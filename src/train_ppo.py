@@ -17,6 +17,7 @@ from utils import (
     preprocess_data,
     DataCollatorForLLaMA,
     PPOTrainerForLLaMA,
+    LogCallback,
     plot_loss
 )
 
@@ -54,6 +55,7 @@ def main():
     ppo_trainer = PPOTrainerForLLaMA(
         training_args=training_args,
         finetuning_args=finetuning_args,
+        callbacks=[LogCallback()],
         config=ppo_config,
         model=model,
         ref_model=None,

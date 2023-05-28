@@ -12,6 +12,7 @@ from utils import (
     preprocess_data,
     PairwiseDataCollatorForLLaMA,
     PairwiseTrainerForLLaMA,
+    LogCallback,
     plot_loss
 )
 
@@ -43,6 +44,7 @@ def main():
         args=training_args,
         tokenizer=tokenizer,
         data_collator=data_collator,
+        callbacks=[LogCallback()],
         **trainer_kwargs
     )
 
