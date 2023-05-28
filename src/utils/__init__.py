@@ -7,6 +7,8 @@ from .common import (
 
 from .data_collator import DataCollatorForLLaMA
 
+from .peft_trainer import LogCallback
+
 from .seq2seq import ComputeMetrics, Seq2SeqTrainerForLLaMA
 from .pairwise import PairwiseDataCollatorForLLaMA, PairwiseTrainerForLLaMA
 from .ppo import PPOTrainerForLLaMA
