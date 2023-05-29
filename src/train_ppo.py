@@ -69,7 +69,7 @@ def main():
     ppo_trainer.ppo_train(max_target_length=data_args.max_target_length)
     ppo_trainer.save_model()
     ppo_trainer.save_state() # must be after save_model
-    if ppo_trainer.is_world_process_zero() and finetuning_args.plot_loss:
+    if ppo_trainer.is_world_process_zero() and model_args.plot_loss:
         plot_loss(training_args, keys=["loss", "reward"])
 
 
