@@ -91,7 +91,7 @@ def init_adapter(
         lastest_checkpoint = None
 
         if model_args.checkpoint_dir is not None:
-            if is_trainable and finetuning_args.resume_lora_training: # continually train on the lora weights
+            if is_trainable and model_args.resume_lora_training: # continually train on the lora weights
                 checkpoints_to_merge, lastest_checkpoint = model_args.checkpoint_dir[:-1], model_args.checkpoint_dir[-1]
             else:
                 checkpoints_to_merge = model_args.checkpoint_dir
