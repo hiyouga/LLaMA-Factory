@@ -1,31 +1,30 @@
 # coding=utf-8
-# Implements parameter-efficient training of a reward model based on LLaMA.
-# This code is inspired by:
-# https://github.com/lvwerra/trl/blob/main/examples/summarization/scripts/reward_summarization.py
-# https://github.com/CarperAI/trlx/blob/main/examples/summarize_rlhf/reward_model/train_reward_model_gptj.py
+# Implements several parameter-efficient pre-training method for LLaMA.
+# This code is inspired by
+# https://github.com/huggingface/transformers/blob/v4.29.2/examples/pytorch/language-modeling/run_clm.py
 
 
+import math
 from utils import (
+    load_pretrained,
     prepare_args,
     prepare_data,
-    load_pretrained,
     preprocess_data,
-    PairwiseDataCollatorForLLaMA,
-    PairwiseTrainerForLLaMA,
+    DataCollatorForLLaMA,
+    PeftTrainer,
     LogCallback,
     plot_loss
 )
 
+
 def main():
 
     # Prepare pretrained model and dataset
-    model_args, data_args, training_args, finetuning_args = prepare_args(stage="rm")
+    model_args, data_args, training_args, finetuning_args = prepare_args(stage="pt")
     dataset = prepare_data(model_args, data_args)
-    model, tokenizer = load_pretrained(model_args, finetuning_args, training_args.do_train, stage="rm")
-    dataset = preprocess_data(dataset, tokenizer, data_args, training_args, stage="rm")
-    data_collator = PairwiseDataCollatorForLLaMA(tokenizer, model.pretrained_model)
-
-    training_args.remove_unused_columns = False # important for pairwise dataset
+    model, tokenizer = load_pretrained(model_args, finetuning_args, training_args.do_train, stage="pt")
+    dataset = preprocess_data(dataset, tokenizer, data_args, training_args, stage="pt")
+    data_collator = DataCollatorForLLaMA(tokenizer, model, data_args.ignore_pad_token_for_loss)
 
     # Split the dataset
     if training_args.do_train:
@@ -38,7 +37,7 @@ def main():
         trainer_kwargs = {"eval_dataset": dataset}
 
     # Initialize our Trainer
-    trainer = PairwiseTrainerForLLaMA(
+    trainer = PeftTrainer(
         finetuning_args=finetuning_args,
         model=model,
         args=training_args,
@@ -61,6 +60,13 @@ def main():
     # Evaluation
     if training_args.do_eval:
         metrics = trainer.evaluate(metric_key_prefix="eval")
+
+        try:
+            perplexity = math.exp(metrics["eval_loss"])
+        except OverflowError:
+            perplexity = float("inf")
+        metrics["perplexity"] = perplexity
+
         trainer.log_metrics("eval", metrics)
         trainer.save_metrics("eval", metrics)
 
