@@ -24,7 +24,7 @@ from utils import (
 
 def main():
 
-    # prepare pretrained model and dataset
+    # Prepare pretrained model and dataset
     model_args, data_args, training_args, finetuning_args = prepare_args(stage="ppo")
     dataset = prepare_data(model_args, data_args)
     model, tokenizer = load_pretrained(model_args, finetuning_args, training_args.do_train, stage="ppo")
