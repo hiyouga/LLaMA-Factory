@@ -1,0 +1,14 @@
+torch>=1.13.1
+protobuf
+cpm_kernels
+sentencepiece
+transformers>=4.27.4
+datasets>=2.10.0
+accelerate>=0.18.0
+peft>=0.3.0
+trl>=0.4.1
+jieba
+rouge_chinese
+nltk
+gradio
+mdtex2html
