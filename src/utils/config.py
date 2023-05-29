@@ -194,7 +194,8 @@ class FinetuningArguments:
         if self.name_module_trainable == "mlp":
             self.trainable_layers = ["layers.{:d}.mlp".format(idx) for idx in trainable_layer_ids]
         elif self.name_module_trainable == "qkv":
-            self.trainable_layers = ["layers.{:d}.attention.query_key_value".format(idx) for idx in trainable_layer_ids]
+            self.trainable_layers = ["layers.{:d}.self_attn.{}".format(idx, proj) \
+                                     for proj in ["k_proj", "q_proj", "v_proj", "o_proj"] for idx in trainable_layer_ids]
 
         assert self.finetuning_type in ["none", "freeze", "lora", "full"], "Invalid fine-tuning method."
 
