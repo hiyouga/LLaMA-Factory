@@ -316,9 +316,6 @@ def prepare_data(
             max_samples_temp = min(len(dataset), max_samples)
             dataset = dataset.select(range(max_samples_temp))
 
-        if dataset.column_names[0] == "text": # for plaintext (in pre-training)
-            dataset = dataset.rename_column("text", getattr(dataset_attr, "prompt_column"))
-
         dummy_data = [None] * len(dataset)
         for column_name, target_name in [
             ("prompt_column", "prompt"),
