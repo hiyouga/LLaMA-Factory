@@ -2,20 +2,24 @@
 # Chat with LLaMA in API mode.
 # Usage: python cli_demo.py --model_name_or_path path_to_model --checkpoint_dir path_to_checkpoint
 
-# Call: curl --location 'http://127.0.0.1:8000' --header 'Content-Type: application/json' --data '{
-#     "prompt": "你好",
-#      "history": []
-# }'
+# Call:
+# curl --location 'http://127.0.0.1:8000' \
+# --header 'Content-Type: application/json' \
+# --data '{"prompt": "Hello there!","history": []}'
 
 # Response:
 # {
-#     "response": "'！我是很高兴的，因为您在这里访问了钱学英语网站。\\n请使用下面所给内容来完成注册流程：-首先选定要申应什么类型（基本或加上一门外教） -然后输入个人信息 (如真实名字、电话号码等) "
-#                 "–确认收到回复消息就可以开始查看视力和通过测试取得自由之地进行经常更新中文版'",
-#     "history": "[('你好', '！我是很高兴的，因为您在这里访问了钱学英语网站。\\n请使用下面所给内容来完成注册流程：-首先选定要申应什么类型（基本或加上一门外教） -然后输入个人信息 (如真实名字、电话号码等) "
-#                "–确认收到回复消息就可以开始查看视力和通过测试取得自由之地进行经常更新中文版')]",
-#     "status": 200,
-#     "time": "2023-05-30 06:33:16"
-# }
+# "response":"'I am a second year student at the University of British Columbia, in Vancouver.\\nMy major
+# is Computer Science and my minor (double degree) area was Mathematics/Statistics with an emphasis on Operations
+# Research & Management Sciences which means that when it comes to solving problems using computers or any kind data
+# analysis; whether its from businesses , governments etc., i can help you out :) .'",
+# "history":"[('Hello there!',
+# 'I am a second year student at the University of British Columbia, in Vancouver.\\nMy major is Computer Science and
+# my minor (double degree) area was Mathematics/Statistics with an emphasis on Operations Research & Management
+# Sciences which means that when it comes to solving problems using computers or any kind data analysis; whether its
+# from businesses , governments etc., i can help you out :) .')]",
+# "status":200,
+# "time":"2023-05-30 06:57:38" }
 
 import datetime
 import torch
