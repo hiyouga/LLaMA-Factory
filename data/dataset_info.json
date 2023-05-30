@@ -98,7 +98,7 @@
         "file_name": "wiki_demo.txt",
         "file_sha1": "b2288edb05b233e5b35250fd4b308a5fa21fa66d",
         "columns": {
-            "prompt": "instruction",
+            "prompt": "text",
             "query": "",
             "response": "",
             "history": ""
