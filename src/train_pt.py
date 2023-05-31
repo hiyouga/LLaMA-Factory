@@ -1,5 +1,5 @@
 # coding=utf-8
-# Implements several parameter-efficient pre-training method for LLaMA.
+# Implements several parameter-efficient pre-training method.
 # This code is inspired by
 # https://github.com/huggingface/transformers/blob/v4.29.2/examples/pytorch/language-modeling/run_clm.py
 
@@ -10,7 +10,7 @@ from utils import (
     prepare_args,
     prepare_data,
     preprocess_data,
-    DataCollatorForLLaMA,
+    DynamicDataCollatorWithPadding,
     PeftTrainer,
     LogCallback,
     plot_loss
@@ -24,7 +24,7 @@ def main():
     dataset = prepare_data(model_args, data_args)
     model, tokenizer = load_pretrained(model_args, finetuning_args, training_args.do_train, stage="pt")
     dataset = preprocess_data(dataset, tokenizer, data_args, training_args, stage="pt")
-    data_collator = DataCollatorForLLaMA(tokenizer, model, data_args.ignore_pad_token_for_loss)
+    data_collator = DynamicDataCollatorWithPadding(tokenizer, model, data_args.ignore_pad_token_for_loss)
 
     # Split the dataset
     if training_args.do_train:

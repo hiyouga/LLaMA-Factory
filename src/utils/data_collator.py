@@ -9,9 +9,9 @@ from transformers.tokenization_utils import PreTrainedTokenizer
 from .other import IGNORE_INDEX
 
 
-class DataCollatorForLLaMA(DataCollatorWithPadding):
+class DynamicDataCollatorWithPadding(DataCollatorWithPadding):
     r"""
-    Data collator for LLaMA. It is capable of dynamically padding for batched data.
+    Inherits DataCollatorWithPadding. It is capable of dynamically padding for batched data.
     """
     def __init__(
             self,
