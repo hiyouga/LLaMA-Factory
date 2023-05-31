@@ -1,5 +1,5 @@
 # coding=utf-8
-# Implements several parameter-efficient supervised fine-tuning method for LLaMA.
+# Implements several parameter-efficient supervised fine-tuning method.
 # This code is inspired by
 # https://github.com/huggingface/transformers/blob/v4.29.2/examples/pytorch/summarization/run_summarization.py
 
@@ -9,8 +9,8 @@ from utils import (
     prepare_args,
     prepare_data,
     preprocess_data,
-    DataCollatorForLLaMA,
-    Seq2SeqTrainerForLLaMA,
+    DynamicDataCollatorWithPadding,
+    Seq2SeqPeftTrainer,
     ComputeMetrics,
     LogCallback,
     get_logits_processor,
@@ -25,7 +25,7 @@ def main():
     dataset = prepare_data(model_args, data_args)
     model, tokenizer = load_pretrained(model_args, finetuning_args, training_args.do_train, stage="sft")
     dataset = preprocess_data(dataset, tokenizer, data_args, training_args, stage="sft")
-    data_collator = DataCollatorForLLaMA(tokenizer, model, data_args.ignore_pad_token_for_loss)
+    data_collator = DynamicDataCollatorWithPadding(tokenizer, model, data_args.ignore_pad_token_for_loss)
 
     # Override the decoding parameters of Seq2SeqTrainer
     training_args.generation_max_length = training_args.generation_max_length if \
@@ -44,7 +44,7 @@ def main():
         trainer_kwargs = {"eval_dataset": dataset}
 
     # Initialize our Trainer
-    trainer = Seq2SeqTrainerForLLaMA(
+    trainer = Seq2SeqPeftTrainer(
         finetuning_args=finetuning_args,
         model=model,
         args=training_args,
