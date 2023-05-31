@@ -75,7 +75,7 @@ def prepare_model_for_training(
         model: PreTrainedModel,
         output_embedding_layer_name: Optional[str] = "lm_head",
         use_gradient_checkpointing: Optional[bool] = True,
-        layer_norm_names: Optional[List[str]] = ["norm"] # for LLaMA setting
+        layer_norm_names: Optional[List[str]] = ["norm", "ln_f"] # for LLaMA and BLOOM setting
 ) -> PreTrainedModel:
 
     for name, param in model.named_parameters():
@@ -141,29 +141,6 @@ def load_valuehead_params(model: torch.nn.Module, checkpoint_dir: os.PathLike) -
     model.register_buffer("reward_head_bias", valuehead_state_dict["summary.bias"])
     model.register_buffer("default_head_weight", torch.zeros_like(valuehead_state_dict["summary.weight"]))
     model.register_buffer("default_head_bias", torch.zeros_like(valuehead_state_dict["summary.bias"]))
-
-
-def auto_configure_device_map(num_gpus: int) -> Dict[str, int]:
-    r"""
-    Configures device map for LLaMA.
-
-    Borrowed from: https://github.com/THUDM/ChatGLM-6B/blob/dev_multi_gpu/utils.py#L8
-    """
-    num_layers = 28
-    layers_per_gpu = 30 / num_gpus
-    device_map = {"model.embed_tokens": 0, "model.norm": 0, "lm_head": 0}
-    added_layers = 2
-    target_gpu = 0
-
-    for i in range(num_layers):
-        if added_layers >= layers_per_gpu:
-            target_gpu += 1
-            added_layers = 0
-        assert target_gpu < num_gpus
-        device_map[f"model.layers.{i}"] = target_gpu
-        added_layers += 1
-
-    return device_map
 
 
 def smooth(scalars: List[float], weight: Optional[float] = 0.95) -> List[float]:

@@ -1,5 +1,5 @@
 # coding=utf-8
-# Exports the fine-tuned LLaMA model.
+# Exports the fine-tuned model.
 # Usage: python export_model.py --checkpoint_dir path_to_checkpoint --output_dir path_to_save_model
 
 
