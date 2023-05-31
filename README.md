@@ -14,15 +14,15 @@
 - [LLaMA](https://github.com/facebookresearch/llama) (7B, 13B, 33B, 65B)
 - [BLOOM](https://huggingface.co/bigscience/bloom) & [BLOOMZ](https://huggingface.co/bigscience/bloomz) (560M, 1.1B, 1.7B, 3B, 7.1B, 176B)
 
-## Supported Training Approach
+## Supported Training Approaches
 
 - [(Continually) pre-training](https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf)
   - Full-parameter training
-  - Selected-parameter training
+  - Partial-parameter training
   - [LoRA](https://arxiv.org/abs/2106.09685)
 - [Supervised fine-tuning](https://arxiv.org/abs/2109.01652)
   - Full-parameter training
-  - Selected-parameter training
+  - Partial-parameter training
   - [LoRA](https://arxiv.org/abs/2106.09685)
 - [RLHF](https://arxiv.org/abs/2203.02155)
   - [LoRA](https://arxiv.org/abs/2106.09685)
