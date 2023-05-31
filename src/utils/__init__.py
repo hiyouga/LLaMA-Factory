@@ -5,13 +5,13 @@ from .common import (
     preprocess_data
 )
 
-from .data_collator import DataCollatorForLLaMA
+from .data_collator import DynamicDataCollatorWithPadding
 
 from .peft_trainer import PeftTrainer, LogCallback
 
-from .seq2seq import ComputeMetrics, Seq2SeqTrainerForLLaMA
-from .pairwise import PairwiseDataCollatorForLLaMA, PairwiseTrainerForLLaMA
-from .ppo import PPOTrainerForLLaMA
+from .seq2seq import ComputeMetrics, Seq2SeqPeftTrainer
+from .pairwise import PairwiseDataCollatorWithPadding, PairwisePeftTrainer
+from .ppo import PPOPeftTrainer
 
 from .config import ModelArguments
-from .other import auto_configure_device_map, get_logits_processor, plot_loss
+from .other import get_logits_processor, plot_loss

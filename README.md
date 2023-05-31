@@ -5,9 +5,65 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/hiyouga/LLaMA-Efficient-Tuning)
 ![GitHub pull request](https://img.shields.io/badge/PRs-welcome-blue)
 
+## Changelog
+
+[23/05/31] Now we support training the BLOOM & BLOOMZ models in this repo. Try `--model_name_or_path bigscience/bloomz-7b1-mt` argument to use the BLOOMZ model.
+
+## Supported Models
+
+- [LLaMA](https://github.com/facebookresearch/llama) (7B, 13B, 33B, 65B)
+- [BLOOM](https://huggingface.co/bigscience/bloom) & [BLOOMZ](https://huggingface.co/bigscience/bloomz) (560M, 1.1B, 1.7B, 3B, 7.1B, 176B)
+
+## Supported Training Approach
+
+- [(Continually) pre-training](https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf)
+  - Full-parameter training
+  - Selected-parameter training
+  - [LoRA](https://arxiv.org/abs/2106.09685)
+- [Supervised fine-tuning](https://arxiv.org/abs/2109.01652)
+  - Full-parameter training
+  - Selected-parameter training
+  - [LoRA](https://arxiv.org/abs/2106.09685)
+- [RLHF](https://arxiv.org/abs/2203.02155)
+  - [LoRA](https://arxiv.org/abs/2106.09685)
+
+## Provided Datasets
+
+- For pre-training:
+  - [Wiki Demo](data/wiki_demo.txt)
+- For supervised fine-tuning:
+  - [Stanford Alpaca](https://github.com/tatsu-lab/stanford_alpaca)
+  - [Stanford Alpaca (Chinese)](https://github.com/ymcui/Chinese-LLaMA-Alpaca)
+  - [GPT-4 Generated Data](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
+  - [BELLE 2M](https://huggingface.co/datasets/BelleGroup/train_2M_CN)
+  - [BELLE 1M](https://huggingface.co/datasets/BelleGroup/train_1M_CN)
+  - [BELLE 0.5M](https://huggingface.co/datasets/BelleGroup/train_0.5M_CN)
+  - [BELLE Dialogue 0.4M](https://huggingface.co/datasets/BelleGroup/generated_chat_0.4M)
+  - [BELLE School Math 0.25M](https://huggingface.co/datasets/BelleGroup/school_math_0.25M)
+  - [BELLE Multiturn Chat 0.8M](https://huggingface.co/datasets/BelleGroup/multiturn_chat_0.8M)
+  - [Guanaco Dataset](https://huggingface.co/datasets/JosephusCheung/GuanacoDataset)
+  - [Firefly 1.1M](https://huggingface.co/datasets/YeungNLP/firefly-train-1.1M)
+  - [CodeAlpaca 20k](https://huggingface.co/datasets/sahil2801/CodeAlpaca-20k)
+  - [Alpaca CoT](https://huggingface.co/datasets/QingyiSi/Alpaca-CoT)
+  - [Web QA (Chinese)](https://huggingface.co/datasets/suolyer/webqa)
+  - [UltraChat](https://github.com/thunlp/UltraChat)
+- For reward model training:
+  - [HH-RLHF](https://huggingface.co/datasets/Anthropic/hh-rlhf)
+  - [GPT-4 Generated Data](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
+  - [GPT-4 Generated Data (Chinese)](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
+
+Please refer to [data/README.md](data/README.md) for details.
+
+Some datasets require confirmation before using them, so we recommend logging in with your HuggingFace account using these commands.
+
+```bash
+pip install --upgrade huggingface_hub
+huggingface-cli login
+```
+
 ## Requirement
 
-- Python 3.8+ and PyTorch 1.13.1
+- Python 3.8+ and PyTorch 1.13.1+
 - 🤗Transformers, Datasets, Accelerate, PEFT and TRL
 - protobuf, cpm_kernels and sentencepiece
 - jieba, rouge_chinese and nltk (used at evaluation)
@@ -36,10 +92,10 @@ pip install -r requirements.txt
 ### LLaMA Weights Preparation
 
 1. Download the weights of the LLaMA models.
-2. Convert them to HF format using this [script](https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/convert_llama_weights_to_hf.py)
+2. Convert them to HF format using the following command.
 
-```python
-python convert_llama_weights_to_hf.py \
+```bash
+python -m transformers.models.llama.convert_llama_weights_to_hf \
     --input_dir path_to_llama_weights --model_size 7B --output_dir path_to_llama_model
 ```
 
@@ -177,7 +233,11 @@ python src/export_model.py \
 
 ## License
 
-This repository is licensed under the [Apache-2.0 License](LICENSE). Please follow the [Model Card](https://github.com/facebookresearch/llama/blob/main/MODEL_CARD.md) to use the LLaMA model.
+This repository is licensed under the [Apache-2.0 License](LICENSE).
+
+Please follow the [Model Card](https://github.com/facebookresearch/llama/blob/main/MODEL_CARD.md) to use the LLaMA models.
+
+Please follow the [RAIL License](https://huggingface.co/spaces/bigscience/license) to use the BLOOM & BLOOMZ models.
 
 ## Citation
 
