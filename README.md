@@ -5,6 +5,8 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/hiyouga/LLaMA-Efficient-Tuning)
 ![GitHub pull request](https://img.shields.io/badge/PRs-welcome-blue)
 
+👋 Join our [WeChat](assets/wechat.jpg).
+
 ## Changelog
 
 [23/05/31] Now we support training the BLOOM & BLOOMZ models in this repo. Try `--model_name_or_path bigscience/bloomz-7b1-mt` argument to use the BLOOMZ model.
