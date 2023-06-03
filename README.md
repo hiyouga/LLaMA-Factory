@@ -9,12 +9,14 @@
 
 ## Changelog
 
+[23/06/03] Now we support quantized training and inference (aka QLoRA). Try `--quantization_bit 4/8` argument to work with quantized model. (experimental feature)
+
 [23/05/31] Now we support training the BLOOM & BLOOMZ models in this repo. Try `--model_name_or_path bigscience/bloomz-7b1-mt` argument to use the BLOOMZ model.
 
 ## Supported Models
 
-- [LLaMA](https://github.com/facebookresearch/llama) (7B, 13B, 33B, 65B)
-- [BLOOM](https://huggingface.co/bigscience/bloom) & [BLOOMZ](https://huggingface.co/bigscience/bloomz) (560M, 1.1B, 1.7B, 3B, 7.1B, 176B)
+- [LLaMA](https://github.com/facebookresearch/llama) (7B/13B/33B/65B)
+- [BLOOM](https://huggingface.co/bigscience/bloom) & [BLOOMZ](https://huggingface.co/bigscience/bloomz) (560M/1.1B/1.7B/3B/7.1B/176B)
 
 ## Supported Training Approaches
 
@@ -22,12 +24,15 @@
   - Full-parameter training
   - Partial-parameter training
   - [LoRA](https://arxiv.org/abs/2106.09685)
+  - [QLoRA](https://arxiv.org/abs/2305.14314)
 - [Supervised fine-tuning](https://arxiv.org/abs/2109.01652)
   - Full-parameter training
   - Partial-parameter training
   - [LoRA](https://arxiv.org/abs/2106.09685)
+  - [QLoRA](https://arxiv.org/abs/2305.14314)
 - [RLHF](https://arxiv.org/abs/2203.02155)
   - [LoRA](https://arxiv.org/abs/2106.09685)
+  - [QLoRA](https://arxiv.org/abs/2305.14314)
 
 ## Provided Datasets
 
@@ -208,6 +213,8 @@ CUDA_VISIBLE_DEVICES=0 python src/train_sft.py \
     --max_samples 50 \
     --predict_with_generate
 ```
+
+We recommend using `--per_device_eval_batch_size=1` and `--max_target_length 128` in INT8 evaluation.
 
 ### CLI Demo
 
