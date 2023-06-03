@@ -38,12 +38,16 @@ class ModelArguments:
         metadata={"help": "Where to store the pretrained models downloaded from huggingface.co."}
     )
     use_fast_tokenizer: Optional[bool] = field(
-        default=True,
+        default=False,
         metadata={"help": "Whether to use one of the fast tokenizer (backed by the tokenizers library) or not."}
     )
     use_auth_token: Optional[bool] = field(
         default=False,
         metadata={"help": "Will use the token generated when running `huggingface-cli login`."}
+    )
+    model_revision: Optional[str] = field(
+        default="main",
+        metadata={"help": "The specific model version to use (can be a branch name, tag name or commit id)."}
     )
     quantization_bit: Optional[int] = field(
         default=None,
@@ -59,7 +63,7 @@ class ModelArguments:
     )
     checkpoint_dir: Optional[str] = field(
         default=None,
-        metadata={"help": "Path to the directory containing the model checkpoints as well as the configurations."}
+        metadata={"help": "Path to the directory(s) containing the delta model checkpoints as well as the configurations."}
     )
     reward_model: Optional[str] = field(
         default=None,
@@ -75,7 +79,7 @@ class ModelArguments:
     )
 
     def __post_init__(self):
-        if self.checkpoint_dir is not None: # support merging lora weights
+        if self.checkpoint_dir is not None: # support merging multiple lora weights
             self.checkpoint_dir = [cd.strip() for cd in self.checkpoint_dir.split(",")]
 
 
