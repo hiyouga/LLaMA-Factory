@@ -15,15 +15,6 @@ require_version("gradio==3.27.0", "To fix: pip install gradio==3.27.0") # higher
 model_args, data_args, finetuning_args = prepare_infer_args()
 model, tokenizer = load_pretrained(model_args, finetuning_args)
 
-if torch.cuda.device_count() > 1:
-    from accelerate import dispatch_model, infer_auto_device_map
-    device_map = infer_auto_device_map(model)
-    model = dispatch_model(model, device_map)
-else:
-    model = model.cuda()
-
-model.eval()
-
 
 """Override Chatbot.postprocess"""
 
