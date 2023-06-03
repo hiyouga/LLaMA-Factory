@@ -53,7 +53,7 @@ def main():
             "temperature": 0.95,
             "num_beams": 1,
             "max_new_tokens": 256,
-            "repetition_penalty": 1.5,
+            "repetition_penalty": 1.0,
             "logits_processor": get_logits_processor()
         }
         with torch.no_grad():

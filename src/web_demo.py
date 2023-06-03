@@ -105,7 +105,7 @@ def predict(input, chatbot, max_length, top_p, temperature, history):
         "temperature": temperature,
         "num_beams": 1,
         "max_length": max_length,
-        "repetition_penalty": 1.5,
+        "repetition_penalty": 1.0,
         "logits_processor": get_logits_processor()
     }
     with torch.no_grad():
