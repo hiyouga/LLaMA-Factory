@@ -9,7 +9,6 @@ from transformers.modeling_utils import PreTrainedModel
 
 from trl import PPOTrainer, AutoModelForCausalLMWithValueHead
 from trl.core import LengthSampler
-from trl.trainer.ppo_trainer import PPODecorators, logprobs_from_logits
 
 from .peft_trainer import PeftTrainer, LogCallback
 
