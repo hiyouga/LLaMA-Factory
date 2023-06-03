@@ -136,6 +136,10 @@ class DataTrainingArguments:
         default=0,
         metadata={"help": "Proportion of the dataset to include in the development set, should be between 0.0 and 1.0."}
     )
+    prompt_template: Optional[Literal["alpaca", "ziya"]] = field(
+        default="alpaca",
+        metadata={"help": "Which template to use for constructing prompts in training."}
+    )
 
     def __post_init__(self): # support mixing multiple datasets
         dataset_names = [ds.strip() for ds in self.dataset.split(",")]
