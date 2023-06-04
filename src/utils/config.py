@@ -62,6 +62,10 @@ class ModelArguments:
         default=True,
         metadata={"help": "Compress the quantization statistics through double quantization."}
     )
+    compute_dtype: Optional[torch.dtype] = field(
+        default=None,
+        metadata={"help": "Used in quantization configs. Do not specify this argument manually."}
+    )
     checkpoint_dir: Optional[str] = field(
         default=None,
         metadata={"help": "Path to the directory(s) containing the delta model checkpoints as well as the configurations."}
@@ -207,10 +211,6 @@ class FinetuningArguments:
         metadata={"help": "Name(s) of target modules to apply LoRA. Use comma to separate multiple modules. \
                   LLaMA choices: [\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"up_proj\", \"down_proj\"], \
                   BLOOM choices: [\"query_key_value\", \"dense\", \"dense_\"]"}
-    )
-    compute_dtype: Optional[torch.dtype] = field(
-        default=None,
-        metadata={"help": "Used in quantization configs. Do not specify this argument manually."}
     )
 
     def __post_init__(self):
