@@ -142,7 +142,7 @@ def load_valuehead_params(model: torch.nn.Module, checkpoint_dir: os.PathLike) -
 
 
 def smooth(scalars: List[float], weight: Optional[float] = 0.9) -> List[float]:
-    """
+    r"""
     EMA implementation according to TensorBoard.
     """
     last = scalars[0]
