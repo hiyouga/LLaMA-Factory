@@ -261,8 +261,8 @@ def prepare_args(
     if training_args.do_predict and (not training_args.predict_with_generate):
         raise ValueError("Please enable `predict_with_generate` to save model predictions.")
 
-    if model_args.quantization_bit is not None and finetuning_args.finetuning_type != "lora":
-        raise ValueError("Quantization is only compatible with the LoRA method.")
+    if model_args.quantization_bit is not None and finetuning_args.finetuning_type == "full":
+        raise ValueError("Quantization is incompatible with the full-parameter tuning.")
 
     if model_args.quantization_bit is not None and (not training_args.do_train):
         logger.warning("Evaluating model in 4/8-bit mode may cause lower scores.")

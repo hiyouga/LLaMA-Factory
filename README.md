@@ -21,13 +21,13 @@
 ## Supported Training Approaches
 
 - [(Continually) pre-training](https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf)
-  - Full-parameter training
-  - Partial-parameter training
+  - Full-parameter tuning
+  - Partial-parameter tuning
   - [LoRA](https://arxiv.org/abs/2106.09685)
   - [QLoRA](https://arxiv.org/abs/2305.14314)
 - [Supervised fine-tuning](https://arxiv.org/abs/2109.01652)
-  - Full-parameter training
-  - Partial-parameter training
+  - Full-parameter tuning
+  - Partial-parameter tuning
   - [LoRA](https://arxiv.org/abs/2106.09685)
   - [QLoRA](https://arxiv.org/abs/2305.14314)
 - [RLHF](https://arxiv.org/abs/2203.02155)
