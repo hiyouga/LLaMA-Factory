@@ -1,6 +1,6 @@
 # coding=utf-8
 # Implements stream chat in command line for fine-tuned models.
-# Usage: python cli_demo.py --checkpoint_dir path_to_checkpoint
+# Usage: python cli_demo.py --model_name_or_path path_to_model --checkpoint_dir path_to_checkpoint
 
 
 from utils import (
