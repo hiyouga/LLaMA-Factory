@@ -148,7 +148,8 @@ class DataTrainingArguments:
 
     def __post_init__(self): # support mixing multiple datasets
         dataset_names = [ds.strip() for ds in self.dataset.split(",")]
-        dataset_info = json.load(open(os.path.join(self.dataset_dir, "dataset_info.json"), "r"))
+        with open(os.path.join(self.dataset_dir, "dataset_info.json"), "r") as f:
+            dataset_info = json.load(f)
 
         self.dataset_list: List[DatasetAttr] = []
         for name in dataset_names:
