@@ -46,7 +46,7 @@ def main():
             "top_p": 0.7,
             "temperature": 0.95,
             "num_beams": 1,
-            "max_new_tokens": 256,
+            "max_new_tokens": 512,
             "repetition_penalty": 1.0,
             "logits_processor": get_logits_processor(),
             "streamer": streamer
