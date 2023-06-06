@@ -5,9 +5,9 @@ from .data_collator import DynamicDataCollatorWithPadding
 
 from .peft_trainer import PeftTrainer
 
-from .other import get_main_logger
+from .other import get_logger
 
-logger = get_main_logger(__name__)
+logger = get_logger(__name__)
 
 
 class PairwiseDataCollatorWithPadding(DynamicDataCollatorWithPadding):
