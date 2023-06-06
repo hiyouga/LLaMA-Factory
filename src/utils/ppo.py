@@ -16,12 +16,12 @@ from .config import FinetuningArguments
 
 from .other import (
     AverageMeter,
-    get_main_logger,
+    get_logger,
     get_logits_processor
 )
 
 
-logger = get_main_logger(__name__)
+logger = get_logger(__name__)
 
 
 def replace_model(model: AutoModelForCausalLMWithValueHead, target: Literal["default", "reward"]) -> None:
