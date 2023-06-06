@@ -21,7 +21,7 @@ from peft.utils.other import WEIGHTS_NAME
 from .config import FinetuningArguments
 
 from .other import (
-    get_logger,
+    get_main_logger,
     get_state_dict,
     load_trainable_params,
     load_valuehead_params,
@@ -30,7 +30,7 @@ from .other import (
 )
 
 
-logger = get_logger(__name__)
+logger = get_main_logger(__name__)
 
 
 class LogCallback(TrainerCallback):

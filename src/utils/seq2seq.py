@@ -13,10 +13,10 @@ from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 
 from .peft_trainer import PeftTrainer
 
-from .other import get_logger, IGNORE_INDEX
+from .other import get_main_logger, IGNORE_INDEX
 
 
-logger = get_logger(__name__)
+logger = get_main_logger(__name__)
 
 
 @dataclass
