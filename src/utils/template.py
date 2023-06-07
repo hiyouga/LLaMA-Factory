@@ -22,6 +22,9 @@ class Template:
         return prompt
 
     def _format_alpaca(self, query: str, history: Optional[list], prefix: Optional[str] = "") -> str:
+        r"""
+        Supports: https://huggingface.co/tatsu-lab/alpaca-7b-wdiff
+        """
         if prefix:
             prompt = prefix
         else:
@@ -35,6 +38,10 @@ class Template:
         return prompt
 
     def _format_vicuna(self, query: str, history: Optional[list], prefix: Optional[str] = "") -> str:
+        r"""
+        Supports: https://huggingface.co/lmsys/vicuna-7b-delta-v1.1
+                  https://huggingface.co/lmsys/vicuna-13b-delta-v1.1
+        """
         if prefix:
             prompt = prefix
         else:
@@ -47,6 +54,9 @@ class Template:
         return prompt
 
     def _format_belle(self, query: str, history: Optional[list], prefix: Optional[str] = "") -> str:
+        r"""
+        Supports: https://huggingface.co/BelleGroup/BELLE-LLaMA-EXT-13B
+        """
         prompt = prefix
         if history:
             for old_query, response in history:
@@ -54,7 +64,32 @@ class Template:
         prompt += "Human: {}\n\nBelle: ".format(query)
         return prompt
 
+    def _format_linly(self, query: str, history: Optional[list], prefix: Optional[str] = "") -> str:
+        r"""
+        Supports: https://github.com/CVI-SZU/Linly
+        """
+        prompt = prefix
+        if history:
+            for old_query, response in history:
+                prompt += "User: {}\nBot: {}\n".format(old_query, response)
+        prompt += "User: {}\nBot: ".format(query)
+        return prompt
+
+    def _format_billa(self, query: str, history: Optional[list], prefix: Optional[str] = "") -> str:
+        r"""
+        Supports: https://github.com/Neutralzz/BiLLa
+        """
+        prompt = prefix
+        if history:
+            for old_query, response in history:
+                prompt += "Human: {}\nAssistant: {}\n".format(old_query, response)
+        prompt += "Human: {}\nAssistant: ".format(query)
+        return prompt
+
     def _format_ziya(self, query: str, history: Optional[list], prefix: Optional[str] = "") -> str:
+        r"""
+        Supports: https://huggingface.co/IDEA-CCNL/Ziya-LLaMA-13B-v1
+        """
         prompt = prefix
         if history:
             for old_query, response in history:
