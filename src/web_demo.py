@@ -8,11 +8,10 @@ import gradio as gr
 
 from threading import Thread
 from utils import (
+    Template,
     load_pretrained,
     prepare_infer_args,
-    get_logits_processor,
-    prompt_template_alpaca,
-    prompt_template_ziya
+    get_logits_processor
 )
 
 from transformers import TextIteratorStreamer
@@ -25,7 +24,7 @@ require_version("gradio>=3.30.0", "To fix: pip install gradio>=3.30.0")
 model_args, data_args, finetuning_args = prepare_infer_args()
 model, tokenizer = load_pretrained(model_args, finetuning_args)
 
-format_example = prompt_template_alpaca if data_args.prompt_template == "alpaca" else prompt_template_ziya
+prompt_template = Template(data_args.prompt_template)
 streamer = TextIteratorStreamer(tokenizer, timeout=60.0, skip_prompt=True, skip_special_tokens=True)
 
 
@@ -81,7 +80,7 @@ def parse_text(text): # copy from https://github.com/GaiZhenbiao/ChuanhuChatGPT
 def predict(query, chatbot, max_length, top_p, temperature, history):
     chatbot.append((parse_text(query), ""))
 
-    input_ids = tokenizer([format_example(query, history)], return_tensors="pt")["input_ids"]
+    input_ids = tokenizer([prompt_template.get_prompt(query, history)], return_tensors="pt")["input_ids"]
     input_ids = input_ids.to(model.device)
     gen_kwargs = {
         "input_ids": input_ids,

@@ -10,7 +10,7 @@ from transformers.modeling_utils import PreTrainedModel
 from transformers.generation.utils import LogitsProcessorList
 from transformers.generation.logits_process import LogitsProcessor
 
-from peft.utils.other import WEIGHTS_NAME
+from peft.utils import WEIGHTS_NAME
 
 
 IGNORE_INDEX = -100

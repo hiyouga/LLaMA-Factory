@@ -4,11 +4,10 @@
 
 
 from utils import (
+    Template,
     load_pretrained,
     prepare_infer_args,
-    get_logits_processor,
-    prompt_template_alpaca,
-    prompt_template_ziya
+    get_logits_processor
 )
 from threading import Thread
 from transformers import TextIteratorStreamer
@@ -20,11 +19,11 @@ def main():
     model_name = "BLOOM" if "bloom" in model_args.model_name_or_path else "LLaMA"
     model, tokenizer = load_pretrained(model_args, finetuning_args)
 
-    format_example = prompt_template_alpaca if data_args.prompt_template == "alpaca" else prompt_template_ziya
+    prompt_template = Template(data_args.prompt_template)
     streamer = TextIteratorStreamer(tokenizer, timeout=60.0, skip_prompt=True, skip_special_tokens=True)
 
     def predict_and_print(query, history: list):
-        input_ids = tokenizer([format_example(query, history)], return_tensors="pt")["input_ids"]
+        input_ids = tokenizer([prompt_template.get_prompt(query, history)], return_tensors="pt")["input_ids"]
         input_ids = input_ids.to(model.device)
         gen_kwargs = {
             "input_ids": input_ids,
