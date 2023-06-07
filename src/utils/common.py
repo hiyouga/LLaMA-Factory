@@ -101,7 +101,7 @@ def _init_adapter(
         logger.info("Fine-tuning method: LoRA")
         lastest_checkpoint = None
 
-        assert os.path.exists(model_args.checkpoint_dir[0], CONFIG_NAME), \
+        assert os.path.exists(os.path.join(model_args.checkpoint_dir[0], CONFIG_NAME)), \
             "The given checkpoint is not a LoRA checkpoint, please specify `--finetuning_type full/freeze` instead."
 
         if model_args.checkpoint_dir is not None:
