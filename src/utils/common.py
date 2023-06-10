@@ -358,12 +358,10 @@ def prepare_data(
         elif dataset_attr.load_from == "file":
             data_file = os.path.join(data_args.dataset_dir, dataset_attr.file_name)
             extension = dataset_attr.file_name.split(".")[-1]
-
             if dataset_attr.file_sha1 is not None:
                 checksum(data_file, dataset_attr.file_sha1)
             else:
                 logger.warning("Checksum failed: missing SHA-1 hash value in dataset_info.json.")
-            print(extension)
             raw_datasets = load_dataset(
                 extension if extension in ["csv", "json"] else "text",
                 data_files=data_file,
