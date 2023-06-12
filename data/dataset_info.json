@@ -79,11 +79,11 @@
   },
   "comparison_gpt4_en": {
     "file_name": "comparison_gpt4_data_en.json",
-    "file_sha1": "eeb295ce0ab011c37af52596460c8a57d07ad19f"
+    "file_sha1": "96fa18313544e22444fe20eead7754b17da452ae"
   },
   "comparison_gpt4_zh": {
     "file_name": "comparison_gpt4_data_zh.json",
-    "file_sha1": "b99a41c1c864019d9b0c07dbcd5df0560cf33ce0"
+    "file_sha1": "515b18ed497199131ddcc1af950345c11dc5c7fd"
   },
   "hh_rlhf_en": {
     "script_url": "hh_rlhf_en",
@@ -99,15 +99,6 @@
     "file_sha1": "b2288edb05b233e5b35250fd4b308a5fa21fa66d",
     "columns": {
       "prompt": "text",
-      "query": "",
-      "response": "",
-      "history": ""
-    }
-  },
-  "pretrain_data": {
-    "file_name": "pretrain_data",
-    "columns": {
-      "prompt": "content",
       "query": "",
       "response": "",
       "history": ""
