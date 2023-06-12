@@ -42,7 +42,7 @@ app = FastAPI()
 
 @app.post("/")
 async def create_item(request: Request):
-    global model, tokenizer, prompt_template
+    global model, tokenizer, prompt_template, generating_args
 
     # Parse the request JSON
     json_post_raw = await request.json()
@@ -56,16 +56,9 @@ async def create_item(request: Request):
     input_ids = input_ids.to(model.device)
 
     # Generation arguments
-    gen_kwargs = {
-        "input_ids": input_ids,
-        "do_sample": True,
-        "top_p": 0.7,
-        "temperature": 0.95,
-        "num_beams": 1,
-        "max_new_tokens": 512,
-        "repetition_penalty": 1.0,
-        "logits_processor": get_logits_processor()
-    }
+    gen_kwargs = generating_args.to_dict()
+    gen_kwargs["input_ids"] = input_ids
+    gen_kwargs["logits_processor"] = get_logits_processor()
 
     # Generate response
     with torch.no_grad():
@@ -95,7 +88,7 @@ async def create_item(request: Request):
 
 
 if __name__ == "__main__":
-    model_args, data_args, finetuning_args = prepare_infer_args()
+    model_args, data_args, finetuning_args, generating_args = prepare_infer_args()
     model, tokenizer = load_pretrained(model_args, finetuning_args)
     prompt_template = Template(data_args.prompt_template)
 
