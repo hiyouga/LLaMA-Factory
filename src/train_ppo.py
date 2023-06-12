@@ -6,18 +6,17 @@
 import math
 
 from torch.optim import AdamW
-
 from transformers.optimization import get_scheduler
 from trl import PPOConfig
 
 from utils import (
-    prepare_args,
-    prepare_data,
-    load_pretrained,
-    preprocess_data,
     DynamicDataCollatorWithPadding,
     PPOPeftTrainer,
     LogCallback,
+    load_pretrained,
+    prepare_args,
+    prepare_data,
+    preprocess_data,
     plot_loss
 )
 
@@ -29,7 +28,7 @@ def main():
     dataset = prepare_data(model_args, data_args)
     model, tokenizer = load_pretrained(model_args, finetuning_args, training_args.do_train, stage="ppo")
     dataset = preprocess_data(dataset, tokenizer, data_args, training_args, stage="ppo")
-    data_collator = DynamicDataCollatorWithPadding(tokenizer, model.pretrained_model)
+    data_collator = DynamicDataCollatorWithPadding(tokenizer)
 
     ppo_config = PPOConfig(
         model_name=model_args.model_name_or_path,
