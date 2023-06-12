@@ -1,5 +1,6 @@
 import torch
-from typing import Dict, Sequence, Union
+import numpy as np
+from typing import Dict, Sequence, Tuple, Union
 
 from .data_collator import DynamicDataCollatorWithPadding
 
@@ -8,6 +9,12 @@ from .peft_trainer import PeftTrainer
 from .other import get_logger
 
 logger = get_logger(__name__)
+
+
+def compute_accuracy(eval_preds: Sequence[Union[np.ndarray, Tuple[np.ndarray]]]) -> Dict[str, float]:
+    preds, _ = eval_preds
+    preds = np.array(preds)
+    return {"accuracy": (preds[:, 0] > preds[:, 1]).sum() / len(preds)}
 
 
 class PairwiseDataCollatorWithPadding(DynamicDataCollatorWithPadding):
@@ -47,5 +54,4 @@ class PairwisePeftTrainer(PeftTrainer):
         _, _, values = model(**inputs)
         r_accept, r_reject = values[:, -1].split(batch_size, dim=0)
         loss = -torch.log(torch.sigmoid(r_accept - r_reject)).mean()
-        outputs = {"r_accept": r_accept, "r_reject": r_reject}
-        return (loss, outputs) if return_outputs else loss
+        return (loss, torch.stack((r_accept, r_reject), dim=-1)) if return_outputs else loss

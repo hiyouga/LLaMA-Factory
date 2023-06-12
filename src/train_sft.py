@@ -5,14 +5,14 @@
 
 
 from utils import (
-    load_pretrained,
-    prepare_args,
-    prepare_data,
-    preprocess_data,
     DynamicDataCollatorWithPadding,
     Seq2SeqPeftTrainer,
     ComputeMetrics,
     LogCallback,
+    load_pretrained,
+    prepare_args,
+    prepare_data,
+    preprocess_data,
     get_logits_processor,
     plot_loss
 )
@@ -25,7 +25,7 @@ def main():
     dataset = prepare_data(model_args, data_args)
     model, tokenizer = load_pretrained(model_args, finetuning_args, training_args.do_train, stage="sft")
     dataset = preprocess_data(dataset, tokenizer, data_args, training_args, stage="sft")
-    data_collator = DynamicDataCollatorWithPadding(tokenizer, model, data_args.ignore_pad_token_for_loss)
+    data_collator = DynamicDataCollatorWithPadding(tokenizer, data_args.ignore_pad_token_for_loss)
 
     # Override the decoding parameters of Seq2SeqTrainer
     training_args.generation_max_length = training_args.generation_max_length if \
