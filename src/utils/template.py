@@ -14,27 +14,25 @@ class Template:
         return getattr(self, "_format_{}".format(self.name))(query, history, prefix)
 
     def _format_vanilla(self, query: str, history: Optional[list], prefix: Optional[str] = "") -> str:
-        prompt = prefix
-        if history:
-            for old_query, response in history:
-                prompt += old_query + "\n" + response + "\n"
-        prompt += query
-        return prompt
+        r"""
+        Use for language model inference without histories.
+        """
+        return query
 
     def _format_alpaca(self, query: str, history: Optional[list], prefix: Optional[str] = "") -> str:
         r"""
         Supports: https://huggingface.co/tatsu-lab/alpaca-7b-wdiff
+                  https://github.com/ymcui/Chinese-LLaMA-Alpaca
         """
         if prefix:
             prompt = prefix
         else:
             prompt = "Below is an instruction that describes a task. "
             prompt += "Write a response that appropriately completes the request.\n\n"
-            prompt += "Instruction:\n"
         if history:
             for old_query, response in history:
-                prompt += "Human:\n{}\n\nAssistant:\n{}\n\n".format(old_query, response)
-        prompt += "Human:\n{}\n\nAssistant:".format(query)
+                prompt += "### Instruction:\n{}\n\n### Response:\n{}\n\n".format(old_query, response)
+        prompt += "### Instruction:\n{}\n\n### Response:\n".format(query)
         return prompt
 
     def _format_vicuna(self, query: str, history: Optional[list], prefix: Optional[str] = "") -> str:
