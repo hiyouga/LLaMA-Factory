@@ -81,7 +81,7 @@ class PeftTrainer(Seq2SeqTrainer):
     def __init__(self, finetuning_args: FinetuningArguments, **kwargs):
         super().__init__(**kwargs)
         self.finetuning_args = finetuning_args
-        if os.path.exists(os.path.join(self.args.output_dir, "trainer_log.jsonl")):
+        if self.is_world_process_zero() and os.path.exists(os.path.join(self.args.output_dir, "trainer_log.jsonl")):
             logger.warning("Previous log file in this folder will be deleted.")
             os.remove(os.path.join(self.args.output_dir, "trainer_log.jsonl"))
 
