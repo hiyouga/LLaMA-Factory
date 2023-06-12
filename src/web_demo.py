@@ -87,7 +87,7 @@ def predict(query, chatbot, max_length, top_p, temperature, history):
         "do_sample": True,
         "top_p": top_p,
         "temperature": temperature,
-        "num_beams": generating_args.infer_num_beams,
+        "num_beams": generating_args.num_beams,
         "max_length": max_length,
         "repetition_penalty": generating_args.repetition_penalty,
         "logits_processor": get_logits_processor(),
