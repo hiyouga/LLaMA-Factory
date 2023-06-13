@@ -126,21 +126,27 @@ def get_state_dict(model: torch.nn.Module) -> Dict[str, torch.Tensor]: # get sta
     return filtered_state_dict
 
 
-def load_trainable_params(model: torch.nn.Module, checkpoint_dir: os.PathLike) -> None:
+def load_trainable_params(model: torch.nn.Module, checkpoint_dir: os.PathLike) -> bool:
     weights_file = os.path.join(checkpoint_dir, WEIGHTS_NAME)
-    assert os.path.exists(weights_file), f"Provided path ({checkpoint_dir}) does not contain the pretrained weights."
+    if not os.path.exists(weights_file):
+        logger.warning("Provided path ({}) does not contain pre-trained weights.".format(checkpoint_dir))
+        return False
     model_state_dict = torch.load(weights_file, map_location="cpu")
     model.load_state_dict(model_state_dict, strict=False) # skip missing keys
+    return True
 
 
-def load_valuehead_params(model: torch.nn.Module, checkpoint_dir: os.PathLike) -> None:
+def load_valuehead_params(model: torch.nn.Module, checkpoint_dir: os.PathLike) -> bool:
     valuehead_file = os.path.join(checkpoint_dir, VALUE_HEAD_FILE_NAME)
-    assert os.path.exists(valuehead_file), f"Provided path ({checkpoint_dir}) does not contain the valuehead weights."
+    if not os.path.exists(valuehead_file):
+        logger.warning("Provided path ({}) does not contain valuehead weights.".format(checkpoint_dir))
+        return False
     valuehead_state_dict = torch.load(valuehead_file, map_location="cpu")
     model.register_buffer("reward_head_weight", valuehead_state_dict["summary.weight"])
     model.register_buffer("reward_head_bias", valuehead_state_dict["summary.bias"])
     model.register_buffer("default_head_weight", torch.zeros_like(valuehead_state_dict["summary.weight"]))
     model.register_buffer("default_head_bias", torch.zeros_like(valuehead_state_dict["summary.bias"]))
+    return True
 
 
 def smooth(scalars: List[float], weight: Optional[float] = 0.9) -> List[float]:
