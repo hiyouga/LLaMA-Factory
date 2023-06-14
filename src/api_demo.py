@@ -50,6 +50,9 @@ async def create_item(request: Request):
     json_post_list = json.loads(json_post)
     prompt = json_post_list.get("prompt")
     history = json_post_list.get("history")
+    max_new_tokens = json_post_list.get("max_new_tokens", None)
+    top_p = json_post_list.get("top_p", None)
+    temperature = json_post_list.get("temperature", None)
 
     # Tokenize the input prompt
     input_ids = tokenizer([prompt_template.get_prompt(prompt, history)], return_tensors="pt")["input_ids"]
@@ -59,6 +62,9 @@ async def create_item(request: Request):
     gen_kwargs = generating_args.to_dict()
     gen_kwargs["input_ids"] = input_ids
     gen_kwargs["logits_processor"] = get_logits_processor()
+    gen_kwargs["max_new_tokens"] = max_new_tokens if max_new_tokens else gen_kwargs["max_new_tokens"]
+    gen_kwargs["top_p"] = top_p if top_p else gen_kwargs["top_p"]
+    gen_kwargs["temperature"] = temperature if temperature else gen_kwargs["temperature"]
 
     # Generate response
     with torch.no_grad():
