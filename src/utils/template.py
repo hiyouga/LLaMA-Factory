@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from dataclasses import dataclass
 
 
@@ -8,89 +8,131 @@ class Template:
     name: str
 
     def __post_init__(self):
-        assert hasattr(self, "_format_{}".format(self.name)), "Template {} does not exist.".format(self.name)
+
+        if self.name == "vanilla":
+            r"""
+            Supports language model inference without histories.
+            """
+            self._register_template(
+                prefix="",
+                prompt="",
+                sep="",
+                use_history=False
+            )
+
+        elif self.name == "alpaca":
+            r"""
+            Supports: https://huggingface.co/tatsu-lab/alpaca-7b-wdiff
+                      https://github.com/ymcui/Chinese-LLaMA-Alpaca
+            """
+            self._register_template(
+                prefix="Below is an instruction that describes a task. "
+                       "Write a response that appropriately completes the request.\n\n",
+                prompt="### Instruction:\n{query}\n\n### Response:\n",
+                sep="\n\n",
+                use_history=True
+            )
+
+        elif self.name == "vicuna":
+            r"""
+            Supports: https://huggingface.co/lmsys/vicuna-7b-delta-v1.1
+                      https://huggingface.co/lmsys/vicuna-13b-delta-v1.1
+            """
+            self._register_template(
+                prefix="A chat between a curious user and an artificial intelligence assistant. "
+                       "The assistant gives helpful, detailed, and polite answers to the user's questions.",
+                prompt="USER: {query} ASSISTANT: ",
+                sep="</s>",
+                use_history=True
+            )
+
+        elif self.name == "belle":
+            r"""
+            Supports: https://huggingface.co/BelleGroup/BELLE-LLaMA-EXT-13B
+            """
+            self._register_template(
+                prefix="",
+                prompt="Human: {query}\n\nBelle: ",
+                sep="\n\n",
+                use_history=True
+            )
+
+        elif self.name == "linly":
+            r"""
+            Supports: https://github.com/CVI-SZU/Linly
+            """
+            self._register_template(
+                prefix="",
+                prompt="User: {query}\nBot: ",
+                sep="\n",
+                use_history=True
+            )
+
+        elif self.name == "billa":
+            r"""
+            Supports: https://github.com/Neutralzz/BiLLa
+            """
+            self._register_template(
+                prefix="",
+                prompt="Human: {query}\nAssistant: ",
+                sep="\n",
+                use_history=True
+            )
+
+        elif self.name == "ziya":
+            r"""
+            Supports: https://huggingface.co/IDEA-CCNL/Ziya-LLaMA-13B-v1
+            """
+            self._register_template(
+                prefix="",
+                prompt="<human>:{query}\n<bot>:",
+                sep="\n",
+                use_history=True
+            )
+
+        elif self.name == "aquila":
+            r"""
+            Supports: https://huggingface.co/qhduan/aquilachat-7b
+            """
+            self._register_template(
+                prefix="A chat between a curious human and an artificial intelligence assistant. "
+                       "The assistant gives helpful, detailed, and polite answers to the human's questions.",
+                prompt="Human: {query}\nAssistant: ",
+                sep="###",
+                use_history=True
+            )
+
+        else:
+            raise ValueError("Template {} does not exist.".format(self.name))
 
     def get_prompt(self, query: str, history: Optional[list] = None, prefix: Optional[str] = "") -> str:
-        return getattr(self, "_format_{}".format(self.name))(query, history, prefix)
-
-    def _format_vanilla(self, query: str, history: Optional[list], prefix: Optional[str] = "") -> str:
         r"""
-        Use for language model inference without histories.
+        Returns a string containing prompt without response.
         """
-        return query
+        return "".join(self._format_example(query, history, prefix))
 
-    def _format_alpaca(self, query: str, history: Optional[list], prefix: Optional[str] = "") -> str:
+    def get_dialog(self, query: str, resp: str, history: Optional[list] = None, prefix: Optional[str] = "") -> List[str]:
         r"""
-        Supports: https://huggingface.co/tatsu-lab/alpaca-7b-wdiff
-                  https://github.com/ymcui/Chinese-LLaMA-Alpaca
+        Returns a list containing 2 * n elements where the 2k-th is a query and the (2k+1)-th is a response.
         """
-        if prefix:
-            prompt = prefix
-        else:
-            prompt = "Below is an instruction that describes a task. "
-            prompt += "Write a response that appropriately completes the request.\n\n"
-        if history:
-            for old_query, response in history:
-                prompt += "### Instruction:\n{}\n\n### Response:\n{}\n\n".format(old_query, response)
-        prompt += "### Instruction:\n{}\n\n### Response:\n".format(query)
-        return prompt
+        return self._format_example(query, history, prefix) + [resp]
 
-    def _format_vicuna(self, query: str, history: Optional[list], prefix: Optional[str] = "") -> str:
-        r"""
-        Supports: https://huggingface.co/lmsys/vicuna-7b-delta-v1.1
-                  https://huggingface.co/lmsys/vicuna-13b-delta-v1.1
-        """
-        if prefix:
-            prompt = prefix
-        else:
-            prompt = "A chat between a curious user and an artificial intelligence assistant. "
-            prompt += "The assistant gives helpful, detailed, and polite answers to the user's questions. "
-        if history:
-            for old_query, response in history:
-                prompt += "USER: {} ASSISTANT: {}</s>".format(old_query, response)
-        prompt += "USER: {} ASSISTANT: ".format(query)
-        return prompt
+    def _register_template(self, prefix: str, prompt: str, sep: str, use_history: Optional[bool] = True) -> None:
+        self.prefix = prefix
+        self.prompt = prompt
+        self.sep = sep
+        self.use_history = use_history
 
-    def _format_belle(self, query: str, history: Optional[list], prefix: Optional[str] = "") -> str:
-        r"""
-        Supports: https://huggingface.co/BelleGroup/BELLE-LLaMA-EXT-13B
-        """
-        prompt = prefix
-        if history:
-            for old_query, response in history:
-                prompt += "Human: {}\n\nBelle: {}\n\n".format(old_query, response)
-        prompt += "Human: {}\n\nBelle: ".format(query)
-        return prompt
-
-    def _format_linly(self, query: str, history: Optional[list], prefix: Optional[str] = "") -> str:
-        r"""
-        Supports: https://github.com/CVI-SZU/Linly
-        """
-        prompt = prefix
-        if history:
-            for old_query, response in history:
-                prompt += "User: {}\nBot: {}\n".format(old_query, response)
-        prompt += "User: {}\nBot: ".format(query)
-        return prompt
-
-    def _format_billa(self, query: str, history: Optional[list], prefix: Optional[str] = "") -> str:
-        r"""
-        Supports: https://github.com/Neutralzz/BiLLa
-        """
-        prompt = prefix
-        if history:
-            for old_query, response in history:
-                prompt += "Human: {}\nAssistant: {}\n".format(old_query, response)
-        prompt += "Human: {}\nAssistant: ".format(query)
-        return prompt
-
-    def _format_ziya(self, query: str, history: Optional[list], prefix: Optional[str] = "") -> str:
-        r"""
-        Supports: https://huggingface.co/IDEA-CCNL/Ziya-LLaMA-13B-v1
-        """
-        prompt = prefix
-        if history:
-            for old_query, response in history:
-                prompt += "<human>:{}\n<bot>:{}\n".format(old_query, response)
-        prompt += "<human>:{}\n<bot>:".format(query)
-        return prompt
+    def _format_example(self, query: str, history: Optional[list] = None, prefix: Optional[str] = "") -> List[str]:
+        prefix = prefix if prefix else self.prefix
+        history = history if (history and self.use_history) else []
+        history = history + [(query, "<dummy>")]
+        convs = []
+        for turn_idx, (user_query, bot_resp) in enumerate(history):
+            if turn_idx == 0:
+                convs.append(prefix + self.prompt.format(query=user_query))
+                convs.append(bot_resp)
+            else:
+                convs.append(self.sep + self.prompt.format(query=user_query))
+                convs.append(bot_resp)
+        return convs[:-1] # drop last
