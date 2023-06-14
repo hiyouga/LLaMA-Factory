@@ -17,9 +17,7 @@ from utils import (
 from transformers import TextIteratorStreamer
 from transformers.utils.versions import require_version
 
-
 require_version("gradio>=3.30.0", "To fix: pip install gradio>=3.30.0")
-
 
 model_args, data_args, finetuning_args, generating_args = prepare_infer_args()
 model, tokenizer = load_pretrained(model_args, finetuning_args)
@@ -45,7 +43,7 @@ def postprocess(self, y):
 gr.Chatbot.postprocess = postprocess
 
 
-def parse_text(text): # copy from https://github.com/GaiZhenbiao/ChuanhuChatGPT
+def parse_text(text):  # copy from https://github.com/GaiZhenbiao/ChuanhuChatGPT
     lines = text.split("\n")
     lines = [line for line in lines if line != ""]
     count = 0
@@ -112,7 +110,6 @@ def reset_state():
 
 
 with gr.Blocks() as demo:
-
     gr.HTML("""
     <h1 align="center">
         <a href="https://github.com/hiyouga/LLaMA-Efficient-Tuning" target="_blank">
@@ -134,11 +131,13 @@ with gr.Blocks() as demo:
             emptyBtn = gr.Button("Clear History")
             max_length = gr.Slider(0, 2048, value=1024, step=1.0, label="Maximum length", interactive=True)
             top_p = gr.Slider(0, 1, value=generating_args.top_p, step=0.01, label="Top P", interactive=True)
-            temperature = gr.Slider(0, 1.5, value=generating_args.temperature, step=0.01, label="Temperature", interactive=True)
+            temperature = gr.Slider(0, 1.5, value=generating_args.temperature, step=0.01, label="Temperature",
+                                    interactive=True)
 
     history = gr.State([])
 
-    submitBtn.click(predict, [user_input, chatbot, max_length, top_p, temperature, history], [chatbot, history], show_progress=True)
+    submitBtn.click(predict, [user_input, chatbot, max_length, top_p, temperature, history], [chatbot, history],
+                    show_progress=True)
     submitBtn.click(reset_user_input, [], [user_input])
 
     emptyBtn.click(reset_state, outputs=[chatbot, history], show_progress=True)
