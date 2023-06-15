@@ -15,7 +15,7 @@ class Template:
             """
             self._register_template(
                 prefix="",
-                prompt="",
+                prompt="{query}",
                 sep="",
                 use_history=False
             )
