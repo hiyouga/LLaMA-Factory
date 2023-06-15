@@ -195,7 +195,8 @@ class FinetuningArguments:
         default="mlp",
         metadata={"help": "Name of trainable modules for Freeze fine-tuning. \
                   LLaMA choices: [\"mlp\", \"self_attn\"], \
-                  BLOOM choices: [\"mlp\", \"self_attention\"]"}
+                  BLOOM choices: [\"mlp\", \"self_attention\"], \
+                  Baichuan choices: [\"mlp\", \"self_attn\"]"}
     )
     lora_rank: Optional[int] = field(
         default=8,
@@ -212,8 +213,9 @@ class FinetuningArguments:
     lora_target: Optional[str] = field(
         default="q_proj,v_proj",
         metadata={"help": "Name(s) of target modules to apply LoRA. Use comma to separate multiple modules. \
-                  LLaMA choices: [\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"up_proj\", \"gate_proj\", \"down_proj\"], \
-                  BLOOM choices: [\"query_key_value\", \"self_attention.dense\", \"mlp.dense\"]"}
+                  LLaMA choices: [\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"], \
+                  BLOOM choices: [\"query_key_value\", \"self_attention.dense\", \"mlp.dense\"], \
+                  Baichuan choices: [\"W_pack\", \"o_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"]"}
     )
 
     def __post_init__(self):
