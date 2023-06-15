@@ -17,6 +17,7 @@
 
 - [LLaMA](https://github.com/facebookresearch/llama) (7B/13B/33B/65B)
 - [BLOOM](https://huggingface.co/bigscience/bloom) & [BLOOMZ](https://huggingface.co/bigscience/bloomz) (560M/1.1B/1.7B/3B/7.1B/176B)
+- [baichuan](https://huggingface.co/baichuan-inc/baichuan-7B) (7B)
 
 ## Supported Training Approaches
 
