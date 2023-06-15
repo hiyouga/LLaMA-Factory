@@ -73,6 +73,7 @@ def get_logits_processor() -> LogitsProcessorList:
 # Inspired by: https://github.com/huggingface/peft/blob/c0209c35abbf88c63aa267800d98a8e212ed0a42/src/peft/utils/other.py#L35
 def prepare_model_for_training(
         model: PreTrainedModel,
+        finetuning_type: str,
         output_embedding_layer_name: Optional[str] = "lm_head",
         use_gradient_checkpointing: Optional[bool] = True,
         layer_norm_names: Optional[List[str]] = ["norm", "ln_f"] # for LLaMA and BLOOM setting
@@ -93,13 +94,13 @@ def prepare_model_for_training(
         model.gradient_checkpointing_enable()
         model.config.use_cache = False # turn off when gradient checkpointing is enabled
 
-    if hasattr(model, output_embedding_layer_name):
-        output_embedding_layer = getattr(model, output_embedding_layer_name)
+    if finetuning_type != "full" and hasattr(model, output_embedding_layer_name):
+        output_embedding_layer: torch.nn.Linear = getattr(model, output_embedding_layer_name)
         input_dtype = output_embedding_layer.weight.dtype
 
         class CastOutputToFloat(torch.nn.Sequential):
 
-            def forward(self, x):
+            def forward(self, x: torch.Tensor) -> torch.Tensor:
                 return super().forward(x.to(input_dtype)).to(torch.float32)
 
         setattr(model, output_embedding_layer_name, CastOutputToFloat(output_embedding_layer))
