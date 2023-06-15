@@ -83,7 +83,13 @@ def prepare_model_for_training(
             param.data = param.data.to(torch.float32)
 
     if use_gradient_checkpointing:
-        model.enable_input_require_grads()
+        if hasattr(model, "enable_input_require_grads"):
+            model.enable_input_require_grads()
+        else:
+            def make_inputs_require_grad(module, input, output):
+                output.requires_grad_(True)
+            model.get_input_embeddings().register_forward_hook(make_inputs_require_grad)
+
         model.gradient_checkpointing_enable()
         model.config.use_cache = False # turn off when gradient checkpointing is enabled
 
