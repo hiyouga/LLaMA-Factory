@@ -9,6 +9,8 @@
 
 ## Changelog
 
+[23/06/15] Now we support training the baichuan-7B model in this repo. Try `--model_name_or_path baichuan-inc/baichuan-7B` argument to use the baichuan-7B model.
+
 [23/06/03] Now we support quantized training and inference (aka [QLoRA](https://github.com/artidoro/qlora)). Try `--quantization_bit 4/8` argument to work with quantized model. (experimental feature)
 
 [23/05/31] Now we support training the BLOOM & BLOOMZ models in this repo. Try `--model_name_or_path bigscience/bloomz-7b1-mt` argument to use the BLOOMZ model.
@@ -111,7 +113,7 @@ python -m transformers.models.llama.convert_llama_weights_to_hf \
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_pt.py \
-    --model_name_or_path path_to_llama_model \
+    --model_name_or_path path_to_your_model \
     --do_train \
     --dataset wiki_demo \
     --finetuning_type lora \
@@ -132,11 +134,10 @@ CUDA_VISIBLE_DEVICES=0 python src/train_pt.py \
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_sft.py \
-    --model_name_or_path path_to_llama_model \
+    --model_name_or_path path_to_your_model \
     --do_train \
     --dataset alpaca_gpt4_en \
     --finetuning_type lora \
-    --checkpoint_dir path_to_pt_checkpoint \
     --output_dir path_to_sft_checkpoint \
     --overwrite_cache \
     --per_device_train_batch_size 4 \
@@ -146,7 +147,6 @@ CUDA_VISIBLE_DEVICES=0 python src/train_sft.py \
     --save_steps 1000 \
     --learning_rate 5e-5 \
     --num_train_epochs 3.0 \
-    --resume_lora_training False \
     --plot_loss \
     --fp16
 ```
@@ -155,11 +155,10 @@ CUDA_VISIBLE_DEVICES=0 python src/train_sft.py \
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_rm.py \
-    --model_name_or_path path_to_llama_model \
+    --model_name_or_path path_to_your_model \
     --do_train \
     --dataset comparison_gpt4_en \
     --finetuning_type lora \
-    --checkpoint_dir path_to_pt_checkpoint \
     --output_dir path_to_rm_checkpoint \
     --per_device_train_batch_size 4 \
     --gradient_accumulation_steps 4 \
@@ -176,11 +175,11 @@ CUDA_VISIBLE_DEVICES=0 python src/train_rm.py \
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_ppo.py \
-    --model_name_or_path path_to_llama_model \
+    --model_name_or_path path_to_your_model \
     --do_train \
     --dataset alpaca_gpt4_en \
     --finetuning_type lora \
-    --checkpoint_dir path_to_pt_checkpoint,path_to_sft_checkpoint \
+    --checkpoint_dir path_to_sft_checkpoint \
     --reward_model path_to_rm_checkpoint \
     --output_dir path_to_ppo_checkpoint \
     --per_device_train_batch_size 2 \
@@ -205,7 +204,7 @@ accelerate launch src/train_XX.py # arguments (same as above)
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_sft.py \
-    --model_name_or_path path_to_llama_model \
+    --model_name_or_path path_to_your_model \
     --do_eval \
     --dataset alpaca_gpt4_en \
     --checkpoint_dir path_to_checkpoint \
@@ -215,20 +214,20 @@ CUDA_VISIBLE_DEVICES=0 python src/train_sft.py \
     --predict_with_generate
 ```
 
-We recommend using `--per_device_eval_batch_size=1` and `--max_target_length 128` in INT8 evaluation.
+We recommend using `--per_device_eval_batch_size=1` and `--max_target_length 128` at 4/8-bit evaluation.
 
 ### CLI Demo
 
 ```bash
 python src/cli_demo.py \
-    --model_name_or_path path_to_llama_model \
+    --model_name_or_path path_to_your_model \
     --checkpoint_dir path_to_checkpoint
 ```
 
 ### Web Demo
 ```bash
 python src/web_demo.py \
-    --model_name_or_path path_to_llama_model \
+    --model_name_or_path path_to_your_model \
     --checkpoint_dir path_to_checkpoint
 ```
 
@@ -236,7 +235,7 @@ python src/web_demo.py \
 
 ```bash
 python src/export_model.py \
-    --model_name_or_path path_to_llama_model \
+    --model_name_or_path path_to_your_model \
     --checkpoint_dir path_to_checkpoint \
     --output_dir path_to_export
 ```
@@ -248,6 +247,8 @@ This repository is licensed under the [Apache-2.0 License](LICENSE).
 Please follow the [Model Card](https://github.com/facebookresearch/llama/blob/main/MODEL_CARD.md) to use the LLaMA models.
 
 Please follow the [RAIL License](https://huggingface.co/spaces/bigscience/license) to use the BLOOM & BLOOMZ models.
+
+Please follow the [baichuan-7B License](https://huggingface.co/baichuan-inc/baichuan-7B/resolve/main/baichuan-7B%20%E6%A8%A1%E5%9E%8B%E8%AE%B8%E5%8F%AF%E5%8D%8F%E8%AE%AE.pdf) to use the baichuan-7B model.
 
 ## Citation
 
