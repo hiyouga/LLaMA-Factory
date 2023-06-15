@@ -170,6 +170,8 @@ def load_pretrained(
         **config_kwargs
     )
     tokenizer.pad_token_id = 0 if tokenizer.pad_token_id is None else tokenizer.pad_token_id # set as the <unk> token
+    if tokenizer.pad_token_id == 64000:
+        tokenizer.pad_token_id = 0 # for baichuan model (need fix)
 
     config = AutoConfig.from_pretrained(model_args.model_name_or_path, **config_kwargs)
     is_mergeable = True
