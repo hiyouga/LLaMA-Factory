@@ -30,7 +30,13 @@
     "hf_hub_url": "BelleGroup/school_math_0.25M"
   },
   "belle_multiturn": {
-    "hf_hub_url": "BelleGroup/multiturn_chat_0.8M"
+    "script_url": "belle_multiturn",
+    "columns": {
+      "prompt": "instruction",
+      "query": "",
+      "response": "output",
+      "history": "history"
+    }
   },
   "guanaco": {
     "hf_hub_url": "JosephusCheung/GuanacoDataset"
