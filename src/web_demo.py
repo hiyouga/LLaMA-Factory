@@ -25,6 +25,7 @@ model_args, data_args, finetuning_args, generating_args = prepare_infer_args()
 model, tokenizer = load_pretrained(model_args, finetuning_args)
 
 prompt_template = Template(data_args.prompt_template)
+source_prefix = data_args.source_prefix if data_args.source_prefix else ""
 
 
 def postprocess(self, y):
@@ -79,7 +80,7 @@ def parse_text(text): # copy from https://github.com/GaiZhenbiao/ChuanhuChatGPT
 def predict(query, chatbot, max_length, top_p, temperature, history):
     chatbot.append((parse_text(query), ""))
 
-    input_ids = tokenizer([prompt_template.get_prompt(query, history)], return_tensors="pt")["input_ids"]
+    input_ids = tokenizer([prompt_template.get_prompt(query, history, source_prefix)], return_tensors="pt")["input_ids"]
     input_ids = input_ids.to(model.device)
 
     streamer = TextIteratorStreamer(tokenizer, timeout=60.0, skip_prompt=True, skip_special_tokens=True)
