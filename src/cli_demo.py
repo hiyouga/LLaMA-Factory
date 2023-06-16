@@ -20,9 +20,10 @@ def main():
 
     model_name = "BLOOM" if "bloom" in model_args.model_name_or_path else "LLaMA"
     prompt_template = Template(data_args.prompt_template)
+    source_prefix = data_args.source_prefix if data_args.source_prefix else ""
 
     def predict_and_print(query, history: list) -> list:
-        input_ids = tokenizer([prompt_template.get_prompt(query, history)], return_tensors="pt")["input_ids"]
+        input_ids = tokenizer([prompt_template.get_prompt(query, history, source_prefix)], return_tensors="pt")["input_ids"]
         input_ids = input_ids.to(model.device)
 
         streamer = TextIteratorStreamer(tokenizer, timeout=60.0, skip_prompt=True, skip_special_tokens=True)
