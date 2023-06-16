@@ -20,6 +20,18 @@ class Template:
                 use_history=False
             )
 
+        elif self.name == "default":
+            r"""
+            Default template.
+            """
+            self._register_template(
+                prefix="A chat between a curious user and an artificial intelligence assistant. "
+                       "The assistant gives helpful, detailed, and polite answers to the user's questions.",
+                prompt="Human: {query}\nAssistant: ",
+                sep="\n",
+                use_history=True
+            )
+
         elif self.name == "alpaca":
             r"""
             Supports: https://huggingface.co/tatsu-lab/alpaca-7b-wdiff
@@ -27,7 +39,7 @@ class Template:
             """
             self._register_template(
                 prefix="Below is an instruction that describes a task. "
-                       "Write a response that appropriately completes the request.\n\n",
+                       "Write a response that appropriately completes the request.",
                 prompt="### Instruction:\n{query}\n\n### Response:\n",
                 sep="\n\n",
                 use_history=True
@@ -97,7 +109,7 @@ class Template:
             self._register_template(
                 prefix="A chat between a curious human and an artificial intelligence assistant. "
                        "The assistant gives helpful, detailed, and polite answers to the human's questions.",
-                prompt="Human: {query}\nAssistant: ",
+                prompt="Human: {query}###Assistant: ",
                 sep="###",
                 use_history=True
             )
@@ -124,7 +136,8 @@ class Template:
         self.use_history = use_history
 
     def _format_example(self, query: str, history: Optional[list] = None, prefix: Optional[str] = "") -> List[str]:
-        prefix = prefix if prefix else self.prefix
+        prefix = prefix if prefix else self.prefix # use prefix if provided
+        prefix = prefix + self.sep if prefix else "" # add separator for non-empty prefix
         history = history if (history and self.use_history) else []
         history = history + [(query, "<dummy>")]
         convs = []
