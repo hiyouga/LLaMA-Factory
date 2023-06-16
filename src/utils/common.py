@@ -284,7 +284,7 @@ def prepare_args(
     if training_args.do_train and (not training_args.fp16):
         logger.warning("We recommend enable fp16 mixed precision training.")
 
-    if data_args.prompt_template == "alpaca":
+    if data_args.prompt_template == "default":
         logger.warning("Please specify `prompt_template` if you are using other pre-trained models.")
 
     if training_args.local_rank != -1 and training_args.ddp_find_unused_parameters is None:
@@ -326,7 +326,7 @@ def prepare_infer_args() -> Tuple[ModelArguments, DataTrainingArguments, Finetun
     if model_args.quantization_bit is not None and finetuning_args.finetuning_type != "lora":
         raise ValueError("Quantization is only compatible with the LoRA method.")
 
-    if data_args.prompt_template == "alpaca":
+    if data_args.prompt_template == "default":
         logger.warning("Please specify `prompt_template` if you are using other pre-trained models.")
 
     return model_args, data_args, finetuning_args, generating_args

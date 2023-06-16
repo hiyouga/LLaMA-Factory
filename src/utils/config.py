@@ -144,7 +144,7 @@ class DataTrainingArguments:
         metadata={"help": "Proportion of the dataset to include in the development set, should be between 0.0 and 1.0."}
     )
     prompt_template: Optional[str] = field(
-        default="alpaca",
+        default="default",
         metadata={"help": "Which template to use for constructing prompts in training and inference."}
     )
 
