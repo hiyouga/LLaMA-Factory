@@ -64,7 +64,7 @@
 
 Please refer to [data/README.md](data/README.md) for details.
 
-Some datasets require confirmation before using them, so we recommend logging in with your HuggingFace account using these commands.
+Some datasets require confirmation before using them, so we recommend logging in with your Hugging Face account using these commands.
 
 ```bash
 pip install --upgrade huggingface_hub
