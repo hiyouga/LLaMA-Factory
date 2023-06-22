@@ -9,11 +9,13 @@
 
 ## Changelog
 
-[23/06/15] Now we support training the baichuan-7B model in this repo. Try `--model_name_or_path baichuan-inc/baichuan-7B` argument to use the baichuan-7B model.
+[23/06/22] Now we align the [demo API](src/api_demo.py) with the [OpenAI's](https://platform.openai.com/docs/api-reference/chat) format where you can insert the fine-tuned model in arbitrary ChatGPT-based applications.
+
+[23/06/15] Now we support training the baichuan-7B model in this repo. Try `--model_name_or_path baichuan-inc/baichuan-7B` and `--lora_target W_pack` arguments to use the baichuan-7B model.
 
 [23/06/03] Now we support quantized training and inference (aka [QLoRA](https://github.com/artidoro/qlora)). Try `--quantization_bit 4/8` argument to work with quantized model. (experimental feature)
 
-[23/05/31] Now we support training the BLOOM & BLOOMZ models in this repo. Try `--model_name_or_path bigscience/bloomz-7b1-mt` argument to use the BLOOMZ model.
+[23/05/31] Now we support training the BLOOM & BLOOMZ models in this repo. Try `--model_name_or_path bigscience/bloomz-7b1-mt` and `--lora_target query_key_value` arguments to use the BLOOMZ model.
 
 ## Supported Models
 
@@ -75,9 +77,9 @@ huggingface-cli login
 
 - Python 3.8+ and PyTorch 1.13.1+
 - 🤗Transformers, Datasets, Accelerate, PEFT and TRL
-- protobuf, cpm_kernels and sentencepiece
 - jieba, rouge_chinese and nltk (used at evaluation)
 - gradio and mdtex2html (used in web_demo.py)
+- uvicorn and fastapi (used in api_demo.py)
 
 And **powerful GPUs**!
 
@@ -99,7 +101,7 @@ cd LLaMA-Efficient-Tuning
 pip install -r requirements.txt
 ```
 
-### LLaMA Weights Preparation
+### LLaMA Weights Preparation (optional)
 
 1. Download the weights of the LLaMA models.
 2. Convert them to HF format using the following command.
@@ -216,17 +218,10 @@ CUDA_VISIBLE_DEVICES=0 python src/train_sft.py \
 
 We recommend using `--per_device_eval_batch_size=1` and `--max_target_length 128` at 4/8-bit evaluation.
 
-### CLI Demo
+### API / CLI / Web Demo
 
 ```bash
-python src/cli_demo.py \
-    --model_name_or_path path_to_your_model \
-    --checkpoint_dir path_to_checkpoint
-```
-
-### Web Demo
-```bash
-python src/web_demo.py \
+python src/xxx_demo.py \
     --model_name_or_path path_to_your_model \
     --checkpoint_dir path_to_checkpoint
 ```
