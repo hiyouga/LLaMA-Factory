@@ -285,6 +285,10 @@ class GeneratingArguments:
         default=1.0,
         metadata={"help": "The parameter for repetition penalty. 1.0 means no penalty."}
     )
+    length_penalty: Optional[float] = field(
+        default=1.0,
+        metadata={"help": "Exponential penalty to the length that is used with beam-based generation."}
+    )
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
