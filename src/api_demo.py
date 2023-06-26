@@ -34,6 +34,21 @@ async def lifespan(app: FastAPI): # collects GPU memory
 app = FastAPI(lifespan=lifespan)
 
 
+class ModelCard(BaseModel):
+    id: str
+    object: str = "model"
+    created: int = Field(default_factory=lambda: int(time.time()))
+    owned_by: str = "owner"
+    root: Optional[str] = None
+    parent: Optional[str] = None
+    permission: Optional[list] = None
+
+
+class ModelList(BaseModel):
+    object: str = "list"
+    data: List[ModelCard] = []
+
+
 class ChatMessage(BaseModel):
     role: Literal["user", "assistant", "system"]
     content: str
@@ -71,6 +86,13 @@ class ChatCompletionResponse(BaseModel):
     object: Literal["chat.completion", "chat.completion.chunk"]
     choices: List[Union[ChatCompletionResponseChoice, ChatCompletionResponseStreamChoice]]
     created: Optional[int] = Field(default_factory=lambda: int(time.time()))
+
+
+@app.get("/v1/models", response_model=ModelList)
+async def list_models():
+    global model_args
+    model_card = ModelCard(id="gpt-3.5-turbo")
+    return ModelList(data=[model_card])
 
 
 @app.post("/v1/chat/completions", response_model=ChatCompletionResponse)
