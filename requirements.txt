@@ -11,3 +11,4 @@ gradio
 mdtex2html
 uvicorn
 fastapi
+sentencepiece
