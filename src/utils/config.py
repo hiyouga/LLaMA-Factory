@@ -1,8 +1,9 @@
-import os
 import json
-import torch
-from typing import Any, Dict, List, Literal, Optional
+import os
 from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, List, Literal, Optional
+
+import torch
 
 
 @dataclass
@@ -82,7 +83,10 @@ class ModelArguments:
         default=False,
         metadata={"help": "Whether to plot the training loss after fine-tuning or not."}
     )
-
+    baichuan_rtx_gpu: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Whether to plot the training loss after fine-tuning or not."}
+    )
     def __post_init__(self):
         if self.checkpoint_dir is not None: # support merging multiple lora weights
             self.checkpoint_dir = [cd.strip() for cd in self.checkpoint_dir.split(",")]

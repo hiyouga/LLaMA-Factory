@@ -1,55 +1,31 @@
+import hashlib
 import os
 import sys
-import torch
-import hashlib
 from itertools import chain
 from typing import List, Literal, Optional, Tuple
 
+import datasets
+import torch
 import transformers
-from transformers import (
-    AutoConfig,
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    HfArgumentParser,
-    Seq2SeqTrainingArguments,
-    BitsAndBytesConfig
-)
-from transformers.utils import check_min_version
-from transformers.utils.versions import require_version
+from datasets import Dataset, concatenate_datasets, load_dataset
+from peft import LoraConfig, PeftModel, TaskType, get_peft_model
+from peft.utils import CONFIG_NAME, WEIGHTS_NAME
+from transformers import (AutoConfig, AutoModelForCausalLM, AutoTokenizer,
+                          BitsAndBytesConfig, HfArgumentParser,
+                          Seq2SeqTrainingArguments)
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils import PreTrainedTokenizer
-
-import datasets
-from datasets import Dataset, concatenate_datasets, load_dataset
-
-from peft import (
-    PeftModel,
-    TaskType,
-    LoraConfig,
-    get_peft_model
-)
-
-from peft.utils import CONFIG_NAME, WEIGHTS_NAME
-
+from transformers.utils import check_min_version
+from transformers.utils.versions import require_version
 from trl import AutoModelForCausalLMWithValueHead
 
-from .config import (
-    ModelArguments,
-    DataTrainingArguments,
-    FinetuningArguments,
-    GeneratingArguments
-)
-
+from .config import (DataTrainingArguments, FinetuningArguments,
+                     GeneratingArguments, ModelArguments)
+from .modeling_baichuan import BaiChuanForCausalLM
+from .other import (IGNORE_INDEX, get_logger, load_trainable_params,
+                    load_valuehead_params, prepare_model_for_training,
+                    print_trainable_params)
 from .template import Template
-
-from .other import (
-    get_logger,
-    load_trainable_params,
-    load_valuehead_params,
-    print_trainable_params,
-    prepare_model_for_training,
-    IGNORE_INDEX
-)
 
 check_min_version("4.29.1")
 require_version("datasets>=2.12.0", "To fix: pip install datasets>=2.12.0")
@@ -206,13 +182,23 @@ def load_pretrained(
         config_kwargs["device_map"] = "auto"
 
     # Load and prepare pretrained models (without valuehead).
-    model = AutoModelForCausalLM.from_pretrained(
-        model_args.model_name_or_path,
-        config=config,
-        torch_dtype=torch.bfloat16 if model_args.compute_dtype == torch.bfloat16 else torch.float16,
-        low_cpu_mem_usage=True,
-        **config_kwargs
-    )
+    if model_args.baichuan_rtx_gpu:
+        model = BaiChuanForCausalLM.from_pretrained(
+            model_args.model_name_or_path,
+            config=config,
+            torch_dtype=torch.bfloat16 if model_args.compute_dtype == torch.bfloat16 else torch.float16,
+            low_cpu_mem_usage=True,
+            **config_kwargs
+        )
+    else:
+        model = AutoModelForCausalLM.from_pretrained(
+            model_args.model_name_or_path,
+            config=config,
+            torch_dtype=torch.bfloat16 if model_args.compute_dtype == torch.bfloat16 else torch.float16,
+            low_cpu_mem_usage=True,
+            **config_kwargs
+        )
+    
     model = prepare_model_for_training(model, finetuning_args.finetuning_type) if is_trainable else model
     model = _init_adapter(model, model_args, finetuning_args, is_trainable, is_mergeable)
 
