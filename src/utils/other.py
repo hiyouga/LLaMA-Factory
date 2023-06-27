@@ -5,12 +5,10 @@ import torch
 import logging
 from typing import Dict, List, Optional
 
-from transformers.trainer import TRAINER_STATE_NAME
+from transformers.trainer import TRAINER_STATE_NAME, WEIGHTS_NAME
 from transformers.modeling_utils import PreTrainedModel
 from transformers.generation.utils import LogitsProcessorList
 from transformers.generation.logits_process import LogitsProcessor
-
-from peft.utils import WEIGHTS_NAME
 
 
 IGNORE_INDEX = -100
