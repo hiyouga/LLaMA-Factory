@@ -26,8 +26,10 @@ class DynamicDataCollatorWithPadding(DataCollatorWithPadding):
         """
         batch_size, seq_length = input_ids.size()
         attention_mask = torch.ones((batch_size, seq_length), device=device)
+
         for i, seq in enumerate(input_ids):
             attention_mask[i, :(seq != self.tokenizer.pad_token_id).nonzero()[0].item()] = 0 # padding
+
         attention_mask = attention_mask.bool()
         return attention_mask
 
@@ -49,7 +51,11 @@ class DynamicDataCollatorWithPadding(DataCollatorWithPadding):
                 labels = [torch.tensor(feature["labels"]).flip(0) for feature in features]
             input_ids = input_ids + labels # pad them to the same length
 
-        input_ids = torch.nn.utils.rnn.pad_sequence(input_ids, batch_first=True, padding_value=self.tokenizer.pad_token_id).flip(-1)
+        input_ids = torch.nn.utils.rnn.pad_sequence(
+            input_ids,
+            batch_first=True,
+            padding_value=self.tokenizer.pad_token_id
+        ).flip(-1)
 
         batch = {}
 
