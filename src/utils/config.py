@@ -134,7 +134,7 @@ class DataTrainingArguments:
     )
     source_prefix: Optional[str] = field(
         default=None,
-        metadata={"help": "A prefix to add before every source text. Use `|` to separate multiple prefixes."}
+        metadata={"help": "A prefix to add before every source text. Use `|` to separate multiple prefixes in training."}
     )
     dev_ratio: Optional[float] = field(
         default=0,
@@ -145,7 +145,7 @@ class DataTrainingArguments:
         metadata={"help": "Which template to use for constructing prompts in training and inference."}
     )
 
-    def __post_init__(self): # support mixing multiple datasets
+    def init_for_training(self): # support mixing multiple datasets
         dataset_names = [ds.strip() for ds in self.dataset.split(",")]
         with open(os.path.join(self.dataset_dir, "dataset_info.json"), "r") as f:
             dataset_info = json.load(f)

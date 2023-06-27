@@ -103,11 +103,10 @@ def _init_adapter(
         lastest_checkpoint = None
 
         if model_args.checkpoint_dir is not None:
-            if not os.path.exists(os.path.join(model_args.checkpoint_dir[0], WEIGHTS_NAME)):
-                raise ValueError("Provided path ({}) does not contain a LoRA weight.".format(model_args.checkpoint_dir[0]))
-            if not os.path.exists(os.path.join(model_args.checkpoint_dir[0], CONFIG_NAME)):
-                raise ValueError("The given checkpoint may be not a LoRA checkpoint, \
-                                  please specify `--finetuning_type full/freeze` instead.")
+            assert os.path.exists(os.path.join(model_args.checkpoint_dir[0], WEIGHTS_NAME)), \
+                "Provided path ({}) does not contain a LoRA weight.".format(model_args.checkpoint_dir[0])
+            assert os.path.exists(os.path.join(model_args.checkpoint_dir[0], CONFIG_NAME)), \
+                "The given checkpoint may be not a LoRA checkpoint, please specify `--finetuning_type full/freeze` instead."
 
             if (is_trainable and model_args.resume_lora_training) or (not is_mergeable): # continually train on the lora weights
                 checkpoints_to_merge, lastest_checkpoint = model_args.checkpoint_dir[:-1], model_args.checkpoint_dir[-1]
@@ -267,6 +266,8 @@ def prepare_args(
     transformers.utils.logging.enable_explicit_format()
 
     # Check arguments (do not check finetuning_args since it may be loaded from checkpoints)
+    data_args.init_for_training()
+
     if stage != "sft" and training_args.predict_with_generate:
         raise ValueError("`predict_with_generate` cannot be set as True at PT, RM and PPO stages.")
 
