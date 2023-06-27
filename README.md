@@ -208,6 +208,7 @@ accelerate launch src/train_XX.py # arguments (same as above)
 compute_environment: LOCAL_MACHINE
 deepspeed_config:
   gradient_accumulation_steps: 4
+  gradient_clipping: 0.5
   offload_optimizer_device: none
   offload_param_device: none
   zero3_init_flag: false
