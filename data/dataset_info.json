@@ -74,6 +74,26 @@
       "history": "history"
     }
   },
+  "oaast_sft": {
+    "file_name": "oaast_sft.json",
+    "file_sha1": "08912e34fb165db137d3436db4c35321e33b28d1",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "history": "history"
+    }
+  },
+  "oaast_sft_zh": {
+    "file_name": "oaast_sft_zh.json",
+    "file_sha1": "e0a2e7e8eff355434ada6c9b7f70bb915f941dd4",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "history": "history"
+    }
+  },
   "example": {
     "script_url": "example_dataset",
     "columns": {
@@ -96,6 +116,26 @@
     "columns": {
       "prompt": "instruction",
       "query": "",
+      "response": "output",
+      "history": "history"
+    }
+  },
+  "oaast_rm": {
+    "file_name": "oaast_rm.json",
+    "file_sha1": "622d420e9b70003b210618253bd3d9d2891d86cb",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "history": "history"
+    }
+  },
+  "oaast_rm_zh": {
+    "file_name": "",
+    "file_sha1": "1065af1f3784dd61be5e79713a35f427b713a232",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
       "response": "output",
       "history": "history"
     }
