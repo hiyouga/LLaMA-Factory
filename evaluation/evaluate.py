@@ -1,7 +1,7 @@
 # coding=utf-8
 # Evaluates fine-tuned models automatically.
 # Usage: python evaluate.py --evalset ceval/ceval-exam:law --split dev --api_base http://localhost:8000/v1 --task_type choice
-# dataset format: question (string), A (string), B (string), C (string), D (string), answer Literal["A", "B", "C", "D"]
+# dataset format: question (string), A (string), B (string), C (string), D (string), answer (Literal["A", "B", "C", "D"])
 
 
 import os
