@@ -59,8 +59,12 @@
   - [Alpaca CoT](https://huggingface.co/datasets/QingyiSi/Alpaca-CoT)
   - [Web QA (Chinese)](https://huggingface.co/datasets/suolyer/webqa)
   - [UltraChat](https://github.com/thunlp/UltraChat)
+  - [Open Assistant](https://huggingface.co/datasets/OpenAssistant/oasst1)
+  - [Open Assistant (Chinese)](https://huggingface.co/datasets/OpenAssistant/oasst1)
 - For reward model training:
   - [HH-RLHF](https://huggingface.co/datasets/Anthropic/hh-rlhf)
+  - [Open Assistant](https://huggingface.co/datasets/OpenAssistant/oasst1)
+  - [Open Assistant (Chinese)](https://huggingface.co/datasets/OpenAssistant/oasst1)
   - [GPT-4 Generated Data](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
   - [GPT-4 Generated Data (Chinese)](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
 
