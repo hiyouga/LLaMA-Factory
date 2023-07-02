@@ -1,6 +1,7 @@
 # coding=utf-8
 # Evaluates fine-tuned models automatically.
-# Usage: python evaluate.py --evalset ceval/ceval-exam:law --split dev --api_base http://localhost:8000/v1 --task_type choice
+# Usage: python evaluate_zh.py --evalset ceval/ceval-exam:law --split dev --output_file result.json
+#                              --api_base http://localhost:8000/v1 --task_type choice --n_samples 100
 # dataset format: question (string), A (string), B (string), C (string), D (string), answer (Literal["A", "B", "C", "D"])
 
 
@@ -75,6 +76,7 @@ EXT2TYPE = {
 def evaluate(
         evalset: str,
         api_base: str,
+        output_file: str,
         split: Optional[str] = "val",
         task_type: Optional[Literal["choice", "cloze", "openqa"]] = "choice",
         n_samples: Optional[int] = 20
@@ -122,7 +124,8 @@ def evaluate(
         })
 
     print("Result: {}/{}\nAccuracy: {:.2f}%".format(n_correct, n_samples, n_correct / n_samples * 100))
-    with open("result.json", "w", encoding="utf-8") as f:
+
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(predictions, f, indent=2, ensure_ascii=False)
 
 
