@@ -86,9 +86,9 @@ huggingface-cli login
 
 - Python 3.8+ and PyTorch 1.13.1+
 - 🤗Transformers, Datasets, Accelerate, PEFT and TRL
-- jieba, rouge_chinese and nltk (used at evaluation)
+- jieba, rouge-chinese and nltk (used at evaluation)
 - gradio and mdtex2html (used in web_demo.py)
-- uvicorn, fastapi and sse_starlette (used in api_demo.py)
+- uvicorn, fastapi and sse-starlette (used in api_demo.py)
 
 And **powerful GPUs**!
 
