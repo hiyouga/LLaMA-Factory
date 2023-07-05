@@ -213,7 +213,7 @@ def load_pretrained(
     model = AutoModelForCausalLM.from_pretrained(
         model_to_load,
         config=config,
-        torch_dtype=model_args.compute_dtype,
+        torch_dtype=torch.bfloat16 if model_args.compute_dtype == torch.bfloat16 else torch.float16,
         low_cpu_mem_usage=True,
         **config_kwargs
     )
