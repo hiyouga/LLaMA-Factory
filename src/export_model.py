@@ -13,7 +13,6 @@ def main():
     model.save_pretrained(training_args.output_dir, max_shard_size="10GB")
     tokenizer.save_pretrained(training_args.output_dir)
     print("model and tokenizer have been saved at:", training_args.output_dir)
-    print("Remember to copy the *.py files from the original directory.")
 
 
 if __name__ == "__main__":
