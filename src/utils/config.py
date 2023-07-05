@@ -237,7 +237,7 @@ class FinetuningArguments:
             self.lora_target = [target.strip() for target in self.lora_target.split(",")]
 
         if self.num_layer_trainable > 0: # fine-tuning the last n layers if num_layer_trainable > 0
-            trainable_layer_ids = [self.num_hidden_layers - k for k in range(self.num_layer_trainable)]
+            trainable_layer_ids = [self.num_hidden_layers - k - 1 for k in range(self.num_layer_trainable)]
         else: # fine-tuning the first n layers if num_layer_trainable < 0
             trainable_layer_ids = [k for k in range(-self.num_layer_trainable)]
 
