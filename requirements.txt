@@ -6,10 +6,10 @@ peft>=0.3.0
 trl>=0.4.4
 sentencepiece
 jieba
-rouge_chinese
+rouge-chinese
 nltk
 gradio
 mdtex2html
 uvicorn
 fastapi
-sse_starlette
+sse-starlette
