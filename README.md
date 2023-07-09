@@ -9,6 +9,8 @@
 
 ## Changelog
 
+[23/07/09] Now we release [FastEdit](https://github.com/hiyouga/FastEdit) ⚡🩹, an easy-to-use package for editing the factual knowledge of large language models efficently. Please follow [FastEdit](https://github.com/hiyouga/FastEdit) if you are interested.
+
 [23/07/07] Now we support training the **InternLM-7B** model in this repo. Try `--model_name_or_path internlm/internlm-7b` argument to use the InternLM model. Remember to use `--prompt_template intern` argument when you are using the InternLM-chat model.
 
 [23/07/05] Now we support training the **Falcon-7B/40B** models in this repo. Try `--model_name_or_path tiiuae/falcon-7b` and `--lora_target query_key_value` arguments to use the Falcon model.
