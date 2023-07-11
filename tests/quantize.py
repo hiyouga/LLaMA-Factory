@@ -2,7 +2,7 @@
 # Quantizes fine-tuned models with AutoGPTQ (https://github.com/PanQiWei/AutoGPTQ).
 # Usage: python auto_gptq.py --input_dir path_to_llama_model --output_dir path_to_quant_model --data_file alpaca.json
 #                            --max_length 1024 --max_samples 1024
-# dataset format: question (string), A (string), B (string), C (string), D (string), answer (Literal["A", "B", "C", "D"])
+# dataset format: instruction (string), input (string), output (string), history (List[string])
 
 
 import fire
@@ -23,7 +23,9 @@ def quantize(input_dir: str, output_dir: str, data_file: str, max_length: int, m
             if "history" in examples:
                 for user_query, bot_resp in examples["history"][i]:
                     prompt += "Human: {}\nAssistant: {}\n".format(user_query, bot_resp)
-            prompt += "Human: {}\nAssistant: {}".format(examples["instruction"][i], examples["output"][i])
+            prompt += "Human: {}\nAssistant: {}".format(
+                examples["instruction"][i] + "\n" + examples["input"][i], examples["output"][i]
+            )
             texts.append(prompt)
         return tokenizer(texts, truncation=True, max_length=max_length)
 
@@ -39,7 +41,7 @@ def quantize(input_dir: str, output_dir: str, data_file: str, max_length: int, m
         desc_act=False
     )
 
-    model = AutoGPTQForCausalLM.from_pretrained(input_dir, quantize_config)
+    model = AutoGPTQForCausalLM.from_pretrained(input_dir, quantize_config, trust_remote_code=True)
     model.quantize(dataset)
     model.save_quantized(output_dir)
 
