@@ -149,5 +149,8 @@
       "response": "",
       "history": ""
     }
+  },
+  "novel_tokens512_50k": {
+    "hf_hub_url": "zxbsmk/webnovel_cn"
   }
 }
