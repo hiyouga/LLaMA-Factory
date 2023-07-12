@@ -73,6 +73,7 @@
   - [UltraChat](https://github.com/thunlp/UltraChat)
   - [Open Assistant](https://huggingface.co/datasets/OpenAssistant/oasst1)
   - [Open Assistant (Chinese)](https://huggingface.co/datasets/OpenAssistant/oasst1)
+  - [WebNovel (Chinese)](https://huggingface.co/datasets/zxbsmk/webnovel_cn)
 - For reward model training:
   - [HH-RLHF](https://huggingface.co/datasets/Anthropic/hh-rlhf)
   - [Open Assistant](https://huggingface.co/datasets/OpenAssistant/oasst1)
