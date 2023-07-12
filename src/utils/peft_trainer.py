@@ -94,7 +94,9 @@ class PeftTrainer(Seq2SeqTrainer):
         output_dir = output_dir if output_dir is not None else self.args.output_dir
         os.makedirs(output_dir, exist_ok=True)
         logger.info(f"Saving model checkpoint to {output_dir}")
-        model = unwrap_model(self.model)
+        model = self.model
+        if self.finetuning_args.finetuning_type != "lora":
+            model = unwrap_model(self.model)
 
         if hasattr(model, "pretrained_model"): # for models with valuehead (currently using LoRA only)
             backbone_model = getattr(model, "pretrained_model")
