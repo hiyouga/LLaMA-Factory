@@ -5,6 +5,8 @@
 
 
 import math
+from transformers import DataCollatorForSeq2Seq
+from utils.other import IGNORE_INDEX
 
 from utils import (
     DynamicDataCollatorWithPadding,
@@ -25,7 +27,10 @@ def main():
     dataset = prepare_data(model_args, data_args)
     model, tokenizer = load_pretrained(model_args, finetuning_args, training_args.do_train, stage="pt")
     dataset = preprocess_data(dataset, tokenizer, data_args, training_args, stage="pt")
-    data_collator = DynamicDataCollatorWithPadding(tokenizer, data_args.ignore_pad_token_for_loss)
+    data_collator = DataCollatorForSeq2Seq(
+        tokenizer=tokenizer,
+        label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
+    )
 
     # Split the dataset
     if training_args.do_train:
