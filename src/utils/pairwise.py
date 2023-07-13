@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from typing import Dict, Sequence, Tuple, Union
 
-from .data_collator import DynamicDataCollatorWithPadding
+from transformers import DataCollatorWithPadding
 
 from .peft_trainer import PeftTrainer
 
@@ -16,7 +16,7 @@ def compute_accuracy(eval_preds: Sequence[Union[np.ndarray, Tuple[np.ndarray]]])
     return {"accuracy": (preds[0] > preds[1]).sum() / len(preds[0])}
 
 
-class PairwiseDataCollatorWithPadding(DynamicDataCollatorWithPadding):
+class PairwiseDataCollatorWithPadding(DataCollatorWithPadding):
     r"""
     Data collator for pairwise data.
     """

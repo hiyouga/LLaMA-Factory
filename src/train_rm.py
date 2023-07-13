@@ -17,6 +17,7 @@ from utils import (
     plot_loss
 )
 
+
 def main():
 
     # Prepare pretrained model and dataset
