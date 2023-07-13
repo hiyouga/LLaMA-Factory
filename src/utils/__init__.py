@@ -6,8 +6,6 @@ from .common import (
     preprocess_data
 )
 
-from .data_collator import DynamicDataCollatorWithPadding
-
 from .peft_trainer import PeftTrainer, LogCallback
 
 from .seq2seq import ComputeMetrics, Seq2SeqPeftTrainer

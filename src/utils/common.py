@@ -165,7 +165,7 @@ def load_pretrained(
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         use_fast=model_args.use_fast_tokenizer,
-        padding_side="left",
+        padding_side=model_args.padding_side,
         **config_kwargs
     )
     if tokenizer.pad_token_id is None or tokenizer.pad_token_id == 64000: # 64000 for baichuan model (older version)
