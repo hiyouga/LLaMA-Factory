@@ -9,7 +9,6 @@ from transformers import DataCollatorForSeq2Seq
 from utils.other import IGNORE_INDEX
 
 from utils import (
-    DynamicDataCollatorWithPadding,
     PeftTrainer,
     LogCallback,
     load_pretrained,
