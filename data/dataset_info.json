@@ -94,6 +94,9 @@
       "history": "history"
     }
   },
+  "novel_tokens512_50k": {
+    "hf_hub_url": "zxbsmk/webnovel_cn"
+  },
   "example": {
     "script_url": "example_dataset",
     "columns": {
@@ -131,7 +134,7 @@
     }
   },
   "oaast_rm_zh": {
-    "file_name": "",
+    "file_name": "oaast_rm_zh.json",
     "file_sha1": "1065af1f3784dd61be5e79713a35f427b713a232",
     "columns": {
       "prompt": "instruction",
@@ -149,8 +152,5 @@
       "response": "",
       "history": ""
     }
-  },
-  "novel_tokens512_50k": {
-    "hf_hub_url": "zxbsmk/webnovel_cn"
   }
 }

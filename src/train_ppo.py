@@ -8,9 +8,8 @@ import math
 from torch.optim import AdamW
 from transformers.optimization import get_scheduler
 from trl import PPOConfig
-
+from transformers import DataCollatorForSeq2Seq
 from utils import (
-    DynamicDataCollatorWithPadding,
     PPOPeftTrainer,
     LogCallback,
     load_pretrained,
@@ -28,7 +27,10 @@ def main():
     dataset = prepare_data(model_args, data_args)
     model, tokenizer = load_pretrained(model_args, finetuning_args, training_args.do_train, stage="ppo")
     dataset = preprocess_data(dataset, tokenizer, data_args, training_args, stage="ppo")
-    data_collator = DynamicDataCollatorWithPadding(tokenizer)
+    data_collator = DataCollatorForSeq2Seq(
+        tokenizer=tokenizer,
+        label_pad_token_id=tokenizer.pad_token_id
+    )
 
     ppo_config = PPOConfig(
         model_name=model_args.model_name_or_path,
