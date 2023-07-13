@@ -4,8 +4,9 @@
 # https://github.com/huggingface/transformers/blob/v4.29.2/examples/pytorch/summarization/run_summarization.py
 
 
+from transformers import DataCollatorForSeq2Seq
+from utils.other import IGNORE_INDEX
 from utils import (
-    DynamicDataCollatorWithPadding,
     Seq2SeqPeftTrainer,
     ComputeMetrics,
     LogCallback,
@@ -25,9 +26,9 @@ def main():
     dataset = prepare_data(model_args, data_args)
     model, tokenizer = load_pretrained(model_args, finetuning_args, training_args.do_train, stage="sft")
     dataset = preprocess_data(dataset, tokenizer, data_args, training_args, stage="sft")
-    data_collator = DynamicDataCollatorWithPadding(
+    data_collator = DataCollatorForSeq2Seq(
         tokenizer=tokenizer,
-        ignore_pad_token_for_loss=(data_args.ignore_pad_token_for_loss and not training_args.predict_with_generate)
+        label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
     )
 
     # Override the decoding parameters of Seq2SeqTrainer
