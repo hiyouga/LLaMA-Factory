@@ -95,7 +95,7 @@ huggingface-cli login
 - Python 3.8+ and PyTorch 1.13.1+
 - 🤗Transformers, Datasets, Accelerate, PEFT and TRL
 - jieba, rouge-chinese and nltk (used at evaluation)
-- gradio and mdtex2html (used in web_demo.py)
+- gradio and matplotlib (used in web_demo.py)
 - uvicorn, fastapi and sse-starlette (used in api_demo.py)
 
 And **powerful GPUs**!
@@ -137,7 +137,8 @@ python -m transformers.models.llama.convert_llama_weights_to_hf \
 ### (Continually) Pre-Training
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_pt.py \
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
+    --stage pt \
     --model_name_or_path path_to_your_model \
     --do_train \
     --dataset wiki_demo \
@@ -158,7 +159,8 @@ CUDA_VISIBLE_DEVICES=0 python src/train_pt.py \
 ### Supervised Fine-Tuning
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_sft.py \
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
+    --stage sft \
     --model_name_or_path path_to_your_model \
     --do_train \
     --dataset alpaca_gpt4_en \
@@ -179,7 +181,8 @@ CUDA_VISIBLE_DEVICES=0 python src/train_sft.py \
 ### Reward Model Training
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_rm.py \
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
+    --stage rm \
     --model_name_or_path path_to_your_model \
     --do_train \
     --dataset comparison_gpt4_en \
@@ -199,7 +202,8 @@ CUDA_VISIBLE_DEVICES=0 python src/train_rm.py \
 ### PPO Training (RLHF)
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_ppo.py \
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
+    --stage ppo \
     --model_name_or_path path_to_your_model \
     --do_train \
     --dataset alpaca_gpt4_en \
@@ -222,7 +226,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_ppo.py \
 
 ```bash
 accelerate config # configure the environment
-accelerate launch src/train_XX.py # arguments (same as above)
+accelerate launch src/train_bash.py # arguments (same as above)
 ```
 
 <details><summary>Example configuration for full-tuning with DeepSpeed ZeRO-2</summary>
@@ -256,7 +260,8 @@ use_cpu: false
 ### Evaluation (BLEU and ROUGE_CHINESE)
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_sft.py \
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
+    --stage pt \
     --model_name_or_path path_to_your_model \
     --do_eval \
     --dataset alpaca_gpt4_en \

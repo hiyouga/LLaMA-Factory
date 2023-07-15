@@ -3,63 +3,15 @@ import json
 import torch
 import numpy as np
 import torch.nn as nn
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
-
+from typing import Any, Dict, List, Optional, Tuple, Union
 from transformers.trainer import PredictionOutput
-from transformers.tokenization_utils import PreTrainedTokenizer
 
-import jieba
-from rouge_chinese import Rouge
-from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
-
-from .peft_trainer import PeftTrainer
-
-from .other import get_logger, IGNORE_INDEX
+from llmtuner.extras.constants import IGNORE_INDEX
+from llmtuner.extras.logging import get_logger
+from llmtuner.tuner.core.trainer import PeftTrainer
 
 
 logger = get_logger(__name__)
-
-
-@dataclass
-class ComputeMetrics:
-    r"""
-    Wraps the tokenizer into metric functions, used in Seq2SeqPeftTrainer.
-    """
-
-    tokenizer: PreTrainedTokenizer
-
-    def __call__(self, eval_preds: Sequence[Union[np.ndarray, Tuple[np.ndarray]]]) -> Dict[str, float]:
-        r"""
-        Uses the model predictions to compute metrics.
-        """
-        preds, labels = eval_preds
-        score_dict = {"rouge-1": [], "rouge-2": [], "rouge-l": [], "bleu-4": []}
-
-        preds = np.where(preds != IGNORE_INDEX, preds, self.tokenizer.pad_token_id)
-        labels = np.where(labels != IGNORE_INDEX, labels, self.tokenizer.pad_token_id)
-
-        decoded_preds = self.tokenizer.batch_decode(preds, skip_special_tokens=True)
-        decoded_labels = self.tokenizer.batch_decode(labels, skip_special_tokens=True)
-
-        for pred, label in zip(decoded_preds, decoded_labels):
-            hypothesis = list(jieba.cut(pred))
-            reference = list(jieba.cut(label))
-
-            if len(" ".join(hypothesis).split()) == 0 or len(" ".join(reference).split()) == 0:
-                result = {"rouge-1": {"f": 0.0}, "rouge-2": {"f": 0.0}, "rouge-l": {"f": 0.0}}
-            else:
-                rouge = Rouge()
-                scores = rouge.get_scores(" ".join(hypothesis), " ".join(reference))
-                result = scores[0]
-
-            for k, v in result.items():
-                score_dict[k].append(round(v["f"] * 100, 4))
-
-            bleu_score = sentence_bleu([list(label)], list(pred), smoothing_function=SmoothingFunction().method3)
-            score_dict["bleu-4"].append(round(bleu_score * 100, 4))
-
-        return {k: float(np.mean(v)) for k, v in score_dict.items()}
 
 
 class Seq2SeqPeftTrainer(PeftTrainer):
@@ -80,7 +32,10 @@ class Seq2SeqPeftTrainer(PeftTrainer):
         Subclass and override to inject custom behavior.
         """
         prompt_len, label_len = inputs["input_ids"].size(-1), inputs["labels"].size(-1)
-        inputs["labels"] = torch.cat((inputs["labels"], torch.zeros_like(inputs["input_ids"])[:, label_len:]), dim=-1)
+        if self.tokenizer.padding_side == "right": # pads the labels to the same length as the inputs
+            inputs["labels"] = torch.cat((inputs["labels"], torch.zeros_like(inputs["input_ids"])[:, label_len:]), dim=-1)
+        else:
+            inputs["labels"] = torch.cat((torch.zeros_like(inputs["input_ids"])[:, label_len:], inputs["labels"]), dim=-1)
         loss, generated_tokens, labels = super().prediction_step(
             model, inputs, prediction_loss_only=prediction_loss_only, ignore_keys=ignore_keys
         )
@@ -89,8 +44,8 @@ class Seq2SeqPeftTrainer(PeftTrainer):
         return (loss, generated_tokens, labels)
 
     def save_predictions(
-            self,
-            predict_results: PredictionOutput
+        self,
+        predict_results: PredictionOutput
     ) -> None:
         r"""
         Saves model predictions to `output_dir`.

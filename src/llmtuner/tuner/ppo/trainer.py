@@ -2,58 +2,23 @@ import os
 import math
 import torch
 from tqdm import tqdm
-from typing import Callable, Dict, List, Literal, Optional, Tuple
+from typing import Callable, Dict, List, Optional
 
-from transformers import Seq2SeqTrainingArguments, TrainerState
+from transformers import Seq2SeqTrainingArguments, TrainerState, TrainerControl
 from transformers.modeling_utils import PreTrainedModel
 
-from trl import PPOTrainer, AutoModelForCausalLMWithValueHead
+from trl import PPOTrainer
 from trl.core import LengthSampler
 
-from .peft_trainer import PeftTrainer, LogCallback
-
-from .config import FinetuningArguments
-
-from .other import (
-    AverageMeter,
-    get_logger,
-    get_logits_processor
-)
+from llmtuner.extras.callbacks import LogCallback
+from llmtuner.extras.logging import get_logger
+from llmtuner.extras.misc import AverageMeter, get_logits_processor
+from llmtuner.hparams import FinetuningArguments
+from llmtuner.tuner.core.trainer import PeftTrainer
+from llmtuner.tuner.ppo.utils import cast_layernorm_dtype, replace_model
 
 
 logger = get_logger(__name__)
-
-
-def replace_model(model: AutoModelForCausalLMWithValueHead, target: Literal["default", "reward"]) -> None:
-    if target == "reward": # save default head temporarily
-        valuehead_state_dict = model.v_head.state_dict()
-        setattr(model, "default_head_weight", valuehead_state_dict["summary.weight"])
-        setattr(model, "default_head_bias", valuehead_state_dict["summary.bias"])
-
-    model.pretrained_model.set_adapter(target) # set the LoRA adapter to be active
-    model.v_head.load_state_dict({
-        "summary.weight": getattr(model, "{}_head_weight".format(target)),
-        "summary.bias": getattr(model, "{}_head_bias".format(target))
-    })
-
-
-def cast_layernorm_dtype(
-        model: AutoModelForCausalLMWithValueHead,
-        layer_norm_names: List[str] = ["norm", "ln_f", "ln_attn", "ln_mlp"], # for LLaMA, BLOOM and Falcon settings
-        layer_norm_params: Optional[Dict[str, torch.Tensor]] = None
-) -> Tuple[AutoModelForCausalLMWithValueHead, Dict[str, torch.Tensor]]:
-
-    layer_norm_state_dict = {}
-
-    for name, param in model.named_parameters():
-        if param.ndim == 1 and any(layer_norm_name in name for layer_norm_name in layer_norm_names):
-            if layer_norm_params is not None:
-                param.data = layer_norm_params[name] # restore float32 weights
-            else:
-                layer_norm_state_dict[name] = param.data.detach().clone() # store float32 weights for stability
-                param.data = param.data.to(torch.float16)
-
-    return model, layer_norm_state_dict
 
 
 class PPOPeftTrainer(PPOTrainer, PeftTrainer):
@@ -62,17 +27,18 @@ class PPOPeftTrainer(PPOTrainer, PeftTrainer):
     """
 
     def __init__(
-            self,
-            training_args: Seq2SeqTrainingArguments,
-            finetuning_args: FinetuningArguments,
-            callbacks: List[LogCallback],
-            **kwargs
+        self,
+        training_args: Seq2SeqTrainingArguments,
+        finetuning_args: FinetuningArguments,
+        callbacks: List[LogCallback],
+        **kwargs
     ):
         PPOTrainer.__init__(self, **kwargs)
         self.args = training_args
         self.finetuning_args = finetuning_args
         self.log_callback = callbacks[0]
         self.state = TrainerState()
+        self.control = TrainerControl()
         self.data_collator = self.accelerator.prepare(kwargs["data_collator"]) # override the data collator of PPOTrainer
 
     def ppo_train(self, max_target_length: int) -> None:
@@ -117,8 +83,9 @@ class PPOPeftTrainer(PPOTrainer, PeftTrainer):
         steps_trained = 0
         loss_meter = AverageMeter()
         reward_meter = AverageMeter()
+        self.log_callback.on_train_begin(self.args, self.state, self.control)
 
-        for step in tqdm(range(max_steps), disable=not self.is_world_process_zero()):
+        for step in tqdm(range(max_steps), disable=not self.is_world_process_zero(), leave=False):
 
             for _ in range(self.config.gradient_accumulation_steps):
 
@@ -158,6 +125,9 @@ class PPOPeftTrainer(PPOTrainer, PeftTrainer):
                 loss_meter.update(stats["ppo/loss/total"], n=len(rewards))
                 reward_meter.update(torch.stack(rewards).mean().item(), n=len(rewards))
 
+                if self.control.should_epoch_stop or self.control.should_training_stop:
+                    break
+
                 if steps_trained == len_dataloader:
                     dataiter = iter(self.dataloader)
                     steps_trained = 0
@@ -172,20 +142,23 @@ class PPOPeftTrainer(PPOTrainer, PeftTrainer):
                 print(logs)
                 logs["step"] = step
                 self.state.log_history.append(logs)
-                self.log_callback.on_log(self.args, self.state, None)
+                self.log_callback.on_log(self.args, self.state, self.control)
                 loss_meter.reset()
                 reward_meter.reset()
 
             if (step+1) % self.args.save_steps == 0: # save checkpoint
                 self.save_model(os.path.join(self.args.output_dir, f"checkpoint-{step+1}"))
 
+            if self.control.should_training_stop:
+                break
+
     @torch.no_grad()
     def generate(
-            self,
-            inputs: Dict[str, torch.Tensor],
-            length_sampler: Optional[Callable] = None,
-            return_prompt: Optional[bool] = True,
-            **generation_kwargs,
+        self,
+        inputs: Dict[str, torch.Tensor],
+        length_sampler: Optional[Callable] = None,
+        return_prompt: Optional[bool] = True,
+        **generation_kwargs
     ) -> torch.Tensor:
         r"""
         Generates model's responses given queries.

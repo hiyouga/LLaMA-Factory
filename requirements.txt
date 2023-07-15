@@ -8,8 +8,9 @@ sentencepiece
 jieba
 rouge-chinese
 nltk
-gradio
-mdtex2html
+gradio>=3.36.0
 uvicorn
+pydantic==1.10.7
 fastapi
 sse-starlette
+matplotlib
