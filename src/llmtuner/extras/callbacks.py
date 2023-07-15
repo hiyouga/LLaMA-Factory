@@ -17,6 +17,7 @@ class LogCallback(TrainerCallback):
 
     def __init__(self, runner=None):
         self.runner = runner
+        self.start_time = time.time()
         self.tracker = {}
 
     def on_train_begin(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
