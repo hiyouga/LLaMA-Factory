@@ -1,31 +1,28 @@
-# coding=utf-8
-# Implements several parameter-efficient pre-training method.
-# This code is inspired by
-# https://github.com/huggingface/transformers/blob/v4.29.2/examples/pytorch/language-modeling/run_clm.py
-
+# Inspired by: https://github.com/huggingface/transformers/blob/v4.29.2/examples/pytorch/language-modeling/run_clm.py
 
 import math
-from transformers import DataCollatorForSeq2Seq
-from utils.other import IGNORE_INDEX
+from typing import Optional, List
+from transformers import Seq2SeqTrainingArguments, DataCollatorForSeq2Seq, TrainerCallback
 
-from utils import (
-    PeftTrainer,
-    LogCallback,
-    load_pretrained,
-    prepare_args,
-    prepare_data,
-    preprocess_data,
-    plot_loss
-)
+from llmtuner.dsets import get_dataset, preprocess_dataset
+from llmtuner.extras.callbacks import LogCallback
+from llmtuner.extras.constants import IGNORE_INDEX
+from llmtuner.extras.ploting import plot_loss
+from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
+from llmtuner.tuner.core import load_model_and_tokenizer
+from llmtuner.tuner.core.trainer import PeftTrainer
 
 
-def main():
-
-    # Prepare pretrained model and dataset
-    model_args, data_args, training_args, finetuning_args = prepare_args(stage="pt")
-    dataset = prepare_data(model_args, data_args)
-    model, tokenizer = load_pretrained(model_args, finetuning_args, training_args.do_train, stage="pt")
-    dataset = preprocess_data(dataset, tokenizer, data_args, training_args, stage="pt")
+def run_pt(
+    model_args: ModelArguments,
+    data_args: DataArguments,
+    training_args: Seq2SeqTrainingArguments,
+    finetuning_args: FinetuningArguments,
+    callbacks: Optional[List[TrainerCallback]] = [LogCallback()]
+):
+    dataset = get_dataset(model_args, data_args)
+    model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, stage="pt")
+    dataset = preprocess_dataset(dataset, tokenizer, data_args, training_args, stage="pt")
     data_collator = DataCollatorForSeq2Seq(
         tokenizer=tokenizer,
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
@@ -48,7 +45,7 @@ def main():
         args=training_args,
         tokenizer=tokenizer,
         data_collator=data_collator,
-        callbacks=[LogCallback()],
+        callbacks=callbacks,
         **trainer_kwargs
     )
 
@@ -65,21 +62,12 @@ def main():
     # Evaluation
     if training_args.do_eval:
         metrics = trainer.evaluate(metric_key_prefix="eval")
-
         try:
             perplexity = math.exp(metrics["eval_loss"])
         except OverflowError:
             perplexity = float("inf")
+
         metrics["perplexity"] = perplexity
 
         trainer.log_metrics("eval", metrics)
         trainer.save_metrics("eval", metrics)
-
-
-def _mp_fn(index):
-    # For xla_spawn (TPUs)
-    main()
-
-
-if __name__ == "__main__":
-    main()

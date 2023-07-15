@@ -1,31 +1,29 @@
-# coding=utf-8
-# Implements several parameter-efficient supervised fine-tuning method.
-# This code is inspired by
-# https://github.com/huggingface/transformers/blob/v4.29.2/examples/pytorch/summarization/run_summarization.py
+# Inspired by: https://github.com/huggingface/transformers/blob/v4.29.2/examples/pytorch/summarization/run_summarization.py
+
+from typing import Optional, List
+from transformers import Seq2SeqTrainingArguments, DataCollatorForSeq2Seq, TrainerCallback
+
+from llmtuner.dsets import get_dataset, preprocess_dataset
+from llmtuner.extras.callbacks import LogCallback
+from llmtuner.extras.constants import IGNORE_INDEX
+from llmtuner.extras.misc import get_logits_processor
+from llmtuner.extras.ploting import plot_loss
+from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
+from llmtuner.tuner.core import load_model_and_tokenizer
+from llmtuner.tuner.sft.metric import ComputeMetrics
+from llmtuner.tuner.sft.trainer import Seq2SeqPeftTrainer
 
 
-from transformers import DataCollatorForSeq2Seq
-from utils.other import IGNORE_INDEX
-from utils import (
-    Seq2SeqPeftTrainer,
-    ComputeMetrics,
-    LogCallback,
-    load_pretrained,
-    prepare_args,
-    prepare_data,
-    preprocess_data,
-    get_logits_processor,
-    plot_loss
-)
-
-
-def main():
-
-    # Prepare pretrained model and dataset
-    model_args, data_args, training_args, finetuning_args = prepare_args(stage="sft")
-    dataset = prepare_data(model_args, data_args)
-    model, tokenizer = load_pretrained(model_args, finetuning_args, training_args.do_train, stage="sft")
-    dataset = preprocess_data(dataset, tokenizer, data_args, training_args, stage="sft")
+def run_sft(
+    model_args: ModelArguments,
+    data_args: DataArguments,
+    training_args: Seq2SeqTrainingArguments,
+    finetuning_args: FinetuningArguments,
+    callbacks: Optional[List[TrainerCallback]] = [LogCallback()]
+):
+    dataset = get_dataset(model_args, data_args)
+    model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, stage="sft")
+    dataset = preprocess_dataset(dataset, tokenizer, data_args, training_args, stage="sft")
     data_collator = DataCollatorForSeq2Seq(
         tokenizer=tokenizer,
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
@@ -54,7 +52,7 @@ def main():
         args=training_args,
         tokenizer=tokenizer,
         data_collator=data_collator,
-        callbacks=[LogCallback()],
+        callbacks=callbacks,
         compute_metrics=ComputeMetrics(tokenizer) if training_args.predict_with_generate else None,
         **trainer_kwargs
     )
@@ -94,12 +92,3 @@ def main():
         trainer.log_metrics("predict", predict_results.metrics)
         trainer.save_metrics("predict", predict_results.metrics)
         trainer.save_predictions(predict_results)
-
-
-def _mp_fn(index):
-    # For xla_spawn (TPUs)
-    main()
-
-
-if __name__ == "__main__":
-    main()
