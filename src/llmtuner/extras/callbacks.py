@@ -46,7 +46,7 @@ class LogCallback(TrainerCallback):
         r"""
         Event called after logging the last logs.
         """
-        if "current_steps" not in state.log_history[-1]:
+        if "step" not in state.log_history[-1]:
             return
         cur_time = time.time()
         cur_steps = state.log_history[-1].get("step")
