@@ -2,21 +2,15 @@
 # Implements stream chat in command line for fine-tuned models.
 # Usage: python cli_demo.py --model_name_or_path path_to_model --checkpoint_dir path_to_checkpoint
 
-
-from utils import (
-    Template,
-    load_pretrained,
-    prepare_infer_args,
-    get_logits_processor
-)
 from threading import Thread
 from transformers import TextIteratorStreamer
 
+from llmtuner import Template, get_infer_args, load_model_and_tokenizer, get_logits_processor
+
 
 def main():
-
-    model_args, data_args, finetuning_args, generating_args = prepare_infer_args()
-    model, tokenizer = load_pretrained(model_args, finetuning_args)
+    model_args, data_args, finetuning_args, generating_args = get_infer_args()
+    model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args)
 
     prompt_template = Template(data_args.prompt_template)
     source_prefix = data_args.source_prefix if data_args.source_prefix else ""

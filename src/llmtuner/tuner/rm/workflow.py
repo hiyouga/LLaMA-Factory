@@ -1,30 +1,28 @@
-# coding=utf-8
-# Implements parameter-efficient training of reward models.
-# This code is inspired by:
+# Inspired by:
 # https://github.com/lvwerra/trl/blob/main/examples/summarization/scripts/reward_summarization.py
 # https://github.com/CarperAI/trlx/blob/main/examples/summarize_rlhf/reward_model/train_reward_model_gptj.py
 
+from transformers import Seq2SeqTrainingArguments
 
-from utils import (
-    PairwiseDataCollatorWithPadding,
-    PairwisePeftTrainer,
-    LogCallback,
-    load_pretrained,
-    prepare_args,
-    prepare_data,
-    preprocess_data,
-    compute_accuracy,
-    plot_loss
-)
+from llmtuner.dsets import get_dataset, preprocess_dataset
+from llmtuner.extras.callbacks import LogCallback
+from llmtuner.extras.ploting import plot_loss
+from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
+from llmtuner.tuner.core import load_model_and_tokenizer
+from llmtuner.tuner.rm.metric import compute_accuracy
+from llmtuner.tuner.rm.collator import PairwiseDataCollatorWithPadding
+from llmtuner.tuner.rm.trainer import PairwisePeftTrainer
 
 
-def main():
-
-    # Prepare pretrained model and dataset
-    model_args, data_args, training_args, finetuning_args = prepare_args(stage="rm")
-    dataset = prepare_data(model_args, data_args)
-    model, tokenizer = load_pretrained(model_args, finetuning_args, training_args.do_train, stage="rm")
-    dataset = preprocess_data(dataset, tokenizer, data_args, training_args, stage="rm")
+def run_rm(
+    model_args: ModelArguments,
+    data_args: DataArguments,
+    training_args: Seq2SeqTrainingArguments,
+    finetuning_args: FinetuningArguments
+):
+    dataset = get_dataset(model_args, data_args)
+    model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, stage="rm")
+    dataset = preprocess_dataset(dataset, tokenizer, data_args, training_args, stage="rm")
     data_collator = PairwiseDataCollatorWithPadding(tokenizer)
 
     training_args.remove_unused_columns = False # important for pairwise dataset
@@ -66,12 +64,3 @@ def main():
         metrics = trainer.evaluate(metric_key_prefix="eval")
         trainer.log_metrics("eval", metrics)
         trainer.save_metrics("eval", metrics)
-
-
-def _mp_fn(index):
-    # For xla_spawn (TPUs)
-    main()
-
-
-if __name__ == "__main__":
-    main()
