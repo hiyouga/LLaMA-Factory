@@ -29,7 +29,7 @@ class DataArguments:
     """
     dataset: Optional[str] = field(
         default="alpaca_zh",
-        metadata={"help": "The name of provided dataset(s) to use. Use comma to separate multiple datasets."}
+        metadata={"help": "The name of provided dataset(s) to use. Use commas to separate multiple datasets."}
     )
     dataset_dir: Optional[str] = field(
         default="data",
