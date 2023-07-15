@@ -40,6 +40,7 @@ class PPOPeftTrainer(PPOTrainer, PeftTrainer):
         self.state = TrainerState()
         self.control = TrainerControl()
         self.data_collator = self.accelerator.prepare(kwargs["data_collator"]) # override the data collator of PPOTrainer
+        self._remove_log()
 
     def ppo_train(self, max_target_length: int) -> None:
         r"""
