@@ -45,7 +45,7 @@ class FinetuningArguments:
     )
     lora_target: Optional[str] = field(
         default="q_proj,v_proj",
-        metadata={"help": "Name(s) of target modules to apply LoRA. Use comma to separate multiple modules. \
+        metadata={"help": "Name(s) of target modules to apply LoRA. Use commas to separate multiple modules. \
                   LLaMA choices: [\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"], \
                   BLOOM & Falcon choices: [\"query_key_value\", \"self_attention.dense\", \"mlp.dense\"], \
                   Baichuan choices: [\"W_pack\", \"o_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"]"}
