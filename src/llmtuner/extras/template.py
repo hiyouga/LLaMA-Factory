@@ -135,6 +135,17 @@ class Template:
                 sep="",
                 use_history=True
             )
+            
+        elif self.name == "starchat":
+            r"""
+            Supports: https://huggingface.co/HuggingFaceH4/starchat-beta
+            """
+            self._register_template(
+                prefix="<|system|>\n<|end|>\n",
+                prompt="<|user|>\n{query}<|end|>\n<|assistant|>\n",
+                sep="<|end|>\n",
+                use_history=True
+            )
 
         else:
             raise ValueError("Template {} does not exist.".format(self.name))
