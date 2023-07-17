@@ -12,7 +12,7 @@ from llmtuner.webui.utils import can_preview, get_preview, gen_plot
 
 def create_sft_tab(top_elems: Dict[str, Component], runner: Runner) -> Dict[str, Component]:
     with gr.Row():
-        dataset_dir = gr.Textbox(value=DEFAULT_DATA_DIR, interactive=True, scale=1)
+        dataset_dir = gr.Textbox(value=DEFAULT_DATA_DIR, interactive=True, scale=2)
         dataset = gr.Dropdown(multiselect=True, interactive=True, scale=4)
         preview_btn = gr.Button(interactive=False, scale=1)
 
