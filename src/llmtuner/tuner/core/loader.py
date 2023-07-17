@@ -28,7 +28,7 @@ check_min_version("4.29.1")
 require_version("datasets>=2.12.0", "To fix: pip install datasets>=2.12.0")
 require_version("accelerate>=0.19.0", "To fix: pip install accelerate>=0.19.0")
 require_version("peft>=0.3.0", "To fix: pip install peft>=0.3.0")
-require_version("trl==0.4.4", "To fix: pip install trl==0.4.4")
+require_version("trl>=0.4.7", "To fix: pip install trl>=0.4.7")
 
 
 def load_model_and_tokenizer(

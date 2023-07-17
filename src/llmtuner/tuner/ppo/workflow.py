@@ -4,7 +4,8 @@
 import math
 from trl import PPOConfig
 from torch.optim import AdamW
-from transformers import DataCollatorForSeq2Seq, Seq2SeqTrainingArguments
+from typing import Optional, List
+from transformers import DataCollatorForSeq2Seq, Seq2SeqTrainingArguments, TrainerCallback
 from transformers.optimization import get_scheduler
 
 from llmtuner.dsets import get_dataset, preprocess_dataset
@@ -19,7 +20,8 @@ def run_ppo(
     model_args: ModelArguments,
     data_args: DataArguments,
     training_args: Seq2SeqTrainingArguments,
-    finetuning_args: FinetuningArguments
+    finetuning_args: FinetuningArguments,
+    callbacks: Optional[List[TrainerCallback]] = [LogCallback()]
 ):
     dataset = get_dataset(model_args, data_args)
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, stage="ppo")
@@ -30,7 +32,7 @@ def run_ppo(
         model_name=model_args.model_name_or_path,
         learning_rate=training_args.learning_rate,
         mini_batch_size=training_args.per_device_train_batch_size,
-        batch_size=training_args.per_device_train_batch_size,
+        batch_size=training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps,
         gradient_accumulation_steps=training_args.gradient_accumulation_steps,
         ppo_epochs=1,
         max_grad_norm=training_args.max_grad_norm
@@ -50,7 +52,7 @@ def run_ppo(
     ppo_trainer = PPOPeftTrainer(
         training_args=training_args,
         finetuning_args=finetuning_args,
-        callbacks=[LogCallback()],
+        callbacks=callbacks,
         config=ppo_config,
         model=model,
         ref_model=None,
