@@ -1,4 +1,5 @@
 import os
+import math
 import json
 import matplotlib.pyplot as plt
 from typing import List, Optional
@@ -10,12 +11,13 @@ from llmtuner.extras.logging import get_logger
 logger = get_logger(__name__)
 
 
-def smooth(scalars: List[float], weight: Optional[float] = 0.9) -> List[float]:
+def smooth(scalars: List[float]) -> List[float]:
     r"""
     EMA implementation according to TensorBoard.
     """
     last = scalars[0]
     smoothed = list()
+    weight = 1.8 * (1 / (1 + math.exp(-0.05 * len(scalars))) - 0.5) # a sigmoid function
     for next_val in scalars:
         smoothed_val = last * weight + (1 - weight) * next_val
         smoothed.append(smoothed_val)

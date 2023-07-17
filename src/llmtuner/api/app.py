@@ -1,3 +1,4 @@
+import json
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -93,7 +94,7 @@ def create_app():
             finish_reason=None
         )
         chunk = ChatCompletionStreamResponse(model=request.model, choices=[choice_data], object="chat.completion.chunk")
-        yield chunk.json(exclude_unset=True, ensure_ascii=False)
+        yield json.dumps(chunk, ensure_ascii=False)
 
         for new_text in chat_model.stream_chat(
             query, history, prefix, temperature=request.temperature, top_p=request.top_p, max_new_tokens=request.max_tokens
@@ -107,7 +108,7 @@ def create_app():
                 finish_reason=None
             )
             chunk = ChatCompletionStreamResponse(model=request.model, choices=[choice_data], object="chat.completion.chunk")
-            yield chunk.json(exclude_unset=True, ensure_ascii=False)
+            yield json.dumps(chunk, ensure_ascii=False)
 
         choice_data = ChatCompletionResponseStreamChoice(
             index=0,
@@ -115,7 +116,7 @@ def create_app():
             finish_reason="stop"
         )
         chunk = ChatCompletionStreamResponse(model=request.model, choices=[choice_data], object="chat.completion.chunk")
-        yield chunk.json(exclude_unset=True, ensure_ascii=False)
+        yield json.dumps(chunk, ensure_ascii=False)
         yield "[DONE]"
 
     return app
