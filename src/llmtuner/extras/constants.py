@@ -29,3 +29,12 @@ SUPPORTED_MODELS = {
     "InternLM-7B-Base": "internlm/internlm-7b",
     "InternLM-7B-Chat": "internlm/internlm-chat-7b"
 }
+
+DEFAULT_MODULE = { # will be deprecated
+    "LLaMA": "q_proj,v_proj",
+    "BLOOM": "query_key_value",
+    "BLOOMZ": "query_key_value",
+    "Falcon": "query_key_value",
+    "Baichuan": "W_pack",
+    "InternLM": "q_proj,v_proj"
+}
