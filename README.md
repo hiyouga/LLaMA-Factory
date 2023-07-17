@@ -10,7 +10,9 @@
 
 ## Changelog
 
-[23/07/11] Now we support training the **Baichuan-13B** model in this repo. Try `--model_name_or_path baichuan-inc/Baichuan-13B-Base`, `--padding_side right` and `--lora_target W_pack` arguments to train the Baichuan-13B model. Remember to use `--prompt_template baichuan` argument when you are using the Baichuan-13B-Chat model.
+[23/07/18] Now we develop an all-in-one Web UI for training, evaluation and inference. Try `train_web.py` to fine-tune models in your Web browser. Thank [@KanadeSiina](https://github.com/KanadeSiina) and [@codemayq](https://github.com/codemayq) for their efforts in the development.
+
+[23/07/11] Now we support training the **Baichuan-13B** model in this repo. Please replace the Baichuan-13B model file with `tests/modeling_baichuan.py` and try `--model_name_or_path path_to_baichuan_model` and `--lora_target W_pack` arguments to train the Baichuan-13B model. Remember to use `--prompt_template baichuan` argument when you are using the Baichuan-13B-Chat model.
 
 [23/07/09] Now we release [FastEdit](https://github.com/hiyouga/FastEdit)⚡🩹, an easy-to-use package for editing the factual knowledge of large language models efficiently. Please follow [FastEdit](https://github.com/hiyouga/FastEdit) if you are interested.
 
@@ -125,14 +127,10 @@ cd LLaMA-Efficient-Tuning
 pip install -r requirements.txt
 ```
 
-### LLaMA Weights Preparation (optional)
-
-1. Download the weights of the LLaMA models.
-2. Convert them to HF format using the following command.
+### All-in-one Web UI
 
 ```bash
-python -m transformers.models.llama.convert_llama_weights_to_hf \
-    --input_dir path_to_llama_weights --model_size 7B --output_dir path_to_llama_model
+python src/train_web.py
 ```
 
 ### (Continually) Pre-Training
@@ -275,10 +273,20 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 
 We recommend using `--per_device_eval_batch_size=1` and `--max_target_length 128` at 4/8-bit evaluation.
 
-### API / CLI / Web Demo
+### API Demo
 
 ```bash
-python src/xxx_demo.py \
+python src/api_demo.py \
+    --model_name_or_path path_to_your_model \
+    --checkpoint_dir path_to_checkpoint
+```
+
+See `http://localhost:8000/docs` for API documentation.
+
+### CLI Demo
+
+```bash
+python src/cli_demo.py \
     --model_name_or_path path_to_your_model \
     --checkpoint_dir path_to_checkpoint
 ```
