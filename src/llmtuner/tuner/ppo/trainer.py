@@ -153,7 +153,7 @@ class PPOPeftTrainer(PPOTrainer, PeftTrainer):
             if self.control.should_training_stop:
                 break
 
-    @torch.no_grad()
+    @torch.inference_mode()
     def generate(
         self,
         inputs: Dict[str, torch.Tensor],
