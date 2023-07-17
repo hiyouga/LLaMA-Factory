@@ -32,16 +32,39 @@ class Seq2SeqPeftTrainer(PeftTrainer):
         Subclass and override to inject custom behavior.
         """
         prompt_len, label_len = inputs["input_ids"].size(-1), inputs["labels"].size(-1)
-        if self.tokenizer.padding_side == "right": # pads the labels to the same length as the inputs
-            inputs["labels"] = torch.cat((inputs["labels"], torch.zeros_like(inputs["input_ids"])[:, label_len:]), dim=-1)
-        else:
-            inputs["labels"] = torch.cat((torch.zeros_like(inputs["input_ids"])[:, label_len:], inputs["labels"]), dim=-1)
+        if prompt_len > label_len:
+            inputs["labels"] = self._pad_tensors_to_target_len(inputs["labels"], inputs["input_ids"])
+        if label_len > prompt_len:
+            inputs["input_ids"] = self._pad_tensors_to_target_len(inputs["input_ids"], inputs["labels"])
+
         loss, generated_tokens, labels = super().prediction_step(
             model, inputs, prediction_loss_only=prediction_loss_only, ignore_keys=ignore_keys
         )
-        generated_tokens = generated_tokens[:, prompt_len:] if generated_tokens is not None else None
+        generated_tokens = generated_tokens[:, max(prompt_len, label_len):] if generated_tokens is not None else None
 
         return (loss, generated_tokens, labels)
+
+    def _pad_tensors_to_target_len(self, src_tensor: torch.Tensor, tgt_tensor: torch.Tensor) -> torch.Tensor:
+        r"""
+        Pads the tensor to the same length as the target tensor.
+
+        Should only be called when predict_with_generate=True.
+        """
+        if self.tokenizer is not None and hasattr(self.tokenizer, "pad_token_id"):
+            assert self.tokenizer.padding_side == "left", "This method only accepts left-padded tensor."
+            # If PAD token is not defined at least EOS token has to be defined
+            pad_token_id = (
+                self.tokenizer.pad_token_id if self.tokenizer.pad_token_id is not None else self.tokenizer.eos_token_id
+            )
+        else:
+            if self.model.config.pad_token_id is not None:
+                pad_token_id = self.model.config.pad_token_id
+            else:
+                raise ValueError("Pad_token_id must be set in the configuration of the model, in order to pad tensors")
+
+        padded_tensor = pad_token_id * torch.ones_like(tgt_tensor)
+        padded_tensor[:, -src_tensor.shape[-1]:] = src_tensor # adopt left-padding
+        return padded_tensor
 
     def save_predictions(
         self,
