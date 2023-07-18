@@ -10,6 +10,8 @@ from llmtuner.tuner import get_infer_args
 from llmtuner.extras.misc import torch_gc
 from llmtuner.chat.stream_chat import ChatModel
 from llmtuner.api.protocol import (
+    Role,
+    Finish,
     ModelCard,
     ModelList,
     ChatMessage,
@@ -49,12 +51,12 @@ def create_app():
 
     @app.post("/v1/chat/completions", response_model=ChatCompletionResponse)
     async def create_chat_completion(request: ChatCompletionRequest):
-        if request.messages[-1].role != "user":
+        if request.messages[-1].role != Role.USER:
             raise HTTPException(status_code=400, detail="Invalid request")
         query = request.messages[-1].content
 
         prev_messages = request.messages[:-1]
-        if len(prev_messages) > 0 and prev_messages[0].role == "system":
+        if len(prev_messages) > 0 and prev_messages[0].role == Role.SYSTEM:
             prefix = prev_messages.pop(0).content
         else:
             prefix = None
@@ -62,7 +64,7 @@ def create_app():
         history = []
         if len(prev_messages) % 2 == 0:
             for i in range(0, len(prev_messages), 2):
-                if prev_messages[i].role == "user" and prev_messages[i+1].role == "assistant":
+                if prev_messages[i].role == Role.USER and prev_messages[i+1].role == Role.ASSISTANT:
                     history.append([prev_messages[i].content, prev_messages[i+1].content])
 
         if request.stream:
@@ -81,19 +83,19 @@ def create_app():
 
         choice_data = ChatCompletionResponseChoice(
             index=0,
-            message=ChatMessage(role="assistant", content=response),
-            finish_reason="stop"
+            message=ChatMessage(role=Role.ASSISTANT, content=response),
+            finish_reason=Finish.STOP
         )
 
-        return ChatCompletionResponse(model=request.model, choices=[choice_data], usage=usage, object="chat.completion")
+        return ChatCompletionResponse(model=request.model, choices=[choice_data], usage=usage)
 
     async def predict(query: str, history: List[Tuple[str, str]], prefix: str, request: ChatCompletionRequest):
         choice_data = ChatCompletionResponseStreamChoice(
             index=0,
-            delta=DeltaMessage(role="assistant"),
+            delta=DeltaMessage(role=Role.ASSISTANT),
             finish_reason=None
         )
-        chunk = ChatCompletionStreamResponse(model=request.model, choices=[choice_data], object="chat.completion.chunk")
+        chunk = ChatCompletionStreamResponse(model=request.model, choices=[choice_data])
         yield json.dumps(chunk, ensure_ascii=False)
 
         for new_text in chat_model.stream_chat(
@@ -107,15 +109,15 @@ def create_app():
                 delta=DeltaMessage(content=new_text),
                 finish_reason=None
             )
-            chunk = ChatCompletionStreamResponse(model=request.model, choices=[choice_data], object="chat.completion.chunk")
+            chunk = ChatCompletionStreamResponse(model=request.model, choices=[choice_data])
             yield json.dumps(chunk, ensure_ascii=False)
 
         choice_data = ChatCompletionResponseStreamChoice(
             index=0,
             delta=DeltaMessage(),
-            finish_reason="stop"
+            finish_reason=Finish.STOP
         )
-        chunk = ChatCompletionStreamResponse(model=request.model, choices=[choice_data], object="chat.completion.chunk")
+        chunk = ChatCompletionStreamResponse(model=request.model, choices=[choice_data])
         yield json.dumps(chunk, ensure_ascii=False)
         yield "[DONE]"
 
