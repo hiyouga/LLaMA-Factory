@@ -107,7 +107,11 @@ class PPOPeftTrainer(PPOTrainer, PeftTrainer):
             # Compute rewards
             replace_model(unwrapped_model, target="reward")
             with torch.no_grad():
-                _, _, values = self.model(**self.prepare_model_inputs(queries, responses))
+                _, _, values = self.model(
+                    **self.prepare_model_inputs(queries, responses),
+                    output_hidden_states=True,
+                    return_dict=True
+                )
             rewards = [reward for reward in values[:, -1].to(torch.float32)] # use float32 type
             replace_model(unwrapped_model, target="default")
 
