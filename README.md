@@ -291,6 +291,14 @@ python src/cli_demo.py \
     --checkpoint_dir path_to_checkpoint
 ```
 
+### Web Demo
+
+```bash
+python src/web_demo.py \
+    --model_name_or_path path_to_your_model \
+    --checkpoint_dir path_to_checkpoint
+```
+
 ### Export model
 
 ```bash
