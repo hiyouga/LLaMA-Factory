@@ -17,8 +17,14 @@ class WebChatModel(ChatModel):
         self.generating_args = GeneratingArguments()
 
     def load_model(
-        self, lang: str, model_name: str, checkpoints: list,
-        finetuning_type: str, template: str, quantization_bit: str
+        self,
+        lang: str,
+        model_name: str,
+        checkpoints: List[str],
+        finetuning_type: str,
+        quantization_bit: str,
+        template: str,
+        source_prefix: str
     ):
         if self.model is not None:
             yield ALERTS["err_exists"][lang]
@@ -43,10 +49,11 @@ class WebChatModel(ChatModel):
         yield ALERTS["info_loading"][lang]
         args = dict(
             model_name_or_path=model_name_or_path,
-            finetuning_type=finetuning_type,
-            prompt_template=template,
             checkpoint_dir=checkpoint_dir,
-            quantization_bit=int(quantization_bit) if quantization_bit else None
+            finetuning_type=finetuning_type,
+            quantization_bit=int(quantization_bit) if quantization_bit else None,
+            prompt_template=template,
+            source_prefix=source_prefix
         )
         super().__init__(*get_infer_args(args))
 
