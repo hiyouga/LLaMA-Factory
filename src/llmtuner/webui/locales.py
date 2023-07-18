@@ -325,6 +325,14 @@ LOCALES = {
             "label": "最大长度"
         }
     },
+    "max_new_tokens": {
+        "en": {
+            "label": "Maximum new tokens"
+        },
+        "zh": {
+            "label": "最大生成长度"
+        }
+    },
     "top_p": {
         "en": {
             "label": "Top-p"

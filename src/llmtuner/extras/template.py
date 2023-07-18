@@ -203,6 +203,18 @@ register_template(
     name="baichuan",
     prefix="",
     prompt="<reserved_102>{query}<reserved_103>",
-    sep="",
+    sep="</s>",
+    use_history=True
+)
+
+
+r"""
+Supports: https://huggingface.co/HuggingFaceH4/starchat-alpha
+          https://huggingface.co/HuggingFaceH4/starchat-beta
+"""
+register_template(
+    prefix="<|system|>\n",
+    prompt="<|user|>\n{query}<|end|>\n<|assistant|>\n",
+    sep="<|end|>\n",
     use_history=True
 )
