@@ -11,7 +11,6 @@ def create_infer_tab(top_elems: Dict[str, Component]) -> Dict[str, Component]:
     with gr.Row():
         load_btn = gr.Button()
         unload_btn = gr.Button()
-        quantization_bit = gr.Dropdown([8, 4])
 
     info_box = gr.Markdown()
 
@@ -21,9 +20,13 @@ def create_infer_tab(top_elems: Dict[str, Component]) -> Dict[str, Component]:
     load_btn.click(
         chat_model.load_model,
         [
-            top_elems["lang"], top_elems["model_name"], top_elems["checkpoints"],
-            top_elems["finetuning_type"], top_elems["template"],
-            quantization_bit
+            top_elems["lang"],
+            top_elems["model_name"],
+            top_elems["checkpoints"],
+            top_elems["finetuning_type"],
+            top_elems["quantization_bit"],
+            top_elems["template"],
+            top_elems["source_prefix"]
         ],
         [info_box]
     ).then(
@@ -39,7 +42,6 @@ def create_infer_tab(top_elems: Dict[str, Component]) -> Dict[str, Component]:
     )
 
     return dict(
-        quantization_bit=quantization_bit,
         info_box=info_box,
         load_btn=load_btn,
         unload_btn=unload_btn,

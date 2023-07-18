@@ -108,7 +108,7 @@ class PPOPeftTrainer(PPOTrainer, PeftTrainer):
             replace_model(unwrapped_model, target="reward")
             with torch.no_grad():
                 _, _, values = self.model(**self.prepare_model_inputs(queries, responses))
-            rewards = [reward for reward in values[-1].to(torch.float32)] # use float32 type
+            rewards = [reward for reward in values[:, -1].to(torch.float32)] # use float32 type
             replace_model(unwrapped_model, target="default")
 
             # Run PPO step
