@@ -213,6 +213,7 @@ Supports: https://huggingface.co/HuggingFaceH4/starchat-alpha
           https://huggingface.co/HuggingFaceH4/starchat-beta
 """
 register_template(
+    name="starchat",
     prefix="<|system|>\n",
     prompt="<|user|>\n{query}<|end|>\n<|assistant|>\n",
     sep="<|end|>\n",
