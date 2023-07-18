@@ -32,7 +32,7 @@ class PairwisePeftTrainer(PeftTrainer):
         See: https://github.com/huggingface/transformers/blob/v4.30.2/src/transformers/trainer.py#L3509
         """
         batch_size = inputs["input_ids"].size(0) // 2
-        _, _, values = model(**inputs)
+        _, _, values = model(**inputs, output_hidden_states=True, return_dict=True)
         r_accept, r_reject = values[:, -1].split(batch_size, dim=0)
         loss = -torch.log(torch.sigmoid(r_accept - r_reject)).mean()
         return (loss, [loss, r_accept, r_reject]) if return_outputs else loss

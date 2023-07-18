@@ -10,7 +10,7 @@ rouge-chinese
 nltk
 gradio>=3.36.0
 uvicorn
-pydantic
-fastapi
+pydantic==1.10.11
+fastapi==0.95.1
 sse-starlette
 matplotlib
