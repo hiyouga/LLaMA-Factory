@@ -4,4 +4,4 @@ from llmtuner.tuner import get_train_args, get_infer_args, load_model_and_tokeni
 from llmtuner.webui import create_ui
 
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
