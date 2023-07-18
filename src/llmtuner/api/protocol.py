@@ -1,6 +1,18 @@
 import time
+from enum import Enum
 from pydantic import BaseModel, Field
-from typing import List, Literal, Optional
+from typing import List, Optional
+
+
+class Role(str, Enum):
+    USER = "user"
+    ASSISTANT = "assistant"
+    SYSTEM = "system"
+
+
+class Finish(str, Enum):
+    STOP = "stop"
+    LENGTH = "length"
 
 
 class ModelCard(BaseModel):
@@ -19,12 +31,12 @@ class ModelList(BaseModel):
 
 
 class ChatMessage(BaseModel):
-    role: Literal["user", "assistant", "system"]
+    role: Role
     content: str
 
 
 class DeltaMessage(BaseModel):
-    role: Optional[Literal["user", "assistant", "system"]] = None
+    role: Optional[Role] = None
     content: Optional[str] = None
 
 
@@ -41,13 +53,13 @@ class ChatCompletionRequest(BaseModel):
 class ChatCompletionResponseChoice(BaseModel):
     index: int
     message: ChatMessage
-    finish_reason: Literal["stop", "length"]
+    finish_reason: Finish
 
 
 class ChatCompletionResponseStreamChoice(BaseModel):
     index: int
     delta: DeltaMessage
-    finish_reason: Optional[Literal["stop", "length"]] = None
+    finish_reason: Optional[Finish] = None
 
 
 class ChatCompletionResponseUsage(BaseModel):
@@ -58,7 +70,7 @@ class ChatCompletionResponseUsage(BaseModel):
 
 class ChatCompletionResponse(BaseModel):
     id: Optional[str] = "chatcmpl-default"
-    object: Literal["chat.completion"]
+    object: Optional[str] = "chat.completion"
     created: Optional[int] = Field(default_factory=lambda: int(time.time()))
     model: str
     choices: List[ChatCompletionResponseChoice]
@@ -67,7 +79,7 @@ class ChatCompletionResponse(BaseModel):
 
 class ChatCompletionStreamResponse(BaseModel):
     id: Optional[str] = "chatcmpl-default"
-    object: Literal["chat.completion.chunk"]
+    object: Optional[str] = "chat.completion.chunk"
     created: Optional[int] = Field(default_factory=lambda: int(time.time()))
     model: str
     choices: List[ChatCompletionResponseStreamChoice]
