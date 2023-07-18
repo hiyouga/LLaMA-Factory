@@ -202,7 +202,7 @@ Supports: https://huggingface.co/baichuan-inc/Baichuan-13B-Chat
 register_template(
     name="baichuan",
     prefix="",
-    prompt="<reserved_102>{query}<reserved_103>",
+    prompt=" <reserved_102> {query} <reserved_103> ",
     sep="</s>",
     use_history=True
 )
