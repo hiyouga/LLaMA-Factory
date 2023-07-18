@@ -69,12 +69,15 @@ class Runner:
         source_prefix: str,
         dataset_dir: str,
         dataset: List[str],
+        max_source_length: int,
+        max_target_length: int,
         learning_rate: str,
         num_train_epochs: str,
         max_samples: str,
         batch_size: int,
         gradient_accumulation_steps: int,
         lr_scheduler_type: str,
+        dev_ratio: float,
         fp16: bool,
         logging_steps: int,
         save_steps: int,
@@ -104,6 +107,8 @@ class Runner:
             source_prefix=source_prefix,
             dataset_dir=dataset_dir,
             dataset=",".join(dataset),
+            max_source_length=max_source_length,
+            max_target_length=max_target_length,
             learning_rate=float(learning_rate),
             num_train_epochs=float(num_train_epochs),
             max_samples=int(max_samples),
@@ -115,6 +120,13 @@ class Runner:
             save_steps=save_steps,
             output_dir=os.path.join(get_save_dir(model_name), finetuning_type, output_dir)
         )
+
+        if dev_ratio > 1e-6:
+            args["dev_ratio"] = dev_ratio
+            args["evaluation_strategy"] = "steps"
+            args["eval_steps"] = save_steps
+            args["load_best_model_at_end"] = True
+
         model_args, data_args, training_args, finetuning_args, _ = get_train_args(args)
 
         run_args = dict(
@@ -147,6 +159,8 @@ class Runner:
         source_prefix: str,
         dataset_dir: str,
         dataset: List[str],
+        max_source_length: int,
+        max_target_length: int,
         max_samples: str,
         batch_size: int,
         predict: bool
@@ -177,6 +191,8 @@ class Runner:
             source_prefix=source_prefix,
             dataset_dir=dataset_dir,
             dataset=",".join(dataset),
+            max_source_length=max_source_length,
+            max_target_length=max_target_length,
             max_samples=int(max_samples),
             per_device_eval_batch_size=batch_size,
             output_dir=output_dir
