@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 import gradio as gr
 from gradio.blocks import Block
@@ -8,9 +8,10 @@ from llmtuner.webui.chat import WebChatModel
 
 
 def create_chat_box(
-    chat_model: WebChatModel
+    chat_model: WebChatModel,
+    visible: Optional[bool] = False
 ) -> Tuple[Block, Component, Component, Dict[str, Component]]:
-    with gr.Box(visible=False) as chat_box:
+    with gr.Box(visible=visible) as chat_box:
         chatbot = gr.Chatbot()
 
         with gr.Row():
