@@ -13,6 +13,12 @@ SUPPORTED_MODELS = {
     "LLaMA-13B": "huggyllama/llama-13b",
     "LLaMA-30B": "huggyllama/llama-30b",
     "LLaMA-65B": "huggyllama/llama-65b",
+    "LLaMA2-7B": "meta-llama/Llama-2-7b-hf",
+    "LLaMA2-13B": "meta-llama/Llama-2-13b-hf",
+    "LLaMA2-70B": "meta-llama/Llama-2-70b-hf",
+    "LLaMA2-7B-Chat": "meta-llama/Llama-2-7b-chat-hf",
+    "LLaMA2-13B-Chat": "meta-llama/Llama-2-13b-chat-hf",
+    "LLaMA2-70B-Chat": "meta-llama/Llama-2-70b-chat-hf",
     "BLOOM-560M": "bigscience/bloom-560m",
     "BLOOM-3B": "bigscience/bloom-3b",
     "BLOOM-7B1": "bigscience/bloom-7b1",
@@ -32,6 +38,7 @@ SUPPORTED_MODELS = {
 
 DEFAULT_MODULE = { # will be deprecated
     "LLaMA": "q_proj,v_proj",
+    "LLaMA2": "q_proj,v_proj",
     "BLOOM": "query_key_value",
     "BLOOMZ": "query_key_value",
     "Falcon": "query_key_value",
