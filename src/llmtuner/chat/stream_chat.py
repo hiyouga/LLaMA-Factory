@@ -26,7 +26,7 @@ class ChatModel:
     def process_args(
         self, query: str, history: Optional[List[Tuple[str, str]]] = None, prefix: Optional[str] = None, **input_kwargs
     ) -> Tuple[Dict[str, Any], int]:
-        prefix = prefix if prefix else self.source_prefix
+        prefix = prefix or self.source_prefix
 
         inputs = self.tokenizer([self.template.get_prompt(query, history, prefix)], return_tensors="pt")
         inputs = inputs.to(self.model.device)
@@ -81,5 +81,4 @@ class ChatModel:
         thread = Thread(target=self.model.generate, kwargs=gen_kwargs)
         thread.start()
 
-        for new_text in streamer:
-            yield new_text
+        yield from streamer
