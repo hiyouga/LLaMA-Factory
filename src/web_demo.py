@@ -24,17 +24,9 @@ def main():
 
         manager = Manager([{"lang": lang}, chat_elems])
 
-        demo.load(
-            manager.gen_label,
-            [lang],
-            [lang] + [elem for elem in chat_elems.values()],
-        )
+        demo.load(manager.gen_label, [lang], [lang] + list(chat_elems.values()))
 
-        lang.change(
-            manager.gen_label,
-            [lang],
-            [lang] + [elem for elem in chat_elems.values()],
-        )
+        lang.change(manager.gen_label, [lang], [lang] + list(chat_elems.values()))
 
     demo.queue()
     demo.launch(server_name="0.0.0.0", share=False, inbrowser=True)
