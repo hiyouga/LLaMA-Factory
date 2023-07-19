@@ -111,7 +111,7 @@ register_template(
            "explain why instead of answering something not correct. "
            "If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n",
     prompt=" [INST] {query} [/INST] ",
-    sep="",
+    sep="</s>",
     use_history=True
 )
 
