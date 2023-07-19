@@ -46,7 +46,7 @@ class Template:
     def _format_example(
         self, query: str, history: Optional[List[Tuple[str, str]]] = None, prefix: Optional[str] = ""
     ) -> List[str]:
-        prefix = prefix if prefix else self.prefix # use prefix if provided
+        prefix = prefix or self.prefix # use prefix if provided
         prefix = prefix + self.sep if prefix else "" # add separator for non-empty prefix
         history = history if (history and self.use_history) else []
         history = history + [(query, "<dummy>")]
