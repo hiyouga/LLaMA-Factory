@@ -10,6 +10,8 @@
 
 ## Changelog
 
+[23/07/19] Now we support training the **LLaMA-2** models in this repo. Try `--model_name_or_path meta-llama/Llama-2-7b-hf` argument to use the LLaMA-2 model. Remember to use `--prompt_template llama2` argument when you are using the LLaMA-2-chat model.
+
 [23/07/18] Now we develop an all-in-one Web UI for training, evaluation and inference. Try `train_web.py` to fine-tune models in your Web browser. Thank [@KanadeSiina](https://github.com/KanadeSiina) and [@codemayq](https://github.com/codemayq) for their efforts in the development.
 
 [23/07/11] Now we support training the **Baichuan-13B** model in this repo. Please replace the Baichuan-13B model file with `tests/modeling_baichuan.py` and try `--model_name_or_path path_to_baichuan_model` and `--lora_target W_pack` arguments to train the Baichuan-13B model. Remember to use `--prompt_template baichuan` argument when you are using the Baichuan-13B-Chat model.
@@ -33,6 +35,7 @@
 ## Supported Models
 
 - [LLaMA](https://github.com/facebookresearch/llama) (7B/13B/33B/65B)
+- [LLaMA-2](https://huggingface.co/meta-llama) (7B/13B/70B)
 - [BLOOM](https://huggingface.co/bigscience/bloom) & [BLOOMZ](https://huggingface.co/bigscience/bloomz) (560M/1.1B/1.7B/3B/7.1B/176B)
 - [Falcon](https://huggingface.co/tiiuae/falcon-7b) (7B/40B)
 - [Baichuan](https://huggingface.co/baichuan-inc/baichuan-7B) (7B/13B)
@@ -315,6 +318,7 @@ This repository is licensed under the [Apache-2.0 License](LICENSE).
 Please follow the model licenses to use the corresponding model weights:
 
 - [LLaMA](https://github.com/facebookresearch/llama/blob/main/MODEL_CARD.md)
+- [LLaMA-2](https://ai.meta.com/llama/license/)
 - [BLOOM](https://huggingface.co/spaces/bigscience/license)
 - [Falcon](LICENSE)
 - [baichuan](https://huggingface.co/baichuan-inc/baichuan-7B/resolve/main/baichuan-7B%20%E6%A8%A1%E5%9E%8B%E8%AE%B8%E5%8F%AF%E5%8D%8F%E8%AE%AE.pdf)
