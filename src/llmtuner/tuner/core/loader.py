@@ -10,7 +10,7 @@ from transformers import (
 )
 from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
-from transformers.trainer import is_deepspeed_zero3_enabled
+from transformers.deepspeed import is_deepspeed_zero3_enabled
 from transformers.modeling_utils import PretrainedConfig, PreTrainedModel
 from transformers.tokenization_utils import PreTrainedTokenizerBase
 from trl import AutoModelForCausalLMWithValueHead
