@@ -36,7 +36,7 @@ SUPPORTED_MODELS = {
     "InternLM-7B-Chat": "internlm/internlm-chat-7b"
 }
 
-DEFAULT_MODULE = { # will be deprecated
+DEFAULT_MODULE = {
     "LLaMA": "q_proj,v_proj",
     "LLaMA2": "q_proj,v_proj",
     "BLOOM": "query_key_value",

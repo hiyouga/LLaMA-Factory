@@ -35,12 +35,21 @@ def create_sft_tab(top_elems: Dict[str, Component], runner: Runner) -> Dict[str,
         lr_scheduler_type = gr.Dropdown(
             value="cosine", choices=[scheduler.value for scheduler in SchedulerType]
         )
+        max_grad_norm = gr.Textbox(value="1.0")
         dev_ratio = gr.Slider(value=0, minimum=0, maximum=1, step=0.001)
-        fp16 = gr.Checkbox(value=True)
 
-    with gr.Row():
-        logging_steps = gr.Slider(value=5, minimum=5, maximum=1000, step=5)
-        save_steps = gr.Slider(value=100, minimum=10, maximum=5000, step=10)
+    with gr.Accordion(label="Advanced config", open=False) as advanced_tab:
+        with gr.Row():
+            logging_steps = gr.Slider(value=5, minimum=5, maximum=1000, step=5)
+            save_steps = gr.Slider(value=100, minimum=10, maximum=5000, step=10)
+            warmup_steps = gr.Slider(value=0, minimum=0, maximum=5000, step=1)
+            compute_type = gr.Radio(choices=["fp16", "bf16"], value="fp16")
+
+    with gr.Accordion(label="LoRA config", open=False) as lora_tab:
+        with gr.Row():
+            lora_rank = gr.Slider(value=8, minimum=1, maximum=1024, step=1, scale=1)
+            lora_dropout = gr.Slider(value=0, minimum=0, maximum=1, step=0.01, scale=1)
+            lora_target = gr.Textbox(scale=2)
 
     with gr.Row():
         start_btn = gr.Button()
@@ -49,7 +58,9 @@ def create_sft_tab(top_elems: Dict[str, Component], runner: Runner) -> Dict[str,
     with gr.Row():
         with gr.Column(scale=4):
             output_dir = gr.Textbox(interactive=True)
-            output_box = gr.Markdown()
+
+            with gr.Box():
+                output_box = gr.Markdown()
 
         with gr.Column(scale=1):
             loss_viewer = gr.Plot()
@@ -74,10 +85,15 @@ def create_sft_tab(top_elems: Dict[str, Component], runner: Runner) -> Dict[str,
             batch_size,
             gradient_accumulation_steps,
             lr_scheduler_type,
+            max_grad_norm,
             dev_ratio,
-            fp16,
             logging_steps,
             save_steps,
+            warmup_steps,
+            compute_type,
+            lora_rank,
+            lora_dropout,
+            lora_target,
             output_dir
         ],
         [output_box]
@@ -103,10 +119,17 @@ def create_sft_tab(top_elems: Dict[str, Component], runner: Runner) -> Dict[str,
         batch_size=batch_size,
         gradient_accumulation_steps=gradient_accumulation_steps,
         lr_scheduler_type=lr_scheduler_type,
+        max_grad_norm=max_grad_norm,
         dev_ratio=dev_ratio,
-        fp16=fp16,
+        advanced_tab=advanced_tab,
         logging_steps=logging_steps,
         save_steps=save_steps,
+        warmup_steps=warmup_steps,
+        compute_type=compute_type,
+        lora_tab=lora_tab,
+        lora_rank=lora_rank,
+        lora_dropout=lora_dropout,
+        lora_target=lora_target,
         start_btn=start_btn,
         stop_btn=stop_btn,
         output_dir=output_dir,
