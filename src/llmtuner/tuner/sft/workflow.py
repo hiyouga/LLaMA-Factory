@@ -3,7 +3,7 @@
 from typing import Optional, List
 from transformers import Seq2SeqTrainingArguments, DataCollatorForSeq2Seq, TrainerCallback
 
-from llmtuner.dsets import get_dataset, preprocess_dataset
+from llmtuner.dsets import get_dataset, preprocess_dataset, split_dataset
 from llmtuner.extras.callbacks import LogCallback
 from llmtuner.extras.constants import IGNORE_INDEX
 from llmtuner.extras.misc import get_logits_processor
@@ -35,16 +35,6 @@ def run_sft(
     training_args.generation_num_beams = data_args.eval_num_beams if \
                 data_args.eval_num_beams is not None else training_args.generation_num_beams
 
-    # Split the dataset
-    if training_args.do_train:
-        if data_args.dev_ratio > 1e-6:
-            dataset = dataset.train_test_split(test_size=data_args.dev_ratio)
-            trainer_kwargs = {"train_dataset": dataset["train"], "eval_dataset": dataset["test"]}
-        else:
-            trainer_kwargs = {"train_dataset": dataset}
-    else: # do_eval or do_predict
-        trainer_kwargs = {"eval_dataset": dataset}
-
     # Initialize our Trainer
     trainer = Seq2SeqPeftTrainer(
         finetuning_args=finetuning_args,
@@ -54,7 +44,7 @@ def run_sft(
         data_collator=data_collator,
         callbacks=callbacks,
         compute_metrics=ComputeMetrics(tokenizer) if training_args.predict_with_generate else None,
-        **trainer_kwargs
+        **split_dataset(dataset, data_args.dev_ratio, training_args.do_train)
     )
 
     # Keyword arguments for `model.generate`
