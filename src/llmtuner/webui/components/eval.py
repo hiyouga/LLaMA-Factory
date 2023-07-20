@@ -31,7 +31,8 @@ def create_eval_tab(top_elems: Dict[str, Component], runner: Runner) -> Dict[str
         start_btn = gr.Button()
         stop_btn = gr.Button()
 
-    output_box = gr.Markdown()
+    with gr.Box():
+        output_box = gr.Markdown()
 
     start_btn.click(
         runner.run_eval,
