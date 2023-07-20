@@ -5,11 +5,14 @@
 
 import uvicorn
 
+from llmtuner import ChatModel
 from llmtuner.api.app import create_app
+from llmtuner.tuner import get_infer_args
 
 
 def main():
-    app = create_app()
+    chat_model = ChatModel(*get_infer_args())
+    app = create_app(chat_model)
     uvicorn.run(app, host="0.0.0.0", port=8000, workers=1)
 
 
