@@ -30,7 +30,7 @@ async def lifespan(app: FastAPI): # collects GPU memory
     torch_gc()
 
 
-def create_app(chat_model: ChatModel):
+def create_app(chat_model: ChatModel) -> FastAPI:
     app = FastAPI(lifespan=lifespan)
 
     app.add_middleware(
