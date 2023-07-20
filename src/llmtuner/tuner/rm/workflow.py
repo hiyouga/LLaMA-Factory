@@ -5,7 +5,7 @@
 from typing import Optional, List
 from transformers import Seq2SeqTrainingArguments, TrainerCallback
 
-from llmtuner.dsets import get_dataset, preprocess_dataset
+from llmtuner.dsets import get_dataset, preprocess_dataset, split_dataset
 from llmtuner.extras.callbacks import LogCallback
 from llmtuner.extras.ploting import plot_loss
 from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
@@ -29,16 +29,6 @@ def run_rm(
 
     training_args.remove_unused_columns = False # important for pairwise dataset
 
-    # Split the dataset
-    if training_args.do_train:
-        if data_args.dev_ratio > 1e-6:
-            dataset = dataset.train_test_split(test_size=data_args.dev_ratio)
-            trainer_kwargs = {"train_dataset": dataset["train"], "eval_dataset": dataset["test"]}
-        else:
-            trainer_kwargs = {"train_dataset": dataset}
-    else: # do_eval or do_predict
-        trainer_kwargs = {"eval_dataset": dataset}
-
     # Initialize our Trainer
     trainer = PairwisePeftTrainer(
         finetuning_args=finetuning_args,
@@ -48,7 +38,7 @@ def run_rm(
         data_collator=data_collator,
         callbacks=callbacks,
         compute_metrics=compute_accuracy,
-        **trainer_kwargs
+        **split_dataset(dataset, data_args.dev_ratio, training_args.do_train)
     )
 
     # Training

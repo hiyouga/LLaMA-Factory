@@ -1,4 +1,4 @@
-from llmtuner import get_train_args, run_pt, run_sft, run_rm, run_ppo
+from llmtuner.tuner import get_train_args, run_pt, run_sft, run_rm, run_ppo
 
 
 def main():
