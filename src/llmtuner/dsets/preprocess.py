@@ -6,7 +6,7 @@ from transformers.tokenization_utils import PreTrainedTokenizer
 from datasets import Dataset
 
 from llmtuner.extras.constants import IGNORE_INDEX
-from llmtuner.extras.template import Template
+from llmtuner.extras.template import get_template
 from llmtuner.hparams import DataArguments
 
 
@@ -19,7 +19,7 @@ def preprocess_dataset(
 ) -> Dataset:
 
     column_names = list(dataset.column_names)
-    prompt_template = Template(data_args.prompt_template)
+    prompt_template = get_template(data_args.prompt_template)
 
     # support question with a single answer or multiple answers
     def get_dialog(examples):
