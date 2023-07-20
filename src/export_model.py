@@ -2,7 +2,7 @@
 # Exports the fine-tuned model.
 # Usage: python export_model.py --checkpoint_dir path_to_checkpoint --output_dir path_to_save_model
 
-from llmtuner import get_train_args, load_model_and_tokenizer
+from llmtuner.tuner import get_train_args, load_model_and_tokenizer
 
 
 def main():

@@ -4,7 +4,7 @@ from threading import Thread
 from transformers import TextIteratorStreamer
 
 from llmtuner.extras.misc import get_logits_processor
-from llmtuner.extras.template import Template
+from llmtuner.extras.template import get_template
 from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments
 from llmtuner.tuner import load_model_and_tokenizer
 
@@ -19,7 +19,7 @@ class ChatModel:
         generating_args: GeneratingArguments
     ) -> None:
         self.model, self.tokenizer = load_model_and_tokenizer(model_args, finetuning_args)
-        self.template = Template(data_args.prompt_template)
+        self.template = get_template(data_args.prompt_template)
         self.source_prefix = data_args.source_prefix if data_args.source_prefix else ""
         self.generating_args = generating_args
 
