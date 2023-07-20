@@ -27,7 +27,7 @@ def create_ui() -> gr.Blocks:
         with gr.Tab("Evaluate"):
             eval_elems = create_eval_tab(top_elems, runner)
 
-        with gr.Tab("Inference"):
+        with gr.Tab("Chat"):
             infer_elems = create_infer_tab(top_elems)
 
         elem_list = [top_elems, sft_elems, eval_elems, infer_elems]

@@ -22,10 +22,11 @@ def create_top() -> Dict[str, Component]:
         checkpoints = gr.Dropdown(multiselect=True, scale=5)
         refresh_btn = gr.Button(scale=1)
 
-    with gr.Row():
-        quantization_bit = gr.Dropdown([8, 4], scale=1)
-        template = gr.Dropdown(value="default", choices=list(templates.keys()), scale=2)
-        source_prefix = gr.Textbox(scale=4)
+    with gr.Accordion(label="Advanced config", open=False) as advanced_tab:
+        with gr.Row():
+            quantization_bit = gr.Dropdown([8, 4], scale=1)
+            template = gr.Dropdown(value="default", choices=list(templates.keys()), scale=1)
+            source_prefix = gr.Textbox(scale=2)
 
     model_name.change(
         list_checkpoint, [model_name, finetuning_type], [checkpoints]
@@ -47,9 +48,10 @@ def create_top() -> Dict[str, Component]:
         model_name=model_name,
         model_path=model_path,
         finetuning_type=finetuning_type,
-        template=template,
         checkpoints=checkpoints,
         refresh_btn=refresh_btn,
+        advanced_tab=advanced_tab,
         quantization_bit=quantization_bit,
+        template=template,
         source_prefix=source_prefix
     )

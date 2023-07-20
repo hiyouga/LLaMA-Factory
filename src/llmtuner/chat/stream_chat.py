@@ -20,7 +20,7 @@ class ChatModel:
     ) -> None:
         self.model, self.tokenizer = load_model_and_tokenizer(model_args, finetuning_args)
         self.template = get_template(data_args.prompt_template)
-        self.source_prefix = data_args.source_prefix if data_args.source_prefix else ""
+        self.source_prefix = data_args.source_prefix or ""
         self.generating_args = generating_args
 
     def process_args(
