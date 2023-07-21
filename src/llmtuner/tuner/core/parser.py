@@ -54,7 +54,7 @@ def get_train_args(
     assert not (training_args.do_train and training_args.predict_with_generate), \
         "`predict_with_generate` cannot be set as True while training."
 
-    assert (not training_args.do_predict) or training_args.predict_with_generate, \
+    assert general_args.stage != "sft" or (not training_args.do_predict) or training_args.predict_with_generate, \
         "Please enable `predict_with_generate` to save model predictions."
 
     assert model_args.quantization_bit is None or finetuning_args.finetuning_type == "lora", \

@@ -452,6 +452,34 @@ LOCALES = {
         "zh": {
             "label": "温度系数"
         }
+    },
+    "save_dir": {
+        "en": {
+            "label": "Export dir",
+            "info": "Directory to save exported model."
+        },
+        "zh": {
+            "label": "导出目录",
+            "info": "保存导出模型的文件夹路径。"
+        }
+    },
+    "max_shard_size": {
+        "en": {
+            "label": "Max shard size (GB)",
+            "info": "The maximum size for a model file."
+        },
+        "zh": {
+            "label": "最大分块大小（GB）",
+            "info": "模型文件的最大大小。"
+        }
+    },
+    "export_btn": {
+        "en": {
+            "value": "Export"
+        },
+        "zh": {
+            "value": "开始导出"
+        }
     }
 }
 
@@ -476,6 +504,14 @@ ALERTS = {
     "err_no_dataset": {
         "en": "Please choose a dataset.",
         "zh": "请选择数据集。"
+    },
+    "err_no_checkpoint": {
+        "en": "Please select a checkpoint.",
+        "zh": "请选择断点。"
+    },
+    "err_no_save_dir": {
+        "en": "Please provide export dir.",
+        "zh": "请填写导出目录"
     },
     "info_aborting": {
         "en": "Aborted, wait for terminating...",
@@ -504,5 +540,13 @@ ALERTS = {
     "info_unloaded": {
         "en": "Model unloaded.",
         "zh": "模型已卸载。"
+    },
+    "info_exporting": {
+        "en": "Exporting model...",
+        "zh": "正在导出模型……"
+    },
+    "info_exported": {
+        "en": "Model exported.",
+        "zh": "模型导出完成。"
     }
 }

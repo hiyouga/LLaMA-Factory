@@ -22,13 +22,9 @@ def create_chat_box(
 
             with gr.Column(scale=1):
                 clear_btn = gr.Button()
-                max_new_tokens = gr.Slider(
-                    10, 2048, value=chat_model.generating_args.max_new_tokens, step=1, interactive=True
-                )
-                top_p = gr.Slider(0.01, 1, value=chat_model.generating_args.top_p, step=0.01, interactive=True)
-                temperature = gr.Slider(
-                    0.01, 1.5, value=chat_model.generating_args.temperature, step=0.01, interactive=True
-                )
+                max_new_tokens = gr.Slider(10, 2048, value=chat_model.generating_args.max_new_tokens, step=1)
+                top_p = gr.Slider(0.01, 1, value=chat_model.generating_args.top_p, step=0.01)
+                temperature = gr.Slider(0.01, 1.5, value=chat_model.generating_args.temperature, step=0.01)
 
     history = gr.State([])
 
