@@ -26,7 +26,7 @@ class Runner:
         self.running = False
 
     def initialize(
-        self, lang: str, model_name: str, dataset: list
+        self, lang: str, model_name: str, dataset: List[str]
     ) -> Tuple[str, str, LoggerHandler, LogCallback]:
         if self.running:
             return None, ALERTS["err_conflict"][lang], None, None
