@@ -29,7 +29,7 @@ def main():
         lang.change(manager.gen_label, [lang], [lang] + list(chat_elems.values()))
 
     demo.queue()
-    demo.launch(server_name="0.0.0.0", share=False, inbrowser=True)
+    demo.launch(server_name="0.0.0.0", server_port=7860, share=False, inbrowser=True)
 
 
 if __name__ == "__main__":
