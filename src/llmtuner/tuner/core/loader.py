@@ -27,8 +27,8 @@ logger = get_logger(__name__)
 
 check_min_version("4.29.1")
 require_version("datasets>=2.12.0", "To fix: pip install datasets>=2.12.0")
-require_version("accelerate>=0.19.0", "To fix: pip install accelerate>=0.19.0")
-require_version("peft>=0.3.0", "To fix: pip install peft>=0.3.0")
+require_version("accelerate>=0.21.0", "To fix: pip install accelerate>=0.21.0")
+require_version("peft>=0.4.0", "To fix: pip install peft>=0.4.0")
 require_version("trl>=0.4.7", "To fix: pip install trl>=0.4.7")
 
 
@@ -81,9 +81,6 @@ def load_model_and_tokenizer(
 
         elif model_args.quantization_bit == 4:
             require_version("bitsandbytes>=0.39.0", "To fix: pip install bitsandbytes>=0.39.0")
-            require_version("transformers>=4.30.1", "To fix: pip install transformers>=4.30.1")
-            require_version("accelerate>=0.20.3", "To fix: pip install accelerate>=0.20.3")
-            require_version("peft>=0.4.0.dev0", "To fix: pip install git+https://github.com/huggingface/peft.git")
             config_kwargs["load_in_4bit"] = True
             config_kwargs["quantization_config"] = BitsAndBytesConfig(
                 load_in_4bit=True,
