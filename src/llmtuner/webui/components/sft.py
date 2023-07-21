@@ -57,7 +57,7 @@ def create_sft_tab(top_elems: Dict[str, Component], runner: Runner) -> Dict[str,
 
     with gr.Row():
         with gr.Column(scale=4):
-            output_dir = gr.Textbox(interactive=True)
+            output_dir = gr.Textbox()
 
             with gr.Box():
                 output_box = gr.Markdown()

@@ -1,8 +1,15 @@
+import os
+import json
 import torch
 from typing import Dict, List, Optional, Tuple, Union
+from transformers.trainer import PredictionOutput
 from transformers.modeling_utils import PreTrainedModel
 
+from llmtuner.extras.logging import get_logger
 from llmtuner.tuner.core.trainer import PeftTrainer
+
+
+logger = get_logger(__name__)
 
 
 class PairwisePeftTrainer(PeftTrainer):
@@ -36,3 +43,26 @@ class PairwisePeftTrainer(PeftTrainer):
         r_accept, r_reject = values[:, -1].split(batch_size, dim=0)
         loss = -torch.log(torch.sigmoid(r_accept - r_reject)).mean()
         return (loss, [loss, r_accept, r_reject]) if return_outputs else loss
+
+    def save_predictions(
+        self,
+        predict_results: PredictionOutput
+    ) -> None:
+        r"""
+        Saves model predictions to `output_dir`.
+
+        A custom behavior that not contained in Seq2SeqTrainer.
+        """
+        if not self.is_world_process_zero():
+            return
+
+        output_prediction_file = os.path.join(self.args.output_dir, "generated_predictions.jsonl")
+        logger.info(f"Saving prediction results to {output_prediction_file}")
+
+        acc_scores, rej_scores = predict_results.predictions
+
+        with open(output_prediction_file, "w", encoding="utf-8") as writer:
+            res: List[str] = []
+            for acc_score, rej_score in zip(acc_scores, rej_scores):
+                res.append(json.dumps({"accept": round(float(acc_score), 2), "reject": round(float(rej_score), 2)}))
+            writer.write("\n".join(res))
