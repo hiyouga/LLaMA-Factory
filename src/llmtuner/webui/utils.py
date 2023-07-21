@@ -3,11 +3,13 @@ import json
 import gradio as gr
 import matplotlib.figure
 import matplotlib.pyplot as plt
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Generator, List, Tuple
 from datetime import datetime
 
 from llmtuner.extras.ploting import smooth
-from llmtuner.webui.common import get_save_dir, DATA_CONFIG
+from llmtuner.tuner import get_infer_args, load_model_and_tokenizer
+from llmtuner.webui.common import get_model_path, get_save_dir, DATA_CONFIG
+from llmtuner.webui.locales import ALERTS
 
 
 def format_info(log: str, tracker: dict) -> str:
@@ -83,3 +85,41 @@ def gen_plot(base_model: str, finetuning_type: str, output_dir: str) -> matplotl
     ax.set_xlabel("step")
     ax.set_ylabel("loss")
     return fig
+
+
+def export_model(
+    lang: str, model_name: str, checkpoints: List[str], finetuning_type: str, max_shard_size: int, save_dir: str
+) -> Generator[str, None, None]:
+    if not model_name:
+        yield ALERTS["err_no_model"][lang]
+        return
+
+    model_name_or_path = get_model_path(model_name)
+    if not model_name_or_path:
+        yield ALERTS["err_no_path"][lang]
+        return
+
+    if not checkpoints:
+        yield ALERTS["err_no_checkpoint"][lang]
+        return
+
+    checkpoint_dir = ",".join(
+            [os.path.join(get_save_dir(model_name), finetuning_type, checkpoint) for checkpoint in checkpoints]
+        )
+
+    if not save_dir:
+        yield ALERTS["err_no_save_dir"][lang]
+        return
+
+    args = dict(
+        model_name_or_path=model_name_or_path,
+        checkpoint_dir=checkpoint_dir,
+        finetuning_type=finetuning_type
+    )
+
+    yield ALERTS["info_exporting"][lang]
+    model_args, _, finetuning_args, _ = get_infer_args(args)
+    model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args)
+    model.save_pretrained(save_dir, max_shard_size=str(max_shard_size)+"GB")
+    tokenizer.save_pretrained(save_dir)
+    yield ALERTS["info_exported"][lang]
