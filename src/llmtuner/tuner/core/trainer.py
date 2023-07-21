@@ -56,7 +56,7 @@ class PeftTrainer(Seq2SeqTrainer):
             backbone_model.config.use_cache = True
             backbone_model.save_pretrained(
                 output_dir,
-                state_dict=get_state_dict(backbone_model),
+                state_dict=get_state_dict(backbone_model, trainable_only=(self.finetuning_args.finetuning_type != "full")),
                 safe_serialization=self.args.save_safetensors
             )
             backbone_model.config.use_cache = False
