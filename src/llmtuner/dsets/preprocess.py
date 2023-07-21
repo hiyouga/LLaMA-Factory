@@ -143,8 +143,10 @@ def preprocess_dataset(
     if stage == "pt":
         preprocess_function = preprocess_pretrain_dataset
     elif stage == "sft":
-        preprocess_function = preprocess_unsupervised_dataset \
-            if training_args.predict_with_generate else preprocess_supervised_dataset
+        if not training_args.predict_with_generate:
+            preprocess_function = preprocess_supervised_dataset
+        else:
+            preprocess_function = preprocess_unsupervised_dataset
     elif stage == "rm":
         preprocess_function = preprocess_pairwise_dataset
     elif stage == "ppo":
