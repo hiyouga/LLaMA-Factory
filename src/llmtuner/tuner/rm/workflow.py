@@ -56,3 +56,10 @@ def run_rm(
         metrics = trainer.evaluate(metric_key_prefix="eval")
         trainer.log_metrics("eval", metrics)
         trainer.save_metrics("eval", metrics)
+
+    # Predict
+    if training_args.do_predict:
+        predict_results = trainer.predict(dataset, metric_key_prefix="predict")
+        trainer.log_metrics("predict", predict_results.metrics)
+        trainer.save_metrics("predict", predict_results.metrics)
+        trainer.save_predictions(predict_results)
