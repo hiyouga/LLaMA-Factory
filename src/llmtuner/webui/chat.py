@@ -84,6 +84,12 @@ class WebChatModel(ChatModel):
             query, history, prefix, max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature
         ):
             response += new_text
+            response = self.postprocess(response)
             new_history = history + [(query, response)]
             chatbot[-1] = [query, response]
             yield chatbot, new_history
+
+    def postprocess(self, response: str) -> str:
+        response = response.replace("<", "&lt;")
+        response = response.replace(">", "&gt;")
+        return response
