@@ -6,7 +6,7 @@
 [![PyPI](https://img.shields.io/pypi/v/llmtuner)](https://pypi.org/project/llmtuner/)
 [![GitHub pull request](https://img.shields.io/badge/PRs-welcome-blue)](https://github.com/hiyouga/LLaMA-Efficient-Tuning/pulls)
 
-👋 加入我们的 [微信群](assets/wechat.jpg).
+👋 加入我们的[微信群](assets/wechat.jpg)。
 
 \[ [English](README.md) | 中文 \]
 
