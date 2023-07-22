@@ -90,6 +90,8 @@ class WebChatModel(ChatModel):
             yield chatbot, new_history
 
     def postprocess(self, response: str) -> str:
-        response = response.replace("<", "&lt;")
-        response = response.replace(">", "&gt;")
-        return response
+        blocks = response.split("```")
+        for i, block in enumerate(blocks):
+            if i % 2 == 0:
+                blocks[i] = block.replace("<", "&lt;").replace(">", "&gt;")
+        return "```".join(blocks)
