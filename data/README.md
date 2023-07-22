@@ -2,16 +2,16 @@ If you are using a custom dataset, please provide your dataset definition in the
 
 ```json
 "dataset_name": {
-    "hf_hub_url": "the name of the dataset repository on the HuggingFace hub. (if specified, ignore below 3 arguments)",
-    "script_url": "the name of the directory containing a dataset loading script. (if specified, ignore below 2 arguments)",
-    "file_name": "the name of the dataset file in the this directory. (required if above are not specified)",
-    "file_sha1": "the SHA-1 hash value of the dataset file. (optional)",
-    "columns": {
-        "prompt": "the name of the column in the datasets containing the prompts. (default: instruction)",
-        "query": "the name of the column in the datasets containing the queries. (default: input)",
-        "response": "the name of the column in the datasets containing the responses. (default: output)",
-        "history": "the name of the column in the datasets containing the history of chat. (default: None)"
-    }
+  "hf_hub_url": "the name of the dataset repository on the HuggingFace hub. (if specified, ignore below 3 arguments)",
+  "script_url": "the name of the directory containing a dataset loading script. (if specified, ignore below 2 arguments)",
+  "file_name": "the name of the dataset file in the this directory. (required if above are not specified)",
+  "file_sha1": "the SHA-1 hash value of the dataset file. (optional)",
+  "columns": {
+    "prompt": "the name of the column in the datasets containing the prompts. (default: instruction)",
+    "query": "the name of the column in the datasets containing the queries. (default: input)",
+    "response": "the name of the column in the datasets containing the responses. (default: output)",
+    "history": "the name of the column in the datasets containing the history of chat. (default: None)"
+  }
 }
 ```
 
