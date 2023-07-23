@@ -63,6 +63,10 @@
 
 - For pre-training:
   - [Wiki Demo (en)](data/wiki_demo.txt)
+  - [RefinedWeb (en)](https://huggingface.co/datasets/tiiuae/falcon-refinedweb)
+  - [StarCoder (en)](https://huggingface.co/datasets/bigcode/starcoderdata)
+  - [Wikipedia (en)](https://huggingface.co/datasets/olm/olm-wikipedia-20221220)
+  - [Wikipedia (zh)](https://huggingface.co/datasets/pleisto/wikipedia-cn-20230720-filtered)
 - For supervised fine-tuning:
   - [Stanford Alpaca (en)](https://github.com/tatsu-lab/stanford_alpaca)
   - [Stanford Alpaca (zh)](https://github.com/ymcui/Chinese-LLaMA-Alpaca)
