@@ -342,6 +342,12 @@ python src/export_model.py \
     --output_dir path_to_export
 ```
 
+## TODO
+
+- [ ] Supporting flash attention ([torch](https://pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html) / [xformers](https://github.com/facebookresearch/xformers) / [flashattn](https://github.com/Dao-AILab/flash-attention)).
+- [ ] Implementing multi-query attention for faster inference.
+- [ ] Supporting full-parameter RLHF training.
+
 ## License
 
 This repository is licensed under the [Apache-2.0 License](LICENSE).

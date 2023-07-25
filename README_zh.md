@@ -342,6 +342,12 @@ python src/export_model.py \
     --output_dir path_to_export
 ```
 
+## TODO
+
+- [ ] 实现 flash attention ([torch](https://pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html) / [xformers](https://github.com/facebookresearch/xformers) / [flashattn](https://github.com/Dao-AILab/flash-attention))。
+- [ ] 在推理阶段使用 Multi-query attention 进行加速。
+- [ ] 支持 RLHF 的全参数微调。
+
 ## 协议
 
 本仓库的代码依照 [Apache-2.0](LICENSE) 协议开源。

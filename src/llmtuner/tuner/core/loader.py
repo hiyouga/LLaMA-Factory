@@ -93,9 +93,6 @@ def load_model_and_tokenizer(
         config_kwargs["device_map"] = {"": int(os.environ.get("LOCAL_RANK", "0"))}
         logger.info("Quantizing model to {} bit.".format(model_args.quantization_bit))
 
-    if not is_trainable: # `device_map=auto` should be used for inference only
-        config_kwargs["device_map"] = "auto"
-
     if model_args.checkpoint_dir is not None and finetuning_args.finetuning_type == "full":
         model_to_load = model_args.checkpoint_dir[0]
     else:
