@@ -51,7 +51,7 @@
   },
   "refgpt_zh_p1": {
     "file_name": "refgpt_zh_50k_p1.json",
-    "file_sha1": "995043a909eed6693f850a96fccb4d3803f3ea5e",
+    "file_sha1": "b40f4f4d0ffacd16da7c275b056d5b6670021752",
     "columns": {
       "prompt": "instruction",
       "query": "input",
@@ -61,7 +61,17 @@
   },
   "refgpt_zh_p2": {
     "file_name": "refgpt_zh_50k_p2.json",
-    "file_sha1": "d9442d5c4541fe5489b5b571871fbe7595ee3809",
+    "file_sha1": "181f32b2c60264a29f81f59d3c76095793eae1b0",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "history": "history"
+    }
+  },
+  "lima": {
+    "file_name": "lima.json",
+    "file_sha1": "9db59f6b7007dc4b17529fc63379b9cd61640f37",
     "columns": {
       "prompt": "instruction",
       "query": "input",
