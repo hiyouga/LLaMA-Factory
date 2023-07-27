@@ -1,0 +1,19 @@
+accelerate launch --config_file accelerate_config.yaml src/train_bash.py \
+    --stage rm \
+    --model_name_or_path /home/mediatek/models/incite-7b-zh-base \
+    --use_fast_tokenizer true \
+    --lora_target query_key_value \
+    --prompt_template mr_chat \
+    --do_train \
+    --dataset comparison_gpt4_zhtw \
+    --finetuning_type lora \
+    --output_dir ./outputs/incite-7b-zh-rm \
+    --per_device_train_batch_size 4 \
+    --gradient_accumulation_steps 1 \
+    --lr_scheduler_type cosine \
+    --logging_steps 10 \
+    --save_steps 1000 \
+    --learning_rate 1e-5 \
+    --num_train_epochs 1.0 \
+    --plot_loss \
+    --fp16
