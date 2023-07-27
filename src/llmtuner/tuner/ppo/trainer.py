@@ -80,7 +80,8 @@ class PPOPeftTrainer(PPOTrainer, PeftTrainer):
             "do_sample": True,
             "pad_token_id": self.tokenizer.pad_token_id,
             "eos_token_id": self.tokenizer.eos_token_id,
-            "logits_processor": get_logits_processor()
+            "logits_processor": get_logits_processor(),
+            "min_new_tokens": 1,
         }
         length_sampler = LengthSampler(max_target_length // 2, max_target_length)
         unwrapped_model: PreTrainedModel = self.accelerator.unwrap_model(self.model)
