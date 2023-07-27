@@ -1,4 +1,7 @@
 {
+  "instruct_tc_and_evol": {
+    "file_name": "instruct_tc_and_evol.json"
+  },
   "alpaca_en": {
     "file_name": "alpaca_data_en_52k.json",
     "file_sha1": "607f94a7f581341e59685aef32f531095232cf23"
@@ -14,6 +17,9 @@
   "alpaca_gpt4_zh": {
     "file_name": "alpaca_gpt4_data_zh.json",
     "file_sha1": "3eaa3bda364ccdd59925d7448a698256c31ef845"
+  },
+  "alpaca_gpt4_zhtw": {
+    "file_name": "alpaca_gpt4_data_zhtw.json"
   },
   "self_cognition": {
     "file_name": "self_cognition.json",
@@ -158,6 +164,9 @@
   "comparison_gpt4_zh": {
     "file_name": "comparison_gpt4_data_zh.json",
     "file_sha1": "515b18ed497199131ddcc1af950345c11dc5c7fd"
+  },
+  "comparison_gpt4_zhtw": {
+    "file_name": "comparison_gpt4_data_zhtw.json"
   },
   "hh_rlhf_en": {
     "script_url": "hh_rlhf_en",
