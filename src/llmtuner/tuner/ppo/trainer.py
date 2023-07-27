@@ -103,45 +103,50 @@ class PPOPeftTrainer(PPOTrainer, PeftTrainer):
             query_tensors = batch["input_ids"]
             response_tensors = self.generate(batch, length_sampler, return_prompt=False, **gen_kwargs)
 
+            has_empty_response = False
             queries, responses = [], []
             for i in range(len(query_tensors)):
+                if (response_tensors[i] != self.tokenizer.pad_token_id).nonzero().size(0) == 0:
+                    has_empty_response = True
+                    break
                 query_length = (query_tensors[i] != self.tokenizer.pad_token_id).nonzero()[0]
                 response_length = (response_tensors[i] != self.tokenizer.pad_token_id).nonzero()[-1] + 1
                 queries.append(query_tensors[i, query_length:]) # remove padding from left
                 responses.append(response_tensors[i, :response_length]) # remove padding from right
 
-            # Compute rewards
-            replace_model(unwrapped_model, target="reward")
-            with torch.no_grad():
-                _, _, values = self.model(
-                    **self.prepare_model_inputs(queries, responses),
-                    output_hidden_states=True,
-                    return_dict=True
-                )
-            rewards = [reward for reward in values[:, -1].to(torch.float32)] # use float32 type
-            replace_model(unwrapped_model, target="default")
+            if not has_empty_response:  # Walk-around for empty response problem
+                # Compute rewards
+                replace_model(unwrapped_model, target="reward")
+                with torch.no_grad():
+                    _, _, values = self.model(
+                        **self.prepare_model_inputs(queries, responses),
+                        output_hidden_states=True,
+                        return_dict=True
+                    )
+                rewards = [reward for reward in values[:, -1].to(torch.float32)] # use float32 type
+                replace_model(unwrapped_model, target="default")
 
-            # Run PPO step
-            unwrapped_model.gradient_checkpointing_enable()
-            unwrapped_model.config.use_cache = False
-            stats = self.step(queries, responses, rewards)
+                # Run PPO step
+                unwrapped_model.gradient_checkpointing_enable()
+                unwrapped_model.config.use_cache = False
+                stats = self.step(queries, responses, rewards)
 
-            loss_meter.update(stats["ppo/loss/total"], n=len(rewards))
-            reward_meter.update(torch.stack(rewards).mean().item(), n=len(rewards))
+                loss_meter.update(stats["ppo/loss/total"], n=len(rewards))
+                reward_meter.update(torch.stack(rewards).mean().item(), n=len(rewards))
 
-            if self.is_world_process_zero() and (step+1) % self.args.logging_steps == 0:
-                logs = dict(
-                    loss=round(loss_meter.avg, 4),
-                    reward=round(reward_meter.avg, 4),
-                    learning_rate=stats["ppo/learning_rate"],
-                    epoch=round(step / len_dataloader, 2)
-                )
-                print(logs)
-                logs["step"] = step
-                self.state.log_history.append(logs)
-                self.log_callback.on_log(self.args, self.state, self.control)
-                loss_meter.reset()
-                reward_meter.reset()
+                if self.is_world_process_zero() and (step+1) % self.args.logging_steps == 0:
+                    logs = dict(
+                        loss=round(loss_meter.avg, 4),
+                        reward=round(reward_meter.avg, 4),
+                        learning_rate=stats["ppo/learning_rate"],
+                        epoch=round(step / len_dataloader, 2)
+                    )
+                    print(logs)
+                    logs["step"] = step
+                    self.state.log_history.append(logs)
+                    self.log_callback.on_log(self.args, self.state, self.control)
+                    loss_meter.reset()
+                    reward_meter.reset()
 
             if (step+1) % self.args.save_steps == 0: # save checkpoint
                 self.save_model(os.path.join(self.args.output_dir, f"checkpoint-{step+1}"))
