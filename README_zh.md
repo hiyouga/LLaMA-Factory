@@ -12,15 +12,15 @@
 
 ## 更新日志
 
-[23/07/19] 现在我们支持了 **LLaMA-2** 模型的训练。请尝试使用 `--model_name_or_path meta-llama/Llama-2-7b-hf` 参数。请注意使用 LLaMA-2-chat 模型需要添加 `--prompt_template llama2` 参数。
+[23/07/19] 现在我们支持了 **LLaMA-2** 模型的训练。请尝试使用 `--model_name_or_path meta-llama/Llama-2-7b-hf` 参数。请注意使用 LLaMA-2-chat 模型需要添加 `--template llama2` 参数。
 
 [23/07/18] 我们开发了支持训练和测试的浏览器一键微调界面。请尝试使用 `train_web.py` 在您的浏览器中微调模型。感谢 [@KanadeSiina](https://github.com/KanadeSiina) 和 [@codemayq](https://github.com/codemayq) 在该功能开发中付出的努力。
 
-[23/07/11] 现在我们支持了 **Baichuan-13B** 模型的训练。请尝试使用 `--model_name_or_path path_to_baichuan_model` 和 `--lora_target W_pack` 参数。请注意使用 Baichuan-13B-Chat 模型需要添加 `--prompt_template baichuan` 参数。
+[23/07/11] 现在我们支持了 **Baichuan-13B** 模型的训练。请尝试使用 `--model_name_or_path path_to_baichuan_model` 和 `--lora_target W_pack` 参数。请注意使用 Baichuan-13B-Chat 模型需要添加 `--template baichuan` 参数。
 
 [23/07/09] 我们开源了 [FastEdit](https://github.com/hiyouga/FastEdit)⚡🩹，一个简单易用的、能迅速编辑大模型事实记忆的工具包。如果您感兴趣请关注我们的 [FastEdit](https://github.com/hiyouga/FastEdit) 项目。
 
-[23/07/07] 现在我们支持了 **InternLM-7B** 模型的训练。请尝试使用 `--model_name_or_path internlm/internlm-7b` 参数。请注意使用 InternLM-chat 模型需要添加 `--prompt_template intern` 参数。
+[23/07/07] 现在我们支持了 **InternLM-7B** 模型的训练。请尝试使用 `--model_name_or_path internlm/internlm-7b` 参数。请注意使用 InternLM-chat 模型需要添加 `--template intern` 参数。
 
 [23/07/05] 现在我们支持了 **Falcon-7B/40B** 模型的训练。请尝试使用 `--model_name_or_path tiiuae/falcon-7b` 和 `--lora_target query_key_value` 参数。
 
@@ -153,6 +153,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --model_name_or_path path_to_your_model \
     --do_train \
     --dataset wiki_demo \
+    --template default \
     --finetuning_type lora \
     --output_dir path_to_pt_checkpoint \
     --overwrite_cache \
@@ -174,7 +175,8 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --stage sft \
     --model_name_or_path path_to_your_model \
     --do_train \
-    --dataset alpaca_gpt4_en \
+    --dataset alpaca_gpt4_zh \
+    --template default \
     --finetuning_type lora \
     --output_dir path_to_sft_checkpoint \
     --overwrite_cache \
@@ -196,7 +198,8 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --stage rm \
     --model_name_or_path path_to_your_model \
     --do_train \
-    --dataset comparison_gpt4_en \
+    --dataset comparison_gpt4_zh \
+    --template default \
     --finetuning_type lora \
     --resume_lora_training False \
     --checkpoint_dir path_to_sft_checkpoint \
@@ -219,7 +222,8 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --stage ppo \
     --model_name_or_path path_to_your_model \
     --do_train \
-    --dataset alpaca_gpt4_en \
+    --dataset alpaca_gpt4_zh \
+    --template default \
     --finetuning_type lora \
     --resume_lora_training False \
     --checkpoint_dir path_to_sft_checkpoint \
@@ -277,7 +281,8 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --stage sft \
     --model_name_or_path path_to_your_model \
     --do_eval \
-    --dataset alpaca_gpt4_en \
+    --dataset alpaca_gpt4_zh \
+    --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint \
     --output_dir path_to_eval_result \
@@ -295,7 +300,8 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --stage sft \
     --model_name_or_path path_to_your_model \
     --do_predict \
-    --dataset alpaca_gpt4_en \
+    --dataset alpaca_gpt4_zh \
+    --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint \
     --output_dir path_to_predict_result \
@@ -311,6 +317,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 ```bash
 python src/api_demo.py \
     --model_name_or_path path_to_your_model \
+    --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint
 ```
@@ -322,6 +329,7 @@ python src/api_demo.py \
 ```bash
 python src/cli_demo.py \
     --model_name_or_path path_to_your_model \
+    --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint
 ```
@@ -331,6 +339,7 @@ python src/cli_demo.py \
 ```bash
 python src/web_demo.py \
     --model_name_or_path path_to_your_model \
+    --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint
 ```
@@ -340,6 +349,7 @@ python src/web_demo.py \
 ```bash
 python src/export_model.py \
     --model_name_or_path path_to_your_model \
+    --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint \
     --output_dir path_to_export

@@ -1,7 +1,7 @@
 import os
 import torch
+from typing import TYPE_CHECKING
 
-from transformers.modeling_utils import PreTrainedModel
 from peft import (
     PeftModel,
     TaskType,
@@ -12,19 +12,22 @@ from peft.utils import CONFIG_NAME, WEIGHTS_NAME
 
 from llmtuner.extras.logging import get_logger
 from llmtuner.extras.save_and_load import load_trainable_params
-from llmtuner.hparams import ModelArguments, FinetuningArguments
+
+if TYPE_CHECKING:
+    from transformers.modeling_utils import PreTrainedModel
+    from llmtuner.hparams import ModelArguments, FinetuningArguments
 
 
 logger = get_logger(__name__)
 
 
 def init_adapter(
-    model: PreTrainedModel,
-    model_args: ModelArguments,
-    finetuning_args: FinetuningArguments,
+    model: "PreTrainedModel",
+    model_args: "ModelArguments",
+    finetuning_args: "FinetuningArguments",
     is_trainable: bool,
     is_mergeable: bool
-) -> PreTrainedModel:
+) -> "PreTrainedModel":
     r"""
     Initializes the adapters.
 
