@@ -54,7 +54,7 @@ class WebChatModel(ChatModel):
             checkpoint_dir=checkpoint_dir,
             finetuning_type=finetuning_type,
             quantization_bit=int(quantization_bit) if quantization_bit else None,
-            prompt_template=template,
+            template=template,
             source_prefix=source_prefix
         )
         super().__init__(*get_infer_args(args))

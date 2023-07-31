@@ -3,12 +3,14 @@ import json
 import torch
 import numpy as np
 import torch.nn as nn
-from typing import Any, Dict, List, Optional, Tuple, Union
-from transformers.trainer import PredictionOutput
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from llmtuner.extras.constants import IGNORE_INDEX
 from llmtuner.extras.logging import get_logger
 from llmtuner.tuner.core.trainer import PeftTrainer
+
+if TYPE_CHECKING:
+    from transformers.trainer import PredictionOutput
 
 
 logger = get_logger(__name__)
@@ -81,7 +83,7 @@ class Seq2SeqPeftTrainer(PeftTrainer):
 
     def save_predictions(
         self,
-        predict_results: PredictionOutput
+        predict_results: "PredictionOutput"
     ) -> None:
         r"""
         Saves model predictions to `output_dir`.

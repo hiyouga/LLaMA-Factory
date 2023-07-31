@@ -1,16 +1,13 @@
 import os
 import json
 import time
+from typing import TYPE_CHECKING
 from datetime import timedelta
 
-from transformers import (
-    TrainerCallback,
-    TrainerControl,
-    TrainerState,
-    TrainingArguments
-)
-from transformers.trainer_callback import TrainerControl, TrainerState
-from transformers.training_args import TrainingArguments
+from transformers import TrainerCallback
+
+if TYPE_CHECKING:
+    from transformers import TrainingArguments, TrainerState, TrainerControl
 
 
 class LogCallback(TrainerCallback):
@@ -20,13 +17,13 @@ class LogCallback(TrainerCallback):
         self.start_time = time.time()
         self.tracker = {}
 
-    def on_train_begin(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+    def on_train_begin(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
         Event called at the beginning of training.
         """
         self.start_time = time.time()
 
-    def on_step_begin(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+    def on_step_begin(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
         Event called at the beginning of a training step. If using gradient accumulation, one training step
         might take several inputs.
@@ -35,7 +32,7 @@ class LogCallback(TrainerCallback):
             control.should_epoch_stop = True
             control.should_training_stop = True
 
-    def on_substep_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+    def on_substep_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
         Event called at the end of an substep during gradient accumulation.
         """
@@ -43,7 +40,7 @@ class LogCallback(TrainerCallback):
             control.should_epoch_stop = True
             control.should_training_stop = True
 
-    def on_log(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs) -> None:
+    def on_log(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs) -> None:
         r"""
         Event called after logging the last logs.
         """
