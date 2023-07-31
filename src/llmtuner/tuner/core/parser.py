@@ -108,7 +108,11 @@ def get_train_args(
         logger.warning("`dev_ratio` is incompatible with `streaming`. Disabling development set.")
         data_args.dev_ratio = 0
 
-    assert not (training_args.max_steps == -1 and data_args.streaming), "Please specify `max_steps` in streaming mode."
+    assert not (training_args.max_steps == -1 and data_args.streaming), \
+        "Please specify `max_steps` in streaming mode."
+
+    assert training_args.evaluation_strategy == "no" or (not data_args.streaming), \
+        "Streaming mode does not support evaluation currently."
 
     training_args.optim = "adamw_torch" if training_args.optim == "adamw_hf" else training_args.optim # suppress warning
 
