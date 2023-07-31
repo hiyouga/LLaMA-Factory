@@ -2,20 +2,24 @@ import os
 import math
 import torch
 from tqdm import tqdm
-from typing import Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional
 
-from transformers import Seq2SeqTrainingArguments, TrainerState, TrainerControl
+from transformers import TrainerState, TrainerControl
 from transformers.modeling_utils import PreTrainedModel
 
 from trl import PPOTrainer
 from trl.core import LengthSampler
 
-from llmtuner.extras.callbacks import LogCallback
 from llmtuner.extras.logging import get_logger
 from llmtuner.extras.misc import AverageMeter, get_logits_processor
-from llmtuner.hparams import FinetuningArguments
+
 from llmtuner.tuner.core.trainer import PeftTrainer
 from llmtuner.tuner.ppo.utils import cast_layernorm_dtype, replace_model
+
+if TYPE_CHECKING:
+    from transformers import Seq2SeqTrainingArguments
+    from llmtuner.extras.callbacks import LogCallback
+    from llmtuner.hparams import FinetuningArguments
 
 
 logger = get_logger(__name__)
@@ -27,9 +31,9 @@ class PPOPeftTrainer(PPOTrainer, PeftTrainer):
     """
     def __init__(
         self,
-        training_args: Seq2SeqTrainingArguments,
-        finetuning_args: FinetuningArguments,
-        callbacks: List[LogCallback],
+        training_args: "Seq2SeqTrainingArguments",
+        finetuning_args: "FinetuningArguments",
+        callbacks: List["LogCallback"],
         **kwargs
     ):
         PPOTrainer.__init__(self, **kwargs)
