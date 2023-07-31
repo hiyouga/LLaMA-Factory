@@ -108,6 +108,8 @@ def get_train_args(
         logger.warning("`dev_ratio` is incompatible with `streaming`. Disabling development set.")
         data_args.dev_ratio = 0
 
+    assert not (training_args.max_steps == -1 and data_args.streaming), "Please specify `max_steps` in streaming mode."
+
     training_args.optim = "adamw_torch" if training_args.optim == "adamw_hf" else training_args.optim # suppress warning
 
     if model_args.quantization_bit is not None:
@@ -119,10 +121,10 @@ def get_train_args(
             model_args.compute_dtype = torch.float32
 
     # Log on each process the small summary:
-    logger.info(
-        f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}\n"
-        + f"  distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
-    )
+    logger.info("Process rank: {}, device: {}, n_gpu: {}\n  distributed training: {}, 16-bits training: {}".format(
+        training_args.local_rank, training_args.device, training_args.n_gpu,
+        bool(training_args.local_rank != -1), training_args.fp16
+    ))
     logger.info(f"Training/evaluation parameters {training_args}")
 
     # Set seed before initializing model.
