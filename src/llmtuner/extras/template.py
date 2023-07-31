@@ -11,37 +11,46 @@ class Template:
     use_history: bool
 
     def get_prompt(
-        self, query: str, history: Optional[List[Tuple[str, str]]] = None, prefix: Optional[str] = ""
+        self,
+        query: str,
+        history: Optional[List[Tuple[str, str]]] = None,
+        prefix: Optional[str] = "",
+        eos_token: Optional[str] = "</s>"
     ) -> str:
         r"""
         Returns a string containing prompt without response.
         """
-        return "".join(self._format_example(query, history, prefix))
+        return eos_token.join(map(lambda x: x[0] + x[1], self._format_example(query, history, prefix)))
 
     def get_dialog(
-        self, query: str, resp: str, history: Optional[List[Tuple[str, str]]] = None, prefix: Optional[str] = ""
-    ) -> List[str]:
+        self,
+        query: str,
+        resp: str,
+        history: Optional[List[Tuple[str, str]]] = None,
+        prefix: Optional[str] = ""
+    ) -> List[Tuple[str, str]]:
         r"""
-        Returns a list containing 2 * n elements where the 2k-th is a query and the (2k+1)-th is a response.
+        Returns a list containing prompt-response pairs.
         """
-        return self._format_example(query, history, prefix) + [resp]
+        result = self._format_example(query, history, prefix)
+        result[-1][-1] = resp
+        return result
 
     def _format_example(
-        self, query: str, history: Optional[List[Tuple[str, str]]] = None, prefix: Optional[str] = ""
-    ) -> List[str]:
+        self,
+        query: str,
+        history: Optional[List[Tuple[str, str]]] = None,
+        prefix: Optional[str] = ""
+    ) -> List[Tuple[str, str]]:
         prefix = prefix or self.prefix # use prefix if provided
         prefix = prefix + self.sep if prefix else "" # add separator for non-empty prefix
         history = history if (history and self.use_history) else []
-        history = history + [(query, "<dummy>")]
-        convs = []
-        for turn_idx, (user_query, bot_resp) in enumerate(history):
-            if turn_idx == 0:
-                convs.append(prefix + self.prompt.format(query=user_query))
-                convs.append(bot_resp)
-            else:
-                convs.append(self.sep + self.prompt.format(query=user_query))
-                convs.append(bot_resp)
-        return convs[:-1] # drop last
+        history = history + [(query, "")]
+        convs = [
+            [(self.sep if turn_idx else prefix) + self.prompt.format(query=query_i), resp_i]
+            for turn_idx, (query_i, resp_i) in enumerate(history)
+        ]
+        return convs
 
 
 templates: Dict[str, Template] = {}
@@ -103,7 +112,7 @@ register_template(
            "explain why instead of answering something not correct. "
            "If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n",
     prompt=" [INST] {query} [/INST] ",
-    sep="</s>",
+    sep="",
     use_history=True
 )
 
@@ -131,7 +140,7 @@ register_template(
     prefix="A chat between a curious user and an artificial intelligence assistant. "
            "The assistant gives helpful, detailed, and polite answers to the user's questions.",
     prompt="USER: {query} ASSISTANT: ",
-    sep="</s>",
+    sep="",
     use_history=True
 )
 
@@ -216,7 +225,7 @@ register_template(
     name="baichuan",
     prefix="",
     prompt="<reserved_102>{query}<reserved_103>",
-    sep="</s>",
+    sep="",
     use_history=True
 )
 

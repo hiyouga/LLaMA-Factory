@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 @dataclass
 class GeneralArguments:
     """
-    Arguments pertaining to which techniques we are going to fine-tuning with.
+    Arguments pertaining to which stage we are going to perform.
     """
     stage: Optional[Literal["pt", "sft", "rm", "ppo"]] = field(
         default="sft",

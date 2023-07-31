@@ -1,13 +1,15 @@
 import numpy as np
 from dataclasses import dataclass
-from typing import Dict, Sequence, Tuple, Union
-from transformers.tokenization_utils import PreTrainedTokenizer
+from typing import TYPE_CHECKING, Dict, Sequence, Tuple, Union
 
 import jieba
 from rouge_chinese import Rouge
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 
 from llmtuner.extras.constants import IGNORE_INDEX
+
+if TYPE_CHECKING:
+    from transformers.tokenization_utils import PreTrainedTokenizer
 
 
 @dataclass
@@ -16,7 +18,7 @@ class ComputeMetrics:
     Wraps the tokenizer into metric functions, used in Seq2SeqPeftTrainer.
     """
 
-    tokenizer: PreTrainedTokenizer
+    tokenizer: "PreTrainedTokenizer"
 
     def __call__(self, eval_preds: Sequence[Union[np.ndarray, Tuple[np.ndarray]]]) -> Dict[str, float]:
         r"""

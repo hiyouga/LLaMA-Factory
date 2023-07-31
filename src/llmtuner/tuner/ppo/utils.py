@@ -1,11 +1,13 @@
 import torch
-from typing import Dict, List, Literal, Optional, Tuple
-from trl import AutoModelForCausalLMWithValueHead
+from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Tuple
 
 from llmtuner.extras.constants import LAYERNORM_NAMES
 
+if TYPE_CHECKING:
+    from trl import AutoModelForCausalLMWithValueHead
 
-def replace_model(model: AutoModelForCausalLMWithValueHead, target: Literal["default", "reward"]) -> None:
+
+def replace_model(model: "AutoModelForCausalLMWithValueHead", target: Literal["default", "reward"]) -> None:
     if target == "reward": # save default head temporarily
         valuehead_state_dict = model.v_head.state_dict()
         setattr(model, "default_head_weight", valuehead_state_dict["summary.weight"])
@@ -19,10 +21,10 @@ def replace_model(model: AutoModelForCausalLMWithValueHead, target: Literal["def
 
 
 def cast_layernorm_dtype(
-    model: AutoModelForCausalLMWithValueHead,
+    model: "AutoModelForCausalLMWithValueHead",
     layer_norm_names: List[str] = LAYERNORM_NAMES,
     layer_norm_params: Optional[Dict[str, torch.Tensor]] = None
-) -> Tuple[AutoModelForCausalLMWithValueHead, Dict[str, torch.Tensor]]:
+) -> Tuple["AutoModelForCausalLMWithValueHead", Dict[str, torch.Tensor]]:
 
     layer_norm_state_dict = {}
 
