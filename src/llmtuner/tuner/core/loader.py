@@ -18,10 +18,11 @@ from trl import AutoModelForCausalLMWithValueHead
 from llmtuner.extras.logging import get_logger
 from llmtuner.extras.misc import count_parameters, prepare_model_for_training
 from llmtuner.extras.save_and_load import load_valuehead_params
+from llmtuner.hparams import FinetuningArguments
 from llmtuner.tuner.core.adapter import init_adapter
 
 if TYPE_CHECKING:
-    from llmtuner.hparams import ModelArguments, FinetuningArguments
+    from llmtuner.hparams import ModelArguments
 
 
 logger = get_logger(__name__)
