@@ -1,25 +1,28 @@
 # Inspired by: https://github.com/huggingface/transformers/blob/v4.29.2/examples/pytorch/summarization/run_summarization.py
 
-from typing import Optional, List
-from transformers import Seq2SeqTrainingArguments, DataCollatorForSeq2Seq, TrainerCallback
+from typing import TYPE_CHECKING, Optional, List
+from transformers import DataCollatorForSeq2Seq
 
 from llmtuner.dsets import get_dataset, preprocess_dataset, split_dataset
 from llmtuner.extras.callbacks import LogCallback
 from llmtuner.extras.constants import IGNORE_INDEX
 from llmtuner.extras.misc import get_logits_processor
 from llmtuner.extras.ploting import plot_loss
-from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
 from llmtuner.tuner.core import load_model_and_tokenizer
 from llmtuner.tuner.sft.metric import ComputeMetrics
 from llmtuner.tuner.sft.trainer import Seq2SeqPeftTrainer
 
+if TYPE_CHECKING:
+    from transformers import Seq2SeqTrainingArguments, TrainerCallback
+    from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
+
 
 def run_sft(
-    model_args: ModelArguments,
-    data_args: DataArguments,
-    training_args: Seq2SeqTrainingArguments,
-    finetuning_args: FinetuningArguments,
-    callbacks: Optional[List[TrainerCallback]] = [LogCallback()]
+    model_args: "ModelArguments",
+    data_args: "DataArguments",
+    training_args: "Seq2SeqTrainingArguments",
+    finetuning_args: "FinetuningArguments",
+    callbacks: Optional[List["TrainerCallback"]] = [LogCallback()]
 ):
     dataset = get_dataset(model_args, data_args)
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, stage="sft")

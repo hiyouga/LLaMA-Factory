@@ -12,15 +12,15 @@
 
 ## Changelog
 
-[23/07/19] Now we support training the **LLaMA-2** models in this repo. Try `--model_name_or_path meta-llama/Llama-2-7b-hf` argument to use the LLaMA-2 model. Remember to use `--prompt_template llama2` argument when you are using the LLaMA-2-chat model.
+[23/07/19] Now we support training the **LLaMA-2** models in this repo. Try `--model_name_or_path meta-llama/Llama-2-7b-hf` argument to use the LLaMA-2 model. Remember to use `--template llama2` argument when you are using the LLaMA-2-chat model.
 
 [23/07/18] Now we develop an all-in-one Web UI for training, evaluation and inference. Try `train_web.py` to fine-tune models in your Web browser. Thank [@KanadeSiina](https://github.com/KanadeSiina) and [@codemayq](https://github.com/codemayq) for their efforts in the development.
 
-[23/07/11] Now we support training the **Baichuan-13B** model in this repo. Try `--model_name_or_path baichuan-inc/Baichuan-13B-Base` and `--lora_target W_pack` arguments to train the Baichuan-13B model. Remember to use `--prompt_template baichuan` argument when you are using the Baichuan-13B-Chat model.
+[23/07/11] Now we support training the **Baichuan-13B** model in this repo. Try `--model_name_or_path baichuan-inc/Baichuan-13B-Base` and `--lora_target W_pack` arguments to train the Baichuan-13B model. Remember to use `--template baichuan` argument when you are using the Baichuan-13B-Chat model.
 
 [23/07/09] Now we release [FastEdit](https://github.com/hiyouga/FastEdit)⚡🩹, an easy-to-use package for editing the factual knowledge of large language models efficiently. Please follow [FastEdit](https://github.com/hiyouga/FastEdit) if you are interested.
 
-[23/07/07] Now we support training the **InternLM-7B** model in this repo. Try `--model_name_or_path internlm/internlm-7b` argument to use the InternLM model. Remember to use `--prompt_template intern` argument when you are using the InternLM-chat model.
+[23/07/07] Now we support training the **InternLM-7B** model in this repo. Try `--model_name_or_path internlm/internlm-7b` argument to use the InternLM model. Remember to use `--template intern` argument when you are using the InternLM-chat model.
 
 [23/07/05] Now we support training the **Falcon-7B/40B** models in this repo. Try `--model_name_or_path tiiuae/falcon-7b` and `--lora_target query_key_value` arguments to use the Falcon model.
 
@@ -153,6 +153,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --model_name_or_path path_to_your_model \
     --do_train \
     --dataset wiki_demo \
+    --template default \
     --finetuning_type lora \
     --output_dir path_to_pt_checkpoint \
     --overwrite_cache \
@@ -175,6 +176,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --model_name_or_path path_to_your_model \
     --do_train \
     --dataset alpaca_gpt4_en \
+    --template default \
     --finetuning_type lora \
     --output_dir path_to_sft_checkpoint \
     --overwrite_cache \
@@ -197,6 +199,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --model_name_or_path path_to_your_model \
     --do_train \
     --dataset comparison_gpt4_en \
+    --template default \
     --finetuning_type lora \
     --resume_lora_training False \
     --checkpoint_dir path_to_sft_checkpoint \
@@ -220,6 +223,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --model_name_or_path path_to_your_model \
     --do_train \
     --dataset alpaca_gpt4_en \
+    --template default \
     --finetuning_type lora \
     --resume_lora_training False \
     --checkpoint_dir path_to_sft_checkpoint \
@@ -278,6 +282,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --model_name_or_path path_to_your_model \
     --do_eval \
     --dataset alpaca_gpt4_en \
+    --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint \
     --output_dir path_to_eval_result \
@@ -296,6 +301,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --model_name_or_path path_to_your_model \
     --do_predict \
     --dataset alpaca_gpt4_en \
+    --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint \
     --output_dir path_to_predict_result \
@@ -311,6 +317,7 @@ If you want to predict the samples with empty responses, please kindly fill the 
 ```bash
 python src/api_demo.py \
     --model_name_or_path path_to_your_model \
+    --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint
 ```
@@ -322,6 +329,7 @@ Visit `http://localhost:8000/docs` for API documentation.
 ```bash
 python src/cli_demo.py \
     --model_name_or_path path_to_your_model \
+    --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint
 ```
@@ -331,6 +339,7 @@ python src/cli_demo.py \
 ```bash
 python src/web_demo.py \
     --model_name_or_path path_to_your_model \
+    --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint
 ```
@@ -340,6 +349,7 @@ python src/web_demo.py \
 ```bash
 python src/export_model.py \
     --model_name_or_path path_to_your_model \
+    --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint \
     --output_dir path_to_export

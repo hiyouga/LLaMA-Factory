@@ -2,25 +2,27 @@
 # https://github.com/lvwerra/trl/blob/main/examples/summarization/scripts/reward_summarization.py
 # https://github.com/CarperAI/trlx/blob/main/examples/summarize_rlhf/reward_model/train_reward_model_gptj.py
 
-from typing import Optional, List
-from transformers import Seq2SeqTrainingArguments, TrainerCallback
+from typing import TYPE_CHECKING, Optional, List
 
 from llmtuner.dsets import get_dataset, preprocess_dataset, split_dataset
 from llmtuner.extras.callbacks import LogCallback
 from llmtuner.extras.ploting import plot_loss
-from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
 from llmtuner.tuner.core import load_model_and_tokenizer
 from llmtuner.tuner.rm.metric import compute_accuracy
 from llmtuner.tuner.rm.collator import PairwiseDataCollatorWithPadding
 from llmtuner.tuner.rm.trainer import PairwisePeftTrainer
 
+if TYPE_CHECKING:
+    from transformers import Seq2SeqTrainingArguments, TrainerCallback
+    from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
+
 
 def run_rm(
-    model_args: ModelArguments,
-    data_args: DataArguments,
-    training_args: Seq2SeqTrainingArguments,
-    finetuning_args: FinetuningArguments,
-    callbacks: Optional[List[TrainerCallback]] = [LogCallback()]
+    model_args: "ModelArguments",
+    data_args: "DataArguments",
+    training_args: "Seq2SeqTrainingArguments",
+    finetuning_args: "FinetuningArguments",
+    callbacks: Optional[List["TrainerCallback"]] = [LogCallback()]
 ):
     dataset = get_dataset(model_args, data_args)
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, stage="rm")

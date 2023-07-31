@@ -2,26 +2,30 @@
 # https://github.com/lvwerra/trl/blob/main/examples/sentiment/scripts/gpt-neox-20b_peft/gpt-neo-20b_sentiment_peft.py
 
 import math
+from typing import TYPE_CHECKING
 from trl import PPOConfig
 from torch.optim import AdamW
 from typing import Optional, List
-from transformers import DataCollatorForSeq2Seq, Seq2SeqTrainingArguments, TrainerCallback
+from transformers import DataCollatorForSeq2Seq
 from transformers.optimization import get_scheduler
 
 from llmtuner.dsets import get_dataset, preprocess_dataset
 from llmtuner.extras.callbacks import LogCallback
 from llmtuner.extras.ploting import plot_loss
-from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
 from llmtuner.tuner.core import load_model_and_tokenizer
 from llmtuner.tuner.ppo.trainer import PPOPeftTrainer
 
+if TYPE_CHECKING:
+    from transformers import Seq2SeqTrainingArguments, TrainerCallback
+    from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
+
 
 def run_ppo(
-    model_args: ModelArguments,
-    data_args: DataArguments,
-    training_args: Seq2SeqTrainingArguments,
-    finetuning_args: FinetuningArguments,
-    callbacks: Optional[List[TrainerCallback]] = [LogCallback()]
+    model_args: "ModelArguments",
+    data_args: "DataArguments",
+    training_args: "Seq2SeqTrainingArguments",
+    finetuning_args: "FinetuningArguments",
+    callbacks: Optional[List["TrainerCallback"]] = [LogCallback()]
 ):
     dataset = get_dataset(model_args, data_args)
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, stage="ppo")

@@ -1,6 +1,6 @@
 import os
 import torch
-from typing import Dict, Optional
+from typing import Dict
 
 from transformers.trainer import WEIGHTS_NAME, WEIGHTS_INDEX_NAME
 from transformers.modeling_utils import load_sharded_checkpoint
@@ -12,12 +12,12 @@ from llmtuner.extras.logging import get_logger
 logger = get_logger(__name__)
 
 
-def get_state_dict(model: torch.nn.Module, trainable_only: Optional[bool] = True) -> Dict[str, torch.Tensor]:
-    state_dict = model.state_dict()
+def get_state_dict(model: torch.nn.Module) -> Dict[str, torch.Tensor]:
+    state_dict: Dict[str, torch.Tensor] = model.state_dict()
     filtered_state_dict = {}
 
     for k, v in model.named_parameters():
-        if (not trainable_only) or v.requires_grad:
+        if v.requires_grad:
             filtered_state_dict[k] = state_dict[k].cpu().clone().detach()
 
     return filtered_state_dict

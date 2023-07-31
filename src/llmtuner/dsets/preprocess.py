@@ -1,65 +1,63 @@
-from typing import Literal
+from typing import TYPE_CHECKING, Any, Dict, Generator, List, Literal
 from itertools import chain
-from transformers import Seq2SeqTrainingArguments
-from transformers.tokenization_utils import PreTrainedTokenizer
-
-from datasets import Dataset
 
 from llmtuner.extras.constants import IGNORE_INDEX
 from llmtuner.extras.template import get_template
-from llmtuner.hparams import DataArguments
+
+if TYPE_CHECKING:
+    from datasets import Dataset
+    from transformers import Seq2SeqTrainingArguments
+    from transformers.tokenization_utils import PreTrainedTokenizer
+    from llmtuner.hparams import DataArguments
 
 
 def preprocess_dataset(
-    dataset: Dataset,
-    tokenizer: PreTrainedTokenizer,
-    data_args: DataArguments,
-    training_args: Seq2SeqTrainingArguments,
+    dataset: "Dataset",
+    tokenizer: "PreTrainedTokenizer",
+    data_args: "DataArguments",
+    training_args: "Seq2SeqTrainingArguments",
     stage: Literal["pt", "sft", "rm", "ppo"]
-) -> Dataset:
+) -> "Dataset":
+    column_names = list(dataset.column_names or [])
+    template = get_template(data_args.template)
 
-    column_names = list(dataset.column_names)
-    prompt_template = get_template(data_args.prompt_template)
-
-    # support question with a single answer or multiple answers
-    def get_dialog(examples):
+    def construct_example(examples: Dict[str, List[Any]]) -> Generator[Any, None, None]:
         for i in range(len(examples["prompt"])):
-            if examples["prompt"][i] and examples["response"][i]:
-                query, answer = examples["prompt"][i], examples["response"][i]
-                query = query + "\n" + examples["query"][i] if examples["query"][i] else query
-                prefix = examples["prefix"][i] if examples["prefix"][i] else ""
-                dialog = prompt_template.get_dialog(query, answer, examples["history"][i], prefix)
-                yield dialog
+            query, response = examples["prompt"][i], examples["response"][i]
+            query = query + "\n" + examples["query"][i] if "query" in examples and examples["query"][i] else query
+            history = history if "history" in examples and examples["history"][i] else []
+            prefix = prefix if "prefix" in examples and examples["prefix"][i] else ""
+            yield query, response, history, prefix
 
-    def preprocess_pretrain_dataset(examples):
+    def preprocess_pretrain_dataset(examples: Dict[str, List[Any]]) -> Dict[str, Any]:
         # build grouped texts with format `<bos> X1 X2 X3 ...` (without <eos>)
-        text_ids = tokenizer(examples["prompt"], add_special_tokens=False)["input_ids"]
-        concatenated_ids = list(chain(*text_ids))
-        total_length = len(concatenated_ids)
-        block_size = data_args.max_source_length - 1
+        tokenized_examples = tokenizer(examples["prompt"], add_special_tokens=False)
+        concatenated_examples = {k: list(chain(*tokenized_examples[k])) for k in tokenized_examples.keys()}
+        total_length = len(concatenated_examples[list(concatenated_examples.keys())[0]])
+        block_size = data_args.max_source_length
         # we drop the small remainder, and if the total_length < block_size, we exclude this batch
         total_length = (total_length // block_size) * block_size
         # split by chunks of max_source_length
-        result = [[tokenizer.bos_token_id] + concatenated_ids[i: i + block_size]
-                  for i in range(0, total_length, block_size)]
-        return {
-            "input_ids": result,
-            "labels": result.copy()
+        result = {
+            k: [t[i: i + block_size] for i in range(0, total_length, block_size)]
+            for k, t in concatenated_examples.items()
         }
+        result["labels"] = result["input_ids"].copy()
+        return result
 
-    def preprocess_supervised_dataset(examples):
+    def preprocess_supervised_dataset(examples: Dict[str, List[Any]]) -> Dict[str, Any]:
         # build inputs with format `<bos> X Y <eos>` and labels with format `<ignore> ... <ignore> Y <eos>`
         # for input with history, we build multiple input-label pairs just like:
         # https://github.com/lm-sys/FastChat/blob/f17c092f64840fa6354ed52789dccb2daa793d0b/fastchat/train/train.py#L112
-        model_inputs = {"input_ids": [], "labels": []}
+        model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
         max_length = data_args.max_source_length + data_args.max_target_length
 
-        for dialog in get_dialog(examples):
+        for query, response, history, prefix in construct_example(examples):
             input_ids, labels = [], []
 
-            for i in range(len(dialog) // 2):
-                source_ids = tokenizer.encode(text=dialog[2*i], add_special_tokens=(i == 0))
-                target_ids = tokenizer.encode(text=dialog[2*i+1], add_special_tokens=False)
+            for i, (query_i, resp_i) in enumerate(template.get_dialog(query, response, history, prefix)):
+                source_ids = tokenizer.encode(text=query_i, add_special_tokens=(i == 0))
+                target_ids = tokenizer.encode(text=resp_i, add_special_tokens=False)
 
                 if len(source_ids) > data_args.max_source_length:
                     source_ids = source_ids[:data_args.max_source_length]
@@ -73,19 +71,20 @@ def preprocess_dataset(
                 labels += [IGNORE_INDEX] * len(source_ids) + target_ids + [tokenizer.eos_token_id]
 
             model_inputs["input_ids"].append(input_ids)
+            model_inputs["attention_mask"].append([1] * len(input_ids))
             model_inputs["labels"].append(labels)
 
         return model_inputs
 
-    def preprocess_unsupervised_dataset(examples):
+    def preprocess_unsupervised_dataset(examples: Dict[str, List[Any]]) -> Dict[str, Any]:
         # build inputs with format `<bos> X` and labels with format `<bos> Y`
-        model_inputs = {"input_ids": [], "labels": []}
+        model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
 
-        for dialog in get_dialog(examples):
-            prompt, answer = "".join(dialog[:-1]), dialog[-1]
+        for query, response, history, prefix in construct_example(examples):
+            prompt = template.get_prompt(query, history, prefix, tokenizer.eos_token)
 
             source_ids = tokenizer.encode(text=prompt, add_special_tokens=True)
-            target_ids = tokenizer.encode(text=answer, add_special_tokens=True)
+            target_ids = tokenizer.encode(text=response, add_special_tokens=True)
 
             if len(source_ids) > data_args.max_source_length:
                 source_ids = source_ids[:data_args.max_source_length]
@@ -93,6 +92,7 @@ def preprocess_dataset(
                 target_ids = target_ids[:data_args.max_target_length]
 
             model_inputs["input_ids"].append(source_ids)
+            model_inputs["attention_mask"].append([1] * len(source_ids))
             model_inputs["labels"].append(target_ids)
 
         return model_inputs
@@ -100,12 +100,12 @@ def preprocess_dataset(
     def preprocess_pairwise_dataset(examples):
         # build input pairs with format `<bos> X Y1 <eos>` and `<bos> X Y2 <eos>`
         model_inputs = {"accept_ids": [], "reject_ids": []}
-        for dialog in get_dialog(examples):
-            prompt, answer = "".join(dialog[:-1]), dialog[-1]
+        for query, response, history, prefix in construct_example(examples):
+            prompt = template.get_prompt(query, history, prefix, tokenizer.eos_token)
 
             source_ids = tokenizer.encode(text=prompt, add_special_tokens=True)
-            accept_ids = tokenizer.encode(text=answer[0], add_special_tokens=False)
-            reject_ids = tokenizer.encode(text=answer[1], add_special_tokens=False)
+            accept_ids = tokenizer.encode(text=response[0], add_special_tokens=False)
+            reject_ids = tokenizer.encode(text=response[1], add_special_tokens=False)
 
             if len(source_ids) > data_args.max_source_length:
                 source_ids = source_ids[:data_args.max_source_length]
@@ -141,34 +141,44 @@ def preprocess_dataset(
         print("inputs:\n{}".format(tokenizer.decode(example["input_ids"], skip_special_tokens=False)))
 
     if stage == "pt":
+        dataset = dataset.filter(lambda example: example["prompt"])
         preprocess_function = preprocess_pretrain_dataset
-    elif stage == "sft":
-        if not training_args.predict_with_generate:
-            preprocess_function = preprocess_supervised_dataset
-        else:
-            preprocess_function = preprocess_unsupervised_dataset
+    elif stage == "sft" and not training_args.predict_with_generate:
+        dataset = dataset.filter(lambda example: example["prompt"] and example["response"])
+        preprocess_function = preprocess_supervised_dataset
     elif stage == "rm":
+        dataset = dataset.filter(lambda example: example["prompt"] and len(example["response"]) > 1)
         preprocess_function = preprocess_pairwise_dataset
-    elif stage == "ppo":
+    else:
+        dataset = dataset.filter(lambda example: example["prompt"])
         preprocess_function = preprocess_unsupervised_dataset
 
     with training_args.main_process_first(desc="dataset map pre-processing"):
+        kwargs = {}
+        if not data_args.streaming:
+            kwargs = dict(
+                num_proc=data_args.preprocessing_num_workers,
+                load_from_cache_file=not data_args.overwrite_cache,
+                desc="Running tokenizer on dataset"
+            )
+
         dataset = dataset.map(
             preprocess_function,
-            batched=True,
-            num_proc=data_args.preprocessing_num_workers,
+            batched=True,            
             remove_columns=column_names,
-            load_from_cache_file=not data_args.overwrite_cache,
-            desc="Running tokenizer on dataset"
+            **kwargs
         )
 
+        if data_args.streaming:
+            dataset = dataset.shuffle(buffer_size=data_args.buffer_size)
+
         if stage == "pt":
-            print_unsupervised_dataset_example(dataset[0])
+            print_unsupervised_dataset_example(next(iter(dataset)))
         elif stage == "sft":
-            print_supervised_dataset_example(dataset[0])
+            print_supervised_dataset_example(next(iter(dataset)))
         elif stage == "rm":
-            print_pairwise_dataset_example(dataset[0])
+            print_pairwise_dataset_example(next(iter(dataset)))
         elif stage == "ppo":
-            print_unsupervised_dataset_example(dataset[0])
+            print_unsupervised_dataset_example(next(iter(dataset)))
 
         return dataset
