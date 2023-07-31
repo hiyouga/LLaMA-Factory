@@ -68,7 +68,7 @@ class PeftTrainer(Seq2SeqTrainer):
         else:
             torch.save(state_dict, os.path.join(output_dir, WEIGHTS_NAME))
 
-        if self.tokenizer is not None:
+        if self.finetuning_args.finetuning_type == "full" and self.tokenizer is not None:
             self.tokenizer.save_pretrained(output_dir)
 
         with open(os.path.join(output_dir, TRAINING_ARGS_NAME), "w", encoding="utf-8") as f:
