@@ -145,10 +145,10 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 ### 浏览器一键微调/测试
 
 ```bash
-python src/train_web.py
+CUDA_VISIBLE_DEVICES=0 python src/train_web.py
 ```
 
-目前网页 UI 仅支持单卡训练。
+目前网页 UI 仅支持**单卡训练**。
 
 ### 二次预训练
 
