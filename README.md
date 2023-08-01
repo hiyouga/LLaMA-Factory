@@ -145,10 +145,10 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 ### All-in-one Web UI
 
 ```bash
-python src/train_web.py
+CUDA_VISIBLE_DEVICES=0 python src/train_web.py
 ```
 
-Currently the web UI only supports training on a single GPU.
+Currently the web UI only supports training on **a single GPU**.
 
 ### (Continually) Pre-Training
 
