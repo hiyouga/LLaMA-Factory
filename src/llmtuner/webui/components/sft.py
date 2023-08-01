@@ -58,7 +58,7 @@ def create_sft_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict[
         stop_btn = gr.Button()
 
     with gr.Row():
-        with gr.Column(scale=4):
+        with gr.Column(scale=3):
             output_dir = gr.Textbox()
 
             with gr.Box():
