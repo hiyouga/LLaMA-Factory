@@ -1,11 +1,13 @@
-from typing import Dict
+from typing import TYPE_CHECKING, Dict
 import gradio as gr
-from gradio.components import Component
 
 from llmtuner.webui.utils import export_model
 
+if TYPE_CHECKING:
+    from gradio.components import Component
 
-def create_export_tab(top_elems: Dict[str, Component]) -> Dict[str, Component]:
+
+def create_export_tab(top_elems: Dict[str, "Component"]) -> Dict[str, "Component"]:
     with gr.Row():
         save_dir = gr.Textbox()
         max_shard_size = gr.Slider(value=10, minimum=1, maximum=100)
