@@ -128,6 +128,7 @@ huggingface-cli login
 ### 环境搭建（可跳过）
 
 ```bash
+git lfs install
 git clone https://github.com/hiyouga/LLaMA-Efficient-Tuning.git
 conda create -n llama_etuning python=3.10
 conda activate llama_etuning
