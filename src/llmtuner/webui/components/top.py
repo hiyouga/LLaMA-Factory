@@ -1,15 +1,17 @@
-from typing import Dict
+from typing import TYPE_CHECKING, Dict
 
 import gradio as gr
-from gradio.components import Component
 
 from llmtuner.extras.constants import METHODS, SUPPORTED_MODELS
 from llmtuner.extras.template import templates
 from llmtuner.webui.common import list_checkpoint, get_model_path, save_config
 from llmtuner.webui.utils import can_quantize
 
+if TYPE_CHECKING:
+    from gradio.components import Component
 
-def create_top() -> Dict[str, Component]:
+
+def create_top() -> Dict[str, "Component"]:
     available_models = list(SUPPORTED_MODELS.keys()) + ["Custom"]
 
     with gr.Row():
