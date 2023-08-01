@@ -1,10 +1,12 @@
 import gradio as gr
-from gradio.blocks import Block
-from gradio.components import Component
-from typing import Tuple
+from typing import TYPE_CHECKING, Tuple
+
+if TYPE_CHECKING:
+    from gradio.blocks import Block
+    from gradio.components import Component
 
 
-def create_preview_box() -> Tuple[Block, Component, Component, Component]:
+def create_preview_box() -> Tuple["Block", "Component", "Component", "Component"]:
     with gr.Box(visible=False, elem_classes="modal-box") as preview_box:
         with gr.Row():
             preview_count = gr.Number(interactive=False)

@@ -1,13 +1,15 @@
-from typing import Dict
+from typing import TYPE_CHECKING, Dict
 
 import gradio as gr
-from gradio.components import Component
 
 from llmtuner.webui.chat import WebChatModel
 from llmtuner.webui.components.chatbot import create_chat_box
 
+if TYPE_CHECKING:
+    from gradio.components import Component
 
-def create_infer_tab(top_elems: Dict[str, Component]) -> Dict[str, Component]:
+
+def create_infer_tab(top_elems: Dict[str, "Component"]) -> Dict[str, "Component"]:
     with gr.Row():
         load_btn = gr.Button()
         unload_btn = gr.Button()
