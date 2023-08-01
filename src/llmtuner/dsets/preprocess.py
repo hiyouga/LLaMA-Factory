@@ -25,8 +25,8 @@ def preprocess_dataset(
         for i in range(len(examples["prompt"])):
             query, response = examples["prompt"][i], examples["response"][i]
             query = query + "\n" + examples["query"][i] if "query" in examples and examples["query"][i] else query
-            history = history if "history" in examples and examples["history"][i] else []
-            prefix = prefix if "prefix" in examples and examples["prefix"][i] else ""
+            history = examples["history"][i] if "history" in examples else None
+            prefix = examples["prefix"][i] if "prefix" in examples else None
             yield query, response, history, prefix
 
     def preprocess_pretrain_dataset(examples: Dict[str, List[Any]]) -> Dict[str, Any]:
