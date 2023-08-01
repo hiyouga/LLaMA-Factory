@@ -128,6 +128,7 @@ Note: please update `data/dataset_info.json` to use your custom dataset. About t
 ### Dependence Installation (optional)
 
 ```bash
+git lfs install
 git clone https://github.com/hiyouga/LLaMA-Efficient-Tuning.git
 conda create -n llama_etuning python=3.10
 conda activate llama_etuning

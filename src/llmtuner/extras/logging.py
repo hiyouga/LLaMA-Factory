@@ -16,8 +16,16 @@ class LoggerHandler(logging.Handler):
         self.log += "\n\n"
 
 
-def get_logger(name: str) -> logging.Logger:
+def reset_logging():
+    r"""
+    Removes basic config of root logger
+    """
+    root = logging.getLogger()
+    list(map(root.removeHandler, root.handlers))
+    list(map(root.removeFilter, root.filters))
 
+
+def get_logger(name: str) -> logging.Logger:
     formatter = logging.Formatter(
         fmt="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
         datefmt="%m/%d/%Y %H:%M:%S"
