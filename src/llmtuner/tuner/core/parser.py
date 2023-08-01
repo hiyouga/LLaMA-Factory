@@ -85,6 +85,9 @@ def get_train_args(
     assert training_args.evaluation_strategy == "no" or (not data_args.streaming), \
         "Streaming mode does not support evaluation currently."
 
+    assert not (general_args.stage == "ppo" and data_args.streaming), \
+        "Streaming mode does not suppport PPO training currently."
+
     if model_args.checkpoint_dir is not None:
         if finetuning_args.finetuning_type != "lora":
             assert len(model_args.checkpoint_dir) == 1, "Only LoRA tuning accepts multiple checkpoints."
@@ -107,8 +110,8 @@ def get_train_args(
         training_args.ddp_find_unused_parameters = False
 
     if data_args.max_samples is not None and data_args.streaming:
-        logger.warning("`max_samples` is incompatible with `streaming`. Disabling streaming mode.")
-        data_args.streaming = False
+        logger.warning("`max_samples` is incompatible with `streaming`. Disabling max_samples.")
+        data_args.max_samples = None
 
     if data_args.dev_ratio > 1e-6 and data_args.streaming:
         logger.warning("`dev_ratio` is incompatible with `streaming`. Disabling development set.")

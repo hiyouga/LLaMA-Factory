@@ -47,20 +47,19 @@ class PeftTrainer(Seq2SeqTrainer):
         logger.info(f"Saving model checkpoint to {output_dir}")
 
         model = unwrap_model(self.model)
-        state_dict = state_dict or get_state_dict(model)
 
         if isinstance(model, PreTrainedModelWrapper):
-            model_params, v_head_params = {}, {}
-            for name in state_dict.keys():
-                if name.startswith("pretrained_model."):
-                    model_params[name.replace("pretrained_model.", "")] = state_dict[name]
-                elif name.startswith("v_head."):
-                    v_head_params[name.replace("v_head.", "")] = state_dict[name]
+            # Custom state dict: https://github.com/lvwerra/trl/blob/v0.4.7/trl/models/modeling_value_head.py#L200
+            model_state_dict = state_dict or model.state_dict()
+            v_head_state_dict = {
+                name.replace("v_head.", ""): model_state_dict[name].cpu().clone().detach()
+                for name in model_state_dict.keys() if name.startswith("v_head.")
+            }
 
-            torch.save(v_head_params, os.path.join(output_dir, VALUE_HEAD_FILE_NAME))
-            state_dict = model_params
+            torch.save(v_head_state_dict, os.path.join(output_dir, VALUE_HEAD_FILE_NAME))
             model = model.pretrained_model
 
+        state_dict = state_dict or get_state_dict(model)
         if isinstance(model, (PeftModel, PreTrainedModel)):
             model.config.use_cache = True
             model.save_pretrained(output_dir, state_dict=state_dict, safe_serialization=self.args.save_safetensors)

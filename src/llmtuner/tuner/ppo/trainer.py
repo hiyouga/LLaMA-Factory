@@ -11,7 +11,7 @@ from trl import PPOTrainer
 from trl.core import LengthSampler
 
 from llmtuner.extras.logging import get_logger
-from llmtuner.extras.misc import AverageMeter, get_logits_processor
+from llmtuner.extras.misc import AverageMeter, count_parameters, get_logits_processor
 
 from llmtuner.tuner.core.trainer import PeftTrainer
 from llmtuner.tuner.ppo.utils import cast_layernorm_dtype, replace_model
@@ -29,6 +29,7 @@ class PPOPeftTrainer(PPOTrainer, PeftTrainer):
     r"""
     Inherits PPOTrainer.
     """
+
     def __init__(
         self,
         training_args: "Seq2SeqTrainingArguments",
@@ -70,7 +71,7 @@ class PPOPeftTrainer(PPOTrainer, PeftTrainer):
             logger.info(f"  Total train batch size (w. parallel, distributed & accumulation) = {total_train_batch_size}")
             logger.info(f"  Gradient Accumulation steps = {self.args.gradient_accumulation_steps}")
             logger.info(f"  Total optimization steps = {max_steps}")
-            logger.info(f"  Number of trainable parameters = {sum(p.numel() for p in self.model.parameters() if p.requires_grad)}")
+            logger.info(f"  Number of trainable parameters = {count_parameters(self.model)[0]}")
 
         # Keyword arguments for `model.generate`
         gen_kwargs = {
