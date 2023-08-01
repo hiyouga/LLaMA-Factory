@@ -32,9 +32,9 @@ def _parse_args(parser: HfArgumentParser, args: Optional[Dict[str, Any]] = None)
 
 def parse_train_args(
     args: Optional[Dict[str, Any]] = None
-) -> Tuple[GeneralArguments, ModelArguments, DataArguments, Seq2SeqTrainingArguments, FinetuningArguments]:
+) -> Tuple[ModelArguments, DataArguments, Seq2SeqTrainingArguments, FinetuningArguments, GeneralArguments]:
     parser = HfArgumentParser((
-        GeneralArguments, ModelArguments, DataArguments, Seq2SeqTrainingArguments, FinetuningArguments
+        ModelArguments, DataArguments, Seq2SeqTrainingArguments, FinetuningArguments, GeneralArguments
     ))
     return _parse_args(parser, args)
 
@@ -51,7 +51,7 @@ def parse_infer_args(
 def get_train_args(
     args: Optional[Dict[str, Any]] = None
 ) -> Tuple[ModelArguments, DataArguments, Seq2SeqTrainingArguments, FinetuningArguments, GeneralArguments]:
-    general_args, model_args, data_args, training_args, finetuning_args = parse_train_args(args)
+    model_args, data_args, training_args, finetuning_args, general_args = parse_train_args(args)
 
     # Setup logging
     if training_args.should_log:
@@ -78,6 +78,12 @@ def get_train_args(
 
     assert model_args.quantization_bit is None or finetuning_args.finetuning_type == "lora", \
         "Quantization is only compatible with the LoRA method."
+
+    assert not (training_args.max_steps == -1 and data_args.streaming), \
+        "Please specify `max_steps` in streaming mode."
+
+    assert training_args.evaluation_strategy == "no" or (not data_args.streaming), \
+        "Streaming mode does not support evaluation currently."
 
     if model_args.checkpoint_dir is not None:
         if finetuning_args.finetuning_type != "lora":
@@ -107,12 +113,6 @@ def get_train_args(
     if data_args.dev_ratio > 1e-6 and data_args.streaming:
         logger.warning("`dev_ratio` is incompatible with `streaming`. Disabling development set.")
         data_args.dev_ratio = 0
-
-    assert not (training_args.max_steps == -1 and data_args.streaming), \
-        "Please specify `max_steps` in streaming mode."
-
-    assert training_args.evaluation_strategy == "no" or (not data_args.streaming), \
-        "Streaming mode does not support evaluation currently."
 
     training_args.optim = "adamw_torch" if training_args.optim == "adamw_hf" else training_args.optim # suppress warning
 
