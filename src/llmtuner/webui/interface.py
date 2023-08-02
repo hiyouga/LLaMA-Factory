@@ -47,6 +47,7 @@ def create_ui() -> gr.Blocks:
             manager.gen_label,
             [top_elems["lang"]],
             [elem for elems in elem_list for elem in elems.values()],
+            queue=False
         )
 
     return demo
