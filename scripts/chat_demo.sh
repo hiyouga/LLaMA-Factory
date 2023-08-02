@@ -3,3 +3,4 @@ CUDA_VISIBLE_DEVICES=4 python src/cli_demo.py \
     --template llama2 \
     --finetuning_type lora \
     --checkpoint_dir outputs/llama_chat_sft/checkpoint-1000
+    
