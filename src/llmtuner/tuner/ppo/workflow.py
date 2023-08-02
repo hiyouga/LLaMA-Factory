@@ -1,5 +1,5 @@
 # Inspired by:
-# https://github.com/lvwerra/trl/blob/main/examples/sentiment/scripts/gpt-neox-20b_peft/gpt-neo-20b_sentiment_peft.py
+# https://github.com/lvwerra/trl/blob/main/examples/research_projects/stack_llama/scripts/rl_training.py
 
 import math
 from typing import TYPE_CHECKING
