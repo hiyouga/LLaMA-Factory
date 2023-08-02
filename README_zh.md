@@ -196,6 +196,8 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --fp16
 ```
 
+使用 Baichuan 模型时请指定 `--lora_target W_pack` 参数。
+
 ### 奖励模型训练
 
 ```bash
