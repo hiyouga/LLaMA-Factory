@@ -65,7 +65,7 @@ class Llama2Template(Template):
             if turn_idx == 0:
                 convs.append([self.prompt.format(query=sys+query_i), resp_i])
             else:
-                convs.append([(self.sep if turn_idx else prefix) + self.prompt.format(query=query_i), resp_i])
+                convs.append([self.sep + self.prompt.format(query=query_i), resp_i])
         return convs
 
 
