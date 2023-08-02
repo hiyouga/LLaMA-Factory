@@ -196,6 +196,8 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --fp16
 ```
 
+Remember to specify `--lora_target W_pack` if you are using Baichuan models.
+
 ### Reward Model Training
 
 ```bash
