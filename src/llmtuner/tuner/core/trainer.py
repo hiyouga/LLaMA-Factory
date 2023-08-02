@@ -47,7 +47,6 @@ class PeftTrainer(Seq2SeqTrainer):
         logger.info(f"Saving model checkpoint to {output_dir}")
 
         model = unwrap_model(self.model)
-
         if isinstance(model, PreTrainedModelWrapper):
             # Custom state dict: https://github.com/lvwerra/trl/blob/v0.4.7/trl/models/modeling_value_head.py#L200
             model_state_dict = state_dict or model.state_dict()
