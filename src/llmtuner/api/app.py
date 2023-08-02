@@ -5,9 +5,8 @@ from contextlib import asynccontextmanager
 from sse_starlette import EventSourceResponse
 from typing import List, Tuple
 
-from llmtuner.tuner import get_infer_args
 from llmtuner.extras.misc import torch_gc
-from llmtuner.chat.stream_chat import ChatModel
+from llmtuner.chat import ChatModel
 from llmtuner.api.protocol import (
     Role,
     Finish,
@@ -122,6 +121,6 @@ def create_app(chat_model: ChatModel) -> FastAPI:
 
 
 if __name__ == "__main__":
-    chat_model = ChatModel(*get_infer_args())
+    chat_model = ChatModel()
     app = create_app(chat_model)
     uvicorn.run(app, host="0.0.0.0", port=8000, workers=1)

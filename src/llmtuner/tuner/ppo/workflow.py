@@ -10,7 +10,6 @@ from transformers import DataCollatorForSeq2Seq
 from transformers.optimization import get_scheduler
 
 from llmtuner.dsets import get_dataset, preprocess_dataset
-from llmtuner.extras.callbacks import LogCallback
 from llmtuner.extras.ploting import plot_loss
 from llmtuner.tuner.core import load_model_and_tokenizer
 from llmtuner.tuner.ppo.trainer import PPOPeftTrainer
@@ -25,7 +24,7 @@ def run_ppo(
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
     finetuning_args: "FinetuningArguments",
-    callbacks: Optional[List["TrainerCallback"]] = [LogCallback()]
+    callbacks: Optional[List["TrainerCallback"]] = None
 ):
     dataset = get_dataset(model_args, data_args)
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, stage="ppo")

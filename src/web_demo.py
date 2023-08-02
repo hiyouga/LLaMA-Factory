@@ -5,17 +5,14 @@
 import gradio as gr
 from transformers.utils.versions import require_version
 
-from llmtuner.tuner import get_infer_args
-from llmtuner.webui.chat import WebChatModel
-from llmtuner.webui.components.chatbot import create_chat_box
-from llmtuner.webui.manager import Manager
+from llmtuner import Manager, WebChatModel, create_chat_box
 
 
 require_version("gradio>=3.36.0", "To fix: pip install gradio>=3.36.0")
 
 
 def main():
-    chat_model = WebChatModel(*get_infer_args())
+    chat_model = WebChatModel()
 
     with gr.Blocks(title="Web Demo") as demo:
         lang = gr.Dropdown(choices=["en", "zh"], value="en")
