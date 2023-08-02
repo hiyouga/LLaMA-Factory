@@ -46,34 +46,37 @@ class Template:
         prefix = prefix + self.sep if prefix else "" # add separator for non-empty prefix
         history = history if (history and self.use_history) else []
         history = history + [(query, "")]
-        convs = [
-            [(self.sep if turn_idx else prefix) + self.prompt.format(query=query_i), resp_i]
-            for turn_idx, (query_i, resp_i) in enumerate(history)
+        return [
+            [(self.sep if i else prefix) + self.prompt.format(query=q), r]
+            for i, (q, r) in enumerate(history)
         ]
-        return convs
 
 
+@dataclass
 class Llama2Template(Template):
-    def _format_example(self, query, history, prefix):
-        sys = prefix or self.prefix
-        if not sys.startswith("<<SYS>>\n"):
-            sys = f"<<SYS>>\n{sys.strip()}\n<</SYS>>\n\n"
+
+    def _format_example(
+        self,
+        query: str,
+        history: Optional[List[Tuple[str, str]]] = None,
+        prefix: Optional[str] = ""
+    ) -> List[Tuple[str, str]]:
+        prefix = prefix or self.prefix # use prefix if provided
+        prefix = prefix if prefix.startswith("<<SYS>>") else "<<SYS>>\n{}\n<</SYS>>\n\n".format(prefix)
         history = history if (history and self.use_history) else []
         history = history + [(query, "")]
-        convs = []
-        for turn_idx, (query_i, resp_i) in enumerate(history):
-            if turn_idx == 0:
-                convs.append([self.prompt.format(query=sys+query_i), resp_i])
-            else:
-                convs.append([self.sep + self.prompt.format(query=query_i), resp_i])
-        return convs
+        return [
+            [(self.sep if i else "") + self.prompt.format(query=(q if i else prefix + q)), r]
+            for i, (q, r) in enumerate(history)
+        ]
 
 
 templates: Dict[str, Template] = {}
 
 
 def register_template(name: str, prefix: str, prompt: str, sep: str, use_history: bool) -> None:
-    templates[name] = Template(
+    template_class = Llama2Template if name == "llama2" else Template
+    templates[name] = template_class(
         prefix=prefix,
         prompt=prompt,
         sep=sep,
@@ -117,7 +120,8 @@ Supports: https://huggingface.co/meta-llama/Llama-2-7b-chat-hf
           https://huggingface.co/meta-llama/Llama-2-13b-chat-hf
           https://huggingface.co/meta-llama/Llama-2-70b-chat-hf
 """
-templates["llama2"] = Llama2Template(
+register_template(
+    name="llama2",
     prefix="<<SYS>>\nYou are a helpful, respectful and honest assistant. "
            "Always answer as helpfully as possible, while being safe.  "
            "Your answers should not include any harmful, unethical, "
@@ -126,7 +130,7 @@ templates["llama2"] = Llama2Template(
            "If a question does not make any sense, or is not factually coherent, "
            "explain why instead of answering something not correct. "
            "If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n",
-    prompt="[INST]{query}[/INST]",
+    prompt="[INST] {query} [/INST] ",
     sep="<s>",
     use_history=True
 )
