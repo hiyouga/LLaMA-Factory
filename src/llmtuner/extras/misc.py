@@ -94,8 +94,8 @@ def prepare_model_for_training(
         model.config.use_cache = False # turn off when gradient checkpointing is enabled
 
     if finetuning_type != "full" and hasattr(model, output_layer_name):
-        if hasattr(model, "config") and hasattr(model.config, "pretraining_tp"):
-            model.config.pretraining_tp = 1 # disable TP for LoRA (https://github.com/huggingface/peft/pull/728)
+        # if hasattr(model, "config") and hasattr(model.config, "pretraining_tp"):
+        #     model.config.pretraining_tp = 1 # disable TP for LoRA (https://github.com/huggingface/peft/pull/728)
 
         output_layer: torch.nn.Linear = getattr(model, output_layer_name)
         input_dtype = output_layer.weight.dtype

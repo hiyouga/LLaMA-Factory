@@ -1,0 +1,13 @@
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
+    --stage rm \
+    --model_name_or_path /home/mediatek/models/incite-7b-zh-base \
+    --use_fast_tokenizer true \
+    --lora_target query_key_value \
+    --prompt_template mr_chat \
+    --do_predict \
+    --dataset comparison_gpt4_zhtw \
+    --finetuning_type lora \
+    --checkpoint_dir ./outputs/incite-7b-zh-rm \
+    --output_dir ./outputs/incite-7b-zh-rm-predict \
+    --per_device_eval_batch_size 8 \
+    --max_samples 100 

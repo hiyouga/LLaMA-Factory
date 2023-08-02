@@ -10,6 +10,9 @@
     "file_name": "alpaca_data_zh_51k.json",
     "file_sha1": "e655af3db557a4197f7b0cf92e1986b08fae6311"
   },
+  "test": {
+    "file_name": "test.json"
+  },
   "alpaca_gpt4_en": {
     "file_name": "alpaca_gpt4_data_en.json",
     "file_sha1": "647f4ad447bd993e4b6b6223d1be15208bab694a"

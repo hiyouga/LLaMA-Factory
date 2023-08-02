@@ -22,7 +22,7 @@
 
 
 
-accelerate launch --config_file accelerate_config.yaml src/train_bash.py \
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch --config_file accelerate_config.yaml src/train_bash.py \
     --stage ppo \
     --model_name_or_path /home/mediatek/models/incite-7b-zh-base \
     --use_fast_tokenizer true \
