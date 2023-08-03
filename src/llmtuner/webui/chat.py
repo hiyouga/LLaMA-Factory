@@ -10,11 +10,12 @@ from llmtuner.webui.locales import ALERTS
 
 class WebChatModel(ChatModel):
 
-    def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
-        self.model = None
-        self.tokenizer = None
-        self.generating_args = GeneratingArguments()
-        if args is not None:
+    def __init__(self, args: Optional[Dict[str, Any]] = None, lazy_init: Optional[bool] = True) -> None:
+        if lazy_init:
+            self.model = None
+            self.tokenizer = None
+            self.generating_args = GeneratingArguments()
+        else:
             super().__init__(args)
 
     def load_model(
