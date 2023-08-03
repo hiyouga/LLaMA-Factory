@@ -95,13 +95,8 @@ def load_model_and_tokenizer(
             )
 
         is_mergeable = False
-        logger.info("Quantizing model to {} bit.".format(model_args.quantization_bit))
-
-    if (
-        model_args.quantization_bit is not None
-        or (os.environ.get('LOCAL_RANK') is not None and not is_deepspeed_zero3_enabled())
-    ):
         config_kwargs["device_map"] = {"": int(os.environ.get("LOCAL_RANK", "0"))}
+        logger.info("Quantizing model to {} bit.".format(model_args.quantization_bit))
 
     if model_args.checkpoint_dir is not None and finetuning_args.finetuning_type == "full":
         model_to_load = model_args.checkpoint_dir[0]
