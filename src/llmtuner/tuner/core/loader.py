@@ -6,13 +6,14 @@ from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
     AutoTokenizer,
-    BitsAndBytesConfig
+    BitsAndBytesConfig,
+    PretrainedConfig,
+    PreTrainedModel,
+    PreTrainedTokenizerBase
 )
 from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
 from transformers.deepspeed import is_deepspeed_zero3_enabled
-from transformers.modeling_utils import PretrainedConfig, PreTrainedModel
-from transformers.tokenization_utils import PreTrainedTokenizerBase
 from trl import AutoModelForCausalLMWithValueHead
 
 from llmtuner.extras.logging import reset_logging, get_logger
@@ -22,6 +23,7 @@ from llmtuner.hparams import FinetuningArguments
 from llmtuner.tuner.core.adapter import init_adapter
 
 if TYPE_CHECKING:
+    from transformers import PreTrainedTokenizer
     from llmtuner.hparams import ModelArguments
 
 
@@ -40,7 +42,7 @@ def load_model_and_tokenizer(
     finetuning_args: "FinetuningArguments",
     is_trainable: Optional[bool] = False,
     stage: Optional[Literal["pt", "sft", "rm", "ppo"]] = "sft"
-) -> Tuple[PreTrainedModel, PreTrainedTokenizerBase]:
+) -> Tuple[PreTrainedModel, "PreTrainedTokenizer"]:
     r"""
     Loads pretrained model and tokenizer.
 
