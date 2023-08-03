@@ -67,7 +67,7 @@ def load_model_and_tokenizer(
         **config_kwargs
     )
     if tokenizer.pad_token_id is None or tokenizer.pad_token_id == 64000: # 64000 for baichuan model (older version)
-        tokenizer.pad_token_id = 0 # set as the <unk> token
+        tokenizer.pad_token = tokenizer.eos_token
 
     config = AutoConfig.from_pretrained(model_args.model_name_or_path, **config_kwargs)
     is_mergeable = True
