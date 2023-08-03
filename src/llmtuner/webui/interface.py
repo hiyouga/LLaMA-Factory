@@ -6,8 +6,10 @@ from llmtuner.webui.components import (
     create_sft_tab,
     create_eval_tab,
     create_infer_tab,
-    create_export_tab
+    create_export_tab,
+    create_chat_box
 )
+from llmtuner.webui.chat import WebChatModel
 from llmtuner.webui.css import CSS
 from llmtuner.webui.manager import Manager
 from llmtuner.webui.runner import Runner
@@ -49,6 +51,23 @@ def create_ui() -> gr.Blocks:
             [elem for elems in elem_list for elem in elems.values()],
             queue=False
         )
+
+    return demo
+
+
+def create_web_demo() -> gr.Blocks:
+    chat_model = WebChatModel(lazy_init=False)
+
+    with gr.Blocks(title="Web Demo", css=CSS) as demo:
+        lang = gr.Dropdown(choices=["en", "zh"], value="en")
+
+        _, _, _, chat_elems = create_chat_box(chat_model, visible=True)
+
+        manager = Manager([{"lang": lang}, chat_elems])
+
+        demo.load(manager.gen_label, [lang], [lang] + list(chat_elems.values()))
+
+        lang.change(manager.gen_label, [lang], [lang] + list(chat_elems.values()))
 
     return demo
 
