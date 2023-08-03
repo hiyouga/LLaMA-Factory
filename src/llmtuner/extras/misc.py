@@ -29,7 +29,6 @@ class AverageMeter:
         self.avg = self.sum / self.count
 
 
-# Avoids runtime error in model.generate(do_sample=True).
 class InvalidScoreLogitsProcessor(LogitsProcessor):
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
@@ -55,10 +54,10 @@ class StopWordsCriteria(StoppingCriteria):
         return any([stop_id in input_ids[:, -1] for stop_id in self.stop_ids])
 
 
-def get_stopwords_criteria(stop_ids: List[int]) -> StoppingCriteriaList:
-    stopwords_criteria = StoppingCriteriaList()
-    stopwords_criteria.append(StopWordsCriteria(stop_ids))
-    return stopwords_criteria
+def get_stopping_criteria(stop_ids: List[int]) -> StoppingCriteriaList:
+    stopping_criteria = StoppingCriteriaList()
+    stopping_criteria.append(StopWordsCriteria(stop_ids))
+    return stopping_criteria
 
 
 def count_parameters(model: torch.nn.Module) -> Tuple[int, int]:
