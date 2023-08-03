@@ -128,7 +128,7 @@ def load_model_and_tokenizer(
     model = init_adapter(model, model_args, finetuning_args, is_trainable, is_mergeable)
 
     if stage == "rm" or stage == "ppo": # add value head
-        model = AutoModelForCausalLMWithValueHead.from_pretrained(model)
+        model: "AutoModelForCausalLMWithValueHead" = AutoModelForCausalLMWithValueHead.from_pretrained(model)
         reset_logging()
 
         if stage == "rm" and model_args.checkpoint_dir is not None: # load valuehead weights to evaluate reward model
