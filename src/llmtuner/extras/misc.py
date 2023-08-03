@@ -1,8 +1,7 @@
 import torch
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
-from transformers.generation.utils import LogitsProcessorList
-from transformers.generation.logits_process import LogitsProcessor
+from transformers import LogitsProcessor, LogitsProcessorList, StoppingCriteria, StoppingCriteriaList
 
 from llmtuner.extras.constants import LAYERNORM_NAMES
 
@@ -44,6 +43,22 @@ def get_logits_processor() -> LogitsProcessorList:
     logits_processor = LogitsProcessorList()
     logits_processor.append(InvalidScoreLogitsProcessor())
     return logits_processor
+
+
+class StopWordsCriteria(StoppingCriteria):
+
+    def __init__(self, stop_ids: List[int]) -> None:
+        super().__init__()
+        self.stop_ids = stop_ids
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor, **kwargs) -> bool:
+        return any([stop_id in input_ids[:, -1] for stop_id in self.stop_ids])
+
+
+def get_stopwords_criteria(stop_ids: List[int]) -> StoppingCriteriaList:
+    stopwords_criteria = StoppingCriteriaList()
+    stopwords_criteria.append(StopWordsCriteria(stop_ids))
+    return stopwords_criteria
 
 
 def count_parameters(model: torch.nn.Module) -> Tuple[int, int]:
