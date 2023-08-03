@@ -9,6 +9,7 @@ class Template:
     prompt: str
     sep: str
     use_history: bool
+    stop_words: List[str]
 
     def get_prompt(
         self,
@@ -74,13 +75,16 @@ class Llama2Template(Template):
 templates: Dict[str, Template] = {}
 
 
-def register_template(name: str, prefix: str, prompt: str, sep: str, use_history: bool) -> None:
+def register_template(
+    name: str, prefix: str, prompt: str, sep: str, use_history: bool, stop_words: List[str]
+) -> None:
     template_class = Llama2Template if name == "llama2" else Template
     templates[name] = template_class(
         prefix=prefix,
         prompt=prompt,
         sep=sep,
-        use_history=use_history
+        use_history=use_history,
+        stop_words=stop_words
     )
 
 
@@ -98,7 +102,8 @@ register_template(
     prefix="",
     prompt="{query}",
     sep="",
-    use_history=False
+    use_history=False,
+    stop_words=[]
 )
 
 
@@ -111,7 +116,8 @@ register_template(
            "The assistant gives helpful, detailed, and polite answers to the user's questions.",
     prompt="Human: {query}\nAssistant: ",
     sep="\n",
-    use_history=True
+    use_history=True,
+    stop_words=[]
 )
 
 
@@ -132,7 +138,8 @@ register_template(
            "If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n",
     prompt="[INST] {query} [/INST] ",
     sep="<s>",
-    use_history=True
+    use_history=True,
+    stop_words=[]
 )
 
 
@@ -146,7 +153,8 @@ register_template(
            "Write a response that appropriately completes the request.",
     prompt="### Instruction:\n{query}\n\n### Response:\n",
     sep="\n\n",
-    use_history=True
+    use_history=True,
+    stop_words=[]
 )
 
 
@@ -160,7 +168,8 @@ register_template(
            "The assistant gives helpful, detailed, and polite answers to the user's questions.",
     prompt="USER: {query} ASSISTANT: ",
     sep="",
-    use_history=True
+    use_history=True,
+    stop_words=[]
 )
 
 
@@ -172,7 +181,8 @@ register_template(
     prefix="",
     prompt="Human: {query}\n\nBelle: ",
     sep="\n\n",
-    use_history=True
+    use_history=True,
+    stop_words=[]
 )
 
 
@@ -184,7 +194,8 @@ register_template(
     prefix="",
     prompt="User: {query}\nBot: ",
     sep="\n",
-    use_history=True
+    use_history=True,
+    stop_words=[]
 )
 
 
@@ -196,7 +207,8 @@ register_template(
     prefix="",
     prompt="Human: {query}\nAssistant: ",
     sep="\n",
-    use_history=True
+    use_history=True,
+    stop_words=[]
 )
 
 
@@ -208,7 +220,8 @@ register_template(
     prefix="",
     prompt="<human>:{query}\n<bot>:",
     sep="\n",
-    use_history=True
+    use_history=True,
+    stop_words=[]
 )
 
 
@@ -221,7 +234,8 @@ register_template(
            "The assistant gives helpful, detailed, and polite answers to the human's questions.",
     prompt="Human: {query}###Assistant: ",
     sep="###",
-    use_history=True
+    use_history=True,
+    stop_words=[]
 )
 
 
@@ -233,7 +247,8 @@ register_template(
     prefix="",
     prompt="<|User|>:{query}<eoh>\n<|Bot|>:",
     sep="<eoa>\n",
-    use_history=True
+    use_history=True,
+    stop_words=["<eoa>"]
 )
 
 
@@ -245,7 +260,8 @@ register_template(
     prefix="",
     prompt="<reserved_102>{query}<reserved_103>",
     sep="",
-    use_history=True
+    use_history=True,
+    stop_words=[]
 )
 
 
@@ -258,5 +274,19 @@ register_template(
     prefix="<|system|>\n",
     prompt="<|user|>\n{query}<|end|>\n<|assistant|>\n",
     sep="<|end|>\n",
-    use_history=True
+    use_history=True,
+    stop_words=["<|end|>"]
+)
+
+
+r"""
+Supports: https://huggingface.co/Qwen/Qwen-7B-Chat
+"""
+register_template(
+    name="chatml",
+    prefix="<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n",
+    prompt="<|im_start|>user\n{query}<|im_end|>\n<|im_start|>assistant\n",
+    sep="<|im_end|>\n",
+    use_history=True,
+    stop_words=["<|im_end|>"]
 )
