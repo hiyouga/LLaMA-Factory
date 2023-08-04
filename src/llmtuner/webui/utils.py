@@ -91,7 +91,13 @@ def gen_plot(base_model: str, finetuning_type: str, output_dir: str) -> matplotl
 
 
 def save_model(
-    lang: str, model_name: str, checkpoints: List[str], finetuning_type: str, max_shard_size: int, save_dir: str
+    lang: str,
+    model_name: str,
+    checkpoints: List[str],
+    finetuning_type: str,
+    template: str,
+    max_shard_size: int,
+    save_dir: str
 ) -> Generator[str, None, None]:
     if not model_name:
         yield ALERTS["err_no_model"][lang]
@@ -118,6 +124,7 @@ def save_model(
         model_name_or_path=model_name_or_path,
         checkpoint_dir=checkpoint_dir,
         finetuning_type=finetuning_type,
+        template=template,
         output_dir=save_dir
     )
 
