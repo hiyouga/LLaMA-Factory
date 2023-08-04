@@ -54,6 +54,10 @@ class DataArguments:
         default="concat",
         metadata={"help": "Strategy to use in dataset mixing."}
     )
+    interleave_probs: Optional[str] = field(
+        default=None,
+        metadata={"help": "Probabilities to sample data from datasets. Use commas to separate multiple datasets."}
+    )
     overwrite_cache: Optional[bool] = field(
         default=False,
         metadata={"help": "Overwrite the cached training and evaluation sets."}
@@ -102,6 +106,9 @@ class DataArguments:
             assert len(prefix_list) == len(dataset_names), "The number of prefixes should be either identical with datasets or 1."
         else:
             prefix_list = [None] * len(dataset_names)
+
+        if self.interleave_probs is not None:
+            self.interleave_probs = [float(prob.strip()) for prob in self.interleave_probs.split(",")]
 
         self.dataset_list: List[DatasetAttr] = []
         for i, name in enumerate(dataset_names):
