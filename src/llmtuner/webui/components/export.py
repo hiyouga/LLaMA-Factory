@@ -22,6 +22,7 @@ def create_export_tab(top_elems: Dict[str, "Component"]) -> Dict[str, "Component
             top_elems["model_name"],
             top_elems["checkpoints"],
             top_elems["finetuning_type"],
+            top_elems["template"],
             max_shard_size,
             save_dir
         ],
