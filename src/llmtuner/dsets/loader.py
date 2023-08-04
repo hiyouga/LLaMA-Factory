@@ -111,6 +111,6 @@ def get_dataset(
         if not data_args.streaming:
             logger.warning("We recommend using `mix_strategy=concat` in non-streaming mode.")
         stopping_strategy = "first_exhausted" if data_args.mix_strategy.endswith("under") else "all_exhausted"
-        return interleave_datasets(all_datasets, stopping_strategy=stopping_strategy)
+        return interleave_datasets(all_datasets, data_args.interleave_probs, stopping_strategy=stopping_strategy)
     else:
         raise ValueError("Unknown mixing strategy.")
