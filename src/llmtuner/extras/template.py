@@ -25,8 +25,8 @@ class Template:
         r"""
         Returns a single pair of token ids representing prompt and response respectively.
         """
-        prefix, history = self._format(query=query, resp=resp, history=history, prefix=prefix)
-        encoded_pairs = self._encode(tokenizer=tokenizer, prefix=prefix, history=history)
+        prefix, history = self._format(query, resp, history, prefix)
+        encoded_pairs = self._encode(tokenizer, prefix, history)
         prompt_ids = []
         for query_ids, resp_ids in encoded_pairs[:-1]:
             prompt_ids = prompt_ids + query_ids + resp_ids
@@ -44,8 +44,8 @@ class Template:
         r"""
         Returns multiple pairs of token ids representing prompts and responses respectively.
         """
-        prefix, history = self._format(query=query, resp=resp, history=history, prefix=prefix)
-        encoded_pairs = self._encode(tokenizer=tokenizer, prefix=prefix, history=history)
+        prefix, history = self._format(query, resp, history, prefix)
+        encoded_pairs = self._encode(tokenizer, prefix, history)
         return encoded_pairs
 
     def _format(
