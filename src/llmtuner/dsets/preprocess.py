@@ -55,7 +55,7 @@ def preprocess_dataset(
         for query, response, history, prefix in construct_example(examples):
             input_ids, labels = [], []
 
-            for source_ids, target_ids in template.get_dialog(tokenizer, query, response, history, prefix):
+            for source_ids, target_ids in template.get_dialog(tokenizer, query, response, history, prefix): # TODO: fix bos
                 if len(source_ids) > data_args.max_source_length:
                     source_ids = source_ids[:data_args.max_source_length]
                 if len(target_ids) > data_args.max_target_length - 1: # eos token
