@@ -55,10 +55,7 @@ def preprocess_dataset(
         for query, response, history, prefix in construct_example(examples):
             input_ids, labels = [], []
 
-            for i, (query_i, resp_i) in enumerate(template.get_dialog(query, response, history, prefix)):
-                source_ids = tokenizer.encode(text=query_i, add_special_tokens=(i == 0))
-                target_ids = tokenizer.encode(text=resp_i, add_special_tokens=False)
-
+            for source_ids, target_ids in template.get_dialog(tokenizer, query, response, history, prefix):
                 if len(source_ids) > data_args.max_source_length:
                     source_ids = source_ids[:data_args.max_source_length]
                 if len(target_ids) > data_args.max_target_length - 1: # eos token
@@ -81,10 +78,7 @@ def preprocess_dataset(
         model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
 
         for query, response, history, prefix in construct_example(examples):
-            prompt = template.get_prompt(query, history, prefix, tokenizer.eos_token)
-
-            source_ids = tokenizer.encode(text=prompt, add_special_tokens=True)
-            target_ids = tokenizer.encode(text=response, add_special_tokens=True)
+            source_ids, target_ids = template.get_prompt(tokenizer, query, response, history, prefix)
 
             if len(source_ids) > data_args.max_source_length:
                 source_ids = source_ids[:data_args.max_source_length]
@@ -101,11 +95,8 @@ def preprocess_dataset(
         # build input pairs with format `<bos> X Y1 <eos>` and `<bos> X Y2 <eos>`
         model_inputs = {"accept_ids": [], "reject_ids": []}
         for query, response, history, prefix in construct_example(examples):
-            prompt = template.get_prompt(query, history, prefix, tokenizer.eos_token)
-
-            source_ids = tokenizer.encode(text=prompt, add_special_tokens=True)
-            accept_ids = tokenizer.encode(text=response[0], add_special_tokens=False)
-            reject_ids = tokenizer.encode(text=response[1], add_special_tokens=False)
+            source_ids, accept_ids = template.get_prompt(tokenizer, query, response[0], history, prefix)
+            source_ids, reject_ids = template.get_prompt(tokenizer, query, response[1], history, prefix)
 
             if len(source_ids) > data_args.max_source_length:
                 source_ids = source_ids[:data_args.max_source_length]
