@@ -101,9 +101,7 @@ class Template:
         token_ids = []
         for elem in context:
             if isinstance(elem, str):
-                subelems = elem.split("{{query}}")
-                if len(subelems) > 1:
-                    elem = subelems[0] + query + subelems[1]
+                elem = elem.replace("{{query}}", query, 1)
                 token_ids = token_ids + tokenizer.encode(elem, add_special_tokens=False)
             elif isinstance(elem, dict):
                 token_ids = token_ids + [tokenizer.convert_tokens_to_ids(elem.get("token"))]
