@@ -102,6 +102,7 @@ class Template:
         for elem in context:
             if isinstance(elem, str):
                 elem = elem.replace("{{query}}", query, 1)
+                elem = elem.replace("<mask>", "[MASK]")
                 token_ids = token_ids + tokenizer.encode(elem, add_special_tokens=False)
             elif isinstance(elem, dict):
                 token_ids = token_ids + [tokenizer.convert_tokens_to_ids(elem.get("token"))]
