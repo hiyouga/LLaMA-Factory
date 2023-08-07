@@ -14,7 +14,7 @@ class Template:
     stop_words: List[str]
     use_history: bool
 
-    def get_prompt(
+    def encode_oneturn(
         self,
         tokenizer: "PreTrainedTokenizer",
         query: str,
@@ -33,7 +33,7 @@ class Template:
         prompt_ids = prompt_ids + encoded_pairs[-1][0]
         return prompt_ids, encoded_pairs[-1][1]
 
-    def get_dialog(
+    def encode_multiturn(
         self,
         tokenizer: "PreTrainedTokenizer",
         query: str,
@@ -73,7 +73,7 @@ class Template:
         r"""
         Encodes formatted inputs to pairs of token ids.
         """
-        if tokenizer.bos_token and getattr(tokenizer, "add_bos_token", False): # bos token is optional
+        if tokenizer.bos_token_id and getattr(tokenizer, "add_bos_token", False): # bos token is optional
             bos_token_id = [tokenizer.bos_token_id]
         else:
             bos_token_id = []
