@@ -41,14 +41,16 @@
 [23/05/31] Now we support training the **BLOOM & BLOOMZ** models in this repo. Try `--model_name_or_path bigscience/bloomz-7b1-mt` and `--lora_target query_key_value` arguments to use the BLOOMZ model.
 
 ## Supported Models
-
-- [LLaMA](https://github.com/facebookresearch/llama) (7B/13B/33B/65B)
-- [LLaMA-2](https://huggingface.co/meta-llama) (7B/13B/70B)
-- [BLOOM](https://huggingface.co/bigscience/bloom) & [BLOOMZ](https://huggingface.co/bigscience/bloomz) (560M/1.1B/1.7B/3B/7.1B/176B)
-- [Falcon](https://huggingface.co/tiiuae/falcon-7b) (7B/40B)
-- [Baichuan](https://huggingface.co/baichuan-inc/baichuan-7B) (7B/13B)
-- [InternLM](https://github.com/InternLM/InternLM) (7B)
-- [Qwen](https://github.com/QwenLM/Qwen-7B) (7B)
+| model                                                       | model size                  | model_name_or_path             | lora_target       | template |
+|-------------------------------------------------------------|-----------------------------|--------------------------------|-------------------|----------|
+| [LLaMA](https://github.com/facebookresearch/llama)          | 7B/13B/33B/65B              | -                              | q_proj,v_proj     | default  |
+| [LLaMA-2](https://huggingface.co/meta-llama)                | 7B/13B/70B                  | meta-llama/Llama-2-7b-hf       | q_proj,v_proj     | llama2   |
+| [BLOOM](https://huggingface.co/bigscience/bloom)            | 560M/1.1B/1.7B/3B/7.1B/176B | bigscience/bloom-7b1           | query_key_value   | default  |
+| [BLOOMZ](https://huggingface.co/bigscience/bloomz)          | 560M/1.1B/1.7B/3B/7.1B/176B | bigscience/bloomz-7b1-mt       | query_key_value   | default  |
+| [Falcon](https://huggingface.co/tiiuae/falcon-7b)           | 7B/40B                      | tiiuae/falcon-7b               | query_key_value   | default  |
+| [Baichuan](https://huggingface.co/baichuan-inc/baichuan-7B) | 7B/13B                      | baichuan-inc/Baichuan-13B-Chat | W_pack            | baichuan |
+| [InternLM](https://github.com/InternLM/InternLM)            | 7B                          | internlm/internlm-7b           | q_proj,v_proj     | intern   |
+| [Qwen](https://github.com/QwenLM/Qwen-7B)                   | 7B                          | Qwen/Qwen-7B-Chat              | c_attn            | chatml   |
 
 ## Supported Training Approaches
 
