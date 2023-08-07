@@ -68,6 +68,8 @@ def load_model_and_tokenizer(
         padding_side=model_args.padding_side,
         **config_kwargs
     )
+    if tokenizer.bos_token_id is None: # fix qwen bos tokenizer error
+        tokenizer.bos_token = "<|startoftext|>"
     if tokenizer.eos_token_id is None: # fix qwen tokenizer
         tokenizer.eos_token = "<|endoftext|>"
     if tokenizer.pad_token_id is None: # add pad token
