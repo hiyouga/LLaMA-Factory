@@ -6,13 +6,14 @@ from transformers import DataCollatorForSeq2Seq
 
 from llmtuner.dsets import get_dataset, preprocess_dataset, split_dataset
 from llmtuner.extras.constants import IGNORE_INDEX
+from llmtuner.extras.misc import get_logits_processor
 from llmtuner.extras.ploting import plot_loss
 from llmtuner.tuner.core import load_model_and_tokenizer
 from llmtuner.tuner.core.trainer import PeftTrainer
 
 if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments, TrainerCallback
-    from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
+    from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments
 
 
 def run_pt(
@@ -20,6 +21,7 @@ def run_pt(
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
     finetuning_args: "FinetuningArguments",
+    generating_args: "GeneratingArguments",
     callbacks: Optional[List["TrainerCallback"]] = None
 ):
     dataset = get_dataset(model_args, data_args)
@@ -29,6 +31,15 @@ def run_pt(
         tokenizer=tokenizer,
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
     )
+
+    # Keyword arguments for `model.generate`
+    gen_kwargs = {
+        "do_sample": generating_args.do_sample,
+        "top_p": generating_args.top_p,
+        "max_new_tokens": data_args.max_target_length + 1,
+        "temperature": generating_args.temperature,
+        "logits_processor": get_logits_processor(),
+    }
 
     # Initialize our Trainer
     trainer = PeftTrainer(
@@ -53,7 +64,7 @@ def run_pt(
 
     # Evaluation
     if training_args.do_eval:
-        metrics = trainer.evaluate(metric_key_prefix="eval")
+        metrics = trainer.evaluate(metric_key_prefix="eval", **gen_kwargs)
         try:
             perplexity = math.exp(metrics["eval_loss"])
         except OverflowError:

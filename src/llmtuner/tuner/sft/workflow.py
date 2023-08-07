@@ -13,7 +13,7 @@ from llmtuner.tuner.sft.trainer import Seq2SeqPeftTrainer
 
 if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments, TrainerCallback
-    from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
+    from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments
 
 
 def run_sft(
@@ -21,6 +21,7 @@ def run_sft(
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
     finetuning_args: "FinetuningArguments",
+    generating_args: "GeneratingArguments",
     callbacks: Optional[List["TrainerCallback"]] = None
 ):
     dataset = get_dataset(model_args, data_args)
@@ -51,11 +52,11 @@ def run_sft(
 
     # Keyword arguments for `model.generate`
     gen_kwargs = {
-        "do_sample": True,
-        "top_p": 0.7,
+        "do_sample": generating_args.do_sample,
+        "top_p": generating_args.top_p,
         "max_new_tokens": data_args.max_target_length + 1,
-        "temperature": 0.95,
-        "logits_processor": get_logits_processor()
+        "temperature": generating_args.temperature,
+        "logits_processor": get_logits_processor(),
     }
 
     # Training

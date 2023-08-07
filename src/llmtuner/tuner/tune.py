@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from llmtuner.extras.callbacks import LogCallback
-from llmtuner.tuner.core import get_train_args, load_model_and_tokenizer
+from llmtuner.tuner.core import get_train_args, load_model_and_tokenizer, get_infer_args
 from llmtuner.tuner.pt import run_pt
 from llmtuner.tuner.sft import run_sft
 from llmtuner.tuner.rm import run_rm
@@ -13,14 +13,15 @@ if TYPE_CHECKING:
 
 def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: Optional[List["TrainerCallback"]] = None):
     model_args, data_args, training_args, finetuning_args, general_args = get_train_args(args)
+    _, _, _, generating_args = get_infer_args(args)
     callbacks = [LogCallback()] if callbacks is None else callbacks
 
     if general_args.stage == "pt":
-        run_pt(model_args, data_args, training_args, finetuning_args, callbacks)
+        run_pt(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
     elif general_args.stage == "sft":
-        run_sft(model_args, data_args, training_args, finetuning_args, callbacks)
+        run_sft(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
     elif general_args.stage == "rm":
-        run_rm(model_args, data_args, training_args, finetuning_args, callbacks)
+        run_rm(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
     elif general_args.stage == "ppo":
         run_ppo(model_args, data_args, training_args, finetuning_args, callbacks)
 

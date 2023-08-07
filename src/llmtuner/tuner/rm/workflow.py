@@ -5,6 +5,7 @@
 from typing import TYPE_CHECKING, Optional, List
 
 from llmtuner.dsets import get_dataset, preprocess_dataset, split_dataset
+from llmtuner.extras.misc import get_logits_processor
 from llmtuner.extras.ploting import plot_loss
 from llmtuner.tuner.core import load_model_and_tokenizer
 from llmtuner.tuner.rm.metric import compute_accuracy
@@ -13,7 +14,7 @@ from llmtuner.tuner.rm.trainer import PairwisePeftTrainer
 
 if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments, TrainerCallback
-    from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
+    from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments
 
 
 def run_rm(
@@ -21,6 +22,7 @@ def run_rm(
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
     finetuning_args: "FinetuningArguments",
+    generating_args: "GeneratingArguments",
     callbacks: Optional[List["TrainerCallback"]] = None
 ):
     dataset = get_dataset(model_args, data_args)
@@ -42,6 +44,15 @@ def run_rm(
         **split_dataset(dataset, data_args.dev_ratio, training_args.do_train)
     )
 
+    # Keyword arguments for `model.generate`
+    gen_kwargs = {
+        "do_sample": generating_args.do_sample,
+        "top_p": generating_args.top_p,
+        "max_new_tokens": data_args.max_target_length + 1,
+        "temperature": generating_args.temperature,
+        "logits_processor": get_logits_processor(),
+    }
+
     # Training
     if training_args.do_train:
         train_result = trainer.train()
@@ -54,13 +65,13 @@ def run_rm(
 
     # Evaluation
     if training_args.do_eval:
-        metrics = trainer.evaluate(metric_key_prefix="eval")
+        metrics = trainer.evaluate(metric_key_prefix="eval", **gen_kwargs)
         trainer.log_metrics("eval", metrics)
         trainer.save_metrics("eval", metrics)
 
     # Predict
     if training_args.do_predict:
-        predict_results = trainer.predict(dataset, metric_key_prefix="predict")
+        predict_results = trainer.predict(dataset, metric_key_prefix="predict", **gen_kwargs)
         trainer.log_metrics("predict", predict_results.metrics)
         trainer.save_metrics("predict", predict_results.metrics)
         trainer.save_predictions(predict_results)
