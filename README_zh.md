@@ -41,16 +41,21 @@
 [23/05/31] 现在我们支持了 **BLOOM & BLOOMZ** 模型的训练。请尝试使用 `--model_name_or_path bigscience/bloomz-7b1-mt` 和 `--lora_target query_key_value` 参数。
 
 ## 模型
-| model                                                       | model size                  | model_name_or_path             | lora_target       | template |
-|-------------------------------------------------------------|-----------------------------|--------------------------------|-------------------|----------|
-| [LLaMA](https://github.com/facebookresearch/llama)          | 7B/13B/33B/65B              | -                              | q_proj,v_proj     | default  |
-| [LLaMA-2](https://huggingface.co/meta-llama)                | 7B/13B/70B                  | meta-llama/Llama-2-7b-hf       | q_proj,v_proj     | llama2   |
-| [BLOOM](https://huggingface.co/bigscience/bloom)            | 560M/1.1B/1.7B/3B/7.1B/176B | bigscience/bloom-7b1           | query_key_value   | default  |
-| [BLOOMZ](https://huggingface.co/bigscience/bloomz)          | 560M/1.1B/1.7B/3B/7.1B/176B | bigscience/bloomz-7b1-mt       | query_key_value   | default  |
-| [Falcon](https://huggingface.co/tiiuae/falcon-7b)           | 7B/40B                      | tiiuae/falcon-7b               | query_key_value   | default  |
-| [Baichuan](https://huggingface.co/baichuan-inc/baichuan-7B) | 7B/13B                      | baichuan-inc/Baichuan-13B-Chat | W_pack            | baichuan |
-| [InternLM](https://github.com/InternLM/InternLM)            | 7B                          | internlm/internlm-7b           | q_proj,v_proj     | intern   |
-| [Qwen](https://github.com/QwenLM/Qwen-7B)                   | 7B                          | Qwen/Qwen-7B-Chat              | c_attn            | chatml   |
+
+| 模型名                                                   | 模型大小                     | 默认模块           | Template |
+| -------------------------------------------------------- | --------------------------- | ----------------- |----------|
+| [LLaMA](https://github.com/facebookresearch/llama)       | 7B/13B/33B/65B              | q_proj,v_proj     | -        |
+| [LLaMA-2](https://huggingface.co/meta-llama)             | 7B/13B/70B                  | q_proj,v_proj     | llama2   |
+| [BLOOM](https://huggingface.co/bigscience/bloom)         | 560M/1.1B/1.7B/3B/7.1B/176B | query_key_value   | -        |
+| [BLOOMZ](https://huggingface.co/bigscience/bloomz)       | 560M/1.1B/1.7B/3B/7.1B/176B | query_key_value   | -        |
+| [Falcon](https://huggingface.co/tiiuae/falcon-7b)        | 7B/40B                      | query_key_value   | -        |
+| [Baichuan](https://github.com/baichuan-inc/baichuan-13B) | 7B/13B                      | W_pack            | baichuan |
+| [InternLM](https://github.com/InternLM/InternLM)         | 7B                          | q_proj,v_proj     | intern   |
+| [Qwen](https://github.com/QwenLM/Qwen-7B)                | 7B                          | c_attn            | chatml   |
+| [XVERSE](https://github.com/xverse-ai/XVERSE-13B)        | 13B                         | q_proj,v_proj     | -        |
+
+> * **默认模块**是 `--lora_target` 参数的默认值。请使用 `python src/train_bash.py -h` 查看全部可选项。
+> * 对于所有“基座”模型，`--template` 参数可以是 `default`, `alpaca`, `vicuna` 等值。
 
 ## 微调方法
 
