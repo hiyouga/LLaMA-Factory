@@ -30,7 +30,7 @@ class ChatModel:
     ) -> Tuple[Dict[str, Any], int]:
         prefix = prefix or self.source_prefix
 
-        prompt, _ = self.template.get_prompt(
+        prompt, _ = self.template.encode_oneturn(
             tokenizer=self.tokenizer, query=query, resp="", history=history, prefix=prefix
         )
         input_ids = torch.tensor([prompt], device=self.model.device)

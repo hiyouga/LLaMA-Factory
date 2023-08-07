@@ -47,15 +47,14 @@ def preprocess_dataset(
 
     def preprocess_supervised_dataset(examples: Dict[str, List[Any]]) -> Dict[str, Any]:
         # build inputs with format `<bos> X Y <eos>` and labels with format `<ignore> ... <ignore> Y <eos>`
-        # for input with history, we build multiple input-label pairs just like:
-        # https://github.com/lm-sys/FastChat/blob/f17c092f64840fa6354ed52789dccb2daa793d0b/fastchat/train/train.py#L112
+        # for multiturn examples, we only mask the prompt part in each prompt-response pair.
         model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
         max_length = data_args.max_source_length + data_args.max_target_length
 
         for query, response, history, prefix in construct_example(examples):
             input_ids, labels = [], []
 
-            for source_ids, target_ids in template.get_dialog(tokenizer, query, response, history, prefix):
+            for source_ids, target_ids in template.encode_multiturn(tokenizer, query, response, history, prefix):
                 if len(source_ids) > data_args.max_source_length:
                     source_ids = source_ids[:data_args.max_source_length]
                 if len(target_ids) > data_args.max_target_length:
@@ -78,7 +77,7 @@ def preprocess_dataset(
         model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
 
         for query, response, history, prefix in construct_example(examples):
-            source_ids, target_ids = template.get_prompt(tokenizer, query, response, history, prefix)
+            source_ids, target_ids = template.encode_oneturn(tokenizer, query, response, history, prefix)
 
             if len(source_ids) > data_args.max_source_length:
                 source_ids = source_ids[:data_args.max_source_length]
@@ -95,8 +94,8 @@ def preprocess_dataset(
         # build input pairs with format `<bos> X Y1 <eos>` and `<bos> X Y2 <eos>`
         model_inputs = {"accept_ids": [], "reject_ids": []}
         for query, response, history, prefix in construct_example(examples):
-            source_ids, accept_ids = template.get_prompt(tokenizer, query, response[0], history, prefix)
-            source_ids, reject_ids = template.get_prompt(tokenizer, query, response[1], history, prefix)
+            source_ids, accept_ids = template.encode_oneturn(tokenizer, query, response[0], history, prefix)
+            source_ids, reject_ids = template.encode_oneturn(tokenizer, query, response[1], history, prefix)
 
             if len(source_ids) > data_args.max_source_length:
                 source_ids = source_ids[:data_args.max_source_length]
