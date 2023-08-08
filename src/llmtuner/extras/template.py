@@ -242,7 +242,6 @@ register_template(
         "If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n"
     ],
     prompt=[
-        {"token": "<s>"},
         "[INST] {{query}} [/INST] "
     ],
     sep=[],
