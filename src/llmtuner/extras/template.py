@@ -185,6 +185,7 @@ def get_template_and_fix_tokenizer(
     if tokenizer.pad_token_id is None and tokenizer.eos_token_id is not None:
         tokenizer.pad_token = tokenizer.eos_token
 
+    tokenizer.add_special_tokens(dict(additional_special_tokens=template.stop_words))
     return template
 
 
