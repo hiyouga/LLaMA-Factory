@@ -31,7 +31,11 @@ def preprocess_dataset(
 
     def preprocess_pretrain_dataset(examples: Dict[str, List[Any]]) -> Dict[str, Any]:
         # build grouped texts with format `X1 X2 X3 ...` (without <eos>)
-        tokenized_examples = tokenizer(examples["prompt"], add_special_tokens=False)
+        if hasattr(tokenizer, "tokenizer"): # for tiktoken tokenizer (Qwen)
+            kwargs = dict(allowed_special="all")
+        else:
+            kwargs = dict(add_special_tokens=False)
+        tokenized_examples = tokenizer(examples["prompt"], **kwargs)
         concatenated_examples = {k: list(chain(*tokenized_examples[k])) for k in tokenized_examples.keys()}
         total_length = len(concatenated_examples[list(concatenated_examples.keys())[0]])
         block_size = data_args.max_source_length
