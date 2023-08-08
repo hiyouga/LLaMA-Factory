@@ -3,6 +3,7 @@ import os
 import threading
 import time
 import transformers
+from transformers.trainer import TRAINING_ARGS_NAME
 from typing import Generator, List, Optional, Tuple
 
 from llmtuner.extras.callbacks import LogCallback
@@ -53,14 +54,14 @@ class Runner:
         return model_name_or_path, "", logger_handler, trainer_callback
 
     def finalize(
-        self, lang: str, finish_info: Optional[str] = None
+        self, lang: str, finish_info: str
     ) -> str:
         self.running = False
         torch_gc()
         if self.aborted:
             return ALERTS["info_aborted"][lang]
         else:
-            return finish_info if finish_info is not None else ALERTS["info_finished"][lang]
+            return finish_info
 
     def run_train(
         self,
@@ -104,6 +105,8 @@ class Runner:
         else:
             checkpoint_dir = None
 
+        output_dir = os.path.join(get_save_dir(model_name), finetuning_type, output_dir)
+
         args = dict(
             stage="sft",
             model_name_or_path=model_name_or_path,
@@ -133,7 +136,7 @@ class Runner:
             lora_rank=lora_rank,
             lora_dropout=lora_dropout,
             lora_target=lora_target or DEFAULT_MODULE.get(model_name.split("-")[0], "q_proj,v_proj"),
-            output_dir=os.path.join(get_save_dir(model_name), finetuning_type, output_dir)
+            output_dir=output_dir
         )
 
         if dev_ratio > 1e-6:
@@ -153,7 +156,12 @@ class Runner:
             else:
                 yield format_info(logger_handler.log, trainer_callback)
 
-        yield self.finalize(lang)
+        if os.path.exists(os.path.join(output_dir), TRAINING_ARGS_NAME):
+            finish_info = ALERTS["info_finished"][lang]
+        else:
+            finish_info = ALERTS["err_failed"][lang]
+
+        yield self.finalize(lang, finish_info)
 
     def run_eval(
         self,
@@ -221,4 +229,9 @@ class Runner:
             else:
                 yield format_info(logger_handler.log, trainer_callback)
 
-        yield self.finalize(lang, get_eval_results(os.path.join(output_dir, "all_results.json")))
+        if os.path.exists(os.path.join(output_dir, "all_results.json")):
+            finish_info = get_eval_results(os.path.join(output_dir, "all_results.json"))
+        else:
+            finish_info = ALERTS["err_failed"][lang]
+
+        yield self.finalize(lang, finish_info)

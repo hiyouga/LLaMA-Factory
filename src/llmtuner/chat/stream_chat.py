@@ -19,7 +19,6 @@ class ChatModel:
         self.template = get_template_and_fix_tokenizer(data_args.template, self.tokenizer)
         self.source_prefix = data_args.source_prefix
         self.stop_ids = self.tokenizer.convert_tokens_to_ids(self.template.stop_words)
-        self.tokenizer.add_special_tokens(dict(additional_special_tokens=self.template.stop_words))
         self.model.generate = MethodType(PreTrainedModel.generate, self.model) # disable custom method (for Qwen)
 
     def process_args(
