@@ -67,12 +67,12 @@ class Template:
         self,
         tokenizer: "PreTrainedTokenizer"
     ) -> Tuple[List[int], List[int]]:
-        if tokenizer.bos_token_id and getattr(tokenizer, "add_bos_token", True):
+        if tokenizer.bos_token_id:
             bos_ids = [tokenizer.bos_token_id]
         else:
             bos_ids = [] # bos token is optional
 
-        if tokenizer.eos_token_id and getattr(tokenizer, "add_eos_token", True):
+        if tokenizer.eos_token_id:
             eos_ids = [tokenizer.eos_token_id]
         else:
             raise ValueError("EOS token is required.")
