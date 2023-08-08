@@ -15,6 +15,7 @@ class ChatModel:
         model_args, data_args, finetuning_args, self.generating_args = get_infer_args(args)
         self.model, self.tokenizer = load_model_and_tokenizer(model_args, finetuning_args)
         self.model = dispatch_model(self.model)
+        self.model = self.model.eval() # change to eval mode
         self.template = get_template(data_args.template)
         self.source_prefix = data_args.source_prefix
         self.stop_ids = self.tokenizer.convert_tokens_to_ids(self.template.stop_words)

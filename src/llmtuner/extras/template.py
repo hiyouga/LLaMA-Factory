@@ -75,7 +75,7 @@ class Template:
         if tokenizer.eos_token_id and getattr(tokenizer, "add_eos_token", False):
             eos_ids = [tokenizer.eos_token_id]
         else: # use the first stop word as the eos token
-            eos_ids = tokenizer.convert_tokens_to_ids(self.stop_words[0])
+            eos_ids = [tokenizer.convert_tokens_to_ids(self.stop_words[0])]
 
         return bos_ids, eos_ids
 
