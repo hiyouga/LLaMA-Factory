@@ -67,15 +67,15 @@ class Template:
         self,
         tokenizer: "PreTrainedTokenizer"
     ) -> Tuple[List[int], List[int]]:
-        if tokenizer.bos_token_id and getattr(tokenizer, "add_bos_token", False):
+        if tokenizer.bos_token_id and getattr(tokenizer, "add_bos_token", True):
             bos_ids = [tokenizer.bos_token_id]
-        else: # bos token is optional
-            bos_ids = []
+        else:
+            bos_ids = [] # bos token is optional
 
-        if tokenizer.eos_token_id and getattr(tokenizer, "add_eos_token", False):
+        if tokenizer.eos_token_id and getattr(tokenizer, "add_eos_token", True):
             eos_ids = [tokenizer.eos_token_id]
-        else: # use the first stop word as the eos token
-            eos_ids = [tokenizer.convert_tokens_to_ids(self.stop_words[0])]
+        else:
+            raise ValueError("EOS token is required.")
 
         return bos_ids, eos_ids
 
@@ -172,9 +172,19 @@ def register_template(
     )
 
 
-def get_template(name: str) -> Template:
+def get_template_and_fix_tokenizer(
+    name: str,
+    tokenizer: "PreTrainedTokenizer"
+) -> Template:
     template = templates.get(name, None)
     assert template is not None, "Template {} does not exist.".format(name)
+
+    if tokenizer.eos_token_id is None and len(template.stop_words): # inplace method
+        tokenizer.eos_token = template.stop_words[0]
+
+    if tokenizer.pad_token_id is None and tokenizer.eos_token_id is not None:
+        tokenizer.pad_token = tokenizer.eos_token
+
     return template
 
 

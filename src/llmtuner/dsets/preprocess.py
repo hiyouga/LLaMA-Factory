@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Any, Dict, Generator, List, Literal
 from itertools import chain
 
 from llmtuner.extras.constants import IGNORE_INDEX
-from llmtuner.extras.template import get_template
+from llmtuner.extras.template import get_template_and_fix_tokenizer
 
 if TYPE_CHECKING:
     from datasets import Dataset
@@ -19,7 +19,7 @@ def preprocess_dataset(
     stage: Literal["pt", "sft", "rm", "ppo"]
 ) -> "Dataset":
     column_names = list(dataset.column_names)
-    template = get_template(data_args.template)
+    template = get_template_and_fix_tokenizer(data_args.template, tokenizer)
 
     def construct_example(examples: Dict[str, List[Any]]) -> Generator[Any, None, None]:
         for i in range(len(examples["prompt"])):
@@ -119,10 +119,9 @@ def preprocess_dataset(
         print("input_ids:\n{}".format(example["input_ids"]))
         print("inputs:\n{}".format(tokenizer.decode(example["input_ids"], skip_special_tokens=False)))
         print("label_ids:\n{}".format(example["labels"]))
-        print("labels:\n{}".format(''.join([
-            tokenizer.decode(d, skip_special_tokens=False)
-            if d != IGNORE_INDEX else '-100' for d in example["labels"]
-        ])))
+        print("labels:\n{}".format(tokenizer.decode([
+            token_id if token_id != IGNORE_INDEX else tokenizer.pad_token_id for token_id in example["labels"]
+        ], skip_special_tokens=False)))
 
     def print_pairwise_dataset_example(example):
         print("accept_ids:\n{}".format(example["accept_ids"]))
