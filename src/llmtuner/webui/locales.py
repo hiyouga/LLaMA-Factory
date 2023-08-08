@@ -513,6 +513,10 @@ ALERTS = {
         "en": "Please provide export dir.",
         "zh": "请填写导出目录"
     },
+    "err_failed": {
+        "en": "Failed.",
+        "zh": "训练出错。"
+    },
     "info_aborting": {
         "en": "Aborted, wait for terminating...",
         "zh": "训练中断，正在等待线程结束……"

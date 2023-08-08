@@ -4,6 +4,7 @@ datasets>=2.12.0
 accelerate>=0.21.0
 peft>=0.4.0
 trl>=0.4.7
+scipy
 sentencepiece
 tiktoken
 jieba
