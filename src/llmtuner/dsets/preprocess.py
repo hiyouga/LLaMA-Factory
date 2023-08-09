@@ -103,13 +103,13 @@ def preprocess_dataset(
 
             if len(source_ids) > data_args.max_source_length:
                 source_ids = source_ids[:data_args.max_source_length]
-            if len(accept_ids) > data_args.max_target_length - 1: # eos token
+            if len(accept_ids) > data_args.max_target_length:
                 accept_ids = accept_ids[:data_args.max_target_length - 1]
-            if len(reject_ids) > data_args.max_target_length - 1: # eos token
+            if len(reject_ids) > data_args.max_target_length:
                 reject_ids = reject_ids[:data_args.max_target_length - 1]
 
-            accept_ids = source_ids + accept_ids + [tokenizer.eos_token_id]
-            reject_ids = source_ids + reject_ids + [tokenizer.eos_token_id]
+            accept_ids = source_ids + accept_ids
+            reject_ids = source_ids + reject_ids
 
             model_inputs["accept_ids"].append(accept_ids)
             model_inputs["reject_ids"].append(reject_ids)
