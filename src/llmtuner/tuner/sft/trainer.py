@@ -79,7 +79,7 @@ class Seq2SeqPeftTrainer(PeftTrainer):
 
         padded_tensor = pad_token_id * torch.ones_like(tgt_tensor)
         padded_tensor[:, -src_tensor.shape[-1]:] = src_tensor # adopt left-padding
-        return padded_tensor
+        return padded_tensor.contiguous()
 
     def save_predictions(
         self,
