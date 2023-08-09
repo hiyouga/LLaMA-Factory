@@ -101,6 +101,9 @@ class Template:
                 prefix_ids = sep_ids
             elif prefix:
                 prefix_ids = self._convert_inputs_to_ids(tokenizer, context=prefix) + eos_ids + sep_ids
+            else:
+                prefix_ids = []
+
             query_ids = self._convert_inputs_to_ids(tokenizer, context=self.prompt, query=query)
             resp_ids = self._convert_inputs_to_ids(tokenizer, context=[resp])
             encoded_pairs.append((bos_ids + prefix_ids + query_ids, resp_ids + eos_ids))
