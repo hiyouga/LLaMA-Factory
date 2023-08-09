@@ -90,9 +90,9 @@ class DataArguments:
         default=None,
         metadata={"help": "A prefix to add before every source text. Use `|` to separate multiple prefixes in training."}
     )
-    dev_ratio: Optional[float] = field(
+    val_size: Optional[float] = field(
         default=0,
-        metadata={"help": "Proportion of the dataset to include in the development set, should be between 0.0 and 1.0."}
+        metadata={"help": "Size of the development set, should be an integer or a float in range `[0,1)`."}
     )
 
     def init_for_training(self): # support mixing multiple datasets

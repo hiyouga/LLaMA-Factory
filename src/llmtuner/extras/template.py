@@ -97,7 +97,7 @@ class Template:
         sep_ids = self._convert_inputs_to_ids(tokenizer, context=self.sep)
         encoded_pairs = []
         for turn_idx, (query, resp) in enumerate(history):
-            if turn_idx == 0:
+            if turn_idx == 0 and prefix:
                 prefix_ids = self._convert_inputs_to_ids(tokenizer, context=prefix) + eos_ids + sep_ids
             else:
                 prefix_ids = sep_ids
