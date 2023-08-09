@@ -38,7 +38,7 @@ def run_pt(
         tokenizer=tokenizer,
         data_collator=data_collator,
         callbacks=callbacks,
-        **split_dataset(dataset, data_args.dev_ratio, training_args.do_train)
+        **split_dataset(dataset, data_args, training_args)
     )
 
     # Training

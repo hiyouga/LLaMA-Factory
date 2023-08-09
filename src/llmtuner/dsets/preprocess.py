@@ -104,9 +104,9 @@ def preprocess_dataset(
             if len(source_ids) > data_args.max_source_length:
                 source_ids = source_ids[:data_args.max_source_length]
             if len(accept_ids) > data_args.max_target_length:
-                accept_ids = accept_ids[:data_args.max_target_length - 1]
+                accept_ids = accept_ids[:data_args.max_target_length]
             if len(reject_ids) > data_args.max_target_length:
-                reject_ids = reject_ids[:data_args.max_target_length - 1]
+                reject_ids = reject_ids[:data_args.max_target_length]
 
             accept_ids = source_ids + accept_ids
             reject_ids = source_ids + reject_ids
@@ -165,9 +165,6 @@ def preprocess_dataset(
             remove_columns=column_names,
             **kwargs
         )
-
-        if data_args.streaming:
-            dataset = dataset.shuffle(buffer_size=data_args.buffer_size)
 
         print_function(next(iter(dataset)))
         return dataset
