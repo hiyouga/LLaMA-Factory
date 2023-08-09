@@ -388,12 +388,9 @@ register_template(
     name="intern",
     prefix=[],
     prompt=[
-        {"token": "<|User|>"},
-        ":{{query}}",
+        "<|User|>:{{query}}",
         {"token": "<eoh>"},
-        "\n",
-        {"token": "<|Bot|>"},
-        ":"
+        "\n<|Bot|>:"
     ],
     sep=[
         "\n"
