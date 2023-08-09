@@ -49,8 +49,8 @@ def create_app(chat_model: ChatModel) -> FastAPI:
     async def create_chat_completion(request: ChatCompletionRequest):
         if request.messages[-1].role != Role.USER:
             raise HTTPException(status_code=400, detail="Invalid request")
-        query = request.messages[-1].content
 
+        query = request.messages[-1].content
         prev_messages = request.messages[:-1]
         if len(prev_messages) > 0 and prev_messages[0].role == Role.SYSTEM:
             prefix = prev_messages.pop(0).content

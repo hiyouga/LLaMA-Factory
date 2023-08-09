@@ -67,33 +67,33 @@ def get_train_args(
     # Check arguments (do not check finetuning_args since it may be loaded from checkpoints)
     data_args.init_for_training()
 
-    assert general_args.stage == "sft" or (not training_args.predict_with_generate), \
-        "`predict_with_generate` cannot be set as True at PT, RM and PPO stages."
+    if general_args.stage != "sft" and training_args.predict_with_generate:
+        raise ValueError("`predict_with_generate` cannot be set as True at PT, RM and PPO stages.")
 
-    assert not (training_args.do_train and training_args.predict_with_generate), \
-        "`predict_with_generate` cannot be set as True while training."
+    if training_args.do_train and training_args.predict_with_generate:
+        raise ValueError("`predict_with_generate` cannot be set as True while training.")
 
-    assert general_args.stage != "sft" or (not training_args.do_predict) or training_args.predict_with_generate, \
-        "Please enable `predict_with_generate` to save model predictions."
+    if general_args.stage == "sft" and training_args.do_predict and not training_args.predict_with_generate:
+        raise ValueError("Please enable `predict_with_generate` to save model predictions.")
 
-    assert model_args.quantization_bit is None or finetuning_args.finetuning_type == "lora", \
-        "Quantization is only compatible with the LoRA method."
+    if training_args.max_steps == -1 and data_args.streaming:
+        raise ValueError("Please specify `max_steps` in streaming mode.")
 
-    assert not (training_args.max_steps == -1 and data_args.streaming), \
-        "Please specify `max_steps` in streaming mode."
+    if general_args.stage == "ppo" and data_args.streaming:
+        raise ValueError("Streaming mode does not suppport PPO training currently.")
 
-    assert training_args.evaluation_strategy == "no" or (not data_args.streaming), \
-        "Streaming mode does not support evaluation currently."
+    if data_args.val_size > 1e-6 and data_args.val_size < 1 and data_args.streaming:
+        raise ValueError("Streaming mode should have an integer val size.")
 
-    assert not (general_args.stage == "ppo" and data_args.streaming), \
-        "Streaming mode does not suppport PPO training currently."
+    if model_args.quantization_bit is not None and finetuning_args.finetuning_type != "lora":
+        raise ValueError("Quantization is only compatible with the LoRA method.")
 
     if model_args.checkpoint_dir is not None:
         if finetuning_args.finetuning_type != "lora":
-            assert len(model_args.checkpoint_dir) == 1, "Only LoRA tuning accepts multiple checkpoints."
-        else:
-            assert model_args.quantization_bit is None or len(model_args.checkpoint_dir) == 1, \
-                "Quantized model only accepts a single checkpoint."
+            if len(model_args.checkpoint_dir) != 1:
+                raise ValueError("Only LoRA tuning accepts multiple checkpoints.")
+        elif model_args.quantization_bit is not None and len(model_args.checkpoint_dir) != 1:
+                raise ValueError("Quantized model only accepts a single checkpoint.")
 
     if model_args.quantization_bit is not None and (not training_args.do_train):
         logger.warning("Evaluating model in 4/8-bit mode may cause lower scores.")
@@ -112,10 +112,6 @@ def get_train_args(
     if data_args.max_samples is not None and data_args.streaming:
         logger.warning("`max_samples` is incompatible with `streaming`. Disabling max_samples.")
         data_args.max_samples = None
-
-    if data_args.dev_ratio > 1e-6 and data_args.streaming:
-        logger.warning("`dev_ratio` is incompatible with `streaming`. Disabling development set.")
-        data_args.dev_ratio = 0
 
     training_args.optim = "adamw_torch" if training_args.optim == "adamw_hf" else training_args.optim # suppress warning
 
@@ -145,14 +141,14 @@ def get_infer_args(
 ) -> Tuple[ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]:
     model_args, data_args, finetuning_args, generating_args = parse_infer_args(args)
 
-    assert model_args.quantization_bit is None or finetuning_args.finetuning_type == "lora", \
-        "Quantization is only compatible with the LoRA method."
+    if model_args.quantization_bit is not None and finetuning_args.finetuning_type != "lora":
+        raise ValueError("Quantization is only compatible with the LoRA method.")
 
     if model_args.checkpoint_dir is not None:
         if finetuning_args.finetuning_type != "lora":
-            assert len(model_args.checkpoint_dir) == 1, "Only LoRA tuning accepts multiple checkpoints."
-        else:
-            assert model_args.quantization_bit is None or len(model_args.checkpoint_dir) == 1, \
-                "Quantized model only accepts a single checkpoint."
+            if len(model_args.checkpoint_dir) != 1:
+                raise ValueError("Only LoRA tuning accepts multiple checkpoints.")
+        elif model_args.quantization_bit is not None and len(model_args.checkpoint_dir) != 1:
+                raise ValueError("Quantized model only accepts a single checkpoint.")
 
     return model_args, data_args, finetuning_args, generating_args
