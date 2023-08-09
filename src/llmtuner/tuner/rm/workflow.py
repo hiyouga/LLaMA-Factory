@@ -39,7 +39,7 @@ def run_rm(
         data_collator=data_collator,
         callbacks=callbacks,
         compute_metrics=compute_accuracy,
-        **split_dataset(dataset, data_args.dev_ratio, training_args.do_train)
+        **split_dataset(dataset, data_args, training_args)
     )
 
     # Training
