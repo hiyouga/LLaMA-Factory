@@ -156,7 +156,7 @@ class Runner:
             else:
                 yield format_info(logger_handler.log, trainer_callback)
 
-        if os.path.exists(os.path.join(output_dir), TRAINING_ARGS_NAME):
+        if os.path.exists(os.path.join(output_dir, TRAINING_ARGS_NAME)):
             finish_info = ALERTS["info_finished"][lang]
         else:
             finish_info = ALERTS["err_failed"][lang]
