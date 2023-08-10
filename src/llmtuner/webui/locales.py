@@ -227,9 +227,9 @@ LOCALES = {
             "info": "用于梯度裁剪的范数。"
         }
     },
-    "dev_ratio": {
+    "val_size": {
         "en": {
-            "label": "Dev ratio",
+            "label": "Val size",
             "info": "Proportion of data in the dev set."
         },
         "zh": {
