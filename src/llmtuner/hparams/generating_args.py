@@ -4,7 +4,7 @@ from dataclasses import asdict, dataclass, field
 
 @dataclass
 class GeneratingArguments:
-    """
+    r"""
     Arguments pertaining to specify the decoding parameters.
     """
     do_sample: Optional[bool] = field(
