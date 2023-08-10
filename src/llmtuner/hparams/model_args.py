@@ -1,6 +1,7 @@
 import torch
 from typing import Literal, Optional
 from dataclasses import dataclass, field
+from huggingface_hub.hf_api import HfFolder
 
 
 @dataclass
@@ -63,6 +64,11 @@ class ModelArguments:
         default=False,
         metadata={"help": "Whether to plot the training loss after fine-tuning or not."}
     )
+    hf_hub_token  : Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to the directory containing the checkpoints of the reward model."}
+    )
+
 
     def __post_init__(self):
         if self.checkpoint_dir is not None: # support merging multiple lora weights
@@ -70,3 +76,6 @@ class ModelArguments:
 
         if self.quantization_bit is not None:
             assert self.quantization_bit in [4, 8], "We only accept 4-bit or 8-bit quantization."
+
+        if self.use_auth_token == True and self.hf_hub_token != None:
+            HfFolder.save_token(self.hf_hub_token)

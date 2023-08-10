@@ -16,3 +16,4 @@ pydantic==1.10.11
 fastapi==0.95.1
 sse-starlette
 matplotlib
+huggingface_hub
