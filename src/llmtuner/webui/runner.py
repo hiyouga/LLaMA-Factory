@@ -4,7 +4,7 @@ import threading
 import time
 import transformers
 from transformers.trainer import TRAINING_ARGS_NAME
-from typing import Generator, List, Optional, Tuple
+from typing import Generator, List, Tuple
 
 from llmtuner.extras.callbacks import LogCallback
 from llmtuner.extras.constants import DEFAULT_MODULE

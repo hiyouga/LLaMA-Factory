@@ -12,6 +12,8 @@
 
 ## Changelog
 
+[23/08/11] Now we support **[DPO training](https://arxiv.org/abs/2305.18290)** for instruction-tuned models. See [this example](#dpo-training) to train your models (experimental feature).
+
 [23/08/03] Now we support training the **Qwen-7B** model in this repo. Try `--model_name_or_path Qwen/Qwen-7B-Chat` and `--lora_target c_attn` arguments to train the Qwen-7B model. Remember to use `--template chatml` argument when you are using the Qwen-7B-Chat model.
 
 [23/07/31] Now we support dataset streaming. Try `--streaming` and `--max_steps 100` arguments to stream your dataset.
@@ -54,24 +56,18 @@
 | [Qwen](https://github.com/QwenLM/Qwen-7B)                | 7B                          | c_attn            | chatml   |
 | [XVERSE](https://github.com/xverse-ai/XVERSE-13B)        | 13B                         | q_proj,v_proj     | -        |
 
-> * **Default module** is used for the `--lora_target` argument. Please use `python src/train_bash.py -h` to see all available options.
-> * For the "base" models, the `--template` argument can be chosen from `default`, `alpaca`, `vicuna` etc.
+- **Default module** is used for the `--lora_target` argument. Please use `python src/train_bash.py -h` to see all available options.
+- For the "base" models, the `--template` argument can be chosen from `default`, `alpaca`, `vicuna` etc. But make sure to use the corresponding template for the "chat" models.
 
 ## Supported Training Approaches
 
-- [(Continually) pre-training](https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf)
-  - Full-parameter tuning
-  - Partial-parameter tuning
-  - [LoRA](https://arxiv.org/abs/2106.09685)
-  - [QLoRA](https://arxiv.org/abs/2305.14314)
-- [Supervised fine-tuning](https://arxiv.org/abs/2109.01652)
-  - Full-parameter tuning
-  - Partial-parameter tuning
-  - [LoRA](https://arxiv.org/abs/2106.09685)
-  - [QLoRA](https://arxiv.org/abs/2305.14314)
-- [RLHF](https://arxiv.org/abs/2203.02155)
-  - [LoRA](https://arxiv.org/abs/2106.09685)
-  - [QLoRA](https://arxiv.org/abs/2305.14314)
+| Approach               | Full-parameter | Partial-parameter | LoRA | QLoRA |
+| ---------------------- | -------------- | ----------------- | ---- | ----- |
+| Pre-Training           | ✅            | ✅                | ✅   | ✅   |
+| Supervised Fine-Tuning | ✅            | ✅                | ✅   | ✅   |
+| Reward Model Training  |                |                   | ✅   | ✅   |
+| PPO Training           |                |                   | ✅   | ✅   |
+| DPO Training           | ✅            |                    | ✅   | ✅   |
 
 ## Provided Datasets
 
@@ -88,7 +84,6 @@
   - [Open Assistant (multilingual)](https://huggingface.co/datasets/OpenAssistant/oasst1)
   - [Self-cognition (zh)](data/self_cognition.json)
   - [ShareGPT (zh)](https://huggingface.co/datasets/QingyiSi/Alpaca-CoT/tree/main/Chinese-instruction-collection)
-  - [RefGPT (zh)](https://github.com/sufengniu/RefGPT)
   - [Guanaco Dataset (multilingual)](https://huggingface.co/datasets/JosephusCheung/GuanacoDataset)
   - [BELLE 2M (zh)](https://huggingface.co/datasets/BelleGroup/train_2M_CN)
   - [BELLE 1M (zh)](https://huggingface.co/datasets/BelleGroup/train_1M_CN)
@@ -103,7 +98,7 @@
   - [Web QA (zh)](https://huggingface.co/datasets/suolyer/webqa)
   - [UltraChat (en)](https://github.com/thunlp/UltraChat)
   - [WebNovel (zh)](https://huggingface.co/datasets/zxbsmk/webnovel_cn)
-- For reward modelling:
+- For reward modelling or DPO training:
   - [HH-RLHF (en)](https://huggingface.co/datasets/Anthropic/hh-rlhf)
   - [Open Assistant (multilingual)](https://huggingface.co/datasets/OpenAssistant/oasst1)
   - [GPT-4 Generated Data (en&zh)](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
@@ -139,7 +134,6 @@ Note: please update `data/dataset_info.json` to use your custom dataset. About t
 ### Dependence Installation (optional)
 
 ```bash
-git lfs install
 git clone https://github.com/hiyouga/LLaMA-Efficient-Tuning.git
 conda create -n llama_etuning python=3.10
 conda activate llama_etuning
@@ -161,7 +155,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_web.py
 
 Currently the web UI only supports training on **a single GPU**.
 
-### (Continually) Pre-Training
+### Pre-Training
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
@@ -222,7 +216,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --resume_lora_training False \
     --checkpoint_dir path_to_sft_checkpoint \
     --output_dir path_to_rm_checkpoint \
-    --per_device_train_batch_size 4 \
+    --per_device_train_batch_size 2 \
     --gradient_accumulation_steps 4 \
     --lr_scheduler_type cosine \
     --logging_steps 10 \
@@ -233,7 +227,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --fp16
 ```
 
-### PPO Training (RLHF)
+### PPO Training
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
@@ -255,6 +249,30 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --learning_rate 1e-5 \
     --num_train_epochs 1.0 \
     --plot_loss
+```
+
+### DPO Training
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
+    --stage dpo \
+    --model_name_or_path path_to_your_model \
+    --do_train \
+    --dataset comparison_gpt4_en \
+    --template default \
+    --finetuning_type lora \
+    --resume_lora_training False \
+    --checkpoint_dir path_to_sft_checkpoint \
+    --output_dir path_to_dpo_checkpoint \
+    --per_device_train_batch_size 2 \
+    --gradient_accumulation_steps 4 \
+    --lr_scheduler_type cosine \
+    --logging_steps 10 \
+    --save_steps 1000 \
+    --learning_rate 1e-5 \
+    --num_train_epochs 1.0 \
+    --plot_loss \
+    --fp16
 ```
 
 ### Distributed Training
