@@ -38,7 +38,7 @@ def create_sft_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict[
             value="cosine", choices=[scheduler.value for scheduler in SchedulerType]
         )
         max_grad_norm = gr.Textbox(value="1.0")
-        dev_ratio = gr.Slider(value=0, minimum=0, maximum=1, step=0.001)
+        val_size = gr.Slider(value=0, minimum=0, maximum=1, step=0.001)
 
     with gr.Accordion(label="Advanced config", open=False) as advanced_tab:
         with gr.Row():
@@ -88,7 +88,7 @@ def create_sft_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict[
             gradient_accumulation_steps,
             lr_scheduler_type,
             max_grad_norm,
-            dev_ratio,
+            val_size,
             logging_steps,
             save_steps,
             warmup_steps,
@@ -122,7 +122,7 @@ def create_sft_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict[
         gradient_accumulation_steps=gradient_accumulation_steps,
         lr_scheduler_type=lr_scheduler_type,
         max_grad_norm=max_grad_norm,
-        dev_ratio=dev_ratio,
+        val_size=val_size,
         advanced_tab=advanced_tab,
         logging_steps=logging_steps,
         save_steps=save_steps,
