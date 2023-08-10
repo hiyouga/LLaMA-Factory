@@ -46,7 +46,6 @@ def preprocess_dataset(
             k: [t[i: i + block_size] for i in range(0, total_length, block_size)]
             for k, t in concatenated_examples.items()
         }
-        result["labels"] = result["input_ids"].copy()
         return result
 
     def preprocess_supervised_dataset(examples: Dict[str, List[Any]]) -> Dict[str, Any]:
@@ -95,24 +94,22 @@ def preprocess_dataset(
         return model_inputs
 
     def preprocess_pairwise_dataset(examples):
-        # build input pairs with format `<bos> X Y1 <eos>` and `<bos> X Y2 <eos>`
-        model_inputs = {"accept_ids": [], "reject_ids": []}
+        # build input pairs with format `<bos> X`, `Y1 <eos>` and `Y2 <eos>`
+        model_inputs = {"prompt_ids": [], "chosen_ids": [], "rejected_ids": []}
         for query, response, history, prefix in construct_example(examples):
-            source_ids, accept_ids = template.encode_oneturn(tokenizer, query, response[0], history, prefix)
-            source_ids, reject_ids = template.encode_oneturn(tokenizer, query, response[1], history, prefix)
+            prompt_ids, chosen_ids = template.encode_oneturn(tokenizer, query, response[0], history, prefix)
+            _, rejected_ids = template.encode_oneturn(tokenizer, query, response[1], history, prefix)
 
-            if len(source_ids) > data_args.max_source_length:
-                source_ids = source_ids[:data_args.max_source_length]
-            if len(accept_ids) > data_args.max_target_length:
-                accept_ids = accept_ids[:data_args.max_target_length]
-            if len(reject_ids) > data_args.max_target_length:
-                reject_ids = reject_ids[:data_args.max_target_length]
+            if len(prompt_ids) > data_args.max_source_length:
+                prompt_ids = prompt_ids[:data_args.max_source_length]
+            if len(chosen_ids) > data_args.max_target_length:
+                chosen_ids = chosen_ids[:data_args.max_target_length]
+            if len(rejected_ids) > data_args.max_target_length:
+                rejected_ids = rejected_ids[:data_args.max_target_length]
 
-            accept_ids = source_ids + accept_ids
-            reject_ids = source_ids + reject_ids
-
-            model_inputs["accept_ids"].append(accept_ids)
-            model_inputs["reject_ids"].append(reject_ids)
+            model_inputs["prompt_ids"].append(prompt_ids)
+            model_inputs["chosen_ids"].append(chosen_ids)
+            model_inputs["rejected_ids"].append(rejected_ids)
         return model_inputs
 
     def print_supervised_dataset_example(example):
@@ -124,10 +121,12 @@ def preprocess_dataset(
         ], skip_special_tokens=False)))
 
     def print_pairwise_dataset_example(example):
-        print("accept_ids:\n{}".format(example["accept_ids"]))
-        print("accepts:\n{}".format(tokenizer.decode(example["accept_ids"], skip_special_tokens=False)))
-        print("reject_ids:\n{}".format(example["reject_ids"]))
-        print("rejects:\n{}".format(tokenizer.decode(example["reject_ids"], skip_special_tokens=False)))
+        print("prompt_ids:\n{}".format(example["prompt_ids"]))
+        print("prompt:\n{}".format(tokenizer.decode(example["prompt_ids"], skip_special_tokens=False)))
+        print("chosen_ids:\n{}".format(example["chosen_ids"]))
+        print("chosen:\n{}".format(tokenizer.decode(example["chosen_ids"], skip_special_tokens=False)))
+        print("rejected_ids:\n{}".format(example["rejected_ids"]))
+        print("rejected:\n{}".format(tokenizer.decode(example["rejected_ids"], skip_special_tokens=False)))
 
     def print_unsupervised_dataset_example(example):
         print("input_ids:\n{}".format(example["input_ids"]))

@@ -1,11 +1,9 @@
-# Inspired by:
-# https://github.com/lvwerra/trl/blob/main/examples/research_projects/stack_llama/scripts/rl_training.py
+# Inspired by: https://github.com/lvwerra/trl/blob/main/examples/research_projects/stack_llama/scripts/rl_training.py
 
 import math
-from typing import TYPE_CHECKING
 from trl import PPOConfig
 from torch.optim import AdamW
-from typing import Optional, List
+from typing import TYPE_CHECKING, Optional, List
 from transformers import DataCollatorForSeq2Seq
 from transformers.optimization import get_scheduler
 
@@ -16,7 +14,7 @@ from llmtuner.tuner.ppo.trainer import PPOPeftTrainer
 
 if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments, TrainerCallback
-    from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
+    from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments
 
 
 def run_ppo(
@@ -24,6 +22,7 @@ def run_ppo(
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
     finetuning_args: "FinetuningArguments",
+    generating_args: "GeneratingArguments",
     callbacks: Optional[List["TrainerCallback"]] = None
 ):
     dataset = get_dataset(model_args, data_args)
@@ -42,8 +41,9 @@ def run_ppo(
     )
 
     optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=training_args.learning_rate)
-    total_train_batch_size = \
+    total_train_batch_size = (
         training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps * training_args.world_size
+    )
     num_training_steps = training_args.num_train_epochs * math.ceil(len(dataset) / total_train_batch_size)
     lr_scheduler = get_scheduler(
         training_args.lr_scheduler_type,
@@ -56,6 +56,7 @@ def run_ppo(
     ppo_trainer = PPOPeftTrainer(
         training_args=training_args,
         finetuning_args=finetuning_args,
+        generating_args=generating_args,
         callbacks=callbacks,
         config=ppo_config,
         model=model,
@@ -67,8 +68,10 @@ def run_ppo(
         lr_scheduler=lr_scheduler
     )
 
-    ppo_trainer.ppo_train(max_target_length=data_args.max_target_length)
-    ppo_trainer.save_model()
-    ppo_trainer.save_state() # must be after save_model
-    if ppo_trainer.is_world_process_zero() and model_args.plot_loss:
-        plot_loss(training_args.output_dir, keys=["loss", "reward"])
+    # Training
+    if training_args.do_train:
+        ppo_trainer.ppo_train(max_target_length=data_args.max_target_length)
+        ppo_trainer.save_model()
+        ppo_trainer.save_state() # must be called after save_model to have a folder
+        if ppo_trainer.is_world_process_zero() and model_args.plot_loss:
+            plot_loss(training_args.output_dir, keys=["loss", "reward"])

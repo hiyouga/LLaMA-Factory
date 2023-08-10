@@ -61,7 +61,7 @@ class Template:
         prefix: Optional[str] = None
     ) -> Tuple[List[Union[str, Dict[str, str]]], List[Tuple[str, str]]]:
         r"""
-        Aligns inputs to a special format.
+        Aligns inputs to the standard format.
         """
         prefix = [prefix] if prefix else self.prefix # use prefix if provided
         history = history if (history and self.use_history) else []
@@ -92,28 +92,32 @@ class Template:
     ) -> List[Tuple[List[int], List[int]]]:
         r"""
         Encodes formatted inputs to pairs of token ids.
+        Turn 0: bos + prefix + sep + query    resp + eos
+        Turn t: sep + bos + query             resp + eos
         """
         bos_ids, eos_ids = self._get_special_ids(tokenizer)
         sep_ids = self._convert_inputs_to_ids(tokenizer, context=self.sep)
         encoded_pairs = []
         for turn_idx, (query, resp) in enumerate(history):
-            if turn_idx != 0:
-                prefix_ids = sep_ids
-            elif prefix:
-                prefix_ids = self._convert_inputs_to_ids(tokenizer, context=prefix) + eos_ids + sep_ids
+            if turn_idx == 0:
+                if prefix: # has prefix
+                    prefix_ids = bos_ids + self._convert_inputs_to_ids(tokenizer, context=prefix) + sep_ids
+                else:
+                    prefix_ids = bos_ids
             else:
-                prefix_ids = []
+                prefix_ids = sep_ids + bos_ids
 
-            query_ids = self._convert_inputs_to_ids(tokenizer, context=self.prompt, query=query)
+            query_ids = self._convert_inputs_to_ids(tokenizer, context=self.prompt, query=query, idx=str(turn_idx))
             resp_ids = self._convert_inputs_to_ids(tokenizer, context=[resp])
-            encoded_pairs.append((bos_ids + prefix_ids + query_ids, resp_ids + eos_ids))
+            encoded_pairs.append((prefix_ids + query_ids, resp_ids + eos_ids))
         return encoded_pairs
 
     def _convert_inputs_to_ids(
         self,
         tokenizer: "PreTrainedTokenizer",
         context: List[Union[str, Dict[str, str]]],
-        query: Optional[str] = ""
+        query: Optional[str] = "",
+        idx: Optional[str] = ""
     ) -> List[int]:
         r"""
         Converts context to token ids.
@@ -127,6 +131,7 @@ class Template:
         for elem in context:
             if isinstance(elem, str):
                 elem = elem.replace("{{query}}", query, 1)
+                elem = elem.replace("{{idx}}", idx, 1)
                 token_ids = token_ids + tokenizer.encode(elem, **kwargs)
             elif isinstance(elem, dict):
                 token_ids = token_ids + [tokenizer.convert_tokens_to_ids(elem.get("token"))]
@@ -146,10 +151,12 @@ class Llama2Template(Template):
     ) -> List[Tuple[List[int], List[int]]]:
         r"""
         Encodes formatted inputs to pairs of token ids.
+        Turn 0: bos + prefix + query    resp + eos
+        Turn t: bos + query             resp + eos
         """
         bos_ids, eos_ids = self._get_special_ids(tokenizer)
         encoded_pairs = []
-        assert isinstance(prefix[0], str), "LLaMA-2 template only accepts list containing a single str."
+        assert isinstance(prefix[0], str), "LLaMA-2 template only accepts list containing a single string."
         for turn_idx, (query, resp) in enumerate(history):
             if turn_idx == 0: # llama2 template has not sep_ids
                 query = prefix[0] + query
@@ -187,11 +194,12 @@ def get_template_and_fix_tokenizer(
     template = templates.get(name, None)
     assert template is not None, "Template {} does not exist.".format(name)
 
-    if tokenizer.eos_token_id is None: # inplace method
-        if len(template.stop_words):
-            tokenizer.eos_token = template.stop_words[0]
-        else:
-            tokenizer.eos_token = "<|endoftext|>"
+    if len(template.stop_words): # inplace method
+        tokenizer.eos_token = template.stop_words[0]
+        logger.info("Replace eos token: {}".format(tokenizer.eos_token))
+
+    if tokenizer.eos_token_id is None:
+        tokenizer.eos_token = "<|endoftext|>"
         logger.info("Add eos token: {}".format(tokenizer.eos_token))
 
     if tokenizer.pad_token_id is None:
@@ -422,12 +430,13 @@ register_template(
     name="baichuan",
     prefix=[],
     prompt=[
-        {"token": "<reserved_102>"},
-        "{{query}}",
-        {"token": "<reserved_103>"}
+        {"token": "<reserved_102>"}, # user token (a little difference in position)
+        "{{query}}"
     ],
     sep=[],
-    stop_words=[],
+    stop_words=[
+        "<reserved_103>" # assistant token
+    ],
     use_history=True
 )
 
@@ -440,7 +449,8 @@ register_template(
     name="starchat",
     prefix=[
         {"token": "<|system|>"},
-        "\n"
+        "\n",
+        {"token": "<|end|>"}
     ],
     prompt=[
         {"token": "<|user|>"},
@@ -466,7 +476,8 @@ register_template(
     name="chatml",
     prefix=[
         {"token": "<|im_start|>"},
-        "system\nYou are a helpful assistant."
+        "system\nYou are a helpful assistant.",
+        {"token": "<|im_end|>"}
     ],
     prompt=[
         {"token": "<|im_start|>"},
@@ -482,5 +493,25 @@ register_template(
     stop_words=[
         "<|im_end|>"
     ],
+    use_history=True
+)
+
+
+r"""
+Supports: https://huggingface.co/THUDM/chatglm2-6b
+"""
+register_template(
+    name="chatglm2",
+    prefix=[
+        {"token": "[gMASK]"},
+        {"token": "sop"}
+    ],
+    prompt=[
+        "[Round {{idx}}]\n\n问：{{query}}\n\n答："
+    ],
+    sep=[
+        "\n\n"
+    ],
+    stop_words=[],
     use_history=True
 )
