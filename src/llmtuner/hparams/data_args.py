@@ -24,7 +24,7 @@ class DatasetAttr:
 
 @dataclass
 class DataArguments:
-    """
+    r"""
     Arguments pertaining to what data we are going to input our model for training and evaluation.
     """
     template: str = field(

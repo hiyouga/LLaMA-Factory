@@ -34,7 +34,7 @@ check_min_version("4.29.1")
 require_version("datasets>=2.12.0", "To fix: pip install datasets>=2.12.0")
 require_version("accelerate>=0.21.0", "To fix: pip install accelerate>=0.21.0")
 require_version("peft>=0.4.0", "To fix: pip install peft>=0.4.0")
-require_version("trl>=0.4.7", "To fix: pip install trl>=0.4.7")
+require_version("trl>=0.5.0", "To fix: pip install trl>=0.5.0")
 
 
 def load_model_and_tokenizer(
@@ -51,9 +51,6 @@ def load_model_and_tokenizer(
     if (not is_trainable) and model_args.checkpoint_dir is None:
         logger.warning("Checkpoint is not found at evaluation, load the original model.")
         finetuning_args = FinetuningArguments(finetuning_type="none")
-
-    assert stage in ["pt", "sft"] or finetuning_args.finetuning_type == "lora", \
-        "RM and PPO training can only be performed with the LoRA method."
 
     config_kwargs = {
         "trust_remote_code": True,
@@ -132,8 +129,6 @@ def load_model_and_tokenizer(
                 })
 
         if stage == "ppo": # load reward model
-            assert is_trainable, "PPO stage cannot be performed at evaluation."
-            assert model_args.reward_model is not None, "Reward model is necessary for PPO training."
             logger.info("Load reward model from {}".format(model_args.reward_model))
             model.pretrained_model.load_adapter(model_args.reward_model, "reward", is_trainable=False)
             assert load_valuehead_params(model, model_args.reward_model), "Reward model is not correctly loaded."
