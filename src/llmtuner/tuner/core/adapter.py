@@ -39,7 +39,7 @@ def init_adapter(
     if finetuning_args.finetuning_type == "none" and is_trainable:
         raise ValueError("You cannot use finetuning_type=none while training.")
 
-    if finetuning_args.finetuning_type == "full":
+    if finetuning_args.finetuning_type == "full" and is_trainable:
         logger.info("Fine-tuning method: Full")
         model = model.float()
 

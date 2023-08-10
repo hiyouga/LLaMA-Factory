@@ -1,7 +1,11 @@
 import torch
 from typing import TYPE_CHECKING, List, Optional, Tuple
-
-from transformers import LogitsProcessor, LogitsProcessorList, StoppingCriteria, StoppingCriteriaList
+from transformers import (
+    LogitsProcessor,
+    LogitsProcessorList,
+    StoppingCriteria,
+    StoppingCriteriaList
+)
 
 from llmtuner.extras.constants import LAYERNORM_NAMES
 
