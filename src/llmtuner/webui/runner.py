@@ -83,7 +83,7 @@ class Runner:
         gradient_accumulation_steps: int,
         lr_scheduler_type: str,
         max_grad_norm: str,
-        dev_ratio: float,
+        val_size: float,
         logging_steps: int,
         save_steps: int,
         warmup_steps: int,
@@ -139,8 +139,8 @@ class Runner:
             output_dir=output_dir
         )
 
-        if dev_ratio > 1e-6:
-            args["dev_ratio"] = dev_ratio
+        if val_size > 1e-6:
+            args["val_size"] = val_size
             args["evaluation_strategy"] = "steps"
             args["eval_steps"] = save_steps
             args["load_best_model_at_end"] = True
