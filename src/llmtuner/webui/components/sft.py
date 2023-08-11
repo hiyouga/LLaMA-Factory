@@ -22,7 +22,12 @@ def create_sft_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict[
 
     dataset_dir.change(list_dataset, [dataset_dir], [dataset])
     dataset.change(can_preview, [dataset_dir, dataset], [preview_btn])
-    preview_btn.click(get_preview, [dataset_dir, dataset], [preview_count, preview_samples, preview_box])
+    preview_btn.click(
+        get_preview,
+        [dataset_dir, dataset],
+        [preview_count, preview_samples, preview_box],
+        queue=False
+    )
 
     with gr.Row():
         max_source_length = gr.Slider(value=512, minimum=4, maximum=4096, step=1)
@@ -46,12 +51,14 @@ def create_sft_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict[
             save_steps = gr.Slider(value=100, minimum=10, maximum=5000, step=10)
             warmup_steps = gr.Slider(value=0, minimum=0, maximum=5000, step=1)
             compute_type = gr.Radio(choices=["fp16", "bf16"], value="fp16")
+            padding_side = gr.Radio(choices=["left", "right"], value="left")
 
     with gr.Accordion(label="LoRA config", open=False) as lora_tab:
         with gr.Row():
             lora_rank = gr.Slider(value=8, minimum=1, maximum=1024, step=1, scale=1)
-            lora_dropout = gr.Slider(value=0, minimum=0, maximum=1, step=0.01, scale=1)
+            lora_dropout = gr.Slider(value=0.1, minimum=0, maximum=1, step=0.01, scale=1)
             lora_target = gr.Textbox(scale=2)
+            resume_lora_training = gr.Checkbox(value=True, scale=1)
 
     with gr.Row():
         start_btn = gr.Button()
@@ -59,7 +66,11 @@ def create_sft_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict[
 
     with gr.Row():
         with gr.Column(scale=3):
-            output_dir = gr.Textbox()
+            with gr.Row():
+                output_dir = gr.Textbox()
+
+            with gr.Row():
+                process_bar = gr.Slider(visible=False, interactive=False)
 
             with gr.Box():
                 output_box = gr.Markdown()
@@ -93,16 +104,21 @@ def create_sft_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict[
             save_steps,
             warmup_steps,
             compute_type,
+            padding_side,
             lora_rank,
             lora_dropout,
             lora_target,
+            resume_lora_training,
             output_dir
         ],
-        [output_box]
+        [
+            output_box,
+            process_bar
+        ]
     )
     stop_btn.click(runner.set_abort, queue=False)
 
-    output_box.change(
+    process_bar.change(
         gen_plot, [top_elems["model_name"], top_elems["finetuning_type"], output_dir], loss_viewer, queue=False
     )
 
@@ -128,10 +144,12 @@ def create_sft_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict[
         save_steps=save_steps,
         warmup_steps=warmup_steps,
         compute_type=compute_type,
+        padding_side=padding_side,
         lora_tab=lora_tab,
         lora_rank=lora_rank,
         lora_dropout=lora_dropout,
         lora_target=lora_target,
+        resume_lora_training=resume_lora_training,
         start_btn=start_btn,
         stop_btn=stop_btn,
         output_dir=output_dir,

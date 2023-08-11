@@ -55,10 +55,6 @@ class ModelArguments:
         default=None,
         metadata={"help": "Path to the directory containing the checkpoints of the reward model."}
     )
-    resume_lora_training: Optional[bool] = field(
-        default=True,
-        metadata={"help": "Whether to resume training from the last LoRA weights or create new weights after merging them."}
-    )
     plot_loss: Optional[bool] = field(
         default=False,
         metadata={"help": "Whether to plot the training loss after fine-tuning or not."}

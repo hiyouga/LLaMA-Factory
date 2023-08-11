@@ -93,11 +93,13 @@ def get_dataset(
                 dataset = dataset.rename_column(getattr(dataset_attr, column_name), column_name)
 
         if dataset_attr.source_prefix: # add prefix
-            features = None
             if data_args.streaming:
                 features = dataset.features
                 features["prefix"] = Value(dtype="string", id=None)
-            dataset = dataset.map(lambda _: {"prefix": dataset_attr.source_prefix}, features=features)
+                dataset = dataset.map(lambda _: {"prefix": dataset_attr.source_prefix}, features=features)
+            else:
+                prefix_data = [dataset_attr.source_prefix] * len(dataset)
+                dataset = dataset.add_column("prefix", prefix_data)
 
         all_datasets.append(dataset)
 
