@@ -1,3 +1,4 @@
+import tiktoken
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Literal
 from itertools import chain
 
@@ -31,10 +32,11 @@ def preprocess_dataset(
 
     def preprocess_pretrain_dataset(examples: Dict[str, List[Any]]) -> Dict[str, Any]:
         # build grouped texts with format `X1 X2 X3 ...` (without <eos>)
-        if hasattr(tokenizer, "tokenizer"): # for tiktoken tokenizer (Qwen)
+        if isinstance(getattr(tokenizer, "tokenizer"), tiktoken.Encoding): # for tiktoken tokenizer (Qwen)
             kwargs = dict(allowed_special="all")
         else:
             kwargs = dict(add_special_tokens=False)
+
         tokenized_examples = tokenizer(examples["prompt"], **kwargs)
         concatenated_examples = {k: list(chain(*tokenized_examples[k])) for k in tokenized_examples.keys()}
         total_length = len(concatenated_examples[list(concatenated_examples.keys())[0]])
