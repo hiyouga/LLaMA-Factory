@@ -438,7 +438,7 @@ register_template(
     ],
     sep=[],
     stop_words=[
-        {"token": "<reserved_102>"} # user token
+        "<reserved_102>" # user token
     ],
     use_history=True
 )
