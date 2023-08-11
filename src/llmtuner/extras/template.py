@@ -178,7 +178,7 @@ def register_template(
     stop_words: List[str],
     use_history: bool
 ) -> None:
-    template_class = Llama2Template if name == "llama2" else Template
+    template_class = Llama2Template if "llama2" in name else Template
     templates[name] = template_class(
         prefix=prefix,
         prompt=prompt,
@@ -262,6 +262,23 @@ register_template(
         "If a question does not make any sense, or is not factually coherent, "
         "explain why instead of answering something not correct. "
         "If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n"
+    ],
+    prompt=[
+        "[INST] {{query}} [/INST] "
+    ],
+    sep=[],
+    stop_words=[],
+    use_history=True
+)
+
+
+r"""
+Supports: https://github.com/ymcui/Chinese-LLaMA-Alpaca-2
+"""
+register_template(
+    name="llama2_zh",
+    prefix=[
+        "<<SYS>>\nYou are a helpful assistant. 你是一个乐于助人的助手。\n<</SYS>>\n\n"
     ],
     prompt=[
         "[INST] {{query}} [/INST] "

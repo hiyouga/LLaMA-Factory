@@ -43,7 +43,7 @@ def create_top() -> Dict[str, "Component"]:
         can_quantize, [finetuning_type], [quantization_bit]
     )
 
-    refresh_btn.click(list_checkpoint, [model_name, finetuning_type], [checkpoints])
+    refresh_btn.click(list_checkpoint, [model_name, finetuning_type], [checkpoints], queue=False)
 
     return dict(
         lang=lang,

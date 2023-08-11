@@ -57,6 +57,10 @@ class FinetuningArguments:
                   Qwen choices: [\"c_attn\", \"attn.c_proj\", \"w1\", \"w2\", \"mlp.c_proj\"], \
                   LLaMA-2, InternLM, XVERSE choices: the same as LLaMA."}
     )
+    resume_lora_training: Optional[bool] = field(
+        default=True,
+        metadata={"help": "Whether to resume training from the last LoRA weights or create new weights after merging them."}
+    )
     dpo_beta: Optional[float] = field(
         default=0.1,
         metadata={"help": "The beta parameter for the DPO loss."}
