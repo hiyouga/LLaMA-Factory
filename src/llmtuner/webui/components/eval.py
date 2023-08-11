@@ -20,7 +20,12 @@ def create_eval_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict
 
     dataset_dir.change(list_dataset, [dataset_dir], [dataset])
     dataset.change(can_preview, [dataset_dir, dataset], [preview_btn])
-    preview_btn.click(get_preview, [dataset_dir, dataset], [preview_count, preview_samples, preview_box])
+    preview_btn.click(
+        get_preview,
+        [dataset_dir, dataset],
+        [preview_count, preview_samples, preview_box],
+        queue=False
+    )
 
     with gr.Row():
         max_source_length = gr.Slider(value=512, minimum=4, maximum=4096, step=1)
@@ -32,6 +37,9 @@ def create_eval_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict
     with gr.Row():
         start_btn = gr.Button()
         stop_btn = gr.Button()
+
+    with gr.Row():
+        process_bar = gr.Slider(visible=False, interactive=False)
 
     with gr.Box():
         output_box = gr.Markdown()
@@ -54,7 +62,10 @@ def create_eval_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict
             batch_size,
             predict
         ],
-        [output_box]
+        [
+            output_box,
+            process_bar
+        ]
     )
     stop_btn.click(runner.set_abort, queue=False)
 
