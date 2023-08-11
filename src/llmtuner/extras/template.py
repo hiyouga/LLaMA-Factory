@@ -123,7 +123,7 @@ class Template:
         r"""
         Converts context to token ids.
         """
-        if isinstance(getattr(tokenizer, "tokenizer"), tiktoken.Encoding): # for tiktoken tokenizer (Qwen)
+        if isinstance(getattr(tokenizer, "tokenizer", None), tiktoken.Encoding): # for tiktoken tokenizer (Qwen)
             kwargs = dict(allowed_special="all")
         else:
             kwargs = dict(add_special_tokens=False)
