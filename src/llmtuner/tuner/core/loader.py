@@ -92,7 +92,7 @@ def load_model_and_tokenizer(
             )
 
         is_mergeable = False
-        config_kwargs["device_map"] = {"": int(os.environ.get("LOCAL_RANK", "0"))}
+        config_kwargs["device_map"] = {"": int(os.environ.get("LOCAL_RANK", "0"))} if is_trainable else "auto"
         logger.info("Quantizing model to {} bit.".format(model_args.quantization_bit))
 
     # Load and prepare pretrained models (without valuehead).
