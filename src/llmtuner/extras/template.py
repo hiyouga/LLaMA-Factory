@@ -1,5 +1,6 @@
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
+import tiktoken
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
 from llmtuner.extras.logging import get_logger
 
@@ -122,7 +123,7 @@ class Template:
         r"""
         Converts context to token ids.
         """
-        if hasattr(tokenizer, "tokenizer"): # for tiktoken tokenizer (Qwen)
+        if isinstance(getattr(tokenizer, "tokenizer"), tiktoken.Encoding): # for tiktoken tokenizer (Qwen)
             kwargs = dict(allowed_special="all")
         else:
             kwargs = dict(add_special_tokens=False)
@@ -428,14 +429,16 @@ Supports: https://huggingface.co/baichuan-inc/Baichuan-13B-Chat
 """
 register_template(
     name="baichuan",
-    prefix=[],
+    prefix=[
+        {"token": "<reserved_102>"} # user token (a little difference in the first turn)
+    ],
     prompt=[
-        {"token": "<reserved_102>"}, # user token (a little difference in position)
-        "{{query}}"
+        "{{query}}",
+        {"token": "<reserved_103>"} # assistant token
     ],
     sep=[],
     stop_words=[
-        "<reserved_103>" # assistant token
+        {"token": "<reserved_102>"} # user token
     ],
     use_history=True
 )
