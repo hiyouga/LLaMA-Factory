@@ -32,7 +32,7 @@ def preprocess_dataset(
 
     def preprocess_pretrain_dataset(examples: Dict[str, List[Any]]) -> Dict[str, Any]:
         # build grouped texts with format `X1 X2 X3 ...` (without <eos>)
-        if isinstance(getattr(tokenizer, "tokenizer"), tiktoken.Encoding): # for tiktoken tokenizer (Qwen)
+        if isinstance(getattr(tokenizer, "tokenizer", None), tiktoken.Encoding): # for tiktoken tokenizer (Qwen)
             kwargs = dict(allowed_special="all")
         else:
             kwargs = dict(add_special_tokens=False)
