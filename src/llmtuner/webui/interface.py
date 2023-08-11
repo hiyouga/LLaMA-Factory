@@ -67,7 +67,7 @@ def create_web_demo() -> gr.Blocks:
 
         demo.load(manager.gen_label, [lang], [lang] + list(chat_elems.values()))
 
-        lang.change(manager.gen_label, [lang], [lang] + list(chat_elems.values()))
+        lang.change(manager.gen_label, [lang], [lang] + list(chat_elems.values()), queue=False)
 
     return demo
 

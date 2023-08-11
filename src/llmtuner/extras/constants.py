@@ -37,7 +37,9 @@ SUPPORTED_MODELS = {
     "InternLM-7B": "internlm/internlm-7b",
     "InternLM-7B-Chat": "internlm/internlm-chat-7b",
     "Qwen-7B": "Qwen/Qwen-7B",
-    "Qwen-7B-Chat": "Qwen/Qwen-7B-Chat"
+    "Qwen-7B-Chat": "Qwen/Qwen-7B-Chat",
+    "XVERSE-13B": "xverse/XVERSE-13B",
+    "ChatGLM2-6B": "THUDM/chatglm2-6b"
 }
 
 DEFAULT_MODULE = {
@@ -48,5 +50,7 @@ DEFAULT_MODULE = {
     "Falcon": "query_key_value",
     "Baichuan": "W_pack",
     "InternLM": "q_proj,v_proj",
-    "Qwen": "c_attn"
+    "Qwen": "c_attn",
+    "XVERSE": "q_proj,v_proj",
+    "ChatGLM2": "query_key_value"
 }

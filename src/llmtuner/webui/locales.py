@@ -277,6 +277,16 @@ LOCALES = {
             "info": "是否启用 FP16 或 BF16 混合精度训练。"
         }
     },
+    "padding_side": {
+        "en": {
+            "label": "Padding side",
+            "info": "The side on which the model should have padding applied."
+        },
+        "zh": {
+            "label": "填充位置",
+            "info": "使用左填充或右填充。"
+        }
+    },
     "lora_tab": {
         "en": {
             "label": "LoRA configurations"
@@ -313,6 +323,16 @@ LOCALES = {
         "zh": {
             "label": "LoRA 作用层（非必填）",
             "info": "应用 LoRA 的线性层名称。使用英文逗号分隔多个名称。"
+        }
+    },
+    "resume_lora_training": {
+        "en": {
+            "label": "Resume LoRA training",
+            "info": "Whether to resume training from the last LoRA weights or create new lora weights."
+        },
+        "zh": {
+            "label": "继续上次的训练",
+            "info": "接着上次的 LoRA 权重训练或创建一个新的 LoRA 权重。"
         }
     },
     "start_btn": {
