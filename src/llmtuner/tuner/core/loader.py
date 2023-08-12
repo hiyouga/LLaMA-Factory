@@ -83,6 +83,8 @@ def load_model_and_tokenizer(
 
     # Set RoPE scaling
     if model_args.rope_scaling is not None:
+        require_version("transformers>=4.31.0", "RoPE scaling requires transformers>=4.31.0")
+
         if hasattr(config, "use_dynamic_ntk"): # for Qwen models
             if is_trainable:
                 logger.warning("Qwen model does not support rope scaling in training.")
