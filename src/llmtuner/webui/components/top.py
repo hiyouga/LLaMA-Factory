@@ -26,7 +26,7 @@ def create_top() -> Dict[str, "Component"]:
 
     with gr.Accordion(label="Advanced config", open=False) as advanced_tab:
         with gr.Row():
-            quantization_bit = gr.Dropdown([8, 4], scale=1)
+            quantization_bit = gr.Dropdown(["", "8", "4"], scale=1)
             template = gr.Dropdown(value="default", choices=list(templates.keys()), scale=1)
             source_prefix = gr.Textbox(scale=2)
 
