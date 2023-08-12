@@ -43,9 +43,9 @@ class ModelArguments:
         default=True,
         metadata={"help": "Whether to use double quantization in int4 training or not."}
     )
-    compute_dtype: Optional[torch.dtype] = field(
+    rope_scaling: Optional[Literal["linear", "dynamic"]] = field(
         default=None,
-        metadata={"help": "Used in quantization configs. Do not specify this argument manually."}
+        metadata={"help": "Adopt scaled rotary positional embeddings."}
     )
     checkpoint_dir: Optional[str] = field(
         default=None,
@@ -63,8 +63,19 @@ class ModelArguments:
         default=None,
         metadata={"help": "Auth token to log in with Hugging Face Hub."}
     )
+    compute_dtype: Optional[torch.dtype] = field(
+        default=None,
+        metadata={"help": "Used in quantization configs. Do not specify this argument manually."}
+    )
+    model_max_length: Optional[int] = field(
+        default=None,
+        metadata={"help": "Used in rope scaling. Do not specify this argument manually."}
+    )
 
     def __post_init__(self):
+        if self.compute_dtype is not None or self.model_max_length is not None:
+            raise ValueError("These arguments cannot be specified.")
+
         if self.checkpoint_dir is not None: # support merging multiple lora weights
             self.checkpoint_dir = [cd.strip() for cd in self.checkpoint_dir.split(",")]
 
