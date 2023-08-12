@@ -1,7 +1,5 @@
 IGNORE_INDEX = -100
 
-SFT_SCRIPT_PREFIX = "CUDA_VISIBLE_DEVICES=0 python "
-
 LOG_FILE_NAME = "trainer_log.jsonl"
 
 VALUE_HEAD_FILE_NAME = "value_head.bin"

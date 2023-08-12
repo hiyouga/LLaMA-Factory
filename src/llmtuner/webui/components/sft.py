@@ -16,13 +16,13 @@ def create_sft_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict[
     with gr.Row():
         dataset_dir = gr.Textbox(value=DEFAULT_DATA_DIR, scale=2)
         dataset = gr.Dropdown(multiselect=True, scale=4)
-        preview_btn = gr.Button(interactive=False, scale=1)
+        data_preview_btn = gr.Button(interactive=False, scale=1)
 
     preview_box, preview_count, preview_samples, close_btn = create_preview_box()
 
     dataset_dir.change(list_dataset, [dataset_dir], [dataset])
-    dataset.change(can_preview, [dataset_dir, dataset], [preview_btn])
-    preview_btn.click(
+    dataset.change(can_preview, [dataset_dir, dataset], [data_preview_btn])
+    data_preview_btn.click(
         get_preview,
         [dataset_dir, dataset],
         [preview_count, preview_samples, preview_box],
@@ -61,15 +61,12 @@ def create_sft_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict[
             resume_lora_training = gr.Checkbox(value=True, scale=1)
 
     with gr.Row():
-        preview_script_btn = gr.Button()
+        cmd_preview_btn = gr.Button()
         start_btn = gr.Button()
         stop_btn = gr.Button()
 
     with gr.Row():
         with gr.Column(scale=3):
-            with gr.Box():
-                preview_script_box = gr.Textbox()
-
             with gr.Row():
                 output_dir = gr.Textbox()
 
@@ -82,82 +79,45 @@ def create_sft_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict[
         with gr.Column(scale=1):
             loss_viewer = gr.Plot()
 
-    preview_script_btn.click(
-        runner.preview_sft_script,
-        [
-            top_elems["lang"],
-            top_elems["model_name"],
-            top_elems["checkpoints"],
-            top_elems["finetuning_type"],
-            top_elems["quantization_bit"],
-            top_elems["template"],
-            top_elems["source_prefix"],
-            dataset_dir,
-            dataset,
-            max_source_length,
-            max_target_length,
-            learning_rate,
-            num_train_epochs,
-            max_samples,
-            batch_size,
-            gradient_accumulation_steps,
-            lr_scheduler_type,
-            max_grad_norm,
-            val_size,
-            logging_steps,
-            save_steps,
-            warmup_steps,
-            compute_type,
-            padding_side,
-            lora_rank,
-            lora_dropout,
-            lora_target,
-            resume_lora_training,
-            output_dir
-        ],
-        [
-            preview_script_box
-        ]
-    )
+    input_list = [
+        top_elems["lang"],
+        top_elems["model_name"],
+        top_elems["checkpoints"],
+        top_elems["finetuning_type"],
+        top_elems["quantization_bit"],
+        top_elems["template"],
+        top_elems["source_prefix"],
+        dataset_dir,
+        dataset,
+        max_source_length,
+        max_target_length,
+        learning_rate,
+        num_train_epochs,
+        max_samples,
+        batch_size,
+        gradient_accumulation_steps,
+        lr_scheduler_type,
+        max_grad_norm,
+        val_size,
+        logging_steps,
+        save_steps,
+        warmup_steps,
+        compute_type,
+        padding_side,
+        lora_rank,
+        lora_dropout,
+        lora_target,
+        resume_lora_training,
+        output_dir
+    ]
 
-    start_btn.click(
-        runner.run_train,
-        [
-            top_elems["lang"],
-            top_elems["model_name"],
-            top_elems["checkpoints"],
-            top_elems["finetuning_type"],
-            top_elems["quantization_bit"],
-            top_elems["template"],
-            top_elems["source_prefix"],
-            dataset_dir,
-            dataset,
-            max_source_length,
-            max_target_length,
-            learning_rate,
-            num_train_epochs,
-            max_samples,
-            batch_size,
-            gradient_accumulation_steps,
-            lr_scheduler_type,
-            max_grad_norm,
-            val_size,
-            logging_steps,
-            save_steps,
-            warmup_steps,
-            compute_type,
-            padding_side,
-            lora_rank,
-            lora_dropout,
-            lora_target,
-            resume_lora_training,
-            output_dir
-        ],
-        [
-            output_box,
-            process_bar
-        ]
-    )
+    output_list = [
+        output_box,
+        process_bar
+    ]
+
+    cmd_preview_btn.click(runner.preview_train, input_list, output_list)
+    start_btn.click(runner.run_train, input_list, output_list)
     stop_btn.click(runner.set_abort, queue=False)
 
     process_bar.change(
@@ -167,7 +127,7 @@ def create_sft_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict[
     return dict(
         dataset_dir=dataset_dir,
         dataset=dataset,
-        preview_btn=preview_btn,
+        data_preview_btn=data_preview_btn,
         preview_count=preview_count,
         preview_samples=preview_samples,
         close_btn=close_btn,
@@ -192,11 +152,10 @@ def create_sft_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict[
         lora_dropout=lora_dropout,
         lora_target=lora_target,
         resume_lora_training=resume_lora_training,
+        cmd_preview_btn=cmd_preview_btn,
         start_btn=start_btn,
         stop_btn=stop_btn,
         output_dir=output_dir,
         output_box=output_box,
-        loss_viewer=loss_viewer,
-        preview_script_btn=preview_script_btn,
-        preview_script_box=preview_script_box
+        loss_viewer=loss_viewer
     )
