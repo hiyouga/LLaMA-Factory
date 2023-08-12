@@ -317,7 +317,9 @@ use_cpu: false
 #### 使用 DeepSpeed
 
 ```bash
-deepspeed --num_gpus 8 --master_port=9901 src/train_bash.py --deepspeed ds_config.json ... # 参数同上
+deepspeed --num_gpus 8 --master_port=9901 src/train_bash.py \
+    --deepspeed ds_config.json \
+    ... # 参数同上
 ```
 
 <details><summary>使用 DeepSpeed ZeRO-2 进行全参数微调的 DeepSpeed 配置示例</summary>
