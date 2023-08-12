@@ -61,11 +61,15 @@ def create_sft_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict[
             resume_lora_training = gr.Checkbox(value=True, scale=1)
 
     with gr.Row():
+        preview_script_btn = gr.Button()
         start_btn = gr.Button()
         stop_btn = gr.Button()
 
     with gr.Row():
         with gr.Column(scale=3):
+            with gr.Box():
+                preview_script_box = gr.Textbox()
+
             with gr.Row():
                 output_dir = gr.Textbox()
 
@@ -77,6 +81,44 @@ def create_sft_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict[
 
         with gr.Column(scale=1):
             loss_viewer = gr.Plot()
+
+    preview_script_btn.click(
+        runner.preview_sft_script,
+        [
+            top_elems["lang"],
+            top_elems["model_name"],
+            top_elems["checkpoints"],
+            top_elems["finetuning_type"],
+            top_elems["quantization_bit"],
+            top_elems["template"],
+            top_elems["source_prefix"],
+            dataset_dir,
+            dataset,
+            max_source_length,
+            max_target_length,
+            learning_rate,
+            num_train_epochs,
+            max_samples,
+            batch_size,
+            gradient_accumulation_steps,
+            lr_scheduler_type,
+            max_grad_norm,
+            val_size,
+            logging_steps,
+            save_steps,
+            warmup_steps,
+            compute_type,
+            padding_side,
+            lora_rank,
+            lora_dropout,
+            lora_target,
+            resume_lora_training,
+            output_dir
+        ],
+        [
+            preview_script_box
+        ]
+    )
 
     start_btn.click(
         runner.run_train,
@@ -154,5 +196,7 @@ def create_sft_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict[
         stop_btn=stop_btn,
         output_dir=output_dir,
         output_box=output_box,
-        loss_viewer=loss_viewer
+        loss_viewer=loss_viewer,
+        preview_script_btn=preview_script_btn,
+        preview_script_box=preview_script_box
     )
