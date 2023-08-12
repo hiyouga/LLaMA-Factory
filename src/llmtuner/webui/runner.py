@@ -126,8 +126,6 @@ class Runner:
             logging_steps=logging_steps,
             save_steps=save_steps,
             warmup_steps=warmup_steps,
-            fp16=(compute_type == "fp16"),
-            bf16=(compute_type == "bf16"),
             padding_side=padding_side,
             lora_rank=lora_rank,
             lora_dropout=lora_dropout,
@@ -135,7 +133,7 @@ class Runner:
             resume_lora_training=resume_lora_training,
             output_dir=output_dir
         )
-
+        args[compute_type] = True
         if val_size > 1e-6:
             args["val_size"] = val_size
             args["evaluation_strategy"] = "steps"
