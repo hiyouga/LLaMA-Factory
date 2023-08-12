@@ -105,12 +105,12 @@ LOCALES = {
             "label": "数据集"
         }
     },
-    "preview_btn": {
+    "data_preview_btn": {
         "en": {
-            "value": "Preview"
+            "value": "Preview dataset"
         },
         "zh": {
-            "value": "预览"
+            "value": "预览数据集"
         }
     },
     "preview_count": {
@@ -335,6 +335,14 @@ LOCALES = {
             "info": "接着上次的 LoRA 权重训练或创建一个新的 LoRA 权重。"
         }
     },
+    "cmd_preview_btn": {
+        "en": {
+            "value": "Preview command"
+        },
+        "zh": {
+            "value": "预览命令"
+        }
+    },
     "start_btn": {
         "en": {
             "value": "Start"
@@ -499,22 +507,6 @@ LOCALES = {
         },
         "zh": {
             "value": "开始导出"
-        }
-    },
-    "preview_script_btn": {
-        "en": {
-            "value": "preview train script"
-        },
-        "zh": {
-            "value": "预览训练脚本命令"
-        }
-    },
-    "preview_script_box": {
-        "en": {
-            "label": "SFT Script Preview",
-        },
-        "zh": {
-            "label": "训练命令预览",
         }
     }
 }

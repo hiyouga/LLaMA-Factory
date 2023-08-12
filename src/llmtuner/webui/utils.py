@@ -62,6 +62,16 @@ def can_quantize(finetuning_type: str) -> Dict[str, Any]:
         return gr.update(interactive=True)
 
 
+def gen_cmd(args: Dict[str, Any]) -> str:
+    cmd_lines = ["CUDA_VISIBLE_DEVICES=0 python "]
+    for k, v in args.items():
+        if v is not None and v is not False and v != "":
+            cmd_lines.append("    --{} {} ".format(k, str(v)))
+    cmd_text = "\\\n".join(cmd_lines)
+    cmd_text = "```bash\n{}\n```".format(cmd_text)
+    return cmd_text
+
+
 def get_eval_results(path: os.PathLike) -> str:
     with open(path, "r", encoding="utf-8") as f:
         result = json.dumps(json.load(f), indent=4)
