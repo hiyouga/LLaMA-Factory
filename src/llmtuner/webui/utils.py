@@ -65,7 +65,7 @@ def can_quantize(finetuning_type: str) -> Dict[str, Any]:
 def gen_cmd(args: Dict[str, Any]) -> str:
     cmd_lines = ["CUDA_VISIBLE_DEVICES=0 python "]
     for k, v in args.items():
-        if v is not None and v is not False and v != "":
+        if v is not None and v != "":
             cmd_lines.append("    --{} {} ".format(k, str(v)))
     cmd_text = "\\\n".join(cmd_lines)
     cmd_text = "```bash\n{}\n```".format(cmd_text)
