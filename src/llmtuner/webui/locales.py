@@ -500,6 +500,22 @@ LOCALES = {
         "zh": {
             "value": "开始导出"
         }
+    },
+    "preview_script_btn": {
+        "en": {
+            "value": "preview train script"
+        },
+        "zh": {
+            "value": "预览训练脚本命令"
+        }
+    },
+    "preview_script_box": {
+        "en": {
+            "label": "SFT Script Preview",
+        },
+        "zh": {
+            "label": "训练命令预览",
+        }
     }
 }
 
