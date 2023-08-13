@@ -2,7 +2,7 @@ import torch
 from collections import defaultdict
 from peft import PeftModel
 from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union
-from transformers import Trainer
+from transformers import BatchEncoding, Trainer
 from trl import DPOTrainer
 
 from llmtuner.extras.constants import IGNORE_INDEX
@@ -43,21 +43,23 @@ class DPOPeftTrainer(PeftModelMixin, DPOTrainer):
         model: Optional[torch.nn.Module] = None,
         batch: Optional[Dict[str, torch.Tensor]] = None
     ) -> Tuple[torch.FloatTensor, torch.FloatTensor, torch.FloatTensor, torch.FloatTensor]:
+        batch_copied = BatchEncoding({k: v.detach().clone() for k, v in batch.items()}) # avoid error
         unwrapped_model: "PreTrainedModel" = self.accelerator.unwrap_model(self.model)
+
         if not torch.is_grad_enabled():
             unwrapped_model.gradient_checkpointing_disable()
 
         if model is None and isinstance(unwrapped_model, PeftModel): # peft model has no ref_model
             with unwrapped_model.disable_adapter():
-                all_logits: torch.Tensor = self.model(
-                    batch["input_ids"],
-                    attention_mask=batch["attention_mask"],
+                all_logits = self.model(
+                    input_ids=batch_copied["input_ids"],
+                    attention_mask=batch_copied["attention_mask"],
                     return_dict=True
                 ).logits.to(torch.float32)
         else:
-            all_logits: torch.Tensor = model(
-                batch["input_ids"],
-                attention_mask=batch["attention_mask"],
+            all_logits = model(
+                input_ids=batch_copied["input_ids"],
+                attention_mask=batch_copied["attention_mask"],
                 return_dict=True
             ).logits.to(torch.float32)
 
