@@ -63,6 +63,7 @@ def can_quantize(finetuning_type: str) -> Dict[str, Any]:
 
 
 def gen_cmd(args: Dict[str, Any]) -> str:
+    args["plot_loss"] = True
     cmd_lines = ["CUDA_VISIBLE_DEVICES=0 python "]
     for k, v in args.items():
         if v is not None and v != "":
