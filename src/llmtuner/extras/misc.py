@@ -95,7 +95,6 @@ def prepare_model_for_training(
     use_gradient_checkpointing: Optional[bool] = True,
     layer_norm_names: Optional[List[str]] = LAYERNORM_NAMES
 ) -> "PreTrainedModel":
-
     for name, param in model.named_parameters():
         if param.ndim == 1 and any(layer_norm_name in name for layer_norm_name in layer_norm_names):
             param.data = param.data.to(torch.float32)
@@ -112,9 +111,6 @@ def prepare_model_for_training(
         model.config.use_cache = False # turn off when gradient checkpointing is enabled
 
     if finetuning_type != "full" and hasattr(model, output_layer_name):
-        if hasattr(model, "config") and hasattr(model.config, "pretraining_tp"):
-            model.config.pretraining_tp = 1 # disable TP for LoRA (https://github.com/huggingface/peft/pull/728)
-
         output_layer: torch.nn.Linear = getattr(model, output_layer_name)
         input_dtype = output_layer.weight.dtype
 
