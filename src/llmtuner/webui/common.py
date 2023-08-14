@@ -29,14 +29,16 @@ def load_config() -> Dict[str, Any]:
         with open(get_config_path(), "r", encoding="utf-8") as f:
             return json.load(f)
     except:
-        return {"last_model": "", "path_dict": {}}
+        return {"lang": "", "last_model": "", "path_dict": {}}
 
 
-def save_config(model_name: str, model_path: str) -> None:
+def save_config(lang: str, model_name: str, model_path: str) -> None:
     os.makedirs(DEFAULT_CACHE_DIR, exist_ok=True)
     user_config = load_config()
-    user_config["last_model"] = model_name
-    user_config["path_dict"][model_name] = model_path
+    user_config["lang"] = lang or user_config["lang"]
+    if model_name:
+        user_config["last_model"] = model_name
+        user_config["path_dict"][model_name] = model_path
     with open(get_config_path(), "w", encoding="utf-8") as f:
         json.dump(user_config, f, indent=2, ensure_ascii=False)
 
