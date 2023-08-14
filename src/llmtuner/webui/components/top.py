@@ -4,7 +4,7 @@ import gradio as gr
 
 from llmtuner.extras.constants import METHODS, SUPPORTED_MODELS
 from llmtuner.extras.template import templates
-from llmtuner.webui.common import list_checkpoint, get_model_path, save_config
+from llmtuner.webui.common import list_checkpoint, get_model_path, save_config, get_template
 from llmtuner.webui.utils import can_quantize
 
 if TYPE_CHECKING:
@@ -39,6 +39,7 @@ def create_top() -> Dict[str, "Component"]:
     ) # do not save config since the below line will save
 
     model_path.change(save_config, [lang, model_name, model_path])
+    model_path.change(get_template, [model_name], [template])
 
     finetuning_type.change(
         list_checkpoint, [model_name, finetuning_type], [checkpoints]
