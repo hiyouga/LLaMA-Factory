@@ -59,7 +59,7 @@ def create_web_demo() -> gr.Blocks:
     chat_model = WebChatModel(lazy_init=False)
 
     with gr.Blocks(title="Web Demo", css=CSS) as demo:
-        lang = gr.Dropdown(choices=["en", "zh"], value="")
+        lang = gr.Dropdown(choices=["en", "zh"])
 
         _, _, _, chat_elems = create_chat_box(chat_model, visible=True)
 
@@ -67,7 +67,7 @@ def create_web_demo() -> gr.Blocks:
 
         demo.load(manager.gen_label, [lang], [lang] + list(chat_elems.values()))
 
-        lang.change(manager.gen_label, [lang], [lang] + list(chat_elems.values()), queue=False)
+        lang.select(manager.gen_label, [lang], [lang] + list(chat_elems.values()), queue=False)
 
     return demo
 
