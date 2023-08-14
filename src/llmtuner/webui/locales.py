@@ -335,6 +335,44 @@ LOCALES = {
             "info": "接着上次的 LoRA 权重训练或创建一个新的 LoRA 权重。"
         }
     },
+    "rlhf_tab": {
+        "en": {
+            "label": "RLHF configurations"
+        },
+        "zh": {
+            "label": "RLHF 参数设置"
+        }
+    },
+    "rlhf_method": {
+        "en": {
+            "label": "RLHF method",
+            "info": "The RLHF algorithm to adopt."
+        },
+        "zh": {
+            "label": "RLHF 方法",
+            "info": "RLHF 阶段使用的算法。"
+        }
+    },
+    "dpo_beta": {
+        "en": {
+            "label": "DPO beta",
+            "info": "Value of the beta parameter in the DPO loss."
+        },
+        "zh": {
+            "label": "DPO beta 参数",
+            "info": "DPO 损失函数中 beta 超参数大小。"
+        }
+    },
+    "reward_model": {
+        "en": {
+            "label": "Reward model",
+            "info": "Checkpoint of the reward model for PPO training."
+        },
+        "zh": {
+            "label": "奖励模型",
+            "info": "PPO 训练中奖励模型的断点路径。"
+        }
+    },
     "cmd_preview_btn": {
         "en": {
             "value": "Preview command"
