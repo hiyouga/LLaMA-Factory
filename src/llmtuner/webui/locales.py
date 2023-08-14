@@ -546,7 +546,15 @@ LOCALES = {
         "zh": {
             "value": "开始导出"
         }
-    }
+    },
+    "stage": {
+        "en": {
+            "label": "train stage"
+        },
+        "zh": {
+            "label": "训练阶段"
+        }
+    },
 }
 
 
