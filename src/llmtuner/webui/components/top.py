@@ -20,22 +20,25 @@ def create_top() -> Dict[str, "Component"]:
         model_path = gr.Textbox(scale=3)
 
     with gr.Row():
-        finetuning_type = gr.Dropdown(value="lora", choices=METHODS, scale=1)
+        finetuning_type = gr.Dropdown(choices=METHODS, value="lora", scale=1)
         checkpoints = gr.Dropdown(multiselect=True, scale=5)
         refresh_btn = gr.Button(scale=1)
 
     with gr.Accordion(label="Advanced config", open=False) as advanced_tab:
         with gr.Row():
-            quantization_bit = gr.Dropdown(["", "8", "4"], scale=1)
-            template = gr.Dropdown(value="default", choices=list(templates.keys()), scale=1)
+            quantization_bit = gr.Dropdown(choices=["None", "8", "4"], value="None", scale=1)
+            template = gr.Dropdown(choices=list(templates.keys()), value="default", scale=1)
             source_prefix = gr.Textbox(scale=2)
+
+    lang.change(save_config, [lang, model_name, model_path])
 
     model_name.change(
         list_checkpoint, [model_name, finetuning_type], [checkpoints]
     ).then(
         get_model_path, [model_name], [model_path]
     ) # do not save config since the below line will save
-    model_path.change(save_config, [model_name, model_path])
+
+    model_path.change(save_config, [lang, model_name, model_path])
 
     finetuning_type.change(
         list_checkpoint, [model_name, finetuning_type], [checkpoints]
@@ -43,7 +46,9 @@ def create_top() -> Dict[str, "Component"]:
         can_quantize, [finetuning_type], [quantization_bit]
     )
 
-    refresh_btn.click(list_checkpoint, [model_name, finetuning_type], [checkpoints], queue=False)
+    refresh_btn.click(
+        list_checkpoint, [model_name, finetuning_type], [checkpoints], queue=False
+    )
 
     return dict(
         lang=lang,
