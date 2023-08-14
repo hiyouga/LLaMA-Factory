@@ -8,11 +8,11 @@ from transformers.trainer import TRAINING_ARGS_NAME
 from typing import Any, Dict, Generator, List, Tuple
 
 from llmtuner.extras.callbacks import LogCallback
-from llmtuner.extras.constants import DEFAULT_MODULE, DEFAULT_TEMPLATE, DEFAULT_TEMPLATE_WITH_CUSTOM_MODEL
+from llmtuner.extras.constants import DEFAULT_MODULE
 from llmtuner.extras.logging import LoggerHandler
 from llmtuner.extras.misc import torch_gc
 from llmtuner.tuner import run_exp
-from llmtuner.webui.common import get_model_path, get_save_dir, get_template
+from llmtuner.webui.common import get_model_path, get_save_dir
 from llmtuner.webui.locales import ALERTS
 from llmtuner.webui.utils import gen_cmd, get_eval_results, update_process_bar
 
@@ -70,7 +70,7 @@ class Runner:
         quantization_bit: str,
         template: str,
         source_prefix: str,
-        stage: str,
+        training_stage: str,
         dataset_dir: str,
         dataset: List[str],
         max_source_length: int,
@@ -138,21 +138,21 @@ class Runner:
         )
         args[compute_type] = True
 
-        if stage == "Pretraining":
-            args["stage"] = "pt"
-        if stage == "Reward Modeling":
+        if training_stage == "Reward Modeling":
             args["stage"] = "rm"
             args["resume_lora_training"] = False
-        elif stage == "PPO":
+        elif training_stage == "PPO":
             args["stage"] = "ppo"
             args["resume_lora_training"] = False
             args["reward_model"] = reward_model
             args["padding_side"] = "left"
             val_size = 0
-        elif stage == "DPO":
+        elif training_stage == "DPO":
             args["stage"] = "dpo"
             args["resume_lora_training"] = False
             args["dpo_beta"] = dpo_beta
+        elif training_stage == "Pre-Training":
+            args["stage"] = "pt"
 
         if val_size > 1e-6:
             args["val_size"] = val_size
