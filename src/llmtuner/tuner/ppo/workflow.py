@@ -37,7 +37,9 @@ def run_ppo(
         batch_size=training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps,
         gradient_accumulation_steps=training_args.gradient_accumulation_steps,
         ppo_epochs=1,
-        max_grad_norm=training_args.max_grad_norm
+        max_grad_norm=training_args.max_grad_norm,
+        seed=training_args.seed,
+        optimize_cuda_cache=True
     )
 
     optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=training_args.learning_rate)
