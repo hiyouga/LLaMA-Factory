@@ -68,7 +68,7 @@
 | ---------------------- | -------------- | ----------------- | ---- | ----- |
 | Pre-Training           | ✅            | ✅                | ✅   | ✅   |
 | Supervised Fine-Tuning | ✅            | ✅                | ✅   | ✅   |
-| Reward Model Training  |                |                   | ✅   | ✅   |
+| Reward Modeling        |                |                   | ✅   | ✅   |
 | PPO Training           |                |                   | ✅   | ✅   |
 | DPO Training           | ✅            |                    | ✅   | ✅   |
 
@@ -103,7 +103,7 @@
   - [Web QA (zh)](https://huggingface.co/datasets/suolyer/webqa)
   - [UltraChat (en)](https://github.com/thunlp/UltraChat)
   - [WebNovel (zh)](https://huggingface.co/datasets/zxbsmk/webnovel_cn)
-- For reward modelling or DPO training:
+- For reward modeling or DPO training:
   - [HH-RLHF (en)](https://huggingface.co/datasets/Anthropic/hh-rlhf)
   - [Open Assistant (multilingual)](https://huggingface.co/datasets/OpenAssistant/oasst1)
   - [GPT-4 Generated Data (en&zh)](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
@@ -206,7 +206,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --fp16
 ```
 
-### Reward Model Training
+### Reward Modeling
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
