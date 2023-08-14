@@ -10,6 +10,8 @@ LAYERNORM_NAMES = ["norm", "ln_f", "ln_attn", "ln_mlp"]
 
 METHODS = ["full", "freeze", "lora"]
 
+STAGES = ["Supervised Finetuning", "Reward Modeling", "PPO", "DPO", "Pretraining"]
+
 SUPPORTED_MODELS = {
     "LLaMA-7B": "huggyllama/llama-7b",
     "LLaMA-13B": "huggyllama/llama-13b",
@@ -53,4 +55,32 @@ DEFAULT_MODULE = {
     "Qwen": "c_attn",
     "XVERSE": "q_proj,v_proj",
     "ChatGLM2": "query_key_value"
+}
+
+DEFAULT_TEMPLATE = {
+    "LLaMA2": "llama2",
+    "Baichuan": "baichuan",
+    "InternLM": "intern",
+    "Qwen": "chatml",
+    "ChatGLM2": "chatglm2"
+}
+
+# huggingface model name prefix 2 template
+DEFAULT_TEMPLATE_WITH_CUSTOM_MODEL = {
+    "Llama-2": "llama2",
+    "chinese-alpaca-2": "llama2_zh",
+    "alpaca-7b-wdiff": "alpaca",
+    "vicuna": "vicuna",
+    "BELLE": "belle",
+    "Chinese-LLaMA-2": "linly",
+    "BiLLa": "billa",
+    "Ziya": "ziya",
+    "aquilachat": "aquila",
+    "internlm": "intern",
+    "aquilachat": "aquila",
+    "internlm": "intern",
+    "Baichuan":"baichuan",
+    "starchat":"starchat",
+    "Qwen":"chatml",
+    "chatglm2":"chatglm2"
 }
