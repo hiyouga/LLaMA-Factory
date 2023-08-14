@@ -273,8 +273,8 @@ register_template(
 
 
 r"""
-Supports: https://huggingface.co/ziqingyang/chinese-alpaca-2-7b
-          https://github.com/ymcui/Chinese-LLaMA-Alpaca-2
+Supports: https://github.com/ymcui/Chinese-LLaMA-Alpaca-2
+          https://huggingface.co/ziqingyang/chinese-alpaca-2-7b
 """
 register_template(
     name="llama2_zh",
