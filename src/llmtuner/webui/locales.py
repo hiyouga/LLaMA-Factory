@@ -87,6 +87,16 @@ LOCALES = {
             "info": "默认使用的系统提示词"
         }
     },
+    "training_stage": {
+        "en": {
+            "label": "Stage",
+            "info": "The stage to perform in training."
+        },
+        "zh": {
+            "label": "训练阶段",
+            "info": "目前采用的训练方式。"
+        }
+    },
     "dataset_dir": {
         "en": {
             "label": "Data dir",
@@ -343,16 +353,6 @@ LOCALES = {
             "label": "RLHF 参数设置"
         }
     },
-    "rlhf_method": {
-        "en": {
-            "label": "RLHF method",
-            "info": "The RLHF algorithm to adopt."
-        },
-        "zh": {
-            "label": "RLHF 方法",
-            "info": "RLHF 阶段使用的算法。"
-        }
-    },
     "dpo_beta": {
         "en": {
             "label": "DPO beta",
@@ -546,15 +546,7 @@ LOCALES = {
         "zh": {
             "value": "开始导出"
         }
-    },
-    "stage": {
-        "en": {
-            "label": "train stage"
-        },
-        "zh": {
-            "label": "训练阶段"
-        }
-    },
+    }
 }
 
 
