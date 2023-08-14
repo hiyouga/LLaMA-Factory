@@ -53,7 +53,7 @@ class WebChatModel(ChatModel):
             model_name_or_path=model_name_or_path,
             checkpoint_dir=checkpoint_dir,
             finetuning_type=finetuning_type,
-            quantization_bit=int(quantization_bit) if quantization_bit else None,
+            quantization_bit=int(quantization_bit) if quantization_bit != "None" else None,
             template=template,
             source_prefix=source_prefix
         )
