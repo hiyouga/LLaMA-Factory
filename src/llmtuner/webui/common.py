@@ -49,11 +49,8 @@ def get_model_path(model_name: str) -> str:
 
 
 def get_template(
-        template: str,
         model_name: str,
 ) -> str:
-    if template and template != "default":
-        return template
     if model_name == "Custom":
         model_name_or_path = get_model_path(model_name)
         # get last dir
