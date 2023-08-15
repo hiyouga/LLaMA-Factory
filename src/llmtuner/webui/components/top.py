@@ -28,7 +28,7 @@ def create_top() -> Dict[str, "Component"]:
         with gr.Row():
             quantization_bit = gr.Dropdown(choices=["None", "8", "4"], value="None", scale=1)
             template = gr.Dropdown(choices=list(templates.keys()), value="default", scale=1)
-            source_prefix = gr.Textbox(scale=2)
+            system_prompt = gr.Textbox(scale=2)
 
     lang.change(save_config, [lang, model_name, model_path])
 
@@ -62,5 +62,5 @@ def create_top() -> Dict[str, "Component"]:
         advanced_tab=advanced_tab,
         quantization_bit=quantization_bit,
         template=template,
-        source_prefix=source_prefix
+        system_prompt=system_prompt
     )
