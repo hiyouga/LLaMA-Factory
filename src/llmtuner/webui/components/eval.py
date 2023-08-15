@@ -52,7 +52,7 @@ def create_eval_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict
         top_elems["finetuning_type"],
         top_elems["quantization_bit"],
         top_elems["template"],
-        top_elems["source_prefix"],
+        top_elems["system_prompt"],
         dataset_dir,
         dataset,
         max_source_length,
