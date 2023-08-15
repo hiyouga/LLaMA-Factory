@@ -77,7 +77,7 @@ LOCALES = {
             "info": "构建提示词时使用的模板"
         }
     },
-    "source_prefix": {
+    "system_prompt": {
         "en": {
             "label": "System prompt (optional)",
             "info": "A sequence used as the default system prompt."
@@ -455,7 +455,7 @@ LOCALES = {
             "value": "模型未加载，请先加载模型。"
         }
     },
-    "prefix": {
+    "system": {
         "en": {
             "placeholder": "System prompt (optional)"
         },

@@ -92,14 +92,13 @@ def get_dataset(
             if getattr(dataset_attr, column_name) and getattr(dataset_attr, column_name) != column_name:
                 dataset = dataset.rename_column(getattr(dataset_attr, column_name), column_name)
 
-        if dataset_attr.source_prefix: # add prefix
+        if dataset_attr.system_prompt: # add system prompt
             if data_args.streaming:
                 features = dataset.features
-                features["prefix"] = Value(dtype="string", id=None)
-                dataset = dataset.map(lambda _: {"prefix": dataset_attr.source_prefix}, features=features)
+                features["system"] = Value(dtype="string", id=None)
+                dataset = dataset.map(lambda _: {"system": dataset_attr.system_prompt}, features=features)
             else:
-                prefix_data = [dataset_attr.source_prefix] * len(dataset)
-                dataset = dataset.add_column("prefix", prefix_data)
+                dataset = dataset.add_column("system", [dataset_attr.system_prompt] * len(dataset))
 
         all_datasets.append(dataset)
 
