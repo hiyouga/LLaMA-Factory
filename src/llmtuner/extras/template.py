@@ -16,9 +16,11 @@ class Template:
 
     prefix: List[Union[str, Dict[str, str]]]
     prompt: List[Union[str, Dict[str, str]]]
+    system: str
     sep: List[Union[str, Dict[str, str]]]
     stop_words: List[str]
     use_history: bool
+    bos_after_prefix: bool
 
     def encode_oneturn(
         self,
@@ -26,18 +28,18 @@ class Template:
         query: str,
         resp: str,
         history: Optional[List[Tuple[str, str]]] = None,
-        prefix: Optional[str] = None
+        system: Optional[str] = None
     ) -> Tuple[List[int], List[int]]:
         r"""
         Returns a single pair of token ids representing prompt and response respectively.
         """
-        prefix, history = self._format(query, resp, history, prefix)
-        encoded_pairs = self._encode(tokenizer, prefix, history)
+        system, history = self._format(query, resp, history, system)
+        encoded_pairs = self._encode(tokenizer, system, history)
         prompt_ids = []
         for query_ids, resp_ids in encoded_pairs[:-1]:
             prompt_ids = prompt_ids + query_ids + resp_ids
-        prompt_ids = prompt_ids + encoded_pairs[-1][0]
-        return prompt_ids, encoded_pairs[-1][1]
+        prompt_ids, answer_ids = prompt_ids + encoded_pairs[-1][0], encoded_pairs[-1][1]
+        return prompt_ids, answer_ids
 
     def encode_multiturn(
         self,
@@ -45,13 +47,13 @@ class Template:
         query: str,
         resp: str,
         history: Optional[List[Tuple[str, str]]] = None,
-        prefix: Optional[str] = None
+        system: Optional[str] = None
     ) -> List[Tuple[List[int], List[int]]]:
         r"""
         Returns multiple pairs of token ids representing prompts and responses respectively.
         """
-        prefix, history = self._format(query, resp, history, prefix)
-        encoded_pairs = self._encode(tokenizer, prefix, history)
+        system, history = self._format(query, resp, history, system)
+        encoded_pairs = self._encode(tokenizer, system, history)
         return encoded_pairs
 
     def _format(
@@ -59,15 +61,15 @@ class Template:
         query: str,
         resp: str,
         history: Optional[List[Tuple[str, str]]] = None,
-        prefix: Optional[str] = None
-    ) -> Tuple[List[Union[str, Dict[str, str]]], List[Tuple[str, str]]]:
+        system: Optional[str] = None
+    ) -> Tuple[str, List[Tuple[str, str]]]:
         r"""
         Aligns inputs to the standard format.
         """
-        prefix = [prefix] if prefix else self.prefix # use prefix if provided
+        system = system or self.system # use system if provided
         history = history if (history and self.use_history) else []
         history = history + [(query, resp)]
-        return prefix, history
+        return system, history
 
     def _get_special_ids(
         self,
@@ -88,7 +90,7 @@ class Template:
     def _encode(
         self,
         tokenizer: "PreTrainedTokenizer",
-        prefix: List[Union[str, Dict[str, str]]],
+        system: str,
         history: List[Tuple[str, str]]
     ) -> List[Tuple[List[int], List[int]]]:
         r"""
@@ -101,8 +103,12 @@ class Template:
         encoded_pairs = []
         for turn_idx, (query, resp) in enumerate(history):
             if turn_idx == 0:
-                if prefix: # has prefix
-                    prefix_ids = bos_ids + self._convert_inputs_to_ids(tokenizer, context=prefix) + sep_ids
+                prefix_ids = self._convert_inputs_to_ids(tokenizer, context=self.prefix, system=system)
+                if len(prefix_ids) != 0: # has prefix
+                    if self.bos_after_prefix:
+                        prefix_ids = prefix_ids + bos_ids + sep_ids
+                    else:
+                        prefix_ids = bos_ids + prefix_ids + sep_ids
                 else:
                     prefix_ids = bos_ids
             else:
@@ -117,8 +123,9 @@ class Template:
         self,
         tokenizer: "PreTrainedTokenizer",
         context: List[Union[str, Dict[str, str]]],
-        query: Optional[str] = "",
-        idx: Optional[str] = ""
+        system: Optional[str] = None,
+        query: Optional[str] = None,
+        idx: Optional[str] = None
     ) -> List[int]:
         r"""
         Converts context to token ids.
@@ -131,13 +138,15 @@ class Template:
         token_ids = []
         for elem in context:
             if isinstance(elem, str):
-                elem = elem.replace("{{query}}", query, 1)
-                elem = elem.replace("{{idx}}", idx, 1)
+                elem = elem.replace("{{system}}", system, 1) if system is not None else elem
+                elem = elem.replace("{{query}}", query, 1) if query is not None else elem
+                elem = elem.replace("{{idx}}", idx, 1) if idx is not None else elem
                 token_ids = token_ids + tokenizer.encode(elem, **kwargs)
             elif isinstance(elem, dict):
                 token_ids = token_ids + [tokenizer.convert_tokens_to_ids(elem.get("token"))]
             else:
                 raise NotImplementedError
+
         return token_ids
 
 
@@ -147,7 +156,7 @@ class Llama2Template(Template):
     def _encode(
         self,
         tokenizer: "PreTrainedTokenizer",
-        prefix: List[Union[str, Dict[str, str]]],
+        system: str,
         history: List[Tuple[str, str]]
     ) -> List[Tuple[List[int], List[int]]]:
         r"""
@@ -157,10 +166,9 @@ class Llama2Template(Template):
         """
         bos_ids, eos_ids = self._get_special_ids(tokenizer)
         encoded_pairs = []
-        assert isinstance(prefix[0], str), "LLaMA-2 template only accepts list containing a single string."
         for turn_idx, (query, resp) in enumerate(history):
-            if turn_idx == 0: # llama2 template has not sep_ids
-                query = prefix[0] + query
+            if turn_idx == 0: # llama2 template has no sep_ids
+                query = self.prefix[0].replace("{{system}}", system) + query
             query_ids = self._convert_inputs_to_ids(tokenizer, context=self.prompt, query=query)
             resp_ids = self._convert_inputs_to_ids(tokenizer, context=[resp])
             encoded_pairs.append((bos_ids + query_ids, resp_ids + eos_ids))
@@ -174,17 +182,21 @@ def register_template(
     name: str,
     prefix: List[Union[str, Dict[str, str]]],
     prompt: List[Union[str, Dict[str, str]]],
+    system: str,
     sep: List[Union[str, Dict[str, str]]],
-    stop_words: List[str],
-    use_history: bool
+    stop_words: Optional[List[str]] = [],
+    use_history: Optional[bool] = True,
+    bos_after_prefix: Optional[bool] = False
 ) -> None:
     template_class = Llama2Template if "llama2" in name else Template
     templates[name] = template_class(
         prefix=prefix,
         prompt=prompt,
+        system=system,
         sep=sep,
         stop_words=stop_words,
-        use_history=use_history
+        use_history=use_history,
+        bos_after_prefix=bos_after_prefix
     )
 
 
@@ -201,7 +213,7 @@ def get_template_and_fix_tokenizer(
         if tokenizer.eos_token_id is not None:
             additional_special_tokens.append(tokenizer.eos_token)
 
-        tokenizer.eos_token = template.stop_words[0]
+        tokenizer.eos_token = additional_special_tokens[0] # use the first stop word as eos token
         additional_special_tokens.pop(0)
         logger.info("Replace eos token: {}".format(tokenizer.eos_token))
 
@@ -229,8 +241,8 @@ register_template(
     prompt=[
         "{{query}}"
     ],
+    system="",
     sep=[],
-    stop_words=[],
     use_history=False
 )
 
@@ -241,17 +253,18 @@ Default template.
 register_template(
     name="default",
     prefix=[
-        "A chat between a curious user and an artificial intelligence assistant. "
-        "The assistant gives helpful, detailed, and polite answers to the user's questions."
+        "{{system}}"
     ],
     prompt=[
         "Human: {{query}}\nAssistant: "
     ],
+    system=(
+        "A chat between a curious user and an artificial intelligence assistant. "
+        "The assistant gives helpful, detailed, and polite answers to the user's questions."
+    ),
     sep=[
         "\n"
-    ],
-    stop_words=[],
-    use_history=True
+    ]
 )
 
 
@@ -263,21 +276,22 @@ Supports: https://huggingface.co/meta-llama/Llama-2-7b-chat-hf
 register_template(
     name="llama2",
     prefix=[
-        "<<SYS>>\nYou are a helpful, respectful and honest assistant. "
+        "<<SYS>>\n{{system}}\n<</SYS>>\n\n"
+    ],
+    prompt=[
+        "[INST] {{query}} [/INST] "
+    ],
+    system=(
+        "You are a helpful, respectful and honest assistant. "
         "Always answer as helpfully as possible, while being safe.  "
         "Your answers should not include any harmful, unethical, "
         "racist, sexist, toxic, dangerous, or illegal content. "
         "Please ensure that your responses are socially unbiased and positive in nature.\n"
         "If a question does not make any sense, or is not factually coherent, "
         "explain why instead of answering something not correct. "
-        "If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n"
-    ],
-    prompt=[
-        "[INST] {{query}} [/INST] "
-    ],
-    sep=[],
-    stop_words=[],
-    use_history=True
+        "If you don't know the answer to a question, please don't share false information."
+    ),
+    sep=[]
 )
 
 
@@ -288,14 +302,13 @@ Supports: https://github.com/ymcui/Chinese-LLaMA-Alpaca-2
 register_template(
     name="llama2_zh",
     prefix=[
-        "<<SYS>>\nYou are a helpful assistant. 你是一个乐于助人的助手。\n<</SYS>>\n\n"
+        "<<SYS>>\n{{system}}\n<</SYS>>\n\n"
     ],
     prompt=[
         "[INST] {{query}} [/INST] "
     ],
-    sep=[],
-    stop_words=[],
-    use_history=True
+    system="You are a helpful assistant. 你是一个乐于助人的助手。",
+    sep=[]
 )
 
 
@@ -306,17 +319,18 @@ Supports: https://huggingface.co/tatsu-lab/alpaca-7b-wdiff
 register_template(
     name="alpaca",
     prefix=[
-        "Below is an instruction that describes a task. "
-        "Write a response that appropriately completes the request."
+        "{{system}}"
     ],
     prompt=[
         "### Instruction:\n{{query}}\n\n### Response:\n"
     ],
+    system=(
+        "Below is an instruction that describes a task. "
+        "Write a response that appropriately completes the request."
+    ),
     sep=[
         "\n\n"
-    ],
-    stop_words=[],
-    use_history=True
+    ]
 )
 
 
@@ -327,15 +341,16 @@ Supports: https://huggingface.co/lmsys/vicuna-7b-delta-v1.1
 register_template(
     name="vicuna",
     prefix=[
-        "A chat between a curious user and an artificial intelligence assistant. "
-        "The assistant gives helpful, detailed, and polite answers to the user's questions."
+        "{{system}}"
     ],
     prompt=[
         "USER: {{query}} ASSISTANT: "
     ],
-    sep=[],
-    stop_words=[],
-    use_history=True
+    system=(
+        "A chat between a curious user and an artificial intelligence assistant. "
+        "The assistant gives helpful, detailed, and polite answers to the user's questions."
+    ),
+    sep=[]
 )
 
 
@@ -344,15 +359,16 @@ Supports: https://huggingface.co/BelleGroup/BELLE-LLaMA-EXT-13B
 """
 register_template(
     name="belle",
-    prefix=[],
+    prefix=[
+        "{{system}}"
+    ],
     prompt=[
         "Human: {{query}}\n\nBelle: "
     ],
+    system="",
     sep=[
         "\n\n"
-    ],
-    stop_words=[],
-    use_history=True
+    ]
 )
 
 
@@ -361,15 +377,16 @@ Supports: https://github.com/CVI-SZU/Linly
 """
 register_template(
     name="linly",
-    prefix=[],
+    prefix=[
+        "{{system}}"
+    ],
     prompt=[
         "User: {{query}}\nBot: "
     ],
+    system="",
     sep=[
         "\n"
-    ],
-    stop_words=[],
-    use_history=True
+    ]
 )
 
 
@@ -378,15 +395,16 @@ Supports: https://github.com/Neutralzz/BiLLa
 """
 register_template(
     name="billa",
-    prefix=[],
+    prefix=[
+        "{{system}}"
+    ],
     prompt=[
         "Human: {{query}}\nAssistant: "
     ],
+    system="",
     sep=[
         "\n"
-    ],
-    stop_words=[],
-    use_history=True
+    ]
 )
 
 
@@ -395,18 +413,19 @@ Supports: https://huggingface.co/IDEA-CCNL/Ziya-LLaMA-13B-v1
 """
 register_template(
     name="ziya",
-    prefix=[],
+    prefix=[
+        "{{system}}"
+    ],
     prompt=[
         {"token": "<human>"},
         ":{{query}}\n",
         {"token": "<bot>"},
         ":"
     ],
+    system="",
     sep=[
         "\n"
-    ],
-    stop_words=[],
-    use_history=True
+    ]
 )
 
 
@@ -416,17 +435,18 @@ Supports: https://huggingface.co/qhduan/aquilachat-7b
 register_template(
     name="aquila",
     prefix=[
-        "A chat between a curious human and an artificial intelligence assistant. "
-        "The assistant gives helpful, detailed, and polite answers to the human's questions."
+        "{{system}}"
     ],
     prompt=[
         "Human: {{query}}###Assistant: "
     ],
+    system=(
+        "A chat between a curious human and an artificial intelligence assistant. "
+        "The assistant gives helpful, detailed, and polite answers to the human's questions."
+    ),
     sep=[
         "###"
-    ],
-    stop_words=[],
-    use_history=True
+    ]
 )
 
 
@@ -435,19 +455,21 @@ Supports: https://huggingface.co/internlm/internlm-chat-7b
 """
 register_template(
     name="intern",
-    prefix=[],
+    prefix=[
+        "{{system}}"
+    ],
     prompt=[
         "<|User|>:{{query}}",
         {"token": "<eoh>"},
         "\n<|Bot|>:"
     ],
+    system="",
     sep=[
         "\n"
     ],
     stop_words=[
         "<eoa>"
-    ],
-    use_history=True
+    ]
 )
 
 
@@ -457,17 +479,19 @@ Supports: https://huggingface.co/baichuan-inc/Baichuan-13B-Chat
 register_template(
     name="baichuan",
     prefix=[
-        {"token": "<reserved_102>"} # user token (a little difference in the first turn)
+        "{{system}}",
+        {"token": "<reserved_102>"} # user token
     ],
     prompt=[
         "{{query}}",
         {"token": "<reserved_103>"} # assistant token
     ],
+    system="",
     sep=[],
     stop_words=[
         "<reserved_102>" # user token
     ],
-    use_history=True
+    bos_after_prefix=True
 )
 
 
@@ -479,7 +503,7 @@ register_template(
     name="starchat",
     prefix=[
         {"token": "<|system|>"},
-        "\n",
+        "\n{{system}}",
         {"token": "<|end|>"}
     ],
     prompt=[
@@ -489,13 +513,13 @@ register_template(
         "\n",
         {"token": "<|assistant|>"}
     ],
+    system="",
     sep=[
         "\n"
     ],
     stop_words=[
         "<|end|>"
-    ],
-    use_history=True
+    ]
 )
 
 
@@ -506,7 +530,7 @@ register_template(
     name="chatml",
     prefix=[
         {"token": "<|im_start|>"},
-        "system\nYou are a helpful assistant.",
+        "system\n{{system}}",
         {"token": "<|im_end|>"}
     ],
     prompt=[
@@ -517,13 +541,13 @@ register_template(
         {"token": "<|im_start|>"},
         "assistant\n"
     ],
+    system="You are a helpful assistant.",
     sep=[
         "\n"
     ],
     stop_words=[
         "<|im_end|>"
-    ],
-    use_history=True
+    ]
 )
 
 
@@ -534,14 +558,14 @@ register_template(
     name="chatglm2",
     prefix=[
         {"token": "[gMASK]"},
-        {"token": "sop"}
+        {"token": "sop"},
+        "{{system}}"
     ],
     prompt=[
         "[Round {{idx}}]\n\n问：{{query}}\n\n答："
     ],
+    system="",
     sep=[
         "\n\n"
-    ],
-    stop_words=[],
-    use_history=True
+    ]
 )
