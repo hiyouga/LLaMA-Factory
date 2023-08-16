@@ -49,6 +49,8 @@ class ChatModel:
             top_p=top_p or gen_kwargs["top_p"],
             top_k=top_k or gen_kwargs["top_k"],
             repetition_penalty=repetition_penalty or gen_kwargs["repetition_penalty"],
+            eos_token_id=self.tokenizer.eos_token_id,
+            pad_token_id=self.tokenizer.pad_token_id,
             logits_processor=get_logits_processor(),
             stopping_criteria=get_stopping_criteria(self.tokenizer.additional_special_tokens_ids)
         ))
