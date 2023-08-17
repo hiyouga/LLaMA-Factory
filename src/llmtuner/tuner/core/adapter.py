@@ -39,7 +39,7 @@ def init_adapter(
     if finetuning_args.finetuning_type == "none" and is_trainable:
         raise ValueError("You cannot use finetuning_type=none while training.")
 
-    if finetuning_args.finetuning_type == "full":
+    if finetuning_args.finetuning_type == "full" and is_trainable:
         logger.info("Fine-tuning method: Full")
         model = model.float()
 
@@ -65,7 +65,7 @@ def init_adapter(
             assert os.path.exists(os.path.join(model_args.checkpoint_dir[0], CONFIG_NAME)), \
                 "The given checkpoint may be not a LoRA checkpoint, please specify `--finetuning_type full/freeze` instead."
 
-            if (is_trainable and model_args.resume_lora_training) or (not is_mergeable): # continually train on the lora weights
+            if (is_trainable and finetuning_args.resume_lora_training) or (not is_mergeable): # continually fine-tuning
                 checkpoints_to_merge, latest_checkpoint = model_args.checkpoint_dir[:-1], model_args.checkpoint_dir[-1]
             else:
                 checkpoints_to_merge = model_args.checkpoint_dir

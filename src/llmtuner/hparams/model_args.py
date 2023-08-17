@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 
 @dataclass
 class ModelArguments:
-    """
+    r"""
     Arguments pertaining to which model/config/tokenizer we are going to fine-tune.
     """
     model_name_or_path: str = field(
@@ -43,9 +43,9 @@ class ModelArguments:
         default=True,
         metadata={"help": "Whether to use double quantization in int4 training or not."}
     )
-    compute_dtype: Optional[torch.dtype] = field(
+    rope_scaling: Optional[Literal["linear", "dynamic"]] = field(
         default=None,
-        metadata={"help": "Used in quantization configs. Do not specify this argument manually."}
+        metadata={"help": "Adopt scaled rotary positional embeddings."}
     )
     checkpoint_dir: Optional[str] = field(
         default=None,
@@ -55,18 +55,33 @@ class ModelArguments:
         default=None,
         metadata={"help": "Path to the directory containing the checkpoints of the reward model."}
     )
-    resume_lora_training: Optional[bool] = field(
-        default=True,
-        metadata={"help": "Whether to resume training from the last LoRA weights or create new weights after merging them."}
-    )
     plot_loss: Optional[bool] = field(
         default=False,
         metadata={"help": "Whether to plot the training loss after fine-tuning or not."}
     )
+    hf_auth_token: Optional[str] = field(
+        default=None,
+        metadata={"help": "Auth token to log in with Hugging Face Hub."}
+    )
+    compute_dtype: Optional[torch.dtype] = field(
+        default=None,
+        metadata={"help": "Used in quantization configs. Do not specify this argument manually."}
+    )
+    model_max_length: Optional[int] = field(
+        default=None,
+        metadata={"help": "Used in rope scaling. Do not specify this argument manually."}
+    )
 
     def __post_init__(self):
+        if self.compute_dtype is not None or self.model_max_length is not None:
+            raise ValueError("These arguments cannot be specified.")
+
         if self.checkpoint_dir is not None: # support merging multiple lora weights
             self.checkpoint_dir = [cd.strip() for cd in self.checkpoint_dir.split(",")]
 
         if self.quantization_bit is not None:
             assert self.quantization_bit in [4, 8], "We only accept 4-bit or 8-bit quantization."
+
+        if self.use_auth_token == True and self.hf_auth_token is not None:
+            from huggingface_hub.hf_api import HfFolder # lazy load
+            HfFolder.save_token(self.hf_auth_token)

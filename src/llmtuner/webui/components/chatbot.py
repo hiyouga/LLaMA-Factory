@@ -17,7 +17,7 @@ def create_chat_box(
 
         with gr.Row():
             with gr.Column(scale=4):
-                prefix = gr.Textbox(show_label=False)
+                system = gr.Textbox(show_label=False)
                 query = gr.Textbox(show_label=False, lines=8)
                 submit_btn = gr.Button(variant="primary")
 
@@ -31,7 +31,7 @@ def create_chat_box(
 
     submit_btn.click(
         chat_model.predict,
-        [chatbot, query, history, prefix, max_new_tokens, top_p, temperature],
+        [chatbot, query, history, system, max_new_tokens, top_p, temperature],
         [chatbot, history],
         show_progress=True
     ).then(
@@ -41,7 +41,7 @@ def create_chat_box(
     clear_btn.click(lambda: ([], []), outputs=[chatbot, history], show_progress=True)
 
     return chat_box, chatbot, history, dict(
-        prefix=prefix,
+        system=system,
         query=query,
         submit_btn=submit_btn,
         clear_btn=clear_btn,

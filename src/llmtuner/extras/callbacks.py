@@ -7,8 +7,14 @@ from datetime import timedelta
 from transformers import TrainerCallback
 from transformers.trainer_utils import has_length
 
+from llmtuner.extras.constants import LOG_FILE_NAME
+from llmtuner.extras.logging import get_logger
+
 if TYPE_CHECKING:
     from transformers import TrainingArguments, TrainerState, TrainerControl
+
+
+logger = get_logger(__name__)
 
 
 class LogCallback(TrainerCallback):
@@ -38,6 +44,9 @@ class LogCallback(TrainerCallback):
             self.in_training = True
             self.start_time = time.time()
             self.max_steps = state.max_steps
+            if os.path.exists(os.path.join(args.output_dir, LOG_FILE_NAME)):
+                logger.warning("Previous log file in this folder will be deleted.")
+                os.remove(os.path.join(args.output_dir, LOG_FILE_NAME))
 
     def on_train_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
