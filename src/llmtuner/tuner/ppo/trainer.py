@@ -10,7 +10,7 @@ from trl import PPOTrainer
 from trl.core import LengthSampler
 
 from llmtuner.extras.logging import get_logger
-from llmtuner.extras.misc import AverageMeter, count_parameters, get_logits_processor, get_stopping_criteria
+from llmtuner.extras.misc import AverageMeter, count_parameters, get_logits_processor
 from llmtuner.tuner.core.trainer import PeftTrainer
 from llmtuner.tuner.ppo.utils import cast_layernorm_dtype, replace_model
 
@@ -74,10 +74,9 @@ class PPOPeftTrainer(PPOTrainer, PeftTrainer):
 
         # Keyword arguments for `model.generate`
         gen_kwargs = self.generating_args.to_dict()
-        gen_kwargs["eos_token_id"] = self.tokenizer.eos_token_id
+        gen_kwargs["eos_token_id"] = [self.tokenizer.eos_token_id] + self.tokenizer.additional_special_tokens_ids
         gen_kwargs["pad_token_id"] = self.tokenizer.pad_token_id
         gen_kwargs["logits_processor"] = get_logits_processor()
-        gen_kwargs["stopping_criteria"] = get_stopping_criteria(self.tokenizer.additional_special_tokens_ids)
 
         length_sampler = LengthSampler(max_target_length // 2, max_target_length)
         unwrapped_model: "AutoModelForCausalLMWithValueHead" = self.accelerator.unwrap_model(self.model)
