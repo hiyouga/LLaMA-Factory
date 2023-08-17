@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple
 from transformers import TrainerState, TrainerControl
 
 from trl import PPOTrainer
-from trl.core import LengthSampler
+from trl.core import LengthSampler, PPODecorators, logprobs_from_logits
 
 from llmtuner.extras.logging import get_logger
 from llmtuner.extras.misc import AverageMeter, count_parameters, get_logits_processor
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments
     from trl import AutoModelForCausalLMWithValueHead
     from llmtuner.extras.callbacks import LogCallback
-    from llmtuner.hparams import FinetuningArguments
+    from llmtuner.hparams import FinetuningArguments, GeneratingArguments
 
 
 logger = get_logger(__name__)
@@ -33,16 +33,19 @@ class PPOPeftTrainer(PPOTrainer, PeftTrainer):
         self,
         training_args: "Seq2SeqTrainingArguments",
         finetuning_args: "FinetuningArguments",
+        generating_args: "GeneratingArguments",
         callbacks: List["LogCallback"],
+        compute_dtype: torch.dtype,
         **kwargs
     ):
         PPOTrainer.__init__(self, **kwargs)
         self.args = training_args
         self.finetuning_args = finetuning_args
+        self.generating_args = generating_args
         self.log_callback = callbacks[0]
+        self.compute_dtype = compute_dtype
         self.state = TrainerState()
         self.control = TrainerControl()
-        self._remove_log()
 
     def ppo_train(self, max_target_length: int) -> None:
         r"""
@@ -72,14 +75,11 @@ class PPOPeftTrainer(PPOTrainer, PeftTrainer):
             logger.info(f"  Number of trainable parameters = {count_parameters(self.model)[0]}")
 
         # Keyword arguments for `model.generate`
-        gen_kwargs = {
-            "top_k": 0.0,
-            "top_p": 1.0,
-            "do_sample": True,
-            "pad_token_id": self.tokenizer.pad_token_id,
-            "eos_token_id": self.tokenizer.eos_token_id,
-            "logits_processor": get_logits_processor()
-        }
+        gen_kwargs = self.generating_args.to_dict()
+        gen_kwargs["eos_token_id"] = list(set([self.tokenizer.eos_token_id] + self.tokenizer.additional_special_tokens_ids))
+        gen_kwargs["pad_token_id"] = self.tokenizer.pad_token_id
+        gen_kwargs["logits_processor"] = get_logits_processor()
+
         length_sampler = LengthSampler(max_target_length // 2, max_target_length)
         unwrapped_model: "AutoModelForCausalLMWithValueHead" = self.accelerator.unwrap_model(self.model)
 
@@ -185,9 +185,73 @@ class PPOPeftTrainer(PPOTrainer, PeftTrainer):
         replace_model(unwrapped_model, target="reward")
         batch = self.prepare_model_inputs(queries, responses)
         _, _, values = self.model(**batch, output_hidden_states=True, return_dict=True)
+        if values.size(0) != batch["input_ids"].size(0): # adapt chatglm2
+            values = torch.transpose(values, 0, 1)
         rewards = [reward for reward in values[:, -1].float().detach().cpu()] # use fp32 type
         replace_model(unwrapped_model, target="default")
         return rewards
+
+    @PPODecorators.empty_cuda_cache()
+    def batched_forward_pass(
+        self,
+        model: "AutoModelForCausalLMWithValueHead",
+        queries: torch.Tensor,
+        responses: torch.Tensor,
+        model_inputs: dict,
+        return_logits: Optional[bool] = False
+    ):
+        r"""
+        Calculates model outputs in multiple batches.
+
+        Subclass and override to inject custom behavior.
+        """
+        bs = len(queries)
+        fbs = self.config.mini_batch_size
+        all_logprobs = []
+        all_logits = []
+        all_masks = []
+        all_values = []
+
+        for i in range(math.ceil(bs / fbs)):
+            input_kwargs = {key: value[i * fbs : (i + 1) * fbs] for key, value in model_inputs.items()}
+            query_batch = queries[i * fbs : (i + 1) * fbs]
+            response_batch = responses[i * fbs : (i + 1) * fbs]
+            input_ids = input_kwargs["input_ids"]
+            attention_mask = input_kwargs["attention_mask"]
+
+            with torch.cuda.amp.autocast(dtype=self.compute_dtype): # support bf16
+                logits, _, values = model(**input_kwargs)
+
+            if values.size(0) != input_ids.size(0): # adapt chatglm2
+                values = torch.transpose(values, 0, 1)
+
+            logprobs = logprobs_from_logits(logits[:, :-1, :], input_ids[:, 1:])
+            masks = torch.zeros_like(attention_mask)
+            masks[:, :-1] = attention_mask[:, 1:]
+
+            for j in range(len(query_batch)):
+                start = len(query_batch[j]) - 1
+                if attention_mask[j, 0] == 0:  # offset left padding
+                    start += attention_mask[j, :].nonzero()[0]
+                end = start + len(response_batch[j])
+
+                masks[j, :start] = 0
+                masks[j, end:] = 0
+
+            if return_logits:
+                all_logits.append(logits)
+            else:
+                del logits
+            all_values.append(values)
+            all_logprobs.append(logprobs)
+            all_masks.append(masks)
+
+        return (
+            torch.cat(all_logprobs),
+            torch.cat(all_logits)[:, :-1] if return_logits else None,
+            torch.cat(all_values)[:, :-1],
+            torch.cat(all_masks)[:, :-1],
+        )
 
     def save_model(self, output_dir: Optional[str] = None) -> None:
         r"""

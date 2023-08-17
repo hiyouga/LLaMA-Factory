@@ -12,19 +12,23 @@
 
 ## Changelog
 
+[23/08/12] Now we support **RoPE scaling** to extend the context length of the LLaMA models. Try `--rope_scaling linear` argument in training and `--rope_scaling dynamic` argument at inference to extrapolate the position embeddings.
+
+[23/08/11] Now we support **[DPO training](https://arxiv.org/abs/2305.18290)** for instruction-tuned models. See [this example](#dpo-training) to train your models (experimental feature).
+
 [23/08/03] Now we support training the **Qwen-7B** model in this repo. Try `--model_name_or_path Qwen/Qwen-7B-Chat` and `--lora_target c_attn` arguments to train the Qwen-7B model. Remember to use `--template chatml` argument when you are using the Qwen-7B-Chat model.
 
-[23/07/31] Now we support dataset streaming. Try `--streaming` and `--max_steps 100` arguments to stream your dataset.
+[23/07/31] Now we support **dataset streaming**. Try `--streaming` and `--max_steps 10000` arguments to load your dataset in streaming mode.
 
 [23/07/29] We release two instruction-tuned 13B models at Hugging Face. See these Hugging Face Repos ([LLaMA-2](https://huggingface.co/hiyouga/Llama-2-Chinese-13b-chat) / [Baichuan](https://huggingface.co/hiyouga/baichuan-13b-sft)) for details.
 
 [23/07/19] Now we support training the **LLaMA-2** models in this repo. Try `--model_name_or_path meta-llama/Llama-2-7b-hf` argument to use the LLaMA-2 model. Remember to use `--template llama2` argument when you are using the LLaMA-2-chat model.
 
-[23/07/18] Now we develop an all-in-one Web UI for training, evaluation and inference. Try `train_web.py` to fine-tune models in your Web browser. Thank [@KanadeSiina](https://github.com/KanadeSiina) and [@codemayq](https://github.com/codemayq) for their efforts in the development.
+[23/07/18] Now we develop an **all-in-one Web UI** for training, evaluation and inference. Try `train_web.py` to fine-tune models in your Web browser. Thank [@KanadeSiina](https://github.com/KanadeSiina) and [@codemayq](https://github.com/codemayq) for their efforts in the development.
 
 [23/07/11] Now we support training the **Baichuan-13B** model in this repo. Try `--model_name_or_path baichuan-inc/Baichuan-13B-Base` and `--lora_target W_pack` arguments to train the Baichuan-13B model. Remember to use `--template baichuan` argument when you are using the Baichuan-13B-Chat model.
 
-[23/07/09] Now we release [FastEdit](https://github.com/hiyouga/FastEdit)⚡🩹, an easy-to-use package for editing the factual knowledge of large language models efficiently. Please follow [FastEdit](https://github.com/hiyouga/FastEdit) if you are interested.
+[23/07/09] Now we release **[FastEdit](https://github.com/hiyouga/FastEdit)** ⚡🩹, an easy-to-use package for editing the factual knowledge of large language models efficiently. Please follow [FastEdit](https://github.com/hiyouga/FastEdit) if you are interested.
 
 [23/07/07] Now we support training the **InternLM-7B** model in this repo. Try `--model_name_or_path internlm/internlm-7b` argument to use the InternLM model. Remember to use `--template intern` argument when you are using the InternLM-chat model.
 
@@ -53,25 +57,22 @@
 | [InternLM](https://github.com/InternLM/InternLM)         | 7B                          | q_proj,v_proj     | intern   |
 | [Qwen](https://github.com/QwenLM/Qwen-7B)                | 7B                          | c_attn            | chatml   |
 | [XVERSE](https://github.com/xverse-ai/XVERSE-13B)        | 13B                         | q_proj,v_proj     | -        |
+| [ChatGLM2](https://github.com/THUDM/ChatGLM2-6B)         | 6B                          | query_key_value   | chatglm2 |
 
-> * **Default module** is used for the `--lora_target` argument. Please use `python src/train_bash.py -h` to see all available options.
-> * For the "base" models, the `--template` argument can be chosen from `default`, `alpaca`, `vicuna` etc.
+- **Default module** is used for the `--lora_target` argument. Please use `python src/train_bash.py -h` to see all available options.
+- For the "base" models, the `--template` argument can be chosen from `default`, `alpaca`, `vicuna` etc. But make sure to use the corresponding template for the "chat" models.
 
 ## Supported Training Approaches
 
-- [(Continually) pre-training](https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf)
-  - Full-parameter tuning
-  - Partial-parameter tuning
-  - [LoRA](https://arxiv.org/abs/2106.09685)
-  - [QLoRA](https://arxiv.org/abs/2305.14314)
-- [Supervised fine-tuning](https://arxiv.org/abs/2109.01652)
-  - Full-parameter tuning
-  - Partial-parameter tuning
-  - [LoRA](https://arxiv.org/abs/2106.09685)
-  - [QLoRA](https://arxiv.org/abs/2305.14314)
-- [RLHF](https://arxiv.org/abs/2203.02155)
-  - [LoRA](https://arxiv.org/abs/2106.09685)
-  - [QLoRA](https://arxiv.org/abs/2305.14314)
+| Approach               |   Full-parameter   | Partial-parameter  |       LoRA         |       QLoRA        |
+| ---------------------- | ------------------ | ------------------ | ------------------ | ------------------ |
+| Pre-Training           | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Supervised Fine-Tuning | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Reward Modeling        |                    |                    | :white_check_mark: | :white_check_mark: |
+| PPO Training           |                    |                    | :white_check_mark: | :white_check_mark: |
+| DPO Training           | :white_check_mark: |                    | :white_check_mark: | :white_check_mark: |
+
+- Use `--quantization_bit 4/8` argument to enable QLoRA.
 
 ## Provided Datasets
 
@@ -88,7 +89,6 @@
   - [Open Assistant (multilingual)](https://huggingface.co/datasets/OpenAssistant/oasst1)
   - [Self-cognition (zh)](data/self_cognition.json)
   - [ShareGPT (zh)](https://huggingface.co/datasets/QingyiSi/Alpaca-CoT/tree/main/Chinese-instruction-collection)
-  - [RefGPT (zh)](https://github.com/sufengniu/RefGPT)
   - [Guanaco Dataset (multilingual)](https://huggingface.co/datasets/JosephusCheung/GuanacoDataset)
   - [BELLE 2M (zh)](https://huggingface.co/datasets/BelleGroup/train_2M_CN)
   - [BELLE 1M (zh)](https://huggingface.co/datasets/BelleGroup/train_1M_CN)
@@ -103,7 +103,7 @@
   - [Web QA (zh)](https://huggingface.co/datasets/suolyer/webqa)
   - [UltraChat (en)](https://github.com/thunlp/UltraChat)
   - [WebNovel (zh)](https://huggingface.co/datasets/zxbsmk/webnovel_cn)
-- For reward modelling:
+- For reward modeling or DPO training:
   - [HH-RLHF (en)](https://huggingface.co/datasets/Anthropic/hh-rlhf)
   - [Open Assistant (multilingual)](https://huggingface.co/datasets/OpenAssistant/oasst1)
   - [GPT-4 Generated Data (en&zh)](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
@@ -139,7 +139,6 @@ Note: please update `data/dataset_info.json` to use your custom dataset. About t
 ### Dependence Installation (optional)
 
 ```bash
-git lfs install
 git clone https://github.com/hiyouga/LLaMA-Efficient-Tuning.git
 conda create -n llama_etuning python=3.10
 conda activate llama_etuning
@@ -161,7 +160,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_web.py
 
 Currently the web UI only supports training on **a single GPU**.
 
-### (Continually) Pre-Training
+### Pre-Training
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
@@ -207,9 +206,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --fp16
 ```
 
-Remember to specify `--lora_target W_pack` if you are using Baichuan models.
-
-### Reward Model Training
+### Reward Modeling
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
@@ -222,7 +219,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --resume_lora_training False \
     --checkpoint_dir path_to_sft_checkpoint \
     --output_dir path_to_rm_checkpoint \
-    --per_device_train_batch_size 4 \
+    --per_device_train_batch_size 2 \
     --gradient_accumulation_steps 4 \
     --lr_scheduler_type cosine \
     --logging_steps 10 \
@@ -233,7 +230,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --fp16
 ```
 
-### PPO Training (RLHF)
+### PPO Training
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
@@ -257,14 +254,40 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --plot_loss
 ```
 
+### DPO Training
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
+    --stage dpo \
+    --model_name_or_path path_to_your_model \
+    --do_train \
+    --dataset comparison_gpt4_en \
+    --template default \
+    --finetuning_type lora \
+    --resume_lora_training False \
+    --checkpoint_dir path_to_sft_checkpoint \
+    --output_dir path_to_dpo_checkpoint \
+    --per_device_train_batch_size 2 \
+    --gradient_accumulation_steps 4 \
+    --lr_scheduler_type cosine \
+    --logging_steps 10 \
+    --save_steps 1000 \
+    --learning_rate 1e-5 \
+    --num_train_epochs 1.0 \
+    --plot_loss \
+    --fp16
+```
+
 ### Distributed Training
+
+#### Use Huggingface Accelerate
 
 ```bash
 accelerate config # configure the environment
 accelerate launch src/train_bash.py # arguments (same as above)
 ```
 
-<details><summary>Example configuration for full-tuning with DeepSpeed ZeRO-2</summary>
+<details><summary>Example config.yaml for training with DeepSpeed ZeRO-2</summary>
 
 ```yaml
 compute_environment: LOCAL_MACHINE
@@ -288,6 +311,44 @@ tpu_env: []
 tpu_use_cluster: false
 tpu_use_sudo: false
 use_cpu: false
+```
+
+</details>
+
+#### Use DeepSpeed
+
+```bash
+deepspeed --num_gpus 8 --master_port=9901 src/train_bash.py \
+    --deepspeed ds_config.json \
+    ... # arguments (same as above)
+```
+
+<details><summary>Example ds_config.json for training with DeepSpeed ZeRO-2</summary>
+
+```json
+{
+  "train_micro_batch_size_per_gpu": "auto",
+  "gradient_accumulation_steps": "auto",
+  "gradient_clipping": "auto",
+  "zero_allow_untested_optimizer": true,
+  "fp16": {
+    "enabled": "auto",
+    "loss_scale": 0,
+    "initial_scale_power": 16,
+    "loss_scale_window": 1000,
+    "hysteresis": 2,
+    "min_loss_scale": 1
+  },  
+  "zero_optimization": {
+    "stage": 2,
+    "allgather_partitions": true,
+    "allgather_bucket_size": 5e8,
+    "reduce_scatter": true,
+    "reduce_bucket_size": 5e8,
+    "overlap_comm": false,
+    "contiguous_gradients": true
+  }
+}
 ```
 
 </details>
@@ -390,6 +451,8 @@ Please follow the model licenses to use the corresponding model weights:
 - [Baichuan](https://huggingface.co/baichuan-inc/baichuan-7B/resolve/main/baichuan-7B%20%E6%A8%A1%E5%9E%8B%E8%AE%B8%E5%8F%AF%E5%8D%8F%E8%AE%AE.pdf)
 - [InternLM](https://github.com/InternLM/InternLM#open-source-license)
 - [Qwen](https://huggingface.co/Qwen/Qwen-7B-Chat/blob/main/LICENSE)
+- [XVERSE](https://github.com/xverse-ai/XVERSE-13B/blob/main/MODEL_LICENSE.pdf)
+- [ChatGLM2](https://github.com/THUDM/ChatGLM2-6B/blob/main/MODEL_LICENSE)
 
 ## Citation
 

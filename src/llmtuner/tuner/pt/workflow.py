@@ -2,10 +2,9 @@
 
 import math
 from typing import TYPE_CHECKING, Optional, List
-from transformers import DataCollatorForSeq2Seq
+from transformers import DataCollatorForLanguageModeling
 
 from llmtuner.dsets import get_dataset, preprocess_dataset, split_dataset
-from llmtuner.extras.constants import IGNORE_INDEX
 from llmtuner.extras.ploting import plot_loss
 from llmtuner.tuner.core import load_model_and_tokenizer
 from llmtuner.tuner.core.trainer import PeftTrainer
@@ -25,10 +24,7 @@ def run_pt(
     dataset = get_dataset(model_args, data_args)
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, stage="pt")
     dataset = preprocess_dataset(dataset, tokenizer, data_args, training_args, stage="pt")
-    data_collator = DataCollatorForSeq2Seq(
-        tokenizer=tokenizer,
-        label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
-    )
+    data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
     # Initialize our Trainer
     trainer = PeftTrainer(
@@ -38,7 +34,7 @@ def run_pt(
         tokenizer=tokenizer,
         data_collator=data_collator,
         callbacks=callbacks,
-        **split_dataset(dataset, data_args.dev_ratio, training_args.do_train)
+        **split_dataset(dataset, data_args, training_args)
     )
 
     # Training
@@ -60,6 +56,5 @@ def run_pt(
             perplexity = float("inf")
 
         metrics["perplexity"] = perplexity
-
         trainer.log_metrics("eval", metrics)
         trainer.save_metrics("eval", metrics)

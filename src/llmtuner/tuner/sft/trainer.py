@@ -50,9 +50,10 @@ class Seq2SeqPeftTrainer(PeftTrainer):
         loss, generated_tokens, labels = super().prediction_step(
             model, inputs, prediction_loss_only=prediction_loss_only, ignore_keys=ignore_keys
         )
-        generated_tokens = (
-            generated_tokens[:, max(prompt_len, label_len):] if generated_tokens is not None else None
-        )
+        if generated_tokens is not None:
+            generated_tokens[:, :max(prompt_len, label_len)] = (
+                self.tokenizer.pad_token_id * torch.ones_like(generated_tokens[:, :max(prompt_len, label_len)])
+            )
 
         return (loss, generated_tokens, labels)
 
@@ -72,14 +73,11 @@ class Seq2SeqPeftTrainer(PeftTrainer):
                 assert self.tokenizer.padding_side == "left", "This method only accepts left-padded tensor."
                 pad_token_id = self.tokenizer.pad_token_id
             else:
-                if self.model.config.pad_token_id is not None:
-                    pad_token_id = self.model.config.pad_token_id
-                else:
-                    raise ValueError("Pad_token_id must be set in the configuration of the model.")
+                raise ValueError("PAD token is required.")
 
         padded_tensor = pad_token_id * torch.ones_like(tgt_tensor)
         padded_tensor[:, -src_tensor.shape[-1]:] = src_tensor # adopt left-padding
-        return padded_tensor.contiguous()
+        return padded_tensor.contiguous() # in contiguous memory
 
     def save_predictions(
         self,
