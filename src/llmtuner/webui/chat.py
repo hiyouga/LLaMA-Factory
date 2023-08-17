@@ -26,7 +26,7 @@ class WebChatModel(ChatModel):
         finetuning_type: str,
         quantization_bit: str,
         template: str,
-        source_prefix: str
+        system_prompt: str
     ):
         if self.model is not None:
             yield ALERTS["err_exists"][lang]
@@ -53,9 +53,9 @@ class WebChatModel(ChatModel):
             model_name_or_path=model_name_or_path,
             checkpoint_dir=checkpoint_dir,
             finetuning_type=finetuning_type,
-            quantization_bit=int(quantization_bit) if quantization_bit else None,
+            quantization_bit=int(quantization_bit) if quantization_bit != "None" else None,
             template=template,
-            source_prefix=source_prefix
+            system_prompt=system_prompt
         )
         super().__init__(args)
 
@@ -73,7 +73,7 @@ class WebChatModel(ChatModel):
         chatbot: List[Tuple[str, str]],
         query: str,
         history: List[Tuple[str, str]],
-        prefix: str,
+        system: str,
         max_new_tokens: int,
         top_p: float,
         temperature: float
@@ -81,7 +81,7 @@ class WebChatModel(ChatModel):
         chatbot.append([query, ""])
         response = ""
         for new_text in self.stream_chat(
-            query, history, prefix, max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature
+            query, history, system, max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature
         ):
             response += new_text
             response = self.postprocess(response)
