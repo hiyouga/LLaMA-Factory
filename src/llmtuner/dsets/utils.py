@@ -1,9 +1,38 @@
-from typing import TYPE_CHECKING, Dict, Union
+import hashlib
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
+
+from llmtuner.extras.logging import get_logger
 
 if TYPE_CHECKING:
     from datasets import Dataset, IterableDataset
     from transformers import TrainingArguments
     from llmtuner.hparams import DataArguments
+
+
+logger = get_logger(__name__)
+
+
+EXT2TYPE = {
+    "csv": "csv",
+    "json": "json",
+    "jsonl": "json",
+    "txt": "text"
+}
+
+
+def checksum(data_files: List[str], file_sha1: Optional[str] = None) -> None:
+    if file_sha1 is None:
+        logger.warning("Checksum failed: missing SHA-1 hash value in dataset_info.json.")
+        return
+
+    if len(data_files) != 1:
+        logger.warning("Checksum failed: too many files.")
+        return
+
+    with open(data_files[0], "rb") as f:
+        sha1 = hashlib.sha1(f.read()).hexdigest()
+        if sha1 != file_sha1:
+            logger.warning("Checksum failed: mismatched SHA-1 hash value at {}.".format(data_files[0]))
 
 
 def split_dataset(

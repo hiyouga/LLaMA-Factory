@@ -25,7 +25,7 @@ class ComputeMetrics:
         Uses the model predictions to compute metrics.
         """
         preds, labels = eval_preds
-        score_dict = {"accuracy": [], "rouge-1": [], "rouge-2": [], "rouge-l": [], "bleu-4": []}
+        score_dict = {"rouge-1": [], "rouge-2": [], "rouge-l": [], "bleu-4": []}
 
         preds = np.where(preds != IGNORE_INDEX, preds, self.tokenizer.pad_token_id)
         labels = np.where(labels != IGNORE_INDEX, labels, self.tokenizer.pad_token_id)
@@ -49,6 +49,5 @@ class ComputeMetrics:
 
             bleu_score = sentence_bleu([list(label)], list(pred), smoothing_function=SmoothingFunction().method3)
             score_dict["bleu-4"].append(round(bleu_score * 100, 4))
-            score_dict["accuracy"].append(float(len(label) != 0 and pred[:len(label)] == label))
 
         return {k: float(np.mean(v)) for k, v in score_dict.items()}
