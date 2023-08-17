@@ -60,6 +60,7 @@ def run_ppo(
         finetuning_args=finetuning_args,
         generating_args=generating_args,
         callbacks=callbacks,
+        compute_dtype=model_args.compute_dtype,
         config=ppo_config,
         model=model,
         ref_model=None,
