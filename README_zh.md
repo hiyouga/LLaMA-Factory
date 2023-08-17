@@ -64,13 +64,13 @@
 
 ## 训练方法
 
-| 方法        | 全参数训练 | 部分参数训练 | LoRA | QLoRA |
-| ---------- | ---------- | ----------- | ---- | ----- |
-| 预训练      | ✅        | ✅         | ✅   | ✅   |
-| 指令监督微调 | ✅        | ✅         | ✅   | ✅   |
-| 奖励模型训练 |           |             | ✅   | ✅   |
-| PPO 训练    |           |             | ✅   | ✅   |
-| DPO 训练    | ✅        |             | ✅   | ✅   |
+| 方法                   |     全参数训练      |    部分参数训练     |       LoRA         |       QLoRA        |
+| ---------------------- | ------------------ | ------------------ | ------------------ | ------------------ |
+| 预训练                 | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| 指令监督微调            | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| 奖励模型训练            |                    |                    | :white_check_mark: | :white_check_mark: |
+| PPO 训练               |                    |                    | :white_check_mark: | :white_check_mark: |
+| DPO 训练               | :white_check_mark: |                    | :white_check_mark: | :white_check_mark: |
 
 - 使用 `--quantization_bit 4/8` 参数来启用 QLoRA 训练。
 
