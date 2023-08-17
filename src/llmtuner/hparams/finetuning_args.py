@@ -5,7 +5,7 @@ from dataclasses import asdict, dataclass, field
 
 @dataclass
 class FinetuningArguments:
-    """
+    r"""
     Arguments pertaining to which techniques we are going to fine-tuning with.
     """
     finetuning_type: Optional[Literal["none", "freeze", "lora", "full"]] = field(
@@ -14,7 +14,7 @@ class FinetuningArguments:
     )
     num_hidden_layers: Optional[int] = field(
         default=32,
-        metadata={"help": "Number of decoder blocks in the model. \
+        metadata={"help": "Number of decoder blocks in the model for partial-parameter (freeze) fine-tuning. \
                   LLaMA choices: [\"32\", \"40\", \"60\", \"80\"], \
                   LLaMA-2 choices: [\"32\", \"40\", \"80\"], \
                   BLOOM choices: [\"24\", \"30\", \"70\"], \
@@ -25,16 +25,16 @@ class FinetuningArguments:
     )
     num_layer_trainable: Optional[int] = field(
         default=3,
-        metadata={"help": "Number of trainable layers for Freeze fine-tuning."}
+        metadata={"help": "Number of trainable layers for partial-parameter (freeze) fine-tuning."}
     )
     name_module_trainable: Optional[Literal["mlp", "self_attn", "self_attention"]] = field(
         default="mlp",
-        metadata={"help": "Name of trainable modules for Freeze fine-tuning. \
-                  LLaMA & LLaMA-2 choices: [\"mlp\", \"self_attn\"], \
+        metadata={"help": "Name of trainable modules for partial-parameter (freeze) fine-tuning. \
+                  LLaMA choices: [\"mlp\", \"self_attn\"], \
                   BLOOM & Falcon choices: [\"mlp\", \"self_attention\"], \
                   Baichuan choices: [\"mlp\", \"self_attn\"], \
                   Qwen choices: [\"mlp\", \"attn\"], \
-                  InternLM, XVERSE choices: the same as LLaMA."}
+                  LLaMA-2, InternLM, XVERSE choices: the same as LLaMA."}
     )
     lora_rank: Optional[int] = field(
         default=8,
@@ -51,11 +51,19 @@ class FinetuningArguments:
     lora_target: Optional[str] = field(
         default="q_proj,v_proj",
         metadata={"help": "Name(s) of target modules to apply LoRA. Use commas to separate multiple modules. \
-                  LLaMA & LLaMA-2 choices: [\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"], \
+                  LLaMA choices: [\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"], \
                   BLOOM & Falcon choices: [\"query_key_value\", \"self_attention.dense\", \"mlp.dense\"], \
                   Baichuan choices: [\"W_pack\", \"o_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"], \
                   Qwen choices: [\"c_attn\", \"attn.c_proj\", \"w1\", \"w2\", \"mlp.c_proj\"], \
-                  InternLM, XVERSE choices: the same as LLaMA."}
+                  LLaMA-2, InternLM, XVERSE choices: the same as LLaMA."}
+    )
+    resume_lora_training: Optional[bool] = field(
+        default=True,
+        metadata={"help": "Whether to resume training from the last LoRA weights or create new weights after merging them."}
+    )
+    dpo_beta: Optional[float] = field(
+        default=0.1,
+        metadata={"help": "The beta parameter for the DPO loss."}
     )
 
     def __post_init__(self):
@@ -72,14 +80,14 @@ class FinetuningArguments:
         assert self.finetuning_type in ["none", "freeze", "lora", "full"], "Invalid fine-tuning method."
 
     def save_to_json(self, json_path: str):
-        """Saves the content of this instance in JSON format inside `json_path`."""
+        r"""Saves the content of this instance in JSON format inside `json_path`."""
         json_string = json.dumps(asdict(self), indent=2, sort_keys=True) + "\n"
         with open(json_path, "w", encoding="utf-8") as f:
             f.write(json_string)
 
     @classmethod
     def load_from_json(cls, json_path: str):
-        """Creates an instance from the content of `json_path`."""
+        r"""Creates an instance from the content of `json_path`."""
         with open(json_path, "r", encoding="utf-8") as f:
             text = f.read()
         return cls(**json.loads(text))

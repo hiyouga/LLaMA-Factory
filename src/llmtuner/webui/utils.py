@@ -15,13 +15,18 @@ if TYPE_CHECKING:
     from llmtuner.extras.callbacks import LogCallback
 
 
-def format_info(log: str, callback: "LogCallback") -> str:
-    info = log
-    if callback.max_steps:
-        info += "Running **{:d}/{:d}**: {} < {}\n".format(
-            callback.cur_steps, callback.max_steps, callback.elapsed_time, callback.remaining_time
-        )
-    return info
+def update_process_bar(callback: "LogCallback") -> Dict[str, Any]:
+    if not callback.max_steps:
+        return gr.update(visible=False)
+
+    percentage = round(100 * callback.cur_steps / callback.max_steps, 0) if callback.max_steps != 0 else 100.0
+    label = "Running {:d}/{:d}: {} < {}".format(
+        callback.cur_steps,
+        callback.max_steps,
+        callback.elapsed_time,
+        callback.remaining_time
+    )
+    return gr.update(label=label, value=percentage, visible=True)
 
 
 def get_time() -> str:
@@ -55,6 +60,18 @@ def can_quantize(finetuning_type: str) -> Dict[str, Any]:
         return gr.update(value="", interactive=False)
     else:
         return gr.update(interactive=True)
+
+
+def gen_cmd(args: Dict[str, Any]) -> str:
+    if args.get("do_train", None):
+        args["plot_loss"] = True
+    cmd_lines = ["CUDA_VISIBLE_DEVICES=0 python "]
+    for k, v in args.items():
+        if v is not None and v != "":
+            cmd_lines.append("    --{} {} ".format(k, str(v)))
+    cmd_text = "\\\n".join(cmd_lines)
+    cmd_text = "```bash\n{}\n```".format(cmd_text)
+    return cmd_text
 
 
 def get_eval_results(path: os.PathLike) -> str:
