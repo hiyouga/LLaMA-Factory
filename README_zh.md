@@ -164,7 +164,9 @@ CUDA_VISIBLE_DEVICES=0 python src/train_web.py
 
 目前网页 UI 仅支持**单卡训练**。
 
-### 预训练
+### 单 GPU 训练
+
+#### 预训练
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
@@ -187,7 +189,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --fp16
 ```
 
-### 指令监督微调
+#### 指令监督微调
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
@@ -210,7 +212,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --fp16
 ```
 
-### 奖励模型训练
+#### 奖励模型训练
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
@@ -234,7 +236,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --fp16
 ```
 
-### PPO 训练
+#### PPO 训练
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
@@ -258,7 +260,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --plot_loss
 ```
 
-### DPO 训练
+#### DPO 训练
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
@@ -357,40 +359,15 @@ deepspeed --num_gpus 8 --master_port=9901 src/train_bash.py \
 
 </details>
 
-### 指标评估（BLEU 分数和汉语 ROUGE 分数）
+### 导出微调后的模型
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage sft \
+python src/export_model.py \
     --model_name_or_path path_to_your_model \
-    --do_eval \
-    --dataset alpaca_gpt4_zh \
     --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint \
-    --output_dir path_to_eval_result \
-    --per_device_eval_batch_size 8 \
-    --max_samples 100 \
-    --predict_with_generate
-```
-
-我们建议在量化模型的评估中使用 `--per_device_eval_batch_size=1` 和 `--max_target_length 128`。
-
-### 模型预测
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage sft \
-    --model_name_or_path path_to_your_model \
-    --do_predict \
-    --dataset alpaca_gpt4_zh \
-    --template default \
-    --finetuning_type lora \
-    --checkpoint_dir path_to_checkpoint \
-    --output_dir path_to_predict_result \
-    --per_device_eval_batch_size 8 \
-    --max_samples 100 \
-    --predict_with_generate
+    --output_dir path_to_export
 ```
 
 ### API 服务
@@ -425,15 +402,40 @@ python src/web_demo.py \
     --checkpoint_dir path_to_checkpoint
 ```
 
-### 导出微调模型
+### 指标评估（BLEU 分数和汉语 ROUGE 分数）
 
 ```bash
-python src/export_model.py \
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
+    --stage sft \
     --model_name_or_path path_to_your_model \
+    --do_eval \
+    --dataset alpaca_gpt4_zh \
     --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint \
-    --output_dir path_to_export
+    --output_dir path_to_eval_result \
+    --per_device_eval_batch_size 8 \
+    --max_samples 100 \
+    --predict_with_generate
+```
+
+我们建议在量化模型的评估中使用 `--per_device_eval_batch_size=1` 和 `--max_target_length 128`。
+
+### 模型预测
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
+    --stage sft \
+    --model_name_or_path path_to_your_model \
+    --do_predict \
+    --dataset alpaca_gpt4_zh \
+    --template default \
+    --finetuning_type lora \
+    --checkpoint_dir path_to_checkpoint \
+    --output_dir path_to_predict_result \
+    --per_device_eval_batch_size 8 \
+    --max_samples 100 \
+    --predict_with_generate
 ```
 
 ## TODO
