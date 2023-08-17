@@ -164,7 +164,9 @@ We strongly recommend using the all-in-one Web UI for newcomers since it can als
 
 Currently the web UI only supports training on **a single GPU**.
 
-### Pre-Training
+### Train on a single GPU
+
+#### Pre-Training
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
@@ -187,7 +189,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --fp16
 ```
 
-### Supervised Fine-Tuning
+#### Supervised Fine-Tuning
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
@@ -210,7 +212,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --fp16
 ```
 
-### Reward Modeling
+#### Reward Modeling
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
@@ -234,7 +236,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --fp16
 ```
 
-### PPO Training
+#### PPO Training
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
@@ -255,10 +257,11 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --save_steps 1000 \
     --learning_rate 1e-5 \
     --num_train_epochs 1.0 \
-    --plot_loss
+    --plot_loss \
+    --fp16
 ```
 
-### DPO Training
+#### DPO Training
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
@@ -357,40 +360,15 @@ deepspeed --num_gpus 8 --master_port=9901 src/train_bash.py \
 
 </details>
 
-### Evaluation (BLEU and ROUGE_CHINESE)
+### Export model
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage sft \
+python src/export_model.py \
     --model_name_or_path path_to_your_model \
-    --do_eval \
-    --dataset alpaca_gpt4_en \
     --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint \
-    --output_dir path_to_eval_result \
-    --per_device_eval_batch_size 8 \
-    --max_samples 100 \
-    --predict_with_generate
-```
-
-We recommend using `--per_device_eval_batch_size=1` and `--max_target_length 128` at 4/8-bit evaluation.
-
-### Predict
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage sft \
-    --model_name_or_path path_to_your_model \
-    --do_predict \
-    --dataset alpaca_gpt4_en \
-    --template default \
-    --finetuning_type lora \
-    --checkpoint_dir path_to_checkpoint \
-    --output_dir path_to_predict_result \
-    --per_device_eval_batch_size 8 \
-    --max_samples 100 \
-    --predict_with_generate
+    --output_dir path_to_export
 ```
 
 ### API Demo
@@ -425,15 +403,40 @@ python src/web_demo.py \
     --checkpoint_dir path_to_checkpoint
 ```
 
-### Export model
+### Evaluation (BLEU and ROUGE_CHINESE)
 
 ```bash
-python src/export_model.py \
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
+    --stage sft \
     --model_name_or_path path_to_your_model \
+    --do_eval \
+    --dataset alpaca_gpt4_en \
     --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint \
-    --output_dir path_to_export
+    --output_dir path_to_eval_result \
+    --per_device_eval_batch_size 8 \
+    --max_samples 100 \
+    --predict_with_generate
+```
+
+We recommend using `--per_device_eval_batch_size=1` and `--max_target_length 128` at 4/8-bit evaluation.
+
+### Predict
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
+    --stage sft \
+    --model_name_or_path path_to_your_model \
+    --do_predict \
+    --dataset alpaca_gpt4_en \
+    --template default \
+    --finetuning_type lora \
+    --checkpoint_dir path_to_checkpoint \
+    --output_dir path_to_predict_result \
+    --per_device_eval_batch_size 8 \
+    --max_samples 100 \
+    --predict_with_generate
 ```
 
 ## TODO
