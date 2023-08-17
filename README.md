@@ -64,13 +64,13 @@
 
 ## Supported Training Approaches
 
-| Approach               | Full-parameter | Partial-parameter | LoRA | QLoRA |
-| ---------------------- | -------------- | ----------------- | ---- | ----- |
-| Pre-Training           | ✅            | ✅                | ✅   | ✅   |
-| Supervised Fine-Tuning | ✅            | ✅                | ✅   | ✅   |
-| Reward Modeling        |                |                   | ✅   | ✅   |
-| PPO Training           |                |                   | ✅   | ✅   |
-| DPO Training           | ✅            |                    | ✅   | ✅   |
+| Approach               |   Full-parameter   | Partial-parameter  |       LoRA         |       QLoRA        |
+| ---------------------- | ------------------ | ------------------ | ------------------ | ------------------ |
+| Pre-Training           | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Supervised Fine-Tuning | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Reward Modeling        |                    |                    | :white_check_mark: | :white_check_mark: |
+| PPO Training           |                    |                    | :white_check_mark: | :white_check_mark: |
+| DPO Training           | :white_check_mark: |                    | :white_check_mark: | :white_check_mark: |
 
 - Use `--quantization_bit 4/8` argument to enable QLoRA.
 
