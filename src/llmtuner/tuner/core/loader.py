@@ -121,6 +121,9 @@ def load_model_and_tokenizer(
     # Quantization configurations (using bitsandbytes library).
     is_mergeable = True
     if model_args.quantization_bit is not None:
+        if is_deepspeed_zero3_enabled():
+            raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantization.")
+
         if model_args.quantization_bit == 8:
             require_version("bitsandbytes>=0.37.0", "To fix: pip install bitsandbytes>=0.37.0")
             config_kwargs["load_in_8bit"] = True
@@ -144,7 +147,7 @@ def load_model_and_tokenizer(
     model = AutoModelForCausalLM.from_pretrained(
         model_to_load,
         config=config,
-        torch_dtype=torch.bfloat16 if model_args.compute_dtype == torch.bfloat16 else torch.float16,
+        torch_dtype=model_args.compute_dtype,
         low_cpu_mem_usage=(not is_deepspeed_zero3_enabled()),
         **config_kwargs
     )
