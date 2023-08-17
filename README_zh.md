@@ -12,6 +12,8 @@
 
 ## 更新日志
 
+[23/08/18] 现在我们支持了**训练状态恢复**，请将 `transformers` 升级至 `4.31.0` 以启用此功能。
+
 [23/08/12] 现在我们支持了 **RoPE 插值**来扩展 LLaMA 模型的上下文长度。请尝试使用 `--rope_scaling linear` 参数训练模型或使用 `--rope_scaling dynamic` 参数评估模型。
 
 [23/08/11] 现在我们支持了指令模型的 **[DPO 训练](https://arxiv.org/abs/2305.18290)**。详情请参阅[此示例](#dpo-训练)（实验性功能）。
@@ -24,7 +26,7 @@
 
 [23/07/19] 现在我们支持了 **LLaMA-2** 模型的训练。请尝试使用 `--model_name_or_path meta-llama/Llama-2-7b-hf` 参数。使用 LLaMA-2-chat 模型时请添加 `--template llama2` 参数。
 
-[23/07/18] 我们开发了支持训练和测试的**一体化浏览器界面**。请尝试使用 `train_web.py` 在您的浏览器中微调模型。感谢 [@KanadeSiina](https://github.com/KanadeSiina) 和 [@codemayq](https://github.com/codemayq) 在该功能开发中付出的努力。
+[23/07/18] 我们开发了支持训练和测试的**浏览器一体化界面**。请尝试使用 `train_web.py` 在您的浏览器中微调模型。感谢 [@KanadeSiina](https://github.com/KanadeSiina) 和 [@codemayq](https://github.com/codemayq) 在该功能开发中付出的努力。
 
 [23/07/11] 现在我们支持了 **Baichuan-13B** 模型的训练。请尝试使用 `--model_name_or_path baichuan-inc/Baichuan-13B-Base` 和 `--lora_target W_pack` 参数。使用 Baichuan-13B-Chat 模型时请添加 `--template baichuan` 参数。
 
@@ -152,11 +154,13 @@ pip install -r requirements.txt
 pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.39.1-py3-none-win_amd64.whl
 ```
 
-### 浏览器一键微调/测试
+### 浏览器一体化界面
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_web.py
 ```
+
+我们极力推荐新手使用浏览器一体化界面，因为它还可以**自动**生成运行所需的命令行脚本。
 
 目前网页 UI 仅支持**单卡训练**。
 
@@ -451,6 +455,8 @@ python src/export_model.py \
 - [Baichuan](https://huggingface.co/baichuan-inc/baichuan-7B/resolve/main/baichuan-7B%20%E6%A8%A1%E5%9E%8B%E8%AE%B8%E5%8F%AF%E5%8D%8F%E8%AE%AE.pdf)
 - [InternLM](https://github.com/InternLM/InternLM#open-source-license)
 - [Qwen](https://huggingface.co/Qwen/Qwen-7B-Chat/blob/main/LICENSE)
+- [XVERSE](https://github.com/xverse-ai/XVERSE-13B/blob/main/MODEL_LICENSE.pdf)
+- [ChatGLM2](https://github.com/THUDM/ChatGLM2-6B/blob/main/MODEL_LICENSE)
 
 ## 引用
 

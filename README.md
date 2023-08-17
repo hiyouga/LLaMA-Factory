@@ -12,6 +12,8 @@
 
 ## Changelog
 
+[23/08/18] Now we support **resuming training**, upgrade `transformers` to `4.31.0` to enjoy this feature.
+
 [23/08/12] Now we support **RoPE scaling** to extend the context length of the LLaMA models. Try `--rope_scaling linear` argument in training and `--rope_scaling dynamic` argument at inference to extrapolate the position embeddings.
 
 [23/08/11] Now we support **[DPO training](https://arxiv.org/abs/2305.18290)** for instruction-tuned models. See [this example](#dpo-training) to train your models (experimental feature).
@@ -157,6 +159,8 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_web.py
 ```
+
+We strongly recommend using the all-in-one Web UI for newcomers since it can also generate training scripts **automatically**.
 
 Currently the web UI only supports training on **a single GPU**.
 
