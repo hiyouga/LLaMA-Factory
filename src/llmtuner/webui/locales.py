@@ -77,7 +77,7 @@ LOCALES = {
             "info": "构建提示词时使用的模板"
         }
     },
-    "source_prefix": {
+    "system_prompt": {
         "en": {
             "label": "System prompt (optional)",
             "info": "A sequence used as the default system prompt."
@@ -85,6 +85,16 @@ LOCALES = {
         "zh": {
             "label": "系统提示词（非必填）",
             "info": "默认使用的系统提示词"
+        }
+    },
+    "training_stage": {
+        "en": {
+            "label": "Stage",
+            "info": "The stage to perform in training."
+        },
+        "zh": {
+            "label": "训练阶段",
+            "info": "目前采用的训练方式。"
         }
     },
     "dataset_dir": {
@@ -105,12 +115,12 @@ LOCALES = {
             "label": "数据集"
         }
     },
-    "preview_btn": {
+    "data_preview_btn": {
         "en": {
-            "value": "Preview"
+            "value": "Preview dataset"
         },
         "zh": {
-            "value": "预览"
+            "value": "预览数据集"
         }
     },
     "preview_count": {
@@ -227,9 +237,9 @@ LOCALES = {
             "info": "用于梯度裁剪的范数。"
         }
     },
-    "dev_ratio": {
+    "val_size": {
         "en": {
-            "label": "Dev ratio",
+            "label": "Val size",
             "info": "Proportion of data in the dev set."
         },
         "zh": {
@@ -277,6 +287,16 @@ LOCALES = {
             "info": "是否启用 FP16 或 BF16 混合精度训练。"
         }
     },
+    "padding_side": {
+        "en": {
+            "label": "Padding side",
+            "info": "The side on which the model should have padding applied."
+        },
+        "zh": {
+            "label": "填充位置",
+            "info": "使用左填充或右填充。"
+        }
+    },
     "lora_tab": {
         "en": {
             "label": "LoRA configurations"
@@ -313,6 +333,52 @@ LOCALES = {
         "zh": {
             "label": "LoRA 作用层（非必填）",
             "info": "应用 LoRA 的线性层名称。使用英文逗号分隔多个名称。"
+        }
+    },
+    "resume_lora_training": {
+        "en": {
+            "label": "Resume LoRA training",
+            "info": "Whether to resume training from the last LoRA weights or create new lora weights."
+        },
+        "zh": {
+            "label": "继续上次的训练",
+            "info": "接着上次的 LoRA 权重训练或创建一个新的 LoRA 权重。"
+        }
+    },
+    "rlhf_tab": {
+        "en": {
+            "label": "RLHF configurations"
+        },
+        "zh": {
+            "label": "RLHF 参数设置"
+        }
+    },
+    "dpo_beta": {
+        "en": {
+            "label": "DPO beta",
+            "info": "Value of the beta parameter in the DPO loss."
+        },
+        "zh": {
+            "label": "DPO beta 参数",
+            "info": "DPO 损失函数中 beta 超参数大小。"
+        }
+    },
+    "reward_model": {
+        "en": {
+            "label": "Reward model",
+            "info": "Checkpoint of the reward model for PPO training."
+        },
+        "zh": {
+            "label": "奖励模型",
+            "info": "PPO 训练中奖励模型的断点路径。"
+        }
+    },
+    "cmd_preview_btn": {
+        "en": {
+            "value": "Preview command"
+        },
+        "zh": {
+            "value": "预览命令"
         }
     },
     "start_btn": {
@@ -389,7 +455,7 @@ LOCALES = {
             "value": "模型未加载，请先加载模型。"
         }
     },
-    "prefix": {
+    "system": {
         "en": {
             "placeholder": "System prompt (optional)"
         },
