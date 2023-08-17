@@ -1,10 +1,6 @@
 import torch
 from typing import TYPE_CHECKING, List, Optional, Tuple
-from transformers import (
-    LogitsProcessor,
-    InfNanRemoveLogitsProcessor,
-    LogitsProcessorList
-)
+from transformers import InfNanRemoveLogitsProcessor, LogitsProcessorList
 
 from llmtuner.extras.constants import LAYERNORM_NAMES
 
