@@ -125,6 +125,9 @@ def get_train_args(
     if training_args.do_train and training_args.predict_with_generate:
         raise ValueError("`predict_with_generate` cannot be set as True while training.")
 
+    if training_args.do_train and finetuning_args.finetuning_type == "lora" and finetuning_args.lora_target is None:
+        raise ValueError("Please specify `lora_target` in LoRA training.")
+
     if model_args.quantization_bit is not None and finetuning_args.finetuning_type != "lora":
         raise ValueError("Quantization is only compatible with the LoRA method.")
 
