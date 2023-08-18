@@ -55,7 +55,7 @@ class Seq2SeqPeftTrainer(PeftTrainer):
                 self.tokenizer.pad_token_id * torch.ones_like(generated_tokens[:, :max(prompt_len, label_len)])
             )
 
-        return (loss, generated_tokens, labels)
+        return loss, generated_tokens, labels
 
     def _pad_tensors_to_target_len(
         self,
