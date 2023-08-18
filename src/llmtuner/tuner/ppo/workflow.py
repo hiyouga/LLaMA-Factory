@@ -6,6 +6,7 @@ from torch.optim import AdamW
 from typing import TYPE_CHECKING, Optional, List
 from transformers import DataCollatorForSeq2Seq
 from transformers.optimization import get_scheduler
+from transformers.utils.versions import require_version
 
 from llmtuner.dsets import get_dataset, preprocess_dataset
 from llmtuner.extras.ploting import plot_loss
@@ -41,6 +42,11 @@ def run_ppo(
         seed=training_args.seed,
         optimize_cuda_cache=True
     )
+
+    if finetuning_args.ppo_score_norm:
+        require_version("trl>=0.5.1.dev0", "To fix: pip install git+https://github.com/huggingface/trl.git")
+        ppo_config.use_score_scaling = True
+        ppo_config.use_score_norm = True
 
     optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=training_args.learning_rate)
     total_train_batch_size = (
