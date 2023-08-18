@@ -171,11 +171,12 @@ CUDA_VISIBLE_DEVICES=0 python src/train_web.py
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --stage pt \
-    --model_name_or_path path_to_your_model \
+    --model_name_or_path path_to_llama_model \
     --do_train \
     --dataset wiki_demo \
     --template default \
     --finetuning_type lora \
+    --lora_target q_proj,v_proj \
     --output_dir path_to_pt_checkpoint \
     --overwrite_cache \
     --per_device_train_batch_size 4 \
@@ -194,11 +195,12 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --stage sft \
-    --model_name_or_path path_to_your_model \
+    --model_name_or_path path_to_llama_model \
     --do_train \
     --dataset alpaca_gpt4_zh \
     --template default \
     --finetuning_type lora \
+    --lora_target q_proj,v_proj \
     --output_dir path_to_sft_checkpoint \
     --overwrite_cache \
     --per_device_train_batch_size 4 \
@@ -217,11 +219,12 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --stage rm \
-    --model_name_or_path path_to_your_model \
+    --model_name_or_path path_to_llama_model \
     --do_train \
     --dataset comparison_gpt4_zh \
     --template default \
     --finetuning_type lora \
+    --lora_target q_proj,v_proj \
     --resume_lora_training False \
     --checkpoint_dir path_to_sft_checkpoint \
     --output_dir path_to_rm_checkpoint \
@@ -230,7 +233,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --lr_scheduler_type cosine \
     --logging_steps 10 \
     --save_steps 1000 \
-    --learning_rate 1e-5 \
+    --learning_rate 1e-6 \
     --num_train_epochs 1.0 \
     --plot_loss \
     --fp16
@@ -241,11 +244,12 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --stage ppo \
-    --model_name_or_path path_to_your_model \
+    --model_name_or_path path_to_llama_model \
     --do_train \
     --dataset alpaca_gpt4_zh \
     --template default \
     --finetuning_type lora \
+    --lora_target q_proj,v_proj \
     --resume_lora_training False \
     --checkpoint_dir path_to_sft_checkpoint \
     --reward_model path_to_rm_checkpoint \
@@ -265,11 +269,12 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --stage dpo \
-    --model_name_or_path path_to_your_model \
+    --model_name_or_path path_to_llama_model \
     --do_train \
     --dataset comparison_gpt4_zh \
     --template default \
     --finetuning_type lora \
+    --lora_target q_proj,v_proj \
     --resume_lora_training False \
     --checkpoint_dir path_to_sft_checkpoint \
     --output_dir path_to_dpo_checkpoint \
@@ -363,7 +368,7 @@ deepspeed --num_gpus 8 --master_port=9901 src/train_bash.py \
 
 ```bash
 python src/export_model.py \
-    --model_name_or_path path_to_your_model \
+    --model_name_or_path path_to_llama_model \
     --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint \
@@ -374,7 +379,7 @@ python src/export_model.py \
 
 ```bash
 python src/api_demo.py \
-    --model_name_or_path path_to_your_model \
+    --model_name_or_path path_to_llama_model \
     --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint
@@ -386,7 +391,7 @@ python src/api_demo.py \
 
 ```bash
 python src/cli_demo.py \
-    --model_name_or_path path_to_your_model \
+    --model_name_or_path path_to_llama_model \
     --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint
@@ -396,7 +401,7 @@ python src/cli_demo.py \
 
 ```bash
 python src/web_demo.py \
-    --model_name_or_path path_to_your_model \
+    --model_name_or_path path_to_llama_model \
     --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint
@@ -407,7 +412,7 @@ python src/web_demo.py \
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --stage sft \
-    --model_name_or_path path_to_your_model \
+    --model_name_or_path path_to_llama_model \
     --do_eval \
     --dataset alpaca_gpt4_zh \
     --template default \
@@ -426,7 +431,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --stage sft \
-    --model_name_or_path path_to_your_model \
+    --model_name_or_path path_to_llama_model \
     --do_predict \
     --dataset alpaca_gpt4_zh \
     --template default \
