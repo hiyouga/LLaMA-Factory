@@ -19,14 +19,15 @@ class Manager:
         }
 
         user_config = load_config()
-        refresh_dict = {}
+        if not lang:
+            if user_config.get("lang", None):
+                lang = user_config["lang"]
+            else:
+                lang = "en"
 
-        if "lang" in user_config:
-            refresh_dict["lang"] = {"value": user_config["lang"]}
-        else:
-            refresh_dict["lang"] = {"value": "en"}
+        refresh_dict["lang"] = {"value": lang}
 
-        if user_config.get("last_model"):
+        if user_config.get("last_model", None):
             refresh_dict["model_name"] = {"value": user_config["last_model"]}
             refresh_dict["model_path"] = {"value": get_model_path(user_config["last_model"])}
 
