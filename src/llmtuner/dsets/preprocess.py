@@ -24,7 +24,7 @@ def preprocess_dataset(
 
     def construct_example(examples: Dict[str, List[Any]]) -> Generator[Any, None, None]:
         for i in range(len(examples["prompt"])):
-            query, response = examples["prompt"][i], examples["response"][i]
+            query, response = examples["prompt"][i], examples["response"][i] if "response" in examples else ""
             query = query + "\n" + examples["query"][i] if "query" in examples and examples["query"][i] else query
             history = examples["history"][i] if "history" in examples else None
             system = examples["system"][i] if "system" in examples else None

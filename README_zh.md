@@ -375,6 +375,22 @@ python src/export_model.py \
     --output_dir path_to_export
 ```
 
+使用gptq算法导出量化版本模型
+```bash
+pip install auto-gptq
+
+python src/export_model.py \
+    --model_name_or_path path_to_llama_model \
+    --dataset alpaca_gpt4_zh \
+    --template default \
+    --finetuning_type lora \
+    --checkpoint_dir path_to_checkpoint \
+    --output_dir path_to_export \
+    --gptq_quantization_bit 4 \
+    --gptq_export True
+```
+
+
 ### API 服务
 
 ```bash

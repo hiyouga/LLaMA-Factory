@@ -71,6 +71,14 @@ class ModelArguments:
         default=None,
         metadata={"help": "Used in rope scaling. Do not specify this argument manually."}
     )
+    gptq_export: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Whether to use autogptq in model export or not."}
+    )
+    gptq_quantization_bit: Optional[int] = field(
+        default=None,
+        metadata={"help": "The number of bits to export the model for gptq."}
+    )
 
     def __post_init__(self):
         if self.compute_dtype is not None or self.model_max_length is not None:
@@ -81,6 +89,9 @@ class ModelArguments:
 
         if self.quantization_bit is not None:
             assert self.quantization_bit in [4, 8], "We only accept 4-bit or 8-bit quantization."
+
+        if self.gptq_quantization_bit is not None:
+            assert self.gptq_quantization_bit in [2, 3, 4, 8], "We only accept [2,3,4,8] bit quantization for gptq."
 
         if self.use_auth_token == True and self.hf_auth_token is not None:
             from huggingface_hub.hf_api import HfFolder # lazy load
