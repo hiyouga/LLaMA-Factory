@@ -224,7 +224,10 @@ def get_template_and_fix_tokenizer(
             tokenizer.pad_token = tokenizer.eos_token
         logger.info("Add pad token: {}".format(tokenizer.pad_token))
 
-    tokenizer.add_special_tokens(dict(additional_special_tokens=additional_special_tokens))
+    tokenizer.add_special_tokens(
+        dict(additional_special_tokens=additional_special_tokens),
+        replace_additional_special_tokens=False
+    )
     return template
 
 
@@ -472,7 +475,7 @@ register_template(
 
 r"""
 Supports: https://huggingface.co/baichuan-inc/Baichuan-13B-Chat
-Used for training.
+Used for training and inference of the fine-tuned models.
 """
 register_template(
     name="baichuan",
