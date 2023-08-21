@@ -472,9 +472,30 @@ register_template(
 
 r"""
 Supports: https://huggingface.co/baichuan-inc/Baichuan-13B-Chat
+Used for training.
 """
 register_template(
     name="baichuan",
+    prefix=[
+        "{{system}}"
+    ],
+    prompt=[
+        {"token": "<reserved_102>"}, # user token
+        "{{query}}",
+        {"token": "<reserved_103>"} # assistant token
+    ],
+    system="",
+    sep=[],
+    stop_words=[]
+)
+
+
+r"""
+Supports: https://huggingface.co/baichuan-inc/Baichuan-13B-Chat
+Used for inference of the original model.
+"""
+register_template(
+    name="baichuan_eval",
     prefix=[
         "{{system}}",
         {"token": "<reserved_102>"} # user token
