@@ -21,7 +21,8 @@ class FinetuningArguments:
                   Falcon choices: [\"32\", \"60\"], \
                   Baichuan choices: [\"32\", \"40\"] \
                   Qwen choices: [\"32\"], \
-                  XVERSE choices: [\"40\"]"}
+                  XVERSE choices: [\"40\"], \
+                  ChatGLM2 choices: [\"28\"]"}
     )
     num_layer_trainable: Optional[int] = field(
         default=3,
@@ -31,7 +32,7 @@ class FinetuningArguments:
         default="mlp",
         metadata={"help": "Name of trainable modules for partial-parameter (freeze) fine-tuning. \
                   LLaMA choices: [\"mlp\", \"self_attn\"], \
-                  BLOOM & Falcon choices: [\"mlp\", \"self_attention\"], \
+                  BLOOM & Falcon & ChatGLM2 choices: [\"mlp\", \"self_attention\"], \
                   Baichuan choices: [\"mlp\", \"self_attn\"], \
                   Qwen choices: [\"mlp\", \"attn\"], \
                   LLaMA-2, InternLM, XVERSE choices: the same as LLaMA."}
@@ -52,7 +53,7 @@ class FinetuningArguments:
         default=None,
         metadata={"help": "Name(s) of target modules to apply LoRA. Use commas to separate multiple modules. \
                   LLaMA choices: [\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"], \
-                  BLOOM & Falcon choices: [\"query_key_value\", \"self_attention.dense\", \"mlp.dense\"], \
+                  BLOOM & Falcon & ChatGLM2 choices: [\"query_key_value\", \"self_attention.dense\", \"mlp.dense\"], \
                   Baichuan choices: [\"W_pack\", \"o_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"], \
                   Qwen choices: [\"c_attn\", \"attn.c_proj\", \"w1\", \"w2\", \"mlp.c_proj\"], \
                   LLaMA-2, InternLM, XVERSE choices: the same as LLaMA."}
