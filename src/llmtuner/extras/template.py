@@ -589,3 +589,19 @@ register_template(
         "\n\n"
     ]
 )
+
+
+r"""
+Supports: https://huggingface.co/xverse/XVERSE-13B-Chat
+"""
+register_template(
+    name="xverse",
+    prefix=[
+        "{{system}}"
+    ],
+    prompt=[
+        "Human: {{query}}\n\nAssistant: "
+    ],
+    system="",
+    sep=[]
+)
