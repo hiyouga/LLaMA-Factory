@@ -16,3 +16,15 @@ If you are using a custom dataset, please provide your dataset definition in the
 ```
 
 where the `prompt` and `response` columns should contain non-empty values. The `query` column will be concatenated with the `prompt` column and used as input for the model. The `history` column should contain a list where each element is a string tuple representing a query-response pair.
+
+For Reward-Modeling(rm) dataset, the first n examples represent chosen examples and the last n examples represent rejected examples.
+```json
+{
+    "instruction": "Question?",
+    "input": "",
+    "output": [
+       "chosen answer",
+       "rejected answer"
+    ]
+}
+```
