@@ -11,7 +11,8 @@ If you are using a custom dataset, please provide your dataset definition in the
     "query": "the name of the column in the datasets containing the queries. (default: input)",
     "response": "the name of the column in the datasets containing the responses. (default: output)",
     "history": "the name of the column in the datasets containing the history of chat. (default: None)"
-  }
+  },
+  "stage": "The stage at which the data is being used: pt, sft, and rm, which correspond to pre-training, supervised fine-tuning(PPO), and reward model (DPO) training, respectively.(default: None)"
 }
 ```
 
@@ -26,6 +27,7 @@ For datasets used in reward modeling or DPO training, the `response` column shou
   "output": [
     "Chosen answer",
     "Rejected answer"
-  ]
+  ],
+  "stage": "rm"
 }
 ```
