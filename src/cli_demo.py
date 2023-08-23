@@ -1,3 +1,5 @@
+import sys
+
 from llmtuner import ChatModel
 
 
@@ -8,7 +10,8 @@ def main():
 
     while True:
         try:
-            query = input("\nUser: ")
+            print("\nUser: ")
+            query = "".join(sys.stdin.readlines())
         except UnicodeDecodeError:
             print("Detected decoding error at the inputs, please set the terminal encoding to utf-8.")
             continue
