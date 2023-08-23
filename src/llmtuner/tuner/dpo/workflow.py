@@ -3,6 +3,7 @@
 from copy import deepcopy
 from peft import PeftModel
 from typing import TYPE_CHECKING, Optional, List
+from transformers import Seq2SeqTrainingArguments
 
 from llmtuner.dsets import get_dataset, preprocess_dataset, split_dataset
 from llmtuner.extras.constants import IGNORE_INDEX
@@ -12,7 +13,7 @@ from llmtuner.tuner.dpo.collator import DPODataCollatorWithPadding
 from llmtuner.tuner.dpo.trainer import DPOPeftTrainer
 
 if TYPE_CHECKING:
-    from transformers import Seq2SeqTrainingArguments, TrainerCallback
+    from transformers import TrainerCallback
     from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
 
 
