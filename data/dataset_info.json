@@ -154,6 +154,16 @@
     "hf_hub_url": "zxbsmk/webnovel_cn",
     "stage": "sft"
   },
+  "ad_gen": {
+    "hf_hub_url": "HasturOfficial/adgen",
+    "columns": {
+      "prompt": "content",
+      "query": "",
+      "response": "summary",
+      "history": ""
+    },
+    "stage": "sft"
+  },
   "comparison_gpt4_en": {
     "file_name": "comparison_gpt4_data_en.json",
     "file_sha1": "96fa18313544e22444fe20eead7754b17da452ae",
