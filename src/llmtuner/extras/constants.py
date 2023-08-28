@@ -18,6 +18,14 @@ STAGES = [
     "Pre-Training"
 ]
 
+DATASET_STAGE_MAP = {
+    "SFT": "sft",
+    "Pre-Training": "pt",
+    "Reward Modeling": "rm",
+    "PPO": "sft",
+    "DPO": "rm"
+}
+
 SUPPORTED_MODELS = {
     "LLaMA-7B": "huggyllama/llama-7b",
     "LLaMA-13B": "huggyllama/llama-13b",
