@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Tuple
 from datetime import datetime
 
+from llmtuner.dsets.utils import EXT2TYPE
 from llmtuner.extras.ploting import smooth
 from llmtuner.tuner import export_model
 from llmtuner.webui.common import get_model_path, get_save_dir, DATA_CONFIG
@@ -50,8 +51,15 @@ def get_preview(dataset_dir: str, dataset: list) -> Tuple[int, list, Dict[str, A
     with open(os.path.join(dataset_dir, DATA_CONFIG), "r", encoding="utf-8") as f:
         dataset_info = json.load(f)
     data_file = dataset_info[dataset[0]]["file_name"]
-    with open(os.path.join(dataset_dir, data_file), "r", encoding="utf-8") as f:
-        data = json.load(f)
+    data = []
+    data_format = EXT2TYPE.get(data_file.split(".")[-1], None)
+    if data_format == "text":
+        with open(os.path.join(dataset_dir, data_file), "r", encoding="utf-8") as f:
+            for line in f:
+                data.append(line.strip())
+    elif data_format == "json":
+        with open(os.path.join(dataset_dir, data_file), "r", encoding="utf-8") as f:
+            data = json.load(f)
     return len(data), data[:2], gr.update(visible=True)
 
 
