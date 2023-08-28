@@ -22,7 +22,8 @@ def create_train_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dic
 
     preview_box, preview_count, preview_samples, close_btn = create_preview_box()
 
-    dataset_dir.change(list_dataset, [dataset_dir], [dataset])
+    training_stage.change(list_dataset, [dataset_dir, training_stage], [dataset])
+    dataset_dir.change(list_dataset, [dataset_dir, training_stage], [dataset])
     dataset.change(can_preview, [dataset_dir, dataset], [data_preview_btn])
     data_preview_btn.click(
         get_preview,

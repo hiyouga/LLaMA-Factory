@@ -11,7 +11,8 @@
     "query": "数据集代表请求的表头名称（默认：input）",
     "response": "数据集代表回答的表头名称（默认：output）",
     "history": "数据集代表历史对话的表头名称（默认：None）"
-  }
+  },
+  "stage": "数据所应用的训练阶段，可选值有 pt, sft, rm 三个，对应预训练，指令监督微调(PPO)，奖励模型(DPO)训练, 默认为None，表示不限制"
 }
 ```
 
@@ -26,6 +27,7 @@
   "output": [
     "Chosen answer",
     "Rejected answer"
-  ]
+  ],
+  "stage": "rm"
 }
 ```
