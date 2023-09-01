@@ -10,20 +10,12 @@ LAYERNORM_NAMES = ["norm", "ln_f", "ln_attn", "ln_mlp"]
 
 METHODS = ["full", "freeze", "lora"]
 
-STAGES = [
-    "SFT",
-    "Reward Modeling",
-    "PPO",
-    "DPO",
-    "Pre-Training"
-]
-
-DATASET_STAGE_MAP = {
-    "SFT": "sft",
-    "Pre-Training": "pt",
+TRAINING_STAGES = {
+    "Supervised Fine-Tuning": "sft",
     "Reward Modeling": "rm",
-    "PPO": "sft",
-    "DPO": "rm"
+    "PPO": "ppo",
+    "DPO": "dpo",
+    "Pre-Training": "pt"
 }
 
 SUPPORTED_MODELS = {
