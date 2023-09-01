@@ -105,7 +105,7 @@
   - [Web QA (zh)](https://huggingface.co/datasets/suolyer/webqa)
   - [UltraChat (en)](https://github.com/thunlp/UltraChat)
   - [WebNovel (zh)](https://huggingface.co/datasets/zxbsmk/webnovel_cn)
-  - [Ad Gen (zh)](https://arxiv.org/abs/1908.06605)
+  - [Ad Gen (zh)](https://huggingface.co/datasets/HasturOfficial/adgen)
 - For reward modeling or DPO training:
   - [HH-RLHF (en)](https://huggingface.co/datasets/Anthropic/hh-rlhf)
   - [Open Assistant (multilingual)](https://huggingface.co/datasets/OpenAssistant/oasst1)
