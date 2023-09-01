@@ -44,7 +44,6 @@ def run_ppo(
     )
 
     if finetuning_args.ppo_score_norm:
-        require_version("trl>=0.5.1.dev0", "To fix: pip install git+https://github.com/huggingface/trl.git")
         ppo_config.use_score_scaling = True
         ppo_config.use_score_norm = True
 

@@ -16,7 +16,7 @@ class ModelArguments:
         metadata={"help": "Where to store the pretrained models downloaded from huggingface.co."}
     )
     use_fast_tokenizer: Optional[bool] = field(
-        default=False,
+        default=True,
         metadata={"help": "Whether to use one of the fast tokenizer (backed by the tokenizers library) or not."}
     )
     use_auth_token: Optional[bool] = field(

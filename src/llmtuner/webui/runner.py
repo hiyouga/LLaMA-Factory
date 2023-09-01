@@ -8,7 +8,7 @@ from transformers.trainer import TRAINING_ARGS_NAME
 from typing import Any, Dict, Generator, List, Tuple
 
 from llmtuner.extras.callbacks import LogCallback
-from llmtuner.extras.constants import DEFAULT_MODULE
+from llmtuner.extras.constants import DEFAULT_MODULE, TRAINING_STAGES
 from llmtuner.extras.logging import LoggerHandler
 from llmtuner.extras.misc import torch_gc
 from llmtuner.tuner import run_exp
@@ -106,7 +106,7 @@ class Runner:
         output_dir = os.path.join(get_save_dir(model_name), finetuning_type, output_dir)
 
         args = dict(
-            stage="sft",
+            stage=TRAINING_STAGES[training_stage],
             model_name_or_path=get_model_path(model_name),
             do_train=True,
             overwrite_cache=True,
@@ -133,26 +133,20 @@ class Runner:
             lora_rank=lora_rank,
             lora_dropout=lora_dropout,
             lora_target=lora_target or DEFAULT_MODULE.get(model_name.split("-")[0], "q_proj,v_proj"),
-            resume_lora_training=resume_lora_training,
+            resume_lora_training=(
+                False if TRAINING_STAGES[training_stage] in ["rm", "ppo", "dpo"] else resume_lora_training
+            ),
             output_dir=output_dir
         )
         args[compute_type] = True
 
-        if training_stage == "Reward Modeling":
-            args["stage"] = "rm"
-            args["resume_lora_training"] = False
-        elif training_stage == "PPO":
-            args["stage"] = "ppo"
-            args["resume_lora_training"] = False
+        if args["stage"] == "ppo":
             args["reward_model"] = reward_model
             args["padding_side"] = "left"
             val_size = 0
-        elif training_stage == "DPO":
-            args["stage"] = "dpo"
-            args["resume_lora_training"] = False
+
+        if args["stage"] == "dpo":
             args["dpo_beta"] = dpo_beta
-        elif training_stage == "Pre-Training":
-            args["stage"] = "pt"
 
         if val_size > 1e-6:
             args["val_size"] = val_size
