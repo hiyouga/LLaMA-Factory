@@ -6,13 +6,13 @@ If you are using a custom dataset, please provide your dataset definition in the
   "script_url": "the name of the directory containing a dataset loading script. (if specified, ignore below 2 arguments)",
   "file_name": "the name of the dataset file in the this directory. (required if above are not specified)",
   "file_sha1": "the SHA-1 hash value of the dataset file. (optional)",
+  "ranking": "whether the examples contains ranked responses or not. (default: false)",
   "columns": {
     "prompt": "the name of the column in the datasets containing the prompts. (default: instruction)",
     "query": "the name of the column in the datasets containing the queries. (default: input)",
     "response": "the name of the column in the datasets containing the responses. (default: output)",
     "history": "the name of the column in the datasets containing the history of chat. (default: None)"
-  },
-  "stage": "The stage at which the data is being used: pt, sft, and rm, which correspond to pre-training, supervised fine-tuning(PPO), and reward model (DPO) training, respectively.(default: None)"
+  }
 }
 ```
 
@@ -27,7 +27,6 @@ For datasets used in reward modeling or DPO training, the `response` column shou
   "output": [
     "Chosen answer",
     "Rejected answer"
-  ],
-  "stage": "rm"
+  ]
 }
 ```
