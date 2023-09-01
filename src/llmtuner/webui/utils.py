@@ -74,7 +74,7 @@ def can_quantize(finetuning_type: str) -> Dict[str, Any]:
 def gen_cmd(args: Dict[str, Any]) -> str:
     if args.get("do_train", None):
         args["plot_loss"] = True
-    cmd_lines = ["CUDA_VISIBLE_DEVICES=0 python src/train_bash.py"]
+    cmd_lines = ["CUDA_VISIBLE_DEVICES=0 python src/train_bash.py "]
     for k, v in args.items():
         if v is not None and v != "":
             cmd_lines.append("    --{} {} ".format(k, str(v)))

@@ -34,6 +34,8 @@ def preprocess_dataset(
         # build grouped texts with format `X1 X2 X3 ...`
         if isinstance(getattr(tokenizer, "tokenizer", None), tiktoken.Encoding):
             kwargs = dict(allowed_special="all") # for tiktoken tokenizer (Qwen)
+        else:
+            kwargs = dict(add_special_tokens=True)
 
         if hasattr(tokenizer, "add_bos_token") and hasattr(tokenizer, "add_eos_token"):
             setattr(tokenizer, "add_bos_token", True) # for LLaMA tokenizer
