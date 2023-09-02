@@ -43,7 +43,7 @@ class Manager:
 
         return refresh_dict
 
-    def gen_label(self, lang: str, model_name: str, finetuning_type: str = "lora", training_stage: str = list(TRAINING_STAGES.keys())[0]
+    def gen_label(self, lang: str, model_name: str = "", finetuning_type: str = "lora", training_stage: str = list(TRAINING_STAGES.keys())[0]
     ) -> Dict[Component, Dict[str, Any]]: # cannot use TYPE_CHECKING
         update_dict = {}
         refresh_dict = self.gen_refresh(lang, model_name, finetuning_type, training_stage)
