@@ -41,17 +41,21 @@ def create_ui() -> gr.Blocks:
 
         demo.load(
             manager.gen_label,
-            [top_elems["lang"]],
+            [top_elems["lang"], top_elems["model_name"], top_elems["finetuning_type"], train_elems["training_stage"]],
             [elem for elems in elem_list for elem in elems.values()],
         )
 
-        top_elems["lang"].change(
-            manager.gen_label,
-            [top_elems["lang"]],
-            [elem for elems in elem_list for elem in elems.values()],
-            queue=False
-        )
+        change_publishers = [
+            top_elems["lang"], top_elems["model_name"], top_elems["finetuning_type"], train_elems["training_stage"]
+        ]
 
+        for change_publisher in change_publishers:
+            change_publisher.change(
+                manager.gen_label,
+                change_publishers,
+                [elem for elems in elem_list for elem in elems.values()],
+                queue=False
+            )
     return demo
 
 
