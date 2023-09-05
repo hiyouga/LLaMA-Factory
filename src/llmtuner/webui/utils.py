@@ -58,7 +58,7 @@ def get_preview(
         if data_file.endswith(".json"):
             data = json.load(f)
         elif data_file.endswith(".jsonl"):
-            data = [json.load(line) for line in f]
+            data = [json.loads(line) for line in f]
         else:
             data = [line for line in f]
     return len(data), data[start:end], gr.update(visible=True)
