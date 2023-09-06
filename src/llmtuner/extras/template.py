@@ -517,6 +517,49 @@ register_template(
 
 
 r"""
+Supports: https://huggingface.co/baichuan-inc/Baichuan2-7B-Chat
+          https://huggingface.co/baichuan-inc/Baichuan2-13B-Chat
+Used for training and inference of the fine-tuned models.
+"""
+register_template(
+    name="baichuan2",
+    prefix=[
+        "{{system}}"
+    ],
+    prompt=[
+        {"token": "<reserved_106>"}, # user token
+        "{{query}}",
+        {"token": "<reserved_107>"} # assistant token
+    ],
+    system="",
+    sep=[]
+)
+
+
+r"""
+Supports: https://huggingface.co/baichuan-inc/Baichuan2-7B-Chat
+          https://huggingface.co/baichuan-inc/Baichuan2-13B-Chat
+Used for inference of the original model.
+"""
+register_template(
+    name="baichuan2_eval",
+    prefix=[
+        "{{system}}",
+        {"token": "<reserved_106>"} # user token
+    ],
+    prompt=[
+        "{{query}}",
+        {"token": "<reserved_107>"} # assistant token
+    ],
+    system="",
+    sep=[],
+    stop_words=[
+        "<reserved_106>" # user token
+    ]
+)
+
+
+r"""
 Supports: https://huggingface.co/HuggingFaceH4/starchat-alpha
           https://huggingface.co/HuggingFaceH4/starchat-beta
 """

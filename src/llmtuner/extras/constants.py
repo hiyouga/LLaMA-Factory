@@ -78,7 +78,7 @@ DEFAULT_TEMPLATE = {
     "LLaMA2": "llama2",
     "ChineseLLaMA2": "llama2_zh",
     "Baichuan": "baichuan",
-    "Baichuan2": "baichuan",
+    "Baichuan2": "baichuan2",
     "InternLM": "intern",
     "Qwen": "chatml",
     "XVERSE": "xverse",
