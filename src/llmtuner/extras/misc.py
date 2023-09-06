@@ -1,3 +1,4 @@
+import gc
 import torch
 from typing import TYPE_CHECKING, List, Optional, Tuple
 from transformers import InfNanRemoveLogitsProcessor, LogitsProcessorList
@@ -98,6 +99,7 @@ def torch_gc() -> None:
     r"""
     Collects GPU memory.
     """
+    gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
         torch.cuda.ipc_collect()

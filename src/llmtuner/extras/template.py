@@ -490,8 +490,7 @@ register_template(
         {"token": "<reserved_103>"} # assistant token
     ],
     system="",
-    sep=[],
-    stop_words=[]
+    sep=[]
 )
 
 
