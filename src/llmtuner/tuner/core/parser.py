@@ -119,6 +119,9 @@ def get_train_args(
     if general_args.stage == "ppo" and model_args.reward_model is None:
         raise ValueError("Reward model is necessary for PPO training.")
 
+    if general_args.stage == "ppo" and training_args.deepspeed is not None:
+        raise ValueError("PPO training is incompatible with DeepSpeed, use Accelerate instead.")
+
     if general_args.stage == "ppo" and data_args.streaming:
         raise ValueError("Streaming mode does not suppport PPO training currently.")
 
