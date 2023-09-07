@@ -76,7 +76,7 @@ class PPOPeftTrainer(PPOTrainer, PeftTrainer):
 
         # Keyword arguments for `model.generate`
         gen_kwargs = self.generating_args.to_dict()
-        gen_kwargs["eos_token_id"] = list(set([self.tokenizer.eos_token_id] + self.tokenizer.additional_special_tokens_ids))
+        gen_kwargs["eos_token_id"] = [self.tokenizer.eos_token_id] + self.tokenizer.additional_special_tokens_ids
         gen_kwargs["pad_token_id"] = self.tokenizer.pad_token_id
         gen_kwargs["logits_processor"] = get_logits_processor()
 
