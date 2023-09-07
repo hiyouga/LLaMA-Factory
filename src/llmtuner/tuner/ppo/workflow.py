@@ -6,7 +6,6 @@ from torch.optim import AdamW
 from typing import TYPE_CHECKING, Optional, List
 from transformers import DataCollatorForSeq2Seq
 from transformers.optimization import get_scheduler
-from transformers.utils.versions import require_version
 
 from llmtuner.dsets import get_dataset, preprocess_dataset
 from llmtuner.extras.ploting import plot_loss
