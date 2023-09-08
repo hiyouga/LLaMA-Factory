@@ -27,10 +27,6 @@ class ModelArguments:
         default="main",
         metadata={"help": "The specific model version to use (can be a branch name, tag name or commit id)."}
     )
-    padding_side: Optional[Literal["left", "right"]] = field(
-        default="left",
-        metadata={"help": "The side on which the model should have padding applied."}
-    )
     quantization_bit: Optional[int] = field(
         default=None,
         metadata={"help": "The number of bits to quantize the model."}

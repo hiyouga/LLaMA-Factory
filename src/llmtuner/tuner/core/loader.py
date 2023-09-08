@@ -68,7 +68,7 @@ def load_model_and_tokenizer(
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         use_fast=model_args.use_fast_tokenizer,
-        padding_side=model_args.padding_side,
+        padding_side="right", # training with left-padded tensors in fp16 precision may cause overflow
         **config_kwargs
     )
 
