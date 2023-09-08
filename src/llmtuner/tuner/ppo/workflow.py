@@ -4,7 +4,7 @@ import math
 from trl import PPOConfig
 from torch.optim import AdamW
 from typing import TYPE_CHECKING, Optional, List
-from transformers import DataCollatorForSeq2Seq
+from transformers import DataCollatorWithPadding
 from transformers.optimization import get_scheduler
 
 from llmtuner.dsets import get_dataset, preprocess_dataset
@@ -28,7 +28,9 @@ def run_ppo(
     dataset = get_dataset(model_args, data_args)
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, stage="ppo")
     dataset = preprocess_dataset(dataset, tokenizer, data_args, training_args, stage="ppo")
-    data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, label_pad_token_id=tokenizer.pad_token_id)
+
+    tokenizer.padding_side = "left" # use left-padding in generation while using right-padding in training
+    data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
     ppo_config = PPOConfig(
         model_name=model_args.model_name_or_path,

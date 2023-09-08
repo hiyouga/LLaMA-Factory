@@ -1,5 +1,4 @@
 # Inspired by:
-# https://github.com/lvwerra/trl/blob/main/examples/summarization/scripts/reward_summarization.py
 # https://github.com/CarperAI/trlx/blob/main/examples/summarize_rlhf/reward_model/train_reward_model_gptj.py
 
 from typing import TYPE_CHECKING, Optional, List

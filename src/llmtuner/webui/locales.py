@@ -287,16 +287,6 @@ LOCALES = {
             "info": "是否启用 FP16 或 BF16 混合精度训练。"
         }
     },
-    "padding_side": {
-        "en": {
-            "label": "Padding side",
-            "info": "The side on which the model should have padding applied."
-        },
-        "zh": {
-            "label": "填充位置",
-            "info": "使用左填充或右填充。"
-        }
-    },
     "lora_tab": {
         "en": {
             "label": "LoRA configurations"
