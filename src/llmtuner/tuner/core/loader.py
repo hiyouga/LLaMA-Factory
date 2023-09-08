@@ -175,6 +175,7 @@ def load_model_and_tokenizer(
     # Initialize adapters
     model = prepare_model_for_training(model, finetuning_args.finetuning_type) if is_trainable else model
     model = init_adapter(model, model_args, finetuning_args, is_trainable, is_mergeable)
+    model = model.train() if is_trainable else model.eval()
 
     # Prepare model with valuehead for RLHF
     if stage == "rm" or stage == "ppo":
