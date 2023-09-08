@@ -96,6 +96,9 @@ def get_train_args(
     # Check arguments (do not check finetuning_args since it may be loaded from checkpoints)
     data_args.init_for_training()
 
+    if general_args.stage != "pt" and data_args.template is None:
+        raise ValueError("Please specify which `template` to use.")
+
     if general_args.stage != "sft" and training_args.predict_with_generate:
         raise ValueError("`predict_with_generate` cannot be set as True except SFT.")
 
@@ -220,6 +223,9 @@ def get_infer_args(
     GeneratingArguments
 ]:
     model_args, data_args, finetuning_args, generating_args = parse_infer_args(args)
+
+    if data_args.template is None:
+        raise ValueError("Please specify which `template` to use.")
 
     if model_args.quantization_bit is not None and finetuning_args.finetuning_type != "lora":
         raise ValueError("Quantization is only compatible with the LoRA method.")

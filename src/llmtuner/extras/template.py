@@ -214,10 +214,7 @@ def get_template_and_fix_tokenizer(
         logger.info("Add eos token: {}".format(tokenizer.eos_token))
 
     if tokenizer.pad_token_id is None:
-        if tokenizer.unk_token_id is not None:
-            tokenizer.pad_token = tokenizer.unk_token
-        else:
-            tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.pad_token = tokenizer.eos_token
         logger.info("Add pad token: {}".format(tokenizer.pad_token))
 
     tokenizer.add_special_tokens(
