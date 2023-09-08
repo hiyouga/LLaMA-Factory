@@ -1,4 +1,6 @@
 # Copyright (c) 2023, Baichuan Intelligent Technology. All rights reserved.
+# Modified by hiyouga, to support attention mask, the alibi implementation is largely borrowed from
+# https://github.com/huggingface/transformers/blob/main/src/transformers/models/bloom/modeling_bloom.py
 
 import math
 from typing import List, Optional, Tuple, Union
@@ -12,7 +14,6 @@ from transformers import PreTrainedModel
 from transformers.activations import ACT2FN
 from transformers.modeling_outputs import BaseModelOutputWithPast, CausalLMOutputWithPast
 from transformers.utils import logging
-from transformers.generation.utils import GenerationConfig
 
 from .configuration_baichuan import BaichuanConfig
 
@@ -128,7 +129,7 @@ class MLP(nn.Module):
 
 class BaichuanAttention(nn.Module):
 
-    def __init__(self, config: BaichuanConfig):
+    def __init__(self, config: "BaichuanConfig"):
         super().__init__()
         self.config = config
         self.hidden_size = config.hidden_size
@@ -223,7 +224,7 @@ class BaichuanAttention(nn.Module):
 
 class BaichuanLayer(nn.Module):
 
-    def __init__(self, config: BaichuanConfig):
+    def __init__(self, config: "BaichuanConfig"):
         super().__init__()
         self.hidden_size = config.hidden_size
         self.self_attn = BaichuanAttention(config=config)
@@ -342,7 +343,7 @@ class BaichuanPreTrainedModel(PreTrainedModel):
 
 class BaichuanModel(BaichuanPreTrainedModel):
 
-    def __init__(self, config: BaichuanConfig):
+    def __init__(self, config: "BaichuanConfig"):
         super().__init__(config)
         self.padding_idx = config.pad_token_id
         self.vocab_size = config.vocab_size
@@ -651,93 +652,3 @@ class BaichuanForCausalLM(BaichuanPreTrainedModel):
             for layer_past in standardized_past
         )
         return self._convert_to_baichuan_cache(reordered_past)
-
-    def quantize(self, bits: int):
-        try:
-            from .quantizer import QLinear
-        except ImportError:
-            raise ImportError(
-                f"Needs QLinear to run quantize."
-            )
-
-        for layer in self.model.layers:
-            layer.self_attn.W_pack = QLinear(
-                bits=bits,
-                weight=layer.self_attn.W_pack.weight,
-                bias = None,
-            )
-            layer.self_attn.o_proj = QLinear(
-                bits=bits,
-                weight=layer.self_attn.o_proj.weight,
-                bias = None,
-            )
-            layer.mlp.gate_proj = QLinear(
-                bits=bits,
-                weight=layer.mlp.gate_proj.weight,
-                bias = None,
-            )
-            layer.mlp.down_proj = QLinear(
-                bits=bits,
-                weight=layer.mlp.down_proj.weight,
-                bias = None,
-            )
-            layer.mlp.up_proj = QLinear(
-                bits=bits,
-                weight=layer.mlp.up_proj.weight,
-                bias = None,
-            )
-        return self
-
-    def _build_chat_input(self, tokenizer, messages: List[dict], max_new_tokens: int=0):
-        max_new_tokens = max_new_tokens or self.generation_config.max_new_tokens
-        max_input_tokens = self.config.model_max_length - max_new_tokens
-        max_input_tokens = max(self.config.model_max_length // 2, max_input_tokens)
-        total_input, round_input = [], []
-        for i, message in enumerate(messages[::-1]):
-            content_tokens = tokenizer.encode(message['content'])
-            if message['role'] == 'user':
-                round_input = [self.generation_config.user_token_id] + content_tokens + round_input
-                if total_input and len(total_input) + len(round_input) > max_input_tokens:
-                    break
-                else:
-                    total_input = round_input + total_input
-                    if len(total_input) >= max_input_tokens:
-                        break
-                    else:
-                        round_input = []
-            elif message['role'] == 'assistant':
-                round_input = [
-                    self.generation_config.assistant_token_id
-                ] + content_tokens + [
-                    self.generation_config.eos_token_id
-                ] + round_input
-            else:
-                raise ValueError(f"message role not supported yet: {message['role']}")
-        total_input = total_input[-max_input_tokens:]  # truncate left
-        total_input.append(self.generation_config.assistant_token_id)
-        total_input = torch.LongTensor([total_input]).to(self.device)
-        return total_input
-
-    @torch.no_grad()
-    def chat(self, tokenizer, messages: List[dict], stream=False,
-             generation_config: Optional[GenerationConfig]=None):
-        generation_config = generation_config or self.generation_config
-        input_ids = self._build_chat_input(tokenizer, messages, generation_config.max_new_tokens)
-        if stream:
-            from transformers_stream_generator.main import NewGenerationMixin, StreamGenerationConfig
-            self.__class__.generate = NewGenerationMixin.generate
-            self.__class__.sample_stream = NewGenerationMixin.sample_stream
-            stream_config = StreamGenerationConfig(**generation_config.to_dict(), do_stream=True)
-
-            def stream_generator():
-                outputs = []
-                for token in self.generate(input_ids, generation_config=stream_config):
-                    outputs.append(token.item())
-                    yield tokenizer.decode(outputs, skip_special_tokens=True)
-
-            return stream_generator()
-        else:
-            self.__class__.generate = PreTrainedModel.generate  # disable stream
-            outputs = self.generate(input_ids, generation_config=generation_config)
-            response = tokenizer.decode(outputs[0][len(input_ids[0]):], skip_special_tokens=True)
-            return response
