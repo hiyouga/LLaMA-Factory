@@ -6,6 +6,7 @@ from peft import (
     PeftModel,
     TaskType,
     LoraConfig,
+    AdaLoraConfig,
     get_peft_model
 )
 from peft.utils import CONFIG_NAME, WEIGHTS_NAME
@@ -55,8 +56,11 @@ def init_adapter(
         if model_args.checkpoint_dir is not None:
             assert load_trainable_params(model, model_args.checkpoint_dir[0]), "Model checkpoint is not correctly loaded."
 
-    if finetuning_args.finetuning_type == "lora":
-        logger.info("Fine-tuning method: LoRA")
+    if finetuning_args.finetuning_type == "lora" or finetuning_args.finetuning_type == "adalora":
+        if finetuning_args.finetuning_type == "lora":
+            logger.info("Fine-tuning method: LoRA")
+        if finetuning_args.finetuning_type == "adalora":
+            logger.info("Fine-tuning method: AdaLoRA")
         latest_checkpoint = None
 
         if model_args.checkpoint_dir is not None:
@@ -81,14 +85,26 @@ def init_adapter(
                 model = PeftModel.from_pretrained(model, latest_checkpoint, is_trainable=is_trainable)
 
         if is_trainable and latest_checkpoint is None: # create new lora weights while training
-            lora_config = LoraConfig(
-                task_type=TaskType.CAUSAL_LM,
-                inference_mode=False,
-                r=finetuning_args.lora_rank,
-                lora_alpha=finetuning_args.lora_alpha,
-                lora_dropout=finetuning_args.lora_dropout,
-                target_modules=finetuning_args.lora_target
-            )
+            if finetuning_args.finetuning_type == "lora":
+                lora_config = LoraConfig(
+                    task_type=TaskType.CAUSAL_LM,
+                    inference_mode=False,
+                    r=finetuning_args.lora_rank,
+                    lora_alpha=finetuning_args.lora_alpha,
+                    lora_dropout=finetuning_args.lora_dropout,
+                    target_modules=finetuning_args.lora_target
+                )
+            if finetuning_args.finetuning_type == "adalora":
+                lora_config = AdaLoraConfig(
+                    task_type=TaskType.CAUSAL_LM,
+                    inference_mode=False,
+                    target_r=finetuning_args.target_r,
+                    init_r=finetuning_args.init_r,
+                    r=finetuning_args.lora_rank,
+                    lora_alpha=finetuning_args.lora_alpha,
+                    lora_dropout=finetuning_args.lora_dropout,
+                    target_modules=finetuning_args.lora_target
+                )
             model = get_peft_model(model, lora_config)
 
     if model_args.checkpoint_dir is not None:

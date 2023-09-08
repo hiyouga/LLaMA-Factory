@@ -8,7 +8,7 @@ class FinetuningArguments:
     r"""
     Arguments pertaining to which techniques we are going to fine-tuning with.
     """
-    finetuning_type: Optional[Literal["lora", "freeze", "full", "none"]] = field(
+    finetuning_type: Optional[Literal["lora", "adalora", "freeze", "full", "none"]] = field(
         default="lora",
         metadata={"help": "Which fine-tuning method to use."}
     )
@@ -36,6 +36,14 @@ class FinetuningArguments:
                   Baichuan choices: [\"mlp\", \"self_attn\"], \
                   Qwen choices: [\"mlp\", \"attn\"], \
                   LLaMA-2, InternLM, XVERSE choices: the same as LLaMA."}
+    )
+    target_r: Optional[int] = field(
+        default=8,
+        metadata={"help": "The target average rank of incremental matrix for AdaLoRA fine-tuning."}
+    )
+    init_r: Optional[int] = field(
+        default=12,
+        metadata={"help": "The initial rank for each incremental matrix for AdaLoRA fine-tuning."}
     )
     lora_rank: Optional[int] = field(
         default=8,
@@ -82,7 +90,7 @@ class FinetuningArguments:
 
         self.trainable_layers = ["{:d}.{}".format(idx, self.name_module_trainable) for idx in trainable_layer_ids]
 
-        assert self.finetuning_type in ["lora", "freeze", "full", "none"], "Invalid fine-tuning method."
+        assert self.finetuning_type in ["lora", "adalora", "freeze", "full", "none"], "Invalid fine-tuning method."
 
     def save_to_json(self, json_path: str):
         r"""Saves the content of this instance in JSON format inside `json_path`."""
