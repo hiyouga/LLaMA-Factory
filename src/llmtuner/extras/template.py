@@ -583,7 +583,8 @@ register_template(
     system="",
     sep=[
         "\n\n"
-    ]
+    ],
+    efficient_eos=True
 )
 
 
