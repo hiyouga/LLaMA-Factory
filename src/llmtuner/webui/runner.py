@@ -87,7 +87,6 @@ class Runner:
         save_steps: int,
         warmup_steps: int,
         compute_type: str,
-        padding_side: str,
         lora_rank: int,
         lora_dropout: float,
         lora_target: str,
@@ -129,7 +128,6 @@ class Runner:
             logging_steps=logging_steps,
             save_steps=save_steps,
             warmup_steps=warmup_steps,
-            padding_side=padding_side,
             lora_rank=lora_rank,
             lora_dropout=lora_dropout,
             lora_target=lora_target or DEFAULT_MODULE.get(model_name.split("-")[0], "q_proj,v_proj"),
@@ -142,7 +140,6 @@ class Runner:
 
         if args["stage"] == "ppo":
             args["reward_model"] = reward_model
-            args["padding_side"] = "left"
             val_size = 0
 
         if args["stage"] == "dpo":
