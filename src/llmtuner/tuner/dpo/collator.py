@@ -16,7 +16,7 @@ class DPODataCollatorWithPadding(DataCollatorForSeq2Seq):
             if self.tokenizer.padding_side == "left":
                 start, end = feature.size(0) - answer_len, feature.size(0)
             else:
-                start, end = prompt_len, answer_len
+                start, end = prompt_len, prompt_len + answer_len
             padded_tensor = self.label_pad_token_id * torch.ones_like(feature)
             padded_tensor[start:end] = feature[start:end]
             padded_labels.append(padded_tensor)
