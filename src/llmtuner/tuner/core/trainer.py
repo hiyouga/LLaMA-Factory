@@ -44,26 +44,37 @@ class PeftModelMixin:
         output_dir = output_dir if output_dir is not None else self.args.output_dir
         os.makedirs(output_dir, exist_ok=True)
         logger.info(f"Saving model checkpoint to {output_dir}")
+        model = self.model
+        model_unwrapped = unwrap_model(model)
 
-        model = unwrap_model(self.model)
-        if isinstance(model, PreTrainedModelWrapper):
-            # Custom state dict: https://github.com/lvwerra/trl/blob/v0.4.7/trl/models/modeling_value_head.py#L200
+        if isinstance(model_unwrapped, PreTrainedModelWrapper):
+            # Custom state dict: https://github.com/lvwerra/trl/blob/v0.7.1/trl/models/modeling_value_head.py#L200
             model_state_dict = state_dict or model.state_dict()
             v_head_state_dict = {
                 name.replace("v_head.", ""): model_state_dict[name].cpu().clone().detach()
                 for name in model_state_dict.keys() if name.startswith("v_head.")
             }
-
             torch.save(v_head_state_dict, os.path.join(output_dir, VALUE_HEAD_FILE_NAME))
-            model = model.pretrained_model
+            model = model_unwrapped.pretrained_model
+            model_unwrapped = unwrap_model(model)
 
         state_dict = state_dict or get_state_dict(model)
-        if isinstance(model, (PeftModel, PreTrainedModel)):
-            model.config.use_cache = True
-            model.save_pretrained(output_dir, state_dict=state_dict, safe_serialization=self.args.save_safetensors)
-            model.config.use_cache = False
+        if not isinstance(model, (PeftModel, PreTrainedModel)):
+            if isinstance(model_unwrapped, (PeftModel, PreTrainedModel)):
+                model_unwrapped.config.use_cache = True
+                model_unwrapped.save_pretrained(
+                    output_dir, state_dict=state_dict, safe_serialization=self.args.save_safetensors
+                )
+                model_unwrapped.config.use_cache = False
+            else:
+                logger.info("Trainer.model is not a `PreTrainedModel`, only saving its state dict.")
+                torch.save(state_dict, os.path.join(output_dir, WEIGHTS_NAME))
         else:
-            torch.save(state_dict, os.path.join(output_dir, WEIGHTS_NAME))
+            model.config.use_cache = True
+            model.save_pretrained(
+                output_dir, state_dict=state_dict, safe_serialization=self.args.save_safetensors
+            )
+            model.config.use_cache = False
 
         if self.finetuning_args.finetuning_type == "full" and self.tokenizer is not None:
             try:
