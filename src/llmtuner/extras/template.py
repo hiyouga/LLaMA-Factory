@@ -77,13 +77,13 @@ class Template:
     ) -> Tuple[List[int], List[int]]:
         if tokenizer.bos_token_id is not None and getattr(tokenizer, "add_bos_token", True):
             bos_ids = [tokenizer.bos_token_id]
-        else: # baichuan, qwen and gpt2 models has no bos token
+        else: # baichuan, qwen and gpt2 models have no bos token
             bos_ids = []
 
         if tokenizer.eos_token_id is None:
             raise ValueError("EOS token is required.")
 
-        if self.efficient_eos: # used in baichuan, qwen and gpt2 models
+        if self.efficient_eos: # used in baichuan, qwen, chatglm, etc.
             eos_ids = []
         else:
             eos_ids = [tokenizer.eos_token_id]

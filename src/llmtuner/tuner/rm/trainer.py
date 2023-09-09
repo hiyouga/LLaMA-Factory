@@ -69,13 +69,17 @@ class PairwisePeftTrainer(PeftTrainer):
             assert div_index > 0
             chosen_trunc_rewards = chosen_rewards[i, div_index:end_index]
             rejected_trunc_rewards = rejected_rewards[i, div_index:end_index]
-            chosen_scores.append(chosen_trunc_rewards[-1]) # use the end score for inference
-            rejected_scores.append(rejected_trunc_rewards[-1])
+            if return_outputs: # use the score on the EOS token for inference
+                chosen_scores.append(chosen_rewards[i, chosen_length-1])
+                rejected_scores.append(rejected_rewards[i, rejected_length-1])
             loss += -torch.nn.functional.logsigmoid(chosen_trunc_rewards - rejected_trunc_rewards).mean()
 
         loss = loss / batch_size
-        chosen_scores, rejected_scores = torch.stack(chosen_scores), torch.stack(rejected_scores)
-        return (loss, [loss, chosen_scores, rejected_scores]) if return_outputs else loss
+        if return_outputs:
+            chosen_scores, rejected_scores = torch.stack(chosen_scores), torch.stack(rejected_scores)
+            return loss, [loss, chosen_scores, rejected_scores]
+
+        return loss
 
     def save_predictions(
         self,
