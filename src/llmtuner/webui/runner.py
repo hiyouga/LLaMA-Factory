@@ -12,7 +12,7 @@ from llmtuner.extras.constants import DEFAULT_MODULE, TRAINING_STAGES
 from llmtuner.extras.logging import LoggerHandler
 from llmtuner.extras.misc import torch_gc
 from llmtuner.tuner import run_exp
-from llmtuner.webui.common import get_model_path, get_save_dir
+from llmtuner.webui.common import get_model_path, get_save_dir, load_config
 from llmtuner.webui.locales import ALERTS
 from llmtuner.webui.utils import gen_cmd, get_eval_results, update_process_bar
 
@@ -97,21 +97,25 @@ class Runner:
     ) -> Tuple[str, str, List[str], str, Dict[str, Any]]:
         if checkpoints:
             checkpoint_dir = ",".join(
-                [os.path.join(get_save_dir(model_name), finetuning_type, ckpt) for ckpt in checkpoints]
+                [get_save_dir(model_name, finetuning_type, ckpt) for ckpt in checkpoints]
             )
         else:
             checkpoint_dir = None
 
-        output_dir = os.path.join(get_save_dir(model_name), finetuning_type, output_dir)
+        output_dir = get_save_dir(model_name, finetuning_type, output_dir)
+
+        user_config = load_config()
+        cache_dir = user_config.get("cache_dir", None)
 
         args = dict(
             stage=TRAINING_STAGES[training_stage],
             model_name_or_path=get_model_path(model_name),
             do_train=True,
-            overwrite_cache=True,
+            overwrite_cache=False,
+            cache_dir=cache_dir,
             checkpoint_dir=checkpoint_dir,
             finetuning_type=finetuning_type,
-            quantization_bit=int(quantization_bit) if quantization_bit and quantization_bit != "None" else None,
+            quantization_bit=int(quantization_bit) if quantization_bit in ["8", "4"] else None,
             template=template,
             system_prompt=system_prompt,
             dataset_dir=dataset_dir,
@@ -172,22 +176,26 @@ class Runner:
     ) -> Tuple[str, str, List[str], str, Dict[str, Any]]:
         if checkpoints:
             checkpoint_dir = ",".join(
-                [os.path.join(get_save_dir(model_name), finetuning_type, checkpoint) for checkpoint in checkpoints]
+                [get_save_dir(model_name, finetuning_type, ckpt) for ckpt in checkpoints]
             )
-            output_dir = os.path.join(get_save_dir(model_name), finetuning_type, "eval_" + "_".join(checkpoints))
+            output_dir = get_save_dir(model_name, finetuning_type, "eval_" + "_".join(checkpoints))
         else:
             checkpoint_dir = None
-            output_dir = os.path.join(get_save_dir(model_name), finetuning_type, "eval_base")
+            output_dir = get_save_dir(model_name, finetuning_type, "eval_base")
+
+        user_config = load_config()
+        cache_dir = user_config.get("cache_dir", None)
 
         args = dict(
             stage="sft",
             model_name_or_path=get_model_path(model_name),
             do_eval=True,
-            overwrite_cache=True,
+            overwrite_cache=False,
             predict_with_generate=True,
+            cache_dir=cache_dir,
             checkpoint_dir=checkpoint_dir,
             finetuning_type=finetuning_type,
-            quantization_bit=int(quantization_bit) if quantization_bit and quantization_bit != "None" else None,
+            quantization_bit=int(quantization_bit) if quantization_bit in ["8", "4"] else None,
             template=template,
             system_prompt=system_prompt,
             dataset_dir=dataset_dir,

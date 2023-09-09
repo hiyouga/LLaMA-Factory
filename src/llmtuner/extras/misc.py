@@ -1,9 +1,7 @@
 import gc
 import torch
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, Tuple
 from transformers import InfNanRemoveLogitsProcessor, LogitsProcessorList
-
-from llmtuner.extras.constants import LAYERNORM_NAMES
 
 if TYPE_CHECKING:
     from transformers.modeling_utils import PreTrainedModel
@@ -29,12 +27,6 @@ class AverageMeter:
         self.avg = self.sum / self.count
 
 
-def get_logits_processor() -> LogitsProcessorList:
-    logits_processor = LogitsProcessorList()
-    logits_processor.append(InfNanRemoveLogitsProcessor())
-    return logits_processor
-
-
 def count_parameters(model: torch.nn.Module) -> Tuple[int, int]:
     r"""
     Returns the number of trainable parameters and number of all parameters in the model.
@@ -57,42 +49,10 @@ def count_parameters(model: torch.nn.Module) -> Tuple[int, int]:
     return trainable_params, all_param
 
 
-# Includes: (1) cast the layernorm in fp32 (2) make output embedding layer require grads (3) upcast the lm_head to fp32
-# Inspired by: https://github.com/huggingface/peft/blob/c0209c35abbf88c63aa267800d98a8e212ed0a42/src/peft/utils/other.py#L35
-def prepare_model_for_training(
-    model: "PreTrainedModel",
-    finetuning_type: str,
-    output_layer_name: Optional[str] = "lm_head",
-    use_gradient_checkpointing: Optional[bool] = True,
-    layer_norm_names: Optional[List[str]] = LAYERNORM_NAMES
-) -> "PreTrainedModel":
-    for name, param in model.named_parameters():
-        if param.ndim == 1 and any(layer_norm_name in name for layer_norm_name in layer_norm_names):
-            param.data = param.data.to(torch.float32)
-
-    if use_gradient_checkpointing:
-        if hasattr(model, "enable_input_require_grads"):
-            model.enable_input_require_grads()
-        else:
-            def make_inputs_require_grad(module, input, output):
-                output.requires_grad_(True)
-            model.get_input_embeddings().register_forward_hook(make_inputs_require_grad)
-
-        model.gradient_checkpointing_enable()
-        model.config.use_cache = False # turn off when gradient checkpointing is enabled
-
-    if finetuning_type != "full" and hasattr(model, output_layer_name):
-        output_layer: torch.nn.Linear = getattr(model, output_layer_name)
-        input_dtype = output_layer.weight.dtype
-
-        class CastOutputToFloat(torch.nn.Sequential):
-
-            def forward(self, x: torch.Tensor) -> torch.Tensor:
-                return super().forward(x.to(input_dtype)).to(torch.float32)
-
-        setattr(model, output_layer_name, CastOutputToFloat(output_layer))
-
-    return model
+def get_logits_processor() -> LogitsProcessorList:
+    logits_processor = LogitsProcessorList()
+    logits_processor.append(InfNanRemoveLogitsProcessor())
+    return logits_processor
 
 
 def torch_gc() -> None:

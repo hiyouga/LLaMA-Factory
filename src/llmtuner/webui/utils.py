@@ -90,7 +90,7 @@ def get_eval_results(path: os.PathLike) -> str:
 
 
 def gen_plot(base_model: str, finetuning_type: str, output_dir: str) -> matplotlib.figure.Figure:
-    log_file = os.path.join(get_save_dir(base_model), finetuning_type, output_dir, "trainer_log.jsonl")
+    log_file = get_save_dir(base_model, finetuning_type, output_dir, "trainer_log.jsonl")
     if not os.path.isfile(log_file):
         return None
 
@@ -139,7 +139,7 @@ def save_model(
         return
 
     checkpoint_dir = ",".join(
-            [os.path.join(get_save_dir(model_name), finetuning_type, checkpoint) for checkpoint in checkpoints]
+            [get_save_dir(model_name, finetuning_type, ckpt) for ckpt in checkpoints]
         )
 
     if not save_dir:
