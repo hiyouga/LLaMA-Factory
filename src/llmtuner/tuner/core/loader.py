@@ -23,10 +23,11 @@ except ImportError:
     from transformers.integrations import is_deepspeed_zero3_enabled
 
 from llmtuner.extras.logging import reset_logging, get_logger
-from llmtuner.extras.misc import count_parameters, prepare_model_for_training
+from llmtuner.extras.misc import count_parameters
 from llmtuner.extras.save_and_load import load_valuehead_params
 from llmtuner.hparams import FinetuningArguments
 from llmtuner.tuner.core.adapter import init_adapter
+from llmtuner.tuner.core.utils import prepare_model_for_training
 
 if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer
