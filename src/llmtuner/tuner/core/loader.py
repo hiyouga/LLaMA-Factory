@@ -72,6 +72,10 @@ def load_model_and_tokenizer(
         **config_kwargs
     )
 
+    # Fix tokenizer (for ChatGLM2)
+    if "PreTrainedTokenizerBase" not in str(tokenizer._pad.__func__):
+        tokenizer._pad = MethodType(PreTrainedTokenizerBase._pad, tokenizer)
+
     if finetuning_args.finetuning_type == "full" and model_args.checkpoint_dir is not None:
         model_to_load = model_args.checkpoint_dir[0]
     else:
