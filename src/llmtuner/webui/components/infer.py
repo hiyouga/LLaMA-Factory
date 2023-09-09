@@ -16,7 +16,7 @@ def create_infer_tab(top_elems: Dict[str, "Component"]) -> Dict[str, "Component"
 
     info_box = gr.Textbox(show_label=False, interactive=False)
 
-    chat_model = WebChatModel()
+    chat_model = WebChatModel(lazy_init=True)
     chat_box, chatbot, history, chat_elems = create_chat_box(chat_model)
 
     load_btn.click(

@@ -62,7 +62,7 @@
 | [XVERSE](https://github.com/xverse-ai/XVERSE-13B)        | 13B                         | q_proj,v_proj     | xverse    |
 | [ChatGLM2](https://github.com/THUDM/ChatGLM2-6B)         | 6B                          | query_key_value   | chatglm2  |
 
-- **Default module** is used for the `--lora_target` argument. Please use `python src/train_bash.py -h` to see all available options.
+- **Default module** is used for the `--lora_target` argument, you can use `--lora_target all` to specify all the available modules.
 - For the "base" models, the `--template` argument can be chosen from `default`, `alpaca`, `vicuna` etc. But make sure to use the corresponding template for the "chat" models.
 
 ## Supported Training Approaches
@@ -176,7 +176,6 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --model_name_or_path path_to_llama_model \
     --do_train \
     --dataset wiki_demo \
-    --template default \
     --finetuning_type lora \
     --lora_target q_proj,v_proj \
     --output_dir path_to_pt_checkpoint \

@@ -12,6 +12,7 @@ from peft.utils import CONFIG_NAME, WEIGHTS_NAME
 
 from llmtuner.extras.logging import get_logger
 from llmtuner.extras.save_and_load import load_trainable_params
+from llmtuner.tuner.core.utils import find_all_linear_modules
 
 if TYPE_CHECKING:
     from transformers.modeling_utils import PreTrainedModel
@@ -81,13 +82,18 @@ def init_adapter(
                 model = PeftModel.from_pretrained(model, latest_checkpoint, is_trainable=is_trainable)
 
         if is_trainable and latest_checkpoint is None: # create new lora weights while training
+            if len(finetuning_args.lora_target) == 1 and finetuning_args.lora_target == "all":
+                target_modules = find_all_linear_modules(model, model_args.quantization_bit)
+            else:
+                target_modules = finetuning_args.lora_target
+
             lora_config = LoraConfig(
                 task_type=TaskType.CAUSAL_LM,
                 inference_mode=False,
                 r=finetuning_args.lora_rank,
                 lora_alpha=finetuning_args.lora_alpha,
                 lora_dropout=finetuning_args.lora_dropout,
-                target_modules=finetuning_args.lora_target
+                target_modules=target_modules
             )
             model = get_peft_model(model, lora_config)
 

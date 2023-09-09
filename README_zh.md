@@ -62,7 +62,7 @@
 | [XVERSE](https://github.com/xverse-ai/XVERSE-13B)        | 13B                         | q_proj,v_proj     | xverse    |
 | [ChatGLM2](https://github.com/THUDM/ChatGLM2-6B)         | 6B                          | query_key_value   | chatglm2  |
 
-- **默认模块**是 `--lora_target` 参数的部分可选项。请使用 `python src/train_bash.py -h` 查看全部可选项。
+- **默认模块**应作为 `--lora_target` 参数的默认值，可使用 `--lora_target all` 参数指定全部模块。
 - 对于所有“基座”（Base）模型，`--template` 参数可以是 `default`, `alpaca`, `vicuna` 等任意值。但“对话”（Chat）模型请务必使用对应的模板。
 
 ## 训练方法
@@ -176,7 +176,6 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --model_name_or_path path_to_llama_model \
     --do_train \
     --dataset wiki_demo \
-    --template default \
     --finetuning_type lora \
     --lora_target q_proj,v_proj \
     --output_dir path_to_pt_checkpoint \
