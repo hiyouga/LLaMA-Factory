@@ -82,7 +82,7 @@ def init_adapter(
                 model = PeftModel.from_pretrained(model, latest_checkpoint, is_trainable=is_trainable)
 
         if is_trainable and latest_checkpoint is None: # create new lora weights while training
-            if len(finetuning_args.lora_target) == 1 and finetuning_args.lora_target == "all":
+            if len(finetuning_args.lora_target) == 1 and finetuning_args.lora_target[0] == "all":
                 target_modules = find_all_linear_modules(model, model_args.quantization_bit)
             else:
                 target_modules = finetuning_args.lora_target
