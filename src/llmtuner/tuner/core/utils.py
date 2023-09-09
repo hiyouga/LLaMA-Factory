@@ -20,7 +20,7 @@ def find_all_linear_modules(
 
     module_names = set()
     for name, module in model.named_modules():
-        if isinstance(module, linear_cls):
+        if output_layer_name not in name and isinstance(module, linear_cls):
             module_names.add(name.split(".")[-1])
 
     if output_layer_name in module_names:
