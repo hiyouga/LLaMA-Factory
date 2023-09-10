@@ -64,7 +64,7 @@
 | [XVERSE](https://github.com/xverse-ai/XVERSE-13B)        | 13B                         | q_proj,v_proj     | xverse    |
 | [ChatGLM2](https://github.com/THUDM/ChatGLM2-6B)         | 6B                          | query_key_value   | chatglm2  |
 
-> **Note**
+> [!NOTE]
 > **默认模块**应作为 `--lora_target` 参数的默认值，可使用 `--lora_target all` 参数指定全部模块。
 >
 > 对于所有“基座”（Base）模型，`--template` 参数可以是 `default`, `alpaca`, `vicuna` 等任意值。但“对话”（Chat）模型请务必使用对应的模板。
@@ -79,7 +79,7 @@
 | PPO 训练               |                    |                    | :white_check_mark: | :white_check_mark: |
 | DPO 训练               | :white_check_mark: |                    | :white_check_mark: | :white_check_mark: |
 
-> **Note**
+> [!NOTE]
 > 请使用 `--quantization_bit 4/8` 参数来启用 QLoRA 训练。
 
 ## 数据集
@@ -143,7 +143,7 @@ huggingface-cli login
 
 关于数据集文件的格式，请参考 `data/example_dataset` 文件夹的内容。构建自定义数据集时，既可以使用单个 `.json` 文件，也可以使用一个[数据加载脚本](https://huggingface.co/docs/datasets/dataset_script)和多个文件。
 
-> **Note**
+> [!NOTE]
 > 使用自定义数据集时，请更新 `data/dataset_info.json` 文件，该文件的格式请参考 `data/README.md`。
 
 ### 环境搭建（可跳过）
@@ -170,12 +170,12 @@ CUDA_VISIBLE_DEVICES=0 python src/train_web.py
 
 我们极力推荐新手使用浏览器一体化界面，因为它还可以**自动**生成运行所需的命令行脚本。
 
-> **Warning**
+> [!WARNING]
 > 目前网页 UI 仅支持**单卡训练**。
 
 ### 单 GPU 训练
 
-> **Warning**
+> [!IMPORTANT]
 > 如果您使用多张 GPU 训练模型，请移步[多 GPU 分布式训练](#多-gpu-分布式训练)部分。
 
 #### 预训练
@@ -343,6 +343,7 @@ deepspeed --num_gpus 8 --master_port=9901 src/train_bash.py \
 
 ```json
 {
+  "train_batch_size": "auto",
   "train_micro_batch_size_per_gpu": "auto",
   "gradient_accumulation_steps": "auto",
   "gradient_clipping": "auto",
@@ -390,7 +391,7 @@ python src/api_demo.py \
     --checkpoint_dir path_to_checkpoint
 ```
 
-> **Note**
+> [!NOTE]
 > 关于 API 文档请见 `http://localhost:8000/docs`。
 
 ### 命令行测试
@@ -430,7 +431,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --predict_with_generate
 ```
 
-> **Note**
+> [!NOTE]
 > 我们建议在量化模型的评估中使用 `--per_device_eval_batch_size=1` 和 `--max_target_length 128`。
 
 ### 模型预测
