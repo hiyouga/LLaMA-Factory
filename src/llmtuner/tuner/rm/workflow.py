@@ -5,11 +5,12 @@ from typing import TYPE_CHECKING, Optional, List
 from transformers import Seq2SeqTrainingArguments
 
 from llmtuner.dsets import get_dataset, preprocess_dataset, split_dataset
+from llmtuner.extras.callbacks import SavePeftModelCallback
 from llmtuner.extras.ploting import plot_loss
 from llmtuner.tuner.core import load_model_and_tokenizer
 from llmtuner.tuner.rm.metric import compute_accuracy
 from llmtuner.tuner.rm.collator import PairwiseDataCollatorWithPadding
-from llmtuner.tuner.rm.trainer import PairwisePeftTrainer
+from llmtuner.tuner.rm.trainer import PairwiseTrainer
 
 if TYPE_CHECKING:
     from transformers import TrainerCallback
@@ -33,13 +34,12 @@ def run_rm(
     training_args = Seq2SeqTrainingArguments(**training_args_dict)
 
     # Initialize our Trainer
-    trainer = PairwisePeftTrainer(
-        finetuning_args=finetuning_args,
+    trainer = PairwiseTrainer(
         model=model,
         args=training_args,
         tokenizer=tokenizer,
         data_collator=data_collator,
-        callbacks=callbacks,
+        callbacks=callbacks + [SavePeftModelCallback()],
         compute_metrics=compute_accuracy,
         **split_dataset(dataset, data_args, training_args)
     )
