@@ -64,7 +64,7 @@
 | [XVERSE](https://github.com/xverse-ai/XVERSE-13B)        | 13B                         | q_proj,v_proj     | xverse    |
 | [ChatGLM2](https://github.com/THUDM/ChatGLM2-6B)         | 6B                          | query_key_value   | chatglm2  |
 
-> **Note**
+> [!NOTE]
 > **Default module** is used for the `--lora_target` argument, you can use `--lora_target all` to specify all the available modules.
 >
 > For the "base" models, the `--template` argument can be chosen from `default`, `alpaca`, `vicuna` etc. But make sure to use the corresponding template for the "chat" models.
@@ -79,7 +79,7 @@
 | PPO Training           |                    |                    | :white_check_mark: | :white_check_mark: |
 | DPO Training           | :white_check_mark: |                    | :white_check_mark: | :white_check_mark: |
 
-> **Note**
+> [!NOTE]
 > Use `--quantization_bit 4/8` argument to enable QLoRA.
 
 ## Provided Datasets
@@ -143,7 +143,7 @@ And **powerful GPUs**!
 
 Please refer to `data/example_dataset` for checking the details about the format of dataset files. You can either use a single `.json` file or a [dataset loading script](https://huggingface.co/docs/datasets/dataset_script) with multiple files to create a custom dataset.
 
-> **Note**
+> [!NOTE]
 > Please update `data/dataset_info.json` to use your custom dataset. About the format of this file, please refer to `data/README.md`.
 
 ### Dependence Installation (optional)
@@ -170,12 +170,12 @@ CUDA_VISIBLE_DEVICES=0 python src/train_web.py
 
 We strongly recommend using the all-in-one Web UI for newcomers since it can also generate training scripts **automatically**.
 
-> **Warning**
+> [!WARNING]
 > Currently the web UI only supports training on **a single GPU**.
 
 ### Train on a single GPU
 
-> **Warning**
+> [!IMPORTANT]
 > If you want to train models on multiple GPUs, please refer to [Distributed Training](#distributed-training).
 
 #### Pre-Training
@@ -344,6 +344,7 @@ deepspeed --num_gpus 8 --master_port=9901 src/train_bash.py \
 
 ```json
 {
+  "train_batch_size": "auto",
   "train_micro_batch_size_per_gpu": "auto",
   "gradient_accumulation_steps": "auto",
   "gradient_clipping": "auto",
@@ -391,7 +392,7 @@ python src/api_demo.py \
     --checkpoint_dir path_to_checkpoint
 ```
 
-> **Note**
+> [!NOTE]
 > Visit `http://localhost:8000/docs` for API documentation.
 
 ### CLI Demo
@@ -431,7 +432,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --predict_with_generate
 ```
 
-> **Note**
+> [!NOTE]
 > We recommend using `--per_device_eval_batch_size=1` and `--max_target_length 128` at 4/8-bit evaluation.
 
 ### Predict
