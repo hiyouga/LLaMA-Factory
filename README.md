@@ -65,7 +65,6 @@
 | [ChatGLM2](https://github.com/THUDM/ChatGLM2-6B)         | 6B                          | query_key_value   | chatglm2  |
 
 > **Note**
->
 > **Default module** is used for the `--lora_target` argument, you can use `--lora_target all` to specify all the available modules.
 >
 > For the "base" models, the `--template` argument can be chosen from `default`, `alpaca`, `vicuna` etc. But make sure to use the corresponding template for the "chat" models.
@@ -81,7 +80,6 @@
 | DPO Training           | :white_check_mark: |                    | :white_check_mark: | :white_check_mark: |
 
 > **Note**
->
 > Use `--quantization_bit 4/8` argument to enable QLoRA.
 
 ## Provided Datasets
@@ -146,7 +144,6 @@ And **powerful GPUs**!
 Please refer to `data/example_dataset` for checking the details about the format of dataset files. You can either use a single `.json` file or a [dataset loading script](https://huggingface.co/docs/datasets/dataset_script) with multiple files to create a custom dataset.
 
 > **Note**
->
 > Please update `data/dataset_info.json` to use your custom dataset. About the format of this file, please refer to `data/README.md`.
 
 ### Dependence Installation (optional)
@@ -174,14 +171,12 @@ CUDA_VISIBLE_DEVICES=0 python src/train_web.py
 We strongly recommend using the all-in-one Web UI for newcomers since it can also generate training scripts **automatically**.
 
 > **Warning**
->
 > Currently the web UI only supports training on **a single GPU**.
 
 ### Train on a single GPU
 
 > **Warning**
->
-> If you want to train models on multiple GPUs, please refer to [#distributed-training](Distributed Training).
+> If you want to train models on multiple GPUs, please refer to [Distributed Training](#distributed-training).
 
 #### Pre-Training
 
@@ -397,7 +392,6 @@ python src/api_demo.py \
 ```
 
 > **Note**
->
 > Visit `http://localhost:8000/docs` for API documentation.
 
 ### CLI Demo
@@ -438,7 +432,6 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 ```
 
 > **Note**
->
 > We recommend using `--per_device_eval_batch_size=1` and `--max_target_length 128` at 4/8-bit evaluation.
 
 ### Predict
@@ -490,7 +483,7 @@ If this work is helpful, please kindly cite as:
 
 ## Acknowledgement
 
-This repo is a sibling of [ChatGLM-Efficient-Tuning](https://github.com/hiyouga/ChatGLM-Efficient-Tuning). They share a similar code structure of efficient tuning on large language models.
+This repo benefits from [PEFT](https://github.com/huggingface/peft), [QLoRA](https://github.com/artidoro/qlora) and [OpenChatKit](https://github.com/togethercomputer/OpenChatKit). Thanks for their wonderful works.
 
 ## Star History
 
