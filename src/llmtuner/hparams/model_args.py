@@ -43,6 +43,10 @@ class ModelArguments:
         default=None,
         metadata={"help": "Adopt scaled rotary positional embeddings."}
     )
+    flash_attn: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Enable flash attention for faster training."}
+    )
     checkpoint_dir: Optional[str] = field(
         default=None,
         metadata={"help": "Path to the directory(s) containing the delta model checkpoints as well as the configurations."}
