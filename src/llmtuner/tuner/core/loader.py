@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-check_min_version("4.29.1")
+check_min_version("4.30.0")
 require_version("datasets>=2.12.0", "To fix: pip install datasets>=2.12.0")
 require_version("accelerate>=0.21.0", "To fix: pip install accelerate>=0.21.0")
 require_version("peft==0.4.0", "To fix: pip install peft==0.4.0")
@@ -78,7 +78,7 @@ def load_model_and_tokenizer(
     if "PreTrainedTokenizerBase" not in str(tokenizer._pad.__func__):
         tokenizer._pad = MethodType(PreTrainedTokenizerBase._pad, tokenizer)
 
-    if finetuning_args.finetuning_type == "full" and model_args.checkpoint_dir is not None:
+    if finetuning_args.finetuning_type != "lora" and model_args.checkpoint_dir is not None:
         model_to_load = model_args.checkpoint_dir[0]
     else:
         model_to_load = model_args.model_name_or_path
@@ -197,6 +197,7 @@ def load_model_and_tokenizer(
     # Prepare model with valuehead for RLHF
     if stage == "rm" or stage == "ppo":
         model: AutoModelForCausalLMWithValueHead = AutoModelForCausalLMWithValueHead.from_pretrained(model)
+        model._keys_to_ignore_on_save = None
         reset_logging()
         if stage == "rm" and model_args.checkpoint_dir is not None: # load valuehead weights to evaluate reward model
             logger.warning("Only the last checkpoint containing valuehead will be loaded as the valuehead.")

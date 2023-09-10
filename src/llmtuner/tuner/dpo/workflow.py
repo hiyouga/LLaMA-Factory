@@ -10,7 +10,7 @@ from llmtuner.extras.constants import IGNORE_INDEX
 from llmtuner.extras.ploting import plot_loss
 from llmtuner.tuner.core import load_model_and_tokenizer
 from llmtuner.tuner.dpo.collator import DPODataCollatorWithPadding
-from llmtuner.tuner.dpo.trainer import DPOPeftTrainer
+from llmtuner.tuner.dpo.trainer import CustomDPOTrainer
 
 if TYPE_CHECKING:
     from transformers import TrainerCallback
@@ -37,10 +37,10 @@ def run_dpo(
     training_args = Seq2SeqTrainingArguments(**training_args_dict)
 
     # Initialize our Trainer
-    trainer = DPOPeftTrainer(
-        finetuning_args=finetuning_args,
-        ref_model=deepcopy(model) if not isinstance(model, PeftModel) else None,
+    trainer = CustomDPOTrainer(
+        beta=finetuning_args.dpo_beta,
         model=model,
+        ref_model=deepcopy(model) if not isinstance(model, PeftModel) else None,
         args=training_args,
         tokenizer=tokenizer,
         data_collator=data_collator,

@@ -2,9 +2,9 @@ import os
 import json
 import torch
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
+from transformers import Trainer
 
 from llmtuner.extras.logging import get_logger
-from llmtuner.tuner.core.trainer import PeftTrainer
 
 if TYPE_CHECKING:
     from transformers.trainer import PredictionOutput
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-class PairwisePeftTrainer(PeftTrainer):
+class PairwiseTrainer(Trainer):
     r"""
     Inherits PeftTrainer to compute pairwise loss.
     """
