@@ -11,7 +11,6 @@ from peft import (
 from peft.utils import CONFIG_NAME, WEIGHTS_NAME
 
 from llmtuner.extras.logging import get_logger
-from llmtuner.extras.save_and_load import load_trainable_params
 from llmtuner.tuner.core.utils import find_all_linear_modules
 
 if TYPE_CHECKING:
@@ -52,9 +51,6 @@ def init_adapter(
                 param.requires_grad_(False)
             else:
                 param.data = param.data.to(torch.float32)
-
-        if model_args.checkpoint_dir is not None:
-            assert load_trainable_params(model, model_args.checkpoint_dir[0]), "Model checkpoint is not correctly loaded."
 
     if finetuning_args.finetuning_type == "lora":
         logger.info("Fine-tuning method: LoRA")
