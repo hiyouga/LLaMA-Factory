@@ -26,6 +26,7 @@ class CustomDPOTrainer(DPOTrainer):
             if ref_model is not None:
                 disable_dropout_in_model(ref_model)
 
+        self.is_encoder_decoder = model.config.is_encoder_decoder
         self.ref_model = ref_model
         self.use_dpo_data_collator = True # hack to avoid warning
         self.label_pad_token_id = IGNORE_INDEX
