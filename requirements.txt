@@ -6,6 +6,7 @@ peft==0.4.0
 trl>=0.7.1
 scipy
 sentencepiece
+protobuf
 tiktoken
 jieba
 rouge-chinese
