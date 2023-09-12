@@ -230,7 +230,8 @@ class LlamaAttention(torch.nn.Module):
             new_len = past_len+q.size(1)
             if new_len > past_kv.size(1):
                 past_kv = torch.cat(
-                    [past_kv, torch.empty(bsz, 256, 2, kv.size(3), kv.size(4), dtype=kv.dtype, device=kv.device)], 1
+                    [past_kv, torch.empty(bsz, 256, 2, kv.size(3), kv.size(4), dtype=kv.dtype, device=kv.device)],
+                    dim=1
                 )
             past_kv[:, past_len:new_len] = kv
             kv = past_kv[:, :new_len]
@@ -248,20 +249,18 @@ class LlamaAttention(torch.nn.Module):
             attn_outputs = flash_attn_varlen_kvpacked_func(
                 unpadded_q, unpadded_kv, cu_seqlens_q, cu_seqlens_k,
                 max_seqlen_q, max_seqlen_k,
-                dropout_p=0.0, softmax_scale=1.0/self.norm_factor,
+                dropout_p=0.0, softmax_scale=1.0 / self.norm_factor,
                 causal=(not has_layer_past), return_attn_probs=output_attentions
             )
 
             attn_output = attn_outputs[0] if output_attentions else attn_outputs
-            attn_output = pad_input(
-                attn_output, indices_q, bsz, q_len
-            ).reshape(bsz, q_len, h_size)
+            attn_output = pad_input(attn_output, indices_q, bsz, q_len).reshape(bsz, q_len, h_size)
             attn_weights = attn_outputs[2] if output_attentions else None
 
         else:
             # no padding tokens, more efficient
             attn_outputs = flash_attn_kvpacked_func(
-                q, kv, dropout_p=0.0, softmax_scale=1.0/self.norm_factor,
+                q, kv, dropout_p=0.0, softmax_scale=1.0 / self.norm_factor,
                 causal=(not has_layer_past), return_attn_probs=output_attentions
             )
             attn_output = attn_outputs[0] if output_attentions else attn_outputs
