@@ -147,7 +147,8 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
                 dataiter = iter(self.dataloader)
                 steps_trained = 0
 
-        self.log_callback.on_train_end(
+        self.log_callback.on_train_end(self.args, self.state, self.control)
+        self.save_callback.on_train_end(
             self.args, self.state, self.control, model=self.accelerator.unwrap_model(self.model)
         )
 
