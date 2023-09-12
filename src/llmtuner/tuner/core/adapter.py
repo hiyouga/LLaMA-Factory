@@ -92,6 +92,8 @@ def init_adapter(
                 target_modules=target_modules
             )
             model = get_peft_model(model, lora_config)
+            if id(model.peft_config) != id(model.base_model.peft_config): # https://github.com/huggingface/peft/issues/923
+                model.base_model.peft_config = model.peft_config
 
     if model_args.checkpoint_dir is not None:
         logger.info("Loaded fine-tuned model from checkpoint(s): {}".format(",".join(model_args.checkpoint_dir)))

@@ -469,7 +469,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 
 ## 致谢
 
-本项目受益于 [PEFT](https://github.com/huggingface/peft)、[QLoRA](https://github.com/artidoro/qlora) 和 [OpenChatKit](https://github.com/togethercomputer/OpenChatKit)，感谢以上诸位作者的付出。
+本项目受益于 [PEFT](https://github.com/huggingface/peft)、[QLoRA](https://github.com/artidoro/qlora)、[FastChat](https://github.com/lm-sys/FastChat) 和 [OpenChatKit](https://github.com/togethercomputer/OpenChatKit)，感谢以上诸位作者的付出。
 
 ## Star History
 
