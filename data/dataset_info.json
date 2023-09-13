@@ -95,6 +95,12 @@
       "history": "history"
     }
   },
+  "codealpaca": {
+    "hf_hub_url": "sahil2801/CodeAlpaca-20k"
+  },
+  "alpaca_cot": {
+    "hf_hub_url": "QingyiSi/Alpaca-CoT"
+  },
   "firefly": {
     "hf_hub_url": "YeungNLP/firefly-train-1.1M",
     "columns": {
@@ -104,11 +110,14 @@
       "history": ""
     }
   },
-  "codealpaca": {
-    "hf_hub_url": "sahil2801/CodeAlpaca-20k"
-  },
-  "alpaca_cot": {
-    "hf_hub_url": "QingyiSi/Alpaca-CoT"
+  "mathinstruct": {
+    "hf_hub_url": "TIGER-Lab/MathInstruct",
+    "columns": {
+      "prompt": "instruction",
+      "query": "",
+      "response": "output",
+      "history": ""
+    }
   },
   "webqa": {
     "hf_hub_url": "suolyer/webqa",
