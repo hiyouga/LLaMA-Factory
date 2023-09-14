@@ -10,8 +10,8 @@ if TYPE_CHECKING:
 def replace_model(model: "AutoModelForCausalLMWithValueHead", target: Literal["default", "reward"]) -> None:
     if target == "reward": # save default head temporarily
         valuehead_state_dict = model.v_head.state_dict()
-        setattr(model, "default_head_weight", valuehead_state_dict["summary.weight"].clone())
-        setattr(model, "default_head_bias", valuehead_state_dict["summary.bias"].clone())
+        setattr(model, "default_head_weight", valuehead_state_dict["summary.weight"].detach().clone())
+        setattr(model, "default_head_bias", valuehead_state_dict["summary.bias"].detach().clone())
 
     model.pretrained_model.set_adapter(target) # set the LoRA adapter to be active
     model.v_head.load_state_dict({
