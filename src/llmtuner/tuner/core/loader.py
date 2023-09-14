@@ -103,7 +103,6 @@ def load_model_and_tokenizer(
 
         elif hasattr(config, "rope_scaling"): # for LLaMA and Falcon models
             require_version("transformers>=4.31.0", "RoPE scaling requires transformers>=4.31.0")
-
             if is_trainable:
                 if model_args.rope_scaling == "dynamic":
                     assert not model_args.flash_attn, "Flash attention does not support dynamic rope scaling."
