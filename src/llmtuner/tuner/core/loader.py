@@ -86,10 +86,8 @@ def load_model_and_tokenizer(
 
     # Fix config (for Qwen)
     if is_trainable and hasattr(config, "fp16") and hasattr(config, "bf16"):
-        if model_args.compute_dtype == torch.bfloat16:
-            setattr(config, "bf16", True)
-        else:
-            setattr(config, "fp16", True)
+        setattr(config, "fp16", model_args.compute_dtype == torch.float16)
+        setattr(config, "bf16", model_args.compute_dtype == torch.bfloat16)
 
     # Set RoPE scaling
     if model_args.rope_scaling is not None:
