@@ -139,7 +139,7 @@ def create_train_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dic
     start_btn.click(runner.run_train, input_components, output_components)
     stop_btn.click(runner.set_abort, queue=False)
 
-    process_bar.change(
+    output_box.change(
         gen_plot, [top_elems["model_name"], top_elems["finetuning_type"], output_dir], loss_viewer, queue=False
     )
 
