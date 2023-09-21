@@ -213,7 +213,7 @@ def get_train_args(
     else:
         model_args.compute_dtype = torch.float32
 
-    model_args.model_max_length = data_args.max_source_length + data_args.max_target_length
+    model_args.model_max_length = data_args.cutoff_len
 
     # Log on each process the small summary:
     logger.info("Process rank: {}, device: {}, n_gpu: {}\n  distributed training: {}, compute dtype: {}".format(
