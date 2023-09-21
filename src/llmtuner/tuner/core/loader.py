@@ -173,7 +173,7 @@ def load_model_and_tokenizer(
     )
 
     # Disable custom generate method (for Qwen)
-    if "GenerationMixin" not in str(model.generate.__func__):
+    if isinstance(model, PreTrainedModel) and "GenerationMixin" not in str(model.generate.__func__):
         model.generate = MethodType(PreTrainedModel.generate, model)
 
     # Fix LM head (for ChatGLM2)
