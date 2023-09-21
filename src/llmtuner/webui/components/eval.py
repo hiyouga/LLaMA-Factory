@@ -28,11 +28,15 @@ def create_eval_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict
     )
 
     with gr.Row():
-        max_source_length = gr.Slider(value=512, minimum=4, maximum=4096, step=1)
-        max_target_length = gr.Slider(value=512, minimum=4, maximum=4096, step=1)
+        cutoff_len = gr.Slider(value=1024, minimum=4, maximum=8192, step=1)
         max_samples = gr.Textbox(value="100000")
         batch_size = gr.Slider(value=8, minimum=1, maximum=512, step=1)
         predict = gr.Checkbox(value=True)
+
+    with gr.Row():
+        max_new_tokens = gr.Slider(10, 2048, value=128, step=1)
+        top_p = gr.Slider(0.01, 1, value=0.7, step=0.01)
+        temperature = gr.Slider(0.01, 1.5, value=0.95, step=0.01)
 
     with gr.Row():
         cmd_preview_btn = gr.Button()
@@ -55,11 +59,13 @@ def create_eval_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict
         top_elems["system_prompt"],
         dataset_dir,
         dataset,
-        max_source_length,
-        max_target_length,
+        cutoff_len,
         max_samples,
         batch_size,
-        predict
+        predict,
+        max_new_tokens,
+        top_p,
+        temperature
     ]
 
     output_components = [
@@ -78,11 +84,13 @@ def create_eval_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict
         preview_count=preview_count,
         preview_samples=preview_samples,
         close_btn=close_btn,
-        max_source_length=max_source_length,
-        max_target_length=max_target_length,
+        cutoff_len=cutoff_len,
         max_samples=max_samples,
         batch_size=batch_size,
         predict=predict,
+        max_new_tokens=max_new_tokens,
+        top_p=top_p,
+        temperature=temperature,
         cmd_preview_btn=cmd_preview_btn,
         start_btn=start_btn,
         stop_btn=stop_btn,

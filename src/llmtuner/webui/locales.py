@@ -147,24 +147,14 @@ LOCALES = {
             "value": "关闭"
         }
     },
-    "max_source_length": {
+    "cutoff_len": {
         "en": {
-            "label": "Max source length",
-            "info": "Max tokens in source sequence."
+            "label": "Cutoff length",
+            "info": "Max tokens in input sequence."
         },
         "zh": {
-            "label": "输入序列最大长度",
+            "label": "截断长度",
             "info": "输入序列分词后的最大长度。"
-        }
-    },
-    "max_target_length": {
-        "en": {
-            "label": "Max target length",
-            "info": "Max tokens in target sequence."
-        },
-        "zh": {
-            "label": "输出序列最大长度",
-            "info": "输出序列分词后的最大长度。"
         }
     },
     "learning_rate": {
@@ -195,6 +185,16 @@ LOCALES = {
         "zh": {
             "label": "最大样本数",
             "info": "每个数据集最多使用的样本数。"
+        }
+    },
+    "compute_type": {
+        "en": {
+            "label": "Compute type",
+            "info": "Whether to use fp16 or bf16 mixed precision training."
+        },
+        "zh": {
+            "label": "计算类型",
+            "info": "是否启用 FP16 或 BF16 混合精度训练。"
         }
     },
     "batch_size": {
@@ -277,14 +277,20 @@ LOCALES = {
             "info": "学习率预热采用的步数。"
         }
     },
-    "compute_type": {
+    "flash_attn": {
         "en": {
-            "label": "Compute type",
-            "info": "Whether to use fp16 or bf16 mixed precision training."
+            "label": "Use FlashAttention-2"
         },
         "zh": {
-            "label": "计算类型",
-            "info": "是否启用 FP16 或 BF16 混合精度训练。"
+            "label": "使用 FlashAttention-2"
+        }
+    },
+    "rope_scaling": {
+        "en": {
+            "label": "Use RoPE scaling"
+        },
+        "zh": {
+            "label": "使用 RoPE 插值"
         }
     },
     "lora_tab": {
