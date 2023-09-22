@@ -8,6 +8,7 @@ import os
 import fire
 import json
 import torch
+import random
 import numpy as np
 from tqdm import tqdm
 from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Tuple
@@ -48,6 +49,7 @@ class EvalTemplate:
         history = [self.parse_example(support_set[k]) for k in range(len(support_set))]
 
         if len(history):
+            random.shuffle(history)
             temp = history.pop(0)
             history.insert(0, (self.system.format(subject=subject_name) + temp[0], temp[1]))
         else:
