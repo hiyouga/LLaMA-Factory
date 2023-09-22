@@ -6,8 +6,8 @@
 import fire
 import torch
 from typing import Optional
-from deepspeed.accelerator import get_accelerator
-from deepspeed.profiling.flops_profiler import get_model_profile
+from deepspeed.accelerator import get_accelerator # type: ignore
+from deepspeed.profiling.flops_profiler import get_model_profile # type: ignore
 
 from llmtuner import ChatModel
 
@@ -35,7 +35,7 @@ def calculate(
             print_profile=True,
             detailed=True
         )
-        print("FLOPS:", flops)
+        print("FLOPs:", flops)
         print("MACs:", macs)
         print("Params:", params)
 
