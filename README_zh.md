@@ -51,7 +51,7 @@
 | [Qwen](https://github.com/QwenLM/Qwen-7B)                | 7B                          | c_attn            | chatml    |
 | [XVERSE](https://github.com/xverse-ai/XVERSE-13B)        | 13B                         | q_proj,v_proj     | xverse    |
 | [ChatGLM2](https://github.com/THUDM/ChatGLM2-6B)         | 6B                          | query_key_value   | chatglm2  |
-| [Phi-1.5](https://huggingface.co/microsoft/phi-1_5)      | 1.5B                        | Wqkv              | -         |
+| [Phi-1.5](https://huggingface.co/microsoft/phi-1_5)      | 1.3B                        | Wqkv              | -         |
 
 > [!NOTE]
 > **默认模块**应作为 `--lora_target` 参数的默认值，可使用 `--lora_target all` 参数指定全部模块。
@@ -360,7 +360,7 @@ deepspeed --num_gpus 8 --master_port=9901 src/train_bash.py \
 
 </details>
 
-### 导出微调后的模型
+### 导出微调后的完整模型
 
 ```bash
 python src/export_model.py \
@@ -368,7 +368,8 @@ python src/export_model.py \
     --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint \
-    --output_dir path_to_export
+    --output_dir path_to_export \
+    --fp16
 ```
 
 ### API 服务
