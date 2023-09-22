@@ -14,27 +14,29 @@
 
 ## Changelog
 
-[23/09/10] Now we support using **[FlashAttention](https://github.com/Dao-AILab/flash-attention)** for the LLaMA models. Try `--flash_attn` argument to enable FlashAttention-2 if you are using RTX4090, A100 or H100 GPUs (experimental feature).
+[23/09/23] We integrated MMLU and C-Eval benchmarks in this repo. See [this example](#evaluation-mmlu--c-eval) to evaluate your models.
 
-[23/08/18] Now we support **resuming training**, upgrade `transformers` to `4.31.0` to enjoy this feature.
+[23/09/10] We supported using **[FlashAttention](https://github.com/Dao-AILab/flash-attention)** for the LLaMA models. Try `--flash_attn` argument to enable FlashAttention-2 if you are using RTX4090, A100 or H100 GPUs.
 
-[23/08/12] Now we support **RoPE scaling** to extend the context length of the LLaMA models. Try `--rope_scaling linear` argument in training and `--rope_scaling dynamic` argument at inference to extrapolate the position embeddings.
+[23/08/18] We supported **resuming training**, upgrade `transformers` to `4.31.0` to enjoy this feature.
 
-[23/08/11] Now we support **[DPO training](https://arxiv.org/abs/2305.18290)** for instruction-tuned models. See [this example](#dpo-training) to train your models.
+[23/08/12] We supported **RoPE scaling** to extend the context length of the LLaMA models. Try `--rope_scaling linear` argument in training and `--rope_scaling dynamic` argument at inference to extrapolate the position embeddings.
 
-[23/07/31] Now we support **dataset streaming**. Try `--streaming` and `--max_steps 10000` arguments to load your dataset in streaming mode.
+[23/08/11] We supported **[DPO training](https://arxiv.org/abs/2305.18290)** for instruction-tuned models. See [this example](#dpo-training) to train your models.
 
-[23/07/29] We release two instruction-tuned 13B models at Hugging Face. See these Hugging Face Repos ([LLaMA-2](https://huggingface.co/hiyouga/Llama-2-Chinese-13b-chat) / [Baichuan](https://huggingface.co/hiyouga/Baichuan-13B-sft)) for details.
+[23/07/31] We supported **dataset streaming**. Try `--streaming` and `--max_steps 10000` arguments to load your dataset in streaming mode.
 
-[23/07/18] Now we develop an **all-in-one Web UI** for training, evaluation and inference. Try `train_web.py` to fine-tune models in your Web browser. Thank [@KanadeSiina](https://github.com/KanadeSiina) and [@codemayq](https://github.com/codemayq) for their efforts in the development.
+[23/07/29] We released two instruction-tuned 13B models at Hugging Face. See these Hugging Face Repos ([LLaMA-2](https://huggingface.co/hiyouga/Llama-2-Chinese-13b-chat) / [Baichuan](https://huggingface.co/hiyouga/Baichuan-13B-sft)) for details.
 
-[23/07/09] Now we release **[FastEdit](https://github.com/hiyouga/FastEdit)** ⚡🩹, an easy-to-use package for editing the factual knowledge of large language models efficiently. Please follow [FastEdit](https://github.com/hiyouga/FastEdit) if you are interested.
+[23/07/18] We developed an **all-in-one Web UI** for training, evaluation and inference. Try `train_web.py` to fine-tune models in your Web browser. Thank [@KanadeSiina](https://github.com/KanadeSiina) and [@codemayq](https://github.com/codemayq) for their efforts in the development.
 
-[23/06/29] We provide a **reproducible example** of training a chat model using instruction-following datasets, see [Baichuan-7B-sft](https://huggingface.co/hiyouga/Baichuan-7B-sft) for details.
+[23/07/09] We released **[FastEdit](https://github.com/hiyouga/FastEdit)** ⚡🩹, an easy-to-use package for editing the factual knowledge of large language models efficiently. Please follow [FastEdit](https://github.com/hiyouga/FastEdit) if you are interested.
 
-[23/06/22] Now we align the [demo API](src/api_demo.py) with the [OpenAI's](https://platform.openai.com/docs/api-reference/chat) format where you can insert the fine-tuned model in **arbitrary ChatGPT-based applications**.
+[23/06/29] We provided a **reproducible example** of training a chat model using instruction-following datasets, see [Baichuan-7B-sft](https://huggingface.co/hiyouga/Baichuan-7B-sft) for details.
 
-[23/06/03] Now we support quantized training and inference (aka **[QLoRA](https://github.com/artidoro/qlora)**). Try `--quantization_bit 4/8` argument to work with quantized models.
+[23/06/22] We aligned the [demo API](src/api_demo.py) with the [OpenAI's](https://platform.openai.com/docs/api-reference/chat) format where you can insert the fine-tuned model in **arbitrary ChatGPT-based applications**.
+
+[23/06/03] We supported quantized training and inference (aka **[QLoRA](https://github.com/artidoro/qlora)**). Try `--quantization_bit 4/8` argument to work with quantized models.
 
 ## Supported Models
 
@@ -405,27 +407,7 @@ python src/web_demo.py \
     --checkpoint_dir path_to_checkpoint
 ```
 
-### Evaluation (BLEU and ROUGE_CHINESE)
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage sft \
-    --model_name_or_path path_to_llama_model \
-    --do_eval \
-    --dataset alpaca_gpt4_en \
-    --template default \
-    --finetuning_type lora \
-    --checkpoint_dir path_to_checkpoint \
-    --output_dir path_to_eval_result \
-    --per_device_eval_batch_size 8 \
-    --max_samples 100 \
-    --predict_with_generate
-```
-
-> [!NOTE]
-> We recommend using `--per_device_eval_batch_size=1` and `--max_target_length 128` at 4/8-bit evaluation.
-
-### Predict
+### Evaluation and Predict (BLEU & ROUGE_CHINESE)
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
@@ -440,6 +422,24 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --per_device_eval_batch_size 8 \
     --max_samples 100 \
     --predict_with_generate
+```
+
+> [!NOTE]
+> We recommend using `--per_device_eval_batch_size=1` and `--max_target_length 128` at 4/8-bit evaluation.
+
+### Evaluation (MMLU & C-Eval)
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python evaluation/evaluate.py \
+    --model_name_or_path path_to_llama_model \
+    --finetuning_type lora \
+    --checkpoint_dir path_to_checkpoint \
+    --template vanilla \
+    --task mmlu \
+    --split test \
+    --lang en \
+    --n_shot 5 \
+    --batch_size 4
 ```
 
 ## License

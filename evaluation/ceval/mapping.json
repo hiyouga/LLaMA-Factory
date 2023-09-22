@@ -1,0 +1,210 @@
+{
+  "accountant": {
+    "name": "注册会计师",
+    "category": "Other"
+  },
+  "advanced_mathematics": {
+    "name": "高等数学",
+    "category": "STEM"
+  },
+  "art_studies": {
+    "name": "艺术学",
+    "category": "Humanities"
+  },
+  "basic_medicine": {
+    "name": "基础医学",
+    "category": "Other"
+  },
+  "business_administration": {
+    "name": "工商管理",
+    "category": "Social Sciences"
+  },
+  "chinese_language_and_literature": {
+    "name": "中国语言文学",
+    "category": "Humanities"
+  },
+  "civil_servant": {
+    "name": "公务员",
+    "category": "Other"
+  },
+  "clinical_medicine": {
+    "name": "临床医学",
+    "category": "Other"
+  },
+  "college_chemistry": {
+    "name": "大学化学",
+    "category": "STEM"
+  },
+  "college_economics": {
+    "name": "大学经济学",
+    "category": "Social Sciences"
+  },
+  "college_physics": {
+    "name": "大学物理",
+    "category": "STEM"
+  },
+  "college_programming": {
+    "name": "大学编程",
+    "category": "STEM"
+  },
+  "computer_architecture": {
+    "name": "计算机组成",
+    "category": "STEM"
+  },
+  "computer_network": {
+    "name": "计算机网络",
+    "category": "STEM"
+  },
+  "discrete_mathematics": {
+    "name": "离散数学",
+    "category": "STEM"
+  },
+  "education_science": {
+    "name": "教育学",
+    "category": "Social Sciences"
+  },
+  "electrical_engineer": {
+    "name": "注册电气工程师",
+    "category": "STEM"
+  },
+  "environmental_impact_assessment_engineer": {
+    "name": "环境影响评价工程师",
+    "category": "Other"
+  },
+  "fire_engineer": {
+    "name": "注册消防工程师",
+    "category": "Other"
+  },
+  "high_school_biology": {
+    "name": "高中生物",
+    "category": "STEM"
+  },
+  "high_school_chemistry": {
+    "name": "高中化学",
+    "category": "STEM"
+  },
+  "high_school_chinese": {
+    "name": "高中语文",
+    "category": "Humanities"
+  },
+  "high_school_geography": {
+    "name": "高中地理",
+    "category": "Social Sciences"
+  },
+  "high_school_history": {
+    "name": "高中历史",
+    "category": "Humanities"
+  },
+  "high_school_mathematics": {
+    "name": "高中数学",
+    "category": "STEM"
+  },
+  "high_school_physics": {
+    "name": "高中物理",
+    "category": "STEM"
+  },
+  "high_school_politics": {
+    "name": "高中政治",
+    "category": "Social Sciences"
+  },
+  "ideological_and_moral_cultivation": {
+    "name": "思想道德修养与法律基础",
+    "category": "Humanities"
+  },
+  "law": {
+    "name": "法学",
+    "category": "Humanities"
+  },
+  "legal_professional": {
+    "name": "法律职业资格",
+    "category": "Humanities"
+  },
+  "logic": {
+    "name": "逻辑学",
+    "category": "Humanities"
+  },
+  "mao_zedong_thought": {
+    "name": "毛泽东思想和中国特色社会主义理论体系概论",
+    "category": "Social Sciences"
+  },
+  "marxism": {
+    "name": "马克思主义基本原理",
+    "category": "Social Sciences"
+  },
+  "metrology_engineer": {
+    "name": "注册计量师",
+    "category": "STEM"
+  },
+  "middle_school_biology": {
+    "name": "初中生物",
+    "category": "STEM"
+  },
+  "middle_school_chemistry": {
+    "name": "初中化学",
+    "category": "STEM"
+  },
+  "middle_school_geography": {
+    "name": "初中地理",
+    "category": "Social Sciences"
+  },
+  "middle_school_history": {
+    "name": "初中历史",
+    "category": "Humanities"
+  },
+  "middle_school_mathematics": {
+    "name": "初中数学",
+    "category": "STEM"
+  },
+  "middle_school_physics": {
+    "name": "初中物理",
+    "category": "STEM"
+  },
+  "middle_school_politics": {
+    "name": "初中政治",
+    "category": "Social Sciences"
+  },
+  "modern_chinese_history": {
+    "name": "近代史纲要",
+    "category": "Humanities"
+  },
+  "operating_system": {
+    "name": "操作系统",
+    "category": "STEM"
+  },
+  "physician": {
+    "name": "医师资格",
+    "category": "Other"
+  },
+  "plant_protection": {
+    "name": "植物保护",
+    "category": "Other"
+  },
+  "probability_and_statistics": {
+    "name": "概率统计",
+    "category": "STEM"
+  },
+  "professional_tour_guide": {
+    "name": "导游资格",
+    "category": "Humanities"
+  },
+  "sports_science": {
+    "name": "体育学",
+    "category": "Other"
+  },
+  "tax_accountant": {
+    "name": "税务师",
+    "category": "Other"
+  },
+  "teacher_qualification": {
+    "name": "教师资格",
+    "category": "Social Sciences"
+  },
+  "urban_and_rural_planner": {
+    "name": "注册城乡规划师",
+    "category": "Other"
+  },
+  "veterinary_medicine": {
+    "name": "兽医学",
+    "category": "STEM"
+  }
+}

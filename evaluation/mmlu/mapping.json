@@ -1,0 +1,230 @@
+{
+  "abstract_algebra": {
+    "name": "abstract algebra",
+    "category": "STEM"
+  },
+  "anatomy": {
+    "name": "anatomy",
+    "category": "Other"
+  },
+  "astronomy": {
+    "name": "astronomy",
+    "category": "STEM"
+  },
+  "business_ethics": {
+    "name": "business ethics",
+    "category": "Other"
+  },
+  "clinical_knowledge": {
+    "name": "clinical knowledge",
+    "category": "Other"
+  },
+  "college_biology": {
+    "name": "college biology",
+    "category": "STEM"
+  },
+  "college_chemistry": {
+    "name": "college chemistry",
+    "category": "STEM"
+  },
+  "college_computer_science": {
+    "name": "college computer science",
+    "category": "STEM"
+  },
+  "college_mathematics": {
+    "name": "college mathematics",
+    "category": "STEM"
+  },
+  "college_medicine": {
+    "name": "college medicine",
+    "category": "Other"
+  },
+  "college_physics": {
+    "name": "college physics",
+    "category": "STEM"
+  },
+  "computer_security": {
+    "name": "computer security",
+    "category": "STEM"
+  },
+  "conceptual_physics": {
+    "name": "conceptual physics",
+    "category": "STEM"
+  },
+  "econometrics": {
+    "name": "econometrics",
+    "category": "Social Sciences"
+  },
+  "electrical_engineering": {
+    "name": "electrical engineering",
+    "category": "STEM"
+  },
+  "elementary_mathematics": {
+    "name": "elementary mathematics",
+    "category": "STEM"
+  },
+  "formal_logic": {
+    "name": "formal logic",
+    "category": "Humanities"
+  },
+  "global_facts": {
+    "name": "global facts",
+    "category": "Other"
+  },
+  "high_school_biology": {
+    "name": "high school biology",
+    "category": "STEM"
+  },
+  "high_school_chemistry": {
+    "name": "high school chemistry",
+    "category": "STEM"
+  },
+  "high_school_computer_science": {
+    "name": "high school computer science",
+    "category": "STEM"
+  },
+  "high_school_european_history": {
+    "name": "high school european history",
+    "category": "Humanities"
+  },
+  "high_school_geography": {
+    "name": "high school geography",
+    "category": "Social Sciences"
+  },
+  "high_school_government_and_politics": {
+    "name": "high school government and politics",
+    "category": "Social Sciences"
+  },
+  "high_school_macroeconomics": {
+    "name": "high school macroeconomics",
+    "category": "Social Sciences"
+  },
+  "high_school_mathematics": {
+    "name": "high school mathematics",
+    "category": "STEM"
+  },
+  "high_school_microeconomics": {
+    "name": "high school microeconomics",
+    "category": "Social Sciences"
+  },
+  "high_school_physics": {
+    "name": "high school physics",
+    "category": "STEM"
+  },
+  "high_school_psychology": {
+    "name": "high school psychology",
+    "category": "Social Sciences"
+  },
+  "high_school_statistics": {
+    "name": "high school statistics",
+    "category": "STEM"
+  },
+  "high_school_us_history": {
+    "name": "high school us history",
+    "category": "Humanities"
+  },
+  "high_school_world_history": {
+    "name": "high school world history",
+    "category": "Humanities"
+  },
+  "human_aging": {
+    "name": "human aging",
+    "category": "Other"
+  },
+  "human_sexuality": {
+    "name": "human sexuality",
+    "category": "Social Sciences"
+  },
+  "international_law": {
+    "name": "international law",
+    "category": "Humanities"
+  },
+  "jurisprudence": {
+    "name": "jurisprudence",
+    "category": "Humanities"
+  },
+  "logical_fallacies": {
+    "name": "logical fallacies",
+    "category": "Humanities"
+  },
+  "machine_learning": {
+    "name": "machine learning",
+    "category": "STEM"
+  },
+  "management": {
+    "name": "management",
+    "category": "Other"
+  },
+  "marketing": {
+    "name": "marketing",
+    "category": "Other"
+  },
+  "medical_genetics": {
+    "name": "medical genetics",
+    "category": "Other"
+  },
+  "miscellaneous": {
+    "name": "miscellaneous",
+    "category": "Other"
+  },
+  "moral_disputes": {
+    "name": "moral disputes",
+    "category": "Humanities"
+  },
+  "moral_scenarios": {
+    "name": "moral scenarios",
+    "category": "Humanities"
+  },
+  "nutrition": {
+    "name": "nutrition",
+    "category": "Other"
+  },
+  "philosophy": {
+    "name": "philosophy",
+    "category": "Humanities"
+  },
+  "prehistory": {
+    "name": "prehistory",
+    "category": "Humanities"
+  },
+  "professional_accounting": {
+    "name": "professional accounting",
+    "category": "Other"
+  },
+  "professional_law": {
+    "name": "professional law",
+    "category": "Humanities"
+  },
+  "professional_medicine": {
+    "name": "professional medicine",
+    "category": "Other"
+  },
+  "professional_psychology": {
+    "name": "professional psychology",
+    "category": "Social Sciences"
+  },
+  "public_relations": {
+    "name": "public relations",
+    "category": "Social Sciences"
+  },
+  "security_studies": {
+    "name": "security studies",
+    "category": "Social Sciences"
+  },
+  "sociology": {
+    "name": "sociology",
+    "category": "Social Sciences"
+  },
+  "us_foreign_policy": {
+    "name": "us foreign policy",
+    "category": "Social Sciences"
+  },
+  "virology": {
+    "name": "virology",
+    "category": "Other"
+  },
+  "world_religions": {
+    "name": "world religions",
+    "category": "Humanities"
+  }
+}
