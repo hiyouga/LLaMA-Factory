@@ -138,12 +138,11 @@ class Template:
         token_ids = []
         for elem in context:
             if isinstance(elem, str):
-                if len(elem) == 0:
-                    continue
                 elem = elem.replace("{{system}}", system, 1) if system is not None else elem
                 elem = elem.replace("{{query}}", query, 1) if query is not None else elem
                 elem = elem.replace("{{idx}}", idx, 1) if idx is not None else elem
-                token_ids = token_ids + tokenizer.encode(elem, **kwargs)
+                if len(elem) != 0:
+                    token_ids = token_ids + tokenizer.encode(elem, **kwargs)
             elif isinstance(elem, dict):
                 token_ids = token_ids + [tokenizer.convert_tokens_to_ids(elem.get("token"))]
             else:

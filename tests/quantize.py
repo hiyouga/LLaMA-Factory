@@ -1,5 +1,5 @@
 # coding=utf-8
-# Quantizes fine-tuned models with AutoGPTQ (https://github.com/PanQiWei/AutoGPTQ).
+# Quantizes models with AutoGPTQ (https://github.com/PanQiWei/AutoGPTQ).
 # Usage: python quantize.py --input_dir path_to_llama_model --output_dir path_to_quant_model --data_file alpaca.json
 #                           --max_length 1024 --max_samples 1024
 # dataset format: instruction (string), input (string), output (string), history (List[string])
