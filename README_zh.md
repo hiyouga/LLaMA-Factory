@@ -368,8 +368,7 @@ python src/export_model.py \
     --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint \
-    --output_dir path_to_export \
-    --fp16
+    --output_dir path_to_export
 ```
 
 ### API 服务
