@@ -14,15 +14,17 @@
 
 ## 更新日志
 
-[23/09/10] 现在我们支持了 LLaMA 模型的 **[FlashAttention](https://github.com/Dao-AILab/flash-attention)**。如果您使用的是 RTX4090、A100 或 H100 GPU，请使用 `--flash_attn` 参数以启用 FlashAttention-2（实验性功能）。
+[23/09/23] 我们在项目中集成了 MMLU 和 C-Eval 评估集。使用方法请参阅[此示例](#模型评估mmlu-和-c-eval)。
 
-[23/08/18] 现在我们支持了**训练状态恢复**，请将 `transformers` 升级至 `4.31.0` 以启用此功能。
+[23/09/10] 我们支持了 LLaMA 模型的 **[FlashAttention](https://github.com/Dao-AILab/flash-attention)**。如果您使用的是 RTX4090、A100 或 H100 GPU，请使用 `--flash_attn` 参数以启用 FlashAttention-2（实验性功能）。
 
-[23/08/12] 现在我们支持了 **RoPE 插值**来扩展 LLaMA 模型的上下文长度。请使用 `--rope_scaling linear` 参数训练模型或使用 `--rope_scaling dynamic` 参数评估模型。
+[23/08/18] 我们支持了**训练状态恢复**，请将 `transformers` 升级至 `4.31.0` 以启用此功能。
 
-[23/08/11] 现在我们支持了指令模型的 **[DPO 训练](https://arxiv.org/abs/2305.18290)**。详情请参阅[此示例](#dpo-训练)。
+[23/08/12] 我们支持了 **RoPE 插值**来扩展 LLaMA 模型的上下文长度。请使用 `--rope_scaling linear` 参数训练模型或使用 `--rope_scaling dynamic` 参数评估模型。
 
-[23/07/31] 现在我们支持了**数据流式加载**。请尝试使用 `--streaming` 和 `--max_steps 10000` 参数来流式加载数据集。
+[23/08/11] 我们支持了指令模型的 **[DPO 训练](https://arxiv.org/abs/2305.18290)**。使用方法请参阅[此示例](#dpo-训练)。
+
+[23/07/31] 我们支持了**数据流式加载**。请尝试使用 `--streaming` 和 `--max_steps 10000` 参数来流式加载数据集。
 
 [23/07/29] 我们在 Hugging Face 发布了两个 13B 指令微调模型。详细内容请查阅我们的 Hugging Face 项目（[LLaMA-2](https://huggingface.co/hiyouga/Llama-2-Chinese-13b-chat) / [Baichuan](https://huggingface.co/hiyouga/Baichuan-13B-sft)）。
 
@@ -34,7 +36,7 @@
 
 [23/06/22] 我们对齐了[示例 API](src/api_demo.py) 与 [OpenAI API](https://platform.openai.com/docs/api-reference/chat) 的格式，您可以将微调模型接入**任意基于 ChatGPT 的应用**中。
 
-[23/06/03] 现在我们实现了 4 比特的 LoRA 训练（也称 **[QLoRA](https://github.com/artidoro/qlora)**）。请尝试使用 `--quantization_bit 4` 参数进行 4 比特量化微调。
+[23/06/03] 我们实现了 4 比特的 LoRA 训练（也称 **[QLoRA](https://github.com/artidoro/qlora)**）。请尝试使用 `--quantization_bit 4` 参数进行 4 比特量化微调。
 
 ## 模型
 
@@ -404,27 +406,7 @@ python src/web_demo.py \
     --checkpoint_dir path_to_checkpoint
 ```
 
-### 指标评估（BLEU 分数和汉语 ROUGE 分数）
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage sft \
-    --model_name_or_path path_to_llama_model \
-    --do_eval \
-    --dataset alpaca_gpt4_zh \
-    --template default \
-    --finetuning_type lora \
-    --checkpoint_dir path_to_checkpoint \
-    --output_dir path_to_eval_result \
-    --per_device_eval_batch_size 8 \
-    --max_samples 100 \
-    --predict_with_generate
-```
-
-> [!NOTE]
-> 我们建议在量化模型的评估中使用 `--per_device_eval_batch_size=1` 和 `--max_target_length 128`。
-
-### 模型预测
+### 指标评估与模型预测（BLEU 分数和汉语 ROUGE 分数）
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
@@ -439,6 +421,24 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --per_device_eval_batch_size 8 \
     --max_samples 100 \
     --predict_with_generate
+```
+
+> [!NOTE]
+> 我们建议在量化模型的评估中使用 `--per_device_eval_batch_size=1` 和 `--max_target_length 128`。
+
+### 模型评估（MMLU 和 C-Eval）
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python evaluation/evaluate.py \
+    --model_name_or_path path_to_llama_model \
+    --finetuning_type lora \
+    --checkpoint_dir path_to_checkpoint \
+    --template vanilla \
+    --task ceval \
+    --split validation \
+    --lang zh \
+    --n_shot 5 \
+    --batch_size 4
 ```
 
 ## 协议
