@@ -1,0 +1,270 @@
+{
+  "agronomy": {
+    "name": "农学",
+    "category": "Other"
+  },
+  "anatomy": {
+    "name": "解剖学",
+    "category": "STEM"
+  },
+  "ancient_chinese": {
+    "name": "古汉语",
+    "category": "Social Sciences"
+  },
+  "arts": {
+    "name": "艺术学",
+    "category": "Humanities"
+  },
+  "astronomy": {
+    "name": "天文学",
+    "category": "STEM"
+  },
+  "business_ethics": {
+    "name": "商业伦理",
+    "category": "Social Sciences"
+  },
+  "chinese_civil_service_exam": {
+    "name": "中国公务员考试",
+    "category": "Social Sciences"
+  },
+  "chinese_driving_rule": {
+    "name": "中国驾驶规则",
+    "category": "Other"
+  },
+  "chinese_food_culture": {
+    "name": "中国饮食文化",
+    "category": "Social Sciences"
+  },
+  "chinese_foreign_policy": {
+    "name": "中国外交政策",
+    "category": "Social Sciences"
+  },
+  "chinese_history": {
+    "name": "中国历史",
+    "category": "Humanities"
+  },
+  "chinese_literature": {
+    "name": "中国文学",
+    "category": "Humanities"
+  },
+  "chinese_teacher_qualification": {
+    "name": "中国教师资格",
+    "category": "Social Sciences"
+  },
+  "college_actuarial_science": {
+    "name": "大学精算学",
+    "category": "STEM"
+  },
+  "college_education": {
+    "name": "大学教育学",
+    "category": "Social Sciences"
+  },
+  "college_engineering_hydrology": {
+    "name": "大学工程水文学",
+    "category": "STEM"
+  },
+  "college_law": {
+    "name": "大学法律",
+    "category": "Humanities"
+  },
+  "college_mathematics": {
+    "name": "大学数学",
+    "category": "STEM"
+  },
+  "college_medical_statistics": {
+    "name": "大学医学统计",
+    "category": "STEM"
+  },
+  "clinical_knowledge": {
+    "name": "临床知识",
+    "category": "Other"
+  },
+  "college_medicine": {
+    "name": "大学医学",
+    "category": "Other"
+  },
+  "computer_science": {
+    "name": "计算机科学",
+    "category": "STEM"
+  },
+  "computer_security": {
+    "name": "计算机安全",
+    "category": "Other"
+  },
+  "conceptual_physics": {
+    "name": "概念物理学",
+    "category": "STEM"
+  },
+  "construction_project_management": {
+    "name": "建设工程管理",
+    "category": "Other"
+  },
+  "economics": {
+    "name": "经济学",
+    "category": "Social Sciences"
+  },
+  "education": {
+    "name": "教育学",
+    "category": "Social Sciences"
+  },
+  "elementary_chinese": {
+    "name": "小学语文",
+    "category": "Social Sciences"
+  },
+  "elementary_commonsense": {
+    "name": "小学常识",
+    "category": "Other"
+  },
+  "elementary_information_and_technology": {
+    "name": "小学信息技术",
+    "category": "Other"
+  },
+  "electrical_engineering": {
+    "name": "电气工程",
+    "category": "STEM"
+  },
+  "elementary_mathematics": {
+    "name": "初等数学",
+    "category": "STEM"
+  },
+  "ethnology": {
+    "name": "民族学",
+    "category": "Social Sciences"
+  },
+  "food_science": {
+    "name": "食品科学",
+    "category": "Other"
+  },
+  "genetics": {
+    "name": "遗传学",
+    "category": "STEM"
+  },
+  "global_facts": {
+    "name": "全球事实",
+    "category": "Humanities"
+  },
+  "high_school_biology": {
+    "name": "高中生物",
+    "category": "STEM"
+  },
+  "high_school_chemistry": {
+    "name": "高中化学",
+    "category": "STEM"
+  },
+  "high_school_geography": {
+    "name": "高中地理",
+    "category": "Social Sciences"
+  },
+  "high_school_mathematics": {
+    "name": "高中数学",
+    "category": "STEM"
+  },
+  "high_school_physics": {
+    "name": "高中物理学",
+    "category": "STEM"
+  },
+  "high_school_politics": {
+    "name": "高中政治",
+    "category": "Social Sciences"
+  },
+  "human_sexuality": {
+    "name": "人类性行为",
+    "category": "Other"
+  },
+  "international_law": {
+    "name": "国际法学",
+    "category": "Humanities"
+  },
+  "journalism": {
+    "name": "新闻学",
+    "category": "Social Sciences"
+  },
+  "jurisprudence": {
+    "name": "法理学",
+    "category": "Humanities"
+  },
+  "legal_and_moral_basis": {
+    "name": "法律与道德基础",
+    "category": "Other"
+  },
+  "logical": {
+    "name": "逻辑学",
+    "category": "Humanities"
+  },
+  "machine_learning": {
+    "name": "机器学习",
+    "category": "STEM"
+  },
+  "management": {
+    "name": "管理学",
+    "category": "Social Sciences"
+  },
+  "marketing": {
+    "name": "市场营销",
+    "category": "Social Sciences"
+  },
+  "marxist_theory": {
+    "name": "马克思主义理论",
+    "category": "Humanities"
+  },
+  "modern_chinese": {
+    "name": "现代汉语",
+    "category": "Social Sciences"
+  },
+  "nutrition": {
+    "name": "营养学",
+    "category": "Other"
+  },
+  "philosophy": {
+    "name": "哲学",
+    "category": "Humanities"
+  },
+  "professional_accounting": {
+    "name": "专业会计",
+    "category": "Social Sciences"
+  },
+  "professional_law": {
+    "name": "专业法学",
+    "category": "Humanities"
+  },
+  "professional_medicine": {
+    "name": "专业医学",
+    "category": "Other"
+  },
+  "professional_psychology": {
+    "name": "专业心理学",
+    "category": "Social Sciences"
+  },
+  "public_relations": {
+    "name": "公共关系",
+    "category": "Social Sciences"
+  },
+  "security_study": {
+    "name": "安全研究",
+    "category": "Social Sciences"
+  },
+  "sociology": {
+    "name": "社会学",
+    "category": "Social Sciences"
+  },
+  "sports_science": {
+    "name": "体育学",
+    "category": "Other"
+  },
+  "traditional_chinese_medicine": {
+    "name": "中医中药",
+    "category": "Other"
+  },
+  "virology": {
+    "name": "病毒学",
+    "category": "STEM"
+  },
+  "world_history": {
+    "name": "世界历史",
+    "category": "Humanities"
+  },
+  "world_religions": {
+    "name": "世界宗教",
+    "category": "Humanities"
+  }
+}

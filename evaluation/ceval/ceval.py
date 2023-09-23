@@ -92,14 +92,14 @@ task_list = [
 ]
 
 
-class CevalExamConfig(datasets.BuilderConfig):
+class CevalConfig(datasets.BuilderConfig):
     def __init__(self, **kwargs):
         super().__init__(version=datasets.Version("1.0.0"), **kwargs)
 
 
-class CevalExam(datasets.GeneratorBasedBuilder):
+class Ceval(datasets.GeneratorBasedBuilder):
     BUILDER_CONFIGS = [
-        CevalExamConfig(
+        CevalConfig(
             name=task_name,
         )
         for task_name in task_list
