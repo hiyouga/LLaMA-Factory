@@ -65,7 +65,7 @@ eval_templates = {
     "en": EvalTemplate(
         system="The following are multiple choice questions (with answers) about {subject}.\n\n",
         choice="\n{choice}. {content}",
-        answer="\nAnswer: "
+        answer="\nAnswer:"
     ),
     "zh": EvalTemplate(
         system="以下是中国关于{subject}考试的单项选择题，请选出其中的正确答案。\n\n",
