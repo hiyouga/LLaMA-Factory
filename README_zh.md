@@ -14,7 +14,7 @@
 
 ## 更新日志
 
-[23/09/23] 我们在项目中集成了 MMLU 和 C-Eval 评估集。使用方法请参阅[此示例](#模型评估mmlu-和-c-eval)。
+[23/09/23] 我们在项目中集成了 MMLU、C-Eval 和 CMMLU 评估集。使用方法请参阅[此示例](#模型评估)。
 
 [23/09/10] 我们支持了 LLaMA 模型的 **[FlashAttention](https://github.com/Dao-AILab/flash-attention)**。如果您使用的是 RTX4090、A100 或 H100 GPU，请使用 `--flash_attn` 参数以启用 FlashAttention-2（实验性功能）。
 
@@ -370,7 +370,8 @@ python src/export_model.py \
     --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint \
-    --output_dir path_to_export
+    --output_dir path_to_export \
+    --fp16
 ```
 
 ### API 服务
@@ -406,7 +407,22 @@ python src/web_demo.py \
     --checkpoint_dir path_to_checkpoint
 ```
 
-### 指标评估与模型预测（BLEU 分数和汉语 ROUGE 分数）
+### 模型评估
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python src/evaluate.py \
+    --model_name_or_path path_to_llama_model \
+    --finetuning_type lora \
+    --checkpoint_dir path_to_checkpoint \
+    --template vanilla \
+    --task ceval \
+    --split validation \
+    --lang zh \
+    --n_shot 5 \
+    --batch_size 4
+```
+
+### 模型预测
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
@@ -424,22 +440,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 ```
 
 > [!NOTE]
-> 我们建议在量化模型的评估中使用 `--per_device_eval_batch_size=1` 和 `--max_target_length 128`。
-
-### 模型评估（MMLU 和 C-Eval）
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/evaluate.py \
-    --model_name_or_path path_to_llama_model \
-    --finetuning_type lora \
-    --checkpoint_dir path_to_checkpoint \
-    --template vanilla \
-    --task ceval \
-    --split validation \
-    --lang zh \
-    --n_shot 5 \
-    --batch_size 4
-```
+> 我们建议在量化模型的预测中使用 `--per_device_eval_batch_size=1` 和 `--max_target_length 128`。
 
 ## 协议
 

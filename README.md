@@ -14,7 +14,7 @@
 
 ## Changelog
 
-[23/09/23] We integrated MMLU and C-Eval benchmarks in this repo. See [this example](#evaluation-mmlu--c-eval) to evaluate your models.
+[23/09/23] We integrated MMLU, C-Eval and CMMLU benchmarks in this repo. See [this example](#evaluation) to evaluate your models.
 
 [23/09/10] We supported using **[FlashAttention](https://github.com/Dao-AILab/flash-attention)** for the LLaMA models. Try `--flash_attn` argument to enable FlashAttention-2 if you are using RTX4090, A100 or H100 GPUs.
 
@@ -371,7 +371,8 @@ python src/export_model.py \
     --template default \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint \
-    --output_dir path_to_export
+    --output_dir path_to_export \
+    --fp16
 ```
 
 ### API Demo
@@ -407,7 +408,22 @@ python src/web_demo.py \
     --checkpoint_dir path_to_checkpoint
 ```
 
-### Evaluation and Predict (BLEU & ROUGE_CHINESE)
+### Evaluation
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python src/evaluate.py \
+    --model_name_or_path path_to_llama_model \
+    --finetuning_type lora \
+    --checkpoint_dir path_to_checkpoint \
+    --template vanilla \
+    --task mmlu \
+    --split test \
+    --lang en \
+    --n_shot 5 \
+    --batch_size 4
+```
+
+### Predict
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
@@ -425,22 +441,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 ```
 
 > [!NOTE]
-> We recommend using `--per_device_eval_batch_size=1` and `--max_target_length 128` at 4/8-bit evaluation.
-
-### Evaluation (MMLU & C-Eval)
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/evaluate.py \
-    --model_name_or_path path_to_llama_model \
-    --finetuning_type lora \
-    --checkpoint_dir path_to_checkpoint \
-    --template vanilla \
-    --task mmlu \
-    --split test \
-    --lang en \
-    --n_shot 5 \
-    --batch_size 4
-```
+> We recommend using `--per_device_eval_batch_size=1` and `--max_target_length 128` at 4/8-bit predict.
 
 ## License
 
