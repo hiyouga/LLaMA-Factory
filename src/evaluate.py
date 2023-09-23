@@ -58,14 +58,14 @@ class EvalTemplate:
         if not use_history:
             query = "\n\n".join(["".join(item) for item in history] + [query])
             history = []
-        return query, resp, history
+        return query.strip(), resp, history
 
 
 eval_templates = {
     "en": EvalTemplate(
         system="The following are multiple choice questions (with answers) about {subject}.\n\n",
         choice="\n{choice}. {content}",
-        answer="\nAnswer:"
+        answer="\nAnswer: "
     ),
     "zh": EvalTemplate(
         system="以下是中国关于{subject}考试的单项选择题，请选出其中的正确答案。\n\n",
