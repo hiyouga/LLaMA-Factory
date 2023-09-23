@@ -429,7 +429,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 ### 模型评估（MMLU 和 C-Eval）
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python evaluation/evaluate.py \
+CUDA_VISIBLE_DEVICES=0 python src/evaluate.py \
     --model_name_or_path path_to_llama_model \
     --finetuning_type lora \
     --checkpoint_dir path_to_checkpoint \
