@@ -45,7 +45,11 @@ class ModelArguments:
     )
     flash_attn: Optional[bool] = field(
         default=False,
-        metadata={"help": "Enable flash attention for faster training."}
+        metadata={"help": "Enable FlashAttention-2 for faster training."}
+    )
+    shift_attn: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Enable shift short attention (S^2-Attn) proposed by LongLoRA."}
     )
     checkpoint_dir: Optional[str] = field(
         default=None,
