@@ -22,7 +22,7 @@ def preprocess_dataset(
     column_names = list(next(iter(dataset)).keys())
     template = get_template_and_fix_tokenizer(data_args.template, tokenizer)
 
-    if template.efficient_eos and data_args.sft_packing:
+    if template is not None and template.efficient_eos and data_args.sft_packing:
         raise ValueError("Current template is incompatible with packing.")
 
     def construct_example(examples: Dict[str, List[Any]]) -> Generator[Any, None, None]:
