@@ -42,6 +42,7 @@ def run_ppo(
         ppo_epochs=1,
         max_grad_norm=training_args.max_grad_norm,
         seed=training_args.seed,
+        log_with=training_args.report_to,
         optimize_cuda_cache=True,
         accelerator_kwargs={"step_scheduler_with_optimizer": False}
     )
