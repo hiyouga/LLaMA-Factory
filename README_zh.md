@@ -14,7 +14,7 @@
 
 ## 更新日志
 
-[23/09/27] 我们支持了 [LongLoRA](https://github.com/dvlab-research/LongLoRA) 提出的 **S^2-Attn**。请使用 `--shift_attn` 参数以启用该功能。
+[23/09/27] 我们支持了 [LongLoRA](https://github.com/dvlab-research/LongLoRA) 提出的 **$S^2$-Attn**。请使用 `--shift_attn` 参数以启用该功能。
 
 [23/09/23] 我们在项目中集成了 MMLU、C-Eval 和 CMMLU 评估集。使用方法请参阅[此示例](#模型评估)。
 
