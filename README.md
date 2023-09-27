@@ -14,7 +14,7 @@
 
 ## Changelog
 
-[23/09/27] We supported **S^2-Attn** proposed by [LongLoRA](https://github.com/dvlab-research/LongLoRA). Try `--shift_attn` argument to enable shift short attention.
+[23/09/27] We supported **$S^2$-Attn** proposed by [LongLoRA](https://github.com/dvlab-research/LongLoRA). Try `--shift_attn` argument to enable shift short attention.
 
 [23/09/23] We integrated MMLU, C-Eval and CMMLU benchmarks in this repo. See [this example](#evaluation) to evaluate your models.
 
