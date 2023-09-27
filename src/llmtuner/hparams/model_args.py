@@ -67,6 +67,10 @@ class ModelArguments:
         default=None,
         metadata={"help": "Auth token to log in with Hugging Face Hub."}
     )
+    layernorm_dtype: Optional[Literal["auto", "fp16", "bf16", "fp32"]] = field(
+        default="auto",
+        metadata={"help": "Data type of the layer norm weights."}
+    )
 
     def __post_init__(self):
         self.compute_dtype = None
