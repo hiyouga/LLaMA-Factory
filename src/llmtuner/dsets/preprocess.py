@@ -116,7 +116,7 @@ def preprocess_dataset(
         # split by chunks of cutoff_len
         for i in range(0, total_length, block_size):
             model_inputs["input_ids"].append(input_ids[i: i + block_size])
-            model_inputs["attention_mask"].append([1] * len(block_size))
+            model_inputs["attention_mask"].append([1] * block_size)
             model_inputs["labels"].append(labels[i: i + block_size])
 
         return model_inputs
