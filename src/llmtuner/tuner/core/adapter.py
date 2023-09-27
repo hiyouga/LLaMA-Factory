@@ -45,9 +45,15 @@ def init_adapter(
 
     if finetuning_args.finetuning_type == "freeze":
         logger.info("Fine-tuning method: Freeze")
+        num_layers = getattr(model.config, "num_layers")
+        if finetuning_args.num_layer_trainable > 0: # fine-tuning the last n layers if num_layer_trainable > 0
+            trainable_layer_ids = [num_layers - k - 1 for k in range(finetuning_args.num_layer_trainable)]
+        else: # fine-tuning the first n layers if num_layer_trainable < 0
+            trainable_layer_ids = [k for k in range(-finetuning_args.num_layer_trainable)]
 
+        trainable_layers = ["{:d}.{}".format(idx, finetuning_args.name_module_trainable) for idx in trainable_layer_ids]
         for name, param in model.named_parameters():
-            if not any(trainable_layer in name for trainable_layer in finetuning_args.trainable_layers):
+            if not any(trainable_layer in name for trainable_layer in trainable_layers):
                 param.requires_grad_(False)
             else:
                 param.data = param.data.to(torch.float32)
@@ -89,7 +95,8 @@ def init_adapter(
                 r=finetuning_args.lora_rank,
                 lora_alpha=finetuning_args.lora_alpha,
                 lora_dropout=finetuning_args.lora_dropout,
-                target_modules=target_modules
+                target_modules=target_modules,
+                modules_to_save=finetuning_args.additional_target
             )
             model = get_peft_model(model, lora_config)
             if id(model.peft_config) != id(model.base_model.peft_config): # https://github.com/huggingface/peft/issues/923
