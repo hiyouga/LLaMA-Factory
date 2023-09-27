@@ -100,7 +100,7 @@ def preprocess_dataset(
         return model_inputs
 
     def preprocess_packed_supervised_dataset(examples: Dict[str, List[Any]]) -> Dict[str, Any]:
-        # build inputs with format `<bos> X Y <eos>` and labels with format `<ignore> ... <ignore> Y <eos>`
+        # build inputs with format `<bos> X Y <eos>` and labels with format `<bos> X Y <eos>`
         # we do not mask the inputs in packed training.
         model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
         input_ids, labels = [], []
