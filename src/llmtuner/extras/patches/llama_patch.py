@@ -173,7 +173,7 @@ class LlamaFlashAttention2(LlamaAttention):
                 state = state.reshape(bsz * num_group, group_size, self.num_heads, self.head_dim)
 
         if attention_mask is not None:
-            logger.warning_once("Padded sequences are less efficient.")
+            logger.warning_once("Padded sequences are less efficient in FlashAttention.")
             batch_size = query_states.shape[0]
             # -q_len: assumes left padding
             unpadded_q, indices_q, cu_seqlens_q, max_seqlen_q = unpad_input(query_states, attention_mask[:, -q_len:])
