@@ -97,7 +97,7 @@ class DataArguments:
             dataset_info = json.load(f)
 
         prompt_list = self.system_prompt.split("|") if self.system_prompt else [None]
-        prompt_list = prompt_list * (len(dataset_names) // len(prompt_list))
+        prompt_list = prompt_list * (len(dataset_names) // len(prompt_list))    ## 如果是dataset_names 不能被整除，就会assert
         assert len(prompt_list) == len(dataset_names), "Number of system prompts should be equal to datasets or 1."
 
         if self.interleave_probs is not None:
@@ -126,5 +126,5 @@ class DataArguments:
                 dataset_attr.history = dataset_info[name]["columns"].get("history", None)
 
             dataset_attr.ranking = dataset_info[name].get("ranking", False)
-            dataset_attr.system_prompt = prompt_list[i]
+            dataset_attr.system_prompt = prompt_list[i]    ### 这里的system_prompt 有什么用？对一个dataset增加的全局prompt？
             self.dataset_list.append(dataset_attr)
