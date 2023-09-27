@@ -43,6 +43,7 @@ class DeltaMessage(BaseModel):
 class ChatCompletionRequest(BaseModel):
     model: str
     messages: List[ChatMessage]
+    do_sample: Optional[bool] = True
     temperature: Optional[float] = None
     top_p: Optional[float] = None
     n: Optional[int] = 1
