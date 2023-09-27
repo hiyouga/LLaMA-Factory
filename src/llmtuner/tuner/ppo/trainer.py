@@ -110,8 +110,16 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             # Run PPO step
             stats = self.step(queries, responses, rewards)
             self.tokenizer.padding_side = "left" # restore padding side
-            loss_meter.update(stats["ppo/loss/total"], n=len(rewards))
+            loss_meter.update(float(stats["ppo/loss/total"]), n=len(rewards))
             reward_meter.update(torch.stack(rewards).mean().item(), n=len(rewards))
+
+            if self.config.log_with is not None:
+                try:
+                    batch["query"] = self.tokenizer.batch_decode(queries, skip_special_tokens=True)
+                    batch["response"] = self.tokenizer.batch_decode(responses, skip_special_tokens=True)
+                    self.log_stats(stats, batch, rewards)
+                except:
+                    logger.warning("Failed to save stats due to unknown errors.")
 
             self.state.global_step += 1
             self.log_callback.on_step_end(self.args, self.state, self.control)
