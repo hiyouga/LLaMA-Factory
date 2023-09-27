@@ -13,7 +13,7 @@ try:
     from flash_attn import flash_attn_func, flash_attn_varlen_func # type: ignore
     from flash_attn.bert_padding import pad_input, unpad_input # type: ignore
 except ImportError:
-    raise ImportError("Please install FlashAttention from https://github.com/Dao-AILab/flash-attention")
+    print("FlashAttention-2 is not installed, ignore this if you are not using FlashAttention.")
 
 
 logger = logging.get_logger(__name__)
