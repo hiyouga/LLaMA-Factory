@@ -90,6 +90,10 @@ class DataArguments:
         default=0,
         metadata={"help": "Size of the development set, should be an integer or a float in range `[0,1)`."}
     )
+    sft_packing: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Packing the questions and answers in the supervised fine-tuning stage."}
+    )
 
     def init_for_training(self): # support mixing multiple datasets
         dataset_names = [ds.strip() for ds in self.dataset.split(",")]
