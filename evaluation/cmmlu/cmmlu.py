@@ -160,4 +160,8 @@ class CMMLU(datasets.GeneratorBasedBuilder):
     def _generate_examples(self, filepath):
         df = pd.read_csv(filepath, header=0, index_col=0, encoding="utf-8")
         for i, instance in enumerate(df.to_dict(orient="records")):
+            question = instance.pop("Question", "")
+            answer = instance.pop("Answer", "")
+            instance["question"] = question
+            instance["answer"] = answer
             yield i, instance
