@@ -55,8 +55,6 @@ def create_train_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dic
             logging_steps = gr.Slider(value=5, minimum=5, maximum=1000, step=5)
             save_steps = gr.Slider(value=100, minimum=10, maximum=5000, step=10)
             warmup_steps = gr.Slider(value=0, minimum=0, maximum=5000, step=1)
-            flash_attn = gr.Checkbox(value=False)
-            rope_scaling = gr.Checkbox(value=False)
 
     with gr.Accordion(label="LoRA config", open=False) as lora_tab:
         with gr.Row():
@@ -67,8 +65,8 @@ def create_train_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dic
 
     with gr.Accordion(label="RLHF config", open=False) as rlhf_tab:
         with gr.Row():
-            dpo_beta = gr.Slider(value=0.1, minimum=0, maximum=1, step=0.01, scale=2)
-            reward_model = gr.Dropdown(scale=2)
+            dpo_beta = gr.Slider(value=0.1, minimum=0, maximum=1, step=0.01, scale=1)
+            reward_model = gr.Dropdown(scale=3)
             refresh_btn = gr.Button(scale=1)
 
     refresh_btn.click(
@@ -105,6 +103,9 @@ def create_train_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dic
         top_elems["quantization_bit"],
         top_elems["template"],
         top_elems["system_prompt"],
+        top_elems["flash_attn"],
+        top_elems["shift_attn"],
+        top_elems["rope_scaling"],
         training_stage,
         dataset_dir,
         dataset,
@@ -121,8 +122,6 @@ def create_train_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dic
         logging_steps,
         save_steps,
         warmup_steps,
-        flash_attn,
-        rope_scaling,
         lora_rank,
         lora_dropout,
         lora_target,
@@ -167,8 +166,6 @@ def create_train_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dic
         logging_steps=logging_steps,
         save_steps=save_steps,
         warmup_steps=warmup_steps,
-        flash_attn=flash_attn,
-        rope_scaling=rope_scaling,
         lora_tab=lora_tab,
         lora_rank=lora_rank,
         lora_dropout=lora_dropout,
