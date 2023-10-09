@@ -8,6 +8,7 @@ scipy
 sentencepiece
 protobuf
 tiktoken
+fire
 jieba
 rouge-chinese
 nltk
