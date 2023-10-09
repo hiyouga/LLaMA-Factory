@@ -28,7 +28,10 @@ def create_infer_tab(top_elems: Dict[str, "Component"]) -> Dict[str, "Component"
             top_elems["finetuning_type"],
             top_elems["quantization_bit"],
             top_elems["template"],
-            top_elems["system_prompt"]
+            top_elems["system_prompt"],
+            top_elems["flash_attn"],
+            top_elems["shift_attn"],
+            top_elems["rope_scaling"]
         ],
         [info_box]
     ).then(
