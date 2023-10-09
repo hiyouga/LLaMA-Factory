@@ -26,7 +26,10 @@ class WebChatModel(ChatModel):
         finetuning_type: str,
         quantization_bit: str,
         template: str,
-        system_prompt: str
+        system_prompt: str,
+        flash_attn: bool,
+        shift_attn: bool,
+        rope_scaling: str
     ):
         if self.model is not None:
             yield ALERTS["err_exists"][lang]
@@ -42,9 +45,7 @@ class WebChatModel(ChatModel):
             return
 
         if checkpoints:
-            checkpoint_dir = ",".join(
-                [os.path.join(get_save_dir(model_name), finetuning_type, checkpoint) for checkpoint in checkpoints]
-            )
+            checkpoint_dir = ",".join([get_save_dir(model_name, finetuning_type, ckpt) for ckpt in checkpoints])
         else:
             checkpoint_dir = None
 
@@ -55,7 +56,10 @@ class WebChatModel(ChatModel):
             finetuning_type=finetuning_type,
             quantization_bit=int(quantization_bit) if quantization_bit and quantization_bit != "None" else None,
             template=template,
-            system_prompt=system_prompt
+            system_prompt=system_prompt,
+            flash_attn=flash_attn,
+            shift_attn=shift_attn,
+            rope_scaling=rope_scaling if rope_scaling in ["linear", "dynamic"] else None
         )
         super().__init__(args)
 
