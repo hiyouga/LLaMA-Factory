@@ -54,7 +54,7 @@ class WebChatModel(ChatModel):
             model_name_or_path=model_name_or_path,
             checkpoint_dir=checkpoint_dir,
             finetuning_type=finetuning_type,
-            quantization_bit=int(quantization_bit) if quantization_bit and quantization_bit != "None" else None,
+            quantization_bit=int(quantization_bit) if quantization_bit in ["8", "4"] else None,
             template=template,
             system_prompt=system_prompt,
             flash_attn=flash_attn,
