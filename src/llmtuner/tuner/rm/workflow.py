@@ -27,7 +27,7 @@ def run_rm(
     dataset = get_dataset(model_args, data_args)
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, stage="rm")
     dataset = preprocess_dataset(dataset, tokenizer, data_args, training_args, stage="rm")
-    data_collator = PairwiseDataCollatorWithPadding(tokenizer)
+    data_collator = PairwiseDataCollatorWithPadding(tokenizer, pad_to_multiple_of=4)
 
     training_args_dict = training_args.to_dict()
     training_args_dict.update(dict(remove_unused_columns=False)) # important for pairwise dataset

@@ -29,6 +29,7 @@ def run_dpo(
     dataset = preprocess_dataset(dataset, tokenizer, data_args, training_args, stage="rm")
     data_collator = DPODataCollatorWithPadding(
         tokenizer=tokenizer,
+        pad_to_multiple_of=4,
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
     )
 
