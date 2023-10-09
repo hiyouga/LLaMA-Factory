@@ -125,7 +125,7 @@ huggingface-cli login
 - Python 3.8+ 和 PyTorch 1.13.1+
 - 🤗Transformers, Datasets, Accelerate, PEFT 和 TRL
 - sentencepiece, protobuf 和 tiktoken
-- jieba, rouge-chinese 和 nltk (用于评估)
+- fire, jieba, rouge-chinese 和 nltk (用于评估及预测)
 - gradio 和 matplotlib (用于网页端交互)
 - uvicorn, fastapi 和 sse-starlette (用于 API)
 
@@ -477,7 +477,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 
 ## 致谢
 
-本项目受益于 [PEFT](https://github.com/huggingface/peft)、[QLoRA](https://github.com/artidoro/qlora)、[FastChat](https://github.com/lm-sys/FastChat) 和 [OpenChatKit](https://github.com/togethercomputer/OpenChatKit)，感谢以上诸位作者的付出。
+本项目受益于 [PEFT](https://github.com/huggingface/peft)、[QLoRA](https://github.com/artidoro/qlora) 和 [FastChat](https://github.com/lm-sys/FastChat)，感谢以上诸位作者的付出。
 
 ## Star History
 
