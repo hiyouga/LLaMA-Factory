@@ -26,9 +26,15 @@ def create_top() -> Dict[str, "Component"]:
 
     with gr.Accordion(label="Advanced config", open=False) as advanced_tab:
         with gr.Row():
-            quantization_bit = gr.Dropdown(choices=["None", "8", "4"], value="None", scale=1)
+            quantization_bit = gr.Dropdown(choices=["none", "8", "4"], value="none", scale=1)
             template = gr.Dropdown(choices=list(templates.keys()), value="default", scale=1)
             system_prompt = gr.Textbox(scale=2)
+
+    with gr.Accordion(label="Model config (LLaMA only)", open=False) as llama_tab:
+        with gr.Row():
+            flash_attn = gr.Checkbox(value=False)
+            shift_attn = gr.Checkbox(value=False)
+            rope_scaling = gr.Dropdown(choices=["none", "linear", "dynamic"], value="none")
 
     lang.change(save_config, [lang, model_name, model_path])
 
@@ -62,5 +68,9 @@ def create_top() -> Dict[str, "Component"]:
         advanced_tab=advanced_tab,
         quantization_bit=quantization_bit,
         template=template,
-        system_prompt=system_prompt
+        system_prompt=system_prompt,
+        llama_tab=llama_tab,
+        flash_attn=flash_attn,
+        shift_attn=shift_attn,
+        rope_scaling=rope_scaling
     )
