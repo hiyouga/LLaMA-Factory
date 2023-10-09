@@ -149,6 +149,9 @@ def get_train_args(
     if general_args.stage == "ppo" and data_args.streaming:
         raise ValueError("Streaming mode does not suppport PPO training currently.")
 
+    if general_args.stage == "ppo" and model_args.shift_attn:
+        raise ValueError("PPO training is incompatible with S^2-Attn.")
+
     if training_args.max_steps == -1 and data_args.streaming:
         raise ValueError("Please specify `max_steps` in streaming mode.")
 
