@@ -59,12 +59,12 @@ LOCALES = {
     },
     "quantization_bit": {
         "en": {
-            "label": "Quantization bit (optional)",
-            "info": "Enable 4/8-bit model quantization."
+            "label": "Quantization bit",
+            "info": "Enable 4/8-bit model quantization (QLoRA)."
         },
         "zh": {
-            "label": "量化等级（非必填）",
-            "info": "启用 4/8 比特模型量化。"
+            "label": "量化等级",
+            "info": "启用 4/8 比特模型量化（QLoRA）。"
         }
     },
     "template": {
@@ -85,6 +85,38 @@ LOCALES = {
         "zh": {
             "label": "系统提示词（非必填）",
             "info": "默认使用的系统提示词"
+        }
+    },
+    "llama_tab": {
+        "en": {
+            "label": "Model configurations (LLaMA only)"
+        },
+        "zh": {
+            "label": "模型设置（仅LLaMA）"
+        }
+    },
+    "flash_attn": {
+        "en": {
+            "label": "Use FlashAttention-2"
+        },
+        "zh": {
+            "label": "使用 FlashAttention-2"
+        }
+    },
+    "shift_attn": {
+        "en": {
+            "label": "Use shift short attention (S^2-Attn)"
+        },
+        "zh": {
+            "label": "使用 shift short attention (S^2-Attn)"
+        }
+    },
+    "rope_scaling": {
+        "en": {
+            "label": "RoPE scaling"
+        },
+        "zh": {
+            "label": "RoPE 插值方法"
         }
     },
     "training_stage": {
@@ -277,22 +309,6 @@ LOCALES = {
             "info": "学习率预热采用的步数。"
         }
     },
-    "flash_attn": {
-        "en": {
-            "label": "Use FlashAttention-2"
-        },
-        "zh": {
-            "label": "使用 FlashAttention-2"
-        }
-    },
-    "rope_scaling": {
-        "en": {
-            "label": "Use RoPE scaling"
-        },
-        "zh": {
-            "label": "使用 RoPE 插值"
-        }
-    },
     "lora_tab": {
         "en": {
             "label": "LoRA configurations"
@@ -362,11 +378,11 @@ LOCALES = {
     "reward_model": {
         "en": {
             "label": "Reward model",
-            "info": "Checkpoint of the reward model for PPO training."
+            "info": "Checkpoint of the reward model for PPO training. (Needs to refresh checkpoints)"
         },
         "zh": {
             "label": "奖励模型",
-            "info": "PPO 训练中奖励模型的断点路径。"
+            "info": "PPO 训练中奖励模型的断点路径。（需要刷新断点）"
         }
     },
     "cmd_preview_btn": {
