@@ -1,6 +1,5 @@
-from typing import TYPE_CHECKING, Dict
-
 import gradio as gr
+from typing import TYPE_CHECKING, Dict
 
 from llmtuner.webui.chat import WebChatModel
 from llmtuner.webui.components.chatbot import create_chat_box

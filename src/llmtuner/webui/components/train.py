@@ -1,7 +1,6 @@
+import gradio as gr
 from typing import TYPE_CHECKING, Dict
 from transformers.trainer_utils import SchedulerType
-
-import gradio as gr
 
 from llmtuner.extras.constants import TRAINING_STAGES
 from llmtuner.webui.common import list_checkpoint, list_dataset, DEFAULT_DATA_DIR
