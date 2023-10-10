@@ -423,7 +423,7 @@ register_template(
 
 
 r"""
-Supports: https://huggingface.co/qhduan/aquilachat-7b
+Supports: https://huggingface.co/BAAI/AquilaChat-7B
 """
 register_template(
     name="aquila",
@@ -439,7 +439,11 @@ register_template(
     ),
     sep=[
         "###"
-    ]
+    ],
+    stop_words=[
+        "</s>"
+    ],
+    efficient_eos=True
 )
 
 
