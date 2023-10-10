@@ -1,11 +1,12 @@
-import gradio as gr
-import logging
 import os
-import threading
 import time
+import logging
+import threading
+import gradio as gr
+from typing import Any, Dict, Generator, List, Tuple
+
 import transformers
 from transformers.trainer import TRAINING_ARGS_NAME
-from typing import Any, Dict, Generator, List, Tuple
 
 from llmtuner.extras.callbacks import LogCallback
 from llmtuner.extras.constants import DEFAULT_MODULE, TRAINING_STAGES
