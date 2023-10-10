@@ -1,6 +1,5 @@
-from typing import TYPE_CHECKING, Dict, Optional, Tuple
-
 import gradio as gr
+from typing import TYPE_CHECKING, Dict, Optional, Tuple
 
 if TYPE_CHECKING:
     from gradio.blocks import Block
