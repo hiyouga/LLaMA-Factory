@@ -1,5 +1,4 @@
-import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Generator, List, Optional, Tuple
 
 from llmtuner.chat.stream_chat import ChatModel
 from llmtuner.extras.misc import torch_gc
@@ -11,11 +10,10 @@ from llmtuner.webui.locales import ALERTS
 class WebChatModel(ChatModel):
 
     def __init__(self, args: Optional[Dict[str, Any]] = None, lazy_init: Optional[bool] = True) -> None:
-        if lazy_init:
-            self.model = None
-            self.tokenizer = None
-            self.generating_args = GeneratingArguments()
-        else:
+        self.model = None
+        self.tokenizer = None
+        self.generating_args = GeneratingArguments()
+        if not lazy_init:
             super().__init__(args)
 
     def load_model(
@@ -30,7 +28,7 @@ class WebChatModel(ChatModel):
         flash_attn: bool,
         shift_attn: bool,
         rope_scaling: str
-    ):
+    ) -> Generator[str, None, None]:
         if self.model is not None:
             yield ALERTS["err_exists"][lang]
             return
@@ -65,7 +63,7 @@ class WebChatModel(ChatModel):
 
         yield ALERTS["info_loaded"][lang]
 
-    def unload_model(self, lang: str):
+    def unload_model(self, lang: str) -> Generator[str, None, None]:
         yield ALERTS["info_unloading"][lang]
         self.model = None
         self.tokenizer = None
@@ -81,16 +79,15 @@ class WebChatModel(ChatModel):
         max_new_tokens: int,
         top_p: float,
         temperature: float
-    ):
+    ) -> Generator[Tuple[List[Tuple[str, str]], List[Tuple[str, str]]], None, None]:
         chatbot.append([query, ""])
         response = ""
         for new_text in self.stream_chat(
             query, history, system, max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature
         ):
             response += new_text
-            response = self.postprocess(response)
             new_history = history + [(query, response)]
-            chatbot[-1] = [query, response]
+            chatbot[-1] = [query, self.postprocess(response)]
             yield chatbot, new_history
 
     def postprocess(self, response: str) -> str:

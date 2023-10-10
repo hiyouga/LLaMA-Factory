@@ -1,6 +1,5 @@
-from typing import TYPE_CHECKING, Dict
-
 import gradio as gr
+from typing import TYPE_CHECKING, Dict
 
 from llmtuner.extras.constants import METHODS, SUPPORTED_MODELS
 from llmtuner.extras.template import templates
