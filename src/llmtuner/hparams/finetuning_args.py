@@ -57,7 +57,15 @@ class FinetuningArguments:
     )
     ppo_score_norm: Optional[bool] = field(
         default=False,
-        metadata={"help": "Use score normalization in PPO Training."}
+        metadata={"help": "Use score normalization in PPO training."}
+    )
+    ppo_logger: Optional[str] = field(
+        default=None,
+        metadata={"help": "Log with either 'wandb' or 'tensorboard' in PPO training."}
+    )
+    ppo_target: Optional[float] = field(
+        default=6.0,
+        metadata={"help": "Target KL value for adaptive KL control in PPO training."}
     )
     dpo_beta: Optional[float] = field(
         default=0.1,
