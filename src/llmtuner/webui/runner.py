@@ -145,6 +145,9 @@ class Runner:
         )
         args[compute_type] = True
 
+        if args["quantization_bit"] is not None:
+            args["upcast_layernorm"] = True
+
         if args["stage"] == "ppo":
             args["reward_model"] = reward_model
             val_size = 0
