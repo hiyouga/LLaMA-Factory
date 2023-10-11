@@ -2,7 +2,7 @@ import os
 from typing import TYPE_CHECKING, List, Union
 
 from datasets import concatenate_datasets, interleave_datasets, load_dataset
-
+import datasets
 from llmtuner.dsets.utils import checksum, EXT2TYPE
 from llmtuner.extras.logging import get_logger
 
@@ -26,6 +26,9 @@ def get_dataset(
 
         if dataset_attr.load_from == "hf_hub":
             data_path = dataset_attr.dataset_name
+            data_files = None
+        elif dataset_attr.load_from == "hf_local":
+            data_path = os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)
             data_files = None
         elif dataset_attr.load_from == "script":
             data_path = os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)
@@ -52,14 +55,19 @@ def get_dataset(
         else:
             raise NotImplementedError
 
-        dataset = load_dataset(
-            data_path,
-            data_files=data_files,
-            split=data_args.split,
-            cache_dir=model_args.cache_dir,
-            streaming=data_args.streaming,
-            use_auth_token=True if model_args.use_auth_token else None
-        )
+        if dataset_attr.load_from == "hf_local":
+            dataset = datasets.load_from_disk(
+                data_path
+            )[data_args.split]
+        else:
+            dataset = load_dataset(
+                data_path,
+                data_files=data_files,
+                split=data_args.split,
+                cache_dir=model_args.cache_dir,
+                streaming=data_args.streaming,
+                use_auth_token=True if model_args.use_auth_token else None
+            )
 
         if max_samples is not None:
             max_samples_temp = min(len(dataset), max_samples)

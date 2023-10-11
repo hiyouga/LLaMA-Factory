@@ -17,8 +17,8 @@ class DatasetAttr:
     response: Optional[str] = "output"
     history: Optional[str] = None
 
-    def __repr__(self) -> str:
-        return self.dataset_name
+    #def __repr__(self) -> str:
+    #    return self.dataset_name
 
 
 @dataclass
@@ -111,8 +111,9 @@ class DataArguments:
         for i, name in enumerate(dataset_names):
             if name not in dataset_info:
                 raise ValueError("Undefined dataset {} in dataset_info.json.".format(name))
-
-            if "hf_hub_url" in dataset_info[name]:
+            if "hf_local_path" in dataset_info[name]:
+                dataset_attr = DatasetAttr("hf_local", dataset_name=dataset_info[name]["hf_local_path"])
+            elif "hf_hub_url" in dataset_info[name]:
                 dataset_attr = DatasetAttr("hf_hub", dataset_name=dataset_info[name]["hf_hub_url"])
             elif "script_url" in dataset_info[name]:
                 dataset_attr = DatasetAttr("script", dataset_name=dataset_info[name]["script_url"])

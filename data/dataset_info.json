@@ -245,5 +245,52 @@
       "response": "",
       "history": ""
     }
+  },
+
+  "evol_instruct_v2":{
+    "hf_hub_url":"WizardLM/WizardLM_evol_instruct_70k",
+    "columns": {
+      "prompt": "instruction",
+      "query": "",
+      "response": "output",
+      "history": ""
+    }
+  },
+  "TigerResearch_sft_en":{
+    "hf_hub_url":"TigerResearch/sft_en",
+    "hf_local_path":"hf_download/TigerResearch_sft_en",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "history": ""
+    }
+  },
+  "TigerResearch_sft_zh":{
+      "hf_hub_url":"TigerResearch/sft_zh",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "history": ""
+    }
+  },
+  "TigerResearch_tigerbot-zhihu-zh-10k":{
+    "hf_hub_url":"TigerResearch/tigerbot-zhihu-zh-10k",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "history": ""
+    }
+  },
+  "TigerResearch_tigerbot-gsm-8k-en":{
+    "hf_hub_url":"TigerResearch/tigerbot-gsm-8k-en",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output",
+      "history": ""
+    }
   }
 }
