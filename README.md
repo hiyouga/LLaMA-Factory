@@ -1,11 +1,11 @@
-# LLaMA Efficient Tuning
+# LLaMA Factory: Training and Evaluating Large Language Models with Minimal Effort
 
-[![GitHub Repo stars](https://img.shields.io/github/stars/hiyouga/LLaMA-Efficient-Tuning?style=social)](https://github.com/hiyouga/LLaMA-Efficient-Tuning/stargazers)
-[![GitHub Code License](https://img.shields.io/github/license/hiyouga/LLaMA-Efficient-Tuning)](LICENSE)
-[![GitHub last commit](https://img.shields.io/github/last-commit/hiyouga/LLaMA-Efficient-Tuning)](https://github.com/hiyouga/LLaMA-Efficient-Tuning/commits/main)
+[![GitHub Repo stars](https://img.shields.io/github/stars/hiyouga/LLaMA-Factory?style=social)](https://github.com/hiyouga/LLaMA-Factory/stargazers)
+[![GitHub Code License](https://img.shields.io/github/license/hiyouga/LLaMA-Factory)](LICENSE)
+[![GitHub last commit](https://img.shields.io/github/last-commit/hiyouga/LLaMA-Factory)](https://github.com/hiyouga/LLaMA-Factory/commits/main)
 [![PyPI](https://img.shields.io/pypi/v/llmtuner)](https://pypi.org/project/llmtuner/)
 [![Downloads](https://static.pepy.tech/badge/llmtuner)](https://pypi.org/project/llmtuner/)
-[![GitHub pull request](https://img.shields.io/badge/PRs-welcome-blue)](https://github.com/hiyouga/LLaMA-Efficient-Tuning/pulls)
+[![GitHub pull request](https://img.shields.io/badge/PRs-welcome-blue)](https://github.com/hiyouga/LLaMA-Factory/pulls)
 [![Discord](https://dcbadge.vercel.app/api/server/7HGMsdxqJ?compact=true&style=flat)](https://discord.gg/7HGMsdxqJ)
 
 👋 Join our [WeChat](assets/wechat.jpg).
@@ -143,10 +143,10 @@ Please refer to `data/example_dataset` for checking the details about the format
 ### Dependence Installation (optional)
 
 ```bash
-git clone https://github.com/hiyouga/LLaMA-Efficient-Tuning.git
-conda create -n llama_etuning python=3.10
-conda activate llama_etuning
-cd LLaMA-Efficient-Tuning
+git clone https://github.com/hiyouga/LLaMA-Factory.git
+conda create -n llama_factory python=3.10
+conda activate llama_factory
+cd LLaMA-Factory
 pip install -r requirements.txt
 ```
 
@@ -468,10 +468,10 @@ Please follow the model licenses to use the corresponding model weights:
 If this work is helpful, please kindly cite as:
 
 ```bibtex
-@Misc{llama-efficient-tuning,
-  title = {LLaMA Efficient Tuning},
+@Misc{llama-factory,
+  title = {LLaMA Factory},
   author = {hiyouga},
-  howpublished = {\url{https://github.com/hiyouga/LLaMA-Efficient-Tuning}},
+  howpublished = {\url{https://github.com/hiyouga/LLaMA-Factory}},
   year = {2023}
 }
 ```
@@ -482,4 +482,4 @@ This repo benefits from [PEFT](https://github.com/huggingface/peft), [QLoRA](htt
 
 ## Star History
 
-![Star History Chart](https://api.star-history.com/svg?repos=hiyouga/LLaMA-Efficient-Tuning&type=Date)
+![Star History Chart](https://api.star-history.com/svg?repos=hiyouga/LLaMA-Factory&type=Date)
