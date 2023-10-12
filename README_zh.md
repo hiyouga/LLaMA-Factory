@@ -1,11 +1,11 @@
-# LLaMA Efficient Tuning
+# LLaMA Factory: 轻松的大模型训练与评估
 
-[![GitHub Repo stars](https://img.shields.io/github/stars/hiyouga/LLaMA-Efficient-Tuning?style=social)](https://github.com/hiyouga/LLaMA-Efficient-Tuning/stargazers)
-[![GitHub Code License](https://img.shields.io/github/license/hiyouga/LLaMA-Efficient-Tuning)](LICENSE)
-[![GitHub last commit](https://img.shields.io/github/last-commit/hiyouga/LLaMA-Efficient-Tuning)](https://github.com/hiyouga/LLaMA-Efficient-Tuning/commits/main)
+[![GitHub Repo stars](https://img.shields.io/github/stars/hiyouga/LLaMA-Factory?style=social)](https://github.com/hiyouga/LLaMA-Factory/stargazers)
+[![GitHub Code License](https://img.shields.io/github/license/hiyouga/LLaMA-Factory)](LICENSE)
+[![GitHub last commit](https://img.shields.io/github/last-commit/hiyouga/LLaMA-Factory)](https://github.com/hiyouga/LLaMA-Factory/commits/main)
 [![PyPI](https://img.shields.io/pypi/v/llmtuner)](https://pypi.org/project/llmtuner/)
 [![Downloads](https://static.pepy.tech/badge/llmtuner)](https://pypi.org/project/llmtuner/)
-[![GitHub pull request](https://img.shields.io/badge/PRs-welcome-blue)](https://github.com/hiyouga/LLaMA-Efficient-Tuning/pulls)
+[![GitHub pull request](https://img.shields.io/badge/PRs-welcome-blue)](https://github.com/hiyouga/LLaMA-Factory/pulls)
 [![Discord](https://dcbadge.vercel.app/api/server/7HGMsdxqJ?compact=true&style=flat)](https://discord.gg/7HGMsdxqJ)
 
 👋 加入我们的[微信群](assets/wechat.jpg)。
@@ -143,10 +143,10 @@ huggingface-cli login
 ### 环境搭建（可跳过）
 
 ```bash
-git clone https://github.com/hiyouga/LLaMA-Efficient-Tuning.git
-conda create -n llama_etuning python=3.10
-conda activate llama_etuning
-cd LLaMA-Efficient-Tuning
+git clone https://github.com/hiyouga/LLaMA-Factory.git
+conda create -n llama_factory python=3.10
+conda activate llama_factory
+cd LLaMA-Factory
 pip install -r requirements.txt
 ```
 
@@ -467,10 +467,10 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 如果您觉得此项目有帮助，请考虑以下列格式引用
 
 ```bibtex
-@Misc{llama-efficient-tuning,
-  title = {LLaMA Efficient Tuning},
+@Misc{llama-factory,
+  title = {LLaMA Factory},
   author = {hiyouga},
-  howpublished = {\url{https://github.com/hiyouga/LLaMA-Efficient-Tuning}},
+  howpublished = {\url{https://github.com/hiyouga/LLaMA-Factory}},
   year = {2023}
 }
 ```
@@ -481,4 +481,4 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 
 ## Star History
 
-![Star History Chart](https://api.star-history.com/svg?repos=hiyouga/LLaMA-Efficient-Tuning&type=Date)
+![Star History Chart](https://api.star-history.com/svg?repos=hiyouga/LLaMA-Factory&type=Date)
