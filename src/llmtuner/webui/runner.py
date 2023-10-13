@@ -138,12 +138,13 @@ class Runner:
             lora_rank=lora_rank,
             lora_dropout=lora_dropout,
             lora_target=lora_target or DEFAULT_MODULE.get(model_name.split("-")[0], "q_proj,v_proj"),
-            resume_lora_training=(
-                False if TRAINING_STAGES[training_stage] in ["rm", "ppo", "dpo"] else resume_lora_training
-            ),
+            resume_lora_training=resume_lora_training,
             output_dir=output_dir
         )
         args[compute_type] = True
+
+        if TRAINING_STAGES[training_stage] in ["rm", "ppo", "dpo"] and args["quantization_bit"] is None:
+            args["resume_lora_training"] = False
 
         if args["quantization_bit"] is not None:
             args["upcast_layernorm"] = True
