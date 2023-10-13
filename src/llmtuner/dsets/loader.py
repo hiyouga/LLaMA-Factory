@@ -65,6 +65,8 @@ def get_dataset(
             max_samples_temp = min(len(dataset), max_samples)
             dataset = dataset.select(range(max_samples_temp))
 
+        # TODO: adapt to the sharegpt format
+
         for column_name in ["prompt", "query", "response", "history"]: # align datasets
             if getattr(dataset_attr, column_name) and getattr(dataset_attr, column_name) != column_name:
                 dataset = dataset.rename_column(getattr(dataset_attr, column_name), column_name)
