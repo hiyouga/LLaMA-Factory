@@ -7,19 +7,28 @@ from llmtuner.webui.utils import can_preview, get_preview
 
 if TYPE_CHECKING:
     from gradio.components import Component
-    from llmtuner.webui.runner import Runner
+    from llmtuner.webui.engine import Engine
 
 
-def create_eval_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict[str, "Component"]:
+def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
+    input_elems = engine.manager.get_base_elems()
+    elem_dict = dict()
+
     with gr.Row():
         dataset_dir = gr.Textbox(value=DEFAULT_DATA_DIR, scale=2)
         dataset = gr.Dropdown(multiselect=True, scale=4)
         data_preview_btn = gr.Button(interactive=False, scale=1)
 
-    preview_box, preview_count, preview_samples, close_btn = create_preview_box()
-
     dataset_dir.change(list_dataset, [dataset_dir], [dataset])
     dataset.change(can_preview, [dataset_dir, dataset], [data_preview_btn])
+
+    input_elems.update({dataset_dir, dataset})
+    elem_dict.update(dict(
+        dataset_dir=dataset_dir, dataset=dataset, data_preview_btn=data_preview_btn
+    ))
+
+    preview_box, preview_count, preview_samples, close_btn = create_preview_box()
+
     data_preview_btn.click(
         get_preview,
         [dataset_dir, dataset],
@@ -27,16 +36,30 @@ def create_eval_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict
         queue=False
     )
 
+    elem_dict.update(dict(
+        preview_count=preview_count, preview_samples=preview_samples, close_btn=close_btn
+    ))
+
     with gr.Row():
         cutoff_len = gr.Slider(value=1024, minimum=4, maximum=8192, step=1)
         max_samples = gr.Textbox(value="100000")
         batch_size = gr.Slider(value=8, minimum=1, maximum=512, step=1)
         predict = gr.Checkbox(value=True)
 
+    input_elems.update({cutoff_len, max_samples, batch_size, predict})
+    elem_dict.update(dict(
+        cutoff_len=cutoff_len, max_samples=max_samples, batch_size=batch_size, predict=predict
+    ))
+
     with gr.Row():
         max_new_tokens = gr.Slider(10, 2048, value=128, step=1)
         top_p = gr.Slider(0.01, 1, value=0.7, step=0.01)
         temperature = gr.Slider(0.01, 1.5, value=0.95, step=0.01)
+
+    input_elems.update({max_new_tokens, top_p, temperature})
+    elem_dict.update(dict(
+        max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature
+    ))
 
     with gr.Row():
         cmd_preview_btn = gr.Button()
@@ -49,53 +72,13 @@ def create_eval_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict
     with gr.Box():
         output_box = gr.Markdown()
 
-    input_components = [
-        top_elems["lang"],
-        top_elems["model_name"],
-        top_elems["checkpoints"],
-        top_elems["finetuning_type"],
-        top_elems["quantization_bit"],
-        top_elems["template"],
-        top_elems["system_prompt"],
-        top_elems["flash_attn"],
-        top_elems["shift_attn"],
-        top_elems["rope_scaling"],
-        dataset_dir,
-        dataset,
-        cutoff_len,
-        max_samples,
-        batch_size,
-        predict,
-        max_new_tokens,
-        top_p,
-        temperature
-    ]
+    output_elems = [output_box, process_bar]
+    elem_dict.update(dict(
+        cmd_preview_btn=cmd_preview_btn, start_btn=start_btn, stop_btn=stop_btn, output_box=output_box
+    ))
 
-    output_components = [
-        output_box,
-        process_bar
-    ]
+    cmd_preview_btn.click(engine.runner.preview_eval, input_elems, output_elems)
+    start_btn.click(engine.runner.run_eval, input_elems, output_elems)
+    stop_btn.click(engine.runner.set_abort, queue=False)
 
-    cmd_preview_btn.click(runner.preview_eval, input_components, output_components)
-    start_btn.click(runner.run_eval, input_components, output_components)
-    stop_btn.click(runner.set_abort, queue=False)
-
-    return dict(
-        dataset_dir=dataset_dir,
-        dataset=dataset,
-        data_preview_btn=data_preview_btn,
-        preview_count=preview_count,
-        preview_samples=preview_samples,
-        close_btn=close_btn,
-        cutoff_len=cutoff_len,
-        max_samples=max_samples,
-        batch_size=batch_size,
-        predict=predict,
-        max_new_tokens=max_new_tokens,
-        top_p=top_p,
-        temperature=temperature,
-        cmd_preview_btn=cmd_preview_btn,
-        start_btn=start_btn,
-        stop_btn=stop_btn,
-        output_box=output_box
-    )
+    return elem_dict
