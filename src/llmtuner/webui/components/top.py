@@ -37,12 +37,6 @@ def create_top(engine: "Engine") -> Dict[str, "Component"]:
             shift_attn = gr.Checkbox(value=False)
             rope_scaling = gr.Dropdown(choices=["none", "linear", "dynamic"], value="none")
 
-    lang.change(
-        engine.change_lang, [lang], engine.manager.list_elems(), queue=False
-    ).then(
-        save_config, inputs=[config, lang, model_name, model_path]
-    )
-
     model_name.change(
         list_checkpoint, [model_name, finetuning_type], [checkpoints]
     ).then(
