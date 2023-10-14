@@ -199,10 +199,10 @@ class Runner:
             yield gen_cmd(args), gr.update(visible=False)
 
     def run_train(self, data: Dict[Component, Any]) -> Generator[Tuple[str, Dict[str, Any]], None, None]:
-        self.prepare(data, self._parse_train_args)
+        yield from self.prepare(data, self._parse_train_args)
 
     def run_eval(self, data: Dict[Component, Any]) -> Generator[Tuple[str, Dict[str, Any]], None, None]:
-        self.prepare(data, self._parse_eval_args)
+        yield from self.prepare(data, self._parse_eval_args)
 
     def prepare(self, data: Dict[Component, Any], is_training: bool) -> Generator[Tuple[str, Dict[str, Any]], None, None]:
         parse_func = self._parse_train_args if is_training else self._parse_eval_args
@@ -213,9 +213,9 @@ class Runner:
         else:
             self.running = True
             run_kwargs = dict(args=args, callbacks=[self.trainer_callback])
-            thread = Thread(target=run_exp, kwargs=run_kwargs)
-            thread.start()
-            yield self.monitor(lang, output_dir, is_training)
+            self.thread = Thread(target=run_exp, kwargs=run_kwargs)
+            self.thread.start()
+            yield from self.monitor(lang, output_dir, is_training)
 
     def monitor(self, lang: str, output_dir: str, is_training: bool) -> Generator[Tuple[str, Dict[str, Any]], None, None]:
         while self.thread.is_alive():
