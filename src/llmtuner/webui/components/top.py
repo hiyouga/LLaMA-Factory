@@ -8,10 +8,9 @@ from llmtuner.webui.utils import can_quantize
 
 if TYPE_CHECKING:
     from gradio.components import Component
-    from llmtuner.webui.engine import Engine
 
 
-def create_top(engine: "Engine") -> Dict[str, "Component"]:
+def create_top() -> Dict[str, "Component"]:
     available_models = list(SUPPORTED_MODELS.keys()) + ["Custom"]
     config = gr.State(value=load_config())
 
@@ -38,11 +37,11 @@ def create_top(engine: "Engine") -> Dict[str, "Component"]:
             rope_scaling = gr.Dropdown(choices=["none", "linear", "dynamic"], value="none")
 
     model_name.change(
-        list_checkpoint, [model_name, finetuning_type], [checkpoints]
+        list_checkpoint, [model_name, finetuning_type], [checkpoints], queue=False
     ).then(
-        get_model_path, [config, model_name], [model_path]
+        get_model_path, [config, model_name], [model_path], queue=False
     ).then(
-        get_template, [model_name], [template]
+        get_template, [model_name], [template], queue=False
     ) # do not save config since the below line will save
 
     model_path.change(save_config, inputs=[config, lang, model_name, model_path])

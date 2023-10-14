@@ -19,8 +19,8 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
         dataset = gr.Dropdown(multiselect=True, scale=4)
         data_preview_btn = gr.Button(interactive=False, scale=1)
 
-    dataset_dir.change(list_dataset, [dataset_dir], [dataset])
-    dataset.change(can_preview, [dataset_dir, dataset], [data_preview_btn])
+    dataset_dir.change(list_dataset, [dataset_dir], [dataset], queue=False)
+    dataset.change(can_preview, [dataset_dir, dataset], [data_preview_btn], queue=False)
 
     input_elems.update({dataset_dir, dataset})
     elem_dict.update(dict(
