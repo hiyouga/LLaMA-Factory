@@ -21,7 +21,7 @@ def create_ui() -> gr.Blocks:
     engine = Engine(pure_chat=False)
 
     with gr.Blocks(title="Web Tuner", css=CSS) as demo:
-        engine.manager.all_elems["top"] = create_top(engine)
+        engine.manager.all_elems["top"] = create_top()
         lang: "gr.Dropdown" = engine.manager.get_elem("top.lang")
         config = engine.manager.get_elem("top.config")
         model_name = engine.manager.get_elem("top.model_name")
