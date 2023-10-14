@@ -1,69 +1,73 @@
-from typing import Any, Dict, Generator, List, Optional, Tuple
+from gradio.components import Component # cannot use TYPE_CHECKING here
+from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Tuple
 
 from llmtuner.chat.stream_chat import ChatModel
 from llmtuner.extras.misc import torch_gc
 from llmtuner.hparams import GeneratingArguments
-from llmtuner.webui.common import get_model_path, get_save_dir
+from llmtuner.webui.common import get_save_dir
 from llmtuner.webui.locales import ALERTS
+
+if TYPE_CHECKING:
+    from llmtuner.webui.manager import Manager
 
 
 class WebChatModel(ChatModel):
 
-    def __init__(self, args: Optional[Dict[str, Any]] = None, lazy_init: Optional[bool] = True) -> None:
+    def __init__(self, manager: "Manager", lazy_init: Optional[bool] = True) -> None:
+        self.manager = manager
         self.model = None
         self.tokenizer = None
         self.generating_args = GeneratingArguments()
         if not lazy_init:
-            super().__init__(args)
+            super().__init__()
 
-    def load_model(
-        self,
-        lang: str,
-        model_name: str,
-        checkpoints: List[str],
-        finetuning_type: str,
-        quantization_bit: str,
-        template: str,
-        system_prompt: str,
-        flash_attn: bool,
-        shift_attn: bool,
-        rope_scaling: str
-    ) -> Generator[str, None, None]:
-        if self.model is not None:
+    @property
+    def loaded(self) -> bool:
+        return self.model is not None
+
+    def load_model(self, data: Dict[Component, Any]) -> Generator[str, None, None]:
+        get = lambda name: data[self.manager.get_elem(name)]
+        lang = get("top.lang")
+
+        if self.loaded:
             yield ALERTS["err_exists"][lang]
             return
 
-        if not model_name:
+        if not get("top.model_name"):
             yield ALERTS["err_no_model"][lang]
             return
 
-        model_name_or_path = get_model_path(model_name)
-        if not model_name_or_path:
+        if not get("top.model_path"):
             yield ALERTS["err_no_path"][lang]
             return
 
-        if checkpoints:
-            checkpoint_dir = ",".join([get_save_dir(model_name, finetuning_type, ckpt) for ckpt in checkpoints])
+        if get("top.checkpoints"):
+            checkpoint_dir = ",".join([
+                get_save_dir(get("top.model_name"), get("top.finetuning_type"), ckpt) for ckpt in get("top.checkpoints")
+            ])
         else:
             checkpoint_dir = None
 
         yield ALERTS["info_loading"][lang]
         args = dict(
-            model_name_or_path=model_name_or_path,
+            model_name_or_path=get("top.model_path"),
             checkpoint_dir=checkpoint_dir,
-            finetuning_type=finetuning_type,
-            quantization_bit=int(quantization_bit) if quantization_bit in ["8", "4"] else None,
-            template=template,
-            system_prompt=system_prompt,
-            flash_attn=flash_attn,
-            shift_attn=shift_attn,
-            rope_scaling=rope_scaling if rope_scaling in ["linear", "dynamic"] else None
+            finetuning_type=get("top.finetuning_type"),
+            quantization_bit=int(get("top.quantization_bit")) if get("top.quantization_bit") in ["8", "4"] else None,
+            template=get("top.template"),
+            system_prompt=get("top.system_prompt"),
+            flash_attn=get("top.flash_attn"),
+            shift_attn=get("top.shift_attn"),
+            rope_scaling=get("top.rope_scaling") if get("top.rope_scaling") in ["linear", "dynamic"] else None
         )
         super().__init__(args)
 
         yield ALERTS["info_loaded"][lang]
 
-    def unload_model(self, lang: str) -> Generator[str, None, None]:
+    def unload_model(self, data: Dict[Component, Any]) -> Generator[str, None, None]:
+        get = lambda name: data[self.manager.get_elem(name)]
+        lang = get("top.lang")
+
         yield ALERTS["info_unloading"][lang]
         self.model = None
         self.tokenizer = None
