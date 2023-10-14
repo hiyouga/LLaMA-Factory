@@ -12,25 +12,27 @@ from llmtuner.webui.utils import get_time
 
 class Engine:
 
-    def __init__(self, init_chat: Optional[bool] = False) -> None:
+    def __init__(self, pure_chat: Optional[bool] = False) -> None:
+        self.pure_chat = pure_chat
         self.manager: "Manager" = Manager()
         self.runner: "Runner" = Runner(self.manager)
-        self.chatter: "WebChatModel" = WebChatModel(manager=self.manager, lazy_init=(not init_chat))
+        self.chatter: "WebChatModel" = WebChatModel(manager=self.manager, lazy_init=(not pure_chat))
 
     def resume(self, config: CONFIG_CLASS) -> Generator[Dict[Component, Dict[str, Any]], None, None]:
         lang = config.get("lang", None) or "en"
 
         resume_dict = {
-            "top.config": {"value": config},
             "top.lang": {"value": lang},
-            "train.dataset": {"choices": list_dataset()["choices"]},
-            "eval.dataset": {"choices": list_dataset()["choices"]},
             "infer.chat_box": {"visible": self.chatter.loaded}
         }
 
-        if config.get("last_model", None):
-            resume_dict["top.model_name"] = {"value": config["last_model"]}
-            resume_dict["top.model_path"] = {"value": get_model_path(config, config["last_model"])}
+        if not self.pure_chat:
+            resume_dict["train.dataset"] = {"choices": list_dataset()["choices"]}
+            resume_dict["eval.dataset"] = {"choices": list_dataset()["choices"]}
+
+            if config.get("last_model", None):
+                resume_dict["top.model_name"] = {"value": config["last_model"]}
+                resume_dict["top.model_path"] = {"value": get_model_path(config, config["last_model"])}
 
         yield {self.manager.get_elem(k): gr.update(**v) for k, v in resume_dict.items()}
 
@@ -42,5 +44,5 @@ class Engine:
     def change_lang(self, lang: str) -> Dict[Component, Dict[str, Any]]:
         return {
             component: gr.update(**LOCALES[name][lang])
-            for elems in self.manager.all_elems.values() for name, component in elems.items()
+            for elems in self.manager.all_elems.values() for name, component in elems.items() if name in LOCALES
         }
