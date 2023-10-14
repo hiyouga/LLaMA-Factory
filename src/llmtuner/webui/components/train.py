@@ -9,10 +9,13 @@ from llmtuner.webui.utils import can_preview, get_preview, gen_plot
 
 if TYPE_CHECKING:
     from gradio.components import Component
-    from llmtuner.webui.runner import Runner
+    from llmtuner.webui.engine import Engine
 
 
-def create_train_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dict[str, "Component"]:
+def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
+    input_elems = engine.manager.get_base_elems()
+    elem_dict = dict()
+
     with gr.Row():
         training_stage = gr.Dropdown(
             choices=list(TRAINING_STAGES.keys()), value=list(TRAINING_STAGES.keys())[0], scale=2
@@ -21,11 +24,17 @@ def create_train_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dic
         dataset = gr.Dropdown(multiselect=True, scale=4)
         data_preview_btn = gr.Button(interactive=False, scale=1)
 
+    training_stage.change(list_dataset, [dataset_dir, training_stage], [dataset], queue=False)
+    dataset_dir.change(list_dataset, [dataset_dir, training_stage], [dataset], queue=False)
+    dataset.change(can_preview, [dataset_dir, dataset], [data_preview_btn], queue=False)
+
+    input_elems.update({training_stage, dataset_dir, dataset})
+    elem_dict.update(dict(
+        training_stage=training_stage, dataset_dir=dataset_dir, dataset=dataset, data_preview_btn=data_preview_btn
+    ))
+
     preview_box, preview_count, preview_samples, close_btn = create_preview_box()
 
-    training_stage.change(list_dataset, [dataset_dir, training_stage], [dataset])
-    dataset_dir.change(list_dataset, [dataset_dir, training_stage], [dataset])
-    dataset.change(can_preview, [dataset_dir, dataset], [data_preview_btn])
     data_preview_btn.click(
         get_preview,
         [dataset_dir, dataset],
@@ -33,12 +42,22 @@ def create_train_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dic
         queue=False
     )
 
+    elem_dict.update(dict(
+        preview_count=preview_count, preview_samples=preview_samples, close_btn=close_btn
+    ))
+
     with gr.Row():
         cutoff_len = gr.Slider(value=1024, minimum=4, maximum=8192, step=1)
         learning_rate = gr.Textbox(value="5e-5")
         num_train_epochs = gr.Textbox(value="3.0")
         max_samples = gr.Textbox(value="100000")
         compute_type = gr.Radio(choices=["fp16", "bf16"], value="fp16")
+
+    input_elems.update({cutoff_len, learning_rate, num_train_epochs, max_samples, compute_type})
+    elem_dict.update(dict(
+        cutoff_len=cutoff_len, learning_rate=learning_rate, num_train_epochs=num_train_epochs,
+        max_samples=max_samples, compute_type=compute_type
+    ))
 
     with gr.Row():
         batch_size = gr.Slider(value=4, minimum=1, maximum=512, step=1)
@@ -49,11 +68,22 @@ def create_train_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dic
         max_grad_norm = gr.Textbox(value="1.0")
         val_size = gr.Slider(value=0, minimum=0, maximum=1, step=0.001)
 
+    input_elems.update({batch_size, gradient_accumulation_steps, lr_scheduler_type, max_grad_norm, val_size})
+    elem_dict.update(dict(
+        batch_size=batch_size, gradient_accumulation_steps=gradient_accumulation_steps,
+        lr_scheduler_type=lr_scheduler_type, max_grad_norm=max_grad_norm, val_size=val_size
+    ))
+
     with gr.Accordion(label="Advanced config", open=False) as advanced_tab:
         with gr.Row():
             logging_steps = gr.Slider(value=5, minimum=5, maximum=1000, step=5)
             save_steps = gr.Slider(value=100, minimum=10, maximum=5000, step=10)
             warmup_steps = gr.Slider(value=0, minimum=0, maximum=5000, step=1)
+
+    input_elems.update({logging_steps, save_steps, warmup_steps})
+    elem_dict.update(dict(
+        advanced_tab=advanced_tab, logging_steps=logging_steps, save_steps=save_steps, warmup_steps=warmup_steps
+    ))
 
     with gr.Accordion(label="LoRA config", open=False) as lora_tab:
         with gr.Row():
@@ -61,6 +91,15 @@ def create_train_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dic
             lora_dropout = gr.Slider(value=0.1, minimum=0, maximum=1, step=0.01, scale=1)
             lora_target = gr.Textbox(scale=2)
             resume_lora_training = gr.Checkbox(value=True, scale=1)
+
+    input_elems.update({lora_rank, lora_dropout, lora_target, resume_lora_training})
+    elem_dict.update(dict(
+        lora_tab=lora_tab,
+        lora_rank=lora_rank,
+        lora_dropout=lora_dropout,
+        lora_target=lora_target,
+        resume_lora_training=resume_lora_training,
+    ))
 
     with gr.Accordion(label="RLHF config", open=False) as rlhf_tab:
         with gr.Row():
@@ -70,10 +109,13 @@ def create_train_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dic
 
     refresh_btn.click(
         list_checkpoint,
-        [top_elems["model_name"], top_elems["finetuning_type"]],
+        [engine.manager.get_elem("top.model_name"), engine.manager.get_elem("top.finetuning_type")],
         [reward_model],
         queue=False
     )
+
+    input_elems.update({dpo_beta, reward_model})
+    elem_dict.update(dict(rlhf_tab=rlhf_tab, dpo_beta=dpo_beta, reward_model=reward_model, refresh_btn=refresh_btn))
 
     with gr.Row():
         cmd_preview_btn = gr.Button()
@@ -86,6 +128,7 @@ def create_train_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dic
                 output_dir = gr.Textbox()
 
             with gr.Row():
+                resume_btn = gr.Checkbox(visible=False, interactive=False, value=False)
                 process_bar = gr.Slider(visible=False, interactive=False)
 
             with gr.Box():
@@ -94,90 +137,23 @@ def create_train_tab(top_elems: Dict[str, "Component"], runner: "Runner") -> Dic
         with gr.Column(scale=1):
             loss_viewer = gr.Plot()
 
-    input_components = [
-        top_elems["lang"],
-        top_elems["model_name"],
-        top_elems["checkpoints"],
-        top_elems["finetuning_type"],
-        top_elems["quantization_bit"],
-        top_elems["template"],
-        top_elems["system_prompt"],
-        top_elems["flash_attn"],
-        top_elems["shift_attn"],
-        top_elems["rope_scaling"],
-        training_stage,
-        dataset_dir,
-        dataset,
-        cutoff_len,
-        learning_rate,
-        num_train_epochs,
-        max_samples,
-        compute_type,
-        batch_size,
-        gradient_accumulation_steps,
-        lr_scheduler_type,
-        max_grad_norm,
-        val_size,
-        logging_steps,
-        save_steps,
-        warmup_steps,
-        lora_rank,
-        lora_dropout,
-        lora_target,
-        resume_lora_training,
-        dpo_beta,
-        reward_model,
-        output_dir
-    ]
+    input_elems.add(output_dir)
+    output_elems = [output_box, process_bar]
+    elem_dict.update(dict(
+        cmd_preview_btn=cmd_preview_btn, start_btn=start_btn, stop_btn=stop_btn, output_dir=output_dir,
+        resume_btn=resume_btn, output_box=output_box, loss_viewer=loss_viewer, process_bar=process_bar
+    ))
 
-    output_components = [
-        output_box,
-        process_bar
-    ]
+    cmd_preview_btn.click(engine.runner.preview_train, input_elems, output_elems)
+    start_btn.click(engine.runner.run_train, input_elems, output_elems)
+    stop_btn.click(engine.runner.set_abort, queue=False)
+    resume_btn.change(engine.runner.monitor, outputs=output_elems)
 
-    cmd_preview_btn.click(runner.preview_train, input_components, output_components)
-    start_btn.click(runner.run_train, input_components, output_components)
-    stop_btn.click(runner.set_abort, queue=False)
-
-    process_bar.change(
-        gen_plot, [top_elems["model_name"], top_elems["finetuning_type"], output_dir], loss_viewer, queue=False
+    output_box.change(
+        gen_plot,
+        [engine.manager.get_elem("top.model_name"), engine.manager.get_elem("top.finetuning_type"), output_dir],
+        loss_viewer,
+        queue=False
     )
 
-    return dict(
-        training_stage=training_stage,
-        dataset_dir=dataset_dir,
-        dataset=dataset,
-        data_preview_btn=data_preview_btn,
-        preview_count=preview_count,
-        preview_samples=preview_samples,
-        close_btn=close_btn,
-        cutoff_len=cutoff_len,
-        learning_rate=learning_rate,
-        num_train_epochs=num_train_epochs,
-        max_samples=max_samples,
-        compute_type=compute_type,
-        batch_size=batch_size,
-        gradient_accumulation_steps=gradient_accumulation_steps,
-        lr_scheduler_type=lr_scheduler_type,
-        max_grad_norm=max_grad_norm,
-        val_size=val_size,
-        advanced_tab=advanced_tab,
-        logging_steps=logging_steps,
-        save_steps=save_steps,
-        warmup_steps=warmup_steps,
-        lora_tab=lora_tab,
-        lora_rank=lora_rank,
-        lora_dropout=lora_dropout,
-        lora_target=lora_target,
-        resume_lora_training=resume_lora_training,
-        rlhf_tab=rlhf_tab,
-        dpo_beta=dpo_beta,
-        reward_model=reward_model,
-        refresh_btn=refresh_btn,
-        cmd_preview_btn=cmd_preview_btn,
-        start_btn=start_btn,
-        stop_btn=stop_btn,
-        output_dir=output_dir,
-        output_box=output_box,
-        loss_viewer=loss_viewer
-    )
+    return elem_dict

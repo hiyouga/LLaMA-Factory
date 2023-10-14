@@ -134,6 +134,11 @@ class LogCallback(TrainerCallback):
             elapsed_time=self.elapsed_time,
             remaining_time=self.remaining_time
         )
+        if self.runner is not None:
+            logger.info("{{'loss': {:.4f}, 'learning_rate': {:.6f}, 'epoch': {:.2f}}}".format(
+                logs["loss"], logs["learning_rate"], logs["epoch"]
+            ))
+
         os.makedirs(args.output_dir, exist_ok=True)
         with open(os.path.join(args.output_dir, "trainer_log.jsonl"), "a", encoding="utf-8") as f:
             f.write(json.dumps(logs) + "\n")
