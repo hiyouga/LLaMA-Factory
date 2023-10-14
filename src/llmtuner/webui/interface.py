@@ -9,65 +9,66 @@ from llmtuner.webui.components import (
     create_export_tab,
     create_chat_box
 )
-from llmtuner.webui.chat import WebChatModel
+from llmtuner.webui.common import load_config, save_config
 from llmtuner.webui.css import CSS
-from llmtuner.webui.manager import Manager
-from llmtuner.webui.runner import Runner
+from llmtuner.webui.engine import Engine
 
 
 require_version("gradio>=3.36.0", "To fix: pip install gradio>=3.36.0")
 
 
 def create_ui() -> gr.Blocks:
-    runner = Runner()
+    engine = Engine(pure_chat=False)
 
     with gr.Blocks(title="Web Tuner", css=CSS) as demo:
-        top_elems = create_top()
+        engine.manager.all_elems["top"] = create_top()
+        lang: "gr.Dropdown" = engine.manager.get_elem("top.lang")
+        config = engine.manager.get_elem("top.config")
+        model_name = engine.manager.get_elem("top.model_name")
+        model_path = engine.manager.get_elem("top.model_path")
 
         with gr.Tab("Train"):
-            train_elems = create_train_tab(top_elems, runner)
+            engine.manager.all_elems["train"] = create_train_tab(engine)
 
         with gr.Tab("Evaluate"):
-            eval_elems = create_eval_tab(top_elems, runner)
+            engine.manager.all_elems["eval"] = create_eval_tab(engine)
 
         with gr.Tab("Chat"):
-            infer_elems = create_infer_tab(top_elems)
+            engine.manager.all_elems["infer"] = create_infer_tab(engine)
 
         with gr.Tab("Export"):
-            export_elems = create_export_tab(top_elems)
+            engine.manager.all_elems["export"] = create_export_tab(engine)
 
-        elem_list = [top_elems, train_elems, eval_elems, infer_elems, export_elems]
-        manager = Manager(elem_list)
+        demo.load(engine.resume, [config], engine.manager.list_elems())
 
-        demo.load(
-            manager.gen_label,
-            [top_elems["lang"]],
-            [elem for elems in elem_list for elem in elems.values()],
-        )
-
-        top_elems["lang"].change(
-            manager.gen_label,
-            [top_elems["lang"]],
-            [elem for elems in elem_list for elem in elems.values()],
-            queue=False
+        lang.change(
+            engine.change_lang, [lang], engine.manager.list_elems(), queue=False
+        ).then(
+            save_config, inputs=[config, lang, model_name, model_path]
         )
 
     return demo
 
 
 def create_web_demo() -> gr.Blocks:
-    chat_model = WebChatModel(lazy_init=False)
+    engine = Engine(pure_chat=True)
 
     with gr.Blocks(title="Web Demo", css=CSS) as demo:
-        lang = gr.Dropdown(choices=["en", "zh"], value="en")
+        config = gr.State(value=load_config())
+        lang = gr.Dropdown(choices=["en", "zh"])
 
-        _, _, _, chat_elems = create_chat_box(chat_model, visible=True)
+        engine.manager.all_elems["top"] = dict(config=config, lang=lang)
 
-        manager = Manager([{"lang": lang}, chat_elems])
+        chat_box, _, _, chat_elems = create_chat_box(engine, visible=True)
+        engine.manager.all_elems["infer"] = dict(chat_box=chat_box, **chat_elems)
 
-        demo.load(manager.gen_label, [lang], [lang] + list(chat_elems.values()))
+        demo.load(engine.resume, [config], engine.manager.list_elems())
 
-        lang.select(manager.gen_label, [lang], [lang] + list(chat_elems.values()), queue=False)
+        lang.change(
+            engine.change_lang, [lang], engine.manager.list_elems(), queue=False
+        ).then(
+            save_config, inputs=[config, lang]
+        )
 
     return demo
 
