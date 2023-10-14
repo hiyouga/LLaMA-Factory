@@ -135,7 +135,7 @@ class LogCallback(TrainerCallback):
             remaining_time=self.remaining_time
         )
         if self.runner is not None:
-            logger.info("{{'loss': {:.4f}, 'learning_rate': {:2.2e}, 'epoch': {:.2f}}}".format(
+            logger.info("{{'loss': {:.4f}, 'learning_rate': {:2.4e}, 'epoch': {:.2f}}}".format(
                 logs["loss"], logs["learning_rate"], logs["epoch"]
             ))
 
