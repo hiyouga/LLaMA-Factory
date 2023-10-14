@@ -1,8 +1,4 @@
 LOCALES = {
-    "config": {
-        "en": {},
-        "zh": {}
-    },
     "lang": {
         "en": {
             "label": "Lang"
@@ -446,10 +442,6 @@ LOCALES = {
         "zh": {
             "label": "保存预测结果"
         }
-    },
-    "chat_box": {
-        "en": {},
-        "zh": {}
     },
     "load_btn": {
         "en": {
