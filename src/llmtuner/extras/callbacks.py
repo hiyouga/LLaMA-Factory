@@ -66,7 +66,7 @@ class LogCallback(TrainerCallback):
             self.in_training = True
             self.start_time = time.time()
             self.max_steps = state.max_steps
-            if os.path.exists(os.path.join(args.output_dir, LOG_FILE_NAME)):
+            if os.path.exists(os.path.join(args.output_dir, LOG_FILE_NAME)) and args.overwrite_output_dir:
                 logger.warning("Previous log file in this folder will be deleted.")
                 os.remove(os.path.join(args.output_dir, LOG_FILE_NAME))
 
@@ -135,7 +135,7 @@ class LogCallback(TrainerCallback):
             remaining_time=self.remaining_time
         )
         if self.runner is not None:
-            logger.info("{{'loss': {:.4f}, 'learning_rate': {:.6f}, 'epoch': {:.2f}}}".format(
+            logger.info("{{'loss': {:.4f}, 'learning_rate': {:2.2e}, 'epoch': {:.2f}}}".format(
                 logs["loss"], logs["learning_rate"], logs["epoch"]
             ))
 
