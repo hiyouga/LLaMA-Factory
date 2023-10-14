@@ -88,11 +88,10 @@ def load_model_and_tokenizer(
         tokenizer._pad = MethodType(PreTrainedTokenizerBase._pad, tokenizer)
 
     # Set model dtype
-    if model_args.compute_dtype is not None:
+    if model_args.compute_dtype is not None: # for training
         setattr(config, "torch_dtype", model_args.compute_dtype)
-    else: # priority: bf16 > fp16 > fp32
-        optim_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
-        setattr(config, "torch_dtype", optim_dtype)
+    else: # for evaluation, priority: bf16 > fp16 > fp32
+        model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
 
     # Fix config (for Qwen)
     if getattr(config, "model_type", None) == "qwen":
@@ -185,7 +184,7 @@ def load_model_and_tokenizer(
     model = AutoModelForCausalLM.from_pretrained(
         model_to_load,
         config=config,
-        torch_dtype=getattr(config, "torch_dtype"),
+        torch_dtype=model_args.compute_dtype,
         low_cpu_mem_usage=(not is_deepspeed_zero3_enabled()),
         **config_kwargs
     )
