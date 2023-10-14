@@ -122,9 +122,6 @@ def get_train_args(
     if general_args.stage == "ppo" and model_args.reward_model is None:
         raise ValueError("Reward model is necessary for PPO training.")
 
-    if general_args.stage == "ppo" and training_args.deepspeed is not None:
-        raise ValueError("PPO training is incompatible with DeepSpeed, use Accelerate instead.")
-
     if general_args.stage == "ppo" and data_args.streaming:
         raise ValueError("Streaming mode does not suppport PPO training currently.")
 
@@ -133,9 +130,6 @@ def get_train_args(
 
     if training_args.max_steps == -1 and data_args.streaming:
         raise ValueError("Please specify `max_steps` in streaming mode.")
-
-    if data_args.val_size > 1e-6 and data_args.val_size < 1 and data_args.streaming:
-        raise ValueError("Streaming mode should have an integer val size.")
 
     if training_args.do_train and training_args.predict_with_generate:
         raise ValueError("`predict_with_generate` cannot be set as True while training.")
@@ -165,11 +159,6 @@ def get_train_args(
 
     if (not training_args.do_train) and model_args.quantization_bit is not None:
         logger.warning("Evaluating model in 4/8-bit mode may cause lower scores.")
-
-    # postprocess data_args
-    if data_args.max_samples is not None and data_args.streaming:
-        logger.warning("`max_samples` is incompatible with `streaming`. Disabling max_samples.")
-        data_args.max_samples = None
 
     # postprocess training_args
     if (

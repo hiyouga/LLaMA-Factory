@@ -1,4 +1,3 @@
-import torch
 from typing import Literal, Optional
 from dataclasses import dataclass, field
 
@@ -18,6 +17,10 @@ class ModelArguments:
     use_fast_tokenizer: Optional[bool] = field(
         default=True,
         metadata={"help": "Whether to use one of the fast tokenizer (backed by the tokenizers library) or not."}
+    )
+    split_special_tokens: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Whether or not the special tokens should be split during the tokenization process."}
     )
     use_auth_token: Optional[bool] = field(
         default=False,
@@ -75,6 +78,9 @@ class ModelArguments:
     def __post_init__(self):
         self.compute_dtype = None
         self.model_max_length = None
+
+        if self.split_special_tokens and self.use_fast_tokenizer:
+            raise ValueError("`split_special_tokens` is only supported for slow tokenizers.")
 
         if self.checkpoint_dir is not None: # support merging multiple lora weights
             self.checkpoint_dir = [cd.strip() for cd in self.checkpoint_dir.split(",")]
