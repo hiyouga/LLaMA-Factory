@@ -118,6 +118,7 @@ class Runner:
             output_dir=output_dir
         )
         args[get("train.compute_type")] = True
+        args["disable_tqdm"] = True
 
         if TRAINING_STAGES[get("train.training_stage")] in ["rm", "ppo", "dpo"]:
             args["resume_lora_training"] = (args["quantization_bit"] is not None)
