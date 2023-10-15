@@ -531,7 +531,7 @@ LOCALES = {
             "label": "温度系数"
         }
     },
-    "save_dir": {
+    "export_dir": {
         "en": {
             "label": "Export dir",
             "info": "Directory to save exported model."
@@ -587,7 +587,7 @@ ALERTS = {
         "en": "Please select a checkpoint.",
         "zh": "请选择断点。"
     },
-    "err_no_save_dir": {
+    "err_no_export_dir": {
         "en": "Please provide export dir.",
         "zh": "请填写导出目录"
     },
