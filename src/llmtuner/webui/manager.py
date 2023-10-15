@@ -18,7 +18,6 @@ class Manager:
 
     def get_base_elems(self):
         return {
-            self.all_elems["top"]["config"],
             self.all_elems["top"]["lang"],
             self.all_elems["top"]["model_name"],
             self.all_elems["top"]["model_path"],
