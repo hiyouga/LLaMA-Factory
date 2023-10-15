@@ -12,9 +12,11 @@
 
 \[ English | [中文](README_zh.md) \]
 
-## Example: Fine-tuning large language model within 10 minutes
+## LLaMA Board: A One-stop Web UI for Getting Started with LLaMA Factory
 
-Launch an **all-in-one Web UI** via `python src/train_web.py`.
+Launch **LLaMA Board** via `CUDA_VISIBLE_DEVICES=0 python src/train_web.py`. (multiple GPUs are not supported yet)
+
+Here is an example of altering the self-cognition of an instruction-tuned language model within 10 minutes on a single GPU.
 
 https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846-2d88920d5ba1
 
@@ -159,17 +161,6 @@ If you want to enable the quantized LoRA (QLoRA) on the Windows platform, you wi
 ```bash
 pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.39.1-py3-none-win_amd64.whl
 ```
-
-### All-in-one Web UI
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_web.py
-```
-
-We **strongly recommend** using the all-in-one Web UI for newcomers since it can also generate training scripts automatically, even without a GPU environment.
-
-> [!WARNING]
-> Currently the web UI only supports training on **a single GPU**.
 
 ### Train on a single GPU
 
