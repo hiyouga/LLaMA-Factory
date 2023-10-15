@@ -141,7 +141,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     output_elems = [output_box, process_bar]
     elem_dict.update(dict(
         cmd_preview_btn=cmd_preview_btn, start_btn=start_btn, stop_btn=stop_btn, output_dir=output_dir,
-        resume_btn=resume_btn, output_box=output_box, loss_viewer=loss_viewer, process_bar=process_bar
+        resume_btn=resume_btn, process_bar=process_bar, output_box=output_box, loss_viewer=loss_viewer
     ))
 
     cmd_preview_btn.click(engine.runner.preview_train, input_elems, output_elems)
