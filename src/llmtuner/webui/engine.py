@@ -39,9 +39,12 @@ class Engine:
 
         yield self._form_dict(resume_dict)
 
-        if self.runner.alive: # TODO: resume eval
+        if self.runner.alive:
             yield {elem: gr.update(value=value) for elem, value in self.runner.data.items()}
-            resume_dict = {"train.resume_btn": {"value": True}}
+            if self.runner.do_train:
+                resume_dict = {"train.resume_btn": {"value": True}}
+            else:
+                resume_dict = {"eval.resume_btn": {"value": True}}
         else:
             resume_dict = {"train.output_dir": {"value": get_time()}}
         yield self._form_dict(resume_dict)

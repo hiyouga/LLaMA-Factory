@@ -136,7 +136,7 @@ class LogCallback(TrainerCallback):
         )
         if self.runner is not None:
             logger.info("{{'loss': {:.4f}, 'learning_rate': {:2.4e}, 'epoch': {:.2f}}}".format(
-                logs["loss"], logs["learning_rate"], logs["epoch"]
+                logs["loss"] or 0, logs["learning_rate"] or 0, logs["epoch"] or 0
             ))
 
         os.makedirs(args.output_dir, exist_ok=True)
