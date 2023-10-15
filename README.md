@@ -12,6 +12,10 @@
 
 \[ English | [中文](README_zh.md) \]
 
+Launch an all-in-one Web UI via `python src/train_web.py`.
+
+https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846-2d88920d5ba1
+
 ## Changelog
 
 [23/09/27] We supported **$S^2$-Attn** proposed by [LongLoRA](https://github.com/dvlab-research/LongLoRA) for the LLaMA models. Try `--shift_attn` argument to enable shift short attention.
