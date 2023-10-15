@@ -8,6 +8,10 @@ class FinetuningArguments:
     r"""
     Arguments pertaining to which techniques we are going to fine-tuning with.
     """
+    stage: Optional[Literal["pt", "sft", "rm", "ppo", "dpo"]] = field(
+        default="sft",
+        metadata={"help": "Which stage will be performed in training."}
+    )
     finetuning_type: Optional[Literal["lora", "freeze", "full", "none"]] = field(
         default="lora",
         metadata={"help": "Which fine-tuning method to use."}
