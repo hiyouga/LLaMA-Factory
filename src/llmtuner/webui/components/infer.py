@@ -17,10 +17,7 @@ def create_infer_tab(engine: "Engine") -> Dict[str, "Component"]:
         unload_btn = gr.Button()
 
     info_box = gr.Textbox(show_label=False, interactive=False)
-
-    elem_dict.update(dict(
-        info_box=info_box, load_btn=load_btn, unload_btn=unload_btn
-    ))
+    elem_dict.update(dict(load_btn=load_btn, unload_btn=unload_btn, info_box=info_box))
 
     chat_box, chatbot, history, chat_elems = create_chat_box(engine, visible=False)
     elem_dict.update(dict(chat_box=chat_box, **chat_elems))
