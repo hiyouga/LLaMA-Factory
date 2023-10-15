@@ -12,7 +12,7 @@ def create_export_tab(engine: "Engine") -> Dict[str, "Component"]:
     elem_dict = dict()
 
     with gr.Row():
-        save_dir = gr.Textbox()
+        export_dir = gr.Textbox()
         max_shard_size = gr.Slider(value=10, minimum=1, maximum=100)
 
     export_btn = gr.Button()
@@ -28,13 +28,13 @@ def create_export_tab(engine: "Engine") -> Dict[str, "Component"]:
             engine.manager.get_elem("top.finetuning_type"),
             engine.manager.get_elem("top.template"),
             max_shard_size,
-            save_dir
+            export_dir
         ],
         [info_box]
     )
 
     elem_dict.update(dict(
-        save_dir=save_dir,
+        export_dir=export_dir,
         max_shard_size=max_shard_size,
         export_btn=export_btn,
         info_box=info_box
