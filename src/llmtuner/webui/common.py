@@ -1,7 +1,7 @@
 import os
 import json
 import gradio as gr
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 from transformers.utils import (
     WEIGHTS_NAME,
     WEIGHTS_INDEX_NAME,
@@ -27,7 +27,6 @@ CKPT_NAMES = [
     ADAPTER_WEIGHTS_NAME,
     ADAPTER_SAFE_WEIGHTS_NAME
 ]
-CONFIG_CLASS = Dict[str, Union[str, Dict[str, str]]]
 
 
 def get_save_dir(*args) -> os.PathLike:
@@ -38,7 +37,7 @@ def get_config_path() -> os.PathLike:
     return os.path.join(DEFAULT_CACHE_DIR, USER_CONFIG)
 
 
-def load_config() -> CONFIG_CLASS:
+def load_config() -> Dict[str, Any]:
     try:
         with open(get_config_path(), "r", encoding="utf-8") as f:
             return json.load(f)
@@ -46,20 +45,20 @@ def load_config() -> CONFIG_CLASS:
         return {"lang": None, "last_model": None, "path_dict": {}, "cache_dir": None}
 
 
-def save_config(
-    config: CONFIG_CLASS, lang: str, model_name: Optional[str] = None, model_path: Optional[str] = None
-) -> None:
+def save_config(lang: str, model_name: Optional[str] = None, model_path: Optional[str] = None) -> None:
     os.makedirs(DEFAULT_CACHE_DIR, exist_ok=True)
-    config["lang"] = lang or config["lang"]
+    user_config = load_config()
+    user_config["lang"] = lang or user_config["lang"]
     if model_name:
-        config["last_model"] = model_name
-        config["path_dict"][model_name] = model_path
+        user_config["last_model"] = model_name
+        user_config["path_dict"][model_name] = model_path
     with open(get_config_path(), "w", encoding="utf-8") as f:
-        json.dump(config, f, indent=2, ensure_ascii=False)
+        json.dump(user_config, f, indent=2, ensure_ascii=False)
 
 
-def get_model_path(config: Dict[str, Any], model_name: str) -> str:
-    return config["path_dict"].get(model_name, None) or SUPPORTED_MODELS.get(model_name, "")
+def get_model_path(model_name: str) -> str:
+    user_config = load_config()
+    return user_config["path_dict"].get(model_name, None) or SUPPORTED_MODELS.get(model_name, "")
 
 
 def get_module(model_name: str) -> str:

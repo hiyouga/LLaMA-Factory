@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Dict
 
 from llmtuner.extras.constants import METHODS, SUPPORTED_MODELS
 from llmtuner.extras.template import templates
-from llmtuner.webui.common import get_model_path, get_template, list_checkpoint, load_config, save_config
+from llmtuner.webui.common import get_model_path, get_template, list_checkpoint, save_config
 from llmtuner.webui.utils import can_quantize
 
 if TYPE_CHECKING:
@@ -12,7 +12,6 @@ if TYPE_CHECKING:
 
 def create_top() -> Dict[str, "Component"]:
     available_models = list(SUPPORTED_MODELS.keys()) + ["Custom"]
-    config = gr.State(value=load_config())
 
     with gr.Row():
         lang = gr.Dropdown(choices=["en", "zh"], scale=1)
@@ -39,17 +38,17 @@ def create_top() -> Dict[str, "Component"]:
     model_name.change(
         list_checkpoint, [model_name, finetuning_type], [checkpoints], queue=False
     ).then(
-        get_model_path, [config, model_name], [model_path], queue=False
+        get_model_path, [model_name], [model_path], queue=False
     ).then(
         get_template, [model_name], [template], queue=False
     ) # do not save config since the below line will save
 
-    model_path.change(save_config, inputs=[config, lang, model_name, model_path])
+    model_path.change(save_config, inputs=[lang, model_name, model_path], queue=False)
 
     finetuning_type.change(
-        list_checkpoint, [model_name, finetuning_type], [checkpoints]
+        list_checkpoint, [model_name, finetuning_type], [checkpoints], queue=False
     ).then(
-        can_quantize, [finetuning_type], [quantization_bit]
+        can_quantize, [finetuning_type], [quantization_bit], queue=False
     )
 
     refresh_btn.click(
@@ -57,7 +56,6 @@ def create_top() -> Dict[str, "Component"]:
     )
 
     return dict(
-        config=config,
         lang=lang,
         model_name=model_name,
         model_path=model_path,
