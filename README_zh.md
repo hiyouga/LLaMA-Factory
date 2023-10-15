@@ -12,6 +12,12 @@
 
 \[ [English](README.md) | 中文 \]
 
+## 示例：在十分钟内微调一个大模型
+
+通过 `python src/train_web.py` 开启**训练推理一体化界面**。
+
+https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846-2d88920d5ba1
+
 ## 更新日志
 
 [23/09/27] 我们针对 LLaMA 模型支持了 [LongLoRA](https://github.com/dvlab-research/LongLoRA) 提出的 **$S^2$-Attn**。请使用 `--shift_attn` 参数以启用该功能。
