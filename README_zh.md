@@ -12,9 +12,11 @@
 
 \[ [English](README.md) | 中文 \]
 
-## 示例：在十分钟内微调一个大模型
+## LLaMA Board: 通过一站式网页界面快速上手 LLaMA Factory
 
-通过 `python src/train_web.py` 开启**训练推理一体化界面**。
+使用 `CUDA_VISIBLE_DEVICES=0 python src/train_web.py` 启动 **LLaMA Board**。（该界面目前仅支持单卡训练）
+
+下面是使用单张 GPU 在 10 分钟内更改对话式大型语言模型自我认知的示例。
 
 https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846-2d88920d5ba1
 
@@ -159,17 +161,6 @@ pip install -r requirements.txt
 ```bash
 pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.39.1-py3-none-win_amd64.whl
 ```
-
-### 浏览器一体化界面
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_web.py
-```
-
-我们**极力推荐**新手使用浏览器一体化界面，因为它还可以不依赖 GPU 环境自动生成在 GPU 上运行的命令行脚本。
-
-> [!WARNING]
-> 目前网页 UI 仅支持**单卡训练**。
 
 ### 单 GPU 训练
 
