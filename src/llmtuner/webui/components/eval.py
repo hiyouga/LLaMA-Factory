@@ -67,6 +67,7 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
         stop_btn = gr.Button()
 
     with gr.Row():
+        resume_btn = gr.Checkbox(visible=False, interactive=False, value=False)
         process_bar = gr.Slider(visible=False, interactive=False)
 
     with gr.Box():
@@ -74,11 +75,13 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
 
     output_elems = [output_box, process_bar]
     elem_dict.update(dict(
-        cmd_preview_btn=cmd_preview_btn, start_btn=start_btn, stop_btn=stop_btn, output_box=output_box
+        cmd_preview_btn=cmd_preview_btn, start_btn=start_btn, stop_btn=stop_btn,
+        resume_btn=resume_btn, process_bar=process_bar, output_box=output_box
     ))
 
     cmd_preview_btn.click(engine.runner.preview_eval, input_elems, output_elems)
     start_btn.click(engine.runner.run_eval, input_elems, output_elems)
     stop_btn.click(engine.runner.set_abort, queue=False)
+    resume_btn.change(engine.runner.monitor, outputs=output_elems)
 
     return elem_dict
