@@ -12,7 +12,9 @@
 
 \[ English | [中文](README_zh.md) \]
 
-Launch an all-in-one Web UI via `python src/train_web.py`.
+## Example: Fine-tuning large language model within 10 minutes
+
+Launch an **all-in-one Web UI** via `python src/train_web.py`.
 
 https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846-2d88920d5ba1
 
