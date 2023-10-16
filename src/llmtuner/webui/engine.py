@@ -25,30 +25,30 @@ class Engine:
         user_config = load_config()
         lang = user_config.get("lang", None) or "en"
 
-        resume_dict = {
+        init_dict = {
             "top.lang": {"value": lang},
             "infer.chat_box": {"visible": self.chatter.loaded}
         }
 
         if not self.pure_chat:
-            resume_dict["train.dataset"] = {"choices": list_dataset()["choices"]}
-            resume_dict["eval.dataset"] = {"choices": list_dataset()["choices"]}
+            init_dict["train.dataset"] = {"choices": list_dataset()["choices"]}
+            init_dict["eval.dataset"] = {"choices": list_dataset()["choices"]}
 
             if user_config.get("last_model", None):
-                resume_dict["top.model_name"] = {"value": user_config["last_model"]}
-                resume_dict["top.model_path"] = {"value": get_model_path(user_config["last_model"])}
+                init_dict["top.model_name"] = {"value": user_config["last_model"]}
+                init_dict["top.model_path"] = {"value": get_model_path(user_config["last_model"])}
 
-        yield self._form_dict(resume_dict)
+        yield self._form_dict(init_dict)
 
-        if self.runner.alive:
-            yield {elem: gr.update(value=value) for elem, value in self.runner.data.items()}
-            if self.runner.do_train:
-                resume_dict = {"train.resume_btn": {"value": True}}
+        if not self.pure_chat:
+            if self.runner.alive:
+                yield {elem: gr.update(value=value) for elem, value in self.runner.data.items()}
+                if self.runner.do_train:
+                    yield self._form_dict({"train.resume_btn": {"value": True}})
+                else:
+                    yield self._form_dict({"eval.resume_btn": {"value": True}})
             else:
-                resume_dict = {"eval.resume_btn": {"value": True}}
-        else:
-            resume_dict = {"train.output_dir": {"value": get_time()}}
-        yield self._form_dict(resume_dict)
+                yield self._form_dict({"train.output_dir": {"value": get_time()}})
 
     def change_lang(self, lang: str) -> Dict[Component, Dict[str, Any]]:
         return {
