@@ -20,7 +20,7 @@ require_version("gradio==3.38.0", "To fix: pip install gradio==3.38.0")
 def create_ui() -> gr.Blocks:
     engine = Engine(pure_chat=False)
 
-    with gr.Blocks(title="Web Tuner", css=CSS) as demo:
+    with gr.Blocks(title="LLaMA Board", css=CSS) as demo:
         engine.manager.all_elems["top"] = create_top()
         lang: "gr.Dropdown" = engine.manager.get_elem("top.lang")
 
