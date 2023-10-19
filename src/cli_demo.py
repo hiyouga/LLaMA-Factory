@@ -1,3 +1,4 @@
+import readline
 from llmtuner import ChatModel
 
 
