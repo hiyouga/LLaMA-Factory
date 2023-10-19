@@ -88,8 +88,8 @@ def get_train_args(
     transformers.utils.logging.enable_default_handler()
     transformers.utils.logging.enable_explicit_format()
 
-    # Check arguments (do not check finetuning_args since it may be loaded from checkpoints)
-    data_args.init_for_training()
+    # Check arguments
+    data_args.init_for_training(training_args.seed)
 
     if finetuning_args.stage != "pt" and data_args.template is None:
         raise ValueError("Please specify which `template` to use.")
