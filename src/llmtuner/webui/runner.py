@@ -179,7 +179,7 @@ class Runner:
             max_new_tokens=get("eval.max_new_tokens"),
             top_p=get("eval.top_p"),
             temperature=get("eval.temperature"),
-            output_dir=get("eval.output_dir")
+            output_dir=output_dir
         )
 
         if get("eval.predict"):
