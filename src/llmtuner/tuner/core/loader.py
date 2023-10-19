@@ -240,4 +240,7 @@ def load_model_and_tokenizer(
         trainable_params, all_param, 100 * trainable_params / all_param
     ))
 
+    if not is_trainable:
+        logger.info("This IS expected that the trainable params is 0 if you are using model for inference only.")
+
     return model, tokenizer
