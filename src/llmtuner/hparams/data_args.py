@@ -60,7 +60,7 @@ class DataArguments:
     )
     mix_strategy: Optional[Literal["concat", "interleave_under", "interleave_over"]] = field(
         default="concat",
-        metadata={"help": "Strategy to use in dataset mixing."}
+        metadata={"help": "Strategy to use in dataset mixing (concat/interleave) (undersampling/oversampling)."}
     )
     interleave_probs: Optional[str] = field(
         default=None,
@@ -106,7 +106,8 @@ class DataArguments:
         if self.streaming and self.max_samples is not None:
             raise ValueError("`max_samples` is incompatible with `streaming`.")
 
-    def init_for_training(self): # support mixing multiple datasets
+    def init_for_training(self, seed: int): # support mixing multiple datasets
+        self.seed = seed
         dataset_names = [ds.strip() for ds in self.dataset.split(",")] if self.dataset is not None else []
         try:
             with open(os.path.join(self.dataset_dir, "dataset_info.json"), "r") as f:
