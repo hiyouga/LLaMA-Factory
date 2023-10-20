@@ -113,6 +113,8 @@ class DataArguments:
             with open(os.path.join(self.dataset_dir, "dataset_info.json"), "r") as f:
                 dataset_info = json.load(f)
         except Exception:
+            if self.dataset is not None:
+                raise ValueError("Cannot find dataset_info.json in `dataset_dir`.")
             dataset_info = None
 
         prompt_list = self.system_prompt.split("|") if self.system_prompt else [None]
