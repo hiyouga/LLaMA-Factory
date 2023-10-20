@@ -122,7 +122,7 @@ def evaluate(
         checkpoint_dir=checkpoint_dir,
         template=template
     ))
-    chat_model.tokenizer.padding_side = "left" # avoid overflow issue in batched inference for llama2
+    chat_model.tokenizer.padding_side = "right" # avoid overflow issue in batched inference for llama2
     eval_template = eval_templates[lang]
 
     category_corrects: Dict[str, np.ndarray] = {
