@@ -569,7 +569,7 @@ register_template(
     prompt=[
         "GPT4 User: {{query}}",
         {"token": "<|end_of_turn|>"},
-        "GPT4 Assistant: "
+        "GPT4 Assistant:"
     ],
     system="",
     sep=[
