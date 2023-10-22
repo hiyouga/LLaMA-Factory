@@ -22,6 +22,8 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 
 ## 更新日志
 
+[23/10/21] 我们支持了 [NEFTune](https://arxiv.org/abs/2310.05914) 优化。试试`--neftune_noise_alpha` 参数来激活 NEFTune，例如，`--neftune_noise_alpha 5`。
+
 [23/09/27] 我们针对 LLaMA 模型支持了 [LongLoRA](https://github.com/dvlab-research/LongLoRA) 提出的 **$S^2$-Attn**。请使用 `--shift_attn` 参数以启用该功能。
 
 [23/09/23] 我们在项目中集成了 MMLU、C-Eval 和 CMMLU 评估集。使用方法请参阅[此示例](#模型评估)。
