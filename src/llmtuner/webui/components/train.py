@@ -79,26 +79,30 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             logging_steps = gr.Slider(value=5, minimum=5, maximum=1000, step=5)
             save_steps = gr.Slider(value=100, minimum=10, maximum=5000, step=10)
             warmup_steps = gr.Slider(value=0, minimum=0, maximum=5000, step=1)
+            neft_alpha = gr.Slider(value=0, minimum=0, maximum=10, step=0.1)
 
-    input_elems.update({logging_steps, save_steps, warmup_steps})
+            with gr.Column():
+                train_on_prompt = gr.Checkbox(value=False)
+                upcast_layernorm = gr.Checkbox(value=False)
+
+    input_elems.update({logging_steps, save_steps, warmup_steps, neft_alpha, train_on_prompt, upcast_layernorm})
     elem_dict.update(dict(
-        advanced_tab=advanced_tab, logging_steps=logging_steps, save_steps=save_steps, warmup_steps=warmup_steps
+        advanced_tab=advanced_tab, logging_steps=logging_steps, save_steps=save_steps, warmup_steps=warmup_steps,
+        neft_alpha=neft_alpha, train_on_prompt=train_on_prompt, upcast_layernorm=upcast_layernorm
     ))
 
     with gr.Accordion(label="LoRA config", open=False) as lora_tab:
         with gr.Row():
             lora_rank = gr.Slider(value=8, minimum=1, maximum=1024, step=1, scale=1)
             lora_dropout = gr.Slider(value=0.1, minimum=0, maximum=1, step=0.01, scale=1)
-            lora_target = gr.Textbox(scale=2)
+            lora_target = gr.Textbox(scale=1)
+            additional_target = gr.Textbox(scale=1)
             resume_lora_training = gr.Checkbox(value=True, scale=1)
 
-    input_elems.update({lora_rank, lora_dropout, lora_target, resume_lora_training})
+    input_elems.update({lora_rank, lora_dropout, lora_target, additional_target, resume_lora_training})
     elem_dict.update(dict(
-        lora_tab=lora_tab,
-        lora_rank=lora_rank,
-        lora_dropout=lora_dropout,
-        lora_target=lora_target,
-        resume_lora_training=resume_lora_training,
+        lora_tab=lora_tab, lora_rank=lora_rank, lora_dropout=lora_dropout, lora_target=lora_target,
+        additional_target=additional_target, resume_lora_training=resume_lora_training,
     ))
 
     with gr.Accordion(label="RLHF config", open=False) as rlhf_tab:
