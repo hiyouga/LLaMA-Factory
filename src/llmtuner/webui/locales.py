@@ -309,6 +309,36 @@ LOCALES = {
             "info": "学习率预热采用的步数。"
         }
     },
+    "neft_alpha": {
+        "en": {
+            "label": "NEFTune Alpha",
+            "info": "Magnitude of noise adding to embedding vectors."
+        },
+        "zh": {
+            "label": "NEFTune 噪声参数",
+            "info": "嵌入向量所添加的噪声大小。"
+        }
+    },
+    "train_on_prompt": {
+        "en": {
+            "label": "Train on prompt",
+            "info": "Compute loss on the prompt tokens in supervised fine-tuning."
+        },
+        "zh": {
+            "label": "计算输入损失",
+            "info": "在监督微调时候计算输入序列的损失。"
+        }
+    },
+    "upcast_layernorm": {
+        "en": {
+            "label": "Upcast LayerNorm",
+            "info": "Upcast weights of layernorm in float32."
+        },
+        "zh": {
+            "label": "缩放归一化层",
+            "info": "将归一化层权重缩放至 32 位浮点数。"
+        }
+    },
     "lora_tab": {
         "en": {
             "label": "LoRA configurations"
@@ -340,11 +370,21 @@ LOCALES = {
     "lora_target": {
         "en": {
             "label": "LoRA modules (optional)",
-            "info": "The name(s) of target modules to apply LoRA. Use commas to separate multiple modules."
+            "info": "Name(s) of target modules to apply LoRA. Use commas to separate multiple modules."
         },
         "zh": {
-            "label": "LoRA 作用层（非必填）",
-            "info": "应用 LoRA 的线性层名称。使用英文逗号分隔多个名称。"
+            "label": "LoRA 作用模块（非必填）",
+            "info": "应用 LoRA 的目标模块名称。使用英文逗号分隔多个名称。"
+        }
+    },
+    "additional_target": {
+        "en": {
+            "label": "Additional modules (optional)",
+            "info": "Name(s) of modules apart from LoRA layers to be set as trainable. Use commas to separate multiple modules."
+        },
+        "zh": {
+            "label": "附加模块（非必填）",
+            "info": "除 LoRA 层以外的可训练模块名称。使用英文逗号分隔多个名称。"
         }
     },
     "resume_lora_training": {
