@@ -117,7 +117,7 @@ class Runner:
             lora_rank=get("train.lora_rank"),
             lora_dropout=get("train.lora_dropout"),
             lora_target=get("train.lora_target") or get_module(get("top.model_name")),
-            additional_target=get("train.additional_target"),
+            additional_target=get("train.additional_target") if get("train.additional_target") else None,
             resume_lora_training=get("train.resume_lora_training"),
             output_dir=output_dir
         )
