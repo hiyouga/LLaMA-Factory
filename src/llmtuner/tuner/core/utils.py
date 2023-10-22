@@ -3,10 +3,14 @@ from types import MethodType
 from typing import TYPE_CHECKING, List, Optional
 
 from llmtuner.extras.constants import LAYERNORM_NAMES
+from llmtuner.extras.logging import get_logger
 
 if TYPE_CHECKING:
     from transformers.modeling_utils import PreTrainedModel
     from llmtuner.hparams import FinetuningArguments
+
+
+logger = get_logger(__name__)
 
 
 def find_all_linear_modules(
@@ -49,6 +53,7 @@ def prepare_model_for_training(
         for name, param in model.named_parameters():
             if param.ndim == 1 and any(ln_name in name for ln_name in layernorm_names):
                 param.data = param.data.to(torch.float32)
+        logger.info("Upcasting weights in layernorm in float32.")
 
     if finetuning_args.neft_alpha > 1e-6:
         input_embed: torch.nn.Embedding = model.get_input_embeddings()
@@ -62,6 +67,7 @@ def prepare_model_for_training(
             return embeddings
 
         input_embed.forward = MethodType(noisy_forward, input_embed)
+        logger.info("Using noisy embedding with alpha={:.2f}".format(finetuning_args.neft_alpha))
 
     if use_gradient_checkpointing:
         if hasattr(model, "enable_input_require_grads"):
@@ -73,6 +79,7 @@ def prepare_model_for_training(
 
         model.gradient_checkpointing_enable()
         model.config.use_cache = False # turn off when gradient checkpointing is enabled
+        logger.info("Gradient checkpointing enabled.")
 
     if finetuning_args.finetuning_type != "full" and hasattr(model, output_layer_name):
         output_layer: torch.nn.Linear = getattr(model, output_layer_name)
