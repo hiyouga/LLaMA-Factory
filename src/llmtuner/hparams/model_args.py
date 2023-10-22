@@ -62,10 +62,6 @@ class ModelArguments:
         default=None,
         metadata={"help": "Path to the directory containing the checkpoints of the reward model."}
     )
-    upcast_layernorm: Optional[bool] = field(
-        default=False,
-        metadata={"help": "Whether to upcast the layernorm weights in fp32."}
-    )
     plot_loss: Optional[bool] = field(
         default=False,
         metadata={"help": "Whether to plot the training loss after fine-tuning or not."}

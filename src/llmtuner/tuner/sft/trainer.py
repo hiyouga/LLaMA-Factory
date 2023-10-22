@@ -3,10 +3,8 @@ import json
 import torch
 import numpy as np
 import torch.nn as nn
-from functools import wraps
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
-from transformers import Seq2SeqTrainer, PreTrainedModel, Trainer
-from peft import PeftModel
+from transformers import Seq2SeqTrainer
 
 from llmtuner.extras.constants import IGNORE_INDEX
 from llmtuner.extras.logging import get_logger
@@ -22,14 +20,6 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
     r"""
     Inherits PeftTrainer to compute generative metrics such as BLEU and ROUGE.
     """
-
-    def __init__(self, model: Union["PreTrainedModel", nn.Module] = None, neftune_noise_alpha: Optional[float] = 0, **kwargs):
-        super().__init__(model, **kwargs)
-        self.neftune_noise_alpha = neftune_noise_alpha
-        self._neftune_activated = False
-
-        if self.neftune_noise_alpha:
-            self._activate_neftune(model)
 
     def prediction_step(
         self,
@@ -109,71 +99,3 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             for pred, label in zip(decoded_preds, decoded_labels):
                 res.append(json.dumps({"label": label, "predict": pred}, ensure_ascii=False))
             writer.write("\n".join(res))
-
-
-    @wraps(Trainer.train)
-    def train(self, *args, **kwargs):
-        output = super().train(*args, **kwargs)
-
-        # After training we make sure to retrieve back the original forward pass method
-        # for the embedding layer.
-        if self.neftune_noise_alpha is not None:
-            self._deactivate_neftune(self.model)
-
-        return output
-
-    def _toggle_neftune(self, model, activate=True):
-        """Toggle NEFTune optimization for a model (i.e. activate or deactivate).
-        This optimization based on this paper: https://arxiv.org/abs/2310.05914
-
-        Parameters:
-        model : PreTrainedModel or PeftModel
-            The model to toggle the noise for.
-        activate : bool, optional (default=True)
-            Whether to activate the noise or not.
-        """
-        if activate == self._neftune_activated:
-            return
-
-        self._neftune_activated = activate
-
-        embeddings = (model.get_input_embeddings() if isinstance(model, PreTrainedModel) 
-                    else model.base_model.get_input_embeddings() if isinstance(model, PeftModel) 
-                    else None)
-
-        if embeddings:
-            if activate:
-                embeddings.neftune_noise_alpha = self.neftune_noise_alpha
-                embeddings._trl_old_forward = embeddings.forward
-                neftune_method = _neftune_forward_function.__get__(embeddings, embeddings.__class__)
-                setattr(embeddings, "forward", neftune_method)
-                logger.info("NEFTune activated with alpha: ", self.neftune_noise_alpha)
-            elif hasattr(embeddings, "_trl_old_forward"):
-                embeddings.forward = embeddings._trl_old_forward
-                del embeddings._trl_old_forward
-                del embeddings.neftune_noise_alpha
-                logger.info("NEFTune deactivated")
-
-    _activate_neftune = lambda self, model: self._toggle_neftune(model, activate=True)
-    _deactivate_neftune = lambda self, model: self._toggle_neftune(model, activate=False)
-
-
-def _neftune_forward_function(self, input: torch.Tensor) -> torch.Tensor:
-    """
-    This code is adapted from the original source code that can be found here: https://github.com/neelsjain/NEFTune
-    """
-    embeddings = torch.nn.functional.embedding(
-        input,
-        self.weight,
-        self.padding_idx,
-        self.max_norm,
-        self.norm_type,
-        self.scale_grad_by_freq,
-        self.sparse)
-
-    if self.training:
-        dims = torch.tensor(embeddings.size(1) * embeddings.size(2))
-        mag_norm = self.neftune_noise_alpha / torch.sqrt(dims)
-        embeddings += torch.zeros_like(embeddings).uniform_(-mag_norm, mag_norm)
-
-    return embeddings
