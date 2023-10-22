@@ -75,9 +75,13 @@ class FinetuningArguments:
         default=0.1,
         metadata={"help": "The beta parameter for the DPO loss."}
     )
-    neftune_noise_alpha: Optional[float] = field(
-        default=None,
-        metadata={"help": "The alpha parameter for the NEFTune noise. By setting this the NEFTune optimization will be activated."}
+    upcast_layernorm: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Whether to upcast the layernorm weights in fp32."}
+    )
+    neft_alpha: Optional[float] = field(
+        default=0,
+        metadata={"help": "The alpha parameter to control the noise magnitude in NEFTune."}
     )
 
     def __post_init__(self):
