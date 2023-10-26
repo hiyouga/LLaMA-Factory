@@ -98,6 +98,10 @@ class DataArguments:
         default=False,
         metadata={"help": "Packing the questions and answers in the supervised fine-tuning stage."}
     )
+    cache_path: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to save or load the preprocessed datasets."}
+    )
 
     def __post_init__(self):
         if self.streaming and self.val_size > 1e-6 and self.val_size < 1:
@@ -105,6 +109,9 @@ class DataArguments:
 
         if self.streaming and self.max_samples is not None:
             raise ValueError("`max_samples` is incompatible with `streaming`.")
+
+        if self.streaming and self.cache_path:
+            raise ValueError("`cache_path` is incompatible with `streaming`.")
 
     def init_for_training(self, seed: int): # support mixing multiple datasets
         self.seed = seed
