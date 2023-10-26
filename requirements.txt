@@ -3,7 +3,7 @@ transformers>=4.31.0
 datasets>=2.12.0
 accelerate>=0.21.0
 peft>=0.4.0
-trl>=0.7.1
+trl>=0.7.2
 scipy
 sentencepiece
 protobuf
