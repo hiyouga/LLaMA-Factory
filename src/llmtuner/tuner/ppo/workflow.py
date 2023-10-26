@@ -66,6 +66,7 @@ def run_ppo(
     ppo_trainer = CustomPPOTrainer(
         model_args=model_args,
         training_args=training_args,
+        finetuning_args=finetuning_args,
         generating_args=generating_args,
         callbacks=callbacks + [SavePeftModelCallback()],
         config=ppo_config,
