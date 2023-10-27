@@ -68,8 +68,8 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 > **默认模块**应作为 `--lora_target` 参数的默认值，可使用 `--lora_target all` 参数指定全部模块。
 >
 > 对于所有“基座”（Base）模型，`--template` 参数可以是 `default`, `alpaca`, `vicuna` 等任意值。但“对话”（Chat）模型请务必使用**对应的模板**。
->
-> 项目所支持模型的完整列表请参阅 [template.py](src/llmtuner/extras/template.py)。
+
+项目所支持模型的完整列表请参阅 [template.py](src/llmtuner/extras/template.py)。
 
 ## 训练方法
 

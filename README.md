@@ -68,8 +68,8 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 > **Default module** is used for the `--lora_target` argument, you can use `--lora_target all` to specify all the available modules.
 >
 > For the "base" models, the `--template` argument can be chosen from `default`, `alpaca`, `vicuna` etc. But make sure to use the **corresponding template** for the "chat" models.
->
-> Please refer to [template.py](src/llmtuner/extras/template.py) for a full list of models we supported.
+
+Please refer to [template.py](src/llmtuner/extras/template.py) for a full list of models we supported.
 
 ## Supported Training Approaches
 
