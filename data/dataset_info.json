@@ -245,5 +245,23 @@
       "response": "",
       "history": ""
     }
+  },
+  "data_1025_clb": {
+    "script_url": "/home/lbcen/data/HTLLM/data/FinPT/data_1025_clb",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+
+    }
+  },
+  "data_1026": {
+    "script_url": "/home/lbcen/data/HTLLM/data/FinPT/data_1026",
+    "columns": {
+      "prompt": "instruction",
+      "query": "",
+      "response": "output"
+
+    }
   }
 }
