@@ -559,6 +559,28 @@ register_template(
 
 
 r"""
+Supports: https://huggingface.co/THUDM/chatglm3-6b
+"""
+register_template(
+    name="chatglm3",
+    prefix=[
+        {"token": "[gMASK]"},
+        {"token": "sop"},
+        "{{system}}"
+    ],
+    prompt=[
+        {"token": "<|user|>"},
+        "\n",
+        "{{query}}",
+        {"token": "<|assistant|>"}
+    ],
+    system="",
+    sep=[],
+    efficient_eos=True
+)
+
+
+r"""
 Supports: https://huggingface.co/openchat/openchat_v3.2_super
 """
 register_template(
