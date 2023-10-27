@@ -336,7 +336,7 @@ register_template(
         "{{system}}"
     ],
     prompt=[
-        "USER: {{query}} ASSISTANT: "
+        "USER: {{query}} ASSISTANT:"
     ],
     system=(
         "A chat between a curious user and an artificial intelligence assistant. "
@@ -366,6 +366,7 @@ register_template(
 
 r"""
 Supports: https://huggingface.co/IDEA-CCNL/Ziya-LLaMA-13B-v1
+          https://huggingface.co/IDEA-CCNL/Ziya-LLaMA-13B-v1.1
           https://huggingface.co/IDEA-CCNL/Ziya2-13B-Chat
 """
 register_template(
@@ -397,7 +398,7 @@ register_template(
         "{{system}}"
     ],
     prompt=[
-        "Human: {{query}}###Assistant: "
+        "Human: {{query}}###Assistant:"
     ],
     system=(
         "A chat between a curious human and an artificial intelligence assistant. "
