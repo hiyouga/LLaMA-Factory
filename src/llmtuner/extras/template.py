@@ -576,6 +576,10 @@ register_template(
     ],
     system="",
     sep=[],
+    stop_words=[
+        "<|user|>",
+        "<|observation|>"
+    ],
     efficient_eos=True
 )
 
