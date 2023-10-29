@@ -442,6 +442,12 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 > [!NOTE]
 > We recommend using `--per_device_eval_batch_size=1` and `--max_target_length 128` at 4/8-bit predict.
 
+## Projects using LLaMA Factory
+
+- **[StarWhisper](https://github.com/Yu-Yang-Li/StarWhisper)**: A large language model for Astronomy, based on ChatGLM2-6B and Qwen-14B.
+- **[DISC-LawLLM](https://github.com/FudanDISC/DISC-LawLLM)**: A large language model specialized in Chinese legal domain, based on Baichuan-13B, is capable of retrieving and reasoning on legal knowledge.
+- **[Sunsimiao](https://github.com/thomas-yanxin/Sunsimiao)**: A large language model specialized in Chinese medical domain, based on Baichuan-7B and ChatGLM-6B.
+
 ## License
 
 This repository is licensed under the [Apache-2.0 License](LICENSE).
