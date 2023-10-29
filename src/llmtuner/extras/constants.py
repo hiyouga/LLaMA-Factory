@@ -57,6 +57,8 @@ SUPPORTED_MODELS = {
     "XVERSE-13B": "xverse/XVERSE-13B",
     "XVERSE-13B-Chat": "xverse/XVERSE-13B-Chat",
     "ChatGLM2-6B-Chat": "THUDM/chatglm2-6b",
+    "ChatGLM3-6B-Base": "THUDM/chatglm3-6b-base",
+    "ChatGLM3-6B-Chat": "THUDM/chatglm3-6b",
     "Phi1.5-1.3B": "microsoft/phi-1_5"
 }
 
@@ -73,6 +75,7 @@ DEFAULT_MODULE = {
     "Qwen": "c_attn",
     "XVERSE": "q_proj,v_proj",
     "ChatGLM2": "query_key_value",
+    "ChatGLM3": "query_key_value",
     "Phi1.5": "Wqkv"
 }
 
@@ -84,5 +87,6 @@ DEFAULT_TEMPLATE = {
     "InternLM": "intern",
     "Qwen": "chatml",
     "XVERSE": "xverse",
-    "ChatGLM2": "chatglm2"
+    "ChatGLM2": "chatglm2",
+    "ChatGLM3": "chatglm3"
 }
