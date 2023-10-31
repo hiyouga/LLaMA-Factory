@@ -35,26 +35,18 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         """
         if self.args.predict_with_generate:
             assert self.tokenizer.padding_side == "left", "This method only accepts left-padded tensor."
-            assert self.tokenizer.pad_token_id is not None, "Pad token is required."
             prompt_len, label_len = inputs["input_ids"].size(-1), inputs["labels"].size(-1)
+            labels = inputs["labels"].clone()
             if prompt_len > label_len:
                 inputs["labels"] = self._pad_tensors_to_target_len(inputs["labels"], inputs["input_ids"])
             if label_len > prompt_len:
-                inputs["input_ids"] = self._pad_tensors_to_target_len(inputs["input_ids"], inputs["labels"])
-                if "attention_mask" in inputs:
-                    inputs["attention_mask"] = self._pad_tensors_to_target_len(
-                        inputs["attention_mask"], inputs["labels"], pad_token_id=0
-                    )
-                if "position_ids" in inputs:
-                    inputs["position_ids"] = self._pad_tensors_to_target_len(
-                        inputs["position_ids"], inputs["labels"], pad_token_id=0
-                    )
+                inputs["labels"] = inputs["labels"][:, :prompt_len] # truncate the labels instead of padding the inputs
 
-        loss, generated_tokens, labels = super().prediction_step(
+        loss, generated_tokens, _ = super().prediction_step(
             model, inputs, prediction_loss_only=prediction_loss_only, ignore_keys=ignore_keys
         )
         if generated_tokens is not None and self.args.predict_with_generate:
-            generated_tokens[:, :max(prompt_len, label_len)] = self.tokenizer.pad_token_id
+            generated_tokens[:, :prompt_len] = self.tokenizer.pad_token_id
             generated_tokens = generated_tokens.contiguous()
 
         return loss, generated_tokens, labels
@@ -62,14 +54,13 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
     def _pad_tensors_to_target_len(
         self,
         src_tensor: torch.Tensor,
-        tgt_tensor: torch.Tensor,
-        pad_token_id: Optional[int] = None
+        tgt_tensor: torch.Tensor
     ) -> torch.Tensor:
         r"""
         Pads the tensor to the same length as the target tensor.
         """
-        pad_token_id = pad_token_id if pad_token_id is not None else self.tokenizer.pad_token_id
-        padded_tensor = pad_token_id * torch.ones_like(tgt_tensor)
+        assert self.tokenizer.pad_token_id is not None, "Pad token is required."
+        padded_tensor = self.tokenizer.pad_token_id * torch.ones_like(tgt_tensor)
         padded_tensor[:, -src_tensor.shape[-1]:] = src_tensor # adopt left-padding
         return padded_tensor.contiguous() # in contiguous memory
 
