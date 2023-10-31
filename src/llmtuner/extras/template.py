@@ -249,7 +249,7 @@ register_template(
         "{{system}}"
     ],
     prompt=[
-        "Human: {{query}}\nAssistant: "
+        "Human: {{query}}\nAssistant:"
     ],
     system=(
         "A chat between a curious user and an artificial intelligence assistant. "
@@ -272,7 +272,7 @@ register_template(
         "<<SYS>>\n{{system}}\n<</SYS>>\n\n"
     ],
     prompt=[
-        "[INST] {{query}} [/INST] "
+        "[INST] {{query}} [/INST]"
     ],
     system=(
         "You are a helpful, respectful and honest assistant. "
@@ -298,7 +298,7 @@ register_template(
         "<<SYS>>\n{{system}}\n<</SYS>>\n\n"
     ],
     prompt=[
-        "[INST] {{query}} [/INST] "
+        "[INST] {{query}} [/INST]"
     ],
     system="You are a helpful assistant. 你是一个乐于助人的助手。",
     sep=[]
