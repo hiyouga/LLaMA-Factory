@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug cli_demo.sh",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/cli_demo.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--model_name_or_path", "../pretrain/Baichuan2-7B-Base", 
+                "--template", "baichuan2", 
+                "--finetuning_type", "lora", 
+                "--checkpoint_dir", "../finetuned/baichuan2-7B-base-sft_1028/checkpoint-1800"
+            ],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

@@ -2,6 +2,10 @@
 __pycache__/
 *.py[cod]
 *$py.class
+data
+finetuned
+merged
+pretrain
 
 # C extensions
 *.so

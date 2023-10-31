@@ -77,8 +77,13 @@ class ChatModel:
         **input_kwargs
     ) -> Tuple[str, Tuple[int, int]]:
         gen_kwargs, prompt_length = self.process_args(query, history, system, **input_kwargs)
+        # raw_input = self.tokenizer.decode(gen_kwargs["inputs"][0])
+        # print(f'raw inputs: \n{raw_input}')
         generation_output = self.model.generate(**gen_kwargs)
+        raw_output = self.tokenizer.decode(generation_output[0])
+        # print(f'raw outputs: \n{raw_output}')
         outputs = generation_output.tolist()[0][prompt_length:]
+        
         response = self.tokenizer.decode(outputs, skip_special_tokens=True)
         response_length = len(outputs)
         return response, (prompt_length, response_length)
@@ -92,6 +97,8 @@ class ChatModel:
         **input_kwargs
     ) -> Generator[str, None, None]:
         gen_kwargs, _ = self.process_args(query, history, system, **input_kwargs)
+        raw_input = self.tokenizer.decode(gen_kwargs["inputs"][0])
+        print(f'raw inputs: \n{raw_input}')
         streamer = TextIteratorStreamer(self.tokenizer, timeout=60.0, skip_prompt=True, skip_special_tokens=True)
         gen_kwargs["streamer"] = streamer
 

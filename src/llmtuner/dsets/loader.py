@@ -44,6 +44,7 @@ def get_dataset(
             elif os.path.isfile(os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)): # single file
                 data_files.append(os.path.join(data_args.dataset_dir, dataset_attr.dataset_name))
                 data_path = EXT2TYPE.get(dataset_attr.dataset_name.split(".")[-1], None)
+                # data_path = os.path.dirname(os.path.join(data_args.dataset_dir, dataset_attr.dataset_name))
             else:
                 raise ValueError("File not found.")
 

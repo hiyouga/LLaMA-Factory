@@ -263,5 +263,23 @@
       "response": "output"
 
     }
+  },
+  "sft_1028": {
+    "file_name": "/home/lbcen/data/HTLLM/LLaMA-Factory/data/sft_1028/train.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+
+    }
+  },
+  "sft1030": {
+    "file_name": "/home/lbcen/data/HTLLM/LLaMA-Factory/data/FinPT/sft/sft1030/train.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+
+    }
   }
 }
