@@ -26,17 +26,17 @@ class ChatModel:
         **input_kwargs
     ) -> Tuple[Dict[str, Any], int]:
         system = system or self.system_prompt
-
         prompt, _ = self.template.encode_oneturn(
             tokenizer=self.tokenizer, query=query, resp="", history=history, system=system
         )
+        prompt_length = len(prompt)
         input_ids = torch.tensor([prompt], device=self.model.device)
-        prompt_length = len(input_ids[0])
 
         do_sample = input_kwargs.pop("do_sample", None)
         temperature = input_kwargs.pop("temperature", None)
         top_p = input_kwargs.pop("top_p", None)
         top_k = input_kwargs.pop("top_k", None)
+        num_return_sequences = input_kwargs.pop("num_return_sequences", None)
         repetition_penalty = input_kwargs.pop("repetition_penalty", None)
         max_length = input_kwargs.pop("max_length", None)
         max_new_tokens = input_kwargs.pop("max_new_tokens", None)
@@ -47,10 +47,14 @@ class ChatModel:
             temperature=temperature or generating_args["temperature"],
             top_p=top_p or generating_args["top_p"],
             top_k=top_k or generating_args["top_k"],
+            num_return_sequences=num_return_sequences or 1,
             repetition_penalty=repetition_penalty or generating_args["repetition_penalty"],
             eos_token_id=[self.tokenizer.eos_token_id] + self.tokenizer.additional_special_tokens_ids,
             pad_token_id=self.tokenizer.pad_token_id
         ))
+
+        if int(num_return_sequences) > 1:
+            generating_args["do_sample"] = True
 
         if max_length:
             generating_args.pop("max_new_tokens", None)
@@ -75,12 +79,16 @@ class ChatModel:
         history: Optional[List[Tuple[str, str]]] = None,
         system: Optional[str] = None,
         **input_kwargs
-    ) -> Tuple[str, Tuple[int, int]]:
+    ) -> Tuple[List[str], Tuple[int, int]]:
         gen_kwargs, prompt_length = self.process_args(query, history, system, **input_kwargs)
-        generation_output = self.model.generate(**gen_kwargs)
-        outputs = generation_output.tolist()[0][prompt_length:]
-        response = self.tokenizer.decode(outputs, skip_special_tokens=True)
-        response_length = len(outputs)
+        generate_output = self.model.generate(**gen_kwargs)
+        response_ids = generate_output[:, prompt_length:]
+        response = self.tokenizer.batch_decode(response_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True)
+        response_length = 0
+        for i in range(len(response_ids)):
+            eos_index = (response_ids[i] == self.tokenizer.eos_token_id).nonzero()
+            response_length += eos_index[0].item() if len(eos_index) else len(response_ids[i])
+
         return response, (prompt_length, response_length)
 
     @torch.inference_mode()
