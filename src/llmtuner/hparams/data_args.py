@@ -12,6 +12,8 @@ class DatasetAttr:
     dataset_sha1: Optional[str] = None
     system_prompt: Optional[str] = None
     ranking: Optional[bool] = False
+    formatting: Optional[Literal["alpaca", "sharegpt"]] = "alpaca"
+
     prompt: Optional[str] = "instruction"
     query: Optional[str] = "input"
     response: Optional[str] = "output"
