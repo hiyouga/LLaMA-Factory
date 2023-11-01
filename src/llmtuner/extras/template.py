@@ -573,7 +573,8 @@ register_template(
         {"token": "<|user|>"},
         "\n",
         "{{query}}",
-        {"token": "<|assistant|>"}
+        {"token": "<|assistant|>"},
+        "\n"
     ],
     system="",
     sep=[],
