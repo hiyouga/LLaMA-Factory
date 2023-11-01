@@ -53,7 +53,7 @@ class ChatModel:
             pad_token_id=self.tokenizer.pad_token_id
         ))
 
-        if int(num_return_sequences) > 1:
+        if isinstance(num_return_sequences, int) and num_return_sequences > 1:
             generating_args["do_sample"] = True
 
         if max_length:
