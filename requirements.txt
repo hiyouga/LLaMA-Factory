@@ -12,7 +12,7 @@ fire
 jieba
 rouge-chinese
 nltk
-gradio==3.38.0
+gradio==3.50.2
 uvicorn
 pydantic==1.10.11
 fastapi==0.95.1
