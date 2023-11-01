@@ -20,9 +20,6 @@ class ModelCard(BaseModel):
     object: Optional[str] = "model"
     created: Optional[int] = Field(default_factory=lambda: int(time.time()))
     owned_by: Optional[str] = "owner"
-    root: Optional[str] = None
-    parent: Optional[str] = None
-    permission: Optional[list] = []
 
 
 class ModelList(BaseModel):
