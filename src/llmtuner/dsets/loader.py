@@ -72,10 +72,11 @@ def get_dataset(
                 dataset = dataset.rename_column(getattr(dataset_attr, column_name), column_name)
 
         if dataset_attr.system_prompt: # add system prompt
+            system_prompt = dataset_attr.system_prompt
             if data_args.streaming:
-                dataset = dataset.map(lambda _: {"system": dataset_attr.system_prompt})
+                dataset = dataset.map(lambda _: {"system": system_prompt})
             else:
-                dataset = dataset.add_column("system", [dataset_attr.system_prompt] * len(dataset))
+                dataset = dataset.add_column("system", [system_prompt] * len(dataset))
 
         all_datasets.append(dataset)
 
