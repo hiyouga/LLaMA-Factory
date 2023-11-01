@@ -117,9 +117,6 @@ def get_train_args(
     if finetuning_args.stage == "ppo" and model_args.reward_model is None:
         raise ValueError("Reward model is necessary for PPO training.")
 
-    if finetuning_args.stage == "ppo" and data_args.streaming:
-        raise ValueError("Streaming mode does not suppport PPO training currently.")
-
     if finetuning_args.stage == "ppo" and model_args.shift_attn:
         raise ValueError("PPO training is incompatible with S^2-Attn.")
 
