@@ -7,13 +7,9 @@ if TYPE_CHECKING:
 
 
 def create_preview_box() -> Tuple["Block", "Component", "Component", "Component"]:
-    with gr.Box(visible=False, elem_classes="modal-box") as preview_box:
-        with gr.Row():
-            preview_count = gr.Number(interactive=False)
-
-        with gr.Row():
-            preview_samples = gr.JSON(interactive=False)
-
+    with gr.Column(visible=False, elem_classes="modal-box") as preview_box:
+        preview_count = gr.Number(interactive=False)
+        preview_samples = gr.JSON(interactive=False)
         close_btn = gr.Button()
 
     close_btn.click(lambda: gr.update(visible=False), outputs=[preview_box], queue=False)
