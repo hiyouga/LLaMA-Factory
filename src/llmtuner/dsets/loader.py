@@ -82,8 +82,8 @@ def get_dataset(
                         assistant_role = msg_list[idx + 1][dataset_attr.role]
                     else:
                         if (
-                            msg_list[idx][dataset_attr.query] != user_role
-                            or msg_list[idx+1][dataset_attr.query] != assistant_role
+                            msg_list[idx][dataset_attr.role] != user_role
+                            or msg_list[idx+1][dataset_attr.role] != assistant_role
                         ):
                             raise ValueError("Only accepts conversation in u/a/u/a/u/a order.")
                     msg_pairs.append((msg_list[idx][dataset_attr.content], msg_list[idx + 1][dataset_attr.content]))
