@@ -90,9 +90,11 @@ def get_eval_results(path: os.PathLike) -> str:
 
 
 def gen_plot(base_model: str, finetuning_type: str, output_dir: str) -> matplotlib.figure.Figure:
+    if not base_model:
+        return
     log_file = get_save_dir(base_model, finetuning_type, output_dir, "trainer_log.jsonl")
     if not os.path.isfile(log_file):
-        return None
+        return
 
     plt.close("all")
     fig = plt.figure()
