@@ -19,7 +19,7 @@ class Engine:
         self.chatter: "WebChatModel" = WebChatModel(manager=self.manager, lazy_init=(not pure_chat))
 
     def _form_dict(self, resume_dict: Dict[str, Dict[str, Any]]):
-        return {self.manager.get_elem(k): gr.update(**v) for k, v in resume_dict.items()}
+        return {self.manager.get_elem_by_name(k): gr.update(**v) for k, v in resume_dict.items()}
 
     def resume(self) -> Generator[Dict[Component, Dict[str, Any]], None, None]:
         user_config = load_config()
@@ -42,7 +42,7 @@ class Engine:
 
         if not self.pure_chat:
             if self.runner.alive:
-                yield {elem: gr.update(value=value) for elem, value in self.runner.data.items()}
+                yield {elem: gr.update(value=value) for elem, value in self.runner.running_data.items()}
                 if self.runner.do_train:
                     yield self._form_dict({"train.resume_btn": {"value": True}})
                 else:
