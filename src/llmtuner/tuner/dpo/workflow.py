@@ -58,3 +58,9 @@ def run_dpo(
         trainer.save_model()
         if trainer.is_world_process_zero() and model_args.plot_loss:
             plot_loss(training_args.output_dir, keys=["loss", "eval_loss"])
+
+    # Evaluation
+    if training_args.do_eval:
+        metrics = trainer.evaluate(metric_key_prefix="eval")
+        trainer.log_metrics("eval", metrics)
+        trainer.save_metrics("eval", metrics)
