@@ -6,7 +6,9 @@ If you are using a custom dataset, please provide your dataset definition in the
   "script_url": "the name of the directory containing a dataset loading script. (if specified, ignore below 2 arguments)",
   "file_name": "the name of the dataset file in the this directory. (required if above are not specified)",
   "file_sha1": "the SHA-1 hash value of the dataset file. (optional)",
+  "subset": "",
   "ranking": "whether the examples contains ranked responses or not. (default: false)",
+  "formatting": "",
   "columns": {
     "prompt": "the name of the column in the datasets containing the prompts. (default: instruction)",
     "query": "the name of the column in the datasets containing the queries. (default: input)",
