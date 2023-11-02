@@ -1,5 +1,5 @@
 import os
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Union
 
 from datasets import concatenate_datasets, interleave_datasets, load_dataset
 
@@ -26,22 +26,23 @@ def get_dataset(
 
         if dataset_attr.load_from == "hf_hub":
             data_path = dataset_attr.dataset_name
+            data_name = dataset_attr.subset
             data_files = None
         elif dataset_attr.load_from == "script":
             data_path = os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)
+            data_name = dataset_attr.subset
             data_files = None
         elif dataset_attr.load_from == "file":
-            data_path = None
+            data_path, data_name = None, None
             data_files: List[str] = []
-
-            if os.path.isdir(os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)): # directory
+            if os.path.isdir(os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)): # is directory
                 for file_name in os.listdir(os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)):
                     data_files.append(os.path.join(data_args.dataset_dir, dataset_attr.dataset_name, file_name))
                     if data_path is None:
                         data_path = EXT2TYPE.get(file_name.split(".")[-1], None)
                     else:
-                        assert data_path == EXT2TYPE.get(file_name.split(".")[-1], None), "file type does not match."
-            elif os.path.isfile(os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)): # single file
+                        assert data_path == EXT2TYPE.get(file_name.split(".")[-1], None), "file types are not identical."
+            elif os.path.isfile(os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)): # is file
                 data_files.append(os.path.join(data_args.dataset_dir, dataset_attr.dataset_name))
                 data_path = EXT2TYPE.get(dataset_attr.dataset_name.split(".")[-1], None)
             else:
@@ -53,7 +54,8 @@ def get_dataset(
             raise NotImplementedError
 
         dataset = load_dataset(
-            data_path,
+            path=data_path,
+            name=data_name,
             data_files=data_files,
             split=data_args.split,
             cache_dir=model_args.cache_dir,
@@ -61,15 +63,59 @@ def get_dataset(
             use_auth_token=True if model_args.use_auth_token else None
         )
 
-        if max_samples is not None:
-            max_samples_temp = min(len(dataset), max_samples)
-            dataset = dataset.select(range(max_samples_temp))
+        if max_samples is not None: # truncate dataset
+            dataset = dataset.select(range(min(len(dataset), max_samples)))
 
-        # TODO: adapt to the sharegpt format
+        def convert_format(examples: Dict[str, List[Any]]) -> Dict[str, List[Any]]:
+            # convert dataset from sharegpt format to alpaca format
+            outputs = {"prompt": [], "query": [], "response": [], "history": []}
+            for msg_list in examples[dataset_attr.prompt]:
+                msg_list = msg_list[:len(msg_list) // 2 * 2] # should be multiples of 2
+                if len(msg_list) == 0:
+                    continue
 
-        for column_name in ["prompt", "query", "response", "history"]: # align datasets
-            if getattr(dataset_attr, column_name) and getattr(dataset_attr, column_name) != column_name:
-                dataset = dataset.rename_column(getattr(dataset_attr, column_name), column_name)
+                msg_pairs = []
+                user_role, assistant_role = None, None
+                for idx in range(0, len(msg_list), 2):
+                    if user_role is None and assistant_role is None:
+                        user_role = msg_list[idx][dataset_attr.query]
+                        assistant_role = msg_list[idx + 1][dataset_attr.query]
+                    else:
+                        if (
+                            msg_list[idx][dataset_attr.query] != user_role
+                            or msg_list[idx+1][dataset_attr.query] != assistant_role
+                        ):
+                            raise ValueError("Only accepts conversation in u/a/u/a/u/a order.")
+                    msg_pairs.append((msg_list[idx][dataset_attr.response], msg_list[idx + 1][dataset_attr.response]))
+
+                if len(msg_pairs) != 0:
+                    outputs["prompt"].append(msg_pairs[-1][0])
+                    outputs["query"].append("")
+                    outputs["response"].append(msg_pairs[-1][1])
+                    outputs["history"].append(msg_pairs[:-1])
+
+            return outputs
+
+        if dataset_attr.formatting == "sharegpt": # convert format
+            column_names = list(next(iter(dataset)).keys())
+            kwargs = {}
+            if not data_args.streaming:
+                kwargs = dict(
+                    num_proc=data_args.preprocessing_num_workers,
+                    load_from_cache_file=(not data_args.overwrite_cache),
+                    desc="Converting format of dataset"
+                )
+
+            dataset = dataset.map(
+                convert_format,
+                batched=True,
+                remove_columns=column_names,
+                **kwargs
+            )
+        else:
+            for column_name in ["prompt", "query", "response", "history"]: # align dataset
+                if getattr(dataset_attr, column_name) and getattr(dataset_attr, column_name) != column_name:
+                    dataset = dataset.rename_column(getattr(dataset_attr, column_name), column_name)
 
         if dataset_attr.system_prompt: # add system prompt
             system_prompt = dataset_attr.system_prompt

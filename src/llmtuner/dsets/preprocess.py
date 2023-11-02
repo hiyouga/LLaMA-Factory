@@ -39,7 +39,7 @@ def preprocess_dataset(
             system = examples["system"][i] if "system" in examples else None
             yield query, response, history, system
 
-    def preprocess_pretrain_dataset(examples: Dict[str, List[Any]]) -> Dict[str, Any]:
+    def preprocess_pretrain_dataset(examples: Dict[str, List[Any]]) -> Dict[str, List[List[int]]]:
         # build grouped texts with format `X1 X2 X3 ...`
         if isinstance(getattr(tokenizer, "tokenizer", None), tiktoken.Encoding): # for tiktoken tokenizer (Qwen)
             kwargs = dict(allowed_special="all")
@@ -62,7 +62,7 @@ def preprocess_dataset(
         }
         return result
 
-    def preprocess_supervised_dataset(examples: Dict[str, List[Any]]) -> Dict[str, Any]:
+    def preprocess_supervised_dataset(examples: Dict[str, List[Any]]) -> Dict[str, List[List[int]]]:
         # build inputs with format `<bos> X Y <eos>` and labels with format `<ignore> ... <ignore> Y <eos>`
         # for multiturn examples, we only mask the prompt part in each prompt-response pair.
         model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
@@ -108,7 +108,7 @@ def preprocess_dataset(
 
         return model_inputs
 
-    def preprocess_packed_supervised_dataset(examples: Dict[str, List[Any]]) -> Dict[str, Any]:
+    def preprocess_packed_supervised_dataset(examples: Dict[str, List[Any]]) -> Dict[str, List[List[int]]]:
         # build inputs with format `<bos> X1 Y1 <eos> <bos> X2 Y2 <eos>`
         # and labels with format `<ignore> ... <ignore> Y1 <eos> <ignore> ... <ignore> Y2 <eos>`
         model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
@@ -145,7 +145,7 @@ def preprocess_dataset(
 
         return model_inputs
 
-    def preprocess_unsupervised_dataset(examples: Dict[str, List[Any]]) -> Dict[str, Any]:
+    def preprocess_unsupervised_dataset(examples: Dict[str, List[Any]]) -> Dict[str, List[List[int]]]:
         # build inputs with format `<bos> X` and labels with format `Y <eos>`
         model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
 
@@ -169,10 +169,10 @@ def preprocess_dataset(
 
         return model_inputs
 
-    def preprocess_pairwise_dataset(examples):
+    def preprocess_pairwise_dataset(examples: Dict[str, List[Any]]) -> Dict[str, List[List[int]]]:
         # build input pairs with format `<bos> X`, `Y1 <eos>` and `Y2 <eos>`
         model_inputs = {"prompt_ids": [], "chosen_ids": [], "rejected_ids": []}
-        for query, response, history, system in construct_example(examples):            
+        for query, response, history, system in construct_example(examples):
             if not (isinstance(query, str) and isinstance(response, list) and query != "" and len(response) > 1):
                 continue
 
@@ -197,9 +197,10 @@ def preprocess_dataset(
             model_inputs["prompt_ids"].append(prompt_ids)
             model_inputs["chosen_ids"].append(chosen_ids)
             model_inputs["rejected_ids"].append(rejected_ids)
+
         return model_inputs
 
-    def print_supervised_dataset_example(example):
+    def print_supervised_dataset_example(example: Dict[str, List[int]]) -> None:
         print("input_ids:\n{}".format(example["input_ids"]))
         print("inputs:\n{}".format(tokenizer.decode(example["input_ids"], skip_special_tokens=False)))
         print("label_ids:\n{}".format(example["labels"]))
@@ -207,7 +208,7 @@ def preprocess_dataset(
             tokenizer.decode(list(filter(lambda x: x != IGNORE_INDEX, example["labels"])), skip_special_tokens=False)
         ))
 
-    def print_pairwise_dataset_example(example):
+    def print_pairwise_dataset_example(example: Dict[str, List[int]]) -> None:
         print("prompt_ids:\n{}".format(example["prompt_ids"]))
         print("prompt:\n{}".format(tokenizer.decode(example["prompt_ids"], skip_special_tokens=False)))
         print("chosen_ids:\n{}".format(example["chosen_ids"]))
@@ -215,7 +216,7 @@ def preprocess_dataset(
         print("rejected_ids:\n{}".format(example["rejected_ids"]))
         print("rejected:\n{}".format(tokenizer.decode(example["rejected_ids"], skip_special_tokens=False)))
 
-    def print_unsupervised_dataset_example(example):
+    def print_unsupervised_dataset_example(example: Dict[str, List[int]]) -> None:
         print("input_ids:\n{}".format(example["input_ids"]))
         print("inputs:\n{}".format(tokenizer.decode(example["input_ids"], skip_special_tokens=False)))
 
@@ -242,13 +243,13 @@ def preprocess_dataset(
         if not data_args.streaming:
             kwargs = dict(
                 num_proc=data_args.preprocessing_num_workers,
-                load_from_cache_file=not data_args.overwrite_cache,
+                load_from_cache_file=(not data_args.overwrite_cache),
                 desc="Running tokenizer on dataset"
             )
 
         dataset = dataset.map(
             preprocess_func,
-            batched=True,            
+            batched=True,
             remove_columns=column_names,
             **kwargs
         )
