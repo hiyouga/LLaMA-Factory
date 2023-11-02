@@ -113,7 +113,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
 
     refresh_btn.click(
         list_checkpoint,
-        [engine.manager.get_elem("top.model_name"), engine.manager.get_elem("top.finetuning_type")],
+        [engine.manager.get_elem_by_name("top.model_name"), engine.manager.get_elem_by_name("top.finetuning_type")],
         [reward_model],
         queue=False
     )
@@ -155,7 +155,11 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
 
     output_box.change(
         gen_plot,
-        [engine.manager.get_elem("top.model_name"), engine.manager.get_elem("top.finetuning_type"), output_dir],
+        [
+            engine.manager.get_elem_by_name("top.model_name"),
+            engine.manager.get_elem_by_name("top.finetuning_type"),
+            output_dir
+        ],
         loss_viewer,
         queue=False
     )
