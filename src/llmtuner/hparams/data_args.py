@@ -19,6 +19,9 @@ class DatasetAttr:
     query: Optional[str] = "input"
     response: Optional[str] = "output"
     history: Optional[str] = None
+    messages: Optional[str] = "conversations"
+    role: Optional[str] = "from"
+    content: Optional[str] = "value"
 
     def __repr__(self) -> str:
         return self.dataset_name
@@ -155,6 +158,9 @@ class DataArguments:
                 dataset_attr.query = dataset_info[name]["columns"].get("query", None)
                 dataset_attr.response = dataset_info[name]["columns"].get("response", None)
                 dataset_attr.history = dataset_info[name]["columns"].get("history", None)
+                dataset_attr.messages = dataset_info[name]["columns"].get("messages", None)
+                dataset_attr.role = dataset_info[name]["columns"].get("role", None)
+                dataset_attr.content = dataset_info[name]["columns"].get("content", None)
 
             dataset_attr.subset = dataset_info[name].get("subset", None)
             dataset_attr.ranking = dataset_info[name].get("ranking", False)
