@@ -11,11 +11,9 @@ def create_chat_box(
     engine: "Engine",
     visible: Optional[bool] = False
 ) -> Tuple["Block", "Component", "Component", Dict[str, "Component"]]:
-    elem_dict = dict()
-
     with gr.Box(visible=visible) as chat_box:
         chatbot = gr.Chatbot()
-
+        history = gr.State([])
         with gr.Row():
             with gr.Column(scale=4):
                 system = gr.Textbox(show_label=False)
@@ -29,13 +27,6 @@ def create_chat_box(
                 top_p = gr.Slider(0.01, 1, value=gen_kwargs.top_p, step=0.01)
                 temperature = gr.Slider(0.01, 1.5, value=gen_kwargs.temperature, step=0.01)
 
-    elem_dict.update(dict(
-        system=system, query=query, submit_btn=submit_btn, clear_btn=clear_btn,
-        max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature
-    ))
-
-    history = gr.State([])
-
     submit_btn.click(
         engine.chatter.predict,
         [chatbot, query, history, system, max_new_tokens, top_p, temperature],
@@ -47,4 +38,12 @@ def create_chat_box(
 
     clear_btn.click(lambda: ([], []), outputs=[chatbot, history], show_progress=True)
 
-    return chat_box, chatbot, history, elem_dict
+    return chat_box, chatbot, history, dict(
+        system=system,
+        query=query,
+        submit_btn=submit_btn,
+        clear_btn=clear_btn,
+        max_new_tokens=max_new_tokens,
+        top_p=top_p,
+        temperature=temperature
+    )

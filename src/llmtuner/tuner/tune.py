@@ -38,10 +38,10 @@ def export_model(args: Optional[Dict[str, Any]] = None, max_shard_size: Optional
     model_args, _, finetuning_args, _ = get_infer_args(args)
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args)
     model.config.use_cache = True
-    tokenizer.padding_side = "left" # restore padding side
-    tokenizer.init_kwargs["padding_side"] = "left"
     model.save_pretrained(model_args.export_dir, max_shard_size=max_shard_size)
     try:
+        tokenizer.padding_side = "left" # restore padding side
+        tokenizer.init_kwargs["padding_side"] = "left"
         tokenizer.save_pretrained(model_args.export_dir)
     except:
         logger.warning("Cannot save tokenizer, please copy the files manually.")
