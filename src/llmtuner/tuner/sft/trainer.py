@@ -33,7 +33,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
         Subclass and override to inject custom behavior.
         """
-        labels = inputs["labels"].clone() if "labels" in inputs else None # backup labels
+        labels = inputs["labels"].detach().clone() if "labels" in inputs else None # backup labels
         if self.args.predict_with_generate:
             assert self.tokenizer.padding_side == "left", "This method only accepts left-padded tensor."
             prompt_len, label_len = inputs["input_ids"].size(-1), inputs["labels"].size(-1)
