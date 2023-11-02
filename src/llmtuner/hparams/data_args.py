@@ -156,5 +156,6 @@ class DataArguments:
                 dataset_attr.history = dataset_info[name]["columns"].get("history", None)
 
             dataset_attr.ranking = dataset_info[name].get("ranking", False)
+            dataset_attr.formatting = dataset_info[name].get("formatting", "alpaca")
             dataset_attr.system_prompt = prompt_list[i]
             self.dataset_list.append(dataset_attr)
