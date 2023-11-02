@@ -15,7 +15,7 @@ from llmtuner.extras.constants import DEFAULT_MODULE, DEFAULT_TEMPLATE, SUPPORTE
 
 
 DEFAULT_CACHE_DIR = "cache"
-DEFAULT_DATA_DIR = "data"
+DEFAULT_DATA_DIR = R"C:\Users\28596\Desktop\dataset"
 DEFAULT_SAVE_DIR = "saves"
 USER_CONFIG = "user.config"
 DATA_CONFIG = "dataset_info.json"

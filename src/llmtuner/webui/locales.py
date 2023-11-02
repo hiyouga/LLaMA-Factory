@@ -239,6 +239,16 @@ LOCALES = {
             "info": "每块 GPU 上处理的样本数量。"
         }
     },
+    "eval_batch_size": {
+        "en": {
+            "label": "eval_Batch size",
+            "info": "Number of samples to process per GPU."
+        },
+        "zh": {
+            "label": "(验证时)批处理大小",
+            "info": "每块 GPU 上处理的样本数量。"
+        }
+    },
     "gradient_accumulation_steps": {
         "en": {
             "label": "Gradient accumulation",
@@ -355,6 +365,16 @@ LOCALES = {
         "zh": {
             "label": "LoRA 秩",
             "info": "LoRA 矩阵的秩。"
+        }
+    },
+    "lora_alpha": {
+        "en": {
+            "label": "Lora alpha",
+            "info": "The rank of LoRA matrices."
+        },
+        "zh": {
+            "label": "LoRA alpha",
+            "info": "LoRA alpha参数"
         }
     },
     "lora_dropout": {

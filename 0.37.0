@@ -1,0 +1,6 @@
+Looking in indexes: https://pypi.tuna.tsinghua.edu.cn/simple
+Collecting bitsandbytes
+  Downloading https://pypi.tuna.tsinghua.edu.cn/packages/1e/2c/af22cd797fc368a9f098ed03015730e6568b884fe67f9940793d944a4b7b/bitsandbytes-0.41.1-py3-none-any.whl (92.6 MB)
+     --------------------------------------- 92.6/92.6 MB 38.6 MB/s eta 0:00:00
+Installing collected packages: bitsandbytes
+Successfully installed bitsandbytes-0.41.1

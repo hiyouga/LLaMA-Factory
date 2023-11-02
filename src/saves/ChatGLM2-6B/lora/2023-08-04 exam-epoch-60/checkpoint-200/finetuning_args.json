@@ -1,0 +1,13 @@
+{
+  "finetuning_type": "lora",
+  "lora_alpha": 32.0,
+  "lora_dropout": 0,
+  "lora_rank": 8,
+  "lora_target": [
+    "query_key_value"
+  ],
+  "name_module_trainable": "mlp",
+  "num_layer_trainable": 3,
+  "pre_seq_len": 64,
+  "prefix_projection": false
+}

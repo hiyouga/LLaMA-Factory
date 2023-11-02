@@ -1,0 +1,97 @@
+{
+  "best_metric": null,
+  "best_model_checkpoint": null,
+  "epoch": 0.991869918699187,
+  "global_step": 61,
+  "is_hyper_param_search": false,
+  "is_local_process_zero": true,
+  "is_world_process_zero": true,
+  "log_history": [
+    {
+      "epoch": 0.08,
+      "learning_rate": 2.9505415871869808e-05,
+      "loss": 2.9669,
+      "step": 5
+    },
+    {
+      "epoch": 0.16,
+      "learning_rate": 2.805427861545233e-05,
+      "loss": 2.6585,
+      "step": 10
+    },
+    {
+      "epoch": 0.24,
+      "learning_rate": 2.57422828247159e-05,
+      "loss": 2.8347,
+      "step": 15
+    },
+    {
+      "epoch": 0.33,
+      "learning_rate": 2.2721892022647464e-05,
+      "loss": 2.7421,
+      "step": 20
+    },
+    {
+      "epoch": 0.41,
+      "learning_rate": 1.9192284522774144e-05,
+      "loss": 2.4226,
+      "step": 25
+    },
+    {
+      "epoch": 0.49,
+      "learning_rate": 1.538621870482483e-05,
+      "loss": 2.356,
+      "step": 30
+    },
+    {
+      "epoch": 0.57,
+      "learning_rate": 1.1554683868023069e-05,
+      "loss": 2.3291,
+      "step": 35
+    },
+    {
+      "epoch": 0.65,
+      "learning_rate": 7.950348854590206e-06,
+      "loss": 2.2975,
+      "step": 40
+    },
+    {
+      "epoch": 0.73,
+      "learning_rate": 4.810899916540603e-06,
+      "loss": 2.1208,
+      "step": 45
+    },
+    {
+      "epoch": 0.81,
+      "learning_rate": 2.3433666026522154e-06,
+      "loss": 1.9593,
+      "step": 50
+    },
+    {
+      "epoch": 0.89,
+      "learning_rate": 7.104692879492625e-07,
+      "loss": 2.0598,
+      "step": 55
+    },
+    {
+      "epoch": 0.98,
+      "learning_rate": 1.988865172754206e-08,
+      "loss": 2.102,
+      "step": 60
+    },
+    {
+      "epoch": 0.99,
+      "step": 61,
+      "total_flos": 1.473895580909568e+16,
+      "train_loss": 2.399782274590164,
+      "train_runtime": 810.0016,
+      "train_samples_per_second": 1.214,
+      "train_steps_per_second": 0.075
+    }
+  ],
+  "max_steps": 61,
+  "num_train_epochs": 1,
+  "total_flos": 1.473895580909568e+16,
+  "trial_name": null,
+  "trial_params": null
+}

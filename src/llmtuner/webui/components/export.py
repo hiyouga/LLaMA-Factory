@@ -27,6 +27,7 @@ def create_export_tab(engine: "Engine") -> Dict[str, "Component"]:
             engine.manager.get_elem("top.checkpoints"),
             engine.manager.get_elem("top.finetuning_type"),
             engine.manager.get_elem("top.template"),
+
             max_shard_size,
             export_dir
         ],

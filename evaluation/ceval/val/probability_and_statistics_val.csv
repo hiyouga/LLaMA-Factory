@@ -1,0 +1,48 @@
+id,question,A,B,C,D,answer
+0,设随机变量$X$和$Y$相互独立，且X$\sim N(0，1)，Y\sim N(0$，2)，则$D\left(X^2Y^2\right)=$____,10,20,32,45,C
+1,"设随机变量$(X,Y)$的概率密度为$f(x,y)=\left\{\begin{array}{cc}6y,&0<x<1,0<y<x，\\0,&\text{其他.}\end{array}\right.$,$$\text{则}P\left(X>\frac{1}{2}\mid Y=\frac{1}{3}\right)=$$____",$\frac{3}{4}$,$\frac{2}{3}$,$\frac{1}{4}$,$\frac{1}{3}$,A
+2,"总体的简单样本,$\bar{X}$为样本均值,则$D(\bar{X})=$____",$\frac{3}{80}$,$\frac{9}{16}$,$\frac{3}{1600}$,$\frac{3}{160}$,C
+3,"设总体$X$服从拉普拉斯分布$f(x,\lambda)=\frac{1}{4\lambda}e^{-\frac{|x|}{2\lambda}},-\infty<x<\infty$,其中$\lambda>0$。则$E(|X|)=$____",$\frac{1}{2 \lambda}$,$\frac{1}{\lambda}$,$2 \lambda$,$\lambda$,C
+4,"设$X_1,X_2,\cdots X_{12}$是来自正态总体$X\sim N\left(0,\sigma^2\right)$的简单样本,随机变量$Y=\frac{\sum_{i=1}^6X_i^2}{\sum_{j=1}^6X_{j+6}^2}$服从的分布为:____",$\chi^2(6)$,$\chi^2(1)$,"$F(5,5)$","$F(6,6)$",D
+5,对于任意两个随机变量X和$Y$，若$E(XY)=EX\cdot EY$，则____,$D(X Y)=D(X) \cdot D(Y)$,$D(X+Y)=D(X)+D(Y)$,X和Y独立,X和Y不相关,D
+6,"设$(X_1,X_2,...,X_n)$是取自总体X的一个样本，X的概率密度如下：$f(x)=\begin{cases}\frac12e^{-\frac{(x-\mu)}{2}},x\geq\mu,\\0,其他\end{cases}$,$\mu$为未知参数。则$\mu$的最大似然估计量是.____",$\hat{\mu}=\max _{1 \leq i \leq n} X_i$,$\hat{\mu}=\frac13 \max _{1 \leq i \leq n} X_i$,$\hat{\mu}=\min _{1 \leq i \leq n} X_i$,$\hat{\mu}=\frac12 \min _{1 \leq i \leq n} X_i$,C
+7,当事件$A$和$B$同时发生时$C$也发生，则下列式子中成立的是____,$P(C)=P(A \cap B)$,$P(C) \leq P(A)+P(B)-1$,$P(C)=P(A \cup B)$,$P(C) \geq P(A)+P(B)-1$,D
+8,"$$
+\text{设}0<P(A)<1，0<P(B)<1\text{，}
+$$
+$P(A\mid B)+P(\bar{A}\mid\bar{B})=1$，则____",事件A和B互不相容,事件A和B互相对立,事件A和B互不独立,事件A和B相互独立,D
+9,设X和Y分别表示扔n次硬币出现正面和反面的次数，则$X，Y$的相关系数为____,-1,0,\frac{1}{2},1,A
+10,"设二维随机变量$(X,Y)$在区域$D=\left\{(x,y):x^2+y^2<1\right\}$内均匀分布,则$X$与$Y$为____",独立同分布的随机变量,独立不同分布的随机变量,不独立同分布的随机变量,不独立也不同分布的随机变量,C
+11,设$X\sim N(1，4)，Y\sim N(3，16)，P\{Y=aX+b\}=1$，且$\rho_{XY}=-1$，则____,"a=2, b=5","a=-2, b=-5","a=-2, b=5","a=2, b=-5",C
+12,"设总体$X$的分布列如下:
+
+\begin{tabular}{|c|c|c|c|}
+\hline$\boldsymbol{X}$&0&1&2\\
+\hline$\boldsymbol{p}$&$2/5$&$1/5$&$2/5$\\
+\hline
+\end{tabular}
+
+$\left(X_{1},X_{2},\cdots X_{n}\right)$是来自于该总体的样本,$X_{(n)}=\max\left(X_{1},X_{2},\cdots X_{n}\right)$,
+
+(i)$P\left(\mathbf{X}_{(n)}=0\right)=\left(\frac{2}{5}\right)^{n}$,
+(ii)$P\left(X_{(n)}=1\right)=\frac{2}{5}\left(c_{0}^{1}\left(\frac{1}{5}\right)^{n-1}\right.$,
+(iii)$P\left(\mathbf{X}_{(n)}=2\right)=1-\left(\frac{2}{5}\right)^{n}$,
+
+上述(i)、(ii)、(iii)中正确个数为____",2,1,0,3,B
+13,"设随机变量(X,Y)的概率密度为$f(x,y)=\begin{cases}2,0<x<y,0<y<1\\0,其他\end{cases}$.则0<y<1时，f_{X|Y}(x|y)=____","$\begin{cases}\frac{1}{x}, & 0<y<x, \\ 0, & \text { 其他 }\end{cases}$","$\{\begin{array}{cl}\frac{1}{2 x}, & |y|<x, \\0, & \text { 其他}\end{array}$","$\begin{cases}\frac{1}{y}, & 0<x<y, \\ 0, & \text { 其他. }\end{cases}$","$\begin{cases}\frac{1}{2y}, & |x|<y, \\ 0, & \text { 其他. }\end{cases}$",C
+14,"设总体$X$的分布律为
+
+\begin{tabular}{|l|l|l|l|}
+\hline$X$&-1&0&2\\
+\hline$P$&$\frac{1}{3}\theta$&$1-\frac{2}{3}\theta$&$\frac{1}{3}\theta$\\
+\hline
+\end{tabular}
+
+$\left(X_{1},X_{2},\cdots,X_{n}\right)$为来自总体的样本,设有以下四个统计量
+
+(i)$\frac{3}{n}\sum_{i=1}^{n}X_{i}$,(ii)$\left.X_{1}+\frac{2}{n-1}\right)_{i=2}^{n}X_{i}$,(iii)$\frac{3}{5n}\sum_{i=1}^{n}X_{i}^{2}$,(iv)$\frac{1}{3n}\sum_{i=1}^{n}X_{i}^{2}$
+
+在上述四个统计量中,是参数$\theta$的一致估计量的个数是____",0,2,1,3,B
+15,"设$X_1,...,X_4,X_5$相互独立、且都服从N(0,4).设$\alpha\in(0,1)$,$k>0$,$P(X_1^2+X_2^2+X_3^2+X_4^2\le kX_5^2)=\alpha$则k=____","$\frac{1}{4}F_{\alpha}(4,1)$","$\frac{1}{4}F_{1-\alpha}(4,1)$","$4F_{\alpha}(4,1)$","$4F_{1-\alpha}(4,1)$",D
+16,"设$X_1,X_1,\cdots X_8$为来自总体$X\sim N\left(\mu_1,1\right)$的简单样本,$\bar{X},S_1^2$分別是其对应的样本均值与样本方差。$Y_1,Y_1,\cdots,Y_7$为来自总$Y\sim N\left(\mu_2,1\right)$的简单样本,$\bar{Y},S_2^2$分别是其对应的样本均值与样本方差。下列选项正确的是：____",$\sum_{i=1}^8\left(X_i-\mu_1\right)^2+\sum_{i=1}^7\left(Y_i-\mu_2\right)^2 \sim \chi^2(15)$,$E\left(\sum_{i=1}^8\left(X_i-\mu_1\right)^2+\sum_{i=1}^7\left(Y_i-\mu_2\right)^2\right)=15$,$\mathrm{D}(\bar{X}+\bar{Y})=\frac{1}{8}+\frac{1}{7}$,"$\bar{X}-\bar{Y} \sim \mathrm{N}\left(\mu_1-\mu_2, \frac{1}{8}+\frac{1}{7}\right)$",B
+17,"若随机变量X的分布函数为$F(x)=pF_1(x)+qF_2(x)$，其中$F_1(x)$，$F_2(x)$为两个分布函数，常数p，q满足:$p>0$，$q>0$，$p+q=1$，那么X的分布叫作$F_1(x)，F_2(x)$的混合分布.设$\mu_1，\mu_2$分别为$F_1(x)，F_2(x)$的期望，$\sigma_1^2,\sigma_2^2$分别为$F_1(\mathrm{x})$，$F_2(\mathrm{x})$的方差，则$DX=$____",$p \sigma_1^2+q \sigma_2^2$,$p^2 \sigma_1^2+q^2 \sigma_2^2$,$p \sigma_1^2+q \sigma_2^2+p q\left(\mu_1-\mu_2\right)^2$,$p \sigma_1^2+q \sigma_2^2+p q\left(\sigma_1-\sigma_2\right)^2$,C

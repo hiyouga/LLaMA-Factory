@@ -47,11 +47,12 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     ))
 
     with gr.Row():
-        cutoff_len = gr.Slider(value=1024, minimum=4, maximum=8192, step=1)
+        cutoff_len = gr.Slider(value=2048, minimum=4, maximum=8192, step=1)
         learning_rate = gr.Textbox(value="5e-5")
-        num_train_epochs = gr.Textbox(value="3.0")
+        num_train_epochs = gr.Textbox(value="1.0")
         max_samples = gr.Textbox(value="100000")
         compute_type = gr.Radio(choices=["fp16", "bf16"], value="fp16")
+
 
     input_elems.update({cutoff_len, learning_rate, num_train_epochs, max_samples, compute_type})
     elem_dict.update(dict(
@@ -61,6 +62,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
 
     with gr.Row():
         batch_size = gr.Slider(value=4, minimum=1, maximum=512, step=1)
+        eval_batch_size = gr.Slider(value=4, minimum=1, maximum=512, step=1)
         gradient_accumulation_steps = gr.Slider(value=4, minimum=1, maximum=512, step=1)
         lr_scheduler_type = gr.Dropdown(
             choices=[scheduler.value for scheduler in SchedulerType], value="cosine"
@@ -68,9 +70,9 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
         max_grad_norm = gr.Textbox(value="1.0")
         val_size = gr.Slider(value=0, minimum=0, maximum=1, step=0.001)
 
-    input_elems.update({batch_size, gradient_accumulation_steps, lr_scheduler_type, max_grad_norm, val_size})
+    input_elems.update({batch_size,eval_batch_size, gradient_accumulation_steps, lr_scheduler_type, max_grad_norm, val_size})
     elem_dict.update(dict(
-        batch_size=batch_size, gradient_accumulation_steps=gradient_accumulation_steps,
+        batch_size=batch_size,eval_batch_size=eval_batch_size, gradient_accumulation_steps=gradient_accumulation_steps,
         lr_scheduler_type=lr_scheduler_type, max_grad_norm=max_grad_norm, val_size=val_size
     ))
 
@@ -94,14 +96,15 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     with gr.Accordion(label="LoRA config", open=False) as lora_tab:
         with gr.Row():
             lora_rank = gr.Slider(value=8, minimum=1, maximum=1024, step=1, scale=1)
+            lora_alpha = gr.Slider(value=16, minimum=1, maximum=2048, step=1, scale=1)
             lora_dropout = gr.Slider(value=0.1, minimum=0, maximum=1, step=0.01, scale=1)
             lora_target = gr.Textbox(scale=1)
             additional_target = gr.Textbox(scale=1)
             resume_lora_training = gr.Checkbox(value=True, scale=1)
 
-    input_elems.update({lora_rank, lora_dropout, lora_target, additional_target, resume_lora_training})
+    input_elems.update({lora_rank,lora_alpha, lora_dropout, lora_target, additional_target, resume_lora_training})
     elem_dict.update(dict(
-        lora_tab=lora_tab, lora_rank=lora_rank, lora_dropout=lora_dropout, lora_target=lora_target,
+        lora_tab=lora_tab, lora_rank=lora_rank,lora_alpha=lora_alpha, lora_dropout=lora_dropout, lora_target=lora_target,
         additional_target=additional_target, resume_lora_training=resume_lora_training,
     ))
 
@@ -140,6 +143,17 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
 
         with gr.Column(scale=1):
             loss_viewer = gr.Plot()
+
+    # with gr.Row():
+    #     cutoff_len = gr.Slider(value=1024, minimum=4, maximum=8192, step=1)
+    #     max_samples = gr.Textbox(value="100000")
+    #     batch_size = gr.Slider(value=1, minimum=1, maximum=512, step=1)
+    #     predict = gr.Checkbox(value=True)
+    #
+    # input_elems.update({cutoff_len, max_samples, batch_size, predict})
+    # elem_dict.update(dict(
+    #     cutoff_len=cutoff_len, max_samples=max_samples, batch_size=batch_size, predict=predict
+    # ))
 
     input_elems.add(output_dir)
     output_elems = [output_box, process_bar]

@@ -28,7 +28,9 @@ class Manager:
             self.all_elems["top"]["system_prompt"],
             self.all_elems["top"]["flash_attn"],
             self.all_elems["top"]["shift_attn"],
-            self.all_elems["top"]["rope_scaling"]
+            self.all_elems["top"]["rope_scaling"],
+
+
         }
 
     def list_elems(self) -> List["Component"]:

@@ -1,0 +1,154 @@
+id,question,A,B,C,D
+0,在代数系统中，整环和域的关系是____,整环一定是域,域不一定是整环,域一定是整环,域一定不是整环
+1,下列公式与$\left(\forall x\right)\left(\left(\exists y\right)P\left(y\right)\rightarrow Q\left(x\right)\right)$等值的是____,$(\forall\:x)\:(\exists\:y)\:(\mathsf{P}\:(y)\:\rightarrow\:\mathsf{Q}\:(x)\:)$,$\left(\forall x\right)\left(\forall y\right)\left(\neg\mathsf{P}\left(y\right)\:\rightarrow\:\mathsf{Q}\left(x\right)\right)$,$\left(\forall x\right)\left(\neg\mathtt{Q}\left(x\right)\ \rightarrow\ \left(\forall y\right)\neg\mathtt{P}\left(y\right)\right)$,$\left(\exists y\right)\mathsf{P}\left(y\right)\:\rightarrow\:\left(\:\forall x\right)\mathsf{Q}\left(x\right)$
+2,一个连通图G具有以下____条件时，能一笔画出：即从某结点出发，经过图中每边仅一次回到该结点。,G 没有奇数度结点,G 有一个奇数度结点,G有2个奇数度结点,G没有或有2个奇数度结点
+3,公式$\neg p\rightarrow(q\rightarrow r)$与____等值。,$q\rightarrow(p\lor r)$,$(p\wedge q)\rightarrow r$,$(p\rightarrow r)\lor(q\rightarrow r)$,$p\rightarrow\left(q\lor r\right)$
+4,具有7个结点的所有非同构的树有____个。,7,11,12,14
+5,若一个平面图G是面4可着色的，则其对偶图G*一定满足_____,点4可着色,面4可着色,有H回路,有欧拉回路
+6,下列公式中____不是永真式:,$\neg p\rightarrow(p\rightarrow q)$,$p\rightarrow(\neg p\rightarrow q)$,$\big(p\to\big(q\lor(p\to q)\big)\big)\land\neg q$,$\big(p\to\big(q\lor(p\to q)\big)\big)\lor\neg q$
+7,令$P$:今天下雪了，$Q$:路滑，则命题“虽然今天下雪了，但是路不滑”可符号化为____,$P\rightarrow\neg Q$,$P \lor \neg Q$,$\textit{P}\wedge Q$,$\textit{P}\wedge \neg Q$
+8,以下性质不一定正确的是____,$A=B\Leftrightarrow P(A)=P(B)$,$A\subseteq B\Leftrightarrow P(A)\subseteq P(B)$,$P(A)\in P(B)\Leftrightarrow A\in B$,$(A-B)\oplus(A-C)=\Phi\Leftrightarrow A-B=A-C$
+9,"设个体域为$\{-1,1\}$，并对$\mathsf{P}\left(x,y\right)$设定为$\mathsf{P}\left(-1,-1\right)\mathsf{=T}$,$\mathsf{P}\left(-1,1\right)\mathsf{=F}$,$\mathsf{P}(1,-1)\mathsf{=T}$,$\mathtt{P}\left(1,1\right)\mathtt{=F}$，其真值为$\textbf{T}$的公式为____","$(\forall x)\left(\exists y\right)\mathsf{P}\left(x,y\right)$","$(\exists x)(\forall y)\mathsf{P}(x,y)$","$(\forall x)(\forall y)P(x,y)$","$(\forall y)(\exists x)P(x,y)$"
+10,$R$是集合$A$上的二元关系，下面____说法是错误的。,$tsr(R)=trs(R)$,$rts(R)=tsr(R)$,$str(R)=rts(R)$,$rts(R)=trs(R)$
+11,以2，2，3，3，1，1，1，1为顶点度数列的所有非同构的无向树的个数为____。,4,5,6,7
+12,已知5阶有向图G的度数列和入度列分别为(3，3，2，3，3)和(2，1，1，1，2)，则有向图G的出度列为____。,(1，2，1，2，1),(2，2，2，2，0),(2，2，1，2，1),(1，2，0，2，1)
+13,"令$F(x)$：""x是金属""，$G(y)$：""y是液体""，$H(x,y)$：""x可以溶解在y中""，则命题“任何金属可以溶解在某种液体中”可符号化为下列哪项？____","$(\forall x)(F(x)\land(\exists y)(G(y)\land H(x,y)))$","$(\forall x)(\exists(x)F(x)\rightarrow(G(y)\rightarrow H(x,y)))$","$(\forall x)(F(x)\rightarrow(\exists y)(G(y)\land H(x,y)))$","$(\forall x)(F(x)\rightarrow(\exists y)(G(y)\rightarrow H(x,y))$"
+14,"A,B为任意集合，以下____不一定正确",${P}({A})\cup P(B)=P(A\cup B)$,${P}({A})\cap P(B)=P(A\cap B)$,${P}({A})\in P(B)\Rightarrow P(A\in B)$,${P}({A})\subseteq P(B)\Rightarrow P(A\subseteq B)$
+15,$P(P(P(\Phi)))$为____,"$\{\{\Phi\},\{\Phi,\{\Phi\}\}\}$","$\{\Phi,\{\Phi,\{\Phi\}\},\{\Phi\}\}$","$\{\Phi,\{\Phi,\{\Phi\}\},\{\Phi\},\{\{\Phi\}\}\}$","$\{\Phi,\{\Phi,\{\Phi\}\}\}$"
+16,设p:我很累，q:我去学习，命题:“除非我很累，否则我就去学习”的符号化正确的是____,$\neg p\wedge q$,$\neg p\rightarrow q$,$\neg p\rightarrow\neg q$,$ p\rightarrow\neg q$
+17,任意一条链都是____,分配格,有补格,有界格,有界分配格
+18,下列选项中，关于大项和小项的说法错误的是____,每个小项有一个成真赋值，有2n-1种成假赋值,任意两个不同大项的合取式为矛盾式,全体小项的析取式为重言式,每个大项的成假赋值均不相同
+19,$f\colon N\rightarrow N\quad\text{}$，且对任意$i\:\in\:N$有$f(i)=i(\text{mod}\ 6)$，则$\mathcal{f}$是____,单射,满射,双射,以上都不对
+20,已知图G中有11条边，1个4度顶点，4个3度顶点，其余顶点的度数均不大于2，则G中至少有____个顶点。,9,8,7,6
+21,假设$A\subseteq B$，以下____不一定成立,$\cup A\subseteq\cup B$,$\cap A\subseteq\cap B$,$P(A)\subseteq P(B)$,$A-B\subseteq B-A$
+22,含n个命题变元的任一命题公式的指派个数是____,n,n^2,2n,22n
+23,使得$(q\wedge(p\rightarrow q))\rightarrow p$的真值为$\mathsf{F}$的是下列情形____,"$(p,q)=(F,F)$","$(p,q)=(F,T)$","$(p,q)=(T,F)$","$(p,q)=(T,T)$"
+24,下列说法错误的是____,\textbf{K}_5 是结点数最小的非平面图；,\textbf{K}_5去掉任意一条边所形成的图仍是$K^{(2)}$型子图；,\textbf{K}_5 中不存在 K（2）型子图；,在\textbf{K}_5的边上任意加一个度为2的结点， 所形成的新图具有 K 型子图。
+25,公式$(p\uparrow q)\downarrow(p\uparrow q)$与____等值。,$p\lor q$,$p\wedge q$,${p\rightarrow q}$,$p\leftrightarrow q$
+26,"$(\forall x)(P(x)\rightarrow(\exists y)Q(x,y))$的前束范式为____","$(\forall x)(\exists y)(\neg P(x)\lor Q(x,y))$","$(\forall x)(\exists y)(P(x)\lor Q(x,y))$","$(\forall x)(\exists y)(\neg P(x)\wedge Q(x,y))$","$(\exists x)(\exists y)(\neg P(x)\wedge Q(x,y))$"
+27,下列说法错误的是____,给定\mathbf{G}_{1}的某个子图$\mathbf{H}$，如果在\mathbf{G}_{2}中找不到与H同构的子图，则\mathbf{G}_{1}和\mathbf{G}_{2}一定不同构,任一非空无向图中的道路有无穷条,"任何非平面图中一定存在一个子图是$\mathsf{K}^{(1)}$型图或者$\mathsf{K}^{(2)}$型图（$\mathsf{K}^{(1)}$型图指${\mathsf{K}}_{5}$的同胚，$\mathsf{K}^{(2)}$型图指${\mathsf{K}}_{3,3}$的同胚）",给定赋权的叶子结点集合，则相应的 Huffman 树是唯一的
+28,A是一个有限集合，（A，≤）是一个偏序集，则下面说法____是错误的。,（A，≤）是全序集当有仅当（A，≤）是良序集,集合A 的任意非空子集B一定存在上确界,集合A 的任意非空子集B一定存在极大元,（B，≤）可能存在多条链
+29,$A\cup(B\cap C)$与____不恒等,$(A\cup B)\cap(A\cup C)$,$((A-B)-C)\cup(B\cap C)$,$(A-B)\cup(B\cap C)\cup(A-C)$,$A\cup(B-(B\oplus C))$
+30,设$\mathsf{H}\left(x\right)$:x是人；$\mathsf{P}\left(x\right)$:x犯错误。则“没有不犯错误的人”应该翻译成____,$\left(\exists x\right)\:\left(\text{H}\left(x\right)\wedge\neg\text{P}\left(x\right)\right)$,$\left(\forall x\right)\left(H\left(x\right)\rightarrow P\left(x\right)\right)$,$\left(\forall x\right)\:\left(H\left(x\right)\wedge P\left(x\right)\right)$,$\left(\exists x\right)\:\left(H\left(x\right)\rightarrow P\left(x\right)\right)$
+31,设T为n(n≥3)阶无向树，T有几条割边?____,n条,n-2条,n-1条,没有
+32,关于$A\rightarrow\phi$的函数，下列_是正确的____,不存在,有一个空函数$\Phi$,仅当A非空时才能有函数,仅当A为空时才能有函数
+33,下列命题联结词集合中，是联结词的完备集的是____,"$\{\neg,\leftrightarrow\}$",$\{\uparrow\}$,"$\{\wedge,\lor \}$","$\{\wedge,\rightarrow \}$"
+34,以下____不正确。,$\phi\subseteq\phi$,$\phi\in1$,$\phi\subseteq1$,$\phi\in\phi$
+35,设$A\left(x\right):x$是成功人士，$B\left(x\right):x$出身名门，命题“成功人士未必都出身名门”符号化为____,$(\forall x)(A(x)\wedge B(x))$,$\neg\left(\exists x\right)\left(\mathtt{A}\left(\mathtt{x}\right)\rightarrow\mathbf{B}\left(\mathtt{x}\right)\right)$,$\neg\left(\forall x\right)\left(\mathtt{A}\left(\mathtt{x}\right)\wedge\mathtt{B}\left(\mathtt{x}\right)\right)$,$\neg\left(\forall x\right)\left(\text{A}\left(x\right)\rightarrow\text{B}\left(x\right)\right)$
+36,设R是集合A={1，2，3}上的二元关系，且R={＜1，1＞，＜3，3＞}，下列命题中____为真。Ⅰ．R的自反闭包为{＜1，1＞，＜2，2＞，＜3，3＞}Ⅱ．R的对称闭包为{＜1，1＞，＜3，3＞}Ⅲ．R的传递闭包为{＜l，1＞，＜3，3＞},只有Ⅰ,只有Ⅱ,Ⅰ和Ⅱ,Ⅰ、Ⅱ和Ⅲ
+37,设G是连通平面图，有v个顶点，e条边，且其平面表示中共有r个面，则e=____,v+r+2,r-v+2,r+v-2,v-r+2
+38,与自然数集合$N$等势的集合是____,"$[0,1]$",$\mathbf{N_2}$,$Q$,$R$
+39,已知集合A={1，2，3}上的关系R={〈3，3〉，〈3，1〉}，则s(R)=____,{〈3，3〉，〈1，3〉},{〈3，3〉，〈3，1〉，〈1，3〉},{〈3，3〉，〈1，1〉，〈2，2〉},{〈3，3〉，〈3，1〉，〈1，3〉，〈1，1〉}
+40,Z代表整数集合，“≤”是Ζ上的小于等于二关系，下面说法____是错误的。,"(Z, ≤)是偏序集","(Z, ≤)是全序集","(Z, ≤）是良序集","(Z, ≤）是一条链"
+41,已知图G有11条边，由1个4度顶点，4个3度顶点，其余顶点的度数均小于等于2，则G中至少有____个顶点。,7,8,9,10
+42,"假设集合${A\subseteq B}$,$C$是任意一个集合，则以下不一定成立____",$C\cup A\subseteq C\cup B$,$\cap A\subseteq \cap B$,$C\cap A\subseteq C\cap{B}$,$A-B\subseteq B-A$
+43,"令$\mathbb{N}$是自然数集，$\mathbb{Q}$是有理数集，$\mathbb{R}$是实数集，则与闭区间$[1,2]$等势的集合是____",$\ {\mathrm{{N}}}$,$\mathbb{N}\times\mathbb{Q}$,$\mathbb{N}_{2}$,$p(\mathbb{R})$
+44,设$R_{3}$是集合A到集合B上的二元关系，$R_{1}$，$R_{2}$，是集合B到集合C上的二元关系，则以下_是错误的.____,$(R_1\cup R_2)\circ R_3=(R_{1}\circ R_{3})\cup(R_{2}\circ R_{3})$,$(R_{1}\cap R_{2})\circ R_{3}=(R_{1}\circ R_{3})\cap(R_{2}\circ R_{3})$,$R_1[A\cup B]=R_1[A]\cup R_1[B]$,$\left(R_1\circ R_3\right)^{-1}=R_3^{-1}\circ R_1^{-1}$
+45,设T为n≥2的简单图，以下____不足以证明T是树。,T连通且无回路,T连通且每条边为割边,T连通且有n一1条边,T无回路且每条边均为割边
+46,"设$N\left(\mathbf{x}\right):\textbf{x}$是自然数$\mathsf{E}\left(x,y\right):\textbf{x}$等于$\textbf{y}$;$\text{f}\left(\text{x}\right):\textbf{x}$的相继前元。则命题$(\forall\:x)\:(\:(N(x)\land\neg E(x,0))\rightarrow\:(\exists\:y)\:(E(y,f(x))\land(\forall\:z)\:(\:E(z,f(x))\rightarrow E(y,z))\:))$表示的自然语言是____",任意非零自然数有相继前元,存在非零自然数有且仅有一个相继前元,任意非零自然数有且仅有一个相继前元,存在一个自然数是任意非零自然数的唯一相继前元
+47,设G是有n个结点，m条边的连通图，必须删去G的____条边，才能确定G的一棵生成树.,m-n+I,m-n,m+n+1,n-m+1
+48,在平面图$\mathbf{G}$的某个域内增加一个结点及连接该结点与该域的边界上某结点的一条边，得到一个新图$\mathbf{G^{\prime}}$，那么以下正确的是____,$\mathbf{G}^*\subset\mathbf{G^{\prime}}^*$,$\mathbf{G}^{*}\supset\mathbf{G^{\prime}}^{*}$,$\mathbf{G}^{*}=\mathbf{G^{\prime}}^{*}$,以上都不对
+49,设有一个连通平面图G，共有7个结点，12条边，则G的面的个数为____,6,7,8,9
+50,集合A1，A2，…，An是集合C的n个子集，n≥2，已知C中的任意一元素都恰好在两个不同的子集中出现一次，即任意两个不同的子集Ai，Aj有|Ai∩Aj|=1，则|C|=____。,n,n-1,2n,n+1
+51,设a：小华，P(x)：x是教授，f(x)：x的父亲，则语句“小华的父亲是教授”可符号化为____,P(f(a)),P(a)∧f(a),f(P(a)),P(a)∨f(a)
+52,设f：B→C，g：A→B。若f·g是满射的，则下面命题为真的是____。,f是满射的,f是单射的,f是双射的,g是满射的
+53,任意一个具有2个或2个以上元的半群____,可能不是群,一定不是群,一定是群,是交换群
+54,设$\mathcal{R}$是集合$\mathcal{A}$上反自反、对称、传递的二元关系，且$\mid A\mid\geq2$。定义二元关系$\overline{R}=A\times A-R$，则对于关系$\overline{\mathcal{R}}$，错误的是_____,$\overline{\mathcal{R}}$是自反的,$\overline{\mathcal{R}}$是对称的,$\overline{\mathcal{R}}$不是反对称的,$\overline{\mathcal{R}}$是传递的
+55,设G=〈V，E〉是无向图，若每个顶点的度数至少为2，则G包含____条初级回路。,1,2,3,4
+56,一个无向图共有6个顶点，其中5个顶点的度数分别为1，2，2，3，4，则第六个顶点的度数不可能是下列哪项？____,4,2,1,0
+57,下面说法错误的是____,结点数大于 2 的简单图 $G$ 中一定存在度相同的结点,同构的图存在同构的导出子图,简单图 $G$ 中，若$m\geq\frac{1}{2}(n-1)(n-2)$， 则$G$不存在孤立点,连通无向图的每一对不同的顶点 之间都存在简单道路
+58,下列命题公式为永假式的是____,﹁(P→Q),﹁(P→Q)∧Q,(P→Q)∨Q,﹁P∧(P→Q)
+59,下面表述不正确的是哪项？____,全称量词和存在量词不可以随便交换位置。,如果公式A没有自由变元，则称公式A为闭公式,命题的真值可以不唯一,谓词是用来刻画个体具有的性质或关系的。
+60,下列语句中是真命题的是____,这个语句是假的,严禁吸烟,如果1+2=3，那么雪是黑的,如果1+2=5，那么雪是黑的
+61,A，B，C为任意命题公式，当下列哪项成立，有$A\Leftrightarrow B$____,$C\to A\Leftrightarrow C\to B$,$A\lor C\Leftrightarrow B\lor C$,$A\land C\Leftrightarrow B\land C$,$\neg A\Leftrightarrow \neg B$
+62,设N为自然数集合，Z为整数集合，Q为有理数集合，R为实数集合，为全体奇数集合，[0，1)和(0，1)为两个区间，下列关系中为假的是____。,(0，1)≈Q,Z≤R,Q≈N,[0，1]≈R
+63,下列公式中____不是永真公式,$(\alpha\rightarrow\beta)\rightarrow(\neg\beta\rightarrow\neg\alpha)$,$(\neg\alpha\rightarrow\beta)\rightarrow(\neg\beta\rightarrow\alpha)$,$(\neg\alpha\rightarrow\neg\beta)\rightarrow(\beta\rightarrow\alpha)$,$(\alpha\rightarrow\beta)\rightarrow(\neg\alpha\rightarrow\neg\beta)$
+64,$f$，$g$是函数.若$g$不是单射的，则____,$f\circ g$不是单射的,$g\circ f$不是单射的,A，B 都不对,不一定
+65,"设平面图$G$加上一个孤立结点，得到一个新图$G^{,}$，那么以下正确的是____","$G^{*}\supset G^{,*}$","$G^{*}\subset G^{,*}$","$G^{*} = G^{,*}$",以上都不对
+66,在谓词逻辑中，令F(x)表示x是人，G(x)表示x呼吸，命题“没有不呼吸的人”的符号表示中____是正确的。,仅Ⅲ,Ⅰ和Ⅱ,Ⅱ和Ⅲ,Ⅰ、Ⅱ和Ⅲ
+67,${\mathcal{f}}\circ{\mathcal{g}}\circ{\mathcal{h}}$是双射，那么一定有____,$\mathcal{f}$是单射，$\mathcal{h}$是满射；,$\mathcal{g}$是满射，$\mathcal{h}$是单射；,$\mathcal{f}$是满射，$\mathcal{h}$是单射；,$\mathcal{f}$是单射，$\mathcal{g}$是单射。
+68,以下性质中，不正确的是____,存在对称但不反对称的二元关系,存在反对称但不对称的二元关系,存在既对称又反对称的二元关系,没有既不对称也不反对称的二元关系
+69,下面四个关系中____是拟序关系,R中的“>”关系,N- {0}中的整除关系,N-{0}中的互素关系,"R={<x，y>|（x-y）被5整除，$x,y\in Z$}"
+70,G是平面图，它的点、边、域数分别是：n、m、d，G*是其对偶图，它的点、边、域数分别是：n*、m*、d*，则G*满足____,G*不唯一,有K子图,G* = G,d = n*
+71,在整数集Z上，下列运算满足结合律的是____,a*b=|a-b|,a*b=ab+1,a*b=2a+b,a*b=a+b+1
+72,下列不是命题的是____,乌鸦是黑色的,歌声多么动听!,2是素数,雪是黑色的
+73,前提﹁P∧Q，Q→R，﹁R的结论是____,P,Q,﹁R,﹁P
+74,对自然数集合N，下列哪种运算是可结合的，运算定义为a，b∈N____,a*b=a-b,a*b=a+2b,a*b=min(a，b),a*b=|a-b|
+75,T是结点数为n≥2的树，则T至少有____个叶结点。,2,3,4,无合适选项
+76,设无向图G的邻接矩阵为$\begin{bmatrix}0&1&1&1&1\\1&0&1&0&0\\1&1&0&1&1\\1&0&1&0&1\\1&0&1&1&0\end{bmatrix}$则G的顶点数与边数分别为哪项？____,4，10,5，10,4，8,5，8
+77,下面说法错误的是____,若简单图每个结点的度大于等于$\frac{\boldsymbol{n}}{2}$， 则$\textbf{G}$有$\textbf{H}$回路,$K_{n}$的$\textbf{H}$回路含有$\dfrac{1}{2}n(n-1)$条边,如果一个图$\textbf{G}$的子图是非平面图，则$\textbf{G}$一定是非平面图,简单图$\textbf{G}$的任意结点$\mathbf{v}_{\mathbf{i}}$，$\mathbf{v}_{\mathbf{j}}$之间恒有$d(v_{i})+d(v_{j})\geq n$，则$\textbf{G}$存在$\textbf{H}$回路
+78,"根据归结推理规则，子句${\mathsf{P}}\left(x\right)\:\lor\:{\mathsf{Q}}\left(a,\:x\right)$与${\mathsf P}\left(\mathbf{y}\right)\lor\neg{\mathsf Q}\left(\mathbf{y},\mathbf{b}\right)$的归结式是____",$\mathsf{P}\left(\mathsf{a}\right)$,$\mathsf{P}\left(\mathsf{b}\right)$,$\mathsf{P}\left(\mathsf{a}\right)\ \lor\ \mathsf{P}\left(\mathsf{b}\right)$,$\mathsf{P}\left(\mathbf{a}\right)\:\wedge\:\mathsf{P}\left(\mathbf{b}\right)$
+79,设S={1，{1}，{1，2}}，则既是S的元素又是S的子集的为____,φ,1,{1},{1，2}
+80,下列命题不含联结词的（称为原子命题）是____,“小明和小华是兄弟”。,“他个子不高也不漂亮”。,“小张或小王能解出这道题”。,“小张可能去体育场也可能在家里电视屏幕上观看这场球赛”。
+81,下列公式不成立的是____,$(\forall x)P(x)\rightarrow q=(\exists x)(P(x)\rightarrow q)$,$(\exists x)(P(x)\to Q(x))\:=(\forall x)P(x)\to(\exists x)Q(x)$,$(\exists x)P(x)\rightarrow(\forall x)Q(x)\Rightarrow(\forall x)(P(x)\rightarrow Q(x))$,"$(\exists x)(\forall y)P(x,y)=(\forall y)(\exists x)P(x,y)$"
+82,设R是集合A={a，b，c，d)上的二元关系，R={＜a，d＞，＜d，a＞，＜a，c＞，＜c，a＞，＜b，d＞，＜d，b＞}，下面____命题为真，Ⅰ. R·R是对称的Ⅱ．R·R是自反的 Ⅲ．R·R不是传递的,仅Ⅰ,仅Ⅱ,Ⅰ和Ⅱ,全真
+83,6阶11条边的连通的简单的非同构的非平面图的个数为____。,3,4,5,6
+84,下列公式中是重言式____,$\mathsf{P}\rightarrow(\mathsf{P}\wedge\mathsf{Q})$,$(\neg\mathtt{Q}\wedge(\mathtt{P}\rightarrow\mathtt{Q})\rightarrow\mathtt{P}$,$\mathsf{Q}\rightarrow(\mathsf{P}\rightarrow\mathsf{Q})$,$\left(\mathsf{P}\rightarrow\mathsf{Q}\right)\rightarrow\left(\begin{matrix}{\left(\mathsf{P}\rightarrow\mathsf{R}\right)}\rightarrow\left(\mathsf{Q}\rightarrow\mathsf{R}\right)\end{matrix}\right)$
+85,"设${\mathcal{f}}:[0,1]\to[0,1]$。${\mathcal{f}}(x)={\frac{2x+1}{4}}$则$\mathcal{f}$是____",双射;,单射;,满射;,无法判断。
+86,"所有使命题公式$\neg P\wedge(Q\vee\neg R)$的真值为T的解释是$(\mathsf{P},\mathsf{Q},\mathsf{R})$____","$(\mathsf{F},\mathsf{F},\mathsf{F})$, $(\mathsf{F},\mathsf{F},\mathsf{T})$,$(\mathsf{T},\mathsf{F},\mathsf{F})$;","$(\mathsf{F},\mathsf{T},\mathsf{T})$,$(\mathsf{F},\mathsf{T},\mathsf{F})$,$(\mathsf{F},\mathsf{F},\mathsf{F})$;","$(\mathsf{T},\mathsf{F},\mathsf{F})$,$(\mathsf{T},\mathsf{F},\mathsf{T})$,$(\mathsf{T},\mathsf{T},\mathsf{F})$);","$(\mathsf{T},\mathsf{T},\mathsf{F})$,$(\mathsf{T},\mathsf{F},\mathsf{T})$,$(\mathsf{T},\mathsf{T},\mathsf{T})$."
+87,"设R={<a，b>，<a，c>，<b,c>,<a，a>}，则R满足的性质有____",对称；,传递；,自反；,以上都不满足。
+88,与基数$2^{\aleph_{0}}$相等的是____,$\aleph2^{\aleph_{o}}$ ($\boldsymbol{\aleph}$为实数集$R$的基数）,$2^{\aleph}$,$\aleph_0\cdot\aleph_0$,$\aleph_o2^{\aleph}$
+89,互不相同的n元真值函数有多少个？____,$\text{2n}$,$\mathcal{2}^{n}$,$n^2$,$2^{2^n}$
+90,对于一个只有4个不同元素的集合A来说，A上的不同的二元关系的总数为____。,42,24,216,取决于元素是否为数值
+91,下列说法错误的是____,简单图${G}(n\geq3)$存在${H}$回路的充要条件是其闭合图是完全图,简单图${G}$的任意结点$\mathbf{v}_{\mathrm{i}}$，$\mathbf{v}_{\mathrm{j}}$之间恒有$d(\nu_{i})+d(\nu_{j})\geq n-1$，则${G}$存在${H}$道路,完全图$K_{n}(n\geq3)$中存在${H}$回路,若简单图${G}$的每个结点的度都大于等于$\frac{n}{2}$，则${G}$有${H}$回路
+92,若A可化为与其等价的含2n个小项的主析取范式，则A为____,矛盾式,重言式,可满足式,不确定
+93,设无向图G=＜V，E＞，其中V={V1，V2，V3，V4，V5}，E={(V1，V4)，(V4，V4)，(V1，V2)，(V2，V3)，(V3，V4)}，下列命题为真的是____。,G是哈密尔顿图,G是欧拉图,G是二部图,G是平面图
+94,设p：他怕困难，q：他获得成功。命题“他只有不怕困难，才能获得成功”可符号化为____,p→q,q→p,﹁p→q,q→﹁p
+95,下列4个推理中，不正确的是____,$A\Rightarrow(A\wedge B)$,$(A \lor B) \wedge\neg A\Rightarrow B$,(A\rightarrow B)\wedge A\Rightarrow B,$(A\rightarrow B)\wedge\neg B\Rightarrow\neg A$
+96,下列集合可数的是____,"$[1,2]$",$\mathsf{N}_{2}$,$\mathbb{R}^{*}$即正实数集合,$\mathbb{Q}\times\mathbb{Q}$
+97,极大平面图不满足____,连通,无割边,每个域边界数3,3d＜ 2m
+98,设G为n(n≥2)阶无向连通图，下面____命题必为真。Ⅰ．若G有割点，则G一定有桥Ⅱ，若G有桥，则G一定有割点,仅Ⅰ,仅Ⅱ,全不一定为真,全一定为真
+99,4阶非同构的无向简单图共有____个。,9,13,11,27
+100,$f$是集合$A$到集合$B$的关系，则____,若$f$是函数，则$f^{-1}$也是函数,若$f^{-1}$是函数，则$f$也是函数,若$f$不是函数，则$f^{-1}$也不是函数,都不对
+101,"$R_{1}$,$R_{2}$是集合A上的二元关系，则以下____是正确的",若$R_{1}\cap R_{2}$自反，则$R_{1}$和$R_{2}$均自反；,若$R_{1}\cap R_{2}$对称，则$R_{1}$和$R_{2}$均对称；,若$R_{1}$和$R_{2}$传递，则$R_1\cup R_2$传递；,若$R_{1}$和$R_{2}$反对称，则$R_1\cup R_2$反对称；
+102,下列各组公式不等值的是____,$(\forall x)(\alpha(x)\wedge\beta(x))$与$(\forall x)\alpha\big(x\big)\wedge(\forall x)\beta\big(x\big)$,$(\exists x)\alpha(x)\lor\beta$与$(\exists x)\big(\alpha\big(x\big)\lor\beta\big)$,$(\forall x)\alpha\bigl(x\bigr)\rightarrow\beta$与$(\forall x)\big(\alpha(x)\rightarrow\beta\big)$,$(\exists x)(\alpha(x)\lor\beta(x))$与$(\exists x)\alpha\big(x\big)\lor(\exists x)\beta\big(x\big)$
+103,"$(\exists x)(\forall y)P(x,y,z)\rightarrow(\exists z)P(x,y,z)$的前束范式为____","$(\exists x)(\forall y)(\exists z)(\neg P(x,y,u)\lor P(\nu,w,z))$","$(\forall x)(\exists y)(\exists z)(\neg P(x,\nu,u)\lor P(\nu,w,z))$","$(\exists x)(\forall y)(\exists z)(P(x,\nu,u)\rightarrow P(\nu,w,z))$",以上都不对
+104,设无向树T由3个3度顶点，2个2度顶点，其余顶点都是树叶，则T有____片树叶。,3,4,5,6
+105,G为平面图，其对偶图的结点数、边数、域数分别为n*，m*，d*，则以下性质一定正确的是____,(G*)*=G,d*=m*-n*+2,G 未必有对偶图,G*未必有对偶图
+106,"设个体域为$\{\mathbf{a},\mathbf{b}\}$，并对$\mathsf{P}\left\{x,y\right\}$设定为$P\left(\mathbf{a},\:\mathbf{a}\right)\:=\mathbf{T}$，$P\left(a,b\right)=F$，$P\left(b\:,\:a\right)\:=\:F$，$\mathsf{P}\left(\mathbf{b},\mathbf{b}\right)$，其真值为真的公式为____","$(\forall x)(\exists y)P(x,y)$","$(\exists x)(\forall y)P(x,y)$","$(\forall x)(\forall y)P(x,y)$","$(\exists y)(\forall x)P(x,y)$"
+107,设无向图G有n个结点（n≥3），有m=n+1条边，下面说法不正确的是____,图 G 是一个连通图；,图 G 中一定有回路；,图G存在一条不是割边的边；,图 G 存在某两个点， 这两个点间有两条不同的道路；
+108,下面不正确的是____,$\neg Q\land(P\rightarrow Q)\Rightarrow\neg P$,$P\Rightarrow P\lor Q$,$P\rightarrow Q\Rightarrow\neg Q\rightarrow\neg P$,$(P\to Q)\lor\neg Q\Rightarrow\neg P$
+109,公式$(p\downarrow q)\downarrow(p\downarrow q)$与____等值。,$p \lor q$,$\mathfrak{p}\wedge\mathfrak{q}$,$\mathtt{p}\rightarrow\mathtt{q}$,$\text{p}\leftrightarrow\text{q}$
+110,设${\mathrm{P}}(x)$表示“x是数学学得好的学生”，${\mathrm{Q}}(x)$表示“x是优秀生”，则“并不是数学学得好的都是优秀生”用符号表示为____,$\neg(\forall x)(\mathrm{P}(x)\to\mathrm{Q}(x))$,$\neg(\forall x)(\mathrm{P}(x)\wedge\mathrm{Q}(x))$,$\neg(\exists x)(\operatorname P(x)\to Q(x))$,$(\forall x)(\neg\mathrm{P}(x)\wedge\mathrm{Q}(x))$
+111,下面关于命题公式的叙述不正确的是____,不是可满足的公式必永假,如果$\mathsf{P}$是重言式， 对其使用代入规则得到的公式 $\mathsf{Q}$不一定是重言式,如果$\mathsf{P}\leftrightarrow\ \mathsf{Q}$是重言式，那么$\mathsf{P}=\mathsf{Q}$,如果${\mathsf P}\rightarrow{\mathsf Q}$是重言式， 那么$\neg\mathsf{Q}\rightarrow\neg\mathsf{P}$是重言式
+112,"下列三个命题公式中有几个与$(x\land\neg y)$矛盾(既不同为真也不同为假）？($\neg x\lor y$),($\neg x\land y$),($\neg y\to\neg x$)____",0,1,2,3
+113,下列语句为复合命题的是____,今天天气凉爽,今天天气炎热，有雷阵雨,x+y＞16,今天天气多好呀，外面景色多美呀
+114,集合A有5个元素，集合B有2个元素，则A到B的满射（假设在A中每个元素上都有定义）个数为____,30,32,25,23
+115,无向连通图G=〈V，E〉的点割集为V1，边割集为E1，则子图G—E1所含的连通分量个数为____,1,2,3,4
+116,设A为n个元素的集合，则A上有____个二元关系。,2n,2n×n,2n,n
+117,"$\left(\exists x\right)\left(\mathsf{P}\left(a,x\right)\rightarrow\left(\forall y\right)\mathsf{Q}\left(x,b,y\right)\right)$的前束范式为____","$\left(\exists x\right)\left(\forall y\right)\left(\neg P\left(a,x\right)\lor Q\left(x,b,y\right)\right)$","$\neg\left(\forall x\right)\left(\exists y\right)\left(\mathsf{P}\left(a,x\right)\wedge\neg Q\left(x,b,y\right)\right)$","$(\exists x)(\forall y)~(\neg P(a,x)\land Q(x,b,y))$","$(\exists x)(\neg P(a,x)\lor(\forall y)Q(x,b,y))$"
+118,设有函数f：R→R和g：R→R，且f(x)=x^2-1，g(x)=4x+1，则复合函数[*]____,x^2,4x^2-3,4x^2+8x,4x^2
+119,下列属于两个命题变元P、Q的大项的是____,﹁P∧P∧Q,﹁P∨P∨Q,﹁P∧Q,﹁P∨Q
+120,"设有四个犯罪嫌疑人甲乙丙丁。甲说：“我不是罪犯。“乙说：""丁是罪犯。“丙说：”乙是罪犯，”丁说：""我不是罪犯。""经调查证实四人中只有一人说的是真话。下列哪个判断为真？____",甲说的是假话，甲是罪犯。,乙说的是真话，丁是罪犯。,丙说的是真话，乙是罪犯，,丁说的是假话，丁是罪犯。
+121,$R_{1}$，$R_{2}$，$R_{3}$，是三个关系，如果下面等式所涉及的运算都有意义，那么不正确的等式是____,$R_1\circ(R_2\cup R_3)=R_1\circ R_2\cup R_1\circ R_3$,$(R_1\circ R_2)\circ R_3=R_1\circ(R_2\circ R_3)$,$R_1\circ(R_2\cap R_3)=R_1\circ R_2\cap R_1\circ R_3$,$(R_1\circ R_2)^{-1}=R_2^{-1}\circ R_1^{-1}$
+122,在简单无向图G=〈V，E〉中，如果V中的每个顶点都与其余的顶点邻接，则该图称为____,正则图,完全图,强连通图,连通图
+123,下列哪个命题公式是重言式?____,$(x\rightarrow y)\land(y\rightarrow x)$,$(\neg x\circ y)\land(\neg(\neg x\land\neg y))$,$\neg(x\rightarrow\neg y)\rightarrow x$,$\neg(x\lor y)$
+124,以下____不是集合,$\phi\times P(\phi)$（$P$表示幂集运算）,{x|是整数且|x|是素数},{x| x是包含1的集合},{x| x包含1且$x\mathsf{\subseteq}R$}
+125,下面不是命题的是____,火星上有生命存在,雪是白的,我正在说谎,10 + 11= 101
+126,$R_{1}$，$R_{2}$，均为A中的关系，下面结论正确的是____,若$R_{1}$， $R_{2}$均为对称关系，则${R_1}\circ {R_2}$为对称关系,若$R_{1}$是偏序关系，则$R_{\textbf{1}}^{-\textbf{1}}$也是偏序关系,$t(R_1)\cup t(R_2)=t(R_1\cup R_2)$ （t 为传递闭包）,$st(R_1)=ts(R_1)$（s为对称闭包）
+127,"设$R$是$A$中的一个关系，$I_A\subseteq R$，若有$<a,b>\in R\wedge<a,c>\in R\Rightarrow<b,c>\in R$，则下列说法最准确的是____",$R$是等价关系,$R$是相容关系,$R$是偏序关系,$R$是拟序关系
+128,"设解释I如下：个体域$D=\{a,b\}$，$F(a,a)=F(b,b)=0$，$F(a,b)=F\{b,a\}=1$，在解释l下.下列公式中真值为1的是哪项？____","$\{\forall x\}(\exists y)F(x,y)$","$(\exists x)(\forall y)F(x,y)$","$(\forall x)(\forall y)F(x,y)$","$\neg(\exists x)(\exists y)F(x,y)$"
+129,下列命题公式中____为重言式?Ⅰ．(p→(p∨q))∨rⅡ．(p→(q∨r))→((p→q)∧(p→r))Ⅲ．(p→q)∧(p→r)→(p→r)Ⅳ．┐(p→q)∧q∧r,Ⅲ,Ⅰ和Ⅲ,Ⅰ和Ⅱ,Ⅰ、Ⅱ、Ⅲ和Ⅳ
+130,下列无向图不一定为树的是____,无回路的连通图,有n个结点，n-1条边的连通图,每对结点间都有路的图,连通但删去一条边便不连通的图
+131,下列命题公式为重言式的是____,$Q\rightarrow(P\wedge Q)$,$P\rightarrow(P\wedge Q)$,$(P\wedge Q)\rightarrow P$,$(P\lor Q)\rightarrow Q$
+132,设集合$\mathbf{A}=\{a\}$，下式不成立的是:____,$\{\phi\}\in P P(A)$,$\{\phi\}\subseteq{\mathcal{PP}}({\mathcal{A}})$,"$\{\phi,\{\alpha\}\}\in{\mathcal{PP}}({\mathcal{A}})$","$\{\phi,\{a\}\}\subseteq{\mathcal{P}}{\mathcal{P}}(A)$"
+133,"与闭区间$\left[444,555\right]$等势的集合是____",$N$,$\text{NxQ}$,$\mathbf{N}_{2}$,$\text{NxN}$
+134,下面论述不正确的是____,良序集必为全序集,偏序关系是自反、反对称、传递的。,相容关系是自反和反对称的,有限全序集必为良序集
+135,在自然数集N上，下列运算满足结合律的是____,a*b=a,a*b=|a-b|,a*b=ba,a*b=2a+b
+136,设R+为正实数集合，＜R+，*＞在下面四种运算下不构成代数系统的是____。,*代表普通加法,*代表普通乘法,*代表普通除法,*代表普通减法
+137,设连通图G的顶点数和边数与一立方体相同，即有8个顶点和12条边。任意一棵G的生成树的总边数为____。,10,9,8,7
+138,设R1、R2都是从A到B的二元关系，则下列各式成立的为____,(R1∩R2)-1=R1-1∪R2-1,(R1∩R2)-1=R1-1∩R2-1,(R1∩R2)-1=R1∪R2,(R1∩R2)-1=R1∩R2
+139,下列集合关于数的加法和乘法运算不能构成环的是____,自然数集合,整数集合,有理数集合,实数集合
+140,"${\mathcal{R}}=\{\lt a,b\gt,\lt b,a\gt,\lt a,c\gt\}$,则${st}({\mathcal{R}})$为____(其中${s}({\mathcal{R}})$为${\mathcal{R}}$的对称闭包，${t}({\mathcal{R}})$为${\mathcal{R}}$的传递闭包)","$\{\lt a,b\gt \lt b,a\gt ,\lt a,c\gt ,\lt c,a\gt ,\lt a,a\gt ,\lt b,c\gt \}$","$\{\lt a,b\gt \lt b,a\gt ,\lt a,c\gt ,\lt a,a\gt ,\lt b,c\gt ,\lt c,b\gt \}$","$\{\lt a,b\gt \lt b,a\gt ,\lt a,c\gt ,\lt a,a\gt ,\lt b,b\gt ,\lt b,c\gt,\lt c,a\gt,\lt c,b\gt \}$","$\{\lt a,b\gt \lt b,a\gt ,\lt a,c\gt ,\lt b,b\gt ,\lt b,c\gt,\lt c,b\gt,\lt c,a\gt \}$"
+141,设函数$g\colon A\rightarrow B$，$f\colon B\rightarrow C$，则下列是正确的____,若$g$ 是满射，$f$是单射，则$f\circ g$ 是单射,若$g$是满射，$f$是单射，则$f\circ g$是满射,若$g$是满射，$f$是单射，则$f\circ g$是双射,若$f\circ g$是单射，且 $g$ 是满射，则$f$是单射。
+142,下面的联结词集合不是完备集的是____,$\{\uparrow\}$ ($\uparrow$ 表示与非),"$\{\lnot,\to\}$","$\{\lnot,\leftrightarrow\}$","$\{\neg, \lor \}$"
+143,一棵高度为h的正则k叉树中，叶结点的个数为____,kh-1,kh,2h-1,2h
+144,下面哪一种图不一定是树____,无回路的连通图,有n个结点n-1 条边的连通图,连通但删去一条边则不连通的图,每对结点之间都有通路的图
+145,下列数组中，能构成无向图的顶点度数的数组是____,(1，1，2，3),(2，2，2，2),(3，2，3，4，5),(0，1，3，3)
+146,偏序关系一定不是____,自反的,传递的,反自反的,反对称的
+147,"设$N\left(x\right)$：x是自然数；$L\left(x,y\right)$：x大于y。则命题$(\:\forall x)\:\left(N(x)\rightarrow L\:\left(x+1,0\right)\:\right)$表示的自然语言是_____",$x+1>0$,任何自然数的后继数必大于0,每一个自然数都大于0,存在自然数大于0
+148,无向简单图G是棵树，当且仅当____,G连通且边数比结点数少1,G连通且结点数比边数少1,G的边数比结点数少1,G中没有回路
+149,设p：天下雨，q：我开车上班。命题“除非不下雨，否则我开车上班”可符号化为____,p→q,q→p,﹁p→q,q→﹁p
+150,权序列为（30，25，20，15，10）的最优二叉树的带权路径总长为____,100,225,400,625
+151,设〈G，*〉为群，[*]有____,(ab)-1=ab,(ab)-1=ba,(ab)-1=a-1b-1,(ab)-1=b-1a-1
+152,下列说法错误的是____,$\mathbf{K_{3}}$是边数最少的非平面图,$\mathsf{K}_{5}$是结点数最少的非平面图,$\mathsf{K}_{6}$中不存在$k^{(1)}$型子图,$\mathbf{K_{3}}$去掉任意一条边所形成的图是可平面图

@@ -1,0 +1,12 @@
+id,question,A,B,C,D,answer,explanation
+0,"已知函数$f(x)=\sin(\omega x-\frac{\pi}{6})(\omega>0).$若f(x)在$\left(0,\frac{\pi}{2}\right)$上有且仅有三个极值点，则不正确的有____","f(x)在区间$[0, \frac{\pi}{4}]$上的最小值可以等于$-\frac{1}{2}$","若$f(x)$的图像关于点$\left(\frac{\pi}{3},0\right)$对称，则$f(x)$在区间$\left(0,\frac{\pi}{12}\right)$上单调递增",$f(x)$的最小正周期可能为$\frac{\pi}{3}$,若$f\left(0\right)+f\left(\frac{\pi}{2}\right)=0$，将$ g(x)=\sin{2x}$的图象向右平移$\frac{\pi}{12}$个单位可得到$y=f\left(\frac{x}{3}\right)$的图象,A,"1. 根据极值点个数限制，可得$\frac{\pi}{2}\omega-\frac{\pi}{6} \in \left(\frac{5\pi}{2}, \frac{7\pi}{2}\right)$，解得$\omega \in \left(\frac{16}{3}, \frac{22}{3}\right)$。
+2. 若A选项成立，则可得$\frac{\pi}{4}\omega - \frac{\pi}{6} \leq \frac{7\pi}{6}$，解得$\omega \leq \frac{16}{3}$，与1中范围矛盾。"
+1,二项式$(\sqrt[3]{3}+x)^{12}$的展开式中，系数为有理数的项的个数为____,6,5,4,3,B,"1. 该二项式展开的通项为$T_{r+1}=C^r_{12}3^{4-r/3}x^r$。
+2. 若要通项系数为有理数，则需$3^{r/3}$为有理数，即$r$被3整除。0到12中符合要求的$r$共5项。"
+2,为加快新冠肺炎检测效率，某检测机构采取合并检测法，即将多人的拭子样本合并检测，若为阴性，则可以确定所有样本都是阴性的，若为阳性，则还需要对本组的每个人再做检测．现对20名密切接触者的拭子样本进行合并检测，每份样本的检测结果是阴性还是阳性都是相互独立的，每人检测结果呈阳性的概率为p，且检测次数的数学期望为20，则p的值为____,$1-({\frac{1}{20}})^{\frac{1}{20}}$,$1-(\frac{1}{20})^{\frac{1}{21}}$,$1-\left(\frac{1}{21}\right)^{\frac{1}{20}}$,$1-\left(\frac{1}{21}\right)^{\frac{1}{21}}$,A,"1. 实际的检测次数为1（合并检测结果阴性）或21（合并检测的结果为阳性，每人单独再检测）。
+2. 由期望的运算公式可得$1\times(1-p)^{20}+21\times p^{20}$=20，解得$p=1-({\frac{1}{20}})^{\frac{1}{20}}$"
+3,"在矩形ABCD种，AB=1,AD=2,则点P在以点C为圆心且与BD相切的圆上，若$\overrightarrow{AP} = \lambda\overrightarrow{AB}+\mu\overrightarrow{AD}$,则$\lambda+\mu$的最大值为____",3,$2\sqrt{2}$,$\sqrt{5}$,2,A,"1. 首先，我们需要求圆的半径。BD长为$\sqrt{1^2+2^2}=\sqrt{5}$，圆的半径为C到BD做垂线的长度，即$\frac{1 \times 2}{\sqrt{5}}=\frac{2\sqrt{5}}{5}$。
+2. 设A点为原点，AD为x轴，AB为y轴，则点P坐标需要满足的圆的参数方程可写为$x=2+\frac{2\sqrt{5}}{5}\cos\theta, y=1+\frac{2\sqrt{5}}{5}\sin\theta$，又有$\lambda$和$\mu$满足$x=2\mu$，$y=\lambda$，与圆的参数方程联立可得$\mu=1+\frac{\sqrt{5}}{5}\cos\theta, \lambda = 1+\frac{2\sqrt{5}}{5}\sin\theta$。
+3. 整理可得$\lambda+\mu = 2+\frac{2\sqrt{5}}{5}\sin\theta+\frac{\sqrt{5}}{5}\cos\theta$，设$\phi$满足$\sin\phi=\frac{\sqrt{5}}{5}, \cos\phi=\frac{2\sqrt{5}}{5}$，则有$\lambda+\mu=2+\sin(\theta+\phi) \leq 3$。"
+4,"已知$\left \{ a_n \right \}$ 为等差数列,若$a_1+a_5+a_9=8\pi$，则 $\cos (a_3+a_7)$的值为____",$\frac{\sqrt{3}}{2}$,$-\frac{\sqrt{3}}{2}$,$\frac{1}{2}$,$-\frac{1}{2}$,D,"1. 根据等差数列的性质，有$a_{m-n}+a_{m+n}=2a_m$，因此，$a_1+a_5+a_9=3a_5=8\pi$，即$a_5=\frac{8\pi}{3}$。 
+2. 同理，$\cos(a_3+a_7)=\cos(2a_5)=\cos(\frac{16\pi}{3})=-\frac{1}{2}$。"

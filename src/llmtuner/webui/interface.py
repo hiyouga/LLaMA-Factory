@@ -7,7 +7,8 @@ from llmtuner.webui.components import (
     create_eval_tab,
     create_infer_tab,
     create_export_tab,
-    create_chat_box
+    create_chat_box,
+    # create_test_tab
 )
 from llmtuner.webui.common import save_config
 from llmtuner.webui.css import CSS
@@ -20,7 +21,7 @@ require_version("gradio==3.38.0", "To fix: pip install gradio==3.38.0")
 def create_ui() -> gr.Blocks:
     engine = Engine(pure_chat=False)
 
-    with gr.Blocks(title="LLaMA Board", css=CSS) as demo:
+    with gr.Blocks(title="陈明轩 LLMs training platform", css=CSS) as demo:
         engine.manager.all_elems["top"] = create_top()
         lang: "gr.Dropdown" = engine.manager.get_elem("top.lang")
 
@@ -35,6 +36,8 @@ def create_ui() -> gr.Blocks:
 
         with gr.Tab("Export"):
             engine.manager.all_elems["export"] = create_export_tab(engine)
+
+
 
         demo.load(engine.resume, outputs=engine.manager.list_elems())
         lang.change(engine.change_lang, [lang], engine.manager.list_elems(), queue=False)

@@ -34,7 +34,7 @@ class FinetuningArguments:
         metadata={"help": "The intrinsic dimension for LoRA fine-tuning."}
     )
     lora_alpha: Optional[float] = field(
-        default=32.0,
+        default=16.0,
         metadata={"help": "The scale factor for LoRA fine-tuning (similar with the learning rate)."}
     )
     lora_dropout: Optional[float] = field(

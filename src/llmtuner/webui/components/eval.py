@@ -41,9 +41,9 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
     ))
 
     with gr.Row():
-        cutoff_len = gr.Slider(value=1024, minimum=4, maximum=8192, step=1)
+        cutoff_len = gr.Slider(value=2048, minimum=4, maximum=8192, step=1)
         max_samples = gr.Textbox(value="100000")
-        batch_size = gr.Slider(value=8, minimum=1, maximum=512, step=1)
+        batch_size = gr.Slider(value=1, minimum=1, maximum=512, step=1)
         predict = gr.Checkbox(value=True)
 
     input_elems.update({cutoff_len, max_samples, batch_size, predict})

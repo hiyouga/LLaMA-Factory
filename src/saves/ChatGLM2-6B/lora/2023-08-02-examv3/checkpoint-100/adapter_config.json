@@ -1,0 +1,20 @@
+{
+  "auto_mapping": null,
+  "base_model_name_or_path": "C:\\Users\\28596\\Desktop\\python\\chatglm2-6b",
+  "bias": "none",
+  "fan_in_fan_out": false,
+  "inference_mode": true,
+  "init_lora_weights": true,
+  "layers_pattern": null,
+  "layers_to_transform": null,
+  "lora_alpha": 32.0,
+  "lora_dropout": 0,
+  "modules_to_save": null,
+  "peft_type": "LORA",
+  "r": 8,
+  "revision": null,
+  "target_modules": [
+    "query_key_value"
+  ],
+  "task_type": "CAUSAL_LM"
+}

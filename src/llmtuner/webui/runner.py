@@ -119,7 +119,11 @@ class Runner:
             lora_target=get("train.lora_target") or get_module(get("top.model_name")),
             additional_target=get("train.additional_target") if get("train.additional_target") else None,
             resume_lora_training=get("train.resume_lora_training"),
-            output_dir=output_dir
+            output_dir=output_dir,
+            per_device_eval_batch_size=get("train.eval_batch_size"),
+            lora_alpha=get("train.lora_alpha"),
+
+
         )
         args[get("train.compute_type")] = True
         args["disable_tqdm"] = True
