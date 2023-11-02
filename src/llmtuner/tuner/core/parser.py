@@ -106,8 +106,8 @@ def get_train_args(
     if finetuning_args.stage in ["rm", "ppo"] and training_args.resume_from_checkpoint is not None:
         raise ValueError("RM and PPO stages do not support `resume_from_checkpoint`.")
 
-    if finetuning_args.stage in ["ppo", "dpo"] and not training_args.do_train:
-        raise ValueError("PPO and DPO stages can only be performed at training.")
+    if finetuning_args.stage == "ppo" and not training_args.do_train:
+        raise ValueError("PPO training does not support evaluation.")
 
     if finetuning_args.stage in ["rm", "dpo"]:
         for dataset_attr in data_args.dataset_list:
