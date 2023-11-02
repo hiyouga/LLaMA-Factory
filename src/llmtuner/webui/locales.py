@@ -163,12 +163,28 @@ LOCALES = {
             "label": "数量"
         }
     },
-    "preview_samples": {
+    "page_index": {
         "en": {
-            "label": "Samples"
+            "label": "Page"
         },
         "zh": {
-            "label": "样例"
+            "label": "页数"
+        }
+    },
+    "prev_btn": {
+        "en": {
+            "value": "Prev"
+        },
+        "zh": {
+            "value": "上一页"
+        }
+    },
+    "next_btn": {
+        "en": {
+            "value": "Next"
+        },
+        "zh": {
+            "value": "下一页"
         }
     },
     "close_btn": {
@@ -177,6 +193,14 @@ LOCALES = {
         },
         "zh": {
             "value": "关闭"
+        }
+    },
+    "preview_samples": {
+        "en": {
+            "label": "Samples"
+        },
+        "zh": {
+            "label": "样例"
         }
     },
     "cutoff_len": {
