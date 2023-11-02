@@ -21,12 +21,12 @@ def create_export_tab(engine: "Engine") -> Dict[str, "Component"]:
     export_btn.click(
         save_model,
         [
-            engine.manager.get_elem("top.lang"),
-            engine.manager.get_elem("top.model_name"),
-            engine.manager.get_elem("top.model_path"),
-            engine.manager.get_elem("top.checkpoints"),
-            engine.manager.get_elem("top.finetuning_type"),
-            engine.manager.get_elem("top.template"),
+            engine.manager.get_elem_by_name("top.lang"),
+            engine.manager.get_elem_by_name("top.model_name"),
+            engine.manager.get_elem_by_name("top.model_path"),
+            engine.manager.get_elem_by_name("top.checkpoints"),
+            engine.manager.get_elem_by_name("top.finetuning_type"),
+            engine.manager.get_elem_by_name("top.template"),
             max_shard_size,
             export_dir
         ],

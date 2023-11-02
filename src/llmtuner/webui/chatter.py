@@ -26,9 +26,8 @@ class WebChatModel(ChatModel):
         return self.model is not None
 
     def load_model(self, data: Dict[Component, Any]) -> Generator[str, None, None]:
-        get = lambda name: data[self.manager.get_elem(name)]
+        get = lambda name: data[self.manager.get_elem_by_name(name)]
         lang = get("top.lang")
-
         if self.loaded:
             yield ALERTS["err_exists"][lang]
             return
@@ -65,9 +64,7 @@ class WebChatModel(ChatModel):
         yield ALERTS["info_loaded"][lang]
 
     def unload_model(self, data: Dict[Component, Any]) -> Generator[str, None, None]:
-        get = lambda name: data[self.manager.get_elem(name)]
-        lang = get("top.lang")
-
+        lang = data[self.manager.get_elem_by_name("top.lang")]
         yield ALERTS["info_unloading"][lang]
         self.model = None
         self.tokenizer = None
