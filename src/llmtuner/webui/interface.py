@@ -22,7 +22,7 @@ def create_ui() -> gr.Blocks:
 
     with gr.Blocks(title="LLaMA Board", css=CSS) as demo:
         engine.manager.all_elems["top"] = create_top()
-        lang: "gr.Dropdown" = engine.manager.get_elem("top.lang")
+        lang: "gr.Dropdown" = engine.manager.get_elem_by_name("top.lang")
 
         with gr.Tab("Train"):
             engine.manager.all_elems["train"] = create_train_tab(engine)
