@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING, Dict, List, Set
 
 if TYPE_CHECKING:
     from gradio.components import Component
@@ -9,14 +9,14 @@ class Manager:
     def __init__(self) -> None:
         self.all_elems: Dict[str, Dict[str, "Component"]] = {}
 
-    def get_elem(self, name: str) -> "Component":
+    def get_elem_by_name(self, name: str) -> "Component":
         r"""
         Example: top.lang, train.dataset
         """
         tab_name, elem_name = name.split(".")
         return self.all_elems[tab_name][elem_name]
 
-    def get_base_elems(self):
+    def get_base_elems(self) -> Set["Component"]:
         return {
             self.all_elems["top"]["lang"],
             self.all_elems["top"]["model_name"],
