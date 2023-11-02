@@ -30,6 +30,7 @@ class CustomDPOTrainer(DPOTrainer):
         self.is_encoder_decoder = model.config.is_encoder_decoder
         self.ref_model = ref_model
         self.use_dpo_data_collator = True # hack to avoid warning
+        self.generate_during_eval = False # disable at evaluation
         self.label_pad_token_id = IGNORE_INDEX
         self.padding_value = 0
         self.beta = beta
