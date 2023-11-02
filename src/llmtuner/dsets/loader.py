@@ -69,7 +69,7 @@ def get_dataset(
         def convert_format(examples: Dict[str, List[Any]]) -> Dict[str, List[Any]]:
             # convert dataset from sharegpt format to alpaca format
             outputs = {"prompt": [], "query": [], "response": [], "history": []}
-            for msg_list in examples[dataset_attr.prompt]:
+            for msg_list in examples[dataset_attr.messages]:
                 msg_list = msg_list[:len(msg_list) // 2 * 2] # should be multiples of 2
                 if len(msg_list) == 0:
                     continue
@@ -78,15 +78,15 @@ def get_dataset(
                 user_role, assistant_role = None, None
                 for idx in range(0, len(msg_list), 2):
                     if user_role is None and assistant_role is None:
-                        user_role = msg_list[idx][dataset_attr.query]
-                        assistant_role = msg_list[idx + 1][dataset_attr.query]
+                        user_role = msg_list[idx][dataset_attr.role]
+                        assistant_role = msg_list[idx + 1][dataset_attr.role]
                     else:
                         if (
                             msg_list[idx][dataset_attr.query] != user_role
                             or msg_list[idx+1][dataset_attr.query] != assistant_role
                         ):
                             raise ValueError("Only accepts conversation in u/a/u/a/u/a order.")
-                    msg_pairs.append((msg_list[idx][dataset_attr.response], msg_list[idx + 1][dataset_attr.response]))
+                    msg_pairs.append((msg_list[idx][dataset_attr.content], msg_list[idx + 1][dataset_attr.content]))
 
                 if len(msg_pairs) != 0:
                     outputs["prompt"].append(msg_pairs[-1][0])

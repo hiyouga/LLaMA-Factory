@@ -129,7 +129,7 @@ Please refer to [template.py](src/llmtuner/extras/template.py) for a full list o
 - [ShareGPT4 (en&zh)](https://huggingface.co/datasets/shibing624/sharegpt_gpt4)
 - [UltraChat 200k (en)](https://huggingface.co/datasets/HuggingFaceH4/ultrachat_200k)
 - [AgentInstruct (en)](https://huggingface.co/datasets/THUDM/AgentInstruct)
-- [LMSYS Chat (en)](https://huggingface.co/datasets/lmsys/lmsys-chat-1m)
+- [LMSYS Chat 1M (en)](https://huggingface.co/datasets/lmsys/lmsys-chat-1m)
 - [Evol Instruct V2 (en)](https://huggingface.co/datasets/WizardLM/WizardLM_evol_instruct_V2_196k)
 
 </details>
