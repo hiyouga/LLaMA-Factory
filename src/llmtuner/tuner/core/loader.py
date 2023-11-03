@@ -195,7 +195,8 @@ def load_model_and_tokenizer(
 
     # Fix LM head (for ChatGLM2 and ChatGLM3)
     if getattr(config, "model_type", None) == "chatglm":
-        setattr(model, "lm_head", model.transformer.output_layer)
+        if "chatglm2" in getattr(config, "_name_or_path", None):
+            setattr(model, "lm_head", model.transformer.output_layer)
 
     # Register auto class to save the custom code files.
     if isinstance(config, PretrainedConfig) and "AutoConfig" in getattr(config, "auto_map", {}):
