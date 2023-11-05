@@ -621,3 +621,35 @@ register_template(
     system="",
     sep=[]
 )
+
+
+
+r"""
+Supports: https://huggingface.co/deepseek-ai/deepseek-coder-1.3b-instruct
+          https://huggingface.co/deepseek-ai/deepseek-coder-6.7b-instruct
+          https://huggingface.co/deepseek-ai/deepseek-coder-33b-instruct
+"""
+register_template(
+    name="deepseek",
+    prefix=[
+        "{{system}}"
+    ],
+    prompt=[
+        "### Instruction:\n{{query}}\n### Response:\n"
+    ],
+    system=(
+        "You are an AI programming assistant, utilizing the Deepseek Coder model, "
+        "developed by Deepseek Company, and you only answer questions related to computer science. "
+        "For politically sensitive questions, security and privacy issues, "
+        "and other non-computer science questions, you will refuse to answer."
+    ),
+    sep=[
+        "\n",
+        {"token": "<|EOT|>"},
+        "\n"
+    ],
+    stop_words=[
+        "<|EOT|>"
+    ],
+    efficient_eos=True
+)
