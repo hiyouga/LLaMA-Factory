@@ -635,7 +635,7 @@ register_template(
         "{{system}}"
     ],
     prompt=[
-        "### Instruction:\n{{query}}\n### Response:\n"
+        "### Instruction:\n{{query}}\n\n### Response:\n"
     ],
     system=(
         "You are an AI programming assistant, utilizing the Deepseek Coder model, "
@@ -646,7 +646,7 @@ register_template(
     sep=[
         "\n",
         {"token": "<|EOT|>"},
-        "\n"
+        "\n\n"
     ],
     stop_words=[
         "<|EOT|>"
