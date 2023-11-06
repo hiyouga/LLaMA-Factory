@@ -32,9 +32,9 @@ async def lifespan(app: FastAPI): # collects GPU memory
 
 
 def to_json(data: BaseModel) -> str:
-    try:
+    try: # pydantic v2
         return json.dumps(data.model_dump(exclude_unset=True), ensure_ascii=False)
-    except:
+    except: # pydantic v1
         return data.json(exclude_unset=True, ensure_ascii=False)
 
 
