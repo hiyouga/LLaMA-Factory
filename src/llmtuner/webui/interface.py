@@ -14,7 +14,7 @@ from llmtuner.webui.css import CSS
 from llmtuner.webui.engine import Engine
 
 
-require_version("gradio==3.50.2", "To fix: pip install gradio==3.50.2")
+require_version("gradio>=3.38.0,<4.0.0", "To fix: pip install \"gradio>=3.38.0,<4.0.0\"")
 
 
 def create_ui() -> gr.Blocks:

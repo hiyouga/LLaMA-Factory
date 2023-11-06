@@ -14,7 +14,6 @@ from transformers import (
     PreTrainedTokenizerBase
 )
 from transformers.models.llama import modeling_llama as LlamaModule
-from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
 from trl import AutoModelForCausalLMWithValueHead
 
@@ -39,7 +38,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-check_min_version("4.31.0")
+require_version("transformers>=4.31.0,<4.35.0", "To fix: pip install \"transformers>=4.31.0,<4.35.0\"")
 require_version("datasets>=2.12.0", "To fix: pip install datasets>=2.12.0")
 require_version("accelerate>=0.21.0", "To fix: pip install accelerate>=0.21.0")
 require_version("peft>=0.4.0", "To fix: pip install peft>=0.4.0")
