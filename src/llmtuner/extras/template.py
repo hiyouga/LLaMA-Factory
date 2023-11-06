@@ -226,86 +226,6 @@ def get_template_and_fix_tokenizer(
 
 
 r"""
-Supports language model inference without histories.
-"""
-register_template(
-    name="vanilla",
-    prefix=[],
-    prompt=[
-        "{{query}}"
-    ],
-    system="",
-    sep=[],
-    use_history=False
-)
-
-
-r"""
-Default template.
-"""
-register_template(
-    name="default",
-    prefix=[
-        "{{system}}"
-    ],
-    prompt=[
-        "Human: {{query}}\nAssistant:"
-    ],
-    system=(
-        "A chat between a curious user and an artificial intelligence assistant. "
-        "The assistant gives helpful, detailed, and polite answers to the user's questions."
-    ),
-    sep=[
-        "\n"
-    ]
-)
-
-
-r"""
-Supports: https://huggingface.co/meta-llama/Llama-2-7b-chat-hf
-          https://huggingface.co/meta-llama/Llama-2-13b-chat-hf
-          https://huggingface.co/meta-llama/Llama-2-70b-chat-hf
-"""
-register_template(
-    name="llama2",
-    prefix=[
-        "<<SYS>>\n{{system}}\n<</SYS>>\n\n"
-    ],
-    prompt=[
-        "[INST] {{query}} [/INST]"
-    ],
-    system=(
-        "You are a helpful, respectful and honest assistant. "
-        "Always answer as helpfully as possible, while being safe.  "
-        "Your answers should not include any harmful, unethical, "
-        "racist, sexist, toxic, dangerous, or illegal content. "
-        "Please ensure that your responses are socially unbiased and positive in nature.\n\n"
-        "If a question does not make any sense, or is not factually coherent, "
-        "explain why instead of answering something not correct. "
-        "If you don't know the answer to a question, please don't share false information."
-    ),
-    sep=[]
-)
-
-
-r"""
-Supports: https://huggingface.co/ziqingyang/chinese-alpaca-2-7b
-          https://huggingface.co/ziqingyang/chinese-alpaca-2-13b
-"""
-register_template(
-    name="llama2_zh",
-    prefix=[
-        "<<SYS>>\n{{system}}\n<</SYS>>\n\n"
-    ],
-    prompt=[
-        "[INST] {{query}} [/INST]"
-    ],
-    system="You are a helpful assistant. 你是一个乐于助人的助手。",
-    sep=[]
-)
-
-
-r"""
 Supports: https://huggingface.co/tatsu-lab/alpaca-7b-wdiff
 """
 register_template(
@@ -322,67 +242,6 @@ register_template(
     ),
     sep=[
         "\n\n"
-    ]
-)
-
-
-r"""
-Supports: https://huggingface.co/lmsys/vicuna-7b-v1.5
-          https://huggingface.co/lmsys/vicuna-13b-v1.5
-"""
-register_template(
-    name="vicuna",
-    prefix=[
-        "{{system}}"
-    ],
-    prompt=[
-        "USER: {{query}} ASSISTANT:"
-    ],
-    system=(
-        "A chat between a curious user and an artificial intelligence assistant. "
-        "The assistant gives helpful, detailed, and polite answers to the user's questions."
-    ),
-    sep=[]
-)
-
-
-r"""
-Supports: https://huggingface.co/BelleGroup/BELLE-LLaMA-EXT-13B
-"""
-register_template(
-    name="belle",
-    prefix=[
-        "{{system}}"
-    ],
-    prompt=[
-        "Human: {{query}}\n\nBelle: "
-    ],
-    system="",
-    sep=[
-        "\n\n"
-    ]
-)
-
-
-r"""
-Supports: https://huggingface.co/IDEA-CCNL/Ziya-LLaMA-13B-v1
-          https://huggingface.co/IDEA-CCNL/Ziya-LLaMA-13B-v1.1
-          https://huggingface.co/IDEA-CCNL/Ziya2-13B-Chat
-"""
-register_template(
-    name="ziya",
-    prefix=[
-        "{{system}}"
-    ],
-    prompt=[
-        {"token": "<human>"},
-        ":{{query}}\n",
-        {"token": "<bot>"},
-        ":"
-    ],
-    system="",
-    sep=[
-        "\n"
     ]
 )
 
@@ -409,32 +268,6 @@ register_template(
     ],
     stop_words=[
         "</s>"
-    ],
-    efficient_eos=True
-)
-
-
-r"""
-Supports: https://huggingface.co/internlm/internlm-chat-7b
-          https://huggingface.co/internlm/internlm-chat-20b
-"""
-register_template(
-    name="intern",
-    prefix=[
-        "{{system}}"
-    ],
-    prompt=[
-        "<|User|>:{{query}}",
-        {"token": "<eoh>"},
-        "\n<|Bot|>:"
-    ],
-    system="",
-    sep=[
-        {"token": "<eoa>"},
-        "\n"
-    ],
-    stop_words=[
-        "<eoa>"
     ],
     efficient_eos=True
 )
@@ -480,61 +313,38 @@ register_template(
 
 
 r"""
-Supports: https://huggingface.co/HuggingFaceH4/starchat-alpha
-          https://huggingface.co/HuggingFaceH4/starchat-beta
+Supports: https://huggingface.co/BelleGroup/BELLE-LLaMA-EXT-13B
 """
 register_template(
-    name="starchat",
+    name="belle",
     prefix=[
-        {"token": "<|system|>"},
-        "\n{{system}}",
+        "{{system}}"
     ],
     prompt=[
-        {"token": "<|user|>"},
-        "\n{{query}}",
-        {"token": "<|end|>"},
-        "\n",
-        {"token": "<|assistant|>"}
+        "Human: {{query}}\n\nBelle: "
     ],
     system="",
     sep=[
-        {"token": "<|end|>"},
-        "\n"
-    ],
-    stop_words=[
-        "<|end|>"
-    ],
-    efficient_eos=True
+        "\n\n"
+    ]
 )
 
 
 r"""
-Supports: https://huggingface.co/Qwen/Qwen-7B-Chat
-          https://huggingface.co/Qwen/Qwen-14B-Chat
+Supports: https://huggingface.co/vivo-ai/BlueLM-7B-Chat
 """
 register_template(
-    name="chatml",
+    name="bluelm",
     prefix=[
-        {"token": "<|im_start|>"},
-        "system\n{{system}}"
+        "{{system}}"
     ],
     prompt=[
-        {"token": "<|im_start|>"},
-        "user\n{{query}}",
-        {"token": "<|im_end|>"},
-        "\n",
-        {"token": "<|im_start|>"},
-        "assistant\n"
+        {"token": "[|Human|]:"},
+        "{{query}}",
+        {"token": "[|AI|]:"}
     ],
-    system="You are a helpful assistant.",
-    sep=[
-        {"token": "<|im_end|>"},
-        "\n"
-    ],
-    stop_words=[
-        "<|im_end|>"
-    ],
-    efficient_eos=True
+    system="",
+    sep=[]
 )
 
 
@@ -586,45 +396,6 @@ register_template(
 
 
 r"""
-Supports: https://huggingface.co/openchat/openchat_v3.2_super
-"""
-register_template(
-    name="openchat",
-    prefix=[
-        "{{system}}"
-    ],
-    prompt=[
-        "GPT4 User: {{query}}",
-        {"token": "<|end_of_turn|>"},
-        "GPT4 Assistant:"
-    ],
-    system="",
-    sep=[
-        {"token": "<|end_of_turn|>"}
-    ],
-    efficient_eos=True
-)
-
-
-r"""
-Supports: https://huggingface.co/xverse/XVERSE-7B-Chat
-          https://huggingface.co/xverse/XVERSE-13B-Chat
-"""
-register_template(
-    name="xverse",
-    prefix=[
-        "{{system}}"
-    ],
-    prompt=[
-        "Human: {{query}}\n\nAssistant: "
-    ],
-    system="",
-    sep=[]
-)
-
-
-
-r"""
 Supports: https://huggingface.co/deepseek-ai/deepseek-coder-1.3b-instruct
           https://huggingface.co/deepseek-ai/deepseek-coder-6.7b-instruct
           https://huggingface.co/deepseek-ai/deepseek-coder-33b-instruct
@@ -652,4 +423,291 @@ register_template(
         "<|EOT|>"
     ],
     efficient_eos=True
+)
+
+
+r"""
+Default template.
+"""
+register_template(
+    name="default",
+    prefix=[
+        "{{system}}"
+    ],
+    prompt=[
+        "Human: {{query}}\nAssistant:"
+    ],
+    system=(
+        "A chat between a curious user and an artificial intelligence assistant. "
+        "The assistant gives helpful, detailed, and polite answers to the user's questions."
+    ),
+    sep=[
+        "\n"
+    ]
+)
+
+
+r"""
+Supports: https://huggingface.co/internlm/internlm-chat-7b
+          https://huggingface.co/internlm/internlm-chat-20b
+"""
+register_template(
+    name="intern",
+    prefix=[
+        "{{system}}"
+    ],
+    prompt=[
+        "<|User|>:{{query}}",
+        {"token": "<eoh>"},
+        "\n<|Bot|>:"
+    ],
+    system="",
+    sep=[
+        {"token": "<eoa>"},
+        "\n"
+    ],
+    stop_words=[
+        "<eoa>"
+    ],
+    efficient_eos=True
+)
+
+
+r"""
+Supports: https://huggingface.co/meta-llama/Llama-2-7b-chat-hf
+          https://huggingface.co/meta-llama/Llama-2-13b-chat-hf
+          https://huggingface.co/meta-llama/Llama-2-70b-chat-hf
+"""
+register_template(
+    name="llama2",
+    prefix=[
+        "<<SYS>>\n{{system}}\n<</SYS>>\n\n"
+    ],
+    prompt=[
+        "[INST] {{query}} [/INST]"
+    ],
+    system=(
+        "You are a helpful, respectful and honest assistant. "
+        "Always answer as helpfully as possible, while being safe.  "
+        "Your answers should not include any harmful, unethical, "
+        "racist, sexist, toxic, dangerous, or illegal content. "
+        "Please ensure that your responses are socially unbiased and positive in nature.\n\n"
+        "If a question does not make any sense, or is not factually coherent, "
+        "explain why instead of answering something not correct. "
+        "If you don't know the answer to a question, please don't share false information."
+    ),
+    sep=[]
+)
+
+
+r"""
+Supports: https://huggingface.co/ziqingyang/chinese-alpaca-2-7b
+          https://huggingface.co/ziqingyang/chinese-alpaca-2-13b
+"""
+register_template(
+    name="llama2_zh",
+    prefix=[
+        "<<SYS>>\n{{system}}\n<</SYS>>\n\n"
+    ],
+    prompt=[
+        "[INST] {{query}} [/INST]"
+    ],
+    system="You are a helpful assistant. 你是一个乐于助人的助手。",
+    sep=[]
+)
+
+
+r"""
+Supports: https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1
+"""
+register_template(
+    name="mistral",
+    prefix=[
+        "{{system}}"
+    ],
+    prompt=[
+        "[INST] {{query}} [/INST]"
+    ],
+    system="",
+    sep=[]
+)
+
+
+r"""
+Supports: https://huggingface.co/openchat/openchat_3.5
+"""
+register_template(
+    name="openchat",
+    prefix=[
+        "{{system}}"
+    ],
+    prompt=[
+        "GPT4 Correct User: {{query}}",
+        {"token": "<|end_of_turn|>"},
+        "GPT4 Correct Assistant:"
+    ],
+    system="You are a helpful assistant.",
+    sep=[
+        {"token": "<|end_of_turn|>"}
+    ],
+    stop_words=[
+        "<|end_of_turn|>"
+    ],
+    efficient_eos=True
+)
+
+
+r"""
+Supports: https://huggingface.co/Qwen/Qwen-7B-Chat
+          https://huggingface.co/Qwen/Qwen-14B-Chat
+"""
+register_template(
+    name="qwen",
+    prefix=[
+        {"token": "<|im_start|>"},
+        "system\n{{system}}"
+    ],
+    prompt=[
+        {"token": "<|im_start|>"},
+        "user\n{{query}}",
+        {"token": "<|im_end|>"},
+        "\n",
+        {"token": "<|im_start|>"},
+        "assistant\n"
+    ],
+    system="You are a helpful assistant.",
+    sep=[
+        {"token": "<|im_end|>"},
+        "\n"
+    ],
+    stop_words=[
+        "<|im_end|>"
+    ],
+    efficient_eos=True
+)
+
+
+r"""
+Supports: https://huggingface.co/HuggingFaceH4/starchat-alpha
+          https://huggingface.co/HuggingFaceH4/starchat-beta
+"""
+register_template(
+    name="starchat",
+    prefix=[
+        {"token": "<|system|>"},
+        "\n{{system}}",
+    ],
+    prompt=[
+        {"token": "<|user|>"},
+        "\n{{query}}",
+        {"token": "<|end|>"},
+        "\n",
+        {"token": "<|assistant|>"}
+    ],
+    system="",
+    sep=[
+        {"token": "<|end|>"},
+        "\n"
+    ],
+    stop_words=[
+        "<|end|>"
+    ],
+    efficient_eos=True
+)
+
+
+r"""
+Supports language model inference without histories.
+"""
+register_template(
+    name="vanilla",
+    prefix=[],
+    prompt=[
+        "{{query}}"
+    ],
+    system="",
+    sep=[],
+    use_history=False
+)
+
+
+r"""
+Supports: https://huggingface.co/lmsys/vicuna-7b-v1.5
+          https://huggingface.co/lmsys/vicuna-13b-v1.5
+"""
+register_template(
+    name="vicuna",
+    prefix=[
+        "{{system}}"
+    ],
+    prompt=[
+        "USER: {{query}} ASSISTANT:"
+    ],
+    system=(
+        "A chat between a curious user and an artificial intelligence assistant. "
+        "The assistant gives helpful, detailed, and polite answers to the user's questions."
+    ),
+    sep=[]
+)
+
+
+r"""
+Supports: https://huggingface.co/xverse/XVERSE-7B-Chat
+          https://huggingface.co/xverse/XVERSE-13B-Chat
+"""
+register_template(
+    name="xverse",
+    prefix=[
+        "{{system}}"
+    ],
+    prompt=[
+        "Human: {{query}}\n\nAssistant: "
+    ],
+    system="",
+    sep=[]
+)
+
+
+r"""
+Supports: https://huggingface.co/HuggingFaceH4/zephyr-7b-alpha
+          https://huggingface.co/HuggingFaceH4/zephyr-7b-beta
+"""
+register_template(
+    name="zephyr",
+    prefix=[
+        {"token": "<|system|>"},
+        "\n{{system}}",
+        {"token": "</s>"}
+    ],
+    prompt=[
+        {"token": "<|user|>"},
+        "\n{{query}}",
+        {"token": "</s>"},
+        {"token": "<|assistant|>"}
+    ],
+    system="You are a friendly chatbot who always responds in the style of a pirate",
+    sep=[]
+)
+
+
+r"""
+Supports: https://huggingface.co/IDEA-CCNL/Ziya-LLaMA-13B-v1
+          https://huggingface.co/IDEA-CCNL/Ziya-LLaMA-13B-v1.1
+          https://huggingface.co/IDEA-CCNL/Ziya2-13B-Chat
+"""
+register_template(
+    name="ziya",
+    prefix=[
+        "{{system}}"
+    ],
+    prompt=[
+        {"token": "<human>"},
+        ":{{query}}\n",
+        {"token": "<bot>"},
+        ":"
+    ],
+    system="",
+    sep=[
+        "\n"
+    ]
 )
