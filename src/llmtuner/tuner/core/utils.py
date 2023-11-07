@@ -1,13 +1,12 @@
 import torch
-from types import MethodType
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from llmtuner.extras.constants import LAYERNORM_NAMES
 from llmtuner.extras.logging import get_logger
 
 if TYPE_CHECKING:
     from transformers.modeling_utils import PreTrainedModel
-    from llmtuner.hparams import FinetuningArguments
+    from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
 
 
 logger = get_logger(__name__)
@@ -15,8 +14,7 @@ logger = get_logger(__name__)
 
 def find_all_linear_modules(
     model: "PreTrainedModel",
-    quantization_bit: Optional[int] = None,
-    output_layer_name: Optional[str] = "lm_head"
+    quantization_bit: Optional[int] = None
 ) -> List[str]:
     if quantization_bit is not None:
         import bitsandbytes as bnb
@@ -24,15 +22,33 @@ def find_all_linear_modules(
     else:
         linear_cls = torch.nn.Linear
 
+    output_layer_names = ["lm_head"]
+    if model.config.model_type == "chatglm":
+        output_layer_names.append("output_layer")
+
     module_names = set()
     for name, module in model.named_modules():
-        if output_layer_name not in name and isinstance(module, linear_cls):
+        if (
+            isinstance(module, linear_cls)
+            and not any([output_layer in name for output_layer in output_layer_names])
+        ):
             module_names.add(name.split(".")[-1])
 
-    if output_layer_name in module_names:
-        module_names.pop(output_layer_name)
-
+    logger.info("Found linear modules: {}".format(",".join(module_names)))
     return list(module_names)
+
+
+def generate_model_card(
+    model_args: "ModelArguments",
+    data_args: "DataArguments",
+    finetuning_args: "FinetuningArguments"
+) -> Dict[str, Any]:
+    return {
+        "tasks": "text-generation",
+        "finetuned_from": model_args.model_name_or_path,
+        "dataset": [dataset.strip() for dataset in data_args.dataset.split(",")],
+        "tags": ["llama-factory"] + (["lora"] if finetuning_args.finetuning_type == "lora" else [])
+    }
 
 
 def prepare_model_for_training(
@@ -56,26 +72,21 @@ def prepare_model_for_training(
         logger.info("Upcasting weights in layernorm in float32.")
 
     if finetuning_args.neft_alpha > 1e-6:
-        input_embed = model.get_input_embeddings()
-        if isinstance(input_embed, torch.nn.Embedding):
-            def noisy_forward(self: torch.nn.Embedding, x: torch.Tensor) -> torch.Tensor:
-                embeddings = input_embed.__class__.forward(self, x)
-                if self.training:
-                    dims = self.num_embeddings * self.embedding_dim
-                    mag_norm = finetuning_args.neft_alpha / (dims ** 0.5)
-                    embeddings += torch.zeros_like(embeddings).uniform_(-mag_norm, mag_norm)
-                return embeddings
+        def neftune_forward_hook(module: torch.nn.Module, args: Tuple[torch.Tensor], output: torch.Tensor):
+            if module.training:
+                dims = torch.tensor(output.size(1) * output.size(2))
+                mag_norm = finetuning_args.neft_alpha / torch.sqrt(dims)
+                output = output + torch.zeros_like(output).uniform_(-mag_norm, mag_norm)
+            return output
 
-            input_embed.forward = MethodType(noisy_forward, input_embed)
-            logger.info("Using noisy embedding with alpha={:.2f}".format(finetuning_args.neft_alpha))
-        else:
-            logger.warning("Input embeddings are not normal nn.Embedding, cannot transform into noisy embedding.")
+        model.get_input_embeddings().register_forward_hook(neftune_forward_hook)
+        logger.info("Using noisy embedding with alpha={:.2f}".format(finetuning_args.neft_alpha))
 
     if use_gradient_checkpointing:
         if hasattr(model, "enable_input_require_grads"):
             model.enable_input_require_grads()
         else:
-            def make_inputs_require_grad(module: torch.nn.Module, input: torch.Tensor, output: torch.Tensor):
+            def make_inputs_require_grad(module: torch.nn.Module, args: Tuple[torch.Tensor], output: torch.Tensor):
                 output.requires_grad_(True)
             model.get_input_embeddings().register_forward_hook(make_inputs_require_grad)
 
@@ -86,9 +97,11 @@ def prepare_model_for_training(
     if finetuning_args.finetuning_type != "full" and hasattr(model, output_layer_name):
         output_layer = getattr(model, output_layer_name)
         if isinstance(output_layer, torch.nn.Linear):
-            def forward_in_fp32(self, x: torch.Tensor) -> torch.Tensor:
-                return output_layer.__class__.forward(self, x.to(output_layer.weight.dtype)).to(torch.float32)
-
-            output_layer.forward = MethodType(forward_in_fp32, output_layer)
+            def fp32_forward_pre_hook(module: torch.nn.Module, args: Tuple[torch.Tensor]):
+                return args[0].to(output_layer.weight.dtype)
+            def fp32_forward_post_hook(module: torch.nn.Module, args: Tuple[torch.Tensor], output: torch.Tensor):
+                return output.to(torch.float32)
+            output_layer.register_forward_pre_hook(fp32_forward_pre_hook)
+            output_layer.register_forward_hook(fp32_forward_post_hook)
 
     return model
