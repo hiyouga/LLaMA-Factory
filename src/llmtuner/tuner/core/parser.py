@@ -106,8 +106,8 @@ def get_train_args(
     if finetuning_args.stage in ["rm", "ppo"] and training_args.resume_from_checkpoint is not None:
         raise ValueError("RM and PPO stages do not support `resume_from_checkpoint`.")
 
-    if finetuning_args.stage in ["ppo", "dpo"] and not training_args.do_train:
-        raise ValueError("PPO and DPO stages can only be performed at training.")
+    if finetuning_args.stage == "ppo" and not training_args.do_train:
+        raise ValueError("PPO training does not support evaluation.")
 
     if finetuning_args.stage in ["rm", "dpo"]:
         for dataset_attr in data_args.dataset_list:
@@ -116,9 +116,6 @@ def get_train_args(
 
     if finetuning_args.stage == "ppo" and model_args.reward_model is None:
         raise ValueError("Reward model is necessary for PPO training.")
-
-    if finetuning_args.stage == "ppo" and data_args.streaming:
-        raise ValueError("Streaming mode does not suppport PPO training currently.")
 
     if finetuning_args.stage == "ppo" and model_args.shift_attn:
         raise ValueError("PPO training is incompatible with S^2-Attn.")

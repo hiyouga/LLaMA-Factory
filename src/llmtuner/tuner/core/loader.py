@@ -14,7 +14,6 @@ from transformers import (
     PreTrainedTokenizerBase
 )
 from transformers.models.llama import modeling_llama as LlamaModule
-from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
 from trl import AutoModelForCausalLMWithValueHead
 
@@ -39,7 +38,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-check_min_version("4.31.0")
+require_version("transformers>=4.31.0,<4.35.0", "To fix: pip install \"transformers>=4.31.0,<4.35.0\"")
 require_version("datasets>=2.12.0", "To fix: pip install datasets>=2.12.0")
 require_version("accelerate>=0.21.0", "To fix: pip install accelerate>=0.21.0")
 require_version("peft>=0.4.0", "To fix: pip install peft>=0.4.0")
@@ -84,7 +83,7 @@ def load_model_and_tokenizer(
 
     config = AutoConfig.from_pretrained(model_to_load, **config_kwargs)
 
-    # Fix tokenizer (for ChatGLM2)
+    # Fix tokenizer (for ChatGLM2 and ChatGLM3)
     if getattr(config, "model_type", None) == "chatglm":
         tokenizer._pad = MethodType(PreTrainedTokenizerBase._pad, tokenizer)
 
@@ -194,9 +193,10 @@ def load_model_and_tokenizer(
     if isinstance(model, PreTrainedModel) and "GenerationMixin" not in str(model.generate.__func__):
         model.generate = MethodType(PreTrainedModel.generate, model)
 
-    # Fix LM head (for ChatGLM2)
+    # Fix LM head (for ChatGLM2 and ChatGLM3)
     if getattr(config, "model_type", None) == "chatglm":
         setattr(model, "lm_head", model.transformer.output_layer)
+        setattr(model, "_keys_to_ignore_on_save", ["lm_head.weight"])
 
     # Register auto class to save the custom code files.
     if isinstance(config, PretrainedConfig) and "AutoConfig" in getattr(config, "auto_map", {}):
@@ -213,8 +213,7 @@ def load_model_and_tokenizer(
 
     # Prepare model with valuehead for RLHF
     if stage == "rm" or stage == "ppo":
-        model = AutoModelForCausalLMWithValueHead.from_pretrained(model)
-        model._keys_to_ignore_on_save = None
+        model: "AutoModelForCausalLMWithValueHead" = AutoModelForCausalLMWithValueHead.from_pretrained(model)
         reset_logging()
         if stage == "rm" and model_args.checkpoint_dir is not None: # load valuehead weights to evaluate reward model
             logger.warning("Only the last checkpoint containing valuehead will be loaded.")

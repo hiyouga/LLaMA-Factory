@@ -28,7 +28,7 @@ class GeneratingArguments:
         metadata={"help": "Number of beams for beam search. 1 means no beam search."}
     )
     max_length: Optional[int] = field(
-        default=None,
+        default=512,
         metadata={"help": "The maximum length the generated tokens can have. It can be overridden by max_new_tokens."}
     )
     max_new_tokens: Optional[int] = field(
@@ -46,6 +46,8 @@ class GeneratingArguments:
 
     def to_dict(self) -> Dict[str, Any]:
         args = asdict(self)
-        if args.get("max_new_tokens", None):
+        if args.get("max_new_tokens", -1) > 0:
             args.pop("max_length", None)
+        else:
+            args.pop("max_new_tokens", None)
         return args

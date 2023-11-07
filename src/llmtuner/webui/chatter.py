@@ -1,3 +1,4 @@
+import gradio as gr
 from gradio.components import Component # cannot use TYPE_CHECKING here
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Tuple
 
@@ -26,19 +27,19 @@ class WebChatModel(ChatModel):
         return self.model is not None
 
     def load_model(self, data: Dict[Component, Any]) -> Generator[str, None, None]:
-        get = lambda name: data[self.manager.get_elem(name)]
+        get = lambda name: data[self.manager.get_elem_by_name(name)]
         lang = get("top.lang")
-
+        error = ""
         if self.loaded:
-            yield ALERTS["err_exists"][lang]
-            return
+            error = ALERTS["err_exists"][lang]
+        elif not get("top.model_name"):
+            error = ALERTS["err_no_model"][lang]
+        elif not get("top.model_path"):
+            error = ALERTS["err_no_path"][lang]
 
-        if not get("top.model_name"):
-            yield ALERTS["err_no_model"][lang]
-            return
-
-        if not get("top.model_path"):
-            yield ALERTS["err_no_path"][lang]
+        if error:
+            gr.Warning(error)
+            yield error
             return
 
         if get("top.checkpoints"):
@@ -65,9 +66,7 @@ class WebChatModel(ChatModel):
         yield ALERTS["info_loaded"][lang]
 
     def unload_model(self, data: Dict[Component, Any]) -> Generator[str, None, None]:
-        get = lambda name: data[self.manager.get_elem(name)]
-        lang = get("top.lang")
-
+        lang = data[self.manager.get_elem_by_name("top.lang")]
         yield ALERTS["info_unloading"][lang]
         self.model = None
         self.tokenizer = None

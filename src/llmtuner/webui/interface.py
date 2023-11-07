@@ -14,7 +14,7 @@ from llmtuner.webui.css import CSS
 from llmtuner.webui.engine import Engine
 
 
-require_version("gradio==3.38.0", "To fix: pip install gradio==3.38.0")
+require_version("gradio>=3.38.0,<4.0.0", "To fix: pip install \"gradio>=3.38.0,<4.0.0\"")
 
 
 def create_ui() -> gr.Blocks:
@@ -22,7 +22,7 @@ def create_ui() -> gr.Blocks:
 
     with gr.Blocks(title="LLaMA Board", css=CSS) as demo:
         engine.manager.all_elems["top"] = create_top()
-        lang: "gr.Dropdown" = engine.manager.get_elem("top.lang")
+        lang: "gr.Dropdown" = engine.manager.get_elem_by_name("top.lang")
 
         with gr.Tab("Train"):
             engine.manager.all_elems["train"] = create_train_tab(engine)
