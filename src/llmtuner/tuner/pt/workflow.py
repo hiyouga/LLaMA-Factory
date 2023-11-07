@@ -46,9 +46,9 @@ def run_pt(
             plot_loss(training_args.output_dir, keys=["loss", "eval_loss"])
 
         if training_args.push_to_hub:
-            trainer.push_to_hub(**generate_model_card())
+            trainer.push_to_hub(**generate_model_card(model_args, data_args, finetuning_args))
         else:
-            trainer.create_model_card(**generate_model_card())
+            trainer.create_model_card(**generate_model_card(model_args, data_args, finetuning_args))
 
     # Evaluation
     if training_args.do_eval:
