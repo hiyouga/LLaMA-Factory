@@ -22,10 +22,6 @@ class ModelArguments:
         default=False,
         metadata={"help": "Whether or not the special tokens should be split during the tokenization process."}
     )
-    use_auth_token: Optional[bool] = field(
-        default=False,
-        metadata={"help": "Will use the token generated when running `huggingface-cli login`."}
-    )
     model_revision: Optional[str] = field(
         default="main",
         metadata={"help": "The specific model version to use (can be a branch name, tag name or commit id)."}
@@ -66,7 +62,7 @@ class ModelArguments:
         default=False,
         metadata={"help": "Whether to plot the training loss after fine-tuning or not."}
     )
-    hf_auth_token: Optional[str] = field(
+    hf_hub_token: Optional[str] = field(
         default=None,
         metadata={"help": "Auth token to log in with Hugging Face Hub."}
     )
@@ -87,7 +83,3 @@ class ModelArguments:
 
         if self.quantization_bit is not None:
             assert self.quantization_bit in [4, 8], "We only accept 4-bit or 8-bit quantization."
-
-        if self.use_auth_token == True and self.hf_auth_token is not None:
-            from huggingface_hub.hf_api import HfFolder # lazy load
-            HfFolder.save_token(self.hf_auth_token)
