@@ -1,20 +1,24 @@
 # Inspired by: https://github.com/huggingface/trl/blob/main/examples/research_projects/stack_llama_2/scripts/dpo_llama2.py
 
-from copy import deepcopy
 from peft import PeftModel
 from typing import TYPE_CHECKING, Optional, List
 from transformers import Seq2SeqTrainingArguments
 
 from llmtuner.dsets import get_dataset, preprocess_dataset, split_dataset
 from llmtuner.extras.constants import IGNORE_INDEX
+from llmtuner.extras.logging import get_logger
 from llmtuner.extras.ploting import plot_loss
+from llmtuner.hparams import ModelArguments
 from llmtuner.tuner.core import generate_model_card, load_model_and_tokenizer
 from llmtuner.tuner.dpo.collator import DPODataCollatorWithPadding
 from llmtuner.tuner.dpo.trainer import CustomDPOTrainer
 
 if TYPE_CHECKING:
     from transformers import TrainerCallback
-    from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
+    from llmtuner.hparams import DataArguments, FinetuningArguments
+
+
+logger = get_logger(__name__)
 
 
 def run_dpo(
@@ -34,9 +38,23 @@ def run_dpo(
     )
 
     # Create reference model
-    ref_model = None
-    if not isinstance(model, PeftModel):
-        ref_model, _ = load_model_and_tokenizer(model_args, finetuning_args, is_trainable=False, stage="sft")
+    if finetuning_args.dpo_ref_model is not None:
+        ref_model_args_dict = model_args.to_dict()
+        ref_model_args_dict.update(dict(
+            model_name_or_path=finetuning_args.dpo_ref_model,
+            checkpoint_dir=finetuning_args.dpo_ref_model_checkpoint
+        ))
+        ref_model_args = ModelArguments(**ref_model_args_dict)
+        ref_model, _ = load_model_and_tokenizer(ref_model_args, finetuning_args, is_trainable=False, stage="sft")
+        logger.info("Created reference model from {}".format(finetuning_args.dpo_ref_model))
+    elif training_args.do_train:
+        if isinstance(model, PeftModel):
+            ref_model = None
+        else:
+            ref_model, _ = load_model_and_tokenizer(model_args, finetuning_args, is_trainable=False, stage="sft")
+            logger.info("Created reference model from the model itself.")
+    else:
+        ref_model = model
 
     # Update arguments
     training_args_dict = training_args.to_dict()
@@ -68,6 +86,11 @@ def run_dpo(
     # Evaluation
     if training_args.do_eval:
         metrics = trainer.evaluate(metric_key_prefix="eval")
+        if id(model) == id(ref_model): # unable to compute rewards without a reference model
+            logger.warning("Pass `dpo_ref_model` for computing rewards at evaluation.")
+            remove_keys = [key for key in metrics.keys() if "rewards" in key]
+            for key in remove_keys:
+                metrics.pop(key)
         trainer.log_metrics("eval", metrics)
         trainer.save_metrics("eval", metrics)
 
