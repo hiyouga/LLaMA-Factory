@@ -3,7 +3,7 @@ import sys
 import math
 import torch
 from tqdm import tqdm
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 from transformers import GenerationConfig, Trainer, TrainerState, TrainerControl
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
