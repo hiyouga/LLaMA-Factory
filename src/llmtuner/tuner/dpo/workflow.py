@@ -59,13 +59,15 @@ def run_dpo(
         if trainer.is_world_process_zero() and model_args.plot_loss:
             plot_loss(training_args.output_dir, keys=["loss", "eval_loss"])
 
-        if training_args.push_to_hub:
-            trainer.push_to_hub(**generate_model_card(model_args, data_args, finetuning_args))
-        else:
-            trainer.create_model_card(**generate_model_card(model_args, data_args, finetuning_args))
-
     # Evaluation
     if training_args.do_eval:
         metrics = trainer.evaluate(metric_key_prefix="eval")
         trainer.log_metrics("eval", metrics)
         trainer.save_metrics("eval", metrics)
+
+    # Create model card
+    if training_args.do_train:
+        if training_args.push_to_hub:
+            trainer.push_to_hub(**generate_model_card(model_args, data_args, finetuning_args))
+        else:
+            trainer.create_model_card(**generate_model_card(model_args, data_args, finetuning_args))
