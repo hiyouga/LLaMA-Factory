@@ -34,7 +34,7 @@ class PairwiseTrainer(Trainer):
 
         Subclass and override to inject custom behavior.
 
-        Note that the first element will be removed from the output tuple. 
+        Note that the first element will be removed from the output tuple.
         See: https://github.com/huggingface/transformers/blob/v4.30.2/src/transformers/trainer.py#L3509
         """
         # Compute rewards
@@ -45,9 +45,6 @@ class PairwiseTrainer(Trainer):
         # Split the inputs and rewards into two parts, chosen and rejected
         batch_size = inputs["input_ids"].size(0) // 2
         chosen_input_ids, rejected_input_ids = inputs["input_ids"][:batch_size], inputs["input_ids"][batch_size:]
-        chosen_attn_mask, rejected_attn_mask = (
-            inputs["attention_mask"][:batch_size], inputs["attention_mask"][batch_size:]
-        )
         chosen_rewards, rejected_rewards = values[:batch_size], values[batch_size:]
         chosen_scores, rejected_scores = [], []
 
@@ -55,8 +52,8 @@ class PairwiseTrainer(Trainer):
         # Inspired by: https://github.com/CarperAI/trlx/blob/main/examples/summarize_rlhf/reward_model/reward_model.py
         loss = 0
         for i in range(batch_size):
-            chosen_length = chosen_attn_mask[i].nonzero()[-1] + 1
-            rejected_length = rejected_attn_mask[i].nonzero()[-1] + 1
+            chosen_length = (chosen_input_ids[i] != self.tokenizer.pad_token_id).nonzero()[-1] + 1
+            rejected_length = (rejected_input_ids[i] != self.tokenizer.pad_token_id).nonzero()[-1] + 1
             check_divergence = (chosen_input_ids[i] != rejected_input_ids[i]).nonzero()
 
             if len(check_divergence) == 0:
@@ -69,7 +66,7 @@ class PairwiseTrainer(Trainer):
             assert div_index > 0
             chosen_trunc_rewards = chosen_rewards[i, div_index:end_index]
             rejected_trunc_rewards = rejected_rewards[i, div_index:end_index]
-            if return_outputs: # use the score on the EOS token for inference
+            if return_outputs: # use the score on the last token except pad token for inference
                 chosen_scores.append(chosen_rewards[i, chosen_length-1])
                 rejected_scores.append(rejected_rewards[i, rejected_length-1])
             loss += -torch.nn.functional.logsigmoid(chosen_trunc_rewards - rejected_trunc_rewards).mean()
@@ -95,7 +92,6 @@ class PairwiseTrainer(Trainer):
 
         output_prediction_file = os.path.join(self.args.output_dir, "generated_predictions.jsonl")
         logger.info(f"Saving prediction results to {output_prediction_file}")
-
         chosen_scores, rejected_scores = predict_results.predictions
 
         with open(output_prediction_file, "w", encoding="utf-8") as writer:
