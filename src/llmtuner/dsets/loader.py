@@ -59,8 +59,8 @@ def get_dataset(
             data_files=data_files,
             split=data_args.split,
             cache_dir=model_args.cache_dir,
-            streaming=data_args.streaming,
-            use_auth_token=True if model_args.use_auth_token else None
+            token=model_args.hf_hub_token,
+            streaming=data_args.streaming
         )
 
         if max_samples is not None: # truncate dataset
