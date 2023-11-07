@@ -28,6 +28,7 @@ def run_rm(
     dataset = preprocess_dataset(dataset, tokenizer, data_args, training_args, stage="rm")
     data_collator = PairwiseDataCollatorWithPadding(tokenizer, pad_to_multiple_of=4)
 
+    # Update arguments
     training_args_dict = training_args.to_dict()
     training_args_dict.update(dict(remove_unused_columns=False)) # important for pairwise dataset
     training_args = Seq2SeqTrainingArguments(**training_args_dict)

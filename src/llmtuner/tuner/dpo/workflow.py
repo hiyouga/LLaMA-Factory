@@ -33,6 +33,12 @@ def run_dpo(
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
     )
 
+    # Create reference model
+    ref_model = None
+    if not isinstance(model, PeftModel):
+        ref_model, _ = load_model_and_tokenizer(model_args, finetuning_args, is_trainable=False, stage="sft")
+
+    # Update arguments
     training_args_dict = training_args.to_dict()
     training_args_dict.update(dict(remove_unused_columns=False)) # important for pairwise dataset
     training_args = Seq2SeqTrainingArguments(**training_args_dict)
@@ -41,7 +47,7 @@ def run_dpo(
     trainer = CustomDPOTrainer(
         beta=finetuning_args.dpo_beta,
         model=model,
-        ref_model=deepcopy(model) if not isinstance(model, PeftModel) else None,
+        ref_model=ref_model,
         args=training_args,
         tokenizer=tokenizer,
         data_collator=data_collator,
