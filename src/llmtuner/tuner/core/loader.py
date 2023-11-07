@@ -68,6 +68,7 @@ def load_model_and_tokenizer(
         "use_auth_token": True if model_args.use_auth_token else None,
     }
 
+    print("model_args.model_name_or_path: ", model_args.model_name_or_path)
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         use_fast=model_args.use_fast_tokenizer,
