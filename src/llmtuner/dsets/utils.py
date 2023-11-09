@@ -13,9 +13,11 @@ logger = get_logger(__name__)
 
 
 EXT2TYPE = {
+    "arrow": "arrow",
     "csv": "csv",
     "json": "json",
     "jsonl": "json",
+    "parquet": "parquet",
     "txt": "text"
 }
 
