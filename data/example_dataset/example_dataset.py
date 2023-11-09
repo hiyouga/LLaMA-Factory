@@ -3,7 +3,7 @@ import datasets
 from typing import Any, Dict, List
 
 
-_DESCRIPTION = "An example of dataset for LLaMA."
+_DESCRIPTION = "An example of dataset."
 _CITATION = ""
 _HOMEPAGE = ""
 _LICENSE = ""
