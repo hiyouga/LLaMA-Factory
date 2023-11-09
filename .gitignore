@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 /.idea/
 /path_to_sft_checkpoint/
+/data/sft_checkpoint/

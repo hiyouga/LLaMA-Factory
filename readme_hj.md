@@ -18,7 +18,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --finetuning_type lora \
     --lora_target Wqkv \
     --lora_rank 8 \
-    --output_dir path_to_sft_checkpoint \
+    --output_dir ./data/sft_checkpoint/drive_1109 \
     --overwrite_cache \
     --per_device_train_batch_size 1 \
     --gradient_accumulation_steps 1 \
@@ -28,7 +28,10 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --learning_rate 5e-5 \
     --num_train_epochs 3.0 \
     --plot_loss \
-    --overwrite_output_dir
+    --overwrite_output_dir \
+    --val_size 0.1 \
+    --do_eval True \
+    --evaluation_strategy epoch
 ```
 
 ## Test(2.8GB)
