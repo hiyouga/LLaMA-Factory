@@ -96,11 +96,7 @@
   },
   "ultra_chat": {
     "script_url": "ultra_chat",
-    "columns": {
-      "prompt": "instruction",
-      "response": "output",
-      "history": "history"
-    }
+    "formatting": "sharegpt"
   },
   "open_platypus": {
     "hf_hub_url": "garage-bAInd/Open-Platypus"
