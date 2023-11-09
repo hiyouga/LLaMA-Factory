@@ -1,0 +1,20 @@
+{
+  "auto_mapping": null,
+  "base_model_name_or_path": "/home/houjinghp/data/llm/phi-1_5/",
+  "bias": "none",
+  "fan_in_fan_out": false,
+  "inference_mode": true,
+  "init_lora_weights": true,
+  "layers_pattern": null,
+  "layers_to_transform": null,
+  "lora_alpha": 32.0,
+  "lora_dropout": 0.1,
+  "modules_to_save": null,
+  "peft_type": "LORA",
+  "r": 8,
+  "revision": null,
+  "target_modules": [
+    "Wqkv"
+  ],
+  "task_type": "CAUSAL_LM"
+}
