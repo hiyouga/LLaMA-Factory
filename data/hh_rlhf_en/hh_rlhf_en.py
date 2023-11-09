@@ -1,9 +1,9 @@
 import json
 import datasets
-from typing import Any, Dict, List
+from typing import List
 
 
-_DESCRIPTION = "Human preference data about helpfulness and harmlessness for ChatGLM."
+_DESCRIPTION = "Human preference data about helpfulness and harmlessness."
 _CITATION = ""
 _HOMEPAGE = "https://huggingface.co/datasets/Anthropic/hh-rlhf"
 _LICENSE = "mit"
@@ -42,7 +42,7 @@ class HhRlhfEn(datasets.GeneratorBasedBuilder):
             citation=_CITATION
         )
 
-    def _split_generators(self, dl_manager: datasets.DownloadManager) -> List[datasets.SplitGenerator]:
+    def _split_generators(self, dl_manager: datasets.DownloadManager):
         file_path = dl_manager.download_and_extract(_URLS)
         return [
             datasets.SplitGenerator(
@@ -59,7 +59,7 @@ class HhRlhfEn(datasets.GeneratorBasedBuilder):
             )
         ]
 
-    def _generate_examples(self, filepaths: List[str]) -> Dict[int, Dict[str, Any]]: # generate multi-turn chat for ChatGLM
+    def _generate_examples(self, filepaths: List[str]):
         key = 0
         for filepath in filepaths:
             with open(filepath, "r", encoding="utf-8") as f:
