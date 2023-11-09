@@ -51,9 +51,6 @@ def preprocess_dataset(
             setattr(tokenizer, "add_eos_token", True)
 
         tokenized_examples = tokenizer(examples["prompt"], **kwargs)
-        # Make sure the saved tokenizer is the same as the original
-        if hasattr(tokenizer, "add_eos_token"):  # for Baichuan2 tokenizer
-            setattr(tokenizer, "add_eos_token", add_eos_token_flag)
         concatenated_examples = {k: list(chain(*tokenized_examples[k])) for k in tokenized_examples.keys()}
         total_length = len(concatenated_examples[list(concatenated_examples.keys())[0]])
         block_size = data_args.cutoff_len
@@ -64,6 +61,9 @@ def preprocess_dataset(
             k: [t[i: i + block_size] for i in range(0, total_length, block_size)]
             for k, t in concatenated_examples.items()
         }
+        # make sure the saved tokenizer is the same as the original one
+        if hasattr(tokenizer, "add_eos_token"):
+            setattr(tokenizer, "add_eos_token", add_eos_token_flag)
         return result
 
     def preprocess_supervised_dataset(examples: Dict[str, List[Any]]) -> Dict[str, List[List[int]]]:
