@@ -1,4 +1,4 @@
-# Local 9700K
+# Local 5900X
 ## Run(2.8GB)
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/cli_demo.py \
@@ -43,7 +43,7 @@ CUDA_VISIBLE_DEVICES=0 python src/cli_demo.py \
     --checkpoint_dir path_to_sft_checkpoint
 ```
 
-# Local 5900X
+# Local 9700K
 ## Run(2.8GB)
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/cli_demo.py \
