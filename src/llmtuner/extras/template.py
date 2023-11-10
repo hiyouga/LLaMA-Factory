@@ -448,6 +448,25 @@ register_template(
 
 
 r"""
+Supports: https://huggingface.co/tiiuae/falcon-180B-chat
+"""
+register_template(
+    name="falcon",
+    prefix=[
+        "{{system}}"
+    ],
+    prompt=[
+        "User: {{query}}\nFalcon:"
+    ],
+    system="",
+    sep=[
+        "\n"
+    ],
+    efficient_eos=True
+)
+
+
+r"""
 Supports: https://huggingface.co/internlm/internlm-chat-7b
           https://huggingface.co/internlm/internlm-chat-20b
 """
