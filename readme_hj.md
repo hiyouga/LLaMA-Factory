@@ -1,5 +1,5 @@
 # Local 5900X
-## Run(2.8GB)
+## Run(4.2GB)
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/cli_demo.py \
     --model_name_or_path /home/houjinghp/data/llm/phi-1_5/ \
@@ -34,7 +34,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --evaluation_strategy epoch
 ```
 
-## Test(2.8GB)
+## Test(4.2GB)
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/cli_demo.py \
     --model_name_or_path /home/houjinghp/data/llm/phi-1_5/ \
@@ -44,7 +44,7 @@ CUDA_VISIBLE_DEVICES=0 python src/cli_demo.py \
 ```
 
 # Local 9700K
-## Run(2.8GB)
+## Run(4.2GB)
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/cli_demo.py \
     --model_name_or_path /home/gemhou/Study/data/phi-1_5_copy/ \
@@ -52,7 +52,7 @@ CUDA_VISIBLE_DEVICES=0 python src/cli_demo.py \
     --finetuning_type lora
 ```
 
-## Test(2.8GB)
+## Test(4.2GB)
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/cli_demo.py \
     --model_name_or_path /home/gemhou/Study/data/phi-1_5_copy/ \
@@ -62,7 +62,7 @@ CUDA_VISIBLE_DEVICES=0 python src/cli_demo.py \
 ```
 
 # Server
-## Run(2.8GB)
+## Run(4.2GB)
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/cli_demo.py \
     --model_name_or_path /xxx \
