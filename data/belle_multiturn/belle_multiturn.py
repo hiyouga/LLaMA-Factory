@@ -1,6 +1,5 @@
 import json
 import datasets
-from typing import Any, Dict, List
 
 
 _DESCRIPTION = "BELLE multiturn chat dataset."
@@ -23,7 +22,7 @@ class BelleMultiturn(datasets.GeneratorBasedBuilder):
 
     VERSION = datasets.Version("0.0.0")
 
-    def _info(self) -> datasets.DatasetInfo:
+    def _info(self):
         features = datasets.Features({
             "instruction": datasets.Value("string"),
             "output": datasets.Value("string"),
@@ -37,7 +36,7 @@ class BelleMultiturn(datasets.GeneratorBasedBuilder):
             citation=_CITATION
         )
 
-    def _split_generators(self, dl_manager: datasets.DownloadManager) -> List[datasets.SplitGenerator]:
+    def _split_generators(self, dl_manager: datasets.DownloadManager):
         file_path = dl_manager.download(_URL)
         return [
             datasets.SplitGenerator(
@@ -48,7 +47,7 @@ class BelleMultiturn(datasets.GeneratorBasedBuilder):
             )
         ]
 
-    def _generate_examples(self, filepath: str) -> Dict[int, Dict[str, Any]]: # generate multi-turn chat with history
+    def _generate_examples(self, filepath: str):
         with open(filepath, "r", encoding="utf-8") as f:
             for key, row in enumerate(f):
                 data = json.loads(row)

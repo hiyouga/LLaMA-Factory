@@ -448,6 +448,25 @@ register_template(
 
 
 r"""
+Supports: https://huggingface.co/tiiuae/falcon-180B-chat
+"""
+register_template(
+    name="falcon",
+    prefix=[
+        "{{system}}"
+    ],
+    prompt=[
+        "User: {{query}}\nFalcon:"
+    ],
+    system="",
+    sep=[
+        "\n"
+    ],
+    efficient_eos=True
+)
+
+
+r"""
 Supports: https://huggingface.co/internlm/internlm-chat-7b
           https://huggingface.co/internlm/internlm-chat-20b
 """
@@ -488,7 +507,7 @@ register_template(
     ],
     system=(
         "You are a helpful, respectful and honest assistant. "
-        "Always answer as helpfully as possible, while being safe.  "
+        "Always answer as helpfully as possible, while being safe. "
         "Your answers should not include any harmful, unethical, "
         "racist, sexist, toxic, dangerous, or illegal content. "
         "Please ensure that your responses are socially unbiased and positive in nature.\n\n"
@@ -546,7 +565,7 @@ register_template(
         {"token": "<|end_of_turn|>"},
         "GPT4 Correct Assistant:"
     ],
-    system="You are a helpful assistant.",
+    system="",
     sep=[
         {"token": "<|end_of_turn|>"}
     ],
@@ -665,6 +684,43 @@ register_template(
     ],
     system="",
     sep=[]
+)
+
+
+r"""
+Supports: https://huggingface.co/wenge-research/yayi-7b
+          https://huggingface.co/wenge-research/yayi-7b-llama2
+          https://huggingface.co/wenge-research/yayi-13b-llama2
+"""
+register_template(
+    name="yayi",
+    prefix=[
+        {"token": "<|System|>"},
+        ":\n{{system}}"
+    ],
+    prompt=[
+        {"token": "<|Human|>"},
+        ":\n{{query}}\n\n",
+        {"token": "<|YaYi|>"},
+        ":"
+    ],
+    system=(
+        "You are a helpful, respectful and honest assistant named YaYi "
+        "developed by Beijing Wenge Technology Co.,Ltd. "
+        "Always answer as helpfully as possible, while being safe.  "
+        "Your answers should not include any harmful, unethical, "
+        "racist, sexist, toxic, dangerous, or illegal content. "
+        "Please ensure that your responses are socially unbiased and positive in nature.\n\n"
+        "If a question does not make any sense, or is not factually coherent, "
+        "explain why instead of answering something not correct. "
+        "If you don't know the answer to a question, please don't share false information."
+    ),
+    sep=[
+        "\n\n"
+    ],
+    stop_words=[
+        "<|End|>"
+    ]
 )
 
 

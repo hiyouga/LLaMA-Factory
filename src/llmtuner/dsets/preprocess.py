@@ -47,6 +47,7 @@ def preprocess_dataset(
             kwargs = dict(add_special_tokens=True)
 
         if hasattr(tokenizer, "add_eos_token"): # for LLaMA tokenizer
+            add_eos_token_flag = getattr(tokenizer, "add_eos_token")
             setattr(tokenizer, "add_eos_token", True)
 
         tokenized_examples = tokenizer(examples["prompt"], **kwargs)
@@ -60,6 +61,9 @@ def preprocess_dataset(
             k: [t[i: i + block_size] for i in range(0, total_length, block_size)]
             for k, t in concatenated_examples.items()
         }
+        # make sure the saved tokenizer is the same as the original one
+        if hasattr(tokenizer, "add_eos_token"):
+            setattr(tokenizer, "add_eos_token", add_eos_token_flag)
         return result
 
     def preprocess_supervised_dataset(examples: Dict[str, List[Any]]) -> Dict[str, List[List[int]]]:
@@ -257,7 +261,7 @@ def preprocess_dataset(
         if data_args.cache_path is not None and not os.path.exists(data_args.cache_path):
             if training_args.should_save:
                 dataset.save_to_disk(data_args.cache_path)
-            raise SystemExit("Dataset saved, rerun this script with the same `--cache_file`.")
+            raise SystemExit("Dataset saved, rerun this script with the same `--cache_path`.")
 
         if training_args.should_log:
             try:

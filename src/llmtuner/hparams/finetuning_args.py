@@ -24,10 +24,10 @@ class FinetuningArguments:
         default="mlp",
         metadata={"help": "Name of trainable modules for partial-parameter (freeze) fine-tuning. \
                   LLaMA choices: [\"mlp\", \"self_attn\"], \
-                  BLOOM & Falcon & ChatGLM2 choices: [\"mlp\", \"self_attention\"], \
+                  BLOOM & Falcon & ChatGLM choices: [\"mlp\", \"self_attention\"], \
                   Qwen choices: [\"mlp\", \"attn\"], \
                   Phi-1.5 choices: [\"mlp\", \"mixer\"], \
-                  LLaMA-2, Baichuan, InternLM, XVERSE choices: the same as LLaMA."}
+                  LLaMA-2, BlueLM, Baichuan, InternLM, Mistral, Skywork, XVERSE, Yi choices: the same as LLaMA."}
     )
     lora_rank: Optional[int] = field(
         default=8,
@@ -45,11 +45,11 @@ class FinetuningArguments:
         default=None,
         metadata={"help": "Name(s) of target modules to apply LoRA. Use commas to separate multiple modules. \
                   LLaMA choices: [\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"], \
-                  BLOOM & Falcon & ChatGLM2 choices: [\"query_key_value\", \"self_attention.dense\", \"mlp.dense\"], \
+                  BLOOM & Falcon & ChatGLM choices: [\"query_key_value\", \"dense\", \"dense_h_to_4h\", \"dense_4h_to_h\"], \
                   Baichuan choices: [\"W_pack\", \"o_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"], \
                   Qwen choices: [\"c_attn\", \"attn.c_proj\", \"w1\", \"w2\", \"mlp.c_proj\"], \
                   Phi-1.5 choices: [\"Wqkv\", \"out_proj\", \"fc1\", \"fc2\"], \
-                  LLaMA-2, InternLM, XVERSE choices: the same as LLaMA."}
+                  LLaMA-2, BlueLM, InternLM, Mistral, Skywork, XVERSE, Yi choices: the same as LLaMA."}
     )
     additional_target: Optional[str] = field(
         default=None,
@@ -75,6 +75,14 @@ class FinetuningArguments:
         default=0.1,
         metadata={"help": "The beta parameter for the DPO loss."}
     )
+    dpo_ref_model: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to the reference model used for the DPO training."}
+    )
+    dpo_ref_model_checkpoint: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to the directory(s) containing the model checkpoints of the reference model."}
+    )
     upcast_layernorm: Optional[bool] = field(
         default=False,
         metadata={"help": "Whether to upcast the layernorm weights in fp32."}
@@ -91,7 +99,7 @@ class FinetuningArguments:
         if isinstance(self.additional_target, str):
             self.additional_target = [target.strip() for target in self.additional_target.split(",")]
 
-        assert self.finetuning_type in ["lora", "freeze", "full", "none"], "Invalid fine-tuning method."
+        assert self.finetuning_type in ["lora", "freeze", "full"], "Invalid fine-tuning method."
 
     def save_to_json(self, json_path: str):
         r"""Saves the content of this instance in JSON format inside `json_path`."""

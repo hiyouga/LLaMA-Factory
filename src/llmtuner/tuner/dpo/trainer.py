@@ -1,5 +1,4 @@
 import torch
-import deepspeed # type: ignore
 from copy import deepcopy
 from collections import defaultdict
 from typing import TYPE_CHECKING, Dict, Literal, Optional, Tuple, Union
@@ -51,7 +50,7 @@ class CustomDPOTrainer(DPOTrainer):
                 self.ref_model = self.accelerator.prepare_model(self.ref_model, evaluation_mode=True)
 
     def _prepare_deepspeed(self, model: "PreTrainedModelWrapper"):
-        # Adapted from accelerate: https://github.com/huggingface/accelerate/blob/739b135f8367becb67ffaada12fe76e3aa60fefd/src/accelerate/accelerator.py#L1473
+        # adapted from accelerate: https://github.com/huggingface/accelerate/blob/739b135f8367becb67ffaada12fe76e3aa60fefd/src/accelerate/accelerator.py#L1473
         deepspeed_plugin = self.accelerator.state.deepspeed_plugin
         config_kwargs = deepcopy(deepspeed_plugin.deepspeed_config)
         if model is not None:
@@ -76,6 +75,9 @@ class CustomDPOTrainer(DPOTrainer):
         # Otherwise, we assume the reference model fits in memory and is initialized on each device with ZeRO disabled (stage 0)
         if config_kwargs["zero_optimization"]["stage"] != 3:
             config_kwargs["zero_optimization"]["stage"] = 0
+
+        # Lazy load
+        import deepspeed # type: ignore
         model, *_ = deepspeed.initialize(model=model, config=config_kwargs)
         model.eval()
         return model

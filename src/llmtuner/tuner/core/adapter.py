@@ -1,6 +1,9 @@
+import os
 import torch
 from typing import TYPE_CHECKING
 
+from transformers.utils import cached_file
+from transformers.trainer import WEIGHTS_NAME, SAFE_WEIGHTS_NAME
 from peft import (
     PeftModel,
     TaskType,
@@ -23,8 +26,7 @@ def init_adapter(
     model: "PreTrainedModel",
     model_args: "ModelArguments",
     finetuning_args: "FinetuningArguments",
-    is_trainable: bool,
-    is_mergeable: bool
+    is_trainable: bool
 ) -> "PreTrainedModel":
     r"""
     Initializes the adapters.
@@ -34,8 +36,8 @@ def init_adapter(
     Note that the trainable parameters must be cast to float32.
     """
 
-    if finetuning_args.finetuning_type == "none" and is_trainable:
-        raise ValueError("You cannot use finetuning_type=none while training.")
+    if (not is_trainable) and model_args.checkpoint_dir is None:
+        logger.info("Checkpoint is not found at evaluation, load the original model.")
 
     if finetuning_args.finetuning_type == "full" and is_trainable:
         logger.info("Fine-tuning method: Full")
@@ -58,11 +60,11 @@ def init_adapter(
 
     if finetuning_args.finetuning_type == "lora":
         logger.info("Fine-tuning method: LoRA")
-        latest_checkpoint = None
+        checkpoint_to_resume = None
 
         if model_args.checkpoint_dir is not None:
-            if (is_trainable and finetuning_args.resume_lora_training) or (not is_mergeable): # continually fine-tuning
-                checkpoints_to_merge, latest_checkpoint = model_args.checkpoint_dir[:-1], model_args.checkpoint_dir[-1]
+            if is_trainable and finetuning_args.resume_lora_training:
+                checkpoints_to_merge, checkpoint_to_resume = model_args.checkpoint_dir[:-1], model_args.checkpoint_dir[-1]
             else:
                 checkpoints_to_merge = model_args.checkpoint_dir
 
@@ -73,10 +75,10 @@ def init_adapter(
             if len(checkpoints_to_merge) > 0:
                 logger.info("Merged {} model checkpoint(s).".format(len(checkpoints_to_merge)))
 
-            if latest_checkpoint is not None: # resume lora training or quantized inference
-                model = PeftModel.from_pretrained(model, latest_checkpoint, is_trainable=is_trainable)
+            if checkpoint_to_resume is not None: # resume lora training
+                model = PeftModel.from_pretrained(model, checkpoint_to_resume, is_trainable=is_trainable)
 
-        if is_trainable and latest_checkpoint is None: # create new lora weights while training
+        if is_trainable and checkpoint_to_resume is None: # create new lora weights while training
             if len(finetuning_args.lora_target) == 1 and finetuning_args.lora_target[0] == "all":
                 target_modules = find_all_linear_modules(model, model_args.quantization_bit)
             else:
@@ -92,10 +94,35 @@ def init_adapter(
                 modules_to_save=finetuning_args.additional_target
             )
             model = get_peft_model(model, lora_config)
-            if id(model.peft_config) != id(model.base_model.peft_config): # https://github.com/huggingface/peft/issues/923
-                model.base_model.peft_config = model.peft_config
 
     if model_args.checkpoint_dir is not None:
         logger.info("Loaded fine-tuned model from checkpoint(s): {}".format(",".join(model_args.checkpoint_dir)))
 
     return model
+
+
+def load_valuehead_params(
+    model: "PreTrainedModel",
+    model_args: "ModelArguments"
+) -> bool:
+    kwargs = {
+        "path_or_repo_id": model_args.reward_model,
+        "cache_dir": model_args.cache_dir,
+        "token": model_args.hf_hub_token,
+        "revision": model_args.model_revision
+    }
+    try:
+        vhead_file = cached_file(filename=WEIGHTS_NAME, **kwargs)
+    except:
+        try:
+            vhead_file = cached_file(filename=SAFE_WEIGHTS_NAME, **kwargs)
+        except:
+            logger.warning("Provided path ({}) does not contain valuehead weights.".format(model_args.reward_model))
+            return False
+
+    vhead_params = torch.load(vhead_file, map_location="cpu")
+    model.register_buffer("reward_head_weight", vhead_params["v_head.summary.weight"], persistent=False)
+    model.register_buffer("reward_head_bias", vhead_params["v_head.summary.bias"], persistent=False)
+    model.register_buffer("default_head_weight", torch.zeros_like(vhead_params["v_head.summary.weight"]), persistent=False)
+    model.register_buffer("default_head_bias", torch.zeros_like(vhead_params["v_head.summary.bias"]), persistent=False)
+    return True
