@@ -54,11 +54,11 @@ class ModelArguments:
         default=False,
         metadata={"help": "Enable shift short attention (S^2-Attn) proposed by LongLoRA."}
     )
-    reward_model: Optional[str] = field(
+    reward_model: Optional[str] = field( # TODO: move it to FinetuningArguments
         default=None,
         metadata={"help": "Path to the directory containing the checkpoints of the reward model."}
     )
-    plot_loss: Optional[bool] = field(
+    plot_loss: Optional[bool] = field( # TODO: move it to FinetuningArguments
         default=False,
         metadata={"help": "Whether to plot the training loss after fine-tuning or not."}
     )
