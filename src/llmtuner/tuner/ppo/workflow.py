@@ -42,7 +42,7 @@ def run_ppo(
         ppo_epochs=1,
         max_grad_norm=training_args.max_grad_norm,
         seed=training_args.seed,
-        optimize_cuda_cache=True,
+        optimize_device_cache=True,
         target=finetuning_args.ppo_target,
         log_with=finetuning_args.ppo_logger,
         use_score_scaling=finetuning_args.ppo_score_norm,

@@ -158,7 +158,7 @@ huggingface-cli login
 - Python 3.8+ and PyTorch 1.13.1+
 - 🤗Transformers, Datasets, Accelerate, PEFT and TRL
 - sentencepiece, protobuf and tiktoken
-- fire, jieba, rouge-chinese and nltk (used at evaluation and predict)
+- jieba, rouge-chinese and nltk (used at evaluation and predict)
 - gradio and matplotlib (used in web UI)
 - uvicorn, fastapi and sse-starlette (used in API)
 

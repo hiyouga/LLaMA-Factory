@@ -1,5 +1,4 @@
 import os
-import sys
 import torch
 import datasets
 import transformers
@@ -8,6 +7,7 @@ from transformers import HfArgumentParser, Seq2SeqTrainingArguments
 from transformers.trainer_utils import get_last_checkpoint
 
 from llmtuner.extras.logging import get_logger
+from llmtuner.extras.misc import parse_args
 from llmtuner.hparams import (
     ModelArguments,
     DataArguments,
@@ -17,17 +17,6 @@ from llmtuner.hparams import (
 
 
 logger = get_logger(__name__)
-
-
-def _parse_args(parser: HfArgumentParser, args: Optional[Dict[str, Any]] = None) -> Tuple[Any]:
-    if args is not None:
-        return parser.parse_dict(args)
-    elif len(sys.argv) == 2 and sys.argv[1].endswith(".yaml"):
-        return parser.parse_yaml_file(os.path.abspath(sys.argv[1]))
-    elif len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
-        return parser.parse_json_file(os.path.abspath(sys.argv[1]))
-    else:
-        return parser.parse_args_into_dataclasses()
 
 
 def parse_train_args(
@@ -46,7 +35,7 @@ def parse_train_args(
         FinetuningArguments,
         GeneratingArguments
     ))
-    return _parse_args(parser, args)
+    return parse_args(parser, args)
 
 
 def parse_infer_args(
@@ -63,7 +52,7 @@ def parse_infer_args(
         FinetuningArguments,
         GeneratingArguments
     ))
-    return _parse_args(parser, args)
+    return parse_args(parser, args)
 
 
 def get_train_args(
