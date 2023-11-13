@@ -38,12 +38,13 @@ def init_adapter(
 
     if (not is_trainable) and model_args.checkpoint_dir is None:
         logger.info("Checkpoint is not found at evaluation, load the original model.")
+        return model
 
     if finetuning_args.finetuning_type == "full" and is_trainable:
         logger.info("Fine-tuning method: Full")
         model = model.float()
 
-    if finetuning_args.finetuning_type == "freeze":
+    if finetuning_args.finetuning_type == "freeze" and is_trainable:
         logger.info("Fine-tuning method: Freeze")
         num_layers = getattr(model.config, "num_layers")
         if finetuning_args.num_layer_trainable > 0: # fine-tuning the last n layers if num_layer_trainable > 0
