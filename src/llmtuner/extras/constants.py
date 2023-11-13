@@ -152,6 +152,14 @@ register_model_group(
 
 register_model_group(
     models={
+        "LingoWhale-8B": "deeplang-ai/LingoWhale-8B"
+    },
+    module="qkv_proj"
+)
+
+
+register_model_group(
+    models={
         "LLaMA-7B": "huggyllama/llama-7b",
         "LLaMA-13B": "huggyllama/llama-13b",
         "LLaMA-30B": "huggyllama/llama-30b",
