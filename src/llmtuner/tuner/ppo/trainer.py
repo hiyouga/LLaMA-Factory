@@ -226,7 +226,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         replace_model(unwrapped_model, target="default")
         return rewards
 
-    @PPODecorators.empty_cuda_cache()
+    @PPODecorators.empty_device_cache()
     def batched_forward_pass(
         self,
         model: "AutoModelForCausalLMWithValueHead",

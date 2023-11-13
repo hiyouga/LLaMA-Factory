@@ -158,7 +158,7 @@ huggingface-cli login
 - Python 3.8+ 和 PyTorch 1.13.1+
 - 🤗Transformers, Datasets, Accelerate, PEFT 和 TRL
 - sentencepiece, protobuf 和 tiktoken
-- fire, jieba, rouge-chinese 和 nltk (用于评估及预测)
+- jieba, rouge-chinese 和 nltk (用于评估及预测)
 - gradio 和 matplotlib (用于网页端交互)
 - uvicorn, fastapi 和 sse-starlette (用于 API)
 

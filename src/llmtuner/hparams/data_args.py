@@ -42,7 +42,7 @@ class DataArguments:
     )
     dataset_dir: Optional[str] = field(
         default="data",
-        metadata={"help": "The name of the folder containing datasets."}
+        metadata={"help": "Path to the folder containing the datasets."}
     )
     split: Optional[str] = field(
         default="train",
