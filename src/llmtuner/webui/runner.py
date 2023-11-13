@@ -136,7 +136,7 @@ class Runner:
             args["upcast_layernorm"] = True
 
         if args["stage"] == "ppo":
-            args["reward_model"] = get("train.reward_model")
+            args["reward_model"] = get_save_dir(get("top.model_name"), get("top.finetuning_type"), get("train.reward_model"))
 
         if args["stage"] == "dpo":
             args["dpo_beta"] = get("train.dpo_beta")
