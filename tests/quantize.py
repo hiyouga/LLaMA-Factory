@@ -4,7 +4,6 @@
 #                           --max_length 1024 --max_samples 1024
 # dataset format: instruction (string), input (string), output (string), history (List[string])
 
-
 import fire
 from datasets import load_dataset
 from transformers import AutoTokenizer
