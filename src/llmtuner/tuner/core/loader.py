@@ -84,10 +84,9 @@ def load_model_and_tokenizer(
         tokenizer._pad = MethodType(PreTrainedTokenizerBase._pad, tokenizer)
 
     # Set model dtype
-    if model_args.compute_dtype is not None: # for training
-        setattr(config, "torch_dtype", model_args.compute_dtype)
-    else: # for evaluation, priority: bf16 > fp16 > fp32
+    if model_args.compute_dtype is None: # priority: bf16 > fp16 > fp32
         model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
+    setattr(config, "torch_dtype", model_args.compute_dtype)
 
     # Fix config (for Qwen)
     if getattr(config, "model_type", None) == "qwen":
