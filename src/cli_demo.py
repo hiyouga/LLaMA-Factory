@@ -1,5 +1,11 @@
-import readline
 from llmtuner import ChatModel
+
+try:
+    import platform
+    if platform.system() != "Windows":
+        import readline
+except ImportError:
+    print("Install `readline` for a better experience.")
 
 
 def main():
