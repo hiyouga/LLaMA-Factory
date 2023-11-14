@@ -65,6 +65,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 | [Phi-1.5](https://huggingface.co/microsoft/phi-1_5)      | 1.3B                        | Wqkv              | -         |
 | [Qwen](https://github.com/QwenLM/Qwen)                   | 7B/14B                      | c_attn            | qwen      |
 | [XVERSE](https://github.com/xverse-ai)                   | 7B/13B/65B                  | q_proj,v_proj     | xverse    |
+| [Yi](https://github.com/01-ai/Yi)                        | 6B/34B                      | q_proj,v_proj     | llama2    |
 
 > [!NOTE]
 > **Default module** is used for the `--lora_target` argument, you can use `--lora_target all` to specify all the available modules.
