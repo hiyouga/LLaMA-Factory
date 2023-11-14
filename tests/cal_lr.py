@@ -32,19 +32,14 @@ def calculate_lr(
         dataset=dataset,
         template="default",
         cutoff_len=cutoff_len,
-        output_dir="dummy_dir",
-        fp16=True
+        output_dir="dummy_dir"
     ))
     trainset = get_dataset(model_args, data_args)
     _, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, is_trainable=False, stage="sft")
     trainset = preprocess_dataset(trainset, tokenizer, data_args, training_args, stage="sft")
     data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, label_pad_token_id=IGNORE_INDEX)
     dataloader = DataLoader(
-        dataset=trainset,
-        batch_size=batch_size,
-        shuffle=True,
-        collate_fn=data_collator,
-        pin_memory=True
+        dataset=trainset, batch_size=batch_size, shuffle=True, collate_fn=data_collator, pin_memory=True
     )
     valid_tokens, total_tokens = 0, 0
     for batch in tqdm(dataloader):
