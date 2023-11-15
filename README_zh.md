@@ -14,7 +14,9 @@
 
 ## LLaMA Board: 通过一站式网页界面快速上手 LLaMA Factory
 
-使用 `CUDA_VISIBLE_DEVICES=0 python src/train_web.py` 启动 **LLaMA Board**。（该界面目前仅支持单卡训练）
+通过 **[Hugging Face Space](https://huggingface.co/spaces/hiyouga/LLaMA-Board)** 预览 LLaMA Board。
+
+使用 `CUDA_VISIBLE_DEVICES=0 python src/train_web.py` 启动 LLaMA Board。（该界面目前仅支持单卡训练）
 
 下面是使用单张 GPU 在 10 分钟内更改对话式大型语言模型自我认知的示例。
 

@@ -70,7 +70,7 @@ def get_module(model_name: str) -> str:
 
 
 def get_template(model_name: str) -> str:
-    if model_name.endswith("Chat") and get_prefix(model_name) in DEFAULT_TEMPLATE:
+    if model_name and model_name.endswith("Chat") and get_prefix(model_name) in DEFAULT_TEMPLATE:
         return DEFAULT_TEMPLATE[get_prefix(model_name)]
     return "default"
 
