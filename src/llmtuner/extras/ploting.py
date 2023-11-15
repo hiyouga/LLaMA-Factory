@@ -1,11 +1,14 @@
 import os
 import math
 import json
-import matplotlib.pyplot as plt
 from typing import List, Optional
 from transformers.trainer import TRAINER_STATE_NAME
 
 from llmtuner.extras.logging import get_logger
+from llmtuner.extras.packages import is_matplotlib_available
+
+if is_matplotlib_available():
+    import matplotlib.pyplot as plt
 
 
 logger = get_logger(__name__)
