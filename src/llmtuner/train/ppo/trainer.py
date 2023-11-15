@@ -37,23 +37,43 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         finetuning_args: "FinetuningArguments",
         generating_args: "GeneratingArguments",
         callbacks: List["TrainerCallback"],
+        reward_model: "AutoModelForCausalLMWithValueHead",
         **kwargs
     ):
         PPOTrainer.__init__(self, **kwargs)
+
         self.args = training_args
         self.model_args = model_args
         self.finetuning_args = finetuning_args
+
         self.generation_config = GenerationConfig(
             pad_token_id=self.tokenizer.pad_token_id,
             eos_token_id=[self.tokenizer.eos_token_id] + self.tokenizer.additional_special_tokens_ids,
             **generating_args.to_dict()
         )
+
         self.state = TrainerState()
         self.control = TrainerControl()
         self.log_callback, self.save_callback = callbacks[0], callbacks[1]
         assert isinstance(self.log_callback, LogCallback) and isinstance(self.save_callback, SavePeftModelCallback)
+
         if self.args.max_steps > 0:
             logger.info("max_steps is given, it will override any value given in num_train_epochs")
+
+        if reward_model is not None:
+            is_deepspeed_enabled = self.accelerator.distributed_type == "DEEPSPEED" and hasattr(
+                self.accelerator.state, "deepspeed_plugin"
+            )
+            if is_deepspeed_enabled:
+                if not (
+                    getattr(reward_model.pretrained_model, "is_loaded_in_8bit", False)
+                    or getattr(reward_model.pretrained_model, "is_loaded_in_4bit", False)
+                ): # quantized models are already set on the correct device
+                    self.reward_model = self._prepare_deepspeed(self.reward_model)
+            else:
+                self.reward_model = self.accelerator.prepare_model(self.reward_model, evaluation_mode=True)
+        else:
+            self.reward_model = None
 
     def ppo_train(self) -> None:
         r"""
@@ -213,11 +233,14 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         r"""
         Computes scores using given reward model.
         """
-        replace_model(unwrapped_model, target="reward")
+        if self.reward_model is None:
+            replace_model(unwrapped_model, target="reward")
+
         batch = self.prepare_model_inputs(queries, responses)
 
         with torch.cuda.amp.autocast(dtype=self.model_args.compute_dtype): # support bf16
-            _, _, values = self.model(**batch, output_hidden_states=True, return_dict=True)
+            reward_model = self.reward_model if self.reward_model is not None else self.model
+            _, _, values = reward_model(**batch, output_hidden_states=True, return_dict=True)
 
         if values.size(0) != batch["input_ids"].size(0): # adapt to chatglm2
             values = torch.transpose(values, 0, 1)
@@ -228,7 +251,9 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             end_index = end_indexes[-1].item() if len(end_indexes) else 0
             rewards.append(values[i, end_index].float().detach().cpu()) # use fp32 type
 
-        replace_model(unwrapped_model, target="default")
+        if self.reward_model is None:
+            replace_model(unwrapped_model, target="default")
+
         return rewards
 
     @PPODecorators.empty_device_cache()

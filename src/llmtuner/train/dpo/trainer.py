@@ -43,7 +43,11 @@ class CustomDPOTrainer(DPOTrainer):
 
         if ref_model is not None:
             if self.is_deepspeed_enabled:
-                self.ref_model = self._prepare_deepspeed(self.ref_model)
+                if not (
+                    getattr(ref_model, "is_loaded_in_8bit", False)
+                    or getattr(ref_model, "is_loaded_in_4bit", False)
+                ): # quantized models are already set on the correct device
+                    self.ref_model = self._prepare_deepspeed(self.ref_model)
             else:
                 self.ref_model = self.accelerator.prepare_model(self.ref_model, evaluation_mode=True)
 

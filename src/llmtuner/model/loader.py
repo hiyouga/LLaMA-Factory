@@ -15,7 +15,6 @@ from transformers import (
 )
 from transformers.models.llama import modeling_llama as LlamaModule
 from transformers.utils.versions import require_version
-from peft import PeftModel
 from trl import AutoModelForCausalLMWithValueHead
 
 try:
@@ -24,12 +23,12 @@ except ImportError: # https://github.com/huggingface/transformers/releases/tag/v
     from transformers.deepspeed import is_deepspeed_zero3_enabled
 
 from llmtuner.extras.logging import reset_logging, get_logger
-from llmtuner.extras.misc import count_parameters, infer_optim_dtype
+from llmtuner.extras.misc import count_parameters, get_current_device, infer_optim_dtype
 from llmtuner.extras.packages import is_flash_attn2_available
 from llmtuner.extras.patches import llama_patch as LlamaPatches
 from llmtuner.hparams import FinetuningArguments
-from llmtuner.model.adapter import init_adapter, load_valuehead_params
-from llmtuner.model.utils import prepare_model_for_training
+from llmtuner.model.adapter import init_adapter
+from llmtuner.model.utils import load_valuehead_params, prepare_model_for_training
 
 if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer
@@ -74,6 +73,7 @@ def load_model_and_tokenizer(
     )
 
     if finetuning_args.finetuning_type != "lora" and model_args.checkpoint_dir is not None:
+        logger.info("Use `model_name_or_path` to specify the model trained with full/freeze method.")
         model_to_load = model_args.checkpoint_dir[0]
     else:
         model_to_load = model_args.model_name_or_path
@@ -145,7 +145,7 @@ def load_model_and_tokenizer(
         else:
             logger.warning("Current model does not support shift short attention.")
 
-    # Quantization configurations (using bitsandbytes library).
+    # Quantization configurations (using bitsandbytes library)
     if model_args.quantization_bit is not None:
         if is_deepspeed_zero3_enabled():
             raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantization.")
@@ -165,10 +165,10 @@ def load_model_and_tokenizer(
                 bnb_4bit_quant_type=model_args.quantization_type
             )
 
-        config_kwargs["device_map"] = {"": int(os.environ.get("LOCAL_RANK", "0"))} if is_trainable else "auto"
+        config_kwargs["device_map"] = {"": get_current_device()}
         logger.info("Quantizing model to {} bit.".format(model_args.quantization_bit))
 
-    # Load and prepare pre-trained models (without valuehead).
+    # Load pre-trained models (without valuehead)
     model = AutoModelForCausalLM.from_pretrained(
         model_to_load,
         config=config,
@@ -186,7 +186,7 @@ def load_model_and_tokenizer(
         setattr(model, "lm_head", model.transformer.output_layer)
         setattr(model, "_keys_to_ignore_on_save", ["lm_head.weight"])
 
-    # Register auto class to save the custom code files.
+    # Register auto class to save the custom code files
     if isinstance(config, PretrainedConfig) and "AutoConfig" in getattr(config, "auto_map", {}):
         config.__class__.register_for_auto_class()
     if isinstance(model, PreTrainedModel) and "AutoModelForCausalLM" in getattr(config, "auto_map", {}):
@@ -200,25 +200,15 @@ def load_model_and_tokenizer(
     model = model.train() if is_trainable else model.eval()
 
     # Prepare model with valuehead for RLHF
-    if stage == "rm" or stage == "ppo":
+    if stage in ["rm", "ppo"]:
         model: "AutoModelForCausalLMWithValueHead" = AutoModelForCausalLMWithValueHead.from_pretrained(model)
         reset_logging()
-        if stage == "rm" and model_args.checkpoint_dir is not None: # load valuehead weights to evaluate reward model
+        if model_args.checkpoint_dir is not None: # load valuehead weights if exists
             logger.warning("Only the last checkpoint containing valuehead will be loaded.")
-            if load_valuehead_params(model, model_args):
-                model.v_head.load_state_dict({
-                    "summary.weight": getattr(model, "reward_head_weight"),
-                    "summary.bias": getattr(model, "reward_head_bias")
-                })
-
-        if stage == "ppo": # load reward model
-            logger.info("Load reward model from {}".format(model_args.reward_model))
-            if isinstance(model.pretrained_model, PeftModel):
-                model.pretrained_model.load_adapter(model_args.reward_model, "reward")
-            for name, param in model.named_parameters(): # https://github.com/huggingface/peft/issues/1090
-                if "default" in name:
-                    param.data = param.data.to(torch.float32) # trainable params should in fp32
-            assert load_valuehead_params(model, model_args), "Reward model is not correctly loaded."
+            vhead_params = load_valuehead_params(model_args.checkpoint_dir[-1], model_args)
+            if vhead_params is not None:
+                model.load_state_dict(vhead_params, strict=False)
+                logger.info("Loaded valuehead from checkpoint: {}".format(model_args.checkpoint_dir[-1]))
 
     # Prepare model for inference
     if not is_trainable:

@@ -88,11 +88,7 @@
   },
   "belle_multiturn": {
     "script_url": "belle_multiturn",
-    "columns": {
-      "prompt": "instruction",
-      "response": "output",
-      "history": "history"
-    }
+    "formatting": "sharegpt"
   },
   "ultra_chat": {
     "script_url": "ultra_chat",
@@ -106,6 +102,13 @@
   },
   "alpaca_cot": {
     "hf_hub_url": "QingyiSi/Alpaca-CoT"
+  },
+  "openorca": {
+    "hf_hub_url": "Open-Orca/OpenOrca",
+    "columns": {
+      "prompt": "question",
+      "response": "response"
+    }
   },
   "mathinstruct": {
     "hf_hub_url": "TIGER-Lab/MathInstruct",
