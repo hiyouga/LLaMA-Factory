@@ -2,11 +2,23 @@ from collections import defaultdict, OrderedDict
 from typing import Dict, Optional
 
 
+CHOICES = ["A", "B", "C", "D"]
+
+DEFAULT_MODULE = defaultdict(str)
+
+DEFAULT_TEMPLATE = defaultdict(str)
+
 IGNORE_INDEX = -100
+
+LAYERNORM_NAMES = {"norm", "ln"}
 
 LOG_FILE_NAME = "trainer_log.jsonl"
 
 METHODS = ["full", "freeze", "lora"]
+
+SUBJECTS = ["Average", "STEM", "Social Sciences", "Humanities", "Other"]
+
+SUPPORTED_MODELS = OrderedDict()
 
 TRAINING_STAGES = {
     "Supervised Fine-Tuning": "sft",
@@ -15,14 +27,6 @@ TRAINING_STAGES = {
     "DPO": "dpo",
     "Pre-Training": "pt"
 }
-
-LAYERNORM_NAMES = {"norm", "ln"}
-
-SUPPORTED_MODELS = OrderedDict()
-
-DEFAULT_MODULE = defaultdict(str)
-
-DEFAULT_TEMPLATE = defaultdict(str)
 
 
 def register_model_group(
