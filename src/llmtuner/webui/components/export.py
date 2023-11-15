@@ -1,7 +1,7 @@
 import gradio as gr
 from typing import TYPE_CHECKING, Dict, Generator, List
 
-from llmtuner.tuner import export_model
+from llmtuner.train import export_model
 from llmtuner.webui.common import get_save_dir
 from llmtuner.webui.locales import ALERTS
 

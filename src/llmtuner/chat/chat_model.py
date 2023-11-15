@@ -4,8 +4,8 @@ from typing import Any, Dict, Generator, List, Literal, Optional, Tuple
 from threading import Thread
 from transformers import GenerationConfig, TextIteratorStreamer
 
+from llmtuner.data.template import get_template_and_fix_tokenizer
 from llmtuner.extras.misc import get_logits_processor
-from llmtuner.extras.template import get_template_and_fix_tokenizer
 from llmtuner.model import dispatch_model, get_infer_args, load_model_and_tokenizer
 
 
