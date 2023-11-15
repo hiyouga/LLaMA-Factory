@@ -1,16 +1,19 @@
 import os
 import json
 import gradio as gr
-import matplotlib.figure
-import matplotlib.pyplot as plt
 from typing import TYPE_CHECKING, Any, Dict
 from datetime import datetime
 
+from llmtuner.extras.packages import is_matplotlib_available
 from llmtuner.extras.ploting import smooth
 from llmtuner.webui.common import get_save_dir
 
 if TYPE_CHECKING:
     from llmtuner.extras.callbacks import LogCallback
+
+if is_matplotlib_available():
+    import matplotlib.figure
+    import matplotlib.pyplot as plt
 
 
 def update_process_bar(callback: "LogCallback") -> Dict[str, Any]:
@@ -56,7 +59,7 @@ def get_eval_results(path: os.PathLike) -> str:
     return "```json\n{}\n```\n".format(result)
 
 
-def gen_plot(base_model: str, finetuning_type: str, output_dir: str) -> matplotlib.figure.Figure:
+def gen_plot(base_model: str, finetuning_type: str, output_dir: str) -> "matplotlib.figure.Figure":
     if not base_model:
         return
     log_file = get_save_dir(base_model, finetuning_type, output_dir, "trainer_log.jsonl")
