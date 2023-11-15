@@ -6,19 +6,16 @@ from transformers import Seq2SeqTrainingArguments
 
 from llmtuner.data import get_dataset, preprocess_dataset, split_dataset
 from llmtuner.extras.constants import IGNORE_INDEX
-from llmtuner.extras.logging import get_logger
 from llmtuner.extras.ploting import plot_loss
 from llmtuner.hparams import ModelArguments
-from llmtuner.model import create_ref_model, generate_model_card, load_model_and_tokenizer
+from llmtuner.model import generate_model_card, load_model_and_tokenizer
+from llmtuner.train.utils import create_ref_model
 from llmtuner.train.dpo.collator import DPODataCollatorWithPadding
 from llmtuner.train.dpo.trainer import CustomDPOTrainer
 
 if TYPE_CHECKING:
     from transformers import TrainerCallback
     from llmtuner.hparams import DataArguments, FinetuningArguments
-
-
-logger = get_logger(__name__)
 
 
 def run_dpo(
@@ -74,7 +71,6 @@ def run_dpo(
     if training_args.do_eval:
         metrics = trainer.evaluate(metric_key_prefix="eval")
         if id(model) == id(ref_model): # unable to compute rewards without a reference model
-            logger.warning("Specify `ref_model` for computing rewards at evaluation.")
             remove_keys = [key for key in metrics.keys() if "rewards" in key]
             for key in remove_keys:
                 metrics.pop(key)
