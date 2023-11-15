@@ -43,7 +43,7 @@ class SavePeftModelCallback(TrainerCallback):
             if model.pretrained_model.can_generate():
                 model.pretrained_model.generation_config.save_pretrained(args.output_dir)
             if getattr(model, "is_peft_model", False):
-                getattr(model, "pretrained_model").save_pretrained(args.output_dir)
+                model.pretrained_model.save_pretrained(args.output_dir)
 
 
 class LogCallback(TrainerCallback):
