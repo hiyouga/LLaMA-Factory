@@ -225,9 +225,6 @@ def get_template_and_fix_tokenizer(
     return template
 
 
-r"""
-Supports: https://huggingface.co/tatsu-lab/alpaca-7b-wdiff
-"""
 register_template(
     name="alpaca",
     prefix=[
@@ -246,11 +243,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/BAAI/AquilaChat-7B
-          https://huggingface.co/BAAI/AquilaChat2-7B
-          https://huggingface.co/BAAI/AquilaChat2-34B
-"""
 register_template(
     name="aquila",
     prefix=[
@@ -273,9 +265,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/baichuan-inc/Baichuan-13B-Chat
-"""
 register_template(
     name="baichuan",
     prefix=[
@@ -292,10 +281,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/baichuan-inc/Baichuan2-7B-Chat
-          https://huggingface.co/baichuan-inc/Baichuan2-13B-Chat
-"""
 register_template(
     name="baichuan2",
     prefix=[
@@ -312,9 +297,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/BelleGroup/BELLE-LLaMA-EXT-13B
-"""
 register_template(
     name="belle",
     prefix=[
@@ -330,9 +312,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/vivo-ai/BlueLM-7B-Chat
-"""
 register_template(
     name="bluelm",
     prefix=[
@@ -348,9 +327,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/THUDM/chatglm2-6b
-"""
 register_template(
     name="chatglm2",
     prefix=[
@@ -369,9 +345,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/THUDM/chatglm3-6b
-"""
 register_template(
     name="chatglm3",
     prefix=[
@@ -395,11 +368,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/deepseek-ai/deepseek-coder-1.3b-instruct
-          https://huggingface.co/deepseek-ai/deepseek-coder-6.7b-instruct
-          https://huggingface.co/deepseek-ai/deepseek-coder-33b-instruct
-"""
 register_template(
     name="deepseek",
     prefix=[
@@ -426,9 +394,6 @@ register_template(
 )
 
 
-r"""
-Default template.
-"""
 register_template(
     name="default",
     prefix=[
@@ -447,9 +412,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/tiiuae/falcon-180B-chat
-"""
 register_template(
     name="falcon",
     prefix=[
@@ -466,10 +428,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/internlm/internlm-chat-7b
-          https://huggingface.co/internlm/internlm-chat-20b
-"""
 register_template(
     name="intern",
     prefix=[
@@ -492,11 +450,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/meta-llama/Llama-2-7b-chat-hf
-          https://huggingface.co/meta-llama/Llama-2-13b-chat-hf
-          https://huggingface.co/meta-llama/Llama-2-70b-chat-hf
-"""
 register_template(
     name="llama2",
     prefix=[
@@ -519,10 +472,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/ziqingyang/chinese-alpaca-2-7b
-          https://huggingface.co/ziqingyang/chinese-alpaca-2-13b
-"""
 register_template(
     name="llama2_zh",
     prefix=[
@@ -536,9 +485,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1
-"""
 register_template(
     name="mistral",
     prefix=[
@@ -552,9 +498,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/openchat/openchat_3.5
-"""
 register_template(
     name="openchat",
     prefix=[
@@ -576,10 +519,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/Qwen/Qwen-7B-Chat
-          https://huggingface.co/Qwen/Qwen-14B-Chat
-"""
 register_template(
     name="qwen",
     prefix=[
@@ -606,10 +545,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/HuggingFaceH4/starchat-alpha
-          https://huggingface.co/HuggingFaceH4/starchat-beta
-"""
 register_template(
     name="starchat",
     prefix=[
@@ -650,10 +585,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/lmsys/vicuna-7b-v1.5
-          https://huggingface.co/lmsys/vicuna-13b-v1.5
-"""
 register_template(
     name="vicuna",
     prefix=[
@@ -670,10 +601,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/xverse/XVERSE-7B-Chat
-          https://huggingface.co/xverse/XVERSE-13B-Chat
-"""
 register_template(
     name="xverse",
     prefix=[
@@ -687,11 +614,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/wenge-research/yayi-7b
-          https://huggingface.co/wenge-research/yayi-7b-llama2
-          https://huggingface.co/wenge-research/yayi-13b-llama2
-"""
 register_template(
     name="yayi",
     prefix=[
@@ -724,10 +646,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/HuggingFaceH4/zephyr-7b-alpha
-          https://huggingface.co/HuggingFaceH4/zephyr-7b-beta
-"""
 register_template(
     name="zephyr",
     prefix=[
@@ -746,11 +664,6 @@ register_template(
 )
 
 
-r"""
-Supports: https://huggingface.co/IDEA-CCNL/Ziya-LLaMA-13B-v1
-          https://huggingface.co/IDEA-CCNL/Ziya-LLaMA-13B-v1.1
-          https://huggingface.co/IDEA-CCNL/Ziya2-13B-Chat
-"""
 register_template(
     name="ziya",
     prefix=[
