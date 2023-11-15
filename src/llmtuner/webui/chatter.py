@@ -2,7 +2,7 @@ import gradio as gr
 from gradio.components import Component # cannot use TYPE_CHECKING here
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Tuple
 
-from llmtuner.chat.stream_chat import ChatModel
+from llmtuner.chat import ChatModel
 from llmtuner.extras.misc import torch_gc
 from llmtuner.hparams import GeneratingArguments
 from llmtuner.webui.common import get_save_dir
