@@ -82,15 +82,13 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         raise ValueError("Please enable `predict_with_generate` to save model predictions.")
 
     if finetuning_args.stage in ["rm", "ppo"]:
-        if finetuning_args.finetuning_type != "lora":
-            raise ValueError("RM and PPO stages can only be performed with the LoRA method.")
         if training_args.resume_from_checkpoint is not None:
             raise ValueError("RM and PPO stages do not support `resume_from_checkpoint`.")
         if training_args.load_best_model_at_end:
             raise ValueError("RM and PPO stages do not support `load_best_model_at_end`.")
 
     if finetuning_args.stage == "ppo" and not training_args.do_train:
-        raise ValueError("PPO training does not support evaluation.")
+        raise ValueError("PPO training does not support evaluation, use the SFT stage to evaluate models.")
 
     if finetuning_args.stage in ["rm", "dpo"]:
         for dataset_attr in data_args.dataset_list:
@@ -130,6 +128,9 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
     if (not training_args.do_train) and model_args.quantization_bit is not None:
         logger.warning("Evaluating model in 4/8-bit mode may cause lower scores.")
+
+    if (not training_args.do_train) and finetuning_args.stage == "dpo" and finetuning_args.ref_model is None:
+        logger.warning("Specify `ref_model` for computing rewards at evaluation.")
 
     # postprocess training_args
     if (

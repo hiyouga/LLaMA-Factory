@@ -9,17 +9,14 @@ from transformers.optimization import get_scheduler
 
 from llmtuner.data import get_dataset, preprocess_dataset
 from llmtuner.extras.callbacks import SavePeftModelCallback
-from llmtuner.extras.logging import get_logger
 from llmtuner.extras.ploting import plot_loss
-from llmtuner.model import create_ref_model, create_reward_model, load_model_and_tokenizer
+from llmtuner.model import load_model_and_tokenizer
+from llmtuner.train.utils import create_ref_model, create_reward_model
 from llmtuner.train.ppo.trainer import CustomPPOTrainer
 
 if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments, TrainerCallback
     from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments
-
-
-logger = get_logger(__name__)
 
 
 def run_ppo(
