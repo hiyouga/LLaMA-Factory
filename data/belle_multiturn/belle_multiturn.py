@@ -24,9 +24,7 @@ class BelleMultiturn(datasets.GeneratorBasedBuilder):
 
     def _info(self):
         features = datasets.Features({
-            "instruction": datasets.Value("string"),
-            "output": datasets.Value("string"),
-            "history": datasets.Sequence(datasets.Sequence(datasets.Value("string")))
+            "conversations": [{"from": datasets.Value("string"), "value": datasets.Value("string")}]
         })
         return datasets.DatasetInfo(
             description=_DESCRIPTION,
@@ -51,6 +49,7 @@ class BelleMultiturn(datasets.GeneratorBasedBuilder):
         with open(filepath, "r", encoding="utf-8") as f:
             for key, row in enumerate(f):
                 data = json.loads(row)
+                conversations = []
                 prompt = data["instruction"].strip()
                 response = data["output"].strip()
 
@@ -58,7 +57,8 @@ class BelleMultiturn(datasets.GeneratorBasedBuilder):
                 human_idx = prompt.rfind("Human:")
                 query = prompt[human_idx+6:assist_idx].strip()
                 prompt = prompt[:human_idx].strip()
-                history = []
+                conversations.insert(0, {"from": "gpt", "value": response})
+                conversations.insert(0, {"from": "human", "value": query})
 
                 while prompt.rfind("Assistant:") != -1:
                     assist_idx = prompt.rfind("Assistant:")
@@ -66,13 +66,10 @@ class BelleMultiturn(datasets.GeneratorBasedBuilder):
                     if human_idx != -1:
                         old_query = prompt[human_idx+6:assist_idx].strip()
                         old_resp = prompt[assist_idx+10:].strip()
-                        history.insert(0, (old_query, old_resp))
+                        conversations.insert(0, {"from": "gpt", "value": old_resp})
+                        conversations.insert(0, {"from": "human", "value": old_query})
                     else:
                         break
                     prompt = prompt[:human_idx].strip()
 
-                yield key, {
-                    "instruction": query,
-                    "output": response,
-                    "history": history
-                }
+                yield key, {"conversations": conversations}

@@ -9,7 +9,7 @@ from llmtuner.extras.constants import IGNORE_INDEX
 from llmtuner.extras.logging import get_logger
 from llmtuner.extras.ploting import plot_loss
 from llmtuner.hparams import ModelArguments
-from llmtuner.model import generate_model_card, load_model_and_tokenizer
+from llmtuner.model import create_ref_model, generate_model_card, load_model_and_tokenizer
 from llmtuner.train.dpo.collator import DPODataCollatorWithPadding
 from llmtuner.train.dpo.trainer import CustomDPOTrainer
 
@@ -38,23 +38,10 @@ def run_dpo(
     )
 
     # Create reference model
-    if finetuning_args.dpo_ref_model is not None:
-        ref_model_args_dict = model_args.to_dict()
-        ref_model_args_dict.update(dict(
-            model_name_or_path=finetuning_args.dpo_ref_model,
-            checkpoint_dir=finetuning_args.dpo_ref_model_checkpoint
-        ))
-        ref_model_args = ModelArguments(**ref_model_args_dict)
-        ref_model, _ = load_model_and_tokenizer(ref_model_args, finetuning_args, is_trainable=False, stage="sft")
-        logger.info("Created reference model from {}".format(finetuning_args.dpo_ref_model))
-    elif training_args.do_train:
-        if isinstance(model, PeftModel):
-            ref_model = None
-        else:
-            ref_model, _ = load_model_and_tokenizer(model_args, finetuning_args, is_trainable=False, stage="sft")
-            logger.info("Created reference model from the model itself.")
-    else:
+    if finetuning_args.ref_model is None and (not training_args.do_train): # use the model itself
         ref_model = model
+    else:
+        ref_model = create_ref_model(model_args, finetuning_args, stage="dpo")
 
     # Update arguments
     training_args_dict = training_args.to_dict()
@@ -80,14 +67,14 @@ def run_dpo(
         trainer.log_metrics("train", train_result.metrics)
         trainer.save_metrics("train", train_result.metrics)
         trainer.save_state()
-        if trainer.is_world_process_zero() and model_args.plot_loss:
+        if trainer.is_world_process_zero() and finetuning_args.plot_loss:
             plot_loss(training_args.output_dir, keys=["loss", "eval_loss"])
 
     # Evaluation
     if training_args.do_eval:
         metrics = trainer.evaluate(metric_key_prefix="eval")
         if id(model) == id(ref_model): # unable to compute rewards without a reference model
-            logger.warning("Pass `dpo_ref_model` for computing rewards at evaluation.")
+            logger.warning("Specify `ref_model` for computing rewards at evaluation.")
             remove_keys = [key for key in metrics.keys() if "rewards" in key]
             for key in remove_keys:
                 metrics.pop(key)

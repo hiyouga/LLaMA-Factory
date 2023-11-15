@@ -81,9 +81,9 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 | ---------------------- | ------------------ | ------------------ | ------------------ | ------------------ |
 | 预训练                 | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | 指令监督微调            | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| 奖励模型训练            |                    |                    | :white_check_mark: | :white_check_mark: |
-| PPO 训练               |                    |                    | :white_check_mark: | :white_check_mark: |
-| DPO 训练               | :white_check_mark: |                    | :white_check_mark: | :white_check_mark: |
+| 奖励模型训练            | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| PPO 训练               | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| DPO 训练               | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
 > [!NOTE]
 > 请使用 `--quantization_bit 4/8` 参数来启用 QLoRA 训练。
