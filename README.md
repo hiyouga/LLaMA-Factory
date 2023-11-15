@@ -81,9 +81,9 @@ Please refer to [constants.py](src/llmtuner/extras/constants.py) for a full list
 | ---------------------- | ------------------ | ------------------ | ------------------ | ------------------ |
 | Pre-Training           | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | Supervised Fine-Tuning | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Reward Modeling        |                    |                    | :white_check_mark: | :white_check_mark: |
-| PPO Training           |                    |                    | :white_check_mark: | :white_check_mark: |
-| DPO Training           | :white_check_mark: |                    | :white_check_mark: | :white_check_mark: |
+| Reward Modeling        | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| PPO Training           | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| DPO Training           | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
 > [!NOTE]
 > Use `--quantization_bit 4/8` argument to enable QLoRA.

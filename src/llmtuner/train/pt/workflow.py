@@ -42,7 +42,7 @@ def run_pt(
         trainer.log_metrics("train", train_result.metrics)
         trainer.save_metrics("train", train_result.metrics)
         trainer.save_state()
-        if trainer.is_world_process_zero() and model_args.plot_loss:
+        if trainer.is_world_process_zero() and finetuning_args.plot_loss:
             plot_loss(training_args.output_dir, keys=["loss", "eval_loss"])
 
     # Evaluation
