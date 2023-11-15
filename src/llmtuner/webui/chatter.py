@@ -14,8 +14,14 @@ if TYPE_CHECKING:
 
 class WebChatModel(ChatModel):
 
-    def __init__(self, manager: "Manager", lazy_init: Optional[bool] = True) -> None:
+    def __init__(
+        self,
+        manager: "Manager",
+        demo_mode: Optional[bool] = False,
+        lazy_init: Optional[bool] = True
+    ) -> None:
         self.manager = manager
+        self.demo_mode = demo_mode
         self.model = None
         self.tokenizer = None
         self.generating_args = GeneratingArguments()
@@ -36,6 +42,8 @@ class WebChatModel(ChatModel):
             error = ALERTS["err_no_model"][lang]
         elif not get("top.model_path"):
             error = ALERTS["err_no_path"][lang]
+        elif self.demo_mode:
+            error = ALERTS["err_demo"][lang]
 
         if error:
             gr.Warning(error)

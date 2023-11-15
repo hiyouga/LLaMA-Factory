@@ -659,6 +659,10 @@ ALERTS = {
         "en": "Failed.",
         "zh": "训练出错。"
     },
+    "err_demo": {
+        "en": "Training is unavailable in demo mode, duplicate the space to a private one first.",
+        "zh": "展示模式不支持训练，请先复制到私人空间。"
+    },
     "info_aborting": {
         "en": "Aborted, wait for terminating...",
         "zh": "训练中断，正在等待线程结束……"

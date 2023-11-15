@@ -12,11 +12,11 @@ from llmtuner.webui.utils import get_time
 
 class Engine:
 
-    def __init__(self, pure_chat: Optional[bool] = False) -> None:
+    def __init__(self, demo_mode: Optional[bool] = False, pure_chat: Optional[bool] = False) -> None:
         self.pure_chat = pure_chat
-        self.manager: "Manager" = Manager()
-        self.runner: "Runner" = Runner(self.manager)
-        self.chatter: "WebChatModel" = WebChatModel(manager=self.manager, lazy_init=(not pure_chat))
+        self.manager = Manager()
+        self.runner = Runner(self.manager, demo_mode=demo_mode)
+        self.chatter = WebChatModel(manager=self.manager, demo_mode=demo_mode, lazy_init=(not pure_chat))
 
     def _form_dict(self, resume_dict: Dict[str, Dict[str, Any]]):
         return {self.manager.get_elem_by_name(k): gr.update(**v) for k, v in resume_dict.items()}
