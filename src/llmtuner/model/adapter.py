@@ -46,7 +46,11 @@ def init_adapter(
         else: # fine-tuning the first n layers if num_layer_trainable < 0
             trainable_layer_ids = [k for k in range(-finetuning_args.num_layer_trainable)]
 
-        trainable_layers = ["{:d}.{}".format(idx, finetuning_args.name_module_trainable) for idx in trainable_layer_ids]
+        trainable_layers = []
+        for module_name in finetuning_args.name_module_trainable:
+            for idx in trainable_layer_ids:
+                trainable_layers.append("{:d}.{}".format(idx, module_name))
+
         for name, param in model.named_parameters():
             if not any(trainable_layer in name for trainable_layer in trainable_layers):
                 param.requires_grad_(False)
