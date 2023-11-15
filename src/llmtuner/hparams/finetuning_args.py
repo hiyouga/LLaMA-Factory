@@ -166,7 +166,7 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments):
         if self.stage == "ppo" and self.reward_model is None:
             raise ValueError("Reward model is necessary for PPO training.")
 
-        if self.reward_model_type == "lora" and self.finetuning_type != "lora":
+        if self.stage == "ppo" and self.reward_model_type == "lora" and self.finetuning_type != "lora":
             raise ValueError("Lora reward model only supports lora training.")
 
     def save_to_json(self, json_path: str):
