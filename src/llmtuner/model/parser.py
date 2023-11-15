@@ -95,9 +95,6 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
             if not dataset_attr.ranking:
                 raise ValueError("Please use ranked datasets for reward modeling or DPO training.")
 
-    if finetuning_args.stage == "ppo" and model_args.reward_model is None:
-        raise ValueError("Reward model is necessary for PPO training.")
-
     if finetuning_args.stage == "ppo" and model_args.shift_attn:
         raise ValueError("PPO training is incompatible with S^2-Attn.")
 
