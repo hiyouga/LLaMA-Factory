@@ -196,6 +196,14 @@ register_model_group(
 
 register_model_group(
     models={
+        "OpenChat3.5-7B-Chat": "openchat/openchat_3.5"
+    },
+    template="openchat"
+)
+
+
+register_model_group(
+    models={
         "Phi1.5-1.3B": "microsoft/phi-1_5"
     },
     module="Wqkv"
@@ -223,6 +231,15 @@ register_model_group(
 
 register_model_group(
     models={
+        "Vicuna1.5-7B-Chat": "lmsys/vicuna-7b-v1.5",
+        "Vicuna1.5-13B-Chat": "lmsys/vicuna-13b-v1.5"
+    },
+    template="vicuna"
+)
+
+
+register_model_group(
+    models={
         "XVERSE-7B": "xverse/XVERSE-7B",
         "XVERSE-13B": "xverse/XVERSE-13B",
         "XVERSE-65B": "xverse/XVERSE-65B",
@@ -235,7 +252,25 @@ register_model_group(
 
 register_model_group(
     models={
+        "Yayi-7B": "wenge-research/yayi-7b-llama2",
+        "Yayi-13B": "wenge-research/yayi-13b-llama2"
+    },
+    template="yayi"
+)
+
+
+register_model_group(
+    models={
         "Yi-6B": "01-ai/Yi-6B",
         "Yi-34B": "01-ai/Yi-34B"
     }
+)
+
+
+register_model_group(
+    models={
+        "Zephyr-7B-Alpha-Chat": "HuggingFaceH4/zephyr-7b-alpha",
+        "Zephyr-7B-Beta-Chat": "HuggingFaceH4/zephyr-7b-beta"
+    },
+    template="zephyr"
 )
