@@ -25,8 +25,12 @@ class WebChatModel(ChatModel):
         self.model = None
         self.tokenizer = None
         self.generating_args = GeneratingArguments()
-        if not lazy_init:
+
+        if not lazy_init: # read arguments from command line
             super().__init__()
+
+        if demo_mode: # load openchat 3.5 by default
+            super().__init__(dict(model_name_or_path="openchat/openchat_3.5", template="openchat"))
 
     @property
     def loaded(self) -> bool:
@@ -75,6 +79,11 @@ class WebChatModel(ChatModel):
 
     def unload_model(self, data: Dict[Component, Any]) -> Generator[str, None, None]:
         lang = data[self.manager.get_elem_by_name("top.lang")]
+
+        if self.demo_mode:
+            yield ALERTS["err_demo"][lang]
+            return
+
         yield ALERTS["info_unloading"][lang]
         self.model = None
         self.tokenizer = None

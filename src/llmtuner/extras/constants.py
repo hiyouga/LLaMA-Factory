@@ -120,10 +120,12 @@ register_model_group(
 
 register_model_group(
     models={
-        "ChineseLLaMA2-7B": "ziqingyang/chinese-llama-2-7b",
-        "ChineseLLaMA2-13B": "ziqingyang/chinese-llama-2-13b",
-        "ChineseLLaMA2-7B-Chat": "ziqingyang/chinese-alpaca-2-7b",
-        "ChineseLLaMA2-13B-Chat": "ziqingyang/chinese-alpaca-2-13b"
+        "ChineseLLaMA2-1.3B": "hfl/chinese-llama-2-1.3b",
+        "ChineseLLaMA2-7B": "hfl/chinese-llama-2-7b",
+        "ChineseLLaMA2-13B": "hfl/chinese-llama-2-13b",
+        "ChineseLLaMA2-1.3B-Chat": "hfl/chinese-alpaca-2-1.3b",
+        "ChineseLLaMA2-7B-Chat": "hfl/chinese-alpaca-2-7b",
+        "ChineseLLaMA2-13B-Chat": "hfl/chinese-alpaca-2-13b"
     },
     template="llama2_zh"
 )
