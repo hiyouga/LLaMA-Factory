@@ -1,9 +1,9 @@
 CSS = r"""
 .duplicate-button {
-  margin: auto;
-  color: white;
-  background: black;
-  border-radius: 100vh;
+  margin: auto !important;
+  color: white !important;
+  background: black !important;
+  border-radius: 100vh !important;
 }
 
 .modal-box {
