@@ -66,6 +66,4 @@ class UltraChat(datasets.GeneratorBasedBuilder):
                         "from": "human" if i % 2 == 0 else "gpt",
                         "value": content[i]
                     } for i in range(len(content))]
-                    yield key, {
-                        "conversations": conversations
-                    }
+                    yield key, {"conversations": conversations}

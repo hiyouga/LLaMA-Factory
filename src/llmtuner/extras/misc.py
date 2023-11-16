@@ -13,14 +13,13 @@ try:
         is_torch_npu_available
     )
     _is_fp16_available = is_torch_npu_available() or is_torch_cuda_available()
-    _is_bf16_available = is_torch_bf16_gpu_available() or is_torch_bf16_cpu_available
+    _is_bf16_available = is_torch_bf16_gpu_available() or is_torch_bf16_cpu_available()
 except ImportError:
     _is_fp16_available = torch.cuda.is_available()
     _is_bf16_available = torch.cuda.is_bf16_supported()
 
 if TYPE_CHECKING:
     from transformers import HfArgumentParser
-    from transformers.modeling_utils import PreTrainedModel
 
 
 class AverageMeter:
@@ -65,16 +64,14 @@ def count_parameters(model: torch.nn.Module) -> Tuple[int, int]:
     return trainable_params, all_param
 
 
-def infer_optim_dtype(model_dtype: torch.dtype) -> torch.dtype:
-    r"""
-    Infers the optimal dtype according to the model_dtype and device compatibility.
-    """
-    if _is_bf16_available and model_dtype == torch.bfloat16:
-        return torch.bfloat16
-    elif _is_fp16_available:
-        return torch.float16
+def get_current_device() -> str:
+    import accelerate
+    from accelerate import Accelerator
+    dummy_accelerator = Accelerator()
+    if accelerate.utils.is_xpu_available():
+        return "xpu:{}".format(dummy_accelerator.local_process_index)
     else:
-        return torch.float32
+        return dummy_accelerator.local_process_index if torch.cuda.is_available() else "cpu"
 
 
 def get_logits_processor() -> "LogitsProcessorList":
@@ -86,14 +83,16 @@ def get_logits_processor() -> "LogitsProcessorList":
     return logits_processor
 
 
-def torch_gc() -> None:
+def infer_optim_dtype(model_dtype: torch.dtype) -> torch.dtype:
     r"""
-    Collects GPU memory.
+    Infers the optimal dtype according to the model_dtype and device compatibility.
     """
-    gc.collect()
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-        torch.cuda.ipc_collect()
+    if _is_bf16_available and model_dtype == torch.bfloat16:
+        return torch.bfloat16
+    elif _is_fp16_available:
+        return torch.float16
+    else:
+        return torch.float32
 
 
 def parse_args(parser: "HfArgumentParser", args: Optional[Dict[str, Any]] = None) -> Tuple[Any]:
@@ -107,26 +106,11 @@ def parse_args(parser: "HfArgumentParser", args: Optional[Dict[str, Any]] = None
         return parser.parse_args_into_dataclasses()
 
 
-def dispatch_model(model: "PreTrainedModel") -> "PreTrainedModel":
+def torch_gc() -> None:
     r"""
-    Dispatches a pre-trained model to GPUs with balanced memory.
-    Borrowed from: https://github.com/huggingface/transformers/blob/v4.31.0/src/transformers/modeling_utils.py#L2803
+    Collects GPU memory.
     """
-    if getattr(model, "is_loaded_in_8bit", False) or getattr(model, "is_loaded_in_4bit", False): # do nothing
-        return model
-
-    if torch.cuda.device_count() > 1:
-        from accelerate import dispatch_model
-        from accelerate.utils import infer_auto_device_map, get_balanced_memory
-
-        if model._no_split_modules is None:
-            raise ValueError("The model class needs to implement the `_no_split_modules` attribute.")
-
-        kwargs = {"dtype": model.dtype, "no_split_module_classes": model._no_split_modules}
-        max_memory = get_balanced_memory(model, **kwargs)
-        # Make sure tied weights are tied before creating the device map.
-        model.tie_weights()
-        device_map = infer_auto_device_map(model, max_memory=max_memory, **kwargs)
-        return dispatch_model(model, device_map)
-    else:
-        return model.cuda()
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()

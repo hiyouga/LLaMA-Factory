@@ -2,11 +2,23 @@ from collections import defaultdict, OrderedDict
 from typing import Dict, Optional
 
 
+CHOICES = ["A", "B", "C", "D"]
+
+DEFAULT_MODULE = defaultdict(str)
+
+DEFAULT_TEMPLATE = defaultdict(str)
+
 IGNORE_INDEX = -100
+
+LAYERNORM_NAMES = {"norm", "ln"}
 
 LOG_FILE_NAME = "trainer_log.jsonl"
 
 METHODS = ["full", "freeze", "lora"]
+
+SUBJECTS = ["Average", "STEM", "Social Sciences", "Humanities", "Other"]
+
+SUPPORTED_MODELS = OrderedDict()
 
 TRAINING_STAGES = {
     "Supervised Fine-Tuning": "sft",
@@ -15,14 +27,6 @@ TRAINING_STAGES = {
     "DPO": "dpo",
     "Pre-Training": "pt"
 }
-
-LAYERNORM_NAMES = {"norm", "ln"}
-
-SUPPORTED_MODELS = OrderedDict()
-
-DEFAULT_MODULE = defaultdict(str)
-
-DEFAULT_TEMPLATE = defaultdict(str)
 
 
 def register_model_group(
@@ -116,10 +120,12 @@ register_model_group(
 
 register_model_group(
     models={
-        "ChineseLLaMA2-7B": "ziqingyang/chinese-llama-2-7b",
-        "ChineseLLaMA2-13B": "ziqingyang/chinese-llama-2-13b",
-        "ChineseLLaMA2-7B-Chat": "ziqingyang/chinese-alpaca-2-7b",
-        "ChineseLLaMA2-13B-Chat": "ziqingyang/chinese-alpaca-2-13b"
+        "ChineseLLaMA2-1.3B": "hfl/chinese-llama-2-1.3b",
+        "ChineseLLaMA2-7B": "hfl/chinese-llama-2-7b",
+        "ChineseLLaMA2-13B": "hfl/chinese-llama-2-13b",
+        "ChineseLLaMA2-1.3B-Chat": "hfl/chinese-alpaca-2-1.3b",
+        "ChineseLLaMA2-7B-Chat": "hfl/chinese-alpaca-2-7b",
+        "ChineseLLaMA2-13B-Chat": "hfl/chinese-alpaca-2-13b"
     },
     template="llama2_zh"
 )
@@ -192,6 +198,14 @@ register_model_group(
 
 register_model_group(
     models={
+        "OpenChat3.5-7B-Chat": "openchat/openchat_3.5"
+    },
+    template="openchat"
+)
+
+
+register_model_group(
+    models={
         "Phi1.5-1.3B": "microsoft/phi-1_5"
     },
     module="Wqkv"
@@ -219,6 +233,15 @@ register_model_group(
 
 register_model_group(
     models={
+        "Vicuna1.5-7B-Chat": "lmsys/vicuna-7b-v1.5",
+        "Vicuna1.5-13B-Chat": "lmsys/vicuna-13b-v1.5"
+    },
+    template="vicuna"
+)
+
+
+register_model_group(
+    models={
         "XVERSE-7B": "xverse/XVERSE-7B",
         "XVERSE-13B": "xverse/XVERSE-13B",
         "XVERSE-65B": "xverse/XVERSE-65B",
@@ -231,7 +254,25 @@ register_model_group(
 
 register_model_group(
     models={
+        "Yayi-7B": "wenge-research/yayi-7b-llama2",
+        "Yayi-13B": "wenge-research/yayi-13b-llama2"
+    },
+    template="yayi"
+)
+
+
+register_model_group(
+    models={
         "Yi-6B": "01-ai/Yi-6B",
         "Yi-34B": "01-ai/Yi-34B"
     }
+)
+
+
+register_model_group(
+    models={
+        "Zephyr-7B-Alpha-Chat": "HuggingFaceH4/zephyr-7b-alpha",
+        "Zephyr-7B-Beta-Chat": "HuggingFaceH4/zephyr-7b-beta"
+    },
+    template="zephyr"
 )
