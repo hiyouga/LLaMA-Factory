@@ -236,11 +236,12 @@ class Runner:
         yield from self._launch(data, do_train=False)
 
     def monitor(self) -> Generator[Tuple[str, Dict[str, Any]], None, None]:
+        get = lambda name: self.running_data[self.manager.get_elem_by_name(name)]
         self.running = True
-        lang = self.running_data[self.manager.get_elem_by_name("top.lang")]
-        output_dir = self.running_data[self.manager.get_elem_by_name(
+        lang = get("top.lang")
+        output_dir = get_save_dir(get("top.model_name"), get("top.finetuning_type"), get(
             "{}.output_dir".format("train" if self.do_train else "eval")
-        )]
+        ))
         while self.thread.is_alive():
             time.sleep(2)
             if self.aborted:
