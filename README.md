@@ -14,7 +14,9 @@
 
 ## LLaMA Board: A One-stop Web UI for Getting Started with LLaMA Factory
 
-Launch **LLaMA Board** via `CUDA_VISIBLE_DEVICES=0 python src/train_web.py`. (multiple GPUs are not supported yet)
+Preview LLaMA Board at **[Hugging Face Space](https://huggingface.co/spaces/hiyouga/LLaMA-Board)**.
+
+Launch LLaMA Board via `CUDA_VISIBLE_DEVICES=0 python src/train_web.py`. (multiple GPUs are not supported yet)
 
 Here is an example of altering the self-cognition of an instruction-tuned language model within 10 minutes on a single GPU.
 
@@ -71,7 +73,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 >
 > For the "base" models, the `--template` argument can be chosen from `default`, `alpaca`, `vicuna` etc. But make sure to use the **corresponding template** for the "chat" models.
 
-Please refer to [template.py](src/llmtuner/extras/template.py) for a full list of models we supported.
+Please refer to [constants.py](src/llmtuner/extras/constants.py) for a full list of models we supported.
 
 ## Supported Training Approaches
 
@@ -79,9 +81,9 @@ Please refer to [template.py](src/llmtuner/extras/template.py) for a full list o
 | ---------------------- | ------------------ | ------------------ | ------------------ | ------------------ |
 | Pre-Training           | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | Supervised Fine-Tuning | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Reward Modeling        |                    |                    | :white_check_mark: | :white_check_mark: |
-| PPO Training           |                    |                    | :white_check_mark: | :white_check_mark: |
-| DPO Training           | :white_check_mark: |                    | :white_check_mark: | :white_check_mark: |
+| Reward Modeling        | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| PPO Training           | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| DPO Training           | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
 > [!NOTE]
 > Use `--quantization_bit 4/8` argument to enable QLoRA.
@@ -122,6 +124,7 @@ Please refer to [template.py](src/llmtuner/extras/template.py) for a full list o
 - [OpenPlatypus (en)](https://huggingface.co/datasets/garage-bAInd/Open-Platypus)
 - [CodeAlpaca 20k (en)](https://huggingface.co/datasets/sahil2801/CodeAlpaca-20k)
 - [Alpaca CoT (multilingual)](https://huggingface.co/datasets/QingyiSi/Alpaca-CoT)
+- [OpenOrca (en)](https://huggingface.co/datasets/Open-Orca/OpenOrca)
 - [MathInstruct (en)](https://huggingface.co/datasets/TIGER-Lab/MathInstruct)
 - [Firefly 1.1M (zh)](https://huggingface.co/datasets/YeungNLP/firefly-train-1.1M)
 - [Web QA (zh)](https://huggingface.co/datasets/suolyer/webqa)
