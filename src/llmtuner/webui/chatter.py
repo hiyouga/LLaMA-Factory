@@ -29,8 +29,14 @@ class WebChatModel(ChatModel):
         if not lazy_init: # read arguments from command line
             super().__init__()
 
-        if demo_mode: # load openchat 3.5 by default
-            super().__init__(dict(model_name_or_path="openchat/openchat_3.5", template="openchat"))
+        if demo_mode: # load config.json by default
+            import json
+            try:
+                with open("demo_config.json", "r", encoding="utf-8") as f:
+                    args = json.load(f)
+            except:
+                raise ValueError("Cannot find `demo_config.json` at current directory.")
+            super().__init__(args)
 
     @property
     def loaded(self) -> bool:
