@@ -37,7 +37,13 @@ def init_adapter(
 
     if finetuning_args.finetuning_type == "freeze" and is_trainable:
         logger.info("Fine-tuning method: Freeze")
-        num_layers = getattr(model.config, "num_layers")
+        num_layers = (
+            getattr(model.config, "num_hidden_layers", None)
+            or getattr(model.config, "num_layers", None)
+            or getattr(model.config, "n_layer", None)
+        )
+        if not num_layers:
+            raise ValueError("Current model does not support freeze tuning.")
         if finetuning_args.num_layer_trainable > 0: # fine-tuning the last n layers if num_layer_trainable > 0
             trainable_layer_ids = [num_layers - k - 1 for k in range(finetuning_args.num_layer_trainable)]
         else: # fine-tuning the first n layers if num_layer_trainable < 0
