@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, List, Tuple
 
-from llmtuner.eval.constants import CHOICES
+from llmtuner.extras.constants import CHOICES
 
 if TYPE_CHECKING:
     from datasets import Dataset

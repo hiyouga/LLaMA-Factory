@@ -1,4 +1,11 @@
 CSS = r"""
+.duplicate-button {
+  margin: auto !important;
+  color: white !important;
+  background: black !important;
+  border-radius: 100vh !important;
+}
+
 .modal-box {
   position: fixed !important;
   top: 50%;
