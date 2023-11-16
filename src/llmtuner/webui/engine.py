@@ -13,6 +13,7 @@ from llmtuner.webui.utils import get_time
 class Engine:
 
     def __init__(self, demo_mode: Optional[bool] = False, pure_chat: Optional[bool] = False) -> None:
+        self.demo_mode = demo_mode
         self.pure_chat = pure_chat
         self.manager = Manager()
         self.runner = Runner(self.manager, demo_mode=demo_mode)
@@ -22,7 +23,7 @@ class Engine:
         return {self.manager.get_elem_by_name(k): gr.update(**v) for k, v in resume_dict.items()}
 
     def resume(self) -> Generator[Dict[Component, Dict[str, Any]], None, None]:
-        user_config = load_config()
+        user_config = load_config() if not self.demo_mode else {}
         lang = user_config.get("lang", None) or "en"
 
         init_dict = {
