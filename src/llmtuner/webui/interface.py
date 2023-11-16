@@ -38,7 +38,7 @@ def create_ui(demo_mode: Optional[bool] = False) -> gr.Blocks:
         with gr.Tab("Train"):
             engine.manager.all_elems["train"] = create_train_tab(engine)
 
-        with gr.Tab("Evaluate"):
+        with gr.Tab("Evaluate & Predict"):
             engine.manager.all_elems["eval"] = create_eval_tab(engine)
 
         with gr.Tab("Chat"):
