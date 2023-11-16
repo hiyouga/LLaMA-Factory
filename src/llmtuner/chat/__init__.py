@@ -1,1 +1,1 @@
-from llmtuner.chat.stream_chat import ChatModel
+from llmtuner.chat.chat_model import ChatModel
