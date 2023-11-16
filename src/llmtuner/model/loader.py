@@ -202,7 +202,6 @@ def load_model_and_tokenizer(
     # Prepare model with valuehead for RLHF
     if stage in ["rm", "ppo"]:
         model: "AutoModelForCausalLMWithValueHead" = AutoModelForCausalLMWithValueHead.from_pretrained(model)
-        reset_logging()
         vhead_path = (
             model_args.checkpoint_dir[-1] if model_args.checkpoint_dir is not None else model_args.model_name_or_path
         )
