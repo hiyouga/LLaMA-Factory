@@ -1,1 +1,1 @@
-from llmtuner.eval.engine import Evaluator
+from llmtuner.eval.evaluator import Evaluator

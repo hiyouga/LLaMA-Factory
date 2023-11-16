@@ -1,8 +1,8 @@
 import gradio as gr
 from typing import TYPE_CHECKING, Dict
 
+from llmtuner.data.template import templates
 from llmtuner.extras.constants import METHODS, SUPPORTED_MODELS
-from llmtuner.extras.template import templates
 from llmtuner.webui.common import get_model_path, get_template, list_checkpoint, save_config
 from llmtuner.webui.utils import can_quantize
 

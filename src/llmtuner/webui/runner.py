@@ -4,7 +4,7 @@ import logging
 import gradio as gr
 from threading import Thread
 from gradio.components import Component # cannot use TYPE_CHECKING here
-from typing import TYPE_CHECKING, Any, Dict, Generator, List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Generator, Optional, Tuple
 
 import transformers
 from transformers.trainer import TRAINING_ARGS_NAME
@@ -13,7 +13,7 @@ from llmtuner.extras.callbacks import LogCallback
 from llmtuner.extras.constants import TRAINING_STAGES
 from llmtuner.extras.logging import LoggerHandler
 from llmtuner.extras.misc import torch_gc
-from llmtuner.tuner import run_exp
+from llmtuner.train import run_exp
 from llmtuner.webui.common import get_module, get_save_dir, load_config
 from llmtuner.webui.locales import ALERTS
 from llmtuner.webui.utils import gen_cmd, get_eval_results, update_process_bar
@@ -24,13 +24,13 @@ if TYPE_CHECKING:
 
 class Runner:
 
-    def __init__(self, manager: "Manager") -> None:
+    def __init__(self, manager: "Manager", demo_mode: Optional[bool] = False) -> None:
         self.manager = manager
+        self.demo_mode = demo_mode
         """ Resume """
         self.thread: "Thread" = None
         self.do_train = True
         self.running_data: Dict["Component", Any] = None
-        self.monitor_inputs: Dict[str, str] = None
         """ State """
         self.aborted = False
         self.running = False
@@ -46,9 +46,8 @@ class Runner:
 
     def set_abort(self) -> None:
         self.aborted = True
-        self.running = False
 
-    def _initialize(self, data: Dict[Component, Any], do_train: bool) -> str:
+    def _initialize(self, data: Dict[Component, Any], do_train: bool, from_preview: bool) -> str:
         get = lambda name: data[self.manager.get_elem_by_name(name)]
         lang, model_name, model_path = get("top.lang"), get("top.model_name"), get("top.model_path")
         dataset = get("train.dataset") if do_train else get("eval.dataset")
@@ -65,6 +64,9 @@ class Runner:
         if len(dataset) == 0:
             return ALERTS["err_no_dataset"][lang]
 
+        if self.demo_mode and (not from_preview):
+            return ALERTS["err_demo"][lang]
+
         self.aborted = False
         self.logger_handler.reset()
         self.trainer_callback = LogCallback(self)
@@ -72,6 +74,7 @@ class Runner:
 
     def _finalize(self, lang: str, finish_info: str) -> str:
         self.thread = None
+        self.running_data = None
         self.running = False
         torch_gc()
         if self.aborted:
@@ -84,9 +87,9 @@ class Runner:
         user_config = load_config()
 
         if get("top.checkpoints"):
-            checkpoint_dir = ",".join([
-                get_save_dir(get("top.model_name"), get("top.finetuning_type"), ckpt) for ckpt in get("top.checkpoints")
-            ])
+            checkpoint_dir = ",".join([get_save_dir(
+                get("top.model_name"), get("top.finetuning_type"), ckpt
+            ) for ckpt in get("top.checkpoints")])
         else:
             checkpoint_dir = None
 
@@ -136,7 +139,10 @@ class Runner:
             args["upcast_layernorm"] = True
 
         if args["stage"] == "ppo":
-            args["reward_model"] = get_save_dir(get("top.model_name"), get("top.finetuning_type"), get("train.reward_model"))
+            args["reward_model"] = get_save_dir(
+                get("top.model_name"), get("top.finetuning_type"), get("train.reward_model")
+            )
+            args["reward_model_type"] = "lora" if get("top.finetuning_type") == "lora" else "full"
 
         if args["stage"] == "dpo":
             args["dpo_beta"] = get("train.dpo_beta")
@@ -154,9 +160,9 @@ class Runner:
         user_config = load_config()
 
         if get("top.checkpoints"):
-            checkpoint_dir = ",".join([
-                get_save_dir(get("top.model_name"), get("top.finetuning_type"), ckpt) for ckpt in get("top.checkpoints")
-            ])
+            checkpoint_dir = ",".join([get_save_dir(
+                get("top.model_name"), get("top.finetuning_type"), ckpt
+            ) for ckpt in get("top.checkpoints")])
             output_dir = get_save_dir(
                 get("top.model_name"), get("top.finetuning_type"), "eval_" + "_".join(get("top.checkpoints"))
             )
@@ -196,7 +202,7 @@ class Runner:
         return args
 
     def _preview(self, data: Dict[Component, Any], do_train: bool) -> Generator[Tuple[str, Dict[str, Any]], None, None]:
-        error = self._initialize(data, do_train)
+        error = self._initialize(data, do_train, from_preview=True)
         if error:
             gr.Warning(error)
             yield error, gr.update(visible=False)
@@ -205,16 +211,14 @@ class Runner:
             yield gen_cmd(args), gr.update(visible=False)
 
     def _launch(self, data: Dict[Component, Any], do_train: bool) -> Generator[Tuple[str, Dict[str, Any]], None, None]:
-        error = self._initialize(data, do_train)
+        error = self._initialize(data, do_train, from_preview=False)
         if error:
             gr.Warning(error)
             yield error, gr.update(visible=False)
         else:
             args = self._parse_train_args(data) if do_train else self._parse_eval_args(data)
             run_kwargs = dict(args=args, callbacks=[self.trainer_callback])
-            self.running = True
             self.do_train, self.running_data = do_train, data
-            self.monitor_inputs = dict(lang=data[self.manager.get_elem_by_name("top.lang")], output_dir=args["output_dir"])
             self.thread = Thread(target=run_exp, kwargs=run_kwargs)
             self.thread.start()
             yield from self.monitor()
@@ -232,7 +236,12 @@ class Runner:
         yield from self._launch(data, do_train=False)
 
     def monitor(self) -> Generator[Tuple[str, Dict[str, Any]], None, None]:
-        lang, output_dir = self.monitor_inputs["lang"], self.monitor_inputs["output_dir"]
+        get = lambda name: self.running_data[self.manager.get_elem_by_name(name)]
+        self.running = True
+        lang = get("top.lang")
+        output_dir = get_save_dir(get("top.model_name"), get("top.finetuning_type"), get(
+            "{}.output_dir".format("train" if self.do_train else "eval")
+        ))
         while self.thread.is_alive():
             time.sleep(2)
             if self.aborted:
