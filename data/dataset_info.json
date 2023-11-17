@@ -218,7 +218,7 @@
   },
   "wiki_demo": {
     "file_name": "wiki_demo.txt",
-    "file_sha1": "b2288edb05b233e5b35250fd4b308a5fa21fa66d",
+    "file_sha1": "e70375e28eda542a90c68213640cc371898ce181",
     "columns": {
       "prompt": "text"
     }
