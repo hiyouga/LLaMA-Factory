@@ -168,17 +168,12 @@ def load_model_and_tokenizer(
         config_kwargs["device_map"] = {"": get_current_device()}
         logger.info("Quantizing model to {} bit.".format(model_args.quantization_bit))
 
-    if is_deepspeed_zero3_enabled() or getattr(config, "model_type", None) == "chatglm":
-        low_cpu_mem_usage = False
-    else:
-        low_cpu_mem_usage = True
-
     # Load pre-trained models (without valuehead)
     model = AutoModelForCausalLM.from_pretrained(
         model_to_load,
         config=config,
         torch_dtype=model_args.compute_dtype,
-        low_cpu_mem_usage=low_cpu_mem_usage,
+        low_cpu_mem_usage=(not is_deepspeed_zero3_enabled()),
         **config_kwargs
     )
 
