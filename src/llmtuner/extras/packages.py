@@ -19,7 +19,7 @@ _jieba_available = is_package_available("jieba")
 _matplotlib_available = is_package_available("matplotlib")
 _nltk_available = is_package_available("nltk")
 _rouge_available = is_package_available("rouge_chinese")
-_starlette_available = is_package_available("sse-starlette")
+_starlette_available = is_package_available("sse_starlette")
 _uvicorn_available = is_package_available("uvicorn")
 
 
