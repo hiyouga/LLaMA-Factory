@@ -23,6 +23,31 @@
 
 https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846-2d88920d5ba1
 
+## 目录
+
+- [性能指标](#性能指标)
+- [更新日志](#更新日志)
+- [模型](#模型)
+- [训练方法](#训练方法)
+- [数据集](#数据集)
+- [软件依赖](#软件依赖)
+- [如何使用](#如何使用)
+- [使用了 LLaMA Factory 的项目](#使用了-llama-factory-的项目)
+- [协议](#协议)
+- [引用](#引用)
+- [致谢](#致谢)
+
+## 性能指标
+
+与 ChatGLM 官方的 [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/ptuning) 微调相比，LLaMA-Factory 的 LoRA 微调提供了 **3.7 倍**的加速比，同时在广告文案生成任务上取得了更高的 BLEU 分数。结合 4 比特量化技术，LLaMA-Factory 的 QLoRA 微调进一步降低了 GPU 显存消耗。
+
+![benchmark](assets/benchmark.svg)
+
+- Training Speed: 训练阶段每秒处理的样本数量。（批处理大小=4，截断长度=1024）
+- BLEU Score: [广告文案生成](https://aclanthology.org/D19-1321.pdf)任务验证集上的 BLEU-4 分数。（批处理大小=4，截断长度=1024）
+- GPU Memory: 4 比特量化训练的 GPU 显存峰值。（批处理大小=1，截断长度=1024）
+- 我们在 ChatGLM 的 P-Tuning 中采用 `pre_seq_len=128`，在 LLaMA-Factory 的 LoRA 微调中采用 `lora_rank=32`。
+
 ## 更新日志
 
 [23/10/21] 我们支持了 **[NEFTune](https://arxiv.org/abs/2310.05914)** 训练技巧。请使用 `--neft_alpha` 参数启用 NEFTune，例如 `--neft_alpha 5`。
@@ -475,6 +500,9 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 - **[DISC-LawLLM](https://github.com/FudanDISC/DISC-LawLLM)**: 中文法律领域大模型 DISC-LawLLM，基于 Baichuan-13B 微调而得，具有法律推理和知识检索能力。
 - **[Sunsimiao](https://github.com/thomas-yanxin/Sunsimiao)**: 孙思邈中文医疗大模型 Sumsimiao，基于 Baichuan-7B 和 ChatGLM-6B 在中文医疗数据上微调而得。
 - **[CareGPT](https://github.com/WangRongsheng/CareGPT)**: 医疗大模型项目 CareGPT，基于 LLaMA2-7B 和 Baichuan-13B 在中文医疗数据上微调而得。
+
+> [!NOTE]
+> 如果您有项目希望添加至上述列表，请通过邮件联系或者创建一个 PR。
 
 ## 协议
 
