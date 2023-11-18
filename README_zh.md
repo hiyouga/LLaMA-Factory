@@ -43,9 +43,9 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 
 ![benchmark](assets/benchmark.svg)
 
-- Training Speed: 训练阶段每秒处理的样本数量。（批处理大小=4，截断长度=1024）
-- BLEU Score: [广告文案生成](https://aclanthology.org/D19-1321.pdf)任务验证集上的 BLEU-4 分数。（批处理大小=4，截断长度=1024）
-- GPU Memory: 4 比特量化训练的 GPU 显存峰值。（批处理大小=1，截断长度=1024）
+- **Training Speed**: 训练阶段每秒处理的样本数量。（批处理大小=4，截断长度=1024）
+- **BLEU Score**: [广告文案生成](https://aclanthology.org/D19-1321.pdf)任务验证集上的 BLEU-4 分数。（批处理大小=4，截断长度=1024）
+- **GPU Memory**: 4 比特量化训练的 GPU 显存峰值。（批处理大小=1，截断长度=1024）
 - 我们在 ChatGLM 的 P-Tuning 中采用 `pre_seq_len=128`，在 LLaMA-Factory 的 LoRA 微调中采用 `lora_rank=32`。
 
 ## 更新日志
