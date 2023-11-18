@@ -43,9 +43,9 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 ![benchmark](assets/benchmark.svg)
 
-- Training Speed: the number of training samples processed per second during the training. (bs=4, cutoff_len=1024)
-- BLEU Score: BLEU-4 score on the development set of the [advertising text generation](https://aclanthology.org/D19-1321.pdf) task. (bs=4, cutoff_len=1024)
-- GPU Memory: Peak GPU memory usage in the 4-bit quantized training. (bs=1, cutoff_len=1024)
+- **Training Speed**: the number of training samples processed per second during the training. (bs=4, cutoff_len=1024)
+- **BLEU Score**: BLEU-4 score on the development set of the [advertising text generation](https://aclanthology.org/D19-1321.pdf) task. (bs=4, cutoff_len=1024)
+- **GPU Memory**: Peak GPU memory usage in 4-bit quantized training. (bs=1, cutoff_len=1024)
 - We adopt `pre_seq_len=128` for ChatGLM's P-Tuning and `lora_rank=32` for LLaMA-Factory's LoRA tuning.
 
 ## Changelog
