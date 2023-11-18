@@ -3,6 +3,7 @@
 import os
 import json
 import torch
+import inspect
 import tiktoken
 import numpy as np
 from tqdm import tqdm, trange
@@ -45,13 +46,18 @@ class Evaluator:
         return [chr(ord("A") + offset.item()) for offset in torch.argmax(choice_probs, dim=-1)]
 
     def eval(self) -> None:
+        if "token" in inspect.signature(cached_file).parameters:
+            kwargs = {"token": self.model_args.hf_hub_token}
+        elif "use_auth_token" in inspect.signature(cached_file).parameters: # for transformers==4.31.0
+            kwargs = {"use_auth_token": self.model_args.hf_hub_token}
+
         mapping = cached_file(
             path_or_repo_id = os.path.join(self.eval_args.task_dir, self.eval_args.task),
             filename="mapping.json",
             cache_dir=self.model_args.cache_dir,
-            token=self.model_args.hf_hub_token,
-            revision=self.model_args.model_revision
+            **kwargs
         )
+
         with open(mapping, "r", encoding="utf-8") as f:
             categorys: Dict[str, Dict[str, str]] = json.load(f)
 
@@ -62,7 +68,9 @@ class Evaluator:
             dataset = load_dataset(
                 path=os.path.join(self.eval_args.task_dir, self.eval_args.task),
                 name=subject,
-                download_mode="force_redownload"
+                cache_dir=self.model_args.cache_dir,
+                download_mode=self.eval_args.download_mode,
+                token=self.model_args.hf_hub_token
             )
             pbar.set_postfix_str(categorys[subject]["name"])
             inputs, outputs, labels = [], [], []
