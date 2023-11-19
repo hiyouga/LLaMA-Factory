@@ -71,7 +71,7 @@ def find_all_linear_modules(
     return list(module_names)
 
 
-def generate_model_card(
+def get_modelcard_args(
     model_args: "ModelArguments",
     data_args: "DataArguments",
     finetuning_args: "FinetuningArguments"
