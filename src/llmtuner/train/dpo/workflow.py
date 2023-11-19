@@ -1,6 +1,5 @@
 # Inspired by: https://github.com/huggingface/trl/blob/main/examples/research_projects/stack_llama_2/scripts/dpo_llama2.py
 
-from peft import PeftModel
 from typing import TYPE_CHECKING, Optional, List
 from transformers import Seq2SeqTrainingArguments
 
@@ -8,10 +7,10 @@ from llmtuner.data import get_dataset, preprocess_dataset, split_dataset
 from llmtuner.extras.constants import IGNORE_INDEX
 from llmtuner.extras.ploting import plot_loss
 from llmtuner.hparams import ModelArguments
-from llmtuner.model import generate_model_card, load_model_and_tokenizer
-from llmtuner.train.utils import create_ref_model
+from llmtuner.model import load_model_and_tokenizer
 from llmtuner.train.dpo.collator import DPODataCollatorWithPadding
 from llmtuner.train.dpo.trainer import CustomDPOTrainer
+from llmtuner.train.utils import create_modelcard_and_push, create_ref_model
 
 if TYPE_CHECKING:
     from transformers import TrainerCallback
@@ -78,8 +77,4 @@ def run_dpo(
         trainer.save_metrics("eval", metrics)
 
     # Create model card
-    if training_args.do_train:
-        if training_args.push_to_hub:
-            trainer.push_to_hub(**generate_model_card(model_args, data_args, finetuning_args))
-        else:
-            trainer.create_model_card(**generate_model_card(model_args, data_args, finetuning_args))
+    create_modelcard_and_push(trainer, model_args, data_args, training_args, finetuning_args)
