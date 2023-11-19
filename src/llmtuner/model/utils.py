@@ -78,6 +78,7 @@ def get_modelcard_args(
 ) -> Dict[str, Any]:
     return {
         "tasks": "text-generation",
+        "license": "other",
         "finetuned_from": model_args.model_name_or_path,
         "dataset": [dataset.strip() for dataset in data_args.dataset.split(",")],
         "tags": ["llama-factory"] + (["lora"] if finetuning_args.finetuning_type == "lora" else [])
