@@ -3,14 +3,33 @@ from typing import TYPE_CHECKING, Literal, Union
 
 from llmtuner.extras.logging import get_logger
 from llmtuner.hparams import ModelArguments, FinetuningArguments
-from llmtuner.model import load_model_and_tokenizer, load_valuehead_params
+from llmtuner.model import get_modelcard_args, load_model_and_tokenizer, load_valuehead_params
 
 if TYPE_CHECKING:
+    from transformers import Seq2SeqTrainingArguments, Trainer
     from transformers.modeling_utils import PreTrainedModel
     from trl import AutoModelForCausalLMWithValueHead
+    from llmtuner.hparams import DataArguments
 
 
 logger = get_logger(__name__)
+
+
+def create_modelcard_and_push(
+    trainer: "Trainer",
+    model_args: "ModelArguments",
+    data_args: "DataArguments",
+    training_args: "Seq2SeqTrainingArguments",
+    finetuning_args: "FinetuningArguments"
+) -> None:
+    if training_args.do_train:
+        if training_args.push_to_hub:
+            trainer.push_to_hub(**get_modelcard_args(model_args, data_args, finetuning_args))
+            return
+        try:
+            trainer.create_model_card(**get_modelcard_args(model_args, data_args, finetuning_args))
+        except Exception as err:
+            logger.warning("Failed to create model card: {}".format(str(err)))
 
 
 def create_ref_model(
