@@ -324,7 +324,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 ```
 
 > [!WARNING]
-> 如果在 fp16 精度下训练 LLaMA-2 模型，请使用 `--per_device_eval_batch_size=1`。
+> 如果使用 fp16 精度进行 LLaMA-2 模型的 PPO 训练，请使用 `--per_device_train_batch_size=1`。
 
 #### DPO 训练
 
@@ -499,7 +499,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 ```
 
 > [!WARNING]
-> 如果在 fp16 精度下推理 LLaMA-2 模型，请使用 `--per_device_eval_batch_size=1`。
+> 如果使用 fp16 精度进行 LLaMA-2 模型的预测，请使用 `--per_device_eval_batch_size=1`。
 
 > [!TIP]
 > 我们建议在量化模型的预测中使用 `--per_device_eval_batch_size=1` 和 `--max_target_length 128`。
