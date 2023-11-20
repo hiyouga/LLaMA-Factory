@@ -94,7 +94,7 @@ def run_ppo(
 
     # Training
     if training_args.do_train:
-        ppo_trainer.ppo_train()
+        ppo_trainer.ppo_train(resume_from_checkpoint=training_args.resume_from_checkpoint)
         ppo_trainer.save_model()
         ppo_trainer.save_state() # must be called after save_model to have a folder
         if ppo_trainer.is_world_process_zero() and finetuning_args.plot_loss:
