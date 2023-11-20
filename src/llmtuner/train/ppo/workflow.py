@@ -39,11 +39,12 @@ def run_ppo(
     reward_model = create_reward_model(model, model_args, finetuning_args)
 
     # Create ppo config
+    backward_batch_size = training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps
     ppo_config = PPOConfig(
         model_name=model_args.model_name_or_path,
         learning_rate=training_args.learning_rate,
         mini_batch_size=training_args.per_device_train_batch_size,
-        batch_size=training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps,
+        batch_size=backward_batch_size * finetuning_args.ppo_buffer_size,
         gradient_accumulation_steps=training_args.gradient_accumulation_steps,
         ppo_epochs=finetuning_args.ppo_epochs,
         max_grad_norm=training_args.max_grad_norm,
@@ -62,9 +63,7 @@ def run_ppo(
     if training_args.max_steps > 0:
         num_training_steps = training_args.max_steps
     else:
-        total_train_batch_size = (
-            training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps * training_args.world_size
-        )
+        total_train_batch_size = backward_batch_size * finetuning_args.ppo_buffer_size * training_args.world_size
         num_training_steps = training_args.num_train_epochs * math.ceil(len(dataset) / total_train_batch_size)
 
     lr_scheduler = get_scheduler(
