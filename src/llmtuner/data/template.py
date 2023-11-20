@@ -358,6 +358,35 @@ register_template(
         {"token": "<|user|>"},
         "\n",
         "{{query}}",
+        {"token": "<|assistant|>"},
+        "\n" # add an extra newline to avoid error in ChatGLM's process_response method
+    ],
+    system=(
+        "You are ChatGLM3, a large language model trained by Zhipu.AI. "
+        "Follow the user's instructions carefully. Respond using markdown."
+    ),
+    sep=[],
+    stop_words=[
+        "<|user|>",
+        "<|observation|>"
+    ],
+    efficient_eos=True
+)
+
+
+register_template(
+    name="chatglm3_raw", # the raw template for tool tuning
+    prefix=[
+        {"token": "[gMASK]"},
+        {"token": "sop"},
+        {"token": "<|system|>"},
+        "\n",
+        "{{system}}"
+    ],
+    prompt=[
+        {"token": "<|user|>"},
+        "\n",
+        "{{query}}",
         {"token": "<|assistant|>"}
     ],
     system=(

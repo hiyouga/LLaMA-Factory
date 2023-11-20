@@ -65,7 +65,12 @@ def init_adapter(
         checkpoint_to_resume = None
 
         if model_args.checkpoint_dir is not None:
-            if is_trainable and finetuning_args.resume_lora_training:
+            is_mergeable = True
+            if getattr(model, "quantization_method", None) == "gptq":
+                assert len(model_args.checkpoint_dir) == 1, "GPTQ quantized model only accepts a single checkpoint."
+                is_mergeable = False
+
+            if (is_trainable and finetuning_args.resume_lora_training) or (not is_mergeable):
                 checkpoints_to_merge, checkpoint_to_resume = model_args.checkpoint_dir[:-1], model_args.checkpoint_dir[-1]
             else:
                 checkpoints_to_merge = model_args.checkpoint_dir
