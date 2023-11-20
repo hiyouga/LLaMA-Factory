@@ -34,7 +34,10 @@ class WebChatModel(ChatModel):
             try:
                 with open("demo_config.json", "r", encoding="utf-8") as f:
                     args = json.load(f)
+                assert args.get("model_name_or_path", None) and args.get("template", None)
                 super().__init__(args)
+            except AssertionError:
+                print("Please provided model name and template in `demo_config.json`.")
             except:
                 print("Cannot find `demo_config.json` at current directory.")
 
