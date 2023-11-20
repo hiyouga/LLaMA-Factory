@@ -74,6 +74,10 @@ class RLHFArguments:
         default=None,
         metadata={"help": "Log with either 'wandb' or 'tensorboard' in PPO training."}
     )
+    ppo_epochs: Optional[int] = field(
+        default=4,
+        metadata={"help": "Number of optimisation epochs per batch of samples"},
+    )
     ppo_score_norm: Optional[bool] = field(
         default=False,
         metadata={"help": "Use score normalization in PPO training."}
