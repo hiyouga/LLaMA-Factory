@@ -324,7 +324,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 ```
 
 > [!WARNING]
-> Use `--per_device_train_batch_size=1` for LLaMA-2 models in fp16 training.
+> Use `--per_device_train_batch_size=1` for LLaMA-2 models in fp16 PPO training.
 
 #### DPO Training
 
