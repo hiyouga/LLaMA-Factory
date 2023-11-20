@@ -323,6 +323,9 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --fp16
 ```
 
+> [!WARNING]
+> Use `--per_device_train_batch_size=1` for LLaMA-2 models in fp16 training.
+
 #### DPO Training
 
 ```bash
@@ -418,7 +421,7 @@ deepspeed --num_gpus 8 --master_port=9901 src/train_bash.py \
 
 </details>
 
-### Export model
+### Merge LoRA weights and export model
 
 ```bash
 python src/export_model.py \
@@ -439,7 +442,7 @@ python src/api_demo.py \
     --checkpoint_dir path_to_checkpoint
 ```
 
-> [!NOTE]
+> [!TIP]
 > Visit `http://localhost:8000/docs` for API documentation.
 
 ### CLI Demo
@@ -491,10 +494,14 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --output_dir path_to_predict_result \
     --per_device_eval_batch_size 8 \
     --max_samples 100 \
-    --predict_with_generate
+    --predict_with_generate \
+    --fp16
 ```
 
-> [!NOTE]
+> [!WARNING]
+> Use `--per_device_train_batch_size=1` for LLaMA-2 models in fp16 predict.
+
+> [!TIP]
 > We recommend using `--per_device_eval_batch_size=1` and `--max_target_length 128` at 4/8-bit predict.
 
 ## Projects using LLaMA Factory
@@ -504,7 +511,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 - **[Sunsimiao](https://github.com/thomas-yanxin/Sunsimiao)**: A large language model specialized in Chinese medical domain, based on Baichuan-7B and ChatGLM-6B.
 - **[CareGPT](https://github.com/WangRongsheng/CareGPT)**: A series of large language models for Chinese medical domain, based on LLaMA2-7B and Baichuan-13B.
 
-> [!NOTE]
+> [!TIP]
 > If you have a project that should be incorporated, please contact via email or create a pull request.
 
 ## License

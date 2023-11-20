@@ -16,7 +16,10 @@ try:
     _is_bf16_available = is_torch_bf16_gpu_available() or is_torch_bf16_cpu_available()
 except ImportError:
     _is_fp16_available = torch.cuda.is_available()
-    _is_bf16_available = torch.cuda.is_bf16_supported()
+    try:
+        _is_bf16_available = torch.cuda.is_bf16_supported()
+    except:
+        _is_bf16_available = False
 
 if TYPE_CHECKING:
     from transformers import HfArgumentParser
