@@ -683,6 +683,22 @@ register_template(
 
 
 register_template(
+    name="yi",
+    prefix=[
+        "{{system}}"
+    ],
+    prompt=[
+        "<|im_start|>user\n{{query}}<|im_end|>\n<|im_start|>assistant\n"
+    ],
+    system="",
+    sep=[
+        "<|im_end|>\n"
+    ],
+    efficient_eos=True
+)
+
+
+register_template(
     name="zephyr",
     prefix=[
         {"token": "<|system|>"},
