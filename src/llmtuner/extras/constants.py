@@ -264,8 +264,12 @@ register_model_group(
 register_model_group(
     models={
         "Yi-6B": "01-ai/Yi-6B",
-        "Yi-34B": "01-ai/Yi-34B"
-    }
+        "Yi-34B": "01-ai/Yi-34B",
+        "Yi-34B-Chat": "01-ai/Yi-34B-Chat",
+        "Yi-34B-int8-Chat": "01-ai/Yi-34B-Chat-8bits",
+        "Yi-34B-int4-Chat": "01-ai/Yi-34B-Chat-4bits"
+    },
+    template="yi"
 )
 
 
