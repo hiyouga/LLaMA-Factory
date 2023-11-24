@@ -1,7 +1,10 @@
 # Inspired by: https://github.com/lvwerra/trl/blob/main/examples/research_projects/stack_llama/scripts/rl_training.py
 
 import math
+import os
+from peft import TaskType, LoraConfig
 from trl import PPOConfig
+import torch
 from torch.optim import AdamW
 from typing import TYPE_CHECKING, Optional, List
 from transformers import DataCollatorWithPadding
@@ -29,6 +32,22 @@ def run_ppo(
 ):
     dataset = get_dataset(model_args, data_args)
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, stage="ppo")
+    if finetuning_args.ppo_use_separate_value_model:
+        if finetuning_args.value_model is not None:
+            model.pretrained_model.load_adapter(finetuning_args.value_model, "value", is_trainable=True)
+            state_dict = torch.load(os.path.join(finetuning_args.value_model, "pytorch_model.bin"), map_location="cpu")
+            model.load_state_dict(state_dict, strict=False)
+        else:
+            lora_config = LoraConfig(
+                task_type=TaskType.CAUSAL_LM,
+                inference_mode=False,
+                r=finetuning_args.lora_rank,
+                lora_alpha=finetuning_args.lora_alpha,
+                lora_dropout=finetuning_args.lora_dropout,
+                target_modules=finetuning_args.lora_target,
+                modules_to_save=finetuning_args.additional_target
+            )
+            model.pretrained_model.add_adapter("value", lora_config)
     dataset = preprocess_dataset(dataset, tokenizer, data_args, training_args, stage="ppo")
 
     tokenizer.padding_side = "left" # use left-padding in generation while using right-padding in training

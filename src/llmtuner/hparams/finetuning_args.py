@@ -122,6 +122,14 @@ class RLHFArguments:
         default="lora",
         metadata={"help": "The checkpoint type of the reward model. The lora type only supports lora training."}
     )
+    ppo_use_separate_value_model: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Use a separate value model which does not share parameters with policy."}
+    )
+    value_model: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to the directory containing the checkpoints of the value model."}
+    )
 
 
 @dataclass

@@ -3,6 +3,7 @@ import sys
 import math
 import torch
 from tqdm import tqdm
+from types import MethodType
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from transformers import BatchEncoding, GenerationConfig, Trainer, TrainerState, TrainerControl
@@ -296,7 +297,16 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             attention_mask = input_kwargs["attention_mask"]
 
             with torch.cuda.amp.autocast(dtype=self.model_args.compute_dtype): # support bf16
-                logits, _, values = model(**input_kwargs)
+                unwrapped_model = self.accelerator.unwrap_model(model)
+                if "value" in unwrapped_model.pretrained_model.peft_config:
+                    # this model has a separate value model and policy model
+                    unwrapped_model.pretrained_model.set_adapter("value")
+                    _, _, values = model(**input_kwargs)
+                    unwrapped_model.pretrained_model.set_adapter("default")
+                    logits, _, _ = model(**input_kwargs)
+                else:
+                    # this model has a shared value model and policy model
+                    logits, _, values = model(**input_kwargs)
 
             if values.size(0) != input_ids.size(0): # adapt to chatglm2
                 values = torch.transpose(values, 0, 1)
