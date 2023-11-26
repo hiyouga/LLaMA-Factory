@@ -90,6 +90,7 @@ class WebChatModel(ChatModel):
         lang = data[self.manager.get_elem_by_name("top.lang")]
 
         if self.demo_mode:
+            gr.Warning(ALERTS["err_demo"][lang])
             yield ALERTS["err_demo"][lang]
             return
 

@@ -149,6 +149,10 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments):
         default=None,
         metadata={"help": "Path to the directory to save the exported model."}
     )
+    export_size: Optional[int] = field(
+        default=1,
+        metadata={"help": "The file shard size (in GB) of the exported model."}
+    )
     plot_loss: Optional[bool] = field(
         default=False,
         metadata={"help": "Whether to plot the training loss after fine-tuning or not."}
