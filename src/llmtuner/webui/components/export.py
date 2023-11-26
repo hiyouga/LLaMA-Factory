@@ -40,18 +40,19 @@ def save_model(
         checkpoint_dir=",".join([get_save_dir(model_name, finetuning_type, ckpt) for ckpt in checkpoints]),
         finetuning_type=finetuning_type,
         template=template,
-        export_dir=export_dir
+        export_dir=export_dir,
+        export_size=max_shard_size
     )
 
     yield ALERTS["info_exporting"][lang]
-    export_model(args, max_shard_size="{}GB".format(max_shard_size))
+    export_model(args)
     yield ALERTS["info_exported"][lang]
 
 
 def create_export_tab(engine: "Engine") -> Dict[str, "Component"]:
     with gr.Row():
         export_dir = gr.Textbox()
-        max_shard_size = gr.Slider(value=10, minimum=1, maximum=100)
+        max_shard_size = gr.Slider(value=1, minimum=1, maximum=100)
 
     export_btn = gr.Button()
     info_box = gr.Textbox(show_label=False, interactive=False)
