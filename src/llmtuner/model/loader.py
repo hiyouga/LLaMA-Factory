@@ -146,6 +146,9 @@ def load_model_and_tokenizer(
 
     # Quantization configurations (using bitsandbytes library)
     if model_args.quantization_bit is not None:
+        if getattr(config, "quantization_config", None):
+            raise ValueError("Remove `quantization_bit` if you are using a quantized model.")
+
         if is_deepspeed_zero3_enabled():
             raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantization.")
 
