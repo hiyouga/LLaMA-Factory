@@ -217,7 +217,11 @@ register_model_group(
         "Qwen-7B": "Qwen/Qwen-7B",
         "Qwen-14B": "Qwen/Qwen-14B",
         "Qwen-7B-Chat": "Qwen/Qwen-7B-Chat",
-        "Qwen-14B-Chat": "Qwen/Qwen-14B-Chat"
+        "Qwen-14B-Chat": "Qwen/Qwen-14B-Chat",
+        "Qwen-7B-int8-Chat": "Qwen/Qwen-7B-Chat-Int8",
+        "Qwen-7B-int4-Chat": "Qwen/Qwen-7B-Chat-Int4",
+        "Qwen-14B-int8-Chat": "Qwen/Qwen-14B-Chat-Int8",
+        "Qwen-14B-int4-Chat": "Qwen/Qwen-14B-Chat-Int4"
     },
     module="c_attn",
     template="qwen"
@@ -266,8 +270,7 @@ register_model_group(
         "Yi-6B": "01-ai/Yi-6B",
         "Yi-34B": "01-ai/Yi-34B",
         "Yi-34B-Chat": "01-ai/Yi-34B-Chat",
-        "Yi-34B-int8-Chat": "01-ai/Yi-34B-Chat-8bits",
-        "Yi-34B-int4-Chat": "01-ai/Yi-34B-Chat-4bits"
+        "Yi-34B-int8-Chat": "01-ai/Yi-34B-Chat-8bits"
     },
     template="yi"
 )
