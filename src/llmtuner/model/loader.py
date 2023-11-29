@@ -1,4 +1,6 @@
 import math
+import os
+
 import torch
 from types import MethodType
 from typing import TYPE_CHECKING, Literal, Optional, Tuple
@@ -62,6 +64,8 @@ def load_model_and_tokenizer(
         "revision": model_args.model_revision,
         "token": model_args.hf_hub_token
     }
+
+    try_download_model_from_ms(model_args)
 
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
@@ -228,3 +232,13 @@ def load_model_and_tokenizer(
         logger.info("This IS expected that the trainable params is 0 if you are using model for inference only.")
 
     return model, tokenizer
+
+
+def try_download_model_from_ms(model_args):
+    if os.environ.get('USE_MODELSCOPE_HUB', False) and not os.path.exists(model_args.model_name_or_path):
+        try:
+            from modelscope import snapshot_download
+            model_args.model_name_or_path = snapshot_download(model_args.model_name_or_path, model_args.model_revision)
+        except ImportError as e:
+            raise ImportError(f'You are using `USE_MODELSCOPE_HUB=True` but you have no modelscope sdk installed. '
+                              f'Please install it by `pip install modelscope -U`') from e
