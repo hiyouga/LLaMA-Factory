@@ -31,7 +31,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 - [模型](#模型)
 - [训练方法](#训练方法)
 - [数据集](#数据集)
-- [软件依赖](#软件依赖)
+- [软硬件依赖](#软硬件依赖)
 - [如何使用](#如何使用)
 - [使用了 LLaMA Factory 的项目](#使用了-llama-factory-的项目)
 - [协议](#协议)
@@ -183,7 +183,7 @@ pip install --upgrade huggingface_hub
 huggingface-cli login
 ```
 
-## 软件依赖
+## 软硬件依赖
 
 - Python 3.8+ 和 PyTorch 1.13.1+
 - 🤗Transformers, Datasets, Accelerate, PEFT 和 TRL
@@ -192,7 +192,15 @@ huggingface-cli login
 - gradio 和 matplotlib (用于网页端交互)
 - uvicorn, fastapi 和 sse-starlette (用于 API)
 
-以及 **强而有力的 GPU**！
+### 硬件依赖
+
+| 训练方法 | 精度 |   7B  |  13B  |  30B  |   65B  |
+| ------- | ---- | ----- | ----- | ----- | ------ |
+| 全参数   |  16  | 140GB | 240GB | 520GB | 1200GB |
+| 部分参数 |  16  |  20GB |  40GB | 120GB |  240GB |
+| LoRA    |  16  |  16GB |  32GB |  80GB |  160GB |
+| LoRA    |   8  |  10GB |  16GB |  40GB |   80GB |
+| LoRA    |   4  |   6GB |  12GB |  24GB |   48GB |
 
 ## 如何使用
 

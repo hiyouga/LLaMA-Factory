@@ -192,7 +192,15 @@ huggingface-cli login
 - gradio and matplotlib (used in web UI)
 - uvicorn, fastapi and sse-starlette (used in API)
 
-And **powerful GPUs**!
+### Hardware Requirement
+
+| Method | Bits |   7B  |  13B  |  30B  |   65B  |
+| ------ | ---- | ----- | ----- | ----- | ------ |
+| Full   |  16  | 140GB | 240GB | 520GB | 1200GB |
+| Freeze |  16  |  20GB |  40GB | 120GB |  240GB |
+| LoRA   |  16  |  16GB |  32GB |  80GB |  160GB |
+| LoRA   |   8  |  10GB |  16GB |  40GB |   80GB |
+| LoRA   |   4  |   6GB |  12GB |  24GB |   48GB |
 
 ## Getting Started
 
