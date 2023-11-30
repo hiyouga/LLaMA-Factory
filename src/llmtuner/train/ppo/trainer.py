@@ -298,7 +298,8 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             with torch.cuda.amp.autocast(dtype=self.model_args.compute_dtype): # support bf16
                 logits, _, values = model(**input_kwargs)
 
-            if getattr(model.config, "model_type", None) == "chatglm":
+            unwrapped_model: "AutoModelForCausalLMWithValueHead" = self.accelerator.unwrap_model(self.model)
+            if getattr(unwrapped_model.config, "model_type", None) == "chatglm":
                 values = torch.transpose(values, 0, 1)
 
             logprobs = logprobs_from_logits(logits[:, :-1, :], input_ids[:, 1:])
