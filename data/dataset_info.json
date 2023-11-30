@@ -266,6 +266,12 @@
     "columns": {
       "prompt": "content"
     }
+  "nectar_rlaif": {
+    "hf_hub_url": "mlinmg/RLAIF-Nectar",
+    "ranking": true
+  },
+  "nectar_sft": {
+    "hf_hub_url": "mlinmg/SFT-Nectar"
   },
   "starcoder": {
     "hf_hub_url": "bigcode/starcoderdata",
