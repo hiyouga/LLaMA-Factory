@@ -38,10 +38,11 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
         max_new_tokens = gr.Slider(10, 2048, value=128, step=1)
         top_p = gr.Slider(0.01, 1, value=0.7, step=0.01)
         temperature = gr.Slider(0.01, 1.5, value=0.95, step=0.01)
+        output_dir = gr.Textbox()
 
-    input_elems.update({max_new_tokens, top_p, temperature})
+    input_elems.update({max_new_tokens, top_p, temperature, output_dir})
     elem_dict.update(dict(
-        max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature
+        max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature, output_dir=output_dir
     ))
 
     with gr.Row():
