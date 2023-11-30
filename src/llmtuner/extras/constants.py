@@ -133,6 +133,28 @@ register_model_group(
 
 register_model_group(
     models={
+        "DeepseekLLM-7B-Base": "deepseek-ai/deepseek-llm-7b-base",
+        "DeepseekLLM-67B-Base": "deepseek-ai/deepseek-llm-67b-base",
+        "DeepseekLLM-7B-Chat": "deepseek-ai/deepseek-llm-7b-chat",
+        "DeepseekLLM-67B-Chat": "deepseek-ai/deepseek-llm-67b-chat"
+    },
+    template="deepseek"
+)
+
+
+register_model_group(
+    models={
+        "DeepseekCoder-6.7B-Base": "deepseek-ai/deepseek-coder-6.7b-base",
+        "DeepseekCoder-6.7B-Chat": "deepseek-ai/deepseek-coder-6.7b-instruct",
+        "DeepseekCoder-33B-Base": "deepseek-ai/deepseek-coder-33b-base",
+        "DeepseekCoder-33B-Chat": "deepseek-ai/deepseek-coder-33b-instruct"
+    },
+    template="deepseekcoder"
+)
+
+
+register_model_group(
+    models={
         "Falcon-7B": "tiiuae/falcon-7b",
         "Falcon-40B": "tiiuae/falcon-40b",
         "Falcon-180B": "tiiuae/falcon-180B",
@@ -214,14 +236,22 @@ register_model_group(
 
 register_model_group(
     models={
+        "Qwen-1.8B": "Qwen/Qwen-1_8B",
         "Qwen-7B": "Qwen/Qwen-7B",
         "Qwen-14B": "Qwen/Qwen-14B",
+        "Qwen-72B": "Qwen/Qwen-72B",
+        "Qwen-1.8B-Chat": "Qwen/Qwen-1_8B-Chat",
         "Qwen-7B-Chat": "Qwen/Qwen-7B-Chat",
         "Qwen-14B-Chat": "Qwen/Qwen-14B-Chat",
+        "Qwen-72B-Chat": "Qwen/Qwen-72B-Chat",
+        "Qwen-1.8B-int8-Chat": "Qwen/Qwen-1_8B-Chat-Int8",
+        "Qwen-1.8B-int4-Chat": "Qwen/Qwen-1_8B-Chat-Int4",
         "Qwen-7B-int8-Chat": "Qwen/Qwen-7B-Chat-Int8",
         "Qwen-7B-int4-Chat": "Qwen/Qwen-7B-Chat-Int4",
         "Qwen-14B-int8-Chat": "Qwen/Qwen-14B-Chat-Int8",
-        "Qwen-14B-int4-Chat": "Qwen/Qwen-14B-Chat-Int4"
+        "Qwen-14B-int4-Chat": "Qwen/Qwen-14B-Chat-Int4",
+        "Qwen-72B-int8-Chat": "Qwen/Qwen-72B-Chat-Int8",
+        "Qwen-72B-int4-Chat": "Qwen/Qwen-72B-Chat-Int4"
     },
     module="c_attn",
     template="qwen"
