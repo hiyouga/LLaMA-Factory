@@ -11,14 +11,19 @@ from transformers.utils import (
     ADAPTER_SAFE_WEIGHTS_NAME
 )
 
-from llmtuner.extras.constants import DEFAULT_MODULE, DEFAULT_TEMPLATE, SUPPORTED_MODELS, TRAINING_STAGES
+from llmtuner.extras.constants import (
+    DEFAULT_MODULE,
+    DEFAULT_TEMPLATE,
+    SUPPORTED_MODELS,
+    TRAINING_STAGES
+)
+from llmtuner.hparams.data_args import DATA_CONFIG
 
 
 DEFAULT_CACHE_DIR = "cache"
 DEFAULT_DATA_DIR = "data"
 DEFAULT_SAVE_DIR = "saves"
 USER_CONFIG = "user.config"
-DATA_CONFIG = "dataset_info.json"
 CKPT_NAMES = [
     WEIGHTS_NAME,
     WEIGHTS_INDEX_NAME,
@@ -94,7 +99,7 @@ def load_dataset_info(dataset_dir: str) -> Dict[str, Dict[str, Any]]:
         with open(os.path.join(dataset_dir, DATA_CONFIG), "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception as err:
-        print("Cannot open {} in {} due to {}.".format(DATA_CONFIG, dataset_dir, str(err)))
+        print("Cannot open {} due to {}.".format(os.path.join(dataset_dir, DATA_CONFIG), str(err)))
         return {}
 
 
