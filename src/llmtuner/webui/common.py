@@ -11,16 +11,15 @@ from transformers.utils import (
     ADAPTER_SAFE_WEIGHTS_NAME
 )
 
-
 from llmtuner.extras.constants import (
     DEFAULT_MODULE,
     DEFAULT_TEMPLATE,
     SUPPORTED_MODELS,
-    ALL_OFFICIAL_MODELS,
-    TRAINING_STAGES
+    TRAINING_STAGES,
+    DownloadSource
 )
+from llmtuner.extras.misc import use_modelscope
 from llmtuner.hparams.data_args import DATA_CONFIG
-
 
 
 DEFAULT_CACHE_DIR = "cache"
@@ -66,10 +65,15 @@ def save_config(lang: str, model_name: Optional[str] = None, model_path: Optiona
 
 def get_model_path(model_name: str) -> str:
     user_config = load_config()
-    cached_path = user_config["path_dict"].get(model_name, None)
-    if cached_path in ALL_OFFICIAL_MODELS.get(model_name, []):
-        cached_path = None
-    return cached_path or SUPPORTED_MODELS.get(model_name, "")
+    path_dict: Dict[DownloadSource, str] = SUPPORTED_MODELS.get(model_name, [])
+    model_path = user_config["path_dict"].get(model_name, None) or path_dict.get(DownloadSource.DEFAULT, "")
+    if (
+        use_modelscope()
+        and path_dict.get(DownloadSource.MODELSCOPE)
+        and model_path == path_dict.get(DownloadSource.DEFAULT)
+    ): # replace path
+        model_path = path_dict.get(DownloadSource.MODELSCOPE)
+    return model_path
 
 
 def get_prefix(model_name: str) -> str:
