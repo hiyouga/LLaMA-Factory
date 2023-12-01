@@ -94,7 +94,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 | [LLaMA-2](https://huggingface.co/meta-llama)             | 7B/13B/70B                  | q_proj,v_proj     | llama2    |
 | [Mistral](https://huggingface.co/mistralai)              | 7B                          | q_proj,v_proj     | mistral   |
 | [Phi-1.5](https://huggingface.co/microsoft/phi-1_5)      | 1.3B                        | Wqkv              | -         |
-| [Qwen](https://github.com/QwenLM/Qwen)                   | 7B/14B                      | c_attn            | qwen      |
+| [Qwen](https://github.com/QwenLM/Qwen)                   | 1.8B/7B/14B/72B             | c_attn            | qwen      |
 | [XVERSE](https://github.com/xverse-ai)                   | 7B/13B/65B                  | q_proj,v_proj     | xverse    |
 
 > [!NOTE]
@@ -158,6 +158,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 - [Firefly 1.1M (zh)](https://huggingface.co/datasets/YeungNLP/firefly-train-1.1M)
 - [Web QA (zh)](https://huggingface.co/datasets/suolyer/webqa)
 - [WebNovel (zh)](https://huggingface.co/datasets/zxbsmk/webnovel_cn)
+- [Nectar (en)](https://huggingface.co/datasets/berkeley-nest/Nectar)
 - [Ad Gen (zh)](https://huggingface.co/datasets/HasturOfficial/adgen)
 - [ShareGPT Hyperfiltered (en)](https://huggingface.co/datasets/totally-not-an-llm/sharegpt-hyperfiltered-3k)
 - [ShareGPT4 (en&zh)](https://huggingface.co/datasets/shibing624/sharegpt_gpt4)
@@ -173,6 +174,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 - [HH-RLHF (en)](https://huggingface.co/datasets/Anthropic/hh-rlhf)
 - [Open Assistant (multilingual)](https://huggingface.co/datasets/OpenAssistant/oasst1)
 - [GPT-4 Generated Data (en&zh)](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
+- [Nectar (en)](https://huggingface.co/datasets/berkeley-nest/Nectar)
 
 </details>
 
@@ -201,8 +203,8 @@ huggingface-cli login
 | 全参数   |  16  | 140GB | 240GB | 520GB | 1200GB |
 | 部分参数 |  16  |  20GB |  40GB | 120GB |  240GB |
 | LoRA    |  16  |  16GB |  32GB |  80GB |  160GB |
-| LoRA    |   8  |  10GB |  16GB |  40GB |   80GB |
-| LoRA    |   4  |   6GB |  12GB |  24GB |   48GB |
+| QLoRA   |   8  |  10GB |  16GB |  40GB |   80GB |
+| QLoRA   |   4  |   6GB |  12GB |  24GB |   48GB |
 
 ## 如何使用
 
