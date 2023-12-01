@@ -8,8 +8,8 @@ class ModelArguments:
     Arguments pertaining to which model/config/tokenizer we are going to fine-tune.
     """
     model_name_or_path: str = field(
-        metadata={"help": "Path to pretrained model or model identifier "
-                          "from huggingface.co/models or modelscope.cn/models."}
+        metadata={"help": "Path to pretrained model or model identifier from \
+                  huggingface.co/models or modelscope.cn/models."}
     )
     cache_dir: Optional[str] = field(
         default=None,
