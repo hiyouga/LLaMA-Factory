@@ -509,6 +509,25 @@ register_model_group(
 
 register_model_group(
     models={
+        "XuanYuan-70B": {
+            DownloadSource.DEFAULT: "Duxiaoman-DI/XuanYuan-70B"
+        },
+        "XuanYuan-70B-Chat": {
+            DownloadSource.DEFAULT: "Duxiaoman-DI/XuanYuan-70B-Chat"
+        },
+        "XuanYuan-70B-int8-Chat": {
+            DownloadSource.DEFAULT: "Duxiaoman-DI/XuanYuan-70B-Chat-8bit"
+        },
+        "XuanYuan-70B-int4-Chat": {
+            DownloadSource.DEFAULT: "Duxiaoman-DI/XuanYuan-70B-Chat-4bit"
+        }
+    },
+    template="xuanyuan"
+)
+
+
+register_model_group(
+    models={
         "XVERSE-7B": {
             DownloadSource.DEFAULT: "xverse/XVERSE-7B",
             DownloadSource.MODELSCOPE: "xverse/XVERSE-7B"
