@@ -72,7 +72,9 @@ def get_current_device() -> str:
     import accelerate
     if accelerate.utils.is_xpu_available():
         return "xpu:{}".format(os.environ.get("LOCAL_RANK", "0"))
-    elif accelerate.utils.is_npu_available() or torch.cuda.is_available():
+    elif accelerate.utils.is_npu_available():
+        return "npu:{}".format(os.environ.get("LOCAL_RANK", "0"))
+    elif torch.cuda.is_available():
         return "cuda:{}".format(os.environ.get("LOCAL_RANK", "0"))
     else:
         return "cpu"
