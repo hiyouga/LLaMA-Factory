@@ -250,7 +250,7 @@ export USE_MODELSCOPE_HUB=1 # `set USE_MODELSCOPE_HUB=1` for Windows
 Then you can train the corresponding model by specifying a model ID of the ModelScope Hub. (find a full list of model IDs at [ModelScope Hub](https://modelscope.cn/models))
 
 ```bash
-python src/train_bash.py \
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --model_name_or_path modelscope/Llama-2-7b-ms \
     ... # arguments (same as above)
 ```
