@@ -51,6 +51,8 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 ## Changelog
 
+[23/12/01] We supported **[ModelScope Hub](https://www.modelscope.cn/models)** to accelerate model downloading. Add environment variable `USE_MODELSCOPE_HUB=1` to your command line, then you can use the model-id of ModelScope Hub.
+
 [23/10/21] We supported **[NEFTune](https://arxiv.org/abs/2310.05914)** trick for fine-tuning. Try `--neft_alpha` argument to activate NEFTune, e.g., `--neft_alpha 5`.
 
 [23/09/27] We supported **$S^2$-Attn** proposed by [LongLoRA](https://github.com/dvlab-research/LongLoRA) for the LLaMA models. Try `--shift_attn` argument to enable shift short attention.
@@ -227,6 +229,33 @@ If you want to enable the quantized LoRA (QLoRA) on the Windows platform, you wi
 
 ```bash
 pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.39.1-py3-none-win_amd64.whl
+```
+
+### Use ModelScope Models
+
+If you have trouble with downloading models from HuggingFace, we have supported ModelScope Hub. To use LLaMA-Factory together with ModelScope, please add a environment variable:
+
+```shell
+export USE_MODELSCOPE_HUB=1
+```
+
+> [!NOTE]
+>
+> Please use integers only. 0 or not set for using HuggingFace hub. Other values will be treated as use ModelScope hub.
+
+Then you can use LLaMA-Factory with ModelScope model-ids:
+
+```shell
+python src/train_bash.py \
+    --model_name_or_path ZhipuAI/chatglm3-6b \
+    ... other arguments
+# You can find all model ids in this link: https://www.modelscope.cn/models
+```
+
+Web demo also supports ModelScope, after setting the environment variable please run with this command:
+
+```shell
+CUDA_VISIBLE_DEVICES=0 python src/train_web.py
 ```
 
 ### Train on a single GPU
