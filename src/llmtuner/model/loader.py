@@ -146,22 +146,25 @@ def load_model_and_tokenizer(
         else:
             logger.warning("Current model does not support shift short attention.")
 
+    # Quantization configurations (using gptq or awq)
+    if getattr(config, "quantization_config", None):
+        if model_args.quantization_bit is not None: # remove bnb quantization
+            model_args.quantization_bit = None
+        config_kwargs["device_map"] = {"": get_current_device()}
+        quantization_config = getattr(config, "quantization_config", None)
+        logger.info("Loading {}-bit quantized model.".format(quantization_config.get("bits", -1)))
+
     # Quantization configurations (using bitsandbytes library)
     if model_args.quantization_bit is not None:
-        if getattr(config, "quantization_config", None):
-            raise ValueError("Remove `quantization_bit` if you are using a quantized model.")
-
         if is_deepspeed_zero3_enabled():
             raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantization.")
 
         if model_args.quantization_bit == 8:
             require_version("bitsandbytes>=0.37.0", "To fix: pip install bitsandbytes>=0.37.0")
-            config_kwargs["load_in_8bit"] = True
             config_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_8bit=True)
 
         if model_args.quantization_bit == 4:
             require_version("bitsandbytes>=0.39.0", "To fix: pip install bitsandbytes>=0.39.0")
-            config_kwargs["load_in_4bit"] = True
             config_kwargs["quantization_config"] = BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_compute_dtype=model_args.compute_dtype,
