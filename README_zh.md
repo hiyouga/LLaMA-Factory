@@ -250,7 +250,7 @@ export USE_MODELSCOPE_HUB=1 # Windows 使用 `set USE_MODELSCOPE_HUB=1`
 接着即可通过指定模型名称来训练对应的模型。（在[魔搭社区](https://modelscope.cn/models)查看所有可用的模型）
 
 ```bash
-python src/train_bash.py \
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --model_name_or_path modelscope/Llama-2-7b-ms \
     ... # 参数同上
 ```
