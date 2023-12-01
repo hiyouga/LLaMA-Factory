@@ -134,6 +134,9 @@
   "webnovel": {
     "hf_hub_url": "zxbsmk/webnovel_cn"
   },
+  "nectar_sft": {
+    "hf_hub_url": "mlinmg/SFT-Nectar"
+  },
   "adgen": {
     "hf_hub_url": "HasturOfficial/adgen",
     "columns": {
@@ -216,6 +219,10 @@
     "file_sha1": "515b18ed497199131ddcc1af950345c11dc5c7fd",
     "ranking": true
   },
+  "nectar_rm": {
+    "hf_hub_url": "mlinmg/RLAIF-Nectar",
+    "ranking": true
+  },
   "wiki_demo": {
     "file_name": "wiki_demo.txt",
     "file_sha1": "e70375e28eda542a90c68213640cc371898ce181",
@@ -266,12 +273,6 @@
     "columns": {
       "prompt": "content"
     }
-  "nectar_rlaif": {
-    "hf_hub_url": "mlinmg/RLAIF-Nectar",
-    "ranking": true
-  },
-  "nectar_sft": {
-    "hf_hub_url": "mlinmg/SFT-Nectar"
   },
   "starcoder": {
     "hf_hub_url": "bigcode/starcoderdata",
