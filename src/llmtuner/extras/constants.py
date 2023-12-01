@@ -43,7 +43,7 @@ def register_model_group(
         else:
             assert prefix == name.split("-")[0], "prefix should be identical."
 
-        if not os.environ.get('USE_MODELSCOPE_HUB', False):
+        if not int(os.environ.get('USE_MODELSCOPE_HUB', '0')):
             # If path is a string, we treat it as a huggingface model-id by default.
             SUPPORTED_MODELS[name] = path["hf"] if isinstance(path, dict) else path
         elif isinstance(path, dict) and "ms" in path:
