@@ -20,7 +20,7 @@ SUBJECTS = ["Average", "STEM", "Social Sciences", "Humanities", "Other"]
 
 SUPPORTED_MODELS = OrderedDict()
 
-MODELSCOPE_MODELS = OrderedDict()
+ALL_OFFICIAL_MODELS = OrderedDict()
 
 TRAINING_STAGES = {
     "Supervised Fine-Tuning": "sft",
@@ -43,12 +43,14 @@ def register_model_group(
         else:
             assert prefix == name.split("-")[0], "prefix should be identical."
 
+        ALL_OFFICIAL_MODELS[name] = [path] if isinstance(path, str) else list(path.values())
         if not int(os.environ.get('USE_MODELSCOPE_HUB', '0')):
             # If path is a string, we treat it as a huggingface model-id by default.
             SUPPORTED_MODELS[name] = path["hf"] if isinstance(path, dict) else path
         elif isinstance(path, dict) and "ms" in path:
             # Use ModelScope modelhub
             SUPPORTED_MODELS[name] = path["ms"]
+        print(f'Supported models add {name}/{SUPPORTED_MODELS[name]}')
     if module is not None:
         DEFAULT_MODULE[prefix] = module
     if template is not None:
