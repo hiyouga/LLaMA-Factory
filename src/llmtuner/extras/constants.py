@@ -107,11 +107,11 @@ register_model_group(
         },
         "BLOOM-3B": {
             "hf": "bigscience/bloom-3b",
-            "ms": "bigscience/bloom-3b",
+            "ms": "AI-ModelScope/bloom-3b",
         },
         "BLOOM-7B1": {
             "hf": "bigscience/bloom-7b1",
-            "ms": "bigscience/bloom-7b1",
+            "ms": "AI-ModelScope/bloom-7b1",
         }
     },
     module="query_key_value"
@@ -122,11 +122,11 @@ register_model_group(
     models={
         "BLOOMZ-560M": {
             "hf": "bigscience/bloomz-560m",
-            "ms": "bigscience/bloomz-560m",
+            "ms": "AI-ModelScope/bloomz-560m",
         },
         "BLOOMZ-3B": {
             "hf": "bigscience/bloomz-3b",
-            "ms": "bigscience/bloomz-3b",
+            "ms": "AI-ModelScope/bloomz-3b",
         },
         "BLOOMZ-7B1-mt": {
             "hf": "bigscience/bloomz-7b1-mt",
@@ -184,27 +184,27 @@ register_model_group(
     models={
         "ChineseLLaMA2-1.3B": {
             "hf": "hfl/chinese-llama-2-1.3b",
-            "ms": "hfl/chinese-llama-2-1.3b",
+            "ms": "AI-ModelScope/chinese-llama-2-1.3b",
         },
         "ChineseLLaMA2-7B": {
             "hf": "hfl/chinese-llama-2-7b",
-            "ms": "hfl/chinese-llama-2-7b",
+            "ms": "AI-ModelScope/chinese-llama-2-7b",
         },
         "ChineseLLaMA2-13B": {
             "hf": "hfl/chinese-llama-2-13b",
-            "ms": "hfl/chinese-llama-2-13b",
+            "ms": "AI-ModelScope/chinese-llama-2-13b",
         },
         "ChineseLLaMA2-1.3B-Chat": {
             "hf": "hfl/chinese-alpaca-2-1.3b",
-            "ms": "hfl/chinese-alpaca-2-1.3b",
+            "ms": "AI-ModelScope/chinese-alpaca-2-1.3b",
         },
         "ChineseLLaMA2-7B-Chat": {
             "hf": "hfl/chinese-alpaca-2-7b",
-            "ms": "hfl/chinese-alpaca-2-7b",
+            "ms": "AI-ModelScope/chinese-alpaca-2-7b",
         },
         "ChineseLLaMA2-13B-Chat": {
             "hf": "hfl/chinese-alpaca-2-13b",
-            "ms": "hfl/chinese-alpaca-2-13b",
+            "ms": "AI-ModelScope/chinese-alpaca-2-13b",
         }
     },
     template="llama2_zh"
@@ -215,15 +215,15 @@ register_model_group(
     models={
         "Falcon-7B": {
             "hf": "tiiuae/falcon-7b",
-            "ms": "tiiuae/falcon-7b",
+            "ms": "AI-ModelScope/falcon-7b",
         },
         "Falcon-40B": {
             "hf": "tiiuae/falcon-40b",
-            "ms": "tiiuae/falcon-40b",
+            "ms": "AI-ModelScope/falcon-40b",
         },
         "Falcon-180B": {
             "hf": "tiiuae/falcon-180B",
-            "ms": "tiiuae/falcon-180B",
+            "ms": "AI-ModelScope/falcon-180B",
         },
         "Falcon-7B-Chat": {
             "hf": "tiiuae/falcon-7b-instruct",
@@ -231,11 +231,11 @@ register_model_group(
         },
         "Falcon-40B-Chat": {
             "hf": "tiiuae/falcon-40b-instruct",
-            "ms": "tiiuae/falcon-40b-instruct",
+            "ms": "AI-ModelScope/falcon-40b-instruct",
         },
         "Falcon-180B-Chat": {
             "hf": "tiiuae/falcon-180B-chat",
-            "ms": "tiiuae/falcon-180B-chat",
+            "ms": "AI-ModelScope/falcon-180B-chat",
         }
     },
     module="query_key_value",
@@ -349,7 +349,7 @@ register_model_group(
     models={
         "OpenChat3.5-7B-Chat": {
             "hf": "openchat/openchat_3.5",
-            "ms": "openchat/openchat_3.5",
+            "ms": "myxiongmodel/openchat_3.5",
         }
     },
     template="openchat"
@@ -360,7 +360,7 @@ register_model_group(
     models={
         "Phi1.5-1.3B": {
             "hf": "microsoft/phi-1_5",
-            "ms": "microsoft/phi-1_5",
+            "ms": "allspace/PHI_1-5",
         }
     },
     module="Wqkv"
@@ -425,7 +425,7 @@ register_model_group(
         },
         "Vicuna1.5-13B-Chat": {
             "hf": "lmsys/vicuna-13b-v1.5",
-            "ms": "lmsys/vicuna-13b-v1.5",
+            "ms": "Xorbits/vicuna-13b-v1.5",
         }
     },
     template="vicuna"
@@ -463,11 +463,11 @@ register_model_group(
     models={
         "Yayi-7B": {
             "hf": "wenge-research/yayi-7b-llama2",
-            "ms": "wenge-research/yayi-7b-llama2",
+            "ms": "AI-ModelScope/yayi-7b-llama2",
         },
         "Yayi-13B": {
             "hf": "wenge-research/yayi-13b-llama2",
-            "ms": "wenge-research/yayi-13b-llama2",
+            "ms": "AI-ModelScope/yayi-13b-llama2",
         }
     },
     template="yayi"
@@ -501,7 +501,7 @@ register_model_group(
     models={
         "Zephyr-7B-Alpha-Chat": {
             "hf": "HuggingFaceH4/zephyr-7b-alpha",
-            "ms": "HuggingFaceH4/zephyr-7b-alpha",
+            "ms": "AI-ModelScope/zephyr-7b-alpha",
         },
         "Zephyr-7B-Beta-Chat": {
             "hf": "HuggingFaceH4/zephyr-7b-beta",
