@@ -42,18 +42,18 @@ def dispatch_model(model: "PreTrainedModel") -> "PreTrainedModel":
         return model.cuda()
 
 
-def find_all_linear_modules(
-    model: "PreTrainedModel",
-    quantization_bit: Optional[int] = None
-) -> List[str]:
+def find_all_linear_modules(model: "PreTrainedModel") -> List[str]:
     r"""
     Finds all available modules to apply lora.
     """
-    if quantization_bit is not None:
-        import bitsandbytes as bnb
-        linear_cls = bnb.nn.Linear4bit if quantization_bit == 4 else bnb.nn.Linear8bitLt
-    else:
+    quantization_method = getattr(model, "quantization_method", None)
+    if quantization_method is None:
         linear_cls = torch.nn.Linear
+    elif quantization_method == "bitsandbytes":
+        import bitsandbytes as bnb
+        linear_cls = bnb.nn.Linear4bit if getattr(model, "is_loaded_in_4bit", False) else bnb.nn.Linear8bitLt
+    else:
+        raise ValueError("Finding linear modules for {} models is not supported.".format(quantization_method))
 
     output_layer_names = ["lm_head"]
     if model.config.model_type == "chatglm":
