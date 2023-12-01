@@ -69,11 +69,12 @@ def count_parameters(model: torch.nn.Module) -> Tuple[int, int]:
 
 def get_current_device() -> str:
     import accelerate
-    dummy_accelerator = accelerate.Accelerator()
     if accelerate.utils.is_xpu_available():
-        return "xpu:{}".format(dummy_accelerator.local_process_index)
+        return "xpu:{}".format(os.environ.get("LOCAL_RANK", "0"))
+    elif accelerate.utils.is_npu_available() or torch.cuda.is_available():
+        return os.environ.get("LOCAL_RANK", "0")
     else:
-        return dummy_accelerator.local_process_index if torch.cuda.is_available() else "cpu"
+        return "cpu"
 
 
 def get_logits_processor() -> "LogitsProcessorList":
