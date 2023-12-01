@@ -132,7 +132,7 @@ LOCALES = {
     "dataset_dir": {
         "en": {
             "label": "Data dir",
-            "info": "Path of the data directory."
+            "info": "Path to the data directory."
         },
         "zh": {
             "label": "数据路径",
@@ -475,12 +475,12 @@ LOCALES = {
     },
     "output_dir": {
         "en": {
-            "label": "Checkpoint name",
-            "info": "Directory to save checkpoint."
+            "label": "Output dir",
+            "info": "Directory for saving results."
         },
         "zh": {
-            "label": "断点名称",
-            "info": "保存模型断点的文件夹名称。"
+            "label": "输出目录",
+            "info": "保存结果的路径。"
         }
     },
     "output_box": {
