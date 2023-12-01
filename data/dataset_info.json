@@ -134,6 +134,9 @@
   "webnovel": {
     "hf_hub_url": "zxbsmk/webnovel_cn"
   },
+  "nectar_sft": {
+    "hf_hub_url": "mlinmg/SFT-Nectar"
+  },
   "adgen": {
     "hf_hub_url": "HasturOfficial/adgen",
     "columns": {
@@ -214,6 +217,10 @@
   "comparison_gpt4_zh": {
     "file_name": "comparison_gpt4_data_zh.json",
     "file_sha1": "515b18ed497199131ddcc1af950345c11dc5c7fd",
+    "ranking": true
+  },
+  "nectar_rm": {
+    "hf_hub_url": "mlinmg/RLAIF-Nectar",
     "ranking": true
   },
   "wiki_demo": {

@@ -4,6 +4,9 @@ from typing import List, Literal, Optional
 from dataclasses import dataclass, field
 
 
+DATA_CONFIG = "dataset_info.json"
+
+
 @dataclass
 class DatasetAttr:
 
@@ -130,11 +133,11 @@ class DataArguments:
         self.seed = seed
         dataset_names = [ds.strip() for ds in self.dataset.split(",")] if self.dataset is not None else []
         try:
-            with open(os.path.join(self.dataset_dir, "dataset_info.json"), "r") as f:
+            with open(os.path.join(self.dataset_dir, DATA_CONFIG), "r") as f:
                 dataset_info = json.load(f)
-        except Exception:
+        except Exception as err:
             if self.dataset is not None:
-                raise ValueError("Cannot find dataset_info.json in `dataset_dir`.")
+                raise ValueError("Cannot open {} due to {}.".format(os.path.join(self.dataset_dir, DATA_CONFIG), str(err)))
             dataset_info = None
 
         prompt_list = self.system_prompt.split("|") if self.system_prompt else [None]
@@ -147,7 +150,7 @@ class DataArguments:
         self.dataset_list: List[DatasetAttr] = []
         for i, name in enumerate(dataset_names):
             if name not in dataset_info:
-                raise ValueError("Undefined dataset {} in dataset_info.json.".format(name))
+                raise ValueError("Undefined dataset {} in {}.".format(name, DATA_CONFIG))
 
             if "hf_hub_url" in dataset_info[name]:
                 dataset_attr = DatasetAttr("hf_hub", dataset_name=dataset_info[name]["hf_hub_url"])

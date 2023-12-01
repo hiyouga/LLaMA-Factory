@@ -87,9 +87,9 @@ class Runner:
         user_config = load_config()
 
         if get("top.checkpoints"):
-            checkpoint_dir = ",".join([get_save_dir(
-                get("top.model_name"), get("top.finetuning_type"), ckpt
-            ) for ckpt in get("top.checkpoints")])
+            checkpoint_dir = ",".join([
+                get_save_dir(get("top.model_name"), get("top.finetuning_type"), ckpt) for ckpt in get("top.checkpoints")
+            ])
         else:
             checkpoint_dir = None
 
@@ -160,15 +160,11 @@ class Runner:
         user_config = load_config()
 
         if get("top.checkpoints"):
-            checkpoint_dir = ",".join([get_save_dir(
-                get("top.model_name"), get("top.finetuning_type"), ckpt
-            ) for ckpt in get("top.checkpoints")])
-            output_dir = get_save_dir(
-                get("top.model_name"), get("top.finetuning_type"), "eval_" + "_".join(get("top.checkpoints"))
-            )
+            checkpoint_dir = ",".join([
+                get_save_dir(get("top.model_name"), get("top.finetuning_type"), ckpt) for ckpt in get("top.checkpoints")
+            ])
         else:
             checkpoint_dir = None
-            output_dir = get_save_dir(get("top.model_name"), get("top.finetuning_type"), "eval_base")
 
         args = dict(
             stage="sft",
@@ -192,7 +188,7 @@ class Runner:
             max_new_tokens=get("eval.max_new_tokens"),
             top_p=get("eval.top_p"),
             temperature=get("eval.temperature"),
-            output_dir=output_dir
+            output_dir=get_save_dir(get("top.model_name"), get("top.finetuning_type"), get("eval.output_dir"))
         )
 
         if get("eval.predict"):
@@ -242,6 +238,7 @@ class Runner:
         output_dir = get_save_dir(get("top.model_name"), get("top.finetuning_type"), get(
             "{}.output_dir".format("train" if self.do_train else "eval")
         ))
+
         while self.thread.is_alive():
             time.sleep(2)
             if self.aborted:
