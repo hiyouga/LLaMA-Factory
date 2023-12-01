@@ -235,7 +235,7 @@ def load_model_and_tokenizer(
 
 
 def try_download_model_from_ms(model_args):
-    if os.environ.get('USE_MODELSCOPE_HUB', False) and not os.path.exists(model_args.model_name_or_path):
+    if int(os.environ.get('USE_MODELSCOPE_HUB', '0')) and not os.path.exists(model_args.model_name_or_path):
         try:
             from modelscope import snapshot_download
             revision = model_args.model_revision
@@ -243,5 +243,5 @@ def try_download_model_from_ms(model_args):
                 revision = 'master'
             model_args.model_name_or_path = snapshot_download(model_args.model_name_or_path, revision)
         except ImportError as e:
-            raise ImportError(f'You are using `USE_MODELSCOPE_HUB=True` but you have no modelscope sdk installed. '
+            raise ImportError(f'You are using `USE_MODELSCOPE_HUB=1` but you have no modelscope sdk installed. '
                               f'Please install it by `pip install modelscope -U`') from e
