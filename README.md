@@ -156,6 +156,7 @@ Please refer to [constants.py](src/llmtuner/extras/constants.py) for a full list
 - [Firefly 1.1M (zh)](https://huggingface.co/datasets/YeungNLP/firefly-train-1.1M)
 - [Web QA (zh)](https://huggingface.co/datasets/suolyer/webqa)
 - [WebNovel (zh)](https://huggingface.co/datasets/zxbsmk/webnovel_cn)
+- [Nectar (en)](https://huggingface.co/datasets/berkeley-nest/Nectar)
 - [Ad Gen (zh)](https://huggingface.co/datasets/HasturOfficial/adgen)
 - [ShareGPT Hyperfiltered (en)](https://huggingface.co/datasets/totally-not-an-llm/sharegpt-hyperfiltered-3k)
 - [ShareGPT4 (en&zh)](https://huggingface.co/datasets/shibing624/sharegpt_gpt4)
@@ -171,6 +172,7 @@ Please refer to [constants.py](src/llmtuner/extras/constants.py) for a full list
 - [HH-RLHF (en)](https://huggingface.co/datasets/Anthropic/hh-rlhf)
 - [Open Assistant (multilingual)](https://huggingface.co/datasets/OpenAssistant/oasst1)
 - [GPT-4 Generated Data (en&zh)](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
+- [Nectar (en)](https://huggingface.co/datasets/berkeley-nest/Nectar)
 
 </details>
 
