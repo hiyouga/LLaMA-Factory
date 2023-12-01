@@ -1,4 +1,4 @@
-# LLaMA Factory: 轻松的大模型训练与评估
+![# LLaMA Factory](assets/logo.png)
 
 [![GitHub Repo stars](https://img.shields.io/github/stars/hiyouga/LLaMA-Factory?style=social)](https://github.com/hiyouga/LLaMA-Factory/stargazers)
 [![GitHub Code License](https://img.shields.io/github/license/hiyouga/LLaMA-Factory)](LICENSE)
