@@ -50,7 +50,6 @@ def register_model_group(
         elif isinstance(path, dict) and "ms" in path:
             # Use ModelScope modelhub
             SUPPORTED_MODELS[name] = path["ms"]
-        print(f'Supported models add {name}/{SUPPORTED_MODELS[name]}')
     if module is not None:
         DEFAULT_MODULE[prefix] = module
     if template is not None:
