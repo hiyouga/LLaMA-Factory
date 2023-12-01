@@ -51,6 +51,8 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 
 ## 更新日志
 
+[23/12/01] 我们支持了 **[魔搭ModelHub](https://www.modelscope.cn/models)** 进行模型下载加速。在启动命令前环境变量中增加 `USE_MODELSCOPE_HUB=1` 即可开启。
+
 [23/10/21] 我们支持了 **[NEFTune](https://arxiv.org/abs/2310.05914)** 训练技巧。请使用 `--neft_alpha` 参数启用 NEFTune，例如 `--neft_alpha 5`。
 
 [23/09/27] 我们针对 LLaMA 模型支持了 [LongLoRA](https://github.com/dvlab-research/LongLoRA) 提出的 **$S^2$-Attn**。请使用 `--shift_attn` 参数以启用该功能。
@@ -227,6 +229,33 @@ pip install -r requirements.txt
 
 ```bash
 pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.39.1-py3-none-win_amd64.whl
+```
+
+### 使用魔搭的模型
+
+如果下载HuggingFace模型存在问题，我们已经支持了魔搭的ModelHub，只需要添加一个环境变量：
+
+```shell
+export USE_MODELSCOPE_HUB=1
+```
+
+> [!NOTE]
+>
+> 该环境变量仅支持整数，0或者不设置代表使用HuggingFace，其他值代表使用ModelScope
+
+之后就可以在命令行中指定魔搭的模型id：
+
+```shell
+python src/train_bash.py \
+    --model_name_or_path ZhipuAI/chatglm3-6b \
+    ... other arguments
+# 在这个链接中可以看到所有可用模型: https://www.modelscope.cn/models
+```
+
+Web demo目前也支持了魔搭, 在设置环境变量后即可使用：
+
+```shell
+CUDA_VISIBLE_DEVICES=0 python src/train_web.py
 ```
 
 ### 单 GPU 训练
