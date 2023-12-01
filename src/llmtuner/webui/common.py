@@ -89,12 +89,12 @@ def list_checkpoint(model_name: str, finetuning_type: str) -> Dict[str, Any]:
     return gr.update(value=[], choices=checkpoints)
 
 
-def load_dataset_info(dataset_dir: str) -> Dict[str, Any]:
+def load_dataset_info(dataset_dir: str) -> Dict[str, Dict[str, Any]]:
     try:
         with open(os.path.join(dataset_dir, DATA_CONFIG), "r", encoding="utf-8") as f:
             return json.load(f)
-    except:
-        print("Cannot find {} in {}.".format(DATA_CONFIG, dataset_dir))
+    except Exception as err:
+        print("Cannot open {} in {} due to {}.".format(DATA_CONFIG, dataset_dir, str(err)))
         return {}
 
 
