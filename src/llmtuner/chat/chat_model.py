@@ -167,7 +167,8 @@ class ChatModel:
 
         scores = []
         for i in range(input_ids.size(0)):
-            length = (input_ids[i] != self.tokenizer.pad_token_id).nonzero()[-1] + 1
-            scores.append(values[i, length-1].nan_to_num().item())
+            end_indexes = (input_ids[i] != self.tokenizer.pad_token_id).nonzero()
+            end_index = end_indexes[-1].item() if len(end_indexes) else 0
+            scores.append(values[i, end_index].nan_to_num().item())
 
         return scores
