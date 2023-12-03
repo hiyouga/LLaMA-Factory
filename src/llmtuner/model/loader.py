@@ -1,3 +1,4 @@
+import os
 import math
 import torch
 from types import MethodType
@@ -22,7 +23,7 @@ except ImportError: # https://github.com/huggingface/transformers/releases/tag/v
     from transformers.deepspeed import is_deepspeed_zero3_enabled
 
 from llmtuner.extras.logging import get_logger
-from llmtuner.extras.misc import count_parameters, get_current_device, infer_optim_dtype, try_download_model_from_ms
+from llmtuner.extras.misc import count_parameters, infer_optim_dtype, try_download_model_from_ms
 from llmtuner.extras.packages import is_flash_attn2_available
 from llmtuner.extras.patches import llama_patch as LlamaPatches
 from llmtuner.hparams import FinetuningArguments
@@ -150,7 +151,7 @@ def load_model_and_tokenizer(
     if getattr(config, "quantization_config", None):
         if model_args.quantization_bit is not None: # remove bnb quantization
             model_args.quantization_bit = None
-        config_kwargs["device_map"] = {"": get_current_device()}
+        config_kwargs["device_map"] = {"": int(os.environ.get("LOCAL_RANK", "0"))}
         quantization_config = getattr(config, "quantization_config", None)
         logger.info("Loading {}-bit quantized model.".format(quantization_config.get("bits", -1)))
 
@@ -172,7 +173,7 @@ def load_model_and_tokenizer(
                 bnb_4bit_quant_type=model_args.quantization_type
             )
 
-        config_kwargs["device_map"] = {"": get_current_device()}
+        config_kwargs["device_map"] = {"": int(os.environ.get("LOCAL_RANK", "0"))}
         logger.info("Quantizing model to {} bit.".format(model_args.quantization_bit))
 
     # Load pre-trained models (without valuehead)
