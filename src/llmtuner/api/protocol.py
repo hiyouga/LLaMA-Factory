@@ -81,3 +81,16 @@ class ChatCompletionStreamResponse(BaseModel):
     created: Optional[int] = Field(default_factory=lambda: int(time.time()))
     model: str
     choices: List[ChatCompletionResponseStreamChoice]
+
+
+class ScoreEvaluationRequest(BaseModel):
+    model: str
+    messages: List[str]
+    max_length: Optional[int] = None
+
+
+class ScoreEvaluationResponse(BaseModel):
+    id: Optional[str] = "scoreeval-default"
+    object: Optional[str] = "score.evaluation"
+    model: str
+    scores: List[float]
