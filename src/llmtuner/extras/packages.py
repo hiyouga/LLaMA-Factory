@@ -18,6 +18,7 @@ _flash_attn2_available = is_package_available("flash_attn") and get_package_vers
 _jieba_available = is_package_available("jieba")
 _matplotlib_available = is_package_available("matplotlib")
 _nltk_available = is_package_available("nltk")
+_requests_available = is_package_available("requests")
 _rouge_available = is_package_available("rouge_chinese")
 _starlette_available = is_package_available("sse_starlette")
 _uvicorn_available = is_package_available("uvicorn")
@@ -41,6 +42,10 @@ def is_matplotlib_available():
 
 def is_nltk_available():
     return _nltk_available
+
+
+def is_requests_available():
+    return _requests_available
 
 
 def is_rouge_available():
