@@ -68,6 +68,20 @@ def count_parameters(model: torch.nn.Module) -> Tuple[int, int]:
     return trainable_params, all_param
 
 
+def get_current_device() -> torch.device:
+    import accelerate
+    if accelerate.utils.is_xpu_available():
+        device = "xpu:{}".format(os.environ.get("LOCAL_RANK", "0"))
+    elif accelerate.utils.is_npu_available():
+        device = "npu:{}".format(os.environ.get("LOCAL_RANK", "0"))
+    elif torch.cuda.is_available():
+        device = "cuda:{}".format(os.environ.get("LOCAL_RANK", "0"))
+    else:
+        device = "cpu"
+
+    return torch.device(device)
+
+
 def get_logits_processor() -> "LogitsProcessorList":
     r"""
     Gets logits processor that removes NaN and Inf logits.
