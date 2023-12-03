@@ -118,9 +118,9 @@ class RLHFArguments:
         default=None,
         metadata={"help": "The number of bits to quantize the reward model."}
     )
-    reward_model_type: Optional[Literal["lora", "full"]] = field(
+    reward_model_type: Optional[Literal["lora", "full", "api"]] = field(
         default="lora",
-        metadata={"help": "The checkpoint type of the reward model. The lora type only supports lora training."}
+        metadata={"help": "The type of the reward model in PPO training. Lora model only supports lora training."}
     )
 
 
