@@ -28,14 +28,14 @@ def run_ppo(
     callbacks: Optional[List["TrainerCallback"]] = None
 ):
     dataset = get_dataset(model_args, data_args)
-    model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, stage="ppo")
+    model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, add_valuehead=True)
     dataset = preprocess_dataset(dataset, tokenizer, data_args, training_args, stage="ppo")
 
     tokenizer.padding_side = "left" # use left-padding in generation while using right-padding in training
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
     # Create reference model and reward model
-    ref_model = create_ref_model(model_args, finetuning_args, stage="ppo")
+    ref_model = create_ref_model(model_args, finetuning_args, add_valuehead=True)
     reward_model = create_reward_model(model, model_args, finetuning_args)
 
     # Create ppo config
