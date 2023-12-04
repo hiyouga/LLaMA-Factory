@@ -475,6 +475,9 @@ python src/export_model.py \
     --export_dir path_to_export
 ```
 
+> [!WARNING]
+> Merging LoRA weights into a GPTQ quantized model is not supported.
+
 ### API Demo
 
 ```bash
