@@ -208,7 +208,7 @@ huggingface-cli login
 
 | Method | Bits |   7B  |  13B  |  30B  |   65B  |
 | ------ | ---- | ----- | ----- | ----- | ------ |
-| Full   |  16  | 140GB | 240GB | 520GB | 1200GB |
+| Full   |  16  | 160GB | 320GB | 600GB | 1200GB |
 | Freeze |  16  |  20GB |  40GB | 120GB |  240GB |
 | LoRA   |  16  |  16GB |  32GB |  80GB |  160GB |
 | QLoRA  |   8  |  10GB |  16GB |  40GB |   80GB |
