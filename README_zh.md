@@ -475,6 +475,9 @@ python src/export_model.py \
     --export_dir path_to_export
 ```
 
+> [!WARNING]
+> 尚不支持 GPTQ 量化模型的 LoRA 权重合并及导出。
+
 ### API 服务
 
 ```bash
