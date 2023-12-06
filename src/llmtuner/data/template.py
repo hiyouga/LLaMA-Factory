@@ -724,6 +724,9 @@ register_template(
     sep=[
         "<|im_end|>\n"
     ],
+    stop_words=[
+        "<|im_end|>"
+    ],
     efficient_eos=True
 )
 
