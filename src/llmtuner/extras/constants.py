@@ -578,9 +578,17 @@ register_model_group(
             DownloadSource.DEFAULT: "01-ai/Yi-34B",
             DownloadSource.MODELSCOPE: "01ai/Yi-34B"
         },
+        "Yi-6B-Chat": {
+            DownloadSource.DEFAULT: "01-ai/Yi-6B-Chat",
+            DownloadSource.MODELSCOPE: "01ai/Yi-6B-Chat"
+        },
         "Yi-34B-Chat": {
             DownloadSource.DEFAULT: "01-ai/Yi-34B-Chat",
             DownloadSource.MODELSCOPE: "01ai/Yi-34B-Chat"
+        },
+        "Yi-6B-int8-Chat": {
+            DownloadSource.DEFAULT: "01-ai/Yi-6B-Chat-8bits",
+            DownloadSource.MODELSCOPE: "01ai/Yi-6B-Chat-8bits"
         },
         "Yi-34B-int8-Chat": {
             DownloadSource.DEFAULT: "01-ai/Yi-34B-Chat-8bits",
