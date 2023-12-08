@@ -39,9 +39,9 @@ logger = get_logger(__name__)
 
 
 require_version("transformers>=4.31.0,<4.35.0", "To fix: pip install \"transformers>=4.31.0,<4.35.0\"")
-require_version("datasets>=2.14.0", "To fix: pip install datasets>=2.14.0")
+require_version("datasets>=2.14.3", "To fix: pip install datasets>=2.14.3")
 require_version("accelerate>=0.21.0", "To fix: pip install accelerate>=0.21.0")
-require_version("peft>=0.6.0", "To fix: pip install peft>=0.6.0")
+require_version("peft==0.6.0", "To fix: pip install peft==0.6.0")
 require_version("trl>=0.7.4", "To fix: pip install trl>=0.7.4")
 
 
