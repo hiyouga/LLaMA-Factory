@@ -1,8 +1,8 @@
 torch>=1.13.1
 transformers>=4.31.0,<4.35.0
-datasets>=2.14.0
+datasets>=2.14.3
 accelerate>=0.21.0
-peft>=0.6.0
+peft==0.6.0
 trl>=0.7.4
 gradio>=3.38.0,<4.0.0
 scipy
