@@ -2,11 +2,12 @@
 
 ```json
 "数据集名称": {
-  "hf_hub_url": "Hugging Face 上的项目地址（若指定，则忽略下列三个参数）",
+  "hf_hub_url": "Hugging Face 的仓库地址（若指定，则忽略下列三个参数）",
   "script_url": "包含数据加载脚本的本地文件夹名称（若指定，则忽略下列两个参数）",
   "file_name": "该目录下数据集文件的名称（若上述参数未指定，则此项必需）",
-  "file_sha1": "数据集文件的SHA-1哈希值（可选，留空不影响训练）",
+  "file_sha1": "数据集文件的 SHA-1 哈希值（可选，留空不影响训练）",
   "subset": "数据集子集的名称（可选，默认：None）",
+  "folder": "Hugging Face 仓库的文件夹名称（可选，默认：None）",
   "ranking": "是否为偏好数据集（可选，默认：False）",
   "formatting": "数据集格式（可选，默认：alpaca，可以为 alpaca 或 sharegpt）",
   "columns": {
