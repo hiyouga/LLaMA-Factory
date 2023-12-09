@@ -15,6 +15,7 @@ class DatasetAttr:
     dataset_sha1: Optional[str] = None
     system_prompt: Optional[str] = None
     subset: Optional[str] = None
+    folder: Optional[str] = None
     ranking: Optional[bool] = False
     formatting: Optional[Literal["alpaca", "sharegpt"]] = "alpaca"
 
@@ -173,6 +174,7 @@ class DataArguments:
                 dataset_attr.content = dataset_info[name]["columns"].get("content", None)
 
             dataset_attr.subset = dataset_info[name].get("subset", None)
+            dataset_attr.folder = dataset_info[name].get("folder", None)
             dataset_attr.ranking = dataset_info[name].get("ranking", False)
             dataset_attr.formatting = dataset_info[name].get("formatting", "alpaca")
             dataset_attr.system_prompt = prompt_list[i]
