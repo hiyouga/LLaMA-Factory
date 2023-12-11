@@ -28,7 +28,7 @@ from llmtuner.extras.packages import is_flash_attn2_available
 from llmtuner.extras.patches import llama_patch as LlamaPatches
 from llmtuner.hparams import FinetuningArguments
 from llmtuner.model.adapter import init_adapter
-from llmtuner.model.utils import load_valuehead_params, prepare_model_for_training
+from llmtuner.model.utils import load_valuehead_params, prepare_model_for_training, resize_embedding_layer
 
 if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer
@@ -184,6 +184,9 @@ def load_model_and_tokenizer(
         low_cpu_mem_usage=(not is_deepspeed_zero3_enabled()),
         **config_kwargs
     )
+
+    # Resize token embeddings
+    resize_embedding_layer(model, tokenizer)
 
     # Disable custom generate method (for Qwen and Baichuan2)
     if isinstance(model, PreTrainedModel) and "GenerationMixin" not in str(model.generate.__func__):
