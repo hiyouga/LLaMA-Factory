@@ -11,6 +11,7 @@ from llmtuner.hparams import ModelArguments, FinetuningArguments
 
 if TYPE_CHECKING:
     from transformers.modeling_utils import PreTrainedModel
+    from transformers.tokenization_utils import PreTrainedTokenizer
     from llmtuner.hparams import DataArguments
 
 
@@ -181,3 +182,14 @@ def prepare_model_for_training(
             output_layer.register_forward_hook(fp32_forward_post_hook)
 
     return model
+
+
+def resize_embedding_layer(model: "PreTrainedModel", tokenizer: "PreTrainedTokenizer") -> None:
+    r"""
+    Resize token embeddings.
+    """
+    old_vocab_size = model.get_input_embeddings().weight.size(0)
+    new_vocab_size = len(tokenizer)
+    if new_vocab_size != old_vocab_size:
+        model.resize_token_embeddings(new_vocab_size, pad_to_multiple_of=64)
+        logger.info("Resized embedding tokens from {} to {}.".format(old_vocab_size, new_vocab_size))
