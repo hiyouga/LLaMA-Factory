@@ -102,6 +102,9 @@ def init_adapter(
             )
             model = get_peft_model(model, lora_config)
 
+        for param in filter(lambda p: p.requires_grad, model.parameters()):
+            param.data = param.data.to(torch.float32)
+
     if model_args.checkpoint_dir is not None:
         logger.info("Loaded fine-tuned model from checkpoint(s): {}".format(",".join(model_args.checkpoint_dir)))
 
