@@ -17,3 +17,4 @@ pydantic
 fastapi
 sse-starlette
 matplotlib
+transformers_stream_generator #it gives error when using on runpod
