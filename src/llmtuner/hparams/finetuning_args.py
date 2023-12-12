@@ -141,10 +141,6 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments):
         default=False,
         metadata={"help": "Whether to upcast the layernorm weights in fp32."}
     )
-    neft_alpha: Optional[float] = field(
-        default=0,
-        metadata={"help": "The alpha parameter to control the noise magnitude in NEFTune."}
-    )
     export_dir: Optional[str] = field(
         default=None,
         metadata={"help": "Path to the directory to save the exported model."}
