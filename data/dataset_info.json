@@ -129,6 +129,7 @@
   },
   "firefly": {
     "hf_hub_url": "YeungNLP/firefly-train-1.1M",
+    "ms_hub_url": "AI-ModelScope/firefly-train-1.1M",
     "columns": {
       "prompt": "input",
       "response": "target"
@@ -151,6 +152,7 @@
   },
   "adgen": {
     "hf_hub_url": "HasturOfficial/adgen",
+    "ms_hub_url": "AI-ModelScope/adgen",
     "columns": {
       "prompt": "content",
       "response": "summary"
@@ -168,6 +170,7 @@
   },
   "ultrachat_200k": {
     "hf_hub_url": "HuggingFaceH4/ultrachat_200k",
+    "ms_hub_url": "AI-ModelScope/ultrachat_200k",
     "columns": {
       "prompt": "messages",
       "query": "role",
@@ -181,6 +184,7 @@
   },
   "lmsys_chat": {
     "hf_hub_url": "lmsys/lmsys-chat-1m",
+    "ms_hub_url": "AI-ModelScope/lmsys-chat-1m",
     "columns": {
       "prompt": "conversation",
       "query": "role",
