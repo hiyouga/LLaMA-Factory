@@ -119,7 +119,7 @@ class Runner:
             logging_steps=get("train.logging_steps"),
             save_steps=get("train.save_steps"),
             warmup_steps=get("train.warmup_steps"),
-            neft_alpha=get("train.neft_alpha"),
+            neftune_noise_alpha=get("train.neftune_alpha"),
             train_on_prompt=get("train.train_on_prompt"),
             upcast_layernorm=get("train.upcast_layernorm"),
             lora_rank=get("train.lora_rank"),
