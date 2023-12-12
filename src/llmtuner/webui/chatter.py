@@ -77,7 +77,6 @@ class WebChatModel(ChatModel):
             finetuning_type=get("top.finetuning_type"),
             quantization_bit=int(get("top.quantization_bit")) if get("top.quantization_bit") in ["8", "4"] else None,
             template=get("top.template"),
-            system_prompt=get("top.system_prompt"),
             flash_attn=get("top.flash_attn"),
             shift_attn=get("top.shift_attn"),
             rope_scaling=get("top.rope_scaling") if get("top.rope_scaling") in ["linear", "dynamic"] else None
