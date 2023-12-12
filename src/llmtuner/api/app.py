@@ -128,7 +128,7 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
     async def predict(query: str, history: List[Tuple[str, str]], system: str, request: ChatCompletionRequest):
         choice_data = ChatCompletionResponseStreamChoice(
             index=0,
-            delta=DeltaMessage(role=Role.ASSISTANT),
+            delta=DeltaMessage(role=Role.ASSISTANT, content=""),
             finish_reason=None
         )
         chunk = ChatCompletionStreamResponse(model=request.model, choices=[choice_data])
