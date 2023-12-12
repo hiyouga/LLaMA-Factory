@@ -59,13 +59,6 @@ def get_dataset(
                 dataset_name=data_path,
                 subset_name=data_name,
             ).to_hf_dataset()
-
-            def map_func(example):
-                # do something to example
-                example['input'] = example['input'] or ''
-                return example
-
-            dataset = dataset.map(map_func)
         else:
             dataset = load_dataset(
                 path=data_path,
