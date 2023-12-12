@@ -55,6 +55,10 @@ class LoraArguments:
                   Phi-1.5 choices: [\"Wqkv\", \"out_proj\", \"fc1\", \"fc2\"], \
                   Others choices: the same as LLaMA."}
     )
+    loftq_init: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Use LoftQ initialization for quantized LoRA fine-tuning."}
+    )
     resume_lora_training: Optional[bool] = field(
         default=True,
         metadata={"help": "Whether to resume training from the last LoRA weights or create new weights after merging them."}
