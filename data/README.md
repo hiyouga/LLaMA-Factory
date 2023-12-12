@@ -4,9 +4,10 @@ If you are using a custom dataset, please provide your dataset definition in the
 "dataset_name": {
   "hf_hub_url": "the name of the dataset repository on the Hugging Face hub. (if specified, ignore below 3 arguments)",
   "script_url": "the name of the directory containing a dataset loading script. (if specified, ignore below 2 arguments)",
-  "file_name": "the name of the dataset file in the this directory. (required if above are not specified)",
+  "file_name": "the name of the dataset file in this directory. (required if above are not specified)",
   "file_sha1": "the SHA-1 hash value of the dataset file. (optional, does not affect training)",
   "subset": "the name of the subset. (optional, default: None)",
+  "folder": "the name of the folder of the dataset repository on the Hugging Face hub. (optional, default: None)",
   "ranking": "whether the dataset is a preference dataset or not. (default: false)",
   "formatting": "the format of the dataset. (optional, default: alpaca, can be chosen from {alpaca, sharegpt})",
   "columns": {

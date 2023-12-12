@@ -118,9 +118,9 @@ class RLHFArguments:
         default=None,
         metadata={"help": "The number of bits to quantize the reward model."}
     )
-    reward_model_type: Optional[Literal["lora", "full"]] = field(
+    reward_model_type: Optional[Literal["lora", "full", "api"]] = field(
         default="lora",
-        metadata={"help": "The checkpoint type of the reward model. The lora type only supports lora training."}
+        metadata={"help": "The type of the reward model in PPO training. Lora model only supports lora training."}
     )
 
 
@@ -140,10 +140,6 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments):
     upcast_layernorm: Optional[bool] = field(
         default=False,
         metadata={"help": "Whether to upcast the layernorm weights in fp32."}
-    )
-    neft_alpha: Optional[float] = field(
-        default=0,
-        metadata={"help": "The alpha parameter to control the noise magnitude in NEFTune."}
     )
     export_dir: Optional[str] = field(
         default=None,

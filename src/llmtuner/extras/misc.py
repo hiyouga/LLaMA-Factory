@@ -23,6 +23,7 @@ except ImportError:
 
 if TYPE_CHECKING:
     from transformers import HfArgumentParser
+    from llmtuner.hparams import ModelArguments
 
 
 class AverageMeter:
@@ -67,14 +68,18 @@ def count_parameters(model: torch.nn.Module) -> Tuple[int, int]:
     return trainable_params, all_param
 
 
-def get_current_device() -> str:
+def get_current_device() -> torch.device:
     import accelerate
     if accelerate.utils.is_xpu_available():
-        return "xpu:{}".format(os.environ.get("LOCAL_RANK", "0"))
-    elif accelerate.utils.is_npu_available() or torch.cuda.is_available():
-        return os.environ.get("LOCAL_RANK", "0")
+        device = "xpu:{}".format(os.environ.get("LOCAL_RANK", "0"))
+    elif accelerate.utils.is_npu_available():
+        device = "npu:{}".format(os.environ.get("LOCAL_RANK", "0"))
+    elif torch.cuda.is_available():
+        device = "cuda:{}".format(os.environ.get("LOCAL_RANK", "0"))
     else:
-        return "cpu"
+        device = "cpu"
+
+    return torch.device(device)
 
 
 def get_logits_processor() -> "LogitsProcessorList":
@@ -117,3 +122,23 @@ def torch_gc() -> None:
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
         torch.cuda.ipc_collect()
+
+
+def try_download_model_from_ms(model_args: "ModelArguments") -> None:
+    if not use_modelscope() or os.path.exists(model_args.model_name_or_path):
+        return
+
+    try:
+        from modelscope import snapshot_download # type: ignore
+        revision = "master" if model_args.model_revision == "main" else model_args.model_revision
+        model_args.model_name_or_path = snapshot_download(
+            model_args.model_name_or_path,
+            revision=revision,
+            cache_dir=model_args.cache_dir
+        )
+    except ImportError:
+        raise ImportError("Please install modelscope via `pip install modelscope -U`")
+
+
+def use_modelscope() -> bool:
+    return bool(int(os.environ.get("USE_MODELSCOPE_HUB", "0")))

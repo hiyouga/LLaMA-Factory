@@ -1,9 +1,8 @@
-import math
 import os
-
+import math
 import torch
 from types import MethodType
-from typing import TYPE_CHECKING, Literal, Optional, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple
 
 from transformers import (
     AutoConfig,
@@ -23,13 +22,12 @@ try:
 except ImportError: # https://github.com/huggingface/transformers/releases/tag/v4.33.1
     from transformers.deepspeed import is_deepspeed_zero3_enabled
 
-from llmtuner.extras.logging import reset_logging, get_logger
-from llmtuner.extras.misc import count_parameters, get_current_device, infer_optim_dtype
+from llmtuner.extras.logging import get_logger
+from llmtuner.extras.misc import count_parameters, get_current_device, infer_optim_dtype, try_download_model_from_ms
 from llmtuner.extras.packages import is_flash_attn2_available
-from llmtuner.extras.patches import llama_patch as LlamaPatches
 from llmtuner.hparams import FinetuningArguments
 from llmtuner.model.adapter import init_adapter
-from llmtuner.model.utils import load_valuehead_params, prepare_model_for_training
+from llmtuner.model.utils import load_valuehead_params, prepare_model_for_training, resize_embedding_layer
 
 if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer
@@ -39,10 +37,10 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-require_version("transformers>=4.31.0,<4.35.0", "To fix: pip install \"transformers>=4.31.0,<4.35.0\"")
-require_version("datasets>=2.14.0", "To fix: pip install datasets>=2.14.0")
+require_version("transformers>=4.36.0", "To fix: pip install transformers>=4.36.0")
+require_version("datasets>=2.14.3", "To fix: pip install datasets>=2.14.3")
 require_version("accelerate>=0.21.0", "To fix: pip install accelerate>=0.21.0")
-require_version("peft>=0.6.0", "To fix: pip install peft>=0.6.0")
+require_version("peft>=0.7.0", "To fix: pip install peft>=0.7.0")
 require_version("trl>=0.7.4", "To fix: pip install trl>=0.7.4")
 
 
@@ -50,7 +48,7 @@ def load_model_and_tokenizer(
     model_args: "ModelArguments",
     finetuning_args: "FinetuningArguments",
     is_trainable: Optional[bool] = False,
-    stage: Optional[Literal["pt", "sft", "rm", "ppo"]] = "sft"
+    add_valuehead: Optional[bool] = False
 ) -> Tuple[PreTrainedModel, "PreTrainedTokenizer"]:
     r"""
     Loads pretrained model and tokenizer.
@@ -58,14 +56,14 @@ def load_model_and_tokenizer(
     Support both training and inference.
     """
 
+    try_download_model_from_ms(model_args)
+
     config_kwargs = {
         "trust_remote_code": True,
         "cache_dir": model_args.cache_dir,
         "revision": model_args.model_revision,
         "token": model_args.hf_hub_token
     }
-
-    try_download_model_from_ms(model_args)
 
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
@@ -125,45 +123,42 @@ def load_model_and_tokenizer(
 
     # Set FlashAttention-2
     if model_args.flash_attn:
-        if getattr(config, "model_type", None) == "llama":
-            if is_flash_attn2_available():
-                LlamaModule.LlamaAttention = LlamaPatches.LlamaFlashAttention2
-                LlamaModule.LlamaModel._prepare_decoder_attention_mask = LlamaPatches._prepare_decoder_attention_mask
-                logger.info("Using FlashAttention-2 for faster training and inference.")
-            else:
-                logger.warning("FlashAttention-2 is not installed.")
-        elif getattr(config, "model_type", None) in ["qwen", "Yi"]:
+        if not is_flash_attn2_available():
+            logger.warning("FlashAttention-2 is not installed.")
+        elif getattr(config, "model_type", None) == "qwen":
             logger.info("Current model automatically enables FlashAttention if installed.")
         else:
-            logger.warning("Current model does not support FlashAttention.")
-    elif is_trainable and model_args.shift_attn and getattr(config, "model_type", None) == "llama":
-        LlamaModule.LlamaAttention = LlamaPatches.LlamaShiftShortAttention
-        logger.warning("Using `--flash_attn` for faster training in large context length.")
+            setattr(config, "attn_implementation", "flash_attention_2")
+            logger.info("Using FlashAttention-2 for faster training and inference.")
 
     # Set shift short attention (S^2-Attn)
     if is_trainable and model_args.shift_attn:
-        if getattr(config, "model_type", None) == "llama":
-            setattr(config, "group_size_ratio", 0.25)
-            logger.info("Using shift short attention with group_size_ratio=1/4.")
-        else:
-            logger.warning("Current model does not support shift short attention.")
+        logger.warning("Shift short attention is temporarily invalid due to breaking changes.")
+        # if getattr(config, "model_type", None) == "llama":
+        #     setattr(config, "group_size_ratio", 0.25)
+        #     logger.info("Using shift short attention with group_size_ratio=1/4.")
+        # else:
+        #     logger.warning("Current model does not support shift short attention.")
+
+    # Quantization configurations (using gptq or awq)
+    if getattr(config, "quantization_config", None):
+        if model_args.quantization_bit is not None: # remove bnb quantization
+            model_args.quantization_bit = None
+        config_kwargs["device_map"] = {"": get_current_device()}
+        quantization_config = getattr(config, "quantization_config", None)
+        logger.info("Loading {}-bit quantized model.".format(quantization_config.get("bits", -1)))
 
     # Quantization configurations (using bitsandbytes library)
     if model_args.quantization_bit is not None:
-        if getattr(config, "quantization_config", None):
-            raise ValueError("Remove `quantization_bit` if you are using a quantized model.")
-
         if is_deepspeed_zero3_enabled():
             raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantization.")
 
         if model_args.quantization_bit == 8:
             require_version("bitsandbytes>=0.37.0", "To fix: pip install bitsandbytes>=0.37.0")
-            config_kwargs["load_in_8bit"] = True
             config_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_8bit=True)
 
         if model_args.quantization_bit == 4:
             require_version("bitsandbytes>=0.39.0", "To fix: pip install bitsandbytes>=0.39.0")
-            config_kwargs["load_in_4bit"] = True
             config_kwargs["quantization_config"] = BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_compute_dtype=model_args.compute_dtype,
@@ -182,6 +177,9 @@ def load_model_and_tokenizer(
         low_cpu_mem_usage=(not is_deepspeed_zero3_enabled()),
         **config_kwargs
     )
+
+    # Resize token embeddings
+    resize_embedding_layer(model, tokenizer)
 
     # Disable custom generate method (for Qwen and Baichuan2)
     if isinstance(model, PreTrainedModel) and "GenerationMixin" not in str(model.generate.__func__):
@@ -203,12 +201,12 @@ def load_model_and_tokenizer(
     # Initialize adapters
     model = prepare_model_for_training(model=model, finetuning_args=finetuning_args) if is_trainable else model
     model = init_adapter(model, model_args, finetuning_args, is_trainable)
-    model = model.train() if is_trainable else model.eval()
 
     # Prepare model with valuehead for RLHF
-    if stage in ["rm", "ppo"]:
+    if add_valuehead:
         model: "AutoModelForCausalLMWithValueHead" = AutoModelForCausalLMWithValueHead.from_pretrained(model)
-        setattr(model, "_keys_to_ignore_on_save", [name for name, _ in model.named_parameters() if "pretrained_model" in name])
+        ignore_modules = [name for name, _ in model.named_parameters() if "pretrained_model" in name]
+        setattr(model, "_keys_to_ignore_on_save", ignore_modules)
         setattr(model, "tie_weights", MethodType(lambda _: None, model)) # use empty method
         vhead_path = (
             model_args.checkpoint_dir[-1] if model_args.checkpoint_dir is not None else model_args.model_name_or_path
@@ -222,6 +220,9 @@ def load_model_and_tokenizer(
     if not is_trainable:
         model.requires_grad_(False) # fix all model params
         model = model.to(model_args.compute_dtype) if model_args.quantization_bit is None else model
+        model.eval()
+    else:
+        model.train()
 
     trainable_params, all_param = count_parameters(model)
     logger.info("trainable params: {:d} || all params: {:d} || trainable%: {:.4f}".format(
@@ -232,16 +233,3 @@ def load_model_and_tokenizer(
         logger.info("This IS expected that the trainable params is 0 if you are using model for inference only.")
 
     return model, tokenizer
-
-
-def try_download_model_from_ms(model_args):
-    if int(os.environ.get('USE_MODELSCOPE_HUB', '0')) and not os.path.exists(model_args.model_name_or_path):
-        try:
-            from modelscope import snapshot_download
-            revision = model_args.model_revision
-            if revision == 'main':
-                revision = 'master'
-            model_args.model_name_or_path = snapshot_download(model_args.model_name_or_path, revision)
-        except ImportError as e:
-            raise ImportError(f'You are using `USE_MODELSCOPE_HUB=1` but you have no modelscope sdk installed. '
-                              f'Please install it by `pip install modelscope -U`') from e
