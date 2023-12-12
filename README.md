@@ -1,4 +1,4 @@
-# LLaMA Factory: Training and Evaluating Large Language Models with Minimal Effort
+![# LLaMA Factory](assets/logo.png)
 
 [![GitHub Repo stars](https://img.shields.io/github/stars/hiyouga/LLaMA-Factory?style=social)](https://github.com/hiyouga/LLaMA-Factory/stargazers)
 [![GitHub Code License](https://img.shields.io/github/license/hiyouga/LLaMA-Factory)](LICENSE)
@@ -44,16 +44,24 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 ![benchmark](assets/benchmark.svg)
 
+<details><summary>Definitions</summary>
+
 - **Training Speed**: the number of training samples processed per second during the training. (bs=4, cutoff_len=1024)
 - **Rouge Score**: Rouge-2 score on the development set of the [advertising text generation](https://aclanthology.org/D19-1321.pdf) task. (bs=4, cutoff_len=1024)
 - **GPU Memory**: Peak GPU memory usage in 4-bit quantized training. (bs=1, cutoff_len=1024)
 - We adopt `pre_seq_len=128` for ChatGLM's P-Tuning and `lora_rank=32` for LLaMA-Factory's LoRA tuning.
 
+</details>
+
 ## Changelog
 
-[23/12/01] We supported **[ModelScope Hub](https://www.modelscope.cn/models)** to accelerate model downloading. Add environment variable `USE_MODELSCOPE_HUB=1` to your command line, then you can use the model-id of ModelScope Hub.
+[23/12/12] We supported fine-tuning the latest MoE model **[Mixtral 8x7B](https://huggingface.co/mistralai/Mixtral-8x7B-v0.1)** in our framework. See hardware requirement [here](#hardware-requirement).
 
-[23/10/21] We supported **[NEFTune](https://arxiv.org/abs/2310.05914)** trick for fine-tuning. Try `--neft_alpha` argument to activate NEFTune, e.g., `--neft_alpha 5`.
+[23/12/01] We supported downloading pre-trained models from the **[ModelScope Hub](https://modelscope.cn/models)** for Chinese mainland users. See [this tutorial](#use-modelscope-models-optional) for usage.
+
+<details><summary>Full Changelog</summary>
+
+[23/10/21] We supported **[NEFTune](https://arxiv.org/abs/2310.05914)** trick for fine-tuning. Try `--neftune_noise_alpha` argument to activate NEFTune, e.g., `--neftune_noise_alpha 5`.
 
 [23/09/27] We supported **$S^2$-Attn** proposed by [LongLoRA](https://github.com/dvlab-research/LongLoRA) for the LLaMA models. Try `--shift_attn` argument to enable shift short attention.
 
@@ -79,6 +87,8 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 [23/06/03] We supported quantized training and inference (aka **[QLoRA](https://github.com/artidoro/qlora)**). Try `--quantization_bit 4/8` argument to work with quantized models.
 
+</details>
+
 ## Supported Models
 
 | Model                                                    | Model size                  | Default module    | Template  |
@@ -93,6 +103,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [LLaMA](https://github.com/facebookresearch/llama)       | 7B/13B/33B/65B              | q_proj,v_proj     | -         |
 | [LLaMA-2](https://huggingface.co/meta-llama)             | 7B/13B/70B                  | q_proj,v_proj     | llama2    |
 | [Mistral](https://huggingface.co/mistralai)              | 7B                          | q_proj,v_proj     | mistral   |
+| [Mixtral](https://huggingface.co/mistralai)              | 8x7B                        | q_proj,v_proj     | mistral   |
 | [Phi-1.5](https://huggingface.co/microsoft/phi-1_5)      | 1.3B                        | Wqkv              | -         |
 | [Qwen](https://github.com/QwenLM/Qwen)                   | 1.8B/7B/14B/72B             | c_attn            | qwen      |
 | [XVERSE](https://github.com/xverse-ai)                   | 7B/13B/65B                  | q_proj,v_proj     | xverse    |
@@ -198,13 +209,13 @@ huggingface-cli login
 
 ### Hardware Requirement
 
-| Method | Bits |   7B  |  13B  |  30B  |   65B  |
-| ------ | ---- | ----- | ----- | ----- | ------ |
-| Full   |  16  | 140GB | 240GB | 520GB | 1200GB |
-| Freeze |  16  |  20GB |  40GB | 120GB |  240GB |
-| LoRA   |  16  |  16GB |  32GB |  80GB |  160GB |
-| QLoRA  |   8  |  10GB |  16GB |  40GB |   80GB |
-| QLoRA  |   4  |   6GB |  12GB |  24GB |   48GB |
+| Method | Bits |   7B  |  13B  |  30B  |   65B  |   8x7B |
+| ------ | ---- | ----- | ----- | ----- | ------ | ------ |
+| Full   |  16  | 160GB | 320GB | 600GB | 1200GB | 1000GB |
+| Freeze |  16  |  20GB |  40GB | 120GB |  240GB |  200GB |
+| LoRA   |  16  |  16GB |  32GB |  80GB |  160GB |  120GB |
+| QLoRA  |   8  |  10GB |  16GB |  40GB |   80GB |   80GB |
+| QLoRA  |   4  |   6GB |  12GB |  24GB |   48GB |   32GB |
 
 ## Getting Started
 
@@ -231,31 +242,26 @@ If you want to enable the quantized LoRA (QLoRA) on the Windows platform, you wi
 pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.39.1-py3-none-win_amd64.whl
 ```
 
-### Use ModelScope Models
+### Use ModelScope Models (optional)
 
-If you have trouble with downloading models from HuggingFace, we have supported ModelScope Hub. To use LLaMA-Factory together with ModelScope, please add a environment variable:
+If you have trouble with downloading models from Hugging Face, you can use LLaMA-Factory together with ModelScope in the following manner.
 
-```shell
-export USE_MODELSCOPE_HUB=1
+```bash
+export USE_MODELSCOPE_HUB=1 # `set USE_MODELSCOPE_HUB=1` for Windows
 ```
 
-> [!NOTE]
->
-> Please use integers only. 0 or not set for using HuggingFace hub. Other values will be treated as use ModelScope hub.
+Then you can train the corresponding model by specifying a model ID of the ModelScope Hub. (find a full list of model IDs at [ModelScope Hub](https://modelscope.cn/models))
 
-Then you can use LLaMA-Factory with ModelScope model-ids:
-
-```shell
-python src/train_bash.py \
-    --model_name_or_path ZhipuAI/chatglm3-6b \
-    ... other arguments
-# You can find all model ids in this link: https://www.modelscope.cn/models
+```bash
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
+    --model_name_or_path modelscope/Llama-2-7b-ms \
+    ... # arguments (same as above)
 ```
 
-Web demo also supports ModelScope, after setting the environment variable please run with this command:
+LLaMA Board also supports using the models on the ModelScope Hub.
 
-```shell
-CUDA_VISIBLE_DEVICES=0 python src/train_web.py
+```bash
+CUDA_VISIBLE_DEVICES=0 USE_MODELSCOPE_HUB=1 python src/train_web.py
 ```
 
 ### Train on a single GPU
@@ -471,6 +477,9 @@ python src/export_model.py \
     --checkpoint_dir path_to_checkpoint \
     --export_dir path_to_export
 ```
+
+> [!WARNING]
+> Merging LoRA weights into a GPTQ quantized model is not supported.
 
 ### API Demo
 

@@ -1,9 +1,23 @@
+import json
 import torch
-from typing import TYPE_CHECKING, Dict, Literal, Optional
+from typing import TYPE_CHECKING, Dict, List, Literal, Optional
+
+from llmtuner.extras.packages import is_requests_available
 
 if TYPE_CHECKING:
     from transformers import PreTrainedModel
     from trl import AutoModelForCausalLMWithValueHead
+
+if is_requests_available():
+    import requests
+
+
+def get_rewards_from_server(server_url: str, messages: List[str]) -> List[torch.Tensor]:
+    headers = {"Content-Type": "application/json"}
+    payload = {"model": "model", "messages": messages}
+    response = requests.post(server_url, json=payload, headers=headers)
+    rewards = json.loads(response.text)["scores"]
+    return torch.Tensor(rewards)
 
 
 def replace_model(model: "AutoModelForCausalLMWithValueHead", target: Literal["default", "reward"]) -> None:

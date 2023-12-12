@@ -333,7 +333,7 @@ LOCALES = {
             "info": "学习率预热采用的步数。"
         }
     },
-    "neft_alpha": {
+    "neftune_alpha": {
         "en": {
             "label": "NEFTune Alpha",
             "info": "Magnitude of noise adding to embedding vectors."

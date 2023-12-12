@@ -1,4 +1,4 @@
-# LLaMA Factory: 轻松的大模型训练与评估
+![# LLaMA Factory](assets/logo.png)
 
 [![GitHub Repo stars](https://img.shields.io/github/stars/hiyouga/LLaMA-Factory?style=social)](https://github.com/hiyouga/LLaMA-Factory/stargazers)
 [![GitHub Code License](https://img.shields.io/github/license/hiyouga/LLaMA-Factory)](LICENSE)
@@ -44,16 +44,24 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 
 ![benchmark](assets/benchmark.svg)
 
+<details><summary>变量定义</summary>
+
 - **Training Speed**: 训练阶段每秒处理的样本数量。（批处理大小=4，截断长度=1024）
 - **Rouge Score**: [广告文案生成](https://aclanthology.org/D19-1321.pdf)任务验证集上的 Rouge-2 分数。（批处理大小=4，截断长度=1024）
 - **GPU Memory**: 4 比特量化训练的 GPU 显存峰值。（批处理大小=1，截断长度=1024）
 - 我们在 ChatGLM 的 P-Tuning 中采用 `pre_seq_len=128`，在 LLaMA-Factory 的 LoRA 微调中采用 `lora_rank=32`。
 
+</details>
+
 ## 更新日志
 
-[23/12/01] 我们支持了 **[魔搭ModelHub](https://www.modelscope.cn/models)** 进行模型下载加速。在启动命令前环境变量中增加 `USE_MODELSCOPE_HUB=1` 即可开启。
+[23/12/12] 我们支持了微调最新的混合专家模型 **[Mixtral 8x7B](https://huggingface.co/mistralai/Mixtral-8x7B-v0.1)**。硬件需求请查阅[此处](#硬件依赖)。
 
-[23/10/21] 我们支持了 **[NEFTune](https://arxiv.org/abs/2310.05914)** 训练技巧。请使用 `--neft_alpha` 参数启用 NEFTune，例如 `--neft_alpha 5`。
+[23/12/01] 我们支持了从 **[魔搭社区](https://modelscope.cn/models)** 下载预训练模型。详细用法请参照 [此教程](#使用魔搭社区可跳过)。
+
+<details><summary>展开日志</summary>
+
+[23/10/21] 我们支持了 **[NEFTune](https://arxiv.org/abs/2310.05914)** 训练技巧。请使用 `--neftune_noise_alpha` 参数启用 NEFTune，例如 `--neftune_noise_alpha 5`。
 
 [23/09/27] 我们针对 LLaMA 模型支持了 [LongLoRA](https://github.com/dvlab-research/LongLoRA) 提出的 **$S^2$-Attn**。请使用 `--shift_attn` 参数以启用该功能。
 
@@ -79,6 +87,8 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 
 [23/06/03] 我们实现了 4 比特的 LoRA 训练（也称 **[QLoRA](https://github.com/artidoro/qlora)**）。请使用 `--quantization_bit 4` 参数进行 4 比特量化微调。
 
+</details>
+
 ## 模型
 
 | 模型名                                                   | 模型大小                     | 默认模块           | Template  |
@@ -93,6 +103,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 | [LLaMA](https://github.com/facebookresearch/llama)       | 7B/13B/33B/65B              | q_proj,v_proj     | -         |
 | [LLaMA-2](https://huggingface.co/meta-llama)             | 7B/13B/70B                  | q_proj,v_proj     | llama2    |
 | [Mistral](https://huggingface.co/mistralai)              | 7B                          | q_proj,v_proj     | mistral   |
+| [Mixtral](https://huggingface.co/mistralai)              | 8x7B                        | q_proj,v_proj     | mistral   |
 | [Phi-1.5](https://huggingface.co/microsoft/phi-1_5)      | 1.3B                        | Wqkv              | -         |
 | [Qwen](https://github.com/QwenLM/Qwen)                   | 1.8B/7B/14B/72B             | c_attn            | qwen      |
 | [XVERSE](https://github.com/xverse-ai)                   | 7B/13B/65B                  | q_proj,v_proj     | xverse    |
@@ -198,13 +209,13 @@ huggingface-cli login
 
 ### 硬件依赖
 
-| 训练方法 | 精度 |   7B  |  13B  |  30B  |   65B  |
-| ------- | ---- | ----- | ----- | ----- | ------ |
-| 全参数   |  16  | 140GB | 240GB | 520GB | 1200GB |
-| 部分参数 |  16  |  20GB |  40GB | 120GB |  240GB |
-| LoRA    |  16  |  16GB |  32GB |  80GB |  160GB |
-| QLoRA   |   8  |  10GB |  16GB |  40GB |   80GB |
-| QLoRA   |   4  |   6GB |  12GB |  24GB |   48GB |
+| 训练方法 | 精度 |   7B  |  13B  |  30B  |   65B  |   8x7B |
+| ------- | ---- | ----- | ----- | ----- | ------ | ------ |
+| 全参数   |  16  | 160GB | 320GB | 600GB | 1200GB | 1000GB |
+| 部分参数 |  16  |  20GB |  40GB | 120GB |  240GB |  200GB |
+| LoRA    |  16  |  16GB |  32GB |  80GB |  160GB |  120GB |
+| QLoRA   |   8  |  10GB |  16GB |  40GB |   80GB |   80GB |
+| QLoRA   |   4  |   6GB |  12GB |  24GB |   48GB |   32GB |
 
 ## 如何使用
 
@@ -231,31 +242,26 @@ pip install -r requirements.txt
 pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.39.1-py3-none-win_amd64.whl
 ```
 
-### 使用魔搭的模型
+### 使用魔搭社区（可跳过）
 
-如果下载HuggingFace模型存在问题，我们已经支持了魔搭的ModelHub，只需要添加一个环境变量：
+如果您在 Hugging Face 模型的下载中遇到了问题，可以通过下述方法使用魔搭社区。
 
-```shell
-export USE_MODELSCOPE_HUB=1
+```bash
+export USE_MODELSCOPE_HUB=1 # Windows 使用 `set USE_MODELSCOPE_HUB=1`
 ```
 
-> [!NOTE]
->
-> 该环境变量仅支持整数，0或者不设置代表使用HuggingFace，其他值代表使用ModelScope
+接着即可通过指定模型名称来训练对应的模型。（在[魔搭社区](https://modelscope.cn/models)查看所有可用的模型）
 
-之后就可以在命令行中指定魔搭的模型id：
-
-```shell
-python src/train_bash.py \
-    --model_name_or_path ZhipuAI/chatglm3-6b \
-    ... other arguments
-# 在这个链接中可以看到所有可用模型: https://www.modelscope.cn/models
+```bash
+CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
+    --model_name_or_path modelscope/Llama-2-7b-ms \
+    ... # 参数同上
 ```
 
-Web demo目前也支持了魔搭, 在设置环境变量后即可使用：
+LLaMA Board 同样支持魔搭社区的模型下载。
 
-```shell
-CUDA_VISIBLE_DEVICES=0 python src/train_web.py
+```bash
+CUDA_VISIBLE_DEVICES=0 USE_MODELSCOPE_HUB=1 python src/train_web.py
 ```
 
 ### 单 GPU 训练
@@ -471,6 +477,9 @@ python src/export_model.py \
     --checkpoint_dir path_to_checkpoint \
     --export_dir path_to_export
 ```
+
+> [!WARNING]
+> 尚不支持 GPTQ 量化模型的 LoRA 权重合并及导出。
 
 ### API 服务
 

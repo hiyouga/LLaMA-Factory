@@ -26,7 +26,7 @@ def run_sft(
     callbacks: Optional[List["TrainerCallback"]] = None
 ):
     dataset = get_dataset(model_args, data_args)
-    model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, stage="sft")
+    model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train)
     dataset = preprocess_dataset(dataset, tokenizer, data_args, training_args, stage="sft")
 
     if training_args.predict_with_generate:
@@ -34,7 +34,7 @@ def run_sft(
 
     data_collator = DataCollatorForSeq2Seq(
         tokenizer=tokenizer,
-        pad_to_multiple_of=4 if tokenizer.padding_side == "right" else None, # for shift short attention
+        pad_to_multiple_of=8 if tokenizer.padding_side == "right" else None, # for shift short attention
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
     )
 
