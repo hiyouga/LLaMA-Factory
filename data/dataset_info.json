@@ -70,7 +70,7 @@
   },
   "guanaco": {
     "hf_hub_url": "JosephusCheung/GuanacoDataset",
-    "ms_hub_url": "wyj123456/GuanacoDataset"
+    "ms_hub_url": "AI-ModelScope/GuanacoDataset"
   },
   "belle_2m": {
     "hf_hub_url": "BelleGroup/train_2M_CN",
