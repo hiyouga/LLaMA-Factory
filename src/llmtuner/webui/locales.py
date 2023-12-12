@@ -77,22 +77,12 @@ LOCALES = {
             "info": "构建提示词时使用的模板"
         }
     },
-    "system_prompt": {
+    "rope_scaling": {
         "en": {
-            "label": "System prompt (optional)",
-            "info": "A sequence used as the default system prompt."
+            "label": "RoPE scaling"
         },
         "zh": {
-            "label": "系统提示词（非必填）",
-            "info": "默认使用的系统提示词"
-        }
-    },
-    "llama_tab": {
-        "en": {
-            "label": "Model configurations (LLaMA only)"
-        },
-        "zh": {
-            "label": "模型设置（仅LLaMA）"
+            "label": "RoPE 插值方法"
         }
     },
     "flash_attn": {
@@ -109,14 +99,6 @@ LOCALES = {
         },
         "zh": {
             "label": "使用 shift short attention (S^2-Attn)"
-        }
-    },
-    "rope_scaling": {
-        "en": {
-            "label": "RoPE scaling"
-        },
-        "zh": {
-            "label": "RoPE 插值方法"
         }
     },
     "training_stage": {
