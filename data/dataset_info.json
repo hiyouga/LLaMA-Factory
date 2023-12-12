@@ -113,6 +113,7 @@
   },
   "openorca": {
     "hf_hub_url": "Open-Orca/OpenOrca",
+    "ms_hub_url": "AI-ModelScope/OpenOrca",
     "columns": {
       "prompt": "question",
       "response": "response"
