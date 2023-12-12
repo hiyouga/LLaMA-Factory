@@ -65,16 +65,16 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             logging_steps = gr.Slider(value=5, minimum=5, maximum=1000, step=5)
             save_steps = gr.Slider(value=100, minimum=10, maximum=5000, step=10)
             warmup_steps = gr.Slider(value=0, minimum=0, maximum=5000, step=1)
-            neft_alpha = gr.Slider(value=0, minimum=0, maximum=10, step=0.1)
+            neftune_alpha = gr.Slider(value=0, minimum=0, maximum=10, step=0.1)
 
             with gr.Column():
                 train_on_prompt = gr.Checkbox(value=False)
                 upcast_layernorm = gr.Checkbox(value=False)
 
-    input_elems.update({logging_steps, save_steps, warmup_steps, neft_alpha, train_on_prompt, upcast_layernorm})
+    input_elems.update({logging_steps, save_steps, warmup_steps, neftune_alpha, train_on_prompt, upcast_layernorm})
     elem_dict.update(dict(
         advanced_tab=advanced_tab, logging_steps=logging_steps, save_steps=save_steps, warmup_steps=warmup_steps,
-        neft_alpha=neft_alpha, train_on_prompt=train_on_prompt, upcast_layernorm=upcast_layernorm
+        neftune_alpha=neftune_alpha, train_on_prompt=train_on_prompt, upcast_layernorm=upcast_layernorm
     ))
 
     with gr.Accordion(label="LoRA config", open=False) as lora_tab:
