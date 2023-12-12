@@ -55,9 +55,11 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 ## Changelog
 
+[23/12/12] We supported fine-tuning the latest MoE model **[Mixtral 8x7B](https://huggingface.co/mistralai/Mixtral-8x7B-v0.1)** in our framework.
+
 [23/12/01] We supported downloading pre-trained models from the **[ModelScope Hub](https://modelscope.cn/models)** for Chinese mainland users. See [this tutorial](#use-modelscope-models-optional) for usage.
 
-[23/10/21] We supported **[NEFTune](https://arxiv.org/abs/2310.05914)** trick for fine-tuning. Try `--neft_alpha` argument to activate NEFTune, e.g., `--neft_alpha 5`.
+[23/10/21] We supported **[NEFTune](https://arxiv.org/abs/2310.05914)** trick for fine-tuning. Try `--neftune_noise_alpha` argument to activate NEFTune, e.g., `--neftune_noise_alpha 5`.
 
 <details><summary>Full Changelog</summary>
 
@@ -101,6 +103,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [LLaMA](https://github.com/facebookresearch/llama)       | 7B/13B/33B/65B              | q_proj,v_proj     | -         |
 | [LLaMA-2](https://huggingface.co/meta-llama)             | 7B/13B/70B                  | q_proj,v_proj     | llama2    |
 | [Mistral](https://huggingface.co/mistralai)              | 7B                          | q_proj,v_proj     | mistral   |
+| [Mixtral](https://huggingface.co/mistralai)              | 8x7B                        | q_proj,v_proj     | mistral   |
 | [Phi-1.5](https://huggingface.co/microsoft/phi-1_5)      | 1.3B                        | Wqkv              | -         |
 | [Qwen](https://github.com/QwenLM/Qwen)                   | 1.8B/7B/14B/72B             | c_attn            | qwen      |
 | [XVERSE](https://github.com/xverse-ai)                   | 7B/13B/65B                  | q_proj,v_proj     | xverse    |
@@ -206,13 +209,13 @@ huggingface-cli login
 
 ### Hardware Requirement
 
-| Method | Bits |   7B  |  13B  |  30B  |   65B  |
-| ------ | ---- | ----- | ----- | ----- | ------ |
-| Full   |  16  | 160GB | 320GB | 600GB | 1200GB |
-| Freeze |  16  |  20GB |  40GB | 120GB |  240GB |
-| LoRA   |  16  |  16GB |  32GB |  80GB |  160GB |
-| QLoRA  |   8  |  10GB |  16GB |  40GB |   80GB |
-| QLoRA  |   4  |   6GB |  12GB |  24GB |   48GB |
+| Method | Bits |   7B  |  13B  |  30B  |   65B  |   8x7B |
+| ------ | ---- | ----- | ----- | ----- | ------ | ------ |
+| Full   |  16  | 160GB | 320GB | 600GB | 1200GB | 1000GB |
+| Freeze |  16  |  20GB |  40GB | 120GB |  240GB |  200GB |
+| LoRA   |  16  |  16GB |  32GB |  80GB |  160GB |  120GB |
+| QLoRA  |   8  |  10GB |  16GB |  40GB |   80GB |   80GB |
+| QLoRA  |   4  |   6GB |  12GB |  24GB |   48GB |   32GB |
 
 ## Getting Started
 
