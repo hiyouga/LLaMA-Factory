@@ -384,7 +384,8 @@ register_model_group(
             DownloadSource.MODELSCOPE: "AI-ModelScope/Mistral-7B-Instruct-v0.1"
         },
         "Mistral-7B-v0.2-Chat": {
-            DownloadSource.DEFAULT: "mistralai/Mistral-7B-Instruct-v0.2"
+            DownloadSource.DEFAULT: "mistralai/Mistral-7B-Instruct-v0.2",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Mistral-7B-Instruct-v0.2"
         }
     },
     template="mistral"
@@ -394,7 +395,8 @@ register_model_group(
 register_model_group(
     models={
         "Mixtral-8x7B": {
-            DownloadSource.DEFAULT: "mistralai/Mixtral-8x7B-v0.1"
+            DownloadSource.DEFAULT: "mistralai/Mixtral-8x7B-v0.1",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Mixtral-8x7B-v0.1"
         },
         "Mixtral-8x7B-Chat": {
             DownloadSource.DEFAULT: "mistralai/Mixtral-8x7B-Instruct-v0.1"
