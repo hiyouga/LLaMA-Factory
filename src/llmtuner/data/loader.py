@@ -55,16 +55,8 @@ def get_dataset(
 
         if int(os.environ.get('USE_MODELSCOPE_HUB', '0')) and dataset_attr.load_from == "ms_hub":
             from modelscope import MsDataset
-            cache_dir = model_args.cache_dir
-            cache_dir = str(cache_dir) if cache_dir is not None else None
-
-            print(f'>data_path: {data_path}, '
-                  f'>data_name: {data_name}, '
-                  f'>split: {data_args.split},'
-                  f'>data_files: {data_files}, '
-                  f'>cache_dir: {cache_dir},'
-                  f'>token: {model_args.ms_hub_token},'
-                  f'>streaming: {data_args.streaming}')
+            from modelscope.utils.config_ds import MS_DATASETS_CACHE
+            cache_dir = model_args.cache_dir or MS_DATASETS_CACHE
 
             dataset = MsDataset.load(
                 dataset_name=data_path,
