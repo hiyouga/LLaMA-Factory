@@ -65,7 +65,7 @@ def get_dataset(
                 data_files=data_files,
                 cache_dir=cache_dir,
                 token=model_args.ms_hub_token,
-                streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
+                use_streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
             ).to_hf_dataset()
         else:
             dataset = load_dataset(
