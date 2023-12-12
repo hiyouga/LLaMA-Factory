@@ -115,7 +115,7 @@ def get_dataset(
                     outputs["prompt"].append(msg_pairs[-1][0])
                     outputs["query"].append("")
                     outputs["response"].append(msg_pairs[-1][1])
-                    outputs["history"].append(msg_pairs[:-1])
+                    outputs["history"].append(msg_pairs[:-1] if len(msg_pairs) > 1 else None)
                     outputs["system"].append(examples[dataset_attr.system][i] if dataset_attr.system else "")
 
             return outputs
