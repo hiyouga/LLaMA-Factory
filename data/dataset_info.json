@@ -109,7 +109,8 @@
     "ms_hub_url": "AI-ModelScope/CodeAlpaca-20k"
   },
   "alpaca_cot": {
-    "hf_hub_url": "QingyiSi/Alpaca-CoT"
+    "hf_hub_url": "QingyiSi/Alpaca-CoT",
+    "ms_hub_url": "AI-ModelScope/Alpaca-CoT"
   },
   "openorca": {
     "hf_hub_url": "Open-Orca/OpenOrca",
@@ -170,23 +171,23 @@
     "hf_hub_url": "HuggingFaceH4/ultrachat_200k",
     "ms_hub_url": "AI-ModelScope/ultrachat_200k",
     "columns": {
-      "prompt": "messages",
-      "query": "role",
-      "response": "content"
+      "messages": "messages",
+      "role": "role",
+      "content": "content"
     },
     "formatting": "sharegpt"
   },
   "agent_instruct": {
     "hf_hub_url": "THUDM/AgentInstruct",
+    "ms_hub_url": "ZhipuAI/AgentInstruct",
     "formatting": "sharegpt"
   },
   "lmsys_chat": {
     "hf_hub_url": "lmsys/lmsys-chat-1m",
-    "ms_hub_url": "AI-ModelScope/lmsys-chat-1m",
     "columns": {
-      "prompt": "conversation",
-      "query": "role",
-      "response": "content"
+      "messages": "conversation",
+      "role": "role",
+      "content": "content"
     },
     "formatting": "sharegpt"
   },
@@ -287,12 +288,14 @@
   },
   "the_stack": {
     "hf_hub_url": "bigcode/the-stack",
+    "ms_hub_url": "AI-ModelScope/the-stack",
     "columns": {
       "prompt": "content"
     }
   },
   "starcoder_python": {
     "hf_hub_url": "bigcode/starcoderdata",
+    "ms_hub_url": "AI-ModelScope/starcoderdata",
     "columns": {
       "prompt": "content"
     },
