@@ -541,9 +541,7 @@ register_template(
         "[INST] {{query}} [/INST]"
     ],
     system="",
-    sep=[
-        " "
-    ]
+    sep=[]
 )
 
 
