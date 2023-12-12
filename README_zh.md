@@ -55,9 +55,11 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 
 ## 更新日志
 
+[23/12/12] 我们支持了微调最新的混合专家模型 **[Mixtral 8x7B](https://huggingface.co/mistralai/Mixtral-8x7B-v0.1)**。
+
 [23/12/01] 我们支持了从 **[魔搭社区](https://modelscope.cn/models)** 下载预训练模型。详细用法请参照 [此教程](#使用魔搭社区可跳过)。
 
-[23/10/21] 我们支持了 **[NEFTune](https://arxiv.org/abs/2310.05914)** 训练技巧。请使用 `--neft_alpha` 参数启用 NEFTune，例如 `--neft_alpha 5`。
+[23/10/21] 我们支持了 **[NEFTune](https://arxiv.org/abs/2310.05914)** 训练技巧。请使用 `--neftune_noise_alpha` 参数启用 NEFTune，例如 `--neftune_noise_alpha 5`。
 
 <details><summary>展开日志</summary>
 
@@ -101,6 +103,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 | [LLaMA](https://github.com/facebookresearch/llama)       | 7B/13B/33B/65B              | q_proj,v_proj     | -         |
 | [LLaMA-2](https://huggingface.co/meta-llama)             | 7B/13B/70B                  | q_proj,v_proj     | llama2    |
 | [Mistral](https://huggingface.co/mistralai)              | 7B                          | q_proj,v_proj     | mistral   |
+| [Mixtral](https://huggingface.co/mistralai)              | 8x7B                        | q_proj,v_proj     | mistral   |
 | [Phi-1.5](https://huggingface.co/microsoft/phi-1_5)      | 1.3B                        | Wqkv              | -         |
 | [Qwen](https://github.com/QwenLM/Qwen)                   | 1.8B/7B/14B/72B             | c_attn            | qwen      |
 | [XVERSE](https://github.com/xverse-ai)                   | 7B/13B/65B                  | q_proj,v_proj     | xverse    |
@@ -206,13 +209,13 @@ huggingface-cli login
 
 ### 硬件依赖
 
-| 训练方法 | 精度 |   7B  |  13B  |  30B  |   65B  |
-| ------- | ---- | ----- | ----- | ----- | ------ |
-| 全参数   |  16  | 160GB | 320GB | 600GB | 1200GB |
-| 部分参数 |  16  |  20GB |  40GB | 120GB |  240GB |
-| LoRA    |  16  |  16GB |  32GB |  80GB |  160GB |
-| QLoRA   |   8  |  10GB |  16GB |  40GB |   80GB |
-| QLoRA   |   4  |   6GB |  12GB |  24GB |   48GB |
+| 训练方法 | 精度 |   7B  |  13B  |  30B  |   65B  |   8x7B |
+| ------- | ---- | ----- | ----- | ----- | ------ | ------ |
+| 全参数   |  16  | 160GB | 320GB | 600GB | 1200GB | 1000GB |
+| 部分参数 |  16  |  20GB |  40GB | 120GB |  240GB |  200GB |
+| LoRA    |  16  |  16GB |  32GB |  80GB |  160GB |  120GB |
+| QLoRA   |   8  |  10GB |  16GB |  40GB |   80GB |   80GB |
+| QLoRA   |   4  |   6GB |  12GB |  24GB |   48GB |   32GB |
 
 ## 如何使用
 
