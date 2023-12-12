@@ -55,7 +55,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 ## Changelog
 
-[23/12/12] We supported **[LoftQ](https://arxiv.org/abs/2310.08659)** training. Try `loftq_init` argument with `peft==0.7.1.dev0` for better QLoRA performance.
+[23/12/12] We supported **[LoftQ](https://arxiv.org/abs/2310.08659)** training. Try `loftq_init` argument with [a patched peft](https://github.com/hiyouga/peft) for better QLoRA performance.
 
 [23/12/12] We supported fine-tuning the latest MoE model **[Mixtral 8x7B](https://huggingface.co/mistralai/Mixtral-8x7B-v0.1)** in our framework. See hardware requirement [here](#hardware-requirement).
 
