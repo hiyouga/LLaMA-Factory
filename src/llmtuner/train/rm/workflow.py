@@ -25,9 +25,9 @@ def run_rm(
     callbacks: Optional[List["TrainerCallback"]] = None
 ):
     dataset = get_dataset(model_args, data_args)
-    model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, stage="rm")
+    model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, add_valuehead=True)
     dataset = preprocess_dataset(dataset, tokenizer, data_args, training_args, stage="rm")
-    data_collator = PairwiseDataCollatorWithPadding(tokenizer, pad_to_multiple_of=4)
+    data_collator = PairwiseDataCollatorWithPadding(tokenizer, pad_to_multiple_of=8)
 
     # Update arguments
     training_args_dict = training_args.to_dict()

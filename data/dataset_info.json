@@ -291,10 +291,11 @@
       "prompt": "content"
     }
   },
-  "starcoder": {
+  "starcoder_python": {
     "hf_hub_url": "bigcode/starcoderdata",
     "columns": {
       "prompt": "content"
-    }
+    },
+    "folder": "python"
   }
 }
