@@ -15,7 +15,9 @@ from llmtuner.api.protocol import (
     ChatCompletionStreamResponse,
     ChatCompletionResponseChoice,
     ChatCompletionResponseStreamChoice,
-    ChatCompletionResponseUsage
+    ChatCompletionResponseUsage,
+    ScoreEvaluationRequest,
+    ScoreEvaluationResponse
 )
 from llmtuner.chat import ChatModel
 from llmtuner.extras.misc import torch_gc
@@ -68,6 +70,9 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
 
     @app.post("/v1/chat/completions", response_model=ChatCompletionResponse, status_code=status.HTTP_200_OK)
     async def create_chat_completion(request: ChatCompletionRequest):
+        if not chat_model.can_generate:
+            raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Not allowed")
+
         if len(request.messages) == 0 or request.messages[-1].role != Role.USER:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid request")
 
@@ -155,6 +160,17 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
         chunk = ChatCompletionStreamResponse(model=request.model, choices=[choice_data])
         yield to_json(chunk)
         yield "[DONE]"
+
+    @app.post("/v1/score/evaluation", response_model=ScoreEvaluationResponse, status_code=status.HTTP_200_OK)
+    async def create_score_evaluation(request: ScoreEvaluationRequest):
+        if chat_model.can_generate:
+            raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Not allowed")
+
+        if len(request.messages) == 0:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid request")
+        
+        scores = chat_model.get_scores(request.messages, max_length=request.max_length)
+        return ScoreEvaluationResponse(model=request.model, scores=scores)
 
     return app
 

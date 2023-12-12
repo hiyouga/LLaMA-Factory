@@ -87,7 +87,7 @@ def init_adapter(
 
         if is_trainable and checkpoint_to_resume is None: # create new lora weights while training
             if len(finetuning_args.lora_target) == 1 and finetuning_args.lora_target[0] == "all":
-                target_modules = find_all_linear_modules(model, model_args.quantization_bit)
+                target_modules = find_all_linear_modules(model)
             else:
                 target_modules = finetuning_args.lora_target
 
@@ -101,6 +101,9 @@ def init_adapter(
                 modules_to_save=finetuning_args.additional_target
             )
             model = get_peft_model(model, lora_config)
+
+        for param in filter(lambda p: p.requires_grad, model.parameters()):
+            param.data = param.data.to(torch.float32)
 
     if model_args.checkpoint_dir is not None:
         logger.info("Loaded fine-tuned model from checkpoint(s): {}".format(",".join(model_args.checkpoint_dir)))
