@@ -44,12 +44,12 @@ def _verify_model_args(model_args: "ModelArguments", finetuning_args: "Finetunin
     if model_args.quantization_bit is not None and finetuning_args.finetuning_type != "lora":
         raise ValueError("Quantization is only compatible with the LoRA method.")
 
-    if (
-        model_args.checkpoint_dir is not None
-        and len(model_args.checkpoint_dir) != 1
-        and finetuning_args.finetuning_type != "lora"
-    ):
-        raise ValueError("Multiple checkpoints are only available for LoRA tuning.")
+    if model_args.checkpoint_dir is not None and len(model_args.checkpoint_dir) != 1:
+        if finetuning_args.finetuning_type != "lora":
+            raise ValueError("Multiple checkpoints are only available for LoRA tuning.")
+        
+        if model_args.quantization_bit is not None:
+            raise ValueError("Quantized model only accepts a single checkpoint. Merge them first.")
 
 
 def parse_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:

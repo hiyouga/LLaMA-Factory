@@ -1,4 +1,3 @@
-import os
 import math
 import torch
 from types import MethodType
@@ -13,7 +12,6 @@ from transformers import (
     PreTrainedModel,
     PreTrainedTokenizerBase
 )
-from transformers.models.llama import modeling_llama as LlamaModule
 from transformers.utils.versions import require_version
 from trl import AutoModelForCausalLMWithValueHead
 
