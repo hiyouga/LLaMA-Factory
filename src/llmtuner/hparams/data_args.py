@@ -2,7 +2,9 @@ import os
 import json
 from typing import List, Literal, Optional
 from dataclasses import dataclass, field
+from llmtuner.extras.logging import get_logger
 
+logger = get_logger(__name__)
 
 DATA_CONFIG = "dataset_info.json"
 
@@ -153,8 +155,17 @@ class DataArguments:
             if name not in dataset_info:
                 raise ValueError("Undefined dataset {} in {}.".format(name, DATA_CONFIG))
 
-            if "hf_hub_url" in dataset_info[name]:
-                dataset_attr = DatasetAttr("hf_hub", dataset_name=dataset_info[name]["hf_hub_url"])
+            if "hf_hub_url" in dataset_info[name] or 'ms_hub_url' in dataset_info[name]:
+                url_key_name = "hf_hub_url"
+                if int(os.environ.get('USE_MODELSCOPE_HUB', '0')):
+                    if 'ms_hub_url' in dataset_info[name]:
+                        url_key_name = 'ms_hub_url'
+                    else:
+                        logger.warning('You are using ModelScope Hub, but the specified dataset '
+                                       'has no `ms_hub_url` key, so `hf_hub_url` will be used instead.')
+
+                dataset_attr = DatasetAttr(url_key_name[:url_key_name.index('_url')],
+                                           dataset_name=dataset_info[name][url_key_name])
             elif "script_url" in dataset_info[name]:
                 dataset_attr = DatasetAttr("script", dataset_name=dataset_info[name]["script_url"])
             else:
