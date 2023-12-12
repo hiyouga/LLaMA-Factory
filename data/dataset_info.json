@@ -159,7 +159,6 @@
   },
   "sharegpt_hyper": {
     "hf_hub_url": "totally-not-an-llm/sharegpt-hyperfiltered-3k",
-    "ms_hub_url": "AI-ModelScope/sharegpt-hyperfiltered-3k",
     "formatting": "sharegpt"
   },
   "sharegpt4": {
@@ -193,7 +192,6 @@
   },
   "evol_instruct": {
     "hf_hub_url": "WizardLM/WizardLM_evol_instruct_V2_196k",
-    "ms_hub_url": "AI-ModelScope/WizardLM_evol_instruct_V2_196k",
     "formatting": "sharegpt"
   },
   "hh_rlhf_en": {
