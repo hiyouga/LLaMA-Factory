@@ -55,12 +55,14 @@ def get_dataset(
 
         if int(os.environ.get('USE_MODELSCOPE_HUB', '0')) and dataset_attr.load_from == "ms_hub":
             from modelscope import MsDataset
+            cache_dir = model_args.cache_dir
+            cache_dir = str(cache_dir) if cache_dir is not None else None
             dataset = MsDataset.load(
                 dataset_name=data_path,
                 subset_name=data_name,
                 split=data_args.split,
                 data_files=data_files,
-                cache_dir=model_args.cache_dir,
+                cache_dir=cache_dir,
                 token=model_args.ms_hub_token,
                 streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
             ).to_hf_dataset()
