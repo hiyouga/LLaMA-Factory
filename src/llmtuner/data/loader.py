@@ -57,6 +57,15 @@ def get_dataset(
             from modelscope import MsDataset
             cache_dir = model_args.cache_dir
             cache_dir = str(cache_dir) if cache_dir is not None else None
+
+            print(f'>data_path: {data_path}, '
+                  f'>data_name: {data_name}, '
+                  f'>split: {data_args.split},'
+                  f'>data_files: {data_files}, '
+                  f'>cache_dir: {cache_dir},'
+                  f'>token: {model_args.ms_hub_token},'
+                  f'>streaming: {data_args.streaming}')
+
             dataset = MsDataset.load(
                 dataset_name=data_path,
                 subset_name=data_name,
