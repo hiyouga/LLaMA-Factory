@@ -25,7 +25,7 @@ def get_dataset(
         logger.info("Loading dataset {}...".format(dataset_attr))
 
         data_path, data_name, data_dir, data_files = None, None, None, None
-        if dataset_attr.load_from == "hf_hub":
+        if dataset_attr.load_from in ("hf_hub", "ms_hub"):
             data_path = dataset_attr.dataset_name
             data_name = dataset_attr.subset
             data_dir = dataset_attr.folder
@@ -53,16 +53,30 @@ def get_dataset(
         else:
             raise NotImplementedError
 
-        dataset = load_dataset(
-            path=data_path,
-            name=data_name,
-            data_dir=data_dir,
-            data_files=data_files,
-            split=data_args.split,
-            cache_dir=model_args.cache_dir,
-            token=model_args.hf_hub_token,
-            streaming=(data_args.streaming and (dataset_attr.load_from != "file"))
-        )
+        if int(os.environ.get('USE_MODELSCOPE_HUB', '0')) and dataset_attr.load_from == "ms_hub":
+            from modelscope import MsDataset
+            from modelscope.utils.config_ds import MS_DATASETS_CACHE
+            cache_dir = model_args.cache_dir or MS_DATASETS_CACHE
+
+            dataset = MsDataset.load(
+                dataset_name=data_path,
+                subset_name=data_name,
+                split=data_args.split,
+                data_files=data_files,
+                cache_dir=cache_dir,
+                token=model_args.ms_hub_token,
+                use_streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
+            ).to_hf_dataset()
+        else:
+            dataset = load_dataset(
+                path=data_path,
+                name=data_name,
+                data_files=data_files,
+                split=data_args.split,
+                cache_dir=model_args.cache_dir,
+                token=model_args.hf_hub_token,
+                streaming=(data_args.streaming and (dataset_attr.load_from != "file"))
+            )
 
         if data_args.streaming and (dataset_attr.load_from == "file"):
             dataset = dataset.to_iterable_dataset() # TODO: add num shards parameter
