@@ -65,7 +65,7 @@ def get_dataset(
                 example['input'] = example['input'] or ''
                 return example
 
-            dataset = dataset.ds_instance.map(map_func)
+            dataset = dataset.map(map_func)
         else:
             dataset = load_dataset(
                 path=data_path,
