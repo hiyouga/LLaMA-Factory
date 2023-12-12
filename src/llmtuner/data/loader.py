@@ -58,6 +58,11 @@ def get_dataset(
             dataset = MsDataset.load(
                 dataset_name=data_path,
                 subset_name=data_name,
+                split=data_args.split,
+                data_files=data_files,
+                cache_dir=model_args.cache_dir,
+                token=model_args.ms_hub_token,
+                streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
             ).to_hf_dataset()
         else:
             dataset = load_dataset(

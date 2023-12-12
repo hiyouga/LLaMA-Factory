@@ -129,7 +129,6 @@
   },
   "firefly": {
     "hf_hub_url": "YeungNLP/firefly-train-1.1M",
-    "ms_hub_url": "AI-ModelScope/firefly-train-1.1M",
     "columns": {
       "prompt": "input",
       "response": "target"
