@@ -217,7 +217,7 @@ def load_model_and_tokenizer(
     # Prepare model for inference
     if not is_trainable:
         model.requires_grad_(False) # fix all model params
-        model = model.to(model_args.compute_dtype) if model_args.quantization_bit is None else model
+        model = model.to(model_args.compute_dtype) if not getattr(model, "quantization_method", None) else model
         model.eval()
     else:
         model.train()
