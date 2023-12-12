@@ -57,7 +57,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 [23/12/12] We supported fine-tuning the latest MoE model **[Mixtral 8x7B](https://huggingface.co/mistralai/Mixtral-8x7B-v0.1)** in our framework. See hardware requirement [here](#hardware-requirement).
 
-[23/12/01] We supported downloading pre-trained models from the **[ModelScope Hub](https://modelscope.cn/models)** for Chinese mainland users. See [this tutorial](#use-modelscope-models-optional) for usage.
+[23/12/01] We supported downloading pre-trained models and datasets from the **[ModelScope Hub](https://modelscope.cn/models)** for Chinese mainland users. See [this tutorial](#use-modelscope-hub-optional) for usage.
 
 <details><summary>Full Changelog</summary>
 
@@ -242,9 +242,9 @@ If you want to enable the quantized LoRA (QLoRA) on the Windows platform, you wi
 pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.39.1-py3-none-win_amd64.whl
 ```
 
-### Use ModelScope Models (optional)
+### Use ModelScope Hub (optional)
 
-If you have trouble with downloading models from Hugging Face, you can use LLaMA-Factory together with ModelScope in the following manner.
+If you have trouble with downloading models and datasets from Hugging Face, you can use LLaMA-Factory together with ModelScope in the following manner.
 
 ```bash
 export USE_MODELSCOPE_HUB=1 # `set USE_MODELSCOPE_HUB=1` for Windows
@@ -258,7 +258,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     ... # arguments (same as above)
 ```
 
-LLaMA Board also supports using the models on the ModelScope Hub.
+LLaMA Board also supports using the models and datasets on the ModelScope Hub.
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 USE_MODELSCOPE_HUB=1 python src/train_web.py

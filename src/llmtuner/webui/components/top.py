@@ -25,16 +25,13 @@ def create_top() -> Dict[str, "Component"]:
 
     with gr.Accordion(label="Advanced config", open=False) as advanced_tab:
         with gr.Row():
-            quantization_bit = gr.Dropdown(choices=["none", "8", "4"], value="none", scale=1)
-            template = gr.Dropdown(choices=list(templates.keys()), value="default", scale=1)
-            system_prompt = gr.Textbox(scale=2)
+            quantization_bit = gr.Dropdown(choices=["none", "8", "4"], value="none")
+            template = gr.Dropdown(choices=list(templates.keys()), value="default")
+            rope_scaling = gr.Radio(choices=["none", "linear", "dynamic"], value="none")
 
-    with gr.Accordion(label="Model config (LLaMA only)", open=False) as llama_tab:
-        with gr.Row():
             with gr.Column():
                 flash_attn = gr.Checkbox(value=False)
                 shift_attn = gr.Checkbox(value=False)
-            rope_scaling = gr.Radio(choices=["none", "linear", "dynamic"], value="none")
 
     model_name.change(
         list_checkpoint, [model_name, finetuning_type], [checkpoints], queue=False
@@ -66,9 +63,7 @@ def create_top() -> Dict[str, "Component"]:
         advanced_tab=advanced_tab,
         quantization_bit=quantization_bit,
         template=template,
-        system_prompt=system_prompt,
-        llama_tab=llama_tab,
+        rope_scaling=rope_scaling,
         flash_attn=flash_attn,
-        shift_attn=shift_attn,
-        rope_scaling=rope_scaling
+        shift_attn=shift_attn
     )
