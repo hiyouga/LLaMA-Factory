@@ -148,17 +148,6 @@ def prepare_model_for_training(
                 param.data = param.data.to(torch.float32)
         logger.info("Upcasting weights in layernorm in float32.")
 
-    if finetuning_args.neft_alpha > 1e-6:
-        def neftune_forward_hook(module: torch.nn.Module, args: Tuple[torch.Tensor], output: torch.Tensor):
-            if module.training:
-                dims = torch.tensor(output.size(1) * output.size(2))
-                mag_norm = finetuning_args.neft_alpha / torch.sqrt(dims)
-                output = output + torch.zeros_like(output).uniform_(-mag_norm, mag_norm)
-            return output
-
-        model.get_input_embeddings().register_forward_hook(neftune_forward_hook)
-        logger.info("Using noisy embedding with alpha={:.2f}".format(finetuning_args.neft_alpha))
-
     if use_gradient_checkpointing and getattr(model, "supports_gradient_checkpointing", False):
         if hasattr(model, "enable_input_require_grads"):
             model.enable_input_require_grads()
