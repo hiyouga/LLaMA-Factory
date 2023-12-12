@@ -151,25 +151,21 @@ def load_model_and_tokenizer(
         if is_deepspeed_zero3_enabled():
             raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantization.")
 
-        if finetuning_args.loftq_init:
-            require_version("peft>=0.7.1.dev0", "To fix: pip install git+https://github.com/hiyouga/peft.git")
-            logger.info("Skip bnb quantization because using loftq.")
-        else:
-            if model_args.quantization_bit == 8:
-                require_version("bitsandbytes>=0.37.0", "To fix: pip install bitsandbytes>=0.37.0")
-                config_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_8bit=True)
+        if model_args.quantization_bit == 8:
+            require_version("bitsandbytes>=0.37.0", "To fix: pip install bitsandbytes>=0.37.0")
+            config_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_8bit=True)
 
-            if model_args.quantization_bit == 4:
-                require_version("bitsandbytes>=0.39.0", "To fix: pip install bitsandbytes>=0.39.0")
-                config_kwargs["quantization_config"] = BitsAndBytesConfig(
-                    load_in_4bit=True,
-                    bnb_4bit_compute_dtype=model_args.compute_dtype,
-                    bnb_4bit_use_double_quant=model_args.double_quantization,
-                    bnb_4bit_quant_type=model_args.quantization_type
-                )
+        if model_args.quantization_bit == 4:
+            require_version("bitsandbytes>=0.39.0", "To fix: pip install bitsandbytes>=0.39.0")
+            config_kwargs["quantization_config"] = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=model_args.compute_dtype,
+                bnb_4bit_use_double_quant=model_args.double_quantization,
+                bnb_4bit_quant_type=model_args.quantization_type
+            )
 
-            config_kwargs["device_map"] = {"": get_current_device()}
-            logger.info("Quantizing model to {} bit.".format(model_args.quantization_bit))
+        config_kwargs["device_map"] = {"": get_current_device()}
+        logger.info("Quantizing model to {} bit.".format(model_args.quantization_bit))
 
     # Load pre-trained models (without valuehead)
     model = AutoModelForCausalLM.from_pretrained(
