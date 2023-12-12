@@ -25,11 +25,11 @@ def run_dpo(
     callbacks: Optional[List["TrainerCallback"]] = None
 ):
     dataset = get_dataset(model_args, data_args)
-    model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, stage="sft")
+    model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train)
     dataset = preprocess_dataset(dataset, tokenizer, data_args, training_args, stage="rm")
     data_collator = DPODataCollatorWithPadding(
         tokenizer=tokenizer,
-        pad_to_multiple_of=4,
+        pad_to_multiple_of=8,
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
     )
 
@@ -37,7 +37,7 @@ def run_dpo(
     if finetuning_args.ref_model is None and (not training_args.do_train): # use the model itself
         ref_model = model
     else:
-        ref_model = create_ref_model(model_args, finetuning_args, stage="dpo")
+        ref_model = create_ref_model(model_args, finetuning_args)
 
     # Update arguments
     training_args_dict = training_args.to_dict()
