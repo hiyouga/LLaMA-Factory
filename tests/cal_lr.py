@@ -26,7 +26,7 @@ def calculate_lr(
     cutoff_len: int,  # i.e. maximum input length during training
     batch_size: int,  # total batch size, namely (batch size * gradient accumulation * world size)
     is_mistral: bool, # mistral model uses a smaller learning rate,
-    dataset_dir: Optional[str] = "data"
+    dataset_dir: Optional[str] = "../data"
 ):
     model_args, data_args, training_args, finetuning_args, _ = get_train_args(dict(
         stage="sft",
@@ -38,7 +38,7 @@ def calculate_lr(
         output_dir="dummy_dir"
     ))
     trainset = get_dataset(model_args, data_args)
-    _, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, is_trainable=False, stage="sft")
+    _, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, is_trainable=False, add_valuehead=False)
     trainset = preprocess_dataset(trainset, tokenizer, data_args, training_args, stage="sft")
     data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, label_pad_token_id=IGNORE_INDEX)
     dataloader = DataLoader(
