@@ -47,7 +47,7 @@ def gen_cmd(args: Dict[str, Any]) -> str:
     current_devices = os.environ.get("CUDA_VISIBLE_DEVICES", "0")
     cmd_lines = ["CUDA_VISIBLE_DEVICES={} python src/train_bash.py ".format(current_devices)]
     for k, v in args.items():
-        if v is not None and v != "":
+        if v is not None and v is not False and v != "":
             cmd_lines.append("    --{} {} ".format(k, str(v)))
     cmd_text = "\\\n".join(cmd_lines)
     cmd_text = "```bash\n{}\n```".format(cmd_text)
