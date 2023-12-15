@@ -145,6 +145,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
     if finetuning_args.stage in ["rm", "ppo"] and finetuning_args.finetuning_type in ["full", "freeze"]:
         can_resume_from_checkpoint = False
+        training_args.resume_from_checkpoint = None
     else:
         can_resume_from_checkpoint = True
 
