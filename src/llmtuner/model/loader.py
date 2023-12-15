@@ -1,20 +1,20 @@
 from typing import TYPE_CHECKING, Optional, Tuple
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.utils.versions import require_version
 from trl import AutoModelForCausalLMWithValueHead
 
+import llmtuner.model.patcher as patcher
 from llmtuner.extras.logging import get_logger
-from llmtuner.extras.misc import count_parameters, get_current_device, try_download_model_from_ms
-from llmtuner.extras.packages import is_flash_attn2_available
-from llmtuner.hparams import FinetuningArguments
+from llmtuner.extras.misc import count_parameters, try_download_model_from_ms
 from llmtuner.model.adapter import init_adapter
-from llmtuner.model.patches import patch_config, patch_model, patch_valuehead_model, patch_tokenizer, register_autoclass
-from llmtuner.model.utils import load_valuehead_params, prepare_model_for_training, resize_embedding_layer
+from llmtuner.model.utils import (
+    load_valuehead_params, prepare_model_for_training, resize_embedding_layer, register_autoclass
+)
 
 if TYPE_CHECKING:
     from transformers import PreTrainedModel, PreTrainedTokenizer
-    from llmtuner.hparams import ModelArguments
+    from llmtuner.hparams import ModelArguments, FinetuningArguments
 
 
 logger = get_logger(__name__)
@@ -55,45 +55,15 @@ def load_model_and_tokenizer(
         padding_side="right", # training with left-padded tensors in fp16 precision may cause overflow
         **config_kwargs
     )
-    patch_tokenizer(tokenizer)
-
     config = AutoConfig.from_pretrained(model_args.model_name_or_path, **config_kwargs)
-    patch_config(config, model_args, is_trainable)
 
-    # Set FlashAttention-2
-    if model_args.flash_attn and is_flash_attn2_available():
-        config_kwargs["use_flash_attention_2"] = True
-        logger.info("Using FlashAttention-2 for faster training and inference.")
+    patcher.patch_tokenizer(tokenizer)
+    patcher.patch_config(config, model_args, is_trainable)
+    patcher.configure_rope(config, model_args, is_trainable)
+    patcher.configure_flashattn(config, model_args)
+    patcher.configure_longlora(config, model_args, is_trainable)
+    patcher.configure_quantization(config, config_kwargs, model_args)
 
-    # Quantization configurations (using gptq or awq)
-    if getattr(config, "quantization_config", None):
-        model_args.quantization_bit = None # remove bnb quantization
-        config_kwargs["device_map"] = {"": get_current_device()}
-        quantization_config = getattr(config, "quantization_config", None)
-        logger.info("Loading {}-bit pre-quantized model.".format(quantization_config.get("bits", -1)))
-
-    # Quantization configurations (using bitsandbytes)
-    if model_args.quantization_bit is not None:
-        if is_deepspeed_zero3_enabled():
-            raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantization.")
-
-        if model_args.quantization_bit == 8:
-            require_version("bitsandbytes>=0.37.0", "To fix: pip install bitsandbytes>=0.37.0")
-            config_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_8bit=True)
-
-        if model_args.quantization_bit == 4:
-            require_version("bitsandbytes>=0.39.0", "To fix: pip install bitsandbytes>=0.39.0")
-            config_kwargs["quantization_config"] = BitsAndBytesConfig(
-                load_in_4bit=True,
-                bnb_4bit_compute_dtype=model_args.compute_dtype,
-                bnb_4bit_use_double_quant=model_args.double_quantization,
-                bnb_4bit_quant_type=model_args.quantization_type
-            )
-
-        config_kwargs["device_map"] = {"": get_current_device()}
-        logger.info("Quantizing model to {} bit.".format(model_args.quantization_bit))
-
-    # Load pre-trained models (without valuehead)
     model = AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
         config=config,
@@ -101,23 +71,20 @@ def load_model_and_tokenizer(
         low_cpu_mem_usage=(not is_deepspeed_zero3_enabled()),
         **config_kwargs
     )
-    patch_model(model)
+    patcher.patch_model(model)
     register_autoclass(config, model, tokenizer)
     resize_embedding_layer(model, tokenizer)
 
-    # Initialize adapters
     model = prepare_model_for_training(model=model, finetuning_args=finetuning_args) if is_trainable else model
     model = init_adapter(model, model_args, finetuning_args, is_trainable)
 
-    # Prepare model with valuehead for RLHF
     if add_valuehead:
         model: "AutoModelForCausalLMWithValueHead" = AutoModelForCausalLMWithValueHead.from_pretrained(model)
-        patch_valuehead_model(model)
+        patcher.patch_valuehead_model(model)
         vhead_params = load_valuehead_params(model_args)
         if vhead_params is not None:
             model.load_state_dict(vhead_params, strict=False)
 
-    # Prepare model for inference
     if not is_trainable:
         model.requires_grad_(False) # fix all model params
         model = model.to(model_args.compute_dtype) if not getattr(model, "quantization_method", None) else model
