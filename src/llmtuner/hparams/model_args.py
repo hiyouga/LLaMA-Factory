@@ -8,12 +8,15 @@ class ModelArguments:
     Arguments pertaining to which model/config/tokenizer we are going to fine-tune.
     """
     model_name_or_path: str = field(
-        metadata={"help": "Path to pretrained model or model identifier from \
-                  huggingface.co/models or modelscope.cn/models."}
+        metadata={"help": "Path to the model weight or identifier from huggingface.co/models or modelscope.cn/models."}
+    )
+    adapter_name_or_path: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to the adapter weight or identifier from huggingface.co/models."}
     )
     cache_dir: Optional[str] = field(
         default=None,
-        metadata={"help": "Where to store the pretrained models downloaded from huggingface.co."}
+        metadata={"help": "Where to store the pre-trained models downloaded from huggingface.co or modelscope.cn."}
     )
     use_fast_tokenizer: Optional[bool] = field(
         default=True,
@@ -43,10 +46,6 @@ class ModelArguments:
         default=None,
         metadata={"help": "Adopt scaled rotary positional embeddings."}
     )
-    checkpoint_dir: Optional[str] = field(
-        default=None,
-        metadata={"help": "Path to the directory(s) containing the model checkpoints as well as the configurations."}
-    )
     flash_attn: Optional[bool] = field(
         default=False,
         metadata={"help": "Enable FlashAttention-2 for faster training."}
@@ -71,8 +70,8 @@ class ModelArguments:
         if self.split_special_tokens and self.use_fast_tokenizer:
             raise ValueError("`split_special_tokens` is only supported for slow tokenizers.")
 
-        if self.checkpoint_dir is not None: # support merging multiple lora weights
-            self.checkpoint_dir = [cd.strip() for cd in self.checkpoint_dir.split(",")]
+        if self.adapter_name_or_path is not None: # support merging multiple lora weights
+            self.adapter_name_or_path = [path.strip() for path in self.adapter_name_or_path.split(",")]
 
         assert self.quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
 

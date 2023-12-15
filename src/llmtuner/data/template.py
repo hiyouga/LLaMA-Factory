@@ -617,9 +617,6 @@ register_template(
 )
 
 
-r"""
-Supports language model inference without histories.
-"""
 register_template(
     name="vanilla",
     prefix=[],

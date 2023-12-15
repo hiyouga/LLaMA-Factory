@@ -15,7 +15,7 @@ class FreezeArguments:
                   LLaMA choices: [\"mlp\", \"self_attn\"], \
                   BLOOM & Falcon & ChatGLM choices: [\"mlp\", \"self_attention\"], \
                   Qwen choices: [\"mlp\", \"attn\"], \
-                  Phi-1.5 choices: [\"mlp\", \"mixer\"], \
+                  Phi choices: [\"mlp\", \"mixer\"], \
                   Others choices: the same as LLaMA."}
     )
     num_layer_trainable: Optional[int] = field(
@@ -33,9 +33,9 @@ class LoraArguments:
         default=None,
         metadata={"help": "Name(s) of modules apart from LoRA layers to be set as trainable and saved in the final checkpoint."}
     )
-    lora_alpha: Optional[float] = field(
+    lora_alpha: Optional[int] = field(
         default=None,
-        metadata={"help": "The scale factor for LoRA fine-tuning (default: lora_rank * 2.0)."}
+        metadata={"help": "The scale factor for LoRA fine-tuning (default: lora_rank * 2)."}
     )
     lora_dropout: Optional[float] = field(
         default=0.1,
@@ -52,12 +52,12 @@ class LoraArguments:
                   BLOOM & Falcon & ChatGLM choices: [\"query_key_value\", \"dense\", \"dense_h_to_4h\", \"dense_4h_to_h\"], \
                   Baichuan choices: [\"W_pack\", \"o_proj\", \"gate_proj\", \"up_proj\", \"down_proj\"], \
                   Qwen choices: [\"c_attn\", \"attn.c_proj\", \"w1\", \"w2\", \"mlp.c_proj\"], \
-                  Phi-1.5 choices: [\"Wqkv\", \"out_proj\", \"fc1\", \"fc2\"], \
+                  Phi choices: [\"Wqkv\", \"out_proj\", \"fc1\", \"fc2\"], \
                   Others choices: the same as LLaMA."}
     )
-    resume_lora_training: Optional[bool] = field(
-        default=True,
-        metadata={"help": "Whether to resume training from the last LoRA weights or create new weights after merging them."}
+    create_new_adapter: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Whether to create a new adapter with randomly initialized weight or not."}
     )
 
 
@@ -98,9 +98,9 @@ class RLHFArguments:
         default=None,
         metadata={"help": "Path to the reference model used for the PPO or DPO training."}
     )
-    ref_model_checkpoint: Optional[str] = field(
+    ref_model_adapters: Optional[str] = field(
         default=None,
-        metadata={"help": "Path to the directory(s) containing the model checkpoints of the reference model."}
+        metadata={"help": "Path to the adapters of the reference model."}
     )
     ref_model_quantization_bit: Optional[int] = field(
         default=None,
@@ -108,11 +108,11 @@ class RLHFArguments:
     )
     reward_model: Optional[str] = field(
         default=None,
-        metadata={"help": "Path to the directory containing the checkpoints of the reward model."}
+        metadata={"help": "Path to the reward model used for the PPO training."}
     )
-    reward_model_checkpoint: Optional[str] = field(
+    reward_model_adapters: Optional[str] = field(
         default=None,
-        metadata={"help": "Path to the directory(s) containing the model checkpoints of the reward model."}
+        metadata={"help": "Path to the adapters of the reward model."}
     )
     reward_model_quantization_bit: Optional[int] = field(
         default=None,
@@ -161,11 +161,11 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments):
             return arg
 
         self.name_module_trainable = split_arg(self.name_module_trainable)
-        self.lora_alpha = self.lora_alpha or float(self.lora_rank * 2.0)
+        self.lora_alpha = self.lora_alpha or self.lora_rank * 2
         self.lora_target = split_arg(self.lora_target)
         self.additional_target = split_arg(self.additional_target)
-        self.ref_model_checkpoint = split_arg(self.ref_model_checkpoint)
-        self.reward_model_checkpoint = split_arg(self.reward_model_checkpoint)
+        self.ref_model_adapters = split_arg(self.ref_model_adapters)
+        self.reward_model_adapters = split_arg(self.reward_model_adapters)
 
         assert self.finetuning_type in ["lora", "freeze", "full"], "Invalid fine-tuning method."
         assert self.ref_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."

@@ -14,7 +14,7 @@ def save_model(
     lang: str,
     model_name: str,
     model_path: str,
-    checkpoints: List[str],
+    adapter_path: List[str],
     finetuning_type: str,
     template: str,
     max_shard_size: int,
@@ -25,8 +25,8 @@ def save_model(
         error = ALERTS["err_no_model"][lang]
     elif not model_path:
         error = ALERTS["err_no_path"][lang]
-    elif not checkpoints:
-        error = ALERTS["err_no_checkpoint"][lang]
+    elif not adapter_path:
+        error = ALERTS["err_no_adapter"][lang]
     elif not export_dir:
         error = ALERTS["err_no_export_dir"][lang]
 
@@ -37,7 +37,7 @@ def save_model(
 
     args = dict(
         model_name_or_path=model_path,
-        checkpoint_dir=",".join([get_save_dir(model_name, finetuning_type, ckpt) for ckpt in checkpoints]),
+        adapter_name_or_path=",".join([get_save_dir(model_name, finetuning_type, adapter) for adapter in adapter_path]),
         finetuning_type=finetuning_type,
         template=template,
         export_dir=export_dir,
@@ -63,7 +63,7 @@ def create_export_tab(engine: "Engine") -> Dict[str, "Component"]:
             engine.manager.get_elem_by_name("top.lang"),
             engine.manager.get_elem_by_name("top.model_name"),
             engine.manager.get_elem_by_name("top.model_path"),
-            engine.manager.get_elem_by_name("top.checkpoints"),
+            engine.manager.get_elem_by_name("top.adapter_path"),
             engine.manager.get_elem_by_name("top.finetuning_type"),
             engine.manager.get_elem_by_name("top.template"),
             max_shard_size,
