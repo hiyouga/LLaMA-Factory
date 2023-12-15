@@ -460,6 +460,21 @@ register_template(
 
 
 register_template(
+    name="empty",
+    prefix=[
+        "{{system}}"
+    ],
+    prompt=[
+        "{{query}}",
+    ],
+    system="",
+    sep=[
+        ""
+    ]
+)
+
+
+register_template(
     name="falcon",
     prefix=[
         "{{system}}"
