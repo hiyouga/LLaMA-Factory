@@ -12,16 +12,6 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-EXT2TYPE = {
-    "arrow": "arrow",
-    "csv": "csv",
-    "json": "json",
-    "jsonl": "json",
-    "parquet": "parquet",
-    "txt": "text"
-}
-
-
 def checksum(data_files: List[str], file_sha1: Optional[str] = None) -> None:
     if file_sha1 is None:
         logger.warning("Checksum failed: missing SHA-1 hash value in dataset_info.json.")

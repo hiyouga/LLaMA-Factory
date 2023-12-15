@@ -9,6 +9,15 @@ DEFAULT_MODULE = defaultdict(str)
 
 DEFAULT_TEMPLATE = defaultdict(str)
 
+FILEEXT2TYPE = {
+    "arrow": "arrow",
+    "csv": "csv",
+    "json": "json",
+    "jsonl": "json",
+    "parquet": "parquet",
+    "txt": "text"
+}
+
 IGNORE_INDEX = -100
 
 LAYERNORM_NAMES = {"norm", "ln"}

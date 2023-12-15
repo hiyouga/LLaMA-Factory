@@ -38,10 +38,11 @@ def export_model(args: Optional[Dict[str, Any]] = None):
     model_args, _, finetuning_args, _ = get_infer_args(args)
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args)
 
-    if getattr(model, "quantization_method", None) in ["gptq", "awq"]:
-        raise ValueError("Cannot export a GPTQ or AWQ quantized model.")
+    if getattr(model, "quantization_method", None):
+        raise ValueError("Cannot export a quantized model.")
 
     model.config.use_cache = True
+    model = model.to("cpu")
     model.save_pretrained(finetuning_args.export_dir, max_shard_size="{}GB".format(finetuning_args.export_size))
 
     try:

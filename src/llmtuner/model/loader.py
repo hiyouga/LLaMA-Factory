@@ -62,7 +62,7 @@ def load_model_and_tokenizer(
     patcher.configure_rope(config, model_args, is_trainable)
     patcher.configure_flashattn(config_kwargs, model_args)
     patcher.configure_longlora(config, model_args, is_trainable)
-    patcher.configure_quantization(config, config_kwargs, model_args)
+    patcher.configure_quantization(config, config_kwargs, tokenizer, model_args, finetuning_args)
 
     model = AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
