@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Dict
 from transformers.trainer_utils import SchedulerType
 
 from llmtuner.extras.constants import TRAINING_STAGES
-from llmtuner.webui.common import list_checkpoint, list_dataset, DEFAULT_DATA_DIR
+from llmtuner.webui.common import list_adapters, list_dataset, DEFAULT_DATA_DIR
 from llmtuner.webui.components.data import create_preview_box
 from llmtuner.webui.utils import gen_plot
 
@@ -60,7 +60,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
         lr_scheduler_type=lr_scheduler_type, max_grad_norm=max_grad_norm, val_size=val_size
     ))
 
-    with gr.Accordion(label="Advanced config", open=False) as advanced_tab:
+    with gr.Accordion(label="Extra config", open=False) as extra_tab:
         with gr.Row():
             logging_steps = gr.Slider(value=5, minimum=5, maximum=1000, step=5)
             save_steps = gr.Slider(value=100, minimum=10, maximum=5000, step=10)
@@ -73,7 +73,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
 
     input_elems.update({logging_steps, save_steps, warmup_steps, neftune_alpha, train_on_prompt, upcast_layernorm})
     elem_dict.update(dict(
-        advanced_tab=advanced_tab, logging_steps=logging_steps, save_steps=save_steps, warmup_steps=warmup_steps,
+        extra_tab=extra_tab, logging_steps=logging_steps, save_steps=save_steps, warmup_steps=warmup_steps,
         neftune_alpha=neftune_alpha, train_on_prompt=train_on_prompt, upcast_layernorm=upcast_layernorm
     ))
 
@@ -83,12 +83,12 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             lora_dropout = gr.Slider(value=0.1, minimum=0, maximum=1, step=0.01, scale=1)
             lora_target = gr.Textbox(scale=1)
             additional_target = gr.Textbox(scale=1)
-            resume_lora_training = gr.Checkbox(value=True, scale=1)
+            create_new_adapter = gr.Checkbox(scale=1)
 
-    input_elems.update({lora_rank, lora_dropout, lora_target, additional_target, resume_lora_training})
+    input_elems.update({lora_rank, lora_dropout, lora_target, additional_target, create_new_adapter})
     elem_dict.update(dict(
         lora_tab=lora_tab, lora_rank=lora_rank, lora_dropout=lora_dropout, lora_target=lora_target,
-        additional_target=additional_target, resume_lora_training=resume_lora_training,
+        additional_target=additional_target, create_new_adapter=create_new_adapter
     ))
 
     with gr.Accordion(label="RLHF config", open=False) as rlhf_tab:
@@ -98,7 +98,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             refresh_btn = gr.Button(scale=1)
 
     refresh_btn.click(
-        list_checkpoint,
+        list_adapters,
         [engine.manager.get_elem_by_name("top.model_name"), engine.manager.get_elem_by_name("top.finetuning_type")],
         [reward_model],
         queue=False

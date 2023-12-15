@@ -33,20 +33,20 @@ LOCALES = {
             "label": "微调方法"
         }
     },
-    "checkpoints": {
+    "adapter_path": {
         "en": {
-            "label": "Checkpoints"
+            "label": "Adapter path"
         },
         "zh": {
-            "label": "模型断点"
+            "label": "适配器路径"
         }
     },
     "refresh_btn": {
         "en": {
-            "value": "Refresh checkpoints"
+            "value": "Refresh adapters"
         },
         "zh": {
-            "value": "刷新断点"
+            "value": "刷新适配器"
         }
     },
     "advanced_tab": {
@@ -285,6 +285,14 @@ LOCALES = {
             "info": "验证集占全部样本的百分比。"
         }
     },
+    "extra_tab": {
+        "en": {
+            "label": "Extra configurations"
+        },
+        "zh": {
+            "label": "其它参数设置"
+        }
+    },
     "logging_steps": {
         "en": {
             "label": "Logging steps",
@@ -393,14 +401,14 @@ LOCALES = {
             "info": "除 LoRA 层以外的可训练模块名称。使用英文逗号分隔多个名称。"
         }
     },
-    "resume_lora_training": {
+    "create_new_adapter": {
         "en": {
-            "label": "Resume LoRA training",
-            "info": "Whether to resume training from the last LoRA weights or create new lora weights."
+            "label": "Create new adapter",
+            "info": "Whether to create a new adapter with randomly initialized weight or not."
         },
         "zh": {
-            "label": "继续上次的训练",
-            "info": "接着上次的 LoRA 权重训练或创建一个新的 LoRA 权重。"
+            "label": "新建适配器",
+            "info": "是否创建一个经过随机初始化的新适配器。"
         }
     },
     "rlhf_tab": {
@@ -629,9 +637,9 @@ ALERTS = {
         "en": "Please choose a dataset.",
         "zh": "请选择数据集。"
     },
-    "err_no_checkpoint": {
-        "en": "Please select a checkpoint.",
-        "zh": "请选择断点。"
+    "err_no_adapter": {
+        "en": "Please select an adapter.",
+        "zh": "请选择一个适配器。"
     },
     "err_no_export_dir": {
         "en": "Please provide export dir.",
