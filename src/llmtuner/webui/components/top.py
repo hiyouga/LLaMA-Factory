@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Dict
 
 from llmtuner.data.template import templates
 from llmtuner.extras.constants import METHODS, SUPPORTED_MODELS
-from llmtuner.webui.common import get_model_path, get_template, list_checkpoint, save_config
+from llmtuner.webui.common import get_model_path, get_template, list_adapters, save_config
 from llmtuner.webui.utils import can_quantize
 
 if TYPE_CHECKING:
@@ -20,7 +20,7 @@ def create_top() -> Dict[str, "Component"]:
 
     with gr.Row():
         finetuning_type = gr.Dropdown(choices=METHODS, value="lora", scale=1)
-        checkpoints = gr.Dropdown(multiselect=True, scale=5)
+        adapter_path = gr.Dropdown(multiselect=True, scale=5)
         refresh_btn = gr.Button(scale=1)
 
     with gr.Accordion(label="Advanced config", open=False) as advanced_tab:
@@ -34,7 +34,7 @@ def create_top() -> Dict[str, "Component"]:
                 shift_attn = gr.Checkbox(value=False)
 
     model_name.change(
-        list_checkpoint, [model_name, finetuning_type], [checkpoints], queue=False
+        list_adapters, [model_name, finetuning_type], [adapter_path], queue=False
     ).then(
         get_model_path, [model_name], [model_path], queue=False
     ).then(
@@ -44,13 +44,13 @@ def create_top() -> Dict[str, "Component"]:
     model_path.change(save_config, inputs=[lang, model_name, model_path], queue=False)
 
     finetuning_type.change(
-        list_checkpoint, [model_name, finetuning_type], [checkpoints], queue=False
+        list_adapters, [model_name, finetuning_type], [adapter_path], queue=False
     ).then(
         can_quantize, [finetuning_type], [quantization_bit], queue=False
     )
 
     refresh_btn.click(
-        list_checkpoint, [model_name, finetuning_type], [checkpoints], queue=False
+        list_adapters, [model_name, finetuning_type], [adapter_path], queue=False
     )
 
     return dict(
@@ -58,7 +58,7 @@ def create_top() -> Dict[str, "Component"]:
         model_name=model_name,
         model_path=model_path,
         finetuning_type=finetuning_type,
-        checkpoints=checkpoints,
+        adapter_path=adapter_path,
         refresh_btn=refresh_btn,
         advanced_tab=advanced_tab,
         quantization_bit=quantization_bit,
