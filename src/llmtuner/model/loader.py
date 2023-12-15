@@ -60,7 +60,7 @@ def load_model_and_tokenizer(
     patcher.patch_tokenizer(tokenizer)
     patcher.patch_config(config, model_args, is_trainable)
     patcher.configure_rope(config, model_args, is_trainable)
-    patcher.configure_flashattn(config, model_args)
+    patcher.configure_flashattn(config_kwargs, model_args)
     patcher.configure_longlora(config, model_args, is_trainable)
     patcher.configure_quantization(config, config_kwargs, model_args)
 
