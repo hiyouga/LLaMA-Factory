@@ -3,7 +3,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Union
 
 from datasets import concatenate_datasets, interleave_datasets, load_dataset
 
-from llmtuner.data.utils import checksum, EXT2TYPE
+from llmtuner.data.utils import checksum
+from llmtuner.extras.constants import FILEEXT2TYPE
 from llmtuner.extras.logging import get_logger
 
 if TYPE_CHECKING:
@@ -39,12 +40,12 @@ def get_dataset(
                 for file_name in os.listdir(local_path):
                     data_files.append(os.path.join(local_path, file_name))
                     if data_path is None:
-                        data_path = EXT2TYPE.get(file_name.split(".")[-1], None)
+                        data_path = FILEEXT2TYPE.get(file_name.split(".")[-1], None)
                     else:
-                        assert data_path == EXT2TYPE.get(file_name.split(".")[-1], None), "file types are not identical."
+                        assert data_path == FILEEXT2TYPE.get(file_name.split(".")[-1], None), "file types are not identical."
             elif os.path.isfile(local_path): # is file
                 data_files.append(local_path)
-                data_path = EXT2TYPE.get(local_path.split(".")[-1], None)
+                data_path = FILEEXT2TYPE.get(local_path.split(".")[-1], None)
             else:
                 raise ValueError("File not found.")
 
