@@ -36,6 +36,10 @@ def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: Optional[List["Tra
 
 def export_model(args: Optional[Dict[str, Any]] = None):
     model_args, _, finetuning_args, _ = get_infer_args(args)
+
+    if model_args.adapter_name_or_path is not None and finetuning_args.export_quantization_bit is not None:
+        raise ValueError("Please merge adapters before quantizing the model.")
+
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args)
 
     if getattr(model, "quantization_method", None) and model_args.adapter_name_or_path is not None:
