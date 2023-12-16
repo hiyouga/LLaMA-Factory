@@ -70,6 +70,14 @@ class RLHFArguments:
         default=0.1,
         metadata={"help": "The beta parameter for the DPO loss."}
     )
+    dpo_loss: Optional[Literal["sigmoid", "hinge"]] = field(
+        default="sigmoid",
+        metadata={"help": "The type of DPO loss to use."}
+    )
+    dpo_ftx: Optional[float] = field(
+        default=0,
+        metadata={"help": "The supervised fine-tuning loss coefficient in DPO training."}
+    )
     ppo_buffer_size: Optional[int] = field(
         default=1,
         metadata={"help": "The number of mini-batches to make experience buffer in a PPO optimization step."}
