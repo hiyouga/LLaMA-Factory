@@ -5,6 +5,9 @@ import torch
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 from transformers import InfNanRemoveLogitsProcessor, LogitsProcessorList
 
+import logging
+logger = logging.getLogger(__name__)
+
 try:
     from transformers.utils import (
         is_torch_bf16_cpu_available,
@@ -111,7 +114,12 @@ def parse_args(parser: "HfArgumentParser", args: Optional[Dict[str, Any]] = None
     elif len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         return parser.parse_json_file(os.path.abspath(sys.argv[1]))
     else:
-        return parser.parse_args_into_dataclasses()
+        (*parsed_args, unknown_args) = parser.parse_args_into_dataclasses(return_remaining_strings=True)
+        if unknown_args:
+            logger.warning(parser.format_help())
+            logger.error(f'\nGot unknown args, potentially deprecated arguments: {unknown_args}\n')
+            raise ValueError(f"Some specified arguments are not used by the HfArgumentParser: {unknown_args}")
+        return (*parsed_args,)
 
 
 def torch_gc() -> None:
