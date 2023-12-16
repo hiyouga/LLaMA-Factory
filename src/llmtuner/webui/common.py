@@ -1,6 +1,7 @@
 import os
 import json
 import gradio as gr
+from collections import defaultdict
 from typing import Any, Dict, Optional
 from peft.utils import WEIGHTS_NAME, SAFETENSORS_WEIGHTS_NAME
 
@@ -52,8 +53,8 @@ def save_config(lang: str, model_name: Optional[str] = None, model_path: Optiona
 
 def get_model_path(model_name: str) -> str:
     user_config = load_config()
-    path_dict: Dict[DownloadSource, str] = SUPPORTED_MODELS.get(model_name, [])
-    model_path = user_config["path_dict"].get(model_name, None) or path_dict.get(DownloadSource.DEFAULT, "")
+    path_dict: Dict[DownloadSource, str] = SUPPORTED_MODELS.get(model_name, defaultdict(str))
+    model_path = user_config["path_dict"].get(model_name, None) or path_dict.get(DownloadSource.DEFAULT, None)
     if (
         use_modelscope()
         and path_dict.get(DownloadSource.MODELSCOPE)
