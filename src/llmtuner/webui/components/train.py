@@ -94,7 +94,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     with gr.Accordion(label="RLHF config", open=False) as rlhf_tab:
         with gr.Row():
             dpo_beta = gr.Slider(value=0.1, minimum=0, maximum=1, step=0.01, scale=1)
-            reward_model = gr.Dropdown(scale=3)
+            reward_model = gr.Dropdown(scale=3, allow_custom_value=True)
             refresh_btn = gr.Button(scale=1)
 
     refresh_btn.click(
