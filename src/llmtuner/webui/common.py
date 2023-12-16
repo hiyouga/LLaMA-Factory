@@ -7,6 +7,7 @@ from peft.utils import WEIGHTS_NAME, SAFETENSORS_WEIGHTS_NAME
 from llmtuner.extras.constants import (
     DEFAULT_MODULE,
     DEFAULT_TEMPLATE,
+    PEFT_METHODS,
     SUPPORTED_MODELS,
     TRAINING_STAGES,
     DownloadSource
@@ -77,8 +78,11 @@ def get_template(model_name: str) -> str:
 
 
 def list_adapters(model_name: str, finetuning_type: str) -> Dict[str, Any]:
+    if finetuning_type not in PEFT_METHODS:
+        return gr.update(value=[], choices=[], interactive=False)
+
     adapters = []
-    if model_name and finetuning_type == "lora": # full and freeze have no adapter
+    if model_name and finetuning_type == "lora":
         save_dir = get_save_dir(model_name, finetuning_type)
         if save_dir and os.path.isdir(save_dir):
             for adapter in os.listdir(save_dir):
@@ -87,7 +91,7 @@ def list_adapters(model_name: str, finetuning_type: str) -> Dict[str, Any]:
                     and any([os.path.isfile(os.path.join(save_dir, adapter, name)) for name in ADAPTER_NAMES])
                 ):
                     adapters.append(adapter)
-    return gr.update(value=[], choices=adapters)
+    return gr.update(value=[], choices=adapters, interactive=True)
 
 
 def load_dataset_info(dataset_dir: str) -> Dict[str, Dict[str, Any]]:

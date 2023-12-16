@@ -21,8 +21,11 @@ def next_page(page_index: int, total_num: int) -> int:
 
 
 def can_preview(dataset_dir: str, dataset: list) -> Dict[str, Any]:
-    with open(os.path.join(dataset_dir, DATA_CONFIG), "r", encoding="utf-8") as f:
-        dataset_info = json.load(f)
+    try:
+        with open(os.path.join(dataset_dir, DATA_CONFIG), "r", encoding="utf-8") as f:
+            dataset_info = json.load(f)
+    except:
+        return gr.update(interactive=False)
 
     if (
         len(dataset) > 0
