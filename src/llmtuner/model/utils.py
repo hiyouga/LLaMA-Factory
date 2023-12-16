@@ -1,3 +1,4 @@
+import math
 import torch
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
 
@@ -124,6 +125,14 @@ def load_valuehead_params(model_args: "ModelArguments") -> Dict[str, torch.Tenso
     return None
 
 
+def noisy_mean_initialization(embed_weight: torch.Tensor, num_new_tokens: int):
+    embedding_dim = embed_weight.size(1)
+    avg_weight = embed_weight[:-num_new_tokens].mean(dim=0, keepdim=True)
+    noise_weight = torch.empty_like(avg_weight[-num_new_tokens:])
+    noise_weight.normal_(mean=0, std=(1.0 / math.sqrt(embedding_dim)))
+    embed_weight[-num_new_tokens:] = avg_weight + noise_weight
+
+
 def prepare_model_for_training(
     model: "PreTrainedModel",
     finetuning_args: "FinetuningArguments",
@@ -181,6 +190,10 @@ def resize_embedding_layer(model: "PreTrainedModel", tokenizer: "PreTrainedToken
 
         model.resize_token_embeddings(len(tokenizer), pad_to_multiple_of=64)
         new_embedding_size = model.get_input_embeddings().weight.size(0)
+        num_new_tokens = new_embedding_size - current_embedding_size
+        noisy_mean_initialization(model.get_input_embeddings().weight.data, num_new_tokens)
+        noisy_mean_initialization(model.get_output_embeddings().weight.data, num_new_tokens)
+
         logger.info("Resized token embeddings from {} to {}.".format(current_embedding_size, new_embedding_size))
 
 
