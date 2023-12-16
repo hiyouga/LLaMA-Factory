@@ -47,6 +47,8 @@ def run_dpo(
     # Initialize our Trainer
     trainer = CustomDPOTrainer(
         beta=finetuning_args.dpo_beta,
+        loss_type=finetuning_args.dpo_loss,
+        ftx_gamma=finetuning_args.dpo_ftx,
         model=model,
         ref_model=ref_model,
         args=training_args,

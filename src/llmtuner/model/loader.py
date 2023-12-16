@@ -24,7 +24,7 @@ require_version("transformers>=4.36.1", "To fix: pip install transformers>=4.36.
 require_version("datasets>=2.14.3", "To fix: pip install datasets>=2.14.3")
 require_version("accelerate>=0.21.0", "To fix: pip install accelerate>=0.21.0")
 require_version("peft>=0.7.0", "To fix: pip install peft>=0.7.0")
-require_version("trl>=0.7.4", "To fix: pip install trl>=0.7.4")
+require_version("trl==0.7.4", "To fix: pip install trl==0.7.4")
 
 
 def load_model_and_tokenizer(

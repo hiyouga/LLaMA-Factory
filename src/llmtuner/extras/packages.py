@@ -13,48 +13,37 @@ def get_package_version(name: str) -> str:
         return "0.0.0"
 
 
-_fastapi_available = is_package_available("fastapi")
-_flash_attn2_available = is_package_available("flash_attn") and get_package_version("flash_attn").startswith("2")
-_jieba_available = is_package_available("jieba")
-_matplotlib_available = is_package_available("matplotlib")
-_nltk_available = is_package_available("nltk")
-_requests_available = is_package_available("requests")
-_rouge_available = is_package_available("rouge_chinese")
-_starlette_available = is_package_available("sse_starlette")
-_uvicorn_available = is_package_available("uvicorn")
-
-
 def is_fastapi_availble():
-    return _fastapi_available
+    return is_package_available("fastapi")
 
 
 def is_flash_attn2_available():
-    return _flash_attn2_available
+    return is_package_available("flash_attn") and get_package_version("flash_attn").startswith("2")
 
 
 def is_jieba_available():
-    return _jieba_available
+    return is_package_available("jieba")
 
 
 def is_matplotlib_available():
-    return _matplotlib_available
+    return is_package_available("matplotlib")
 
 
 def is_nltk_available():
-    return _nltk_available
+    return is_package_available("nltk")
 
 
 def is_requests_available():
-    return _requests_available
+    return is_package_available("requests")
 
 
 def is_rouge_available():
-    return _rouge_available
+    return is_package_available("rouge_chinese")
 
 
 def is_starlette_available():
-    return _starlette_available
+    return is_package_available("sse_starlette")
 
 
 def is_uvicorn_available():
-    return _uvicorn_available
+    return is_package_available("uvicorn")
