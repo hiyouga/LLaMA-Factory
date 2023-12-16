@@ -239,6 +239,13 @@
       "prompt": "text"
     }
   },
+  "c4_demo": {
+    "file_name": "c4_demo.json",
+    "file_sha1": "a5a0c86759732f9a5238e447fecd74f28a66cca8",
+    "columns": {
+      "prompt": "text"
+    }
+  },
   "refinedweb": {
     "hf_hub_url": "tiiuae/falcon-refinedweb",
     "columns": {

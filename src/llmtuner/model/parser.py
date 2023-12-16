@@ -1,5 +1,7 @@
 import os
+import sys
 import torch
+import logging
 import datasets
 import transformers
 from typing import Any, Dict, Optional, Tuple
@@ -7,7 +9,6 @@ from transformers import HfArgumentParser, Seq2SeqTrainingArguments
 from transformers.trainer_utils import get_last_checkpoint
 
 from llmtuner.extras.logging import get_logger
-from llmtuner.extras.misc import parse_args
 from llmtuner.hparams import (
     ModelArguments,
     DataArguments,
@@ -40,6 +41,33 @@ _EVAL_CLS = Tuple[
 ]
 
 
+def _parse_args(parser: "HfArgumentParser", args: Optional[Dict[str, Any]] = None) -> Tuple[Any]:
+    if args is not None:
+        return parser.parse_dict(args)
+
+    if len(sys.argv) == 2 and sys.argv[1].endswith(".yaml"):
+        return parser.parse_yaml_file(os.path.abspath(sys.argv[1]))
+
+    if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
+        return parser.parse_json_file(os.path.abspath(sys.argv[1]))
+
+    (*parsed_args, unknown_args) = parser.parse_args_into_dataclasses(return_remaining_strings=True)
+
+    if unknown_args:
+        print(parser.format_help())
+        print("Got unknown args, potentially deprecated arguments: {}".format(unknown_args))
+        raise ValueError("Some specified arguments are not used by the HfArgumentParser: {}".format(unknown_args))
+
+    return (*parsed_args,)
+
+
+def _set_transformers_logging(log_level: Optional[int] = logging.INFO) -> None:
+    datasets.utils.logging.set_verbosity(log_level)
+    transformers.utils.logging.set_verbosity(log_level)
+    transformers.utils.logging.enable_default_handler()
+    transformers.utils.logging.enable_explicit_format()
+
+
 def _verify_model_args(model_args: "ModelArguments", finetuning_args: "FinetuningArguments") -> None:
     if model_args.quantization_bit is not None:
         if finetuning_args.finetuning_type != "lora":
@@ -56,34 +84,28 @@ def _verify_model_args(model_args: "ModelArguments", finetuning_args: "Finetunin
             raise ValueError("Quantized model only accepts a single adapter. Merge them first.")
 
 
-def parse_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
+def _parse_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     parser = HfArgumentParser(_TRAIN_ARGS)
-    return parse_args(parser, args)
+    return _parse_args(parser, args)
 
 
-def parse_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
+def _parse_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
     parser = HfArgumentParser(_INFER_ARGS)
-    return parse_args(parser, args)
+    return _parse_args(parser, args)
 
 
-def parse_eval_args(args: Optional[Dict[str, Any]] = None) -> _EVAL_CLS:
+def _parse_eval_args(args: Optional[Dict[str, Any]] = None) -> _EVAL_CLS:
     parser = HfArgumentParser(_EVAL_ARGS)
-    return parse_args(parser, args)
+    return _parse_args(parser, args)
 
 
 def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
-    model_args, data_args, training_args, finetuning_args, generating_args = parse_train_args(args)
+    model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_args(args)
 
     # Setup logging
     if training_args.should_log:
-        # The default of training_args.log_level is passive, so we set log level at info here to have that default.
-        transformers.utils.logging.set_verbosity_info()
-
-    log_level = training_args.get_process_log_level()
-    datasets.utils.logging.set_verbosity(log_level)
-    transformers.utils.logging.set_verbosity(log_level)
-    transformers.utils.logging.enable_default_handler()
-    transformers.utils.logging.enable_explicit_format()
+        log_level = training_args.get_process_log_level()
+        _set_transformers_logging(log_level)
 
     # Check arguments
     data_args.init_for_training(training_args.seed)
@@ -193,7 +215,8 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
 
 def get_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
-    model_args, data_args, finetuning_args, generating_args = parse_infer_args(args)
+    model_args, data_args, finetuning_args, generating_args = _parse_infer_args(args)
+    _set_transformers_logging()
 
     if data_args.template is None:
         raise ValueError("Please specify which `template` to use.")
@@ -204,7 +227,8 @@ def get_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
 
 
 def get_eval_args(args: Optional[Dict[str, Any]] = None) -> _EVAL_CLS:
-    model_args, data_args, eval_args, finetuning_args = parse_eval_args(args)
+    model_args, data_args, eval_args, finetuning_args = _parse_eval_args(args)
+    _set_transformers_logging()
 
     if data_args.template is None:
         raise ValueError("Please specify which `template` to use.")

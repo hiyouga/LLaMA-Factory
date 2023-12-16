@@ -76,8 +76,13 @@ def configure_quantization(
     if finetuning_args.export_quantization_bit is not None: # gptq
         require_version("optimum>=1.16.0", "To fix: pip install optimum>=1.16.0")
         require_version("auto_gptq>=0.5.0", "To fix: pip install auto_gptq>=0.5.0")
+
+        if getattr(config, "model_type", None) == "chatglm":
+            raise ValueError("ChatGLM model is not supported.")
+
         config_kwargs["quantization_config"] = GPTQConfig(
             bits=finetuning_args.export_quantization_bit,
+            tokenizer=tokenizer,
             dataset=get_quantization_dataset(tokenizer, model_args, finetuning_args)
         )
         config_kwargs["device_map"] = "auto"
