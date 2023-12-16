@@ -5,8 +5,8 @@ import torch
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 from transformers import InfNanRemoveLogitsProcessor, LogitsProcessorList
 
-import logging
-logger = logging.getLogger(__name__)
+from llmtuner.extras.logging import get_logger
+logger = get_logger(__name__)
 
 try:
     from transformers.utils import (
