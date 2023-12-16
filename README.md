@@ -482,7 +482,7 @@ python src/export_model.py \
 > Merging LoRA weights into a quantized model is not supported.
 
 > [!TIP]
-> Use `--export_quantization_bit 4` and `--export_quantization_dataset data/wiki_demo.txt` to quantize the model.
+> Use `--export_quantization_bit 4` and `--export_quantization_dataset data/c4_demo.json` to quantize the model.
 
 ### API Demo
 

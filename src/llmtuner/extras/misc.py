@@ -1,12 +1,8 @@
 import gc
 import os
-import sys
 import torch
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Tuple
 from transformers import InfNanRemoveLogitsProcessor, LogitsProcessorList
-
-from llmtuner.extras.logging import get_logger
-logger = get_logger(__name__)
 
 try:
     from transformers.utils import (
@@ -104,22 +100,6 @@ def infer_optim_dtype(model_dtype: torch.dtype) -> torch.dtype:
         return torch.float16
     else:
         return torch.float32
-
-
-def parse_args(parser: "HfArgumentParser", args: Optional[Dict[str, Any]] = None) -> Tuple[Any]:
-    if args is not None:
-        return parser.parse_dict(args)
-    elif len(sys.argv) == 2 and sys.argv[1].endswith(".yaml"):
-        return parser.parse_yaml_file(os.path.abspath(sys.argv[1]))
-    elif len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
-        return parser.parse_json_file(os.path.abspath(sys.argv[1]))
-    else:
-        (*parsed_args, unknown_args) = parser.parse_args_into_dataclasses(return_remaining_strings=True)
-        if unknown_args:
-            logger.warning(parser.format_help())
-            logger.error(f'\nGot unknown args, potentially deprecated arguments: {unknown_args}\n')
-            raise ValueError(f"Some specified arguments are not used by the HfArgumentParser: {unknown_args}")
-        return (*parsed_args,)
 
 
 def torch_gc() -> None:

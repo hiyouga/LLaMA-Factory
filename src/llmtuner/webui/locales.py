@@ -432,11 +432,11 @@ LOCALES = {
     "reward_model": {
         "en": {
             "label": "Reward model",
-            "info": "Checkpoint of the reward model for PPO training. (Needs to refresh checkpoints)"
+            "info": "Adapter of the reward model for PPO training. (Needs to refresh adapters)"
         },
         "zh": {
             "label": "奖励模型",
-            "info": "PPO 训练中奖励模型的断点路径。（需要刷新断点）"
+            "info": "PPO 训练中奖励模型的适配器路径。（需要刷新适配器）"
         }
     },
     "cmd_preview_btn": {
@@ -585,6 +585,36 @@ LOCALES = {
             "label": "温度系数"
         }
     },
+    "max_shard_size": {
+        "en": {
+            "label": "Max shard size (GB)",
+            "info": "The maximum size for a model file."
+        },
+        "zh": {
+            "label": "最大分块大小（GB）",
+            "info": "单个模型文件的最大大小。"
+        }
+    },
+    "export_quantization_bit": {
+        "en": {
+            "label": "Export quantization bit.",
+            "info": "Quantizing the exported model."
+        },
+        "zh": {
+            "label": "导出量化等级",
+            "info": "量化导出模型。"
+        }
+    },
+    "export_quantization_dataset": {
+        "en": {
+            "label": "Export quantization dataset.",
+            "info": "The calibration dataset used for quantization."
+        },
+        "zh": {
+            "label": "导出量化数据集",
+            "info": "量化过程中使用的校准数据集。"
+        }
+    },
     "export_dir": {
         "en": {
             "label": "Export dir",
@@ -593,16 +623,6 @@ LOCALES = {
         "zh": {
             "label": "导出目录",
             "info": "保存导出模型的文件夹路径。"
-        }
-    },
-    "max_shard_size": {
-        "en": {
-            "label": "Max shard size (GB)",
-            "info": "The maximum size for a model file."
-        },
-        "zh": {
-            "label": "最大分块大小（GB）",
-            "info": "模型文件的最大大小。"
         }
     },
     "export_btn": {

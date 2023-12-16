@@ -482,7 +482,7 @@ python src/export_model.py \
 > 尚不支持量化模型的 LoRA 权重合并及导出。
 
 > [!TIP]
-> 使用 `--export_quantization_bit 4` 和 `--export_quantization_dataset data/wiki_demo.txt` 量化导出模型。
+> 使用 `--export_quantization_bit 4` 和 `--export_quantization_dataset data/c4_demo.json` 量化导出模型。
 
 ### API 服务
 
