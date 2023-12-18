@@ -574,6 +574,10 @@ register_model_group(
             DownloadSource.DEFAULT: "xverse/XVERSE-65B",
             DownloadSource.MODELSCOPE: "xverse/XVERSE-65B"
         },
+        "XVERSE-65B-2": {
+            DownloadSource.DEFAULT: "xverse/XVERSE-65B-2",
+            DownloadSource.MODELSCOPE: "xverse/XVERSE-65B-2"
+        },
         "XVERSE-7B-Chat": {
             DownloadSource.DEFAULT: "xverse/XVERSE-7B-Chat",
             DownloadSource.MODELSCOPE: "xverse/XVERSE-7B-Chat"
