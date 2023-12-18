@@ -2,8 +2,9 @@
 
 ```json
 "数据集名称": {
-  "hf_hub_url": "Hugging Face 的仓库地址（若指定，则忽略下列三个参数）",
-  "script_url": "包含数据加载脚本的本地文件夹名称（若指定，则忽略下列两个参数）",
+  "hf_hub_url": "Hugging Face 的数据集仓库地址（若指定，则忽略 script_url 和 file_name）",
+  "ms_hub_url": "ModelScope 的数据集仓库地址（若指定，则忽略 script_url 和 file_name）",
+  "script_url": "包含数据加载脚本的本地文件夹名称（若指定，则忽略 file_name）",
   "file_name": "该目录下数据集文件的名称（若上述参数未指定，则此项必需）",
   "file_sha1": "数据集文件的 SHA-1 哈希值（可选，留空不影响训练）",
   "subset": "数据集子集的名称（可选，默认：None）",
