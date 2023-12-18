@@ -431,9 +431,13 @@ register_model_group(
 
 register_model_group(
     models={
-        "Phi1.5-1.3B": {
+        "Phi-1.5-1.3B": {
             DownloadSource.DEFAULT: "microsoft/phi-1_5",
             DownloadSource.MODELSCOPE: "allspace/PHI_1-5"
+        },
+        "Phi-2-2.7B": {
+            DownloadSource.DEFAULT: "microsoft/phi-2",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/phi-2"
         }
     },
     module="Wqkv"
