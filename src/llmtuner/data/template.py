@@ -403,6 +403,21 @@ register_template(
 
 
 register_template(
+    name="codegeex2",
+    prefix=[
+        {"token": "[gMASK]"},
+        {"token": "sop"},
+        "{{system}}"
+    ],
+    prompt=[
+        "{{query}}"
+    ],
+    system="",
+    sep=[]
+)
+
+
+register_template(
     name="deepseek",
     prefix=[
         "{{system}}"
