@@ -104,7 +104,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [LLaMA-2](https://huggingface.co/meta-llama)             | 7B/13B/70B                  | q_proj,v_proj     | llama2    |
 | [Mistral](https://huggingface.co/mistralai)              | 7B                          | q_proj,v_proj     | mistral   |
 | [Mixtral](https://huggingface.co/mistralai)              | 8x7B                        | q_proj,v_proj     | mistral   |
-| [Phi-1.5](https://huggingface.co/microsoft/phi-1_5)      | 1.3B                        | Wqkv              | -         |
+| [Phi-1.5/2](https://huggingface.co/microsoft)            | 1.3B/2.7B                   | Wqkv              | -         |
 | [Qwen](https://github.com/QwenLM/Qwen)                   | 1.8B/7B/14B/72B             | c_attn            | qwen      |
 | [XVERSE](https://github.com/xverse-ai)                   | 7B/13B/65B                  | q_proj,v_proj     | xverse    |
 
@@ -126,7 +126,7 @@ Please refer to [constants.py](src/llmtuner/extras/constants.py) for a full list
 | DPO Training           | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
 > [!NOTE]
-> Use `--quantization_bit 4/8` argument to enable QLoRA.
+> Use `--quantization_bit 4` argument to enable QLoRA.
 
 ## Provided Datasets
 
@@ -482,7 +482,7 @@ python src/export_model.py \
 > Merging LoRA weights into a quantized model is not supported.
 
 > [!TIP]
-> Use `--export_quantization_bit 4` and `--export_quantization_dataset data/c4_demo.json` to quantize the model.
+> Use `--export_quantization_bit 4` and `--export_quantization_dataset data/c4_demo.json` to quantize the model after merging the LoRA weights.
 
 ### API Demo
 
