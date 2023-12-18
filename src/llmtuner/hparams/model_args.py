@@ -19,7 +19,7 @@ class ModelArguments:
         metadata={"help": "Where to store the pre-trained models downloaded from huggingface.co or modelscope.cn."}
     )
     use_fast_tokenizer: Optional[bool] = field(
-        default=True,
+        default=False,
         metadata={"help": "Whether to use one of the fast tokenizer (backed by the tokenizers library) or not."}
     )
     split_special_tokens: Optional[bool] = field(
