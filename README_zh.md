@@ -104,7 +104,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 | [LLaMA-2](https://huggingface.co/meta-llama)             | 7B/13B/70B                  | q_proj,v_proj     | llama2    |
 | [Mistral](https://huggingface.co/mistralai)              | 7B                          | q_proj,v_proj     | mistral   |
 | [Mixtral](https://huggingface.co/mistralai)              | 8x7B                        | q_proj,v_proj     | mistral   |
-| [Phi-1.5](https://huggingface.co/microsoft/phi-1_5)      | 1.3B                        | Wqkv              | -         |
+| [Phi-1.5/2](https://huggingface.co/microsoft)            | 1.3B/2.7B                   | Wqkv              | -         |
 | [Qwen](https://github.com/QwenLM/Qwen)                   | 1.8B/7B/14B/72B             | c_attn            | qwen      |
 | [XVERSE](https://github.com/xverse-ai)                   | 7B/13B/65B                  | q_proj,v_proj     | xverse    |
 
@@ -126,7 +126,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 | DPO 训练               | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
 > [!NOTE]
-> 请使用 `--quantization_bit 4/8` 参数来启用 QLoRA 训练。
+> 请使用 `--quantization_bit 4` 参数来启用 QLoRA 训练。
 
 ## 数据集
 
@@ -467,7 +467,7 @@ deepspeed --num_gpus 8 --master_port=9901 src/train_bash.py \
 
 </details>
 
-### 合并 LoRA 权重并导出完整模型
+### 合并 LoRA 权重并导出模型
 
 ```bash
 python src/export_model.py \
@@ -482,7 +482,7 @@ python src/export_model.py \
 > 尚不支持量化模型的 LoRA 权重合并及导出。
 
 > [!TIP]
-> 使用 `--export_quantization_bit 4` 和 `--export_quantization_dataset data/c4_demo.json` 量化导出模型。
+> 合并 LoRA 权重之后可再次使用 `--export_quantization_bit 4` 和 `--export_quantization_dataset data/c4_demo.json` 量化模型。
 
 ### API 服务
 
