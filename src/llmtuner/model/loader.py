@@ -73,7 +73,8 @@ def load_model_and_tokenizer(
     )
     patcher.patch_model(model)
     register_autoclass(config, model, tokenizer)
-    resize_embedding_layer(model, tokenizer)
+    if not is_deepspeed_zero3_enabled():
+        resize_embedding_layer(model, tokenizer)
 
     model = prepare_model_for_training(model=model, finetuning_args=finetuning_args) if is_trainable else model
     model = init_adapter(model, model_args, finetuning_args, is_trainable)
