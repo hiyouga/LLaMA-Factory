@@ -44,6 +44,13 @@ def preprocess_dataset(
 ) -> Union["Dataset", "IterableDataset"]:
     template = get_template_and_fix_tokenizer(data_args.template, tokenizer)
 
+    if data_args.cache_path is not None and os.path.exists(data_args.cache_path):
+        logger.warning("Loading dataset from disk will ignore other data arguments.")
+        dataset = load_from_disk(data_args.cache_path)
+        if data_args.streaming:
+            dataset = dataset.to_iterable_dataset()
+        return dataset
+
     if data_args.train_on_prompt and template.efficient_eos:
         raise ValueError("Current template does not support `train_on_prompt`.")
 
@@ -239,10 +246,6 @@ def preprocess_dataset(
     else:
         preprocess_func = preprocess_unsupervised_dataset
         print_function = print_unsupervised_dataset_example
-
-    if data_args.cache_path is not None and os.path.exists(data_args.cache_path):
-        logger.warning("Loading dataset from disk will ignore other data arguments.")
-        return load_from_disk(data_args.cache_path)
 
     with training_args.main_process_first(desc="dataset map pre-processing"):
         column_names = list(next(iter(dataset)).keys())
