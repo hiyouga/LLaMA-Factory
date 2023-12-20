@@ -32,6 +32,9 @@ def run_sft(
     if training_args.predict_with_generate:
         tokenizer.padding_side = "left" # use left-padding in generation
 
+    if getattr(model, "is_quantized", False) and not training_args.do_train:
+        setattr(model, "_hf_peft_config_loaded", True) # hack here: make model compatible with prediction
+
     data_collator = DataCollatorForSeq2Seq(
         tokenizer=tokenizer,
         pad_to_multiple_of=8 if tokenizer.padding_side == "right" else None, # for shift short attention
