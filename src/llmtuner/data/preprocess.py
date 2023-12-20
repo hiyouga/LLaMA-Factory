@@ -3,8 +3,6 @@ import tiktoken
 from itertools import chain
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Literal, Tuple, Union
 
-from datasets import load_from_disk
-
 from llmtuner.data.template import get_template_and_fix_tokenizer
 from llmtuner.extras.constants import IGNORE_INDEX
 from llmtuner.extras.logging import get_logger
@@ -45,11 +43,7 @@ def preprocess_dataset(
     template = get_template_and_fix_tokenizer(data_args.template, tokenizer)
 
     if data_args.cache_path is not None and os.path.exists(data_args.cache_path):
-        logger.warning("Loading dataset from disk will ignore other data arguments.")
-        dataset = load_from_disk(data_args.cache_path)
-        if data_args.streaming:
-            dataset = dataset.to_iterable_dataset()
-        return dataset
+        return dataset # already preprocessed
 
     if data_args.train_on_prompt and template.efficient_eos:
         raise ValueError("Current template does not support `train_on_prompt`.")
