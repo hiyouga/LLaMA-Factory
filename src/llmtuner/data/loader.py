@@ -63,8 +63,8 @@ def get_dataset(
 
         if dataset_attr.load_from == "ms_hub":
             try:
-                from modelscope import MsDataset # type: ignore
-                from modelscope.utils.config_ds import MS_DATASETS_CACHE # type: ignore
+                from modelscope import MsDataset
+                from modelscope.utils.config_ds import MS_DATASETS_CACHE
 
                 cache_dir = model_args.cache_dir or MS_DATASETS_CACHE
                 dataset = MsDataset.load(
@@ -75,7 +75,7 @@ def get_dataset(
                     split=data_args.split,
                     cache_dir=cache_dir,
                     token=model_args.ms_hub_token,
-                    use_streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
+                    use_streaming=(data_args.streaming and (dataset_attr.load_from != "file"))
                 ).to_hf_dataset()
             except ImportError:
                 raise ImportError("Please install modelscope via `pip install modelscope -U`")
