@@ -490,7 +490,7 @@ python src/export_model.py \
 ```bash
 python src/api_demo.py \
     --model_name_or_path path_to_llama_model \
-    --adapter_name_or_path path_to_checkpoint \
+    --checkpoint_dir path_to_checkpoint \
     --template default \
     --finetuning_type lora
 ```
