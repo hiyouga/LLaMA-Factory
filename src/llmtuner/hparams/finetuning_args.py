@@ -157,7 +157,7 @@ class ExportArguments:
         default=128,
         metadata={"help": "The number of samples used for quantization."}
     )
-    export_quantization_maxlen: Optional[str] = field(
+    export_quantization_maxlen: Optional[int] = field(
         default=1024,
         metadata={"help": "The maximum length of the model inputs used for quantization."}
     )
