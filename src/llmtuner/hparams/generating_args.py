@@ -43,6 +43,10 @@ class GeneratingArguments:
         default=1.0,
         metadata={"help": "Exponential penalty to the length that is used with beam-based generation."}
     )
+    api_port: Optional[int] = field(
+        default=8000,
+        metadata={"help": "API port. Default to 8000."}
+    )
 
     def to_dict(self) -> Dict[str, Any]:
         args = asdict(self)
