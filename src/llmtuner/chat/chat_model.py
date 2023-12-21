@@ -134,39 +134,24 @@ class ChatModel:
         yield from streamer
 
     @torch.inference_mode()
-    def get_scores(
+    def get_score(
         self,
-        batch_input: List[str],
-        **input_kwargs
-    ) -> List[float]:
-        if isinstance(getattr(self.tokenizer, "tokenizer", None), tiktoken.Encoding): # for tiktoken tokenizer (Qwen)
-            kwargs = dict(allowed_special="all")
-        else:
-            kwargs = dict(add_special_tokens=True)
-
-        max_length = input_kwargs.pop("max_length", None)
+        query: str,
+        response: str,
+        history: Optional[List[Tuple[str, str]]] = None,
+        system: Optional[str] = None
+    ) -> float:
         device = getattr(self.model.pretrained_model, "device", "cuda")
-
-        inputs = self.tokenizer(
-            batch_input,
-            padding=True,
-            truncation=True,
-            max_length=max_length or getattr(self.model.config, "max_position_embeddings", 1024),
-            pad_to_multiple_of=8,
-            return_tensors="pt",
-            **kwargs
-        ).to(device)
-
-        input_ids: torch.Tensor = inputs["input_ids"]
-        _, _, values = self.model(**inputs, output_hidden_states=True, return_dict=True)
+        prompt_ids, response_ids = self.template.encode_oneturn(
+            self.tokenizer, query=query, resp=response, history=history, system=system
+        )
+        input_ids = torch.tensor([prompt_ids + response_ids], device=device)
+        _, _, values = self.model(input_ids, output_hidden_states=True, return_dict=True)
 
         if getattr(self.model.config, "model_type", None) == "chatglm":
             values = torch.transpose(values, 0, 1)
 
-        scores = []
-        for i in range(input_ids.size(0)):
-            end_indexes = (input_ids[i] != self.tokenizer.pad_token_id).nonzero()
-            end_index = end_indexes[-1].item() if len(end_indexes) else 0
-            scores.append(values[i, end_index].nan_to_num().item())
+        end_index = (input_ids[0] != self.tokenizer.pad_token_id).nonzero()[-1].item()
+        score = values[0][end_index].nan_to_num().item()
 
-        return scores
+        return score

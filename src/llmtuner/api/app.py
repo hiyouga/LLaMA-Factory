@@ -76,22 +76,7 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
         if len(request.messages) == 0 or request.messages[-1].role != Role.USER:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid request")
 
-        query = request.messages[-1].content
-        prev_messages = request.messages[:-1]
-        if len(prev_messages) and prev_messages[0].role == Role.SYSTEM:
-            system = prev_messages.pop(0).content
-        else:
-            system = None
-
-        history = []
-        if len(prev_messages) % 2 == 0:
-            for i in range(0, len(prev_messages), 2):
-                if prev_messages[i].role == Role.USER and prev_messages[i+1].role == Role.ASSISTANT:
-                    history.append([prev_messages[i].content, prev_messages[i+1].content])
-                else:
-                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only supports u/a/u/a/u...")
-        else:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only supports u/a/u/a/u...")
+        query, _, history, system = _parse_messages(request.messages)
 
         if request.stream:
             generate = predict(query, history, system, request)
@@ -166,11 +151,36 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
         if chat_model.can_generate:
             raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Not allowed")
 
-        if len(request.messages) == 0:
+        if len(request.messages) == 0 or request.messages[-1].role != Role.ASSISTANT:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid request")
-        
-        scores = chat_model.get_scores(request.messages, max_length=request.max_length)
-        return ScoreEvaluationResponse(model=request.model, scores=scores)
+
+        query, response, history, system = _parse_messages(request.messages)
+        score = chat_model.get_score(query, response, history, system)
+        return ScoreEvaluationResponse(model=request.model, score=score)
+
+    def _parse_messages(messages: List[ChatMessage]):
+        query = None
+        response = None
+        history = []
+        system = None
+
+        if len(messages) > 0 and messages[0].role == Role.SYSTEM:
+            system = messages.pop().content
+        if len(messages) > 0 and messages[-1].role == Role.ASSISTANT:
+            response = messages.pop(-1).content
+        if len(messages) > 0 and messages[-1].role == Role.USER:
+            query = messages.pop(-1).content
+
+        if len(messages) % 2 == 0:
+            for i in range(0, len(messages), 2):
+                if messages[i].role == Role.USER and messages[i + 1].role == Role.ASSISTANT:
+                    history.append([messages[i].content, messages[i + 1].content])
+                else:
+                    raise ValueError("The messages must be u/a/u/a/...")
+        else:
+            raise ValueError("The messages must be u/a/u/a/...")
+
+        return query, response, history, system
 
     return app
 

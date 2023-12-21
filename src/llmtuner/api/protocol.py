@@ -85,12 +85,11 @@ class ChatCompletionStreamResponse(BaseModel):
 
 class ScoreEvaluationRequest(BaseModel):
     model: str
-    messages: List[str]
-    max_length: Optional[int] = None
+    messages: List[ChatMessage]
 
 
 class ScoreEvaluationResponse(BaseModel):
     id: Optional[str] = "scoreeval-default"
     object: Optional[str] = "score.evaluation"
     model: str
-    scores: List[float]
+    score: float
