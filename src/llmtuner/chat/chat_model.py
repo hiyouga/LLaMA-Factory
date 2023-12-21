@@ -12,7 +12,6 @@ from llmtuner.model import dispatch_model, get_infer_args, load_model_and_tokeni
 
 @dataclass
 class Response:
-
     response_text: str
     response_length: int
     prompt_length: int
