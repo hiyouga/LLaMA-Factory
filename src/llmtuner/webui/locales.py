@@ -85,20 +85,12 @@ LOCALES = {
             "label": "RoPE 插值方法"
         }
     },
-    "flash_attn": {
+    "booster": {
         "en": {
-            "label": "Use FlashAttention-2"
+            "label": "Booster"
         },
         "zh": {
-            "label": "使用 FlashAttention-2"
-        }
-    },
-    "shift_attn": {
-        "en": {
-            "label": "Use shift short attention (S^2-Attn)"
-        },
-        "zh": {
-            "label": "使用 shift short attention (S^2-Attn)"
+            "label": "加速方式"
         }
     },
     "training_stage": {
