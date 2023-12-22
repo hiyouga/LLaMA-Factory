@@ -67,6 +67,7 @@ def load_model_and_tokenizer(
         unsloth_kwargs = {
             "model_name": model_args.model_name_or_path,
             "max_seq_length": model_args.model_max_length,
+            "dtype": model_args.compute_dtype,
             "load_in_4bit": model_args.quantization_bit == 4,
             "token": model_args.hf_hub_token,
             "device_map": get_current_device(),
