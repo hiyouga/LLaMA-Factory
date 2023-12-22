@@ -54,6 +54,10 @@ class ModelArguments:
         default=False,
         metadata={"help": "Enable shift short attention (S^2-Attn) proposed by LongLoRA."}
     )
+    use_unsloth: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Whether to use unsloth's optimization for LoRA training."}
+    )
     hf_hub_token: Optional[str] = field(
         default=None,
         metadata={"help": "Auth token to log in with Hugging Face Hub."}
@@ -61,6 +65,30 @@ class ModelArguments:
     ms_hub_token: Optional[str] = field(
         default=None,
         metadata={"help": "Auth token to log in with ModelScope Hub."}
+    )
+    export_dir: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to the directory to save the exported model."}
+    )
+    export_size: Optional[int] = field(
+        default=1,
+        metadata={"help": "The file shard size (in GB) of the exported model."}
+    )
+    export_quantization_bit: Optional[int] = field(
+        default=None,
+        metadata={"help": "The number of bits to quantize the exported model."}
+    )
+    export_quantization_dataset: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to the dataset or dataset name to use in quantizing the exported model."}
+    )
+    export_quantization_nsamples: Optional[int] = field(
+        default=128,
+        metadata={"help": "The number of samples used for quantization."}
+    )
+    export_quantization_maxlen: Optional[int] = field(
+        default=1024,
+        metadata={"help": "The maximum length of the model inputs used for quantization."}
     )
 
     def __post_init__(self):
@@ -74,6 +102,10 @@ class ModelArguments:
             self.adapter_name_or_path = [path.strip() for path in self.adapter_name_or_path.split(",")]
 
         assert self.quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
+        assert self.export_quantization_bit in [None, 8, 4, 3, 2], "We only accept 2/3/4/8-bit quantization."
+
+        if self.export_quantization_bit is not None and self.export_quantization_dataset is None:
+            raise ValueError("Quantization dataset is necessary for exporting.")
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)

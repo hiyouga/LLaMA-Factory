@@ -16,7 +16,7 @@ class CustomDPOTrainer(DPOTrainer):
     def __init__(
         self,
         beta: float,
-        loss_type: Literal["sigmoid", "hinge"],
+        loss_type: Literal["sigmoid", "hinge", "ipo", "kto"],
         ftx_gamma: float,
         model: Union["PreTrainedModel", torch.nn.Module],
         ref_model: Optional[Union["PreTrainedModel", torch.nn.Module]] = None,
@@ -28,16 +28,20 @@ class CustomDPOTrainer(DPOTrainer):
             if ref_model is not None:
                 disable_dropout_in_model(ref_model)
 
-        self.is_encoder_decoder = model.config.is_encoder_decoder
-        self.ref_model = ref_model
         self.use_dpo_data_collator = True # hack to avoid warning
         self.generate_during_eval = False # disable at evaluation
         self.label_pad_token_id = IGNORE_INDEX
         self.padding_value = 0
+        self.is_encoder_decoder = model.config.is_encoder_decoder
+        self.precompute_ref_log_probs = False
+        self._precomputed_train_ref_log_probs = False
+        self._precomputed_eval_ref_log_probs = False
+
+        self.ref_model = ref_model
         self.beta = beta
         self.label_smoothing = 0
-        self.ftx_gamma = ftx_gamma
         self.loss_type = loss_type
+        self.ftx_gamma = ftx_gamma
         self._stored_metrics = defaultdict(lambda: defaultdict(list))
 
         Trainer.__init__(self, model=model, **kwargs)
@@ -95,7 +99,7 @@ class CustomDPOTrainer(DPOTrainer):
         chosen_logits, rejected_logits = all_logits.split(batch_size, dim=0)
         return chosen_logps, rejected_logps, chosen_logits, rejected_logits
 
-    def get_batch_metrics(
+    def get_batch_loss_metrics(
         self,
         model: "PreTrainedModel",
         batch: Dict[str, torch.Tensor],

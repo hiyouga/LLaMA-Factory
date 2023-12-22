@@ -104,8 +104,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
     # Setup logging
     if training_args.should_log:
-        log_level = training_args.get_process_log_level()
-        _set_transformers_logging(log_level)
+        _set_transformers_logging()
 
     # Check arguments
     data_args.init_for_training(training_args.seed)
