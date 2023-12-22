@@ -37,7 +37,7 @@ def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: Optional[List["Tra
 def export_model(args: Optional[Dict[str, Any]] = None):
     model_args, _, finetuning_args, _ = get_infer_args(args)
 
-    if model_args.adapter_name_or_path is not None and finetuning_args.export_quantization_bit is not None:
+    if model_args.adapter_name_or_path is not None and model_args.export_quantization_bit is not None:
         raise ValueError("Please merge adapters before quantizing the model.")
 
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args)
@@ -47,12 +47,12 @@ def export_model(args: Optional[Dict[str, Any]] = None):
 
     model.config.use_cache = True
     model = model.to("cpu")
-    model.save_pretrained(finetuning_args.export_dir, max_shard_size="{}GB".format(finetuning_args.export_size))
+    model.save_pretrained(model_args.export_dir, max_shard_size="{}GB".format(model_args.export_size))
 
     try:
         tokenizer.padding_side = "left" # restore padding side
         tokenizer.init_kwargs["padding_side"] = "left"
-        tokenizer.save_pretrained(finetuning_args.export_dir)
+        tokenizer.save_pretrained(model_args.export_dir)
     except:
         logger.warning("Cannot save tokenizer, please copy the files manually.")
 

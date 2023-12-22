@@ -18,85 +18,14 @@ from llmtuner.extras.packages import is_flash_attn2_available
 if TYPE_CHECKING:
     from transformers import PretrainedConfig, PreTrainedTokenizer
     from trl import AutoModelForCausalLMWithValueHead
-    from llmtuner.hparams import ModelArguments, FinetuningArguments
+    from llmtuner.hparams import ModelArguments
 
 
 logger = get_logger(__name__)
 SUPPORTED_CLASS_FOR_S2ATTN = [] # TODO: add llama
 
 
-def configure_flashattn(config_kwargs: Dict[str, Any], model_args: "ModelArguments"):
-    if model_args.flash_attn and is_flash_attn2_available():
-        config_kwargs["use_flash_attention_2"] = True
-        logger.info("Using FlashAttention-2 for faster training and inference.")
-
-
-def configure_longlora(config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool):
-    if is_trainable and model_args.shift_attn:
-        if getattr(config, "model_type", None) in SUPPORTED_CLASS_FOR_S2ATTN:
-            setattr(config, "group_size_ratio", 0.25)
-            logger.info("Using shift short attention with group_size_ratio=1/4.")
-        else:
-            logger.warning("Current model does not support shift short attention.")
-
-
-def configure_quantization(
-    config: "PretrainedConfig",
-    config_kwargs: Dict[str, Any],
-    tokenizer: "PreTrainedTokenizer",
-    model_args: "ModelArguments",
-    finetuning_args: "FinetuningArguments"
-):
-    r"""
-    Priority: Pre-quantized (training) > AutoGPTQ (export) > Bitsandbytes (training)
-    """
-    if getattr(config, "quantization_config", None): # gptq or awq
-        if is_deepspeed_zero3_enabled():
-            raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantization.")
-
-        config_kwargs["device_map"] = {"": get_current_device()}
-        quantization_config = getattr(config, "quantization_config", None)
-        logger.info("Loading {}-bit pre-quantized model.".format(quantization_config.get("bits", -1)))
-
-    elif finetuning_args.export_quantization_bit is not None: # gptq
-        require_version("optimum>=1.16.0", "To fix: pip install optimum>=1.16.0")
-        require_version("auto_gptq>=0.5.0", "To fix: pip install auto_gptq>=0.5.0")
-        from accelerate.utils import get_max_memory
-
-        if getattr(config, "model_type", None) == "chatglm":
-            raise ValueError("ChatGLM model is not supported.")
-
-        config_kwargs["quantization_config"] = GPTQConfig(
-            bits=finetuning_args.export_quantization_bit,
-            tokenizer=tokenizer,
-            dataset=get_quantization_dataset(tokenizer, model_args, finetuning_args)
-        )
-        config_kwargs["device_map"] = "auto"
-        config_kwargs["max_memory"] = get_max_memory()
-        logger.info("Quantizing model to {} bit.".format(finetuning_args.export_quantization_bit))
-
-    elif model_args.quantization_bit is not None: # bnb
-        if is_deepspeed_zero3_enabled():
-            raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantization.")
-
-        if model_args.quantization_bit == 8:
-            require_version("bitsandbytes>=0.37.0", "To fix: pip install bitsandbytes>=0.37.0")
-            config_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_8bit=True)
-
-        elif model_args.quantization_bit == 4:
-            require_version("bitsandbytes>=0.39.0", "To fix: pip install bitsandbytes>=0.39.0")
-            config_kwargs["quantization_config"] = BitsAndBytesConfig(
-                load_in_4bit=True,
-                bnb_4bit_compute_dtype=model_args.compute_dtype,
-                bnb_4bit_use_double_quant=model_args.double_quantization,
-                bnb_4bit_quant_type=model_args.quantization_type
-            )
-
-        config_kwargs["device_map"] = {"": get_current_device()}
-        logger.info("Quantizing model to {} bit.".format(model_args.quantization_bit))
-
-
-def configure_rope(config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool):
+def _configure_rope(config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool):
     if model_args.rope_scaling is not None:
         if not hasattr(config, "rope_scaling"):
             logger.warning("Current model does not support RoPE scaling.")
@@ -123,27 +52,94 @@ def configure_rope(config: "PretrainedConfig", model_args: "ModelArguments", is_
             ))
 
 
-def get_quantization_dataset(
+def _configure_flashattn(model_args: "ModelArguments", config_kwargs: Dict[str, Any]):
+    if model_args.flash_attn and is_flash_attn2_available():
+        config_kwargs["use_flash_attention_2"] = True
+        config_kwargs["torch_dtype"] = model_args.compute_dtype
+        logger.info("Using FlashAttention-2 for faster training and inference.")
+
+
+def _configure_longlora(config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool):
+    if is_trainable and model_args.shift_attn:
+        if getattr(config, "model_type", None) in SUPPORTED_CLASS_FOR_S2ATTN:
+            setattr(config, "group_size_ratio", 0.25)
+            logger.info("Using shift short attention with group_size_ratio=1/4.")
+        else:
+            logger.warning("Current model does not support shift short attention.")
+
+
+def _configure_quantization(
+    config: "PretrainedConfig",
     tokenizer: "PreTrainedTokenizer",
     model_args: "ModelArguments",
-    finetuning_args: "FinetuningArguments"
-) -> List[str]:
+    config_kwargs: Dict[str, Any]
+):
+    r"""
+    Priority: Pre-quantized (training) > AutoGPTQ (export) > Bitsandbytes (training)
+    """
+    if getattr(config, "quantization_config", None): # gptq or awq
+        if is_deepspeed_zero3_enabled():
+            raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantization.")
+
+        config_kwargs["device_map"] = {"": get_current_device()}
+        quantization_config = getattr(config, "quantization_config", None)
+        logger.info("Loading {}-bit pre-quantized model.".format(quantization_config.get("bits", -1)))
+
+    elif model_args.export_quantization_bit is not None: # gptq
+        require_version("optimum>=1.16.0", "To fix: pip install optimum>=1.16.0")
+        require_version("auto_gptq>=0.5.0", "To fix: pip install auto_gptq>=0.5.0")
+        from accelerate.utils import get_max_memory
+
+        if getattr(config, "model_type", None) == "chatglm":
+            raise ValueError("ChatGLM model is not supported.")
+
+        config_kwargs["quantization_config"] = GPTQConfig(
+            bits=model_args.export_quantization_bit,
+            tokenizer=tokenizer,
+            dataset=get_quantization_dataset(tokenizer, model_args)
+        )
+        config_kwargs["device_map"] = "auto"
+        config_kwargs["max_memory"] = get_max_memory()
+        logger.info("Quantizing model to {} bit.".format(model_args.export_quantization_bit))
+
+    elif model_args.quantization_bit is not None: # bnb
+        if is_deepspeed_zero3_enabled():
+            raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantization.")
+
+        if model_args.quantization_bit == 8:
+            require_version("bitsandbytes>=0.37.0", "To fix: pip install bitsandbytes>=0.37.0")
+            config_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_8bit=True)
+
+        elif model_args.quantization_bit == 4:
+            require_version("bitsandbytes>=0.39.0", "To fix: pip install bitsandbytes>=0.39.0")
+            config_kwargs["quantization_config"] = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=model_args.compute_dtype,
+                bnb_4bit_use_double_quant=model_args.double_quantization,
+                bnb_4bit_quant_type=model_args.quantization_type
+            )
+
+        config_kwargs["device_map"] = {"": get_current_device()}
+        logger.info("Quantizing model to {} bit.".format(model_args.quantization_bit))
+
+
+def get_quantization_dataset(tokenizer: "PreTrainedTokenizer", model_args: "ModelArguments") -> List[str]:
     r"""
     Inspired by: https://github.com/huggingface/optimum/blob/v1.16.0/optimum/gptq/data.py#L133
     TODO: remove tokenizer.decode() https://github.com/huggingface/optimum/pull/1600
     """
-    if os.path.isfile(finetuning_args.export_quantization_dataset):
-        data_path = FILEEXT2TYPE.get(finetuning_args.export_quantization_dataset.split(".")[-1], None)
-        data_files = finetuning_args.export_quantization_dataset
+    if os.path.isfile(model_args.export_quantization_dataset):
+        data_path = FILEEXT2TYPE.get(model_args.export_quantization_dataset.split(".")[-1], None)
+        data_files = model_args.export_quantization_dataset
     else:
-        data_path = finetuning_args.export_quantization_dataset
+        data_path = model_args.export_quantization_dataset
         data_files = None
 
     dataset = load_dataset(path=data_path, data_files=data_files, split="train", cache_dir=model_args.cache_dir)
-    maxlen = finetuning_args.export_quantization_maxlen
+    maxlen = model_args.export_quantization_maxlen
 
     samples = []
-    for _ in range(finetuning_args.export_quantization_nsamples):
+    for _ in range(model_args.export_quantization_nsamples):
         while True:
             sample_idx = random.randint(0, len(dataset) - 1)
             sample: Dict[str, torch.Tensor] = tokenizer(dataset[sample_idx]["text"], return_tensors="pt")
@@ -151,13 +147,24 @@ def get_quantization_dataset(
                 break # TODO: fix large maxlen
 
         word_idx = random.randint(0, sample["input_ids"].size(1) - maxlen - 1)
-        input_ids = sample["input_ids"][:, word_idx:word_idx+maxlen]
+        input_ids = sample["input_ids"][:, word_idx : word_idx + maxlen]
         samples.append(tokenizer.decode(input_ids[0].tolist(), skip_special_tokens=True))
 
     return samples
 
 
-def patch_config(config: "PretrainedConfig", model_args: "ModelArguments"):
+def patch_tokenizer(tokenizer: "PreTrainedTokenizer"):
+    if "PreTrainedTokenizerBase" not in str(tokenizer._pad.__func__):
+        tokenizer._pad = MethodType(PreTrainedTokenizerBase._pad, tokenizer)
+
+
+def patch_config(
+    config: "PretrainedConfig",
+    tokenizer: "PreTrainedTokenizer",
+    model_args: "ModelArguments",
+    config_kwargs: Dict[str, Any],
+    is_trainable: bool
+):
     if model_args.compute_dtype is None: # priority: bf16 > fp16 > fp32
         model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
     setattr(config, "torch_dtype", model_args.compute_dtype)
@@ -165,6 +172,11 @@ def patch_config(config: "PretrainedConfig", model_args: "ModelArguments"):
     if getattr(config, "model_type", None) == "qwen":
         for dtype_name, dtype in [("fp16", torch.float16), ("bf16", torch.bfloat16), ("fp32", torch.float32)]:
             setattr(config, dtype_name, getattr(config, "torch_dtype", None) == dtype)
+
+    _configure_rope(config, model_args, is_trainable)
+    _configure_flashattn(model_args, config_kwargs)
+    _configure_longlora(config, model_args, is_trainable)
+    _configure_quantization(config, tokenizer, model_args, config_kwargs)
 
 
 def patch_model(model: "PreTrainedModel"):
@@ -177,15 +189,15 @@ def patch_model(model: "PreTrainedModel"):
 
 
 def patch_valuehead_model(model: "AutoModelForCausalLMWithValueHead"):
-    def get_input_embeddings(self: "AutoModelForCausalLMWithValueHead") -> torch.nn.Module:
-        return self.pretrained_model.get_input_embeddings()
+    def tie_weights(self: "AutoModelForCausalLMWithValueHead") -> None:
+        if isinstance(self.pretrained_model, PreTrainedModel):
+            self.pretrained_model.tie_weights()
 
-    setattr(model, "get_input_embeddings", MethodType(get_input_embeddings, model))
+    def get_input_embeddings(self: "AutoModelForCausalLMWithValueHead") -> torch.nn.Module:
+        if isinstance(self.pretrained_model, PreTrainedModel):
+            return self.pretrained_model.get_input_embeddings()
+
     ignore_modules = [name for name, _ in model.named_parameters() if "pretrained_model" in name]
     setattr(model, "_keys_to_ignore_on_save", ignore_modules)
-    setattr(model, "tie_weights", MethodType(lambda _: None, model)) # use empty method
-
-
-def patch_tokenizer(tokenizer: "PreTrainedTokenizer"):
-    if "PreTrainedTokenizerBase" not in str(tokenizer._pad.__func__):
-        tokenizer._pad = MethodType(PreTrainedTokenizerBase._pad, tokenizer)
+    setattr(model, "tie_weights", MethodType(tie_weights, model))
+    setattr(model, "get_input_embeddings", MethodType(get_input_embeddings, model))
