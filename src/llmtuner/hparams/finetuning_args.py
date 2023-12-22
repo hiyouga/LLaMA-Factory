@@ -38,7 +38,7 @@ class LoraArguments:
         metadata={"help": "The scale factor for LoRA fine-tuning (default: lora_rank * 2)."}
     )
     lora_dropout: Optional[float] = field(
-        default=0.1,
+        default=0.0,
         metadata={"help": "Dropout rate for the LoRA fine-tuning."}
     )
     lora_rank: Optional[int] = field(
@@ -70,7 +70,7 @@ class RLHFArguments:
         default=0.1,
         metadata={"help": "The beta parameter for the DPO loss."}
     )
-    dpo_loss: Optional[Literal["sigmoid", "hinge"]] = field(
+    dpo_loss: Optional[Literal["sigmoid", "hinge", "ipo", "kto"]] = field(
         default="sigmoid",
         metadata={"help": "The type of DPO loss to use."}
     )
@@ -133,38 +133,7 @@ class RLHFArguments:
 
 
 @dataclass
-class ExportArguments:
-    r"""
-    Arguments pertaining to model exporting.
-    """
-    export_dir: Optional[str] = field(
-        default=None,
-        metadata={"help": "Path to the directory to save the exported model."}
-    )
-    export_size: Optional[int] = field(
-        default=1,
-        metadata={"help": "The file shard size (in GB) of the exported model."}
-    )
-    export_quantization_bit: Optional[int] = field(
-        default=None,
-        metadata={"help": "The number of bits to quantize the exported model."}
-    )
-    export_quantization_dataset: Optional[str] = field(
-        default=None,
-        metadata={"help": "Path to the dataset or dataset name to use in quantizing the exported model."}
-    )
-    export_quantization_nsamples: Optional[int] = field(
-        default=128,
-        metadata={"help": "The number of samples used for quantization."}
-    )
-    export_quantization_maxlen: Optional[int] = field(
-        default=1024,
-        metadata={"help": "The maximum length of the model inputs used for quantization."}
-    )
-
-
-@dataclass
-class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, ExportArguments):
+class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments):
     r"""
     Arguments pertaining to which techniques we are going to fine-tuning with.
     """
@@ -201,16 +170,12 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, ExportA
         assert self.finetuning_type in ["lora", "freeze", "full"], "Invalid fine-tuning method."
         assert self.ref_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
         assert self.reward_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
-        assert self.export_quantization_bit in [None, 8, 4, 3, 2], "We only accept 2/3/4/8-bit quantization."
 
         if self.stage == "ppo" and self.reward_model is None:
             raise ValueError("Reward model is necessary for PPO training.")
 
         if self.stage == "ppo" and self.reward_model_type == "lora" and self.finetuning_type != "lora":
             raise ValueError("Freeze/Full PPO training needs `reward_model_type=full`.")
-
-        if self.export_quantization_bit is not None and self.export_quantization_dataset is None:
-            raise ValueError("Quantization dataset is necessary for exporting.")
 
     def save_to_json(self, json_path: str):
         r"""Saves the content of this instance in JSON format inside `json_path`."""

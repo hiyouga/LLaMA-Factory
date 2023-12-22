@@ -55,6 +55,8 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 ## Changelog
 
+[23/12/23] We supported **[unsloth](https://github.com/unslothai/unsloth)**'s implementation for faster LoRA tuning. Try `--use_unsloth` argument to active unsloth patch. See performance comparisons [here](https://github.com/hiyouga/LLaMA-Factory/wiki/Performance-comparison).
+
 [23/12/12] We supported fine-tuning the latest MoE model **[Mixtral 8x7B](https://huggingface.co/mistralai/Mixtral-8x7B-v0.1)** in our framework. See hardware requirement [here](#hardware-requirement).
 
 [23/12/01] We supported downloading pre-trained models and datasets from the **[ModelScope Hub](https://modelscope.cn/models)** for Chinese mainland users. See [this tutorial](#use-modelscope-hub-optional) for usage.
