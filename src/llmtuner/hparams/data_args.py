@@ -127,9 +127,6 @@ class DataArguments:
         if self.streaming and self.max_samples is not None:
             raise ValueError("`max_samples` is incompatible with `streaming`.")
 
-        if self.streaming and self.cache_path:
-            raise ValueError("`cache_path` is incompatible with `streaming`.")
-
     def init_for_training(self, seed: int): # support mixing multiple datasets
         self.seed = seed
         dataset_names = [ds.strip() for ds in self.dataset.split(",")] if self.dataset is not None else []
