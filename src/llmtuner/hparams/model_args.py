@@ -22,6 +22,10 @@ class ModelArguments:
         default=False,
         metadata={"help": "Whether to use one of the fast tokenizer (backed by the tokenizers library) or not."}
     )
+    resize_vocab: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Whether to resize the tokenizer vocab and the embedding layers."}
+    )
     split_special_tokens: Optional[bool] = field(
         default=False,
         metadata={"help": "Whether or not the special tokens should be split during the tokenization process."}
