@@ -123,14 +123,6 @@ def load_valuehead_params(path_or_repo_id: str, model_args: "ModelArguments") ->
     return None
 
 
-def noisy_mean_initialization(embed_weight: torch.Tensor, num_new_tokens: int):
-    embedding_dim = embed_weight.size(1)
-    avg_weight = embed_weight[:-num_new_tokens].mean(dim=0, keepdim=True)
-    noise_weight = torch.empty_like(avg_weight[-num_new_tokens:])
-    noise_weight.normal_(mean=0, std=(1.0 / math.sqrt(embedding_dim)))
-    embed_weight[-num_new_tokens:] = avg_weight + noise_weight
-
-
 def prepare_model_for_training(
     model: "PreTrainedModel",
     finetuning_args: "FinetuningArguments",
@@ -174,25 +166,6 @@ def prepare_model_for_training(
             output_layer.register_forward_hook(fp32_forward_post_hook)
 
     return model
-
-
-def resize_embedding_layer(model: "PreTrainedModel", tokenizer: "PreTrainedTokenizer") -> None:
-    r"""
-    Resize token embeddings.
-    """
-    current_embedding_size = model.get_input_embeddings().weight.size(0)
-    if len(tokenizer) > current_embedding_size:
-        if not isinstance(model.get_output_embeddings(), torch.nn.Linear):
-            logger.warning("Current model does not support resizing token embeddings.")
-            return
-
-        model.resize_token_embeddings(len(tokenizer), pad_to_multiple_of=64)
-        new_embedding_size = model.get_input_embeddings().weight.size(0)
-        num_new_tokens = new_embedding_size - current_embedding_size
-        noisy_mean_initialization(model.get_input_embeddings().weight.data, num_new_tokens)
-        noisy_mean_initialization(model.get_output_embeddings().weight.data, num_new_tokens)
-
-        logger.info("Resized token embeddings from {} to {}.".format(current_embedding_size, new_embedding_size))
 
 
 def register_autoclass(config: "PretrainedConfig", model: "PreTrainedModel", tokenizer: "PreTrainedTokenizer"):
