@@ -199,7 +199,7 @@ def _prepare_model_for_training(
         logger.info("Upcasting layernorm weights in float32.")
 
     if not model_args.disable_gradient_checkpointing:
-        if getattr(model, "supports_gradient_checkpointing", False):
+        if not getattr(model, "supports_gradient_checkpointing", False):
             logger.warning("Current model does not support gradient checkpointing.")
         else:
             model.enable_input_require_grads()
