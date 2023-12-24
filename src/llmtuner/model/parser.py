@@ -144,7 +144,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
     _verify_model_args(model_args, finetuning_args)
 
-    if training_args.do_train and model_args.quantization_bit is not None and (not finetuning_args.upcast_layernorm):
+    if training_args.do_train and model_args.quantization_bit is not None and (not model_args.upcast_layernorm):
         logger.warning("We recommend enable `upcast_layernorm` in quantized training.")
 
     if training_args.do_train and (not training_args.fp16) and (not training_args.bf16):
