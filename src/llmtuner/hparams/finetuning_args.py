@@ -145,13 +145,9 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments):
         default="lora",
         metadata={"help": "Which fine-tuning method to use."}
     )
-    upcast_layernorm: Optional[bool] = field(
-        default=False,
-        metadata={"help": "Whether to upcast the layernorm weights in fp32."}
-    )
     plot_loss: Optional[bool] = field(
         default=False,
-        metadata={"help": "Whether to plot the training loss after fine-tuning or not."}
+        metadata={"help": "Whether or not to save the training loss curves."}
     )
 
     def __post_init__(self):
