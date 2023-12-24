@@ -20,11 +20,11 @@ class ModelArguments:
     )
     use_fast_tokenizer: Optional[bool] = field(
         default=False,
-        metadata={"help": "Whether to use one of the fast tokenizer (backed by the tokenizers library) or not."}
+        metadata={"help": "Whether or not to use one of the fast tokenizer (backed by the tokenizers library)."}
     )
     resize_vocab: Optional[bool] = field(
         default=False,
-        metadata={"help": "Whether to resize the tokenizer vocab and the embedding layers."}
+        metadata={"help": "Whether or not to resize the tokenizer vocab and the embedding layers."}
     )
     split_special_tokens: Optional[bool] = field(
         default=False,
@@ -44,11 +44,11 @@ class ModelArguments:
     )
     double_quantization: Optional[bool] = field(
         default=True,
-        metadata={"help": "Whether to use double quantization in int4 training or not."}
+        metadata={"help": "Whether or not to use double quantization in int4 training."}
     )
     rope_scaling: Optional[Literal["linear", "dynamic"]] = field(
         default=None,
-        metadata={"help": "Adopt scaled rotary positional embeddings."}
+        metadata={"help": "Which scaling strategy should be adopted for the RoPE embeddings."}
     )
     flash_attn: Optional[bool] = field(
         default=False,
@@ -60,7 +60,15 @@ class ModelArguments:
     )
     use_unsloth: Optional[bool] = field(
         default=False,
-        metadata={"help": "Whether to use unsloth's optimization for LoRA training."}
+        metadata={"help": "Whether or not to use unsloth's optimization for the LoRA training."}
+    )
+    disable_gradient_checkpointing: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Whether or not to disable gradient checkpointing."}
+    )
+    upcast_layernorm: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Whether or not to upcast the layernorm weights in fp32."}
     )
     hf_hub_token: Optional[str] = field(
         default=None,
