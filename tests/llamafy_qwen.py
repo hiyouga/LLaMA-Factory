@@ -6,11 +6,19 @@ import os
 import fire
 import json
 import torch
+from tqdm import tqdm
 from collections import OrderedDict
 from safetensors import safe_open
-from transformers.modeling_utils import shard_checkpoint, WEIGHTS_NAME, WEIGHTS_INDEX_NAME
+from safetensors.torch import save_file
+from transformers.modeling_utils import (
+    shard_checkpoint,
+    SAFE_WEIGHTS_NAME,
+    SAFE_WEIGHTS_INDEX_NAME,
+    WEIGHTS_NAME,
+    WEIGHTS_INDEX_NAME
+)
 from transformers.utils import check_min_version
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 try:
     check_min_version("4.34.0")
@@ -24,7 +32,8 @@ CONFIG_NAME = "config.json"
 def save_weight(
     input_dir: str,
     output_dir: str,
-    shard_size: str
+    shard_size: str,
+    save_safetensors: bool
 ) -> str:
     qwen_state_dict: Dict[str, torch.Tensor] = OrderedDict()
     for filepath in os.listdir(input_dir):
@@ -35,7 +44,7 @@ def save_weight(
 
     llama2_state_dict: Dict[str, torch.Tensor] = OrderedDict()
     torch_dtype = None
-    for key, value in qwen_state_dict.items():
+    for key, value in tqdm(qwen_state_dict.items(), desc="Convert format"):
         if torch_dtype is None:
             torch_dtype = value.dtype
         if "wte" in key:
@@ -69,14 +78,20 @@ def save_weight(
             else:
                 raise KeyError("Unable to process key {}".format(key))
 
-    shards, index = shard_checkpoint(llama2_state_dict, max_shard_size=shard_size, weights_name=WEIGHTS_NAME)
-    for shard_file, shard in shards.items():
-        torch.save(shard, os.path.join(output_dir, shard_file))
+    weights_name = SAFE_WEIGHTS_NAME if save_safetensors else WEIGHTS_NAME
+    shards, index = shard_checkpoint(llama2_state_dict, max_shard_size=shard_size, weights_name=weights_name)
+
+    for shard_file, shard in tqdm(shards.items(), desc="Save weights"):
+        if save_safetensors:
+            save_file(shard, os.path.join(output_dir, shard_file), metadata={"format": "pt"})
+        else:
+            torch.save(shard, os.path.join(output_dir, shard_file))
 
     if index is None:
-        print("Model weights saved in {}".format(os.path.join(output_dir, WEIGHTS_NAME)))
+        print("Model weights saved in {}".format(os.path.join(output_dir, weights_name)))
     else:
-        with open(os.path.join(output_dir, WEIGHTS_INDEX_NAME), "w", encoding="utf-8") as f:
+        index_name = SAFE_WEIGHTS_INDEX_NAME if save_safetensors else WEIGHTS_INDEX_NAME
+        with open(os.path.join(output_dir, index_name), "w", encoding="utf-8") as f:
             json.dump(index, f, indent=2, sort_keys=True)
         print("Model weights saved in {}".format(output_dir))
 
@@ -120,15 +135,16 @@ def save_config(
 def llamafy_qwen(
     input_dir: str,
     output_dir: str,
-    shard_size: str
+    shard_size: str,
+    save_safetensors: Optional[bool] = False
 ):
     try:
         os.makedirs(output_dir, exist_ok=False)
     except Exception as e:
         raise print("Output dir already exists", e)
 
-    torch_dtype = save_weight(input_dir, output_dir, shard_size)
-    save_config(input_dir, output_dir, torch_dtype)    
+    torch_dtype = save_weight(input_dir, output_dir, shard_size, save_safetensors)
+    save_config(input_dir, output_dir, torch_dtype)
 
 
 if __name__ == "__main__":
