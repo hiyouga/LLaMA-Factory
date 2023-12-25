@@ -1,6 +1,7 @@
 # coding=utf-8
 # Converts the Qwen models in the same format as LLaMA2.
 # Usage: python llamafy_qwen.py --input_dir input --output_dir output --shard_size 10GB
+# Converted model: https://huggingface.co/hiyouga/Qwen-14B-Chat-LLaMAfied
 
 import os
 import fire
