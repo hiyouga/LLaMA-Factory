@@ -173,6 +173,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 - [Web QA (zh)](https://huggingface.co/datasets/suolyer/webqa)
 - [WebNovel (zh)](https://huggingface.co/datasets/zxbsmk/webnovel_cn)
 - [Nectar (en)](https://huggingface.co/datasets/berkeley-nest/Nectar)
+- [deepctrl (en&zh)](https://www.modelscope.cn/datasets/deepctrl/deepctrl-sft-data)
 - [Ad Gen (zh)](https://huggingface.co/datasets/HasturOfficial/adgen)
 - [ShareGPT Hyperfiltered (en)](https://huggingface.co/datasets/totally-not-an-llm/sharegpt-hyperfiltered-3k)
 - [ShareGPT4 (en&zh)](https://huggingface.co/datasets/shibing624/sharegpt_gpt4)
