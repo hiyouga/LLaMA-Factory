@@ -141,6 +141,9 @@
   "nectar_sft": {
     "hf_hub_url": "mlinmg/SFT-Nectar"
   },
+  "deepctrl": {
+    "ms_hub_url": "deepctrl/deepctrl-sft-data"
+  },
   "adgen": {
     "hf_hub_url": "HasturOfficial/adgen",
     "ms_hub_url": "AI-ModelScope/adgen",
