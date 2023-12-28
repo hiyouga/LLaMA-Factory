@@ -102,7 +102,7 @@ class ModelArguments:
         default=1024,
         metadata={"help": "The maximum length of the model inputs used for quantization."}
     )
-    export_lecacy_format: Optional[bool] = field(
+    export_legacy_format: Optional[bool] = field(
         default=False,
         metadata={"help": "Whether or not to save the `.bin` files instead of `.safetensors`."}
     )

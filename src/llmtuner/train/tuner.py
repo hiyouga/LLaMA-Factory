@@ -50,7 +50,7 @@ def export_model(args: Optional[Dict[str, Any]] = None):
     model.save_pretrained(
         save_directory=model_args.export_dir,
         max_shard_size="{}GB".format(model_args.export_size),
-        safe_serialization=(not model_args.export_lecacy_format)
+        safe_serialization=(not model_args.export_legacy_format)
     )
 
     try:
