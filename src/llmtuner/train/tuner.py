@@ -47,7 +47,11 @@ def export_model(args: Optional[Dict[str, Any]] = None):
 
     model.config.use_cache = True
     model = model.to("cpu")
-    model.save_pretrained(model_args.export_dir, max_shard_size="{}GB".format(model_args.export_size))
+    model.save_pretrained(
+        save_directory=model_args.export_dir,
+        max_shard_size="{}GB".format(model_args.export_size),
+        safe_serialization=(not model_args.export_lecacy_format)
+    )
 
     try:
         tokenizer.padding_side = "left" # restore padding side
