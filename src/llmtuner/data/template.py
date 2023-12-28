@@ -759,6 +759,26 @@ register_template(
 
 
 register_template(
+    name="yuan",
+    prefix=[
+        "{{system}}"
+    ],
+    prompt=[
+        "{{query}}",
+        {"token": "<sep>"}
+    ],
+    system="",
+    sep=[
+        "\n"
+    ],
+    stop_words=[
+        "<eod>"
+    ],
+    replace_eos=True
+)
+
+
+register_template(
     name="zephyr",
     prefix=[
         {"token": "<|system|>"},
