@@ -60,7 +60,7 @@ def load_model_and_tokenizer(
 
     model = None
     if is_trainable and model_args.use_unsloth:
-        require_version("unsloth==2023.12", "Follow the instructions at: https://github.com/unslothai/unsloth")
+        require_version("unsloth", "Follow the instructions at: https://github.com/unslothai/unsloth")
         from unsloth import FastLlamaModel, FastMistralModel # type: ignore
         unsloth_kwargs = {
             "model_name": model_args.model_name_or_path,
