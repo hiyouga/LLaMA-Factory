@@ -479,7 +479,9 @@ python src/export_model.py \
     --adapter_name_or_path path_to_checkpoint \
     --template default \
     --finetuning_type lora \
-    --export_dir path_to_export
+    --export_dir path_to_export \
+    --export_size 2 \
+    --export_legacy_format False
 ```
 
 > [!WARNING]
