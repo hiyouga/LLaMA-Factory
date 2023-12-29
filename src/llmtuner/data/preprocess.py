@@ -261,7 +261,7 @@ def preprocess_dataset(
         if data_args.cache_path is not None and not os.path.exists(data_args.cache_path):
             if training_args.should_save:
                 dataset.save_to_disk(data_args.cache_path)
-            raise SystemExit("Dataset saved, rerun this script with the same `--cache_path`.")
+                logger.info("Dataset cache saved at {}.".format(data_args.cache_path))
 
         if training_args.should_log:
             try:
