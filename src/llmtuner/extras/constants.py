@@ -643,6 +643,25 @@ register_model_group(
 
 register_model_group(
     models={
+        "Yuan2-2B-Chat": {
+            DownloadSource.DEFAULT: "IEITYuan/Yuan2-2B-hf",
+            DownloadSource.MODELSCOPE: "YuanLLM/Yuan2.0-2B-hf"
+        },
+        "Yuan2-51B-Chat": {
+            DownloadSource.DEFAULT: "IEITYuan/Yuan2-51B-hf",
+            DownloadSource.MODELSCOPE: "YuanLLM/Yuan2.0-51B-hf"
+        },
+        "Yuan2-102B-Chat": {
+            DownloadSource.DEFAULT: "IEITYuan/Yuan2-102B-hf",
+            DownloadSource.MODELSCOPE: "YuanLLM/Yuan2.0-102B-hf"
+        }
+    },
+    template="yuan"
+)
+
+
+register_model_group(
+    models={
         "Zephyr-7B-Alpha-Chat": {
             DownloadSource.DEFAULT: "HuggingFaceH4/zephyr-7b-alpha",
             DownloadSource.MODELSCOPE: "AI-ModelScope/zephyr-7b-alpha"
