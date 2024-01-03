@@ -277,5 +277,6 @@ def patch_valuehead_model(model: "AutoModelForCausalLMWithValueHead") -> None:
     ignore_modules = [name for name, _ in model.named_parameters() if "pretrained_model" in name]
     setattr(model, "_keys_to_ignore_on_save", ignore_modules)
     setattr(model, "_no_split_modules", getattr(model.pretrained_model, "_no_split_modules", None))
+    setattr(model, "dtype", getattr(model.pretrained_model, "dtype", None))
     setattr(model, "tie_weights", MethodType(tie_weights, model))
     setattr(model, "get_input_embeddings", MethodType(get_input_embeddings, model))
