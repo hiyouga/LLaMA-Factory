@@ -3,7 +3,7 @@ import math
 import torch
 import random
 from types import MethodType
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 from datasets import load_dataset
 
 from transformers import BitsAndBytesConfig, GPTQConfig, PreTrainedModel, PreTrainedTokenizerBase
