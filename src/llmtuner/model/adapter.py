@@ -1,5 +1,6 @@
 import torch
 from typing import TYPE_CHECKING
+from transformers.integrations import is_deepspeed_zero3_enabled
 from peft import PeftModel, TaskType, LoraConfig, get_peft_model
 
 from llmtuner.extras.logging import get_logger
@@ -69,6 +70,10 @@ def init_adapter(
             is_mergeable = True
             if getattr(model, "quantization_method", None): # merge lora in quantized model is unstable
                 assert len(model_args.adapter_name_or_path) == 1, "Quantized model only accepts a single adapter."
+                is_mergeable = False
+
+            if is_deepspeed_zero3_enabled():
+                assert len(model_args.adapter_name_or_path) == 1, "Cannot use multiple adapters in DeepSpeed ZeRO-3."
                 is_mergeable = False
 
             if (is_trainable and not finetuning_args.create_new_adapter) or (not is_mergeable):
