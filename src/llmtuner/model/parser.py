@@ -192,7 +192,11 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
                 training_args.resume_from_checkpoint
             ))
 
-    if finetuning_args.stage in ["rm", "ppo"] and training_args.resume_from_checkpoint is not None:
+    if (
+        finetuning_args.stage in ["rm", "ppo"]
+        and finetuning_args.finetuning_type == "lora"
+        and training_args.resume_from_checkpoint is not None
+    ):
         logger.warning("Add {} to `adapter_name_or_path` to resume training from checkpoint.".format(
             training_args.resume_from_checkpoint
         ))
