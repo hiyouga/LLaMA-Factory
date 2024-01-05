@@ -1,4 +1,5 @@
 import json
+from threading import Lock
 from typing import List, Tuple
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
@@ -54,7 +55,6 @@ def to_json(data: BaseModel) -> str:
 
 def create_app(chat_model: "ChatModel") -> "FastAPI":
     app = FastAPI(lifespan=lifespan)
-
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -62,6 +62,7 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    lock = Lock()
 
     @app.get("/v1/models", response_model=ModelList)
     async def list_models():
@@ -70,6 +71,7 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
 
     @app.post("/v1/chat/completions", response_model=ChatCompletionResponse, status_code=status.HTTP_200_OK)
     async def create_chat_completion(request: ChatCompletionRequest):
+        lock.acquire()
         if not chat_model.can_generate:
             raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Not allowed")
 
@@ -123,6 +125,7 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
             total_tokens=prompt_length+response_length
         )
 
+        lock.release()
         return ChatCompletionResponse(model=request.model, choices=choices, usage=usage)
 
     async def predict(query: str, history: List[Tuple[str, str]], system: str, request: ChatCompletionRequest):
@@ -163,6 +166,7 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
 
     @app.post("/v1/score/evaluation", response_model=ScoreEvaluationResponse, status_code=status.HTTP_200_OK)
     async def create_score_evaluation(request: ScoreEvaluationRequest):
+        lock.acquire()
         if chat_model.can_generate:
             raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Not allowed")
 
@@ -170,6 +174,7 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid request")
         
         scores = chat_model.get_scores(request.messages, max_length=request.max_length)
+        lock.release()
         return ScoreEvaluationResponse(model=request.model, scores=scores)
 
     return app
