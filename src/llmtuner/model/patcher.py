@@ -139,7 +139,9 @@ def _configure_quantization(
             raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantization.")
 
         config_kwargs["device_map"] = {"": get_current_device()}
-        quantization_config = getattr(config, "quantization_config", None)
+        quantization_config: Dict[str, Any] = getattr(config, "quantization_config", None)
+        if quantization_config.get("quant_method", None) == "gptq" and quantization_config.get("bits", -1) == 4:
+            quantization_config["use_exllama"] = False # disable exllama
         logger.info("Loading {}-bit pre-quantized model.".format(quantization_config.get("bits", -1)))
 
     elif model_args.export_quantization_bit is not None: # gptq
