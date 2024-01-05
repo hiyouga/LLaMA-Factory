@@ -1,3 +1,4 @@
+import torch
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from llmtuner.extras.callbacks import LogCallback
@@ -46,7 +47,12 @@ def export_model(args: Optional[Dict[str, Any]] = None):
         logger.warning("Cannot merge adapters to a quantized model.")
 
     model.config.use_cache = True
-    model = model.to("cpu")
+    if getattr(model.config, "torch_dtype", None) == "bfloat16":
+        model = model.to(torch.bfloat16).to("cpu")
+    else:
+        model = model.to(torch.float16).to("cpu")
+        setattr(model.config, "torch_dtype", "float16")
+
     model.save_pretrained(
         save_directory=model_args.export_dir,
         max_shard_size="{}GB".format(model_args.export_size),
