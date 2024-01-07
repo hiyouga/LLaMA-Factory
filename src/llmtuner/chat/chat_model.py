@@ -152,7 +152,6 @@ class ChatModel:
             padding=True,
             truncation=True,
             max_length=max_length or getattr(self.model.config, "max_position_embeddings", 1024),
-            pad_to_multiple_of=8,
             return_tensors="pt",
             **kwargs
         ).to(device)
