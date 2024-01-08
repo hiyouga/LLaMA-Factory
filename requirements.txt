@@ -6,6 +6,7 @@ peft>=0.7.0
 trl>=0.7.6
 gradio>=3.38.0,<4.0.0
 scipy
+einops
 sentencepiece
 protobuf
 tiktoken
@@ -17,4 +18,3 @@ pydantic
 fastapi
 sse-starlette
 matplotlib
-einops
