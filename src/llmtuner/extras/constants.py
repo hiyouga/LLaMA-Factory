@@ -40,6 +40,10 @@ TRAINING_STAGES = {
     "Pre-Training": "pt"
 }
 
+V_HEAD_WEIGHTS_NAME = "v_head.bin"
+
+V_HEAD_SAFE_WEIGHTS_NAME = "v_head.safetensors"
+
 class DownloadSource(str, Enum):
     DEFAULT = "hf"
     MODELSCOPE = "ms"
