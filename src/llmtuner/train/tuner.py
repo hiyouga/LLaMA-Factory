@@ -1,5 +1,6 @@
 import torch
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from transformers import PreTrainedModel
 
 from llmtuner.extras.callbacks import LogCallback
 from llmtuner.extras.logging import get_logger
@@ -44,7 +45,10 @@ def export_model(args: Optional[Dict[str, Any]] = None):
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args)
 
     if getattr(model, "quantization_method", None) and model_args.adapter_name_or_path is not None:
-        logger.warning("Cannot merge adapters to a quantized model.")
+        raise ValueError("Cannot merge adapters to a quantized model.")
+
+    if not isinstance(model, PreTrainedModel):
+        raise ValueError("The model is not a `PreTrainedModel`, export aborted.")
 
     model.config.use_cache = True
     if getattr(model.config, "torch_dtype", None) == "bfloat16":
