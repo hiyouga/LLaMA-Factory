@@ -457,7 +457,7 @@ deepspeed --num_gpus 8 --master_port=9901 src/train_bash.py \
     "loss_scale_window": 1000,
     "hysteresis": 2,
     "min_loss_scale": 1
-  },  
+  },
   "zero_optimization": {
     "stage": 2,
     "allgather_partitions": true,

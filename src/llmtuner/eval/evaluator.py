@@ -3,7 +3,6 @@
 import os
 import json
 import torch
-import inspect
 import tiktoken
 import numpy as np
 from tqdm import tqdm, trange
@@ -46,16 +45,11 @@ class Evaluator:
         return [chr(ord("A") + offset.item()) for offset in torch.argmax(choice_probs, dim=-1)]
 
     def eval(self) -> None:
-        if "token" in inspect.signature(cached_file).parameters:
-            kwargs = {"token": self.model_args.hf_hub_token}
-        elif "use_auth_token" in inspect.signature(cached_file).parameters: # for transformers==4.31.0
-            kwargs = {"use_auth_token": self.model_args.hf_hub_token}
-
         mapping = cached_file(
             path_or_repo_id = os.path.join(self.eval_args.task_dir, self.eval_args.task),
             filename="mapping.json",
             cache_dir=self.model_args.cache_dir,
-            **kwargs
+            token=self.model_args.hf_hub_token
         )
 
         with open(mapping, "r", encoding="utf-8") as f:
