@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Optional, List
 from transformers import Seq2SeqTrainingArguments
 
 from llmtuner.data import get_dataset, preprocess_dataset, split_dataset
-from llmtuner.extras.callbacks import SavePeftModelCallback
+from llmtuner.extras.callbacks import FixValueHeadModelCallback
 from llmtuner.extras.ploting import plot_loss
 from llmtuner.model import load_model_and_tokenizer
 from llmtuner.train.rm.collator import PairwiseDataCollatorWithPadding
@@ -40,7 +40,7 @@ def run_rm(
         args=training_args,
         tokenizer=tokenizer,
         data_collator=data_collator,
-        callbacks=callbacks + [SavePeftModelCallback()],
+        callbacks=callbacks + [FixValueHeadModelCallback()],
         compute_metrics=compute_accuracy,
         **split_dataset(dataset, data_args, training_args)
     )
