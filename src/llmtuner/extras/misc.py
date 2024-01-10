@@ -79,6 +79,10 @@ def get_current_device() -> torch.device:
     return torch.device(device)
 
 
+def get_device_count() -> int:
+    return torch.cuda.device_count()
+
+
 def get_logits_processor() -> "LogitsProcessorList":
     r"""
     Gets logits processor that removes NaN and Inf logits.

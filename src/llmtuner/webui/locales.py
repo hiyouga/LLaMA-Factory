@@ -325,14 +325,14 @@ LOCALES = {
             "info": "嵌入向量所添加的噪声大小。"
         }
     },
-    "train_on_prompt": {
+    "sft_packing": {
         "en": {
-            "label": "Train on prompt",
-            "info": "Compute loss on the prompt tokens in supervised fine-tuning."
+            "label": "Pack sequences",
+            "info": "Pack sequences into samples of fixed length in supervised fine-tuning."
         },
         "zh": {
-            "label": "计算输入损失",
-            "info": "在监督微调时候计算输入序列的损失。"
+            "label": "序列打包",
+            "info": "在有监督微调阶段将序列打包为相同长度的样本。"
         }
     },
     "upcast_layernorm": {
@@ -342,7 +342,7 @@ LOCALES = {
         },
         "zh": {
             "label": "缩放归一化层",
-            "info": "将归一化层权重缩放至 32 位浮点数。"
+            "info": "将归一化层权重缩放至 32 位精度。"
         }
     },
     "lora_tab": {
@@ -664,6 +664,10 @@ ALERTS = {
     "err_demo": {
         "en": "Training is unavailable in demo mode, duplicate the space to a private one first.",
         "zh": "展示模式不支持训练，请先复制到私人空间。"
+    },
+    "err_device_count": {
+        "en": "Multiple GPUs are not supported yet.",
+        "zh": "尚不支持多 GPU 训练。"
     },
     "info_aborting": {
         "en": "Aborted, wait for terminating...",
