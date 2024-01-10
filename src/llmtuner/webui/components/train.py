@@ -37,7 +37,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
         learning_rate = gr.Textbox(value="5e-5")
         num_train_epochs = gr.Textbox(value="3.0")
         max_samples = gr.Textbox(value="100000")
-        compute_type = gr.Radio(choices=["fp16", "bf16"], value="fp16")
+        compute_type = gr.Radio(choices=["fp16", "bf16", "fp32"], value="fp16")
 
     input_elems.update({cutoff_len, learning_rate, num_train_epochs, max_samples, compute_type})
     elem_dict.update(dict(
@@ -68,13 +68,13 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             neftune_alpha = gr.Slider(value=0, minimum=0, maximum=10, step=0.1)
 
             with gr.Column():
-                train_on_prompt = gr.Checkbox(value=False)
+                sft_packing = gr.Checkbox(value=False)
                 upcast_layernorm = gr.Checkbox(value=False)
 
-    input_elems.update({logging_steps, save_steps, warmup_steps, neftune_alpha, train_on_prompt, upcast_layernorm})
+    input_elems.update({logging_steps, save_steps, warmup_steps, neftune_alpha, sft_packing, upcast_layernorm})
     elem_dict.update(dict(
         extra_tab=extra_tab, logging_steps=logging_steps, save_steps=save_steps, warmup_steps=warmup_steps,
-        neftune_alpha=neftune_alpha, train_on_prompt=train_on_prompt, upcast_layernorm=upcast_layernorm
+        neftune_alpha=neftune_alpha, sft_packing=sft_packing, upcast_layernorm=upcast_layernorm
     ))
 
     with gr.Accordion(label="LoRA config", open=False) as lora_tab:
