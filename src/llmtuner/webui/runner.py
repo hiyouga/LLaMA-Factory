@@ -12,7 +12,7 @@ from transformers.trainer import TRAINING_ARGS_NAME
 from llmtuner.extras.callbacks import LogCallback
 from llmtuner.extras.constants import TRAINING_STAGES
 from llmtuner.extras.logging import LoggerHandler
-from llmtuner.extras.misc import torch_gc
+from llmtuner.extras.misc import get_device_count, torch_gc
 from llmtuner.train import run_exp
 from llmtuner.webui.common import get_module, get_save_dir, load_config
 from llmtuner.webui.locales import ALERTS
@@ -67,6 +67,9 @@ class Runner:
         if self.demo_mode and (not from_preview):
             return ALERTS["err_demo"][lang]
 
+        if not from_preview and get_device_count() > 1:
+            return ALERTS["err_device_count"][lang]
+
         self.aborted = False
         self.logger_handler.reset()
         self.trainer_callback = LogCallback(self)
@@ -119,16 +122,17 @@ class Runner:
             save_steps=get("train.save_steps"),
             warmup_steps=get("train.warmup_steps"),
             neftune_noise_alpha=get("train.neftune_alpha") or None,
-            train_on_prompt=get("train.train_on_prompt"),
+            sft_packing=get("train.sft_packing"),
             upcast_layernorm=get("train.upcast_layernorm"),
             lora_rank=get("train.lora_rank"),
             lora_dropout=get("train.lora_dropout"),
             lora_target=get("train.lora_target") or get_module(get("top.model_name")),
             additional_target=get("train.additional_target") or None,
             create_new_adapter=get("train.create_new_adapter"),
-            output_dir=get_save_dir(get("top.model_name"), get("top.finetuning_type"), get("train.output_dir"))
+            output_dir=get_save_dir(get("top.model_name"), get("top.finetuning_type"), get("train.output_dir")),
+            fp16=(get("train.compute_type") == "fp16"),
+            bf16=(get("train.compute_type") == "bf16")
         )
-        args[get("train.compute_type")] = True
         args["disable_tqdm"] = True
 
         if TRAINING_STAGES[get("train.training_stage")] in ["rm", "ppo", "dpo"]:
