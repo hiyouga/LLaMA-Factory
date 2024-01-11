@@ -569,7 +569,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 - **[DISC-LawLLM](https://github.com/FudanDISC/DISC-LawLLM)**: 中文法律领域大模型 DISC-LawLLM，基于 Baichuan-13B 微调而得，具有法律推理和知识检索能力。
 - **[Sunsimiao](https://github.com/thomas-yanxin/Sunsimiao)**: 孙思邈中文医疗大模型 Sumsimiao，基于 Baichuan-7B 和 ChatGLM-6B 在中文医疗数据上微调而得。
 - **[CareGPT](https://github.com/WangRongsheng/CareGPT)**: 医疗大模型项目 CareGPT，基于 LLaMA2-7B 和 Baichuan-13B 在中文医疗数据上微调而得。
-
+- **[MachineMindset](https://github.com/PKU-YuanGroup/Machine-Mindset/)**: MBTI性格大模型项目，可以根据数据集+训练方式让任何LLM拥有16个不同的性格类型
 > [!TIP]
 > 如果您有项目希望添加至上述列表，请通过邮件联系或者创建一个 PR。
 
