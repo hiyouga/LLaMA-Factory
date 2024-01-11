@@ -36,6 +36,7 @@ class CustomDPOTrainer(DPOTrainer):
         self.precompute_ref_log_probs = False
         self._precomputed_train_ref_log_probs = False
         self._precomputed_eval_ref_log_probs = False
+        self._peft_has_been_casted_to_bf16 = False
 
         self.ref_model = ref_model
         self.beta = beta
