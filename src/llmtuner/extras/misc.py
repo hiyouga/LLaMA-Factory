@@ -1,14 +1,21 @@
 import gc
 import os
 import torch
-from typing import TYPE_CHECKING, Tuple
-from transformers import InfNanRemoveLogitsProcessor, LogitsProcessorList
+from typing import TYPE_CHECKING, Dict, Tuple
+from transformers import InfNanRemoveLogitsProcessor, LogitsProcessorList, PreTrainedModel
 from transformers.utils import (
+    WEIGHTS_NAME,
+    SAFE_WEIGHTS_NAME,
     is_torch_bf16_gpu_available,
     is_torch_cuda_available,
     is_torch_npu_available,
     is_torch_xpu_available
 )
+from peft import PeftModel
+
+from llmtuner.extras.constants import V_HEAD_WEIGHTS_NAME, V_HEAD_SAFE_WEIGHTS_NAME
+from llmtuner.extras.logging import get_logger
+
 
 _is_fp16_available = is_torch_npu_available() or is_torch_cuda_available()
 try:
@@ -18,7 +25,11 @@ except:
 
 
 if TYPE_CHECKING:
+    from trl import AutoModelForCausalLMWithValueHead
     from llmtuner.hparams import ModelArguments
+
+
+logger = get_logger(__name__)
 
 
 class AverageMeter:
@@ -61,6 +72,57 @@ def count_parameters(model: torch.nn.Module) -> Tuple[int, int]:
             trainable_params += num_params
 
     return trainable_params, all_param
+
+
+def fix_valuehead_checkpoint(
+    model: "AutoModelForCausalLMWithValueHead",
+    output_dir: str,
+    safe_serialization: bool
+) -> None:
+    r"""
+    The model is already unwrapped.
+
+    There are three cases:
+    1. full tuning without ds_zero3: state_dict = {"model.layers.*": ..., "v_head.summary.*": ...}
+    2. lora tuning without ds_zero3: state_dict = {"v_head.summary.*": ...}
+    3. under deepspeed zero3: state_dict = {"pretrained_model.model.layers.*": ..., "v_head.summary.*": ...}
+
+    We assume `stage3_gather_16bit_weights_on_model_save=true`.
+    """
+    if not isinstance(model.pretrained_model, (PreTrainedModel, PeftModel)):
+        return
+
+    if safe_serialization:
+        from safetensors import safe_open
+        from safetensors.torch import save_file
+        path_to_checkpoint = os.path.join(output_dir, SAFE_WEIGHTS_NAME)
+        with safe_open(path_to_checkpoint, framework="pt", device="cpu") as f:
+            state_dict: Dict[str, torch.Tensor] = {key: f.get_tensor(key) for key in f.keys()}
+    else:
+        path_to_checkpoint = os.path.join(output_dir, WEIGHTS_NAME)
+        state_dict: Dict[str, torch.Tensor] = torch.load(path_to_checkpoint, map_location="cpu")
+
+    decoder_state_dict = {}
+    v_head_state_dict = {}
+    for name, param in state_dict.items():
+        if name.startswith("v_head."):
+            v_head_state_dict[name] = param
+        else:
+            decoder_state_dict[name.replace("pretrained_model.", "")] = param
+
+    os.remove(path_to_checkpoint)
+    model.pretrained_model.save_pretrained(
+        output_dir,
+        state_dict=decoder_state_dict or None,
+        safe_serialization=safe_serialization
+    )
+
+    if safe_serialization:
+        save_file(v_head_state_dict, os.path.join(output_dir, V_HEAD_SAFE_WEIGHTS_NAME), metadata={"format": "pt"})
+    else:
+        torch.save(v_head_state_dict, os.path.join(output_dir, V_HEAD_WEIGHTS_NAME))
+
+    logger.info("Value head model saved at: {}".format(output_dir))
 
 
 def get_current_device() -> torch.device:
