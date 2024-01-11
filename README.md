@@ -569,7 +569,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 - **[DISC-LawLLM](https://github.com/FudanDISC/DISC-LawLLM)**: A large language model specialized in Chinese legal domain, based on Baichuan-13B, is capable of retrieving and reasoning on legal knowledge.
 - **[Sunsimiao](https://github.com/thomas-yanxin/Sunsimiao)**: A large language model specialized in Chinese medical domain, based on Baichuan-7B and ChatGLM-6B.
 - **[CareGPT](https://github.com/WangRongsheng/CareGPT)**: A series of large language models for Chinese medical domain, based on LLaMA2-7B and Baichuan-13B.
-- **[MachineMindset](https://github.com/PKU-YuanGroup/Machine-Mindset/)**: Psychology MBTI large language model Project, capable of giving any LLM 16 different personality types based on dataset + training method.
+- **[MachineMindset](https://github.com/PKU-YuanGroup/Machine-Mindset/)**: MBTI Personality large language model Project, capable of giving any LLM 16 different personality types based on dataset + training method.
 > [!TIP]
 > If you have a project that should be incorporated, please contact via email or create a pull request.
 
