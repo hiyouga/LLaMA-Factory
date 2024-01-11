@@ -774,15 +774,10 @@ register_template(
 register_template(
     name="zephyr",
     prefix=[
-        {"token": "<|system|>"},
-        "\n{{system}}",
-        {"token": "</s>"}
+        "<|system|>\n{{system}}</s>",
     ],
     prompt=[
-        {"token": "<|user|>"},
-        "\n{{query}}",
-        {"token": "</s>"},
-        {"token": "<|assistant|>"}
+        "<|user|>\n{{query}}</s><|assistant|>"
     ],
     system="You are a friendly chatbot who always responds in the style of a pirate",
     sep=[]
