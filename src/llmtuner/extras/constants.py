@@ -536,6 +536,20 @@ register_model_group(
 
 register_model_group(
     models={
+        "SOLAR-10.7B": {
+            DownloadSource.DEFAULT: "upstage/SOLAR-10.7B-v1.0"
+        },
+        "SOLAR-10.7B-Chat": {
+            DownloadSource.DEFAULT: "upstage/SOLAR-10.7B-Instruct-v1.0",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/SOLAR-10.7B-Instruct-v1.0"
+        }
+    },
+    template="solar"
+)
+
+
+register_model_group(
+    models={
         "Skywork-13B-Base": {
             DownloadSource.DEFAULT: "Skywork/Skywork-13B-base",
             DownloadSource.MODELSCOPE: "skywork/Skywork-13B-base"
