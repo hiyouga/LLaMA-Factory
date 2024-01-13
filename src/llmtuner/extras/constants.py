@@ -443,8 +443,7 @@ register_model_group(
             DownloadSource.DEFAULT: "microsoft/phi-2",
             DownloadSource.MODELSCOPE: "AI-ModelScope/phi-2"
         }
-    },
-    module="Wqkv"
+    }
 )
 
 
