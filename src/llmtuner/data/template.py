@@ -618,6 +618,19 @@ register_template(
 
 
 register_template(
+    name="solar",
+    prefix=[
+        "{{system}}"
+    ],
+    prompt=[
+        "### User:\n{{query}}\n\n### Assistant:\n"
+    ],
+    system="",
+    sep=[]
+)
+
+
+register_template(
     name="starchat",
     prefix=[
         {"token": "<|system|>"},
