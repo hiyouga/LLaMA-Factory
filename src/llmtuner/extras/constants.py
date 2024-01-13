@@ -271,6 +271,21 @@ register_model_group(
 
 register_model_group(
     models={
+        "DeepseekMoE-16B-Base": {
+            DownloadSource.DEFAULT: "deepseek-ai/deepseek-moe-16b-base",
+            DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-moe-16b-base"
+        },
+        "DeepseekMoE-16B-Chat": {
+            DownloadSource.DEFAULT: "deepseek-ai/deepseek-moe-16b-chat",
+            DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-moe-16b-chat"
+        }
+    },
+    template="deepseek"
+)
+
+
+register_model_group(
+    models={
         "Falcon-7B": {
             DownloadSource.DEFAULT: "tiiuae/falcon-7b",
             DownloadSource.MODELSCOPE: "AI-ModelScope/falcon-7b"
