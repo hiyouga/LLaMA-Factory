@@ -225,19 +225,19 @@ register_model_group(
 
 register_model_group(
     models={
-        "DeepseekLLM-7B-Base": {
+        "DeepSeekLLM-7B-Base": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-llm-7b-base",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-llm-7b-base"
         },
-        "DeepseekLLM-67B-Base": {
+        "DeepSeekLLM-67B-Base": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-llm-67b-base",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-llm-67b-base"
         },
-        "DeepseekLLM-7B-Chat": {
+        "DeepSeekLLM-7B-Chat": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-llm-7b-chat",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-llm-7b-chat"
         },
-        "DeepseekLLM-67B-Chat": {
+        "DeepSeekLLM-67B-Chat": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-llm-67b-chat",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-llm-67b-chat"
         }
@@ -248,19 +248,19 @@ register_model_group(
 
 register_model_group(
     models={
-        "DeepseekCoder-6.7B-Base": {
+        "DeepSeekCoder-6.7B-Base": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-coder-6.7b-base",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-coder-6.7b-base"
         },
-        "DeepseekCoder-33B-Base": {
+        "DeepSeekCoder-33B-Base": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-coder-33b-base",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-coder-33b-base"
         },
-        "DeepseekCoder-6.7B-Chat": {
+        "DeepSeekCoder-6.7B-Chat": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-coder-6.7b-instruct",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-coder-6.7b-instruct"
         },
-        "DeepseekCoder-33B-Chat": {
+        "DeepSeekCoder-33B-Chat": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-coder-33b-instruct",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-coder-33b-instruct"
         }
@@ -271,11 +271,11 @@ register_model_group(
 
 register_model_group(
     models={
-        "DeepseekMoE-16B-Base": {
+        "DeepSeekMoE-16B-Base": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-moe-16b-base",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-moe-16b-base"
         },
-        "DeepseekMoE-16B-Chat": {
+        "DeepSeekMoE-16B-Chat": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-moe-16b-chat",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-moe-16b-chat"
         }
