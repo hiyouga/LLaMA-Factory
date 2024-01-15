@@ -532,7 +532,7 @@ CUDA_VISIBLE_DEVICES=0 python src/evaluate.py \
     --model_name_or_path path_to_llama_model \
     --adapter_name_or_path path_to_checkpoint \
     --template vanilla \
-    --finetuning_type lora
+    --finetuning_type lora \
     --task mmlu \
     --split test \
     --lang en \
