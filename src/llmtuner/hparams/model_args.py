@@ -106,6 +106,10 @@ class ModelArguments:
         default=False,
         metadata={"help": "Whether or not to save the `.bin` files instead of `.safetensors`."}
     )
+    export_hub_model_id: Optional[str] = field(
+        default=None,
+        metadata={"help": "The name of the repository if push the model to the Hugging Face hub."}
+    )
 
     def __post_init__(self):
         self.compute_dtype = None
