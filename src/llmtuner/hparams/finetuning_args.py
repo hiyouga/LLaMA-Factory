@@ -160,8 +160,6 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments):
         self.lora_alpha = self.lora_alpha or self.lora_rank * 2
         self.lora_target = split_arg(self.lora_target)
         self.additional_target = split_arg(self.additional_target)
-        self.ref_model_adapters = split_arg(self.ref_model_adapters)
-        self.reward_model_adapters = split_arg(self.reward_model_adapters)
 
         assert self.finetuning_type in ["lora", "freeze", "full"], "Invalid fine-tuning method."
         assert self.ref_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
