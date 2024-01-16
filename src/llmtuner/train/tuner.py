@@ -50,7 +50,7 @@ def export_model(args: Optional[Dict[str, Any]] = None):
     if not isinstance(model, PreTrainedModel):
         raise ValueError("The model is not a `PreTrainedModel`, export aborted.")
 
-    model.config.use_cache = True
+    setattr(model.config, "use_cache", True)
     if getattr(model.config, "torch_dtype", None) == "bfloat16":
         model = model.to(torch.bfloat16).to("cpu")
     else:
@@ -62,11 +62,20 @@ def export_model(args: Optional[Dict[str, Any]] = None):
         max_shard_size="{}GB".format(model_args.export_size),
         safe_serialization=(not model_args.export_legacy_format)
     )
+    if model_args.export_hub_model_id is not None:
+        model.push_to_hub(
+            model_args.export_hub_model_id,
+            token=model_args.hf_hub_token,
+            max_shard_size="{}GB".format(model_args.export_size),
+            safe_serialization=(not model_args.export_legacy_format)
+        )
 
     try:
         tokenizer.padding_side = "left" # restore padding side
         tokenizer.init_kwargs["padding_side"] = "left"
         tokenizer.save_pretrained(model_args.export_dir)
+        if model_args.export_hub_model_id is not None:
+            tokenizer.push_to_hub(model_args.export_hub_model_id, token=model_args.hf_hub_token)
     except:
         logger.warning("Cannot save tokenizer, please copy the files manually.")
 
