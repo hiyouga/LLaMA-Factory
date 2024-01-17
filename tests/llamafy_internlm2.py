@@ -65,7 +65,7 @@ def save_weight(
         elif "w3" in key:
             llama2_state_dict[key.replace("feed_forward.w3", "mlp.up_proj")] = value
         else:
-            raise KeyError("Unable to process key {}".format(key))
+            llama2_state_dict[key] = value
 
     weights_name = SAFE_WEIGHTS_NAME if save_safetensors else WEIGHTS_NAME
     shards, index = shard_checkpoint(llama2_state_dict, max_shard_size=shard_size, weights_name=weights_name)
