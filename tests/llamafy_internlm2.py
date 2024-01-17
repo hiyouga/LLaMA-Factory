@@ -40,7 +40,7 @@ def save_weight(
     llama2_state_dict: Dict[str, torch.Tensor] = OrderedDict()
     for key, value in tqdm(internlm2_state_dict.items(), desc="Convert format"):
         if "output" in key:
-            llama2_state_dict["lm_head"] = value
+            llama2_state_dict[key.replace("output", "lm_head")] = value
         elif "tok_embeddings" in key:
             llama2_state_dict[key.replace("tok_embeddings", "embed_tokens")] = value
         elif "attention_norm" in key:
