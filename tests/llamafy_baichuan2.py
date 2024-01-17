@@ -31,7 +31,7 @@ def save_weight(
     save_safetensors: bool
 ):
     baichuan2_state_dict: Dict[str, torch.Tensor] = OrderedDict()
-    for filepath in os.listdir(input_dir):
+    for filepath in tqdm(os.listdir(input_dir), desc="Load weights"):
         if os.path.isfile(os.path.join(input_dir, filepath)) and filepath.endswith(".bin"):
             shard_weight = torch.load(os.path.join(input_dir, filepath), map_location="cpu")
             baichuan2_state_dict.update(shard_weight)

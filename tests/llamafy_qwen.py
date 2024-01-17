@@ -37,7 +37,7 @@ def save_weight(
     save_safetensors: bool
 ) -> str:
     qwen_state_dict: Dict[str, torch.Tensor] = OrderedDict()
-    for filepath in os.listdir(input_dir):
+    for filepath in tqdm(os.listdir(input_dir), desc="Load weights"):
         if os.path.isfile(os.path.join(input_dir, filepath)) and filepath.endswith(".safetensors"):
             with safe_open(os.path.join(input_dir, filepath), framework="pt", device="cpu") as f:
                 for key in f.keys():
