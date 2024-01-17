@@ -42,7 +42,7 @@ def save_weight(
         if "output" in key:
             llama2_state_dict["lm_head"] = value
         elif "tok_embeddings" in key:
-            llama2_state_dict["embed_tokens"] = value
+            llama2_state_dict[key.replace("tok_embeddings", "embed_tokens")] = value
         elif "attention_norm" in key:
             llama2_state_dict[key.replace("attention_norm", "input_layernorm")] = value
         elif "wqkv" in key:
