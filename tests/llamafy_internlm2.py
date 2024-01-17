@@ -49,8 +49,8 @@ def save_weight(
             proj_size = value.size(0)
             num_q_heads = internlm2_config_dict["num_attention_heads"]
             num_kv_heads = internlm2_config_dict["num_key_value_heads"]
-            q_size = proj_size // (num_q_heads + num_kv_heads) * num_q_heads
-            kv_size = proj_size // (num_q_heads + num_kv_heads) * num_kv_heads
+            q_size = proj_size // (num_q_heads + 2 * num_kv_heads) * num_q_heads
+            kv_size = proj_size // (num_q_heads + 2 * num_kv_heads) * num_kv_heads
             llama2_state_dict[key.replace("attention.wqkv", "self_attn.q_proj")] = value[:q_size, ...]
             llama2_state_dict[key.replace("attention.wqkv", "self_attn.k_proj")] = value[q_size:q_size+kv_size, ...]
             llama2_state_dict[key.replace("attention.wqkv", "self_attn.v_proj")] = value[q_size+kv_size:, ...]
