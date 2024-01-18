@@ -1,1 +1,4 @@
-from llmtuner.train.sft.workflow import run_sft
+from .workflow import run_sft
+
+
+__all__ = ["run_sft"]

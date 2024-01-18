@@ -10,15 +10,15 @@ from transformers import BitsAndBytesConfig, GPTQConfig, PreTrainedModel, PreTra
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.utils.versions import require_version
 
-from llmtuner.extras.constants import FILEEXT2TYPE, LAYERNORM_NAMES
-from llmtuner.extras.logging import get_logger
-from llmtuner.extras.misc import get_current_device, infer_optim_dtype
-from llmtuner.extras.packages import is_flash_attn2_available
+from ..extras.constants import FILEEXT2TYPE, LAYERNORM_NAMES
+from ..extras.logging import get_logger
+from ..extras.misc import get_current_device, infer_optim_dtype
+from ..extras.packages import is_flash_attn2_available
 
 if TYPE_CHECKING:
     from transformers import PretrainedConfig, PreTrainedTokenizer
     from trl import AutoModelForCausalLMWithValueHead
-    from llmtuner.hparams import ModelArguments
+    from ..hparams import ModelArguments
 
 
 logger = get_logger(__name__)

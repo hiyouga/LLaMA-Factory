@@ -521,6 +521,14 @@ LOCALES = {
             "placeholder": "系统提示词（非必填）"
         }
     },
+    "tools": {
+        "en": {
+            "placeholder": "Tools (optional)"
+        },
+        "zh": {
+            "placeholder": "工具列表（非必填）"
+        }
+    },
     "query": {
         "en": {
             "placeholder": "Input..."
