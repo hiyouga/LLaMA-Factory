@@ -1,1 +1,4 @@
-from llmtuner.train.ppo.workflow import run_ppo
+from .workflow import run_ppo
+
+
+__all__ = ["run_ppo"]

@@ -3,7 +3,6 @@
 import os
 import json
 import torch
-import tiktoken
 import numpy as np
 from tqdm import tqdm, trange
 from typing import Any, Dict, List, Optional
@@ -11,10 +10,11 @@ from typing import Any, Dict, List, Optional
 from datasets import load_dataset
 from transformers.utils import cached_file
 
-from llmtuner.data.template import get_template_and_fix_tokenizer
-from llmtuner.eval.template import get_eval_template
-from llmtuner.extras.constants import CHOICES, SUBJECTS
-from llmtuner.model import dispatch_model, get_eval_args, load_model_and_tokenizer
+from ..data import get_template_and_fix_tokenizer
+from .template import get_eval_template
+from ..extras.constants import CHOICES, SUBJECTS
+from ..hparams import get_eval_args
+from ..model import dispatch_model, load_model_and_tokenizer
 
 
 class Evaluator:
@@ -26,15 +26,9 @@ class Evaluator:
         self.model = dispatch_model(self.model)
         self.template = get_template_and_fix_tokenizer(self.data_args.template, self.tokenizer)
         self.eval_template = get_eval_template(self.eval_args.lang)
-        self.choice_inputs = self._encode_choices()
-
-    def _encode_choices(self) -> List[int]:
-        if isinstance(getattr(self.tokenizer, "tokenizer", None), tiktoken.Encoding): # for tiktoken tokenizer (Qwen)
-            kwargs = dict(allowed_special="all")
-        else:
-            kwargs = dict(add_special_tokens=False)
-
-        return [self.tokenizer.encode(self.eval_template.prefix + ch, **kwargs)[-1] for ch in CHOICES]
+        self.choice_inputs = [self.tokenizer.encode(
+            self.eval_template.prefix + ch, add_special_tokens=False
+        )[-1] for ch in CHOICES]
 
     @torch.inference_mode()
     def batch_inference(self, batch_input: Dict[str, torch.Tensor]) -> List[str]:
@@ -71,17 +65,17 @@ class Evaluator:
             inputs, outputs, labels = [], [], []
             for i in trange(len(dataset[self.data_args.split]), desc="Formatting batches", position=1, leave=False):
                 support_set = dataset["train"].shuffle().select(range(min(self.eval_args.n_shot, len(dataset["train"]))))
-                query, resp, history = self.eval_template.format_example(
+                messages = self.eval_template.format_example(
                     target_data=dataset[self.data_args.split][i],
                     support_set=support_set,
-                    subject_name=categorys[subject]["name"],
-                    use_history=self.template.use_history
+                    subject_name=categorys[subject]["name"]
                 )
+
                 input_ids, _ = self.template.encode_oneturn(
-                    tokenizer=self.tokenizer, query=query, resp=resp, history=history
+                    tokenizer=self.tokenizer, messages=messages
                 )
                 inputs.append({"input_ids": input_ids, "attention_mask": [1] * len(input_ids)})
-                labels.append(resp)
+                labels.append(messages[-1]["content"])
 
             for i in trange(0, len(inputs), self.eval_args.batch_size, desc="Predicting batches", position=1, leave=False):
                 batch_input = self.tokenizer.pad(

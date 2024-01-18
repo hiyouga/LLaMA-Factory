@@ -4,7 +4,7 @@ import torch
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 from transformers import Trainer
 
-from llmtuner.extras.logging import get_logger
+from ...extras.logging import get_logger
 
 if TYPE_CHECKING:
     from transformers.trainer import PredictionOutput

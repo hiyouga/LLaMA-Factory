@@ -5,7 +5,8 @@ from collections import defaultdict
 from typing import Any, Dict, Optional
 from peft.utils import WEIGHTS_NAME, SAFETENSORS_WEIGHTS_NAME
 
-from llmtuner.extras.constants import (
+from ..extras.constants import (
+    DATA_CONFIG,
     DEFAULT_MODULE,
     DEFAULT_TEMPLATE,
     PEFT_METHODS,
@@ -13,8 +14,7 @@ from llmtuner.extras.constants import (
     TRAINING_STAGES,
     DownloadSource
 )
-from llmtuner.extras.misc import use_modelscope
-from llmtuner.hparams.data_args import DATA_CONFIG
+from ..extras.misc import use_modelscope
 
 
 ADAPTER_NAMES = {WEIGHTS_NAME, SAFETENSORS_WEIGHTS_NAME}

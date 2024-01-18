@@ -13,8 +13,8 @@ from transformers.utils import (
 )
 from peft import PeftModel
 
-from llmtuner.extras.constants import V_HEAD_WEIGHTS_NAME, V_HEAD_SAFE_WEIGHTS_NAME
-from llmtuner.extras.logging import get_logger
+from .constants import V_HEAD_WEIGHTS_NAME, V_HEAD_SAFE_WEIGHTS_NAME
+from .logging import get_logger
 
 
 _is_fp16_available = is_torch_npu_available() or is_torch_cuda_available()
