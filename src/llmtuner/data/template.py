@@ -286,6 +286,9 @@ register_template(
     format_user=StringFormatter(container=[
         "Human: {{content}}###Assistant:"
     ]),
+    format_assistant=StringFormatter(container=[
+        "{{content}}"
+    ]),
     system=(
         "A chat between a curious human and an artificial intelligence assistant. "
         "The assistant gives helpful, detailed, and polite answers to the human's questions."
@@ -307,6 +310,9 @@ register_template(
         "{{content}}",
         {"token": "<reserved_103>"}
     ]),
+    format_assistant=StringFormatter(container=[
+        "{{content}}"
+    ]),
     efficient_eos=True
 )
 
@@ -317,6 +323,9 @@ register_template(
         {"token": "<reserved_106>"},
         "{{content}}",
         {"token": "<reserved_107>"}
+    ]),
+    format_assistant=StringFormatter(container=[
+        "{{content}}"
     ]),
     efficient_eos=True
 )
@@ -347,6 +356,9 @@ register_template(
     name="chatglm2",
     format_user=StringFormatter(container=[
         "[Round {{idx}}]\n\n问：{{content}}\n\n答："
+    ]),
+    format_assistant=StringFormatter(container=[
+        "{{content}}"
     ]),
     format_system=StringFormatter(container=[
         {"token": "[gMASK]"},
@@ -422,6 +434,9 @@ register_template(
     format_user=StringFormatter(container=[
         "### Instruction:\n{{content}}\n### Response:\n"
     ]),
+    format_assistant=StringFormatter(container=[
+        "{{content}}"
+    ]),
     system=(
         "You are an AI programming assistant, utilizing the Deepseek Coder model, "
         "developed by Deepseek Company, and you only answer questions related to computer science. "
@@ -460,6 +475,9 @@ register_template(
     format_user=StringFormatter(container=[
         "User: {{content}}\nFalcon:"
     ]),
+    format_assistant=StringFormatter(container=[
+        "{{content}}"
+    ]),
     separator=[
         "\n"
     ],
@@ -473,6 +491,9 @@ register_template(
         "<|User|>:{{content}}",
         {"token": "<eoh>"},
         "\n<|Bot|>:"
+    ]),
+    format_assistant=StringFormatter(container=[
+        "{{content}}"
     ]),
     separator=[
         {"token": "<eoa>"},
@@ -494,6 +515,9 @@ register_template(
         "\n",
         {"token": "[UNUSED_TOKEN_146]"},
         "assistant\n"
+    ]),
+    format_assistant=StringFormatter(container=[
+        "{{content}}"
     ]),
     format_system=StringFormatter(container=[
         {"token": "[UNUSED_TOKEN_146]"},
@@ -557,6 +581,9 @@ register_template(
         {"token": "<|end_of_turn|>"},
         "GPT4 Correct Assistant:"
     ]),
+    format_assistant=StringFormatter(container=[
+        "{{content}}"
+    ]),
     separator=[
         {"token": "<|end_of_turn|>"}
     ],
@@ -602,6 +629,9 @@ register_template(
         {"token": "<|end|>"},
         "\n",
         {"token": "<|assistant|>"}
+    ]),
+    format_assistant=StringFormatter(container=[
+        "{{content}}"
     ]),
     format_system=StringFormatter(container=[
         {"token": "<|system|>"},
