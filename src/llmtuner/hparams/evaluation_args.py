@@ -43,13 +43,5 @@ class EvaluationArguments:
     )
 
     def __post_init__(self):
-        task_available = []
-        for folder in os.listdir(self.task_dir):
-            if os.path.isdir(os.path.join(self.task_dir, folder)):
-                task_available.append(folder)
-
-        if self.task not in task_available:
-            raise ValueError("Task {} not found in {}.".format(self.task, self.task_dir))
-
         if self.save_dir is not None and os.path.exists(self.save_dir):
             raise ValueError("`save_dir` already exists, use another one.")

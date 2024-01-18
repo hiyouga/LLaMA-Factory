@@ -1,1 +1,4 @@
-from llmtuner.train.rm.workflow import run_rm
+from .workflow import run_rm
+
+
+__all__ = ["run_rm"]

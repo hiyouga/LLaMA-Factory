@@ -8,14 +8,12 @@ from typing import Any, Dict, Optional, Tuple
 from transformers import HfArgumentParser, Seq2SeqTrainingArguments
 from transformers.trainer_utils import get_last_checkpoint
 
-from llmtuner.extras.logging import get_logger
-from llmtuner.hparams import (
-    ModelArguments,
-    DataArguments,
-    EvaluationArguments,
-    FinetuningArguments,
-    GeneratingArguments
-)
+from ..extras.logging import get_logger
+from .data_args import DataArguments
+from .evaluation_args import EvaluationArguments
+from .finetuning_args import FinetuningArguments
+from .generating_args import GeneratingArguments
+from .model_args import ModelArguments
 
 
 logger = get_logger(__name__)
@@ -107,8 +105,6 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         _set_transformers_logging()
 
     # Check arguments
-    data_args.init_for_training(training_args.seed)
-
     if finetuning_args.stage != "pt" and data_args.template is None:
         raise ValueError("Please specify which `template` to use.")
 

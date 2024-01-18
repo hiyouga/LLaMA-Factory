@@ -2,14 +2,14 @@ import gradio as gr
 from gradio.components import Component # cannot use TYPE_CHECKING here
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Tuple
 
-from llmtuner.chat import ChatModel
-from llmtuner.extras.misc import torch_gc
-from llmtuner.hparams import GeneratingArguments
-from llmtuner.webui.common import get_save_dir
-from llmtuner.webui.locales import ALERTS
+from ..chat import ChatModel
+from ..extras.misc import torch_gc
+from ..hparams import GeneratingArguments
+from .common import get_save_dir
+from .locales import ALERTS
 
 if TYPE_CHECKING:
-    from llmtuner.webui.manager import Manager
+    from .manager import Manager
 
 
 class WebChatModel(ChatModel):
