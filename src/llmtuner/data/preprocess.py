@@ -97,7 +97,7 @@ def preprocess_packed_supervised_dataset(
 
         messages = examples["prompt"][i] + examples["response"][i]
         for turn_idx, (source_ids, target_ids) in enumerate(template.encode_multiturn(
-            tokenizer, messages, examples["system"][i], examples["tool"][i], 1_000_000
+            tokenizer, messages, examples["system"][i], examples["tool"][i]
         )):
             if data_args.train_on_prompt:
                 source_mask = source_ids
