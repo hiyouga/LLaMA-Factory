@@ -198,12 +198,12 @@
     "hf_hub_url": "WizardLM/WizardLM_evol_instruct_V2_196k",
     "formatting": "sharegpt"
   },
-  "glaive_func_call": {
-    "file_name": "glaive_func_call.json",
+  "glaive_toolcall": {
+    "file_name": "glaive_toolcall_10k.json",
     "formatting": "sharegpt",
     "columns": {
       "messages": "conversations",
-      "tool": "tools"
+      "tools": "tools"
     }
   },
   "hh_rlhf_en": {
