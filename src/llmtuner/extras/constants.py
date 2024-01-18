@@ -343,6 +343,30 @@ register_model_group(
 
 register_model_group(
     models={
+        "InternLM2-7B": {
+            DownloadSource.DEFAULT: "internlm/internlm2-7b",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2-7b"
+        },
+        "InternLM2-20B": {
+            DownloadSource.DEFAULT: "internlm/internlm2-20b",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2-20b"
+        },
+        "InternLM2-7B-Chat": {
+            DownloadSource.DEFAULT: "internlm/internlm2-chat-7b",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2-chat-7b"
+        },
+        "InternLM2-20B-Chat": {
+            DownloadSource.DEFAULT: "internlm/internlm2-chat-20b",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2-chat-20b"
+        }
+    },
+    module="wqkv",
+    template="intern2"
+)
+
+
+register_model_group(
+    models={
         "LingoWhale-8B": {
             DownloadSource.DEFAULT: "deeplang-ai/LingoWhale-8B",
             DownloadSource.MODELSCOPE: "DeepLang/LingoWhale-8B"
