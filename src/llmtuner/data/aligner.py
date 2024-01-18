@@ -60,7 +60,7 @@ def convert_sharegpt(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr"
                 accept_tags = [dataset_attr.assistant_tag, dataset_attr.function_tag]
 
             if message[dataset_attr.role_tag] not in accept_tags:
-                raise ValueError("Invalid role tag.")
+                raise ValueError("Invalid role tag in {}.".format(messages))
 
             prompt.append({"role": tag_mapping[message[dataset_attr.role_tag]], "content": message[dataset_attr.content_tag]})
 
