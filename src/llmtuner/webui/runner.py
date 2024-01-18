@@ -9,17 +9,17 @@ from typing import TYPE_CHECKING, Any, Dict, Generator, Optional, Tuple
 import transformers
 from transformers.trainer import TRAINING_ARGS_NAME
 
-from llmtuner.extras.callbacks import LogCallback
-from llmtuner.extras.constants import TRAINING_STAGES
-from llmtuner.extras.logging import LoggerHandler
-from llmtuner.extras.misc import get_device_count, torch_gc
-from llmtuner.train import run_exp
-from llmtuner.webui.common import get_module, get_save_dir, load_config
-from llmtuner.webui.locales import ALERTS
-from llmtuner.webui.utils import gen_cmd, get_eval_results, update_process_bar
+from ..extras.callbacks import LogCallback
+from ..extras.constants import TRAINING_STAGES
+from ..extras.logging import LoggerHandler
+from ..extras.misc import get_device_count, torch_gc
+from ..train import run_exp
+from .common import get_module, get_save_dir, load_config
+from .locales import ALERTS
+from .utils import gen_cmd, get_eval_results, update_process_bar
 
 if TYPE_CHECKING:
-    from llmtuner.webui.manager import Manager
+    from .manager import Manager
 
 
 class Runner:

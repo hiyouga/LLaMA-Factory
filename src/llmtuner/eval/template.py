@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, List, Tuple
 
-from llmtuner.extras.constants import CHOICES
+from ..extras.constants import CHOICES
 
 if TYPE_CHECKING:
     from datasets import Dataset
@@ -44,7 +44,7 @@ class EvalTemplate:
         return query.strip(), resp, history
 
 
-eval_templates: Dict[str, EvalTemplate] = {}
+eval_templates: Dict[str, "EvalTemplate"] = {}
 
 
 def register_eval_template(
@@ -62,7 +62,7 @@ def register_eval_template(
     )
 
 
-def get_eval_template(name: str) -> EvalTemplate:
+def get_eval_template(name: str) -> "EvalTemplate":
     eval_template = eval_templates.get(name, None)
     assert eval_template is not None, "Template {} does not exist.".format(name)
     return eval_template

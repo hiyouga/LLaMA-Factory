@@ -5,6 +5,8 @@ from typing import Dict, Optional
 
 CHOICES = ["A", "B", "C", "D"]
 
+DATA_CONFIG = "dataset_info.json"
+
 DEFAULT_MODULE = defaultdict(str)
 
 DEFAULT_TEMPLATE = defaultdict(str)

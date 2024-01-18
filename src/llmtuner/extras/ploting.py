@@ -4,8 +4,8 @@ import json
 from typing import List, Optional
 from transformers.trainer import TRAINER_STATE_NAME
 
-from llmtuner.extras.logging import get_logger
-from llmtuner.extras.packages import is_matplotlib_available
+from .logging import get_logger
+from .packages import is_matplotlib_available
 
 if is_matplotlib_available():
     import matplotlib.pyplot as plt

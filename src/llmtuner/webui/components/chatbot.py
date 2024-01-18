@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING, Dict, Optional, Tuple
 if TYPE_CHECKING:
     from gradio.blocks import Block
     from gradio.components import Component
-    from llmtuner.webui.engine import Engine
+
+    from ..engine import Engine
 
 
 def create_chat_box(
