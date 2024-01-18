@@ -95,7 +95,21 @@ class Template:
 
             encoded_messages.append(self._convert_elements_to_ids(tokenizer, elements))
 
-        return [(encoded_messages[i], encoded_messages[i+1]) for i in range(0, len(encoded_messages), 2)]
+        # TODO: need to improve
+        encoded_pairs = []
+        total_length = 0
+        for i in range(0, len(encoded_messages), 2):
+            if total_length >= cutoff_len:
+                break
+
+            encoded_messages[i] = encoded_messages[i][:cutoff_len-total_length]
+            total_length += len(encoded_messages[i])
+
+            encoded_messages[i+1] = encoded_messages[i+1][:max(1, cutoff_len-total_length)]
+            total_length += len(encoded_messages[i+1])
+            encoded_pairs.append((encoded_messages[i], encoded_messages[i+1]))
+
+        return encoded_pairs
 
     def _convert_elements_to_ids(
         self,
@@ -161,7 +175,21 @@ class Llama2Template(Template):
 
             encoded_messages.append(self._convert_elements_to_ids(tokenizer, elements))
 
-        return [(encoded_messages[i], encoded_messages[i+1]) for i in range(0, len(encoded_messages), 2)]
+        # TODO: need to improve
+        encoded_pairs = []
+        total_length = 0
+        for i in range(0, len(encoded_messages), 2):
+            if total_length >= cutoff_len:
+                break
+
+            encoded_messages[i] = encoded_messages[i][:cutoff_len-total_length]
+            total_length += len(encoded_messages[i])
+
+            encoded_messages[i+1] = encoded_messages[i+1][:max(1, cutoff_len-total_length)]
+            total_length += len(encoded_messages[i+1])
+            encoded_pairs.append((encoded_messages[i], encoded_messages[i+1]))
+
+        return encoded_pairs
 
 
 templates: Dict[str, Template] = {}
