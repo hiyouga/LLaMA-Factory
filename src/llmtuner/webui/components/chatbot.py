@@ -18,6 +18,7 @@ def create_chat_box(
         with gr.Row():
             with gr.Column(scale=4):
                 system = gr.Textbox(show_label=False)
+                tools = gr.Textbox(show_label=False, lines=2)
                 query = gr.Textbox(show_label=False, lines=8)
                 submit_btn = gr.Button(variant="primary")
 
@@ -30,7 +31,7 @@ def create_chat_box(
 
     submit_btn.click(
         engine.chatter.predict,
-        [chatbot, query, history, system, max_new_tokens, top_p, temperature],
+        [chatbot, query, history, system, tools, max_new_tokens, top_p, temperature],
         [chatbot, history],
         show_progress=True
     ).then(
@@ -41,6 +42,7 @@ def create_chat_box(
 
     return chat_box, chatbot, history, dict(
         system=system,
+        tools=tools,
         query=query,
         submit_btn=submit_btn,
         clear_btn=clear_btn,
