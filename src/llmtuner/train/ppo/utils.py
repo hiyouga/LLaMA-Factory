@@ -2,7 +2,7 @@ import json
 import torch
 from typing import TYPE_CHECKING, Dict, List, Literal, Optional
 
-from llmtuner.extras.packages import is_requests_available
+from ...extras.packages import is_requests_available
 
 if TYPE_CHECKING:
     from transformers import PreTrainedModel

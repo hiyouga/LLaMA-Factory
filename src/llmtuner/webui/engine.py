@@ -2,12 +2,12 @@ import gradio as gr
 from gradio.components import Component # cannot use TYPE_CHECKING here
 from typing import Any, Dict, Generator, Optional
 
-from llmtuner.webui.chatter import WebChatModel
-from llmtuner.webui.common import get_model_path, list_dataset, load_config
-from llmtuner.webui.locales import LOCALES
-from llmtuner.webui.manager import Manager
-from llmtuner.webui.runner import Runner
-from llmtuner.webui.utils import get_time
+from .chatter import WebChatModel
+from .common import get_model_path, list_dataset, load_config
+from .locales import LOCALES
+from .manager import Manager
+from .runner import Runner
+from .utils import get_time
 
 
 class Engine:

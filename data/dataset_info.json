@@ -165,9 +165,13 @@
     "hf_hub_url": "HuggingFaceH4/ultrachat_200k",
     "ms_hub_url": "AI-ModelScope/ultrachat_200k",
     "columns": {
-      "messages": "messages",
-      "role": "role",
-      "content": "content"
+      "messages": "messages"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "human",
+      "assistant_tag": "assistant"
     },
     "formatting": "sharegpt"
   },
@@ -180,15 +184,27 @@
     "hf_hub_url": "lmsys/lmsys-chat-1m",
     "ms_hub_url": "AI-ModelScope/lmsys-chat-1m",
     "columns": {
-      "messages": "conversation",
-      "role": "role",
-      "content": "content"
+      "messages": "conversation"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "human",
+      "assistant_tag": "assistant"
     },
     "formatting": "sharegpt"
   },
   "evol_instruct": {
     "hf_hub_url": "WizardLM/WizardLM_evol_instruct_V2_196k",
     "formatting": "sharegpt"
+  },
+  "glaive_func_call": {
+    "file_name": "glaive_func_call.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "tool": "tools"
+    }
   },
   "hh_rlhf_en": {
     "script_url": "hh_rlhf_en",
