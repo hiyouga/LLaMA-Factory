@@ -1,6 +1,9 @@
 import gradio as gr
 from typing import TYPE_CHECKING, Dict, Optional, Tuple
 
+from ..utils import check_json_schema
+
+
 if TYPE_CHECKING:
     from gradio.blocks import Block
     from gradio.components import Component
@@ -28,6 +31,8 @@ def create_chat_box(
                 max_new_tokens = gr.Slider(10, 2048, value=gen_kwargs.max_new_tokens, step=1)
                 top_p = gr.Slider(0.01, 1, value=gen_kwargs.top_p, step=0.01)
                 temperature = gr.Slider(0.01, 1.5, value=gen_kwargs.temperature, step=0.01)
+
+    tools.input(check_json_schema, [tools])
 
     submit_btn.click(
         engine.chatter.predict,

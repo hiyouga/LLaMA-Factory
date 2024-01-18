@@ -41,6 +41,13 @@ def can_quantize(finetuning_type: str) -> Dict[str, Any]:
         return gr.update(interactive=True)
 
 
+def check_json_schema(text: str) -> None:
+    try:
+        json.loads(text)
+    except json.JSONDecodeError:
+        gr.Warning("Invalid JSON schema")
+
+
 def gen_cmd(args: Dict[str, Any]) -> str:
     args.pop("disable_tqdm", None)
     args["plot_loss"] = args.get("do_train", None)
