@@ -1,12 +1,13 @@
 import gradio as gr
 from typing import TYPE_CHECKING, Dict
 
-from llmtuner.webui.common import list_dataset, DEFAULT_DATA_DIR
-from llmtuner.webui.components.data import create_preview_box
+from ..common import list_dataset, DEFAULT_DATA_DIR
+from .data import create_preview_box
 
 if TYPE_CHECKING:
     from gradio.components import Component
-    from llmtuner.webui.engine import Engine
+
+    from ..engine import Engine
 
 
 def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:

@@ -1,13 +1,14 @@
 import gradio as gr
 from typing import TYPE_CHECKING, Dict, Generator, List
 
-from llmtuner.train import export_model
-from llmtuner.webui.common import get_save_dir
-from llmtuner.webui.locales import ALERTS
+from ...train import export_model
+from ..common import get_save_dir
+from ..locales import ALERTS
 
 if TYPE_CHECKING:
     from gradio.components import Component
-    from llmtuner.webui.engine import Engine
+
+    from ..engine import Engine
 
 
 GPTQ_BITS = ["8", "4", "3", "2"]
