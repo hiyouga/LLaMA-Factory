@@ -5,7 +5,7 @@ from transformers import BatchEncoding, Trainer
 from trl import DPOTrainer
 from trl.trainer.utils import disable_dropout_in_model
 
-from llmtuner.extras.constants import IGNORE_INDEX
+from ...extras.constants import IGNORE_INDEX
 
 if TYPE_CHECKING:
     from transformers import PreTrainedModel

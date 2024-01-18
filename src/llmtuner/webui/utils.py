@@ -4,12 +4,12 @@ import gradio as gr
 from typing import TYPE_CHECKING, Any, Dict
 from datetime import datetime
 
-from llmtuner.extras.packages import is_matplotlib_available
-from llmtuner.extras.ploting import smooth
-from llmtuner.webui.common import get_save_dir
+from ..extras.packages import is_matplotlib_available
+from ..extras.ploting import smooth
+from .common import get_save_dir
 
 if TYPE_CHECKING:
-    from llmtuner.extras.callbacks import LogCallback
+    from ..extras.callbacks import LogCallback
 
 if is_matplotlib_available():
     import matplotlib.figure

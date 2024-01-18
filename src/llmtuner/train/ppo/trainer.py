@@ -13,15 +13,15 @@ from transformers.trainer_pt_utils import remove_dummy_checkpoint
 from trl import PPOTrainer
 from trl.core import PPODecorators, logprobs_from_logits
 
-from llmtuner.extras.callbacks import LogCallback, FixValueHeadModelCallback
-from llmtuner.extras.logging import get_logger
-from llmtuner.extras.misc import AverageMeter, count_parameters, get_logits_processor
-from llmtuner.train.ppo.utils import dump_layernorm, get_rewards_from_server, restore_layernorm, replace_model
+from ...extras.callbacks import LogCallback, FixValueHeadModelCallback
+from ...extras.logging import get_logger
+from ...extras.misc import AverageMeter, count_parameters, get_logits_processor
+from .utils import dump_layernorm, get_rewards_from_server, restore_layernorm, replace_model
 
 if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments, TrainerCallback
     from trl import AutoModelForCausalLMWithValueHead
-    from llmtuner.hparams import ModelArguments, FinetuningArguments, GeneratingArguments
+    from ...hparams import ModelArguments, FinetuningArguments, GeneratingArguments
 
 
 logger = get_logger(__name__)

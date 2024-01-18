@@ -6,8 +6,8 @@ import torch.nn as nn
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from transformers import Seq2SeqTrainer
 
-from llmtuner.extras.constants import IGNORE_INDEX
-from llmtuner.extras.logging import get_logger
+from ...extras.constants import IGNORE_INDEX
+from ...extras.logging import get_logger
 
 if TYPE_CHECKING:
     from transformers.trainer import PredictionOutput

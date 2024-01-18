@@ -4,14 +4,14 @@ import math
 from typing import TYPE_CHECKING, Optional, List
 from transformers import DataCollatorForLanguageModeling, Trainer
 
-from llmtuner.data import get_dataset, preprocess_dataset, split_dataset
-from llmtuner.extras.ploting import plot_loss
-from llmtuner.model import load_model_and_tokenizer
-from llmtuner.train.utils import create_modelcard_and_push
+from ...data import get_dataset, split_dataset
+from ...extras.ploting import plot_loss
+from ...model import load_model_and_tokenizer
+from ...train.utils import create_modelcard_and_push
 
 if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments, TrainerCallback
-    from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
+    from ...hparams import ModelArguments, DataArguments, FinetuningArguments
 
 
 def run_pt(
@@ -21,9 +21,8 @@ def run_pt(
     finetuning_args: "FinetuningArguments",
     callbacks: Optional[List["TrainerCallback"]] = None
 ):
-    dataset = get_dataset(model_args, data_args)
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train)
-    dataset = preprocess_dataset(dataset, tokenizer, data_args, training_args, stage="pt")
+    dataset = get_dataset(model_args, data_args, tokenizer, training_args, stage="pt")
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
     # Initialize our Trainer
