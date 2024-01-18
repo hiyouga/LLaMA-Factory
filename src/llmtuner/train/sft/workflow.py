@@ -3,18 +3,19 @@
 from typing import TYPE_CHECKING, Optional, List
 from transformers import DataCollatorForSeq2Seq, Seq2SeqTrainingArguments
 
-from llmtuner.data import get_dataset, preprocess_dataset, split_dataset
-from llmtuner.extras.constants import IGNORE_INDEX
-from llmtuner.extras.misc import get_logits_processor
-from llmtuner.extras.ploting import plot_loss
-from llmtuner.model import load_model_and_tokenizer
-from llmtuner.train.sft.metric import ComputeMetrics
-from llmtuner.train.sft.trainer import CustomSeq2SeqTrainer
-from llmtuner.train.utils import create_modelcard_and_push
+from ...data import get_dataset, split_dataset
+from ...extras.constants import IGNORE_INDEX
+from ...extras.misc import get_logits_processor
+from ...extras.ploting import plot_loss
+from ...model import load_model_and_tokenizer
+from ...train.sft.metric import ComputeMetrics
+from ...train.sft.trainer import CustomSeq2SeqTrainer
+from ...train.utils import create_modelcard_and_push
+
 
 if TYPE_CHECKING:
     from transformers import TrainerCallback
-    from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments
+    from ...hparams import ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments
 
 
 def run_sft(
@@ -25,9 +26,8 @@ def run_sft(
     generating_args: "GeneratingArguments",
     callbacks: Optional[List["TrainerCallback"]] = None
 ):
-    dataset = get_dataset(model_args, data_args)
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train)
-    dataset = preprocess_dataset(dataset, tokenizer, data_args, training_args, stage="sft")
+    dataset = get_dataset(model_args, data_args, tokenizer, training_args, stage="sft")
 
     if training_args.predict_with_generate:
         tokenizer.padding_side = "left" # use left-padding in generation

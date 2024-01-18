@@ -4,13 +4,13 @@ from typing import TYPE_CHECKING, Any, Dict, List
 from transformers import PreTrainedModel
 from transformers.utils import cached_file
 
-from llmtuner.extras.constants import V_HEAD_WEIGHTS_NAME, V_HEAD_SAFE_WEIGHTS_NAME
-from llmtuner.extras.logging import get_logger
-from llmtuner.extras.misc import get_current_device
+from ..extras.constants import V_HEAD_WEIGHTS_NAME, V_HEAD_SAFE_WEIGHTS_NAME
+from ..extras.logging import get_logger
+from ..extras.misc import get_current_device
 
 if TYPE_CHECKING:
     from transformers import PretrainedConfig, PreTrainedTokenizer
-    from llmtuner.hparams import ModelArguments, DataArguments, FinetuningArguments
+    from ..hparams import ModelArguments, DataArguments, FinetuningArguments
 
 
 logger = get_logger(__name__)

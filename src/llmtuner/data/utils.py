@@ -1,7 +1,8 @@
 import hashlib
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from enum import Enum, unique
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
-from llmtuner.extras.logging import get_logger
+from ..extras.logging import get_logger
 
 if TYPE_CHECKING:
     from datasets import Dataset, IterableDataset
@@ -10,6 +11,14 @@ if TYPE_CHECKING:
 
 
 logger = get_logger(__name__)
+
+
+@unique
+class Role(str, Enum):
+    USER = "user"
+    ASSISTANT = "assistant"
+    OBSERVATION = "observation"
+    FUNCTION = "function"
 
 
 def checksum(data_files: List[str], file_sha1: Optional[str] = None) -> None:
@@ -25,6 +34,13 @@ def checksum(data_files: List[str], file_sha1: Optional[str] = None) -> None:
         sha1 = hashlib.sha1(f.read()).hexdigest()
         if sha1 != file_sha1:
             logger.warning("Checksum failed: mismatched SHA-1 hash value at {}.".format(data_files[0]))
+
+
+def infer_max_len(source_len: int, target_len: int, data_args: "DataArguments") -> Tuple[int, int]:
+    max_target_len = int(data_args.cutoff_len * (target_len / (source_len + target_len)))
+    max_target_len = max(max_target_len, data_args.reserved_label_len)
+    max_source_len = data_args.cutoff_len - max_target_len
+    return max_source_len, max_target_len
 
 
 def split_dataset(

@@ -5,7 +5,7 @@ from typing import List, Tuple
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
 
-from llmtuner.api.protocol import (
+from .protocol import (
     Role,
     Finish,
     ModelCard,
@@ -21,9 +21,9 @@ from llmtuner.api.protocol import (
     ScoreEvaluationRequest,
     ScoreEvaluationResponse
 )
-from llmtuner.chat import ChatModel
-from llmtuner.extras.misc import torch_gc
-from llmtuner.extras.packages import (
+from ..chat import ChatModel
+from ..extras.misc import torch_gc
+from ..extras.packages import (
     is_fastapi_availble, is_starlette_available, is_uvicorn_available
 )
 

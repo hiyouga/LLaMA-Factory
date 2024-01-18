@@ -3,7 +3,7 @@ import json
 import gradio as gr
 from typing import TYPE_CHECKING, Any, Dict, Tuple
 
-from llmtuner.webui.common import DATA_CONFIG
+from ...extras.constants import DATA_CONFIG
 
 if TYPE_CHECKING:
     from gradio.components import Component

@@ -9,7 +9,6 @@ scipy
 einops
 sentencepiece
 protobuf
-tiktoken
 jieba
 rouge-chinese
 nltk

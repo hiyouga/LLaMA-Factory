@@ -2,8 +2,8 @@ import numpy as np
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, Sequence, Tuple, Union
 
-from llmtuner.extras.constants import IGNORE_INDEX
-from llmtuner.extras.packages import (
+from ...extras.constants import IGNORE_INDEX
+from ...extras.packages import (
     is_jieba_available, is_nltk_available, is_rouge_available
 )
 
