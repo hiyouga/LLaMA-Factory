@@ -44,9 +44,9 @@ class FunctionFormatter:
     def __call__(self, content: str) -> List[Union[str, Dict[str, str]]]:
         try:
             function = json.loads(content)
-            name = json.dumps(function["name"], ensure_ascii=False)
+            name = function["name"]
             arguments = json.dumps(function["arguments"], ensure_ascii=False)
-        except json.JSONDecodeError:
+        except Exception:
             name, arguments = "", ""
 
         elements = []
@@ -98,5 +98,5 @@ class ToolFormatter:
 
             if self.type == "default":
                 return [self._default(tools)]
-        except json.JSONDecodeError:
+        except Exception:
             return [""]
