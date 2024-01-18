@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 def convert_alpaca(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") -> Dict[str, List[Any]]:
-    outputs = {"prompt": [], "response": [], "system": [], "tool": []}
+    outputs = {"prompt": [], "response": [], "system": [], "tools": []}
     for i in range(len(examples[dataset_attr.prompt])):
         prompt = []
         if dataset_attr.history:
@@ -33,13 +33,13 @@ def convert_alpaca(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") 
         outputs["prompt"].append(prompt)
         outputs["response"].append(response)
         outputs["system"].append(examples[dataset_attr.system][i] if dataset_attr.system else "")
-        outputs["tool"].append("")
+        outputs["tools"].append("")
 
     return outputs
 
 
 def convert_sharegpt(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") -> Dict[str, List[Any]]:
-    outputs = {"prompt": [], "response": [], "system": [], "tool": []}
+    outputs = {"prompt": [], "response": [], "system": [], "tools": []}
     tag_mapping = {
         dataset_attr.user_tag: Role.USER,
         dataset_attr.assistant_tag: Role.ASSISTANT,
@@ -69,7 +69,7 @@ def convert_sharegpt(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr"
         outputs["prompt"].append(prompt)
         outputs["response"].append(response)
         outputs["system"].append(examples[dataset_attr.system][i] if dataset_attr.system else "")
-        outputs["tool"].append(examples[dataset_attr.tool][i] if dataset_attr.tool else "")
+        outputs["tools"].append(examples[dataset_attr.tools][i] if dataset_attr.tools else "")
 
     return outputs
 
@@ -82,7 +82,7 @@ def align_dataset(
         prompt: [{"role": "user", "content": "..."}]
         response: [{"role": "assistant", "content": "..."}]
         system: "..."
-        tool: "..."
+        tools: "..."
     """
     if dataset_attr.formatting == "alpaca":
         convert_func = partial(convert_alpaca, dataset_attr=dataset_attr)

@@ -29,7 +29,7 @@ class DatasetAttr:
     history: Optional[str] = None
 
     messages: Optional[str] = "conversations"
-    tool: Optional[str] = None
+    tools: Optional[str] = None
 
     role_tag: Optional[str] = "from"
     content_tag: Optional[str] = "value"
@@ -86,7 +86,7 @@ def get_dataset_list(data_args: "DataArguments") -> List["DatasetAttr"]:
             if dataset_attr.formatting == "alpaca":
                 column_names = ["prompt", "query", "response", "history"]
             else:
-                column_names = ["messages", "tool"]
+                column_names = ["messages", "tools"]
 
             column_names += ["system"]
             for column_name in column_names:

@@ -93,6 +93,9 @@ class ToolFormatter:
     def __call__(self, content: str) -> List[Union[str, Dict[str, str]]]:
         try:
             tools = json.loads(content)
+            if not len(tools):
+                return [""]
+
             if self.type == "default":
                 return [self._default(tools)]
         except json.JSONDecodeError:
