@@ -1,10 +1,14 @@
 import gradio as gr
 from typing import TYPE_CHECKING, Dict, Optional, Tuple
 
+from ..utils import check_json_schema
+
+
 if TYPE_CHECKING:
     from gradio.blocks import Block
     from gradio.components import Component
-    from llmtuner.webui.engine import Engine
+
+    from ..engine import Engine
 
 
 def create_chat_box(
@@ -17,6 +21,7 @@ def create_chat_box(
         with gr.Row():
             with gr.Column(scale=4):
                 system = gr.Textbox(show_label=False)
+                tools = gr.Textbox(show_label=False, lines=2)
                 query = gr.Textbox(show_label=False, lines=8)
                 submit_btn = gr.Button(variant="primary")
 
@@ -27,9 +32,11 @@ def create_chat_box(
                 top_p = gr.Slider(0.01, 1, value=gen_kwargs.top_p, step=0.01)
                 temperature = gr.Slider(0.01, 1.5, value=gen_kwargs.temperature, step=0.01)
 
+    tools.input(check_json_schema, [tools])
+
     submit_btn.click(
         engine.chatter.predict,
-        [chatbot, query, history, system, max_new_tokens, top_p, temperature],
+        [chatbot, query, history, system, tools, max_new_tokens, top_p, temperature],
         [chatbot, history],
         show_progress=True
     ).then(
@@ -40,6 +47,7 @@ def create_chat_box(
 
     return chat_box, chatbot, history, dict(
         system=system,
+        tools=tools,
         query=query,
         submit_btn=submit_btn,
         clear_btn=clear_btn,

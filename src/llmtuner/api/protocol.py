@@ -1,15 +1,17 @@
 import time
-from enum import Enum
+from enum import Enum, unique
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
 
+@unique
 class Role(str, Enum):
     USER = "user"
     ASSISTANT = "assistant"
     SYSTEM = "system"
 
 
+@unique
 class Finish(str, Enum):
     STOP = "stop"
     LENGTH = "length"

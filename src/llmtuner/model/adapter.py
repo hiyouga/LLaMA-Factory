@@ -3,12 +3,12 @@ from typing import TYPE_CHECKING
 from transformers.integrations import is_deepspeed_zero3_enabled
 from peft import PeftModel, TaskType, LoraConfig, get_peft_model
 
-from llmtuner.extras.logging import get_logger
-from llmtuner.model.utils import find_all_linear_modules
+from ..extras.logging import get_logger
+from .utils import find_all_linear_modules
 
 if TYPE_CHECKING:
     from transformers.modeling_utils import PreTrainedModel
-    from llmtuner.hparams import ModelArguments, FinetuningArguments
+    from ..hparams import ModelArguments, FinetuningArguments
 
 
 logger = get_logger(__name__)

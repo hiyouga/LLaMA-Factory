@@ -5,6 +5,8 @@ from typing import Dict, Optional
 
 CHOICES = ["A", "B", "C", "D"]
 
+DATA_CONFIG = "dataset_info.json"
+
 DEFAULT_MODULE = defaultdict(str)
 
 DEFAULT_TEMPLATE = defaultdict(str)
@@ -336,6 +338,30 @@ register_model_group(
         }
     },
     template="intern"
+)
+
+
+register_model_group(
+    models={
+        "InternLM2-7B": {
+            DownloadSource.DEFAULT: "internlm/internlm2-7b",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2-7b"
+        },
+        "InternLM2-20B": {
+            DownloadSource.DEFAULT: "internlm/internlm2-20b",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2-20b"
+        },
+        "InternLM2-7B-Chat": {
+            DownloadSource.DEFAULT: "internlm/internlm2-chat-7b",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2-chat-7b"
+        },
+        "InternLM2-20B-Chat": {
+            DownloadSource.DEFAULT: "internlm/internlm2-chat-20b",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2-chat-20b"
+        }
+    },
+    module="wqkv",
+    template="intern2"
 )
 
 

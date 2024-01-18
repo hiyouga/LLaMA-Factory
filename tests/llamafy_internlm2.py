@@ -1,6 +1,7 @@
 # coding=utf-8
 # Converts the InternLM2 model in the same format as LLaMA2.
 # Usage: python llamafy_internlm2.py --input_dir input --output_dir output --shard_size 10GB
+# Warning: We have found that the converted model cannot infer correctly. It will be fixed later.
 
 import os
 import fire
@@ -43,19 +44,18 @@ def save_weight(
             llama2_state_dict[key.replace("output", "lm_head")] = value
         elif "tok_embeddings" in key:
             llama2_state_dict[key.replace("tok_embeddings", "embed_tokens")] = value
-        elif "attention_norm" in key:
-            llama2_state_dict[key.replace("attention_norm", "input_layernorm")] = value
         elif "wqkv" in key:
-            proj_size = value.size(0)
             num_q_heads = internlm2_config_dict["num_attention_heads"]
             num_kv_heads = internlm2_config_dict["num_key_value_heads"]
-            q_size = proj_size // (num_q_heads + 2 * num_kv_heads) * num_q_heads
-            kv_size = proj_size // (num_q_heads + 2 * num_kv_heads) * num_kv_heads
+            q_size = value.size(0) // (num_q_heads + 2 * num_kv_heads) * num_q_heads
+            kv_size = value.size(0) // (num_q_heads + 2 * num_kv_heads) * num_kv_heads
             llama2_state_dict[key.replace("attention.wqkv", "self_attn.q_proj")] = value[:q_size, ...]
             llama2_state_dict[key.replace("attention.wqkv", "self_attn.k_proj")] = value[q_size:q_size+kv_size, ...]
             llama2_state_dict[key.replace("attention.wqkv", "self_attn.v_proj")] = value[q_size+kv_size:, ...]
         elif "wo" in key:
             llama2_state_dict[key.replace("attention.wo", "self_attn.o_proj")] = value
+        elif "attention_norm" in key:
+            llama2_state_dict[key.replace("attention_norm", "input_layernorm")] = value
         elif "ffn_norm" in key:
             llama2_state_dict[key.replace("ffn_norm", "post_attention_layernorm")] = value
         elif "w1" in key:

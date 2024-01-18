@@ -1,13 +1,13 @@
 import torch
-import tiktoken
 from dataclasses import dataclass
 from typing import Any, Dict, Generator, List, Literal, Optional, Tuple
 from threading import Thread
 from transformers import GenerationConfig, TextIteratorStreamer
 
-from llmtuner.data.template import get_template_and_fix_tokenizer
-from llmtuner.extras.misc import get_logits_processor
-from llmtuner.model import dispatch_model, get_infer_args, load_model_and_tokenizer
+from ..data import get_template_and_fix_tokenizer, Role
+from ..extras.misc import get_logits_processor
+from ..model import dispatch_model, load_model_and_tokenizer
+from ..hparams import get_infer_args
 
 
 @dataclass
@@ -36,10 +36,19 @@ class ChatModel:
         query: str,
         history: Optional[List[Tuple[str, str]]] = None,
         system: Optional[str] = None,
+        tools: Optional[str] = None,
         **input_kwargs
     ) -> Tuple[Dict[str, Any], int]:
+        messages = []
+        if history is not None:
+            for old_prompt, old_response in history:
+                messages.append({"role": Role.USER, "content": old_prompt})
+                messages.append({"role": Role.ASSISTANT, "content": old_response})
+
+        messages.append({"role": Role.USER, "content": query})
+        messages.append({"role": Role.ASSISTANT, "content": ""})
         prompt, _ = self.template.encode_oneturn(
-            tokenizer=self.tokenizer, query=query, resp="", history=history, system=system
+            tokenizer=self.tokenizer, messages=messages, system=system, tools=tools
         )
         prompt_length = len(prompt)
         input_ids = torch.tensor([prompt], device=self.model.device)
@@ -90,6 +99,7 @@ class ChatModel:
         query: str,
         history: Optional[List[Tuple[str, str]]] = None,
         system: Optional[str] = None,
+        tools: Optional[str] = None,
         **input_kwargs
     ) -> List[Response]:
         r"""
@@ -97,7 +107,7 @@ class ChatModel:
 
         Returns: [(response_text, prompt_length, response_length)] * n (default n=1)
         """
-        gen_kwargs, prompt_length = self._process_args(query, history, system, **input_kwargs)
+        gen_kwargs, prompt_length = self._process_args(query, history, system, tools, **input_kwargs)
         generate_output = self.model.generate(**gen_kwargs)
         response_ids = generate_output[:, prompt_length:]
         response = self.tokenizer.batch_decode(
@@ -122,9 +132,10 @@ class ChatModel:
         query: str,
         history: Optional[List[Tuple[str, str]]] = None,
         system: Optional[str] = None,
+        tools: Optional[str] = None,
         **input_kwargs
     ) -> Generator[str, None, None]:
-        gen_kwargs, _ = self._process_args(query, history, system, **input_kwargs)
+        gen_kwargs, _ = self._process_args(query, history, system, tools, **input_kwargs)
         streamer = TextIteratorStreamer(self.tokenizer, timeout=60.0, skip_prompt=True, skip_special_tokens=True)
         gen_kwargs["streamer"] = streamer
 
@@ -139,11 +150,6 @@ class ChatModel:
         batch_input: List[str],
         **input_kwargs
     ) -> List[float]:
-        if isinstance(getattr(self.tokenizer, "tokenizer", None), tiktoken.Encoding): # for tiktoken tokenizer (Qwen)
-            kwargs = dict(allowed_special="all")
-        else:
-            kwargs = dict(add_special_tokens=True)
-
         max_length = input_kwargs.pop("max_length", None)
         device = getattr(self.model.pretrained_model, "device", "cuda")
 
@@ -153,7 +159,7 @@ class ChatModel:
             truncation=True,
             max_length=max_length or getattr(self.model.config, "max_position_embeddings", 1024),
             return_tensors="pt",
-            **kwargs
+            add_special_tokens=True
         ).to(device)
 
         input_ids: torch.Tensor = inputs["input_ids"]
