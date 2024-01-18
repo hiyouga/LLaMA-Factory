@@ -2,14 +2,14 @@ import gradio as gr
 from gradio.components import Component # cannot use TYPE_CHECKING here
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Tuple
 
-from llmtuner.chat import ChatModel
-from llmtuner.extras.misc import torch_gc
-from llmtuner.hparams import GeneratingArguments
-from llmtuner.webui.common import get_save_dir
-from llmtuner.webui.locales import ALERTS
+from ..chat import ChatModel
+from ..extras.misc import torch_gc
+from ..hparams import GeneratingArguments
+from .common import get_save_dir
+from .locales import ALERTS
 
 if TYPE_CHECKING:
-    from llmtuner.webui.manager import Manager
+    from .manager import Manager
 
 
 class WebChatModel(ChatModel):
@@ -105,6 +105,7 @@ class WebChatModel(ChatModel):
         query: str,
         history: List[Tuple[str, str]],
         system: str,
+        tools: str,
         max_new_tokens: int,
         top_p: float,
         temperature: float
@@ -112,7 +113,7 @@ class WebChatModel(ChatModel):
         chatbot.append([query, ""])
         response = ""
         for new_text in self.stream_chat(
-            query, history, system, max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature
+            query, history, system, tools, max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature
         ):
             response += new_text
             new_history = history + [(query, response)]

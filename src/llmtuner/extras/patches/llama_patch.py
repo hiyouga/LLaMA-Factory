@@ -10,7 +10,7 @@ try:
 except ImportError:
     print("Please upgrade `transformers`.")
 
-from llmtuner.extras.packages import is_flash_attn2_available
+from ..packages import is_flash_attn2_available
 
 
 if is_flash_attn2_available():

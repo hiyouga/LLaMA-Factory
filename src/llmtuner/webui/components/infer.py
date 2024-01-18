@@ -1,11 +1,12 @@
 import gradio as gr
 from typing import TYPE_CHECKING, Dict
 
-from llmtuner.webui.components.chatbot import create_chat_box
+from .chatbot import create_chat_box
 
 if TYPE_CHECKING:
     from gradio.components import Component
-    from llmtuner.webui.engine import Engine
+
+    from ..engine import Engine
 
 
 def create_infer_tab(engine: "Engine") -> Dict[str, "Component"]:

@@ -6,9 +6,9 @@ from datetime import timedelta
 from transformers import TrainerCallback
 from transformers.trainer_utils import has_length, PREFIX_CHECKPOINT_DIR
 
-from llmtuner.extras.constants import LOG_FILE_NAME
-from llmtuner.extras.logging import get_logger
-from llmtuner.extras.misc import fix_valuehead_checkpoint
+from .constants import LOG_FILE_NAME
+from .logging import get_logger
+from .misc import fix_valuehead_checkpoint
 
 
 if TYPE_CHECKING:

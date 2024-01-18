@@ -2,14 +2,15 @@ import torch
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from transformers import PreTrainedModel
 
-from llmtuner.extras.callbacks import LogCallback
-from llmtuner.extras.logging import get_logger
-from llmtuner.model import get_train_args, get_infer_args, load_model_and_tokenizer
-from llmtuner.train.pt import run_pt
-from llmtuner.train.sft import run_sft
-from llmtuner.train.rm import run_rm
-from llmtuner.train.ppo import run_ppo
-from llmtuner.train.dpo import run_dpo
+from ..extras.callbacks import LogCallback
+from ..extras.logging import get_logger
+from ..hparams import get_train_args, get_infer_args
+from ..model import load_model_and_tokenizer
+from .pt import run_pt
+from .sft import run_sft
+from .rm import run_rm
+from .ppo import run_ppo
+from .dpo import run_dpo
 
 if TYPE_CHECKING:
     from transformers import TrainerCallback
