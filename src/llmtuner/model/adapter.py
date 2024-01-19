@@ -125,7 +125,7 @@ def init_adapter(
                 model = get_peft_model(model, lora_config)
 
         for param in filter(lambda p: p.requires_grad, model.parameters()):
-            param.data = param.data.to(torch.float32)
+            param.data = param.data.to(torch.bfloat16 if finetuning_args.lora_bf16_mode else torch.float32)
 
     if model_args.adapter_name_or_path is not None:
         logger.info("Loaded adapter(s): {}".format(",".join(model_args.adapter_name_or_path)))
