@@ -32,8 +32,8 @@ class Template:
         self,
         tokenizer: "PreTrainedTokenizer",
         messages: List[Dict[str, str]],
-        system: str,
-        tools: str,
+        system: Optional[str] = None,
+        tools: Optional[str] = None,
         cutoff_len: Optional[int] = 1_000_000
     ) -> Tuple[List[int], List[int]]:
         r"""
