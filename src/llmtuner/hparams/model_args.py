@@ -70,6 +70,10 @@ class ModelArguments:
         default=False,
         metadata={"help": "Whether or not to upcast the layernorm weights in fp32."}
     )
+    upcast_lmhead_output: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Whether or not to upcast the output of lm_head in fp32."}
+    )
     hf_hub_token: Optional[str] = field(
         default=None,
         metadata={"help": "Auth token to log in with Hugging Face Hub."}
