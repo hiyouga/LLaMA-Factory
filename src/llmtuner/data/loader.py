@@ -1,4 +1,5 @@
 import os
+import inspect
 from typing import TYPE_CHECKING, List, Literal, Union
 
 from datasets import concatenate_datasets, interleave_datasets, load_dataset, load_from_disk
@@ -82,6 +83,11 @@ def load_single_dataset(
         except ImportError:
             raise ImportError("Please install modelscope via `pip install modelscope -U`")
     else:
+        if "trust_remote_code" in inspect.signature(load_dataset).parameters: # for datasets==2.16.0
+            kwargs = {"trust_remote_code": True}
+        else:
+            kwargs = {}
+
         dataset = load_dataset(
             path=data_path,
             name=data_name,
@@ -90,7 +96,8 @@ def load_single_dataset(
             split=data_args.split,
             cache_dir=model_args.cache_dir,
             token=model_args.hf_hub_token,
-            streaming=(data_args.streaming and (dataset_attr.load_from != "file"))
+            streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
+            **kwargs
         )
 
     if data_args.streaming and (dataset_attr.load_from == "file"): # faster than specifying streaming=True
