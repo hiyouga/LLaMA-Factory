@@ -209,7 +209,7 @@ def _prepare_model_for_training(
             model.config.use_cache = False # turn off when gradient checkpointing is enabled
             logger.info("Gradient checkpointing enabled.")
 
-    if hasattr(model, output_layer_name):
+    if hasattr(model, output_layer_name) and model_args.upcast_lmhead_output:
         def fp32_forward_post_hook(module: torch.nn.Module, args: Tuple[torch.Tensor], output: torch.Tensor):
             return output.to(torch.float32)
 
