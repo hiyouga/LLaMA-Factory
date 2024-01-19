@@ -27,8 +27,7 @@ class EvalTemplate:
         self,
         target_data: Dict[str, str],
         support_set: "Dataset",
-        subject_name: str,
-        use_history: bool
+        subject_name: str
     ) -> List[Dict[str, str]]:
         messages = []
         for k in range(len(support_set)):
@@ -39,12 +38,7 @@ class EvalTemplate:
         prompt, response = self.parse_example(target_data)
         messages.append({"role": Role.USER, "content": prompt})
         messages.append({"role": Role.ASSISTANT, "content": response})
-
         messages[0]["content"] = self.system.format(subject=subject_name) + messages[0]["content"]
-
-        if not use_history:
-            messages = [{"role": Role.USER, "content": "\n\n".join([message["content"] for message in messages[:-1]])}]
-
         return messages
 
 
