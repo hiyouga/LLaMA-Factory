@@ -55,9 +55,13 @@ class LoraArguments:
                   Phi choices: [\"Wqkv\", \"out_proj\", \"fc1\", \"fc2\"], \
                   Others choices: the same as LLaMA."}
     )
+    lora_bf16_mode: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Whether or not to train lora adapters in bf16 precision."}
+    )
     create_new_adapter: Optional[bool] = field(
         default=False,
-        metadata={"help": "Whether to create a new adapter with randomly initialized weight or not."}
+        metadata={"help": "Whether or not to create a new adapter with randomly initialized weight."}
     )
 
 
