@@ -22,7 +22,7 @@ def run_pt(
     callbacks: Optional[List["TrainerCallback"]] = None
 ):
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train)
-    dataset = get_dataset(model_args, data_args, tokenizer, training_args, stage="pt")
+    dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="pt")
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
     # Initialize our Trainer
