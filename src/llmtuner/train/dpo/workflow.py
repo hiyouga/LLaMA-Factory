@@ -1,6 +1,7 @@
 # Inspired by: https://github.com/huggingface/trl/blob/main/examples/research_projects/stack_llama_2/scripts/dpo_llama2.py
 
-from typing import TYPE_CHECKING, Optional, List
+from typing import TYPE_CHECKING, List, Optional
+
 from transformers import Seq2SeqTrainingArguments
 
 from ...data import get_dataset, split_dataset
@@ -12,8 +13,10 @@ from ...train.dpo.collator import DPODataCollatorWithPadding
 from ...train.dpo.trainer import CustomDPOTrainer
 from ...train.utils import create_modelcard_and_push, create_ref_model
 
+
 if TYPE_CHECKING:
     from transformers import TrainerCallback
+
     from ...hparams import DataArguments, FinetuningArguments
 
 
@@ -22,25 +25,25 @@ def run_dpo(
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
     finetuning_args: "FinetuningArguments",
-    callbacks: Optional[List["TrainerCallback"]] = None
+    callbacks: Optional[List["TrainerCallback"]] = None,
 ):
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train)
     dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="rm")
     data_collator = DPODataCollatorWithPadding(
         tokenizer=tokenizer,
         pad_to_multiple_of=8,
-        label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
+        label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
     )
 
     # Create reference model
-    if finetuning_args.ref_model is None and (not training_args.do_train): # use the model itself
+    if finetuning_args.ref_model is None and (not training_args.do_train):  # use the model itself
         ref_model = model
     else:
         ref_model = create_ref_model(model_args, finetuning_args)
 
     # Update arguments
     training_args_dict = training_args.to_dict()
-    training_args_dict.update(dict(remove_unused_columns=False)) # important for pairwise dataset
+    training_args_dict.update(dict(remove_unused_columns=False))  # important for pairwise dataset
     training_args = Seq2SeqTrainingArguments(**training_args_dict)
 
     # Initialize our Trainer
@@ -54,7 +57,7 @@ def run_dpo(
         tokenizer=tokenizer,
         data_collator=data_collator,
         callbacks=callbacks,
-        **split_dataset(dataset, data_args, training_args)
+        **split_dataset(dataset, data_args, training_args),
     )
 
     # Training
@@ -70,7 +73,7 @@ def run_dpo(
     # Evaluation
     if training_args.do_eval:
         metrics = trainer.evaluate(metric_key_prefix="eval")
-        if id(model) == id(ref_model): # unable to compute rewards without a reference model
+        if id(model) == id(ref_model):  # unable to compute rewards without a reference model
             remove_keys = [key for key in metrics.keys() if "rewards" in key]
             for key in remove_keys:
                 metrics.pop(key)

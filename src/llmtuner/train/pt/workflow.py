@@ -1,7 +1,8 @@
 # Inspired by: https://github.com/huggingface/transformers/blob/v4.34.1/examples/pytorch/language-modeling/run_clm.py
 
 import math
-from typing import TYPE_CHECKING, Optional, List
+from typing import TYPE_CHECKING, List, Optional
+
 from transformers import DataCollatorForLanguageModeling, Trainer
 
 from ...data import get_dataset, split_dataset
@@ -9,9 +10,11 @@ from ...extras.ploting import plot_loss
 from ...model import load_model_and_tokenizer
 from ...train.utils import create_modelcard_and_push
 
+
 if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments, TrainerCallback
-    from ...hparams import ModelArguments, DataArguments, FinetuningArguments
+
+    from ...hparams import DataArguments, FinetuningArguments, ModelArguments
 
 
 def run_pt(
@@ -19,7 +22,7 @@ def run_pt(
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
     finetuning_args: "FinetuningArguments",
-    callbacks: Optional[List["TrainerCallback"]] = None
+    callbacks: Optional[List["TrainerCallback"]] = None,
 ):
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train)
     dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="pt")
@@ -32,7 +35,7 @@ def run_pt(
         tokenizer=tokenizer,
         data_collator=data_collator,
         callbacks=callbacks,
-        **split_dataset(dataset, data_args, training_args)
+        **split_dataset(dataset, data_args, training_args),
     )
 
     # Training

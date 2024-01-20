@@ -1,11 +1,16 @@
 import math
+from typing import Optional, Tuple
+
 import torch
 import torch.nn as nn
-from typing import Optional, Tuple
-from transformers.utils import logging
 from transformers.models.llama.modeling_llama import (
-    Cache, LlamaAttention, LlamaFlashAttention2, apply_rotary_pos_emb, repeat_kv
+    Cache,
+    LlamaAttention,
+    LlamaFlashAttention2,
+    apply_rotary_pos_emb,
+    repeat_kv,
 )
+from transformers.utils import logging
 
 
 logger = logging.get_logger(__name__)
@@ -19,7 +24,7 @@ def llama_torch_attn_forward(
     position_ids: Optional[torch.LongTensor] = None,
     past_key_value: Optional["Cache"] = None,
     output_attentions: bool = False,
-    **kwargs
+    **kwargs,
 ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
     bsz, q_len, _ = hidden_states.size()
 
@@ -45,15 +50,17 @@ def llama_torch_attn_forward(
     key_states = repeat_kv(key_states, self.num_key_value_groups)
     value_states = repeat_kv(value_states, self.num_key_value_groups)
 
-    if getattr(self.config, "group_size_ratio", None) and self.training: # shift
+    if getattr(self.config, "group_size_ratio", None) and self.training:  # shift
         groupsz = int(q_len * getattr(self.config, "group_size_ratio"))
         assert q_len % groupsz == 0, "q_len {} should be divisible by group size {}.".format(q_len, groupsz)
         num_groups = q_len // groupsz
+
         def shift(state: torch.Tensor) -> torch.Tensor:
-            state = state.transpose(1, 2) # output: (bsz, seq_len, n_heads, head_dim)
-            state = torch.cat((
-                state[:, :, :self.num_heads//2], state[:, :, self.num_heads//2:].roll(-groupsz//2, dims=1)
-            ), dim=2)
+            state = state.transpose(1, 2)  # output: (bsz, seq_len, n_heads, head_dim)
+            state = torch.cat(
+                (state[:, :, : self.num_heads // 2], state[:, :, self.num_heads // 2 :].roll(-groupsz // 2, dims=1)),
+                dim=2,
+            )
             return state.reshape(bsz * num_groups, groupsz, self.num_heads, self.head_dim).transpose(1, 2)
 
         query_states, key_states, value_states = shift(query_states), shift(key_states), shift(value_states)
@@ -68,14 +75,17 @@ def llama_torch_attn_forward(
     # upcast attention to fp32
     attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
     attn_weights = nn.functional.dropout(attn_weights, p=self.attention_dropout, training=self.training)
-    attn_output = torch.matmul(attn_weights, value_states) # (bsz, :, seq_len, :) or (bsz*n_group, :, groupsz, :)
+    attn_output = torch.matmul(attn_weights, value_states)  # (bsz, :, seq_len, :) or (bsz*n_group, :, groupsz, :)
     attn_output = attn_output.transpose(1, 2).contiguous()
 
-    if getattr(self.config, "group_size_ratio", None) and self.training: # shift back
+    if getattr(self.config, "group_size_ratio", None) and self.training:  # shift back
         attn_output.reshape(bsz, q_len, self.num_heads, self.head_dim)
-        attn_output = torch.cat((
-            attn_output[:, :, :self.num_heads//2], attn_output[:, :, self.num_heads//2:].roll(groupsz//2, dims=1)
-        ))
+        attn_output = torch.cat(
+            (
+                attn_output[:, :, : self.num_heads // 2],
+                attn_output[:, :, self.num_heads // 2 :].roll(groupsz // 2, dims=1),
+            )
+        )
 
     attn_output = attn_output.reshape(bsz, q_len, self.hidden_size)
     attn_output = self.o_proj(attn_output)
@@ -94,7 +104,7 @@ def llama_flash_attn_forward(
     position_ids: Optional[torch.LongTensor] = None,
     past_key_value: Optional[Tuple[torch.Tensor]] = None,
     output_attentions: bool = False,
-    **kwargs
+    **kwargs,
 ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
     # LlamaFlashAttention2 attention does not support output_attentions
     output_attentions = False
@@ -124,9 +134,9 @@ def llama_flash_attn_forward(
     key_states = repeat_kv(key_states, self.num_key_value_groups)
     value_states = repeat_kv(value_states, self.num_key_value_groups)
 
-    query_states = query_states.transpose(1, 2) # (bsz, seq_len, n_heads, head_dim)
-    key_states = key_states.transpose(1, 2) # (bsz, seq_len, n_heads, head_dim)
-    value_states = value_states.transpose(1, 2) # (bsz, seq_len, n_heads, head_dim)
+    query_states = query_states.transpose(1, 2)  # (bsz, seq_len, n_heads, head_dim)
+    key_states = key_states.transpose(1, 2)  # (bsz, seq_len, n_heads, head_dim)
+    value_states = value_states.transpose(1, 2)  # (bsz, seq_len, n_heads, head_dim)
 
     dropout_rate = self.attention_dropout if self.training else 0.0
 
@@ -144,14 +154,16 @@ def llama_flash_attn_forward(
         key_states = key_states.to(target_dtype)
         value_states = value_states.to(target_dtype)
 
-    if getattr(self.config, "group_size_ratio", None) and self.training: # shift
+    if getattr(self.config, "group_size_ratio", None) and self.training:  # shift
         groupsz = int(q_len * getattr(self.config, "group_size_ratio"))
         assert q_len % groupsz == 0, "q_len {} should be divisible by group size {}.".format(q_len, groupsz)
         num_groups = q_len // groupsz
+
         def shift(state: torch.Tensor) -> torch.Tensor:
-            state = torch.cat((
-                state[:, :, :self.num_heads//2], state[:, :, self.num_heads//2:].roll(-groupsz//2, dims=1)
-            ), dim=2)
+            state = torch.cat(
+                (state[:, :, : self.num_heads // 2], state[:, :, self.num_heads // 2 :].roll(-groupsz // 2, dims=1)),
+                dim=2,
+            )
             return state.reshape(bsz * num_groups, groupsz, self.num_heads, self.head_dim)
 
         query_states, key_states, value_states = shift(query_states), shift(key_states), shift(value_states)
@@ -162,11 +174,14 @@ def llama_flash_attn_forward(
         query_states, key_states, value_states, attention_mask, q_len, dropout=dropout_rate
     )
 
-    if getattr(self.config, "group_size_ratio", None) and self.training: # shift back
+    if getattr(self.config, "group_size_ratio", None) and self.training:  # shift back
         attn_output.reshape(bsz, q_len, self.num_heads, self.head_dim)
-        attn_output = torch.cat((
-            attn_output[:, :, :self.num_heads//2], attn_output[:, :, self.num_heads//2:].roll(groupsz//2, dims=1)
-        ))
+        attn_output = torch.cat(
+            (
+                attn_output[:, :, : self.num_heads // 2],
+                attn_output[:, :, self.num_heads // 2 :].roll(groupsz // 2, dims=1),
+            )
+        )
 
     attn_output = attn_output.reshape(bsz, q_len, self.hidden_size).contiguous()
     attn_output = self.o_proj(attn_output)

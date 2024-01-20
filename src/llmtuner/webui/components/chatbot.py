@@ -1,5 +1,6 @@
-import gradio as gr
 from typing import TYPE_CHECKING, Dict, Optional, Tuple
+
+import gradio as gr
 
 from ..utils import check_json_schema
 
@@ -12,8 +13,7 @@ if TYPE_CHECKING:
 
 
 def create_chat_box(
-    engine: "Engine",
-    visible: Optional[bool] = False
+    engine: "Engine", visible: Optional[bool] = False
 ) -> Tuple["Block", "Component", "Component", Dict[str, "Component"]]:
     with gr.Box(visible=visible) as chat_box:
         chatbot = gr.Chatbot()
@@ -38,20 +38,23 @@ def create_chat_box(
         engine.chatter.predict,
         [chatbot, query, history, system, tools, max_new_tokens, top_p, temperature],
         [chatbot, history],
-        show_progress=True
-    ).then(
-        lambda: gr.update(value=""), outputs=[query]
-    )
+        show_progress=True,
+    ).then(lambda: gr.update(value=""), outputs=[query])
 
     clear_btn.click(lambda: ([], []), outputs=[chatbot, history], show_progress=True)
 
-    return chat_box, chatbot, history, dict(
-        system=system,
-        tools=tools,
-        query=query,
-        submit_btn=submit_btn,
-        clear_btn=clear_btn,
-        max_new_tokens=max_new_tokens,
-        top_p=top_p,
-        temperature=temperature
+    return (
+        chat_box,
+        chatbot,
+        history,
+        dict(
+            system=system,
+            tools=tools,
+            query=query,
+            submit_btn=submit_btn,
+            clear_btn=clear_btn,
+            max_new_tokens=max_new_tokens,
+            top_p=top_p,
+            temperature=temperature,
+        ),
     )

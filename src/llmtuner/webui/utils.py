@@ -1,12 +1,14 @@
-import os
 import json
-import gradio as gr
-from typing import TYPE_CHECKING, Any, Dict
+import os
 from datetime import datetime
+from typing import TYPE_CHECKING, Any, Dict
+
+import gradio as gr
 
 from ..extras.packages import is_matplotlib_available
 from ..extras.ploting import smooth
 from .common import get_save_dir
+
 
 if TYPE_CHECKING:
     from ..extras.callbacks import LogCallback
@@ -22,16 +24,13 @@ def update_process_bar(callback: "LogCallback") -> Dict[str, Any]:
 
     percentage = round(100 * callback.cur_steps / callback.max_steps, 0) if callback.max_steps != 0 else 100.0
     label = "Running {:d}/{:d}: {} < {}".format(
-        callback.cur_steps,
-        callback.max_steps,
-        callback.elapsed_time,
-        callback.remaining_time
+        callback.cur_steps, callback.max_steps, callback.elapsed_time, callback.remaining_time
     )
     return gr.update(label=label, value=percentage, visible=True)
 
 
 def get_time() -> str:
-    return datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+    return datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
 
 def can_quantize(finetuning_type: str) -> Dict[str, Any]:

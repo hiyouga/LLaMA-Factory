@@ -1,14 +1,16 @@
-import os
 import json
-import torch
+import os
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
+
+import torch
 from transformers import Trainer
 
 from ...extras.logging import get_logger
 
+
 if TYPE_CHECKING:
-    from transformers.trainer import PredictionOutput
     from transformers.modeling_utils import PreTrainedModel
+    from transformers.trainer import PredictionOutput
 
 
 logger = get_logger(__name__)
@@ -21,13 +23,10 @@ class PairwiseTrainer(Trainer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.can_return_loss = True # override property to return eval_loss
+        self.can_return_loss = True  # override property to return eval_loss
 
     def compute_loss(
-        self,
-        model: "PreTrainedModel",
-        inputs: Dict[str, torch.Tensor],
-        return_outputs: Optional[bool] = False
+        self, model: "PreTrainedModel", inputs: Dict[str, torch.Tensor], return_outputs: Optional[bool] = False
     ) -> Union[torch.Tensor, Tuple[torch.Tensor, List[torch.Tensor]]]:
         r"""
         Computes pairwise loss. The first n examples are chosen and the last n examples are rejected.
@@ -68,9 +67,9 @@ class PairwiseTrainer(Trainer):
             assert div_index > 0
             chosen_trunc_rewards = chosen_rewards[i, div_index:end_index]
             rejected_trunc_rewards = rejected_rewards[i, div_index:end_index]
-            if return_outputs: # use the score on the last token except pad token for inference
-                chosen_scores.append(chosen_rewards[i, chosen_length-1])
-                rejected_scores.append(rejected_rewards[i, rejected_length-1])
+            if return_outputs:  # use the score on the last token except pad token for inference
+                chosen_scores.append(chosen_rewards[i, chosen_length - 1])
+                rejected_scores.append(rejected_rewards[i, rejected_length - 1])
             loss += -torch.nn.functional.logsigmoid(chosen_trunc_rewards - rejected_trunc_rewards).mean()
 
         loss = loss / batch_size
@@ -80,10 +79,7 @@ class PairwiseTrainer(Trainer):
 
         return loss
 
-    def save_predictions(
-        self,
-        predict_results: "PredictionOutput"
-    ) -> None:
+    def save_predictions(self, predict_results: "PredictionOutput") -> None:
         r"""
         Saves model predictions to `output_dir`.
 

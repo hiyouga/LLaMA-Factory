@@ -1,8 +1,10 @@
-import gradio as gr
 from typing import TYPE_CHECKING, Dict
 
-from ..common import list_dataset, DEFAULT_DATA_DIR
+import gradio as gr
+
+from ..common import DEFAULT_DATA_DIR, list_dataset
 from .data import create_preview_box
+
 
 if TYPE_CHECKING:
     from gradio.components import Component
@@ -31,9 +33,7 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
         predict = gr.Checkbox(value=True)
 
     input_elems.update({cutoff_len, max_samples, batch_size, predict})
-    elem_dict.update(dict(
-        cutoff_len=cutoff_len, max_samples=max_samples, batch_size=batch_size, predict=predict
-    ))
+    elem_dict.update(dict(cutoff_len=cutoff_len, max_samples=max_samples, batch_size=batch_size, predict=predict))
 
     with gr.Row():
         max_new_tokens = gr.Slider(10, 2048, value=128, step=1)
@@ -42,9 +42,7 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
         output_dir = gr.Textbox()
 
     input_elems.update({max_new_tokens, top_p, temperature, output_dir})
-    elem_dict.update(dict(
-        max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature, output_dir=output_dir
-    ))
+    elem_dict.update(dict(max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature, output_dir=output_dir))
 
     with gr.Row():
         cmd_preview_btn = gr.Button()
@@ -59,10 +57,16 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
         output_box = gr.Markdown()
 
     output_elems = [output_box, process_bar]
-    elem_dict.update(dict(
-        cmd_preview_btn=cmd_preview_btn, start_btn=start_btn, stop_btn=stop_btn,
-        resume_btn=resume_btn, process_bar=process_bar, output_box=output_box
-    ))
+    elem_dict.update(
+        dict(
+            cmd_preview_btn=cmd_preview_btn,
+            start_btn=start_btn,
+            stop_btn=stop_btn,
+            resume_btn=resume_btn,
+            process_bar=process_bar,
+            output_box=output_box,
+        )
+    )
 
     cmd_preview_btn.click(engine.runner.preview_eval, input_elems, output_elems)
     start_btn.click(engine.runner.run_eval, input_elems, output_elems)
