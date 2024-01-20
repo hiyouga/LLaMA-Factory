@@ -421,6 +421,16 @@ LOCALES = {
             "info": "DPO 损失函数中 beta 超参数大小。"
         }
     },
+    "dpo_ftx": {
+        "en": {
+            "label": "DPO-ftx weight",
+            "info": "The weight of SFT loss in the DPO-ftx."
+        },
+        "zh": {
+            "label": "DPO-ftx 权重",
+            "info": "DPO-ftx 中 SFT 损失的权重大小。"
+        }
+    },
     "reward_model": {
         "en": {
             "label": "Reward model",
