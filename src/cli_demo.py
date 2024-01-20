@@ -34,6 +34,7 @@ def main():
             print("History has been removed.")
             continue
 
+        messages.append({"role": "user", "content": query})
         print("Assistant: ", end="", flush=True)
 
         response = ""
@@ -41,8 +42,6 @@ def main():
             print(new_text, end="", flush=True)
             response += new_text
         print()
-
-        messages.append({"role": "user", "content": query})
         messages.append({"role": "assistant", "content": response})
 
 
