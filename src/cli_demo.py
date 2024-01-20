@@ -1,10 +1,12 @@
 from llmtuner import ChatModel
 from llmtuner.extras.misc import torch_gc
 
+
 try:
     import platform
+
     if platform.system() != "Windows":
-        import readline
+        import readline  # noqa: F401
 except ImportError:
     print("Install `readline` for a better experience.")
 

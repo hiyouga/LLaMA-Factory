@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING, Dict, List, Set
 
+
 if TYPE_CHECKING:
     from gradio.components import Component
 
 
 class Manager:
-
     def __init__(self) -> None:
         self.all_elems: Dict[str, Dict[str, "Component"]] = {}
 
@@ -26,7 +26,7 @@ class Manager:
             self.all_elems["top"]["quantization_bit"],
             self.all_elems["top"]["template"],
             self.all_elems["top"]["rope_scaling"],
-            self.all_elems["top"]["booster"]
+            self.all_elems["top"]["booster"],
         }
 
     def list_elems(self) -> List["Component"]:
