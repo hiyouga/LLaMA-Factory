@@ -7,10 +7,10 @@ from .train import create_train_tab
 
 
 __all__ = [
+    "create_chat_box",
+    "create_eval_tab",
+    "create_export_tab",
+    "create_infer_tab",
     "create_top",
     "create_train_tab",
-    "create_eval_tab",
-    "create_infer_tab",
-    "create_export_tab",
-    "create_chat_box",
 ]
