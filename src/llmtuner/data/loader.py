@@ -1,16 +1,16 @@
-import os
 import inspect
+import os
 from typing import TYPE_CHECKING, List, Literal, Union
 
 from datasets import concatenate_datasets, interleave_datasets, load_dataset, load_from_disk
 
 from ..extras.constants import FILEEXT2TYPE
 from ..extras.logging import get_logger
-from .utils import checksum
-from .parser import get_dataset_list
 from .aligner import align_dataset
-from .template import get_template_and_fix_tokenizer
+from .parser import get_dataset_list
 from .preprocess import get_preprocess_and_print_func
+from .template import get_template_and_fix_tokenizer
+from .utils import checksum
 
 
 if TYPE_CHECKING:
@@ -18,8 +18,8 @@ if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments
     from transformers.tokenization_utils import PreTrainedTokenizer
 
+    from ..hparams import DataArguments, ModelArguments
     from .parser import DatasetAttr
-    from ..hparams import ModelArguments, DataArguments
 
 
 logger = get_logger(__name__)
@@ -44,14 +44,14 @@ def load_single_dataset(
     elif dataset_attr.load_from == "file":
         data_files = []
         local_path: str = os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)
-        if os.path.isdir(local_path): # is directory
+        if os.path.isdir(local_path):  # is directory
             for file_name in os.listdir(local_path):
                 data_files.append(os.path.join(local_path, file_name))
                 if data_path is None:
                     data_path = FILEEXT2TYPE.get(file_name.split(".")[-1], None)
                 elif data_path != FILEEXT2TYPE.get(file_name.split(".")[-1], None):
                     raise ValueError("File types should be identical.")
-        elif os.path.isfile(local_path): # is file
+        elif os.path.isfile(local_path):  # is file
             data_files.append(local_path)
             data_path = FILEEXT2TYPE.get(local_path.split(".")[-1], None)
         else:
@@ -78,12 +78,12 @@ def load_single_dataset(
                 split=data_args.split,
                 cache_dir=cache_dir,
                 token=model_args.ms_hub_token,
-                use_streaming=(data_args.streaming and (dataset_attr.load_from != "file"))
+                use_streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
             ).to_hf_dataset()
         except ImportError:
             raise ImportError("Please install modelscope via `pip install modelscope -U`")
     else:
-        if "trust_remote_code" in inspect.signature(load_dataset).parameters: # for datasets==2.16.0
+        if "trust_remote_code" in inspect.signature(load_dataset).parameters:  # for datasets==2.16.0
             kwargs = {"trust_remote_code": True}
         else:
             kwargs = {}
@@ -97,13 +97,13 @@ def load_single_dataset(
             cache_dir=model_args.cache_dir,
             token=model_args.hf_hub_token,
             streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
-            **kwargs
+            **kwargs,
         )
 
-    if data_args.streaming and (dataset_attr.load_from == "file"): # faster than specifying streaming=True
-        dataset = dataset.to_iterable_dataset() # TODO: add num shards parameter
+    if data_args.streaming and (dataset_attr.load_from == "file"):  # faster than specifying streaming=True
+        dataset = dataset.to_iterable_dataset()  # TODO: add num shards parameter
 
-    if data_args.max_samples is not None: # truncate dataset
+    if data_args.max_samples is not None:  # truncate dataset
         num_samples = min(data_args.max_samples, len(dataset))
         dataset = dataset.select(range(num_samples))
 
@@ -113,7 +113,7 @@ def load_single_dataset(
 def merge_dataset(
     all_datasets: List[Union["Dataset", "IterableDataset"]],
     data_args: "DataArguments",
-    training_args: "Seq2SeqTrainingArguments"
+    training_args: "Seq2SeqTrainingArguments",
 ) -> Union["Dataset", "IterableDataset"]:
     if len(all_datasets) == 1:
         return all_datasets[0]
@@ -128,7 +128,7 @@ def merge_dataset(
             datasets=all_datasets,
             probabilities=data_args.interleave_probs,
             seed=training_args.seed,
-            stopping_strategy="first_exhausted" if data_args.mix_strategy.endswith("under") else "all_exhausted"
+            stopping_strategy="first_exhausted" if data_args.mix_strategy.endswith("under") else "all_exhausted",
         )
     else:
         raise ValueError("Unknown mixing strategy.")
@@ -160,7 +160,7 @@ def get_dataset(
 
     with training_args.main_process_first(desc="load dataset"):
         all_datasets = []
-        for dataset_attr in get_dataset_list(data_args): # TODO: add split
+        for dataset_attr in get_dataset_list(data_args):  # TODO: add split
             all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args))
         dataset = merge_dataset(all_datasets, data_args, training_args)
 
@@ -174,15 +174,10 @@ def get_dataset(
             kwargs = dict(
                 num_proc=data_args.preprocessing_num_workers,
                 load_from_cache_file=(not data_args.overwrite_cache),
-                desc="Running tokenizer on dataset"
+                desc="Running tokenizer on dataset",
             )
 
-        dataset = dataset.map(
-            preprocess_func,
-            batched=True,
-            remove_columns=column_names,
-            **kwargs
-        )
+        dataset = dataset.map(preprocess_func, batched=True, remove_columns=column_names, **kwargs)
 
         if data_args.cache_path is not None and not os.path.exists(data_args.cache_path):
             if training_args.should_save:

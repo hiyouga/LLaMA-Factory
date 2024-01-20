@@ -1,9 +1,10 @@
-import os
 import json
-import gradio as gr
+import os
 from collections import defaultdict
 from typing import Any, Dict, Optional
-from peft.utils import WEIGHTS_NAME, SAFETENSORS_WEIGHTS_NAME
+
+import gradio as gr
+from peft.utils import SAFETENSORS_WEIGHTS_NAME, WEIGHTS_NAME
 
 from ..extras.constants import (
     DATA_CONFIG,
@@ -12,7 +13,7 @@ from ..extras.constants import (
     PEFT_METHODS,
     SUPPORTED_MODELS,
     TRAINING_STAGES,
-    DownloadSource
+    DownloadSource,
 )
 from ..extras.misc import use_modelscope
 
@@ -36,7 +37,7 @@ def load_config() -> Dict[str, Any]:
     try:
         with open(get_config_path(), "r", encoding="utf-8") as f:
             return json.load(f)
-    except:
+    except Exception:
         return {"lang": None, "last_model": None, "path_dict": {}, "cache_dir": None}
 
 
@@ -59,7 +60,7 @@ def get_model_path(model_name: str) -> str:
         use_modelscope()
         and path_dict.get(DownloadSource.MODELSCOPE)
         and model_path == path_dict.get(DownloadSource.DEFAULT)
-    ): # replace path
+    ):  # replace path
         model_path = path_dict.get(DownloadSource.MODELSCOPE)
     return model_path
 
@@ -87,9 +88,8 @@ def list_adapters(model_name: str, finetuning_type: str) -> Dict[str, Any]:
         save_dir = get_save_dir(model_name, finetuning_type)
         if save_dir and os.path.isdir(save_dir):
             for adapter in os.listdir(save_dir):
-                if (
-                    os.path.isdir(os.path.join(save_dir, adapter))
-                    and any([os.path.isfile(os.path.join(save_dir, adapter, name)) for name in ADAPTER_NAMES])
+                if os.path.isdir(os.path.join(save_dir, adapter)) and any(
+                    os.path.isfile(os.path.join(save_dir, adapter, name)) for name in ADAPTER_NAMES
                 ):
                     adapters.append(adapter)
     return gr.update(value=[], choices=adapters, interactive=True)

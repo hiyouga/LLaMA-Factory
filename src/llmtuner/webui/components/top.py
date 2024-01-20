@@ -1,10 +1,12 @@
-import gradio as gr
 from typing import TYPE_CHECKING, Dict
+
+import gradio as gr
 
 from ...data import templates
 from ...extras.constants import METHODS, SUPPORTED_MODELS
 from ..common import get_model_path, get_template, list_adapters, save_config
 from ..utils import can_quantize
+
 
 if TYPE_CHECKING:
     from gradio.components import Component
@@ -30,25 +32,19 @@ def create_top() -> Dict[str, "Component"]:
             rope_scaling = gr.Radio(choices=["none", "linear", "dynamic"], value="none")
             booster = gr.Radio(choices=["none", "flash_attn", "unsloth"], value="none")
 
-    model_name.change(
-        list_adapters, [model_name, finetuning_type], [adapter_path], queue=False
-    ).then(
+    model_name.change(list_adapters, [model_name, finetuning_type], [adapter_path], queue=False).then(
         get_model_path, [model_name], [model_path], queue=False
     ).then(
         get_template, [model_name], [template], queue=False
-    ) # do not save config since the below line will save
+    )  # do not save config since the below line will save
 
     model_path.change(save_config, inputs=[lang, model_name, model_path], queue=False)
 
-    finetuning_type.change(
-        list_adapters, [model_name, finetuning_type], [adapter_path], queue=False
-    ).then(
+    finetuning_type.change(list_adapters, [model_name, finetuning_type], [adapter_path], queue=False).then(
         can_quantize, [finetuning_type], [quantization_bit], queue=False
     )
 
-    refresh_btn.click(
-        list_adapters, [model_name, finetuning_type], [adapter_path], queue=False
-    )
+    refresh_btn.click(list_adapters, [model_name, finetuning_type], [adapter_path], queue=False)
 
     return dict(
         lang=lang,
@@ -61,5 +57,5 @@ def create_top() -> Dict[str, "Component"]:
         quantization_bit=quantization_bit,
         template=template,
         rope_scaling=rope_scaling,
-        booster=booster
+        booster=booster,
     )

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Tuple
 from ..extras.constants import IGNORE_INDEX
 from ..extras.logging import get_logger
 
+
 if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments
     from transformers.tokenization_utils import PreTrainedTokenizer
@@ -17,9 +18,7 @@ logger = get_logger(__name__)
 
 
 def preprocess_pretrain_dataset(
-    examples: Dict[str, List[Any]],
-    tokenizer: "PreTrainedTokenizer",
-    data_args: "DataArguments"
+    examples: Dict[str, List[Any]], tokenizer: "PreTrainedTokenizer", data_args: "DataArguments"
 ) -> Dict[str, List[List[int]]]:
     # build grouped texts with format `X1 X2 X3 ...`
     text_examples = [examples["prompt"][i][0]["content"] for i in range(len(examples["prompt"]))]
@@ -35,7 +34,7 @@ def preprocess_pretrain_dataset(
     total_length = (total_length // block_size) * block_size
     # split by chunks of cutoff_len
     result = {
-        k: [t[i: i + block_size] for i in range(0, total_length, block_size)]
+        k: [t[i : i + block_size] for i in range(0, total_length, block_size)]
         for k, t in concatenated_examples.items()
     }
     return result
@@ -57,9 +56,11 @@ def preprocess_supervised_dataset(
 
         messages = examples["prompt"][i] + examples["response"][i]
         input_ids, labels = [], []
-        for turn_idx, (source_ids, target_ids) in enumerate(template.encode_multiturn(
-            tokenizer, messages, examples["system"][i], examples["tools"][i], data_args.cutoff_len
-        )):
+        for turn_idx, (source_ids, target_ids) in enumerate(
+            template.encode_multiturn(
+                tokenizer, messages, examples["system"][i], examples["tools"][i], data_args.cutoff_len
+            )
+        ):
             if data_args.train_on_prompt:
                 source_mask = source_ids
             elif turn_idx != 0 and template.efficient_eos:
@@ -96,9 +97,9 @@ def preprocess_packed_supervised_dataset(
             continue
 
         messages = examples["prompt"][i] + examples["response"][i]
-        for turn_idx, (source_ids, target_ids) in enumerate(template.encode_multiturn(
-            tokenizer, messages, examples["system"][i], examples["tools"][i]
-        )):
+        for turn_idx, (source_ids, target_ids) in enumerate(
+            template.encode_multiturn(tokenizer, messages, examples["system"][i], examples["tools"][i])
+        ):
             if data_args.train_on_prompt:
                 source_mask = source_ids
             elif turn_idx != 0 and template.efficient_eos:
@@ -119,9 +120,9 @@ def preprocess_packed_supervised_dataset(
     total_length = (total_length // block_size) * block_size
     # split by chunks of cutoff_len
     for i in range(0, total_length, block_size):
-        model_inputs["input_ids"].append(input_ids[i: i + block_size])
+        model_inputs["input_ids"].append(input_ids[i : i + block_size])
         model_inputs["attention_mask"].append([1] * block_size)
-        model_inputs["labels"].append(labels[i: i + block_size])
+        model_inputs["labels"].append(labels[i : i + block_size])
 
     return model_inputs
 
@@ -191,9 +192,11 @@ def print_supervised_dataset_example(example: Dict[str, List[int]], tokenizer: "
     print("input_ids:\n{}".format(example["input_ids"]))
     print("inputs:\n{}".format(tokenizer.decode(example["input_ids"], skip_special_tokens=False)))
     print("label_ids:\n{}".format(example["labels"]))
-    print("labels:\n{}".format(
-        tokenizer.decode(list(filter(lambda x: x != IGNORE_INDEX, example["labels"])), skip_special_tokens=False)
-    ))
+    print(
+        "labels:\n{}".format(
+            tokenizer.decode(list(filter(lambda x: x != IGNORE_INDEX, example["labels"])), skip_special_tokens=False)
+        )
+    )
 
 
 def print_pairwise_dataset_example(example: Dict[str, List[int]], tokenizer: "PreTrainedTokenizer") -> None:
@@ -232,10 +235,14 @@ def get_preprocess_and_print_func(
 
         print_function = partial(print_supervised_dataset_example, tokenizer=tokenizer)
     elif stage == "rm":
-        preprocess_func = partial(preprocess_pairwise_dataset, tokenizer=tokenizer, template=template, data_args=data_args)
+        preprocess_func = partial(
+            preprocess_pairwise_dataset, tokenizer=tokenizer, template=template, data_args=data_args
+        )
         print_function = partial(print_pairwise_dataset_example, tokenizer=tokenizer)
     else:
-        preprocess_func = partial(preprocess_unsupervised_dataset, tokenizer=tokenizer, template=template, data_args=data_args)
+        preprocess_func = partial(
+            preprocess_unsupervised_dataset, tokenizer=tokenizer, template=template, data_args=data_args
+        )
         print_function = partial(print_unsupervised_dataset_example, tokenizer=tokenizer)
 
     return preprocess_func, print_function

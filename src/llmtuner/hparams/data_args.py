@@ -1,5 +1,5 @@
-from typing import Literal, Optional
 from dataclasses import dataclass, field
+from typing import Literal, Optional
 
 
 @dataclass
@@ -8,80 +8,66 @@ class DataArguments:
     Arguments pertaining to what data we are going to input our model for training and evaluation.
     """
     template: Optional[str] = field(
-        default=None,
-        metadata={"help": "Which template to use for constructing prompts in training and inference."}
+        default=None, metadata={"help": "Which template to use for constructing prompts in training and inference."}
     )
     dataset: Optional[str] = field(
         default=None,
-        metadata={"help": "The name of provided dataset(s) to use. Use commas to separate multiple datasets."}
+        metadata={"help": "The name of provided dataset(s) to use. Use commas to separate multiple datasets."},
     )
     dataset_dir: Optional[str] = field(
-        default="data",
-        metadata={"help": "Path to the folder containing the datasets."}
+        default="data", metadata={"help": "Path to the folder containing the datasets."}
     )
     split: Optional[str] = field(
-        default="train",
-        metadata={"help": "Which dataset split to use for training and evaluation."}
+        default="train", metadata={"help": "Which dataset split to use for training and evaluation."}
     )
     cutoff_len: Optional[int] = field(
-        default=1024,
-        metadata={"help": "The maximum length of the model inputs after tokenization."}
+        default=1024, metadata={"help": "The maximum length of the model inputs after tokenization."}
     )
     reserved_label_len: Optional[int] = field(
-        default=1,
-        metadata={"help": "The maximum length reserved for label after tokenization."}
+        default=1, metadata={"help": "The maximum length reserved for label after tokenization."}
     )
     train_on_prompt: Optional[bool] = field(
-        default=False,
-        metadata={"help": "Whether to disable the mask on the prompt or not."}
+        default=False, metadata={"help": "Whether to disable the mask on the prompt or not."}
     )
-    streaming: Optional[bool] = field(
-        default=False,
-        metadata={"help": "Enable dataset streaming."}
-    )
+    streaming: Optional[bool] = field(default=False, metadata={"help": "Enable dataset streaming."})
     buffer_size: Optional[int] = field(
-        default=16384,
-        metadata={"help": "Size of the buffer to randomly sample examples from in dataset streaming."}
+        default=16384, metadata={"help": "Size of the buffer to randomly sample examples from in dataset streaming."}
     )
     mix_strategy: Optional[Literal["concat", "interleave_under", "interleave_over"]] = field(
         default="concat",
-        metadata={"help": "Strategy to use in dataset mixing (concat/interleave) (undersampling/oversampling)."}
+        metadata={"help": "Strategy to use in dataset mixing (concat/interleave) (undersampling/oversampling)."},
     )
     interleave_probs: Optional[str] = field(
         default=None,
-        metadata={"help": "Probabilities to sample data from datasets. Use commas to separate multiple datasets."}
+        metadata={"help": "Probabilities to sample data from datasets. Use commas to separate multiple datasets."},
     )
     overwrite_cache: Optional[bool] = field(
-        default=False,
-        metadata={"help": "Overwrite the cached training and evaluation sets."}
+        default=False, metadata={"help": "Overwrite the cached training and evaluation sets."}
     )
     preprocessing_num_workers: Optional[int] = field(
-        default=None,
-        metadata={"help": "The number of processes to use for the preprocessing."}
+        default=None, metadata={"help": "The number of processes to use for the preprocessing."}
     )
     max_samples: Optional[int] = field(
-        default=None,
-        metadata={"help": "For debugging purposes, truncate the number of examples for each dataset."}
+        default=None, metadata={"help": "For debugging purposes, truncate the number of examples for each dataset."}
     )
     eval_num_beams: Optional[int] = field(
         default=None,
-        metadata={"help": "Number of beams to use for evaluation. This argument will be passed to `model.generate`"}
+        metadata={"help": "Number of beams to use for evaluation. This argument will be passed to `model.generate`"},
     )
     ignore_pad_token_for_loss: Optional[bool] = field(
         default=True,
-        metadata={"help": "Whether to ignore the tokens corresponding to padded labels in the loss computation or not."}
+        metadata={
+            "help": "Whether to ignore the tokens corresponding to padded labels in the loss computation or not."
+        },
     )
     val_size: Optional[float] = field(
-        default=0,
-        metadata={"help": "Size of the development set, should be an integer or a float in range `[0,1)`."}
+        default=0, metadata={"help": "Size of the development set, should be an integer or a float in range `[0,1)`."}
     )
     sft_packing: Optional[bool] = field(
-        default=False,
-        metadata={"help": "Packing the questions and answers in the supervised fine-tuning stage."}
+        default=False, metadata={"help": "Packing the questions and answers in the supervised fine-tuning stage."}
     )
     cache_path: Optional[str] = field(
-        default=None,
-        metadata={"help": "Path to save or load the preprocessed datasets."}
+        default=None, metadata={"help": "Path to save or load the preprocessed datasets."}
     )
 
     def __post_init__(self):
