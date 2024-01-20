@@ -15,6 +15,7 @@ from ..extras.constants import FILEEXT2TYPE, LAYERNORM_NAMES
 from ..extras.logging import get_logger
 from ..extras.misc import get_current_device, infer_optim_dtype
 from ..extras.packages import is_flash_attn2_available
+from ..extras.patches.llama_patch import apply_llama_patch
 
 if TYPE_CHECKING:
     from transformers import PretrainedConfig, PreTrainedTokenizer
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
 
 
 logger = get_logger(__name__)
-SUPPORTED_CLASS_FOR_S2ATTN = [] # TODO: add llama
+SUPPORTED_CLASS_FOR_S2ATTN = ["llama"]
 
 
 def _noisy_mean_initialization(embed_weight: torch.Tensor, num_new_tokens: int):
@@ -39,26 +40,25 @@ def _resize_embedding_layer(model: "PreTrainedModel", tokenizer: "PreTrainedToke
     Resize token embeddings.
     """
     if is_deepspeed_zero3_enabled():
-        import deepspeed
-        with deepspeed.zero.GatheredParameters(model.get_input_embeddings().weight, modifier_rank=None):
-            current_embedding_size = model.get_input_embeddings().weight.size(0)
+        import deepspeed # type: ignore
+        params = [model.get_input_embeddings().weight]
+        if model.get_output_embeddings() is not None and not model.config.tie_word_embeddings:
+            params.append(model.get_output_embeddings().weight)
+
+        context_maybe_zero3 = deepspeed.zero.GatheredParameters(params, modifier_rank=0)
     else:
+        context_maybe_zero3 = nullcontext()
+
+    with context_maybe_zero3:
         current_embedding_size = model.get_input_embeddings().weight.size(0)
+
     if len(tokenizer) > current_embedding_size:
         if not isinstance(model.get_output_embeddings(), torch.nn.Linear):
             logger.warning("Current model does not support resizing token embeddings.")
             return
 
         model.resize_token_embeddings(len(tokenizer), pad_to_multiple_of=64)
-        if is_deepspeed_zero3_enabled():
-            import deepspeed
-            params = [model.get_input_embeddings().weight]
-            if model.get_output_embeddings() is not None and not model.config.tie_word_embeddings:
-                params.append(model.get_output_embeddings().weight)
-            context = deepspeed.zero.GatheredParameters(params, modifier_rank=0)
-        else:
-            context = nullcontext()
-        with context:
+        with context_maybe_zero3:
             new_embedding_size = model.get_input_embeddings().weight.size(0)
             num_new_tokens = new_embedding_size - current_embedding_size
             _noisy_mean_initialization(model.get_input_embeddings().weight.data, num_new_tokens)
@@ -136,6 +136,7 @@ def _configure_flashattn(config_kwargs: Dict[str, Any]) -> None:
 def _configure_longlora(config: "PretrainedConfig") -> None:
     if getattr(config, "model_type", None) in SUPPORTED_CLASS_FOR_S2ATTN:
         setattr(config, "group_size_ratio", 0.25)
+        apply_llama_patch()
         logger.info("Using shift short attention with group_size_ratio=1/4.")
     else:
         logger.warning("Current model does not support shift short attention.")
