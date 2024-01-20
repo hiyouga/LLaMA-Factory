@@ -37,6 +37,7 @@ class ChatModel:
         tools: Optional[str] = None,
         **input_kwargs,
     ) -> Tuple[Dict[str, Any], int]:
+        messages += [{"role": "assistant", "content": ""}]
         prompt, _ = self.template.encode_oneturn(
             tokenizer=self.tokenizer, messages=messages, system=system, tools=tools
         )

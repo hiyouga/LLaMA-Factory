@@ -141,7 +141,7 @@ class Template:
             max_source_len, max_target_len = infer_max_len(
                 source_len=len(encoded_messages[i]),
                 target_len=len(encoded_messages[i + 1]),
-                cutoff_len=(cutoff_len - total_length),
+                max_len=(cutoff_len - total_length),
                 reserved_label_len=reserved_label_len,
             )
             encoded_messages[i] = encoded_messages[i][: max_source_len]
