@@ -29,7 +29,7 @@ def run_ppo(
     callbacks: Optional[List["TrainerCallback"]] = None
 ):
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, add_valuehead=True)
-    dataset = get_dataset(model_args, data_args, tokenizer, training_args, stage="ppo")
+    dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="ppo")
 
     tokenizer.padding_side = "left" # use left-padding in generation while using right-padding in training
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)

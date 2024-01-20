@@ -130,6 +130,20 @@ def llama_flash_attn_forward(
 
     dropout_rate = self.attention_dropout if self.training else 0.0
 
+    input_dtype = query_states.dtype
+    if input_dtype == torch.float32:
+        if torch.is_autocast_enabled():
+            target_dtype = torch.get_autocast_gpu_dtype()
+        elif hasattr(self.config, "_pre_quantization_dtype"):
+            target_dtype = self.config._pre_quantization_dtype
+        else:
+            target_dtype = self.q_proj.weight.dtype
+
+        logger.warning_once("The input hidden states seems to be silently casted in float32.")
+        query_states = query_states.to(target_dtype)
+        key_states = key_states.to(target_dtype)
+        value_states = value_states.to(target_dtype)
+
     if getattr(self.config, "group_size_ratio", None) and self.training: # shift
         groupsz = int(q_len * getattr(self.config, "group_size_ratio"))
         assert q_len % groupsz == 0, "q_len {} should be divisible by group size {}.".format(q_len, groupsz)
