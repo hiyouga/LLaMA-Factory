@@ -3,6 +3,7 @@ from enum import Enum, unique
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
+from typing_extensions import Literal
 
 
 @unique
@@ -20,14 +21,14 @@ class Finish(str, Enum):
 
 class ModelCard(BaseModel):
     id: str
-    object: Optional[str] = "model"
-    created: Optional[int] = Field(default_factory=lambda: int(time.time()))
-    owned_by: Optional[str] = "owner"
+    object: Literal["model"] = "model"
+    created: int = Field(default_factory=lambda: int(time.time()))
+    owned_by: Literal["owner"] = "owner"
 
 
 class ModelList(BaseModel):
-    object: Optional[str] = "list"
-    data: Optional[List[ModelCard]] = []
+    object: Literal["list"] = "list"
+    data: List[ModelCard] = []
 
 
 class ChatMessage(BaseModel):
@@ -43,12 +44,12 @@ class DeltaMessage(BaseModel):
 class ChatCompletionRequest(BaseModel):
     model: str
     messages: List[ChatMessage]
-    do_sample: Optional[bool] = True
+    do_sample: bool = True
     temperature: Optional[float] = None
     top_p: Optional[float] = None
-    n: Optional[int] = 1
+    n: int = 1
     max_tokens: Optional[int] = None
-    stream: Optional[bool] = False
+    stream: bool = False
 
 
 class ChatCompletionResponseChoice(BaseModel):
@@ -70,18 +71,18 @@ class ChatCompletionResponseUsage(BaseModel):
 
 
 class ChatCompletionResponse(BaseModel):
-    id: Optional[str] = "chatcmpl-default"
-    object: Optional[str] = "chat.completion"
-    created: Optional[int] = Field(default_factory=lambda: int(time.time()))
+    id: Literal["chatcmpl-default"] = "chatcmpl-default"
+    object: Literal["chat.completion"] = "chat.completion"
+    created: int = Field(default_factory=lambda: int(time.time()))
     model: str
     choices: List[ChatCompletionResponseChoice]
     usage: ChatCompletionResponseUsage
 
 
 class ChatCompletionStreamResponse(BaseModel):
-    id: Optional[str] = "chatcmpl-default"
-    object: Optional[str] = "chat.completion.chunk"
-    created: Optional[int] = Field(default_factory=lambda: int(time.time()))
+    id: Literal["chatcmpl-default"] = "chatcmpl-default"
+    object: Literal["chat.completion.chunk"] = "chat.completion.chunk"
+    created: int = Field(default_factory=lambda: int(time.time()))
     model: str
     choices: List[ChatCompletionResponseStreamChoice]
 
@@ -93,7 +94,7 @@ class ScoreEvaluationRequest(BaseModel):
 
 
 class ScoreEvaluationResponse(BaseModel):
-    id: Optional[str] = "scoreeval-default"
-    object: Optional[str] = "score.evaluation"
+    id: Literal["scoreeval-default"] = "scoreeval-default"
+    object: Literal["score.evaluation"] = "score.evaluation"
     model: str
     scores: List[float]

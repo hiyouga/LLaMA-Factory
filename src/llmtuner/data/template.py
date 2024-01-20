@@ -144,8 +144,8 @@ class Template:
                 max_len=(cutoff_len - total_length),
                 reserved_label_len=reserved_label_len,
             )
-            encoded_messages[i] = encoded_messages[i][: max_source_len]
-            encoded_messages[i + 1] = encoded_messages[i + 1][: max_target_len]
+            encoded_messages[i] = encoded_messages[i][:max_source_len]
+            encoded_messages[i + 1] = encoded_messages[i + 1][:max_target_len]
             total_length += len(encoded_messages[i]) + len(encoded_messages[i + 1])
             encoded_pairs.append((encoded_messages[i], encoded_messages[i + 1]))
 
@@ -416,7 +416,7 @@ register_template(
         "by the user such as English and 中文."
     ),
     stop_words=["<|im_end|>"],
-    efficient_eos=True,
+    efficient_eos=True,  # internlm2 tokenizer cannot set eos_token_id
 )
 
 
@@ -455,9 +455,7 @@ register_template(
 
 register_template(
     name="openchat",
-    format_user=StringFormatter(
-        slots=["GPT4 Correct User: {{content}}", {"eos_token"}, "GPT4 Correct Assistant:"]
-    ),
+    format_user=StringFormatter(slots=["GPT4 Correct User: {{content}}", {"eos_token"}, "GPT4 Correct Assistant:"]),
     format_assistant=StringFormatter(slots=["{{content}}"]),
     format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
     force_system=True,
