@@ -146,6 +146,7 @@ class Runner:
 
         if args["stage"] == "dpo":
             args["dpo_beta"] = get("train.dpo_beta")
+            args["dpo_ftx"] = get("train.dpo_ftx")
 
         if get("train.val_size") > 1e-6 and args["stage"] != "ppo":
             args["val_size"] = get("train.val_size")
