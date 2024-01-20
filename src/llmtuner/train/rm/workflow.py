@@ -1,6 +1,7 @@
 # Inspired by: https://github.com/CarperAI/trlx/blob/main/examples/summarize_rlhf/reward_model/train_reward_model_gptj.py
 
-from typing import TYPE_CHECKING, Optional, List
+from typing import TYPE_CHECKING, List, Optional
+
 from transformers import Seq2SeqTrainingArguments
 
 from ...data import get_dataset, split_dataset
@@ -13,9 +14,11 @@ from ...train.rm.metric import compute_accuracy
 from ...train.rm.trainer import PairwiseTrainer
 from ...train.utils import create_modelcard_and_push
 
+
 if TYPE_CHECKING:
     from transformers import TrainerCallback
-    from ...hparams import ModelArguments, DataArguments, FinetuningArguments
+
+    from ...hparams import DataArguments, FinetuningArguments, ModelArguments
 
 
 def run_rm(
@@ -23,15 +26,17 @@ def run_rm(
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
     finetuning_args: "FinetuningArguments",
-    callbacks: Optional[List["TrainerCallback"]] = None
+    callbacks: Optional[List["TrainerCallback"]] = None,
 ):
-    model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train, add_valuehead=True)
+    model, tokenizer = load_model_and_tokenizer(
+        model_args, finetuning_args, training_args.do_train, add_valuehead=True
+    )
     dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="rm")
     data_collator = PairwiseDataCollatorWithPadding(tokenizer, pad_to_multiple_of=8)
 
     # Update arguments
     training_args_dict = training_args.to_dict()
-    training_args_dict.update(dict(remove_unused_columns=False)) # important for pairwise dataset
+    training_args_dict.update(dict(remove_unused_columns=False))  # important for pairwise dataset
     training_args = Seq2SeqTrainingArguments(**training_args_dict)
 
     # Initialize our Trainer
@@ -42,7 +47,7 @@ def run_rm(
         data_collator=data_collator,
         callbacks=callbacks + [FixValueHeadModelCallback()],
         compute_metrics=compute_accuracy,
-        **split_dataset(dataset, data_args, training_args)
+        **split_dataset(dataset, data_args, training_args),
     )
 
     # Training

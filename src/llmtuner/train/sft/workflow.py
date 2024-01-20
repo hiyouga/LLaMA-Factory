@@ -1,6 +1,7 @@
 # Inspired by: https://github.com/huggingface/transformers/blob/v4.34.1/examples/pytorch/summarization/run_summarization.py
 
-from typing import TYPE_CHECKING, Optional, List
+from typing import TYPE_CHECKING, List, Optional
+
 from transformers import DataCollatorForSeq2Seq, Seq2SeqTrainingArguments
 
 from ...data import get_dataset, split_dataset
@@ -15,7 +16,8 @@ from ...train.utils import create_modelcard_and_push
 
 if TYPE_CHECKING:
     from transformers import TrainerCallback
-    from ...hparams import ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments
+
+    from ...hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
 
 
 def run_sft(
@@ -24,29 +26,31 @@ def run_sft(
     training_args: "Seq2SeqTrainingArguments",
     finetuning_args: "FinetuningArguments",
     generating_args: "GeneratingArguments",
-    callbacks: Optional[List["TrainerCallback"]] = None
+    callbacks: Optional[List["TrainerCallback"]] = None,
 ):
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train)
     dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="sft")
 
     if training_args.predict_with_generate:
-        tokenizer.padding_side = "left" # use left-padding in generation
+        tokenizer.padding_side = "left"  # use left-padding in generation
 
     if getattr(model, "is_quantized", False) and not training_args.do_train:
-        setattr(model, "_hf_peft_config_loaded", True) # hack here: make model compatible with prediction
+        setattr(model, "_hf_peft_config_loaded", True)  # hack here: make model compatible with prediction
 
     data_collator = DataCollatorForSeq2Seq(
         tokenizer=tokenizer,
-        pad_to_multiple_of=8 if tokenizer.padding_side == "right" else None, # for shift short attention
-        label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
+        pad_to_multiple_of=8 if tokenizer.padding_side == "right" else None,  # for shift short attention
+        label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
     )
 
     # Override the decoding parameters of Seq2SeqTrainer
     training_args_dict = training_args.to_dict()
-    training_args_dict.update(dict(
-        generation_max_length=training_args.generation_max_length or data_args.cutoff_len,
-        generation_num_beams=data_args.eval_num_beams or training_args.generation_num_beams
-    ))
+    training_args_dict.update(
+        dict(
+            generation_max_length=training_args.generation_max_length or data_args.cutoff_len,
+            generation_num_beams=data_args.eval_num_beams or training_args.generation_num_beams,
+        )
+    )
     training_args = Seq2SeqTrainingArguments(**training_args_dict)
 
     # Initialize our Trainer
@@ -57,7 +61,7 @@ def run_sft(
         data_collator=data_collator,
         callbacks=callbacks,
         compute_metrics=ComputeMetrics(tokenizer) if training_args.predict_with_generate else None,
-        **split_dataset(dataset, data_args, training_args)
+        **split_dataset(dataset, data_args, training_args),
     )
 
     # Keyword arguments for `model.generate`
@@ -79,7 +83,7 @@ def run_sft(
     # Evaluation
     if training_args.do_eval:
         metrics = trainer.evaluate(metric_key_prefix="eval", **gen_kwargs)
-        if training_args.predict_with_generate: # eval_loss will be wrong if predict_with_generate is enabled
+        if training_args.predict_with_generate:  # eval_loss will be wrong if predict_with_generate is enabled
             metrics.pop("eval_loss", None)
         trainer.log_metrics("eval", metrics)
         trainer.save_metrics("eval", metrics)
@@ -87,7 +91,7 @@ def run_sft(
     # Predict
     if training_args.do_predict:
         predict_results = trainer.predict(dataset, metric_key_prefix="predict", **gen_kwargs)
-        if training_args.predict_with_generate: # predict_loss will be wrong if predict_with_generate is enabled
+        if training_args.predict_with_generate:  # predict_loss will be wrong if predict_with_generate is enabled
             predict_results.metrics.pop("predict_loss", None)
         trainer.log_metrics("predict", predict_results.metrics)
         trainer.save_metrics("predict", predict_results.metrics)

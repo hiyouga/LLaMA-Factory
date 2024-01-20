@@ -9,7 +9,7 @@ def is_package_available(name: str) -> bool:
 def get_package_version(name: str) -> str:
     try:
         return importlib.metadata.version(name)
-    except:
+    except Exception:
         return "0.0.0"
 
 

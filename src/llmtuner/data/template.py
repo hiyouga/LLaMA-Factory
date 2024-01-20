@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
 
 from ..extras.logging import get_logger
+from .formatter import FunctionFormatter, StringFormatter, ToolFormatter
 from .utils import Role
-from .formatter import StringFormatter, FunctionFormatter, ToolFormatter
 
 
 if TYPE_CHECKING:
@@ -15,7 +15,6 @@ logger = get_logger(__name__)
 
 @dataclass
 class Template:
-
     format_user: Callable
     format_assistant: Callable
     format_system: Callable
@@ -34,7 +33,7 @@ class Template:
         messages: List[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        cutoff_len: Optional[int] = 1_000_000
+        cutoff_len: Optional[int] = 1_000_000,
     ) -> Tuple[List[int], List[int]]:
         r"""
         Returns a single pair of token ids representing prompt and response respectively.
@@ -53,7 +52,7 @@ class Template:
         messages: List[Dict[str, str]],
         system: str,
         tools: str,
-        cutoff_len: Optional[int] = 1_000_000
+        cutoff_len: Optional[int] = 1_000_000,
     ) -> List[Tuple[List[int], List[int]]]:
         r"""
         Returns multiple pairs of token ids representing prompts and responses respectively.
@@ -67,7 +66,7 @@ class Template:
         messages: List[Dict[str, str]],
         system: str,
         tools: str,
-        cutoff_len: int
+        cutoff_len: int,
     ) -> List[Tuple[List[int], List[int]]]:
         r"""
         Encodes formatted inputs to pairs of token ids.
@@ -102,19 +101,17 @@ class Template:
             if total_length >= cutoff_len:
                 break
 
-            encoded_messages[i] = encoded_messages[i][:cutoff_len-total_length]
+            encoded_messages[i] = encoded_messages[i][: cutoff_len - total_length]
             total_length += len(encoded_messages[i])
 
-            encoded_messages[i+1] = encoded_messages[i+1][:max(1, cutoff_len-total_length)]
-            total_length += len(encoded_messages[i+1])
-            encoded_pairs.append((encoded_messages[i], encoded_messages[i+1]))
+            encoded_messages[i + 1] = encoded_messages[i + 1][: max(1, cutoff_len - total_length)]
+            total_length += len(encoded_messages[i + 1])
+            encoded_pairs.append((encoded_messages[i], encoded_messages[i + 1]))
 
         return encoded_pairs
 
     def _convert_elements_to_ids(
-        self,
-        tokenizer: "PreTrainedTokenizer",
-        elements: List[Union[str, Dict[str, str]]]
+        self, tokenizer: "PreTrainedTokenizer", elements: List[Union[str, Dict[str, str]]]
     ) -> List[int]:
         r"""
         Converts elements to token ids.
@@ -139,14 +136,13 @@ class Template:
 
 @dataclass
 class Llama2Template(Template):
-
     def _encode(
         self,
         tokenizer: "PreTrainedTokenizer",
         messages: List[Dict[str, str]],
         system: str,
         tools: str,
-        cutoff_len: int
+        cutoff_len: int,
     ) -> List[Tuple[List[int], List[int]]]:
         r"""
         Encodes formatted inputs to pairs of token ids.
@@ -182,12 +178,12 @@ class Llama2Template(Template):
             if total_length >= cutoff_len:
                 break
 
-            encoded_messages[i] = encoded_messages[i][:cutoff_len-total_length]
+            encoded_messages[i] = encoded_messages[i][: cutoff_len - total_length]
             total_length += len(encoded_messages[i])
 
-            encoded_messages[i+1] = encoded_messages[i+1][:max(1, cutoff_len-total_length)]
-            total_length += len(encoded_messages[i+1])
-            encoded_pairs.append((encoded_messages[i], encoded_messages[i+1]))
+            encoded_messages[i + 1] = encoded_messages[i + 1][: max(1, cutoff_len - total_length)]
+            total_length += len(encoded_messages[i + 1])
+            encoded_pairs.append((encoded_messages[i], encoded_messages[i + 1]))
 
         return encoded_pairs
 
@@ -207,32 +203,26 @@ def register_template(
     separator: Optional[List[Union[str, Dict[str, str]]]] = "",
     stop_words: Optional[List[str]] = [],
     efficient_eos: Optional[bool] = False,
-    replace_eos: Optional[bool] = False
+    replace_eos: Optional[bool] = False,
 ) -> None:
     template_class = Llama2Template if name.startswith("llama2") else Template
     templates[name] = template_class(
         format_user=format_user or StringFormatter(container=["{{content}}"]),
-        format_assistant=format_assistant or StringFormatter(container=[
-            "{{content}}", {"eos_token"}
-        ]),
+        format_assistant=format_assistant or StringFormatter(container=["{{content}}", {"eos_token"}]),
         format_system=format_system or StringFormatter(container=["{{content}}"]),
         format_tool=format_tool or ToolFormatter(type="default"),
         format_observation=format_observation or format_user,
-        format_function=format_function or FunctionFormatter(container=[
-            "Action: {{name}}\nAction Input: {{arguments}}", {"eos_token"}
-        ]),
+        format_function=format_function
+        or FunctionFormatter(container=["Action: {{name}}\nAction Input: {{arguments}}", {"eos_token"}]),
         system=system,
         separator=separator,
         stop_words=stop_words,
         efficient_eos=efficient_eos,
-        replace_eos=replace_eos
+        replace_eos=replace_eos,
     )
 
 
-def get_template_and_fix_tokenizer(
-    name: str,
-    tokenizer: "PreTrainedTokenizer"
-) -> Template:
+def get_template_and_fix_tokenizer(name: str, tokenizer: "PreTrainedTokenizer") -> Template:
     if tokenizer.eos_token_id is None:
         tokenizer.eos_token = "<|endoftext|>"
         logger.info("Add eos token: {}".format(tokenizer.eos_token))
@@ -241,7 +231,7 @@ def get_template_and_fix_tokenizer(
         tokenizer.pad_token = tokenizer.eos_token
         logger.info("Add pad token: {}".format(tokenizer.pad_token))
 
-    if name is None: # for pre-training
+    if name is None:  # for pre-training
         return None
 
     template = templates.get(name, None)
@@ -258,8 +248,7 @@ def get_template_and_fix_tokenizer(
 
     if stop_words:
         tokenizer.add_special_tokens(
-            dict(additional_special_tokens=stop_words),
-            replace_additional_special_tokens=False
+            dict(additional_special_tokens=stop_words), replace_additional_special_tokens=False
         )
         logger.info("Add {} to stop words.".format(",".join(stop_words)))
 
@@ -268,263 +257,153 @@ def get_template_and_fix_tokenizer(
 
 register_template(
     name="alpaca",
-    format_user=StringFormatter(container=[
-        "### Instruction:\n{{content}}\n\n### Response:\n"
-    ]),
+    format_user=StringFormatter(container=["### Instruction:\n{{content}}\n\n### Response:\n"]),
     system=(
-        "Below is an instruction that describes a task. "
-        "Write a response that appropriately completes the request."
+        "Below is an instruction that describes a task. " "Write a response that appropriately completes the request."
     ),
-    separator=[
-        "\n\n"
-    ]
+    separator=["\n\n"],
 )
 
 
 register_template(
     name="aquila",
-    format_user=StringFormatter(container=[
-        "Human: {{content}}###Assistant:"
-    ]),
-    format_assistant=StringFormatter(container=[
-        "{{content}}"
-    ]),
+    format_user=StringFormatter(container=["Human: {{content}}###Assistant:"]),
+    format_assistant=StringFormatter(container=["{{content}}"]),
     system=(
         "A chat between a curious human and an artificial intelligence assistant. "
         "The assistant gives helpful, detailed, and polite answers to the human's questions."
     ),
-    separator=[
-        "###"
-    ],
-    stop_words=[
-        "</s>"
-    ],
-    efficient_eos=True
+    separator=["###"],
+    stop_words=["</s>"],
+    efficient_eos=True,
 )
 
 
 register_template(
     name="baichuan",
-    format_user=StringFormatter(container=[
-        {"token": "<reserved_102>"},
-        "{{content}}",
-        {"token": "<reserved_103>"}
-    ]),
-    format_assistant=StringFormatter(container=[
-        "{{content}}"
-    ]),
-    efficient_eos=True
+    format_user=StringFormatter(container=[{"token": "<reserved_102>"}, "{{content}}", {"token": "<reserved_103>"}]),
+    format_assistant=StringFormatter(container=["{{content}}"]),
+    efficient_eos=True,
 )
 
 
 register_template(
     name="baichuan2",
-    format_user=StringFormatter(container=[
-        {"token": "<reserved_106>"},
-        "{{content}}",
-        {"token": "<reserved_107>"}
-    ]),
-    format_assistant=StringFormatter(container=[
-        "{{content}}"
-    ]),
-    efficient_eos=True
+    format_user=StringFormatter(container=[{"token": "<reserved_106>"}, "{{content}}", {"token": "<reserved_107>"}]),
+    format_assistant=StringFormatter(container=["{{content}}"]),
+    efficient_eos=True,
 )
 
 
 register_template(
-    name="belle",
-    format_user=StringFormatter(container=[
-        "Human: {{content}}\n\nBelle: "
-    ]),
-    separator=[
-        "\n\n"
-    ]
+    name="belle", format_user=StringFormatter(container=["Human: {{content}}\n\nBelle: "]), separator=["\n\n"]
 )
 
 
 register_template(
     name="bluelm",
-    format_user=StringFormatter(container=[
-        {"token": "[|Human|]:"},
-        "{{content}}",
-        {"token": "[|AI|]:"}
-    ])
+    format_user=StringFormatter(container=[{"token": "[|Human|]:"}, "{{content}}", {"token": "[|AI|]:"}]),
 )
 
 
 register_template(
     name="chatglm2",
-    format_user=StringFormatter(container=[
-        "[Round {{idx}}]\n\n问：{{content}}\n\n答："
-    ]),
-    format_assistant=StringFormatter(container=[
-        "{{content}}"
-    ]),
-    format_system=StringFormatter(container=[
-        {"token": "[gMASK]"},
-        {"token": "sop"},
-        "{{content}}"
-    ]),
-    separator=[
-        "\n\n"
-    ],
-    efficient_eos=True
+    format_user=StringFormatter(container=["[Round {{idx}}]\n\n问：{{content}}\n\n答："]),
+    format_assistant=StringFormatter(container=["{{content}}"]),
+    format_system=StringFormatter(container=[{"token": "[gMASK]"}, {"token": "sop"}, "{{content}}"]),
+    separator=["\n\n"],
+    efficient_eos=True,
 )
 
 
 register_template(
     name="chatglm3",
-    format_user=StringFormatter(container=[
-        {"token": "<|user|>"},
-        "\n",
-        "{{content}}",
-        {"token": "<|assistant|>"}
-    ]),
-    format_assistant=StringFormatter(container=[
-        "\n"
-        "{{content}}"
-    ]),
-    format_system=StringFormatter(container=[
-        {"token": "[gMASK]"},
-        {"token": "sop"},
-        {"token": "<|system|>"},
-        "\n",
-        "{{content}}"
-    ]),
-    format_observation=StringFormatter(container=[
-        {"token": "<|observation|>"},
-        "\n",
-        "{{content}}"
-    ]),
-    format_function=FunctionFormatter(container=[
-        "{{name}}\n{{arguments}}"
-    ]),
+    format_user=StringFormatter(container=[{"token": "<|user|>"}, "\n", "{{content}}", {"token": "<|assistant|>"}]),
+    format_assistant=StringFormatter(container=["\n" "{{content}}"]),
+    format_system=StringFormatter(
+        container=[{"token": "[gMASK]"}, {"token": "sop"}, {"token": "<|system|>"}, "\n", "{{content}}"]
+    ),
+    format_observation=StringFormatter(container=[{"token": "<|observation|>"}, "\n", "{{content}}"]),
+    format_function=FunctionFormatter(container=["{{name}}\n{{arguments}}"]),
     system=(
         "You are ChatGLM3, a large language model trained by Zhipu.AI. "
         "Follow the user's instructions carefully. Respond using markdown."
     ),
-    stop_words=[
-        "<|user|>",
-        "<|observation|>"
-    ],
-    efficient_eos=True
+    stop_words=["<|user|>", "<|observation|>"],
+    efficient_eos=True,
 )
 
 
 register_template(
-    name="codegeex2",
-    format_system=StringFormatter(container=[
-        {"token": "[gMASK]"},
-        {"token": "sop"},
-        "{{content}}"
-    ])
+    name="codegeex2", format_system=StringFormatter(container=[{"token": "[gMASK]"}, {"token": "sop"}, "{{content}}"])
 )
 
 
-register_template(
-    name="deepseek",
-    format_user=StringFormatter(container=[
-        "User: {{content}}\n\nAssistant:"
-    ])
-)
+register_template(name="deepseek", format_user=StringFormatter(container=["User: {{content}}\n\nAssistant:"]))
 
 
 register_template(
     name="deepseekcoder",
-    format_user=StringFormatter(container=[
-        "### Instruction:\n{{content}}\n### Response:\n"
-    ]),
-    format_assistant=StringFormatter(container=[
-        "{{content}}"
-    ]),
+    format_user=StringFormatter(container=["### Instruction:\n{{content}}\n### Response:\n"]),
+    format_assistant=StringFormatter(container=["{{content}}"]),
     system=(
         "You are an AI programming assistant, utilizing the Deepseek Coder model, "
         "developed by Deepseek Company, and you only answer questions related to computer science. "
         "For politically sensitive questions, security and privacy issues, "
         "and other non-computer science questions, you will refuse to answer\n"
     ),
-    separator=[
-        "\n",
-        {"token": "<|EOT|>"},
-        "\n"
-    ],
-    stop_words=[
-        "<|EOT|>"
-    ],
-    efficient_eos=True
+    separator=["\n", {"token": "<|EOT|>"}, "\n"],
+    stop_words=["<|EOT|>"],
+    efficient_eos=True,
 )
 
 
 register_template(
     name="default",
-    format_user=StringFormatter(container=[
-        "Human: {{content}}\nAssistant: "
-    ]),
+    format_user=StringFormatter(container=["Human: {{content}}\nAssistant: "]),
     system=(
         "A chat between a curious user and an artificial intelligence assistant. "
         "The assistant gives helpful, detailed, and polite answers to the user's questions.\n"
     ),
-    separator=[
-        "\n"
-    ]
+    separator=["\n"],
 )
 
 
 register_template(
     name="falcon",
-    format_user=StringFormatter(container=[
-        "User: {{content}}\nFalcon:"
-    ]),
-    format_assistant=StringFormatter(container=[
-        "{{content}}"
-    ]),
-    separator=[
-        "\n"
-    ],
-    efficient_eos=True
+    format_user=StringFormatter(container=["User: {{content}}\nFalcon:"]),
+    format_assistant=StringFormatter(container=["{{content}}"]),
+    separator=["\n"],
+    efficient_eos=True,
 )
 
 
 register_template(
     name="intern",
-    format_user=StringFormatter(container=[
-        "<|User|>:{{content}}",
-        {"token": "<eoh>"},
-        "\n<|Bot|>:"
-    ]),
-    format_assistant=StringFormatter(container=[
-        "{{content}}"
-    ]),
-    separator=[
-        {"token": "<eoa>"},
-        "\n"
-    ],
-    stop_words=[
-        "<eoa>"
-    ],
-    efficient_eos=True
+    format_user=StringFormatter(container=["<|User|>:{{content}}", {"token": "<eoh>"}, "\n<|Bot|>:"]),
+    format_assistant=StringFormatter(container=["{{content}}"]),
+    separator=[{"token": "<eoa>"}, "\n"],
+    stop_words=["<eoa>"],
+    efficient_eos=True,
 )
 
 
 register_template(
     name="intern2",
-    format_user=StringFormatter(container=[
-        {"token": "[UNUSED_TOKEN_146]"},
-        "user\n{{content}}",
-        {"token": "[UNUSED_TOKEN_145]"},
-        "\n",
-        {"token": "[UNUSED_TOKEN_146]"},
-        "assistant\n"
-    ]),
-    format_assistant=StringFormatter(container=[
-        "{{content}}"
-    ]),
-    format_system=StringFormatter(container=[
-        {"token": "[UNUSED_TOKEN_146]"},
-        "system\n{{content}}",
-        {"token": "[UNUSED_TOKEN_145]"},
-        "\n"
-    ]),
+    format_user=StringFormatter(
+        container=[
+            {"token": "[UNUSED_TOKEN_146]"},
+            "user\n{{content}}",
+            {"token": "[UNUSED_TOKEN_145]"},
+            "\n",
+            {"token": "[UNUSED_TOKEN_146]"},
+            "assistant\n",
+        ]
+    ),
+    format_assistant=StringFormatter(container=["{{content}}"]),
+    format_system=StringFormatter(
+        container=[{"token": "[UNUSED_TOKEN_146]"}, "system\n{{content}}", {"token": "[UNUSED_TOKEN_145]"}, "\n"]
+    ),
     system=(
         "You are an AI assistant whose name is InternLM (书生·浦语).\n"
         "- InternLM (书生·浦语) is a conversational language model that is developed "
@@ -532,14 +411,9 @@ register_template(
         "- InternLM (书生·浦语) can understand and communicate fluently in the language chosen "
         "by the user such as English and 中文."
     ),
-    separator=[
-        {"token": "[UNUSED_TOKEN_145]"},
-        "\n"
-    ],
-    stop_words=[
-        "[UNUSED_TOKEN_145]"
-    ],
-    efficient_eos=True
+    separator=[{"token": "[UNUSED_TOKEN_145]"}, "\n"],
+    stop_words=["[UNUSED_TOKEN_145]"],
+    efficient_eos=True,
 )
 
 
@@ -556,7 +430,7 @@ register_template(
         "If a question does not make any sense, or is not factually coherent, "
         "explain why instead of answering something not correct. "
         "If you don't know the answer to a question, please don't share false information."
-    )
+    ),
 )
 
 
@@ -564,142 +438,83 @@ register_template(
     name="llama2_zh",
     format_user=StringFormatter(container=["[INST] {{content}} [/INST]"]),
     format_system=StringFormatter(container=["<<SYS>>\n{{content}}\n<</SYS>>\n\n"]),
-    system="You are a helpful assistant. 你是一个乐于助人的助手。"
+    system="You are a helpful assistant. 你是一个乐于助人的助手。",
 )
 
 
-register_template(
-    name="mistral",
-    format_user=StringFormatter(container=["[INST] {{content}} [/INST]"])
-)
+register_template(name="mistral", format_user=StringFormatter(container=["[INST] {{content}} [/INST]"]))
 
 
 register_template(
     name="openchat",
-    format_user=StringFormatter(container=[
-        "GPT4 Correct User: {{content}}",
-        {"token": "<|end_of_turn|>"},
-        "GPT4 Correct Assistant:"
-    ]),
-    format_assistant=StringFormatter(container=[
-        "{{content}}"
-    ]),
-    separator=[
-        {"token": "<|end_of_turn|>"}
-    ],
-    stop_words=[
-        "<|end_of_turn|>"
-    ],
-    efficient_eos=True
+    format_user=StringFormatter(
+        container=["GPT4 Correct User: {{content}}", {"token": "<|end_of_turn|>"}, "GPT4 Correct Assistant:"]
+    ),
+    format_assistant=StringFormatter(container=["{{content}}"]),
+    separator=[{"token": "<|end_of_turn|>"}],
+    stop_words=["<|end_of_turn|>"],
+    efficient_eos=True,
 )
 
 
 register_template(
     name="qwen",
-    format_user=StringFormatter(container=[
-        "<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"
-    ]),
-    format_system=StringFormatter(container=[
-        "<|im_start|>system\n{{content}}<|im_end|>\n"
-    ]),
+    format_user=StringFormatter(container=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_system=StringFormatter(container=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     system="You are a helpful assistant.",
-    separator=[
-        "\n"
-    ],
-    stop_words=[
-        "<|im_end|>"
-    ],
-    replace_eos=True
+    separator=["\n"],
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
 )
 
 
-register_template(
-    name="solar",
-    format_user=StringFormatter(container=[
-        "### User:\n{{content}}\n\n### Assistant:\n"
-    ])
-)
+register_template(name="solar", format_user=StringFormatter(container=["### User:\n{{content}}\n\n### Assistant:\n"]))
 
 
 register_template(
     name="starchat",
-    format_user=StringFormatter(container=[
-        {"token": "<|user|>"},
-        "\n{{content}}",
-        {"token": "<|end|>"},
-        "\n",
-        {"token": "<|assistant|>"}
-    ]),
-    format_assistant=StringFormatter(container=[
-        "{{content}}"
-    ]),
-    format_system=StringFormatter(container=[
-        {"token": "<|system|>"},
-        "\n{{content}}",
-        {"token": "<|end|>"},
-        "\n"
-    ]),
-    separator=[
-        {"token": "<|end|>"},
-        "\n"
-    ],
-    stop_words=[
-        "<|end|>"
-    ],
-    efficient_eos=True
+    format_user=StringFormatter(
+        container=[{"token": "<|user|>"}, "\n{{content}}", {"token": "<|end|>"}, "\n", {"token": "<|assistant|>"}]
+    ),
+    format_assistant=StringFormatter(container=["{{content}}"]),
+    format_system=StringFormatter(container=[{"token": "<|system|>"}, "\n{{content}}", {"token": "<|end|>"}, "\n"]),
+    separator=[{"token": "<|end|>"}, "\n"],
+    stop_words=["<|end|>"],
+    efficient_eos=True,
 )
 
 
-register_template(
-    name="vanilla"
-)
+register_template(name="vanilla")
 
 
 register_template(
     name="vicuna",
-    format_user=StringFormatter(container=[
-        "USER: {{content}} ASSISTANT:"
-    ]),
+    format_user=StringFormatter(container=["USER: {{content}} ASSISTANT:"]),
     system=(
         "A chat between a curious user and an artificial intelligence assistant. "
         "The assistant gives helpful, detailed, and polite answers to the user's questions."
-    )
+    ),
 )
 
 
 register_template(
     name="xuanyuan",
-    format_user=StringFormatter(container=[
-        "Human: {{content}} Assistant:"
-    ]),
+    format_user=StringFormatter(container=["Human: {{content}} Assistant:"]),
     system=(
         "以下是用户和人工智能助手之间的对话。用户以Human开头，人工智能助手以Assistant开头，"
         "会对人类提出的问题给出有帮助、高质量、详细和礼貌的回答，并且总是拒绝参与与不道德、"
         "不安全、有争议、政治敏感等相关的话题、问题和指示。\n"
-    )
+    ),
 )
 
 
-register_template(
-    name="xverse",
-    format_user=StringFormatter(container=[
-        "Human: {{content}}\n\nAssistant: "
-    ])
-)
+register_template(name="xverse", format_user=StringFormatter(container=["Human: {{content}}\n\nAssistant: "]))
 
 
 register_template(
     name="yayi",
-    format_user=StringFormatter(container=[
-        {"token": "<|Human|>"},
-        ":\n{{content}}\n\n",
-        {"token": "<|YaYi|>"},
-        ":"
-    ]),
-    format_system=StringFormatter(container=[
-        {"token": "<|System|>"},
-        ":\n{{content}}\n\n"
-    ]),
+    format_user=StringFormatter(container=[{"token": "<|Human|>"}, ":\n{{content}}\n\n", {"token": "<|YaYi|>"}, ":"]),
+    format_system=StringFormatter(container=[{"token": "<|System|>"}, ":\n{{content}}\n\n"]),
     system=(
         "You are a helpful, respectful and honest assistant named YaYi "
         "developed by Beijing Wenge Technology Co.,Ltd. "
@@ -711,67 +526,43 @@ register_template(
         "explain why instead of answering something not correct. "
         "If you don't know the answer to a question, please don't share false information."
     ),
-    separator=[
-        "\n\n"
-    ],
-    stop_words=[
-        "<|End|>"
-    ]
+    separator=["\n\n"],
+    stop_words=["<|End|>"],
 )
 
 
 register_template(
     name="yi",
-    format_user=StringFormatter(container=[
-        "<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"
-    ]),
-    separator=[
-        "\n"
-    ],
-    stop_words=[
-        "<|im_end|>"
-    ],
-    replace_eos=True
+    format_user=StringFormatter(container=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    separator=["\n"],
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
 )
 
 
 register_template(
     name="yuan",
-    format_user=StringFormatter(container=[
-        "{{content}}",
-        {"token": "<sep>"}
-    ]),
-    separator=[
-        "\n"
-    ],
-    stop_words=[
-        "<eod>"
-    ],
-    replace_eos=True
+    format_user=StringFormatter(container=["{{content}}", {"token": "<sep>"}]),
+    separator=["\n"],
+    stop_words=["<eod>"],
+    replace_eos=True,
 )
 
 
 register_template(
     name="zephyr",
-    format_user=StringFormatter(container=[
-        "<|user|>\n{{content}}</s><|assistant|>"
-    ]),
-    format_system=StringFormatter(container=[
-        "<|system|>\n{{content}}</s>",
-    ]),
-    system="You are a friendly chatbot who always responds in the style of a pirate"
+    format_user=StringFormatter(container=["<|user|>\n{{content}}</s><|assistant|>"]),
+    format_system=StringFormatter(
+        container=[
+            "<|system|>\n{{content}}</s>",
+        ]
+    ),
+    system="You are a friendly chatbot who always responds in the style of a pirate",
 )
 
 
 register_template(
     name="ziya",
-    format_user=StringFormatter(container=[
-        {"token": "<human>"},
-        ":{{content}}\n",
-        {"token": "<bot>"},
-        ":"
-    ]),
-    separator=[
-        "\n"
-    ]
+    format_user=StringFormatter(container=[{"token": "<human>"}, ":{{content}}\n", {"token": "<bot>"}, ":"]),
+    separator=["\n"],
 )
