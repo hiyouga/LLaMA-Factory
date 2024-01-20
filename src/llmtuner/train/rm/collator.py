@@ -1,6 +1,7 @@
-import torch
 from dataclasses import dataclass
 from typing import Any, Dict, Sequence
+
+import torch
 from transformers import DataCollatorWithPadding
 
 
@@ -20,8 +21,9 @@ class PairwiseDataCollatorWithPadding(DataCollatorWithPadding):
         features = [
             {
                 "input_ids": feature["prompt_ids"] + feature[key],
-                "attention_mask": [1] * (len(feature["prompt_ids"]) + len(feature[key]))
+                "attention_mask": [1] * (len(feature["prompt_ids"]) + len(feature[key])),
             }
-            for key in ("chosen_ids", "rejected_ids") for feature in features
+            for key in ("chosen_ids", "rejected_ids")
+            for feature in features
         ]
         return super().__call__(features)

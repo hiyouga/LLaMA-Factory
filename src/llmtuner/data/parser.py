@@ -1,10 +1,11 @@
-import os
 import json
-from typing import TYPE_CHECKING, List, Literal, Optional
+import os
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, List, Literal, Optional
 
 from ..extras.constants import DATA_CONFIG
 from ..extras.misc import use_modelscope
+
 
 if TYPE_CHECKING:
     from ..hparams import DataArguments
@@ -12,7 +13,6 @@ if TYPE_CHECKING:
 
 @dataclass
 class DatasetAttr:
-
     load_from: Literal["hf_hub", "ms_hub", "script", "file"]
     dataset_name: Optional[str] = None
     dataset_sha1: Optional[str] = None
@@ -49,7 +49,9 @@ def get_dataset_list(data_args: "DataArguments") -> List["DatasetAttr"]:
             dataset_info = json.load(f)
     except Exception as err:
         if data_args.dataset is not None:
-            raise ValueError("Cannot open {} due to {}.".format(os.path.join(data_args.dataset_dir, DATA_CONFIG), str(err)))
+            raise ValueError(
+                "Cannot open {} due to {}.".format(os.path.join(data_args.dataset_dir, DATA_CONFIG), str(err))
+            )
         dataset_info = None
 
     if data_args.interleave_probs is not None:
@@ -74,7 +76,7 @@ def get_dataset_list(data_args: "DataArguments") -> List["DatasetAttr"]:
             dataset_attr = DatasetAttr(
                 "file",
                 dataset_name=dataset_info[name]["file_name"],
-                dataset_sha1=dataset_info[name].get("file_sha1", None)
+                dataset_sha1=dataset_info[name].get("file_sha1", None),
             )
 
         dataset_attr.subset = dataset_info[name].get("subset", None)

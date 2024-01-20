@@ -1,21 +1,22 @@
-import gradio as gr
 from typing import Optional
+
+import gradio as gr
 from transformers.utils.versions import require_version
 
+from .common import save_config
 from .components import (
+    create_chat_box,
+    create_eval_tab,
+    create_export_tab,
+    create_infer_tab,
     create_top,
     create_train_tab,
-    create_eval_tab,
-    create_infer_tab,
-    create_export_tab,
-    create_chat_box
 )
-from .common import save_config
 from .css import CSS
 from .engine import Engine
 
 
-require_version("gradio>=3.38.0,<4.0.0", "To fix: pip install \"gradio>=3.38.0,<4.0.0\"")
+require_version("gradio>=3.38.0,<4.0.0", 'To fix: pip install "gradio>=3.38.0,<4.0.0"')
 
 
 def create_ui(demo_mode: Optional[bool] = False) -> gr.Blocks:
@@ -23,11 +24,9 @@ def create_ui(demo_mode: Optional[bool] = False) -> gr.Blocks:
 
     with gr.Blocks(title="LLaMA Board", css=CSS) as demo:
         if demo_mode:
+            gr.HTML("<h1><center>LLaMA Board: A One-stop Web UI for Getting Started with LLaMA Factory</center></h1>")
             gr.HTML(
-                "<h1><center>LLaMA Board: A One-stop Web UI for Getting Started with LLaMA Factory</center></h1>"
-            )
-            gr.HTML(
-                "<h3><center>Visit <a href=\"https://github.com/hiyouga/LLaMA-Factory\" target=\"_blank\">"
+                '<h3><center>Visit <a href="https://github.com/hiyouga/LLaMA-Factory" target="_blank">'
                 "LLaMA Factory</a> for details.</center></h3>"
             )
             gr.DuplicateButton(value="Duplicate Space for private use", elem_classes="duplicate-button")

@@ -1,14 +1,17 @@
-import torch
 from typing import TYPE_CHECKING, Optional, Union
 
+import torch
+
 from ..extras.logging import get_logger
-from ..hparams import ModelArguments, FinetuningArguments
+from ..hparams import FinetuningArguments, ModelArguments
 from ..model import get_modelcard_args, load_model_and_tokenizer, load_valuehead_params
+
 
 if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments, Trainer
     from transformers.modeling_utils import PreTrainedModel
     from trl import AutoModelForCausalLMWithValueHead
+
     from ..hparams import DataArguments
 
 
@@ -20,7 +23,7 @@ def create_modelcard_and_push(
     model_args: "ModelArguments",
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
-    finetuning_args: "FinetuningArguments"
+    finetuning_args: "FinetuningArguments",
 ) -> None:
     if training_args.do_train:
         if training_args.push_to_hub:
@@ -33,9 +36,7 @@ def create_modelcard_and_push(
 
 
 def create_ref_model(
-    model_args: "ModelArguments",
-    finetuning_args: "FinetuningArguments",
-    add_valuehead: Optional[bool] = False
+    model_args: "ModelArguments", finetuning_args: "FinetuningArguments", add_valuehead: Optional[bool] = False
 ) -> Union["PreTrainedModel", "AutoModelForCausalLMWithValueHead"]:
     r"""
     Creates reference model for PPO/DPO training. Evaluation mode is not supported.
@@ -44,11 +45,13 @@ def create_ref_model(
     """
     if finetuning_args.ref_model is not None:
         ref_model_args_dict = model_args.to_dict()
-        ref_model_args_dict.update(dict(
-            model_name_or_path=finetuning_args.ref_model,
-            adapter_name_or_path=finetuning_args.ref_model_adapters,
-            quantization_bit=finetuning_args.ref_model_quantization_bit
-        ))
+        ref_model_args_dict.update(
+            dict(
+                model_name_or_path=finetuning_args.ref_model,
+                adapter_name_or_path=finetuning_args.ref_model_adapters,
+                quantization_bit=finetuning_args.ref_model_quantization_bit,
+            )
+        )
         ref_model_args = ModelArguments(**ref_model_args_dict)
         ref_finetuning_args = FinetuningArguments(finetuning_type="lora")
         ref_model, _ = load_model_and_tokenizer(
@@ -68,9 +71,7 @@ def create_ref_model(
 
 
 def create_reward_model(
-    model: "AutoModelForCausalLMWithValueHead",
-    model_args: "ModelArguments",
-    finetuning_args: "FinetuningArguments"
+    model: "AutoModelForCausalLMWithValueHead", model_args: "ModelArguments", finetuning_args: "FinetuningArguments"
 ) -> "AutoModelForCausalLMWithValueHead":
     r"""
     Creates reward model for PPO training.
@@ -81,24 +82,30 @@ def create_reward_model(
         return finetuning_args.reward_model
     elif finetuning_args.reward_model_type == "lora":
         model.pretrained_model.load_adapter(finetuning_args.reward_model, "reward")
-        for name, param in model.named_parameters(): # https://github.com/huggingface/peft/issues/1090
+        for name, param in model.named_parameters():  # https://github.com/huggingface/peft/issues/1090
             if "default" in name:
-                param.data = param.data.to(torch.float32) # trainable params should in fp32
+                param.data = param.data.to(torch.float32)  # trainable params should in fp32
         vhead_params = load_valuehead_params(finetuning_args.reward_model, model_args)
         assert vhead_params is not None, "Reward model is not correctly loaded."
         model.register_buffer("reward_head_weight", vhead_params["v_head.summary.weight"], persistent=False)
         model.register_buffer("reward_head_bias", vhead_params["v_head.summary.bias"], persistent=False)
-        model.register_buffer("default_head_weight", torch.zeros_like(vhead_params["v_head.summary.weight"]), persistent=False)
-        model.register_buffer("default_head_bias", torch.zeros_like(vhead_params["v_head.summary.bias"]), persistent=False)
+        model.register_buffer(
+            "default_head_weight", torch.zeros_like(vhead_params["v_head.summary.weight"]), persistent=False
+        )
+        model.register_buffer(
+            "default_head_bias", torch.zeros_like(vhead_params["v_head.summary.bias"]), persistent=False
+        )
         logger.info("Loaded adapter weights of reward model from {}".format(finetuning_args.reward_model))
         return None
     else:
         reward_model_args_dict = model_args.to_dict()
-        reward_model_args_dict.update(dict(
-            model_name_or_path=finetuning_args.reward_model,
-            adapter_name_or_path=finetuning_args.reward_model_adapters,
-            quantization_bit=finetuning_args.reward_model_quantization_bit
-        ))
+        reward_model_args_dict.update(
+            dict(
+                model_name_or_path=finetuning_args.reward_model,
+                adapter_name_or_path=finetuning_args.reward_model_adapters,
+                quantization_bit=finetuning_args.reward_model_quantization_bit,
+            )
+        )
         reward_model_args = ModelArguments(**reward_model_args_dict)
         reward_finetuning_args = FinetuningArguments(finetuning_type="lora")
         reward_model, _ = load_model_and_tokenizer(

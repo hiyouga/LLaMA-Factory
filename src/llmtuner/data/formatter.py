@@ -76,7 +76,11 @@ class ToolFormatter:
                 required = ", required" if name in tool["parameters"].get("required", []) else ""
                 enum = ", should be one of [{}]".format(", ".join(param["enum"])) if param.get("enum", None) else ""
                 param_text += "  - {name} ({type}{required}): {desc}{enum}\n".format(
-                    name=name, type=param.get("type", ""), required=required, desc=param.get("description", ""), enum=enum
+                    name=name,
+                    type=param.get("type", ""),
+                    required=required,
+                    desc=param.get("description", ""),
+                    enum=enum,
                 )
 
             tool_text += "> Tool Name: {name}\nTool Description: {desc}\nTool Args:\n{args}\n".format(
@@ -85,9 +89,7 @@ class ToolFormatter:
             tool_names.append(tool["name"])
 
         return TOOL_SYSTEM_PROMPT.format(
-            tool_text=tool_text,
-            tool_names=", ".join(tool_names),
-            format_prompt=JSON_FORMAT_PROMPT
+            tool_text=tool_text, tool_names=", ".join(tool_names), format_prompt=JSON_FORMAT_PROMPT
         )
 
     def __call__(self, content: str) -> List[Union[str, Dict[str, str]]]:

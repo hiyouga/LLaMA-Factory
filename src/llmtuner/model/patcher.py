@@ -1,12 +1,12 @@
-import os
 import math
-import torch
+import os
 import random
+from contextlib import nullcontext
 from types import MethodType
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
-from datasets import load_dataset
-from contextlib import nullcontext
 
+import torch
+from datasets import load_dataset
 from transformers import BitsAndBytesConfig, GPTQConfig, PreTrainedModel, PreTrainedTokenizerBase
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.utils.versions import require_version
@@ -17,9 +17,11 @@ from ..extras.misc import get_current_device, infer_optim_dtype
 from ..extras.packages import is_flash_attn2_available
 from ..extras.patches.llama_patch import apply_llama_patch
 
+
 if TYPE_CHECKING:
     from transformers import PretrainedConfig, PreTrainedTokenizer
     from trl import AutoModelForCausalLMWithValueHead
+
     from ..hparams import ModelArguments
 
 
@@ -40,7 +42,8 @@ def _resize_embedding_layer(model: "PreTrainedModel", tokenizer: "PreTrainedToke
     Resize token embeddings.
     """
     if is_deepspeed_zero3_enabled():
-        import deepspeed # type: ignore
+        import deepspeed  # type: ignore
+
         params = [model.get_input_embeddings().weight]
         if model.get_output_embeddings() is not None and not model.config.tie_word_embeddings:
             params.append(model.get_output_embeddings().weight)
@@ -88,7 +91,7 @@ def _get_quantization_dataset(tokenizer: "PreTrainedTokenizer", model_args: "Mod
             sample_idx = random.randint(0, len(dataset) - 1)
             sample: Dict[str, torch.Tensor] = tokenizer(dataset[sample_idx]["text"], return_tensors="pt")
             if sample["input_ids"].size(1) >= maxlen:
-                break # TODO: fix large maxlen
+                break  # TODO: fix large maxlen
 
         word_idx = random.randint(0, sample["input_ids"].size(1) - maxlen - 1)
         input_ids = sample["input_ids"][:, word_idx : word_idx + maxlen]
@@ -119,9 +122,9 @@ def _configure_rope(config: "PretrainedConfig", model_args: "ModelArguments", is
         scaling_factor = 2.0
 
     setattr(config, "rope_scaling", {"type": model_args.rope_scaling, "factor": scaling_factor})
-    logger.info("Using {} scaling strategy and setting scaling factor to {}".format(
-        model_args.rope_scaling, scaling_factor
-    ))
+    logger.info(
+        "Using {} scaling strategy and setting scaling factor to {}".format(model_args.rope_scaling, scaling_factor)
+    )
 
 
 def _configure_flashattn(config_kwargs: Dict[str, Any]) -> None:
@@ -146,22 +149,22 @@ def _configure_quantization(
     config: "PretrainedConfig",
     tokenizer: "PreTrainedTokenizer",
     model_args: "ModelArguments",
-    config_kwargs: Dict[str, Any]
+    config_kwargs: Dict[str, Any],
 ) -> None:
     r"""
     Priority: GPTQ-quantized (training) > AutoGPTQ (export) > Bitsandbytes (training)
     """
-    if getattr(config, "quantization_config", None): # gptq
+    if getattr(config, "quantization_config", None):  # gptq
         if is_deepspeed_zero3_enabled():
             raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantization.")
 
         config_kwargs["device_map"] = {"": get_current_device()}
         quantization_config: Dict[str, Any] = getattr(config, "quantization_config", None)
         if quantization_config.get("quant_method", None) == "gptq" and quantization_config.get("bits", -1) == 4:
-            quantization_config["use_exllama"] = False # disable exllama
+            quantization_config["use_exllama"] = False  # disable exllama
         logger.info("Loading {}-bit GPTQ-quantized model.".format(quantization_config.get("bits", -1)))
 
-    elif model_args.export_quantization_bit is not None: # auto-gptq
+    elif model_args.export_quantization_bit is not None:  # auto-gptq
         require_version("optimum>=1.16.0", "To fix: pip install optimum>=1.16.0")
         require_version("auto_gptq>=0.5.0", "To fix: pip install auto_gptq>=0.5.0")
         from accelerate.utils import get_max_memory
@@ -172,13 +175,13 @@ def _configure_quantization(
         config_kwargs["quantization_config"] = GPTQConfig(
             bits=model_args.export_quantization_bit,
             tokenizer=tokenizer,
-            dataset=_get_quantization_dataset(tokenizer, model_args)
+            dataset=_get_quantization_dataset(tokenizer, model_args),
         )
         config_kwargs["device_map"] = "auto"
         config_kwargs["max_memory"] = get_max_memory()
         logger.info("Quantizing model to {} bit.".format(model_args.export_quantization_bit))
 
-    elif model_args.quantization_bit is not None: # bnb
+    elif model_args.quantization_bit is not None:  # bnb
         if is_deepspeed_zero3_enabled():
             raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantization.")
 
@@ -192,7 +195,7 @@ def _configure_quantization(
                 load_in_4bit=True,
                 bnb_4bit_compute_dtype=model_args.compute_dtype,
                 bnb_4bit_use_double_quant=model_args.double_quantization,
-                bnb_4bit_quant_type=model_args.quantization_type
+                bnb_4bit_quant_type=model_args.quantization_type,
             )
 
         config_kwargs["device_map"] = {"": get_current_device()}
@@ -200,9 +203,7 @@ def _configure_quantization(
 
 
 def _prepare_model_for_training(
-    model: "PreTrainedModel",
-    model_args: "ModelArguments",
-    output_layer_name: Optional[str] = "lm_head"
+    model: "PreTrainedModel", model_args: "ModelArguments", output_layer_name: Optional[str] = "lm_head"
 ) -> None:
     r"""
     Includes:
@@ -222,10 +223,11 @@ def _prepare_model_for_training(
             logger.warning("Current model does not support gradient checkpointing.")
         else:
             model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
-            model.config.use_cache = False # turn off when gradient checkpointing is enabled
+            model.config.use_cache = False  # turn off when gradient checkpointing is enabled
             logger.info("Gradient checkpointing enabled.")
 
     if hasattr(model, output_layer_name) and model_args.upcast_lmhead_output:
+
         def fp32_forward_post_hook(module: torch.nn.Module, args: Tuple[torch.Tensor], output: torch.Tensor):
             return output.to(torch.float32)
 
@@ -244,9 +246,9 @@ def patch_config(
     tokenizer: "PreTrainedTokenizer",
     model_args: "ModelArguments",
     config_kwargs: Dict[str, Any],
-    is_trainable: bool
+    is_trainable: bool,
 ) -> None:
-    if model_args.compute_dtype is None: # priority: bf16 > fp16 > fp32
+    if model_args.compute_dtype is None:  # priority: bf16 > fp16 > fp32
         model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
 
     if getattr(config, "model_type", None) == "qwen":
@@ -266,10 +268,7 @@ def patch_config(
 
 
 def patch_model(
-    model: "PreTrainedModel",
-    tokenizer: "PreTrainedTokenizer",
-    model_args: "ModelArguments",
-    is_trainable: bool
+    model: "PreTrainedModel", tokenizer: "PreTrainedTokenizer", model_args: "ModelArguments", is_trainable: bool
 ) -> None:
     if "GenerationMixin" not in str(model.generate.__func__):
         model.generate = MethodType(PreTrainedModel.generate, model)

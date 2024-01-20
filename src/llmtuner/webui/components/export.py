@@ -1,9 +1,11 @@
-import gradio as gr
 from typing import TYPE_CHECKING, Dict, Generator, List
+
+import gradio as gr
 
 from ...train import export_model
 from ..common import get_save_dir
 from ..locales import ALERTS
+
 
 if TYPE_CHECKING:
     from gradio.components import Component
@@ -24,7 +26,7 @@ def save_model(
     max_shard_size: int,
     export_quantization_bit: int,
     export_quantization_dataset: str,
-    export_dir: str
+    export_dir: str,
 ) -> Generator[str, None, None]:
     error = ""
     if not model_name:
@@ -44,7 +46,9 @@ def save_model(
         return
 
     if adapter_path:
-        adapter_name_or_path = ",".join([get_save_dir(model_name, finetuning_type, adapter) for adapter in adapter_path])
+        adapter_name_or_path = ",".join(
+            [get_save_dir(model_name, finetuning_type, adapter) for adapter in adapter_path]
+        )
     else:
         adapter_name_or_path = None
 
@@ -56,7 +60,7 @@ def save_model(
         export_dir=export_dir,
         export_size=max_shard_size,
         export_quantization_bit=int(export_quantization_bit) if export_quantization_bit in GPTQ_BITS else None,
-        export_quantization_dataset=export_quantization_dataset
+        export_quantization_dataset=export_quantization_dataset,
     )
 
     yield ALERTS["info_exporting"][lang]
@@ -86,9 +90,9 @@ def create_export_tab(engine: "Engine") -> Dict[str, "Component"]:
             max_shard_size,
             export_quantization_bit,
             export_quantization_dataset,
-            export_dir
+            export_dir,
         ],
-        [info_box]
+        [info_box],
     )
 
     return dict(
@@ -97,5 +101,5 @@ def create_export_tab(engine: "Engine") -> Dict[str, "Component"]:
         export_quantization_dataset=export_quantization_dataset,
         export_dir=export_dir,
         export_btn=export_btn,
-        info_box=info_box
+        info_box=info_box,
     )
