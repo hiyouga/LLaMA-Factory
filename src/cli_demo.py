@@ -13,7 +13,7 @@ except ImportError:
 
 def main():
     chat_model = ChatModel()
-    history = []
+    messages = []
     print("Welcome to the CLI application, use `clear` to remove the history, use `exit` to exit the application.")
 
     while True:
@@ -37,12 +37,13 @@ def main():
         print("Assistant: ", end="", flush=True)
 
         response = ""
-        for new_text in chat_model.stream_chat(query, history):
+        for new_text in chat_model.stream_chat(messages):
             print(new_text, end="", flush=True)
             response += new_text
         print()
 
-        history = history + [(query, response)]
+        messages.append({"role": "user", "content": query})
+        messages.append({"role": "assistant", "content": response})
 
 
 if __name__ == "__main__":

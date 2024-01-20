@@ -1,6 +1,11 @@
 import json
-from dataclasses import dataclass
-from typing import Any, Dict, List, Literal, Union
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Literal, Set, Sequence, Tuple, Union
+
+
+SLOTS = Sequence[Union[str, Set[str], Dict[str, str]]]
 
 
 JSON_FORMAT_PROMPT = (
@@ -18,30 +23,85 @@ TOOL_SYSTEM_PROMPT = (
 )
 
 
-@dataclass
-class StringFormatter:
-    container: List[Union[str, Dict[str, str]]]
+def default_tool_formatter(tools: List[Dict[str, Any]]) -> str:
+    tool_text = ""
+    tool_names = []
+    for tool in tools:
+        param_text = ""
+        for name, param in tool["parameters"]["properties"].items():
+            required = ", required" if name in tool["parameters"].get("required", []) else ""
+            enum = ", should be one of [{}]".format(", ".join(param["enum"])) if param.get("enum", None) else ""
+            param_text += "  - {name} ({type}{required}): {desc}{enum}\n".format(
+                name=name,
+                type=param.get("type", ""),
+                required=required,
+                desc=param.get("description", ""),
+                enum=enum,
+            )
 
-    def __call__(self, **kwargs) -> List[Union[str, Dict[str, str]]]:
+        tool_text += "> Tool Name: {name}\nTool Description: {desc}\nTool Args:\n{args}\n".format(
+            name=tool["name"], desc=tool.get("description", ""), args=param_text
+        )
+        tool_names.append(tool["name"])
+
+    return TOOL_SYSTEM_PROMPT.format(
+        tool_text=tool_text, tool_names=", ".join(tool_names), format_prompt=JSON_FORMAT_PROMPT
+    )
+
+
+def default_tool_extractor(content: str) -> Union[str, Tuple[str, str]]:
+    regex = re.compile(r"Action:\s*([a-zA-Z0-9_]+).*?Action Input:\s*(.*)", re.DOTALL)
+    action_match = re.search(regex, content)
+    if not action_match:
+        return content
+
+    tool_name = action_match.group(1).strip()
+    tool_input = action_match.group(2).strip().strip('"').strip("```")
+    try:
+        arguments = json.loads(tool_input)
+    except json.JSONDecodeError:
+        return content
+
+    return tool_name, json.dumps(arguments, ensure_ascii=False)
+
+
+@dataclass
+class Formatter(ABC):
+    slots: SLOTS = field(default_factory=list)
+    tool_format: Literal["default"] = "default"
+
+    @abstractmethod
+    def apply(self, **kwargs) -> SLOTS:
+        ...
+
+
+@dataclass
+class EmptyFormatter(Formatter):
+    def apply(self, **kwargs) -> SLOTS:
+        return self.slots
+
+
+@dataclass
+class StringFormatter(Formatter):
+    def apply(self, **kwargs) -> SLOTS:
         elements = []
-        for elem in self.container:
-            if isinstance(elem, str):
+        for slot in self.slots:
+            if isinstance(slot, str):
                 for name, value in kwargs.items():
-                    elem = elem.replace("{{" + name + "}}", value)
-                elements.append(elem)
-            elif isinstance(elem, (dict, set)):
-                elements.append(elem)
+                    slot = slot.replace("{{" + name + "}}", value, 1)
+                elements.append(slot)
+            elif isinstance(slot, (dict, set)):
+                elements.append(slot)
             else:
-                raise ValueError("Input must be string, set[str] or dict[str, str], got {}".format(type(elem)))
+                raise ValueError("Input must be string, set[str] or dict[str, str], got {}".format(type(slot)))
 
         return elements
 
 
 @dataclass
-class FunctionFormatter:
-    container: List[Union[str, Dict[str, str]]]
-
-    def __call__(self, content: str) -> List[Union[str, Dict[str, str]]]:
+class FunctionFormatter(Formatter):
+    def apply(self, **kwargs) -> SLOTS:
+        content = kwargs.pop("content")
         try:
             function = json.loads(content)
             name = function["name"]
@@ -50,55 +110,36 @@ class FunctionFormatter:
             name, arguments = "", ""
 
         elements = []
-        for elem in self.container:
-            if isinstance(elem, str):
-                elem = elem.replace("{{name}}", name)
-                elem = elem.replace("{{arguments}}", arguments)
-                elements.append(elem)
-            elif isinstance(elem, (dict, set)):
-                elements.append(elem)
+        for slot in self.slots:
+            if isinstance(slot, str):
+                slot = slot.replace("{{name}}", name).replace("{{arguments}}", arguments)
+                elements.append(slot)
+            elif isinstance(slot, (dict, set)):
+                elements.append(slot)
             else:
-                raise ValueError("Input must be string, set[str] or dict[str, str], got {}".format(type(elem)))
+                raise ValueError("Input must be string, set[str] or dict[str, str], got {}".format(type(slot)))
 
         return elements
 
 
 @dataclass
-class ToolFormatter:
-    type: Literal["default"]
-
-    def _default(self, tools: List[Dict[str, Any]]) -> str:
-        tool_text = ""
-        tool_names = []
-        for tool in tools:
-            param_text = ""
-            for name, param in tool["parameters"]["properties"].items():
-                required = ", required" if name in tool["parameters"].get("required", []) else ""
-                enum = ", should be one of [{}]".format(", ".join(param["enum"])) if param.get("enum", None) else ""
-                param_text += "  - {name} ({type}{required}): {desc}{enum}\n".format(
-                    name=name,
-                    type=param.get("type", ""),
-                    required=required,
-                    desc=param.get("description", ""),
-                    enum=enum,
-                )
-
-            tool_text += "> Tool Name: {name}\nTool Description: {desc}\nTool Args:\n{args}\n".format(
-                name=tool["name"], desc=tool.get("description", ""), args=param_text
-            )
-            tool_names.append(tool["name"])
-
-        return TOOL_SYSTEM_PROMPT.format(
-            tool_text=tool_text, tool_names=", ".join(tool_names), format_prompt=JSON_FORMAT_PROMPT
-        )
-
-    def __call__(self, content: str) -> List[Union[str, Dict[str, str]]]:
+class ToolFormatter(Formatter):
+    def apply(self, **kwargs) -> SLOTS:
+        content = kwargs.pop("content")
         try:
             tools = json.loads(content)
             if not len(tools):
                 return [""]
 
-            if self.type == "default":
-                return [self._default(tools)]
+            if self.tool_format == "default":
+                return [default_tool_formatter(tools)]
+            else:
+                raise NotImplementedError
         except Exception:
             return [""]
+
+    def extract(self, content: str) -> Union[str, Tuple[str, str]]:
+        if self.tool_format == "default":
+            return default_tool_extractor(content)
+        else:
+            raise NotImplementedError
