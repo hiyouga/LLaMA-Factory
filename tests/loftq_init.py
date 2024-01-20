@@ -7,9 +7,13 @@ import os
 import fire
 import torch
 import torch.nn as nn
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import LoftQConfig, LoraConfig, TaskType, get_peft_model
+
+
+if TYPE_CHECKING:
+    from transformers import PreTrainedModel
 
 
 class Shell(nn.Module):
@@ -42,7 +46,8 @@ def quantize_loftq(
     loftq_iter: Optional[int] = 1,
     lora_alpha: Optional[int] = None,
     lora_rank: Optional[int] = 16,
-    lora_target: Optional[str] = "q_proj,v_proj"
+    lora_target: Optional[str] = "q_proj,v_proj",
+    save_safetensors: Optional[bool] = False,
 ):
     tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, trust_remote_code=True)
     model = AutoModelForCausalLM.from_pretrained(model_name_or_path, trust_remote_code=True, torch_dtype="auto")
@@ -60,16 +65,16 @@ def quantize_loftq(
 
     # Init LoftQ model
     lora_model = get_peft_model(model, lora_config)
-    base_model = lora_model.get_base_model()
+    base_model: "PreTrainedModel" = lora_model.get_base_model()
 
     # Save LoftQ model
     setattr(lora_model.base_model.peft_config["default"], "base_model_name_or_path", save_dir)
     setattr(lora_model.base_model.peft_config["default"], "init_lora_weights", True)
-    lora_model.save_pretrained(os.path.join(save_dir, "adapters"))
+    lora_model.save_pretrained(os.path.join(save_dir, "adapters"), safe_serialization=save_safetensors)
 
     # Save base model
     unwrap_model(base_model)
-    base_model.save_pretrained(save_dir)
+    base_model.save_pretrained(save_dir, safe_serialization=save_safetensors)
     tokenizer.save_pretrained(save_dir)
 
 
