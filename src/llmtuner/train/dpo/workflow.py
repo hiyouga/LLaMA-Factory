@@ -25,7 +25,7 @@ def run_dpo(
     callbacks: Optional[List["TrainerCallback"]] = None
 ):
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train)
-    dataset = get_dataset(model_args, data_args, tokenizer, training_args, stage="rm")
+    dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="rm")
     data_collator = DPODataCollatorWithPadding(
         tokenizer=tokenizer,
         pad_to_multiple_of=8,

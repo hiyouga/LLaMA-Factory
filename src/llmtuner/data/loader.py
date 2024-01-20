@@ -135,9 +135,9 @@ def merge_dataset(
 
 
 def get_dataset(
+    tokenizer: "PreTrainedTokenizer",
     model_args: "ModelArguments",
     data_args: "DataArguments",
-    tokenizer: "PreTrainedTokenizer",
     training_args: "Seq2SeqTrainingArguments",
     stage: Literal["pt", "sft", "rm", "ppo"],
     # split: Optional[str] = "train", # TODO: add split
