@@ -8,6 +8,7 @@ import gradio as gr
 from ..extras.packages import is_matplotlib_available
 from ..extras.ploting import smooth
 from .common import get_save_dir
+from .locales import ALERTS
 
 
 if TYPE_CHECKING:
@@ -40,11 +41,15 @@ def can_quantize(finetuning_type: str) -> Dict[str, Any]:
         return gr.update(interactive=True)
 
 
-def check_json_schema(text: str) -> None:
+def check_json_schema(text: str, lang: str) -> None:
     try:
-        json.loads(text)
+        tools = json.loads(text)
+        for tool in tools:
+            assert "name" in tool
+    except AssertionError:
+        gr.Warning(ALERTS["err_tool_name"][lang])
     except json.JSONDecodeError:
-        gr.Warning("Invalid JSON schema")
+        gr.Warning(ALERTS["err_json_schema"][lang])
 
 
 def gen_cmd(args: Dict[str, Any]) -> str:

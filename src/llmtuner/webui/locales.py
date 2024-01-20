@@ -208,6 +208,8 @@ ALERTS = {
         "zh": "展示模式不支持训练，请先复制到私人空间。",
     },
     "err_device_count": {"en": "Multiple GPUs are not supported yet.", "zh": "尚不支持多 GPU 训练。"},
+    "err_tool_name": {"en": "Tool name not found.", "zh": "工具名称未找到。"},
+    "err_json_schema": {"en": "Invalid JSON schema.", "zh": "Json 格式错误。"},
     "info_aborting": {"en": "Aborted, wait for terminating...", "zh": "训练中断，正在等待线程结束……"},
     "info_aborted": {"en": "Ready.", "zh": "准备就绪。"},
     "info_finished": {"en": "Finished.", "zh": "训练完毕。"},
