@@ -29,7 +29,7 @@ def main():
             break
 
         if query.strip() == "clear":
-            history = []
+            messages = []
             torch_gc()
             print("History has been removed.")
             continue
