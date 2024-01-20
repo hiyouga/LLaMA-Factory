@@ -37,9 +37,9 @@ class ChatModel:
         tools: Optional[str] = None,
         **input_kwargs,
     ) -> Tuple[Dict[str, Any], int]:
-        messages += [{"role": "assistant", "content": ""}]
+        new_messages = messages + [{"role": "assistant", "content": ""}]
         prompt, _ = self.template.encode_oneturn(
-            tokenizer=self.tokenizer, messages=messages, system=system, tools=tools
+            tokenizer=self.tokenizer, messages=new_messages, system=system, tools=tools
         )
         prompt_length = len(prompt)
         input_ids = torch.tensor([prompt], device=self.model.device)

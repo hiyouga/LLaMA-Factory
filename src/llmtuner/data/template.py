@@ -416,7 +416,7 @@ register_template(
         "by the user such as English and 中文."
     ),
     stop_words=["<|im_end|>"],
-    replace_eos=True,
+    efficient_eos=True,
 )
 
 
