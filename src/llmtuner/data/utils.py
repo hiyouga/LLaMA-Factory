@@ -38,10 +38,10 @@ def checksum(data_files: List[str], file_sha1: Optional[str] = None) -> None:
             logger.warning("Checksum failed: mismatched SHA-1 hash value at {}.".format(data_files[0]))
 
 
-def infer_max_len(source_len: int, target_len: int, cutoff_len: int, reserved_label_len: int) -> Tuple[int, int]:
-    max_target_len = int(cutoff_len * (target_len / (source_len + target_len)))
+def infer_max_len(source_len: int, target_len: int, max_len: int, reserved_label_len: int) -> Tuple[int, int]:
+    max_target_len = int(max_len * (target_len / (source_len + target_len)))
     max_target_len = max(max_target_len, reserved_label_len)
-    max_source_len = cutoff_len - max_target_len
+    max_source_len = max_len - max_target_len
     return max_source_len, max_target_len
 
 
