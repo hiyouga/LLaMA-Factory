@@ -74,6 +74,9 @@ class Formatter(ABC):
     def apply(self, **kwargs) -> SLOTS:
         ...
 
+    def extract(self, content: str) -> Union[str, Tuple[str, str]]:
+        raise NotImplementedError
+
 
 @dataclass
 class EmptyFormatter(Formatter):
