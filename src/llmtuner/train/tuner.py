@@ -57,7 +57,7 @@ def export_model(args: Optional[Dict[str, Any]] = None):
         raise ValueError("The model is not a `PreTrainedModel`, export aborted.")
 
     setattr(model.config, "use_cache", True)
-    if getattr(model.config, "torch_dtype", None) == "bfloat16":
+    if getattr(model.config, "torch_dtype", None) == torch.bfloat16:
         model = model.to(torch.bfloat16).to("cpu")
     else:
         model = model.to(torch.float16).to("cpu")
