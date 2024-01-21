@@ -31,12 +31,16 @@ def default_tool_formatter(tools: List[Dict[str, Any]]) -> str:
         for name, param in tool["parameters"]["properties"].items():
             required = ", required" if name in tool["parameters"].get("required", []) else ""
             enum = ", should be one of [{}]".format(", ".join(param["enum"])) if param.get("enum", None) else ""
-            param_text += "  - {name} ({type}{required}): {desc}{enum}\n".format(
+            items = (
+                ", where each item should be {}".format(param["items"].get("type", "")) if param.get("items") else ""
+            )
+            param_text += "  - {name} ({type}{required}): {desc}{enum}{items}\n".format(
                 name=name,
                 type=param.get("type", ""),
                 required=required,
                 desc=param.get("description", ""),
                 enum=enum,
+                items=items,
             )
 
         tool_text += "> Tool Name: {name}\nTool Description: {desc}\nTool Args:\n{args}\n".format(
