@@ -19,7 +19,7 @@ TOOL_SYSTEM_PROMPT = (
     "```\n"
     "Action: the action to take, should be one of [{tool_names}] if using a tool.\n"
     "Action Input: the input to the action{format_prompt}.\n"
-    "```"
+    "```\n"
 )
 
 
