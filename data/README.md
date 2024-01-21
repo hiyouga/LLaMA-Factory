@@ -12,14 +12,21 @@ If you are using a custom dataset, please provide your dataset definition in the
   "ranking": "whether the dataset is a preference dataset or not. (default: false)",
   "formatting": "the format of the dataset. (optional, default: alpaca, can be chosen from {alpaca, sharegpt})",
   "columns": {
-    "prompt": "the column name in the dataset containing the prompts. (default: instruction, for alpaca)",
-    "query": "the column name in the dataset containing the queries. (default: input, for alpaca)",
-    "response": "the column name in the dataset containing the responses. (default: output, for alpaca)",
-    "history": "the column name in the dataset containing the histories. (default: None, for alpaca)",
-    "messages": "the column name in the dataset containing the messages. (default: conversations, for sharegpt)",
-    "role": "the key in the message represents the identity. (default: from, for sharegpt)",
-    "content": "the key in the message represents the content. (default: value, for sharegpt)",
-    "system": "the column name in the dataset containing the system prompts. (default: None, for both)"
+    "prompt": "the column name in the dataset containing the prompts. (default: instruction)",
+    "query": "the column name in the dataset containing the queries. (default: input)",
+    "response": "the column name in the dataset containing the responses. (default: output)",
+    "history": "the column name in the dataset containing the histories. (default: None)",
+    "messages": "the column name in the dataset containing the messages. (default: conversations)",
+    "system": "the column name in the dataset containing the system prompts. (default: None)",
+    "tools": "the column name in the dataset containing the tool description. (default: None)"
+  },
+  "tags": {
+    "role_tag": "the key in the message represents the identity. (default: from)",
+    "content_tag": "the key in the message represents the content. (default: value)",
+    "user_tag": "the value of the role_tag represents the user. (default: human)",
+    "assistant_tag": "the value of the role_tag represents the assistant. (default: gpt)",
+    "observation_tag": "the value of the role_tag represents the tool results. (default: observation)",
+    "function_tag": "the value of the role_tag represents the function call. (default: function_call)"
   }
 }
 ```
@@ -91,7 +98,8 @@ The dataset in sharegpt format should follow the below format:
         "value": "model response"
       }
     ],
-    "system": "system prompt (optional)"
+    "system": "system prompt (optional)",
+    "tools": "tool description (optional)"
   }
 ]
 ```
@@ -102,9 +110,12 @@ Regarding the above dataset, the `columns` in `dataset_info.json` should be:
 "dataset_name": {
   "columns": {
     "messages": "conversations",
-    "role": "from",
-    "content": "value",
-    "system": "system"
+    "system": "system",
+    "tools": "tools"
+  },
+  "tags": {
+    "role_tag": "from",
+    "content_tag": "value"
   }
 }
 ```
