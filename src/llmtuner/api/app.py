@@ -85,7 +85,7 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
         if not chat_model.can_generate:
             raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Not allowed")
 
-        if len(request.messages) == 0 or request.messages[-1].role != Role.USER:
+        if len(request.messages) == 0 or request.messages[-1].role not in [Role.USER, Role.TOOL]:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid length")
 
         messages = [dictify(message) for message in request.messages]
