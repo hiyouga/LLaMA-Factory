@@ -223,6 +223,7 @@ def _prepare_model_for_training(
             logger.warning("Current model does not support gradient checkpointing.")
         else:
             model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+            model.enable_input_require_grads()
             model.config.use_cache = False  # turn off when gradient checkpointing is enabled
             logger.info("Gradient checkpointing enabled.")
 
