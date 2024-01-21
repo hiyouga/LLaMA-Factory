@@ -59,8 +59,8 @@ def export_model(args: Optional[Dict[str, Any]] = None):
     if hasattr(model.config, "torch_dtype"):
         model = model.to(getattr(model.config, "torch_dtype")).to("cpu")
     else:
-        model = model.to(torch.float32).to("cpu")
-        setattr(model.config, "torch_dtype", "float32")
+        model = model.to(torch.float16).to("cpu")
+        setattr(model.config, "torch_dtype", torch.float16)
 
     model.save_pretrained(
         save_directory=model_args.export_dir,
