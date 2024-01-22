@@ -95,6 +95,7 @@ class StringFormatter(Formatter):
         for slot in self.slots:
             if isinstance(slot, str):
                 for name, value in kwargs.items():
+                    value = value if value is not None else ""
                     slot = slot.replace("{{" + name + "}}", value, 1)
                 elements.append(slot)
             elif isinstance(slot, (dict, set)):
