@@ -15,10 +15,10 @@ JSON_FORMAT_PROMPT = (
 
 TOOL_SYSTEM_PROMPT = (
     "You have access to the following tools:\n{tool_text}"
-    "Use the following format to answer the question:\n"
+    "Use the following format if using a tool:\n"
     "```\n"
-    "Action: the action to take, should be one of [{tool_names}] if using a tool.\n"
-    "Action Input: the input to the action{format_prompt}.\n"
+    "Action: tool name (one of [{tool_names}]).\n"
+    "Action Input: the input to the tool{format_prompt}.\n"
     "```\n"
 )
 
@@ -95,12 +95,15 @@ class StringFormatter(Formatter):
         for slot in self.slots:
             if isinstance(slot, str):
                 for name, value in kwargs.items():
+                    if not isinstance(value, str):
+                        raise RuntimeError("Expected a string, got {}".format(value))
+
                     slot = slot.replace("{{" + name + "}}", value, 1)
                 elements.append(slot)
             elif isinstance(slot, (dict, set)):
                 elements.append(slot)
             else:
-                raise ValueError("Input must be string, set[str] or dict[str, str], got {}".format(type(slot)))
+                raise RuntimeError("Input must be string, set[str] or dict[str, str], got {}".format(type(slot)))
 
         return elements
 
@@ -124,7 +127,7 @@ class FunctionFormatter(Formatter):
             elif isinstance(slot, (dict, set)):
                 elements.append(slot)
             else:
-                raise ValueError("Input must be string, set[str] or dict[str, str], got {}".format(type(slot)))
+                raise RuntimeError("Input must be string, set[str] or dict[str, str], got {}".format(type(slot)))
 
         return elements
 

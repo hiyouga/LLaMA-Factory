@@ -15,7 +15,7 @@ def convert_alpaca(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") 
     outputs = {"prompt": [], "response": [], "system": [], "tools": []}
     for i in range(len(examples[dataset_attr.prompt])):
         prompt = []
-        if dataset_attr.history:
+        if dataset_attr.history and isinstance(examples[dataset_attr.history][i], list):
             for old_prompt, old_response in examples[dataset_attr.history][i]:
                 prompt.append({"role": Role.USER, "content": old_prompt})
                 prompt.append({"role": Role.ASSISTANT, "content": old_response})
@@ -25,13 +25,10 @@ def convert_alpaca(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") 
             instruction += "\n" + examples[dataset_attr.query][i]
         prompt.append({"role": Role.USER, "content": instruction})
 
-        if dataset_attr.response:
-            if isinstance(examples[dataset_attr.response][i], list):
-                response = [
-                    {"role": Role.ASSISTANT, "content": content} for content in examples[dataset_attr.response][i]
-                ]
-            else:
-                response = [{"role": Role.ASSISTANT, "content": examples[dataset_attr.response][i]}]
+        if dataset_attr.response and isinstance(examples[dataset_attr.response][i], list):
+            response = [{"role": Role.ASSISTANT, "content": content} for content in examples[dataset_attr.response][i]]
+        elif dataset_attr.response and isinstance(examples[dataset_attr.response][i], str):
+            response = [{"role": Role.ASSISTANT, "content": examples[dataset_attr.response][i]}]
         else:
             response = []
 
