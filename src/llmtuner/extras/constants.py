@@ -455,11 +455,38 @@ register_model_group(
 register_model_group(
     models={
         "OpenChat3.5-7B-Chat": {
-            DownloadSource.DEFAULT: "openchat/openchat_3.5",
+            DownloadSource.DEFAULT: "openchat/openchat-3.5-0106",
             DownloadSource.MODELSCOPE: "myxiongmodel/openchat_3.5",
         }
     },
     template="openchat",
+)
+
+
+register_model_group(
+    models={
+        "Orion-14B-Base": {
+            DownloadSource.DEFAULT: "OrionStarAI/Orion-14B-Base",
+            DownloadSource.MODELSCOPE: "OrionStarAI/Orion-14B-Base",
+        },
+        "Orion-14B-Chat": {
+            DownloadSource.DEFAULT: "OrionStarAI/Orion-14B-Chat",
+            DownloadSource.MODELSCOPE: "OrionStarAI/Orion-14B-Chat",
+        },
+        "Orion-14B-Long-Chat": {
+            DownloadSource.DEFAULT: "OrionStarAI/Orion-14B-LongChat",
+            DownloadSource.MODELSCOPE: "OrionStarAI/Orion-14B-LongChat",
+        },
+        "Orion-14B-RAG-Chat": {
+            DownloadSource.DEFAULT: "OrionStarAI/Orion-14B-Chat-RAG",
+            DownloadSource.MODELSCOPE: "OrionStarAI/Orion-14B-Chat-RAG",
+        },
+        "Orion-14B-Plugin-Chat": {
+            DownloadSource.DEFAULT: "OrionStarAI/Orion-14B-Chat-Plugin",
+            DownloadSource.MODELSCOPE: "OrionStarAI/Orion-14B-Chat-Plugin",
+        },
+    },
+    template="orion",
 )
 
 
