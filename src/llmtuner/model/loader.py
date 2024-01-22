@@ -96,6 +96,11 @@ def load_model_and_tokenizer(
             **config_kwargs,
         )
 
+    if getattr(config, "model_type", None) == "mistral" and is_deepspeed_zero3_enabled():
+        from deepspeed.utils import set_z3_leaf_modules
+        from transformers.models.mixtral.modeling_mixtral import MixtralSparseMoeBlock
+        set_z3_leaf_modules(model, [MixtralSparseMoeBlock])
+
     patch_model(model, tokenizer, model_args, is_trainable)
     register_autoclass(config, model, tokenizer)
 
