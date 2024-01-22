@@ -5,7 +5,7 @@
   },
   "alpaca_zh": {
     "file_name": "alpaca_data_zh_51k.json",
-    "file_sha1": "e655af3db557a4197f7b0cf92e1986b08fae6311"
+    "file_sha1": "0016a4df88f523aad8dc004ada7575896824a0dc"
   },
   "alpaca_gpt4_en": {
     "file_name": "alpaca_gpt4_data_en.json",
@@ -47,6 +47,15 @@
       "query": "input",
       "response": "output",
       "history": "history"
+    }
+  },
+  "glaive_toolcall": {
+    "file_name": "glaive_toolcall_10k.json",
+    "file_sha1": "a6917b85d209df98d31fdecb253c79ebc440f6f3",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "tools": "tools"
     }
   },
   "example": {
@@ -197,14 +206,6 @@
   "evol_instruct": {
     "hf_hub_url": "WizardLM/WizardLM_evol_instruct_V2_196k",
     "formatting": "sharegpt"
-  },
-  "glaive_toolcall": {
-    "file_name": "glaive_toolcall_10k.json",
-    "formatting": "sharegpt",
-    "columns": {
-      "messages": "conversations",
-      "tools": "tools"
-    }
   },
   "hh_rlhf_en": {
     "script_url": "hh_rlhf_en",
