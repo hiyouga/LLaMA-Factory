@@ -284,7 +284,7 @@ def patch_model(
     if is_trainable:
         _prepare_model_for_training(model, model_args)
 
-    if getattr(config, "model_type", None) == "mixtral" and is_deepspeed_zero3_enabled():
+    if getattr(model.config, "model_type", None) == "mixtral" and is_deepspeed_zero3_enabled():
         from deepspeed.utils import set_z3_leaf_modules
         from transformers.models.mixtral.modeling_mixtral import MixtralSparseMoeBlock
         set_z3_leaf_modules(model, [MixtralSparseMoeBlock])
