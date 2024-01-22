@@ -463,6 +463,14 @@ register_template(
 
 
 register_template(
+    name="orion",
+    format_user=StringFormatter(slots=["Human: {{content}}\n\nAssistant: </s>"]),
+    format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
+    force_system=True,
+)
+
+
+register_template(
     name="qwen",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
