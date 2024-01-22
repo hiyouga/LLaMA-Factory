@@ -60,7 +60,7 @@ def _verify_model_args(model_args: "ModelArguments", finetuning_args: "Finetunin
         if finetuning_args.finetuning_type != "lora":
             raise ValueError("Quantization is only compatible with the LoRA method.")
 
-        if finetuning_args.create_new_adapter:
+        if model_args.adapter_name_or_path is not None and finetuning_args.create_new_adapter:
             raise ValueError("Cannot create new adapter upon a quantized model.")
 
     if model_args.adapter_name_or_path is not None and len(model_args.adapter_name_or_path) != 1:
