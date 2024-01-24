@@ -56,7 +56,9 @@ def export_model(args: Optional[Dict[str, Any]] = None):
     if not isinstance(model, PreTrainedModel):
         raise ValueError("The model is not a `PreTrainedModel`, export aborted.")
 
-    if hasattr(model.config, "torch_dtype"):
+    if getattr(model, "quantization_method", None):
+        model = model.to("cpu")
+    elif hasattr(model.config, "torch_dtype"):
         model = model.to(getattr(model.config, "torch_dtype")).to("cpu")
     else:
         model = model.to(torch.float16).to("cpu")
