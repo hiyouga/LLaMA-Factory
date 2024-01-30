@@ -185,7 +185,16 @@ Please refer to [constants.py](src/llmtuner/extras/constants.py) for a full list
 - [LMSYS Chat 1M (en)](https://huggingface.co/datasets/lmsys/lmsys-chat-1m)
 - [Evol Instruct V2 (en)](https://huggingface.co/datasets/WizardLM/WizardLM_evol_instruct_V2_196k)
 - [Glaive Function Calling V2 (en)](https://huggingface.co/datasets/glaiveai/glaive-function-calling-v2)
-
+- [Open Assistant (de)](https://huggingface.co/datasets/mayflowergmbh/oasst_de)
+- [Dolly 15k (de)](https://huggingface.co/datasets/mayflowergmbh/dolly-15k_de)
+- [FreedomIntelligence Alpaca GPT4 (de)](https://huggingface.co/datasets/mayflowergmbh/alpaca-gpt4_de)
+- [LeoLM/OpenSchnabeltier (de)](https://huggingface.co/datasets/mayflowergmbh/openschnabeltier_de)
+- [FreedomIntelligence/evol-instruct-deutsch (de)](https://huggingface.co/datasets/mayflowergmbh/evol-instruct_de)
+- [wiki_qa (de)](https://huggingface.co/datasets/wiki_qa)
+- [cognitivecomputations/dolphin (de)](https://huggingface.co/datasets/mayflowergmbh/dolphin_de)
+- [booksum (de)](https://huggingface.co/datasets/mayflowergmbh/booksum_de)
+- [jondurbin/airoboros-3.0 (de)](https://huggingface.co/datasets/mayflowergmbh/airoboros-3.0_de)
+- [stingning/ultrachat (de)](https://huggingface.co/datasets/mayflowergmbh/ultra-chat_de)
 </details>
 
 <details><summary>Preference datasets</summary>
@@ -194,6 +203,7 @@ Please refer to [constants.py](src/llmtuner/extras/constants.py) for a full list
 - [Open Assistant (multilingual)](https://huggingface.co/datasets/OpenAssistant/oasst1)
 - [GPT-4 Generated Data (en&zh)](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
 - [Nectar (en)](https://huggingface.co/datasets/berkeley-nest/Nectar)
+- [Intel/orca_dpo_pairs (de)](https://huggingface.co/datasets/mayflowergmbh/intel_orca_dpo_pairs_de)
 
 </details>
 
