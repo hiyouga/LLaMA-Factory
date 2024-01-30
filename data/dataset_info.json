@@ -15,6 +15,9 @@
     "file_name": "alpaca_gpt4_data_zh.json",
     "file_sha1": "3eaa3bda364ccdd59925d7448a698256c31ef845"
   },
+  "alpaca-gpt4_de": {
+    "hf_hub_url": "mayflowergmbh/alpaca-gpt4_de"
+  },
   "self_cognition": {
     "file_name": "self_cognition.json",
     "file_sha1": "6287a730ada924fc5d9eadc6d8f865e01b7a6f67"
@@ -38,6 +41,9 @@
       "response": "output",
       "history": "history"
     }
+  },
+  "oasst_de": {
+    "hf_hub_url": "mayflowergmbh/oasst_de"
   },
   "lima": {
     "file_name": "lima.json",
@@ -120,7 +126,31 @@
       "system": "system_prompt"
     }
   },
-  "mathinstruct": {
+  "intel_orca_dpo_pairs_de" : {
+    "hf_hub_url": "mayflowergmbh/intel_orca_dpo_pairs_de"
+  },
+  "airoboros-3.0_de": {
+    "hf_hub_url": "mayflowergmbh/airoboros-3.0_de"
+  },
+  "booksum_de": {
+    "hf_hub_url": "mayflowergmbh/booksum_de"
+  },
+  "dolphin_de": {
+    "hf_hub_url": "mayflowergmbh/dolphin_de"
+  },
+  "wiki_qa_de": {
+    "hf_hub_url": "mayflowergmbh/wiki_qa_de"
+  },
+  "evol-instruct_de": {
+    "hf_hub_url": "mayflowergmbh/evol-instruct_de"
+  },
+  "openschnabeltier_de": {
+    "hf_hub_url": "mayflowergmbh/openschnabeltier_de"
+  },
+  "dolly-15k_de": {
+    "hf_hub_url": "mayflowergmbh/dolly-15k_de"
+  },
+  "mathinstruct ": {
     "hf_hub_url": "TIGER-Lab/MathInstruct",
     "ms_hub_url": "AI-ModelScope/MathInstruct",
     "columns": {
@@ -183,6 +213,9 @@
       "assistant_tag": "assistant"
     },
     "formatting": "sharegpt"
+  },
+  "ultrachat_chat_de": {
+    "hf_hub_url": "mayflowergmbh/ultra-chat_de",  
   },
   "agent_instruct": {
     "hf_hub_url": "THUDM/AgentInstruct",
