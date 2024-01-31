@@ -101,6 +101,18 @@ def _get_quantization_dataset(tokenizer: "PreTrainedTokenizer", model_args: "Mod
     return samples
 
 
+def _configure_attn_implementation(model_args: "ModelArguments", config_kwargs: Dict[str, Any]) -> None:
+    if model_args.flash_attn:
+        if is_flash_attn2_available():
+            config_kwargs["attn_implementation"] = "flash_attention_2"
+            logger.info("Using FlashAttention-2 for faster training and inference.")
+        else:
+            logger.warning("FlashAttention2 is not installed.")
+            config_kwargs["attn_implementation"] = None
+    else:
+        config_kwargs["attn_implementation"] = "eager"        
+
+
 def _configure_rope(config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool) -> None:
     if not hasattr(config, "rope_scaling"):
         logger.warning("Current model does not support RoPE scaling.")
@@ -126,15 +138,6 @@ def _configure_rope(config: "PretrainedConfig", model_args: "ModelArguments", is
     logger.info(
         "Using {} scaling strategy and setting scaling factor to {}".format(model_args.rope_scaling, scaling_factor)
     )
-
-
-def _configure_flashattn(config_kwargs: Dict[str, Any]) -> None:
-    if not is_flash_attn2_available():
-        logger.warning("FlashAttention2 is not installed.")
-        return
-
-    config_kwargs["use_flash_attention_2"] = True
-    logger.info("Using FlashAttention-2 for faster training and inference.")
 
 
 def _configure_longlora(config: "PretrainedConfig") -> None:
@@ -257,11 +260,10 @@ def patch_config(
         for dtype_name, dtype in [("fp16", torch.float16), ("bf16", torch.bfloat16), ("fp32", torch.float32)]:
             setattr(config, dtype_name, model_args.compute_dtype == dtype)
 
+    _configure_attn_implementation(model_args, config_kwargs)
+
     if model_args.rope_scaling is not None:
         _configure_rope(config, model_args, is_trainable)
-
-    if model_args.flash_attn:
-        _configure_flashattn(config_kwargs)
 
     if is_trainable and model_args.shift_attn:
         _configure_longlora(config)
