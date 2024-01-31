@@ -115,7 +115,9 @@ Regarding the above dataset, the `columns` in `dataset_info.json` should be:
   },
   "tags": {
     "role_tag": "from",
-    "content_tag": "value"
+    "content_tag": "value",
+    "user_tag": "human",
+    "assistant_tag": "gpt"
   }
 }
 ```
