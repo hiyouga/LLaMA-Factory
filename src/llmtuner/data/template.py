@@ -117,9 +117,9 @@ class Template:
             elif isinstance(elem, dict):
                 token_ids += [tokenizer.convert_tokens_to_ids(elem.get("token"))]
             elif isinstance(elem, set):
-                if "bos_token" in elem and tokenizer.bos_token_id:
+                if "bos_token" in elem and tokenizer.bos_token_id is not None:
                     token_ids += [tokenizer.bos_token_id]
-                elif "eos_token" in elem and tokenizer.eos_token_id:
+                elif "eos_token" in elem and tokenizer.eos_token_id is not None:
                     token_ids += [tokenizer.eos_token_id]
             else:
                 raise ValueError("Input must be string, set[str] or dict[str, str], got {}".format(type(elem)))
