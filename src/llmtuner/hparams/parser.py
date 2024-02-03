@@ -63,12 +63,11 @@ def _verify_model_args(model_args: "ModelArguments", finetuning_args: "Finetunin
         if model_args.adapter_name_or_path is not None and finetuning_args.create_new_adapter:
             raise ValueError("Cannot create new adapter upon a quantized model.")
 
-    if model_args.adapter_name_or_path is not None and len(model_args.adapter_name_or_path) != 1:
-        if finetuning_args.finetuning_type != "lora":
-            raise ValueError("Multiple adapters are only available for LoRA tuning.")
-
-        if model_args.quantization_bit is not None:
+        if model_args.adapter_name_or_path is not None and len(model_args.adapter_name_or_path) != 1:
             raise ValueError("Quantized model only accepts a single adapter. Merge them first.")
+
+    if model_args.adapter_name_or_path is not None and finetuning_args.finetuning_type != "lora":
+        raise ValueError("Only LoRA method has adapters.")
 
 
 def _parse_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
