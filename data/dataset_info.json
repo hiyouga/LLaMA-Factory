@@ -215,7 +215,7 @@
     "formatting": "sharegpt"
   },
   "ultrachat_chat_de": {
-    "hf_hub_url": "mayflowergmbh/ultra-chat_de",  
+    "hf_hub_url": "mayflowergmbh/ultra-chat_de"
   },
   "agent_instruct": {
     "hf_hub_url": "THUDM/AgentInstruct",
