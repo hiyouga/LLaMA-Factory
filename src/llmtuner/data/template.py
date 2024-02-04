@@ -339,7 +339,9 @@ register_template(
         slots=[{"token": "[gMASK]"}, {"token": "sop"}, {"token": "<|system|>"}, "\n", "{{content}}"]
     ),
     format_function=FunctionFormatter(slots=["{{name}}\n{{arguments}}"]),
-    format_observation=StringFormatter(slots=[{"token": "<|observation|>"}, "\n", "{{content}}"]),
+    format_observation=StringFormatter(
+        slots=[{"token": "<|observation|>"}, "\n", "{{content}}", {"token": "<|assistant|>"}]
+    ),
     default_system=(
         "You are ChatGLM3, a large language model trained by Zhipu.AI. "
         "Follow the user's instructions carefully. Respond using markdown."
