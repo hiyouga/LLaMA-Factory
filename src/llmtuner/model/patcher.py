@@ -110,7 +110,7 @@ def _configure_attn_implementation(model_args: "ModelArguments", config_kwargs: 
             logger.warning("FlashAttention2 is not installed.")
             config_kwargs["attn_implementation"] = None
     else:
-        config_kwargs["attn_implementation"] = "eager"        
+        config_kwargs["attn_implementation"] = "eager"
 
 
 def _configure_rope(config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool) -> None:
