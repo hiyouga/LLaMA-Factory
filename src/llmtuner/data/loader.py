@@ -155,9 +155,6 @@ def get_dataset(
                 dataset = dataset.to_iterable_dataset()
             return dataset
 
-        if data_args.streaming:
-            raise ValueError("Turn off dataset streaming to save cache files.")
-
     with training_args.main_process_first(desc="load dataset"):
         all_datasets = []
         for dataset_attr in get_dataset_list(data_args):  # TODO: add split

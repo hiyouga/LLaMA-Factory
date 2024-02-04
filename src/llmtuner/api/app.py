@@ -120,6 +120,9 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
 
     def chat_completion(messages: Sequence[Dict[str, str]], system: str, tools: str, request: ChatCompletionRequest):
         if request.stream:
+            if tools:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot stream function calls.")
+
             generate = stream_chat_completion(messages, system, tools, request)
             return EventSourceResponse(generate, media_type="text/event-stream")
 
