@@ -17,6 +17,7 @@ class FreezeArguments:
                   BLOOM & Falcon & ChatGLM choices: ["mlp", "self_attention"], \
                   Qwen choices: ["mlp", "attn"], \
                   Phi choices: ["mlp", "mixer"], \
+                  InternLM2 choices: ["feed_forward", "attention"], \
                   Others choices: the same as LLaMA.'
         },
     )
