@@ -52,8 +52,18 @@ def init_adapter(
         else:  # fine-tuning the first n layers if num_layer_trainable < 0
             trainable_layer_ids = [k for k in range(-finetuning_args.num_layer_trainable)]  # noqa: C416
 
+        freeze_modules = set()
+        for name, _ in model.named_modules():
+            if "0." in name:
+                freeze_modules.add(name.split("0.")[-1].split(".")[0])
+
         trainable_layers = []
         for module_name in finetuning_args.name_module_trainable:
+            if module_name not in freeze_modules:
+                raise ValueError(
+                    "Module {} is not found, please choose from {}".format(module_name, ", ".join(freeze_modules))
+                )
+
             for idx in trainable_layer_ids:
                 trainable_layers.append("{:d}.{}".format(idx, module_name))
 
