@@ -3,7 +3,7 @@ import os
 from typing import Sequence
 
 from openai import OpenAI
-
+# pip install openai >= 1.3.0
 
 os.environ["OPENAI_BASE_URL"] = "http://192.168.0.1:8000/v1"
 os.environ["OPENAI_API_KEY"] = "0"
