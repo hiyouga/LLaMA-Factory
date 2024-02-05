@@ -17,3 +17,5 @@ pydantic
 fastapi
 sse-starlette
 matplotlib
+auto-gptq
+optimum
