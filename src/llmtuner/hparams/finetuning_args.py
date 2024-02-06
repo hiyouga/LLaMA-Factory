@@ -8,6 +8,7 @@ class FreezeArguments:
     r"""
     Arguments pertaining to the freeze (partial-parameter) training.
     """
+
     name_module_trainable: Optional[str] = field(
         default="mlp",
         metadata={
@@ -31,6 +32,7 @@ class LoraArguments:
     r"""
     Arguments pertaining to the LoRA training.
     """
+
     additional_target: Optional[str] = field(
         default=None,
         metadata={
@@ -67,6 +69,7 @@ class RLHFArguments:
     r"""
     Arguments pertaining to the PPO and DPO training.
     """
+
     dpo_beta: Optional[float] = field(default=0.1, metadata={"help": "The beta parameter for the DPO loss."})
     dpo_loss: Optional[Literal["sigmoid", "hinge", "ipo", "kto"]] = field(
         default="sigmoid", metadata={"help": "The type of DPO loss to use."}
@@ -122,6 +125,7 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments):
     r"""
     Arguments pertaining to which techniques we are going to fine-tuning with.
     """
+
     stage: Optional[Literal["pt", "sft", "rm", "ppo", "dpo"]] = field(
         default="sft", metadata={"help": "Which stage will be performed in training."}
     )
