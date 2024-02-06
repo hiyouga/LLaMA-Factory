@@ -17,3 +17,5 @@ pydantic
 fastapi
 sse-starlette
 matplotlib
+bitsandbytes>=0.37.0
+transformers-stream-generator==0.0.4
