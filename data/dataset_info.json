@@ -151,7 +151,7 @@
   "dolly-15k_de": {
     "hf_hub_url": "mayflowergmbh/dolly-15k_de"
   },
-  "mathinstruct ": {
+  "mathinstruct": {
     "hf_hub_url": "TIGER-Lab/MathInstruct",
     "ms_hub_url": "AI-ModelScope/MathInstruct",
     "columns": {
