@@ -10,6 +10,7 @@ class EvaluationArguments:
     r"""
     Arguments pertaining to specify the evaluation parameters.
     """
+
     task: str = field(metadata={"help": "Name of the evaluation task."})
     task_dir: Optional[str] = field(
         default="evaluation", metadata={"help": "Path to the folder containing the evaluation datasets."}
