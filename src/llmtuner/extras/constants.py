@@ -219,21 +219,31 @@ register_model_group(
 
 register_model_group(
     models={
-        "DeepSeekLLM-7B-Base": {
+        "DeepSeek-LLM-7B-Base": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-llm-7b-base",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-llm-7b-base",
         },
-        "DeepSeekLLM-67B-Base": {
+        "DeepSeek-LLM-67B-Base": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-llm-67b-base",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-llm-67b-base",
         },
-        "DeepSeekLLM-7B-Chat": {
+        "DeepSeek-LLM-7B-Chat": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-llm-7b-chat",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-llm-7b-chat",
         },
-        "DeepSeekLLM-67B-Chat": {
+        "DeepSeek-LLM-67B-Chat": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-llm-67b-chat",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-llm-67b-chat",
+        },
+        "DeepSeek-Math-7B-Base": {DownloadSource.DEFAULT: "deepseek-ai/deepseek-math-7b-base"},
+        "DeepSeek-Math-7B-Chat": {DownloadSource.DEFAULT: "deepseek-ai/deepseek-math-7b-instruct"},
+        "DeepSeek-MoE-16B-Base": {
+            DownloadSource.DEFAULT: "deepseek-ai/deepseek-moe-16b-base",
+            DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-moe-16b-base",
+        },
+        "DeepSeek-MoE-16B-Chat": {
+            DownloadSource.DEFAULT: "deepseek-ai/deepseek-moe-16b-chat",
+            DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-moe-16b-chat",
         },
     },
     template="deepseek",
@@ -262,21 +272,6 @@ register_model_group(
         },
     },
     template="deepseekcoder",
-)
-
-
-register_model_group(
-    models={
-        "DeepSeekMoE-16B-Base": {
-            DownloadSource.DEFAULT: "deepseek-ai/deepseek-moe-16b-base",
-            DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-moe-16b-base",
-        },
-        "DeepSeekMoE-16B-Chat": {
-            DownloadSource.DEFAULT: "deepseek-ai/deepseek-moe-16b-chat",
-            DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-moe-16b-chat",
-        },
-    },
-    template="deepseek",
 )
 
 
