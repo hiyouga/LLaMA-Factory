@@ -127,7 +127,8 @@
     }
   },
   "intel_orca_dpo_pairs_de" : {
-    "hf_hub_url": "mayflowergmbh/intel_orca_dpo_pairs_de"
+    "hf_hub_url": "mayflowergmbh/intel_orca_dpo_pairs_de",
+    "ranking": true
   },
   "airoboros-3.0_de": {
     "hf_hub_url": "mayflowergmbh/airoboros-3.0_de"
