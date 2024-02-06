@@ -376,7 +376,8 @@ register_template(
 
 register_template(
     name="deepseekcoder",
-    format_user=StringFormatter(slots=["### Instruction:\n{{content}}\n### Response:\n"]),
+    format_user=StringFormatter(slots=["### Instruction:\n{{content}}\n### Response:"]),
+    format_assistant=StringFormatter(slots=["\n", "{{content}}"]),
     format_separator=EmptyFormatter(slots=["\n", {"token": "<|EOT|>"}, "\n"]),
     default_system=(
         "You are an AI programming assistant, utilizing the Deepseek Coder model, "
