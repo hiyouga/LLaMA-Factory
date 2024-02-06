@@ -14,7 +14,7 @@ indent-width = 4
 ignore = ["C408", "C901", "E501", "E731", "E741", "W605"]
 select = ["C", "E", "F", "I", "W"]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 lines-after-imports = 2
 known-first-party = ["llmtuner"]
 

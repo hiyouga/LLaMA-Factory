@@ -7,6 +7,7 @@ class GeneratingArguments:
     r"""
     Arguments pertaining to specify the decoding parameters.
     """
+
     do_sample: Optional[bool] = field(
         default=True, metadata={"help": "Whether or not to use sampling, use greedy decoding otherwise."}
     )
