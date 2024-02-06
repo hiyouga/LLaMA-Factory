@@ -7,13 +7,22 @@ line-length = 119
 target-version = ["py38"]
 
 [tool.ruff]
+line-length = 119
+indent-width = 4
+
+[tool.ruff.lint]
 ignore = ["C408", "C901", "E501", "E731", "E741", "W605"]
 select = ["C", "E", "F", "I", "W"]
-line-length = 119
 
 [tool.ruff.isort]
 lines-after-imports = 2
 known-first-party = ["llmtuner"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
 
 [isort]
 default_section = "FIRSTPARTY"
