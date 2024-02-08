@@ -77,7 +77,7 @@ def convert_sharegpt(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr"
         response.append(last_message)
         outputs["prompt"].append(prompt)
         outputs["response"].append(response)
-        if not dataset_attr.system_tag:
+        if n_sys == 0:
             outputs["system"].append(examples[dataset_attr.system][i] if dataset_attr.system else "")
         outputs["tools"].append(examples[dataset_attr.tools][i] if dataset_attr.tools else "")
 
