@@ -60,6 +60,7 @@ def convert_sharegpt(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr"
             if dataset_attr.system_tag and message[dataset_attr.role_tag] == dataset_attr.system_tag:
                 outputs["system"].append(message[dataset_attr.content_tag])
                 n_sys = 1
+                continue
 
             if (turn_idx - n_sys) % 2 == 0:
                 accept_tags = [dataset_attr.user_tag, dataset_attr.observation_tag]
