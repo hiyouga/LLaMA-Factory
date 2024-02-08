@@ -47,10 +47,10 @@ def convert_sharegpt(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr"
         dataset_attr.assistant_tag: Role.ASSISTANT,
         dataset_attr.observation_tag: Role.OBSERVATION,
         dataset_attr.function_tag: Role.FUNCTION,
+        dataset_attr.system_tag: Role.SYSTEM,
     }
     for i, messages in enumerate(examples[dataset_attr.messages]):
-        messages = messages[: len(messages) // 2 * 2]  # should be multiples of 2
-        if len(messages) == 0:
+        if len(messages) <= 1:
             continue
 
         prompt = []
@@ -74,6 +74,9 @@ def convert_sharegpt(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr"
                 {"role": tag_mapping[message[dataset_attr.role_tag]], "content": message[dataset_attr.content_tag]}
             )
 
+        if len(prompt) % 2 == 1:
+            # Last message was neither from assistant nor function
+            prompt.pop(-1)
         last_message = prompt.pop(-1)
         response.append(last_message)
         outputs["prompt"].append(prompt)
