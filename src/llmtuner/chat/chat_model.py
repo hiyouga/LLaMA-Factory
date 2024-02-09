@@ -28,7 +28,7 @@ class ChatModel:
         )
         self.tokenizer.padding_side = "left" if self.can_generate else "right"
         self.model = dispatch_model(self.model)
-        self.template = get_template_and_fix_tokenizer(data_args.template, self.tokenizer)
+        self.template = get_template_and_fix_tokenizer(self.tokenizer, data_args.template)
 
     def _process_args(
         self,
