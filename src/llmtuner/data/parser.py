@@ -37,6 +37,10 @@ class DatasetAttr:
     assistant_tag: Optional[str] = "gpt"
     observation_tag: Optional[str] = "observation"
     function_tag: Optional[str] = "function_call"
+    system_tag: Optional[str] = None
+
+    assert system_tag is None or system is None, f"Can not provide both system message (system_tag={system_tag}) and system column(system={system})"
+
 
     def __repr__(self) -> str:
         return self.dataset_name
@@ -95,7 +99,7 @@ def get_dataset_list(data_args: "DataArguments") -> List["DatasetAttr"]:
                 setattr(dataset_attr, column_name, dataset_info[name]["columns"].get(column_name, None))
 
         if dataset_attr.formatting == "sharegpt" and "tags" in dataset_info[name]:
-            for tag in ["role_tag", "content_tag", "user_tag", "assistant_tag", "observation_tag", "function_tag"]:
+            for tag in ["role_tag", "content_tag", "user_tag", "assistant_tag", "observation_tag", "function_tag", "system_tag"]:
                 setattr(dataset_attr, tag, dataset_info[name]["tags"].get(tag, None))
 
         dataset_list.append(dataset_attr)
