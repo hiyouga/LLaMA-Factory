@@ -126,6 +126,20 @@
       "system": "system_prompt"
     }
   },
+ "slimorca": {
+  "hf_hub_url": "Open-Orca/SlimOrca",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "conversations"
+  },
+  "tags": {
+    "role_tag": "from",
+    "content_tag": "value",
+    "user_tag": "human",
+    "assistant_tag": "gpt",
+    "system_tag": "system"
+  }
+ },
   "intel_orca_dpo_pairs_de" : {
     "hf_hub_url": "mayflowergmbh/intel_orca_dpo_pairs_de",
     "ranking": true
