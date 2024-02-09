@@ -26,7 +26,8 @@ If you are using a custom dataset, please provide your dataset definition in the
     "user_tag": "the value of the role_tag represents the user. (default: human)",
     "assistant_tag": "the value of the role_tag represents the assistant. (default: gpt)",
     "observation_tag": "the value of the role_tag represents the tool results. (default: observation)",
-    "function_tag": "the value of the role_tag represents the function call. (default: function_call)"
+    "function_tag": "the value of the role_tag represents the function call. (default: function_call)",
+    "system_tag": "the value of the role_tag represents the system prompt. (default: None) incompatible with system column"
   }
 }
 ```
