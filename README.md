@@ -157,8 +157,8 @@ Please refer to [constants.py](src/llmtuner/extras/constants.py) for a full list
 
 - [Stanford Alpaca (en)](https://github.com/tatsu-lab/stanford_alpaca)
 - [Stanford Alpaca (zh)](https://github.com/ymcui/Chinese-LLaMA-Alpaca)
-- [GPT-4 Generated Data (en&zh)](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
-- [Self-cognition (zh)](data/self_cognition.json)
+- [Alpaca GPT4 (en&zh)](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
+- [Self Cognition (zh)](data/self_cognition.json)
 - [Open Assistant (multilingual)](https://huggingface.co/datasets/OpenAssistant/oasst1)
 - [ShareGPT (zh)](https://huggingface.co/datasets/QingyiSi/Alpaca-CoT/tree/main/Chinese-instruction-collection)
 - [Guanaco Dataset (multilingual)](https://huggingface.co/datasets/JosephusCheung/GuanacoDataset)
@@ -176,6 +176,7 @@ Please refer to [constants.py](src/llmtuner/extras/constants.py) for a full list
 - [OpenOrca (en)](https://huggingface.co/datasets/Open-Orca/OpenOrca)
 - [MathInstruct (en)](https://huggingface.co/datasets/TIGER-Lab/MathInstruct)
 - [Firefly 1.1M (zh)](https://huggingface.co/datasets/YeungNLP/firefly-train-1.1M)
+- [Wiki QA (en)](https://huggingface.co/datasets/wiki_qa)
 - [Web QA (zh)](https://huggingface.co/datasets/suolyer/webqa)
 - [WebNovel (zh)](https://huggingface.co/datasets/zxbsmk/webnovel_cn)
 - [Nectar (en)](https://huggingface.co/datasets/berkeley-nest/Nectar)
@@ -190,14 +191,14 @@ Please refer to [constants.py](src/llmtuner/extras/constants.py) for a full list
 - [Glaive Function Calling V2 (en)](https://huggingface.co/datasets/glaiveai/glaive-function-calling-v2)
 - [Open Assistant (de)](https://huggingface.co/datasets/mayflowergmbh/oasst_de)
 - [Dolly 15k (de)](https://huggingface.co/datasets/mayflowergmbh/dolly-15k_de)
-- [FreedomIntelligence Alpaca GPT4 (de)](https://huggingface.co/datasets/mayflowergmbh/alpaca-gpt4_de)
-- [LeoLM/OpenSchnabeltier (de)](https://huggingface.co/datasets/mayflowergmbh/openschnabeltier_de)
-- [FreedomIntelligence/evol-instruct-deutsch (de)](https://huggingface.co/datasets/mayflowergmbh/evol-instruct_de)
-- [wiki_qa (de)](https://huggingface.co/datasets/wiki_qa)
-- [cognitivecomputations/dolphin (de)](https://huggingface.co/datasets/mayflowergmbh/dolphin_de)
-- [booksum (de)](https://huggingface.co/datasets/mayflowergmbh/booksum_de)
-- [jondurbin/airoboros-3.0 (de)](https://huggingface.co/datasets/mayflowergmbh/airoboros-3.0_de)
-- [stingning/ultrachat (de)](https://huggingface.co/datasets/mayflowergmbh/ultra-chat_de)
+- [Alpaca GPT4 (de)](https://huggingface.co/datasets/mayflowergmbh/alpaca-gpt4_de)
+- [OpenSchnabeltier (de)](https://huggingface.co/datasets/mayflowergmbh/openschnabeltier_de)
+- [Evol Instruct (de)](https://huggingface.co/datasets/mayflowergmbh/evol-instruct_de)
+- [Dolphin (de)](https://huggingface.co/datasets/mayflowergmbh/dolphin_de)
+- [Booksum (de)](https://huggingface.co/datasets/mayflowergmbh/booksum_de)
+- [Airoboros (de)](https://huggingface.co/datasets/mayflowergmbh/airoboros-3.0_de)
+- [Ultrachat (de)](https://huggingface.co/datasets/mayflowergmbh/ultra-chat_de)
+
 </details>
 
 <details><summary>Preference datasets</summary>
@@ -206,7 +207,7 @@ Please refer to [constants.py](src/llmtuner/extras/constants.py) for a full list
 - [Open Assistant (multilingual)](https://huggingface.co/datasets/OpenAssistant/oasst1)
 - [GPT-4 Generated Data (en&zh)](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
 - [Nectar (en)](https://huggingface.co/datasets/berkeley-nest/Nectar)
-- [Intel/orca_dpo_pairs (de)](https://huggingface.co/datasets/mayflowergmbh/intel_orca_dpo_pairs_de)
+- [Orca DPO (de)](https://huggingface.co/datasets/mayflowergmbh/intel_orca_dpo_pairs_de)
 
 </details>
 

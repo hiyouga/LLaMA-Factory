@@ -142,7 +142,7 @@ def get_dataset(
     stage: Literal["pt", "sft", "rm", "ppo"],
     # split: Optional[str] = "train", # TODO: add split
 ) -> Union["Dataset", "IterableDataset"]:
-    template = get_template_and_fix_tokenizer(data_args.template, tokenizer)
+    template = get_template_and_fix_tokenizer(tokenizer, data_args.template)
     if data_args.train_on_prompt and template.efficient_eos:
         raise ValueError("Current template does not support `train_on_prompt`.")
 
