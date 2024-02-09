@@ -21,6 +21,7 @@ class Role(str, Enum):
     ASSISTANT = "assistant"
     OBSERVATION = "observation"
     FUNCTION = "function"
+    SYSTEM = "system"
 
 
 def checksum(data_files: List[str], file_sha1: Optional[str] = None) -> None:
