@@ -24,7 +24,7 @@ class Evaluator:
         self.model, self.tokenizer = load_model_and_tokenizer(self.model_args, finetuning_args)
         self.tokenizer.padding_side = "right"  # avoid overflow issue in batched inference for llama2
         self.model = dispatch_model(self.model)
-        self.template = get_template_and_fix_tokenizer(self.data_args.template, self.tokenizer)
+        self.template = get_template_and_fix_tokenizer(self.tokenizer, self.data_args.template)
         self.eval_template = get_eval_template(self.eval_args.lang)
         self.choice_inputs = [
             self.tokenizer.encode(self.eval_template.prefix + ch, add_special_tokens=False)[-1] for ch in CHOICES
