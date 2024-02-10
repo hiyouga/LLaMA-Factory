@@ -247,7 +247,7 @@ def _add_or_replace_eos_token(tokenizer: "PreTrainedTokenizer", eos_token: str) 
         logger.info("Replace eos token: {}".format(tokenizer.eos_token))
 
     if is_oov:
-        logger.warning("New token is added, you must enable `resize_vocab` to activate it.")
+        logger.warning("New tokens have been added, make sure `resize_vocab` is True.")
 
 
 def get_template_and_fix_tokenizer(
