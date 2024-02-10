@@ -65,9 +65,9 @@ Regarding the above dataset, the `columns` in `dataset_info.json` should be:
 }
 ```
 
-where the `prompt` and `response` columns should contain non-empty values, represent instruction and response respectively. The `query` column will be concatenated with the `prompt` column and used as input for the model.
+The `query` column will be concatenated with the `prompt` column and used as the user prompt, then the user prompt would be `prompt\nquery`. The `response` column represents the model response.
 
-The `system` column will be used as the system prompt in the template. The `history` column is a list consisting string tuples representing query-response pairs in history. Note that the responses **in each round will be used for training**.
+The `system` column will be used as the system prompt. The `history` column is a list consisting string tuples representing prompt-response pairs in the history. Note that the responses in the history **will also be used for training**.
 
 For the pre-training datasets, only the `prompt` column will be used for training.
 
@@ -123,6 +123,6 @@ Regarding the above dataset, the `columns` in `dataset_info.json` should be:
 }
 ```
 
-where the `messages` column should be a list whose length is even, and follow the `u/a/u/a/u/a` order.
+where the `messages` column should be a list following the `u/a/u/a/u/a` order.
 
 Pre-training datasets and preference datasets are incompatible with the sharegpt format yet.
