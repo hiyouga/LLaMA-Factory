@@ -67,7 +67,7 @@ def _verify_model_args(model_args: "ModelArguments", finetuning_args: "Finetunin
             raise ValueError("Quantized model only accepts a single adapter. Merge them first.")
 
     if model_args.adapter_name_or_path is not None and finetuning_args.finetuning_type != "lora":
-        raise ValueError("Only LoRA method has adapters.")
+        raise ValueError("Adapter is only valid for the LoRA method.")
 
 
 def _parse_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
@@ -124,6 +124,14 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         raise ValueError("Please specify `lora_target` in LoRA training.")
 
     _verify_model_args(model_args, finetuning_args)
+
+    if (
+        training_args.do_train
+        and finetuning_args.finetuning_type == "lora"
+        and model_args.resize_vocab
+        and finetuning_args.additional_target is None
+    ):
+        logger.warning("Add token embeddings to `additional_target` to make the added tokens trainable.")
 
     if training_args.do_train and model_args.quantization_bit is not None and (not model_args.upcast_layernorm):
         logger.warning("We recommend enable `upcast_layernorm` in quantized training.")
