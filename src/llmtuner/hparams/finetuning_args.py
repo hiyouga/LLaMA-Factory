@@ -132,6 +132,9 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments):
     finetuning_type: Optional[Literal["lora", "freeze", "full"]] = field(
         default="lora", metadata={"help": "Which fine-tuning method to use."}
     )
+    disable_version_checking: Optional[bool] = field(
+        default=False, metadata={"help": "Whether or not to disable version checking."}
+    )
     plot_loss: Optional[bool] = field(
         default=False, metadata={"help": "Whether or not to save the training loss curves."}
     )
