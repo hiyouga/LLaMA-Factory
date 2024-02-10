@@ -30,6 +30,7 @@ def load_single_dataset(
     model_args: "ModelArguments",
     data_args: "DataArguments",
 ):
+    logger.info("Loading dataset {}...".format(dataset_attr))
     data_path, data_name, data_dir, data_files = None, None, None, None
     if dataset_attr.load_from in ["hf_hub", "ms_hub"]:
         data_path = dataset_attr.dataset_name
@@ -60,7 +61,7 @@ def load_single_dataset(
         if data_path is None:
             raise ValueError("File extension must be txt, csv, json or jsonl.")
 
-        checksum(data_files, dataset_attr.dataset_sha1)
+        checksum(data_files, dataset_attr.file_sha1)
     else:
         raise NotImplementedError
 
@@ -157,7 +158,7 @@ def get_dataset(
 
     with training_args.main_process_first(desc="load dataset"):
         all_datasets = []
-        for dataset_attr in get_dataset_list(data_args):  # TODO: add split
+        for dataset_attr in get_dataset_list(data_args):
             all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args))
         dataset = merge_dataset(all_datasets, data_args, training_args)
 
@@ -185,6 +186,6 @@ def get_dataset(
             try:
                 print_function(next(iter(dataset)))
             except StopIteration:
-                raise RuntimeError("Empty dataset!")
+                raise RuntimeError("Cannot find valid samples, check `data/README.md` for the data format.")
 
         return dataset
