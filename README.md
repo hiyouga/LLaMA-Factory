@@ -174,6 +174,7 @@ Please refer to [constants.py](src/llmtuner/extras/constants.py) for a full list
 - [CodeAlpaca 20k (en)](https://huggingface.co/datasets/sahil2801/CodeAlpaca-20k)
 - [Alpaca CoT (multilingual)](https://huggingface.co/datasets/QingyiSi/Alpaca-CoT)
 - [OpenOrca (en)](https://huggingface.co/datasets/Open-Orca/OpenOrca)
+- [SlimOrca (en)](https://huggingface.co/datasets/Open-Orca/SlimOrca)
 - [MathInstruct (en)](https://huggingface.co/datasets/TIGER-Lab/MathInstruct)
 - [Firefly 1.1M (zh)](https://huggingface.co/datasets/YeungNLP/firefly-train-1.1M)
 - [Wiki QA (en)](https://huggingface.co/datasets/wiki_qa)

@@ -11,7 +11,7 @@ If you are using a custom dataset, please provide your dataset definition in the
   "folder": "the name of the folder of the dataset repository on the Hugging Face hub. (optional, default: None)",
   "ranking": "whether the dataset is a preference dataset or not. (default: false)",
   "formatting": "the format of the dataset. (optional, default: alpaca, can be chosen from {alpaca, sharegpt})",
-  "columns": {
+  "columns (optional)": {
     "prompt": "the column name in the dataset containing the prompts. (default: instruction)",
     "query": "the column name in the dataset containing the queries. (default: input)",
     "response": "the column name in the dataset containing the responses. (default: output)",
@@ -20,14 +20,14 @@ If you are using a custom dataset, please provide your dataset definition in the
     "system": "the column name in the dataset containing the system prompts. (default: None)",
     "tools": "the column name in the dataset containing the tool description. (default: None)"
   },
-  "tags": {
+  "tags (optional, used for the sharegpt format)": {
     "role_tag": "the key in the message represents the identity. (default: from)",
     "content_tag": "the key in the message represents the content. (default: value)",
     "user_tag": "the value of the role_tag represents the user. (default: human)",
     "assistant_tag": "the value of the role_tag represents the assistant. (default: gpt)",
     "observation_tag": "the value of the role_tag represents the tool results. (default: observation)",
     "function_tag": "the value of the role_tag represents the function call. (default: function_call)",
-    "system_tag": "the value of the role_tag represents the system prompt. (default: None) incompatible with system column"
+    "system_tag": "the value of the role_tag represents the system prompt. (default: system, can override system column)"
   }
 }
 ```
