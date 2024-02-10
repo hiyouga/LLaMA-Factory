@@ -11,7 +11,7 @@
   "folder": "Hugging Face 仓库的文件夹名称（可选，默认：None）",
   "ranking": "是否为偏好数据集（可选，默认：False）",
   "formatting": "数据集格式（可选，默认：alpaca，可以为 alpaca 或 sharegpt）",
-  "columns": {
+  "columns（可选）": {
     "prompt": "数据集代表提示词的表头名称（默认：instruction）",
     "query": "数据集代表请求的表头名称（默认：input）",
     "response": "数据集代表回答的表头名称（默认：output）",
@@ -20,13 +20,14 @@
     "system": "数据集代表系统提示的表头名称（默认：None）",
     "tools": "数据集代表工具描述的表头名称（默认：None）"
   },
-  "tags": {
+  "tags（可选，用于 sharegpt 格式）": {
     "role_tag": "消息中代表发送者身份的键名（默认：from）",
     "content_tag": "消息中代表文本内容的键名（默认：value）",
     "user_tag": "消息中代表用户的 role_tag（默认：human）",
     "assistant_tag": "消息中代表助手的 role_tag（默认：gpt）",
     "observation_tag": "消息中代表工具返回结果的 role_tag（默认：observation）",
-    "function_tag": "消息中代表工具调用的 role_tag（默认：function_call）"
+    "function_tag": "消息中代表工具调用的 role_tag（默认：function_call）",
+    "system_tag": "消息中代表系统提示的 role_tag（默认：system，会覆盖 system 列）"
   }
 }
 ```

@@ -15,9 +15,6 @@
     "file_name": "alpaca_gpt4_data_zh.json",
     "file_sha1": "3eaa3bda364ccdd59925d7448a698256c31ef845"
   },
-  "alpaca-gpt4_de": {
-    "hf_hub_url": "mayflowergmbh/alpaca-gpt4_de"
-  },
   "self_cognition": {
     "file_name": "self_cognition.json",
     "file_sha1": "6287a730ada924fc5d9eadc6d8f865e01b7a6f67"
@@ -41,9 +38,6 @@
       "response": "output",
       "history": "history"
     }
-  },
-  "oasst_de": {
-    "hf_hub_url": "mayflowergmbh/oasst_de"
   },
   "lima": {
     "file_name": "lima.json",
@@ -126,44 +120,8 @@
       "system": "system_prompt"
     }
   },
- "slimorca": {
-  "hf_hub_url": "Open-Orca/SlimOrca",
-  "formatting": "sharegpt",
-  "columns": {
-    "messages": "conversations"
-  },
-  "tags": {
-    "role_tag": "from",
-    "content_tag": "value",
-    "user_tag": "human",
-    "assistant_tag": "gpt",
-    "system_tag": "system"
-  }
- },
-  "intel_orca_dpo_pairs_de" : {
-    "hf_hub_url": "mayflowergmbh/intel_orca_dpo_pairs_de",
-    "ranking": true
-  },
-  "airoboros-3.0_de": {
-    "hf_hub_url": "mayflowergmbh/airoboros-3.0_de"
-  },
-  "booksum_de": {
-    "hf_hub_url": "mayflowergmbh/booksum_de"
-  },
-  "dolphin_de": {
-    "hf_hub_url": "mayflowergmbh/dolphin_de"
-  },
-  "wiki_qa_de": {
-    "hf_hub_url": "mayflowergmbh/wiki_qa_de"
-  },
-  "evol-instruct_de": {
-    "hf_hub_url": "mayflowergmbh/evol-instruct_de"
-  },
-  "openschnabeltier_de": {
-    "hf_hub_url": "mayflowergmbh/openschnabeltier_de"
-  },
-  "dolly-15k_de": {
-    "hf_hub_url": "mayflowergmbh/dolly-15k_de"
+  "slimorca": {
+    "hf_hub_url": "Open-Orca/SlimOrca"
   },
   "mathinstruct": {
     "hf_hub_url": "TIGER-Lab/MathInstruct",
@@ -180,6 +138,13 @@
       "response": "target"
     }
   },
+  "wikiqa": {
+    "hf_hub_url": "wiki_qa",
+    "columns": {
+      "prompt": "question",
+      "response": "answer"
+    }
+  },
   "webqa": {
     "hf_hub_url": "suolyer/webqa",
     "ms_hub_url": "AI-ModelScope/webqa",
@@ -193,7 +158,8 @@
     "ms_hub_url": "AI-ModelScope/webnovel_cn"
   },
   "nectar_sft": {
-    "hf_hub_url": "mlinmg/SFT-Nectar"
+    "hf_hub_url": "mlinmg/SFT-Nectar",
+    "ms_hub_url": "AI-ModelScope/SFT-Nectar"
   },
   "deepctrl": {
     "ms_hub_url": "deepctrl/deepctrl-sft-data"
@@ -229,9 +195,6 @@
     },
     "formatting": "sharegpt"
   },
-  "ultrachat_chat_de": {
-    "hf_hub_url": "mayflowergmbh/ultra-chat_de"
-  },
   "agent_instruct": {
     "hf_hub_url": "THUDM/AgentInstruct",
     "ms_hub_url": "ZhipuAI/AgentInstruct",
@@ -253,7 +216,35 @@
   },
   "evol_instruct": {
     "hf_hub_url": "WizardLM/WizardLM_evol_instruct_V2_196k",
+    "ms_hub_url": "AI-ModelScope/WizardLM_evol_instruct_V2_196k",
     "formatting": "sharegpt"
+  },
+  "oasst_de": {
+    "hf_hub_url": "mayflowergmbh/oasst_de"
+  },
+  "dolly_15k_de": {
+    "hf_hub_url": "mayflowergmbh/dolly-15k_de"
+  },
+  "alpaca-gpt4_de": {
+    "hf_hub_url": "mayflowergmbh/alpaca-gpt4_de"
+  },
+  "openschnabeltier_de": {
+    "hf_hub_url": "mayflowergmbh/openschnabeltier_de"
+  },
+  "evol_instruct_de": {
+    "hf_hub_url": "mayflowergmbh/evol-instruct_de"
+  },
+  "dolphin_de": {
+    "hf_hub_url": "mayflowergmbh/dolphin_de"
+  },
+  "booksum_de": {
+    "hf_hub_url": "mayflowergmbh/booksum_de"
+  },
+  "airoboros_de": {
+    "hf_hub_url": "mayflowergmbh/airoboros-3.0_de"
+  },
+  "ultrachat_de": {
+    "hf_hub_url": "mayflowergmbh/ultra-chat_de"
   },
   "hh_rlhf_en": {
     "script_url": "hh_rlhf_en",
@@ -298,6 +289,11 @@
   },
   "nectar_rm": {
     "hf_hub_url": "mlinmg/RLAIF-Nectar",
+    "ms_hub_url": "AI-ModelScope/RLAIF-Nectar",
+    "ranking": true
+  },
+  "orca_dpo_de" : {
+    "hf_hub_url": "mayflowergmbh/intel_orca_dpo_pairs_de",
     "ranking": true
   },
   "wiki_demo": {
@@ -329,6 +325,7 @@
   },
   "wikipedia_en": {
     "hf_hub_url": "olm/olm-wikipedia-20221220",
+    "ms_hub_url": "AI-ModelScope/olm-wikipedia-20221220",
     "columns": {
       "prompt": "text"
     }
@@ -342,6 +339,7 @@
   },
   "pile": {
     "hf_hub_url": "EleutherAI/pile",
+    "ms_hub_url": "AI-ModelScope/pile",
     "columns": {
       "prompt": "text"
     },
@@ -349,6 +347,7 @@
   },
   "skypile": {
     "hf_hub_url": "Skywork/SkyPile-150B",
+    "ms_hub_url": "AI-ModelScope/SkyPile-150B",
     "columns": {
       "prompt": "text"
     }
