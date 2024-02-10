@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING, Optional, Tuple
 
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 from transformers.integrations import is_deepspeed_zero3_enabled
-from transformers.utils.versions import require_version
 from trl import AutoModelForCausalLMWithValueHead
 
 from ..extras.logging import get_logger
@@ -19,13 +18,6 @@ if TYPE_CHECKING:
 
 
 logger = get_logger(__name__)
-
-
-require_version("transformers>=4.37.2", "To fix: pip install transformers>=4.37.2")
-require_version("datasets>=2.14.3", "To fix: pip install datasets>=2.14.3")
-require_version("accelerate>=0.21.0", "To fix: pip install accelerate>=0.21.0")
-require_version("peft>=0.7.0", "To fix: pip install peft>=0.7.0")
-require_version("trl>=0.7.6", "To fix: pip install trl>=0.7.6")
 
 
 def load_model_and_tokenizer(
@@ -63,7 +55,6 @@ def load_model_and_tokenizer(
 
     model = None
     if is_trainable and model_args.use_unsloth:
-        require_version("unsloth", "Follow the instructions at: https://github.com/unslothai/unsloth")
         from unsloth import FastLlamaModel, FastMistralModel  # type: ignore
 
         unsloth_kwargs = {
