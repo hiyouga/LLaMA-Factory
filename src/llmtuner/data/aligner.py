@@ -20,10 +20,14 @@ def convert_alpaca(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") 
                 prompt.append({"role": Role.USER, "content": old_prompt})
                 prompt.append({"role": Role.ASSISTANT, "content": old_response})
 
-        instruction = examples[dataset_attr.prompt][i]
+        content = []
+        if dataset_attr.prompt and examples[dataset_attr.prompt][i]:
+            content.append(examples[dataset_attr.prompt][i])
+
         if dataset_attr.query and examples[dataset_attr.query][i]:
-            instruction += "\n" + examples[dataset_attr.query][i]
-        prompt.append({"role": Role.USER, "content": instruction})
+            content.append(examples[dataset_attr.query][i])
+
+        prompt.append({"role": Role.USER, "content": "\n".join(content)})
 
         if dataset_attr.response and isinstance(examples[dataset_attr.response][i], list):
             response = [{"role": Role.ASSISTANT, "content": content} for content in examples[dataset_attr.response][i]]
