@@ -1,6 +1,8 @@
 from functools import partial
 from typing import TYPE_CHECKING, Any, Dict, List, Union
 
+from datasets import Features
+
 from .utils import Role
 
 
@@ -100,6 +102,18 @@ def align_dataset(
         convert_func = partial(convert_sharegpt, dataset_attr=dataset_attr)
 
     column_names = list(next(iter(dataset)).keys())
+    features = Features.from_dict(
+        {
+            "prompt": [
+                {"role": {"dtype": "string", "_type": "Value"}, "content": {"dtype": "string", "_type": "Value"}}
+            ],
+            "response": [
+                {"role": {"dtype": "string", "_type": "Value"}, "content": {"dtype": "string", "_type": "Value"}}
+            ],
+            "system": {"dtype": "string", "_type": "Value"},
+            "tools": {"dtype": "string", "_type": "Value"},
+        }
+    )
     kwargs = {}
     if not data_args.streaming:
         kwargs = dict(
@@ -108,4 +122,10 @@ def align_dataset(
             desc="Converting format of dataset",
         )
 
-    return dataset.map(convert_func, batched=True, remove_columns=column_names, **kwargs)
+    return dataset.map(
+        convert_func,
+        batched=True,
+        remove_columns=column_names,
+        features=features,
+        **kwargs,
+    )
