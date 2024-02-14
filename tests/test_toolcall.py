@@ -1,13 +1,10 @@
 import json
-import os
 from typing import Sequence
 
 from openai import OpenAI
 from transformers.utils.versions import require_version
 
 
-os.environ["OPENAI_BASE_URL"] = "http://192.168.0.1:8000/v1"
-os.environ["OPENAI_API_KEY"] = "0"
 require_version("openai>=1.5.0", "To fix: pip install openai>=1.5.0")
 
 
@@ -24,7 +21,10 @@ tool_map = {"calculate_gpa": calculate_gpa}
 
 
 if __name__ == "__main__":
-    client = OpenAI()
+    client = OpenAI(
+        api_key="0",
+        base_url="http://localhost:8000/v1",
+    )
     tools = [
         {
             "type": "function",
