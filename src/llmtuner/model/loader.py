@@ -87,6 +87,17 @@ def load_model_and_tokenizer(
             **config_kwargs,
         )
 
+        # Add llama-factory tag to push these tags on the Hub.
+        # the feature is available since 4.37.0 but adding the check
+        # just in case
+        if hasattr(model, "add_model_tags"):
+            model.add_model_tags(["llama-factory"])
+        else:
+            logger.warning_once(
+                "Was not able to properly tag the model, if you want to use the model tagging feature, make sure to "
+                "have transformers>=4.37.0 installed on your environment."
+            )
+
     patch_model(model, tokenizer, model_args, is_trainable)
     register_autoclass(config, model, tokenizer)
 
