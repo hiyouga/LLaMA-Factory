@@ -20,8 +20,8 @@ class Role(str, Enum):
     USER = "user"
     ASSISTANT = "assistant"
     SYSTEM = "system"
-    OBSERVATION = "observation"
     FUNCTION = "function"
+    OBSERVATION = "observation"
 
 
 def checksum(data_files: List[str], file_sha1: Optional[str] = None) -> None:

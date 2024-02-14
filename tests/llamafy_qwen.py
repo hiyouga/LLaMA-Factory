@@ -1,6 +1,6 @@
 # coding=utf-8
 # Converts the Qwen models in the same format as LLaMA2.
-# Usage: python llamafy_qwen.py --input_dir input --output_dir output --shard_size 10GB
+# Usage: python llamafy_qwen.py --input_dir input --output_dir output
 # Converted model: https://huggingface.co/hiyouga/Qwen-14B-Chat-LLaMAfied
 
 import json
@@ -128,7 +128,9 @@ def save_config(input_dir: str, output_dir: str, torch_dtype: str):
     print("Model config saved in {}".format(os.path.join(output_dir, CONFIG_NAME)))
 
 
-def llamafy_qwen(input_dir: str, output_dir: str, shard_size: str, save_safetensors: Optional[bool] = False):
+def llamafy_qwen(
+    input_dir: str, output_dir: str, shard_size: Optional[str] = "2GB", save_safetensors: Optional[bool] = False
+):
     try:
         os.makedirs(output_dir, exist_ok=False)
     except Exception as e:
