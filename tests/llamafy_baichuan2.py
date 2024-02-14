@@ -1,6 +1,6 @@
 # coding=utf-8
 # Converts the Baichuan2-7B model in the same format as LLaMA2-7B.
-# Usage: python llamafy_baichuan2.py --input_dir input --output_dir output --shard_size 10GB
+# Usage: python llamafy_baichuan2.py --input_dir input --output_dir output
 # Inspired by: https://huggingface.co/fireballoon/baichuan-llama-7b/blob/main/convert_baichuan_to_llama.py
 # Converted model: https://huggingface.co/hiyouga/Baichuan2-7B-Base-LLaMAfied
 
@@ -76,7 +76,9 @@ def save_config(input_dir: str, output_dir: str):
     print("Model config saved in {}".format(os.path.join(output_dir, CONFIG_NAME)))
 
 
-def llamafy_baichuan2(input_dir: str, output_dir: str, shard_size: str, save_safetensors: Optional[bool] = False):
+def llamafy_baichuan2(
+    input_dir: str, output_dir: str, shard_size: Optional[str] = "2GB", save_safetensors: Optional[bool] = False
+):
     try:
         os.makedirs(output_dir, exist_ok=False)
     except Exception as e:
