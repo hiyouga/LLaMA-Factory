@@ -300,6 +300,11 @@ def patch_model(
         if is_trainable:
             patch_mixtral_replace_moe_impl()
 
+    try:
+        model.add_model_tags(["llama-factory"])
+    except Exception:
+        logger.warning("Cannot properly tag the model.")
+
 
 def patch_valuehead_model(model: "AutoModelForCausalLMWithValueHead") -> None:
     def tie_weights(self: "AutoModelForCausalLMWithValueHead") -> None:

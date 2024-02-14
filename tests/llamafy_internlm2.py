@@ -1,6 +1,6 @@
 # coding=utf-8
 # Converts the InternLM2 model in the same format as LLaMA2.
-# Usage: python llamafy_internlm2.py --input_dir input --output_dir output --shard_size 10GB
+# Usage: python llamafy_internlm2.py --input_dir input --output_dir output
 # Warning: We have found that the converted model cannot infer correctly. It will be fixed later.
 
 import json
@@ -98,7 +98,9 @@ def save_config(input_dir: str, output_dir: str):
     print("Model config saved in {}".format(os.path.join(output_dir, CONFIG_NAME)))
 
 
-def llamafy_internlm2(input_dir: str, output_dir: str, shard_size: str, save_safetensors: Optional[bool] = False):
+def llamafy_internlm2(
+    input_dir: str, output_dir: str, shard_size: Optional[str] = "2GB", save_safetensors: Optional[bool] = False
+):
     try:
         os.makedirs(output_dir, exist_ok=False)
     except Exception as e:

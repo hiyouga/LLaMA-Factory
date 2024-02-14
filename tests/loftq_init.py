@@ -26,7 +26,7 @@ class Shell(nn.Module):
 
 
 def unwrap_model(model: nn.Module, pattern=".base_layer") -> None:
-    for name in set([k.split(pattern)[0] for k, _ in model.named_modules() if pattern in k]):  # noqa: C403
+    for name in {k.split(pattern)[0] for k, _ in model.named_modules() if pattern in k}:
         parent_name = ".".join(name.split(".")[:-1])
         child_name = name.split(".")[-1]
         parent_module = model.get_submodule(parent_name)
