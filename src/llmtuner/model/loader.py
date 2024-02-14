@@ -55,7 +55,7 @@ def load_model_and_tokenizer(
 
     model = None
     if is_trainable and model_args.use_unsloth:
-        from unsloth import FastLlamaModel, FastMistralModel  # type: ignore
+        from unsloth import FastLanguageModel  # type: ignore
 
         unsloth_kwargs = {
             "model_name": model_args.model_name_or_path,
@@ -63,14 +63,12 @@ def load_model_and_tokenizer(
             "dtype": model_args.compute_dtype,
             "load_in_4bit": model_args.quantization_bit == 4,
             "token": model_args.hf_hub_token,
-            "device_map": get_current_device(),
+            "device_map": {"": get_current_device()},
             "rope_scaling": getattr(config, "rope_scaling", None),
         }
-        if getattr(config, "model_type", None) == "llama":
-            model, _ = FastLlamaModel.from_pretrained(**unsloth_kwargs)
-        elif getattr(config, "model_type", None) == "mistral":
-            model, _ = FastMistralModel.from_pretrained(**unsloth_kwargs)
-        else:
+        try:
+            model, _ = FastLanguageModel.from_pretrained(**unsloth_kwargs)
+        except NotImplementedError:
             logger.warning("Unsloth does not support model type {}.".format(getattr(config, "model_type", None)))
             model_args.use_unsloth = False
 
@@ -86,17 +84,6 @@ def load_model_and_tokenizer(
             low_cpu_mem_usage=(not is_deepspeed_zero3_enabled()),
             **config_kwargs,
         )
-
-        # Add llama-factory tag to push these tags on the Hub.
-        # the feature is available since 4.37.0 but adding the check
-        # just in case
-        if hasattr(model, "add_model_tags"):
-            model.add_model_tags(["llama-factory"])
-        else:
-            logger.warning_once(
-                "Was not able to properly tag the model, if you want to use the model tagging feature, make sure to "
-                "have transformers>=4.37.0 installed on your environment."
-            )
 
     patch_model(model, tokenizer, model_args, is_trainable)
     register_autoclass(config, model, tokenizer)
@@ -133,5 +120,13 @@ def load_model_and_tokenizer(
 
     if not is_trainable:
         logger.info("This IS expected that the trainable params is 0 if you are using model for inference only.")
+
+    if model_args.print_param_status:
+        for name, param in model.named_parameters():
+            print(
+                "name: {}, dtype: {}, device: {}, trainable: {}".format(
+                    name, param.dtype, param.device, param.requires_grad
+                )
+            )
 
     return model, tokenizer
