@@ -63,8 +63,8 @@ def init_adapter(
 
         freeze_modules = {"all"}
         for name, _ in model.named_modules():
-            if "0." in name:
-                freeze_modules.add(name.split("0.")[-1].split(".")[0])
+            if ".0." in name:
+                freeze_modules.add(name.split(".0.")[-1].split(".")[0])
 
         trainable_layers = []
         for module_name in finetuning_args.name_module_trainable:
