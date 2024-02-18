@@ -10,7 +10,7 @@ import fire
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import DataCollatorForSeq2Seq
+from transformers import DataCollatorForLanguageModeling, DataCollatorForSeq2Seq
 
 from llmtuner.data import get_dataset
 from llmtuner.extras.constants import IGNORE_INDEX
@@ -24,26 +24,35 @@ BASE_BS = 4_000_000  # from llama paper
 
 def calculate_lr(
     model_name_or_path: str,
-    dataset: str,
-    cutoff_len: int,  # i.e. maximum input length during training
     batch_size: int,  # total batch size, namely (batch size * gradient accumulation * world size)
-    is_mistral: bool,  # mistral model uses a smaller learning rate,
+    stage: Optional[str] = "sft",
+    dataset: Optional[str] = "alpaca_en",
     dataset_dir: Optional[str] = "data",
+    template: Optional[str] = "default",
+    cutoff_len: Optional[int] = 1024,  # i.e. maximum input length during training
+    is_mistral: Optional[bool] = False,  # mistral model uses a smaller learning rate,
 ):
     model_args, data_args, training_args, finetuning_args, _ = get_train_args(
         dict(
-            stage="sft",
+            stage=stage,
             model_name_or_path=model_name_or_path,
             dataset=dataset,
             dataset_dir=dataset_dir,
-            template="default",
+            template=template,
             cutoff_len=cutoff_len,
             output_dir="dummy_dir",
+            overwrite_cache=True,
         )
     )
     _, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, is_trainable=False, add_valuehead=False)
-    trainset = get_dataset(tokenizer, model_args, data_args, training_args, stage="sft")
-    data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, label_pad_token_id=IGNORE_INDEX)
+    trainset = get_dataset(tokenizer, model_args, data_args, training_args, stage=stage)
+    if stage == "pt":
+        data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+    elif stage == "sft":
+        data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, label_pad_token_id=IGNORE_INDEX)
+    else:
+        raise NotImplementedError
+
     dataloader = DataLoader(
         dataset=trainset, batch_size=batch_size, shuffle=True, collate_fn=data_collator, pin_memory=True
     )
