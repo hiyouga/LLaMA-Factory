@@ -52,8 +52,8 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     )
 
     with gr.Row():
-        batch_size = gr.Slider(value=4, minimum=1, maximum=512, step=1)
-        gradient_accumulation_steps = gr.Slider(value=4, minimum=1, maximum=512, step=1)
+        batch_size = gr.Slider(value=4, minimum=1, maximum=1024, step=1)
+        gradient_accumulation_steps = gr.Slider(value=4, minimum=1, maximum=1024, step=1)
         lr_scheduler_type = gr.Dropdown(choices=[scheduler.value for scheduler in SchedulerType], value="cosine")
         max_grad_norm = gr.Textbox(value="1.0")
         val_size = gr.Slider(value=0, minimum=0, maximum=1, step=0.001)
@@ -76,11 +76,13 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             warmup_steps = gr.Slider(value=0, minimum=0, maximum=5000, step=1)
             neftune_alpha = gr.Slider(value=0, minimum=0, maximum=10, step=0.1)
 
-            with gr.Column():
-                sft_packing = gr.Checkbox(value=False)
-                upcast_layernorm = gr.Checkbox(value=False)
+        with gr.Row():
+            resize_vocab = gr.Checkbox()
+            sft_packing = gr.Checkbox()
+            upcast_layernorm = gr.Checkbox()
+            use_llama_pro = gr.Checkbox()
 
-    input_elems.update({logging_steps, save_steps, warmup_steps, neftune_alpha, sft_packing, upcast_layernorm})
+    input_elems.update({logging_steps, save_steps, warmup_steps, neftune_alpha, resize_vocab, sft_packing, upcast_layernorm, use_llama_pro})
     elem_dict.update(
         dict(
             extra_tab=extra_tab,
@@ -88,20 +90,25 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             save_steps=save_steps,
             warmup_steps=warmup_steps,
             neftune_alpha=neftune_alpha,
+            resize_vocab=resize_vocab,
             sft_packing=sft_packing,
             upcast_layernorm=upcast_layernorm,
+            use_llama_pro=use_llama_pro,
         )
     )
 
     with gr.Accordion(label="LoRA config", open=False) as lora_tab:
         with gr.Row():
-            lora_rank = gr.Slider(value=8, minimum=1, maximum=1024, step=1, scale=1)
-            lora_dropout = gr.Slider(value=0.1, minimum=0, maximum=1, step=0.01, scale=1)
-            lora_target = gr.Textbox(scale=1)
-            additional_target = gr.Textbox(scale=1)
-            create_new_adapter = gr.Checkbox(scale=1)
+            lora_rank = gr.Slider(value=8, minimum=1, maximum=1024, step=1)
+            lora_dropout = gr.Slider(value=0.1, minimum=0, maximum=1, step=0.01)
+            lora_target = gr.Textbox()
+            additional_target = gr.Textbox()
 
-    input_elems.update({lora_rank, lora_dropout, lora_target, additional_target, create_new_adapter})
+            with gr.Column():
+                use_rslora = gr.Checkbox()
+                create_new_adapter = gr.Checkbox()
+
+    input_elems.update({lora_rank, lora_dropout, lora_target, additional_target, use_rslora, create_new_adapter})
     elem_dict.update(
         dict(
             lora_tab=lora_tab,
@@ -109,6 +116,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             lora_dropout=lora_dropout,
             lora_target=lora_target,
             additional_target=additional_target,
+            use_rslora=use_rslora,
             create_new_adapter=create_new_adapter,
         )
     )
@@ -143,7 +151,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
                 output_dir = gr.Textbox()
 
             with gr.Row():
-                resume_btn = gr.Checkbox(visible=False, interactive=False, value=False)
+                resume_btn = gr.Checkbox(visible=False, interactive=False)
                 process_bar = gr.Slider(visible=False, interactive=False)
 
             with gr.Box():
