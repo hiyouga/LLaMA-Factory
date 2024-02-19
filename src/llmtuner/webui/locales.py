@@ -452,6 +452,20 @@ LOCALES = {
             "info": "嵌入向量所添加的噪声大小。",
         },
     },
+    "resize_vocab": {
+        "en": {
+            "label": "Resize token embeddings",
+            "info": "Resize the tokenizer vocab and the embedding layers.",
+        },
+        "ru": {
+            "label": "Изменение размера токенных эмбеддингов",
+            "info": "Изменить размер словаря токенизатора и слоев эмбеддинга.",
+        },
+        "zh": {
+            "label": "更改词表大小",
+            "info": "更改分词器词表和嵌入层的大小。",
+        },
+    },
     "sft_packing": {
         "en": {
             "label": "Pack sequences",
@@ -478,6 +492,20 @@ LOCALES = {
         "zh": {
             "label": "缩放归一化层",
             "info": "将归一化层权重缩放至 32 位精度。",
+        },
+    },
+    "use_llama_pro": {
+        "en": {
+            "label": "Enable LLaMA Pro",
+            "info": "Make the parameters in the expanded blocks trainable.",
+        },
+        "ru": {
+            "label": "Включить LLaMA Pro",
+            "info": "Сделать параметры в расширенных блоках обучаемыми.",
+        },
+        "zh": {
+            "label": "使用 LLaMA Pro",
+            "info": "仅训练块扩展后的参数。",
         },
     },
     "lora_tab": {
@@ -550,18 +578,32 @@ LOCALES = {
             "info": "除 LoRA 层以外的可训练模块名称。使用英文逗号分隔多个名称。",
         },
     },
+    "use_rslora": {
+        "en": {
+            "label": "Use rslora",
+            "info": "Use the rank stabilization scaling factor for LoRA layer.",
+        },
+        "ru": {
+            "label": "Использовать rslora",
+            "info": "Использовать коэффициент масштабирования стабилизации ранга для слоя LoRA.",
+        },
+        "zh": {
+            "label": "使用 rslora",
+            "info": "对 LoRA 层使用秩稳定缩放方法。",
+        },
+    },
     "create_new_adapter": {
         "en": {
             "label": "Create new adapter",
-            "info": "Whether to create a new adapter with randomly initialized weight or not.",
+            "info": "Create a new adapter with randomly initialized weight upon the existing one.",
         },
         "ru": {
             "label": "Создать новый адаптер",
-            "info": "Создать новый адаптер с случайной инициализацией веса или нет.",
+            "info": "Создать новый адаптер с случайной инициализацией веса на основе существующего.",
         },
         "zh": {
             "label": "新建适配器",
-            "info": "是否创建一个经过随机初始化的新适配器。",
+            "info": "在现有的适配器上创建一个随机初始化后的新适配器。",
         },
     },
     "rlhf_tab": {
@@ -859,7 +901,7 @@ LOCALES = {
     },
     "export_quantization_dataset": {
         "en": {
-            "label": "Export quantization dataset.",
+            "label": "Export quantization dataset",
             "info": "The calibration dataset used for quantization.",
         },
         "ru": {
@@ -869,6 +911,20 @@ LOCALES = {
         "zh": {
             "label": "导出量化数据集",
             "info": "量化过程中使用的校准数据集。",
+        },
+    },
+    "export_legacy_format": {
+        "en": {
+            "label": "Export legacy format",
+            "info": "Do not use safetensors to save the model.",
+        },
+        "ru": {
+            "label": "Экспорт в устаревший формат",
+            "info": "Не использовать safetensors для сохранения модели.",
+        },
+        "zh": {
+            "label": "导出旧格式",
+            "info": "不使用 safetensors 格式保存模型。",
         },
     },
     "export_dir": {
