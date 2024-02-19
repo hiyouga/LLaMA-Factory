@@ -200,6 +200,9 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments):
         if self.stage == "ppo" and self.reward_model_type == "lora" and self.finetuning_type != "lora":
             raise ValueError("Freeze/Full PPO training needs `reward_model_type=full`.")
 
+        if self.use_llama_pro and self.finetuning_type != "freeze":
+            raise ValueError("`use_llama_pro` is only valid for the Freeze method.")
+
     def save_to_json(self, json_path: str):
         r"""Saves the content of this instance in JSON format inside `json_path`."""
         json_string = json.dumps(asdict(self), indent=2, sort_keys=True) + "\n"
