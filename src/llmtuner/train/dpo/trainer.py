@@ -15,6 +15,100 @@ if TYPE_CHECKING:
 
 
 class CustomDPOTrainer(DPOTrainer):
+    """
+    Custom trainer for Differentiable Policy Optimization (DPO).
+
+    This class extends DPOTrainer and provides additional functionalities for DPO training.
+
+    Parameters
+    ----------
+    beta : float
+        Coefficient for controlling the importance of the DPO loss term.
+
+    loss_type : Literal["sigmoid", "hinge", "ipo", "kto"]
+        Type of loss function to use.
+
+    ftx_gamma : float
+        Coefficient for controlling the importance of the supervised cross-entropy loss term.
+
+    model : Union["PreTrainedModel", torch.nn.Module]
+        The main model for training.
+
+    ref_model : Optional[Union["PreTrainedModel", torch.nn.Module]], optional
+        Reference model for comparison during training, by default None.
+
+    disable_dropout : Optional[bool], optional
+        Flag to disable dropout during initialization, by default True.
+
+    **kwargs : Any
+        Additional keyword arguments.
+
+    Raises
+    ------
+    AttributeError
+        If `transformers` needs to be updated.
+
+    ValueError
+        If the task is unknown.
+
+    Attributes
+    ----------
+    use_dpo_data_collator : bool
+        Flag indicating whether to use DPO data collator.
+
+    generate_during_eval : bool
+        Flag indicating whether to generate during evaluation.
+
+    label_pad_token_id : int
+        Token ID for padding labels.
+
+    padding_value : int
+        Value for padding.
+
+    is_encoder_decoder : bool
+        Flag indicating if the model is an encoder-decoder architecture.
+    
+    precompute_ref_log_probs : bool
+        Flag indicating whether to precompute reference log probabilities.
+    
+    _precomputed_train_ref_log_probs : bool
+        Flag indicating whether reference log probabilities are precomputed for training.
+    
+    _precomputed_eval_ref_log_probs : bool
+        Flag indicating whether reference log probabilities are precomputed for evaluation.
+    
+    _peft_has_been_casted_to_bf16 : bool
+        Flag indicating if PEFT has been casted to BF16.
+    
+    ref_model : Optional[Union["PreTrainedModel", torch.nn.Module]]
+        Reference model for comparison during training.
+    
+    beta : float
+        Coefficient for controlling the importance of the DPO loss term.
+    
+    label_smoothing : int
+        Coefficient for controlling label smoothing.
+    
+    loss_type : Literal["sigmoid", "hinge", "ipo", "kto"]
+        Type of loss function to use.
+    
+    ftx_gamma : float
+        Coefficient for controlling the importance of the supervised cross-entropy loss term.
+    
+    _stored_metrics : defaultdict
+        Dictionary to store metrics.
+
+    Methods
+    -------
+    sft_loss(chosen_logits: torch.FloatTensor, chosen_labels: torch.LongTensor) -> torch.Tensor:
+        Computes supervised cross-entropy loss of given labels under the given logits.
+
+    concatenated_forward(model: "PreTrainedModel", batch: Dict[str, torch.Tensor]) -> Tuple[torch.FloatTensor, torch.FloatTensor, torch.FloatTensor, torch.FloatTensor]:
+        Computes the forward pass for concatenated inputs.
+
+    get_batch_loss_metrics(model: "PreTrainedModel", batch: Dict[str, torch.Tensor], train_eval: Optional[Literal["train", "eval"]] = "train") -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        Computes the DPO loss and other metrics for the given batch of inputs for train or test.
+    """
     def __init__(
         self,
         beta: float,
@@ -61,11 +155,21 @@ class CustomDPOTrainer(DPOTrainer):
                 self.ref_model = self.accelerator.prepare_model(self.ref_model, evaluation_mode=True)
 
     def sft_loss(self, chosen_logits: torch.FloatTensor, chosen_labels: torch.LongTensor) -> torch.Tensor:
-        r"""
+        """
         Computes supervised cross-entropy loss of given labels under the given logits.
 
-        Returns:
-            A tensor of shape (batch_size,) containing the cross-entropy loss of each samples.
+        Parameters
+        ----------
+        chosen_logits : torch.FloatTensor
+            Logits for chosen labels.
+
+        chosen_labels : torch.LongTensor
+            Chosen labels.
+
+        Returns
+        -------
+        torch.Tensor
+            Tensor containing the cross-entropy loss of each sample.
         """
         all_logps = self.get_batch_logps(chosen_logits, chosen_labels, average_log_prob=True)
         return -all_logps
@@ -73,6 +177,22 @@ class CustomDPOTrainer(DPOTrainer):
     def concatenated_forward(
         self, model: "PreTrainedModel", batch: Dict[str, torch.Tensor]
     ) -> Tuple[torch.FloatTensor, torch.FloatTensor, torch.FloatTensor, torch.FloatTensor]:
+        """
+        Computes the forward pass for concatenated inputs.
+
+        Parameters
+        ----------
+        model : "PreTrainedModel"
+            The model.
+
+        batch : Dict[str, torch.Tensor]
+            Dictionary containing the batched data.
+
+        Returns
+        -------
+        Tuple[torch.FloatTensor, torch.FloatTensor, torch.FloatTensor, torch.FloatTensor]
+            Tuple containing chosen and rejected log probabilities and logits.
+        """
         batch_copied = BatchEncoding({k: v.detach().clone() for k, v in batch.items()})  # avoid error
 
         all_logits = model(
@@ -96,8 +216,24 @@ class CustomDPOTrainer(DPOTrainer):
         batch: Dict[str, torch.Tensor],
         train_eval: Optional[Literal["train", "eval"]] = "train",
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        r"""
+        """
         Computes the DPO loss and other metrics for the given batch of inputs for train or test.
+
+        Parameters
+        ----------
+        model : "PreTrainedModel"
+            The model.
+
+        batch : Dict[str, torch.Tensor]
+            Dictionary containing the batched data.
+
+        train_eval : Optional[Literal["train", "eval"]], optional
+            Flag indicating whether it's train or evaluation mode, by default "train".
+
+        Returns
+        -------
+        Tuple[torch.Tensor, Dict[str, torch.Tensor]]
+            Tuple containing loss and metrics.
         """
         metrics = {}
         (

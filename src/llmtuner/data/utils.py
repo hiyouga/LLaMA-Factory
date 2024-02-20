@@ -25,6 +25,21 @@ class Role(str, Enum):
 
 
 def checksum(data_files: List[str], file_sha1: Optional[str] = None) -> None:
+    """
+    Verify the checksum of a file.
+
+    Parameters
+    ----------
+    data_files : List[str]
+        List of file paths to be checksummed.
+
+    file_sha1 : str, optional
+        Expected SHA-1 hash value. If None, the checksum fails.
+
+    Notes
+    -----
+    This function calculates the SHA-1 hash value of a file and compares it with the expected value.
+    """
     if file_sha1 is None:
         logger.warning("Checksum failed: missing SHA-1 hash value in dataset_info.json.")
         return
@@ -40,6 +55,33 @@ def checksum(data_files: List[str], file_sha1: Optional[str] = None) -> None:
 
 
 def infer_max_len(source_len: int, target_len: int, max_len: int, reserved_label_len: int) -> Tuple[int, int]:
+    """
+    Infer the maximum lengths for source and target sequences.
+
+    Parameters
+    ----------
+    source_len : int
+        Length of the source sequence.
+
+    target_len : int
+        Length of the target sequence.
+
+    max_len : int
+        Maximum length for combined source and target sequences.
+
+    reserved_label_len : int
+        Length of reserved labels.
+
+    Returns
+    -------
+    Tuple[int, int]
+        Maximum length for the source and target sequences.
+
+    Notes
+    -----
+    This function infers the maximum lengths for source and target sequences based on the maximum length constraint
+    and the length of reserved labels.
+    """
     max_target_len = int(max_len * (target_len / (source_len + target_len)))
     max_target_len = max(max_target_len, reserved_label_len)
     max_source_len = max_len - max_target_len
@@ -49,6 +91,31 @@ def infer_max_len(source_len: int, target_len: int, max_len: int, reserved_label
 def split_dataset(
     dataset: Union["Dataset", "IterableDataset"], data_args: "DataArguments", training_args: "TrainingArguments"
 ) -> Dict[str, "Dataset"]:
+    """
+    Split the dataset into training and evaluation sets.
+
+    Parameters
+    ----------
+    dataset : Union[Dataset, IterableDataset]
+        Dataset to be split.
+
+    data_args : DataArguments
+        Data configuration arguments.
+        
+    training_args : TrainingArguments
+        Training configuration arguments.
+
+    Returns
+    -------
+    Dict[str, Dataset]
+        Dictionary containing training and evaluation datasets.
+
+    Notes
+    -----
+    This function splits the dataset into training and evaluation sets based on the specified validation size
+    and streaming mode. If `do_train` is True, it returns a dictionary with keys 'train_dataset' and 'eval_dataset'.
+    If `do_train` is False, it returns a dictionary with key 'eval_dataset'.
+    """
     if training_args.do_train:
         if data_args.val_size > 1e-6:  # Split the dataset
             if data_args.streaming:

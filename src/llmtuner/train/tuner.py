@@ -22,6 +22,26 @@ logger = get_logger(__name__)
 
 
 def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: Optional[List["TrainerCallback"]] = None):
+    """
+    Run the experiment based on the specified arguments.
+
+    Parameters
+    ----------
+    args : Optional[Dict[str, Any]], optional
+        Dictionary containing the experiment arguments, by default None.
+
+    callbacks : Optional[List["TrainerCallback"]], optional
+        List of callbacks to use during training, by default None.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    ValueError
+        If the task stage is unknown.
+    """
     model_args, data_args, training_args, finetuning_args, generating_args = get_train_args(args)
     callbacks = [LogCallback()] if callbacks is None else callbacks
 
@@ -40,6 +60,23 @@ def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: Optional[List["Tra
 
 
 def export_model(args: Optional[Dict[str, Any]] = None):
+    """
+    Export the trained model.
+
+    Parameters
+    ----------
+    args : Optional[Dict[str, Any]], optional
+        Dictionary containing the export arguments, by default None.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    ValueError
+        If the export directory is not specified or if there's an issue during export.
+    """
     model_args, _, finetuning_args, _ = get_infer_args(args)
 
     if model_args.export_dir is None:
