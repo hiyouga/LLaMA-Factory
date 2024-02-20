@@ -508,6 +508,45 @@ LOCALES = {
             "info": "仅训练块扩展后的参数。",
         },
     },
+    "freeze_tab": {
+        "en": {
+            "label": "Freeze tuning configurations",
+        },
+        "ru": {
+            "label": "конфигурации для настройки заморозки",
+        },
+        "zh": {
+            "label": "部分参数微调设置",
+        },
+    },
+    "num_layer_trainable": {
+        "en": {
+            "label": "Trainable layers",
+            "info": "The number of trainable layers.",
+        },
+        "ru": {
+            "label": "Обучаемые слои",
+            "info": "Количество обучаемых слоев.",
+        },
+        "zh": {
+            "label": "可训练层数",
+            "info": "可训练模型层的数量。",
+        },
+    },
+    "name_module_trainable": {
+        "en": {
+            "label": "Trainable modules",
+            "info": "The name of trainable modules. Use commas to separate multiple modules.",
+        },
+        "ru": {
+            "label": "Обучаемые модули",
+            "info": "Название обучаемых модулей. Используйте запятые для разделения нескольких модулей.",
+        },
+        "zh": {
+            "label": "可训练模块",
+            "info": "可训练模块的名称。使用英文逗号分隔多个名称。",
+        },
+    },
     "lora_tab": {
         "en": {
             "label": "LoRA configurations",

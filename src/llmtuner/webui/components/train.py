@@ -108,6 +108,18 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
         )
     )
 
+    with gr.Accordion(label="Freeze config", open=False) as freeze_tab:
+        with gr.Row():
+            num_layer_trainable = gr.Slider(value=3, minimum=1, maximum=128, step=1, scale=2)
+            name_module_trainable = gr.Textbox(scale=3)
+
+    input_elems.update({num_layer_trainable, name_module_trainable})
+    elem_dict.update(
+        dict(
+            freeze_tab=freeze_tab, num_layer_trainable=num_layer_trainable, name_module_trainable=name_module_trainable
+        )
+    )
+
     with gr.Accordion(label="LoRA config", open=False) as lora_tab:
         with gr.Row():
             lora_rank = gr.Slider(value=8, minimum=1, maximum=1024, step=1)

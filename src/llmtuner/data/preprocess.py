@@ -99,12 +99,12 @@ def preprocess_packed_supervised_dataset(
             continue
 
         messages = examples["prompt"][i] + examples["response"][i]
-        for turn_idx, (source_ids, target_ids) in enumerate(
-            template.encode_multiturn(tokenizer, messages, examples["system"][i], examples["tools"][i])
+        for source_ids, target_ids in template.encode_multiturn(
+            tokenizer, messages, examples["system"][i], examples["tools"][i]
         ):
             if data_args.train_on_prompt:
                 source_mask = source_ids
-            elif turn_idx != 0 and template.efficient_eos:
+            elif len(input_ids) != 0 and template.efficient_eos:
                 source_mask = [tokenizer.eos_token_id] + [IGNORE_INDEX] * (len(source_ids) - 1)
             else:
                 source_mask = [IGNORE_INDEX] * len(source_ids)
@@ -112,9 +112,9 @@ def preprocess_packed_supervised_dataset(
             input_ids += source_ids + target_ids
             labels += source_mask + target_ids
 
-        if template.efficient_eos:
-            input_ids += [tokenizer.eos_token_id]
-            labels += [tokenizer.eos_token_id]
+    if template.efficient_eos:
+        input_ids += [tokenizer.eos_token_id]
+        labels += [tokenizer.eos_token_id]
 
     total_length = len(input_ids)
     block_size = data_args.cutoff_len
@@ -122,9 +122,10 @@ def preprocess_packed_supervised_dataset(
     total_length = (total_length // block_size) * block_size
     # split by chunks of cutoff_len
     for i in range(0, total_length, block_size):
-        model_inputs["input_ids"].append(input_ids[i : i + block_size])
-        model_inputs["attention_mask"].append([1] * block_size)
-        model_inputs["labels"].append(labels[i : i + block_size])
+        if not all(label == IGNORE_INDEX for label in labels[i : i + block_size]):
+            model_inputs["input_ids"].append(input_ids[i : i + block_size])
+            model_inputs["attention_mask"].append([1] * block_size)
+            model_inputs["labels"].append(labels[i : i + block_size])
 
     return model_inputs
 
@@ -180,7 +181,6 @@ def preprocess_pairwise_dataset(
 
         chosen_messages = examples["prompt"][i] + [examples["response"][i][0]]
         rejected_messages = examples["prompt"][i] + [examples["response"][i][1]]
-
         prompt_ids, chosen_ids = template.encode_oneturn(
             tokenizer,
             chosen_messages,
