@@ -76,6 +76,33 @@ def find_all_linear_modules(model: "PreTrainedModel") -> List[str]:
     return list(module_names)
 
 
+def find_expanded_modules(model: "PreTrainedModel", target_modules: List[str], num_layer_trainable: int) -> List[str]:
+    r"""
+    Finds the modules in the expanded blocks to apply lora.
+    """
+    num_layers = getattr(model.config, "num_hidden_layers", None)
+    if not num_layers:
+        raise ValueError("Model was not supported.")
+
+    if num_layers % num_layer_trainable != 0:
+        raise ValueError(
+            "`num_layers` {} should be divisible by `num_layer_trainable` {}.".format(num_layers, num_layer_trainable)
+        )
+
+    stride = num_layers // num_layer_trainable
+    trainable_layer_ids = range(stride - 1, num_layers + stride - 1, stride)
+    trainable_layers = [".{:d}.".format(idx) for idx in trainable_layer_ids]
+    module_names = []
+    for name, _ in model.named_modules():
+        if any(target_module in name for target_module in target_modules) and any(
+            trainable_layer in name for trainable_layer in trainable_layers
+        ):
+            module_names.append(name)
+
+    logger.info("Apply lora to layers: {}".format(",".join(map(str, trainable_layer_ids))))
+    return module_names
+
+
 def load_valuehead_params(path_or_repo_id: str, model_args: "ModelArguments") -> Dict[str, torch.Tensor]:
     r"""
     Loads value head parameters from Hugging Face Hub or local disk.
