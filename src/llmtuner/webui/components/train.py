@@ -82,7 +82,18 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             upcast_layernorm = gr.Checkbox()
             use_llama_pro = gr.Checkbox()
 
-    input_elems.update({logging_steps, save_steps, warmup_steps, neftune_alpha, resize_vocab, sft_packing, upcast_layernorm, use_llama_pro})
+    input_elems.update(
+        {
+            logging_steps,
+            save_steps,
+            warmup_steps,
+            neftune_alpha,
+            resize_vocab,
+            sft_packing,
+            upcast_layernorm,
+            use_llama_pro,
+        }
+    )
     elem_dict.update(
         dict(
             extra_tab=extra_tab,
