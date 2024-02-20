@@ -112,9 +112,9 @@ def preprocess_packed_supervised_dataset(
             input_ids += source_ids + target_ids
             labels += source_mask + target_ids
 
-    if template.efficient_eos:
-        input_ids += [tokenizer.eos_token_id]
-        labels += [tokenizer.eos_token_id]
+        if template.efficient_eos:
+            input_ids += [tokenizer.eos_token_id]
+            labels += [tokenizer.eos_token_id]
 
     total_length = len(input_ids)
     block_size = data_args.cutoff_len
