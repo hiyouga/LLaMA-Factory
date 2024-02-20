@@ -5,7 +5,7 @@ from peft import LoraConfig, LoraModel, PeftModel, TaskType, get_peft_model
 from transformers.integrations import is_deepspeed_zero3_enabled
 
 from ..extras.logging import get_logger
-from .utils import find_all_linear_modules
+from .utils import find_all_linear_modules, find_expanded_modules
 
 
 if TYPE_CHECKING:
@@ -82,6 +82,8 @@ def init_adapter(
             else:
                 param.requires_grad_(False)
 
+        logger.info("Set trainable layers: {}".format(",".join(map(str, trainable_layer_ids))))
+
     if finetuning_args.finetuning_type == "lora":
         logger.info("Fine-tuning method: LoRA")
         adapter_to_resume = None
@@ -117,6 +119,9 @@ def init_adapter(
                 target_modules = find_all_linear_modules(model)
             else:
                 target_modules = finetuning_args.lora_target
+
+            if finetuning_args.use_llama_pro:
+                target_modules = find_expanded_modules(model, target_modules, finetuning_args.num_layer_trainable)
 
             peft_kwargs = {
                 "r": finetuning_args.lora_rank,
