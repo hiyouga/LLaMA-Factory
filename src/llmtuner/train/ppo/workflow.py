@@ -61,6 +61,7 @@ def run_ppo(
         use_score_norm=finetuning_args.ppo_score_norm,
         whiten_rewards=finetuning_args.ppo_whiten_rewards,
         accelerator_kwargs={"step_scheduler_with_optimizer": False},
+        project_kwargs={"logging_dir": training_args.logging_dir},
     )
 
     # Create optimizer and scheduler
