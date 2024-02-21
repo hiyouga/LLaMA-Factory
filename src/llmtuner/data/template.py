@@ -434,6 +434,16 @@ _register_template(
 
 
 _register_template(
+    name="gemma",
+    format_user=StringFormatter(slots=["<start_of_turn>user\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]),
+    format_system=StringFormatter(slots=["{{content}}"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    stop_words=["<end_of_turn>"],
+    replace_eos=True,
+)
+
+
+_register_template(
     name="intern",
     format_user=StringFormatter(slots=["<|User|>:{{content}}", {"token": "<eoh>"}, "\n<|Bot|>:"]),
     format_separator=EmptyFormatter(slots=[{"token": "<eoa>"}, "\n"]),
