@@ -121,7 +121,8 @@
     }
   },
   "slimorca": {
-    "hf_hub_url": "Open-Orca/SlimOrca"
+    "hf_hub_url": "Open-Orca/SlimOrca",
+    "formatting": "sharegpt"
   },
   "mathinstruct": {
     "hf_hub_url": "TIGER-Lab/MathInstruct",
