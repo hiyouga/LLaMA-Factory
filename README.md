@@ -437,6 +437,7 @@ accelerate launch src/train_bash.py # arguments (same as above)
 
 ```yaml
 compute_environment: LOCAL_MACHINE
+debug: false
 distributed_type: MULTI_GPU
 downcast_bf16: 'no'
 gpu_ids: all
