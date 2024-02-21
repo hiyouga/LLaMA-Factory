@@ -90,7 +90,7 @@ class RLHFArguments:
         default=0.1,
         metadata={"help": "The beta parameter for the DPO loss."},
     )
-    dpo_loss: Optional[Literal["sigmoid", "hinge", "ipo", "kto"]] = field(
+    dpo_loss: Optional[Literal["sigmoid", "hinge", "ipo", "kto_pair"]] = field(
         default="sigmoid",
         metadata={"help": "The type of DPO loss to use."},
     )
