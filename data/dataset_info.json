@@ -1,11 +1,11 @@
 {
   "qa": {
     "file_name": "qa.json",
-    "file_sha1": "e58e98fbf1536580e172fb5be31f04bac71f196c"
+    "file_sha1": "fd51e469d56d6a7f6e5df52dcce1038be968b2c2"
   },
   "whoami": {
     "file_name": "whoami.json",
-    "file_sha1": "d3bc3a718a12deefef9e09e46f0f2f7ddd25c28d"
+    "file_sha1": "2f79086dcaef69449af5d3088e7802a6cad42ad4"
   },
   "yiqi1": {
     "file_name": "1.json",
