@@ -326,6 +326,25 @@ register_model_group(
 
 register_model_group(
     models={
+        "Gemma-2B": {
+            DownloadSource.DEFAULT: "google/gemma-2b",
+        },
+        "Gemma-7B": {
+            DownloadSource.DEFAULT: "google/gemma-7b",
+        },
+        "Gemma-2B-Chat": {
+            DownloadSource.DEFAULT: "google/gemma-2b-it",
+        },
+        "Gemma-7B-Chat": {
+            DownloadSource.DEFAULT: "google/gemma-7b-it",
+        },
+    },
+    template="gemma",
+)
+
+
+register_model_group(
+    models={
         "InternLM-7B": {
             DownloadSource.DEFAULT: "internlm/internlm-7b",
             DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm-7b",
