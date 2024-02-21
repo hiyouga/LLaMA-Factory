@@ -144,7 +144,7 @@ class Runner:
             args["lora_target"] = get("train.lora_target") or get_module(get("top.model_name"))
             args["additional_target"] = get("train.additional_target") or None
             args["use_rslora"] = get("train.use_rslora")
-            if TRAINING_STAGES[get("train.training_stage")] in ["rm", "ppo", "dpo"]:
+            if args["stage"] in ["rm", "ppo", "dpo"]:
                 args["create_new_adapter"] = args["quantization_bit"] is None
             else:
                 args["create_new_adapter"] = get("train.create_new_adapter")
@@ -166,7 +166,7 @@ class Runner:
             args["val_size"] = get("train.val_size")
             args["evaluation_strategy"] = "steps"
             args["eval_steps"] = get("train.save_steps")
-            args["load_best_model_at_end"] = True
+            args["load_best_model_at_end"] = args["stage"] not in ["rm", "ppo"]
 
         return args
 
