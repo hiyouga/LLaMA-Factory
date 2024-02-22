@@ -372,7 +372,7 @@ _register_template(
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     format_separator=EmptyFormatter(slots=["\n"]),
-    stop_words=["<|im_end|>"],
+    stop_words=["<|im_end|>", "<|im_start|>"],
     replace_eos=True,
 )
 
@@ -383,7 +383,7 @@ _register_template(
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     format_separator=EmptyFormatter(slots=["\n"]),
     default_system="Du bist ein freundlicher und hilfsbereiter KI-Assistent.",
-    stop_words=["<|im_end|>"],
+    stop_words=["<|im_end|>", "<|im_start|>"],
     replace_eos=True,
 )
 
