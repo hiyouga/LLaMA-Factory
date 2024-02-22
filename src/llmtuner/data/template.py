@@ -368,6 +368,16 @@ _register_template(
 
 
 _register_template(
+    name="chatml",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
+)
+
+
+_register_template(
     name="chatml_de",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
@@ -437,9 +447,8 @@ _register_template(
     name="gemma",
     format_user=StringFormatter(slots=["<start_of_turn>user\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]),
     format_system=StringFormatter(slots=["{{content}}"]),
-    format_separator=EmptyFormatter(slots=["\n"]),
-    stop_words=["<end_of_turn>"],
-    replace_eos=True,
+    format_separator=EmptyFormatter(slots=["<end_of_turn>\n"]),
+    efficient_eos=True,
 )
 
 
