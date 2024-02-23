@@ -35,7 +35,7 @@ if is_fastapi_availble():
 
 
 if is_starlette_available():
-    from sse_starlette import EventSourceResponse
+    from sse_starlette import EventSourceResponse, ServerSentEvent
 
 
 if is_uvicorn_available():
@@ -130,7 +130,7 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot stream function calls.")
 
             generate = stream_chat_completion(messages, system, tools, request)
-            return EventSourceResponse(generate, media_type="text/event-stream")
+            return EventSourceResponse(generate, media_type="text/event-stream", ping_message_factory=lambda: ServerSentEvent(**{"ping": 'connection test'}))
 
         responses = chat_model.chat(
             messages,
