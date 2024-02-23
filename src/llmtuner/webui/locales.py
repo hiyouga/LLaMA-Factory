@@ -833,6 +833,17 @@ LOCALES = {
             "placeholder": "工具列表（非必填）",
         },
     },
+    "role": {
+        "en": {
+            "label": "Role",
+        },
+        "ru": {
+            "label": "Роль",
+        },
+        "zh": {
+            "label": "角色",
+        },
+    },
     "query": {
         "en": {
             "placeholder": "Input...",
