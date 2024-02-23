@@ -131,7 +131,7 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot stream function calls.")
 
             generate = stream_chat_completion(messages, system, tools, request)
-            return EventSourceResponse(generate, media_type="text/event-stream")
+            return EventSourceResponse(generate, media_type="text/event-stream", ping=600)
 
         responses = chat_model.chat(
             messages,
