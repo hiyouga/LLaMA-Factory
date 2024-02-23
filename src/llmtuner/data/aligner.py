@@ -19,8 +19,8 @@ def convert_alpaca(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") 
         prompt = []
         if dataset_attr.history and isinstance(examples[dataset_attr.history][i], list):
             for old_prompt, old_response in examples[dataset_attr.history][i]:
-                prompt.append({"role": Role.USER, "content": old_prompt})
-                prompt.append({"role": Role.ASSISTANT, "content": old_response})
+                prompt.append({"role": Role.USER.value, "content": old_prompt})
+                prompt.append({"role": Role.ASSISTANT.value, "content": old_response})
 
         content = []
         if dataset_attr.prompt and examples[dataset_attr.prompt][i]:
@@ -29,12 +29,14 @@ def convert_alpaca(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") 
         if dataset_attr.query and examples[dataset_attr.query][i]:
             content.append(examples[dataset_attr.query][i])
 
-        prompt.append({"role": Role.USER, "content": "\n".join(content)})
+        prompt.append({"role": Role.USER.value, "content": "\n".join(content)})
 
         if dataset_attr.response and isinstance(examples[dataset_attr.response][i], list):
-            response = [{"role": Role.ASSISTANT, "content": content} for content in examples[dataset_attr.response][i]]
+            response = [
+                {"role": Role.ASSISTANT.value, "content": content} for content in examples[dataset_attr.response][i]
+            ]
         elif dataset_attr.response and isinstance(examples[dataset_attr.response][i], str):
-            response = [{"role": Role.ASSISTANT, "content": examples[dataset_attr.response][i]}]
+            response = [{"role": Role.ASSISTANT.value, "content": examples[dataset_attr.response][i]}]
         else:
             response = []
 
@@ -49,11 +51,11 @@ def convert_alpaca(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") 
 def convert_sharegpt(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") -> Dict[str, List[Any]]:
     outputs = {"prompt": [], "response": [], "system": [], "tools": []}
     tag_mapping = {
-        dataset_attr.user_tag: Role.USER,
-        dataset_attr.assistant_tag: Role.ASSISTANT,
-        dataset_attr.observation_tag: Role.OBSERVATION,
-        dataset_attr.function_tag: Role.FUNCTION,
-        dataset_attr.system_tag: Role.SYSTEM,
+        dataset_attr.user_tag: Role.USER.value,
+        dataset_attr.assistant_tag: Role.ASSISTANT.value,
+        dataset_attr.observation_tag: Role.OBSERVATION.value,
+        dataset_attr.function_tag: Role.FUNCTION.value,
+        dataset_attr.system_tag: Role.SYSTEM.value,
     }
     odd_tags = (dataset_attr.user_tag, dataset_attr.observation_tag)
     even_tags = (dataset_attr.assistant_tag, dataset_attr.function_tag)
