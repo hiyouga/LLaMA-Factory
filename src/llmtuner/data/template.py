@@ -446,9 +446,10 @@ _register_template(
 _register_template(
     name="gemma",
     format_user=StringFormatter(slots=["<start_of_turn>user\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]),
-    format_system=StringFormatter(slots=["{{content}}"]),
+    format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
     format_separator=EmptyFormatter(slots=["<end_of_turn>\n"]),
     efficient_eos=True,
+    force_system=True,
 )
 
 
