@@ -146,7 +146,7 @@ def preprocess_unsupervised_dataset(
         if len(examples["response"][i]) == 1:
             messages = examples["prompt"][i] + examples["response"][i]
         else:
-            messages = examples["prompt"][i] + [{"role": Role.ASSISTANT, "content": ""}]
+            messages = examples["prompt"][i] + [{"role": Role.ASSISTANT.value, "content": ""}]
 
         input_ids, labels = template.encode_oneturn(
             tokenizer,

@@ -115,7 +115,7 @@ class WebChatModel(ChatModel):
         temperature: float,
     ) -> Generator[Tuple[Sequence[Tuple[str, str]], Sequence[Tuple[str, str]]], None, None]:
         chatbot.append([query, ""])
-        query_messages = messages + [{"role": Role.USER, "content": query}]
+        query_messages = messages + [{"role": Role.USER.value, "content": query}]
         response = ""
         for new_text in self.stream_chat(
             query_messages, system, tools, max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature
@@ -130,10 +130,10 @@ class WebChatModel(ChatModel):
                 name, arguments = result
                 arguments = json.loads(arguments)
                 tool_call = json.dumps({"name": name, "arguments": arguments}, ensure_ascii=False)
-                output_messages = query_messages + [{"role": Role.FUNCTION, "content": tool_call}]
+                output_messages = query_messages + [{"role": Role.FUNCTION.value, "content": tool_call}]
                 bot_text = "```json\n" + tool_call + "\n```"
             else:
-                output_messages = query_messages + [{"role": Role.ASSISTANT, "content": result}]
+                output_messages = query_messages + [{"role": Role.ASSISTANT.value, "content": result}]
                 bot_text = result
 
             chatbot[-1] = [query, self.postprocess(bot_text)]
