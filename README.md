@@ -516,7 +516,7 @@ python src/export_model.py \
 > [!TIP]
 > Use `--export_quantization_bit 4` and `--export_quantization_dataset data/c4_demo.json` to quantize the model after merging the LoRA weights.
 
-### API Demo
+### Inference with OpenAI-style API
 
 ```bash
 python src/api_demo.py \
@@ -529,7 +529,7 @@ python src/api_demo.py \
 > [!TIP]
 > Visit `http://localhost:8000/docs` for API documentation.
 
-### CLI Demo
+### Inference with command line
 
 ```bash
 python src/cli_demo.py \
@@ -539,7 +539,7 @@ python src/cli_demo.py \
     --finetuning_type lora
 ```
 
-### Web Demo
+### Inference with web browser
 
 ```bash
 python src/web_demo.py \
@@ -576,7 +576,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --template default \
     --finetuning_type lora \
     --output_dir path_to_predict_result \
-    --per_device_eval_batch_size 8 \
+    --per_device_eval_batch_size 1 \
     --max_samples 100 \
     --predict_with_generate \
     --fp16
