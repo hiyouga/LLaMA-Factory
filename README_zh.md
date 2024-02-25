@@ -516,7 +516,7 @@ python src/export_model.py \
 > [!TIP]
 > 合并 LoRA 权重之后可再次使用 `--export_quantization_bit 4` 和 `--export_quantization_dataset data/c4_demo.json` 量化模型。
 
-### API 服务
+### 使用 OpenAI 风格 API 推理
 
 ```bash
 python src/api_demo.py \
@@ -529,7 +529,7 @@ python src/api_demo.py \
 > [!TIP]
 > 关于 API 文档请见 `http://localhost:8000/docs`。
 
-### 命令行测试
+### 使用命令行推理
 
 ```bash
 python src/cli_demo.py \
@@ -539,7 +539,7 @@ python src/cli_demo.py \
     --finetuning_type lora
 ```
 
-### 浏览器测试
+### 使用浏览器推理
 
 ```bash
 python src/web_demo.py \
@@ -576,7 +576,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --template default \
     --finetuning_type lora \
     --output_dir path_to_predict_result \
-    --per_device_eval_batch_size 8 \
+    --per_device_eval_batch_size 1 \
     --max_samples 100 \
     --predict_with_generate \
     --fp16
