@@ -165,7 +165,8 @@ class Runner:
         if get("train.val_size") > 1e-6 and args["stage"] != "ppo":
             args["val_size"] = get("train.val_size")
             args["evaluation_strategy"] = "steps"
-            args["eval_steps"] = get("train.save_steps")
+            args["eval_steps"] = args["save_steps"]
+            args["per_device_eval_batch_size"] = args["per_device_train_batch_size"]
             args["load_best_model_at_end"] = args["stage"] not in ["rm", "ppo"]
 
         return args
