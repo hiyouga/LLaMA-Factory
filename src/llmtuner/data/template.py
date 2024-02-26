@@ -309,6 +309,15 @@ _register_template(
 
 
 _register_template(
+    name="atom",
+    format_user=StringFormatter(
+        slots=[{"bos_token"}, "Human: {{content}}\n", {"eos_token"}, {"bos_token"}, "Assistant:"]
+    ),
+    format_assistant=StringFormatter(slots=["{{content}}\n", {"eos_token"}]),
+)
+
+
+_register_template(
     name="baichuan",
     format_user=StringFormatter(slots=[{"token": "<reserved_102>"}, "{{content}}", {"token": "<reserved_103>"}]),
     efficient_eos=True,
@@ -515,7 +524,7 @@ _register_template(
 _register_template(
     name="openchat",
     format_user=StringFormatter(slots=["GPT4 Correct User: {{content}}", {"eos_token"}, "GPT4 Correct Assistant:"]),
-    format_assistant=StringFormatter(slots=["{{content}}"]),
+    format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}]),
     format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
     force_system=True,
 )
@@ -643,10 +652,4 @@ _register_template(
     name="ziya",
     format_user=StringFormatter(slots=[{"token": "<human>"}, ":{{content}}\n", {"token": "<bot>"}, ":"]),
     format_separator=EmptyFormatter(slots=["\n"]),
-)
-
-_register_template(
-    name="atom",
-    format_user=StringFormatter(slots=[{"bos_token"}, "Human: {{content}}\n", {"eos_token"}, {"bos_token"}, "Assistant:"]),
-    format_assistant=StringFormatter(slots=["{{content}}\n", {"eos_token"}]),
 )
