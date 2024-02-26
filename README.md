@@ -398,6 +398,9 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --fp16
 ```
 
+> [!TIP]
+> Use `--adapter_name_or_path path_to_sft_checkpoint,path_to_ppo_checkpoint` to infer the fine-tuned model.
+
 > [!WARNING]
 > Use `--per_device_train_batch_size=1` for LLaMA-2 models in fp16 PPO training.
 
@@ -425,6 +428,9 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --plot_loss \
     --fp16
 ```
+
+> [!TIP]
+> Use `--adapter_name_or_path path_to_sft_checkpoint,path_to_dpo_checkpoint` to infer the fine-tuned model.
 
 ### Distributed Training
 

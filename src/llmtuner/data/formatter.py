@@ -75,7 +75,8 @@ class Formatter(ABC):
     tool_format: Literal["default"] = "default"
 
     @abstractmethod
-    def apply(self, **kwargs) -> SLOTS: ...
+    def apply(self, **kwargs) -> SLOTS:
+        ...
 
     def extract(self, content: str) -> Union[str, Tuple[str, str]]:
         raise NotImplementedError

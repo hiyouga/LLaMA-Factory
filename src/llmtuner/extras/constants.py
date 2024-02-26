@@ -884,6 +884,7 @@ register_model_group(
     template="zephyr",
 )
 
+
 register_model_group(
     models={
         "Atom-7B": {
