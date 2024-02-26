@@ -398,6 +398,9 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --fp16
 ```
 
+> [!TIP]
+> 使用 `--adapter_name_or_path path_to_sft_checkpoint,path_to_ppo_checkpoint` 来进行微调模型的推理。
+
 > [!WARNING]
 > 如果使用 fp16 精度进行 LLaMA-2 模型的 PPO 训练，请使用 `--per_device_train_batch_size=1`。
 
@@ -425,6 +428,9 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --plot_loss \
     --fp16
 ```
+
+> [!TIP]
+> 使用 `--adapter_name_or_path path_to_sft_checkpoint,path_to_dpo_checkpoint` 来进行微调模型的推理。
 
 ### 多 GPU 分布式训练
 
