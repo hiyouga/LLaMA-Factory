@@ -644,3 +644,9 @@ _register_template(
     format_user=StringFormatter(slots=[{"token": "<human>"}, ":{{content}}\n", {"token": "<bot>"}, ":"]),
     format_separator=EmptyFormatter(slots=["\n"]),
 )
+
+_register_template(
+    name="atom",
+    format_user=StringFormatter(slots=[{"bos_token"}, "Human: {{content}}\n", {"eos_token"}, {"bos_token"}, "Assistant:"]),
+    format_assistant=StringFormatter(slots=["{{content}}\n", {"eos_token"}]),
+)
