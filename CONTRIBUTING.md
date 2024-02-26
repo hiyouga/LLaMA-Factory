@@ -6,7 +6,7 @@ It also helps us if you spread the word! Reference the library in blog posts abo
 
 However you choose to contribute, please be mindful and respect our [code of conduct](CODE_OF_CONDUCT.md).
 
-**This guide was heavily inspired by [transformers guide to contributing](https://github.com/scikit-learn/scikit-learn/blob/main/CONTRIBUTING.md).**
+**This guide was heavily inspired by [transformers guide to contributing](https://github.com/huggingface/transformers/blob/main/CONTRIBUTING.md).**
 
 ## Ways to contribute
 
