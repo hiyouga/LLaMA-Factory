@@ -883,3 +883,17 @@ register_model_group(
     },
     template="zephyr",
 )
+
+register_model_group(
+    models={
+        "Atom-7B": {
+            DownloadSource.DEFAULT: "FlagAlpha/Atom-7B",
+            DownloadSource.MODELSCOPE: "FlagAlpha/Atom-7B",
+        },
+        "Atom-7B-Chat": {
+            DownloadSource.DEFAULT: "FlagAlpha/Atom-7B-Chat",
+            DownloadSource.MODELSCOPE: "FlagAlpha/Atom-7B-Chat",
+        },
+    },
+    template="atom",
+)
