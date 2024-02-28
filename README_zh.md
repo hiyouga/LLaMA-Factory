@@ -45,6 +45,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 - **多种精度**：32 比特全参数训练、16 比特部分参数训练、16比特 LoRA 训练、基于 AQLM/AWQ/GPTQ/LLM.int8 的 2/4/8 比特 LoRA 训练。
 - **先进算法**: DoRA、LongLoRA、LLaMA Pro、LoftQ、agent tuning。
 - **新鲜技巧**：FlashAttention-2、Unsloth、RoPE scaling、NEFTune、rsLoRA。
+- **实验监控**：LlamaBoard、TensorBoard、Wandb、MLflow 等等。
 
 ## 性能指标
 
@@ -236,14 +237,26 @@ huggingface-cli login
 
 ## 软硬件依赖
 
-- Python 3.8+ 和 PyTorch 1.13.1+
-- 🤗Transformers, Datasets, Accelerate, PEFT 和 TRL
-- sentencepiece, protobuf 和 tiktoken
-- jieba, rouge-chinese 和 nltk (用于评估及预测)
-- gradio 和 matplotlib (用于网页端交互)
-- uvicorn, fastapi 和 sse-starlette (用于 API)
+| 必需项       | 至少     | 推荐      |
+| ------------ | ------- | --------- |
+| python       | 3.8     | 3.10      |
+| torch        | 1.13.1  | 2.2.1     |
+| transformers | 4.37.2  | 4.38.1    |
+| datasets     | 2.14.3  | 2.17.1    |
+| accelerate   | 0.27.2  | 0.27.2    |
+| peft         | 0.9.0   | 0.9.0     |
+| trl          | 0.7.11  | 0.7.11    |
+
+| 可选项       | 至少     | 推荐      |
+| ------------ | ------- | --------- |
+| CUDA         | 11.6    | 12.2      |
+| deepspeed    | 0.10.0  | 0.13.4    |
+| bitsandbytes | 0.39.0  | 0.41.3    |
+| flash-attn   | 2.3.0   | 2.5.5     |
 
 ### 硬件依赖
+
+\* *估算值*
 
 | 训练方法 | 精度 |   7B  |  13B  |  30B  |   65B  |   8x7B |
 | ------- | ---- | ----- | ----- | ----- | ------ | ------ |
