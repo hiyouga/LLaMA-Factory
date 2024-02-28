@@ -17,9 +17,7 @@
 
 ## LLaMA Board: A One-stop Web UI for Getting Started with LLaMA Factory
 
-Preview LLaMA Board at **[🤗 Spaces](https://huggingface.co/spaces/hiyouga/LLaMA-Board)** or **[ModelScope](https://modelscope.cn/studios/hiyouga/LLaMA-Board)**.
-
-Launch LLaMA Board via `CUDA_VISIBLE_DEVICES=0 python src/train_web.py`. (multiple GPUs are not supported yet in this mode)
+Preview LLaMA Board at **[🤗 Spaces](https://huggingface.co/spaces/hiyouga/LLaMA-Board)** and **[ModelScope](https://modelscope.cn/studios/hiyouga/LLaMA-Board)**, or launch it locally with `CUDA_VISIBLE_DEVICES=0 python src/train_web.py`.
 
 Here is an example of altering the self-cognition of an instruction-tuned language model within 10 minutes on a single GPU.
 
@@ -27,6 +25,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 
 ## Table of Contents
 
+- [Features](#features)
 - [Benchmark](#benchmark)
 - [Changelog](#changelog)
 - [Supported Models](#supported-models)
@@ -38,6 +37,14 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 - [License](#license)
 - [Citation](#citation)
 - [Acknowledgement](#acknowledgement)
+
+## Features
+
+- **Various models**: LLaMA, Mistral, Mixtral-MoE, Qwen, Yi, Gemma, Baichuan, ChatGLM, Phi, etc.
+- **Integrated methods**: (Continuous) pre-training, supervised fine-tuning, reward modeling, PPO and DPO.
+- **Scalable resources**: 32-bit full-tuning, 16-bit freeze tuning, 16-bit LoRA tuning, 2/4/8-bit QLoRA with AQLM/AWQ/GPTQ/LLM.int8.
+- **Advanced algorithms**: DoRA, LongLoRA, LLaMA Pro, agent tuning.
+- **Intriguing tricks**: FlashAttention-2, Unsloth, RoPE scaling, NEFTune, rsLoRA.
 
 ## Benchmark
 
@@ -62,9 +69,9 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 [24/02/05] Qwen1.5 (Qwen2 beta version) series models are supported in LLaMA-Factory. Check this [blog post](https://qwenlm.github.io/blog/qwen1.5/) for details.
 
-[24/01/18] We supported **agent tuning** for most models, equipping model with tool using abilities by fine-tuning with `--dataset glaive_toolcall`.
-
 <details><summary>Full Changelog</summary>
+
+[24/01/18] We supported **agent tuning** for most models, equipping model with tool using abilities by fine-tuning with `--dataset glaive_toolcall`.
 
 [23/12/23] We supported **[unsloth](https://github.com/unslothai/unsloth)**'s implementation to boost LoRA tuning for the LLaMA, Mistral and Yi models. Try `--use_unsloth` argument to activate unsloth patch. It achieves 1.7x speed in our benchmark, check [this page](https://github.com/hiyouga/LLaMA-Factory/wiki/Performance-comparison) for details.
 
