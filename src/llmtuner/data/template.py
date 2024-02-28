@@ -360,6 +360,21 @@ _register_template(
     name="chatglm3",
     format_user=StringFormatter(slots=[{"token": "<|user|>"}, "\n", "{{content}}", {"token": "<|assistant|>"}]),
     format_assistant=StringFormatter(slots=["\n", "{{content}}"]),
+    format_system=StringFormatter(slots=[{"token": "[gMASK]"}, {"token": "sop"}]),
+    format_function=FunctionFormatter(slots=["{{name}}\n{{arguments}}"]),
+    format_observation=StringFormatter(
+        slots=[{"token": "<|observation|>"}, "\n", "{{content}}", {"token": "<|assistant|>"}]
+    ),
+    stop_words=["<|user|>", "<|observation|>"],
+    efficient_eos=True,
+    force_system=True,
+)
+
+
+_register_template(
+    name="chatglm3_system",
+    format_user=StringFormatter(slots=[{"token": "<|user|>"}, "\n", "{{content}}", {"token": "<|assistant|>"}]),
+    format_assistant=StringFormatter(slots=["\n", "{{content}}"]),
     format_system=StringFormatter(
         slots=[{"token": "[gMASK]"}, {"token": "sop"}, {"token": "<|system|>"}, "\n", "{{content}}"]
     ),

@@ -328,15 +328,19 @@ register_model_group(
     models={
         "Gemma-2B": {
             DownloadSource.DEFAULT: "google/gemma-2b",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/gemma-2b",
         },
         "Gemma-7B": {
             DownloadSource.DEFAULT: "google/gemma-7b",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/gemma-2b-it",
         },
         "Gemma-2B-Chat": {
             DownloadSource.DEFAULT: "google/gemma-2b-it",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/gemma-7b",
         },
         "Gemma-7B-Chat": {
             DownloadSource.DEFAULT: "google/gemma-7b-it",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/gemma-7b-it",
         },
     },
     template="gemma",
@@ -562,7 +566,10 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen-1_8B-Chat",
             DownloadSource.MODELSCOPE: "qwen/Qwen-1_8B-Chat",
         },
-        "Qwen-7B-Chat": {DownloadSource.DEFAULT: "Qwen/Qwen-7B-Chat", DownloadSource.MODELSCOPE: "qwen/Qwen-7B-Chat"},
+        "Qwen-7B-Chat": {
+            DownloadSource.DEFAULT: "Qwen/Qwen-7B-Chat",
+            DownloadSource.MODELSCOPE: "qwen/Qwen-7B-Chat",
+        },
         "Qwen-14B-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen-14B-Chat",
             DownloadSource.MODELSCOPE: "qwen/Qwen-14B-Chat",
