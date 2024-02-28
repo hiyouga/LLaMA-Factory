@@ -21,18 +21,18 @@ def create_chat_box(
         messages = gr.State([])
         with gr.Row():
             with gr.Column(scale=4):
+                role = gr.Dropdown(choices=[Role.USER.value, Role.OBSERVATION.value], value=Role.USER.value)
                 system = gr.Textbox(show_label=False)
                 tools = gr.Textbox(show_label=False, lines=2)
-                role = gr.Dropdown(choices=[Role.USER.value, Role.OBSERVATION.value], value=Role.USER.value)
                 query = gr.Textbox(show_label=False, lines=8)
                 submit_btn = gr.Button(variant="primary")
 
             with gr.Column(scale=1):
-                clear_btn = gr.Button()
                 gen_kwargs = engine.chatter.generating_args
                 max_new_tokens = gr.Slider(10, 2048, value=gen_kwargs.max_new_tokens, step=1)
                 top_p = gr.Slider(0.01, 1, value=gen_kwargs.top_p, step=0.01)
                 temperature = gr.Slider(0.01, 1.5, value=gen_kwargs.temperature, step=0.01)
+                clear_btn = gr.Button()
 
     tools.input(check_json_schema, [tools, engine.manager.get_elem_by_name("top.lang")])
 
@@ -50,14 +50,14 @@ def create_chat_box(
         chatbot,
         messages,
         dict(
+            role=role,
             system=system,
             tools=tools,
-            role=role,
             query=query,
             submit_btn=submit_btn,
-            clear_btn=clear_btn,
             max_new_tokens=max_new_tokens,
             top_p=top_p,
             temperature=temperature,
+            clear_btn=clear_btn,
         ),
     )

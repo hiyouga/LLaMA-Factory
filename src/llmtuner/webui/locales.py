@@ -839,6 +839,17 @@ LOCALES = {
             "value": "模型未加载，请先加载模型。",
         },
     },
+    "role": {
+        "en": {
+            "label": "Role",
+        },
+        "ru": {
+            "label": "Роль",
+        },
+        "zh": {
+            "label": "角色",
+        },
+    },
     "system": {
         "en": {
             "placeholder": "System prompt (optional)",
@@ -861,17 +872,6 @@ LOCALES = {
             "placeholder": "工具列表（非必填）",
         },
     },
-    "role": {
-        "en": {
-            "label": "Role",
-        },
-        "ru": {
-            "label": "Роль",
-        },
-        "zh": {
-            "label": "角色",
-        },
-    },
     "query": {
         "en": {
             "placeholder": "Input...",
@@ -892,17 +892,6 @@ LOCALES = {
         },
         "zh": {
             "value": "提交",
-        },
-    },
-    "clear_btn": {
-        "en": {
-            "value": "Clear history",
-        },
-        "ru": {
-            "value": "Очистить историю",
-        },
-        "zh": {
-            "value": "清空历史",
         },
     },
     "max_length": {
@@ -947,6 +936,17 @@ LOCALES = {
         },
         "zh": {
             "label": "温度系数",
+        },
+    },
+    "clear_btn": {
+        "en": {
+            "value": "Clear history",
+        },
+        "ru": {
+            "value": "Очистить историю",
+        },
+        "zh": {
+            "value": "清空历史",
         },
     },
     "max_shard_size": {
