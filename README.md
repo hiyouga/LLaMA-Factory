@@ -43,7 +43,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 - **Various models**: LLaMA, Mistral, Mixtral-MoE, Qwen, Yi, Gemma, Baichuan, ChatGLM, Phi, etc.
 - **Integrated methods**: (Continuous) pre-training, supervised fine-tuning, reward modeling, PPO and DPO.
 - **Scalable resources**: 32-bit full-tuning, 16-bit freeze tuning, 16-bit LoRA tuning, 2/4/8-bit QLoRA with AQLM/AWQ/GPTQ/LLM.int8.
-- **Advanced algorithms**: DoRA, LongLoRA, LLaMA Pro, agent tuning.
+- **Advanced algorithms**: DoRA, LongLoRA, LLaMA Pro, LoftQ, agent tuning.
 - **Intriguing tricks**: FlashAttention-2, Unsloth, RoPE scaling, NEFTune, rsLoRA.
 
 ## Benchmark
