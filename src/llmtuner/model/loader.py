@@ -51,7 +51,7 @@ def load_model_and_tokenizer(
     patch_tokenizer(tokenizer)
 
     config = AutoConfig.from_pretrained(model_args.model_name_or_path, **config_kwargs)
-    patch_config(config, tokenizer, model_args, config_kwargs, is_trainable)
+    patch_config(config, tokenizer, model_args, finetuning_args, config_kwargs, is_trainable)
 
     model = None
     if is_trainable and model_args.use_unsloth:
