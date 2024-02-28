@@ -106,6 +106,7 @@ class WebChatModel(ChatModel):
     def predict(
         self,
         chatbot: List[Tuple[str, str]],
+        role: str,
         query: str,
         messages: Sequence[Tuple[str, str]],
         system: str,
@@ -115,7 +116,7 @@ class WebChatModel(ChatModel):
         temperature: float,
     ) -> Generator[Tuple[Sequence[Tuple[str, str]], Sequence[Tuple[str, str]]], None, None]:
         chatbot.append([query, ""])
-        query_messages = messages + [{"role": Role.USER.value, "content": query}]
+        query_messages = messages + [{"role": role, "content": query}]
         response = ""
         for new_text in self.stream_chat(
             query_messages, system, tools, max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature
