@@ -36,9 +36,9 @@ def _check_dependencies(disabled: bool) -> None:
     else:
         require_version("transformers>=4.37.2", "To fix: pip install transformers>=4.37.2")
         require_version("datasets>=2.14.3", "To fix: pip install datasets>=2.14.3")
-        require_version("accelerate>=0.21.0", "To fix: pip install accelerate>=0.21.0")
-        require_version("peft>=0.8.2", "To fix: pip install peft>=0.8.2")
-        require_version("trl>=0.7.6", "To fix: pip install trl>=0.7.6")
+        require_version("accelerate>=0.27.2", "To fix: pip install accelerate>=0.27.2")
+        require_version("peft>=0.9.0", "To fix: pip install peft>=0.9.0")
+        require_version("trl>=0.7.11", "To fix: pip install trl>=0.7.11")
 
 
 def _parse_args(parser: "HfArgumentParser", args: Optional[Dict[str, Any]] = None) -> Tuple[Any]:
@@ -144,7 +144,14 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         raise ValueError("Please specify `lora_target` in LoRA training.")
 
     if training_args.do_train and model_args.use_unsloth and not is_unsloth_available:
-        raise ValueError("Install Unsloth: https://github.com/unslothai/unsloth")
+        raise ValueError("Unsloth was not installed: https://github.com/unslothai/unsloth")
+
+    if finetuning_args.use_dora:
+        if model_args.quantization_bit is not None:
+            raise ValueError("DoRA does not support quantization.")
+
+        if model_args.use_unsloth:
+            raise ValueError("Unsloth does not support DoRA.")
 
     _verify_model_args(model_args, finetuning_args)
     _check_dependencies(disabled=finetuning_args.disable_version_checking)

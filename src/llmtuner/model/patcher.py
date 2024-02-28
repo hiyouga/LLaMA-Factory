@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from transformers import PretrainedConfig, PreTrainedTokenizer
     from trl import AutoModelForCausalLMWithValueHead
 
-    from ..hparams import ModelArguments
+    from ..hparams import FinetuningArguments, ModelArguments
 
 
 logger = get_logger(__name__)
@@ -253,6 +253,7 @@ def patch_config(
     config: "PretrainedConfig",
     tokenizer: "PreTrainedTokenizer",
     model_args: "ModelArguments",
+    finetuning_args: "FinetuningArguments",
     config_kwargs: Dict[str, Any],
     is_trainable: bool,
 ) -> None:
@@ -272,6 +273,9 @@ def patch_config(
         _configure_longlora(config)
 
     _configure_quantization(config, tokenizer, model_args, config_kwargs)
+
+    if finetuning_args.use_dora:
+        config_kwargs["device_map"] = {"": get_current_device()}
 
 
 def patch_model(

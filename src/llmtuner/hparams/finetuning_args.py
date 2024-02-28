@@ -74,6 +74,9 @@ class LoraArguments:
         default=False,
         metadata={"help": "Whether or not to use the rank stabilization scaling factor for LoRA layer."},
     )
+    use_dora: Optional[bool] = field(
+        default=False, metadata={"help": "Whether or not to use the weight-decomposed lora method (DoRA)."}
+    )
     create_new_adapter: Optional[bool] = field(
         default=False,
         metadata={"help": "Whether or not to create a new adapter with randomly initialized weight."},
