@@ -41,10 +41,10 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 ## 项目特色
 
 - **多种模型**：LLaMA、Mistral、Mixtral-MoE、Qwen、Yi、Gemma、Baichuan、ChatGLM、Phi 等等。
-- **集成方法**：（增量）预训练、指令监督微调、奖励模型训练、PPO 训练、DPO 训练。
-- **多种精度**：32 比特全参数训练、16 比特部分参数训练、16比特 LoRA 训练、基于 AQLM/AWQ/GPTQ/LLM.int8 的 2/4/8 比特 LoRA 训练。
-- **先进算法**: DoRA、LongLoRA、LLaMA Pro、LoftQ、agent tuning。
-- **新鲜技巧**：FlashAttention-2、Unsloth、RoPE scaling、NEFTune、rsLoRA。
+- **集成方法**：（增量）预训练、指令监督微调、奖励模型训练、PPO 训练和 DPO 训练。
+- **多种精度**：32 比特全参数微调、16 比特冻结微调、16 比特 LoRA 微调和基于 AQLM/AWQ/GPTQ/LLM.int8 的 2/4/8 比特 QLoRA 微调。
+- **先进算法**：DoRA、LongLoRA、LLaMA Pro、LoftQ 和 Agent 微调。
+- **实用技巧**：FlashAttention-2、Unsloth、RoPE scaling、NEFTune 和 rsLoRA。
 - **实验监控**：LlamaBoard、TensorBoard、Wandb、MLflow 等等。
 
 ## 性能指标

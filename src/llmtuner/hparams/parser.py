@@ -3,7 +3,6 @@ import os
 import sys
 from typing import Any, Dict, Optional, Tuple
 
-import datasets
 import torch
 import transformers
 from transformers import HfArgumentParser, Seq2SeqTrainingArguments
@@ -62,7 +61,6 @@ def _parse_args(parser: "HfArgumentParser", args: Optional[Dict[str, Any]] = Non
 
 
 def _set_transformers_logging(log_level: Optional[int] = logging.INFO) -> None:
-    datasets.utils.logging.set_verbosity(log_level)
     transformers.utils.logging.set_verbosity(log_level)
     transformers.utils.logging.enable_default_handler()
     transformers.utils.logging.enable_explicit_format()
@@ -243,7 +241,6 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
             str(model_args.compute_dtype),
         )
     )
-    logger.info(f"Training/evaluation parameters {training_args}")
 
     transformers.set_seed(training_args.seed)
 

@@ -7,5 +7,5 @@ from .train import export_model, run_exp
 from .webui import create_ui, create_web_demo
 
 
-__version__ = "0.5.2"
+__version__ = "0.5.3"
 __all__ = ["create_app", "ChatModel", "Evaluator", "export_model", "run_exp", "create_ui", "create_web_demo"]

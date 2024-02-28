@@ -44,11 +44,14 @@ def can_quantize(finetuning_type: str) -> Dict[str, Any]:
 def check_json_schema(text: str, lang: str) -> None:
     try:
         tools = json.loads(text)
-        for tool in tools:
-            assert "name" in tool
-    except AssertionError:
+        if tools:
+            assert isinstance(tools, list)
+            for tool in tools:
+                if "name" not in tool:
+                    raise ValueError("Name not found.")
+    except ValueError:
         gr.Warning(ALERTS["err_tool_name"][lang])
-    except json.JSONDecodeError:
+    except Exception:
         gr.Warning(ALERTS["err_json_schema"][lang])
 
 
