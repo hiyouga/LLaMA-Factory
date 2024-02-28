@@ -17,9 +17,7 @@
 
 ## LLaMA Board: 通过一站式网页界面快速上手 LLaMA Factory
 
-通过 **[🤗 Spaces](https://huggingface.co/spaces/hiyouga/LLaMA-Board)** 或 **[ModelScope](https://modelscope.cn/studios/hiyouga/LLaMA-Board)** 预览 LLaMA Board。
-
-使用 `CUDA_VISIBLE_DEVICES=0 python src/train_web.py` 启动 LLaMA Board。（该模式目前仅支持单卡训练）
+通过 **[🤗 Spaces](https://huggingface.co/spaces/hiyouga/LLaMA-Board)** 或 **[ModelScope](https://modelscope.cn/studios/hiyouga/LLaMA-Board)** 预览 LLaMA Board，或者通过命令 `CUDA_VISIBLE_DEVICES=0 python src/train_web.py` 本地启动。
 
 下面是使用单张 GPU 在 10 分钟内更改对话式大型语言模型自我认知的示例。
 
@@ -27,6 +25,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 
 ## 目录
 
+- [项目特色](#项目特色)
 - [性能指标](#性能指标)
 - [更新日志](#更新日志)
 - [模型](#模型)
@@ -38,6 +37,14 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 - [协议](#协议)
 - [引用](#引用)
 - [致谢](#致谢)
+
+## 项目特色
+
+- **多种模型**：LLaMA、Mistral、Mixtral-MoE、Qwen、Yi、Gemma、Baichuan、ChatGLM、Phi 等等。
+- **集成方法**：（增量）预训练、指令监督微调、奖励模型训练、PPO 训练、DPO 训练。
+- **多种精度**：32 比特全参数训练、16 比特部分参数训练、16比特 LoRA 训练、基于 AQLM/AWQ/GPTQ/LLM.int8 的 2/4/8 比特 LoRA 训练。
+- **先进算法**: DoRA、LongLoRA、LLaMA Pro、agent tuning。
+- **新鲜技巧**：FlashAttention-2、Unsloth、RoPE scaling、NEFTune、rsLoRA。
 
 ## 性能指标
 
@@ -62,9 +69,9 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 
 [24/02/05] Qwen1.5（Qwen2 测试版）系列模型已在 LLaMA-Factory 中实现微调支持。详情请查阅该[博客页面](https://qwenlm.github.io/zh/blog/qwen1.5/)。
 
-[24/01/18] 我们针对绝大多数模型实现了 **Agent 微调**，微调时指定 `--dataset glaive_toolcall` 即可使模型获得工具调用能力。
-
 <details><summary>展开日志</summary>
+
+[24/01/18] 我们针对绝大多数模型实现了 **Agent 微调**，微调时指定 `--dataset glaive_toolcall` 即可使模型获得工具调用能力。
 
 [23/12/23] 我们针对 LLaMA, Mistral 和 Yi 模型支持了 **[unsloth](https://github.com/unslothai/unsloth)** 的 LoRA 训练加速。请使用 `--use_unsloth` 参数启用 unsloth 优化。该方法可提供 1.7 倍的训练速度，详情请查阅[此页面](https://github.com/hiyouga/LLaMA-Factory/wiki/Performance-comparison)。
 
