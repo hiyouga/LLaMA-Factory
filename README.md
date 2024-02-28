@@ -45,6 +45,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846
 - **Scalable resources**: 32-bit full-tuning, 16-bit freeze tuning, 16-bit LoRA tuning, 2/4/8-bit QLoRA with AQLM/AWQ/GPTQ/LLM.int8.
 - **Advanced algorithms**: DoRA, LongLoRA, LLaMA Pro, LoftQ, agent tuning.
 - **Intriguing tricks**: FlashAttention-2, Unsloth, RoPE scaling, NEFTune, rsLoRA.
+- **Experiment monitors**: LlamaBoard, TensorBoard, Wandb, MLflow, etc.
 
 ## Benchmark
 
@@ -236,14 +237,26 @@ huggingface-cli login
 
 ## Requirement
 
-- Python 3.8+ and PyTorch 1.13.1+
-- 🤗Transformers, Datasets, Accelerate, PEFT and TRL
-- sentencepiece, protobuf and tiktoken
-- jieba, rouge-chinese and nltk (used at evaluation and predict)
-- gradio and matplotlib (used in web UI)
-- uvicorn, fastapi and sse-starlette (used in API)
+| Mandatory    | Minimum | Recommend |
+| ------------ | ------- | --------- |
+| python       | 3.8     | 3.10      |
+| torch        | 1.13.1  | 2.2.1     |
+| transformers | 4.37.2  | 4.38.1    |
+| datasets     | 2.14.3  | 2.17.1    |
+| accelerate   | 0.27.2  | 0.27.2    |
+| peft         | 0.9.0   | 0.9.0     |
+| trl          | 0.7.11  | 0.7.11    |
+
+| Optional     | Minimum | Recommend |
+| ------------ | ------- | --------- |
+| CUDA         | 11.6    | 12.2      |
+| deepspeed    | 0.10.0  | 0.13.4    |
+| bitsandbytes | 0.39.0  | 0.41.3    |
+| flash-attn   | 2.3.0   | 2.5.5     |
 
 ### Hardware Requirement
+
+\* *estimated*
 
 | Method | Bits |   7B  |  13B  |  30B  |   65B  |   8x7B |
 | ------ | ---- | ----- | ----- | ----- | ------ | ------ |
