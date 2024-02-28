@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Dict, Optional, Tuple
 
 import gradio as gr
 
+from ...data import Role
 from ..utils import check_json_schema
 
 
@@ -22,6 +23,7 @@ def create_chat_box(
             with gr.Column(scale=4):
                 system = gr.Textbox(show_label=False)
                 tools = gr.Textbox(show_label=False, lines=2)
+                role = gr.Dropdown(choices=[Role.USER.value, Role.OBSERVATION.value], value=Role.USER.value)
                 query = gr.Textbox(show_label=False, lines=8)
                 submit_btn = gr.Button(variant="primary")
 
@@ -36,7 +38,7 @@ def create_chat_box(
 
     submit_btn.click(
         engine.chatter.predict,
-        [chatbot, query, messages, system, tools, max_new_tokens, top_p, temperature],
+        [chatbot, role, query, messages, system, tools, max_new_tokens, top_p, temperature],
         [chatbot, messages],
         show_progress=True,
     ).then(lambda: gr.update(value=""), outputs=[query])
@@ -50,6 +52,7 @@ def create_chat_box(
         dict(
             system=system,
             tools=tools,
+            role=role,
             query=query,
             submit_btn=submit_btn,
             clear_btn=clear_btn,
