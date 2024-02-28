@@ -258,7 +258,7 @@ def get_template_and_fix_tokenizer(
         template = templates["vanilla"]  # placeholder
     else:
         template = templates.get(name, None)
-        if templates is None:
+        if template is None:
             raise ValueError("Template {} does not exist.".format(name))
 
     stop_words = template.stop_words
