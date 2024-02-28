@@ -8,6 +8,7 @@ import gradio as gr
 import transformers
 from gradio.components import Component  # cannot use TYPE_CHECKING here
 from transformers.trainer import TRAINING_ARGS_NAME
+from transformers.utils import is_torch_cuda_available
 
 from ..extras.callbacks import LogCallback
 from ..extras.constants import TRAINING_STAGES
@@ -64,11 +65,14 @@ class Runner:
         if len(dataset) == 0:
             return ALERTS["err_no_dataset"][lang]
 
-        if self.demo_mode and (not from_preview):
+        if not from_preview and self.demo_mode:
             return ALERTS["err_demo"][lang]
 
         if not from_preview and get_device_count() > 1:
             return ALERTS["err_device_count"][lang]
+
+        if not from_preview and not is_torch_cuda_available():
+            gr.Warning(ALERTS["warn_no_cuda"][lang])
 
         self.aborted = False
         self.logger_handler.reset()
@@ -139,11 +143,13 @@ class Runner:
             args["num_layer_trainable"] = int(get("train.num_layer_trainable"))
             args["name_module_trainable"] = get("train.name_module_trainable")
         elif args["finetuning_type"] == "lora":
-            args["lora_rank"] = get("train.lora_rank")
-            args["lora_dropout"] = get("train.lora_dropout")
+            args["lora_rank"] = int(get("train.lora_rank"))
+            args["lora_alpha"] = float(get("train.lora_alpha"))
+            args["lora_dropout"] = float(get("train.lora_dropout"))
             args["lora_target"] = get("train.lora_target") or get_module(get("top.model_name"))
-            args["additional_target"] = get("train.additional_target") or None
             args["use_rslora"] = get("train.use_rslora")
+            args["use_dora"] = get("train.use_dora")
+            args["additional_target"] = get("train.additional_target") or None
             if args["stage"] in ["rm", "ppo", "dpo"]:
                 args["create_new_adapter"] = args["quantization_bit"] is None
             else:

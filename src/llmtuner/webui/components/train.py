@@ -34,7 +34,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     elem_dict.update(dict(training_stage=training_stage, dataset_dir=dataset_dir, dataset=dataset, **preview_elems))
 
     with gr.Row():
-        cutoff_len = gr.Slider(value=1024, minimum=4, maximum=8192, step=1)
+        cutoff_len = gr.Slider(value=1024, minimum=4, maximum=16384, step=1)
         learning_rate = gr.Textbox(value="5e-5")
         num_train_epochs = gr.Textbox(value="3.0")
         max_samples = gr.Textbox(value="100000")
@@ -52,8 +52,8 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     )
 
     with gr.Row():
-        batch_size = gr.Slider(value=4, minimum=1, maximum=1024, step=1)
-        gradient_accumulation_steps = gr.Slider(value=4, minimum=1, maximum=1024, step=1)
+        batch_size = gr.Slider(value=2, minimum=1, maximum=1024, step=1)
+        gradient_accumulation_steps = gr.Slider(value=8, minimum=1, maximum=1024, step=1)
         lr_scheduler_type = gr.Dropdown(choices=[scheduler.value for scheduler in SchedulerType], value="cosine")
         max_grad_norm = gr.Textbox(value="1.0")
         val_size = gr.Slider(value=0, minimum=0, maximum=1, step=0.001)
@@ -122,25 +122,31 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
 
     with gr.Accordion(label="LoRA config", open=False) as lora_tab:
         with gr.Row():
-            lora_rank = gr.Slider(value=8, minimum=1, maximum=1024, step=1)
-            lora_dropout = gr.Slider(value=0.1, minimum=0, maximum=1, step=0.01)
-            lora_target = gr.Textbox()
-            additional_target = gr.Textbox()
+            lora_rank = gr.Slider(value=8, minimum=1, maximum=1024, step=1, scale=1)
+            lora_alpha = gr.Slider(value=16, minimum=1, maximum=2048, step=0.1, scale=1)
+            lora_dropout = gr.Slider(value=0.1, minimum=0, maximum=1, step=0.01, scale=1)
+            lora_target = gr.Textbox(scale=2)
 
-            with gr.Column():
-                use_rslora = gr.Checkbox()
-                create_new_adapter = gr.Checkbox()
+        with gr.Row():
+            use_rslora = gr.Checkbox(scale=1)
+            use_dora = gr.Checkbox(scale=1)
+            create_new_adapter = gr.Checkbox(scale=1)
+            additional_target = gr.Textbox(scale=2)
 
-    input_elems.update({lora_rank, lora_dropout, lora_target, additional_target, use_rslora, create_new_adapter})
+    input_elems.update(
+        {lora_rank, lora_alpha, lora_dropout, lora_target, use_rslora, use_dora, create_new_adapter, additional_target}
+    )
     elem_dict.update(
         dict(
             lora_tab=lora_tab,
             lora_rank=lora_rank,
+            lora_alpha=lora_alpha,
             lora_dropout=lora_dropout,
             lora_target=lora_target,
-            additional_target=additional_target,
             use_rslora=use_rslora,
+            use_dora=use_dora,
             create_new_adapter=create_new_adapter,
+            additional_target=additional_target,
         )
     )
 
