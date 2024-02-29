@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING, Optional, Tuple
 
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
-from transformers.integrations import is_deepspeed_zero3_enabled
 from trl import AutoModelForCausalLMWithValueHead
 
 from ..extras.logging import get_logger
@@ -77,13 +76,7 @@ def load_model_and_tokenizer(
             logger.warning("Unsloth does not support loading adapters.")
 
     if model is None:
-        model = AutoModelForCausalLM.from_pretrained(
-            model_args.model_name_or_path,
-            config=config,
-            torch_dtype=model_args.compute_dtype,
-            low_cpu_mem_usage=(not is_deepspeed_zero3_enabled()),
-            **config_kwargs,
-        )
+        model = AutoModelForCausalLM.from_pretrained(model_args.model_name_or_path, config=config, **config_kwargs)
 
     patch_model(model, tokenizer, model_args, is_trainable)
     register_autoclass(config, model, tokenizer)
