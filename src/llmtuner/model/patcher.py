@@ -163,7 +163,6 @@ def _configure_quantization(
         if is_deepspeed_zero3_enabled():
             raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantization.")
 
-        config_kwargs["device_map"] = {"": get_current_device()}
         quantization_config: Dict[str, Any] = getattr(config, "quantization_config", None)
         if quantization_config.get("quant_method", None) == "gptq" and quantization_config.get("bits", -1) == 4:
             quantization_config["use_exllama"] = False  # disable exllama
@@ -214,7 +213,6 @@ def _configure_quantization(
                 bnb_4bit_quant_type=model_args.quantization_type,
             )
 
-        config_kwargs["device_map"] = {"": get_current_device()}
         logger.info("Quantizing model to {} bit.".format(model_args.quantization_bit))
 
 
@@ -283,6 +281,11 @@ def patch_config(
         _configure_longlora(config)
 
     _configure_quantization(config, tokenizer, model_args, config_kwargs)
+
+    config_kwargs["torch_dtype"] = model_args.compute_dtype
+    if not is_deepspeed_zero3_enabled():
+        config_kwargs["device_map"] = {"": get_current_device()}
+        config_kwargs["low_cpu_mem_usage"] = True
 
 
 def patch_model(
