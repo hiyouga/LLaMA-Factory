@@ -169,11 +169,14 @@ def _configure_quantization(
             quantization_config["use_exllama"] = False  # disable exllama
 
         if quantization_config.get("quant_method", None) == "aqlm":
+            require_version(
+                "transformers>=4.39.0.dev0", "To fix: pip install git+https://github.com/huggingface/transformers.git"
+            )
             quantization_config["bits"] = 2
 
         logger.info(
             "Loading {}-bit {}-quantized model.".format(
-                quantization_config.get("bits", "?"), quantization_config.get("quant_method", None)
+                quantization_config.get("bits", "?"), str(quantization_config.get("quant_method", "")).upper()
             )
         )
 
