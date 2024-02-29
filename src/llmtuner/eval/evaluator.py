@@ -20,6 +20,18 @@ from .template import get_eval_template
 
 class Evaluator:
     def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Initialize the Evaluator.
+
+        Parameters
+        ----------
+        args : Dict[str, Any], optional
+            Optional arguments for initialization.
+
+        Notes
+        -----
+        Initializes the Evaluator with model, tokenizer, templates, and choice inputs.
+        """
         self.model_args, self.data_args, self.eval_args, finetuning_args = get_eval_args(args)
         self.model, self.tokenizer = load_model_and_tokenizer(self.model_args, finetuning_args)
         self.tokenizer.padding_side = "right"  # avoid overflow issue in batched inference for llama2
@@ -32,6 +44,23 @@ class Evaluator:
 
     @torch.inference_mode()
     def batch_inference(self, batch_input: Dict[str, torch.Tensor]) -> List[str]:
+        """
+        Perform batch inference.
+
+        Parameters
+        ----------
+        batch_input : Dict[str, torch.Tensor]
+            Input data for batch inference.
+
+        Returns
+        -------
+        List[str]
+            List of predicted choices.
+
+        Notes
+        -----
+        This function performs batch inference and returns the predicted choices.
+        """
         logits = self.model(**batch_input).logits
         lengths = torch.sum(batch_input["attention_mask"], dim=-1)
         word_probs = torch.stack([logits[i, lengths[i] - 1] for i in range(len(lengths))], dim=0)
@@ -39,6 +68,21 @@ class Evaluator:
         return [chr(ord("A") + offset.item()) for offset in torch.argmax(choice_probs, dim=-1)]
 
     def eval(self) -> None:
+        """
+        Evaluate the model.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        This function evaluates the model and saves the results.
+        """
         mapping = cached_file(
             path_or_repo_id=os.path.join(self.eval_args.task_dir, self.eval_args.task),
             filename="mapping.json",
@@ -101,6 +145,25 @@ class Evaluator:
         self._save_results(category_corrects, results)
 
     def _save_results(self, category_corrects: Dict[str, np.ndarray], results: Dict[str, Dict[int, str]]) -> None:
+        """
+        Save evaluation results.
+
+        Parameters
+        ----------
+        category_corrects : Dict[str, np.ndarray]
+            Dictionary containing category-wise correctness.
+
+        results : Dict[str, Dict[int, str]]
+            Dictionary containing evaluation results.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        This function saves evaluation results to files.
+        """
         score_info = "\n".join(
             [
                 "{:>15}: {:.2f}".format(category_name, 100 * np.mean(category_correct))

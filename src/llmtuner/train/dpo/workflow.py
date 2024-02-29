@@ -27,6 +27,48 @@ def run_dpo(
     finetuning_args: "FinetuningArguments",
     callbacks: Optional[List["TrainerCallback"]] = None,
 ):
+    """
+    Runs Differentiable Policy Optimization (DPO) training.
+
+    This function initializes the model, tokenizer, data collator, and trainer for DPO training,
+    conducts training if specified, evaluates the model, and saves the results.
+
+    Parameters
+    ----------
+    model_args : "ModelArguments"
+        Model configuration arguments.
+
+    data_args : "DataArguments"
+        Data configuration arguments.
+
+    training_args : "Seq2SeqTrainingArguments"
+        Training configuration arguments.
+
+    finetuning_args : "FinetuningArguments"
+        Finetuning configuration arguments.
+        
+    callbacks : Optional[List["TrainerCallback"]], optional
+        List of trainer callbacks, by default None.
+
+    Raises
+    ------
+    ValueError
+        If unable to compute rewards without a reference model.
+
+    Notes
+    -----
+    This function assumes the availability of the following functions:
+        - load_model_and_tokenizer
+        - get_dataset
+        - create_ref_model
+        - split_dataset
+        - CustomDPOTrainer
+        - plot_loss
+
+    See Also
+    --------
+    load_model_and_tokenizer, get_dataset, create_ref_model, split_dataset, CustomDPOTrainer, plot_loss
+    """
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train)
     dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="rm")
     data_collator = DPODataCollatorWithPadding(

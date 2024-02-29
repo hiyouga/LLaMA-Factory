@@ -9,9 +9,27 @@ from transformers import DataCollatorForSeq2Seq
 class DPODataCollatorWithPadding(DataCollatorForSeq2Seq):
     r"""
     Data collator for pairwise data.
+
+    This class extends `DataCollatorForSeq2Seq` and provides padding functionality for pairwise data.
     """
 
     def _pad_labels(self, batch: torch.Tensor, positions: List[Tuple[int, int]]) -> torch.Tensor:
+        """
+        Pad the labels in the batch to match the longest sequence.
+
+        Parameters
+        ----------
+        batch : torch.Tensor
+            The batch of input features.
+
+        positions : List[Tuple[int, int]]
+            List of tuples representing the positions of prompt and answer lengths in each feature.
+
+        Returns
+        -------
+        padded_labels : torch.Tensor
+            Tensor with padded labels.
+        """
         padded_labels = []
         for feature, (prompt_len, answer_len) in zip(batch, positions):
             if self.tokenizer.padding_side == "left":
@@ -24,11 +42,21 @@ class DPODataCollatorWithPadding(DataCollatorForSeq2Seq):
         return torch.stack(padded_labels, dim=0).contiguous()  # in contiguous memory
 
     def __call__(self, features: Sequence[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
-        r"""
-        Pads batched data to the longest sequence in the batch.
+        """
+        Pad batched data to the longest sequence in the batch.
 
         We generate 2 * n examples where the first n examples represent chosen examples and
         the last n examples represent rejected examples.
+
+        Parameters
+        ----------
+        features : Sequence[Dict[str, Any]]
+            List of dictionaries containing input features.
+
+        Returns
+        -------
+        batch : Dict[str, torch.Tensor]
+            Dictionary containing the batched data.
         """
         concatenated_features = []
         label_positions = []

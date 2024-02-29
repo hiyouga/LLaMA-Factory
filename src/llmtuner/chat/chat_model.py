@@ -21,6 +21,19 @@ class Response:
 
 class ChatModel:
     def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Initialize the ChatModel.
+
+        Parameters
+        ----------
+        args : Dict[str, Any], optional
+            Arguments for model initialization.
+
+        Notes
+        -----
+        This constructor initializes the ChatModel by loading the model and tokenizer,
+        setting up generating arguments, and configuring the template for chat completion.
+        """
         model_args, data_args, finetuning_args, self.generating_args = get_infer_args(args)
         self.can_generate = finetuning_args.stage == "sft"
         self.model, self.tokenizer = load_model_and_tokenizer(
@@ -37,6 +50,33 @@ class ChatModel:
         tools: Optional[str] = None,
         **input_kwargs,
     ) -> Tuple[Dict[str, Any], int]:
+        """
+        Process arguments for chat completion.
+
+        Parameters
+        ----------
+        messages : Sequence[Dict[str, str]]
+            Sequence of user messages and their roles.
+
+        system : str, optional
+            System input message.
+
+        tools : str, optional
+            JSON-encoded list of tool functions.
+
+        **input_kwargs
+            Additional keyword arguments.
+
+        Returns
+        -------
+        Tuple[Dict[str, Any], int]
+            Generated keyword arguments and prompt length.
+
+        Notes
+        -----
+        This function processes arguments for chat completion, including encoding messages,
+        setting generation parameters, and preparing input IDs.
+        """
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         prompt, _ = self.template.encode_oneturn(
             tokenizer=self.tokenizer, messages=paired_messages, system=system, tools=tools
@@ -94,6 +134,37 @@ class ChatModel:
         tools: Optional[str] = None,
         **input_kwargs,
     ) -> List[Response]:
+        """
+        Generate chat completions based on user input.
+
+        Parameters
+        ----------
+        messages : Sequence[Dict[str, str]]
+            Sequence of user messages and their roles.
+
+        system : str, optional
+            System input message.
+
+        tools : str, optional
+            JSON-encoded list of tool functions.
+
+        **input_kwargs
+            Additional keyword arguments.
+
+        Returns
+        -------
+        List[Response]
+            List of generated responses.
+
+        Raises
+        ------
+        ValueError
+            If the model does not support chat generation.
+
+        Notes
+        -----
+        This function generates chat completions based on user messages, system input, and tools.
+        """
         if not self.can_generate:
             raise ValueError("The current model does not support `chat`.")
 
@@ -126,6 +197,37 @@ class ChatModel:
         tools: Optional[str] = None,
         **input_kwargs,
     ) -> Generator[str, None, None]:
+        """
+        Stream chat completions based on user input.
+
+        Parameters
+        ----------
+        messages : Sequence[Dict[str, str]]
+            Sequence of user messages and their roles.
+
+        system : str, optional
+            System input message.
+
+        tools : str, optional
+            JSON-encoded list of tool functions.
+
+        **input_kwargs
+            Additional keyword arguments.
+
+        Yields
+        ------
+        str
+            JSON string representation of each chat completion chunk.
+
+        Raises
+        ------
+        ValueError
+            If the model does not support streaming chat.
+
+        Notes
+        -----
+        This function streams chat completions based on user messages, system input, and tools.
+        """
         if not self.can_generate:
             raise ValueError("The current model does not support `stream_chat`.")
 
@@ -140,6 +242,31 @@ class ChatModel:
 
     @torch.inference_mode()
     def get_scores(self, batch_input: List[str], **input_kwargs) -> List[float]:
+        """
+        Get scores of a chat model based on user input.
+
+        Parameters
+        ----------
+        batch_input : List[str]
+            List of input messages.
+            
+        **input_kwargs
+            Additional keyword arguments.
+
+        Returns
+        -------
+        List[float]
+            List of scores for each input message.
+
+        Raises
+        ------
+        ValueError
+            If the model supports chat generation.
+
+        Notes
+        -----
+        This function retrieves scores of a chat model based on user input.
+        """
         if self.can_generate:
             raise ValueError("Cannot get scores using an auto-regressive model.")
 
