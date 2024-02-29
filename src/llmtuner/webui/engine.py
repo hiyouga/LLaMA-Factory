@@ -38,7 +38,7 @@ class Engine:
 
         yield self._form_dict(init_dict)
 
-        if not self.pure_chat:
+        if not self.pure_chat and not self.demo_mode:
             if self.runner.alive:
                 yield {elem: gr.update(value=value) for elem, value in self.runner.running_data.items()}
                 if self.runner.do_train:
