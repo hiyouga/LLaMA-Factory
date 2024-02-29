@@ -38,8 +38,8 @@ class Engine:
 
         yield self._form_dict(init_dict)
 
-        if not self.pure_chat and not self.demo_mode:
-            if self.runner.alive:
+        if not self.pure_chat:
+            if self.runner.alive and not self.demo_mode:
                 yield {elem: gr.update(value=value) for elem, value in self.runner.running_data.items()}
                 if self.runner.do_train:
                     yield self._form_dict({"train.resume_btn": {"value": True}})
