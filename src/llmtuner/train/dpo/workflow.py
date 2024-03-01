@@ -2,20 +2,18 @@
 
 from typing import TYPE_CHECKING, List, Optional
 
-from transformers import Seq2SeqTrainingArguments
-
 from ...data import get_dataset, split_dataset
 from ...extras.constants import IGNORE_INDEX
 from ...extras.ploting import plot_loss
 from ...hparams import ModelArguments
-from ...model import load_model_and_tokenizer
+from ...model import load_model, load_tokenizer
 from ...train.dpo.collator import DPODataCollatorWithPadding
 from ...train.dpo.trainer import CustomDPOTrainer
 from ...train.utils import create_modelcard_and_push, create_ref_model
 
 
 if TYPE_CHECKING:
-    from transformers import TrainerCallback
+    from transformers import Seq2SeqTrainingArguments, TrainerCallback
 
     from ...hparams import DataArguments, FinetuningArguments
 
@@ -27,8 +25,9 @@ def run_dpo(
     finetuning_args: "FinetuningArguments",
     callbacks: Optional[List["TrainerCallback"]] = None,
 ):
-    model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train)
+    tokenizer = load_tokenizer(model_args)
     dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="rm")
+    model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
     data_collator = DPODataCollatorWithPadding(
         tokenizer=tokenizer,
         pad_to_multiple_of=8,
@@ -42,9 +41,7 @@ def run_dpo(
         ref_model = create_ref_model(model_args, finetuning_args)
 
     # Update arguments
-    training_args_dict = training_args.to_dict()
-    training_args_dict.update(dict(remove_unused_columns=False))  # important for pairwise dataset
-    training_args = Seq2SeqTrainingArguments(**training_args_dict)
+    training_args.remove_unused_columns = False  # important for pairwise dataset
 
     # Initialize our Trainer
     trainer = CustomDPOTrainer(

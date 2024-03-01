@@ -2,20 +2,20 @@
 
 from typing import TYPE_CHECKING, List, Optional
 
-from transformers import DataCollatorForSeq2Seq, Seq2SeqTrainingArguments
+from transformers import DataCollatorForSeq2Seq
 
 from ...data import get_dataset, split_dataset
 from ...extras.constants import IGNORE_INDEX
 from ...extras.misc import get_logits_processor
 from ...extras.ploting import plot_loss
-from ...model import load_model_and_tokenizer
+from ...model import load_model, load_tokenizer
 from ...train.sft.metric import ComputeMetrics
 from ...train.sft.trainer import CustomSeq2SeqTrainer
 from ...train.utils import create_modelcard_and_push
 
 
 if TYPE_CHECKING:
-    from transformers import TrainerCallback
+    from transformers import Seq2SeqTrainingArguments, TrainerCallback
 
     from ...hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
 
@@ -28,8 +28,9 @@ def run_sft(
     generating_args: "GeneratingArguments",
     callbacks: Optional[List["TrainerCallback"]] = None,
 ):
-    model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train)
+    tokenizer = load_tokenizer(model_args)
     dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="sft")
+    model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
 
     if training_args.predict_with_generate:
         tokenizer.padding_side = "left"  # use left-padding in generation
@@ -44,14 +45,8 @@ def run_sft(
     )
 
     # Override the decoding parameters of Seq2SeqTrainer
-    training_args_dict = training_args.to_dict()
-    training_args_dict.update(
-        dict(
-            generation_max_length=training_args.generation_max_length or data_args.cutoff_len,
-            generation_num_beams=data_args.eval_num_beams or training_args.generation_num_beams,
-        )
-    )
-    training_args = Seq2SeqTrainingArguments(**training_args_dict)
+    training_args.generation_max_length = training_args.generation_max_length or data_args.cutoff_len
+    training_args.generation_num_beams = data_args.eval_num_beams or training_args.generation_num_beams
 
     # Initialize our Trainer
     trainer = CustomSeq2SeqTrainer(
