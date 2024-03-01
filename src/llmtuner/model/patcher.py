@@ -102,16 +102,16 @@ def _get_quantization_dataset(tokenizer: "PreTrainedTokenizer", model_args: "Mod
     return samples
 
 
-def _configure_attn_implementation(model_args: "ModelArguments", config_kwargs: Dict[str, Any]) -> None:
+def _configure_attn_implementation(model_args: "ModelArguments", init_kwargs: Dict[str, Any]) -> None:
     if model_args.flash_attn:
         if is_flash_attn2_available():
-            config_kwargs["attn_implementation"] = "flash_attention_2"
             logger.info("Using FlashAttention-2 for faster training and inference.")
+            init_kwargs["attn_implementation"] = "flash_attention_2"
         else:
             logger.warning("FlashAttention2 is not installed.")
-            config_kwargs["attn_implementation"] = None
+            init_kwargs["attn_implementation"] = None
     else:
-        config_kwargs["attn_implementation"] = "eager"
+        init_kwargs["attn_implementation"] = "eager"
 
 
 def _configure_rope(config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool) -> None:
@@ -154,7 +154,7 @@ def _configure_quantization(
     config: "PretrainedConfig",
     tokenizer: "PreTrainedTokenizer",
     model_args: "ModelArguments",
-    config_kwargs: Dict[str, Any],
+    init_kwargs: Dict[str, Any],
 ) -> None:
     r"""
     Priority: PTQ-quantized (training) > AutoGPTQ (export) > Bitsandbytes (training)
@@ -187,13 +187,13 @@ def _configure_quantization(
         if getattr(config, "model_type", None) == "chatglm":
             raise ValueError("ChatGLM model is not supported.")
 
-        config_kwargs["quantization_config"] = GPTQConfig(
+        init_kwargs["quantization_config"] = GPTQConfig(
             bits=model_args.export_quantization_bit,
             tokenizer=tokenizer,
             dataset=_get_quantization_dataset(tokenizer, model_args),
         )
-        config_kwargs["device_map"] = "auto"
-        config_kwargs["max_memory"] = get_max_memory()
+        init_kwargs["device_map"] = "auto"
+        init_kwargs["max_memory"] = get_max_memory()
         logger.info("Quantizing model to {} bit.".format(model_args.export_quantization_bit))
 
     elif model_args.quantization_bit is not None:  # bnb
@@ -202,11 +202,11 @@ def _configure_quantization(
 
         if model_args.quantization_bit == 8:
             require_version("bitsandbytes>=0.37.0", "To fix: pip install bitsandbytes>=0.37.0")
-            config_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_8bit=True)
+            init_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_8bit=True)
 
         elif model_args.quantization_bit == 4:
             require_version("bitsandbytes>=0.39.0", "To fix: pip install bitsandbytes>=0.39.0")
-            config_kwargs["quantization_config"] = BitsAndBytesConfig(
+            init_kwargs["quantization_config"] = BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_compute_dtype=model_args.compute_dtype,
                 bnb_4bit_use_double_quant=model_args.double_quantization,
@@ -262,7 +262,7 @@ def patch_config(
     config: "PretrainedConfig",
     tokenizer: "PreTrainedTokenizer",
     model_args: "ModelArguments",
-    config_kwargs: Dict[str, Any],
+    init_kwargs: Dict[str, Any],
     is_trainable: bool,
 ) -> None:
     if model_args.compute_dtype is None:  # priority: bf16 > fp16 > fp32
@@ -272,7 +272,7 @@ def patch_config(
         for dtype_name, dtype in [("fp16", torch.float16), ("bf16", torch.bfloat16), ("fp32", torch.float32)]:
             setattr(config, dtype_name, model_args.compute_dtype == dtype)
 
-    _configure_attn_implementation(model_args, config_kwargs)
+    _configure_attn_implementation(model_args, init_kwargs)
 
     if model_args.rope_scaling is not None:
         _configure_rope(config, model_args, is_trainable)
@@ -280,12 +280,12 @@ def patch_config(
     if is_trainable and model_args.shift_attn:
         _configure_longlora(config)
 
-    _configure_quantization(config, tokenizer, model_args, config_kwargs)
+    _configure_quantization(config, tokenizer, model_args, init_kwargs)
 
-    config_kwargs["torch_dtype"] = model_args.compute_dtype
+    init_kwargs["torch_dtype"] = model_args.compute_dtype
     if not is_deepspeed_zero3_enabled():
-        config_kwargs["device_map"] = {"": get_current_device()}
-        config_kwargs["low_cpu_mem_usage"] = True
+        init_kwargs["device_map"] = {"": get_current_device()}
+        init_kwargs["low_cpu_mem_usage"] = True
 
 
 def patch_model(

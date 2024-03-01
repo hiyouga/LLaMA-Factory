@@ -2,13 +2,11 @@
 
 from typing import TYPE_CHECKING, List, Optional
 
-from transformers import Seq2SeqTrainingArguments
-
 from ...data import get_dataset, split_dataset
 from ...extras.callbacks import FixValueHeadModelCallback
 from ...extras.misc import fix_valuehead_checkpoint
 from ...extras.ploting import plot_loss
-from ...model import load_model_and_tokenizer
+from ...model import load_model, load_tokenizer
 from ...train.rm.collator import PairwiseDataCollatorWithPadding
 from ...train.rm.metric import compute_accuracy
 from ...train.rm.trainer import PairwiseTrainer
@@ -16,7 +14,7 @@ from ...train.utils import create_modelcard_and_push
 
 
 if TYPE_CHECKING:
-    from transformers import TrainerCallback
+    from transformers import Seq2SeqTrainingArguments, TrainerCallback
 
     from ...hparams import DataArguments, FinetuningArguments, ModelArguments
 
@@ -28,16 +26,13 @@ def run_rm(
     finetuning_args: "FinetuningArguments",
     callbacks: Optional[List["TrainerCallback"]] = None,
 ):
-    model, tokenizer = load_model_and_tokenizer(
-        model_args, finetuning_args, training_args.do_train, add_valuehead=True
-    )
+    tokenizer = load_tokenizer(model_args)
     dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="rm")
+    model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train, add_valuehead=True)
     data_collator = PairwiseDataCollatorWithPadding(tokenizer, pad_to_multiple_of=8)
 
     # Update arguments
-    training_args_dict = training_args.to_dict()
-    training_args_dict.update(dict(remove_unused_columns=False))  # important for pairwise dataset
-    training_args = Seq2SeqTrainingArguments(**training_args_dict)
+    training_args.remove_unused_columns = False  # important for pairwise dataset
 
     # Initialize our Trainer
     trainer = PairwiseTrainer(

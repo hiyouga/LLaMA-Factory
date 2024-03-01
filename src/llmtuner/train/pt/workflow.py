@@ -7,7 +7,7 @@ from transformers import DataCollatorForLanguageModeling, Trainer
 
 from ...data import get_dataset, split_dataset
 from ...extras.ploting import plot_loss
-from ...model import load_model_and_tokenizer
+from ...model import load_model, load_tokenizer
 from ...train.utils import create_modelcard_and_push
 
 
@@ -24,8 +24,9 @@ def run_pt(
     finetuning_args: "FinetuningArguments",
     callbacks: Optional[List["TrainerCallback"]] = None,
 ):
-    model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, training_args.do_train)
+    tokenizer = load_tokenizer(model_args)
     dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="pt")
+    model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
     # Initialize our Trainer
