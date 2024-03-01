@@ -181,9 +181,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         and finetuning_args.finetuning_type == "lora"
     ):
         logger.warning("`ddp_find_unused_parameters` needs to be set as False for LoRA in DDP training.")
-        training_args_dict = training_args.to_dict()
-        training_args_dict.update(dict(ddp_find_unused_parameters=False))
-        training_args = Seq2SeqTrainingArguments(**training_args_dict)
+        training_args.ddp_find_unused_parameters = False
 
     if finetuning_args.stage in ["rm", "ppo"] and finetuning_args.finetuning_type in ["full", "freeze"]:
         can_resume_from_checkpoint = False
@@ -205,9 +203,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
             raise ValueError("Output directory already exists and is not empty. Please set `overwrite_output_dir`.")
 
         if last_checkpoint is not None:
-            training_args_dict = training_args.to_dict()
-            training_args_dict.update(dict(resume_from_checkpoint=last_checkpoint))
-            training_args = Seq2SeqTrainingArguments(**training_args_dict)
+            training_args.resume_from_checkpoint = last_checkpoint
             logger.info(
                 "Resuming training from {}. Change `output_dir` or use `overwrite_output_dir` to avoid.".format(
                     training_args.resume_from_checkpoint
@@ -233,7 +229,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
     # Log on each process the small summary:
     logger.info(
-        "Process rank: {}, device: {}, n_gpu: {}\n  distributed training: {}, compute dtype: {}".format(
+        "Process rank: {}, device: {}, n_gpu: {}, distributed training: {}, compute dtype: {}".format(
             training_args.local_rank,
             training_args.device,
             training_args.n_gpu,
