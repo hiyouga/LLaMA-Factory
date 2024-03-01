@@ -12,7 +12,7 @@ from ...data import get_dataset
 from ...extras.callbacks import FixValueHeadModelCallback
 from ...extras.misc import fix_valuehead_checkpoint
 from ...extras.ploting import plot_loss
-from ...model import load_model_and_tokenizer
+from ...model import load_model, load_tokenizer
 from ...train.ppo.trainer import CustomPPOTrainer
 from ...train.utils import create_ref_model, create_reward_model
 
@@ -31,10 +31,9 @@ def run_ppo(
     generating_args: "GeneratingArguments",
     callbacks: Optional[List["TrainerCallback"]] = None,
 ):
-    model, tokenizer = load_model_and_tokenizer(
-        model_args, finetuning_args, training_args.do_train, add_valuehead=True
-    )
+    tokenizer = load_tokenizer(model_args)
     dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="ppo")
+    model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train, add_valuehead=True)
 
     tokenizer.padding_side = "left"  # use left-padding in generation while using right-padding in training
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
