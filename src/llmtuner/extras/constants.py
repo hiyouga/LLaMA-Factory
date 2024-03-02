@@ -745,6 +745,21 @@ register_model_group(
 
 register_model_group(
     models={
+        "StarCoder2-3B": {
+            DownloadSource.DEFAULT: "bigcode/starcoder2-3b",
+        },
+        "StarCoder2-7B": {
+            DownloadSource.DEFAULT: "bigcode/starcoder2-7b",
+        },
+        "StarCoder2-15B": {
+            DownloadSource.DEFAULT: "bigcode/starcoder2-15b",
+        },
+    }
+)
+
+
+register_model_group(
+    models={
         "Vicuna1.5-7B-Chat": {
             DownloadSource.DEFAULT: "lmsys/vicuna-7b-v1.5",
             DownloadSource.MODELSCOPE: "Xorbits/vicuna-7b-v1.5",
