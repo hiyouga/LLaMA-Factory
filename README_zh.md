@@ -17,9 +17,16 @@
 
 \[ [English](README.md) | 中文 \]
 
+**微调大模型可以像这样轻松…**
+
 https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd-d76c6d0a6594
 
-使用 [Hugging Face 空间](https://huggingface.co/spaces/hiyouga/LLaMA-Board) / [魔搭社区](https://modelscope.cn/studios/hiyouga/LLaMA-Board) / [Colab](https://colab.research.google.com/drive/1eRTPn37ltBbYsISy9Aw2NuI2Aq5CQrD9?usp=sharing) / [本地机器](#llama-board-gui) 打开。
+选择你的打开方式：
+
+- **Hugging Face 空间**：https://huggingface.co/spaces/hiyouga/LLaMA-Board
+- **魔搭社区**：https://modelscope.cn/studios/hiyouga/LLaMA-Board
+- **Colab**：https://colab.research.google.com/drive/1eRTPn37ltBbYsISy9Aw2NuI2Aq5CQrD9?usp=sharing
+- **本地机器**：请见[如何使用](#如何使用)
 
 ## 目录
 

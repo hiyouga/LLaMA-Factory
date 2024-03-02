@@ -17,9 +17,16 @@
 
 \[ English | [中文](README_zh.md) \]
 
+**Fine-tuning a large language model can be easy as...**
+
 https://github.com/hiyouga/LLaMA-Factory/assets/16256802/9840a653-7e9c-41c8-ae89-7ace5698baf6
 
-Open in [🤗 Spaces](https://huggingface.co/spaces/hiyouga/LLaMA-Board) / [ModelScope](https://modelscope.cn/studios/hiyouga/LLaMA-Board) / [Colab](https://colab.research.google.com/drive/1eRTPn37ltBbYsISy9Aw2NuI2Aq5CQrD9?usp=sharing) / [Local machine](#llama-board-gui).
+Choose your path:
+
+- **🤗 Spaces**: https://huggingface.co/spaces/hiyouga/LLaMA-Board
+- **ModelScope**: https://modelscope.cn/studios/hiyouga/LLaMA-Board
+- **Colab**: https://colab.research.google.com/drive/1eRTPn37ltBbYsISy9Aw2NuI2Aq5CQrD9?usp=sharing
+- **Local machine**: Please refer to [usage](#getting-started)
 
 ## Table of Contents
 
