@@ -15,9 +15,9 @@
     "file_name": "alpaca_gpt4_data_zh.json",
     "file_sha1": "3eaa3bda364ccdd59925d7448a698256c31ef845"
   },
-  "self_cognition": {
-    "file_name": "self_cognition.json",
-    "file_sha1": "6287a730ada924fc5d9eadc6d8f865e01b7a6f67"
+  "identity": {
+    "file_name": "identity.json",
+    "file_sha1": "ffe3ecb58ab642da33fbb514d5e6188f1469ad40"
   },
   "oaast_sft": {
     "file_name": "oaast_sft.json",
