@@ -28,6 +28,7 @@ def save_model(
     export_quantization_dataset: str,
     export_legacy_format: bool,
     export_dir: str,
+    export_hub_model_id: str,
 ) -> Generator[str, None, None]:
     error = ""
     if not model_name:
@@ -59,6 +60,7 @@ def save_model(
         finetuning_type=finetuning_type,
         template=template,
         export_dir=export_dir,
+        export_hub_model_id=export_hub_model_id or None,
         export_size=max_shard_size,
         export_quantization_bit=int(export_quantization_bit) if export_quantization_bit in GPTQ_BITS else None,
         export_quantization_dataset=export_quantization_dataset,
@@ -77,7 +79,10 @@ def create_export_tab(engine: "Engine") -> Dict[str, "Component"]:
         export_quantization_dataset = gr.Textbox(value="data/c4_demo.json")
         export_legacy_format = gr.Checkbox()
 
-    export_dir = gr.Textbox()
+    with gr.Row():
+        export_dir = gr.Textbox()
+        export_hub_model_id = gr.Textbox()
+
     export_btn = gr.Button()
     info_box = gr.Textbox(show_label=False, interactive=False)
 
@@ -95,6 +100,7 @@ def create_export_tab(engine: "Engine") -> Dict[str, "Component"]:
             export_quantization_dataset,
             export_legacy_format,
             export_dir,
+            export_hub_model_id,
         ],
         [info_box],
     )
@@ -105,6 +111,7 @@ def create_export_tab(engine: "Engine") -> Dict[str, "Component"]:
         export_quantization_dataset=export_quantization_dataset,
         export_legacy_format=export_legacy_format,
         export_dir=export_dir,
+        export_hub_model_id=export_hub_model_id,
         export_btn=export_btn,
         info_box=info_box,
     )

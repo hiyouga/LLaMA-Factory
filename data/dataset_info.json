@@ -220,6 +220,13 @@
     "ms_hub_url": "AI-ModelScope/WizardLM_evol_instruct_V2_196k",
     "formatting": "sharegpt"
   },
+  "cosmopedia": {
+    "hf_hub_url": "HuggingFaceTB/cosmopedia",
+    "columns": {
+      "prompt": "prompt",
+      "response": "text"
+    }
+  },
   "oasst_de": {
     "hf_hub_url": "mayflowergmbh/oasst_de"
   },
