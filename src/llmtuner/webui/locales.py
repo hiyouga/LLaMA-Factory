@@ -1019,6 +1019,20 @@ LOCALES = {
             "info": "保存导出模型的文件夹路径。",
         },
     },
+    "export_hub_model_id": {
+        "en": {
+            "label": "HF Hub ID (optional)",
+            "info": "Repo ID for uploading model to Hugging Face hub.",
+        },
+        "ru": {
+            "label": "HF Hub ID (опционально)",
+            "info": "Идентификатор репозитория для загрузки модели на Hugging Face hub.",
+        },
+        "zh": {
+            "label": "HF Hub ID（非必填）",
+            "info": "用于将模型上传至 Hugging Face Hub 的仓库 ID。",
+        },
+    },
     "export_btn": {
         "en": {
             "value": "Export",
