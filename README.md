@@ -25,7 +25,7 @@ Here is an example of altering the self-cognition of an instruction-tuned langua
 
 
 
-https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6b969ec5-ae2f-4ef7-9dcf-5816eb1e936b
+https://github.com/hiyouga/LLaMA-Factory/assets/16256802/9840a653-7e9c-41c8-ae89-7ace5698baf6
 
 
 
