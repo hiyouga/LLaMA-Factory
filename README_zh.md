@@ -23,7 +23,10 @@
 
 下面是使用单张 GPU 在 10 分钟内更改对话式大型语言模型自我认知的示例。
 
-https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846-2d88920d5ba1
+
+
+https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd-d76c6d0a6594
+
 
 ## 目录
 
