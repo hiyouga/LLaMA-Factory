@@ -23,7 +23,11 @@ Preview LLaMA Board at **[🤗 Spaces](https://huggingface.co/spaces/hiyouga/LLa
 
 Here is an example of altering the self-cognition of an instruction-tuned language model within 10 minutes on a single GPU.
 
-https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6ba60acc-e2e2-4bec-b846-2d88920d5ba1
+
+
+https://github.com/hiyouga/LLaMA-Factory/assets/16256802/6b969ec5-ae2f-4ef7-9dcf-5816eb1e936b
+
+
 
 ## Table of Contents
 
