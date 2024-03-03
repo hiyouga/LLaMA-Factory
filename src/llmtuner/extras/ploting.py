@@ -46,8 +46,8 @@ def plot_loss(save_dictionary: os.PathLike, keys: Optional[List[str]] = ["loss"]
             continue
 
         plt.figure()
-        plt.plot(steps, metrics, alpha=0.4, label="original")
-        plt.plot(steps, smooth(metrics), label="smoothed")
+        plt.plot(steps, metrics, color="#1f77b4", alpha=0.4, label="original")
+        plt.plot(steps, smooth(metrics), color="#1f77b4", label="smoothed")
         plt.title("training {} of {}".format(key, save_dictionary))
         plt.xlabel("step")
         plt.ylabel(key)
