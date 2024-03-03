@@ -82,6 +82,7 @@ def gen_plot(base_model: str, finetuning_type: str, output_dir: str) -> "matplot
         return
 
     plt.close("all")
+    plt.switch_backend("agg")
     fig = plt.figure()
     ax = fig.add_subplot(111)
     steps, losses = [], []
@@ -95,8 +96,8 @@ def gen_plot(base_model: str, finetuning_type: str, output_dir: str) -> "matplot
     if len(losses) == 0:
         return None
 
-    ax.plot(steps, losses, alpha=0.4, label="original")
-    ax.plot(steps, smooth(losses), label="smoothed")
+    ax.plot(steps, losses, color="#1f77b4", alpha=0.4, label="original")
+    ax.plot(steps, smooth(losses), color="#1f77b4", label="smoothed")
     ax.legend()
     ax.set_xlabel("step")
     ax.set_ylabel("loss")
