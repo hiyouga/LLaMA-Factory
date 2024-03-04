@@ -144,6 +144,8 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 Please refer to [constants.py](src/llmtuner/extras/constants.py) for a full list of models we supported.
 
+You also can add a custom chat template to [template.py](src/llmtuner/data/template.py).
+
 ## Supported Training Approaches
 
 | Approach               |     Full-tuning    |    Freeze-tuning   |       LoRA         |       QLoRA        |
@@ -556,6 +558,8 @@ python src/export_model.py \
 > Merging LoRA weights into a quantized model is not supported.
 
 > [!TIP]
+> Use `--model_name_or_path path_to_export` only to use the exported model.
+> 
 > Use `--export_quantization_bit 4` and `--export_quantization_dataset data/c4_demo.json` to quantize the model after merging the LoRA weights.
 
 ### Inference with OpenAI-style API
