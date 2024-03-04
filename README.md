@@ -558,9 +558,9 @@ python src/export_model.py \
 > Merging LoRA weights into a quantized model is not supported.
 
 > [!TIP]
-> Use `--model_name_or_path path_to_export` only to use the exported model.
+> Use `--model_name_or_path path_to_export` solely to use the exported model.
 > 
-> Use `--export_quantization_bit 4` and `--export_quantization_dataset data/c4_demo.json` to quantize the model after merging the LoRA weights.
+> Use `--export_quantization_bit 4` and `--export_quantization_dataset data/c4_demo.json` to quantize the model with AutoGPTQ after merging the LoRA weights.
 
 ### Inference with OpenAI-style API
 
