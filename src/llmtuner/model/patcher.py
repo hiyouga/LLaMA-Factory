@@ -284,8 +284,9 @@ def patch_config(
 
     init_kwargs["torch_dtype"] = model_args.compute_dtype
     if not is_deepspeed_zero3_enabled():
-        init_kwargs["device_map"] = {"": get_current_device()}
         init_kwargs["low_cpu_mem_usage"] = True
+        if is_trainable:
+            init_kwargs["device_map"] = {"": get_current_device()}
 
 
 def patch_model(
