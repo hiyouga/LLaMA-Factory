@@ -144,6 +144,8 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 
 项目所支持模型的完整列表请参阅 [constants.py](src/llmtuner/extras/constants.py)。
 
+您也可以在 [template.py](src/llmtuner/data/template.py) 中添加自己的对话模板。
+
 ## 训练方法
 
 | 方法                   |     全参数训练      |    部分参数训练     |       LoRA         |       QLoRA        |
@@ -555,6 +557,8 @@ python src/export_model.py \
 > 尚不支持量化模型的 LoRA 权重合并及导出。
 
 > [!TIP]
+> 仅使用 `--model_name_or_path path_to_export` 来加载导出后的模型。
+> 
 > 合并 LoRA 权重之后可再次使用 `--export_quantization_bit 4` 和 `--export_quantization_dataset data/c4_demo.json` 量化模型。
 
 ### 使用 OpenAI 风格 API 推理

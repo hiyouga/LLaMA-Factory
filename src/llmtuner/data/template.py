@@ -213,6 +213,32 @@ def _register_template(
     replace_eos: Optional[bool] = False,
     force_system: Optional[bool] = False,
 ) -> None:
+    r"""
+    Registers a chat template.
+
+    To add the following chat template:
+    ```
+    [HUMAN]:
+    user prompt here
+    [AI]:
+    model response here
+
+    [HUMAN]:
+    user prompt here
+    [AI]:
+    model response here
+    ```
+
+    The corresponding code should be:
+    ```
+    _register_template(
+        name="custom",
+        format_user=StringFormatter(slots=["[HUMAN]:\n{{content}}\n[AI]:\n"]),
+        format_separator=EmptyFormatter(slots=["\n\n"]),
+        efficient_eos=True,
+    )
+    ```
+    """
     eos_slots = [] if efficient_eos else [{"eos_token"}]
     template_class = Llama2Template if name.startswith("llama2") else Template
     default_user_formatter = StringFormatter(slots=["{{content}}"])
