@@ -40,7 +40,7 @@ class LoraArguments:
             "help": "Name(s) of modules apart from LoRA layers to be set as trainable and saved in the final checkpoint."
         },
     )
-    lora_alpha: Optional[int] = field(
+    lora_alpha: Optional[float] = field(
         default=None,
         metadata={"help": "The scale factor for LoRA fine-tuning (default: lora_rank * 2)."},
     )
