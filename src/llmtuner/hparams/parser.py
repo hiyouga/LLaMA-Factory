@@ -99,6 +99,11 @@ def _parse_eval_args(args: Optional[Dict[str, Any]] = None) -> _EVAL_CLS:
 def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_args(args)
 
+    print("model_args", model_args)
+    print("data_args", data_args)
+    print("training_args", training_args)
+    print("finetuning_args", finetuning_args)
+
     # Setup logging
     if training_args.should_log:
         _set_transformers_logging()
@@ -106,6 +111,9 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     # Check arguments
     if finetuning_args.stage != "pt" and data_args.template is None:
         raise ValueError("Please specify which `template` to use.")
+
+    if finetuning_args.stage == "pt" and data_args.train_last_turn_only:
+        raise ValueError("PT stage does not support `train_last_turn_only`.")
 
     if finetuning_args.stage != "sft" and training_args.predict_with_generate:
         raise ValueError("`predict_with_generate` cannot be set as True except SFT.")

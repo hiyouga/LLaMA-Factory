@@ -20,6 +20,10 @@ class DataArguments:
         default="data",
         metadata={"help": "Path to the folder containing the datasets."},
     )
+    train_last_turn_only: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Whether or not to train the last turn only."},
+    )
     split: Optional[str] = field(
         default="train",
         metadata={"help": "Which dataset split to use for training and evaluation."},

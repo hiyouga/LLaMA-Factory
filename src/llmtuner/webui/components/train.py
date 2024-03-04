@@ -25,13 +25,15 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
         )
         dataset_dir = gr.Textbox(value=DEFAULT_DATA_DIR, scale=2)
         dataset = gr.Dropdown(multiselect=True, scale=4)
+        train_last_turn_only = gr.Checkbox()
         preview_elems = create_preview_box(dataset_dir, dataset)
+        
 
     training_stage.change(list_dataset, [dataset_dir, training_stage], [dataset], queue=False)
     dataset_dir.change(list_dataset, [dataset_dir, training_stage], [dataset], queue=False)
 
-    input_elems.update({training_stage, dataset_dir, dataset})
-    elem_dict.update(dict(training_stage=training_stage, dataset_dir=dataset_dir, dataset=dataset, **preview_elems))
+    input_elems.update({training_stage, dataset_dir, dataset, train_last_turn_only})
+    elem_dict.update(dict(training_stage=training_stage, dataset_dir=dataset_dir, dataset=dataset,train_last_turn_only=train_last_turn_only, **preview_elems))
 
     with gr.Row():
         cutoff_len = gr.Slider(value=1024, minimum=4, maximum=16384, step=1)
@@ -81,6 +83,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             sft_packing = gr.Checkbox()
             upcast_layernorm = gr.Checkbox()
             use_llama_pro = gr.Checkbox()
+        
 
     input_elems.update(
         {

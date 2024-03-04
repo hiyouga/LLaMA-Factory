@@ -116,6 +116,7 @@ class Runner:
             flash_attn=(get("top.booster") == "flash_attn"),
             use_unsloth=(get("top.booster") == "unsloth"),
             dataset_dir=get("train.dataset_dir"),
+            train_last_turn_only=get("train.train_last_turn_only"),
             dataset=",".join(get("train.dataset")),
             cutoff_len=get("train.cutoff_len"),
             learning_rate=float(get("train.learning_rate")),
