@@ -63,6 +63,7 @@ def preprocess_supervised_dataset(
                 data_args.reserved_label_len,
             )
         ):
+            # 判断data_args.train_last_turn_only是否为True，如果是True。设置除了最后一轮的其他轮的source_ids都为IGNORE_INDEX
             if data_args.train_on_prompt:
                 source_mask = source_ids
             elif turn_idx != 0 and template.efficient_eos:
@@ -71,7 +72,11 @@ def preprocess_supervised_dataset(
                 source_mask = [IGNORE_INDEX] * len(source_ids)
 
             input_ids += source_ids + target_ids
-            labels += source_mask + target_ids
+
+            if data_args.train_last_turn_only and turn_idx != len(messages) - 1:
+                labels += source_mask + [IGNORE_INDEX] * len(target_ids)
+            else:
+                labels += source_mask + target_ids
 
         if template.efficient_eos:
             input_ids += [tokenizer.eos_token_id]
@@ -110,7 +115,11 @@ def preprocess_packed_supervised_dataset(
                 source_mask = [IGNORE_INDEX] * len(source_ids)
 
             input_ids += source_ids + target_ids
-            labels += source_mask + target_ids
+
+            if data_args.train_last_turn_only and len(input_ids) != 0:
+                labels += source_mask + [IGNORE_INDEX] * len(target_ids)
+            else:
+                labels += source_mask + target_ids
 
     if template.efficient_eos:
         input_ids += [tokenizer.eos_token_id]
