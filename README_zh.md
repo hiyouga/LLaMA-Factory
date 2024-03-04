@@ -559,7 +559,7 @@ python src/export_model.py \
 > [!TIP]
 > 仅使用 `--model_name_or_path path_to_export` 来加载导出后的模型。
 > 
-> 合并 LoRA 权重之后可再次使用 `--export_quantization_bit 4` 和 `--export_quantization_dataset data/c4_demo.json` 量化模型。
+> 合并 LoRA 权重之后可再次使用 `--export_quantization_bit 4` 和 `--export_quantization_dataset data/c4_demo.json` 基于 AutoGPTQ 量化模型。
 
 ### 使用 OpenAI 风格 API 推理
 
