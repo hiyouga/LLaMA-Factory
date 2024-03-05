@@ -53,6 +53,49 @@ def default_tool_formatter(tools: List[Dict[str, Any]]) -> str:
     )
 
 
+def rubra_fc_v1_tool_formatter(specs: List[Dict[str, Any]]) -> str:
+    function_definitions = []
+    for spec in specs:
+        # Extracting basic information
+        func_name = spec['name']
+        description = spec.get('description', 'No description provided.')
+        parameters = spec.get('parameters', {}).get('properties', {})
+        required_params = spec.get('parameters', {}).get('required', [])
+        
+        if isinstance(required_params, bool):  # Incorrect structure handling
+            required_params = []  # Resetting to empty if it's mistakenly a boolean
+        
+        # Creating the function signature
+        func_args = []
+        for param, details in parameters.items():
+            type_annotation = details['type']
+            # Handling enum types for parameters
+            if 'enum' in details:
+                type_annotation = 'str'  # Using str type for enums, might be enhanced to use Literal types in future versions
+            arg_str = f"{param}: {type_annotation}"
+            if param not in required_params:
+                arg_str += " = None"
+            func_args.append(arg_str)
+        func_args_str = ", ".join(func_args) if func_args else ""
+        
+        # Generating the docstring with dynamic parameter documentation, including required status
+        docstring_lines = ['"""', description, '']
+        for param, details in parameters.items():
+            required_text = "Required" if param in required_params else "Optional"
+            docstring_lines.append(f":param {param}: {details.get('description', 'No description provided.')} ({required_text})")
+            docstring_lines.append(f":type {param}: {details['type']}")
+        docstring_lines.append('"""')
+        docstring = "\n    ".join(docstring_lines)
+        
+        # Generating the full function definition
+        function_definition = f"""def {func_name}({func_args_str}) -> None:
+    {docstring}
+"""
+        function_definitions.append(function_definition)
+    
+    return "\n".join(function_definitions)
+
+
 def default_tool_extractor(content: str) -> Union[str, Tuple[str, str]]:
     regex = re.compile(r"Action:\s*([a-zA-Z0-9_]+).*?Action Input:\s*(.*)", re.DOTALL)
     action_match = re.search(regex, content)
@@ -143,6 +186,8 @@ class ToolFormatter(Formatter):
 
             if self.tool_format == "default":
                 return [default_tool_formatter(tools)]
+            elif self.tool_format == "rubra-fc-v1":
+                return [rubra_fc_v1_tool_formatter(tools)]
             else:
                 raise NotImplementedError
         except Exception:

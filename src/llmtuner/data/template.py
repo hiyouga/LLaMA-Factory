@@ -631,6 +631,14 @@ _register_template(
     force_system=True,
 )
 
+_register_template(
+    name="mistral_rubra",
+    format_user=StringFormatter(slots=["[INST] {{content}} [/INST]"]),
+    format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
+    force_system=True,
+    format_tools=ToolFormatter(tool_format="rubra-fc-v1")
+)
+
 
 _register_template(
     name="openchat",
