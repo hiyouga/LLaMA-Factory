@@ -287,6 +287,8 @@ def patch_config(
         init_kwargs["low_cpu_mem_usage"] = True
         if is_trainable:
             init_kwargs["device_map"] = {"": get_current_device()}
+        elif model_args.export_dir is None:
+            init_kwargs["device_map"] = "auto"
 
 
 def patch_model(
