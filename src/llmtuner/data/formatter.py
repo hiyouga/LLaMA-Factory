@@ -204,5 +204,7 @@ class ToolFormatter(Formatter):
     def extract(self, content: str) -> Union[str, Tuple[str, str]]:
         if self.tool_format == "default":
             return default_tool_extractor(content)
+        elif self.tool_format == "rubra-fc-v1":
+            return default_tool_extractor(content)
         else:
             raise NotImplementedError
