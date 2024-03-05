@@ -88,7 +88,7 @@ def load_model(
 
     if model is None:
         model_init_context = nullcontext()
-        if is_trainable and getattr(config, "quantization_config", None):
+        if model_args.aqlm_optimization and getattr(config, "quantization_config", None):
             quantization_config: Dict[str, Any] = getattr(config, "quantization_config", None)
             if quantization_config.get("quant_method", None) == "aqlm":
                 import aqlm  # type: ignore
