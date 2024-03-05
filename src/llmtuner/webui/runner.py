@@ -144,7 +144,7 @@ class Runner:
             args["name_module_trainable"] = get("train.name_module_trainable")
         elif args["finetuning_type"] == "lora":
             args["lora_rank"] = int(get("train.lora_rank"))
-            args["lora_alpha"] = float(get("train.lora_alpha"))
+            args["lora_alpha"] = int(get("train.lora_alpha"))
             args["lora_dropout"] = float(get("train.lora_dropout"))
             args["lora_target"] = get("train.lora_target") or get_module(get("top.model_name"))
             args["use_rslora"] = get("train.use_rslora")
