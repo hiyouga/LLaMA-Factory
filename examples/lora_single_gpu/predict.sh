@@ -13,6 +13,7 @@ CUDA_VISIBLE_DEVICES=0 python ../../src/train_bash.py \
     --overwrite_cache \
     --overwrite_output_dir \
     --cutoff_len 1024 \
+    --preprocessing_num_workers 16 \
     --per_device_eval_batch_size 1 \
     --max_samples 20 \
     --predict_with_generate
