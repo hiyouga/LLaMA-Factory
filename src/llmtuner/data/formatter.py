@@ -131,7 +131,6 @@ def rubra_fc_v1_tool_formatter(specs: List[Dict[str, Any]]) -> str:
     to_return = TOOL_SYSTEM_PROMPT_RUBRA.format(
         tool_text="\n".join(function_definitions)
     )
-    print(to_return)
     return to_return
 
 
