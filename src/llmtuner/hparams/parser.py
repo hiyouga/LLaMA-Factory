@@ -7,7 +7,6 @@ import torch
 import transformers
 from transformers import HfArgumentParser, Seq2SeqTrainingArguments
 from transformers.trainer_utils import get_last_checkpoint
-from transformers.utils.versions import require_version
 
 from ..extras.logging import get_logger
 from ..extras.packages import is_unsloth_available
@@ -27,17 +26,6 @@ _INFER_ARGS = [ModelArguments, DataArguments, FinetuningArguments, GeneratingArg
 _INFER_CLS = Tuple[ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _EVAL_ARGS = [ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments]
 _EVAL_CLS = Tuple[ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments]
-
-
-def _check_dependencies(disabled: bool) -> None:
-    if disabled:
-        logger.warning("Version checking has been disabled, may lead to unexpected behaviors.")
-    else:
-        require_version("transformers>=4.37.2", "To fix: pip install transformers>=4.37.2")
-        require_version("datasets>=2.14.3", "To fix: pip install datasets>=2.14.3")
-        require_version("accelerate>=0.27.2", "To fix: pip install accelerate>=0.27.2")
-        require_version("peft>=0.9.0", "To fix: pip install peft>=0.9.0")
-        require_version("trl>=0.7.11", "To fix: pip install trl>=0.7.11")
 
 
 def _parse_args(parser: "HfArgumentParser", args: Optional[Dict[str, Any]] = None) -> Tuple[Any]:
@@ -152,7 +140,6 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
             raise ValueError("Unsloth does not support DoRA.")
 
     _verify_model_args(model_args, finetuning_args)
-    _check_dependencies(disabled=finetuning_args.disable_version_checking)
 
     if (
         training_args.do_train
@@ -249,7 +236,6 @@ def get_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
 
     _set_transformers_logging()
     _verify_model_args(model_args, finetuning_args)
-    _check_dependencies(disabled=finetuning_args.disable_version_checking)
 
     if data_args.template is None:
         raise ValueError("Please specify which `template` to use.")
@@ -262,7 +248,6 @@ def get_eval_args(args: Optional[Dict[str, Any]] = None) -> _EVAL_CLS:
 
     _set_transformers_logging()
     _verify_model_args(model_args, finetuning_args)
-    _check_dependencies(disabled=finetuning_args.disable_version_checking)
     model_args.aqlm_optimization = True
 
     if data_args.template is None:
