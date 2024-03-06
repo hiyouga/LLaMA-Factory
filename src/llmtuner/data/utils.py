@@ -42,15 +42,6 @@ class ShareGPTRole(str, Enum):
     FUNCTION = "function_call"
     OBSERVATION = "observation"
 
-@unique
-class OpenAIRole(str, Enum):
-    USER = "user"
-    ASSISTANT = "assistant"
-    SYSTEM = "system"
-    FUNCTION = "tool_calls"
-    OBSERVATION = "tool"
-
-
 
 def checksum(data_files: List[str], file_sha1: Optional[str] = None) -> None:
     if file_sha1 is None:
