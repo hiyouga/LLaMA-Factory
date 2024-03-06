@@ -173,10 +173,6 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments):
         default=False,
         metadata={"help": "Whether or not to make only the parameters in the expanded blocks trainable."},
     )
-    disable_version_checking: Optional[bool] = field(
-        default=False,
-        metadata={"help": "Whether or not to disable version checking."},
-    )
     plot_loss: Optional[bool] = field(
         default=False,
         metadata={"help": "Whether or not to save the training loss curves."},
