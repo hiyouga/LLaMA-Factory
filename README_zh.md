@@ -474,8 +474,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 #### 使用 Huggingface Accelerate
 
 ```bash
-accelerate config # 首先配置分布式环境
-accelerate launch src/train_bash.py # 参数同上
+accelerate launch --config_file config.yaml src/train_bash.py # 参数同上
 ```
 
 <details><summary>LoRA 训练的 Accelerate 配置示例</summary>
