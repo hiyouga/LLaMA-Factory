@@ -809,10 +809,10 @@ _register_template(
         slots=["<|im_start|>assistant\n{{content}}<|im_end|>\n"]
     ),
     format_function=StringFormatter(
-        slots=["<|im_start|>function\n{{content}}<|im_end|>\n"]
+        slots=["<|im_start|><<functions>>\n{{content}}<|im_end|>\n"]
     ),
     format_observation=StringFormatter(
-        slots=["<|im_start|>observation\n{{content}}<|im_end|>\n"]
+        slots=["<|im_start|><<observation>>\n{{content}}<|im_end|>\n"]
     ),
     stop_words=["<|im_end|>", "<|im_start|>"],
     generation_prompt="<|im_start|>assistant\\n",
@@ -1044,7 +1044,9 @@ if __name__ == "__main__":
     res = templates["chatml_rubra"].encode_messages(
         messages=messsages, system="you are helpful assistant.", tools=tool_content
     )
-    print(f"=======\nEncoded Message: \n {res}\n=======")
+    print(f"=======\nEncoded Message:\n=======")
+    for msg in res:
+        print(msg)
 
     jinja_template = _get_jinja_template(templates["chatml_rubra"], tokenizer)
     print(f"=======\nJinja Template: \n {jinja_template}\n=======")
