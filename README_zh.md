@@ -501,10 +501,13 @@ use_cpu: false
 
 </details>
 
+> [!TIP]
+> 我们推荐使用 Accelerate 进行 LoRA 训练。
+
 #### 使用 DeepSpeed
 
 ```bash
-deepspeed --num_gpus 8 --master_port=9901 src/train_bash.py \
+deepspeed --num_gpus 8 src/train_bash.py \
     --deepspeed ds_config.json \
     ... # 参数同上
 ```
@@ -521,24 +524,31 @@ deepspeed --num_gpus 8 --master_port=9901 src/train_bash.py \
   "fp16": {
     "enabled": "auto",
     "loss_scale": 0,
-    "initial_scale_power": 16,
     "loss_scale_window": 1000,
+    "initial_scale_power": 16,
     "hysteresis": 2,
     "min_loss_scale": 1
+  },
+  "bf16": {
+    "enabled": "auto"
   },
   "zero_optimization": {
     "stage": 2,
     "allgather_partitions": true,
     "allgather_bucket_size": 5e8,
+    "overlap_comm": true,
     "reduce_scatter": true,
     "reduce_bucket_size": 5e8,
-    "overlap_comm": false,
-    "contiguous_gradients": true
+    "contiguous_gradients": true,
+    "round_robin_gradients": true
   }
 }
 ```
 
 </details>
+
+> [!TIP]
+> 更多训练脚本请查看 [examples](examples)。
 
 ### 合并 LoRA 权重并导出模型
 
