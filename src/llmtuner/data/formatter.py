@@ -190,8 +190,8 @@ class FunctionFormatter(Formatter):
             raise ValueError("Name and arguments placeholders are required in the function formatter.")
 
     def apply(self, **kwargs) -> SLOTS:
-        content = kwargs.pop("content")
         try:
+            content = kwargs.pop("content")
             function = json.loads(content)
             name = function["name"]
             arguments = json.dumps(function["arguments"], ensure_ascii=False)
