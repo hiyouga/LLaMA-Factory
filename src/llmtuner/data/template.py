@@ -11,8 +11,6 @@ from .formatter import (
 )
 
 from .utils import Role, infer_max_len
-from .utils import infer_max_len
-# from .utils import ShareGPTRole as Role
 import json
 
 
@@ -121,6 +119,50 @@ class Template:
             encoded_messages.append(self._convert_elements_to_ids(tokenizer, elements))
 
         return self._make_pairs(encoded_messages, cutoff_len, reserved_label_len)
+
+    def encode_messages(
+        self,
+        messages: List[Dict[str, str]],
+        system: str = None,
+        tools: List[str] = None,
+    ) -> Sequence[Tuple[List[int], List[int]]]:
+        r"""
+        Encodes formatted inputs to pairs of token ids.
+        Turn 0: system + query        resp
+        Turn t: sep + query           resp
+        """
+        system = system or self.default_system
+        encoded_messages = []
+        for i, message in enumerate(messages):
+            if "from" in message:
+                message["role"] = message["from"]
+            if "value" in message:
+                message["content"] = message["value"]
+            elements = []
+            if i == 0 and (system or tools or self.force_system):
+                tool_text = self.format_tools.apply(content=tools)[0] if tools else ""
+                elements += self.format_system.apply(
+                    content=(system + "\n" + tool_text)
+                )
+            elif i > 0 and i % 2 == 0:
+                elements += self.format_separator.apply()
+
+            if message["role"] == Role.USER.value:
+                elements += self.format_user.apply(
+                    content=message["content"], idx=str(i // 2)
+                )
+            elif message["role"] == Role.ASSISTANT.value :
+                elements += self.format_assistant.apply(content=message["content"])
+            elif message["role"] == Role.OBSERVATION.value:
+                elements += self.format_observation.apply(content=message["content"])
+            elif message["role"] == Role.FUNCTION.value:
+                elements += self.format_function.apply(content=message["content"])
+            else:
+                raise NotImplementedError("Unexpected role: {}".format(message["role"]))
+
+            encoded_messages.append(elements)
+
+        return encoded_messages
 
     def encode_messages(
         self,
