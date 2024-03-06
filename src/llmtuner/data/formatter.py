@@ -60,48 +60,68 @@ def default_tool_formatter(tools: List[Dict[str, Any]]) -> str:
 
 def rubra_fc_v1_tool_formatter(specs: List[Dict[str, Any]]) -> str:
     function_definitions = []
+    
+    type_mapping = {
+        "string": "str",
+        "number": "float",  # Default to float; consider context for int usage
+        "object": "Dict[str, Any]",  # Placeholder, detailed handling will vary
+        "array": "List",
+        "boolean": "bool",
+        "null": "None",
+    }
+    
     for spec in specs:
-        
-        # Extracting basic information
         func_name = spec['name']
         description = spec.get('description', 'No description provided.')
         parameters = spec.get('parameters', {}).get('properties', {})
         required_params = spec.get('parameters', {}).get('required', [])
         
-        if isinstance(required_params, bool):  # Incorrect structure handling
-            required_params = []  # Resetting to empty if it's mistakenly a boolean
-        
-        # Creating the function signature
         func_args = []
         for param, details in parameters.items():
-            type_annotation = details['type']
-            # Handling enum types for parameters
+            json_type = details['type']
+            default_value = details.get('default')
+            python_type = type_mapping.get(json_type, "Any")  # Use Any as a fallback
+            
+            if json_type == 'array':
+                items_type = type_mapping.get(details.get('items', {}).get('type', 'Any'), "Any")
+                python_type = f"List[{items_type}]"
+            elif json_type == 'object':
+                # Simple representation; consider enhancing for nested objects
+                python_type = "Dict[str, Any]"
+            
             if 'enum' in details:
-                type_annotation = 'str'  # Using str type for enums, might be enhanced to use Literal types in future versions
-            arg_str = f"{param}: {type_annotation}"
-            if param not in required_params:
-                arg_str += " = None"
+                python_type = 'str'  # Consider using Enum class
+                
+            arg_str = f"{param}: {python_type}"
+            
+            if required_params:
+                if param not in required_params:
+                    arg_str += " = None"  # Indicate optional by setting default to None
+                
             func_args.append(arg_str)
+                
         func_args_str = ", ".join(func_args) if func_args else ""
         
-        # Generating the docstring with dynamic parameter documentation, including required status
         docstring_lines = ['"""', description, '']
         for param, details in parameters.items():
-            required_text = "Required" if param in required_params else "Optional"
-            docstring_lines.append(f":param {param}: {details.get('description', 'No description provided.')} ({required_text})")
-            docstring_lines.append(f":type {param}: {details['type']}")
+            if required_params:
+                required_text = "(Optional)" if param not in required_params else ""
+            else:
+                required_text = ""
+            json_type = details['type']
+            python_type = type_mapping.get(json_type, "Any")
+            
+            param_description = details.get('description', 'No description provided.')
+            docstring_lines.append(f":param {param}: {param_description} {required_text}")
+            docstring_lines.append(f":type {param}: {python_type}")
+            
         docstring_lines.append('"""')
         docstring = "\n    ".join(docstring_lines)
         
-        # Generating the full function definition
-        function_definition = f"""def {func_name}({func_args_str}) -> None:
-    {docstring}
-"""
+        function_definition = f"def {func_name}({func_args_str}):\n    {docstring}\n"
         function_definitions.append(function_definition)
-    to_return = TOOL_SYSTEM_PROMPT_RUBRA.format(
-        tool_text="\n".join(function_definitions)
-    )
-    return to_return
+    
+    return "\n".join(function_definitions)
 
 
 def default_tool_extractor(content: str) -> Union[str, Tuple[str, str]]:
