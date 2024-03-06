@@ -16,6 +16,7 @@ CUDA_VISIBLE_DEVICES=0 python ../../src/train_bash.py \
     --overwrite_cache \
     --overwrite_output_dir \
     --cutoff_len 512 \
+    --preprocessing_num_workers 16 \
     --per_device_train_batch_size 1 \
     --gradient_accumulation_steps 8 \
     --lr_scheduler_type cosine \
