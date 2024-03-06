@@ -128,10 +128,8 @@ def rubra_fc_v1_tool_formatter(specs: List[Dict[str, Any]]) -> str:
         
         function_definition = f"def {func_name}({func_args_str}):\n    {docstring}\n"
         function_definitions.append(function_definition)
-    to_return = TOOL_SYSTEM_PROMPT_RUBRA.format(
-        tool_text="\n".join(function_definitions)
-    )
-    return to_return
+    
+    return "\n".join(function_definitions)
 
 
 def default_tool_extractor(content: str) -> Union[str, Tuple[str, str]]:
