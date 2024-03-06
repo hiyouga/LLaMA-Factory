@@ -475,8 +475,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 #### Use Huggingface Accelerate
 
 ```bash
-accelerate config # configure the environment
-accelerate launch src/train_bash.py # arguments (same as above)
+accelerate launch --config_file config.yaml src/train_bash.py # arguments (same as above)
 ```
 
 <details><summary>Example config for LoRA training</summary>

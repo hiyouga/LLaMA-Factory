@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from transformers.tokenization_utils import PreTrainedTokenizer
 
 if is_jieba_available():
-    import jieba
+    import jieba  # type: ignore
 
 if is_nltk_available():
     from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
