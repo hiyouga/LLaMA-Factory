@@ -22,11 +22,6 @@ TOOL_SYSTEM_PROMPT = (
     "```\n"
 )
 
-TOOL_SYSTEM_PROMPT_RUBRA = (
-    "You have access to the following tools:\n{tool_text}",
-    "Use the following format if using a tool:\n[toolname1(arg1=value1, arg2=value2, ...), toolname2(arg1=value1, arg2=value2, ...)]"
-)
-
 
 def default_tool_formatter(tools: List[Dict[str, Any]]) -> str:
     tool_text = ""
@@ -97,11 +92,12 @@ def rubra_fc_v1_tool_formatter(specs: List[Dict[str, Any]]) -> str:
     {docstring}
 """
         function_definitions.append(function_definition)
-    to_return = TOOL_SYSTEM_PROMPT_RUBRA.format(
-        tool_text="\n".join(function_definitions)
+    to_return = "You have access to the following tools:\n{tool_text}".format(
+        "\n".join(function_definitions)
     )
-    print(to_return)
-    return to_return
+    to_return += "Use the following format if using a tool:\n[toolname1(arg1=value1, arg2=value2, ...), toolname2(arg1=value1, arg2=value2, ...)]"
+    # print(to_return)
+    return "hi"
 
 
 def default_tool_extractor(content: str) -> Union[str, Tuple[str, str]]:
@@ -202,9 +198,10 @@ class ToolFormatter(Formatter):
             return [""]
 
     def extract(self, content: str) -> Union[str, Tuple[str, str]]:
+        print("tool_format", tool_format)
         if self.tool_format == "default":
             return default_tool_extractor(content)
         elif self.tool_format == "rubra-fc-v1":
-            return default_tool_extractor(content)
+            return rubra_fc_v1_tool_formatter(content)
         else:
             raise NotImplementedError

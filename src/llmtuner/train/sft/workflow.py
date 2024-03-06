@@ -30,6 +30,8 @@ def run_sft(
 ):
     tokenizer = load_tokenizer(model_args)
     dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="sft")
+    print(dataset)
+    return
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
 
     if training_args.predict_with_generate:

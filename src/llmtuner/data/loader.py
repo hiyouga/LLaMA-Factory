@@ -146,7 +146,7 @@ def get_dataset(
     template = get_template_and_fix_tokenizer(tokenizer, data_args.template)
     if data_args.train_on_prompt and template.efficient_eos:
         raise ValueError("Current template does not support `train_on_prompt`.")
-
+    print("data_args", data_args)
     # Load from cache
     if data_args.cache_path is not None:
         if os.path.exists(data_args.cache_path):
@@ -169,6 +169,7 @@ def get_dataset(
         preprocess_func, print_function = get_preprocess_and_print_func(
             tokenizer, template, data_args, training_args, stage
         )
+        print("preprocess_func", preprocess_func)
         column_names = list(next(iter(dataset)).keys())
         kwargs = {}
         if not data_args.streaming:

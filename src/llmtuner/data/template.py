@@ -636,7 +636,7 @@ _register_template(
     format_user=StringFormatter(slots=["[INST] {{content}} [/INST]"]),
     format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
     force_system=True,
-    format_tools=ToolFormatter(tool_format="rubra-fc-v1")
+    # format_tools=ToolFormatter(tool_format="rubra-fc-v1")
 )
 
 
