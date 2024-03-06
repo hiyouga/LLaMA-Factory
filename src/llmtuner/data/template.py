@@ -320,11 +320,11 @@ def _register_template(
     format_observation: Optional["Formatter"] = None,
     format_tools: Optional["Formatter"] = None,
     format_separator: Optional["Formatter"] = None,
-    default_system: str = "",
-    stop_words: List[str] = [],
-    efficient_eos: bool = False,
-    replace_eos: bool = False,
-    force_system: bool = False,
+    default_system: Optional[str] = "",
+    stop_words: Optional[List[str]] = [],
+    efficient_eos: Optional[bool] = False,
+    replace_eos: Optional[bool] = False,
+    force_system: Optional[bool] = False,
     generation_prompt: Optional[str] = None,
 ) -> None:
     r"""
@@ -464,9 +464,7 @@ def _get_jinja_template(template: "Template", tokenizer: "PreTrainedTokenizer") 
     user_message = _convert_slots_to_jinja(template.format_user.apply(), tokenizer)
     jinja_template += "{{ " + user_message + " }}"
     jinja_template += "{% elif message['role'] == 'assistant' %}"
-    assistant_message = _convert_slots_to_jinja(
-        template.format_assistant.apply() + template.format_separator.apply(), tokenizer
-    )
+    assistant_message = _convert_slots_to_jinja(template.format_assistant.apply() + template.format_separator.apply(), tokenizer)
     jinja_template += "{{ " + assistant_message + " }}"
     if isinstance(template.format_function, Formatter):
         jinja_template += "{% elif message['role'] == 'function' %}"
