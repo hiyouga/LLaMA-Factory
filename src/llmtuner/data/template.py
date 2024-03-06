@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, Union
 
 from ..extras.logging import get_logger
-from .formatter import EmptyFormatter, FunctionFormatter, StringFormatter, ToolFormatter
+from .formatter import EmptyFormatter, FunctionFormatter, StringFormatter, ToolFormatter, Formatter
 from .utils import Role, infer_max_len
 import json
 
@@ -30,6 +30,7 @@ class Template:
     efficient_eos: bool
     replace_eos: bool
     force_system: bool
+    generation_prompt: Optional[str]
 
     def encode_oneturn(
         self,
@@ -249,6 +250,7 @@ def _register_template(
     efficient_eos: Optional[bool] = False,
     replace_eos: Optional[bool] = False,
     force_system: Optional[bool] = False,
+    generation_prompt: Optional[str] = None,
 ) -> None:
     r"""
     Registers a chat template.
@@ -296,6 +298,7 @@ def _register_template(
         efficient_eos=efficient_eos,
         replace_eos=replace_eos,
         force_system=force_system,
+        generation_prompt=generation_prompt,
     )
 
 
@@ -342,7 +345,7 @@ def _convert_slots_to_jinja(
 
 
 def _get_jinja_template(template: "Template", tokenizer: "PreTrainedTokenizer") -> str:
-    jinja_template = ""
+    jinja_template = "{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}"
 
     if template.default_system:
         jinja_template += "{% set system_message = '" + _jinja_escape(template.default_system) + "' %}"
@@ -369,12 +372,21 @@ def _get_jinja_template(template: "Template", tokenizer: "PreTrainedTokenizer") 
     user_message = _convert_slots_to_jinja(template.format_user.apply(), tokenizer)
     jinja_template += "{{ " + user_message + " }}"
     jinja_template += "{% elif message['role'] == 'assistant' %}"
-    assistant_message = _convert_slots_to_jinja(
-        template.format_assistant.apply() + template.format_separator.apply(), tokenizer
-    )
+    assistant_message = _convert_slots_to_jinja(template.format_assistant.apply() + template.format_separator.apply(), tokenizer)
     jinja_template += "{{ " + assistant_message + " }}"
+    if isinstance(template.format_function, Formatter):
+        jinja_template += "{% elif message['role'] == 'function' %}"
+        function_message = _convert_slots_to_jinja(template.format_function.apply(), tokenizer)
+        jinja_template += "{{ " + function_message + " }}"
+        
+    if isinstance(template.format_observation, Formatter):
+        jinja_template += "{% elif message['role'] == 'observation' %}"
+        observation_message = _convert_slots_to_jinja(template.format_observation.apply(), tokenizer)
+        jinja_template += "{{ " + observation_message + " }}"
     jinja_template += "{% endif %}"
     jinja_template += "{% endfor %}"
+    if template.generation_prompt:
+        jinja_template += "{% if add_generation_prompt %}{{ '"+template.generation_prompt+"' }}{% endif %}"
     return jinja_template
 
 
@@ -685,6 +697,7 @@ _register_template(
     format_function=StringFormatter(slots=["<|im_start|>function\n{{content}}<|im_end|>\n"]),
     format_observation=StringFormatter(slots=["<|im_start|>observation\n{{content}}<|im_end|>\n"]),
     stop_words=["<|im_end|>", "<|im_start|>"],
+    generation_prompt="<|im_start|>assistant\\n",
     replace_eos=True,
 )
 

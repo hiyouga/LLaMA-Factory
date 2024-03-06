@@ -162,8 +162,8 @@ class StringFormatter(Formatter):
 @dataclass
 class FunctionFormatter(Formatter):
     def apply(self, **kwargs) -> SLOTS:
-        content = kwargs.pop("content")
         try:
+            content = kwargs.pop("content")
             function = json.loads(content)
             name = function["name"]
             arguments = json.dumps(function["arguments"], ensure_ascii=False)
