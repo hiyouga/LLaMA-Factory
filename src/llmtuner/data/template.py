@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, Union
 from ..extras.logging import get_logger
 from .formatter import EmptyFormatter, FunctionFormatter, StringFormatter, ToolFormatter
 from .utils import Role, infer_max_len
+import json
 
 
 if TYPE_CHECKING:
@@ -84,7 +85,7 @@ class Template:
             elements = []
             if i == 0 and (system or tools or self.force_system):
                 tool_text = self.format_tools.apply(content=tools)[0] if tools else ""
-                elements += self.format_system.apply(content=(system + tool_text))
+                elements += self.format_system.apply(content=(system + "\n" + tool_text))
             elif i > 0 and i % 2 == 0:
                 elements += self.format_separator.apply()
 
@@ -102,6 +103,42 @@ class Template:
             encoded_messages.append(self._convert_elements_to_ids(tokenizer, elements))
 
         return self._make_pairs(encoded_messages, cutoff_len, reserved_label_len)
+    
+    def encode_messages(
+        self,
+        messages: List[Dict[str, str]],
+        system: str = None,
+        tools: List[str] = None,
+    ) -> Sequence[Tuple[List[int], List[int]]]:
+        r"""
+        Encodes formatted inputs to pairs of token ids.
+        Turn 0: system + query        resp
+        Turn t: sep + query           resp
+        """
+        system = system or self.default_system
+        encoded_messages = []
+        for i, message in enumerate(messages):
+            elements = []
+            if i == 0 and (system or tools or self.force_system):
+                tool_text = self.format_tools.apply(content=tools)[0] if tools else ""
+                elements += self.format_system.apply(content=(system + "\n" + tool_text))
+            elif i > 0 and i % 2 == 0:
+                elements += self.format_separator.apply()
+
+            if message["role"] == Role.USER.value:
+                elements += self.format_user.apply(content=message["content"], idx=str(i // 2))
+            elif message["role"] == Role.ASSISTANT.value:
+                elements += self.format_assistant.apply(content=message["content"])
+            elif message["role"] == Role.OBSERVATION.value:
+                elements += self.format_observation.apply(content=message["content"])
+            elif message["role"] == Role.FUNCTION.value:
+                elements += self.format_function.apply(content=message["content"])
+            else:
+                raise NotImplementedError("Unexpected role: {}".format(message["role"]))
+
+            encoded_messages.append(elements)
+
+        return encoded_messages
 
     def _convert_elements_to_ids(
         self, tokenizer: "PreTrainedTokenizer", elements: List[Union[str, Dict[str, str]]]
@@ -639,6 +676,18 @@ _register_template(
     # format_tools=ToolFormatter(tool_format="rubra-fc-v1")
 )
 
+_register_template(
+    name="chatml_rubra",
+    format_tools=ToolFormatter(tool_format="rubra-fc-v1"),
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_assistant=StringFormatter(slots=["<|im_start|>assistant\n{{content}}<|im_end|>\n"]),
+    format_function=StringFormatter(slots=["<|im_start|>function\n{{content}}<|im_end|>\n"]),
+    format_observation=StringFormatter(slots=["<|im_start|>observation\n{{content}}<|im_end|>\n"]),
+    stop_words=["<|im_end|>", "<|im_start|>"],
+    replace_eos=True,
+)
+
 
 _register_template(
     name="openchat",
@@ -771,3 +820,65 @@ _register_template(
     format_user=StringFormatter(slots=["<human>:{{content}}\n<bot>:"]),
     format_separator=EmptyFormatter(slots=["\n"]),
 )
+
+
+
+
+if __name__ == "__main__":
+    from transformers import AutoTokenizer
+    tokenizer = AutoTokenizer.from_pretrained("teknium/OpenHermes-2.5-Mistral-7B")
+    
+    tool_content = json.dumps([
+    {
+        "name": "get_stock_price",
+        "description": "Get the current stock price",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "symbol": {
+                    "type": "string",
+                    "description": "The stock symbol, e.g. AAPL, GOOG"
+                }
+            },
+            "required": [
+                "symbol"
+            ]
+        }
+    },
+    {
+        "name": "check_word_anagram",
+        "description": "Check if two words are anagrams of each other",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "word1": {
+                    "type": "string",
+                    "description": "The first word"
+                },
+                "word2": {
+                    "type": "string",
+                    "description": "The second word"
+                }
+            },
+            "required": [
+                "word1",
+                "word2"
+            ]
+        }
+    }
+])
+    res = templates["chatml_rubra"].encode_messages(messages=[{'role': 'user', 'content': 'hi'},
+        {'role': 'assistant', 'content': 'no.'},
+        {'role': 'user', 'content': 'really.'},
+        {'role': 'assistant', 'content': 'ok.'},],system="you are helpful assistant.", tools=tool_content
+        )
+    print(f"=======\nEncoded Message: \n {res}\n=======")
+    
+    jinja_template = _get_jinja_template(templates["chatml_rubra"], tokenizer)
+    print(f"=======\nJinja Template: \n {jinja_template}\n=======")
+    
+    
+    
+    
+
+
