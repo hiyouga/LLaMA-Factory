@@ -71,7 +71,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 [24/02/28] We supported weight-decomposed LoRA (**[DoRA](https://arxiv.org/abs/2402.09353)**). Try `--use_dora` to activate DoRA training.
 
-[24/02/15] We supported **block expansion** proposed by [LLaMA Pro](https://github.com/TencentARC/LLaMA-Pro). See `tests/llama_pro.py` for usage.
+[24/02/15] We supported **block expansion** proposed by [LLaMA Pro](https://github.com/TencentARC/LLaMA-Pro). See `scripts/llama_pro.py` for usage.
 
 [24/02/05] Qwen1.5 (Qwen2 beta version) series models are supported in LLaMA-Factory. Check this [blog post](https://qwenlm.github.io/blog/qwen1.5/) for details.
 
@@ -475,8 +475,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 #### Use Huggingface Accelerate
 
 ```bash
-accelerate config # configure the environment
-accelerate launch src/train_bash.py # arguments (same as above)
+accelerate launch --config_file config.yaml src/train_bash.py # arguments (same as above)
 ```
 
 <details><summary>Example config for LoRA training</summary>
@@ -502,10 +501,13 @@ use_cpu: false
 
 </details>
 
+> [!TIP]
+> We commend using Accelerate for LoRA tuning.
+
 #### Use DeepSpeed
 
 ```bash
-deepspeed --num_gpus 8 --master_port=9901 src/train_bash.py \
+deepspeed --num_gpus 8 src/train_bash.py \
     --deepspeed ds_config.json \
     ... # arguments (same as above)
 ```
@@ -522,24 +524,31 @@ deepspeed --num_gpus 8 --master_port=9901 src/train_bash.py \
   "fp16": {
     "enabled": "auto",
     "loss_scale": 0,
-    "initial_scale_power": 16,
     "loss_scale_window": 1000,
+    "initial_scale_power": 16,
     "hysteresis": 2,
     "min_loss_scale": 1
+  },
+  "bf16": {
+    "enabled": "auto"
   },
   "zero_optimization": {
     "stage": 2,
     "allgather_partitions": true,
     "allgather_bucket_size": 5e8,
+    "overlap_comm": true,
     "reduce_scatter": true,
     "reduce_bucket_size": 5e8,
-    "overlap_comm": false,
-    "contiguous_gradients": true
+    "contiguous_gradients": true,
+    "round_robin_gradients": true
   }
 }
 ```
 
 </details>
+
+> [!TIP]
+> Refer to [examples](examples) for more training scripts.
 
 ### Merge LoRA weights and export model
 

@@ -121,6 +121,9 @@ class ModelArguments:
         default=False,
         metadata={"help": "For debugging purposes, print the status of the parameters in the model."},
     )
+    aqlm_optimization: Optional[bool] = field(
+        default=False, metadata={"help": "Whether or not to optimize the training performance of AQLM models."}
+    )
 
     def __post_init__(self):
         self.compute_dtype = None

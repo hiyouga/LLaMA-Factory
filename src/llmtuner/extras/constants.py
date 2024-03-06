@@ -671,48 +671,48 @@ register_model_group(
             DownloadSource.MODELSCOPE: "qwen/Qwen1.5-0.5B-Chat-GPTQ-Int8",
         },
         "Qwen1.5-0.5B-int4-Chat": {
-            DownloadSource.DEFAULT: "Qwen/Qwen1.5-0.5B-Chat-GPTQ-Int4",
-            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-0.5B-Chat-GPTQ-Int4",
+            DownloadSource.DEFAULT: "Qwen/Qwen1.5-0.5B-Chat-AWQ",
+            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-0.5B-Chat-AWQ",
         },
         "Qwen1.5-1.8B-int8-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen1.5-1.8B-Chat-GPTQ-Int8",
             DownloadSource.MODELSCOPE: "qwen/Qwen1.5-1.8B-Chat-GPTQ-Int8",
         },
         "Qwen1.5-1.8B-int4-Chat": {
-            DownloadSource.DEFAULT: "Qwen/Qwen1.5-1.8B-Chat-GPTQ-Int4",
-            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-1.8B-Chat-GPTQ-Int4",
+            DownloadSource.DEFAULT: "Qwen/Qwen1.5-1.8B-Chat-AWQ",
+            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-1.8B-Chat-AWQ",
         },
         "Qwen1.5-4B-int8-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen1.5-4B-Chat-GPTQ-Int8",
             DownloadSource.MODELSCOPE: "qwen/Qwen1.5-4B-Chat-GPTQ-Int8",
         },
         "Qwen1.5-4B-int4-Chat": {
-            DownloadSource.DEFAULT: "Qwen/Qwen1.5-4B-Chat-GPTQ-Int4",
-            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-4B-Chat-GPTQ-Int4",
+            DownloadSource.DEFAULT: "Qwen/Qwen1.5-4B-Chat-AWQ",
+            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-4B-Chat-AWQ",
         },
         "Qwen1.5-7B-int8-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen1.5-7B-Chat-GPTQ-Int8",
             DownloadSource.MODELSCOPE: "qwen/Qwen1.5-7B-Chat-GPTQ-Int8",
         },
         "Qwen1.5-7B-int4-Chat": {
-            DownloadSource.DEFAULT: "Qwen/Qwen1.5-7B-Chat-GPTQ-Int4",
-            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-7B-Chat-GPTQ-Int4",
+            DownloadSource.DEFAULT: "Qwen/Qwen1.5-7B-Chat-AWQ",
+            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-7B-Chat-AWQ",
         },
         "Qwen1.5-14B-int8-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen1.5-14B-Chat-GPTQ-Int8",
             DownloadSource.MODELSCOPE: "qwen/Qwen1.5-14B-Chat-GPTQ-Int8",
         },
         "Qwen1.5-14B-int4-Chat": {
-            DownloadSource.DEFAULT: "Qwen/Qwen1.5-14B-Chat-GPTQ-Int4",
-            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-14B-Chat-GPTQ-Int4",
+            DownloadSource.DEFAULT: "Qwen/Qwen1.5-14B-Chat-AWQ",
+            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-14B-Chat-AWQ",
         },
         "Qwen1.5-72B-int8-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen1.5-72B-Chat-GPTQ-Int8",
             DownloadSource.MODELSCOPE: "qwen/Qwen1.5-72B-Chat-GPTQ-Int8",
         },
         "Qwen1.5-72B-int4-Chat": {
-            DownloadSource.DEFAULT: "Qwen/Qwen1.5-72B-Chat-GPTQ-Int4",
-            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-72B-Chat-GPTQ-Int4",
+            DownloadSource.DEFAULT: "Qwen/Qwen1.5-72B-Chat-AWQ",
+            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-72B-Chat-AWQ",
         },
     },
     template="qwen",
