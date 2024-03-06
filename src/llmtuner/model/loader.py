@@ -45,6 +45,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "PreTrainedTokenizer":
         **init_kwargs,
     )
     patch_tokenizer(tokenizer)
+    print("tokenizer", tokenizer)
     return tokenizer
 
 
