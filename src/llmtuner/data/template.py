@@ -465,9 +465,7 @@ def _get_jinja_template(template: "Template", tokenizer: "PreTrainedTokenizer") 
     user_message = _convert_slots_to_jinja(template.format_user.apply(), tokenizer)
     jinja_template += "{{ " + user_message + " }}"
     jinja_template += "{% elif message['role'] == 'assistant' %}"
-    assistant_message = _convert_slots_to_jinja(
-        template.format_assistant.apply() + template.format_separator.apply(), tokenizer
-    )
+    assistant_message = _convert_slots_to_jinja(template.format_assistant.apply() + template.format_separator.apply(), tokenizer)
     jinja_template += "{{ " + assistant_message + " }}"
     if isinstance(template.format_function, Formatter):
         jinja_template += "{% elif message['role'] == 'function' %}"
