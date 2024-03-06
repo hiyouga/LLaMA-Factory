@@ -1042,7 +1042,6 @@ if __name__ == "__main__":
     res = templates["mistral_rubra"].encode_messages(
         messages=messsages, system="you are helpful assistant.", tools=tool_content
     )
-    print(type(res))
     print(f"=======\nEncoded Message:\n=======")
     for msg in res:
         print(msg)
