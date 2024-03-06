@@ -25,6 +25,14 @@ class Role(str, Enum):
     FUNCTION = "function_call"
     OBSERVATION = "observation"
 
+@unique
+class OpenAIRole(str, Enum):
+    USER = "user"
+    ASSISTANT = "assistant"
+    SYSTEM = "system"
+    FUNCTION = "tool_calls"
+    OBSERVATION = "tool"
+
 
 @unique
 class ShareGPTRole(str, Enum):
