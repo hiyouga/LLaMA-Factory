@@ -203,7 +203,7 @@ class ToolFormatter(Formatter):
             return [""]
 
     def extract(self, content: str) -> Union[str, Tuple[str, str]]:
-        print("tool_format", tool_format)
+        print("tool_format", self.tool_format)
         if self.tool_format == "default":
             return default_tool_extractor(content)
         elif self.tool_format == "rubra-fc-v1":
