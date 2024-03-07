@@ -486,6 +486,9 @@ def get_template_and_fix_tokenizer(
             logger.warning(
                 "New tokens have been added, make sure `resize_vocab` is True."
             )
+            logger.warning(
+                "New tokens have been added, make sure `resize_vocab` is True."
+            )
 
     try:
         tokenizer.chat_template = _get_jinja_template(template, tokenizer)
