@@ -10,9 +10,9 @@ from .formatter import (
     Formatter,
 )
 
-# from .utils import Role, infer_max_len
+from .utils import Role, infer_max_len
 from .utils import infer_max_len
-from .utils import OpenAIRole as Role
+# from .utils import OpenAIRole as Role
 import json
 
 
