@@ -474,11 +474,14 @@ def get_template_and_fix_tokenizer(
 
     if stop_words:
         num_added_tokens = tokenizer.add_special_tokens(
-            dict(additional_special_tokens=stop_words), replace_additional_special_tokens=False
+            dict(additional_special_tokens=stop_words),
+            replace_additional_special_tokens=False,
         )
         logger.info("Add {} to stop words.".format(",".join(stop_words)))
         if num_added_tokens > 0:
-            logger.warning("New tokens have been added, make sure `resize_vocab` is True.")
+            logger.warning(
+                "New tokens have been added, make sure `resize_vocab` is True."
+            )
 
     try:
         tokenizer.chat_template = _get_jinja_template(template, tokenizer)
@@ -1005,30 +1008,36 @@ if __name__ == "__main__":
     )
     messsages = [
         {
-            "role": "user",
-            "content": "I am looking for a book but I can't remember the title. The author's name is George Orwell.",
-        },
-        {"role": "tool_calls", "content": '[search_books(author="George Orwell")]'},
-        {
-            "role": "tool",
-            "content": "{'books': [{'title': '1984', 'author': 'George Orwell', 'genre': 'Dystopian'}, {'title': 'Animal Farm', 'author': 'George Orwell', 'genre': 'Political Satire'}]}",
+            "from": "human",
+            "value": "Can you tell me the latest news headlines for the United States?",
         },
         {
-            "role": "assistant",
-            "content": 'I found two books by George Orwell. The first one is "1984" which is a Dystopian novel. The second one is "Animal Farm", a Political Satire.',
+            "from": "function_call",
+            "value": '{"name": "get_news_headlines", "arguments": {"country": "United States"}}',
         },
         {
-            "role": "user",
-            "content": "Oh yes, I was looking for Animal Farm. Can you also find books in the same genre?",
-        },
-        {"role": "tool_calls", "content": '[search_books(genre="Political Satire")]'},
-        {
-            "role": "tool",
-            "content": "{'books': [{'title': 'Catch-22', 'author': 'Joseph Heller', 'genre': 'Political Satire'}, {'title': 'Slaughterhouse-Five', 'author': 'Kurt Vonnegut', 'genre': 'Political Satire'}]}",
+            "from": "observation",
+            "value": '{"headlines": ["Biden announces new vaccine mandates", "Hurricane Ida devastates Louisiana", "Apple unveils new iPhone", "NASA\'s Perseverance rover collects first Mars rock sample"]}',
         },
         {
-            "role": "assistant",
-            "content": 'Sure, here are two more books in the Political Satire genre. "Catch-22" by Joseph Heller and "Slaughterhouse-Five" by Kurt Vonnegut.',
+            "from": "gpt",
+            "value": "Here are the latest news headlines for the United States:\n1. Biden announces new vaccine mandates\n2. Hurricane Ida devastates Louisiana\n3. Apple unveils new iPhone\n4. NASA's Perseverance rover collects first Mars rock sample",
+        },
+        {
+            "from": "human",
+            "value": "That's interesting. What about the news in France?",
+        },
+        {
+            "from": "function_call",
+            "value": '{"name": "get_news_headlines", "arguments": {"country": "France"}}',
+        },
+        {
+            "from": "observation",
+            "value": '{"headlines": ["France recalls ambassadors to US and Australia", "French election: Macron\'s party braces for tough fight", "Louvre Museum to undergo major overhaul", "France to offer free birth control to all women under 25"]}',
+        },
+        {
+            "from": "gpt",
+            "value": "Here are the latest news headlines for France:\n1. France recalls ambassadors to US and Australia\n2. French election: Macron's party braces for tough fight\n3. Louvre Museum to undergo major overhaul\n4. France to offer free birth control to all women under 25",
         },
     ]
     res = templates["chatml_rubra"].encode_messages(
