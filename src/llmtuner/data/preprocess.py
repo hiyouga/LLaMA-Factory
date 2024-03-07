@@ -72,8 +72,10 @@ def preprocess_supervised_dataset(
                 source_mask = [IGNORE_INDEX] * len(source_ids)
 
             input_ids += source_ids + target_ids
+            
+            max_turn_idx = len(messages)/2 - 1
 
-            if data_args.train_last_turn_only and turn_idx != len(messages) - 1:
+            if data_args.train_last_turn_only and turn_idx <max_turn_idx:
                 target_mask = [IGNORE_INDEX] * len(target_ids)
                 labels += source_mask + target_mask
             else:
