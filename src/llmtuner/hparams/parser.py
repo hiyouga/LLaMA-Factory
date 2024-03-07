@@ -7,6 +7,7 @@ import torch
 import transformers
 from transformers import HfArgumentParser, Seq2SeqTrainingArguments
 from transformers.trainer_utils import get_last_checkpoint
+from transformers.utils import is_torch_bf16_gpu_available
 
 from ..extras.logging import get_logger
 from ..extras.misc import check_dependencies
@@ -156,6 +157,13 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         if model_args.use_unsloth:
             raise ValueError("Unsloth does not support DoRA.")
 
+    if finetuning_args.pure_bf16:
+        if not is_torch_bf16_gpu_available():
+            raise ValueError("This device does not support `pure_bf16`.")
+
+        if training_args.fp16 or training_args.bf16:
+            raise ValueError("Turn off mixed precision training when using `pure_bf16`.")
+
     _verify_model_args(model_args, finetuning_args)
 
     if (
@@ -226,9 +234,11 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         )
 
     # Post-process model arguments
-    model_args.compute_dtype = (
-        torch.bfloat16 if training_args.bf16 else (torch.float16 if training_args.fp16 else None)
-    )
+    if training_args.bf16 or finetuning_args.pure_bf16:
+        model_args.compute_dtype = torch.bfloat16
+    elif training_args.fp16:
+        model_args.compute_dtype = torch.float16
+
     model_args.model_max_length = data_args.cutoff_len
     model_args.aqlm_optimization = not training_args.predict_with_generate
 

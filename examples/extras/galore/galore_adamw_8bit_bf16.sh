@@ -11,6 +11,7 @@ CUDA_VISIBLE_DEVICES=0 python ../../../src/train_bash.py \
     --use_galore \
     --galore_target mlp,self_attn \
     --galore_rank 32 \
+    --optim adamw_8bit \
     --output_dir ../../../saves/LLaMA2-7B/galore/sft \
     --overwrite_cache \
     --overwrite_output_dir \
@@ -31,4 +32,4 @@ CUDA_VISIBLE_DEVICES=0 python ../../../src/train_bash.py \
     --max_samples 3000 \
     --val_size 0.1 \
     --plot_loss \
-    --fp16
+    --pure_bf16
