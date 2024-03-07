@@ -22,7 +22,7 @@ class FreezeArguments:
                     Others choices: the same as LLaMA."""
         },
     )
-    num_layer_trainable: Optional[int] = field(
+    num_layer_trainable: int = field(
         default=3,
         metadata={"help": "The number of trainable layers for partial-parameter (freeze) fine-tuning."},
     )
@@ -44,11 +44,11 @@ class LoraArguments:
         default=None,
         metadata={"help": "The scale factor for LoRA fine-tuning (default: lora_rank * 2)."},
     )
-    lora_dropout: Optional[float] = field(
+    lora_dropout: float = field(
         default=0.0,
         metadata={"help": "Dropout rate for the LoRA fine-tuning."},
     )
-    lora_rank: Optional[int] = field(
+    lora_rank: int = field(
         default=8,
         metadata={"help": "The intrinsic dimension for LoRA fine-tuning."},
     )
@@ -66,18 +66,19 @@ class LoraArguments:
                     Others choices: the same as LLaMA."""
         },
     )
-    lora_bf16_mode: Optional[bool] = field(
+    lora_bf16_mode: bool = field(
         default=False,
         metadata={"help": "Whether or not to train lora adapters in bf16 precision."},
     )
-    use_rslora: Optional[bool] = field(
+    use_rslora: bool = field(
         default=False,
         metadata={"help": "Whether or not to use the rank stabilization scaling factor for LoRA layer."},
     )
-    use_dora: Optional[bool] = field(
-        default=False, metadata={"help": "Whether or not to use the weight-decomposed lora method (DoRA)."}
+    use_dora: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use the weight-decomposed lora method (DoRA)."},
     )
-    create_new_adapter: Optional[bool] = field(
+    create_new_adapter: bool = field(
         default=False,
         metadata={"help": "Whether or not to create a new adapter with randomly initialized weight."},
     )
@@ -89,23 +90,23 @@ class RLHFArguments:
     Arguments pertaining to the PPO and DPO training.
     """
 
-    dpo_beta: Optional[float] = field(
+    dpo_beta: float = field(
         default=0.1,
         metadata={"help": "The beta parameter for the DPO loss."},
     )
-    dpo_loss: Optional[Literal["sigmoid", "hinge", "ipo", "kto_pair"]] = field(
+    dpo_loss: Literal["sigmoid", "hinge", "ipo", "kto_pair"] = field(
         default="sigmoid",
         metadata={"help": "The type of DPO loss to use."},
     )
-    dpo_ftx: Optional[float] = field(
-        default=0,
+    dpo_ftx: float = field(
+        default=0.0,
         metadata={"help": "The supervised fine-tuning loss coefficient in DPO training."},
     )
-    ppo_buffer_size: Optional[int] = field(
+    ppo_buffer_size: int = field(
         default=1,
         metadata={"help": "The number of mini-batches to make experience buffer in a PPO optimization step."},
     )
-    ppo_epochs: Optional[int] = field(
+    ppo_epochs: int = field(
         default=4,
         metadata={"help": "The number of epochs to perform in a PPO optimization step."},
     )
@@ -113,15 +114,15 @@ class RLHFArguments:
         default=None,
         metadata={"help": 'Log with either "wandb" or "tensorboard" in PPO training.'},
     )
-    ppo_score_norm: Optional[bool] = field(
+    ppo_score_norm: bool = field(
         default=False,
         metadata={"help": "Use score normalization in PPO training."},
     )
-    ppo_target: Optional[float] = field(
+    ppo_target: float = field(
         default=6.0,
         metadata={"help": "Target KL value for adaptive KL control in PPO training."},
     )
-    ppo_whiten_rewards: Optional[bool] = field(
+    ppo_whiten_rewards: bool = field(
         default=False,
         metadata={"help": "Whiten the rewards before compute advantages in PPO training."},
     )
@@ -149,7 +150,7 @@ class RLHFArguments:
         default=None,
         metadata={"help": "The number of bits to quantize the reward model."},
     )
-    reward_model_type: Optional[Literal["lora", "full", "api"]] = field(
+    reward_model_type: Literal["lora", "full", "api"] = field(
         default="lora",
         metadata={"help": "The type of the reward model in PPO training. Lora model only supports lora training."},
     )
@@ -161,19 +162,19 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments):
     Arguments pertaining to which techniques we are going to fine-tuning with.
     """
 
-    stage: Optional[Literal["pt", "sft", "rm", "ppo", "dpo"]] = field(
+    stage: Literal["pt", "sft", "rm", "ppo", "dpo"] = field(
         default="sft",
         metadata={"help": "Which stage will be performed in training."},
     )
-    finetuning_type: Optional[Literal["lora", "freeze", "full"]] = field(
+    finetuning_type: Literal["lora", "freeze", "full"] = field(
         default="lora",
         metadata={"help": "Which fine-tuning method to use."},
     )
-    use_llama_pro: Optional[bool] = field(
+    use_llama_pro: bool = field(
         default=False,
         metadata={"help": "Whether or not to make only the parameters in the expanded blocks trainable."},
     )
-    plot_loss: Optional[bool] = field(
+    plot_loss: bool = field(
         default=False,
         metadata={"help": "Whether or not to save the training loss curves."},
     )
