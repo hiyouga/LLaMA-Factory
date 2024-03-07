@@ -180,7 +180,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
     # Post-process training arguments
     if (
-        training_args.local_rank != -1
+        training_args.parallel_mode.value == "distributed"
         and training_args.ddp_find_unused_parameters is None
         and finetuning_args.finetuning_type == "lora"
     ):
