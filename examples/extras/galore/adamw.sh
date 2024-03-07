@@ -7,9 +7,7 @@ CUDA_VISIBLE_DEVICES=0 python ../../../src/train_bash.py \
     --dataset alpaca_gpt4_en,glaive_toolcall \
     --dataset_dir ../../../data \
     --template default \
-    --finetuning_type freeze \
-    --name_module_trainable mlp,self_attn \
-    --num_layer_trainable 8 \
+    --finetuning_type full \
     --output_dir ../../../saves/LLaMA2-7B/galore/sft \
     --overwrite_cache \
     --overwrite_output_dir \

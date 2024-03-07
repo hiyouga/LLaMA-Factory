@@ -66,10 +66,6 @@ class LoraArguments:
                     Others choices: the same as LLaMA."""
         },
     )
-    lora_bf16_mode: bool = field(
-        default=False,
-        metadata={"help": "Whether or not to train lora adapters in bf16 precision."},
-    )
     use_rslora: bool = field(
         default=False,
         metadata={"help": "Whether or not to use the rank stabilization scaling factor for LoRA layer."},
@@ -194,6 +190,10 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
     Arguments pertaining to which techniques we are going to fine-tuning with.
     """
 
+    pure_bf16: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to train model in purely bf16 precision (without AMP)."},
+    )
     stage: Literal["pt", "sft", "rm", "ppo", "dpo"] = field(
         default="sft",
         metadata={"help": "Which stage will be performed in training."},
