@@ -178,7 +178,7 @@ class GaloreArguments:
         default=0.25,
         metadata={"help": "GaLore scale."},
     )
-    galore_proj_type: Literal["std"] = field(
+    galore_proj_type: Literal["std", "reverse_std", "right", "left", "full"] = field(
         default="std",
         metadata={"help": "Type of GaLore projection."},
     )
