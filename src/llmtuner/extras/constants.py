@@ -848,6 +848,10 @@ register_model_group(
             DownloadSource.DEFAULT: "01-ai/Yi-6B",
             DownloadSource.MODELSCOPE: "01ai/Yi-6B",
         },
+        "Yi-9B": {
+            DownloadSource.DEFAULT: "01-ai/Yi-9B",
+            DownloadSource.MODELSCOPE: "01ai/Yi-9B",
+        },
         "Yi-34B": {
             DownloadSource.DEFAULT: "01-ai/Yi-34B",
             DownloadSource.MODELSCOPE: "01ai/Yi-34B",
