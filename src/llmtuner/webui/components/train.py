@@ -34,38 +34,38 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     elem_dict.update(dict(training_stage=training_stage, dataset_dir=dataset_dir, dataset=dataset, **preview_elems))
 
     with gr.Row():
-        cutoff_len = gr.Slider(value=1024, minimum=4, maximum=16384, step=1)
         learning_rate = gr.Textbox(value="5e-5")
         num_train_epochs = gr.Textbox(value="3.0")
+        max_grad_norm = gr.Textbox(value="1.0")
         max_samples = gr.Textbox(value="100000")
-        compute_type = gr.Radio(choices=["fp16", "bf16", "fp32"], value="fp16")
+        compute_type = gr.Dropdown(choices=["fp16", "bf16", "fp32", "pure_bf16"], value="fp16")
 
-    input_elems.update({cutoff_len, learning_rate, num_train_epochs, max_samples, compute_type})
+    input_elems.update({learning_rate, num_train_epochs, max_grad_norm, max_samples, compute_type})
     elem_dict.update(
         dict(
-            cutoff_len=cutoff_len,
             learning_rate=learning_rate,
             num_train_epochs=num_train_epochs,
+            max_grad_norm=max_grad_norm,
             max_samples=max_samples,
             compute_type=compute_type,
         )
     )
 
     with gr.Row():
+        cutoff_len = gr.Slider(value=1024, minimum=4, maximum=16384, step=1)
         batch_size = gr.Slider(value=2, minimum=1, maximum=1024, step=1)
         gradient_accumulation_steps = gr.Slider(value=8, minimum=1, maximum=1024, step=1)
-        lr_scheduler_type = gr.Dropdown(choices=[scheduler.value for scheduler in SchedulerType], value="cosine")
-        max_grad_norm = gr.Textbox(value="1.0")
         val_size = gr.Slider(value=0, minimum=0, maximum=1, step=0.001)
+        lr_scheduler_type = gr.Dropdown(choices=[scheduler.value for scheduler in SchedulerType], value="cosine")
 
-    input_elems.update({batch_size, gradient_accumulation_steps, lr_scheduler_type, max_grad_norm, val_size})
+    input_elems.update({cutoff_len, batch_size, gradient_accumulation_steps, val_size, lr_scheduler_type})
     elem_dict.update(
         dict(
+            cutoff_len=cutoff_len,
             batch_size=batch_size,
             gradient_accumulation_steps=gradient_accumulation_steps,
-            lr_scheduler_type=lr_scheduler_type,
-            max_grad_norm=max_grad_norm,
             val_size=val_size,
+            lr_scheduler_type=lr_scheduler_type,
         )
     )
 
@@ -75,12 +75,14 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             save_steps = gr.Slider(value=100, minimum=10, maximum=5000, step=10)
             warmup_steps = gr.Slider(value=0, minimum=0, maximum=5000, step=1)
             neftune_alpha = gr.Slider(value=0, minimum=0, maximum=10, step=0.1)
+            optim = gr.Textbox(value="adamw_torch")
 
         with gr.Row():
             resize_vocab = gr.Checkbox()
             sft_packing = gr.Checkbox()
             upcast_layernorm = gr.Checkbox()
             use_llama_pro = gr.Checkbox()
+            shift_attn = gr.Checkbox()
 
     input_elems.update(
         {
@@ -88,10 +90,12 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             save_steps,
             warmup_steps,
             neftune_alpha,
+            optim,
             resize_vocab,
             sft_packing,
             upcast_layernorm,
             use_llama_pro,
+            shift_attn,
         }
     )
     elem_dict.update(
@@ -101,10 +105,12 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             save_steps=save_steps,
             warmup_steps=warmup_steps,
             neftune_alpha=neftune_alpha,
+            optim=optim,
             resize_vocab=resize_vocab,
             sft_packing=sft_packing,
             upcast_layernorm=upcast_layernorm,
             use_llama_pro=use_llama_pro,
+            shift_attn=shift_attn,
         )
     )
 
@@ -167,6 +173,26 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     input_elems.update({dpo_beta, dpo_ftx, reward_model})
     elem_dict.update(
         dict(rlhf_tab=rlhf_tab, dpo_beta=dpo_beta, dpo_ftx=dpo_ftx, reward_model=reward_model, refresh_btn=refresh_btn)
+    )
+
+    with gr.Accordion(label="GaLore config", open=False) as galore_tab:
+        with gr.Row():
+            use_galore = gr.Checkbox(scale=1)
+            galore_rank = gr.Slider(value=16, minimum=1, maximum=1024, step=1, scale=2)
+            galore_update_interval = gr.Slider(value=200, minimum=1, maximum=1024, step=1, scale=2)
+            galore_scale = gr.Slider(value=0.25, minimum=0, maximum=1, step=0.01, scale=2)
+            galore_target = gr.Textbox(value="mlp,attn", scale=3)
+
+    input_elems.update({use_galore, galore_rank, galore_update_interval, galore_scale, galore_target})
+    elem_dict.update(
+        dict(
+            galore_tab=galore_tab,
+            use_galore=use_galore,
+            galore_rank=galore_rank,
+            galore_update_interval=galore_update_interval,
+            galore_scale=galore_scale,
+            galore_target=galore_target,
+        )
     )
 
     with gr.Row():

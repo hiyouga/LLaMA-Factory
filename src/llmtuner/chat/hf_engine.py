@@ -147,7 +147,7 @@ class HuggingfaceEngine(BaseEngine):
         )
         streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
         gen_kwargs["streamer"] = streamer
-        thread = Thread(target=model.generate, kwargs=gen_kwargs)
+        thread = Thread(target=model.generate, kwargs=gen_kwargs, daemon=True)
         thread.start()
 
         def stream():
