@@ -576,7 +576,7 @@ CUDA_VISIBLE_DEVICES=0 python src/export_model.py \
 ### 使用 OpenAI 风格 API 推理
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python src/api_demo.py \
+CUDA_VISIBLE_DEVICES=0 API_PORT=8000 python src/api_demo.py \
     --model_name_or_path path_to_llama_model \
     --adapter_name_or_path path_to_checkpoint \
     --template default \
