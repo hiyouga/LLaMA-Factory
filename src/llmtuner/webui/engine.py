@@ -16,8 +16,8 @@ class Engine:
         self.demo_mode = demo_mode
         self.pure_chat = pure_chat
         self.manager = Manager()
-        self.runner = Runner(self.manager, demo_mode=demo_mode)
-        self.chatter = WebChatModel(manager=self.manager, demo_mode=demo_mode, lazy_init=(not pure_chat))
+        self.runner = Runner(self.manager, demo_mode)
+        self.chatter = WebChatModel(self.manager, demo_mode, lazy_init=(not pure_chat))
 
     def _form_dict(self, resume_dict: Dict[str, Dict[str, Any]]):
         return {self.manager.get_elem_by_name(k): gr.update(**v) for k, v in resume_dict.items()}
