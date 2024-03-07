@@ -157,7 +157,39 @@ class RLHFArguments:
 
 
 @dataclass
-class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments):
+class GaloreArguments:
+    r"""
+    Arguments pertaining to the GaLore optimization.
+    """
+
+    use_galore: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use galore optimizer."},
+    )
+    galore_target: str = field(
+        default="mlp,attn",
+        metadata={"help": "Name(s) of modules to apply GaLore."},
+    )
+    galore_rank: int = field(
+        default=16,
+        metadata={"help": "GaLore rank."},
+    )
+    galore_update_interval: int = field(
+        default=200,
+        metadata={"help": "Number of steps to update the GaLore projection."},
+    )
+    galore_scale: float = field(
+        default=0.25,
+        metadata={"help": "GaLore scale."},
+    )
+    galore_proj_type: Literal["std"] = field(
+        default="std",
+        metadata={"help": "Type of GaLore projection."},
+    )
+
+
+@dataclass
+class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments):
     r"""
     Arguments pertaining to which techniques we are going to fine-tuning with.
     """
@@ -202,6 +234,9 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments):
 
         if self.use_llama_pro and self.finetuning_type == "full":
             raise ValueError("`use_llama_pro` is only valid for the Freeze or LoRA method.")
+
+        if self.use_galore and self.finetuning_type == "lora":
+            raise ValueError("Cannot use LoRA with GaLore together.")
 
     def save_to_json(self, json_path: str):
         r"""Saves the content of this instance in JSON format inside `json_path`."""
