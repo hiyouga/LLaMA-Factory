@@ -1,6 +1,6 @@
 #!/bin/bash
 
-python ../../src/export_model.py \
+CUDA_VISIBLE_DEVICES=0 python ../../src/export_model.py \
     --model_name_or_path ../../models/llama2-7b-sft \
     --template default \
     --export_dir ../../models/llama2-7b-sft-int4 \

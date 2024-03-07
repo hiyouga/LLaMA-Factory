@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Sequence
 
 from openai import OpenAI
@@ -17,13 +18,10 @@ def calculate_gpa(grades: Sequence[str], hours: Sequence[int]) -> float:
     return total_score / total_hour
 
 
-tool_map = {"calculate_gpa": calculate_gpa}
-
-
-if __name__ == "__main__":
+def main():
     client = OpenAI(
         api_key="0",
-        base_url="http://localhost:8000/v1",
+        base_url="http://localhost:{}/v1".format(os.environ.get("API_PORT", 8000)),
     )
     tools = [
         {
@@ -42,6 +40,8 @@ if __name__ == "__main__":
             },
         }
     ]
+    tool_map = {"calculate_gpa": calculate_gpa}
+
     messages = []
     messages.append({"role": "user", "content": "My grades are A, A, B, and C. The credit hours are 3, 4, 3, and 2."})
     result = client.chat.completions.create(messages=messages, model="test", tools=tools)
@@ -55,3 +55,7 @@ if __name__ == "__main__":
     result = client.chat.completions.create(messages=messages, model="test", tools=tools)
     print(result.choices[0].message.content)
     # Based on your grades and credit hours, your calculated Grade Point Average (GPA) is 3.4166666666666665.
+
+
+if __name__ == "__main__":
+    main()

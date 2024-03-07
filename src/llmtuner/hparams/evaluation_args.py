@@ -14,23 +14,23 @@ class EvaluationArguments:
     task: str = field(
         metadata={"help": "Name of the evaluation task."},
     )
-    task_dir: Optional[str] = field(
+    task_dir: str = field(
         default="evaluation",
         metadata={"help": "Path to the folder containing the evaluation datasets."},
     )
-    batch_size: Optional[int] = field(
+    batch_size: int = field(
         default=4,
         metadata={"help": "The batch size per GPU for evaluation."},
     )
-    seed: Optional[int] = field(
+    seed: int = field(
         default=42,
         metadata={"help": "Random seed to be used with data loaders."},
     )
-    lang: Optional[Literal["en", "zh"]] = field(
+    lang: Literal["en", "zh"] = field(
         default="en",
         metadata={"help": "Language used at evaluation."},
     )
-    n_shot: Optional[int] = field(
+    n_shot: int = field(
         default=5,
         metadata={"help": "Number of examplars for few-shot learning."},
     )
@@ -38,7 +38,7 @@ class EvaluationArguments:
         default=None,
         metadata={"help": "Path to save the evaluation results."},
     )
-    download_mode: Optional[DownloadMode] = field(
+    download_mode: DownloadMode = field(
         default=DownloadMode.REUSE_DATASET_IF_EXISTS,
         metadata={"help": "Download mode used for the evaluation datasets."},
     )
