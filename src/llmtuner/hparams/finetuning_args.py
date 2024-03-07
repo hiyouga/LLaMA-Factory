@@ -155,20 +155,20 @@ class RLHFArguments:
 @dataclass
 class GaloreArguments:
     r"""
-    Arguments pertaining to the GaLore optimization.
+    Arguments pertaining to the GaLore algorithm.
     """
 
     use_galore: bool = field(
         default=False,
-        metadata={"help": "Whether or not to use galore optimizer."},
+        metadata={"help": "Whether or not to use gradient low-Rank projection."},
     )
     galore_target: str = field(
         default="mlp,attn",
-        metadata={"help": "Name(s) of modules to apply GaLore."},
+        metadata={"help": "Name(s) of modules to apply GaLore. Use commas to separate multiple modules."},
     )
     galore_rank: int = field(
         default=16,
-        metadata={"help": "GaLore rank."},
+        metadata={"help": "The rank of GaLore gradients."},
     )
     galore_update_interval: int = field(
         default=200,
@@ -176,7 +176,7 @@ class GaloreArguments:
     )
     galore_scale: float = field(
         default=0.25,
-        metadata={"help": "GaLore scale."},
+        metadata={"help": "GaLore scaling coefficient."},
     )
     galore_proj_type: Literal["std", "reverse_std", "right", "left", "full"] = field(
         default="std",
