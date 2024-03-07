@@ -21,13 +21,14 @@ def get_requires():
 extra_require = {
     "deepspeed": ["deepspeed==0.13.1"],
     "metrics": ["nltk", "jieba", "rouge-chinese"],
-    "unsloth": ["unsloth[cu121-ampere-torch220] @ git+https://github.com/unslothai/unsloth.git"],
+    "unsloth": ["torch==2.2.0", "unsloth[cu121-ampere-torch220] @ git+https://github.com/unslothai/unsloth.git"],
     "vllm": ["vllm==0.3.3"],
     "bitsandbytes": ["bitsandbytes>=0.39.0"],
     "gptq": ["optimum>=1.16.0", "auto-gptq>=0.5.0"],
     "awq": ["autoawq"],
     "aqlm": ["aqlm[gpu,cpu]"],
-    "galore": ["galore_torch @ git+https://github.com/jiaweizzhao/GaLore.git"],
+    "galore": ["galore_torch @ git+https://github.com/hiyouga/GaLore.git"],
+    "qwen": ["tiktoken", "transformers_stream_generator"],
 }
 
 
