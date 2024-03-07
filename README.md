@@ -577,7 +577,7 @@ CUDA_VISIBLE_DEVICES=0 python src/export_model.py \
 ### Inference with OpenAI-style API
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python src/api_demo.py \
+CUDA_VISIBLE_DEVICES=0 API_PORT=8000 python src/api_demo.py \
     --model_name_or_path path_to_llama_model \
     --adapter_name_or_path path_to_checkpoint \
     --template default \
