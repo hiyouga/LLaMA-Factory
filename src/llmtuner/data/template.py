@@ -457,7 +457,7 @@ _register_template(
     name="chatglm3",
     format_user=StringFormatter(slots=[{"token": "<|user|>"}, "\n", "{{content}}", {"token": "<|assistant|>"}]),
     format_assistant=StringFormatter(slots=["\n", "{{content}}"]),
-    format_system=StringFormatter(slots=[{"token": "[gMASK]"}, {"token": "sop"}]),
+    format_system=StringFormatter(slots=[{"token": "[gMASK]"}, {"token": "sop"}, "{{content}}"]),
     format_function=FunctionFormatter(slots=["{{name}}\n{{arguments}}"]),
     format_observation=StringFormatter(
         slots=[{"token": "<|observation|>"}, "\n", "{{content}}", {"token": "<|assistant|>"}]
