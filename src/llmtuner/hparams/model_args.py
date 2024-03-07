@@ -85,6 +85,10 @@ class ModelArguments:
         default="hf",
         metadata={"help": "Backend engine used at inference."},
     )
+    vllm_maxlen: int = field(
+        default=2048,
+        metadata={"help": "Maximum input length of the vLLM engine."},
+    )
     hf_hub_token: Optional[str] = field(
         default=None,
         metadata={"help": "Auth token to log in with Hugging Face Hub."},
