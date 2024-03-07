@@ -157,6 +157,12 @@ def get_current_device() -> torch.device:
 
 
 def get_device_count() -> int:
+    r"""
+    Gets the number of available GPU devices.
+    """
+    if not torch.cuda.is_available():
+        return 0
+
     return torch.cuda.device_count()
 
 

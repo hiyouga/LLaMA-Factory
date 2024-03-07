@@ -51,3 +51,7 @@ def is_unsloth_available():
 
 def is_uvicorn_available():
     return _is_package_available("uvicorn")
+
+
+def is_vllm_available():
+    return _is_package_available("vllm")
