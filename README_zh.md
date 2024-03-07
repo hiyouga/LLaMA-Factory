@@ -70,9 +70,9 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 
 ## 更新日志
 
-[24/03/07] 我们支持了 [GaLore](https://arxiv.org/abs/2403.03507) 算法。请使用 `--use_galore` 参数切换显存高效的优化器。
+[24/03/07] 我们支持了 **[GaLore](https://arxiv.org/abs/2403.03507)** 算法。请使用 `--use_galore` 参数切换显存高效的优化器。
 
-[24/03/07] 我们集成了 [vLLM](https://github.com/vllm-project/vllm) 以实现极速并发推理。请使用 `--infer_backend vllm` 来获得 **270%** 的推理速度。（尚不支持 LoRA，请先合并权重。）
+[24/03/07] 我们集成了 **[vLLM](https://github.com/vllm-project/vllm)** 以实现极速并发推理。请使用 `--infer_backend vllm` 来获得 **270%** 的推理速度。（尚不支持 LoRA，请先合并权重。）
 
 [24/02/28] 我们支持了 **[DoRA](https://arxiv.org/abs/2402.09353)** 微调。请使用 `--use_dora` 参数进行 DoRA 微调。
 
