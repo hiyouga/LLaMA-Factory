@@ -4,4 +4,4 @@ Fixes # (issue)
 
 ## Before submitting
 
-- [ ] Did you read the [contributor guideline](/CONTRIBUTING.md)?
+- [ ] Did you read the [contributor guideline](https://github.com/hiyouga/LLaMA-Factory/blob/main/.github/CONTRIBUTING.md)?
