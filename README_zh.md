@@ -51,6 +51,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 - **先进算法**：DoRA、LongLoRA、LLaMA Pro、LoftQ 和 Agent 微调。
 - **实用技巧**：FlashAttention-2、Unsloth、RoPE scaling、NEFTune 和 rsLoRA。
 - **实验监控**：LlamaBoard、TensorBoard、Wandb、MLflow 等等。
+- **极速推理**：基于 vLLM 的 OpenAI 风格 API、浏览器界面和命令行接口。
 
 ## 性能指标
 
@@ -69,17 +70,19 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 
 ## 更新日志
 
+[24/03/07] 我们集成了 [vLLM](https://github.com/vllm-project/vllm) 以实现极速并发推理。请使用 `--infer_backend vllm` 来获得 **270%** 的推理速度。（尚不支持 LoRA，请先合并权重。）
+
 [24/02/28] 我们支持了 **[DoRA](https://arxiv.org/abs/2402.09353)** 微调。请使用 `--use_dora` 参数进行 DoRA 微调。
 
 [24/02/15] 我们支持了 [LLaMA Pro](https://github.com/TencentARC/LLaMA-Pro) 提出的**块扩展**方法。详细用法请参照 `scripts/llama_pro.py`。
 
-[24/02/05] Qwen1.5（Qwen2 测试版）系列模型已在 LLaMA-Factory 中实现微调支持。详情请查阅该[博客页面](https://qwenlm.github.io/zh/blog/qwen1.5/)。
-
 <details><summary>展开日志</summary>
+
+[24/02/05] Qwen1.5（Qwen2 测试版）系列模型已在 LLaMA-Factory 中实现微调支持。详情请查阅该[博客页面](https://qwenlm.github.io/zh/blog/qwen1.5/)。
 
 [24/01/18] 我们针对绝大多数模型实现了 **Agent 微调**，微调时指定 `--dataset glaive_toolcall` 即可使模型获得工具调用能力。
 
-[23/12/23] 我们针对 LLaMA, Mistral 和 Yi 模型支持了 **[unsloth](https://github.com/unslothai/unsloth)** 的 LoRA 训练加速。请使用 `--use_unsloth` 参数启用 unsloth 优化。该方法可提供 1.7 倍的训练速度，详情请查阅[此页面](https://github.com/hiyouga/LLaMA-Factory/wiki/Performance-comparison)。
+[23/12/23] 我们针对 LLaMA, Mistral 和 Yi 模型支持了 **[unsloth](https://github.com/unslothai/unsloth)** 的 LoRA 训练加速。请使用 `--use_unsloth` 参数启用 unsloth 优化。该方法可提供 **170%** 的训练速度，详情请查阅[此页面](https://github.com/hiyouga/LLaMA-Factory/wiki/Performance-comparison)。
 
 [23/12/12] 我们支持了微调最新的混合专家模型 **[Mixtral 8x7B](https://huggingface.co/mistralai/Mixtral-8x7B-v0.1)**。硬件需求请查阅[此处](#硬件依赖)。
 
@@ -552,7 +555,7 @@ deepspeed --num_gpus 8 src/train_bash.py \
 ### 合并 LoRA 权重并导出模型
 
 ```bash
-python src/export_model.py \
+CUDA_VISIBLE_DEVICES=0 python src/export_model.py \
     --model_name_or_path path_to_llama_model \
     --adapter_name_or_path path_to_checkpoint \
     --template default \
@@ -573,7 +576,7 @@ python src/export_model.py \
 ### 使用 OpenAI 风格 API 推理
 
 ```bash
-python src/api_demo.py \
+CUDA_VISIBLE_DEVICES=0 python src/api_demo.py \
     --model_name_or_path path_to_llama_model \
     --adapter_name_or_path path_to_checkpoint \
     --template default \
@@ -586,7 +589,7 @@ python src/api_demo.py \
 ### 使用命令行推理
 
 ```bash
-python src/cli_demo.py \
+CUDA_VISIBLE_DEVICES=0 python src/cli_demo.py \
     --model_name_or_path path_to_llama_model \
     --adapter_name_or_path path_to_checkpoint \
     --template default \
@@ -596,7 +599,7 @@ python src/cli_demo.py \
 ### 使用浏览器推理
 
 ```bash
-python src/web_demo.py \
+CUDA_VISIBLE_DEVICES=0 python src/web_demo.py \
     --model_name_or_path path_to_llama_model \
     --adapter_name_or_path path_to_checkpoint \
     --template default \
