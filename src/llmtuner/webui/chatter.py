@@ -75,6 +75,7 @@ class WebChatModel(ChatModel):
             flash_attn=(get("top.booster") == "flash_attn"),
             use_unsloth=(get("top.booster") == "unsloth"),
             rope_scaling=get("top.rope_scaling") if get("top.rope_scaling") in ["linear", "dynamic"] else None,
+            infer_backend=get("infer.infer_backend"),
         )
         super().__init__(args)
 
