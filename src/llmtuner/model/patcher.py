@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from transformers import PretrainedConfig, PreTrainedTokenizer
     from trl import AutoModelForCausalLMWithValueHead
 
-    from ..hparams import ModelArguments
+    from ..hparams import ModelArguments,FinetuningArguments
 
 
 logger = get_logger(__name__)
