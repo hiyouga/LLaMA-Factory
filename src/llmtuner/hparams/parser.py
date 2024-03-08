@@ -137,16 +137,6 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if training_args.do_train and training_args.predict_with_generate:
         raise ValueError("`predict_with_generate` cannot be set as True while training.")
 
-    if (
-        training_args.do_train
-        and finetuning_args.finetuning_type == "freeze"
-        and finetuning_args.name_module_trainable is None
-    ):
-        raise ValueError("Please specify `name_module_trainable` in Freeze training.")
-
-    if training_args.do_train and finetuning_args.finetuning_type == "lora" and finetuning_args.lora_target is None:
-        raise ValueError("Please specify `lora_target` in LoRA training.")
-
     if training_args.do_train and model_args.use_unsloth and not is_unsloth_available:
         raise ValueError("Unsloth was not installed: https://github.com/unslothai/unsloth")
 
