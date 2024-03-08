@@ -10,6 +10,7 @@ CUDA_VISIBLE_DEVICES=0 python ../../../src/train_bash.py \
     --finetuning_type freeze \
     --name_module_trainable all \
     --num_layer_trainable 8 \
+    --use_llama_pro \
     --output_dir ../../../saves/LLaMA2-7B-Pro/lora/sft \
     --overwrite_cache \
     --overwrite_output_dir \
