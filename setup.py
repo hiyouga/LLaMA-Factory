@@ -26,7 +26,7 @@ extra_require = {
     "bitsandbytes": ["bitsandbytes>=0.39.0"],
     "gptq": ["optimum>=1.16.0", "auto-gptq>=0.5.0"],
     "awq": ["autoawq"],
-    "aqlm": ["aqlm[gpu,cpu]"],
+    "aqlm": ["aqlm[gpu]>=1.1.0", "transformers @ git+https://github.com/huggingface/transformers.git"],
     "galore": ["galore_torch @ git+https://github.com/hiyouga/GaLore.git"],
     "qwen": ["tiktoken", "transformers_stream_generator"],
 }
