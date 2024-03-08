@@ -254,7 +254,7 @@ huggingface-cli login
 | Mandatory    | Minimum | Recommend |
 | ------------ | ------- | --------- |
 | python       | 3.8     | 3.10      |
-| torch        | 1.13.1  | 2.2.1     |
+| torch        | 1.13.1  | 2.2.0     |
 | transformers | 4.37.2  | 4.38.2    |
 | datasets     | 2.14.3  | 2.17.1    |
 | accelerate   | 0.27.2  | 0.27.2    |
@@ -264,7 +264,7 @@ huggingface-cli login
 | Optional     | Minimum | Recommend |
 | ------------ | ------- | --------- |
 | CUDA         | 11.6    | 12.2      |
-| deepspeed    | 0.10.0  | 0.13.4    |
+| deepspeed    | 0.10.0  | 0.13.1    |
 | bitsandbytes | 0.39.0  | 0.41.3    |
 | flash-attn   | 2.3.0   | 2.5.5     |
 
