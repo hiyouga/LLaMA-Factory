@@ -174,6 +174,7 @@ def _configure_quantization(
             require_version(
                 "transformers>=4.39.0.dev0", "To fix: pip install git+https://github.com/huggingface/transformers.git"
             )
+            require_version("aqlm>=1.1.0", "To fix: pip install aqlm[gpu]>=1.1.0")
             quantization_config["bits"] = 2
 
         quant_bits = quantization_config.get("bits", "?")
