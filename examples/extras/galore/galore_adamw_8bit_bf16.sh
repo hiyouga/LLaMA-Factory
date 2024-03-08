@@ -8,10 +8,10 @@ CUDA_VISIBLE_DEVICES=0 python ../../../src/train_bash.py \
     --dataset_dir ../../../data \
     --template default \
     --finetuning_type full \
+    --optim adamw_8bit \
     --use_galore \
     --galore_target mlp,self_attn \
     --galore_rank 16 \
-    --optim adamw_8bit \
     --output_dir ../../../saves/LLaMA2-7B/galore/sft \
     --overwrite_cache \
     --overwrite_output_dir \
