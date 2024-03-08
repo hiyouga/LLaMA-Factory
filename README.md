@@ -276,11 +276,15 @@ huggingface-cli login
 | ------ | ---- | ----- | ----- | ----- | ------ | ------ |
 | Full   | AMP  | 120GB | 240GB | 600GB | 1200GB |  900GB |
 | Full   |  16  |  60GB | 120GB | 300GB |  600GB |  400GB |
+| GaLore |  16  |  28GB |  60GB | 150GB |  300GB |  200GB |
 | Freeze |  16  |  20GB |  40GB |  80GB |  200GB |  160GB |
 | LoRA   |  16  |  16GB |  32GB |  64GB |  160GB |  120GB |
 | QLoRA  |   8  |  10GB |  20GB |  40GB |   80GB |   60GB |
 | QLoRA  |   4  |   6GB |  12GB |  24GB |   48GB |   30GB |
 | QLoRA  |   2  |   4GB |   8GB |  16GB |   24GB |   18GB |
+
+> [!NOTE]
+> We report the GaLore results without per-layer weight updates.
 
 ## Getting Started
 
