@@ -648,6 +648,32 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 > [!TIP]
 > We recommend using `--per_device_eval_batch_size=1` and `--max_target_length 128` at 4/8-bit predict.
 
+### Dockerize Training
+
+#### Get ready
+
+Necessary dockerized environment is needed, such as Docker or Docker Compose.
+
+#### Docker support
+
+```bash
+docker build -f ./Dockerfile -t llama-factory:latest .
+
+docker run --gpus=all -v ./hf_cache:/root/.cache/huggingface/ -v ./data:/app/data -v ./output:/app/output -p 7860:7860 --shm-size 16G --name llama_factory -d llama-factory:latest
+```
+
+#### Docker Compose support
+
+```bash
+docker compose -f ./docker-compose.yml up -d
+```
+
+> [!TIP]
+> Details about volume:
+> * hf_cache: Utilize Huggingface cache on the host machine. Reassignable if a cache already exists in a different directory.
+> * data: Place datasets on this dir of the host machine so that they can be selected on LLaMA Board GUI.
+> * output: Set export dir to this location so that the merged result can be accessed directly on the host machine.
+
 ## Projects using LLaMA Factory
 
 1. Wang et al. ESRL: Efficient Sampling-based Reinforcement Learning for Sequence Generation. 2023. [[arxiv]](https://arxiv.org/abs/2308.02223)
