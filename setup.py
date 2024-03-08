@@ -1,13 +1,14 @@
 import os
 import re
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 
 def get_version():
     with open(os.path.join("src", "llmtuner", "__init__.py"), "r", encoding="utf-8") as f:
         file_content = f.read()
         pattern = r"{0}\W*=\W*\"([^\"]+)\"".format("__version__")
-        version, = re.findall(pattern, file_content)
+        (version,) = re.findall(pattern, file_content)
         return version
 
 
@@ -29,11 +30,11 @@ extra_require = {
     "aqlm": ["aqlm[gpu]>=1.1.0", "transformers @ git+https://github.com/huggingface/transformers.git"],
     "galore": ["galore_torch @ git+https://github.com/hiyouga/GaLore.git"],
     "qwen": ["tiktoken", "transformers_stream_generator"],
+    "quality": ["ruff"],
 }
 
 
 def main():
-
     setup(
         name="llmtuner",
         version=get_version(),
@@ -51,7 +52,7 @@ def main():
         install_requires=get_requires(),
         extras_require=extra_require,
         classifiers=[
-            "Development Status :: 3 - Alpha",
+            "Development Status :: 4 - Beta",
             "Intended Audience :: Developers",
             "Intended Audience :: Education",
             "Intended Audience :: Science/Research",
@@ -61,8 +62,9 @@ def main():
             "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
             "Programming Language :: Python :: 3.10",
+            "Programming Language :: Python :: 3.11",
             "Topic :: Scientific/Engineering :: Artificial Intelligence",
-        ]
+        ],
     )
 
 
