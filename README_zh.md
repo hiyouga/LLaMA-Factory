@@ -48,8 +48,8 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 - **多种模型**：LLaMA、Mistral、Mixtral-MoE、Qwen、Yi、Gemma、Baichuan、ChatGLM、Phi 等等。
 - **集成方法**：（增量）预训练、指令监督微调、奖励模型训练、PPO 训练和 DPO 训练。
 - **多种精度**：32 比特全参数微调、16 比特冻结微调、16 比特 LoRA 微调和基于 AQLM/AWQ/GPTQ/LLM.int8 的 2/4/8 比特 QLoRA 微调。
-- **先进算法**：DoRA、LongLoRA、LLaMA Pro、LoftQ 和 Agent 微调。
-- **实用技巧**：FlashAttention-2、Unsloth、RoPE scaling、NEFTune、rsLoRA 和 GaLore。
+- **先进算法**：GaLore、DoRA、LongLoRA、LLaMA Pro、LoftQ 和 Agent 微调。
+- **实用技巧**：FlashAttention-2、Unsloth、RoPE scaling、NEFTune 和 rsLoRA。
 - **实验监控**：LlamaBoard、TensorBoard、Wandb、MLflow 等等。
 - **极速推理**：基于 vLLM 的 OpenAI 风格 API、浏览器界面和命令行接口。
 
@@ -272,13 +272,15 @@ huggingface-cli login
 
 \* *估算值*
 
-| 训练方法 | 精度 |   7B  |  13B  |  30B  |   65B  |   8x7B |
+| 训练方法 | 精度 |   7B  |  13B  |  30B  |   70B  |   8x7B |
 | ------- | ---- | ----- | ----- | ----- | ------ | ------ |
-| 全参数   |  16  | 160GB | 320GB | 600GB | 1200GB |  900GB |
-| 部分参数 |  16  |  20GB |  40GB | 120GB |  240GB |  200GB |
-| LoRA    |  16  |  16GB |  32GB |  80GB |  160GB |  120GB |
-| QLoRA   |   8  |  10GB |  16GB |  40GB |   80GB |   80GB |
-| QLoRA   |   4  |   6GB |  12GB |  24GB |   48GB |   32GB |
+| 全参数   | AMP  | 120GB | 240GB | 600GB | 1200GB |  900GB |
+| 全参数   |  16  |  60GB | 120GB | 300GB |  600GB |  400GB |
+| 部分参数 |  16  |  20GB |  40GB |  80GB |  200GB |  160GB |
+| LoRA    |  16  |  16GB |  32GB |  64GB |  160GB |  120GB |
+| QLoRA   |   8  |  10GB |  20GB |  40GB |   80GB |   60GB |
+| QLoRA   |   4  |   6GB |  12GB |  24GB |   48GB |   30GB |
+| QLoRA   |   2  |   4GB |   8GB |  16GB |   24GB |   18GB |
 
 ## 如何使用
 
@@ -482,7 +484,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 accelerate launch --config_file config.yaml src/train_bash.py # 参数同上
 ```
 
-<details><summary>LoRA 训练的 Accelerate 配置示例</summary>
+<details><summary>使用 Accelerate 进行 LoRA 训练的 config.yaml 示例</summary>
 
 ```yaml
 compute_environment: LOCAL_MACHINE
@@ -516,7 +518,7 @@ deepspeed --num_gpus 8 src/train_bash.py \
     ... # 参数同上
 ```
 
-<details><summary>使用 DeepSpeed ZeRO-2 进行全参数训练的 DeepSpeed 配置示例</summary>
+<details><summary>使用 DeepSpeed ZeRO-2 进行全参数训练的 ds_config.json 示例</summary>
 
 ```json
 {

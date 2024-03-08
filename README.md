@@ -48,8 +48,8 @@ Choose your path:
 - **Various models**: LLaMA, Mistral, Mixtral-MoE, Qwen, Yi, Gemma, Baichuan, ChatGLM, Phi, etc.
 - **Integrated methods**: (Continuous) pre-training, supervised fine-tuning, reward modeling, PPO and DPO.
 - **Scalable resources**: 32-bit full-tuning, 16-bit freeze-tuning, 16-bit LoRA and 2/4/8-bit QLoRA via AQLM/AWQ/GPTQ/LLM.int8.
-- **Advanced algorithms**: DoRA, LongLoRA, LLaMA Pro, LoftQ and Agent tuning.
-- **Practical tricks**: FlashAttention-2, Unsloth, RoPE scaling, NEFTune, rsLoRA and GaLore.
+- **Advanced algorithms**: GaLore, DoRA, LongLoRA, LLaMA Pro, LoftQ and Agent tuning.
+- **Practical tricks**: FlashAttention-2, Unsloth, RoPE scaling, NEFTune and rsLoRA.
 - **Experiment monitors**: LlamaBoard, TensorBoard, Wandb, MLflow, etc.
 - **Faster inference**: OpenAI-style API, Gradio UI and CLI with vLLM worker.
 
@@ -272,13 +272,15 @@ huggingface-cli login
 
 \* *estimated*
 
-| Method | Bits |   7B  |  13B  |  30B  |   65B  |   8x7B |
+| Method | Bits |   7B  |  13B  |  30B  |   70B  |   8x7B |
 | ------ | ---- | ----- | ----- | ----- | ------ | ------ |
-| Full   |  16  | 160GB | 320GB | 600GB | 1200GB |  900GB |
-| Freeze |  16  |  20GB |  40GB | 120GB |  240GB |  200GB |
-| LoRA   |  16  |  16GB |  32GB |  80GB |  160GB |  120GB |
-| QLoRA  |   8  |  10GB |  16GB |  40GB |   80GB |   80GB |
-| QLoRA  |   4  |   6GB |  12GB |  24GB |   48GB |   32GB |
+| Full   | AMP  | 120GB | 240GB | 600GB | 1200GB |  900GB |
+| Full   |  16  |  60GB | 120GB | 300GB |  600GB |  400GB |
+| Freeze |  16  |  20GB |  40GB |  80GB |  200GB |  160GB |
+| LoRA   |  16  |  16GB |  32GB |  64GB |  160GB |  120GB |
+| QLoRA  |   8  |  10GB |  20GB |  40GB |   80GB |   60GB |
+| QLoRA  |   4  |   6GB |  12GB |  24GB |   48GB |   30GB |
+| QLoRA  |   2  |   4GB |   8GB |  16GB |   24GB |   18GB |
 
 ## Getting Started
 
@@ -483,7 +485,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 accelerate launch --config_file config.yaml src/train_bash.py # arguments (same as above)
 ```
 
-<details><summary>Example config for LoRA training</summary>
+<details><summary>Example config.yaml for LoRA training</summary>
 
 ```yaml
 compute_environment: LOCAL_MACHINE
@@ -517,7 +519,7 @@ deepspeed --num_gpus 8 src/train_bash.py \
     ... # arguments (same as above)
 ```
 
-<details><summary>Example config for full-parameter training with DeepSpeed ZeRO-2</summary>
+<details><summary>Example ds_config.json for full-parameter training with DeepSpeed ZeRO-2</summary>
 
 ```json
 {
