@@ -9,8 +9,8 @@ class FreezeArguments:
     Arguments pertaining to the freeze (partial-parameter) training.
     """
 
-    name_module_trainable: Optional[str] = field(
-        default=None,
+    name_module_trainable: str = field(
+        default="all",
         metadata={
             "help": """Name of trainable modules for partial-parameter (freeze) fine-tuning. \
                     Use commas to separate multiple modules. \
@@ -23,7 +23,7 @@ class FreezeArguments:
         },
     )
     num_layer_trainable: int = field(
-        default=3,
+        default=2,
         metadata={"help": "The number of trainable layers for partial-parameter (freeze) fine-tuning."},
     )
 
@@ -52,8 +52,8 @@ class LoraArguments:
         default=8,
         metadata={"help": "The intrinsic dimension for LoRA fine-tuning."},
     )
-    lora_target: Optional[str] = field(
-        default=None,
+    lora_target: str = field(
+        default="all",
         metadata={
             "help": """Name(s) of target modules to apply LoRA. \
                     Use commas to separate multiple modules. \
