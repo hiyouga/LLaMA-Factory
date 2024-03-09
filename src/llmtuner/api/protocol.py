@@ -12,6 +12,7 @@ class Role(str, Enum):
     ASSISTANT = "assistant"
     SYSTEM = "system"
     FUNCTION = "function"
+    OBSERVATION = "observation"
     TOOL = "tool"
 
 

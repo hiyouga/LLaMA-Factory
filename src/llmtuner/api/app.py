@@ -77,6 +77,7 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
         Role.ASSISTANT: DataRole.ASSISTANT.value,
         Role.SYSTEM: DataRole.SYSTEM.value,
         Role.FUNCTION: DataRole.FUNCTION.value,
+        Role.OBSERVATION: DataRole.OBSERVATION.value,
         Role.TOOL: DataRole.OBSERVATION.value,
     }
 
@@ -103,7 +104,7 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
 
         input_messages = []
         for i, message in enumerate(request.messages):
-            if i % 2 == 0 and message.role not in [Role.USER, Role.TOOL]:
+            if i % 2 == 0 and message.role not in [Role.USER, Role.OBSERVATION, Role.TOOL]:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role")
             elif i % 2 == 1 and message.role not in [Role.ASSISTANT, Role.FUNCTION]:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role")
