@@ -78,9 +78,11 @@ class DataArguments:
         default=0.0,
         metadata={"help": "Size of the development set, should be an integer or a float in range `[0,1)`."},
     )
-    sft_packing: bool = field(
-        default=False,
-        metadata={"help": "Packing the questions and answers in the supervised fine-tuning stage."},
+    packing: Optional[bool] = field(
+        default=None,
+        metadata={
+            "help": "Whether or not to pack the sequences in training. Will automatically enable in pre-training."
+        },
     )
     cache_path: Optional[str] = field(
         default=None,
