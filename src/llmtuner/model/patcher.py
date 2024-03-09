@@ -3,7 +3,7 @@ import os
 import random
 from contextlib import nullcontext
 from types import MethodType
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 import torch
 from datasets import load_dataset
@@ -219,7 +219,7 @@ def _configure_quantization(
 
 
 def _prepare_model_for_training(
-    model: "PreTrainedModel", model_args: "ModelArguments", output_layer_name: Optional[str] = "lm_head"
+    model: "PreTrainedModel", model_args: "ModelArguments", output_layer_name: str = "lm_head"
 ) -> None:
     r"""
     Includes:

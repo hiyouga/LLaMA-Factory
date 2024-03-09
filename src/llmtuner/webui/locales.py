@@ -480,18 +480,18 @@ LOCALES = {
             "info": "更改分词器词表和嵌入层的大小。",
         },
     },
-    "sft_packing": {
+    "packing": {
         "en": {
             "label": "Pack sequences",
-            "info": "Pack sequences into samples of fixed length in supervised fine-tuning.",
+            "info": "Pack sequences into samples of fixed length.",
         },
         "ru": {
             "label": "Упаковка последовательностей",
-            "info": "Упаковка последовательностей в образцы фиксированной длины при контролируемой тонкой настройке.",
+            "info": "Упаковка последовательностей в образцы фиксированной длины.",
         },
         "zh": {
             "label": "序列打包",
-            "info": "在指令监督微调时将序列打包为等长样本。",
+            "info": "将序列打包为等长样本。",
         },
     },
     "upcast_layernorm": {

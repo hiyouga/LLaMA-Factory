@@ -292,7 +292,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         queries: torch.Tensor,
         responses: torch.Tensor,
         model_inputs: dict,
-        return_logits: Optional[bool] = False,
+        return_logits: bool = False,
         response_masks: Optional[torch.Tensor] = None,
     ):
         r"""

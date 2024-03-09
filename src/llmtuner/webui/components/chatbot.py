@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, Tuple
 
 import gradio as gr
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 def create_chat_box(
-    engine: "Engine", visible: Optional[bool] = False
+    engine: "Engine", visible: bool = False
 ) -> Tuple["Block", "Component", "Component", Dict[str, "Component"]]:
     with gr.Box(visible=visible) as chat_box:
         chatbot = gr.Chatbot()

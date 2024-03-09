@@ -135,7 +135,6 @@ class ModelArguments:
     )
 
     def __post_init__(self):
-        self.aqlm_optimization = None
         self.compute_dtype = None
         self.device_map = None
         self.model_max_length = None

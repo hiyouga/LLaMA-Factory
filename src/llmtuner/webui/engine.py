@@ -1,4 +1,4 @@
-from typing import Any, Dict, Generator, Optional
+from typing import Any, Dict, Generator
 
 import gradio as gr
 from gradio.components import Component  # cannot use TYPE_CHECKING here
@@ -12,7 +12,7 @@ from .utils import get_time
 
 
 class Engine:
-    def __init__(self, demo_mode: Optional[bool] = False, pure_chat: Optional[bool] = False) -> None:
+    def __init__(self, demo_mode: bool = False, pure_chat: bool = False) -> None:
         self.demo_mode = demo_mode
         self.pure_chat = pure_chat
         self.manager = Manager()
