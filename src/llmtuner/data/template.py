@@ -276,11 +276,11 @@ def _register_template(
     format_observation: Optional["Formatter"] = None,
     format_tools: Optional["Formatter"] = None,
     format_separator: Optional["Formatter"] = None,
-    default_system: Optional[str] = "",
-    stop_words: Optional[List[str]] = [],
-    efficient_eos: Optional[bool] = False,
-    replace_eos: Optional[bool] = False,
-    force_system: Optional[bool] = False,
+    default_system: str = "",
+    stop_words: List[str] = [],
+    efficient_eos: bool = False,
+    replace_eos: bool = False,
+    force_system: bool = False,
     generation_prompt: Optional[str] = None,
 ) -> None:
     r"""
