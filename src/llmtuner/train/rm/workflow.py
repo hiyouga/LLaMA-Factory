@@ -35,7 +35,7 @@ def run_rm(
     training_args.remove_unused_columns = False  # important for pairwise dataset
 
     # Initialize our Trainer
-    optimizer = create_custom_optimzer(model, training_args, finetuning_args)
+    optimizer = create_custom_optimzer(model, dataset, training_args, finetuning_args)
     trainer = PairwiseTrainer(
         model=model,
         args=training_args,
