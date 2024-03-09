@@ -46,7 +46,7 @@ def create_modelcard_and_push(
 
 
 def create_ref_model(
-    model_args: "ModelArguments", finetuning_args: "FinetuningArguments", add_valuehead: Optional[bool] = False
+    model_args: "ModelArguments", finetuning_args: "FinetuningArguments", add_valuehead: bool = False
 ) -> Union["PreTrainedModel", "AutoModelForCausalLMWithValueHead"]:
     r"""
     Creates reference model for PPO/DPO training. Evaluation mode is not supported.

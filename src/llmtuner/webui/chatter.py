@@ -18,9 +18,7 @@ if TYPE_CHECKING:
 
 
 class WebChatModel(ChatModel):
-    def __init__(
-        self, manager: "Manager", demo_mode: Optional[bool] = False, lazy_init: Optional[bool] = True
-    ) -> None:
+    def __init__(self, manager: "Manager", demo_mode: bool = False, lazy_init: bool = True) -> None:
         self.manager = manager
         self.demo_mode = demo_mode
         self.engine: Optional["BaseEngine"] = None
