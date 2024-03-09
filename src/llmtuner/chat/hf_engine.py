@@ -36,7 +36,6 @@ class HuggingfaceEngine(BaseEngine):
         self.tokenizer.padding_side = "left" if self.can_generate else "right"
         self.template = get_template_and_fix_tokenizer(self.tokenizer, data_args.template)
         self.generating_args = generating_args.to_dict()
-        self._semaphore = asyncio.Semaphore(int(os.environ.get("MAX_CONCURRENT", 1)))
 
     @staticmethod
     def _process_args(
@@ -190,6 +189,9 @@ class HuggingfaceEngine(BaseEngine):
             scores.append(values[i, end_index].nan_to_num().item())
 
         return scores
+
+    async def start(self) -> None:
+        self._semaphore = asyncio.Semaphore(int(os.environ.get("MAX_CONCURRENT", 1)))
 
     async def chat(
         self,

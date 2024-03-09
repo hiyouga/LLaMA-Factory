@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Optional, Union
 
 import torch
+from transformers.utils.versions import require_version
 
 from ..extras.logging import get_logger
 from ..extras.packages import is_galore_available
@@ -131,6 +132,7 @@ def create_custom_optimzer(
     if not finetuning_args.use_galore:
         return None
 
+    require_version("galore_torch", "To fix: pip install git+https://github.com/hiyouga/GaLore.git")
     galore_params = []
     galore_targets = finetuning_args.galore_target.split(",")
 
