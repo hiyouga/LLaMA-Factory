@@ -59,7 +59,7 @@ class ChatCompletionMessage(BaseModel):
 class ChatCompletionRequest(BaseModel):
     model: str
     messages: List[ChatMessage]
-    tools: Optional[list] = []
+    tools: list = []
     do_sample: bool = True
     temperature: Optional[float] = None
     top_p: Optional[float] = None
