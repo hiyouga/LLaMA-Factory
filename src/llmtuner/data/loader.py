@@ -29,7 +29,7 @@ def load_single_dataset(
     dataset_attr: "DatasetAttr",
     model_args: "ModelArguments",
     data_args: "DataArguments",
-):
+) -> Union["Dataset", "IterableDataset"]:
     logger.info("Loading dataset {}...".format(dataset_attr))
     data_path, data_name, data_dir, data_files = None, None, None, None
     if dataset_attr.load_from in ["hf_hub", "ms_hub"]:

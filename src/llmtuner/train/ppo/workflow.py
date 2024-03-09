@@ -64,7 +64,7 @@ def run_ppo(
     )
 
     # Create optimizer and scheduler
-    optimizer = create_custom_optimzer(model, training_args, finetuning_args)
+    optimizer = create_custom_optimzer(model, dataset, training_args, finetuning_args)
     if optimizer is None:
         optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=training_args.learning_rate)
 

@@ -182,6 +182,10 @@ class GaloreArguments:
         default="std",
         metadata={"help": "Type of GaLore projection."},
     )
+    galore_layerwise: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to enable layer-wise update to further save memory."},
+    )
 
 
 @dataclass
