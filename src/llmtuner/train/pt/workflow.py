@@ -30,7 +30,7 @@ def run_pt(
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
     # Initialize our Trainer
-    optimizer = create_custom_optimzer(model, training_args, finetuning_args)
+    optimizer = create_custom_optimzer(model, dataset, training_args, finetuning_args)
     trainer = Trainer(
         model=model,
         args=training_args,
