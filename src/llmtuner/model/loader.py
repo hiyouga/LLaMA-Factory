@@ -109,7 +109,10 @@ def load_model(
 
     if not is_trainable:
         model.requires_grad_(False)
-        model = model.to(model_args.compute_dtype) if not getattr(model, "quantization_method", None) else model
+        if not getattr(model, "quantization_method", None):
+            for param in filter(lambda p: p.device.type == "cuda", model.parameters()):
+                param.data = param.data.to(model_args.compute_dtype)
+
         model.eval()
     else:
         model.train()
