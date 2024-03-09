@@ -18,6 +18,11 @@ def _start_background_loop(loop: asyncio.AbstractEventLoop) -> None:
 
 class ChatModel:
     def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
+        self._loop = asyncio.new_event_loop()
+        self._thread = Thread(target=_start_background_loop, args=(self._loop,), daemon=True)
+        self._thread.start()
+        asyncio.set_event_loop(self._loop)
+
         model_args, data_args, finetuning_args, generating_args = get_infer_args(args)
         if model_args.infer_backend == "huggingface":
             self.engine: "BaseEngine" = HuggingfaceEngine(model_args, data_args, finetuning_args, generating_args)
@@ -25,10 +30,6 @@ class ChatModel:
             self.engine: "BaseEngine" = VllmEngine(model_args, data_args, finetuning_args, generating_args)
         else:
             raise NotImplementedError("Unknown backend: {}".format(model_args.infer_backend))
-
-        self._loop = asyncio.new_event_loop()
-        self._thread = Thread(target=_start_background_loop, args=(self._loop,), daemon=True)
-        self._thread.start()
 
     def chat(
         self,
