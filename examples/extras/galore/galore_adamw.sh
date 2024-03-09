@@ -9,8 +9,9 @@ CUDA_VISIBLE_DEVICES=0 python ../../../src/train_bash.py \
     --template default \
     --finetuning_type full \
     --use_galore \
+    --galore_layerwise \
     --galore_target mlp,self_attn \
-    --galore_rank 32 \
+    --galore_rank 128 \
     --output_dir ../../../saves/LLaMA2-7B/galore/sft \
     --overwrite_cache \
     --overwrite_output_dir \
@@ -18,7 +19,7 @@ CUDA_VISIBLE_DEVICES=0 python ../../../src/train_bash.py \
     --preprocessing_num_workers 16 \
     --per_device_train_batch_size 1 \
     --per_device_eval_batch_size 1 \
-    --gradient_accumulation_steps 2 \
+    --gradient_accumulation_steps 1 \
     --lr_scheduler_type cosine \
     --logging_steps 10 \
     --warmup_steps 20 \

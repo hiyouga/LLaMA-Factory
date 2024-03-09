@@ -50,7 +50,7 @@ def run_sft(
     training_args.generation_num_beams = data_args.eval_num_beams or training_args.generation_num_beams
 
     # Initialize our Trainer
-    optimizer = create_custom_optimzer(model, training_args, finetuning_args)
+    optimizer = create_custom_optimzer(model, dataset, training_args, finetuning_args)
     trainer = CustomSeq2SeqTrainer(
         model=model,
         args=training_args,
