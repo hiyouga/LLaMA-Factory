@@ -1,6 +1,6 @@
 import json
 import datasets
-from typing import Any, Dict, List
+from typing import Any, Dict, Generator, List, Tuple
 
 
 _DESCRIPTION = "An example of dataset."
@@ -40,7 +40,7 @@ class ExampleDataset(datasets.GeneratorBasedBuilder):
             )
         ]
 
-    def _generate_examples(self, filepath: str) -> Dict[int, Dict[str, Any]]:
+    def _generate_examples(self, filepath: str) -> Generator[Tuple[int, Dict[str, Any]], None, None]:
         example_dataset = json.load(open(filepath, "r", encoding="utf-8"))
         for key, example in enumerate(example_dataset):
             yield key, example
