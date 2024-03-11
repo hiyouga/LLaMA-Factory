@@ -10,9 +10,9 @@ from .formatter import (
     Formatter,
 )
 
-from .utils import Role, infer_max_len
+# from .utils import Role, infer_max_len, HumanRole
 from .utils import infer_max_len
-# from .utils import OpenAIRole as Role
+from .utils import ShareGPTRole as Role
 import json
 
 
@@ -136,6 +136,10 @@ class Template:
         system = system or self.default_system
         encoded_messages = []
         for i, message in enumerate(messages):
+            if "from" in message:
+                message["role"] = message["from"]
+            if "value" in message:
+                message["content"] = message["value"]
             elements = []
             if i == 0 and (system or tools or self.force_system):
                 tool_text = self.format_tools.apply(content=tools)[0] if tools else ""
@@ -149,7 +153,7 @@ class Template:
                 elements += self.format_user.apply(
                     content=message["content"], idx=str(i // 2)
                 )
-            elif message["role"] == Role.ASSISTANT.value:
+            elif message["role"] == Role.ASSISTANT.value :
                 elements += self.format_assistant.apply(content=message["content"])
             elif message["role"] == Role.OBSERVATION.value:
                 elements += self.format_observation.apply(content=message["content"])
@@ -796,8 +800,11 @@ _register_template(
     name="mistral_rubra",
     format_user=StringFormatter(slots=["[INST] {{content}} [/INST]"]),
     format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
+    format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}]),
     force_system=True,
-    # format_tools=ToolFormatter(tool_format="rubra-fc-v1")
+    format_tools=ToolFormatter(tool_format="rubra-fc-v1"),
+    format_function=StringFormatter(slots=["<<functions>>{{content}}", {"eos_token"}]),
+    format_observation=StringFormatter(slots=["[INST] <<observation>>{{content}} [/INST]"]),
 )
 
 _register_template(
@@ -978,7 +985,7 @@ _register_template(
 if __name__ == "__main__":
     from transformers import AutoTokenizer
 
-    tokenizer = AutoTokenizer.from_pretrained("teknium/OpenHermes-2.5-Mistral-7B")
+    tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-Instruct-v0.2")
 
     tool_content = json.dumps(
         [
@@ -1040,7 +1047,7 @@ if __name__ == "__main__":
             "value": "Here are the latest news headlines for France:\n1. France recalls ambassadors to US and Australia\n2. French election: Macron's party braces for tough fight\n3. Louvre Museum to undergo major overhaul\n4. France to offer free birth control to all women under 25",
         },
     ]
-    res = templates["chatml_rubra"].encode_messages(
+    res = templates["mistral_rubra"].encode_messages(
         messages=messsages, system="you are helpful assistant.", tools=tool_content
     )
     print(type(res))
@@ -1048,5 +1055,5 @@ if __name__ == "__main__":
     for msg in res:
         print(msg)
 
-    jinja_template = _get_jinja_template(templates["chatml_rubra"], tokenizer)
+    jinja_template = _get_jinja_template(templates["mistral_rubra"], tokenizer)
     print(f"=======\nJinja Template: \n {jinja_template}\n=======")
