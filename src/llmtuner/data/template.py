@@ -10,9 +10,9 @@ from .formatter import (
     Formatter,
 )
 
-from .utils import Role, infer_max_len
+# from .utils import Role, infer_max_len, HumanRole
 from .utils import infer_max_len
-# from .utils import OpenAIRole as Role
+from .utils import ShareGPTRole as Role
 import json
 
 
@@ -153,7 +153,7 @@ class Template:
                 elements += self.format_user.apply(
                     content=message["content"], idx=str(i // 2)
                 )
-            elif message["role"] == Role.ASSISTANT.value:
+            elif message["role"] == Role.ASSISTANT.value :
                 elements += self.format_assistant.apply(content=message["content"])
             elif message["role"] == Role.OBSERVATION.value:
                 elements += self.format_observation.apply(content=message["content"])
