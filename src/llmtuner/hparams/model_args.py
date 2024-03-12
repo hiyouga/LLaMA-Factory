@@ -89,6 +89,14 @@ class ModelArguments:
         default=2048,
         metadata={"help": "Maximum input length of the vLLM engine."},
     )
+    vllm_gpu_util: float = field(
+        default=0.9,
+        metadata={"help": "The fraction of GPU memory in (0,1) to be used for the vLLM engine."},
+    )
+    vllm_enforce_eager: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to disable CUDA graph in the vLLM engine."},
+    )
     hf_hub_token: Optional[str] = field(
         default=None,
         metadata={"help": "Auth token to log in with Hugging Face Hub."},

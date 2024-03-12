@@ -31,9 +31,11 @@ class VllmEngine(BaseEngine):
             model=model_args.model_name_or_path,
             trust_remote_code=True,
             max_model_len=model_args.vllm_maxlen,
-            tensor_parallel_size=get_device_count(),
+            tensor_parallel_size=get_device_count() or 1,
+            gpu_memory_utilization=model_args.vllm_gpu_util,
             disable_log_stats=True,
             disable_log_requests=True,
+            enforce_eager=model_args.vllm_enforce_eager,
         )
         self.model = AsyncLLMEngine.from_engine_args(engine_args)
         self.tokenizer = load_tokenizer(model_args)
