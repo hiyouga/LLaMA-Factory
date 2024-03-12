@@ -52,5 +52,6 @@ def plot_loss(save_dictionary: os.PathLike, keys: List[str] = ["loss"]) -> None:
         plt.xlabel("step")
         plt.ylabel(key)
         plt.legend()
-        plt.savefig(os.path.join(save_dictionary, "training_{}.png".format(key)), format="png", dpi=100)
-        print("Figure saved:", os.path.join(save_dictionary, "training_{}.png".format(key)))
+        figure_path = os.path.join(save_dictionary, "training_{}.png".format(key.replace(os.path.sep, "_")))
+        plt.savefig(figure_path, format="png", dpi=100)
+        print("Figure saved at:", figure_path)
