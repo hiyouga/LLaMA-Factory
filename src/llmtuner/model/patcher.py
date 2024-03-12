@@ -291,6 +291,9 @@ def patch_config(
         if "device_map" not in init_kwargs:  # quant models cannot use auto device map
             init_kwargs["device_map"] = model_args.device_map or {"": get_current_device()}
 
+        if init_kwargs["device_map"] == "auto":
+            init_kwargs["offload_folder"] = model_args.offload_folder
+
 
 def patch_model(
     model: "PreTrainedModel", tokenizer: "PreTrainedTokenizer", model_args: "ModelArguments", is_trainable: bool
