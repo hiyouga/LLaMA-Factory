@@ -141,6 +141,27 @@ def default_tool_extractor(content: str) -> Union[str, Tuple[str, str]]:
     return tool_name, json.dumps(arguments, ensure_ascii=False)
 
 
+def rubra_fc_v1_tool_extractor(content: str) -> Union[str, Tuple[str, str]]:
+    regex = re.compile(r"<<functions>>({.*?}})", re.DOTALL)
+    action_match = re.search(regex, content)
+
+    if not action_match:
+        return content
+
+    json_str = action_match.group(1).strip()
+
+    try:
+        data = json.loads(json_str)
+        func_name = data.get("name", "")
+        func_args = data.get("arguments", {})
+
+        return func_name, json.dumps(func_args, ensure_ascii=False)
+    except json.JSONDecodeError:
+        print("json decode error")
+        print(json_str)
+        return content
+
+
 @dataclass
 class Formatter(ABC):
     slots: SLOTS = field(default_factory=list)
@@ -227,6 +248,6 @@ class ToolFormatter(Formatter):
         if self.tool_format == "default":
             return default_tool_extractor(content)
         elif self.tool_format == "rubra-fc-v1":
-            return rubra_fc_v1_tool_formatter(content)
+            return rubra_fc_v1_tool_extractor(content)
         else:
             raise NotImplementedError
