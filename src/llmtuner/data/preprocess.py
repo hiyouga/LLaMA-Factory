@@ -37,6 +37,10 @@ def preprocess_pretrain_dataset(
         k: [t[i : i + block_size] for i in range(0, total_length, block_size)]
         for k, t in concatenated_examples.items()
     }
+    if data_args.template == "gemma":
+        for i in range(len(result["input_ids"])):
+            result["input_ids"][i][0] = tokenizer.bos_token_id
+
     return result
 
 

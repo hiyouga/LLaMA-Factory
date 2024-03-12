@@ -503,7 +503,7 @@ register_model_group(
         },
         "OLMo-7B-Chat": {
             DownloadSource.DEFAULT: "allenai/OLMo-7B-Instruct",
-        }
+        },
     },
     module="att_proj",
     template="olmo",
