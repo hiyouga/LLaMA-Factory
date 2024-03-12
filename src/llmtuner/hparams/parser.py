@@ -124,7 +124,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if training_args.do_train and training_args.predict_with_generate:
         raise ValueError("`predict_with_generate` cannot be set as True while training.")
 
-    if training_args.do_train and model_args.use_unsloth and not is_unsloth_available:
+    if training_args.do_train and model_args.use_unsloth and not is_unsloth_available():
         raise ValueError("Unsloth was not installed: https://github.com/unslothai/unsloth")
 
     if finetuning_args.use_dora:
@@ -140,6 +140,13 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
         if training_args.fp16 or training_args.bf16:
             raise ValueError("Turn off mixed precision training when using `pure_bf16`.")
+
+    if (
+        finetuning_args.use_galore
+        and finetuning_args.galore_layerwise
+        and training_args.parallel_mode.value == "distributed"
+    ):
+        raise ValueError("Distributed training does not support layer-wise GaLore.")
 
     if model_args.infer_backend == "vllm":
         raise ValueError("vLLM backend is only available for API, CLI and Web.")
