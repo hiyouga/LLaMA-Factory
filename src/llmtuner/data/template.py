@@ -1019,42 +1019,25 @@ if __name__ == "__main__":
                     },
                     "required": [],
                 },
-            }
+            },
+            {
+            "name": "getCurrentWeather",
+            "description": "Get the weather in location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                "location": {"type": "string", "description": "The city and state e.g. San Francisco, CA"},
+                "unit": {"type": "string", "enum": ["c", "f"]}
+                },
+                "required": ["location"]
+    }
+  }
         ]
     )
     messsages = [
-        {
-            "from": "human",
-            "value": "Can you tell me the latest news headlines for the United States?",
-        },
-        {
-            "from": "function_call",
-            "value": '{"name": "get_news_headlines", "arguments": {"country": "United States"}}',
-        },
-        {
-            "from": "observation",
-            "value": '{"headlines": ["Biden announces new vaccine mandates", "Hurricane Ida devastates Louisiana", "Apple unveils new iPhone", "NASA\'s Perseverance rover collects first Mars rock sample"]}',
-        },
-        {
-            "from": "gpt",
-            "value": "Here are the latest news headlines for the United States:\n1. Biden announces new vaccine mandates\n2. Hurricane Ida devastates Louisiana\n3. Apple unveils new iPhone\n4. NASA's Perseverance rover collects first Mars rock sample",
-        },
-        {
-            "from": "human",
-            "value": "That's interesting. What about the news in France?",
-        },
-        {
-            "from": "function_call",
-            "value": '{"name": "get_news_headlines", "arguments": {"country": "France"}}',
-        },
-        {
-            "from": "observation",
-            "value": '{"headlines": ["France recalls ambassadors to US and Australia", "French election: Macron\'s party braces for tough fight", "Louvre Museum to undergo major overhaul", "France to offer free birth control to all women under 25"]}',
-        },
-        {
-            "from": "gpt",
-            "value": "Here are the latest news headlines for France:\n1. France recalls ambassadors to US and Australia\n2. French election: Macron's party braces for tough fight\n3. Louvre Museum to undergo major overhaul\n4. France to offer free birth control to all women under 25",
-        },
+        {"role": "user", "content": "what's the weather in boston?"}, 
+        {"role": "function_call", "content": '[getCurrentWeather(location="Boston)]'}, 
+        {"role": "observation", "content": "72 f."}
     ]
     res = templates["mistral_rubra"].encode_messages(
         messages=messsages, system="you are helpful assistant.", tools=tool_content

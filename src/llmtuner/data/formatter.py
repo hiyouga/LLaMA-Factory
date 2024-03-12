@@ -111,7 +111,14 @@ def rubra_fc_v1_tool_formatter(specs: List[Dict[str, Any]]) -> str:
             json_type = details['type']
             python_type = type_mapping.get(json_type, "Any")
             
-            param_description = details.get('description', 'No description provided.')
+            param_description = ""
+            if "description" in details:
+                param_description = details["description"]
+            if "enum" in details:
+                quoted_enum = [f'"{val}"' for val in details["enum"]]
+                param_description += f" Acceptable values are: {' or '.join(quoted_enum)}"
+            if not param_description:
+                param_description = "No description provided."
             docstring_lines.append(f":param {param}: {param_description} {required_text}")
             docstring_lines.append(f":type {param}: {python_type}")
             
@@ -121,7 +128,9 @@ def rubra_fc_v1_tool_formatter(specs: List[Dict[str, Any]]) -> str:
         function_definition = f"def {func_name}({func_args_str}):\n    {docstring}\n"
         function_definitions.append(function_definition)
     
-    return TOOL_SYSTEM_PROMPT_RUBRA.format( tool_text="\n".join(function_definitions))
+    res = TOOL_SYSTEM_PROMPT_RUBRA.format( tool_text="\n".join(function_definitions))
+    print(f"formatted tool:\n {res}")
+    return res
 
 
 
