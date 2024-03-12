@@ -826,6 +826,15 @@ _register_template(
 
 
 _register_template(
+    name="olmo",
+    format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>"]),
+    format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}]),
+    format_system=StringFormatter(slots=[{"eos_token"}, "{{content}}"]),
+    force_system=True,
+)
+
+
+_register_template(
     name="openchat",
     format_user=StringFormatter(
         slots=[

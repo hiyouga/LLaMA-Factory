@@ -494,6 +494,24 @@ register_model_group(
 
 register_model_group(
     models={
+        "OLMo-1B": {
+            DownloadSource.DEFAULT: "allenai/OLMo-1B",
+        },
+        "OLMo-7B": {
+            DownloadSource.DEFAULT: "allenai/OLMo-7B",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/OLMo-7B",
+        },
+        "OLMo-7B-Chat": {
+            DownloadSource.DEFAULT: "allenai/OLMo-7B-Instruct",
+        }
+    },
+    module="att_proj",
+    template="olmo",
+)
+
+
+register_model_group(
+    models={
         "OpenChat3.5-7B-Chat": {
             DownloadSource.DEFAULT: "openchat/openchat-3.5-0106",
             DownloadSource.MODELSCOPE: "myxiongmodel/openchat_3.5",
