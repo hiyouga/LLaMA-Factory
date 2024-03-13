@@ -52,8 +52,6 @@ class Runner:
         get = lambda name: data[self.manager.get_elem_by_name(name)]
         lang, model_name, model_path = get("top.lang"), get("top.model_name"), get("top.model_path")
         dataset = get("train.dataset") if do_train else get("eval.dataset")
-        stage = TRAINING_STAGES[get("train.training_stage")]
-        reward_model = get("train.reward_model")
 
         if self.running:
             return ALERTS["err_conflict"][lang]
@@ -67,14 +65,17 @@ class Runner:
         if len(dataset) == 0:
             return ALERTS["err_no_dataset"][lang]
 
-        if stage == "ppo" and not reward_model:
-            return ALERTS["err_no_reward_model"][lang]
-
         if not from_preview and self.demo_mode:
             return ALERTS["err_demo"][lang]
 
         if not from_preview and get_device_count() > 1:
             return ALERTS["err_device_count"][lang]
+
+        if do_train:
+            stage = TRAINING_STAGES[get("train.training_stage")]
+            reward_model = get("train.reward_model")
+            if stage == "ppo" and not reward_model:
+                return ALERTS["err_no_reward_model"][lang]
 
         if not from_preview and not is_torch_cuda_available():
             gr.Warning(ALERTS["warn_no_cuda"][lang])
