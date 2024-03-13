@@ -9,7 +9,7 @@ CUDA_VISIBLE_DEVICES=0 python ../../src/train_bash.py \
     --template default \
     --finetuning_type lora \
     --lora_target q_proj,v_proj \
-    --output_dir ../../saves/LLaMA2-7B/lora_plus/sft \
+    --output_dir ../../saves/LLaMA2-7B/loraplus/sft \
     --overwrite_cache \
     --overwrite_output_dir \
     --cutoff_len 1024 \
@@ -30,4 +30,4 @@ CUDA_VISIBLE_DEVICES=0 python ../../src/train_bash.py \
     --val_size 0.1 \
     --plot_loss \
     --fp16 \
-    --lora_lr_ratio 16.0
+    --loraplus_lr_ratio 16.0
