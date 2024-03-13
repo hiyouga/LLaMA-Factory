@@ -116,7 +116,8 @@ def rubra_fc_v1_tool_formatter(specs: List[Dict[str, Any]]) -> str:
                 param_description = details["description"]
             if "enum" in details:
                 quoted_enum = [f'"{val}"' for val in details["enum"]]
-                param_description += f" Acceptable values are: {' or '.join(quoted_enum)}"
+                values_text = "Only acceptable value is" if len(quoted_enum) == 1 else "Only acceptable values are"
+                param_description += f" {values_text}: {' or '.join(quoted_enum)}"
             if not param_description:
                 param_description = "No description provided."
             docstring_lines.append(f":param {param}: {param_description} {required_text}")
