@@ -294,6 +294,7 @@ def _create_loraplus_optimizer(
         dict(params=param_dict["embedding"], lr=finetuning_args.loraplus_lr_embedding, **decay_args),
     ]
     optimizer = optim_class(param_groups, **optim_kwargs)
+    logger.info("Using LoRA+ optimizer with loraplus lr ratio {:.2f}.".format(finetuning_args.loraplus_lr_ratio))
     return optimizer
 
 
@@ -303,7 +304,7 @@ def create_custom_optimzer(
     training_args: "Seq2SeqTrainingArguments",
     finetuning_args: "FinetuningArguments",
 ) -> Optional["torch.optim.Optimizer"]:
-    if not finetuning_args.use_galore:
+    if finetuning_args.use_galore:
         return _create_galore_optimizer(model, dataset, training_args, finetuning_args)
 
     if finetuning_args.loraplus_lr_ratio is not None:
