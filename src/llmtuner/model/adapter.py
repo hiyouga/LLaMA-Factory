@@ -5,7 +5,7 @@ from peft import LoraConfig, LoraModel, PeftModel, TaskType, get_peft_model
 from transformers.integrations import is_deepspeed_zero3_enabled
 
 from ..extras.logging import get_logger
-from .utils import find_all_linear_modules, find_expanded_modules
+from .utils import QuantizationMethod, find_all_linear_modules, find_expanded_modules
 
 
 if TYPE_CHECKING:
@@ -129,9 +129,9 @@ def init_adapter(
             if finetuning_args.use_llama_pro:
                 target_modules = find_expanded_modules(model, target_modules, finetuning_args.num_layer_trainable)
 
-            if finetuning_args.use_dora:
-                if getattr(model, "quantization_method", None):
-                    raise ValueError("DoRA is currently not compatible with quantized models.")
+            if finetuning_args.use_dora and getattr(model, "quantization_method", None) is not None:
+                if getattr(model, "quantization_method", None) != QuantizationMethod.BITS_AND_BYTES:
+                    raise ValueError("DoRA is not compatible with PTQ-quantized models.")
 
             peft_kwargs = {
                 "r": finetuning_args.lora_rank,
