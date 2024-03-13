@@ -210,6 +210,11 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         default=False,
         metadata={"help": "Whether or not to make only the parameters in the expanded blocks trainable."},
     )
+    # for lora+,[LoRA+: Efficient Low Rank Adaptation of Large Models](https://arxiv.org/pdf/2402.12354.pdf)
+    lora_lr_ratio: Optional[float] = field(
+        default=None,
+        metadata={'help': 'The lora learning_rate ratio of lora_A to lora_B, option:16.0.'},
+    )
     plot_loss: bool = field(
         default=False,
         metadata={"help": "Whether or not to save the training loss curves."},
