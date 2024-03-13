@@ -164,6 +164,8 @@ def _create_galore_optimizer(
 
     if len(finetuning_args.galore_target) == 1 and finetuning_args.galore_target[0] == "all":
         galore_targets = find_all_linear_modules(model)
+    else:
+        galore_targets = finetuning_args.galore_target
 
     galore_params: List["torch.nn.Parameter"] = []
     for name, module in model.named_modules():
