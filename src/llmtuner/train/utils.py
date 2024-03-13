@@ -1,7 +1,8 @@
 import math
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Union
-
+from transformers.trainer import Trainer
 import torch
+from torch import nn
 from transformers.optimization import get_scheduler
 from transformers.utils.versions import require_version
 
@@ -17,7 +18,7 @@ if is_galore_available():
 
 if TYPE_CHECKING:
     from datasets import Dataset, IterableDataset
-    from transformers import Seq2SeqTrainingArguments, Trainer
+    from transformers import Seq2SeqTrainingArguments
     from transformers.modeling_utils import PreTrainedModel
     from trl import AutoModelForCausalLMWithValueHead
 
@@ -243,4 +244,90 @@ def create_custom_optimzer(
         optimizer = optim_class(param_groups, **optim_kwargs)
 
     logger.info("Using GaLore optimizer, may cause hanging at the start of training, wait patiently.")
+    return optimizer
+
+
+def optimizer_group_callback(model, lora_lr_ratio, **defaults):
+    "lora plus"
+    params = []
+    names = set()
+    for name, param in model.named_parameters():
+        if "default" in name and ('lora_B' in name or
+                                  'lora_embedding_B' in name):
+            params.append(param)
+            names.add(name)
+    if params:
+        assert 'lr' in defaults
+        return names, {
+            'params': params,
+            'lr': defaults['lr'] * lora_lr_ratio,
+        }
+    return None, None
+
+
+def create_lora_plus_optimizer(
+        model: "PreTrainedModel",
+        training_args: "Seq2SeqTrainingArguments",
+        finetuning_args: "FinetuningArguments",
+) -> Optional["torch.optim.Optimizer"]:
+    if finetuning_args.lora_lr_ratio is None:
+        return None
+    all_param_names = set()
+    param_groups = []
+    param_names, param_group = optimizer_group_callback(
+        model, lora_lr_ratio=finetuning_args.lora_lr_ratio,
+        lr=training_args.learning_rate,
+        weight_decay=training_args.weight_decay)
+    if param_names and all_param_names & param_names:
+        raise ValueError(
+            'Cannot set one parameter to different param groups')
+    if param_names and param_group:
+        all_param_names.update(param_names)
+        param_groups.append(param_group)
+
+    opt_model = model
+    decay_parameters = Trainer.get_decay_parameter_names(None, opt_model)
+    param_groups.extend([
+        {
+            'params': [
+                p for n, p in opt_model.named_parameters()
+                if (n in decay_parameters and n not in all_param_names and p.requires_grad)
+            ],
+            'weight_decay':
+                training_args.weight_decay,
+        },
+        {
+            'params': [
+                p for n, p in opt_model.named_parameters()
+                if (n not in decay_parameters and n not in all_param_names and p.requires_grad)
+            ],
+            'weight_decay':
+                0.0,
+        },
+    ])
+
+    optimizer_cls, optimizer_kwargs = Trainer.get_optimizer_cls_and_kwargs(training_args)
+
+    optimizer = optimizer_cls(param_groups, **optimizer_kwargs)
+
+    if optimizer_cls.__name__ == 'Adam8bit':
+        import bitsandbytes
+
+        manager = bitsandbytes.optim.GlobalOptimManager.get_instance()
+
+        skipped = 0
+        for module in opt_model.modules():
+            if isinstance(module, nn.Embedding):
+                skipped += sum({
+                                   p.data_ptr(): p.numel()
+                                   for p in module.parameters()
+                               }.values())
+                logger.info(
+                    f'skipped {module}: {skipped / 2 ** 20}M params')
+                manager.register_module_override(
+                    module, 'weight', {'optim_bits': 32})
+                logger.debug(
+                    f'bitsandbytes: will optimize {module} in fp32')
+        logger.info(f'skipped: {skipped / 2 ** 20}M params')
+
     return optimizer
