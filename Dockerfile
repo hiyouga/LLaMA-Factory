@@ -1,4 +1,4 @@
-FROM cnstark/pytorch:2.0.1-py3.9.17-cuda11.8.0-ubuntu20.04
+FROM nvcr.io/nvidia/pytorch:24.01-py3
 
 WORKDIR /app
 
