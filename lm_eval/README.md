@@ -15,4 +15,10 @@ and set the output dir to a dir of the model dir `OUTPUT_PATH=/app/data/mistral-
 docker run --gpus all -v /home/paperspace/LLaMA-Factory/merged_model/mistral-rubra:/app/data/mistral-rubra -e MODEL_DIR=/app/data/mistral-rubra -e OUTPUT_PATH=/app/data/mistral-rubra/evaloutput  tybalex/lmeval
 ```
 
+## Test multiple tasks
+You can set multiple tasks, split by comma, with `TASKS` env variable, such as:
+```
+docker run --gpus all -v /home/paperspace/LLaMA-Factory/merged_model/mistral-rubra:/app/data/mistral-rubra -e MODEL_DIR=/app/data/mistral-rubra -e OUTPUT_PATH=/app/data/mistral-rubra/evaloutput -e TASKS=arc_easy,hellaswag tybalex/lmeval
+```
 
+But be careful about the case like this : `mmlu` typically requires `num_fewshots=5` while a lot of other test benchmarks use `num_fewshots=0`
