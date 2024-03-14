@@ -283,6 +283,9 @@ def patch_config(
             setattr(config, dtype_name, model_args.compute_dtype == dtype)
 
     _configure_attn_implementation(model_args, init_kwargs)
+    if getattr(config, "model_type", None) == "qwen" and init_kwargs["attn_implementation"] != "flash_attention_2":
+        config.use_flash_attn = False
+
     _configure_rope(config, model_args, is_trainable)
     _configure_longlora(config, model_args, is_trainable)
     _configure_quantization(config, tokenizer, model_args, init_kwargs)
