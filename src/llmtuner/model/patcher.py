@@ -294,11 +294,12 @@ def patch_config(
     init_kwargs["torch_dtype"] = model_args.compute_dtype
     if not is_deepspeed_zero3_enabled():
         init_kwargs["low_cpu_mem_usage"] = model_args.low_cpu_mem_usage
-        if "device_map" not in init_kwargs:  # quant models cannot use auto device map
-            init_kwargs["device_map"] = model_args.device_map or {"": get_current_device()}
+        if model_args.low_cpu_mem_usage:
+            if "device_map" not in init_kwargs:  # quant models cannot use auto device map
+                init_kwargs["device_map"] = model_args.device_map or {"": get_current_device()}
 
-        if init_kwargs["device_map"] == "auto":
-            init_kwargs["offload_folder"] = model_args.offload_folder
+            if init_kwargs["device_map"] == "auto":
+                init_kwargs["offload_folder"] = model_args.offload_folder
 
 
 def patch_model(
