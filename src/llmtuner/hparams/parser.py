@@ -74,19 +74,6 @@ def _verify_model_args(model_args: "ModelArguments", finetuning_args: "Finetunin
         if model_args.adapter_name_or_path is not None and len(model_args.adapter_name_or_path) != 1:
             raise ValueError("Quantized model only accepts a single adapter. Merge them first.")
 
-    if model_args.infer_backend == "vllm":
-        if finetuning_args.stage != "sft":
-            raise ValueError("vLLM engine only supports auto-regressive models.")
-
-        if model_args.adapter_name_or_path is not None:
-            raise ValueError("vLLM engine does not support LoRA adapters. Merge them first.")
-
-        if model_args.quantization_bit is not None:
-            raise ValueError("vLLM engine does not support quantization.")
-
-        if model_args.rope_scaling is not None:
-            raise ValueError("vLLM engine does not support RoPE scaling.")
-
 
 def _parse_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     parser = HfArgumentParser(_TRAIN_ARGS)
@@ -266,8 +253,6 @@ def get_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
     model_args, data_args, finetuning_args, generating_args = _parse_infer_args(args)
 
     _set_transformers_logging()
-    _verify_model_args(model_args, finetuning_args)
-    model_args.device_map = "auto"
 
     if data_args.template is None:
         raise ValueError("Please specify which `template` to use.")
@@ -296,8 +281,6 @@ def get_eval_args(args: Optional[Dict[str, Any]] = None) -> _EVAL_CLS:
     model_args, data_args, eval_args, finetuning_args = _parse_eval_args(args)
 
     _set_transformers_logging()
-    _verify_model_args(model_args, finetuning_args)
-    model_args.device_map = "auto"
 
     if data_args.template is None:
         raise ValueError("Please specify which `template` to use.")

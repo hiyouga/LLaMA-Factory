@@ -827,9 +827,6 @@ _register_template(
 )
 
 
-
-
-
 _register_template(
     name="olmo",
     format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>"]),
