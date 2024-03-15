@@ -130,7 +130,6 @@ def rubra_fc_v1_tool_formatter(specs: List[Dict[str, Any]]) -> str:
         function_definitions.append(function_definition)
     
     res = TOOL_SYSTEM_PROMPT_RUBRA.format( tool_text="\n".join(function_definitions))
-    print(f"formatted tool:\n {res}")
     return res
 
 
