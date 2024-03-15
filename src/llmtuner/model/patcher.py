@@ -279,13 +279,11 @@ def patch_config(
         model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
 
     if getattr(config, "model_type", None) == "qwen":
+        setattr(config, "use_flash_attn", model_args.flash_attn)
         for dtype_name, dtype in [("fp16", torch.float16), ("bf16", torch.bfloat16), ("fp32", torch.float32)]:
             setattr(config, dtype_name, model_args.compute_dtype == dtype)
 
     _configure_attn_implementation(model_args, init_kwargs)
-    if getattr(config, "model_type", None) == "qwen" and init_kwargs["attn_implementation"] != "flash_attention_2":
-        config.use_flash_attn = False
-
     _configure_rope(config, model_args, is_trainable)
     _configure_longlora(config, model_args, is_trainable)
     _configure_quantization(config, tokenizer, model_args, init_kwargs)
