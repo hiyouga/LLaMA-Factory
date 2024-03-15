@@ -279,6 +279,7 @@ def patch_config(
         model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
 
     if getattr(config, "model_type", None) == "qwen":
+        setattr(config, "use_flash_attn", model_args.flash_attn)
         for dtype_name, dtype in [("fp16", torch.float16), ("bf16", torch.bfloat16), ("fp32", torch.float32)]:
             setattr(config, dtype_name, model_args.compute_dtype == dtype)
 
