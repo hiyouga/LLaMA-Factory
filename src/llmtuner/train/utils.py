@@ -160,7 +160,7 @@ def _create_galore_optimizer(
     training_args: "Seq2SeqTrainingArguments",
     finetuning_args: "FinetuningArguments",
 ) -> "torch.optim.Optimizer":
-    require_version("galore_torch", "To fix: pip install git+https://github.com/hiyouga/GaLore.git")
+    require_version("galore_torch", "To fix: pip install galore-torch")
 
     if len(finetuning_args.galore_target) == 1 and finetuning_args.galore_target[0] == "all":
         galore_targets = find_all_linear_modules(model)
