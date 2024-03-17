@@ -375,4 +375,8 @@
     },
     "folder": "python"
   }
-}
+  "saya.json":{
+    "hf_hub_url": "Ambrosepp/saya.json",
+  
+  
+  }
