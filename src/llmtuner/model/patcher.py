@@ -3,7 +3,7 @@ import os
 import random
 from contextlib import nullcontext
 from types import MethodType
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 import torch
 from datasets import load_dataset
@@ -18,6 +18,7 @@ from ..extras.misc import get_current_device, infer_optim_dtype
 from ..extras.packages import is_flash_attn2_available
 from ..extras.patches.llama_patch import apply_llama_patch
 from ..extras.patches.mixtral_patch import patch_mixtral_replace_moe_impl
+from .utils import QuantizationMethod
 
 
 if TYPE_CHECKING:
@@ -115,6 +116,9 @@ def _configure_attn_implementation(model_args: "ModelArguments", init_kwargs: Di
 
 
 def _configure_rope(config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool) -> None:
+    if model_args.rope_scaling is None:
+        return
+
     if not hasattr(config, "rope_scaling"):
         logger.warning("Current model does not support RoPE scaling.")
         return
@@ -141,7 +145,10 @@ def _configure_rope(config: "PretrainedConfig", model_args: "ModelArguments", is
     )
 
 
-def _configure_longlora(config: "PretrainedConfig") -> None:
+def _configure_longlora(config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool) -> None:
+    if not is_trainable or not model_args.shift_attn:
+        return
+
     if getattr(config, "model_type", None) in SUPPORTED_CLASS_FOR_S2ATTN:
         setattr(config, "group_size_ratio", 0.25)
         apply_llama_patch()
@@ -167,13 +174,14 @@ def _configure_quantization(
         quantization_config: Dict[str, Any] = getattr(config, "quantization_config", None)
         quant_method = quantization_config.get("quant_method", "")
 
-        if quant_method == "gptq":
+        if quant_method == QuantizationMethod.GPTQ:
             quantization_config["use_exllama"] = False  # disable exllama
 
-        if quant_method == "aqlm":
+        if quant_method == QuantizationMethod.AQLM:
             require_version(
                 "transformers>=4.39.0.dev0", "To fix: pip install git+https://github.com/huggingface/transformers.git"
             )
+            require_version("aqlm>=1.1.0", "To fix: pip install aqlm[gpu]>=1.1.0")
             quantization_config["bits"] = 2
 
         quant_bits = quantization_config.get("bits", "?")
@@ -198,7 +206,7 @@ def _configure_quantization(
 
     elif model_args.quantization_bit is not None:  # bnb
         if is_deepspeed_zero3_enabled():
-            raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantization.")
+            require_version("bitsandbytes>=0.43.0", "To fix: pip install bitsandbytes>=0.43.0")
 
         if model_args.quantization_bit == 8:
             require_version("bitsandbytes>=0.37.0", "To fix: pip install bitsandbytes>=0.37.0")
@@ -218,7 +226,7 @@ def _configure_quantization(
 
 
 def _prepare_model_for_training(
-    model: "PreTrainedModel", model_args: "ModelArguments", output_layer_name: Optional[str] = "lm_head"
+    model: "PreTrainedModel", model_args: "ModelArguments", output_layer_name: str = "lm_head"
 ) -> None:
     r"""
     Includes:
@@ -241,7 +249,7 @@ def _prepare_model_for_training(
             # According to: https://github.com/huggingface/transformers/issues/28339
             model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": True})
             model.enable_input_require_grads()
-            model.config.use_cache = False  # turn off when gradient checkpointing is enabled
+            setattr(model.config, "use_cache", False)  # turn off when gradient checkpointing is enabled
             logger.info("Gradient checkpointing enabled.")
 
     if hasattr(model, output_layer_name) and model_args.upcast_lmhead_output:
@@ -271,24 +279,28 @@ def patch_config(
         model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
 
     if getattr(config, "model_type", None) == "qwen":
+        setattr(config, "use_flash_attn", model_args.flash_attn)
         for dtype_name, dtype in [("fp16", torch.float16), ("bf16", torch.bfloat16), ("fp32", torch.float32)]:
             setattr(config, dtype_name, model_args.compute_dtype == dtype)
 
     _configure_attn_implementation(model_args, init_kwargs)
-
-    if model_args.rope_scaling is not None:
-        _configure_rope(config, model_args, is_trainable)
-
-    if is_trainable and model_args.shift_attn:
-        _configure_longlora(config)
-
+    _configure_rope(config, model_args, is_trainable)
+    _configure_longlora(config, model_args, is_trainable)
     _configure_quantization(config, tokenizer, model_args, init_kwargs)
+
+    if model_args.use_cache and not is_trainable:
+        setattr(config, "use_cache", True)
+        logger.info("Using KV cache for faster generation.")
 
     init_kwargs["torch_dtype"] = model_args.compute_dtype
     if not is_deepspeed_zero3_enabled():
-        init_kwargs["low_cpu_mem_usage"] = True
-        if "device_map" not in init_kwargs:
-            init_kwargs["device_map"] = {"": get_current_device()} if is_trainable else "auto"
+        init_kwargs["low_cpu_mem_usage"] = model_args.low_cpu_mem_usage
+        if model_args.low_cpu_mem_usage:
+            if "device_map" not in init_kwargs:  # quant models cannot use auto device map
+                init_kwargs["device_map"] = model_args.device_map or {"": get_current_device()}
+
+            if init_kwargs["device_map"] == "auto":
+                init_kwargs["offload_folder"] = model_args.offload_folder
 
 
 def patch_model(

@@ -1,5 +1,3 @@
-from typing import Optional
-
 import gradio as gr
 from transformers.utils.versions import require_version
 
@@ -19,7 +17,7 @@ from .engine import Engine
 require_version("gradio>=3.38.0,<4.0.0", 'To fix: pip install "gradio>=3.38.0,<4.0.0"')
 
 
-def create_ui(demo_mode: Optional[bool] = False) -> gr.Blocks:
+def create_ui(demo_mode: bool = False) -> gr.Blocks:
     engine = Engine(demo_mode=demo_mode, pure_chat=False)
 
     with gr.Blocks(title="LLaMA Board", css=CSS) as demo:
@@ -31,8 +29,7 @@ def create_ui(demo_mode: Optional[bool] = False) -> gr.Blocks:
             )
             gr.DuplicateButton(value="Duplicate Space for private use", elem_classes="duplicate-button")
 
-        engine.manager.all_elems["top"] = create_top()
-        lang: "gr.Dropdown" = engine.manager.get_elem_by_name("top.lang")
+        lang, engine.manager.all_elems["top"] = create_top()
 
         with gr.Tab("Train"):
             engine.manager.all_elems["train"] = create_train_tab(engine)

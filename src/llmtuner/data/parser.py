@@ -19,13 +19,13 @@ class DatasetAttr:
 
     """ basic configs """
     load_from: Literal["hf_hub", "ms_hub", "script", "file"]
-    dataset_name: Optional[str] = None
+    dataset_name: str
     """ extra configs """
     file_sha1: Optional[str] = None
     subset: Optional[str] = None
     folder: Optional[str] = None
-    ranking: Optional[bool] = False
-    formatting: Optional[Literal["alpaca", "sharegpt"]] = "alpaca"
+    ranking: bool = False
+    formatting: Literal["alpaca", "sharegpt"] = "alpaca"
     """ columns """
     system: Optional[str] = None
     """ columns for the alpaca format """

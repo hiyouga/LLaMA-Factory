@@ -7,8 +7,11 @@ import torch
 import transformers
 from transformers import HfArgumentParser, Seq2SeqTrainingArguments
 from transformers.trainer_utils import get_last_checkpoint
+from transformers.utils import is_torch_bf16_gpu_available
+from transformers.utils.versions import require_version
 
 from ..extras.logging import get_logger
+from ..extras.misc import check_dependencies
 from ..extras.packages import is_unsloth_available
 from .data_args import DataArguments
 from .evaluation_args import EvaluationArguments
@@ -18,6 +21,9 @@ from .model_args import ModelArguments
 
 
 logger = get_logger(__name__)
+
+
+check_dependencies()
 
 
 _TRAIN_ARGS = [ModelArguments, DataArguments, Seq2SeqTrainingArguments, FinetuningArguments, GeneratingArguments]
@@ -55,6 +61,9 @@ def _set_transformers_logging(log_level: Optional[int] = logging.INFO) -> None:
 
 
 def _verify_model_args(model_args: "ModelArguments", finetuning_args: "FinetuningArguments") -> None:
+    if model_args.adapter_name_or_path is not None and finetuning_args.finetuning_type != "lora":
+        raise ValueError("Adapter is only valid for the LoRA method.")
+
     if model_args.quantization_bit is not None:
         if finetuning_args.finetuning_type != "lora":
             raise ValueError("Quantization is only compatible with the LoRA method.")
@@ -64,9 +73,6 @@ def _verify_model_args(model_args: "ModelArguments", finetuning_args: "Finetunin
 
         if model_args.adapter_name_or_path is not None and len(model_args.adapter_name_or_path) != 1:
             raise ValueError("Quantized model only accepts a single adapter. Merge them first.")
-
-    if model_args.adapter_name_or_path is not None and finetuning_args.finetuning_type != "lora":
-        raise ValueError("Adapter is only valid for the LoRA method.")
 
 
 def _parse_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
@@ -119,25 +125,32 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if training_args.do_train and training_args.predict_with_generate:
         raise ValueError("`predict_with_generate` cannot be set as True while training.")
 
-    if (
-        training_args.do_train
-        and finetuning_args.finetuning_type == "freeze"
-        and finetuning_args.name_module_trainable is None
-    ):
-        raise ValueError("Please specify `name_module_trainable` in Freeze training.")
-
-    if training_args.do_train and finetuning_args.finetuning_type == "lora" and finetuning_args.lora_target is None:
-        raise ValueError("Please specify `lora_target` in LoRA training.")
-
-    if training_args.do_train and model_args.use_unsloth and not is_unsloth_available:
+    if training_args.do_train and model_args.use_unsloth and not is_unsloth_available():
         raise ValueError("Unsloth was not installed: https://github.com/unslothai/unsloth")
 
     if finetuning_args.use_dora:
         if model_args.quantization_bit is not None:
-            raise ValueError("DoRA does not support quantization.")
+            require_version("peft>=0.9.1.dev0", "To fix: pip install git+https://github.com/huggingface/peft.git")
 
         if model_args.use_unsloth:
             raise ValueError("Unsloth does not support DoRA.")
+
+    if finetuning_args.pure_bf16:
+        if not is_torch_bf16_gpu_available():
+            raise ValueError("This device does not support `pure_bf16`.")
+
+        if training_args.fp16 or training_args.bf16:
+            raise ValueError("Turn off mixed precision training when using `pure_bf16`.")
+
+    if (
+        finetuning_args.use_galore
+        and finetuning_args.galore_layerwise
+        and training_args.parallel_mode.value == "distributed"
+    ):
+        raise ValueError("Distributed training does not support layer-wise GaLore.")
+
+    if model_args.infer_backend == "vllm":
+        raise ValueError("vLLM backend is only available for API, CLI and Web.")
 
     _verify_model_args(model_args, finetuning_args)
 
@@ -155,6 +168,9 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if training_args.do_train and (not training_args.fp16) and (not training_args.bf16):
         logger.warning("We recommend enable mixed precision training.")
 
+    if training_args.do_train and finetuning_args.use_galore and not finetuning_args.pure_bf16:
+        logger.warning("Using GaLore with mixed precision training may significantly increases GPU memory usage.")
+
     if (not training_args.do_train) and model_args.quantization_bit is not None:
         logger.warning("Evaluating model in 4/8-bit mode may cause lower scores.")
 
@@ -163,7 +179,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
     # Post-process training arguments
     if (
-        training_args.local_rank != -1
+        training_args.parallel_mode.value == "distributed"
         and training_args.ddp_find_unused_parameters is None
         and finetuning_args.finetuning_type == "lora"
     ):
@@ -209,11 +225,13 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         )
 
     # Post-process model arguments
-    model_args.compute_dtype = (
-        torch.bfloat16 if training_args.bf16 else (torch.float16 if training_args.fp16 else None)
-    )
+    if training_args.bf16 or finetuning_args.pure_bf16:
+        model_args.compute_dtype = torch.bfloat16
+    elif training_args.fp16:
+        model_args.compute_dtype = torch.float16
+
     model_args.model_max_length = data_args.cutoff_len
-    model_args.aqlm_optimization = not training_args.predict_with_generate
+    data_args.packing = data_args.packing if data_args.packing is not None else finetuning_args.stage == "pt"
 
     # Log on each process the small summary:
     logger.info(
@@ -221,7 +239,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
             training_args.local_rank,
             training_args.device,
             training_args.n_gpu,
-            bool(training_args.local_rank != -1),
+            training_args.parallel_mode.value == "distributed",
             str(model_args.compute_dtype),
         )
     )
@@ -235,10 +253,26 @@ def get_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
     model_args, data_args, finetuning_args, generating_args = _parse_infer_args(args)
 
     _set_transformers_logging()
-    _verify_model_args(model_args, finetuning_args)
 
     if data_args.template is None:
         raise ValueError("Please specify which `template` to use.")
+
+    if model_args.infer_backend == "vllm":
+        if finetuning_args.stage != "sft":
+            raise ValueError("vLLM engine only supports auto-regressive models.")
+
+        if model_args.adapter_name_or_path is not None:
+            raise ValueError("vLLM engine does not support LoRA adapters. Merge them first.")
+
+        if model_args.quantization_bit is not None:
+            raise ValueError("vLLM engine does not support quantization.")
+
+        if model_args.rope_scaling is not None:
+            raise ValueError("vLLM engine does not support RoPE scaling.")
+
+    _verify_model_args(model_args, finetuning_args)
+
+    model_args.device_map = "auto"
 
     return model_args, data_args, finetuning_args, generating_args
 
@@ -247,11 +281,16 @@ def get_eval_args(args: Optional[Dict[str, Any]] = None) -> _EVAL_CLS:
     model_args, data_args, eval_args, finetuning_args = _parse_eval_args(args)
 
     _set_transformers_logging()
-    _verify_model_args(model_args, finetuning_args)
-    model_args.aqlm_optimization = True
 
     if data_args.template is None:
         raise ValueError("Please specify which `template` to use.")
+
+    if model_args.infer_backend == "vllm":
+        raise ValueError("vLLM backend is only available for API, CLI and Web.")
+
+    _verify_model_args(model_args, finetuning_args)
+
+    model_args.device_map = "auto"
 
     transformers.set_seed(eval_args.seed)
 

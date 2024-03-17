@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, Tuple
 
 import gradio as gr
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 def create_chat_box(
-    engine: "Engine", visible: Optional[bool] = False
+    engine: "Engine", visible: bool = False
 ) -> Tuple["Block", "Component", "Component", Dict[str, "Component"]]:
     with gr.Box(visible=visible) as chat_box:
         chatbot = gr.Chatbot()
@@ -28,10 +28,9 @@ def create_chat_box(
                 submit_btn = gr.Button(variant="primary")
 
             with gr.Column(scale=1):
-                gen_kwargs = engine.chatter.generating_args
-                max_new_tokens = gr.Slider(10, 2048, value=gen_kwargs.max_new_tokens, step=1)
-                top_p = gr.Slider(0.01, 1, value=gen_kwargs.top_p, step=0.01)
-                temperature = gr.Slider(0.01, 1.5, value=gen_kwargs.temperature, step=0.01)
+                max_new_tokens = gr.Slider(8, 4096, value=512, step=1)
+                top_p = gr.Slider(0.01, 1.0, value=0.7, step=0.01)
+                temperature = gr.Slider(0.01, 1.5, value=0.95, step=0.01)
                 clear_btn = gr.Button()
 
     tools.input(check_json_schema, [tools, engine.manager.get_elem_by_name("top.lang")])

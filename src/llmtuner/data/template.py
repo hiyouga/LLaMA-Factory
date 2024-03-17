@@ -11,8 +11,6 @@ from .formatter import (
 )
 
 from .utils import Role, infer_max_len
-from .utils import infer_max_len
-# from .utils import ShareGPTRole as Role
 import json
 
 
@@ -47,8 +45,8 @@ class Template:
         messages: List[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        cutoff_len: Optional[int] = 1_000_000,
-        reserved_label_len: Optional[int] = 1,
+        cutoff_len: int = 1_000_000,
+        reserved_label_len: int = 1,
     ) -> Tuple[List[int], List[int]]:
         r"""
         Returns a single pair of token ids representing prompt and response respectively.
@@ -69,8 +67,8 @@ class Template:
         messages: List[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        cutoff_len: Optional[int] = 1_000_000,
-        reserved_label_len: Optional[int] = 1,
+        cutoff_len: int = 1_000_000,
+        reserved_label_len: int = 1,
     ) -> Sequence[Tuple[List[int], List[int]]]:
         r"""
         Returns multiple pairs of token ids representing prompts and responses respectively.
@@ -278,11 +276,11 @@ def _register_template(
     format_observation: Optional["Formatter"] = None,
     format_tools: Optional["Formatter"] = None,
     format_separator: Optional["Formatter"] = None,
-    default_system: Optional[str] = "",
-    stop_words: Optional[List[str]] = [],
-    efficient_eos: Optional[bool] = False,
-    replace_eos: Optional[bool] = False,
-    force_system: Optional[bool] = False,
+    default_system: str = "",
+    stop_words: List[str] = [],
+    efficient_eos: bool = False,
+    replace_eos: bool = False,
+    force_system: bool = False,
     generation_prompt: Optional[str] = None,
 ) -> None:
     r"""
@@ -585,7 +583,7 @@ _register_template(
         slots=[{"token": "<|user|>"}, "\n", "{{content}}", {"token": "<|assistant|>"}]
     ),
     format_assistant=StringFormatter(slots=["\n", "{{content}}"]),
-    format_system=StringFormatter(slots=[{"token": "[gMASK]"}, {"token": "sop"}]),
+    format_system=StringFormatter(slots=[{"token": "[gMASK]"}, {"token": "sop"}, "{{content}}"]),
     format_function=FunctionFormatter(slots=["{{name}}\n{{arguments}}"]),
     format_observation=StringFormatter(
         slots=[
@@ -830,6 +828,15 @@ _register_template(
 
 
 _register_template(
+    name="olmo",
+    format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>"]),
+    format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}]),
+    format_system=StringFormatter(slots=[{"eos_token"}, "{{content}}"]),
+    force_system=True,
+)
+
+
+_register_template(
     name="openchat",
     format_user=StringFormatter(
         slots=[
@@ -1033,7 +1040,6 @@ if __name__ == "__main__":
     res = templates["mistral_rubra"].encode_messages(
         messages=messsages, system="you are helpful assistant.", tools=tool_content
     )
-    print(type(res))
     print(f"=======\nEncoded Message:\n=======")
     for msg in res:
         print(msg)

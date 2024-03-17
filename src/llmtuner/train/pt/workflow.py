@@ -8,7 +8,7 @@ from transformers import DataCollatorForLanguageModeling, Trainer
 from ...data import get_dataset, split_dataset
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
-from ...train.utils import create_modelcard_and_push
+from ..utils import create_custom_optimzer, create_modelcard_and_push
 
 
 if TYPE_CHECKING:
@@ -30,12 +30,14 @@ def run_pt(
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
     # Initialize our Trainer
+    optimizer = create_custom_optimzer(model, dataset, training_args, finetuning_args)
     trainer = Trainer(
         model=model,
         args=training_args,
         tokenizer=tokenizer,
         data_collator=data_collator,
         callbacks=callbacks,
+        optimizers=(optimizer, None),
         **split_dataset(dataset, data_args, training_args),
     )
 

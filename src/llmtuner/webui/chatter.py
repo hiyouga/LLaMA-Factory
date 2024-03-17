@@ -1,4 +1,5 @@
 import json
+import os
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Sequence, Tuple
 
 import gradio as gr
@@ -7,44 +8,32 @@ from gradio.components import Component  # cannot use TYPE_CHECKING here
 from ..chat import ChatModel
 from ..data import Role
 from ..extras.misc import torch_gc
-from ..hparams import GeneratingArguments
 from .common import get_save_dir
 from .locales import ALERTS
 
 
 if TYPE_CHECKING:
+    from ..chat import BaseEngine
     from .manager import Manager
 
 
 class WebChatModel(ChatModel):
-    def __init__(
-        self, manager: "Manager", demo_mode: Optional[bool] = False, lazy_init: Optional[bool] = True
-    ) -> None:
+    def __init__(self, manager: "Manager", demo_mode: bool = False, lazy_init: bool = True) -> None:
         self.manager = manager
         self.demo_mode = demo_mode
-        self.model = None
-        self.tokenizer = None
-        self.generating_args = GeneratingArguments()
+        self.engine: Optional["BaseEngine"] = None
 
         if not lazy_init:  # read arguments from command line
             super().__init__()
 
-        if demo_mode:  # load demo_config.json if exists
-            import json
-
-            try:
-                with open("demo_config.json", "r", encoding="utf-8") as f:
-                    args = json.load(f)
-                assert args.get("model_name_or_path", None) and args.get("template", None)
-                super().__init__(args)
-            except AssertionError:
-                print("Please provided model name and template in `demo_config.json`.")
-            except Exception:
-                print("Cannot find `demo_config.json` at current directory.")
+        if demo_mode and os.environ.get("DEMO_MODEL") and os.environ.get("DEMO_TEMPLATE"):  # load demo model
+            model_name_or_path = os.environ.get("DEMO_MODEL")
+            template = os.environ.get("DEMO_TEMPLATE")
+            super().__init__(dict(model_name_or_path=model_name_or_path, template=template))
 
     @property
     def loaded(self) -> bool:
-        return self.model is not None
+        return self.engine is not None
 
     def load_model(self, data: Dict[Component, Any]) -> Generator[str, None, None]:
         get = lambda name: data[self.manager.get_elem_by_name(name)]
@@ -84,6 +73,7 @@ class WebChatModel(ChatModel):
             flash_attn=(get("top.booster") == "flash_attn"),
             use_unsloth=(get("top.booster") == "unsloth"),
             rope_scaling=get("top.rope_scaling") if get("top.rope_scaling") in ["linear", "dynamic"] else None,
+            infer_backend=get("infer.infer_backend"),
         )
         super().__init__(args)
 
@@ -98,8 +88,7 @@ class WebChatModel(ChatModel):
             return
 
         yield ALERTS["info_unloading"][lang]
-        self.model = None
-        self.tokenizer = None
+        self.engine = None
         torch_gc()
         yield ALERTS["info_unloaded"][lang]
 
@@ -123,7 +112,7 @@ class WebChatModel(ChatModel):
         ):
             response += new_text
             if tools:
-                result = self.template.format_tools.extract(response)
+                result = self.engine.template.format_tools.extract(response)
             else:
                 result = response
 

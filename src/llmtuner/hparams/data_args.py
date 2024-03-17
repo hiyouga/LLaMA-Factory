@@ -16,35 +16,35 @@ class DataArguments:
         default=None,
         metadata={"help": "The name of provided dataset(s) to use. Use commas to separate multiple datasets."},
     )
-    dataset_dir: Optional[str] = field(
+    dataset_dir: str = field(
         default="data",
         metadata={"help": "Path to the folder containing the datasets."},
     )
-    split: Optional[str] = field(
+    split: str = field(
         default="train",
         metadata={"help": "Which dataset split to use for training and evaluation."},
     )
-    cutoff_len: Optional[int] = field(
+    cutoff_len: int = field(
         default=1024,
         metadata={"help": "The cutoff length of the model inputs after tokenization."},
     )
-    reserved_label_len: Optional[int] = field(
+    reserved_label_len: int = field(
         default=1,
         metadata={"help": "The minimum cutoff length reserved for label after tokenization."},
     )
-    train_on_prompt: Optional[bool] = field(
+    train_on_prompt: bool = field(
         default=False,
         metadata={"help": "Whether to disable the mask on the prompt or not."},
     )
-    streaming: Optional[bool] = field(
+    streaming: bool = field(
         default=False,
         metadata={"help": "Enable dataset streaming."},
     )
-    buffer_size: Optional[int] = field(
+    buffer_size: int = field(
         default=16384,
         metadata={"help": "Size of the buffer to randomly sample examples from in dataset streaming."},
     )
-    mix_strategy: Optional[Literal["concat", "interleave_under", "interleave_over"]] = field(
+    mix_strategy: Literal["concat", "interleave_under", "interleave_over"] = field(
         default="concat",
         metadata={"help": "Strategy to use in dataset mixing (concat/interleave) (undersampling/oversampling)."},
     )
@@ -52,13 +52,13 @@ class DataArguments:
         default=None,
         metadata={"help": "Probabilities to sample data from datasets. Use commas to separate multiple datasets."},
     )
-    overwrite_cache: Optional[bool] = field(
+    overwrite_cache: bool = field(
         default=False,
         metadata={"help": "Overwrite the cached training and evaluation sets."},
     )
     preprocessing_num_workers: Optional[int] = field(
         default=None,
-        metadata={"help": "The number of processes to use for the preprocessing."},
+        metadata={"help": "The number of processes to use for the pre-processing."},
     )
     max_samples: Optional[int] = field(
         default=None,
@@ -68,23 +68,25 @@ class DataArguments:
         default=None,
         metadata={"help": "Number of beams to use for evaluation. This argument will be passed to `model.generate`"},
     )
-    ignore_pad_token_for_loss: Optional[bool] = field(
+    ignore_pad_token_for_loss: bool = field(
         default=True,
         metadata={
             "help": "Whether or not to ignore the tokens corresponding to padded labels in the loss computation."
         },
     )
-    val_size: Optional[float] = field(
-        default=0,
+    val_size: float = field(
+        default=0.0,
         metadata={"help": "Size of the development set, should be an integer or a float in range `[0,1)`."},
     )
-    sft_packing: Optional[bool] = field(
-        default=False,
-        metadata={"help": "Packing the questions and answers in the supervised fine-tuning stage."},
+    packing: Optional[bool] = field(
+        default=None,
+        metadata={
+            "help": "Whether or not to pack the sequences in training. Will automatically enable in pre-training."
+        },
     )
     cache_path: Optional[str] = field(
         default=None,
-        metadata={"help": "Path to save or load the preprocessed datasets."},
+        metadata={"help": "Path to save or load the pre-processed datasets."},
     )
 
     def __post_init__(self):

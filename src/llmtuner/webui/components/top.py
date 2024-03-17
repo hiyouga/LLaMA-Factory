@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, Dict, Tuple
 
 import gradio as gr
 
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from gradio.components import Component
 
 
-def create_top() -> Dict[str, "Component"]:
+def create_top() -> Tuple["gr.Dropdown", Dict[str, "Component"]]:
     available_models = list(SUPPORTED_MODELS.keys()) + ["Custom"]
 
     with gr.Row():
@@ -22,7 +22,7 @@ def create_top() -> Dict[str, "Component"]:
 
     with gr.Row():
         finetuning_type = gr.Dropdown(choices=METHODS, value="lora", scale=1)
-        adapter_path = gr.Dropdown(multiselect=True, scale=5, allow_custom_value=True)
+        adapter_path = gr.Dropdown(multiselect=True, allow_custom_value=True, scale=5)
         refresh_btn = gr.Button(scale=1)
 
     with gr.Accordion(label="Advanced config", open=False) as advanced_tab:
@@ -44,7 +44,7 @@ def create_top() -> Dict[str, "Component"]:
 
     refresh_btn.click(list_adapters, [model_name, finetuning_type], [adapter_path], queue=False)
 
-    return dict(
+    return lang, dict(
         lang=lang,
         model_name=model_name,
         model_path=model_path,

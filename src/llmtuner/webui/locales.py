@@ -245,20 +245,6 @@ LOCALES = {
             "label": "样例",
         },
     },
-    "cutoff_len": {
-        "en": {
-            "label": "Cutoff length",
-            "info": "Max tokens in input sequence.",
-        },
-        "ru": {
-            "label": "Длина обрезки",
-            "info": "Максимальное количество токенов во входной последовательности.",
-        },
-        "zh": {
-            "label": "截断长度",
-            "info": "输入序列分词后的最大长度。",
-        },
-    },
     "learning_rate": {
         "en": {
             "label": "Learning rate",
@@ -287,6 +273,20 @@ LOCALES = {
             "info": "需要执行的训练总轮数。",
         },
     },
+    "max_grad_norm": {
+        "en": {
+            "label": "Maximum gradient norm",
+            "info": "Norm for gradient clipping.",
+        },
+        "ru": {
+            "label": "Максимальная норма градиента",
+            "info": "Норма для обрезки градиента.",
+        },
+        "zh": {
+            "label": "最大梯度范数",
+            "info": "用于梯度裁剪的范数。",
+        },
+    },
     "max_samples": {
         "en": {
             "label": "Max samples",
@@ -304,15 +304,29 @@ LOCALES = {
     "compute_type": {
         "en": {
             "label": "Compute type",
-            "info": "Whether to use mixed precision training (fp16 or bf16).",
+            "info": "Whether to use mixed precision training.",
         },
         "ru": {
             "label": "Тип вычислений",
-            "info": "Использовать ли обучение смешанной точности fp16 или bf16.",
+            "info": "Использовать ли обучение смешанной точности.",
         },
         "zh": {
             "label": "计算类型",
-            "info": "是否使用混合精度训练（fp16 或 bf16）。",
+            "info": "是否使用混合精度训练。",
+        },
+    },
+    "cutoff_len": {
+        "en": {
+            "label": "Cutoff length",
+            "info": "Max tokens in input sequence.",
+        },
+        "ru": {
+            "label": "Длина обрезки",
+            "info": "Максимальное количество токенов во входной последовательности.",
+        },
+        "zh": {
+            "label": "截断长度",
+            "info": "输入序列分词后的最大长度。",
         },
     },
     "batch_size": {
@@ -343,34 +357,6 @@ LOCALES = {
             "info": "梯度累积的步数。",
         },
     },
-    "lr_scheduler_type": {
-        "en": {
-            "label": "LR scheduler",
-            "info": "Name of the learning rate scheduler.",
-        },
-        "ru": {
-            "label": "Планировщик скорости обучения",
-            "info": "Название планировщика скорости обучения.",
-        },
-        "zh": {
-            "label": "学习率调节器",
-            "info": "学习率调度器的名称。",
-        },
-    },
-    "max_grad_norm": {
-        "en": {
-            "label": "Maximum gradient norm",
-            "info": "Norm for gradient clipping.",
-        },
-        "ru": {
-            "label": "Максимальная норма градиента",
-            "info": "Норма для обрезки градиента.",
-        },
-        "zh": {
-            "label": "最大梯度范数",
-            "info": "用于梯度裁剪的范数。",
-        },
-    },
     "val_size": {
         "en": {
             "label": "Val size",
@@ -383,6 +369,20 @@ LOCALES = {
         "zh": {
             "label": "验证集比例",
             "info": "验证集占全部样本的百分比。",
+        },
+    },
+    "lr_scheduler_type": {
+        "en": {
+            "label": "LR scheduler",
+            "info": "Name of the learning rate scheduler.",
+        },
+        "ru": {
+            "label": "Планировщик скорости обучения",
+            "info": "Название планировщика скорости обучения.",
+        },
+        "zh": {
+            "label": "学习率调节器",
+            "info": "学习率调度器的名称。",
         },
     },
     "extra_tab": {
@@ -452,6 +452,20 @@ LOCALES = {
             "info": "嵌入向量所添加的噪声大小。",
         },
     },
+    "optim": {
+        "en": {
+            "label": "Optimizer",
+            "info": "The optimizer to use: adamw_torch, adamw_8bit or adafactor.",
+        },
+        "ru": {
+            "label": "Оптимизатор",
+            "info": "Оптимизатор для использования: adamw_torch, adamw_8bit или adafactor.",
+        },
+        "zh": {
+            "label": "优化器",
+            "info": "使用的优化器：adamw_torch、adamw_8bit 或 adafactor。",
+        },
+    },
     "resize_vocab": {
         "en": {
             "label": "Resize token embeddings",
@@ -466,18 +480,18 @@ LOCALES = {
             "info": "更改分词器词表和嵌入层的大小。",
         },
     },
-    "sft_packing": {
+    "packing": {
         "en": {
             "label": "Pack sequences",
-            "info": "Pack sequences into samples of fixed length in supervised fine-tuning.",
+            "info": "Pack sequences into samples of fixed length.",
         },
         "ru": {
             "label": "Упаковка последовательностей",
-            "info": "Упаковка последовательностей в образцы фиксированной длины при контролируемой тонкой настройке.",
+            "info": "Упаковка последовательностей в образцы фиксированной длины.",
         },
         "zh": {
             "label": "序列打包",
-            "info": "在指令监督微调时将序列打包为等长样本。",
+            "info": "将序列打包为等长样本。",
         },
     },
     "upcast_layernorm": {
@@ -506,6 +520,20 @@ LOCALES = {
         "zh": {
             "label": "使用 LLaMA Pro",
             "info": "仅训练块扩展后的参数。",
+        },
+    },
+    "shift_attn": {
+        "en": {
+            "label": "Enable S^2 Attention",
+            "info": "Use shift short attention proposed by LongLoRA.",
+        },
+        "ru": {
+            "label": "Включить S^2 внимание",
+            "info": "Использовать сдвиг внимания на короткие дистанции предложенный LongLoRA.",
+        },
+        "zh": {
+            "label": "使用 S^2 Attention",
+            "info": "使用 LongLoRA 提出的 shift short attention。",
         },
     },
     "freeze_tab": {
@@ -569,16 +597,16 @@ LOCALES = {
         },
         "zh": {
             "label": "LoRA 秩",
-            "info": "LoRA 矩阵的秩。",
+            "info": "LoRA 矩阵的秩大小。",
         },
     },
     "lora_alpha": {
         "en": {
-            "label": "LoRA Alpha",
+            "label": "LoRA alpha",
             "info": "Lora scaling coefficient.",
         },
         "ru": {
-            "label": "LoRA Alpha",
+            "label": "LoRA alpha",
             "info": "Коэффициент масштабирования LoRA.",
         },
         "zh": {
@@ -588,7 +616,7 @@ LOCALES = {
     },
     "lora_dropout": {
         "en": {
-            "label": "LoRA Dropout",
+            "label": "LoRA dropout",
             "info": "Dropout ratio of LoRA weights.",
         },
         "ru": {
@@ -603,15 +631,15 @@ LOCALES = {
     "lora_target": {
         "en": {
             "label": "LoRA modules (optional)",
-            "info": "Name(s) of target modules to apply LoRA. Use commas to separate multiple modules.",
+            "info": "Name(s) of modules to apply LoRA. Use commas to separate multiple modules.",
         },
         "ru": {
             "label": "Модули LoRA (опционально)",
-            "info": "Имена целевых модулей для применения LoRA. Используйте запятые для разделения нескольких модулей.",
+            "info": "Имена модулей для применения LoRA. Используйте запятые для разделения нескольких модулей.",
         },
         "zh": {
             "label": "LoRA 作用模块（非必填）",
-            "info": "应用 LoRA 的目标模块名称。使用英文逗号分隔多个名称。",
+            "info": "应用 LoRA 的模块名称。使用英文逗号分隔多个名称。",
         },
     },
     "use_rslora": {
@@ -659,7 +687,10 @@ LOCALES = {
     "additional_target": {
         "en": {
             "label": "Additional modules (optional)",
-            "info": "Name(s) of modules apart from LoRA layers to be set as trainable. Use commas to separate multiple modules.",
+            "info": (
+                "Name(s) of modules apart from LoRA layers to be set as trainable. "
+                "Use commas to separate multiple modules."
+            ),
         },
         "ru": {
             "label": "Дополнительные модули (опционально)",
@@ -715,15 +746,96 @@ LOCALES = {
     "reward_model": {
         "en": {
             "label": "Reward model",
-            "info": "Adapter of the reward model for PPO training. (Needs to refresh adapters)",
+            "info": "Adapter of the reward model for PPO training.",
         },
         "ru": {
             "label": "Модель вознаграждения",
-            "info": "Адаптер модели вознаграждения для обучения PPO. (Необходимо обновить адаптеры)",
+            "info": "Адаптер модели вознаграждения для обучения PPO.",
         },
         "zh": {
             "label": "奖励模型",
-            "info": "PPO 训练中奖励模型的适配器路径。（需要刷新适配器）",
+            "info": "PPO 训练中奖励模型的适配器路径。",
+        },
+    },
+    "galore_tab": {
+        "en": {
+            "label": "GaLore configurations",
+        },
+        "ru": {
+            "label": "Конфигурации GaLore",
+        },
+        "zh": {
+            "label": "GaLore 参数设置",
+        },
+    },
+    "use_galore": {
+        "en": {
+            "label": "Use GaLore",
+            "info": "Enable gradient low-Rank projection.",
+        },
+        "ru": {
+            "label": "Использовать GaLore",
+            "info": "Включить проекцию градиента на низкоранговое пространство.",
+        },
+        "zh": {
+            "label": "使用 GaLore",
+            "info": "使用梯度低秩投影。",
+        },
+    },
+    "galore_rank": {
+        "en": {
+            "label": "GaLore rank",
+            "info": "The rank of GaLore gradients.",
+        },
+        "ru": {
+            "label": "Ранг GaLore",
+            "info": "Ранг градиентов GaLore.",
+        },
+        "zh": {
+            "label": "GaLore 秩",
+            "info": "GaLore 梯度的秩大小。",
+        },
+    },
+    "galore_update_interval": {
+        "en": {
+            "label": "Update interval",
+            "info": "Number of steps to update the GaLore projection.",
+        },
+        "ru": {
+            "label": "Интервал обновления",
+            "info": "Количество шагов для обновления проекции GaLore.",
+        },
+        "zh": {
+            "label": "更新间隔",
+            "info": "相邻两次投影更新的步数。",
+        },
+    },
+    "galore_scale": {
+        "en": {
+            "label": "GaLore scale",
+            "info": "GaLore scaling coefficient.",
+        },
+        "ru": {
+            "label": "LoRA Alpha",
+            "info": "Коэффициент масштабирования GaLore.",
+        },
+        "zh": {
+            "label": "GaLore 缩放系数",
+            "info": "GaLore 缩放系数大小。",
+        },
+    },
+    "galore_target": {
+        "en": {
+            "label": "GaLore modules",
+            "info": "Name(s) of modules to apply GaLore. Use commas to separate multiple modules.",
+        },
+        "ru": {
+            "label": "Модули GaLore",
+            "info": "Имена модулей для применения GaLore. Используйте запятые для разделения нескольких модулей.",
+        },
+        "zh": {
+            "label": "GaLore 作用模块",
+            "info": "应用 GaLore 的模块名称。使用英文逗号分隔多个名称。",
         },
     },
     "cmd_preview_btn": {
@@ -804,6 +916,17 @@ LOCALES = {
         },
         "zh": {
             "label": "保存预测结果",
+        },
+    },
+    "infer_backend": {
+        "en": {
+            "label": "Inference engine",
+        },
+        "ru": {
+            "label": "Инференс движок",
+        },
+        "zh": {
+            "label": "推理引擎",
         },
     },
     "load_btn": {
@@ -1076,7 +1199,12 @@ ALERTS = {
     "err_no_adapter": {
         "en": "Please select an adapter.",
         "ru": "Пожалуйста, выберите адаптер.",
-        "zh": "请选择一个适配器。",
+        "zh": "请选择适配器。",
+    },
+    "err_no_reward_model": {
+        "en": "Please select a reward model.",
+        "ru": "Пожалуйста, выберите модель вознаграждения.",
+        "zh": "请选择奖励模型。",
     },
     "err_no_export_dir": {
         "en": "Please provide export dir.",

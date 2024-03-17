@@ -13,8 +13,8 @@ from ...extras.callbacks import FixValueHeadModelCallback
 from ...extras.misc import fix_valuehead_checkpoint
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
-from ...train.ppo.trainer import CustomPPOTrainer
-from ...train.utils import create_ref_model, create_reward_model
+from ..utils import create_custom_optimzer, create_ref_model, create_reward_model
+from .trainer import CustomPPOTrainer
 
 
 if TYPE_CHECKING:
@@ -64,7 +64,10 @@ def run_ppo(
     )
 
     # Create optimizer and scheduler
-    optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=training_args.learning_rate)
+    optimizer = create_custom_optimzer(model, dataset, training_args, finetuning_args)
+    if optimizer is None:
+        optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=training_args.learning_rate)
+
     if training_args.max_steps > 0:
         num_training_steps = training_args.max_steps
     else:

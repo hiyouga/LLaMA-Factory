@@ -9,11 +9,9 @@ scipy
 einops
 sentencepiece
 protobuf
-jieba
-rouge-chinese
-nltk
 uvicorn
 pydantic
 fastapi
 sse-starlette
 matplotlib
+fire
