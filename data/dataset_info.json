@@ -67,6 +67,24 @@
       "tools": "tools"
     }
   },
+  "rubra_systemchat_functions": {
+    "file_name": "systemchat-functions.json",
+    "file_sha1": "4e7d40aa818f7b551bd4a6cf71155c5d0e46017249867efb28af2d871644a1c8",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "tools": "tools"
+    }
+  },
+  "rubra_gorilla_functions": {
+    "file_name": "gorilla-functions.json",
+    "file_sha1": "4e7d40aa818f7b551bd4a6cf71155c5d0e46017249867efb28af2d871644a1c8",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "tools": "tools"
+    }
+  },
   "example": {
     "script_url": "example_dataset",
     "columns": {
