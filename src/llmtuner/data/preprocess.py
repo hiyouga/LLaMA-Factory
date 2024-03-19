@@ -217,7 +217,7 @@ def preprocess_pairwise_dataset(
 
 
 def print_supervised_dataset_example(example: Dict[str, List[int]], tokenizer: "PreTrainedTokenizer") -> None:
-    print("input_ids:\n{}".format(example["input_ids"]))
+    # print("input_ids:\n{}".format(example["input_ids"]))
     print("inputs:\n{}".format(tokenizer.decode(example["input_ids"], skip_special_tokens=False)))
     print("label_ids:\n{}".format(example["labels"]))
     print(

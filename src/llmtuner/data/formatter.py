@@ -163,6 +163,7 @@ def rubra_fc_v1_tool_extractor(content: str) -> Union[str, Tuple[str, str]]:
         data = json.loads(json_str)
         func_name = data.get("name", "")
         func_args = data.get("arguments", {})
+        print("func_name", func_name)
 
         return func_name, json.dumps(func_args, ensure_ascii=False)
     except json.JSONDecodeError:
