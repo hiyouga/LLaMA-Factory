@@ -71,7 +71,12 @@ def rubra_fc_v1_tool_formatter(specs: List[Dict[str, Any]]) -> str:
     }
     
     for spec in specs:
+        # print("spec:")
+        # print(spec)
+        spec = spec['function']
         func_name = spec['name']
+        # print("func_name", func_name)
+        # print("success")
         description = spec.get('description', 'No description provided.')
         parameters = spec.get('parameters', {}).get('properties', {})
         required_params = spec.get('parameters', {}).get('required', [])
@@ -130,6 +135,8 @@ def rubra_fc_v1_tool_formatter(specs: List[Dict[str, Any]]) -> str:
         function_definitions.append(function_definition)
     
     res = TOOL_SYSTEM_PROMPT_RUBRA.format( tool_text="\n".join(function_definitions))
+    # print("res:")
+    # print(res)
     return res
 
 
