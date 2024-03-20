@@ -520,7 +520,7 @@ use_cpu: false
 ```bash
 deepspeed --num_gpus 8 src/train_bash.py \
     --deepspeed ds_config.json \ 
-        --ddp_timeout 180000000 \ # If the training data is too large, it is recommended to add the ddp_timeout command line option to prevent NCCL errors.
+    --ddp_timeout 180000000 \ 
     ... # arguments (same as above)
 ```
 
