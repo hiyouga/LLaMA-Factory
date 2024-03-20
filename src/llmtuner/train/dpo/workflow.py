@@ -7,7 +7,7 @@ from ...extras.constants import IGNORE_INDEX
 from ...extras.ploting import plot_loss
 from ...hparams import ModelArguments
 from ...model import load_model, load_tokenizer
-from ..utils import create_custom_optimzer, create_modelcard_and_push, create_ref_model
+from ..utils import create_modelcard_and_push, create_ref_model
 from .collator import DPODataCollatorWithPadding
 from .trainer import CustomDPOTrainer
 
@@ -44,18 +44,17 @@ def run_dpo(
     training_args.remove_unused_columns = False  # important for pairwise dataset
 
     # Initialize our Trainer
-    optimizer = create_custom_optimzer(model, dataset, training_args, finetuning_args)
     trainer = CustomDPOTrainer(
         beta=finetuning_args.dpo_beta,
         loss_type=finetuning_args.dpo_loss,
         ftx_gamma=finetuning_args.dpo_ftx,
+        finetuning_args=finetuning_args,
         model=model,
         ref_model=ref_model,
         args=training_args,
         tokenizer=tokenizer,
         data_collator=data_collator,
         callbacks=callbacks,
-        optimizers=(optimizer, None),
         **split_dataset(dataset, data_args, training_args),
     )
 

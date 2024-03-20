@@ -9,10 +9,9 @@ from ...extras.constants import IGNORE_INDEX
 from ...extras.misc import get_logits_processor
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
-from ...train.sft.metric import ComputeMetrics
-from ...train.sft.trainer import CustomSeq2SeqTrainer
-from ...train.utils import create_modelcard_and_push
-from ..utils import create_custom_optimzer
+from ..utils import create_modelcard_and_push
+from .metric import ComputeMetrics
+from .trainer import CustomSeq2SeqTrainer
 
 
 if TYPE_CHECKING:
@@ -50,14 +49,13 @@ def run_sft(
     training_args.generation_num_beams = data_args.eval_num_beams or training_args.generation_num_beams
 
     # Initialize our Trainer
-    optimizer = create_custom_optimzer(model, dataset, training_args, finetuning_args)
     trainer = CustomSeq2SeqTrainer(
         model=model,
         args=training_args,
+        finetuning_args=finetuning_args,
         tokenizer=tokenizer,
         data_collator=data_collator,
         callbacks=callbacks,
-        optimizers=(optimizer, None),
         compute_metrics=ComputeMetrics(tokenizer) if training_args.predict_with_generate else None,
         **split_dataset(dataset, data_args, training_args),
     )
