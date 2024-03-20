@@ -8,10 +8,13 @@ from trl import DPOTrainer
 from trl.trainer.utils import disable_dropout_in_model
 
 from ...extras.constants import IGNORE_INDEX
+from ..utils import create_custom_optimzer
 
 
 if TYPE_CHECKING:
     from transformers import PreTrainedModel
+
+    from ...hparams import FinetuningArguments
 
 
 class CustomDPOTrainer(DPOTrainer):
@@ -21,6 +24,7 @@ class CustomDPOTrainer(DPOTrainer):
         loss_type: Literal["sigmoid", "hinge", "ipo", "kto_pair"],
         ftx_gamma: float,
         model: Union["PreTrainedModel", torch.nn.Module],
+        finetuning_args: "FinetuningArguments",
         ref_model: Optional[Union["PreTrainedModel", torch.nn.Module]] = None,
         disable_dropout: bool = True,
         **kwargs,
@@ -30,6 +34,7 @@ class CustomDPOTrainer(DPOTrainer):
             if ref_model is not None:
                 disable_dropout_in_model(ref_model)
 
+        self.finetuning_args = finetuning_args
         self.reference_free = False
         self.use_dpo_data_collator = True  # hack to avoid warning
         self.generate_during_eval = False  # disable at evaluation
@@ -60,6 +65,13 @@ class CustomDPOTrainer(DPOTrainer):
                     self.ref_model = self._prepare_deepspeed(self.ref_model)
             else:
                 self.ref_model = self.accelerator.prepare_model(self.ref_model, evaluation_mode=True)
+
+    def create_optimizer_and_scheduler(self, num_training_steps: int) -> None:
+        self.optimizer = create_custom_optimzer(self.model, self.args, self.finetuning_args, num_training_steps)
+        if self.optimizer is None:
+            self.create_optimizer()
+
+        self.create_scheduler(num_training_steps=num_training_steps, optimizer=self.optimizer)
 
     def sft_loss(self, chosen_logits: torch.FloatTensor, chosen_labels: torch.LongTensor) -> torch.Tensor:
         r"""
