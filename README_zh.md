@@ -485,7 +485,9 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 #### 使用 Huggingface Accelerate
 
 ```bash
-accelerate launch --config_file config.yaml src/train_bash.py # 参数同上
+accelerate launch --config_file config.yaml src/train_bash.py \
+    --ddp_timeout 180000000 \
+    ... # 参数同上
 ```
 
 <details><summary>使用 Accelerate 进行 LoRA 训练的 config.yaml 示例</summary>
@@ -519,9 +521,8 @@ use_cpu: false
 ```bash
 deepspeed --num_gpus 8 src/train_bash.py \
     --deepspeed ds_config.json \
-    --ddp_timeout 180000000 \  
+    --ddp_timeout 180000000 \
     ... # 参数同上
-
 ```
 
 <details><summary>使用 DeepSpeed ZeRO-2 进行全参数训练的 ds_config.json 示例</summary>
