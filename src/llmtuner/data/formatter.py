@@ -8,9 +8,7 @@ from typing import Any, Dict, List, Literal, Optional, Sequence, Set, Tuple, Uni
 SLOTS = Sequence[Union[str, Set[str], Dict[str, str]]]
 
 
-JSON_FORMAT_PROMPT = (
-    """, in a JSON format representing the kwargs (e.g. ```{"input": "hello world", "num_beams": 5}```)"""
-)
+JSON_FORMAT_PROMPT = """, in a JSON format representing the kwargs (e.g. ```{"input": "hello world", "num_beams": 5}```)"""
 
 
 TOOL_SYSTEM_PROMPT = (
@@ -34,10 +32,18 @@ def default_tool_formatter(tools: List[Dict[str, Any]]) -> str:
     for tool in tools:
         param_text = ""
         for name, param in tool["parameters"]["properties"].items():
-            required = ", required" if name in tool["parameters"].get("required", []) else ""
-            enum = ", should be one of [{}]".format(", ".join(param["enum"])) if param.get("enum", None) else ""
+            required = (
+                ", required" if name in tool["parameters"].get("required", []) else ""
+            )
+            enum = (
+                ", should be one of [{}]".format(", ".join(param["enum"]))
+                if param.get("enum", None)
+                else ""
+            )
             items = (
-                ", where each item should be {}".format(param["items"].get("type", "")) if param.get("items") else ""
+                ", where each item should be {}".format(param["items"].get("type", ""))
+                if param.get("items")
+                else ""
             )
             param_text += "  - {name} ({type}{required}): {desc}{enum}{items}\n".format(
                 name=name,
@@ -54,13 +60,97 @@ def default_tool_formatter(tools: List[Dict[str, Any]]) -> str:
         tool_names.append(tool["name"])
 
     return TOOL_SYSTEM_PROMPT.format(
-        tool_text=tool_text, tool_names=", ".join(tool_names), format_prompt=JSON_FORMAT_PROMPT
+        tool_text=tool_text,
+        tool_names=", ".join(tool_names),
+        format_prompt=JSON_FORMAT_PROMPT,
     )
+
+
+# def rubra_fc_v1_tool_formatter(specs: List[Dict[str, Any]]) -> str:
+#     function_definitions = []
+
+#     type_mapping = {
+#         "string": "str",
+#         "number": "float",  # Default to float; consider context for int usage
+#         "object": "Dict[str, Any]",  # Placeholder, detailed handling will vary
+#         "array": "List",
+#         "boolean": "bool",
+#         "null": "None",
+#     }
+
+#     for spec in specs:
+#         spec = spec['function']
+#         func_name = spec['name']
+#         try:
+#             description = spec.get('description', 'No description provided.')
+#             parameters = spec.get('parameters', {}).get('properties', {})
+#             required_params = spec.get('parameters', {}).get('required', [])
+#         except Exception as e:
+#             print(f"An error occurred: {e}")
+#             print("spec:", spec)
+
+#         func_args = []
+#         for param, details in parameters.items():
+#             json_type = details['type']
+#             default_value = details.get('default')
+#             python_type = type_mapping.get(json_type, "Any")  # Use Any as a fallback
+
+#             if json_type == 'array':
+#                 items_type = type_mapping.get(details.get('items', {}).get('type', 'Any'), "Any")
+#                 python_type = f"List[{items_type}]"
+#             elif json_type == 'object':
+#                 # Simple representation; consider enhancing for nested objects
+#                 python_type = "Dict[str, Any]"
+
+#             if 'enum' in details:
+#                 python_type = 'str'  # Consider using Enum class
+
+#             arg_str = f"{param}: {python_type}"
+
+#             if required_params:
+#                 if param not in required_params:
+#                     arg_str += " = None"  # Indicate optional by setting default to None
+
+#             func_args.append(arg_str)
+
+#         func_args_str = ", ".join(func_args) if func_args else ""
+
+#         docstring_lines = ['"""', description, '']
+#         for param, details in parameters.items():
+#             if required_params:
+#                 required_text = "(Optional)" if param not in required_params else ""
+#             else:
+#                 required_text = ""
+#             json_type = details['type']
+#             python_type = type_mapping.get(json_type, "Any")
+
+#             param_description = ""
+#             if "description" in details:
+#                 param_description = details["description"]
+#             if "enum" in details:
+#                 quoted_enum = [f'"{val}"' for val in details["enum"]]
+#                 values_text = "Only acceptable value is" if len(quoted_enum) == 1 else "Only acceptable values are"
+#                 param_description += f" {values_text}: {' or '.join(quoted_enum)}"
+#             if not param_description:
+#                 param_description = "No description provided."
+#             docstring_lines.append(f":param {param}: {param_description} {required_text}")
+#             docstring_lines.append(f":type {param}: {python_type}")
+
+#         docstring_lines.append('"""')
+#         docstring = "\n    ".join(docstring_lines)
+
+#         function_definition = f"def {func_name}({func_args_str}):\n    {docstring}\n"
+#         function_definitions.append(function_definition)
+
+#     res = TOOL_SYSTEM_PROMPT_RUBRA.format( tool_text="\n".join(function_definitions))
+#     # print("res:")
+#     # print(res)
+#     return res
 
 
 def rubra_fc_v1_tool_formatter(specs: List[Dict[str, Any]]) -> str:
     function_definitions = []
-    
+
     type_mapping = {
         "string": "str",
         "number": "float",  # Default to float; consider context for int usage
@@ -69,76 +159,76 @@ def rubra_fc_v1_tool_formatter(specs: List[Dict[str, Any]]) -> str:
         "boolean": "bool",
         "null": "None",
     }
-    
+
     for spec in specs:
-        # print("spec:")
-        # print(spec)
-        spec = spec['function']
-        func_name = spec['name']
-        # print("func_name", func_name)
-        # print("success")
-        description = spec.get('description', 'No description provided.')
-        parameters = spec.get('parameters', {}).get('properties', {})
-        required_params = spec.get('parameters', {}).get('required', [])
-        
+        if "function" not in spec:
+            print("Missing 'function' key in spec:", spec)
+            continue
+        func_spec = spec["function"]
+
+        func_name = func_spec.get("name", "unnamed_function")
+        description = func_spec.get("description", "No description provided.")
+
+        parameters = func_spec.get("parameters", {})
+        properties = parameters.get("properties", {}) if parameters else {}
+        required_params = parameters.get("required", []) if parameters else []
+
         func_args = []
-        for param, details in parameters.items():
-            json_type = details['type']
-            default_value = details.get('default')
+        for param, details in properties.items():
+            json_type = details.get("type", "Any")
             python_type = type_mapping.get(json_type, "Any")  # Use Any as a fallback
-            
-            if json_type == 'array':
-                items_type = type_mapping.get(details.get('items', {}).get('type', 'Any'), "Any")
+
+            if json_type == "array":
+                items_type = type_mapping.get(
+                    details.get("items", {}).get("type", "Any"), "Any"
+                )
                 python_type = f"List[{items_type}]"
-            elif json_type == 'object':
-                # Simple representation; consider enhancing for nested objects
+            elif json_type == "object":
                 python_type = "Dict[str, Any]"
-            
-            if 'enum' in details:
-                python_type = 'str'  # Consider using Enum class
-                
+
+            if "enum" in details:
+                python_type = "str"  # Consider using Enum class
+
             arg_str = f"{param}: {python_type}"
-            
-            if required_params:
-                if param not in required_params:
-                    arg_str += " = None"  # Indicate optional by setting default to None
-                
+
+            if param not in required_params:
+                arg_str += " = None"  # Indicate optional by setting default to None
+
             func_args.append(arg_str)
-                
+
         func_args_str = ", ".join(func_args) if func_args else ""
-        
-        docstring_lines = ['"""', description, '']
-        for param, details in parameters.items():
-            if required_params:
-                required_text = "(Optional)" if param not in required_params else ""
-            else:
-                required_text = ""
-            json_type = details['type']
-            python_type = type_mapping.get(json_type, "Any")
-            
-            param_description = ""
-            if "description" in details:
-                param_description = details["description"]
+
+        docstring_lines = ['"""', description, ""]
+        for param, details in properties.items():
+            required_text = "" if param in required_params else "(Optional)"
+            param_description = details.get("description", "No description provided.")
+
             if "enum" in details:
                 quoted_enum = [f'"{val}"' for val in details["enum"]]
-                values_text = "Only acceptable value is" if len(quoted_enum) == 1 else "Only acceptable values are"
+                values_text = (
+                    "Only acceptable values are"
+                    if len(quoted_enum) > 1
+                    else "Only acceptable value is"
+                )
                 param_description += f" {values_text}: {' or '.join(quoted_enum)}"
-            if not param_description:
-                param_description = "No description provided."
-            docstring_lines.append(f":param {param}: {param_description} {required_text}")
-            docstring_lines.append(f":type {param}: {python_type}")
-            
+
+            python_type = type_mapping.get(details.get("type", "Any"), "Any")
+            docstring_lines.extend(
+                [
+                    f":param {param}: {param_description} {required_text}",
+                    f":type {param}: {python_type}",
+                ]
+            )
+
         docstring_lines.append('"""')
         docstring = "\n    ".join(docstring_lines)
-        
-        function_definition = f"def {func_name}({func_args_str}):\n    {docstring}\n"
-        function_definitions.append(function_definition)
-    
-    res = TOOL_SYSTEM_PROMPT_RUBRA.format( tool_text="\n".join(function_definitions))
-    # print("res:")
-    # print(res)
-    return res
 
+        function_definition = (
+            f"def {func_name}({func_args_str}):\n    {docstring}\n    pass\n"
+        )
+        function_definitions.append(function_definition)
+
+    return "\n".join(function_definitions)
 
 
 def default_tool_extractor(content: str) -> Union[str, Tuple[str, str]]:
@@ -230,7 +320,11 @@ class StringFormatter(Formatter):
             elif isinstance(slot, (dict, set)):
                 elements.append(slot)
             else:
-                raise RuntimeError("Input must be string, set[str] or dict[str, str], got {}".format(type(slot)))
+                raise RuntimeError(
+                    "Input must be string, set[str] or dict[str, str], got {}".format(
+                        type(slot)
+                    )
+                )
 
         return elements
 
@@ -246,7 +340,9 @@ class FunctionFormatter(Formatter):
                 has_args = True
 
         if not has_name or not has_args:
-            raise ValueError("Name and arguments placeholders are required in the function formatter.")
+            raise ValueError(
+                "Name and arguments placeholders are required in the function formatter."
+            )
 
     def apply(self, **kwargs) -> SLOTS:
         try:
@@ -260,12 +356,18 @@ class FunctionFormatter(Formatter):
         elements = []
         for slot in self.slots:
             if isinstance(slot, str):
-                slot = slot.replace("{{name}}", name).replace("{{arguments}}", arguments)
+                slot = slot.replace("{{name}}", name).replace(
+                    "{{arguments}}", arguments
+                )
                 elements.append(slot)
             elif isinstance(slot, (dict, set)):
                 elements.append(slot)
             else:
-                raise RuntimeError("Input must be string, set[str] or dict[str, str], got {}".format(type(slot)))
+                raise RuntimeError(
+                    "Input must be string, set[str] or dict[str, str], got {}".format(
+                        type(slot)
+                    )
+                )
 
         return elements
 

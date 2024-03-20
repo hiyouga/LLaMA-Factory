@@ -19,15 +19,23 @@ logger = get_logger(__name__)
 
 
 def preprocess_pretrain_dataset(
-    examples: Dict[str, List[Any]], tokenizer: "PreTrainedTokenizer", data_args: "DataArguments"
+    examples: Dict[str, List[Any]],
+    tokenizer: "PreTrainedTokenizer",
+    data_args: "DataArguments",
 ) -> Dict[str, List[List[int]]]:
     # build grouped texts with format `X1 X2 X3 ...` if packing is enabled
-    text_examples = [messages[0]["content"] + tokenizer.eos_token for messages in examples["prompt"]]
+    text_examples = [
+        messages[0]["content"] + tokenizer.eos_token for messages in examples["prompt"]
+    ]
     if not data_args.packing:
-        return tokenizer(text_examples, add_special_tokens=False, max_length=data_args.cutoff_len)
+        return tokenizer(
+            text_examples, add_special_tokens=False, max_length=data_args.cutoff_len
+        )
 
     tokenized_examples = tokenizer(text_examples, add_special_tokens=False)
-    concatenated_examples = {k: list(chain(*tokenized_examples[k])) for k in tokenized_examples.keys()}
+    concatenated_examples = {
+        k: list(chain(*tokenized_examples[k])) for k in tokenized_examples.keys()
+    }
     total_length = len(concatenated_examples[list(concatenated_examples.keys())[0]])
     block_size = data_args.cutoff_len
     # we drop the small remainder, and if the total_length < block_size, we exclude this batch
@@ -73,7 +81,9 @@ def preprocess_supervised_dataset(
             if data_args.train_on_prompt:
                 source_mask = source_ids
             elif turn_idx != 0 and template.efficient_eos:
-                source_mask = [tokenizer.eos_token_id] + [IGNORE_INDEX] * (len(source_ids) - 1)
+                source_mask = [tokenizer.eos_token_id] + [IGNORE_INDEX] * (
+                    len(source_ids) - 1
+                )
             else:
                 source_mask = [IGNORE_INDEX] * len(source_ids)
 
@@ -112,7 +122,9 @@ def preprocess_packed_supervised_dataset(
             if data_args.train_on_prompt:
                 source_mask = source_ids
             elif len(input_ids) != 0 and template.efficient_eos:
-                source_mask = [tokenizer.eos_token_id] + [IGNORE_INDEX] * (len(source_ids) - 1)
+                source_mask = [tokenizer.eos_token_id] + [IGNORE_INDEX] * (
+                    len(source_ids) - 1
+                )
             else:
                 source_mask = [IGNORE_INDEX] * len(source_ids)
 
@@ -153,7 +165,9 @@ def preprocess_unsupervised_dataset(
         if len(examples["response"][i]) == 1:
             messages = examples["prompt"][i] + examples["response"][i]
         else:
-            messages = examples["prompt"][i] + [{"role": Role.ASSISTANT.value, "content": ""}]
+            messages = examples["prompt"][i] + [
+                {"role": Role.ASSISTANT.value, "content": ""}
+            ]
 
         input_ids, labels = template.encode_oneturn(
             tokenizer,
@@ -216,29 +230,63 @@ def preprocess_pairwise_dataset(
     return model_inputs
 
 
-def print_supervised_dataset_example(example: Dict[str, List[int]], tokenizer: "PreTrainedTokenizer") -> None:
+def print_supervised_dataset_example(
+    example: Dict[str, List[int]], tokenizer: "PreTrainedTokenizer"
+) -> None:
     # print("input_ids:\n{}".format(example["input_ids"]))
-    print("inputs:\n{}".format(tokenizer.decode(example["input_ids"], skip_special_tokens=False)))
-    print("label_ids:\n{}".format(example["labels"]))
+    print("===========================================")
+    # print("example:")
+    # print(example)
+    print(
+        "inputs:\n{}".format(
+            tokenizer.decode(example["input_ids"], skip_special_tokens=False)
+        )
+    )
+    # print("label_ids:\n{}".format(example["labels"]))
+
     print(
         "labels:\n{}".format(
-            tokenizer.decode(list(filter(lambda x: x != IGNORE_INDEX, example["labels"])), skip_special_tokens=False)
+            tokenizer.decode(
+                list(filter(lambda x: x != IGNORE_INDEX, example["labels"])),
+                skip_special_tokens=False,
+            )
+        )
+    )
+    print("=========================================")
+
+
+def print_pairwise_dataset_example(
+    example: Dict[str, List[int]], tokenizer: "PreTrainedTokenizer"
+) -> None:
+    print("prompt_ids:\n{}".format(example["prompt_ids"]))
+    print(
+        "prompt:\n{}".format(
+            tokenizer.decode(example["prompt_ids"], skip_special_tokens=False)
+        )
+    )
+    print("chosen_ids:\n{}".format(example["chosen_ids"]))
+    print(
+        "chosen:\n{}".format(
+            tokenizer.decode(example["chosen_ids"], skip_special_tokens=False)
+        )
+    )
+    print("rejected_ids:\n{}".format(example["rejected_ids"]))
+    print(
+        "rejected:\n{}".format(
+            tokenizer.decode(example["rejected_ids"], skip_special_tokens=False)
         )
     )
 
 
-def print_pairwise_dataset_example(example: Dict[str, List[int]], tokenizer: "PreTrainedTokenizer") -> None:
-    print("prompt_ids:\n{}".format(example["prompt_ids"]))
-    print("prompt:\n{}".format(tokenizer.decode(example["prompt_ids"], skip_special_tokens=False)))
-    print("chosen_ids:\n{}".format(example["chosen_ids"]))
-    print("chosen:\n{}".format(tokenizer.decode(example["chosen_ids"], skip_special_tokens=False)))
-    print("rejected_ids:\n{}".format(example["rejected_ids"]))
-    print("rejected:\n{}".format(tokenizer.decode(example["rejected_ids"], skip_special_tokens=False)))
-
-
-def print_unsupervised_dataset_example(example: Dict[str, List[int]], tokenizer: "PreTrainedTokenizer") -> None:
+def print_unsupervised_dataset_example(
+    example: Dict[str, List[int]], tokenizer: "PreTrainedTokenizer"
+) -> None:
     print("input_ids:\n{}".format(example["input_ids"]))
-    print("inputs:\n{}".format(tokenizer.decode(example["input_ids"], skip_special_tokens=False)))
+    print(
+        "inputs:\n{}".format(
+            tokenizer.decode(example["input_ids"], skip_special_tokens=False)
+        )
+    )
 
 
 def get_preprocess_and_print_func(
@@ -249,28 +297,46 @@ def get_preprocess_and_print_func(
     stage: Literal["pt", "sft", "rm", "ppo"],
 ) -> Tuple[Callable, Callable]:
     if stage == "pt":
-        preprocess_func = partial(preprocess_pretrain_dataset, tokenizer=tokenizer, data_args=data_args)
-        print_function = partial(print_unsupervised_dataset_example, tokenizer=tokenizer)
+        preprocess_func = partial(
+            preprocess_pretrain_dataset, tokenizer=tokenizer, data_args=data_args
+        )
+        print_function = partial(
+            print_unsupervised_dataset_example, tokenizer=tokenizer
+        )
     elif stage == "sft" and not training_args.predict_with_generate:
         if data_args.packing:
             preprocess_func = partial(
-                preprocess_packed_supervised_dataset, tokenizer=tokenizer, template=template, data_args=data_args
+                preprocess_packed_supervised_dataset,
+                tokenizer=tokenizer,
+                template=template,
+                data_args=data_args,
             )
         else:
             preprocess_func = partial(
-                preprocess_supervised_dataset, tokenizer=tokenizer, template=template, data_args=data_args
+                preprocess_supervised_dataset,
+                tokenizer=tokenizer,
+                template=template,
+                data_args=data_args,
             )
 
         print_function = partial(print_supervised_dataset_example, tokenizer=tokenizer)
     elif stage == "rm":
         preprocess_func = partial(
-            preprocess_pairwise_dataset, tokenizer=tokenizer, template=template, data_args=data_args
+            preprocess_pairwise_dataset,
+            tokenizer=tokenizer,
+            template=template,
+            data_args=data_args,
         )
         print_function = partial(print_pairwise_dataset_example, tokenizer=tokenizer)
     else:
         preprocess_func = partial(
-            preprocess_unsupervised_dataset, tokenizer=tokenizer, template=template, data_args=data_args
+            preprocess_unsupervised_dataset,
+            tokenizer=tokenizer,
+            template=template,
+            data_args=data_args,
         )
-        print_function = partial(print_unsupervised_dataset_example, tokenizer=tokenizer)
+        print_function = partial(
+            print_unsupervised_dataset_example, tokenizer=tokenizer
+        )
 
     return preprocess_func, print_function
