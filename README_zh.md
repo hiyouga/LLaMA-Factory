@@ -519,7 +519,7 @@ use_cpu: false
 ```bash
 deepspeed --num_gpus 8 src/train_bash.py \
     --deepspeed ds_config.json \
-    --ddp_timeout 180000000 \  # 如训练数据过大，建议加上ddp_timeout命令行，防止nccl报错
+    --ddp_timeout 180000000 \  
     ... # 参数同上
 
 ```
