@@ -1,7 +1,9 @@
+import os
 import json
 import datasets
 from typing import List
 
+_HF_ENDPOINT = os.getenv("_HF_ENDPOINT", "https://huggingface.co")
 
 _DESCRIPTION = "UltraChat: Large-scale, Informative, and Diverse Multi-round Dialogue Data."
 
@@ -16,9 +18,9 @@ _CITATION = """\
 }
 """
 
-_HOMEPAGE = "https://huggingface.co/datasets/stingning/ultrachat"
+_HOMEPAGE = f"{_HF_ENDPOINT}/datasets/stingning/ultrachat"
 _LICENSE = "cc-by-nc-4.0"
-_BASE_DATA_URL = "https://huggingface.co/datasets/stingning/ultrachat/resolve/main/train_{idx}.jsonl"
+_BASE_DATA_URL = "{_HF_ENDPOINT}/datasets/stingning/ultrachat/resolve/main/train_{idx}.jsonl"
 
 
 class UltraChat(datasets.GeneratorBasedBuilder):
@@ -38,7 +40,7 @@ class UltraChat(datasets.GeneratorBasedBuilder):
         )
 
     def _split_generators(self, dl_manager: datasets.DownloadManager):
-        file_paths = [dl_manager.download(_BASE_DATA_URL.format(idx=idx)) for idx in range(10)] # multiple shards
+        file_paths = [dl_manager.download(_BASE_DATA_URL.format(_HF_ENDPOINT=_HF_ENDPOINT,idx=idx)) for idx in range(10)] # multiple shards
         return [
             datasets.SplitGenerator(
                 name=datasets.Split.TRAIN,
