@@ -1,11 +1,11 @@
 #!/bin/bash
 
 deepspeed --num_gpus 4 ../../src/train_bash.py \
-    --deepspeed ds_z3_config.json \
+    --deepspeed ../deepspeed/ds_z3_config.json \
     --stage sft \
     --do_train \
     --model_name_or_path meta-llama/Llama-2-7b-hf \
-    --dataset alpaca_gpt4_en \
+    --dataset alpaca_gpt4_en,glaive_toolcall \
     --dataset_dir ../../data \
     --template default \
     --finetuning_type full \

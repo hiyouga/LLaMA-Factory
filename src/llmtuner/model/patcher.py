@@ -210,9 +210,6 @@ def _configure_quantization(
         logger.info("Quantizing model to {} bit.".format(model_args.export_quantization_bit))
 
     elif model_args.quantization_bit is not None:  # bnb
-        if is_deepspeed_zero3_enabled():
-            require_version("bitsandbytes>=0.43.0", "To fix: pip install bitsandbytes>=0.43.0")
-
         if model_args.quantization_bit == 8:
             require_version("bitsandbytes>=0.37.0", "To fix: pip install bitsandbytes>=0.37.0")
             init_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_8bit=True)
@@ -224,6 +221,7 @@ def _configure_quantization(
                 bnb_4bit_compute_dtype=model_args.compute_dtype,
                 bnb_4bit_use_double_quant=model_args.double_quantization,
                 bnb_4bit_quant_type=model_args.quantization_type,
+                bnb_4bit_quant_storage=model_args.compute_dtype,  # crucial for fsdp qlora
             )
 
         init_kwargs["device_map"] = {"": get_current_device()}
@@ -300,7 +298,7 @@ def patch_config(
     init_kwargs["torch_dtype"] = model_args.compute_dtype
     if not is_deepspeed_zero3_enabled():
         init_kwargs["low_cpu_mem_usage"] = model_args.low_cpu_mem_usage
-        if model_args.low_cpu_mem_usage:
+        if init_kwargs["low_cpu_mem_usage"]:
             if "device_map" not in init_kwargs:  # quant models cannot use auto device map
                 init_kwargs["device_map"] = model_args.device_map or {"": get_current_device()}
 
