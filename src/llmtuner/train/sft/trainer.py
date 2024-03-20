@@ -4,15 +4,17 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
-import torch.nn as nn
 from transformers import Seq2SeqTrainer
 
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
+from ..utils import create_custom_optimzer
 
 
 if TYPE_CHECKING:
     from transformers.trainer import PredictionOutput
+
+    from ...hparams import FinetuningArguments
 
 
 logger = get_logger(__name__)
@@ -20,12 +22,23 @@ logger = get_logger(__name__)
 
 class CustomSeq2SeqTrainer(Seq2SeqTrainer):
     r"""
-    Inherits PeftTrainer to compute generative metrics such as BLEU and ROUGE.
+    Inherits Seq2SeqTrainer to compute generative metrics such as BLEU and ROUGE.
     """
+
+    def __init__(self, finetuning_args: "FinetuningArguments", **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.finetuning_args = finetuning_args
+
+    def create_optimizer_and_scheduler(self, num_training_steps: int) -> None:
+        self.optimizer = create_custom_optimzer(self.model, self.args, self.finetuning_args, num_training_steps)
+        if self.optimizer is None:
+            self.create_optimizer()
+
+        self.create_scheduler(num_training_steps=num_training_steps, optimizer=self.optimizer)
 
     def prediction_step(
         self,
-        model: nn.Module,
+        model: "torch.nn.Module",
         inputs: Dict[str, Union[torch.Tensor, Any]],
         prediction_loss_only: bool,
         ignore_keys: Optional[List[str]] = None,

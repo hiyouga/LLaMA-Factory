@@ -64,15 +64,15 @@ def run_ppo(
     )
 
     # Create optimizer and scheduler
-    optimizer = create_custom_optimzer(model, dataset, training_args, finetuning_args)
-    if optimizer is None:
-        optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=training_args.learning_rate)
-
     if training_args.max_steps > 0:
         num_training_steps = training_args.max_steps
     else:
         total_train_batch_size = backward_batch_size * finetuning_args.ppo_buffer_size * training_args.world_size
         num_training_steps = training_args.num_train_epochs * math.ceil(len(dataset) / total_train_batch_size)
+
+    optimizer = create_custom_optimzer(model, training_args, finetuning_args, num_training_steps)
+    if optimizer is None:
+        optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=training_args.learning_rate)
 
     lr_scheduler = get_scheduler(
         training_args.lr_scheduler_type,
