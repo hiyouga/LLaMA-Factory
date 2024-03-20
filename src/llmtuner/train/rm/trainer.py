@@ -6,11 +6,14 @@ import torch
 from transformers import Trainer
 
 from ...extras.logging import get_logger
+from ..utils import create_custom_optimzer
 
 
 if TYPE_CHECKING:
     from transformers.modeling_utils import PreTrainedModel
     from transformers.trainer import PredictionOutput
+
+    from ...hparams import FinetuningArguments
 
 
 logger = get_logger(__name__)
@@ -18,12 +21,20 @@ logger = get_logger(__name__)
 
 class PairwiseTrainer(Trainer):
     r"""
-    Inherits PeftTrainer to compute pairwise loss.
+    Inherits Trainer to compute pairwise loss.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, finetuning_args: "FinetuningArguments", **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.finetuning_args = finetuning_args
         self.can_return_loss = True  # override property to return eval_loss
+
+    def create_optimizer_and_scheduler(self, num_training_steps: int) -> None:
+        self.optimizer = create_custom_optimzer(self.model, self.args, self.finetuning_args, num_training_steps)
+        if self.optimizer is None:
+            self.create_optimizer()
+
+        self.create_scheduler(num_training_steps=num_training_steps, optimizer=self.optimizer)
 
     def compute_loss(
         self, model: "PreTrainedModel", inputs: Dict[str, torch.Tensor], return_outputs: bool = False
