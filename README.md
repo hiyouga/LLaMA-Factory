@@ -519,7 +519,8 @@ use_cpu: false
 
 ```bash
 deepspeed --num_gpus 8 src/train_bash.py \
-    --deepspeed ds_config.json \
+    --deepspeed ds_config.json \ 
+    --ddp_timeout 180000000 \ 
     ... # arguments (same as above)
 ```
 
