@@ -519,7 +519,9 @@ use_cpu: false
 ```bash
 deepspeed --num_gpus 8 src/train_bash.py \
     --deepspeed ds_config.json \
+    --ddp_timeout 180000000 \  
     ... # 参数同上
+
 ```
 
 <details><summary>使用 DeepSpeed ZeRO-2 进行全参数训练的 ds_config.json 示例</summary>
