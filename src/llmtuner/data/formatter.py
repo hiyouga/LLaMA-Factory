@@ -1,5 +1,6 @@
 import json
 import re
+import ast
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Literal, Optional, Sequence, Set, Tuple, Union
@@ -147,88 +148,82 @@ def default_tool_formatter(tools: List[Dict[str, Any]]) -> str:
 #     # print(res)
 #     return res
 
-
 def rubra_fc_v1_tool_formatter(specs: List[Dict[str, Any]]) -> str:
     function_definitions = []
 
     type_mapping = {
         "string": "str",
-        "number": "float",  # Default to float; consider context for int usage
-        "object": "Dict[str, Any]",  # Placeholder, detailed handling will vary
+        "number": "float",
+        "object": "Dict[str, Any]",
         "array": "List",
         "boolean": "bool",
         "null": "None",
     }
 
     for spec in specs:
-        if "function" not in spec:
-            print("Missing 'function' key in spec:", spec)
-            continue
-        func_spec = spec["function"]
+        try:
+            if "function" not in spec:
+                continue
+            func_spec = spec["function"]
 
-        func_name = func_spec.get("name", "unnamed_function")
-        description = func_spec.get("description", "No description provided.")
+            func_name = func_spec.get("name", "unnamed_function")
+            description = func_spec.get("description", "No description provided.") or "No description provided."
 
-        parameters = func_spec.get("parameters", {})
-        properties = parameters.get("properties", {}) if parameters else {}
-        required_params = parameters.get("required", []) if parameters else []
+            prop_dict = {}
+            required_params = []
 
-        func_args = []
-        for param, details in properties.items():
-            json_type = details.get("type", "Any")
-            python_type = type_mapping.get(json_type, "Any")  # Use Any as a fallback
+            parameters = func_spec.get('parameters')
+            if parameters and isinstance(parameters, dict) and 'properties' in parameters:
+                temp_properties = parameters['properties']
+                if isinstance(temp_properties, dict) and ('required' in temp_properties or 'optional' in temp_properties):
+                    for status in ['required', 'optional']:
+                        for item in temp_properties.get(status, []):
+                            item['required'] = (status == 'required')
+                            prop_dict[item['name']] = item
+                elif isinstance(temp_properties, list):
+                    for item in temp_properties:
+                        if isinstance(item, dict) and 'name' in item:
+                            prop_dict[item['name']] = item
+                elif isinstance(temp_properties, dict):
+                    prop_dict = temp_properties
+                else:
+                    print(f"Unexpected properties format in function {func_name}.")
+            elif parameters is None:
+                print(f"No parameters defined for function {func_name}.")
+                continue  # Skip further processing for this function
 
-            if json_type == "array":
-                items_type = type_mapping.get(
-                    details.get("items", {}).get("type", "Any"), "Any"
-                )
-                python_type = f"List[{items_type}]"
-            elif json_type == "object":
-                python_type = "Dict[str, Any]"
+            if 'required' in parameters and isinstance(parameters['required'], list):
+                required_params = parameters['required']
 
-            if "enum" in details:
-                python_type = "str"  # Consider using Enum class
+            func_args = []
+            for param, details in prop_dict.items():
+                param_type = details.get("type", "Any")
+                python_type = type_mapping.get(param_type.lower(), "Any") if isinstance(param_type, str) else "Any"
+                is_required = details.get('required', False)
 
-            arg_str = f"{param}: {python_type}"
+                arg_str = f"{param}: {python_type}"
+                if not is_required:
+                    arg_str += " = None"
+                func_args.append(arg_str)
 
-            if param not in required_params:
-                arg_str += " = None"  # Indicate optional by setting default to None
+            func_args_str = ", ".join(func_args) if func_args else ""
+            docstring_lines = ['"""', description]
+            for param, details in prop_dict.items():
+                required_text = "" if details.get('required', False) else "(Optional)"
+                param_description = details.get("description", "No description provided.")
+                docstring_lines.append(f":param {param}: {param_description} {required_text}")
 
-            func_args.append(arg_str)
+            docstring_lines.append('"""')
+            docstring = "\n    ".join(docstring_lines)
+            function_definition = f"def {func_name}({func_args_str}):\n    {docstring}\n    pass\n"
+            function_definitions.append(function_definition)
+        except Exception as e:
+            print(f"Error {e}")
+            print("=========================")
+            print(json.dumps(func_spec))
 
-        func_args_str = ", ".join(func_args) if func_args else ""
-
-        docstring_lines = ['"""', description, ""]
-        for param, details in properties.items():
-            required_text = "" if param in required_params else "(Optional)"
-            param_description = details.get("description", "No description provided.")
-
-            if "enum" in details:
-                quoted_enum = [f'"{val}"' for val in details["enum"]]
-                values_text = (
-                    "Only acceptable values are"
-                    if len(quoted_enum) > 1
-                    else "Only acceptable value is"
-                )
-                param_description += f" {values_text}: {' or '.join(quoted_enum)}"
-
-            python_type = type_mapping.get(details.get("type", "Any"), "Any")
-            docstring_lines.extend(
-                [
-                    f":param {param}: {param_description} {required_text}",
-                    f":type {param}: {python_type}",
-                ]
-            )
-
-        docstring_lines.append('"""')
-        docstring = "\n    ".join(docstring_lines)
-
-        function_definition = (
-            f"def {func_name}({func_args_str}):\n    {docstring}\n    pass\n"
-        )
-        function_definitions.append(function_definition)
-
-    return "\n".join(function_definitions)
+    res = TOOL_SYSTEM_PROMPT_RUBRA.format( tool_text="\n".join(function_definitions))
+    return res
 
 
 def default_tool_extractor(content: str) -> Union[str, Tuple[str, str]]:
@@ -247,25 +242,52 @@ def default_tool_extractor(content: str) -> Union[str, Tuple[str, str]]:
     return tool_name, json.dumps(arguments, ensure_ascii=False)
 
 
-def rubra_fc_v1_tool_extractor(content: str) -> Union[str, Tuple[str, str]]:
-    regex = re.compile(r"<<functions>>({.*?}})", re.DOTALL)
-    action_match = re.search(regex, content)
+def parse_function_call(call):
+    func_name, args_str = call.split('(', 1)
+    args_str = args_str.rstrip(')')
+    args_list = args_str.split(',')
+    args_dict = {}
+    for arg in args_list:
+        key, value = arg.split('=')
+        key = key.strip()
+        value = value.strip()
+        try:
+            # Use ast.literal_eval to safely parse the string to its Python type
+            parsed_value = ast.literal_eval(value)
+        except ValueError as e:
+            # If parsing fails, keep the original string. 
+            # This might happen if the value is a string that's not quoted as a Python literal.
+            print(f"Error parsing value {value}: {e}")
+            parsed_value = value
+        args_dict[key] = parsed_value
+    return {"name": func_name.strip(), "arguments": args_dict}
 
-    if not action_match:
+
+def rubra_fc_v1_tool_extractor(content: str) -> Union[str, Tuple[str, str]]:
+    regex = re.compile(r"<<functions>>\[(.*?)\]", re.DOTALL)
+    matches = re.findall(regex, content)
+
+    print("content:", content)
+
+    if not matches:
         return content
 
-    json_str = action_match.group(1).strip()
-
     try:
-        data = json.loads(json_str)
-        func_name = data.get("name", "")
-        func_args = data.get("arguments", {})
-        print("func_name", func_name)
-
-        return func_name, json.dumps(func_args, ensure_ascii=False)
-    except json.JSONDecodeError:
-        print("json decode error")
-        print(json_str)
+        result_dicts = []
+        for match in matches:
+            # Splitting each function call from the match. We add ')' back because it was used as a delimiter
+            function_calls = [f"{func})" for func in match.split('),') if func]
+            print(function_calls)
+            for function_call in function_calls:
+                # Removing the trailing ')' that was added for the last function call
+                if function_call.endswith(')'):
+                    function_call = function_call[:-1]
+                result_dict = parse_function_call(function_call.strip())
+                result_dicts.append(result_dict)
+            print(result_dicts)
+        return json.dumps(result_dicts, ensure_ascii=False)
+    except Exception as e:
+        print(f"Exception {e}")
         return content
 
 
@@ -396,7 +418,7 @@ class ToolFormatter(Formatter):
             return [""]
 
     def extract(self, content: str) -> Union[str, Tuple[str, str]]:
-        print("tool_format", self.tool_format)
+        # print("tool_format", self.tool_format)
         if self.tool_format == "default":
             return default_tool_extractor(content)
         elif self.tool_format == "rubra-fc-v1":
