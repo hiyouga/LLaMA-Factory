@@ -70,6 +70,8 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 
 ## 更新日志
 
+[23/03/21] 我们的论文 "[LlamaFactory: Unified Efficient Fine-Tuning of 100+ Language Models](https://arxiv.org/abs/2403.13372)" 可在 arXiv 上查看！
+
 [24/03/20] 我们支持了能在 2x24GB GPU 上微调 70B 模型的 **FSDP+QLoRA**。详细用法请参照 `examples/fsdp_qlora`。
 
 [24/03/13] 我们支持了 **[LoRA+](https://arxiv.org/abs/2402.12354)**。请使用 `loraplus_lr_ratio=16.0` 参数开启 LoRA+ 方法。
@@ -697,11 +699,12 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 如果您觉得此项目有帮助，请考虑以下列格式引用
 
 ```bibtex
-@Misc{llama-factory,
-  title = {LLaMA Factory},
-  author = {hiyouga},
-  howpublished = {\url{https://github.com/hiyouga/LLaMA-Factory}},
-  year = {2023}
+@article{zheng2024llamafactory,
+  title={LlamaFactory: Unified Efficient Fine-Tuning of 100+ Language Models}, 
+  author={Yaowei Zheng and Richong Zhang and Junhao Zhang and Yanhan Ye and Zheyan Luo},
+  journal={arXiv preprint arXiv:2403.13372},
+  year={2024},
+  url={http://arxiv.org/abs/2403.13372}
 }
 ```
 
