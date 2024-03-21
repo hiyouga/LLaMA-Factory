@@ -1,6 +1,9 @@
+import os
 import json
 import datasets
 
+
+_HF_ENDPOINT = os.getenv("HF_ENDPOINT", "https://huggingface.co")
 
 _DESCRIPTION = "BELLE multiturn chat dataset."
 
@@ -13,9 +16,9 @@ _CITATION = """\
 }
 """
 
-_HOMEPAGE = "https://huggingface.co/datasets/BelleGroup/multiturn_chat_0.8M"
+_HOMEPAGE = "{}/datasets/BelleGroup/multiturn_chat_0.8M".format(_HF_ENDPOINT)
 _LICENSE = "gpl-3.0"
-_URL = "https://huggingface.co/datasets/BelleGroup/multiturn_chat_0.8M/resolve/main/multiturn_chat_0.8M.json"
+_URL = "{}/datasets/BelleGroup/multiturn_chat_0.8M/resolve/main/multiturn_chat_0.8M.json".format(_HF_ENDPOINT)
 
 
 class BelleMultiturn(datasets.GeneratorBasedBuilder):

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CUDA_VISIBLE_DEVICES=0,1,2,3 accelerate launch \
-    --config_file master_config.yaml \
+    --config_file ../accelerate/master_config.yaml \
     ../../src/train_bash.py \
     --stage sft \
     --do_train \
