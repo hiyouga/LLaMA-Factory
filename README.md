@@ -70,6 +70,8 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 ## Changelog
 
+[23/03/21] Our paper "[LlamaFactory: Unified Efficient Fine-Tuning of 100+ Language Models](https://arxiv.org/abs/2403.13372)" is available at arXiv!
+
 [24/03/20] We supported **FSDP+QLoRA** that fine-tunes a 70B model on 2x24GB GPUs. See `examples/fsdp_qlora` for usage.
 
 [24/03/13] We supported **[LoRA+](https://arxiv.org/abs/2402.12354)**. Try `loraplus_lr_ratio=16.0` to enable LoRA+ algorithm.
@@ -724,11 +726,12 @@ Please follow the model licenses to use the corresponding model weights: [Baichu
 If this work is helpful, please kindly cite as:
 
 ```bibtex
-@Misc{llama-factory,
-  title = {LLaMA Factory},
-  author = {hiyouga},
-  howpublished = {\url{https://github.com/hiyouga/LLaMA-Factory}},
-  year = {2023}
+@article{zheng2024llamafactory,
+  title={LlamaFactory: Unified Efficient Fine-Tuning of 100+ Language Models}, 
+  author={Yaowei Zheng and Richong Zhang and Junhao Zhang and Yanhan Ye and Zheyan Luo},
+  journal={arXiv preprint arXiv:2403.13372},
+  year={2024},
+  url={http://arxiv.org/abs/2403.13372}
 }
 ```
 
