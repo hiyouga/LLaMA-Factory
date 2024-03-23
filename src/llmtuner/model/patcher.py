@@ -183,9 +183,7 @@ def _configure_quantization(
             quantization_config["use_exllama"] = False  # disable exllama
 
         if quant_method == QuantizationMethod.AQLM:
-            require_version(
-                "transformers>=4.39.0.dev0", "To fix: pip install git+https://github.com/huggingface/transformers.git"
-            )
+            require_version("transformers>=4.39.0", "To fix: pip install transformers>=4.39.0")
             require_version("aqlm>=1.1.0", "To fix: pip install aqlm[gpu]>=1.1.0")
             quantization_config["bits"] = 2
 
@@ -210,6 +208,11 @@ def _configure_quantization(
         logger.info("Quantizing model to {} bit.".format(model_args.export_quantization_bit))
 
     elif model_args.quantization_bit is not None:  # bnb
+        if is_deepspeed_zero3_enabled():
+            require_version("transformers>=4.39.0", "To fix: pip install transformers>=4.39.0")
+            require_version("accelerate>=0.28.0", "To fix: pip install accelerate>=0.28.0")
+            require_version("bitsandbytes>=0.43.0", "To fix: pip install bitsandbytes>=0.43.0")
+
         if model_args.quantization_bit == 8:
             require_version("bitsandbytes>=0.37.0", "To fix: pip install bitsandbytes>=0.37.0")
             init_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_8bit=True)
