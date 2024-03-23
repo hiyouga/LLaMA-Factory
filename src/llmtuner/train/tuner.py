@@ -66,7 +66,7 @@ def export_model(args: Optional[Dict[str, Any]] = None):
 
     # Configuration check and fix
     config = model.generation_config
-    if config.do_sample and (
+    if config.do_sample == False and (
         (config.temperature is not None and config.temperature != 1.0) or
         (config.top_p is not None and config.top_p != 1.0) or
         (config.typical_p is not None and config.typical_p != 1.0)
