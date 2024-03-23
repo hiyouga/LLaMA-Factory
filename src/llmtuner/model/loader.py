@@ -110,6 +110,9 @@ def load_model(
     if not is_trainable:
         model.requires_grad_(False)
         model.eval()
+        for param in model.parameters():
+            if param.device.type == "cuda":
+                param.data = param.data.to(model_args.compute_dtype)
     else:
         model.train()
 
