@@ -71,7 +71,7 @@ def export_model(args: Optional[Dict[str, Any]] = None):
         (config.top_p is not None and config.top_p != 1.0) or
         (config.typical_p is not None and config.typical_p != 1.0)
     ):
-        config.do_sample = False
+        config.do_sample = True
 
     model.save_pretrained(
         save_directory=model_args.export_dir,
