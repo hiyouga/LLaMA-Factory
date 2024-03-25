@@ -308,7 +308,7 @@ cd LLaMA-Factory
 pip install -r requirements.txt
 ```
 
-如果要在 Windows 平台上开启量化 LoRA（QLoRA），需要安装预编译的 `bitsandbytes` 库, 支持 CUDA 11.1 到 12.2, 请根据 CUDA 版本的情况选择适合的 `release` 版本 [bitsandbytes-windows-webui]([Release Wheels · jllllll/bitsandbytes-windows-webui (github.com)](https://github.com/jllllll/bitsandbytes-windows-webui/releases/tag/wheels))
+如果要在 Windows 平台上开启量化 LoRA（QLoRA），需要安装预编译的 `bitsandbytes` 库, 支持 CUDA 11.1 到 12.2, 请根据您使用的 CUDA 版本情况选择适合的 [bitsandbytes-windows-webui]([Release Wheels · jllllll/bitsandbytes-windows-webui (github.com)](https://github.com/jllllll/bitsandbytes-windows-webui/releases/tag/wheels))  `release` 版本。
 
 ```bash
 pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.41.1-py3-none-win_amd64.whl
