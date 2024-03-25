@@ -64,14 +64,13 @@ def export_model(args: Optional[Dict[str, Any]] = None):
         for param in model.parameters():
             param.data = param.data.to(output_dtype)
 
-    # Configuration check and fix
-    config = model.generation_config
-    if not config.do_sample and (
-        (config.temperature is not None and config.temperature != 1.0) or
-        (config.top_p is not None and config.top_p != 1.0) or
-        (config.typical_p is not None and config.typical_p != 1.0)
+    gen_config = model.generation_config  # check and fix generation config
+    if not gen_config.do_sample and (
+        (gen_config.temperature is not None and gen_config.temperature != 1.0)
+        or (gen_config.top_p is not None and gen_config.top_p != 1.0)
+        or (gen_config.typical_p is not None and gen_config.typical_p != 1.0)
     ):
-        config.do_sample = True
+        gen_config.do_sample = True
 
     model.save_pretrained(
         save_directory=model_args.export_dir,
