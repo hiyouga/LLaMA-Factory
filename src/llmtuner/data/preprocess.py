@@ -80,7 +80,7 @@ def preprocess_supervised_dataset(
 
             input_ids += source_ids + target_ids
 
-            if data_args.train_last_turn_only and turn_idx != len(messages) - 1:
+            if data_args.train_last_turn_only and turn_idx != len(messages)/2 - 1:
                 labels += source_mask + [IGNORE_INDEX] * len(target_ids)
             else:
                 labels += source_mask + target_ids
@@ -111,7 +111,7 @@ def preprocess_packed_supervised_dataset(
             continue
 
         messages = examples["prompt"][i] + examples["response"][i]
-        for source_ids, target_ids in template.encode_multiturn(
+        for turn_idx,(source_ids, target_ids) in template.encode_multiturn(
             tokenizer, messages, examples["system"][i], examples["tools"][i]
         ):
             if data_args.train_on_prompt:
@@ -123,7 +123,7 @@ def preprocess_packed_supervised_dataset(
 
             input_ids += source_ids + target_ids
 
-            if data_args.train_last_turn_only and len(input_ids) != 0:
+            if data_args.train_last_turn_only and turn_idx != len(messages)/2 - 1:
                 labels += source_mask + [IGNORE_INDEX] * len(target_ids)
             else:
                 labels += source_mask + target_ids
