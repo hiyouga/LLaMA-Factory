@@ -308,10 +308,10 @@ cd LLaMA-Factory
 pip install -r requirements.txt
 ```
 
-如果要在 Windows 平台上开启量化 LoRA（QLoRA），需要安装预编译的 `bitsandbytes` 库, 支持 CUDA 11.1 到 12.2。
+如果要在 Windows 平台上开启量化 LoRA（QLoRA），需要安装预编译的 `bitsandbytes` 库, 支持 CUDA 11.1 到 12.2, 请根据 CUDA 版本的情况选择适合的 `release` 版本 [bitsandbytes-windows-webui]([Release Wheels · jllllll/bitsandbytes-windows-webui (github.com)](https://github.com/jllllll/bitsandbytes-windows-webui/releases/tag/wheels))
 
 ```bash
-pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.40.0-py3-none-win_amd64.whl
+pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.41.1-py3-none-win_amd64.whl
 ```
 
 如果要在 Windows 平台上开启 FlashAttention-2，需要安装预编译的 `flash-attn` 库，支持 CUDA 12.1 到 12.2，请根据需求到 [flash-attention](https://github.com/bdashore3/flash-attention/releases) 下载对应版本安装。
