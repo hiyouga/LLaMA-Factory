@@ -45,7 +45,7 @@ class PairwiseTrainer(Trainer):
         Subclass and override to inject custom behavior.
 
         Note that the first element will be removed from the output tuple.
-        See: https://github.com/huggingface/transformers/blob/v4.30.2/src/transformers/trainer.py#L3509
+        See: https://github.com/huggingface/transformers/blob/v4.39.1/src/transformers/trainer.py#L3777
         """
         # Compute rewards
         _, _, values = model(**inputs, output_hidden_states=True, return_dict=True)
