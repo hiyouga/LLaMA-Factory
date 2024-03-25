@@ -20,15 +20,14 @@ def get_requires():
 
 
 extra_require = {
-    "deepspeed": ["deepspeed==0.13.1"],
+    "deepspeed": ["deepspeed"],
     "metrics": ["nltk", "jieba", "rouge-chinese"],
-    "unsloth": ["torch==2.2.0", "unsloth[cu121-ampere-torch220] @ git+https://github.com/unslothai/unsloth.git"],
-    "vllm": ["vllm==0.3.3"],
+    "unsloth": ["torch==2.2.0", "unsloth[cu121-ampere-torch220]"],
+    "vllm": ["vllm>=0.3.3"],
     "bitsandbytes": ["bitsandbytes>=0.39.0"],
     "gptq": ["optimum>=1.16.0", "auto-gptq>=0.5.0"],
     "awq": ["autoawq"],
-    "aqlm": ["aqlm[gpu]>=1.1.0", "transformers @ git+https://github.com/huggingface/transformers.git"],
-    "galore": ["galore_torch @ git+https://github.com/hiyouga/GaLore.git"],
+    "aqlm": ["aqlm[gpu]>=1.1.0"],
     "qwen": ["tiktoken", "transformers_stream_generator"],
     "quality": ["ruff"],
 }
