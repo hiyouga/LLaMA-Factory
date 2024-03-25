@@ -130,7 +130,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
     if finetuning_args.use_dora:
         if model_args.quantization_bit is not None:
-            require_version("peft>=0.9.1.dev0", "To fix: pip install git+https://github.com/huggingface/peft.git")
+            require_version("peft>=0.10.0", "To fix: pip install peft>=0.10.0")
 
         if model_args.use_unsloth:
             raise ValueError("Unsloth does not support DoRA.")
