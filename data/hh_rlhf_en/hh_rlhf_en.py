@@ -1,13 +1,14 @@
+import os
 import json
 import datasets
 from typing import List
 
-
+_HF_ENDPOINT = os.getenv("HF_ENDPOINT", "https://huggingface.co")
 _DESCRIPTION = "Human preference data about helpfulness and harmlessness."
 _CITATION = ""
-_HOMEPAGE = "https://huggingface.co/datasets/Anthropic/hh-rlhf"
+_HOMEPAGE = "{}/datasets/Anthropic/hh-rlhf".format(_HF_ENDPOINT)
 _LICENSE = "mit"
-_URL = "https://huggingface.co/datasets/Anthropic/hh-rlhf/resolve/main/"
+_URL = "{}/datasets/Anthropic/hh-rlhf/resolve/main/".format(_HF_ENDPOINT)
 _URLS = {
     "train": [
         _URL + "harmless-base/train.jsonl.gz",

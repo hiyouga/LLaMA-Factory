@@ -11,12 +11,14 @@ from transformers.models.llama.modeling_llama import (
     repeat_kv,
 )
 from transformers.utils import logging
+from transformers.utils.versions import require_version
 
 
 logger = logging.get_logger(__name__)
 
 
-# Modified from: https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py
+# Modified from:
+# https://github.com/huggingface/transformers/blob/v4.39.1/src/transformers/models/llama/modeling_llama.py
 def llama_torch_attn_forward(
     self: "LlamaAttention",
     hidden_states: torch.Tensor,
@@ -24,6 +26,7 @@ def llama_torch_attn_forward(
     position_ids: Optional[torch.LongTensor] = None,
     past_key_value: Optional["Cache"] = None,
     output_attentions: bool = False,
+    cache_position: Optional[torch.LongTensor] = None,
     **kwargs,
 ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
     bsz, q_len, _ = hidden_states.size()
@@ -36,15 +39,12 @@ def llama_torch_attn_forward(
     key_states = key_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
     value_states = value_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
 
-    kv_seq_len = key_states.shape[-2]
-    if past_key_value is not None:
-        kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
-
-    cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
-    query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)
+    past_key_value = getattr(self, "past_key_value", past_key_value)
+    cos, sin = self.rotary_emb(value_states, position_ids)
+    query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin)
 
     if past_key_value is not None:
-        cache_kwargs = {"sin": sin, "cos": cos}  # Specific to RoPE models
+        cache_kwargs = {"sin": sin, "cos": cos, "cache_position": cache_position}
         key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
 
     key_states = repeat_kv(key_states, self.num_key_value_groups)
@@ -96,14 +96,16 @@ def llama_torch_attn_forward(
     return attn_output, attn_weights, past_key_value
 
 
-# Modified from: https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py
+# Modified from:
+# https://github.com/huggingface/transformers/blob/v4.39.1/src/transformers/models/llama/modeling_llama.py
 def llama_flash_attn_forward(
     self: "LlamaFlashAttention2",
     hidden_states: torch.Tensor,
     attention_mask: Optional[torch.Tensor] = None,
     position_ids: Optional[torch.LongTensor] = None,
-    past_key_value: Optional[Tuple[torch.Tensor]] = None,
+    past_key_value: Optional["Cache"] = None,
     output_attentions: bool = False,
+    cache_position: Optional[torch.LongTensor] = None,
     **kwargs,
 ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
     # LlamaFlashAttention2 attention does not support output_attentions
@@ -120,15 +122,13 @@ def llama_flash_attn_forward(
     key_states = key_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
     value_states = value_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
 
-    kv_seq_len = key_states.shape[-2]
-    if past_key_value is not None:
-        kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
+    cos, sin = self.rotary_emb(value_states, position_ids)
+    query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin)
 
-    cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
-    query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)
+    past_key_value = getattr(self, "past_key_value", past_key_value)
 
     if past_key_value is not None:
-        cache_kwargs = {"sin": sin, "cos": cos}  # Specific to RoPE models
+        cache_kwargs = {"sin": sin, "cos": cos, "cache_position": cache_position}
         key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
 
     key_states = repeat_kv(key_states, self.num_key_value_groups)
@@ -193,5 +193,6 @@ def llama_flash_attn_forward(
 
 
 def apply_llama_patch() -> None:
+    require_version("transformers==4.39.1", "To fix: pip install transformers==4.39.1")
     LlamaAttention.forward = llama_torch_attn_forward
     LlamaFlashAttention2.forward = llama_flash_attn_forward

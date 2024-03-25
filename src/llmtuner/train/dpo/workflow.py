@@ -7,9 +7,9 @@ from ...extras.constants import IGNORE_INDEX
 from ...extras.ploting import plot_loss
 from ...hparams import ModelArguments
 from ...model import load_model, load_tokenizer
-from ...train.dpo.collator import DPODataCollatorWithPadding
-from ...train.dpo.trainer import CustomDPOTrainer
-from ...train.utils import create_modelcard_and_push, create_ref_model
+from ..utils import create_modelcard_and_push, create_ref_model
+from .collator import DPODataCollatorWithPadding
+from .trainer import CustomDPOTrainer
 
 
 if TYPE_CHECKING:
@@ -48,6 +48,7 @@ def run_dpo(
         beta=finetuning_args.dpo_beta,
         loss_type=finetuning_args.dpo_loss,
         ftx_gamma=finetuning_args.dpo_ftx,
+        finetuning_args=finetuning_args,
         model=model,
         ref_model=ref_model,
         args=training_args,

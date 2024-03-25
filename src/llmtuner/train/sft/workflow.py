@@ -9,9 +9,9 @@ from ...extras.constants import IGNORE_INDEX
 from ...extras.misc import get_logits_processor
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
-from ...train.sft.metric import ComputeMetrics
-from ...train.sft.trainer import CustomSeq2SeqTrainer
-from ...train.utils import create_modelcard_and_push
+from ..utils import create_modelcard_and_push
+from .metric import ComputeMetrics
+from .trainer import CustomSeq2SeqTrainer
 
 
 if TYPE_CHECKING:
@@ -52,6 +52,7 @@ def run_sft(
     trainer = CustomSeq2SeqTrainer(
         model=model,
         args=training_args,
+        finetuning_args=finetuning_args,
         tokenizer=tokenizer,
         data_collator=data_collator,
         callbacks=callbacks,

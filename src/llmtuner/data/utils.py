@@ -2,12 +2,14 @@ import hashlib
 from enum import Enum, unique
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
+from datasets import concatenate_datasets, interleave_datasets
+
 from ..extras.logging import get_logger
 
 
 if TYPE_CHECKING:
     from datasets import Dataset, IterableDataset
-    from transformers import TrainingArguments
+    from transformers import Seq2SeqTrainingArguments
 
     from llmtuner.hparams import DataArguments
 
@@ -46,8 +48,32 @@ def infer_max_len(source_len: int, target_len: int, max_len: int, reserved_label
     return max_source_len, max_target_len
 
 
+def merge_dataset(
+    all_datasets: List[Union["Dataset", "IterableDataset"]],
+    data_args: "DataArguments",
+    training_args: "Seq2SeqTrainingArguments",
+) -> Union["Dataset", "IterableDataset"]:
+    if len(all_datasets) == 1:
+        return all_datasets[0]
+    elif data_args.mix_strategy == "concat":
+        if data_args.streaming:
+            logger.warning("The samples between different datasets will not be mixed in streaming mode.")
+        return concatenate_datasets(all_datasets)
+    elif data_args.mix_strategy.startswith("interleave"):
+        if not data_args.streaming:
+            logger.warning("We recommend using `mix_strategy=concat` in non-streaming mode.")
+        return interleave_datasets(
+            datasets=all_datasets,
+            probabilities=data_args.interleave_probs,
+            seed=training_args.seed,
+            stopping_strategy="first_exhausted" if data_args.mix_strategy.endswith("under") else "all_exhausted",
+        )
+    else:
+        raise ValueError("Unknown mixing strategy.")
+
+
 def split_dataset(
-    dataset: Union["Dataset", "IterableDataset"], data_args: "DataArguments", training_args: "TrainingArguments"
+    dataset: Union["Dataset", "IterableDataset"], data_args: "DataArguments", training_args: "Seq2SeqTrainingArguments"
 ) -> Dict[str, "Dataset"]:
     if training_args.do_train:
         if data_args.val_size > 1e-6:  # Split the dataset

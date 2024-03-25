@@ -14,7 +14,7 @@ from transformers.utils import cached_file
 from ..data import get_template_and_fix_tokenizer
 from ..extras.constants import CHOICES, SUBJECTS
 from ..hparams import get_eval_args
-from ..model import dispatch_model, load_model_and_tokenizer
+from ..model import load_model_and_tokenizer
 from .template import get_eval_template
 
 
@@ -23,7 +23,6 @@ class Evaluator:
         self.model_args, self.data_args, self.eval_args, finetuning_args = get_eval_args(args)
         self.model, self.tokenizer = load_model_and_tokenizer(self.model_args, finetuning_args)
         self.tokenizer.padding_side = "right"  # avoid overflow issue in batched inference for llama2
-        self.model = dispatch_model(self.model)
         self.template = get_template_and_fix_tokenizer(self.tokenizer, self.data_args.template)
         self.eval_template = get_eval_template(self.eval_args.lang)
         self.choice_inputs = [

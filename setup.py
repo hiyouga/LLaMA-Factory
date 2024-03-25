@@ -1,13 +1,14 @@
 import os
 import re
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 
 def get_version():
     with open(os.path.join("src", "llmtuner", "__init__.py"), "r", encoding="utf-8") as f:
         file_content = f.read()
         pattern = r"{0}\W*=\W*\"([^\"]+)\"".format("__version__")
-        version, = re.findall(pattern, file_content)
+        (version,) = re.findall(pattern, file_content)
         return version
 
 
@@ -18,8 +19,22 @@ def get_requires():
         return lines
 
 
-def main():
+extra_require = {
+    "deepspeed": ["deepspeed==0.13.1"],
+    "metrics": ["nltk", "jieba", "rouge-chinese"],
+    "unsloth": ["torch==2.2.0", "unsloth[cu121-ampere-torch220] @ git+https://github.com/unslothai/unsloth.git"],
+    "vllm": ["vllm==0.3.3"],
+    "bitsandbytes": ["bitsandbytes>=0.39.0"],
+    "gptq": ["optimum>=1.16.0", "auto-gptq>=0.5.0"],
+    "awq": ["autoawq"],
+    "aqlm": ["aqlm[gpu]>=1.1.0", "transformers @ git+https://github.com/huggingface/transformers.git"],
+    "galore": ["galore_torch @ git+https://github.com/hiyouga/GaLore.git"],
+    "qwen": ["tiktoken", "transformers_stream_generator"],
+    "quality": ["ruff"],
+}
 
+
+def main():
     setup(
         name="llmtuner",
         version=get_version(),
@@ -35,8 +50,9 @@ def main():
         packages=find_packages("src"),
         python_requires=">=3.8.0",
         install_requires=get_requires(),
+        extras_require=extra_require,
         classifiers=[
-            "Development Status :: 3 - Alpha",
+            "Development Status :: 4 - Beta",
             "Intended Audience :: Developers",
             "Intended Audience :: Education",
             "Intended Audience :: Science/Research",
@@ -46,8 +62,9 @@ def main():
             "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
             "Programming Language :: Python :: 3.10",
+            "Programming Language :: Python :: 3.11",
             "Topic :: Scientific/Engineering :: Artificial Intelligence",
-        ]
+        ],
     )
 
 

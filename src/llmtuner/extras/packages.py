@@ -21,6 +21,10 @@ def is_flash_attn2_available():
     return _is_package_available("flash_attn") and _get_package_version("flash_attn").startswith("2")
 
 
+def is_galore_available():
+    return _is_package_available("galore_torch")
+
+
 def is_jieba_available():
     return _is_package_available("jieba")
 
@@ -51,3 +55,7 @@ def is_unsloth_available():
 
 def is_uvicorn_available():
     return _is_package_available("uvicorn")
+
+
+def is_vllm_available():
+    return _is_package_available("vllm")

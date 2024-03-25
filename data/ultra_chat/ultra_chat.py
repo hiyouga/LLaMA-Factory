@@ -1,7 +1,9 @@
+import os
 import json
 import datasets
 from typing import List
 
+_HF_ENDPOINT = os.getenv("HF_ENDPOINT", "https://huggingface.co")
 
 _DESCRIPTION = "UltraChat: Large-scale, Informative, and Diverse Multi-round Dialogue Data."
 
@@ -16,9 +18,9 @@ _CITATION = """\
 }
 """
 
-_HOMEPAGE = "https://huggingface.co/datasets/stingning/ultrachat"
+_HOMEPAGE = "{}/datasets/stingning/ultrachat".format(_HF_ENDPOINT)
 _LICENSE = "cc-by-nc-4.0"
-_BASE_DATA_URL = "https://huggingface.co/datasets/stingning/ultrachat/resolve/main/train_{idx}.jsonl"
+_BASE_DATA_URL = "{}/datasets/stingning/ultrachat/resolve/main/train_{{idx}}.jsonl".format(_HF_ENDPOINT)
 
 
 class UltraChat(datasets.GeneratorBasedBuilder):

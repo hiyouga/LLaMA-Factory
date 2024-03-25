@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, Sequence, Tuple, Union
 
 import numpy as np
+from transformers.utils.versions import require_version
 
 from ...extras.constants import IGNORE_INDEX
 from ...extras.packages import is_jieba_available, is_nltk_available, is_rouge_available
@@ -11,7 +12,7 @@ if TYPE_CHECKING:
     from transformers.tokenization_utils import PreTrainedTokenizer
 
 if is_jieba_available():
-    import jieba
+    import jieba  # type: ignore
 
 if is_nltk_available():
     from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
@@ -32,6 +33,10 @@ class ComputeMetrics:
         r"""
         Uses the model predictions to compute metrics.
         """
+        require_version("jieba", "To fix: pip install jieba")
+        require_version("nltk", "To fix: pip install nltk")
+        require_version("rouge_chinese", "To fix: pip install rouge-chinese")
+
         preds, labels = eval_preds
         score_dict = {"rouge-1": [], "rouge-2": [], "rouge-l": [], "bleu-4": []}
 

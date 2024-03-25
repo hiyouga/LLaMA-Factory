@@ -5,7 +5,7 @@ from typing import Any, Dict, Literal, Optional
 @dataclass
 class ModelArguments:
     r"""
-    Arguments pertaining to which model/config/tokenizer we are going to fine-tune.
+    Arguments pertaining to which model/config/tokenizer we are going to fine-tune or infer.
     """
 
     model_name_or_path: str = field(
@@ -21,31 +21,35 @@ class ModelArguments:
         default=None,
         metadata={"help": "Where to store the pre-trained models downloaded from huggingface.co or modelscope.cn."},
     )
-    use_fast_tokenizer: Optional[bool] = field(
+    use_fast_tokenizer: bool = field(
         default=False,
         metadata={"help": "Whether or not to use one of the fast tokenizer (backed by the tokenizers library)."},
     )
-    resize_vocab: Optional[bool] = field(
+    resize_vocab: bool = field(
         default=False,
         metadata={"help": "Whether or not to resize the tokenizer vocab and the embedding layers."},
     )
-    split_special_tokens: Optional[bool] = field(
+    split_special_tokens: bool = field(
         default=False,
         metadata={"help": "Whether or not the special tokens should be split during the tokenization process."},
     )
-    model_revision: Optional[str] = field(
+    model_revision: str = field(
         default="main",
         metadata={"help": "The specific model version to use (can be a branch name, tag name or commit id)."},
     )
+    low_cpu_mem_usage: bool = field(
+        default=True,
+        metadata={"help": "Whether or not to use memory-efficient model loading."},
+    )
     quantization_bit: Optional[int] = field(
         default=None,
-        metadata={"help": "The number of bits to quantize the model."},
+        metadata={"help": "The number of bits to quantize the model using bitsandbytes."},
     )
-    quantization_type: Optional[Literal["fp4", "nf4"]] = field(
+    quantization_type: Literal["fp4", "nf4"] = field(
         default="nf4",
         metadata={"help": "Quantization data type to use in int4 training."},
     )
-    double_quantization: Optional[bool] = field(
+    double_quantization: bool = field(
         default=True,
         metadata={"help": "Whether or not to use double quantization in int4 training."},
     )
@@ -53,29 +57,53 @@ class ModelArguments:
         default=None,
         metadata={"help": "Which scaling strategy should be adopted for the RoPE embeddings."},
     )
-    flash_attn: Optional[bool] = field(
+    flash_attn: bool = field(
         default=False,
         metadata={"help": "Enable FlashAttention-2 for faster training."},
     )
-    shift_attn: Optional[bool] = field(
+    shift_attn: bool = field(
         default=False,
         metadata={"help": "Enable shift short attention (S^2-Attn) proposed by LongLoRA."},
     )
-    use_unsloth: Optional[bool] = field(
+    use_unsloth: bool = field(
         default=False,
         metadata={"help": "Whether or not to use unsloth's optimization for the LoRA training."},
     )
-    disable_gradient_checkpointing: Optional[bool] = field(
+    disable_gradient_checkpointing: bool = field(
         default=False,
         metadata={"help": "Whether or not to disable gradient checkpointing."},
     )
-    upcast_layernorm: Optional[bool] = field(
+    upcast_layernorm: bool = field(
         default=False,
         metadata={"help": "Whether or not to upcast the layernorm weights in fp32."},
     )
-    upcast_lmhead_output: Optional[bool] = field(
+    upcast_lmhead_output: bool = field(
         default=False,
         metadata={"help": "Whether or not to upcast the output of lm_head in fp32."},
+    )
+    infer_backend: Literal["huggingface", "vllm"] = field(
+        default="huggingface",
+        metadata={"help": "Backend engine used at inference."},
+    )
+    vllm_maxlen: int = field(
+        default=2048,
+        metadata={"help": "Maximum input length of the vLLM engine."},
+    )
+    vllm_gpu_util: float = field(
+        default=0.9,
+        metadata={"help": "The fraction of GPU memory in (0,1) to be used for the vLLM engine."},
+    )
+    vllm_enforce_eager: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to disable CUDA graph in the vLLM engine."},
+    )
+    offload_folder: str = field(
+        default="offload",
+        metadata={"help": "Path to offload model weights."},
+    )
+    use_cache: bool = field(
+        default=True,
+        metadata={"help": "Whether or not to use KV cache in generation."},
     )
     hf_hub_token: Optional[str] = field(
         default=None,
@@ -89,7 +117,7 @@ class ModelArguments:
         default=None,
         metadata={"help": "Path to the directory to save the exported model."},
     )
-    export_size: Optional[int] = field(
+    export_size: int = field(
         default=1,
         metadata={"help": "The file shard size (in GB) of the exported model."},
     )
@@ -101,15 +129,15 @@ class ModelArguments:
         default=None,
         metadata={"help": "Path to the dataset or dataset name to use in quantizing the exported model."},
     )
-    export_quantization_nsamples: Optional[int] = field(
+    export_quantization_nsamples: int = field(
         default=128,
         metadata={"help": "The number of samples used for quantization."},
     )
-    export_quantization_maxlen: Optional[int] = field(
+    export_quantization_maxlen: int = field(
         default=1024,
         metadata={"help": "The maximum length of the model inputs used for quantization."},
     )
-    export_legacy_format: Optional[bool] = field(
+    export_legacy_format: bool = field(
         default=False,
         metadata={"help": "Whether or not to save the `.bin` files instead of `.safetensors`."},
     )
@@ -117,13 +145,14 @@ class ModelArguments:
         default=None,
         metadata={"help": "The name of the repository if push the model to the Hugging Face hub."},
     )
-    print_param_status: Optional[bool] = field(
+    print_param_status: bool = field(
         default=False,
         metadata={"help": "For debugging purposes, print the status of the parameters in the model."},
     )
 
     def __post_init__(self):
         self.compute_dtype = None
+        self.device_map = None
         self.model_max_length = None
 
         if self.split_special_tokens and self.use_fast_tokenizer:

@@ -1,7 +1,7 @@
 import json
 import math
 import os
-from typing import List, Optional
+from typing import List
 
 from transformers.trainer import TRAINER_STATE_NAME
 
@@ -30,7 +30,7 @@ def smooth(scalars: List[float]) -> List[float]:
     return smoothed
 
 
-def plot_loss(save_dictionary: os.PathLike, keys: Optional[List[str]] = ["loss"]) -> None:
+def plot_loss(save_dictionary: os.PathLike, keys: List[str] = ["loss"]) -> None:
     with open(os.path.join(save_dictionary, TRAINER_STATE_NAME), "r", encoding="utf-8") as f:
         data = json.load(f)
 
@@ -52,5 +52,6 @@ def plot_loss(save_dictionary: os.PathLike, keys: Optional[List[str]] = ["loss"]
         plt.xlabel("step")
         plt.ylabel(key)
         plt.legend()
-        plt.savefig(os.path.join(save_dictionary, "training_{}.png".format(key)), format="png", dpi=100)
-        print("Figure saved:", os.path.join(save_dictionary, "training_{}.png".format(key)))
+        figure_path = os.path.join(save_dictionary, "training_{}.png".format(key.replace(os.path.sep, "_")))
+        plt.savefig(figure_path, format="png", dpi=100)
+        print("Figure saved at:", figure_path)

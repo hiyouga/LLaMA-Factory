@@ -220,6 +220,14 @@
     "ms_hub_url": "AI-ModelScope/WizardLM_evol_instruct_V2_196k",
     "formatting": "sharegpt"
   },
+  "glaive_toolcall_100k": {
+    "hf_hub_url": "hiyouga/glaive-function-calling-v2-sharegpt",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "tools": "tools"
+    }
+  },
   "cosmopedia": {
     "hf_hub_url": "HuggingFaceTB/cosmopedia",
     "columns": {
@@ -294,6 +302,16 @@
     "file_name": "comparison_gpt4_data_zh.json",
     "file_sha1": "515b18ed497199131ddcc1af950345c11dc5c7fd",
     "ranking": true
+  },
+  "orca_rlhf": {
+    "file_name": "orca_rlhf.json",
+    "file_sha1": "acc8f74d16fd1fc4f68e7d86eaa781c2c3f5ba8e",
+    "ranking": true,
+    "columns": {
+      "prompt": "question",
+      "response": "answer",
+      "system": "system"
+    }
   },
   "nectar_rm": {
     "hf_hub_url": "mlinmg/RLAIF-Nectar",

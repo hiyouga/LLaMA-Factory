@@ -7,10 +7,10 @@ from ...extras.callbacks import FixValueHeadModelCallback
 from ...extras.misc import fix_valuehead_checkpoint
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
-from ...train.rm.collator import PairwiseDataCollatorWithPadding
-from ...train.rm.metric import compute_accuracy
-from ...train.rm.trainer import PairwiseTrainer
-from ...train.utils import create_modelcard_and_push
+from ..utils import create_modelcard_and_push
+from .collator import PairwiseDataCollatorWithPadding
+from .metric import compute_accuracy
+from .trainer import PairwiseTrainer
 
 
 if TYPE_CHECKING:
@@ -38,6 +38,7 @@ def run_rm(
     trainer = PairwiseTrainer(
         model=model,
         args=training_args,
+        finetuning_args=finetuning_args,
         tokenizer=tokenizer,
         data_collator=data_collator,
         callbacks=callbacks + [FixValueHeadModelCallback()],

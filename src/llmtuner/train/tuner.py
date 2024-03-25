@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 import torch
 from transformers import PreTrainedModel
 
+from ..data import get_template_and_fix_tokenizer
 from ..extras.callbacks import LogCallback
 from ..extras.logging import get_logger
 from ..hparams import get_infer_args, get_train_args
@@ -40,15 +41,16 @@ def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: Optional[List["Tra
 
 
 def export_model(args: Optional[Dict[str, Any]] = None):
-    model_args, _, finetuning_args, _ = get_infer_args(args)
+    model_args, data_args, finetuning_args, _ = get_infer_args(args)
 
     if model_args.export_dir is None:
-        raise ValueError("Please specify `export_dir`.")
+        raise ValueError("Please specify `export_dir` to save model.")
 
     if model_args.adapter_name_or_path is not None and model_args.export_quantization_bit is not None:
         raise ValueError("Please merge adapters before quantizing the model.")
 
     model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args)
+    get_template_and_fix_tokenizer(tokenizer, data_args.template)
 
     if getattr(model, "quantization_method", None) and model_args.adapter_name_or_path is not None:
         raise ValueError("Cannot merge adapters to a quantized model.")
@@ -56,13 +58,11 @@ def export_model(args: Optional[Dict[str, Any]] = None):
     if not isinstance(model, PreTrainedModel):
         raise ValueError("The model is not a `PreTrainedModel`, export aborted.")
 
-    if getattr(model, "quantization_method", None):
-        model = model.to("cpu")
-    elif hasattr(model.config, "torch_dtype"):
-        model = model.to(getattr(model.config, "torch_dtype")).to("cpu")
-    else:
-        model = model.to(torch.float16).to("cpu")
-        setattr(model.config, "torch_dtype", torch.float16)
+    if getattr(model, "quantization_method", None) is None:  # cannot convert dtype of a quantized model
+        output_dtype = getattr(model.config, "torch_dtype", torch.float16)
+        setattr(model.config, "torch_dtype", output_dtype)
+        for param in model.parameters():
+            param.data = param.data.to(output_dtype)
 
     model.save_pretrained(
         save_directory=model_args.export_dir,
