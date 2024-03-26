@@ -173,7 +173,7 @@ def _configure_quantization(
     """
     if getattr(config, "quantization_config", None):  # ptq
         if is_deepspeed_zero3_enabled():
-            raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantization.")
+            raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantized models.")
 
         init_kwargs["device_map"] = {"": get_current_device()}
         quantization_config: Dict[str, Any] = getattr(config, "quantization_config", None)

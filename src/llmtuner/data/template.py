@@ -689,6 +689,8 @@ _register_template(
 
 _register_template(
     name="vanilla",
+    format_separator=EmptyFormatter(slots=["\n"]),
+    efficient_eos=True,
 )
 
 
