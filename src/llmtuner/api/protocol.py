@@ -48,6 +48,7 @@ class FunctionCall(BaseModel):
 class ChatMessage(BaseModel):
     role: Role
     content: str
+    tool_calls: Optional[List[FunctionCall]] = None
 
 
 class ChatCompletionMessage(BaseModel):
