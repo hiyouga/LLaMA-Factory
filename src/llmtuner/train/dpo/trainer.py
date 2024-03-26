@@ -64,10 +64,10 @@ class CustomDPOTrainer(DPOTrainer):
                 self.ref_model = self.accelerator.prepare_model(self.ref_model, evaluation_mode=True)
 
     def create_optimizer_and_scheduler(self, num_training_steps: int) -> None:
-        self.optimizer = create_custom_optimzer(self.model, self.args, self.finetuning_args, num_training_steps)
         if self.optimizer is None:
-            self.create_optimizer()
+            self.optimizer = create_custom_optimzer(self.model, self.args, self.finetuning_args, num_training_steps)
 
+        self.create_optimizer()
         self.create_scheduler(num_training_steps=num_training_steps, optimizer=self.optimizer)
 
     def sft_loss(self, chosen_logits: torch.FloatTensor, chosen_labels: torch.LongTensor) -> torch.Tensor:
