@@ -30,10 +30,10 @@ class PairwiseTrainer(Trainer):
         self.can_return_loss = True  # override property to return eval_loss
 
     def create_optimizer_and_scheduler(self, num_training_steps: int) -> None:
-        self.optimizer = create_custom_optimzer(self.model, self.args, self.finetuning_args, num_training_steps)
         if self.optimizer is None:
-            self.create_optimizer()
+            self.optimizer = create_custom_optimzer(self.model, self.args, self.finetuning_args, num_training_steps)
 
+        self.create_optimizer()
         self.create_scheduler(num_training_steps=num_training_steps, optimizer=self.optimizer)
 
     def compute_loss(
