@@ -45,13 +45,10 @@ def run_dpo(
 
     # Initialize our Trainer
     trainer = CustomDPOTrainer(
-        beta=finetuning_args.dpo_beta,
-        loss_type=finetuning_args.dpo_loss,
-        ftx_gamma=finetuning_args.dpo_ftx,
-        finetuning_args=finetuning_args,
         model=model,
         ref_model=ref_model,
         args=training_args,
+        finetuning_args=finetuning_args,
         tokenizer=tokenizer,
         data_collator=data_collator,
         callbacks=callbacks,
