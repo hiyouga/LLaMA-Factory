@@ -44,6 +44,7 @@ class DatasetAttr:
     observation_tag: Optional[str] = "observation"
     function_tag: Optional[str] = "function_call"
     system_tag: Optional[str] = "system"
+    sample_num: Optional[int] = None
 
     def __repr__(self) -> str:
         return self.dataset_name
@@ -90,7 +91,8 @@ def get_dataset_list(data_args: "DataArguments") -> List["DatasetAttr"]:
         dataset_attr.set_attr("folder", dataset_info[name])
         dataset_attr.set_attr("ranking", dataset_info[name], default=False)
         dataset_attr.set_attr("formatting", dataset_info[name], default="alpaca")
-
+        dataset_attr.set_attr("sample_num", dataset_info[name])
+        
         if "columns" in dataset_info[name]:
             column_names = ["system"]
             if dataset_attr.formatting == "alpaca":
