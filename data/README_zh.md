@@ -28,7 +28,8 @@
     "observation_tag": "消息中代表工具返回结果的 role_tag（默认：observation）",
     "function_tag": "消息中代表工具调用的 role_tag（默认：function_call）",
     "system_tag": "消息中代表系统提示的 role_tag（默认：system，会覆盖 system 列）"
-  }
+  },
+  "sample_num": "从该数据集采样的数量，可大于该数据集总量（默认：None）"
 }
 ```
 
