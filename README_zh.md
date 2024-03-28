@@ -450,7 +450,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 ```
 
 > [!TIP]
-> 使用 `--adapter_name_or_path path_to_sft_checkpoint,path_to_ppo_checkpoint` 来进行微调模型的推理。
+> 如果开启了 `--create_new_adapter`，则使用 `--adapter_name_or_path path_to_sft_checkpoint,path_to_ppo_checkpoint` 来进行微调模型的推理。
 
 > [!WARNING]
 > 如果使用 fp16 精度进行 LLaMA-2 模型的 PPO 训练，请使用 `--per_device_train_batch_size=1`。
@@ -481,7 +481,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 ```
 
 > [!TIP]
-> 使用 `--adapter_name_or_path path_to_sft_checkpoint,path_to_dpo_checkpoint` 来进行微调模型的推理。
+> 如果开启了 `--create_new_adapter`，则使用 `--adapter_name_or_path path_to_sft_checkpoint,path_to_dpo_checkpoint` 来进行微调模型的推理。
 
 ### 多 GPU 分布式训练
 
@@ -569,7 +569,7 @@ deepspeed --num_gpus 8 src/train_bash.py \
 ### 合并 LoRA 权重并导出模型
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python src/export_model.py \
+CUDA_VISIBLE_DEVICES= python src/export_model.py \
     --model_name_or_path path_to_llama_model \
     --adapter_name_or_path path_to_checkpoint \
     --template default \
