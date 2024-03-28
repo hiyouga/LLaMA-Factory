@@ -47,6 +47,8 @@ def find_all_linear_modules(model: "PreTrainedModel") -> List[str]:
     output_layer_names = ["lm_head"]
     if model.config.model_type == "chatglm":
         output_layer_names.append("output_layer")
+    elif model.config.model_type == "internlm2":
+        output_layer_names.append("output")
 
     module_names = set()
     for name, module in model.named_modules():
