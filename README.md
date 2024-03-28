@@ -451,7 +451,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 ```
 
 > [!TIP]
-> Use `--adapter_name_or_path path_to_sft_checkpoint,path_to_ppo_checkpoint` to infer the fine-tuned model.
+> Use `--adapter_name_or_path path_to_sft_checkpoint,path_to_ppo_checkpoint` to infer the fine-tuned model if `--create_new_adapter` was enabled.
 
 > [!WARNING]
 > Use `--per_device_train_batch_size=1` for LLaMA-2 models in fp16 PPO training.
@@ -482,7 +482,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 ```
 
 > [!TIP]
-> Use `--adapter_name_or_path path_to_sft_checkpoint,path_to_dpo_checkpoint` to infer the fine-tuned model.
+> Use `--adapter_name_or_path path_to_sft_checkpoint,path_to_dpo_checkpoint` to infer the fine-tuned model if `--create_new_adapter` was enabled.
 
 ### Distributed Training
 
@@ -570,7 +570,7 @@ deepspeed --num_gpus 8 src/train_bash.py \
 ### Merge LoRA weights and export model
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python src/export_model.py \
+CUDA_VISIBLE_DEVICES= python src/export_model.py \
     --model_name_or_path path_to_llama_model \
     --adapter_name_or_path path_to_checkpoint \
     --template default \
