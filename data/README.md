@@ -27,8 +27,9 @@ If you are using a custom dataset, please provide your dataset definition in the
     "assistant_tag": "the value of the role_tag represents the assistant. (default: gpt)",
     "observation_tag": "the value of the role_tag represents the tool results. (default: observation)",
     "function_tag": "the value of the role_tag represents the function call. (default: function_call)",
-    "system_tag": "the value of the role_tag represents the system prompt. (default: system, can override system column)"
-  }
+    "system_tag": "the value of the role_tag represents the system prompt. (default: system, can override system column)",
+  },
+  "sample_num": "the number of samples from this dataset can be greater than the total amount of the dataset. (default: None)"
 }
 ```
 

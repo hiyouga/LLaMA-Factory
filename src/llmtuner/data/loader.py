@@ -1,5 +1,7 @@
 import inspect
 import os
+import numpy as np
+from numpy.random import RandomState
 from typing import TYPE_CHECKING, Literal, Union
 
 from datasets import load_dataset, load_from_disk
@@ -107,6 +109,17 @@ def load_single_dataset(
     if data_args.max_samples is not None:  # truncate dataset
         num_samples = min(data_args.max_samples, len(dataset))
         dataset = dataset.select(range(num_samples))
+
+    if dataset_attr.sample_num:
+        dataset_sample_num = dataset_attr.sample_num
+        logger.info(f"从 {dataset_attr.dataset_name} 采样 {dataset_sample_num} 条训练样本")
+        random_state = RandomState(42)
+        idx = random_state.permutation(len(dataset))[:dataset_sample_num]
+        dataset_sample_num -= len(idx)
+        if dataset_sample_num > 0:
+            idx2 = random_state.choice(len(dataset), dataset_sample_num)
+            idx = np.concatenate([idx, idx2], axis=0)
+        dataset = dataset.select(idx)
 
     return align_dataset(dataset, dataset_attr, data_args)
 
