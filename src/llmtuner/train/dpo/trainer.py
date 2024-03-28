@@ -20,12 +20,9 @@ if TYPE_CHECKING:
 class CustomDPOTrainer(DPOTrainer):
     def __init__(
         self,
-        beta: float,
-        loss_type: Literal["sigmoid", "hinge", "ipo", "kto_pair"],
-        ftx_gamma: float,
         model: Union["PreTrainedModel", torch.nn.Module],
+        ref_model: Optional[Union["PreTrainedModel", torch.nn.Module]],
         finetuning_args: "FinetuningArguments",
-        ref_model: Optional[Union["PreTrainedModel", torch.nn.Module]] = None,
         disable_dropout: bool = True,
         **kwargs,
     ):
@@ -47,10 +44,10 @@ class CustomDPOTrainer(DPOTrainer):
         self._peft_has_been_casted_to_bf16 = False
 
         self.ref_model = ref_model
-        self.beta = beta
-        self.label_smoothing = 0
-        self.loss_type = loss_type
-        self.ftx_gamma = ftx_gamma
+        self.beta = finetuning_args.dpo_beta
+        self.label_smoothing = finetuning_args.dpo_label_smoothing
+        self.loss_type = finetuning_args.dpo_loss
+        self.ftx_gamma = finetuning_args.dpo_ftx
         self._stored_metrics = defaultdict(lambda: defaultdict(list))
 
         Trainer.__init__(self, model=model, **kwargs)
@@ -67,10 +64,10 @@ class CustomDPOTrainer(DPOTrainer):
                 self.ref_model = self.accelerator.prepare_model(self.ref_model, evaluation_mode=True)
 
     def create_optimizer_and_scheduler(self, num_training_steps: int) -> None:
-        self.optimizer = create_custom_optimzer(self.model, self.args, self.finetuning_args, num_training_steps)
         if self.optimizer is None:
-            self.create_optimizer()
+            self.optimizer = create_custom_optimzer(self.model, self.args, self.finetuning_args, num_training_steps)
 
+        self.create_optimizer()
         self.create_scheduler(num_training_steps=num_training_steps, optimizer=self.optimizer)
 
     def sft_loss(self, chosen_logits: torch.FloatTensor, chosen_labels: torch.LongTensor) -> torch.Tensor:

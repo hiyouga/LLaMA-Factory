@@ -133,7 +133,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
     if finetuning_args.use_dora:
         if model_args.quantization_bit is not None:
-            require_version("peft>=0.9.1.dev0", "To fix: pip install git+https://github.com/huggingface/peft.git")
+            require_version("peft>=0.10.0", "To fix: pip install peft>=0.10.0")
 
         if model_args.use_unsloth:
             raise ValueError("Unsloth does not support DoRA.")
@@ -151,6 +151,9 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         and training_args.parallel_mode.value == "distributed"
     ):
         raise ValueError("Distributed training does not support layer-wise GaLore.")
+
+    if finetuning_args.use_galore and training_args.deepspeed is not None:
+        raise ValueError("GaLore is incompatible with DeepSpeed.")
 
     if model_args.infer_backend == "vllm":
         raise ValueError("vLLM backend is only available for API, CLI and Web.")

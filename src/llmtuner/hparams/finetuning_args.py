@@ -102,6 +102,10 @@ class RLHFArguments:
         default="sigmoid",
         metadata={"help": "The type of DPO loss to use."},
     )
+    dpo_label_smoothing: float = field(
+        default=0.0,
+        metadata={"help": "The robust DPO label smoothing parameter in cDPO that should be between 0 and 0.5."},
+    )
     dpo_ftx: float = field(
         default=0.0,
         metadata={"help": "The supervised fine-tuning loss coefficient in DPO training."},
@@ -247,6 +251,9 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
 
         if self.stage == "ppo" and self.reward_model_type == "lora" and self.finetuning_type != "lora":
             raise ValueError("`reward_model_type` cannot be lora for Freeze/Full PPO training.")
+
+        if self.stage == "dpo" and self.dpo_loss != "sigmoid" and self.dpo_label_smoothing > 1e-6:
+            raise ValueError("`dpo_label_smoothing` is only valid for sigmoid loss function.")
 
         if self.use_llama_pro and self.finetuning_type == "full":
             raise ValueError("`use_llama_pro` is only valid for the Freeze or LoRA method.")

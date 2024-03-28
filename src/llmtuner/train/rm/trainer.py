@@ -30,10 +30,10 @@ class PairwiseTrainer(Trainer):
         self.can_return_loss = True  # override property to return eval_loss
 
     def create_optimizer_and_scheduler(self, num_training_steps: int) -> None:
-        self.optimizer = create_custom_optimzer(self.model, self.args, self.finetuning_args, num_training_steps)
         if self.optimizer is None:
-            self.create_optimizer()
+            self.optimizer = create_custom_optimzer(self.model, self.args, self.finetuning_args, num_training_steps)
 
+        self.create_optimizer()
         self.create_scheduler(num_training_steps=num_training_steps, optimizer=self.optimizer)
 
     def compute_loss(
@@ -45,7 +45,7 @@ class PairwiseTrainer(Trainer):
         Subclass and override to inject custom behavior.
 
         Note that the first element will be removed from the output tuple.
-        See: https://github.com/huggingface/transformers/blob/v4.30.2/src/transformers/trainer.py#L3509
+        See: https://github.com/huggingface/transformers/blob/v4.39.1/src/transformers/trainer.py#L3777
         """
         # Compute rewards
         _, _, values = model(**inputs, output_hidden_states=True, return_dict=True)
