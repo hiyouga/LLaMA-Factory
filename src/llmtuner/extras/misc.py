@@ -64,7 +64,7 @@ def check_dependencies() -> None:
         require_version("transformers>=4.37.2", "To fix: pip install transformers>=4.37.2")
         require_version("datasets>=2.14.3", "To fix: pip install datasets>=2.14.3")
         require_version("accelerate>=0.27.2", "To fix: pip install accelerate>=0.27.2")
-        require_version("peft>=0.9.0", "To fix: pip install peft>=0.9.0")
+        require_version("peft>=0.10.0", "To fix: pip install peft>=0.10.0")
         require_version("trl>=0.8.1", "To fix: pip install trl>=0.8.1")
 
 
