@@ -76,9 +76,9 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 [24/03/07] We supported gradient low-rank projection (**[GaLore](https://arxiv.org/abs/2403.03507)**) algorithm. See `examples/extras/galore` for usage.
 
-[24/03/07] We integrated **[vLLM](https://github.com/vllm-project/vllm)** for faster and concurrent inference. Try `--infer_backend vllm` to enjoy **270%** inference speed. (LoRA is not yet supported, merge it first.)
-
 <details><summary>Full Changelog</summary>
+
+[24/03/07] We integrated **[vLLM](https://github.com/vllm-project/vllm)** for faster and concurrent inference. Try `--infer_backend vllm` to enjoy **270%** inference speed. (LoRA is not yet supported, merge it first.)
 
 [24/02/28] We supported weight-decomposed LoRA (**[DoRA](https://arxiv.org/abs/2402.09353)**). Try `--use_dora` to activate DoRA training.
 
@@ -586,7 +586,7 @@ CUDA_VISIBLE_DEVICES= python src/export_model.py \
 > [!TIP]
 > Use `--model_name_or_path path_to_export` solely to use the exported model.
 > 
-> Use `--export_quantization_bit 4` and `--export_quantization_dataset data/c4_demo.json` to quantize the model with AutoGPTQ after merging the LoRA weights.
+> Use `CUDA_VISIBLE_DEVICES=0`, `--export_quantization_bit 4` and `--export_quantization_dataset data/c4_demo.json` to quantize the model with AutoGPTQ after merging the LoRA weights.
 
 ### Inference with OpenAI-style API
 
@@ -662,19 +662,23 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
 
 ### Dockerize Training
 
-#### Get ready
-
-Necessary dockerized environment is needed, such as Docker or Docker Compose.
-
-#### Docker support
+#### Use Docker
 
 ```bash
 docker build -f ./Dockerfile -t llama-factory:latest .
 
-docker run --gpus=all -v ./hf_cache:/root/.cache/huggingface/ -v ./data:/app/data -v ./output:/app/output -p 7860:7860 --shm-size 16G --name llama_factory -d llama-factory:latest
+docker run --gpus=all \
+    -v ./hf_cache:/root/.cache/huggingface/ \
+    -v ./data:/app/data \
+    -v ./output:/app/output \
+    -e CUDA_VISIBLE_DEVICES=0 \
+    -p 7860:7860 \
+    --shm-size 16G \
+    --name llama_factory \
+    -d llama-factory:latest
 ```
 
-#### Docker Compose support
+#### Use Docker Compose
 
 ```bash
 docker compose -f ./docker-compose.yml up -d
@@ -682,7 +686,7 @@ docker compose -f ./docker-compose.yml up -d
 
 > [!TIP]
 > Details about volume:
-> * hf_cache: Utilize Huggingface cache on the host machine. Reassignable if a cache already exists in a different directory.
+> * hf_cache: Utilize Hugging Face cache on the host machine. Reassignable if a cache already exists in a different directory.
 > * data: Place datasets on this dir of the host machine so that they can be selected on LLaMA Board GUI.
 > * output: Set export dir to this location so that the merged result can be accessed directly on the host machine.
 
