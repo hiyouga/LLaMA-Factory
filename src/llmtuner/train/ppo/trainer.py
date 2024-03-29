@@ -6,20 +6,23 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 import torch
 from tqdm import tqdm
 from transformers import GenerationConfig, Trainer, TrainerControl, TrainerState
+from transformers.optimization import get_scheduler
 from transformers.trainer_pt_utils import remove_dummy_checkpoint
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 from transformers.utils import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
-from trl import PPOTrainer
+from trl import PPOConfig, PPOTrainer
 from trl.core import PPODecorators, logprobs_from_logits
 
 from ...extras.callbacks import FixValueHeadModelCallback, LogCallback
 from ...extras.logging import get_logger
 from ...extras.misc import AverageMeter, count_parameters, get_current_device, get_logits_processor
+from ..utils import create_custom_optimzer, create_custom_scheduler
 from .utils import dump_layernorm, get_rewards_from_server, replace_model, restore_layernorm
 
 
 if TYPE_CHECKING:
-    from transformers import Seq2SeqTrainingArguments, TrainerCallback
+    from datasets import Dataset
+    from transformers import DataCollatorWithPadding, PreTrainedTokenizer, Seq2SeqTrainingArguments, TrainerCallback
     from trl import AutoModelForCausalLMWithValueHead
 
     from ...hparams import FinetuningArguments, GeneratingArguments, ModelArguments
@@ -40,10 +43,53 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         finetuning_args: "FinetuningArguments",
         generating_args: "GeneratingArguments",
         callbacks: List["TrainerCallback"],
-        reward_model: "AutoModelForCausalLMWithValueHead",
-        **kwargs,
+        model: "AutoModelForCausalLMWithValueHead",
+        reward_model: Optional["AutoModelForCausalLMWithValueHead"],
+        ref_model: Optional["AutoModelForCausalLMWithValueHead"],
+        tokenizer: "PreTrainedTokenizer",
+        dataset: "Dataset",
+        data_collator: "DataCollatorWithPadding",
     ):
-        PPOTrainer.__init__(self, **kwargs)
+        backward_batch_size = training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps
+        ppo_config = PPOConfig(
+            model_name=model_args.model_name_or_path,
+            learning_rate=training_args.learning_rate,
+            mini_batch_size=training_args.per_device_train_batch_size,
+            batch_size=backward_batch_size * finetuning_args.ppo_buffer_size,
+            gradient_accumulation_steps=training_args.gradient_accumulation_steps,
+            ppo_epochs=finetuning_args.ppo_epochs,
+            max_grad_norm=training_args.max_grad_norm,
+            seed=training_args.seed,
+            optimize_device_cache=True,
+            target=finetuning_args.ppo_target,
+            use_score_scaling=finetuning_args.ppo_score_norm,
+            use_score_norm=finetuning_args.ppo_score_norm,
+            whiten_rewards=finetuning_args.ppo_whiten_rewards,
+            accelerator_kwargs={"step_scheduler_with_optimizer": False},
+            log_with=training_args.report_to[0] if training_args.report_to is not None else None,
+            project_kwargs={"logging_dir": training_args.logging_dir},
+        )
+
+        # Create optimizer and scheduler
+        if training_args.max_steps > 0:
+            num_training_steps = training_args.max_steps
+        else:
+            total_train_batch_size = backward_batch_size * finetuning_args.ppo_buffer_size * training_args.world_size
+            num_training_steps = training_args.num_train_epochs * math.ceil(len(dataset) / total_train_batch_size)
+
+        optimizer = self.create_optimizer(model, training_args, finetuning_args)
+        scheduler = self.create_scheduler(training_args, num_training_steps, optimizer)
+
+        PPOTrainer.__init__(
+            self,
+            config=ppo_config,
+            model=model,
+            ref_model=ref_model,
+            tokenizer=tokenizer,
+            dataset=dataset,
+            data_collator=data_collator,
+            lr_scheduler=scheduler,
+        )
 
         self.args = training_args
         self.model_args = model_args
@@ -204,6 +250,44 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         self.save_callback.on_train_end(
             self.args, self.state, self.control, model=self.accelerator.unwrap_model(self.model)
         )
+
+    def create_optimizer(
+        self,
+        model: "AutoModelForCausalLMWithValueHead",
+        training_args: "Seq2SeqTrainingArguments",
+        finetuning_args: "FinetuningArguments",
+    ) -> "torch.optim.Optimizer":
+        optimizer = create_custom_optimzer(model, training_args, finetuning_args)
+        if optimizer is None:
+            decay_params, nodecay_params = [], []
+            decay_param_names = self.get_decay_parameter_names(model)
+            for name, param in model.named_parameters():
+                if param.requires_grad:
+                    if name in decay_param_names:
+                        decay_params.append(param)
+                    else:
+                        nodecay_params.append(param)
+
+            optim_class, optim_kwargs = Trainer.get_optimizer_cls_and_kwargs(training_args)
+            param_groups = [
+                dict(params=nodecay_params),
+                dict(params=decay_params, weight_decay=training_args.weight_decay),
+            ]
+            optimizer = optim_class(param_groups, **optim_kwargs)
+
+        return optimizer
+
+    def create_scheduler(
+        self, training_args: "Seq2SeqTrainingArguments", num_training_steps: int, optimizer: "torch.optim.Optimizer"
+    ) -> "torch.optim.lr_scheduler.LRScheduler":
+        create_custom_scheduler(training_args, num_training_steps, optimizer)
+        lr_scheduler = get_scheduler(
+            training_args.lr_scheduler_type,
+            optimizer=optimizer,
+            num_warmup_steps=training_args.get_warmup_steps(num_training_steps),
+            num_training_steps=num_training_steps,
+        )
+        return lr_scheduler
 
     @torch.no_grad()
     def get_inputs(self, batch: Dict[str, torch.Tensor]) -> Tuple[List[torch.Tensor], List[torch.Tensor]]:
