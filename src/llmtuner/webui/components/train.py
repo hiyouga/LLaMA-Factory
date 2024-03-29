@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, Dict, Set, Tuple
 
 import gradio as gr
 from transformers.trainer_utils import SchedulerType
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from ..engine import Engine
 
 
-def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
+def create_train_tab(engine: "Engine") -> Tuple[Set["Component"],Dict[str, "Component"]]:
     input_elems = engine.manager.get_base_elems()
     elem_dict = dict()
 
@@ -257,4 +257,4 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
         queue=False,
     )
 
-    return elem_dict
+    return input_elems, elem_dict

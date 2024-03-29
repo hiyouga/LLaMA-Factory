@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Set
 
 import gradio as gr
 from gradio.components import Component
@@ -20,45 +20,35 @@ from .engine import Engine
 
 require_version("gradio>=3.38.0,<4.0.0", 'To fix: pip install "gradio>=3.38.0,<4.0.0"')
 
-class Params_save_manager:
-    def __init__(self, engine:"Engine") -> None:
+class ParamsSaveManager:
+    def __init__(self, engine:"Engine",input_elems:Set["Component"]):
         self.engine = engine
 
-    def save(self,*data: Dict[Component, Any]) -> None:
+        self.input_elem_names = list()
+        diff_elems = input_elems.difference(engine.manager.get_base_elems())
+        id_to_name = {id(component): name for name, component in self.engine.manager.all_elems["train"].items()}
+
+        self.input_elem_names = [id_to_name[id(elem)] for elem in diff_elems if id(elem) in id_to_name]
+        self.input_elem_component = [self.engine.manager.get_elem_by_name(f"train.{name}") for name in self.input_elem_names]
+
+    def save(self,*data: List[Any]) -> None:
         config = dict()
-        names = self._get_components()[0]
-        for index, value in enumerate(data):
-            config.update({names[index]:value})
+        for index, name in enumerate(self.input_elem_names):
+            config.update({name:data[index]})
         with open('config.json','w') as file:
             file.write(json.dumps(config))
 
     def load(self) -> Dict[Component, Dict[str, Any]]:
-        components = self._get_components()
         with open('config.json','r') as file:
             config = json.loads(file.read())
         return {
-            component: gr.update(value=config[name])
-            for name, component in zip(components[0],components[1])
+            component: gr.update(value=config[self.input_elem_names[index]])
+            for index, component in enumerate(self.input_elem_component)
         }
-
-    def _get_components(self) -> Tuple[List[str],List["Component"]]:
-        names = list()
-        components = list()
-
-        for name, component in self.engine.manager.all_elems["train"].items():
-            if (isinstance(component,(gr.components.dropdown.Dropdown,
-                                      gr.components.textbox.Textbox,
-                                      gr.components.checkbox.Checkbox,
-                                      gr.components.slider.Slider))):
-                names.append(name)
-                components.append(component)
-
-        return (names, components)
 
 
 def create_ui(demo_mode: bool = False) -> gr.Blocks:
     engine = Engine(demo_mode=demo_mode, pure_chat=False)
-    config_manager = Params_save_manager(engine)
 
     with gr.Blocks(title="LLaMA Board", css=CSS) as demo:
         if demo_mode:
@@ -72,10 +62,12 @@ def create_ui(demo_mode: bool = False) -> gr.Blocks:
         lang, engine.manager.all_elems["top"] = create_top()
 
         with gr.Tab("Train"):
-            engine.manager.all_elems["train"] = create_train_tab(engine)
+            input_elems, engine.manager.all_elems["train"] = create_train_tab(engine)
+            config_manager = ParamsSaveManager(engine,input_elems)
 
-            engine.manager.all_elems["train"]["save_param_btn"].click(config_manager.save,config_manager._get_components()[1],queue=False)
-            engine.manager.all_elems["train"]["load_param_btn"].click(config_manager.load,outputs=config_manager._get_components()[1],queue=False)
+            #notice:Use all elems will include layouts
+            engine.manager.all_elems["train"]["save_param_btn"].click(config_manager.save,config_manager.input_elem_component,queue=False)
+            engine.manager.all_elems["train"]["load_param_btn"].click(config_manager.load,outputs=config_manager.input_elem_component,queue=False)
 
         with gr.Tab("Evaluate & Predict"):
             engine.manager.all_elems["eval"] = create_eval_tab(engine)
