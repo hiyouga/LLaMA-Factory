@@ -21,8 +21,9 @@ from .engine import Engine
 require_version("gradio>=3.38.0,<4.0.0", 'To fix: pip install "gradio>=3.38.0,<4.0.0"')
 
 class ParamsSaveManager:
-    def __init__(self, engine:"Engine",input_elems:Set["Component"]):
+    def __init__(self,engine:"Engine",input_elems:Set["Component"]) -> None:
         self.engine = engine
+        self.config_path = "./config.json"
 
         self.input_elem_names = list()
         diff_elems = input_elems.difference(engine.manager.get_base_elems())
@@ -35,16 +36,19 @@ class ParamsSaveManager:
         config = dict()
         for index, name in enumerate(self.input_elem_names):
             config.update({name:data[index]})
-        with open('config.json','w') as file:
+        with open(self.config_path,'w') as file:
             file.write(json.dumps(config))
 
     def load(self) -> Dict[Component, Dict[str, Any]]:
-        with open('config.json','r') as file:
+        with open(self.config_path,'r') as file:
             config = json.loads(file.read())
         return {
             component: gr.update(value=config[self.input_elem_names[index]])
             for index, component in enumerate(self.input_elem_component)
         }
+    
+    def change_config_path(self,*data: List[str]):
+        self.config_path = data[0]
 
 
 def create_ui(demo_mode: bool = False) -> gr.Blocks:
@@ -68,6 +72,7 @@ def create_ui(demo_mode: bool = False) -> gr.Blocks:
             #notice:Use all elems will include layouts
             engine.manager.all_elems["train"]["save_param_btn"].click(config_manager.save,config_manager.input_elem_component,queue=False)
             engine.manager.all_elems["train"]["load_param_btn"].click(config_manager.load,outputs=config_manager.input_elem_component,queue=False)
+            engine.manager.all_elems["train"]["config_path"].change(config_manager.change_config_path,engine.manager.all_elems["train"]["config_path"])
 
         with gr.Tab("Evaluate & Predict"):
             engine.manager.all_elems["eval"] = create_eval_tab(engine)

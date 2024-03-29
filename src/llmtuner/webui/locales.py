@@ -1189,6 +1189,17 @@ LOCALES = {
             "value": "加载训练参数"
         },
     },
+    "config_path": {
+        "en": {
+            "label": "Config file path(JSON)"
+        },
+        "ru": {
+            "label": "Путь к файлу конфигурации"
+        },
+        "zh": {
+            "label": "配置文件路径"
+        },
+    },
 }
 
 

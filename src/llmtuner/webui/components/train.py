@@ -234,16 +234,16 @@ def create_train_tab(engine: "Engine") -> Tuple[Set["Component"],Dict[str, "Comp
     with gr.Row():
         save_param_btn = gr.Button()
         load_param_btn = gr.Button()
-
-    save_param_btn.value = "保存训练配置"
-    load_param_btn.value = "加载训练配置"
+        config_path = gr.Textbox(value="./config.json")
 
     elem_dict.update(
         dict(
             save_param_btn=save_param_btn,
             load_param_btn=load_param_btn,
+            config_path=config_path
         )
     )
+    input_elems.update({config_path})
 
     output_box.change(
         gen_plot,
