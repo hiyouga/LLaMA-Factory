@@ -1167,6 +1167,28 @@ LOCALES = {
             "value": "开始导出",
         },
     },
+    "save_param_btn": {
+        "en": {
+            "value": "Save train params"
+        },
+        "ru": {
+            "value": "Сохранение параметров обучения"
+        },
+        "zh": {
+            "value": "保存训练参数"
+        },
+    },
+    "load_param_btn": {
+        "en": {
+            "value": "Load train params"
+        },
+        "ru": {
+            "value": "Загрузка параметров обучения"
+        },
+        "zh": {
+            "value": "加载训练参数"
+        },
+    },
 }
 
 

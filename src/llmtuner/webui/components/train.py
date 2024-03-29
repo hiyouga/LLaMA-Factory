@@ -235,7 +235,6 @@ def create_train_tab(engine: "Engine") -> Tuple[Set["Component"],Dict[str, "Comp
         save_param_btn = gr.Button()
         load_param_btn = gr.Button()
 
-    #到时候写入本地化
     save_param_btn.value = "保存训练配置"
     load_param_btn.value = "加载训练配置"
 
