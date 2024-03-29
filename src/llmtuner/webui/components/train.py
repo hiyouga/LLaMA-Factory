@@ -82,7 +82,6 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             upcast_layernorm = gr.Checkbox()
             use_llama_pro = gr.Checkbox()
             shift_attn = gr.Checkbox()
-
     input_elems.update(
         {
             logging_steps,
@@ -229,6 +228,21 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             process_bar=process_bar,
             output_box=output_box,
             loss_viewer=loss_viewer,
+        )
+    )
+
+    with gr.Row():
+        save_param_btn = gr.Button()
+        load_param_btn = gr.Button()
+
+    #到时候写入本地化
+    save_param_btn.value = "保存训练配置"
+    load_param_btn.value = "加载训练配置"
+
+    elem_dict.update(
+        dict(
+            save_param_btn=save_param_btn,
+            load_param_btn=load_param_btn,
         )
     )
 
