@@ -74,7 +74,7 @@ def save_model(
 
 def create_export_tab(engine: "Engine") -> Dict[str, "Component"]:
     with gr.Row():
-        max_shard_size = gr.Slider(value=1, minimum=1, maximum=100)
+        max_shard_size = gr.Slider(value=1, minimum=1, maximum=100, step=1)
         export_quantization_bit = gr.Dropdown(choices=["none", "8", "4", "3", "2"], value="none")
         export_quantization_dataset = gr.Textbox(value="data/c4_demo.json")
         export_legacy_format = gr.Checkbox()
@@ -89,12 +89,12 @@ def create_export_tab(engine: "Engine") -> Dict[str, "Component"]:
     export_btn.click(
         save_model,
         [
-            engine.manager.get_elem_by_name("top.lang"),
-            engine.manager.get_elem_by_name("top.model_name"),
-            engine.manager.get_elem_by_name("top.model_path"),
-            engine.manager.get_elem_by_name("top.adapter_path"),
-            engine.manager.get_elem_by_name("top.finetuning_type"),
-            engine.manager.get_elem_by_name("top.template"),
+            engine.manager.get_elem_by_id("top.lang"),
+            engine.manager.get_elem_by_id("top.model_name"),
+            engine.manager.get_elem_by_id("top.model_path"),
+            engine.manager.get_elem_by_id("top.adapter_path"),
+            engine.manager.get_elem_by_id("top.finetuning_type"),
+            engine.manager.get_elem_by_id("top.template"),
             max_shard_size,
             export_quantization_bit,
             export_quantization_dataset,

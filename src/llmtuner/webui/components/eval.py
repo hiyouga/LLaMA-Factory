@@ -53,7 +53,7 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
         resume_btn = gr.Checkbox(visible=False, interactive=False, value=False)
         process_bar = gr.Slider(visible=False, interactive=False)
 
-    with gr.Box():
+    with gr.Row():
         output_box = gr.Markdown()
 
     output_elems = [output_box, process_bar]
@@ -68,9 +68,9 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
         )
     )
 
-    cmd_preview_btn.click(engine.runner.preview_eval, input_elems, output_elems)
+    cmd_preview_btn.click(engine.runner.preview_eval, input_elems, output_elems, concurrency_limit=None)
     start_btn.click(engine.runner.run_eval, input_elems, output_elems)
     stop_btn.click(engine.runner.set_abort, queue=False)
-    resume_btn.change(engine.runner.monitor, outputs=output_elems)
+    resume_btn.change(engine.runner.monitor, outputs=output_elems, concurrency_limit=None)
 
     return elem_dict

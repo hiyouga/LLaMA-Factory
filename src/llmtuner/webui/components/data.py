@@ -1,6 +1,6 @@
 import json
 import os
-from typing import TYPE_CHECKING, Any, Dict, Tuple
+from typing import TYPE_CHECKING, Dict, Tuple
 
 import gradio as gr
 
@@ -22,24 +22,24 @@ def next_page(page_index: int, total_num: int) -> int:
     return page_index + 1 if (page_index + 1) * PAGE_SIZE < total_num else page_index
 
 
-def can_preview(dataset_dir: str, dataset: list) -> Dict[str, Any]:
+def can_preview(dataset_dir: str, dataset: list) -> "gr.Button":
     try:
         with open(os.path.join(dataset_dir, DATA_CONFIG), "r", encoding="utf-8") as f:
             dataset_info = json.load(f)
     except Exception:
-        return gr.update(interactive=False)
+        return gr.Button(interactive=False)
 
     if (
         len(dataset) > 0
         and "file_name" in dataset_info[dataset[0]]
         and os.path.isfile(os.path.join(dataset_dir, dataset_info[dataset[0]]["file_name"]))
     ):
-        return gr.update(interactive=True)
+        return gr.Button(interactive=True)
     else:
-        return gr.update(interactive=False)
+        return gr.Button(interactive=False)
 
 
-def get_preview(dataset_dir: str, dataset: list, page_index: int) -> Tuple[int, list, Dict[str, Any]]:
+def get_preview(dataset_dir: str, dataset: list, page_index: int) -> Tuple[int, list, "gr.Column"]:
     with open(os.path.join(dataset_dir, DATA_CONFIG), "r", encoding="utf-8") as f:
         dataset_info = json.load(f)
 
@@ -51,7 +51,7 @@ def get_preview(dataset_dir: str, dataset: list, page_index: int) -> Tuple[int, 
             data = [json.loads(line) for line in f]
         else:
             data = [line for line in f]  # noqa: C416
-    return len(data), data[PAGE_SIZE * page_index : PAGE_SIZE * (page_index + 1)], gr.update(visible=True)
+    return len(data), data[PAGE_SIZE * page_index : PAGE_SIZE * (page_index + 1)], gr.Column(visible=True)
 
 
 def create_preview_box(dataset_dir: "gr.Textbox", dataset: "gr.Dropdown") -> Dict[str, "Component"]:
@@ -67,7 +67,7 @@ def create_preview_box(dataset_dir: "gr.Textbox", dataset: "gr.Dropdown") -> Dic
             close_btn = gr.Button()
 
         with gr.Row():
-            preview_samples = gr.JSON(interactive=False)
+            preview_samples = gr.JSON()
 
     dataset.change(can_preview, [dataset_dir, dataset], [data_preview_btn], queue=False).then(
         lambda: 0, outputs=[page_index], queue=False
@@ -81,7 +81,7 @@ def create_preview_box(dataset_dir: "gr.Textbox", dataset: "gr.Dropdown") -> Dic
     next_btn.click(next_page, [page_index, preview_count], [page_index], queue=False).then(
         get_preview, [dataset_dir, dataset, page_index], [preview_count, preview_samples, preview_box], queue=False
     )
-    close_btn.click(lambda: gr.update(visible=False), outputs=[preview_box], queue=False)
+    close_btn.click(lambda: gr.Column(visible=False), outputs=[preview_box], queue=False)
     return dict(
         data_preview_btn=data_preview_btn,
         preview_count=preview_count,
