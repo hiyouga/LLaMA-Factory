@@ -364,12 +364,11 @@
     }
   },
   "pile": {
-    "hf_hub_url": "EleutherAI/pile",
+    "hf_hub_url": "monology/pile-uncopyrighted",
     "ms_hub_url": "AI-ModelScope/pile",
     "columns": {
       "prompt": "text"
-    },
-    "subset": "all"
+    }
   },
   "skypile": {
     "hf_hub_url": "Skywork/SkyPile-150B",
