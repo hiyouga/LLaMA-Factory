@@ -46,8 +46,8 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
 
     with gr.Row():
         cmd_preview_btn = gr.Button()
-        start_btn = gr.Button()
-        stop_btn = gr.Button()
+        start_btn = gr.Button(variant="primary")
+        stop_btn = gr.Button(variant="stop")
 
     with gr.Row():
         resume_btn = gr.Checkbox(visible=False, interactive=False, value=False)
