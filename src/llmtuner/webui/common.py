@@ -79,9 +79,9 @@ def get_template(model_name: str) -> str:
     return "default"
 
 
-def list_adapters(model_name: str, finetuning_type: str) -> Dict[str, Any]:
+def list_adapters(model_name: str, finetuning_type: str) -> "gr.Dropdown":
     if finetuning_type not in PEFT_METHODS:
-        return gr.update(value=[], choices=[], interactive=False)
+        return gr.Dropdown(value=[], choices=[], interactive=False)
 
     adapters = []
     if model_name and finetuning_type == "lora":
@@ -92,7 +92,7 @@ def list_adapters(model_name: str, finetuning_type: str) -> Dict[str, Any]:
                     os.path.isfile(os.path.join(save_dir, adapter, name)) for name in ADAPTER_NAMES
                 ):
                     adapters.append(adapter)
-    return gr.update(value=[], choices=adapters, interactive=True)
+    return gr.Dropdown(value=[], choices=adapters, interactive=True)
 
 
 def load_dataset_info(dataset_dir: str) -> Dict[str, Dict[str, Any]]:
@@ -104,12 +104,12 @@ def load_dataset_info(dataset_dir: str) -> Dict[str, Dict[str, Any]]:
         return {}
 
 
-def list_dataset(dataset_dir: str = None, training_stage: str = list(TRAINING_STAGES.keys())[0]) -> Dict[str, Any]:
+def list_dataset(dataset_dir: str = None, training_stage: str = list(TRAINING_STAGES.keys())[0]) -> "gr.Dropdown":
     dataset_info = load_dataset_info(dataset_dir if dataset_dir is not None else DEFAULT_DATA_DIR)
     ranking = TRAINING_STAGES[training_stage] in ["rm", "dpo"]
     datasets = [k for k, v in dataset_info.items() if v.get("ranking", False) == ranking]
-    return gr.update(value=[], choices=datasets)
+    return gr.Dropdown(value=[], choices=datasets)
 
 
-def autoset_packing(training_stage: str = list(TRAINING_STAGES.keys())[0]) -> Dict[str, Any]:
-    return gr.update(value=(TRAINING_STAGES[training_stage] == "pt"))
+def autoset_packing(training_stage: str = list(TRAINING_STAGES.keys())[0]) -> "gr.Button":
+    return gr.Button(value=(TRAINING_STAGES[training_stage] == "pt"))

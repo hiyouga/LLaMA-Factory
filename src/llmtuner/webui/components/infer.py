@@ -29,11 +29,11 @@ def create_infer_tab(engine: "Engine") -> Dict[str, "Component"]:
     elem_dict.update(dict(chat_box=chat_box, **chat_elems))
 
     load_btn.click(engine.chatter.load_model, input_elems, [info_box]).then(
-        lambda: gr.update(visible=engine.chatter.loaded), outputs=[chat_box]
+        lambda: gr.Column(visible=engine.chatter.loaded), outputs=[chat_box]
     )
 
     unload_btn.click(engine.chatter.unload_model, input_elems, [info_box]).then(
         lambda: ([], []), outputs=[chatbot, history]
-    ).then(lambda: gr.update(visible=engine.chatter.loaded), outputs=[chat_box])
+    ).then(lambda: gr.Column(visible=engine.chatter.loaded), outputs=[chat_box])
 
     return elem_dict
