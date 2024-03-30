@@ -312,21 +312,20 @@ def patch_config(
 def patch_model(
     model: "PreTrainedModel", tokenizer: "PreTrainedTokenizer", model_args: "ModelArguments", is_trainable: bool
 ) -> None:
-    #Config check and fix
-    gen_config = model.generation_config
-    if not gen_config.do_sample and (
-        (gen_config.temperature is not None and gen_config.temperature != 1.0)
-        or (gen_config.top_p is not None and gen_config.top_p != 1.0)
-        or (gen_config.typical_p is not None and gen_config.typical_p != 1.0)
-    ):
-        gen_config.do_sample = True
-
     if "GenerationMixin" not in str(model.generate.__func__):
         model.generate = MethodType(PreTrainedModel.generate, model)
 
     if getattr(model.config, "model_type", None) == "chatglm":
         setattr(model, "lm_head", model.transformer.output_layer)
         setattr(model, "_keys_to_ignore_on_save", ["lm_head.weight"])
+
+    gen_config = model.generation_config  # check and fix generation config
+    if not gen_config.do_sample and (
+        (gen_config.temperature is not None and gen_config.temperature != 1.0)
+        or (gen_config.top_p is not None and gen_config.top_p != 1.0)
+        or (gen_config.typical_p is not None and gen_config.typical_p != 1.0)
+    ):
+        gen_config.do_sample = True
 
     if model_args.resize_vocab:
         _resize_embedding_layer(model, tokenizer)
