@@ -36,7 +36,7 @@ class WebChatModel(ChatModel):
         return self.engine is not None
 
     def load_model(self, data: Dict[Component, Any]) -> Generator[str, None, None]:
-        get = lambda name: data[self.manager.get_elem_by_name(name)]
+        get = lambda elem_id: data[self.manager.get_elem_by_id(elem_id)]
         lang = get("top.lang")
         error = ""
         if self.loaded:
@@ -80,7 +80,7 @@ class WebChatModel(ChatModel):
         yield ALERTS["info_loaded"][lang]
 
     def unload_model(self, data: Dict[Component, Any]) -> Generator[str, None, None]:
-        lang = data[self.manager.get_elem_by_name("top.lang")]
+        lang = data[self.manager.get_elem_by_id("top.lang")]
 
         if self.demo_mode:
             gr.Warning(ALERTS["err_demo"][lang])
@@ -97,13 +97,13 @@ class WebChatModel(ChatModel):
         chatbot: List[Tuple[str, str]],
         role: str,
         query: str,
-        messages: Sequence[Tuple[str, str]],
+        messages: Sequence[Dict[str, str]],
         system: str,
         tools: str,
         max_new_tokens: int,
         top_p: float,
         temperature: float,
-    ) -> Generator[Tuple[Sequence[Tuple[str, str]], Sequence[Tuple[str, str]]], None, None]:
+    ) -> Generator[Tuple[List[Tuple[str, str]], List[Dict[str, str]]], None, None]:
         chatbot.append([query, ""])
         query_messages = messages + [{"role": role, "content": query}]
         response = ""
@@ -126,12 +126,5 @@ class WebChatModel(ChatModel):
                 output_messages = query_messages + [{"role": Role.ASSISTANT.value, "content": result}]
                 bot_text = result
 
-            chatbot[-1] = [query, self.postprocess(bot_text)]
+            chatbot[-1] = [query, bot_text]
             yield chatbot, output_messages
-
-    def postprocess(self, response: str) -> str:
-        blocks = response.split("```")
-        for i, block in enumerate(blocks):
-            if i % 2 == 0:
-                blocks[i] = block.replace("<", "&lt;").replace(">", "&gt;")
-        return "```".join(blocks)
