@@ -7,7 +7,6 @@ from ..utils import check_json_schema
 
 
 if TYPE_CHECKING:
-    from gradio.blocks import Block
     from gradio.components import Component
 
     from ..engine import Engine
@@ -15,9 +14,9 @@ if TYPE_CHECKING:
 
 def create_chat_box(
     engine: "Engine", visible: bool = False
-) -> Tuple["Block", "Component", "Component", Dict[str, "Component"]]:
-    with gr.Box(visible=visible) as chat_box:
-        chatbot = gr.Chatbot()
+) -> Tuple["gr.Column", "Component", "Component", Dict[str, "Component"]]:
+    with gr.Column(visible=visible) as chat_box:
+        chatbot = gr.Chatbot(show_copy_button=True)
         messages = gr.State([])
         with gr.Row():
             with gr.Column(scale=4):
@@ -33,14 +32,14 @@ def create_chat_box(
                 temperature = gr.Slider(0.01, 1.5, value=0.95, step=0.01)
                 clear_btn = gr.Button()
 
-    tools.input(check_json_schema, [tools, engine.manager.get_elem_by_name("top.lang")])
+    tools.input(check_json_schema, inputs=[tools, engine.manager.get_elem_by_id("top.lang")])
 
     submit_btn.click(
         engine.chatter.predict,
         [chatbot, role, query, messages, system, tools, max_new_tokens, top_p, temperature],
         [chatbot, messages],
         show_progress=True,
-    ).then(lambda: gr.update(value=""), outputs=[query])
+    ).then(lambda: "", outputs=[query])
 
     clear_btn.click(lambda: ([], []), outputs=[chatbot, messages], show_progress=True)
 
