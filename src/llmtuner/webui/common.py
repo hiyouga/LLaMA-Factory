@@ -20,6 +20,7 @@ from ..extras.misc import use_modelscope
 
 ADAPTER_NAMES = {WEIGHTS_NAME, SAFETENSORS_WEIGHTS_NAME}
 DEFAULT_CACHE_DIR = "cache"
+DEFAULT_CONFIG_DIR = "config"
 DEFAULT_DATA_DIR = "data"
 DEFAULT_SAVE_DIR = "saves"
 USER_CONFIG = "user.config"
@@ -31,6 +32,10 @@ def get_save_dir(*args) -> os.PathLike:
 
 def get_config_path() -> os.PathLike:
     return os.path.join(DEFAULT_CACHE_DIR, USER_CONFIG)
+
+
+def get_save_path(config_path: str) -> os.PathLike:
+    return os.path.join(DEFAULT_CONFIG_DIR, config_path)
 
 
 def load_config() -> Dict[str, Any]:
@@ -50,6 +55,22 @@ def save_config(lang: str, model_name: Optional[str] = None, model_path: Optiona
         user_config["path_dict"][model_name] = model_path
     with open(get_config_path(), "w", encoding="utf-8") as f:
         json.dump(user_config, f, indent=2, ensure_ascii=False)
+
+
+def load_args(config_path: str) -> Optional[Dict[str, Any]]:
+    try:
+        with open(get_save_path(config_path), "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def save_args(config_path: str, config_dict: Dict[str, Any]) -> str:
+    os.makedirs(DEFAULT_CONFIG_DIR, exist_ok=True)
+    with open(get_save_path(config_path), "w", encoding="utf-8") as f:
+        json.dump(config_dict, f, indent=2, ensure_ascii=False)
+
+    return str(get_save_path(config_path))
 
 
 def get_model_path(model_name: str) -> str:

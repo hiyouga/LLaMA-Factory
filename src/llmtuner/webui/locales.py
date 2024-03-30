@@ -628,18 +628,32 @@ LOCALES = {
             "info": "LoRA 权重随机丢弃的概率。",
         },
     },
-    "lora_target": {
+    "loraplus_lr_ratio": {
         "en": {
-            "label": "LoRA modules (optional)",
-            "info": "Name(s) of modules to apply LoRA. Use commas to separate multiple modules.",
+            "label": "LoRA+ LR ratio",
+            "info": "The LR ratio of the B matrices in LoRA.",
         },
         "ru": {
-            "label": "Модули LoRA (опционально)",
-            "info": "Имена модулей для применения LoRA. Используйте запятые для разделения нескольких модулей.",
+            "label": "LoRA+ LR коэффициент",
+            "info": "Коэффициент LR матриц B в LoRA.",
         },
         "zh": {
-            "label": "LoRA 作用模块（非必填）",
-            "info": "应用 LoRA 的模块名称。使用英文逗号分隔多个名称。",
+            "label": "LoRA+ 学习率比例",
+            "info": "LoRA+ 中 B 矩阵的学习率倍数。",
+        },
+    },
+    "create_new_adapter": {
+        "en": {
+            "label": "Create new adapter",
+            "info": "Create a new adapter with randomly initialized weight upon the existing one.",
+        },
+        "ru": {
+            "label": "Создать новый адаптер",
+            "info": "Создать новый адаптер с случайной инициализацией веса на основе существующего.",
+        },
+        "zh": {
+            "label": "新建适配器",
+            "info": "在现有的适配器上创建一个随机初始化后的新适配器。",
         },
     },
     "use_rslora": {
@@ -670,18 +684,18 @@ LOCALES = {
             "info": "使用权重分解的 LoRA。",
         },
     },
-    "create_new_adapter": {
+    "lora_target": {
         "en": {
-            "label": "Create new adapter",
-            "info": "Create a new adapter with randomly initialized weight upon the existing one.",
+            "label": "LoRA modules (optional)",
+            "info": "Name(s) of modules to apply LoRA. Use commas to separate multiple modules.",
         },
         "ru": {
-            "label": "Создать новый адаптер",
-            "info": "Создать новый адаптер с случайной инициализацией веса на основе существующего.",
+            "label": "Модули LoRA (опционально)",
+            "info": "Имена модулей для применения LoRA. Используйте запятые для разделения нескольких модулей.",
         },
         "zh": {
-            "label": "新建适配器",
-            "info": "在现有的适配器上创建一个随机初始化后的新适配器。",
+            "label": "LoRA 作用模块（非必填）",
+            "info": "应用 LoRA 的模块名称。使用英文逗号分隔多个名称。",
         },
     },
     "additional_target": {
@@ -849,6 +863,28 @@ LOCALES = {
             "value": "预览命令",
         },
     },
+    "arg_save_btn": {
+        "en": {
+            "value": "Save arguments",
+        },
+        "ru": {
+            "value": "Сохранить аргументы",
+        },
+        "zh": {
+            "value": "保存训练参数",
+        },
+    },
+    "arg_load_btn": {
+        "en": {
+            "value": "Load arguments",
+        },
+        "ru": {
+            "value": "Загрузить аргументы",
+        },
+        "zh": {
+            "value": "载入训练参数",
+        },
+    },
     "start_btn": {
         "en": {
             "value": "Start",
@@ -883,6 +919,20 @@ LOCALES = {
         "zh": {
             "label": "输出目录",
             "info": "保存结果的路径。",
+        },
+    },
+    "config_path": {
+        "en": {
+            "label": "Config path",
+            "info": "Path to config saving arguments.",
+        },
+        "ru": {
+            "label": "Путь к конфигурации",
+            "info": "Путь для сохранения аргументов конфигурации.",
+        },
+        "zh": {
+            "label": "配置路径",
+            "info": "保存训练参数的配置文件路径。",
         },
     },
     "output_box": {
@@ -1236,6 +1286,11 @@ ALERTS = {
         "ru": "Неверная схема JSON.",
         "zh": "Json 格式错误。",
     },
+    "err_config_not_found": {
+        "en": "Config file is not found.",
+        "ru": "Файл конфигурации не найден.",
+        "zh": "未找到配置文件。",
+    },
     "warn_no_cuda": {
         "en": "CUDA environment was not detected.",
         "ru": "Среда CUDA не обнаружена.",
@@ -1255,6 +1310,11 @@ ALERTS = {
         "en": "Finished.",
         "ru": "Завершено.",
         "zh": "训练完毕。",
+    },
+    "info_config_saved": {
+        "en": "Arguments have been saved at: ",
+        "ru": "Аргументы были сохранены по адресу: ",
+        "zh": "训练参数已保存至：",
     },
     "info_loading": {
         "en": "Loading model...",

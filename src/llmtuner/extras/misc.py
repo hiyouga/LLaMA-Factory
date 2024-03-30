@@ -66,6 +66,7 @@ def check_dependencies() -> None:
         require_version("accelerate>=0.27.2", "To fix: pip install accelerate>=0.27.2")
         require_version("peft>=0.10.0", "To fix: pip install peft>=0.10.0")
         require_version("trl>=0.8.1", "To fix: pip install trl>=0.8.1")
+        require_version("gradio>4.0.0,<=4.21.0", "To fix: pip install gradio==4.21.0")
 
 
 def count_parameters(model: torch.nn.Module) -> Tuple[int, int]:
