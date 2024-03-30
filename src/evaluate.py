@@ -2,8 +2,7 @@ from llmtuner import Evaluator
 
 
 def main():
-    evaluator = Evaluator()
-    evaluator.eval()
+    Evaluator().eval()
 
 
 if __name__ == "__main__":
