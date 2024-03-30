@@ -66,13 +66,7 @@ def create_ui(demo_mode: bool = False) -> gr.Blocks:
         lang, engine.manager.all_elems["top"] = create_top()
 
         with gr.Tab("Train"):
-            input_elems, engine.manager.all_elems["train"] = create_train_tab(engine)
-            config_manager = ParamsSaveManager(engine,input_elems)
-
-            #notice:Use all elems will include layouts
-            engine.manager.all_elems["train"]["save_param_btn"].click(config_manager.save,config_manager.input_elem_component,queue=False)
-            engine.manager.all_elems["train"]["load_param_btn"].click(config_manager.load,outputs=config_manager.input_elem_component,queue=False)
-            engine.manager.all_elems["train"]["config_path"].change(config_manager.change_config_path,engine.manager.all_elems["train"]["config_path"])
+            engine.manager.add_elem_dict("train", create_train_tab(engine))
 
         with gr.Tab("Evaluate & Predict"):
             engine.manager.all_elems["eval"] = create_eval_tab(engine)
