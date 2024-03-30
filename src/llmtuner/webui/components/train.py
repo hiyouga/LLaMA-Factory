@@ -68,7 +68,7 @@ def create_train_tab(engine: "Engine") -> Tuple[Set["Component"],Dict[str, "Comp
         )
     )
 
-    with gr.Accordion(label="Extra config", open=False) as extra_tab:
+    with gr.Accordion(open=False) as extra_tab:
         with gr.Row():
             logging_steps = gr.Slider(value=5, minimum=5, maximum=1000, step=5)
             save_steps = gr.Slider(value=100, minimum=10, maximum=5000, step=10)
@@ -112,7 +112,7 @@ def create_train_tab(engine: "Engine") -> Tuple[Set["Component"],Dict[str, "Comp
         )
     )
 
-    with gr.Accordion(label="Freeze config", open=False) as freeze_tab:
+    with gr.Accordion(open=False) as freeze_tab:
         with gr.Row():
             num_layer_trainable = gr.Slider(value=3, minimum=1, maximum=128, step=1, scale=2)
             name_module_trainable = gr.Textbox(value="all", scale=3)
@@ -124,7 +124,7 @@ def create_train_tab(engine: "Engine") -> Tuple[Set["Component"],Dict[str, "Comp
         )
     )
 
-    with gr.Accordion(label="LoRA config", open=False) as lora_tab:
+    with gr.Accordion(open=False) as lora_tab:
         with gr.Row():
             lora_rank = gr.Slider(value=8, minimum=1, maximum=1024, step=1, scale=1)
             lora_alpha = gr.Slider(value=16, minimum=1, maximum=2048, step=1, scale=1)
@@ -154,7 +154,7 @@ def create_train_tab(engine: "Engine") -> Tuple[Set["Component"],Dict[str, "Comp
         )
     )
 
-    with gr.Accordion(label="RLHF config", open=False) as rlhf_tab:
+    with gr.Accordion(open=False) as rlhf_tab:
         with gr.Row():
             dpo_beta = gr.Slider(value=0.1, minimum=0, maximum=1, step=0.01, scale=1)
             dpo_ftx = gr.Slider(value=0, minimum=0, maximum=10, step=0.01, scale=1)
@@ -162,7 +162,7 @@ def create_train_tab(engine: "Engine") -> Tuple[Set["Component"],Dict[str, "Comp
 
     training_stage.change(list_dataset, [dataset_dir, training_stage], [dataset], queue=False).then(
         list_adapters,
-        [engine.manager.get_elem_by_name("top.model_name"), engine.manager.get_elem_by_name("top.finetuning_type")],
+        [engine.manager.get_elem_by_id("top.model_name"), engine.manager.get_elem_by_id("top.finetuning_type")],
         [reward_model],
         queue=False,
     ).then(autoset_packing, [training_stage], [packing], queue=False)
@@ -170,7 +170,7 @@ def create_train_tab(engine: "Engine") -> Tuple[Set["Component"],Dict[str, "Comp
     input_elems.update({dpo_beta, dpo_ftx, reward_model})
     elem_dict.update(dict(rlhf_tab=rlhf_tab, dpo_beta=dpo_beta, dpo_ftx=dpo_ftx, reward_model=reward_model))
 
-    with gr.Accordion(label="GaLore config", open=False) as galore_tab:
+    with gr.Accordion(open=False) as galore_tab:
         with gr.Row():
             use_galore = gr.Checkbox(scale=1)
             galore_rank = gr.Slider(value=16, minimum=1, maximum=1024, step=1, scale=2)
@@ -204,7 +204,7 @@ def create_train_tab(engine: "Engine") -> Tuple[Set["Component"],Dict[str, "Comp
                 resume_btn = gr.Checkbox(visible=False, interactive=False)
                 process_bar = gr.Slider(visible=False, interactive=False)
 
-            with gr.Box():
+            with gr.Row():
                 output_box = gr.Markdown()
 
         with gr.Column(scale=1):
@@ -213,10 +213,10 @@ def create_train_tab(engine: "Engine") -> Tuple[Set["Component"],Dict[str, "Comp
     input_elems.add(output_dir)
     output_elems = [output_box, process_bar]
 
-    cmd_preview_btn.click(engine.runner.preview_train, input_elems, output_elems)
+    cmd_preview_btn.click(engine.runner.preview_train, input_elems, output_elems, concurrency_limit=None)
     start_btn.click(engine.runner.run_train, input_elems, output_elems)
     stop_btn.click(engine.runner.set_abort, queue=False)
-    resume_btn.change(engine.runner.monitor, outputs=output_elems)
+    resume_btn.change(engine.runner.monitor, outputs=output_elems, concurrency_limit=None)
 
     elem_dict.update(
         dict(
@@ -248,8 +248,8 @@ def create_train_tab(engine: "Engine") -> Tuple[Set["Component"],Dict[str, "Comp
     output_box.change(
         gen_plot,
         [
-            engine.manager.get_elem_by_name("top.model_name"),
-            engine.manager.get_elem_by_name("top.finetuning_type"),
+            engine.manager.get_elem_by_id("top.model_name"),
+            engine.manager.get_elem_by_id("top.finetuning_type"),
             output_dir,
         ],
         loss_viewer,
