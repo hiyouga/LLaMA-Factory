@@ -1,9 +1,9 @@
 from collections import defaultdict
-from contextlib import nullcontext
 from typing import TYPE_CHECKING, Dict, Literal, Optional, Tuple, Union
 
 import torch
-from transformers import BatchEncoding, Trainer
+import torch.nn.functional as F
+from transformers import Trainer
 from trl import DPOTrainer
 from trl.trainer.utils import disable_dropout_in_model
 
@@ -17,19 +17,16 @@ if TYPE_CHECKING:
     from ...hparams import FinetuningArguments
 
 
-class CustomDPOTrainer(DPOTrainer):
+class CustomORPOTrainer(DPOTrainer):
     def __init__(
         self,
-        model: Union["PreTrainedModel", torch.nn.Module],
-        ref_model: Optional[Union["PreTrainedModel", torch.nn.Module]],
+        model: Union["PreTrainedModel", "torch.nn.Module"],
         finetuning_args: "FinetuningArguments",
         disable_dropout: bool = True,
         **kwargs,
     ):
         if disable_dropout:
             disable_dropout_in_model(model)
-            if ref_model is not None:
-                disable_dropout_in_model(ref_model)
 
         self.finetuning_args = finetuning_args
         self.reference_free = False
@@ -43,25 +40,10 @@ class CustomDPOTrainer(DPOTrainer):
         self._precomputed_eval_ref_log_probs = False
         self._peft_has_been_casted_to_bf16 = False
 
-        self.ref_model = ref_model
-        self.beta = finetuning_args.dpo_beta
-        self.label_smoothing = finetuning_args.dpo_label_smoothing
-        self.loss_type = finetuning_args.dpo_loss
-        self.ftx_gamma = finetuning_args.dpo_ftx
+        self.beta = finetuning_args.orpo_beta
         self._stored_metrics = defaultdict(lambda: defaultdict(list))
 
         Trainer.__init__(self, model=model, **kwargs)
-        if not hasattr(self, "accelerator"):
-            raise AttributeError("Please update `transformers`.")
-
-        if ref_model is not None:
-            if self.is_deepspeed_enabled:
-                if not (
-                    getattr(ref_model, "is_loaded_in_8bit", False) or getattr(ref_model, "is_loaded_in_4bit", False)
-                ):  # quantized models are already set on the correct device
-                    self.ref_model = self._prepare_deepspeed(self.ref_model)
-            else:
-                self.ref_model = self.accelerator.prepare_model(self.ref_model, evaluation_mode=True)
 
     def create_optimizer(self) -> "torch.optim.Optimizer":
         if self.optimizer is None:
@@ -84,13 +66,39 @@ class CustomDPOTrainer(DPOTrainer):
         all_logps = self.get_batch_logps(chosen_logits, chosen_labels, average_log_prob=True)
         return -all_logps
 
+    # Borrowed from:
+    # https://github.com/huggingface/trl/blob/0ee349dcd43b0f4b3169449f16751c38ac4a609f/trl/trainer/orpo_trainer.py#L592
+    def odds_ratio_loss(
+        self, chosen_logps: "torch.Tensor", rejected_logps: "torch.Tensor"
+    ) -> Tuple["torch.Tensor", "torch.Tensor", "torch.Tensor", "torch.Tensor", "torch.Tensor"]:
+        r"""
+        Computes ORPO's odds ratio (OR) loss.
+
+        Args:
+            policy_chosen_logps: Log probabilities of the policy model for the chosen responses. Shape: (batch_size,)
+            policy_rejected_logps: Log probabilities of the policy model for the rejected responses. Shape: (batch_size,)
+
+        Returns:
+            A tuple of five tensors: (losses, chosen_rewards, rejected_rewards, log_odds_ratio, log_odds_chosen).
+        """
+
+        # Derived from Eqs. (4) and (7) from https://arxiv.org/abs/2403.07691 by using log identities and exp(log(P(y|x)) = P(y|x)
+        log_odds = (chosen_logps - rejected_logps) - (
+            torch.log(1 - torch.exp(chosen_logps)) - torch.log(1 - torch.exp(rejected_logps))
+        )
+        ratio = F.logsigmoid(log_odds)
+        losses = self.beta * ratio
+
+        chosen_rewards = self.beta * chosen_logps.detach()
+        rejected_rewards = self.beta * rejected_logps.detach()
+
+        return losses, chosen_rewards, rejected_rewards, ratio, log_odds
+
     def concatenated_forward(
         self, model: "PreTrainedModel", batch: Dict[str, "torch.Tensor"]
     ) -> Tuple["torch.Tensor", "torch.Tensor", "torch.Tensor", "torch.Tensor"]:
-        batch_copied = BatchEncoding({k: v.detach().clone() for k, v in batch.items()})  # avoid error
-
         all_logits = model(
-            input_ids=batch_copied["input_ids"], attention_mask=batch_copied["attention_mask"], return_dict=True
+            input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], return_dict=True
         ).logits.to(torch.float32)
 
         all_logps = self.get_batch_logps(
@@ -111,42 +119,18 @@ class CustomDPOTrainer(DPOTrainer):
         train_eval: Literal["train", "eval"] = "train",
     ) -> Tuple["torch.Tensor", Dict[str, "torch.Tensor"]]:
         r"""
-        Computes the DPO loss and other metrics for the given batch of inputs for train or test.
+        Computes the ORPO loss and other metrics for the given batch of inputs for train or test.
         """
         metrics = {}
-        (
-            policy_chosen_logps,
-            policy_rejected_logps,
-            policy_chosen_logits,
-            policy_rejected_logits,
-        ) = self.concatenated_forward(model, batch)
-        with torch.no_grad():
-            if self.ref_model is None:
-                ref_model = self.model
-                ref_context = self.accelerator.unwrap_model(self.model).disable_adapter()
-            else:
-                ref_model = self.ref_model
-                ref_context = nullcontext()
+        chosen_logps, rejected_logps, chosen_logits, rejected_logits = self.concatenated_forward(model, batch)
 
-            with ref_context:
-                (
-                    reference_chosen_logps,
-                    reference_rejected_logps,
-                    _,
-                    _,
-                ) = self.concatenated_forward(ref_model, batch)
-
-        losses, chosen_rewards, rejected_rewards = self.dpo_loss(
-            policy_chosen_logps,
-            policy_rejected_logps,
-            reference_chosen_logps,
-            reference_rejected_logps,
+        losses, chosen_rewards, rejected_rewards, log_odds_ratio, log_odds_chosen = self.odds_ratio_loss(
+            chosen_logps, rejected_logps
         )
-        batch_loss = losses.mean()
-        if self.ftx_gamma > 1e-6:
-            batch_size = batch["input_ids"].size(0) // 2
-            chosen_labels, _ = batch["labels"].split(batch_size, dim=0)
-            batch_loss += self.ftx_gamma * self.sft_loss(policy_chosen_logits, chosen_labels).mean()
+        batch_size = batch["input_ids"].size(0) // 2
+        chosen_labels, _ = batch["labels"].split(batch_size, dim=0)
+        sft_loss = self.sft_loss(chosen_logits, chosen_labels)
+        batch_loss = (sft_loss - losses).mean()
 
         reward_accuracies = (chosen_rewards > rejected_rewards).float()
 
@@ -155,9 +139,12 @@ class CustomDPOTrainer(DPOTrainer):
         metrics["{}rewards/rejected".format(prefix)] = rejected_rewards.cpu().mean()
         metrics["{}rewards/accuracies".format(prefix)] = reward_accuracies.cpu().mean()
         metrics["{}rewards/margins".format(prefix)] = (chosen_rewards - rejected_rewards).cpu().mean()
-        metrics["{}logps/rejected".format(prefix)] = policy_rejected_logps.detach().cpu().mean()
-        metrics["{}logps/chosen".format(prefix)] = policy_chosen_logps.detach().cpu().mean()
-        metrics["{}logits/rejected".format(prefix)] = policy_rejected_logits.detach().cpu().mean()
-        metrics["{}logits/chosen".format(prefix)] = policy_chosen_logits.detach().cpu().mean()
+        metrics["{}logps/rejected".format(prefix)] = rejected_logps.detach().cpu().mean()
+        metrics["{}logps/chosen".format(prefix)] = chosen_logps.detach().cpu().mean()
+        metrics["{}logits/rejected".format(prefix)] = rejected_logits.detach().cpu().mean()
+        metrics["{}logits/chosen".format(prefix)] = chosen_logits.detach().cpu().mean()
+        metrics["{}sft_loss".format(prefix)] = sft_loss.detach().cpu().mean()
+        metrics["{}log_odds_ratio".format(prefix)] = log_odds_ratio.detach().cpu().mean()
+        metrics["{}log_odds_chosen".format(prefix)] = log_odds_chosen.detach().cpu().mean()
 
         return batch_loss, metrics
