@@ -70,7 +70,7 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
 
     cmd_preview_btn.click(engine.runner.preview_eval, input_elems, output_elems, concurrency_limit=None)
     start_btn.click(engine.runner.run_eval, input_elems, output_elems)
-    stop_btn.click(engine.runner.set_abort, queue=False)
+    stop_btn.click(engine.runner.set_abort)
     resume_btn.change(engine.runner.monitor, outputs=output_elems, concurrency_limit=None)
 
     return elem_dict
