@@ -7,8 +7,8 @@ from ...extras.constants import IGNORE_INDEX
 from ...extras.ploting import plot_loss
 from ...hparams import ModelArguments
 from ...model import load_model, load_tokenizer
-from ..utils import create_modelcard_and_push, create_ref_model
-from .trainer import CustomDPOTrainer
+from ..utils import create_modelcard_and_push
+from .trainer import CustomORPOTrainer
 
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from ...hparams import DataArguments, FinetuningArguments
 
 
-def run_dpo(
+def run_orpo(
     model_args: "ModelArguments",
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
@@ -34,19 +34,12 @@ def run_dpo(
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
     )
 
-    # Create reference model
-    if finetuning_args.ref_model is None and (not training_args.do_train):  # use the model itself
-        ref_model = model
-    else:
-        ref_model = create_ref_model(model_args, finetuning_args)
-
     # Update arguments
     training_args.remove_unused_columns = False  # important for pairwise dataset
 
     # Initialize our Trainer
-    trainer = CustomDPOTrainer(
+    trainer = CustomORPOTrainer(
         model=model,
-        ref_model=ref_model,
         args=training_args,
         finetuning_args=finetuning_args,
         tokenizer=tokenizer,
@@ -68,10 +61,6 @@ def run_dpo(
     # Evaluation
     if training_args.do_eval:
         metrics = trainer.evaluate(metric_key_prefix="eval")
-        if id(model) == id(ref_model):  # unable to compute rewards without a reference model
-            remove_keys = [key for key in metrics.keys() if "rewards" in key]
-            for key in remove_keys:
-                metrics.pop(key)
         trainer.log_metrics("eval", metrics)
         trainer.save_metrics("eval", metrics)
 
