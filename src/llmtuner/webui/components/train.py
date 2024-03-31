@@ -169,10 +169,13 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
         with gr.Row():
             dpo_beta = gr.Slider(value=0.1, minimum=0, maximum=1, step=0.01, scale=1)
             dpo_ftx = gr.Slider(value=0, minimum=0, maximum=10, step=0.01, scale=1)
+            orpo_beta = gr.Slider(value=0.1, minimum=0, maximum=1, step=0.01, scale=1)
             reward_model = gr.Dropdown(multiselect=True, allow_custom_value=True, scale=2)
 
-    input_elems.update({dpo_beta, dpo_ftx, reward_model})
-    elem_dict.update(dict(rlhf_tab=rlhf_tab, dpo_beta=dpo_beta, dpo_ftx=dpo_ftx, reward_model=reward_model))
+    input_elems.update({dpo_beta, dpo_ftx, orpo_beta, reward_model})
+    elem_dict.update(
+        dict(rlhf_tab=rlhf_tab, dpo_beta=dpo_beta, dpo_ftx=dpo_ftx, orpo_beta=orpo_beta, reward_model=reward_model)
+    )
 
     with gr.Accordion(open=False) as galore_tab:
         with gr.Row():
