@@ -63,7 +63,7 @@ def run_dpo(
         trainer.save_metrics("train", train_result.metrics)
         trainer.save_state()
         if trainer.is_world_process_zero() and finetuning_args.plot_loss:
-            plot_loss(training_args.output_dir, keys=["loss", "eval_loss", "accuracy"])
+            plot_loss(training_args.output_dir, keys=["loss", "eval_loss", "rewards/accuracies"])
 
     # Evaluation
     if training_args.do_eval:
