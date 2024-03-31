@@ -232,7 +232,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
         concurrency_limit=None,
     )
     start_btn.click(engine.runner.run_train, input_elems, output_elems)
-    stop_btn.click(engine.runner.set_abort, queue=False)
+    stop_btn.click(engine.runner.set_abort)
     resume_btn.change(engine.runner.monitor, outputs=output_elems, concurrency_limit=None)
 
     dataset_dir.change(list_dataset, [dataset_dir, training_stage], [dataset], queue=False)
