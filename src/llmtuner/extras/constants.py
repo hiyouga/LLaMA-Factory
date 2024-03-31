@@ -39,8 +39,11 @@ TRAINING_STAGES = {
     "Reward Modeling": "rm",
     "PPO": "ppo",
     "DPO": "dpo",
+    "ORPO": "orpo",
     "Pre-Training": "pt",
 }
+
+STAGES_USE_PAIR_DATA = ["rm", "dpo", "orpo"]
 
 V_HEAD_WEIGHTS_NAME = "value_head.bin"
 
