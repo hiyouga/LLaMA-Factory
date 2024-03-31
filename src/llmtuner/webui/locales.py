@@ -757,6 +757,20 @@ LOCALES = {
             "info": "DPO-ftx 中 SFT 损失的权重大小。",
         },
     },
+    "orpo_beta": {
+        "en": {
+            "label": "ORPO beta",
+            "info": "Value of the beta parameter in the ORPO loss.",
+        },
+        "ru": {
+            "label": "ORPO бета",
+            "info": "Значение параметра бета в функции потерь ORPO.",
+        },
+        "zh": {
+            "label": "ORPO beta 参数",
+            "info": "ORPO 损失函数中 beta 超参数大小。",
+        },
+    },
     "reward_model": {
         "en": {
             "label": "Reward model",
