@@ -11,6 +11,7 @@ from ..extras.constants import (
     DEFAULT_MODULE,
     DEFAULT_TEMPLATE,
     PEFT_METHODS,
+    STAGES_USE_PAIR_DATA,
     SUPPORTED_MODELS,
     TRAINING_STAGES,
     DownloadSource,
@@ -127,7 +128,7 @@ def load_dataset_info(dataset_dir: str) -> Dict[str, Dict[str, Any]]:
 
 def list_dataset(dataset_dir: str = None, training_stage: str = list(TRAINING_STAGES.keys())[0]) -> "gr.Dropdown":
     dataset_info = load_dataset_info(dataset_dir if dataset_dir is not None else DEFAULT_DATA_DIR)
-    ranking = TRAINING_STAGES[training_stage] in ["rm", "dpo"]
+    ranking = TRAINING_STAGES[training_stage] in STAGES_USE_PAIR_DATA
     datasets = [k for k, v in dataset_info.items() if v.get("ranking", False) == ranking]
     return gr.Dropdown(value=[], choices=datasets)
 
