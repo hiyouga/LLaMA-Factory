@@ -84,7 +84,7 @@ class CustomORPOTrainer(DPOTrainer):
 
         # Derived from Eqs. (4) and (7) from https://arxiv.org/abs/2403.07691 by using log identities and exp(log(P(y|x)) = P(y|x)
         log_odds = (chosen_logps - rejected_logps) - (
-            torch.log(1 - torch.exp(chosen_logps)) - torch.log(1 - torch.exp(rejected_logps))
+            torch.log1p(-torch.exp(chosen_logps)) - torch.log1p(-torch.exp(rejected_logps))
         )
         ratio = F.logsigmoid(log_odds)
         losses = self.beta * ratio
