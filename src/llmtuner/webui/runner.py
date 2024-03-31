@@ -174,10 +174,11 @@ class Runner:
                 ]
             )
             args["reward_model_type"] = "lora" if args["finetuning_type"] == "lora" else "full"
-
-        if args["stage"] == "dpo":
+        elif args["stage"] == "dpo":
             args["dpo_beta"] = get("train.dpo_beta")
             args["dpo_ftx"] = get("train.dpo_ftx")
+        elif args["stage"] == "orpo":
+            args["orpo_beta"] = get("train.orpo_beta")
 
         if get("train.val_size") > 1e-6 and args["stage"] != "ppo":
             args["val_size"] = get("train.val_size")
