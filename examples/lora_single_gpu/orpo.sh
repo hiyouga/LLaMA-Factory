@@ -4,7 +4,7 @@ CUDA_VISIBLE_DEVICES=0 python ../../src/train_bash.py \
     --stage orpo \
     --do_train \
     --model_name_or_path meta-llama/Llama-2-7b-hf \
-    --dataset comparison_gpt4_en \
+    --dataset orca_rlhf \
     --dataset_dir ../../data \
     --template default \
     --finetuning_type lora \
