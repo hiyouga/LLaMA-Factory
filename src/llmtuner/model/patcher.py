@@ -331,7 +331,7 @@ def patch_model(
     ):
         gen_config.do_sample = True
 
-    if model_args.resize_vocab:
+    if is_trainable and model_args.resize_vocab:
         _resize_embedding_layer(model, tokenizer)
 
     if is_trainable:
