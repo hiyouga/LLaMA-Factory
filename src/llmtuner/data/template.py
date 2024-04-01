@@ -414,7 +414,7 @@ _register_template(
 
 _register_template(
     name="baichuan",
-    format_user=StringFormatter(slots=["<reserved_102>{{content}}<reserved_103>"]),
+    format_user=StringFormatter(slots=[{"token": "<reserved_102>"}, "{{content}}", {"token": "<reserved_103>"}]),
     efficient_eos=True,
 )
 
