@@ -95,7 +95,10 @@ class CustomDPOTrainer(DPOTrainer):
         batch_copied = BatchEncoding({k: v.detach().clone() for k, v in batch.items()})  # avoid error
 
         all_logits: "torch.Tensor" = model(
-            input_ids=batch_copied["input_ids"], attention_mask=batch_copied["attention_mask"], return_dict=True
+            input_ids=batch_copied["input_ids"],
+            attention_mask=batch_copied["attention_mask"],
+            return_dict=True,
+            use_cache=False,
         ).logits.to(torch.float32)
 
         all_logps = self.get_batch_logps(
