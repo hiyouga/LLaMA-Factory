@@ -108,12 +108,18 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
             elif i % 2 == 1 and message.role not in [Role.ASSISTANT, Role.FUNCTION]:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role")
 
-            input_messages.append({"role": role_mapping[message.role], "content": message.content})
+            if message.role == Role.ASSISTANT and isinstance(message.tool_calls, list) and len(message.tool_calls):
+                name = message.tool_calls[0].function.name
+                arguments = message.tool_calls[0].function.arguments
+                content = json.dumps({"name": name, "argument": arguments}, ensure_ascii=False)
+                input_messages.append({"role": role_mapping[Role.FUNCTION], "content": content})
+            else:
+                input_messages.append({"role": role_mapping[message.role], "content": message.content})
 
         tool_list = request.tools
         if isinstance(tool_list, list) and len(tool_list):
             try:
-                tools = json.dumps([tool["function"] for tool in tool_list], ensure_ascii=False)
+                tools = json.dumps([dictify(tool.function) for tool in tool_list], ensure_ascii=False)
             except Exception:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid tools")
         else:

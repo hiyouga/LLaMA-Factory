@@ -1,6 +1,6 @@
 import time
 from enum import Enum, unique
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 from typing_extensions import Literal
@@ -39,6 +39,17 @@ class Function(BaseModel):
     arguments: str
 
 
+class FunctionDefinition(BaseModel):
+    name: str
+    description: str
+    parameters: Dict[str, Any]
+
+
+class FunctionAvailable(BaseModel):
+    type: Literal["function", "code_interpreter"] = "function"
+    function: Optional[FunctionDefinition] = None
+
+
 class FunctionCall(BaseModel):
     id: Literal["call_default"] = "call_default"
     type: Literal["function"] = "function"
@@ -47,7 +58,8 @@ class FunctionCall(BaseModel):
 
 class ChatMessage(BaseModel):
     role: Role
-    content: str
+    content: Optional[str] = None
+    tool_calls: Optional[List[FunctionCall]] = None
 
 
 class ChatCompletionMessage(BaseModel):
@@ -59,7 +71,7 @@ class ChatCompletionMessage(BaseModel):
 class ChatCompletionRequest(BaseModel):
     model: str
     messages: List[ChatMessage]
-    tools: list = []
+    tools: Optional[List[FunctionAvailable]] = None
     do_sample: bool = True
     temperature: Optional[float] = None
     top_p: Optional[float] = None
