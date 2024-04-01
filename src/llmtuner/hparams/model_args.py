@@ -53,6 +53,10 @@ class ModelArguments:
         default=True,
         metadata={"help": "Whether or not to use double quantization in int4 training."},
     )
+    quantization_device_map: Optional[Literal["auto"]] = field(
+        default=None,
+        metadata={"help": "Device map used for loading the 4-bit quantized model, needs bitsandbytes>=0.43.0."},
+    )
     rope_scaling: Optional[Literal["linear", "dynamic"]] = field(
         default=None,
         metadata={"help": "Which scaling strategy should be adopted for the RoPE embeddings."},
