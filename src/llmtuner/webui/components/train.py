@@ -21,10 +21,10 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
 
     with gr.Row():
         training_stage = gr.Dropdown(
-            choices=list(TRAINING_STAGES.keys()), value=list(TRAINING_STAGES.keys())[0], scale=2
+            choices=list(TRAINING_STAGES.keys()), value=list(TRAINING_STAGES.keys())[0], scale=1
         )
-        dataset_dir = gr.Textbox(value=DEFAULT_DATA_DIR, scale=2)
-        dataset = gr.Dropdown(multiselect=True, scale=4)
+        dataset_dir = gr.Textbox(value=DEFAULT_DATA_DIR, scale=1)
+        dataset = gr.Dropdown(multiselect=True, scale=2, allow_custom_value=True)
         preview_elems = create_preview_box(dataset_dir, dataset)
 
     input_elems.update({training_stage, dataset_dir, dataset})
@@ -75,11 +75,17 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             optim = gr.Textbox(value="adamw_torch")
 
         with gr.Row():
-            resize_vocab = gr.Checkbox()
-            packing = gr.Checkbox()
-            upcast_layernorm = gr.Checkbox()
-            use_llama_pro = gr.Checkbox()
-            shift_attn = gr.Checkbox()
+            with gr.Column():
+                resize_vocab = gr.Checkbox()
+                packing = gr.Checkbox()
+
+            with gr.Column():
+                upcast_layernorm = gr.Checkbox()
+                use_llama_pro = gr.Checkbox()
+
+            with gr.Column():
+                shift_attn = gr.Checkbox()
+                report_to = gr.Checkbox()
 
     input_elems.update(
         {
@@ -93,6 +99,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             upcast_layernorm,
             use_llama_pro,
             shift_attn,
+            report_to,
         }
     )
     elem_dict.update(
@@ -108,6 +115,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             upcast_layernorm=upcast_layernorm,
             use_llama_pro=use_llama_pro,
             shift_attn=shift_attn,
+            report_to=report_to,
         )
     )
 
