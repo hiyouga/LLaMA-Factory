@@ -28,6 +28,9 @@ def run_dpo(
     dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="rm")
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
 
+    if model_args.flash_attn and 'Qwen2' in model.__class__.__name__:
+        tokenizer.padding_side = 'left'
+
     data_collator = PairwiseDataCollatorWithPadding(
         tokenizer=tokenizer,
         pad_to_multiple_of=8,
