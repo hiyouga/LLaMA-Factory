@@ -80,20 +80,18 @@ class Runner:
         if not from_preview and not is_torch_cuda_available():
             gr.Warning(ALERTS["warn_no_cuda"][lang])
 
-        self.aborted = False
         self.logger_handler.reset()
         self.trainer_callback = LogCallback(self)
         return ""
 
     def _finalize(self, lang: str, finish_info: str) -> str:
+        finish_info = ALERTS["info_aborted"][lang] if self.aborted else finish_info
         self.thread = None
-        self.running_data = None
+        self.aborted = False
         self.running = False
+        self.running_data = None
         torch_gc()
-        if self.aborted:
-            return ALERTS["info_aborted"][lang]
-        else:
-            return finish_info
+        return finish_info
 
     def _parse_train_args(self, data: Dict["Component", Any]) -> Dict[str, Any]:
         get = lambda elem_id: data[self.manager.get_elem_by_id(elem_id)]
@@ -141,6 +139,7 @@ class Runner:
             upcast_layernorm=get("train.upcast_layernorm"),
             use_llama_pro=get("train.use_llama_pro"),
             shift_attn=get("train.shift_attn"),
+            report_to="all" if get("train.report_to") else "none",
             use_galore=get("train.use_galore"),
             output_dir=get_save_dir(get("top.model_name"), get("top.finetuning_type"), get("train.output_dir")),
             fp16=(get("train.compute_type") == "fp16"),
