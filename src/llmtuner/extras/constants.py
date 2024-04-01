@@ -463,13 +463,17 @@ register_model_group(
 
 register_model_group(
     models={
-        "Mistral-7B": {
+        "Mistral-7B-v0.1": {
             DownloadSource.DEFAULT: "mistralai/Mistral-7B-v0.1",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Mistral-7B-v0.1",
         },
-        "Mistral-7B-Chat": {
+        "Mistral-7B-v0.1-Chat": {
             DownloadSource.DEFAULT: "mistralai/Mistral-7B-Instruct-v0.1",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Mistral-7B-Instruct-v0.1",
+        },
+        "Mistral-7B-v0.2": {
+            DownloadSource.DEFAULT: "alpindale/Mistral-7B-v0.2-hf",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Mistral-7B-v0.2-hf",
         },
         "Mistral-7B-v0.2-Chat": {
             DownloadSource.DEFAULT: "mistralai/Mistral-7B-Instruct-v0.2",
@@ -663,6 +667,10 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen1.5-72B",
             DownloadSource.MODELSCOPE: "qwen/Qwen1.5-72B",
         },
+        "Qwen1.5-MoE-A2.7B": {
+            DownloadSource.DEFAULT: "Qwen/Qwen1.5-MoE-A2.7B",
+            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-MoE-A2.7B",
+        },
         "Qwen1.5-0.5B-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen1.5-0.5B-Chat",
             DownloadSource.MODELSCOPE: "qwen/Qwen1.5-0.5B-Chat",
@@ -686,6 +694,10 @@ register_model_group(
         "Qwen1.5-72B-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen1.5-72B-Chat",
             DownloadSource.MODELSCOPE: "qwen/Qwen1.5-72B-Chat",
+        },
+        "Qwen1.5-MoE-A2.7B-Chat": {
+            DownloadSource.DEFAULT: "Qwen/Qwen1.5-MoE-A2.7B-Chat",
+            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-MoE-A2.7B-Chat",
         },
         "Qwen1.5-0.5B-int8-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen1.5-0.5B-Chat-GPTQ-Int8",
@@ -734,6 +746,10 @@ register_model_group(
         "Qwen1.5-72B-int4-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen1.5-72B-Chat-AWQ",
             DownloadSource.MODELSCOPE: "qwen/Qwen1.5-72B-Chat-AWQ",
+        },
+        "Qwen1.5-MoE-A2.7B-int4-Chat": {
+            DownloadSource.DEFAULT: "Qwen/Qwen1.5-MoE-A2.7B-Chat-GPTQ-Int4",
+            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-MoE-A2.7B-Chat-GPTQ-Int4",
         },
     },
     template="qwen",
