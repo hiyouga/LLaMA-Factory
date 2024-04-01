@@ -536,6 +536,20 @@ LOCALES = {
             "info": "使用 LongLoRA 提出的 shift short attention。",
         },
     },
+    "report_to": {
+        "en": {
+            "label": "Enable external logger",
+            "info": "Use TensorBoard or wandb to log experiment.",
+        },
+        "ru": {
+            "label": "Включить внешний регистратор",
+            "info": "Использовать TensorBoard или wandb для ведения журнала экспериментов.",
+        },
+        "zh": {
+            "label": "启用外部记录面板",
+            "info": "使用 TensorBoard 或 wandb 记录实验。",
+        },
+    },
     "freeze_tab": {
         "en": {
             "label": "Freeze tuning configurations",
