@@ -264,8 +264,8 @@ huggingface-cli login
 | ------------ | ------- | --------- |
 | python       | 3.8     | 3.10      |
 | torch        | 1.13.1  | 2.2.0     |
-| transformers | 4.37.2  | 4.39.1    |
-| datasets     | 2.14.3  | 2.17.1    |
+| transformers | 4.37.2  | 4.39.2    |
+| datasets     | 2.14.3  | 2.18.0    |
 | accelerate   | 0.27.2  | 0.28.0    |
 | peft         | 0.9.0   | 0.10.0    |
 | trl          | 0.8.1   | 0.8.1     |
