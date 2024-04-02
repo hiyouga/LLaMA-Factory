@@ -27,6 +27,6 @@ deepspeed --num_gpus 4 ../../src/train_bash.py \
     --num_train_epochs 3.0 \
     --max_samples 3000 \
     --val_size 0.1 \
-    --ddp_timeout 1800000 \
+    --ddp_timeout 180000000 \
     --plot_loss \
     --fp16
