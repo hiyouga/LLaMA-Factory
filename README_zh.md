@@ -307,8 +307,7 @@ cd LLaMA-Factory
 pip install -e .[metrics]
 ```
 
-> [!TIP]
-> 可选的额外依赖项：deepspeed、metrics、unsloth、vllm、bitsandbytes、gptq、awq、aqlm、qwen、quality
+可选的额外依赖项：deepspeed、metrics、unsloth、vllm、bitsandbytes、gptq、awq、aqlm、qwen、quality
 
 <details><summary>Windows 用户指南</summary>
 
@@ -324,13 +323,15 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 
 ### LLaMA Board 可视化界面
 
+> [!IMPORTANT]
+> LLaMA Board 可视化界面目前仅支持单 GPU 训练，请使用[命令行接口](#命令行接口)来进行分布式训练。
+
 #### 使用本地环境
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_web.py
 # 或 CUDA_VISIBLE_DEVICES=0 python -m llmtuner.webui.interface
 ```
-
 
 #### 使用 Docker
 
@@ -354,14 +355,13 @@ docker run --gpus=all \
 docker compose -f ./docker-compose.yml up -d
 ```
 
-> [!TIP]
-> 数据卷详情：
-> * hf_cache：使用宿主机的 Hugging Face 缓存文件夹，允许更改为新的目录。
-> * data：宿主机中存放数据集的文件夹路径。
-> * output：将导出目录设置为该路径后，即可在宿主机中访问导出后的模型。
+<details><summary>数据卷详情</summary>
 
-> [!WARNING]
-> LLaMA Board 可视化界面尚不支持多 GPU 训练。
+- hf_cache：使用宿主机的 Hugging Face 缓存文件夹，允许更改为新的目录。
+- data：宿主机中存放数据集的文件夹路径。
+- output：将导出目录设置为该路径后，即可在宿主机中访问导出后的模型。
+
+</details>
 
 ### 命令行接口
 
@@ -378,10 +378,11 @@ docker compose -f ./docker-compose.yml up -d
 export USE_MODELSCOPE_HUB=1 # Windows 使用 `set USE_MODELSCOPE_HUB=1`
 ```
 
-> [!TIP]
-> 将 `--model_name_or_path` 设置为模型 ID 来加载对应的模型。在[魔搭社区](https://modelscope.cn/models)查看所有可用的模型，例如 `modelscope/Llama-2-7b-ms`。
+将 `--model_name_or_path` 设置为模型 ID 来加载对应的模型。在[魔搭社区](https://modelscope.cn/models)查看所有可用的模型，例如 `modelscope/Llama-2-7b-ms`。
 
 ## 使用了 LLaMA Factory 的项目
+
+<details><summary>点击显示</summary>
 
 1. Wang et al. ESRL: Efficient Sampling-based Reinforcement Learning for Sequence Generation. 2023. [[arxiv]](https://arxiv.org/abs/2308.02223)
 1. Yu et al. Open, Closed, or Small Language Models for Text Classification? 2023. [[arxiv]](https://arxiv.org/abs/2308.10092)
@@ -411,6 +412,8 @@ export USE_MODELSCOPE_HUB=1 # Windows 使用 `set USE_MODELSCOPE_HUB=1`
 1. **[Sunsimiao](https://github.com/thomas-yanxin/Sunsimiao)**: 孙思邈中文医疗大模型 Sumsimiao，基于 Baichuan-7B 和 ChatGLM-6B 在中文医疗数据上微调而得。
 1. **[CareGPT](https://github.com/WangRongsheng/CareGPT)**: 医疗大模型项目 CareGPT，基于 LLaMA2-7B 和 Baichuan-13B 在中文医疗数据上微调而得。
 1. **[MachineMindset](https://github.com/PKU-YuanGroup/Machine-Mindset/)**：MBTI性格大模型项目，根据数据集与训练方式让任意 LLM 拥有 16 个不同的性格类型。
+
+</details>
 
 > [!TIP]
 > 如果您有项目希望添加至上述列表，请通过邮件联系或者创建一个 PR。
