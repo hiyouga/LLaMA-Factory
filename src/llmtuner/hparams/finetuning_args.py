@@ -226,7 +226,7 @@ class LisaArguments:
     )
     lisa_embedding_name: str = field(default="model.embed_tokens", metadata={"help": "lisa_embedding_name"})
     lisa_output_name: str = field(default="lm_head", metadata={"help": "lisa_output_name"})
-    lisa_attention_name: str = field(default="model.layers", metadata={"help": "lisa_output_name"})
+    lisa_attention_name: str = field(default="model.layers", metadata={"help": "lisa_attention_name"})
 
 @dataclass
 class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments, LisaArguments):
