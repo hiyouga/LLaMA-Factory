@@ -327,8 +327,8 @@ To enable FlashAttention-2 on the Windows platform, you need to install the prec
 #### Use local environment
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_web.py
-# or CUDA_VISIBLE_DEVICES=0 python -m llmtuner.webui.interface
+export CUDA_VISIBLE_DEVICES=0 # `set CUDA_VISIBLE_DEVICES=0` for Windows
+python src/train_web.py # or python -m llmtuner.webui.interface
 ```
 
 #### Use Docker
@@ -370,10 +370,8 @@ Use `python src/train_bash.py -h` to display arguments description.
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 API_PORT=8000 python src/api_demo.py \
-    --model_name_or_path path_to_model \
-    --adapter_name_or_path path_to_lora_adapter \
-    --template default \
-    --finetuning_type lora \
+    --model_name_or_path mistralai/Mistral-7B-Instruct-v0.2 \
+    --template mistral \
     --infer_backend vllm
 ```
 
