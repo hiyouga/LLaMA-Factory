@@ -17,8 +17,7 @@ from ..extras.logging import get_logger
 from ..extras.misc import get_current_device, infer_optim_dtype
 from ..extras.packages import is_flash_attn2_available
 from ..extras.patches.llama_patch import apply_llama_patch
-from ..extras.patches.mixtral_patch import patch_mixtral_replace_moe_impl
-from .utils import QuantizationMethod
+from .utils import QuantizationMethod, add_z3_leaf_module
 
 
 if TYPE_CHECKING:
@@ -30,47 +29,6 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 SUPPORTED_CLASS_FOR_S2ATTN = ["llama"]
-
-
-def _noisy_mean_initialization(embed_weight: torch.Tensor, num_new_tokens: int):
-    embedding_dim = embed_weight.size(1)
-    avg_weight = embed_weight[:-num_new_tokens].mean(dim=0, keepdim=True)
-    noise_weight = torch.empty_like(embed_weight[-num_new_tokens:])
-    noise_weight.normal_(mean=0, std=(1.0 / math.sqrt(embedding_dim)))
-    embed_weight[-num_new_tokens:] = avg_weight + noise_weight
-
-
-def _resize_embedding_layer(model: "PreTrainedModel", tokenizer: "PreTrainedTokenizer") -> None:
-    r"""
-    Resize token embeddings.
-    """
-    if is_deepspeed_zero3_enabled():
-        import deepspeed  # type: ignore
-
-        params = [model.get_input_embeddings().weight]
-        if model.get_output_embeddings() is not None and not model.config.tie_word_embeddings:
-            params.append(model.get_output_embeddings().weight)
-
-        context_maybe_zero3 = deepspeed.zero.GatheredParameters(params, modifier_rank=0)
-    else:
-        context_maybe_zero3 = nullcontext()
-
-    with context_maybe_zero3:
-        current_embedding_size = model.get_input_embeddings().weight.size(0)
-
-    if len(tokenizer) > current_embedding_size:
-        if not isinstance(model.get_output_embeddings(), torch.nn.Linear):
-            logger.warning("Current model does not support resizing token embeddings.")
-            return
-
-        model.resize_token_embeddings(len(tokenizer), pad_to_multiple_of=64)
-        with context_maybe_zero3:
-            new_embedding_size = model.get_input_embeddings().weight.size(0)
-            num_new_tokens = new_embedding_size - current_embedding_size
-            _noisy_mean_initialization(model.get_input_embeddings().weight.data, num_new_tokens)
-            _noisy_mean_initialization(model.get_output_embeddings().weight.data, num_new_tokens)
-
-        logger.info("Resized token embeddings from {} to {}.".format(current_embedding_size, new_embedding_size))
 
 
 def _get_quantization_dataset(tokenizer: "PreTrainedTokenizer", model_args: "ModelArguments") -> List[str]:
@@ -180,7 +138,11 @@ def _configure_quantization(
         quant_method = quantization_config.get("quant_method", "")
 
         if quant_method == QuantizationMethod.GPTQ:
+            require_version("auto_gptq>=0.5.0", "To fix: pip install auto_gptq>=0.5.0")
             quantization_config["use_exllama"] = False  # disable exllama
+
+        if quant_method == QuantizationMethod.AWQ:
+            require_version("autoawq", "To fix: pip install autoawq")
 
         if quant_method == QuantizationMethod.AQLM:
             require_version("transformers>=4.39.0", "To fix: pip install transformers>=4.39.0")
@@ -233,6 +195,47 @@ def _configure_quantization(
             init_kwargs["device_map"] = {"": get_current_device()}
 
         logger.info("Quantizing model to {} bit.".format(model_args.quantization_bit))
+
+
+def _noisy_mean_initialization(embed_weight: torch.Tensor, num_new_tokens: int):
+    embedding_dim = embed_weight.size(1)
+    avg_weight = embed_weight[:-num_new_tokens].mean(dim=0, keepdim=True)
+    noise_weight = torch.empty_like(embed_weight[-num_new_tokens:])
+    noise_weight.normal_(mean=0, std=(1.0 / math.sqrt(embedding_dim)))
+    embed_weight[-num_new_tokens:] = avg_weight + noise_weight
+
+
+def _resize_embedding_layer(model: "PreTrainedModel", tokenizer: "PreTrainedTokenizer") -> None:
+    r"""
+    Resize token embeddings.
+    """
+    if is_deepspeed_zero3_enabled():
+        import deepspeed  # type: ignore
+
+        params = [model.get_input_embeddings().weight]
+        if model.get_output_embeddings() is not None and not model.config.tie_word_embeddings:
+            params.append(model.get_output_embeddings().weight)
+
+        context_maybe_zero3 = deepspeed.zero.GatheredParameters(params, modifier_rank=0)
+    else:
+        context_maybe_zero3 = nullcontext()
+
+    with context_maybe_zero3:
+        current_embedding_size = model.get_input_embeddings().weight.size(0)
+
+    if len(tokenizer) > current_embedding_size:
+        if not isinstance(model.get_output_embeddings(), torch.nn.Linear):
+            logger.warning("Current model does not support resizing token embeddings.")
+            return
+
+        model.resize_token_embeddings(len(tokenizer), pad_to_multiple_of=64)
+        with context_maybe_zero3:
+            new_embedding_size = model.get_input_embeddings().weight.size(0)
+            num_new_tokens = new_embedding_size - current_embedding_size
+            _noisy_mean_initialization(model.get_input_embeddings().weight.data, num_new_tokens)
+            _noisy_mean_initialization(model.get_output_embeddings().weight.data, num_new_tokens)
+
+        logger.info("Resized token embeddings from {} to {}.".format(current_embedding_size, new_embedding_size))
 
 
 def _fp32_forward_post_hook(
@@ -348,15 +351,15 @@ def patch_model(
     if is_trainable:
         _prepare_model_for_training(model, model_args)
 
-    if getattr(model.config, "model_type", None) == "mixtral" and is_deepspeed_zero3_enabled():
-        require_version("deepspeed>=0.13.0", "To fix: pip install deepspeed>=0.13.0")
-        from deepspeed.utils import set_z3_leaf_modules  # type: ignore
+    if getattr(model.config, "model_type", None) == "mixtral":
         from transformers.models.mixtral.modeling_mixtral import MixtralSparseMoeBlock
 
-        set_z3_leaf_modules(model, [MixtralSparseMoeBlock])
+        add_z3_leaf_module(model, MixtralSparseMoeBlock)
 
-        if is_trainable:
-            patch_mixtral_replace_moe_impl()
+    if getattr(model.config, "model_type", None) == "qwen2moe":
+        from transformers.models.qwen2_moe.modeling_qwen2_moe import Qwen2MoeSparseMoeBlock
+
+        add_z3_leaf_module(model, Qwen2MoeSparseMoeBlock)
 
     try:
         model.add_model_tags(["llama-factory"])

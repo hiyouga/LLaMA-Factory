@@ -193,6 +193,6 @@ def llama_flash_attn_forward(
 
 
 def apply_llama_patch() -> None:
-    require_version("transformers==4.39.2", "To fix: pip install transformers==4.39.2")
+    require_version("transformers==4.39.3", "To fix: pip install transformers==4.39.3")
     LlamaAttention.forward = llama_torch_attn_forward
     LlamaFlashAttention2.forward = llama_flash_attn_forward
