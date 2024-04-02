@@ -6,7 +6,7 @@ CUDA_VISIBLE_DEVICES=0 python ../../src/train_bash.py \
     --model_name_or_path meta-llama/Llama-2-7b-hf \
     --adapter_name_or_path ../../saves/LLaMA2-7B/lora/sft \
     --create_new_adapter \
-    --dataset comparison_gpt4_en \
+    --dataset orca_rlhf \
     --dataset_dir ../../data \
     --template default \
     --finetuning_type lora \
