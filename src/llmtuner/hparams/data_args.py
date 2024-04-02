@@ -84,9 +84,9 @@ class DataArguments:
             "help": "Whether or not to pack the sequences in training. Will automatically enable in pre-training."
         },
     )
-    cache_path: Optional[str] = field(
+    tokenized_path: Optional[str] = field(
         default=None,
-        metadata={"help": "Path to save or load the pre-processed datasets."},
+        metadata={"help": "Path to save or load the tokenized datasets."},
     )
 
     def __post_init__(self):

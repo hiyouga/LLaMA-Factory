@@ -53,7 +53,7 @@ Choose your path:
 
 ## Benchmark
 
-Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/ptuning), LLaMA-Factory's LoRA tuning offers up to **3.7 times faster** training speed with a better Rouge score on the advertising text generation task. By leveraging 4-bit quantization technique, LLaMA-Factory's QLoRA further improves the efficiency regarding the GPU memory.
+Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/ptuning), LLaMA Factory's LoRA tuning offers up to **3.7 times faster** training speed with a better Rouge score on the advertising text generation task. By leveraging 4-bit quantization technique, LLaMA Factory's QLoRA further improves the efficiency regarding the GPU memory.
 
 ![benchmark](assets/benchmark.svg)
 
@@ -62,7 +62,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 - **Training Speed**: the number of training samples processed per second during the training. (bs=4, cutoff_len=1024)
 - **Rouge Score**: Rouge-2 score on the development set of the [advertising text generation](https://aclanthology.org/D19-1321.pdf) task. (bs=4, cutoff_len=1024)
 - **GPU Memory**: Peak GPU memory usage in 4-bit quantized training. (bs=1, cutoff_len=1024)
-- We adopt `pre_seq_len=128` for ChatGLM's P-Tuning and `lora_rank=32` for LLaMA-Factory's LoRA tuning.
+- We adopt `pre_seq_len=128` for ChatGLM's P-Tuning and `lora_rank=32` for LLaMA Factory's LoRA tuning.
 
 </details>
 
@@ -72,7 +72,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 [24/03/21] Our paper "[LlamaFactory: Unified Efficient Fine-Tuning of 100+ Language Models](https://arxiv.org/abs/2403.13372)" is available at arXiv!
 
-[24/03/20] We supported **FSDP+QLoRA** that fine-tunes a 70B model on 2x24GB GPUs. See `examples/fsdp_qlora` for usage.
+[24/03/20] We supported **FSDP+QLoRA** that fine-tunes a 70B model on 2x24GB GPUs. See `examples/extras/fsdp_qlora` for usage.
 
 <details><summary>Full Changelog</summary>
 
@@ -168,9 +168,6 @@ You also can add a custom chat template to [template.py](src/llmtuner/data/templ
 | DPO Training           | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | ORPO Training          | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
-> [!NOTE]
-> Use `--quantization_bit 4` argument to enable QLoRA.
-
 ## Provided Datasets
 
 <details><summary>Pre-training datasets</summary>
@@ -263,7 +260,7 @@ huggingface-cli login
 | ------------ | ------- | --------- |
 | python       | 3.8     | 3.10      |
 | torch        | 1.13.1  | 2.2.0     |
-| transformers | 4.37.2  | 4.39.2    |
+| transformers | 4.37.2  | 4.39.3    |
 | datasets     | 2.14.3  | 2.18.0    |
 | accelerate   | 0.27.2  | 0.28.0    |
 | peft         | 0.9.0   | 0.10.0    |
@@ -293,22 +290,27 @@ huggingface-cli login
 
 ## Getting Started
 
-### Data Preparation (optional)
+### Data Preparation
 
-Please refer to [data/README.md](data/README.md) for checking the details about the format of dataset files. You can either use a single `.json` file or a [dataset loading script](https://huggingface.co/docs/datasets/dataset_script) with multiple files to create a custom dataset.
+Please refer to [data/README.md](data/README.md) for checking the details about the format of dataset files. You can either use datasets on HuggingFace / ModelScope hub or load the dataset in local disk.
 
 > [!NOTE]
-> Please update `data/dataset_info.json` to use your custom dataset. About the format of this file, please refer to `data/README.md`.
+> Please update `data/dataset_info.json` to use your custom dataset.
 
-### Dependence Installation (optional)
+### Dependence Installation
 
 ```bash
 git clone https://github.com/hiyouga/LLaMA-Factory.git
 conda create -n llama_factory python=3.10
 conda activate llama_factory
 cd LLaMA-Factory
-pip install -r requirements.txt
+pip install -e .[metrics]
 ```
+
+> [!TIP]
+> Extra dependencies available: deepspeed, metrics, unsloth, vllm, bitsandbytes, gptq, awq, aqlm, qwen, quality
+
+<details><summary>For Windows users</summary>
 
 If you want to enable the quantized LoRA (QLoRA) on the Windows platform, you will be required to install a pre-built version of `bitsandbytes` library, which supports CUDA 11.1 to 12.2, please select the appropriate [release version](https://github.com/jllllll/bitsandbytes-windows-webui/releases/tag/wheels) based on your CUDA version.
 
@@ -318,351 +320,16 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 
 To enable FlashAttention-2 on the Windows platform, you need to install the precompiled `flash-attn` library, which supports CUDA 12.1 to 12.2. Please download the corresponding version from [flash-attention](https://github.com/bdashore3/flash-attention/releases) based on your requirements.
 
-### Use ModelScope Hub (optional)
+</details>
 
-If you have trouble with downloading models and datasets from Hugging Face, you can use LLaMA-Factory together with ModelScope in the following manner.
+### LLaMA Board GUI
 
-```bash
-export USE_MODELSCOPE_HUB=1 # `set USE_MODELSCOPE_HUB=1` for Windows
-```
-
-Then you can train the corresponding model by specifying a model ID of the ModelScope Hub. (find a full list of model IDs at [ModelScope Hub](https://modelscope.cn/models))
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --model_name_or_path modelscope/Llama-2-7b-ms \
-    ... # arguments (same as below)
-```
-
-LLaMA Board also supports using the models and datasets on the ModelScope Hub.
-
-```bash
-CUDA_VISIBLE_DEVICES=0 USE_MODELSCOPE_HUB=1 python src/train_web.py
-```
-
-### Train on a single GPU
-
-> [!IMPORTANT]
-> If you want to train models on multiple GPUs, please refer to [Distributed Training](#distributed-training).
-
-
-#### LLaMA Board GUI
+#### Use local environment
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_web.py
+# or CUDA_VISIBLE_DEVICES=0 python -m llmtuner.webui.interface
 ```
-
-#### Pre-Training
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage pt \
-    --do_train \
-    --model_name_or_path path_to_llama_model \
-    --dataset wiki_demo \
-    --finetuning_type lora \
-    --lora_target q_proj,v_proj \
-    --output_dir path_to_pt_checkpoint \
-    --overwrite_cache \
-    --per_device_train_batch_size 4 \
-    --gradient_accumulation_steps 4 \
-    --lr_scheduler_type cosine \
-    --logging_steps 10 \
-    --save_steps 1000 \
-    --learning_rate 5e-5 \
-    --num_train_epochs 3.0 \
-    --plot_loss \
-    --fp16
-```
-
-#### Supervised Fine-Tuning
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage sft \
-    --do_train \
-    --model_name_or_path path_to_llama_model \
-    --dataset alpaca_gpt4_en \
-    --template default \
-    --finetuning_type lora \
-    --lora_target q_proj,v_proj \
-    --output_dir path_to_sft_checkpoint \
-    --overwrite_cache \
-    --per_device_train_batch_size 4 \
-    --gradient_accumulation_steps 4 \
-    --lr_scheduler_type cosine \
-    --logging_steps 10 \
-    --save_steps 1000 \
-    --learning_rate 5e-5 \
-    --num_train_epochs 3.0 \
-    --plot_loss \
-    --fp16
-```
-
-#### Reward Modeling
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage rm \
-    --do_train \
-    --model_name_or_path path_to_llama_model \
-    --adapter_name_or_path path_to_sft_checkpoint \
-    --create_new_adapter \
-    --dataset comparison_gpt4_en \
-    --template default \
-    --finetuning_type lora \
-    --lora_target q_proj,v_proj \
-    --output_dir path_to_rm_checkpoint \
-    --per_device_train_batch_size 2 \
-    --gradient_accumulation_steps 4 \
-    --lr_scheduler_type cosine \
-    --logging_steps 10 \
-    --save_steps 1000 \
-    --learning_rate 1e-5 \
-    --num_train_epochs 1.0 \
-    --plot_loss \
-    --fp16
-```
-
-#### PPO Training
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage ppo \
-    --do_train \
-    --model_name_or_path path_to_llama_model \
-    --adapter_name_or_path path_to_sft_checkpoint \
-    --create_new_adapter \
-    --dataset alpaca_gpt4_en \
-    --template default \
-    --finetuning_type lora \
-    --lora_target q_proj,v_proj \
-    --reward_model path_to_rm_checkpoint \
-    --output_dir path_to_ppo_checkpoint \
-    --per_device_train_batch_size 2 \
-    --gradient_accumulation_steps 4 \
-    --lr_scheduler_type cosine \
-    --top_k 0 \
-    --top_p 0.9 \
-    --logging_steps 10 \
-    --save_steps 1000 \
-    --learning_rate 1e-5 \
-    --num_train_epochs 1.0 \
-    --plot_loss \
-    --fp16
-```
-
-> [!TIP]
-> Use `--adapter_name_or_path path_to_sft_checkpoint,path_to_ppo_checkpoint` to infer the fine-tuned model if `--create_new_adapter` was enabled.
-
-> [!WARNING]
-> Use `--per_device_train_batch_size=1` for LLaMA-2 models in fp16 PPO training.
-
-#### DPO Training
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage dpo \
-    --do_train \
-    --model_name_or_path path_to_llama_model \
-    --adapter_name_or_path path_to_sft_checkpoint \
-    --create_new_adapter \
-    --dataset comparison_gpt4_en \
-    --template default \
-    --finetuning_type lora \
-    --lora_target q_proj,v_proj \
-    --output_dir path_to_dpo_checkpoint \
-    --per_device_train_batch_size 2 \
-    --gradient_accumulation_steps 4 \
-    --lr_scheduler_type cosine \
-    --logging_steps 10 \
-    --save_steps 1000 \
-    --learning_rate 1e-5 \
-    --num_train_epochs 1.0 \
-    --plot_loss \
-    --fp16
-```
-
-> [!TIP]
-> Use `--adapter_name_or_path path_to_sft_checkpoint,path_to_dpo_checkpoint` to infer the fine-tuned model if `--create_new_adapter` was enabled.
-
-### Distributed Training
-
-#### Use Huggingface Accelerate
-
-```bash
-accelerate launch --config_file config.yaml src/train_bash.py \
-    --ddp_timeout 180000000 \
-    ... # arguments (same as above)
-```
-
-<details><summary>Example config.yaml for LoRA training</summary>
-
-```yaml
-compute_environment: LOCAL_MACHINE
-debug: false
-distributed_type: MULTI_GPU
-downcast_bf16: 'no'
-gpu_ids: all
-machine_rank: 0
-main_training_function: main
-mixed_precision: fp16
-num_machines: 1
-num_processes: 4
-rdzv_backend: static
-same_network: true
-tpu_env: []
-tpu_use_cluster: false
-tpu_use_sudo: false
-use_cpu: false
-```
-
-</details>
-
-> [!TIP]
-> We commend using Accelerate for LoRA tuning.
-
-#### Use DeepSpeed
-
-```bash
-deepspeed --num_gpus 8 src/train_bash.py \
-    --deepspeed ds_config.json \
-    --ddp_timeout 180000000 \
-    ... # arguments (same as above)
-```
-
-<details><summary>Example ds_config.json for full-parameter training with DeepSpeed ZeRO-2</summary>
-
-```json
-{
-  "train_batch_size": "auto",
-  "train_micro_batch_size_per_gpu": "auto",
-  "gradient_accumulation_steps": "auto",
-  "gradient_clipping": "auto",
-  "zero_allow_untested_optimizer": true,
-  "fp16": {
-    "enabled": "auto",
-    "loss_scale": 0,
-    "loss_scale_window": 1000,
-    "initial_scale_power": 16,
-    "hysteresis": 2,
-    "min_loss_scale": 1
-  },
-  "bf16": {
-    "enabled": "auto"
-  },
-  "zero_optimization": {
-    "stage": 2,
-    "allgather_partitions": true,
-    "allgather_bucket_size": 5e8,
-    "overlap_comm": true,
-    "reduce_scatter": true,
-    "reduce_bucket_size": 5e8,
-    "contiguous_gradients": true,
-    "round_robin_gradients": true
-  }
-}
-```
-
-</details>
-
-> [!TIP]
-> Refer to [examples](examples) for more training scripts.
-
-### Merge LoRA weights and export model
-
-```bash
-CUDA_VISIBLE_DEVICES= python src/export_model.py \
-    --model_name_or_path path_to_llama_model \
-    --adapter_name_or_path path_to_checkpoint \
-    --template default \
-    --finetuning_type lora \
-    --export_dir path_to_export \
-    --export_size 2 \
-    --export_legacy_format False
-```
-
-> [!WARNING]
-> Merging LoRA weights into a quantized model is not supported.
-
-> [!TIP]
-> Use `--model_name_or_path path_to_export` solely to use the exported model.
-> 
-> Use `CUDA_VISIBLE_DEVICES=0`, `--export_quantization_bit 4` and `--export_quantization_dataset data/c4_demo.json` to quantize the model with AutoGPTQ after merging the LoRA weights.
-
-### Inference with OpenAI-style API
-
-```bash
-CUDA_VISIBLE_DEVICES=0 API_PORT=8000 python src/api_demo.py \
-    --model_name_or_path path_to_llama_model \
-    --adapter_name_or_path path_to_checkpoint \
-    --template default \
-    --finetuning_type lora
-```
-
-> [!TIP]
-> Visit `http://localhost:8000/docs` for API documentation.
-
-### Inference with command line
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/cli_demo.py \
-    --model_name_or_path path_to_llama_model \
-    --adapter_name_or_path path_to_checkpoint \
-    --template default \
-    --finetuning_type lora
-```
-
-### Inference with web browser
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/web_demo.py \
-    --model_name_or_path path_to_llama_model \
-    --adapter_name_or_path path_to_checkpoint \
-    --template default \
-    --finetuning_type lora
-```
-
-### Evaluation
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/evaluate.py \
-    --model_name_or_path path_to_llama_model \
-    --adapter_name_or_path path_to_checkpoint \
-    --template vanilla \
-    --finetuning_type lora \
-    --task mmlu \
-    --split test \
-    --lang en \
-    --n_shot 5 \
-    --batch_size 4
-```
-
-### Predict
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage sft \
-    --do_predict \
-    --model_name_or_path path_to_llama_model \
-    --adapter_name_or_path path_to_checkpoint \
-    --dataset alpaca_gpt4_en \
-    --template default \
-    --finetuning_type lora \
-    --output_dir path_to_predict_result \
-    --per_device_eval_batch_size 1 \
-    --max_samples 100 \
-    --predict_with_generate \
-    --fp16
-```
-
-> [!WARNING]
-> Use `--per_device_train_batch_size=1` for LLaMA-2 models in fp16 predict.
-
-> [!TIP]
-> We recommend using `--per_device_eval_batch_size=1` and `--max_target_length 128` at 4/8-bit predict.
-
-### Dockerize Training
 
 #### Use Docker
 
@@ -691,6 +358,27 @@ docker compose -f ./docker-compose.yml up -d
 > * hf_cache: Utilize Hugging Face cache on the host machine. Reassignable if a cache already exists in a different directory.
 > * data: Place datasets on this dir of the host machine so that they can be selected on LLaMA Board GUI.
 > * output: Set export dir to this location so that the merged result can be accessed directly on the host machine.
+
+> [!WARNING]
+> LLaMA Board GUI does not yet support multi-GPUs training.
+
+### Command Line Interface
+
+See [examples](examples) for usage.
+
+> [!TIP]
+> Use `python src/train_bash.py -h` to display arguments description.
+
+### Use ModelScope Hub
+
+If you have trouble with downloading models and datasets from Hugging Face, you can use ModelScope.
+
+```bash
+export USE_MODELSCOPE_HUB=1 # `set USE_MODELSCOPE_HUB=1` for Windows
+```
+
+> [!TIP]
+> Train the model by specifying a model ID of the ModelScope Hub as the `--model_name_or_path`. You can find a full list of model IDs at [ModelScope Hub](https://modelscope.cn/models), e.g., `modelscope/Llama-2-7b-ms`.
 
 ## Projects using LLaMA Factory
 
@@ -738,7 +426,7 @@ If this work is helpful, please kindly cite as:
 
 ```bibtex
 @article{zheng2024llamafactory,
-  title={LlamaFactory: Unified Efficient Fine-Tuning of 100+ Language Models}, 
+  title={LlamaFactory: Unified Efficient Fine-Tuning of 100+ Language Models},
   author={Yaowei Zheng and Richong Zhang and Junhao Zhang and Yanhan Ye and Zheyan Luo and Yongqiang Ma},
   journal={arXiv preprint arXiv:2403.13372},
   year={2024},
@@ -748,7 +436,7 @@ If this work is helpful, please kindly cite as:
 
 ## Acknowledgement
 
-This repo benefits from [PEFT](https://github.com/huggingface/peft), [QLoRA](https://github.com/artidoro/qlora) and [FastChat](https://github.com/lm-sys/FastChat). Thanks for their wonderful works.
+This repo benefits from [PEFT](https://github.com/huggingface/peft), [TRL](https://github.com/huggingface/trl), [QLoRA](https://github.com/artidoro/qlora) and [FastChat](https://github.com/lm-sys/FastChat). Thanks for their wonderful works.
 
 ## Star History
 
