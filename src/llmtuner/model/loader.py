@@ -20,6 +20,7 @@ logger = get_logger(__name__)
 
 
 def _get_init_kwargs(model_args: "ModelArguments") -> Dict[str, Any]:
+    model_args.model_name_or_path = try_download_model_from_ms(model_args)
     return {
         "trust_remote_code": True,
         "cache_dir": model_args.cache_dir,
@@ -34,9 +35,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "PreTrainedTokenizer":
 
     Note: including inplace operation of model_args.
     """
-    try_download_model_from_ms(model_args)
     init_kwargs = _get_init_kwargs(model_args)
-
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         use_fast=model_args.use_fast_tokenizer,
