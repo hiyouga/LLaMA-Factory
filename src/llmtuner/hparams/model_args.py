@@ -73,6 +73,10 @@ class ModelArguments:
         default=False,
         metadata={"help": "Whether or not to use unsloth's optimization for the LoRA training."},
     )
+    moe_aux_loss_coef: Optional[float] = field(
+        default=None,
+        metadata={"help": "Coefficient of the auxiliary router loss in mixture-of-experts model."},
+    )
     disable_gradient_checkpointing: bool = field(
         default=False,
         metadata={"help": "Whether or not to disable gradient checkpointing."},
