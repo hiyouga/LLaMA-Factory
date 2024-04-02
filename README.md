@@ -245,8 +245,6 @@ You also can add a custom chat template to [template.py](src/llmtuner/data/templ
 
 </details>
 
-Please refer to [data/README.md](data/README.md) for details.
-
 Some datasets require confirmation before using them, so we recommend logging in with your Hugging Face account using these commands.
 
 ```bash
@@ -366,8 +364,18 @@ docker compose -f ./docker-compose.yml up -d
 
 See [examples](examples) for usage.
 
-> [!TIP]
-> Use `python src/train_bash.py -h` to display arguments description.
+Use `python src/train_bash.py -h` to display arguments description.
+
+### Deploy with OpenAI-style API and vLLM
+
+```bash
+CUDA_VISIBLE_DEVICES=0 API_PORT=8000 python src/api_demo.py \
+    --model_name_or_path path_to_model \
+    --adapter_name_or_path path_to_lora_adapter \
+    --template default \
+    --finetuning_type lora \
+    --infer_backend vllm
+```
 
 ### Use ModelScope Hub
 
@@ -380,6 +388,8 @@ export USE_MODELSCOPE_HUB=1 # `set USE_MODELSCOPE_HUB=1` for Windows
 Train the model by specifying a model ID of the ModelScope Hub as the `--model_name_or_path`. You can find a full list of model IDs at [ModelScope Hub](https://modelscope.cn/models), e.g., `modelscope/Llama-2-7b-ms`.
 
 ## Projects using LLaMA Factory
+
+If you have a project that should be incorporated, please contact via email or create a pull request.
 
 <details><summary>Click to show</summary>
 
@@ -413,9 +423,6 @@ Train the model by specifying a model ID of the ModelScope Hub as the `--model_n
 1. **[MachineMindset](https://github.com/PKU-YuanGroup/Machine-Mindset/)**: A series of MBTI Personality large language models, capable of giving any LLM 16 different personality types based on different datasets and training methods.
 
 </details>
-
-> [!TIP]
-> If you have a project that should be incorporated, please contact via email or create a pull request.
 
 ## License
 

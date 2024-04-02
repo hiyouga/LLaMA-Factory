@@ -245,8 +245,6 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 
 </details>
 
-使用方法请参考 [data/README_zh.md](data/README_zh.md) 文件。
-
 部分数据集的使用需要确认，我们推荐使用下述命令登录您的 Hugging Face 账户。
 
 ```bash
@@ -337,7 +335,6 @@ CUDA_VISIBLE_DEVICES=0 python src/train_web.py
 
 ```bash
 docker build -f ./Dockerfile -t llama-factory:latest .
-
 docker run --gpus=all \
     -v ./hf_cache:/root/.cache/huggingface/ \
     -v ./data:/app/data \
@@ -367,8 +364,18 @@ docker compose -f ./docker-compose.yml up -d
 
 使用方法请参考 [examples](examples) 文件夹。
 
-> [!TIP]
-> 使用 `python src/train_bash.py -h` 查看参数文档。
+使用 `python src/train_bash.py -h` 查看参数文档。
+
+### 使用 OpenAI 风格 API 和 vLLM 部署
+
+```bash
+CUDA_VISIBLE_DEVICES=0 API_PORT=8000 python src/api_demo.py \
+    --model_name_or_path path_to_model \
+    --adapter_name_or_path path_to_lora_adapter \
+    --template default \
+    --finetuning_type lora \
+    --infer_backend vllm
+```
 
 ### 使用魔搭社区
 
@@ -381,6 +388,8 @@ export USE_MODELSCOPE_HUB=1 # Windows 使用 `set USE_MODELSCOPE_HUB=1`
 将 `--model_name_or_path` 设置为模型 ID 来加载对应的模型。在[魔搭社区](https://modelscope.cn/models)查看所有可用的模型，例如 `modelscope/Llama-2-7b-ms`。
 
 ## 使用了 LLaMA Factory 的项目
+
+如果您有项目希望添加至上述列表，请通过邮件联系或者创建一个 PR。
 
 <details><summary>点击显示</summary>
 
@@ -414,9 +423,6 @@ export USE_MODELSCOPE_HUB=1 # Windows 使用 `set USE_MODELSCOPE_HUB=1`
 1. **[MachineMindset](https://github.com/PKU-YuanGroup/Machine-Mindset/)**：MBTI性格大模型项目，根据数据集与训练方式让任意 LLM 拥有 16 个不同的性格类型。
 
 </details>
-
-> [!TIP]
-> 如果您有项目希望添加至上述列表，请通过邮件联系或者创建一个 PR。
 
 ## 协议
 
