@@ -3,7 +3,7 @@
 ```
 examples/
 ├── lora_single_gpu/
-│   ├── pt.sh: 进行预训练
+│   ├── pretrain.sh: 进行预训练
 │   ├── sft.sh: 进行指令监督微调
 │   ├── reward.sh: 进行奖励模型训练
 │   ├── ppo.sh: 进行 PPO 训练
