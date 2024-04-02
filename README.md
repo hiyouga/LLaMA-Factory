@@ -369,10 +369,11 @@ Use `python src/train_bash.py -h` to display arguments description.
 ### Deploy with OpenAI-style API and vLLM
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 API_PORT=8000 python src/api_demo.py \
+CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 python src/api_demo.py \
     --model_name_or_path mistralai/Mistral-7B-Instruct-v0.2 \
     --template mistral \
-    --infer_backend vllm
+    --infer_backend vllm \
+    --vllm_enforce_eager
 ```
 
 ### Use ModelScope Hub
