@@ -53,7 +53,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 
 ## 性能指标
 
-与 ChatGLM 官方的 [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/ptuning) 微调相比，LLaMA-Factory 的 LoRA 微调提供了 **3.7 倍**的加速比，同时在广告文案生成任务上取得了更高的 Rouge 分数。结合 4 比特量化技术，LLaMA-Factory 的 QLoRA 微调进一步降低了 GPU 显存消耗。
+与 ChatGLM 官方的 [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/ptuning) 微调相比，LLaMA Factory 的 LoRA 微调提供了 **3.7 倍**的加速比，同时在广告文案生成任务上取得了更高的 Rouge 分数。结合 4 比特量化技术，LLaMA Factory 的 QLoRA 微调进一步降低了 GPU 显存消耗。
 
 ![benchmark](assets/benchmark.svg)
 
@@ -62,7 +62,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 - **Training Speed**: 训练阶段每秒处理的样本数量。（批处理大小=4，截断长度=1024）
 - **Rouge Score**: [广告文案生成](https://aclanthology.org/D19-1321.pdf)任务验证集上的 Rouge-2 分数。（批处理大小=4，截断长度=1024）
 - **GPU Memory**: 4 比特量化训练的 GPU 显存峰值。（批处理大小=1，截断长度=1024）
-- 我们在 ChatGLM 的 P-Tuning 中采用 `pre_seq_len=128`，在 LLaMA-Factory 的 LoRA 微调中采用 `lora_rank=32`。
+- 我们在 ChatGLM 的 P-Tuning 中采用 `pre_seq_len=128`，在 LLaMA Factory 的 LoRA 微调中采用 `lora_rank=32`。
 
 </details>
 
@@ -72,7 +72,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 
 [24/03/21] 我们的论文 "[LlamaFactory: Unified Efficient Fine-Tuning of 100+ Language Models](https://arxiv.org/abs/2403.13372)" 可在 arXiv 上查看！
 
-[24/03/20] 我们支持了能在 2x24GB GPU 上微调 70B 模型的 **FSDP+QLoRA**。详细用法请参照 `examples/fsdp_qlora`。
+[24/03/20] 我们支持了能在 2x24GB GPU 上微调 70B 模型的 **FSDP+QLoRA**。详细用法请参照 `examples/extras/fsdp_qlora`。
 
 <details><summary>展开日志</summary>
 
@@ -168,9 +168,6 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 | DPO 训练               | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | ORPO 训练              | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
-> [!NOTE]
-> 请使用 `--quantization_bit 4` 参数来启用 QLoRA 训练。
-
 ## 数据集
 
 <details><summary>预训练数据集</summary>
@@ -263,7 +260,7 @@ huggingface-cli login
 | ------------ | ------- | --------- |
 | python       | 3.8     | 3.10      |
 | torch        | 1.13.1  | 2.2.0     |
-| transformers | 4.37.2  | 4.39.2    |
+| transformers | 4.37.2  | 4.39.3    |
 | datasets     | 2.14.3  | 2.18.0    |
 | accelerate   | 0.27.2  | 0.28.0    |
 | peft         | 0.9.0   | 0.10.0    |
@@ -293,22 +290,27 @@ huggingface-cli login
 
 ## 如何使用
 
-### 数据准备（可跳过）
+### 数据准备
 
-关于数据集文件的格式，请参考 [data/README_zh.md](data/README_zh.md) 的内容。构建自定义数据集时，既可以使用单个 `.json` 文件，也可以使用一个[数据加载脚本](https://huggingface.co/docs/datasets/dataset_script)和多个文件。
+关于数据集文件的格式，请参考 [data/README_zh.md](data/README_zh.md) 的内容。你可以使用 HuggingFace / ModelScope 上的数据集或加载本地数据集。
 
 > [!NOTE]
-> 使用自定义数据集时，请更新 `data/dataset_info.json` 文件，该文件的格式请参考 `data/README_zh.md`。
+> 使用自定义数据集时，请更新 `data/dataset_info.json` 文件。
 
-### 环境搭建（可跳过）
+### 安装依赖
 
 ```bash
 git clone https://github.com/hiyouga/LLaMA-Factory.git
 conda create -n llama_factory python=3.10
 conda activate llama_factory
 cd LLaMA-Factory
-pip install -r requirements.txt
+pip install -e .[metrics]
 ```
+
+> [!TIP]
+> 可选的额外依赖项：deepspeed、metrics、unsloth、vllm、bitsandbytes、gptq、awq、aqlm、qwen、quality
+
+<details><summary>Windows 用户指南</summary>
 
 如果要在 Windows 平台上开启量化 LoRA（QLoRA），需要安装预编译的 `bitsandbytes` 库, 支持 CUDA 11.1 到 12.2, 请根据您的 CUDA 版本情况选择适合的[发布版本](https://github.com/jllllll/bitsandbytes-windows-webui/releases/tag/wheels)。
 
@@ -318,350 +320,17 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 
 如果要在 Windows 平台上开启 FlashAttention-2，需要安装预编译的 `flash-attn` 库，支持 CUDA 12.1 到 12.2，请根据需求到 [flash-attention](https://github.com/bdashore3/flash-attention/releases) 下载对应版本安装。
 
-### 使用魔搭社区（可跳过）
+</details>
 
-如果您在 Hugging Face 模型和数据集的下载中遇到了问题，可以通过下述方法使用魔搭社区。
+### LLaMA Board 可视化界面
 
-```bash
-export USE_MODELSCOPE_HUB=1 # Windows 使用 `set USE_MODELSCOPE_HUB=1`
-```
-
-接着即可通过指定模型名称来训练对应的模型。（在[魔搭社区](https://modelscope.cn/models)查看所有可用的模型）
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --model_name_or_path modelscope/Llama-2-7b-ms \
-    ... # 参数同下
-```
-
-LLaMA Board 同样支持魔搭社区的模型和数据集下载。
-
-```bash
-CUDA_VISIBLE_DEVICES=0 USE_MODELSCOPE_HUB=1 python src/train_web.py
-```
-
-### 单 GPU 训练
-
-> [!IMPORTANT]
-> 如果您使用多张 GPU 训练模型，请移步[多 GPU 分布式训练](#多-gpu-分布式训练)部分。
-
-#### LLaMA Board GUI
+#### 使用本地环境
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python src/train_web.py
+# 或 CUDA_VISIBLE_DEVICES=0 python -m llmtuner.webui.interface
 ```
 
-#### 预训练
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage pt \
-    --do_train \
-    --model_name_or_path path_to_llama_model \
-    --dataset wiki_demo \
-    --finetuning_type lora \
-    --lora_target q_proj,v_proj \
-    --output_dir path_to_pt_checkpoint \
-    --overwrite_cache \
-    --per_device_train_batch_size 4 \
-    --gradient_accumulation_steps 4 \
-    --lr_scheduler_type cosine \
-    --logging_steps 10 \
-    --save_steps 1000 \
-    --learning_rate 5e-5 \
-    --num_train_epochs 3.0 \
-    --plot_loss \
-    --fp16
-```
-
-#### 指令监督微调
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage sft \
-    --do_train \
-    --model_name_or_path path_to_llama_model \
-    --dataset alpaca_gpt4_zh \
-    --template default \
-    --finetuning_type lora \
-    --lora_target q_proj,v_proj \
-    --output_dir path_to_sft_checkpoint \
-    --overwrite_cache \
-    --per_device_train_batch_size 4 \
-    --gradient_accumulation_steps 4 \
-    --lr_scheduler_type cosine \
-    --logging_steps 10 \
-    --save_steps 1000 \
-    --learning_rate 5e-5 \
-    --num_train_epochs 3.0 \
-    --plot_loss \
-    --fp16
-```
-
-#### 奖励模型训练
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage rm \
-    --do_train \
-    --model_name_or_path path_to_llama_model \
-    --adapter_name_or_path path_to_sft_checkpoint \
-    --create_new_adapter \
-    --dataset comparison_gpt4_zh \
-    --template default \
-    --finetuning_type lora \
-    --lora_target q_proj,v_proj \
-    --output_dir path_to_rm_checkpoint \
-    --per_device_train_batch_size 2 \
-    --gradient_accumulation_steps 4 \
-    --lr_scheduler_type cosine \
-    --logging_steps 10 \
-    --save_steps 1000 \
-    --learning_rate 1e-5 \
-    --num_train_epochs 1.0 \
-    --plot_loss \
-    --fp16
-```
-
-#### PPO 训练
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage ppo \
-    --do_train \
-    --model_name_or_path path_to_llama_model \
-    --adapter_name_or_path path_to_sft_checkpoint \
-    --create_new_adapter \
-    --dataset alpaca_gpt4_zh \
-    --template default \
-    --finetuning_type lora \
-    --lora_target q_proj,v_proj \
-    --reward_model path_to_rm_checkpoint \
-    --output_dir path_to_ppo_checkpoint \
-    --per_device_train_batch_size 2 \
-    --gradient_accumulation_steps 4 \
-    --lr_scheduler_type cosine \
-    --top_k 0 \
-    --top_p 0.9 \
-    --logging_steps 10 \
-    --save_steps 1000 \
-    --learning_rate 1e-5 \
-    --num_train_epochs 1.0 \
-    --plot_loss \
-    --fp16
-```
-
-> [!TIP]
-> 如果开启了 `--create_new_adapter`，则使用 `--adapter_name_or_path path_to_sft_checkpoint,path_to_ppo_checkpoint` 来进行微调模型的推理。
-
-> [!WARNING]
-> 如果使用 fp16 精度进行 LLaMA-2 模型的 PPO 训练，请使用 `--per_device_train_batch_size=1`。
-
-#### DPO 训练
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage dpo \
-    --do_train \
-    --model_name_or_path path_to_llama_model \
-    --adapter_name_or_path path_to_sft_checkpoint \
-    --create_new_adapter \
-    --dataset comparison_gpt4_zh \
-    --template default \
-    --finetuning_type lora \
-    --lora_target q_proj,v_proj \
-    --output_dir path_to_dpo_checkpoint \
-    --per_device_train_batch_size 2 \
-    --gradient_accumulation_steps 4 \
-    --lr_scheduler_type cosine \
-    --logging_steps 10 \
-    --save_steps 1000 \
-    --learning_rate 1e-5 \
-    --num_train_epochs 1.0 \
-    --plot_loss \
-    --fp16
-```
-
-> [!TIP]
-> 如果开启了 `--create_new_adapter`，则使用 `--adapter_name_or_path path_to_sft_checkpoint,path_to_dpo_checkpoint` 来进行微调模型的推理。
-
-### 多 GPU 分布式训练
-
-#### 使用 Huggingface Accelerate
-
-```bash
-accelerate launch --config_file config.yaml src/train_bash.py \
-    --ddp_timeout 180000000 \
-    ... # 参数同上
-```
-
-<details><summary>使用 Accelerate 进行 LoRA 训练的 config.yaml 示例</summary>
-
-```yaml
-compute_environment: LOCAL_MACHINE
-debug: false
-distributed_type: MULTI_GPU
-downcast_bf16: 'no'
-gpu_ids: all
-machine_rank: 0
-main_training_function: main
-mixed_precision: fp16
-num_machines: 1
-num_processes: 4
-rdzv_backend: static
-same_network: true
-tpu_env: []
-tpu_use_cluster: false
-tpu_use_sudo: false
-use_cpu: false
-```
-
-</details>
-
-> [!TIP]
-> 我们推荐使用 Accelerate 进行 LoRA 训练。
-
-#### 使用 DeepSpeed
-
-```bash
-deepspeed --num_gpus 8 src/train_bash.py \
-    --deepspeed ds_config.json \
-    --ddp_timeout 180000000 \
-    ... # 参数同上
-```
-
-<details><summary>使用 DeepSpeed ZeRO-2 进行全参数训练的 ds_config.json 示例</summary>
-
-```json
-{
-  "train_batch_size": "auto",
-  "train_micro_batch_size_per_gpu": "auto",
-  "gradient_accumulation_steps": "auto",
-  "gradient_clipping": "auto",
-  "zero_allow_untested_optimizer": true,
-  "fp16": {
-    "enabled": "auto",
-    "loss_scale": 0,
-    "loss_scale_window": 1000,
-    "initial_scale_power": 16,
-    "hysteresis": 2,
-    "min_loss_scale": 1
-  },
-  "bf16": {
-    "enabled": "auto"
-  },
-  "zero_optimization": {
-    "stage": 2,
-    "allgather_partitions": true,
-    "allgather_bucket_size": 5e8,
-    "overlap_comm": true,
-    "reduce_scatter": true,
-    "reduce_bucket_size": 5e8,
-    "contiguous_gradients": true,
-    "round_robin_gradients": true
-  }
-}
-```
-
-</details>
-
-> [!TIP]
-> 更多训练脚本请查看 [examples](examples)。
-
-### 合并 LoRA 权重并导出模型
-
-```bash
-CUDA_VISIBLE_DEVICES= python src/export_model.py \
-    --model_name_or_path path_to_llama_model \
-    --adapter_name_or_path path_to_checkpoint \
-    --template default \
-    --finetuning_type lora \
-    --export_dir path_to_export \
-    --export_size 2 \
-    --export_legacy_format False
-```
-
-> [!WARNING]
-> 尚不支持量化模型的 LoRA 权重合并及导出。
-
-> [!TIP]
-> 仅使用 `--model_name_or_path path_to_export` 来加载导出后的模型。
-> 
-> 合并 LoRA 权重之后可再次使用 `CUDA_VISIBLE_DEVICES=0`、`--export_quantization_bit 4` 和 `--export_quantization_dataset data/c4_demo.json` 基于 AutoGPTQ 量化模型。
-
-### 使用 OpenAI 风格 API 推理
-
-```bash
-CUDA_VISIBLE_DEVICES=0 API_PORT=8000 python src/api_demo.py \
-    --model_name_or_path path_to_llama_model \
-    --adapter_name_or_path path_to_checkpoint \
-    --template default \
-    --finetuning_type lora
-```
-
-> [!TIP]
-> 关于 API 文档请见 `http://localhost:8000/docs`。
-
-### 使用命令行推理
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/cli_demo.py \
-    --model_name_or_path path_to_llama_model \
-    --adapter_name_or_path path_to_checkpoint \
-    --template default \
-    --finetuning_type lora
-```
-
-### 使用浏览器推理
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/web_demo.py \
-    --model_name_or_path path_to_llama_model \
-    --adapter_name_or_path path_to_checkpoint \
-    --template default \
-    --finetuning_type lora
-```
-
-### 模型评估
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/evaluate.py \
-    --model_name_or_path path_to_llama_model \
-    --adapter_name_or_path path_to_checkpoint \
-    --template vanilla \
-    --finetuning_type lora \
-    --task ceval \
-    --split validation \
-    --lang zh \
-    --n_shot 5 \
-    --batch_size 4
-```
-
-### 模型预测
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
-    --stage sft \
-    --do_predict \
-    --model_name_or_path path_to_llama_model \
-    --adapter_name_or_path path_to_checkpoint \
-    --dataset alpaca_gpt4_zh \
-    --template default \
-    --finetuning_type lora \
-    --output_dir path_to_predict_result \
-    --per_device_eval_batch_size 1 \
-    --max_samples 100 \
-    --predict_with_generate \
-    --fp16
-```
-
-> [!WARNING]
-> 如果使用 fp16 精度进行 LLaMA-2 模型的预测，请使用 `--per_device_eval_batch_size=1`。
-
-> [!TIP]
-> 我们建议在量化模型的预测中使用 `--per_device_eval_batch_size=1` 和 `--max_target_length 128`。
-
-### 使用容器
 
 #### 使用 Docker
 
@@ -690,6 +359,27 @@ docker compose -f ./docker-compose.yml up -d
 > * hf_cache：使用宿主机的 Hugging Face 缓存文件夹，允许更改为新的目录。
 > * data：宿主机中存放数据集的文件夹路径。
 > * output：将导出目录设置为该路径后，即可在宿主机中访问导出后的模型。
+
+> [!WARNING]
+> LLaMA Board 可视化界面尚不支持多 GPU 训练。
+
+### 命令行接口
+
+使用方法请参考 [examples](examples) 文件夹。
+
+> [!TIP]
+> 使用 `python src/train_bash.py -h` 查看参数文档。
+
+### 使用魔搭社区
+
+如果您在 Hugging Face 模型和数据集的下载中遇到了问题，可以通过下述方法使用魔搭社区。
+
+```bash
+export USE_MODELSCOPE_HUB=1 # Windows 使用 `set USE_MODELSCOPE_HUB=1`
+```
+
+> [!TIP]
+> 将 `--model_name_or_path` 设置为模型 ID 来加载对应的模型。在[魔搭社区](https://modelscope.cn/models)查看所有可用的模型，例如 `modelscope/Llama-2-7b-ms`。
 
 ## 使用了 LLaMA Factory 的项目
 
@@ -747,7 +437,7 @@ docker compose -f ./docker-compose.yml up -d
 
 ## 致谢
 
-本项目受益于 [PEFT](https://github.com/huggingface/peft)、[QLoRA](https://github.com/artidoro/qlora) 和 [FastChat](https://github.com/lm-sys/FastChat)，感谢以上诸位作者的付出。
+本项目受益于 [PEFT](https://github.com/huggingface/peft)、[TRL](https://github.com/huggingface/trl)、[QLoRA](https://github.com/artidoro/qlora) 和 [FastChat](https://github.com/lm-sys/FastChat)，感谢以上诸位作者的付出。
 
 ## Star History
 

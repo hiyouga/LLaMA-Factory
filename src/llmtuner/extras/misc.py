@@ -193,6 +193,18 @@ def infer_optim_dtype(model_dtype: torch.dtype) -> torch.dtype:
         return torch.float32
 
 
+def is_path_available(path: os.PathLike) -> bool:
+    r"""
+    Checks if the path is empty or not exist.
+    """
+    if not os.path.exists(path):
+        return True
+    elif os.path.isdir(path) and not os.listdir(path):
+        return True
+    else:
+        return False
+
+
 def torch_gc() -> None:
     r"""
     Collects GPU memory.
