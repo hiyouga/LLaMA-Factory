@@ -3,7 +3,7 @@ We provide diverse examples about fine-tuning LLMs.
 ```
 examples/
 ├── lora_single_gpu/
-│   ├── pt.sh: Do pre-training
+│   ├── pretrain.sh: Do pre-training
 │   ├── sft.sh: Do supervised fine-tuning
 │   ├── reward.sh: Do reward modeling
 │   ├── ppo.sh: Do PPO training
