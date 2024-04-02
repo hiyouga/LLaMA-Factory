@@ -23,8 +23,8 @@ examples/
 │   ├── single_node.sh
 │   └── multi_node.sh
 ├── merge_lora/
-│   ├── merge.sh
-│   └── quantize.sh
+│   ├── merge.sh: Merge LoRA weights
+│   └── quantize.sh: Quantize with AutoGPTQ
 ├── inference/
 │   ├── cli_demo.sh
 │   ├── api_demo.sh
