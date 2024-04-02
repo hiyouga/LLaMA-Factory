@@ -369,10 +369,11 @@ docker compose -f ./docker-compose.yml up -d
 ### 使用 OpenAI 风格 API 和 vLLM 部署
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 API_PORT=8000 python src/api_demo.py \
+CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 python src/api_demo.py \
     --model_name_or_path mistralai/Mistral-7B-Instruct-v0.2 \
     --template mistral \
-    --infer_backend vllm
+    --infer_backend vllm \
+    --vllm_enforce_eager
 ```
 
 ### 使用魔搭社区
