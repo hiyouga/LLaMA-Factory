@@ -290,11 +290,6 @@ def patch_config(
     if model_args.compute_dtype is None:  # priority: bf16 > fp16 > fp32
         model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
 
-    if getattr(config, "model_type", None) == "qwen":
-        setattr(config, "use_flash_attn", model_args.flash_attn)
-        for dtype_name, dtype in [("fp16", torch.float16), ("bf16", torch.bfloat16), ("fp32", torch.float32)]:
-            setattr(config, dtype_name, model_args.compute_dtype == dtype)
-
     _configure_attn_implementation(config, model_args, init_kwargs)
     _configure_rope(config, model_args, is_trainable)
     _configure_longlora(config, model_args, is_trainable)
@@ -304,11 +299,25 @@ def patch_config(
         setattr(config, "use_cache", True)
         logger.info("Using KV cache for faster generation.")
 
+    if model_args.moe_aux_loss_coef is not None:
+        if getattr(config, "model_type", None) in ["mixtral", "qwen2_moe"]:
+            setattr(config, "router_aux_loss_coef", model_args.moe_aux_loss_coef)
+        elif getattr(config, "model_type", None) == "deepseek":
+            setattr(config, "aux_loss_alpha", model_args.moe_aux_loss_coef)
+
+    if getattr(config, "model_type", None) == "qwen":
+        setattr(config, "use_flash_attn", model_args.flash_attn)
+        for dtype_name, dtype in [("fp16", torch.float16), ("bf16", torch.bfloat16), ("fp32", torch.float32)]:
+            setattr(config, dtype_name, model_args.compute_dtype == dtype)
+
+    if getattr(config, "model_type", None) == "qwen2" and is_trainable and model_args.flash_attn:
+        setattr(config, "use_cache", False)  # qwen2 does not support use_cache when using flashattn
+
     init_kwargs["torch_dtype"] = model_args.compute_dtype
     if not is_deepspeed_zero3_enabled():
         init_kwargs["low_cpu_mem_usage"] = model_args.low_cpu_mem_usage
         if init_kwargs["low_cpu_mem_usage"]:
-            if "device_map" not in init_kwargs:  # quant models cannot use auto device map
+            if "device_map" not in init_kwargs:
                 init_kwargs["device_map"] = model_args.device_map or {"": get_current_device()}
 
             if init_kwargs["device_map"] == "auto":
@@ -332,9 +341,6 @@ def patch_model(
     if is_trainable and getattr(model.config, "model_type", None) == "chatglm":
         setattr(model, "lm_head", model.transformer.output_layer)
         setattr(model, "_keys_to_ignore_on_save", ["lm_head.weight"])
-
-    if is_trainable and getattr(model.config, "model_type", None) == "qwen2" and model_args.flash_attn:
-        setattr(model.config, "use_cache", False)  # qwen2 does not support use_cache when using flashattn
 
     if model_args.resize_vocab:
         _resize_embedding_layer(model, tokenizer)
