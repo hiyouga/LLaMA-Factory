@@ -362,7 +362,7 @@ docker compose -f ./docker-compose.yml up -d
 
 ### Command Line Interface
 
-See [examples](examples) for usage.
+See [examples/README.md](examples/README.md) for usage.
 
 Use `python src/train_bash.py -h` to display arguments description.
 
