@@ -203,17 +203,15 @@ def torch_gc() -> None:
         torch.cuda.ipc_collect()
 
 
-def try_download_model_from_ms(model_args: "ModelArguments") -> None:
+def try_download_model_from_ms(model_args: "ModelArguments") -> str:
     if not use_modelscope() or os.path.exists(model_args.model_name_or_path):
-        return
+        return model_args.model_name_or_path
 
     try:
         from modelscope import snapshot_download
 
         revision = "master" if model_args.model_revision == "main" else model_args.model_revision
-        model_args.model_name_or_path = snapshot_download(
-            model_args.model_name_or_path, revision=revision, cache_dir=model_args.cache_dir
-        )
+        return snapshot_download(model_args.model_name_or_path, revision=revision, cache_dir=model_args.cache_dir)
     except ImportError:
         raise ImportError("Please install modelscope via `pip install modelscope -U`")
 
