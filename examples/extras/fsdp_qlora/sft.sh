@@ -5,17 +5,17 @@ pip install "accelerate>=0.28.0"
 pip install "bitsandbytes>=0.43.0"
 
 CUDA_VISIBLE_DEVICES=0,1 accelerate launch \
-    --config_file ../accelerate/fsdp_config.yaml \
-    ../../src/train_bash.py \
+    --config_file ../../accelerate/fsdp_config.yaml \
+    ../../../src/train_bash.py \
     --stage sft \
     --do_train \
     --model_name_or_path meta-llama/Llama-2-70b-hf \
     --dataset alpaca_gpt4_en,glaive_toolcall \
-    --dataset_dir ../../data \
+    --dataset_dir ../../../data \
     --template default \
     --finetuning_type lora \
     --lora_target q_proj,v_proj \
-    --output_dir ../../saves/LLaMA2-70B/lora/sft \
+    --output_dir ../../../saves/LLaMA2-70B/lora/sft \
     --overwrite_cache \
     --overwrite_output_dir \
     --cutoff_len 1024 \
