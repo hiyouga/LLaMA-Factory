@@ -362,7 +362,7 @@ docker compose -f ./docker-compose.yml up -d
 
 ### 命令行接口
 
-使用方法请参考 [examples](examples) 文件夹。
+使用方法请参考 [examples/README_zh.md](examples/README_zh.md)。
 
 使用 `python src/train_bash.py -h` 查看参数文档。
 
