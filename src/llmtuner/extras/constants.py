@@ -26,7 +26,7 @@ LAYERNORM_NAMES = {"norm", "ln"}
 
 LOG_FILE_NAME = "trainer_log.jsonl"
 
-METHODS = ["full", "freeze", "lora"]
+METHODS = ["full", "freeze", "lora", "lisa"]
 
 PEFT_METHODS = ["lora"]
 

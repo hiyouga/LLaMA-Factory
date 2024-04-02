@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, List, Optional
 from transformers import DataCollatorForSeq2Seq
 
 from ...data import get_dataset, split_dataset
+from ...extras.callbacks import LisaTrainCallback
 from ...extras.constants import IGNORE_INDEX
 from ...extras.misc import get_logits_processor
 from ...extras.ploting import plot_loss
@@ -31,6 +32,11 @@ def run_sft(
     tokenizer = load_tokenizer(model_args)
     dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="sft")
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
+
+    if not callbacks:
+        callbacks = []
+    if finetuning_args.finetuning_type == 'lisa' and training_args.do_train is True:
+        callbacks.append(LisaTrainCallback(finetuning_args, model))
 
     if training_args.predict_with_generate:
         tokenizer.padding_side = "left"  # use left-padding in generation

@@ -204,7 +204,32 @@ class GaloreArguments:
 
 
 @dataclass
-class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments):
+class LisaArguments:
+    r"""
+        see: https://arxiv.org/abs/2403.17919
+        ref: https://github.com/OptimalScale/LMFlow
+        Arguments pertaining to the Lisa algorithm.
+            - 始终更新底层 embedding 和顶层 linear head；
+            - 随机更新少数中间的 self-attention 层，比如 2-4 层。
+        """
+    lisa_activated_layers: int = field(
+        default=2,
+        metadata={
+            "help": "the number of activated layers in LISA."
+        }
+    )
+    lisa_interval_steps: int = field(
+        default=20,
+        metadata={
+            "help": "the number of steps in each freezing interval of LISA, i.e. the selected unfreezed layers are randomly switched every {lisa_interval_steps} steps."
+        }
+    )
+    lisa_embedding_name: str = field(default="model.embed_tokens", metadata={"help": "lisa_embedding_name"})
+    lisa_output_name: str = field(default="lm_head", metadata={"help": "lisa_output_name"})
+    lisa_attention_name: str = field(default="model.layers", metadata={"help": "lisa_output_name"})
+
+@dataclass
+class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments, LisaArguments):
     r"""
     Arguments pertaining to which techniques we are going to fine-tuning with.
     """
@@ -217,7 +242,7 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         default="sft",
         metadata={"help": "Which stage will be performed in training."},
     )
-    finetuning_type: Literal["lora", "freeze", "full"] = field(
+    finetuning_type: Literal["lora", "freeze", "lisa", "full"] = field(
         default="lora",
         metadata={"help": "Which fine-tuning method to use."},
     )
@@ -242,7 +267,7 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         self.additional_target = split_arg(self.additional_target)
         self.galore_target = split_arg(self.galore_target)
 
-        assert self.finetuning_type in ["lora", "freeze", "full"], "Invalid fine-tuning method."
+        assert self.finetuning_type in ["lora", "freeze", "lisa", "full"], "Invalid fine-tuning method."
         assert self.ref_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
         assert self.reward_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
 

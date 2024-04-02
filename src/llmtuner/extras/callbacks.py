@@ -4,19 +4,68 @@ import time
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
+import numpy as np
 from transformers import TrainerCallback
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR, has_length
 
 from .constants import LOG_FILE_NAME
 from .logging import get_logger
 from .misc import fix_valuehead_checkpoint
-
+from ..hparams import FinetuningArguments
 
 if TYPE_CHECKING:
     from transformers import TrainerControl, TrainerState, TrainingArguments
 
 
 logger = get_logger(__name__)
+
+
+class LisaTrainCallback(TrainerCallback):
+    def __init__(self, finetuning_args: "FinetuningArguments", model: None):
+        self.layers_attribute = finetuning_args.lisa_attention_name
+        self.step_interval = finetuning_args.lisa_interval_steps
+        self.lisa_activated_layers = finetuning_args.lisa_activated_layers
+        self.model = model
+        # Determine the way to access layers based on the model type
+        if self.model.__class__.__name__ == 'LlamaForCausalLM':
+            finetuning_args.lisa_attention_name = 'model.layers'  # Layer access path for LlamaForCausalLM
+        elif self.model.__class__.__name__ == 'Qwen2ForCausalLM':
+            finetuning_args.lisa_attention_name = 'model.layers'  # Layer access path for Qwen model
+        elif self.model.__class__.__name__ == 'MistralForCausalLM':
+            finetuning_args.lisa_attention_name = 'model.layers'
+        elif self.model.__class__.__name__ == 'GemmaForCausalLM':
+            finetuning_args.lisa_attention_name = 'model.layers'
+
+        self.atten_layers = eval("self.model." + finetuning_args.lisa_attention_name)
+        self.total_layers = len(self.atten_layers)
+        self.active_layers_indices = []
+        self.embed_layers = eval("self.model." + finetuning_args.lisa_embedding_name)
+        self.output_layers = eval("self.model." + finetuning_args.lisa_output_name)
+        self.switch_active_layers()
+
+    def on_step_begin(self, args, state, control, **kwargs):
+        if state.global_step % self.step_interval == 0:
+            self.switch_active_layers()
+
+    def freeze_all_layers(self):
+        for param in self.model.parameters():
+            param.requires_grad = False
+
+    def switch_active_layers(self):
+        self.freeze_all_layers()
+        np.random.seed(int(time.time()))
+        self.active_layers_indices = np.random.choice(range(self.total_layers), self.lisa_activated_layers,
+                                                      replace=False)
+        for idx in self.active_layers_indices:
+            for param in self.atten_layers[idx].parameters():
+                param.requires_grad = True
+        self.output_layers.requires_grad_(True)
+        self.embed_layers.requires_grad_(True)
+
+        # trainable_params, all_param = count_parameters(self.model)
+        # print("trainable params: {:d} || all params: {:d} || trainable%: {:.4f}".format(
+        #     trainable_params, all_param, 100 * trainable_params / all_param
+        # ))
 
 
 class FixValueHeadModelCallback(TrainerCallback):
