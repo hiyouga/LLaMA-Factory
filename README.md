@@ -307,8 +307,7 @@ cd LLaMA-Factory
 pip install -e .[metrics]
 ```
 
-> [!TIP]
-> Extra dependencies available: deepspeed, metrics, unsloth, vllm, bitsandbytes, gptq, awq, aqlm, qwen, quality
+Extra dependencies available: deepspeed, metrics, unsloth, vllm, bitsandbytes, gptq, awq, aqlm, qwen, quality
 
 <details><summary>For Windows users</summary>
 
@@ -324,6 +323,9 @@ To enable FlashAttention-2 on the Windows platform, you need to install the prec
 
 ### LLaMA Board GUI
 
+> [!IMPORTANT]
+> LLaMA Board GUI only supports training on a single GPU, please use [CLI](#command-line-interface) for distributed training.
+
 #### Use local environment
 
 ```bash
@@ -335,7 +337,6 @@ CUDA_VISIBLE_DEVICES=0 python src/train_web.py
 
 ```bash
 docker build -f ./Dockerfile -t llama-factory:latest .
-
 docker run --gpus=all \
     -v ./hf_cache:/root/.cache/huggingface/ \
     -v ./data:/app/data \
@@ -353,14 +354,13 @@ docker run --gpus=all \
 docker compose -f ./docker-compose.yml up -d
 ```
 
-> [!TIP]
-> Details about volume:
-> * hf_cache: Utilize Hugging Face cache on the host machine. Reassignable if a cache already exists in a different directory.
-> * data: Place datasets on this dir of the host machine so that they can be selected on LLaMA Board GUI.
-> * output: Set export dir to this location so that the merged result can be accessed directly on the host machine.
+<details><summary>Details about volume</summary>
 
-> [!WARNING]
-> LLaMA Board GUI does not yet support multi-GPUs training.
+- hf_cache: Utilize Hugging Face cache on the host machine. Reassignable if a cache already exists in a different directory.
+- data: Place datasets on this dir of the host machine so that they can be selected on LLaMA Board GUI.
+- output: Set export dir to this location so that the merged result can be accessed directly on the host machine.
+
+</details>
 
 ### Command Line Interface
 
@@ -377,10 +377,11 @@ If you have trouble with downloading models and datasets from Hugging Face, you 
 export USE_MODELSCOPE_HUB=1 # `set USE_MODELSCOPE_HUB=1` for Windows
 ```
 
-> [!TIP]
-> Train the model by specifying a model ID of the ModelScope Hub as the `--model_name_or_path`. You can find a full list of model IDs at [ModelScope Hub](https://modelscope.cn/models), e.g., `modelscope/Llama-2-7b-ms`.
+Train the model by specifying a model ID of the ModelScope Hub as the `--model_name_or_path`. You can find a full list of model IDs at [ModelScope Hub](https://modelscope.cn/models), e.g., `modelscope/Llama-2-7b-ms`.
 
 ## Projects using LLaMA Factory
+
+<details><summary>Click to show</summary>
 
 1. Wang et al. ESRL: Efficient Sampling-based Reinforcement Learning for Sequence Generation. 2023. [[arxiv]](https://arxiv.org/abs/2308.02223)
 1. Yu et al. Open, Closed, or Small Language Models for Text Classification? 2023. [[arxiv]](https://arxiv.org/abs/2308.10092)
@@ -410,6 +411,8 @@ export USE_MODELSCOPE_HUB=1 # `set USE_MODELSCOPE_HUB=1` for Windows
 1. **[Sunsimiao](https://github.com/thomas-yanxin/Sunsimiao)**: A large language model specialized in Chinese medical domain, based on Baichuan-7B and ChatGLM-6B.
 1. **[CareGPT](https://github.com/WangRongsheng/CareGPT)**: A series of large language models for Chinese medical domain, based on LLaMA2-7B and Baichuan-13B.
 1. **[MachineMindset](https://github.com/PKU-YuanGroup/Machine-Mindset/)**: A series of MBTI Personality large language models, capable of giving any LLM 16 different personality types based on different datasets and training methods.
+
+</details>
 
 > [!TIP]
 > If you have a project that should be incorporated, please contact via email or create a pull request.
