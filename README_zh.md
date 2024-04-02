@@ -327,8 +327,8 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 #### 使用本地环境
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python src/train_web.py
-# 或 CUDA_VISIBLE_DEVICES=0 python -m llmtuner.webui.interface
+export CUDA_VISIBLE_DEVICES=0 # Windows 使用 `set CUDA_VISIBLE_DEVICES=0`
+python src/train_web.py # 或 python -m llmtuner.webui.interface
 ```
 
 #### 使用 Docker
@@ -370,10 +370,8 @@ docker compose -f ./docker-compose.yml up -d
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 API_PORT=8000 python src/api_demo.py \
-    --model_name_or_path path_to_model \
-    --adapter_name_or_path path_to_lora_adapter \
-    --template default \
-    --finetuning_type lora \
+    --model_name_or_path mistralai/Mistral-7B-Instruct-v0.2 \
+    --template mistral \
     --infer_backend vllm
 ```
 
