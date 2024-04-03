@@ -66,7 +66,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             use_score_norm=finetuning_args.ppo_score_norm,
             whiten_rewards=finetuning_args.ppo_whiten_rewards,
             accelerator_kwargs={"step_scheduler_with_optimizer": False},
-            log_with=training_args.report_to[0] if training_args.report_to is not None else None,
+            log_with=training_args.report_to[0] if training_args.report_to else None,
             project_kwargs={"logging_dir": training_args.logging_dir},
         )
 
