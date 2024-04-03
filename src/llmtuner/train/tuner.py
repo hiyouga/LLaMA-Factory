@@ -7,7 +7,7 @@ from ..data import get_template_and_fix_tokenizer
 from ..extras.callbacks import LogCallback
 from ..extras.logging import get_logger
 from ..hparams import get_infer_args, get_train_args
-from ..model import load_model_and_tokenizer
+from ..model import load_model, load_tokenizer
 from .dpo import run_dpo
 from .orpo import run_orpo
 from .ppo import run_ppo
@@ -52,8 +52,9 @@ def export_model(args: Optional[Dict[str, Any]] = None):
     if model_args.adapter_name_or_path is not None and model_args.export_quantization_bit is not None:
         raise ValueError("Please merge adapters before quantizing the model.")
 
-    model, tokenizer = load_model_and_tokenizer(model_args, finetuning_args)
+    tokenizer = load_tokenizer(model_args)
     get_template_and_fix_tokenizer(tokenizer, data_args.template)
+    model = load_model(tokenizer, model_args, finetuning_args)  # must after fixing tokenizer to resize vocab
 
     if getattr(model, "quantization_method", None) and model_args.adapter_name_or_path is not None:
         raise ValueError("Cannot merge adapters to a quantized model.")
