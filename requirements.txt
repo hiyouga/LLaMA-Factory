@@ -15,4 +15,3 @@ fastapi
 sse-starlette
 matplotlib
 fire
-galore-torch
