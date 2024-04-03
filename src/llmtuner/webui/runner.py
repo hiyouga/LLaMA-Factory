@@ -277,6 +277,7 @@ class Runner:
 
     def monitor(self) -> Generator[Dict[Component, Any], None, None]:
         get = lambda elem_id: self.running_data[self.manager.get_elem_by_id(elem_id)]
+        self.aborted = False
         self.running = True
 
         lang = get("top.lang")
