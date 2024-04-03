@@ -92,23 +92,29 @@ class WebChatModel(ChatModel):
         torch_gc()
         yield ALERTS["info_unloaded"][lang]
 
-    def predict(
+    def append(
         self,
-        chatbot: List[Tuple[str, str]],
+        chatbot: List[List[Optional[str]]],
+        messages: Sequence[Dict[str, str]],
         role: str,
         query: str,
+    ) -> Tuple[List[List[Optional[str]]], List[Dict[str, str]], str]:
+        return chatbot + [[query, None]], messages + [{"role": role, "content": query}], ""
+
+    def stream(
+        self,
+        chatbot: List[List[Optional[str]]],
         messages: Sequence[Dict[str, str]],
         system: str,
         tools: str,
         max_new_tokens: int,
         top_p: float,
         temperature: float,
-    ) -> Generator[Tuple[List[Tuple[str, str]], List[Dict[str, str]]], None, None]:
-        chatbot.append([query, ""])
-        query_messages = messages + [{"role": role, "content": query}]
+    ) -> Generator[Tuple[List[List[Optional[str]]], List[Dict[str, str]]], None, None]:
+        chatbot[-1][1] = ""
         response = ""
         for new_text in self.stream_chat(
-            query_messages, system, tools, max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature
+            messages, system, tools, max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature
         ):
             response += new_text
             if tools:
@@ -120,11 +126,11 @@ class WebChatModel(ChatModel):
                 name, arguments = result
                 arguments = json.loads(arguments)
                 tool_call = json.dumps({"name": name, "arguments": arguments}, ensure_ascii=False)
-                output_messages = query_messages + [{"role": Role.FUNCTION.value, "content": tool_call}]
+                output_messages = messages + [{"role": Role.FUNCTION.value, "content": tool_call}]
                 bot_text = "```json\n" + tool_call + "\n```"
             else:
-                output_messages = query_messages + [{"role": Role.ASSISTANT.value, "content": result}]
+                output_messages = messages + [{"role": Role.ASSISTANT.value, "content": result}]
                 bot_text = result
 
-            chatbot[-1] = [query, bot_text]
+            chatbot[-1][1] = bot_text
             yield chatbot, output_messages
