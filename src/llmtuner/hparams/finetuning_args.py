@@ -206,7 +206,7 @@ class GaloreArguments:
 @dataclass
 class LisaArguments:
     r"""
-        see: https://arxiv.org/abs/2403.17919
+        paper: https://arxiv.org/abs/2403.17919
         ref: https://github.com/OptimalScale/LMFlow
         Arguments pertaining to the Lisa algorithm.
             - 始终更新底层 embedding 和顶层 linear head；
@@ -221,12 +221,19 @@ class LisaArguments:
     lisa_interval_steps: int = field(
         default=20,
         metadata={
-            "help": "the number of steps in each freezing interval of LISA, i.e. the selected unfreezed layers are randomly switched every {lisa_interval_steps} steps."
+            "help": "the number of steps in each freezing interval of LISA, i.e. "
+                    "the selected unfrozen layers are randomly switched every {lisa_interval_steps} steps."
         }
     )
-    lisa_embedding_name: str = field(default="model.embed_tokens", metadata={"help": "lisa_embedding_name"})
-    lisa_output_name: str = field(default="lm_head", metadata={"help": "lisa_output_name"})
-    lisa_attention_name: str = field(default="model.layers", metadata={"help": "lisa_attention_name"})
+    lisa_attention_name: str = field(
+        default="model.layers",
+        metadata={"help": "suffix name of attention names"}
+    )
+    lisa_verbose: bool = field(
+        default=False,
+        metadata={"help": "output more for lisa"},
+    )
+
 
 @dataclass
 class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments, LisaArguments):
