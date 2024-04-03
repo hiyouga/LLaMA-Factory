@@ -21,8 +21,6 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
         dataset = gr.Dropdown(multiselect=True, scale=4)
         preview_elems = create_preview_box(dataset_dir, dataset)
 
-    dataset_dir.change(list_dataset, [dataset_dir], [dataset], queue=False)
-
     input_elems.update({dataset_dir, dataset})
     elem_dict.update(dict(dataset_dir=dataset_dir, dataset=dataset, **preview_elems))
 
@@ -50,7 +48,7 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
         stop_btn = gr.Button(variant="stop")
 
     with gr.Row():
-        resume_btn = gr.Checkbox(visible=False, interactive=False, value=False)
+        resume_btn = gr.Checkbox(visible=False, interactive=False)
         process_bar = gr.Slider(visible=False, interactive=False)
 
     with gr.Row():
@@ -72,5 +70,7 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
     start_btn.click(engine.runner.run_eval, input_elems, output_elems)
     stop_btn.click(engine.runner.set_abort)
     resume_btn.change(engine.runner.monitor, outputs=output_elems, concurrency_limit=None)
+
+    dataset_dir.change(list_dataset, [dataset_dir], [dataset], queue=False)
 
     return elem_dict

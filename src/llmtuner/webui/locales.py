@@ -1344,6 +1344,11 @@ ALERTS = {
         "ru": "Аргументы были сохранены по адресу: ",
         "zh": "训练参数已保存至：",
     },
+    "info_config_loaded": {
+        "en": "Arguments have been restored.",
+        "ru": "Аргументы были восстановлены.",
+        "zh": "训练参数已载入。",
+    },
     "info_loading": {
         "en": "Loading model...",
         "ru": "Загрузка модели...",
