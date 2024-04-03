@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, Tuple
+from typing import TYPE_CHECKING, Any, Dict
 
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 from trl import AutoModelForCausalLMWithValueHead
@@ -133,17 +133,3 @@ def load_model(
             )
 
     return model
-
-
-def load_model_and_tokenizer(
-    model_args: "ModelArguments",
-    finetuning_args: "FinetuningArguments",
-    is_trainable: bool = False,
-    add_valuehead: bool = False,
-) -> Tuple["PreTrainedModel", "PreTrainedTokenizer"]:
-    r"""
-    Loads pretrained model and tokenizer.
-    """
-    tokenizer = load_tokenizer(model_args)
-    model = load_model(tokenizer, model_args, finetuning_args, is_trainable, add_valuehead)
-    return model, tokenizer
