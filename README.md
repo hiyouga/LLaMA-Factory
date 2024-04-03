@@ -305,7 +305,7 @@ cd LLaMA-Factory
 pip install -e .[metrics]
 ```
 
-Extra dependencies available: deepspeed, metrics, unsloth, vllm, bitsandbytes, gptq, awq, aqlm, qwen, quality
+Extra dependencies available: deepspeed, metrics, unsloth, galore, vllm, bitsandbytes, gptq, awq, aqlm, qwen, quality
 
 <details><summary>For Windows users</summary>
 
