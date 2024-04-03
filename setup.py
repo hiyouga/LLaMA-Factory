@@ -20,7 +20,7 @@ def get_requires():
 
 
 extra_require = {
-    "deepspeed": ["deepspeed"],
+    "deepspeed": ["deepspeed>=0.10.0"],
     "metrics": ["nltk", "jieba", "rouge-chinese"],
     "unsloth": ["torch==2.2.0", "unsloth[cu121-ampere-torch220]"],
     "vllm": ["vllm>=0.3.3"],
