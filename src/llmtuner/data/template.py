@@ -775,7 +775,7 @@ _register_template(
 )
 
 _register_template(
-    name="mediatek",
+    name="breeze",
     format_user=StringFormatter(slots=["[INST] {{content}} [/INST] "]),
     format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
     default_system="You are a helpful AI assistant built by MediaTek Research. The user you are helping speaks Traditional Chinese and comes from Taiwan. ",
