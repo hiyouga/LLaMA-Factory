@@ -969,3 +969,17 @@ register_model_group(
     },
     template="atom",
 )
+
+register_model_group(
+    models={
+        "Breeze-7B": {
+            DownloadSource.DEFAULT: "MediaTek-Research/Breeze-7B-Base-v1_0",
+            DownloadSource.MODELSCOPE: "MediaTek-Research/Breeze-7B-Base-v1_0",
+        },
+        "Breeze-7B-Chat": {
+            DownloadSource.DEFAULT: "MediaTek-Research/Breeze-7B-Instruct-v1_0",
+            DownloadSource.MODELSCOPE: "MediaTek-Research/Breeze-7B-Instruct-v1_0",
+        }
+    },
+    template="mediatek",
+)
