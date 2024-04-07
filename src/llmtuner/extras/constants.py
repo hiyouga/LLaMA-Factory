@@ -981,5 +981,5 @@ register_model_group(
             DownloadSource.MODELSCOPE: "MediaTek-Research/Breeze-7B-Instruct-v1_0",
         }
     },
-    template="mediatek",
+    template="breeze",
 )
