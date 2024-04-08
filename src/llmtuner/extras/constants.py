@@ -172,6 +172,19 @@ register_model_group(
 
 register_model_group(
     models={
+        "Breeze-7B": {
+            DownloadSource.DEFAULT: "MediaTek-Research/Breeze-7B-Base-v1_0",
+        },
+        "Breeze-7B-Chat": {
+            DownloadSource.DEFAULT: "MediaTek-Research/Breeze-7B-Instruct-v1_0",
+        },
+    },
+    template="breeze",
+)
+
+
+register_model_group(
+    models={
         "ChatGLM2-6B-Chat": {
             DownloadSource.DEFAULT: "THUDM/chatglm2-6b",
             DownloadSource.MODELSCOPE: "ZhipuAI/chatglm2-6b",
@@ -748,8 +761,8 @@ register_model_group(
             DownloadSource.MODELSCOPE: "qwen/Qwen1.5-14B-Chat-AWQ",
         },
         "Qwen1.5-32B-int4-Chat": {
-            DownloadSource.DEFAULT: "Qwen/Qwen1.5-32B-Chat-GPTQ-Int4",
-            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-32B-Chat-GPTQ-Int4",
+            DownloadSource.DEFAULT: "Qwen/Qwen1.5-32B-Chat-AWQ",
+            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-32B-Chat-AWQ",
         },
         "Qwen1.5-72B-int8-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen1.5-72B-Chat-GPTQ-Int8",
@@ -980,18 +993,4 @@ register_model_group(
         },
     },
     template="atom",
-)
-
-register_model_group(
-    models={
-        "Breeze-7B": {
-            DownloadSource.DEFAULT: "MediaTek-Research/Breeze-7B-Base-v1_0",
-            DownloadSource.MODELSCOPE: "MediaTek-Research/Breeze-7B-Base-v1_0",
-        },
-        "Breeze-7B-Chat": {
-            DownloadSource.DEFAULT: "MediaTek-Research/Breeze-7B-Instruct-v1_0",
-            DownloadSource.MODELSCOPE: "MediaTek-Research/Breeze-7B-Instruct-v1_0",
-        }
-    },
-    template="breeze",
 )
