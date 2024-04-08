@@ -442,6 +442,18 @@ _register_template(
 
 
 _register_template(
+    name="breeze",
+    format_user=StringFormatter(slots=["[INST] {{content}} [/INST] "]),
+    format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
+    default_system=(
+        "You are a helpful AI assistant built by MediaTek Research. "
+        "The user you are helping speaks Traditional Chinese and comes from Taiwan."
+    ),
+    efficient_eos=True,
+)
+
+
+_register_template(
     name="chatglm2",
     format_user=StringFormatter(slots=["[Round {{idx}}]\n\n问：{{content}}\n\n答："]),
     format_system=StringFormatter(slots=[{"token": "[gMASK]"}, {"token": "sop"}, "{{content}}"]),
@@ -772,12 +784,4 @@ _register_template(
     name="ziya",
     format_user=StringFormatter(slots=["<human>:{{content}}\n<bot>:"]),
     format_separator=EmptyFormatter(slots=["\n"]),
-)
-
-_register_template(
-    name="breeze",
-    format_user=StringFormatter(slots=["[INST] {{content}} [/INST] "]),
-    format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
-    default_system="You are a helpful AI assistant built by MediaTek Research. The user you are helping speaks Traditional Chinese and comes from Taiwan. ",
-    efficient_eos=True,
 )
