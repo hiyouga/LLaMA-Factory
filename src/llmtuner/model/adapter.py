@@ -145,6 +145,8 @@ def init_adapter(
                 from unsloth import FastLanguageModel  # type: ignore
 
                 unsloth_peft_kwargs = {"model": model, "max_seq_length": model_args.model_max_length}
+                if finetuning_args.additional_target:
+                    unsloth_peft_kwargs["modules_to_save"] = finetuning_args.additional_target                
                 model = FastLanguageModel.get_peft_model(**peft_kwargs, **unsloth_peft_kwargs)
             else:
                 lora_config = LoraConfig(
