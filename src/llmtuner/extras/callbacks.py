@@ -30,6 +30,10 @@ class LisaTrainCallback(TrainerCallback):
         self.total_layers = len(self.get_layers())
         self.lisa_verbose = finetuning_args.lisa_verbose
         self.trained_layers = set()
+        if self.lisa_activated_layers > self.total_layers:
+            raise ValueError(
+                f'lisa_activated_layers>({self.lisa_activated_layers})>total_layers({self.total_layers}), '
+                f'please check your arguments.')
         logger.info(
             f"LISA will activate {self.lisa_activated_layers}/{self.total_layers} layers "
             f"({self.lisa_activated_layers * 100 / self.total_layers}%) every {self.step_interval} steps"
