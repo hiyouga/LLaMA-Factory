@@ -145,7 +145,7 @@ def init_adapter(
             if model_args.use_unsloth:
                 from unsloth import FastLanguageModel  # type: ignore
 
-                unsloth_peft_kwargs = {"model": model, "max_seq_length": model_args.model_max_length}       
+                unsloth_peft_kwargs = {"model": model, "max_seq_length": model_args.model_max_length}
                 model = FastLanguageModel.get_peft_model(**peft_kwargs, **unsloth_peft_kwargs)
             else:
                 lora_config = LoraConfig(
