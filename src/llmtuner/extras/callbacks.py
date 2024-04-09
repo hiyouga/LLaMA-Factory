@@ -72,12 +72,6 @@ class LisaTrainCallback(TrainerCallback):
         layers = self.get_layers()
         active_layers_indices = np.random.choice(range(self.total_layers), self.lisa_activated_layers,
                                                  replace=False)
-
-        logger.info(
-            f"LISA will activate layers {','.join(map(str,active_layers_indices))} for the next step. "
-            f"{len(self.trained_layers)}/{self.total_layers} layers "
-            f"({len(self.trained_layers) * 100 / self.total_layers}%)  "
-            f"are trained: {','.join(map(str, sorted(self.trained_layers)))}")
         self.trained_layers.update(active_layers_indices)
         for idx in active_layers_indices:
             for param in layers[idx].parameters():
@@ -87,6 +81,11 @@ class LisaTrainCallback(TrainerCallback):
             print("trainable params: {:d} || all params: {:d} || trainable%: {:.4f}".format(
                 trainable_params, all_param, 100 * trainable_params / all_param
             ))
+            logger.info(
+                f"LISA will activate layers {','.join(map(str, active_layers_indices))} for the next step. "
+                f"{len(self.trained_layers)}/{self.total_layers} layers "
+                f"({len(self.trained_layers) * 100 / self.total_layers}%)  "
+                f"are trained: {','.join(map(str, sorted(self.trained_layers)))}")
 
 
 class FixValueHeadModelCallback(TrainerCallback):
