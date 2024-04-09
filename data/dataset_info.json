@@ -3,9 +3,6 @@
     "file_name": "alpaca_data_en_52k.json",
     "file_sha1": "607f94a7f581341e59685aef32f531095232cf23"
   },
-  "debug_demo": {
-    "file_name": "debug_demo.jsonl"
-  },
   "alpaca_zh": {
     "file_name": "alpaca_data_zh_51k.json",
     "file_sha1": "0016a4df88f523aad8dc004ada7575896824a0dc"
