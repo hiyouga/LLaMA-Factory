@@ -74,9 +74,10 @@ class LisaTrainCallback(TrainerCallback):
                                                  replace=False)
 
         logger.info(
-            f"LISA will activate layers at indices: {active_layers_indices} for the next steps. "
+            f"LISA will activate layers {','.join(map(str,active_layers_indices))} for the next step. "
             f"{len(self.trained_layers)}/{self.total_layers} layers "
-            f"({len(self.trained_layers) * 100 / self.total_layers}%)  are trained.")
+            f"({len(self.trained_layers) * 100 / self.total_layers}%)  "
+            f"are trained: {','.join(map(str, sorted(self.trained_layers)))}")
         self.trained_layers.update(active_layers_indices)
         for idx in active_layers_indices:
             for param in layers[idx].parameters():
