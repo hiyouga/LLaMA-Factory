@@ -78,7 +78,7 @@ class LisaTrainCallback(TrainerCallback):
                 param.requires_grad = True
         if self.lisa_verbose:
             trainable_params, all_param = count_parameters(self.trainer.model)
-            print("trainable params: {:d} || all params: {:d} || trainable%: {:.4f}".format(
+            logger.info("trainable params: {:d} || all params: {:d} || trainable%: {:.4f}".format(
                 trainable_params, all_param, 100 * trainable_params / all_param
             ))
             logger.info(
