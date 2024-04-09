@@ -10,7 +10,7 @@ CUDA_VISIBLE_DEVICES=0 python ../../src/train_bash.py \
     --use_lisa \
     --lisa_activated_layers 2 \
     --lisa_interval_steps 5 \
-    --output_dir ../../saves/LLaMA2-7B/lora/sft \
+    --output_dir ../../saves/LLaMA2-7B/lisa/sft \
     --overwrite_cache \
     --overwrite_output_dir \
     --cutoff_len 1024 \
