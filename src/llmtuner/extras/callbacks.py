@@ -2,6 +2,7 @@ import json
 import os
 import time
 from datetime import timedelta
+from functools import reduce
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -20,24 +21,31 @@ logger = get_logger(__name__)
 
 
 class LisaTrainCallback(TrainerCallback):
-    def __init__(self, finetuning_args: "FinetuningArguments", model: None):
+    def __init__(self, finetuning_args: "FinetuningArguments", trainer: None):
         super().__init__()
-        self.model = model
+        self.trainer = trainer
         self.layers_attribute = self.attention_layer_auto_detect(finetuning_args.lisa_attention_name)
         self.step_interval = finetuning_args.lisa_interval_steps
         self.lisa_activated_layers = finetuning_args.lisa_activated_layers
-        self.total_layers = len(eval("self.model." + self.layers_attribute))
+        self.total_layers = len(self.get_layers())
         self.lisa_verbose = finetuning_args.lisa_verbose
 
     def attention_layer_auto_detect(self, lisa_attention_name):
+        class_to_layers_map = {
+            'LlamaForCausalLM': 'model.layers',
+            'Qwen2ForCausalLM': 'model.layers',
+            'MistralForCausalLM': 'model.layers',
+            'MixtralForCausalLM': 'model.layers',
+            'GemmaForCausalLM': 'model.layers',
+            'GPT2LMHeadModel': 'transformer.h',
+        }
         _atten_val = lisa_attention_name
+        model_class_name = self.trainer.model.__class__.__name__
         if _atten_val is None:
             # Determine the way to access layers based on the model type
-            if self.model.__class__.__name__ in ['LlamaForCausalLM', 'Qwen2ForCausalLM', 'MistralForCausalLM',
-                                                 'GemmaForCausalLM']:
-                _atten_val = 'model.layers'
-            else:
-                _atten_val = 'transformer.h'  # General access path
+            if model_class_name in class_to_layers_map:
+                _atten_val = class_to_layers_map[model_class_name]
+
         return _atten_val
 
     def on_step_begin(self, args, state, control, **kwargs):
@@ -45,25 +53,26 @@ class LisaTrainCallback(TrainerCallback):
             self.switch_active_layers()
 
     def freeze_all_layers(self):
-        layers = eval("self.model." + self.layers_attribute)
+        layers = self.get_layers()
         for layer in layers:
             for param in layer.parameters():
                 param.requires_grad = False
 
+    def get_layers(self):
+        return reduce(getattr, self.layers_attribute.split("."), self.trainer.model)
+
     def switch_active_layers(self):
         # disable gradients for all layers
         self.freeze_all_layers()
-        # seed, avoid fixed in other places
-        np.random.seed(int(time.time()))
-        layers = eval("self.model." + self.layers_attribute)
+        layers = self.get_layers()
         active_layers_indices = np.random.choice(range(self.total_layers), self.lisa_activated_layers,
                                                  replace=False)
+        print(f"Activating layers at indices: {active_layers_indices} for the next steps.", flush=True)
         for idx in active_layers_indices:
             for param in layers[idx].parameters():
                 param.requires_grad = True
         if self.lisa_verbose:
-            print('active_layers_indices', active_layers_indices)
-            trainable_params, all_param = count_parameters(self.model)
+            trainable_params, all_param = count_parameters(self.trainer.model)
             print("trainable params: {:d} || all params: {:d} || trainable%: {:.4f}".format(
                 trainable_params, all_param, 100 * trainable_params / all_param
             ))
