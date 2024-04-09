@@ -29,6 +29,7 @@ class LisaTrainCallback(TrainerCallback):
         self.lisa_activated_layers = finetuning_args.lisa_activated_layers
         self.total_layers = len(self.get_layers())
         self.lisa_verbose = finetuning_args.lisa_verbose
+        self.trained_layers = set()
         logger.info(
             f"LISA will activate {self.lisa_activated_layers}/{self.total_layers} layers "
             f"({self.lisa_activated_layers * 100 / self.total_layers}%) every {self.step_interval} steps"
@@ -71,7 +72,12 @@ class LisaTrainCallback(TrainerCallback):
         layers = self.get_layers()
         active_layers_indices = np.random.choice(range(self.total_layers), self.lisa_activated_layers,
                                                  replace=False)
-        print(f"Activating layers at indices: {active_layers_indices} for the next steps.", flush=True)
+
+        logger.info(
+            f"LISA will activate layers at indices: {active_layers_indices} for the next steps. "
+            f"{len(self.trained_layers)}/{self.total_layers} layers "
+            f"({len(self.trained_layers) * 100 / self.total_layers}%)  are trained.")
+        self.trained_layers.update(active_layers_indices)
         for idx in active_layers_indices:
             for param in layers[idx].parameters():
                 param.requires_grad = True
@@ -170,7 +176,7 @@ class LogCallback(TrainerCallback):
             self.max_steps = 0
 
     def on_predict(
-        self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", *other, **kwargs
+            self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", *other, **kwargs
     ):
         r"""
         Event called after a successful prediction.
@@ -216,7 +222,7 @@ class LogCallback(TrainerCallback):
             f.write(json.dumps(logs) + "\n")
 
     def on_prediction_step(
-        self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs
+            self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs
     ):
         r"""
         Event called after a prediction step.
