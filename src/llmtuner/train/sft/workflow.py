@@ -21,12 +21,12 @@ if TYPE_CHECKING:
 
 
 def run_sft(
-        model_args: "ModelArguments",
-        data_args: "DataArguments",
-        training_args: "Seq2SeqTrainingArguments",
-        finetuning_args: "FinetuningArguments",
-        generating_args: "GeneratingArguments",
-        callbacks: Optional[List["TrainerCallback"]] = None,
+    model_args: "ModelArguments",
+    data_args: "DataArguments",
+    training_args: "Seq2SeqTrainingArguments",
+    finetuning_args: "FinetuningArguments",
+    generating_args: "GeneratingArguments",
+    callbacks: Optional[List["TrainerCallback"]] = None,
 ):
     tokenizer = load_tokenizer(model_args)
     dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="sft")
