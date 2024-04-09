@@ -29,6 +29,10 @@ class LisaTrainCallback(TrainerCallback):
         self.lisa_activated_layers = finetuning_args.lisa_activated_layers
         self.total_layers = len(self.get_layers())
         self.lisa_verbose = finetuning_args.lisa_verbose
+        logger.info(
+            f"LISA will activate {self.lisa_activated_layers}/{self.total_layers} layers "
+            f"({self.lisa_activated_layers * 100 / self.total_layers}%) every {self.step_interval} steps"
+        )
 
     def attention_layer_auto_detect(self, lisa_attention_name):
         class_to_layers_map = {

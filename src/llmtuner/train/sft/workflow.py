@@ -14,7 +14,6 @@ from ..utils import create_modelcard_and_push
 from .metric import ComputeMetrics
 from .trainer import CustomSeq2SeqTrainer
 
-
 if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments, TrainerCallback
 
@@ -22,12 +21,12 @@ if TYPE_CHECKING:
 
 
 def run_sft(
-    model_args: "ModelArguments",
-    data_args: "DataArguments",
-    training_args: "Seq2SeqTrainingArguments",
-    finetuning_args: "FinetuningArguments",
-    generating_args: "GeneratingArguments",
-    callbacks: Optional[List["TrainerCallback"]] = None,
+        model_args: "ModelArguments",
+        data_args: "DataArguments",
+        training_args: "Seq2SeqTrainingArguments",
+        finetuning_args: "FinetuningArguments",
+        generating_args: "GeneratingArguments",
+        callbacks: Optional[List["TrainerCallback"]] = None,
 ):
     tokenizer = load_tokenizer(model_args)
     dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="sft")
@@ -62,7 +61,7 @@ def run_sft(
     )
 
     # post callbacks
-    if finetuning_args.finetuning_type == 'lisa' and training_args.do_train is True:
+    if finetuning_args.use_lisa:
         trainer.add_callback(LisaTrainCallback(finetuning_args, trainer))
 
     # Keyword arguments for `model.generate`

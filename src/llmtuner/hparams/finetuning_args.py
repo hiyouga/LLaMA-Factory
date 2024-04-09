@@ -212,14 +212,20 @@ class LisaArguments:
             - 始终更新底层 embedding 和顶层 linear head；
             - 随机更新少数中间的 self-attention 层，比如 2-4 层。
         """
+    use_lisa: bool = field(
+        default=False,
+        metadata={
+            "help": "the number of activated layers in LISA."
+        }
+    )
     lisa_activated_layers: int = field(
-        default=2,
+        default=None,
         metadata={
             "help": "the number of activated layers in LISA."
         }
     )
     lisa_interval_steps: int = field(
-        default=20,
+        default=None,
         metadata={
             "help": "the number of steps in each freezing interval of LISA, i.e. "
                     "the selected unfrozen layers are randomly switched every {lisa_interval_steps} steps."
@@ -249,7 +255,7 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         default="sft",
         metadata={"help": "Which stage will be performed in training."},
     )
-    finetuning_type: Literal["lora", "freeze", "lisa", "full"] = field(
+    finetuning_type: Literal["lora", "freeze", "full"] = field(
         default="lora",
         metadata={"help": "Which fine-tuning method to use."},
     )
@@ -274,7 +280,7 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         self.additional_target = split_arg(self.additional_target)
         self.galore_target = split_arg(self.galore_target)
 
-        assert self.finetuning_type in ["lora", "freeze", "lisa", "full"], "Invalid fine-tuning method."
+        assert self.finetuning_type in ["lora", "freeze", "full"], "Invalid fine-tuning method."
         assert self.ref_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
         assert self.reward_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
 
@@ -292,6 +298,9 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
 
         if self.use_galore and self.finetuning_type == "lora":
             raise ValueError("Cannot use LoRA with GaLore together.")
+
+        if self.use_lisa and self.lisa_interval_steps is None and self.lisa_activated_layers is None:
+            raise ValueError("`use_lisa` requires `lisa_interval_steps` and `lisa_activated_layers`")
 
     def save_to_json(self, json_path: str):
         r"""Saves the content of this instance in JSON format inside `json_path`."""
