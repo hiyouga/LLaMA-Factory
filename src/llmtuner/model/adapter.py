@@ -139,6 +139,7 @@ def init_adapter(
                 "lora_alpha": finetuning_args.lora_alpha,
                 "lora_dropout": finetuning_args.lora_dropout,
                 "use_rslora": finetuning_args.use_rslora,
+                "modules_to_save": finetuning_args.additional_target,
             }
 
             if model_args.use_unsloth:
@@ -150,7 +151,6 @@ def init_adapter(
                 lora_config = LoraConfig(
                     task_type=TaskType.CAUSAL_LM,
                     inference_mode=False,
-                    modules_to_save=finetuning_args.additional_target,
                     use_dora=finetuning_args.use_dora,
                     **peft_kwargs,
                 )
