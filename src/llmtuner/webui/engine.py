@@ -1,6 +1,5 @@
 from typing import Any, Dict, Generator
 
-import gradio as gr
 from gradio.components import Component  # cannot use TYPE_CHECKING here
 
 from .chatter import WebChatModel
@@ -19,44 +18,46 @@ class Engine:
         self.runner = Runner(self.manager, demo_mode)
         self.chatter = WebChatModel(self.manager, demo_mode, lazy_init=(not pure_chat))
 
-    def _form_dict(self, resume_dict: Dict[str, Dict[str, Any]]):
-        return {self.manager.get_elem_by_name(k): gr.update(**v) for k, v in resume_dict.items()}
+    def _update_component(self, input_dict: Dict[str, Dict[str, Any]]) -> Dict["Component", "Component"]:
+        r"""
+        Gets the dict to update the components.
+        """
+        output_dict: Dict["Component", "Component"] = {}
+        for elem_id, elem_attr in input_dict.items():
+            elem = self.manager.get_elem_by_id(elem_id)
+            output_dict[elem] = elem.__class__(**elem_attr)
 
-    def resume(self) -> Generator[Dict[Component, Dict[str, Any]], None, None]:
+        return output_dict
+
+    def resume(self) -> Generator[Dict[Component, Component], None, None]:
         user_config = load_config() if not self.demo_mode else {}
         lang = user_config.get("lang", None) or "en"
 
         init_dict = {"top.lang": {"value": lang}, "infer.chat_box": {"visible": self.chatter.loaded}}
 
         if not self.pure_chat:
-            init_dict["train.dataset"] = {"choices": list_dataset()["choices"]}
-            init_dict["eval.dataset"] = {"choices": list_dataset()["choices"]}
+            init_dict["train.dataset"] = {"choices": list_dataset().choices}
+            init_dict["eval.dataset"] = {"choices": list_dataset().choices}
+            init_dict["train.output_dir"] = {"value": "train_{}".format(get_time())}
+            init_dict["train.config_path"] = {"value": "{}.json".format(get_time())}
+            init_dict["eval.output_dir"] = {"value": "eval_{}".format(get_time())}
 
             if user_config.get("last_model", None):
                 init_dict["top.model_name"] = {"value": user_config["last_model"]}
                 init_dict["top.model_path"] = {"value": get_model_path(user_config["last_model"])}
 
-        yield self._form_dict(init_dict)
+        yield self._update_component(init_dict)
 
-        if not self.pure_chat:
-            if self.runner.alive and not self.demo_mode:
-                yield {elem: gr.update(value=value) for elem, value in self.runner.running_data.items()}
-                if self.runner.do_train:
-                    yield self._form_dict({"train.resume_btn": {"value": True}})
-                else:
-                    yield self._form_dict({"eval.resume_btn": {"value": True}})
+        if self.runner.alive and not self.demo_mode and not self.pure_chat:
+            yield {elem: elem.__class__(value=value) for elem, value in self.runner.running_data.items()}
+            if self.runner.do_train:
+                yield self._update_component({"train.resume_btn": {"value": True}})
             else:
-                yield self._form_dict(
-                    {
-                        "train.output_dir": {"value": "train_" + get_time()},
-                        "eval.output_dir": {"value": "eval_" + get_time()},
-                    }
-                )
+                yield self._update_component({"eval.resume_btn": {"value": True}})
 
-    def change_lang(self, lang: str) -> Dict[Component, Dict[str, Any]]:
+    def change_lang(self, lang: str) -> Dict[Component, Component]:
         return {
-            component: gr.update(**LOCALES[name][lang])
-            for elems in self.manager.all_elems.values()
-            for name, component in elems.items()
-            if name in LOCALES
+            elem: elem.__class__(**LOCALES[elem_name][lang])
+            for elem_name, elem in self.manager.get_elem_iter()
+            if elem_name in LOCALES
         }

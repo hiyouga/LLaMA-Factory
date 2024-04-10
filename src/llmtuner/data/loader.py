@@ -6,6 +6,7 @@ from datasets import load_dataset, load_from_disk
 
 from ..extras.constants import FILEEXT2TYPE
 from ..extras.logging import get_logger
+from ..extras.misc import is_path_available
 from .aligner import align_dataset
 from .parser import get_dataset_list
 from .preprocess import get_preprocess_and_print_func
@@ -117,17 +118,17 @@ def get_dataset(
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
     stage: Literal["pt", "sft", "rm", "ppo"],
-    # split: Optional[str] = "train", # TODO: add split
 ) -> Union["Dataset", "IterableDataset"]:
     template = get_template_and_fix_tokenizer(tokenizer, data_args.template)
     if data_args.train_on_prompt and template.efficient_eos:
         raise ValueError("Current template does not support `train_on_prompt`.")
-    print("data_args", data_args)
-    # Load from cache
-    if data_args.cache_path is not None:
-        if os.path.exists(data_args.cache_path):
+
+    # Load tokenized dataset
+    if data_args.tokenized_path is not None:
+        if not is_path_available(data_args.tokenized_path):
             logger.warning("Loading dataset from disk will ignore other data arguments.")
-            dataset = load_from_disk(data_args.cache_path)
+            dataset = load_from_disk(data_args.tokenized_path)
+            logger.info("Loaded tokenized dataset from {}.".format(data_args.tokenized_path))
             if data_args.streaming:
                 dataset = dataset.to_iterable_dataset()
             return dataset
@@ -138,6 +139,9 @@ def get_dataset(
     with training_args.main_process_first(desc="load dataset"):
         all_datasets = []
         for dataset_attr in get_dataset_list(data_args):
+            if (stage == "rm" and dataset_attr.ranking is False) or (stage != "rm" and dataset_attr.ranking is True):
+                raise ValueError("The dataset is not applicable in the current training stage.")
+
             all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args))
         dataset = merge_dataset(all_datasets, data_args, training_args)
 
@@ -157,10 +161,13 @@ def get_dataset(
 
         dataset = dataset.map(preprocess_func, batched=True, remove_columns=column_names, **kwargs)
 
-        if data_args.cache_path is not None and not os.path.exists(data_args.cache_path):
+        if data_args.tokenized_path is not None:
             if training_args.should_save:
-                dataset.save_to_disk(data_args.cache_path)
-                logger.info("Dataset cache saved at {}.".format(data_args.cache_path))
+                dataset.save_to_disk(data_args.tokenized_path)
+                logger.info("Tokenized dataset saved at {}.".format(data_args.tokenized_path))
+                logger.info("Please restart the training with `--tokenized_path {}`.".format(data_args.tokenized_path))
+
+            exit(0)
 
         if training_args.should_log:
             try:

@@ -102,9 +102,17 @@ class RLHFArguments:
         default="sigmoid",
         metadata={"help": "The type of DPO loss to use."},
     )
+    dpo_label_smoothing: float = field(
+        default=0.0,
+        metadata={"help": "The robust DPO label smoothing parameter in cDPO that should be between 0 and 0.5."},
+    )
     dpo_ftx: float = field(
         default=0.0,
         metadata={"help": "The supervised fine-tuning loss coefficient in DPO training."},
+    )
+    orpo_beta: float = field(
+        default=0.1,
+        metadata={"help": "The beta (lambda) parameter in ORPO loss representing the weight of the SFT loss."},
     )
     ppo_buffer_size: int = field(
         default=1,
@@ -113,10 +121,6 @@ class RLHFArguments:
     ppo_epochs: int = field(
         default=4,
         metadata={"help": "The number of epochs to perform in a PPO optimization step."},
-    )
-    ppo_logger: Optional[str] = field(
-        default=None,
-        metadata={"help": 'Log with either "wandb" or "tensorboard" in PPO training.'},
     )
     ppo_score_norm: bool = field(
         default=False,
@@ -209,7 +213,7 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         default=False,
         metadata={"help": "Whether or not to train model in purely bf16 precision (without AMP)."},
     )
-    stage: Literal["pt", "sft", "rm", "ppo", "dpo"] = field(
+    stage: Literal["pt", "sft", "rm", "ppo", "dpo", "orpo"] = field(
         default="sft",
         metadata={"help": "Which stage will be performed in training."},
     )
@@ -247,6 +251,9 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
 
         if self.stage == "ppo" and self.reward_model_type == "lora" and self.finetuning_type != "lora":
             raise ValueError("`reward_model_type` cannot be lora for Freeze/Full PPO training.")
+
+        if self.stage == "dpo" and self.dpo_loss != "sigmoid" and self.dpo_label_smoothing > 1e-6:
+            raise ValueError("`dpo_label_smoothing` is only valid for sigmoid loss function.")
 
         if self.use_llama_pro and self.finetuning_type == "full":
             raise ValueError("`use_llama_pro` is only valid for the Freeze or LoRA method.")

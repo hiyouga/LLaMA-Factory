@@ -53,6 +53,10 @@ class ModelArguments:
         default=True,
         metadata={"help": "Whether or not to use double quantization in int4 training."},
     )
+    quantization_device_map: Optional[Literal["auto"]] = field(
+        default=None,
+        metadata={"help": "Device map used for loading the 4-bit quantized model, needs bitsandbytes>=0.43.0."},
+    )
     rope_scaling: Optional[Literal["linear", "dynamic"]] = field(
         default=None,
         metadata={"help": "Which scaling strategy should be adopted for the RoPE embeddings."},
@@ -68,6 +72,10 @@ class ModelArguments:
     use_unsloth: bool = field(
         default=False,
         metadata={"help": "Whether or not to use unsloth's optimization for the LoRA training."},
+    )
+    moe_aux_loss_coef: Optional[float] = field(
+        default=None,
+        metadata={"help": "Coefficient of the auxiliary router loss in mixture-of-experts model."},
     )
     disable_gradient_checkpointing: bool = field(
         default=False,

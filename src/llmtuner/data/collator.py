@@ -6,12 +6,15 @@ from transformers import DataCollatorForSeq2Seq
 
 
 @dataclass
-class DPODataCollatorWithPadding(DataCollatorForSeq2Seq):
+class PairwiseDataCollatorWithPadding(DataCollatorForSeq2Seq):
     r"""
     Data collator for pairwise data.
     """
 
     def _pad_labels(self, batch: torch.Tensor, positions: List[Tuple[int, int]]) -> torch.Tensor:
+        r"""
+        Masks out the input ids except for the responses.
+        """
         padded_labels = []
         for feature, (prompt_len, answer_len) in zip(batch, positions):
             if self.tokenizer.padding_side == "left":
@@ -43,12 +46,6 @@ class DPODataCollatorWithPadding(DataCollatorForSeq2Seq):
                 )
                 label_positions.append((prompt_len, answer_len))
 
-        batch = self.tokenizer.pad(
-            concatenated_features,
-            padding=self.padding,
-            max_length=self.max_length,
-            pad_to_multiple_of=self.pad_to_multiple_of,
-            return_tensors=self.return_tensors,
-        )
+        batch = super().__call__(concatenated_features)
         batch["labels"] = self._pad_labels(batch["input_ids"], label_positions)
         return batch

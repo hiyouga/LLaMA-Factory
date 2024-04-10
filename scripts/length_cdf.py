@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from llmtuner.data import get_dataset
 from llmtuner.hparams import get_train_args
-from llmtuner.model import load_model_and_tokenizer
+from llmtuner.model import load_tokenizer
 
 
 def length_cdf(
@@ -20,7 +20,7 @@ def length_cdf(
     template: Optional[str] = "default",
     interval: Optional[int] = 1000,
 ):
-    model_args, data_args, training_args, finetuning_args, _ = get_train_args(
+    model_args, data_args, training_args, _, _ = get_train_args(
         dict(
             stage="sft",
             model_name_or_path=model_name_or_path,
@@ -32,7 +32,7 @@ def length_cdf(
             overwrite_cache=True,
         )
     )
-    _, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, is_trainable=False, add_valuehead=False)
+    tokenizer = load_tokenizer(model_args)
     trainset = get_dataset(tokenizer, model_args, data_args, training_args, stage="sft")
     total_num = len(trainset)
     length_dict = defaultdict(int)

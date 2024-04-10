@@ -536,7 +536,7 @@ _register_template(
 
 _register_template(
     name="baichuan",
-    format_user=StringFormatter(slots=["<reserved_102>{{content}}<reserved_103>"]),
+    format_user=StringFormatter(slots=[{"token": "<reserved_102>"}, "{{content}}", {"token": "<reserved_103>"}]),
     efficient_eos=True,
 )
 
@@ -562,6 +562,18 @@ _register_template(
     format_user=StringFormatter(
         slots=[{"token": "[|Human|]:"}, "{{content}}", {"token": "[|AI|]:"}]
     ),
+)
+
+
+_register_template(
+    name="breeze",
+    format_user=StringFormatter(slots=["[INST] {{content}} [/INST] "]),
+    format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
+    default_system=(
+        "You are a helpful AI assistant built by MediaTek Research. "
+        "The user you are helping speaks Traditional Chinese and comes from Taiwan."
+    ),
+    efficient_eos=True,
 )
 
 
@@ -897,6 +909,8 @@ _register_template(
 
 _register_template(
     name="vanilla",
+    format_separator=EmptyFormatter(slots=["\n"]),
+    efficient_eos=True,
 )
 
 

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, Tuple
+from typing import TYPE_CHECKING, Any, Dict
 
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 from trl import AutoModelForCausalLMWithValueHead
@@ -20,6 +20,7 @@ logger = get_logger(__name__)
 
 
 def _get_init_kwargs(model_args: "ModelArguments") -> Dict[str, Any]:
+    model_args.model_name_or_path = try_download_model_from_ms(model_args)
     return {
         "trust_remote_code": True,
         "cache_dir": model_args.cache_dir,
@@ -34,9 +35,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "PreTrainedTokenizer":
 
     Note: including inplace operation of model_args.
     """
-    try_download_model_from_ms(model_args)
     init_kwargs = _get_init_kwargs(model_args)
-
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         use_fast=model_args.use_fast_tokenizer,
@@ -132,17 +131,3 @@ def load_model(
             )
 
     return model
-
-
-def load_model_and_tokenizer(
-    model_args: "ModelArguments",
-    finetuning_args: "FinetuningArguments",
-    is_trainable: bool = False,
-    add_valuehead: bool = False,
-) -> Tuple["PreTrainedModel", "PreTrainedTokenizer"]:
-    r"""
-    Loads pretrained model and tokenizer.
-    """
-    tokenizer = load_tokenizer(model_args)
-    model = load_model(tokenizer, model_args, finetuning_args, is_trainable, add_valuehead)
-    return model, tokenizer

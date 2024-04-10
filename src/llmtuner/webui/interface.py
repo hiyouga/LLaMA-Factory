@@ -1,5 +1,4 @@
 import gradio as gr
-from transformers.utils.versions import require_version
 
 from .common import save_config
 from .components import (
@@ -14,9 +13,6 @@ from .css import CSS
 from .engine import Engine
 
 
-require_version("gradio>=3.38.0,<4.0.0", 'To fix: pip install "gradio>=3.38.0,<4.0.0"')
-
-
 def create_ui(demo_mode: bool = False) -> gr.Blocks:
     engine = Engine(demo_mode=demo_mode, pure_chat=False)
 
@@ -29,23 +25,24 @@ def create_ui(demo_mode: bool = False) -> gr.Blocks:
             )
             gr.DuplicateButton(value="Duplicate Space for private use", elem_classes="duplicate-button")
 
-        lang, engine.manager.all_elems["top"] = create_top()
+        engine.manager.add_elems("top", create_top())
+        lang: "gr.Dropdown" = engine.manager.get_elem_by_id("top.lang")
 
         with gr.Tab("Train"):
-            engine.manager.all_elems["train"] = create_train_tab(engine)
+            engine.manager.add_elems("train", create_train_tab(engine))
 
         with gr.Tab("Evaluate & Predict"):
-            engine.manager.all_elems["eval"] = create_eval_tab(engine)
+            engine.manager.add_elems("eval", create_eval_tab(engine))
 
         with gr.Tab("Chat"):
-            engine.manager.all_elems["infer"] = create_infer_tab(engine)
+            engine.manager.add_elems("infer", create_infer_tab(engine))
 
         if not demo_mode:
             with gr.Tab("Export"):
-                engine.manager.all_elems["export"] = create_export_tab(engine)
+                engine.manager.add_elems("export", create_export_tab(engine))
 
-        demo.load(engine.resume, outputs=engine.manager.list_elems())
-        lang.change(engine.change_lang, [lang], engine.manager.list_elems(), queue=False)
+        demo.load(engine.resume, outputs=engine.manager.get_elem_list(), concurrency_limit=None)
+        lang.change(engine.change_lang, [lang], engine.manager.get_elem_list(), queue=False)
         lang.input(save_config, inputs=[lang], queue=False)
 
     return demo
@@ -56,19 +53,17 @@ def create_web_demo() -> gr.Blocks:
 
     with gr.Blocks(title="Web Demo", css=CSS) as demo:
         lang = gr.Dropdown(choices=["en", "zh"])
-        engine.manager.all_elems["top"] = dict(lang=lang)
+        engine.manager.add_elems("top", dict(lang=lang))
 
         chat_box, _, _, chat_elems = create_chat_box(engine, visible=True)
-        engine.manager.all_elems["infer"] = dict(chat_box=chat_box, **chat_elems)
+        engine.manager.add_elems("infer", dict(chat_box=chat_box, **chat_elems))
 
-        demo.load(engine.resume, outputs=engine.manager.list_elems())
-        lang.change(engine.change_lang, [lang], engine.manager.list_elems(), queue=False)
+        demo.load(engine.resume, outputs=engine.manager.get_elem_list(), concurrency_limit=None)
+        lang.change(engine.change_lang, [lang], engine.manager.get_elem_list(), queue=False)
         lang.input(save_config, inputs=[lang], queue=False)
 
     return demo
 
 
 if __name__ == "__main__":
-    demo = create_ui()
-    demo.queue()
-    demo.launch(server_name="0.0.0.0", share=False, inbrowser=True)
+    create_ui().queue().launch(server_name="0.0.0.0", server_port=None, share=False, inbrowser=True)

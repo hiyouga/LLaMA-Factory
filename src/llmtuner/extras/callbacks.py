@@ -58,9 +58,17 @@ class LogCallback(TrainerCallback):
             self.in_training = True
             self.start_time = time.time()
             self.max_steps = state.max_steps
-            if os.path.exists(os.path.join(args.output_dir, LOG_FILE_NAME)) and args.overwrite_output_dir:
-                logger.warning("Previous log file in this folder will be deleted.")
-                os.remove(os.path.join(args.output_dir, LOG_FILE_NAME))
+
+        if args.save_on_each_node:
+            if not state.is_local_process_zero:
+                return
+        else:
+            if not state.is_world_process_zero:
+                return
+
+        if os.path.exists(os.path.join(args.output_dir, LOG_FILE_NAME)) and args.overwrite_output_dir:
+            logger.warning("Previous log file in this folder will be deleted.")
+            os.remove(os.path.join(args.output_dir, LOG_FILE_NAME))
 
     def on_train_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
@@ -112,8 +120,12 @@ class LogCallback(TrainerCallback):
         r"""
         Event called after logging the last logs.
         """
-        if not state.is_local_process_zero:
-            return
+        if args.save_on_each_node:
+            if not state.is_local_process_zero:
+                return
+        else:
+            if not state.is_world_process_zero:
+                return
 
         logs = dict(
             current_steps=self.cur_steps,
@@ -122,6 +134,7 @@ class LogCallback(TrainerCallback):
             eval_loss=state.log_history[-1].get("eval_loss", None),
             predict_loss=state.log_history[-1].get("predict_loss", None),
             reward=state.log_history[-1].get("reward", None),
+            accuracy=state.log_history[-1].get("rewards/accuracies", None),
             learning_rate=state.log_history[-1].get("learning_rate", None),
             epoch=state.log_history[-1].get("epoch", None),
             percentage=round(self.cur_steps / self.max_steps * 100, 2) if self.max_steps != 0 else 100,

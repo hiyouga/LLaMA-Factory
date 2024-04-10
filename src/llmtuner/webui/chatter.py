@@ -36,7 +36,7 @@ class WebChatModel(ChatModel):
         return self.engine is not None
 
     def load_model(self, data: Dict[Component, Any]) -> Generator[str, None, None]:
-        get = lambda name: data[self.manager.get_elem_by_name(name)]
+        get = lambda elem_id: data[self.manager.get_elem_by_id(elem_id)]
         lang = get("top.lang")
         error = ""
         if self.loaded:
@@ -80,7 +80,7 @@ class WebChatModel(ChatModel):
         yield ALERTS["info_loaded"][lang]
 
     def unload_model(self, data: Dict[Component, Any]) -> Generator[str, None, None]:
-        lang = data[self.manager.get_elem_by_name("top.lang")]
+        lang = data[self.manager.get_elem_by_id("top.lang")]
 
         if self.demo_mode:
             gr.Warning(ALERTS["err_demo"][lang])
@@ -92,23 +92,29 @@ class WebChatModel(ChatModel):
         torch_gc()
         yield ALERTS["info_unloaded"][lang]
 
-    def predict(
+    def append(
         self,
-        chatbot: List[Tuple[str, str]],
+        chatbot: List[List[Optional[str]]],
+        messages: Sequence[Dict[str, str]],
         role: str,
         query: str,
-        messages: Sequence[Tuple[str, str]],
+    ) -> Tuple[List[List[Optional[str]]], List[Dict[str, str]], str]:
+        return chatbot + [[query, None]], messages + [{"role": role, "content": query}], ""
+
+    def stream(
+        self,
+        chatbot: List[List[Optional[str]]],
+        messages: Sequence[Dict[str, str]],
         system: str,
         tools: str,
         max_new_tokens: int,
         top_p: float,
         temperature: float,
-    ) -> Generator[Tuple[Sequence[Tuple[str, str]], Sequence[Tuple[str, str]]], None, None]:
-        chatbot.append([query, ""])
-        query_messages = messages + [{"role": role, "content": query}]
+    ) -> Generator[Tuple[List[List[Optional[str]]], List[Dict[str, str]]], None, None]:
+        chatbot[-1][1] = ""
         response = ""
         for new_text in self.stream_chat(
-            query_messages, system, tools, max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature
+            messages, system, tools, max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature
         ):
             response += new_text
             if tools:
@@ -120,18 +126,11 @@ class WebChatModel(ChatModel):
                 name, arguments = result
                 arguments = json.loads(arguments)
                 tool_call = json.dumps({"name": name, "arguments": arguments}, ensure_ascii=False)
-                output_messages = query_messages + [{"role": Role.FUNCTION.value, "content": tool_call}]
+                output_messages = messages + [{"role": Role.FUNCTION.value, "content": tool_call}]
                 bot_text = "```json\n" + tool_call + "\n```"
             else:
-                output_messages = query_messages + [{"role": Role.ASSISTANT.value, "content": result}]
+                output_messages = messages + [{"role": Role.ASSISTANT.value, "content": result}]
                 bot_text = result
 
-            chatbot[-1] = [query, self.postprocess(bot_text)]
+            chatbot[-1][1] = bot_text
             yield chatbot, output_messages
-
-    def postprocess(self, response: str) -> str:
-        blocks = response.split("```")
-        for i, block in enumerate(blocks):
-            if i % 2 == 0:
-                blocks[i] = block.replace("<", "&lt;").replace(">", "&gt;")
-        return "```".join(blocks)

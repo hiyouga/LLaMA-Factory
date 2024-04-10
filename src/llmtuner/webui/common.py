@@ -11,6 +11,7 @@ from ..extras.constants import (
     DEFAULT_MODULE,
     DEFAULT_TEMPLATE,
     PEFT_METHODS,
+    STAGES_USE_PAIR_DATA,
     SUPPORTED_MODELS,
     TRAINING_STAGES,
     DownloadSource,
@@ -20,6 +21,7 @@ from ..extras.misc import use_modelscope
 
 ADAPTER_NAMES = {WEIGHTS_NAME, SAFETENSORS_WEIGHTS_NAME}
 DEFAULT_CACHE_DIR = "cache"
+DEFAULT_CONFIG_DIR = "config"
 DEFAULT_DATA_DIR = "data"
 DEFAULT_SAVE_DIR = "saves"
 USER_CONFIG = "user.config"
@@ -31,6 +33,10 @@ def get_save_dir(*args) -> os.PathLike:
 
 def get_config_path() -> os.PathLike:
     return os.path.join(DEFAULT_CACHE_DIR, USER_CONFIG)
+
+
+def get_save_path(config_path: str) -> os.PathLike:
+    return os.path.join(DEFAULT_CONFIG_DIR, config_path)
 
 
 def load_config() -> Dict[str, Any]:
@@ -50,6 +56,22 @@ def save_config(lang: str, model_name: Optional[str] = None, model_path: Optiona
         user_config["path_dict"][model_name] = model_path
     with open(get_config_path(), "w", encoding="utf-8") as f:
         json.dump(user_config, f, indent=2, ensure_ascii=False)
+
+
+def load_args(config_path: str) -> Optional[Dict[str, Any]]:
+    try:
+        with open(get_save_path(config_path), "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def save_args(config_path: str, config_dict: Dict[str, Any]) -> str:
+    os.makedirs(DEFAULT_CONFIG_DIR, exist_ok=True)
+    with open(get_save_path(config_path), "w", encoding="utf-8") as f:
+        json.dump(config_dict, f, indent=2, ensure_ascii=False)
+
+    return str(get_save_path(config_path))
 
 
 def get_model_path(model_name: str) -> str:
@@ -79,9 +101,9 @@ def get_template(model_name: str) -> str:
     return "default"
 
 
-def list_adapters(model_name: str, finetuning_type: str) -> Dict[str, Any]:
+def list_adapters(model_name: str, finetuning_type: str) -> "gr.Dropdown":
     if finetuning_type not in PEFT_METHODS:
-        return gr.update(value=[], choices=[], interactive=False)
+        return gr.Dropdown(value=[], choices=[], interactive=False)
 
     adapters = []
     if model_name and finetuning_type == "lora":
@@ -92,7 +114,7 @@ def list_adapters(model_name: str, finetuning_type: str) -> Dict[str, Any]:
                     os.path.isfile(os.path.join(save_dir, adapter, name)) for name in ADAPTER_NAMES
                 ):
                     adapters.append(adapter)
-    return gr.update(value=[], choices=adapters, interactive=True)
+    return gr.Dropdown(value=[], choices=adapters, interactive=True)
 
 
 def load_dataset_info(dataset_dir: str) -> Dict[str, Dict[str, Any]]:
@@ -104,12 +126,12 @@ def load_dataset_info(dataset_dir: str) -> Dict[str, Dict[str, Any]]:
         return {}
 
 
-def list_dataset(dataset_dir: str = None, training_stage: str = list(TRAINING_STAGES.keys())[0]) -> Dict[str, Any]:
+def list_dataset(dataset_dir: str = None, training_stage: str = list(TRAINING_STAGES.keys())[0]) -> "gr.Dropdown":
     dataset_info = load_dataset_info(dataset_dir if dataset_dir is not None else DEFAULT_DATA_DIR)
-    ranking = TRAINING_STAGES[training_stage] in ["rm", "dpo"]
+    ranking = TRAINING_STAGES[training_stage] in STAGES_USE_PAIR_DATA
     datasets = [k for k, v in dataset_info.items() if v.get("ranking", False) == ranking]
-    return gr.update(value=[], choices=datasets)
+    return gr.Dropdown(value=[], choices=datasets)
 
 
-def autoset_packing(training_stage: str = list(TRAINING_STAGES.keys())[0]) -> Dict[str, Any]:
-    return gr.update(value=(TRAINING_STAGES[training_stage] == "pt"))
+def autoset_packing(training_stage: str = list(TRAINING_STAGES.keys())[0]) -> "gr.Button":
+    return gr.Button(value=(TRAINING_STAGES[training_stage] == "pt"))
