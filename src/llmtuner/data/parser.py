@@ -53,22 +53,35 @@ class DatasetAttr:
 
 
 def get_dataset_list(data_args: "DataArguments") -> List["DatasetAttr"]:
-    dataset_names = [ds.strip() for ds in data_args.dataset.split(",")] if data_args.dataset is not None else []
-    try:
-        with open(os.path.join(data_args.dataset_dir, DATA_CONFIG), "r") as f:
-            dataset_info = json.load(f)
-    except Exception as err:
-        if data_args.dataset is not None:
-            raise ValueError(
-                "Cannot open {} due to {}.".format(os.path.join(data_args.dataset_dir, DATA_CONFIG), str(err))
-            )
+    if data_args.dataset is not None:
+        dataset_names = [ds.strip() for ds in data_args.dataset.split(",")]
+    else:
+        dataset_names = []
+
+    if data_args.dataset_dir == "ONLINE":
         dataset_info = None
+    else:
+        try:
+            with open(os.path.join(data_args.dataset_dir, DATA_CONFIG), "r") as f:
+                dataset_info = json.load(f)
+        except Exception as err:
+            if len(dataset_names) != 0:
+                raise ValueError(
+                    "Cannot open {} due to {}.".format(os.path.join(data_args.dataset_dir, DATA_CONFIG), str(err))
+                )
+            dataset_info = None
 
     if data_args.interleave_probs is not None:
         data_args.interleave_probs = [float(prob.strip()) for prob in data_args.interleave_probs.split(",")]
 
     dataset_list: List[DatasetAttr] = []
     for name in dataset_names:
+        if dataset_info is None:
+            load_from = "ms_hub" if use_modelscope() else "hf_hub"
+            dataset_attr = DatasetAttr(load_from, dataset_name=name)
+            dataset_list.append(dataset_attr)
+            continue
+
         if name not in dataset_info:
             raise ValueError("Undefined dataset {} in {}.".format(name, DATA_CONFIG))
 
