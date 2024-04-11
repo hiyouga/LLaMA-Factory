@@ -6,7 +6,7 @@ from datasets import load_dataset, load_from_disk
 
 from ..extras.constants import FILEEXT2TYPE
 from ..extras.logging import get_logger
-from ..extras.misc import is_path_available
+from ..extras.misc import has_tokenized_data
 from .aligner import align_dataset
 from .parser import get_dataset_list
 from .preprocess import get_preprocess_and_print_func
@@ -81,7 +81,9 @@ def load_single_dataset(
                 cache_dir=cache_dir,
                 token=model_args.ms_hub_token,
                 use_streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
-            ).to_hf_dataset()
+            )
+            if isinstance(dataset, MsDataset):
+                dataset = dataset.to_hf_dataset()
         except ImportError:
             raise ImportError("Please install modelscope via `pip install modelscope -U`")
     else:
@@ -125,7 +127,7 @@ def get_dataset(
 
     # Load tokenized dataset
     if data_args.tokenized_path is not None:
-        if not is_path_available(data_args.tokenized_path):
+        if has_tokenized_data(data_args.tokenized_path):
             logger.warning("Loading dataset from disk will ignore other data arguments.")
             dataset = load_from_disk(data_args.tokenized_path)
             logger.info("Loaded tokenized dataset from {}.".format(data_args.tokenized_path))
