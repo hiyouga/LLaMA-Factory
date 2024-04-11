@@ -305,7 +305,7 @@ cd LLaMA-Factory
 pip install -e .[metrics]
 ```
 
-可选的额外依赖项：deepspeed、metrics、unsloth、galore、vllm、bitsandbytes、gptq、awq、aqlm、qwen、quality
+可选的额外依赖项：deepspeed、metrics、unsloth、galore、vllm、bitsandbytes、gptq、awq、aqlm、qwen、modelscope、quality
 
 <details><summary>Windows 用户指南</summary>
 
