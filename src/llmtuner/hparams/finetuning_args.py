@@ -299,8 +299,11 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         if self.use_galore and self.finetuning_type == "lora":
             raise ValueError("Cannot use LoRA with GaLore together.")
 
-        if self.use_lisa and self.lisa_interval_steps is None and self.lisa_activated_layers is None:
-            raise ValueError("`use_lisa` requires `lisa_interval_steps` and `lisa_activated_layers`")
+        if self.use_lisa:
+            if self.finetuning_type != 'full':
+                raise ValueError("`use_lisa` requires `finetuning_type` is `full`")
+            if self.lisa_interval_steps is None or self.lisa_activated_layers is None:
+                raise ValueError("`use_lisa` requires `lisa_interval_steps` and `lisa_activated_layers`")
 
     def save_to_json(self, json_path: str):
         r"""Saves the content of this instance in JSON format inside `json_path`."""

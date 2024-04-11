@@ -7,6 +7,7 @@ CUDA_VISIBLE_DEVICES=0 python ../../src/train_bash.py \
     --dataset alpaca_gpt4_en,glaive_toolcall \
     --dataset_dir ../../data \
     --template default \
+    --finetuning_type full \
     --use_lisa \
     --lisa_activated_layers 2 \
     --lisa_interval_steps 5 \
