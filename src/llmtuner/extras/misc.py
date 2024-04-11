@@ -193,16 +193,11 @@ def infer_optim_dtype(model_dtype: torch.dtype) -> torch.dtype:
         return torch.float32
 
 
-def is_path_available(path: os.PathLike) -> bool:
+def has_tokenized_data(path: os.PathLike) -> bool:
     r"""
-    Checks if the path is empty or not exist.
+    Checks if the path has a tokenized dataset.
     """
-    if not os.path.exists(path):
-        return True
-    elif os.path.isdir(path) and not os.listdir(path):
-        return True
-    else:
-        return False
+    return os.path.isdir(path) and len(os.listdir(path)) > 0
 
 
 def torch_gc() -> None:

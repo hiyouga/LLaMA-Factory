@@ -30,6 +30,7 @@ extra_require = {
     "awq": ["autoawq"],
     "aqlm": ["aqlm[gpu]>=1.1.0"],
     "qwen": ["tiktoken", "transformers_stream_generator"],
+    "modelscope": ["modelscope"],
     "quality": ["ruff"],
 }
 
