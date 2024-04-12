@@ -994,3 +994,13 @@ register_model_group(
     },
     template="atom",
 )
+
+register_model_group(
+    models={
+        "C4AI-Command-R-35B": {
+            DownloadSource.DEFAULT: "CohereForAI/c4ai-command-r-v01",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/c4ai-command-r-v01",
+        }
+    },
+    template="c4ai",
+)
