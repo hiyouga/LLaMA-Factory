@@ -65,8 +65,7 @@ def export_model(args: Optional[Dict[str, Any]] = None):
     if getattr(model, "quantization_method", None) is None:  # cannot convert dtype of a quantized model
         output_dtype = getattr(model.config, "torch_dtype", torch.float16)
         setattr(model.config, "torch_dtype", output_dtype)
-        for param in model.parameters():
-            param.data = param.data.to(output_dtype)
+        model = model.to(output_dtype)
 
     model.save_pretrained(
         save_directory=model_args.export_dir,
