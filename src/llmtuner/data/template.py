@@ -785,3 +785,11 @@ _register_template(
     format_user=StringFormatter(slots=["<human>:{{content}}\n<bot>:"]),
     format_separator=EmptyFormatter(slots=["\n"]),
 )
+
+_register_template(
+    name="c4ai",
+    format_user=StringFormatter(slots=["<|START_OF_TURN_TOKEN|><|USER_TOKEN|>{{content}}", "<|END_OF_TURN_TOKEN|>", "<|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>"]),
+    format_assistant=StringFormatter(slots=["{{content}}", "<|END_OF_TURN_TOKEN|>"]),
+    format_system=StringFormatter(slots=[{"bos_token"},"<|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|>{{content}}", "<|END_OF_TURN_TOKEN|>"]),
+    default_system="You are a powerful conversational AI trained by Cohere to help people. You are augmented by a number of tools, and your job is to use and consume the output of these tools to best help the user. You will see a conversation history between yourself and a user, ending with an utterance from the user. You will then see a specific instruction instructing you what kind of response to generate. When you answer the user's requests, you cite your sources in your answers, according to those instructions.",
+)
