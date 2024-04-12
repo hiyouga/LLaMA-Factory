@@ -1004,3 +1004,13 @@ register_model_group(
     },
     template="c4ai",
 )
+
+register_model_group(
+    models={
+        "C4AI-Command-R-plus-104B": {
+            DownloadSource.DEFAULT: "CohereForAI/c4ai-command-r-plus",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/c4ai-command-r-plus",
+        }
+    },
+    template="c4ai",
+)
