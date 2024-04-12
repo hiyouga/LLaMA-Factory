@@ -57,9 +57,11 @@ def create_modelcard_and_push(
     kwargs = {
         "tasks": "text-generation",
         "finetuned_from": model_args.model_name_or_path,
-        "dataset": [dataset.strip() for dataset in data_args.dataset.split(",")],
         "tags": ["llama-factory", finetuning_args.finetuning_type],
     }
+    if data_args.dataset is not None:
+        kwargs["dataset"] = [dataset.strip() for dataset in data_args.dataset.split(",")]
+
     if not training_args.do_train:
         pass
     elif training_args.push_to_hub:
