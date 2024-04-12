@@ -277,7 +277,11 @@ def get_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
 
     _verify_model_args(model_args, finetuning_args)
 
-    model_args.device_map = "auto"
+    if model_args.export_dir is not None:
+        model_args.device_map = {"": "cpu"}
+        model_args.compute_dtype = torch.float32
+    else:
+        model_args.device_map = "auto"
 
     return model_args, data_args, finetuning_args, generating_args
 
