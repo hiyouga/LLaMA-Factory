@@ -5,7 +5,7 @@
   },
   "alpaca_zh": {
     "file_name": "alpaca_data_zh_51k.json",
-    "file_sha1": "0016a4df88f523aad8dc004ada7575896824a0dc"
+    "file_sha1": "2ba9827122c158dc256668d42bd1bcb8bc6b786e"
   },
   "alpaca_gpt4_en": {
     "file_name": "alpaca_gpt4_data_en.json",
