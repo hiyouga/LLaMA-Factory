@@ -786,6 +786,7 @@ _register_template(
     format_separator=EmptyFormatter(slots=["\n"]),
 )
 
+
 _register_template(
     name="c4ai",
     format_user=StringFormatter(slots=["<|START_OF_TURN_TOKEN|><|USER_TOKEN|>{{content}}", "<|END_OF_TURN_TOKEN|>", "<|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>"]),
