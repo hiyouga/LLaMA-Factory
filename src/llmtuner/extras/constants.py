@@ -995,6 +995,7 @@ register_model_group(
     template="atom",
 )
 
+
 register_model_group(
     models={
         "C4AI-Command-R-35B": {
@@ -1004,6 +1005,7 @@ register_model_group(
     },
     template="c4ai",
 )
+
 
 register_model_group(
     models={
