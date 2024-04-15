@@ -244,6 +244,28 @@ register_model_group(
 
 register_model_group(
     models={
+        "CommandR-35B-Chat": {
+            DownloadSource.DEFAULT: "CohereForAI/c4ai-command-r-v01",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/c4ai-command-r-v01",
+        },
+        "CommandR-Plus-104B-Chat": {
+            DownloadSource.DEFAULT: "CohereForAI/c4ai-command-r-plus",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/c4ai-command-r-plus",
+        },
+        "CommandR-35B-4bit-Chat": {
+            DownloadSource.DEFAULT: "CohereForAI/c4ai-command-r-v01-4bit",
+            DownloadSource.MODELSCOPE: "mirror013/c4ai-command-r-v01-4bit",
+        },
+        "CommandR-Plus-104B-4bit-Chat": {
+            DownloadSource.DEFAULT: "CohereForAI/c4ai-command-r-plus-4bit",
+        },
+    },
+    template="cohere",
+)
+
+
+register_model_group(
+    models={
         "DeepSeek-LLM-7B-Base": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-llm-7b-base",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-llm-7b-base",
@@ -993,26 +1015,4 @@ register_model_group(
         },
     },
     template="atom",
-)
-
-
-register_model_group(
-    models={
-        "C4AI-Command-R-35B": {
-            DownloadSource.DEFAULT: "CohereForAI/c4ai-command-r-v01",
-            DownloadSource.MODELSCOPE: "AI-ModelScope/c4ai-command-r-v01",
-        }
-    },
-    template="c4ai",
-)
-
-
-register_model_group(
-    models={
-        "C4AI-Command-R-plus-104B": {
-            DownloadSource.DEFAULT: "CohereForAI/c4ai-command-r-plus",
-            DownloadSource.MODELSCOPE: "AI-ModelScope/c4ai-command-r-plus",
-        }
-    },
-    template="c4ai",
 )
