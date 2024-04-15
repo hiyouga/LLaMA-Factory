@@ -378,7 +378,7 @@
     }
   },
   "the_stack": {
-    "hf_hub_url": "bigcode/the-stack",
+    "hf_hub_url": "bigcode/the-stack-v2",
     "ms_hub_url": "AI-ModelScope/the-stack",
     "columns": {
       "prompt": "content"
