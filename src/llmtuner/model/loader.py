@@ -48,7 +48,6 @@ def load_tokenizer(model_args: "ModelArguments") -> "PreTrainedTokenizer":
         tokenizer = AutoTokenizer.from_pretrained(
             model_args.model_name_or_path,
             use_fast=True,
-            split_special_tokens=model_args.split_special_tokens,
             padding_side="right",
             **init_kwargs,
         )
