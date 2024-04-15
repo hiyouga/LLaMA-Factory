@@ -323,8 +323,8 @@ def patch_config(
     if not is_deepspeed_zero3_enabled():
         init_kwargs["low_cpu_mem_usage"] = model_args.low_cpu_mem_usage
         if init_kwargs["low_cpu_mem_usage"]:
-            if "device_map" not in init_kwargs:
-                init_kwargs["device_map"] = model_args.device_map or {"": get_current_device()}
+            if "device_map" not in init_kwargs and model_args.device_map:
+                init_kwargs["device_map"] = model_args.device_map
 
             if init_kwargs["device_map"] == "auto":
                 init_kwargs["offload_folder"] = model_args.offload_folder
