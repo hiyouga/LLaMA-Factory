@@ -244,28 +244,6 @@ register_model_group(
 
 register_model_group(
     models={
-        "CommandR-35B-Chat": {
-            DownloadSource.DEFAULT: "CohereForAI/c4ai-command-r-v01",
-            DownloadSource.MODELSCOPE: "AI-ModelScope/c4ai-command-r-v01",
-        },
-        "CommandR-Plus-104B-Chat": {
-            DownloadSource.DEFAULT: "CohereForAI/c4ai-command-r-plus",
-            DownloadSource.MODELSCOPE: "AI-ModelScope/c4ai-command-r-plus",
-        },
-        "CommandR-35B-4bit-Chat": {
-            DownloadSource.DEFAULT: "CohereForAI/c4ai-command-r-v01-4bit",
-            DownloadSource.MODELSCOPE: "mirror013/c4ai-command-r-v01-4bit",
-        },
-        "CommandR-Plus-104B-4bit-Chat": {
-            DownloadSource.DEFAULT: "CohereForAI/c4ai-command-r-plus-4bit",
-        },
-    },
-    template="cohere",
-)
-
-
-register_model_group(
-    models={
         "DeepSeek-LLM-7B-Base": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-llm-7b-base",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-llm-7b-base",
@@ -379,23 +357,6 @@ register_model_group(
         "Gemma-7B-Chat": {
             DownloadSource.DEFAULT: "google/gemma-7b-it",
             DownloadSource.MODELSCOPE: "AI-ModelScope/gemma-7b-it",
-        },
-    },
-    template="gemma",
-)
-
-
-register_model_group(
-    models={
-        "CodeGemma-2B": {
-            DownloadSource.DEFAULT: "google/codegemma-2b",
-        },
-        "CodeGemma-7B": {
-            DownloadSource.DEFAULT: "google/codegemma-7b",
-        },
-        "CodeGemma-7B-Chat": {
-            DownloadSource.DEFAULT: "google/codegemma-7b-it",
-            DownloadSource.MODELSCOPE: "AI-ModelScope/codegemma-7b-it",
         },
     },
     template="gemma",
@@ -1035,4 +996,19 @@ register_model_group(
         },
     },
     template="zephyr",
+)
+
+
+register_model_group(
+    models={
+        "Atom-7B": {
+            DownloadSource.DEFAULT: "FlagAlpha/Atom-7B",
+            DownloadSource.MODELSCOPE: "FlagAlpha/Atom-7B",
+        },
+        "Atom-7B-Chat": {
+            DownloadSource.DEFAULT: "FlagAlpha/Atom-7B-Chat",
+            DownloadSource.MODELSCOPE: "FlagAlpha/Atom-7B-Chat",
+        },
+    },
+    template="atom",
 )

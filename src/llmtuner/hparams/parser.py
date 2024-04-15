@@ -82,6 +82,9 @@ def _check_extra_dependencies(
     if model_args.use_unsloth:
         require_version("unsloth", "Please install unsloth: https://github.com/unslothai/unsloth")
 
+    if model_args.mixture_of_depths:
+        require_version("mixture-of-depth", "To fix: pip install mixture-of-depth")
+
     if model_args.infer_backend == "vllm":
         require_version("vllm>=0.3.3", "To fix: pip install vllm>=0.3.3")
 
@@ -153,9 +156,6 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
     if training_args.do_train and training_args.predict_with_generate:
         raise ValueError("`predict_with_generate` cannot be set as True while training.")
-
-    if training_args.do_train and model_args.quantization_device_map == "auto":
-        raise ValueError("Cannot use device map for quantized models in training.")
 
     if finetuning_args.use_dora and model_args.use_unsloth:
         raise ValueError("Unsloth does not support DoRA.")

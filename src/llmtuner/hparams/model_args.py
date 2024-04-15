@@ -55,7 +55,7 @@ class ModelArguments:
     )
     quantization_device_map: Optional[Literal["auto"]] = field(
         default=None,
-        metadata={"help": "Device map used to infer the 4-bit quantized model, needs bitsandbytes>=0.43.0."},
+        metadata={"help": "Device map used for loading the 4-bit quantized model, needs bitsandbytes>=0.43.0."},
     )
     rope_scaling: Optional[Literal["linear", "dynamic"]] = field(
         default=None,
@@ -68,6 +68,10 @@ class ModelArguments:
     shift_attn: bool = field(
         default=False,
         metadata={"help": "Enable shift short attention (S^2-Attn) proposed by LongLoRA."},
+    )
+    mixture_of_depths: Optional[Literal["convert", "continue"]] = field(
+        default=None,
+        metadata={"help": "Whether or not to use mixture-of-depths (MoD) in training."},
     )
     use_unsloth: bool = field(
         default=False,

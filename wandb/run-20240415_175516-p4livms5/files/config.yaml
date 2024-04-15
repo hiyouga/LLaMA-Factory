@@ -1,0 +1,656 @@
+wandb_version: 1
+
+_wandb:
+  desc: null
+  value:
+    python_version: 3.10.14
+    cli_version: 0.16.6
+    framework: huggingface
+    huggingface_version: 4.39.3
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    start_time: 1713196516.0
+    t:
+      1:
+      - 1
+      - 11
+      - 49
+      - 51
+      - 55
+      - 71
+      - 84
+      - 98
+      - 105
+      2:
+      - 1
+      - 11
+      - 49
+      - 51
+      - 55
+      - 71
+      - 84
+      - 98
+      - 105
+      3:
+      - 7
+      - 23
+      4: 3.10.14
+      5: 0.16.6
+      6: 4.39.3
+      8:
+      - 5
+      9:
+        1: transformers_trainer
+      13: linux-x86_64
+    m:
+    - 1: train/global_step
+      6:
+      - 3
+vocab_size:
+  desc: null
+  value: 32000
+max_position_embeddings:
+  desc: null
+  value: 4096
+hidden_size:
+  desc: null
+  value: 4096
+intermediate_size:
+  desc: null
+  value: 11008
+num_hidden_layers:
+  desc: null
+  value: 32
+num_attention_heads:
+  desc: null
+  value: 32
+num_key_value_heads:
+  desc: null
+  value: 32
+hidden_act:
+  desc: null
+  value: silu
+initializer_range:
+  desc: null
+  value: 0.02
+rms_norm_eps:
+  desc: null
+  value: 1.0e-05
+pretraining_tp:
+  desc: null
+  value: 1
+use_cache:
+  desc: null
+  value: false
+rope_theta:
+  desc: null
+  value: 10000.0
+rope_scaling:
+  desc: null
+  value: null
+attention_bias:
+  desc: null
+  value: false
+attention_dropout:
+  desc: null
+  value: 0.0
+return_dict:
+  desc: null
+  value: true
+output_hidden_states:
+  desc: null
+  value: false
+output_attentions:
+  desc: null
+  value: false
+torchscript:
+  desc: null
+  value: false
+torch_dtype:
+  desc: null
+  value: float16
+use_bfloat16:
+  desc: null
+  value: false
+tf_legacy_loss:
+  desc: null
+  value: false
+pruned_heads:
+  desc: null
+  value: {}
+tie_word_embeddings:
+  desc: null
+  value: false
+chunk_size_feed_forward:
+  desc: null
+  value: 0
+is_encoder_decoder:
+  desc: null
+  value: false
+is_decoder:
+  desc: null
+  value: false
+cross_attention_hidden_size:
+  desc: null
+  value: null
+add_cross_attention:
+  desc: null
+  value: false
+tie_encoder_decoder:
+  desc: null
+  value: false
+max_length:
+  desc: null
+  value: 20
+min_length:
+  desc: null
+  value: 0
+do_sample:
+  desc: null
+  value: false
+early_stopping:
+  desc: null
+  value: false
+num_beams:
+  desc: null
+  value: 1
+num_beam_groups:
+  desc: null
+  value: 1
+diversity_penalty:
+  desc: null
+  value: 0.0
+temperature:
+  desc: null
+  value: 1.0
+top_k:
+  desc: null
+  value: 50
+top_p:
+  desc: null
+  value: 1.0
+typical_p:
+  desc: null
+  value: 1.0
+repetition_penalty:
+  desc: null
+  value: 1.0
+length_penalty:
+  desc: null
+  value: 1.0
+no_repeat_ngram_size:
+  desc: null
+  value: 0
+encoder_no_repeat_ngram_size:
+  desc: null
+  value: 0
+bad_words_ids:
+  desc: null
+  value: null
+num_return_sequences:
+  desc: null
+  value: 1
+output_scores:
+  desc: null
+  value: false
+return_dict_in_generate:
+  desc: null
+  value: false
+forced_bos_token_id:
+  desc: null
+  value: null
+forced_eos_token_id:
+  desc: null
+  value: null
+remove_invalid_values:
+  desc: null
+  value: false
+exponential_decay_length_penalty:
+  desc: null
+  value: null
+suppress_tokens:
+  desc: null
+  value: null
+begin_suppress_tokens:
+  desc: null
+  value: null
+architectures:
+  desc: null
+  value:
+  - LlamaForCausalLM
+finetuning_task:
+  desc: null
+  value: null
+id2label:
+  desc: null
+  value:
+    '0': LABEL_0
+    '1': LABEL_1
+label2id:
+  desc: null
+  value:
+    LABEL_0: 0
+    LABEL_1: 1
+tokenizer_class:
+  desc: null
+  value: null
+prefix:
+  desc: null
+  value: null
+bos_token_id:
+  desc: null
+  value: 1
+pad_token_id:
+  desc: null
+  value: null
+eos_token_id:
+  desc: null
+  value: 2
+sep_token_id:
+  desc: null
+  value: null
+decoder_start_token_id:
+  desc: null
+  value: null
+task_specific_params:
+  desc: null
+  value: null
+problem_type:
+  desc: null
+  value: null
+_name_or_path:
+  desc: null
+  value: meta-llama/Llama-2-7b-hf
+transformers_version:
+  desc: null
+  value: 4.39.3
+model_type:
+  desc: null
+  value: llama
+output_dir:
+  desc: null
+  value: ./test
+overwrite_output_dir:
+  desc: null
+  value: true
+do_train:
+  desc: null
+  value: true
+do_eval:
+  desc: null
+  value: false
+do_predict:
+  desc: null
+  value: false
+evaluation_strategy:
+  desc: null
+  value: 'no'
+prediction_loss_only:
+  desc: null
+  value: false
+per_device_train_batch_size:
+  desc: null
+  value: 1
+per_device_eval_batch_size:
+  desc: null
+  value: 8
+per_gpu_train_batch_size:
+  desc: null
+  value: null
+per_gpu_eval_batch_size:
+  desc: null
+  value: null
+gradient_accumulation_steps:
+  desc: null
+  value: 1
+eval_accumulation_steps:
+  desc: null
+  value: null
+eval_delay:
+  desc: null
+  value: 0
+learning_rate:
+  desc: null
+  value: 0.0001
+weight_decay:
+  desc: null
+  value: 0.0
+adam_beta1:
+  desc: null
+  value: 0.9
+adam_beta2:
+  desc: null
+  value: 0.999
+adam_epsilon:
+  desc: null
+  value: 1.0e-08
+max_grad_norm:
+  desc: null
+  value: 1.0
+num_train_epochs:
+  desc: null
+  value: 3.0
+max_steps:
+  desc: null
+  value: -1
+lr_scheduler_type:
+  desc: null
+  value: cosine
+lr_scheduler_kwargs:
+  desc: null
+  value: {}
+warmup_ratio:
+  desc: null
+  value: 0.0
+warmup_steps:
+  desc: null
+  value: 10
+log_level:
+  desc: null
+  value: passive
+log_level_replica:
+  desc: null
+  value: warning
+log_on_each_node:
+  desc: null
+  value: true
+logging_dir:
+  desc: null
+  value: ./test/runs/Apr15_17-55-05_marco-System-Product-Name
+logging_strategy:
+  desc: null
+  value: steps
+logging_first_step:
+  desc: null
+  value: false
+logging_steps:
+  desc: null
+  value: 1.0
+logging_nan_inf_filter:
+  desc: null
+  value: true
+save_strategy:
+  desc: null
+  value: steps
+save_steps:
+  desc: null
+  value: 33
+save_total_limit:
+  desc: null
+  value: null
+save_safetensors:
+  desc: null
+  value: true
+save_on_each_node:
+  desc: null
+  value: false
+save_only_model:
+  desc: null
+  value: false
+no_cuda:
+  desc: null
+  value: false
+use_cpu:
+  desc: null
+  value: false
+use_mps_device:
+  desc: null
+  value: false
+seed:
+  desc: null
+  value: 42
+data_seed:
+  desc: null
+  value: null
+jit_mode_eval:
+  desc: null
+  value: false
+use_ipex:
+  desc: null
+  value: false
+bf16:
+  desc: null
+  value: false
+fp16:
+  desc: null
+  value: true
+fp16_opt_level:
+  desc: null
+  value: O1
+half_precision_backend:
+  desc: null
+  value: auto
+bf16_full_eval:
+  desc: null
+  value: false
+fp16_full_eval:
+  desc: null
+  value: false
+tf32:
+  desc: null
+  value: null
+local_rank:
+  desc: null
+  value: 0
+ddp_backend:
+  desc: null
+  value: null
+tpu_num_cores:
+  desc: null
+  value: null
+tpu_metrics_debug:
+  desc: null
+  value: false
+debug:
+  desc: null
+  value: []
+dataloader_drop_last:
+  desc: null
+  value: false
+eval_steps:
+  desc: null
+  value: null
+dataloader_num_workers:
+  desc: null
+  value: 4
+dataloader_prefetch_factor:
+  desc: null
+  value: null
+past_index:
+  desc: null
+  value: -1
+run_name:
+  desc: null
+  value: ./test
+disable_tqdm:
+  desc: null
+  value: false
+remove_unused_columns:
+  desc: null
+  value: true
+label_names:
+  desc: null
+  value: null
+load_best_model_at_end:
+  desc: null
+  value: false
+metric_for_best_model:
+  desc: null
+  value: null
+greater_is_better:
+  desc: null
+  value: null
+ignore_data_skip:
+  desc: null
+  value: false
+fsdp:
+  desc: null
+  value: []
+fsdp_min_num_params:
+  desc: null
+  value: 0
+fsdp_config:
+  desc: null
+  value:
+    min_num_params: 0
+    xla: false
+    xla_fsdp_v2: false
+    xla_fsdp_grad_ckpt: false
+fsdp_transformer_layer_cls_to_wrap:
+  desc: null
+  value: null
+accelerator_config:
+  desc: null
+  value:
+    split_batches: false
+    dispatch_batches: null
+    even_batches: true
+    use_seedable_sampler: true
+deepspeed:
+  desc: null
+  value: null
+label_smoothing_factor:
+  desc: null
+  value: 0.0
+optim:
+  desc: null
+  value: paged_adamw_32bit
+optim_args:
+  desc: null
+  value: null
+adafactor:
+  desc: null
+  value: false
+group_by_length:
+  desc: null
+  value: false
+length_column_name:
+  desc: null
+  value: length
+report_to:
+  desc: null
+  value:
+  - wandb
+ddp_find_unused_parameters:
+  desc: null
+  value: false
+ddp_bucket_cap_mb:
+  desc: null
+  value: null
+ddp_broadcast_buffers:
+  desc: null
+  value: null
+dataloader_pin_memory:
+  desc: null
+  value: true
+dataloader_persistent_workers:
+  desc: null
+  value: false
+skip_memory_metrics:
+  desc: null
+  value: true
+use_legacy_prediction_loop:
+  desc: null
+  value: false
+push_to_hub:
+  desc: null
+  value: false
+resume_from_checkpoint:
+  desc: null
+  value: null
+hub_model_id:
+  desc: null
+  value: null
+hub_strategy:
+  desc: null
+  value: every_save
+hub_token:
+  desc: null
+  value: <HUB_TOKEN>
+hub_private_repo:
+  desc: null
+  value: false
+hub_always_push:
+  desc: null
+  value: false
+gradient_checkpointing:
+  desc: null
+  value: false
+gradient_checkpointing_kwargs:
+  desc: null
+  value: null
+include_inputs_for_metrics:
+  desc: null
+  value: false
+fp16_backend:
+  desc: null
+  value: auto
+push_to_hub_model_id:
+  desc: null
+  value: null
+push_to_hub_organization:
+  desc: null
+  value: null
+push_to_hub_token:
+  desc: null
+  value: <PUSH_TO_HUB_TOKEN>
+mp_parameters:
+  desc: null
+  value: ''
+auto_find_batch_size:
+  desc: null
+  value: false
+full_determinism:
+  desc: null
+  value: false
+torchdynamo:
+  desc: null
+  value: null
+ray_scope:
+  desc: null
+  value: last
+ddp_timeout:
+  desc: null
+  value: 1800
+torch_compile:
+  desc: null
+  value: false
+torch_compile_backend:
+  desc: null
+  value: null
+torch_compile_mode:
+  desc: null
+  value: null
+dispatch_batches:
+  desc: null
+  value: null
+split_batches:
+  desc: null
+  value: null
+include_tokens_per_second:
+  desc: null
+  value: false
+include_num_input_tokens_seen:
+  desc: null
+  value: false
+neftune_noise_alpha:
+  desc: null
+  value: null
+optim_target_modules:
+  desc: null
+  value: null
+sortish_sampler:
+  desc: null
+  value: false
+predict_with_generate:
+  desc: null
+  value: false
+generation_max_length:
+  desc: null
+  value: null
+generation_num_beams:
+  desc: null
+  value: null
+generation_config:
+  desc: null
+  value: null
