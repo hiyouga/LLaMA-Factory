@@ -3,7 +3,7 @@
 CUDA_VISIBLE_DEVICES=0 python ../../src/train_bash.py \
     --stage sft \
     --do_predict \
-    --model_name_or_path meta-llama/Llama-2-7b-hf \
+    --model_name_or_path ../../saves/LLaMA2-7B/full/sft \
     --dataset alpaca_gpt4_en,glaive_toolcall \
     --dataset_dir ../../data \
     --template default \
