@@ -82,6 +82,8 @@ def load_model(
             "token": model_args.hf_hub_token,
             "device_map": {"": get_current_device()},
             "rope_scaling": getattr(config, "rope_scaling", None),
+            "fix_tokenizer": False,
+            "trust_remote_code": True,
         }
         try:
             model, _ = FastLanguageModel.from_pretrained(**unsloth_kwargs)
