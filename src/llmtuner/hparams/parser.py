@@ -8,10 +8,10 @@ import transformers
 from transformers import HfArgumentParser, Seq2SeqTrainingArguments
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import is_torch_bf16_gpu_available
+from transformers.utils.versions import require_version
 
 from ..extras.logging import get_logger
 from ..extras.misc import check_dependencies, get_current_device
-from ..extras.packages import is_unsloth_available
 from .data_args import DataArguments
 from .evaluation_args import EvaluationArguments
 from .finetuning_args import FinetuningArguments
@@ -74,6 +74,26 @@ def _verify_model_args(model_args: "ModelArguments", finetuning_args: "Finetunin
             raise ValueError("Quantized model only accepts a single adapter. Merge them first.")
 
 
+def _check_extra_dependencies(
+    model_args: "ModelArguments",
+    finetuning_args: "FinetuningArguments",
+    training_args: Optional["Seq2SeqTrainingArguments"] = None,
+) -> None:
+    if model_args.use_unsloth:
+        require_version("unsloth", "Please install unsloth: https://github.com/unslothai/unsloth")
+
+    if model_args.infer_backend == "vllm":
+        require_version("vllm>=0.3.3", "To fix: pip install vllm>=0.3.3")
+
+    if finetuning_args.use_galore:
+        require_version("galore_torch", "To fix: pip install galore_torch")
+
+    if training_args is not None and training_args.predict_with_generate:
+        require_version("jieba", "To fix: pip install jieba")
+        require_version("nltk", "To fix: pip install nltk")
+        require_version("rouge_chinese", "To fix: pip install rouge-chinese")
+
+
 def _parse_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     parser = HfArgumentParser(_TRAIN_ARGS)
     return _parse_args(parser, args)
@@ -131,9 +151,6 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if training_args.do_train and training_args.predict_with_generate:
         raise ValueError("`predict_with_generate` cannot be set as True while training.")
 
-    if training_args.do_train and model_args.use_unsloth and not is_unsloth_available():
-        raise ValueError("Unsloth was not installed: https://github.com/unslothai/unsloth")
-
     if finetuning_args.use_dora and model_args.use_unsloth:
         raise ValueError("Unsloth does not support DoRA.")
 
@@ -158,6 +175,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         raise ValueError("vLLM backend is only available for API, CLI and Web.")
 
     _verify_model_args(model_args, finetuning_args)
+    _check_extra_dependencies(model_args, finetuning_args, training_args)
 
     if (
         training_args.do_train
@@ -277,6 +295,7 @@ def get_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
             raise ValueError("vLLM engine does not support RoPE scaling.")
 
     _verify_model_args(model_args, finetuning_args)
+    _check_extra_dependencies(model_args, finetuning_args)
 
     if model_args.export_dir is not None:
         model_args.device_map = {"": torch.device(model_args.export_device)}
@@ -298,6 +317,7 @@ def get_eval_args(args: Optional[Dict[str, Any]] = None) -> _EVAL_CLS:
         raise ValueError("vLLM backend is only available for API, CLI and Web.")
 
     _verify_model_args(model_args, finetuning_args)
+    _check_extra_dependencies(model_args, finetuning_args)
 
     model_args.device_map = "auto"
 

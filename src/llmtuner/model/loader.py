@@ -85,7 +85,9 @@ def load_model(
             logger.warning("Unsloth does not support loading adapters.")
 
     if model is None:
-        model = AutoModelForCausalLM.from_pretrained(model_args.model_name_or_path, config=config, **init_kwargs)
+        init_kwargs["config"] = config
+        init_kwargs["pretrained_model_name_or_path"] = model_args.model_name_or_path
+        model: "PreTrainedModel" = AutoModelForCausalLM.from_pretrained(**init_kwargs)
 
     patch_model(model, tokenizer, model_args, is_trainable)
     register_autoclass(config, model, tokenizer)

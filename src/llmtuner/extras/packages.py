@@ -49,10 +49,6 @@ def is_starlette_available():
     return _is_package_available("sse_starlette")
 
 
-def is_unsloth_available():
-    return _is_package_available("unsloth")
-
-
 def is_uvicorn_available():
     return _is_package_available("uvicorn")
 
