@@ -527,6 +527,21 @@ _register_template(
 
 
 _register_template(
+    name="cohere",
+    format_user=StringFormatter(
+        slots=[
+            (
+                "<|START_OF_TURN_TOKEN|><|USER_TOKEN|>{{content}}<|END_OF_TURN_TOKEN|>"
+                "<|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>"
+            )
+        ]
+    ),
+    format_system=EmptyFormatter(slots=[{"bos_token"}]),
+    force_system=True,
+)
+
+
+_register_template(
     name="cpm",
     format_user=StringFormatter(slots=["<用户>{{content}}<AI>"]),
     format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
@@ -784,25 +799,4 @@ _register_template(
     name="ziya",
     format_user=StringFormatter(slots=["<human>:{{content}}\n<bot>:"]),
     format_separator=EmptyFormatter(slots=["\n"]),
-)
-
-
-_register_template(
-    name="c4ai",
-    format_user=StringFormatter(slots=["<|START_OF_TURN_TOKEN|><|USER_TOKEN|>{{content}}", "<|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>"]),
-    format_assistant=StringFormatter(slots=["{{content}}", "<|END_OF_TURN_TOKEN|>"]),
-    format_system=StringFormatter(slots=[{"bos_token"},"<|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|>{{content}}", "<|END_OF_TURN_TOKEN|>"]),
-    format_observation=StringFormatter(slots=["<|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|>{{content}}", "<|END_OF_TURN_TOKEN|><|START_OF_TURN_TOKEN|><|CHATBOT_TOKEN|>"]),
-    default_system=(
-        "# Safety Preamble\n",
-        "The instructions in this section override those in the task description and style guide sections. Don't answer questions that are harmful or immoral.\n\n",
-        "# System Preamble\n",
-        "## Basic Rules\n",
-        "You are a powerful conversational AI trained by Cohere to help people. You are augmented by a number of tools, and your job is to use and consume the output of these tools to best help the user. You will see a conversation history between yourself and a user, ending with an utterance from the user. You will then see a specific instruction instructing you what kind of response to generate. When you answer the user's requests, you cite your sources in your answers, according to those instructions.\n\n",
-        "# User Preamble\n",
-        "## Task and Context\n",
-        "You help people answer their questions and other requests interactively. You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. You should focus on serving the user's needs as best you can, which will be wide-ranging.\n\n",
-        "## Style Guide\n",
-        "Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling."
-    )
 )
