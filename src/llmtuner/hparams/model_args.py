@@ -55,7 +55,7 @@ class ModelArguments:
     )
     quantization_device_map: Optional[Literal["auto"]] = field(
         default=None,
-        metadata={"help": "Device map used for loading the 4-bit quantized model, needs bitsandbytes>=0.43.0."},
+        metadata={"help": "Device map used to infer the 4-bit quantized model, needs bitsandbytes>=0.43.0."},
     )
     rope_scaling: Optional[Literal["linear", "dynamic"]] = field(
         default=None,
