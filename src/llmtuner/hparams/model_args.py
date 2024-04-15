@@ -129,6 +129,10 @@ class ModelArguments:
         default=1,
         metadata={"help": "The file shard size (in GB) of the exported model."},
     )
+    export_device: str = field(
+        default="cpu",
+        metadata={"help": "The device used in model export."},
+    )
     export_quantization_bit: Optional[int] = field(
         default=None,
         metadata={"help": "The number of bits to quantize the exported model."},
