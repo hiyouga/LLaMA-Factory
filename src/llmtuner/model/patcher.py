@@ -133,7 +133,9 @@ def _configure_quantization(
         if is_deepspeed_zero3_enabled():
             raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantized models.")
 
-        init_kwargs["device_map"] = {"": get_current_device()}
+        if model_args.quantization_device_map != "auto":
+            init_kwargs["device_map"] = {"": get_current_device()}
+
         quantization_config: Dict[str, Any] = getattr(config, "quantization_config", None)
         quant_method = quantization_config.get("quant_method", "")
 

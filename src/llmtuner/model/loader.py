@@ -36,13 +36,23 @@ def load_tokenizer(model_args: "ModelArguments") -> "PreTrainedTokenizer":
     Note: including inplace operation of model_args.
     """
     init_kwargs = _get_init_kwargs(model_args)
-    tokenizer = AutoTokenizer.from_pretrained(
-        model_args.model_name_or_path,
-        use_fast=model_args.use_fast_tokenizer,
-        split_special_tokens=model_args.split_special_tokens,
-        padding_side="right",
-        **init_kwargs,
-    )
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_args.model_name_or_path,
+            use_fast=model_args.use_fast_tokenizer,
+            split_special_tokens=model_args.split_special_tokens,
+            padding_side="right",
+            **init_kwargs,
+        )
+    except ValueError:  # try the fast one
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_args.model_name_or_path,
+            use_fast=True,
+            split_special_tokens=model_args.split_special_tokens,
+            padding_side="right",
+            **init_kwargs,
+        )
+
     patch_tokenizer(tokenizer)
     return tokenizer
 
