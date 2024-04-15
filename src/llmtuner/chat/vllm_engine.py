@@ -1,8 +1,6 @@
 import uuid
 from typing import TYPE_CHECKING, AsyncGenerator, AsyncIterator, Dict, List, Optional, Sequence
 
-from transformers.utils.versions import require_version
-
 from ..data import get_template_and_fix_tokenizer
 from ..extras.misc import get_device_count
 from ..extras.packages import is_vllm_available
@@ -25,7 +23,6 @@ class VllmEngine(BaseEngine):
         finetuning_args: "FinetuningArguments",
         generating_args: "GeneratingArguments",
     ) -> None:
-        require_version("vllm>=0.3.3", "To fix: pip install vllm>=0.3.3")
         self.can_generate = finetuning_args.stage == "sft"
         engine_args = AsyncEngineArgs(
             model=model_args.model_name_or_path,
