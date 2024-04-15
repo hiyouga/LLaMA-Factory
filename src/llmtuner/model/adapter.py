@@ -32,6 +32,9 @@ def init_adapter(
         logger.info("Adapter is not found at evaluation, load the base model.")
         return model
 
+    if finetuning_args.finetuning_type != "lora" and getattr(model, "quantization_method", None):
+        raise ValueError("You can only use lora for quantized models.")
+
     if finetuning_args.finetuning_type == "full" and is_trainable:
         logger.info("Fine-tuning method: Full")
         if not finetuning_args.pure_bf16:
@@ -129,9 +132,12 @@ def init_adapter(
             if finetuning_args.use_llama_pro:
                 target_modules = find_expanded_modules(model, target_modules, finetuning_args.num_layer_trainable)
 
-            if finetuning_args.use_dora and getattr(model, "quantization_method", None) is not None:
-                if getattr(model, "quantization_method", None) != QuantizationMethod.BITS_AND_BYTES:
-                    raise ValueError("DoRA is not compatible with PTQ-quantized models.")
+            if (
+                finetuning_args.use_dora
+                and getattr(model, "quantization_method", None) is not None
+                and getattr(model, "quantization_method", None) != QuantizationMethod.BITS_AND_BYTES
+            ):
+                raise ValueError("DoRA is not compatible with PTQ-quantized models.")
 
             peft_kwargs = {
                 "r": finetuning_args.lora_rank,
