@@ -151,6 +151,9 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if training_args.do_train and training_args.predict_with_generate:
         raise ValueError("`predict_with_generate` cannot be set as True while training.")
 
+    if training_args.do_train and model_args.quantization_device_map == "auto":
+        raise ValueError("Cannot use device map for quantized models in training.")
+
     if finetuning_args.use_dora and model_args.use_unsloth:
         raise ValueError("Unsloth does not support DoRA.")
 
