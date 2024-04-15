@@ -22,6 +22,7 @@ examples/
 ├── full_multi_gpu/
 │   ├── single_node.sh: 使用 DeepSpeed 进行单节点训练
 │   └── multi_node.sh: 使用 DeepSpeed 进行多节点训练
+|   └── predict.sh: 使用单卡做全参批量预测
 ├── merge_lora/
 │   ├── merge.sh: 将 LoRA 权重合并到预训练模型中
 │   └── quantize.sh: 使用 AutoGPTQ 量化模型
