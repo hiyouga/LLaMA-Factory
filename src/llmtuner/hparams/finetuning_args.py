@@ -204,7 +204,45 @@ class GaloreArguments:
 
 
 @dataclass
-class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments):
+class LisaArguments:
+    r"""
+        paper: https://arxiv.org/abs/2403.17919
+        ref: https://github.com/OptimalScale/LMFlow
+        Arguments pertaining to the Lisa algorithm.
+            - 始终更新底层 embedding 和顶层 linear head；
+            - 随机更新少数中间的 self-attention 层，比如 2-4 层。
+        """
+    use_lisa: bool = field(
+        default=False,
+        metadata={
+            "help": "the number of activated layers in LISA."
+        }
+    )
+    lisa_activated_layers: int = field(
+        default=None,
+        metadata={
+            "help": "the number of activated layers in LISA."
+        }
+    )
+    lisa_interval_steps: int = field(
+        default=None,
+        metadata={
+            "help": "the number of steps in each freezing interval of LISA, i.e. "
+                    "the selected unfrozen layers are randomly switched every {lisa_interval_steps} steps."
+        }
+    )
+    lisa_attention_name: str = field(
+        default="model.layers",
+        metadata={"help": "suffix name of attention names"}
+    )
+    lisa_verbose: bool = field(
+        default=False,
+        metadata={"help": "output more for lisa"},
+    )
+
+
+@dataclass
+class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments, LisaArguments):
     r"""
     Arguments pertaining to which techniques we are going to fine-tuning with.
     """
@@ -260,6 +298,12 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
 
         if self.use_galore and self.finetuning_type == "lora":
             raise ValueError("Cannot use LoRA with GaLore together.")
+
+        if self.use_lisa:
+            if self.finetuning_type != 'full':
+                raise ValueError("`use_lisa` requires `finetuning_type` is `full`")
+            if self.lisa_interval_steps is None or self.lisa_activated_layers is None:
+                raise ValueError("`use_lisa` requires `lisa_interval_steps` and `lisa_activated_layers`")
 
     def save_to_json(self, json_path: str):
         r"""Saves the content of this instance in JSON format inside `json_path`."""

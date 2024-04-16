@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, List, Optional
 from transformers import DataCollatorForSeq2Seq
 
 from ...data import get_dataset, split_dataset
+from ...extras.callbacks import LisaTrainCallback
 from ...extras.constants import IGNORE_INDEX
 from ...extras.misc import get_logits_processor
 from ...extras.ploting import plot_loss
@@ -12,7 +13,6 @@ from ...model import load_model, load_tokenizer
 from ..utils import create_modelcard_and_push
 from .metric import ComputeMetrics
 from .trainer import CustomSeq2SeqTrainer
-
 
 if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments, TrainerCallback
@@ -59,6 +59,10 @@ def run_sft(
         compute_metrics=ComputeMetrics(tokenizer) if training_args.predict_with_generate else None,
         **split_dataset(dataset, data_args, training_args),
     )
+
+    # post callbacks
+    if finetuning_args.use_lisa:
+        trainer.add_callback(LisaTrainCallback(finetuning_args, trainer))
 
     # Keyword arguments for `model.generate`
     gen_kwargs = generating_args.to_dict()

@@ -2,21 +2,94 @@ import json
 import os
 import time
 from datetime import timedelta
+from functools import reduce
 from typing import TYPE_CHECKING
 
+import numpy as np
 from transformers import TrainerCallback
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR, has_length
 
 from .constants import LOG_FILE_NAME
 from .logging import get_logger
-from .misc import fix_valuehead_checkpoint
-
+from .misc import fix_valuehead_checkpoint, count_parameters
+from ..hparams import FinetuningArguments
 
 if TYPE_CHECKING:
     from transformers import TrainerControl, TrainerState, TrainingArguments
 
-
 logger = get_logger(__name__)
+
+
+class LisaTrainCallback(TrainerCallback):
+    def __init__(self, finetuning_args: "FinetuningArguments", trainer: None):
+        super().__init__()
+        self.trainer = trainer
+        self.layers_attribute = self.attention_layer_auto_detect(finetuning_args.lisa_attention_name)
+        self.step_interval = finetuning_args.lisa_interval_steps
+        self.lisa_activated_layers = finetuning_args.lisa_activated_layers
+        self.total_layers = len(self.get_layers())
+        self.lisa_verbose = finetuning_args.lisa_verbose
+        self.trained_layers = set()
+        if self.lisa_activated_layers > self.total_layers:
+            raise ValueError(
+                f'lisa_activated_layers>({self.lisa_activated_layers})>total_layers({self.total_layers}), '
+                f'please check your arguments.')
+        logger.info(
+            f"LISA will activate {self.lisa_activated_layers}/{self.total_layers} layers "
+            f"({self.lisa_activated_layers * 100 / self.total_layers}%) every {self.step_interval} steps"
+        )
+
+    def attention_layer_auto_detect(self, lisa_attention_name):
+        class_to_layers_map = {
+            'LlamaForCausalLM': 'model.layers',
+            'Qwen2ForCausalLM': 'model.layers',
+            'MistralForCausalLM': 'model.layers',
+            'MixtralForCausalLM': 'model.layers',
+            'GemmaForCausalLM': 'model.layers',
+            'GPT2LMHeadModel': 'transformer.h',
+        }
+        _atten_val = lisa_attention_name
+        model_class_name = self.trainer.model.__class__.__name__
+        if _atten_val is None:
+            # Determine the way to access layers based on the model type
+            if model_class_name in class_to_layers_map:
+                _atten_val = class_to_layers_map[model_class_name]
+
+        return _atten_val
+
+    def on_step_begin(self, args, state, control, **kwargs):
+        if state.global_step % self.step_interval == 0:
+            self.switch_active_layers()
+
+    def freeze_all_layers(self):
+        layers = self.get_layers()
+        for layer in layers:
+            for param in layer.parameters():
+                param.requires_grad = False
+
+    def get_layers(self):
+        return reduce(getattr, self.layers_attribute.split("."), self.trainer.model)
+
+    def switch_active_layers(self):
+        # disable gradients for all layers
+        self.freeze_all_layers()
+        layers = self.get_layers()
+        active_layers_indices = np.random.choice(range(self.total_layers), self.lisa_activated_layers,
+                                                 replace=False)
+        self.trained_layers.update(active_layers_indices)
+        for idx in active_layers_indices:
+            for param in layers[idx].parameters():
+                param.requires_grad = True
+        if self.lisa_verbose:
+            trainable_params, all_param = count_parameters(self.trainer.model)
+            logger.info("trainable params: {:d} || all params: {:d} || trainable%: {:.4f}".format(
+                trainable_params, all_param, 100 * trainable_params / all_param
+            ))
+            logger.info(
+                f"LISA will activate layers {','.join(map(str, sorted(active_layers_indices)))} for the next steps. "
+                f"{len(self.trained_layers)}/{self.total_layers} layers "
+                f"({len(self.trained_layers) * 100 / self.total_layers}%)  "
+                f"are trained: {','.join(map(str, sorted(self.trained_layers)))}")
 
 
 class FixValueHeadModelCallback(TrainerCallback):
@@ -107,7 +180,7 @@ class LogCallback(TrainerCallback):
             self.max_steps = 0
 
     def on_predict(
-        self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", *other, **kwargs
+            self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", *other, **kwargs
     ):
         r"""
         Event called after a successful prediction.
@@ -153,7 +226,7 @@ class LogCallback(TrainerCallback):
             f.write(json.dumps(logs) + "\n")
 
     def on_prediction_step(
-        self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs
+            self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs
     ):
         r"""
         Event called after a prediction step.
