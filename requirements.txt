@@ -4,7 +4,7 @@ datasets>=2.14.3
 accelerate>=0.27.2
 peft>=0.10.0
 trl>=0.8.1
-gradio>=4.0.0,<=4.21.0
+gradio>=4.0.0
 scipy
 einops
 sentencepiece
