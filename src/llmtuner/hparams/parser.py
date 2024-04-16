@@ -82,11 +82,17 @@ def _check_extra_dependencies(
     if model_args.use_unsloth:
         require_version("unsloth", "Please install unsloth: https://github.com/unslothai/unsloth")
 
+    if model_args.mixture_of_depths:
+        require_version("mixture-of-depth", "To fix: pip install mixture-of-depth")
+
     if model_args.infer_backend == "vllm":
         require_version("vllm>=0.3.3", "To fix: pip install vllm>=0.3.3")
 
     if finetuning_args.use_galore:
         require_version("galore_torch", "To fix: pip install galore_torch")
+
+    if finetuning_args.use_badam:
+        require_version("badam", "To fix: pip install badam")
 
     if training_args is not None and training_args.predict_with_generate:
         require_version("jieba", "To fix: pip install jieba")
@@ -151,6 +157,9 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if training_args.do_train and training_args.predict_with_generate:
         raise ValueError("`predict_with_generate` cannot be set as True while training.")
 
+    if training_args.do_train and model_args.quantization_device_map == "auto":
+        raise ValueError("Cannot use device map for quantized models in training.")
+
     if finetuning_args.use_dora and model_args.use_unsloth:
         raise ValueError("Unsloth does not support DoRA.")
 
@@ -169,14 +178,15 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         raise ValueError("Distributed training does not support layer-wise GaLore.")
 
     if finetuning_args.use_galore and training_args.deepspeed is not None:
-        raise ValueError("GaLore is incompatible with DeepSpeed.")
+        raise ValueError("GaLore is incompatible with DeepSpeed yet.")
 
-    if (finetuning_args.use_badam
+    if (
+        finetuning_args.use_badam
         and finetuning_args.badam_mode == "layer"
         and training_args.parallel_mode.value == "distributed"
     ):
-        raise ValueError("BAdam with layer-wise mode is not supported in distributed training by now, use ratio mode instead.")
-    
+        raise ValueError("Layer-wise BAdam does not yet support distributed training, use ratio-wise BAdam.")
+
     if model_args.infer_backend == "vllm":
         raise ValueError("vLLM backend is only available for API, CLI and Web.")
 
