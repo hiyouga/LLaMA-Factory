@@ -24,6 +24,7 @@ extra_require = {
     "metrics": ["nltk", "jieba", "rouge-chinese"],
     "unsloth": ["torch==2.2.0", "unsloth[cu121-ampere-torch220]"],
     "galore": ["galore-torch"],
+    "badam": ["badam"],
     "vllm": ["vllm>=0.3.3"],
     "bitsandbytes": ["bitsandbytes>=0.39.0"],
     "gptq": ["optimum>=1.16.0", "auto-gptq>=0.5.0"],
