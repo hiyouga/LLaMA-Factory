@@ -88,6 +88,9 @@ def _check_extra_dependencies(
     if finetuning_args.use_galore:
         require_version("galore_torch", "To fix: pip install galore_torch")
 
+    if finetuning_args.use_badam:
+        require_version("badam", "To fix: pip install badam")
+
     if training_args is not None and training_args.predict_with_generate:
         require_version("jieba", "To fix: pip install jieba")
         require_version("nltk", "To fix: pip install nltk")
@@ -172,7 +175,14 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         raise ValueError("Distributed training does not support layer-wise GaLore.")
 
     if finetuning_args.use_galore and training_args.deepspeed is not None:
-        raise ValueError("GaLore is incompatible with DeepSpeed.")
+        raise ValueError("GaLore is incompatible with DeepSpeed yet.")
+
+    if (
+        finetuning_args.use_badam
+        and finetuning_args.badam_mode == "layer"
+        and training_args.parallel_mode.value == "distributed"
+    ):
+        raise ValueError("Layer-wise BAdam does not yet support distributed training, use ratio-wise BAdam.")
 
     if model_args.infer_backend == "vllm":
         raise ValueError("vLLM backend is only available for API, CLI and Web.")
