@@ -174,15 +174,15 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     ):
         raise ValueError("Distributed training does not support layer-wise GaLore.")
 
-    if finetuning_args.use_galore and training_args.deepspeed is not None:
-        raise ValueError("GaLore is incompatible with DeepSpeed yet.")
-
     if (
         finetuning_args.use_badam
         and finetuning_args.badam_mode == "layer"
         and training_args.parallel_mode.value == "distributed"
     ):
         raise ValueError("Layer-wise BAdam does not yet support distributed training, use ratio-wise BAdam.")
+
+    if (finetuning_args.use_galore or finetuning_args.use_badam) and training_args.deepspeed is not None:
+        raise ValueError("GaLore and BAdam are incompatible with DeepSpeed yet.")
 
     if model_args.infer_backend == "vllm":
         raise ValueError("vLLM backend is only available for API, CLI and Web.")
