@@ -46,7 +46,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 - **多种模型**：LLaMA、Mistral、Mixtral-MoE、Qwen、Yi、Gemma、Baichuan、ChatGLM、Phi 等等。
 - **集成方法**：（增量）预训练、指令监督微调、奖励模型训练、PPO 训练、DPO 训练和 ORPO 训练。
 - **多种精度**：32 比特全参数微调、16 比特冻结微调、16 比特 LoRA 微调和基于 AQLM/AWQ/GPTQ/LLM.int8 的 2/4/8 比特 QLoRA 微调。
-- **先进算法**：GaLore、DoRA、LongLoRA、LLaMA Pro、LoRA+、LoftQ 和 Agent 微调。
+- **先进算法**：GaLore、BAdam、DoRA、LongLoRA、LLaMA Pro、LoRA+、LoftQ 和 Agent 微调。
 - **实用技巧**：FlashAttention-2、Unsloth、RoPE scaling、NEFTune 和 rsLoRA。
 - **实验监控**：LlamaBoard、TensorBoard、Wandb、MLflow 等等。
 - **极速推理**：基于 vLLM 的 OpenAI 风格 API、浏览器界面和命令行接口。
@@ -68,13 +68,15 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 
 ## 更新日志
 
+[24/04/16] 我们支持了 **[BAdam](https://arxiv.org/abs/2404.02827)**。详细用法请参照 `examples/extras/badam`。
+
 [24/04/16] 我们支持了 **[unsloth](https://github.com/unslothai/unsloth)** 的长序列训练（24GB 可训练 Llama-2-7B-56k）。该方法相比 FlashAttention-2 提供了 **117%** 的训练速度和 **50%** 的显存节约。更多数据请见[此页面](https://github.com/hiyouga/LLaMA-Factory/wiki/Performance-comparison)。
 
 [24/03/31] 我们支持了 **[ORPO](https://arxiv.org/abs/2403.07691)**。详细用法请参照 `examples/lora_single_gpu`。
 
-[24/03/21] 我们的论文 "[LlamaFactory: Unified Efficient Fine-Tuning of 100+ Language Models](https://arxiv.org/abs/2403.13372)" 可在 arXiv 上查看！
-
 <details><summary>展开日志</summary>
+
+[24/03/21] 我们的论文 "[LlamaFactory: Unified Efficient Fine-Tuning of 100+ Language Models](https://arxiv.org/abs/2403.13372)" 可在 arXiv 上查看！
 
 [24/03/20] 我们支持了能在 2x24GB GPU 上微调 70B 模型的 **FSDP+QLoRA**。详细用法请参照 `examples/extras/fsdp_qlora`。
 
@@ -278,16 +280,15 @@ huggingface-cli login
 
 \* *估算值*
 
-| 训练方法 | 精度 |   7B  |  13B  |  30B  |   70B  |   8x7B |
-| ------- | ---- | ----- | ----- | ----- | ------ | ------ |
-| 全参数   | AMP  | 120GB | 240GB | 600GB | 1200GB |  900GB |
-| 全参数   |  16  |  60GB | 120GB | 300GB |  600GB |  400GB |
-| GaLore  |  16  |  16GB |  32GB |  64GB |  160GB |  120GB |
-| 部分参数 |  16  |  20GB |  40GB |  80GB |  200GB |  160GB |
-| LoRA    |  16  |  16GB |  32GB |  64GB |  160GB |  120GB |
-| QLoRA   |   8  |  10GB |  20GB |  40GB |   80GB |   60GB |
-| QLoRA   |   4  |   6GB |  12GB |  24GB |   48GB |   30GB |
-| QLoRA   |   2  |   4GB |   8GB |  16GB |   24GB |   18GB |
+| 训练方法           | 精度 |   7B  |  13B  |  30B  |   70B  |   8x7B |
+| ----------------- | ---- | ----- | ----- | ----- | ------ | ------ |
+| Full              | AMP  | 120GB | 240GB | 600GB | 1200GB |  900GB |
+| Full              |  16  |  60GB | 120GB | 300GB |  600GB |  400GB |
+| Freeze            |  16  |  20GB |  40GB |  80GB |  200GB |  160GB |
+| LoRA/GaLore/BAdam |  16  |  16GB |  32GB |  64GB |  160GB |  120GB |
+| QLoRA             |   8  |  10GB |  20GB |  40GB |   80GB |   60GB |
+| QLoRA             |   4  |   6GB |  12GB |  24GB |   48GB |   30GB |
+| QLoRA             |   2  |   4GB |   8GB |  16GB |   24GB |   18GB |
 
 ## 如何使用
 

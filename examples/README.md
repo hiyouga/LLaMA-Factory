@@ -3,7 +3,7 @@ We provide diverse examples about fine-tuning LLMs.
 ```
 examples/
 ├── lora_single_gpu/
-│   ├── pretrain.sh: Do pre-training using LoRA
+│   ├── pretrain.sh: Do continuous pre-training using LoRA
 │   ├── sft.sh: Do supervised fine-tuning using LoRA
 │   ├── reward.sh: Do reward modeling using LoRA
 │   ├── ppo.sh: Do PPO training using LoRA
@@ -34,6 +34,8 @@ examples/
 └── extras/
     ├── galore/
     │   └── sft.sh: Fine-tune model with GaLore
+    ├── badam/
+    │   └── sft.sh: Fine-tune model with BAdam
     ├── loraplus/
     │   └── sft.sh: Fine-tune model using LoRA+
     ├── llama_pro/
