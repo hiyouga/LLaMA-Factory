@@ -31,6 +31,5 @@ python ../../../src/train_bash.py \
 --use_badam \
 --switch_mode descending \
 --badam_verbose 2 \
---switch_block_every 50 \
---pure_bf16 \
+--switch_block_every 50
 
