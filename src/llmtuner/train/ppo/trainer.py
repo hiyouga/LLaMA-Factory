@@ -1,6 +1,7 @@
 import math
 import os
 import sys
+from types import MethodType
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 import torch
@@ -123,6 +124,11 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
                     self.reward_model = self._prepare_deepspeed(self.reward_model)
             else:
                 self.reward_model = self.accelerator.prepare_model(self.reward_model, evaluation_mode=True)
+
+        if finetuning_args.use_badam:
+            from badam import clip_grad_norm_for_sparse_tensor
+
+            self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_for_sparse_tensor, self.accelerator)
 
     def ppo_train(self, resume_from_checkpoint: Optional[str] = None) -> None:
         r"""
