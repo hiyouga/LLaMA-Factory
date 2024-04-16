@@ -28,14 +28,13 @@ def can_preview(dataset_dir: str, dataset: list) -> "gr.Button":
             dataset_info = json.load(f)
     except Exception:
         return gr.Button(interactive=False)
-    
+
+    if len(dataset) == 0 or "file_name" not in dataset_info[dataset[0]]:
+        return gr.Button(interactive=False)
+
     local_path = os.path.join(dataset_dir, dataset_info[dataset[0]]["file_name"])
-    if (
-            len(dataset) > 0
-            and "file_name" in dataset_info[dataset[0]]
-            and (os.path.isfile(local_path)
-                 or (os.path.isdir(local_path)) and len(os.listdir(local_path)) != 0)
-    ):
+    if (os.path.isfile(local_path)
+            or (os.path.isdir(local_path) and len(os.listdir(local_path)) != 0)):
         return gr.Button(interactive=True)
     else:
         return gr.Button(interactive=False)
