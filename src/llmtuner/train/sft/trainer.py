@@ -29,7 +29,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
     def __init__(self, finetuning_args: "FinetuningArguments", **kwargs) -> None:
         super().__init__(**kwargs)
         self.finetuning_args = finetuning_args
-        if version.parse(torch.__version__) >= version.parse("1.13"):
+        if finetuning_args.use_badam:
             from badam import clip_grad_norm_for_sparse_tensor
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_for_sparse_tensor, self.accelerator)
 

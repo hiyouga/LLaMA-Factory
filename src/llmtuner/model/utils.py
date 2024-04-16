@@ -150,19 +150,20 @@ def gradient_checkpointing_enable(self, gradient_checkpointing_kwargs=None):
             Additional keyword arguments passed along to the `torch.utils.checkpoint.checkpoint` function.
     """
     from torch.utils.checkpoint import checkpoint
+    import functools
     
     if not self.supports_gradient_checkpointing:
         raise ValueError(f"{self.__class__.__name__} does not support gradient checkpointing.")
 
     if gradient_checkpointing_kwargs is None:
-        gradient_checkpointing_kwargs = {}
+        gradient_checkpointing_kwargs = {"use_reentrant": True}
 
-    # gradient_checkpointing_func = functools.partial(checkpoint, **gradient_checkpointing_kwargs)
+    checkpoint = functools.partial(checkpoint, **gradient_checkpointing_kwargs)
     
     def gradient_checkpointing_func(func, *args, **kwargs):
         module = func.__self__
         
-        if any([p.requires_grad for p in module.parameters()]):
+        if any(p.requires_grad for p in module.parameters()):
             for arg in args:
                 if torch.is_tensor(arg) and torch.is_floating_point(arg):
                     arg.requires_grad_(True)
@@ -170,10 +171,3 @@ def gradient_checkpointing_enable(self, gradient_checkpointing_kwargs=None):
         return checkpoint(func, *args, **kwargs)            
         
     self._set_gradient_checkpointing(enable=True, gradient_checkpointing_func=gradient_checkpointing_func)
-
-    if getattr(self, "_hf_peft_config_loaded", False):
-        # When using PEFT + gradient checkpointing + Trainer we need to make sure the input has requires_grad=True
-        # we do it also on PEFT: https://github.com/huggingface/peft/blob/85013987aa82aa1af3da1236b6902556ce3e483e/src/peft/peft_model.py#L334
-        # When training with PEFT, only LoRA layers will have requires grad set to True, but the output of frozen layers need to propagate
-        # the gradients to make sure the gradient flows.
-        self.enable_input_require_grads()
