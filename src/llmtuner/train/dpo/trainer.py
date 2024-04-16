@@ -1,5 +1,6 @@
 from collections import defaultdict
 from contextlib import nullcontext
+from types import MethodType
 from typing import TYPE_CHECKING, Dict, Literal, Optional, Tuple, Union
 
 import torch
@@ -62,6 +63,11 @@ class CustomDPOTrainer(DPOTrainer):
                     self.ref_model = self._prepare_deepspeed(self.ref_model)
             else:
                 self.ref_model = self.accelerator.prepare_model(self.ref_model, evaluation_mode=True)
+
+        if finetuning_args.use_badam:
+            from badam import clip_grad_norm_for_sparse_tensor
+
+            self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_for_sparse_tensor, self.accelerator)
 
     def create_optimizer(self) -> "torch.optim.Optimizer":
         if self.optimizer is None:

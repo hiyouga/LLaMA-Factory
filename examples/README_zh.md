@@ -3,7 +3,7 @@
 ```
 examples/
 ├── lora_single_gpu/
-│   ├── pretrain.sh: 基于 LoRA 进行预训练
+│   ├── pretrain.sh: 基于 LoRA 进行增量预训练
 │   ├── sft.sh: 基于 LoRA 进行指令监督微调
 │   ├── reward.sh: 基于 LoRA 进行奖励模型训练
 │   ├── ppo.sh: 基于 LoRA 进行 PPO 训练
@@ -34,6 +34,8 @@ examples/
 └── extras/
     ├── galore/
     │   └── sft.sh: 使用 GaLore 训练模型
+    ├── badam/
+    │   └── sft.sh: 使用 BAdam 训练模型
     ├── loraplus/
     │   └── sft.sh: 使用 LoRA+ 训练模型
     ├── llama_pro/
