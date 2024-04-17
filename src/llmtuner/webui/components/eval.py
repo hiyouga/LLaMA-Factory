@@ -1,9 +1,12 @@
 from typing import TYPE_CHECKING, Dict
 
-import gradio as gr
-
+from ...extras.packages import is_gradio_available
 from ..common import DEFAULT_DATA_DIR, list_dataset
 from .data import create_preview_box
+
+
+if is_gradio_available():
+    import gradio as gr
 
 
 if TYPE_CHECKING:
