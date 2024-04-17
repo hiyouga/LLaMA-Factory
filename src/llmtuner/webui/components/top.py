@@ -1,11 +1,14 @@
 from typing import TYPE_CHECKING, Dict
 
-import gradio as gr
-
 from ...data import templates
 from ...extras.constants import METHODS, SUPPORTED_MODELS
+from ...extras.packages import is_gradio_available
 from ..common import get_model_path, get_template, list_adapters, save_config
 from ..utils import can_quantize
+
+
+if is_gradio_available():
+    import gradio as gr
 
 
 if TYPE_CHECKING:

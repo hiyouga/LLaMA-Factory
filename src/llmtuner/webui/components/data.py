@@ -2,9 +2,12 @@ import json
 import os
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
-import gradio as gr
-
 from ...extras.constants import DATA_CONFIG
+from ...extras.packages import is_gradio_available
+
+
+if is_gradio_available():
+    import gradio as gr
 
 
 if TYPE_CHECKING:
