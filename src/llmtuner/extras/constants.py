@@ -538,13 +538,19 @@ register_model_group(
 
 register_model_group(
     models={
-        "Mixtral-8x7B": {
+        "Mixtral-8x7B-v0.1": {
             DownloadSource.DEFAULT: "mistralai/Mixtral-8x7B-v0.1",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Mixtral-8x7B-v0.1",
         },
-        "Mixtral-8x7B-Chat": {
+        "Mixtral-8x7B-v0.1-Chat": {
             DownloadSource.DEFAULT: "mistralai/Mixtral-8x7B-Instruct-v0.1",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Mixtral-8x7B-Instruct-v0.1",
+        },
+        "Mixtral-8x22B-v0.1": {
+            DownloadSource.DEFAULT: "mistralai/Mixtral-8x22B-v0.1",
+        },
+        "Mixtral-8x22B-v0.1-Chat": {
+            DownloadSource.DEFAULT: "mistralai/Mixtral-8x22B-Instruct-v0.1",
         },
     },
     template="mistral",
