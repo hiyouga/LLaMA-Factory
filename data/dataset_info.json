@@ -1,11 +1,15 @@
 {
+  "sixlan_sft_data_unwrap": {
+    "file_name": "sixlan_sft_data_unwrap.json",
+    "file_sha1": "607f94a7f581341e59685aef32f531095232cf23"
+  },
   "alpaca_en": {
     "file_name": "alpaca_data_en_52k.json",
     "file_sha1": "607f94a7f581341e59685aef32f531095232cf23"
   },
   "alpaca_zh": {
     "file_name": "alpaca_data_zh_51k.json",
-    "file_sha1": "2ba9827122c158dc256668d42bd1bcb8bc6b786e"
+    "file_sha1": "0016a4df88f523aad8dc004ada7575896824a0dc"
   },
   "alpaca_gpt4_en": {
     "file_name": "alpaca_gpt4_data_en.json",
@@ -364,11 +368,12 @@
     }
   },
   "pile": {
-    "hf_hub_url": "monology/pile-uncopyrighted",
+    "hf_hub_url": "EleutherAI/pile",
     "ms_hub_url": "AI-ModelScope/pile",
     "columns": {
       "prompt": "text"
-    }
+    },
+    "subset": "all"
   },
   "skypile": {
     "hf_hub_url": "Skywork/SkyPile-150B",

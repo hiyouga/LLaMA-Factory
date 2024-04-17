@@ -1,0 +1,12 @@
+--2024-04-15 06:44:15--  https://www.modelscope.cn/api/v1/models/AI-ModelScope/Open-Sora/repo?Revision=master
+Resolving www.modelscope.cn (www.modelscope.cn)... 39.99.230.9, 39.101.133.162, 39.99.245.74, ...
+Connecting to www.modelscope.cn (www.modelscope.cn)|39.99.230.9|:443... failed: Connection refused.
+Connecting to www.modelscope.cn (www.modelscope.cn)|39.101.133.162|:443... failed: Connection refused.
+Connecting to www.modelscope.cn (www.modelscope.cn)|39.99.245.74|:443... failed: Connection refused.
+Connecting to www.modelscope.cn (www.modelscope.cn)|39.100.73.80|:443... failed: Connection refused.
+Connecting to www.modelscope.cn (www.modelscope.cn)|47.92.245.157|:443... failed: Connection refused.
+Connecting to www.modelscope.cn (www.modelscope.cn)|39.98.76.40|:443... failed: Connection refused.
+Connecting to www.modelscope.cn (www.modelscope.cn)|47.92.142.143|:443... failed: Connection refused.
+Connecting to www.modelscope.cn (www.modelscope.cn)|39.101.130.40|:443... failed: Connection refused.
+Connecting to www.modelscope.cn (www.modelscope.cn)|47.92.164.72|:443... failed: Connection refused.
+Connecting to www.modelscope.cn (www.modelscope.cn)|47.92.32.132|:443... failed: Connection refused.

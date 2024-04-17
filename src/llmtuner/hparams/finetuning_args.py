@@ -162,6 +162,7 @@ class RLHFArguments:
         default="lora",
         metadata={"help": "The type of the reward model in PPO training. Lora model only supports lora training."},
     )
+    
 
 
 @dataclass

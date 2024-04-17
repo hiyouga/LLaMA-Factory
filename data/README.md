@@ -34,8 +34,6 @@ If you are using a custom dataset, please provide your dataset definition in the
 
 Given above, you can use the custom dataset via specifying `--dataset dataset_name`.
 
-----
-
 Currently we support dataset in **alpaca** or **sharegpt** format, the dataset in alpaca format should follow the below format:
 
 ```json
@@ -85,10 +83,6 @@ For the preference datasets, the `response` column should be a string list whose
   ]
 }
 ```
-
-Remember to set `"ranking": true` for the preference datasets.
-
-----
 
 The dataset in sharegpt format should follow the below format:
 
