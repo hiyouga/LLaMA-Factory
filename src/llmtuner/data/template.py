@@ -659,7 +659,7 @@ _register_template(
 
 _register_template(
     name="mistral",
-    format_user=StringFormatter(slots=["[INST] {{content}} [/INST]"]),
+    format_user=StringFormatter(slots=[" [INST] {{content}} [/INST]"]),
     format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
     force_system=True,
 )
