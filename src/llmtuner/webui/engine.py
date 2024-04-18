@@ -1,16 +1,13 @@
 from typing import Any, Dict, Generator
 
-from ..extras.packages import is_gradio_available
+from gradio.components import Component  # cannot use TYPE_CHECKING here
+
 from .chatter import WebChatModel
 from .common import get_model_path, list_dataset, load_config
 from .locales import LOCALES
 from .manager import Manager
 from .runner import Runner
 from .utils import get_time
-
-
-if is_gradio_available():
-    from gradio.components import Component  # cannot use TYPE_CHECKING here
 
 
 class Engine:

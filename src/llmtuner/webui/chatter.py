@@ -2,10 +2,12 @@ import json
 import os
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Sequence, Tuple
 
+import gradio as gr
+from gradio.components import Component  # cannot use TYPE_CHECKING here
+
 from ..chat import ChatModel
 from ..data import Role
 from ..extras.misc import torch_gc
-from ..extras.packages import is_gradio_available
 from .common import get_save_dir
 from .locales import ALERTS
 
@@ -13,11 +15,6 @@ from .locales import ALERTS
 if TYPE_CHECKING:
     from ..chat import BaseEngine
     from .manager import Manager
-
-
-if is_gradio_available():
-    import gradio as gr
-    from gradio.components import Component  # cannot use TYPE_CHECKING here
 
 
 class WebChatModel(ChatModel):

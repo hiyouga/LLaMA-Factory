@@ -326,8 +326,8 @@ def get_eval_args(args: Optional[Dict[str, Any]] = None) -> _EVAL_CLS:
     if data_args.template is None:
         raise ValueError("Please specify which `template` to use.")
 
-    if model_args.infer_backend == "vllm":
-        raise ValueError("vLLM backend is only available for API, CLI and Web.")
+    # if model_args.infer_backend == "vllm":
+    #     raise ValueError("vLLM backend is only available for API, CLI and Web.")
 
     _verify_model_args(model_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args)

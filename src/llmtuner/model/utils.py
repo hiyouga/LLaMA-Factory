@@ -1,4 +1,3 @@
-import inspect
 from enum import Enum, unique
 from functools import partial
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
@@ -130,12 +129,7 @@ def gradient_checkpointing_enable(
 
         return gradient_checkpointing_func(func, *args, **kwargs)
 
-    if "value" in inspect.signature(self._set_gradient_checkpointing).parameters:  # old GC format
-        self.apply(partial(self._set_gradient_checkpointing, value=True))
-        self.enable_input_require_grads()
-        logger.warning("You are using the old GC format, some features (e.g. BAdam) will be invalid.")
-    else:  # have already enabled input require gradients
-        self._set_gradient_checkpointing(enable=True, gradient_checkpointing_func=custom_gradient_checkpointing_func)
+    self._set_gradient_checkpointing(enable=True, gradient_checkpointing_func=custom_gradient_checkpointing_func)
 
 
 def load_valuehead_params(path_or_repo_id: str, model_args: "ModelArguments") -> Dict[str, torch.Tensor]:

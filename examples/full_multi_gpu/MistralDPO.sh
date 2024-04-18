@@ -6,13 +6,13 @@ deepspeed --num_gpus 8 ../../src/train_bash.py \
     --deepspeed ../deepspeed/ds_z2_config.json \
     --stage dpo \
     --do_train \
-    --model_name_or_path /mnt/data/shesj/Trained/RL4CoT/SFT/Qwen1_5_7b_Chat_SixLang \
+    --model_name_or_path /mnt/data/shesj/Trained/RL4CoT/SFT/Mistral-7B_SixLang \
     --dataset sixlan_align_data_5k_MisConInstructLowSix_0.7_20-4ensemble-train \
     --dataset_dir /mnt/data/shesj/Data/LFData \
-    --template qwen \
+    --template mistral \
     --finetuning_type full \
-    --output_dir /mnt/data/shesj/Trained/CommonAlign/DPO/QwenSixDPO \
-    --logging_dir "/mnt/data/shesj/Log/CommonAlign/DPO/QwenSixDPO" \
+    --output_dir /mnt/data/shesj/Trained/CommonAlign/DPO/MistralSixDPO \
+    --logging_dir "/mnt/data/shesj/Log/CommonAlign/DPO/MistralSixDPO" \
     --overwrite_cache \
     --overwrite_output_dir \
     --cutoff_len 1024 \
@@ -27,10 +27,10 @@ deepspeed --num_gpus 8 ../../src/train_bash.py \
     --eval_steps 200 \
     --evaluation_strategy steps \
     --load_best_model_at_end \
-    --learning_rate 5e-6 \
+    --learning_rate 1e-6 \
     --max_steps 1000 \
     --max_samples 10000000000 \
     --val_size -1 \
-    --dpo_ftx 0.0 \
+    --dpo_ftx 1.0 \
     --bf16 \
     --tf32 True

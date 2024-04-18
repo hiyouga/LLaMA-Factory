@@ -2,7 +2,7 @@
 
 from .api import create_app
 from .chat import ChatModel
-from .eval import Evaluator
+from .evaluation import Evaluator
 from .train import export_model, run_exp
 from .webui import create_ui, create_web_demo
 

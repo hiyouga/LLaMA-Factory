@@ -120,6 +120,7 @@ def get_dataset(
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
     stage: Literal["pt", "sft", "rm", "ppo"],
+    dev = False
 ) -> Union["Dataset", "IterableDataset"]:
     template = get_template_and_fix_tokenizer(tokenizer, data_args.template)
     if data_args.train_on_prompt and template.efficient_eos:
@@ -140,12 +141,19 @@ def get_dataset(
 
     with training_args.main_process_first(desc="load dataset"):
         all_datasets = []
+        if data_args.val_size < 0: # Force to load my customer dev_data
+            data_args.dataset = data_args.dataset.replace("-train","-dev")
+            print("=================== WE are Hacking to Load Eval Dataset =============================")
+            print(data_args.dataset)
         for dataset_attr in get_dataset_list(data_args):
             if (stage == "rm" and dataset_attr.ranking is False) or (stage != "rm" and dataset_attr.ranking is True):
                 raise ValueError("The dataset is not applicable in the current training stage.")
 
             all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args))
         dataset = merge_dataset(all_datasets, data_args, training_args)
+
+    if len(dataset) > 512000:
+        dataset = dataset.select(range(512000))
 
     with training_args.main_process_first(desc="pre-process dataset"):
         preprocess_func, print_function = get_preprocess_and_print_func(
@@ -159,7 +167,10 @@ def get_dataset(
                 load_from_cache_file=(not data_args.overwrite_cache),
                 desc="Running tokenizer on dataset",
             )
-
+        if stage == "rm":
+            dataset = dataset.filter(
+                lambda x: len(x["response"][0]['content']) != 0 and len(x["response"][1]['content']) != 0 and x["response"][0]['content'] !=x["response"][1]['content']
+                )
         dataset = dataset.map(preprocess_func, batched=True, remove_columns=column_names, **kwargs)
 
         if data_args.tokenized_path is not None:

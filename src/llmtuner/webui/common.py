@@ -3,6 +3,7 @@ import os
 from collections import defaultdict
 from typing import Any, Dict, Optional
 
+import gradio as gr
 from peft.utils import SAFETENSORS_WEIGHTS_NAME, WEIGHTS_NAME
 
 from ..extras.constants import (
@@ -16,11 +17,6 @@ from ..extras.constants import (
     DownloadSource,
 )
 from ..extras.misc import use_modelscope
-from ..extras.packages import is_gradio_available
-
-
-if is_gradio_available():
-    import gradio as gr
 
 
 ADAPTER_NAMES = {WEIGHTS_NAME, SAFETENSORS_WEIGHTS_NAME}

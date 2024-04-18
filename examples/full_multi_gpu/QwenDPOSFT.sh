@@ -11,8 +11,8 @@ deepspeed --num_gpus 8 ../../src/train_bash.py \
     --dataset_dir /mnt/data/shesj/Data/LFData \
     --template qwen \
     --finetuning_type full \
-    --output_dir /mnt/data/shesj/Trained/CommonAlign/DPO/QwenSixDPO \
-    --logging_dir "/mnt/data/shesj/Log/CommonAlign/DPO/QwenSixDPO" \
+    --output_dir /mnt/data/shesj/Trained/CommonAlign/DPO/QwenDPOSFT \
+    --logging_dir "/mnt/data/shesj/Log/CommonAlign/DPO/QwenDPOSFT" \
     --overwrite_cache \
     --overwrite_output_dir \
     --cutoff_len 1024 \
@@ -31,6 +31,6 @@ deepspeed --num_gpus 8 ../../src/train_bash.py \
     --max_steps 1000 \
     --max_samples 10000000000 \
     --val_size -1 \
-    --dpo_ftx 0.0 \
+    --dpo_ftx 1.0 \
     --bf16 \
     --tf32 True

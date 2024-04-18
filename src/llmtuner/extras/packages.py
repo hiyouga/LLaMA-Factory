@@ -25,10 +25,6 @@ def is_galore_available():
     return _is_package_available("galore_torch")
 
 
-def is_gradio_available():
-    return _is_package_available("gradio")
-
-
 def is_jieba_available():
     return _is_package_available("jieba")
 

@@ -1,11 +1,8 @@
 from typing import TYPE_CHECKING, Dict
 
-from ...extras.packages import is_gradio_available
+import gradio as gr
+
 from .chatbot import create_chat_box
-
-
-if is_gradio_available():
-    import gradio as gr
 
 
 if TYPE_CHECKING:

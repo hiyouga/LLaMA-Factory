@@ -25,7 +25,12 @@ def run_dpo(
     callbacks: Optional[List["TrainerCallback"]] = None,
 ):
     tokenizer = load_tokenizer(model_args)
-    dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="rm")
+    train_dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="rm")
+    dev_dataset = get_dataset(tokenizer, model_args, data_args, training_args, stage="rm",dev=True)
+    print("======= Dataset Size " ,len(train_dataset),len(dev_dataset))
+
+    if len(dev_dataset) > 20000:
+        dev_dataset = dev_dataset.select(range(20000))
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
 
     data_collator = PairwiseDataCollatorWithPadding(
@@ -43,6 +48,9 @@ def run_dpo(
     # Update arguments
     training_args.remove_unused_columns = False  # important for pairwise dataset
 
+
+
+
     # Initialize our Trainer
     trainer = CustomDPOTrainer(
         model=model,
@@ -52,7 +60,8 @@ def run_dpo(
         tokenizer=tokenizer,
         data_collator=data_collator,
         callbacks=callbacks,
-        **split_dataset(dataset, data_args, training_args),
+        train_dataset=train_dataset,
+        eval_dataset=dev_dataset,
     )
 
     # Training

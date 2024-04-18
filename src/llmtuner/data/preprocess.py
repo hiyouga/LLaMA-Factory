@@ -184,6 +184,8 @@ def preprocess_pairwise_dataset(
 ) -> Dict[str, List[List[int]]]:
     # build input pairs with format `<bos> X`, `Y1 <eos>` and `Y2 <eos>`
     model_inputs = {"prompt_ids": [], "chosen_ids": [], "rejected_ids": []}
+
+
     for i in range(len(examples["prompt"])):
         if len(examples["prompt"][i]) % 2 != 1 or len(examples["response"][i]) < 2:
             continue
