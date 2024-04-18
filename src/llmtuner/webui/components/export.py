@@ -1,10 +1,13 @@
 from typing import TYPE_CHECKING, Dict, Generator, List
 
-import gradio as gr
-
+from ...extras.packages import is_gradio_available
 from ...train import export_model
 from ..common import get_save_dir
 from ..locales import ALERTS
+
+
+if is_gradio_available():
+    import gradio as gr
 
 
 if TYPE_CHECKING:

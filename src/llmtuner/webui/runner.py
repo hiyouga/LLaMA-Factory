@@ -4,9 +4,7 @@ import time
 from threading import Thread
 from typing import TYPE_CHECKING, Any, Dict, Generator
 
-import gradio as gr
 import transformers
-from gradio.components import Component  # cannot use TYPE_CHECKING here
 from transformers.trainer import TRAINING_ARGS_NAME
 from transformers.utils import is_torch_cuda_available
 
@@ -14,10 +12,16 @@ from ..extras.callbacks import LogCallback
 from ..extras.constants import TRAINING_STAGES
 from ..extras.logging import LoggerHandler
 from ..extras.misc import get_device_count, torch_gc
+from ..extras.packages import is_gradio_available
 from ..train import run_exp
 from .common import get_module, get_save_dir, load_args, load_config, save_args
 from .locales import ALERTS
 from .utils import gen_cmd, gen_plot, get_eval_results, update_process_bar
+
+
+if is_gradio_available():
+    import gradio as gr
+    from gradio.components import Component  # cannot use TYPE_CHECKING here
 
 
 if TYPE_CHECKING:
