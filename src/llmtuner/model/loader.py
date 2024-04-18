@@ -71,6 +71,12 @@ def load_model(
     patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
 
     model = None
+    if model_args.mixture_of_depths == 'continue':
+        from MoD import AutoMoDModelForCausalLM
+        model = AutoMoDModelForCausalLM.from_pretrained(model_args.model_name_or_path, config=config)
+        if model.config.model_type == 'qwen2':
+            RuntimeError("Qwen models are not supported for MoD training.")
+
     if is_trainable and model_args.use_unsloth:
         from unsloth import FastLanguageModel  # type: ignore
 
@@ -99,6 +105,13 @@ def load_model(
         init_kwargs["config"] = config
         init_kwargs["pretrained_model_name_or_path"] = model_args.model_name_or_path
         model: "PreTrainedModel" = AutoModelForCausalLM.from_pretrained(**init_kwargs)
+
+    if model_args.mixture_of_depths == 'convert':
+        from MoD import convert_hf_model
+        if model.config.model_type == 'qwen2':
+            RuntimeError("Qwen models are not supported for MoD training.")
+        model = convert_hf_model(model)
+
 
     patch_model(model, tokenizer, model_args, is_trainable)
     register_autoclass(config, model, tokenizer)
