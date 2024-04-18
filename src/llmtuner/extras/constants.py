@@ -515,6 +515,25 @@ register_model_group(
 
 register_model_group(
     models={
+        "LLaMA3-8B": {
+            DownloadSource.DEFAULT: "meta-llama/Meta-Llama-3-8B",
+        },
+        "LLaMA3-70B": {
+            DownloadSource.DEFAULT: "meta-llama/Meta-Llama-3-70B",
+        },
+        "LLaMA3-8B-Chat": {
+            DownloadSource.DEFAULT: "meta-llama/Meta-Llama-3-8B-Instruct",
+        },
+        "LLaMA3-70B-Chat": {
+            DownloadSource.DEFAULT: "meta-llama/Meta-Llama-3-70B-Instruct",
+        },
+    },
+    template="llama3",
+)
+
+
+register_model_group(
+    models={
         "Mistral-7B-v0.1": {
             DownloadSource.DEFAULT: "mistralai/Mistral-7B-v0.1",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Mistral-7B-v0.1",
