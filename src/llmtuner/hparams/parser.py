@@ -82,7 +82,7 @@ def _check_extra_dependencies(
     if model_args.use_unsloth:
         require_version("unsloth", "Please install unsloth: https://github.com/unslothai/unsloth")
 
-    if model_args.mixture_of_depths:
+    if model_args.mixture_of_depths == 'convert' or model_args.mixture_of_depths == 'continue':
         require_version("mixture-of-depth", "To fix: pip install mixture-of-depth")
 
     if model_args.infer_backend == "vllm":
