@@ -1,4 +1,4 @@
-from mMTbench import Evaluator
+from .mMTbench import Evaluator
 
 
 __all__ = ["Evaluator"]

@@ -5,7 +5,7 @@ from ..data import get_template_and_fix_tokenizer
 from ..model import load_tokenizer
 from ..hparams import get_eval_args
 from vllm import LLM, SamplingParams
-
+from typing import Any, Dict, List, Optional
 '''
 
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python ../../src/evaluate.py \
@@ -52,7 +52,7 @@ class Evaluator:
         tokenizer.padding_side = "left"
         template = get_template_and_fix_tokenizer(tokenizer, data_args.template)
 
-        sampling_params = SamplingParams(n=eval_args.iter,temperature=eval_args.temperature,max_tokens=1024)
+        sampling_params = SamplingParams(n=eval_args.n_iter,temperature=eval_args.temperature,max_tokens=eval_args.max_new_tokens)
         llm = LLM(model=model_args.model_name_or_path,dtype=torch.bfloat16,tensor_parallel_size=8)
 
 
@@ -72,5 +72,5 @@ class Evaluator:
             for _ in g:
                 i['answers'].append({"generated":_})
 
-        f = open(target_dir,'w')
+        f = open(eval_args.save_dir + "/" + eval_args.model_name + "_" + eval_args.task + ".json",'w')
         json.dump(data,f,indent=2,ensure_ascii=False)
