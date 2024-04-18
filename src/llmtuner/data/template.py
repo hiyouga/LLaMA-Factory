@@ -650,6 +650,20 @@ _register_template(
 
 
 _register_template(
+    name="llama3",
+    format_user=StringFormatter(
+        slots=[
+            "<|start_header_id|>user<|end_header_id|>\n\n{{content}}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+        ]
+    ),
+    format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
+    format_separator=EmptyFormatter(slots=["<|eot_id|>"]),
+    efficient_eos=True,
+    force_system=True,
+)
+
+
+_register_template(
     name="llama2_zh",
     format_user=StringFormatter(slots=[{"bos_token"}, "[INST] {{content}} [/INST]"]),
     format_system=StringFormatter(slots=["<<SYS>>\n{{content}}\n<</SYS>>\n\n"]),
