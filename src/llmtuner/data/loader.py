@@ -2,7 +2,7 @@ import inspect
 import os
 from typing import TYPE_CHECKING, Literal, Union
 
-from datasets import load_dataset, load_from_disk
+from datasets import load_dataset, load_from_disk, IterableDataset
 
 from ..extras.constants import FILEEXT2TYPE
 from ..extras.logging import get_logger
@@ -15,7 +15,7 @@ from .utils import checksum, merge_dataset
 
 
 if TYPE_CHECKING:
-    from datasets import Dataset, IterableDataset
+    from datasets import Dataset
     from transformers import Seq2SeqTrainingArguments
     from transformers.tokenization_utils import PreTrainedTokenizer
 
@@ -108,8 +108,11 @@ def load_single_dataset(
         dataset = dataset.to_iterable_dataset()  # TODO: add num shards parameter
 
     if data_args.max_samples is not None:  # truncate dataset
-        num_samples = min(data_args.max_samples, len(dataset))
-        dataset = dataset.select(range(num_samples))
+        if isinstance(dataset, IterableDataset):
+            logger.warning("max_samples will not work in streaming mode")
+        else:
+            num_samples = min(data_args.max_samples, len(dataset))
+            dataset = dataset.select(range(num_samples))
 
     return align_dataset(dataset, dataset_attr, data_args)
 
