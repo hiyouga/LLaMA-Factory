@@ -661,13 +661,18 @@ _register_template(
     name="llama3",
     format_user=StringFormatter(
         slots=[
-            "<|start_header_id|>user<|end_header_id|>\n\n{{content}}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+            (
+                "<|start_header_id|>user<|end_header_id|>\n\n{{content}}<|eot_id|>"
+                "<|start_header_id|>assistant<|end_header_id|>\n\n"
+            )
         ]
     ),
-    format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
+    format_system=StringFormatter(
+        slots=[{"bos_token"}, "<|start_header_id|>system<|end_header_id|>\n\n{{content}}<|eot_id|>"]
+    ),
+    default_system="You are a helpful assistant.",
     stop_words=["<|eot_id|>"],
     replace_eos=True,
-    force_system=True,
 )
 
 
