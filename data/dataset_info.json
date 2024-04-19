@@ -318,6 +318,28 @@
     "ms_hub_url": "AI-ModelScope/RLAIF-Nectar",
     "ranking": true
   },
+  "dpo_mix_en": {
+    "hf_hub_url": "hiyouga/DPO-En-Zh-20k",
+    "subset": "en",
+    "ranking": true,
+    "columns": {
+      "prompt": "prompt",
+      "response": "answer",
+      "system": "system",
+      "history": "history"
+    }
+  },
+  "dpo_mix_zh": {
+    "hf_hub_url": "hiyouga/DPO-En-Zh-20k",
+    "subset": "zh",
+    "ranking": true,
+    "columns": {
+      "prompt": "prompt",
+      "response": "answer",
+      "system": "system",
+      "history": "history"
+    }
+  },
   "orca_dpo_de" : {
     "hf_hub_url": "mayflowergmbh/intel_orca_dpo_pairs_de",
     "ranking": true
