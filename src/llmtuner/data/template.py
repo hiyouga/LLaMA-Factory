@@ -650,6 +650,14 @@ _register_template(
 
 
 _register_template(
+    name="llama2_zh",
+    format_user=StringFormatter(slots=[{"bos_token"}, "[INST] {{content}} [/INST]"]),
+    format_system=StringFormatter(slots=["<<SYS>>\n{{content}}\n<</SYS>>\n\n"]),
+    default_system="You are a helpful assistant. 你是一个乐于助人的助手。",
+)
+
+
+_register_template(
     name="llama3",
     format_user=StringFormatter(
         slots=[
@@ -657,17 +665,9 @@ _register_template(
         ]
     ),
     format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
-    format_separator=EmptyFormatter(slots=["<|eot_id|>"]),
-    efficient_eos=True,
+    stop_words=["<|eot_id|>"],
+    replace_eos=True,
     force_system=True,
-)
-
-
-_register_template(
-    name="llama2_zh",
-    format_user=StringFormatter(slots=[{"bos_token"}, "[INST] {{content}} [/INST]"]),
-    format_system=StringFormatter(slots=["<<SYS>>\n{{content}}\n<</SYS>>\n\n"]),
-    default_system="You are a helpful assistant. 你是一个乐于助人的助手。",
 )
 
 
