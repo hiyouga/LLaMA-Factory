@@ -44,7 +44,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "PreTrainedTokenizer":
             padding_side="right",
             **init_kwargs,
         )
-    except ValueError:  # try the fast one
+    except Exception:  # try the fast one
         tokenizer = AutoTokenizer.from_pretrained(
             model_args.model_name_or_path,
             use_fast=True,
