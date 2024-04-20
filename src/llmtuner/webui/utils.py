@@ -3,19 +3,22 @@ import os
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
-import gradio as gr
-
-from ..extras.packages import is_matplotlib_available
+from ..extras.packages import is_gradio_available, is_matplotlib_available
 from ..extras.ploting import smooth
 from .locales import ALERTS
 
 
-if TYPE_CHECKING:
-    from ..extras.callbacks import LogCallback
+if is_gradio_available():
+    import gradio as gr
+
 
 if is_matplotlib_available():
     import matplotlib.figure
     import matplotlib.pyplot as plt
+
+
+if TYPE_CHECKING:
+    from ..extras.callbacks import LogCallback
 
 
 def update_process_bar(callback: "LogCallback") -> "gr.Slider":

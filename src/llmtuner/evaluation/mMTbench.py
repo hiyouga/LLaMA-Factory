@@ -53,12 +53,14 @@ class Evaluator:
         template = get_template_and_fix_tokenizer(tokenizer, data_args.template)
 
         sampling_params = SamplingParams(n=eval_args.n_iter,temperature=eval_args.temperature,max_tokens=eval_args.max_new_tokens)
-        llm = LLM(model=model_args.model_name_or_path,dtype=torch.bfloat16,tensor_parallel_size=8)
+        gpu_count = torch.cuda.device_count()
+        if gpu_count != 1:
+            gpu_count = gpu_count - (gpu_count % 4)
+        llm = LLM(model=model_args.model_name_or_path,dtype=torch.bfloat16,tensor_parallel_size=gpu_count,swap_space=32)
 
+        input_prompt_ids = [template.encode_oneturn(tokenizer=tokenizer, messages=[{"role": "user", "content": query}] + [{"role": "assistant", "content": ""}])[0] for query in input_prompt]
 
-        input_prompt_ids = [template.encode_oneturn(tokenizer=tokenizer, messages=[{"role": "user", "content": query}] + [{"role": "assistant", "content": ""}]) for query in input_prompt]
-
-        generations = llm.generate(prompt=None, sampling_params=sampling_params, prompt_token_ids=input_prompt_ids)
+        generations = llm.generate(prompts = None,sampling_params=sampling_params, prompt_token_ids=input_prompt_ids)
 
         generated_ = []
         for output in generations:

@@ -1,9 +1,12 @@
 from typing import TYPE_CHECKING, Dict, Tuple
 
-import gradio as gr
-
 from ...data import Role
+from ...extras.packages import is_gradio_available
 from ..utils import check_json_schema
+
+
+if is_gradio_available():
+    import gradio as gr
 
 
 if TYPE_CHECKING:
