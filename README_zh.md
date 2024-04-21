@@ -329,10 +329,10 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 
 </details>
 
-### LLaMA Board 可视化界面
+### 利用 LLaMA Board 可视化界面训练
 
 > [!IMPORTANT]
-> LLaMA Board 可视化界面目前仅支持单 GPU 训练，请使用[命令行接口](#命令行接口)来进行分布式训练。
+> LLaMA Board 可视化界面目前仅支持单 GPU 训练，请使用[命令行接口](#命令行接口)来进行多 GPU 分布式训练。
 
 #### 使用本地环境
 
@@ -381,13 +381,13 @@ docker compose -f ./docker-compose.yml up -d
 
 </details>
 
-### 命令行接口
+### 利用命令行接口训练
 
 使用方法请参考 [examples/README_zh.md](examples/README_zh.md)。
 
-使用 `python src/train_bash.py -h` 查看参数文档。
+您可以执行 `python src/train_bash.py -h` 来查看参数文档。
 
-### 使用 OpenAI 风格 API 和 vLLM 部署
+### 利用 vLLM 部署 OpenAI API
 
 ```bash
 CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 python src/api_demo.py \
@@ -397,7 +397,7 @@ CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 python src/api_demo.py \
     --vllm_enforce_eager
 ```
 
-### 使用魔搭社区
+### 从魔搭社区下载
 
 如果您在 Hugging Face 模型和数据集的下载中遇到了问题，可以通过下述方法使用魔搭社区。
 
@@ -405,7 +405,7 @@ CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 python src/api_demo.py \
 export USE_MODELSCOPE_HUB=1 # Windows 使用 `set USE_MODELSCOPE_HUB=1`
 ```
 
-将 `--model_name_or_path` 设置为模型 ID 来加载对应的模型。在[魔搭社区](https://modelscope.cn/models)查看所有可用的模型，例如 `modelscope/Llama-2-7b-ms`。
+将 `--model_name_or_path` 设置为模型 ID 来加载对应的模型。在[魔搭社区](https://modelscope.cn/models)查看所有可用的模型，例如 `LLM-Research/Meta-Llama-3-8B-Instruct`。
 
 ## 使用了 LLaMA Factory 的项目
 

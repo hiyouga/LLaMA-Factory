@@ -329,7 +329,7 @@ To enable FlashAttention-2 on the Windows platform, you need to install the prec
 
 </details>
 
-### LLaMA Board GUI
+### Train with LLaMA Board GUI
 
 > [!IMPORTANT]
 > LLaMA Board GUI only supports training on a single GPU, please use [CLI](#command-line-interface) for distributed training.
@@ -381,7 +381,7 @@ docker compose -f ./docker-compose.yml up -d
 
 </details>
 
-### Command Line Interface
+### Train with Command Line Interface
 
 See [examples/README.md](examples/README.md) for usage.
 
@@ -397,7 +397,7 @@ CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 python src/api_demo.py \
     --vllm_enforce_eager
 ```
 
-### Use ModelScope Hub
+### Download from ModelScope Hub
 
 If you have trouble with downloading models and datasets from Hugging Face, you can use ModelScope.
 
@@ -405,7 +405,7 @@ If you have trouble with downloading models and datasets from Hugging Face, you 
 export USE_MODELSCOPE_HUB=1 # `set USE_MODELSCOPE_HUB=1` for Windows
 ```
 
-Train the model by specifying a model ID of the ModelScope Hub as the `--model_name_or_path`. You can find a full list of model IDs at [ModelScope Hub](https://modelscope.cn/models), e.g., `modelscope/Llama-2-7b-ms`.
+Train the model by specifying a model ID of the ModelScope Hub as the `--model_name_or_path`. You can find a full list of model IDs at [ModelScope Hub](https://modelscope.cn/models), e.g., `LLM-Research/Meta-Llama-3-8B-Instruct`.
 
 ## Projects using LLaMA Factory
 
