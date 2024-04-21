@@ -38,12 +38,11 @@ examples/
     │   └── sft.sh: Fine-tune model with BAdam
     ├── loraplus/
     │   └── sft.sh: Fine-tune model using LoRA+
+    ├── mod/
+    │   └── sft.sh: Fine-tune model using Mixture-of-Depths
     ├── llama_pro/
     │   ├── expand.sh: Expand layers in the model
     │   └── sft.sh: Fine-tune the expanded model
-    ├── MoD/
-    │   ├── freeze_sft.sh: Freeze finetune a model, updating only the MoD router
-    │   └── sft.sh: Fine-tune the MoD model
     └── fsdp_qlora/
         └── sft.sh: Fine-tune quantized model with FSDP+QLoRA
 ```

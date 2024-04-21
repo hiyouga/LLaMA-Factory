@@ -63,15 +63,15 @@ class ModelArguments:
     )
     flash_attn: bool = field(
         default=False,
-        metadata={"help": "Enable FlashAttention-2 for faster training."},
+        metadata={"help": "Enable FlashAttention for faster training."},
     )
     shift_attn: bool = field(
         default=False,
         metadata={"help": "Enable shift short attention (S^2-Attn) proposed by LongLoRA."},
     )
-    mixture_of_depths: Optional[Literal["convert", "continue"]] = field(
+    mixture_of_depths: Optional[Literal["convert", "load"]] = field(
         default=None,
-        metadata={"help": "Whether or not to use MoD in the model."},
+        metadata={"help": "Convert the model to mixture-of-depths (MoD) or load the MoD model."},
     )
     use_unsloth: bool = field(
         default=False,
