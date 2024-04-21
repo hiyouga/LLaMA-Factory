@@ -43,25 +43,25 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/9840a653-7e9c-41c8-ae89
 
 ## Возможности
 
-- **Various models**: LLaMA, Mistral, Mixtral-MoE, Qwen, Yi, Gemma, Baichuan, ChatGLM, Phi, etc.
-- **Integrated methods**: (Continuous) pre-training, supervised fine-tuning, reward modeling, PPO, DPO and ORPO.
-- **Scalable resources**: 32-bit full-tuning, 16-bit freeze-tuning, 16-bit LoRA and 2/4/8-bit QLoRA via AQLM/AWQ/GPTQ/LLM.int8.
-- **Advanced algorithms**: GaLore, BAdam, DoRA, LongLoRA, LLaMA Pro, Mixture-of-Depths, LoRA+, LoftQ and Agent tuning.
-- **Practical tricks**: FlashAttention-2, Unsloth, RoPE scaling, NEFTune and rsLoRA.
-- **Experiment monitors**: LlamaBoard, TensorBoard, Wandb, MLflow, etc.
-- **Faster inference**: OpenAI-style API, Gradio UI and CLI with vLLM worker.
+- **Разные модели**: LLaMA, Mistral, Mixtral-MoE, Qwen, Yi, Gemma, Baichuan, ChatGLM, Phi, и другие.
+- **Интегрированные подходы**: (Continuous) pre-training, supervised fine-tuning, reward modeling, PPO, DPO и ORPO.
+- **Масштабируемые ресурсы**: 32-bit full-tuning, 16-bit freeze-tuning, 16-bit LoRA и 2/4/8-bit QLoRA через AQLM/AWQ/GPTQ/LLM.int8.
+- **Расширенные алгоритмы**: GaLore, BAdam, DoRA, LongLoRA, LLaMA Pro, Mixture-of-Depths, LoRA+, LoftQ и Agent tuning.
+- **Практические трюки**: FlashAttention-2, Unsloth, RoPE scaling, NEFTune и rsLoRA.
+- **Мониторинг экспериментов**: LlamaBoard, TensorBoard, Wandb, MLflow, и другие.
+- **Более быстрый вывод**: OpenAI совместимый API, Gradio UI и CLI с vLLM worker.
 
 ## Производительность
 
-Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/ptuning), LLaMA Factory's LoRA tuning offers up to **3.7 times faster** training speed with a better Rouge score on the advertising text generation task. By leveraging 4-bit quantization technique, LLaMA Factory's QLoRA further improves the efficiency regarding the GPU memory.
+В сравнении с ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/ptuning), LoRA tuning в LLaMA Factory обеспечивает скорость обучения в **3.7 раз быстрее** с большим баллом в Rouge на задаче генерации рекламного текста. Используя технику 4-bit quantization, LLaMA Factory's QLoRA повышает еще больше эффективность использования GPU памяти.
 
 ![benchmark](assets/benchmark.svg)
 
-<details><summary>Definitions</summary>
+<details><summary>Определения</summary>
 
-- **Training Speed**: the number of training samples processed per second during the training. (bs=4, cutoff_len=1024)
-- **Rouge Score**: Rouge-2 score on the development set of the [advertising text generation](https://aclanthology.org/D19-1321.pdf) task. (bs=4, cutoff_len=1024)
-- **GPU Memory**: Peak GPU memory usage in 4-bit quantized training. (bs=1, cutoff_len=1024)
+- **Скорость обучения**: количество обучающих выборок обрабатываемые в секунду во время обучения. (bs=4, cutoff_len=1024)
+- **Балл Rouge**: Балл Rouge-2 набора разработки задачи [генерации рекламного текста](https://aclanthology.org/D19-1321.pdf). (bs=4, cutoff_len=1024)
+- **Память GPU**: Максимальное использование памяти GPU в обучении 4-bit quantized. (bs=1, cutoff_len=1024)
 - We adopt `pre_seq_len=128` for ChatGLM's P-Tuning and `lora_rank=32` for LLaMA Factory's LoRA tuning.
 
 </details>
@@ -134,7 +134,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 ## Поддерживаемые модели
 
-| Model                                                    | Model size                  | Default module    | Template  |
+| Модель                                                   | Размер модели               | Стандартный модуль| Шаблон    |
 | -------------------------------------------------------- | --------------------------- | ----------------- | --------- |
 | [Baichuan2](https://huggingface.co/baichuan-inc)         | 7B/13B                      | W_pack            | baichuan2 |
 | [BLOOM](https://huggingface.co/bigscience)               | 560M/1.1B/1.7B/3B/7.1B/176B | query_key_value   | -         |
@@ -159,19 +159,19 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [Yuan](https://huggingface.co/IEITYuan)                  | 2B/51B/102B                 | q_proj,v_proj     | yuan      |
 
 > [!NOTE]
-> **Default module** is used for the `--lora_target` argument, you can use `--lora_target all` to specify all the available modules for better convergence.
+> **Стандартный модуль** используется для аргумента `--lora_target`, вы можете использовать `--lora_target all` чтобы использовать все доступные модули.
 >
-> For the "base" models, the `--template` argument can be chosen from `default`, `alpaca`, `vicuna` etc. But make sure to use the **corresponding template** for the "instruct/chat" models.
+> Для "базовой" модели, аргумент `--template` может быть выбран из `default`, `alpaca`, `vicuna` и др. Но обязательно используйте **соответствующий шаблон** для "instruct/chat" моделей.
 >
-> Remember to use the **SAME** template in training and inference.
+> Запомните, используйте **ТОТ ЖЕ САМЫЙ** шаблон для обучения и вывода.
 
-Please refer to [constants.py](src/llmtuner/extras/constants.py) for a full list of models we supported.
+Пожалуйста, следуйте за [constants.py](src/llmtuner/extras/constants.py) для получения полного списка поддерживаемых моделей.
 
-You also can add a custom chat template to [template.py](src/llmtuner/data/template.py).
+Вы можете добавить свой формат чата [template.py](src/llmtuner/data/template.py).
 
 ## Поддерживаемые подходы к обучению
 
-| Approach               |     Full-tuning    |    Freeze-tuning   |       LoRA         |       QLoRA        |
+| Подход                 |     Full-tuning    |    Freeze-tuning   |       LoRA         |       QLoRA        |
 | ---------------------- | ------------------ | ------------------ | ------------------ | ------------------ |
 | Pre-Training           | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | Supervised Fine-Tuning | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
@@ -182,7 +182,7 @@ You also can add a custom chat template to [template.py](src/llmtuner/data/templ
 
 ## Предоставленные наборы данных
 
-<details><summary>Pre-training datasets</summary>
+<details><summary>Наборы данных для пред-обучения</summary>
 
 - [Wiki Demo (en)](data/wiki_demo.txt)
 - [RefinedWeb (en)](https://huggingface.co/datasets/tiiuae/falcon-refinedweb)
@@ -196,7 +196,7 @@ You also can add a custom chat template to [template.py](src/llmtuner/data/templ
 
 </details>
 
-<details><summary>Supervised fine-tuning datasets</summary>
+<details><summary>Наборы данных для контроллируемеого файн-тюнинга</summary>
 
 - [Stanford Alpaca (en)](https://github.com/tatsu-lab/stanford_alpaca)
 - [Stanford Alpaca (zh)](https://github.com/ymcui/Chinese-LLaMA-Alpaca)
@@ -246,7 +246,7 @@ You also can add a custom chat template to [template.py](src/llmtuner/data/templ
 
 </details>
 
-<details><summary>Preference datasets</summary>
+<details><summary>Наборы данных на основе предпочтений</summary>
 
 - [HH-RLHF (en)](https://huggingface.co/datasets/Anthropic/hh-rlhf)
 - [Open Assistant (multilingual)](https://huggingface.co/datasets/OpenAssistant/oasst1)
@@ -258,7 +258,7 @@ You also can add a custom chat template to [template.py](src/llmtuner/data/templ
 
 </details>
 
-Some datasets require confirmation before using them, so we recommend logging in with your Hugging Face account using these commands.
+Некоторые наборы данных требуют подтверждения перед его использованием, мы рекомендуем предварительно авторизоваться в ваш аккаунт Hugging Face используя данные команды.
 
 ```bash
 pip install --upgrade huggingface_hub
@@ -267,7 +267,7 @@ huggingface-cli login
 
 ## Требования
 
-| Mandatory    | Minimum | Recommend |
+| Обязательно  | Минимум | Рекоменд. |
 | ------------ | ------- | --------- |
 | python       | 3.8     | 3.10      |
 | torch        | 1.13.1  | 2.2.0     |
@@ -277,14 +277,14 @@ huggingface-cli login
 | peft         | 0.9.0   | 0.10.0    |
 | trl          | 0.8.1   | 0.8.1     |
 
-| Optional     | Minimum | Recommend |
+| Опционально  | Минимум | Рекоменд. |
 | ------------ | ------- | --------- |
 | CUDA         | 11.6    | 12.2      |
 | deepspeed    | 0.10.0  | 0.14.0    |
 | bitsandbytes | 0.39.0  | 0.43.0    |
 | flash-attn   | 2.3.0   | 2.5.6     |
 
-### Hardware Requirement
+### Требования к оборудованию
 
 \* *estimated*
 
@@ -300,14 +300,14 @@ huggingface-cli login
 
 ## Начало работы
 
-### Data Preparation
+### Подготовка данных
 
-Please refer to [data/README.md](data/README.md) for checking the details about the format of dataset files. You can either use datasets on HuggingFace / ModelScope hub or load the dataset in local disk.
+Откройте [data/README.md](data/README.md) для детальной проверки формата файлов набора данных. Вы можете использовать наборы данных HuggingFace / ModelScope hub или загрузить наборы данных на локальный диск.
 
 > [!NOTE]
-> Please update `data/dataset_info.json` to use your custom dataset.
+> Пожалуйста обновите файл `data/dataset_info.json` для использования собственного набора данных.
 
-### Dependence Installation
+### Установка зависимостей
 
 ```bash
 git clone https://github.com/hiyouga/LLaMA-Factory.git
@@ -317,9 +317,9 @@ cd LLaMA-Factory
 pip install -e .[metrics]
 ```
 
-Extra dependencies available: deepspeed, metrics, unsloth, galore, badam, vllm, bitsandbytes, gptq, awq, aqlm, qwen, modelscope, quality
+Доступные дополнительные зависимости: deepspeed, metrics, unsloth, galore, badam, vllm, bitsandbytes, gptq, awq, aqlm, qwen, modelscope, quality
 
-<details><summary>For Windows users</summary>
+<details><summary>Для пользователей Windows</summary>
 
 If you want to enable the quantized LoRA (QLoRA) on the Windows platform, you will be required to install a pre-built version of `bitsandbytes` library, which supports CUDA 11.1 to 12.2, please select the appropriate [release version](https://github.com/jllllll/bitsandbytes-windows-webui/releases/tag/wheels) based on your CUDA version.
 
@@ -327,24 +327,24 @@ If you want to enable the quantized LoRA (QLoRA) on the Windows platform, you wi
 pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.41.2.post2-py3-none-win_amd64.whl
 ```
 
-To enable FlashAttention-2 on the Windows platform, you need to install the precompiled `flash-attn` library, which supports CUDA 12.1 to 12.2. Please download the corresponding version from [flash-attention](https://github.com/bdashore3/flash-attention/releases) based on your requirements.
+Для включения FlashAttention-2 на платформе Windows, вам нужно будет установить компилированную версию библиотеки `flash-attn`, с поддержкой CUDA 12.1 до 12.2. Пожалуйста, загрузите соответствующую версию с [flash-attention](https://github.com/bdashore3/flash-attention/releases) на основе ваших требований.
 
 </details>
 
-### Train with LLaMA Board GUI
+### Тренировка с LLaMA Board GUI
 
 > [!IMPORTANT]
-> LLaMA Board GUI only supports training on a single GPU, please use [CLI](#command-line-interface) for distributed training.
+> LLaMA Board GUI поддерживает обучение только на одном GPU, используйте [CLI](#command-line-interface) для распределенного обучения.
 
-#### Use local environment
+#### Используя локальное окружение
 
 ```bash
-export CUDA_VISIBLE_DEVICES=0 # `set CUDA_VISIBLE_DEVICES=0` for Windows
-export GRADIO_SERVER_PORT=7860 # `set GRADIO_SERVER_PORT=7860` for Windows
-python src/train_web.py # or python -m llmtuner.webui.interface
+export CUDA_VISIBLE_DEVICES=0 # `set CUDA_VISIBLE_DEVICES=0` для Windows
+export GRADIO_SERVER_PORT=7860 # `set GRADIO_SERVER_PORT=7860` для Windows
+python src/train_web.py # или python -m llmtuner.webui.interface
 ```
 
-<details><summary>For Alibaba Cloud users</summary>
+<details><summary>Для пользователей Alibaba Cloud</summary>
 
 If you encountered display problems in LLaMA Board on Alibaba Cloud, try using the following command to set environment variables before starting LLaMA Board:
 
@@ -354,7 +354,7 @@ export GRADIO_ROOT_PATH=/${JUPYTER_NAME}/proxy/7860/
 
 </details>
 
-#### Use Docker
+#### Используя Docker
 
 ```bash
 docker build -f ./Dockerfile -t llama-factory:latest .
@@ -369,7 +369,7 @@ docker run --gpus=all \
     -d llama-factory:latest
 ```
 
-#### Use Docker Compose
+#### Используя Docker Compose
 
 ```bash
 docker compose -f ./docker-compose.yml up -d
@@ -383,13 +383,13 @@ docker compose -f ./docker-compose.yml up -d
 
 </details>
 
-### Train with Command Line Interface
+### Тренировка через командную строку
 
 See [examples/README.md](examples/README.md) for usage.
 
 Use `python src/train_bash.py -h` to display arguments description.
 
-### Deploy with OpenAI-style API and vLLM
+### Публикация в OpenAI совместимом API и vLLM
 
 ```bash
 CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 python src/api_demo.py \
@@ -399,21 +399,21 @@ CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 python src/api_demo.py \
     --vllm_enforce_eager
 ```
 
-### Download from ModelScope Hub
+### Загрузка с ModelScope Hub
 
-If you have trouble with downloading models and datasets from Hugging Face, you can use ModelScope.
+Если у вас есть проблемы с загрузкой моделей с Hugging Face, вы можете использовать ModelScope.
 
 ```bash
-export USE_MODELSCOPE_HUB=1 # `set USE_MODELSCOPE_HUB=1` for Windows
+export USE_MODELSCOPE_HUB=1 # `set USE_MODELSCOPE_HUB=1` для Windows
 ```
 
 Train the model by specifying a model ID of the ModelScope Hub as the `--model_name_or_path`. You can find a full list of model IDs at [ModelScope Hub](https://modelscope.cn/models), e.g., `LLM-Research/Meta-Llama-3-8B-Instruct`.
 
 ## Проекты использующие LLaMA Factory
 
-If you have a project that should be incorporated, please contact via email or create a pull request.
+Если у вас есть проекты, которые нужно включить здесь, сообщите нам по email или создайте pull request.
 
-<details><summary>Click to show</summary>
+<details><summary>Нажмите для просмотра</summary>
 
 1. Wang et al. ESRL: Efficient Sampling-based Reinforcement Learning for Sequence Generation. 2023. [[arxiv]](https://arxiv.org/abs/2308.02223)
 1. Yu et al. Open, Closed, or Small Language Models for Text Classification? 2023. [[arxiv]](https://arxiv.org/abs/2308.10092)
@@ -454,13 +454,13 @@ If you have a project that should be incorporated, please contact via email or c
 
 ## Лицензия
 
-This repository is licensed under the [Apache-2.0 License](LICENSE).
+Данный репозиторий лицензирован как [Apache-2.0 License](LICENSE).
 
-Please follow the model licenses to use the corresponding model weights: [Baichuan2](https://huggingface.co/baichuan-inc/Baichuan2-7B-Base/blob/main/Community%20License%20for%20Baichuan%202%20Model.pdf) / [BLOOM](https://huggingface.co/spaces/bigscience/license) / [ChatGLM3](https://github.com/THUDM/ChatGLM3/blob/main/MODEL_LICENSE) / [Command-R](https://cohere.com/c4ai-cc-by-nc-license) / [DeepSeek](https://github.com/deepseek-ai/DeepSeek-LLM/blob/main/LICENSE-MODEL) / [Falcon](https://huggingface.co/tiiuae/falcon-180B/blob/main/LICENSE.txt) / [Gemma](https://ai.google.dev/gemma/terms) / [InternLM2](https://github.com/InternLM/InternLM#license) / [LLaMA](https://github.com/facebookresearch/llama/blob/main/MODEL_CARD.md) / [LLaMA-2](https://ai.meta.com/llama/license/) / [LLaMA-3](https://llama.meta.com/llama3/license/) / [Mistral](LICENSE) / [OLMo](LICENSE) / [Phi-1.5/2](https://huggingface.co/microsoft/phi-1_5/resolve/main/Research%20License.docx) / [Qwen](https://github.com/QwenLM/Qwen/blob/main/Tongyi%20Qianwen%20LICENSE%20AGREEMENT) / [StarCoder2](https://huggingface.co/spaces/bigcode/bigcode-model-license-agreement) / [XVERSE](https://github.com/xverse-ai/XVERSE-13B/blob/main/MODEL_LICENSE.pdf) / [Yi](https://huggingface.co/01-ai/Yi-6B/blob/main/LICENSE) / [Yuan](https://github.com/IEIT-Yuan/Yuan-2.0/blob/main/LICENSE-Yuan)
+Пожалуйста, соблюдайте лицензии моделей на веса: [Baichuan2](https://huggingface.co/baichuan-inc/Baichuan2-7B-Base/blob/main/Community%20License%20for%20Baichuan%202%20Model.pdf) / [BLOOM](https://huggingface.co/spaces/bigscience/license) / [ChatGLM3](https://github.com/THUDM/ChatGLM3/blob/main/MODEL_LICENSE) / [Command-R](https://cohere.com/c4ai-cc-by-nc-license) / [DeepSeek](https://github.com/deepseek-ai/DeepSeek-LLM/blob/main/LICENSE-MODEL) / [Falcon](https://huggingface.co/tiiuae/falcon-180B/blob/main/LICENSE.txt) / [Gemma](https://ai.google.dev/gemma/terms) / [InternLM2](https://github.com/InternLM/InternLM#license) / [LLaMA](https://github.com/facebookresearch/llama/blob/main/MODEL_CARD.md) / [LLaMA-2](https://ai.meta.com/llama/license/) / [LLaMA-3](https://llama.meta.com/llama3/license/) / [Mistral](LICENSE) / [OLMo](LICENSE) / [Phi-1.5/2](https://huggingface.co/microsoft/phi-1_5/resolve/main/Research%20License.docx) / [Qwen](https://github.com/QwenLM/Qwen/blob/main/Tongyi%20Qianwen%20LICENSE%20AGREEMENT) / [StarCoder2](https://huggingface.co/spaces/bigcode/bigcode-model-license-agreement) / [XVERSE](https://github.com/xverse-ai/XVERSE-13B/blob/main/MODEL_LICENSE.pdf) / [Yi](https://huggingface.co/01-ai/Yi-6B/blob/main/LICENSE) / [Yuan](https://github.com/IEIT-Yuan/Yuan-2.0/blob/main/LICENSE-Yuan)
 
 ## Цитирование
 
-If this work is helpful, please kindly cite as:
+Если данная работа была полезна для вас, пожалуйста цитируйте как:
 
 ```bibtex
 @article{zheng2024llamafactory,
@@ -474,7 +474,7 @@ If this work is helpful, please kindly cite as:
 
 ## Благодарность
 
-This repo benefits from [PEFT](https://github.com/huggingface/peft), [TRL](https://github.com/huggingface/trl), [QLoRA](https://github.com/artidoro/qlora) and [FastChat](https://github.com/lm-sys/FastChat). Thanks for their wonderful works.
+Данный репозиторий использует [PEFT](https://github.com/huggingface/peft), [TRL](https://github.com/huggingface/trl), [QLoRA](https://github.com/artidoro/qlora) and [FastChat](https://github.com/lm-sys/FastChat).Спасибо им за отличную работу.
 
 ## История звезд
 
