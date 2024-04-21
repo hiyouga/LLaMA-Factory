@@ -344,9 +344,9 @@ export GRADIO_SERVER_PORT=7860 # `set GRADIO_SERVER_PORT=7860` for Windows
 python src/train_web.py # or python -m llmtuner.webui.interface
 ```
 
-<details><summary>For Aliyun users</summary>
+<details><summary>For Alibaba Cloud users</summary>
 
-If you encountered display problems in LLaMA Board GUI, try using the following command to set environment variables before starting LLaMA Board:
+If you encountered display problems in LLaMA Board on Alibaba Cloud, try using the following command to set environment variables before starting LLaMA Board:
 
 ```bash
 export GRADIO_ROOT_PATH=/${JUPYTER_NAME}/proxy/7860/
