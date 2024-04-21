@@ -1,6 +1,6 @@
 import json
 import os
-from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Dict, Generator, List, Optional, Sequence, Tuple
 
 from ..chat import ChatModel
 from ..data import Role
@@ -17,7 +17,6 @@ if TYPE_CHECKING:
 
 if is_gradio_available():
     import gradio as gr
-    from gradio.components import Component  # cannot use TYPE_CHECKING here
 
 
 class WebChatModel(ChatModel):
@@ -38,7 +37,7 @@ class WebChatModel(ChatModel):
     def loaded(self) -> bool:
         return self.engine is not None
 
-    def load_model(self, data: Dict[Component, Any]) -> Generator[str, None, None]:
+    def load_model(self, data) -> Generator[str, None, None]:
         get = lambda elem_id: data[self.manager.get_elem_by_id(elem_id)]
         lang = get("top.lang")
         error = ""
@@ -82,7 +81,7 @@ class WebChatModel(ChatModel):
 
         yield ALERTS["info_loaded"][lang]
 
-    def unload_model(self, data: Dict[Component, Any]) -> Generator[str, None, None]:
+    def unload_model(self, data) -> Generator[str, None, None]:
         lang = data[self.manager.get_elem_by_id("top.lang")]
 
         if self.demo_mode:
