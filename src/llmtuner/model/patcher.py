@@ -139,6 +139,7 @@ def _configure_quantization(
 
         if quant_method == QuantizationMethod.GPTQ:
             require_version("auto_gptq>=0.5.0", "To fix: pip install auto_gptq>=0.5.0")
+            quantization_config.pop("disable_exllama", None)  # remove deprecated args
             quantization_config["use_exllama"] = False  # disable exllama
 
         if quant_method == QuantizationMethod.AWQ:
