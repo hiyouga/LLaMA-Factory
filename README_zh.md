@@ -346,7 +346,7 @@ python src/train_web.py # 或 python -m llmtuner.webui.interface
 
 <details><summary>阿里云用户指南</summary>
 
-如果您在 LLaMA Board GUI 中遇到显示问题，请尝试在启动前使用以下命令设置环境变量：
+如果您在阿里云上使用 LLaMA Board 时遇到显示问题，请尝试在启动前使用以下命令设置环境变量：
 
 ```bash
 export GRADIO_ROOT_PATH=/${JUPYTER_NAME}/proxy/7860/
