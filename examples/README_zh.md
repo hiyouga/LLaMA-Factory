@@ -41,6 +41,9 @@ examples/
     ├── llama_pro/
     │   ├── expand.sh: 扩展模型中的层
     │   └── sft.sh: 训练扩展后的模型
+    ├── MoD/
+    │   ├── freeze_sft.sh: 冻结微调模型，仅更新 MoD 路由器
+    │   └── sft.sh: 微调国防部模型
     └── fsdp_qlora/
         └── sft.sh: 使用 FSDP+QLoRA 微调量化模型
 ```
