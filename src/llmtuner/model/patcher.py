@@ -61,9 +61,7 @@ def _get_quantization_dataset(tokenizer: "PreTrainedTokenizer", model_args: "Mod
     return samples
 
 
-def _configure_attn_implementation(
-    config: "PretrainedConfig", model_args: "ModelArguments", init_kwargs: Dict[str, Any]
-) -> None:
+def _configure_attn_implementation(config: "PretrainedConfig", model_args: "ModelArguments") -> None:
     if model_args.flash_attn:
         if not is_flash_attn2_available():
             logger.warning("FlashAttention2 is not installed.")
@@ -73,9 +71,9 @@ def _configure_attn_implementation(
         if getattr(config, "model_type", None) == "internlm2":  # special case for custom models
             setattr(config, "attn_implementation", "flash_attention_2")
         else:
-            init_kwargs["attn_implementation"] = "flash_attention_2"
+            setattr(config, "_attn_implementation", "flash_attention_2")
     else:
-        init_kwargs["attn_implementation"] = "eager"
+        setattr(config, "_attn_implementation", "eager")
 
 
 def _configure_rope(config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool) -> None:
@@ -295,7 +293,7 @@ def patch_config(
     if model_args.compute_dtype is None:  # priority: bf16 > fp16 > fp32
         model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
 
-    _configure_attn_implementation(config, model_args, init_kwargs)
+    _configure_attn_implementation(config, model_args)
     _configure_rope(config, model_args, is_trainable)
     _configure_longlora(config, model_args, is_trainable)
     _configure_quantization(config, tokenizer, model_args, init_kwargs)
