@@ -69,7 +69,7 @@ def init_adapter(
         for name, _ in model.named_modules():
             if ".0." in name:
                 freeze_modules.add(name.split(".0.")[-1].split(".")[0])
-            elif ".1." in name:  # here since MoD starts from layer 1
+            elif ".1." in name:  # MoD starts from layer 1
                 freeze_modules.add(name.split(".1.")[-1].split(".")[0])
 
         trainable_layers = []

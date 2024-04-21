@@ -83,6 +83,8 @@ def count_parameters(model: torch.nn.Module) -> Tuple[int, int]:
         if param.__class__.__name__ == "Params4bit":
             if hasattr(param, "quant_storage") and hasattr(param.quant_storage, "itemsize"):
                 num_bytes = param.quant_storage.itemsize
+            elif hasattr(param, "element_size"):  # for older pytorch version
+                num_bytes = param.element_size()
             else:
                 num_bytes = 1
 
