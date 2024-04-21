@@ -342,6 +342,16 @@ export GRADIO_SERVER_PORT=7860 # `set GRADIO_SERVER_PORT=7860` for Windows
 python src/train_web.py # or python -m llmtuner.webui.interface
 ```
 
+<details><summary>For Aliyun users</summary>
+
+If you encountered display problems in LLaMA Board GUI, try using the following command to set environment variables before starting LLaMA Board:
+
+```bash
+export GRADIO_ROOT_PATH=/${JUPYTER_NAME}/proxy/7860/
+```
+
+</details>
+
 #### Use Docker
 
 ```bash
@@ -381,8 +391,8 @@ Use `python src/train_bash.py -h` to display arguments description.
 
 ```bash
 CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 python src/api_demo.py \
-    --model_name_or_path mistralai/Mistral-7B-Instruct-v0.2 \
-    --template mistral \
+    --model_name_or_path meta-llama/Meta-Llama-3-8B-Instruct \
+    --template llama3 \
     --infer_backend vllm \
     --vllm_enforce_eager
 ```
