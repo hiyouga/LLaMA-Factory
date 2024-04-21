@@ -18,7 +18,8 @@ examples/
 │   └── aqlm.sh: 基于 QLoRA 微调 2 比特 AQLM 模型
 ├── lora_multi_gpu/
 │   ├── single_node.sh: 使用 Accelerate 进行单节点 LoRA 训练
-│   └── multi_node.sh: 使用 Accelerate 进行多节点 LoRA 训练
+│   ├── multi_node.sh: 使用 Accelerate 进行多节点 LoRA 训练
+│   └── ds_zero3.sh: 使用 DeepSpeed ZeRO-3 进行 LoRA 训练
 ├── full_multi_gpu/
 │   ├── single_node.sh: 使用 DeepSpeed 进行单节点全量训练
 │   ├── multi_node.sh: 使用 DeepSpeed 进行多节点全量训练
