@@ -303,10 +303,13 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
             raise ValueError("`dpo_label_smoothing` is only valid for sigmoid loss function.")
 
         if self.use_llama_pro and self.finetuning_type == "full":
-            raise ValueError("`use_llama_pro` is only valid for the Freeze or LoRA method.")
+            raise ValueError("`use_llama_pro` is only valid for the Freeze or LoRA training.")
 
         if self.use_galore and self.finetuning_type == "lora":
             raise ValueError("Cannot use LoRA with GaLore together.")
+
+        if self.loraplus_lr_ratio is not None and self.finetuning_type != "lora":
+            raise ValueError("`loraplus_lr_ratio` is only valid for the LoRA training.")
 
     def save_to_json(self, json_path: str):
         r"""Saves the content of this instance in JSON format inside `json_path`."""
