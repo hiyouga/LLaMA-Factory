@@ -11,8 +11,8 @@ CUDA_VISIBLE_DEVICES=0 python ../../../src/train_bash.py \
     --use_galore \
     --galore_layerwise \
     --galore_target mlp,self_attn \
-    --galore_scale 2.0 \
     --galore_rank 128 \
+    --galore_scale 2.0 \
     --output_dir ../../../saves/LLaMA2-7B/galore/sft \
     --overwrite_cache \
     --overwrite_output_dir \
@@ -29,8 +29,8 @@ CUDA_VISIBLE_DEVICES=0 python ../../../src/train_bash.py \
     --evaluation_strategy steps \
     --load_best_model_at_end \
     --learning_rate 5e-5 \
-    --num_train_epochs 30.0 \
-    --max_samples 300 \
+    --num_train_epochs 3.0 \
+    --max_samples 3000 \
     --val_size 0.1 \
     --plot_loss \
     --pure_bf16
