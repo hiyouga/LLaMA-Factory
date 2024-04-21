@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, Dict
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 from trl import AutoModelForCausalLMWithValueHead
 
+from ..extras.constants import MOD_SUPPORTED_MODELS
 from ..extras.logging import get_logger
 from ..extras.misc import count_parameters, get_current_device, try_download_model_from_ms
 from .adapter import init_adapter
@@ -44,7 +45,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "PreTrainedTokenizer":
             padding_side="right",
             **init_kwargs,
         )
-    except Exception:  # try the fast one
+    except ValueError:  # try the fast one
         tokenizer = AutoTokenizer.from_pretrained(
             model_args.model_name_or_path,
             use_fast=True,
@@ -71,12 +72,6 @@ def load_model(
     patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
 
     model = None
-    if model_args.mixture_of_depths == 'continue':
-        from MoD import AutoMoDModelForCausalLM
-        model = AutoMoDModelForCausalLM.from_pretrained(model_args.model_name_or_path, config=config)
-        if model.config.model_type == 'qwen2':
-            RuntimeError("Qwen models are not supported for MoD training.")
-
     if is_trainable and model_args.use_unsloth:
         from unsloth import FastLanguageModel  # type: ignore
 
@@ -104,14 +99,22 @@ def load_model(
     if model is None:
         init_kwargs["config"] = config
         init_kwargs["pretrained_model_name_or_path"] = model_args.model_name_or_path
-        model: "PreTrainedModel" = AutoModelForCausalLM.from_pretrained(**init_kwargs)
 
-    if model_args.mixture_of_depths == 'convert':
-        from MoD import convert_hf_model
-        if model.config.model_type == 'qwen2':
-            RuntimeError("Qwen models are not supported for MoD training.")
-        model = convert_hf_model(model)
+        if model_args.mixture_of_depths == "load":
+            from MoD import AutoMoDModelForCausalLM
 
+            model = AutoMoDModelForCausalLM.from_pretrained(**init_kwargs)
+        else:
+            model = AutoModelForCausalLM.from_pretrained(**init_kwargs)
+
+        if model_args.mixture_of_depths == "convert":
+            from MoD import apply_mod_to_hf
+
+            if getattr(config, "model_type", None) not in MOD_SUPPORTED_MODELS:
+                raise ValueError("Current model is not supported by mixture-of-depth.")
+
+            model = apply_mod_to_hf(model)
+            model = model.to(model_args.compute_dtype)
 
     patch_model(model, tokenizer, model_args, is_trainable)
     register_autoclass(config, model, tokenizer)
@@ -119,7 +122,7 @@ def load_model(
     model = init_adapter(model, model_args, finetuning_args, is_trainable)
 
     if add_valuehead:
-        model: "AutoModelForCausalLMWithValueHead" = AutoModelForCausalLMWithValueHead.from_pretrained(model)
+        model = AutoModelForCausalLMWithValueHead.from_pretrained(model)
         patch_valuehead_model(model)
 
         if model_args.adapter_name_or_path is not None:
