@@ -33,7 +33,7 @@ def create_top() -> Dict[str, "Component"]:
             quantization_bit = gr.Dropdown(choices=["none", "8", "4"], value="none")
             template = gr.Dropdown(choices=list(templates.keys()), value="default")
             rope_scaling = gr.Radio(choices=["none", "linear", "dynamic"], value="none")
-            booster = gr.Radio(choices=["none", "flashattn", "unsloth"], value="none")
+            booster = gr.Radio(choices=["none", "flashattn2", "unsloth"], value="none")
 
     model_name.change(list_adapters, [model_name, finetuning_type], [adapter_path], queue=False).then(
         get_model_path, [model_name], [model_path], queue=False
