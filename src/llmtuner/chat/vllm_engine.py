@@ -2,9 +2,9 @@ import uuid
 from typing import TYPE_CHECKING, AsyncGenerator, AsyncIterator, Dict, List, Optional, Sequence
 
 from ..data import get_template_and_fix_tokenizer
-from ..extras.misc import get_device_count
+from ..extras.misc import get_device_count, infer_optim_dtype
 from ..extras.packages import is_vllm_available
-from ..model import load_tokenizer
+from ..model import load_config, load_tokenizer
 from .base_engine import BaseEngine, Response
 
 
@@ -23,10 +23,20 @@ class VllmEngine(BaseEngine):
         finetuning_args: "FinetuningArguments",
         generating_args: "GeneratingArguments",
     ) -> None:
+        config = load_config(model_args)  # may download model from ms hub
+        load_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
+
         self.can_generate = finetuning_args.stage == "sft"
+        self.tokenizer = load_tokenizer(model_args)
+        self.tokenizer.padding_side = "left"
+        self.template = get_template_and_fix_tokenizer(self.tokenizer, data_args.template)
+        self.generating_args = generating_args.to_dict()
+
         engine_args = AsyncEngineArgs(
             model=model_args.model_name_or_path,
             trust_remote_code=True,
+            download_dir=model_args.cache_dir,
+            dtype=str(load_dtype).split(".")[-1],
             max_model_len=model_args.vllm_maxlen,
             tensor_parallel_size=get_device_count() or 1,
             gpu_memory_utilization=model_args.vllm_gpu_util,
@@ -35,10 +45,6 @@ class VllmEngine(BaseEngine):
             enforce_eager=model_args.vllm_enforce_eager,
         )
         self.model = AsyncLLMEngine.from_engine_args(engine_args)
-        self.tokenizer = load_tokenizer(model_args)
-        self.tokenizer.padding_side = "left"
-        self.template = get_template_and_fix_tokenizer(self.tokenizer, data_args.template)
-        self.generating_args = generating_args.to_dict()
 
     async def _generate(
         self,
