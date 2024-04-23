@@ -1,5 +1,5 @@
 from .loader import load_config, load_model, load_tokenizer
-from .utils import find_all_linear_modules, load_valuehead_params
+from .utils.misc import find_all_linear_modules, load_valuehead_params
 
 
 __all__ = [

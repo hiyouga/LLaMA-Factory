@@ -47,6 +47,8 @@ TRAINING_STAGES = {
 
 STAGES_USE_PAIR_DATA = ["rm", "dpo", "orpo"]
 
+SUPPORTED_CLASS_FOR_S2ATTN = ["llama"]
+
 V_HEAD_WEIGHTS_NAME = "value_head.bin"
 
 V_HEAD_SAFE_WEIGHTS_NAME = "value_head.safetensors"
