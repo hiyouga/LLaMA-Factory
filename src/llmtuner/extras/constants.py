@@ -654,6 +654,20 @@ register_model_group(
 
 register_model_group(
     models={
+        "Phi3-3.8B-4k-Chat": {
+            DownloadSource.DEFAULT: "microsoft/Phi-3-mini-4k-instruct",
+        },
+        "Phi3-3.8B-128k-Chat": {
+            DownloadSource.DEFAULT: "microsoft/Phi-3-mini-128k-instruct",
+        },
+    },
+    module="qkv_proj",
+    template="phi",
+)
+
+
+register_model_group(
+    models={
         "Qwen-1.8B": {
             DownloadSource.DEFAULT: "Qwen/Qwen-1_8B",
             DownloadSource.MODELSCOPE: "qwen/Qwen-1_8B",
