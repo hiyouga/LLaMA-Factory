@@ -5,7 +5,8 @@ from peft import LoraConfig, LoraModel, PeftModel, TaskType, get_peft_model
 from transformers.integrations import is_deepspeed_zero3_enabled
 
 from ..extras.logging import get_logger
-from .utils import QuantizationMethod, find_all_linear_modules, find_expanded_modules
+from .utils.misc import find_all_linear_modules, find_expanded_modules
+from .utils.quantization import QuantizationMethod
 
 
 if TYPE_CHECKING:
