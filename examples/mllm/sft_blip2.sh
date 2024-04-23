@@ -14,7 +14,7 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --overwrite_output_dir \
     --cutoff_len 1024 \
     --preprocessing_num_workers 16 \
-    --per_device_train_batch_size 1 \
+    --per_device_train_batch_size 4 \
     --per_device_eval_batch_size 1 \
     --gradient_accumulation_steps 8 \
     --lr_scheduler_type cosine \
@@ -31,4 +31,3 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --plot_loss \
     --quantization_bit 8 \
     --image_path /home/LAB/fengzc/LLM/checkpoints/liuhaotian/LLaVA-Instruct-150K/images/coco/train2017
-

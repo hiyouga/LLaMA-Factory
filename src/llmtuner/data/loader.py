@@ -184,7 +184,6 @@ def get_mm_dataset(
         training_args: "Seq2SeqTrainingArguments",
         stage: Literal["pt", "sft", "rm", "ppo"],
 ) -> Union["Dataset", "IterableDataset"]:
-    tokenizer = processor.tokenizer
     if data_args.tokenized_path is not None:
         if has_tokenized_data(data_args.tokenized_path):
             logger.warning("Loading dataset from disk will ignore other data arguments.")
