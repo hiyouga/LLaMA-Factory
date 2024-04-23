@@ -167,7 +167,6 @@ def init_adapter(
             }
 
             if model_args.use_unsloth:
-                print(model)
                 model = get_unsloth_peft_model(model, model_args, peft_kwargs)
             else:
                 lora_config = LoraConfig(
