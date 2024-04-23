@@ -32,4 +32,3 @@ CUDA_VISIBLE_DEVICES=0 python src/train_bash.py \
     --quantization_bit 8 \
     --image_path /home/LAB/fengzc/LLM/checkpoints/liuhaotian/LLaVA-Instruct-150K/images/coco/train2017 \
     --use_qformer
-
