@@ -1,21 +1,19 @@
 from typing import TYPE_CHECKING, Any, Dict
 
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, AutoProcessor, AutoModelForVision2Seq
 from trl import AutoModelForCausalLMWithValueHead
 
 from ..extras.constants import MOD_SUPPORTED_MODELS
 from ..extras.logging import get_logger
 from ..extras.misc import count_parameters, get_current_device, try_download_model_from_ms
-from .adapter import init_adapter
+from .adapter import init_adapter, init_mm_adapter
 from .patcher import patch_config, patch_model, patch_tokenizer, patch_valuehead_model
 from .utils import load_valuehead_params, register_autoclass
-
 
 if TYPE_CHECKING:
     from transformers import PreTrainedModel, PreTrainedTokenizer
 
     from ..hparams import FinetuningArguments, ModelArguments
-
 
 logger = get_logger(__name__)
 
@@ -57,12 +55,38 @@ def load_tokenizer(model_args: "ModelArguments") -> "PreTrainedTokenizer":
     return tokenizer
 
 
+def load_processor(model_args: "ModelArguments") -> "AutoProcessor":
+    r"""
+    Loads processor. Must before load_model.
+
+    Note: including inplace operation of model_args.
+    """
+    init_kwargs = _get_init_kwargs(model_args)
+    try:
+        processor = AutoProcessor.from_pretrained(
+            model_args.model_name_or_path,
+            use_fast=model_args.use_fast_tokenizer,
+            split_special_tokens=model_args.split_special_tokens,
+            padding_side="right",
+            **init_kwargs,
+        )
+    except Exception:  # try the fast one
+        processor = AutoProcessor.from_pretrained(
+            model_args.model_name_or_path,
+            use_fast=True,
+            padding_side="right",
+            **init_kwargs,
+        )
+
+    return processor
+
+
 def load_model(
-    tokenizer: "PreTrainedTokenizer",
-    model_args: "ModelArguments",
-    finetuning_args: "FinetuningArguments",
-    is_trainable: bool = False,
-    add_valuehead: bool = False,
+        tokenizer: "PreTrainedTokenizer",
+        model_args: "ModelArguments",
+        finetuning_args: "FinetuningArguments",
+        is_trainable: bool = False,
+        add_valuehead: bool = False,
 ) -> "PreTrainedModel":
     r"""
     Loads pretrained model. Must after load_tokenizer.
@@ -134,6 +158,80 @@ def load_model(
         if vhead_params is not None:
             model.load_state_dict(vhead_params, strict=False)
             logger.info("Loaded valuehead from checkpoint: {}".format(vhead_path))
+
+    if not is_trainable:
+        model.requires_grad_(False)
+        model.eval()
+    else:
+        model.train()
+
+    trainable_params, all_param = count_parameters(model)
+    if is_trainable:
+        param_stats = "trainable params: {:d} || all params: {:d} || trainable%: {:.4f}".format(
+            trainable_params, all_param, 100 * trainable_params / all_param
+        )
+    else:
+        param_stats = "all params: {:d}".format(all_param)
+    logger.info(param_stats)
+
+    if model_args.print_param_status:
+        for name, param in model.named_parameters():
+            print(
+                "name: {}, dtype: {}, device: {}, trainable: {}".format(
+                    name, param.dtype, param.device, param.requires_grad
+                )
+            )
+
+    return model
+
+
+def load_mm_model(
+        processor: "AutoProcessor",
+        model_args: "ModelArguments",
+        finetuning_args: "FinetuningArguments",
+        is_trainable: bool = False,
+        add_valuehead: bool = False,
+) -> "AutoModelForVision2Seq":
+    r"""
+    Loads pretrained model. Must after load_tokenizer.
+    """
+    tokenizer = processor.tokenizer
+    init_kwargs = _get_init_kwargs(model_args)
+    config = AutoConfig.from_pretrained(model_args.model_name_or_path, **init_kwargs)
+    patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
+
+    model = None
+    if is_trainable and model_args.use_unsloth:
+        from unsloth import FastLanguageModel  # type: ignore
+
+        unsloth_kwargs = {
+            "model_name": model_args.model_name_or_path,
+            "max_seq_length": model_args.model_max_length,
+            "dtype": model_args.compute_dtype,
+            "load_in_4bit": model_args.quantization_bit == 4,
+            "token": model_args.hf_hub_token,
+            "device_map": {"": get_current_device()},
+            "rope_scaling": getattr(config, "rope_scaling", None),
+            "fix_tokenizer": False,
+            "trust_remote_code": True,
+        }
+        try:
+            model, _ = FastLanguageModel.from_pretrained(**unsloth_kwargs)
+        except NotImplementedError:
+            logger.warning("Unsloth does not support model type {}.".format(getattr(config, "model_type", None)))
+            model_args.use_unsloth = False
+
+        if model_args.adapter_name_or_path:
+            model_args.adapter_name_or_path = None
+            logger.warning("Unsloth does not support loading adapters.")
+    if model is None:
+        init_kwargs["config"] = config
+        init_kwargs["pretrained_model_name_or_path"] = model_args.model_name_or_path
+        model: "AutoModelForVision2Seq" = AutoModelForVision2Seq.from_pretrained(**init_kwargs)
+    patch_model(model, tokenizer, model_args, is_trainable)
+    register_autoclass(config, model, tokenizer)
+
+    model = init_mm_adapter(model, model_args, finetuning_args, is_trainable)
 
     if not is_trainable:
         model.requires_grad_(False)
