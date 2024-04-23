@@ -270,6 +270,22 @@ register_model_group(
 
 register_model_group(
     models={
+        "DBRX-132B-Base": {
+            DownloadSource.DEFAULT: "databricks/dbrx-base",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/dbrx-base",
+        },
+        "DBRX-132B-Chat": {
+            DownloadSource.DEFAULT: "databricks/dbrx-instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/dbrx-instruct",
+        },
+    },
+    module="Wqkv",
+    template="dbrx",
+)
+
+
+register_model_group(
+    models={
         "DeepSeek-LLM-7B-Base": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-llm-7b-base",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-llm-7b-base",
@@ -450,6 +466,16 @@ register_model_group(
     },
     module="wqkv",
     template="intern2",
+)
+
+
+register_model_group(
+    models={
+        "Jambda-v0.1": {
+            DownloadSource.DEFAULT: "ai21labs/Jamba-v0.1",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Jamba-v0.1",
+        }
+    },
 )
 
 
