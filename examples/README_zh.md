@@ -19,11 +19,11 @@ examples/
 ├── lora_multi_gpu/
 │   ├── single_node.sh: 使用 Accelerate 进行单节点 LoRA 训练
 │   ├── multi_node.sh: 使用 Accelerate 进行多节点 LoRA 训练
-│   └── ds_zero3.sh: 使用 DeepSpeed ZeRO-3 进行 LoRA 训练
+│   └── ds_zero3.sh: 使用 DeepSpeed ZeRO-3 进行 LoRA 训练（拆分权重）
 ├── full_multi_gpu/
 │   ├── single_node.sh: 使用 DeepSpeed 进行单节点全量训练
 │   ├── multi_node.sh: 使用 DeepSpeed 进行多节点全量训练
-│   └── predict.sh: 基于全量训练进行批量预测并计算 BLEU 和 ROUGE 分数
+│   └── predict.sh: 基于全量训练进行多卡批量预测并计算 BLEU 和 ROUGE 分数
 ├── merge_lora/
 │   ├── merge.sh: 将 LoRA 权重合并到预训练模型中
 │   └── quantize.sh: 使用 AutoGPTQ 量化微调后的模型
