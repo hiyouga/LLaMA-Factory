@@ -8,7 +8,7 @@ from ..extras.logging import get_logger
 from ..extras.misc import count_parameters, get_current_device, try_download_model_from_ms
 from .adapter import init_adapter
 from .patcher import patch_config, patch_model, patch_tokenizer, patch_valuehead_model
-from .utils import load_valuehead_params, register_autoclass
+from .utils.misc import load_valuehead_params, register_autoclass
 
 
 if TYPE_CHECKING:
