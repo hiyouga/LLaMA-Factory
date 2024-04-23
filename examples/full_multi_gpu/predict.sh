@@ -1,6 +1,8 @@
 #!/bin/bash
 
-CUDA_VISIBLE_DEVICES=0 python ../../src/train_bash.py \
+CUDA_VISIBLE_DEVICES=0,1,2,3 accelerate launch \
+    --config_file ../accelerate/single_config.yaml \
+    ../../src/train_bash.py \
     --stage sft \
     --do_predict \
     --model_name_or_path ../../saves/LLaMA2-7B/full/sft \
