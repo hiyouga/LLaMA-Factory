@@ -340,7 +340,7 @@
       "history": "history"
     }
   },
-  "orca_dpo_de" : {
+  "orca_dpo_de": {
     "hf_hub_url": "mayflowergmbh/intel_orca_dpo_pairs_de",
     "ranking": true
   },
@@ -413,5 +413,10 @@
       "prompt": "content"
     },
     "folder": "python"
+  },
+  "llava_instruct_100": {
+    "file_name": "llava_instruct_100.json",
+    "file_sha1": "96fa18313544e22444fe20eead7754b17da452ae",
+    "ranking": true
   }
 }
