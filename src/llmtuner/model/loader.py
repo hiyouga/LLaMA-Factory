@@ -3,12 +3,13 @@ from typing import TYPE_CHECKING, Any, Dict
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 from trl import AutoModelForCausalLMWithValueHead
 
-from ..extras.constants import MOD_SUPPORTED_MODELS
 from ..extras.logging import get_logger
-from ..extras.misc import count_parameters, get_current_device, try_download_model_from_ms
+from ..extras.misc import count_parameters, try_download_model_from_ms
 from .adapter import init_adapter
 from .patcher import patch_config, patch_model, patch_tokenizer, patch_valuehead_model
 from .utils.misc import load_valuehead_params, register_autoclass
+from .utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
+from .utils.unsloth import load_unsloth_pretrained_model
 
 
 if TYPE_CHECKING:
@@ -83,54 +84,30 @@ def load_model(
     patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
 
     model = None
-    if is_trainable and model_args.use_unsloth:
-        from unsloth import FastLanguageModel  # type: ignore
+    lazy_load = False
+    if model_args.use_unsloth:
+        if model_args.adapter_name_or_path is not None:
+            lazy_load = True
+        elif is_trainable:
+            model = load_unsloth_pretrained_model(config, model_args)
 
-        unsloth_kwargs = {
-            "model_name": model_args.model_name_or_path,
-            "max_seq_length": model_args.model_max_length,
-            "dtype": model_args.compute_dtype,
-            "load_in_4bit": model_args.quantization_bit == 4,
-            "token": model_args.hf_hub_token,
-            "device_map": {"": get_current_device()},
-            "rope_scaling": getattr(config, "rope_scaling", None),
-            "fix_tokenizer": False,
-            "trust_remote_code": True,
-        }
-        try:
-            model, _ = FastLanguageModel.from_pretrained(**unsloth_kwargs)
-        except NotImplementedError:
-            logger.warning("Unsloth does not support model type {}.".format(getattr(config, "model_type", None)))
-            model_args.use_unsloth = False
-
-        if model_args.adapter_name_or_path:
-            model_args.adapter_name_or_path = None
-            logger.warning("Unsloth does not support loading adapters.")
-
-    if model is None:
+    if model is None and not lazy_load:
         init_kwargs["config"] = config
         init_kwargs["pretrained_model_name_or_path"] = model_args.model_name_or_path
 
         if model_args.mixture_of_depths == "load":
-            from MoD import AutoMoDModelForCausalLM
-
-            model = AutoMoDModelForCausalLM.from_pretrained(**init_kwargs)
+            model = load_mod_pretrained_model(**init_kwargs)
         else:
             model = AutoModelForCausalLM.from_pretrained(**init_kwargs)
 
         if model_args.mixture_of_depths == "convert":
-            from MoD import apply_mod_to_hf
+            model = convert_pretrained_model_to_mod(model, config, model_args)
 
-            if getattr(config, "model_type", None) not in MOD_SUPPORTED_MODELS:
-                raise ValueError("Current model is not supported by mixture-of-depth.")
+    if not lazy_load:
+        patch_model(model, tokenizer, model_args, is_trainable)
+        register_autoclass(config, model, tokenizer)
 
-            model = apply_mod_to_hf(model)
-            model = model.to(model_args.compute_dtype)
-
-    patch_model(model, tokenizer, model_args, is_trainable)
-    register_autoclass(config, model, tokenizer)
-
-    model = init_adapter(model, model_args, finetuning_args, is_trainable)
+    model = init_adapter(config, model, model_args, finetuning_args, is_trainable)
 
     if add_valuehead:
         model = AutoModelForCausalLMWithValueHead.from_pretrained(model)
