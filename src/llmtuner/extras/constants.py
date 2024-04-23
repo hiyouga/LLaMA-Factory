@@ -613,18 +613,15 @@ register_model_group(
 register_model_group(
     models={
         "OLMo-1B": {
-            DownloadSource.DEFAULT: "allenai/OLMo-1B",
+            DownloadSource.DEFAULT: "allenai/OLMo-1B-hf",
         },
         "OLMo-7B": {
-            DownloadSource.DEFAULT: "allenai/OLMo-7B",
-            DownloadSource.MODELSCOPE: "AI-ModelScope/OLMo-7B",
+            DownloadSource.DEFAULT: "allenai/OLMo-7B-hf",
         },
-        "OLMo-7B-Chat": {
-            DownloadSource.DEFAULT: "allenai/OLMo-7B-Instruct",
+        "OLMo-1.7-7B": {
+            DownloadSource.DEFAULT: "allenai/OLMo-1.7-7B-hf",
         },
     },
-    module="att_proj",
-    template="olmo",
 )
 
 
