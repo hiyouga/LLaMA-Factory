@@ -747,8 +747,10 @@ _register_template(
     name="phi",
     format_user=StringFormatter(slots=["<|user|>\n{{content}}<|end|>\n<|assistant|>\n"]),
     format_system=StringFormatter(slots=[{"bos_token"}, "<|system|>\n{{content}}<|end|>\n"]),
-    format_separator=EmptyFormatter(slots=["<|end|>\n"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
     default_system="You are a helpful AI assistant.",
+    stop_words=["<|end|>"],
+    replace_eos=True,
 )
 
 
