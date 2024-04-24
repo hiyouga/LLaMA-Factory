@@ -199,8 +199,7 @@ def get_mm_dataset(
     with training_args.main_process_first(desc="load dataset"):
         all_datasets = []
         for dataset_attr in get_dataset_list(data_args):
-            local_path = os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)
-            all_datasets.append(load_dataset("json", data_files=local_path)['train'])
+            all_datasets.append(load_dataset(dataset_attr.dataset_name)['train'])
         dataset = merge_dataset(all_datasets, data_args, training_args)
 
     return dataset

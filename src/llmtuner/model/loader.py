@@ -191,6 +191,7 @@ def load_mm_model(
         finetuning_args: "FinetuningArguments",
         is_trainable: bool = False,
         add_valuehead: bool = False,
+        use_clm=True,
 ) -> "AutoModelForVision2Seq":
     r"""
     Loads pretrained model. Must after load_tokenizer.
@@ -231,7 +232,7 @@ def load_mm_model(
     patch_model(model, tokenizer, model_args, is_trainable)
     register_autoclass(config, model, tokenizer)
 
-    model = init_mm_adapter(model, model_args, finetuning_args, is_trainable)
+    model = init_mm_adapter(model, model_args, finetuning_args, is_trainable, use_clm)
 
     if not is_trainable:
         model.requires_grad_(False)

@@ -414,9 +414,10 @@
     },
     "folder": "python"
   },
-  "llava_instruct_100": {
-    "file_name": "llava_instruct_100.json",
-    "file_sha1": "96fa18313544e22444fe20eead7754b17da452ae",
-    "ranking": true
+  "llava_instruct": {
+    "hf_hub_url": "HuggingFaceH4/llava-instruct-mix-vsft"
+  },
+  "mllm_instruct_example": {
+    "hf_hub_url": "data/mllm_example_dataset"
   }
 }
