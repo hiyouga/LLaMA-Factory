@@ -202,29 +202,6 @@ def load_mm_model(
     patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
 
     model = None
-    if is_trainable and model_args.use_unsloth:
-        from unsloth import FastLanguageModel  # type: ignore
-
-        unsloth_kwargs = {
-            "model_name": model_args.model_name_or_path,
-            "max_seq_length": model_args.model_max_length,
-            "dtype": model_args.compute_dtype,
-            "load_in_4bit": model_args.quantization_bit == 4,
-            "token": model_args.hf_hub_token,
-            "device_map": {"": get_current_device()},
-            "rope_scaling": getattr(config, "rope_scaling", None),
-            "fix_tokenizer": False,
-            "trust_remote_code": True,
-        }
-        try:
-            model, _ = FastLanguageModel.from_pretrained(**unsloth_kwargs)
-        except NotImplementedError:
-            logger.warning("Unsloth does not support model type {}.".format(getattr(config, "model_type", None)))
-            model_args.use_unsloth = False
-
-        if model_args.adapter_name_or_path:
-            model_args.adapter_name_or_path = None
-            logger.warning("Unsloth does not support loading adapters.")
     if model is None:
         init_kwargs["config"] = config
         init_kwargs["pretrained_model_name_or_path"] = model_args.model_name_or_path
