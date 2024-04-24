@@ -47,7 +47,8 @@ def apply_lora(base_model_path, model_path, lora_path):
     model.save_pretrained(model_path)
     tokenizer.save_pretrained(model_path)
     processor.image_processor.save_pretrained(model_path)
-
+    if 'instructblip' in model_path:
+        processor.qformer_tokenizer.save_pretrained(model_path)
 
 def main(
         model_path: str,
