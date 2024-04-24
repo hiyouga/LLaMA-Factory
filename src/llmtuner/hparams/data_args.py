@@ -88,10 +88,6 @@ class DataArguments:
         default=None,
         metadata={"help": "Path to save or load the tokenized datasets."},
     )
-    image_path: Optional[str] = field(
-        default=None,
-        metadata={"help": "Path to images."},
-    )
 
     def __post_init__(self):
         if self.reserved_label_len >= self.cutoff_len:
