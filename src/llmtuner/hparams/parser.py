@@ -67,6 +67,9 @@ def _verify_model_args(model_args: "ModelArguments", finetuning_args: "Finetunin
         if finetuning_args.finetuning_type != "lora":
             raise ValueError("Quantization is only compatible with the LoRA method.")
 
+        if model_args.resize_vocab:
+            raise ValueError("Cannot resize embedding layers of a quantized model.")
+
         if model_args.adapter_name_or_path is not None and finetuning_args.create_new_adapter:
             raise ValueError("Cannot create new adapter upon a quantized model.")
 
@@ -199,10 +202,11 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if (
         training_args.do_train
         and finetuning_args.finetuning_type == "lora"
+        and model_args.quantization_bit is None
         and model_args.resize_vocab
         and finetuning_args.additional_target is None
     ):
-        logger.warning("Add token embeddings to `additional_target` to make the added tokens trainable.")
+        logger.warning("Remember to add embedding layers to `additional_target` to make the added tokens trainable.")
 
     if training_args.do_train and model_args.quantization_bit is not None and (not model_args.upcast_layernorm):
         logger.warning("We recommend enable `upcast_layernorm` in quantized training.")
