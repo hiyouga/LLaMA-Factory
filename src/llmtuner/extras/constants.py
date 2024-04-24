@@ -47,6 +47,8 @@ TRAINING_STAGES = {
 
 STAGES_USE_PAIR_DATA = ["rm", "dpo", "orpo"]
 
+SUPPORTED_CLASS_FOR_S2ATTN = ["llama"]
+
 V_HEAD_WEIGHTS_NAME = "value_head.bin"
 
 V_HEAD_SAFE_WEIGHTS_NAME = "value_head.safetensors"
@@ -268,6 +270,22 @@ register_model_group(
 
 register_model_group(
     models={
+        "DBRX-132B-Base": {
+            DownloadSource.DEFAULT: "databricks/dbrx-base",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/dbrx-base",
+        },
+        "DBRX-132B-Chat": {
+            DownloadSource.DEFAULT: "databricks/dbrx-instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/dbrx-instruct",
+        },
+    },
+    module="Wqkv",
+    template="dbrx",
+)
+
+
+register_model_group(
+    models={
         "DeepSeek-LLM-7B-Base": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-llm-7b-base",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-llm-7b-base",
@@ -453,6 +471,16 @@ register_model_group(
 
 register_model_group(
     models={
+        "Jambda-v0.1": {
+            DownloadSource.DEFAULT: "ai21labs/Jamba-v0.1",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Jamba-v0.1",
+        }
+    },
+)
+
+
+register_model_group(
+    models={
         "LingoWhale-8B": {
             DownloadSource.DEFAULT: "deeplang-ai/LingoWhale-8B",
             DownloadSource.MODELSCOPE: "DeepLang/LingoWhale-8B",
@@ -585,18 +613,15 @@ register_model_group(
 register_model_group(
     models={
         "OLMo-1B": {
-            DownloadSource.DEFAULT: "allenai/OLMo-1B",
+            DownloadSource.DEFAULT: "allenai/OLMo-1B-hf",
         },
         "OLMo-7B": {
-            DownloadSource.DEFAULT: "allenai/OLMo-7B",
-            DownloadSource.MODELSCOPE: "AI-ModelScope/OLMo-7B",
+            DownloadSource.DEFAULT: "allenai/OLMo-7B-hf",
         },
-        "OLMo-7B-Chat": {
-            DownloadSource.DEFAULT: "allenai/OLMo-7B-Instruct",
+        "OLMo-1.7-7B": {
+            DownloadSource.DEFAULT: "allenai/OLMo-1.7-7B-hf",
         },
     },
-    module="att_proj",
-    template="olmo",
 )
 
 
@@ -649,6 +674,20 @@ register_model_group(
             DownloadSource.MODELSCOPE: "AI-ModelScope/phi-2",
         },
     }
+)
+
+
+register_model_group(
+    models={
+        "Phi3-3.8B-4k-Chat": {
+            DownloadSource.DEFAULT: "microsoft/Phi-3-mini-4k-instruct",
+        },
+        "Phi3-3.8B-128k-Chat": {
+            DownloadSource.DEFAULT: "microsoft/Phi-3-mini-128k-instruct",
+        },
+    },
+    module="qkv_proj",
+    template="phi",
 )
 
 

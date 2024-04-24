@@ -31,11 +31,11 @@ class GeneratingArguments:
         metadata={"help": "Number of beams for beam search. 1 means no beam search."},
     )
     max_length: int = field(
-        default=512,
+        default=1024,
         metadata={"help": "The maximum length the generated tokens can have. It can be overridden by max_new_tokens."},
     )
     max_new_tokens: int = field(
-        default=512,
+        default=1024,
         metadata={"help": "The maximum numbers of tokens to generate, ignoring the number of tokens in the prompt."},
     )
     repetition_penalty: float = field(
