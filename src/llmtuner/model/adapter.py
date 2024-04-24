@@ -182,7 +182,8 @@ def init_adapter(
 def init_mm_adapter(
         model: "AutoModelForVision2Seq", model_args: "ModelArguments",
         finetuning_args: "FinetuningArguments",
-        is_trainable: bool
+        is_trainable: bool,
+        use_clm=True,
 ) -> "AutoModelForVision2Seq":
     if finetuning_args.finetuning_type == "lora":
         logger.info("Fine-tuning method: {}".format("DoRA" if finetuning_args.use_dora else "LoRA"))
@@ -253,12 +254,19 @@ def init_mm_adapter(
                 }
                 model = FastLanguageModel.get_peft_model(**peft_kwargs, **unsloth_peft_kwargs)
             else:
-                lora_config = LoraConfig(
-                    # task_type=TaskType.CAUSAL_LM,
-                    inference_mode=False,
-                    use_dora=finetuning_args.use_dora,
-                    **peft_kwargs,
-                )
+                if use_clm:
+                    lora_config = LoraConfig(
+                        task_type=TaskType.CAUSAL_LM,
+                        inference_mode=False,
+                        use_dora=finetuning_args.use_dora,
+                        **peft_kwargs,
+                    )
+                else:
+                    lora_config = LoraConfig(
+                        inference_mode=False,
+                        use_dora=finetuning_args.use_dora,
+                        **peft_kwargs,
+                    )
                 model = get_peft_model(model, lora_config)
 
         if (not finetuning_args.pure_bf16) and (not finetuning_args.use_badam):
