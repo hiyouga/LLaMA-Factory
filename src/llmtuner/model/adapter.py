@@ -157,6 +157,17 @@ def init_adapter(
             ):
                 raise ValueError("DoRA is not compatible with PTQ-quantized models.")
 
+            if model_args.resize_vocab and finetuning_args.additional_target is None:
+                input_embeddings = model.get_input_embeddings()
+                output_embeddings = model.get_output_embeddings()
+                module_names = set()
+                for name, module in model.named_modules():
+                    if module in [input_embeddings, output_embeddings]:
+                        module_names.add(name.split(".")[-1])
+
+                finetuning_args.additional_target = module_names
+                logger.warning("Vocab has been resized, add {} to trainable params.".format(",".join(module_names)))
+
             peft_kwargs = {
                 "r": finetuning_args.lora_rank,
                 "target_modules": target_modules,
