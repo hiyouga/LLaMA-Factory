@@ -1,49 +1,21 @@
-import inspect
-from enum import Enum, unique
-from functools import partial
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List
 
 import torch
 from transformers import PreTrainedModel
-from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.utils import cached_file
-from transformers.utils.versions import require_version
 
-from ..extras.constants import V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
-from ..extras.logging import get_logger
+from ...extras.constants import V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
+from ...extras.logging import get_logger
+from .quantization import QuantizationMethod
 
 
 if TYPE_CHECKING:
     from transformers import PretrainedConfig, PreTrainedTokenizer
 
-    from ..hparams import ModelArguments
+    from ...hparams import ModelArguments
 
 
 logger = get_logger(__name__)
-
-
-@unique
-class QuantizationMethod(str, Enum):
-    r"""
-    Borrowed from `transformers.utils.quantization_config.QuantizationMethod`.
-    """
-
-    BITS_AND_BYTES = "bitsandbytes"
-    GPTQ = "gptq"
-    AWQ = "awq"
-    AQLM = "aqlm"
-    QUANTO = "quanto"
-
-
-def add_z3_leaf_module(model: "PreTrainedModel", module: "torch.nn.Module") -> None:
-    r"""
-    Sets module as a leaf module to skip partitioning in deepspeed zero3.
-    """
-    if is_deepspeed_zero3_enabled():
-        require_version("deepspeed>=0.13.0", "To fix: pip install deepspeed>=0.13.0")
-        from deepspeed.utils import set_z3_leaf_modules  # type: ignore
-
-        set_z3_leaf_modules(model, [module])
 
 
 def find_all_linear_modules(model: "PreTrainedModel") -> List[str]:
@@ -100,42 +72,6 @@ def find_expanded_modules(model: "PreTrainedModel", target_modules: List[str], n
 
     logger.info("Apply lora to layers: {}".format(",".join(map(str, trainable_layer_ids))))
     return module_names
-
-
-def gradient_checkpointing_enable(
-    self: "PreTrainedModel", gradient_checkpointing_kwargs: Optional[Dict[str, Any]] = None
-) -> None:
-    r"""
-    Activates gradient checkpointing for the current model.
-
-    Modification of the original method to enable gradient checkpointing for block-wise optimizer.
-    """
-    from torch.utils.checkpoint import checkpoint
-
-    if not self.supports_gradient_checkpointing:
-        raise ValueError("{} does not support gradient checkpointing.".format(self.__class__.__name__))
-
-    if gradient_checkpointing_kwargs is None:
-        gradient_checkpointing_kwargs = {"use_reentrant": True}
-
-    gradient_checkpointing_func = partial(checkpoint, **gradient_checkpointing_kwargs)
-
-    def custom_gradient_checkpointing_func(func, *args, **kwargs):
-        module: "torch.nn.Module" = func.__self__
-
-        if any(param.requires_grad for param in module.parameters()):
-            for arg in args:
-                if torch.is_tensor(arg) and torch.is_floating_point(arg):
-                    arg.requires_grad_(True)
-
-        return gradient_checkpointing_func(func, *args, **kwargs)
-
-    if "value" in inspect.signature(self._set_gradient_checkpointing).parameters:  # old GC format
-        self.apply(partial(self._set_gradient_checkpointing, value=True))
-        self.enable_input_require_grads()
-        logger.warning("You are using the old GC format, some features (e.g. BAdam) will be invalid.")
-    else:  # have already enabled input require gradients
-        self._set_gradient_checkpointing(enable=True, gradient_checkpointing_func=custom_gradient_checkpointing_func)
 
 
 def load_valuehead_params(path_or_repo_id: str, model_args: "ModelArguments") -> Dict[str, torch.Tensor]:
