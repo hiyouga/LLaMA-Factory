@@ -1,0 +1,65 @@
+[
+  {
+    "messages": [
+      {
+        "content": "Who are they?",
+        "role": "user"
+      },
+      {
+        "content": "They're Kane and Gretzka from Bayern Munich.",
+        "role": "assistant"
+      },
+      {
+        "content": "What are they doing?",
+        "role": "user"
+      },
+      {
+        "content": "They are celebrating on the soccer field",
+        "role": "assistant"
+      }
+    ],
+    "image": "1.jpg"
+  },
+  {
+    "messages": [
+      {
+        "content": "Who is he?",
+        "role": "user"
+      },
+      {
+        "content": "He's Thomas Muller from Bayern Munich.",
+        "role": "assistant"
+      },
+      {
+        "content": "Why is he on the ground?",
+        "role": "user"
+      },
+      {
+        "content": "Because he's sliding on his knees to celebrate.",
+        "role": "assistant"
+      }
+    ],
+    "image": "2.jpg"
+  },
+  {
+    "messages": [
+      {
+        "content": "Please describe this image",
+        "role": "user"
+      },
+      {
+        "content": "Chinese astronaut Gui Haichao is giving a speech.",
+        "role": "assistant"
+      },
+      {
+        "content": "What has he accomplished?",
+        "role": "user"
+      },
+      {
+        "content": "He was appointed to be a payload specialist on Shenzhou 16 mission in June 2022, thus becoming the first Chinese civilian of Group 3 in space on 30 May 2023. He is responsible for the on-orbit operation of space science experimental payloads.",
+        "role": "assistant"
+      }
+    ],
+    "image": "3.jpg"
+  }
+]

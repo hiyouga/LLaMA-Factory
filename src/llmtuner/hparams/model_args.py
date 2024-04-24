@@ -165,10 +165,6 @@ class ModelArguments:
         default=False,
         metadata={"help": "For debugging purposes, print the status of the parameters in the model."},
     )
-    use_qformer: bool = field(
-        default=False,
-        metadata={"help": "Whether use qformer for Multimodal LLM."},
-    )
 
     def __post_init__(self):
         self.compute_dtype = None
