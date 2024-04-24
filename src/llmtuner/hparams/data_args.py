@@ -26,11 +26,11 @@ class DataArguments:
     )
     cutoff_len: int = field(
         default=1024,
-        metadata={"help": "The cutoff length of the model inputs after tokenization."},
+        metadata={"help": "The cutoff length of the tokenized inputs in the dataset."},
     )
     reserved_label_len: int = field(
         default=1,
-        metadata={"help": "The minimum cutoff length reserved for label after tokenization."},
+        metadata={"help": "The minimum cutoff length reserved for the tokenized labels in the dataset."},
     )
     train_on_prompt: bool = field(
         default=False,

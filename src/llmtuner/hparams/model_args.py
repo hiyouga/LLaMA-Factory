@@ -33,6 +33,10 @@ class ModelArguments:
         default=False,
         metadata={"help": "Whether or not the special tokens should be split during the tokenization process."},
     )
+    new_special_tokens: Optional[str] = field(
+        default=None,
+        metadata={"help": "Special tokens to be added into the tokenizer."},
+    )
     model_revision: str = field(
         default="main",
         metadata={"help": "The specific model version to use (can be a branch name, tag name or commit id)."},
@@ -176,6 +180,9 @@ class ModelArguments:
 
         if self.adapter_name_or_path is not None:  # support merging multiple lora weights
             self.adapter_name_or_path = [path.strip() for path in self.adapter_name_or_path.split(",")]
+
+        if self.new_special_tokens is not None:  # support multiple special tokens
+            self.new_special_tokens = [token.strip() for token in self.new_special_tokens.split(",")]
 
         assert self.quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
         assert self.export_quantization_bit in [None, 8, 4, 3, 2], "We only accept 2/3/4/8-bit quantization."
