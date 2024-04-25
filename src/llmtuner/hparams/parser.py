@@ -196,6 +196,9 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if model_args.infer_backend == "vllm":
         raise ValueError("vLLM backend is only available for API, CLI and Web.")
 
+    if model_args.visual_inputs and data_args.packing:
+        raise ValueError("Cannot use packing in MLLM fine-tuning.")
+
     _verify_model_args(model_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args, training_args)
 
