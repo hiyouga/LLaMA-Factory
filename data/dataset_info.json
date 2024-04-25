@@ -418,6 +418,17 @@
     "hf_hub_url": "HuggingFaceH4/llava-instruct-mix-vsft"
   },
   "mllm_instruct_example": {
-    "hf_hub_url": "data/mllm_example_dataset"
+    "file_name": "llava_instruct_example.json",
+    "formatting": "llava",
+    "columns": {
+      "messages": "messages",
+      "images": "images"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
   }
 }
