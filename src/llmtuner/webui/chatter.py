@@ -2,6 +2,8 @@ import json
 import os
 from typing import TYPE_CHECKING, Dict, Generator, List, Optional, Sequence, Tuple
 
+from numpy.typing import NDArray
+
 from ..chat import ChatModel
 from ..data import Role
 from ..extras.misc import torch_gc
@@ -112,6 +114,7 @@ class WebChatModel(ChatModel):
         messages: Sequence[Dict[str, str]],
         system: str,
         tools: str,
+        image: Optional[NDArray],
         max_new_tokens: int,
         top_p: float,
         temperature: float,
@@ -119,7 +122,7 @@ class WebChatModel(ChatModel):
         chatbot[-1][1] = ""
         response = ""
         for new_text in self.stream_chat(
-            messages, system, tools, max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature
+            messages, system, tools, image, max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature
         ):
             response += new_text
             if tools:
