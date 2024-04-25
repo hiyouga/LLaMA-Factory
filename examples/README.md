@@ -9,6 +9,7 @@ examples/
 │   ├── ppo.sh: Do PPO training using LoRA
 │   ├── dpo.sh: Do DPO training using LoRA
 │   ├── orpo.sh: Do ORPO training using LoRA
+│   ├── sft_mllm.sh: Do supervised fine-tuning on multimodal data using LoRA
 │   ├── prepare.sh: Save tokenized dataset
 │   └── predict.sh: Do batch predict and compute BLEU and ROUGE scores after LoRA tuning
 ├── qlora_single_gpu/
