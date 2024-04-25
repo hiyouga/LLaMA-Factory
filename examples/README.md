@@ -28,9 +28,9 @@ examples/
 │   ├── merge.sh: Merge LoRA weights into the pre-trained models
 │   └── quantize.sh: Quantize the fine-tuned model with AutoGPTQ
 ├── inference/
-│   ├── cli_demo.sh: Launch a command line interface with LoRA adapters
-│   ├── api_demo.sh: Launch an OpenAI-style API with LoRA adapters
-│   ├── web_demo.sh: Launch a web interface with LoRA adapters
+│   ├── cli_demo.sh: Chat with fine-tuned model in the CLI with LoRA adapters
+│   ├── api_demo.sh: Chat with fine-tuned model in an OpenAI-style API with LoRA adapters
+│   ├── web_demo.sh: Chat with fine-tuned model in the Web browser with LoRA adapters
 │   └── evaluate.sh: Evaluate model on the MMLU/CMMLU/C-Eval benchmarks with LoRA adapters
 └── extras/
     ├── galore/
