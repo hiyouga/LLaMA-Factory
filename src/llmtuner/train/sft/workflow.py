@@ -43,7 +43,7 @@ def run_sft(
     data_collator = DataCollatorForSeq2Seq(
         tokenizer=tokenizer,
         pad_to_multiple_of=8 if tokenizer.padding_side == "right" else None,  # for shift short attention
-        label_pad_token_id=(IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id),
+        label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
     )
 
     # Override the decoding parameters of Seq2SeqTrainer
