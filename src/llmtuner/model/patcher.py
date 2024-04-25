@@ -12,7 +12,7 @@ from .utils.attention import configure_attn_implementation, print_attn_implement
 from .utils.checkpointing import prepare_model_for_training
 from .utils.embedding import resize_embedding_layer
 from .utils.longlora import configure_longlora
-from .utils.moe import add_z3_leaf_module
+from .utils.moe import add_z3_leaf_module, configure_moe
 from .utils.quantization import configure_quantization
 from .utils.rope import configure_rope
 
@@ -46,16 +46,11 @@ def patch_config(
     configure_rope(config, model_args, is_trainable)
     configure_longlora(config, model_args, is_trainable)
     configure_quantization(config, tokenizer, model_args, init_kwargs)
+    configure_moe(config, model_args, is_trainable)
 
     if model_args.use_cache and not is_trainable:
         setattr(config, "use_cache", True)
         logger.info("Using KV cache for faster generation.")
-
-    if model_args.moe_aux_loss_coef is not None:
-        if getattr(config, "model_type", None) in ["mixtral", "qwen2_moe"]:
-            setattr(config, "router_aux_loss_coef", model_args.moe_aux_loss_coef)
-        elif getattr(config, "model_type", None) == "deepseek":
-            setattr(config, "aux_loss_alpha", model_args.moe_aux_loss_coef)
 
     if getattr(config, "model_type", None) == "qwen":
         setattr(config, "use_flash_attn", model_args.flash_attn)
@@ -64,9 +59,6 @@ def patch_config(
 
     if getattr(config, "model_type", None) == "qwen2" and is_trainable and model_args.flash_attn:
         setattr(config, "use_cache", False)  # qwen2 does not support use_cache when using flashattn
-
-    if getattr(config, "model_type", None) in ["mixtral", "qwen2_moe"] and is_trainable:
-        setattr(config, "output_router_logits", True)
 
     init_kwargs["torch_dtype"] = model_args.compute_dtype
     if not is_deepspeed_zero3_enabled():
