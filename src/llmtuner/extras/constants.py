@@ -28,6 +28,8 @@ LOG_FILE_NAME = "trainer_log.jsonl"
 
 METHODS = ["full", "freeze", "lora"]
 
+MLLM_LIST = ["LLaVA1.5"]
+
 MOD_SUPPORTED_MODELS = ["bloom", "falcon", "gemma", "llama", "mistral", "mixtral", "phi", "starcoder2"]
 
 PEFT_METHODS = ["lora"]
@@ -563,6 +565,19 @@ register_model_group(
         },
     },
     template="llama3",
+)
+
+
+register_model_group(
+    models={
+        "LLaVA1.5-7B-Chat": {
+            DownloadSource.DEFAULT: "llava-hf/llava-1.5-7b-hf",
+        },
+        "LLaVA1.5-13B-Chat": {
+            DownloadSource.DEFAULT: "llava-hf/llava-1.5-13b-hf",
+        },
+    },
+    template="vicuna",
 )
 
 
