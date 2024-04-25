@@ -36,12 +36,7 @@ def convert_alpaca(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") 
                 {"role": Role.ASSISTANT.value, "content": content} for content in examples[dataset_attr.response][i]
             ]
         elif dataset_attr.response and isinstance(examples[dataset_attr.response][i], str):
-            response = [
-                {
-                    "role": Role.ASSISTANT.value,
-                    "content": examples[dataset_attr.response][i],
-                }
-            ]
+            response = [{"role": Role.ASSISTANT.value, "content": examples[dataset_attr.response][i]}]
         else:
             response = []
 
@@ -54,47 +49,6 @@ def convert_alpaca(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") 
 
 
 def convert_sharegpt(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") -> Dict[str, List[Any]]:
-    outputs = {"prompt": [], "response": [], "system": [], "tools": []}
-    tag_mapping = {
-        dataset_attr.user_tag: Role.USER.value,
-        dataset_attr.assistant_tag: Role.ASSISTANT.value,
-        dataset_attr.observation_tag: Role.OBSERVATION.value,
-        dataset_attr.function_tag: Role.FUNCTION.value,
-        dataset_attr.system_tag: Role.SYSTEM.value,
-    }
-    odd_tags = (dataset_attr.user_tag, dataset_attr.observation_tag)
-    even_tags = (dataset_attr.assistant_tag, dataset_attr.function_tag)
-    accept_tags = (odd_tags, even_tags)
-    for i, messages in enumerate(examples[dataset_attr.messages]):
-        if dataset_attr.system_tag and messages[0][dataset_attr.role_tag] == dataset_attr.system_tag:
-            system = messages[0][dataset_attr.content_tag]
-            messages = messages[1:]
-        else:
-            system = examples[dataset_attr.system][i] if dataset_attr.system else ""
-
-        messages = messages[: len(messages) // 2 * 2]  # should be multiples of 2
-        if len(messages) == 0:
-            continue
-
-        aligned_messages = []
-        for turn_idx, message in enumerate(messages):
-            if message[dataset_attr.role_tag] not in accept_tags[turn_idx % 2]:
-                raise ValueError("Invalid role tag in {}.".format(messages))
-
-            aligned_messages.append(
-                {"role": tag_mapping[message[dataset_attr.role_tag]], "content": message[dataset_attr.content_tag]}
-            )
-
-        outputs["prompt"].append(aligned_messages[:-1])
-        outputs["response"].append(aligned_messages[-1:])
-        outputs["system"].append(system)
-        outputs["tools"].append(examples[dataset_attr.tools][i] if dataset_attr.tools else "")
-        outputs["images"].append([])
-
-    return outputs
-
-
-def convert_llava(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") -> Dict[str, List[Any]]:
     outputs = {"prompt": [], "response": [], "system": [], "tools": [], "images": []}
     tag_mapping = {
         dataset_attr.user_tag: Role.USER.value,
@@ -130,7 +84,6 @@ def convert_llava(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") -
         outputs["response"].append(aligned_messages[-1:])
         outputs["system"].append(system)
         outputs["tools"].append(examples[dataset_attr.tools][i] if dataset_attr.tools else "")
-        print(examples[dataset_attr.images][i])
         outputs["images"].append(examples[dataset_attr.images][i] if dataset_attr.images else [])
 
     return outputs
@@ -148,8 +101,6 @@ def align_dataset(
     """
     if dataset_attr.formatting == "alpaca":
         convert_func = partial(convert_alpaca, dataset_attr=dataset_attr)
-    elif dataset_attr.formatting == "llava":
-        convert_func = partial(convert_llava, dataset_attr=dataset_attr)
     else:
         convert_func = partial(convert_sharegpt, dataset_attr=dataset_attr)
 
