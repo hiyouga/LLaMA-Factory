@@ -1,16 +1,15 @@
 # Inspired by: https://github.com/huggingface/transformers/blob/v4.34.1/examples/pytorch/summarization/run_summarization.py
-
 from typing import TYPE_CHECKING, List, Optional
 
 from transformers import DataCollatorForSeq2Seq
 
-from ...data import get_dataset, split_dataset
+from ...data import get_dataset
 from ...extras.constants import IGNORE_INDEX
 from ...extras.misc import get_logits_processor
 from ...extras.ploting import plot_loss
-from ...model import load_model, load_tokenizer
+from ...model import load_model, load_processor
+from ..sft.metric import ComputeMetrics
 from ..utils import create_modelcard_and_push
-from .metric import ComputeMetrics
 from .trainer import CustomSeq2SeqTrainer
 
 
@@ -25,7 +24,7 @@ if TYPE_CHECKING:
     )
 
 
-def run_sft(
+def run_sft_mm(
     model_args: "ModelArguments",
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
@@ -33,25 +32,14 @@ def run_sft(
     generating_args: "GeneratingArguments",
     callbacks: Optional[List["TrainerCallback"]] = None,
 ):
-    tokenizer_modules = load_tokenizer(model_args)
-    tokenizer = tokenizer_modules["tokenizer"]
-    processor = tokenizer_modules["processor"]
-    dataset = get_dataset(
-        tokenizer,
-        model_args,
-        data_args,
-        training_args,
-        stage="sft",
-        processor=processor,
-    )
+    processor = load_processor(model_args)
+    tokenizer = processor.tokenizer
+    dataset = get_dataset(tokenizer, model_args, data_args, training_args, "sft", processor)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
-
-    if training_args.predict_with_generate:
-        tokenizer.padding_side = "left"  # use left-padding in generation
-
     if getattr(model, "is_quantized", False) and not training_args.do_train:
         setattr(model, "_hf_peft_config_loaded", True)  # hack here: make model compatible with prediction
-
+    train_dataset = dataset
+    eval_dataset = dataset
     data_collator = DataCollatorForSeq2Seq(
         tokenizer=tokenizer,
         pad_to_multiple_of=(8 if tokenizer.padding_side == "right" else None),  # for shift short attention
@@ -61,8 +49,7 @@ def run_sft(
     # Override the decoding parameters of Seq2SeqTrainer
     training_args.generation_max_length = training_args.generation_max_length or data_args.cutoff_len
     training_args.generation_num_beams = data_args.eval_num_beams or training_args.generation_num_beams
-    if model_args.use_mllm:
-        training_args.remove_unused_columns = False
+    training_args.remove_unused_columns = False
 
     # Initialize our Trainer
     trainer = CustomSeq2SeqTrainer(
@@ -73,7 +60,8 @@ def run_sft(
         data_collator=data_collator,
         callbacks=callbacks,
         compute_metrics=(ComputeMetrics(tokenizer) if training_args.predict_with_generate else None),
-        **split_dataset(dataset, data_args, training_args),
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
     )
 
     # Keyword arguments for `model.generate`
