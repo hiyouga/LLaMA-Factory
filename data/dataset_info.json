@@ -414,9 +414,6 @@
     },
     "folder": "python"
   },
-  "llava_instruct": {
-    "hf_hub_url": "HuggingFaceH4/llava-instruct-mix-vsft"
-  },
   "mllm_instruct_example": {
     "file_name": "llava_instruct_example.json",
     "formatting": "llava",
