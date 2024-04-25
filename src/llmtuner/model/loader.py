@@ -1,6 +1,12 @@
 from typing import TYPE_CHECKING, Any, Dict, Union
 
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, AutoProcessor, AutoModelForVision2Seq
+from transformers import (
+    AutoConfig,
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    AutoProcessor,
+    AutoModelForVision2Seq,
+)
 from trl import AutoModelForCausalLMWithValueHead
 
 from ..extras.logging import get_logger
@@ -62,10 +68,14 @@ def load_tokenizer(model_args: "ModelArguments") -> "PreTrainedTokenizer":
             dict(additional_special_tokens=model_args.new_special_tokens),
             replace_additional_special_tokens=False,
         )
-        logger.info("Add {} to special tokens.".format(",".join(model_args.new_special_tokens)))
+        logger.info(
+            "Add {} to special tokens.".format(",".join(model_args.new_special_tokens))
+        )
         if num_added_tokens > 0 and not model_args.resize_vocab:
             model_args.resize_vocab = True
-            logger.warning("New tokens have been added, changed `resize_vocab` to True.")
+            logger.warning(
+                "New tokens have been added, changed `resize_vocab` to True."
+            )
 
     patch_tokenizer(tokenizer)
     return tokenizer
@@ -111,7 +121,7 @@ def load_model(
     finetuning_args: "FinetuningArguments",
     is_trainable: bool = False,
     add_valuehead: bool = False,
-) -> Union["PreTrainedModel", "AutoModelForVision2Seq"]:
+) -> Union["PreTrainedModel"]:
     r"""
     Loads pretrained model.
     """
@@ -170,8 +180,10 @@ def load_model(
 
     trainable_params, all_param = count_parameters(model)
     if is_trainable:
-        param_stats = "trainable params: {:d} || all params: {:d} || trainable%: {:.4f}".format(
-            trainable_params, all_param, 100 * trainable_params / all_param
+        param_stats = (
+            "trainable params: {:d} || all params: {:d} || trainable%: {:.4f}".format(
+                trainable_params, all_param, 100 * trainable_params / all_param
+            )
         )
     else:
         param_stats = "all params: {:d}".format(all_param)

@@ -2,7 +2,7 @@
   {
     "messages": [
       {
-        "content": "Who are they?",
+        "content": "Who are they?<image>",
         "role": "user"
       },
       {
@@ -18,12 +18,14 @@
         "role": "assistant"
       }
     ],
-    "image": "1.jpg"
+    "images": [
+      "data/images/1.jpg"
+    ]
   },
   {
     "messages": [
       {
-        "content": "Who is he?",
+        "content": "Who is he?<image>",
         "role": "user"
       },
       {
@@ -39,12 +41,14 @@
         "role": "assistant"
       }
     ],
-    "image": "2.jpg"
+    "images": [
+      "data/images/2.jpg"
+    ]
   },
   {
     "messages": [
       {
-        "content": "Please describe this image",
+        "content": "Please describe this image<image>",
         "role": "user"
       },
       {
@@ -60,6 +64,8 @@
         "role": "assistant"
       }
     ],
-    "image": "3.jpg"
+    "images": [
+      "data/images/3.jpg"
+    ]
   }
 ]
