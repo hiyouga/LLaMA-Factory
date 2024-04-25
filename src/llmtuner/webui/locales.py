@@ -1073,6 +1073,17 @@ LOCALES = {
             "placeholder": "工具列表（非必填）",
         },
     },
+    "image": {
+        "en": {
+            "label": "Image (optional)",
+        },
+        "ru": {
+            "label": "Изображение (по желанию)",
+        },
+        "zh": {
+            "label": "图像（非必填）",
+        },
+    },
     "query": {
         "en": {
             "placeholder": "Input...",
