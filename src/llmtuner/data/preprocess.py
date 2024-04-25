@@ -91,6 +91,8 @@ def preprocess_supervised_dataset(
         model_inputs["labels"].append(labels)
         if processor is not None and "images" in examples:
             pixel_values = processor.image_processor(examples["images"][0], return_tensors="pt")["pixel_values"][0]
+            if "pixel_values" not in model_inputs:
+                model_inputs["pixel_values"] = []
             model_inputs["pixel_values"].append(pixel_values)
     return model_inputs
 
