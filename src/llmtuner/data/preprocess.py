@@ -14,14 +14,11 @@ if TYPE_CHECKING:
     from ..hparams import DataArguments
     from .template import Template
 
-
 logger = get_logger(__name__)
 
 
 def preprocess_pretrain_dataset(
-    examples: Dict[str, List[Any]],
-    tokenizer: "PreTrainedTokenizer",
-    data_args: "DataArguments",
+    examples: Dict[str, List[Any]], tokenizer: "PreTrainedTokenizer", data_args: "DataArguments"
 ) -> Dict[str, List[List[int]]]:
     # build grouped texts with format `X1 X2 X3 ...` if packing is enabled
     text_examples = [messages[0]["content"] + tokenizer.eos_token for messages in examples["prompt"]]
@@ -56,11 +53,7 @@ def preprocess_supervised_dataset(
 ) -> Dict[str, List[List[int]]]:
     # build inputs with format `<bos> X Y <eos>` and labels with format `<ignore> ... <ignore> Y <eos>`
     # for multiturn examples, we only mask the prompt part in each prompt-response pair.
-    model_inputs = {
-        "input_ids": [],
-        "attention_mask": [],
-        "labels": [],
-    }
+    model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
 
     for i in range(len(examples["prompt"])):
         if len(examples["prompt"][i]) % 2 != 1 or len(examples["response"][i]) != 1:
@@ -154,12 +147,7 @@ def preprocess_multimodal_supervised_dataset(
     # build inputs with format `<bos> X Y <eos>` and labels with format `<ignore> ... <ignore> Y <eos>`
     # for multiturn examples, we only mask the prompt part in each prompt-response pair.
     tokenizer = processor.tokenizer
-    model_inputs = {
-        "input_ids": [],
-        "attention_mask": [],
-        "labels": [],
-        "pixel_values": [],
-    }
+    model_inputs = {"input_ids": [], "attention_mask": [], "labels": [], "pixel_values": []}
 
     for i in range(len(examples["prompt"])):
         if len(examples["prompt"][i]) % 2 != 1 or len(examples["response"][i]) != 1:
@@ -284,10 +272,7 @@ def print_supervised_dataset_example(example: Dict[str, List[int]], tokenizer: "
     print("label_ids:\n{}".format(example["labels"]))
     print(
         "labels:\n{}".format(
-            tokenizer.decode(
-                list(filter(lambda x: x != IGNORE_INDEX, example["labels"])),
-                skip_special_tokens=False,
-            )
+            tokenizer.decode(list(filter(lambda x: x != IGNORE_INDEX, example["labels"])), skip_special_tokens=False)
         )
     )
 
@@ -320,33 +305,21 @@ def get_preprocess_and_print_func(
     elif stage == "sft" and not training_args.predict_with_generate:
         if data_args.packing:
             preprocess_func = partial(
-                preprocess_packed_supervised_dataset,
-                tokenizer=tokenizer,
-                template=template,
-                data_args=data_args,
+                preprocess_packed_supervised_dataset, tokenizer=tokenizer, template=template, data_args=data_args
             )
         elif processor is not None:
             preprocess_func = partial(
-                preprocess_multimodal_supervised_dataset,
-                processor=processor,
-                template=template,
-                data_args=data_args,
+                preprocess_multimodal_supervised_dataset, processor=processor, template=template, data_args=data_args
             )
         else:
             preprocess_func = partial(
-                preprocess_supervised_dataset,
-                tokenizer=tokenizer,
-                template=template,
-                data_args=data_args,
+                preprocess_supervised_dataset, tokenizer=tokenizer, template=template, data_args=data_args
             )
 
         print_function = partial(print_supervised_dataset_example, tokenizer=tokenizer)
     elif stage == "rm":
         preprocess_func = partial(
-            preprocess_pairwise_dataset,
-            tokenizer=tokenizer,
-            template=template,
-            data_args=data_args,
+            preprocess_pairwise_dataset, tokenizer=tokenizer, template=template, data_args=data_args
         )
         print_function = partial(print_pairwise_dataset_example, tokenizer=tokenizer)
     else:

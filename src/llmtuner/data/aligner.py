@@ -82,10 +82,7 @@ def convert_sharegpt(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr"
                 raise ValueError("Invalid role tag in {}.".format(messages))
 
             aligned_messages.append(
-                {
-                    "role": tag_mapping[message[dataset_attr.role_tag]],
-                    "content": message[dataset_attr.content_tag],
-                }
+                {"role": tag_mapping[message[dataset_attr.role_tag]], "content": message[dataset_attr.content_tag]}
             )
 
         outputs["prompt"].append(aligned_messages[:-1])
@@ -126,10 +123,7 @@ def convert_llava(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") -
                 raise ValueError("Invalid role tag in {}.".format(messages))
 
             aligned_messages.append(
-                {
-                    "role": tag_mapping[message[dataset_attr.role_tag]],
-                    "content": message[dataset_attr.content_tag],
-                }
+                {"role": tag_mapping[message[dataset_attr.role_tag]], "content": message[dataset_attr.content_tag]}
             )
 
         outputs["prompt"].append(aligned_messages[:-1])
@@ -143,9 +137,7 @@ def convert_llava(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") -
 
 
 def align_dataset(
-    dataset: Union["Dataset", "IterableDataset"],
-    dataset_attr: "DatasetAttr",
-    data_args: "DataArguments",
+    dataset: Union["Dataset", "IterableDataset"], dataset_attr: "DatasetAttr", data_args: "DataArguments"
 ) -> Union["Dataset", "IterableDataset"]:
     r"""
     Aligned dataset:
@@ -165,16 +157,10 @@ def align_dataset(
     features = Features.from_dict(
         {
             "prompt": [
-                {
-                    "role": {"dtype": "string", "_type": "Value"},
-                    "content": {"dtype": "string", "_type": "Value"},
-                }
+                {"role": {"dtype": "string", "_type": "Value"}, "content": {"dtype": "string", "_type": "Value"}}
             ],
             "response": [
-                {
-                    "role": {"dtype": "string", "_type": "Value"},
-                    "content": {"dtype": "string", "_type": "Value"},
-                }
+                {"role": {"dtype": "string", "_type": "Value"}, "content": {"dtype": "string", "_type": "Value"}}
             ],
             "system": {"dtype": "string", "_type": "Value"},
             "tools": {"dtype": "string", "_type": "Value"},
