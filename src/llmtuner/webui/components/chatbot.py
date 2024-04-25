@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 def create_chat_box(
     engine: "Engine", visible: bool = False
-) -> Tuple["gr.Column", "Component", "Component", Dict[str, "Component"]]:
+) -> Tuple["Component", "Component", Dict[str, "Component"]]:
     with gr.Column(visible=visible) as chat_box:
         chatbot = gr.Chatbot(show_copy_button=True)
         messages = gr.State([])
@@ -29,7 +29,7 @@ def create_chat_box(
                         system = gr.Textbox(show_label=False)
                         tools = gr.Textbox(show_label=False, lines=4)
 
-                    with gr.Column():
+                    with gr.Column() as image_box:
                         image = gr.Image(type="numpy")
 
                 query = gr.Textbox(show_label=False, lines=8)
@@ -55,13 +55,14 @@ def create_chat_box(
     clear_btn.click(lambda: ([], []), outputs=[chatbot, messages])
 
     return (
-        chat_box,
         chatbot,
         messages,
         dict(
+            chat_box=chat_box,
             role=role,
             system=system,
             tools=tools,
+            image_box=image_box,
             image=image,
             query=query,
             submit_btn=submit_btn,
