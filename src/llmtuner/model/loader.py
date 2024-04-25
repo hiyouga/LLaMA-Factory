@@ -112,7 +112,7 @@ def load_model(
     finetuning_args: "FinetuningArguments",
     is_trainable: bool = False,
     add_valuehead: bool = False,
-) -> Union["PreTrainedModel"]:
+) -> "PreTrainedModel":
     r"""
     Loads pretrained model.
     """

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import torch
 from peft import LoraConfig, LoraModel, PeftModel, TaskType, get_peft_model
@@ -21,11 +21,11 @@ logger = get_logger(__name__)
 
 def init_adapter(
     config: "PretrainedConfig",
-    model: Union["PreTrainedModel"],
+    model: "PreTrainedModel",
     model_args: "ModelArguments",
     finetuning_args: "FinetuningArguments",
     is_trainable: bool,
-) -> Union["PreTrainedModel"]:
+) -> "PreTrainedModel":
     r"""
     Initializes the adapters.
 
