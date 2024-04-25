@@ -81,6 +81,10 @@ class ModelArguments:
         default=False,
         metadata={"help": "Whether or not to use unsloth's optimization for the LoRA training."},
     )
+    visual_inputs: bool = field(
+        default=False,
+        metadata={"help": "Whethor or not to use multimodal LLM that accepts visual inputs."},
+    )
     moe_aux_loss_coef: Optional[float] = field(
         default=None,
         metadata={"help": "Coefficient of the auxiliary router loss in mixture-of-experts model."},
@@ -168,10 +172,6 @@ class ModelArguments:
     print_param_status: bool = field(
         default=False,
         metadata={"help": "For debugging purposes, print the status of the parameters in the model."},
-    )
-    use_mllm: bool = field(
-        default=False,
-        metadata={"help": "Whether use Multimodal LLM."},
     )
 
     def __post_init__(self):
