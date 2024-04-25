@@ -38,9 +38,7 @@ def init_adapter(
         logger.info("Adapter is not found at evaluation, load the base model.")
         return model
 
-    if finetuning_args.finetuning_type != "lora" and getattr(
-        model, "quantization_method", None
-    ):
+    if finetuning_args.finetuning_type != "lora" and getattr(model, "quantization_method", None):
         raise ValueError("You can only use lora for quantized models.")
 
     if finetuning_args.finetuning_type == "full" and is_trainable:
@@ -68,12 +66,8 @@ def init_adapter(
 
             stride = num_layers // finetuning_args.num_layer_trainable
             trainable_layer_ids = range(stride - 1, num_layers + stride - 1, stride)
-        elif (
-            finetuning_args.num_layer_trainable > 0
-        ):  # fine-tuning the last n layers if num_layer_trainable > 0
-            trainable_layer_ids = range(
-                num_layers - finetuning_args.num_layer_trainable, num_layers
-            )
+        elif finetuning_args.num_layer_trainable > 0:  # fine-tuning the last n layers if num_layer_trainable > 0
+            trainable_layer_ids = range(num_layers - finetuning_args.num_layer_trainable, num_layers)
         else:  # fine-tuning the first n layers if num_layer_trainable < 0
             trainable_layer_ids = range(-finetuning_args.num_layer_trainable)
 
@@ -88,15 +82,11 @@ def init_adapter(
         for module_name in finetuning_args.name_module_trainable:
             if module_name not in freeze_modules:
                 raise ValueError(
-                    "Module {} is not found, please choose from {}".format(
-                        module_name, ", ".join(freeze_modules)
-                    )
+                    "Module {} is not found, please choose from {}".format(module_name, ", ".join(freeze_modules))
                 )
 
             for idx in trainable_layer_ids:
-                trainable_layers.append(
-                    ".{:d}.{}".format(idx, module_name if module_name != "all" else "")
-                )
+                trainable_layers.append(".{:d}.{}".format(idx, module_name if module_name != "all" else ""))
 
         for name, param in model.named_parameters():
             if any(trainable_layer in name for trainable_layer in trainable_layers):
@@ -105,43 +95,27 @@ def init_adapter(
             else:
                 param.requires_grad_(False)
 
-        logger.info(
-            "Set trainable layers: {}".format(",".join(map(str, trainable_layer_ids)))
-        )
+        logger.info("Set trainable layers: {}".format(",".join(map(str, trainable_layer_ids))))
 
     if finetuning_args.finetuning_type == "lora":
-        logger.info(
-            "Fine-tuning method: {}".format(
-                "DoRA" if finetuning_args.use_dora else "LoRA"
-            )
-        )
+        logger.info("Fine-tuning method: {}".format("DoRA" if finetuning_args.use_dora else "LoRA"))
         adapter_to_resume = None
 
         if model_args.adapter_name_or_path is not None:
             is_mergeable = True
-            if getattr(
-                model, "quantization_method", None
-            ):  # merge lora in quantized model is unstable
-                assert (
-                    len(model_args.adapter_name_or_path) == 1
-                ), "Quantized model only accepts a single adapter."
+            if getattr(model, "quantization_method", None):  # merge lora in quantized model is unstable
+                assert len(model_args.adapter_name_or_path) == 1, "Quantized model only accepts a single adapter."
                 is_mergeable = False
 
             if is_deepspeed_zero3_enabled():
-                assert (
-                    len(model_args.adapter_name_or_path) == 1
-                ), "Cannot use multiple adapters in DeepSpeed ZeRO-3."
+                assert len(model_args.adapter_name_or_path) == 1, "Cannot use multiple adapters in DeepSpeed ZeRO-3."
                 is_mergeable = False
 
             if model_args.use_unsloth:
-                assert (
-                    len(model_args.adapter_name_or_path) == 1
-                ), "Unsloth model only accepts a single adapter."
+                assert len(model_args.adapter_name_or_path) == 1, "Unsloth model only accepts a single adapter."
                 is_mergeable = False
 
-            if (is_trainable and not finetuning_args.create_new_adapter) or (
-                not is_mergeable
-            ):
+            if (is_trainable and not finetuning_args.create_new_adapter) or (not is_mergeable):
                 adapter_to_merge = model_args.adapter_name_or_path[:-1]
                 adapter_to_resume = model_args.adapter_name_or_path[-1]
             else:
@@ -158,9 +132,7 @@ def init_adapter(
 
             if adapter_to_resume is not None:  # resume lora training
                 if model_args.use_unsloth:
-                    model = load_unsloth_peft_model(
-                        config, model_args, is_trainable=is_trainable
-                    )
+                    model = load_unsloth_peft_model(config, model_args, is_trainable=is_trainable)
                 else:
                     model = PeftModel.from_pretrained(
                         model,
@@ -169,27 +141,19 @@ def init_adapter(
                         offload_folder=model_args.offload_folder,
                     )
 
-        if (
-            is_trainable and adapter_to_resume is None
-        ):  # create new lora weights while training
-            if (
-                len(finetuning_args.lora_target) == 1
-                and finetuning_args.lora_target[0] == "all"
-            ):
+        if is_trainable and adapter_to_resume is None:  # create new lora weights while training
+            if len(finetuning_args.lora_target) == 1 and finetuning_args.lora_target[0] == "all":
                 target_modules = find_all_linear_modules(model)
             else:
                 target_modules = finetuning_args.lora_target
 
             if finetuning_args.use_llama_pro:
-                target_modules = find_expanded_modules(
-                    model, target_modules, finetuning_args.num_layer_trainable
-                )
+                target_modules = find_expanded_modules(model, target_modules, finetuning_args.num_layer_trainable)
 
             if (
                 finetuning_args.use_dora
                 and getattr(model, "quantization_method", None) is not None
-                and getattr(model, "quantization_method", None)
-                != QuantizationMethod.BITS_AND_BYTES
+                and getattr(model, "quantization_method", None) != QuantizationMethod.BITS_AND_BYTES
             ):
                 raise ValueError("DoRA is not compatible with PTQ-quantized models.")
 
@@ -202,11 +166,7 @@ def init_adapter(
                         module_names.add(name.split(".")[-1])
 
                 finetuning_args.additional_target = module_names
-                logger.warning(
-                    "Vocab has been resized, add {} to trainable params.".format(
-                        ",".join(module_names)
-                    )
-                )
+                logger.warning("Vocab has been resized, add {} to trainable params.".format(",".join(module_names)))
 
             peft_kwargs = {
                 "r": finetuning_args.lora_rank,
@@ -233,10 +193,6 @@ def init_adapter(
                 param.data = param.data.to(torch.float32)
 
         if model_args.adapter_name_or_path is not None:
-            logger.info(
-                "Loaded adapter(s): {}".format(
-                    ",".join(model_args.adapter_name_or_path)
-                )
-            )
+            logger.info("Loaded adapter(s): {}".format(",".join(model_args.adapter_name_or_path)))
 
     return model
