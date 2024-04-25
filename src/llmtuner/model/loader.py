@@ -41,9 +41,7 @@ def _get_init_kwargs(model_args: "ModelArguments") -> Dict[str, Any]:
     }
 
 
-def load_tokenizer(
-    model_args: "ModelArguments",
-) -> Dict[str, Union["PreTrainedTokenizer", "AutoProcessor"]]:
+def load_tokenizer(model_args: "ModelArguments") -> Dict[str, Union["PreTrainedTokenizer", "AutoProcessor"]]:
     r"""
     Loads pretrained tokenizer.
 
