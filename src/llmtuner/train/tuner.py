@@ -52,7 +52,7 @@ def export_model(args: Optional[Dict[str, Any]] = None):
     if model_args.adapter_name_or_path is not None and model_args.export_quantization_bit is not None:
         raise ValueError("Please merge adapters before quantizing the model.")
 
-    tokenizer = load_tokenizer(model_args)
+    tokenizer = load_tokenizer(model_args)["tokenizer"]
     get_template_and_fix_tokenizer(tokenizer, data_args.template)
     model = load_model(tokenizer, model_args, finetuning_args)  # must after fixing tokenizer to resize vocab
 
