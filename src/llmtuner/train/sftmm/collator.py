@@ -19,11 +19,24 @@ class DataCollatorForVis2Seq:
             texts.append(text)
             images.append(example["images"][0])
 
-        batch = self.processor(text=texts, images=images, return_tensors="pt", padding=True)
+        batch = self.processor(
+            text=texts, images=images, return_tensors="pt", padding=True
+        )
 
         labels = batch["input_ids"].clone()
         if self.processor.tokenizer.pad_token_id is not None:
             labels[labels == self.processor.tokenizer.pad_token_id] = -100
         batch["labels"] = labels
 
+        return batch
+
+
+@dataclass
+class DataCollatorForMLLM:
+    processor: AutoProcessor
+
+    def __call__(self, examples):
+        print(examples[0].keys())
+        print(examples[0]["input_ids"])
+        batch = {}
         return batch
