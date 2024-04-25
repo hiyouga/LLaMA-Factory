@@ -18,7 +18,8 @@ If you are using a custom dataset, please provide your dataset definition in the
     "history": "the column name in the dataset containing the histories. (default: None)",
     "messages": "the column name in the dataset containing the messages. (default: conversations)",
     "system": "the column name in the dataset containing the system prompts. (default: None)",
-    "tools": "the column name in the dataset containing the tool description. (default: None)"
+    "tools": "the column name in the dataset containing the tool description. (default: None)",
+    "images": "the column name in the dataset containing the image inputs. (default: None)"
   },
   "tags (optional, used for the sharegpt format)": {
     "role_tag": "the key in the message represents the identity. (default: from)",

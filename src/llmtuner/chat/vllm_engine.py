@@ -12,7 +12,10 @@ if is_vllm_available():
     from vllm import AsyncEngineArgs, AsyncLLMEngine, RequestOutput, SamplingParams
     from vllm.lora.request import LoRARequest
 
+
 if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
     from ..hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
 
 
@@ -29,7 +32,9 @@ class VllmEngine(BaseEngine):
         infer_dtype = str(infer_dtype).split(".")[-1]
 
         self.can_generate = finetuning_args.stage == "sft"
-        self.tokenizer = load_tokenizer(model_args)
+        tokenizer_module = load_tokenizer(model_args)
+        self.tokenizer = tokenizer_module["tokenizer"]
+        self.processor = tokenizer_module["processor"]
         self.tokenizer.padding_side = "left"
         self.template = get_template_and_fix_tokenizer(self.tokenizer, data_args.template)
         self.generating_args = generating_args.to_dict()
@@ -58,6 +63,7 @@ class VllmEngine(BaseEngine):
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
+        image: Optional["NDArray"] = None,
         **input_kwargs,
     ) -> AsyncIterator["RequestOutput"]:
         request_id = "chatcmpl-{}".format(uuid.uuid4().hex)
@@ -121,10 +127,11 @@ class VllmEngine(BaseEngine):
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
+        image: Optional["NDArray"] = None,
         **input_kwargs,
     ) -> List["Response"]:
         final_output = None
-        generator = await self._generate(messages, system, tools, **input_kwargs)
+        generator = await self._generate(messages, system, tools, image, **input_kwargs)
         async for request_output in generator:
             final_output = request_output
 
@@ -146,10 +153,11 @@ class VllmEngine(BaseEngine):
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
+        image: Optional["NDArray"] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
         generated_text = ""
-        generator = await self._generate(messages, system, tools, **input_kwargs)
+        generator = await self._generate(messages, system, tools, image, **input_kwargs)
         async for result in generator:
             delta_text = result.outputs[0].text[len(generated_text) :]
             generated_text = result.outputs[0].text
