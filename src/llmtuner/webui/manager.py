@@ -60,4 +60,5 @@ class Manager:
             self._id_to_elem["top.template"],
             self._id_to_elem["top.rope_scaling"],
             self._id_to_elem["top.booster"],
+            self._id_to_elem["top.visual_inputs"],
         }

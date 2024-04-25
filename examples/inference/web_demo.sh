@@ -1,4 +1,5 @@
 #!/bin/bash
+# add `--visual_inputs True` to load MLLM
 
 CUDA_VISIBLE_DEVICES=0 python ../../src/web_demo.py \
     --model_name_or_path meta-llama/Llama-2-7b-hf \
