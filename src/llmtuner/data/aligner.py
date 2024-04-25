@@ -13,9 +13,7 @@ if TYPE_CHECKING:
     from .parser import DatasetAttr
 
 
-def convert_alpaca(
-    examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr"
-) -> Dict[str, List[Any]]:
+def convert_alpaca(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") -> Dict[str, List[Any]]:
     outputs = {"prompt": [], "response": [], "system": [], "tools": []}
     for i in range(len(examples[dataset_attr.prompt])):
         prompt = []
@@ -33,16 +31,11 @@ def convert_alpaca(
 
         prompt.append({"role": Role.USER.value, "content": "\n".join(content)})
 
-        if dataset_attr.response and isinstance(
-            examples[dataset_attr.response][i], list
-        ):
+        if dataset_attr.response and isinstance(examples[dataset_attr.response][i], list):
             response = [
-                {"role": Role.ASSISTANT.value, "content": content}
-                for content in examples[dataset_attr.response][i]
+                {"role": Role.ASSISTANT.value, "content": content} for content in examples[dataset_attr.response][i]
             ]
-        elif dataset_attr.response and isinstance(
-            examples[dataset_attr.response][i], str
-        ):
+        elif dataset_attr.response and isinstance(examples[dataset_attr.response][i], str):
             response = [
                 {
                     "role": Role.ASSISTANT.value,
@@ -54,17 +47,13 @@ def convert_alpaca(
 
         outputs["prompt"].append(prompt)
         outputs["response"].append(response)
-        outputs["system"].append(
-            examples[dataset_attr.system][i] if dataset_attr.system else ""
-        )
+        outputs["system"].append(examples[dataset_attr.system][i] if dataset_attr.system else "")
         outputs["tools"].append("")
         outputs["images"].append([])
     return outputs
 
 
-def convert_sharegpt(
-    examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr"
-) -> Dict[str, List[Any]]:
+def convert_sharegpt(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") -> Dict[str, List[Any]]:
     outputs = {"prompt": [], "response": [], "system": [], "tools": []}
     tag_mapping = {
         dataset_attr.user_tag: Role.USER.value,
@@ -77,10 +66,7 @@ def convert_sharegpt(
     even_tags = (dataset_attr.assistant_tag, dataset_attr.function_tag)
     accept_tags = (odd_tags, even_tags)
     for i, messages in enumerate(examples[dataset_attr.messages]):
-        if (
-            dataset_attr.system_tag
-            and messages[0][dataset_attr.role_tag] == dataset_attr.system_tag
-        ):
+        if dataset_attr.system_tag and messages[0][dataset_attr.role_tag] == dataset_attr.system_tag:
             system = messages[0][dataset_attr.content_tag]
             messages = messages[1:]
         else:
@@ -105,17 +91,13 @@ def convert_sharegpt(
         outputs["prompt"].append(aligned_messages[:-1])
         outputs["response"].append(aligned_messages[-1:])
         outputs["system"].append(system)
-        outputs["tools"].append(
-            examples[dataset_attr.tools][i] if dataset_attr.tools else ""
-        )
+        outputs["tools"].append(examples[dataset_attr.tools][i] if dataset_attr.tools else "")
         outputs["images"].append([])
 
     return outputs
 
 
-def convert_llava(
-    examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr"
-) -> Dict[str, List[Any]]:
+def convert_llava(examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr") -> Dict[str, List[Any]]:
     outputs = {"prompt": [], "response": [], "system": [], "tools": [], "images": []}
     tag_mapping = {
         dataset_attr.user_tag: Role.USER.value,
@@ -128,10 +110,7 @@ def convert_llava(
     even_tags = (dataset_attr.assistant_tag, dataset_attr.function_tag)
     accept_tags = (odd_tags, even_tags)
     for i, messages in enumerate(examples[dataset_attr.messages]):
-        if (
-            dataset_attr.system_tag
-            and messages[0][dataset_attr.role_tag] == dataset_attr.system_tag
-        ):
+        if dataset_attr.system_tag and messages[0][dataset_attr.role_tag] == dataset_attr.system_tag:
             system = messages[0][dataset_attr.content_tag]
             messages = messages[1:]
         else:
@@ -156,13 +135,9 @@ def convert_llava(
         outputs["prompt"].append(aligned_messages[:-1])
         outputs["response"].append(aligned_messages[-1:])
         outputs["system"].append(system)
-        outputs["tools"].append(
-            examples[dataset_attr.tools][i] if dataset_attr.tools else ""
-        )
+        outputs["tools"].append(examples[dataset_attr.tools][i] if dataset_attr.tools else "")
         print(examples[dataset_attr.images][i])
-        outputs["images"].append(
-            examples[dataset_attr.images][i] if dataset_attr.images else []
-        )
+        outputs["images"].append(examples[dataset_attr.images][i] if dataset_attr.images else [])
 
     return outputs
 
