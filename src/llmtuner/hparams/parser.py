@@ -308,14 +308,14 @@ def get_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
         if finetuning_args.stage != "sft":
             raise ValueError("vLLM engine only supports auto-regressive models.")
 
-        if model_args.adapter_name_or_path is not None:
-            raise ValueError("vLLM engine does not support LoRA adapters. Merge them first.")
-
         if model_args.quantization_bit is not None:
-            raise ValueError("vLLM engine does not support quantization.")
+            raise ValueError("vLLM engine does not support bnb quantization (GPTQ and AWQ are supported).")
 
         if model_args.rope_scaling is not None:
             raise ValueError("vLLM engine does not support RoPE scaling.")
+
+        if model_args.adapter_name_or_path is not None and len(model_args.adapter_name_or_path) != 1:
+            raise ValueError("vLLM only accepts a single adapter. Merge them first.")
 
     _verify_model_args(model_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args)
