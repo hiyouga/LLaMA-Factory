@@ -1,11 +1,11 @@
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, Union
 
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, AutoProcessor, AutoModelForVision2Seq
 from trl import AutoModelForCausalLMWithValueHead
 
 from ..extras.logging import get_logger
 from ..extras.misc import count_parameters, try_download_model_from_ms
-from .adapter import init_adapter, init_mm_adapter
+from .adapter import init_adapter
 from .patcher import patch_config, patch_model, patch_tokenizer, patch_valuehead_model
 from .utils.misc import load_valuehead_params, register_autoclass
 from .utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
@@ -106,12 +106,12 @@ def load_config(model_args: "ModelArguments") -> "PretrainedConfig":
 
 
 def load_model(
-        tokenizer: "PreTrainedTokenizer",
-        model_args: "ModelArguments",
-        finetuning_args: "FinetuningArguments",
-        is_trainable: bool = False,
-        add_valuehead: bool = False,
-) -> "PreTrainedModel":
+    tokenizer: "PreTrainedTokenizer",
+    model_args: "ModelArguments",
+    finetuning_args: "FinetuningArguments",
+    is_trainable: bool = False,
+    add_valuehead: bool = False,
+) -> Union["PreTrainedModel", "AutoModelForVision2Seq"]:
     r"""
     Loads pretrained model.
     """
@@ -134,7 +134,10 @@ def load_model(
         if model_args.mixture_of_depths == "load":
             model = load_mod_pretrained_model(**init_kwargs)
         else:
-            model = AutoModelForCausalLM.from_pretrained(**init_kwargs)
+            if model_args.use_mllm:
+                model = AutoModelForVision2Seq.from_pretrained(**init_kwargs)
+            else:
+                model = AutoModelForCausalLM.from_pretrained(**init_kwargs)
 
         if model_args.mixture_of_depths == "convert":
             model = convert_pretrained_model_to_mod(model, config, model_args)
@@ -158,58 +161,6 @@ def load_model(
         if vhead_params is not None:
             model.load_state_dict(vhead_params, strict=False)
             logger.info("Loaded valuehead from checkpoint: {}".format(vhead_path))
-
-    if not is_trainable:
-        model.requires_grad_(False)
-        model.eval()
-    else:
-        model.train()
-
-    trainable_params, all_param = count_parameters(model)
-    if is_trainable:
-        param_stats = "trainable params: {:d} || all params: {:d} || trainable%: {:.4f}".format(
-            trainable_params, all_param, 100 * trainable_params / all_param
-        )
-    else:
-        param_stats = "all params: {:d}".format(all_param)
-    logger.info(param_stats)
-
-    if model_args.print_param_status:
-        for name, param in model.named_parameters():
-            print(
-                "name: {}, dtype: {}, device: {}, trainable: {}".format(
-                    name, param.dtype, param.device, param.requires_grad
-                )
-            )
-
-    return model
-
-
-def load_mm_model(
-        processor: "AutoProcessor",
-        model_args: "ModelArguments",
-        finetuning_args: "FinetuningArguments",
-        is_trainable: bool = False,
-        add_valuehead: bool = False,
-        use_clm=True,
-) -> "AutoModelForVision2Seq":
-    r"""
-    Loads pretrained model. Must after load_tokenizer.
-    """
-    tokenizer = processor.tokenizer
-    init_kwargs = _get_init_kwargs(model_args)
-    config = AutoConfig.from_pretrained(model_args.model_name_or_path, **init_kwargs)
-    patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
-
-    model = None
-    if model is None:
-        init_kwargs["config"] = config
-        init_kwargs["pretrained_model_name_or_path"] = model_args.model_name_or_path
-        model: "AutoModelForVision2Seq" = AutoModelForVision2Seq.from_pretrained(**init_kwargs)
-    patch_model(model, tokenizer, model_args, is_trainable)
-    register_autoclass(config, model, tokenizer)
-
-    model = init_mm_adapter(model, model_args, finetuning_args, is_trainable, use_clm)
 
     if not is_trainable:
         model.requires_grad_(False)
