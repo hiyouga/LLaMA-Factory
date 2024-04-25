@@ -169,7 +169,7 @@ class ModelArguments:
     )
     export_device: str = field(
         default="cpu",
-        metadata={"help": "The device used in model export."},
+        metadata={"help": "The device used in model export, use cuda to avoid addmm errors."},
     )
     export_quantization_bit: Optional[int] = field(
         default=None,
