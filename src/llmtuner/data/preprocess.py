@@ -324,10 +324,7 @@ def get_preprocess_and_print_func(
         print_function = partial(print_pairwise_dataset_example, tokenizer=tokenizer)
     else:
         preprocess_func = partial(
-            preprocess_unsupervised_dataset,
-            tokenizer=tokenizer,
-            template=template,
-            data_args=data_args,
+            preprocess_unsupervised_dataset, tokenizer=tokenizer, template=template, data_args=data_args
         )
         print_function = partial(print_unsupervised_dataset_example, tokenizer=tokenizer)
 
