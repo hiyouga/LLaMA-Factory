@@ -14,7 +14,9 @@ from .base_engine import BaseEngine, Response
 
 
 if TYPE_CHECKING:
-    from transformers import PreTrainedModel, PreTrainedTokenizer
+    from numpy.typing import NDArray
+    from transformers import PreTrainedModel, PreTrainedTokenizer, ProcessorMixin
+    from transformers.image_processing_utils import BaseImageProcessor
     from trl import PreTrainedModelWrapper
 
     from ..data import Template
@@ -30,7 +32,9 @@ class HuggingfaceEngine(BaseEngine):
         generating_args: "GeneratingArguments",
     ) -> None:
         self.can_generate = finetuning_args.stage == "sft"
-        self.tokenizer = load_tokenizer(model_args)
+        tokenizer_module = load_tokenizer(model_args)
+        self.tokenizer = tokenizer_module["tokenizer"]
+        self.processor = tokenizer_module["processor"]
         self.tokenizer.padding_side = "left" if self.can_generate else "right"
         self.template = get_template_and_fix_tokenizer(self.tokenizer, data_args.template)
         self.model = load_model(
@@ -42,13 +46,18 @@ class HuggingfaceEngine(BaseEngine):
     def _process_args(
         model: "PreTrainedModel",
         tokenizer: "PreTrainedTokenizer",
+        processor: Optional["ProcessorMixin"],
         template: "Template",
         generating_args: Dict[str, Any],
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
+        image: Optional["NDArray"] = None,
         input_kwargs: Optional[Dict[str, Any]] = {},
     ) -> Tuple[Dict[str, Any], int]:
+        if processor is not None and image is not None and "<image>" not in messages[0]["content"]:
+            messages[0]["content"] = messages[0]["content"] + "<image>"
+
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         prompt_ids, _ = template.encode_oneturn(
             tokenizer=tokenizer, messages=paired_messages, system=system, tools=tools
@@ -95,6 +104,11 @@ class HuggingfaceEngine(BaseEngine):
             logits_processor=get_logits_processor(),
         )
 
+        if processor is not None and image is not None:
+            image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
+            pixel_values: "torch.Tensor" = image_processor(image, return_tensors="pt")["pixel_values"]
+            gen_kwargs["pixel_values"] = pixel_values.to(model.device)
+
         return gen_kwargs, prompt_length
 
     @staticmethod
@@ -102,15 +116,17 @@ class HuggingfaceEngine(BaseEngine):
     def _chat(
         model: "PreTrainedModel",
         tokenizer: "PreTrainedTokenizer",
+        processor: Optional["ProcessorMixin"],
         template: "Template",
         generating_args: Dict[str, Any],
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
+        image: Optional["NDArray"] = None,
         input_kwargs: Optional[Dict[str, Any]] = {},
     ) -> List["Response"]:
         gen_kwargs, prompt_length = HuggingfaceEngine._process_args(
-            model, tokenizer, template, generating_args, messages, system, tools, input_kwargs
+            model, tokenizer, processor, template, generating_args, messages, system, tools, image, input_kwargs
         )
         generate_output = model.generate(**gen_kwargs)
         response_ids = generate_output[:, prompt_length:]
@@ -135,15 +151,17 @@ class HuggingfaceEngine(BaseEngine):
     def _stream_chat(
         model: "PreTrainedModel",
         tokenizer: "PreTrainedTokenizer",
+        processor: Optional["ProcessorMixin"],
         template: "Template",
         generating_args: Dict[str, Any],
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
+        image: Optional["NDArray"] = None,
         input_kwargs: Optional[Dict[str, Any]] = {},
     ) -> Callable[[], str]:
         gen_kwargs, _ = HuggingfaceEngine._process_args(
-            model, tokenizer, template, generating_args, messages, system, tools, input_kwargs
+            model, tokenizer, processor, template, generating_args, messages, system, tools, image, input_kwargs
         )
         streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
         gen_kwargs["streamer"] = streamer
@@ -199,6 +217,7 @@ class HuggingfaceEngine(BaseEngine):
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
+        image: Optional["NDArray"] = None,
         **input_kwargs,
     ) -> List["Response"]:
         if not self.can_generate:
@@ -208,11 +227,13 @@ class HuggingfaceEngine(BaseEngine):
         input_args = (
             self.model,
             self.tokenizer,
+            self.processor,
             self.template,
             self.generating_args,
             messages,
             system,
             tools,
+            image,
             input_kwargs,
         )
         async with self._semaphore:
@@ -224,6 +245,7 @@ class HuggingfaceEngine(BaseEngine):
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
+        image: Optional["NDArray"] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
         if not self.can_generate:
@@ -233,11 +255,13 @@ class HuggingfaceEngine(BaseEngine):
         input_args = (
             self.model,
             self.tokenizer,
+            self.processor,
             self.template,
             self.generating_args,
             messages,
             system,
             tools,
+            image,
             input_kwargs,
         )
         async with self._semaphore:
