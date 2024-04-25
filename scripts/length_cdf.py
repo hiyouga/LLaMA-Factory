@@ -32,8 +32,8 @@ def length_cdf(
             overwrite_cache=True,
         )
     )
-    tokenizer = load_tokenizer(model_args)
-    trainset = get_dataset(tokenizer, model_args, data_args, training_args, stage="sft")
+    tokenizer_module = load_tokenizer(model_args)
+    trainset = get_dataset(model_args, data_args, training_args, stage="sft", **tokenizer_module)
     total_num = len(trainset)
     length_dict = defaultdict(int)
     for sample in tqdm(trainset["input_ids"]):
