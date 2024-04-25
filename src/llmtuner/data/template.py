@@ -879,14 +879,3 @@ _register_template(
     format_user=StringFormatter(slots=["<human>:{{content}}\n<bot>:"]),
     format_separator=EmptyFormatter(slots=["\n"]),
 )
-
-
-_register_template(
-    name="llava",
-    format_user=StringFormatter(slots=["USER: {{content}} ASSISTANT: "]),
-    format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}]),
-    default_system=(
-        "A chat between a curious user and an artificial intelligence assistant. "
-        "The assistant gives helpful, detailed, and polite answers to the user's questions."
-    ),
-)
