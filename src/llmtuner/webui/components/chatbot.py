@@ -23,9 +23,15 @@ def create_chat_box(
         messages = gr.State([])
         with gr.Row():
             with gr.Column(scale=4):
-                role = gr.Dropdown(choices=[Role.USER.value, Role.OBSERVATION.value], value=Role.USER.value)
-                system = gr.Textbox(show_label=False)
-                tools = gr.Textbox(show_label=False, lines=2)
+                with gr.Row():
+                    with gr.Column():
+                        role = gr.Dropdown(choices=[Role.USER.value, Role.OBSERVATION.value], value=Role.USER.value)
+                        system = gr.Textbox(show_label=False)
+                        tools = gr.Textbox(show_label=False, lines=4)
+
+                    with gr.Column():
+                        image = gr.Image(type="numpy")
+
                 query = gr.Textbox(show_label=False, lines=8)
                 submit_btn = gr.Button(variant="primary")
 
@@ -43,7 +49,7 @@ def create_chat_box(
         [chatbot, messages, query],
     ).then(
         engine.chatter.stream,
-        [chatbot, messages, system, tools, max_new_tokens, top_p, temperature],
+        [chatbot, messages, system, tools, image, max_new_tokens, top_p, temperature],
         [chatbot, messages],
     )
     clear_btn.click(lambda: ([], []), outputs=[chatbot, messages])
@@ -56,6 +62,7 @@ def create_chat_box(
             role=role,
             system=system,
             tools=tools,
+            image=image,
             query=query,
             submit_btn=submit_btn,
             max_new_tokens=max_new_tokens,

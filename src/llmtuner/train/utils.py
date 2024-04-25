@@ -91,7 +91,7 @@ def create_ref_model(
         )
         ref_model_args = ModelArguments(**ref_model_args_dict)
         ref_finetuning_args = FinetuningArguments(finetuning_type="lora")
-        tokenizer = load_tokenizer(ref_model_args)
+        tokenizer = load_tokenizer(ref_model_args)["tokenizer"]
         ref_model = load_model(
             tokenizer, ref_model_args, ref_finetuning_args, is_trainable=False, add_valuehead=add_valuehead
         )
@@ -100,7 +100,7 @@ def create_ref_model(
         if finetuning_args.finetuning_type == "lora":
             ref_model = None
         else:
-            tokenizer = load_tokenizer(model_args)
+            tokenizer = load_tokenizer(model_args)["tokenizer"]
             ref_model = load_model(
                 tokenizer, model_args, finetuning_args, is_trainable=False, add_valuehead=add_valuehead
             )
@@ -147,7 +147,7 @@ def create_reward_model(
         )
         reward_model_args = ModelArguments(**reward_model_args_dict)
         reward_finetuning_args = FinetuningArguments(finetuning_type="lora")
-        tokenizer = load_tokenizer(reward_model_args)
+        tokenizer = load_tokenizer(reward_model_args)["tokenizer"]
         reward_model = load_model(
             tokenizer, reward_model_args, reward_finetuning_args, is_trainable=False, add_valuehead=True
         )

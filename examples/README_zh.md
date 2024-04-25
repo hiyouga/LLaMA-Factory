@@ -9,6 +9,7 @@ examples/
 │   ├── ppo.sh: 基于 LoRA 进行 PPO 训练
 │   ├── dpo.sh: 基于 LoRA 进行 DPO 训练
 │   ├── orpo.sh: 基于 LoRA 进行 ORPO 训练
+│   ├── sft_mllm.sh: 基于 LoRA 进行多模态指令监督微调
 │   ├── prepare.sh: 保存预处理后的数据集
 │   └── predict.sh: 基于 LoRA 进行批量预测并计算 BLEU 和 ROUGE 分数
 ├── qlora_single_gpu/
