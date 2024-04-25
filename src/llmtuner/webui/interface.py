@@ -58,8 +58,8 @@ def create_web_demo() -> gr.Blocks:
         lang = gr.Dropdown(choices=["en", "zh"])
         engine.manager.add_elems("top", dict(lang=lang))
 
-        chat_box, _, _, chat_elems = create_chat_box(engine, visible=True)
-        engine.manager.add_elems("infer", dict(chat_box=chat_box, **chat_elems))
+        _, _, chat_elems = create_chat_box(engine, visible=True)
+        engine.manager.add_elems("infer", chat_elems)
 
         demo.load(engine.resume, outputs=engine.manager.get_elem_list(), concurrency_limit=None)
         lang.change(engine.change_lang, [lang], engine.manager.get_elem_list(), queue=False)

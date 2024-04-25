@@ -9,6 +9,7 @@ from ..extras.constants import (
     DATA_CONFIG,
     DEFAULT_MODULE,
     DEFAULT_TEMPLATE,
+    MLLM_LIST,
     PEFT_METHODS,
     STAGES_USE_PAIR_DATA,
     SUPPORTED_MODELS,
@@ -103,6 +104,10 @@ def get_template(model_name: str) -> str:
     if model_name and model_name.endswith("Chat") and get_prefix(model_name) in DEFAULT_TEMPLATE:
         return DEFAULT_TEMPLATE[get_prefix(model_name)]
     return "default"
+
+
+def get_visual(model_name: str) -> bool:
+    return get_prefix(model_name) in MLLM_LIST
 
 
 def list_adapters(model_name: str, finetuning_type: str) -> "gr.Dropdown":
