@@ -169,6 +169,10 @@ class ModelArguments:
         default=False,
         metadata={"help": "For debugging purposes, print the status of the parameters in the model."},
     )
+    use_mllm: bool = field(
+        default=False,
+        metadata={"help": "Whether use Multimodal LLM."},
+    )
 
     def __post_init__(self):
         self.compute_dtype = None
