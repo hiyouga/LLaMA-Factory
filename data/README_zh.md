@@ -18,7 +18,8 @@
     "history": "数据集代表历史对话的表头名称（默认：None）",
     "messages": "数据集代表消息列表的表头名称（默认：conversations）",
     "system": "数据集代表系统提示的表头名称（默认：None）",
-    "tools": "数据集代表工具描述的表头名称（默认：None）"
+    "tools": "数据集代表工具描述的表头名称（默认：None）",
+    "images": "数据集代表图像输入的表头名称（默认：None）"
   },
   "tags（可选，用于 sharegpt 格式）": {
     "role_tag": "消息中代表发送者身份的键名（默认：from）",
