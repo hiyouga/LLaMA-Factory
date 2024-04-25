@@ -43,6 +43,7 @@ class Engine:
             init_dict["train.output_dir"] = {"value": "train_{}".format(get_time())}
             init_dict["train.config_path"] = {"value": "{}.json".format(get_time())}
             init_dict["eval.output_dir"] = {"value": "eval_{}".format(get_time())}
+            init_dict["infer.image_box"] = {"visible": False}
 
             if user_config.get("last_model", None):
                 init_dict["top.model_name"] = {"value": user_config["last_model"]}
