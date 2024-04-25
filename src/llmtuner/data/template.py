@@ -1012,8 +1012,8 @@ _register_template(
 
 _register_template(
     name="llava",
-    format_user=StringFormatter(slots=["USER: {{content}} "]),
-    format_assistant=StringFormatter(slots=["ASSISTANT: {{content}}"]),
+    format_user=StringFormatter(slots=["USER: {{content}} ASSISTANT: "]),
+    format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}]),
     default_system=(
         "A chat between a curious user and an artificial intelligence assistant. "
         "The assistant gives helpful, detailed, and polite answers to the user's questions."
