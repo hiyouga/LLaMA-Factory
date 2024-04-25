@@ -188,18 +188,8 @@ class ModelArguments:
         if self.new_special_tokens is not None:  # support multiple special tokens
             self.new_special_tokens = [token.strip() for token in self.new_special_tokens.split(",")]
 
-        assert self.quantization_bit in [
-            None,
-            8,
-            4,
-        ], "We only accept 4-bit or 8-bit quantization."
-        assert self.export_quantization_bit in [
-            None,
-            8,
-            4,
-            3,
-            2,
-        ], "We only accept 2/3/4/8-bit quantization."
+        assert self.quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
+        assert self.export_quantization_bit in [None, 8, 4, 3, 2], "We only accept 2/3/4/8-bit quantization."
 
         if self.export_quantization_bit is not None and self.export_quantization_dataset is None:
             raise ValueError("Quantization dataset is necessary for exporting.")
