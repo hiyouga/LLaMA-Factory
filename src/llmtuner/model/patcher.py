@@ -15,6 +15,7 @@ from .utils.longlora import configure_longlora
 from .utils.moe import add_z3_leaf_module, configure_moe
 from .utils.quantization import configure_quantization
 from .utils.rope import configure_rope
+from .utils.visual import autocast_projector_dtype
 
 
 if TYPE_CHECKING:
@@ -91,6 +92,9 @@ def patch_model(
 
     if model_args.resize_vocab:
         resize_embedding_layer(model, tokenizer)
+
+    if model_args.visual_inputs:
+        autocast_projector_dtype(model, model_args)
 
     if is_trainable:
         prepare_model_for_training(model, model_args)
