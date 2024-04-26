@@ -48,6 +48,10 @@ def is_nltk_available():
     return _is_package_available("nltk")
 
 
+def is_pillow_available():
+    return _is_package_available("PIL")
+
+
 def is_requests_available():
     return _is_package_available("requests")
 
