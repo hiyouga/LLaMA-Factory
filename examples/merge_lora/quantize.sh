@@ -1,4 +1,5 @@
 #!/bin/bash
+# NEED TO run `merge.sh` before using this script
 
 CUDA_VISIBLE_DEVICES=0 python ../../src/export_model.py \
     --model_name_or_path ../../models/llama2-7b-sft \

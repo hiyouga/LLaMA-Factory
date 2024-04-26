@@ -14,10 +14,23 @@ if TYPE_CHECKING:
     from .parser import DatasetAttr
 
 
+def _convert_images(images: List[Any], dataset_attr: "DatasetAttr", data_args: "DataArguments") -> List[Any]:
+    outputs = []
+    if dataset_attr.load_from in ["script", "file"]:
+        for image in images:
+            if isinstance(image, str) and os.path.isfile(os.path.join(data_args.dataset_dir, image)):
+                outputs.append(os.path.join(data_args.dataset_dir, image))
+            else:
+                outputs.append(image)
+
+    return outputs
+
+
 def convert_alpaca(
     examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr", data_args: "DataArguments"
 ) -> Dict[str, List[Any]]:
     outputs = {"prompt": [], "response": [], "system": [], "tools": [], "images": []}
+    convert_images = partial(_convert_images, dataset_attr=dataset_attr, data_args=data_args)
     for i in range(len(examples[dataset_attr.prompt])):
         prompt = []
         if dataset_attr.history and isinstance(examples[dataset_attr.history][i], list):
@@ -47,11 +60,7 @@ def convert_alpaca(
         outputs["response"].append(response)
         outputs["system"].append(examples[dataset_attr.system][i] if dataset_attr.system else "")
         outputs["tools"].append("")
-        outputs["images"].append(
-            [os.path.join(data_args.dataset_dir, path) for path in examples[dataset_attr.images][i]]
-            if dataset_attr.images
-            else []
-        )
+        outputs["images"].append(convert_images(examples[dataset_attr.images][i]) if dataset_attr.images else [])
 
     return outputs
 
@@ -60,6 +69,7 @@ def convert_sharegpt(
     examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr", data_args: "DataArguments"
 ) -> Dict[str, List[Any]]:
     outputs = {"prompt": [], "response": [], "system": [], "tools": [], "images": []}
+    convert_images = partial(_convert_images, dataset_attr=dataset_attr, data_args=data_args)
     tag_mapping = {
         dataset_attr.user_tag: Role.USER.value,
         dataset_attr.assistant_tag: Role.ASSISTANT.value,
@@ -94,11 +104,7 @@ def convert_sharegpt(
         outputs["response"].append(aligned_messages[-1:])
         outputs["system"].append(system)
         outputs["tools"].append(examples[dataset_attr.tools][i] if dataset_attr.tools else "")
-        outputs["images"].append(
-            [os.path.join(data_args.dataset_dir, path) for path in examples[dataset_attr.images][i]]
-            if dataset_attr.images
-            else []
-        )
+        outputs["images"].append(convert_images(examples[dataset_attr.images][i]) if dataset_attr.images else [])
 
     return outputs
 
