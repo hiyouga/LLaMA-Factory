@@ -27,10 +27,10 @@ def create_chat_box(
                     with gr.Column():
                         role = gr.Dropdown(choices=[Role.USER.value, Role.OBSERVATION.value], value=Role.USER.value)
                         system = gr.Textbox(show_label=False)
-                        tools = gr.Textbox(show_label=False, lines=4)
+                        tools = gr.Textbox(show_label=False, lines=3)
 
                     with gr.Column() as image_box:
-                        image = gr.Image(type="numpy")
+                        image = gr.Image(sources=["upload"], type="numpy")
 
                 query = gr.Textbox(show_label=False, lines=8)
                 submit_btn = gr.Button(variant="primary")
