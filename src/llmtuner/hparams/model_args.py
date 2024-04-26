@@ -182,6 +182,9 @@ class ModelArguments:
         if self.split_special_tokens and self.use_fast_tokenizer:
             raise ValueError("`split_special_tokens` is only supported for slow tokenizers.")
 
+        if self.visual_inputs and self.use_unsloth:
+            raise ValueError("Unsloth does not support MLLM yet. Stay tuned.")
+
         if self.adapter_name_or_path is not None:  # support merging multiple lora weights
             self.adapter_name_or_path = [path.strip() for path in self.adapter_name_or_path.split(",")]
 
