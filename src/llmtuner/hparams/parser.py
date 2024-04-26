@@ -323,6 +323,9 @@ def get_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
         if model_args.visual_inputs:
             raise ValueError("vLLM engine does not support MLLM yet. Stay tuned.")
 
+    if finetuning_args.stage == "rm" and model_args.visual_inputs:
+        raise ValueError("Reward server does not support MLLM yet. Stay tuned.")
+
     _verify_model_args(model_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args)
 
