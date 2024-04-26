@@ -808,6 +808,10 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen1.5-72B",
             DownloadSource.MODELSCOPE: "qwen/Qwen1.5-72B",
         },
+        "Qwen1.5-110B": {
+            DownloadSource.DEFAULT: "Qwen/Qwen1.5-110B",
+            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-110B",
+        },
         "Qwen1.5-MoE-A2.7B": {
             DownloadSource.DEFAULT: "Qwen/Qwen1.5-MoE-A2.7B",
             DownloadSource.MODELSCOPE: "qwen/Qwen1.5-MoE-A2.7B",
@@ -843,6 +847,10 @@ register_model_group(
         "Qwen1.5-72B-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen1.5-72B-Chat",
             DownloadSource.MODELSCOPE: "qwen/Qwen1.5-72B-Chat",
+        },
+        "Qwen1.5-110B-Chat": {
+            DownloadSource.DEFAULT: "Qwen/Qwen1.5-110B-Chat",
+            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-110B-Chat",
         },
         "Qwen1.5-MoE-A2.7B-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen1.5-MoE-A2.7B-Chat",
