@@ -89,7 +89,7 @@ def _check_extra_dependencies(
         require_version("mixture-of-depth>=1.1.6", "To fix: pip install mixture-of-depth>=1.1.6")
 
     if model_args.infer_backend == "vllm":
-        require_version("vllm>=0.3.3", "To fix: pip install vllm>=0.3.3")
+        require_version("vllm>=0.4.0", "To fix: pip install vllm>=0.4.0")
 
     if finetuning_args.use_galore:
         require_version("galore_torch", "To fix: pip install galore_torch")
@@ -319,9 +319,6 @@ def get_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
 
         if model_args.adapter_name_or_path is not None and len(model_args.adapter_name_or_path) != 1:
             raise ValueError("vLLM only accepts a single adapter. Merge them first.")
-
-        if model_args.visual_inputs:
-            raise ValueError("vLLM engine does not support MLLM yet. Stay tuned.")
 
     if finetuning_args.stage == "rm" and model_args.visual_inputs:
         raise ValueError("Reward server does not support MLLM yet. Stay tuned.")
