@@ -56,7 +56,7 @@ class HuggingfaceEngine(BaseEngine):
         input_kwargs: Optional[Dict[str, Any]] = {},
     ) -> Tuple[Dict[str, Any], int]:
         if processor is not None and image is not None and "<image>" not in messages[0]["content"]:
-            messages[0]["content"] = messages[0]["content"] + "<image>"
+            messages[0]["content"] = "<image>" + messages[0]["content"]
 
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         prompt_ids, _ = template.encode_oneturn(

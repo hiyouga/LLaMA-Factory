@@ -60,7 +60,7 @@
   },
   "mllm_demo": {
     "file_name": "mllm_demo.json",
-    "file_sha1": "b6709b23657d5c42a701f1c5574f3a6edaa40a20",
+    "file_sha1": "d626cc0ad88a26d0dc9fcb47336821cf486d8bcc",
     "formatting": "sharegpt",
     "columns": {
       "messages": "messages",
