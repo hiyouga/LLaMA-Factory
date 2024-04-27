@@ -15,6 +15,7 @@ from .utils.longlora import configure_longlora
 from .utils.moe import add_z3_leaf_module, configure_moe
 from .utils.quantization import configure_quantization
 from .utils.rope import configure_rope
+from .utils.valuehead import configure_valuehead, prepare_valuehead_model
 from .utils.visual import autocast_projector_dtype
 
 
@@ -39,6 +40,7 @@ def patch_config(
     model_args: "ModelArguments",
     init_kwargs: Dict[str, Any],
     is_trainable: bool,
+    add_valuehead: bool,
 ) -> None:
     if model_args.compute_dtype is None:  # priority: bf16 > fp16 > fp32
         model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
@@ -48,6 +50,9 @@ def patch_config(
     configure_longlora(config, model_args, is_trainable)
     configure_quantization(config, tokenizer, model_args, init_kwargs)
     configure_moe(config, model_args, is_trainable)
+
+    if add_valuehead:
+        configure_valuehead(config)
 
     if model_args.use_cache and not is_trainable:
         setattr(config, "use_cache", True)
@@ -73,7 +78,11 @@ def patch_config(
 
 
 def patch_model(
-    model: "PreTrainedModel", tokenizer: "PreTrainedTokenizer", model_args: "ModelArguments", is_trainable: bool
+    model: "PreTrainedModel",
+    tokenizer: "PreTrainedTokenizer",
+    model_args: "ModelArguments",
+    is_trainable: bool,
+    add_valuehead: bool,
 ) -> None:
     gen_config = model.generation_config  # check and fix generation config
     if not gen_config.do_sample and (
@@ -86,9 +95,8 @@ def patch_model(
     if "GenerationMixin" not in str(model.generate.__func__):
         model.generate = MethodType(PreTrainedModel.generate, model)
 
-    if is_trainable and getattr(model.config, "model_type", None) == "chatglm":
-        setattr(model, "lm_head", model.transformer.output_layer)
-        setattr(model, "_keys_to_ignore_on_save", ["lm_head.weight"])
+    if add_valuehead:
+        prepare_valuehead_model(model)
 
     if model_args.resize_vocab:
         resize_embedding_layer(model, tokenizer)
