@@ -306,9 +306,11 @@ register_model_group(
         },
         "DeepSeek-Math-7B-Base": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-math-7b-base",
+            DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-math-7b-base",
         },
         "DeepSeek-Math-7B-Chat": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-math-7b-instruct",
+            DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-math-7b-instruct",
         },
         "DeepSeek-MoE-16B-Base": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-moe-16b-base",
@@ -616,6 +618,7 @@ register_model_group(
         },
         "Mixtral-8x22B-v0.1": {
             DownloadSource.DEFAULT: "mistralai/Mixtral-8x22B-v0.1",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Mixtral-8x22B-v0.1",
         },
         "Mixtral-8x22B-v0.1-Chat": {
             DownloadSource.DEFAULT: "mistralai/Mixtral-8x22B-Instruct-v0.1",
@@ -644,7 +647,7 @@ register_model_group(
     models={
         "OpenChat3.5-7B-Chat": {
             DownloadSource.DEFAULT: "openchat/openchat-3.5-0106",
-            DownloadSource.MODELSCOPE: "myxiongmodel/openchat_3.5",
+            DownloadSource.MODELSCOPE: "xcwzxcwz/openchat-3.5-0106",
         }
     },
     template="openchat",
@@ -696,9 +699,11 @@ register_model_group(
     models={
         "Phi3-3.8B-4k-Chat": {
             DownloadSource.DEFAULT: "microsoft/Phi-3-mini-4k-instruct",
+            DownloadSource.DEFAULT: "LLM-Research/Phi-3-mini-4k-instruct",
         },
         "Phi3-3.8B-128k-Chat": {
             DownloadSource.DEFAULT: "microsoft/Phi-3-mini-128k-instruct",
+            DownloadSource.DEFAULT: "LLM-Research/Phi-3-mini-128k-instruct",
         },
     },
     module="qkv_proj",
@@ -912,6 +917,10 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen1.5-72B-Chat-AWQ",
             DownloadSource.MODELSCOPE: "qwen/Qwen1.5-72B-Chat-AWQ",
         },
+        "Qwen1.5-110B-int4-Chat": {
+            DownloadSource.DEFAULT: "Qwen/Qwen1.5-110B-Chat-AWQ",
+            DownloadSource.MODELSCOPE: "qwen/Qwen1.5-110B-Chat-AWQ",
+        },
         "Qwen1.5-MoE-A2.7B-int4-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen1.5-MoE-A2.7B-Chat-GPTQ-Int4",
             DownloadSource.MODELSCOPE: "qwen/Qwen1.5-MoE-A2.7B-Chat-GPTQ-Int4",
@@ -953,12 +962,15 @@ register_model_group(
     models={
         "StarCoder2-3B": {
             DownloadSource.DEFAULT: "bigcode/starcoder2-3b",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/starcoder2-3b",
         },
         "StarCoder2-7B": {
             DownloadSource.DEFAULT: "bigcode/starcoder2-7b",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/starcoder2-7b",
         },
         "StarCoder2-15B": {
             DownloadSource.DEFAULT: "bigcode/starcoder2-15b",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/starcoder2-15b",
         },
     }
 )
@@ -981,17 +993,53 @@ register_model_group(
 
 register_model_group(
     models={
+        "XuanYuan-6B": {
+            DownloadSource.DEFAULT: "Duxiaoman-DI/XuanYuan-6B",
+            DownloadSource.MODELSCOPE: "Duxiaoman-DI/XuanYuan-6B",
+        },
         "XuanYuan-70B": {
             DownloadSource.DEFAULT: "Duxiaoman-DI/XuanYuan-70B",
+            DownloadSource.MODELSCOPE: "Duxiaoman-DI/XuanYuan-70B",
+        },
+        "XuanYuan-2-70B": {
+            DownloadSource.DEFAULT: "Duxiaoman-DI/XuanYuan2-70B",
+            DownloadSource.MODELSCOPE: "Duxiaoman-DI/XuanYuan2-70B",
+        },
+        "XuanYuan-6B-Chat": {
+            DownloadSource.DEFAULT: "Duxiaoman-DI/XuanYuan-6B-Chat",
+            DownloadSource.MODELSCOPE: "Duxiaoman-DI/XuanYuan-6B-Chat",
         },
         "XuanYuan-70B-Chat": {
             DownloadSource.DEFAULT: "Duxiaoman-DI/XuanYuan-70B-Chat",
+            DownloadSource.MODELSCOPE: "Duxiaoman-DI/XuanYuan-70B-Chat",
+        },
+        "XuanYuan-2-70B-Chat": {
+            DownloadSource.DEFAULT: "Duxiaoman-DI/XuanYuan2-70B-Chat",
+            DownloadSource.MODELSCOPE: "Duxiaoman-DI/XuanYuan2-70B-Chat",
+        },
+        "XuanYuan-6B-int8-Chat": {
+            DownloadSource.DEFAULT: "Duxiaoman-DI/XuanYuan-6B-Chat-8bit",
+            DownloadSource.MODELSCOPE: "Duxiaoman-DI/XuanYuan-6B-Chat-8bit",
+        },
+        "XuanYuan-6B-int4-Chat": {
+            DownloadSource.DEFAULT: "Duxiaoman-DI/XuanYuan-6B-Chat-4bit",
+            DownloadSource.MODELSCOPE: "Duxiaoman-DI/XuanYuan-6B-Chat-4bit",
         },
         "XuanYuan-70B-int8-Chat": {
             DownloadSource.DEFAULT: "Duxiaoman-DI/XuanYuan-70B-Chat-8bit",
+            DownloadSource.MODELSCOPE: "Duxiaoman-DI/XuanYuan-70B-Chat-8bit",
         },
         "XuanYuan-70B-int4-Chat": {
             DownloadSource.DEFAULT: "Duxiaoman-DI/XuanYuan-70B-Chat-4bit",
+            DownloadSource.MODELSCOPE: "Duxiaoman-DI/XuanYuan-70B-Chat-4bit",
+        },
+        "XuanYuan-2-70B-int8-Chat": {
+            DownloadSource.DEFAULT: "Duxiaoman-DI/XuanYuan2-70B-Chat-8bit",
+            DownloadSource.MODELSCOPE: "Duxiaoman-DI/XuanYuan2-70B-Chat-8bit",
+        },
+        "XuanYuan-2-70B-int4-Chat": {
+            DownloadSource.DEFAULT: "Duxiaoman-DI/XuanYuan2-70B-Chat-4bit",
+            DownloadSource.MODELSCOPE: "Duxiaoman-DI/XuanYuan2-70B-Chat-4bit",
         },
     },
     template="xuanyuan",
@@ -1027,6 +1075,30 @@ register_model_group(
         "XVERSE-65B-Chat": {
             DownloadSource.DEFAULT: "xverse/XVERSE-65B-Chat",
             DownloadSource.MODELSCOPE: "xverse/XVERSE-65B-Chat",
+        },
+        "XVERSE-MoE-A4.2B": {
+            DownloadSource.DEFAULT: "xverse/XVERSE-MoE-A4.2B",
+            DownloadSource.MODELSCOPE: "xverse/XVERSE-MoE-A4.2B",
+        },
+        "XVERSE-7B-int8-Chat": {
+            DownloadSource.DEFAULT: "xverse/XVERSE-7B-Chat-GPTQ-Int8",
+            DownloadSource.MODELSCOPE: "xverse/XVERSE-7B-Chat-GPTQ-Int8",
+        },
+        "XVERSE-7B-int4-Chat": {
+            DownloadSource.DEFAULT: "xverse/XVERSE-7B-Chat-GPTQ-Int4",
+            DownloadSource.MODELSCOPE: "xverse/XVERSE-7B-Chat-GPTQ-Int4",
+        },
+        "XVERSE-13B-int8-Chat": {
+            DownloadSource.DEFAULT: "xverse/XVERSE-13B-Chat-GPTQ-Int8",
+            DownloadSource.MODELSCOPE: "xverse/XVERSE-13B-Chat-GPTQ-Int8",
+        },
+        "XVERSE-13B-int4-Chat": {
+            DownloadSource.DEFAULT: "xverse/XVERSE-13B-Chat-GPTQ-Int4",
+            DownloadSource.MODELSCOPE: "xverse/XVERSE-13B-Chat-GPTQ-Int4",
+        },
+        "XVERSE-65B-int4-Chat": {
+            DownloadSource.DEFAULT: "xverse/XVERSE-65B-Chat-GPTQ-Int4",
+            DownloadSource.MODELSCOPE: "xverse/XVERSE-65B-Chat-GPTQ-Int4",
         },
     },
     template="xverse",
@@ -1119,6 +1191,9 @@ register_model_group(
         "Zephyr-7B-Beta-Chat": {
             DownloadSource.DEFAULT: "HuggingFaceH4/zephyr-7b-beta",
             DownloadSource.MODELSCOPE: "modelscope/zephyr-7b-beta",
+        },
+        "Zephyr-141B-ORPO-Chat": {
+            DownloadSource.DEFAULT: "HuggingFaceH4/zephyr-orpo-141b-A35b-v0.1",
         },
     },
     template="zephyr",
