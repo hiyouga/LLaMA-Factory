@@ -870,7 +870,7 @@ _register_template(
     format_user=StringFormatter(slots=["<|user|>\n{{content}}", {"eos_token"}, "<|assistant|>"]),
     format_assistant=StringFormatter(slots=["\n{{content}}", {"eos_token"}]),
     format_system=StringFormatter(slots=["<|system|>\n{{content}}", {"eos_token"}]),
-    default_system="You are a friendly chatbot who always responds in the style of a pirate",
+    default_system="You are Zephyr, a helpful assistant.",
 )
 
 
