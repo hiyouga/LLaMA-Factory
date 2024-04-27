@@ -22,7 +22,6 @@ def get_requires():
 extra_require = {
     "deepspeed": ["deepspeed>=0.10.0"],
     "metrics": ["nltk", "jieba", "rouge-chinese"],
-    "unsloth": ["torch==2.2.0", "unsloth[cu121-ampere-torch220]"],
     "galore": ["galore-torch"],
     "badam": ["badam"],
     "vllm": ["vllm>=0.4.0"],
