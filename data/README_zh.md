@@ -37,7 +37,7 @@
 
 ----
 
-该项目目前支持两种格式的数据集：**alpaca** 和 **sharegpt**，其中 alpaca 格式的数据集按照以下方式组织：
+该项目目前支持三种格式的数据集：**alpaca** 和 **sharegpt**，其中 alpaca 格式的数据集按照以下方式组织：
 
 ```json
 [
@@ -94,6 +94,7 @@
 而 sharegpt 格式的数据集按照以下方式组织：
 
 ```json
+# 第一种sharegpt格式
 [
   {
     "conversations": [
@@ -108,6 +109,29 @@
     ],
     "system": "系统提示词（选填）",
     "tools": "工具描述（选填）"
+  }
+]
+
+# 第二种sharegpt格式
+
+[
+  {
+    "type": "chatml",
+    "messages": [
+    {
+      "role": "system",
+      "content": "You are a helpful assistant."
+    },
+    {
+      "role": "user",
+      "content": "Tell me something about large language models."
+    },
+    {
+      "role": "assistant",
+      "content": "Large language models are a type of language model  ..."
+    }
+  ],
+  "source": "unknown"
   }
 ]
 ```
