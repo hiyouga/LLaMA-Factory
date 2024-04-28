@@ -120,15 +120,15 @@
     "messages": [
     {
       "role": "system",
-      "content": "You are a helpful assistant."
+      "content": "你是一个很有用的AI助手"
     },
     {
       "role": "user",
-      "content": "Tell me something about large language models."
+      "content": "告诉我一些关于大模型的一些信息"
     },
     {
       "role": "assistant",
-      "content": "Large language models are a type of language model  ..."
+      "content": "大模型是一种语言模型"
     }
   ],
   "source": "unknown"
