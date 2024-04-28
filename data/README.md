@@ -94,20 +94,44 @@ Remember to set `"ranking": true` for the preference datasets.
 The dataset in sharegpt format should follow the below format:
 
 ```json
+# The first sharegpt format
 [
   {
     "conversations": [
       {
         "from": "human",
-        "value": "user instruction"
+        "value": "用户指令"
       },
       {
         "from": "gpt",
-        "value": "model response"
+        "value": "模型回答"
       }
     ],
-    "system": "system prompt (optional)",
-    "tools": "tool description (optional)"
+    "system": "系统提示词（选填）",
+    "tools": "工具描述（选填）"
+  }
+]
+
+# The second sharegpt format
+
+[
+  {
+    "type": "chatml",
+    "messages": [
+    {
+      "role": "system",
+      "content": "You are a helpful assistant."
+    },
+    {
+      "role": "user",
+      "content": "Tell me something about large language models."
+    },
+    {
+      "role": "assistant",
+      "content": "Large language models are a type of language model  ..."
+    }
+  ],
+  "source": "unknown"
   }
 ]
 ```
