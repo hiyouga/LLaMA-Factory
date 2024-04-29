@@ -1,4 +1,6 @@
 from llmtuner import run_exp
+import wandb
+wandb.init(project="DoRA_commonsense", entity="prada-lab")
 
 
 def main():
