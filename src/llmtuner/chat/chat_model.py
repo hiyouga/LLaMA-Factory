@@ -28,6 +28,7 @@ class ChatModel:
         else:
             raise NotImplementedError("Unknown backend: {}".format(model_args.infer_backend))
 
+        self.models_args = model_args
         self._loop = asyncio.new_event_loop()
         self._thread = Thread(target=_start_background_loop, args=(self._loop,), daemon=True)
         self._thread.start()

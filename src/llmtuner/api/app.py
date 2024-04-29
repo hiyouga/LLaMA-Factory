@@ -82,7 +82,11 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
 
     @app.get("/v1/models", response_model=ModelList)
     async def list_models():
-        model_card = ModelCard(id="gpt-3.5-turbo")
+        if chat_model.models_args.model_revision != "main":  # the default of model_revision is main
+            ids = chat_model.models_args.model_revision
+        else:
+            ids = "gpt-3.5-turbo"
+        model_card = ModelCard(id=ids)
         return ModelList(data=[model_card])
 
     @app.post("/v1/chat/completions", response_model=ChatCompletionResponse, status_code=status.HTTP_200_OK)
