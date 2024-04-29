@@ -16,3 +16,5 @@ sse-starlette
 matplotlib
 fire
 packaging
+icecream
+tiktoken
