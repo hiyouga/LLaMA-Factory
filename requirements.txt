@@ -1,4 +1,5 @@
-torch>=1.13.1
+modelscope
+torch==2.1.2
 transformers>=4.37.2
 datasets>=2.14.3
 accelerate>=0.27.2
@@ -16,3 +17,7 @@ sse-starlette
 matplotlib
 fire
 packaging
+vllm==0.4.0
+llmtuner==0.7.0
+nltk==3.8.1
+rouge-chinese==1.0.3
