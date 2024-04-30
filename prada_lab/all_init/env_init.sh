@@ -9,3 +9,4 @@ export HF_HUB_CACHE=/root/autodl-tmp/.cache/huggingface/hub
 export HF_ENDPOINT=https://hf-mirror.com
 export HF_TOKEN=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
 export mirror=git\ clone\ https://mirror.ghproxy.com//
+mkdir /root/autodl-tmp/train_exps
