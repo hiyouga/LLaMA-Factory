@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict
+from typing import Any, Dict, Union, Optional, List
 
 
 @dataclass
@@ -46,7 +46,10 @@ class GeneratingArguments:
         default=1.0,
         metadata={"help": "Exponential penalty to the length that is used with beam-based generation."},
     )
-
+    stop: Union[Optional[str], List[str]] = field(
+        default=None,
+        metadata={"help": "List of strings or string that stop the generation when they are generated. The returned output will not contain the stop strings."},
+    )
     def to_dict(self) -> Dict[str, Any]:
         args = asdict(self)
         if args.get("max_new_tokens", -1) > 0:
