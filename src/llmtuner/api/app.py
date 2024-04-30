@@ -141,6 +141,7 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
             top_p=request.top_p,
             max_new_tokens=request.max_tokens,
             num_return_sequences=request.n,
+            stop=request.stop
         )
 
         prompt_length, response_length = 0, 0
@@ -193,6 +194,7 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
             temperature=request.temperature,
             top_p=request.top_p,
             max_new_tokens=request.max_tokens,
+            stop=request.stop
         ):
             if len(new_token) == 0:
                 continue
