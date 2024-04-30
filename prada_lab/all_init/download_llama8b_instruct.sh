@@ -1,0 +1,1 @@
+huggingface-cli download --token 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 meta-llama/Meta-Llama-3-8B-Instruct --local-dir /root/autodl-tmp/models/llama-8b-instruct --local-dir-use-symlinks False
