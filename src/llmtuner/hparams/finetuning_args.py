@@ -221,16 +221,18 @@ class BAdamArgument:
         default=None,
         metadata={"help": "The starting block index for layer-wise BAdam."},
     )
-    badam_switch_block_every: Optional[int] = field(
-        default=50,
-        metadata={"help": "How often to switch model's block update. Set to -1 to disable the block update."},
-    )
     badam_switch_mode: Optional[Literal["ascending", "descending", "random", "fixed"]] = field(
         default="ascending",
         metadata={"help": "the strategy of picking block to update for layer-wise BAdam."},
     )
+    badam_switch_interval: Optional[int] = field(
+        default=50,
+        metadata={
+            "help": "Number of steps to update the block for layer-wise BAdam. Use -1 to disable the block update."
+        },
+    )
     badam_update_ratio: float = field(
-        default=0.0,
+        default=0.05,
         metadata={"help": "The ratio of the update for ratio-wise BAdam."},
     )
     badam_mask_mode: Literal["adjacent", "scatter"] = field(
@@ -307,6 +309,9 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
 
         if self.use_galore and self.finetuning_type == "lora":
             raise ValueError("Cannot use LoRA with GaLore together.")
+
+        if self.use_galore and self.use_badam:
+            raise ValueError("Cannot use GaLore with BAdam together.")
 
         if self.loraplus_lr_ratio is not None and self.finetuning_type != "lora":
             raise ValueError("`loraplus_lr_ratio` is only valid for the LoRA training.")
