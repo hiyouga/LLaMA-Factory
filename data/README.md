@@ -1,4 +1,4 @@
-If you are using a custom dataset, please provide your dataset definition in the following format in `dataset_info.json`.
+If you are using a custom dataset, please add your **dataset description** to `dataset_info.json` according to the following format. We also provide several examples in the next section.
 
 ```json
 "dataset_name": {
@@ -33,7 +33,7 @@ If you are using a custom dataset, please provide your dataset definition in the
 }
 ```
 
-Given above, you can use the custom dataset via specifying `--dataset dataset_name`.
+After that, you can load the custom dataset by specifying `--dataset dataset_name`.
 
 ----
 
@@ -54,10 +54,11 @@ Currently we support dataset in **alpaca** or **sharegpt** format, the dataset i
 ]
 ```
 
-Regarding the above dataset, the `columns` in `dataset_info.json` should be:
+Regarding the above dataset, the description in `dataset_info.json` should be:
 
 ```json
 "dataset_name": {
+  "file_name": "data.json",
   "columns": {
     "prompt": "instruction",
     "query": "input",
@@ -70,76 +71,86 @@ Regarding the above dataset, the `columns` in `dataset_info.json` should be:
 
 The `query` column will be concatenated with the `prompt` column and used as the user prompt, then the user prompt would be `prompt\nquery`. The `response` column represents the model response.
 
-The `system` column will be used as the system prompt. The `history` column is a list consisting string tuples representing prompt-response pairs in the history. Note that the responses in the history **will also be used for training**.
+The `system` column will be used as the system prompt. The `history` column is a list consisting string tuples representing prompt-response pairs in the history. Note that the responses in the history **will also be used for training** in supervised fine-tuning.
 
-For the pre-training datasets, only the `prompt` column will be used for training.
-
-For the preference datasets, the `response` column should be a string list whose length is 2, with the preferred answers appearing first, for example:
+For the **pre-training datasets**, only the `prompt` column will be used for training, for example:
 
 ```json
-{
-  "instruction": "user instruction",
-  "input": "user input",
-  "output": [
-    "chosen answer",
-    "rejected answer"
-  ]
+[
+  {"text": "document"},
+  {"text": "document"}
+]
+```
+
+Regarding the above dataset, the description in `dataset_info.json` should be:
+
+```json
+"dataset_name": {
+  "file_name": "data.json",
+  "columns": {
+    "prompt": "text"
+  }
 }
 ```
 
-Remember to set `"ranking": true` for the preference datasets.
+For the **preference datasets**, the `response` column should be a string list whose length is 2, with the preferred answers appearing first, for example:
+
+```json
+[
+  {
+    "instruction": "user instruction",
+    "input": "user input",
+    "output": [
+      "chosen answer",
+      "rejected answer"
+    ]
+  }
+]
+```
+
+Regarding the above dataset, the description in `dataset_info.json` should be:
+
+```json
+"dataset_name": {
+  "file_name": "data.json",
+  "ranking": true,
+  "columns": {
+    "prompt": "instruction",
+    "query": "input",
+    "response": "output",
+  }
+}
+```
 
 ----
 
-The dataset in sharegpt format should follow the below format:
+The dataset in **sharegpt** format should follow the below format:
 
 ```json
-# The first sharegpt format
 [
   {
     "conversations": [
       {
         "from": "human",
-        "value": "用户指令"
+        "value": "user instruction"
       },
       {
         "from": "gpt",
-        "value": "模型回答"
+        "value": "model response"
       }
     ],
-    "system": "系统提示词（选填）",
-    "tools": "工具描述（选填）"
-  }
-]
-
-# The second sharegpt format
-
-[
-  {
-    "type": "chatml",
-    "messages": [
-    {
-      "role": "system",
-      "content": "You are a helpful assistant."
-    },
-    {
-      "role": "user",
-      "content": "Tell me something about large language models."
-    },
-    {
-      "role": "assistant",
-      "content": "Large language models are a type of language model  ..."
-    }
-  ],
-  "source": "unknown"
+    "system": "system prompt (optional)",
+    "tools": "tool description (optional)"
   }
 ]
 ```
 
-Regarding the above dataset, the `columns` in `dataset_info.json` should be:
+Regarding the above dataset, the description in `dataset_info.json` should be:
 
 ```json
 "dataset_name": {
+  "file_name": "data.json",
+  "formatting": "sharegpt",
   "columns": {
     "messages": "conversations",
     "system": "system",
@@ -156,4 +167,46 @@ Regarding the above dataset, the `columns` in `dataset_info.json` should be:
 
 where the `messages` column should be a list following the `u/a/u/a/u/a` order.
 
-Pre-training datasets and preference datasets are incompatible with the sharegpt format yet.
+We also supports the dataset in the **openai** format:
+
+```json
+[
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "system prompt (optional)"
+      },
+      {
+        "role": "user",
+        "content": "user instruction"
+      },
+      {
+        "role": "assistant",
+        "content": "model response"
+      }
+    ]
+  }
+]
+```
+
+Regarding the above dataset, the description in `dataset_info.json` should be:
+
+```json
+"dataset_name": {
+  "file_name": "data.json",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "messages"
+  },
+  "tags": {
+    "role_tag": "role",
+    "content_tag": "content",
+    "user_tag": "user",
+    "assistant_tag": "assistant",
+    "system_tag": "system"
+  }
+}
+```
+
+Pre-training datasets and preference datasets are **incompatible** with the sharegpt format yet.
