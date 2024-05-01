@@ -214,25 +214,19 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
         with gr.Row():
             use_badam = gr.Checkbox()
             badam_mode = gr.Dropdown(choices=["layer", "ratio"], value="layer")
-            badam_mask_mode = gr.Dropdown(choices=["adjacent", "scatter"], value="adjacent")
             badam_switch_mode = gr.Dropdown(choices=["ascending", "descending", "random", "fixed"], value="ascending")
-            badam_update_ratio = gr.Slider(value=0, minimum=0, maximum=1, step=0.01)
             badam_switch_block_every = gr.Slider(value=50, minimum=-1, maximum=200, step=1)
+            badam_update_ratio = gr.Slider(value=0, minimum=0, maximum=1, step=0.01)
 
-            badam_verbose = gr.Dropdown(choices=[0, 1, 2], value=0)
-
-    input_elems.update({use_badam, badam_mode, badam_switch_block_every, badam_switch_mode, badam_update_ratio,
-                        badam_mask_mode, badam_verbose})
+    input_elems.update({use_badam, badam_mode, badam_switch_mode, badam_switch_block_every, badam_update_ratio})
     elem_dict.update(
         dict(
             badam_tab=badam_tab,
             use_badam=use_badam,
             badam_mode=badam_mode,
-            badam_switch_block_every=badam_switch_block_every,
             badam_switch_mode=badam_switch_mode,
+            badam_switch_block_every=badam_switch_block_every,
             badam_update_ratio=badam_update_ratio,
-            badam_mask_mode=badam_mask_mode,
-            badam_verbose=badam_verbose,
         )
     )
 
