@@ -317,14 +317,14 @@ def _create_badam_optimizer(
             base_optimizer=base_optimizer,
             named_parameters_list=list(model.named_parameters()),
             block_prefix_list=None,
-            switch_block_every=finetuning_args.badam_switch_block_every,
+            switch_block_every=finetuning_args.badam_switch_interval,
             start_block=finetuning_args.badam_start_block,
             switch_mode=finetuning_args.badam_switch_mode,
             verbose=finetuning_args.badam_verbose,
         )
         logger.info(
             f"Using BAdam optimizer with layer-wise update, switch mode is {finetuning_args.badam_switch_mode}, "
-            f"switch block every {finetuning_args.badam_switch_block_every} steps, "
+            f"switch block every {finetuning_args.badam_switch_interval} steps, "
             f"default start block is {finetuning_args.badam_start_block}"
         )
 
