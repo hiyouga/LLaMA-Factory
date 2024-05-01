@@ -905,15 +905,15 @@ LOCALES = {
     "use_badam": {
         "en": {
             "label": "Use BAdam",
-            "info": "Enable the block coordinate optimization with Adam.",
+            "info": "Enable the BAdam optimizer.",
         },
         "ru": {
             "label": "Использовать BAdam",
-            "info": "Включите блочную оптимизацию координат с Adam.",
+            "info": "Включите оптимизатор BAdam.",
         },
         "zh": {
             "label": "使用 BAdam",
-            "info": "使用多Block协同的Adam优化器。",
+            "info": "使用 BAdam 优化器。",
         },
     },
     "badam_mode": {
@@ -923,25 +923,11 @@ LOCALES = {
         },
         "ru": {
             "label": "Режим BAdam",
-            "info": "Использовать оптимизатор BAdam с обработкой слоев или с обработкой коэффициентов.",
+            "info": "Использовать ли оптимизатор BAdam с послоевой или пропорциональной настройкой.",
         },
         "zh": {
             "label": "BAdam 模式",
-            "info": "使用layer或者ratio比例模式。",
-        },
-    },
-    "badam_switch_block_every": {
-        "en": {
-            "label": "Switch block frequency",
-            "info": "How often to switch model's block update. Set to -1 to disable the block update.",
-        },
-        "ru": {
-            "label": "Частота переключения",
-            "info": "Как часто переключать обновление блока модели. Установите -1, чтобы отключить обновление блока.",
-        },
-        "zh": {
-            "label": "切换block的频率",
-            "info": "控制切换block切换的频率，如果是-1,则不切换。",
+            "info": "使用 layer-wise 或 ratio-wise BAdam 优化器。",
         },
     },
     "badam_switch_mode": {
@@ -950,12 +936,26 @@ LOCALES = {
             "info": "The strategy of picking block to update for layer-wise BAdam.",
         },
         "ru": {
-            "label": "Переключить режим",
-            "info": "Стратегия выбора блока для обновления в методе BAdam по слоям.",
+            "label": "Режим переключения",
+            "info": "Стратегия выбора блока для обновления для послойного BAdam.",
         },
         "zh": {
-            "label": "Block切换策略",
-            "info": "如果是layer类型的训练模式，如何切换block。",
+            "label": "切换策略",
+            "info": "Layer-wise BAdam 优化器的块切换策略。",
+        },
+    },
+    "badam_switch_interval": {
+        "en": {
+            "label": "Switch interval",
+            "info": "Number of steps to update the block for layer-wise BAdam.",
+        },
+        "ru": {
+            "label": "Интервал переключения",
+            "info": "количество шагов для обновления блока для пошагового BAdam.",
+        },
+        "zh": {
+            "label": "切换频率",
+            "info": "Layer-wise BAdam 优化器的块切换频率。",
         },
     },
     "badam_update_ratio": {
@@ -965,39 +965,11 @@ LOCALES = {
         },
         "ru": {
             "label": "Коэффициент обновления",
-            "info": "Коэффициент обновления для метода BAdam, основанного на коэффициентах.",
+            "info": "Коэффициент обновления для BAdam с учётом соотношений.",
         },
         "zh": {
-            "label": "Block更新比例",
-            "info": "如果是比例类型的训练模式，block每次更新的范围比例。",
-        },
-    },
-    "badam_mask_mode": {
-        "en": {
-            "label": "Mask mode",
-            "info": "The mode of the mask for BAdam optimizer.",
-        },
-        "ru": {
-            "label": "Режим маски",
-            "info": "Режим маски для оптимизатора BAdam.",
-        },
-        "zh": {
-            "label": "Mask模式",
-            "info": "BAdam优化器内训练参数的mask关系。",
-        },
-    },
-    "badam_verbose": {
-        "en": {
-            "label": "Verbosity level",
-            "info": "0 for no print, 1 for print the block prefix, 2 for print trainable parameters.",
-        },
-        "ru": {
-            "label": "Уровень многословности",
-            "info": "0 для отсутствия печати, 1 для печати префикса блока, 2 для печати обучаемых параметров.",
-        },
-        "zh": {
-            "label": "输出日志级别",
-            "info": "0：不输出，1：输出block前缀， 1：输出可训练的参数。",
+            "label": "Block 更新比例",
+            "info": "Ratio-wise BAdam 优化器的更新比例。",
         },
     },
     "cmd_preview_btn": {
