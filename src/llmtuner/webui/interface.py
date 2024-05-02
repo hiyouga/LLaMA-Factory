@@ -69,8 +69,8 @@ def create_web_demo() -> gr.Blocks:
 
 
 def run_web_ui():
-    create_ui().queue().launch(server_name="0.0.0.0", server_port=None, share=False, inbrowser=True)
+    create_ui().queue().launch(server_name="0.0.0.0")
 
 
 def run_web_demo():
-    create_web_demo().queue().launch(server_name="0.0.0.0", server_port=None, share=False, inbrowser=True)
+    create_web_demo().queue().launch(server_name="0.0.0.0")
