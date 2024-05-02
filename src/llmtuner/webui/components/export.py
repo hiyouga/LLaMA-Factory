@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Dict, Generator, List
 
 from ...extras.misc import torch_gc
 from ...extras.packages import is_gradio_available
-from ...train import export_model
+from ...train.tuner import export_model
 from ..common import get_save_dir
 from ..locales import ALERTS
 

@@ -7,7 +7,7 @@ pip install "bitsandbytes>=0.43.0"
 
 CUDA_VISIBLE_DEVICES=0,1 accelerate launch \
     --config_file ../../accelerate/fsdp_config.yaml \
-    ../../../src/train_bash.py \
+    ../../../src/train.py \
     --stage sft \
     --do_train \
     --model_name_or_path meta-llama/Llama-2-70b-hf \

@@ -23,9 +23,9 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: Optional[List["TrainerCallback"]] = None):
+def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: List["TrainerCallback"] = []):
     model_args, data_args, training_args, finetuning_args, generating_args = get_train_args(args)
-    callbacks = [LogCallback()] if callbacks is None else callbacks
+    callbacks.append(LogCallback(training_args.output_dir))
 
     if finetuning_args.stage == "pt":
         run_pt(model_args, data_args, training_args, finetuning_args, callbacks)
@@ -88,7 +88,3 @@ def export_model(args: Optional[Dict[str, Any]] = None):
             tokenizer.push_to_hub(model_args.export_hub_model_id, token=model_args.hf_hub_token)
     except Exception:
         logger.warning("Cannot save tokenizer, please copy the files manually.")
-
-
-if __name__ == "__main__":
-    run_exp()

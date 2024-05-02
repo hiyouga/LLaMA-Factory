@@ -68,5 +68,9 @@ def create_web_demo() -> gr.Blocks:
     return demo
 
 
-if __name__ == "__main__":
+def run_web_ui():
     create_ui().queue().launch(server_name="0.0.0.0", server_port=None, share=False, inbrowser=True)
+
+
+def run_web_demo():
+    create_web_demo().queue().launch(server_name="0.0.0.0", server_port=None, share=False, inbrowser=True)

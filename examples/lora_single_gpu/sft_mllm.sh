@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CUDA_VISIBLE_DEVICES=0 python ../../src/train_bash.py \
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train \
     --stage sft \
     --do_train \
     --model_name_or_path llava-hf/llava-1.5-7b-hf \
