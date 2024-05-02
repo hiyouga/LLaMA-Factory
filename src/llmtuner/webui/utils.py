@@ -45,7 +45,7 @@ def gen_cmd(args: Dict[str, Any]) -> str:
     args.pop("disable_tqdm", None)
     args["plot_loss"] = args.get("do_train", None)
     current_devices = os.environ.get("CUDA_VISIBLE_DEVICES", "0")
-    cmd_lines = ["CUDA_VISIBLE_DEVICES={} python src/train_bash.py ".format(current_devices)]
+    cmd_lines = ["CUDA_VISIBLE_DEVICES={} llamafactory-cli train ".format(current_devices)]
     for k, v in clean_cmd(args).items():
         cmd_lines.append("    --{} {} ".format(k, str(v)))
 
