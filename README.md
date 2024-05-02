@@ -346,7 +346,7 @@ To enable FlashAttention-2 on the Windows platform, you need to install the prec
 ```bash
 export CUDA_VISIBLE_DEVICES=0 # `set CUDA_VISIBLE_DEVICES=0` for Windows
 export GRADIO_SERVER_PORT=7860 # `set GRADIO_SERVER_PORT=7860` for Windows
-python src/train_web.py # or python -m llmtuner.webui.interface
+llamafactory-cli webui
 ```
 
 <details><summary>For Alibaba Cloud users</summary>
@@ -392,12 +392,12 @@ docker compose -f ./docker-compose.yml up -d
 
 See [examples/README.md](examples/README.md) for usage.
 
-Use `python src/train_bash.py -h` to display arguments description.
+Use `llamafactory-cli train -h` to display arguments description.
 
 ### Deploy with OpenAI-style API and vLLM
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 python src/api_demo.py \
+CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 llamafactory-cli api \
     --model_name_or_path meta-llama/Meta-Llama-3-8B-Instruct \
     --template llama3 \
     --infer_backend vllm \
