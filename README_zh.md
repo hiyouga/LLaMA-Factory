@@ -346,7 +346,7 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 ```bash
 export CUDA_VISIBLE_DEVICES=0 # Windows 使用 `set CUDA_VISIBLE_DEVICES=0`
 export GRADIO_SERVER_PORT=7860 # Windows 使用 `set GRADIO_SERVER_PORT=7860`
-python src/train_web.py # 或 python -m llmtuner.webui.interface
+llamafactory-cli webui
 ```
 
 <details><summary>阿里云用户指南</summary>
@@ -392,12 +392,12 @@ docker compose -f ./docker-compose.yml up -d
 
 使用方法请参考 [examples/README_zh.md](examples/README_zh.md)。
 
-您可以执行 `python src/train_bash.py -h` 来查看参数文档。
+您可以执行 `llamafactory-cli train -h` 来查看参数文档。
 
 ### 利用 vLLM 部署 OpenAI API
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 python src/api_demo.py \
+CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 llamafactory-cli api \
     --model_name_or_path meta-llama/Meta-Llama-3-8B-Instruct \
     --template llama3 \
     --infer_backend vllm \
