@@ -1,6 +1,7 @@
 #!/bin/bash
+# ZeRO-3 enables weight sharding on multiple GPUs
 
-deepspeed --num_gpus 4 ../../src/train_bash.py \
+deepspeed --num_gpus 4 ../../src/train.py \
     --deepspeed ../deepspeed/ds_z3_config.json \
     --stage sft \
     --do_train \

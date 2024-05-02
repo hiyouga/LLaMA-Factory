@@ -41,7 +41,7 @@ class Engine:
             init_dict["train.dataset"] = {"choices": list_dataset().choices}
             init_dict["eval.dataset"] = {"choices": list_dataset().choices}
             init_dict["train.output_dir"] = {"value": "train_{}".format(get_time())}
-            init_dict["train.config_path"] = {"value": "{}.json".format(get_time())}
+            init_dict["train.config_path"] = {"value": "{}.yaml".format(get_time())}
             init_dict["eval.output_dir"] = {"value": "eval_{}".format(get_time())}
             init_dict["infer.image_box"] = {"visible": False}
 
@@ -51,7 +51,7 @@ class Engine:
 
         yield self._update_component(init_dict)
 
-        if self.runner.alive and not self.demo_mode and not self.pure_chat:
+        if self.runner.running and not self.demo_mode and not self.pure_chat:
             yield {elem: elem.__class__(value=value) for elem, value in self.runner.running_data.items()}
             if self.runner.do_train:
                 yield self._update_component({"train.resume_btn": {"value": True}})
