@@ -142,7 +142,6 @@ class Runner:
             bf16=(get("train.compute_type") == "bf16"),
             pure_bf16=(get("train.compute_type") == "pure_bf16"),
         )
-        args["disable_tqdm"] = True
 
         if args["finetuning_type"] == "freeze":
             args["num_layer_trainable"] = get("train.num_layer_trainable")
@@ -233,7 +232,6 @@ class Runner:
             temperature=get("eval.temperature"),
             output_dir=get_save_dir(get("top.model_name"), get("top.finetuning_type"), get("eval.output_dir")),
         )
-        args["disable_tqdm"] = True
 
         if get("eval.predict"):
             args["do_predict"] = True
