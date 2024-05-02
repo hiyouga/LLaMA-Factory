@@ -1,4 +1,5 @@
 #!/bin/bash
+# use `--tokenized_path` in training script to load data
 
 CUDA_VISIBLE_DEVICES= python ../../src/train_bash.py \
     --stage sft \
