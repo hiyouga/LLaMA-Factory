@@ -1,4 +1,4 @@
-from llmtuner import run_exp
+from llmtuner.train.tuner import run_exp
 
 
 def main():
@@ -7,7 +7,7 @@ def main():
 
 def _mp_fn(index):
     # For xla_spawn (TPUs)
-    main()
+    run_exp()
 
 
 if __name__ == "__main__":
