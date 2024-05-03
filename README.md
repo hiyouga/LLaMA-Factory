@@ -344,10 +344,11 @@ To enable FlashAttention-2 on the Windows platform, you need to install the prec
 #### Use local environment
 
 ```bash
-export CUDA_VISIBLE_DEVICES=0 # `set CUDA_VISIBLE_DEVICES=0` for Windows
-export GRADIO_SERVER_PORT=7860 # `set GRADIO_SERVER_PORT=7860` for Windows
 llamafactory-cli webui
 ```
+
+> [!TIPS]
+> To modify the default setting in the LLaMA Board GUI, you can use environment variables, e.g., `export CUDA_VISIBLE_DEVICES=0 GRADIO_SERVER_NAME=0.0.0.0 GRADIO_SERVER_PORT=7860 GRADIO_SHARE=False` (use `set` command on Windows OS).
 
 <details><summary>For Alibaba Cloud users</summary>
 
@@ -392,7 +393,8 @@ docker compose -f ./docker-compose.yml up -d
 
 See [examples/README.md](examples/README.md) for usage.
 
-Use `llamafactory-cli train -h` to display arguments description.
+> [!TIPS]
+> Use `llamafactory-cli train -h` to display arguments description.
 
 ### Deploy with OpenAI-style API and vLLM
 
