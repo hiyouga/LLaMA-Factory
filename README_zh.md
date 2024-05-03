@@ -344,10 +344,11 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 #### 使用本地环境
 
 ```bash
-export CUDA_VISIBLE_DEVICES=0 # Windows 使用 `set CUDA_VISIBLE_DEVICES=0`
-export GRADIO_SERVER_PORT=7860 # Windows 使用 `set GRADIO_SERVER_PORT=7860`
 llamafactory-cli webui
 ```
+
+> [!TIPS]
+> 您可以使用环境变量来修改 LLaMA Board 可视化界面的默认设置，例如 `export CUDA_VISIBLE_DEVICES=0 GRADIO_SERVER_NAME=0.0.0.0 GRADIO_SERVER_PORT=7860 GRADIO_SHARE=False`（Windows 系统可使用 `set` 指令）。
 
 <details><summary>阿里云用户指南</summary>
 
@@ -392,7 +393,8 @@ docker compose -f ./docker-compose.yml up -d
 
 使用方法请参考 [examples/README_zh.md](examples/README_zh.md)。
 
-您可以执行 `llamafactory-cli train -h` 来查看参数文档。
+> [!TIPS]
+> 您可以执行 `llamafactory-cli train -h` 来查看参数文档。
 
 ### 利用 vLLM 部署 OpenAI API
 
