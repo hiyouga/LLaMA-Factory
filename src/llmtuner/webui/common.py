@@ -17,12 +17,16 @@ from ..extras.constants import (
     TRAINING_STAGES,
     DownloadSource,
 )
+from ..extras.logging import get_logger
 from ..extras.misc import use_modelscope
 from ..extras.packages import is_gradio_available
 
 
 if is_gradio_available():
     import gradio as gr
+
+
+logger = get_logger(__name__)
 
 
 ADAPTER_NAMES = {WEIGHTS_NAME, SAFETENSORS_WEIGHTS_NAME}
@@ -128,11 +132,15 @@ def list_adapters(model_name: str, finetuning_type: str) -> "gr.Dropdown":
 
 
 def load_dataset_info(dataset_dir: str) -> Dict[str, Dict[str, Any]]:
+    if dataset_dir == "ONLINE":
+        logger.info("dataset_dir is ONLINE, using online dataset.")
+        return {}
+
     try:
         with open(os.path.join(dataset_dir, DATA_CONFIG), "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception as err:
-        print("Cannot open {} due to {}.".format(os.path.join(dataset_dir, DATA_CONFIG), str(err)))
+        logger.warning("Cannot open {} due to {}.".format(os.path.join(dataset_dir, DATA_CONFIG), str(err)))
         return {}
 
 

@@ -63,7 +63,7 @@ def get_time() -> str:
     return datetime.now().strftime(r"%Y-%m-%d-%H-%M-%S")
 
 
-def get_trainer_info(output_path: os.PathLike) -> Tuple[str, "gr.Slider", Optional["gr.Plot"]]:
+def get_trainer_info(output_path: os.PathLike, do_train: bool) -> Tuple[str, "gr.Slider", Optional["gr.Plot"]]:
     running_log = ""
     running_progress = gr.Slider(visible=False)
     running_loss = None
@@ -91,7 +91,7 @@ def get_trainer_info(output_path: os.PathLike) -> Tuple[str, "gr.Slider", Option
             )
             running_progress = gr.Slider(label=label, value=percentage, visible=True)
 
-            if is_matplotlib_available():
+            if do_train and is_matplotlib_available():
                 running_loss = gr.Plot(gen_loss_plot(trainer_log))
 
     return running_log, running_progress, running_loss
