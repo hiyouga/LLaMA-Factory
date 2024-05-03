@@ -299,12 +299,12 @@ class Runner:
                     progress_bar: gr.Slider(visible=False),
                 }
             else:
-                running_log, running_progress, running_loss = get_trainer_info(output_path)
+                running_log, running_progress, running_loss = get_trainer_info(output_path, self.do_train)
                 return_dict = {
                     output_box: running_log,
                     progress_bar: running_progress,
                 }
-                if self.do_train and running_loss is not None:
+                if running_loss is not None:
                     return_dict[loss_viewer] = running_loss
 
                 yield return_dict
