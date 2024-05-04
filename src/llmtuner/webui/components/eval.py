@@ -48,6 +48,7 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
     with gr.Row():
         cmd_preview_btn = gr.Button()
         start_btn = gr.Button(variant="primary")
+        stop_btn = gr.Button(variant="stop")
 
     with gr.Row():
         resume_btn = gr.Checkbox(visible=False, interactive=False)
@@ -61,6 +62,7 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
         dict(
             cmd_preview_btn=cmd_preview_btn,
             start_btn=start_btn,
+            stop_btn=stop_btn,
             resume_btn=resume_btn,
             progress_bar=progress_bar,
             output_box=output_box,
@@ -69,6 +71,7 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
 
     cmd_preview_btn.click(engine.runner.preview_eval, input_elems, output_elems, concurrency_limit=None)
     start_btn.click(engine.runner.run_eval, input_elems, output_elems)
+    stop_btn.click(engine.runner.set_abort)
     resume_btn.change(engine.runner.monitor, outputs=output_elems, concurrency_limit=None)
 
     dataset_dir.change(list_dataset, [dataset_dir], [dataset], queue=False)

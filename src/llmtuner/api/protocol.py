@@ -51,7 +51,7 @@ class FunctionAvailable(BaseModel):
 
 
 class FunctionCall(BaseModel):
-    id: Literal["call_default"] = "call_default"
+    id: str
     type: Literal["function"] = "function"
     function: Function
 
@@ -86,7 +86,7 @@ class ChatCompletionResponseChoice(BaseModel):
     finish_reason: Finish
 
 
-class ChatCompletionResponseStreamChoice(BaseModel):
+class ChatCompletionStreamResponseChoice(BaseModel):
     index: int
     delta: ChatCompletionMessage
     finish_reason: Optional[Finish] = None
@@ -99,7 +99,7 @@ class ChatCompletionResponseUsage(BaseModel):
 
 
 class ChatCompletionResponse(BaseModel):
-    id: Literal["chatcmpl-default"] = "chatcmpl-default"
+    id: str
     object: Literal["chat.completion"] = "chat.completion"
     created: int = Field(default_factory=lambda: int(time.time()))
     model: str
@@ -108,11 +108,11 @@ class ChatCompletionResponse(BaseModel):
 
 
 class ChatCompletionStreamResponse(BaseModel):
-    id: Literal["chatcmpl-default"] = "chatcmpl-default"
+    id: str
     object: Literal["chat.completion.chunk"] = "chat.completion.chunk"
     created: int = Field(default_factory=lambda: int(time.time()))
     model: str
-    choices: List[ChatCompletionResponseStreamChoice]
+    choices: List[ChatCompletionStreamResponseChoice]
 
 
 class ScoreEvaluationRequest(BaseModel):
@@ -122,7 +122,7 @@ class ScoreEvaluationRequest(BaseModel):
 
 
 class ScoreEvaluationResponse(BaseModel):
-    id: Literal["scoreeval-default"] = "scoreeval-default"
+    id: str
     object: Literal["score.evaluation"] = "score.evaluation"
     model: str
     scores: List[float]
