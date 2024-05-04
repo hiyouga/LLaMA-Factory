@@ -156,9 +156,10 @@ async def create_stream_chat_completion_response(
         top_p=request.top_p,
         max_new_tokens=request.max_tokens,
     ):
-        yield _create_stream_chat_completion_chunk(
-            completion_id=completion_id, model=request.model, delta=ChatCompletionMessage(content=new_token)
-        )
+        if len(new_token) != 0:
+            yield _create_stream_chat_completion_chunk(
+                completion_id=completion_id, model=request.model, delta=ChatCompletionMessage(content=new_token)
+            )
 
     yield _create_stream_chat_completion_chunk(
         completion_id=completion_id, model=request.model, delta=ChatCompletionMessage(), finish_reason=Finish.STOP
