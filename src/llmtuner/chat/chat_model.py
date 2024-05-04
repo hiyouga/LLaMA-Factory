@@ -98,7 +98,7 @@ class ChatModel:
         return await self.engine.get_scores(batch_input, **input_kwargs)
 
 
-def run_chat():
+def run_chat() -> None:
     try:
         import platform
 
