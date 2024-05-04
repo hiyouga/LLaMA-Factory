@@ -4,7 +4,7 @@
 
 import json
 from dataclasses import dataclass
-from typing import Any, Dict, Literal, Sequence
+from typing import Any, Dict, Literal, Optional, Sequence
 
 import fire
 import torch
@@ -53,6 +53,7 @@ def cal_ppl(
     dataset_dir: str = "data",
     template: str = "default",
     cutoff_len: int = 1024,
+    max_samples: Optional[int] = None,
     train_on_prompt: bool = False,
 ):
     model_args, data_args, training_args, finetuning_args, _ = get_train_args(
@@ -63,6 +64,7 @@ def cal_ppl(
             dataset_dir=dataset_dir,
             template=template,
             cutoff_len=cutoff_len,
+            max_samples=max_samples,
             train_on_prompt=train_on_prompt,
             output_dir="dummy_dir",
             overwrite_cache=True,
