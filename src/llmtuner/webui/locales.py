@@ -1449,7 +1449,7 @@ ALERTS = {
     "info_aborting": {
         "en": "Aborted, wait for terminating...",
         "ru": "Прервано, ожидание завершения...",
-        "zh": "训练中断，正在等待线程结束……",
+        "zh": "训练中断，正在等待进程结束……",
     },
     "info_aborted": {
         "en": "Ready.",
