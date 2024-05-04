@@ -19,7 +19,7 @@ import pandas as pd
 
 _CITATION = """\
 @article{huang2023ceval,
-  title={C-Eval: A Multi-Level Multi-Discipline Chinese Evaluation Suite for Foundation Models}, 
+  title={C-Eval: A Multi-Level Multi-Discipline Chinese Evaluation Suite for Foundation Models},
   author={Huang, Yuzhen and Bai, Yuzhuo and Zhu, Zhihao and Zhang, Junlei and Zhang, Jinghan and Su, Tangjun and Liu, Junteng and Lv, Chuancheng and Zhang, Yikai and Lei, Jiayi and Fu, Yao and Sun, Maosong and He, Junxian},
   journal={arXiv preprint arXiv:2305.08322},
   year={2023}
@@ -133,25 +133,19 @@ class Ceval(datasets.GeneratorBasedBuilder):
             datasets.SplitGenerator(
                 name=datasets.Split.TEST,
                 gen_kwargs={
-                    "filepath": os.path.join(
-                        data_dir, "test", f"{task_name}_test.csv"
-                    ),
+                    "filepath": os.path.join(data_dir, "test", f"{task_name}_test.csv"),
                 },
             ),
             datasets.SplitGenerator(
                 name=datasets.Split.VALIDATION,
                 gen_kwargs={
-                    "filepath": os.path.join(
-                        data_dir, "val", f"{task_name}_val.csv"
-                    ),
+                    "filepath": os.path.join(data_dir, "val", f"{task_name}_val.csv"),
                 },
             ),
             datasets.SplitGenerator(
                 name=datasets.Split.TRAIN,
                 gen_kwargs={
-                    "filepath": os.path.join(
-                        data_dir, "dev", f"{task_name}_dev.csv"
-                    ),
+                    "filepath": os.path.join(data_dir, "dev", f"{task_name}_dev.csv"),
                 },
             ),
         ]
