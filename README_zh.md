@@ -339,7 +339,7 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 ### 利用 LLaMA Board 可视化界面训练（由 [Gradio](https://github.com/gradio-app/gradio) 驱动）
 
 > [!IMPORTANT]
-> LLaMA Board 可视化界面目前仅支持单 GPU 训练，请使用[命令行接口](#命令行接口)来进行多 GPU 分布式训练。
+> LLaMA Board 可视化界面目前仅支持单 GPU 训练，请使用[命令行接口](#利用命令行接口训练)来进行多 GPU 分布式训练。
 
 #### 使用本地环境
 
