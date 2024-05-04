@@ -339,7 +339,7 @@ To enable FlashAttention-2 on the Windows platform, you need to install the prec
 ### Train with LLaMA Board GUI (powered by [Gradio](https://github.com/gradio-app/gradio))
 
 > [!IMPORTANT]
-> LLaMA Board GUI only supports training on a single GPU, please use [CLI](#command-line-interface) for distributed training.
+> LLaMA Board GUI only supports training on a single GPU, please use [CLI](#train-with-command-line-interface) for distributed training.
 
 #### Use local environment
 
