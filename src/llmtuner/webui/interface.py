@@ -68,9 +68,9 @@ def create_web_demo() -> gr.Blocks:
     return demo
 
 
-def run_web_ui():
+def run_web_ui() -> None:
     create_ui().queue().launch()
 
 
-def run_web_demo():
+def run_web_demo() -> None:
     create_web_demo().queue().launch()
