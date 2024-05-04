@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: List["TrainerCallback"] = []):
+def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: List["TrainerCallback"] = []) -> None:
     model_args, data_args, training_args, finetuning_args, generating_args = get_train_args(args)
     callbacks.append(LogCallback(training_args.output_dir))
 
@@ -43,7 +43,7 @@ def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: List["TrainerCallb
         raise ValueError("Unknown task.")
 
 
-def export_model(args: Optional[Dict[str, Any]] = None):
+def export_model(args: Optional[Dict[str, Any]] = None) -> None:
     model_args, data_args, finetuning_args, _ = get_infer_args(args)
 
     if model_args.export_dir is None:
