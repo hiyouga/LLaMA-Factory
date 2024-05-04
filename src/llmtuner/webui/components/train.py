@@ -52,10 +52,10 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     )
 
     with gr.Row():
-        cutoff_len = gr.Slider(value=1024, minimum=4, maximum=65536, step=1)
-        batch_size = gr.Slider(value=2, minimum=1, maximum=1024, step=1)
-        gradient_accumulation_steps = gr.Slider(value=8, minimum=1, maximum=1024, step=1)
-        val_size = gr.Slider(value=0, minimum=0, maximum=1, step=0.001)
+        cutoff_len = gr.Slider(minimum=4, maximum=65536, value=1024, step=1)
+        batch_size = gr.Slider(minimum=1, maximum=1024, value=2, step=1)
+        gradient_accumulation_steps = gr.Slider(minimum=1, maximum=1024, value=8, step=1)
+        val_size = gr.Slider(minimum=0, maximum=1, value=0, step=0.001)
         lr_scheduler_type = gr.Dropdown(choices=[scheduler.value for scheduler in SchedulerType], value="cosine")
 
     input_elems.update({cutoff_len, batch_size, gradient_accumulation_steps, val_size, lr_scheduler_type})
@@ -71,10 +71,10 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
 
     with gr.Accordion(open=False) as extra_tab:
         with gr.Row():
-            logging_steps = gr.Slider(value=5, minimum=5, maximum=1000, step=5)
-            save_steps = gr.Slider(value=100, minimum=10, maximum=5000, step=10)
-            warmup_steps = gr.Slider(value=0, minimum=0, maximum=5000, step=1)
-            neftune_alpha = gr.Slider(value=0, minimum=0, maximum=10, step=0.1)
+            logging_steps = gr.Slider(minimum=1, maximum=1000, value=5, step=5)
+            save_steps = gr.Slider(minimum=10, maximum=5000, value=100, step=10)
+            warmup_steps = gr.Slider(minimum=0, maximum=5000, value=0, step=1)
+            neftune_alpha = gr.Slider(minimum=0, maximum=10, value=0, step=0.1)
             optim = gr.Textbox(value="adamw_torch")
 
         with gr.Row():
@@ -124,7 +124,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
 
     with gr.Accordion(open=False) as freeze_tab:
         with gr.Row():
-            num_layer_trainable = gr.Slider(value=3, minimum=1, maximum=128, step=1)
+            num_layer_trainable = gr.Slider(minimum=1, maximum=128, value=2, step=1)
             name_module_trainable = gr.Textbox(value="all")
 
     input_elems.update({num_layer_trainable, name_module_trainable})
@@ -136,10 +136,10 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
 
     with gr.Accordion(open=False) as lora_tab:
         with gr.Row():
-            lora_rank = gr.Slider(value=8, minimum=1, maximum=1024, step=1)
-            lora_alpha = gr.Slider(value=16, minimum=1, maximum=2048, step=1)
-            lora_dropout = gr.Slider(value=0, minimum=0, maximum=1, step=0.01)
-            loraplus_lr_ratio = gr.Slider(value=0, minimum=0, maximum=64, step=0.01)
+            lora_rank = gr.Slider(minimum=1, maximum=1024, value=8, step=1)
+            lora_alpha = gr.Slider(minimum=1, maximum=2048, value=16, step=1)
+            lora_dropout = gr.Slider(minimum=0, maximum=1, value=0, step=0.01)
+            loraplus_lr_ratio = gr.Slider(minimum=0, maximum=64, value=0, step=0.01)
             create_new_adapter = gr.Checkbox()
 
         with gr.Row():
@@ -180,9 +180,9 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
 
     with gr.Accordion(open=False) as rlhf_tab:
         with gr.Row():
-            dpo_beta = gr.Slider(value=0.1, minimum=0, maximum=1, step=0.01)
-            dpo_ftx = gr.Slider(value=0, minimum=0, maximum=10, step=0.01)
-            orpo_beta = gr.Slider(value=0.1, minimum=0, maximum=1, step=0.01)
+            dpo_beta = gr.Slider(minimum=0, maximum=1, value=0.1, step=0.01)
+            dpo_ftx = gr.Slider(minimum=0, maximum=10, value=0, step=0.01)
+            orpo_beta = gr.Slider(minimum=0, maximum=1, value=0.1, step=0.01)
             reward_model = gr.Dropdown(multiselect=True, allow_custom_value=True)
 
     input_elems.update({dpo_beta, dpo_ftx, orpo_beta, reward_model})
@@ -193,9 +193,9 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     with gr.Accordion(open=False) as galore_tab:
         with gr.Row():
             use_galore = gr.Checkbox()
-            galore_rank = gr.Slider(value=16, minimum=1, maximum=1024, step=1)
-            galore_update_interval = gr.Slider(value=200, minimum=1, maximum=1024, step=1)
-            galore_scale = gr.Slider(value=0.25, minimum=0, maximum=1, step=0.01)
+            galore_rank = gr.Slider(minimum=1, maximum=1024, value=16, step=1)
+            galore_update_interval = gr.Slider(minimum=1, maximum=1024, value=200, step=1)
+            galore_scale = gr.Slider(minimum=0, maximum=1, value=0.25, step=0.01)
             galore_target = gr.Textbox(value="all")
 
     input_elems.update({use_galore, galore_rank, galore_update_interval, galore_scale, galore_target})
@@ -215,8 +215,8 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             use_badam = gr.Checkbox()
             badam_mode = gr.Dropdown(choices=["layer", "ratio"], value="layer")
             badam_switch_mode = gr.Dropdown(choices=["ascending", "descending", "random", "fixed"], value="ascending")
-            badam_switch_interval = gr.Slider(value=50, minimum=1, maximum=1024, step=1)
-            badam_update_ratio = gr.Slider(value=0.05, minimum=0, maximum=1, step=0.01)
+            badam_switch_interval = gr.Slider(minimum=1, maximum=1024, value=50, step=1)
+            badam_update_ratio = gr.Slider(minimum=0, maximum=1, value=0.05, step=0.01)
 
     input_elems.update({use_badam, badam_mode, badam_switch_mode, badam_switch_interval, badam_update_ratio})
     elem_dict.update(
