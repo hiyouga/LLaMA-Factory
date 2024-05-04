@@ -85,7 +85,7 @@ def save_model(
 
 def create_export_tab(engine: "Engine") -> Dict[str, "Component"]:
     with gr.Row():
-        export_size = gr.Slider(value=1, minimum=1, maximum=100, step=1)
+        export_size = gr.Slider(minimum=1, maximum=100, value=1, step=1)
         export_quantization_bit = gr.Dropdown(choices=["none", "8", "4", "3", "2"], value="none")
         export_quantization_dataset = gr.Textbox(value="data/c4_demo.json")
         export_device = gr.Radio(choices=["cpu", "cuda"], value="cpu")
