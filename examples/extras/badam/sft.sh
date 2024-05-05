@@ -10,7 +10,7 @@ CUDA_VISIBLE_DEVICES=0 llamafactory-cli train \
     --finetuning_type full \
     --use_badam \
     --badam_switch_mode descending \
-    --badam_switch_block_every 50 \
+    --badam_switch_interval 50 \
     --badam_verbose 2 \
     --output_dir ../../../saves/LLaMA2-7B/badam/sft \
     --overwrite_cache \
