@@ -358,11 +358,8 @@ See [examples/README.md](examples/README.md) for advanced usage (including distr
 #### Use local environment
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 llamafactory-cli webui
+CUDA_VISIBLE_DEVICES=0 GRADIO_SHARE=1 llamafactory-cli webui
 ```
-
-> [!TIP]
-> To modify the default setting in the LLaMA Board GUI, you can use environment variables, e.g., `export GRADIO_SERVER_NAME=0.0.0.0 GRADIO_SERVER_PORT=7860 GRADIO_SHARE=False` (use `set` command on Windows OS).
 
 <details><summary>For Alibaba Cloud users</summary>
 
