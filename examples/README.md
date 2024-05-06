@@ -1,50 +1,218 @@
 We provide diverse examples about fine-tuning LLMs.
 
+Make sure to execute these commands in the `LLaMA-Factory` directory.
+
+## Table of Contents
+
+- [LoRA Fine-Tuning on A Single GPU](#lora-fine-tuning-on-a-single-gpu)
+- [QLoRA Fine-Tuning on a Single GPU](#qlora-fine-tuning-on-a-single-gpu)
+- [LoRA Fine-Tuning on Multiple GPUs](#lora-fine-tuning-on-multiple-gpus)
+- [Full-Parameter Fine-Tuning on Multiple GPUs](#full-parameter-fine-tuning-on-multiple-gpus)
+- [Merging LoRA Adapters and Quantization](#merging-lora-adapters-and-quantization)
+- [Inferring LoRA Fine-Tuned Models](#inferring-lora-fine-tuned-models)
+- [Extras](#extras)
+
+## Examples
+
+### LoRA Fine-Tuning on A Single GPU
+
+#### (Continuous) Pre-Training
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llama3_lora_pretrain.yaml
 ```
-examples/
-├── lora_single_gpu/
-│   ├── pretrain.sh: Do continuous pre-training using LoRA
-│   ├── sft.sh: Do supervised fine-tuning using LoRA
-│   ├── reward.sh: Do reward modeling using LoRA
-│   ├── ppo.sh: Do PPO training using LoRA
-│   ├── dpo.sh: Do DPO training using LoRA
-│   ├── orpo.sh: Do ORPO training using LoRA
-│   ├── sft_mllm.sh: Do supervised fine-tuning on multimodal data using LoRA
-│   ├── prepare.sh: Save tokenized dataset
-│   └── predict.sh: Do batch predict and compute BLEU and ROUGE scores after LoRA tuning
-├── qlora_single_gpu/
-│   ├── bitsandbytes.sh: Fine-tune 4/8-bit BNB models using QLoRA
-│   ├── gptq.sh: Fine-tune 4/8-bit GPTQ models using QLoRA
-│   ├── awq.sh: Fine-tune 4-bit AWQ models using QLoRA
-│   └── aqlm.sh: Fine-tune 2-bit AQLM models using QLoRA
-├── lora_multi_gpu/
-│   ├── single_node.sh: Fine-tune model with Accelerate on single node using LoRA
-│   ├── multi_node.sh: Fine-tune model with Accelerate on multiple nodes using LoRA
-│   └── ds_zero3.sh: Fine-tune model with DeepSpeed ZeRO-3 using LoRA (weight sharding)
-├── full_multi_gpu/
-│   ├── single_node.sh: Full fine-tune model with DeepSpeed on single node
-│   ├── multi_node.sh: Full fine-tune model with DeepSpeed on multiple nodes
-│   └── predict.sh: Do parallel batch predict and compute BLEU and ROUGE scores after full tuning
-├── merge_lora/
-│   ├── merge.sh: Merge LoRA weights into the pre-trained models
-│   └── quantize.sh: Quantize the fine-tuned model with AutoGPTQ
-├── inference/
-│   ├── cli_demo.sh: Chat with fine-tuned model in the CLI with LoRA adapters
-│   ├── api_demo.sh: Chat with fine-tuned model in an OpenAI-style API with LoRA adapters
-│   ├── web_demo.sh: Chat with fine-tuned model in the Web browser with LoRA adapters
-│   └── evaluate.sh: Evaluate model on the MMLU/CMMLU/C-Eval benchmarks with LoRA adapters
-└── extras/
-    ├── galore/
-    │   └── sft.sh: Fine-tune model with GaLore
-    ├── badam/
-    │   └── sft.sh: Fine-tune model with BAdam
-    ├── loraplus/
-    │   └── sft.sh: Fine-tune model using LoRA+
-    ├── mod/
-    │   └── sft.sh: Fine-tune model using Mixture-of-Depths
-    ├── llama_pro/
-    │   ├── expand.sh: Expand layers in the model
-    │   └── sft.sh: Fine-tune the expanded model
-    └── fsdp_qlora/
-        └── sft.sh: Fine-tune quantized model with FSDP+QLoRA
+
+#### Supervised Fine-Tuning
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llama3_lora_sft.yaml
+```
+
+#### Reward Modeling
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llama3_lora_reward.yaml
+```
+
+#### PPO Training
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llama3_lora_ppo.yaml
+```
+
+#### DPO Training
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llama3_lora_dpo.yaml
+```
+
+#### ORPO Training
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llama3_lora_orpo.yaml
+```
+
+#### Multimodal Supervised Fine-Tuning
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llava1_5_lora_sft.yaml
+```
+
+#### Preprocess Dataset
+
+It is useful for large dataset, use `tokenized_path` in config to load the preprocessed dataset.
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llama3_preprocess.yaml
+```
+
+#### Evaluating on MMLU/CMMLU/C-Eval Benchmarks
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli eval examples/lora_single_gpu/llama3_lora_eval.yaml
+```
+
+#### Batch Predicting and Computing BLEU and ROUGE Scores
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llama3_lora_predict.yaml
+```
+
+### QLoRA Fine-Tuning on a Single GPU
+
+#### Supervised Fine-Tuning with 4/8-bit Bitsandbytes Quantization (Recommended)
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/qlora_single_gpu/llama3_lora_sft_bitsandbytes.yaml
+```
+
+#### Supervised Fine-Tuning with 4/8-bit GPTQ Quantization
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/qlora_single_gpu/llama3_lora_sft_gptq.yaml
+```
+
+#### Supervised Fine-Tuning with 4-bit AWQ Quantization
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/qlora_single_gpu/llama3_lora_sft_awq.yaml
+```
+
+#### Supervised Fine-Tuning with 2-bit AQLM Quantization
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/qlora_single_gpu/llama3_lora_sft_aqlm.yaml
+```
+
+### LoRA Fine-Tuning on Multiple GPUs
+
+#### Supervised Fine-Tuning with Accelerate on Single Node
+
+```bash
+bash examples/lora_multi_gpu/single_node.sh
+```
+
+#### Supervised Fine-Tuning with Accelerate on Multiple Nodes
+
+```bash
+bash examples/lora_multi_gpu/multi_node.sh
+```
+
+#### Supervised Fine-Tuning with DeepSpeed ZeRO-3 (Weight Sharding)
+
+```bash
+bash examples/lora_multi_gpu/ds_zero3.sh
+```
+
+### Full-Parameter Fine-Tuning on Multiple GPUs
+
+#### Supervised Fine-Tuning with Accelerate on Single Node
+
+```bash
+bash examples/full_multi_gpu/single_node.sh
+```
+
+#### Supervised Fine-Tuning with Accelerate on Multiple Nodes
+
+```bash
+bash examples/full_multi_gpu/multi_node.sh
+```
+
+#### Batch Predicting and Computing BLEU and ROUGE Scores
+
+```bash
+bash examples/full_multi_gpu/predict.sh
+```
+
+### Merging LoRA Adapters and Quantization
+
+#### Merge LoRA Adapters
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
+```
+
+#### Quantizing Model using AutoGPTQ
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli export examples/merge_lora/llama3_gptq.yaml
+```
+
+### Inferring LoRA Fine-Tuned Models
+
+#### Use CLI
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli chat examples/merge_lora/llama3_lora_sft.yaml
+```
+
+#### Use Web UI
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli webchat examples/merge_lora/llama3_lora_sft.yaml
+```
+
+#### Launch OpenAI-style API
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli api examples/merge_lora/llama3_lora_sft.yaml
+```
+
+### Extras
+
+#### Full-Parameter Fine-Tuning using GaLore
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/extras/galore/llama3_full_sft.yaml
+```
+
+#### Full-Parameter Fine-Tuning using BAdam
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/extras/badam/llama3_full_sft.yaml
+```
+
+#### LoRA+ Fine-Tuning
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/extras/loraplus/llama3_lora_sft.yaml
+```
+
+#### Mixture-of-Depths Fine-Tuning
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/extras/mod/llama3_full_sft.yaml
+```
+
+#### LLaMA-Pro Fine-Tuning
+
+```bash
+bash examples/extras/llama_pro/expand.sh
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/extras/llama_pro/llama3_freeze_sft.yaml
+```
+
+#### FSDP+QLoRA Fine-Tuning
+
+```bash
+bash examples/extras/fsdp_qlora/single_node.sh
 ```
