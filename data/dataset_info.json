@@ -359,7 +359,7 @@
     }
   },
   "nectar_rm": {
-    "hf_hub_url": "mlinmg/RLAIF-Nectar",
+    "hf_hub_url": "AstraMindAI/RLAIF-Nectar",
     "ms_hub_url": "AI-ModelScope/RLAIF-Nectar",
     "ranking": true
   },
