@@ -337,7 +337,7 @@ Please refer to [data/README.md](data/README.md) for checking the details about 
 
 ### Quickstart
 
-The following 3 commands conduct LoRA fine-tuning, inference and merging for Llama3-8B-Instruct model, respectively.
+Use the following 3 commands to conduct LoRA **fine-tuning**, **inference** and **merging** for Llama3-8B-Instruct model, respectively.
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llama3_lora_sft.yaml
@@ -345,7 +345,7 @@ CUDA_VISIBLE_DEVICES=0 llamafactory-cli chat examples/inference/llama3_lora_sft.
 CUDA_VISIBLE_DEVICES=0 llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
 ```
 
-See [examples/README.md](examples/README.md) for advanced usage.
+See [examples/README.md](examples/README.md) for advanced usage (including distributed training).
 
 > [!TIP]
 > Use `llamafactory-cli help` to show help information.
