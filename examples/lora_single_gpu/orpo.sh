@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CUDA_VISIBLE_DEVICES=0 python ../../src/train_bash.py \
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train \
     --stage orpo \
     --do_train \
     --model_name_or_path meta-llama/Llama-2-7b-hf \

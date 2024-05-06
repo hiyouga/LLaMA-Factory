@@ -1,6 +1,7 @@
 #!/bin/bash
+# use `--tokenized_path` in training script to load data
 
-CUDA_VISIBLE_DEVICES= python ../../src/train_bash.py \
+CUDA_VISIBLE_DEVICES= llamafactory-cli train \
     --stage sft \
     --do_train \
     --model_name_or_path meta-llama/Llama-2-7b-hf \
