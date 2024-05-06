@@ -106,7 +106,6 @@ class VllmEngine(BaseEngine):
                 top_k=top_k or generating_args["top_k"],
                 num_return_sequences=num_return_sequences or 1,
                 repetition_penalty=repetition_penalty or generating_args["repetition_penalty"],
-                stop=stop or generating_args["stop"]
             )
         )
 
@@ -124,10 +123,10 @@ class VllmEngine(BaseEngine):
             top_k=generating_args["top_k"],
             use_beam_search=generating_args["num_beams"] > 1,
             length_penalty=generating_args["length_penalty"],
+            stop=stop,
             stop_token_ids=[self.tokenizer.eos_token_id] + self.tokenizer.additional_special_tokens_ids,
             max_tokens=generating_args["max_new_tokens"],
             skip_special_tokens=True,
-            stop=generating_args["stop"],
         )
 
         if self.processor is not None and image is not None:
