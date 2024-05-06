@@ -1,9 +1,16 @@
 We provide diverse examples about fine-tuning LLMs.
 
+```bash
+export CUDA_VISIBLE_DEVICES=0
+cd examples/lora_single_gpu
+llamafactory-cli train llama3_lora_pretrain.yaml # Do continuous pre-training using LoRA
+
+```
+
 ```
 examples/
 ├── lora_single_gpu/
-│   ├── pretrain.sh: Do continuous pre-training using LoRA
+│   ├── `
 │   ├── sft.sh: Do supervised fine-tuning using LoRA
 │   ├── reward.sh: Do reward modeling using LoRA
 │   ├── ppo.sh: Do PPO training using LoRA
