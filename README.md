@@ -276,18 +276,19 @@ huggingface-cli login
 | ------------ | ------- | --------- |
 | python       | 3.8     | 3.10      |
 | torch        | 1.13.1  | 2.2.0     |
-| transformers | 4.37.2  | 4.39.3    |
-| datasets     | 2.14.3  | 2.18.0    |
-| accelerate   | 0.27.2  | 0.28.0    |
+| transformers | 4.37.2  | 4.40.1    |
+| datasets     | 2.14.3  | 2.19.1    |
+| accelerate   | 0.27.2  | 0.30.0    |
 | peft         | 0.9.0   | 0.10.0    |
-| trl          | 0.8.1   | 0.8.1     |
+| trl          | 0.8.1   | 0.8.6     |
 
 | Optional     | Minimum | Recommend |
 | ------------ | ------- | --------- |
 | CUDA         | 11.6    | 12.2      |
 | deepspeed    | 0.10.0  | 0.14.0    |
-| bitsandbytes | 0.39.0  | 0.43.0    |
-| flash-attn   | 2.3.0   | 2.5.6     |
+| bitsandbytes | 0.39.0  | 0.43.1    |
+| vllm         | 0.4.0   | 0.4.2     |
+| flash-attn   | 2.3.0   | 2.5.8     |
 
 ### Hardware Requirement
 
@@ -305,24 +306,15 @@ huggingface-cli login
 
 ## Getting Started
 
-### Data Preparation
-
-Please refer to [data/README.md](data/README.md) for checking the details about the format of dataset files. You can either use datasets on HuggingFace / ModelScope hub or load the dataset in local disk.
-
-> [!NOTE]
-> Please update `data/dataset_info.json` to use your custom dataset.
-
-### Dependence Installation
+### Installation
 
 ```bash
 git clone https://github.com/hiyouga/LLaMA-Factory.git
-conda create -n llama_factory python=3.10
-conda activate llama_factory
 cd LLaMA-Factory
 pip install -e .[metrics]
 ```
 
-Extra dependencies available: deepspeed, metrics, galore, badam, vllm, bitsandbytes, gptq, awq, aqlm, qwen, modelscope, quality
+Extra dependencies available: metrics, deepspeed, bitsandbytes, vllm, galore, badam, gptq, awq, aqlm, qwen, modelscope, quality
 
 <details><summary>For Windows users</summary>
 
@@ -336,19 +328,41 @@ To enable FlashAttention-2 on the Windows platform, you need to install the prec
 
 </details>
 
-### Train with LLaMA Board GUI (powered by [Gradio](https://github.com/gradio-app/gradio))
+### Data Preparation
+
+Please refer to [data/README.md](data/README.md) for checking the details about the format of dataset files. You can either use datasets on HuggingFace / ModelScope hub or load the dataset in local disk.
+
+> [!NOTE]
+> Please update `data/dataset_info.json` to use your custom dataset.
+
+### Quickstart
+
+Use the following 3 commands to conduct LoRA **fine-tuning**, **inference** and **merging** for Llama3-8B-Instruct model, respectively.
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llama3_lora_sft.yaml
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli chat examples/inference/llama3_lora_sft.yaml
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
+```
+
+See [examples/README.md](examples/README.md) for advanced usage (including distributed training).
+
+> [!TIP]
+> Use `llamafactory-cli help` to show help information.
+
+### Use LLaMA Board GUI (powered by [Gradio](https://github.com/gradio-app/gradio))
 
 > [!IMPORTANT]
-> LLaMA Board GUI only supports training on a single GPU, please use [CLI](#train-with-command-line-interface) for distributed training.
+> LLaMA Board GUI only supports training on a single GPU.
 
 #### Use local environment
 
 ```bash
-llamafactory-cli webui
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli webui
 ```
 
 > [!TIP]
-> To modify the default setting in the LLaMA Board GUI, you can use environment variables, e.g., `export CUDA_VISIBLE_DEVICES=0 GRADIO_SERVER_NAME=0.0.0.0 GRADIO_SERVER_PORT=7860 GRADIO_SHARE=False` (use `set` command on Windows OS).
+> To modify the default setting in the LLaMA Board GUI, you can use environment variables, e.g., `export GRADIO_SERVER_NAME=0.0.0.0 GRADIO_SERVER_PORT=7860 GRADIO_SHARE=False` (use `set` command on Windows OS).
 
 <details><summary>For Alibaba Cloud users</summary>
 
@@ -389,21 +403,10 @@ docker compose -f ./docker-compose.yml up -d
 
 </details>
 
-### Train with Command Line Interface
-
-See [examples/README.md](examples/README.md) for usage.
-
-> [!TIP]
-> Use `llamafactory-cli train -h` to display arguments description.
-
 ### Deploy with OpenAI-style API and vLLM
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 llamafactory-cli api \
-    --model_name_or_path meta-llama/Meta-Llama-3-8B-Instruct \
-    --template llama3 \
-    --infer_backend vllm \
-    --vllm_enforce_eager
+CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 llamafactory-cli api examples/inference/llama3_vllm.yaml
 ```
 
 ### Download from ModelScope Hub
