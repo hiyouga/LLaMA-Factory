@@ -24,8 +24,6 @@ IGNORE_INDEX = -100
 
 LAYERNORM_NAMES = {"norm", "ln"}
 
-LOG_FILE_NAME = "trainer_log.jsonl"
-
 METHODS = ["full", "freeze", "lora"]
 
 MLLM_LIST = ["LLaVA1.5"]
@@ -34,9 +32,15 @@ MOD_SUPPORTED_MODELS = ["bloom", "falcon", "gemma", "llama", "mistral", "mixtral
 
 PEFT_METHODS = ["lora"]
 
+RUNNING_LOG = "running_log.txt"
+
 SUBJECTS = ["Average", "STEM", "Social Sciences", "Humanities", "Other"]
 
 SUPPORTED_MODELS = OrderedDict()
+
+TRAINER_CONFIG = "trainer_config.yaml"
+
+TRAINER_LOG = "trainer_log.jsonl"
 
 TRAINING_STAGES = {
     "Supervised Fine-Tuning": "sft",

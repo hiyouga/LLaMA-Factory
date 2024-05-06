@@ -1,5 +1,9 @@
 import logging
+import os
 import sys
+from concurrent.futures import ThreadPoolExecutor
+
+from .constants import RUNNING_LOG
 
 
 class LoggerHandler(logging.Handler):
@@ -7,19 +11,35 @@ class LoggerHandler(logging.Handler):
     Logger handler used in Web UI.
     """
 
-    def __init__(self):
+    def __init__(self, output_dir: str) -> None:
         super().__init__()
-        self.log = ""
+        formatter = logging.Formatter(
+            fmt="%(asctime)s - %(levelname)s - %(name)s - %(message)s", datefmt="%m/%d/%Y %H:%M:%S"
+        )
+        self.setLevel(logging.INFO)
+        self.setFormatter(formatter)
 
-    def reset(self):
-        self.log = ""
+        os.makedirs(output_dir, exist_ok=True)
+        self.running_log = os.path.join(output_dir, RUNNING_LOG)
+        if os.path.exists(self.running_log):
+            os.remove(self.running_log)
 
-    def emit(self, record):
+        self.thread_pool = ThreadPoolExecutor(max_workers=1)
+
+    def _write_log(self, log_entry: str) -> None:
+        with open(self.running_log, "a", encoding="utf-8") as f:
+            f.write(log_entry + "\n\n")
+
+    def emit(self, record) -> None:
         if record.name == "httpx":
             return
+
         log_entry = self.format(record)
-        self.log += log_entry
-        self.log += "\n\n"
+        self.thread_pool.submit(self._write_log, log_entry)
+
+    def close(self) -> None:
+        self.thread_pool.shutdown(wait=True)
+        return super().close()
 
 
 def get_logger(name: str) -> logging.Logger:

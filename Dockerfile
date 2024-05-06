@@ -11,4 +11,4 @@ RUN pip install -e .[deepspeed,metrics,bitsandbytes,qwen]
 VOLUME [ "/root/.cache/huggingface/", "/app/data", "/app/output" ]
 EXPOSE 7860
 
-CMD [ "python", "src/train_web.py" ]
+CMD [ "llamafactory-cli webui" ]
