@@ -174,7 +174,7 @@
     "ms_hub_url": "AI-ModelScope/webnovel_cn"
   },
   "nectar_sft": {
-    "hf_hub_url": "mlinmg/SFT-Nectar",
+    "hf_hub_url": "AstraMindAI/SFT-Nectar",
     "ms_hub_url": "AI-ModelScope/SFT-Nectar"
   },
   "deepctrl": {
@@ -359,7 +359,7 @@
     }
   },
   "nectar_rm": {
-    "hf_hub_url": "mlinmg/RLAIF-Nectar",
+    "hf_hub_url": "AstraMindAI/RLAIF-Nectar",
     "ms_hub_url": "AI-ModelScope/RLAIF-Nectar",
     "ranking": true
   },
