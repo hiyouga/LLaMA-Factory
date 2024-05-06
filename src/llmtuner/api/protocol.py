@@ -1,6 +1,6 @@
 import time
 from enum import Enum, unique
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 from typing_extensions import Literal
@@ -78,6 +78,7 @@ class ChatCompletionRequest(BaseModel):
     n: int = 1
     max_tokens: Optional[int] = None
     stream: bool = False
+    stop: Union[Optional[str], List[str]] = None
 
 
 class ChatCompletionResponseChoice(BaseModel):
