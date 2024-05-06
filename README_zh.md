@@ -358,11 +358,8 @@ CUDA_VISIBLE_DEVICES=0 llamafactory-cli export examples/merge_lora/llama3_lora_s
 #### 使用本地环境
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 llamafactory-cli webui
+CUDA_VISIBLE_DEVICES=0 GRADIO_SHARE=1 llamafactory-cli webui
 ```
-
-> [!TIP]
-> 您可以使用环境变量来修改 LLaMA Board 可视化界面的默认设置，例如 `export GRADIO_SERVER_NAME=0.0.0.0 GRADIO_SERVER_PORT=7860 GRADIO_SHARE=False`（Windows 系统可使用 `set` 指令）。
 
 <details><summary>阿里云用户指南</summary>
 
