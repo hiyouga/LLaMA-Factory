@@ -46,6 +46,7 @@ class GeneratingArguments:
         default=1.0,
         metadata={"help": "Exponential penalty to the length that is used with beam-based generation."},
     )
+
     def to_dict(self) -> Dict[str, Any]:
         args = asdict(self)
         if args.get("max_new_tokens", -1) > 0:
