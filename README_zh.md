@@ -337,7 +337,7 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 
 ### 快速开始
 
-下面三行命令分别对 Llama3-8B-Instruct 模型进行 LoRA 微调、推理和合并。
+下面三行命令分别对 Llama3-8B-Instruct 模型进行 LoRA **微调**、**推理**和**合并**。
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llama3_lora_sft.yaml
@@ -345,10 +345,10 @@ CUDA_VISIBLE_DEVICES=0 llamafactory-cli chat examples/inference/llama3_lora_sft.
 CUDA_VISIBLE_DEVICES=0 llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
 ```
 
-高级用法请参考 [examples/README_zh.md](examples/README_zh.md)。
+高级用法请参考 [examples/README_zh.md](examples/README_zh.md)（包括多 GPU 微调）。
 
 > [!TIP]
-> 使用 `llamafactory-cli help` 显示使用帮助。
+> 使用 `llamafactory-cli help` 显示帮助信息。
 
 ### 使用 LLaMA Board 可视化界面（由 [Gradio](https://github.com/gradio-app/gradio) 驱动）
 
