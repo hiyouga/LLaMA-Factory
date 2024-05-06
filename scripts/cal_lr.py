@@ -4,7 +4,7 @@
 # Inspired by: https://github.com/imoneoi/openchat/blob/master/ochat/training_deepspeed/train.py
 
 import math
-from typing import Optional
+from typing import Literal
 
 import fire
 import torch
@@ -25,12 +25,12 @@ BASE_BS = 4_000_000  # from llama paper
 def calculate_lr(
     model_name_or_path: str,
     batch_size: int,  # total batch size, namely (batch size * gradient accumulation * world size)
-    stage: Optional[str] = "sft",
-    dataset: Optional[str] = "alpaca_en",
-    dataset_dir: Optional[str] = "data",
-    template: Optional[str] = "default",
-    cutoff_len: Optional[int] = 1024,  # i.e. maximum input length during training
-    is_mistral: Optional[bool] = False,  # mistral model uses a smaller learning rate,
+    stage: Literal["pt", "sft"] = "sft",
+    dataset: str = "alpaca_en",
+    dataset_dir: str = "data",
+    template: str = "default",
+    cutoff_len: int = 1024,  # i.e. maximum input length during training
+    is_mistral: bool = False,  # mistral model uses a smaller learning rate,
 ):
     model_args, data_args, training_args, _, _ = get_train_args(
         dict(
@@ -54,9 +54,7 @@ def calculate_lr(
     else:
         raise NotImplementedError
 
-    dataloader = DataLoader(
-        dataset=trainset, batch_size=batch_size, shuffle=True, collate_fn=data_collator, pin_memory=True
-    )
+    dataloader = DataLoader(trainset, batch_size, shuffle=False, collate_fn=data_collator, pin_memory=True)
     valid_tokens, total_tokens = 0, 0
     for batch in tqdm(dataloader):
         valid_tokens += torch.sum(batch["labels"] != IGNORE_INDEX).item()
