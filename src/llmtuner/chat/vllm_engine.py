@@ -96,6 +96,7 @@ class VllmEngine(BaseEngine):
         repetition_penalty = input_kwargs.pop("repetition_penalty", None)
         max_length = input_kwargs.pop("max_length", None)
         max_new_tokens = input_kwargs.pop("max_new_tokens", None)
+        stop = input_kwargs.pop("stop", None)
 
         generating_args = self.generating_args.copy()
         generating_args.update(
@@ -122,6 +123,7 @@ class VllmEngine(BaseEngine):
             top_k=generating_args["top_k"],
             use_beam_search=generating_args["num_beams"] > 1,
             length_penalty=generating_args["length_penalty"],
+            stop=stop,
             stop_token_ids=[self.tokenizer.eos_token_id] + self.tokenizer.additional_special_tokens_ids,
             max_tokens=generating_args["max_new_tokens"],
             skip_special_tokens=True,
