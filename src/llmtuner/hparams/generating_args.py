@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Union, Optional, List
+from typing import Any, Dict
 
 
 @dataclass
@@ -45,10 +45,6 @@ class GeneratingArguments:
     length_penalty: float = field(
         default=1.0,
         metadata={"help": "Exponential penalty to the length that is used with beam-based generation."},
-    )
-    stop: Union[Optional[str], List[str]] = field(
-        default=None,
-        metadata={"help": "List of strings or string that stop the generation when they are generated. The returned output will not contain the stop strings."},
     )
     def to_dict(self) -> Dict[str, Any]:
         args = asdict(self)
