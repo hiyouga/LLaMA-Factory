@@ -163,7 +163,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 | [Yuan](https://huggingface.co/IEITYuan)                  | 2B/51B/102B                      | q_proj,v_proj     | yuan      |
 
 > [!NOTE]
-> **默认模块**应作为 `--lora_target` 参数的默认值，可使用 `--lora_target all` 参数指定全部模块以得到更好的效果。
+> **默认模块**应作为 `--lora_target` 参数的默认值，可使用 `--lora_target all` 参数指定全部模块以取得更好的效果。
 >
 > 对于所有“基座”（Base）模型，`--template` 参数可以是 `default`, `alpaca`, `vicuna` 等任意值。但“对话”（Instruct/Chat）模型请务必使用**对应的模板**。
 >
@@ -276,18 +276,19 @@ huggingface-cli login
 | ------------ | ------- | --------- |
 | python       | 3.8     | 3.10      |
 | torch        | 1.13.1  | 2.2.0     |
-| transformers | 4.37.2  | 4.39.3    |
-| datasets     | 2.14.3  | 2.18.0    |
-| accelerate   | 0.27.2  | 0.28.0    |
+| transformers | 4.37.2  | 4.40.1    |
+| datasets     | 2.14.3  | 2.19.1    |
+| accelerate   | 0.27.2  | 0.30.0    |
 | peft         | 0.9.0   | 0.10.0    |
-| trl          | 0.8.1   | 0.8.1     |
+| trl          | 0.8.1   | 0.8.6     |
 
 | 可选项       | 至少     | 推荐      |
 | ------------ | ------- | --------- |
 | CUDA         | 11.6    | 12.2      |
 | deepspeed    | 0.10.0  | 0.14.0    |
-| bitsandbytes | 0.39.0  | 0.43.0    |
-| flash-attn   | 2.3.0   | 2.5.6     |
+| bitsandbytes | 0.39.0  | 0.43.1    |
+| vllm         | 0.4.0   | 0.4.2     |
+| flash-attn   | 2.3.0   | 2.5.8     |
 
 ### 硬件依赖
 
@@ -305,24 +306,15 @@ huggingface-cli login
 
 ## 如何使用
 
-### 数据准备
-
-关于数据集文件的格式，请参考 [data/README_zh.md](data/README_zh.md) 的内容。你可以使用 HuggingFace / ModelScope 上的数据集或加载本地数据集。
-
-> [!NOTE]
-> 使用自定义数据集时，请更新 `data/dataset_info.json` 文件。
-
-### 安装依赖
+### 安装 LLaMA Factory
 
 ```bash
 git clone https://github.com/hiyouga/LLaMA-Factory.git
-conda create -n llama_factory python=3.10
-conda activate llama_factory
 cd LLaMA-Factory
 pip install -e .[metrics]
 ```
 
-可选的额外依赖项：deepspeed、metrics、galore、badam、vllm、bitsandbytes、gptq、awq、aqlm、qwen、modelscope、quality
+可选的额外依赖项：metrics、deepspeed、bitsandbytes、vllm、galore、badam、gptq、awq、aqlm、qwen、modelscope、quality
 
 <details><summary>Windows 用户指南</summary>
 
@@ -336,19 +328,41 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 
 </details>
 
-### 利用 LLaMA Board 可视化界面训练（由 [Gradio](https://github.com/gradio-app/gradio) 驱动）
+### 数据准备
+
+关于数据集文件的格式，请参考 [data/README_zh.md](data/README_zh.md) 的内容。你可以使用 HuggingFace / ModelScope 上的数据集或加载本地数据集。
+
+> [!NOTE]
+> 使用自定义数据集时，请更新 `data/dataset_info.json` 文件。
+
+### 快速开始
+
+下面三行命令分别对 Llama3-8B-Instruct 模型进行 LoRA 微调、推理和合并。
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llama3_lora_sft.yaml
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli chat examples/inference/llama3_lora_sft.yaml
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
+```
+
+高级用法请参考 [examples/README_zh.md](examples/README_zh.md)。
+
+> [!TIP]
+> 使用 `llamafactory-cli help` 显示使用帮助。
+
+### 使用 LLaMA Board 可视化界面（由 [Gradio](https://github.com/gradio-app/gradio) 驱动）
 
 > [!IMPORTANT]
-> LLaMA Board 可视化界面目前仅支持单 GPU 训练，请使用[命令行接口](#利用命令行接口训练)来进行多 GPU 分布式训练。
+> LLaMA Board 可视化界面目前仅支持单 GPU 训练。
 
 #### 使用本地环境
 
 ```bash
-llamafactory-cli webui
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli webui
 ```
 
 > [!TIP]
-> 您可以使用环境变量来修改 LLaMA Board 可视化界面的默认设置，例如 `export CUDA_VISIBLE_DEVICES=0 GRADIO_SERVER_NAME=0.0.0.0 GRADIO_SERVER_PORT=7860 GRADIO_SHARE=False`（Windows 系统可使用 `set` 指令）。
+> 您可以使用环境变量来修改 LLaMA Board 可视化界面的默认设置，例如 `export GRADIO_SERVER_NAME=0.0.0.0 GRADIO_SERVER_PORT=7860 GRADIO_SHARE=False`（Windows 系统可使用 `set` 指令）。
 
 <details><summary>阿里云用户指南</summary>
 
@@ -389,21 +403,10 @@ docker compose -f ./docker-compose.yml up -d
 
 </details>
 
-### 利用命令行接口训练
-
-使用方法请参考 [examples/README_zh.md](examples/README_zh.md)。
-
-> [!TIP]
-> 您可以执行 `llamafactory-cli train -h` 来查看参数文档。
-
 ### 利用 vLLM 部署 OpenAI API
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 llamafactory-cli api \
-    --model_name_or_path meta-llama/Meta-Llama-3-8B-Instruct \
-    --template llama3 \
-    --infer_backend vllm \
-    --vllm_enforce_eager
+CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 llamafactory-cli api examples/inference/llama3_vllm.yaml
 ```
 
 ### 从魔搭社区下载
