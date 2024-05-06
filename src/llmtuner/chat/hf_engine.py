@@ -73,6 +73,10 @@ class HuggingfaceEngine(BaseEngine):
         repetition_penalty = input_kwargs.pop("repetition_penalty", None)
         max_length = input_kwargs.pop("max_length", None)
         max_new_tokens = input_kwargs.pop("max_new_tokens", None)
+        stop = input_kwargs.pop("stop", None)
+
+        if stop is not None:
+            raise ValueError("Stop parameter is not supported in Huggingface engine yet.")
 
         generating_args.update(
             dict(
