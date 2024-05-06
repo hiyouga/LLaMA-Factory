@@ -6,7 +6,7 @@ python -m torch.distributed.run \
     --node_rank $RANK \
     --master_addr $MASTER_ADDR \
     --master_port $MASTER_PORT \
-    ../../src/train_bash.py \
+    ../../src/train.py \
     --deepspeed ../deepspeed/ds_z3_config.json \
     --stage sft \
     --do_train \

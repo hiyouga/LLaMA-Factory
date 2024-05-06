@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CUDA_VISIBLE_DEVICES=0 python ../../../src/train_bash.py \
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train \
     --stage sft \
     --do_train \
     --model_name_or_path meta-llama/Llama-2-7b-hf \
@@ -10,7 +10,7 @@ CUDA_VISIBLE_DEVICES=0 python ../../../src/train_bash.py \
     --finetuning_type full \
     --use_badam \
     --badam_switch_mode descending \
-    --badam_switch_block_every 50 \
+    --badam_switch_interval 50 \
     --badam_verbose 2 \
     --output_dir ../../../saves/LLaMA2-7B/badam/sft \
     --overwrite_cache \

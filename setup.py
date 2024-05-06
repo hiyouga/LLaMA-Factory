@@ -52,6 +52,7 @@ def main():
         python_requires=">=3.8.0",
         install_requires=get_requires(),
         extras_require=extra_require,
+        entry_points={"console_scripts": ["llamafactory-cli = llmtuner.cli:main"]},
         classifiers=[
             "Development Status :: 4 - Beta",
             "Intended Audience :: Developers",
