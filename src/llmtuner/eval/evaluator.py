@@ -118,6 +118,5 @@ class Evaluator:
                 f.write(score_info)
 
 
-if __name__ == "__main__":
-    evaluator = Evaluator()
-    evaluator.eval()
+def run_eval() -> None:
+    Evaluator().eval()

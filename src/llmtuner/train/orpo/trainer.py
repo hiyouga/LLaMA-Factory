@@ -113,15 +113,15 @@ class CustomORPOTrainer(DPOTrainer):
         reward_accuracies = (chosen_rewards > rejected_rewards).float()
 
         prefix = "eval_" if train_eval == "eval" else ""
-        metrics["{}rewards/chosen".format(prefix)] = chosen_rewards.cpu().mean()
-        metrics["{}rewards/rejected".format(prefix)] = rejected_rewards.cpu().mean()
-        metrics["{}rewards/accuracies".format(prefix)] = reward_accuracies.cpu().mean()
-        metrics["{}rewards/margins".format(prefix)] = (chosen_rewards - rejected_rewards).cpu().mean()
-        metrics["{}logps/rejected".format(prefix)] = rejected_logps.detach().cpu().mean()
-        metrics["{}logps/chosen".format(prefix)] = chosen_logps.detach().cpu().mean()
-        metrics["{}logits/rejected".format(prefix)] = rejected_logits.detach().cpu().mean()
-        metrics["{}logits/chosen".format(prefix)] = chosen_logits.detach().cpu().mean()
-        metrics["{}sft_loss".format(prefix)] = sft_loss.detach().cpu().mean()
-        metrics["{}odds_ratio_loss".format(prefix)] = odds_ratio_loss.detach().cpu().mean()
+        metrics["{}rewards/chosen".format(prefix)] = chosen_rewards.mean().cpu()
+        metrics["{}rewards/rejected".format(prefix)] = rejected_rewards.mean().cpu()
+        metrics["{}rewards/accuracies".format(prefix)] = reward_accuracies.mean().cpu()
+        metrics["{}rewards/margins".format(prefix)] = (chosen_rewards - rejected_rewards).mean().cpu()
+        metrics["{}logps/rejected".format(prefix)] = rejected_logps.detach().mean().cpu()
+        metrics["{}logps/chosen".format(prefix)] = chosen_logps.detach().mean().cpu()
+        metrics["{}logits/rejected".format(prefix)] = rejected_logits.detach().mean().cpu()
+        metrics["{}logits/chosen".format(prefix)] = chosen_logits.detach().mean().cpu()
+        metrics["{}sft_loss".format(prefix)] = sft_loss.detach().mean().cpu()
+        metrics["{}odds_ratio_loss".format(prefix)] = odds_ratio_loss.detach().mean().cpu()
 
         return batch_loss, metrics
