@@ -352,7 +352,7 @@ CUDA_VISIBLE_DEVICES=0 llamafactory-cli export examples/merge_lora/llama3_lora_s
 > [!TIP]
 > 使用 `llamafactory-cli help` 显示帮助信息。
 
-### 使用 LLaMA Board 可视化界面（由 [Gradio](https://github.com/gradio-app/gradio) 驱动）
+### LLaMA Board 可视化微调（由 [Gradio](https://github.com/gradio-app/gradio) 驱动）
 
 > [!IMPORTANT]
 > LLaMA Board 可视化界面目前仅支持单 GPU 训练。
