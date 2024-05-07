@@ -339,7 +339,7 @@ Please refer to [data/README.md](data/README.md) for checking the details about 
 
 ### Quickstart
 
-Use the following 3 commands to conduct LoRA **fine-tuning**, **inference** and **merging** for Llama3-8B-Instruct model, respectively.
+Use the following 3 commands to run LoRA **fine-tuning**, **inference** and **merging** of the Llama3-8B-Instruct model, respectively.
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llama3_lora_sft.yaml
@@ -352,7 +352,7 @@ See [examples/README.md](examples/README.md) for advanced usage (including distr
 > [!TIP]
 > Use `llamafactory-cli help` to show help information.
 
-### Use LLaMA Board GUI (powered by [Gradio](https://github.com/gradio-app/gradio))
+### Fine-Tuning with LLaMA Board GUI (powered by [Gradio](https://github.com/gradio-app/gradio))
 
 > [!IMPORTANT]
 > LLaMA Board GUI only supports training on a single GPU.
