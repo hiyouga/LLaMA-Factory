@@ -148,6 +148,8 @@ bash examples/full_multi_gpu/predict.sh
 
 #### Merge LoRA Adapters
 
+Note: DO NOT use quantized model or `quantization_bit` when merging LoRA adapters.
+
 ```bash
 CUDA_VISIBLE_DEVICES=0 llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
 ```
