@@ -148,6 +148,8 @@ bash examples/full_multi_gpu/predict.sh
 
 #### 合并 LoRA 适配器
 
+注：请勿使用量化后的模型或 `quantization_bit` 参数来合并 LoRA 适配器。
+
 ```bash
 CUDA_VISIBLE_DEVICES=0 llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
 ```
