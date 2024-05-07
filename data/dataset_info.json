@@ -19,16 +19,6 @@
     "file_name": "identity.json",
     "file_sha1": "0f67e97fd01612006ab3536cdaf6cfb0d1e7f279"
   },
-  "oaast_sft": {
-    "file_name": "oaast_sft.json",
-    "file_sha1": "7baf5d43e67a91f9bbdf4e400dbe033b87e9757e",
-    "columns": {
-      "prompt": "instruction",
-      "query": "input",
-      "response": "output",
-      "history": "history"
-    }
-  },
   "oaast_sft_zh": {
     "file_name": "oaast_sft_zh.json",
     "file_sha1": "a6a91f18f80f37b10ded9cf633fb50c033bf7b9f",
@@ -311,17 +301,6 @@
     "script_url": "hh_rlhf_en",
     "columns": {
       "prompt": "instruction",
-      "response": "output",
-      "history": "history"
-    },
-    "ranking": true
-  },
-  "oaast_rm": {
-    "file_name": "oaast_rm.json",
-    "file_sha1": "622d420e9b70003b210618253bd3d9d2891d86cb",
-    "columns": {
-      "prompt": "instruction",
-      "query": "input",
       "response": "output",
       "history": "history"
     },
