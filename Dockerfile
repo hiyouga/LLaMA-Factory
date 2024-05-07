@@ -11,4 +11,4 @@ RUN pip install -e .[deepspeed,metrics,bitsandbytes,qwen]
 VOLUME [ "/root/.cache/huggingface/", "/app/data", "/app/output" ]
 EXPOSE 7860
 
-CMD [ "llamafactory-cli webui" ]
+CMD [ "llamafactory-cli", "webui" ]
