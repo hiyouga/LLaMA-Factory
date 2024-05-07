@@ -207,8 +207,8 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 - [Stanford Alpaca (en)](https://github.com/tatsu-lab/stanford_alpaca)
 - [Stanford Alpaca (zh)](https://github.com/ymcui/Chinese-LLaMA-Alpaca)
 - [Alpaca GPT4 (en&zh)](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
-- [Self Cognition (zh)](data/self_cognition.json)
-- [Open Assistant (multilingual)](https://huggingface.co/datasets/OpenAssistant/oasst1)
+- [Identity (en&zh)](data/identity.json)
+- [Open Assistant (zh)](https://huggingface.co/datasets/OpenAssistant/oasst1)
 - [ShareGPT (zh)](https://huggingface.co/datasets/QingyiSi/Alpaca-CoT/tree/main/Chinese-instruction-collection)
 - [Guanaco Dataset (multilingual)](https://huggingface.co/datasets/JosephusCheung/GuanacoDataset)
 - [BELLE 2M (zh)](https://huggingface.co/datasets/BelleGroup/train_2M_CN)
@@ -256,11 +256,11 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 <details><summary>偏好数据集</summary>
 
 - [HH-RLHF (en)](https://huggingface.co/datasets/Anthropic/hh-rlhf)
-- [Open Assistant (multilingual)](https://huggingface.co/datasets/OpenAssistant/oasst1)
 - [GPT-4 Generated Data (en&zh)](https://github.com/Instruction-Tuning-with-GPT-4/GPT-4-LLM)
 - [Orca DPO (en)](https://huggingface.co/datasets/Intel/orca_dpo_pairs)
 - [Nectar (en)](https://huggingface.co/datasets/berkeley-nest/Nectar)
 - [DPO mixed (en&zh)](https://huggingface.co/datasets/hiyouga/DPO-En-Zh-20k)
+- [Open Assistant (zh)](https://huggingface.co/datasets/OpenAssistant/oasst1)
 - [Orca DPO (de)](https://huggingface.co/datasets/mayflowergmbh/intel_orca_dpo_pairs_de)
 
 </details>
