@@ -15,10 +15,8 @@ from .pt import run_pt
 from .rm import run_rm
 from .sft import run_sft
 
-
 if TYPE_CHECKING:
     from transformers import TrainerCallback
-
 
 logger = get_logger(__name__)
 
@@ -52,7 +50,9 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
     if model_args.adapter_name_or_path is not None and model_args.export_quantization_bit is not None:
         raise ValueError("Please merge adapters before quantizing the model.")
 
-    tokenizer = load_tokenizer(model_args)["tokenizer"]
+    tokenizer_module = load_tokenizer(model_args)["tokenizer"]
+    tokenizer = tokenizer_module['tokenizer']
+    processor = tokenizer_module['processor']
     get_template_and_fix_tokenizer(tokenizer, data_args.template)
     model = load_model(tokenizer, model_args, finetuning_args)  # must after fixing tokenizer to resize vocab
 
@@ -88,3 +88,6 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
             tokenizer.push_to_hub(model_args.export_hub_model_id, token=model_args.hf_hub_token)
     except Exception:
         logger.warning("Cannot save tokenizer, please copy the files manually.")
+
+    if model_args.visual_inputs:
+        processor.image_processor.save_pretrained(model_args.export_dir)
