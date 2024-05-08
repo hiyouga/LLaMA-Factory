@@ -577,6 +577,10 @@ register_model_group(
             DownloadSource.DEFAULT: "meta-llama/Meta-Llama-3-70B-Instruct",
             DownloadSource.MODELSCOPE: "LLM-Research/Meta-Llama-3-70B-Instruct",
         },
+        "LLaMA3-8B-Chinese-Chat": {
+            DownloadSource.DEFAULT: "shenzhi-wang/Llama3-8B-Chinese-Chat",
+            DownloadSource.MODELSCOPE: "LLM-Research/Llama3-8B-Chinese-Chat",
+        },
     },
     template="llama3",
 )
