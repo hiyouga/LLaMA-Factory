@@ -324,6 +324,14 @@ register_model_group(
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-moe-16b-chat",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-moe-16b-chat",
         },
+        "DeepSeek-MoE-236B": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V2",
+            DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V2",
+        },
+        "DeepSeek-MoE-236B-Chat": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V2-Chat",
+            DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V2-Chat",
+        },
     },
     template="deepseek",
 )
