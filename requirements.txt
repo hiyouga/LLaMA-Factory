@@ -13,7 +13,7 @@ uvicorn
 pydantic
 fastapi
 sse-starlette
-matplotlib
+matplotlib>=3.7.0
 fire
 packaging
 pyyaml
