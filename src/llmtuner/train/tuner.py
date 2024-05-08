@@ -50,7 +50,7 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
     if model_args.adapter_name_or_path is not None and model_args.export_quantization_bit is not None:
         raise ValueError("Please merge adapters before quantizing the model.")
 
-    tokenizer_module = load_tokenizer(model_args)["tokenizer"]
+    tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module['tokenizer']
     processor = tokenizer_module['processor']
     get_template_and_fix_tokenizer(tokenizer, data_args.template)
