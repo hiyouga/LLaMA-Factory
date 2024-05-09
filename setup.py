@@ -21,7 +21,7 @@ def get_requires():
 
 extra_require = {
     "metrics": ["nltk", "jieba", "rouge-chinese"],
-    "deepspeed": ["deepspeed>=0.10.0"],
+    "deepspeed": ["deepspeed>=0.10.0,<=0.14.0"],
     "bitsandbytes": ["bitsandbytes>=0.39.0"],
     "vllm": ["vllm>=0.4.0"],
     "galore": ["galore-torch"],
