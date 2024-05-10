@@ -715,11 +715,11 @@ register_model_group(
     models={
         "Phi3-3.8B-4k-Chat": {
             DownloadSource.DEFAULT: "microsoft/Phi-3-mini-4k-instruct",
-            DownloadSource.DEFAULT: "LLM-Research/Phi-3-mini-4k-instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Phi-3-mini-4k-instruct",
         },
         "Phi3-3.8B-128k-Chat": {
             DownloadSource.DEFAULT: "microsoft/Phi-3-mini-128k-instruct",
-            DownloadSource.DEFAULT: "LLM-Research/Phi-3-mini-128k-instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Phi-3-mini-128k-instruct",
         },
     },
     module="qkv_proj",
