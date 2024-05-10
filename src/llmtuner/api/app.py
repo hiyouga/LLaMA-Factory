@@ -1,6 +1,8 @@
 import os
 from contextlib import asynccontextmanager
-from typing import Annotated, Optional
+from typing import Optional
+
+from typing_extensions import Annotated
 
 from ..chat import ChatModel
 from ..extras.misc import torch_gc

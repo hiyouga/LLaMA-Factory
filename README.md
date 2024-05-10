@@ -310,13 +310,19 @@ huggingface-cli login
 
 ### Installation
 
+> [!IMPORTANT]
+> Installation is mandatory.
+
 ```bash
 git clone https://github.com/hiyouga/LLaMA-Factory.git
 cd LLaMA-Factory
-pip install -e .[metrics]
+pip install -e .[torch,metrics]
 ```
 
-Extra dependencies available: metrics, deepspeed, bitsandbytes, vllm, galore, badam, gptq, awq, aqlm, qwen, modelscope, quality
+Extra dependencies available: torch, metrics, deepspeed, bitsandbytes, vllm, galore, badam, gptq, awq, aqlm, qwen, modelscope, quality
+
+> [!TIP]
+> Use `pip install --no-deps -e .` to resolve package conflicts.
 
 <details><summary>For Windows users</summary>
 
