@@ -155,7 +155,8 @@ def load_model(
         model.eval()
     else:
         model.train()
-
+        if model_args.visual_inputs:
+            model.vision_tower.requires_grad_(False)
     trainable_params, all_param = count_parameters(model)
     if is_trainable:
         param_stats = "trainable params: {:d} || all params: {:d} || trainable%: {:.4f}".format(
