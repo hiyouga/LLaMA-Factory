@@ -101,7 +101,7 @@ def patch_model(
     if model_args.resize_vocab:
         resize_embedding_layer(model, tokenizer)
 
-    if model_args.visual_inputs and model_args.autocast_projector:
+    if model_args.visual_inputs:
         autocast_projector_dtype(model, model_args)
 
     if is_trainable:
