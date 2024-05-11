@@ -106,7 +106,7 @@ def load_model(
     """
     init_kwargs = _get_init_kwargs(model_args)
     config = load_config(model_args)
-    patch_config(config, tokenizer, model_args, init_kwargs, is_trainable, add_valuehead)
+    patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
 
     model = None
     lazy_load = False
