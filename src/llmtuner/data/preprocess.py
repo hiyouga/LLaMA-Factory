@@ -198,6 +198,9 @@ def preprocess_unsupervised_dataset(
         )
 
         if template.efficient_eos:
+            # ChatGLM3-6B 微调后的模型推理结果有重复的内容。官网说明：推理的 input_ids 与训练的 input_ids 不一致可能导致重复Token的问题。
+            # 参考网址 https://github.com/THUDM/ChatGLM2-6B/issues/270
+            input_ids += [tokenizer.eos_token_id]
             labels += [tokenizer.eos_token_id]
 
         model_inputs["input_ids"].append(input_ids)
