@@ -46,6 +46,9 @@ def init_adapter(
         if (not finetuning_args.pure_bf16) and (not finetuning_args.use_badam):
             model = model.float()
 
+        if model_args.visual_inputs and hasattr(model, "vision_tower"):  # freeze vision model
+            model.vision_tower.requires_grad_(False)
+
     if finetuning_args.finetuning_type == "freeze" and is_trainable:
         logger.info("Fine-tuning method: Freeze")
         num_layers = (
