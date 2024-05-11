@@ -8,17 +8,12 @@ from ...extras.logging import get_logger
 
 
 if TYPE_CHECKING:
-    from transformers import PretrainedConfig, PreTrainedModel
+    from transformers import PreTrainedModel
 
     from ...hparams import ModelArguments
 
 
 logger = get_logger(__name__)
-
-
-def configure_valuehead(config: "PretrainedConfig") -> None:
-    if getattr(config, "model_type", None) == "llava":
-        setattr(config, "hidden_size", getattr(config.vision_config, "intermediate_size", None))
 
 
 def load_valuehead_params(path_or_repo_id: str, model_args: "ModelArguments") -> Dict[str, torch.Tensor]:
