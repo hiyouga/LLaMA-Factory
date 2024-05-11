@@ -68,6 +68,8 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
         output_dtype = getattr(model.config, "torch_dtype", torch.float16)
         setattr(model.config, "torch_dtype", output_dtype)
         model = model.to(output_dtype)
+    else:
+        setattr(model.config, "torch_dtype", torch.float16)
 
     model.save_pretrained(
         save_directory=model_args.export_dir,
