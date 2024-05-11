@@ -366,7 +366,7 @@ CUDA_VISIBLE_DEVICES=0 llamafactory-cli export examples/merge_lora/llama3_lora_s
 #### 使用本地环境
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 GRADIO_SERVER_PORT=7860 GRADIO_SHARE=1 llamafactory-cli webui
+CUDA_VISIBLE_DEVICES=0 GRADIO_SHARE=1 llamafactory-cli webui
 ```
 
 <details><summary>阿里云 PAI 和 AutoDL 用户指南</summary>
@@ -374,7 +374,7 @@ CUDA_VISIBLE_DEVICES=0 GRADIO_SERVER_PORT=7860 GRADIO_SHARE=1 llamafactory-cli w
 如果您在阿里云 PAI 上使用 LLaMA Board 时遇到显示问题，请尝试在启动前使用以下命令设置环境变量：
 
 ```bash
-export GRADIO_ROOT_PATH=/${JUPYTER_NAME}/proxy/7860/
+export GRADIO_SERVER_PORT=7860 GRADIO_ROOT_PATH=/${JUPYTER_NAME}/proxy/7860/
 ```
 
 如果您正在使用 AutoDL，请安装下述 Gradio 版本：
