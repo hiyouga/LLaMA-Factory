@@ -65,7 +65,7 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
         raise ValueError("The model is not a `PreTrainedModel`, export aborted.")
 
     if getattr(model, "quantization_method", None) is None:  # cannot convert dtype of a quantized model
-        output_dtype = torch.float16
+        output_dtype = getattr(model.config, "torch_dtype", torch.float16)
         setattr(model.config, "torch_dtype", output_dtype)
         model = model.to(output_dtype)
 
