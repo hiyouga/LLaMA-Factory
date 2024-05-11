@@ -1,27 +1,21 @@
 {
   "alpaca_en": {
-    "file_name": "alpaca_data_en_52k.json",
-    "file_sha1": "607f94a7f581341e59685aef32f531095232cf23"
+    "file_name": "alpaca_data_en_52k.json"
   },
   "alpaca_zh": {
-    "file_name": "alpaca_data_zh_51k.json",
-    "file_sha1": "2ba9827122c158dc256668d42bd1bcb8bc6b786e"
+    "file_name": "alpaca_data_zh_51k.json"
   },
   "alpaca_gpt4_en": {
-    "file_name": "alpaca_gpt4_data_en.json",
-    "file_sha1": "647f4ad447bd993e4b6b6223d1be15208bab694a"
+    "file_name": "alpaca_gpt4_data_en.json"
   },
   "alpaca_gpt4_zh": {
-    "file_name": "alpaca_gpt4_data_zh.json",
-    "file_sha1": "3eaa3bda364ccdd59925d7448a698256c31ef845"
+    "file_name": "alpaca_gpt4_data_zh.json"
   },
   "identity": {
-    "file_name": "identity.json",
-    "file_sha1": "0f67e97fd01612006ab3536cdaf6cfb0d1e7f279"
+    "file_name": "identity.json"
   },
   "oaast_sft_zh": {
     "file_name": "oaast_sft_zh.json",
-    "file_sha1": "a6a91f18f80f37b10ded9cf633fb50c033bf7b9f",
     "columns": {
       "prompt": "instruction",
       "query": "input",
@@ -31,7 +25,6 @@
   },
   "lima": {
     "file_name": "lima.json",
-    "file_sha1": "9db59f6b7007dc4b17529fc63379b9cd61640f37",
     "columns": {
       "prompt": "instruction",
       "query": "input",
@@ -41,7 +34,6 @@
   },
   "glaive_toolcall": {
     "file_name": "glaive_toolcall_10k.json",
-    "file_sha1": "36aea64548fbf6aa300bef411b9221092ed84902",
     "formatting": "sharegpt",
     "columns": {
       "messages": "conversations",
@@ -50,7 +42,6 @@
   },
   "mllm_demo": {
     "file_name": "mllm_demo.json",
-    "file_sha1": "d626cc0ad88a26d0dc9fcb47336821cf486d8bcc",
     "formatting": "sharegpt",
     "columns": {
       "messages": "messages",
@@ -308,7 +299,6 @@
   },
   "oaast_rm_zh": {
     "file_name": "oaast_rm_zh.json",
-    "file_sha1": "1065af1f3784dd61be5e79713a35f427b713a232",
     "columns": {
       "prompt": "instruction",
       "query": "input",
@@ -319,17 +309,14 @@
   },
   "comparison_gpt4_en": {
     "file_name": "comparison_gpt4_data_en.json",
-    "file_sha1": "96fa18313544e22444fe20eead7754b17da452ae",
     "ranking": true
   },
   "comparison_gpt4_zh": {
     "file_name": "comparison_gpt4_data_zh.json",
-    "file_sha1": "515b18ed497199131ddcc1af950345c11dc5c7fd",
     "ranking": true
   },
   "orca_rlhf": {
     "file_name": "orca_rlhf.json",
-    "file_sha1": "acc8f74d16fd1fc4f68e7d86eaa781c2c3f5ba8e",
     "ranking": true,
     "columns": {
       "prompt": "question",
@@ -370,14 +357,12 @@
   },
   "wiki_demo": {
     "file_name": "wiki_demo.txt",
-    "file_sha1": "e70375e28eda542a90c68213640cc371898ce181",
     "columns": {
       "prompt": "text"
     }
   },
   "c4_demo": {
     "file_name": "c4_demo.json",
-    "file_sha1": "a5a0c86759732f9a5238e447fecd74f28a66cca8",
     "columns": {
       "prompt": "text"
     }
