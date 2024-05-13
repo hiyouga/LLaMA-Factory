@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
-from transformers import Seq2SeqTrainer
+from transformers import Seq2SeqTrainer, ProcessorMixin
 
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
@@ -26,9 +26,10 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
     Inherits Seq2SeqTrainer to compute generative metrics such as BLEU and ROUGE.
     """
 
-    def __init__(self, finetuning_args: "FinetuningArguments", **kwargs) -> None:
+    def __init__(self, finetuning_args: "FinetuningArguments", processor: "ProcessorMixin", **kwargs) -> None:
         super().__init__(**kwargs)
         self.finetuning_args = finetuning_args
+        self.processor = processor
         if finetuning_args.use_badam:
             from badam import clip_grad_norm_for_sparse_tensor
 
@@ -120,3 +121,10 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             for label, pred in zip(decoded_labels, decoded_preds):
                 res.append(json.dumps({"label": label, "predict": pred}, ensure_ascii=False))
             writer.write("\n".join(res))
+
+    def save_model(self, output_dir: Optional[str] = None, _internal_call: bool = False):
+        super().save_model(output_dir, _internal_call)
+        if self.processor is not None:
+            if output_dir is None:
+                output_dir = self.args.output_dir
+            getattr(self.processor, "image_processor").save_pretrained(output_dir)
