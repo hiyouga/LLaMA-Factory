@@ -20,7 +20,7 @@ def _get_package_version(name: str) -> "Version":
         return version.parse("0.0.0")
 
 
-def is_fastapi_availble():
+def is_fastapi_available():
     return _is_package_available("fastapi")
 
 
