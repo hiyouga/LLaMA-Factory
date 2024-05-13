@@ -139,13 +139,15 @@ class LogCallback(TrainerCallback):
         r"""
         Event called after an evaluation phase.
         """
-        self._close_thread_pool()
+        if not self.do_train:
+            self._close_thread_pool()
 
     def on_predict(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
         Event called after a successful prediction.
         """
-        self._close_thread_pool()
+        if not self.do_train:
+            self._close_thread_pool()
 
     def on_log(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
