@@ -20,6 +20,7 @@ def get_requires():
 
 
 extra_require = {
+    "torch": ["torch>=1.13.1"],
     "metrics": ["nltk", "jieba", "rouge-chinese"],
     "deepspeed": ["deepspeed>=0.10.0,<=0.14.0"],
     "bitsandbytes": ["bitsandbytes>=0.39.0"],
