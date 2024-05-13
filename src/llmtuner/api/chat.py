@@ -21,8 +21,6 @@ from .protocol import (
 )
 
 
-logger = get_logger(__name__)
-
 if is_fastapi_available():
     from fastapi import HTTPException, status
 
@@ -32,6 +30,7 @@ if TYPE_CHECKING:
     from .protocol import ChatCompletionRequest, ScoreEvaluationRequest
 
 
+logger = get_logger(__name__)
 ROLE_MAPPING = {
     Role.USER: DataRole.USER.value,
     Role.ASSISTANT: DataRole.ASSISTANT.value,
@@ -42,8 +41,7 @@ ROLE_MAPPING = {
 
 
 def _process_request(request: "ChatCompletionRequest") -> Tuple[List[Dict[str, str]], str, str]:
-    params = dictify(request)
-    logger.info(f"==== request ====\n{params}")
+    logger.info("==== request ====\n{}".format(json.dumps(dictify(request), indent=2, ensure_ascii=False)))
 
     if len(request.messages) == 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid length")
