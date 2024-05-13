@@ -6,11 +6,11 @@ if TYPE_CHECKING:
     from pydantic import BaseModel
 
 
-def dictify(data: "BaseModel", **kwargs) -> Dict[str, Any]:
+def dictify(data: "BaseModel") -> Dict[str, Any]:
     try:  # pydantic v2
-        return data.model_dump(**kwargs)
+        return data.model_dump(exclude_unset=True)
     except AttributeError:  # pydantic v1
-        return data.dict(**kwargs)
+        return data.dict(exclude_unset=True)
 
 
 def jsonify(data: "BaseModel") -> str:
