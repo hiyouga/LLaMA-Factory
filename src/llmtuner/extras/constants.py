@@ -320,13 +320,13 @@ register_model_group(
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-moe-16b-base",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-moe-16b-base",
         },
+        "DeepSeek-MoE-236B-Base": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V2",
+            DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V2",
+        },
         "DeepSeek-MoE-16B-Chat": {
             DownloadSource.DEFAULT: "deepseek-ai/deepseek-moe-16b-chat",
             DownloadSource.MODELSCOPE: "deepseek-ai/deepseek-moe-16b-chat",
-        },
-        "DeepSeek-MoE-236B": {
-            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V2",
-            DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V2",
         },
         "DeepSeek-MoE-236B-Chat": {
             DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V2-Chat",
@@ -424,13 +424,13 @@ register_model_group(
 register_model_group(
     models={
         "CodeGemma-2B": {
-            DownloadSource.DEFAULT: "google/codegemma-2b",
+            DownloadSource.DEFAULT: "google/codegemma-1.1-2b",
         },
         "CodeGemma-7B": {
             DownloadSource.DEFAULT: "google/codegemma-7b",
         },
         "CodeGemma-7B-Chat": {
-            DownloadSource.DEFAULT: "google/codegemma-7b-it",
+            DownloadSource.DEFAULT: "google/codegemma-1.1-7b-it",
             DownloadSource.MODELSCOPE: "AI-ModelScope/codegemma-7b-it",
         },
     },
@@ -580,6 +580,9 @@ register_model_group(
         "LLaMA3-8B-Chinese-Chat": {
             DownloadSource.DEFAULT: "shenzhi-wang/Llama3-8B-Chinese-Chat",
             DownloadSource.MODELSCOPE: "LLM-Research/Llama3-8B-Chinese-Chat",
+        },
+        "LLaMA3-70B-Chinese-Chat": {
+            DownloadSource.DEFAULT: "shenzhi-wang/Llama3-70B-Chinese-Chat",
         },
     },
     template="llama3",
@@ -1173,6 +1176,30 @@ register_model_group(
         "Yi-34B-int4-Chat": {
             DownloadSource.DEFAULT: "01-ai/Yi-34B-Chat-4bits",
             DownloadSource.MODELSCOPE: "01ai/Yi-34B-Chat-4bits",
+        },
+        "Yi-1.5-6B": {
+            DownloadSource.DEFAULT: "01-ai/Yi-1.5-6B",
+            DownloadSource.MODELSCOPE: "01ai/Yi-1.5-6B",
+        },
+        "Yi-1.5-9B": {
+            DownloadSource.DEFAULT: "01-ai/Yi-1.5-9B",
+            DownloadSource.MODELSCOPE: "01ai/Yi-1.5-9B",
+        },
+        "Yi-1.5-34B": {
+            DownloadSource.DEFAULT: "01-ai/Yi-1.5-34B",
+            DownloadSource.MODELSCOPE: "01ai/Yi-1.5-34B",
+        },
+        "Yi-1.5-6B-Chat": {
+            DownloadSource.DEFAULT: "01-ai/Yi-1.5-6B-Chat",
+            DownloadSource.MODELSCOPE: "01ai/Yi-1.5-6B-Chat",
+        },
+        "Yi-1.5-9B-Chat": {
+            DownloadSource.DEFAULT: "01-ai/Yi-1.5-9B-Chat",
+            DownloadSource.MODELSCOPE: "01ai/Yi-1.5-9B-Chat",
+        },
+        "Yi-1.5-34B-Chat": {
+            DownloadSource.DEFAULT: "01-ai/Yi-1.5-34B-Chat",
+            DownloadSource.MODELSCOPE: "01ai/Yi-1.5-34B-Chat",
         },
     },
     template="yi",
