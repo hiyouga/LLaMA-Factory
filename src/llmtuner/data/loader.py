@@ -11,7 +11,7 @@ from .aligner import align_dataset
 from .parser import get_dataset_list
 from .preprocess import get_preprocess_and_print_func
 from .template import get_template_and_fix_tokenizer
-from .utils import checksum, merge_dataset
+from .utils import merge_dataset
 
 
 if TYPE_CHECKING:
@@ -61,8 +61,6 @@ def load_single_dataset(
 
         if data_path is None:
             raise ValueError("File extension must be txt, csv, json or jsonl.")
-
-        checksum(data_files, dataset_attr.file_sha1)
     else:
         raise NotImplementedError
 
