@@ -5,7 +5,7 @@
 [![GitHub last commit](https://img.shields.io/github/last-commit/hiyouga/LLaMA-Factory)](https://github.com/hiyouga/LLaMA-Factory/commits/main)
 [![PyPI](https://img.shields.io/pypi/v/llmtuner)](https://pypi.org/project/llmtuner/)
 [![Downloads](https://static.pepy.tech/badge/llmtuner)](https://pypi.org/project/llmtuner/)
-[![Citation](https://img.shields.io/badge/citation-43-green)](#projects-using-llama-factory)
+[![Citation](https://img.shields.io/badge/citation-44-green)](#projects-using-llama-factory)
 [![GitHub pull request](https://img.shields.io/badge/PRs-welcome-blue)](https://github.com/hiyouga/LLaMA-Factory/pulls)
 [![Discord](https://dcbadge.vercel.app/api/server/rKfvV9r9FK?compact=true&style=flat)](https://discord.gg/rKfvV9r9FK)
 [![Twitter](https://img.shields.io/twitter/follow/llamafactory_ai)](https://twitter.com/llamafactory_ai)
@@ -310,13 +310,19 @@ huggingface-cli login
 
 ### Installation
 
+> [!IMPORTANT]
+> Installation is mandatory.
+
 ```bash
 git clone https://github.com/hiyouga/LLaMA-Factory.git
 cd LLaMA-Factory
-pip install -e .[metrics]
+pip install -e .[torch,metrics]
 ```
 
-Extra dependencies available: metrics, deepspeed, bitsandbytes, vllm, galore, badam, gptq, awq, aqlm, qwen, modelscope, quality
+Extra dependencies available: torch, metrics, deepspeed, bitsandbytes, vllm, galore, badam, gptq, awq, aqlm, qwen, modelscope, quality
+
+> [!TIP]
+> Use `pip install --no-deps -e .` to resolve package conflicts.
 
 <details><summary>For Windows users</summary>
 
@@ -363,12 +369,18 @@ See [examples/README.md](examples/README.md) for advanced usage (including distr
 CUDA_VISIBLE_DEVICES=0 GRADIO_SHARE=1 llamafactory-cli webui
 ```
 
-<details><summary>For Alibaba Cloud users</summary>
+<details><summary>For Alibaba Cloud PAI or AutoDL users</summary>
 
-If you encountered display problems in LLaMA Board on Alibaba Cloud, try using the following command to set environment variables before starting LLaMA Board:
+If you encountered display problems in LLaMA Board on Alibaba Cloud PAI, try using the following command to set environment variables before starting LLaMA Board:
 
 ```bash
-export GRADIO_ROOT_PATH=/${JUPYTER_NAME}/proxy/7860/
+export GRADIO_SERVER_PORT=7860 GRADIO_ROOT_PATH=/${JUPYTER_NAME}/proxy/7860/
+```
+
+If you are using AutoDL, please install a specific version of Gradio:
+
+```bash
+pip install gradio==4.10.0
 ```
 
 </details>
@@ -467,6 +479,7 @@ If you have a project that should be incorporated, please contact via email or c
 1. **[CareGPT](https://github.com/WangRongsheng/CareGPT)**: A series of large language models for Chinese medical domain, based on LLaMA2-7B and Baichuan-13B.
 1. **[MachineMindset](https://github.com/PKU-YuanGroup/Machine-Mindset/)**: A series of MBTI Personality large language models, capable of giving any LLM 16 different personality types based on different datasets and training methods.
 1. **[Luminia-13B-v3](https://huggingface.co/Nekochu/Luminia-13B-v3)**: A large language model specialized in generate metadata for stable diffusion. [[🤗Demo]](https://huggingface.co/spaces/Nekochu/Luminia-13B_SD_Prompt)
+1. **[Chinese-LLaVA-Med](https://github.com/BUAADreamer/Chinese-LLaVA-Med)**: A multimodal large language model specialized in Chinese medical domain, based on LLaVA-1.5-7B.
 
 </details>
 
