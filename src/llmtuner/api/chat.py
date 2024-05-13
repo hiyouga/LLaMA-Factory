@@ -3,7 +3,8 @@ import uuid
 from typing import TYPE_CHECKING, AsyncGenerator, Dict, List, Optional, Tuple
 
 from ..data import Role as DataRole
-from ..extras.packages import is_fastapi_availble
+from ..extras.logging import get_logger
+from ..extras.packages import is_fastapi_available
 from .common import dictify, jsonify
 from .protocol import (
     ChatCompletionMessage,
@@ -20,7 +21,7 @@ from .protocol import (
 )
 
 
-if is_fastapi_availble():
+if is_fastapi_available():
     from fastapi import HTTPException, status
 
 
@@ -29,6 +30,7 @@ if TYPE_CHECKING:
     from .protocol import ChatCompletionRequest, ScoreEvaluationRequest
 
 
+logger = get_logger(__name__)
 ROLE_MAPPING = {
     Role.USER: DataRole.USER.value,
     Role.ASSISTANT: DataRole.ASSISTANT.value,
@@ -39,6 +41,8 @@ ROLE_MAPPING = {
 
 
 def _process_request(request: "ChatCompletionRequest") -> Tuple[List[Dict[str, str]], str, str]:
+    logger.info("==== request ====\n{}".format(json.dumps(dictify(request), indent=2, ensure_ascii=False)))
+
     if len(request.messages) == 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid length")
 
