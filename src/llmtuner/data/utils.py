@@ -1,6 +1,5 @@
-import hashlib
 from enum import Enum, unique
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Tuple, Union
 
 from datasets import concatenate_datasets, interleave_datasets
 
@@ -24,21 +23,6 @@ class Role(str, Enum):
     SYSTEM = "system"
     FUNCTION = "function"
     OBSERVATION = "observation"
-
-
-def checksum(data_files: List[str], file_sha1: Optional[str] = None) -> None:
-    if file_sha1 is None:
-        logger.warning("Checksum failed: missing SHA-1 hash value in dataset_info.json.")
-        return
-
-    if len(data_files) != 1:
-        logger.warning("Checksum failed: too many files.")
-        return
-
-    with open(data_files[0], "rb") as f:
-        sha1 = hashlib.sha1(f.read()).hexdigest()
-        if sha1 != file_sha1:
-            logger.warning("Checksum failed: mismatched SHA-1 hash value at {}.".format(data_files[0]))
 
 
 def infer_max_len(source_len: int, target_len: int, max_len: int, reserved_label_len: int) -> Tuple[int, int]:
