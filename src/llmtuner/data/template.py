@@ -308,7 +308,7 @@ def _get_jinja_template(template: "Template", tokenizer: "PreTrainedTokenizer") 
         jinja_template += "{% set system_message = '" + _jinja_escape(template.default_system) + "' %}"
 
     jinja_template += (
-        "{% if messages[0]['role'] == 'system' %}" "{% set system_message = messages[0]['content'] %}" "{% endif %}"
+        "{% if messages[0]['role'] == 'system' %}{% set system_message = messages[0]['content'] %}{% endif %}"
     )
 
     system_message = _convert_slots_to_jinja(template.format_system.apply(), tokenizer, placeholder="system_message")
