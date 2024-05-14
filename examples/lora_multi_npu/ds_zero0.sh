@@ -12,4 +12,4 @@ ASCEND_RT_VISIBLE_DEVICES=0,1,2,3 torchrun \
     --node_rank $RANK \
     --master_addr $MASTER_ADDR \
     --master_port $MASTER_PORT \
-    src/train.py examples/lora_multi_gpu/llama3_lora_sft_ds.yaml
+    src/train.py examples/lora_multi_npu/llama3_lora_sft_ds.yaml
