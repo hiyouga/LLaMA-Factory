@@ -90,7 +90,7 @@ class CustomKTOTrainer(KTOTrainer):
             A tensor of shape (batch_size,) containing the cross-entropy loss of each samples.
         """
         all_logps = self.get_batch_logps(chosen_logits, chosen_labels, average_log_prob=True)
-        return -all_logps
+        return -all_logps.nanmean()
 
 
     def forward(
@@ -181,9 +181,9 @@ class CustomKTOTrainer(KTOTrainer):
             reference_rejected_logps,
             reference_KL_logps,
         )
+        losses = losses.nanmean()
         if self.ftx_gamma > 1e-6:
-            print(self.sft_loss(policy_chosen_logits, batch["labels"]))
-            losses += self.ftx_gamma * self.sft_loss(policy_chosen_logits, batch["labels"])
+            losses += self.ftx_gamma * self.sft_loss(policy_chosen_logits, batch["labels"][batch['tag']])
 
 
         num_chosen = torch.Tensor([len(chosen_rewards)]).to(self.accelerator.device)
@@ -204,4 +204,4 @@ class CustomKTOTrainer(KTOTrainer):
 
         metrics["kl"] = kl.item()
 
-        return losses.nanmean(), metrics
+        return losses, metrics
