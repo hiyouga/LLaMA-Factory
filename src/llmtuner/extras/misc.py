@@ -58,7 +58,7 @@ class AverageMeter:
 
 
 def check_dependencies() -> None:
-    if int(os.environ.get("DISABLE_VERSION_CHECK", "0")):
+    if os.environ.get("DISABLE_VERSION_CHECK", "0").lower() in ["true", "1"]:
         logger.warning("Version checking has been disabled, may lead to unexpected behaviors.")
     else:
         require_version("transformers>=4.37.2", "To fix: pip install transformers>=4.37.2")
