@@ -53,7 +53,7 @@ class LogCallback(TrainerCallback):
         self.aborted = False
         self.do_train = False
         """ Web UI """
-        self.webui_mode = bool(int(os.environ.get("LLAMABOARD_ENABLED", "0")))
+        self.webui_mode = os.environ.get("LLAMABOARD_ENABLED", "0").lower() in ["true", "1"]
         if self.webui_mode:
             signal.signal(signal.SIGABRT, self._set_abort)
             self.logger_handler = LoggerHandler(output_dir)
