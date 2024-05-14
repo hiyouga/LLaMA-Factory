@@ -351,10 +351,9 @@ To utilize Ascend NPU devices for (distributed) training and inference, you need
 | torch-npu    | 2.2.0   | 2.2.0     |
 | deepspeed    | 0.13.2  | 0.13.2    |
 
-> [!NOTE]
-> Remember to use `ASCEND_RT_VISIBLE_DEVICES` instead of `CUDA_VISIBLE_DEVICES` to specify the device to use.
->
-> If you cannot infer model on NPU devices, try setting `do_sample: false` in the configurations.
+Remember to use `ASCEND_RT_VISIBLE_DEVICES` instead of `CUDA_VISIBLE_DEVICES` to specify the device to use.
+
+If you cannot infer model on NPU devices, try setting `do_sample: false` in the configurations.
 
 </details>
 
