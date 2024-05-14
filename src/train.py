@@ -1,5 +1,8 @@
 import os
+
+import torch
 from transformers import is_torch_npu_available
+
 from llmtuner.train.tuner import run_exp
 
 
