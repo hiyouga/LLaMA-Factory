@@ -351,10 +351,9 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 | torch-npu    | 2.2.0   | 2.2.0     |
 | deepspeed    | 0.13.2  | 0.13.2    |
 
-> [!NOTE]
-> 请记得使用 `ASCEND_RT_VISIBLE_DEVICES` 而非 `CUDA_VISIBLE_DEVICES` 来指定您使用的设备。
->
-> 如果遇到无法正常推理的情况，请尝试设置 `do_sample: false`。
+请记得使用 `ASCEND_RT_VISIBLE_DEVICES` 而非 `CUDA_VISIBLE_DEVICES` 来指定您使用的设备。
+
+如果遇到无法正常推理的情况，请尝试设置 `do_sample: false`。
 
 </details>
 
