@@ -51,7 +51,7 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    api_key = os.environ.get("API_KEY", None)
+    api_key = os.environ.get("API_KEY")
     security = HTTPBearer(auto_error=False)
 
     async def verify_api_key(auth: Annotated[Optional[HTTPAuthorizationCredentials], Depends(security)]):

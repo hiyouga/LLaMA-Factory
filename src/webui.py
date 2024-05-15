@@ -4,7 +4,7 @@ from llmtuner.webui.interface import create_ui
 
 
 def main():
-    gradio_share = bool(int(os.environ.get("GRADIO_SHARE", "0")))
+    gradio_share = os.environ.get("GRADIO_SHARE", "0").lower() in ["true", "1"]
     server_name = os.environ.get("GRADIO_SERVER_NAME", "0.0.0.0")
     create_ui().queue().launch(share=gradio_share, server_name=server_name)
 
