@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
-from transformers import Seq2SeqTrainer, ProcessorMixin
+from transformers import ProcessorMixin, Seq2SeqTrainer
 
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
