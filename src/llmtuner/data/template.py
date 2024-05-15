@@ -868,6 +868,7 @@ _register_template(
         "仔细阅读所有的图像，并对人类的问题做出信息丰富、有帮助、详细的和礼貌的回答。\n\n"
     ),
     stop_words=["###"],
+    efficient_eos=True,
 )
 
 
