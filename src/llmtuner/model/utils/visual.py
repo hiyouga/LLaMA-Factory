@@ -8,7 +8,7 @@ from ...extras.logging import get_logger
 
 
 if TYPE_CHECKING:
-    from transformers import LlavaConfig, PretrainedConfig, PreTrainedModel, LlavaForConditionalGeneration
+    from transformers import LlavaConfig, PretrainedConfig, PreTrainedModel
 
     from ...hparams import ModelArguments
 
