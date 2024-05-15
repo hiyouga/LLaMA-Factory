@@ -107,6 +107,7 @@ class Runner:
             model_name_or_path=get("top.model_path"),
             adapter_name_or_path=adapter_name_or_path,
             cache_dir=user_config.get("cache_dir", None),
+            preprocessing_num_workers=16,
             finetuning_type=get("top.finetuning_type"),
             quantization_bit=int(get("top.quantization_bit")) if get("top.quantization_bit") in ["8", "4"] else None,
             template=get("top.template"),
@@ -141,6 +142,7 @@ class Runner:
             fp16=(get("train.compute_type") == "fp16"),
             bf16=(get("train.compute_type") == "bf16"),
             pure_bf16=(get("train.compute_type") == "pure_bf16"),
+            plot_loss=True,
         )
 
         if args["finetuning_type"] == "freeze":
@@ -214,6 +216,7 @@ class Runner:
             model_name_or_path=get("top.model_path"),
             adapter_name_or_path=adapter_name_or_path,
             cache_dir=user_config.get("cache_dir", None),
+            preprocessing_num_workers=16,
             finetuning_type=get("top.finetuning_type"),
             quantization_bit=int(get("top.quantization_bit")) if get("top.quantization_bit") in ["8", "4"] else None,
             template=get("top.template"),
