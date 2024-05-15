@@ -13,6 +13,7 @@ from ..utils import create_custom_optimzer, create_custom_scheduler
 
 
 if TYPE_CHECKING:
+    from transformers import ProcessorMixin
     from transformers.trainer import PredictionOutput
 
     from ...hparams import FinetuningArguments
@@ -26,9 +27,12 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
     Inherits Seq2SeqTrainer to compute generative metrics such as BLEU and ROUGE.
     """
 
-    def __init__(self, finetuning_args: "FinetuningArguments", **kwargs) -> None:
+    def __init__(
+        self, finetuning_args: "FinetuningArguments", processor: Optional["ProcessorMixin"], **kwargs
+    ) -> None:
         super().__init__(**kwargs)
         self.finetuning_args = finetuning_args
+        self.processor = processor
         if finetuning_args.use_badam:
             from badam import clip_grad_norm_for_sparse_tensor
 
@@ -44,6 +48,12 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
     ) -> "torch.optim.lr_scheduler.LRScheduler":
         create_custom_scheduler(self.args, num_training_steps, optimizer)
         return super().create_scheduler(num_training_steps, optimizer)
+
+    def _save(self, output_dir: Optional[str] = None, state_dict: Optional[Dict[str, "torch.Tensor"]] = None) -> None:
+        super()._save(output_dir, state_dict)
+        if self.processor is not None:
+            output_dir = output_dir if output_dir is not None else self.args.output_dir
+            getattr(self.processor, "image_processor").save_pretrained(output_dir)
 
     def prediction_step(
         self,
