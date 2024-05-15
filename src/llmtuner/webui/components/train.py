@@ -124,13 +124,17 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
 
     with gr.Accordion(open=False) as freeze_tab:
         with gr.Row():
-            num_layer_trainable = gr.Slider(minimum=1, maximum=128, value=2, step=1)
-            name_module_trainable = gr.Textbox(value="all")
+            freeze_trainable_layers = gr.Slider(minimum=-128, maximum=128, value=2, step=1)
+            freeze_trainable_modules = gr.Textbox(value="all")
+            freeze_extra_modules = gr.Textbox()
 
-    input_elems.update({num_layer_trainable, name_module_trainable})
+    input_elems.update({freeze_trainable_layers, freeze_trainable_modules, freeze_extra_modules})
     elem_dict.update(
         dict(
-            freeze_tab=freeze_tab, num_layer_trainable=num_layer_trainable, name_module_trainable=name_module_trainable
+            freeze_tab=freeze_tab,
+            freeze_trainable_layers=freeze_trainable_layers,
+            freeze_trainable_modules=freeze_trainable_modules,
+            freeze_extra_modules=freeze_extra_modules,
         )
     )
 

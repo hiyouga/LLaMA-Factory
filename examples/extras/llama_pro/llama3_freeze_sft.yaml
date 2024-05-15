@@ -5,8 +5,8 @@ model_name_or_path: models/llama3-8b-instruct-pro
 stage: sft
 do_train: true
 finetuning_type: freeze
-name_module_trainable: all
-num_layer_trainable: 8
+freeze_trainable_layers: 8
+freeze_trainable_modules: all
 use_llama_pro: true
 
 # dataset

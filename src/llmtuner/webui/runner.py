@@ -146,8 +146,9 @@ class Runner:
         )
 
         if args["finetuning_type"] == "freeze":
-            args["num_layer_trainable"] = get("train.num_layer_trainable")
-            args["name_module_trainable"] = get("train.name_module_trainable")
+            args["freeze_trainable_layers"] = get("train.freeze_trainable_layers")
+            args["freeze_trainable_modules"] = get("train.freeze_trainable_modules")
+            args["freeze_extra_modules"] = get("train.freeze_extra_modules") or None
         elif args["finetuning_type"] == "lora":
             args["lora_rank"] = get("train.lora_rank")
             args["lora_alpha"] = get("train.lora_alpha")

@@ -572,24 +572,24 @@ LOCALES = {
             "label": "部分参数微调设置",
         },
     },
-    "num_layer_trainable": {
+    "freeze_trainable_layers": {
         "en": {
             "label": "Trainable layers",
-            "info": "The number of trainable layers.",
+            "info": "Number of the last(+)/first(-) hidden layers to be set as trainable.",
         },
         "ru": {
             "label": "Обучаемые слои",
-            "info": "Количество обучаемых слоев.",
+            "info": "Количество последних (+)/первых (-) скрытых слоев, которые будут установлены как обучаемые.",
         },
         "zh": {
             "label": "可训练层数",
-            "info": "可训练模型层的数量。",
+            "info": "最末尾（+）/最前端（-）可训练隐藏层的数量。",
         },
     },
-    "name_module_trainable": {
+    "freeze_trainable_modules": {
         "en": {
             "label": "Trainable modules",
-            "info": "The name of trainable modules. Use commas to separate multiple modules.",
+            "info": "Name(s) of trainable modules. Use commas to separate multiple modules.",
         },
         "ru": {
             "label": "Обучаемые модули",
@@ -598,6 +598,26 @@ LOCALES = {
         "zh": {
             "label": "可训练模块",
             "info": "可训练模块的名称。使用英文逗号分隔多个名称。",
+        },
+    },
+    "freeze_extra_modules": {
+        "en": {
+            "label": "Extra modules (optional)",
+            "info": (
+                "Name(s) of modules apart from hidden layers to be set as trainable. "
+                "Use commas to separate multiple modules."
+            ),
+        },
+        "ru": {
+            "label": "Дополнительные модули (опционально)",
+            "info": (
+                "Имена модулей, кроме скрытых слоев, которые следует установить в качестве обучаемых. "
+                "Используйте запятые для разделения нескольких модулей."
+            ),
+        },
+        "zh": {
+            "label": "额外模块（非必填）",
+            "info": "除隐藏层以外的可训练模块名称。使用英文逗号分隔多个名称。",
         },
     },
     "lora_tab": {
