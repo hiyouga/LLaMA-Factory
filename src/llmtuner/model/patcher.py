@@ -18,7 +18,7 @@ from .utils.moe import add_z3_leaf_module, configure_moe
 from .utils.quantization import configure_quantization
 from .utils.rope import configure_rope
 from .utils.valuehead import prepare_valuehead_model
-from .utils.visual import autocast_projector_dtype, configure_hidden_size
+from .utils.visual import autocast_projector_dtype, configure_visual_model
 
 
 if TYPE_CHECKING:
@@ -55,7 +55,7 @@ def patch_config(
     configure_longlora(config, model_args, is_trainable)
     configure_quantization(config, tokenizer, model_args, init_kwargs)
     configure_moe(config, model_args, is_trainable)
-    configure_hidden_size(config)
+    configure_visual_model(config)
 
     if model_args.use_cache and not is_trainable:
         setattr(config, "use_cache", True)
