@@ -5,9 +5,9 @@ from setuptools import find_packages, setup
 
 
 def get_version():
-    with open(os.path.join("src", "llmtuner", "__init__.py"), "r", encoding="utf-8") as f:
+    with open(os.path.join("src", "llmtuner", "cli.py"), "r", encoding="utf-8") as f:
         file_content = f.read()
-        pattern = r"{0}\W*=\W*\"([^\"]+)\"".format("__version__")
+        pattern = r"{}\W*=\W*\"([^\"]+)\"".format("VERSION")
         (version,) = re.findall(pattern, file_content)
         return version
 
