@@ -58,7 +58,7 @@ class LlavaMultiModalProjectorForYiVLForVLLM(LlavaMultiModalProjectorForYiVL):
         self.linear_2 = torch.nn.LayerNorm(text_hidden_size, bias=True)
         self.linear_3 = torch.nn.Linear(text_hidden_size, text_hidden_size, bias=True)
         self.linear_4 = torch.nn.LayerNorm(text_hidden_size, bias=True)
-        self.act = torch.nn.GELU()
+        self.act = ACT2FN[projector_hidden_act]
 
 
 def autocast_projector_dtype(

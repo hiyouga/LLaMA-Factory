@@ -1215,6 +1215,9 @@ register_model_group(
         "YiVL-6B-Chat": {
             DownloadSource.DEFAULT: "BUAADreamer/Yi-VL-6B-hf",
         },
+        "YiVL-34B-Chat": {
+            DownloadSource.DEFAULT: "BUAADreamer/Yi-VL-34B-hf",
+        },
     },
     template="yi_vl",
     vision=True,
