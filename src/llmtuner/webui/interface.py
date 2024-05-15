@@ -73,7 +73,7 @@ def create_web_demo() -> gr.Blocks:
 def run_web_ui() -> None:
     gradio_share = os.environ.get("GRADIO_SHARE", "0").lower() in ["true", "1"]
     server_name = os.environ.get("GRADIO_SERVER_NAME", "0.0.0.0")
-    root_path = os.environ.get("GRADIO_ROOT_PATH", "/")
+    root_path = os.environ.get("GRADIO_ROOT_PATH", "")
     create_ui().queue().launch(share=gradio_share, server_name=server_name, root_path=root_path)
 
 
