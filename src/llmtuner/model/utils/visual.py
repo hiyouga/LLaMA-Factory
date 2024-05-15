@@ -76,7 +76,7 @@ def autocast_projector_dtype(
 
 
 def configure_visual_model(config: "PretrainedConfig") -> None:
-    if getattr(config, "model_type", None) == "llava":
+    if getattr(config, "model_type", None) == "llava":  # required for ds zero3 and valuehead models
         setattr(config, "hidden_size", getattr(config.text_config, "hidden_size", None))
 
     if getattr(config, "is_yi_vl_derived_model", None):
