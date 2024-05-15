@@ -7,6 +7,7 @@ Make sure to execute these commands in the `LLaMA-Factory` directory.
 - [LoRA Fine-Tuning on A Single GPU](#lora-fine-tuning-on-a-single-gpu)
 - [QLoRA Fine-Tuning on a Single GPU](#qlora-fine-tuning-on-a-single-gpu)
 - [LoRA Fine-Tuning on Multiple GPUs](#lora-fine-tuning-on-multiple-gpus)
+- [LoRA Fine-Tuning on Multiple NPUs](#lora-fine-tuning-on-multiple-npus)
 - [Full-Parameter Fine-Tuning on Multiple GPUs](#full-parameter-fine-tuning-on-multiple-gpus)
 - [Merging LoRA Adapters and Quantization](#merging-lora-adapters-and-quantization)
 - [Inferring LoRA Fine-Tuned Models](#inferring-lora-fine-tuned-models)
@@ -122,6 +123,14 @@ bash examples/lora_multi_gpu/multi_node.sh
 
 ```bash
 bash examples/lora_multi_gpu/ds_zero3.sh
+```
+
+### LoRA Fine-Tuning on Multiple NPUs
+
+#### Supervised Fine-Tuning with DeepSpeed ZeRO-0
+
+```bash
+bash examples/lora_multi_npu/ds_zero0.sh
 ```
 
 ### Full-Parameter Fine-Tuning on Multiple GPUs
