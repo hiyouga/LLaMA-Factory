@@ -11,7 +11,7 @@ from ..utils import create_custom_optimzer, create_custom_scheduler
 
 
 if TYPE_CHECKING:
-    from transformers.modeling_utils import PreTrainedModel
+    from transformers import PreTrainedModel, ProcessorMixin
     from transformers.trainer import PredictionOutput
 
     from ...hparams import FinetuningArguments
@@ -25,9 +25,12 @@ class PairwiseTrainer(Trainer):
     Inherits Trainer to compute pairwise loss.
     """
 
-    def __init__(self, finetuning_args: "FinetuningArguments", **kwargs) -> None:
+    def __init__(
+        self, finetuning_args: "FinetuningArguments", processor: Optional["ProcessorMixin"], **kwargs
+    ) -> None:
         super().__init__(**kwargs)
         self.finetuning_args = finetuning_args
+        self.processor = processor
         self.can_return_loss = True  # override property to return eval_loss
         if finetuning_args.use_badam:
             from badam import clip_grad_norm_for_sparse_tensor
@@ -44,6 +47,12 @@ class PairwiseTrainer(Trainer):
     ) -> "torch.optim.lr_scheduler.LRScheduler":
         create_custom_scheduler(self.args, num_training_steps, optimizer)
         return super().create_scheduler(num_training_steps, optimizer)
+
+    def _save(self, output_dir: Optional[str] = None, state_dict: Optional[Dict[str, "torch.Tensor"]] = None) -> None:
+        super()._save(output_dir, state_dict)
+        if self.processor is not None:
+            output_dir = output_dir if output_dir is not None else self.args.output_dir
+            getattr(self.processor, "image_processor").save_pretrained(output_dir)
 
     def compute_loss(
         self, model: "PreTrainedModel", inputs: Dict[str, torch.Tensor], return_outputs: bool = False

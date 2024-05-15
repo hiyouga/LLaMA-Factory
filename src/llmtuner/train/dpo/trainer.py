@@ -13,7 +13,7 @@ from ..utils import create_custom_optimzer, create_custom_scheduler
 
 
 if TYPE_CHECKING:
-    from transformers import PreTrainedModel
+    from transformers import PreTrainedModel, ProcessorMixin
 
     from ...hparams import FinetuningArguments
 
@@ -24,6 +24,7 @@ class CustomDPOTrainer(DPOTrainer):
         model: Union["PreTrainedModel", torch.nn.Module],
         ref_model: Optional[Union["PreTrainedModel", torch.nn.Module]],
         finetuning_args: "FinetuningArguments",
+        processor: Optional["ProcessorMixin"],
         disable_dropout: bool = True,
         **kwargs,
     ):
@@ -33,6 +34,7 @@ class CustomDPOTrainer(DPOTrainer):
                 disable_dropout_in_model(ref_model)
 
         self.finetuning_args = finetuning_args
+        self.processor = processor
         self.reference_free = False
         self.use_dpo_data_collator = True  # hack to avoid warning
         self.generate_during_eval = False  # disable at evaluation
@@ -79,6 +81,12 @@ class CustomDPOTrainer(DPOTrainer):
     ) -> "torch.optim.lr_scheduler.LRScheduler":
         create_custom_scheduler(self.args, num_training_steps, optimizer)
         return super().create_scheduler(num_training_steps, optimizer)
+
+    def _save(self, output_dir: Optional[str] = None, state_dict: Optional[Dict[str, "torch.Tensor"]] = None) -> None:
+        super()._save(output_dir, state_dict)
+        if self.processor is not None:
+            output_dir = output_dir if output_dir is not None else self.args.output_dir
+            getattr(self.processor, "image_processor").save_pretrained(output_dir)
 
     def sft_loss(self, chosen_logits: "torch.FloatTensor", chosen_labels: "torch.LongTensor") -> "torch.Tensor":
         r"""

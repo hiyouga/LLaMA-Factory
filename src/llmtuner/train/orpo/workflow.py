@@ -43,9 +43,9 @@ def run_orpo(
         model=model,
         args=training_args,
         finetuning_args=finetuning_args,
-        tokenizer=tokenizer,
         data_collator=data_collator,
         callbacks=callbacks,
+        **tokenizer_module,
         **split_dataset(dataset, data_args, training_args),
     )
 
