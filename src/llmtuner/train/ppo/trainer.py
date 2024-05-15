@@ -23,7 +23,13 @@ from .utils import dump_layernorm, get_rewards_from_server, replace_model, resto
 
 if TYPE_CHECKING:
     from datasets import Dataset
-    from transformers import DataCollatorWithPadding, PreTrainedTokenizer, Seq2SeqTrainingArguments, TrainerCallback
+    from transformers import (
+        DataCollatorWithPadding,
+        PreTrainedTokenizer,
+        ProcessorMixin,
+        Seq2SeqTrainingArguments,
+        TrainerCallback,
+    )
     from trl import AutoModelForCausalLMWithValueHead
 
     from ...hparams import FinetuningArguments, GeneratingArguments, ModelArguments
@@ -48,6 +54,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         reward_model: Optional["AutoModelForCausalLMWithValueHead"],
         ref_model: Optional["AutoModelForCausalLMWithValueHead"],
         tokenizer: "PreTrainedTokenizer",
+        processor: Optional["ProcessorMixin"],
         dataset: "Dataset",
         data_collator: "DataCollatorWithPadding",
     ):
@@ -97,6 +104,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         self.finetuning_args = finetuning_args
         self.reward_model = reward_model
         self.current_device = get_current_device()  # patch for deepspeed training
+        self.processor = processor
 
         self.generation_config = GenerationConfig(
             pad_token_id=self.tokenizer.pad_token_id,
@@ -294,6 +302,12 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             num_training_steps=num_training_steps,
         )
         return lr_scheduler
+
+    def _save(self, output_dir: Optional[str] = None, state_dict: Optional[Dict[str, "torch.Tensor"]] = None) -> None:
+        super()._save(output_dir, state_dict)
+        if self.processor is not None:
+            output_dir = output_dir if output_dir is not None else self.args.output_dir
+            getattr(self.processor, "image_processor").save_pretrained(output_dir)
 
     @torch.no_grad()
     def get_inputs(self, batch: Dict[str, torch.Tensor]) -> Tuple[List[torch.Tensor], List[torch.Tensor]]:
