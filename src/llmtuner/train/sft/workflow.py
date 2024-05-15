@@ -55,10 +55,10 @@ def run_sft(
         model=model,
         args=training_args,
         finetuning_args=finetuning_args,
-        tokenizer=tokenizer,
         data_collator=data_collator,
         callbacks=callbacks,
         compute_metrics=ComputeMetrics(tokenizer) if training_args.predict_with_generate else None,
+        **tokenizer_module,
         **split_dataset(dataset, data_args, training_args),
     )
 
