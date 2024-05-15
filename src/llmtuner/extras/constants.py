@@ -26,8 +26,6 @@ LAYERNORM_NAMES = {"norm", "ln"}
 
 METHODS = ["full", "freeze", "lora"]
 
-MLLM_LIST = ["LLaVA1.5"]
-
 MOD_SUPPORTED_MODELS = ["bloom", "falcon", "gemma", "llama", "mistral", "mixtral", "phi", "starcoder2"]
 
 PEFT_METHODS = ["lora"]
@@ -59,6 +57,8 @@ V_HEAD_WEIGHTS_NAME = "value_head.bin"
 
 V_HEAD_SAFE_WEIGHTS_NAME = "value_head.safetensors"
 
+VISION_MODELS = set()
+
 
 class DownloadSource(str, Enum):
     DEFAULT = "hf"
@@ -69,6 +69,7 @@ def register_model_group(
     models: Dict[str, Dict[DownloadSource, str]],
     module: Optional[str] = None,
     template: Optional[str] = None,
+    vision: bool = False,
 ) -> None:
     prefix = None
     for name, path in models.items():
@@ -81,6 +82,8 @@ def register_model_group(
         DEFAULT_MODULE[prefix] = module
     if template is not None:
         DEFAULT_TEMPLATE[prefix] = template
+    if vision:
+        VISION_MODELS.add(prefix)
 
 
 register_model_group(
@@ -599,6 +602,7 @@ register_model_group(
         },
     },
     template="vicuna",
+    vision=True,
 )
 
 
@@ -1203,6 +1207,17 @@ register_model_group(
         },
     },
     template="yi",
+)
+
+
+register_model_group(
+    models={
+        "YiVL-6B-Chat": {
+            DownloadSource.DEFAULT: "BUAADreamer/Yi-VL-6B-hf",
+        },
+    },
+    template="yi_vl",
+    vision=True,
 )
 
 

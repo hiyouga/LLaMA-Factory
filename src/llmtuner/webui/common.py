@@ -10,11 +10,11 @@ from ..extras.constants import (
     DATA_CONFIG,
     DEFAULT_MODULE,
     DEFAULT_TEMPLATE,
-    MLLM_LIST,
     PEFT_METHODS,
     STAGES_USE_PAIR_DATA,
     SUPPORTED_MODELS,
     TRAINING_STAGES,
+    VISION_MODELS,
     DownloadSource,
 )
 from ..extras.logging import get_logger
@@ -112,7 +112,7 @@ def get_template(model_name: str) -> str:
 
 
 def get_visual(model_name: str) -> bool:
-    return get_prefix(model_name) in MLLM_LIST
+    return get_prefix(model_name) in VISION_MODELS
 
 
 def list_adapters(model_name: str, finetuning_type: str) -> "gr.Dropdown":
