@@ -30,7 +30,6 @@ def run_sft(
 ):
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
-    processor = tokenizer_module["processor"]
     dataset = get_dataset(model_args, data_args, training_args, stage="sft", **tokenizer_module)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
 
@@ -56,11 +55,10 @@ def run_sft(
         model=model,
         args=training_args,
         finetuning_args=finetuning_args,
-        processor=processor,
-        tokenizer=tokenizer,
         data_collator=data_collator,
         callbacks=callbacks,
         compute_metrics=ComputeMetrics(tokenizer) if training_args.predict_with_generate else None,
+        **tokenizer_module,
         **split_dataset(dataset, data_args, training_args),
     )
 
