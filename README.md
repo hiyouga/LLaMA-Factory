@@ -342,7 +342,7 @@ To enable FlashAttention-2 on the Windows platform, you need to install the prec
 
 <details><summary>For Ascend NPU users</summary>
 
-To utilize Ascend NPU devices for (distributed) training and inference, you need to install the **[torch-npu](https://gitee.com/ascend/pytorch)** package and the **[Ascend CANN Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**.
+To utilize Ascend NPU devices for (distributed) training and inference, you need to install the **[torch-npu](https://gitee.com/ascend/pytorch)** library and the **[Ascend CANN Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**.
 
 | Requirement  | Minimum | Recommend |
 | ------------ | ------- | --------- |
@@ -350,6 +350,11 @@ To utilize Ascend NPU devices for (distributed) training and inference, you need
 | torch        | 2.2.0   | 2.2.0     |
 | torch-npu    | 2.2.0   | 2.2.0     |
 | deepspeed    | 0.13.2  | 0.13.2    |
+
+Docker image:
+
+- 32GB: [Download page](http://mirrors.cn-central-221.ovaijisuan.com/detail/130.html)
+- 64GB: Coming soon
 
 Remember to use `ASCEND_RT_VISIBLE_DEVICES` instead of `CUDA_VISIBLE_DEVICES` to specify the device to use.
 
