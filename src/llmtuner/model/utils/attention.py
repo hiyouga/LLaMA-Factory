@@ -22,7 +22,7 @@ def configure_attn_implementation(config: "PretrainedConfig", model_args: "Model
 
     elif model_args.flash_attn == "sdpa":
         if not is_sdpa_available():
-            logger.warning("Torch>=2.1.1 is required for SDPA attention.")
+            logger.warning("torch>=2.1.1 is required for SDPA attention.")
             return
 
         requested_attn_implementation = "sdpa"
@@ -52,4 +52,4 @@ def print_attn_implementation(config: "PretrainedConfig") -> None:
     elif attn_implementation == "sdpa":
         logger.info("Using torch SDPA for faster training and inference.")
     else:
-        logger.info("Using vanilla Attention implementation.")
+        logger.info("Using vanilla attention implementation.")
