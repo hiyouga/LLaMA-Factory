@@ -29,7 +29,8 @@ def autocast_projector_dtype(
     ) -> "torch.Tensor":
         return output.to(model_args.compute_dtype)
 
-    if hasattr(model, mm_projector_name) and getattr(model.config, "quantization_method", None):
+    if hasattr(model, mm_projector_name) and (getattr(model.config, "quantization_method", None)
+                                              or "Yi" in getattr(model.config.text_config, "_name_or_path", None)):
         logger.info("Casting multimodal projector outputs in {}.".format(model_args.compute_dtype))
         mm_projector: "torch.nn.Module" = getattr(model, mm_projector_name)
         mm_projector.register_forward_hook(_mm_projector_forward_post_hook)

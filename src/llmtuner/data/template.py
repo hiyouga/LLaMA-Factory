@@ -859,7 +859,7 @@ _register_template(
 _register_template(
     name="yivl",
     format_user=StringFormatter(slots=["### Human: {{content}}\n### Assistant:"]),
-    format_assistant=StringFormatter(slots=[" {{content}}"]),
+    format_assistant=StringFormatter(slots=[" {{content}}\n"]),
     stop_words=["###"],
     default_system=(
         "This is a chat between an inquisitive human and an AI assistant. "
