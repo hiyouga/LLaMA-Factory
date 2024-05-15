@@ -49,9 +49,9 @@ def run_ppo(
         model=model,
         reward_model=reward_model,
         ref_model=ref_model,
-        tokenizer=tokenizer,
         dataset=dataset,
         data_collator=data_collator,
+        **tokenizer_module,
     )
 
     # Training
