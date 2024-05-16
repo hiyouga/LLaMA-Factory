@@ -375,6 +375,9 @@ register_model_group(
             DownloadSource.DEFAULT: "tiiuae/falcon-7b",
             DownloadSource.MODELSCOPE: "AI-ModelScope/falcon-7b",
         },
+        "Falcon-11B": {
+            DownloadSource.DEFAULT: "tiiuae/falcon-11B",
+        },
         "Falcon-40B": {
             DownloadSource.DEFAULT: "tiiuae/falcon-40b",
             DownloadSource.MODELSCOPE: "AI-ModelScope/falcon-40b",
