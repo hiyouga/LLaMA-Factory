@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from datasets import Dataset, IterableDataset
     from transformers import Seq2SeqTrainingArguments
 
-    from llmtuner.hparams import DataArguments
+    from ..hparams import DataArguments
 
 
 logger = get_logger(__name__)
