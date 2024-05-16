@@ -6,7 +6,7 @@ stage: sft
 do_train: true
 finetuning_type: full
 use_badam: true
-badam_switch_mode: descending
+badam_switch_mode: ascending
 badam_switch_interval: 50
 badam_verbose: 2
 
