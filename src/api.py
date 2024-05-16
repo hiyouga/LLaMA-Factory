@@ -2,8 +2,8 @@ import os
 
 import uvicorn
 
-from llmtuner.api.app import create_app
-from llmtuner.chat import ChatModel
+from llamafactory.api.app import create_app
+from llamafactory.chat import ChatModel
 
 
 def main():

@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 
 
 def get_version():
-    with open(os.path.join("src", "llmtuner", "cli.py"), "r", encoding="utf-8") as f:
+    with open(os.path.join("src", "llamafactory", "cli.py"), "r", encoding="utf-8") as f:
         file_content = f.read()
         pattern = r"{}\W*=\W*\"([^\"]+)\"".format("VERSION")
         (version,) = re.findall(pattern, file_content)
@@ -38,7 +38,7 @@ extra_require = {
 
 def main():
     setup(
-        name="llmtuner",
+        name="llamafactory",
         version=get_version(),
         author="hiyouga",
         author_email="hiyouga" "@" "buaa.edu.cn",
@@ -53,7 +53,7 @@ def main():
         python_requires=">=3.8.0",
         install_requires=get_requires(),
         extras_require=extra_require,
-        entry_points={"console_scripts": ["llamafactory-cli = llmtuner.cli:main"]},
+        entry_points={"console_scripts": ["llamafactory-cli = llamafactory.cli:main"]},
         classifiers=[
             "Development Status :: 4 - Beta",
             "Intended Audience :: Developers",
