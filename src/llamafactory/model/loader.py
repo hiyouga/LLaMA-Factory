@@ -170,6 +170,7 @@ def load_model(
         )
     else:
         param_stats = "all params: {:d}".format(all_param)
+
     logger.info(param_stats)
 
     if model_args.print_param_status:
