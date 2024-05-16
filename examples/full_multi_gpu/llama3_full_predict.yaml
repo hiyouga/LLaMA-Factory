@@ -1,12 +1,12 @@
-# model
+### model
 model_name_or_path: saves/llama3-8b/full/sft
 
-# method
+### method
 stage: sft
 do_predict: true
 finetuning_type: full
 
-# dataset
+### dataset
 dataset: identity,alpaca_gpt4_en
 template: llama3
 cutoff_len: 1024
@@ -14,10 +14,10 @@ max_samples: 50
 overwrite_cache: true
 preprocessing_num_workers: 16
 
-# output
+### output
 output_dir: saves/llama3-8b/full/predict
 overwrite_output_dir: true
 
-# eval
+### eval
 per_device_eval_batch_size: 1
 predict_with_generate: true
