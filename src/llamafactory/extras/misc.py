@@ -30,7 +30,7 @@ except Exception:
 if TYPE_CHECKING:
     from trl import AutoModelForCausalLMWithValueHead
 
-    from llmtuner.hparams import ModelArguments
+    from ..hparams import ModelArguments
 
 
 logger = get_logger(__name__)
