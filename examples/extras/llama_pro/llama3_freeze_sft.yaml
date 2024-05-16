@@ -1,7 +1,7 @@
-# model
+### model
 model_name_or_path: models/llama3-8b-instruct-pro
 
-# method
+### method
 stage: sft
 do_train: true
 finetuning_type: freeze
@@ -9,7 +9,7 @@ freeze_trainable_layers: 8
 freeze_trainable_modules: all
 use_llama_pro: true
 
-# dataset
+### dataset
 dataset: identity,alpaca_gpt4_en
 template: llama3
 cutoff_len: 1024
@@ -17,14 +17,14 @@ max_samples: 1000
 overwrite_cache: true
 preprocessing_num_workers: 16
 
-# output
+### output
 output_dir: saves/llama3-8b-instruct-pro/freeze/sft
 logging_steps: 10
 save_steps: 500
 plot_loss: true
 overwrite_output_dir: true
 
-# train
+### train
 per_device_train_batch_size: 1
 gradient_accumulation_steps: 8
 learning_rate: 0.0001
@@ -33,7 +33,7 @@ lr_scheduler_type: cosine
 warmup_steps: 0.1
 fp16: true
 
-# eval
+### eval
 val_size: 0.1
 per_device_eval_batch_size: 1
 evaluation_strategy: steps
