@@ -171,22 +171,24 @@ CUDA_VISIBLE_DEVICES=0 llamafactory-cli export examples/merge_lora/llama3_gptq.y
 
 ### Inferring LoRA Fine-Tuned Models
 
+Use `CUDA_VISIBLE_DEVICES=0,1` to infer models on multiple devices.
+
 #### Use CLI
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 llamafactory-cli chat examples/merge_lora/llama3_lora_sft.yaml
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli chat examples/inference/llama3_lora_sft.yaml
 ```
 
 #### Use Web UI
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 llamafactory-cli webchat examples/merge_lora/llama3_lora_sft.yaml
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli webchat examples/inference/llama3_lora_sft.yaml
 ```
 
 #### Launch OpenAI-style API
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 llamafactory-cli api examples/merge_lora/llama3_lora_sft.yaml
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli api examples/inference/llama3_lora_sft.yaml
 ```
 
 ### Extras
