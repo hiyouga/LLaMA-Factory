@@ -171,22 +171,24 @@ CUDA_VISIBLE_DEVICES=0 llamafactory-cli export examples/merge_lora/llama3_gptq.y
 
 ### 推理 LoRA 模型
 
+使用 `CUDA_VISIBLE_DEVICES=0,1` 进行多卡推理。
+
 #### 使用命令行接口
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 llamafactory-cli chat examples/merge_lora/llama3_lora_sft.yaml
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli chat examples/inference/llama3_lora_sft.yaml
 ```
 
 #### 使用浏览器界面
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 llamafactory-cli webchat examples/merge_lora/llama3_lora_sft.yaml
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli webchat examples/inference/llama3_lora_sft.yaml
 ```
 
 #### 启动 OpenAI 风格 API
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 llamafactory-cli api examples/merge_lora/llama3_lora_sft.yaml
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli api examples/inference/llama3_lora_sft.yaml
 ```
 
 ### 杂项
