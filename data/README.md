@@ -19,7 +19,10 @@ If you are using a custom dataset, please add your **dataset description** to `d
     "messages": "the column name in the dataset containing the messages. (default: conversations)",
     "system": "the column name in the dataset containing the system prompts. (default: None)",
     "tools": "the column name in the dataset containing the tool description. (default: None)",
-    "images": "the column name in the dataset containing the image inputs. (default: None)"
+    "images": "the column name in the dataset containing the image inputs. (default: None)",
+    "chosen": "the column name in the dataset containing the chosen answers. (default: None)",
+    "rejected": "the column name in the dataset containing the rejected answers. (default: None)",
+    "kto_tag": "the column name in the dataset containing the kto tags. (default: None)"
   },
   "tags (optional, used for the sharegpt format)": {
     "role_tag": "the key in the message represents the identity. (default: from)",
@@ -42,13 +45,13 @@ Currently we support dataset in **alpaca** or **sharegpt** format, the dataset i
 ```json
 [
   {
-    "instruction": "user instruction (required)",
-    "input": "user input (optional)",
+    "instruction": "human instruction (required)",
+    "input": "human input (optional)",
     "output": "model response (required)",
     "system": "system prompt (optional)",
     "history": [
-      ["user instruction in the first round (optional)", "model response in the first round (optional)"],
-      ["user instruction in the second round (optional)", "model response in the second round (optional)"]
+      ["human instruction in the first round (optional)", "model response in the first round (optional)"],
+      ["human instruction in the second round (optional)", "model response in the second round (optional)"]
     ]
   }
 ]
@@ -69,7 +72,7 @@ Regarding the above dataset, the description in `dataset_info.json` should be:
 }
 ```
 
-The `query` column will be concatenated with the `prompt` column and used as the user prompt, then the user prompt would be `prompt\nquery`. The `response` column represents the model response.
+The `query` column will be concatenated with the `prompt` column and used as the human prompt, then the human prompt would be `prompt\nquery`. The `response` column represents the model response.
 
 The `system` column will be used as the system prompt. The `history` column is a list consisting string tuples representing prompt-response pairs in the history. Note that the responses in the history **will also be used for training** in supervised fine-tuning.
 
@@ -98,12 +101,10 @@ For the **preference datasets**, the `response` column should be a string list w
 ```json
 [
   {
-    "instruction": "user instruction",
-    "input": "user input",
-    "output": [
-      "chosen answer",
-      "rejected answer"
-    ]
+    "instruction": "human instruction",
+    "input": "human input",
+    "chosen": "chosen answer",
+    "rejected": "rejected answer"
   }
 ]
 ```
@@ -117,7 +118,8 @@ Regarding the above dataset, the description in `dataset_info.json` should be:
   "columns": {
     "prompt": "instruction",
     "query": "input",
-    "response": "output",
+    "chosen": "chosen",
+    "rejected": "rejected"
   }
 }
 ```
@@ -132,7 +134,7 @@ The dataset in **sharegpt** format should follow the below format:
     "conversations": [
       {
         "from": "human",
-        "value": "user instruction"
+        "value": "human instruction"
       },
       {
         "from": "gpt",
@@ -179,7 +181,7 @@ We also supports the dataset in the **openai** format:
       },
       {
         "role": "user",
-        "content": "user instruction"
+        "content": "human instruction"
       },
       {
         "role": "assistant",

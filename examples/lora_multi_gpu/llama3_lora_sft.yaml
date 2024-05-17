@@ -11,7 +11,7 @@ lora_target: q_proj,v_proj
 ddp_timeout: 180000000
 
 ### dataset
-dataset: identity,alpaca_gpt4_en
+dataset: identity,alpaca_en_demo
 template: llama3
 cutoff_len: 1024
 max_samples: 1000
