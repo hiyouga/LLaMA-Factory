@@ -32,6 +32,15 @@
       "history": "history"
     }
   },
+  "kto-mix-test": {
+    "file_name": "kto-mix-test.json",
+    "file_sha1": "91b59f657007dc4b17529fc643v9b9cd6d640fha",
+    "columns": {
+      "prompt": "instruction",
+      "response": "output",
+      "tag": "tag"
+    }
+  },
   "glaive_toolcall": {
     "file_name": "glaive_toolcall_10k.json",
     "formatting": "sharegpt",
