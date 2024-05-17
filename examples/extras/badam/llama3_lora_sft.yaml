@@ -11,7 +11,7 @@ badam_switch_interval: 50
 badam_verbose: 2
 
 ### dataset
-dataset: identity,alpaca_gpt4_en
+dataset: identity,alpaca_en_demo
 template: llama3
 cutoff_len: 1024
 max_samples: 1000

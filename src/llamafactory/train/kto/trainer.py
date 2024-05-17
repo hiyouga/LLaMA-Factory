@@ -1,7 +1,7 @@
 from collections import defaultdict
 from contextlib import nullcontext
 from types import MethodType
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union
 
 import torch
 from transformers import Trainer
@@ -13,7 +13,7 @@ from ..utils import create_custom_optimzer, create_custom_scheduler
 
 
 if TYPE_CHECKING:
-    from transformers import PreTrainedModel
+    from transformers import PreTrainedModel, ProcessorMixin
 
     from ...hparams import FinetuningArguments
 
@@ -24,6 +24,7 @@ class CustomKTOTrainer(KTOTrainer):
         model: Union["PreTrainedModel", torch.nn.Module],
         ref_model: Optional[Union["PreTrainedModel", torch.nn.Module]],
         finetuning_args: "FinetuningArguments",
+        processor: Optional["ProcessorMixin"],
         disable_dropout: bool = True,
         **kwargs,
     ):
@@ -33,6 +34,7 @@ class CustomKTOTrainer(KTOTrainer):
                 disable_dropout_in_model(ref_model)
 
         self.finetuning_args = finetuning_args
+        self.processor = processor
         self.reference_free = False
         self.use_dpo_data_collator = True  # hack to avoid warning
         self.generate_during_eval = False  # disable at evaluation
@@ -43,15 +45,15 @@ class CustomKTOTrainer(KTOTrainer):
         self._precomputed_train_ref_log_probs = False
         self._precomputed_eval_ref_log_probs = False
         self._peft_has_been_casted_to_bf16 = False
+
         self.ref_model = ref_model
         self._stored_metrics = defaultdict(lambda: defaultdict(list))
 
-        # KTO parameter
+        # kto hyperparams
         self.beta = finetuning_args.kto_beta
+        self.desirable_weight = finetuning_args.kto_chosen_weight
+        self.undesirable_weight = finetuning_args.kto_rejected_weight
         self.ftx_gamma = finetuning_args.kto_ftx
-        self.desirable_weight = finetuning_args.kto_desirable_weight
-        self.undesirable_weight = finetuning_args.kto_undesirable_weight
-
 
         Trainer.__init__(self, model=model, **kwargs)
         if not hasattr(self, "accelerator"):
@@ -82,78 +84,85 @@ class CustomKTOTrainer(KTOTrainer):
         create_custom_scheduler(self.args, num_training_steps, optimizer)
         return super().create_scheduler(num_training_steps, optimizer)
 
+    def _save(self, output_dir: Optional[str] = None, state_dict: Optional[Dict[str, "torch.Tensor"]] = None) -> None:
+        super()._save(output_dir, state_dict)
+        if self.processor is not None:
+            output_dir = output_dir if output_dir is not None else self.args.output_dir
+            getattr(self.processor, "image_processor").save_pretrained(output_dir)
+
     def sft_loss(self, chosen_logits: "torch.FloatTensor", chosen_labels: "torch.LongTensor") -> "torch.Tensor":
         r"""
         Computes supervised cross-entropy loss of given labels under the given logits.
+
         Returns:
             A tensor of shape (batch_size,) containing the cross-entropy loss of each samples.
         """
         all_logps = self.get_batch_logps(chosen_logits, chosen_labels, average_log_prob=True)
-        return -all_logps.nanmean()
-
+        return -all_logps
 
     def forward(
         self, model: "PreTrainedModel", batch: Dict[str, "torch.Tensor"]
     ) -> Tuple["torch.Tensor", "torch.Tensor", "torch.Tensor", "torch.Tensor", "torch.Tensor"]:
         with torch.no_grad():
-            KL_logits = model(
-                batch["KL_completion_input_ids"],
-                attention_mask=batch["KL_completion_attention_mask"],
-            ).logits
+            kl_logits = model(
+                input_ids=batch["kl_input_ids"],
+                attention_mask=batch["kl_attention_mask"],
+                return_dict=True,
+                use_cache=False,
+            ).logits.to(torch.float32)
 
-        completion_logits = model(
-            batch["input_ids"],
+        target_logits = model(
+            input_ids=batch["input_ids"],
             attention_mask=batch["attention_mask"],
-        ).logits
+            return_dict=True,
+            use_cache=False,
+        ).logits.to(torch.float32)
 
-        completion_logps = self.get_batch_logps(
-            completion_logits,
-            batch["labels"],
+        target_logps = self.get_batch_logps(
+            logits=target_logits,
+            labels=batch["labels"],
             average_log_prob=False,
             is_encoder_decoder=self.is_encoder_decoder,
             label_pad_token_id=self.label_pad_token_id,
         )
 
-        KL_logps = self.get_batch_logps(
-            KL_logits,
-            batch["kl_labels"],
+        kl_logps = self.get_batch_logps(
+            logits=kl_logits,
+            labels=batch["kl_labels"],
             average_log_prob=False,
             is_encoder_decoder=self.is_encoder_decoder,
             label_pad_token_id=self.label_pad_token_id,
         )
 
-        if completion_logps.shape[0] != len(batch["tag"]):
-            raise ValueError(
-                "There is a mismatch between the number of examples in this batch and the number of "
-                "examples for which an output sequence was predicted."
-            )
-        chosen_idx = [i for i in range(completion_logps.shape[0]) if batch["tag"][i]]
-        rejected_idx = [i for i in range(completion_logps.shape[0]) if not batch["tag"][i]]
+        if len(target_logps) != len(batch["kto_tags"]):
+            raise ValueError("Mismatched shape of inputs and labels.")
 
-        chosen_logps = completion_logps[chosen_idx, ...]
-        rejected_logps = completion_logps[rejected_idx, ...]
+        chosen_idx = [i for i in range(len(target_logps)) if batch["kto_tags"][i]]
+        rejected_idx = [i for i in range(len(target_logps)) if not batch["kto_tags"][i]]
 
-        chosen_logits = completion_logits[chosen_idx, ...]
-        rejected_logits = completion_logits[rejected_idx, ...]
+        chosen_logps = target_logps[chosen_idx, ...]
+        rejected_logps = target_logps[rejected_idx, ...]
 
-        return (chosen_logps, rejected_logps, chosen_logits, rejected_logits, KL_logps)
+        chosen_logits = target_logits[chosen_idx, ...]
+        rejected_logits = target_logits[rejected_idx, ...]
 
+        return chosen_logps, rejected_logps, chosen_logits, rejected_logits, kl_logps
 
     def get_batch_loss_metrics(
         self,
-        model,
-        batch: Dict[str, Union[List, torch.LongTensor]],
-    ):
-        """Compute the KTO loss and other metrics for the given batch of inputs for train or test."""
+        model: "PreTrainedModel",
+        batch: Dict[str, "torch.Tensor"],
+    ) -> Tuple["torch.Tensor", Dict[str, "torch.Tensor"]]:
+        r"""
+        Computes the DPO loss and other metrics for the given batch of inputs for train or test.
+        """
         metrics = {}
-        batch = {k: (v.to(self.accelerator.device) if isinstance(v, torch.Tensor) else v) for k, v in batch.items()}
-
         (
             policy_chosen_logps,
             policy_rejected_logps,
             policy_chosen_logits,
-            policy_rejected_logits,
-            policy_KL_logps,
+            _,
+            policy_kl_logps,
         ) = self.forward(model, batch)
 
         with torch.no_grad():
@@ -163,27 +172,29 @@ class CustomKTOTrainer(KTOTrainer):
             else:
                 ref_model = self.ref_model
                 ref_context = nullcontext()
+
             with ref_context:
                 (
                     reference_chosen_logps,
                     reference_rejected_logps,
                     _,
                     _,
-                    reference_KL_logps,
+                    reference_kl_logps,
                 ) = self.forward(ref_model, batch)
 
         losses, chosen_rewards, rejected_rewards, kl = self.kto_loss(
             policy_chosen_logps,
             policy_rejected_logps,
-            policy_KL_logps,
+            policy_kl_logps,
             reference_chosen_logps,
             reference_rejected_logps,
-            reference_KL_logps,
+            reference_kl_logps,
         )
         losses = losses.nanmean()
-        if self.ftx_gamma > 1e-6 and len(batch["labels"][batch['tag']])>0:
-            losses += self.ftx_gamma * self.sft_loss(policy_chosen_logits, batch["labels"][batch['tag']])
 
+        if self.ftx_gamma > 1e-6 and len(policy_chosen_logps) > 0:  # remember to rescale
+            sft_loss = self.sft_loss(policy_chosen_logits, batch["labels"][batch["kto_tags"]])
+            losses += self.ftx_gamma * sft_loss.nanmean() / len(policy_chosen_logits) * len(batch["labels"])
 
         num_chosen = torch.Tensor([len(chosen_rewards)]).to(self.accelerator.device)
         num_rejected = torch.Tensor([len(rejected_rewards)]).to(self.accelerator.device)

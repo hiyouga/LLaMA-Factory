@@ -57,7 +57,7 @@ def load_single_dataset(
             data_files.append(local_path)
             data_path = FILEEXT2TYPE.get(local_path.split(".")[-1], None)
         else:
-            raise ValueError("File not found.")
+            raise ValueError("File {} not found.".format(local_path))
 
         if data_path is None:
             raise ValueError("File extension must be txt, csv, json or jsonl.")
@@ -116,7 +116,7 @@ def get_dataset(
     model_args: "ModelArguments",
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
-    stage: Literal["pt", "sft", "rm", "ppo", "kto"],
+    stage: Literal["pt", "sft", "rm", "kto"],
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"] = None,
 ) -> Union["Dataset", "IterableDataset"]:
