@@ -47,11 +47,13 @@ class CustomDPOTrainer(DPOTrainer):
         self._peft_has_been_casted_to_bf16 = False
 
         self.ref_model = ref_model
+        self._stored_metrics = defaultdict(lambda: defaultdict(list))
+
+        # dpo hyperparams
         self.beta = finetuning_args.dpo_beta
         self.label_smoothing = finetuning_args.dpo_label_smoothing
         self.loss_type = finetuning_args.dpo_loss
         self.ftx_gamma = finetuning_args.dpo_ftx
-        self._stored_metrics = defaultdict(lambda: defaultdict(list))
 
         Trainer.__init__(self, model=model, **kwargs)
         if not hasattr(self, "accelerator"):
@@ -143,6 +145,7 @@ class CustomDPOTrainer(DPOTrainer):
             policy_chosen_logits,
             policy_rejected_logits,
         ) = self.concatenated_forward(model, batch)
+
         with torch.no_grad():
             if self.ref_model is None:
                 ref_model = self.model

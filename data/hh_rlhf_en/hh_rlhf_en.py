@@ -79,5 +79,5 @@ class HhRlhfEn(datasets.GeneratorBasedBuilder):
                             break
                         prompt = prompt[:human_idx]
 
-                    yield key, {"instruction": query, "output": [r_accept, r_reject], "history": history}
+                    yield key, {"instruction": query, "chosen": r_accept, "rejected": r_reject, "history": history}
                     key += 1
