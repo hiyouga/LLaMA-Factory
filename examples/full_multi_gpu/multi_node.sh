@@ -6,7 +6,7 @@ RANK=0
 MASTER_ADDR=192.168.0.1
 MASTER_PORT=29500
 
-CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.run \
+CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun \
     --nproc_per_node $NPROC_PER_NODE \
     --nnodes $NNODES \
     --node_rank $RANK \

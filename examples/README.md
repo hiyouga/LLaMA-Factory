@@ -7,6 +7,7 @@ Make sure to execute these commands in the `LLaMA-Factory` directory.
 - [LoRA Fine-Tuning on A Single GPU](#lora-fine-tuning-on-a-single-gpu)
 - [QLoRA Fine-Tuning on a Single GPU](#qlora-fine-tuning-on-a-single-gpu)
 - [LoRA Fine-Tuning on Multiple GPUs](#lora-fine-tuning-on-multiple-gpus)
+- [LoRA Fine-Tuning on Multiple NPUs](#lora-fine-tuning-on-multiple-npus)
 - [Full-Parameter Fine-Tuning on Multiple GPUs](#full-parameter-fine-tuning-on-multiple-gpus)
 - [Merging LoRA Adapters and Quantization](#merging-lora-adapters-and-quantization)
 - [Inferring LoRA Fine-Tuned Models](#inferring-lora-fine-tuned-models)
@@ -26,6 +27,12 @@ CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llama3_lo
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llama3_lora_sft.yaml
+```
+
+#### Multimodal Supervised Fine-Tuning
+
+```bash
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llava1_5_lora_sft.yaml
 ```
 
 #### Reward Modeling
@@ -50,12 +57,6 @@ CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llama3_lo
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llama3_lora_orpo.yaml
-```
-
-#### Multimodal Supervised Fine-Tuning
-
-```bash
-CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llava1_5_lora_sft.yaml
 ```
 
 #### Preprocess Dataset
@@ -124,6 +125,14 @@ bash examples/lora_multi_gpu/multi_node.sh
 bash examples/lora_multi_gpu/ds_zero3.sh
 ```
 
+### LoRA Fine-Tuning on Multiple NPUs
+
+#### Supervised Fine-Tuning with DeepSpeed ZeRO-0
+
+```bash
+bash examples/lora_multi_npu/ds_zero0.sh
+```
+
 ### Full-Parameter Fine-Tuning on Multiple GPUs
 
 #### Supervised Fine-Tuning with Accelerate on Single Node
@@ -162,22 +171,24 @@ CUDA_VISIBLE_DEVICES=0 llamafactory-cli export examples/merge_lora/llama3_gptq.y
 
 ### Inferring LoRA Fine-Tuned Models
 
+Use `CUDA_VISIBLE_DEVICES=0,1` to infer models on multiple devices.
+
 #### Use CLI
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 llamafactory-cli chat examples/merge_lora/llama3_lora_sft.yaml
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli chat examples/inference/llama3_lora_sft.yaml
 ```
 
 #### Use Web UI
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 llamafactory-cli webchat examples/merge_lora/llama3_lora_sft.yaml
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli webchat examples/inference/llama3_lora_sft.yaml
 ```
 
 #### Launch OpenAI-style API
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 llamafactory-cli api examples/merge_lora/llama3_lora_sft.yaml
+CUDA_VISIBLE_DEVICES=0 llamafactory-cli api examples/inference/llama3_lora_sft.yaml
 ```
 
 ### Extras
