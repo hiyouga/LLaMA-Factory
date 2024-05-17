@@ -25,21 +25,22 @@ class DatasetAttr:
     folder: Optional[str] = None
     ranking: bool = False
     formatting: Literal["alpaca", "sharegpt"] = "alpaca"
-    """ columns """
+    """ common columns """
     system: Optional[str] = None
+    tools: Optional[str] = None
     images: Optional[str] = None
-    tag: Optional[bool] = None
-    """ columns for the alpaca format """
+    """ rlhf columns """
+    chosen: Optional[str] = None
+    rejected: Optional[str] = None
+    kto_tag: Optional[str] = None
+    """ alpaca columns """
     prompt: Optional[str] = "instruction"
     query: Optional[str] = "input"
     response: Optional[str] = "output"
-    chosen: Optional[str] = "chosen"
-    rejected: Optional[str] = "rejected"
     history: Optional[str] = None
-    """ columns for the sharegpt format """
+    """ sharegpt columns """
     messages: Optional[str] = "conversations"
-    tools: Optional[str] = None
-    """ tags for the sharegpt format """
+    """ sharegpt tags """
     role_tag: Optional[str] = "from"
     content_tag: Optional[str] = "value"
     user_tag: Optional[str] = "human"
@@ -107,11 +108,11 @@ def get_dataset_list(data_args: "DataArguments") -> List["DatasetAttr"]:
         dataset_attr.set_attr("formatting", dataset_info[name], default="alpaca")
 
         if "columns" in dataset_info[name]:
-            column_names = ["system", "images", "tag"]
+            column_names = ["system", "tools", "images", "chosen", "rejected", "kto_tag"]
             if dataset_attr.formatting == "alpaca":
                 column_names.extend(["prompt", "query", "response", "history"])
             else:
-                column_names.extend(["messages", "tools"])
+                column_names.extend(["messages"])
 
             for column_name in column_names:
                 dataset_attr.set_attr(column_name, dataset_info[name]["columns"])

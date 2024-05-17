@@ -12,7 +12,7 @@ galore_rank: 128
 galore_scale: 2.0
 
 ### dataset
-dataset: identity,alpaca_gpt4_en
+dataset: identity,alpaca_en_demo
 template: llama3
 cutoff_len: 1024
 max_samples: 1000
