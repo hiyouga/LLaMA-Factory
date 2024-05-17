@@ -28,6 +28,7 @@ class DatasetAttr:
     """ columns """
     system: Optional[str] = None
     images: Optional[str] = None
+    tag: Optional[bool] = None
     """ columns for the alpaca format """
     prompt: Optional[str] = "instruction"
     query: Optional[str] = "input"
@@ -106,7 +107,7 @@ def get_dataset_list(data_args: "DataArguments") -> List["DatasetAttr"]:
         dataset_attr.set_attr("formatting", dataset_info[name], default="alpaca")
 
         if "columns" in dataset_info[name]:
-            column_names = ["system", "images"]
+            column_names = ["system", "images", "tag"]
             if dataset_attr.formatting == "alpaca":
                 column_names.extend(["prompt", "query", "response", "history"])
             else:
