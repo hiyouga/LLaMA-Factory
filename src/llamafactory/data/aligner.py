@@ -29,7 +29,7 @@ def _convert_images(images: List[Any], dataset_attr: "DatasetAttr", data_args: "
 def convert_alpaca(
     examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr", data_args: "DataArguments"
 ) -> Dict[str, List[Any]]:
-    outputs = {"prompt": [], "response": [], "system": [], "tools": [], "images": []}
+    outputs = {"prompt": [], "response": [], "system": [], "tools": [], "images": [], "tag": []}
     convert_images = partial(_convert_images, dataset_attr=dataset_attr, data_args=data_args)
     for i in range(len(examples[dataset_attr.prompt])):
         prompt = []
@@ -61,6 +61,7 @@ def convert_alpaca(
         outputs["system"].append(examples[dataset_attr.system][i] if dataset_attr.system else "")
         outputs["tools"].append("")
         outputs["images"].append(convert_images(examples[dataset_attr.images][i]) if dataset_attr.images else [])
+        outputs["tag"].append(examples[dataset_attr.tag][i] if dataset_attr.tag else True)
 
     return outputs
 
@@ -137,6 +138,7 @@ def align_dataset(
             "system": {"dtype": "string", "_type": "Value"},
             "tools": {"dtype": "string", "_type": "Value"},
             "images": [{"_type": "Image"}],
+            "tag": {"dtype": "bool", "_type": "Value"},
         }
     )
     kwargs = {}
