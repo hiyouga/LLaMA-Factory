@@ -133,6 +133,22 @@ class RLHFArguments:
         default=0.0,
         metadata={"help": "The supervised fine-tuning loss coefficient in DPO training."},
     )
+    kto_beta: float = field(
+        default=0.1,
+        metadata={"help": "The beta parameter for the KTO loss."},
+    )
+    kto_ftx: float = field(
+        default=0.0,
+        metadata={"help": "The supervised fine-tuning loss coefficient in KTO training."},
+    )
+    kto_desirable_weight: float = field(
+        default=1.0,
+        metadata={"help": "The desirable weight for the KTO loss."},
+    )
+    kto_undesirable_weight: float = field(
+        default=1.0,
+        metadata={"help": "The undesirable weight for the KTO loss."},
+    )
     orpo_beta: float = field(
         default=0.1,
         metadata={"help": "The beta (lambda) parameter in ORPO loss representing the weight of the SFT loss."},
@@ -291,7 +307,7 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         default=False,
         metadata={"help": "Whether or not to train model in purely bf16 precision (without AMP)."},
     )
-    stage: Literal["pt", "sft", "rm", "ppo", "dpo", "orpo"] = field(
+    stage: Literal["pt", "sft", "rm", "ppo", "dpo", "orpo", "kto"] = field(
         default="sft",
         metadata={"help": "Which stage will be performed in training."},
     )
