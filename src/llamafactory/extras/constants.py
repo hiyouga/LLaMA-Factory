@@ -45,6 +45,7 @@ TRAINING_STAGES = {
     "Reward Modeling": "rm",
     "PPO": "ppo",
     "DPO": "dpo",
+    "KTO": "kto",
     "ORPO": "orpo",
     "Pre-Training": "pt",
 }
