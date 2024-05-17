@@ -1,48 +1,23 @@
 {
-  "alpaca_en": {
-    "file_name": "alpaca_data_en_52k.json"
-  },
-  "alpaca_zh": {
-    "file_name": "alpaca_data_zh_51k.json"
-  },
-  "alpaca_gpt4_en": {
-    "file_name": "alpaca_gpt4_data_en.json"
-  },
-  "alpaca_gpt4_zh": {
-    "file_name": "alpaca_gpt4_data_zh.json"
-  },
   "identity": {
     "file_name": "identity.json"
   },
-  "oaast_sft_zh": {
-    "file_name": "oaast_sft_zh.json",
+  "alpaca_en_demo": {
+    "file_name": "alpaca_en_demo.json"
+  },
+  "alpaca_zh_demo": {
+    "file_name": "alpaca_zh_demo.json"
+  },
+  "glaive_toolcall_en_demo": {
+    "file_name": "glaive_toolcall_en_demo.json",
+    "formatting": "sharegpt",
     "columns": {
-      "prompt": "instruction",
-      "query": "input",
-      "response": "output",
-      "history": "history"
+      "messages": "conversations",
+      "tools": "tools"
     }
   },
-  "lima": {
-    "file_name": "lima.json",
-    "columns": {
-      "prompt": "instruction",
-      "query": "input",
-      "response": "output",
-      "history": "history"
-    }
-  },
-  "kto-mix-test": {
-    "file_name": "kto-mix-test.json",
-    "file_sha1": "91b59f657007dc4b17529fc643v9b9cd6d640fha",
-    "columns": {
-      "prompt": "instruction",
-      "response": "output",
-      "tag": "tag"
-    }
-  },
-  "glaive_toolcall": {
-    "file_name": "glaive_toolcall_10k.json",
+  "glaive_toolcall_zh_demo": {
+    "file_name": "glaive_toolcall_zh_demo.json",
     "formatting": "sharegpt",
     "columns": {
       "messages": "conversations",
@@ -63,14 +38,41 @@
       "assistant_tag": "assistant"
     }
   },
-  "example": {
-    "script_url": "example_dataset",
+  "alpaca_en": {
+    "hf_hub_url": "llamafactory/alpaca_en",
+    "ms_hub_url": "llamafactory/alpaca_en"
+  },
+  "alpaca_zh": {
+    "hf_hub_url": "llamafactory/alpaca_zh",
+    "ms_hub_url": "llamafactory/alpaca_zh"
+  },
+  "alpaca_gpt4_en": {
+    "hf_hub_url": "llamafactory/alpaca_gpt4_en",
+    "ms_hub_url": "llamafactory/alpaca_gpt4_en"
+  },
+  "alpaca_gpt4_zh": {
+    "hf_hub_url": "llamafactory/alpaca_gpt4_zh",
+    "ms_hub_url": "llamafactory/alpaca_gpt4_zh"
+  },
+  "glaive_toolcall_en": {
+    "hf_hub_url": "llamafactory/glaive_toolcall_en",
+    "formatting": "sharegpt",
     "columns": {
-      "prompt": "instruction",
-      "query": "input",
-      "response": "output",
-      "history": "history"
+      "messages": "conversations",
+      "tools": "tools"
     }
+  },
+  "glaive_toolcall_zh": {
+    "hf_hub_url": "llamafactory/glaive_toolcall_zh",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "tools": "tools"
+    }
+  },
+  "lima": {
+    "hf_hub_url": "llamafactory/lima",
+    "formatting": "sharegpt"
   },
   "guanaco": {
     "hf_hub_url": "JosephusCheung/GuanacoDataset",
@@ -240,6 +242,12 @@
       "response": "text"
     }
   },
+  "stem_zh": {
+    "hf_hub_url": "hfl/stem_zh_instruction"
+  },
+  "ruozhiba_gpt4": {
+    "hf_hub_url": "hfl/ruozhiba_gpt4_turbo"
+  },
   "llava_150k_en": {
     "hf_hub_url": "BUAADreamer/llava-en-zh-300k",
     "subset": "en",
@@ -297,40 +305,66 @@
   "ultrachat_de": {
     "hf_hub_url": "mayflowergmbh/ultra-chat_de"
   },
-  "hh_rlhf_en": {
-    "script_url": "hh_rlhf_en",
+  "dpo_en_demo": {
+    "file_name": "dpo_en_demo.json",
+    "ranking": true,
+    "formatting": "sharegpt",
     "columns": {
-      "prompt": "instruction",
-      "response": "output",
-      "history": "history"
-    },
-    "ranking": true
+      "messages": "conversations",
+      "chosen": "chosen",
+      "rejected": "rejected"
+    }
   },
-  "oaast_rm_zh": {
-    "file_name": "oaast_rm_zh.json",
+  "dpo_zh_demo": {
+    "file_name": "dpo_zh_demo.json",
+    "ranking": true,
+    "formatting": "sharegpt",
     "columns": {
-      "prompt": "instruction",
-      "query": "input",
-      "response": "output",
-      "history": "history"
-    },
-    "ranking": true
+      "messages": "conversations",
+      "chosen": "chosen",
+      "rejected": "rejected"
+    }
   },
-  "comparison_gpt4_en": {
-    "file_name": "comparison_gpt4_data_en.json",
-    "ranking": true
+  "dpo_mix_en": {
+    "hf_hub_url": "hiyouga/DPO-En-Zh-20k",
+    "subset": "en",
+    "ranking": true,
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "chosen": "chosen",
+      "rejected": "rejected"
+    }
   },
-  "comparison_gpt4_zh": {
-    "file_name": "comparison_gpt4_data_zh.json",
-    "ranking": true
+  "dpo_mix_zh": {
+    "hf_hub_url": "hiyouga/DPO-En-Zh-20k",
+    "subset": "zh",
+    "ranking": true,
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "chosen": "chosen",
+      "rejected": "rejected"
+    }
   },
-  "orca_rlhf": {
-    "file_name": "orca_rlhf.json",
+  "orca_pairs": {
+    "hf_hub_url": "Intel/orca_dpo_pairs",
     "ranking": true,
     "columns": {
       "prompt": "question",
-      "response": "answer",
+      "chosen": "chosen",
+      "rejected": "rejected",
       "system": "system"
+    }
+  },
+  "hh_rlhf_en": {
+    "script_url": "hh_rlhf_en",
+    "ranking": true,
+    "columns": {
+      "prompt": "instruction",
+      "chosen": "chosen",
+      "rejected": "rejected",
+      "history": "history"
     }
   },
   "nectar_rm": {
@@ -338,31 +372,37 @@
     "ms_hub_url": "AI-ModelScope/RLAIF-Nectar",
     "ranking": true
   },
-  "dpo_mix_en": {
-    "hf_hub_url": "hiyouga/DPO-En-Zh-20k",
-    "subset": "en",
-    "ranking": true,
-    "columns": {
-      "prompt": "prompt",
-      "response": "answer",
-      "system": "system",
-      "history": "history"
-    }
-  },
-  "dpo_mix_zh": {
-    "hf_hub_url": "hiyouga/DPO-En-Zh-20k",
-    "subset": "zh",
-    "ranking": true,
-    "columns": {
-      "prompt": "prompt",
-      "response": "answer",
-      "system": "system",
-      "history": "history"
-    }
-  },
   "orca_dpo_de": {
     "hf_hub_url": "mayflowergmbh/intel_orca_dpo_pairs_de",
     "ranking": true
+  },
+  "kto_en_demo": {
+    "file_name": "kto_en_demo.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "kto_tag": "label"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
+  "kto_mix_en": {
+    "hf_hub_url": "argilla/kto-mix-15k",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "completion",
+      "kto_tag": "label"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
   },
   "wiki_demo": {
     "file_name": "wiki_demo.txt",
