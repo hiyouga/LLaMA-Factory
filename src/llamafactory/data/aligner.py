@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Union
 
 from datasets import Features
 
+from ..extras.logging import get_logger
 from .utils import Role
 
 
@@ -14,7 +15,13 @@ if TYPE_CHECKING:
     from .parser import DatasetAttr
 
 
+logger = get_logger(__name__)
+
+
 def _convert_images(images: List[Any], dataset_attr: "DatasetAttr", data_args: "DataArguments") -> List[Any]:
+    r"""
+    Optionally concatenates image path to dataset dir when loading from local disk.
+    """
     outputs = []
     if dataset_attr.load_from in ["script", "file"]:
         for image in images:
@@ -29,7 +36,10 @@ def _convert_images(images: List[Any], dataset_attr: "DatasetAttr", data_args: "
 def convert_alpaca(
     examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr", data_args: "DataArguments"
 ) -> Dict[str, List[Any]]:
-    outputs = {"prompt": [], "response": [], "system": [], "tools": [], "images": [], "tag": []}
+    r"""
+    Converts alpaca format dataset to the standard format.
+    """
+    outputs = {"prompt": [], "response": [], "system": [], "tools": [], "images": []}
     convert_images = partial(_convert_images, dataset_attr=dataset_attr, data_args=data_args)
     for i in range(len(examples[dataset_attr.prompt])):
         prompt = []
@@ -45,23 +55,33 @@ def convert_alpaca(
         if dataset_attr.query and examples[dataset_attr.query][i]:
             content.append(examples[dataset_attr.query][i])
 
-        prompt.append({"role": Role.USER.value, "content": "\n".join(content)})
+        prompt.append({"role": Role.USER.value, "content": "\n".join(content)})  # "prompt\nquery"
 
-        if dataset_attr.response and isinstance(examples[dataset_attr.response][i], list):
-            response = [
-                {"role": Role.ASSISTANT.value, "content": content} for content in examples[dataset_attr.response][i]
-            ]
-        elif dataset_attr.response and isinstance(examples[dataset_attr.response][i], str):
+        if dataset_attr.kto_tag and isinstance(examples[dataset_attr.kto_tag], bool):  # kto example
             response = [{"role": Role.ASSISTANT.value, "content": examples[dataset_attr.response][i]}]
-        else:
+            if examples[dataset_attr.kto_tag]:
+                response = response + [{"role": Role.ASSISTANT.value, "content": ""}]
+            else:
+                response = [{"role": Role.ASSISTANT.value, "content": ""}] + response
+        elif (
+            dataset_attr.ranking
+            and isinstance(examples[dataset_attr.chosen][i], str)
+            and isinstance(examples[dataset_attr.rejected][i], str)
+        ):  # pairwise example
+            response = [
+                {"role": Role.ASSISTANT.value, "content": examples[dataset_attr.chosen][i]},
+                {"role": Role.ASSISTANT.value, "content": examples[dataset_attr.rejected][i]},
+            ]
+        elif dataset_attr.response and isinstance(examples[dataset_attr.response][i], str):  # normal example
+            response = [{"role": Role.ASSISTANT.value, "content": examples[dataset_attr.response][i]}]
+        else:  # unsupervised
             response = []
 
         outputs["prompt"].append(prompt)
         outputs["response"].append(response)
         outputs["system"].append(examples[dataset_attr.system][i] if dataset_attr.system else "")
-        outputs["tools"].append("")
+        outputs["tools"].append(examples[dataset_attr.tools][i] if dataset_attr.tools else "")
         outputs["images"].append(convert_images(examples[dataset_attr.images][i]) if dataset_attr.images else [])
-        outputs["tag"].append(examples[dataset_attr.tag][i] if dataset_attr.tag else True)
 
     return outputs
 
@@ -69,6 +89,9 @@ def convert_alpaca(
 def convert_sharegpt(
     examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr", data_args: "DataArguments"
 ) -> Dict[str, List[Any]]:
+    r"""
+    Converts sharegpt format dataset to the standard format.
+    """
     outputs = {"prompt": [], "response": [], "system": [], "tools": [], "images": []}
     convert_images = partial(_convert_images, dataset_attr=dataset_attr, data_args=data_args)
     tag_mapping = {
@@ -88,21 +111,62 @@ def convert_sharegpt(
         else:
             system = examples[dataset_attr.system][i] if dataset_attr.system else ""
 
-        messages = messages[: len(messages) // 2 * 2]  # should be multiples of 2
         if len(messages) == 0:
             continue
 
         aligned_messages = []
+        broken_data = False
         for turn_idx, message in enumerate(messages):
             if message[dataset_attr.role_tag] not in accept_tags[turn_idx % 2]:
-                raise ValueError("Invalid role tag in {}.".format(messages))
+                logger.warning("Invalid role tag in {}.".format(messages))
+                broken_data = True
 
             aligned_messages.append(
                 {"role": tag_mapping[message[dataset_attr.role_tag]], "content": message[dataset_attr.content_tag]}
             )
 
-        outputs["prompt"].append(aligned_messages[:-1])
-        outputs["response"].append(aligned_messages[-1:])
+        if (not dataset_attr.ranking and len(aligned_messages) % 2 != 0) or (
+            dataset_attr.ranking and len(aligned_messages) % 2 == 0
+        ):
+            logger.warning("Invalid message count in {}.".format(messages))
+            broken_data = True
+
+        if dataset_attr.kto_tag and isinstance(examples[dataset_attr.kto_tag][i], bool):  # kto example
+            prompt = aligned_messages[:-1]
+            response = aligned_messages[-1:]
+            if examples[dataset_attr.kto_tag][i]:
+                response = response + [{"role": Role.ASSISTANT.value, "content": ""}]
+            else:
+                response = [{"role": Role.ASSISTANT.value, "content": ""}] + response
+        elif (
+            dataset_attr.ranking
+            and isinstance(examples[dataset_attr.chosen][i], dict)
+            and isinstance(examples[dataset_attr.rejected][i], dict)
+        ):  # pairwise example
+            chosen = examples[dataset_attr.chosen][i]
+            rejected = examples[dataset_attr.rejected][i]
+            if (
+                chosen[dataset_attr.role_tag] not in accept_tags[-1]
+                or rejected[dataset_attr.role_tag] not in accept_tags[-1]
+            ):
+                logger.warning("Invalid role tag in {}.".format(messages))
+                broken_data = True
+
+            prompt = aligned_messages
+            response = [
+                {"role": tag_mapping[chosen[dataset_attr.role_tag]], "content": chosen[dataset_attr.content_tag]},
+                {"role": tag_mapping[rejected[dataset_attr.role_tag]], "content": rejected[dataset_attr.content_tag]},
+            ]
+        else:  # normal example
+            prompt = aligned_messages[:-1]
+            response = aligned_messages[-1:]
+
+        if broken_data:
+            logger.warning("Skipping this abnormal example.")
+            continue
+
+        outputs["prompt"].append(prompt)
+        outputs["response"].append(response)
         outputs["system"].append(system)
         outputs["tools"].append(examples[dataset_attr.tools][i] if dataset_attr.tools else "")
         outputs["images"].append(convert_images(examples[dataset_attr.images][i]) if dataset_attr.images else [])
@@ -138,7 +202,6 @@ def align_dataset(
             "system": {"dtype": "string", "_type": "Value"},
             "tools": {"dtype": "string", "_type": "Value"},
             "images": [{"_type": "Image"}],
-            "tag": {"dtype": "bool", "_type": "Value"},
         }
     )
     kwargs = {}
