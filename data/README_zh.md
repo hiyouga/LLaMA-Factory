@@ -19,7 +19,10 @@
     "messages": "数据集代表消息列表的表头名称（默认：conversations）",
     "system": "数据集代表系统提示的表头名称（默认：None）",
     "tools": "数据集代表工具描述的表头名称（默认：None）",
-    "images": "数据集代表图像输入的表头名称（默认：None）"
+    "images": "数据集代表图像输入的表头名称（默认：None）",
+    "chosen": "数据集代表更优回复的表头名称（默认：None）",
+    "rejected": "数据集代表更差回复的表头名称（默认：None）",
+    "kto_tag": "数据集代表 KTO 标签的表头名称（默认：None）"
   },
   "tags（可选，用于 sharegpt 格式）": {
     "role_tag": "消息中代表发送者身份的键名（默认：from）",
@@ -42,8 +45,8 @@
 ```json
 [
   {
-    "instruction": "用户指令（必填）",
-    "input": "用户输入（选填）",
+    "instruction": "人类指令（必填）",
+    "input": "人类输入（选填）",
     "output": "模型回答（必填）",
     "system": "系统提示词（选填）",
     "history": [
@@ -69,7 +72,7 @@
 }
 ```
 
-其中 `query` 列对应的内容会与 `prompt` 列对应的内容拼接后作为用户指令，即用户指令为 `prompt\nquery`。`response` 列对应的内容为模型回答。
+其中 `query` 列对应的内容会与 `prompt` 列对应的内容拼接后作为人类指令，即人类指令为 `prompt\nquery`。`response` 列对应的内容为模型回答。
 
 `system` 列对应的内容将被作为系统提示词。`history` 列是由多个字符串二元组构成的列表，分别代表历史消息中每轮的指令和回答。注意在指令监督学习时，历史消息中的回答**也会被用于训练**。
 
@@ -98,12 +101,10 @@
 ```json
 [
   {
-    "instruction": "用户指令",
-    "input": "用户输入",
-    "output": [
-      "优质回答",
-      "劣质回答"
-    ]
+    "instruction": "人类指令",
+    "input": "人类输入",
+    "chosen": "优质回答",
+    "rejected": "劣质回答"
   }
 ]
 ```
@@ -117,7 +118,8 @@
   "columns": {
     "prompt": "instruction",
     "query": "input",
-    "response": "output",
+    "chosen": "chosen",
+    "rejected": "rejected"
   }
 }
 ```
@@ -132,7 +134,7 @@
     "conversations": [
       {
         "from": "human",
-        "value": "用户指令"
+        "value": "人类指令"
       },
       {
         "from": "gpt",
@@ -165,7 +167,7 @@
 }
 ```
 
-其中 `messages` 列应当是一个列表，且符合 `用户/模型/用户/模型/用户/模型` 的顺序。
+其中 `messages` 列应当是一个列表，且符合 `人类/模型/人类/模型/人类/模型` 的顺序。
 
 我们同样支持 **openai** 格式的数据集：
 
@@ -179,7 +181,7 @@
       },
       {
         "role": "user",
-        "content": "用户指令"
+        "content": "人类指令"
       },
       {
         "role": "assistant",

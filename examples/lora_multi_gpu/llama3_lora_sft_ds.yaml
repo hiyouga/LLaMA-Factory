@@ -12,7 +12,7 @@ ddp_timeout: 180000000
 deepspeed: examples/deepspeed/ds_z3_config.json
 
 ### dataset
-dataset: identity,alpaca_gpt4_en
+dataset: identity,alpaca_en_demo
 template: llama3
 cutoff_len: 1024
 max_samples: 1000
