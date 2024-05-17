@@ -117,6 +117,7 @@ class ModelArguments:
         default=False,
         metadata={"help": "Whether or not to disable CUDA graph in the vLLM engine."},
     )
+    vllm_max_lora_rank: int = field(default=8, metadata={"help": "The maximum supported rank of all LoRAs."})
     offload_folder: str = field(
         default="offload",
         metadata={"help": "Path to offload model weights."},
