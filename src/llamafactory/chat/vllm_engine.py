@@ -59,6 +59,7 @@ class VllmEngine(BaseEngine):
             "disable_log_requests": True,
             "enforce_eager": model_args.vllm_enforce_eager,
             "enable_lora": model_args.adapter_name_or_path is not None,
+            "max_lora_rank": model_args.vllm_max_lora_rank,
         }
 
         if model_args.visual_inputs:
