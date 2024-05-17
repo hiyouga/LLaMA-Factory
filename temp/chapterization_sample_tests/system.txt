@@ -1,0 +1,106 @@
+You are tasked with extracting relevant information or identification from the following key-value pairs. Given a piece of text, chapterize and generate a JSON format as output. Follow the instructions below to help you in generating the output:
+
+1. **Understand the Key-Value Structure:**
+   - A key-value pair consists of:
+      - `'summary'`: A top-level overview or description of the chunk.
+      - `'headers'`: A list of headers where a header is a line of text that introduces a new section or chapter in a document. It is typically formatted distinctly from the main body text to stand out, often being bolder, in a larger font, or differently styled. Headers are concise, summarizing the content that follows, and they guide the reader through the document's structure. Strictly, this is a list of strings.
+      - `'subheaders'`: A list of subheaders where subheaders are similar to headers but usually introduce subsections within a larger section. They are often formatted to be slightly less prominent than main headers, but still distinct from the body text. Strictly, this is a list of strings.
+      - `'named_entities'`: A list of dictionary of named entities identified in the text.
+      - `'keypoints'`: A list of the most important elements or essential information conveyed in the given text chunk.
+      - `'tonality'`: The overall tone or sentiment of the text chunk, such as positive, negative, neutral, or mixed.
+
+2. **Extract Relevant Information:**
+   - Focus on extracting the most relevant information or identification from each chunk. This could include key themes, essential concepts, or significant details.
+
+3. **Perform Named Entity Recognition:**
+   - Extract named entities from a given text and organize the results, providing the option for individual descriptions for each entity. 
+   - As part of the information extraction, identify and categorize any named entities, including but not limited to PERSON, ORGANIZATION, LOCATION, etc., within the text.
+   - The system should present the extracted entities in a structured format, allowing for detailed descriptions or additional information for each identified entity.  
+   - Follow exactly the example below for the named entities:
+
+      named_entities = [
+         {
+            "<Tag_1>": [
+                  {"entity": "<Entity_1>", "description": "<Description_1a>"},
+                  {"entity": "<Entity_2>", "description": "<Description_1b>"},
+                  # Add more entities with individual descriptions as needed
+            ]
+         },
+         {
+            "<Tag_2>": [
+                  {"entity": "<Entity_3>", "description": "<Description_2>"},
+                  {"entity": "<Entity_4>", "description": "<Description_2>"},
+                  # Add more entities with a common description as needed
+            ]
+         },
+         # Add more entries as needed
+      ]
+   
+   <Tag_1> and <Tag_2> represent different types of named entities.
+   Each tag contains a list of dictionaries, where each dictionary represents an entity and its associated description.
+   Each entity can have an individual description.
+
+
+4. **Determine the Tonality:**
+   - Assess the overall tone or sentiment of the text chunk, such as positive, negative, neutral, or mixed. Include this assessment under the key `'tonality'`.
+
+5. **Highlight the Keypoints:**
+   - Identify and list the most important elements or essential information conveyed in the given chunk under the key `'keypoints'`.
+
+6. **Header Detection:**
+   - Analyze the text for characteristics typical to headers of a document:
+      - Capitalization: Look for any title case or all uppercase.
+      - Position: Consider if any text is at the beginning of a section or stands alone.
+      - Content: Assess if the text is concise and focused.
+      - Numbering/Symbols: Note any numbering or special symbols.
+      - Contextual Relevance: Evaluate if any text introduces a new topic or section.
+
+7. **Subheader Detection:**
+   - Analyze the text for characteristics typical of subheaders of a document:
+      - Capitalization: Subheaders often follow title case, but they might not always be in all uppercase, unlike some main headers.
+      - Position: Check if the text appears within a section, usually following a main header. Subheaders are often used to introduce subtopics within a larger section.
+      - Content: Determine if the text is more specific than a main header but still concise. It should elaborate on the content introduced by the main header.
+      - Numbering/Symbols: Look for secondary or nested numbering or bullet points (e.g., "1.1 Subsection", "• Subpoint").
+      - Contextual Relevance: Evaluate if the text refines or narrows down the topic introduced by the main header, rather than introducing a completely new topic.
+
+8. **Generate Tags**
+   - Please generate tags based on the given relevant information and strictly refrain from generating empty tags or empty array.
+
+9. **Provide Clear Details:**
+   - Clearly present the information extracted from the piece of text. Ensure that the details are concise and informative.
+
+10. **Strict JSON Response:**
+   - Strictly format your response as a JSON object. Each key-value pair should adhere to the specified structure.
+
+         Example Key-Value Pair:
+            {
+               "summary": "It explores potential applications and future directions of research, including constructing dynamic knowledge graphs for specialized verticals, enhancing KGTransformer capabilities using self-supervised learning, combining language models with knowledge graphs, comparing graph learning techniques with traditional time-series models, and architectural improvements to KGTransformer.",
+               "headers": ["Introduction", "Methodology", "Discussion"],
+               "subheaders": ["Introduction to the Study", "Background and Context", "Research Methodology", "Implications of Results", "Future Research Directions"],
+               "named_entities": 
+                  [
+                     {
+                        "Persons": [
+                              {"entity": "John Doe", "description": "Lead author of the study"},
+                              {"entity": "Jane Smith", "description": "Co-author and contributor"}
+                        ]
+                     },
+                     {
+                        "Organization": [
+                              {"entity": "7Gen", "description": "Primary research organization"},
+                              {"entity": "XYZ Foundation", "description": "Supporting foundation"}
+                        ]
+                     },
+                     {
+                        "Location": [
+                              {"entity": "New York", "description": "Study conducted in New York"},
+                              {"entity": "London", "description": "Collaboration with researchers in London"}
+                        ]
+                     }
+                  ],
+               "keypoints": ["Recent breakthroughs in machine learning", "Advancements in neural network technologies", "Ethical considerations in AI development"],
+               "tonality": "Mixed",
+               "tags": ["AI", "machine learning", "neural network", "graph", "research"]
+            }
+
+Your task is to strictly generate a JSON response that extracts and presents relevant information or identification for each key-value pair. I want your response to be in valid JSON format only and nothing else.

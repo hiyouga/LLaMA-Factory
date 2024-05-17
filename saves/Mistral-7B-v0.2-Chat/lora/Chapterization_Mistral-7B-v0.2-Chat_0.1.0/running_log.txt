@@ -1,0 +1,146 @@
+05/16/2024 23:41:32 - INFO - transformers.tokenization_utils_base - loading file tokenizer.model from cache at /home/marx/.cache/huggingface/hub/models--mistralai--Mistral-7B-Instruct-v0.2/snapshots/41b61a33a2483885c981aa79e0df6b32407ed873/tokenizer.model
+
+05/16/2024 23:41:32 - INFO - transformers.tokenization_utils_base - loading file tokenizer.json from cache at /home/marx/.cache/huggingface/hub/models--mistralai--Mistral-7B-Instruct-v0.2/snapshots/41b61a33a2483885c981aa79e0df6b32407ed873/tokenizer.json
+
+05/16/2024 23:41:32 - INFO - transformers.tokenization_utils_base - loading file added_tokens.json from cache at None
+
+05/16/2024 23:41:32 - INFO - transformers.tokenization_utils_base - loading file special_tokens_map.json from cache at /home/marx/.cache/huggingface/hub/models--mistralai--Mistral-7B-Instruct-v0.2/snapshots/41b61a33a2483885c981aa79e0df6b32407ed873/special_tokens_map.json
+
+05/16/2024 23:41:32 - INFO - transformers.tokenization_utils_base - loading file tokenizer_config.json from cache at /home/marx/.cache/huggingface/hub/models--mistralai--Mistral-7B-Instruct-v0.2/snapshots/41b61a33a2483885c981aa79e0df6b32407ed873/tokenizer_config.json
+
+05/16/2024 23:41:32 - INFO - llmtuner.data.template - Add pad token: </s>
+
+05/16/2024 23:41:32 - INFO - llmtuner.data.loader - Loading dataset MediaMeter/Chapterization...
+
+05/16/2024 23:41:38 - INFO - transformers.configuration_utils - loading configuration file config.json from cache at /home/marx/.cache/huggingface/hub/models--mistralai--Mistral-7B-Instruct-v0.2/snapshots/41b61a33a2483885c981aa79e0df6b32407ed873/config.json
+
+05/16/2024 23:41:38 - INFO - transformers.configuration_utils - Model config MistralConfig {
+  "_name_or_path": "mistralai/Mistral-7B-Instruct-v0.2",
+  "architectures": [
+    "MistralForCausalLM"
+  ],
+  "attention_dropout": 0.0,
+  "bos_token_id": 1,
+  "eos_token_id": 2,
+  "hidden_act": "silu",
+  "hidden_size": 4096,
+  "initializer_range": 0.02,
+  "intermediate_size": 14336,
+  "max_position_embeddings": 32768,
+  "model_type": "mistral",
+  "num_attention_heads": 32,
+  "num_hidden_layers": 32,
+  "num_key_value_heads": 8,
+  "rms_norm_eps": 1e-05,
+  "rope_theta": 1000000.0,
+  "sliding_window": null,
+  "tie_word_embeddings": false,
+  "torch_dtype": "bfloat16",
+  "transformers_version": "4.40.2",
+  "use_cache": true,
+  "vocab_size": 32000
+}
+
+
+05/16/2024 23:41:38 - WARNING - llmtuner.model.utils.attention - FlashAttention-2 is not installed.
+
+05/16/2024 23:41:38 - INFO - llmtuner.model.utils.quantization - Quantizing model to 4 bit.
+
+05/16/2024 23:41:38 - INFO - transformers.modeling_utils - loading weights file model.safetensors from cache at /home/marx/.cache/huggingface/hub/models--mistralai--Mistral-7B-Instruct-v0.2/snapshots/41b61a33a2483885c981aa79e0df6b32407ed873/model.safetensors.index.json
+
+05/16/2024 23:41:38 - INFO - transformers.modeling_utils - Instantiating MistralForCausalLM model under default dtype torch.bfloat16.
+
+05/16/2024 23:41:38 - INFO - transformers.generation.configuration_utils - Generate config GenerationConfig {
+  "bos_token_id": 1,
+  "eos_token_id": 2
+}
+
+
+05/16/2024 23:41:41 - INFO - transformers.modeling_utils - All model checkpoint weights were used when initializing MistralForCausalLM.
+
+
+05/16/2024 23:41:41 - INFO - transformers.modeling_utils - All the weights of MistralForCausalLM were initialized from the model checkpoint at mistralai/Mistral-7B-Instruct-v0.2.
+If your task is similar to the task the model of the checkpoint was trained on, you can already use MistralForCausalLM for predictions without further training.
+
+05/16/2024 23:41:41 - INFO - transformers.generation.configuration_utils - loading configuration file generation_config.json from cache at /home/marx/.cache/huggingface/hub/models--mistralai--Mistral-7B-Instruct-v0.2/snapshots/41b61a33a2483885c981aa79e0df6b32407ed873/generation_config.json
+
+05/16/2024 23:41:41 - INFO - transformers.generation.configuration_utils - Generate config GenerationConfig {
+  "bos_token_id": 1,
+  "eos_token_id": 2
+}
+
+
+05/16/2024 23:41:41 - INFO - llmtuner.model.utils.checkpointing - Gradient checkpointing enabled.
+
+05/16/2024 23:41:41 - INFO - llmtuner.model.utils.attention - Using torch SDPA for faster training and inference.
+
+05/16/2024 23:41:41 - INFO - llmtuner.model.adapter - Fine-tuning method: LoRA
+
+05/16/2024 23:41:41 - INFO - llmtuner.model.loader - trainable params: 3407872 || all params: 7245139968 || trainable%: 0.0470
+
+05/16/2024 23:41:41 - INFO - transformers.trainer - Using auto half precision backend
+
+05/16/2024 23:41:41 - INFO - transformers.trainer - ***** Running training *****
+
+05/16/2024 23:41:41 - INFO - transformers.trainer -   Num examples = 743
+
+05/16/2024 23:41:41 - INFO - transformers.trainer -   Num Epochs = 1
+
+05/16/2024 23:41:41 - INFO - transformers.trainer -   Instantaneous batch size per device = 16
+
+05/16/2024 23:41:41 - INFO - transformers.trainer -   Total train batch size (w. parallel, distributed & accumulation) = 64
+
+05/16/2024 23:41:41 - INFO - transformers.trainer -   Gradient Accumulation steps = 4
+
+05/16/2024 23:41:41 - INFO - transformers.trainer -   Total optimization steps = 11
+
+05/16/2024 23:41:41 - INFO - transformers.trainer -   Number of trainable parameters = 3,407,872
+
+05/16/2024 23:43:41 - INFO - llmtuner.extras.callbacks - {'loss': 1.9309, 'learning_rate': 1.1423e-04, 'epoch': 0.43}
+
+05/16/2024 23:45:40 - INFO - llmtuner.extras.callbacks - {'loss': 1.7404, 'learning_rate': 4.0507e-06, 'epoch': 0.85}
+
+05/16/2024 23:46:04 - INFO - transformers.trainer - 
+
+Training completed. Do not forget to share your model on huggingface.co/models =)
+
+
+
+05/16/2024 23:46:04 - INFO - transformers.trainer - Saving model checkpoint to saves/Mistral-7B-v0.2-Chat/lora/Chapterization_Mistral-7B-v0.2-Chat_0.1.0
+
+05/16/2024 23:46:05 - INFO - transformers.configuration_utils - loading configuration file config.json from cache at /home/marx/.cache/huggingface/hub/models--mistralai--Mistral-7B-Instruct-v0.2/snapshots/41b61a33a2483885c981aa79e0df6b32407ed873/config.json
+
+05/16/2024 23:46:05 - INFO - transformers.configuration_utils - Model config MistralConfig {
+  "architectures": [
+    "MistralForCausalLM"
+  ],
+  "attention_dropout": 0.0,
+  "bos_token_id": 1,
+  "eos_token_id": 2,
+  "hidden_act": "silu",
+  "hidden_size": 4096,
+  "initializer_range": 0.02,
+  "intermediate_size": 14336,
+  "max_position_embeddings": 32768,
+  "model_type": "mistral",
+  "num_attention_heads": 32,
+  "num_hidden_layers": 32,
+  "num_key_value_heads": 8,
+  "rms_norm_eps": 1e-05,
+  "rope_theta": 1000000.0,
+  "sliding_window": null,
+  "tie_word_embeddings": false,
+  "torch_dtype": "bfloat16",
+  "transformers_version": "4.40.2",
+  "use_cache": true,
+  "vocab_size": 32000
+}
+
+
+05/16/2024 23:46:05 - INFO - transformers.tokenization_utils_base - tokenizer config file saved in saves/Mistral-7B-v0.2-Chat/lora/Chapterization_Mistral-7B-v0.2-Chat_0.1.0/tokenizer_config.json
+
+05/16/2024 23:46:05 - INFO - transformers.tokenization_utils_base - Special tokens file saved in saves/Mistral-7B-v0.2-Chat/lora/Chapterization_Mistral-7B-v0.2-Chat_0.1.0/special_tokens_map.json
+
+05/16/2024 23:46:05 - INFO - transformers.modelcard - Dropping the following result as it does not have all the necessary fields:
+{'task': {'name': 'Causal Language Modeling', 'type': 'text-generation'}}
+

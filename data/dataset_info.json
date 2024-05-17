@@ -1,4 +1,20 @@
 {
+  "chapterization": {
+    "hf_hub_url": "MediaMeter/Chapterization",
+    "columns": {
+      "prompt": "system",
+      "query": "user",
+      "response": "output"
+    }
+  },
+  "docker_NL": {
+    "hf_hub_url": "MattCoddity/dockerNLcommands",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
   "alpaca_en": {
     "file_name": "alpaca_data_en_52k.json"
   },

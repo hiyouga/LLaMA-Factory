@@ -1,0 +1,3 @@
+{"current_steps": 5, "total_steps": 11, "loss": 1.6531, "learning_rate": 0.00011423148382732853, "epoch": 0.425531914893617, "percentage": 45.45, "elapsed_time": "0:03:20", "remaining_time": "0:04:00"}
+{"current_steps": 10, "total_steps": 11, "loss": 1.4784, "learning_rate": 4.050702638550275e-06, "epoch": 0.851063829787234, "percentage": 90.91, "elapsed_time": "0:06:40", "remaining_time": "0:00:40"}
+{"current_steps": 11, "total_steps": 11, "epoch": 0.9361702127659575, "percentage": 100.0, "elapsed_time": "0:07:20", "remaining_time": "0:00:00"}

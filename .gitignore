@@ -161,8 +161,16 @@ cython_debug/
 
 # custom .gitignore
 user.config
-saves/
 cache/
 
 # python3 virtual environemnts
 .venv_*/
+
+# Raw data.
+*/raw_data/
+
+# Processed data.
+*/processed_data/
+
+# Exported fine-tuned models.
+exports/
