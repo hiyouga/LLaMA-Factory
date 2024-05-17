@@ -8,7 +8,7 @@ finetuning_type: full
 mixture_of_depths: convert
 
 ### dataset
-dataset: identity,alpaca_gpt4_en
+dataset: identity,alpaca_en_demo
 template: llama3
 cutoff_len: 1024
 max_samples: 1000
