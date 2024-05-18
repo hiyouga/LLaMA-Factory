@@ -1,4 +1,4 @@
-`dataset_info.json` 包含了所有可用的数据集。如果您希望使用自定义数据集，请务必在 `dataset_info.json` 文件中添加*数据集描述*，并通过修改 `dataset: 数据集名称` 配置来使用数据集。
+[dataset_info.json](dataset_info.json) 包含了所有可用的数据集。如果您希望使用自定义数据集，请**务必**在 `dataset_info.json` 文件中添加*数据集描述*，并通过修改 `dataset: 数据集名称` 配置来使用数据集。
 
 目前我们支持 **alpaca** 格式和 **sharegpt** 格式的数据集。
 
@@ -41,6 +41,8 @@
 
 ### 指令监督微调数据集
 
+- [样例数据集](alpaca_zh_demo.json)
+
 在指令监督微调时，`instruction` 列对应的内容会与 `input` 列对应的内容拼接后作为人类指令，即人类指令为 `instruction\ninput`。而 `output` 列对应的内容为模型回答。
 
 如果指定，`system` 列对应的内容将被作为系统提示词。
@@ -79,7 +81,9 @@
 
 ### 预训练数据集
 
-对于**预训练数据集**，仅 `prompt` 列中的内容会用于模型学习，例如：
+- [样例数据集](c4_demo.json)
+
+在预训练时，只有 `text` 列中的内容会用于模型学习。
 
 ```json
 [
@@ -133,6 +137,8 @@
 
 ### KTO 数据集
 
+- [样例数据集](kto_en_demo.json)
+
 KTO 数据集需要额外添加一个 `kto_tag` 列，包含 bool 类型的人类反馈。
 
 ```json
@@ -161,6 +167,8 @@ KTO 数据集需要额外添加一个 `kto_tag` 列，包含 bool 类型的人�
 ```
 
 ### 多模态数据集
+
+- [样例数据集](mllm_demo.json)
 
 多模态数据集需要额外添加一个 `images` 列，包含输入图像的路径。目前我们仅支持单张图像输入。
 
@@ -195,9 +203,11 @@ KTO 数据集需要额外添加一个 `kto_tag` 列，包含 bool 类型的人�
 
 ### 指令监督微调数据集
 
-相比 alpaca 格式的数据集，sharegpt 格式支持更多的**角色种类**，例如 human、gpt、observation、function 等等。它们构成一个对象列表呈现在 `conversations` 列中。
+- [样例数据集](glaive_toolcall_zh_demo.json)
 
-其中 human 和 observation 必须出现在奇数位置，gpt 和 function 必须出现在偶数位置。
+相比 alpaca 格式的数据集，sharegpt 格式支持**更多的角色种类**，例如 human、gpt、observation、function 等等。它们构成一个对象列表呈现在 `conversations` 列中。
+
+注意其中 human 和 observation 必须出现在奇数位置，gpt 和 function 必须出现在偶数位置。
 
 ```json
 [
@@ -208,12 +218,12 @@ KTO 数据集需要额外添加一个 `kto_tag` 列，包含 bool 类型的人�
         "value": "人类指令"
       },
       {
-        "from": "gpt",
-        "value": "模型回答"
+        "from": "function_call",
+        "value": "工具参数"
       },
       {
-        "from": "human",
-        "value": "人类指令"
+        "from": "observation",
+        "value": "工具结果"
       },
       {
         "from": "gpt",
@@ -236,17 +246,13 @@ KTO 数据集需要额外添加一个 `kto_tag` 列，包含 bool 类型的人�
     "messages": "conversations",
     "system": "system",
     "tools": "tools"
-  },
-  "tags": {
-    "role_tag": "from",
-    "content_tag": "value",
-    "user_tag": "human",
-    "assistant_tag": "gpt"
   }
 }
 ```
 
 ### 偏好数据集
+
+- [样例数据集](dpo_zh_demo.json)
 
 Sharegpt 格式的偏好数据集同样需要在 `chosen` 列中提供更优的消息，并在 `rejected` 列中提供更差的消息。
 

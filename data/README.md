@@ -1,4 +1,4 @@
-The `dataset_info.json` contains all available datasets. If you are using a custom dataset, please make sure to add a *dataset description* in `dataset_info.json` and specify `dataset: dataset_name` before training to use it.
+The [dataset_info.json](dataset_info.json) contains all available datasets. If you are using a custom dataset, please **make sure** to add a *dataset description* in `dataset_info.json` and specify `dataset: dataset_name` before training to use it.
 
 Currently we support datasets in **alpaca** and **sharegpt** format.
 
@@ -41,11 +41,13 @@ Currently we support datasets in **alpaca** and **sharegpt** format.
 
 ### Supervised Fine-Tuning Dataset
 
+* [Example dataset](alpaca_en_demo.json)
+
 In supervised fine-tuning, the `instruction` column will be concatenated with the `input` column and used as the human prompt, then the human prompt would be `instruction\ninput`. The `output` column represents the model response.
 
 The `system` column will be used as the system prompt if specified.
 
-The `history` column is a list consisting string tuples representing prompt-response pairs in the history messages. Note that the responses in the history **will also be learned by the model** in supervised fine-tuning.
+The `history` column is a list consisting of string tuples representing prompt-response pairs in the history messages. Note that the responses in the history **will also be learned by the model** in supervised fine-tuning.
 
 ```json
 [
@@ -79,7 +81,9 @@ Regarding the above dataset, the *dataset description* in `dataset_info.json` sh
 
 ### Pre-training Dataset
 
-In pre-training, only the `prompt` column will be used for model learning.
+- [Example dataset](c4_demo.json)
+
+In pre-training, only the `text` column will be used for model learning.
 
 ```json
 [
@@ -133,6 +137,8 @@ Regarding the above dataset, the *dataset description* in `dataset_info.json` sh
 
 ### KTO Dataset
 
+- [Example dataset](kto_en_demo.json)
+
 KTO datasets require a extra `kto_tag` column containing the boolean human feedback.
 
 ```json
@@ -162,7 +168,9 @@ Regarding the above dataset, the *dataset description* in `dataset_info.json` sh
 
 ### Multimodal Dataset
 
-Multimodal datasets require a `images` column containing the paths to the input image. Currently we only support one image.
+- [Example dataset](mllm_demo.json)
+
+Multimodal datasets require a `images` column containing the paths to the input images. Currently we only support one image.
 
 ```json
 [
@@ -195,7 +203,9 @@ Regarding the above dataset, the *dataset description* in `dataset_info.json` sh
 
 ### Supervised Fine-Tuning Dataset
 
-Compared to the alpaca format, the sharegpt format allows the datasets have more **roles**, such as human, gpt, observation and function. They are presented in a list of objects in the `conversations` column.
+- [Example dataset](glaive_toolcall_en_demo.json)
+
+Compared to the alpaca format, the sharegpt format allows the datasets have **more roles**, such as human, gpt, observation and function. They are presented in a list of objects in the `conversations` column.
 
 Note that the human and observation should appear in odd positions, while gpt and function should appear in even positions.
 
@@ -208,12 +218,12 @@ Note that the human and observation should appear in odd positions, while gpt an
         "value": "human instruction"
       },
       {
-        "from": "gpt",
-        "value": "model response"
+        "from": "function_call",
+        "value": "tool arguments"
       },
       {
-        "from": "human",
-        "value": "human instruction"
+        "from": "observation",
+        "value": "tool result"
       },
       {
         "from": "gpt",
@@ -241,6 +251,8 @@ Regarding the above dataset, the *dataset description* in `dataset_info.json` sh
 ```
 
 ### Preference Dataset
+
+- [Example dataset](dpo_en_demo.json)
 
 Preference datasets in sharegpt format also require a better message in `chosen` column and a worse message in `rejected` column.
 
