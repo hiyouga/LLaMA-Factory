@@ -77,6 +77,7 @@ def preprocess_supervised_dataset(
 
     for i in range(len(examples["prompt"])):
         if len(examples["prompt"][i]) % 2 != 1 or len(examples["response"][i]) != 1:
+            logger.warning("Dropped invalid example: {}".format(examples["prompt"][i] + examples["response"][i]))
             continue
 
         if processor is not None:
@@ -129,6 +130,7 @@ def preprocess_packed_supervised_dataset(
     input_ids, labels = [], []
     for i in range(len(examples["prompt"])):
         if len(examples["prompt"][i]) % 2 != 1 or len(examples["response"][i]) != 1:
+            logger.warning("Dropped invalid example: {}".format(examples["prompt"][i] + examples["response"][i]))
             continue
 
         messages = examples["prompt"][i] + examples["response"][i]
@@ -178,6 +180,7 @@ def preprocess_unsupervised_dataset(
 
     for i in range(len(examples["prompt"])):
         if len(examples["prompt"][i]) % 2 != 1:
+            logger.warning("Dropped invalid example: {}".format(examples["prompt"][i] + examples["response"][i]))
             continue
 
         if processor is not None:
@@ -224,6 +227,7 @@ def preprocess_pairwise_dataset(
 
     for i in range(len(examples["prompt"])):
         if len(examples["prompt"][i]) % 2 != 1 or len(examples["response"][i]) < 2:
+            logger.warning("Dropped invalid example: {}".format(examples["prompt"][i] + examples["response"][i]))
             continue
 
         if processor is not None:
@@ -285,6 +289,7 @@ def preprocess_kto_dataset(
 
     for i in range(len(examples["prompt"])):
         if len(examples["prompt"][i]) % 2 != 1 or len(examples["response"][i]) < 2:
+            logger.warning("Dropped invalid example: {}".format(examples["prompt"][i] + examples["response"][i]))
             continue
 
         if processor is not None:
