@@ -895,3 +895,13 @@ _register_template(
     format_user=StringFormatter(slots=["<human>:{{content}}\n<bot>:"]),
     format_separator=EmptyFormatter(slots=["\n"]),
 )
+
+
+_register_template(
+    name="zhinao",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    default_system="You are a helpful assistant.",
+    stop_words=["<eod>", "<|im_end|>", "<|im_start|>"],
+)

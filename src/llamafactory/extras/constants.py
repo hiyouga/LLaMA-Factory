@@ -1269,3 +1269,31 @@ register_model_group(
     },
     template="zephyr",
 )
+
+
+register_model_group(
+    models={
+        "Zhinao-7B-Base": {
+            DownloadSource.DEFAULT: "qihoo360/360Zhinao-7B-Base",
+        },
+        "Zhinao-7B-Chat-4K": {
+            DownloadSource.DEFAULT: "qihoo360/360Zhinao-7B-Chat-4K",
+        },
+        "Zhinao-7B-Chat-32K": {
+            DownloadSource.DEFAULT: "qihoo360/360Zhinao-7B-Chat-32K",
+        },
+        "Zhinao-7B-Chat-360K": {
+            DownloadSource.DEFAULT: "qihoo360/360Zhinao-7B-Chat-360K",
+        },
+        "Zhinao-7B-Chat-4K-Int4": {
+            DownloadSource.DEFAULT: "qihoo360/360Zhinao-7B-Chat-4K-Int4",
+        },
+        "Zhinao-7B-Chat-32K-Int4": {
+            DownloadSource.DEFAULT: "qihoo360/360Zhinao-7B-Chat-32K-Int4",
+        },
+        "Zhinao-7B-Chat-360K-Int4": {
+            DownloadSource.DEFAULT: "qihoo360/360Zhinao-7B-Chat-360K-Int4",
+        },
+    },
+    template="zhinao",
+)
