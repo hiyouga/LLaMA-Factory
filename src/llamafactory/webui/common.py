@@ -37,8 +37,9 @@ DEFAULT_SAVE_DIR = "saves"
 USER_CONFIG = "user_config.yaml"
 
 
-def get_save_dir(*args) -> os.PathLike:
-    return os.path.join(DEFAULT_SAVE_DIR, *args)
+def get_save_dir(*paths: str) -> os.PathLike:
+    paths = (path.replace(os.path.sep, "").replace(" ", "").strip() for path in paths)
+    return os.path.join(DEFAULT_SAVE_DIR, *paths)
 
 
 def get_config_path() -> os.PathLike:
