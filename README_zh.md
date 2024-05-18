@@ -320,7 +320,7 @@ huggingface-cli login
 > 此步骤为必需。
 
 ```bash
-git clone https://github.com/hiyouga/LLaMA-Factory.git
+git clone --depth 1 https://github.com/hiyouga/LLaMA-Factory.git
 cd LLaMA-Factory
 pip install -e .[torch,metrics]
 ```
