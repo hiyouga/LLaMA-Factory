@@ -68,8 +68,8 @@ class Template:
         self,
         tokenizer: "PreTrainedTokenizer",
         messages: List[Dict[str, str]],
-        system: str,
-        tools: str,
+        system: Optional[str],
+        tools: Optional[str],
         cutoff_len: int,
         reserved_label_len: int,
     ) -> Sequence[Tuple[List[int], List[int]]]:

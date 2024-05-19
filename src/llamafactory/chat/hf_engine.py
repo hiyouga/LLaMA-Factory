@@ -2,7 +2,7 @@ import asyncio
 import concurrent.futures
 import os
 from threading import Thread
-from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import torch
 from transformers import GenerationConfig, TextIteratorStreamer
@@ -66,16 +66,16 @@ class HuggingfaceEngine(BaseEngine):
         prompt_length = len(prompt_ids)
         inputs = torch.tensor([prompt_ids], device=model.device)
 
-        do_sample = input_kwargs.pop("do_sample", generating_args["do_sample"])
-        temperature = input_kwargs.pop("temperature", generating_args["temperature"])
-        top_p = input_kwargs.pop("top_p", generating_args["top_p"])
-        top_k = input_kwargs.pop("top_k", generating_args["top_k"])
-        num_return_sequences = input_kwargs.pop("num_return_sequences", 1)
-        repetition_penalty = input_kwargs.pop("repetition_penalty", generating_args["repetition_penalty"])
-        length_penalty = input_kwargs.pop("length_penalty", generating_args["length_penalty"])
-        max_length = input_kwargs.pop("max_length", None)
-        max_new_tokens = input_kwargs.pop("max_new_tokens", None)
-        stop = input_kwargs.pop("stop", None)
+        do_sample: Optional[bool] = input_kwargs.pop("do_sample", None)
+        temperature: Optional[float] = input_kwargs.pop("temperature", None)
+        top_p: Optional[float] = input_kwargs.pop("top_p", None)
+        top_k: Optional[float] = input_kwargs.pop("top_k", None)
+        num_return_sequences: int = input_kwargs.pop("num_return_sequences", 1)
+        repetition_penalty: Optional[float] = input_kwargs.pop("repetition_penalty", None)
+        length_penalty: Optional[float] = input_kwargs.pop("length_penalty", None)
+        max_length: Optional[int] = input_kwargs.pop("max_length", None)
+        max_new_tokens: Optional[int] = input_kwargs.pop("max_new_tokens", None)
+        stop: Optional[Union[str, List[str]]] = input_kwargs.pop("stop", None)
 
         if stop is not None:
             raise ValueError("Stop parameter is not supported in Huggingface engine yet.")
@@ -83,20 +83,23 @@ class HuggingfaceEngine(BaseEngine):
         generating_args = generating_args.copy()
         generating_args.update(
             dict(
-                do_sample=do_sample,
-                temperature=temperature,
-                top_p=top_p,
-                top_k=top_k,
+                do_sample=do_sample if do_sample is not None else generating_args["do_sample"],
+                temperature=temperature if temperature is not None else generating_args["temperature"],
+                top_p=top_p if top_p is not None else generating_args["top_p"],
+                top_k=top_k if top_k is not None else generating_args["top_k"],
                 num_return_sequences=num_return_sequences,
-                repetition_penalty=repetition_penalty,
-                length_penalty=length_penalty,
+                repetition_penalty=repetition_penalty
+                if repetition_penalty is not None
+                else generating_args["repetition_penalty"],
+                length_penalty=length_penalty if length_penalty is not None else generating_args["length_penalty"],
                 eos_token_id=[tokenizer.eos_token_id] + tokenizer.additional_special_tokens_ids,
                 pad_token_id=tokenizer.pad_token_id,
             )
         )
 
-        if isinstance(num_return_sequences, int) and num_return_sequences > 1:
+        if isinstance(num_return_sequences, int) and num_return_sequences > 1:  # do_sample needs temperature > 0
             generating_args["do_sample"] = True
+            generating_args["temperature"] = generating_args["temperature"] or 1.0
 
         if not generating_args["temperature"]:
             generating_args["do_sample"] = False
