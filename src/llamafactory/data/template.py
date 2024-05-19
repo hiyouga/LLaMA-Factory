@@ -276,7 +276,7 @@ def _add_or_replace_eos_token(tokenizer: "PreTrainedTokenizer", eos_token: str) 
 
 
 def _jinja_escape(content: str) -> str:
-    return content.replace("\n", r"\n").replace("'", r"\'")
+    return content.replace("'", r"\'")
 
 
 def _convert_slots_to_jinja(slots: "SLOTS", tokenizer: "PreTrainedTokenizer", placeholder: str = "content") -> str:
