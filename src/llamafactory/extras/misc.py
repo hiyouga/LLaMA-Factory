@@ -225,4 +225,4 @@ def try_download_model_from_ms(model_args: "ModelArguments") -> str:
 
 
 def use_modelscope() -> bool:
-    return bool(int(os.environ.get("USE_MODELSCOPE_HUB", "0")))
+    return os.environ.get("USE_MODELSCOPE_HUB", "0").lower() in ["true", "1"]
