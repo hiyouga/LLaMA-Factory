@@ -46,6 +46,11 @@ class GeneratingArguments:
         default=1.0,
         metadata={"help": "Exponential penalty to the length that is used with beam-based generation."},
     )
+    system_message: str = field(
+        default=None,
+        metadata={
+            "help": "System message is a message that the developer wrote to tell the bot how to interpret the conversation"},
+    )
 
     def to_dict(self) -> Dict[str, Any]:
         args = asdict(self)
