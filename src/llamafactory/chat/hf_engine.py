@@ -97,6 +97,9 @@ class HuggingfaceEngine(BaseEngine):
         if isinstance(num_return_sequences, int) and num_return_sequences > 1:
             generating_args["do_sample"] = True
 
+        if not generating_args["temperature"]:
+            generating_args["do_sample"] = False
+
         if not generating_args["do_sample"]:
             generating_args.pop("temperature", None)
             generating_args.pop("top_p", None)
