@@ -59,6 +59,7 @@ class HuggingfaceEngine(BaseEngine):
             messages[0]["content"] = "<image>" + messages[0]["content"]
 
         paired_messages = messages + [{"role": "assistant", "content": ""}]
+        system = system or generating_args["default_system"]
         prompt_ids, _ = template.encode_oneturn(
             tokenizer=tokenizer, messages=paired_messages, system=system, tools=tools
         )

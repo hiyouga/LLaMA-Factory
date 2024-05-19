@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 @dataclass
@@ -45,6 +45,10 @@ class GeneratingArguments:
     length_penalty: float = field(
         default=1.0,
         metadata={"help": "Exponential penalty to the length that is used with beam-based generation."},
+    )
+    default_system: Optional[str] = field(
+        default=None,
+        metadata={"help": "Default system message to use in chat completion."},
     )
 
     def to_dict(self) -> Dict[str, Any]:
