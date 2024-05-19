@@ -96,6 +96,7 @@ class VllmEngine(BaseEngine):
             messages[0]["content"] = "<image>" * self.image_feature_size + messages[0]["content"]
 
         paired_messages = messages + [{"role": "assistant", "content": ""}]
+        system = system or self.generating_args["default_system"]
         prompt_ids, _ = self.template.encode_oneturn(
             tokenizer=self.tokenizer, messages=paired_messages, system=system, tools=tools
         )
