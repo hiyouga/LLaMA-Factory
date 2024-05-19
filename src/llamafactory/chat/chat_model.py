@@ -29,6 +29,7 @@ class ChatModel:
         else:
             raise NotImplementedError("Unknown backend: {}".format(model_args.infer_backend))
 
+        self.system_message = generating_args.system_message or None
         self._loop = asyncio.new_event_loop()
         self._thread = Thread(target=_start_background_loop, args=(self._loop,), daemon=True)
         self._thread.start()
@@ -63,6 +64,7 @@ class ChatModel:
         image: Optional["NDArray"] = None,
         **input_kwargs,
     ) -> Generator[str, None, None]:
+        system = system or self.system_message
         generator = self.astream_chat(messages, system, tools, image, **input_kwargs)
         while True:
             try:
