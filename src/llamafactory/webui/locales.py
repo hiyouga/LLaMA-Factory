@@ -774,52 +774,52 @@ LOCALES = {
             "label": "RLHF 参数设置",
         },
     },
-    "dpo_beta": {
+    "pref_beta": {
         "en": {
-            "label": "DPO beta",
-            "info": "Value of the beta parameter in the DPO loss.",
+            "label": "Beta value",
+            "info": "Value of the beta parameter in the loss.",
         },
         "ru": {
-            "label": "DPO бета",
-            "info": "Значение параметра бета в функции потерь DPO.",
+            "label": "Бета значение",
+            "info": "Значение параметра бета в функции потерь.",
         },
         "zh": {
-            "label": "DPO beta 参数",
-            "info": "DPO 损失函数中 beta 超参数大小。",
+            "label": "Beta 参数",
+            "info": "损失函数中 beta 超参数大小。",
         },
     },
-    "dpo_ftx": {
+    "pref_ftx": {
         "en": {
-            "label": "DPO-ftx weight",
-            "info": "The weight of SFT loss in the DPO-ftx.",
+            "label": "Ftx gamma",
+            "info": "The weight of SFT loss in the final loss.",
         },
         "ru": {
-            "label": "Вес DPO-ftx",
-            "info": "Вес функции потерь SFT в DPO-ftx.",
+            "label": "Ftx гамма",
+            "info": "Вес потери SFT в итоговой потере.",
         },
         "zh": {
-            "label": "DPO-ftx 权重",
-            "info": "DPO-ftx 中 SFT 损失的权重大小。",
+            "label": "Ftx gamma",
+            "info": "损失函数中 SFT 损失的权重大小。",
         },
     },
-    "orpo_beta": {
+    "pref_loss": {
         "en": {
-            "label": "ORPO beta",
-            "info": "Value of the beta parameter in the ORPO loss.",
+            "label": "Loss type",
+            "info": "The type of the loss function.",
         },
         "ru": {
-            "label": "ORPO бета",
-            "info": "Значение параметра бета в функции потерь ORPO.",
+            "label": "Тип потерь",
+            "info": "Тип функции потерь.",
         },
         "zh": {
-            "label": "ORPO beta 参数",
-            "info": "ORPO 损失函数中 beta 超参数大小。",
+            "label": "损失类型",
+            "info": "损失函数的类型。",
         },
     },
     "reward_model": {
         "en": {
             "label": "Reward model",
-            "info": "Adapter of the reward model for PPO training.",
+            "info": "Adapter of the reward model in PPO training.",
         },
         "ru": {
             "label": "Модель вознаграждения",
@@ -828,6 +828,34 @@ LOCALES = {
         "zh": {
             "label": "奖励模型",
             "info": "PPO 训练中奖励模型的适配器路径。",
+        },
+    },
+    "ppo_score_norm": {
+        "en": {
+            "label": "Score norm",
+            "info": "Normalizing scores in PPO training.",
+        },
+        "ru": {
+            "label": "Норма оценок",
+            "info": "Нормализация оценок в тренировке PPO.",
+        },
+        "zh": {
+            "label": "奖励模型",
+            "info": "PPO 训练中归一化奖励分数。",
+        },
+    },
+    "ppo_whiten_rewards": {
+        "en": {
+            "label": "Whiten rewards",
+            "info": "Whiten the rewards in PPO training.",
+        },
+        "ru": {
+            "label": "Белые вознаграждения",
+            "info": "Осветлите вознаграждения в обучении PPO.",
+        },
+        "zh": {
+            "label": "白化奖励",
+            "info": "PPO 训练中将奖励分数做白化处理。",
         },
     },
     "galore_tab": {
