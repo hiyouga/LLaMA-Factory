@@ -1,0 +1,11 @@
+### model
+model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
+template: llama3
+
+### export
+export_dir: models/llama3_gptq
+export_quantization_bit: 4
+export_quantization_dataset: data/c4_demo.json
+export_size: 2
+export_device: cpu
+export_legacy_format: false
