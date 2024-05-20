@@ -22,6 +22,8 @@ FILEEXT2TYPE = {
 
 IGNORE_INDEX = -100
 
+IMAGE_TOKEN = "<image>"
+
 LAYERNORM_NAMES = {"norm", "ln"}
 
 METHODS = ["full", "freeze", "lora"]
