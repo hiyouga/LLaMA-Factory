@@ -136,25 +136,19 @@ class MMLU(datasets.GeneratorBasedBuilder):
             datasets.SplitGenerator(
                 name=datasets.Split.TEST,
                 gen_kwargs={
-                    "filepath": os.path.join(
-                        data_dir, "data", "test", f"{task_name}_test.csv"
-                    ),
+                    "filepath": os.path.join(data_dir, "data", "test", f"{task_name}_test.csv"),
                 },
             ),
             datasets.SplitGenerator(
                 name=datasets.Split.VALIDATION,
                 gen_kwargs={
-                    "filepath": os.path.join(
-                        data_dir, "data", "val", f"{task_name}_val.csv"
-                    ),
+                    "filepath": os.path.join(data_dir, "data", "val", f"{task_name}_val.csv"),
                 },
             ),
             datasets.SplitGenerator(
                 name=datasets.Split.TRAIN,
                 gen_kwargs={
-                    "filepath": os.path.join(
-                        data_dir, "data", "dev", f"{task_name}_dev.csv"
-                    ),
+                    "filepath": os.path.join(data_dir, "data", "dev", f"{task_name}_dev.csv"),
                 },
             ),
         ]
