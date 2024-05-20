@@ -34,7 +34,8 @@ class HhRlhfEn(datasets.GeneratorBasedBuilder):
         features = datasets.Features(
             {
                 "instruction": datasets.Value("string"),
-                "output": datasets.Sequence(datasets.Value("string")),
+                "chosen": datasets.Value("string"),
+                "rejected": datasets.Value("string"),
                 "history": datasets.Sequence(datasets.Sequence(datasets.Value("string"))),
             }
         )
