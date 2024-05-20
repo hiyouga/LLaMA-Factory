@@ -15,7 +15,7 @@ def calculate_gpa(grades: Sequence[str], hours: Sequence[int]) -> float:
     for grade, hour in zip(grades, hours):
         total_score += grade_to_score[grade] * hour
         total_hour += hour
-    return total_score / total_hour
+    return round(total_score / total_hour, 2)
 
 
 def main():
@@ -45,16 +45,19 @@ def main():
     messages = []
     messages.append({"role": "user", "content": "My grades are A, A, B, and C. The credit hours are 3, 4, 3, and 2."})
     result = client.chat.completions.create(messages=messages, model="test", tools=tools)
+    if result.choices[0].message.tool_calls is None:
+        raise ValueError("Cannot retrieve function call from the response.")
+
+    messages.append(result.choices[0].message)
     tool_call = result.choices[0].message.tool_calls[0].function
+    print(tool_call)
+    # Function(arguments='{"grades": ["A", "A", "B", "C"], "hours": [3, 4, 3, 2]}', name='calculate_gpa')
     name, arguments = tool_call.name, json.loads(tool_call.arguments)
-    messages.append(
-        {"role": "function", "content": json.dumps({"name": name, "argument": arguments}, ensure_ascii=False)}
-    )
     tool_result = tool_map[name](**arguments)
     messages.append({"role": "tool", "content": json.dumps({"gpa": tool_result}, ensure_ascii=False)})
     result = client.chat.completions.create(messages=messages, model="test", tools=tools)
     print(result.choices[0].message.content)
-    # Based on your grades and credit hours, your calculated Grade Point Average (GPA) is 3.4166666666666665.
+    # Based on the grades and credit hours you provided, your Grade Point Average (GPA) is 3.42.
 
 
 if __name__ == "__main__":

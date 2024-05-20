@@ -3,24 +3,23 @@
 # Usage: python length_cdf.py --model_name_or_path path_to_model --dataset alpaca_en --template default
 
 from collections import defaultdict
-from typing import Optional
 
 import fire
 from tqdm import tqdm
 
-from llmtuner.data import get_dataset
-from llmtuner.hparams import get_train_args
-from llmtuner.model import load_model_and_tokenizer
+from llamafactory.data import get_dataset
+from llamafactory.hparams import get_train_args
+from llamafactory.model import load_tokenizer
 
 
 def length_cdf(
     model_name_or_path: str,
-    dataset: Optional[str] = "alpaca_en",
-    dataset_dir: Optional[str] = "data",
-    template: Optional[str] = "default",
-    interval: Optional[int] = 1000,
+    dataset: str = "alpaca_en",
+    dataset_dir: str = "data",
+    template: str = "default",
+    interval: int = 1000,
 ):
-    model_args, data_args, training_args, finetuning_args, _ = get_train_args(
+    model_args, data_args, training_args, _, _ = get_train_args(
         dict(
             stage="sft",
             model_name_or_path=model_name_or_path,
@@ -32,8 +31,8 @@ def length_cdf(
             overwrite_cache=True,
         )
     )
-    _, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, is_trainable=False, add_valuehead=False)
-    trainset = get_dataset(tokenizer, model_args, data_args, training_args, stage="sft")
+    tokenizer_module = load_tokenizer(model_args)
+    trainset = get_dataset(model_args, data_args, training_args, stage="sft", **tokenizer_module)
     total_num = len(trainset)
     length_dict = defaultdict(int)
     for sample in tqdm(trainset["input_ids"]):
