@@ -4,7 +4,7 @@
 # Inspired by: https://github.com/imoneoi/openchat/blob/master/ochat/training_deepspeed/train.py
 
 import math
-from typing import Optional
+from typing import Literal
 
 import fire
 import torch
@@ -12,10 +12,10 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import DataCollatorForLanguageModeling, DataCollatorForSeq2Seq
 
-from llmtuner.data import get_dataset
-from llmtuner.extras.constants import IGNORE_INDEX
-from llmtuner.hparams import get_train_args
-from llmtuner.model import load_model_and_tokenizer
+from llamafactory.data import get_dataset
+from llamafactory.extras.constants import IGNORE_INDEX
+from llamafactory.hparams import get_train_args
+from llamafactory.model import load_tokenizer
 
 
 BASE_LR = 3e-4  # 1.5e-4 for 30B-70B models
@@ -25,14 +25,14 @@ BASE_BS = 4_000_000  # from llama paper
 def calculate_lr(
     model_name_or_path: str,
     batch_size: int,  # total batch size, namely (batch size * gradient accumulation * world size)
-    stage: Optional[str] = "sft",
-    dataset: Optional[str] = "alpaca_en",
-    dataset_dir: Optional[str] = "data",
-    template: Optional[str] = "default",
-    cutoff_len: Optional[int] = 1024,  # i.e. maximum input length during training
-    is_mistral: Optional[bool] = False,  # mistral model uses a smaller learning rate,
+    stage: Literal["pt", "sft"] = "sft",
+    dataset: str = "alpaca_en",
+    dataset_dir: str = "data",
+    template: str = "default",
+    cutoff_len: int = 1024,  # i.e. maximum input length during training
+    is_mistral: bool = False,  # mistral model uses a smaller learning rate,
 ):
-    model_args, data_args, training_args, finetuning_args, _ = get_train_args(
+    model_args, data_args, training_args, _, _ = get_train_args(
         dict(
             stage=stage,
             model_name_or_path=model_name_or_path,
@@ -44,8 +44,9 @@ def calculate_lr(
             overwrite_cache=True,
         )
     )
-    _, tokenizer = load_model_and_tokenizer(model_args, finetuning_args, is_trainable=False, add_valuehead=False)
-    trainset = get_dataset(tokenizer, model_args, data_args, training_args, stage=stage)
+    tokenizer_module = load_tokenizer(model_args)
+    tokenizer = tokenizer_module["tokenizer"]
+    trainset = get_dataset(model_args, data_args, training_args, stage, **tokenizer_module)
     if stage == "pt":
         data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
     elif stage == "sft":
@@ -53,9 +54,7 @@ def calculate_lr(
     else:
         raise NotImplementedError
 
-    dataloader = DataLoader(
-        dataset=trainset, batch_size=batch_size, shuffle=True, collate_fn=data_collator, pin_memory=True
-    )
+    dataloader = DataLoader(trainset, batch_size, shuffle=False, collate_fn=data_collator, pin_memory=True)
     valid_tokens, total_tokens = 0, 0
     for batch in tqdm(dataloader):
         valid_tokens += torch.sum(batch["labels"] != IGNORE_INDEX).item()

@@ -10,6 +10,8 @@ services:
       - ./hf_cache:/root/.cache/huggingface/
       - ./data:/app/data
       - ./output:/app/output
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
     ports:
       - "7860:7860"
     ipc: host
