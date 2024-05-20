@@ -718,6 +718,28 @@ register_model_group(
 
 register_model_group(
     models={
+        "PaliGemma-3B-pt-224": {
+            DownloadSource.DEFAULT: "google/paligemma-3b-pt-224",
+        },
+        "PaliGemma-3B-pt-448": {
+            DownloadSource.DEFAULT: "google/paligemma-3b-pt-448",
+        },
+        "PaliGemma-3B-pt-896": {
+            DownloadSource.DEFAULT: "google/paligemma-3b-pt-896",
+        },
+        "PaliGemma-3B-mix-224": {
+            DownloadSource.DEFAULT: "google/paligemma-3b-mix-224",
+        },
+        "PaliGemma-3B-mix-448": {
+            DownloadSource.DEFAULT: "google/paligemma-3b-mix-448",
+        },
+    },
+    vision=True,
+)
+
+
+register_model_group(
+    models={
         "Phi-1.5-1.3B": {
             DownloadSource.DEFAULT: "microsoft/phi-1_5",
             DownloadSource.MODELSCOPE: "allspace/PHI_1-5",
