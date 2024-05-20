@@ -2,6 +2,7 @@ import uuid
 from typing import TYPE_CHECKING, AsyncGenerator, AsyncIterator, Dict, List, Optional, Sequence, Union
 
 from ..data import get_template_and_fix_tokenizer
+from ..extras.constants import IMAGE_TOKEN
 from ..extras.logging import get_logger
 from ..extras.misc import get_device_count, infer_optim_dtype
 from ..extras.packages import is_vllm_available
@@ -17,7 +18,6 @@ if is_vllm_available():
 
 
 if TYPE_CHECKING:
-    import torch
     from numpy.typing import NDArray
     from transformers.image_processing_utils import BaseImageProcessor
 
@@ -67,7 +67,7 @@ class VllmEngine(BaseEngine):
             patch_size = config.vision_config.patch_size
             self.image_feature_size = (image_size // patch_size) ** 2
             engine_args["image_input_type"] = "pixel_values"
-            engine_args["image_token_id"] = self.tokenizer.convert_tokens_to_ids("<image>")
+            engine_args["image_token_id"] = self.tokenizer.convert_tokens_to_ids(IMAGE_TOKEN)
             engine_args["image_input_shape"] = "1,3,{},{}".format(image_size, image_size)
             engine_args["image_feature_size"] = self.image_feature_size
             if getattr(config, "is_yi_vl_derived_model", None):
@@ -92,14 +92,28 @@ class VllmEngine(BaseEngine):
         **input_kwargs,
     ) -> AsyncIterator["RequestOutput"]:
         request_id = "chatcmpl-{}".format(uuid.uuid4().hex)
-        if self.processor is not None and image is not None and "<image>" not in messages[0]["content"]:
-            messages[0]["content"] = "<image>" * self.image_feature_size + messages[0]["content"]
+
+        if (
+            self.processor is not None
+            and image is not None
+            and not hasattr(self.processor, "image_seq_length")
+            and IMAGE_TOKEN not in messages[0]["content"]
+        ):  # llava case
+            messages[0]["content"] = IMAGE_TOKEN * self.image_feature_size + messages[0]["content"]
 
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or self.generating_args["default_system"]
         prompt_ids, _ = self.template.encode_oneturn(
             tokenizer=self.tokenizer, messages=paired_messages, system=system, tools=tools
         )
+
+        if self.processor is not None and image is not None:  # add image features
+            image_processor: "BaseImageProcessor" = getattr(self.processor, "image_processor")
+            pixel_values = image_processor(image, return_tensors="pt")["pixel_values"]
+            multi_modal_data = MultiModalData(type=MultiModalData.Type.IMAGE, data=pixel_values)
+        else:
+            multi_modal_data = None
+
         prompt_length = len(prompt_ids)
 
         use_beam_search: bool = self.generating_args["num_beams"] > 1
@@ -143,13 +157,6 @@ class VllmEngine(BaseEngine):
             max_tokens=max_tokens,
             skip_special_tokens=True,
         )
-
-        if self.processor is not None and image is not None:
-            image_processor: "BaseImageProcessor" = getattr(self.processor, "image_processor")
-            pixel_values: "torch.Tensor" = image_processor(image, return_tensors="pt")["pixel_values"]
-            multi_modal_data = MultiModalData(type=MultiModalData.Type.IMAGE, data=pixel_values)
-        else:
-            multi_modal_data = None
 
         result_generator = self.model.generate(
             prompt=None,
