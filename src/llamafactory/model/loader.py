@@ -163,6 +163,11 @@ def load_model(
     else:
         model.train()
 
+    if model_args.visual_inputs and model_args.tune_mm_proj:
+        lm_params = [param for name, param in model.named_parameters() if "language_model" in name]
+        for param in lm_params:
+            param.requires_grad_(False)
+
     trainable_params, all_param = count_parameters(model)
     if is_trainable:
         param_stats = "trainable params: {:d} || all params: {:d} || trainable%: {:.4f}".format(
