@@ -289,7 +289,7 @@ huggingface-cli login
 | datasets     | 2.14.3  | 2.19.1    |
 | accelerate   | 0.27.2  | 0.30.1    |
 | peft         | 0.9.0   | 0.11.1    |
-| trl          | 0.8.1   | 0.8.6     |
+| trl          | 0.8.2   | 0.8.6     |
 
 | Optional     | Minimum | Recommend |
 | ------------ | ------- | --------- |
