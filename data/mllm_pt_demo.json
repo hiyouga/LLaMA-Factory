@@ -1,0 +1,92 @@
+[
+  {
+    "messages": [
+      {
+        "content": "Render a clear and concise summary of the photo.",
+        "role": "user"
+      },
+      {
+        "content": "There are two soccer players on the field.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "mllm_demo_data/1.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Write a terse but informative summary of the picture.",
+        "role": "user"
+      },
+      {
+        "content": "A soccer player is sliding on his knees to celebrate",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "mllm_demo_data/2.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "What is this?",
+        "role": "user"
+      },
+      {
+        "content": "A man is giving a speech.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "mllm_demo_data/3.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "对照片进行简明扼要的概括。",
+        "role": "user"
+      },
+      {
+        "content": "两个足球运动员在场上",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "mllm_demo_data/1.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "为图片写一个简短但内容丰富的摘要。",
+        "role": "user"
+      },
+      {
+        "content": "一个足球运动员在跪地滑行庆祝",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "mllm_demo_data/2.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "这是什么？",
+        "role": "user"
+      },
+      {
+        "content": "一个男人在演讲",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "mllm_demo_data/3.jpg"
+    ]
+  }
+]
