@@ -89,7 +89,7 @@ def preprocess_supervised_dataset(
         if processor is not None and hasattr(processor, "image_seq_length"):  # paligemma case
             image_token_id = tokenizer.convert_tokens_to_ids(IMAGE_TOKEN)
             input_ids += [image_token_id] * getattr(processor, "image_seq_length")
-            labels += [image_token_id] * getattr(processor, "image_seq_length")
+            labels += [IGNORE_INDEX] * getattr(processor, "image_seq_length")
 
         for turn_idx, (source_ids, target_ids) in enumerate(
             template.encode_multiturn(
