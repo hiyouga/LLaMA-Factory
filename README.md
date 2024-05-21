@@ -345,6 +345,8 @@ To enable FlashAttention-2 on the Windows platform, you need to install the prec
 
 <details><summary>For Ascend NPU users</summary>
 
+Join [NPU user group](assets/wechat_npu.jpg).
+
 To utilize Ascend NPU devices for (distributed) training and inference, you need to install the **[torch-npu](https://gitee.com/ascend/pytorch)** library and the **[Ascend CANN Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**.
 
 | Requirement  | Minimum | Recommend |
