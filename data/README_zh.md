@@ -7,7 +7,7 @@
   "hf_hub_url": "Hugging Face 的数据集仓库地址（若指定，则忽略 script_url 和 file_name）",
   "ms_hub_url": "ModelScope 的数据集仓库地址（若指定，则忽略 script_url 和 file_name）",
   "script_url": "包含数据加载脚本的本地文件夹名称（若指定，则忽略 file_name）",
-  "file_name": "该目录下数据集文件的名称（若上述参数未指定，则此项必需）",
+  "file_name": "该目录下数据集文件夹或文件的名称（若上述参数未指定，则此项必需）",
   "formatting": "数据集格式（可选，默认：alpaca，可以为 alpaca 或 sharegpt）",
   "ranking": "是否为偏好数据集（可选，默认：False）",
   "subset": "数据集子集的名称（可选，默认：None）",
