@@ -289,7 +289,7 @@ huggingface-cli login
 | datasets     | 2.14.3  | 2.19.1    |
 | accelerate   | 0.27.2  | 0.30.1    |
 | peft         | 0.9.0   | 0.11.1    |
-| trl          | 0.8.1   | 0.8.6     |
+| trl          | 0.8.2   | 0.8.6     |
 
 | 可选项       | 至少     | 推荐      |
 | ------------ | ------- | --------- |
@@ -344,6 +344,8 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 </details>
 
 <details><summary>昇腾 NPU 用户指南</summary>
+
+加入 [NPU 用户群](assets/wechat_npu.jpg)。
 
 如果使用昇腾 NPU 设备进行（分布式）训练或推理，需要安装 **[torch-npu](https://gitee.com/ascend/pytorch)** 库和 **[Ascend CANN Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**。
 
