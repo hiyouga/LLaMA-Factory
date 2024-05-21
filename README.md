@@ -289,7 +289,7 @@ huggingface-cli login
 | datasets     | 2.14.3  | 2.19.1    |
 | accelerate   | 0.27.2  | 0.30.1    |
 | peft         | 0.9.0   | 0.11.1    |
-| trl          | 0.8.1   | 0.8.6     |
+| trl          | 0.8.2   | 0.8.6     |
 
 | Optional     | Minimum | Recommend |
 | ------------ | ------- | --------- |
@@ -344,6 +344,8 @@ To enable FlashAttention-2 on the Windows platform, you need to install the prec
 </details>
 
 <details><summary>For Ascend NPU users</summary>
+
+Join [NPU user group](assets/wechat_npu.jpg).
 
 To utilize Ascend NPU devices for (distributed) training and inference, you need to install the **[torch-npu](https://gitee.com/ascend/pytorch)** library and the **[Ascend CANN Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**.
 
