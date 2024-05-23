@@ -359,7 +359,7 @@ To utilize Ascend NPU devices for (distributed) training and inference, you need
 Docker image:
 
 - 32GB: [Download page](http://mirrors.cn-central-221.ovaijisuan.com/detail/130.html)
-- 64GB: Coming soon
+- 64GB: [Download page](http://mirrors.cn-central-221.ovaijisuan.com/detail/131.html)
 
 Remember to use `ASCEND_RT_VISIBLE_DEVICES` instead of `CUDA_VISIBLE_DEVICES` to specify the device to use.
 
