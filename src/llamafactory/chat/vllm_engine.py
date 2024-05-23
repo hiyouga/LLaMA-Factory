@@ -98,7 +98,7 @@ class VllmEngine(BaseEngine):
             and image is not None
             and not hasattr(self.processor, "image_seq_length")
             and IMAGE_TOKEN not in messages[0]["content"]
-        ):  # llava case
+        ):  # llava-like models
             messages[0]["content"] = IMAGE_TOKEN * self.image_feature_size + messages[0]["content"]
 
         paired_messages = messages + [{"role": "assistant", "content": ""}]

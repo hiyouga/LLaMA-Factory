@@ -1,5 +1,6 @@
 import inspect
 import os
+import sys
 from typing import TYPE_CHECKING, Literal, Optional, Union
 
 from datasets import load_dataset, load_from_disk
@@ -167,12 +168,15 @@ def get_dataset(
                 logger.info("Tokenized dataset saved at {}.".format(data_args.tokenized_path))
                 logger.info("Please restart the training with `--tokenized_path {}`.".format(data_args.tokenized_path))
 
-            exit(0)
+            sys.exit(0)
 
         if training_args.should_log:
             try:
                 print_function(next(iter(dataset)))
             except StopIteration:
-                raise RuntimeError("Cannot find valid samples, check `data/README.md` for the data format.")
+                if stage == "pt":
+                    raise RuntimeError("Cannot find sufficient samples, consider increasing dataset size.")
+                else:
+                    raise RuntimeError("Cannot find valid samples, check `data/README.md` for the data format.")
 
         return dataset
