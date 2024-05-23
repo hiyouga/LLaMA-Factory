@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any, Dict, Sequence
 
 import torch
 from transformers import DataCollatorForSeq2Seq
@@ -11,21 +11,6 @@ class PairwiseDataCollatorWithPadding(DataCollatorForSeq2Seq):
     Data collator for pairwise data.
     """
 
-    def _pad_labels(self, batch: torch.Tensor, positions: List[Tuple[int, int]]) -> torch.Tensor:
-        r"""
-        Masks out the input ids except for the responses.
-        """
-        padded_labels = []
-        for feature, (prompt_len, answer_len) in zip(batch, positions):
-            if self.tokenizer.padding_side == "left":
-                start, end = feature.size(0) - answer_len, feature.size(0)
-            else:
-                start, end = prompt_len, prompt_len + answer_len
-            padded_tensor = self.label_pad_token_id * torch.ones_like(feature)
-            padded_tensor[start:end] = feature[start:end]
-            padded_labels.append(padded_tensor)
-        return torch.stack(padded_labels, dim=0).contiguous()  # in contiguous memory
-
     def __call__(self, features: Sequence[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
         r"""
         Pads batched data to the longest sequence in the batch.
@@ -34,21 +19,22 @@ class PairwiseDataCollatorWithPadding(DataCollatorForSeq2Seq):
         the last n examples represent rejected examples.
         """
         concatenated_features = []
-        label_positions = []
-        for key in ("chosen_ids", "rejected_ids"):
+        for key in ("chosen", "rejected"):
             for feature in features:
-                prompt_len, answer_len = len(feature["prompt_ids"]), len(feature[key])
-                concatenated_features.append(
-                    {
-                        "input_ids": feature["prompt_ids"] + feature[key],
-                        "attention_mask": [1] * (prompt_len + answer_len),
-                    }
-                )
-                label_positions.append((prompt_len, answer_len))
+                target_feature = {
+                    "input_ids": feature["{}_input_ids".format(key)],
+                    "attention_mask": feature["{}_attention_mask".format(key)],
+                    "labels": feature["{}_labels".format(key)],
+                }
+                if "pixel_values" in feature:
+                    target_feature["pixel_values"] = feature["pixel_values"]
 
-        batch = super().__call__(concatenated_features)
-        batch["labels"] = self._pad_labels(batch["input_ids"], label_positions)
-        return batch
+                if "{}_token_type_ids".format(key) in feature:
+                    target_feature["token_type_ids"] = feature["{}_token_type_ids".format(key)]
+
+                concatenated_features.append(target_feature)
+
+        return super().__call__(concatenated_features)
 
 
 @dataclass
@@ -62,20 +48,25 @@ class KTODataCollatorWithPadding(DataCollatorForSeq2Seq):
         kl_features = []
         kto_tags = []
         for feature in features:
-            target_features.append(
-                {
-                    "input_ids": feature["input_ids"],
-                    "attention_mask": feature["attention_mask"],
-                    "labels": feature["labels"],
-                }
-            )
-            kl_features.append(
-                {
-                    "input_ids": feature["kl_input_ids"],
-                    "attention_mask": feature["kl_attention_mask"],
-                    "labels": feature["kl_labels"],
-                }
-            )
+            target_feature = {
+                "input_ids": feature["input_ids"],
+                "attention_mask": feature["attention_mask"],
+                "labels": feature["labels"],
+            }
+            kl_feature = {
+                "input_ids": feature["kl_input_ids"],
+                "attention_mask": feature["kl_attention_mask"],
+                "labels": feature["kl_labels"],
+            }
+            if "pixel_values" in feature:
+                target_feature["pixel_values"] = feature["pixel_values"]
+
+            if "token_type_ids" in feature:
+                target_feature["token_type_ids"] = feature["token_type_ids"]
+                kl_feature["token_type_ids"] = feature["kl_token_type_ids"]
+
+            target_features.append(target_feature)
+            kl_features.append(kl_feature)
             kto_tags.append(feature["kto_tags"])
 
         batch = super().__call__(target_features)
@@ -83,5 +74,8 @@ class KTODataCollatorWithPadding(DataCollatorForSeq2Seq):
         batch["kl_input_ids"] = kl_batch["input_ids"]
         batch["kl_attention_mask"] = kl_batch["attention_mask"]
         batch["kl_labels"] = kl_batch["labels"]
+        if "token_type_ids" in batch:
+            batch["kl_token_type_ids"] = kl_batch["token_type_ids"]
+
         batch["kto_tags"] = torch.tensor(kto_tags)
         return batch
