@@ -359,7 +359,7 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 Docker 镜像：
 
 - 32GB：[下载地址](http://mirrors.cn-central-221.ovaijisuan.com/detail/130.html)
-- 64GB：敬请期待
+- 64GB：[下载地址](http://mirrors.cn-central-221.ovaijisuan.com/detail/131.html)
 
 请记得使用 `ASCEND_RT_VISIBLE_DEVICES` 而非 `CUDA_VISIBLE_DEVICES` 来指定您使用的设备。
 
