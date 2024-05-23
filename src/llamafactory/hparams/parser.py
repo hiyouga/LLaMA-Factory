@@ -328,8 +328,8 @@ def get_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
     _verify_model_args(model_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args)
 
-    if model_args.export_dir is not None:
-        model_args.device_map = {"": torch.device(model_args.export_device)}
+    if model_args.export_dir is not None and model_args.export_device == "cpu":
+        model_args.device_map = {"": torch.device("cpu")}
     else:
         model_args.device_map = "auto"
 
