@@ -85,9 +85,7 @@ class CustomORPOTrainer(DPOTrainer):
         r"""
         Computes the average log probabilities of the labels under the given logits.
         """
-        all_logits: "torch.Tensor" = model(
-            input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], return_dict=True, use_cache=False
-        ).logits.to(torch.float32)
+        all_logits: "torch.Tensor" = model(**batch, return_dict=True, use_cache=False).logits.to(torch.float32)
 
         all_logps = self.get_batch_logps(
             logits=all_logits,
