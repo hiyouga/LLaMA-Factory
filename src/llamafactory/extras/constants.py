@@ -22,6 +22,8 @@ FILEEXT2TYPE = {
 
 IGNORE_INDEX = -100
 
+IMAGE_TOKEN = "<image>"
+
 LAYERNORM_NAMES = {"norm", "ln"}
 
 METHODS = ["full", "freeze", "lora"]
@@ -711,6 +713,28 @@ register_model_group(
         },
     },
     template="orion",
+)
+
+
+register_model_group(
+    models={
+        "PaliGemma-3B-pt-224": {
+            DownloadSource.DEFAULT: "google/paligemma-3b-pt-224",
+        },
+        "PaliGemma-3B-pt-448": {
+            DownloadSource.DEFAULT: "google/paligemma-3b-pt-448",
+        },
+        "PaliGemma-3B-pt-896": {
+            DownloadSource.DEFAULT: "google/paligemma-3b-pt-896",
+        },
+        "PaliGemma-3B-mix-224": {
+            DownloadSource.DEFAULT: "google/paligemma-3b-mix-224",
+        },
+        "PaliGemma-3B-mix-448": {
+            DownloadSource.DEFAULT: "google/paligemma-3b-mix-448",
+        },
+    },
+    vision=True,
 )
 
 
