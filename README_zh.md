@@ -69,11 +69,11 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 
 ## 更新日志
 
+[24/05/20] 我们支持了 **PaliGemma** 系列模型的微调。注意 PaliGemma 是预训练模型，你需要使用 `gemma` 模板进行微调使其获得对话能力。
+
 [24/05/18] 我们支持了 **[KTO](https://arxiv.org/abs/2402.01306)** 偏好对齐算法。详细用法请参照 [examples](examples/README_zh.md)。
 
 [24/05/14] 我们支持了昇腾 NPU 设备的训练和推理。详情请查阅[安装](#安装-llama-factory)部分。
-
-[24/05/13] 我们支持了 Yi-1.5 系列模型的微调。
 
 <details><summary>展开日志</summary>
 
@@ -160,6 +160,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 | [LLaVA-1.5](https://huggingface.co/llava-hf)             | 7B/13B                           | q_proj,v_proj     | vicuna    |
 | [Mistral/Mixtral](https://huggingface.co/mistralai)      | 7B/8x7B/8x22B                    | q_proj,v_proj     | mistral   |
 | [OLMo](https://huggingface.co/allenai)                   | 1B/7B                            | q_proj,v_proj     | -         |
+| [PaliGemma](https://huggingface.co/google)               | 3B                               | q_proj,v_proj     | gemma     |
 | [Phi-1.5/2](https://huggingface.co/microsoft)            | 1.3B/2.7B                        | q_proj,v_proj     | -         |
 | [Phi-3](https://huggingface.co/microsoft)                | 3.8B                             | qkv_proj          | phi       |
 | [Qwen](https://huggingface.co/Qwen)                      | 1.8B/7B/14B/72B                  | c_attn            | qwen      |
@@ -284,11 +285,11 @@ huggingface-cli login
 | ------------ | ------- | --------- |
 | python       | 3.8     | 3.10      |
 | torch        | 1.13.1  | 2.2.0     |
-| transformers | 4.37.2  | 4.40.1    |
+| transformers | 4.37.2  | 4.41.0    |
 | datasets     | 2.14.3  | 2.19.1    |
-| accelerate   | 0.27.2  | 0.30.0    |
-| peft         | 0.9.0   | 0.10.0    |
-| trl          | 0.8.1   | 0.8.6     |
+| accelerate   | 0.27.2  | 0.30.1    |
+| peft         | 0.9.0   | 0.11.1    |
+| trl          | 0.8.2   | 0.8.6     |
 
 | 可选项       | 至少     | 推荐      |
 | ------------ | ------- | --------- |
@@ -344,6 +345,8 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 
 <details><summary>昇腾 NPU 用户指南</summary>
 
+加入 [NPU 用户群](assets/wechat_npu.jpg)。
+
 如果使用昇腾 NPU 设备进行（分布式）训练或推理，需要安装 **[torch-npu](https://gitee.com/ascend/pytorch)** 库和 **[Ascend CANN Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**。
 
 | 依赖项       | 至少     | 推荐      |
@@ -356,7 +359,7 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 Docker 镜像：
 
 - 32GB：[下载地址](http://mirrors.cn-central-221.ovaijisuan.com/detail/130.html)
-- 64GB：敬请期待
+- 64GB：[下载地址](http://mirrors.cn-central-221.ovaijisuan.com/detail/131.html)
 
 请记得使用 `ASCEND_RT_VISIBLE_DEVICES` 而非 `CUDA_VISIBLE_DEVICES` 来指定您使用的设备。
 
