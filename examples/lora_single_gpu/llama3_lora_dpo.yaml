@@ -6,7 +6,7 @@ stage: dpo
 do_train: true
 finetuning_type: lora
 lora_target: q_proj,v_proj
-dpo_ftx: 1.0
+pref_loss: sigmoid  # [sigmoid (dpo), orpo, simpo]
 
 ### dataset
 dataset: dpo_en_demo
