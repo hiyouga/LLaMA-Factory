@@ -48,7 +48,6 @@ TRAINING_STAGES = {
     "PPO": "ppo",
     "DPO": "dpo",
     "KTO": "kto",
-    "ORPO": "orpo",
     "Pre-Training": "pt",
 }
 
