@@ -403,20 +403,6 @@ See [examples/README.md](examples/README.md) for advanced usage (including distr
 CUDA_VISIBLE_DEVICES=0 GRADIO_SHARE=1 llamafactory-cli webui
 ```
 
-<details><summary>For Alibaba Cloud PAI or AutoDL users</summary>
-
-If you encountered display problems in LLaMA Board on Alibaba Cloud PAI, try using the following command to set environment variables before starting LLaMA Board:
-
-```bash
-export GRADIO_SERVER_PORT=7860 GRADIO_ROOT_PATH=/${JUPYTER_NAME}/proxy/7860/
-```
-
-If you are using AutoDL, please install a specific version of Gradio:
-
-```bash
-pip install gradio==4.10.0
-```
-
 </details>
 
 #### Use Docker
