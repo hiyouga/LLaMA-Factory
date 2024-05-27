@@ -50,10 +50,10 @@ class CustomKTOTrainer(KTOTrainer):
         self._stored_metrics = defaultdict(lambda: defaultdict(list))
 
         # kto hyperparams
-        self.beta = finetuning_args.kto_beta
+        self.beta = finetuning_args.pref_beta
         self.desirable_weight = finetuning_args.kto_chosen_weight
         self.undesirable_weight = finetuning_args.kto_rejected_weight
-        self.ftx_gamma = finetuning_args.kto_ftx
+        self.ftx_gamma = finetuning_args.pref_ftx
 
         Trainer.__init__(self, model=model, **kwargs)
         if not hasattr(self, "accelerator"):

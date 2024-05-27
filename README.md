@@ -69,13 +69,15 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 ## Changelog
 
+[24/05/26] We supported **[SimPO](https://arxiv.org/abs/2405.14734)** algorithm for preference learning. See [examples](examples/README.md) for usage.
+
 [24/05/20] We supported fine-tuning the **PaliGemma** series models. Note that the PaliGemma models are pre-trained models, you need to fine-tune them with `gemma` template for chat completion.
 
 [24/05/18] We supported **[KTO](https://arxiv.org/abs/2402.01306)** algorithm for preference learning. See [examples](examples/README.md) for usage.
 
-[24/05/14] We supported training and inference on the Ascend NPU devices. Check [installation](#installation) section for details.
-
 <details><summary>Full Changelog</summary>
+
+[24/05/14] We supported training and inference on the Ascend NPU devices. Check [installation](#installation) section for details.
 
 [24/04/26] We supported fine-tuning the **LLaVA-1.5** multimodal LLMs. See [examples](examples/README.md) for usage.
 
@@ -193,6 +195,7 @@ You also can add a custom chat template to [template.py](src/llamafactory/data/t
 | DPO Training           | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | KTO Training           | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | ORPO Training          | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| SimPO Training         | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
 ## Provided Datasets
 
