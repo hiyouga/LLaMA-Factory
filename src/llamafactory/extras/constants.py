@@ -719,6 +719,7 @@ register_model_group(
     template="openchat",
 )
 
+
 register_model_group(
     models={
         "OpenChat3.6-8B-Chat": {
