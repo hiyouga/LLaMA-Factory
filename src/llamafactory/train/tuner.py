@@ -10,7 +10,6 @@ from ..hparams import get_infer_args, get_train_args
 from ..model import load_model, load_tokenizer
 from .dpo import run_dpo
 from .kto import run_kto
-from .orpo import run_orpo
 from .ppo import run_ppo
 from .pt import run_pt
 from .rm import run_rm
@@ -40,8 +39,6 @@ def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: List["TrainerCallb
         run_dpo(model_args, data_args, training_args, finetuning_args, callbacks)
     elif finetuning_args.stage == "kto":
         run_kto(model_args, data_args, training_args, finetuning_args, callbacks)
-    elif finetuning_args.stage == "orpo":
-        run_orpo(model_args, data_args, training_args, finetuning_args, callbacks)
     else:
         raise ValueError("Unknown task.")
 
@@ -100,5 +97,6 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
                 getattr(processor, "image_processor").push_to_hub(
                     model_args.export_hub_model_id, token=model_args.hf_hub_token
                 )
+
     except Exception:
         logger.warning("Cannot save tokenizer, please copy the files manually.")
