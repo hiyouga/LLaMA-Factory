@@ -756,6 +756,22 @@ _register_template(
     force_system=True,
 )
 
+_register_template(
+    name="openchat-3.6",
+    format_user=StringFormatter(
+        slots=[
+            (
+                "<|start_header_id|>GPT4 Correct User<|end_header_id|>\n\n{{content}}<|eot_id|>"
+                "<|start_header_id|>GPT4 Correct Assistant<|end_header_id|>\n\n"
+            )
+        ]
+    ),
+    format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
+    stop_words=["<|eot_id|>"],
+    replace_eos=True,
+    force_system=True,
+)
+
 
 _register_template(
     name="orion",
