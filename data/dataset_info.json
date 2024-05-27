@@ -39,7 +39,7 @@
     }
   },
   "mllm_pt_demo": {
-    "file_name": "mllm_pt_demo.json",
+    "hf_hub_url": "BUAADreamer/mllm_pt_demo",
     "formatting": "sharegpt",
     "columns": {
       "messages": "messages",
