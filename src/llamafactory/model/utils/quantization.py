@@ -35,6 +35,8 @@ class QuantizationMethod(str, Enum):
     AWQ = "awq"
     AQLM = "aqlm"
     QUANTO = "quanto"
+    EETQ = "eetq"
+    HQQ = "hqq"
 
 
 def _get_quantization_dataset(tokenizer: "PreTrainedTokenizer", model_args: "ModelArguments") -> List[str]:
