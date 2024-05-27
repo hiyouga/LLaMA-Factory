@@ -761,7 +761,7 @@ _register_template(
     format_user=StringFormatter(
         slots=[
             (
-                "<|start_header_id|>GPT4 Correct User<|end_header_id|>\n\n{{content}}<|eot_id|>",
+                "<|start_header_id|>GPT4 Correct User<|end_header_id|>\n\n{{content}}<|eot_id|>"
                 "<|start_header_id|>GPT4 Correct Assistant<|end_header_id|>\n\n"
             )
         ]
