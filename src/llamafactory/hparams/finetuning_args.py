@@ -311,6 +311,14 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         default=False,
         metadata={"help": "Whether or not to make only the parameters in the expanded blocks trainable."},
     )
+    freeze_vision_tower: bool = field(
+        default=True,
+        metadata={"help": "Whether ot not to freeze vision tower in MLLM training."},
+    )
+    train_mm_proj_only: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to train the multimodal projector for MLLM only."},
+    )
     plot_loss: bool = field(
         default=False,
         metadata={"help": "Whether or not to save the training loss curves."},
@@ -328,6 +336,7 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         self.lora_target = split_arg(self.lora_target)
         self.additional_target = split_arg(self.additional_target)
         self.galore_target = split_arg(self.galore_target)
+        self.freeze_vision_tower = self.freeze_vision_tower or self.train_mm_proj_only
 
         assert self.finetuning_type in ["lora", "freeze", "full"], "Invalid fine-tuning method."
         assert self.ref_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
@@ -345,7 +354,7 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
             raise ValueError("`dpo_label_smoothing` is only valid for sigmoid loss function.")
 
         if self.use_llama_pro and self.finetuning_type == "full":
-            raise ValueError("`use_llama_pro` is only valid for the Freeze or LoRA training.")
+            raise ValueError("`use_llama_pro` is only valid for Freeze or LoRA training.")
 
         if self.finetuning_type == "lora" and (self.use_galore or self.use_badam):
             raise ValueError("Cannot use LoRA with GaLore or BAdam together.")
@@ -354,4 +363,7 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
             raise ValueError("Cannot use GaLore with BAdam together.")
 
         if self.loraplus_lr_ratio is not None and self.finetuning_type != "lora":
-            raise ValueError("`loraplus_lr_ratio` is only valid for the LoRA training.")
+            raise ValueError("`loraplus_lr_ratio` is only valid for LoRA training.")
+
+        if self.train_mm_proj_only and self.finetuning_type != "full":
+            raise ValueError("`train_mm_proj_only` is only valid for full training.")
