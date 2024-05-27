@@ -6,7 +6,6 @@ stage: kto
 do_train: true
 finetuning_type: lora
 lora_target: q_proj,v_proj
-kto_ftx: 0.1
 
 ### dataset
 dataset: kto_en_demo
