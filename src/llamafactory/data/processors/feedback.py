@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from ...extras.constants import IGNORE_INDEX, IMAGE_TOKEN
+from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
 from .mm_utils import get_paligemma_token_type_ids, get_pixel_values
 
@@ -46,7 +46,7 @@ def preprocess_feedback_dataset(
             continue
 
         if processor is not None and not hasattr(processor, "image_seq_length"):  # llava-like models
-            examples["prompt"][i][0]["content"] = IMAGE_TOKEN + examples["prompt"][i][0]["content"]
+            examples["prompt"][i][0]["content"] = template.image_token + examples["prompt"][i][0]["content"]
 
         if examples["response"][i][0]["content"]:  # desired example
             kto_tag = True
@@ -82,7 +82,7 @@ def preprocess_feedback_dataset(
             kl_response_ids += [tokenizer.eos_token_id]
 
         if processor is not None and hasattr(processor, "image_seq_length"):  # paligemma models
-            image_token_id = tokenizer.convert_tokens_to_ids(IMAGE_TOKEN)
+            image_token_id = tokenizer.convert_tokens_to_ids(template.image_token)
             prompt_ids = [image_token_id] * getattr(processor, "image_seq_length") + prompt_ids
 
         input_ids = prompt_ids + response_ids
