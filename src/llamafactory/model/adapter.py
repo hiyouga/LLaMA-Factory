@@ -10,6 +10,7 @@ from ..extras.logging import get_logger
 from .utils.misc import find_all_linear_modules, find_expanded_modules
 from .utils.quantization import QuantizationMethod
 from .utils.unsloth import get_unsloth_peft_model, load_unsloth_peft_model
+from .utils.visual import filter_vision_tower_linear
 
 
 if TYPE_CHECKING:
@@ -57,6 +58,9 @@ def init_adapter(
 
         if model_args.visual_inputs and hasattr(model, "vision_tower"):  # freeze vision model
             model.vision_tower.requires_grad_(False)
+
+        if model_args.visual_inputs and hasattr(model, "language_model") and model_args.tune_mm_proj:  # freeze language model if only tune mm_proj
+            model.language_model.requires_grad_(False)
 
     if finetuning_args.finetuning_type == "freeze" and is_trainable:
         logger.info("Fine-tuning method: Freeze")
@@ -179,6 +183,9 @@ def init_adapter(
 
             if finetuning_args.use_llama_pro:
                 target_modules = find_expanded_modules(model, target_modules, finetuning_args.num_layer_trainable)
+
+            if model_args.visual_inputs:
+                target_modules = filter_vision_tower_linear(target_modules)
 
             if (
                 finetuning_args.use_dora
