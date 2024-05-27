@@ -179,15 +179,10 @@ class Runner:
             args["ppo_whiten_rewards"] = get("train.ppo_whiten_rewards")
             args["top_k"] = 0
             args["top_p"] = 0.9
-        elif args["stage"] == "dpo":
-            args["dpo_beta"] = get("train.pref_beta")
-            args["dpo_ftx"] = get("train.pref_ftx")
-            args["dpo_loss"] = get("train.pref_loss")
-        elif args["stage"] == "kto":
-            args["kto_beta"] = get("train.pref_beta")
-            args["kto_ftx"] = get("train.pref_ftx")
-        elif args["stage"] == "orpo":
-            args["orpo_beta"] = get("train.pref_beta")
+        elif args["stage"] in ["dpo", "kto"]:
+            args["pref_beta"] = get("train.pref_beta")
+            args["pref_ftx"] = get("train.pref_ftx")
+            args["pref_loss"] = get("train.pref_loss")
 
         # galore config
         if args["use_galore"]:
