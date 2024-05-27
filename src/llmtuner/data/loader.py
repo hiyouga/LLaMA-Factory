@@ -108,6 +108,8 @@ def load_single_dataset(
         num_samples = min(data_args.max_samples, len(dataset))
         dataset = dataset.select(range(num_samples))
 
+    # 0328
+    # print(f"loader.py: line 112")
     return align_dataset(dataset, dataset_attr, data_args)
 
 
@@ -139,6 +141,25 @@ def get_dataset(
         all_datasets = []
         for dataset_attr in get_dataset_list(data_args):
             all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args))
+        
+        # print(f"loader.py: line 144, type: {type(all_datasets)}")
+        # print(all_datasets)
+        # save_path = "/home/data/datasets/0328/evol_instruct"
+        # all_datasets[0].save_to_disk(save_path)
+        # import json
+        # file_path = "/home/data/datasets/0328/evol_instruct.json"
+        # if os.path.exists(file_path):
+        #     dir_name, file_name = os.path.split(file_path)
+        #     name, ext = os.path.splitext(file_name)
+
+        #     new_file_name = f"{name}_duplicate{ext}"
+        #     new_file_path = os.path.join(dir_name, new_file_name)
+        # else:
+        #     new_file_path = file_path
+        # with open(new_file_path, "w", encoding="utf-8") as f:
+        #     json.dump(all_datasets, f, ensure_ascii=False, indent=4)
+        # print(f"Data saved to {new_file_path}")
+
         dataset = merge_dataset(all_datasets, data_args, training_args)
 
     with training_args.main_process_first(desc="pre-process dataset"):
@@ -155,6 +176,14 @@ def get_dataset(
             )
 
         dataset = dataset.map(preprocess_func, batched=True, remove_columns=column_names, **kwargs)
+
+        # 0329 print tokens
+        total_tokens = 0
+        for input_ids in dataset["input_ids"]:
+            total_tokens += len(input_ids)
+        print("********************")
+        print("total_tokens: ", total_tokens)
+        print("********************")
 
         if data_args.cache_path is not None and not os.path.exists(data_args.cache_path):
             if training_args.should_save:

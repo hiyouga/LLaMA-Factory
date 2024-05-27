@@ -1,7 +1,64 @@
 {
+  "alpaca_en_10": {
+    "file_name": "/home/data/ch/targeted_IT/dataset/alpaca_data_en_52k_10.json"
+  },
+  "alpaca_en_50": { 
+    "file_name": "/home/data/ch/targeted_IT/dataset/alpaca_data_en_52k_50.json"
+  },
+  "alpaca_en_100": {
+    "file_name": "/home/data/ch/targeted_IT/dataset/alpaca_data_en_52k_100.json"
+  },
+  "evol_instruct_10": {
+    "file_name": "/home/data/ch/targeted_IT/dataset/WizardLM_evol_instruct_V2_196k_10.json",
+    "columns": {
+      "messages": "conversations"
+    },
+    "tag": {
+      "role_tag": "from",
+      "content_tag": "value",
+      "user_tag": "human",
+      "assistant_tag": "gpt"
+    },
+    "formatting": "sharegpt"
+  },
+  "evol_instruct_50": {
+    "file_name": "/home/data/ch/targeted_IT/dataset/WizardLM_evol_instruct_V2_196k_50.json",
+    "columns": {
+      "messages": "conversations"
+    },
+    "tag": {
+      "role_tag": "from",
+      "content_tag": "value",
+      "user_tag": "human",
+      "assistant_tag": "gpt"
+    },
+    "formatting": "sharegpt"
+  },
+  "evol_instruct_100": {
+    "file_name": "/home/data/ch/targeted_IT/dataset/WizardLM_evol_instruct_V2_196k_100.json",
+    "columns": {
+      "messages": "conversations"
+    },
+    "tag": {
+      "role_tag": "from",
+      "content_tag": "value",
+      "user_tag": "human",
+      "assistant_tag": "gpt"
+    },
+    "formatting": "sharegpt"
+  },
   "alpaca_en": {
     "file_name": "alpaca_data_en_52k.json",
     "file_sha1": "607f94a7f581341e59685aef32f531095232cf23"
+  },
+  "alpaca_en_1%": {
+    "file_name": "/home/data/ch/targeted_IT/dataset/alpaca_data_en_52k_1%.json"
+  },
+  "alpaca_en_10%": {
+    "file_name": "/home/data/ch/targeted_IT/dataset/alpaca_data_en_52k_10%.json"
+  },
+  "alpaca_en_50%": {
+    "file_name": "/home/data/ch/targeted_IT/dataset/alpaca_data_en_52k_50%.json"
   },
   "alpaca_zh": {
     "file_name": "alpaca_data_zh_51k.json",
@@ -218,6 +275,97 @@
   "evol_instruct": {
     "hf_hub_url": "WizardLM/WizardLM_evol_instruct_V2_196k",
     "ms_hub_url": "AI-ModelScope/WizardLM_evol_instruct_V2_196k",
+    "formatting": "sharegpt"
+  },
+  "evol_instruct_1%_json": {
+    "file_name": "/home/data/ch/targeted_IT/dataset/WizardLM_evol_instruct_V2_196k_1%.json",
+    "columns": {
+      "messages": "conversations"
+    },
+    "tag": {
+      "role_tag": "from",
+      "content_tag": "value",
+      "user_tag": "human",
+      "assistant_tag": "gpt"
+    },
+    "formatting": "sharegpt"
+  },
+  "evol_instruct_1%_arrow": {
+    "file_name": "/home/data/ch/targeted_IT/dataset/WizardLM_evol_instruct_V2_196k_1%/data-00000-of-00001.arrow",
+    "columns": {
+      "messages": "conversations"
+    },
+    "tag": {
+      "role_tag": "from",
+      "content_tag": "value",
+      "user_tag": "human",
+      "assistant_tag": "gpt"
+    },
+    "formatting": "sharegpt"
+  },
+  "evol_instruct_10%_json": {
+    "file_name": "/home/data/ch/targeted_IT/dataset/WizardLM_evol_instruct_V2_196k_10%.json",
+    "columns": {
+      "messages": "conversations"
+    },
+    "tag": {
+      "role_tag": "from",
+      "content_tag": "value",
+      "user_tag": "human",
+      "assistant_tag": "gpt"
+    },
+    "formatting": "sharegpt"
+  },
+  "evol_instruct_10%_arrow": {
+    "file_name": "/home/data/ch/targeted_IT/dataset/WizardLM_evol_instruct_V2_196k_10%/data-00000-of-00001.arrow",
+    "columns": {
+      "messages": "conversations"
+    },
+    "tag": {
+      "role_tag": "from",
+      "content_tag": "value",
+      "user_tag": "human",
+      "assistant_tag": "gpt"
+    },
+    "formatting": "sharegpt"
+  },
+  "evol_instruct_hf": {
+    "hf_hub_url": "WizardLM/WizardLM_evol_instruct_V2_196k",
+    "columns": {
+      "messages": "conversations"
+    },
+    "tag": {
+      "role_tag": "from",
+      "content_tag": "value",
+      "user_tag": "human",
+      "assistant_tag": "gpt"
+    },
+    "formatting": "sharegpt"
+  },
+  "evol_instruct_json": {
+    "file_name": "/home/data/ch/targeted_IT/dataset/WizardLM_evol_instruct_V2_196k_100%.json",
+    "columns": {
+      "messages": "conversations"
+    },
+    "tag": {
+      "role_tag": "from",
+      "content_tag": "value",
+      "user_tag": "human",
+      "assistant_tag": "gpt"
+    },
+    "formatting": "sharegpt"
+  },
+  "evol_instruct_local": {
+    "file_name": "/home/data/datasets/WizardLM_arrow/WizardLM_evol_instruct_V2_196k/train/data-00000-of-00001.arrow",
+    "columns": {
+      "messages": "conversations"
+    },
+    "tag": {
+      "role_tag": "from",
+      "content_tag": "value",
+      "user_tag": "human",
+      "assistant_tag": "gpt"
+    },
     "formatting": "sharegpt"
   },
   "glaive_toolcall_100k": {
