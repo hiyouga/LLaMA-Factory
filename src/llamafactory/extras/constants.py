@@ -337,7 +337,7 @@ register_model_group(
         },
         "DeepSeek-MoE-16B-v2-Chat": {
             DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V2-Lite-Chat",
-            DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V2-Lite-Chat"
+            DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V2-Lite-Chat",
         },
         "DeepSeek-MoE-236B-Chat": {
             DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V2-Chat",
