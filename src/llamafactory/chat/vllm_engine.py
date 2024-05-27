@@ -2,7 +2,6 @@ import uuid
 from typing import TYPE_CHECKING, AsyncGenerator, AsyncIterator, Dict, List, Optional, Sequence, Union
 
 from ..data import get_template_and_fix_tokenizer
-from ..extras.constants import IMAGE_TOKEN
 from ..extras.logging import get_logger
 from ..extras.misc import get_device_count, infer_optim_dtype
 from ..extras.packages import is_vllm_available
@@ -67,7 +66,7 @@ class VllmEngine(BaseEngine):
             patch_size = config.vision_config.patch_size
             self.image_feature_size = (image_size // patch_size) ** 2
             engine_args["image_input_type"] = "pixel_values"
-            engine_args["image_token_id"] = self.tokenizer.convert_tokens_to_ids(IMAGE_TOKEN)
+            engine_args["image_token_id"] = self.tokenizer.convert_tokens_to_ids(self.template.image_token)
             engine_args["image_input_shape"] = "1,3,{},{}".format(image_size, image_size)
             engine_args["image_feature_size"] = self.image_feature_size
             if getattr(config, "is_yi_vl_derived_model", None):
@@ -97,9 +96,9 @@ class VllmEngine(BaseEngine):
             self.processor is not None
             and image is not None
             and not hasattr(self.processor, "image_seq_length")
-            and IMAGE_TOKEN not in messages[0]["content"]
-        ):  # llava-like models
-            messages[0]["content"] = IMAGE_TOKEN * self.image_feature_size + messages[0]["content"]
+            and self.template.image_token not in messages[0]["content"]
+        ):  # llava-like models (TODO: paligemma models)
+            messages[0]["content"] = self.template.image_token * self.image_feature_size + messages[0]["content"]
 
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or self.generating_args["default_system"]
