@@ -88,6 +88,19 @@ def register_model_group(
 
 register_model_group(
     models={
+        "Aya-23-8B-Chat": {
+            DownloadSource.DEFAULT: "CohereForAI/aya-23-8B",
+        },
+        "Aya-23-35B-Chat": {
+            DownloadSource.DEFAULT: "CohereForAI/aya-23-35B",
+        },
+    },
+    template="cohere",
+)
+
+
+register_model_group(
+    models={
         "Baichuan-7B-Base": {
             DownloadSource.DEFAULT: "baichuan-inc/Baichuan-7B",
             DownloadSource.MODELSCOPE: "baichuan-inc/baichuan-7B",
