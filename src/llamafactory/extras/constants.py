@@ -719,6 +719,15 @@ register_model_group(
     template="openchat",
 )
 
+register_model_group(
+    models={
+        "OpenChat3.6-8B-Chat": {
+            DownloadSource.DEFAULT: "openchat/openchat-3.6-8b-20240522",
+        }
+    },
+    template="openchat-3.6",
+)
+
 
 register_model_group(
     models={
