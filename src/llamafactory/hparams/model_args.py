@@ -85,10 +85,6 @@ class ModelArguments:
         default=False,
         metadata={"help": "Whethor or not to use multimodal LLM that accepts visual inputs."},
     )
-    tune_mm_proj: bool = field(
-        default=False,
-        metadata={"help": "Whethor or not only finetune mm_projector for MLLM."},
-    )
     moe_aux_loss_coef: Optional[float] = field(
         default=None,
         metadata={"help": "Coefficient of the auxiliary router loss in mixture-of-experts model."},
