@@ -761,16 +761,15 @@ _register_template(
     format_user=StringFormatter(
         slots=[
             (
-                "<|start_header_id|>GPT4 Correct User<|end_header_id|>\n\n{{content}}<|eot_id|>"
+                "<|start_header_id|>GPT4 Correct User<|end_header_id|>\n\n{{content}}<|eot_id|>",
                 "<|start_header_id|>GPT4 Correct Assistant<|end_header_id|>\n\n"
             )
         ]
     ),
-    format_system=StringFormatter(
-        slots=[{"bos_token"}, "<|start_header_id|>System<|end_header_id|>\n\n{{content}}<|eot_id|>"]
-    ),
+    format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
     stop_words=["<|eot_id|>"],
     replace_eos=True,
+    force_system=True,
 )
 
 
