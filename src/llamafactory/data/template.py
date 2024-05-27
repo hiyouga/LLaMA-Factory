@@ -742,7 +742,6 @@ _register_template(
 _register_template(
     name="olmo",
     format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>\n"]),
-    format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}]),
     format_system=StringFormatter(slots=[{"eos_token"}, "{{content}}"]),
     force_system=True,
 )
@@ -751,10 +750,10 @@ _register_template(
 _register_template(
     name="openchat",
     format_user=StringFormatter(slots=["GPT4 Correct User: {{content}}", {"eos_token"}, "GPT4 Correct Assistant:"]),
-    format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}]),
     format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
     force_system=True,
 )
+
 
 _register_template(
     name="openchat-3.6",
