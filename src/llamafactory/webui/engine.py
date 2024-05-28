@@ -5,7 +5,7 @@ from .common import get_model_path, list_dataset, load_config
 from .locales import LOCALES
 from .manager import Manager
 from .runner import Runner
-from .utils import get_time
+from .utils import get_time, save_ds_config
 
 
 if TYPE_CHECKING:
@@ -19,6 +19,8 @@ class Engine:
         self.manager = Manager()
         self.runner = Runner(self.manager, demo_mode)
         self.chatter = WebChatModel(self.manager, demo_mode, lazy_init=(not pure_chat))
+        if not demo_mode:
+            save_ds_config()
 
     def _update_component(self, input_dict: Dict[str, Dict[str, Any]]) -> Dict["Component", "Component"]:
         r"""
