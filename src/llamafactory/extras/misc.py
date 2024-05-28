@@ -165,12 +165,14 @@ def get_current_device() -> torch.device:
 
 def get_device_count() -> int:
     r"""
-    Gets the number of available GPU devices.
+    Gets the number of available GPU or NPU devices.
     """
-    if not torch.cuda.is_available():
+    if is_torch_npu_available():
+        return torch.npu.device_count()
+    elif is_torch_cuda_available():
+        return torch.cuda.device_count()
+    else:
         return 0
-
-    return torch.cuda.device_count()
 
 
 def get_logits_processor() -> "LogitsProcessorList":
@@ -192,6 +194,13 @@ def infer_optim_dtype(model_dtype: torch.dtype) -> torch.dtype:
         return torch.float16
     else:
         return torch.float32
+
+
+def is_gpu_or_npu_available() -> bool:
+    r"""
+    Checks if the GPU or NPU is available.
+    """
+    return is_torch_npu_available() or is_torch_cuda_available()
 
 
 def has_tokenized_data(path: os.PathLike) -> bool:
