@@ -4,8 +4,7 @@ import subprocess
 import sys
 from enum import Enum, unique
 
-from llamafactory import launcher
-
+from . import launcher
 from .api.app import run_api
 from .chat.chat_model import run_chat
 from .eval.evaluator import run_eval
