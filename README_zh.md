@@ -395,9 +395,6 @@ CUDA_VISIBLE_DEVICES=0 llamafactory-cli export examples/merge_lora/llama3_lora_s
 
 ### LLaMA Board 可视化微调（由 [Gradio](https://github.com/gradio-app/gradio) 驱动）
 
-> [!IMPORTANT]
-> LLaMA Board 可视化界面目前仅支持单 GPU 训练。
-
 #### 使用本地环境
 
 ```bash
@@ -457,6 +454,8 @@ export USE_MODELSCOPE_HUB=1 # Windows 使用 `set USE_MODELSCOPE_HUB=1`
 report_to: wandb
 run_name: test_run # 可选
 ```
+
+在启动训练任务时，将 `WANDB_API_KEY` 设置为[密钥](https://wandb.ai/authorize)来登录 W&B 账户。
 
 ## 使用了 LLaMA Factory 的项目
 
