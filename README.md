@@ -174,9 +174,9 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [Yuan](https://huggingface.co/IEITYuan)                  | 2B/51B/102B                      | q_proj,v_proj     | yuan      |
 
 > [!NOTE]
-> **Default module** is used for the `--lora_target` argument, you can use `--lora_target all` to specify all the available modules for better convergence.
+> **Default module** is used for the `lora_target` argument, you can use `lora_target: all` to specify all the available modules for better convergence.
 >
-> For the "base" models, the `--template` argument can be chosen from `default`, `alpaca`, `vicuna` etc. But make sure to use the **corresponding template** for the "instruct/chat" models.
+> For the "base" models, the `template` argument can be chosen from `default`, `alpaca`, `vicuna` etc. But make sure to use the **corresponding template** for the "instruct/chat" models.
 >
 > Remember to use the **SAME** template in training and inference.
 
@@ -448,7 +448,16 @@ If you have trouble with downloading models and datasets from Hugging Face, you 
 export USE_MODELSCOPE_HUB=1 # `set USE_MODELSCOPE_HUB=1` for Windows
 ```
 
-Train the model by specifying a model ID of the ModelScope Hub as the `--model_name_or_path`. You can find a full list of model IDs at [ModelScope Hub](https://modelscope.cn/models), e.g., `LLM-Research/Meta-Llama-3-8B-Instruct`.
+Train the model by specifying a model ID of the ModelScope Hub as the `model_name_or_path`. You can find a full list of model IDs at [ModelScope Hub](https://modelscope.cn/models), e.g., `LLM-Research/Meta-Llama-3-8B-Instruct`.
+
+### Use W&B Logging
+
+To use [Weights & Biases](https://wandb.ai) for logging experimental results, you need to add the following arguments.
+
+```yaml
+report_to: wandb
+run_name: test_run # optional
+```
 
 ## Projects using LLaMA Factory
 
