@@ -33,6 +33,7 @@ extra_require = {
     "qwen": ["tiktoken", "transformers_stream_generator"],
     "modelscope": ["modelscope"],
     "quality": ["ruff"],
+    "torch_npu": ["torch==2.2.0", "torch_npu==2.2.0", "decorator"]
 }
 
 
