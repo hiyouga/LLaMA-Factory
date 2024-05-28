@@ -1103,6 +1103,48 @@ LOCALES = {
             "info": "保存训练参数的配置文件路径。",
         },
     },
+    "device_count": {
+        "en": {
+            "label": "Device count",
+            "info": "Number of devices available.",
+        },
+        "ru": {
+            "label": "Количество устройств",
+            "info": "Количество доступных устройств.",
+        },
+        "zh": {
+            "label": "设备数量",
+            "info": "当前可用的运算设备数。",
+        },
+    },
+    "ds_stage": {
+        "en": {
+            "label": "DeepSpeed stage",
+            "info": "DeepSpeed stage for distributed training.",
+        },
+        "ru": {
+            "label": "Этап DeepSpeed",
+            "info": "Этап DeepSpeed для распределенного обучения.",
+        },
+        "zh": {
+            "label": "DeepSpeed stage",
+            "info": "多卡训练的 DeepSpeed stage。",
+        },
+    },
+    "ds_offload": {
+        "en": {
+            "label": "Enable offload",
+            "info": "Enable DeepSpeed offload (slow down training).",
+        },
+        "ru": {
+            "label": "Включить выгрузку",
+            "info": "включить выгрузку DeepSpeed (замедлит обучение).",
+        },
+        "zh": {
+            "label": "使用 offload",
+            "info": "使用 DeepSpeed offload（会减慢速度）。",
+        },
+    },
     "output_box": {
         "en": {
             "value": "Ready.",
