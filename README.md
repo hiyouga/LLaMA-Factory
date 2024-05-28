@@ -347,7 +347,25 @@ To enable FlashAttention-2 on the Windows platform, you need to install the prec
 
 Join [NPU user group](assets/wechat_npu.jpg).
 
-To utilize Ascend NPU devices for (distributed) training and inference, you need to install the **[torch-npu](https://gitee.com/ascend/pytorch)** library and the **[Ascend CANN Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**.
+Use `pip install -e .[torch_npu]` to install LLaMA-Factory with **[torch-npu](https://gitee.com/ascend/pytorch)** library.
+
+To utilize Ascend NPU devices for (distributed) training and inference, you need to install the **[Ascend CANN Toolkit and Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**. You can follow chapter **[install CANN](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/80RC2alpha002/quickstart/quickstart/quickstart_18_0004.html)** in the installation tutorial to install CANN Toolkit and the kernels, or use the fast installation as following:
+
+```bash
+# replace the url according to your choice
+# install CANN Toolkit
+wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C17SPC701/Ascend-cann-toolkit_8.0.RC1.alpha001_linux-"$(uname -i)".run
+chmod +x Ascend-cann-toolkit_8.0.RC1.alpha001_linux-"$(uname -i)".run
+./Ascend-cann-toolkit_8.0.RC1.alpha001_linux-"$(uname -i)".run --install
+
+# install CANN Kernels
+wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C18B800TP015/Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run
+chmod +x Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run
+./Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run --install
+
+# set env variables
+source /usr/local/Ascend/ascend-toolkit/set_env.sh
+```
 
 | Requirement  | Minimum | Recommend |
 | ------------ | ------- | --------- |
