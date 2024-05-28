@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional, Tuple
 import torch
 import transformers
 from transformers import HfArgumentParser, Seq2SeqTrainingArguments
+from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import is_torch_bf16_gpu_available
 from transformers.utils.versions import require_version
@@ -63,6 +64,9 @@ def _verify_model_args(model_args: "ModelArguments", finetuning_args: "Finetunin
     if model_args.adapter_name_or_path is not None and finetuning_args.finetuning_type != "lora":
         raise ValueError("Adapter is only valid for the LoRA method.")
 
+    if model_args.use_unsloth and is_deepspeed_zero3_enabled():
+        raise ValueError("Unsloth is incompatible with DeepSpeed ZeRO-3.")
+
     if model_args.quantization_bit is not None:
         if finetuning_args.finetuning_type != "lora":
             raise ValueError("Quantization is only compatible with the LoRA method.")
@@ -89,7 +93,7 @@ def _check_extra_dependencies(
         require_version("mixture-of-depth>=1.1.6", "To fix: pip install mixture-of-depth>=1.1.6")
 
     if model_args.infer_backend == "vllm":
-        require_version("vllm>=0.4.0", "To fix: pip install vllm>=0.4.0")
+        require_version("vllm>=0.4.1", "To fix: pip install vllm>=0.4.1")
 
     if finetuning_args.use_galore:
         require_version("galore_torch", "To fix: pip install galore_torch")
