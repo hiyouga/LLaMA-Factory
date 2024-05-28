@@ -8,6 +8,7 @@ import torch
 from transformers import GenerationConfig, TextIteratorStreamer
 
 from ..data import get_template_and_fix_tokenizer
+from ..extras.logging import get_logger
 from ..extras.misc import get_logits_processor
 from ..model import load_model, load_tokenizer
 from .base_engine import BaseEngine, Response
@@ -21,6 +22,9 @@ if TYPE_CHECKING:
 
     from ..data import Template
     from ..hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
+
+
+logger = get_logger(__name__)
 
 
 class HuggingfaceEngine(BaseEngine):
@@ -92,7 +96,7 @@ class HuggingfaceEngine(BaseEngine):
         stop: Optional[Union[str, List[str]]] = input_kwargs.pop("stop", None)
 
         if stop is not None:
-            raise ValueError("Stop parameter is not supported in Huggingface engine yet.")
+            logger.warning("Stop parameter is not supported in Huggingface engine yet.")
 
         generating_args = generating_args.copy()
         generating_args.update(
