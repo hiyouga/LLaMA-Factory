@@ -110,19 +110,20 @@ CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/qlora_single_gpu/llama3_l
 #### 使用 Accelerate 进行单节点训练
 
 ```bash
-bash examples/lora_multi_gpu/single_node.sh
+CUDA_VISIBLE_DEVICES=0,1,2,3 llamafactory-cli train examples/lora_multi_gpu/llama3_lora_sft.yaml
 ```
 
 #### 使用 Accelerate 进行多节点训练
 
 ```bash
-bash examples/lora_multi_gpu/multi_node.sh
+CUDA_VISIBLE_DEVICES=0,1,2,3 NNODES=2 RANK=0 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/lora_multi_gpu/llama3_lora_sft.yaml
+CUDA_VISIBLE_DEVICES=0,1,2,3 NNODES=2 RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/lora_multi_gpu/llama3_lora_sft.yaml
 ```
 
 #### 使用 DeepSpeed ZeRO-3 平均分配显存
 
 ```bash
-bash examples/lora_multi_gpu/ds_zero3.sh
+CUDA_VISIBLE_DEVICES=0,1,2,3 llamafactory-cli train examples/lora_multi_gpu/llama3_lora_sft_ds.yaml
 ```
 
 ### 多 NPU LoRA 微调
@@ -130,7 +131,7 @@ bash examples/lora_multi_gpu/ds_zero3.sh
 #### 使用 DeepSpeed ZeRO-0 训练
 
 ```bash
-bash examples/lora_multi_npu/ds_zero0.sh
+ASCEND_RT_VISIBLE_DEVICES=0,1,2,3 llamafactory-cli train examples/lora_multi_npu/llama3_lora_sft_ds.yaml
 ```
 
 ### 多 GPU 全参数微调
@@ -138,19 +139,20 @@ bash examples/lora_multi_npu/ds_zero0.sh
 #### 使用 DeepSpeed 进行单节点训练
 
 ```bash
-bash examples/full_multi_gpu/single_node.sh
+CUDA_VISIBLE_DEVICES=0,1,2,3 llamafactory-cli train examples/full_multi_gpu/llama3_full_sft.yaml
 ```
 
 #### 使用 DeepSpeed 进行多节点训练
 
 ```bash
-bash examples/full_multi_gpu/multi_node.sh
+CUDA_VISIBLE_DEVICES=0,1,2,3 NNODES=2 RANK=0 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/full_multi_gpu/llama3_full_sft.yaml
+CUDA_VISIBLE_DEVICES=0,1,2,3 NNODES=2 RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/full_multi_gpu/llama3_full_sft.yaml
 ```
 
 #### 批量预测并计算 BLEU 和 ROUGE 分数
 
 ```bash
-bash examples/full_multi_gpu/predict.sh
+CUDA_VISIBLE_DEVICES=0,1,2,3 llamafactory-cli train examples/full_multi_gpu/llama3_full_predict.yaml
 ```
 
 ### 合并 LoRA 适配器与模型量化

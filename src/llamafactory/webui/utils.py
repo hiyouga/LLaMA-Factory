@@ -42,8 +42,7 @@ def clean_cmd(args: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def gen_cmd(args: Dict[str, Any]) -> str:
-    current_devices = os.environ.get("CUDA_VISIBLE_DEVICES", "0")
-    cmd_lines = ["CUDA_VISIBLE_DEVICES={} llamafactory-cli train ".format(current_devices)]
+    cmd_lines = ["llamafactory-cli train "]
     for k, v in clean_cmd(args).items():
         cmd_lines.append("    --{} {} ".format(k, str(v)))
 
