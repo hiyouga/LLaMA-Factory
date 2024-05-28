@@ -395,9 +395,6 @@ See [examples/README.md](examples/README.md) for advanced usage (including distr
 
 ### Fine-Tuning with LLaMA Board GUI (powered by [Gradio](https://github.com/gradio-app/gradio))
 
-> [!IMPORTANT]
-> LLaMA Board GUI only supports training on a single GPU.
-
 #### Use local environment
 
 ```bash
@@ -451,7 +448,7 @@ export USE_MODELSCOPE_HUB=1 # `set USE_MODELSCOPE_HUB=1` for Windows
 
 Train the model by specifying a model ID of the ModelScope Hub as the `model_name_or_path`. You can find a full list of model IDs at [ModelScope Hub](https://modelscope.cn/models), e.g., `LLM-Research/Meta-Llama-3-8B-Instruct`.
 
-### Use W&B Logging
+### Use W&B Logger
 
 To use [Weights & Biases](https://wandb.ai) for logging experimental results, you need to add the following arguments.
 
@@ -459,6 +456,8 @@ To use [Weights & Biases](https://wandb.ai) for logging experimental results, yo
 report_to: wandb
 run_name: test_run # optional
 ```
+
+Set `WANDB_API_KEY` to [your key](https://wandb.ai/authorize) when launching training tasks to log in with your W&B account.
 
 ## Projects using LLaMA Factory
 
