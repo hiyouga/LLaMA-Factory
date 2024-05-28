@@ -10,7 +10,6 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import is_torch_bf16_gpu_available
 from transformers.utils.versions import require_version
 
-from ..extras.constants import TRAINER_CONFIG
 from ..extras.logging import get_logger
 from ..extras.misc import check_dependencies, get_current_device
 from .data_args import DataArguments
@@ -252,10 +251,6 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         and can_resume_from_checkpoint
     ):
         last_checkpoint = get_last_checkpoint(training_args.output_dir)
-        files = os.listdir(training_args.output_dir)
-        if last_checkpoint is None and len(files) > 0 and (len(files) != 1 or files[0] != TRAINER_CONFIG):
-            raise ValueError("Output directory already exists and is not empty. Please set `overwrite_output_dir`.")
-
         if last_checkpoint is not None:
             training_args.resume_from_checkpoint = last_checkpoint
             logger.info(
