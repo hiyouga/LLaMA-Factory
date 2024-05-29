@@ -55,7 +55,7 @@ class Manager:
             self._id_to_elem["top.model_name"],
             self._id_to_elem["top.model_path"],
             self._id_to_elem["top.finetuning_type"],
-            self._id_to_elem["top.adapter_path"],
+            self._id_to_elem["top.checkpoint_path"],
             self._id_to_elem["top.quantization_bit"],
             self._id_to_elem["top.template"],
             self._id_to_elem["top.rope_scaling"],
