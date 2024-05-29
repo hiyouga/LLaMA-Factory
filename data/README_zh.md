@@ -12,6 +12,7 @@
   "ranking": "是否为偏好数据集（可选，默认：False）",
   "subset": "数据集子集的名称（可选，默认：None）",
   "folder": "Hugging Face 仓库的文件夹名称（可选，默认：None）",
+  "num_samples": "该数据集中用于训练的样本数量。（可选，默认：None）",
   "columns（可选）": {
     "prompt": "数据集代表提示词的表头名称（默认：instruction）",
     "query": "数据集代表请求的表头名称（默认：input）",
@@ -32,9 +33,8 @@
     "assistant_tag": "消息中代表助手的 role_tag（默认：gpt）",
     "observation_tag": "消息中代表工具返回结果的 role_tag（默认：observation）",
     "function_tag": "消息中代表工具调用的 role_tag（默认：function_call）",
-    "system_tag": "消息中代表系统提示的 role_tag（默认：system，会覆盖 system 列）"
-  },
-  "sample_num": "从该数据集采样的数量，可大于该数据集总量（默认：None）"
+    "system_tag": "消息中代表系统提示的 role_tag（默认：system，会覆盖 system column）"
+  }
 }
 ```
 
