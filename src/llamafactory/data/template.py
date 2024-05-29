@@ -918,3 +918,13 @@ _register_template(
     format_user=StringFormatter(slots=["<human>:{{content}}\n<bot>:"]),
     format_separator=EmptyFormatter(slots=["\n"]),
 )
+
+
+_register_template(
+    name="telechat",
+    format_user=StringFormatter(slots=["<_user>{{content}}<_bot>"]),
+    format_system=StringFormatter(slots=["<_system>{{content}}<_end>"]),
+    default_system="",
+    stop_words=["<_end>"],
+    replace_eos=True,
+)
