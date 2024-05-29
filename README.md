@@ -359,7 +359,7 @@ chmod +x Ascend-cann-toolkit_8.0.RC1.alpha001_linux-"$(uname -i)".run
 ./Ascend-cann-toolkit_8.0.RC1.alpha001_linux-"$(uname -i)".run --install
 
 # install CANN Kernels
-wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C18B800TP015/Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run
+wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C17SPC701/Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run
 chmod +x Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run
 ./Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run --install
 
