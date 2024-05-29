@@ -823,6 +823,15 @@ _register_template(
 
 
 _register_template(
+    name="telechat",
+    format_user=StringFormatter(slots=["<_user>{{content}}<_bot>"]),
+    format_system=StringFormatter(slots=["<_system>{{content}}<_end>"]),
+    stop_words=["<_end>"],
+    replace_eos=True,
+)
+
+
+_register_template(
     name="vicuna",
     format_user=StringFormatter(slots=["USER: {{content}} ASSISTANT:"]),
     default_system=(
@@ -917,14 +926,4 @@ _register_template(
     name="ziya",
     format_user=StringFormatter(slots=["<human>:{{content}}\n<bot>:"]),
     format_separator=EmptyFormatter(slots=["\n"]),
-)
-
-
-_register_template(
-    name="telechat",
-    format_user=StringFormatter(slots=["<_user>{{content}}<_bot>"]),
-    format_system=StringFormatter(slots=["<_system>{{content}}<_end>"]),
-    default_system="",
-    stop_words=["<_end>"],
-    replace_eos=True,
 )

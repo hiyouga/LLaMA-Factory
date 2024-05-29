@@ -21,6 +21,7 @@ def get_requires():
 
 extra_require = {
     "torch": ["torch>=1.13.1"],
+    "torch_npu": ["torch==2.1.0", "torch-npu==2.1.0.post3", "decorator"],
     "metrics": ["nltk", "jieba", "rouge-chinese"],
     "deepspeed": ["deepspeed>=0.10.0,<=0.14.0"],
     "bitsandbytes": ["bitsandbytes>=0.39.0"],
@@ -33,7 +34,6 @@ extra_require = {
     "qwen": ["tiktoken", "transformers_stream_generator"],
     "modelscope": ["modelscope"],
     "quality": ["ruff"],
-    "torch_npu": ["torch==2.1.0", "torch_npu==2.1.0.post3", "decorator"]
 }
 
 
