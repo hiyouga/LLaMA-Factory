@@ -12,6 +12,7 @@ Currently we support datasets in **alpaca** and **sharegpt** format.
   "ranking": "whether the dataset is a preference dataset or not. (default: False)",
   "subset": "the name of the subset. (optional, default: None)",
   "folder": "the name of the folder of the dataset repository on the Hugging Face hub. (optional, default: None)",
+  "num_samples": "the number of samples in the dataset used for training. (optional, default: None)",
   "columns (optional)": {
     "prompt": "the column name in the dataset containing the prompts. (default: instruction)",
     "query": "the column name in the dataset containing the queries. (default: input)",
@@ -32,9 +33,8 @@ Currently we support datasets in **alpaca** and **sharegpt** format.
     "assistant_tag": "the value of the role_tag represents the assistant. (default: gpt)",
     "observation_tag": "the value of the role_tag represents the tool results. (default: observation)",
     "function_tag": "the value of the role_tag represents the function call. (default: function_call)",
-    "system_tag": "the value of the role_tag represents the system prompt. (default: system, can override system column)",
-  },
-  "sample_num": "the number of samples from this dataset can be greater than the total amount of the dataset. (default: None)"
+    "system_tag": "the value of the role_tag represents the system prompt. (default: system, can override system column)"
+  }
 }
 ```
 
