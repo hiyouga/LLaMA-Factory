@@ -351,7 +351,25 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 
 加入 [NPU 用户群](assets/wechat_npu.jpg)。
 
-如果使用昇腾 NPU 设备进行（分布式）训练或推理，需要安装 **[torch-npu](https://gitee.com/ascend/pytorch)** 库和 **[Ascend CANN Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**。
+使用 `pip install -e .[torch_npu]` 来安装带有 **[torch-npu](https://gitee.com/ascend/pytorch)** 的 LLaMA-Factory。
+
+如果使用昇腾 NPU 设备进行（分布式）训练或推理，需要安装 **[Ascend CANN Toolkit and Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**。可以参考安装教程中的**[安装 CANN](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/80RC2alpha002/quickstart/quickstart/quickstart_18_0004.html)**章节来进行安装，或使用以下快速安装指令：
+
+```bash
+# 请替换 URL 为你需要的 CANN 版本对应的 URL
+# 安装 CANN Toolkit
+wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C17SPC701/Ascend-cann-toolkit_8.0.RC1.alpha001_linux-"$(uname -i)".run
+chmod +x Ascend-cann-toolkit_8.0.RC1.alpha001_linux-"$(uname -i)".run
+./Ascend-cann-toolkit_8.0.RC1.alpha001_linux-"$(uname -i)".run --install
+
+# 安装 CANN Kernels
+wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C17SPC701/Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run
+chmod +x Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run
+./Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run --install
+
+# 设置环境变量
+source /usr/local/Ascend/ascend-toolkit/set_env.sh
+```
 
 | 依赖项       | 至少     | 推荐      |
 | ------------ | ------- | --------- |
