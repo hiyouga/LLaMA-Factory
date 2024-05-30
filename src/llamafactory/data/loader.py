@@ -108,24 +108,22 @@ def load_single_dataset(
         dataset = dataset.to_iterable_dataset()  # TODO: add num shards parameter
 
     if dataset_attr.num_samples is not None and not data_args.streaming:
-    if isinstance(dataset_attr.num_samples, str) and dataset_attr.num_samples.endswith('%'):
-        percentage = float(dataset_attr.num_samples[:-1])
-        if percentage < 0 or percentage > 100:
-            raise ValueError("num_samples must be between 0% and 100%.")
-        target_num = int(len(dataset) * (percentage / 100))
-        indexes = list(range(0, len(dataset), int(100 / percentage)))
-    else:
-        target_num = dataset_attr.num_samples
-        indexes = np.random.permutation(len(dataset))[:target_num]
-    target_num -= len(indexes)
-    if target_num > 0:
-        expand_indexes = np.random.choice(len(dataset), target_num)
-        indexes = np.concatenate((indexes, expand_indexes), axis=0)
-
-    assert len(indexes) == dataset_attr.num_samples, "Sample num mismatched."
-    dataset = dataset.select(indexes)
-    logger.info("Sampled {} examples from dataset {}.".format(dataset_attr.num_samples, dataset_attr))
-
+        if isinstance(dataset_attr.num_samples, str) and dataset_attr.num_samples.endswith('%'):
+            percentage = float(dataset_attr.num_samples[:-1])
+            if percentage < 0 or percentage > 100:
+                raise ValueError("num_samples must be between 0% and 100%.")
+            target_num = int(len(dataset) * (percentage / 100))
+            indexes = list(range(0, len(dataset), int(100 / percentage)))
+        else:
+            target_num = dataset_attr.num_samples
+            indexes = np.random.permutation(len(dataset))[:target_num]
+        target_num -= len(indexes)
+        if target_num > 0:
+            expand_indexes = np.random.choice(len(dataset), target_num)
+            indexes = np.concatenate((indexes, expand_indexes), axis=0)
+        assert len(indexes) == dataset_attr.num_samples, "Sample num mismatched."
+        dataset = dataset.select(indexes)
+        logger.info("Sampled {} examples from dataset {}.".format(dataset_attr.num_samples, dataset_attr))
 
     if data_args.max_samples is not None:  # truncate dataset
         indexes = np.random.permutation(len(dataset))[: data_args.max_samples]
