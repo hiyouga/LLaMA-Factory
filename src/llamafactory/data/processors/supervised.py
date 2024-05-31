@@ -206,7 +206,6 @@ def preprocess_packed_supervised_dataset(
 
         # concat all
         model_inputs["input_ids"].append(list(itertools.chain(*packed_input_ids)))
-
         model_inputs["labels"].append(list(itertools.chain(*packed_labels)))
         model_inputs["attention_mask"].append([1] * total_length + [0] * pad_length)
 
