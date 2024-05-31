@@ -73,10 +73,12 @@ def create_web_demo() -> gr.Blocks:
 def run_web_ui() -> None:
     gradio_share = os.environ.get("GRADIO_SHARE", "0").lower() in ["true", "1"]
     server_name = os.environ.get("GRADIO_SERVER_NAME", "0.0.0.0")
-    create_ui().queue().launch(share=gradio_share, server_name=server_name, inbrowser=True)
+    server_port = int(os.environ.get("GRADIO_SERVER_PORT", "7860"))
+    create_ui().queue().launch(share=gradio_share, server_name=server_name, server_port=server_port, inbrowser=True)
 
 
 def run_web_demo() -> None:
     gradio_share = os.environ.get("GRADIO_SHARE", "0").lower() in ["true", "1"]
     server_name = os.environ.get("GRADIO_SERVER_NAME", "0.0.0.0")
-    create_web_demo().queue().launch(share=gradio_share, server_name=server_name, inbrowser=True)
+    server_port = os.environ.get("GRADIO_SERVER_PORT", "7860")
+    create_web_demo().queue().launch(share=gradio_share, server_name=server_name, server_port=server_port, inbrowser=True)
