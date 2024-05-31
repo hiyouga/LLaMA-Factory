@@ -49,7 +49,8 @@ def run_sft(
     training_args.generation_max_length = training_args.generation_max_length or data_args.cutoff_len
     training_args.generation_num_beams = data_args.eval_num_beams or training_args.generation_num_beams
     training_args.remove_unused_columns = False if model_args.visual_inputs else training_args.remove_unused_columns
-
+    training_args.learning_rate = float(training_args.learning_rate)
+    
     # Initialize our Trainer
     trainer = CustomSeq2SeqTrainer(
         model=model,
