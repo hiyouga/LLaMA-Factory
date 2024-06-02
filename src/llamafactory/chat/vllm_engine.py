@@ -158,13 +158,16 @@ class VllmEngine(BaseEngine):
         )
 
         result_generator = self.model.generate(
-            prompt=None,
+            #prompt=None,
             sampling_params=sampling_params,
             request_id=request_id,
-            prompt_token_ids=prompt_ids,
+            # 修改关键内容为下行,原始参数均已注释
+            inputs = messages[-1]['content'],
+            #prompt_token_ids=prompt_ids,
             lora_request=self.lora_request,
-            multi_modal_data=multi_modal_data,
+            #multi_modal_data=multi_modal_data,
         )
+
         return result_generator
 
     async def start(self) -> None:
