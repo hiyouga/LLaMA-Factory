@@ -107,13 +107,13 @@ CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/qlora_single_gpu/llama3_l
 
 ### 多 GPU LoRA 微调
 
-#### 使用 Accelerate 进行单节点训练
+#### 在单机上进行指令监督微调
 
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3 llamafactory-cli train examples/lora_multi_gpu/llama3_lora_sft.yaml
 ```
 
-#### 使用 Accelerate 进行多节点训练
+#### 在多机上进行指令监督微调
 
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3 NNODES=2 RANK=0 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/lora_multi_gpu/llama3_lora_sft.yaml
@@ -128,7 +128,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 llamafactory-cli train examples/lora_multi_gpu/llam
 
 ### 多 NPU LoRA 微调
 
-#### 使用 DeepSpeed ZeRO-0 训练
+#### 使用 DeepSpeed ZeRO-0 进行指令监督微调
 
 ```bash
 ASCEND_RT_VISIBLE_DEVICES=0,1,2,3 llamafactory-cli train examples/lora_multi_npu/llama3_lora_sft_ds.yaml
@@ -136,13 +136,13 @@ ASCEND_RT_VISIBLE_DEVICES=0,1,2,3 llamafactory-cli train examples/lora_multi_npu
 
 ### 多 GPU 全参数微调
 
-#### 使用 DeepSpeed 进行单节点训练
+#### 在单机上进行指令监督微调
 
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3 llamafactory-cli train examples/full_multi_gpu/llama3_full_sft.yaml
 ```
 
-#### 使用 DeepSpeed 进行多节点训练
+#### 在多机上进行指令监督微调
 
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3 NNODES=2 RANK=0 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/full_multi_gpu/llama3_full_sft.yaml
