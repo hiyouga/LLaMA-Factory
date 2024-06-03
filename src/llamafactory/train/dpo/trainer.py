@@ -10,7 +10,7 @@ from trl import DPOTrainer
 from trl.trainer import disable_dropout_in_model
 
 from ...extras.constants import IGNORE_INDEX
-from ..utils import create_custom_optimzer, create_custom_scheduler
+from ..utils import create_custom_optimzer, create_custom_scheduler, get_ref_context
 
 
 if TYPE_CHECKING:
@@ -69,6 +69,7 @@ class CustomDPOTrainer(DPOTrainer):
                     self.ref_model = self._prepare_deepspeed(self.ref_model)
             else:
                 self.ref_model = self.accelerator.prepare_model(self.ref_model, evaluation_mode=True)
+                self.ref_model.eval()
 
         if finetuning_args.use_badam:
             from badam import clip_grad_norm_for_sparse_tensor
@@ -189,7 +190,7 @@ class CustomDPOTrainer(DPOTrainer):
 
         if self.ref_model is None:
             ref_model = model
-            ref_context = self.accelerator.unwrap_model(model).disable_adapter()
+            ref_context = get_ref_context(self.accelerator, model)
         else:
             ref_model = self.ref_model
             ref_context = nullcontext()
