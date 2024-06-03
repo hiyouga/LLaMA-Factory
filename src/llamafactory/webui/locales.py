@@ -1475,6 +1475,11 @@ ALERTS = {
         "ru": "Пожалуйста, выберите адаптер.",
         "zh": "请选择适配器。",
     },
+    "err_no_output_dir": {
+        "en": "Please provide output dir.",
+        "ru": "Пожалуйста, укажите выходную директорию.",
+        "zh": "请填写输出目录。",
+    },
     "err_no_reward_model": {
         "en": "Please select a reward model.",
         "ru": "Пожалуйста, выберите модель вознаграждения.",
