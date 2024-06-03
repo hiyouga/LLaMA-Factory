@@ -158,12 +158,10 @@ class VllmEngine(BaseEngine):
         )
 
         result_generator = self.model.generate(
-            prompt=None,
+            inputs={"prompt_token_ids": prompt_ids, "multi_modal_data": multi_modal_data},
             sampling_params=sampling_params,
             request_id=request_id,
-            prompt_token_ids=prompt_ids,
             lora_request=self.lora_request,
-            multi_modal_data=multi_modal_data,
         )
         return result_generator
 
