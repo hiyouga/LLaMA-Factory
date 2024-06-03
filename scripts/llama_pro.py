@@ -104,10 +104,10 @@ def block_expansion(
         print("Model weights saved in {}".format(output_dir))
 
     print("Fine-tune this model with:")
-    print("  --model_name_or_path {} \\".format(output_dir))
-    print("  --finetuning_type freeze \\")
-    print("  --freeze_trainable_layers {} \\".format(num_expand))
-    print("  --use_llama_pro")
+    print("model_name_or_path: {}".format(output_dir))
+    print("finetuning_type: freeze")
+    print("freeze_trainable_layers: {}".format(num_expand))
+    print("use_llama_pro: true")
 
 
 if __name__ == "__main__":
