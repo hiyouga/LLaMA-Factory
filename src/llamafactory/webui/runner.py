@@ -64,10 +64,15 @@ class Runner:
             return ALERTS["err_demo"][lang]
 
         if do_train:
+            if not get("train.output_dir"):
+                return ALERTS["err_no_output_dir"][lang]
+
             stage = TRAINING_STAGES[get("train.training_stage")]
-            reward_model = get("train.reward_model")
-            if stage == "ppo" and not reward_model:
+            if stage == "ppo" and not get("train.reward_model"):
                 return ALERTS["err_no_reward_model"][lang]
+        else:
+            if not get("eval.output_dir"):
+                return ALERTS["err_no_output_dir"][lang]
 
         if not from_preview and not is_gpu_or_npu_available():
             gr.Warning(ALERTS["warn_no_cuda"][lang])
