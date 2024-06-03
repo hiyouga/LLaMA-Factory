@@ -25,7 +25,7 @@ extra_require = {
     "metrics": ["nltk", "jieba", "rouge-chinese"],
     "deepspeed": ["deepspeed>=0.10.0,<=0.14.0"],
     "bitsandbytes": ["bitsandbytes>=0.39.0"],
-    "vllm": ["vllm>=0.4.1"],
+    "vllm": ["vllm>=0.4.3"],
     "galore": ["galore-torch"],
     "badam": ["badam"],
     "gptq": ["optimum>=1.16.0", "auto-gptq>=0.5.0"],
