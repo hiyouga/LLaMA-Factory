@@ -180,7 +180,7 @@ def check_output_dir(lang: str, model_name: str, finetuning_type: str, output_di
     r"""
     Check if output dir exists.
     """
-    if os.path.isdir(get_save_dir(model_name, finetuning_type, output_dir)):
+    if model_name and output_dir and os.path.isdir(get_save_dir(model_name, finetuning_type, output_dir)):
         gr.Warning(ALERTS["warn_output_dir_exists"][lang])
 
 

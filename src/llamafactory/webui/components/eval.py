@@ -57,7 +57,6 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
     with gr.Row():
         output_box = gr.Markdown()
 
-    output_elems = [output_box, progress_bar]
     elem_dict.update(
         dict(
             cmd_preview_btn=cmd_preview_btn,
@@ -68,6 +67,7 @@ def create_eval_tab(engine: "Engine") -> Dict[str, "Component"]:
             output_box=output_box,
         )
     )
+    output_elems = [output_box, progress_bar]
 
     cmd_preview_btn.click(engine.runner.preview_eval, input_elems, output_elems, concurrency_limit=None)
     start_btn.click(engine.runner.run_eval, input_elems, output_elems)
