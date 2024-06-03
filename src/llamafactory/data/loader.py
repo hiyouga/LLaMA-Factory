@@ -179,7 +179,7 @@ def get_dataset(
             if training_args.should_save:
                 dataset.save_to_disk(data_args.tokenized_path)
                 logger.info("Tokenized dataset saved at {}.".format(data_args.tokenized_path))
-                logger.info("Please restart the training with `--tokenized_path {}`.".format(data_args.tokenized_path))
+                logger.info("Please restart the training with `tokenized_path: {}`.".format(data_args.tokenized_path))
 
             sys.exit(0)
 
