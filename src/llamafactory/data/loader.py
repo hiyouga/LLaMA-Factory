@@ -62,9 +62,9 @@ def load_single_dataset(
             raise ValueError("File {} not found.".format(local_path))
 
         if data_path is None:
-            raise ValueError("File extension must be txt, csv, json or jsonl.")
+            raise ValueError("Allowed file types: {}.".format(",".join(FILEEXT2TYPE.keys())))
     else:
-        raise NotImplementedError
+        raise NotImplementedError("Unknown load type: {}.".format(dataset_attr.load_from))
 
     if dataset_attr.load_from == "ms_hub":
         try:
