@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Union
 
 import torch
@@ -17,8 +18,8 @@ if is_galore_available():
 
 
 if TYPE_CHECKING:
-    from transformers import Seq2SeqTrainingArguments
-    from transformers.modeling_utils import PreTrainedModel
+    from accelerate import Accelerator
+    from transformers import PreTrainedModel, Seq2SeqTrainingArguments
     from trl import AutoModelForCausalLMWithValueHead
 
     from ..hparams import DataArguments
@@ -154,6 +155,17 @@ def create_reward_model(
         logger.info("Loaded full weights of reward model from {}".format(finetuning_args.reward_model))
         logger.warning("Please ensure the ppo model and reward model share SAME tokenizer and vocabulary.")
         return reward_model
+
+
+@contextmanager
+def get_ref_context(accelerator: "Accelerator", model: "PreTrainedModel"):
+    r"""
+    Gets adapter context for the reference model.
+    """
+    with accelerator.unwrap_model(model).disable_adapter():
+        model.eval()
+        yield
+        model.train()
 
 
 def _get_decay_parameter_names(model: "PreTrainedModel") -> List[str]:
