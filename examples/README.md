@@ -107,13 +107,13 @@ CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/qlora_single_gpu/llama3_l
 
 ### LoRA Fine-Tuning on Multiple GPUs
 
-#### Supervised Fine-Tuning with Accelerate on Single Node
+#### Supervised Fine-Tuning on Single Node
 
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3 llamafactory-cli train examples/lora_multi_gpu/llama3_lora_sft.yaml
 ```
 
-#### Supervised Fine-Tuning with Accelerate on Multiple Nodes
+#### Supervised Fine-Tuning on Multiple Nodes
 
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3 NNODES=2 RANK=0 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/lora_multi_gpu/llama3_lora_sft.yaml
@@ -136,13 +136,13 @@ ASCEND_RT_VISIBLE_DEVICES=0,1,2,3 llamafactory-cli train examples/lora_multi_npu
 
 ### Full-Parameter Fine-Tuning on Multiple GPUs
 
-#### Supervised Fine-Tuning with Accelerate on Single Node
+#### Supervised Fine-Tuning on Single Node
 
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3 llamafactory-cli train examples/full_multi_gpu/llama3_full_sft.yaml
 ```
 
-#### Supervised Fine-Tuning with Accelerate on Multiple Nodes
+#### Supervised Fine-Tuning on Multiple Nodes
 
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3 NNODES=2 RANK=0 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/full_multi_gpu/llama3_full_sft.yaml
