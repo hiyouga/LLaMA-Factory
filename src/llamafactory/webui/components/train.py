@@ -6,7 +6,7 @@ from ...extras.constants import TRAINING_STAGES
 from ...extras.misc import get_device_count
 from ...extras.packages import is_gradio_available
 from ..common import DEFAULT_DATA_DIR, list_checkpoints, list_datasets
-from ..utils import change_stage, check_output_dir, list_output_dirs
+from ..utils import change_stage, check_output_dir, list_output_dirs, list_config_paths
 from .data import create_preview_box
 
 
@@ -259,7 +259,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             with gr.Row():
                 initial_dir = gr.Textbox(visible=False, interactive=False)
                 output_dir = gr.Dropdown(allow_custom_value=True)
-                config_path = gr.Textbox()
+                config_path = gr.Dropdown(allow_custom_value=True)
 
             with gr.Row():
                 device_count = gr.Textbox(value=str(get_device_count() or 1), interactive=False)
@@ -317,5 +317,6 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     output_dir.change(
         list_output_dirs, [model_name, finetuning_type, initial_dir], [output_dir], concurrency_limit=None
     ).then(check_output_dir, inputs=[lang, model_name, finetuning_type, output_dir], concurrency_limit=None)
+    config_path.change(list_config_paths, outputs=[config_path], concurrency_limit=None)
 
     return elem_dict
