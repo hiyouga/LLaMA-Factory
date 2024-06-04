@@ -132,6 +132,7 @@ class Runner:
             pure_bf16=(get("train.compute_type") == "pure_bf16"),
             plot_loss=True,
             ddp_timeout=180000000,
+            include_num_input_tokens_seen=True,
         )
 
         # checkpoints
