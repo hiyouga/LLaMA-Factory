@@ -70,7 +70,11 @@ def main():
     elif command == Command.EXPORT:
         export_model()
     elif command == Command.TRAIN:
-        if get_device_count() > 1:
+        if get_device_count() > 0:
+            # NOTE (MengqingCao): why use torchrun when only one accelerator is available?
+            # DeepSpeed only warp model with DeepSpeedEngine when launching by distributed launcher,
+            # e.g., torchrun, causing some feature missing
+            # sa: https://github.com/huggingface/transformers/issues/24309
             master_addr = os.environ.get("MASTER_ADDR", "127.0.0.1")
             master_port = os.environ.get("MASTER_PORT", str(random.randint(20001, 29999)))
             logger.info("Initializing distributed tasks at: {}:{}".format(master_addr, master_port))
