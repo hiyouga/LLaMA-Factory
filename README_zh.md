@@ -454,6 +454,9 @@ docker compose -f ./docker-compose.yml up -d
 CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 llamafactory-cli api examples/inference/llama3_vllm.yaml
 ```
 
+> [!TIP]
+> API 文档请查阅 https://platform.openai.com/docs/api-reference/chat/create。
+
 ### 从魔搭社区下载
 
 如果您在 Hugging Face 模型和数据集的下载中遇到了问题，可以通过下述方法使用魔搭社区。
