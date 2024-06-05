@@ -56,9 +56,19 @@ class FunctionCall(BaseModel):
     function: Function
 
 
+class ImageURL(BaseModel):
+    url: str
+
+
+class MultimodalInputItem(BaseModel):
+    type: Literal["text", "image_url"]
+    text: Optional[str] = None
+    image_url: Optional[ImageURL] = None
+
+
 class ChatMessage(BaseModel):
     role: Role
-    content: Optional[str] = None
+    content: Optional[Union[str, List[MultimodalInputItem]]] = None
     tool_calls: Optional[List[FunctionCall]] = None
 
 
