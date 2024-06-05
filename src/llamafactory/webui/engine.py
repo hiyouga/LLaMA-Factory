@@ -41,7 +41,7 @@ class Engine:
 
         if not self.pure_chat:
             current_time = get_time()
-            init_dict["train.initial_dir"] = {"value": "train_{}".format(current_time)}
+            init_dict["train.current_time"] = {"value": current_time}
             init_dict["train.output_dir"] = {"value": "train_{}".format(current_time)}
             init_dict["train.config_path"] = {"value": "{}.yaml".format(current_time)}
             init_dict["eval.output_dir"] = {"value": "eval_{}".format(current_time)}
