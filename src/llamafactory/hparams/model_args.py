@@ -125,6 +125,10 @@ class ModelArguments:
         default=8,
         metadata={"help": "Maximum rank of all LoRAs in the vLLM engine."},
     )
+    vllm_dtype: Literal["auto", "float16", "bfloat16", "float32"] = field(
+        default="auto",
+        metadata={"help": "Data type for model weights and activations in the vLLM engine."},
+    )
     offload_folder: str = field(
         default="offload",
         metadata={"help": "Path to offload model weights."},
