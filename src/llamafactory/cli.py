@@ -8,6 +8,7 @@ from . import launcher
 from .api.app import run_api
 from .chat.chat_model import run_chat
 from .eval.evaluator import run_eval
+from .extras.env import VERSION, print_env
 from .extras.logging import get_logger
 from .extras.misc import get_device_count
 from .train.tuner import export_model, run_exp
@@ -29,8 +30,6 @@ USAGE = (
     + "-" * 70
 )
 
-VERSION = "0.7.2.dev0"
-
 WELCOME = (
     "-" * 58
     + "\n"
@@ -50,6 +49,7 @@ logger = get_logger(__name__)
 class Command(str, Enum):
     API = "api"
     CHAT = "chat"
+    ENV = "env"
     EVAL = "eval"
     EXPORT = "export"
     TRAIN = "train"
@@ -65,6 +65,8 @@ def main():
         run_api()
     elif command == Command.CHAT:
         run_chat()
+    elif command == Command.ENV:
+        print_env()
     elif command == Command.EVAL:
         run_eval()
     elif command == Command.EXPORT:
