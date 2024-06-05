@@ -101,6 +101,10 @@ class ModelArguments:
         default=False,
         metadata={"help": "Whether or not to upcast the output of lm_head in fp32."},
     )
+    train_from_scratch: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to randomly initialize the model weights."},
+    )
     infer_backend: Literal["huggingface", "vllm"] = field(
         default="huggingface",
         metadata={"help": "Backend engine used at inference."},

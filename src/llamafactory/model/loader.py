@@ -131,6 +131,8 @@ def load_model(
             model = load_mod_pretrained_model(**init_kwargs)
         elif model_args.visual_inputs:
             model = AutoModelForVision2Seq.from_pretrained(**init_kwargs)
+        elif model_args.train_from_scratch:
+            model = AutoModelForCausalLM.from_config(config)
         else:
             model = AutoModelForCausalLM.from_pretrained(**init_kwargs)
 
