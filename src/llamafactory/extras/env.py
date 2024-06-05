@@ -6,9 +6,10 @@ import peft
 import torch
 import transformers
 import trl
+from transformers.integrations import is_deepspeed_available
 from transformers.utils import is_bitsandbytes_available, is_torch_cuda_available, is_torch_npu_available
 
-from .packages import is_deepspeed_available, is_vllm_available
+from .packages import is_vllm_available
 
 
 VERSION = "0.7.2.dev0"
