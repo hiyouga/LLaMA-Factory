@@ -8,7 +8,7 @@ from transformers.trainer import TRAINING_ARGS_NAME
 from ..extras.constants import PEFT_METHODS, TRAINING_STAGES
 from ..extras.misc import is_gpu_or_npu_available, torch_gc
 from ..extras.packages import is_gradio_available
-from .common import DEFAULT_CACHE_DIR, get_module, get_save_dir, load_config
+from .common import DEFAULT_CACHE_DIR, get_save_dir, load_config
 from .locales import ALERTS
 from .utils import abort_leaf_process, gen_cmd, get_eval_results, get_trainer_info, load_args, save_args, save_cmd
 
@@ -159,7 +159,7 @@ class Runner:
             args["create_new_adapter"] = get("train.create_new_adapter")
             args["use_rslora"] = get("train.use_rslora")
             args["use_dora"] = get("train.use_dora")
-            args["lora_target"] = get("train.lora_target") or get_module(model_name)
+            args["lora_target"] = get("train.lora_target") or "all"
             args["additional_target"] = get("train.additional_target") or None
 
             if args["use_llama_pro"]:
