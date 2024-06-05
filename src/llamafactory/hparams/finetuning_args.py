@@ -24,12 +24,7 @@ class FreezeArguments:
             "help": (
                 "Name(s) of trainable modules for freeze (partial-parameter) fine-tuning. "
                 "Use commas to separate multiple modules. "
-                "Use `all` to specify all the available modules. "
-                "LLaMA choices: [`mlp`, `self_attn`], "
-                "BLOOM & Falcon & ChatGLM choices: [`mlp`, `self_attention`], "
-                "Qwen choices: [`mlp`, `attn`], "
-                "InternLM2 choices: [`feed_forward`, `attention`], "
-                "Others choices: the same as LLaMA."
+                "Use `all` to specify all the available modules."
             )
         },
     )
@@ -79,13 +74,7 @@ class LoraArguments:
             "help": (
                 "Name(s) of target modules to apply LoRA. "
                 "Use commas to separate multiple modules. "
-                "Use `all` to specify all the linear modules. "
-                "LLaMA choices: [`q_proj`, `k_proj`, `v_proj`, `o_proj`, `gate_proj`, `up_proj`, `down_proj`], "
-                "BLOOM & Falcon & ChatGLM choices: [`query_key_value`, `dense`, `dense_h_to_4h`, `dense_4h_to_h`], "
-                "Baichuan choices: [`W_pack`, `o_proj`, `gate_proj`, `up_proj`, `down_proj`], "
-                "Qwen choices: [`c_attn`, `attn.c_proj`, `w1`, `w2`, `mlp.c_proj`], "
-                "InternLM2 choices: [`wqkv`, `wo`, `w1`, `w2`, `w3`], "
-                "Others choices: the same as LLaMA."
+                "Use `all` to specify all the linear modules."
             )
         },
     )

@@ -20,8 +20,6 @@ CHOICES = ["A", "B", "C", "D"]
 
 DATA_CONFIG = "dataset_info.json"
 
-DEFAULT_MODULE = defaultdict(str)
-
 DEFAULT_TEMPLATE = defaultdict(str)
 
 FILEEXT2TYPE = {
@@ -80,7 +78,6 @@ class DownloadSource(str, Enum):
 
 def register_model_group(
     models: Dict[str, Dict[DownloadSource, str]],
-    module: Optional[str] = None,
     template: Optional[str] = None,
     vision: bool = False,
 ) -> None:
@@ -91,8 +88,6 @@ def register_model_group(
         else:
             assert prefix == name.split("-")[0], "prefix should be identical."
         SUPPORTED_MODELS[name] = path
-    if module is not None:
-        DEFAULT_MODULE[prefix] = module
     if template is not None:
         DEFAULT_TEMPLATE[prefix] = template
     if vision:
@@ -127,7 +122,6 @@ register_model_group(
             DownloadSource.MODELSCOPE: "baichuan-inc/Baichuan-13B-Chat",
         },
     },
-    module="W_pack",
     template="baichuan",
 )
 
@@ -151,7 +145,6 @@ register_model_group(
             DownloadSource.MODELSCOPE: "baichuan-inc/Baichuan2-13B-Chat",
         },
     },
-    module="W_pack",
     template="baichuan2",
 )
 
@@ -171,7 +164,6 @@ register_model_group(
             DownloadSource.MODELSCOPE: "AI-ModelScope/bloom-7b1",
         },
     },
-    module="query_key_value",
 )
 
 
@@ -190,7 +182,6 @@ register_model_group(
             DownloadSource.MODELSCOPE: "AI-ModelScope/bloomz-7b1-mt",
         },
     },
-    module="query_key_value",
 )
 
 
@@ -229,7 +220,6 @@ register_model_group(
             DownloadSource.MODELSCOPE: "ZhipuAI/chatglm2-6b",
         }
     },
-    module="query_key_value",
     template="chatglm2",
 )
 
@@ -245,7 +235,6 @@ register_model_group(
             DownloadSource.MODELSCOPE: "ZhipuAI/chatglm3-6b",
         },
     },
-    module="query_key_value",
     template="chatglm3",
 )
 
@@ -344,7 +333,6 @@ register_model_group(
             DownloadSource.MODELSCOPE: "AI-ModelScope/dbrx-instruct",
         },
     },
-    module="Wqkv",
     template="dbrx",
 )
 
@@ -463,7 +451,6 @@ register_model_group(
             DownloadSource.MODELSCOPE: "modelscope/falcon-180B-chat",
         },
     },
-    module="query_key_value",
     template="falcon",
 )
 
@@ -512,7 +499,6 @@ register_model_group(
             DownloadSource.MODELSCOPE: "ZhipuAI/glm-4-9b-chat-1m",
         },
     },
-    module="query_key_value",
     template="glm4",
 )
 
@@ -559,7 +545,6 @@ register_model_group(
             DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2-chat-20b",
         },
     },
-    module="wqkv",
     template="intern2",
 )
 
@@ -581,7 +566,6 @@ register_model_group(
             DownloadSource.MODELSCOPE: "DeepLang/LingoWhale-8B",
         }
     },
-    module="qkv_proj",
 )
 
 
@@ -868,7 +852,6 @@ register_model_group(
             DownloadSource.MODELSCOPE: "LLM-Research/Phi-3-medium-128k-instruct",
         },
     },
-    module="qkv_proj",
     template="phi",
 )
 
@@ -940,7 +923,6 @@ register_model_group(
             DownloadSource.MODELSCOPE: "qwen/Qwen-72B-Chat-Int4",
         },
     },
-    module="c_attn",
     template="qwen",
 )
 
@@ -1153,7 +1135,6 @@ register_model_group(
             DownloadSource.MODELSCOPE: "TeleAI/TeleChat-12B-v2",
         },
     },
-    module="query,key_value",
     template="telechat",
 )
 
