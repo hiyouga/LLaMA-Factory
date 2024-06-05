@@ -303,6 +303,16 @@ register_model_group(
 
 register_model_group(
     models={
+        "Codestral-22B-v0.1-Chat": {
+            DownloadSource.DEFAULT: "mistralai/Codestral-22B-v0.1",
+        },
+    },
+    template="mistral",
+)
+
+
+register_model_group(
+    models={
         "CommandR-35B-Chat": {
             DownloadSource.DEFAULT: "CohereForAI/c4ai-command-r-v01",
             DownloadSource.MODELSCOPE: "AI-ModelScope/c4ai-command-r-v01",
