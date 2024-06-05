@@ -6,7 +6,7 @@ from ...extras.constants import TRAINING_STAGES
 from ...extras.misc import get_device_count
 from ...extras.packages import is_gradio_available
 from ..common import DEFAULT_DATA_DIR, list_checkpoints, list_datasets
-from ..utils import change_stage, check_output_dir, list_output_dirs, list_config_paths
+from ..utils import change_stage, check_output_dir, list_config_paths, list_output_dirs
 from .data import create_preview_box
 
 
@@ -257,7 +257,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     with gr.Row():
         with gr.Column(scale=3):
             with gr.Row():
-                initial_dir = gr.Textbox(visible=False, interactive=False)
+                current_time = gr.Textbox(visible=False, interactive=False)
                 output_dir = gr.Dropdown(allow_custom_value=True)
                 config_path = gr.Dropdown(allow_custom_value=True)
 
@@ -284,7 +284,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             arg_load_btn=arg_load_btn,
             start_btn=start_btn,
             stop_btn=stop_btn,
-            initial_dir=initial_dir,
+            current_time=current_time,
             output_dir=output_dir,
             config_path=config_path,
             device_count=device_count,
@@ -315,11 +315,11 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     dataset.focus(list_datasets, [dataset_dir, training_stage], [dataset], queue=False)
     training_stage.change(change_stage, [training_stage], [dataset, packing], queue=False)
     reward_model.focus(list_checkpoints, [model_name, finetuning_type], [reward_model], queue=False)
-    model_name.change(list_output_dirs, [model_name, finetuning_type, initial_dir], [output_dir], queue=False)
-    finetuning_type.change(list_output_dirs, [model_name, finetuning_type, initial_dir], [output_dir], queue=False)
+    model_name.change(list_output_dirs, [model_name, finetuning_type, current_time], [output_dir], queue=False)
+    finetuning_type.change(list_output_dirs, [model_name, finetuning_type, current_time], [output_dir], queue=False)
     output_dir.change(
-        list_output_dirs, [model_name, finetuning_type, initial_dir], [output_dir], concurrency_limit=None
+        list_output_dirs, [model_name, finetuning_type, current_time], [output_dir], concurrency_limit=None
     ).then(check_output_dir, inputs=[lang, model_name, finetuning_type, output_dir], concurrency_limit=None)
-    config_path.change(list_config_paths, outputs=[config_path], concurrency_limit=None)
+    config_path.change(list_config_paths, [current_time], [config_path], queue=False)
 
     return elem_dict
