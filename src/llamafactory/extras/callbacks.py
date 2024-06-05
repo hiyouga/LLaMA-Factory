@@ -170,12 +170,14 @@ class LogCallback(TrainerCallback):
             percentage=round(self.cur_steps / self.max_steps * 100, 2) if self.max_steps != 0 else 100,
             elapsed_time=self.elapsed_time,
             remaining_time=self.remaining_time,
+            throughput="{:.2f}".format(state.num_input_tokens_seen / (time.time() - self.start_time)),
+            total_tokens=state.num_input_tokens_seen,
         )
         logs = {k: v for k, v in logs.items() if v is not None}
         if self.webui_mode and all(key in logs for key in ["loss", "learning_rate", "epoch"]):
             logger.info(
-                "{{'loss': {:.4f}, 'learning_rate': {:2.4e}, 'epoch': {:.2f}}}".format(
-                    logs["loss"], logs["learning_rate"], logs["epoch"]
+                "{{'loss': {:.4f}, 'learning_rate': {:2.4e}, 'epoch': {:.2f}, 'throughput': {}}}".format(
+                    logs["loss"], logs["learning_rate"], logs["epoch"], logs["throughput"]
                 )
             )
 
