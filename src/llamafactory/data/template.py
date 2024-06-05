@@ -659,6 +659,19 @@ _register_template(
 
 
 _register_template(
+    name="glm4",
+    format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>"]),
+    format_assistant=StringFormatter(slots=["\n{{content}}"]),
+    format_system=StringFormatter(slots=["[gMASK]<sop>{{content}}"]),
+    format_function=FunctionFormatter(slots=["{{name}}\n{{arguments}}"]),
+    format_observation=StringFormatter(slots=["<|observation|>\n{{content}}<|assistant|>"]),
+    stop_words=["<|user|>", "<|observation|>"],
+    efficient_eos=True,
+    force_system=True,
+)
+
+
+_register_template(
     name="intern",
     format_user=StringFormatter(slots=["<|User|>:{{content}}", {"token": "<eoh>"}, "\n<|Bot|>:"]),
     format_separator=EmptyFormatter(slots=[{"token": "<eoa>"}, "\n"]),

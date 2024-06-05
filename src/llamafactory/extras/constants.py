@@ -283,6 +283,26 @@ register_model_group(
 
 register_model_group(
     models={
+        "CodeGemma-7B": {
+            DownloadSource.DEFAULT: "google/codegemma-7b",
+        },
+        "CodeGemma-7B-Chat": {
+            DownloadSource.DEFAULT: "google/codegemma-7b-it",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/codegemma-7b-it",
+        },
+        "CodeGemma-1.1-2B": {
+            DownloadSource.DEFAULT: "google/codegemma-1.1-2b",
+        },
+        "CodeGemma-1.1-7B-Chat": {
+            DownloadSource.DEFAULT: "google/codegemma-1.1-7b-it",
+        },
+    },
+    template="gemma",
+)
+
+
+register_model_group(
+    models={
         "CommandR-35B-Chat": {
             DownloadSource.DEFAULT: "CohereForAI/c4ai-command-r-v01",
             DownloadSource.MODELSCOPE: "AI-ModelScope/c4ai-command-r-v01",
@@ -469,21 +489,21 @@ register_model_group(
 
 register_model_group(
     models={
-        "CodeGemma-7B": {
-            DownloadSource.DEFAULT: "google/codegemma-7b",
+        "GLM-4-9B": {
+            DownloadSource.DEFAULT: "THUDM/glm-4-9b",
+            DownloadSource.MODELSCOPE: "ZhipuAI/glm-4-9b",
         },
-        "CodeGemma-7B-Chat": {
-            DownloadSource.DEFAULT: "google/codegemma-7b-it",
-            DownloadSource.MODELSCOPE: "AI-ModelScope/codegemma-7b-it",
+        "GLM-4-9B-Chat": {
+            DownloadSource.DEFAULT: "THUDM/glm-4-9b-chat",
+            DownloadSource.MODELSCOPE: "ZhipuAI/glm-4-9b-chat",
         },
-        "CodeGemma-1.1-2B": {
-            DownloadSource.DEFAULT: "google/codegemma-1.1-2b",
-        },
-        "CodeGemma-1.1-7B-Chat": {
-            DownloadSource.DEFAULT: "google/codegemma-1.1-7b-it",
+        "GLM-4-9B-1M-Chat": {
+            DownloadSource.DEFAULT: "THUDM/glm-4-9b-chat-1m",
+            DownloadSource.MODELSCOPE: "ZhipuAI/glm-4-9b-chat-1m",
         },
     },
-    template="gemma",
+    module="query_key_value",
+    template="glm4",
 )
 
 
