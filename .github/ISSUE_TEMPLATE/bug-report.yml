@@ -20,10 +20,10 @@ body:
     attributes:
       label: System Info
       description: |
-        Please share your system info with us. You can run the command **transformers-cli env** and copy-paste its output below.
-        请提供您的系统信息。您可以在命令行运行 **transformers-cli env** 并将其输出复制到该文本框中。
+        Please share your system info with us. You can run the command **llamafactory-cli env** and copy-paste its output below.
+        请提供您的系统信息。您可以在命令行运行 **llamafactory-cli env** 并将其输出复制到该文本框中。
 
-      placeholder: transformers version, platform, python version, ...
+      placeholder: llamafactory version, platform, python version, ...
 
   - type: textarea
     id: reproduction
