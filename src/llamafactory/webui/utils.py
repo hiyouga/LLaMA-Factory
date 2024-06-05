@@ -190,6 +190,18 @@ def list_output_dirs(model_name: str, finetuning_type: str, initial_dir: str) ->
     return gr.Dropdown(choices=output_dirs)
 
 
+def list_config_paths() -> "gr.Dropdown":
+    """
+    Lists all the saved configuration files that can be loaded.
+    """
+    if os.path.exists(DEFAULT_CONFIG_DIR) and os.path.isdir(DEFAULT_CONFIG_DIR):
+        config_files = [file_name for file_name in os.listdir(DEFAULT_CONFIG_DIR) if file_name.endswith(".yaml")]
+    else:
+        config_files = []
+
+    return gr.Dropdown(choices=config_files)
+
+
 def check_output_dir(lang: str, model_name: str, finetuning_type: str, output_dir: str) -> None:
     r"""
     Check if output dir exists.
