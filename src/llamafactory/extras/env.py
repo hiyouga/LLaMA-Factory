@@ -51,4 +51,4 @@ def print_env() -> None:
 
         info["vLLM version"] = vllm.__version__
 
-    print("\n".join(["- {}: {}".format(key, value) for key, value in info.items()]) + "\n")
+    print("\n" + "\n".join(["- {}: {}".format(key, value) for key, value in info.items()]) + "\n")
