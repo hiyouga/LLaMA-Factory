@@ -456,6 +456,9 @@ docker compose -f ./docker-compose.yml up -d
 CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 llamafactory-cli api examples/inference/llama3_vllm.yaml
 ```
 
+> [!TIP]
+> Visit https://platform.openai.com/docs/api-reference/chat/create for API document.
+
 ### Download from ModelScope Hub
 
 If you have trouble with downloading models and datasets from Hugging Face, you can use ModelScope.
