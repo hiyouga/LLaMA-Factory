@@ -7,6 +7,7 @@ gradio>=4.0.0
 scipy
 einops
 sentencepiece
+tiktoken
 protobuf
 uvicorn
 pydantic

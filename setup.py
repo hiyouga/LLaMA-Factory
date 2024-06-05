@@ -31,7 +31,7 @@ extra_require = {
     "gptq": ["optimum>=1.16.0", "auto-gptq>=0.5.0"],
     "awq": ["autoawq"],
     "aqlm": ["aqlm[gpu]>=1.1.0"],
-    "qwen": ["tiktoken", "transformers_stream_generator"],
+    "qwen": ["transformers_stream_generator"],
     "modelscope": ["modelscope"],
     "quality": ["ruff"],
 }
