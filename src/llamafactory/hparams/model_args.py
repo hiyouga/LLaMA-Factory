@@ -145,9 +145,9 @@ class ModelArguments:
         default=1,
         metadata={"help": "The file shard size (in GB) of the exported model."},
     )
-    export_device: Literal["cpu", "cuda"] = field(
+    export_device: Literal["cpu", "cuda", "npu"] = field(
         default="cpu",
-        metadata={"help": "The device used in model export, use cuda to avoid addmm errors."},
+        metadata={"help": "The device used in model export, use cuda to avoid addmm errors; use npu/cuda to speed up exporting."},
     )
     export_quantization_bit: Optional[int] = field(
         default=None,
