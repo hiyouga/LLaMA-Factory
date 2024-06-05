@@ -54,11 +54,11 @@ class LogCallback(TrainerCallback):
         self.do_train = False
         """ Web UI """
         self.webui_mode = os.environ.get("LLAMABOARD_ENABLED", "0").lower() in ["true", "1"]
-        if self.webui_mode:
-            signal.signal(signal.SIGABRT, self._set_abort)
-            self.logger_handler = LoggerHandler(output_dir)
-            logging.root.addHandler(self.logger_handler)
-            transformers.logging.add_handler(self.logger_handler)
+        """ RUNNING LOG """
+        signal.signal(signal.SIGABRT, self._set_abort)
+        self.logger_handler = LoggerHandler(output_dir)
+        logging.root.addHandler(self.logger_handler)
+        transformers.logging.add_handler(self.logger_handler)
 
     def _set_abort(self, signum, frame) -> None:
         self.aborted = True
@@ -172,7 +172,7 @@ class LogCallback(TrainerCallback):
             remaining_time=self.remaining_time,
         )
         logs = {k: v for k, v in logs.items() if v is not None}
-        if self.webui_mode and all(key in logs for key in ["loss", "learning_rate", "epoch"]):
+        if all(key in logs for key in ["loss", "learning_rate", "epoch"]):
             logger.info(
                 "{{'loss': {:.4f}, 'learning_rate': {:2.4e}, 'epoch': {:.2f}}}".format(
                     logs["loss"], logs["learning_rate"], logs["epoch"]
