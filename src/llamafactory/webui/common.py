@@ -8,7 +8,6 @@ from yaml import safe_dump, safe_load
 from ..extras.constants import (
     CHECKPOINT_NAMES,
     DATA_CONFIG,
-    DEFAULT_MODULE,
     DEFAULT_TEMPLATE,
     PEFT_METHODS,
     STAGES_USE_PAIR_DATA,
@@ -116,13 +115,6 @@ def get_model_info(model_name: str) -> Tuple[str, str, bool]:
         visual (bool)
     """
     return get_model_path(model_name), get_template(model_name), get_visual(model_name)
-
-
-def get_module(model_name: str) -> str:
-    r"""
-    Gets the LoRA modules of this model.
-    """
-    return DEFAULT_MODULE.get(get_prefix(model_name), "all")
 
 
 def get_template(model_name: str) -> str:

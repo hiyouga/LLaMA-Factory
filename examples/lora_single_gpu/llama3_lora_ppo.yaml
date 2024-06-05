@@ -6,7 +6,7 @@ reward_model: saves/llama3-8b/lora/reward
 stage: ppo
 do_train: true
 finetuning_type: lora
-lora_target: q_proj,v_proj
+lora_target: all
 
 ### dataset
 dataset: identity,alpaca_en_demo

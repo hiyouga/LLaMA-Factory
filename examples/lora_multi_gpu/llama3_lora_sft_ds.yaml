@@ -5,7 +5,7 @@ model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
 stage: sft
 do_train: true
 finetuning_type: lora
-lora_target: q_proj,v_proj
+lora_target: all
 
 ### ddp
 ddp_timeout: 180000000
