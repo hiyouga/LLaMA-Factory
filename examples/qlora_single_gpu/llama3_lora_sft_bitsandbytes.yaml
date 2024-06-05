@@ -6,7 +6,7 @@ quantization_bit: 4
 stage: sft
 do_train: true
 finetuning_type: lora
-lora_target: q_proj,v_proj
+lora_target: all
 
 ### dataset
 dataset: identity,alpaca_en_demo
