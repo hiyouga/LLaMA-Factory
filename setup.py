@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 
 
 def get_version():
-    with open(os.path.join("src", "llamafactory", "cli.py"), "r", encoding="utf-8") as f:
+    with open(os.path.join("src", "llamafactory", "extras", "env.py"), "r", encoding="utf-8") as f:
         file_content = f.read()
         pattern = r"{}\W*=\W*\"([^\"]+)\"".format("VERSION")
         (version,) = re.findall(pattern, file_content)
