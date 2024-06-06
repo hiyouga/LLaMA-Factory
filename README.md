@@ -71,13 +71,15 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 ## Changelog
 
+[24/06/07] We supported fine-tuning the **[Qwen-2](https://qwenlm.github.io/blog/qwen2/)** series models.
+
 [24/06/05] We supported fine-tuning the **[GLM-4-9B/GLM-4-9B-Chat](https://github.com/THUDM/GLM-4)** models.
 
 [24/05/26] We supported **[SimPO](https://arxiv.org/abs/2405.14734)** algorithm for preference learning. See [examples](examples/README.md) for usage.
 
-[24/05/20] We supported fine-tuning the **PaliGemma** series models. Note that the PaliGemma models are pre-trained models, you need to fine-tune them with `gemma` template for chat completion.
-
 <details><summary>Full Changelog</summary>
+
+[24/05/20] We supported fine-tuning the **PaliGemma** series models. Note that the PaliGemma models are pre-trained models, you need to fine-tune them with `gemma` template for chat completion.
 
 [24/05/18] We supported **[KTO](https://arxiv.org/abs/2402.01306)** algorithm for preference learning. See [examples](examples/README.md) for usage.
 
@@ -172,6 +174,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [Phi-3](https://huggingface.co/microsoft)                | 4B/7B/14B                        | phi       |
 | [Qwen](https://huggingface.co/Qwen)                      | 1.8B/7B/14B/72B                  | qwen      |
 | [Qwen1.5 (Code/MoE)](https://huggingface.co/Qwen)        | 0.5B/1.8B/4B/7B/14B/32B/72B/110B | qwen      |
+| [Qwen2 (MoE)](https://huggingface.co/Qwen)               | 0.5B/1.5B/7B/57B/72B             | qwen      |
 | [StarCoder2](https://huggingface.co/bigcode)             | 3B/7B/15B                        | -         |
 | [XVERSE](https://huggingface.co/xverse)                  | 7B/13B/65B                       | xverse    |
 | [Yi (1/1.5)](https://huggingface.co/01-ai)               | 6B/9B/34B                        | yi        |

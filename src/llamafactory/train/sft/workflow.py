@@ -9,7 +9,7 @@ from ...extras.constants import IGNORE_INDEX
 from ...extras.misc import get_logits_processor
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
-from ..utils import create_modelcard_and_push
+from ..trainer_utils import create_modelcard_and_push
 from .metric import ComputeMetrics
 from .trainer import CustomSeq2SeqTrainer
 

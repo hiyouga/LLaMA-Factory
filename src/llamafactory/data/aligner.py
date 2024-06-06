@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Union
 from datasets import Features
 
 from ..extras.logging import get_logger
-from .utils import Role
+from .data_utils import Role
 
 
 if TYPE_CHECKING:
