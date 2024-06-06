@@ -221,7 +221,7 @@ def align_dataset(
             "system": {"dtype": "string", "_type": "Value"},
             "tools": {"dtype": "string", "_type": "Value"},
             "images": [{"_type": "Image"}],
-            "videos": [{"dtype": "string", "_type": "Value"}]
+            "videos": [{"dtype": "string", "_type": "Value"}],
         }
     )
     kwargs = {}

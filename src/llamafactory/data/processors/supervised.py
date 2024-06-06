@@ -4,6 +4,7 @@ from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
 from .mm_utils import get_paligemma_token_type_ids, get_pixel_values, get_pixel_values_videos
 
+
 if TYPE_CHECKING:
     from transformers import ProcessorMixin
     from transformers.tokenization_utils import PreTrainedTokenizer

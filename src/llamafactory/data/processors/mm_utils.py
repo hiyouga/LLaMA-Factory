@@ -11,21 +11,25 @@ if is_pillow_available():
 
 
 if TYPE_CHECKING:
+    from av import Container
     from numpy.typing import NDArray
     from PIL.Image import Image as ImageObject
     from transformers import ProcessorMixin
     from transformers.image_processing_utils import BaseImageProcessor
-    from av import Container
 
 
-def get_pixel_values(images: Sequence["ImageObject"], processor: "ProcessorMixin", image_key: "str" = "pixel_values") -> "NDArray":
+def get_pixel_values(
+    images: Sequence["ImageObject"], processor: "ProcessorMixin", image_key: "str" = "pixel_values"
+) -> "NDArray":
     # process visual inputs (currently only supports a single image)
     image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
     image = images[0] if len(images) != 0 else Image.new("RGB", (100, 100), (255, 255, 255))
     return image_processor(image, return_tensors="pt")[image_key][0]  # shape (C, H, W)
 
 
-def get_pixel_values_videos(videos: Sequence["str"], processor: "ProcessorMixin", video_key: "str" = "pixel_values_videos") -> "NDArray":
+def get_pixel_values_videos(
+    videos: Sequence["str"], processor: "ProcessorMixin", video_key: "str" = "pixel_values_videos"
+) -> "NDArray":
     # process video inputs (currently only supports a single video)
     image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
     container = av.open(videos[0])
@@ -37,7 +41,7 @@ def get_pixel_values_videos(videos: Sequence["str"], processor: "ProcessorMixin"
 
 
 def read_video_pyav(container: "Container", indices: "NDArray"):
-    '''
+    """
     Decode the video with PyAV decoder.
 
     Args:
@@ -46,7 +50,7 @@ def read_video_pyav(container: "Container", indices: "NDArray"):
 
     Returns:
         np.ndarray: np array of decoded frames of shape (num_frames, height, width, 3).
-    '''
+    """
     frames = []
     container.seek(0)
     start_index = indices[0]
