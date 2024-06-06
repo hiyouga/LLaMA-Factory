@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Dict
 
-from ...data import templates
+from ...data import TEMPLATES
 from ...extras.constants import METHODS, SUPPORTED_MODELS
 from ...extras.packages import is_gradio_available
 from ..common import get_model_info, list_checkpoints, save_config
@@ -30,7 +30,7 @@ def create_top() -> Dict[str, "Component"]:
     with gr.Accordion(open=False) as advanced_tab:
         with gr.Row():
             quantization_bit = gr.Dropdown(choices=["none", "8", "4"], value="none", scale=2)
-            template = gr.Dropdown(choices=list(templates.keys()), value="default", scale=2)
+            template = gr.Dropdown(choices=list(TEMPLATES.keys()), value="default", scale=2)
             rope_scaling = gr.Radio(choices=["none", "linear", "dynamic"], value="none", scale=3)
             booster = gr.Radio(choices=["none", "flashattn2", "unsloth"], value="none", scale=3)
             visual_inputs = gr.Checkbox(scale=1)

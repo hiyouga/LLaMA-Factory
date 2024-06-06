@@ -10,7 +10,7 @@ from trl import DPOTrainer
 from trl.trainer import disable_dropout_in_model
 
 from ...extras.constants import IGNORE_INDEX
-from ..utils import create_custom_optimzer, create_custom_scheduler, get_ref_context
+from ..trainer_utils import create_custom_optimzer, create_custom_scheduler, get_ref_context
 
 
 if TYPE_CHECKING:
