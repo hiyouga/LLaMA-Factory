@@ -179,8 +179,6 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [Yuan](https://huggingface.co/IEITYuan)                  | 2B/51B/102B                      | yuan      |
 
 > [!NOTE]
-> **Default module** is used for the `lora_target` argument, you can use `lora_target: all` to specify all the available modules for better convergence.
->
 > For the "base" models, the `template` argument can be chosen from `default`, `alpaca`, `vicuna` etc. But make sure to use the **corresponding template** for the "instruct/chat" models.
 >
 > Remember to use the **SAME** template in training and inference.
@@ -291,21 +289,21 @@ huggingface-cli login
 
 | Mandatory    | Minimum | Recommend |
 | ------------ | ------- | --------- |
-| python       | 3.8     | 3.10      |
-| torch        | 1.13.1  | 2.2.0     |
-| transformers | 4.37.2  | 4.41.0    |
-| datasets     | 2.14.3  | 2.19.1    |
-| accelerate   | 0.27.2  | 0.30.1    |
-| peft         | 0.9.0   | 0.11.1    |
-| trl          | 0.8.2   | 0.8.6     |
+| python       | 3.8     | 3.11      |
+| torch        | 1.13.1  | 2.3.0     |
+| transformers | 4.41.2  | 4.41.2    |
+| datasets     | 2.16.0  | 2.19.2    |
+| accelerate   | 0.30.1  | 0.30.1    |
+| peft         | 0.11.1  | 0.11.1    |
+| trl          | 0.9.3   | 0.9.3     |
 
 | Optional     | Minimum | Recommend |
 | ------------ | ------- | --------- |
 | CUDA         | 11.6    | 12.2      |
 | deepspeed    | 0.10.0  | 0.14.0    |
 | bitsandbytes | 0.39.0  | 0.43.1    |
-| vllm         | 0.4.0   | 0.4.2     |
-| flash-attn   | 2.3.0   | 2.5.8     |
+| vllm         | 0.4.3   | 0.4.3     |
+| flash-attn   | 2.3.0   | 2.5.9     |
 
 ### Hardware Requirement
 
