@@ -10,15 +10,15 @@ from transformers.modeling_utils import is_fsdp_enabled
 
 from ..extras.logging import get_logger
 from ..extras.misc import infer_optim_dtype
-from .utils.attention import configure_attn_implementation, print_attn_implementation
-from .utils.checkpointing import prepare_model_for_training
-from .utils.embedding import resize_embedding_layer
-from .utils.longlora import configure_longlora
-from .utils.moe import add_z3_leaf_module, configure_moe
-from .utils.quantization import configure_quantization
-from .utils.rope import configure_rope
-from .utils.valuehead import prepare_valuehead_model
-from .utils.visual import autocast_projector_dtype, configure_visual_model
+from .model_utils.attention import configure_attn_implementation, print_attn_implementation
+from .model_utils.checkpointing import prepare_model_for_training
+from .model_utils.embedding import resize_embedding_layer
+from .model_utils.longlora import configure_longlora
+from .model_utils.moe import add_z3_leaf_module, configure_moe
+from .model_utils.quantization import configure_quantization
+from .model_utils.rope import configure_rope
+from .model_utils.valuehead import prepare_valuehead_model
+from .model_utils.visual import autocast_projector_dtype, configure_visual_model
 
 
 if TYPE_CHECKING:

@@ -7,7 +7,7 @@ from ...extras.callbacks import FixValueHeadModelCallback
 from ...extras.misc import fix_valuehead_checkpoint
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
-from ..utils import create_modelcard_and_push
+from ..trainer_utils import create_modelcard_and_push
 from .metric import compute_accuracy
 from .trainer import PairwiseTrainer
 

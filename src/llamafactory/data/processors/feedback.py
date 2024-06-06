@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
-from .mm_utils import get_paligemma_token_type_ids, get_pixel_values
+from .processor_utils import get_paligemma_token_type_ids, get_pixel_values
 
 
 if TYPE_CHECKING:

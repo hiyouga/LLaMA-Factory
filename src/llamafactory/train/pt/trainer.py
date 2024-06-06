@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Dict, Optional
 from transformers import Trainer
 
 from ...extras.logging import get_logger
-from ..utils import create_custom_optimzer, create_custom_scheduler
+from ..trainer_utils import create_custom_optimzer, create_custom_scheduler
 
 
 if TYPE_CHECKING:
