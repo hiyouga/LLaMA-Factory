@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
@@ -14,6 +14,55 @@ if TYPE_CHECKING:
 
 
 logger = get_logger(__name__)
+
+
+def _encode_feedback_example(
+    prompt: Sequence[Dict[str, str]],
+    response: Sequence[Dict[str, str]],
+    kl_response: Sequence[Dict[str, str]],
+    system: Optional[str],
+    tools: Optional[str],
+    template: "Template",
+    tokenizer: "PreTrainedTokenizer",
+    processor: Optional["ProcessorMixin"],
+    data_args: "DataArguments",
+) -> Tuple[List[int], List[int], List[int], List[int], bool]:
+    if processor is not None and not hasattr(processor, "image_seq_length"):  # llava-like models
+        prompt[0]["content"] = template.image_token + prompt[0]["content"]
+
+    if response[0]["content"]:  # desired example
+        kto_tag = True
+        messages = prompt + [response[0]]
+    else:  # undesired example
+        kto_tag = False
+        messages = prompt + [response[1]]
+
+    if kl_response[0]["content"]:
+        kl_messages = prompt + [kl_response[0]]
+    else:
+        kl_messages = prompt + [kl_response[1]]
+
+    prompt_ids, response_ids = template.encode_oneturn(
+        tokenizer, messages, system, tools, data_args.cutoff_len, data_args.reserved_label_len
+    )
+    _, kl_response_ids = template.encode_oneturn(
+        tokenizer, kl_messages, system, tools, data_args.cutoff_len, data_args.reserved_label_len
+    )
+
+    if template.efficient_eos:
+        response_ids += [tokenizer.eos_token_id]
+        kl_response_ids += [tokenizer.eos_token_id]
+
+    if processor is not None and hasattr(processor, "image_seq_length"):  # paligemma models
+        image_token_id = tokenizer.convert_tokens_to_ids(template.image_token)
+        prompt_ids = [image_token_id] * getattr(processor, "image_seq_length") + prompt_ids
+
+    input_ids = prompt_ids + response_ids
+    labels = [IGNORE_INDEX] * len(prompt_ids) + response_ids
+    kl_input_ids = prompt_ids + kl_response_ids
+    kl_labels = [IGNORE_INDEX] * len(prompt_ids) + kl_response_ids
+
+    return input_ids, labels, kl_input_ids, kl_labels, kto_tag
 
 
 def preprocess_feedback_dataset(
@@ -45,50 +94,17 @@ def preprocess_feedback_dataset(
             logger.warning("Dropped invalid example: {}".format(examples["prompt"][i] + examples["response"][i]))
             continue
 
-        if processor is not None and not hasattr(processor, "image_seq_length"):  # llava-like models
-            examples["prompt"][i][0]["content"] = template.image_token + examples["prompt"][i][0]["content"]
-
-        if examples["response"][i][0]["content"]:  # desired example
-            kto_tag = True
-            messages = examples["prompt"][i] + [examples["response"][i][0]]
-        else:  # undesired example
-            kto_tag = False
-            messages = examples["prompt"][i] + [examples["response"][i][1]]
-
-        if kl_response[i][0]["content"]:
-            kl_messages = examples["prompt"][i] + [kl_response[i][0]]
-        else:
-            kl_messages = examples["prompt"][i] + [kl_response[i][1]]
-
-        prompt_ids, response_ids = template.encode_oneturn(
-            tokenizer,
-            messages,
-            examples["system"][i],
-            examples["tools"][i],
-            data_args.cutoff_len,
-            data_args.reserved_label_len,
+        input_ids, labels, kl_input_ids, kl_labels, kto_tag = _encode_feedback_example(
+            prompt=examples["prompt"][i],
+            response=examples["response"][i],
+            kl_response=kl_response[i],
+            system=examples["system"][i],
+            tools=examples["tools"][i],
+            template=template,
+            tokenizer=tokenizer,
+            processor=processor,
+            data_args=data_args,
         )
-        _, kl_response_ids = template.encode_oneturn(
-            tokenizer,
-            kl_messages,
-            examples["system"][i],
-            examples["tools"][i],
-            data_args.cutoff_len,
-            data_args.reserved_label_len,
-        )
-
-        if template.efficient_eos:
-            response_ids += [tokenizer.eos_token_id]
-            kl_response_ids += [tokenizer.eos_token_id]
-
-        if processor is not None and hasattr(processor, "image_seq_length"):  # paligemma models
-            image_token_id = tokenizer.convert_tokens_to_ids(template.image_token)
-            prompt_ids = [image_token_id] * getattr(processor, "image_seq_length") + prompt_ids
-
-        input_ids = prompt_ids + response_ids
-        labels = [IGNORE_INDEX] * len(prompt_ids) + response_ids
-        kl_input_ids = prompt_ids + kl_response_ids
-        kl_labels = [IGNORE_INDEX] * len(prompt_ids) + kl_response_ids
         model_inputs["input_ids"].append(input_ids)
         model_inputs["attention_mask"].append([1] * len(input_ids))
         model_inputs["labels"].append(labels)
