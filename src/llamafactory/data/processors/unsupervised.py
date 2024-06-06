@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from ...extras.logging import get_logger
-from ..utils import Role
-from .mm_utils import get_paligemma_token_type_ids, get_pixel_values
+from ..data_utils import Role
+from .processor_utils import get_paligemma_token_type_ids, get_pixel_values
 
 
 if TYPE_CHECKING:
