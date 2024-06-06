@@ -24,7 +24,7 @@ def preprocess_pretrain_dataset(
         concatenated_examples = {k: list(chain(*tokenized_examples[k])) for k in tokenized_examples.keys()}
         total_length = len(concatenated_examples[list(concatenated_examples.keys())[0]])
         block_size = data_args.cutoff_len
-        total_length = (total_length // block_size) * block_size
+        total_length = ((total_length // block_size )+ 1) * block_size
         result = {
             k: [t[i : i + block_size] for i in range(0, total_length, block_size)]
             for k, t in concatenated_examples.items()
