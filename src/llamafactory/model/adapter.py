@@ -7,9 +7,9 @@ from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.modeling_utils import is_fsdp_enabled
 
 from ..extras.logging import get_logger
-from .utils.misc import find_all_linear_modules, find_expanded_modules
-from .utils.quantization import QuantizationMethod
-from .utils.unsloth import get_unsloth_peft_model, load_unsloth_peft_model
+from .model_utils.misc import find_all_linear_modules, find_expanded_modules
+from .model_utils.quantization import QuantizationMethod
+from .model_utils.unsloth import get_unsloth_peft_model, load_unsloth_peft_model
 
 
 if TYPE_CHECKING:

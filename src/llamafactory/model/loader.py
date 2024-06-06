@@ -6,11 +6,11 @@ from trl import AutoModelForCausalLMWithValueHead
 from ..extras.logging import get_logger
 from ..extras.misc import count_parameters, try_download_model_from_ms
 from .adapter import init_adapter
+from .model_utils.misc import register_autoclass
+from .model_utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
+from .model_utils.unsloth import load_unsloth_pretrained_model
+from .model_utils.valuehead import load_valuehead_params
 from .patcher import patch_config, patch_model, patch_tokenizer, patch_valuehead_model
-from .utils.misc import register_autoclass
-from .utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
-from .utils.unsloth import load_unsloth_pretrained_model
-from .utils.valuehead import load_valuehead_params
 
 
 if TYPE_CHECKING:

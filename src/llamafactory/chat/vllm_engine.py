@@ -6,7 +6,7 @@ from ..extras.logging import get_logger
 from ..extras.misc import get_device_count
 from ..extras.packages import is_vllm_available
 from ..model import load_config, load_tokenizer
-from ..model.utils.visual import LlavaMultiModalProjectorForYiVLForVLLM
+from ..model.model_utils.visual import LlavaMultiModalProjectorForYiVLForVLLM
 from .base_engine import BaseEngine, Response
 
 
