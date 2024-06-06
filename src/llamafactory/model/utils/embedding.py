@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-def _noisy_mean_initialization(embed_weight: torch.Tensor, num_new_tokens: int) -> None:
+def _noisy_mean_initialization(embed_weight: "torch.Tensor", num_new_tokens: int) -> None:
     embedding_dim = embed_weight.size(1)
     avg_weight = embed_weight[:-num_new_tokens].mean(dim=0, keepdim=True)
     noise_weight = torch.empty_like(embed_weight[-num_new_tokens:])
