@@ -27,6 +27,7 @@ class Template:
     default_system: str
     stop_words: List[str]
     image_token: str
+    video_token: str
     efficient_eos: bool
     replace_eos: bool
     force_system: bool
@@ -211,6 +212,7 @@ def _register_template(
     default_system: str = "",
     stop_words: List[str] = [],
     image_token: str = "<image>",
+    video_token: str = "<video>",
     efficient_eos: bool = False,
     replace_eos: bool = False,
     force_system: bool = False,
@@ -259,6 +261,7 @@ def _register_template(
         default_system=default_system,
         stop_words=stop_words,
         image_token=image_token,
+        video_token=video_token,
         efficient_eos=efficient_eos,
         replace_eos=replace_eos,
         force_system=force_system,

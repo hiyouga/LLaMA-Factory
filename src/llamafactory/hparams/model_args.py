@@ -85,6 +85,10 @@ class ModelArguments:
         default=False,
         metadata={"help": "Whethor or not to use multimodal LLM that accepts visual inputs."},
     )
+    video_inputs: bool = field(
+        default=False,
+        metadata={"help": "Whethor or not to use multimodal LLM that accepts video inputs."},
+    )
     moe_aux_loss_coef: Optional[float] = field(
         default=None,
         metadata={"help": "Coefficient of the auxiliary router loss in mixture-of-experts model."},

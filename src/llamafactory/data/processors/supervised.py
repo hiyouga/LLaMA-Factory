@@ -2,8 +2,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
-from .mm_utils import get_paligemma_token_type_ids, get_pixel_values
-
+from .mm_utils import get_paligemma_token_type_ids, get_pixel_values, get_pixel_values_videos
 
 if TYPE_CHECKING:
     from transformers import ProcessorMixin
@@ -26,8 +25,17 @@ def preprocess_supervised_dataset(
     # build inputs with format `<bos> X Y <eos>` and labels with format `<ignore> ... <ignore> Y <eos>`
     # for multiturn examples, we only mask the prompt part in each prompt-response pair.
     model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
+
+    image_key = "pixel_values"
+    video_key = "pixel_values_videos"
+
     if processor is not None:
-        model_inputs["pixel_values"] = []
+        if len(examples["images"][0]):
+            model_inputs[image_key] = []
+
+        if len(examples["videos"][0]):
+            model_inputs[video_key] = []
+
         if hasattr(processor, "image_seq_length"):  # paligemma models
             model_inputs["token_type_ids"] = []
 
@@ -38,6 +46,9 @@ def preprocess_supervised_dataset(
 
         if processor is not None and not hasattr(processor, "image_seq_length"):  # llava-like models
             examples["prompt"][i][0]["content"] = template.image_token + examples["prompt"][i][0]["content"]
+
+        if len(examples["videos"][i]):
+            examples["prompt"][i][0]["content"] = template.video_token + examples["prompt"][i][0]["content"]
 
         messages = examples["prompt"][i] + examples["response"][i]
         input_ids, labels = [], []
@@ -75,7 +86,12 @@ def preprocess_supervised_dataset(
         model_inputs["attention_mask"].append([1] * len(input_ids))
         model_inputs["labels"].append(labels)
         if processor is not None:
-            model_inputs["pixel_values"].append(get_pixel_values(examples["images"][i], processor))
+            if len(examples["images"][i]):
+                model_inputs[image_key].append(get_pixel_values(examples["images"][i], processor, image_key))
+
+            if len(examples["videos"][i]):
+                model_inputs[video_key].append(get_pixel_values_videos(examples["videos"][i], processor, video_key))
+
             if hasattr(processor, "image_seq_length"):  # paligemma models
                 model_inputs["token_type_ids"].append(get_paligemma_token_type_ids(len(input_ids), processor))
 
