@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
@@ -14,6 +14,44 @@ if TYPE_CHECKING:
 
 
 logger = get_logger(__name__)
+
+
+def _encode_pairwise_example(
+    prompt: Sequence[Dict[str, str]],
+    response: Sequence[Dict[str, str]],
+    system: Optional[str],
+    tools: Optional[str],
+    template: "Template",
+    tokenizer: "PreTrainedTokenizer",
+    processor: Optional["ProcessorMixin"],
+    data_args: "DataArguments",
+) -> Tuple[List[int], List[int], List[int], List[int]]:
+    if processor is not None and not hasattr(processor, "image_seq_length"):  # llava-like models
+        prompt[0]["content"] = template.image_token + prompt[0]["content"]
+
+    chosen_messages = prompt + [response[0]]
+    rejected_messages = prompt + [response[1]]
+    prompt_ids, chosen_ids = template.encode_oneturn(
+        tokenizer, chosen_messages, system, tools, data_args.cutoff_len, data_args.reserved_label_len
+    )
+    _, rejected_ids = template.encode_oneturn(
+        tokenizer, rejected_messages, system, tools, data_args.cutoff_len, data_args.reserved_label_len
+    )
+
+    if template.efficient_eos:
+        chosen_ids += [tokenizer.eos_token_id]
+        rejected_ids += [tokenizer.eos_token_id]
+
+    if processor is not None and hasattr(processor, "image_seq_length"):  # paligemma models
+        image_token_id = tokenizer.convert_tokens_to_ids(template.image_token)
+        prompt_ids = [image_token_id] * getattr(processor, "image_seq_length") + prompt_ids
+
+    chosen_input_ids = prompt_ids + chosen_ids
+    chosen_labels = [IGNORE_INDEX] * len(prompt_ids) + chosen_ids
+    rejected_input_ids = prompt_ids + rejected_ids
+    rejected_labels = [IGNORE_INDEX] * len(prompt_ids) + rejected_ids
+
+    return chosen_input_ids, chosen_labels, rejected_input_ids, rejected_labels
 
 
 def preprocess_pairwise_dataset(
@@ -43,40 +81,16 @@ def preprocess_pairwise_dataset(
             logger.warning("Dropped invalid example: {}".format(examples["prompt"][i] + examples["response"][i]))
             continue
 
-        if processor is not None and not hasattr(processor, "image_seq_length"):  # llava-like models
-            examples["prompt"][i][0]["content"] = template.image_token + examples["prompt"][i][0]["content"]
-
-        chosen_messages = examples["prompt"][i] + [examples["response"][i][0]]
-        rejected_messages = examples["prompt"][i] + [examples["response"][i][1]]
-        prompt_ids, chosen_ids = template.encode_oneturn(
-            tokenizer,
-            chosen_messages,
-            examples["system"][i],
-            examples["tools"][i],
-            data_args.cutoff_len,
-            data_args.reserved_label_len,
+        chosen_input_ids, chosen_labels, rejected_input_ids, rejected_labels = _encode_pairwise_example(
+            prompt=examples["prompt"][i],
+            response=examples["response"][i],
+            system=examples["system"][i],
+            tools=examples["tools"][i],
+            template=template,
+            tokenizer=tokenizer,
+            processor=processor,
+            data_args=data_args,
         )
-        _, rejected_ids = template.encode_oneturn(
-            tokenizer,
-            rejected_messages,
-            examples["system"][i],
-            examples["tools"][i],
-            data_args.cutoff_len,
-            data_args.reserved_label_len,
-        )
-
-        if template.efficient_eos:
-            chosen_ids += [tokenizer.eos_token_id]
-            rejected_ids += [tokenizer.eos_token_id]
-
-        if processor is not None and hasattr(processor, "image_seq_length"):  # paligemma models
-            image_token_id = tokenizer.convert_tokens_to_ids(template.image_token)
-            prompt_ids = [image_token_id] * getattr(processor, "image_seq_length") + prompt_ids
-
-        chosen_input_ids = prompt_ids + chosen_ids
-        chosen_labels = [IGNORE_INDEX] * len(prompt_ids) + chosen_ids
-        rejected_input_ids = prompt_ids + rejected_ids
-        rejected_labels = [IGNORE_INDEX] * len(prompt_ids) + rejected_ids
         model_inputs["chosen_input_ids"].append(chosen_input_ids)
         model_inputs["chosen_attention_mask"].append([1] * len(chosen_input_ids))
         model_inputs["chosen_labels"].append(chosen_labels)
