@@ -10,11 +10,14 @@ from ...extras.packages import is_jieba_available, is_nltk_available, is_rouge_a
 if TYPE_CHECKING:
     from transformers.tokenization_utils import PreTrainedTokenizer
 
+
 if is_jieba_available():
     import jieba  # type: ignore
 
+
 if is_nltk_available():
     from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
+
 
 if is_rouge_available():
     from rouge_chinese import Rouge
