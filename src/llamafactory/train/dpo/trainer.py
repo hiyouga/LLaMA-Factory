@@ -10,7 +10,7 @@ from trl import DPOTrainer
 from trl.trainer import disable_dropout_in_model
 
 from ...extras.constants import IGNORE_INDEX
-from ..trainer_utils import create_custom_optimzer, create_custom_scheduler, get_ref_context
+from ..trainer_utils import create_custom_optimzer, create_custom_scheduler, get_batch_logps, get_ref_context
 
 
 if TYPE_CHECKING:
@@ -155,12 +155,7 @@ class CustomDPOTrainer(DPOTrainer):
 
         all_logits: "torch.Tensor" = model(**batch, return_dict=True, use_cache=False).logits.to(torch.float32)
 
-        all_logps, valid_length = self.get_batch_logps(
-            logits=all_logits,
-            labels=batch["labels"],
-            is_encoder_decoder=self.is_encoder_decoder,
-            label_pad_token_id=self.label_pad_token_id,
-        )
+        all_logps, valid_length = get_batch_logps(logits=all_logits, labels=batch["labels"])
         if self.loss_type in ["ipo", "orpo", "simpo"]:
             all_logps = all_logps / valid_length
 
