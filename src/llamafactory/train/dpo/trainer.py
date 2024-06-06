@@ -187,13 +187,7 @@ class CustomDPOTrainer(DPOTrainer):
             ref_context = nullcontext()
 
         with torch.no_grad(), ref_context:
-            (
-                reference_chosen_logps,
-                reference_rejected_logps,
-                _,
-                _,
-                _,
-            ) = self.concatenated_forward(ref_model, batch)
+            reference_chosen_logps, reference_rejected_logps, *_ = self.concatenated_forward(ref_model, batch)
 
         return reference_chosen_logps, reference_rejected_logps
 
