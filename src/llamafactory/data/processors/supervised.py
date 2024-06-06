@@ -1,10 +1,9 @@
-import bisect
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
-from .processor_utils import get_paligemma_token_type_ids, get_pixel_values
+from .processor_utils import get_paligemma_token_type_ids, get_pixel_values, greedy_knapsack
 
 
 if TYPE_CHECKING:
@@ -16,38 +15,6 @@ if TYPE_CHECKING:
 
 
 logger = get_logger(__name__)
-
-
-def search_for_fit(numbers: Sequence[int], capacity: int) -> int:
-    r"""
-    Finds the index of largest number that fits into the knapsack with the given capacity.
-    """
-    index = bisect.bisect(numbers, capacity)
-    return -1 if index == 0 else (index - 1)
-
-
-def greedy_knapsack(numbers: List[int], capacity: int) -> List[List[int]]:
-    r"""
-    An efficient greedy algorithm with binary search for the knapsack problem.
-    """
-    numbers.sort()  # sort numbers in ascending order for binary search
-    knapsacks = []
-
-    while numbers:
-        current_knapsack = []
-        remaining_capacity = capacity
-
-        while True:
-            index = search_for_fit(numbers, remaining_capacity)
-            if index == -1:
-                break  # no more numbers fit in this knapsack
-
-            remaining_capacity -= numbers[index]  # update the remaining capacity
-            current_knapsack.append(numbers.pop(index))  # add the number to knapsack
-
-        knapsacks.append(current_knapsack)
-
-    return knapsacks
 
 
 def _encode_supervised_example(

@@ -72,7 +72,7 @@ def main():
     elif command == Command.EXPORT:
         export_model()
     elif command == Command.TRAIN:
-        disable_torchrun = os.environ.get("DISABLE_TORCHRUN", "0").lower() in ["true", "1"]
+        disable_torchrun = os.environ.get("TORCHRUN_DISABLED", "0").lower() in ["true", "1"]
         if disable_torchrun and get_device_count() > 1:
             logger.warning("`torchrun` cannot be disabled when device count > 1.")
             disable_torchrun = False
