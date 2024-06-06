@@ -19,8 +19,8 @@ from trl.models.utils import unwrap_model_for_generation
 from ...extras.callbacks import FixValueHeadModelCallback, LogCallback
 from ...extras.logging import get_logger
 from ...extras.misc import AverageMeter, count_parameters, get_current_device, get_logits_processor
-from ..utils import create_custom_optimzer, create_custom_scheduler
-from .utils import dump_layernorm, get_rewards_from_server, replace_model, restore_layernorm
+from ..trainer_utils import create_custom_optimzer, create_custom_scheduler
+from .ppo_utils import dump_layernorm, get_rewards_from_server, replace_model, restore_layernorm
 
 
 if TYPE_CHECKING:

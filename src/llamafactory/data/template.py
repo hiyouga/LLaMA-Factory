@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, Union
 
 from ..extras.logging import get_logger
+from .data_utils import Role, infer_max_len
 from .formatter import EmptyFormatter, FunctionFormatter, StringFormatter, ToolFormatter
-from .utils import Role, infer_max_len
 
 
 if TYPE_CHECKING:
@@ -196,7 +196,7 @@ class Llama2Template(Template):
         return self._make_pairs(encoded_messages, cutoff_len, reserved_label_len)
 
 
-templates: Dict[str, Template] = {}
+TEMPLATES: Dict[str, Template] = {}
 
 
 def _register_template(
@@ -248,7 +248,7 @@ def _register_template(
     default_function_formatter = FunctionFormatter(slots=["Action: {{name}}\nAction Input: {{arguments}}"] + eos_slots)
     default_tool_formatter = ToolFormatter(tool_format="default")
     default_separator_formatter = EmptyFormatter()
-    templates[name] = template_class(
+    TEMPLATES[name] = template_class(
         format_user=format_user or default_user_formatter,
         format_assistant=format_assistant or default_assistant_formatter,
         format_system=format_system or default_user_formatter,
@@ -348,9 +348,9 @@ def get_template_and_fix_tokenizer(
     name: Optional[str] = None,
 ) -> Template:
     if name is None:
-        template = templates["empty"]  # placeholder
+        template = TEMPLATES["empty"]  # placeholder
     else:
-        template = templates.get(name, None)
+        template = TEMPLATES.get(name, None)
         if template is None:
             raise ValueError("Template {} does not exist.".format(name))
 
