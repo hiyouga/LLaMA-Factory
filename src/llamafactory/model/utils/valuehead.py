@@ -23,6 +23,7 @@ def load_valuehead_params(path_or_repo_id: str, model_args: "ModelArguments") ->
     Returns: dict with keys `v_head.summary.weight` and `v_head.summary.bias`.
     """
     kwargs = {"path_or_repo_id": path_or_repo_id, "cache_dir": model_args.cache_dir, "token": model_args.hf_hub_token}
+    err_text = ""
 
     try:
         from safetensors import safe_open
@@ -31,16 +32,16 @@ def load_valuehead_params(path_or_repo_id: str, model_args: "ModelArguments") ->
         with safe_open(vhead_file, framework="pt", device="cpu") as f:
             return {key: f.get_tensor(key) for key in f.keys()}
     except Exception as err:
-        logger.info("Failed to load {}: {}".format(V_HEAD_SAFE_WEIGHTS_NAME, str(err)))
+        err_text = str(err)
 
     try:
         vhead_file = cached_file(filename=V_HEAD_WEIGHTS_NAME, **kwargs)
         return torch.load(vhead_file, map_location="cpu")
     except Exception as err:
-        logger.info("Failed to load {}: {}".format(V_HEAD_WEIGHTS_NAME, str(err)))
+        err_text = str(err)
 
-    logger.info("Provided path ({}) does not contain value head weights.".format(path_or_repo_id))
-    logger.info("Ignore these messages if you are not resuming the training of a value head model.")
+    logger.info("Provided path ({}) does not contain value head weights: {}.".format(path_or_repo_id, err_text))
+    logger.info("Ignore the above message if you are not resuming the training of a value head model.")
     return None
 
 
