@@ -8,7 +8,7 @@ from transformers import DataCollatorForLanguageModeling
 from ...data import get_dataset, split_dataset
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
-from ..utils import create_modelcard_and_push
+from ..trainer_utils import create_modelcard_and_push
 from .trainer import CustomTrainer
 
 
