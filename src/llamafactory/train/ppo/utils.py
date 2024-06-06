@@ -8,12 +8,13 @@ from transformers.integrations import is_deepspeed_zero3_enabled
 from ...extras.packages import is_requests_available
 
 
+if is_requests_available():
+    import requests
+
+
 if TYPE_CHECKING:
     from transformers import PreTrainedModel
     from trl import AutoModelForCausalLMWithValueHead
-
-if is_requests_available():
-    import requests
 
 
 def get_rewards_from_server(server_url: str, messages: List[str]) -> List[torch.Tensor]:

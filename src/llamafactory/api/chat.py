@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, AsyncGenerator, Dict, List, Optional, Tuple
 
 from ..data import Role as DataRole
 from ..extras.logging import get_logger
-from ..extras.packages import is_fastapi_available, is_pillow_available
+from ..extras.packages import is_fastapi_available, is_pillow_available, is_requests_available
 from .common import dictify, jsonify
 from .protocol import (
     ChatCompletionMessage,
@@ -29,8 +29,11 @@ if is_fastapi_available():
 
 
 if is_pillow_available():
-    import requests
     from PIL import Image
+
+
+if is_requests_available():
+    import requests
 
 
 if TYPE_CHECKING:
