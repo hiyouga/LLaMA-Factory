@@ -1,9 +1,7 @@
 import json
-from contextlib import nullcontext
 from typing import TYPE_CHECKING, Dict, List, Literal, Optional
 
 import torch
-from transformers.integrations import is_deepspeed_zero3_enabled
 
 from ...extras.packages import is_requests_available
 
@@ -18,6 +16,9 @@ if TYPE_CHECKING:
 
 
 def get_rewards_from_server(server_url: str, messages: List[str]) -> List[torch.Tensor]:
+    r"""
+    Gets reward scores from the API server.
+    """
     headers = {"Content-Type": "application/json"}
     payload = {"model": "model", "messages": messages}
     response = requests.post(server_url, json=payload, headers=headers)
@@ -26,25 +27,23 @@ def get_rewards_from_server(server_url: str, messages: List[str]) -> List[torch.
 
 
 def replace_model(model: "AutoModelForCausalLMWithValueHead", target: Literal["default", "reward"]) -> None:
-    if is_deepspeed_zero3_enabled():
-        import deepspeed  # type: ignore
+    r"""
+    Replaces the default/reward modules in the model. The model is already unwrapped (and gathered).
+    """
+    if target == "reward":  # save default head temporarily
+        setattr(model, "default_head_weight", model.v_head.summary.weight.data.detach().clone())
+        setattr(model, "default_head_bias", model.v_head.summary.bias.data.detach().clone())
 
-        params = [model.v_head.summary.weight, model.v_head.summary.bias]
-        context_maybe_zero3 = deepspeed.zero.GatheredParameters(params, modifier_rank=0)
-    else:
-        context_maybe_zero3 = nullcontext()
-
-    with context_maybe_zero3:
-        if target == "reward":  # save default head temporarily
-            setattr(model, "default_head_weight", model.v_head.summary.weight.data.detach().clone())
-            setattr(model, "default_head_bias", model.v_head.summary.bias.data.detach().clone())
-
-        model.pretrained_model.set_adapter(target)  # set the LoRA adapter to be active
-        model.v_head.summary.weight.data = model.get_buffer("{}_head_weight".format(target)).detach().clone()
-        model.v_head.summary.bias.data = model.get_buffer("{}_head_bias".format(target)).detach().clone()
+    model.pretrained_model.set_adapter(target)  # set the LoRA adapter to be active
+    device = model.v_head.summary.weight.device
+    model.v_head.summary.weight.data = model.get_buffer("{}_head_weight".format(target)).detach().clone().to(device)
+    model.v_head.summary.bias.data = model.get_buffer("{}_head_bias".format(target)).detach().clone().to(device)
 
 
 def dump_layernorm(model: "PreTrainedModel") -> Dict[str, torch.Tensor]:
+    r"""
+    Dumps the layernorm parameters in the model. The model is already unwrapped (and gathered).
+    """
     layer_norm_params = {}
     for name, param in model.named_parameters():
         if param.data.dtype == torch.float32:
@@ -55,6 +54,9 @@ def dump_layernorm(model: "PreTrainedModel") -> Dict[str, torch.Tensor]:
 
 
 def restore_layernorm(model: "PreTrainedModel", layernorm_params: Optional[Dict[str, torch.Tensor]] = None) -> None:
+    r"""
+    Restores the layernorm parameters in the model. The model is already unwrapped (and gathered).
+    """
     for name, param in model.named_parameters():
         if name in layernorm_params:
             param.data = layernorm_params[name]
