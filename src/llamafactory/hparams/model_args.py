@@ -15,7 +15,12 @@ class ModelArguments:
     )
     adapter_name_or_path: Optional[str] = field(
         default=None,
-        metadata={"help": "Path to the adapter weight or identifier from huggingface.co/models."},
+        metadata={
+            "help": (
+                "Path to the adapter weight or identifier from huggingface.co/models. "
+                "Use commas to separate multiple adapters."
+            )
+        },
     )
     cache_dir: Optional[str] = field(
         default=None,
@@ -35,7 +40,7 @@ class ModelArguments:
     )
     new_special_tokens: Optional[str] = field(
         default=None,
-        metadata={"help": "Special tokens to be added into the tokenizer."},
+        metadata={"help": "Special tokens to be added into the tokenizer. Use commas to separate multiple tokens."},
     )
     model_revision: str = field(
         default="main",
