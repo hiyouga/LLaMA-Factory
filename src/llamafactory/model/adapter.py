@@ -239,7 +239,7 @@ def init_adapter(
                 )
                 model = get_peft_model(model, lora_config)
 
-        if cast_trainable_params_to_fp32:
+        if is_trainable and cast_trainable_params_to_fp32:
             for param in filter(lambda p: p.requires_grad, model.parameters()):
                 param.data = param.data.to(torch.float32)
 
