@@ -50,13 +50,6 @@ def get_config_path() -> os.PathLike:
     return os.path.join(DEFAULT_CACHE_DIR, USER_CONFIG)
 
 
-def get_arg_save_path(config_path: str) -> os.PathLike:
-    r"""
-    Gets the path to saved arguments.
-    """
-    return os.path.join(DEFAULT_CONFIG_DIR, config_path)
-
-
 def load_config() -> Dict[str, Any]:
     r"""
     Loads user config if exists.
@@ -77,24 +70,28 @@ def save_config(lang: str, model_name: Optional[str] = None, model_path: Optiona
     user_config["lang"] = lang or user_config["lang"]
     if model_name:
         user_config["last_model"] = model_name
+
+    if model_name and model_path:
         user_config["path_dict"][model_name] = model_path
+
     with open(get_config_path(), "w", encoding="utf-8") as f:
         safe_dump(user_config, f)
 
 
-def get_model_path(model_name: str) -> Optional[str]:
+def get_model_path(model_name: str) -> str:
     r"""
     Gets the model path according to the model name.
     """
     user_config = load_config()
-    path_dict: Dict[DownloadSource, str] = SUPPORTED_MODELS.get(model_name, defaultdict(str))
-    model_path = user_config["path_dict"].get(model_name, None) or path_dict.get(DownloadSource.DEFAULT, None)
+    path_dict: Dict["DownloadSource", str] = SUPPORTED_MODELS.get(model_name, defaultdict(str))
+    model_path = user_config["path_dict"].get(model_name, "") or path_dict.get(DownloadSource.DEFAULT, "")
     if (
         use_modelscope()
         and path_dict.get(DownloadSource.MODELSCOPE)
         and model_path == path_dict.get(DownloadSource.DEFAULT)
     ):  # replace path
         model_path = path_dict.get(DownloadSource.MODELSCOPE)
+
     return model_path
 
 
