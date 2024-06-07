@@ -12,7 +12,7 @@ from transformers.utils import is_bitsandbytes_available, is_torch_cuda_availabl
 from .packages import is_vllm_available
 
 
-VERSION = "0.8.0"
+VERSION = "0.8.1.dev0"
 
 
 def print_env() -> None:
