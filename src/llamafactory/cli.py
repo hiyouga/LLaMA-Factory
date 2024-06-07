@@ -72,12 +72,8 @@ def main():
     elif command == Command.EXPORT:
         export_model()
     elif command == Command.TRAIN:
-        disable_torchrun = os.environ.get("TORCHRUN_DISABLED", "0").lower() in ["true", "1"]
-        if disable_torchrun and get_device_count() > 1:
-            logger.warning("`torchrun` cannot be disabled when device count > 1.")
-            disable_torchrun = False
-
-        if (not disable_torchrun) and (get_device_count() > 0):
+        force_torchrun = os.environ.get("FORCE_TORCHRUN", "0").lower() in ["true", "1"]
+        if force_torchrun or get_device_count() > 1:
             master_addr = os.environ.get("MASTER_ADDR", "127.0.0.1")
             master_port = os.environ.get("MASTER_PORT", str(random.randint(20001, 29999)))
             logger.info("Initializing distributed tasks at: {}:{}".format(master_addr, master_port))

@@ -278,6 +278,9 @@ class Runner:
             args = self._parse_train_args(data) if do_train else self._parse_eval_args(data)
             env = deepcopy(os.environ)
             env["LLAMABOARD_ENABLED"] = "1"
+            if args.get("deepspeed", None) is not None:
+                env["FORCE_TORCHRUN"] = "1"
+
             self.trainer = Popen("llamafactory-cli train {}".format(save_cmd(args)), env=env, shell=True)
             yield from self.monitor()
 
