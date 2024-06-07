@@ -1,3 +1,4 @@
+import bisect
 from typing import TYPE_CHECKING, List, Sequence
 
 import av
@@ -18,10 +19,42 @@ if TYPE_CHECKING:
     from transformers.image_processing_utils import BaseImageProcessor
 
 
-def get_pixel_values(
-    images: Sequence["ImageObject"], processor: "ProcessorMixin", image_key: "str" = "pixel_values"
-) -> "NDArray":
-    # process visual inputs (currently only supports a single image)
+def search_for_fit(numbers: Sequence[int], capacity: int) -> int:
+    r"""
+    Finds the index of largest number that fits into the knapsack with the given capacity.
+    """
+    index = bisect.bisect(numbers, capacity)
+    return -1 if index == 0 else (index - 1)
+
+
+def greedy_knapsack(numbers: List[int], capacity: int) -> List[List[int]]:
+    r"""
+    An efficient greedy algorithm with binary search for the knapsack problem.
+    """
+    numbers.sort()  # sort numbers in ascending order for binary search
+    knapsacks = []
+
+    while numbers:
+        current_knapsack = []
+        remaining_capacity = capacity
+
+        while True:
+            index = search_for_fit(numbers, remaining_capacity)
+            if index == -1:
+                break  # no more numbers fit in this knapsack
+
+            remaining_capacity -= numbers[index]  # update the remaining capacity
+            current_knapsack.append(numbers.pop(index))  # add the number to knapsack
+
+        knapsacks.append(current_knapsack)
+
+    return knapsacks
+
+
+def get_pixel_values(images: Sequence["ImageObject"], processor: "ProcessorMixin", image_key: "str" = "pixel_values") -> "NDArray":
+    r"""
+    Processes visual inputs. (currently only supports a single image)
+    """
     image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
     image = images[0] if len(images) != 0 else Image.new("RGB", (100, 100), (255, 255, 255))
     return image_processor(image, return_tensors="pt")[image_key][0]  # shape (C, H, W)
@@ -64,6 +97,8 @@ def read_video_pyav(container: "Container", indices: "NDArray"):
 
 
 def get_paligemma_token_type_ids(input_len: int, processor: "ProcessorMixin") -> List[int]:
-    # get paligemma token type ids for computing loss
+    r"""
+    Gets paligemma token type ids for computing loss.
+    """
     image_seq_length = getattr(processor, "image_seq_length")
     return [0] * image_seq_length + [1] * (input_len - image_seq_length)
