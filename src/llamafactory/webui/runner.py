@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING, Any, Dict, Generator, Optional
 
 from transformers.trainer import TRAINING_ARGS_NAME
 
-from ..extras.constants import PEFT_METHODS, TRAINING_STAGES
+from ..extras.constants import LLAMABOARD_CONFIG, PEFT_METHODS, TRAINING_STAGES
 from ..extras.misc import is_gpu_or_npu_available, torch_gc
 from ..extras.packages import is_gradio_available
-from .common import DEFAULT_CACHE_DIR, get_save_dir, load_config
-from .locales import ALERTS
+from .common import DEFAULT_CACHE_DIR, DEFAULT_CONFIG_DIR, get_save_dir, load_config
+from .locales import ALERTS, LOCALES
 from .utils import abort_leaf_process, gen_cmd, get_eval_results, get_trainer_info, load_args, save_args, save_cmd
 
 
@@ -276,6 +276,10 @@ class Runner:
         else:
             self.do_train, self.running_data = do_train, data
             args = self._parse_train_args(data) if do_train else self._parse_eval_args(data)
+
+            os.makedirs(args["output_dir"], exist_ok=True)
+            save_args(os.path.join(args["output_dir"], LLAMABOARD_CONFIG), self._form_config_dict(data))
+
             env = deepcopy(os.environ)
             env["LLAMABOARD_ENABLED"] = "1"
             if args.get("deepspeed", None) is not None:
@@ -283,6 +287,16 @@ class Runner:
 
             self.trainer = Popen("llamafactory-cli train {}".format(save_cmd(args)), env=env, shell=True)
             yield from self.monitor()
+
+    def _form_config_dict(self, data: Dict["Component", Any]) -> Dict[str, Any]:
+        config_dict = {}
+        skip_ids = ["top.lang", "top.model_path", "train.output_dir", "train.config_path", "train.device_count"]
+        for elem, value in data.items():
+            elem_id = self.manager.get_id_by_elem(elem)
+            if elem_id not in skip_ids:
+                config_dict[elem_id] = value
+
+        return config_dict
 
     def preview_train(self, data):
         yield from self._preview(data, do_train=True)
@@ -349,28 +363,24 @@ class Runner:
         }
         yield return_dict
 
-    def save_args(self, data: dict):
+    def save_args(self, data):
         output_box = self.manager.get_elem_by_id("train.output_box")
         error = self._initialize(data, do_train=True, from_preview=True)
         if error:
             gr.Warning(error)
             return {output_box: error}
 
-        config_dict: Dict[str, Any] = {}
         lang = data[self.manager.get_elem_by_id("top.lang")]
         config_path = data[self.manager.get_elem_by_id("train.config_path")]
-        skip_ids = ["top.lang", "top.model_path", "train.output_dir", "train.config_path", "train.device_count"]
-        for elem, value in data.items():
-            elem_id = self.manager.get_id_by_elem(elem)
-            if elem_id not in skip_ids:
-                config_dict[elem_id] = value
+        os.makedirs(DEFAULT_CONFIG_DIR, exist_ok=True)
+        save_path = os.path.join(DEFAULT_CONFIG_DIR, config_path)
 
-        save_path = save_args(config_path, config_dict)
+        save_args(save_path, self._form_config_dict(data))
         return {output_box: ALERTS["info_config_saved"][lang] + save_path}
 
     def load_args(self, lang: str, config_path: str):
         output_box = self.manager.get_elem_by_id("train.output_box")
-        config_dict = load_args(config_path)
+        config_dict = load_args(os.path.join(DEFAULT_CONFIG_DIR, config_path))
         if config_dict is None:
             gr.Warning(ALERTS["err_config_not_found"][lang])
             return {output_box: ALERTS["err_config_not_found"][lang]}
@@ -378,5 +388,19 @@ class Runner:
         output_dict: Dict["Component", Any] = {output_box: ALERTS["info_config_loaded"][lang]}
         for elem_id, value in config_dict.items():
             output_dict[self.manager.get_elem_by_id(elem_id)] = value
+
+        return output_dict
+
+    def check_output_dir(self, lang: str, model_name: str, finetuning_type: str, output_dir: str):
+        output_box = self.manager.get_elem_by_id("train.output_box")
+        output_dict: Dict["Component", Any] = {output_box: LOCALES["output_box"][lang]["value"]}
+        if model_name and output_dir and os.path.isdir(get_save_dir(model_name, finetuning_type, output_dir)):
+            gr.Warning(ALERTS["warn_output_dir_exists"][lang])
+            output_dict[output_box] = ALERTS["warn_output_dir_exists"][lang]
+
+            output_dir = get_save_dir(model_name, finetuning_type, output_dir)
+            config_dict = load_args(os.path.join(output_dir, LLAMABOARD_CONFIG))  # load llamaboard config
+            for elem_id, value in config_dict.items():
+                output_dict[self.manager.get_elem_by_id(elem_id)] = value
 
         return output_dict
