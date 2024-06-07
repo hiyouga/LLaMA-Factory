@@ -88,6 +88,14 @@ class DataArguments:
         default=None,
         metadata={"help": "Path to save or load the tokenized datasets."},
     )
+    image_key: Optional[str] = field(
+        default="pixel_values",
+        metadata={"help": "key of image pixel_values."},
+    )
+    video_key: Optional[str] = field(
+        default="pixel_values_videos",
+        metadata={"help": "key of video pixel_values."},
+    )
 
     def __post_init__(self):
         if self.reserved_label_len >= self.cutoff_len:

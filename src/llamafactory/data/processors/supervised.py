@@ -70,8 +70,8 @@ def preprocess_supervised_dataset(
     # for multiturn examples, we only mask the prompt part in each prompt-response pair.
     model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
 
-    image_key = "pixel_values"
-    video_key = "pixel_values_videos"
+    image_key = data_args.image_key
+    video_key = data_args.video_key
 
     if processor is not None:
         if len(examples["images"][0]):
@@ -90,9 +90,13 @@ def preprocess_supervised_dataset(
 
         if processor is not None and not hasattr(processor, "image_seq_length"):  # llava-like models
             examples["prompt"][i][0]["content"] = template.image_token + examples["prompt"][i][0]["content"]
-
-        if len(examples["videos"][i]):
-            examples["prompt"][i][0]["content"] = template.video_token + examples["prompt"][i][0]["content"]
+        else:
+            if template.image_token not in examples["prompt"][i][0]["content"] or \
+                    template.video_token not in examples["prompt"][i][0]["content"]:
+                if len(examples["videos"][i]):
+                    examples["prompt"][i][0]["content"] = template.video_token + examples["prompt"][i][0]["content"]
+                if len(examples["images"][i]):
+                    examples["prompt"][i][0]["content"] = template.image_token + examples["prompt"][i][0]["content"]
 
         messages = examples["prompt"][i] + examples["response"][i]
         input_ids, labels = [], []
