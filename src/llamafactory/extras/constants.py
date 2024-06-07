@@ -35,6 +35,8 @@ IGNORE_INDEX = -100
 
 LAYERNORM_NAMES = {"norm", "ln"}
 
+LLAMABOARD_CONFIG = "llamaboard_config.yaml"
+
 METHODS = ["full", "freeze", "lora"]
 
 MOD_SUPPORTED_MODELS = {"bloom", "falcon", "gemma", "llama", "mistral", "mixtral", "phi", "starcoder2"}
@@ -47,9 +49,9 @@ SUBJECTS = ["Average", "STEM", "Social Sciences", "Humanities", "Other"]
 
 SUPPORTED_MODELS = OrderedDict()
 
-TRAINER_CONFIG = "trainer_config.yaml"
-
 TRAINER_LOG = "trainer_log.jsonl"
+
+TRAINING_ARGS = "training_args.yaml"
 
 TRAINING_STAGES = {
     "Supervised Fine-Tuning": "sft",
