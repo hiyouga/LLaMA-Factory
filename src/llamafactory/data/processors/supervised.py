@@ -3,11 +3,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
-<<<<<<< HEAD
-from .processor_utils import get_paligemma_token_type_ids, get_pixel_values, get_pixel_values_videos
-=======
-from .processor_utils import get_paligemma_token_type_ids, get_pixel_values, greedy_knapsack
->>>>>>> f8d8690bf4c2981f3151b4ccf07daeb4f3cd38a9
+from .processor_utils import get_paligemma_token_type_ids, get_pixel_values, get_pixel_values_videos, greedy_knapsack
 
 
 if TYPE_CHECKING:
@@ -92,7 +88,6 @@ def preprocess_supervised_dataset(
             logger.warning("Dropped invalid example: {}".format(examples["prompt"][i] + examples["response"][i]))
             continue
 
-<<<<<<< HEAD
         if processor is not None and not hasattr(processor, "image_seq_length"):  # llava-like models
             examples["prompt"][i][0]["content"] = template.image_token + examples["prompt"][i][0]["content"]
 
@@ -131,18 +126,6 @@ def preprocess_supervised_dataset(
             input_ids += [tokenizer.eos_token_id]
             labels += [tokenizer.eos_token_id]
 
-=======
-        input_ids, labels = _encode_supervised_example(
-            prompt=examples["prompt"][i],
-            response=examples["response"][i],
-            system=examples["system"][i],
-            tools=examples["tools"][i],
-            template=template,
-            tokenizer=tokenizer,
-            processor=processor,
-            data_args=data_args,
-        )
->>>>>>> f8d8690bf4c2981f3151b4ccf07daeb4f3cd38a9
         model_inputs["input_ids"].append(input_ids)
         model_inputs["attention_mask"].append([1] * len(input_ids))
         model_inputs["labels"].append(labels)
