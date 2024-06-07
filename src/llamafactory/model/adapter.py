@@ -50,7 +50,7 @@ def init_adapter(
         logger.info("Upcasting trainable params to float32.")
         cast_trainable_params_to_fp32 = True
 
-    if finetuning_args.finetuning_type == "full" and is_trainable:
+    if is_trainable and finetuning_args.finetuning_type == "full":
         logger.info("Fine-tuning method: Full")
 
         forbidden_modules = set()
@@ -67,7 +67,7 @@ def init_adapter(
             else:
                 param.requires_grad_(False)
 
-    if finetuning_args.finetuning_type == "freeze" and is_trainable:
+    if is_trainable and finetuning_args.finetuning_type == "freeze":
         logger.info("Fine-tuning method: Freeze")
 
         if model_args.visual_inputs:
