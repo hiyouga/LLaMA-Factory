@@ -57,7 +57,8 @@
     "formatting": "sharegpt",
     "columns": {
       "messages": "messages",
-      "videos": "videos"
+      "videos": "videos",
+      "images": "images"
     },
     "tags": {
       "role_tag": "role",
