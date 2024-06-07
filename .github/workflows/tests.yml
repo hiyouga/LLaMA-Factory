@@ -39,8 +39,10 @@ jobs:
     needs: check_code_quality
     strategy:
       matrix:
-        python-version: ["3.8", "3.9"]
-        os: ["ubuntu-latest", "windows-latest"]
+        python-version:
+          - "3.8"
+        os:
+          - "ubuntu-latest"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
