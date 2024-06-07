@@ -30,8 +30,8 @@ def test_attention():
                 "flash_attn": requested_attention,
             }
         )
-        tokenizer = load_tokenizer(model_args)
-        model = load_model(tokenizer["tokenizer"], model_args, finetuning_args)
+        tokenizer_module = load_tokenizer(model_args)
+        model = load_model(tokenizer_module["tokenizer"], model_args, finetuning_args)
         for module in model.modules():
             if "Attention" in module.__class__.__name__:
                 assert module.__class__.__name__ == llama_attention_classes[requested_attention]
