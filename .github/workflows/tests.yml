@@ -3,7 +3,7 @@ name: tests
 on:
   push:
     branches:
-      - $default-branch
+      - main
     paths:
       - "**.py"
       - "requirements.txt"
