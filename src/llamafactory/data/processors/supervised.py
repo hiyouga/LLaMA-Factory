@@ -83,10 +83,10 @@ def preprocess_supervised_dataset(
             for video_key in video_keys:
                 model_inputs[video_key] = []
 
-        if hasattr(processor, "image_seq_length"):  # paligemma models
-            model_inputs["token_type_ids"] = []
-
         processor_class = type(processor).__name__
+
+        if processor_class == 'PaliGemmaProcessor':  # paligemma models
+            model_inputs["token_type_ids"] = []
 
     for i in range(len(examples["prompt"])):
         if len(examples["prompt"][i]) % 2 != 1 or len(examples["response"][i]) != 1:
