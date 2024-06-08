@@ -70,41 +70,52 @@ def preprocess_supervised_dataset(
     # for multiturn examples, we only mask the prompt part in each prompt-response pair.
     model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
 
-    image_key = data_args.image_key
-    video_key = data_args.video_key
+    image_keys = data_args.image_key.split(",")
+    video_keys = data_args.video_key.split(",")
+    processor_class = None
 
     if processor is not None:
         if len(examples["images"][0]):
-            model_inputs[image_key] = []
+            for image_key in image_keys:
+                model_inputs[image_key] = []
 
         if len(examples["videos"][0]):
-            model_inputs[video_key] = []
+            for video_key in video_keys:
+                model_inputs[video_key] = []
 
         if hasattr(processor, "image_seq_length"):  # paligemma models
             model_inputs["token_type_ids"] = []
+
+        processor_class = type(processor).__name__
 
     for i in range(len(examples["prompt"])):
         if len(examples["prompt"][i]) % 2 != 1 or len(examples["response"][i]) != 1:
             logger.warning("Dropped invalid example: {}".format(examples["prompt"][i] + examples["response"][i]))
             continue
 
-        if processor is not None and not hasattr(processor, "image_seq_length"):  # llava-like models
-            examples["prompt"][i][0]["content"] = template.image_token + examples["prompt"][i][0]["content"]
-        else:
-            if template.image_token not in examples["prompt"][i][0]["content"] or \
-                    template.video_token not in examples["prompt"][i][0]["content"]:
-                if len(examples["videos"][i]):
-                    examples["prompt"][i][0]["content"] = template.video_token + examples["prompt"][i][0]["content"]
-                if len(examples["images"][i]):
-                    examples["prompt"][i][0]["content"] = template.image_token + examples["prompt"][i][0]["content"]
+        if processor is not None and processor_class != 'PaliGemmaProcessor':
+            if template.image_token not in examples["prompt"][i][0]["content"] and len(examples["videos"][i]):
+                examples["prompt"][i][0]["content"] = template.video_token + examples["prompt"][i][0]["content"]
+            if template.video_token not in examples["prompt"][i][0]["content"] and len(examples["images"][i]):
+                examples["prompt"][i][0]["content"] = template.image_token + examples["prompt"][i][0]["content"]
 
         messages = examples["prompt"][i] + examples["response"][i]
         input_ids, labels = [], []
 
-        if processor is not None and hasattr(processor, "image_seq_length"):  # paligemma models
+        if processor is not None and processor_class == 'PaliGemmaProcessor':  # paligemma models
             image_token_id = tokenizer.convert_tokens_to_ids(template.image_token)
             input_ids += [image_token_id] * getattr(processor, "image_seq_length")
             labels += [IGNORE_INDEX] * getattr(processor, "image_seq_length")
+
+        if processor is not None and processor_class == 'Idefics2Processor':
+            fake_image_token = processor.fake_image_token.content
+            image_str = f"{fake_image_token}{template.image_token * processor.image_seq_len}{fake_image_token}"
+            image_str = image_str * 5
+            for j in range(len(messages)):
+                content = messages[j]['content']
+                content = content.replace(template.image_token, image_str)
+                content = content.replace(f"{fake_image_token}{fake_image_token}", f"{fake_image_token}")
+                messages[j]['content'] = content
 
         for turn_idx, (source_ids, target_ids) in enumerate(
             template.encode_multiturn(
@@ -135,12 +146,16 @@ def preprocess_supervised_dataset(
         model_inputs["labels"].append(labels)
         if processor is not None:
             if len(examples["images"][i]):
-                model_inputs[image_key].append(get_pixel_values(examples["images"][i], processor, image_key))
+                image_data = get_pixel_values(examples["images"][i], processor, image_keys)
+                for image_key in image_keys:
+                    model_inputs[image_key].append(image_data[image_key])
 
             if len(examples["videos"][i]):
-                model_inputs[video_key].append(get_pixel_values_videos(examples["videos"][i], processor, video_key))
+                video_data = get_pixel_values_videos(examples["videos"][i], processor, video_keys)
+                for video_key in video_keys:
+                    model_inputs[video_key].append(video_data[video_key])
 
-            if hasattr(processor, "image_seq_length"):  # paligemma models
+            if processor_class == 'PaliGemmaProcessor':  # paligemma models
                 model_inputs["token_type_ids"].append(get_paligemma_token_type_ids(len(input_ids), processor))
 
     return model_inputs

@@ -854,6 +854,14 @@ _register_template(
 
 
 _register_template(
+    name="idefics2",
+    format_user=StringFormatter(slots=["User: {{content}}<end_of_utterance>\nAssistant: "]),
+    format_assistant=StringFormatter(slots=["{{content}}"]),
+    format_separator=EmptyFormatter(slots=["<end_of_utterance>\n"])
+)
+
+
+_register_template(
     name="xuanyuan",
     format_user=StringFormatter(slots=["Human: {{content}} Assistant:"]),
     default_system=(

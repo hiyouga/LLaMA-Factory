@@ -51,16 +51,18 @@ def greedy_knapsack(numbers: List[int], capacity: int) -> List[List[int]]:
     return knapsacks
 
 
-def get_pixel_values(images: Sequence["ImageObject"], processor: "ProcessorMixin", image_key: "str" = "pixel_values") -> "NDArray":
+def get_pixel_values(images: Sequence["ImageObject"], processor: "ProcessorMixin", image_keys: "list[str]" = "pixel_values") -> "dict":
     r"""
     Processes visual inputs. (currently only supports a single image)
     """
     image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
     if len(images) <= 1:
         image = images[0] if len(images) != 0 else Image.new("RGB", (100, 100), (255, 255, 255))
-        return image_processor(image, return_tensors="pt")[image_key][0]  # shape (C, H, W)
+        inputs = image_processor(image, return_tensors="pt")
+        return {k: inputs[k][0] for k in image_keys}
     else:
-        return image_processor(images, return_tensors="pt")[image_key]  # shape (C, H, W)
+        inputs = image_processor(images, return_tensors="pt")
+        return {k: inputs[k] for k in image_keys}
 
 
 def preprocess_video(
@@ -74,20 +76,20 @@ def preprocess_video(
 
 
 def get_pixel_values_videos(
-    videos: Sequence["str"], processor: "ProcessorMixin", video_key: "str" = "pixel_values_videos"
-) -> "NDArray":
+    videos: Sequence["str"], processor: "ProcessorMixin", video_keys: "list[str]" = "pixel_values_videos"
+) -> "dict":
     image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
     if len(videos) == 1:
         clip = preprocess_video(videos[0])
-        inputs = image_processor(videos=clip, padding=True, return_tensors="pt", images=None)[video_key][0]
-        return inputs
+        inputs = image_processor(videos=clip, padding=True, return_tensors="pt", images=None)
+        return {k: inputs[k][0] for k in video_keys}
     else:
         clips = []
         for video in videos:
             clip = preprocess_video(video)
             clips.append(clip)
-        inputs = image_processor(videos=clips, padding=True, return_tensors="pt", images=None)[video_key]
-        return inputs
+        inputs = image_processor(videos=clips, padding=True, return_tensors="pt", images=None)
+        return {k: inputs[k][0] for k in video_keys}
 
 
 def read_video_pyav(container: "Container", indices: "NDArray"):
