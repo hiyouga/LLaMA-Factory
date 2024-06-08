@@ -26,17 +26,34 @@ def _encode_supervised_example(
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"],
     data_args: "DataArguments",
+    exists_images: bool,
+    exists_videos: bool,
 ) -> Tuple[List[int], List[int]]:
-    if processor is not None and not hasattr(processor, "image_seq_length"):  # llava-like models
-        prompt[0]["content"] = template.image_token + prompt[0]["content"]
+    if processor is not None:
+        processor_class = type(processor).__name__
+        if processor_class != 'PaliGemmaProcessor':
+            if template.image_token not in prompt[0]["content"] and exists_videos:
+                prompt[0]["content"] = template.video_token + prompt[0]["content"]
+            if template.video_token not in prompt[0]["content"] and exists_images:
+                prompt[0]["content"] = template.image_token + prompt[0]["content"]
 
     messages = prompt + response
     input_ids, labels = [], []
 
-    if processor is not None and hasattr(processor, "image_seq_length"):  # paligemma models
+    if processor is not None and processor_class == 'PaliGemmaProcessor':  # paligemma models
         image_token_id = tokenizer.convert_tokens_to_ids(template.image_token)
         input_ids += [image_token_id] * getattr(processor, "image_seq_length")
         labels += [IGNORE_INDEX] * getattr(processor, "image_seq_length")
+
+    if processor is not None and processor_class == 'Idefics2Processor':
+        fake_image_token = processor.fake_image_token.content
+        image_str = f"{fake_image_token}{template.image_token * processor.image_seq_len}{fake_image_token}"
+        image_str = image_str * 5
+        for j in range(len(messages)):
+            content = messages[j]['content']
+            content = content.replace(template.image_token, image_str)
+            content = content.replace(f"{fake_image_token}{fake_image_token}", f"{fake_image_token}")
+            messages[j]['content'] = content
 
     encoded_pairs = template.encode_multiturn(
         tokenizer, messages, system, tools, data_args.cutoff_len, data_args.reserved_label_len
@@ -93,53 +110,18 @@ def preprocess_supervised_dataset(
             logger.warning("Dropped invalid example: {}".format(examples["prompt"][i] + examples["response"][i]))
             continue
 
-        if processor is not None and processor_class != 'PaliGemmaProcessor':
-            if template.image_token not in examples["prompt"][i][0]["content"] and len(examples["videos"][i]):
-                examples["prompt"][i][0]["content"] = template.video_token + examples["prompt"][i][0]["content"]
-            if template.video_token not in examples["prompt"][i][0]["content"] and len(examples["images"][i]):
-                examples["prompt"][i][0]["content"] = template.image_token + examples["prompt"][i][0]["content"]
-
-        messages = examples["prompt"][i] + examples["response"][i]
-        input_ids, labels = [], []
-
-        if processor is not None and processor_class == 'PaliGemmaProcessor':  # paligemma models
-            image_token_id = tokenizer.convert_tokens_to_ids(template.image_token)
-            input_ids += [image_token_id] * getattr(processor, "image_seq_length")
-            labels += [IGNORE_INDEX] * getattr(processor, "image_seq_length")
-
-        if processor is not None and processor_class == 'Idefics2Processor':
-            fake_image_token = processor.fake_image_token.content
-            image_str = f"{fake_image_token}{template.image_token * processor.image_seq_len}{fake_image_token}"
-            image_str = image_str * 5
-            for j in range(len(messages)):
-                content = messages[j]['content']
-                content = content.replace(template.image_token, image_str)
-                content = content.replace(f"{fake_image_token}{fake_image_token}", f"{fake_image_token}")
-                messages[j]['content'] = content
-
-        for turn_idx, (source_ids, target_ids) in enumerate(
-            template.encode_multiturn(
-                tokenizer,
-                messages,
-                examples["system"][i],
-                examples["tools"][i],
-                data_args.cutoff_len,
-                data_args.reserved_label_len,
-            )
-        ):
-            if data_args.train_on_prompt:
-                source_mask = source_ids
-            elif turn_idx != 0 and template.efficient_eos:
-                source_mask = [tokenizer.eos_token_id] + [IGNORE_INDEX] * (len(source_ids) - 1)
-            else:
-                source_mask = [IGNORE_INDEX] * len(source_ids)
-
-            input_ids += source_ids + target_ids
-            labels += source_mask + target_ids
-
-        if template.efficient_eos:
-            input_ids += [tokenizer.eos_token_id]
-            labels += [tokenizer.eos_token_id]
+        input_ids, labels = _encode_supervised_example(
+            prompt=examples["prompt"][i],
+            response=examples["response"][i],
+            system=examples["system"][i],
+            tools=examples["tools"][i],
+            template=template,
+            tokenizer=tokenizer,
+            processor=processor,
+            data_args=data_args,
+            exists_images=len(examples["images"][i]) > 0,
+            exists_videos=len(examples['videos'][i]) > 0,
+        )
 
         model_inputs["input_ids"].append(input_ids)
         model_inputs["attention_mask"].append([1] * len(input_ids))
@@ -187,6 +169,8 @@ def preprocess_packed_supervised_dataset(
             tokenizer=tokenizer,
             processor=None,
             data_args=data_args,
+            exists_images=len(examples["images"][i]) > 0,
+            exists_videos=len(examples["videos"][i]) > 0,
         )
         length = len(input_ids)
         if length > data_args.cutoff_len:
