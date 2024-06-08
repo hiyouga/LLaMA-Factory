@@ -675,6 +675,15 @@ _register_template(
 
 
 _register_template(
+    name="idefics2",
+    format_user=StringFormatter(slots=["User: {{content}}<end_of_utterance>\nAssistant: "]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    stop_words=["<end_of_utterance>"],
+    replace_eos=True,
+)
+
+
+_register_template(
     name="intern",
     format_user=StringFormatter(slots=["<|User|>:{{content}}", {"token": "<eoh>"}, "\n<|Bot|>:"]),
     format_separator=EmptyFormatter(slots=[{"token": "<eoa>"}, "\n"]),
@@ -850,15 +859,6 @@ _register_template(
         "A chat between a curious user and an artificial intelligence assistant. "
         "The assistant gives helpful, detailed, and polite answers to the user's questions."
     ),
-)
-
-
-_register_template(
-    name="idefics2",
-    format_user=StringFormatter(slots=["User: {{content}}<end_of_utterance>\nAssistant: "]),
-    format_separator=EmptyFormatter(slots=["\n"]),
-    stop_words=["<end_of_utterance>"],
-    replace_eos=True,
 )
 
 
