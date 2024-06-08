@@ -22,7 +22,8 @@ known-third-party = [
     "peft",
     "torch",
     "transformers",
-    "trl"
+    "trl",
+    "av",
 ]
 
 [tool.ruff.format]
