@@ -209,9 +209,6 @@ class ToolFormatter(Formatter):
             if self.tool_format == "default":
                 return [default_tool_formatter(tools)]
             elif self.tool_format == "glm4":
-                """
-                '[gMASK]<sop><|system|>\n你是一个名为 GLM-4 的人工智能助手。你是基于智谱AI训练的语言模型 GLM-4 模型开发的，你的任务是针对用户的问题和要求提供适当的答复和支持。\n\n## get_current_weather\n\n{\n    "name": "get_current_weather",\n    "description": "Get the current weather",\n    "parameters": {\n        "type": "object",\n        "properties": {\n            "location": {\n                "type": "string",\n                "description": "The city and state, e.g. San Francisco, CA"\n            },\n            "format": {\n                "type": "string",\n                "enum": [\n                    "celsius",\n                    "fahrenheit"\n                ],\n                "description": "The temperature unit to use. Infer this from the users location."\n            }\n        },\n        "required": [\n            "location",\n            "format"\n        ]\n    }\n}\n在调用上述函数时，请使用 Json 格式表示调用的参数。<|user|>\nWhat\'s the weather like in San Francisco, Tokyo, and Paris? use celsius<|assistant|>'
-                """
                 return [glm4_tool_formatter(tools)]
             else:
                 raise NotImplementedError
