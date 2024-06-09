@@ -72,23 +72,29 @@ def glm4_tool_formatter(tools: List[Dict[str, Any]]) -> str:
     return GLM4_TOOL_PROMPT.format(tool_text=tool_text)
  
 
-def default_tool_extractor(content: str) -> Union[str, Tuple[str, str]]:
-    regex = re.compile(r"Action:\s*([a-zA-Z0-9_]+).*?Action Input:\s*(.*)", re.DOTALL)
-    action_match = re.search(regex, content)
+def default_tool_extractor(content: str) -> Union[str, List[Tuple[str, str]]]:
+    regex = re.compile(r"Action:\s*([a-zA-Z0-9_]+)\s*Action Input:\s*({.*?})(?=\nAction:|\Z)", re.DOTALL)
+    action_match = re.findall(regex, content)
     if not action_match:
         return content
 
-    tool_name = action_match.group(1).strip()
-    tool_input = action_match.group(2).strip().strip('"').strip("```")
-    try:
-        arguments = json.loads(tool_input)
-    except json.JSONDecodeError:
-        return content
+    results = []
+    
+    for match in action_match:
+        tool_name, tool_input = match
+        tool_name = tool_name.strip()
+        tool_input = tool_input.strip().strip('"').strip("```")
 
-    return tool_name, json.dumps(arguments, ensure_ascii=False)
+        try:
+            arguments = json.loads(tool_input)
+            results.append((tool_name, json.dumps(arguments, ensure_ascii=False)))
+        except json.JSONDecodeError:
+            return content
+
+    return results
 
 
-def glm4_tool_extractor(content: str) -> Union[str, Tuple[str, str]]:
+def glm4_tool_extractor(content: str) -> Union[str, List[Tuple[str, str]]]:
     lines = content.strip().split("\n")
     if len(lines) != 2:
         return content
@@ -98,7 +104,7 @@ def glm4_tool_extractor(content: str) -> Union[str, Tuple[str, str]]:
         arguments = json.loads(tool_input)
     except json.JSONDecodeError:
         return content
-    return tool_name, json.dumps(arguments, ensure_ascii=False)
+    return [(tool_name, json.dumps(arguments, ensure_ascii=False))]
 
     
 
@@ -110,7 +116,7 @@ class Formatter(ABC):
     @abstractmethod
     def apply(self, **kwargs) -> SLOTS: ...
 
-    def extract(self, content: str) -> Union[str, Tuple[str, str]]:
+    def extract(self, content: str) -> Union[str, List[Tuple[str, str]]]:
         raise NotImplementedError
 
 
@@ -215,7 +221,7 @@ class ToolFormatter(Formatter):
         except Exception:
             return [""]
 
-    def extract(self, content: str) -> Union[str, Tuple[str, str]]:
+    def extract(self, content: str) -> Union[str, List[Tuple[str, str]]]:
         if self.tool_format == "default":
             return default_tool_extractor(content)
         elif self.tool_format == "glm4":
