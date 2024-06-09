@@ -6,7 +6,7 @@ from ...extras.constants import TRAINING_STAGES
 from ...extras.misc import get_device_count
 from ...extras.packages import is_gradio_available
 from ..common import DEFAULT_DATA_DIR, list_checkpoints, list_datasets
-from ..utils import change_stage, check_output_dir, list_config_paths, list_output_dirs
+from ..utils import change_stage, list_config_paths, list_output_dirs
 from .data import create_preview_box
 
 
@@ -319,7 +319,13 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     finetuning_type.change(list_output_dirs, [model_name, finetuning_type, current_time], [output_dir], queue=False)
     output_dir.change(
         list_output_dirs, [model_name, finetuning_type, current_time], [output_dir], concurrency_limit=None
-    ).then(check_output_dir, inputs=[lang, model_name, finetuning_type, output_dir], concurrency_limit=None)
+    )
+    output_dir.input(
+        engine.runner.check_output_dir,
+        [lang, model_name, finetuning_type, output_dir],
+        list(input_elems) + [output_box],
+        concurrency_limit=None,
+    )
     config_path.change(list_config_paths, [current_time], [config_path], queue=False)
 
     return elem_dict
