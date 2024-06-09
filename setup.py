@@ -33,7 +33,7 @@ extra_require = {
     "aqlm": ["aqlm[gpu]>=1.1.0"],
     "qwen": ["transformers_stream_generator"],
     "modelscope": ["modelscope"],
-    "quality": ["ruff"],
+    "dev": ["ruff", "pytest"],
 }
 
 
