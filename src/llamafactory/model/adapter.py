@@ -209,6 +209,7 @@ def _setup_lora_tuning(
             "lora_alpha": finetuning_args.lora_alpha,
             "lora_dropout": finetuning_args.lora_dropout,
             "use_rslora": finetuning_args.use_rslora,
+            "use_dora": finetuning_args.use_dora,
             "modules_to_save": finetuning_args.additional_target,
         }
 
@@ -218,7 +219,6 @@ def _setup_lora_tuning(
             lora_config = LoraConfig(
                 task_type=TaskType.CAUSAL_LM,
                 inference_mode=False,
-                use_dora=finetuning_args.use_dora,
                 **peft_kwargs,
             )
             model = get_peft_model(model, lora_config)
