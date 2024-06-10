@@ -405,9 +405,9 @@ Docker 镜像：
 下面三行命令分别对 Llama3-8B-Instruct 模型进行 LoRA **微调**、**推理**和**合并**。
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/lora_single_gpu/llama3_lora_sft.yaml
-CUDA_VISIBLE_DEVICES=0 llamafactory-cli chat examples/inference/llama3_lora_sft.yaml
-CUDA_VISIBLE_DEVICES=0 llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
+llamafactory-cli train examples/lora_single_gpu/llama3_lora_sft.yaml
+llamafactory-cli chat examples/inference/llama3_lora_sft.yaml
+llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
 ```
 
 高级用法请参考 [examples/README_zh.md](examples/README_zh.md)（包括多 GPU 微调）。
@@ -417,31 +417,33 @@ CUDA_VISIBLE_DEVICES=0 llamafactory-cli export examples/merge_lora/llama3_lora_s
 
 ### LLaMA Board 可视化微调（由 [Gradio](https://github.com/gradio-app/gradio) 驱动）
 
-#### 使用本地环境
-
 ```bash
-CUDA_VISIBLE_DEVICES=0 GRADIO_SHARE=1 llamafactory-cli webui
+llamafactory-cli webui
 ```
 
-#### 使用 Docker
+### 构建 Docker
 
 ```bash
-docker build -f ./Dockerfile -t llama-factory:latest .
-docker run --gpus=all \
+docker build -f ./Dockerfile \
+    --build-arg INSTALL_BNB=false \
+    --build-arg INSTALL_VLLM=false \
+    --build-arg INSTALL_DEEPSPEED=false \
+    --build-arg PIP_INDEX=https://pypi.org/simple \
+    -t llamafactory:latest .
+
+docker run -it --gpus=all \
     -v ./hf_cache:/root/.cache/huggingface/ \
     -v ./data:/app/data \
     -v ./output:/app/output \
     -p 7860:7860 \
+    -p 8000:8000 \
     --shm-size 16G \
-    --name llama_factory \
-    -d llama-factory:latest
+    --name llamafactory \
+    llamafactory:latest
 ```
 
-#### 使用 Docker Compose
-
-```bash
-docker compose -f ./docker-compose.yml up -d
-```
+> [!TIP]
+> 通过 `docker compose up -d` 使用 Docker Compose 构建镜像。
 
 <details><summary>数据卷详情</summary>
 
