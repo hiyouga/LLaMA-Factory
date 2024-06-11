@@ -38,7 +38,9 @@ body:
         请合理使用 Markdown 标签来格式化您的文本。
 
       placeholder: |
+        ```bash
         llamafactory-cli train ...
+        ```
 
   - type: textarea
     id: expected-behavior
