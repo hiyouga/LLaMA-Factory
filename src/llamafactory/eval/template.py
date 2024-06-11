@@ -10,7 +10,6 @@ class EvalTemplate:
     system: str
     choice: str
     answer: str
-    prefix: str
 
     def _parse_example(self, example: Dict[str, str]) -> Tuple[str, str]:
         r"""
@@ -42,8 +41,8 @@ class EvalTemplate:
 eval_templates: Dict[str, "EvalTemplate"] = {}
 
 
-def _register_eval_template(name: str, system: str, choice: str, answer: str, prefix: str) -> None:
-    eval_templates[name] = EvalTemplate(system=system, choice=choice, answer=answer, prefix=prefix)
+def _register_eval_template(name: str, system: str, choice: str, answer: str) -> None:
+    eval_templates[name] = EvalTemplate(system=system, choice=choice, answer=answer)
 
 
 def get_eval_template(name: str) -> "EvalTemplate":
@@ -56,8 +55,7 @@ _register_eval_template(
     name="en",
     system="The following are multiple choice questions (with answers) about {subject}.\n\n",
     choice="\n{choice}. {content}",
-    answer="\nAnswer: ",
-    prefix=" ",
+    answer="\nAnswer:",
 )
 
 
@@ -66,5 +64,4 @@ _register_eval_template(
     system="以下是中国关于{subject}考试的单项选择题，请选出其中的正确答案。\n\n",
     choice="\n{choice}. {content}",
     answer="\n答案：",
-    prefix=" ",
 )
