@@ -83,15 +83,12 @@ def create_ref_model(
     The valuehead parameter is randomly initialized since it is useless for PPO training.
     """
     if finetuning_args.ref_model is not None:
-        ref_model_args_dict = model_args.to_dict()
-        ref_model_args_dict.update(
-            dict(
-                model_name_or_path=finetuning_args.ref_model,
-                adapter_name_or_path=finetuning_args.ref_model_adapters,
-                quantization_bit=finetuning_args.ref_model_quantization_bit,
-            )
+        ref_model_args = ModelArguments.copyfrom(
+            model_args,
+            model_name_or_path=finetuning_args.ref_model,
+            adapter_name_or_path=finetuning_args.ref_model_adapters,
+            quantization_bit=finetuning_args.ref_model_quantization_bit,
         )
-        ref_model_args = ModelArguments(**ref_model_args_dict)
         ref_finetuning_args = FinetuningArguments()
         tokenizer = load_tokenizer(ref_model_args)["tokenizer"]
         ref_model = load_model(
@@ -102,9 +99,11 @@ def create_ref_model(
         if finetuning_args.finetuning_type == "lora":
             ref_model = None
         else:
-            tokenizer = load_tokenizer(model_args)["tokenizer"]
+            ref_model_args = ModelArguments.copyfrom(model_args)
+            ref_finetuning_args = FinetuningArguments()
+            tokenizer = load_tokenizer(ref_model_args)["tokenizer"]
             ref_model = load_model(
-                tokenizer, model_args, finetuning_args, is_trainable=False, add_valuehead=add_valuehead
+                tokenizer, ref_model_args, ref_finetuning_args, is_trainable=False, add_valuehead=add_valuehead
             )
             logger.info("Created reference model from the model itself.")
 
@@ -139,15 +138,12 @@ def create_reward_model(
         logger.info("Loaded adapter weights of reward model from {}".format(finetuning_args.reward_model))
         return None
     else:
-        reward_model_args_dict = model_args.to_dict()
-        reward_model_args_dict.update(
-            dict(
-                model_name_or_path=finetuning_args.reward_model,
-                adapter_name_or_path=finetuning_args.reward_model_adapters,
-                quantization_bit=finetuning_args.reward_model_quantization_bit,
-            )
+        reward_model_args = ModelArguments.copyfrom(
+            model_args,
+            model_name_or_path=finetuning_args.reward_model,
+            adapter_name_or_path=finetuning_args.reward_model_adapters,
+            quantization_bit=finetuning_args.reward_model_quantization_bit,
         )
-        reward_model_args = ModelArguments(**reward_model_args_dict)
         reward_finetuning_args = FinetuningArguments()
         tokenizer = load_tokenizer(reward_model_args)["tokenizer"]
         reward_model = load_model(
