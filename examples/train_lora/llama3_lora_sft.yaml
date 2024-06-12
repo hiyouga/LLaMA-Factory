@@ -2,13 +2,14 @@
 model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
 
 ### method
-stage: pt
+stage: sft
 do_train: true
 finetuning_type: lora
 lora_target: all
 
 ### dataset
-dataset: c4_demo
+dataset: identity,alpaca_en_demo
+template: llama3
 cutoff_len: 1024
 max_samples: 1000
 overwrite_cache: true
@@ -29,6 +30,7 @@ num_train_epochs: 3.0
 lr_scheduler_type: cosine
 warmup_ratio: 0.1
 fp16: true
+ddp_timeout: 180000000
 
 ### eval
 val_size: 0.1
