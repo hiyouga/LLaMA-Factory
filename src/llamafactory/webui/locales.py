@@ -494,6 +494,20 @@ LOCALES = {
             "info": "将序列打包为等长样本。",
         },
     },
+    "efficient_packing": {
+        "en": {
+            "label": "Pack sequences for efficient training",
+            "info": "Pack sequences into samples of fixed length without cross-contamination attention for efficient training.",
+        },
+        "ru": {
+            "label": "Пакетные последовательности для эффективного обучения",
+            "info": "Упакуйте последовательности в образцы фиксированной длины без учета перекрестного загрязнения для эффективного обучения.",
+        },
+        "zh": {
+            "label": "打包序列以实现高效训练",
+            "info": "为了提高训练效率，将序列打包成固定长度的样本，无需注意交叉污染。",
+        },
+    },
     "upcast_layernorm": {
         "en": {
             "label": "Upcast LayerNorm",
