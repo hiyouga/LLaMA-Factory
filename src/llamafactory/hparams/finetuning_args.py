@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Literal, Optional
+from typing import List, Literal, Optional
 
 
 @dataclass
@@ -319,19 +319,18 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
                 return [item.strip() for item in arg.split(",")]
             return arg
 
-        self.freeze_trainable_modules = split_arg(self.freeze_trainable_modules)
-        self.freeze_extra_modules = split_arg(self.freeze_extra_modules)
-        self.lora_alpha = self.lora_alpha or self.lora_rank * 2
-        self.lora_target = split_arg(self.lora_target)
-        self.additional_target = split_arg(self.additional_target)
-        self.galore_target = split_arg(self.galore_target)
+        self.freeze_trainable_modules: List[str] = split_arg(self.freeze_trainable_modules)
+        self.freeze_extra_modules: Optional[List[str]] = split_arg(self.freeze_extra_modules)
+        self.lora_alpha: int = self.lora_alpha or self.lora_rank * 2
+        self.lora_target: List[str] = split_arg(self.lora_target)
+        self.additional_target: Optional[List[str]] = split_arg(self.additional_target)
+        self.galore_target: List[str] = split_arg(self.galore_target)
         self.freeze_vision_tower = self.freeze_vision_tower or self.train_mm_proj_only
+        self.use_ref_model = self.pref_loss not in ["orpo", "simpo"]
 
         assert self.finetuning_type in ["lora", "freeze", "full"], "Invalid fine-tuning method."
         assert self.ref_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
         assert self.reward_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
-
-        self.use_ref_model = self.pref_loss not in ["orpo", "simpo"]
 
         if self.stage == "ppo" and self.reward_model is None:
             raise ValueError("`reward_model` is necessary for PPO training.")
