@@ -1,3 +1,4 @@
+import warnings
 from collections import defaultdict
 from contextlib import nullcontext
 from types import MethodType
@@ -9,7 +10,7 @@ from trl import KTOTrainer
 from trl.trainer import disable_dropout_in_model
 
 from ...extras.constants import IGNORE_INDEX
-from ..trainer_utils import create_custom_optimzer, create_custom_scheduler, get_batch_logps, get_ref_context
+from ..trainer_utils import create_custom_optimzer, create_custom_scheduler, get_batch_logps
 
 
 if TYPE_CHECKING:
@@ -59,6 +60,8 @@ class CustomKTOTrainer(KTOTrainer):
         Trainer.__init__(self, model=model, **kwargs)
         if not hasattr(self, "accelerator"):
             raise AttributeError("Please update `transformers`.")
+
+        warnings.simplefilter("ignore")  # remove gc warnings on ref model
 
         if ref_model is not None:
             if self.is_deepspeed_enabled:
@@ -143,7 +146,7 @@ class CustomKTOTrainer(KTOTrainer):
         """
         if self.ref_model is None:
             ref_model = model
-            ref_context = get_ref_context(self.accelerator, model)
+            ref_context = self.accelerator.unwrap_model(model).disable_adapter()
         else:
             ref_model = self.ref_model
             ref_context = nullcontext()
