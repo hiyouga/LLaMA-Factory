@@ -11,6 +11,8 @@ Make sure to execute these commands in the `LLaMA-Factory` directory.
 - [Inferring LoRA Fine-Tuned Models](#inferring-lora-fine-tuned-models)
 - [Extras](#extras)
 
+Use `CUDA_VISIBLE_DEVICES` (GPU) or `ASCEND_RT_VISIBLE_DEVICES` (NPU) to choose computing devices.
+
 ## Examples
 
 ### LoRA Fine-Tuning
@@ -87,7 +89,7 @@ FORCE_TORCHRUN=1 NNODES=2 RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llama
 #### Supervised Fine-Tuning with DeepSpeed ZeRO-3 (Weight Sharding)
 
 ```bash
-FORCE_TORCHRUN=1 llamafactory-cli train examples/train_lora/llama3_lora_sft_ds.yaml
+FORCE_TORCHRUN=1 llamafactory-cli train examples/train_lora/llama3_lora_sft_ds3.yaml
 ```
 
 ### QLoRA Fine-Tuning
@@ -121,14 +123,14 @@ CUDA_VISIBLE_DEVICES=0 llamafactory-cli train examples/train_qlora/llama3_lora_s
 #### Supervised Fine-Tuning on Single Node
 
 ```bash
-FORCE_TORCHRUN=1 llamafactory-cli train examples/train_full/llama3_full_sft.yaml
+FORCE_TORCHRUN=1 llamafactory-cli train examples/train_full/llama3_full_sft_ds3.yaml
 ```
 
 #### Supervised Fine-Tuning on Multiple Nodes
 
 ```bash
-FORCE_TORCHRUN=1 NNODES=2 RANK=0 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_full/llama3_full_sft.yaml
-FORCE_TORCHRUN=1 NNODES=2 RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_full/llama3_full_sft.yaml
+FORCE_TORCHRUN=1 NNODES=2 RANK=0 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_full/llama3_full_sft_ds3.yaml
+FORCE_TORCHRUN=1 NNODES=2 RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_full/llama3_full_sft_ds3.yaml
 ```
 
 #### Batch Predicting and Computing BLEU and ROUGE Scores
