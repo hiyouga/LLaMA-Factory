@@ -24,7 +24,7 @@ def run_kto(
 ):
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
-    dataset = get_dataset(model_args, data_args, training_args, stage="kto", **tokenizer_module)
+    dataset = get_dataset(model_args, data_args, training_args, finetuning_args, stage="kto", **tokenizer_module)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
 
     data_collator = KTODataCollatorWithPadding(
