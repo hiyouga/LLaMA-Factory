@@ -248,6 +248,10 @@
   "ruozhiba_gpt4": {
     "hf_hub_url": "hfl/ruozhiba_gpt4_turbo"
   },
+  "neo_sft": {
+    "hf_hub_url": "m-a-p/neo_sft_phase2",
+    "formatting": "sharegpt"
+  },
   "llava_1k_en": {
     "hf_hub_url": "BUAADreamer/llava-en-zh-2k",
     "subset": "en",
