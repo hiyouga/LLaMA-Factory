@@ -448,7 +448,7 @@ docker run -it --gpus=all \
 
 ```bash
 docker-compose up -d
-docker-compose exec -it llamafactory bash
+docker-compose exec llamafactory bash
 ```
 
 <details><summary>Details about volume</summary>
