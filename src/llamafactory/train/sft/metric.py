@@ -9,7 +9,7 @@ from ...extras.packages import is_rouge_available
 
 
 if TYPE_CHECKING:
-    from transformers.tokenization_utils import PreTrainedTokenizer
+    from transformers import PreTrainedTokenizer
 
 
 if is_jieba_available():
