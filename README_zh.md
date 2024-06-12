@@ -423,6 +423,8 @@ llamafactory-cli webui
 
 ### 构建 Docker
 
+#### 使用 Docker
+
 ```bash
 docker build -f ./Dockerfile \
     --build-arg INSTALL_BNB=false \
@@ -442,8 +444,12 @@ docker run -it --gpus=all \
     llamafactory:latest
 ```
 
-> [!TIP]
-> 通过 `docker-compose up -d` 使用 Docker Compose 构建镜像。
+#### 使用 Docker Compose
+
+```bash
+docker-compose up -d
+docker-compose exec -it llamafactory bash
+```
 
 <details><summary>数据卷详情</summary>
 
