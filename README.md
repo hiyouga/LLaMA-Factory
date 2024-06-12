@@ -443,7 +443,7 @@ docker run -it --gpus=all \
 ```
 
 > [!TIP]
-> Use Docker Compose to build image via `docker compose up -d`.
+> Use Docker Compose to build image via `docker-compose up -d`.
 
 <details><summary>Details about volume</summary>
 
