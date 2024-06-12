@@ -1,0 +1,41 @@
+### model
+model_name_or_path: openbmb/MiniCPM-2B-sft-bf16
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full
+
+### ddp
+ddp_timeout: 180000000
+deepspeed: examples/deepspeed/ds_z2_config.json
+
+### dataset
+dataset: alpaca_zh_demo
+template: cpm
+cutoff_len: 1200
+max_samples: 500000
+overwrite_cache: true
+preprocessing_num_workers: 16
+
+### output
+output_dir: saves/minicpm/full/sft
+logging_steps: 10
+eval_strategy: epoch
+plot_loss: true
+overwrite_output_dir: true
+
+### train
+per_device_train_batch_size: 8
+gradient_accumulation_steps: 8
+learning_rate: 0.0001
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_steps: 0.1
+bf16: true
+
+### eval
+val_size: 0.1
+per_device_eval_batch_size: 4
+evaluation_strategy: steps
+eval_steps: 500
