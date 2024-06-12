@@ -423,6 +423,8 @@ llamafactory-cli webui
 
 ### Build Docker
 
+#### Use Docker
+
 ```bash
 docker build -f ./Dockerfile \
     --build-arg INSTALL_BNB=false \
@@ -442,8 +444,12 @@ docker run -it --gpus=all \
     llamafactory:latest
 ```
 
-> [!TIP]
-> Use Docker Compose to build image via `docker-compose up -d`.
+#### Use Docker Compose
+
+```bash
+docker-compose up -d
+docker-compose exec -it llamafactory bash
+```
 
 <details><summary>Details about volume</summary>
 
