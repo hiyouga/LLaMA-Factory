@@ -406,7 +406,7 @@ Docker 镜像：
 下面三行命令分别对 Llama3-8B-Instruct 模型进行 LoRA **微调**、**推理**和**合并**。
 
 ```bash
-llamafactory-cli train examples/lora_single_gpu/llama3_lora_sft.yaml
+llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
 llamafactory-cli chat examples/inference/llama3_lora_sft.yaml
 llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
 ```
