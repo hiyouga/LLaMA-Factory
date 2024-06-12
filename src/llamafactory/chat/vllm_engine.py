@@ -13,7 +13,10 @@ from .base_engine import BaseEngine, Response
 if is_vllm_available():
     from vllm import AsyncEngineArgs, AsyncLLMEngine, RequestOutput, SamplingParams
     from vllm.lora.request import LoRARequest
-    from vllm.sequence import MultiModalData
+    try:
+        from vllm.multimodal import MultiModalData  # vllm==0.5.0
+    except ImportError:
+        from vllm.sequence import MultiModalData  # vllm<0.5.0
 
 
 if TYPE_CHECKING:
