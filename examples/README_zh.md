@@ -11,6 +11,8 @@
 - [推理 LoRA 模型](#推理-lora-模型)
 - [杂项](#杂项)
 
+使用 `CUDA_VISIBLE_DEVICES`（GPU）或 `ASCEND_RT_VISIBLE_DEVICES`（NPU）选择计算设备。
+
 ## 示例
 
 ### LoRA 微调
@@ -87,7 +89,7 @@ FORCE_TORCHRUN=1 NNODES=2 RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llama
 #### 使用 DeepSpeed ZeRO-3 平均分配显存
 
 ```bash
-FORCE_TORCHRUN=1 llamafactory-cli train examples/train_lora/llama3_lora_sft_ds.yaml
+FORCE_TORCHRUN=1 llamafactory-cli train examples/train_lora/llama3_lora_sft_ds3.yaml
 ```
 
 ### QLoRA 微调
@@ -121,14 +123,14 @@ llamafactory-cli train examples/train_qlora/llama3_lora_sft_aqlm.yaml
 #### 在单机上进行指令监督微调
 
 ```bash
-FORCE_TORCHRUN=1 llamafactory-cli train examples/train_full/llama3_full_sft.yaml
+FORCE_TORCHRUN=1 llamafactory-cli train examples/train_full/llama3_full_sft_ds3.yaml
 ```
 
 #### 在多机上进行指令监督微调
 
 ```bash
-FORCE_TORCHRUN=1 NNODES=2 RANK=0 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_full/llama3_full_sft.yaml
-FORCE_TORCHRUN=1 NNODES=2 RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_full/llama3_full_sft.yaml
+FORCE_TORCHRUN=1 NNODES=2 RANK=0 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_full/llama3_full_sft_ds3.yaml
+FORCE_TORCHRUN=1 NNODES=2 RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_full/llama3_full_sft_ds3.yaml
 ```
 
 #### 批量预测并计算 BLEU 和 ROUGE 分数
