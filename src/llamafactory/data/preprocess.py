@@ -36,7 +36,7 @@ def get_preprocess_and_print_func(
         )
         print_function = partial(print_unsupervised_dataset_example, tokenizer=tokenizer)
     elif stage == "sft" and not training_args.predict_with_generate:
-        if data_args.packing:
+        if data_args.packing or data_args.efficient_packing:
             preprocess_func = partial(
                 preprocess_packed_supervised_dataset,
                 template=template,
