@@ -22,3 +22,4 @@ overwrite_output_dir: true
 ### eval
 per_device_eval_batch_size: 1
 predict_with_generate: true
+ddp_timeout: 180000000
