@@ -18,6 +18,7 @@ services:
     ports:
       - "7860:7860"
       - "8000:8000"
+    command: ["llamafactory-cli", "webui"]
     ipc: host
     deploy:
       resources:
