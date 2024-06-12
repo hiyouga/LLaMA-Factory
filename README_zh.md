@@ -443,7 +443,7 @@ docker run -it --gpus=all \
 ```
 
 > [!TIP]
-> 通过 `docker compose up -d` 使用 Docker Compose 构建镜像。
+> 通过 `docker-compose up -d` 使用 Docker Compose 构建镜像。
 
 <details><summary>数据卷详情</summary>
 
