@@ -13,8 +13,7 @@ from .processors.unsupervised import preprocess_unsupervised_dataset, print_unsu
 
 
 if TYPE_CHECKING:
-    from transformers import ProcessorMixin, Seq2SeqTrainingArguments
-    from transformers.tokenization_utils import PreTrainedTokenizer
+    from transformers import PreTrainedTokenizer, ProcessorMixin, Seq2SeqTrainingArguments
 
     from ..hparams import DataArguments
     from .template import Template

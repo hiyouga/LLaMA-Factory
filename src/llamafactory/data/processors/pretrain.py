@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Dict, List
 
 
 if TYPE_CHECKING:
-    from transformers.tokenization_utils import PreTrainedTokenizer
+    from transformers import PreTrainedTokenizer
 
     from ...hparams import DataArguments
 
