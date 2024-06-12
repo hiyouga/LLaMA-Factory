@@ -120,6 +120,7 @@ class Runner:
             optim=get("train.optim"),
             resize_vocab=get("train.resize_vocab"),
             packing=get("train.packing"),
+            efficient_packing=get("train.efficient_packing"),
             upcast_layernorm=get("train.upcast_layernorm"),
             use_llama_pro=get("train.use_llama_pro"),
             shift_attn=get("train.shift_attn"),
