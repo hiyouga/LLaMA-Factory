@@ -39,7 +39,11 @@ def get_save_dir(*paths: str) -> os.PathLike:
     r"""
     Gets the path to saved model checkpoints.
     """
-    paths = (path.replace(os.path.sep, "").replace(" ", "").strip() for path in paths)
+    if os.path.sep in paths[-1]:
+        logger.warning("Found complex path, some features may be not available.")
+        return paths[-1]
+
+    paths = (path.replace(" ", "").strip() for path in paths)
     return os.path.join(DEFAULT_SAVE_DIR, *paths)
 
 
