@@ -25,8 +25,12 @@ def _setup_full_tuning(
     model: "PreTrainedModel",
     model_args: "ModelArguments",
     finetuning_args: "FinetuningArguments",
+    is_trainable: bool,
     cast_trainable_params_to_fp32: bool,
 ) -> None:
+    if not is_trainable:
+        return
+
     logger.info("Fine-tuning method: Full")
     forbidden_modules = set()
     if model_args.visual_inputs and finetuning_args.freeze_vision_tower:
@@ -47,8 +51,12 @@ def _setup_freeze_tuning(
     model: "PreTrainedModel",
     model_args: "ModelArguments",
     finetuning_args: "FinetuningArguments",
+    is_trainable: bool,
     cast_trainable_params_to_fp32: bool,
 ) -> None:
+    if not is_trainable:
+        return
+
     logger.info("Fine-tuning method: Freeze")
     if model_args.visual_inputs:
         config = model.config.text_config
@@ -132,7 +140,9 @@ def _setup_lora_tuning(
     is_trainable: bool,
     cast_trainable_params_to_fp32: bool,
 ) -> "PeftModel":
-    logger.info("Fine-tuning method: {}".format("DoRA" if finetuning_args.use_dora else "LoRA"))
+    if is_trainable:
+        logger.info("Fine-tuning method: {}".format("DoRA" if finetuning_args.use_dora else "LoRA"))
+
     adapter_to_resume = None
 
     if model_args.adapter_name_or_path is not None:
@@ -172,6 +182,8 @@ def _setup_lora_tuning(
                     is_trainable=is_trainable,
                     offload_folder=model_args.offload_folder,
                 )
+
+        logger.info("Loaded adapter(s): {}".format(",".join(model_args.adapter_name_or_path)))
 
     if is_trainable and adapter_to_resume is None:  # create new lora weights while training
         if len(finetuning_args.lora_target) == 1 and finetuning_args.lora_target[0] == "all":
@@ -227,9 +239,6 @@ def _setup_lora_tuning(
         for param in filter(lambda p: p.requires_grad, model.parameters()):
             param.data = param.data.to(torch.float32)
 
-    if model_args.adapter_name_or_path is not None:
-        logger.info("Loaded adapter(s): {}".format(",".join(model_args.adapter_name_or_path)))
-
     return model
 
 
@@ -247,29 +256,27 @@ def init_adapter(
 
     Note that the trainable parameters must be cast to float32.
     """
-    if (not is_trainable) and model_args.adapter_name_or_path is None:
-        logger.info("Adapter is not found at evaluation, load the base model.")
-        return model
+    if is_trainable and getattr(model, "quantization_method", None) and finetuning_args.finetuning_type != "lora":
+        raise ValueError("Quantized models can only be used for the LoRA tuning.")
 
-    if finetuning_args.finetuning_type != "lora" and getattr(model, "quantization_method", None):
-        raise ValueError("You can only use lora for quantized models.")
-
-    if is_deepspeed_zero3_enabled() or is_fsdp_enabled() or finetuning_args.pure_bf16 or finetuning_args.use_badam:
+    if not is_trainable:
+        cast_trainable_params_to_fp32 = False
+    elif is_deepspeed_zero3_enabled() or is_fsdp_enabled() or finetuning_args.pure_bf16 or finetuning_args.use_badam:
         logger.info("ZeRO3/FSDP/PureBF16/BAdam detected, remaining trainable params as their original precision.")
         cast_trainable_params_to_fp32 = False
     else:
         logger.info("Upcasting trainable params to float32.")
         cast_trainable_params_to_fp32 = True
 
-    if is_trainable and finetuning_args.finetuning_type == "full":
-        _setup_full_tuning(model, model_args, finetuning_args, cast_trainable_params_to_fp32)
-
-    if is_trainable and finetuning_args.finetuning_type == "freeze":
-        _setup_freeze_tuning(model, model_args, finetuning_args, cast_trainable_params_to_fp32)
-
-    if finetuning_args.finetuning_type == "lora":
+    if finetuning_args.finetuning_type == "full":
+        _setup_full_tuning(model, model_args, finetuning_args, is_trainable, cast_trainable_params_to_fp32)
+    elif finetuning_args.finetuning_type == "freeze":
+        _setup_freeze_tuning(model, model_args, finetuning_args, is_trainable, cast_trainable_params_to_fp32)
+    elif finetuning_args.finetuning_type == "lora":
         model = _setup_lora_tuning(
             config, model, model_args, finetuning_args, is_trainable, cast_trainable_params_to_fp32
         )
+    else:
+        raise NotImplementedError("Unknown finetuning type: {}.".format(finetuning_args.finetuning_type))
 
     return model
