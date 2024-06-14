@@ -52,7 +52,7 @@ class VllmEngine(BaseEngine):
             "model": model_args.model_name_or_path,
             "trust_remote_code": True,
             "download_dir": model_args.cache_dir,
-            "dtype": model_args.vllm_dtype,
+            "dtype": model_args.infer_dtype,
             "max_model_len": model_args.vllm_maxlen,
             "tensor_parallel_size": get_device_count() or 1,
             "gpu_memory_utilization": model_args.vllm_gpu_util,
