@@ -8,6 +8,7 @@ import transformers
 from transformers import HfArgumentParser, Seq2SeqTrainingArguments
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.trainer_utils import get_last_checkpoint
+from transformers.training_args import ParallelMode
 from transformers.utils import is_torch_bf16_gpu_available
 from transformers.utils.versions import require_version
 
@@ -162,6 +163,9 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     ):
         raise ValueError("PPO only accepts wandb or tensorboard logger.")
 
+    if training_args.parallel_mode == ParallelMode.NOT_DISTRIBUTED:
+        raise ValueError("Please launch distributed training with `llamafactory-cli` or `torchrun`.")
+
     if training_args.max_steps == -1 and data_args.streaming:
         raise ValueError("Please specify `max_steps` in streaming mode.")
 
@@ -181,14 +185,14 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if (
         finetuning_args.use_galore
         and finetuning_args.galore_layerwise
-        and training_args.parallel_mode.value == "distributed"
+        and training_args.parallel_mode == ParallelMode.DISTRIBUTED
     ):
         raise ValueError("Distributed training does not support layer-wise GaLore.")
 
     if (
         finetuning_args.use_badam
         and finetuning_args.badam_mode == "layer"
-        and training_args.parallel_mode.value == "distributed"
+        and training_args.parallel_mode == ParallelMode.DISTRIBUTED
     ):
         raise ValueError("Layer-wise BAdam does not yet support distributed training, use ratio-wise BAdam.")
 
@@ -230,7 +234,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
     # Post-process training arguments
     if (
-        training_args.parallel_mode.value == "distributed"
+        training_args.parallel_mode == ParallelMode.DISTRIBUTED
         and training_args.ddp_find_unused_parameters is None
         and finetuning_args.finetuning_type == "lora"
     ):
@@ -290,7 +294,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
             training_args.local_rank,
             training_args.device,
             training_args.n_gpu,
-            training_args.parallel_mode.value == "distributed",
+            training_args.parallel_mode == ParallelMode.DISTRIBUTED,
             str(model_args.compute_dtype),
         )
     )
