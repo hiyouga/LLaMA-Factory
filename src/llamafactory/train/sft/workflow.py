@@ -93,7 +93,7 @@ def run_sft(
             predict_results.metrics.pop("predict_loss", None)
         trainer.log_metrics("predict", predict_results.metrics)
         trainer.save_metrics("predict", predict_results.metrics)
-        trainer.save_predictions(predict_results)
+        trainer.save_predictions(dataset, predict_results)
 
     # Create model card
     create_modelcard_and_push(trainer, model_args, data_args, training_args, finetuning_args)
