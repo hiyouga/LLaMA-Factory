@@ -23,7 +23,7 @@ extra_require = {
     "torch": ["torch>=1.13.1"],
     "torch-npu": ["torch==2.1.0", "torch-npu==2.1.0.post3", "decorator"],
     "metrics": ["nltk", "jieba", "rouge-chinese"],
-    "deepspeed": ["deepspeed>=0.10.0,<=0.14.0"],
+    "deepspeed": ["deepspeed>=0.10.0"],
     "bitsandbytes": ["bitsandbytes>=0.39.0"],
     "vllm": ["vllm>=0.4.3"],
     "galore": ["galore-torch"],
