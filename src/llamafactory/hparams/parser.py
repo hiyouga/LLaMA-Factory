@@ -90,8 +90,8 @@ def _verify_model_args(model_args: "ModelArguments", finetuning_args: "Finetunin
         if finetuning_args.finetuning_type != "lora":
             raise ValueError("Quantization is only compatible with the LoRA method.")
 
-        if finetuning_args.use_pissa:
-            raise ValueError("Please use scripts/pissa_init.py for quantized PiSSA.")
+        if finetuning_args.pissa_init:
+            raise ValueError("Please use scripts/pissa_init.py to initialize PiSSA for a quantized model.")
 
         if model_args.resize_vocab:
             raise ValueError("Cannot resize embedding layers of a quantized model.")
