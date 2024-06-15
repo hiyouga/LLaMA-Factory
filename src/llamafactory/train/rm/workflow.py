@@ -1,6 +1,6 @@
 # Copyright 2024 the LlamaFactory team.
 #
-# This code is inspired by CarperAI's trlx library.
+# This code is inspired by the CarperAI's trlx library.
 # https://github.com/CarperAI/trlx/blob/v0.7.0/examples/summarize_rlhf/reward_model/train_reward_model_gptj.py
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

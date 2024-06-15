@@ -1,6 +1,6 @@
 # Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
 #
-# This code is inspired by HuggingFace's TRL library.
+# This code is inspired by the HuggingFace's Transformers library.
 # https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/models/llava/modeling_llava.py
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
