@@ -1,7 +1,7 @@
 # coding=utf-8
 # Copyright 2024 imoneoi and the LlamaFactory team.
 #
-# This code is inspired by imoneoi's OpenChat library.
+# This code is inspired by the imoneoi's OpenChat library.
 # https://github.com/imoneoi/openchat/blob/3.6.0/ochat/training_deepspeed/train.py
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

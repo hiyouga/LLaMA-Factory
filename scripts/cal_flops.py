@@ -1,7 +1,7 @@
 # coding=utf-8
 # Copyright 2024 Microsoft Corporation and the LlamaFactory team.
 #
-# This code is inspired by Microsoft's DeepSpeed library.
+# This code is inspired by the Microsoft's DeepSpeed library.
 # https://www.deepspeed.ai/tutorials/flops-profiler/
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
