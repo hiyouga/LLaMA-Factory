@@ -732,6 +732,20 @@ LOCALES = {
             "info": "使用权重分解的 LoRA。",
         },
     },
+    "use_pissa": {
+        "en": {
+            "label": "Use PiSSA",
+            "info": "Use PiSSA method.",
+        },
+        "ru": {
+            "label": "используйте PiSSA",
+            "info": "Используйте метод PiSSA.",
+        },
+        "zh": {
+            "label": "使用 PiSSA",
+            "info": "使用 PiSSA 方法。",
+        },
+    },
     "lora_target": {
         "en": {
             "label": "LoRA modules (optional)",
