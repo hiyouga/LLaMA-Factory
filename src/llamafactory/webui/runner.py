@@ -173,6 +173,8 @@ class Runner:
             args["create_new_adapter"] = get("train.create_new_adapter")
             args["use_rslora"] = get("train.use_rslora")
             args["use_dora"] = get("train.use_dora")
+            args["pissa_init"] = get("train.use_pissa")
+            args["pissa_convert"] = get("train.use_pissa")
             args["lora_target"] = get("train.lora_target") or "all"
             args["additional_target"] = get("train.additional_target") or None
 
