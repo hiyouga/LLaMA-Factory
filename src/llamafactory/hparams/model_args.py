@@ -163,7 +163,7 @@ class ModelArguments:
     )
     infer_dtype: Literal["auto", "float16", "bfloat16", "float32"] = field(
         default="auto",
-        metadata={"help": "Data type for model weights and activations at inference."}
+        metadata={"help": "Data type for model weights and activations at inference."},
     )
     hf_hub_token: Optional[str] = field(
         default=None,
