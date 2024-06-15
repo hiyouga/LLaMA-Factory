@@ -9,8 +9,6 @@ on:
       - "requirements.txt"
       - ".github/workflows/*.yml"
   pull_request:
-    types:
-      - review_requested
     branches:
       - main
     paths:

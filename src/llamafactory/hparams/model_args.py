@@ -1,6 +1,6 @@
 # Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
 #
-# This code is inspired by HuggingFace's transformers library.
+# This code is inspired by the HuggingFace's transformers library.
 # https://github.com/huggingface/transformers/blob/v4.40.0/examples/pytorch/language-modeling/run_clm.py
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,6 +44,10 @@ class ModelArguments:
                 "Use commas to separate multiple adapters."
             )
         },
+    )
+    adapter_folder: Optional[str] = field(
+        default=None,
+        metadata={"help": "The folder containing the adapter weights to load."},
     )
     cache_dir: Optional[str] = field(
         default=None,
@@ -150,7 +154,7 @@ class ModelArguments:
         metadata={"help": "Whether or not to disable CUDA graph in the vLLM engine."},
     )
     vllm_max_lora_rank: int = field(
-        default=8,
+        default=32,
         metadata={"help": "Maximum rank of all LoRAs in the vLLM engine."},
     )
     offload_folder: str = field(
