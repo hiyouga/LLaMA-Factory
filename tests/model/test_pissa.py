@@ -59,7 +59,7 @@ def compare_model(model_a: "torch.nn.Module", model_b: "torch.nn.Module"):
     state_dict_b = model_b.state_dict()
     assert set(state_dict_a.keys()) == set(state_dict_b.keys())
     for name in state_dict_a.keys():
-        assert torch.allclose(state_dict_a[name], state_dict_b[name], rtol=1e-3, atol=1e-3)
+        assert torch.allclose(state_dict_a[name], state_dict_b[name], rtol=1e-4, atol=1e-5)
 
 
 def test_pissa_init():
