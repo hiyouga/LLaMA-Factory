@@ -1,8 +1,17 @@
 # coding=utf-8
-# Converts the Baichuan2-7B model in the same format as LLaMA2-7B.
-# Usage: python llamafy_baichuan2.py --input_dir input --output_dir output
-# Inspired by: https://huggingface.co/fireballoon/baichuan-llama-7b/blob/main/convert_baichuan_to_llama.py
-# Converted model: https://huggingface.co/hiyouga/Baichuan2-7B-Base-LLaMAfied
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import json
 import os
@@ -79,6 +88,11 @@ def save_config(input_dir: str, output_dir: str):
 def llamafy_baichuan2(
     input_dir: str, output_dir: str, shard_size: Optional[str] = "2GB", save_safetensors: Optional[bool] = False
 ):
+    r"""
+    Converts the Baichuan2-7B model in the same format as LLaMA2-7B.
+    Usage: python llamafy_baichuan2.py --input_dir input --output_dir output
+    Converted model: https://huggingface.co/hiyouga/Baichuan2-7B-Base-LLaMAfied
+    """
     try:
         os.makedirs(output_dir, exist_ok=False)
     except Exception as e:

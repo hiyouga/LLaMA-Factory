@@ -1,7 +1,20 @@
 # coding=utf-8
-# Performs block expansion for LLaMA, Mistral, Qwen1.5 or Yi models.
-# Usage: python llama_pro.py --model_name_or_path meta-llama/Llama-2-7b-hf --output_dir llama2_pro --num_expand 8
-# Inspired by: https://github.com/TencentARC/LLaMA-Pro/blob/main/scripts/block_expansion.py
+# Copyright 2024 Tencent Inc. and the LlamaFactory team.
+#
+# This code is inspired by Tencent's LLaMA-Pro library.
+# https://github.com/TencentARC/LLaMA-Pro/blob/main/scripts/block_expansion.py
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import json
 import os
@@ -37,6 +50,10 @@ def block_expansion(
     shard_size: Optional[str] = "2GB",
     save_safetensors: Optional[bool] = False,
 ):
+    r"""
+    Performs block expansion for LLaMA, Mistral, Qwen1.5 or Yi models.
+    Usage: python llama_pro.py --model_name_or_path meta-llama/Llama-2-7b-hf --output_dir llama2_pro --num_expand 8
+    """
     config: "PretrainedConfig" = AutoConfig.from_pretrained(model_name_or_path)
     num_layers = getattr(config, "num_hidden_layers")
     setattr(config, "num_hidden_layers", num_layers + num_expand)
