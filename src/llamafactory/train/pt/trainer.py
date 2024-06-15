@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from types import MethodType
 from typing import TYPE_CHECKING, Dict, Optional
 
 from transformers import Trainer
 
 from ...extras.logging import get_logger
-from ..trainer_utils import create_custom_optimzer, create_custom_scheduler
+from ..trainer_utils import convert_pissa_adapter, create_custom_optimzer, create_custom_scheduler
 
 
 if TYPE_CHECKING:
@@ -42,6 +43,10 @@ class CustomTrainer(Trainer):
         super().__init__(**kwargs)
         self.finetuning_args = finetuning_args
         self.processor = processor
+
+        if finetuning_args.pissa_convert:
+            self.save_model(os.path.join(self.args.output_dir, "pissa_init"))
+
         if finetuning_args.use_badam:
             from badam import clip_grad_norm_for_sparse_tensor
 
@@ -60,6 +65,9 @@ class CustomTrainer(Trainer):
 
     def _save(self, output_dir: Optional[str] = None, state_dict: Optional[Dict[str, "torch.Tensor"]] = None) -> None:
         super()._save(output_dir, state_dict)
+        output_dir = output_dir if output_dir is not None else self.args.output_dir
+        if self.finetuning_args.pissa_convert:
+            convert_pissa_adapter(output_dir, state_dict, self.accelerator, self.model, self.args)
+
         if self.processor is not None:
-            output_dir = output_dir if output_dir is not None else self.args.output_dir
             getattr(self.processor, "image_processor").save_pretrained(output_dir)

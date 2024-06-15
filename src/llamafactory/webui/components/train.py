@@ -163,10 +163,9 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             create_new_adapter = gr.Checkbox()
 
         with gr.Row():
-            with gr.Column(scale=1):
-                use_rslora = gr.Checkbox()
-                use_dora = gr.Checkbox()
-
+            use_rslora = gr.Checkbox()
+            use_dora = gr.Checkbox()
+            use_pissa = gr.Checkbox()
             lora_target = gr.Textbox(scale=2)
             additional_target = gr.Textbox(scale=2)
 
@@ -179,6 +178,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             create_new_adapter,
             use_rslora,
             use_dora,
+            use_pissa,
             lora_target,
             additional_target,
         }
@@ -193,6 +193,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             create_new_adapter=create_new_adapter,
             use_rslora=use_rslora,
             use_dora=use_dora,
+            use_pissa=use_pissa,
             lora_target=lora_target,
             additional_target=additional_target,
         )
