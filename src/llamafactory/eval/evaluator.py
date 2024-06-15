@@ -1,6 +1,6 @@
 # Copyright 2024 the LlamaFactory team.
 #
-# This code is inspired by Dan's test library.
+# This code is inspired by the Dan's test library.
 # https://github.com/hendrycks/test/blob/master/evaluate_flan.py
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

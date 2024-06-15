@@ -1,6 +1,6 @@
 # Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
 #
-# This code is inspired by HuggingFace's Optimum library.
+# This code is inspired by the HuggingFace's Optimum library.
 # https://github.com/huggingface/optimum/blob/v1.20.0/optimum/gptq/data.py
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

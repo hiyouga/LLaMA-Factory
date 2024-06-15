@@ -1,7 +1,7 @@
 # coding=utf-8
 # Copyright 2024 Tencent Inc. and the LlamaFactory team.
 #
-# This code is inspired by Tencent's LLaMA-Pro library.
+# This code is inspired by the Tencent's LLaMA-Pro library.
 # https://github.com/TencentARC/LLaMA-Pro/blob/main/scripts/block_expansion.py
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
