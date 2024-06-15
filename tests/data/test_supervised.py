@@ -41,7 +41,7 @@ TRAIN_ARGS = {
 }
 
 
-@pytest.mark.parametrize("num_samples", [10])
+@pytest.mark.parametrize("num_samples", [16])
 def test_supervised(num_samples: int):
     model_args, data_args, training_args, _, _ = get_train_args(TRAIN_ARGS)
     tokenizer_module = load_tokenizer(model_args)
