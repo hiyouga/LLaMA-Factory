@@ -1,6 +1,6 @@
 # Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
 #
-# This code is inspired by HuggingFace's TRL library.
+# This code is inspired by the HuggingFace's TRL library.
 # https://github.com/huggingface/trl/blob/v0.8.0/trl/trainer/dpo_trainer.py
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import warnings
 from collections import defaultdict
 from contextlib import nullcontext
@@ -28,7 +29,7 @@ from trl import DPOTrainer
 from trl.trainer import disable_dropout_in_model
 
 from ...extras.constants import IGNORE_INDEX
-from ..trainer_utils import create_custom_optimzer, create_custom_scheduler, get_batch_logps
+from ..trainer_utils import convert_pissa_adapter, create_custom_optimzer, create_custom_scheduler, get_batch_logps
 
 
 if TYPE_CHECKING:
@@ -91,6 +92,9 @@ class CustomDPOTrainer(DPOTrainer):
                 self.ref_model = self.accelerator.prepare_model(self.ref_model, evaluation_mode=True)
                 self.ref_model.eval()
 
+        if finetuning_args.pissa_convert:
+            self.save_model(os.path.join(self.args.output_dir, "pissa_init"))
+
         if finetuning_args.use_badam:
             from badam import clip_grad_norm_for_sparse_tensor
 
@@ -109,8 +113,11 @@ class CustomDPOTrainer(DPOTrainer):
 
     def _save(self, output_dir: Optional[str] = None, state_dict: Optional[Dict[str, "torch.Tensor"]] = None) -> None:
         super()._save(output_dir, state_dict)
+        output_dir = output_dir if output_dir is not None else self.args.output_dir
+        if self.finetuning_args.pissa_convert:
+            convert_pissa_adapter(output_dir, state_dict, self.accelerator, self.model, self.args)
+
         if self.processor is not None:
-            output_dir = output_dir if output_dir is not None else self.args.output_dir
             getattr(self.processor, "image_processor").save_pretrained(output_dir)
 
     def odds_ratio_loss(self, chosen_logps: "torch.Tensor", rejected_logps: "torch.Tensor") -> "torch.Tensor":

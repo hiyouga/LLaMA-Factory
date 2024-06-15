@@ -1,6 +1,6 @@
 # Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
 #
-# This code is inspired by HuggingFace's transformers library.
+# This code is inspired by the HuggingFace's transformers library.
 # https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/trainer_seq2seq.py
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,7 @@ from transformers import Seq2SeqTrainer
 
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
-from ..trainer_utils import create_custom_optimzer, create_custom_scheduler
+from ..trainer_utils import convert_pissa_adapter, create_custom_optimzer, create_custom_scheduler
 
 
 if TYPE_CHECKING:
@@ -51,6 +51,10 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         super().__init__(**kwargs)
         self.finetuning_args = finetuning_args
         self.processor = processor
+
+        if finetuning_args.pissa_convert:
+            self.save_model(os.path.join(self.args.output_dir, "pissa_init"))
+
         if finetuning_args.use_badam:
             from badam import clip_grad_norm_for_sparse_tensor
 
@@ -69,8 +73,11 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
     def _save(self, output_dir: Optional[str] = None, state_dict: Optional[Dict[str, "torch.Tensor"]] = None) -> None:
         super()._save(output_dir, state_dict)
+        output_dir = output_dir if output_dir is not None else self.args.output_dir
+        if self.finetuning_args.pissa_convert:
+            convert_pissa_adapter(output_dir, state_dict, self.accelerator, self.model, self.args)
+
         if self.processor is not None:
-            output_dir = output_dir if output_dir is not None else self.args.output_dir
             getattr(self.processor, "image_processor").save_pretrained(output_dir)
 
     def prediction_step(
