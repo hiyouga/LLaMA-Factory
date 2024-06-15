@@ -1,6 +1,6 @@
 # Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
 #
-# This code is inspired by HuggingFace's transformers library.
+# This code is inspired by the HuggingFace's transformers library.
 # https://github.com/huggingface/transformers/blob/v4.40.0/examples/pytorch/language-modeling/run_clm.py
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -89,6 +89,9 @@ def _verify_model_args(model_args: "ModelArguments", finetuning_args: "Finetunin
     if model_args.quantization_bit is not None:
         if finetuning_args.finetuning_type != "lora":
             raise ValueError("Quantization is only compatible with the LoRA method.")
+
+        if finetuning_args.use_pissa:
+            raise ValueError("Please use scripts/pissa_init.py for quantized PiSSA.")
 
         if model_args.resize_vocab:
             raise ValueError("Cannot resize embedding layers of a quantized model.")
