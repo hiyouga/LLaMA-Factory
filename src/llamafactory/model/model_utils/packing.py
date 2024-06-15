@@ -239,7 +239,7 @@ def configure_packing(config: "PretrainedConfig") -> None:
         attn_implementation = getattr(config, "_attn_implementation", None)
 
     if attn_implementation != "flash_attention_2":
-        raise ValueError("Efficient packing only supports for flash_attention_2. Please set config `flash_attn` is fa2" + " " + attn_implementation)
+        raise ValueError("Efficient packing only supports for flash_attention_2. Please set config `flash_attn` is fa2")
 
     logger = get_logger(__name__)
 
