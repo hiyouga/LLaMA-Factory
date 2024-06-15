@@ -213,6 +213,7 @@ def convert_pissa_adapter(
                 safe_serialization=training_args.save_safetensors,
                 convert_pissa_to_lora=pissa_init_dir,
             )
+            # TODO: the model is applied pissa again unexpectedly
             unwrapped_model.load_adapter(pissa_backup_dir, "default", is_trainable=True)
             unwrapped_model.set_adapter("default")
 
