@@ -1,7 +1,20 @@
 # coding=utf-8
-# Calculates the flops of pre-trained models.
-# Usage: python cal_flops.py --model_name_or_path path_to_model --batch_size 1 --seq_length 512
-# Inspired by: https://www.deepspeed.ai/tutorials/flops-profiler/
+# Copyright 2024 Microsoft Corporation and the LlamaFactory team.
+#
+# This code is inspired by Microsoft's DeepSpeed library.
+# https://www.deepspeed.ai/tutorials/flops-profiler/
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import fire
 import torch
@@ -17,6 +30,10 @@ def calculate_flops(
     seq_length: int = 256,
     flash_attn: str = "auto",
 ):
+    r"""
+    Calculates the flops of pre-trained models.
+    Usage: python cal_flops.py --model_name_or_path path_to_model --batch_size 1 --seq_length 512
+    """
     with get_accelerator().device(0):
         chat_model = ChatModel(dict(model_name_or_path=model_name_or_path, template="empty", flash_attn=flash_attn))
         fake_input = torch.ones((batch_size, seq_length), dtype=torch.long, device=chat_model.model.device)

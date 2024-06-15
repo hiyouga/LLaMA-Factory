@@ -1,3 +1,21 @@
+# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+#
+# This code is inspired by HuggingFace's Transformers and PEFT library.
+# https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/modeling_utils.py
+# https://github.com/huggingface/peft/blob/v0.10.0/src/peft/utils/other.py
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import inspect
 from functools import partial
 from types import MethodType
@@ -68,7 +86,6 @@ def prepare_model_for_training(
         (1) cast the layernorm in fp32
         (2) make output embedding layer require grads
         (3) add the upcasting of the lm_head in fp32
-    Inspired by: https://github.com/huggingface/peft/blob/v0.7.1/src/peft/utils/other.py#L72
     """
     if model_args.upcast_layernorm:
         logger.info("Upcasting layernorm weights in float32.")

@@ -1,7 +1,20 @@
 # coding=utf-8
-# Initializes LoRA weights with LoRA-fine-tuning-aware Quantization (LoftQ)
-# Usage: python loftq_init.py --model_name_or_path path_to_model --save_dir output_dir
-# Inspired by: https://github.com/huggingface/peft/blob/main/examples/loftq_finetuning/quantize_save_load.py
+# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+#
+# This code is inspired by HuggingFace's PEFT library.
+# https://github.com/huggingface/peft/blob/v0.10.0/examples/loftq_finetuning/quantize_save_load.py
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import os
 from typing import TYPE_CHECKING, Optional
@@ -49,6 +62,10 @@ def quantize_loftq(
     lora_target: Optional[str] = "q_proj,v_proj",
     save_safetensors: Optional[bool] = False,
 ):
+    r"""
+    Initializes LoRA weights with LoRA-fine-tuning-aware Quantization (LoftQ)
+    Usage: python loftq_init.py --model_name_or_path path_to_model --save_dir output_dir
+    """
     tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, trust_remote_code=True)
     model = AutoModelForCausalLM.from_pretrained(model_name_or_path, trust_remote_code=True, torch_dtype="auto")
     loftq_config = LoftQConfig(loftq_bits=loftq_bits, loftq_iter=loftq_iter)
