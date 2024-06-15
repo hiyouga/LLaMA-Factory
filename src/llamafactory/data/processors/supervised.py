@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from transformers import ProcessorMixin
     from transformers.tokenization_utils import PreTrainedTokenizer
 
-    from ...hparams import DataArguments, FinetuningArguments
+    from ...hparams import DataArguments
     from ..template import Template
 
 
