@@ -34,7 +34,7 @@ def run_sft(
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
 
     if data_args.efficient_packing:
-        configure_packing(model.config)
+        configure_packing(model.config, model_args)
 
     if training_args.predict_with_generate:
         tokenizer.padding_side = "left"  # use left-padding in generation
