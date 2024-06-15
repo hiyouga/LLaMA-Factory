@@ -213,3 +213,9 @@ llamafactory-cli train examples/extras/llama_pro/llama3_freeze_sft.yaml
 ```bash
 bash examples/extras/fsdp_qlora/single_node.sh
 ```
+
+#### PiSSA 微调
+
+```bash
+llamafactory-cli train examples/extras/pissa/llama3_lora_sft.yaml
+```
