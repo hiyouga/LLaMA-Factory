@@ -1,7 +1,9 @@
-# Copyright 2024 EleutherAI, HuggingFace Inc., and the LlamaFactory team.
+# Copyright 2024 EleutherAI, HuggingFace Inc., Yukang Chen, and the LlamaFactory team.
 #
-# This code is based on the EleutherAI's GPT-NeoX and HuggingFace's Transformers libraries.
+# This code is based on the EleutherAI's GPT-NeoX and the HuggingFace's Transformers libraries.
 # https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/models/llama/modeling_llama.py
+# This code is also inspired by the original LongLoRA implementation.
+# https://github.com/dvlab-research/LongLoRA/blob/main/llama_attn_replace.py
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

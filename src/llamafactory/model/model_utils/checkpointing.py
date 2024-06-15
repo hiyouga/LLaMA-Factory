@@ -1,6 +1,6 @@
 # Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
 #
-# This code is inspired by HuggingFace's Transformers and PEFT library.
+# This code is inspired by the HuggingFace's Transformers and PEFT library.
 # https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/modeling_utils.py
 # https://github.com/huggingface/peft/blob/v0.10.0/src/peft/utils/other.py
 #
