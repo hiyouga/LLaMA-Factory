@@ -66,6 +66,21 @@ STAGES_USE_PAIR_DATA = {"rm", "dpo"}
 
 SUPPORTED_CLASS_FOR_S2ATTN = {"llama"}
 
+SUPPORTED_CLASS_FOR_MULTIPACK = [
+    "llama",
+    "mistral",
+    "mixtral",
+    "qwen2",
+    "qwen2_moe",
+    "falcon",
+    "phi",
+    "phi3",
+    "gemma",
+    "gemmoe",
+    "starcoder2",
+    "jamba"
+]
+
 V_HEAD_WEIGHTS_NAME = "value_head.bin"
 
 V_HEAD_SAFE_WEIGHTS_NAME = "value_head.safetensors"
