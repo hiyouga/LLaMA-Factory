@@ -684,6 +684,21 @@ register_model_group(
 
 register_model_group(
     models={
+        "MiniCPM-2B-SFT-Chat": {
+            DownloadSource.DEFAULT: "openbmb/MiniCPM-2B-sft-bf16",
+            DownloadSource.MODELSCOPE: "OpenBMB/miniCPM-bf16",
+        },
+        "MiniCPM-2B-DPO-Chat": {
+            DownloadSource.DEFAULT: "openbmb/MiniCPM-2B-dpo-bf16",
+            DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM-2B-dpo-bf16",
+        },
+    },
+    template="cpm",
+)
+
+
+register_model_group(
+    models={
         "Mistral-7B-v0.1": {
             DownloadSource.DEFAULT: "mistralai/Mistral-7B-v0.1",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Mistral-7B-v0.1",
