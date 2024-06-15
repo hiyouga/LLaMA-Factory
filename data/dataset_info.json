@@ -524,13 +524,13 @@
       "prompt": "text"
     }
   },
-  "fileweb": {
+  "fineweb": {
     "hf_hub_url": "HuggingFaceFW/fineweb",
     "columns": {
       "prompt": "text"
     }
   },
-  "fileweb_edu": {
+  "fineweb_edu": {
     "hf_hub_url": "HuggingFaceFW/fineweb-edu",
     "columns": {
       "prompt": "text"
@@ -550,5 +550,25 @@
       "prompt": "content"
     },
     "folder": "python"
+  },
+  "Magpie-Pro-300K-Filtered": {
+    "hf_hub_url": "Magpie-Align/Magpie-Pro-300K-Filtered",
+    "columns": {
+      "messages": "conversations"
+    },
+    "tags": {
+      "role_tag": "from",
+      "content_tag": "value",
+      "user_tag": "human",
+      "assistant_tag": "gpt"
+    },
+    "formatting": "sharegpt"
+  },
+  "WebInstructSub": {
+    "hf_hub_url": "TIGER-Lab/WebInstructSub",
+    "columns": {
+      "prompt": "question",
+      "response": "answer"
+    }
   }
 }
