@@ -42,3 +42,5 @@ EXPOSE 7860
 
 # Expose port 8000 for the API service
 EXPOSE 8000
+
+CMD [ "llamafactory-cli", "webui" ]
