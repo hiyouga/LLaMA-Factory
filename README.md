@@ -270,6 +270,8 @@ You also can add a custom chat template to [template.py](src/llamafactory/data/t
 - [Booksum (de)](https://huggingface.co/datasets/mayflowergmbh/booksum_de)
 - [Airoboros (de)](https://huggingface.co/datasets/mayflowergmbh/airoboros-3.0_de)
 - [Ultrachat (de)](https://huggingface.co/datasets/mayflowergmbh/ultra-chat_de)
+- [WebInstructSub (en)](https://huggingface.co/datasets/TIGER-Lab/WebInstructSub)
+- [Magpie-Pro-300K-Filtered (en)](https://huggingface.co/datasets/Magpie-Align/Magpie-Pro-300K-Filtered)
 
 </details>
 
