@@ -270,8 +270,8 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 - [Booksum (de)](https://huggingface.co/datasets/mayflowergmbh/booksum_de)
 - [Airoboros (de)](https://huggingface.co/datasets/mayflowergmbh/airoboros-3.0_de)
 - [Ultrachat (de)](https://huggingface.co/datasets/mayflowergmbh/ultra-chat_de)
-
-</details>
+- [WebInstructSub (en)](https://huggingface.co/datasets/TIGER-Lab/WebInstructSub)
+- [Magpie-Pro-300K-Filtered (en)](https://huggingface.co/datasets/Magpie-Align/Magpie-Pro-300K-Filtered)
 
 <details><summary>偏好数据集</summary>
 
