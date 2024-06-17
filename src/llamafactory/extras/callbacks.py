@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import json
 import logging
 import os
@@ -170,12 +184,14 @@ class LogCallback(TrainerCallback):
             percentage=round(self.cur_steps / self.max_steps * 100, 2) if self.max_steps != 0 else 100,
             elapsed_time=self.elapsed_time,
             remaining_time=self.remaining_time,
+            throughput="{:.2f}".format(state.num_input_tokens_seen / (time.time() - self.start_time)),
+            total_tokens=state.num_input_tokens_seen,
         )
         logs = {k: v for k, v in logs.items() if v is not None}
         if self.webui_mode and all(key in logs for key in ["loss", "learning_rate", "epoch"]):
             logger.info(
-                "{{'loss': {:.4f}, 'learning_rate': {:2.4e}, 'epoch': {:.2f}}}".format(
-                    logs["loss"], logs["learning_rate"], logs["epoch"]
+                "{{'loss': {:.4f}, 'learning_rate': {:2.4e}, 'epoch': {:.2f}, 'throughput': {}}}".format(
+                    logs["loss"], logs["learning_rate"], logs["epoch"], logs["throughput"]
                 )
             )
 

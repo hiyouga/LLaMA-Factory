@@ -14,6 +14,18 @@ body:
           required: true
 
   - type: textarea
+    id: system-info
+    validations:
+      required: true
+    attributes:
+      label: System Info
+      description: |
+        Please share your system info with us. You can run the command **llamafactory-cli env** and copy-paste its output below.
+        请提供您的系统信息。您可以在命令行运行 **llamafactory-cli env** 并将其输出复制到该文本框中。
+
+      placeholder: llamafactory version, platform, python version, ...
+
+  - type: textarea
     id: reproduction
     validations:
       required: true
@@ -26,7 +38,9 @@ body:
         请合理使用 Markdown 标签来格式化您的文本。
 
       placeholder: |
-        python src/train_bash.py ...
+        ```bash
+        llamafactory-cli train ...
+        ```
 
   - type: textarea
     id: expected-behavior
@@ -37,18 +51,6 @@ body:
       description: |
         Please provide a clear and concise description of what you would expect to happen.
         请提供您原本的目的，即这段代码的期望行为。
-
-  - type: textarea
-    id: system-info
-    validations:
-      required: false
-    attributes:
-      label: System Info
-      description: |
-        Please share your system info with us. You can run the command **transformers-cli env** and copy-paste its output below.
-        请提供您的系统信息。您可以在命令行运行 **transformers-cli env** 并将其输出复制到该文本框中。
-
-      placeholder: transformers version, platform, python version, ...
 
   - type: textarea
     id: others

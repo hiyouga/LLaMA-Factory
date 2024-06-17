@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import json
 import os
 from dataclasses import dataclass
@@ -20,11 +34,12 @@ class DatasetAttr:
     """ basic configs """
     load_from: Literal["hf_hub", "ms_hub", "script", "file"]
     dataset_name: str
+    formatting: Literal["alpaca", "sharegpt"] = "alpaca"
+    ranking: bool = False
     """ extra configs """
     subset: Optional[str] = None
     folder: Optional[str] = None
-    ranking: bool = False
-    formatting: Literal["alpaca", "sharegpt"] = "alpaca"
+    num_samples: Optional[int] = None
     """ common columns """
     system: Optional[str] = None
     tools: Optional[str] = None
@@ -102,10 +117,11 @@ def get_dataset_list(data_args: "DataArguments") -> List["DatasetAttr"]:
         else:
             dataset_attr = DatasetAttr("file", dataset_name=dataset_info[name]["file_name"])
 
+        dataset_attr.set_attr("formatting", dataset_info[name], default="alpaca")
+        dataset_attr.set_attr("ranking", dataset_info[name], default=False)
         dataset_attr.set_attr("subset", dataset_info[name])
         dataset_attr.set_attr("folder", dataset_info[name])
-        dataset_attr.set_attr("ranking", dataset_info[name], default=False)
-        dataset_attr.set_attr("formatting", dataset_info[name], default="alpaca")
+        dataset_attr.set_attr("num_samples", dataset_info[name])
 
         if "columns" in dataset_info[name]:
             column_names = ["system", "tools", "images", "chosen", "rejected", "kto_tag"]

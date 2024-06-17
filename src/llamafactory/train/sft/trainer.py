@@ -1,3 +1,20 @@
+# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+#
+# This code is inspired by the HuggingFace's transformers library.
+# https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/trainer_seq2seq.py
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import json
 import os
 from types import MethodType
@@ -9,10 +26,11 @@ from transformers import Seq2SeqTrainer
 
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
-from ..utils import create_custom_optimzer, create_custom_scheduler
+from ..trainer_utils import convert_pissa_adapter, create_custom_optimzer, create_custom_scheduler
 
 
 if TYPE_CHECKING:
+    from torch.utils.data import Dataset
     from transformers import ProcessorMixin
     from transformers.trainer import PredictionOutput
 
@@ -33,6 +51,10 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         super().__init__(**kwargs)
         self.finetuning_args = finetuning_args
         self.processor = processor
+
+        if finetuning_args.pissa_convert:
+            self.save_model(os.path.join(self.args.output_dir, "pissa_init"))
+
         if finetuning_args.use_badam:
             from badam import clip_grad_norm_for_sparse_tensor
 
@@ -51,8 +73,11 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
     def _save(self, output_dir: Optional[str] = None, state_dict: Optional[Dict[str, "torch.Tensor"]] = None) -> None:
         super()._save(output_dir, state_dict)
+        output_dir = output_dir if output_dir is not None else self.args.output_dir
+        if self.finetuning_args.pissa_convert:
+            convert_pissa_adapter(output_dir, state_dict, self.accelerator, self.model, self.args)
+
         if self.processor is not None:
-            output_dir = output_dir if output_dir is not None else self.args.output_dir
             getattr(self.processor, "image_processor").save_pretrained(output_dir)
 
     def training_step(self, *args, **kwargs):
@@ -109,7 +134,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         padded_tensor[:, -src_tensor.shape[-1] :] = src_tensor  # adopt left-padding
         return padded_tensor.contiguous()  # in contiguous memory
 
-    def save_predictions(self, predict_results: "PredictionOutput") -> None:
+    def save_predictions(self, dataset: "Dataset", predict_results: "PredictionOutput") -> None:
         r"""
         Saves model predictions to `output_dir`.
 
@@ -135,6 +160,9 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                     (preds[i][pad_len[0] :], preds[i][: pad_len[0]]), axis=-1
                 )  # move pad token to last
 
+        decoded_inputs = self.tokenizer.batch_decode(
+            dataset["input_ids"], skip_special_tokens=True, clean_up_tokenization_spaces=False
+        )
         decoded_labels = self.tokenizer.batch_decode(
             labels, skip_special_tokens=True, clean_up_tokenization_spaces=False
         )
@@ -142,6 +170,6 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
         with open(output_prediction_file, "w", encoding="utf-8") as writer:
             res: List[str] = []
-            for label, pred in zip(decoded_labels, decoded_preds):
-                res.append(json.dumps({"label": label, "predict": pred}, ensure_ascii=False))
+            for text, label, pred in zip(decoded_inputs, decoded_labels, decoded_preds):
+                res.append(json.dumps({"prompt": text, "label": label, "predict": pred}, ensure_ascii=False))
             writer.write("\n".join(res))

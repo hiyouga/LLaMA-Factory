@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import asyncio
 import concurrent.futures
 import os
@@ -8,6 +22,7 @@ import torch
 from transformers import GenerationConfig, TextIteratorStreamer
 
 from ..data import get_template_and_fix_tokenizer
+from ..extras.logging import get_logger
 from ..extras.misc import get_logits_processor
 from ..model import load_model, load_tokenizer
 from .base_engine import BaseEngine, Response
@@ -21,6 +36,9 @@ if TYPE_CHECKING:
 
     from ..data import Template
     from ..hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
+
+
+logger = get_logger(__name__)
 
 
 class HuggingfaceEngine(BaseEngine):
@@ -79,6 +97,7 @@ class HuggingfaceEngine(BaseEngine):
 
         prompt_length = len(prompt_ids)
         inputs = torch.tensor([prompt_ids], device=model.device)
+        attention_mask = torch.ones_like(inputs, dtype=torch.bool)
 
         do_sample: Optional[bool] = input_kwargs.pop("do_sample", None)
         temperature: Optional[float] = input_kwargs.pop("temperature", None)
@@ -92,7 +111,7 @@ class HuggingfaceEngine(BaseEngine):
         stop: Optional[Union[str, List[str]]] = input_kwargs.pop("stop", None)
 
         if stop is not None:
-            raise ValueError("Stop parameter is not supported in Huggingface engine yet.")
+            logger.warning("Stop parameter is not supported in Huggingface engine yet.")
 
         generating_args = generating_args.copy()
         generating_args.update(
@@ -132,6 +151,7 @@ class HuggingfaceEngine(BaseEngine):
 
         gen_kwargs = dict(
             inputs=inputs,
+            attention_mask=attention_mask,
             generation_config=GenerationConfig(**generating_args),
             logits_processor=get_logits_processor(),
         )
