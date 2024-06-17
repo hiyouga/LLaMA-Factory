@@ -91,7 +91,11 @@ def gen_cmd(args: Dict[str, Any]) -> str:
     r"""
     Generates arguments for previewing.
     """
-    cmd_lines = ["llamafactory-cli train "]
+    cuda_visible_devices = args.pop("cuda_visible_devices", None)
+    cmd_lines = [
+        "llamafactory-cli train " if cuda_visible_devices is None
+        else f"CUDA_VISIBLE_DEVICES={cuda_visible_devices} llamafactory-cli train "
+    ]
     for k, v in clean_cmd(args).items():
         cmd_lines.append("    --{} {} ".format(k, str(v)))
 

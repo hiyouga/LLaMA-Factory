@@ -281,6 +281,9 @@ class Runner:
             yield {output_box: error}
         else:
             args = self._parse_train_args(data) if do_train else self._parse_eval_args(data)
+            cuda_visible_devices = data[self.manager.get_elem_by_id("train.cuda_visible_devices")]
+            if cuda_visible_devices is not None:
+                args["cuda_visible_devices"] = ",".join([str(i) for i in sorted(cuda_visible_devices)])
             yield {output_box: gen_cmd(args)}
 
     def _launch(self, data: Dict["Component", Any], do_train: bool) -> Generator[Dict["Component", Any], None, None]:
@@ -300,6 +303,9 @@ class Runner:
             env["LLAMABOARD_ENABLED"] = "1"
             if args.get("deepspeed", None) is not None:
                 env["FORCE_TORCHRUN"] = "1"
+            cuda_visible_devices = data[self.manager.get_elem_by_id("train.cuda_visible_devices")]
+            if cuda_visible_devices is not None:
+                env["CUDA_VISIBLE_DEVICES"] = ",".join([str(i) for i in sorted(cuda_visible_devices)])
 
             self.trainer = Popen("llamafactory-cli train {}".format(save_cmd(args)), env=env, shell=True)
             yield from self.monitor()

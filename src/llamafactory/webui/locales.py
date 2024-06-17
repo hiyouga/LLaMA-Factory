@@ -1134,6 +1134,20 @@ LOCALES = {
             "info": "当前可用的运算设备数。",
         },
     },
+    "cuda_visible_devices": {
+        "en": {
+            "label": "Cuda visible devices",
+            "info": "Devices that cuda can use (default is all available devices).",
+        },
+        "ru": {
+            "label": "Видимые устройства Cuda",
+            "info": "Устройства, которые может использовать cuda (по умолчанию — все доступные устройства).",
+        },
+        "zh": {
+            "label": "Cuda可见设备",
+            "info": "Cuda可以使用的设备（默认为所有可用设备）。",
+        },
+    },
     "ds_stage": {
         "en": {
             "label": "DeepSpeed stage",
