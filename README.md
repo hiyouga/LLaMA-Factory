@@ -481,7 +481,7 @@ Train the model by specifying a model ID of the ModelScope Hub as the `model_nam
 
 ### Use W&B Logger
 
-To use [Weights & Biases](https://wandb.ai) for logging experimental results, you need to add the following arguments.
+To use [Weights & Biases](https://wandb.ai) for logging experimental results, you need to add the following arguments to yaml files.
 
 ```yaml
 report_to: wandb
