@@ -12,6 +12,7 @@
   "ranking": "是否为偏好数据集（可选，默认：False）",
   "subset": "数据集子集的名称（可选，默认：None）",
   "folder": "Hugging Face 仓库的文件夹名称（可选，默认：None）",
+  "num_samples": "该数据集中用于训练的样本数量。（可选，默认：None）",
   "columns（可选）": {
     "prompt": "数据集代表提示词的表头名称（默认：instruction）",
     "query": "数据集代表请求的表头名称（默认：input）",
