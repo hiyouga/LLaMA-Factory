@@ -1,9 +1,23 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, Union
 
 from ..extras.logging import get_logger
+from .data_utils import Role, infer_max_len
 from .formatter import EmptyFormatter, FunctionFormatter, StringFormatter, ToolFormatter
-from .utils import Role, infer_max_len
 
 
 if TYPE_CHECKING:
@@ -196,7 +210,7 @@ class Llama2Template(Template):
         return self._make_pairs(encoded_messages, cutoff_len, reserved_label_len)
 
 
-templates: Dict[str, Template] = {}
+TEMPLATES: Dict[str, Template] = {}
 
 
 def _register_template(
@@ -248,7 +262,7 @@ def _register_template(
     default_function_formatter = FunctionFormatter(slots=["Action: {{name}}\nAction Input: {{arguments}}"] + eos_slots)
     default_tool_formatter = ToolFormatter(tool_format="default")
     default_separator_formatter = EmptyFormatter()
-    templates[name] = template_class(
+    TEMPLATES[name] = template_class(
         format_user=format_user or default_user_formatter,
         format_assistant=format_assistant or default_assistant_formatter,
         format_system=format_system or default_user_formatter,
@@ -348,9 +362,9 @@ def get_template_and_fix_tokenizer(
     name: Optional[str] = None,
 ) -> Template:
     if name is None:
-        template = templates["empty"]  # placeholder
+        template = TEMPLATES["empty"]  # placeholder
     else:
-        template = templates.get(name, None)
+        template = TEMPLATES.get(name, None)
         if template is None:
             raise ValueError("Template {} does not exist.".format(name))
 
@@ -544,8 +558,13 @@ _register_template(
             )
         ]
     ),
-    format_system=EmptyFormatter(slots=[{"bos_token"}]),
-    force_system=True,
+    format_system=StringFormatter(
+        slots=[{"bos_token"}, "<|START_OF_TURN_TOKEN|><|SYSTEM_TOKEN|>{{content}}<|END_OF_TURN_TOKEN|>"]
+    ),
+    default_system=(
+        "You are Command-R, a brilliant, sophisticated, AI-assistant trained to assist human users "
+        "by providing thorough responses. You are trained by Cohere."
+    ),
 )
 
 
@@ -654,6 +673,19 @@ _register_template(
 
 
 _register_template(
+    name="glm4",
+    format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>"]),
+    format_assistant=StringFormatter(slots=["\n{{content}}"]),
+    format_system=StringFormatter(slots=["[gMASK]<sop>{{content}}"]),
+    format_function=FunctionFormatter(slots=["{{name}}\n{{arguments}}"]),
+    format_observation=StringFormatter(slots=["<|observation|>\n{{content}}<|assistant|>"]),
+    stop_words=["<|user|>", "<|observation|>"],
+    efficient_eos=True,
+    force_system=True,
+)
+
+
+_register_template(
     name="intern",
     format_user=StringFormatter(slots=["<|User|>:{{content}}", {"token": "<eoh>"}, "\n<|Bot|>:"]),
     format_separator=EmptyFormatter(slots=[{"token": "<eoa>"}, "\n"]),
@@ -682,17 +714,8 @@ _register_template(
 _register_template(
     name="llama2",
     format_user=StringFormatter(slots=[{"bos_token"}, "[INST] {{content}} [/INST]"]),
+    format_assistant=StringFormatter(slots=[" {{content}} ", {"eos_token"}]),
     format_system=StringFormatter(slots=["<<SYS>>\n{{content}}\n<</SYS>>\n\n"]),
-    default_system=(
-        "You are a helpful, respectful and honest assistant. "
-        "Always answer as helpfully as possible, while being safe. "
-        "Your answers should not include any harmful, unethical, "
-        "racist, sexist, toxic, dangerous, or illegal content. "
-        "Please ensure that your responses are socially unbiased and positive in nature.\n\n"
-        "If a question does not make any sense, or is not factually coherent, "
-        "explain why instead of answering something not correct. "
-        "If you don't know the answer to a question, please don't share false information."
-    ),
 )
 
 
@@ -742,7 +765,6 @@ _register_template(
 _register_template(
     name="olmo",
     format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>\n"]),
-    format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}]),
     format_system=StringFormatter(slots=[{"eos_token"}, "{{content}}"]),
     force_system=True,
 )
@@ -751,8 +773,24 @@ _register_template(
 _register_template(
     name="openchat",
     format_user=StringFormatter(slots=["GPT4 Correct User: {{content}}", {"eos_token"}, "GPT4 Correct Assistant:"]),
-    format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}]),
     format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
+    force_system=True,
+)
+
+
+_register_template(
+    name="openchat-3.6",
+    format_user=StringFormatter(
+        slots=[
+            (
+                "<|start_header_id|>GPT4 Correct User<|end_header_id|>\n\n{{content}}<|eot_id|>"
+                "<|start_header_id|>GPT4 Correct Assistant<|end_header_id|>\n\n"
+            )
+        ]
+    ),
+    format_system=StringFormatter(slots=[{"bos_token"}, "{{content}}"]),
+    stop_words=["<|eot_id|>"],
+    replace_eos=True,
     force_system=True,
 )
 
@@ -808,6 +846,15 @@ _register_template(
 
 
 _register_template(
+    name="telechat",
+    format_user=StringFormatter(slots=["<_user>{{content}}<_bot>"]),
+    format_system=StringFormatter(slots=["<_system>{{content}}<_end>"]),
+    stop_words=["<_end>"],
+    replace_eos=True,
+)
+
+
+_register_template(
     name="vicuna",
     format_user=StringFormatter(slots=["USER: {{content}} ASSISTANT:"]),
     default_system=(
@@ -857,6 +904,7 @@ _register_template(
 _register_template(
     name="yi",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     format_separator=EmptyFormatter(slots=["\n"]),
     stop_words=["<|im_end|>"],
     replace_eos=True,

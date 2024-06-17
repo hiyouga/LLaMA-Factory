@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from typing import TYPE_CHECKING, Any, Dict, Optional, TypedDict
 
 from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForVision2Seq, AutoProcessor, AutoTokenizer
@@ -6,11 +20,11 @@ from trl import AutoModelForCausalLMWithValueHead
 from ..extras.logging import get_logger
 from ..extras.misc import count_parameters, try_download_model_from_ms
 from .adapter import init_adapter
+from .model_utils.misc import register_autoclass
+from .model_utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
+from .model_utils.unsloth import load_unsloth_pretrained_model
+from .model_utils.valuehead import load_valuehead_params
 from .patcher import patch_config, patch_model, patch_tokenizer, patch_valuehead_model
-from .utils.misc import register_autoclass
-from .utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
-from .utils.unsloth import load_unsloth_pretrained_model
-from .utils.valuehead import load_valuehead_params
 
 
 if TYPE_CHECKING:
@@ -131,6 +145,8 @@ def load_model(
             model = load_mod_pretrained_model(**init_kwargs)
         elif model_args.visual_inputs:
             model = AutoModelForVision2Seq.from_pretrained(**init_kwargs)
+        elif model_args.train_from_scratch:
+            model = AutoModelForCausalLM.from_config(config)
         else:
             model = AutoModelForCausalLM.from_pretrained(**init_kwargs)
 
