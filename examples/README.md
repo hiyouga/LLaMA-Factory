@@ -195,6 +195,12 @@ llamafactory-cli train examples/extras/badam/llama3_full_sft.yaml
 llamafactory-cli train examples/extras/loraplus/llama3_lora_sft.yaml
 ```
 
+#### PiSSA Fine-Tuning
+
+```bash
+llamafactory-cli train examples/extras/pissa/llama3_lora_sft.yaml
+```
+
 #### Mixture-of-Depths Fine-Tuning
 
 ```bash
@@ -211,11 +217,5 @@ llamafactory-cli train examples/extras/llama_pro/llama3_freeze_sft.yaml
 #### FSDP+QLoRA Fine-Tuning
 
 ```bash
-bash examples/extras/fsdp_qlora/single_node.sh
-```
-
-#### PiSSA Fine-Tuning
-
-```bash
-llamafactory-cli train examples/extras/pissa/llama3_lora_sft.yaml
+bash examples/extras/fsdp_qlora/train.sh
 ```
