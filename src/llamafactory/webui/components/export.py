@@ -1,5 +1,20 @@
-from typing import TYPE_CHECKING, Dict, Generator, List
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
+from typing import TYPE_CHECKING, Dict, Generator, List, Union
+
+from ...extras.constants import PEFT_METHODS
 from ...extras.misc import torch_gc
 from ...extras.packages import is_gradio_available
 from ...train.tuner import export_model
@@ -20,12 +35,19 @@ if TYPE_CHECKING:
 GPTQ_BITS = ["8", "4", "3", "2"]
 
 
+def can_quantize(checkpoint_path: Union[str, List[str]]) -> "gr.Dropdown":
+    if isinstance(checkpoint_path, list) and len(checkpoint_path) != 0:
+        return gr.Dropdown(value="none", interactive=False)
+    else:
+        return gr.Dropdown(interactive=True)
+
+
 def save_model(
     lang: str,
     model_name: str,
     model_path: str,
-    adapter_path: List[str],
     finetuning_type: str,
+    checkpoint_path: Union[str, List[str]],
     template: str,
     visual_inputs: bool,
     export_size: int,
@@ -45,9 +67,9 @@ def save_model(
         error = ALERTS["err_no_export_dir"][lang]
     elif export_quantization_bit in GPTQ_BITS and not export_quantization_dataset:
         error = ALERTS["err_no_dataset"][lang]
-    elif export_quantization_bit not in GPTQ_BITS and not adapter_path:
+    elif export_quantization_bit not in GPTQ_BITS and not checkpoint_path:
         error = ALERTS["err_no_adapter"][lang]
-    elif export_quantization_bit in GPTQ_BITS and adapter_path:
+    elif export_quantization_bit in GPTQ_BITS and isinstance(checkpoint_path, list):
         error = ALERTS["err_gptq_lora"][lang]
 
     if error:
@@ -55,16 +77,8 @@ def save_model(
         yield error
         return
 
-    if adapter_path:
-        adapter_name_or_path = ",".join(
-            [get_save_dir(model_name, finetuning_type, adapter) for adapter in adapter_path]
-        )
-    else:
-        adapter_name_or_path = None
-
     args = dict(
         model_name_or_path=model_path,
-        adapter_name_or_path=adapter_name_or_path,
         finetuning_type=finetuning_type,
         template=template,
         visual_inputs=visual_inputs,
@@ -77,6 +91,14 @@ def save_model(
         export_legacy_format=export_legacy_format,
     )
 
+    if checkpoint_path:
+        if finetuning_type in PEFT_METHODS:  # list
+            args["adapter_name_or_path"] = ",".join(
+                [get_save_dir(model_name, finetuning_type, adapter) for adapter in checkpoint_path]
+            )
+        else:  # str
+            args["model_name_or_path"] = get_save_dir(model_name, finetuning_type, checkpoint_path)
+
     yield ALERTS["info_exporting"][lang]
     export_model(args)
     torch_gc()
@@ -86,14 +108,17 @@ def save_model(
 def create_export_tab(engine: "Engine") -> Dict[str, "Component"]:
     with gr.Row():
         export_size = gr.Slider(minimum=1, maximum=100, value=1, step=1)
-        export_quantization_bit = gr.Dropdown(choices=["none", "8", "4", "3", "2"], value="none")
+        export_quantization_bit = gr.Dropdown(choices=["none"] + GPTQ_BITS, value="none")
         export_quantization_dataset = gr.Textbox(value="data/c4_demo.json")
-        export_device = gr.Radio(choices=["cpu", "cuda"], value="cpu")
+        export_device = gr.Radio(choices=["cpu", "auto"], value="cpu")
         export_legacy_format = gr.Checkbox()
 
     with gr.Row():
         export_dir = gr.Textbox()
         export_hub_model_id = gr.Textbox()
+
+    checkpoint_path: gr.Dropdown = engine.manager.get_elem_by_id("top.checkpoint_path")
+    checkpoint_path.change(can_quantize, [checkpoint_path], [export_quantization_bit], queue=False)
 
     export_btn = gr.Button()
     info_box = gr.Textbox(show_label=False, interactive=False)
@@ -104,8 +129,8 @@ def create_export_tab(engine: "Engine") -> Dict[str, "Component"]:
             engine.manager.get_elem_by_id("top.lang"),
             engine.manager.get_elem_by_id("top.model_name"),
             engine.manager.get_elem_by_id("top.model_path"),
-            engine.manager.get_elem_by_id("top.adapter_path"),
             engine.manager.get_elem_by_id("top.finetuning_type"),
+            engine.manager.get_elem_by_id("top.checkpoint_path"),
             engine.manager.get_elem_by_id("top.template"),
             engine.manager.get_elem_by_id("top.visual_inputs"),
             export_size,

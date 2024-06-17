@@ -1,19 +1,37 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import uuid
 from typing import TYPE_CHECKING, AsyncGenerator, AsyncIterator, Dict, List, Optional, Sequence, Union
 
 from ..data import get_template_and_fix_tokenizer
 from ..extras.logging import get_logger
-from ..extras.misc import get_device_count, infer_optim_dtype
-from ..extras.packages import is_vllm_available
+from ..extras.misc import get_device_count
+from ..extras.packages import is_vllm_available, is_vllm_version_greater_than_0_5
 from ..model import load_config, load_tokenizer
-from ..model.utils.visual import LlavaMultiModalProjectorForYiVLForVLLM
+from ..model.model_utils.visual import LlavaMultiModalProjectorForYiVLForVLLM
 from .base_engine import BaseEngine, Response
 
 
 if is_vllm_available():
     from vllm import AsyncEngineArgs, AsyncLLMEngine, RequestOutput, SamplingParams
     from vllm.lora.request import LoRARequest
-    from vllm.sequence import MultiModalData
+
+    if is_vllm_version_greater_than_0_5():
+        from vllm.multimodal.image import ImagePixelData
+    else:
+        from vllm.sequence import MultiModalData
 
 
 if TYPE_CHECKING:
@@ -35,8 +53,6 @@ class VllmEngine(BaseEngine):
         generating_args: "GeneratingArguments",
     ) -> None:
         config = load_config(model_args)  # may download model from ms hub
-        infer_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
-        infer_dtype = str(infer_dtype).split(".")[-1]
 
         self.can_generate = finetuning_args.stage == "sft"
         tokenizer_module = load_tokenizer(model_args)
@@ -50,7 +66,7 @@ class VllmEngine(BaseEngine):
             "model": model_args.model_name_or_path,
             "trust_remote_code": True,
             "download_dir": model_args.cache_dir,
-            "dtype": infer_dtype,
+            "dtype": model_args.infer_dtype,
             "max_model_len": model_args.vllm_maxlen,
             "tensor_parallel_size": get_device_count() or 1,
             "gpu_memory_utilization": model_args.vllm_gpu_util,
@@ -70,7 +86,6 @@ class VllmEngine(BaseEngine):
             engine_args["image_input_shape"] = "1,3,{},{}".format(image_size, image_size)
             engine_args["image_feature_size"] = self.image_feature_size
             if getattr(config, "is_yi_vl_derived_model", None):
-                # bug in vllm 0.4.2, see: https://github.com/vllm-project/vllm/pull/4828
                 import vllm.model_executor.models.llava
 
                 logger.info("Detected Yi-VL model, applying projector patch.")
@@ -109,7 +124,10 @@ class VllmEngine(BaseEngine):
         if self.processor is not None and image is not None:  # add image features
             image_processor: "BaseImageProcessor" = getattr(self.processor, "image_processor")
             pixel_values = image_processor(image, return_tensors="pt")["pixel_values"]
-            multi_modal_data = MultiModalData(type=MultiModalData.Type.IMAGE, data=pixel_values)
+            if is_vllm_version_greater_than_0_5():
+                multi_modal_data = ImagePixelData(image=pixel_values)
+            else:  # TODO: remove vllm 0.4.3 support
+                multi_modal_data = MultiModalData(type=MultiModalData.Type.IMAGE, data=pixel_values)
         else:
             multi_modal_data = None
 
@@ -158,12 +176,10 @@ class VllmEngine(BaseEngine):
         )
 
         result_generator = self.model.generate(
-            prompt=None,
+            inputs={"prompt_token_ids": prompt_ids, "multi_modal_data": multi_modal_data},
             sampling_params=sampling_params,
             request_id=request_id,
-            prompt_token_ids=prompt_ids,
             lora_request=self.lora_request,
-            multi_modal_data=multi_modal_data,
         )
         return result_generator
 
