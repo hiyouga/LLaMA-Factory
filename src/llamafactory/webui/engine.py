@@ -1,11 +1,25 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from typing import TYPE_CHECKING, Any, Dict
 
 from .chatter import WebChatModel
-from .common import get_model_path, list_dataset, load_config
+from .common import load_config
 from .locales import LOCALES
 from .manager import Manager
 from .runner import Runner
-from .utils import get_time
+from .utils import create_ds_config, get_time
 
 
 if TYPE_CHECKING:
@@ -19,6 +33,8 @@ class Engine:
         self.manager = Manager()
         self.runner = Runner(self.manager, demo_mode)
         self.chatter = WebChatModel(self.manager, demo_mode, lazy_init=(not pure_chat))
+        if not demo_mode:
+            create_ds_config()
 
     def _update_component(self, input_dict: Dict[str, Dict[str, Any]]) -> Dict["Component", "Component"]:
         r"""
@@ -38,16 +54,15 @@ class Engine:
         init_dict = {"top.lang": {"value": lang}, "infer.chat_box": {"visible": self.chatter.loaded}}
 
         if not self.pure_chat:
-            init_dict["train.dataset"] = {"choices": list_dataset().choices}
-            init_dict["eval.dataset"] = {"choices": list_dataset().choices}
-            init_dict["train.output_dir"] = {"value": "train_{}".format(get_time())}
-            init_dict["train.config_path"] = {"value": "{}.yaml".format(get_time())}
-            init_dict["eval.output_dir"] = {"value": "eval_{}".format(get_time())}
+            current_time = get_time()
+            init_dict["train.current_time"] = {"value": current_time}
+            init_dict["train.output_dir"] = {"value": "train_{}".format(current_time)}
+            init_dict["train.config_path"] = {"value": "{}.yaml".format(current_time)}
+            init_dict["eval.output_dir"] = {"value": "eval_{}".format(current_time)}
             init_dict["infer.image_box"] = {"visible": False}
 
             if user_config.get("last_model", None):
                 init_dict["top.model_name"] = {"value": user_config["last_model"]}
-                init_dict["top.model_path"] = {"value": get_model_path(user_config["last_model"])}
 
         yield self._update_component(init_dict)
 

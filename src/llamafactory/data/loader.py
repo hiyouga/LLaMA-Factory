@@ -1,24 +1,38 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import inspect
 import os
 import sys
 from typing import TYPE_CHECKING, Literal, Optional, Union
 
+import numpy as np
 from datasets import load_dataset, load_from_disk
 
 from ..extras.constants import FILEEXT2TYPE
 from ..extras.logging import get_logger
 from ..extras.misc import has_tokenized_data
 from .aligner import align_dataset
+from .data_utils import merge_dataset
 from .parser import get_dataset_list
 from .preprocess import get_preprocess_and_print_func
 from .template import get_template_and_fix_tokenizer
-from .utils import merge_dataset
 
 
 if TYPE_CHECKING:
     from datasets import Dataset, IterableDataset
-    from transformers import ProcessorMixin, Seq2SeqTrainingArguments
-    from transformers.tokenization_utils import PreTrainedTokenizer
+    from transformers import PreTrainedTokenizer, ProcessorMixin, Seq2SeqTrainingArguments
 
     from ..hparams import DataArguments, ModelArguments
     from .parser import DatasetAttr
@@ -31,6 +45,7 @@ def load_single_dataset(
     dataset_attr: "DatasetAttr",
     model_args: "ModelArguments",
     data_args: "DataArguments",
+    training_args: "Seq2SeqTrainingArguments",
 ) -> Union["Dataset", "IterableDataset"]:
     logger.info("Loading dataset {}...".format(dataset_attr))
     data_path, data_name, data_dir, data_files = None, None, None, None
@@ -61,9 +76,9 @@ def load_single_dataset(
             raise ValueError("File {} not found.".format(local_path))
 
         if data_path is None:
-            raise ValueError("File extension must be txt, csv, json or jsonl.")
+            raise ValueError("Allowed file types: {}.".format(",".join(FILEEXT2TYPE.keys())))
     else:
-        raise NotImplementedError
+        raise NotImplementedError("Unknown load type: {}.".format(dataset_attr.load_from))
 
     if dataset_attr.load_from == "ms_hub":
         try:
@@ -106,18 +121,30 @@ def load_single_dataset(
     if data_args.streaming and (dataset_attr.load_from == "file"):  # faster than specifying streaming=True
         dataset = dataset.to_iterable_dataset()  # TODO: add num shards parameter
 
-    if data_args.max_samples is not None:  # truncate dataset
-        num_samples = min(data_args.max_samples, len(dataset))
-        dataset = dataset.select(range(num_samples))
+    if dataset_attr.num_samples is not None and not data_args.streaming:
+        target_num = dataset_attr.num_samples
+        indexes = np.random.permutation(len(dataset))[:target_num]
+        target_num -= len(indexes)
+        if target_num > 0:
+            expand_indexes = np.random.choice(len(dataset), target_num)
+            indexes = np.concatenate((indexes, expand_indexes), axis=0)
 
-    return align_dataset(dataset, dataset_attr, data_args)
+        assert len(indexes) == dataset_attr.num_samples, "Sample num mismatched."
+        dataset = dataset.select(indexes)
+        logger.info("Sampled {} examples from dataset {}.".format(dataset_attr.num_samples, dataset_attr))
+
+    if data_args.max_samples is not None:  # truncate dataset
+        max_samples = min(data_args.max_samples, len(dataset))
+        dataset = dataset.select(range(max_samples))
+
+    return align_dataset(dataset, dataset_attr, data_args, training_args)
 
 
 def get_dataset(
     model_args: "ModelArguments",
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
-    stage: Literal["pt", "sft", "rm", "kto"],
+    stage: Literal["pt", "sft", "rm", "ppo", "kto"],
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"] = None,
 ) -> Union["Dataset", "IterableDataset"]:
@@ -144,7 +171,8 @@ def get_dataset(
             if (stage == "rm" and dataset_attr.ranking is False) or (stage != "rm" and dataset_attr.ranking is True):
                 raise ValueError("The dataset is not applicable in the current training stage.")
 
-            all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args))
+            all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args, training_args))
+
         dataset = merge_dataset(all_datasets, data_args, training_args)
 
     with training_args.main_process_first(desc="pre-process dataset"):
@@ -156,7 +184,7 @@ def get_dataset(
         if not data_args.streaming:
             kwargs = dict(
                 num_proc=data_args.preprocessing_num_workers,
-                load_from_cache_file=(not data_args.overwrite_cache),
+                load_from_cache_file=(not data_args.overwrite_cache) or (training_args.local_process_index != 0),
                 desc="Running tokenizer on dataset",
             )
 
@@ -166,7 +194,7 @@ def get_dataset(
             if training_args.should_save:
                 dataset.save_to_disk(data_args.tokenized_path)
                 logger.info("Tokenized dataset saved at {}.".format(data_args.tokenized_path))
-                logger.info("Please restart the training with `--tokenized_path {}`.".format(data_args.tokenized_path))
+                logger.info("Please restart the training with `tokenized_path: {}`.".format(data_args.tokenized_path))
 
             sys.exit(0)
 

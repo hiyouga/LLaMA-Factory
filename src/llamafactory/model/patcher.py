@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
 from types import MethodType
 from typing import TYPE_CHECKING, Any, Dict
@@ -10,15 +24,15 @@ from transformers.modeling_utils import is_fsdp_enabled
 
 from ..extras.logging import get_logger
 from ..extras.misc import infer_optim_dtype
-from .utils.attention import configure_attn_implementation, print_attn_implementation
-from .utils.checkpointing import prepare_model_for_training
-from .utils.embedding import resize_embedding_layer
-from .utils.longlora import configure_longlora
-from .utils.moe import add_z3_leaf_module, configure_moe
-from .utils.quantization import configure_quantization
-from .utils.rope import configure_rope
-from .utils.valuehead import prepare_valuehead_model
-from .utils.visual import autocast_projector_dtype, configure_visual_model
+from .model_utils.attention import configure_attn_implementation, print_attn_implementation
+from .model_utils.checkpointing import prepare_model_for_training
+from .model_utils.embedding import resize_embedding_layer
+from .model_utils.longlora import configure_longlora
+from .model_utils.moe import add_z3_leaf_module, configure_moe
+from .model_utils.quantization import configure_quantization
+from .model_utils.rope import configure_rope
+from .model_utils.valuehead import prepare_valuehead_model
+from .model_utils.visual import autocast_projector_dtype, configure_visual_model
 
 
 if TYPE_CHECKING:
@@ -44,7 +58,10 @@ def patch_config(
     is_trainable: bool,
 ) -> None:
     if model_args.compute_dtype is None:  # priority: bf16 > fp16 > fp32
-        model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
+        if model_args.infer_dtype == "auto":
+            model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
+        else:
+            model_args.compute_dtype = getattr(torch, model_args.infer_dtype)
 
     if is_torch_npu_available():
         use_jit_compile = os.environ.get("JIT_COMPILE", "0").lower() in ["true", "1"]
@@ -79,7 +96,7 @@ def patch_config(
             if "device_map" not in init_kwargs and model_args.device_map:
                 init_kwargs["device_map"] = model_args.device_map
 
-            if init_kwargs["device_map"] == "auto":
+            if init_kwargs.get("device_map", None) == "auto":
                 init_kwargs["offload_folder"] = model_args.offload_folder
 
 
