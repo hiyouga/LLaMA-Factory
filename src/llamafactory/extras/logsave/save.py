@@ -29,6 +29,9 @@ saver: Optional[LogSaver] = None
 
 def save_logs(log_entries: dict):
     global saver
+    task_id = os.environ.get('TASK_ID')
+    if not task_id:
+        return
     try:
         if saver is None:
             saver = LogSaver()
