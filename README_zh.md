@@ -481,7 +481,7 @@ export USE_MODELSCOPE_HUB=1 # Windows 使用 `set USE_MODELSCOPE_HUB=1`
 
 ### 使用 W&B 面板
 
-若要使用 [Weights & Biases](https://wandb.ai) 记录实验数据，请添加下面的参数。
+若要使用 [Weights & Biases](https://wandb.ai) 记录实验数据，请在 yaml 文件中添加下面的参数。
 
 ```yaml
 report_to: wandb
