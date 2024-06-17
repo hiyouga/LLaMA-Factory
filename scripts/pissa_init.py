@@ -68,11 +68,14 @@ def quantize_pissa(
     tokenizer.save_pretrained(output_dir)
     print("Model weights saved in {}".format(output_dir))
 
-    print("Fine-tune this model with:")
+    print("- Fine-tune this model with:")
     print("model_name_or_path: {}".format(output_dir))
     print("adapter_name_or_path: {}".format(pissa_dir))
     print("finetuning_type: lora")
+    print("pissa_init: false")
     print("pissa_convert: true")
+    print("- and optionally with:")
+    print("quantization_bit: 4")
 
 
 if __name__ == "__main__":
