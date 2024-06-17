@@ -50,7 +50,7 @@ def quantize_pissa(
         lora_alpha=lora_alpha if lora_alpha is not None else lora_rank * 2,
         lora_dropout=lora_dropout,
         target_modules=[name.strip() for name in lora_target.split(",")],
-        init_lora_weights="pissa" if pissa_iter == -1 else "pissa_niter_{}".format(pissa_iter)
+        init_lora_weights="pissa" if pissa_iter == -1 else "pissa_niter_{}".format(pissa_iter),
     )
 
     # Init PiSSA model
