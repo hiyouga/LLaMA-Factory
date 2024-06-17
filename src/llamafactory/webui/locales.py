@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 LOCALES = {
     "lang": {
         "en": {
@@ -716,6 +730,20 @@ LOCALES = {
         "zh": {
             "label": "使用 DoRA",
             "info": "使用权重分解的 LoRA。",
+        },
+    },
+    "use_pissa": {
+        "en": {
+            "label": "Use PiSSA",
+            "info": "Use PiSSA method.",
+        },
+        "ru": {
+            "label": "используйте PiSSA",
+            "info": "Используйте метод PiSSA.",
+        },
+        "zh": {
+            "label": "使用 PiSSA",
+            "info": "使用 PiSSA 方法。",
         },
     },
     "lora_target": {

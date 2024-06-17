@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
 from copy import deepcopy
 from subprocess import Popen, TimeoutExpired
@@ -159,6 +173,8 @@ class Runner:
             args["create_new_adapter"] = get("train.create_new_adapter")
             args["use_rslora"] = get("train.use_rslora")
             args["use_dora"] = get("train.use_dora")
+            args["pissa_init"] = get("train.use_pissa")
+            args["pissa_convert"] = get("train.use_pissa")
             args["lora_target"] = get("train.lora_target") or "all"
             args["additional_target"] = get("train.additional_target") or None
 

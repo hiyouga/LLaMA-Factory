@@ -6,10 +6,7 @@ stage: sft
 do_train: true
 finetuning_type: lora
 lora_target: all
-
-### ddp
-ddp_timeout: 180000000
-deepspeed: examples/deepspeed/ds_z0_config.json
+deepspeed: examples/deepspeed/ds_z3_config.json
 
 ### dataset
 dataset: identity,alpaca_en_demo
@@ -34,6 +31,7 @@ num_train_epochs: 3.0
 lr_scheduler_type: cosine
 warmup_ratio: 0.1
 fp16: true
+ddp_timeout: 180000000
 
 ### eval
 val_size: 0.1

@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
 from types import MethodType
 from typing import TYPE_CHECKING, Any, Dict
@@ -44,7 +58,10 @@ def patch_config(
     is_trainable: bool,
 ) -> None:
     if model_args.compute_dtype is None:  # priority: bf16 > fp16 > fp32
-        model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
+        if model_args.infer_dtype == "auto":
+            model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
+        else:
+            model_args.compute_dtype = getattr(torch, model_args.infer_dtype)
 
     if is_torch_npu_available():
         use_jit_compile = os.environ.get("JIT_COMPILE", "0").lower() in ["true", "1"]
@@ -72,14 +89,17 @@ def patch_config(
     # deepspeed zero3 is not compatible with low_cpu_mem_usage
     init_kwargs["low_cpu_mem_usage"] = model_args.low_cpu_mem_usage and (not is_deepspeed_zero3_enabled())
 
-    if not is_deepspeed_zero3_enabled() and not is_fsdp_enabled():  # cast dtype and device if not use zero3 or fsdp
+    # cast data type of the model if:
+    # 1. not deepspeed zero3 and not fsdp (keep zero3 or fsdp in float32)
+    # 2. fsdp + qlora
+    if model_args.quantization_bit is not None or (not is_deepspeed_zero3_enabled() and not is_fsdp_enabled()):
         init_kwargs["torch_dtype"] = model_args.compute_dtype
 
         if init_kwargs["low_cpu_mem_usage"]:  # device map requires low_cpu_mem_usage=True
             if "device_map" not in init_kwargs and model_args.device_map:
                 init_kwargs["device_map"] = model_args.device_map
 
-            if init_kwargs["device_map"] == "auto":
+            if init_kwargs.get("device_map", None) == "auto":
                 init_kwargs["offload_folder"] = model_args.offload_folder
 
 

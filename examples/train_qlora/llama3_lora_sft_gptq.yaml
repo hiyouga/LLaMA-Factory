@@ -1,9 +1,8 @@
 ### model
-model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
-reward_model: saves/llama3-8b/lora/reward
+model_name_or_path: TechxGenus/Meta-Llama-3-8B-Instruct-GPTQ
 
 ### method
-stage: ppo
+stage: sft
 do_train: true
 finetuning_type: lora
 lora_target: all
@@ -17,7 +16,7 @@ overwrite_cache: true
 preprocessing_num_workers: 16
 
 ### output
-output_dir: saves/llama3-8b/lora/ppo
+output_dir: saves/llama3-8b/lora/sft
 logging_steps: 10
 save_steps: 500
 plot_loss: true
@@ -26,13 +25,15 @@ overwrite_output_dir: true
 ### train
 per_device_train_batch_size: 1
 gradient_accumulation_steps: 8
-learning_rate: 1.0e-5
+learning_rate: 1.0e-4
 num_train_epochs: 3.0
 lr_scheduler_type: cosine
 warmup_ratio: 0.1
 fp16: true
+ddp_timeout: 180000000
 
-### generate
-max_new_tokens: 512
-top_k: 0
-top_p: 0.9
+### eval
+val_size: 0.1
+per_device_eval_batch_size: 1
+eval_strategy: steps
+eval_steps: 500

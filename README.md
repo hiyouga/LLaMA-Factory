@@ -49,7 +49,7 @@ Choose your path:
 - **Various models**: LLaMA, LLaVA, Mistral, Mixtral-MoE, Qwen, Yi, Gemma, Baichuan, ChatGLM, Phi, etc.
 - **Integrated methods**: (Continuous) pre-training, (multimodal) supervised fine-tuning, reward modeling, PPO, DPO, KTO, ORPO, etc.
 - **Scalable resources**: 32-bit full-tuning, 16-bit freeze-tuning, 16-bit LoRA and 2/4/8-bit QLoRA via AQLM/AWQ/GPTQ/LLM.int8.
-- **Advanced algorithms**: GaLore, BAdam, DoRA, LongLoRA, LLaMA Pro, Mixture-of-Depths, LoRA+, LoftQ and Agent tuning.
+- **Advanced algorithms**: GaLore, BAdam, DoRA, LongLoRA, LLaMA Pro, Mixture-of-Depths, LoRA+, LoftQ, PiSSA and Agent tuning.
 - **Practical tricks**: FlashAttention-2, Unsloth, RoPE scaling, NEFTune and rsLoRA.
 - **Experiment monitors**: LlamaBoard, TensorBoard, Wandb, MLflow, etc.
 - **Faster inference**: OpenAI-style API, Gradio UI and CLI with vLLM worker.
@@ -71,9 +71,9 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 ## Changelog
 
-[24/06/07] We supported fine-tuning the **[Qwen-2](https://qwenlm.github.io/blog/qwen2/)** series models.
+[24/06/16] We support **[PiSSA](https://arxiv.org/abs/2404.02948)** algorithm. See [examples](examples/README.md) for usage.
 
-[24/06/05] We supported fine-tuning the **[GLM-4-9B/GLM-4-9B-Chat](https://github.com/THUDM/GLM-4)** models.
+[24/06/07] We supported fine-tuning the **[Qwen2](https://qwenlm.github.io/blog/qwen2/)** and **[GLM-4](https://github.com/THUDM/GLM-4)** models.
 
 [24/05/26] We supported **[SimPO](https://arxiv.org/abs/2405.14734)** algorithm for preference learning. See [examples](examples/README.md) for usage.
 
@@ -259,6 +259,7 @@ You also can add a custom chat template to [template.py](src/llamafactory/data/t
 - [Cosmopedia (en)](https://huggingface.co/datasets/HuggingFaceTB/cosmopedia)
 - [STEM (zh)](https://huggingface.co/datasets/hfl/stem_zh_instruction)
 - [Ruozhiba (zh)](https://huggingface.co/datasets/hfl/ruozhiba_gpt4_turbo)
+- [Neo-sft (zh)](https://huggingface.co/datasets/m-a-p/neo_sft_phase2)
 - [LLaVA mixed (en&zh)](https://huggingface.co/datasets/BUAADreamer/llava-en-zh-300k)
 - [Open Assistant (de)](https://huggingface.co/datasets/mayflowergmbh/oasst_de)
 - [Dolly 15k (de)](https://huggingface.co/datasets/mayflowergmbh/dolly-15k_de)
@@ -405,7 +406,7 @@ Please refer to [data/README.md](data/README.md) for checking the details about 
 Use the following 3 commands to run LoRA **fine-tuning**, **inference** and **merging** of the Llama3-8B-Instruct model, respectively.
 
 ```bash
-llamafactory-cli train examples/lora_single_gpu/llama3_lora_sft.yaml
+llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
 llamafactory-cli chat examples/inference/llama3_lora_sft.yaml
 llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
 ```
@@ -422,6 +423,8 @@ llamafactory-cli webui
 ```
 
 ### Build Docker
+
+#### Use Docker
 
 ```bash
 docker build -f ./Dockerfile \
@@ -442,8 +445,12 @@ docker run -it --gpus=all \
     llamafactory:latest
 ```
 
-> [!TIP]
-> Use Docker Compose to build image via `docker compose up -d`.
+#### Use Docker Compose
+
+```bash
+docker-compose up -d
+docker-compose exec llamafactory bash
+```
 
 <details><summary>Details about volume</summary>
 
@@ -456,7 +463,7 @@ docker run -it --gpus=all \
 ### Deploy with OpenAI-style API and vLLM
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 llamafactory-cli api examples/inference/llama3_vllm.yaml
+API_PORT=8000 llamafactory-cli api examples/inference/llama3_vllm.yaml
 ```
 
 > [!TIP]
@@ -474,7 +481,7 @@ Train the model by specifying a model ID of the ModelScope Hub as the `model_nam
 
 ### Use W&B Logger
 
-To use [Weights & Biases](https://wandb.ai) for logging experimental results, you need to add the following arguments.
+To use [Weights & Biases](https://wandb.ai) for logging experimental results, you need to add the following arguments to yaml files.
 
 ```yaml
 report_to: wandb

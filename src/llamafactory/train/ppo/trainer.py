@@ -1,6 +1,24 @@
+# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+#
+# This code is inspired by the HuggingFace's TRL library.
+# https://github.com/huggingface/trl/blob/v0.8.0/trl/trainer/ppo_trainer.py
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import math
 import os
 import sys
+import warnings
 from types import MethodType
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
@@ -134,8 +152,8 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         unwrapped_model: "AutoModelForCausalLMWithValueHead" = self.accelerator.unwrap_model(self.model)
         self.is_chatglm_model = getattr(unwrapped_model.config, "model_type", None) == "chatglm"
 
-        device_type = unwrapped_model.pretrained_model.device.type
-        self.amp_context = torch.autocast(device_type, dtype=model_args.compute_dtype)
+        self.amp_context = torch.autocast(self.current_device.type, dtype=self.model_args.compute_dtype)
+        warnings.simplefilter("ignore")  # remove gc warnings on ref model
 
         if finetuning_args.reward_model_type == "full":
             if self.is_deepspeed_enabled:

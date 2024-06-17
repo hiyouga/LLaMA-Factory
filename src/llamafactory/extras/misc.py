@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import gc
 import os
 from typing import TYPE_CHECKING, Dict, Tuple
@@ -8,6 +22,7 @@ from transformers import InfNanRemoveLogitsProcessor, LogitsProcessorList, PreTr
 from transformers.utils import (
     SAFE_WEIGHTS_NAME,
     WEIGHTS_NAME,
+    is_safetensors_available,
     is_torch_bf16_gpu_available,
     is_torch_cuda_available,
     is_torch_mps_available,
@@ -18,6 +33,11 @@ from transformers.utils.versions import require_version
 
 from .constants import V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
 from .logging import get_logger
+
+
+if is_safetensors_available():
+    from safetensors import safe_open
+    from safetensors.torch import save_file
 
 
 _is_fp16_available = is_torch_npu_available() or is_torch_cuda_available()
@@ -114,9 +134,6 @@ def fix_valuehead_checkpoint(
         return
 
     if safe_serialization:
-        from safetensors import safe_open
-        from safetensors.torch import save_file
-
         path_to_checkpoint = os.path.join(output_dir, SAFE_WEIGHTS_NAME)
         with safe_open(path_to_checkpoint, framework="pt", device="cpu") as f:
             state_dict: Dict[str, torch.Tensor] = {key: f.get_tensor(key) for key in f.keys()}

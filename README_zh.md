@@ -49,7 +49,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 - **多种模型**：LLaMA、LLaVA、Mistral、Mixtral-MoE、Qwen、Yi、Gemma、Baichuan、ChatGLM、Phi 等等。
 - **集成方法**：（增量）预训练、（多模态）指令监督微调、奖励模型训练、PPO 训练、DPO 训练、KTO 训练、ORPO 训练等等。
 - **多种精度**：32 比特全参数微调、16 比特冻结微调、16 比特 LoRA 微调和基于 AQLM/AWQ/GPTQ/LLM.int8 的 2/4/8 比特 QLoRA 微调。
-- **先进算法**：GaLore、BAdam、DoRA、LongLoRA、LLaMA Pro、Mixture-of-Depths、LoRA+、LoftQ 和 Agent 微调。
+- **先进算法**：GaLore、BAdam、DoRA、LongLoRA、LLaMA Pro、Mixture-of-Depths、LoRA+、LoftQ、PiSSA 和 Agent 微调。
 - **实用技巧**：FlashAttention-2、Unsloth、RoPE scaling、NEFTune 和 rsLoRA。
 - **实验监控**：LlamaBoard、TensorBoard、Wandb、MLflow 等等。
 - **极速推理**：基于 vLLM 的 OpenAI 风格 API、浏览器界面和命令行接口。
@@ -71,9 +71,9 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 
 ## 更新日志
 
-[24/06/07] 我们支持了 **[Qwen-2](https://qwenlm.github.io/blog/qwen2/)** 系列模型的微调。
+[24/06/16] 我们支持了 **[PiSSA](https://arxiv.org/abs/2404.02948)** 算法。详细用法请参照 [examples](examples/README_zh.md)。
 
-[24/06/05] 我们支持了 **[GLM-4-9B/GLM-4-9B-Chat](https://github.com/THUDM/GLM-4)** 模型的微调。
+[24/06/07] 我们支持了 **[Qwen2](https://qwenlm.github.io/blog/qwen2/)** 和 **[GLM-4](https://github.com/THUDM/GLM-4)** 模型的微调。
 
 [24/05/26] 我们支持了 **[SimPO](https://arxiv.org/abs/2405.14734)** 偏好对齐算法。详细用法请参照 [examples](examples/README_zh.md)。
 
@@ -259,6 +259,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 - [Cosmopedia (en)](https://huggingface.co/datasets/HuggingFaceTB/cosmopedia)
 - [STEM (zh)](https://huggingface.co/datasets/hfl/stem_zh_instruction)
 - [Ruozhiba (zh)](https://huggingface.co/datasets/hfl/ruozhiba_gpt4_turbo)
+- [Neo-sft (zh)](https://huggingface.co/datasets/m-a-p/neo_sft_phase2)
 - [LLaVA mixed (en&zh)](https://huggingface.co/datasets/BUAADreamer/llava-en-zh-300k)
 - [Open Assistant (de)](https://huggingface.co/datasets/mayflowergmbh/oasst_de)
 - [Dolly 15k (de)](https://huggingface.co/datasets/mayflowergmbh/dolly-15k_de)
@@ -405,7 +406,7 @@ Docker 镜像：
 下面三行命令分别对 Llama3-8B-Instruct 模型进行 LoRA **微调**、**推理**和**合并**。
 
 ```bash
-llamafactory-cli train examples/lora_single_gpu/llama3_lora_sft.yaml
+llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
 llamafactory-cli chat examples/inference/llama3_lora_sft.yaml
 llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
 ```
@@ -422,6 +423,8 @@ llamafactory-cli webui
 ```
 
 ### 构建 Docker
+
+#### 使用 Docker
 
 ```bash
 docker build -f ./Dockerfile \
@@ -442,8 +445,12 @@ docker run -it --gpus=all \
     llamafactory:latest
 ```
 
-> [!TIP]
-> 通过 `docker compose up -d` 使用 Docker Compose 构建镜像。
+#### 使用 Docker Compose
+
+```bash
+docker-compose up -d
+docker-compose exec llamafactory bash
+```
 
 <details><summary>数据卷详情</summary>
 
@@ -456,7 +463,7 @@ docker run -it --gpus=all \
 ### 利用 vLLM 部署 OpenAI API
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 API_PORT=8000 llamafactory-cli api examples/inference/llama3_vllm.yaml
+API_PORT=8000 llamafactory-cli api examples/inference/llama3_vllm.yaml
 ```
 
 > [!TIP]
@@ -474,7 +481,7 @@ export USE_MODELSCOPE_HUB=1 # Windows 使用 `set USE_MODELSCOPE_HUB=1`
 
 ### 使用 W&B 面板
 
-若要使用 [Weights & Biases](https://wandb.ai) 记录实验数据，请添加下面的参数。
+若要使用 [Weights & Biases](https://wandb.ai) 记录实验数据，请在 yaml 文件中添加下面的参数。
 
 ```yaml
 report_to: wandb

@@ -1,3 +1,20 @@
+# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+#
+# This code is inspired by the HuggingFace's transformers library.
+# https://github.com/huggingface/transformers/blob/v4.40.0/examples/pytorch/language-modeling/run_clm.py
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import logging
 import os
 import sys
@@ -8,6 +25,7 @@ import transformers
 from transformers import HfArgumentParser, Seq2SeqTrainingArguments
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.trainer_utils import get_last_checkpoint
+from transformers.training_args import ParallelMode
 from transformers.utils import is_torch_bf16_gpu_available
 from transformers.utils.versions import require_version
 
@@ -71,6 +89,9 @@ def _verify_model_args(model_args: "ModelArguments", finetuning_args: "Finetunin
     if model_args.quantization_bit is not None:
         if finetuning_args.finetuning_type != "lora":
             raise ValueError("Quantization is only compatible with the LoRA method.")
+
+        if finetuning_args.pissa_init:
+            raise ValueError("Please use scripts/pissa_init.py to initialize PiSSA for a quantized model.")
 
         if model_args.resize_vocab:
             raise ValueError("Cannot resize embedding layers of a quantized model.")
@@ -162,6 +183,9 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     ):
         raise ValueError("PPO only accepts wandb or tensorboard logger.")
 
+    if training_args.parallel_mode == ParallelMode.NOT_DISTRIBUTED:
+        raise ValueError("Please launch distributed training with `llamafactory-cli` or `torchrun`.")
+
     if training_args.max_steps == -1 and data_args.streaming:
         raise ValueError("Please specify `max_steps` in streaming mode.")
 
@@ -170,9 +194,6 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
     if training_args.do_train and model_args.quantization_device_map == "auto":
         raise ValueError("Cannot use device map for quantized models in training.")
-
-    if finetuning_args.use_dora and model_args.use_unsloth:
-        raise ValueError("Unsloth does not support DoRA.")
 
     if finetuning_args.pure_bf16:
         if not is_torch_bf16_gpu_available():
@@ -184,14 +205,14 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if (
         finetuning_args.use_galore
         and finetuning_args.galore_layerwise
-        and training_args.parallel_mode.value == "distributed"
+        and training_args.parallel_mode == ParallelMode.DISTRIBUTED
     ):
         raise ValueError("Distributed training does not support layer-wise GaLore.")
 
     if (
         finetuning_args.use_badam
         and finetuning_args.badam_mode == "layer"
-        and training_args.parallel_mode.value == "distributed"
+        and training_args.parallel_mode == ParallelMode.DISTRIBUTED
     ):
         raise ValueError("Layer-wise BAdam does not yet support distributed training, use ratio-wise BAdam.")
 
@@ -233,7 +254,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
     # Post-process training arguments
     if (
-        training_args.parallel_mode.value == "distributed"
+        training_args.parallel_mode == ParallelMode.DISTRIBUTED
         and training_args.ddp_find_unused_parameters is None
         and finetuning_args.finetuning_type == "lora"
     ):
@@ -293,7 +314,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
             training_args.local_rank,
             training_args.device,
             training_args.n_gpu,
-            training_args.parallel_mode.value == "distributed",
+            training_args.parallel_mode == ParallelMode.DISTRIBUTED,
             str(model_args.compute_dtype),
         )
     )
