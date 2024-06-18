@@ -59,6 +59,13 @@ class HuggingfaceEngine(BaseEngine):
             self.tokenizer, model_args, finetuning_args, is_trainable=False, add_valuehead=(not self.can_generate)
         )  # must after fixing tokenizer to resize vocab
         self.generating_args = generating_args.to_dict()
+        try:
+            asyncio.get_event_loop()
+        except RuntimeError:
+            logger.warning("There is no current event loop, creating a new one.")
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
         self.semaphore = asyncio.Semaphore(int(os.environ.get("MAX_CONCURRENT", "1")))
 
     @staticmethod
