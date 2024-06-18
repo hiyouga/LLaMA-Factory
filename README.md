@@ -260,6 +260,8 @@ You also can add a custom chat template to [template.py](src/llamafactory/data/t
 - [STEM (zh)](https://huggingface.co/datasets/hfl/stem_zh_instruction)
 - [Ruozhiba (zh)](https://huggingface.co/datasets/hfl/ruozhiba_gpt4_turbo)
 - [Neo-sft (zh)](https://huggingface.co/datasets/m-a-p/neo_sft_phase2)
+- [WebInstructSub (en)](https://huggingface.co/datasets/TIGER-Lab/WebInstructSub)
+- [Magpie-Pro-300K-Filtered (en)](https://huggingface.co/datasets/Magpie-Align/Magpie-Pro-300K-Filtered)
 - [LLaVA mixed (en&zh)](https://huggingface.co/datasets/BUAADreamer/llava-en-zh-300k)
 - [Open Assistant (de)](https://huggingface.co/datasets/mayflowergmbh/oasst_de)
 - [Dolly 15k (de)](https://huggingface.co/datasets/mayflowergmbh/dolly-15k_de)
@@ -270,8 +272,6 @@ You also can add a custom chat template to [template.py](src/llamafactory/data/t
 - [Booksum (de)](https://huggingface.co/datasets/mayflowergmbh/booksum_de)
 - [Airoboros (de)](https://huggingface.co/datasets/mayflowergmbh/airoboros-3.0_de)
 - [Ultrachat (de)](https://huggingface.co/datasets/mayflowergmbh/ultra-chat_de)
-- [WebInstructSub (en)](https://huggingface.co/datasets/TIGER-Lab/WebInstructSub)
-- [Magpie-Pro-300K-Filtered (en)](https://huggingface.co/datasets/Magpie-Align/Magpie-Pro-300K-Filtered)
 
 </details>
 
