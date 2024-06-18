@@ -183,9 +183,6 @@ class VllmEngine(BaseEngine):
         )
         return result_generator
 
-    async def start(self) -> None:
-        pass
-
     async def chat(
         self,
         messages: Sequence[Dict[str, str]],
