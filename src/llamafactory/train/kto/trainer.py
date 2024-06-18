@@ -95,6 +95,12 @@ class CustomKTOTrainer(KTOTrainer):
 
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_for_sparse_tensor, self.accelerator)
 
+            if (self.args.deepspeed_plugin is not None
+            and self.args.deepspeed_plugin.zero_stage == 3
+            ):
+                from badam.utils import BAdamZeRO3Callback
+                self.callback_handler.add_callback(BAdamZeRO3Callback)
+
     def create_optimizer(self) -> "torch.optim.Optimizer":
         if self.optimizer is None:
             self.optimizer = create_custom_optimzer(self.model, self.args, self.finetuning_args)
