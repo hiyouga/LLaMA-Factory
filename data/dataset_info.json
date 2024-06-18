@@ -252,6 +252,17 @@
     "hf_hub_url": "m-a-p/neo_sft_phase2",
     "formatting": "sharegpt"
   },
+  "magpie_pro_300k": {
+    "hf_hub_url": "Magpie-Align/Magpie-Pro-300K-Filtered",
+    "formatting": "sharegpt"
+  },
+  "web_instruct": {
+    "hf_hub_url": "TIGER-Lab/WebInstructSub",
+    "columns": {
+      "prompt": "question",
+      "response": "answer"
+    }
+  },
   "llava_1k_en": {
     "hf_hub_url": "BUAADreamer/llava-en-zh-2k",
     "subset": "en",
@@ -550,25 +561,5 @@
       "prompt": "content"
     },
     "folder": "python"
-  },
-  "Magpie-Pro-300K-Filtered": {
-    "hf_hub_url": "Magpie-Align/Magpie-Pro-300K-Filtered",
-    "columns": {
-      "messages": "conversations"
-    },
-    "tags": {
-      "role_tag": "from",
-      "content_tag": "value",
-      "user_tag": "human",
-      "assistant_tag": "gpt"
-    },
-    "formatting": "sharegpt"
-  },
-  "WebInstructSub": {
-    "hf_hub_url": "TIGER-Lab/WebInstructSub",
-    "columns": {
-      "prompt": "question",
-      "response": "answer"
-    }
   }
 }
