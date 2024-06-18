@@ -57,8 +57,13 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
         if finetuning_args.use_badam:
             from badam import clip_grad_norm_for_sparse_tensor
-
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_for_sparse_tensor, self.accelerator)
+
+            if (self.args.deepspeed_plugin is not None
+            and self.args.deepspeed_plugin.zero_stage == 3
+            ):
+                from badam.utils import BAdamZeRO3Callback
+                self.callback_handler.add_callback(BAdamZeRO3Callback)
 
     def create_optimizer(self) -> "torch.optim.Optimizer":
         if self.optimizer is None:
@@ -79,21 +84,6 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
         if self.processor is not None:
             getattr(self.processor, "image_processor").save_pretrained(output_dir)
-
-    def training_step(self, *args, **kwargs):
-        r"""
-        Update the reference to deepspeed optimizer
-        """
-        if self.finetuning_args.use_badam and \
-            self.args.deepspeed_plugin is not None and \
-            self.args.deepspeed_plugin.zero_stage == 3:
-            
-            ds_optim = self.optimizer.optimizer
-            badam_optim = ds_optim.optimizer
-            badam_optim.ds_optimizer = ds_optim
-        
-        return super().training_step(*args, **kwargs)
-            
 
     def prediction_step(
         self,
