@@ -353,6 +353,7 @@ def get_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
 
     if model_args.export_dir is not None and model_args.export_device == "cpu":
         model_args.device_map = {"": torch.device("cpu")}
+        model_args.model_max_length = data_args.cutoff_len
     else:
         model_args.device_map = "auto"
 
