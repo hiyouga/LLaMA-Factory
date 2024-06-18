@@ -49,8 +49,6 @@ class ChatModel:
         self._loop = asyncio.new_event_loop()
         self._thread = Thread(target=_start_background_loop, args=(self._loop,), daemon=True)
         self._thread.start()
-        task = asyncio.run_coroutine_threadsafe(self.engine.start(), self._loop)
-        task.result()
 
     def chat(
         self,
