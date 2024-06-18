@@ -164,11 +164,14 @@ async def create_chat_completion_response(
         else:
             result = response.response_text
 
-        if isinstance(result, tuple):
-            name, arguments = result
-            function = Function(name=name, arguments=arguments)
-            tool_call = FunctionCall(id="call_{}".format(uuid.uuid4().hex), function=function)
-            response_message = ChatCompletionMessage(role=Role.ASSISTANT, tool_calls=[tool_call])
+        if isinstance(result, list):
+            tool_calls = []
+            for tool in result:
+                name, arguments = tool
+                function = Function(name=name, arguments=arguments)
+                tool_call = FunctionCall(id="call_{}".format(uuid.uuid4().hex), function=function)
+                tool_calls.append(tool_call)
+            response_message = ChatCompletionMessage(role=Role.ASSISTANT, tool_calls=tool_calls)
             finish_reason = Finish.TOOL
         else:
             response_message = ChatCompletionMessage(role=Role.ASSISTANT, content=result)
