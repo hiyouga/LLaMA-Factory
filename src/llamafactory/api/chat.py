@@ -92,9 +92,11 @@ def _process_request(
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role")
 
         if message.role == Role.ASSISTANT and isinstance(message.tool_calls, list) and len(message.tool_calls):
-            name = message.tool_calls[0].function.name
-            arguments = message.tool_calls[0].function.arguments
-            content = json.dumps({"name": name, "argument": arguments}, ensure_ascii=False)
+            tool_calls = [
+                {"name": tool_call.function.name, "argument": tool_call.function.arguments}
+                for tool_call in message.tool_calls
+            ]
+            content = json.dumps(tool_calls, ensure_ascii=False)
             input_messages.append({"role": ROLE_MAPPING[Role.FUNCTION], "content": content})
         elif isinstance(message.content, list):
             for input_item in message.content:
@@ -118,7 +120,7 @@ def _process_request(
     if isinstance(tool_list, list) and len(tool_list):
         try:
             tools = json.dumps([dictify(tool.function) for tool in tool_list], ensure_ascii=False)
-        except Exception:
+        except json.JSONDecodeError:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid tools")
     else:
         tools = None
@@ -160,17 +162,16 @@ async def create_chat_completion_response(
     choices = []
     for i, response in enumerate(responses):
         if tools:
-            result = chat_model.engine.template.format_tools.extract(response.response_text)
+            result = chat_model.engine.template.extract_tool(response.response_text)
         else:
             result = response.response_text
 
         if isinstance(result, list):
             tool_calls = []
             for tool in result:
-                name, arguments = tool
-                function = Function(name=name, arguments=arguments)
-                tool_call = FunctionCall(id="call_{}".format(uuid.uuid4().hex), function=function)
-                tool_calls.append(tool_call)
+                function = Function(name=tool[0], arguments=tool[1])
+                tool_calls.append(FunctionCall(id="call_{}".format(uuid.uuid4().hex), function=function))
+
             response_message = ChatCompletionMessage(role=Role.ASSISTANT, tool_calls=tool_calls)
             finish_reason = Finish.TOOL
         else:
