@@ -403,6 +403,18 @@ register_model_group(
             DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V2-Chat",
             DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V2-Chat",
         },
+        "DeepSeek-MoE-Coder-16B-Base": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-Coder-V2-Lite-Base",
+        },
+        "DeepSeek-MoE-Coder-236B-Base": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-Coder-V2-Base",
+        },
+        "DeepSeek-MoE-Coder-16B-Chat": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct",
+        },
+        "DeepSeek-MoE-Coder-236B-Chat": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-Coder-V2-Instruct",
+        },
     },
     template="deepseek",
 )
