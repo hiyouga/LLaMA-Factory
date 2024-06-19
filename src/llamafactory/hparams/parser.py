@@ -215,11 +215,8 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     ):
         if finetuning_args.badam_mode == "ratio":
             raise ValueError("Ratio-wise BAdam does not yet support distributed training, use layer-wise BAdam: --badam_mode layer")
-        if (finetuning_args.badam_mode == "layer"
-            and training_args.deepspeed_plugin is not None
-            and training_args.deepspeed_plugin.zero_stage < 3
-        ):
-            raise ValueError(f"Layer-wise BAdam only supports DeepSpeed ZeRO 3 stage, got stage {training_args.deepspeed_plugin.zero_stage}")
+        if finetuning_args.badam_mode == "layer" and (not is_deepspeed_zero3_enabled()):
+            raise ValueError(f"Layer-wise BAdam only supports DeepSpeed ZeRO 3 stage.")
 
     if (finetuning_args.use_galore) and training_args.deepspeed is not None:
         raise ValueError("GaLore are incompatible with DeepSpeed yet.")
