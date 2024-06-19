@@ -536,6 +536,19 @@ register_model_group(
 
 register_model_group(
     models={
+        "GLM-4v-9B": {
+            DownloadSource.DEFAULT: "THUDM/glm-4v-9b",
+            DownloadSource.MODELSCOPE: "ZhipuAI/glm-4v-9b",
+        }
+    },
+    template="glm4v",
+    vision=True,
+    vision_type="vision_message_embed",
+)
+
+
+register_model_group(
+    models={
         "InternLM-7B": {
             DownloadSource.DEFAULT: "internlm/internlm-7b",
             DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm-7b",

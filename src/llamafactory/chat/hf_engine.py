@@ -62,6 +62,7 @@ class HuggingfaceEngine(BaseEngine):
         self.model = load_model(
             self.tokenizer, model_args, finetuning_args, is_trainable=False, add_valuehead=(not self.can_generate)
         )  # must after fixing tokenizer to resize vocab
+        self.model_args = model_args
         self.generating_args = generating_args.to_dict()
         try:
             asyncio.get_event_loop()
@@ -79,6 +80,7 @@ class HuggingfaceEngine(BaseEngine):
         processor: Optional["ProcessorMixin"],
         template: "Template",
         generating_args: Dict[str, Any],
+        model_args: "ModelArguments",
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
@@ -90,15 +92,17 @@ class HuggingfaceEngine(BaseEngine):
             and image is not None
             and not hasattr(processor, "image_seq_length")
             and template.image_token not in messages[0]["content"]
-            and template.format_image is None
-        ):  # llava-like models
+            and model_args.visual_inputs_type == "vision_tower"
+        ):  
+            # llava-like models
             messages[0]["content"] = template.image_token + messages[0]["content"]
-        # Add image token as vision input
-        if image is not None and template.format_image is not None:
+        elif image is not None and model_args.visual_inputs_type == "vision_token":
+            # Add image pathlike token as vision input
             image_path = pathlib.Path(DEFAULT_CACHE_DIR) / "temp.png"
-            Image.fromarray(image).save(image_path)
-            messages[-1]["role"] = "user_with_image"
-            messages[-1]["image"] = os.fspath(image_path)
+            Image.fromarray(image).convert("RGB").save(image_path)
+            messages[-1]["content"] = template.format_image.apply(content=os.fspath(image_path))[0] + messages[-1]["content"]
+        elif image is not None and model_args.visual_inputs_type == "vision_message_embed":
+            messages[-1]["content"] = template.format_image.apply()[0] + messages[-1]["content"]
 
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or generating_args["default_system"]
@@ -175,6 +179,10 @@ class HuggingfaceEngine(BaseEngine):
             generation_config=GenerationConfig(**generating_args),
             logits_processor=get_logits_processor(),
         )
+        if image is not None and model_args.visual_inputs_type == "vision_message_embed":
+            gen_kwargs["images"] = torch.tensor(tokenizer.apply_chat_template([{"role": "user", "image": Image.fromarray(image).convert("RGB"), "content": ""}],
+                                       add_generation_prompt=True, tokenize=True, return_tensors="pt",
+                                       return_dict=True)["images"],dtype=model_args.compute_dtype,device="cuda")
 
         if pixel_values is not None:
             gen_kwargs["pixel_values"] = pixel_values
@@ -189,6 +197,7 @@ class HuggingfaceEngine(BaseEngine):
         processor: Optional["ProcessorMixin"],
         template: "Template",
         generating_args: Dict[str, Any],
+        model_args: "ModelArguments",
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
@@ -196,7 +205,7 @@ class HuggingfaceEngine(BaseEngine):
         input_kwargs: Optional[Dict[str, Any]] = {},
     ) -> List["Response"]:
         gen_kwargs, prompt_length = HuggingfaceEngine._process_args(
-            model, tokenizer, processor, template, generating_args, messages, system, tools, image, input_kwargs
+            model, tokenizer, processor, template, generating_args, model_args, messages, system, tools, image, input_kwargs
         )
         generate_output = model.generate(**gen_kwargs)
         response_ids = generate_output[:, prompt_length:]
@@ -224,6 +233,7 @@ class HuggingfaceEngine(BaseEngine):
         processor: Optional["ProcessorMixin"],
         template: "Template",
         generating_args: Dict[str, Any],
+        model_args: "ModelArguments",
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
@@ -231,7 +241,7 @@ class HuggingfaceEngine(BaseEngine):
         input_kwargs: Optional[Dict[str, Any]] = {},
     ) -> Callable[[], str]:
         gen_kwargs, _ = HuggingfaceEngine._process_args(
-            model, tokenizer, processor, template, generating_args, messages, system, tools, image, input_kwargs
+            model, tokenizer, processor, template, generating_args, model_args, messages, system, tools, image, input_kwargs
         )
         streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
         gen_kwargs["streamer"] = streamer
@@ -297,6 +307,7 @@ class HuggingfaceEngine(BaseEngine):
             self.processor,
             self.template,
             self.generating_args,
+            self.model_args,
             messages,
             system,
             tools,
@@ -325,6 +336,7 @@ class HuggingfaceEngine(BaseEngine):
             self.processor,
             self.template,
             self.generating_args,
+            self.model_args,
             messages,
             system,
             tools,

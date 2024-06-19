@@ -48,7 +48,7 @@ def create_top() -> Dict[str, "Component"]:
             rope_scaling = gr.Radio(choices=["none", "linear", "dynamic"], value="none", scale=3)
             booster = gr.Radio(choices=["none", "flashattn2", "unsloth"], value="none", scale=3)
             visual_inputs = gr.Checkbox(scale=1)
-            visual_inputs_type = gr.Dropdown(choices=["none", "vision_tower", "vision_token"], value="none", scale=3)
+            visual_inputs_type = gr.Dropdown(choices=["none", "vision_tower", "vision_token", "vision_message_embed"], value="none", scale=3)
 
     model_name.change(get_model_info, [model_name], [model_path, template, visual_inputs, visual_inputs_type], queue=False)
     model_name.input(save_config, inputs=[lang, model_name], queue=False)
