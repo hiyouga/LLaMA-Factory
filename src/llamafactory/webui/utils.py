@@ -33,16 +33,16 @@ if is_gradio_available():
     import gradio as gr
 
 
-def abort_leaf_process(pid: int) -> None:
+def abort_process(pid: int) -> None:
     r"""
-    Aborts the leaf processes.
+    Aborts the processes recursively in a bottom-up way.
     """
     children = psutil.Process(pid).children()
     if children:
         for child in children:
-            abort_leaf_process(child.pid)
-    else:
-        os.kill(pid, signal.SIGABRT)
+            abort_process(child.pid)
+
+    os.kill(pid, signal.SIGABRT)
 
 
 def can_quantize(finetuning_type: str) -> "gr.Dropdown":
