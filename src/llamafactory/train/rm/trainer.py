@@ -72,15 +72,9 @@ class PairwiseTrainer(Trainer):
         self.processor = processor
         self.can_return_loss = True  # override property to return eval_loss
         if finetuning_args.use_badam:
-            from badam import clip_grad_norm_for_sparse_tensor
-
-            self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_for_sparse_tensor, self.accelerator)
-
-            if (self.args.deepspeed_plugin is not None
-            and self.args.deepspeed_plugin.zero_stage == 3
-            ):
-                from badam.utils import BAdamZeRO3Callback
-                self.callback_handler.add_callback(BAdamZeRO3Callback)
+            from badam import clip_grad_norm_old_version, BAdamCallback
+            self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
+            self.callback_handler.add_callback(BAdamCallback)
 
     def create_optimizer(self) -> "torch.optim.Optimizer":
         if self.optimizer is None:
