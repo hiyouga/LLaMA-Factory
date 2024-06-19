@@ -20,15 +20,14 @@ from threading import Thread
 from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import torch
-from transformers import GenerationConfig, TextIteratorStreamer
-
 from PIL import Image
+from transformers import GenerationConfig, TextIteratorStreamer
 
 from ..data import get_template_and_fix_tokenizer
 from ..extras.logging import get_logger
 from ..extras.misc import get_logits_processor
-from ..webui.common import DEFAULT_CACHE_DIR
 from ..model import load_model, load_tokenizer
+from ..webui.common import DEFAULT_CACHE_DIR
 from .base_engine import BaseEngine, Response
 
 
@@ -93,7 +92,7 @@ class HuggingfaceEngine(BaseEngine):
             and not hasattr(processor, "image_seq_length")
             and template.image_token not in messages[0]["content"]
             and model_args.visual_inputs_type == "vision_tower"
-        ):  
+        ):
             # llava-like models
             messages[0]["content"] = template.image_token + messages[0]["content"]
         elif image is not None and model_args.visual_inputs_type == "vision_token":

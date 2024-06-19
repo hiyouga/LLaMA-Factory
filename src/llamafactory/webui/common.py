@@ -149,7 +149,7 @@ def get_visual(model_name: str) -> dict[bool,str]:
     """
     if get_prefix(model_name) in VISION_MODELS:
         return True, VISION_TYPES[get_prefix(model_name)]
-    else: 
+    else:
         return False, "none"
 
 
