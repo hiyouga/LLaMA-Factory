@@ -78,9 +78,7 @@ def _fp32_forward_post_hook(
     return output.to(torch.float32)
 
 
-def prepare_model_for_training(
-    model: "PreTrainedModel", model_args: "ModelArguments", output_layer_name: str = "lm_head"
-) -> None:
+def prepare_model_for_training(model: "PreTrainedModel", model_args: "ModelArguments") -> None:
     r"""
     Includes:
         (1) cast the layernorm in fp32
@@ -104,8 +102,8 @@ def prepare_model_for_training(
             setattr(model.config, "use_cache", False)  # turn off when gradient checkpointing is enabled
             logger.info("Gradient checkpointing enabled.")
 
-    if hasattr(model, output_layer_name) and model_args.upcast_lmhead_output:
-        logger.info("Upcasting lm_head outputs in float32.")
-        output_layer = getattr(model, output_layer_name)
+    if model_args.upcast_lmhead_output:
+        output_layer = model.get_output_embeddings()
         if isinstance(output_layer, torch.nn.Linear) and output_layer.weight.dtype != torch.float32:
+            logger.info("Upcasting lm_head outputs in float32.")
             output_layer.register_forward_hook(_fp32_forward_post_hook)
