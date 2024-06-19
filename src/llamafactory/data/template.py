@@ -338,7 +338,11 @@ def _convert_slots_to_jinja(slots: "SLOTS", tokenizer: "PreTrainedTokenizer", pl
 
 
 def _get_jinja_template(template: "Template", tokenizer: "PreTrainedTokenizer") -> str:
-    jinja_template = _convert_slots_to_jinja(template.format_prefix.apply(), tokenizer)
+    jinja_template = ""
+
+    prefix = _convert_slots_to_jinja(template.format_prefix.apply(), tokenizer)
+    if prefix:
+        jinja_template += "{{ " + prefix + " }}"
 
     if template.default_system:
         jinja_template += "{% set system_message = '" + _jinja_escape(template.default_system) + "' %}"
