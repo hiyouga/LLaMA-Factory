@@ -143,7 +143,8 @@ def load_model(
 
         if model_args.mixture_of_depths == "load":
             model = load_mod_pretrained_model(**init_kwargs)
-        elif model_args.visual_inputs:
+        elif model_args.visual_inputs and model_args.visual_inputs_type == "vision_tower":
+            # If model DO NOT have visual token(e.g. Qwen-VL) and model have visual_inputs then choose this.
             model = AutoModelForVision2Seq.from_pretrained(**init_kwargs)
         elif model_args.train_from_scratch:
             model = AutoModelForCausalLM.from_config(config)

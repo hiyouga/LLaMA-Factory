@@ -117,6 +117,10 @@ class ModelArguments:
         default=False,
         metadata={"help": "Whethor or not to use multimodal LLM that accepts visual inputs."},
     )
+    visual_inputs_type: str = field(
+        default="",
+        metadata={"help": "Type of visual inputs."},
+    )
     moe_aux_loss_coef: Optional[float] = field(
         default=None,
         metadata={"help": "Coefficient of the auxiliary router loss in mixture-of-experts model."},
@@ -235,6 +239,7 @@ class ModelArguments:
         if self.new_special_tokens is not None:  # support multiple special tokens
             self.new_special_tokens = [token.strip() for token in self.new_special_tokens.split(",")]
 
+        assert self.visual_inputs and self.visual_inputs_type, "Must specify visual inputs type while using visual input."
         assert self.quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
         assert self.export_quantization_bit in [None, 8, 4, 3, 2], "We only accept 2/3/4/8-bit quantization."
 

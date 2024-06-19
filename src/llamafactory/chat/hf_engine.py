@@ -15,15 +15,19 @@
 import asyncio
 import concurrent.futures
 import os
+import pathlib
 from threading import Thread
 from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import torch
 from transformers import GenerationConfig, TextIteratorStreamer
 
+from PIL import Image
+
 from ..data import get_template_and_fix_tokenizer
 from ..extras.logging import get_logger
 from ..extras.misc import get_logits_processor
+from ..webui.common import DEFAULT_CACHE_DIR
 from ..model import load_model, load_tokenizer
 from .base_engine import BaseEngine, Response
 
@@ -86,8 +90,15 @@ class HuggingfaceEngine(BaseEngine):
             and image is not None
             and not hasattr(processor, "image_seq_length")
             and template.image_token not in messages[0]["content"]
+            and template.format_image is None
         ):  # llava-like models
             messages[0]["content"] = template.image_token + messages[0]["content"]
+        # Add image token as vision input
+        if image is not None and template.format_image is not None:
+            image_path = pathlib.Path(DEFAULT_CACHE_DIR) / "temp.png"
+            Image.fromarray(image).save(image_path)
+            messages[-1]["role"] = "user_with_image"
+            messages[-1]["image"] = os.fspath(image_path)
 
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or generating_args["default_system"]
@@ -95,7 +106,8 @@ class HuggingfaceEngine(BaseEngine):
         prompt_ids, _ = template.encode_oneturn(
             tokenizer=tokenizer, messages=paired_messages, system=system, tools=tools
         )
-        if processor is not None and image is not None:  # add image features
+        # add image features for vision tower
+        if processor is not None and image is not None and template.format_image is None:
             image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
             batch_feature = image_processor(image, return_tensors="pt")
             pixel_values = batch_feature.to(model.device)["pixel_values"]  # shape (B, C, H, W)

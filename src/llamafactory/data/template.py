@@ -39,6 +39,7 @@ class Template:
     format_tools: "Formatter"
     format_separator: "Formatter"
     format_prefix: "Formatter"
+    format_image: "Formatter"
     default_system: str
     stop_words: List[str]
     image_token: str
@@ -115,6 +116,9 @@ class Template:
                 elements += self.format_separator.apply()
 
             if message["role"] == Role.USER.value:
+                elements += self.format_user.apply(content=message["content"], idx=str(i // 2))
+            elif message["role"] == Role.USER_WITH_IMAGE.value:
+                elements += self.format_image.apply(content=message["image"])
                 elements += self.format_user.apply(content=message["content"], idx=str(i // 2))
             elif message["role"] == Role.ASSISTANT.value:
                 elements += self.format_assistant.apply(content=message["content"])
@@ -239,6 +243,7 @@ def _register_template(
     format_tools: Optional["Formatter"] = None,
     format_separator: Optional["Formatter"] = None,
     format_prefix: Optional["Formatter"] = None,
+    format_image: Optional["Formatter"] = None,
     default_system: str = "",
     stop_words: List[str] = [],
     image_token: str = "<image>",
@@ -290,6 +295,7 @@ def _register_template(
         format_tools=format_tools or default_tool_formatter,
         format_separator=format_separator or default_separator_formatter,
         format_prefix=format_prefix or default_prefix_formatter,
+        format_image=format_image,
         default_system=default_system,
         stop_words=stop_words,
         image_token=image_token,
@@ -823,6 +829,19 @@ _register_template(
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     format_observation=StringFormatter(slots=["<|im_start|>tool\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_separator=EmptyFormatter(slots=["\n"]),
+    default_system="You are a helpful assistant.",
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
+)
+
+
+_register_template(
+    name="qwenvl",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_observation=StringFormatter(slots=["<|im_start|>tool\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    format_image=StringFormatter(slots=["<img>{{content}}</img>"]),
     default_system="You are a helpful assistant.",
     stop_words=["<|im_end|>"],
     replace_eos=True,

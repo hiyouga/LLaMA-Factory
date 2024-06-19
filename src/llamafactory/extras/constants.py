@@ -86,6 +86,8 @@ V_HEAD_SAFE_WEIGHTS_NAME = "value_head.safetensors"
 
 VISION_MODELS = set()
 
+VISION_TYPES = dict()
+
 
 class DownloadSource(str, Enum):
     DEFAULT = "hf"
@@ -96,6 +98,7 @@ def register_model_group(
     models: Dict[str, Dict[DownloadSource, str]],
     template: Optional[str] = None,
     vision: bool = False,
+    vision_type: str = "vision_tower",
 ) -> None:
     prefix = None
     for name, path in models.items():
@@ -108,7 +111,7 @@ def register_model_group(
         DEFAULT_TEMPLATE[prefix] = template
     if vision:
         VISION_MODELS.add(prefix)
-
+        VISION_TYPES[prefix] = vision_type
 
 register_model_group(
     models={
@@ -1201,6 +1204,23 @@ register_model_group(
         },
     },
     template="qwen",
+)
+
+
+register_model_group(
+    models={
+        "Qwen-VL-Chat": {
+            DownloadSource.DEFAULT: "Qwen/Qwen-VL-Chat",
+            DownloadSource.MODELSCOPE: "qwen/Qwen2-0.5B",
+        },
+        "Qwen-VL": {
+            DownloadSource.DEFAULT: "Qwen/Qwen-VL",
+            DownloadSource.MODELSCOPE: "qwen/wen-VL",
+        },
+    },
+    template="qwenvl",
+    vision=True,
+    vision_type="vision_token",
 )
 
 

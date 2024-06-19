@@ -127,7 +127,8 @@ def patch_model(
     if model_args.resize_vocab:
         resize_embedding_layer(model, tokenizer)
 
-    if model_args.visual_inputs:
+    if model_args.visual_inputs and model_args.visual_inputs_type == "vison_tower":
+        # If model DO NOT have visual token(e.g. Qwen-VL) and model have visual_inputs then choose this.
         autocast_projector_dtype(model, model_args)
 
     if is_trainable:
