@@ -68,7 +68,7 @@ def default_tool_formatter(tools: List[Dict[str, Any]]) -> str:
 
 
 def default_tool_extractor(content: str) -> Union[str, List[Tuple[str, str]]]:
-    regex = re.compile(r"Action:\s*([a-zA-Z0-9_]+)\s*Action Input:\s*(.+?)(?=\s*Action:|$)", re.DOTALL)
+    regex = re.compile(r"Action:\s*([a-zA-Z0-9_]+)\s*Action Input:\s*(.+?)(?=\s*Action:|\s*$)", re.DOTALL)
     action_match: List[Tuple[str, str]] = re.findall(regex, content)
     if not action_match:
         return content

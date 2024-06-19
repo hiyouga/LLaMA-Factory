@@ -198,6 +198,7 @@ def convert_pissa_adapter(
                 safe_serialization=training_args.save_safetensors,
             )
             setattr(unwrapped_model.peft_config["default"], "init_lora_weights", init_lora_weights)
+
     elif output_dir == training_args.output_dir:  # at the end of training
         logger.info("Converted PiSSA adapter will be saved at: {}.".format(output_dir))
         unwrapped_model = accelerator.unwrap_model(model)
@@ -233,7 +234,7 @@ def _create_galore_optimizer(
     finetuning_args: "FinetuningArguments",
 ) -> "torch.optim.Optimizer":
     if len(finetuning_args.galore_target) == 1 and finetuning_args.galore_target[0] == "all":
-        galore_targets = find_all_linear_modules(model)
+        galore_targets = find_all_linear_modules(model, finetuning_args.freeze_vision_tower)
     else:
         galore_targets = finetuning_args.galore_target
 
