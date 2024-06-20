@@ -1,18 +1,30 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
-import signal
 from copy import deepcopy
 from subprocess import Popen, TimeoutExpired
 from typing import TYPE_CHECKING, Any, Dict, Generator, Optional
 
-import psutil
 from transformers.trainer import TRAINING_ARGS_NAME
 
-from ..extras.constants import PEFT_METHODS, TRAINING_STAGES
+from ..extras.constants import LLAMABOARD_CONFIG, PEFT_METHODS, TRAINING_STAGES
 from ..extras.misc import is_gpu_or_npu_available, torch_gc
 from ..extras.packages import is_gradio_available
-from .common import DEFAULT_CACHE_DIR, get_module, get_save_dir, load_config
-from .locales import ALERTS
-from .utils import gen_cmd, get_eval_results, get_trainer_info, load_args, save_args, save_cmd
+from .common import DEFAULT_CACHE_DIR, DEFAULT_CONFIG_DIR, get_save_dir, load_config
+from .locales import ALERTS, LOCALES
+from .utils import abort_process, gen_cmd, get_eval_results, get_trainer_info, load_args, save_args, save_cmd
 
 
 if is_gradio_available():
@@ -40,8 +52,7 @@ class Runner:
     def set_abort(self) -> None:
         self.aborted = True
         if self.trainer is not None:
-            for children in psutil.Process(self.trainer.pid).children():  # abort the child process
-                os.kill(children.pid, signal.SIGABRT)
+            abort_process(self.trainer.pid)
 
     def _initialize(self, data: Dict["Component", Any], do_train: bool, from_preview: bool) -> str:
         get = lambda elem_id: data[self.manager.get_elem_by_id(elem_id)]
@@ -64,10 +75,15 @@ class Runner:
             return ALERTS["err_demo"][lang]
 
         if do_train:
+            if not get("train.output_dir"):
+                return ALERTS["err_no_output_dir"][lang]
+
             stage = TRAINING_STAGES[get("train.training_stage")]
-            reward_model = get("train.reward_model")
-            if stage == "ppo" and not reward_model:
+            if stage == "ppo" and not get("train.reward_model"):
                 return ALERTS["err_no_reward_model"][lang]
+        else:
+            if not get("eval.output_dir"):
+                return ALERTS["err_no_output_dir"][lang]
 
         if not from_preview and not is_gpu_or_npu_available():
             gr.Warning(ALERTS["warn_no_cuda"][lang])
@@ -130,6 +146,7 @@ class Runner:
             pure_bf16=(get("train.compute_type") == "pure_bf16"),
             plot_loss=True,
             ddp_timeout=180000000,
+            include_num_input_tokens_seen=True,
         )
 
         # checkpoints
@@ -156,7 +173,9 @@ class Runner:
             args["create_new_adapter"] = get("train.create_new_adapter")
             args["use_rslora"] = get("train.use_rslora")
             args["use_dora"] = get("train.use_dora")
-            args["lora_target"] = get("train.lora_target") or get_module(model_name)
+            args["pissa_init"] = get("train.use_pissa")
+            args["pissa_convert"] = get("train.use_pissa")
+            args["lora_target"] = get("train.lora_target") or "all"
             args["additional_target"] = get("train.additional_target") or None
 
             if args["use_llama_pro"]:
@@ -198,7 +217,7 @@ class Runner:
         # eval config
         if get("train.val_size") > 1e-6 and args["stage"] != "ppo":
             args["val_size"] = get("train.val_size")
-            args["evaluation_strategy"] = "steps"
+            args["eval_strategy"] = "steps"
             args["eval_steps"] = args["save_steps"]
             args["per_device_eval_batch_size"] = args["per_device_train_batch_size"]
 
@@ -273,10 +292,27 @@ class Runner:
         else:
             self.do_train, self.running_data = do_train, data
             args = self._parse_train_args(data) if do_train else self._parse_eval_args(data)
+
+            os.makedirs(args["output_dir"], exist_ok=True)
+            save_args(os.path.join(args["output_dir"], LLAMABOARD_CONFIG), self._form_config_dict(data))
+
             env = deepcopy(os.environ)
             env["LLAMABOARD_ENABLED"] = "1"
+            if args.get("deepspeed", None) is not None:
+                env["FORCE_TORCHRUN"] = "1"
+
             self.trainer = Popen("llamafactory-cli train {}".format(save_cmd(args)), env=env, shell=True)
             yield from self.monitor()
+
+    def _form_config_dict(self, data: Dict["Component", Any]) -> Dict[str, Any]:
+        config_dict = {}
+        skip_ids = ["top.lang", "top.model_path", "train.output_dir", "train.config_path", "train.device_count"]
+        for elem, value in data.items():
+            elem_id = self.manager.get_id_by_elem(elem)
+            if elem_id not in skip_ids:
+                config_dict[elem_id] = value
+
+        return config_dict
 
     def preview_train(self, data):
         yield from self._preview(data, do_train=True)
@@ -343,28 +379,24 @@ class Runner:
         }
         yield return_dict
 
-    def save_args(self, data: dict):
+    def save_args(self, data):
         output_box = self.manager.get_elem_by_id("train.output_box")
         error = self._initialize(data, do_train=True, from_preview=True)
         if error:
             gr.Warning(error)
             return {output_box: error}
 
-        config_dict: Dict[str, Any] = {}
         lang = data[self.manager.get_elem_by_id("top.lang")]
         config_path = data[self.manager.get_elem_by_id("train.config_path")]
-        skip_ids = ["top.lang", "top.model_path", "train.output_dir", "train.config_path", "train.device_count"]
-        for elem, value in data.items():
-            elem_id = self.manager.get_id_by_elem(elem)
-            if elem_id not in skip_ids:
-                config_dict[elem_id] = value
+        os.makedirs(DEFAULT_CONFIG_DIR, exist_ok=True)
+        save_path = os.path.join(DEFAULT_CONFIG_DIR, config_path)
 
-        save_path = save_args(config_path, config_dict)
+        save_args(save_path, self._form_config_dict(data))
         return {output_box: ALERTS["info_config_saved"][lang] + save_path}
 
     def load_args(self, lang: str, config_path: str):
         output_box = self.manager.get_elem_by_id("train.output_box")
-        config_dict = load_args(config_path)
+        config_dict = load_args(os.path.join(DEFAULT_CONFIG_DIR, config_path))
         if config_dict is None:
             gr.Warning(ALERTS["err_config_not_found"][lang])
             return {output_box: ALERTS["err_config_not_found"][lang]}
@@ -372,5 +404,19 @@ class Runner:
         output_dict: Dict["Component", Any] = {output_box: ALERTS["info_config_loaded"][lang]}
         for elem_id, value in config_dict.items():
             output_dict[self.manager.get_elem_by_id(elem_id)] = value
+
+        return output_dict
+
+    def check_output_dir(self, lang: str, model_name: str, finetuning_type: str, output_dir: str):
+        output_box = self.manager.get_elem_by_id("train.output_box")
+        output_dict: Dict["Component", Any] = {output_box: LOCALES["output_box"][lang]["value"]}
+        if model_name and output_dir and os.path.isdir(get_save_dir(model_name, finetuning_type, output_dir)):
+            gr.Warning(ALERTS["warn_output_dir_exists"][lang])
+            output_dict[output_box] = ALERTS["warn_output_dir_exists"][lang]
+
+            output_dir = get_save_dir(model_name, finetuning_type, output_dir)
+            config_dict = load_args(os.path.join(output_dir, LLAMABOARD_CONFIG))  # load llamaboard config
+            for elem_id, value in config_dict.items():
+                output_dict[self.manager.get_elem_by_id(elem_id)] = value
 
         return output_dict

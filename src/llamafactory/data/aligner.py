@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
 from functools import partial
 from typing import TYPE_CHECKING, Any, Dict, List, Union
@@ -5,11 +19,12 @@ from typing import TYPE_CHECKING, Any, Dict, List, Union
 from datasets import Features
 
 from ..extras.logging import get_logger
-from .utils import Role
+from .data_utils import Role
 
 
 if TYPE_CHECKING:
     from datasets import Dataset, IterableDataset
+    from transformers import Seq2SeqTrainingArguments
 
     from ..hparams import DataArguments
     from .parser import DatasetAttr
@@ -175,7 +190,10 @@ def convert_sharegpt(
 
 
 def align_dataset(
-    dataset: Union["Dataset", "IterableDataset"], dataset_attr: "DatasetAttr", data_args: "DataArguments"
+    dataset: Union["Dataset", "IterableDataset"],
+    dataset_attr: "DatasetAttr",
+    data_args: "DataArguments",
+    training_args: "Seq2SeqTrainingArguments",
 ) -> Union["Dataset", "IterableDataset"]:
     r"""
     Aligned dataset:
@@ -208,7 +226,7 @@ def align_dataset(
     if not data_args.streaming:
         kwargs = dict(
             num_proc=data_args.preprocessing_num_workers,
-            load_from_cache_file=(not data_args.overwrite_cache),
+            load_from_cache_file=(not data_args.overwrite_cache) or (training_args.local_process_index != 0),
             desc="Converting format of dataset",
         )
 

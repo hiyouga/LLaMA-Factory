@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import json
 import os
 from typing import TYPE_CHECKING, Dict, Generator, List, Optional, Sequence, Tuple
@@ -126,16 +140,15 @@ class WebChatModel(ChatModel):
         ):
             response += new_text
             if tools:
-                result = self.engine.template.format_tools.extract(response)
+                result = self.engine.template.extract_tool(response)
             else:
                 result = response
 
-            if isinstance(result, tuple):
-                name, arguments = result
-                arguments = json.loads(arguments)
-                tool_call = json.dumps({"name": name, "arguments": arguments}, ensure_ascii=False)
-                output_messages = messages + [{"role": Role.FUNCTION.value, "content": tool_call}]
-                bot_text = "```json\n" + tool_call + "\n```"
+            if isinstance(result, list):
+                tool_calls = [{"name": tool[0], "arguments": json.loads(tool[1])} for tool in result]
+                tool_calls = json.dumps(tool_calls, indent=4, ensure_ascii=False)
+                output_messages = messages + [{"role": Role.FUNCTION.value, "content": tool_calls}]
+                bot_text = "```json\n" + tool_calls + "\n```"
             else:
                 output_messages = messages + [{"role": Role.ASSISTANT.value, "content": result}]
                 bot_text = result
