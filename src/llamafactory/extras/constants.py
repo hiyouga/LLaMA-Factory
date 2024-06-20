@@ -66,7 +66,7 @@ STAGES_USE_PAIR_DATA = {"rm", "dpo"}
 
 SUPPORTED_CLASS_FOR_S2ATTN = {"llama"}
 
-SUPPORTED_CLASS_FOR_MULTIPACK = [
+SUPPORTED_CLASS_EFFECIENT_PACKING = [
     "llama",
     "mistral",
     "mixtral",
