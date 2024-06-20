@@ -49,10 +49,10 @@ def create_top() -> Dict[str, "Component"]:
             booster = gr.Radio(choices=["none", "flashattn2", "unsloth"], value="none", scale=3)
             visual_inputs = gr.Checkbox(scale=1)
 
-    model_name.change(get_model_info, [model_name], [model_path, template, visual_inputs], queue=False)
-    model_name.input(save_config, inputs=[lang, model_name], queue=False).then(
+    model_name.change(get_model_info, [model_name], [model_path, template, visual_inputs], queue=False).then(
         list_checkpoints, [model_name, finetuning_type], [checkpoint_path], queue=False
     )
+    model_name.input(save_config, inputs=[lang, model_name], queue=False)
     model_path.input(save_config, inputs=[lang, model_name, model_path], queue=False)
     finetuning_type.change(can_quantize, [finetuning_type], [quantization_bit], queue=False).then(
         list_checkpoints, [model_name, finetuning_type], [checkpoint_path], queue=False
