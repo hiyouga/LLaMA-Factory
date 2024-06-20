@@ -199,6 +199,9 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         if not is_torch_bf16_gpu_available():
             raise ValueError("This device does not support `pure_bf16`.")
 
+        if training_args.deepspeed:
+            raise ValueError("`pure_bf16` is incompatible with DeepSpeed.")
+
         if training_args.fp16 or training_args.bf16:
             raise ValueError("Turn off mixed precision training when using `pure_bf16`.")
 
