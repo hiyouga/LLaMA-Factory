@@ -29,6 +29,7 @@ from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR, has_length
 from .constants import TRAINER_LOG
 from .logging import LoggerHandler, get_logger
 from .misc import fix_valuehead_checkpoint
+from .logsave.save import save_logs
 
 
 if TYPE_CHECKING:
@@ -188,6 +189,7 @@ class LogCallback(TrainerCallback):
             total_tokens=state.num_input_tokens_seen,
         )
         logs = {k: v for k, v in logs.items() if v is not None}
+        save_logs(logs)
         if self.webui_mode and all(key in logs for key in ["loss", "learning_rate", "epoch"]):
             logger.info(
                 "{{'loss': {:.4f}, 'learning_rate': {:2.4e}, 'epoch': {:.2f}, 'throughput': {}}}".format(
