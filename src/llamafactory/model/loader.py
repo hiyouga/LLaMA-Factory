@@ -16,7 +16,7 @@ from .patcher import patch_config, patch_model, patch_tokenizer, patch_valuehead
 if TYPE_CHECKING:
     from transformers import PretrainedConfig, PreTrainedModel, PreTrainedTokenizer, ProcessorMixin
 
-    from ..hparams import FinetuningArguments, ModelArguments
+    from ..hparams import FinetuningArguments, ModelArguments, DataArguments
 
 
 logger = get_logger(__name__)
@@ -104,6 +104,7 @@ def load_config(model_args: "ModelArguments") -> "PretrainedConfig":
 def load_model(
     tokenizer: "PreTrainedTokenizer",
     model_args: "ModelArguments",
+    data_args: "DataArguments",
     finetuning_args: "FinetuningArguments",
     is_trainable: bool = False,
     add_valuehead: bool = False,
@@ -113,7 +114,7 @@ def load_model(
     """
     init_kwargs = _get_init_kwargs(model_args)
     config = load_config(model_args)
-    patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
+    patch_config(config, tokenizer, model_args, data_args, finetuning_args, init_kwargs, is_trainable)
 
     model = None
     lazy_load = False
