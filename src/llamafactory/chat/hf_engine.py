@@ -20,6 +20,7 @@ from threading import Thread
 from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import torch
+import torchvision
 from PIL import Image
 from transformers import GenerationConfig, TextIteratorStreamer
 
@@ -179,9 +180,16 @@ class HuggingfaceEngine(BaseEngine):
             logits_processor=get_logits_processor(),
         )
         if image is not None and model_args.visual_inputs_type == "vision_message_embed":
-            gen_kwargs["images"] = torch.tensor(tokenizer.apply_chat_template([{"role": "user", "image": Image.fromarray(image).convert("RGB"), "content": ""}],
-                                       add_generation_prompt=True, tokenize=True, return_tensors="pt",
-                                       return_dict=True)["images"],dtype=model_args.compute_dtype,device="cuda")
+            transform = torchvision.transforms.Compose(
+                [
+                    torchvision.transforms.Resize(
+                        (1120, 1120), interpolation=torchvision.transforms.InterpolationMode.BICUBIC
+                    ),
+                    torchvision.transforms.ToTensor(),
+                    torchvision.transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711)),
+                ]
+            )
+            gen_kwargs["images"] = transform(Image.fromarray(image)).unsqueeze(0).to(model.device).to(model_args.compute_dtype)
 
         if pixel_values is not None:
             gen_kwargs["pixel_values"] = pixel_values

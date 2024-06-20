@@ -29,13 +29,14 @@ from .processors.unsupervised import preprocess_unsupervised_dataset, print_unsu
 if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer, ProcessorMixin, Seq2SeqTrainingArguments
 
-    from ..hparams import DataArguments
+    from ..hparams import DataArguments, ModelArguments
     from .template import Template
 
 
 def get_preprocess_and_print_func(
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
+    model_args: "ModelArguments",
     stage: Literal["pt", "sft", "rm", "ppo", "kto"],
     template: "Template",
     tokenizer: "PreTrainedTokenizer",
@@ -63,6 +64,7 @@ def get_preprocess_and_print_func(
                 tokenizer=tokenizer,
                 processor=processor,
                 data_args=data_args,
+                model_args=model_args,
             )
 
         print_function = partial(print_supervised_dataset_example, tokenizer=tokenizer)

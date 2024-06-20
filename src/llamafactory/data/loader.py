@@ -177,7 +177,7 @@ def get_dataset(
 
     with training_args.main_process_first(desc="pre-process dataset"):
         preprocess_func, print_function = get_preprocess_and_print_func(
-            data_args, training_args, stage, template, tokenizer, processor
+            data_args, training_args, model_args, stage, template, tokenizer, processor
         )
         column_names = list(next(iter(dataset)).keys())
         kwargs = {}
@@ -189,6 +189,10 @@ def get_dataset(
             )
 
         dataset = dataset.map(preprocess_func, batched=True, remove_columns=column_names, **kwargs)
+
+        if model_args.visual_inputs_type == "vision_message_embed":
+            dataset = dataset.rename_column("image_inputs","images")
+        print(dataset["images"])
 
         if data_args.tokenized_path is not None:
             if training_args.should_save:
