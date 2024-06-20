@@ -140,16 +140,15 @@ class WebChatModel(ChatModel):
         ):
             response += new_text
             if tools:
-                result = self.engine.template.format_tools.extract(response)
+                result = self.engine.template.extract_tool(response)
             else:
                 result = response
 
-            if isinstance(result, tuple):
-                name, arguments = result
-                arguments = json.loads(arguments)
-                tool_call = json.dumps({"name": name, "arguments": arguments}, ensure_ascii=False)
-                output_messages = messages + [{"role": Role.FUNCTION.value, "content": tool_call}]
-                bot_text = "```json\n" + tool_call + "\n```"
+            if isinstance(result, list):
+                tool_calls = [{"name": tool[0], "arguments": json.loads(tool[1])} for tool in result]
+                tool_calls = json.dumps(tool_calls, indent=4, ensure_ascii=False)
+                output_messages = messages + [{"role": Role.FUNCTION.value, "content": tool_calls}]
+                bot_text = "```json\n" + tool_calls + "\n```"
             else:
                 output_messages = messages + [{"role": Role.ASSISTANT.value, "content": result}]
                 bot_text = result

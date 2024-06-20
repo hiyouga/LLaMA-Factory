@@ -51,11 +51,6 @@ class BaseEngine(ABC):
     ) -> None: ...
 
     @abstractmethod
-    async def start(
-        self,
-    ) -> None: ...
-
-    @abstractmethod
     async def chat(
         self,
         messages: Sequence[Dict[str, str]],

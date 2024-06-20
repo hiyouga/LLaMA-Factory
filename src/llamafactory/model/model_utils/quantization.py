@@ -1,6 +1,7 @@
 # Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
 #
-# This code is inspired by the HuggingFace's Optimum library.
+# This code is inspired by the HuggingFace's Transformers and Optimum library.
+# https://github.com/huggingface/transformers/blob/v4.41.0/src/transformers/utils/quantization_config.py
 # https://github.com/huggingface/optimum/blob/v1.20.0/optimum/gptq/data.py
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -96,10 +97,7 @@ def configure_quantization(
     """
     if getattr(config, "quantization_config", None):  # ptq
         if is_deepspeed_zero3_enabled():
-            raise ValueError("DeepSpeed ZeRO-3 is incompatible with quantized models.")
-
-        if model_args.quantization_device_map != "auto":
-            init_kwargs["device_map"] = {"": get_current_device()}
+            raise ValueError("DeepSpeed ZeRO-3 is incompatible with PTQ-quantized models.")
 
         quantization_config: Dict[str, Any] = getattr(config, "quantization_config", None)
         quant_method = quantization_config.get("quant_method", "")
@@ -152,15 +150,15 @@ def configure_quantization(
                 bnb_4bit_quant_storage=model_args.compute_dtype,  # crucial for fsdp+qlora
             )
 
+        # assign device map if:
+        # 1. not deepspeed zero3 and not fsdp
+        # 2. not auto quantization device map
         if is_deepspeed_zero3_enabled() or is_fsdp_enabled() or model_args.quantization_device_map == "auto":
             if model_args.quantization_bit != 4:
-                raise ValueError("Only 4-bit quantized model can use auto device map.")
+                raise ValueError("Only 4-bit quantized model can use fsdp+qlora or auto device map.")
 
-            require_version("transformers>=4.39.0", "To fix: pip install transformers>=4.39.0")
-            require_version("accelerate>=0.28.0", "To fix: pip install accelerate>=0.28.0")
             require_version("bitsandbytes>=0.43.0", "To fix: pip install bitsandbytes>=0.43.0")
-            init_kwargs["torch_dtype"] = model_args.compute_dtype  # fsdp+qlora requires same dtype
         else:
-            init_kwargs["device_map"] = {"": get_current_device()}
+            init_kwargs["device_map"] = {"": get_current_device()}  # change auto device map for inference
 
         logger.info("Quantizing model to {} bit.".format(model_args.quantization_bit))

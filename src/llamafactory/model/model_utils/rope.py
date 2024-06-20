@@ -39,8 +39,8 @@ def configure_rope(config: "PretrainedConfig", model_args: "ModelArguments", is_
         logger.warning("Current model does not support RoPE scaling.")
         return
 
-    if is_trainable:
-        if model_args.rope_scaling == "dynamic":
+    if model_args.model_max_length is not None:
+        if is_trainable and model_args.rope_scaling == "dynamic":
             logger.warning(
                 "Dynamic NTK scaling may not work well with fine-tuning. "
                 "See: https://github.com/huggingface/transformers/pull/24653"

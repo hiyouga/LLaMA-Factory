@@ -50,7 +50,7 @@ def quantize_pissa(
         lora_alpha=lora_alpha if lora_alpha is not None else lora_rank * 2,
         lora_dropout=lora_dropout,
         target_modules=[name.strip() for name in lora_target.split(",")],
-        init_lora_weights="pissa" if pissa_iter == -1 else "pissa_niter_{}".format(pissa_iter)
+        init_lora_weights="pissa" if pissa_iter == -1 else "pissa_niter_{}".format(pissa_iter),
     )
 
     # Init PiSSA model
@@ -68,11 +68,14 @@ def quantize_pissa(
     tokenizer.save_pretrained(output_dir)
     print("Model weights saved in {}".format(output_dir))
 
-    print("Fine-tune this model with:")
+    print("- Fine-tune this model with:")
     print("model_name_or_path: {}".format(output_dir))
     print("adapter_name_or_path: {}".format(pissa_dir))
     print("finetuning_type: lora")
+    print("pissa_init: false")
     print("pissa_convert: true")
+    print("- and optionally with:")
+    print("quantization_bit: 4")
 
 
 if __name__ == "__main__":
