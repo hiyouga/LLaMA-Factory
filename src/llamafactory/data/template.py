@@ -512,25 +512,6 @@ _register_template(
 
 
 _register_template(
-    name="chatglm3_system",
-    format_user=StringFormatter(slots=[{"token": "<|user|>"}, "\n", "{{content}}", {"token": "<|assistant|>"}]),
-    format_assistant=StringFormatter(slots=["\n", "{{content}}"]),
-    format_system=StringFormatter(slots=[{"token": "<|system|>"}, "\n", "{{content}}"]),
-    format_function=FunctionFormatter(slots=["{{name}}\n{{arguments}}"]),
-    format_observation=StringFormatter(
-        slots=[{"token": "<|observation|>"}, "\n", "{{content}}", {"token": "<|assistant|>"}]
-    ),
-    format_prefix=EmptyFormatter(slots=[{"token": "[gMASK]"}, {"token": "sop"}]),
-    default_system=(
-        "You are ChatGLM3, a large language model trained by Zhipu.AI. "
-        "Follow the user's instructions carefully. Respond using markdown."
-    ),
-    stop_words=["<|user|>", "<|observation|>"],
-    efficient_eos=True,
-)
-
-
-_register_template(
     name="chatml",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
