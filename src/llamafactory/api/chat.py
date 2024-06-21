@@ -93,7 +93,7 @@ def _process_request(
 
         if message.role == Role.ASSISTANT and isinstance(message.tool_calls, list) and len(message.tool_calls):
             tool_calls = [
-                {"name": tool_call.function.name, "argument": tool_call.function.arguments}
+                {"name": tool_call.function.name, "arguments": tool_call.function.arguments}
                 for tool_call in message.tool_calls
             ]
             content = json.dumps(tool_calls, ensure_ascii=False)
