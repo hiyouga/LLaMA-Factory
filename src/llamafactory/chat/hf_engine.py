@@ -54,7 +54,7 @@ class HuggingfaceEngine(BaseEngine):
         self.tokenizer = tokenizer_module["tokenizer"]
         self.processor = tokenizer_module["processor"]
         self.tokenizer.padding_side = "left" if self.can_generate else "right"
-        self.template = get_template_and_fix_tokenizer(self.tokenizer, data_args.template)
+        self.template = get_template_and_fix_tokenizer(self.tokenizer, data_args.template, data_args.tool_format)
         self.model = load_model(
             self.tokenizer, model_args, finetuning_args, is_trainable=False, add_valuehead=(not self.can_generate)
         )  # must after fixing tokenizer to resize vocab
