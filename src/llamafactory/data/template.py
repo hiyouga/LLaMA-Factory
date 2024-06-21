@@ -379,6 +379,7 @@ def _get_jinja_template(template: "Template", tokenizer: "PreTrainedTokenizer") 
 def get_template_and_fix_tokenizer(
     tokenizer: "PreTrainedTokenizer",
     name: Optional[str] = None,
+    tool_format: Optional[str] = None,
 ) -> Template:
     if name is None:
         template = TEMPLATES["empty"]  # placeholder
@@ -386,6 +387,9 @@ def get_template_and_fix_tokenizer(
         template = TEMPLATES.get(name, None)
         if template is None:
             raise ValueError("Template {} does not exist.".format(name))
+        
+    if tool_format:
+        template.format_tools = ToolFormatter(tool_format=tool_format)
 
     stop_words = template.stop_words
     if template.replace_eos:
@@ -660,7 +664,6 @@ _register_template(
     format_system=StringFormatter(slots=["<|system|>\n{{content}}"]),
     format_function=FunctionFormatter(slots=["{{name}}\n{{arguments}}"]),
     format_observation=StringFormatter(slots=["<|observation|>\n{{content}}<|assistant|>"]),
-    format_tools=ToolFormatter(tool_format="glm4"),
     format_prefix=EmptyFormatter(slots=["[gMASK]<sop>"]),
     stop_words=["<|user|>", "<|observation|>"],
     efficient_eos=True,
