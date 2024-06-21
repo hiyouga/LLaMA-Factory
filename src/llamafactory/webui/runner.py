@@ -282,7 +282,7 @@ class Runner:
         else:
             args = self._parse_train_args(data) if do_train else self._parse_eval_args(data)
             cuda_visible_devices = data[self.manager.get_elem_by_id("train.cuda_visible_devices")]
-            if cuda_visible_devices is not None:
+            if cuda_visible_devices:
                 args["cuda_visible_devices"] = ",".join([str(i) for i in sorted(cuda_visible_devices)])
             yield {output_box: gen_cmd(args)}
 

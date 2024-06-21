@@ -93,7 +93,7 @@ def gen_cmd(args: Dict[str, Any]) -> str:
     """
     cuda_visible_devices = args.pop("cuda_visible_devices", None)
     cmd_lines = [
-        "llamafactory-cli train " if cuda_visible_devices is None
+        "llamafactory-cli train " if not cuda_visible_devices
         else f"CUDA_VISIBLE_DEVICES={cuda_visible_devices} llamafactory-cli train "
     ]
     for k, v in clean_cmd(args).items():
