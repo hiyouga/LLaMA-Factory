@@ -690,7 +690,7 @@ _register_template(
 
 
 _register_template(
-    name="glm4v",
+    name="glm4_v",
     format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>"]),
     format_assistant=StringFormatter(slots=["\n{{content}}"]),
     format_system=StringFormatter(slots=["<|system|>\n{{content}}"]),

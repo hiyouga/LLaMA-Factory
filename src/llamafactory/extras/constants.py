@@ -541,7 +541,7 @@ register_model_group(
             DownloadSource.MODELSCOPE: "ZhipuAI/glm-4v-9b",
         }
     },
-    template="glm4v",
+    template="glm4_v",
     vision=True,
     vision_type="vision_message_embed",
 )

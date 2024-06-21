@@ -192,7 +192,6 @@ def get_dataset(
 
         if model_args.visual_inputs_type == "vision_message_embed":
             dataset = dataset.rename_column("image_inputs","images")
-        print(dataset["images"])
 
         if data_args.tokenized_path is not None:
             if training_args.should_save:
