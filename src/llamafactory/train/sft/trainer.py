@@ -185,4 +185,4 @@ class GLM4VSeq2SeqTrainer(CustomSeq2SeqTrainer):
         inputs["labels"] = padded_labels.contiguous()
         inputs["attention_mask"] = padded_attention_masks.contiguous()
 
-        super().compute_loss(model, inputs, return_outputs)
+        return super().compute_loss(model, inputs, return_outputs)
