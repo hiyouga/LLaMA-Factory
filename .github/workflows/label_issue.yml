@@ -13,18 +13,15 @@ jobs:
       - env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_URL: ${{ github.event.issue.html_url }}
-          ISSUE_TITLE: "${{ github.event.issue.title }}"
+          ISSUE_TITLE: ${{ github.event.issue.title }}
         run: |
-          gh issue edit $ISSUE_URL --add-label "pending"
-
-          # auto-add label for npu
-          NPU_KEYWORDS=("npu" "ascend" "昇腾")
-          LABEL_NPU="npu"
-          ISSUE_TITLE_LOWER=$(echo "$ISSUE_TITLE" | tr '[:upper:]' '[:lower:]')
-
-          for keyword in "${NPU_KEYWORDS[@]}"; do
-            if [[ "$ISSUE_TITLE_LOWER" == *"$keyword"* ]] && [[ "$ISSUE_TITLE_LOWER" != *"input"* ]]; then
-              gh issue edit "$ISSUE_URL" --add-label "$LABEL_NPU"
+          LABEL=pending
+          NPU_KEYWORDS=(npu ascend 昇腾)
+          ISSUE_TITLE_LOWER=$(echo $ISSUE_TITLE | tr '[:upper:]' '[:lower:]')
+          for KEYWORD in ${NPU_KEYWORDS[@]}; do
+            if [[ $ISSUE_TITLE_LOWER == *$KEYWORD* ]] && [[ $ISSUE_TITLE_LOWER != *input* ]] then
+              LABEL=pending,npu
               break
             fi
           done
+          gh issue edit $ISSUE_URL --add-label $LABEL
