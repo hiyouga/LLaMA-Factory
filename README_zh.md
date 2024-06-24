@@ -448,7 +448,8 @@ docker build -f ./docker/docker-cuda/Dockerfile \
     -t llamafactory:latest .
 
 docker run -dit --gpus=all \
-    -v ./hf_cache:/root/.cache/huggingface/ \
+    -v ./hf_cache:/root/.cache/huggingface \
+    -v ./ms_cache:/root/.cache/modelscope \
     -v ./data:/app/data \
     -v ./output:/app/output \
     -p 7860:7860 \
@@ -471,7 +472,8 @@ docker build -f ./docker/docker-npu/Dockerfile \
 
 # 根据您的资源更改 `device`
 docker run -dit \
-    -v ./hf_cache:/root/.cache/huggingface/ \
+    -v ./hf_cache:/root/.cache/huggingface \
+    -v ./ms_cache:/root/.cache/modelscope \
     -v ./data:/app/data \
     -v ./output:/app/output \
     -v /usr/local/dcmi:/usr/local/dcmi \
