@@ -20,6 +20,8 @@ title: "LlamaFactory: Unified Efficient Fine-Tuning of 100+ Language Models"
 url: "https://arxiv.org/abs/2403.13372"
 preferred-citation:
   type: conference-paper
+  conference:
+    name: "Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 3: System Demonstrations)"
   authors:
     - family-names: "Zheng"
       given-names: "Yaowei"
@@ -35,7 +37,6 @@ preferred-citation:
       given-names: "Zhangchi"
     - family-names: "Ma"
       given-names: "Yongqiang"
-  booktitle: "Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 3: System Demonstrations)"
   title: "LlamaFactory: Unified Efficient Fine-Tuning of 100+ Language Models"
   url: "https://arxiv.org/abs/2403.13372"
   year: 2024
