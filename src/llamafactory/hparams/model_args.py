@@ -97,7 +97,7 @@ class ModelArguments:
         default=None,
         metadata={"help": "Which scaling strategy should be adopted for the RoPE embeddings."},
     )
-    flash_attn: Literal["off", "sdpa", "fa2", "auto"] = field(
+    flash_attn: Literal["disabled", "sdpa", "fa2", "auto"] = field(
         default="auto",
         metadata={"help": "Enable FlashAttention for faster training and inference."},
     )
