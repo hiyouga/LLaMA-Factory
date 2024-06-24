@@ -1,8 +1,8 @@
 services:
   llamafactory:
     build:
-      dockerfile: Dockerfile
-      context: .
+      dockerfile: ./docker/docker-cuda/Dockerfile
+      context: ../..
       args:
         INSTALL_BNB: false
         INSTALL_VLLM: false
