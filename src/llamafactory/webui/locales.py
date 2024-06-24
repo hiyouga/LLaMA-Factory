@@ -1206,6 +1206,17 @@ LOCALES = {
             "label": "推理引擎",
         },
     },
+    "infer_dtype": {
+        "en": {
+            "label": "Inference data type",
+        },
+        "ru": {
+            "label": "Тип данных для вывода",
+        },
+        "zh": {
+            "label": "推理数据类型",
+        },
+    },
     "load_btn": {
         "en": {
             "value": "Load model",
