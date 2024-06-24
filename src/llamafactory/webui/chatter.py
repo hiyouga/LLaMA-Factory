@@ -88,6 +88,7 @@ class WebChatModel(ChatModel):
             visual_inputs_type=get("top.visual_inputs_type"),
             rope_scaling=get("top.rope_scaling") if get("top.rope_scaling") in ["linear", "dynamic"] else None,
             infer_backend=get("infer.infer_backend"),
+            infer_dtype=get("infer.infer_dtype"),
         )
 
         if checkpoint_path:

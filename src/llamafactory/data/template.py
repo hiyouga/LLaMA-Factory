@@ -382,6 +382,7 @@ def _get_jinja_template(template: "Template", tokenizer: "PreTrainedTokenizer") 
 def get_template_and_fix_tokenizer(
     tokenizer: "PreTrainedTokenizer",
     name: Optional[str] = None,
+    tool_format: Optional[str] = None,
 ) -> Template:
     if name is None:
         template = TEMPLATES["empty"]  # placeholder
@@ -389,6 +390,10 @@ def get_template_and_fix_tokenizer(
         template = TEMPLATES.get(name, None)
         if template is None:
             raise ValueError("Template {} does not exist.".format(name))
+
+    if tool_format is not None:
+        logger.info("Using tool format: {}.".format(tool_format))
+        template.format_tools = ToolFormatter(tool_format=tool_format)
 
     stop_words = template.stop_words
     if template.replace_eos:
@@ -515,25 +520,6 @@ _register_template(
 
 
 _register_template(
-    name="chatglm3_system",
-    format_user=StringFormatter(slots=[{"token": "<|user|>"}, "\n", "{{content}}", {"token": "<|assistant|>"}]),
-    format_assistant=StringFormatter(slots=["\n", "{{content}}"]),
-    format_system=StringFormatter(slots=[{"token": "<|system|>"}, "\n", "{{content}}"]),
-    format_function=FunctionFormatter(slots=["{{name}}\n{{arguments}}"]),
-    format_observation=StringFormatter(
-        slots=[{"token": "<|observation|>"}, "\n", "{{content}}", {"token": "<|assistant|>"}]
-    ),
-    format_prefix=EmptyFormatter(slots=[{"token": "[gMASK]"}, {"token": "sop"}]),
-    default_system=(
-        "You are ChatGLM3, a large language model trained by Zhipu.AI. "
-        "Follow the user's instructions carefully. Respond using markdown."
-    ),
-    stop_words=["<|user|>", "<|observation|>"],
-    efficient_eos=True,
-)
-
-
-_register_template(
     name="chatml",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
@@ -643,7 +629,6 @@ _register_template(
 
 _register_template(
     name="empty",
-    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     efficient_eos=True,
 )
 

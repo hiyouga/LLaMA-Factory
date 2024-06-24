@@ -148,7 +148,7 @@ def get_dataset(
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"] = None,
 ) -> Union["Dataset", "IterableDataset"]:
-    template = get_template_and_fix_tokenizer(tokenizer, data_args.template)
+    template = get_template_and_fix_tokenizer(tokenizer, data_args.template, data_args.tool_format)
     if data_args.train_on_prompt and template.efficient_eos:
         raise ValueError("Current template does not support `train_on_prompt`.")
 
