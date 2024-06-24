@@ -29,10 +29,6 @@ class DataArguments:
         default=None,
         metadata={"help": "Which template to use for constructing prompts in training and inference."},
     )
-    tool_format: Optional[str] = field(
-        default=None,
-        metadata={"help": "Specifies the tool format template for function calling ."},
-    )
     dataset: Optional[str] = field(
         default=None,
         metadata={"help": "The name of provided dataset(s) to use. Use commas to separate multiple datasets."},
@@ -104,6 +100,10 @@ class DataArguments:
         metadata={
             "help": "Whether or not to pack the sequences in training. Will automatically enable in pre-training."
         },
+    )
+    tool_format: Optional[str] = field(
+        default=None,
+        metadata={"help": "Tool format to use for constructing function calling examples."},
     )
     tokenized_path: Optional[str] = field(
         default=None,

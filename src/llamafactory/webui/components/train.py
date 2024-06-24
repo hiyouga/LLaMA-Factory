@@ -291,7 +291,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
         with gr.Column(scale=1):
             loss_viewer = gr.Plot()
 
-    input_elems.update({output_dir, config_path, device_count, ds_stage, ds_offload})
+    input_elems.update({output_dir, config_path, ds_stage, ds_offload})
     elem_dict.update(
         dict(
             cmd_preview_btn=cmd_preview_btn,

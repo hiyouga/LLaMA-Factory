@@ -387,8 +387,9 @@ def get_template_and_fix_tokenizer(
         template = TEMPLATES.get(name, None)
         if template is None:
             raise ValueError("Template {} does not exist.".format(name))
-        
-    if tool_format:
+
+    if tool_format is not None:
+        logger.info("Using tool format: {}.".format(tool_format))
         template.format_tools = ToolFormatter(tool_format=tool_format)
 
     stop_words = template.stop_words
@@ -625,7 +626,6 @@ _register_template(
 
 _register_template(
     name="empty",
-    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     efficient_eos=True,
 )
 
