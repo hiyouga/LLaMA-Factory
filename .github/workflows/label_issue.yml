@@ -19,7 +19,7 @@ jobs:
           NPU_KEYWORDS=(npu ascend 昇腾)
           ISSUE_TITLE_LOWER=$(echo $ISSUE_TITLE | tr '[:upper:]' '[:lower:]')
           for KEYWORD in ${NPU_KEYWORDS[@]}; do
-            if [[ $ISSUE_TITLE_LOWER == *$KEYWORD* ]] && [[ $ISSUE_TITLE_LOWER != *input* ]] then
+            if [[ $ISSUE_TITLE_LOWER == *$KEYWORD* ]] && [[ $ISSUE_TITLE_LOWER != *input* ]]; then
               LABEL=pending,npu
               break
             fi
