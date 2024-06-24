@@ -160,8 +160,8 @@ cython_debug/
 .idea/
 
 # custom .gitignore
-user.config
-saves/
 cache/
-wandb
-ds_badam_exp
+config/
+saves/
+output/
+wandb/

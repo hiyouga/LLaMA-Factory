@@ -166,7 +166,8 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
                 self.reward_model = self.accelerator.prepare_model(self.reward_model, evaluation_mode=True)
 
         if finetuning_args.use_badam:
-            from badam import clip_grad_norm_old_version, BAdamCallback
+            from badam import BAdamCallback, clip_grad_norm_old_version
+
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.callback_handler.add_callback(BAdamCallback)
 

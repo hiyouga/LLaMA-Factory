@@ -121,7 +121,7 @@ def _check_extra_dependencies(
         require_version("galore_torch", "To fix: pip install galore_torch")
 
     if finetuning_args.use_badam:
-        require_version("badam", "To fix: pip install badam")
+        require_version("badam>=1.2.1", "To fix: pip install badam>=1.2.1")
 
     if finetuning_args.plot_loss:
         require_version("matplotlib", "To fix: pip install matplotlib")
@@ -214,15 +214,15 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
     if (
         finetuning_args.use_badam
-        and training_args.parallel_mode.value == "distributed"
+        and training_args.parallel_mode == ParallelMode.DISTRIBUTED
     ):
         if finetuning_args.badam_mode == "ratio":
-            raise ValueError("Ratio-wise BAdam does not yet support distributed training, use layer-wise BAdam: --badam_mode layer")
-        if finetuning_args.badam_mode == "layer" and (not is_deepspeed_zero3_enabled()):
-            raise ValueError(f"Layer-wise BAdam only supports DeepSpeed ZeRO 3 stage.")
+            raise ValueError("Radio-based BAdam does not yet support distributed training, use layer-wise BAdam.")
+        elif not is_deepspeed_zero3_enabled():
+            raise ValueError("Layer-wise BAdam only supports DeepSpeed ZeRO-3 training.")
 
-    if (finetuning_args.use_galore) and training_args.deepspeed is not None:
-        raise ValueError("GaLore are incompatible with DeepSpeed yet.")
+    if finetuning_args.use_galore and training_args.deepspeed is not None:
+        raise ValueError("GaLore is incompatible with DeepSpeed yet.")
 
     if model_args.infer_backend == "vllm":
         raise ValueError("vLLM backend is only available for API, CLI and Web.")
