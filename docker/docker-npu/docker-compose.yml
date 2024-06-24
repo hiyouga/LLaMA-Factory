@@ -1,20 +1,19 @@
 services:
   llamafactory:
     build:
-      dockerfile: Dockerfile
-      context: .
+      dockerfile: ./docker/docker-npu/Dockerfile
+      context: ../..
       args:
         INSTALL_DEEPSPEED: false
         PIP_INDEX: https://pypi.org/simple
     container_name: llamafactory
     volumes:
-      - ../../hf_cache:/root/.cache/huggingface/
-      - ../../data:/app/LLaMA-Factory/data
-      - ../../output:/app/LLaMA-Factory/output
+      - ./hf_cache:/root/.cache/huggingface/
+      - ./data:/app/data
+      - ./output:/app/output
       - /usr/local/dcmi:/usr/local/dcmi
       - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
-      - /usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64
-      - /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info
+      - /usr/local/Ascend/driver:/usr/local/Ascend/driver
       - /etc/ascend_install.info:/etc/ascend_install.info
     ports:
       - "7860:7860"
