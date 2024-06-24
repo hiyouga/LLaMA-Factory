@@ -111,9 +111,9 @@ def test_glm4_tool_formatter():
         }
     ]
     assert formatter.apply(content=json.dumps(tools)) == [
-        "你是一个名为 GLM-4 的人工智能助手。你是基于智谱AI训练的语言模型 GLM-4 模型开发的，"
-        "你的任务是针对用户的问题和要求提供适当的答复和支持。"
-        "\n\n## test_tool\n\n{}\n在调用上述函数时，请使用 Json 格式表示调用的参数。".format(
+        "你是一个名为 ChatGLM 的人工智能助手。你是基于智谱AI训练的语言模型 GLM-4 模型开发的，"
+        "你的任务是针对用户的问题和要求提供适当的答复和支持。# 可用工具\n\n"
+        "## test_tool\n\n{}\n在调用上述函数时，请使用 Json 格式表示调用的参数。".format(
             json.dumps(tools[0], indent=4)
         )
     ]
