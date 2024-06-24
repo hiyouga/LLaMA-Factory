@@ -36,7 +36,7 @@ RUN EXTRA_PACKAGES="metrics"; \
     pip uninstall -y transformer-engine flash-attn
 
 # Set up volumes
-VOLUME [ "/root/.cache/huggingface/", "/app/data", "/app/output" ]
+VOLUME [ "/root/.cache/huggingface", "/root/.cache/modelscope", "/app/data", "/app/output" ]
 
 # Expose port 7860 for the LLaMA Board
 ENV GRADIO_SERVER_PORT 7860
