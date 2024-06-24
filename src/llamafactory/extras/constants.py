@@ -579,7 +579,7 @@ register_model_group(
 
 register_model_group(
     models={
-        "Jambda-v0.1": {
+        "Jamba-v0.1": {
             DownloadSource.DEFAULT: "ai21labs/Jamba-v0.1",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Jamba-v0.1",
         }
