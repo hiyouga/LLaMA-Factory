@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
 import torch
 from peft import PeftModel
 from transformers import Trainer
+from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.optimization import get_scheduler
 from transformers.pytorch_utils import ALL_LAYERNORM_LAYERS
 from transformers.trainer_pt_utils import get_parameter_names
@@ -198,6 +199,7 @@ def convert_pissa_adapter(
                 safe_serialization=training_args.save_safetensors,
             )
             setattr(unwrapped_model.peft_config["default"], "init_lora_weights", init_lora_weights)
+
     elif output_dir == training_args.output_dir:  # at the end of training
         logger.info("Converted PiSSA adapter will be saved at: {}.".format(output_dir))
         unwrapped_model = accelerator.unwrap_model(model)
@@ -233,7 +235,7 @@ def _create_galore_optimizer(
     finetuning_args: "FinetuningArguments",
 ) -> "torch.optim.Optimizer":
     if len(finetuning_args.galore_target) == 1 and finetuning_args.galore_target[0] == "all":
-        galore_targets = find_all_linear_modules(model)
+        galore_targets = find_all_linear_modules(model, finetuning_args.freeze_vision_tower)
     else:
         galore_targets = finetuning_args.galore_target
 
@@ -383,6 +385,7 @@ def _create_badam_optimizer(
             start_block=finetuning_args.badam_start_block,
             switch_mode=finetuning_args.badam_switch_mode,
             verbose=finetuning_args.badam_verbose,
+            ds_zero3_enabled=is_deepspeed_zero3_enabled(),
         )
         logger.info(
             f"Using BAdam optimizer with layer-wise update, switch mode is {finetuning_args.badam_switch_mode}, "
@@ -404,7 +407,7 @@ def _create_badam_optimizer(
             **optim_kwargs,
         )
         logger.info(
-            f"Using BAdam optimizer with ratio-wise update, update ratio is {finetuning_args.badam_update_ratio}, "
+            f"Using BAdam optimizer with ratio-based update, update ratio is {finetuning_args.badam_update_ratio}, "
             f"mask mode is {finetuning_args.badam_mask_mode}"
         )
 

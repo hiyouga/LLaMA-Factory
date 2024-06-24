@@ -19,3 +19,4 @@ fire
 packaging
 pyyaml
 av
+numpy<2.0.0
