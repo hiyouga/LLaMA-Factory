@@ -202,18 +202,18 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
 
         if self.is_world_process_zero():
             logger.info("***** Running training *****")
-            logger.info("  Num examples = {}".format(num_examples))
-            logger.info("  Num Epochs = {}".format(num_train_epochs))
-            logger.info("  Instantaneous batch size per device = {}".format(self.args.per_device_train_batch_size))
+            logger.info("  Num examples = {:,}".format(num_examples))
+            logger.info("  Num Epochs = {:,}".format(num_train_epochs))
+            logger.info("  Instantaneous batch size per device = {:,}".format(self.args.per_device_train_batch_size))
             logger.info(
-                "  Total train batch size (w. parallel, buffer, distributed & accumulation) = {}".format(
+                "  Total train batch size (w. parallel, buffer, distributed & accumulation) = {:,}".format(
                     total_train_batch_size
                 )
             )
-            logger.info("  Gradient Accumulation steps = {}".format(self.args.gradient_accumulation_steps))
-            logger.info("  Num optimization epochs per batch = {}".format(self.finetuning_args.ppo_epochs))
-            logger.info("  Total training steps = {}".format(max_steps))
-            logger.info("  Number of trainable parameters = {}".format(count_parameters(self.model)[0]))
+            logger.info("  Gradient Accumulation steps = {:,}".format(self.args.gradient_accumulation_steps))
+            logger.info("  Num optimization epochs per batch = {:,}".format(self.finetuning_args.ppo_epochs))
+            logger.info("  Total training steps = {:,}".format(max_steps))
+            logger.info("  Number of trainable parameters = {:,}".format(count_parameters(self.model)[0]))
 
         dataiter = iter(self.dataloader)
         loss_meter = AverageMeter()
