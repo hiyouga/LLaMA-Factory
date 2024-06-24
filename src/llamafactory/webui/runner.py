@@ -306,7 +306,7 @@ class Runner:
 
     def _form_config_dict(self, data: Dict["Component", Any]) -> Dict[str, Any]:
         config_dict = {}
-        skip_ids = ["top.lang", "top.model_path", "train.output_dir", "train.config_path", "train.device_count"]
+        skip_ids = ["top.lang", "top.model_path", "train.output_dir", "train.config_path"]
         for elem, value in data.items():
             elem_id = self.manager.get_id_by_elem(elem)
             if elem_id not in skip_ids:
