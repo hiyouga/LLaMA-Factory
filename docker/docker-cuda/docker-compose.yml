@@ -10,9 +10,9 @@ services:
         PIP_INDEX: https://pypi.org/simple
     container_name: llamafactory
     volumes:
-      - ./hf_cache:/root/.cache/huggingface/
-      - ./data:/app/data
-      - ./output:/app/output
+      - ../../hf_cache:/root/.cache/huggingface/
+      - ../../data:/app/LLaMA-Factory/data
+      - ../../output:/app/LLaMA-Factory/output
     ports:
       - "7860:7860"
       - "8000:8000"
