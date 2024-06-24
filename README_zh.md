@@ -422,14 +422,16 @@ llamafactory-cli webui
 CUDA 用户：
 
 ```bash
-docker-compose -f ./docker/docker-cuda/docker-compose.yml up -d
+cd docker/docker-cuda/
+docker-compose up -d
 docker-compose exec llamafactory bash
 ```
 
 昇腾 NPU 用户：
 
 ```bash
-docker-compose -f ./docker/docker-npu/docker-compose.yml up -d
+cd docker/docker-npu/
+docker-compose up -d
 docker-compose exec llamafactory bash
 ```
 

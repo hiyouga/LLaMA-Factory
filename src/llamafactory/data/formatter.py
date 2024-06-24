@@ -216,7 +216,7 @@ class ToolFormatter(Formatter):
             self._tool_formatter = glm4_tool_formatter
             self._tool_extractor = glm4_tool_extractor
         else:
-            raise ValueError("Tool format was not found.")
+            raise NotImplementedError("Tool format {} was not found.".format(self.tool_format))
 
     def apply(self, **kwargs) -> SLOTS:
         content = kwargs.pop("content")

@@ -360,7 +360,7 @@ To enable FlashAttention-2 on the Windows platform, you need to install the prec
 
 <details><summary>For Ascend NPU users</summary>
 
-To install LLaMA Factory on Ascend NPU devices, please specify extra dependencies: `pip install -e '.[torch-npu,metrics]'`. Additionally, you need to install the **[Ascend CANN Toolkit and Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**. Please follow the [installation tutorial](https://www.hiascend.com/document/detail/en/CANNCommunityEdition/600alphaX/softwareinstall/instg/atlasdeploy_03_0031.html) or use the following commands:
+To install LLaMA Factory on Ascend NPU devices, please specify extra dependencies: `pip install -e ".[torch-npu,metrics]"`. Additionally, you need to install the **[Ascend CANN Toolkit and Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**. Please follow the [installation tutorial](https://www.hiascend.com/document/detail/en/CANNCommunityEdition/600alphaX/softwareinstall/instg/atlasdeploy_03_0031.html) or use the following commands:
 
 ```bash
 # replace the url according to your CANN version and devices
@@ -422,14 +422,16 @@ llamafactory-cli webui
 For CUDA users:
 
 ```bash
-docker-compose -f ./docker/docker-cuda/docker-compose.yml up -d
+cd docker/docker-cuda/
+docker-compose up -d
 docker-compose exec llamafactory bash
 ```
 
 For Ascend NPU users:
 
 ```bash
-docker-compose -f ./docker/docker-npu/docker-compose.yml up -d
+cd docker/docker-npu/
+docker-compose up -d
 docker-compose exec llamafactory bash
 ```
 
@@ -461,7 +463,7 @@ docker exec -it llamafactory bash
 For Ascend NPU users:
 
 ```bash
-# Change docker image upon your environment
+# Choose docker image upon your environment
 docker build -f ./docker/docker-npu/Dockerfile \
     --build-arg INSTALL_DEEPSPEED=false \
     --build-arg PIP_INDEX=https://pypi.org/simple \
