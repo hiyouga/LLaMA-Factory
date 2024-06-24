@@ -29,6 +29,10 @@ class DataArguments:
         default=None,
         metadata={"help": "Which template to use for constructing prompts in training and inference."},
     )
+    tool_format: Optional[str] = field(
+        default=None,
+        metadata={"help": "Specifies the tool format template for function calling ."},
+    )
     dataset: Optional[str] = field(
         default=None,
         metadata={"help": "The name of provided dataset(s) to use. Use commas to separate multiple datasets."},
