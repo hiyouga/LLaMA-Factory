@@ -102,10 +102,6 @@ def _verify_model_args(model_args: "ModelArguments", finetuning_args: "Finetunin
         if model_args.adapter_name_or_path is not None and len(model_args.adapter_name_or_path) != 1:
             raise ValueError("Quantized model only accepts a single adapter. Merge them first.")
 
-    # In case that `flash_attn` is set to `off` in the yaml file, and parsed as `False` afterwards.
-    if model_args.flash_attn == False:
-        raise ValueError("flash_attn should be \"disabled\", \"sdpa\", \"fa2\" or \"auto\".")
-
 
 def _check_extra_dependencies(
     model_args: "ModelArguments",
