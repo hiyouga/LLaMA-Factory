@@ -383,12 +383,6 @@ source /usr/local/Ascend/ascend-toolkit/set_env.sh
 | torch-npu    | 2.1.0   | 2.1.0.post3 |
 | deepspeed    | 0.13.2  | 0.13.2      |
 
-Docker users please refer to [Build Docker](#Build-Docker).
-
-**NOTE**
-
-The default docker image is [cosdt/cann:8.0.rc1-910b-ubuntu22.04](https://hub.docker.com/layers/cosdt/cann/8.0.rc1-910b-ubuntu22.04/images/sha256-29ef8aacf6b2babd292f06f00b9190c212e7c79a947411e213135e4d41a178a9?context=explore). More options can be found at [cosdt/cann](https://hub.docker.com/r/cosdt/cann/tags).
-
 Remember to use `ASCEND_RT_VISIBLE_DEVICES` instead of `CUDA_VISIBLE_DEVICES` to specify the device to use.
 
 If you cannot infer model on NPU devices, try setting `do_sample: false` in the configurations.
@@ -425,50 +419,62 @@ llamafactory-cli webui
 
 ### Build Docker
 
-#### Use Docker
-
-<details><summary>For NVIDIA GPU users:</summary>
+For CUDA users:
 
 ```bash
-cd ./docker/docker-cuda
-docker build -f ./Dockerfile \
+docker-compose -f ./docker/docker-cuda/docker-compose.yml up -d
+docker-compose exec llamafactory bash
+```
+
+For Ascend NPU users:
+
+```bash
+docker-compose -f ./docker/docker-npu/docker-compose.yml up -d
+docker-compose exec llamafactory bash
+```
+
+<details><summary>Build without Docker Compose</summary>
+
+For CUDA users:
+
+```bash
+docker build -f ./docker/docker-cuda/Dockerfile \
     --build-arg INSTALL_BNB=false \
     --build-arg INSTALL_VLLM=false \
     --build-arg INSTALL_DEEPSPEED=false \
     --build-arg PIP_INDEX=https://pypi.org/simple \
     -t llamafactory:latest .
 
-docker run -it --gpus=all \
-    -v /$(dirname $(dirname "$PWD"))/hf_cache:/root/.cache/huggingface/ \
-    -v /$(dirname $(dirname "$PWD"))/data:/app/data \
-    -v /$(dirname $(dirname "$PWD"))/output:/app/output \
+docker run -dit --gpus=all \
+    -v ./hf_cache:/root/.cache/huggingface/ \
+    -v ./data:/app/data \
+    -v ./output:/app/output \
     -p 7860:7860 \
     -p 8000:8000 \
     --shm-size 16G \
     --name llamafactory \
     llamafactory:latest
-```
-</details>
 
-<details><summary>For Ascend NPU users:</summary>
+docker exec -it llamafactory bash
+```
+
+For Ascend NPU users:
 
 ```bash
-cd ./docker/docker-npu
-docker build -f ./Dockerfile \
+# Change docker image upon your environment
+docker build -f ./docker/docker-npu/Dockerfile \
     --build-arg INSTALL_DEEPSPEED=false \
     --build-arg PIP_INDEX=https://pypi.org/simple \
     -t llamafactory:latest .
 
-# add --device for multi-npu usage
-# or modify --device to change npu card
-docker run -it \
-    -v /$(dirname $(dirname "$PWD"))/hf_cache:/root/.cache/huggingface/ \
-    -v /$(dirname $(dirname "$PWD"))/data:/app/data \
-    -v /$(dirname $(dirname "$PWD"))/output:/app/output \
+# Change `device` upon your resources
+docker run -dit \
+    -v ./hf_cache:/root/.cache/huggingface/ \
+    -v ./data:/app/data \
+    -v ./output:/app/output \
     -v /usr/local/dcmi:/usr/local/dcmi \
     -v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi \
-    -v /usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64 \
-    -v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info \
+    -v /usr/local/Ascend/driver:/usr/local/Ascend/driver \
     -v /etc/ascend_install.info:/etc/ascend_install.info \
     -p 7860:7860 \
     -p 8000:8000 \
@@ -479,27 +485,11 @@ docker run -it \
     --shm-size 16G \
     --name llamafactory \
     llamafactory:latest
+
+docker exec -it llamafactory bash
 ```
+
 </details>
-
-#### Use Docker Compose
-
-Firstly enter your docker path:
-
-```bash
-# for NVIDIA GPU users
-cd ./docker/docker-cuda
-
-# for Ascend NPU users
-cd ./docker/docker-npu
-```
-
-Then run the following command to build docker image and start the container:
-
-```bash
-docker-compose up -d
-docker-compose exec llamafactory bash
-```
 
 <details><summary>Details about volume</summary>
 
