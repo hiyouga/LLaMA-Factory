@@ -6,9 +6,11 @@ stage: sft
 do_train: true
 finetuning_type: full
 use_badam: true
+badam_mode: layer
 badam_switch_mode: ascending
 badam_switch_interval: 50
 badam_verbose: 2
+deepspeed: examples/deepspeed/ds_z3_config.json
 
 ### dataset
 dataset: identity,alpaca_en_demo
@@ -28,7 +30,7 @@ overwrite_output_dir: true
 ### train
 per_device_train_batch_size: 1
 gradient_accumulation_steps: 8
-learning_rate: 1.0e-6
+learning_rate: 1.0e-4
 num_train_epochs: 3.0
 lr_scheduler_type: cosine
 warmup_ratio: 0.1
