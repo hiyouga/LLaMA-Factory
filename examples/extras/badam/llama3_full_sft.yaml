@@ -6,6 +6,7 @@ stage: sft
 do_train: true
 finetuning_type: full
 use_badam: true
+badam_mode: layer
 badam_switch_mode: ascending
 badam_switch_interval: 50
 badam_verbose: 2
@@ -32,7 +33,6 @@ learning_rate: 1.0e-4
 num_train_epochs: 3.0
 lr_scheduler_type: cosine
 warmup_ratio: 0.1
-pure_bf16: true
 
 ### eval
 val_size: 0.1
