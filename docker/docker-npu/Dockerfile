@@ -1,5 +1,5 @@
-# Using ubuntu 22.04 images with cann 8.0.rc1
-# More options can be found at https://hub.docker.com/r/cosdt/cann/tags
+# Use the Ubuntu 22.04 image with CANN 8.0.rc1
+# More versions can be found at https://hub.docker.com/r/cosdt/cann/tags
 FROM cosdt/cann:8.0.rc1-910b-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -9,15 +9,17 @@ ARG INSTALL_DEEPSPEED=false
 ARG PIP_INDEX=https://pypi.org/simple
 
 # Set the working directory
-WORKDIR /app/LLaMA-Factory
+WORKDIR /app
 
-RUN cd /app && \
-    git config --global http.version HTTP/1.1 && \
-    git clone https://github.com/hiyouga/LLaMA-Factory.git && \
-    cd /app/LLaMA-Factory
-
+# Install the requirements
+COPY requirements.txt /app
 RUN pip config set global.index-url $PIP_INDEX
-RUN python3 -m pip install --upgrade pip
+RUN pip config set global.extra-index-url $PIP_INDEX
+RUN python -m pip install --upgrade pip
+RUN python -m pip install -r requirements.txt
+
+# Copy the rest of the application into the image
+COPY . /app
 
 # Install the LLaMA Factory
 RUN EXTRA_PACKAGES="torch-npu,metrics"; \
@@ -31,10 +33,9 @@ RUN EXTRA_PACKAGES="torch-npu,metrics"; \
 VOLUME [ "/root/.cache/huggingface/", "/app/data", "/app/output" ]
 
 # Expose port 7860 for the LLaMA Board
+ENV GRADIO_SERVER_PORT 7860
 EXPOSE 7860
 
 # Expose port 8000 for the API service
+ENV API_PORT 8000
 EXPOSE 8000
-
-# Launch LLaMA Board
-CMD [ "llamafactory-cli", "webui" ]
