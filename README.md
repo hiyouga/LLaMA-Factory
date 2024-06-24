@@ -383,11 +383,6 @@ source /usr/local/Ascend/ascend-toolkit/set_env.sh
 | torch-npu    | 2.1.0   | 2.1.0.post3 |
 | deepspeed    | 0.13.2  | 0.13.2      |
 
-Docker image:
-
-- 32GB: [Download page](http://mirrors.cn-central-221.ovaijisuan.com/detail/130.html)
-- 64GB: [Download page](http://mirrors.cn-central-221.ovaijisuan.com/detail/131.html)
-
 Remember to use `ASCEND_RT_VISIBLE_DEVICES` instead of `CUDA_VISIBLE_DEVICES` to specify the device to use.
 
 If you cannot infer model on NPU devices, try setting `do_sample: false` in the configurations.
@@ -424,17 +419,33 @@ llamafactory-cli webui
 
 ### Build Docker
 
-#### Use Docker
+For CUDA users:
 
 ```bash
-docker build -f ./Dockerfile \
+docker-compose -f ./docker/docker-cuda/docker-compose.yml up -d
+docker-compose exec llamafactory bash
+```
+
+For Ascend NPU users:
+
+```bash
+docker-compose -f ./docker/docker-npu/docker-compose.yml up -d
+docker-compose exec llamafactory bash
+```
+
+<details><summary>Build without Docker Compose</summary>
+
+For CUDA users:
+
+```bash
+docker build -f ./docker/docker-cuda/Dockerfile \
     --build-arg INSTALL_BNB=false \
     --build-arg INSTALL_VLLM=false \
     --build-arg INSTALL_DEEPSPEED=false \
     --build-arg PIP_INDEX=https://pypi.org/simple \
     -t llamafactory:latest .
 
-docker run -it --gpus=all \
+docker run -dit --gpus=all \
     -v ./hf_cache:/root/.cache/huggingface/ \
     -v ./data:/app/data \
     -v ./output:/app/output \
@@ -443,14 +454,42 @@ docker run -it --gpus=all \
     --shm-size 16G \
     --name llamafactory \
     llamafactory:latest
+
+docker exec -it llamafactory bash
 ```
 
-#### Use Docker Compose
+For Ascend NPU users:
 
 ```bash
-docker-compose up -d
-docker-compose exec llamafactory bash
+# Change docker image upon your environment
+docker build -f ./docker/docker-npu/Dockerfile \
+    --build-arg INSTALL_DEEPSPEED=false \
+    --build-arg PIP_INDEX=https://pypi.org/simple \
+    -t llamafactory:latest .
+
+# Change `device` upon your resources
+docker run -dit \
+    -v ./hf_cache:/root/.cache/huggingface/ \
+    -v ./data:/app/data \
+    -v ./output:/app/output \
+    -v /usr/local/dcmi:/usr/local/dcmi \
+    -v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi \
+    -v /usr/local/Ascend/driver:/usr/local/Ascend/driver \
+    -v /etc/ascend_install.info:/etc/ascend_install.info \
+    -p 7860:7860 \
+    -p 8000:8000 \
+    --device /dev/davinci0 \
+    --device /dev/davinci_manager \
+    --device /dev/devmm_svm \
+    --device /dev/hisi_hdc \
+    --shm-size 16G \
+    --name llamafactory \
+    llamafactory:latest
+
+docker exec -it llamafactory bash
 ```
+
+</details>
 
 <details><summary>Details about volume</summary>
 
