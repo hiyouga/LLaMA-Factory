@@ -360,7 +360,7 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 
 <details><summary>昇腾 NPU 用户指南</summary>
 
-在昇腾 NPU 设备上安装 LLaMA Factory 时，需要指定额外依赖项，使用 `pip install -e '.[torch-npu,metrics]'` 命令安装。此外，还需要安装 **[Ascend CANN Toolkit and Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**，安装方法请参考[安装教程](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/80RC2alpha002/quickstart/quickstart/quickstart_18_0004.html)或使用以下命令：
+在昇腾 NPU 设备上安装 LLaMA Factory 时，需要指定额外依赖项，使用 `pip install -e ".[torch-npu,metrics]"` 命令安装。此外，还需要安装 **[Ascend CANN Toolkit and Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**，安装方法请参考[安装教程](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/80RC2alpha002/quickstart/quickstart/quickstart_18_0004.html)或使用以下命令：
 
 ```bash
 # 请替换 URL 为 CANN 版本和设备型号对应的 URL
@@ -382,12 +382,6 @@ source /usr/local/Ascend/ascend-toolkit/set_env.sh
 | torch        | 2.1.0   | 2.1.0       |
 | torch-npu    | 2.1.0   | 2.1.0.post3 |
 | deepspeed    | 0.13.2  | 0.13.2      |
-
-Docker用户请参考 [构建 Docker](#构建-Docker).
-
-**NOTE**
-
-默认镜像为 [cosdt/cann:8.0.rc1-910b-ubuntu22.04](https://hub.docker.com/layers/cosdt/cann/8.0.rc1-910b-ubuntu22.04/images/sha256-29ef8aacf6b2babd292f06f00b9190c212e7c79a947411e213135e4d41a178a9?context=explore). 更多选择见 [cosdt/cann](https://hub.docker.com/r/cosdt/cann/tags).
 
 请使用 `ASCEND_RT_VISIBLE_DEVICES` 而非 `CUDA_VISIBLE_DEVICES` 来指定运算设备。
 
@@ -425,49 +419,62 @@ llamafactory-cli webui
 
 ### 构建 Docker
 
-#### 使用 Docker
-
-<details><summary>NVIDIA GPU 用户：</summary>
+CUDA 用户：
 
 ```bash
-cd ./docker/docker-cuda
-docker build -f ./Dockerfile \
+docker-compose -f ./docker/docker-cuda/docker-compose.yml up -d
+docker-compose exec llamafactory bash
+```
+
+昇腾 NPU 用户：
+
+```bash
+docker-compose -f ./docker/docker-npu/docker-compose.yml up -d
+docker-compose exec llamafactory bash
+```
+
+<details><summary>不使用 Docker Compose 构建</summary>
+
+CUDA 用户：
+
+```bash
+docker build -f ./docker/docker-cuda/Dockerfile \
     --build-arg INSTALL_BNB=false \
     --build-arg INSTALL_VLLM=false \
     --build-arg INSTALL_DEEPSPEED=false \
     --build-arg PIP_INDEX=https://pypi.org/simple \
     -t llamafactory:latest .
 
-docker run -it --gpus=all \
-    -v /$(dirname $(dirname "$PWD"))/hf_cache:/root/.cache/huggingface/ \
-    -v /$(dirname $(dirname "$PWD"))/data:/app/data \
-    -v /$(dirname $(dirname "$PWD"))/output:/app/output \
+docker run -dit --gpus=all \
+    -v ./hf_cache:/root/.cache/huggingface/ \
+    -v ./data:/app/data \
+    -v ./output:/app/output \
     -p 7860:7860 \
     -p 8000:8000 \
     --shm-size 16G \
     --name llamafactory \
     llamafactory:latest
-```
-</details>
 
-<details><summary>Ascend NPU 用户：</summary>
+docker exec -it llamafactory bash
+```
+
+昇腾 NPU 用户：
 
 ```bash
-cd ./docker/docker-npu
-docker build -f ./Dockerfile \
+# 根据您的环境选择镜像
+docker build -f ./docker/docker-npu/Dockerfile \
     --build-arg INSTALL_DEEPSPEED=false \
     --build-arg PIP_INDEX=https://pypi.org/simple \
     -t llamafactory:latest .
 
-# 增加 --device 来使用多卡 NPU 或修改第一个 --device 来更改 NPU 卡
-docker run -it \
-    -v /$(dirname $(dirname "$PWD"))/hf_cache:/root/.cache/huggingface/ \
-    -v /$(dirname $(dirname "$PWD"))/data:/app/data \
-    -v /$(dirname $(dirname "$PWD"))/output:/app/output \
+# 根据您的资源更改 `device`
+docker run -dit \
+    -v ./hf_cache:/root/.cache/huggingface/ \
+    -v ./data:/app/data \
+    -v ./output:/app/output \
     -v /usr/local/dcmi:/usr/local/dcmi \
     -v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi \
-    -v /usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64 \
-    -v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info \
+    -v /usr/local/Ascend/driver:/usr/local/Ascend/driver \
     -v /etc/ascend_install.info:/etc/ascend_install.info \
     -p 7860:7860 \
     -p 8000:8000 \
@@ -478,25 +485,11 @@ docker run -it \
     --shm-size 16G \
     --name llamafactory \
     llamafactory:latest
+
+docker exec -it llamafactory bash
 ```
+
 </details>
-
-#### 使用 Docker Compose
-
-首先进入 docker 目录：
-```bash
-# NVIDIA GPU 用户
-cd ./docker/docker-cuda
-
-# Ascend NPU 用户
-cd ./docker/docker-npu
-```
-然后运行以下命令创建 docker 镜像并启动容器:
-
-```bash
-docker-compose up -d
-docker-compose exec llamafactory bash
-```
 
 <details><summary>数据卷详情</summary>
 
