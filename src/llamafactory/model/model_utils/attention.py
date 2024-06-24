@@ -32,7 +32,7 @@ def configure_attn_implementation(config: "PretrainedConfig", model_args: "Model
     if model_args.flash_attn == "auto":
         return
 
-    elif model_args.flash_attn == "off":
+    elif model_args.flash_attn == "disabled":
         requested_attn_implementation = "eager"
 
     elif model_args.flash_attn == "sdpa":
