@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
 import torch
 from peft import PeftModel
 from transformers import Trainer
+from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.optimization import get_scheduler
 from transformers.pytorch_utils import ALL_LAYERNORM_LAYERS
 from transformers.trainer_pt_utils import get_parameter_names
@@ -372,9 +373,6 @@ def _create_badam_optimizer(
         dict(params=decay_params, weight_decay=training_args.weight_decay),
     ]
 
-    from transformers.integrations import is_deepspeed_zero3_enabled
-    ds_zero3_enabled = is_deepspeed_zero3_enabled()
-
     if finetuning_args.badam_mode == "layer":
         from badam import BlockOptimizer
 
@@ -387,7 +385,7 @@ def _create_badam_optimizer(
             start_block=finetuning_args.badam_start_block,
             switch_mode=finetuning_args.badam_switch_mode,
             verbose=finetuning_args.badam_verbose,
-            ds_zero3_enabled=ds_zero3_enabled
+            ds_zero3_enabled=is_deepspeed_zero3_enabled(),
         )
         logger.info(
             f"Using BAdam optimizer with layer-wise update, switch mode is {finetuning_args.badam_switch_mode}, "
@@ -398,7 +396,6 @@ def _create_badam_optimizer(
     elif finetuning_args.badam_mode == "ratio":
         from badam import BlockOptimizerRatio
 
-        assert not ds_zero3_enabled, "BAdam with ratio-based update does not support Deepspeed ZeRO-3 yet, use layer-wise update instead: --badam_mode layer."
         assert finetuning_args.badam_update_ratio > 1e-6
         optimizer = BlockOptimizerRatio(
             param_groups=param_groups,
