@@ -9,16 +9,18 @@ ARG INSTALL_DEEPSPEED=false
 ARG PIP_INDEX=https://pypi.org/simple
 
 # Set the working directory
-WORKDIR /app
+WORKDIR /app/LLaMA-Factory
+
+RUN cd /app && \
+    git config --global http.version HTTP/1.1 && \
+    git clone https://github.com/hiyouga/LLaMA-Factory.git && \
+    cd /app/LLaMA-Factory
 
 # Install the requirements
-COPY requirements.txt /app/
 RUN pip config set global.index-url $PIP_INDEX
 RUN python -m pip install --upgrade pip
 RUN python -m pip install -r requirements.txt
 
-# Copy the rest of the application into the image
-COPY . /app/
 
 # Install the LLaMA Factory
 RUN EXTRA_PACKAGES="metrics"; \

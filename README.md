@@ -383,10 +383,11 @@ source /usr/local/Ascend/ascend-toolkit/set_env.sh
 | torch-npu    | 2.1.0   | 2.1.0.post3 |
 | deepspeed    | 0.13.2  | 0.13.2      |
 
-Docker image:
+Docker users please refer to [Build Docker](#Build-Docker).
 
-- 32GB: [Download page](http://mirrors.cn-central-221.ovaijisuan.com/detail/130.html)
-- 64GB: [Download page](http://mirrors.cn-central-221.ovaijisuan.com/detail/131.html)
+**NOTE**
+
+The default docker image is [cosdt/cann:8.0.rc1-910b-ubuntu22.04](https://hub.docker.com/layers/cosdt/cann/8.0.rc1-910b-ubuntu22.04/images/sha256-29ef8aacf6b2babd292f06f00b9190c212e7c79a947411e213135e4d41a178a9?context=explore). More options can be found at [cosdt/cann](https://hub.docker.com/r/cosdt/cann/tags).
 
 Remember to use `ASCEND_RT_VISIBLE_DEVICES` instead of `CUDA_VISIBLE_DEVICES` to specify the device to use.
 
@@ -426,7 +427,10 @@ llamafactory-cli webui
 
 #### Use Docker
 
+<details><summary>For NVIDIA GPU users:</summary>
+
 ```bash
+cd ./docker/docker-cuda
 docker build -f ./Dockerfile \
     --build-arg INSTALL_BNB=false \
     --build-arg INSTALL_VLLM=false \
@@ -435,17 +439,62 @@ docker build -f ./Dockerfile \
     -t llamafactory:latest .
 
 docker run -it --gpus=all \
-    -v ./hf_cache:/root/.cache/huggingface/ \
-    -v ./data:/app/data \
-    -v ./output:/app/output \
+    -v /$(dirname $(dirname "$PWD"))/hf_cache:/root/.cache/huggingface/ \
+    -v /$(dirname $(dirname "$PWD"))/data:/app/data \
+    -v /$(dirname $(dirname "$PWD"))/output:/app/output \
     -p 7860:7860 \
     -p 8000:8000 \
     --shm-size 16G \
     --name llamafactory \
     llamafactory:latest
 ```
+</details>
+
+<details><summary>For Ascend NPU users:</summary>
+
+```bash
+cd ./docker/docker-npu
+docker build -f ./Dockerfile \
+    --build-arg INSTALL_DEEPSPEED=false \
+    --build-arg PIP_INDEX=https://pypi.org/simple \
+    -t llamafactory:latest .
+
+# add --device for multi-npu usage
+# or modify --device to change npu card
+docker run -it \
+    -v /$(dirname $(dirname "$PWD"))/hf_cache:/root/.cache/huggingface/ \
+    -v /$(dirname $(dirname "$PWD"))/data:/app/data \
+    -v /$(dirname $(dirname "$PWD"))/output:/app/output \
+    -v /usr/local/dcmi:/usr/local/dcmi \
+    -v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi \
+    -v /usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64 \
+    -v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info \
+    -v /etc/ascend_install.info:/etc/ascend_install.info \
+    -p 7860:7860 \
+    -p 8000:8000 \
+    --device /dev/davinci0 \
+    --device /dev/davinci_manager \
+    --device /dev/devmm_svm \
+    --device /dev/hisi_hdc \
+    --shm-size 16G \
+    --name llamafactory \
+    llamafactory:latest
+```
+</details>
 
 #### Use Docker Compose
+
+Firstly enter your docker path:
+
+```bash
+# for NVIDIA GPU users
+cd ./docker/docker-cuda
+
+# for Ascend NPU users
+cd ./docker/docker-npu
+```
+
+Then run the following command to build docker image and start the container:
 
 ```bash
 docker-compose up -d
