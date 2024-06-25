@@ -191,7 +191,7 @@ class HuggingfaceEngine(BaseEngine):
             )
             gen_kwargs["images"] = transform(Image.fromarray(image)).unsqueeze(0).to(model.device).to(model_args.compute_dtype)
         elif model_args.visual_inputs_type == "vision_message_embed":
-            gen_kwargs["images"] = []
+            gen_kwargs["images"] = None
 
         if pixel_values is not None:
             gen_kwargs["pixel_values"] = pixel_values
