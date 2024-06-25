@@ -35,6 +35,11 @@ RUN EXTRA_PACKAGES="metrics"; \
     pip install -e .[$EXTRA_PACKAGES] && \
     pip uninstall -y transformer-engine flash-attn
 
+# Rebuild flash-attn
+RUN ninja --version || \
+    (pip uninstall -y ninja && pip install ninja) && \
+    MAX_JOBS=4 pip install --no-cache-dir flash-attn --no-build-isolation
+
 # Set up volumes
 VOLUME [ "/root/.cache/huggingface", "/root/.cache/modelscope", "/app/data", "/app/output" ]
 
