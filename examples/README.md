@@ -94,10 +94,10 @@ FORCE_TORCHRUN=1 llamafactory-cli train examples/train_lora/llama3_lora_sft_ds3.
 
 ### QLoRA Fine-Tuning
 
-#### Supervised Fine-Tuning with 4/8-bit Bitsandbytes Quantization (Recommended)
+#### Supervised Fine-Tuning with 4/8-bit Bitsandbytes/HQQ/EETQ Quantization (Recommended)
 
 ```bash
-llamafactory-cli train examples/train_qlora/llama3_lora_sft_bitsandbytes.yaml
+llamafactory-cli train examples/train_qlora/llama3_lora_sft_otfq.yaml
 ```
 
 #### Supervised Fine-Tuning with 4/8-bit GPTQ Quantization
