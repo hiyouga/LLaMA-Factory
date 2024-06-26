@@ -6,6 +6,7 @@ FROM nvcr.io/nvidia/pytorch:24.02-py3
 ARG INSTALL_BNB=false
 ARG INSTALL_VLLM=false
 ARG INSTALL_DEEPSPEED=false
+ARG INSTALL_FLASH_ATTN=false
 ARG PIP_INDEX=https://pypi.org/simple
 
 # Set the working directory
@@ -36,9 +37,11 @@ RUN EXTRA_PACKAGES="metrics"; \
     pip uninstall -y transformer-engine flash-attn
 
 # Rebuild flash-attn
-RUN ninja --version || \
-    (pip uninstall -y ninja && pip install ninja) && \
-    MAX_JOBS=4 pip install --no-cache-dir flash-attn --no-build-isolation
+RUN if [ "$INSTALL_FLASH_ATTN" = "true" ]; then \
+        ninja --version || \
+        (pip uninstall -y ninja && pip install ninja) && \
+        MAX_JOBS=4 pip install --no-cache-dir flash-attn --no-build-isolation \
+    fi;
 
 # Set up volumes
 VOLUME [ "/root/.cache/huggingface", "/root/.cache/modelscope", "/app/data", "/app/output" ]
