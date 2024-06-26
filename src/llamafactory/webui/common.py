@@ -47,6 +47,8 @@ DEFAULT_CONFIG_DIR = "config"
 DEFAULT_DATA_DIR = "data"
 DEFAULT_SAVE_DIR = "saves"
 USER_CONFIG = "user_config.yaml"
+QUANTIZATION_BITS = ["8", "6", "5", "4", "3", "2", "1"]
+GPTQ_BITS = ["8", "4", "3", "2"]
 
 
 def get_save_dir(*paths: str) -> os.PathLike:

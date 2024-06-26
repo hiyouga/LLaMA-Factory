@@ -25,6 +25,7 @@ from yaml import safe_dump, safe_load
 from ..extras.constants import PEFT_METHODS, RUNNING_LOG, TRAINER_LOG, TRAINING_ARGS, TRAINING_STAGES
 from ..extras.packages import is_gradio_available, is_matplotlib_available
 from ..extras.ploting import gen_loss_plot
+from ..model import QuantizationMethod
 from .common import DEFAULT_CACHE_DIR, DEFAULT_CONFIG_DIR, get_save_dir
 from .locales import ALERTS
 
@@ -53,6 +54,18 @@ def can_quantize(finetuning_type: str) -> "gr.Dropdown":
         return gr.Dropdown(value="none", interactive=False)
     else:
         return gr.Dropdown(interactive=True)
+
+
+def can_quantize_to(quantization_method: str) -> "gr.Dropdown":
+    r"""
+    Returns the available quantization bits.
+    """
+    if quantization_method == QuantizationMethod.BITS_AND_BYTES.value:
+        return gr.Dropdown(choices=["none", "8", "4"])
+    elif quantization_method == QuantizationMethod.HQQ.value:
+        return gr.Dropdown(choices=["none", "8", "6", "5", "4", "3", "2", "1"])
+    elif quantization_method == QuantizationMethod.EETQ.value:
+        return gr.Dropdown(choices=["none", "8"])
 
 
 def change_stage(training_stage: str = list(TRAINING_STAGES.keys())[0]) -> Tuple[List[str], bool]:
