@@ -8,10 +8,10 @@ services:
         PIP_INDEX: https://pypi.org/simple
     container_name: llamafactory
     volumes:
-      - ./hf_cache:/root/.cache/huggingface
-      - ./ms_cache:/root/.cache/modelscope
-      - ./data:/app/data
-      - ./output:/app/output
+      - ../../hf_cache:/root/.cache/huggingface
+      - ../../ms_cache:/root/.cache/modelscope
+      - ../../data:/app/data
+      - ../../output:/app/output
       - /usr/local/dcmi:/usr/local/dcmi
       - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
       - /usr/local/Ascend/driver:/usr/local/Ascend/driver
