@@ -42,7 +42,7 @@ extra_require = {
     "vllm": ["vllm>=0.4.3"],
     "galore": ["galore-torch"],
     "badam": ["badam>=1.2.1"],
-    "gptq": ["optimum>=1.16.0", "auto-gptq>=0.5.0"],
+    "gptq": ["optimum>=1.17.0", "auto-gptq>=0.5.0"],
     "awq": ["autoawq"],
     "aqlm": ["aqlm[gpu]>=1.1.0"],
     "qwen": ["transformers_stream_generator"],
