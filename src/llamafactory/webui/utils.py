@@ -61,11 +61,11 @@ def can_quantize_to(quantization_method: str) -> "gr.Dropdown":
     Returns the available quantization bits.
     """
     if quantization_method == QuantizationMethod.BITS_AND_BYTES.value:
-        return gr.Dropdown(choices=["none", "8", "4"])
+        return gr.Dropdown(choices=["none", "8", "4"], value="none")
     elif quantization_method == QuantizationMethod.HQQ.value:
-        return gr.Dropdown(choices=["none", "8", "6", "5", "4", "3", "2", "1"])
+        return gr.Dropdown(choices=["none", "8", "6", "5", "4", "3", "2", "1"], value="none")
     elif quantization_method == QuantizationMethod.EETQ.value:
-        return gr.Dropdown(choices=["none", "8"])
+        return gr.Dropdown(choices=["none", "8"], value="none")
 
 
 def change_stage(training_stage: str = list(TRAINING_STAGES.keys())[0]) -> Tuple[List[str], bool]:
