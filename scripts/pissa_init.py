@@ -35,21 +35,25 @@ def quantize_pissa(
     lora_alpha: int = None,
     lora_rank: int = 16,
     lora_dropout: float = 0,
-    lora_target: str = "q_proj,v_proj",
+    lora_target: tuple = ("q_proj", "v_proj"),
     save_safetensors: bool = True,
 ):
     r"""
     Initializes LoRA weights with Principal Singular values and Singular vectors Adaptation (PiSSA)
     Usage: python pissa_init.py --model_name_or_path path_to_model --output_dir output_dir
     """
+    if isinstance(lora_target, str):
+        lora_target = [name.strip() for name in lora_target.split(",")]
+
     tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, trust_remote_code=True)
     model = AutoModelForCausalLM.from_pretrained(model_name_or_path, trust_remote_code=True, torch_dtype="auto")
+
     lora_config = LoraConfig(
         task_type=TaskType.CAUSAL_LM,
         r=lora_rank,
         lora_alpha=lora_alpha if lora_alpha is not None else lora_rank * 2,
         lora_dropout=lora_dropout,
-        target_modules=[name.strip() for name in lora_target.split(",")],
+        target_modules=lora_target,
         init_lora_weights="pissa" if pissa_iter == -1 else "pissa_niter_{}".format(pissa_iter),
     )
 
