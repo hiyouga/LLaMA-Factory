@@ -94,10 +94,10 @@ FORCE_TORCHRUN=1 llamafactory-cli train examples/train_lora/llama3_lora_sft_ds3.
 
 ### QLoRA 微调
 
-#### 基于 4/8 比特 Bitsandbytes 量化进行指令监督微调（推荐）
+#### 基于 4/8 比特 Bitsandbytes/HQQ/EETQ 量化进行指令监督微调（推荐）
 
 ```bash
-llamafactory-cli train examples/train_qlora/llama3_lora_sft_bitsandbytes.yaml
+llamafactory-cli train examples/train_qlora/llama3_lora_sft_otfq.yaml
 ```
 
 #### 基于 4/8 比特 GPTQ 量化进行指令监督微调
