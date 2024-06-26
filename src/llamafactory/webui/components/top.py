@@ -43,7 +43,7 @@ def create_top() -> Dict[str, "Component"]:
 
     with gr.Accordion(open=False) as advanced_tab:
         with gr.Row():
-            quantization_bit = gr.Dropdown(choices=["none", "8", "4"], value="none", scale=1)
+            quantization_bit = gr.Dropdown(choices=["none", "8", "4"], value="none", allow_custom_value=True, scale=1)
             quantization_method = gr.Dropdown(choices=["bitsandbytes", "hqq", "eetq"], value="bitsandbytes", scale=1)
             template = gr.Dropdown(choices=list(TEMPLATES.keys()), value="default", scale=1)
             rope_scaling = gr.Radio(choices=["none", "linear", "dynamic"], value="none", scale=2)
