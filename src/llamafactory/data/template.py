@@ -618,7 +618,7 @@ _register_template(
 
 _register_template(
     name="default",
-    format_user=StringFormatter(slots=["Human: {{content}}\nAssistant: "]),
+    format_user=StringFormatter(slots=["Human: {{content}}\nAssistant:"]),
     format_system=StringFormatter(slots=["{{content}}\n"]),
     format_separator=EmptyFormatter(slots=["\n"]),
 )
