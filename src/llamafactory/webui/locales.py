@@ -85,15 +85,29 @@ LOCALES = {
     "quantization_bit": {
         "en": {
             "label": "Quantization bit",
-            "info": "Enable 4/8-bit model quantization (QLoRA).",
+            "info": "Enable quantization (QLoRA).",
         },
         "ru": {
             "label": "Уровень квантования",
-            "info": "Включить 4/8-битное квантование модели (QLoRA).",
+            "info": "Включить квантование (QLoRA).",
         },
         "zh": {
             "label": "量化等级",
-            "info": "启用 4/8 比特模型量化（QLoRA）。",
+            "info": "启用量化（QLoRA）。",
+        },
+    },
+    "quantization_method": {
+        "en": {
+            "label": "Quantization method",
+            "info": "Quantization algorithm to use.",
+        },
+        "ru": {
+            "label": "Метод квантования",
+            "info": "Алгоритм квантования, который следует использовать.",
+        },
+        "zh": {
+            "label": "量化方法",
+            "info": "使用的量化算法。",
         },
     },
     "template": {
