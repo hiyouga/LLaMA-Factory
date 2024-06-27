@@ -202,9 +202,6 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         if is_deepspeed_zero3_enabled():
             raise ValueError("`pure_bf16` is incompatible with DeepSpeed ZeRO-3.")
 
-        if training_args.fp16 or training_args.bf16:
-            raise ValueError("Turn off mixed precision training when using `pure_bf16`.")
-
     if (
         finetuning_args.use_galore
         and finetuning_args.galore_layerwise
