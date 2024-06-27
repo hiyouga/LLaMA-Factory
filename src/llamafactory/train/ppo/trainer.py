@@ -99,10 +99,10 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         )
 
         # Add deepspeed config
-        ppo_config.accelerator_kwargs["kwargs_handlers"] = [
-            DistributedDataParallelKwargs(find_unused_parameters=training_args.ddp_find_unused_parameters)
-        ]
         if training_args.deepspeed_plugin is not None:
+            ppo_config.accelerator_kwargs["kwargs_handlers"] = [
+                DistributedDataParallelKwargs(find_unused_parameters=training_args.ddp_find_unused_parameters)
+            ]
             ppo_config.accelerator_kwargs["deepspeed_plugin"] = training_args.deepspeed_plugin
 
         # Create optimizer and scheduler
@@ -166,9 +166,10 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
                 self.reward_model = self.accelerator.prepare_model(self.reward_model, evaluation_mode=True)
 
         if finetuning_args.use_badam:
-            from badam import clip_grad_norm_for_sparse_tensor
+            from badam import BAdamCallback, clip_grad_norm_old_version
 
-            self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_for_sparse_tensor, self.accelerator)
+            self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
+            self.callback_handler.add_callback(BAdamCallback)
 
     def ppo_train(self, resume_from_checkpoint: Optional[str] = None) -> None:
         r"""
@@ -202,18 +203,18 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
 
         if self.is_world_process_zero():
             logger.info("***** Running training *****")
-            logger.info("  Num examples = {}".format(num_examples))
-            logger.info("  Num Epochs = {}".format(num_train_epochs))
-            logger.info("  Instantaneous batch size per device = {}".format(self.args.per_device_train_batch_size))
+            logger.info("  Num examples = {:,}".format(num_examples))
+            logger.info("  Num Epochs = {:,}".format(num_train_epochs))
+            logger.info("  Instantaneous batch size per device = {:,}".format(self.args.per_device_train_batch_size))
             logger.info(
-                "  Total train batch size (w. parallel, buffer, distributed & accumulation) = {}".format(
+                "  Total train batch size (w. parallel, buffer, distributed & accumulation) = {:,}".format(
                     total_train_batch_size
                 )
             )
-            logger.info("  Gradient Accumulation steps = {}".format(self.args.gradient_accumulation_steps))
-            logger.info("  Num optimization epochs per batch = {}".format(self.finetuning_args.ppo_epochs))
-            logger.info("  Total training steps = {}".format(max_steps))
-            logger.info("  Number of trainable parameters = {}".format(count_parameters(self.model)[0]))
+            logger.info("  Gradient Accumulation steps = {:,}".format(self.args.gradient_accumulation_steps))
+            logger.info("  Num optimization epochs per batch = {:,}".format(self.finetuning_args.ppo_epochs))
+            logger.info("  Total training steps = {:,}".format(max_steps))
+            logger.info("  Number of trainable parameters = {:,}".format(count_parameters(self.model)[0]))
 
         dataiter = iter(self.dataloader)
         loss_meter = AverageMeter()

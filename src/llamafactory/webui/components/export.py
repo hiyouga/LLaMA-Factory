@@ -18,7 +18,7 @@ from ...extras.constants import PEFT_METHODS
 from ...extras.misc import torch_gc
 from ...extras.packages import is_gradio_available
 from ...train.tuner import export_model
-from ..common import get_save_dir
+from ..common import GPTQ_BITS, get_save_dir
 from ..locales import ALERTS
 
 
@@ -30,9 +30,6 @@ if TYPE_CHECKING:
     from gradio.components import Component
 
     from ..engine import Engine
-
-
-GPTQ_BITS = ["8", "4", "3", "2"]
 
 
 def can_quantize(checkpoint_path: Union[str, List[str]]) -> "gr.Dropdown":
