@@ -7,6 +7,7 @@ services:
         INSTALL_BNB: false
         INSTALL_VLLM: false
         INSTALL_DEEPSPEED: false
+        INSTALL_FLASH_ATTN: false
         PIP_INDEX: https://pypi.org/simple
     container_name: llamafactory
     volumes:
