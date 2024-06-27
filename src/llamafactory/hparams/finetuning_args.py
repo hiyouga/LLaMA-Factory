@@ -379,10 +379,10 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         if self.loraplus_lr_ratio is not None and self.finetuning_type != "lora":
             raise ValueError("`loraplus_lr_ratio` is only valid for LoRA training.")
 
-        if self.pissa_convert and self.finetuning_type != "lora":
-            raise ValueError("`pissa_convert` is only valid for LoRA training.")
+        if self.pissa_init and self.finetuning_type != "lora":
+            raise ValueError("`pissa_init` is only valid for LoRA training.")
 
-        if self.pissa_convert and (self.stage in ["rm", "ppo", "kto"] or self.use_ref_model):
+        if self.pissa_init and (self.stage in ["ppo", "kto"] or self.use_ref_model):
             raise ValueError("Cannot use PiSSA for current training stage.")
 
         if self.train_mm_proj_only and self.finetuning_type != "full":

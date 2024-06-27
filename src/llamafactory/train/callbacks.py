@@ -1,4 +1,7 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+#
+# This code is inspired by the HuggingFace's transformers library.
+# https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/trainer.py
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,20 +25,76 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
+import torch
 import transformers
-from transformers import TrainerCallback
+from peft import PeftModel
+from transformers import PreTrainedModel, ProcessorMixin, TrainerCallback
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR, has_length
+from transformers.utils import (
+    SAFE_WEIGHTS_NAME,
+    WEIGHTS_NAME,
+    is_safetensors_available,
+)
 
-from .constants import TRAINER_LOG
-from .logging import LoggerHandler, get_logger
-from .misc import fix_valuehead_checkpoint
+from ..extras.constants import TRAINER_LOG, V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
+from ..extras.logging import LoggerHandler, get_logger
 
+
+if is_safetensors_available():
+    from safetensors import safe_open
+    from safetensors.torch import save_file
 
 if TYPE_CHECKING:
     from transformers import TrainerControl, TrainerState, TrainingArguments
+    from trl import AutoModelForCausalLMWithValueHead
 
 
 logger = get_logger(__name__)
+
+
+def fix_valuehead_checkpoint(
+    model: "AutoModelForCausalLMWithValueHead", output_dir: str, safe_serialization: bool
+) -> None:
+    r"""
+    The model is already unwrapped.
+
+    There are three cases:
+    1. full tuning without ds_zero3: state_dict = {"model.layers.*": ..., "v_head.summary.*": ...}
+    2. lora tuning without ds_zero3: state_dict = {"v_head.summary.*": ...}
+    3. under deepspeed zero3: state_dict = {"pretrained_model.model.layers.*": ..., "v_head.summary.*": ...}
+
+    We assume `stage3_gather_16bit_weights_on_model_save=true`.
+    """
+    if not isinstance(model.pretrained_model, (PreTrainedModel, PeftModel)):
+        return
+
+    if safe_serialization:
+        path_to_checkpoint = os.path.join(output_dir, SAFE_WEIGHTS_NAME)
+        with safe_open(path_to_checkpoint, framework="pt", device="cpu") as f:
+            state_dict: Dict[str, torch.Tensor] = {key: f.get_tensor(key) for key in f.keys()}
+    else:
+        path_to_checkpoint = os.path.join(output_dir, WEIGHTS_NAME)
+        state_dict: Dict[str, torch.Tensor] = torch.load(path_to_checkpoint, map_location="cpu")
+
+    decoder_state_dict = {}
+    v_head_state_dict = {}
+    for name, param in state_dict.items():
+        if name.startswith("v_head."):
+            v_head_state_dict[name] = param
+        else:
+            decoder_state_dict[name.replace("pretrained_model.", "")] = param
+
+    os.remove(path_to_checkpoint)
+    model.pretrained_model.save_pretrained(
+        output_dir, state_dict=decoder_state_dict or None, safe_serialization=safe_serialization
+    )
+
+    if safe_serialization:
+        save_file(v_head_state_dict, os.path.join(output_dir, V_HEAD_SAFE_WEIGHTS_NAME), metadata={"format": "pt"})
+    else:
+        torch.save(v_head_state_dict, os.path.join(output_dir, V_HEAD_WEIGHTS_NAME))
+
+    logger.info("Value head model saved at: {}".format(output_dir))
 
 
 class FixValueHeadModelCallback(TrainerCallback):
@@ -51,8 +110,70 @@ class FixValueHeadModelCallback(TrainerCallback):
             )
 
 
+class SaveProcessorCallback(TrainerCallback):
+    def __init__(self, processor: "ProcessorMixin") -> None:
+        r"""
+        Initializes a callback for saving the processor.
+        """
+        self.processor = processor
+
+    def on_train_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
+        r"""
+        Event called at the end of training.
+        """
+        if args.should_save:
+            getattr(self.processor, "image_processor").save_pretrained(args.output_dir)
+
+
+class PissaConvertCallback(TrainerCallback):
+    r"""
+    Initializes a callback for converting the PiSSA adapter to a normal one.
+    """
+
+    def on_train_begin(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
+        r"""
+        Event called at the beginning of training.
+        """
+        if args.should_save:
+            model = kwargs.pop("model")
+            pissa_init_dir = os.path.join(args.output_dir, "pissa_init")
+            logger.info("Initial PiSSA adatper will be saved at: {}.".format(pissa_init_dir))
+            if isinstance(model, PeftModel):
+                init_lora_weights = getattr(model.peft_config["default"], "init_lora_weights")
+                setattr(model.peft_config["default"], "init_lora_weights", True)
+                model.save_pretrained(pissa_init_dir, safe_serialization=args.save_safetensors)
+                setattr(model.peft_config["default"], "init_lora_weights", init_lora_weights)
+
+    def on_train_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
+        r"""
+        Event called at the end of training.
+        """
+        if args.should_save:
+            model = kwargs.pop("model")
+            pissa_init_dir = os.path.join(args.output_dir, "pissa_init")
+            pissa_backup_dir = os.path.join(args.output_dir, "pissa_backup")
+            pissa_convert_dir = os.path.join(args.output_dir, "pissa_converted")
+            logger.info("Converted PiSSA adapter will be saved at: {}.".format(pissa_convert_dir))
+            # 1. save a pissa backup with init_lora_weights: True
+            # 2. save a converted lora with init_lora_weights: pissa
+            # 3. load the pissa backup with init_lora_weights: True
+            # 4. delete the initial adapter and change init_lora_weights to pissa
+            if isinstance(model, PeftModel):
+                init_lora_weights = getattr(model.peft_config["default"], "init_lora_weights")
+                setattr(model.peft_config["default"], "init_lora_weights", True)
+                model.save_pretrained(pissa_backup_dir, safe_serialization=args.save_safetensors)
+                setattr(model.peft_config["default"], "init_lora_weights", init_lora_weights)
+                model.save_pretrained(
+                    pissa_convert_dir, safe_serialization=args.save_safetensors, convert_pissa_to_lora=pissa_init_dir
+                )
+                model.load_adapter(pissa_backup_dir, "default", is_trainable=True)
+                model.set_adapter("default")
+                model.delete_adapter("pissa_init")
+                setattr(model.peft_config["default"], "init_lora_weights", init_lora_weights)
+
+
 class LogCallback(TrainerCallback):
-    def __init__(self, output_dir: str) -> None:
+    def __init__(self) -> None:
         r"""
         Initializes a callback for logging training and evaluation status.
         """
@@ -70,7 +191,7 @@ class LogCallback(TrainerCallback):
         self.webui_mode = os.environ.get("LLAMABOARD_ENABLED", "0").lower() in ["true", "1"]
         if self.webui_mode:
             signal.signal(signal.SIGABRT, self._set_abort)
-            self.logger_handler = LoggerHandler(output_dir)
+            self.logger_handler = LoggerHandler(os.environ.get("LLAMABOARD_WORKDIR"))
             logging.root.addHandler(self.logger_handler)
             transformers.logging.add_handler(self.logger_handler)
 
