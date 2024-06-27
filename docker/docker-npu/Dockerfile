@@ -1,39 +1,38 @@
 # Use the Ubuntu 22.04 image with CANN 8.0.rc1
 # More versions can be found at https://hub.docker.com/r/cosdt/cann/tags
-FROM --platform=$TARGETPLATFORM cosdt/cann:8.0.rc1-910b-ubuntu22.04
+FROM cosdt/cann:8.0.rc1-910b-ubuntu22.04
 
+# Set env
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Define installation arguments
-ARG TARGETPLATFORM
 ARG INSTALL_DEEPSPEED=false
 ARG PIP_INDEX=https://pypi.org/simple
-ARG EXTRA_INDEX=https://download.pytorch.org/whl/cpu
+# x86 torch cpu index
+ARG TORCH_INDEX=https://download.pytorch.org/whl/cpu
 
 # Set the working directory
 WORKDIR /app
 
 # Install the requirements
 COPY requirements.txt /app
-RUN pip config set global.index-url $PIP_INDEX && \
-    pip install --upgrade pip && \
-    pip install -r requirements.txt
+RUN pip config set global.index-url "$PIP_INDEX" && \
+    pip config set global.extra-index-url "$PIP_INDEX" && \
+    python -m pip install --upgrade pip && \
+    python -m pip install -r requirements.txt
 
 # Copy the rest of the application into the image
 COPY . /app
 
 # Install the LLaMA Factory
-RUN EXTRA_PACKAGES="metrics"; \
-    if [ "$TARGETPLATFORM" == "linux/arm64" ]; then \
-        EXTRA_PACKAGES="${EXTRA_PACKAGES},torch-npu-arm64"; \
-    else \
-        pip config set global.extra-index-url $EXTRA_INDEX; \
-        EXTRA_PACKAGES="${EXTRA_PACKAGES},torch-npu-amd64"; \
-    fi; \
-    if [ "$INSTALL_DEEPSPEED" = "true" ]; then \
+RUN EXTRA_PACKAGES="torch-npu,metrics"; \
+    if [ "$INSTALL_DEEPSPEED" == "true" ]; then \
         EXTRA_PACKAGES="${EXTRA_PACKAGES},deepspeed"; \
     fi; \
-    pip install -e .[$EXTRA_PACKAGES] && \
+    if [ "$(uname -i)" != "aarch64" ]; then \
+        pip config set global.extra-index-url "$TORCH_INDEX" \
+    fi; \
+    pip install -e ".[$EXTRA_PACKAGES]" && \
     pip uninstall -y transformer-engine flash-attn
 
 # Set up volumes
