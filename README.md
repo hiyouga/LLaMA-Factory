@@ -444,7 +444,7 @@ docker build -f ./docker/docker-cuda/Dockerfile \
     --build-arg INSTALL_BNB=false \
     --build-arg INSTALL_VLLM=false \
     --build-arg INSTALL_DEEPSPEED=false \
-    --build-arg INSTALL_FLASH_ATTN=false \
+    --build-arg INSTALL_FLASHATTN=false \
     --build-arg PIP_INDEX=https://pypi.org/simple \
     -t llamafactory:latest .
 
