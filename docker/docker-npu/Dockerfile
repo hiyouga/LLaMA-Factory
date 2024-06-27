@@ -7,26 +7,27 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Define installation arguments
 ARG INSTALL_DEEPSPEED=false
 ARG PIP_INDEX=https://pypi.org/simple
+ARG TORCH_INDEX=https://download.pytorch.org/whl/cpu
 
 # Set the working directory
 WORKDIR /app
 
 # Install the requirements
 COPY requirements.txt /app
-RUN pip config set global.index-url $PIP_INDEX
-RUN pip config set global.extra-index-url $PIP_INDEX
-RUN python -m pip install --upgrade pip
-RUN python -m pip install -r requirements.txt
+RUN pip config set global.index-url "$PIP_INDEX" && \
+    pip config set global.extra-index-url "$TORCH_INDEX" && \
+    python -m pip install --upgrade pip && \
+    python -m pip install -r requirements.txt
 
 # Copy the rest of the application into the image
 COPY . /app
 
 # Install the LLaMA Factory
 RUN EXTRA_PACKAGES="torch-npu,metrics"; \
-    if [ "$INSTALL_DEEPSPEED" = "true" ]; then \
+    if [ "$INSTALL_DEEPSPEED" == "true" ]; then \
         EXTRA_PACKAGES="${EXTRA_PACKAGES},deepspeed"; \
     fi; \
-    pip install -e .[$EXTRA_PACKAGES] && \
+    pip install -e ".[$EXTRA_PACKAGES]" && \
     pip uninstall -y transformer-engine flash-attn
 
 # Set up volumes
