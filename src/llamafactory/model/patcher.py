@@ -67,7 +67,7 @@ def patch_config(
         use_jit_compile = os.environ.get("JIT_COMPILE", "0").lower() in ["true", "1"]
         torch.npu.set_compile_mode(jit_compile=use_jit_compile)
 
-    configure_attn_implementation(config, model_args)
+    configure_attn_implementation(config, model_args, is_trainable)
     configure_rope(config, model_args, is_trainable)
     configure_longlora(config, model_args, is_trainable)
     configure_quantization(config, tokenizer, model_args, init_kwargs)
