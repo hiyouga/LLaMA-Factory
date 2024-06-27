@@ -2,6 +2,7 @@
 # More versions can be found at https://hub.docker.com/r/cosdt/cann/tags
 FROM cosdt/cann:8.0.rc1-910b-ubuntu22.04
 
+# Define environments
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Define installation arguments
@@ -27,8 +28,7 @@ RUN EXTRA_PACKAGES="torch-npu,metrics"; \
     if [ "$INSTALL_DEEPSPEED" == "true" ]; then \
         EXTRA_PACKAGES="${EXTRA_PACKAGES},deepspeed"; \
     fi; \
-    pip install -e ".[$EXTRA_PACKAGES]" && \
-    pip uninstall -y transformer-engine flash-attn
+    pip install -e ".[$EXTRA_PACKAGES]"
 
 # Set up volumes
 VOLUME [ "/root/.cache/huggingface", "/root/.cache/modelscope", "/app/data", "/app/output" ]

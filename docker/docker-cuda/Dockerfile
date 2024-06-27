@@ -2,11 +2,14 @@
 # https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-24-02.html
 FROM nvcr.io/nvidia/pytorch:24.02-py3
 
+# Define environments
+ENV MAX_JOBS=4
+
 # Define installation arguments
 ARG INSTALL_BNB=false
 ARG INSTALL_VLLM=false
 ARG INSTALL_DEEPSPEED=false
-ARG INSTALL_FLASH_ATTN=false
+ARG INSTALL_FLASHATTN=false
 ARG PIP_INDEX=https://pypi.org/simple
 
 # Set the working directory
@@ -14,34 +17,33 @@ WORKDIR /app
 
 # Install the requirements
 COPY requirements.txt /app
-RUN pip config set global.index-url $PIP_INDEX
-RUN pip config set global.extra-index-url $PIP_INDEX
-RUN python -m pip install --upgrade pip
-RUN python -m pip install -r requirements.txt
+RUN pip config set global.index-url "$PIP_INDEX" && \
+    pip config set global.extra-index-url "$PIP_INDEX" && \
+    python -m pip install --upgrade pip && \
+    python -m pip install -r requirements.txt
+
+# Rebuild flash attention
+RUN pip uninstall -y transformer-engine flash-attn && \
+    if [ "$INSTALL_FLASHATTN" == "true" ]; then \
+        pip uninstall -y ninja && pip install ninja && \
+        pip install --no-cache-dir flash-attn --no-build-isolation \
+    fi;
 
 # Copy the rest of the application into the image
 COPY . /app
 
 # Install the LLaMA Factory
 RUN EXTRA_PACKAGES="metrics"; \
-    if [ "$INSTALL_BNB" = "true" ]; then \
+    if [ "$INSTALL_BNB" == "true" ]; then \
         EXTRA_PACKAGES="${EXTRA_PACKAGES},bitsandbytes"; \
     fi; \
-    if [ "$INSTALL_VLLM" = "true" ]; then \
+    if [ "$INSTALL_VLLM" == "true" ]; then \
         EXTRA_PACKAGES="${EXTRA_PACKAGES},vllm"; \
     fi; \
-    if [ "$INSTALL_DEEPSPEED" = "true" ]; then \
+    if [ "$INSTALL_DEEPSPEED" == "true" ]; then \
         EXTRA_PACKAGES="${EXTRA_PACKAGES},deepspeed"; \
     fi; \
-    pip install -e .[$EXTRA_PACKAGES] && \
-    pip uninstall -y transformer-engine flash-attn
-
-# Rebuild flash-attn
-RUN if [ "$INSTALL_FLASH_ATTN" = "true" ]; then \
-        ninja --version || \
-        (pip uninstall -y ninja && pip install ninja) && \
-        MAX_JOBS=4 pip install --no-cache-dir flash-attn --no-build-isolation \
-    fi;
+    pip install -e ".[$EXTRA_PACKAGES]"
 
 # Set up volumes
 VOLUME [ "/root/.cache/huggingface", "/root/.cache/modelscope", "/app/data", "/app/output" ]
