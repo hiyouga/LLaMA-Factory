@@ -2,13 +2,11 @@
 # More versions can be found at https://hub.docker.com/r/cosdt/cann/tags
 FROM cosdt/cann:8.0.rc1-910b-ubuntu22.04
 
-# Set env
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Define installation arguments
 ARG INSTALL_DEEPSPEED=false
 ARG PIP_INDEX=https://pypi.org/simple
-# x86 torch cpu index
 ARG TORCH_INDEX=https://download.pytorch.org/whl/cpu
 
 # Set the working directory
@@ -17,7 +15,7 @@ WORKDIR /app
 # Install the requirements
 COPY requirements.txt /app
 RUN pip config set global.index-url "$PIP_INDEX" && \
-    pip config set global.extra-index-url "$PIP_INDEX" && \
+    pip config set global.extra-index-url "$TORCH_INDEX" && \
     python -m pip install --upgrade pip && \
     python -m pip install -r requirements.txt
 
@@ -28,9 +26,6 @@ COPY . /app
 RUN EXTRA_PACKAGES="torch-npu,metrics"; \
     if [ "$INSTALL_DEEPSPEED" == "true" ]; then \
         EXTRA_PACKAGES="${EXTRA_PACKAGES},deepspeed"; \
-    fi; \
-    if [ "$(uname -i)" != "aarch64" ]; then \
-        pip config set global.extra-index-url "$TORCH_INDEX" \
     fi; \
     pip install -e ".[$EXTRA_PACKAGES]" && \
     pip uninstall -y transformer-engine flash-attn
