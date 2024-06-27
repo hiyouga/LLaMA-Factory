@@ -465,7 +465,7 @@ docker exec -it llamafactory bash
 
 ```bash
 # 根据您的环境选择镜像
-docker build --platform linux/arm64 -f ./docker/docker-npu/Dockerfile \
+docker build -f ./docker/docker-npu/Dockerfile \
     --build-arg INSTALL_DEEPSPEED=false \
     --build-arg PIP_INDEX=https://pypi.org/simple \
     -t llamafactory:latest .
