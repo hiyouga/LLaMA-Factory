@@ -113,7 +113,7 @@ class LoraArguments:
         metadata={"help": "Whether or not to initialize a PiSSA adapter."},
     )
     pissa_iter: int = field(
-        default=4,
+        default=16,
         metadata={"help": "The number of iteration steps performed by FSVD in PiSSA. Use -1 to disable it."},
     )
     pissa_convert: bool = field(
