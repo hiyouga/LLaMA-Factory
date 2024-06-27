@@ -160,7 +160,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 | [Command-R](https://huggingface.co/CohereForAI)           | 35B/104B                         | cohere    |
 | [DeepSeek (Code/MoE)](https://huggingface.co/deepseek-ai) | 7B/16B/67B/236B                  | deepseek  |
 | [Falcon](https://huggingface.co/tiiuae)                   | 7B/11B/40B/180B                  | falcon    |
-| [Gemma/CodeGemma](https://huggingface.co/google)          | 2B/7B                            | gemma     |
+| [Gemma/Gemma2/CodeGemma](https://huggingface.co/google)   | 2B/7B/9B/27B                     | gemma     |
 | [GLM4](https://huggingface.co/THUDM)                      | 9B                               | glm4      |
 | [InternLM2](https://huggingface.co/internlm)              | 7B/20B                           | intern2   |
 | [LLaMA](https://github.com/facebookresearch/llama)        | 7B/13B/33B/65B                   | -         |
