@@ -465,7 +465,7 @@ For Ascend NPU users:
 
 ```bash
 # Choose docker image upon your environment
-docker build -f ./docker/docker-npu/Dockerfile \
+docker build --platform linux/arm64 -f ./docker/docker-npu/Dockerfile \
     --build-arg INSTALL_DEEPSPEED=false \
     --build-arg PIP_INDEX=https://pypi.org/simple \
     -t llamafactory:latest .
