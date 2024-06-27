@@ -507,6 +507,18 @@ register_model_group(
         "Gemma-1.1-7B-Chat": {
             DownloadSource.DEFAULT: "google/gemma-1.1-7b-it",
         },
+        "Gemma-2-9B": {
+            DownloadSource.DEFAULT: "google/gemma-2-9b",
+        },
+        "Gemma-2-27B": {
+            DownloadSource.DEFAULT: "google/gemma-2-27b",
+        },
+        "Gemma-2-9B-Chat": {
+            DownloadSource.DEFAULT: "google/gemma-2-9b-it",
+        },
+        "Gemma-2-27B-Chat": {
+            DownloadSource.DEFAULT: "google/gemma-2-27b-it",
+        },
     },
     template="gemma",
 )
