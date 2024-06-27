@@ -38,12 +38,15 @@ def abort_process(pid: int) -> None:
     r"""
     Aborts the processes recursively in a bottom-up way.
     """
-    children = psutil.Process(pid).children()
-    if children:
-        for child in children:
-            abort_process(child.pid)
+    try:
+        children = psutil.Process(pid).children()
+        if children:
+            for child in children:
+                abort_process(child.pid)
 
-    os.kill(pid, signal.SIGABRT)
+        os.kill(pid, signal.SIGABRT)
+    except Exception:
+        pass
 
 
 def can_quantize(finetuning_type: str) -> "gr.Dropdown":
