@@ -1,10 +1,11 @@
 # Use the Ubuntu 22.04 image with CANN 8.0.rc1
 # More versions can be found at https://hub.docker.com/r/cosdt/cann/tags
-FROM cosdt/cann:8.0.rc1-910b-ubuntu22.04
+FROM --platform=$TARGETPLATFORM cosdt/cann:8.0.rc1-910b-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Define installation arguments
+ARG TARGETPLATFORM
 ARG INSTALL_DEEPSPEED=false
 ARG PIP_INDEX=https://pypi.org/simple
 ARG EXTRA_INDEX=https://download.pytorch.org/whl/cpu
@@ -15,7 +16,6 @@ WORKDIR /app
 # Install the requirements
 COPY requirements.txt /app
 RUN pip config set global.index-url $PIP_INDEX && \
-    pip config set global.extra-index-url $EXTRA_INDEX && \
     pip install --upgrade pip && \
     pip install -r requirements.txt
 
@@ -23,7 +23,13 @@ RUN pip config set global.index-url $PIP_INDEX && \
 COPY . /app
 
 # Install the LLaMA Factory
-RUN EXTRA_PACKAGES="torch-npu,metrics"; \
+RUN EXTRA_PACKAGES="metrics"; \
+    if [ "$TARGETPLATFORM" == "linux/arm64" ]; then \
+        EXTRA_PACKAGES="${EXTRA_PACKAGES},torch-npu-arm64"; \
+    else \
+        pip config set global.extra-index-url $EXTRA_INDEX; \
+        EXTRA_PACKAGES="${EXTRA_PACKAGES},torch-npu-amd64"; \
+    fi; \
     if [ "$INSTALL_DEEPSPEED" = "true" ]; then \
         EXTRA_PACKAGES="${EXTRA_PACKAGES},deepspeed"; \
     fi; \
