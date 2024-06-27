@@ -83,9 +83,6 @@ def _verify_model_args(model_args: "ModelArguments", finetuning_args: "Finetunin
     if model_args.adapter_name_or_path is not None and finetuning_args.finetuning_type != "lora":
         raise ValueError("Adapter is only valid for the LoRA method.")
 
-    if model_args.use_unsloth and is_deepspeed_zero3_enabled():
-        raise ValueError("Unsloth is incompatible with DeepSpeed ZeRO-3.")
-
     if model_args.quantization_bit is not None:
         if finetuning_args.finetuning_type != "lora":
             raise ValueError("Quantization is only compatible with the LoRA method.")
@@ -186,6 +183,9 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if training_args.parallel_mode == ParallelMode.NOT_DISTRIBUTED:
         raise ValueError("Please launch distributed training with `llamafactory-cli` or `torchrun`.")
 
+    if training_args.deepspeed and training_args.parallel_mode != ParallelMode.DISTRIBUTED:
+        raise ValueError("Please use `FORCE_TORCHRUN=1` to launch DeepSpeed training.")
+
     if training_args.max_steps == -1 and data_args.streaming:
         raise ValueError("Please specify `max_steps` in streaming mode.")
 
@@ -194,6 +194,9 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
     if training_args.do_train and model_args.quantization_device_map == "auto":
         raise ValueError("Cannot use device map for quantized models in training.")
+
+    if finetuning_args.pissa_init and is_deepspeed_zero3_enabled():
+        raise ValueError("PiSSA is incompatible with DeepSpeed ZeRO-3.")
 
     if finetuning_args.pure_bf16:
         if not is_torch_bf16_gpu_available():
@@ -223,6 +226,9 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
     if model_args.visual_inputs and data_args.packing:
         raise ValueError("Cannot use packing in MLLM fine-tuning.")
+
+    if model_args.use_unsloth and is_deepspeed_zero3_enabled():
+        raise ValueError("Unsloth is incompatible with DeepSpeed ZeRO-3.")
 
     _verify_model_args(model_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args, training_args)
