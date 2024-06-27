@@ -26,8 +26,8 @@ RUN pip config set global.index-url "$PIP_INDEX" && \
 RUN pip uninstall -y transformer-engine flash-attn && \
     if [ "$INSTALL_FLASHATTN" == "true" ]; then \
         pip uninstall -y ninja && pip install ninja && \
-        pip install --no-cache-dir flash-attn --no-build-isolation \
-    fi;
+        pip install --no-cache-dir flash-attn --no-build-isolation; \
+    fi
 
 # Copy the rest of the application into the image
 COPY . /app
