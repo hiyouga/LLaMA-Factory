@@ -4,6 +4,7 @@ FROM nvcr.io/nvidia/pytorch:24.02-py3
 
 # Define environments
 ENV MAX_JOBS=4
+ENV FLASH_ATTENTION_FORCE_BUILD=TRUE
 
 # Define installation arguments
 ARG INSTALL_BNB=false
