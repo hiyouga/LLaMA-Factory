@@ -310,6 +310,7 @@ class Runner:
 
             env = deepcopy(os.environ)
             env["LLAMABOARD_ENABLED"] = "1"
+            env["LLAMABOARD_WORKDIR"] = args["output_dir"]
             if args.get("deepspeed", None) is not None:
                 env["FORCE_TORCHRUN"] = "1"
 
