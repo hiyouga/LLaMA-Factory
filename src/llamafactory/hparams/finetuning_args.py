@@ -113,7 +113,7 @@ class LoraArguments:
         metadata={"help": "Whether or not to initialize a PiSSA adapter."},
     )
     pissa_iter: int = field(
-        default=4,
+        default=16,
         metadata={"help": "The number of iteration steps performed by FSVD in PiSSA. Use -1 to disable it."},
     )
     pissa_convert: bool = field(
@@ -379,10 +379,10 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         if self.loraplus_lr_ratio is not None and self.finetuning_type != "lora":
             raise ValueError("`loraplus_lr_ratio` is only valid for LoRA training.")
 
-        if self.pissa_convert and self.finetuning_type != "lora":
-            raise ValueError("`pissa_convert` is only valid for LoRA training.")
+        if self.pissa_init and self.finetuning_type != "lora":
+            raise ValueError("`pissa_init` is only valid for LoRA training.")
 
-        if self.pissa_convert and (self.stage in ["rm", "ppo", "kto"] or self.use_ref_model):
+        if self.pissa_init and (self.stage in ["ppo", "kto"] or self.use_ref_model):
             raise ValueError("Cannot use PiSSA for current training stage.")
 
         if self.train_mm_proj_only and self.finetuning_type != "full":

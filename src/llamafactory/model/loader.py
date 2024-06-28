@@ -186,11 +186,11 @@ def load_model(
 
     trainable_params, all_param = count_parameters(model)
     if is_trainable:
-        param_stats = "trainable params: {:d} || all params: {:d} || trainable%: {:.4f}".format(
+        param_stats = "trainable params: {:,} || all params: {:,} || trainable%: {:.4f}".format(
             trainable_params, all_param, 100 * trainable_params / all_param
         )
     else:
-        param_stats = "all params: {:d}".format(all_param)
+        param_stats = "all params: {:,}".format(all_param)
 
     logger.info(param_stats)
 

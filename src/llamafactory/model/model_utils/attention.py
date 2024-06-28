@@ -28,7 +28,13 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-def configure_attn_implementation(config: "PretrainedConfig", model_args: "ModelArguments") -> None:
+def configure_attn_implementation(
+    config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool
+) -> None:
+    if getattr(config, "model_type", None) == "gemma2" and is_trainable:  # gemma2 adopts soft-cap attention
+        logger.warning("Gemma-2 models should use eager attention in training, change `flash_attn` to disabled.")
+        model_args.flash_attn = "disabled"
+
     if model_args.flash_attn == "auto":
         return
 
