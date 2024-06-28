@@ -54,7 +54,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
         num_train_epochs = gr.Textbox(value="3.0")
         max_grad_norm = gr.Textbox(value="1.0")
         max_samples = gr.Textbox(value="100000")
-        compute_type = gr.Dropdown(choices=["fp16", "bf16", "fp32", "pure_bf16"], value="fp16")
+        compute_type = gr.Dropdown(choices=["bf16", "fp16", "fp32", "pure_bf16"], value="bf16")
 
     input_elems.update({learning_rate, num_train_epochs, max_grad_norm, max_samples, compute_type})
     elem_dict.update(

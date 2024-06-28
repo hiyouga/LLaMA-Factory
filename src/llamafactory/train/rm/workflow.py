@@ -40,10 +40,9 @@
 from typing import TYPE_CHECKING, List, Optional
 
 from ...data import PairwiseDataCollatorWithPadding, get_dataset, split_dataset
-from ...extras.callbacks import FixValueHeadModelCallback
-from ...extras.misc import fix_valuehead_checkpoint
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
+from ..callbacks import fix_valuehead_checkpoint
 from ..trainer_utils import create_modelcard_and_push
 from .metric import compute_accuracy
 from .trainer import PairwiseTrainer
@@ -77,7 +76,7 @@ def run_rm(
         args=training_args,
         finetuning_args=finetuning_args,
         data_collator=data_collator,
-        callbacks=callbacks + [FixValueHeadModelCallback()],
+        callbacks=callbacks,
         compute_metrics=compute_accuracy,
         **tokenizer_module,
         **split_dataset(dataset, data_args, training_args),
@@ -89,6 +88,7 @@ def run_rm(
         trainer.save_model()
         if training_args.should_save:
             fix_valuehead_checkpoint(model, training_args.output_dir, training_args.save_safetensors)
+
         trainer.log_metrics("train", train_result.metrics)
         trainer.save_metrics("train", train_result.metrics)
         trainer.save_state()

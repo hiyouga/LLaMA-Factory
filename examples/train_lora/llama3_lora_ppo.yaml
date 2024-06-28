@@ -30,7 +30,7 @@ learning_rate: 1.0e-5
 num_train_epochs: 3.0
 lr_scheduler_type: cosine
 warmup_ratio: 0.1
-fp16: true
+bf16: true
 ddp_timeout: 180000000
 
 ### generate

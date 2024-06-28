@@ -25,6 +25,7 @@ from yaml import safe_dump, safe_load
 from ..extras.constants import PEFT_METHODS, RUNNING_LOG, TRAINER_LOG, TRAINING_ARGS, TRAINING_STAGES
 from ..extras.packages import is_gradio_available, is_matplotlib_available
 from ..extras.ploting import gen_loss_plot
+from ..model import QuantizationMethod
 from .common import DEFAULT_CACHE_DIR, DEFAULT_CONFIG_DIR, get_save_dir
 from .locales import ALERTS
 
@@ -37,12 +38,15 @@ def abort_process(pid: int) -> None:
     r"""
     Aborts the processes recursively in a bottom-up way.
     """
-    children = psutil.Process(pid).children()
-    if children:
-        for child in children:
-            abort_process(child.pid)
+    try:
+        children = psutil.Process(pid).children()
+        if children:
+            for child in children:
+                abort_process(child.pid)
 
-    os.kill(pid, signal.SIGABRT)
+        os.kill(pid, signal.SIGABRT)
+    except Exception:
+        pass
 
 
 def can_quantize(finetuning_type: str) -> "gr.Dropdown":
@@ -53,6 +57,20 @@ def can_quantize(finetuning_type: str) -> "gr.Dropdown":
         return gr.Dropdown(value="none", interactive=False)
     else:
         return gr.Dropdown(interactive=True)
+
+
+def can_quantize_to(quantization_method: str) -> "gr.Dropdown":
+    r"""
+    Returns the available quantization bits.
+    """
+    if quantization_method == QuantizationMethod.BITS_AND_BYTES.value:
+        available_bits = ["none", "8", "4"]
+    elif quantization_method == QuantizationMethod.HQQ.value:
+        available_bits = ["none", "8", "6", "5", "4", "3", "2", "1"]
+    elif quantization_method == QuantizationMethod.EETQ.value:
+        available_bits = ["none", "8"]
+
+    return gr.Dropdown(choices=available_bits)
 
 
 def change_stage(training_stage: str = list(TRAINING_STAGES.keys())[0]) -> Tuple[List[str], bool]:

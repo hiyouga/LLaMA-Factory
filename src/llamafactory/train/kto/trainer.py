@@ -27,6 +27,7 @@ from trl import KTOTrainer
 from trl.trainer import disable_dropout_in_model
 
 from ...extras.constants import IGNORE_INDEX
+from ..callbacks import SaveProcessorCallback
 from ..trainer_utils import create_custom_optimzer, create_custom_scheduler, get_batch_logps
 
 
@@ -53,7 +54,6 @@ class CustomKTOTrainer(KTOTrainer):
                 disable_dropout_in_model(ref_model)
 
         self.finetuning_args = finetuning_args
-        self.processor = processor
         self.reference_free = False
         self.use_dpo_data_collator = True  # hack to avoid warning
         self.generate_during_eval = False  # disable at evaluation
@@ -90,11 +90,14 @@ class CustomKTOTrainer(KTOTrainer):
                 self.ref_model = self.accelerator.prepare_model(self.ref_model, evaluation_mode=True)
                 self.ref_model.eval()
 
+        if processor is not None:
+            self.add_callback(SaveProcessorCallback(processor))
+
         if finetuning_args.use_badam:
             from badam import BAdamCallback, clip_grad_norm_old_version
 
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
-            self.callback_handler.add_callback(BAdamCallback)
+            self.add_callback(BAdamCallback)
 
     def create_optimizer(self) -> "torch.optim.Optimizer":
         if self.optimizer is None:
@@ -112,12 +115,6 @@ class CustomKTOTrainer(KTOTrainer):
         Replaces the sequential sampler of KTO Trainer created by trl with the random sampler.
         """
         return Trainer._get_train_sampler(self)
-
-    def _save(self, output_dir: Optional[str] = None, state_dict: Optional[Dict[str, "torch.Tensor"]] = None) -> None:
-        super()._save(output_dir, state_dict)
-        output_dir = output_dir if output_dir is not None else self.args.output_dir
-        if self.processor is not None:
-            getattr(self.processor, "image_processor").save_pretrained(output_dir)
 
     def forward(
         self, model: "PreTrainedModel", batch: Dict[str, "torch.Tensor"], prefix: Literal["", "kl_"] = ""

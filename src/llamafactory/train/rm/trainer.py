@@ -46,6 +46,7 @@ import torch
 from transformers import Trainer
 
 from ...extras.logging import get_logger
+from ..callbacks import FixValueHeadModelCallback, PissaConvertCallback, SaveProcessorCallback
 from ..trainer_utils import create_custom_optimzer, create_custom_scheduler
 
 
@@ -69,13 +70,20 @@ class PairwiseTrainer(Trainer):
     ) -> None:
         super().__init__(**kwargs)
         self.finetuning_args = finetuning_args
-        self.processor = processor
         self.can_return_loss = True  # override property to return eval_loss
+        self.add_callback(FixValueHeadModelCallback)
+
+        if processor is not None:
+            self.add_callback(SaveProcessorCallback(processor))
+
+        if finetuning_args.pissa_convert:
+            self.add_callback(PissaConvertCallback)
+
         if finetuning_args.use_badam:
             from badam import BAdamCallback, clip_grad_norm_old_version
 
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
-            self.callback_handler.add_callback(BAdamCallback)
+            self.add_callback(BAdamCallback)
 
     def create_optimizer(self) -> "torch.optim.Optimizer":
         if self.optimizer is None:
@@ -88,12 +96,6 @@ class PairwiseTrainer(Trainer):
         create_custom_scheduler(self.args, num_training_steps, optimizer)
         return super().create_scheduler(num_training_steps, optimizer)
 
-    def _save(self, output_dir: Optional[str] = None, state_dict: Optional[Dict[str, "torch.Tensor"]] = None) -> None:
-        super()._save(output_dir, state_dict)
-        output_dir = output_dir if output_dir is not None else self.args.output_dir
-        if self.processor is not None:
-            getattr(self.processor, "image_processor").save_pretrained(output_dir)
-
     def compute_loss(
         self, model: "PreTrainedModel", inputs: Dict[str, torch.Tensor], return_outputs: bool = False
     ) -> Union[torch.Tensor, Tuple[torch.Tensor, List[torch.Tensor]]]:
@@ -103,7 +105,7 @@ class PairwiseTrainer(Trainer):
         Subclass and override to inject custom behavior.
 
         Note that the first element will be removed from the output tuple.
-        See: https://github.com/huggingface/transformers/blob/v4.39.1/src/transformers/trainer.py#L3777
+        See: https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/trainer.py#L3842
         """
         # Compute rewards
         _, _, values = model(**inputs, output_hidden_states=True, return_dict=True)
@@ -164,4 +166,5 @@ class PairwiseTrainer(Trainer):
             res: List[str] = []
             for c_score, r_score in zip(chosen_scores, rejected_scores):
                 res.append(json.dumps({"chosen": round(float(c_score), 2), "rejected": round(float(r_score), 2)}))
+
             writer.write("\n".join(res))

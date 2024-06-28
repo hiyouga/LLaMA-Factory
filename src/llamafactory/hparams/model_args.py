@@ -77,6 +77,10 @@ class ModelArguments:
         default=True,
         metadata={"help": "Whether or not to use memory-efficient model loading."},
     )
+    quantization_method: Literal["bitsandbytes", "hqq", "eetq"] = field(
+        default="bitsandbytes",
+        metadata={"help": "Quantization method to use for on-the-fly quantization."},
+    )
     quantization_bit: Optional[int] = field(
         default=None,
         metadata={"help": "The number of bits to quantize the model using bitsandbytes."},
