@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
@@ -98,6 +99,9 @@ def preprocess_supervised_dataset(
             assert len(examples["images"][i]) <= 1,"GLM4v only support 1 image train yet."
             model_inputs["image_inputs"].append(get_pixel_values(examples["images"][i], None, "vision_message_embed"))
             examples["prompt"][i][-1]["content"] = template.format_image.apply()[0] + examples["prompt"][i][-1]["content"]
+        elif model_args.visual_inputs_type == "vision_token":
+            assert len(examples["images"][i]) <= 1,"Qwenvl only support 1 image train yet."
+            examples["prompt"][i][-1]["content"] = template.format_image.apply(content=os.path.join(data_args.dataset_dir,examples["images"][i][-1]))[0] + examples["prompt"][i][-1]["content"]
 
         input_ids, labels = _encode_supervised_example(
             prompt=examples["prompt"][i],
