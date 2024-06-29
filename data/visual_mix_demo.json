@@ -2,7 +2,7 @@
   {
     "messages": [
       {
-        "content": "<video><video>Why is this video funny?<image><image>",
+        "content": "<video>Why is this video funny?<image>",
         "role": "user"
       },
       {
@@ -11,18 +11,16 @@
       }
     ],
     "videos": [
-      "mllm_demo_data/1.mp4",
-      "mllm_demo_data/2.mp4"
+      "mllm_demo_data/1.mp4"
     ],
     "images": [
-      "mllm_demo_data/1.jpg",
-      "mllm_demo_data/2.jpg"
+      "mllm_demo_data/1.jpg"
     ]
   },
   {
     "messages": [
       {
-        "content": "What is she doing?<video>",
+        "content": "<video>What is she doing?<image>",
         "role": "user"
       },
       {
@@ -33,22 +31,26 @@
     "videos": [
       "mllm_demo_data/2.avi"
     ],
-    "images": []
+    "images": [
+      "mllm_demo_data/2.jpg"
+    ]
   },
   {
     "messages": [
       {
-        "content": "<image>What's in the image?",
+        "content": "<video>Why is this video funny?<image>",
         "role": "user"
       },
       {
-        "content": "Two soccer players are celebrating",
+        "content": "A baby is playing!",
         "role": "assistant"
       }
     ],
     "videos": [
-      "mllm_demo_data/1.jpg"
+      "mllm_demo_data/3.mp4"
     ],
-    "images": []
+    "images": [
+      "mllm_demo_data/3.jpg"
+    ]
   }
 ]

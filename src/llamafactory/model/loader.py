@@ -144,8 +144,12 @@ def load_model(
 
         if model_args.mixture_of_depths == "load":
             model = load_mod_pretrained_model(**init_kwargs)
-        elif model_args.visual_inputs or model_args.video_inputs:
-            model = AutoModelForVision2Seq.from_pretrained(**init_kwargs)
+        elif model_args.visual_inputs:
+            if "llava-next-video" in model_args.model_name_or_path.lower():
+                from transformers import LlavaNextVideoForConditionalGeneration
+                model = LlavaNextVideoForConditionalGeneration.from_pretrained(**init_kwargs)  # wait for hf official debug
+            else:
+                model = AutoModelForVision2Seq.from_pretrained(**init_kwargs)
         elif model_args.train_from_scratch:
             model = AutoModelForCausalLM.from_config(config)
         else:
