@@ -100,8 +100,8 @@ def preprocess_supervised_dataset(
     # for multiturn examples, we only mask the prompt part in each prompt-response pair.
     model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
 
-    image_keys = data_args.image_key.split(",")
-    video_keys = data_args.video_key.split(",")
+    image_keys = template.image_data_key
+    video_keys = template.video_data_key
     processor_class = None
 
     if processor is not None:

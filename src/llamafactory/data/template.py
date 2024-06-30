@@ -42,7 +42,9 @@ class Template:
     default_system: str
     stop_words: List[str]
     image_token: str
+    image_data_key: List[str]
     video_token: str
+    video_data_key: List[str]
     efficient_eos: bool
     replace_eos: bool
 
@@ -243,7 +245,9 @@ def _register_template(
     default_system: str = "",
     stop_words: List[str] = [],
     image_token: str = "<image>",
+    image_data_key: List[str] = ["pixel_values"],
     video_token: str = "<video>",
+    video_data_key: List[str] = None,
     efficient_eos: bool = False,
     replace_eos: bool = False,
 ) -> None:
@@ -295,7 +299,9 @@ def _register_template(
         default_system=default_system,
         stop_words=stop_words,
         image_token=image_token,
+        image_data_key=image_data_key,
         video_token=video_token,
+        video_data_key=video_data_key,
         efficient_eos=efficient_eos,
         replace_eos=replace_eos,
     )
@@ -680,6 +686,7 @@ _register_template(
     format_separator=EmptyFormatter(slots=["\n"]),
     stop_words=["<end_of_utterance>"],
     replace_eos=True,
+    image_data_key=["pixel_values", "pixel_attention_mask"],
 )
 
 
@@ -742,6 +749,29 @@ _register_template(
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|eot_id|>"],
     replace_eos=True,
+)
+
+
+_register_template(
+    name="llava_next",
+    format_user=StringFormatter(slots=["USER: {{content}} ASSISTANT:"]),
+    default_system=(
+        "A chat between a curious user and an artificial intelligence assistant. "
+        "The assistant gives helpful, detailed, and polite answers to the user's questions."
+    ),
+    image_data_key=["pixel_values", "image_sizes"],
+)
+
+
+_register_template(
+    name="llava_next_video",
+    format_user=StringFormatter(slots=["USER: {{content}} ASSISTANT:"]),
+    default_system=(
+        "A chat between a curious user and an artificial intelligence assistant. "
+        "The assistant gives helpful, detailed, and polite answers to the user's questions."
+    ),
+    image_data_key=["pixel_values_images"],
+    video_data_key=["pixel_values_videos"],
 )
 
 

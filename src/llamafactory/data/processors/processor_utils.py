@@ -65,7 +65,7 @@ def greedy_knapsack(numbers: List[int], capacity: int) -> List[List[int]]:
     return knapsacks
 
 
-def get_pixel_values(images: Sequence["ImageObject"], processor: "ProcessorMixin", image_keys: "list[str]" = "pixel_values") -> "dict":
+def get_pixel_values(images: Sequence["ImageObject"], processor: "ProcessorMixin", image_keys: "list[str]" = ["pixel_values"]) -> "dict":
     r"""
     Processes visual inputs. (currently only supports a single image)
     """
@@ -90,7 +90,7 @@ def preprocess_video(
 
 
 def get_pixel_values_videos(
-    videos: Sequence["str"], processor: "ProcessorMixin", video_keys: "list[str]" = "pixel_values_videos"
+    videos: Sequence["str"], processor: "ProcessorMixin", video_keys: "list[str]" = ["pixel_values_videos"]
 ) -> "dict":
     image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
     video_processor = getattr(processor, "video_processor", None)
@@ -105,7 +105,7 @@ def get_pixel_values_videos(
                 clip = preprocess_video(video)
                 clips.append(clip)
             inputs = video_processor(clips, return_tensors="pt")
-            return {k: inputs[k][0] for k in video_keys}
+            return {k: inputs[k] for k in video_keys}
     else:
         if len(videos) == 1:
             clip = preprocess_video(videos[0])
@@ -117,7 +117,7 @@ def get_pixel_values_videos(
                 clip = preprocess_video(video)
                 clips.append(clip)
             inputs = image_processor(videos=clips, padding=True, return_tensors="pt", images=None)
-            return {k: inputs[k][0] for k in video_keys}
+            return {k: inputs[k] for k in video_keys}
 
 
 def read_video_pyav(container: "Container", indices: "NDArray"):
