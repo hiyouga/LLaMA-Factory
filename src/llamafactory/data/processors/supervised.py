@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
-from .processor_utils import get_paligemma_token_type_ids, get_pixel_values, greedy_knapsack
+from .processor_utils import get_paligemma_token_type_ids, get_pixel_values, greedy_knapsack, infer_seqlen
 
 
 if TYPE_CHECKING:
@@ -51,10 +51,17 @@ def _encode_supervised_example(
         input_ids += [image_token_id] * getattr(processor, "image_seq_length")
         labels += [IGNORE_INDEX] * getattr(processor, "image_seq_length")
 
-    encoded_pairs = template.encode_multiturn(
-        tokenizer, messages, system, tools, data_args.cutoff_len, data_args.reserved_label_len
-    )
+    encoded_pairs = template.encode_multiturn(tokenizer, messages, system, tools)
+    total_length = 1 if template.efficient_eos else 0
     for turn_idx, (source_ids, target_ids) in enumerate(encoded_pairs):
+        if total_length >= data_args.cutoff_len:
+            break
+
+        source_len, target_len = infer_seqlen(len(source_ids), len(target_ids), data_args.cutoff_len - total_length)
+        source_ids = source_ids[:source_len]
+        target_ids = target_ids[:target_len]
+        total_length += source_len + target_len
+
         if data_args.train_on_prompt:
             source_mask = source_ids
         elif turn_idx != 0 and template.efficient_eos:

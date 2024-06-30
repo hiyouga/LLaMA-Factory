@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, Union
 
 from ..extras.logging import get_logger
-from .data_utils import Role, infer_max_len
+from .data_utils import Role
 from .formatter import EmptyFormatter, FunctionFormatter, StringFormatter, ToolFormatter
 
 
@@ -48,36 +48,33 @@ class Template:
     def encode_oneturn(
         self,
         tokenizer: "PreTrainedTokenizer",
-        messages: List[Dict[str, str]],
+        messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        cutoff_len: int = 1_000_000,
-        reserved_label_len: int = 1,
     ) -> Tuple[List[int], List[int]]:
         r"""
         Returns a single pair of token ids representing prompt and response respectively.
         """
-        encoded_pairs = self._encode(tokenizer, messages, system, tools, cutoff_len, reserved_label_len)
+        encoded_messages = self._encode(tokenizer, messages, system, tools)
         prompt_ids = []
-        for query_ids, resp_ids in encoded_pairs[:-1]:
-            prompt_ids += query_ids + resp_ids
-        prompt_ids = prompt_ids + encoded_pairs[-1][0]
-        answer_ids = encoded_pairs[-1][1]
+        for encoded_ids in encoded_messages[:-1]:
+            prompt_ids += encoded_ids
+
+        answer_ids = encoded_messages[-1]
         return prompt_ids, answer_ids
 
     def encode_multiturn(
         self,
         tokenizer: "PreTrainedTokenizer",
-        messages: List[Dict[str, str]],
+        messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        cutoff_len: int = 1_000_000,
-        reserved_label_len: int = 1,
-    ) -> Sequence[Tuple[List[int], List[int]]]:
+    ) -> List[Tuple[List[int], List[int]]]:
         r"""
         Returns multiple pairs of token ids representing prompts and responses respectively.
         """
-        return self._encode(tokenizer, messages, system, tools, cutoff_len, reserved_label_len)
+        encoded_messages = self._encode(tokenizer, messages, system, tools)
+        return [(encoded_messages[i], encoded_messages[i + 1]) for i in range(0, len(encoded_messages), 2)]
 
     def extract_tool(self, content: str) -> Union[str, List[Tuple[str, str]]]:
         r"""
@@ -88,16 +85,14 @@ class Template:
     def _encode(
         self,
         tokenizer: "PreTrainedTokenizer",
-        messages: List[Dict[str, str]],
+        messages: Sequence[Dict[str, str]],
         system: Optional[str],
         tools: Optional[str],
-        cutoff_len: int,
-        reserved_label_len: int,
-    ) -> Sequence[Tuple[List[int], List[int]]]:
+    ) -> List[List[int]]:
         r"""
         Encodes formatted inputs to pairs of token ids.
-        Turn 0: system + query        resp
-        Turn t: sep + query           resp
+        Turn 0: prefix + system + query        resp
+        Turn t: sep + query                    resp
         """
         system = system or self.default_system
         encoded_messages = []
@@ -106,10 +101,9 @@ class Template:
 
             if i == 0:
                 elements += self.format_prefix.apply()
-
-            if i == 0 and (system or tools):
-                tool_text = self.format_tools.apply(content=tools)[0] if tools else ""
-                elements += self.format_system.apply(content=(system + tool_text))
+                if system or tools:
+                    tool_text = self.format_tools.apply(content=tools)[0] if tools else ""
+                    elements += self.format_system.apply(content=(system + tool_text))
 
             if i > 0 and i % 2 == 0:
                 elements += self.format_separator.apply()
@@ -127,11 +121,9 @@ class Template:
 
             encoded_messages.append(self._convert_elements_to_ids(tokenizer, elements))
 
-        return self._make_pairs(encoded_messages, cutoff_len, reserved_label_len)
+        return encoded_messages
 
-    def _convert_elements_to_ids(
-        self, tokenizer: "PreTrainedTokenizer", elements: List[Union[str, Dict[str, str]]]
-    ) -> List[int]:
+    def _convert_elements_to_ids(self, tokenizer: "PreTrainedTokenizer", elements: "SLOTS") -> List[int]:
         r"""
         Converts elements to token ids.
         """
@@ -152,60 +144,32 @@ class Template:
 
         return token_ids
 
-    def _make_pairs(
-        self,
-        encoded_messages: Sequence[List[int]],
-        cutoff_len: int,
-        reserved_label_len: int,
-    ) -> Sequence[Tuple[List[int], List[int]]]:
-        encoded_pairs = []
-        total_length = 0
-        for i in range(0, len(encoded_messages), 2):
-            if total_length >= cutoff_len:
-                break
-
-            max_source_len, max_target_len = infer_max_len(
-                source_len=len(encoded_messages[i]),
-                target_len=len(encoded_messages[i + 1]),
-                max_len=(cutoff_len - total_length),
-                reserved_label_len=reserved_label_len,
-            )
-            source_ids = encoded_messages[i][:max_source_len]
-            target_ids = encoded_messages[i + 1][:max_target_len]
-            total_length += len(source_ids) + len(target_ids)
-            encoded_pairs.append((source_ids, target_ids))
-
-        return encoded_pairs
-
 
 @dataclass
 class Llama2Template(Template):
     def _encode(
         self,
         tokenizer: "PreTrainedTokenizer",
-        messages: List[Dict[str, str]],
+        messages: Sequence[Dict[str, str]],
         system: str,
         tools: str,
-        cutoff_len: int,
-        reserved_label_len: int,
-    ) -> Sequence[Tuple[List[int], List[int]]]:
+    ) -> List[List[int]]:
         r"""
         Encodes formatted inputs to pairs of token ids.
-        Turn 0: system + query        resp
-        Turn t: sep + query           resp
+        Turn 0: prefix + system + query        resp
+        Turn t: sep + query                    resp
         """
         system = system or self.default_system
         encoded_messages = []
         for i, message in enumerate(messages):
             elements = []
 
+            system_text = ""
             if i == 0:
                 elements += self.format_prefix.apply()
-
-            system_text = ""
-            if i == 0 and (system or tools):
-                tool_text = self.format_tools.apply(content=tools)[0] if tools else ""
-                system_text = self.format_system.apply(content=(system + tool_text))[0]
+                if system or tools:
+                    tool_text = self.format_tools.apply(content=tools)[0] if tools else ""
+                    system_text = self.format_system.apply(content=(system + tool_text))[0]
 
             if i > 0 and i % 2 == 0:
                 elements += self.format_separator.apply()
@@ -223,7 +187,7 @@ class Llama2Template(Template):
 
             encoded_messages.append(self._convert_elements_to_ids(tokenizer, elements))
 
-        return self._make_pairs(encoded_messages, cutoff_len, reserved_label_len)
+        return encoded_messages
 
 
 TEMPLATES: Dict[str, Template] = {}
@@ -240,7 +204,7 @@ def _register_template(
     format_separator: Optional["Formatter"] = None,
     format_prefix: Optional["Formatter"] = None,
     default_system: str = "",
-    stop_words: List[str] = [],
+    stop_words: Sequence[str] = [],
     image_token: str = "<image>",
     efficient_eos: bool = False,
     replace_eos: bool = False,
@@ -275,9 +239,7 @@ def _register_template(
     template_class = Llama2Template if name.startswith("llama2") else Template
     default_user_formatter = StringFormatter(slots=["{{content}}"])
     default_assistant_formatter = StringFormatter(slots=["{{content}}"] + eos_slots)
-    default_function_formatter = FunctionFormatter(
-        slots=["Action: {{name}}\nAction Input: {{arguments}}\n"] + eos_slots
-    )
+    default_function_formatter = FunctionFormatter(slots=eos_slots, tool_format="default")
     default_tool_formatter = ToolFormatter(tool_format="default")
     default_separator_formatter = EmptyFormatter()
     default_prefix_formatter = EmptyFormatter()
@@ -390,7 +352,9 @@ def get_template_and_fix_tokenizer(
 
     if tool_format is not None:
         logger.info("Using tool format: {}.".format(tool_format))
+        eos_slots = [] if template.efficient_eos else [{"eos_token"}]
         template.format_tools = ToolFormatter(tool_format=tool_format)
+        template.format_function = FunctionFormatter(slots=eos_slots, tool_format=tool_format)
 
     stop_words = template.stop_words
     if template.replace_eos:
@@ -506,10 +470,11 @@ _register_template(
     format_user=StringFormatter(slots=[{"token": "<|user|>"}, "\n", "{{content}}", {"token": "<|assistant|>"}]),
     format_assistant=StringFormatter(slots=["\n", "{{content}}"]),
     format_system=StringFormatter(slots=[{"token": "<|system|>"}, "\n", "{{content}}"]),
-    format_function=FunctionFormatter(slots=["{{name}}\n{{arguments}}"]),
+    format_function=FunctionFormatter(slots=[], tool_format="glm4"),
     format_observation=StringFormatter(
         slots=[{"token": "<|observation|>"}, "\n", "{{content}}", {"token": "<|assistant|>"}]
     ),
+    format_tools=ToolFormatter(tool_format="glm4"),
     format_prefix=EmptyFormatter(slots=[{"token": "[gMASK]"}, {"token": "sop"}]),
     stop_words=["<|user|>", "<|observation|>"],
     efficient_eos=True,
@@ -603,16 +568,15 @@ _register_template(
 _register_template(
     name="deepseekcoder",
     format_user=StringFormatter(slots=["### Instruction:\n{{content}}\n### Response:"]),
-    format_assistant=StringFormatter(slots=["\n", "{{content}}"]),
-    format_separator=EmptyFormatter(slots=["\n<|EOT|>\n"]),
+    format_assistant=StringFormatter(slots=["\n{{content}}\n"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     default_system=(
         "You are an AI programming assistant, utilizing the Deepseek Coder model, "
         "developed by Deepseek Company, and you only answer questions related to computer science. "
         "For politically sensitive questions, security and privacy issues, "
         "and other non-computer science questions, you will refuse to answer\n"
     ),
-    stop_words=["<|EOT|>"],
-    efficient_eos=True,
 )
 
 
@@ -662,7 +626,7 @@ _register_template(
     format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>"]),
     format_assistant=StringFormatter(slots=["\n{{content}}"]),
     format_system=StringFormatter(slots=["<|system|>\n{{content}}"]),
-    format_function=FunctionFormatter(slots=["{{name}}\n{{arguments}}"]),
+    format_function=FunctionFormatter(slots=[], tool_format="glm4"),
     format_observation=StringFormatter(slots=["<|observation|>\n{{content}}<|assistant|>"]),
     format_tools=ToolFormatter(tool_format="glm4"),
     format_prefix=EmptyFormatter(slots=["[gMASK]<sop>"]),
