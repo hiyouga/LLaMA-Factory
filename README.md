@@ -384,6 +384,8 @@ Remember to use `ASCEND_RT_VISIBLE_DEVICES` instead of `CUDA_VISIBLE_DEVICES` to
 
 If you cannot infer model on NPU devices, try setting `do_sample: false` in the configurations.
 
+Download the pre-built Docker images: [32GB](http://mirrors.cn-central-221.ovaijisuan.com/detail/130.html) | [64GB](http://mirrors.cn-central-221.ovaijisuan.com/detail/131.html)
+
 </details>
 
 ### Data Preparation
