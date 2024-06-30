@@ -1,6 +1,9 @@
 # Use the Ubuntu 22.04 image with CANN 8.0.rc1
 # More versions can be found at https://hub.docker.com/r/cosdt/cann/tags
+# FROM cosdt/cann:8.0.rc1-910-ubuntu22.04
 FROM cosdt/cann:8.0.rc1-910b-ubuntu22.04
+# FROM cosdt/cann:8.0.rc1-910-openeuler22.03
+# FROM cosdt/cann:8.0.rc1-910b-openeuler22.03
 
 # Define environments
 ENV DEBIAN_FRONTEND=noninteractive
