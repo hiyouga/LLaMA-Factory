@@ -770,7 +770,7 @@ _register_template(
         "A chat between a curious user and an artificial intelligence assistant. "
         "The assistant gives helpful, detailed, and polite answers to the user's questions."
     ),
-    image_data_key=["pixel_values_images"],
+    image_data_key=["pixel_values", "image_sizes"],
     video_data_key=["pixel_values_videos"],
 )
 
@@ -876,6 +876,18 @@ _register_template(
         "A chat between a curious user and an artificial intelligence assistant. "
         "The assistant gives helpful, detailed, and polite answers to the user's questions."
     ),
+)
+
+
+_register_template(
+    name="video_llava",
+    format_user=StringFormatter(slots=["USER: {{content}} ASSISTANT:"]),
+    default_system=(
+        "A chat between a curious user and an artificial intelligence assistant. "
+        "The assistant gives helpful, detailed, and polite answers to the user's questions."
+    ),
+    image_data_key=["pixel_values_images"],
+    video_data_key=["pixel_values_videos"],
 )
 
 

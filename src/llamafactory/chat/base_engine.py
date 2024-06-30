@@ -57,6 +57,7 @@ class BaseEngine(ABC):
         system: Optional[str] = None,
         tools: Optional[str] = None,
         image: Optional["NDArray"] = None,
+        video: Optional["NDArray"] = None,
         **input_kwargs,
     ) -> List["Response"]: ...
 
@@ -67,6 +68,7 @@ class BaseEngine(ABC):
         system: Optional[str] = None,
         tools: Optional[str] = None,
         image: Optional["NDArray"] = None,
+        video: Optional["NDArray"] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]: ...
 

@@ -70,4 +70,10 @@ def create_infer_tab(engine: "Engine") -> Dict[str, "Component"]:
         [chat_elems["image_box"]],
     )
 
+    engine.manager.get_elem_by_id("top.visual_inputs").change(
+        lambda enabled: gr.Column(visible=enabled),
+        [engine.manager.get_elem_by_id("top.visual_inputs")],
+        [chat_elems["video_box"]],
+    )
+
     return elem_dict
