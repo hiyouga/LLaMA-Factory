@@ -22,7 +22,7 @@ from ...extras.constants import IGNORE_INDEX
 from ...extras.ploting import plot_loss
 from ...hparams import ModelArguments
 from ...model import load_model, load_tokenizer
-from ..trainer_utils import create_modelcard_and_push, create_ref_model
+from ..trainer_utils import create_modelcard_and_push, create_ref_model, factory_glm4v_trainer
 from .trainer import CustomDPOTrainer
 
 
@@ -63,7 +63,8 @@ def run_dpo(
     training_args.remove_unused_columns = False  # important for pairwise dataset
 
     # Initialize our Trainer
-    trainer = CustomDPOTrainer(
+    Trainer = factory_glm4v_trainer(CustomDPOTrainer) if model_args.visual_inputs_type == "glm4v_like" else CustomDPOTrainer
+    trainer = Trainer(
         model=model,
         ref_model=ref_model,
         args=training_args,

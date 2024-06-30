@@ -43,7 +43,7 @@ from ...data import PairwiseDataCollatorWithPadding, get_dataset, split_dataset
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
 from ..callbacks import fix_valuehead_checkpoint
-from ..trainer_utils import create_modelcard_and_push
+from ..trainer_utils import create_modelcard_and_push, factory_glm4v_trainer
 from .metric import compute_accuracy
 from .trainer import PairwiseTrainer
 
@@ -71,7 +71,8 @@ def run_rm(
     training_args.remove_unused_columns = False  # important for pairwise dataset
 
     # Initialize our Trainer
-    trainer = PairwiseTrainer(
+    Trainer = factory_glm4v_trainer(PairwiseTrainer) if model_args.visual_inputs_type == "glm4v_like" else PairwiseTrainer
+    trainer = Trainer(
         model=model,
         args=training_args,
         finetuning_args=finetuning_args,

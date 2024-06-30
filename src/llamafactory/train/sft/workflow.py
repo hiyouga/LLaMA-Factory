@@ -24,9 +24,9 @@ from ...extras.constants import IGNORE_INDEX
 from ...extras.misc import get_logits_processor
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
-from ..trainer_utils import create_modelcard_and_push
+from ..trainer_utils import create_modelcard_and_push, factory_glm4v_trainer
 from .metric import ComputeMetrics
-from .trainer import CustomSeq2SeqTrainer, GLM4VSeq2SeqTrainer
+from .trainer import CustomSeq2SeqTrainer
 
 
 if TYPE_CHECKING:
@@ -66,28 +66,17 @@ def run_sft(
     training_args.remove_unused_columns = False if model_args.visual_inputs else training_args.remove_unused_columns
 
     # Initialize our Trainer
-    if model_args.visual_inputs_type == "glm4v_like":
-        trainer = GLM4VSeq2SeqTrainer(
-            model=model,
-            args=training_args,
-            finetuning_args=finetuning_args,
-            data_collator=data_collator,
-            callbacks=callbacks,
-            compute_metrics=ComputeMetrics(tokenizer) if training_args.predict_with_generate else None,
-            **tokenizer_module,
-            **split_dataset(dataset, data_args, training_args),
-        )
-    else:
-        trainer = CustomSeq2SeqTrainer(
-            model=model,
-            args=training_args,
-            finetuning_args=finetuning_args,
-            data_collator=data_collator,
-            callbacks=callbacks,
-            compute_metrics=ComputeMetrics(tokenizer) if training_args.predict_with_generate else None,
-            **tokenizer_module,
-            **split_dataset(dataset, data_args, training_args),
-        )
+    Trainer = factory_glm4v_trainer(CustomSeq2SeqTrainer) if model_args.visual_inputs_type == "glm4v_like" else CustomSeq2SeqTrainer
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        finetuning_args=finetuning_args,
+        data_collator=data_collator,
+        callbacks=callbacks,
+        compute_metrics=ComputeMetrics(tokenizer) if training_args.predict_with_generate else None,
+        **tokenizer_module,
+        **split_dataset(dataset, data_args, training_args),
+    )
 
     # Keyword arguments for `model.generate`
     gen_kwargs = generating_args.to_dict()

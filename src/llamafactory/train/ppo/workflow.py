@@ -23,7 +23,7 @@ from ...data import get_dataset
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
 from ..callbacks import FixValueHeadModelCallback, fix_valuehead_checkpoint
-from ..trainer_utils import create_ref_model, create_reward_model
+from ..trainer_utils import create_ref_model, create_reward_model, factory_glm4v_trainer
 from .trainer import CustomPPOTrainer
 
 
@@ -54,7 +54,8 @@ def run_ppo(
     reward_model = create_reward_model(model, model_args, finetuning_args)
 
     # Initialize our Trainer
-    ppo_trainer = CustomPPOTrainer(
+    Trainer = factory_glm4v_trainer(CustomPPOTrainer) if model_args.visual_inputs_type == "glm4v_like" else CustomPPOTrainer
+    ppo_trainer = Trainer(
         model_args=model_args,
         training_args=training_args,
         finetuning_args=finetuning_args,
