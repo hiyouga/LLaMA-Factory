@@ -121,7 +121,7 @@ class HuggingfaceEngine(BaseEngine):
                 prompt_ids = [image_token_id] * getattr(processor, "image_seq_length") + prompt_ids
             if model_args.visual_inputs_type == "phi3v_like":
                 image_sizes = batch_feature["image_sizes"]
-                index_image = prompt_ids.index(tokenizer.vocab["<|image|>"]) 
+                index_image = prompt_ids.index(tokenizer.vocab["<|image|>"])
                 prompt_ids = prompt_ids[:index_image] + [-1]*batch_feature["num_img_tokens"].item() + prompt_ids[index_image+1:]
 
         prompt_length = len(prompt_ids)

@@ -14,6 +14,7 @@
 
 import bisect
 from typing import TYPE_CHECKING, List, Sequence
+
 from torchvision import transforms
 
 from ...extras.packages import is_pillow_available
