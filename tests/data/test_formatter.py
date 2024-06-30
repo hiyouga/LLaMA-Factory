@@ -28,7 +28,7 @@ def test_string_formatter():
 
 
 def test_function_formatter():
-    formatter = FunctionFormatter(slots=["Action: {{name}}\nAction Input: {{arguments}}\n"])
+    formatter = FunctionFormatter(slots=[], tool_format="default")
     tool_calls = json.dumps({"name": "tool_name", "arguments": {"foo": "bar", "size": 10}})
     assert formatter.apply(content=tool_calls) == [
         """Action: tool_name\nAction Input: {\"foo\": \"bar\", \"size\": 10}\n"""
@@ -36,7 +36,7 @@ def test_function_formatter():
 
 
 def test_multi_function_formatter():
-    formatter = FunctionFormatter(slots=["Action: {{name}}\nAction Input: {{arguments}}\n"])
+    formatter = FunctionFormatter(slots=[], tool_format="default")
     tool_calls = json.dumps([{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}] * 2)
     assert formatter.apply(content=tool_calls) == [
         """Action: tool_name\nAction Input: {\"foo\": \"bar\", \"size\": 10}\n""",
