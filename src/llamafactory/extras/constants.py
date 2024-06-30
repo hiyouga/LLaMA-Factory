@@ -555,7 +555,7 @@ register_model_group(
     },
     template="glm4_v",
     vision=True,
-    vision_type="vision_message_embed",
+    vision_type="glm4v_like",
 )
 
 
@@ -879,6 +879,7 @@ register_model_group(
         },
     },
     vision=True,
+    vision_type="vision_tower",
 )
 
 
@@ -924,6 +925,18 @@ register_model_group(
         },
     },
     template="phi",
+)
+
+
+register_model_group(
+    models={
+        "Phi-3-vision-128k-instruct": {
+            DownloadSource.DEFAULT: "microsoft/Phi-3-vision-128k-instruct",
+        }
+    },
+    template="phi",
+    vision=True,
+    vision_type="phi3v_like",
 )
 
 
@@ -1245,7 +1258,7 @@ register_model_group(
     },
     template="qwenvl",
     vision=True,
-    vision_type="vision_token",
+    vision_type="qwenvl_like",
 )
 
 

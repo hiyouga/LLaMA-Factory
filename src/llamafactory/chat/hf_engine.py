@@ -92,32 +92,37 @@ class HuggingfaceEngine(BaseEngine):
             and image is not None
             and not hasattr(processor, "image_seq_length")
             and template.image_token not in messages[0]["content"]
-            and model_args.visual_inputs_type == "vision_tower"
+            and model_args.visual_inputs_type in ["vision_tower","phi3v_like"]
         ):
             # llava-like models
             messages[0]["content"] = template.image_token + messages[0]["content"]
-        elif image is not None and model_args.visual_inputs_type == "vision_token":
+        elif image is not None and model_args.visual_inputs_type == "qwenvl_like":
             # Add image pathlike token as vision input
             image_path = pathlib.Path(DEFAULT_CACHE_DIR) / "temp.png"
             Image.fromarray(image).convert("RGB").save(image_path)
             messages[-1]["content"] = template.format_image.apply(content=os.fspath(image_path))[0] + messages[-1]["content"]
-        elif image is not None and model_args.visual_inputs_type == "vision_message_embed":
+        elif image is not None and model_args.visual_inputs_type == "glm4v_like":
             messages[-1]["content"] = template.format_image.apply()[0] + messages[-1]["content"]
 
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or generating_args["default_system"]
         pixel_values = None
+        image_sizes = None
         prompt_ids, _ = template.encode_oneturn(
             tokenizer=tokenizer, messages=paired_messages, system=system, tools=tools
         )
         # add image features for vision tower
         if processor is not None and image is not None and template.format_image is None:
             image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
-            batch_feature = image_processor(image, return_tensors="pt")
+            batch_feature = image_processor(image, return_tensors="pt") if model_args.visual_inputs_type == "vision_tower" else image_processor(Image.fromarray(image), return_tensors="pt")
             pixel_values = batch_feature.to(model.device)["pixel_values"]  # shape (B, C, H, W)
             if hasattr(processor, "image_seq_length"):  # paligemma models
                 image_token_id = tokenizer.convert_tokens_to_ids(template.image_token)
                 prompt_ids = [image_token_id] * getattr(processor, "image_seq_length") + prompt_ids
+            if model_args.visual_inputs_type == "phi3v_like":
+                image_sizes = batch_feature["image_sizes"]
+                index_image = prompt_ids.index(tokenizer.vocab["<|image|>"]) 
+                prompt_ids = prompt_ids[:index_image] + [-1]*batch_feature["num_img_tokens"].item() + prompt_ids[index_image+1:]
 
         prompt_length = len(prompt_ids)
         inputs = torch.tensor([prompt_ids], device=model.device)
@@ -179,7 +184,7 @@ class HuggingfaceEngine(BaseEngine):
             generation_config=GenerationConfig(**generating_args),
             logits_processor=get_logits_processor(),
         )
-        if image is not None and model_args.visual_inputs_type == "vision_message_embed":
+        if image is not None and model_args.visual_inputs_type == "glm4v_like":
             transform = torchvision.transforms.Compose(
                 [
                     torchvision.transforms.Resize(
@@ -190,11 +195,14 @@ class HuggingfaceEngine(BaseEngine):
                 ]
             )
             gen_kwargs["images"] = transform(Image.fromarray(image)).unsqueeze(0).to(model.device).to(model_args.compute_dtype)
-        elif model_args.visual_inputs_type == "vision_message_embed":
+        elif model_args.visual_inputs_type == "glm4v_like":
             gen_kwargs["images"] = None
 
         if pixel_values is not None:
             gen_kwargs["pixel_values"] = pixel_values
+
+        if image_sizes is not None and model_args.visual_inputs_type == "phi3v_like":
+            gen_kwargs["image_sizes"] = image_sizes
 
         return gen_kwargs, prompt_length
 

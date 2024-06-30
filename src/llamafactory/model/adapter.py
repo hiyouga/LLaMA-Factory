@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 
 logger = get_logger(__name__)
-VISION_FREEZE_MAP = {"none":"","vision_tower":"vision_tower","vision_message_embed":"vision","vision_token":"visual"}
+VISION_FREEZE_MAP = {"none":"","vision_tower":"vision_tower","glm4v_like":"vision","qwenvl_like":"visual","phi3v_like":"vision_embed_tokens"}
 
 def _setup_full_tuning(
     model: "PreTrainedModel",

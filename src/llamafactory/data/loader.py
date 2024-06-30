@@ -190,7 +190,7 @@ def get_dataset(
 
         dataset = dataset.map(preprocess_func, batched=True, remove_columns=column_names, **kwargs)
 
-        if model_args.visual_inputs_type == "vision_message_embed":
+        if model_args.visual_inputs_type == "glm4v_like":
             dataset = dataset.rename_column("image_inputs","images")
 
         if data_args.tokenized_path is not None:

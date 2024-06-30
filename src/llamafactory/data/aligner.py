@@ -97,7 +97,7 @@ def convert_alpaca(
         outputs["response"].append(response)
         outputs["system"].append(examples[dataset_attr.system][i] if dataset_attr.system else "")
         outputs["tools"].append(examples[dataset_attr.tools][i] if dataset_attr.tools else "")
-        if model_args.visual_inputs_type == "vision_token":
+        if model_args.visual_inputs_type == "qwenvl_like":
             outputs["images"].append(examples[dataset_attr.images][i] if dataset_attr.images else [])
         else:
             outputs["images"].append(convert_images(examples[dataset_attr.images][i]) if dataset_attr.images else [])
@@ -188,7 +188,7 @@ def convert_sharegpt(
         outputs["response"].append(response)
         outputs["system"].append(system)
         outputs["tools"].append(examples[dataset_attr.tools][i] if dataset_attr.tools else "")
-        if model_args.visual_inputs_type == "vision_token":
+        if model_args.visual_inputs_type == "qwenvl_like":
             outputs["images"].append(examples[dataset_attr.images][i] if dataset_attr.images else [])
         else:
             outputs["images"].append(convert_images(examples[dataset_attr.images][i]) if dataset_attr.images else [])
@@ -227,7 +227,7 @@ def align_dataset(
             ],
             "system": {"dtype": "string", "_type": "Value"},
             "tools": {"dtype": "string", "_type": "Value"},
-            "images": [{"dtype": "string", "_type": "Value"} if model_args.visual_inputs_type == "vision_token" else {"_type": "Image"}],
+            "images": [{"dtype": "string", "_type": "Value"} if model_args.visual_inputs_type == "qwenvl_like" else {"_type": "Image"}],
         }
     )
     kwargs = {}

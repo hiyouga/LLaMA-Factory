@@ -88,18 +88,18 @@ def preprocess_supervised_dataset(
         model_inputs["pixel_values"] = []
         if hasattr(processor, "image_seq_length"):  # paligemma models
             model_inputs["token_type_ids"] = []
-    elif model_args.visual_inputs_type == "vision_message_embed":
+    elif model_args.visual_inputs_type == "glm4v_like":
         model_inputs["image_inputs"] = []
 
     for i in range(len(examples["prompt"])):
         if len(examples["prompt"][i]) % 2 != 1 or len(examples["response"][i]) != 1:
             logger.warning("Dropped invalid example: {}".format(examples["prompt"][i] + examples["response"][i]))
             continue
-        if model_args.visual_inputs_type == "vision_message_embed":
+        if model_args.visual_inputs_type == "glm4v_like":
             assert len(examples["images"][i]) <= 1,"GLM4v only support 1 image train yet."
-            model_inputs["image_inputs"].append(get_pixel_values(examples["images"][i], None, "vision_message_embed"))
+            model_inputs["image_inputs"].append(get_pixel_values(examples["images"][i], None, "glm4v_like"))
             examples["prompt"][i][-1]["content"] = template.format_image.apply()[0] + examples["prompt"][i][-1]["content"]
-        elif model_args.visual_inputs_type == "vision_token":
+        elif model_args.visual_inputs_type == "qwenvl_like":
             assert len(examples["images"][i]) <= 1,"Qwenvl only support 1 image train yet."
             examples["prompt"][i][-1]["content"] = template.format_image.apply(content=os.path.join(data_args.dataset_dir,examples["images"][i][-1]))[0] + examples["prompt"][i][-1]["content"]
 

@@ -70,7 +70,7 @@ def get_pixel_values(images: Sequence["ImageObject"], processor: "ProcessorMixin
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
         image = images[0] if len(images) != 0 else Image.new("RGB", (100, 100), (255, 255, 255))
         return image_processor(image, return_tensors="pt")["pixel_values"][0]  # shape (C, H, W)
-    elif vision_type == "vision_message_embed":
+    elif vision_type == "glm4v_like":
         transform = transforms.Compose(
             [
                 transforms.Resize(

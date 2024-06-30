@@ -66,7 +66,7 @@ def run_sft(
     training_args.remove_unused_columns = False if model_args.visual_inputs else training_args.remove_unused_columns
 
     # Initialize our Trainer
-    if model_args.visual_inputs_type == "vision_message_embed":
+    if model_args.visual_inputs_type == "glm4v_like":
         trainer = GLM4VSeq2SeqTrainer(
             model=model,
             args=training_args,
