@@ -63,7 +63,9 @@ def greedy_knapsack(numbers: List[int], capacity: int) -> List[List[int]]:
     return knapsacks
 
 
-def get_pixel_values(images: Sequence["ImageObject"], processor: "ProcessorMixin", vision_type: str = "vision_tower") -> "NDArray":
+def get_pixel_values(
+    images: Sequence["ImageObject"], processor: "ProcessorMixin", vision_type: str = "vision_tower"
+) -> "NDArray":
     r"""
     Processes visual inputs. (currently only supports a single image)
     """
@@ -74,9 +76,7 @@ def get_pixel_values(images: Sequence["ImageObject"], processor: "ProcessorMixin
     elif vision_type == "glm4v_like":
         transform = transforms.Compose(
             [
-                transforms.Resize(
-                    (1120, 1120), interpolation=transforms.InterpolationMode.BICUBIC
-                ),
+                transforms.Resize((1120, 1120), interpolation=transforms.InterpolationMode.BICUBIC),
                 transforms.ToTensor(),
                 transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711)),
             ]

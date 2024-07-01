@@ -66,7 +66,11 @@ def run_sft(
     training_args.remove_unused_columns = False if model_args.visual_inputs else training_args.remove_unused_columns
 
     # Initialize our Trainer
-    Trainer = factory_glm4v_trainer(CustomSeq2SeqTrainer) if model_args.visual_inputs_type == "glm4v_like" else CustomSeq2SeqTrainer
+    Trainer = (
+        factory_glm4v_trainer(CustomSeq2SeqTrainer)
+        if model_args.visual_inputs_type == "glm4v_like"
+        else CustomSeq2SeqTrainer
+    )
     trainer = Trainer(
         model=model,
         args=training_args,

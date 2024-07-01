@@ -50,7 +50,10 @@ def _convert_images(images: List[Any], dataset_attr: "DatasetAttr", data_args: "
 
 
 def convert_alpaca(
-    examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr", data_args: "DataArguments", model_args: "ModelArguments",
+    examples: Dict[str, List[Any]],
+    dataset_attr: "DatasetAttr",
+    data_args: "DataArguments",
+    model_args: "ModelArguments",
 ) -> Dict[str, List[Any]]:
     r"""
     Converts alpaca format dataset to the standard format.
@@ -106,7 +109,10 @@ def convert_alpaca(
 
 
 def convert_sharegpt(
-    examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr", data_args: "DataArguments", model_args: "ModelArguments",
+    examples: Dict[str, List[Any]],
+    dataset_attr: "DatasetAttr",
+    data_args: "DataArguments",
+    model_args: "ModelArguments",
 ) -> Dict[str, List[Any]]:
     r"""
     Converts sharegpt format dataset to the standard format.
@@ -227,7 +233,11 @@ def align_dataset(
             ],
             "system": {"dtype": "string", "_type": "Value"},
             "tools": {"dtype": "string", "_type": "Value"},
-            "images": [{"dtype": "string", "_type": "Value"} if model_args.visual_inputs_type == "qwenvl_like" else {"_type": "Image"}],
+            "images": [
+                {"dtype": "string", "_type": "Value"}
+                if model_args.visual_inputs_type == "qwenvl_like"
+                else {"_type": "Image"}
+            ],
         }
     )
     kwargs = {}

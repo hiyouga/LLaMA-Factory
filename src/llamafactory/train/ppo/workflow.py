@@ -54,7 +54,9 @@ def run_ppo(
     reward_model = create_reward_model(model, model_args, finetuning_args)
 
     # Initialize our Trainer
-    Trainer = factory_glm4v_trainer(CustomPPOTrainer) if model_args.visual_inputs_type == "glm4v_like" else CustomPPOTrainer
+    Trainer = (
+        factory_glm4v_trainer(CustomPPOTrainer) if model_args.visual_inputs_type == "glm4v_like" else CustomPPOTrainer
+    )
     ppo_trainer = Trainer(
         model_args=model_args,
         training_args=training_args,

@@ -33,7 +33,14 @@ if TYPE_CHECKING:
 
 
 logger = get_logger(__name__)
-VISION_FREEZE_MAP = {"none":"","vision_tower":"vision_tower","glm4v_like":"vision","qwenvl_like":"visual","phi3v_like":"vision_embed_tokens"}
+VISION_FREEZE_MAP = {
+    "none": "",
+    "vision_tower": "vision_tower",
+    "glm4v_like": "vision",
+    "qwenvl_like": "visual",
+    "phi3v_like": "vision_embed_tokens",
+}
+
 
 def _setup_full_tuning(
     model: "PreTrainedModel",
@@ -211,8 +218,10 @@ def _setup_lora_tuning(
         if finetuning_args.use_llama_pro:
             target_modules = find_expanded_modules(model, target_modules, finetuning_args.freeze_trainable_layers)
 
-        if finetuning_args.freeze_vision and model_args.visual_inputs_type !="none":
-            target_modules = f"^(?!.*{VISION_FREEZE_MAP[model_args.visual_inputs_type]})."+"*(?:{}).*".format("|".join(target_modules))
+        if finetuning_args.freeze_vision and model_args.visual_inputs_type != "none":
+            target_modules = f"^(?!.*{VISION_FREEZE_MAP[model_args.visual_inputs_type]})." + "*(?:{}).*".format(
+                "|".join(target_modules)
+            )
 
         if (
             finetuning_args.use_dora

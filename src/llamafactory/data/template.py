@@ -777,7 +777,7 @@ _register_template(
     format_separator=EmptyFormatter(slots=["\n"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|end|>"],
-    image_token = "<|image|>",
+    image_token="<|image|>",
     replace_eos=True,
 )
 

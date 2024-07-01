@@ -60,7 +60,9 @@ def run_kto(
     training_args.remove_unused_columns = False  # important for pairwise dataset
 
     # Initialize our Trainer
-    Trainer = factory_glm4v_trainer(CustomKTOTrainer) if model_args.visual_inputs_type == "glm4v_like" else CustomKTOTrainer
+    Trainer = (
+        factory_glm4v_trainer(CustomKTOTrainer) if model_args.visual_inputs_type == "glm4v_like" else CustomKTOTrainer
+    )
     trainer = Trainer(
         model=model,
         ref_model=ref_model,

@@ -113,6 +113,7 @@ def register_model_group(
         VISION_MODELS.add(prefix)
         VISION_TYPES[prefix] = vision_type
 
+
 register_model_group(
     models={
         "Aya-23-8B-Chat": {

@@ -71,7 +71,9 @@ def run_rm(
     training_args.remove_unused_columns = False  # important for pairwise dataset
 
     # Initialize our Trainer
-    Trainer = factory_glm4v_trainer(PairwiseTrainer) if model_args.visual_inputs_type == "glm4v_like" else PairwiseTrainer
+    Trainer = (
+        factory_glm4v_trainer(PairwiseTrainer) if model_args.visual_inputs_type == "glm4v_like" else PairwiseTrainer
+    )
     trainer = Trainer(
         model=model,
         args=training_args,

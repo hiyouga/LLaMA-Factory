@@ -93,7 +93,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
 
     patch_tokenizer(tokenizer)
 
-    if model_args.visual_inputs and model_args.visual_inputs_type in ["vision_tower","phi3v_like"]:
+    if model_args.visual_inputs and model_args.visual_inputs_type in ["vision_tower", "phi3v_like"]:
         try:
             processor = AutoProcessor.from_pretrained(model_args.model_name_or_path, **init_kwargs)
             setattr(processor, "tokenizer", tokenizer)

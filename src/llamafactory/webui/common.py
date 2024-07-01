@@ -145,7 +145,7 @@ def get_template(model_name: str) -> str:
     return "default"
 
 
-def get_visual(model_name: str) -> dict[bool,str]:
+def get_visual(model_name: str) -> dict[bool, str]:
     r"""
     Judges if the model is a vision language model.
     """

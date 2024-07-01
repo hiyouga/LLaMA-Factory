@@ -5,7 +5,6 @@ peft>=0.11.1
 trl>=0.8.6
 gradio>=4.0.0
 pandas>=2.0.0
-torchvision
 scipy
 einops
 sentencepiece
