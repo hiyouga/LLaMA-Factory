@@ -12,12 +12,16 @@ authors:
   given-names: "Yanhan"
 - family-names: "Luo"
   given-names: "Zheyan"
+- family-names: "Feng"
+  given-names: "Zhangchi"
 - family-names: "Ma"
   given-names: "Yongqiang"
 title: "LlamaFactory: Unified Efficient Fine-Tuning of 100+ Language Models"
 url: "https://arxiv.org/abs/2403.13372"
 preferred-citation:
-  type: article
+  type: conference-paper
+  conference:
+    name: "Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 3: System Demonstrations)"
   authors:
     - family-names: "Zheng"
       given-names: "Yaowei"
@@ -29,9 +33,12 @@ preferred-citation:
       given-names: "Yanhan"
     - family-names: "Luo"
       given-names: "Zheyan"
+    - family-names: "Feng"
+      given-names: "Zhangchi"
     - family-names: "Ma"
       given-names: "Yongqiang"
-  journal: "arXiv preprint arXiv:2403.13372"
   title: "LlamaFactory: Unified Efficient Fine-Tuning of 100+ Language Models"
   url: "https://arxiv.org/abs/2403.13372"
   year: 2024
+  publisher: "Association for Computational Linguistics"
+  address: "Bangkok, Thailand"
