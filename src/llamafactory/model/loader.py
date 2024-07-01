@@ -1,10 +1,25 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from typing import TYPE_CHECKING, Any, Dict, Optional, TypedDict
 
+import torch
 from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForVision2Seq, AutoProcessor, AutoTokenizer
 from trl import AutoModelForCausalLMWithValueHead
 
 from ..extras.logging import get_logger
-from ..extras.misc import count_parameters, try_download_model_from_ms
+from ..extras.misc import count_parameters, skip_check_imports, try_download_model_from_ms
 from .adapter import init_adapter
 from .model_utils.misc import register_autoclass
 from .model_utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
@@ -33,6 +48,7 @@ def _get_init_kwargs(model_args: "ModelArguments") -> Dict[str, Any]:
 
     Note: including inplace operation of model_args.
     """
+    skip_check_imports()
     model_args.model_name_or_path = try_download_model_from_ms(model_args)
     return {
         "trust_remote_code": True,
@@ -162,17 +178,21 @@ def load_model(
 
     if not is_trainable:
         model.requires_grad_(False)
+        for param in model.parameters():
+            if param.data.dtype == torch.float32 and model_args.compute_dtype != torch.float32:
+                param.data = param.data.to(model_args.compute_dtype)
+
         model.eval()
     else:
         model.train()
 
     trainable_params, all_param = count_parameters(model)
     if is_trainable:
-        param_stats = "trainable params: {:d} || all params: {:d} || trainable%: {:.4f}".format(
+        param_stats = "trainable params: {:,} || all params: {:,} || trainable%: {:.4f}".format(
             trainable_params, all_param, 100 * trainable_params / all_param
         )
     else:
-        param_stats = "all params: {:d}".format(all_param)
+        param_stats = "all params: {:,}".format(all_param)
 
     logger.info(param_stats)
 

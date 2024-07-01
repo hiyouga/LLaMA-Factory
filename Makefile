@@ -11,4 +11,4 @@ style:
 	ruff format $(check_dirs)
 
 test:
-	pytest tests/
+	CUDA_VISIBLE_DEVICES= pytest tests/

@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import asyncio
 import concurrent.futures
 import os
@@ -40,11 +54,19 @@ class HuggingfaceEngine(BaseEngine):
         self.tokenizer = tokenizer_module["tokenizer"]
         self.processor = tokenizer_module["processor"]
         self.tokenizer.padding_side = "left" if self.can_generate else "right"
-        self.template = get_template_and_fix_tokenizer(self.tokenizer, data_args.template)
+        self.template = get_template_and_fix_tokenizer(self.tokenizer, data_args.template, data_args.tool_format)
         self.model = load_model(
             self.tokenizer, model_args, finetuning_args, is_trainable=False, add_valuehead=(not self.can_generate)
         )  # must after fixing tokenizer to resize vocab
         self.generating_args = generating_args.to_dict()
+        try:
+            asyncio.get_event_loop()
+        except RuntimeError:
+            logger.warning("There is no current event loop, creating a new one.")
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        self.semaphore = asyncio.Semaphore(int(os.environ.get("MAX_CONCURRENT", "1")))
 
     @staticmethod
     def _process_args(
@@ -245,9 +267,6 @@ class HuggingfaceEngine(BaseEngine):
 
         return scores
 
-    async def start(self) -> None:
-        self._semaphore = asyncio.Semaphore(int(os.environ.get("MAX_CONCURRENT", 1)))
-
     async def chat(
         self,
         messages: Sequence[Dict[str, str]],
@@ -272,7 +291,7 @@ class HuggingfaceEngine(BaseEngine):
             image,
             input_kwargs,
         )
-        async with self._semaphore:
+        async with self.semaphore:
             with concurrent.futures.ThreadPoolExecutor() as pool:
                 return await loop.run_in_executor(pool, self._chat, *input_args)
 
@@ -300,7 +319,7 @@ class HuggingfaceEngine(BaseEngine):
             image,
             input_kwargs,
         )
-        async with self._semaphore:
+        async with self.semaphore:
             with concurrent.futures.ThreadPoolExecutor() as pool:
                 stream = self._stream_chat(*input_args)
                 while True:
@@ -319,6 +338,6 @@ class HuggingfaceEngine(BaseEngine):
 
         loop = asyncio.get_running_loop()
         input_args = (self.model, self.tokenizer, batch_input, input_kwargs)
-        async with self._semaphore:
+        async with self.semaphore:
             with concurrent.futures.ThreadPoolExecutor() as pool:
                 return await loop.run_in_executor(pool, self._get_scores, *input_args)

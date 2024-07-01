@@ -3,6 +3,43 @@
     "conversations": [
       {
         "from": "human",
+        "value": "Hi, I have some ingredients and I want to cook something. Can you help me find a recipe?"
+      },
+      {
+        "from": "gpt",
+        "value": "Of course! I can help you with that. Please tell me what ingredients you have."
+      },
+      {
+        "from": "human",
+        "value": "I have chicken, bell peppers, and rice."
+      },
+      {
+        "from": "function_call",
+        "value": "{\"name\": \"search_recipes\", \"arguments\": {\"ingredients\": [\"chicken\", \"bell peppers\", \"rice\"]}}"
+      },
+      {
+        "from": "observation",
+        "value": "{\"recipes\": [{\"name\": \"Chicken and Bell Pepper Stir Fry\", \"ingredients\": [\"chicken\", \"bell peppers\", \"rice\"], \"instructions\": \"Cut the chicken into small pieces. Slice the bell peppers. Cook the rice. Stir fry the chicken and bell peppers. Serve over rice.\"}, {\"name\": \"Chicken and Rice Casserole\", \"ingredients\": [\"chicken\", \"bell peppers\", \"rice\"], \"instructions\": \"Cook the chicken and rice separately. Mix them together with the bell peppers in a casserole dish. Bake until golden brown.\"}]}"
+      },
+      {
+        "from": "gpt",
+        "value": "I found two recipes for you. The first one is \"Chicken and Bell Pepper Stir Fry\". The instructions are: Cut the chicken into small pieces. Slice the bell peppers. Cook the rice. Stir fry the chicken and bell peppers. Serve over rice. The second one is \"Chicken and Rice Casserole\". The instructions are: Cook the chicken and rice separately. Mix them together with the bell peppers in a casserole dish. Bake until golden brown. Which one would you like to try?"
+      },
+      {
+        "from": "human",
+        "value": "They both sound delicious, but I think I'll try the stir fry. Can you order the ingredients for me?"
+      },
+      {
+        "from": "gpt",
+        "value": "I'm sorry, but as an AI, I don't have the capability to perform external tasks such as ordering ingredients. However, I can help you find more recipes or provide cooking tips if you need."
+      }
+    ],
+    "tools": "[{\"name\": \"search_recipes\", \"description\": \"Search for recipes based on ingredients\", \"parameters\": {\"type\": \"object\", \"properties\": {\"ingredients\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}, \"description\": \"The ingredients to search for\"}}, \"required\": [\"ingredients\"]}}]"
+  },
+  {
+    "conversations": [
+      {
+        "from": "human",
         "value": "Write a definition of \"photoshop\"."
       },
       {
@@ -154,43 +191,6 @@
       }
     ],
     "tools": "[]"
-  },
-  {
-    "conversations": [
-      {
-        "from": "human",
-        "value": "Hi, I have some ingredients and I want to cook something. Can you help me find a recipe?"
-      },
-      {
-        "from": "gpt",
-        "value": "Of course! I can help you with that. Please tell me what ingredients you have."
-      },
-      {
-        "from": "human",
-        "value": "I have chicken, bell peppers, and rice."
-      },
-      {
-        "from": "function_call",
-        "value": "{\"name\": \"search_recipes\", \"arguments\": {\"ingredients\": [\"chicken\", \"bell peppers\", \"rice\"]}}"
-      },
-      {
-        "from": "observation",
-        "value": "{\"recipes\": [{\"name\": \"Chicken and Bell Pepper Stir Fry\", \"ingredients\": [\"chicken\", \"bell peppers\", \"rice\"], \"instructions\": \"Cut the chicken into small pieces. Slice the bell peppers. Cook the rice. Stir fry the chicken and bell peppers. Serve over rice.\"}, {\"name\": \"Chicken and Rice Casserole\", \"ingredients\": [\"chicken\", \"bell peppers\", \"rice\"], \"instructions\": \"Cook the chicken and rice separately. Mix them together with the bell peppers in a casserole dish. Bake until golden brown.\"}]}"
-      },
-      {
-        "from": "gpt",
-        "value": "I found two recipes for you. The first one is \"Chicken and Bell Pepper Stir Fry\". The instructions are: Cut the chicken into small pieces. Slice the bell peppers. Cook the rice. Stir fry the chicken and bell peppers. Serve over rice. The second one is \"Chicken and Rice Casserole\". The instructions are: Cook the chicken and rice separately. Mix them together with the bell peppers in a casserole dish. Bake until golden brown. Which one would you like to try?"
-      },
-      {
-        "from": "human",
-        "value": "They both sound delicious, but I think I'll try the stir fry. Can you order the ingredients for me?"
-      },
-      {
-        "from": "gpt",
-        "value": "I'm sorry, but as an AI, I don't have the capability to perform external tasks such as ordering ingredients. However, I can help you find more recipes or provide cooking tips if you need."
-      }
-    ],
-    "tools": "[{\"name\": \"search_recipes\", \"description\": \"Search for recipes based on ingredients\", \"parameters\": {\"type\": \"object\", \"properties\": {\"ingredients\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}, \"description\": \"The ingredients to search for\"}}, \"required\": [\"ingredients\"]}}]"
   },
   {
     "conversations": [

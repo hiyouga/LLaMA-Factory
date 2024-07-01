@@ -1,3 +1,21 @@
+# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+#
+# This code is inspired by the HuggingFace's Transformers and PEFT library.
+# https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/modeling_utils.py
+# https://github.com/huggingface/peft/blob/v0.10.0/src/peft/utils/other.py
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import inspect
 from functools import partial
 from types import MethodType
@@ -60,15 +78,12 @@ def _fp32_forward_post_hook(
     return output.to(torch.float32)
 
 
-def prepare_model_for_training(
-    model: "PreTrainedModel", model_args: "ModelArguments", output_layer_name: str = "lm_head"
-) -> None:
+def prepare_model_for_training(model: "PreTrainedModel", model_args: "ModelArguments") -> None:
     r"""
     Includes:
         (1) cast the layernorm in fp32
         (2) make output embedding layer require grads
         (3) add the upcasting of the lm_head in fp32
-    Inspired by: https://github.com/huggingface/peft/blob/v0.7.1/src/peft/utils/other.py#L72
     """
     if model_args.upcast_layernorm:
         logger.info("Upcasting layernorm weights in float32.")
@@ -87,8 +102,8 @@ def prepare_model_for_training(
             setattr(model.config, "use_cache", False)  # turn off when gradient checkpointing is enabled
             logger.info("Gradient checkpointing enabled.")
 
-    if hasattr(model, output_layer_name) and model_args.upcast_lmhead_output:
-        logger.info("Upcasting lm_head outputs in float32.")
-        output_layer = getattr(model, output_layer_name)
+    if model_args.upcast_lmhead_output:
+        output_layer = model.get_output_embeddings()
         if isinstance(output_layer, torch.nn.Linear) and output_layer.weight.dtype != torch.float32:
+            logger.info("Upcasting lm_head outputs in float32.")
             output_layer.register_forward_hook(_fp32_forward_post_hook)
