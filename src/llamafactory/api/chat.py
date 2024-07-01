@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import base64
 import io
 import json
@@ -78,9 +92,11 @@ def _process_request(
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role")
 
         if message.role == Role.ASSISTANT and isinstance(message.tool_calls, list) and len(message.tool_calls):
-            name = message.tool_calls[0].function.name
-            arguments = message.tool_calls[0].function.arguments
-            content = json.dumps({"name": name, "argument": arguments}, ensure_ascii=False)
+            tool_calls = [
+                {"name": tool_call.function.name, "arguments": tool_call.function.arguments}
+                for tool_call in message.tool_calls
+            ]
+            content = json.dumps(tool_calls, ensure_ascii=False)
             input_messages.append({"role": ROLE_MAPPING[Role.FUNCTION], "content": content})
         elif isinstance(message.content, list):
             for input_item in message.content:
@@ -104,7 +120,7 @@ def _process_request(
     if isinstance(tool_list, list) and len(tool_list):
         try:
             tools = json.dumps([dictify(tool.function) for tool in tool_list], ensure_ascii=False)
-        except Exception:
+        except json.JSONDecodeError:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid tools")
     else:
         tools = None
@@ -146,15 +162,17 @@ async def create_chat_completion_response(
     choices = []
     for i, response in enumerate(responses):
         if tools:
-            result = chat_model.engine.template.format_tools.extract(response.response_text)
+            result = chat_model.engine.template.extract_tool(response.response_text)
         else:
             result = response.response_text
 
-        if isinstance(result, tuple):
-            name, arguments = result
-            function = Function(name=name, arguments=arguments)
-            tool_call = FunctionCall(id="call_{}".format(uuid.uuid4().hex), function=function)
-            response_message = ChatCompletionMessage(role=Role.ASSISTANT, tool_calls=[tool_call])
+        if isinstance(result, list):
+            tool_calls = []
+            for tool in result:
+                function = Function(name=tool[0], arguments=tool[1])
+                tool_calls.append(FunctionCall(id="call_{}".format(uuid.uuid4().hex), function=function))
+
+            response_message = ChatCompletionMessage(role=Role.ASSISTANT, tool_calls=tool_calls)
             finish_reason = Finish.TOOL
         else:
             response_message = ChatCompletionMessage(role=Role.ASSISTANT, content=result)

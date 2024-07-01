@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import json
 import os
 from typing import TYPE_CHECKING, Dict, Generator, List, Optional, Sequence, Tuple
@@ -9,7 +23,7 @@ from ..data import Role
 from ..extras.constants import PEFT_METHODS
 from ..extras.misc import torch_gc
 from ..extras.packages import is_gradio_available
-from .common import get_save_dir
+from .common import QUANTIZATION_BITS, get_save_dir
 from .locales import ALERTS
 
 
@@ -62,17 +76,24 @@ class WebChatModel(ChatModel):
             yield error
             return
 
+        if get("top.quantization_bit") in QUANTIZATION_BITS:
+            quantization_bit = int(get("top.quantization_bit"))
+        else:
+            quantization_bit = None
+
         yield ALERTS["info_loading"][lang]
         args = dict(
             model_name_or_path=model_path,
             finetuning_type=finetuning_type,
-            quantization_bit=int(get("top.quantization_bit")) if get("top.quantization_bit") in ["8", "4"] else None,
+            quantization_bit=quantization_bit,
+            quantization_method=get("top.quantization_method"),
             template=get("top.template"),
             flash_attn="fa2" if get("top.booster") == "flashattn2" else "auto",
             use_unsloth=(get("top.booster") == "unsloth"),
             visual_inputs=get("top.visual_inputs"),
             rope_scaling=get("top.rope_scaling") if get("top.rope_scaling") in ["linear", "dynamic"] else None,
             infer_backend=get("infer.infer_backend"),
+            infer_dtype=get("infer.infer_dtype"),
         )
 
         if checkpoint_path:
@@ -126,16 +147,15 @@ class WebChatModel(ChatModel):
         ):
             response += new_text
             if tools:
-                result = self.engine.template.format_tools.extract(response)
+                result = self.engine.template.extract_tool(response)
             else:
                 result = response
 
-            if isinstance(result, tuple):
-                name, arguments = result
-                arguments = json.loads(arguments)
-                tool_call = json.dumps({"name": name, "arguments": arguments}, ensure_ascii=False)
-                output_messages = messages + [{"role": Role.FUNCTION.value, "content": tool_call}]
-                bot_text = "```json\n" + tool_call + "\n```"
+            if isinstance(result, list):
+                tool_calls = [{"name": tool[0], "arguments": json.loads(tool[1])} for tool in result]
+                tool_calls = json.dumps(tool_calls, indent=4, ensure_ascii=False)
+                output_messages = messages + [{"role": Role.FUNCTION.value, "content": tool_calls}]
+                bot_text = "```json\n" + tool_calls + "\n```"
             else:
                 output_messages = messages + [{"role": Role.ASSISTANT.value, "content": result}]
                 bot_text = result

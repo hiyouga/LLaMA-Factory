@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import json
 import os
 import signal
@@ -11,6 +25,7 @@ from yaml import safe_dump, safe_load
 from ..extras.constants import PEFT_METHODS, RUNNING_LOG, TRAINER_LOG, TRAINING_ARGS, TRAINING_STAGES
 from ..extras.packages import is_gradio_available, is_matplotlib_available
 from ..extras.ploting import gen_loss_plot
+from ..model import QuantizationMethod
 from .common import DEFAULT_CACHE_DIR, DEFAULT_CONFIG_DIR, get_save_dir
 from .locales import ALERTS
 
@@ -19,16 +34,19 @@ if is_gradio_available():
     import gradio as gr
 
 
-def abort_leaf_process(pid: int) -> None:
+def abort_process(pid: int) -> None:
     r"""
-    Aborts the leaf processes.
+    Aborts the processes recursively in a bottom-up way.
     """
-    children = psutil.Process(pid).children()
-    if children:
-        for child in children:
-            abort_leaf_process(child.pid)
-    else:
+    try:
+        children = psutil.Process(pid).children()
+        if children:
+            for child in children:
+                abort_process(child.pid)
+
         os.kill(pid, signal.SIGABRT)
+    except Exception:
+        pass
 
 
 def can_quantize(finetuning_type: str) -> "gr.Dropdown":
@@ -39,6 +57,20 @@ def can_quantize(finetuning_type: str) -> "gr.Dropdown":
         return gr.Dropdown(value="none", interactive=False)
     else:
         return gr.Dropdown(interactive=True)
+
+
+def can_quantize_to(quantization_method: str) -> "gr.Dropdown":
+    r"""
+    Returns the available quantization bits.
+    """
+    if quantization_method == QuantizationMethod.BITS_AND_BYTES.value:
+        available_bits = ["none", "8", "4"]
+    elif quantization_method == QuantizationMethod.HQQ.value:
+        available_bits = ["none", "8", "6", "5", "4", "3", "2", "1"]
+    elif quantization_method == QuantizationMethod.EETQ.value:
+        available_bits = ["none", "8"]
+
+    return gr.Dropdown(choices=available_bits)
 
 
 def change_stage(training_stage: str = list(TRAINING_STAGES.keys())[0]) -> Tuple[List[str], bool]:

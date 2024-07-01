@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from dataclasses import dataclass
 from typing import Dict, List, Sequence, Tuple
 
@@ -10,7 +24,6 @@ class EvalTemplate:
     system: str
     choice: str
     answer: str
-    prefix: str
 
     def _parse_example(self, example: Dict[str, str]) -> Tuple[str, str]:
         r"""
@@ -42,8 +55,8 @@ class EvalTemplate:
 eval_templates: Dict[str, "EvalTemplate"] = {}
 
 
-def _register_eval_template(name: str, system: str, choice: str, answer: str, prefix: str) -> None:
-    eval_templates[name] = EvalTemplate(system=system, choice=choice, answer=answer, prefix=prefix)
+def _register_eval_template(name: str, system: str, choice: str, answer: str) -> None:
+    eval_templates[name] = EvalTemplate(system=system, choice=choice, answer=answer)
 
 
 def get_eval_template(name: str) -> "EvalTemplate":
@@ -56,8 +69,7 @@ _register_eval_template(
     name="en",
     system="The following are multiple choice questions (with answers) about {subject}.\n\n",
     choice="\n{choice}. {content}",
-    answer="\nAnswer: ",
-    prefix=" ",
+    answer="\nAnswer:",
 )
 
 
@@ -66,5 +78,4 @@ _register_eval_template(
     system="以下是中国关于{subject}考试的单项选择题，请选出其中的正确答案。\n\n",
     choice="\n{choice}. {content}",
     answer="\n答案：",
-    prefix=" ",
 )

@@ -4,10 +4,10 @@
 .venv
 cache
 data
+docker
+saves
 hf_cache
 output
-examples
 .dockerignore
 .gitattributes
 .gitignore
-Dockerfile

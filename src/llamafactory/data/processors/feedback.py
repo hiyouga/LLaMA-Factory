@@ -1,13 +1,26 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
-from .processor_utils import get_paligemma_token_type_ids, get_pixel_values
+from .processor_utils import get_paligemma_token_type_ids, get_pixel_values, infer_seqlen
 
 
 if TYPE_CHECKING:
-    from transformers import ProcessorMixin
-    from transformers.tokenization_utils import PreTrainedTokenizer
+    from transformers import PreTrainedTokenizer, ProcessorMixin
 
     from ...hparams import DataArguments
     from ..template import Template
@@ -42,12 +55,8 @@ def _encode_feedback_example(
     else:
         kl_messages = prompt + [kl_response[1]]
 
-    prompt_ids, response_ids = template.encode_oneturn(
-        tokenizer, messages, system, tools, data_args.cutoff_len, data_args.reserved_label_len
-    )
-    _, kl_response_ids = template.encode_oneturn(
-        tokenizer, kl_messages, system, tools, data_args.cutoff_len, data_args.reserved_label_len
-    )
+    prompt_ids, response_ids = template.encode_oneturn(tokenizer, messages, system, tools)
+    _, kl_response_ids = template.encode_oneturn(tokenizer, kl_messages, system, tools)
 
     if template.efficient_eos:
         response_ids += [tokenizer.eos_token_id]
@@ -56,6 +65,12 @@ def _encode_feedback_example(
     if processor is not None and hasattr(processor, "image_seq_length"):  # paligemma models
         image_token_id = tokenizer.convert_tokens_to_ids(template.image_token)
         prompt_ids = [image_token_id] * getattr(processor, "image_seq_length") + prompt_ids
+
+    # do not consider the kl_response
+    source_len, target_len = infer_seqlen(len(prompt_ids), len(response_ids), data_args.cutoff_len)
+    prompt_ids = prompt_ids[:source_len]
+    response_ids = response_ids[:target_len]
+    kl_response_ids = kl_response_ids[:target_len]
 
     input_ids = prompt_ids + response_ids
     labels = [IGNORE_INDEX] * len(prompt_ids) + response_ids

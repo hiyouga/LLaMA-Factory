@@ -4,6 +4,7 @@ accelerate>=0.30.1
 peft>=0.11.1
 trl>=0.8.6
 gradio>=4.0.0
+pandas>=2.0.0
 scipy
 einops
 sentencepiece
@@ -17,3 +18,4 @@ matplotlib>=3.7.0
 fire
 packaging
 pyyaml
+numpy<2.0.0

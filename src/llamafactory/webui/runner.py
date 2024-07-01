@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
 from copy import deepcopy
 from subprocess import Popen, TimeoutExpired
@@ -8,9 +22,9 @@ from transformers.trainer import TRAINING_ARGS_NAME
 from ..extras.constants import LLAMABOARD_CONFIG, PEFT_METHODS, TRAINING_STAGES
 from ..extras.misc import is_gpu_or_npu_available, torch_gc
 from ..extras.packages import is_gradio_available
-from .common import DEFAULT_CACHE_DIR, DEFAULT_CONFIG_DIR, get_save_dir, load_config
+from .common import DEFAULT_CACHE_DIR, DEFAULT_CONFIG_DIR, QUANTIZATION_BITS, get_save_dir, load_config
 from .locales import ALERTS, LOCALES
-from .utils import abort_leaf_process, gen_cmd, get_eval_results, get_trainer_info, load_args, save_args, save_cmd
+from .utils import abort_process, gen_cmd, get_eval_results, get_trainer_info, load_args, save_args, save_cmd
 
 
 if is_gradio_available():
@@ -38,7 +52,7 @@ class Runner:
     def set_abort(self) -> None:
         self.aborted = True
         if self.trainer is not None:
-            abort_leaf_process(self.trainer.pid)
+            abort_process(self.trainer.pid)
 
     def _initialize(self, data: Dict["Component", Any], do_train: bool, from_preview: bool) -> str:
         get = lambda elem_id: data[self.manager.get_elem_by_id(elem_id)]
@@ -90,6 +104,11 @@ class Runner:
         model_name, finetuning_type = get("top.model_name"), get("top.finetuning_type")
         user_config = load_config()
 
+        if get("top.quantization_bit") in QUANTIZATION_BITS:
+            quantization_bit = int(get("top.quantization_bit"))
+        else:
+            quantization_bit = None
+
         args = dict(
             stage=TRAINING_STAGES[get("train.training_stage")],
             do_train=True,
@@ -97,7 +116,8 @@ class Runner:
             cache_dir=user_config.get("cache_dir", None),
             preprocessing_num_workers=16,
             finetuning_type=finetuning_type,
-            quantization_bit=int(get("top.quantization_bit")) if get("top.quantization_bit") in ["8", "4"] else None,
+            quantization_bit=quantization_bit,
+            quantization_method=get("top.quantization_method"),
             template=get("top.template"),
             rope_scaling=get("top.rope_scaling") if get("top.rope_scaling") in ["linear", "dynamic"] else None,
             flash_attn="fa2" if get("top.booster") == "flashattn2" else "auto",
@@ -160,6 +180,8 @@ class Runner:
             args["create_new_adapter"] = get("train.create_new_adapter")
             args["use_rslora"] = get("train.use_rslora")
             args["use_dora"] = get("train.use_dora")
+            args["pissa_init"] = get("train.use_pissa")
+            args["pissa_convert"] = get("train.use_pissa")
             args["lora_target"] = get("train.lora_target") or "all"
             args["additional_target"] = get("train.additional_target") or None
 
@@ -219,13 +241,19 @@ class Runner:
         model_name, finetuning_type = get("top.model_name"), get("top.finetuning_type")
         user_config = load_config()
 
+        if get("top.quantization_bit") in QUANTIZATION_BITS:
+            quantization_bit = int(get("top.quantization_bit"))
+        else:
+            quantization_bit = None
+
         args = dict(
             stage="sft",
             model_name_or_path=get("top.model_path"),
             cache_dir=user_config.get("cache_dir", None),
             preprocessing_num_workers=16,
             finetuning_type=finetuning_type,
-            quantization_bit=int(get("top.quantization_bit")) if get("top.quantization_bit") in ["8", "4"] else None,
+            quantization_bit=quantization_bit,
+            quantization_method=get("top.quantization_method"),
             template=get("top.template"),
             rope_scaling=get("top.rope_scaling") if get("top.rope_scaling") in ["linear", "dynamic"] else None,
             flash_attn="fa2" if get("top.booster") == "flashattn2" else "auto",
@@ -283,6 +311,7 @@ class Runner:
 
             env = deepcopy(os.environ)
             env["LLAMABOARD_ENABLED"] = "1"
+            env["LLAMABOARD_WORKDIR"] = args["output_dir"]
             if args.get("deepspeed", None) is not None:
                 env["FORCE_TORCHRUN"] = "1"
 
@@ -291,7 +320,7 @@ class Runner:
 
     def _form_config_dict(self, data: Dict["Component", Any]) -> Dict[str, Any]:
         config_dict = {}
-        skip_ids = ["top.lang", "top.model_path", "train.output_dir", "train.config_path", "train.device_count"]
+        skip_ids = ["top.lang", "top.model_path", "train.output_dir", "train.config_path"]
         for elem, value in data.items():
             elem_id = self.manager.get_id_by_elem(elem)
             if elem_id not in skip_ids:

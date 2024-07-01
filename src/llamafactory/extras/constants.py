@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from collections import OrderedDict, defaultdict
 from enum import Enum
 from typing import Dict, Optional
@@ -404,6 +418,18 @@ register_model_group(
             DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V2-Chat",
             DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V2-Chat",
         },
+        "DeepSeek-MoE-Coder-16B-Base": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-Coder-V2-Lite-Base",
+        },
+        "DeepSeek-MoE-Coder-236B-Base": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-Coder-V2-Base",
+        },
+        "DeepSeek-MoE-Coder-16B-Chat": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct",
+        },
+        "DeepSeek-MoE-Coder-236B-Chat": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-Coder-V2-Instruct",
+        },
     },
     template="deepseek",
 )
@@ -496,6 +522,18 @@ register_model_group(
         "Gemma-1.1-7B-Chat": {
             DownloadSource.DEFAULT: "google/gemma-1.1-7b-it",
         },
+        "Gemma-2-9B": {
+            DownloadSource.DEFAULT: "google/gemma-2-9b",
+        },
+        "Gemma-2-27B": {
+            DownloadSource.DEFAULT: "google/gemma-2-27b",
+        },
+        "Gemma-2-9B-Chat": {
+            DownloadSource.DEFAULT: "google/gemma-2-9b-it",
+        },
+        "Gemma-2-27B-Chat": {
+            DownloadSource.DEFAULT: "google/gemma-2-27b-it",
+        },
     },
     template="gemma",
 )
@@ -568,7 +606,7 @@ register_model_group(
 
 register_model_group(
     models={
-        "Jambda-v0.1": {
+        "Jamba-v0.1": {
             DownloadSource.DEFAULT: "ai21labs/Jamba-v0.1",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Jamba-v0.1",
         }
@@ -680,6 +718,21 @@ register_model_group(
     },
     template="vicuna",
     vision=True,
+)
+
+
+register_model_group(
+    models={
+        "MiniCPM-2B-SFT-Chat": {
+            DownloadSource.DEFAULT: "openbmb/MiniCPM-2B-sft-bf16",
+            DownloadSource.MODELSCOPE: "OpenBMB/miniCPM-bf16",
+        },
+        "MiniCPM-2B-DPO-Chat": {
+            DownloadSource.DEFAULT: "openbmb/MiniCPM-2B-dpo-bf16",
+            DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM-2B-dpo-bf16",
+        },
+    },
+    template="cpm",
 )
 
 

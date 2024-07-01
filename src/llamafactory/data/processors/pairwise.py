@@ -1,13 +1,26 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
-from .processor_utils import get_paligemma_token_type_ids, get_pixel_values
+from .processor_utils import get_paligemma_token_type_ids, get_pixel_values, infer_seqlen
 
 
 if TYPE_CHECKING:
-    from transformers import ProcessorMixin
-    from transformers.tokenization_utils import PreTrainedTokenizer
+    from transformers import PreTrainedTokenizer, ProcessorMixin
 
     from ...hparams import DataArguments
     from ..template import Template
@@ -31,12 +44,8 @@ def _encode_pairwise_example(
 
     chosen_messages = prompt + [response[0]]
     rejected_messages = prompt + [response[1]]
-    prompt_ids, chosen_ids = template.encode_oneturn(
-        tokenizer, chosen_messages, system, tools, data_args.cutoff_len, data_args.reserved_label_len
-    )
-    _, rejected_ids = template.encode_oneturn(
-        tokenizer, rejected_messages, system, tools, data_args.cutoff_len, data_args.reserved_label_len
-    )
+    prompt_ids, chosen_ids = template.encode_oneturn(tokenizer, chosen_messages, system, tools)
+    _, rejected_ids = template.encode_oneturn(tokenizer, rejected_messages, system, tools)
 
     if template.efficient_eos:
         chosen_ids += [tokenizer.eos_token_id]
@@ -45,6 +54,13 @@ def _encode_pairwise_example(
     if processor is not None and hasattr(processor, "image_seq_length"):  # paligemma models
         image_token_id = tokenizer.convert_tokens_to_ids(template.image_token)
         prompt_ids = [image_token_id] * getattr(processor, "image_seq_length") + prompt_ids
+
+    source_len, target_len = infer_seqlen(
+        len(prompt_ids), max(len(chosen_ids), len(rejected_ids)), data_args.cutoff_len
+    )  # consider the response is more important
+    prompt_ids = prompt_ids[:source_len]
+    chosen_ids = chosen_ids[:target_len]
+    rejected_ids = rejected_ids[:target_len]
 
     chosen_input_ids = prompt_ids + chosen_ids
     chosen_labels = [IGNORE_INDEX] * len(prompt_ids) + chosen_ids
