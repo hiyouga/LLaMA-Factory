@@ -248,6 +248,21 @@
   "ruozhiba_gpt4": {
     "hf_hub_url": "hfl/ruozhiba_gpt4_turbo"
   },
+  "neo_sft": {
+    "hf_hub_url": "m-a-p/neo_sft_phase2",
+    "formatting": "sharegpt"
+  },
+  "magpie_pro_300k": {
+    "hf_hub_url": "Magpie-Align/Magpie-Pro-300K-Filtered",
+    "formatting": "sharegpt"
+  },
+  "web_instruct": {
+    "hf_hub_url": "TIGER-Lab/WebInstructSub",
+    "columns": {
+      "prompt": "question",
+      "response": "answer"
+    }
+  },
   "llava_1k_en": {
     "hf_hub_url": "BUAADreamer/llava-en-zh-2k",
     "subset": "en",
@@ -520,13 +535,13 @@
       "prompt": "text"
     }
   },
-  "fileweb": {
+  "fineweb": {
     "hf_hub_url": "HuggingFaceFW/fineweb",
     "columns": {
       "prompt": "text"
     }
   },
-  "fileweb_edu": {
+  "fineweb_edu": {
     "hf_hub_url": "HuggingFaceFW/fineweb-edu",
     "columns": {
       "prompt": "text"

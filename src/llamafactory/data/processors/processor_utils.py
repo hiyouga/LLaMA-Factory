@@ -1,5 +1,19 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import bisect
-from typing import TYPE_CHECKING, List, Sequence
+from typing import TYPE_CHECKING, List, Sequence, Tuple
 
 from ...extras.packages import is_pillow_available
 
@@ -62,3 +76,16 @@ def get_paligemma_token_type_ids(input_len: int, processor: "ProcessorMixin") ->
     """
     image_seq_length = getattr(processor, "image_seq_length")
     return [0] * image_seq_length + [1] * (input_len - image_seq_length)
+
+
+def infer_seqlen(source_len: int, target_len: int, cutoff_len: int) -> Tuple[int, int]:
+    if target_len * 2 < cutoff_len:  # truncate source
+        max_target_len = cutoff_len
+    elif source_len * 2 < cutoff_len:  # truncate target
+        max_target_len = cutoff_len - source_len
+    else:  # truncate both
+        max_target_len = int(cutoff_len * (target_len / (source_len + target_len)))
+
+    new_target_len = min(max_target_len, target_len)
+    new_source_len = max(cutoff_len - new_target_len, 0)
+    return new_source_len, new_target_len

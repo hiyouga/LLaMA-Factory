@@ -1,10 +1,24 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from typing import TYPE_CHECKING, Dict, Generator, List, Union
 
 from ...extras.constants import PEFT_METHODS
 from ...extras.misc import torch_gc
 from ...extras.packages import is_gradio_available
 from ...train.tuner import export_model
-from ..common import get_save_dir
+from ..common import GPTQ_BITS, get_save_dir
 from ..locales import ALERTS
 
 
@@ -18,7 +32,11 @@ if TYPE_CHECKING:
     from ..engine import Engine
 
 
-GPTQ_BITS = ["8", "4", "3", "2"]
+def can_quantize(checkpoint_path: Union[str, List[str]]) -> "gr.Dropdown":
+    if isinstance(checkpoint_path, list) and len(checkpoint_path) != 0:
+        return gr.Dropdown(value="none", interactive=False)
+    else:
+        return gr.Dropdown(interactive=True)
 
 
 def save_model(
@@ -95,6 +113,9 @@ def create_export_tab(engine: "Engine") -> Dict[str, "Component"]:
     with gr.Row():
         export_dir = gr.Textbox()
         export_hub_model_id = gr.Textbox()
+
+    checkpoint_path: gr.Dropdown = engine.manager.get_elem_by_id("top.checkpoint_path")
+    checkpoint_path.change(can_quantize, [checkpoint_path], [export_quantization_bit], queue=False)
 
     export_btn = gr.Button()
     info_box = gr.Textbox(show_label=False, interactive=False)
