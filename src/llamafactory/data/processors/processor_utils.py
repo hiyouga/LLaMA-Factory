@@ -94,18 +94,16 @@ def get_pixel_values_videos(
 ) -> "dict":
     image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
     video_processor = getattr(processor, "video_processor", None)
+    clips = []
+    for video in videos:
+        clip = preprocess_video(video)
+        clips.append(clip)
+    if len(clips) == 0:
+        clips = clips[0]
     if video_processor is not None:
-        clips = []
-        for video in videos:
-            clip = preprocess_video(video)
-            clips.append(clip)
         inputs = video_processor(clips, return_tensors="pt")
         return {k: inputs[k] for k in video_keys}
     else:
-        clips = []
-        for video in videos:
-            clip = preprocess_video(video)
-            clips.append(clip)
         inputs = image_processor(videos=clips, padding=True, return_tensors="pt", images=None)
         return {k: inputs[k] for k in video_keys}
 

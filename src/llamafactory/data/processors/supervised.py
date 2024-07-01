@@ -151,12 +151,18 @@ def preprocess_supervised_dataset(
             if len(examples["images"][i]):
                 image_data = get_pixel_values(examples["images"][i], processor, image_keys)
                 for image_key in image_keys:
-                    model_inputs[image_key].append(image_data[image_key])
+                    image_value = image_data[image_key]
+                    if image_value.shape[0] == 1:
+                        image_value = image_value[0]
+                    model_inputs[image_key].append(image_value)
 
             if len(examples["videos"][i]):
                 video_data = get_pixel_values_videos(examples["videos"][i], processor, video_keys)
                 for video_key in video_keys:
-                    model_inputs[video_key].append(video_data[video_key])
+                    video_value = video_data[video_key]
+                    if video_value.shape[0] == 1:
+                        video_value = video_value[0]
+                    model_inputs[video_key].append(video_value)
 
             if processor_class == 'PaliGemmaProcessor':  # paligemma models
                 model_inputs["token_type_ids"].append(get_paligemma_token_type_ids(len(input_ids), processor))
