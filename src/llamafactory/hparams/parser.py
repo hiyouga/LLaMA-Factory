@@ -1,3 +1,20 @@
+# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+#
+# This code is inspired by the HuggingFace's transformers library.
+# https://github.com/huggingface/transformers/blob/v4.40.0/examples/pytorch/language-modeling/run_clm.py
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import logging
 import os
 import sys
@@ -8,6 +25,7 @@ import transformers
 from transformers import HfArgumentParser, Seq2SeqTrainingArguments
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.trainer_utils import get_last_checkpoint
+from transformers.training_args import ParallelMode
 from transformers.utils import is_torch_bf16_gpu_available
 from transformers.utils.versions import require_version
 
@@ -65,12 +83,12 @@ def _verify_model_args(model_args: "ModelArguments", finetuning_args: "Finetunin
     if model_args.adapter_name_or_path is not None and finetuning_args.finetuning_type != "lora":
         raise ValueError("Adapter is only valid for the LoRA method.")
 
-    if model_args.use_unsloth and is_deepspeed_zero3_enabled():
-        raise ValueError("Unsloth is incompatible with DeepSpeed ZeRO-3.")
-
     if model_args.quantization_bit is not None:
         if finetuning_args.finetuning_type != "lora":
             raise ValueError("Quantization is only compatible with the LoRA method.")
+
+        if finetuning_args.pissa_init:
+            raise ValueError("Please use scripts/pissa_init.py to initialize PiSSA for a quantized model.")
 
         if model_args.resize_vocab:
             raise ValueError("Cannot resize embedding layers of a quantized model.")
@@ -100,7 +118,7 @@ def _check_extra_dependencies(
         require_version("galore_torch", "To fix: pip install galore_torch")
 
     if finetuning_args.use_badam:
-        require_version("badam", "To fix: pip install badam")
+        require_version("badam>=1.2.1", "To fix: pip install badam>=1.2.1")
 
     if finetuning_args.plot_loss:
         require_version("matplotlib", "To fix: pip install matplotlib")
@@ -162,6 +180,12 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     ):
         raise ValueError("PPO only accepts wandb or tensorboard logger.")
 
+    if training_args.parallel_mode == ParallelMode.NOT_DISTRIBUTED:
+        raise ValueError("Please launch distributed training with `llamafactory-cli` or `torchrun`.")
+
+    if training_args.deepspeed and training_args.parallel_mode != ParallelMode.DISTRIBUTED:
+        raise ValueError("Please use `FORCE_TORCHRUN=1` to launch DeepSpeed training.")
+
     if training_args.max_steps == -1 and data_args.streaming:
         raise ValueError("Please specify `max_steps` in streaming mode.")
 
@@ -171,38 +195,40 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if training_args.do_train and model_args.quantization_device_map == "auto":
         raise ValueError("Cannot use device map for quantized models in training.")
 
-    if finetuning_args.use_dora and model_args.use_unsloth:
-        raise ValueError("Unsloth does not support DoRA.")
+    if finetuning_args.pissa_init and is_deepspeed_zero3_enabled():
+        raise ValueError("PiSSA is incompatible with DeepSpeed ZeRO-3.")
 
     if finetuning_args.pure_bf16:
         if not is_torch_bf16_gpu_available():
             raise ValueError("This device does not support `pure_bf16`.")
 
-        if training_args.fp16 or training_args.bf16:
-            raise ValueError("Turn off mixed precision training when using `pure_bf16`.")
+        if is_deepspeed_zero3_enabled():
+            raise ValueError("`pure_bf16` is incompatible with DeepSpeed ZeRO-3.")
 
     if (
         finetuning_args.use_galore
         and finetuning_args.galore_layerwise
-        and training_args.parallel_mode.value == "distributed"
+        and training_args.parallel_mode == ParallelMode.DISTRIBUTED
     ):
         raise ValueError("Distributed training does not support layer-wise GaLore.")
 
-    if (
-        finetuning_args.use_badam
-        and finetuning_args.badam_mode == "layer"
-        and training_args.parallel_mode.value == "distributed"
-    ):
-        raise ValueError("Layer-wise BAdam does not yet support distributed training, use ratio-wise BAdam.")
+    if finetuning_args.use_badam and training_args.parallel_mode == ParallelMode.DISTRIBUTED:
+        if finetuning_args.badam_mode == "ratio":
+            raise ValueError("Radio-based BAdam does not yet support distributed training, use layer-wise BAdam.")
+        elif not is_deepspeed_zero3_enabled():
+            raise ValueError("Layer-wise BAdam only supports DeepSpeed ZeRO-3 training.")
 
-    if (finetuning_args.use_galore or finetuning_args.use_badam) and training_args.deepspeed is not None:
-        raise ValueError("GaLore and BAdam are incompatible with DeepSpeed yet.")
+    if finetuning_args.use_galore and training_args.deepspeed is not None:
+        raise ValueError("GaLore is incompatible with DeepSpeed yet.")
 
     if model_args.infer_backend == "vllm":
         raise ValueError("vLLM backend is only available for API, CLI and Web.")
 
     if model_args.visual_inputs and data_args.packing:
         raise ValueError("Cannot use packing in MLLM fine-tuning.")
+
+    if model_args.use_unsloth and is_deepspeed_zero3_enabled():
+        raise ValueError("Unsloth is incompatible with DeepSpeed ZeRO-3.")
 
     _verify_model_args(model_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args, training_args)
@@ -233,7 +259,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
     # Post-process training arguments
     if (
-        training_args.parallel_mode.value == "distributed"
+        training_args.parallel_mode == ParallelMode.DISTRIBUTED
         and training_args.ddp_find_unused_parameters is None
         and finetuning_args.finetuning_type == "lora"
     ):
@@ -293,7 +319,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
             training_args.local_rank,
             training_args.device,
             training_args.n_gpu,
-            training_args.parallel_mode.value == "distributed",
+            training_args.parallel_mode == ParallelMode.DISTRIBUTED,
             str(model_args.compute_dtype),
         )
     )
@@ -332,6 +358,7 @@ def get_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
 
     if model_args.export_dir is not None and model_args.export_device == "cpu":
         model_args.device_map = {"": torch.device("cpu")}
+        model_args.model_max_length = data_args.cutoff_len
     else:
         model_args.device_map = "auto"
 

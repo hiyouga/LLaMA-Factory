@@ -1,7 +1,22 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from typing import TYPE_CHECKING
 
+from transformers.utils import is_flash_attn_2_available, is_torch_sdpa_available
+
 from ...extras.logging import get_logger
-from ...extras.packages import is_flash_attn2_available, is_sdpa_available
 
 
 if TYPE_CHECKING:
@@ -13,21 +28,33 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-def configure_attn_implementation(config: "PretrainedConfig", model_args: "ModelArguments") -> None:
+def configure_attn_implementation(
+    config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool
+) -> None:
+    if getattr(config, "model_type", None) == "gemma2" and is_trainable:  # gemma2 adopts soft-cap attention
+        if model_args.flash_attn == "auto":
+            logger.warning("Gemma-2 models should use eager attention in training, change `flash_attn` to disabled.")
+            model_args.flash_attn = "disabled"
+        elif model_args.flash_attn != "disabled":
+            logger.warning(
+                "Gemma-2 models should use eager attention in training, but you set `flash_attn: {}`. "
+                "Will proceed at your own risk.".format(model_args.flash_attn)
+            )
+
     if model_args.flash_attn == "auto":
         return
 
-    elif model_args.flash_attn == "off":
+    elif model_args.flash_attn == "disabled":
         requested_attn_implementation = "eager"
 
     elif model_args.flash_attn == "sdpa":
-        if not is_sdpa_available():
+        if not is_torch_sdpa_available():
             logger.warning("torch>=2.1.1 is required for SDPA attention.")
             return
 
         requested_attn_implementation = "sdpa"
     elif model_args.flash_attn == "fa2":
-        if not is_flash_attn2_available():
+        if not is_flash_attn_2_available():
             logger.warning("FlashAttention-2 is not installed.")
             return
 

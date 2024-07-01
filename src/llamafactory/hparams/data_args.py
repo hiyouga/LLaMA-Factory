@@ -1,3 +1,20 @@
+# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+#
+# This code is inspired by the HuggingFace's transformers library.
+# https://github.com/huggingface/transformers/blob/v4.40.0/examples/pytorch/language-modeling/run_clm.py
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from dataclasses import dataclass, field
 from typing import Literal, Optional
 
@@ -27,10 +44,6 @@ class DataArguments:
     cutoff_len: int = field(
         default=1024,
         metadata={"help": "The cutoff length of the tokenized inputs in the dataset."},
-    )
-    reserved_label_len: int = field(
-        default=1,
-        metadata={"help": "The minimum cutoff length reserved for the tokenized labels in the dataset."},
     )
     train_on_prompt: bool = field(
         default=False,
@@ -90,15 +103,16 @@ class DataArguments:
             "help": "Whether or not to pack the sequences without cross-contamination attention for efficient training."
         },
     )
+    tool_format: Optional[str] = field(
+        default=None,
+        metadata={"help": "Tool format to use for constructing function calling examples."},
+    )
     tokenized_path: Optional[str] = field(
         default=None,
         metadata={"help": "Path to save or load the tokenized datasets."},
     )
 
     def __post_init__(self):
-        if self.reserved_label_len >= self.cutoff_len:
-            raise ValueError("`reserved_label_len` must be smaller than `cutoff_len`.")
-
         if self.streaming and self.val_size > 1e-6 and self.val_size < 1:
             raise ValueError("Streaming mode should have an integer val size.")
 

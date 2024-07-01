@@ -1,7 +1,17 @@
 # coding=utf-8
-# Converts the Qwen models in the same format as LLaMA2.
-# Usage: python llamafy_qwen.py --input_dir input --output_dir output
-# Converted model: https://huggingface.co/hiyouga/Qwen-14B-Chat-LLaMAfied
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import json
 import os
@@ -131,6 +141,11 @@ def save_config(input_dir: str, output_dir: str, torch_dtype: str):
 def llamafy_qwen(
     input_dir: str, output_dir: str, shard_size: Optional[str] = "2GB", save_safetensors: Optional[bool] = False
 ):
+    r"""
+    Converts the Qwen models in the same format as LLaMA2.
+    Usage: python llamafy_qwen.py --input_dir input --output_dir output
+    Converted model: https://huggingface.co/hiyouga/Qwen-14B-Chat-LLaMAfied
+    """
     try:
         os.makedirs(output_dir, exist_ok=False)
     except Exception as e:

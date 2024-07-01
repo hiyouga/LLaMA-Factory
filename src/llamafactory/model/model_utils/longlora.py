@@ -1,3 +1,22 @@
+# Copyright 2024 EleutherAI, HuggingFace Inc., Yukang Chen, and the LlamaFactory team.
+#
+# This code is based on the EleutherAI's GPT-NeoX and the HuggingFace's Transformers libraries.
+# https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/models/llama/modeling_llama.py
+# This code is also inspired by the original LongLoRA implementation.
+# https://github.com/dvlab-research/LongLoRA/blob/main/llama_attn_replace.py
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import math
 from typing import TYPE_CHECKING, Optional, Tuple
 
@@ -96,7 +115,8 @@ def llama_attention_forward(
             (
                 attn_output[:, :, : self.num_heads // 2],
                 attn_output[:, :, self.num_heads // 2 :].roll(groupsz // 2, dims=1),
-            )
+            ),
+            dim=2,
         )
 
     attn_output = attn_output.reshape(bsz, q_len, self.hidden_size)
@@ -181,11 +201,9 @@ def llama_flash_attention_2_forward(
         query_states, key_states, value_states = shift(query_states), shift(key_states), shift(value_states)
         if attention_mask is not None:
             attention_mask = attention_mask[:, :groupsz].repeat(num_groups, 1)
-    else:
-        groupsz = q_len
 
     attn_output: torch.Tensor = self._flash_attention_forward(
-        query_states, key_states, value_states, attention_mask, groupsz, dropout=dropout_rate
+        query_states, key_states, value_states, attention_mask, query_states.size(1), dropout=dropout_rate
     )
 
     if getattr(self.config, "group_size_ratio", None) and self.training:  # shift back
@@ -194,7 +212,8 @@ def llama_flash_attention_2_forward(
             (
                 attn_output[:, :, : self.num_heads // 2],
                 attn_output[:, :, self.num_heads // 2 :].roll(groupsz // 2, dims=1),
-            )
+            ),
+            dim=2,
         )
 
     attn_output = attn_output.reshape(bsz, q_len, self.hidden_size).contiguous()
@@ -293,7 +312,8 @@ def llama_sdpa_attention_forward(
             (
                 attn_output[:, :, : self.num_heads // 2],
                 attn_output[:, :, self.num_heads // 2 :].roll(groupsz // 2, dims=1),
-            )
+            ),
+            dim=2,
         )
 
     attn_output = attn_output.reshape(bsz, q_len, self.hidden_size)
@@ -303,7 +323,7 @@ def llama_sdpa_attention_forward(
 
 
 def _apply_llama_patch() -> None:
-    require_version("transformers==4.40.2", "To fix: pip install transformers==4.40.2")
+    require_version("transformers==4.41.2", "To fix: pip install transformers==4.41.2")
     LlamaAttention.forward = llama_attention_forward
     LlamaFlashAttention2.forward = llama_flash_attention_2_forward
     LlamaSdpaAttention.forward = llama_sdpa_attention_forward

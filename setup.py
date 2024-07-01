@@ -1,3 +1,17 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
 import re
 
@@ -23,14 +37,16 @@ extra_require = {
     "torch": ["torch>=1.13.1"],
     "torch-npu": ["torch==2.1.0", "torch-npu==2.1.0.post3", "decorator"],
     "metrics": ["nltk", "jieba", "rouge-chinese"],
-    "deepspeed": ["deepspeed>=0.10.0,<=0.14.0"],
+    "deepspeed": ["deepspeed>=0.10.0"],
     "bitsandbytes": ["bitsandbytes>=0.39.0"],
-    "vllm": ["vllm>=0.4.3"],
-    "galore": ["galore-torch"],
-    "badam": ["badam"],
-    "gptq": ["optimum>=1.16.0", "auto-gptq>=0.5.0"],
+    "hqq": ["hqq"],
+    "eetq": ["eetq"],
+    "gptq": ["optimum>=1.17.0", "auto-gptq>=0.5.0"],
     "awq": ["autoawq"],
     "aqlm": ["aqlm[gpu]>=1.1.0"],
+    "vllm": ["vllm>=0.4.3"],
+    "galore": ["galore-torch"],
+    "badam": ["badam>=1.2.1"],
     "qwen": ["transformers_stream_generator"],
     "modelscope": ["modelscope"],
     "dev": ["ruff", "pytest"],

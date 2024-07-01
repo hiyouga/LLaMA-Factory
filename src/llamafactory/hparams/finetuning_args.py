@@ -1,5 +1,19 @@
+# Copyright 2024 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from dataclasses import dataclass, field
-from typing import Literal, Optional
+from typing import List, Literal, Optional
 
 
 @dataclass
@@ -93,6 +107,18 @@ class LoraArguments:
     use_dora: bool = field(
         default=False,
         metadata={"help": "Whether or not to use the weight-decomposed lora method (DoRA)."},
+    )
+    pissa_init: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to initialize a PiSSA adapter."},
+    )
+    pissa_iter: int = field(
+        default=16,
+        metadata={"help": "The number of iteration steps performed by FSVD in PiSSA. Use -1 to disable it."},
+    )
+    pissa_convert: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to convert the PiSSA adapter to a normal LoRA adapter."},
     )
     create_new_adapter: bool = field(
         default=False,
@@ -319,19 +345,18 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
                 return [item.strip() for item in arg.split(",")]
             return arg
 
-        self.freeze_trainable_modules = split_arg(self.freeze_trainable_modules)
-        self.freeze_extra_modules = split_arg(self.freeze_extra_modules)
-        self.lora_alpha = self.lora_alpha or self.lora_rank * 2
-        self.lora_target = split_arg(self.lora_target)
-        self.additional_target = split_arg(self.additional_target)
-        self.galore_target = split_arg(self.galore_target)
+        self.freeze_trainable_modules: List[str] = split_arg(self.freeze_trainable_modules)
+        self.freeze_extra_modules: Optional[List[str]] = split_arg(self.freeze_extra_modules)
+        self.lora_alpha: int = self.lora_alpha or self.lora_rank * 2
+        self.lora_target: List[str] = split_arg(self.lora_target)
+        self.additional_target: Optional[List[str]] = split_arg(self.additional_target)
+        self.galore_target: List[str] = split_arg(self.galore_target)
         self.freeze_vision_tower = self.freeze_vision_tower or self.train_mm_proj_only
+        self.use_ref_model = self.stage == "dpo" and self.pref_loss not in ["orpo", "simpo"]
 
         assert self.finetuning_type in ["lora", "freeze", "full"], "Invalid fine-tuning method."
         assert self.ref_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
         assert self.reward_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
-
-        self.use_ref_model = self.pref_loss not in ["orpo", "simpo"]
 
         if self.stage == "ppo" and self.reward_model is None:
             raise ValueError("`reward_model` is necessary for PPO training.")
@@ -353,6 +378,12 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
 
         if self.loraplus_lr_ratio is not None and self.finetuning_type != "lora":
             raise ValueError("`loraplus_lr_ratio` is only valid for LoRA training.")
+
+        if self.pissa_init and self.finetuning_type != "lora":
+            raise ValueError("`pissa_init` is only valid for LoRA training.")
+
+        if self.pissa_init and (self.stage in ["ppo", "kto"] or self.use_ref_model):
+            raise ValueError("Cannot use PiSSA for current training stage.")
 
         if self.train_mm_proj_only and self.finetuning_type != "full":
             raise ValueError("`train_mm_proj_only` is only valid for full training.")

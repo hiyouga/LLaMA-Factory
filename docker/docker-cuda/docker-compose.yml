@@ -1,0 +1,32 @@
+services:
+  llamafactory:
+    build:
+      dockerfile: ./docker/docker-cuda/Dockerfile
+      context: ../..
+      args:
+        INSTALL_BNB: false
+        INSTALL_VLLM: false
+        INSTALL_DEEPSPEED: false
+        INSTALL_FLASHATTN: false
+        PIP_INDEX: https://pypi.org/simple
+    container_name: llamafactory
+    volumes:
+      - ../../hf_cache:/root/.cache/huggingface
+      - ../../ms_cache:/root/.cache/modelscope
+      - ../../data:/app/data
+      - ../../output:/app/output
+    ports:
+      - "7860:7860"
+      - "8000:8000"
+    ipc: host
+    tty: true
+    stdin_open: true
+    command: bash
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            count: "all"
+            capabilities: [gpu]
+    restart: unless-stopped
