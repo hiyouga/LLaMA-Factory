@@ -1,8 +1,27 @@
-from contextlib import contextmanager
+# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+#
+# This code is inspired by the original GaLore's implementation: https://github.com/jiaweizzhao/GaLore
+# and the original LoRA+'s implementation: https://github.com/nikhil-ghosh-berkeley/loraplus
+# and the original BAdam's implementation: https://github.com/Ledzy/BAdam
+# and the HuggingFace's TRL library: https://github.com/huggingface/trl
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 from transformers import Trainer
+from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.optimization import get_scheduler
 from transformers.pytorch_utils import ALL_LAYERNORM_LAYERS
 from transformers.trainer_pt_utils import get_parameter_names
@@ -19,7 +38,6 @@ if is_galore_available():
 
 
 if TYPE_CHECKING:
-    from accelerate import Accelerator
     from transformers import PreTrainedModel, Seq2SeqTrainingArguments
     from trl import AutoModelForCausalLMWithValueHead
 
@@ -83,15 +101,12 @@ def create_ref_model(
     The valuehead parameter is randomly initialized since it is useless for PPO training.
     """
     if finetuning_args.ref_model is not None:
-        ref_model_args_dict = model_args.to_dict()
-        ref_model_args_dict.update(
-            dict(
-                model_name_or_path=finetuning_args.ref_model,
-                adapter_name_or_path=finetuning_args.ref_model_adapters,
-                quantization_bit=finetuning_args.ref_model_quantization_bit,
-            )
+        ref_model_args = ModelArguments.copyfrom(
+            model_args,
+            model_name_or_path=finetuning_args.ref_model,
+            adapter_name_or_path=finetuning_args.ref_model_adapters,
+            quantization_bit=finetuning_args.ref_model_quantization_bit,
         )
-        ref_model_args = ModelArguments(**ref_model_args_dict)
         ref_finetuning_args = FinetuningArguments()
         tokenizer = load_tokenizer(ref_model_args)["tokenizer"]
         ref_model = load_model(
@@ -102,9 +117,11 @@ def create_ref_model(
         if finetuning_args.finetuning_type == "lora":
             ref_model = None
         else:
-            tokenizer = load_tokenizer(model_args)["tokenizer"]
+            ref_model_args = ModelArguments.copyfrom(model_args)
+            ref_finetuning_args = FinetuningArguments()
+            tokenizer = load_tokenizer(ref_model_args)["tokenizer"]
             ref_model = load_model(
-                tokenizer, model_args, finetuning_args, is_trainable=False, add_valuehead=add_valuehead
+                tokenizer, ref_model_args, ref_finetuning_args, is_trainable=False, add_valuehead=add_valuehead
             )
             logger.info("Created reference model from the model itself.")
 
@@ -139,15 +156,12 @@ def create_reward_model(
         logger.info("Loaded adapter weights of reward model from {}".format(finetuning_args.reward_model))
         return None
     else:
-        reward_model_args_dict = model_args.to_dict()
-        reward_model_args_dict.update(
-            dict(
-                model_name_or_path=finetuning_args.reward_model,
-                adapter_name_or_path=finetuning_args.reward_model_adapters,
-                quantization_bit=finetuning_args.reward_model_quantization_bit,
-            )
+        reward_model_args = ModelArguments.copyfrom(
+            model_args,
+            model_name_or_path=finetuning_args.reward_model,
+            adapter_name_or_path=finetuning_args.reward_model_adapters,
+            quantization_bit=finetuning_args.reward_model_quantization_bit,
         )
-        reward_model_args = ModelArguments(**reward_model_args_dict)
         reward_finetuning_args = FinetuningArguments()
         tokenizer = load_tokenizer(reward_model_args)["tokenizer"]
         reward_model = load_model(
@@ -156,17 +170,6 @@ def create_reward_model(
         logger.info("Loaded full weights of reward model from {}".format(finetuning_args.reward_model))
         logger.warning("Please ensure the ppo model and reward model share SAME tokenizer and vocabulary.")
         return reward_model
-
-
-@contextmanager
-def get_ref_context(accelerator: "Accelerator", model: "PreTrainedModel"):
-    r"""
-    Gets adapter context for the reference model.
-    """
-    with accelerator.unwrap_model(model).disable_adapter():
-        model.eval()
-        yield
-        model.train()
 
 
 def _get_decay_parameter_names(model: "PreTrainedModel") -> List[str]:
@@ -184,7 +187,7 @@ def _create_galore_optimizer(
     finetuning_args: "FinetuningArguments",
 ) -> "torch.optim.Optimizer":
     if len(finetuning_args.galore_target) == 1 and finetuning_args.galore_target[0] == "all":
-        galore_targets = find_all_linear_modules(model)
+        galore_targets = find_all_linear_modules(model, finetuning_args.freeze_vision_tower)
     else:
         galore_targets = finetuning_args.galore_target
 
@@ -334,6 +337,7 @@ def _create_badam_optimizer(
             start_block=finetuning_args.badam_start_block,
             switch_mode=finetuning_args.badam_switch_mode,
             verbose=finetuning_args.badam_verbose,
+            ds_zero3_enabled=is_deepspeed_zero3_enabled(),
         )
         logger.info(
             f"Using BAdam optimizer with layer-wise update, switch mode is {finetuning_args.badam_switch_mode}, "
@@ -355,7 +359,7 @@ def _create_badam_optimizer(
             **optim_kwargs,
         )
         logger.info(
-            f"Using BAdam optimizer with ratio-wise update, update ratio is {finetuning_args.badam_update_ratio}, "
+            f"Using BAdam optimizer with ratio-based update, update ratio is {finetuning_args.badam_update_ratio}, "
             f"mask mode is {finetuning_args.badam_mask_mode}"
         )
 

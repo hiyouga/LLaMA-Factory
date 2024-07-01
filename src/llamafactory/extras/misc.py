@@ -1,13 +1,29 @@
+# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+#
+# This code is inspired by the HuggingFace's PEFT library.
+# https://github.com/huggingface/peft/blob/v0.10.0/src/peft/peft_model.py
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import gc
 import os
-from typing import TYPE_CHECKING, Dict, Tuple
+from typing import TYPE_CHECKING, Tuple
 
 import torch
-from peft import PeftModel
-from transformers import InfNanRemoveLogitsProcessor, LogitsProcessorList, PreTrainedModel
+import transformers.dynamic_module_utils
+from transformers import InfNanRemoveLogitsProcessor, LogitsProcessorList
+from transformers.dynamic_module_utils import get_relative_imports
 from transformers.utils import (
-    SAFE_WEIGHTS_NAME,
-    WEIGHTS_NAME,
     is_torch_bf16_gpu_available,
     is_torch_cuda_available,
     is_torch_mps_available,
@@ -16,7 +32,6 @@ from transformers.utils import (
 )
 from transformers.utils.versions import require_version
 
-from .constants import V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
 from .logging import get_logger
 
 
@@ -28,8 +43,6 @@ except Exception:
 
 
 if TYPE_CHECKING:
-    from trl import AutoModelForCausalLMWithValueHead
-
     from ..hparams import ModelArguments
 
 
@@ -58,6 +71,9 @@ class AverageMeter:
 
 
 def check_dependencies() -> None:
+    r"""
+    Checks the version of the required packages.
+    """
     if os.environ.get("DISABLE_VERSION_CHECK", "0").lower() in ["true", "1"]:
         logger.warning("Version checking has been disabled, may lead to unexpected behaviors.")
     else:
@@ -68,7 +84,7 @@ def check_dependencies() -> None:
         require_version("trl>=0.8.6", "To fix: pip install trl>=0.8.6")
 
 
-def count_parameters(model: torch.nn.Module) -> Tuple[int, int]:
+def count_parameters(model: "torch.nn.Module") -> Tuple[int, int]:
     r"""
     Returns the number of trainable parameters and number of all parameters in the model.
     """
@@ -79,7 +95,7 @@ def count_parameters(model: torch.nn.Module) -> Tuple[int, int]:
         if num_params == 0 and hasattr(param, "ds_numel"):
             num_params = param.ds_numel
 
-        # Due to the design of 4bit linear layers from bitsandbytes, multiply the number of parameters by 2
+        # Due to the design of 4bit linear layers from bitsandbytes, multiply the number of parameters by itemsize
         if param.__class__.__name__ == "Params4bit":
             if hasattr(param, "quant_storage") and hasattr(param.quant_storage, "itemsize"):
                 num_bytes = param.quant_storage.itemsize
@@ -97,55 +113,7 @@ def count_parameters(model: torch.nn.Module) -> Tuple[int, int]:
     return trainable_params, all_param
 
 
-def fix_valuehead_checkpoint(
-    model: "AutoModelForCausalLMWithValueHead", output_dir: str, safe_serialization: bool
-) -> None:
-    r"""
-    The model is already unwrapped.
-
-    There are three cases:
-    1. full tuning without ds_zero3: state_dict = {"model.layers.*": ..., "v_head.summary.*": ...}
-    2. lora tuning without ds_zero3: state_dict = {"v_head.summary.*": ...}
-    3. under deepspeed zero3: state_dict = {"pretrained_model.model.layers.*": ..., "v_head.summary.*": ...}
-
-    We assume `stage3_gather_16bit_weights_on_model_save=true`.
-    """
-    if not isinstance(model.pretrained_model, (PreTrainedModel, PeftModel)):
-        return
-
-    if safe_serialization:
-        from safetensors import safe_open
-        from safetensors.torch import save_file
-
-        path_to_checkpoint = os.path.join(output_dir, SAFE_WEIGHTS_NAME)
-        with safe_open(path_to_checkpoint, framework="pt", device="cpu") as f:
-            state_dict: Dict[str, torch.Tensor] = {key: f.get_tensor(key) for key in f.keys()}
-    else:
-        path_to_checkpoint = os.path.join(output_dir, WEIGHTS_NAME)
-        state_dict: Dict[str, torch.Tensor] = torch.load(path_to_checkpoint, map_location="cpu")
-
-    decoder_state_dict = {}
-    v_head_state_dict = {}
-    for name, param in state_dict.items():
-        if name.startswith("v_head."):
-            v_head_state_dict[name] = param
-        else:
-            decoder_state_dict[name.replace("pretrained_model.", "")] = param
-
-    os.remove(path_to_checkpoint)
-    model.pretrained_model.save_pretrained(
-        output_dir, state_dict=decoder_state_dict or None, safe_serialization=safe_serialization
-    )
-
-    if safe_serialization:
-        save_file(v_head_state_dict, os.path.join(output_dir, V_HEAD_SAFE_WEIGHTS_NAME), metadata={"format": "pt"})
-    else:
-        torch.save(v_head_state_dict, os.path.join(output_dir, V_HEAD_WEIGHTS_NAME))
-
-    logger.info("Value head model saved at: {}".format(output_dir))
-
-
-def get_current_device() -> torch.device:
+def get_current_device() -> "torch.device":
     r"""
     Gets the current available device.
     """
@@ -184,7 +152,14 @@ def get_logits_processor() -> "LogitsProcessorList":
     return logits_processor
 
 
-def infer_optim_dtype(model_dtype: torch.dtype) -> torch.dtype:
+def has_tokenized_data(path: "os.PathLike") -> bool:
+    r"""
+    Checks if the path has a tokenized dataset.
+    """
+    return os.path.isdir(path) and len(os.listdir(path)) > 0
+
+
+def infer_optim_dtype(model_dtype: "torch.dtype") -> "torch.dtype":
     r"""
     Infers the optimal dtype according to the model_dtype and device compatibility.
     """
@@ -203,11 +178,9 @@ def is_gpu_or_npu_available() -> bool:
     return is_torch_npu_available() or is_torch_cuda_available()
 
 
-def has_tokenized_data(path: os.PathLike) -> bool:
-    r"""
-    Checks if the path has a tokenized dataset.
-    """
-    return os.path.isdir(path) and len(os.listdir(path)) > 0
+def skip_check_imports() -> None:
+    if os.environ.get("FORCE_CHECK_IMPORTS", "0").lower() not in ["true", "1"]:
+        transformers.dynamic_module_utils.check_imports = get_relative_imports
 
 
 def torch_gc() -> None:
