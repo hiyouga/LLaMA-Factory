@@ -427,60 +427,59 @@ def get_batch_logps(
     return (per_token_logps * loss_mask).sum(-1), loss_mask.sum(-1)
 
 
-def factory_glm4v_trainer(BastTrainer):
-    class GLM4VTrainer(BastTrainer):
-        def compute_loss(self, model, inputs, return_outputs=False):
-            # Padding for labels and attention masks cuz modeling_glm4 will auto filling 1600 image tokens.
-            boi_ids = self.tokenizer.all_special_ids[self.tokenizer.all_special_tokens.index("<|begin_of_image|>")]
-            padded_ids = None
-            padded_labels = None
-            padded_attention_masks = None
-            if any(boi_ids == inputs["input_ids"].flatten()):
-                for input_id, label, attention_mask in zip(
-                    inputs["input_ids"], inputs["labels"], inputs["attention_mask"]
-                ):
-                    if any(boi_ids == input_id.flatten()):
-                        boi_index = input_id.tolist().index(boi_ids)
-                        # GLM will auto filling this.
-                        input_id_padded = input_id.unsqueeze(0)
-                        label_padded = torch.cat(
-                            (
-                                label[:boi_index],
-                                -100 * torch.ones(1600, device=label.device, dtype=label.dtype),
-                                label[boi_index + 1 :],
-                            )
-                        ).unsqueeze(0)
-                        attention_mask_padded = torch.cat(
-                            (
-                                attention_mask[:boi_index],
-                                torch.ones(1600, device=attention_mask.device, dtype=attention_mask.dtype),
-                                attention_mask[boi_index + 1 :],
-                            )
-                        ).unsqueeze(0)
-                    else:
-                        input_id_padded = torch.cat(
-                            (input_id, torch.ones(1600, device=input_id.device, dtype=input_id.dtype))
-                        ).unsqueeze(0)
-                        label_padded = torch.cat(
-                            (label, -100 * torch.ones(1600, device=label.device, dtype=label.dtype))
-                        ).unsqueeze(0)
-                        attention_mask_padded = torch.cat(
-                            (
-                                attention_mask,
-                                torch.zeros(1600, device=attention_mask.device, dtype=attention_mask.dtype),
-                            )
-                        ).unsqueeze(0)
-                    padded_ids = input_id_padded if padded_ids is None else torch.cat((padded_ids, input_id_padded))
-                    padded_labels = label_padded if padded_labels is None else torch.cat((padded_labels, label_padded))
-                    padded_attention_masks = (
-                        attention_mask_padded
-                        if padded_attention_masks is None
-                        else torch.cat((padded_attention_masks, attention_mask_padded))
-                    )
-            inputs["input_ids"] = padded_ids.contiguous()
-            inputs["labels"] = padded_labels.contiguous()
-            inputs["attention_mask"] = padded_attention_masks.contiguous()
+def glm4v_compute_loss_warpper(old_compute_loss):
+    def compute_loss(self, model, inputs, return_outputs=False):
+        # Padding for labels and attention masks cuz modeling_glm4 will auto filling 1600 image tokens.
+        boi_ids = self.tokenizer.all_special_ids[self.tokenizer.all_special_tokens.index("<|begin_of_image|>")]
+        padded_ids = None
+        padded_labels = None
+        padded_attention_masks = None
+        if any(boi_ids == inputs["input_ids"].flatten()):
+            for input_id, label, attention_mask in zip(
+                inputs["input_ids"], inputs["labels"], inputs["attention_mask"]
+            ):
+                if any(boi_ids == input_id.flatten()):
+                    boi_index = input_id.tolist().index(boi_ids)
+                    # GLM will auto filling this.
+                    input_id_padded = input_id.unsqueeze(0)
+                    label_padded = torch.cat(
+                        (
+                            label[:boi_index],
+                            -100 * torch.ones(1600, device=label.device, dtype=label.dtype),
+                            label[boi_index + 1 :],
+                        )
+                    ).unsqueeze(0)
+                    attention_mask_padded = torch.cat(
+                        (
+                            attention_mask[:boi_index],
+                            torch.ones(1600, device=attention_mask.device, dtype=attention_mask.dtype),
+                            attention_mask[boi_index + 1 :],
+                        )
+                    ).unsqueeze(0)
+                else:
+                    input_id_padded = torch.cat(
+                        (input_id, torch.ones(1600, device=input_id.device, dtype=input_id.dtype))
+                    ).unsqueeze(0)
+                    label_padded = torch.cat(
+                        (label, -100 * torch.ones(1600, device=label.device, dtype=label.dtype))
+                    ).unsqueeze(0)
+                    attention_mask_padded = torch.cat(
+                        (
+                            attention_mask,
+                            torch.zeros(1600, device=attention_mask.device, dtype=attention_mask.dtype),
+                        )
+                    ).unsqueeze(0)
+                padded_ids = input_id_padded if padded_ids is None else torch.cat((padded_ids, input_id_padded))
+                padded_labels = label_padded if padded_labels is None else torch.cat((padded_labels, label_padded))
+                padded_attention_masks = (
+                    attention_mask_padded
+                    if padded_attention_masks is None
+                    else torch.cat((padded_attention_masks, attention_mask_padded))
+                )
+        inputs["input_ids"] = padded_ids.contiguous()
+        inputs["labels"] = padded_labels.contiguous()
+        inputs["attention_mask"] = padded_attention_masks.contiguous()
 
-            return super().compute_loss(model, inputs, return_outputs)
+        return old_compute_loss(model, inputs, return_outputs)
 
-    return GLM4VTrainer
+    return compute_loss

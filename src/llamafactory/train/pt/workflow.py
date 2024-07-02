@@ -23,7 +23,7 @@ from transformers import DataCollatorForLanguageModeling
 from ...data import get_dataset, split_dataset
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
-from ..trainer_utils import create_modelcard_and_push, factory_glm4v_trainer
+from ..trainer_utils import create_modelcard_and_push, glm4v_compute_loss_warpper
 from .trainer import CustomTrainer
 
 
@@ -47,8 +47,7 @@ def run_pt(
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
     # Initialize our Trainer
-    Trainer = factory_glm4v_trainer(CustomTrainer) if model_args.visual_inputs_type == "glm4v_like" else CustomTrainer
-    trainer = Trainer(
+    trainer = CustomTrainer(
         model=model,
         args=training_args,
         finetuning_args=finetuning_args,
@@ -57,6 +56,8 @@ def run_pt(
         **tokenizer_module,
         **split_dataset(dataset, data_args, training_args),
     )
+    if model_args.visual_inputs_type == "glm4v_like":
+        trainer.compute_loss = glm4v_compute_loss_warpper(trainer.compute_loss)
 
     # Training
     if training_args.do_train:

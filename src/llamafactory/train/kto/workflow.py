@@ -22,7 +22,7 @@ from ...extras.constants import IGNORE_INDEX
 from ...extras.ploting import plot_loss
 from ...hparams import ModelArguments
 from ...model import load_model, load_tokenizer
-from ..trainer_utils import create_modelcard_and_push, create_ref_model, factory_glm4v_trainer
+from ..trainer_utils import create_modelcard_and_push, create_ref_model, glm4v_compute_loss_warpper
 from .trainer import CustomKTOTrainer
 
 
@@ -60,10 +60,7 @@ def run_kto(
     training_args.remove_unused_columns = False  # important for pairwise dataset
 
     # Initialize our Trainer
-    Trainer = (
-        factory_glm4v_trainer(CustomKTOTrainer) if model_args.visual_inputs_type == "glm4v_like" else CustomKTOTrainer
-    )
-    trainer = Trainer(
+    trainer = CustomKTOTrainer(
         model=model,
         ref_model=ref_model,
         args=training_args,
@@ -73,6 +70,8 @@ def run_kto(
         **tokenizer_module,
         **split_dataset(dataset, data_args, training_args),
     )
+    if model_args.visual_inputs_type == "glm4v_like":
+        trainer.compute_loss = glm4v_compute_loss_warpper(trainer.compute_loss)
 
     # Training
     if training_args.do_train:

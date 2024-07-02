@@ -22,8 +22,8 @@ from transformers import DataCollatorWithPadding
 from ...data import get_dataset
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
-from ..callbacks import FixValueHeadModelCallback, fix_valuehead_checkpoint
-from ..trainer_utils import create_ref_model, create_reward_model, factory_glm4v_trainer
+from ..callbacks import fix_valuehead_checkpoint
+from ..trainer_utils import create_ref_model, create_reward_model, glm4v_compute_loss_warpper
 from .trainer import CustomPPOTrainer
 
 
@@ -54,15 +54,12 @@ def run_ppo(
     reward_model = create_reward_model(model, model_args, finetuning_args)
 
     # Initialize our Trainer
-    Trainer = (
-        factory_glm4v_trainer(CustomPPOTrainer) if model_args.visual_inputs_type == "glm4v_like" else CustomPPOTrainer
-    )
-    ppo_trainer = Trainer(
+    ppo_trainer = CustomPPOTrainer(
         model_args=model_args,
         training_args=training_args,
         finetuning_args=finetuning_args,
         generating_args=generating_args,
-        callbacks=callbacks + [FixValueHeadModelCallback()],
+        callbacks=callbacks,
         model=model,
         reward_model=reward_model,
         ref_model=ref_model,
@@ -70,6 +67,8 @@ def run_ppo(
         data_collator=data_collator,
         **tokenizer_module,
     )
+    if model_args.visual_inputs_type == "glm4v_like":
+        ppo_trainer.compute_loss = glm4v_compute_loss_warpper(ppo_trainer.compute_loss)
 
     # Training
     if training_args.do_train:
