@@ -18,6 +18,7 @@ import os
 import pathlib
 from threading import Thread
 from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from uuid import uuid4
 
 import torch
 import torchvision
@@ -86,7 +87,8 @@ class HuggingfaceEngine(BaseEngine):
         tools: Optional[str] = None,
         image: Optional["NDArray"] = None,
         input_kwargs: Optional[Dict[str, Any]] = {},
-    ) -> Tuple[Dict[str, Any], int]:
+    ) -> Tuple[Dict[str, Any], int, Optional[pathlib.Path]]:
+        image_path = None
         if (
             processor is not None
             and image is not None
@@ -98,7 +100,7 @@ class HuggingfaceEngine(BaseEngine):
             messages[0]["content"] = template.image_token + messages[0]["content"]
         elif image is not None and model_args.visual_inputs_type == "qwenvl_like":
             # Add image pathlike token as vision input
-            image_path = pathlib.Path(DEFAULT_CACHE_DIR) / "temp.png"
+            image_path = pathlib.Path(DEFAULT_CACHE_DIR) / f"{str(uuid4())}.png"
             Image.fromarray(image).convert("RGB").save(image_path)
             messages[-1]["content"] = (
                 template.format_image.apply(content=os.fspath(image_path))[0] + messages[-1]["content"]
@@ -218,7 +220,18 @@ class HuggingfaceEngine(BaseEngine):
         if image_sizes is not None and model_args.visual_inputs_type == "phi3v_like":
             gen_kwargs["image_sizes"] = image_sizes
 
-        return gen_kwargs, prompt_length
+        return gen_kwargs, prompt_length, image_path
+
+    @staticmethod
+    def image_clean_wrapper(func, temporary_image):
+        # clean up for qwenvl.
+        def wrapped_function(**kwargs):
+            result = func(**kwargs)
+            if temporary_image:
+                os.remove(temporary_image)
+            return result
+
+        return wrapped_function
 
     @staticmethod
     @torch.inference_mode()
@@ -235,7 +248,7 @@ class HuggingfaceEngine(BaseEngine):
         image: Optional["NDArray"] = None,
         input_kwargs: Optional[Dict[str, Any]] = {},
     ) -> List["Response"]:
-        gen_kwargs, prompt_length = HuggingfaceEngine._process_args(
+        gen_kwargs, prompt_length, temporary_image = HuggingfaceEngine._process_args(
             model,
             tokenizer,
             processor,
@@ -248,7 +261,7 @@ class HuggingfaceEngine(BaseEngine):
             image,
             input_kwargs,
         )
-        generate_output = model.generate(**gen_kwargs)
+        generate_output = HuggingfaceEngine.image_clean_wrapper(model.generate, temporary_image)(**gen_kwargs)
         response_ids = generate_output[:, prompt_length:]
         response = tokenizer.batch_decode(response_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True)
         results = []
@@ -281,7 +294,7 @@ class HuggingfaceEngine(BaseEngine):
         image: Optional["NDArray"] = None,
         input_kwargs: Optional[Dict[str, Any]] = {},
     ) -> Callable[[], str]:
-        gen_kwargs, _ = HuggingfaceEngine._process_args(
+        gen_kwargs, _, temporary_image = HuggingfaceEngine._process_args(
             model,
             tokenizer,
             processor,
@@ -296,7 +309,11 @@ class HuggingfaceEngine(BaseEngine):
         )
         streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
         gen_kwargs["streamer"] = streamer
-        thread = Thread(target=model.generate, kwargs=gen_kwargs, daemon=True)
+        thread = Thread(
+            target=HuggingfaceEngine.image_clean_wrapper(model.generate, temporary_image),
+            kwargs=gen_kwargs,
+            daemon=True,
+        )
         thread.start()
 
         def stream():

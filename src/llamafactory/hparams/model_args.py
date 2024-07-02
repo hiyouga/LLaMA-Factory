@@ -122,7 +122,7 @@ class ModelArguments:
         metadata={"help": "Whethor or not to use multimodal LLM that accepts visual inputs."},
     )
     visual_inputs_type: str = field(
-        default="",
+        default="none",
         metadata={"help": "Type of visual inputs."},
     )
     moe_aux_loss_coef: Optional[float] = field(
