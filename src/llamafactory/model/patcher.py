@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     from transformers import PretrainedConfig, PreTrainedTokenizer
     from trl import AutoModelForCausalLMWithValueHead
 
-    from ..hparams import ModelArguments, DataArguments, FinetuningArguments
+    from ..hparams import ModelArguments
 
 
 logger = get_logger(__name__)
@@ -54,8 +54,6 @@ def patch_config(
     config: "PretrainedConfig",
     tokenizer: "PreTrainedTokenizer",
     model_args: "ModelArguments",
-    data_args: "DataArguments",
-    finetune_args: "FinetuningArguments",
     init_kwargs: Dict[str, Any],
     is_trainable: bool,
 ) -> None:
@@ -104,7 +102,7 @@ def patch_config(
             if init_kwargs.get("device_map", None) == "auto":
                 init_kwargs["offload_folder"] = model_args.offload_folder
     
-    if finetune_args.stage == "sft" and data_args.efficient_packing:
+    if model_args.efficient_packing:
         configure_packing(config, model_args)
 
 

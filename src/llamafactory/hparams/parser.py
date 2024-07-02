@@ -170,6 +170,9 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if finetuning_args.stage == "ppo" and model_args.shift_attn:
         raise ValueError("PPO training is incompatible with S^2-Attn.")
 
+    if finetuning_args.stage != "sft" and model_args.efficient_packing:
+        raise ValueError("`efficient_packing` cannot be set as True except SFT.")
+
     if finetuning_args.stage == "ppo" and finetuning_args.reward_model_type == "lora" and model_args.use_unsloth:
         raise ValueError("Unsloth does not support lora reward model.")
 

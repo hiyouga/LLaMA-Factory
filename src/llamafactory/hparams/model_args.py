@@ -109,6 +109,12 @@ class ModelArguments:
         default=False,
         metadata={"help": "Enable shift short attention (S^2-Attn) proposed by LongLoRA."},
     )
+    efficient_packing: Optional[bool] = field(
+        default=None,
+        metadata={
+            "help": "Whether or not to pack the sequences without cross-contamination attention for efficient training."
+        },
+    )
     mixture_of_depths: Optional[Literal["convert", "load"]] = field(
         default=None,
         metadata={"help": "Convert the model to mixture-of-depths (MoD) or load the MoD model."},
