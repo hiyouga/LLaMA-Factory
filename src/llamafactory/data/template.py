@@ -646,7 +646,7 @@ _register_template(
 
 _register_template(
     name="idefics2",
-    format_user=StringFormatter(slots=["User: {{content}}<end_of_utterance>\nAssistant: "]),
+    format_user=StringFormatter(slots=["User:{{content}}<end_of_utterance>\nAssistant:"]),
     format_separator=EmptyFormatter(slots=["\n"]),
     stop_words=["<end_of_utterance>"],
     replace_eos=True,
@@ -724,6 +724,7 @@ _register_template(
         "The assistant gives helpful, detailed, and polite answers to the user's questions."
     ),
     image_data_key=["pixel_values", "image_sizes"],
+    image_token="<image>\n"
 )
 
 

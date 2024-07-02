@@ -103,6 +103,16 @@ class HuggingfaceEngine(BaseEngine):
         ):
             messages[0]["content"] = template.video_token + messages[0]["content"]
 
+        if processor_class == 'Idefics2Processor':
+            fake_image_token = processor.fake_image_token.content
+            image_str = f"{fake_image_token}{template.image_token * processor.image_seq_len}{fake_image_token}"
+            image_str = image_str * 5
+            for j in range(len(messages)):
+                content = messages[j]['content']
+                content = content.replace(template.image_token, image_str)
+                content = content.replace(f"{fake_image_token}{fake_image_token}", f"{fake_image_token}")
+                messages[j]['content'] = content
+
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or generating_args["default_system"]
         pixel_values = None
