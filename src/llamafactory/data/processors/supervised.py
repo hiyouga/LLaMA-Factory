@@ -23,7 +23,7 @@ from .processor_utils import get_paligemma_token_type_ids, get_pixel_values, gre
 if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer, ProcessorMixin
 
-    from ...hparams import DataArguments
+    from ...hparams import DataArguments, ModelArguments
     from ..template import Template
 
 
@@ -125,6 +125,7 @@ def preprocess_packed_supervised_dataset(
     template: "Template",
     tokenizer: "PreTrainedTokenizer",
     data_args: "DataArguments",
+    model_args: "ModelArguments"
 ) -> Dict[str, List[List[int]]]:
     # build inputs with format `<bos> X1 Y1 <eos> <bos> X2 Y2 <eos>`
     # and labels with format `<ignore> ... <ignore> Y1 <eos> <ignore> ... <ignore> Y2 <eos>`
@@ -176,7 +177,7 @@ def preprocess_packed_supervised_dataset(
             raise ValueError("The length of packed example should be identical to the cutoff length.")
 
         model_inputs["input_ids"].append(packed_input_ids)
-        if data_args.efficient_packing:
+        if model_args.efficient_packing:
             model_inputs["attention_mask"].append(packed_attention_mask)
         else:
             model_inputs["attention_mask"].append([1] * data_args.cutoff_len)
