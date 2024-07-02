@@ -1260,6 +1260,10 @@ register_model_group(
 
 register_model_group(
     models={
+        "TeleChat-1B-Chat": {
+            DownloadSource.DEFAULT: "Tele-AI/TeleChat-1B",
+            DownloadSource.MODELSCOPE: "TeleAI/TeleChat-1B",
+        },
         "TeleChat-7B-Chat": {
             DownloadSource.DEFAULT: "Tele-AI/telechat-7B",
             DownloadSource.MODELSCOPE: "TeleAI/telechat-7B",
