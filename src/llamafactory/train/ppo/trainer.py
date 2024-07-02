@@ -150,14 +150,10 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         self.callback_handler = CallbackHandler(
             callbacks, self.accelerator.unwrap_model(self.model), self.tokenizer, self.optimizer, self.lr_scheduler
         )
-
         if self.args.max_steps > 0:
             logger.info("max_steps is given, it will override any value given in num_train_epochs")
 
-        unwrapped_model: "AutoModelForCausalLMWithValueHead" = self.accelerator.unwrap_model(self.model)
-        self.is_chatglm_model = getattr(unwrapped_model.config, "model_type", None) == "chatglm"
-
-        self.amp_context = torch.autocast(self.current_device.type, dtype=self.model_args.compute_dtype)
+        self.amp_context = torch.autocast(self.current_device.type)
         warnings.simplefilter("ignore")  # remove gc warnings on ref model
 
         if finetuning_args.reward_model_type == "full":
@@ -403,9 +399,6 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         if self.finetuning_args.reward_model_type == "lora":
             replace_model(unwrapped_model, target="default")
 
-        if self.is_chatglm_model:  # assume same architecture
-            values = torch.transpose(values, 0, 1)
-
         rewards = values.gather(dim=-1, index=(batch["attention_mask"].sum(dim=-1, keepdim=True) - 1))
         return rewards.float().detach()  # use fp32 type
 
@@ -442,9 +435,6 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
 
             with self.amp_context:  # support bf16
                 logits, _, values = model(**input_kwargs, return_dict=True, use_cache=False)
-
-            if self.is_chatglm_model:
-                values = torch.transpose(values, 0, 1)
 
             logprobs = logprobs_from_logits(logits[:, :-1, :], input_ids[:, 1:])
             masks = torch.zeros_like(attention_mask)
