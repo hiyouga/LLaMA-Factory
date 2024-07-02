@@ -54,7 +54,7 @@ def run_ppo(
     reward_model = create_reward_model(model, model_args, finetuning_args)
 
     # Initialize our Trainer
-    ppo_trainer = CustomPPOTrainer(
+    ppo_trainer: "CustomPPOTrainer" = CustomPPOTrainer(
         model_args=model_args,
         training_args=training_args,
         finetuning_args=finetuning_args,
