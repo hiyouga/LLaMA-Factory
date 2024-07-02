@@ -98,7 +98,7 @@ class HuggingfaceEngine(BaseEngine):
         ):
             # llava-like models
             messages[0]["content"] = template.image_token + messages[0]["content"]
-        elif image is not None and model_args.visual_inputs_type == "qwenvl_like":
+        elif image is not None and model_args.visual_inputs_type == "qwen_vl_like":
             # Add image pathlike token as vision input
             image_path = pathlib.Path(DEFAULT_CACHE_DIR) / f"{str(uuid4())}.png"
             Image.fromarray(image).convert("RGB").save(image_path)
@@ -224,7 +224,7 @@ class HuggingfaceEngine(BaseEngine):
 
     @staticmethod
     def image_clean_wrapper(func, temporary_image):
-        # clean up for qwenvl.
+        # clean up for qwen_vl.
         def wrapped_function(**kwargs):
             result = func(**kwargs)
             if temporary_image:

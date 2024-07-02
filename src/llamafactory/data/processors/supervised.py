@@ -108,8 +108,8 @@ def preprocess_supervised_dataset(
             examples["prompt"][i][-1]["content"] = (
                 template.format_image.apply()[0] + examples["prompt"][i][-1]["content"]
             )
-        elif model_args.visual_inputs_type == "qwenvl_like":
-            assert len(examples["images"][i]) <= 1, "Qwenvl only support 1 image train yet."
+        elif model_args.visual_inputs_type == "qwen_vl_like":
+            assert len(examples["images"][i]) <= 1, "qwen_vl only support 1 image train yet."
             examples["prompt"][i][-1]["content"] = (
                 template.format_image.apply(content=os.path.join(data_args.dataset_dir, examples["images"][i][-1]))[0]
                 + examples["prompt"][i][-1]["content"]

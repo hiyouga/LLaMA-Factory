@@ -1258,9 +1258,9 @@ register_model_group(
             DownloadSource.MODELSCOPE: "qwen/wen-VL",
         },
     },
-    template="qwenvl",
+    template="qwen_vl",
     vision=True,
-    vision_type="qwenvl_like",
+    vision_type="qwen_vl_like",
 )
 
 

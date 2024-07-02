@@ -37,7 +37,7 @@ VISION_FREEZE_MAP = {
     "none": "",
     "vision_tower": "vision_tower",
     "glm4v_like": "vision",
-    "qwenvl_like": "visual",
+    "qwen_vl_like": "visual",
     "phi3v_like": "vision_embed_tokens",
 }
 

@@ -50,7 +50,7 @@ def create_top() -> Dict[str, "Component"]:
             booster = gr.Radio(choices=["auto", "flashattn2", "unsloth"], value="auto", scale=2)
             visual_inputs = gr.Checkbox(scale=1)
             visual_inputs_type = gr.Dropdown(
-                choices=["none", "vision_tower", "qwenvl_like", "glm4v_like", "phi3v_like"], value="none", scale=4
+                choices=["none", "vision_tower", "qwen_vl_like", "glm4v_like", "phi3v_like"], value="none", scale=4
             )
 
     model_name.change(

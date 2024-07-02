@@ -174,7 +174,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [Phi-3](https://huggingface.co/microsoft)                    | 4B/7B/14B                        | phi       |
 | [Phi-3-vision](https://huggingface.co/microsoft)             | 4B                               | phi_v     |
 | [Qwen/Qwen1.5/Qwen2 (Code/MoE)](https://huggingface.co/Qwen) | 0.5B/1.5B/4B/7B/14B/32B/72B/110B | qwen      |
-| [Qwen-VL](https://huggingface.co/Qwen)                       | 9B                               | qwenvl    |
+| [Qwen-VL](https://huggingface.co/Qwen)                       | 9B                               | qwen_vl   |
 | [StarCoder 2](https://huggingface.co/bigcode)                | 3B/7B/15B                        | -         |
 | [XVERSE](https://huggingface.co/xverse)                      | 7B/13B/65B                       | xverse    |
 | [Yi/Yi-1.5](https://huggingface.co/01-ai)                    | 6B/9B/34B                        | yi        |
