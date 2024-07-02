@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Union
 from datasets import Features
 
 from ..extras.logging import get_logger
+from ..hparams import ModelArguments
 from .data_utils import Role
 
 
@@ -49,7 +50,10 @@ def _convert_images(images: List[Any], dataset_attr: "DatasetAttr", data_args: "
 
 
 def convert_alpaca(
-    examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr", data_args: "DataArguments"
+    examples: Dict[str, List[Any]],
+    dataset_attr: "DatasetAttr",
+    data_args: "DataArguments",
+    model_args: "ModelArguments",
 ) -> Dict[str, List[Any]]:
     r"""
     Converts alpaca format dataset to the standard format.
@@ -96,13 +100,19 @@ def convert_alpaca(
         outputs["response"].append(response)
         outputs["system"].append(examples[dataset_attr.system][i] if dataset_attr.system else "")
         outputs["tools"].append(examples[dataset_attr.tools][i] if dataset_attr.tools else "")
-        outputs["images"].append(convert_images(examples[dataset_attr.images][i]) if dataset_attr.images else [])
+        if model_args.visual_inputs_type == "qwen_vl_like":
+            outputs["images"].append(examples[dataset_attr.images][i] if dataset_attr.images else [])
+        else:
+            outputs["images"].append(convert_images(examples[dataset_attr.images][i]) if dataset_attr.images else [])
 
     return outputs
 
 
 def convert_sharegpt(
-    examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr", data_args: "DataArguments"
+    examples: Dict[str, List[Any]],
+    dataset_attr: "DatasetAttr",
+    data_args: "DataArguments",
+    model_args: "ModelArguments",
 ) -> Dict[str, List[Any]]:
     r"""
     Converts sharegpt format dataset to the standard format.
@@ -184,7 +194,10 @@ def convert_sharegpt(
         outputs["response"].append(response)
         outputs["system"].append(system)
         outputs["tools"].append(examples[dataset_attr.tools][i] if dataset_attr.tools else "")
-        outputs["images"].append(convert_images(examples[dataset_attr.images][i]) if dataset_attr.images else [])
+        if model_args.visual_inputs_type == "qwen_vl_like":
+            outputs["images"].append(examples[dataset_attr.images][i] if dataset_attr.images else [])
+        else:
+            outputs["images"].append(convert_images(examples[dataset_attr.images][i]) if dataset_attr.images else [])
 
     return outputs
 
@@ -194,6 +207,7 @@ def align_dataset(
     dataset_attr: "DatasetAttr",
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
+    model_args: "ModelArguments",
 ) -> Union["Dataset", "IterableDataset"]:
     r"""
     Aligned dataset:
@@ -204,9 +218,9 @@ def align_dataset(
         images: [],
     """
     if dataset_attr.formatting == "alpaca":
-        convert_func = partial(convert_alpaca, dataset_attr=dataset_attr, data_args=data_args)
+        convert_func = partial(convert_alpaca, dataset_attr=dataset_attr, data_args=data_args, model_args=model_args)
     else:
-        convert_func = partial(convert_sharegpt, dataset_attr=dataset_attr, data_args=data_args)
+        convert_func = partial(convert_sharegpt, dataset_attr=dataset_attr, data_args=data_args, model_args=model_args)
 
     column_names = list(next(iter(dataset)).keys())
     features = Features.from_dict(
@@ -219,7 +233,11 @@ def align_dataset(
             ],
             "system": {"dtype": "string", "_type": "Value"},
             "tools": {"dtype": "string", "_type": "Value"},
-            "images": [{"_type": "Image"}],
+            "images": [
+                {"dtype": "string", "_type": "Value"}
+                if model_args.visual_inputs_type == "qwen_vl_like"
+                else {"_type": "Image"}
+            ],
         }
     )
     kwargs = {}

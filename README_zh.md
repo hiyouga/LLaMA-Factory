@@ -161,6 +161,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 | [Falcon](https://huggingface.co/tiiuae)                      | 7B/11B/40B/180B                  | falcon    |
 | [Gemma/Gemma 2/CodeGemma](https://huggingface.co/google)     | 2B/7B/9B/27B                     | gemma     |
 | [GLM-4](https://huggingface.co/THUDM)                        | 9B                               | glm4      |
+| [GLM-4V](https://huggingface.co/THUDM)                       | 9B                               | glm4_v    |
 | [InternLM2](https://huggingface.co/internlm)                 | 7B/20B                           | intern2   |
 | [Llama](https://github.com/facebookresearch/llama)           | 7B/13B/33B/65B                   | -         |
 | [Llama 2](https://huggingface.co/meta-llama)                 | 7B/13B/70B                       | llama2    |
@@ -171,7 +172,9 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 | [PaliGemma](https://huggingface.co/google)                   | 3B                               | gemma     |
 | [Phi-1.5/Phi-2](https://huggingface.co/microsoft)            | 1.3B/2.7B                        | -         |
 | [Phi-3](https://huggingface.co/microsoft)                    | 4B/7B/14B                        | phi       |
+| [Phi-3-vision](https://huggingface.co/microsoft)             | 4B                               | phi_v     |
 | [Qwen/Qwen1.5/Qwen2 (Code/MoE)](https://huggingface.co/Qwen) | 0.5B/1.5B/4B/7B/14B/32B/72B/110B | qwen      |
+| [Qwen-VL](https://huggingface.co/Qwen)                       | 9B                               | qwen_vl   |
 | [StarCoder 2](https://huggingface.co/bigcode)                | 3B/7B/15B                        | -         |
 | [XVERSE](https://huggingface.co/xverse)                      | 7B/13B/65B                       | xverse    |
 | [Yi/Yi-1.5](https://huggingface.co/01-ai)                    | 6B/9B/34B                        | yi        |

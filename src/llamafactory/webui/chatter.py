@@ -91,6 +91,7 @@ class WebChatModel(ChatModel):
             flash_attn="fa2" if get("top.booster") == "flashattn2" else "auto",
             use_unsloth=(get("top.booster") == "unsloth"),
             visual_inputs=get("top.visual_inputs"),
+            visual_inputs_type=get("top.visual_inputs_type"),
             rope_scaling=get("top.rope_scaling") if get("top.rope_scaling") in ["linear", "dynamic"] else None,
             infer_backend=get("infer.infer_backend"),
             infer_dtype=get("infer.infer_dtype"),

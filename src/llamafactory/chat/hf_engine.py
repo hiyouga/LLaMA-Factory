@@ -15,16 +15,21 @@
 import asyncio
 import concurrent.futures
 import os
+import pathlib
 from threading import Thread
 from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from uuid import uuid4
 
 import torch
+import torchvision
+from PIL import Image
 from transformers import GenerationConfig, TextIteratorStreamer
 
 from ..data import get_template_and_fix_tokenizer
 from ..extras.logging import get_logger
 from ..extras.misc import get_logits_processor
 from ..model import load_model, load_tokenizer
+from ..webui.common import DEFAULT_CACHE_DIR
 from .base_engine import BaseEngine, Response
 
 
@@ -58,6 +63,7 @@ class HuggingfaceEngine(BaseEngine):
         self.model = load_model(
             self.tokenizer, model_args, finetuning_args, is_trainable=False, add_valuehead=(not self.can_generate)
         )  # must after fixing tokenizer to resize vocab
+        self.model_args = model_args
         self.generating_args = generating_args.to_dict()
         try:
             asyncio.get_event_loop()
@@ -75,33 +81,60 @@ class HuggingfaceEngine(BaseEngine):
         processor: Optional["ProcessorMixin"],
         template: "Template",
         generating_args: Dict[str, Any],
+        model_args: "ModelArguments",
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
         image: Optional["NDArray"] = None,
         input_kwargs: Optional[Dict[str, Any]] = {},
-    ) -> Tuple[Dict[str, Any], int]:
+    ) -> Tuple[Dict[str, Any], int, Optional[pathlib.Path]]:
+        image_path = None
         if (
             processor is not None
             and image is not None
             and not hasattr(processor, "image_seq_length")
             and template.image_token not in messages[0]["content"]
-        ):  # llava-like models
+            and model_args.visual_inputs_type in ["vision_tower", "phi3v_like"]
+        ):
+            # llava-like models
             messages[0]["content"] = template.image_token + messages[0]["content"]
+        elif image is not None and model_args.visual_inputs_type == "qwen_vl_like":
+            # Add image pathlike token as vision input
+            image_path = pathlib.Path(DEFAULT_CACHE_DIR) / f"{str(uuid4())}.png"
+            Image.fromarray(image).convert("RGB").save(image_path)
+            messages[-1]["content"] = (
+                template.format_image.apply(content=os.fspath(image_path))[0] + messages[-1]["content"]
+            )
+        elif image is not None and model_args.visual_inputs_type == "glm4v_like":
+            messages[-1]["content"] = template.format_image.apply()[0] + messages[-1]["content"]
 
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or generating_args["default_system"]
         pixel_values = None
+        image_sizes = None
         prompt_ids, _ = template.encode_oneturn(
             tokenizer=tokenizer, messages=paired_messages, system=system, tools=tools
         )
-        if processor is not None and image is not None:  # add image features
+        # add image features for vision tower
+        if processor is not None and image is not None and template.format_image is None:
             image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
-            batch_feature = image_processor(image, return_tensors="pt")
+            batch_feature = (
+                image_processor(image, return_tensors="pt")
+                if model_args.visual_inputs_type == "vision_tower"
+                else image_processor(Image.fromarray(image), return_tensors="pt")
+            )
             pixel_values = batch_feature.to(model.device)["pixel_values"]  # shape (B, C, H, W)
             if hasattr(processor, "image_seq_length"):  # paligemma models
                 image_token_id = tokenizer.convert_tokens_to_ids(template.image_token)
                 prompt_ids = [image_token_id] * getattr(processor, "image_seq_length") + prompt_ids
+            if model_args.visual_inputs_type == "phi3v_like":
+                image_sizes = batch_feature["image_sizes"]
+                index_image = prompt_ids.index(tokenizer.vocab["<|image|>"])
+                prompt_ids = (
+                    prompt_ids[:index_image]
+                    + [-1] * batch_feature["num_img_tokens"].item()
+                    + prompt_ids[index_image + 1 :]
+                )
 
         prompt_length = len(prompt_ids)
         inputs = torch.tensor([prompt_ids], device=model.device)
@@ -163,11 +196,42 @@ class HuggingfaceEngine(BaseEngine):
             generation_config=GenerationConfig(**generating_args),
             logits_processor=get_logits_processor(),
         )
+        if image is not None and model_args.visual_inputs_type == "glm4v_like":
+            transform = torchvision.transforms.Compose(
+                [
+                    torchvision.transforms.Resize(
+                        (1120, 1120), interpolation=torchvision.transforms.InterpolationMode.BICUBIC
+                    ),
+                    torchvision.transforms.ToTensor(),
+                    torchvision.transforms.Normalize(
+                        (0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711)
+                    ),
+                ]
+            )
+            gen_kwargs["images"] = (
+                transform(Image.fromarray(image)).unsqueeze(0).to(model.device).to(model_args.compute_dtype)
+            )
+        elif model_args.visual_inputs_type == "glm4v_like":
+            gen_kwargs["images"] = None
 
         if pixel_values is not None:
             gen_kwargs["pixel_values"] = pixel_values
 
-        return gen_kwargs, prompt_length
+        if image_sizes is not None and model_args.visual_inputs_type == "phi3v_like":
+            gen_kwargs["image_sizes"] = image_sizes
+
+        return gen_kwargs, prompt_length, image_path
+
+    @staticmethod
+    def image_clean_wrapper(func, temporary_image):
+        # clean up for qwen_vl.
+        def wrapped_function(**kwargs):
+            result = func(**kwargs)
+            if temporary_image:
+                os.remove(temporary_image)
+            return result
+
+        return wrapped_function
 
     @staticmethod
     @torch.inference_mode()
@@ -177,16 +241,27 @@ class HuggingfaceEngine(BaseEngine):
         processor: Optional["ProcessorMixin"],
         template: "Template",
         generating_args: Dict[str, Any],
+        model_args: "ModelArguments",
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
         image: Optional["NDArray"] = None,
         input_kwargs: Optional[Dict[str, Any]] = {},
     ) -> List["Response"]:
-        gen_kwargs, prompt_length = HuggingfaceEngine._process_args(
-            model, tokenizer, processor, template, generating_args, messages, system, tools, image, input_kwargs
+        gen_kwargs, prompt_length, temporary_image = HuggingfaceEngine._process_args(
+            model,
+            tokenizer,
+            processor,
+            template,
+            generating_args,
+            model_args,
+            messages,
+            system,
+            tools,
+            image,
+            input_kwargs,
         )
-        generate_output = model.generate(**gen_kwargs)
+        generate_output = HuggingfaceEngine.image_clean_wrapper(model.generate, temporary_image)(**gen_kwargs)
         response_ids = generate_output[:, prompt_length:]
         response = tokenizer.batch_decode(response_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True)
         results = []
@@ -212,18 +287,33 @@ class HuggingfaceEngine(BaseEngine):
         processor: Optional["ProcessorMixin"],
         template: "Template",
         generating_args: Dict[str, Any],
+        model_args: "ModelArguments",
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
         image: Optional["NDArray"] = None,
         input_kwargs: Optional[Dict[str, Any]] = {},
     ) -> Callable[[], str]:
-        gen_kwargs, _ = HuggingfaceEngine._process_args(
-            model, tokenizer, processor, template, generating_args, messages, system, tools, image, input_kwargs
+        gen_kwargs, _, temporary_image = HuggingfaceEngine._process_args(
+            model,
+            tokenizer,
+            processor,
+            template,
+            generating_args,
+            model_args,
+            messages,
+            system,
+            tools,
+            image,
+            input_kwargs,
         )
         streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
         gen_kwargs["streamer"] = streamer
-        thread = Thread(target=model.generate, kwargs=gen_kwargs, daemon=True)
+        thread = Thread(
+            target=HuggingfaceEngine.image_clean_wrapper(model.generate, temporary_image),
+            kwargs=gen_kwargs,
+            daemon=True,
+        )
         thread.start()
 
         def stream():
@@ -285,6 +375,7 @@ class HuggingfaceEngine(BaseEngine):
             self.processor,
             self.template,
             self.generating_args,
+            self.model_args,
             messages,
             system,
             tools,
@@ -313,6 +404,7 @@ class HuggingfaceEngine(BaseEngine):
             self.processor,
             self.template,
             self.generating_args,
+            self.model_args,
             messages,
             system,
             tools,

@@ -33,6 +33,13 @@ if TYPE_CHECKING:
 
 
 logger = get_logger(__name__)
+VISION_FREEZE_MAP = {
+    "none": "",
+    "vision_tower": "vision_tower",
+    "glm4v_like": "vision",
+    "qwen_vl_like": "visual",
+    "phi3v_like": "vision_embed_tokens",
+}
 
 
 def _setup_full_tuning(
@@ -47,8 +54,8 @@ def _setup_full_tuning(
 
     logger.info("Fine-tuning method: Full")
     forbidden_modules = set()
-    if model_args.visual_inputs and finetuning_args.freeze_vision_tower:
-        forbidden_modules.add("vision_tower")
+    if model_args.visual_inputs and finetuning_args.freeze_vision:
+        forbidden_modules.add(VISION_FREEZE_MAP[model_args.visual_inputs_type])
 
     if model_args.visual_inputs and finetuning_args.train_mm_proj_only:
         forbidden_modules.add("language_model")
@@ -131,8 +138,8 @@ def _setup_freeze_tuning(
             trainable_layers.append(module_name)
 
     forbidden_modules = set()
-    if model_args.visual_inputs and finetuning_args.freeze_vision_tower:
-        forbidden_modules.add("vision_tower")
+    if model_args.visual_inputs and finetuning_args.freeze_vision:
+        forbidden_modules.add(VISION_FREEZE_MAP[model_args.visual_inputs_type])
 
     for name, param in model.named_parameters():
         if any(trainable_layer in name for trainable_layer in trainable_layers) and not any(
@@ -204,15 +211,17 @@ def _setup_lora_tuning(
 
     if is_trainable and adapter_to_resume is None:  # create new lora weights while training
         if len(finetuning_args.lora_target) == 1 and finetuning_args.lora_target[0] == "all":
-            target_modules = find_all_linear_modules(model, finetuning_args.freeze_vision_tower)
+            target_modules = find_all_linear_modules(model, finetuning_args.freeze_vision)
         else:
             target_modules = finetuning_args.lora_target
 
         if finetuning_args.use_llama_pro:
             target_modules = find_expanded_modules(model, target_modules, finetuning_args.freeze_trainable_layers)
 
-        if model_args.visual_inputs and finetuning_args.freeze_vision_tower:
-            target_modules = "^(?!.*vision_tower).*(?:{}).*".format("|".join(target_modules))
+        if finetuning_args.freeze_vision and model_args.visual_inputs_type != "none":
+            target_modules = f"^(?!.*{VISION_FREEZE_MAP[model_args.visual_inputs_type]})." + "*(?:{}).*".format(
+                "|".join(target_modules)
+            )
 
         if (
             finetuning_args.use_dora

@@ -15,6 +15,8 @@
 import bisect
 from typing import TYPE_CHECKING, List, Sequence, Tuple
 
+from torchvision import transforms
+
 from ...extras.packages import is_pillow_available
 
 
@@ -61,13 +63,25 @@ def greedy_knapsack(numbers: List[int], capacity: int) -> List[List[int]]:
     return knapsacks
 
 
-def get_pixel_values(images: Sequence["ImageObject"], processor: "ProcessorMixin") -> "NDArray":
+def get_pixel_values(
+    images: Sequence["ImageObject"], processor: "ProcessorMixin", vision_type: str = "vision_tower"
+) -> "NDArray":
     r"""
     Processes visual inputs. (currently only supports a single image)
     """
-    image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
-    image = images[0] if len(images) != 0 else Image.new("RGB", (100, 100), (255, 255, 255))
-    return image_processor(image, return_tensors="pt")["pixel_values"][0]  # shape (C, H, W)
+    if vision_type == "vision_tower":
+        image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
+        image = images[0] if len(images) != 0 else Image.new("RGB", (100, 100), (255, 255, 255))
+        return image_processor(image, return_tensors="pt")["pixel_values"][0]  # shape (C, H, W)
+    elif vision_type == "glm4v_like":
+        transform = transforms.Compose(
+            [
+                transforms.Resize((1120, 1120), interpolation=transforms.InterpolationMode.BICUBIC),
+                transforms.ToTensor(),
+                transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711)),
+            ]
+        )
+        return transform(images[0]) if len(images) != 0 else transform(Image.new("RGB", (1120, 1120), (255, 255, 255)))
 
 
 def get_paligemma_token_type_ids(input_len: int, processor: "ProcessorMixin") -> List[int]:

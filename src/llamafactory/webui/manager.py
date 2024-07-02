@@ -76,4 +76,5 @@ class Manager:
             self._id_to_elem["top.rope_scaling"],
             self._id_to_elem["top.booster"],
             self._id_to_elem["top.visual_inputs"],
+            self._id_to_elem["top.visual_inputs_type"],
         }
