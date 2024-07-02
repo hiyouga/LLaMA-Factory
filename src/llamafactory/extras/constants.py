@@ -509,15 +509,19 @@ register_model_group(
         },
         "Gemma-2-9B": {
             DownloadSource.DEFAULT: "google/gemma-2-9b",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-9b",
         },
         "Gemma-2-27B": {
             DownloadSource.DEFAULT: "google/gemma-2-27b",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-27b",
         },
         "Gemma-2-9B-Chat": {
             DownloadSource.DEFAULT: "google/gemma-2-9b-it",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-9b-it",
         },
         "Gemma-2-27B-Chat": {
             DownloadSource.DEFAULT: "google/gemma-2-27b-it",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-27b-it",
         },
     },
     template="gemma",
@@ -1320,6 +1324,10 @@ register_model_group(
 
 register_model_group(
     models={
+        "TeleChat-1B-Chat": {
+            DownloadSource.DEFAULT: "Tele-AI/TeleChat-1B",
+            DownloadSource.MODELSCOPE: "TeleAI/TeleChat-1B",
+        },
         "TeleChat-7B-Chat": {
             DownloadSource.DEFAULT: "Tele-AI/telechat-7B",
             DownloadSource.MODELSCOPE: "TeleAI/telechat-7B",
