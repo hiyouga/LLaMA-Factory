@@ -933,9 +933,10 @@ register_model_group(
     models={
         "Phi-3-vision-128k-instruct": {
             DownloadSource.DEFAULT: "microsoft/Phi-3-vision-128k-instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Phi-3-medium-128k-instruct",
         }
     },
-    template="phi",
+    template="phi_v",
     vision=True,
     vision_type="phi3v_like",
 )
