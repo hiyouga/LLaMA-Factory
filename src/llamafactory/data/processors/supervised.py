@@ -23,7 +23,7 @@ from .processor_utils import get_paligemma_token_type_ids, get_pixel_values, gre
 if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer, ProcessorMixin
 
-    from ...hparams import DataArguments
+    from ...hparams import DataArguments, ModelArguments
     from ..template import Template
 
 
@@ -125,6 +125,7 @@ def preprocess_packed_supervised_dataset(
     template: "Template",
     tokenizer: "PreTrainedTokenizer",
     data_args: "DataArguments",
+    model_args: "ModelArguments"
 ) -> Dict[str, List[List[int]]]:
     # build inputs with format `<bos> X1 Y1 <eos> <bos> X2 Y2 <eos>`
     # and labels with format `<ignore> ... <ignore> Y1 <eos> <ignore> ... <ignore> Y2 <eos>`
@@ -160,11 +161,12 @@ def preprocess_packed_supervised_dataset(
     model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
     knapsacks = greedy_knapsack(lengths, data_args.cutoff_len)
     for knapsack in knapsacks:
-        packed_input_ids, packed_labels = [], []
-        for length in knapsack:
+        packed_input_ids, packed_attention_mask, packed_labels = [], [], []
+        for i, length in enumerate(knapsack):
             index = length2indexes[length].pop()
             packed_input_ids += batch_input_ids[index]
             packed_labels += batch_labels[index]
+            packed_attention_mask += [i+1]*len(batch_input_ids[index])
 
         if len(packed_input_ids) < data_args.cutoff_len:
             pad_length = data_args.cutoff_len - len(packed_input_ids)
@@ -175,7 +177,10 @@ def preprocess_packed_supervised_dataset(
             raise ValueError("The length of packed example should be identical to the cutoff length.")
 
         model_inputs["input_ids"].append(packed_input_ids)
-        model_inputs["attention_mask"].append([1] * data_args.cutoff_len)
+        if model_args.efficient_packing:
+            model_inputs["attention_mask"].append(packed_attention_mask)
+        else:
+            model_inputs["attention_mask"].append([1] * data_args.cutoff_len)
         model_inputs["labels"].append(packed_labels)
 
     return model_inputs

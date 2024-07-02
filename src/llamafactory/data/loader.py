@@ -177,7 +177,7 @@ def get_dataset(
 
     with training_args.main_process_first(desc="pre-process dataset"):
         preprocess_func, print_function = get_preprocess_and_print_func(
-            data_args, training_args, stage, template, tokenizer, processor
+            data_args, model_args, training_args, stage, template, tokenizer, processor
         )
         column_names = list(next(iter(dataset)).keys())
         kwargs = {}

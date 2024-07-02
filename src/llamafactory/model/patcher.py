@@ -33,7 +33,7 @@ from .model_utils.quantization import configure_quantization
 from .model_utils.rope import configure_rope
 from .model_utils.valuehead import prepare_valuehead_model
 from .model_utils.visual import autocast_projector_dtype, configure_visual_model
-
+from .model_utils.packing import configure_packing
 
 if TYPE_CHECKING:
     from transformers import PretrainedConfig, PreTrainedTokenizer
@@ -101,6 +101,9 @@ def patch_config(
 
             if init_kwargs.get("device_map", None) == "auto":
                 init_kwargs["offload_folder"] = model_args.offload_folder
+    
+    if model_args.efficient_packing:
+        configure_packing(config, model_args)
 
 
 def patch_model(

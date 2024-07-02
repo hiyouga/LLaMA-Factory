@@ -97,6 +97,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             with gr.Column():
                 resize_vocab = gr.Checkbox()
                 packing = gr.Checkbox()
+                efficient_packing = gr.Checkbox()
 
             with gr.Column():
                 upcast_layernorm = gr.Checkbox()
@@ -115,6 +116,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             optim,
             resize_vocab,
             packing,
+            efficient_packing,
             upcast_layernorm,
             use_llama_pro,
             shift_attn,
@@ -131,6 +133,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             optim=optim,
             resize_vocab=resize_vocab,
             packing=packing,
+            efficient_packing=efficient_packing,
             upcast_layernorm=upcast_layernorm,
             use_llama_pro=use_llama_pro,
             shift_attn=shift_attn,
@@ -328,7 +331,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     )
 
     dataset.focus(list_datasets, [dataset_dir, training_stage], [dataset], queue=False)
-    training_stage.change(change_stage, [training_stage], [dataset, packing], queue=False)
+    training_stage.change(change_stage, [training_stage], [dataset, packing, efficient_packing], queue=False)
     reward_model.focus(list_checkpoints, [model_name, finetuning_type], [reward_model], queue=False)
     model_name.change(list_output_dirs, [model_name, finetuning_type, current_time], [output_dir], queue=False)
     finetuning_type.change(list_output_dirs, [model_name, finetuning_type, current_time], [output_dir], queue=False)
