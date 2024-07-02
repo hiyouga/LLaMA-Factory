@@ -57,7 +57,7 @@ def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: List["TrainerCallb
     elif finetuning_args.stage == "kto":
         run_kto(model_args, data_args, training_args, finetuning_args, callbacks)
     else:
-        raise ValueError("Unknown task.")
+        raise ValueError("Unknown task: {}.".format(finetuning_args.stage))
 
 
 def export_model(args: Optional[Dict[str, Any]] = None) -> None:
