@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Tuple
 import torch
 import transformers.models
 from transformers.activations import ACT2FN
+from transformers.utils import logging
 
 from ...extras.logging import get_logger
 
@@ -31,6 +32,7 @@ if TYPE_CHECKING:
 
 
 logger = get_logger(__name__)
+transformers_logger = logging.get_logger(__name__)
 
 
 class LlavaMultiModalProjectorForYiVL(torch.nn.Module):
@@ -61,7 +63,7 @@ class LlavaMultiModalProjectorForYiVL(torch.nn.Module):
             else:
                 target_dtype = self.linear_1.weight.dtype
 
-            logger.warning_once("The hidden states seems to be silently casted in float32.")
+            transformers_logger.warning_once("The hidden states seems to be silently casted in float32.")
             hidden_states = hidden_states.to(target_dtype)
 
         return hidden_states
