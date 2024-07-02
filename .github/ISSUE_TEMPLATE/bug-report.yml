@@ -4,8 +4,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        Issues included in FAQs or those with insufficient information may be closed without a response.
-        包含在常见问题内或提供信息不完整的 issues 可能不会被回复。
+        Issues included in **FAQs** or those with **insufficient** information may be closed without a response.
+        包含在**常见问题**内或提供信息**不完整**的 issues 可能不会被回复。
 
   - type: checkboxes
     id: reminder
