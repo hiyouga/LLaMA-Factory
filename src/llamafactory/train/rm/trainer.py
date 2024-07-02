@@ -31,7 +31,6 @@ from ..trainer_utils import create_custom_optimzer, create_custom_scheduler
 if TYPE_CHECKING:
     from transformers import PreTrainedModel, ProcessorMixin
     from transformers.trainer import PredictionOutput
-    from trl import AutoModelForCausalLMWithValueHead
 
     from ...hparams import FinetuningArguments
 
@@ -86,19 +85,14 @@ class PairwiseTrainer(Trainer):
         Note that the first element will be removed from the output tuple.
         See: https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/trainer.py#L3842
         """
-        # Compute rewards
         _, _, values = model(**inputs, output_hidden_states=True, return_dict=True, use_cache=False)
-
-        unwrapped_model: "AutoModelForCausalLMWithValueHead" = self.accelerator.unwrap_model(self.model)
-        if getattr(unwrapped_model.config, "model_type", None) == "chatglm":
-            values = torch.transpose(values, 0, 1)
-
         batch_size = inputs["input_ids"].size(0) // 2
         chosen_masks, rejected_masks = torch.split(inputs["attention_mask"], batch_size, dim=0)
         chosen_rewards, rejected_rewards = torch.split(values, batch_size, dim=0)
         chosen_scores = chosen_rewards.gather(dim=-1, index=(chosen_masks.sum(dim=-1, keepdim=True) - 1))
         rejected_scores = rejected_rewards.gather(dim=-1, index=(rejected_masks.sum(dim=-1, keepdim=True) - 1))
         chosen_scores, rejected_scores = chosen_scores.squeeze(), rejected_scores.squeeze()
+
         loss = -torch.nn.functional.logsigmoid(chosen_scores.float() - rejected_scores.float()).mean()
         if return_outputs:
             return loss, (loss, chosen_scores, rejected_scores)
