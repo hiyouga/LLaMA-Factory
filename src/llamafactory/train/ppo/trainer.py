@@ -393,7 +393,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         else:
             reward_model = self.reward_model
 
-        with unwrap_model_for_generation(reward_model, self.accelerator), self.amp_context:  # support bf16
+        with self.amp_context:  # support bf16
             _, _, values = reward_model(**batch, return_dict=True, use_cache=False)
 
         if self.finetuning_args.reward_model_type == "lora":
