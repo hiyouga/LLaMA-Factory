@@ -233,6 +233,10 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if model_args.use_unsloth and is_deepspeed_zero3_enabled():
         raise ValueError("Unsloth is incompatible with DeepSpeed ZeRO-3.")
 
+    if data_args.neat_packing and not data_args.packing:
+        logger.warning("`neat_packing` requires `packing` is True. Change it to True.")
+        data_args.packing = True
+
     _verify_model_args(model_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args, training_args)
 

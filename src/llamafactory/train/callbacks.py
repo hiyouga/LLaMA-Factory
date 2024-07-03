@@ -79,9 +79,8 @@ def fix_valuehead_checkpoint(
         if name.startswith("v_head."):
             v_head_state_dict[name] = param
         else:
-            decoder_state_dict[name.replace("pretrained_model.", "")] = param
+            decoder_state_dict[name.replace("pretrained_model.", "", count=1)] = param
 
-    os.remove(path_to_checkpoint)
     model.pretrained_model.save_pretrained(
         output_dir, state_dict=decoder_state_dict or None, safe_serialization=safe_serialization
     )
@@ -91,6 +90,7 @@ def fix_valuehead_checkpoint(
     else:
         torch.save(v_head_state_dict, os.path.join(output_dir, V_HEAD_WEIGHTS_NAME))
 
+    os.remove(path_to_checkpoint)
     logger.info("Value head model saved at: {}".format(output_dir))
 
 
