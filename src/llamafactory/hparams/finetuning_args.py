@@ -376,14 +376,21 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         if self.use_galore and self.use_badam:
             raise ValueError("Cannot use GaLore with BAdam together.")
 
-        if self.loraplus_lr_ratio is not None and self.finetuning_type != "lora":
-            raise ValueError("`loraplus_lr_ratio` is only valid for LoRA training.")
-
-        if self.pissa_init and self.finetuning_type != "lora":
-            raise ValueError("`pissa_init` is only valid for LoRA training.")
-
         if self.pissa_init and (self.stage in ["ppo", "kto"] or self.use_ref_model):
             raise ValueError("Cannot use PiSSA for current training stage.")
 
         if self.train_mm_proj_only and self.finetuning_type != "full":
             raise ValueError("`train_mm_proj_only` is only valid for full training.")
+
+        if self.finetuning_type != "lora":
+            if self.loraplus_lr_ratio is not None:
+                raise ValueError("`loraplus_lr_ratio` is only valid for LoRA training.")
+
+            if self.use_rslora:
+                raise ValueError("`use_rslora` is only valid for LoRA training.")
+
+            if self.use_dora:
+                raise ValueError("`use_dora` is only valid for LoRA training.")
+
+            if self.pissa_init:
+                raise ValueError("`pissa_init` is only valid for LoRA training.")
