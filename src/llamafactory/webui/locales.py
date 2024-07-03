@@ -494,20 +494,6 @@ LOCALES = {
             "info": "使用的优化器：adamw_torch、adamw_8bit 或 adafactor。",
         },
     },
-    "resize_vocab": {
-        "en": {
-            "label": "Resize token embeddings",
-            "info": "Resize the tokenizer vocab and the embedding layers.",
-        },
-        "ru": {
-            "label": "Изменение размера токенных эмбеддингов",
-            "info": "Изменить размер словаря токенизатора и слоев эмбеддинга.",
-        },
-        "zh": {
-            "label": "更改词表大小",
-            "info": "更改分词器词表和嵌入层的大小。",
-        },
-    },
     "packing": {
         "en": {
             "label": "Pack sequences",
@@ -522,32 +508,32 @@ LOCALES = {
             "info": "将序列打包为等长样本。",
         },
     },
-    "efficient_packing": {
+    "neat_packing": {
         "en": {
-            "label": "Pack sequences for efficient training",
-            "info": "Pack sequences into samples of fixed length without cross-contamination attention for efficient training.",
+            "label": "Use neat packing",
+            "info": "Avoid cross-attention between packed sequences.",
         },
         "ru": {
-            "label": "Пакетные последовательности для эффективного обучения",
-            "info": "Упакуйте последовательности в образцы фиксированной длины без учета перекрестного загрязнения для эффективного обучения.",
+            "label": "Используйте аккуратную упаковку",
+            "info": "избегайте перекрестного внимания между упакованными последовательностями.",
         },
         "zh": {
-            "label": "打包序列以实现高效训练",
-            "info": "为了提高训练效率，将序列打包成固定长度的样本，无需注意交叉污染。",
+            "label": "使用无污染打包",
+            "info": "避免打包后的序列产生交叉注意力。",
         },
     },
-    "upcast_layernorm": {
+    "resize_vocab": {
         "en": {
-            "label": "Upcast LayerNorm",
-            "info": "Upcast weights of layernorm in float32.",
+            "label": "Resize token embeddings",
+            "info": "Resize the tokenizer vocab and the embedding layers.",
         },
         "ru": {
-            "label": "Приведение весов LayerNorm",
-            "info": "Приведение весов LayerNorm к float32.",
+            "label": "Изменение размера токенных эмбеддингов",
+            "info": "Изменить размер словаря токенизатора и слоев эмбеддинга.",
         },
         "zh": {
-            "label": "缩放归一化层",
-            "info": "将归一化层权重缩放至 32 位精度。",
+            "label": "更改词表大小",
+            "info": "更改分词器词表和嵌入层的大小。",
         },
     },
     "use_llama_pro": {
