@@ -83,7 +83,7 @@ class DataArguments:
     )
     ignore_pad_token_for_loss: bool = field(
         default=True,
-        metadata={"help": "Whether or not to ignore the tokens corresponding to the pad tokens in loss computation."},
+        metadata={"help": "Whether or not to ignore the tokens corresponding to the pad label in loss computation."},
     )
     val_size: float = field(
         default=0.0,

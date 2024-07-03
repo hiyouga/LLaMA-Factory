@@ -52,4 +52,5 @@ def test_4d_attention_mask():
         ],
         dtype=torch.float16,
     )
+    assert list(attention_mask_computed.size()) == [2, 1, 6, 6]
     assert torch.all(attention_mask_computed == attention_mask_expected)
