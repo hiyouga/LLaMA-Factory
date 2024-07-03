@@ -95,11 +95,11 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
 
         with gr.Row():
             with gr.Column():
-                resize_vocab = gr.Checkbox()
                 packing = gr.Checkbox()
+                neat_packing = gr.Checkbox()
 
             with gr.Column():
-                upcast_layernorm = gr.Checkbox()
+                resize_vocab = gr.Checkbox()
                 use_llama_pro = gr.Checkbox()
 
             with gr.Column():
@@ -113,9 +113,9 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             warmup_steps,
             neftune_alpha,
             optim,
-            resize_vocab,
             packing,
-            upcast_layernorm,
+            neat_packing,
+            resize_vocab,
             use_llama_pro,
             shift_attn,
             report_to,
@@ -129,9 +129,9 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             warmup_steps=warmup_steps,
             neftune_alpha=neftune_alpha,
             optim=optim,
-            resize_vocab=resize_vocab,
             packing=packing,
-            upcast_layernorm=upcast_layernorm,
+            neat_packing=neat_packing,
+            resize_vocab=resize_vocab,
             use_llama_pro=use_llama_pro,
             shift_attn=shift_attn,
             report_to=report_to,
