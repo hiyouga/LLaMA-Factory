@@ -98,7 +98,7 @@ def cal_ppl(
             tokenizer=tokenizer, label_pad_token_id=IGNORE_INDEX, train_on_prompt=train_on_prompt
         )
     else:
-        raise NotImplementedError
+        raise NotImplementedError("Stage does not supported: {}.".format(stage))
 
     dataloader = DataLoader(trainset, batch_size, shuffle=False, collate_fn=data_collator, pin_memory=True)
     criterion = torch.nn.CrossEntropyLoss(reduction="none")
