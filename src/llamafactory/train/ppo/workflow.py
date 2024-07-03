@@ -23,7 +23,7 @@ from ...data import get_dataset
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
 from ..callbacks import fix_valuehead_checkpoint
-from ..trainer_utils import create_ref_model, create_reward_model, glm4v_compute_loss_warpper
+from ..trainer_utils import create_ref_model, create_reward_model
 from .trainer import CustomPPOTrainer
 
 
@@ -67,8 +67,6 @@ def run_ppo(
         data_collator=data_collator,
         **tokenizer_module,
     )
-    if model_args.visual_inputs_type == "glm4v_like":
-        ppo_trainer.compute_loss = glm4v_compute_loss_warpper(ppo_trainer.compute_loss)
 
     # Training
     if training_args.do_train:

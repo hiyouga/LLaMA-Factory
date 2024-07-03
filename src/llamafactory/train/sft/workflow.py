@@ -24,7 +24,7 @@ from ...extras.constants import IGNORE_INDEX
 from ...extras.misc import get_logits_processor
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
-from ..trainer_utils import create_modelcard_and_push, glm4v_compute_loss_warpper
+from ..trainer_utils import create_modelcard_and_push
 from .metric import ComputeMetrics, compute_accuracy, eval_logit_processor
 from .trainer import CustomSeq2SeqTrainer
 
@@ -77,8 +77,6 @@ def run_sft(
         **tokenizer_module,
         **split_dataset(dataset, data_args, training_args),
     )
-    if model_args.visual_inputs_type == "glm4v_like":
-        trainer.compute_loss = glm4v_compute_loss_warpper(trainer.compute_loss)
 
     # Keyword arguments for `model.generate`
     gen_kwargs = generating_args.to_dict()
