@@ -28,6 +28,11 @@ def test_get_seqlens_in_batch():
     assert list(seqlens_in_batch.size()) == [5]
     assert torch.all(seqlens_in_batch == torch.tensor([2, 3, 1, 2, 3]))
 
+    attention_mask_with_indices = torch.tensor([[1, 1, 1]])
+    seqlens_in_batch = get_seqlens_in_batch(attention_mask_with_indices)
+    assert list(seqlens_in_batch.size()) == [1]
+    assert torch.all(seqlens_in_batch == torch.tensor([3]))
+
 
 def test_get_unpad_data():
     attention_mask_with_indices = torch.tensor(
@@ -39,4 +44,10 @@ def test_get_unpad_data():
     indices, cu_seqlens, max_seqlen_in_batch = get_unpad_data(attention_mask_with_indices)
     assert torch.all(indices == torch.tensor([0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11]))
     assert torch.all(cu_seqlens == torch.tensor([0, 2, 5, 6, 8, 11], dtype=torch.int32))
+    assert max_seqlen_in_batch == 3
+
+    attention_mask_with_indices = torch.tensor([[1, 1, 1]])
+    indices, cu_seqlens, max_seqlen_in_batch = get_unpad_data(attention_mask_with_indices)
+    assert torch.all(indices == torch.tensor([0, 1, 2]))
+    assert torch.all(cu_seqlens == torch.tensor([0, 3], dtype=torch.int32))
     assert max_seqlen_in_batch == 3
