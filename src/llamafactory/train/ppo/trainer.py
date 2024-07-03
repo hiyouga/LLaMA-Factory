@@ -393,7 +393,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         else:
             reward_model = self.reward_model
 
-        with self.amp_context:  # support bf16
+        with unwrap_model_for_generation(reward_model, self.accelerator), self.amp_context:  # support bf16
             _, _, values = reward_model(**batch, return_dict=True, use_cache=False)
 
         if self.finetuning_args.reward_model_type == "lora":
@@ -496,4 +496,5 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
                 self.model.save_checkpoint(output_dir)
 
         elif self.args.should_save:
-            self._save(output_dir)
+            unwrapped_model: "AutoModelForCausalLMWithValueHead" = self.accelerator.unwrap_model(self.model)
+            self._save(output_dir, state_dict=unwrapped_model.state_dict())
