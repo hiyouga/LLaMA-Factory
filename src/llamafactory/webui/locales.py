@@ -494,20 +494,6 @@ LOCALES = {
             "info": "使用的优化器：adamw_torch、adamw_8bit 或 adafactor。",
         },
     },
-    "resize_vocab": {
-        "en": {
-            "label": "Resize token embeddings",
-            "info": "Resize the tokenizer vocab and the embedding layers.",
-        },
-        "ru": {
-            "label": "Изменение размера токенных эмбеддингов",
-            "info": "Изменить размер словаря токенизатора и слоев эмбеддинга.",
-        },
-        "zh": {
-            "label": "更改词表大小",
-            "info": "更改分词器词表和嵌入层的大小。",
-        },
-    },
     "packing": {
         "en": {
             "label": "Pack sequences",
@@ -522,18 +508,32 @@ LOCALES = {
             "info": "将序列打包为等长样本。",
         },
     },
-    "upcast_layernorm": {
+    "neat_packing": {
         "en": {
-            "label": "Upcast LayerNorm",
-            "info": "Upcast weights of layernorm in float32.",
+            "label": "Use neat packing",
+            "info": "Avoid cross-attention between packed sequences.",
         },
         "ru": {
-            "label": "Приведение весов LayerNorm",
-            "info": "Приведение весов LayerNorm к float32.",
+            "label": "Используйте аккуратную упаковку",
+            "info": "избегайте перекрестного внимания между упакованными последовательностями.",
         },
         "zh": {
-            "label": "缩放归一化层",
-            "info": "将归一化层权重缩放至 32 位精度。",
+            "label": "使用无污染打包",
+            "info": "避免打包后的序列产生交叉注意力。",
+        },
+    },
+    "resize_vocab": {
+        "en": {
+            "label": "Resize token embeddings",
+            "info": "Resize the tokenizer vocab and the embedding layers.",
+        },
+        "ru": {
+            "label": "Изменение размера токенных эмбеддингов",
+            "info": "Изменить размер словаря токенизатора и слоев эмбеддинга.",
+        },
+        "zh": {
+            "label": "更改词表大小",
+            "info": "更改分词器词表和嵌入层的大小。",
         },
     },
     "use_llama_pro": {
