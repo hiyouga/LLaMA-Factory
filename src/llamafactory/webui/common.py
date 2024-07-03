@@ -123,7 +123,7 @@ def get_prefix(model_name: str) -> str:
     return model_name.split("-")[0]
 
 
-def get_model_info(model_name: str) -> Tuple[str, str, bool]:
+def get_model_info(model_name: str) -> Tuple[str, str, bool, str]:
     r"""
     Gets the necessary information of this model.
 
@@ -145,7 +145,7 @@ def get_template(model_name: str) -> str:
     return "default"
 
 
-def get_visual(model_name: str) -> dict[bool, str]:
+def get_visual(model_name: str) -> Tuple[bool, str]:
     r"""
     Judges if the model is a vision language model.
     """
