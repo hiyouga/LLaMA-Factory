@@ -610,6 +610,7 @@ run_name: test_run # 可选
 1. **[Chinese-LLaVA-Med](https://github.com/BUAADreamer/Chinese-LLaVA-Med)**：中文多模态医学大模型，基于 LLaVA-1.5-7B 在中文多模态医疗数据上微调而得。
 1. **[AutoRE](https://github.com/THUDM/AutoRE)**：基于大语言模型的文档级关系抽取系统。
 1. **[NVIDIA RTX AI Toolkit](https://github.com/NVIDIA/RTX-AI-Toolkit)**: 在 Windows 主机上利用英伟达 RTX 设备进行大型语言模型微调的开发包。
+1. **[LazyLLM](https://github.com/LazyAGI/LazyLLM)**: 低代码构建多Agent大模型应用的开发工具，基于LLaMA-Factory支持对用到的模型进行后续地微调.
 
 </details>
 
