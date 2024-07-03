@@ -83,9 +83,7 @@ class DataArguments:
     )
     ignore_pad_token_for_loss: bool = field(
         default=True,
-        metadata={
-            "help": "Whether or not to ignore the tokens corresponding to padded labels in the loss computation."
-        },
+        metadata={"help": "Whether or not to ignore the tokens corresponding to the pad tokens in loss computation."},
     )
     val_size: float = field(
         default=0.0,
@@ -93,9 +91,11 @@ class DataArguments:
     )
     packing: Optional[bool] = field(
         default=None,
-        metadata={
-            "help": "Whether or not to pack the sequences in training. Will automatically enable in pre-training."
-        },
+        metadata={"help": "Enable sequences packing in training. Will automatically enable in pre-training."},
+    )
+    neat_packing: bool = field(
+        default=False,
+        metadata={"help": "Enable sequence packing without cross-attention."},
     )
     tool_format: Optional[str] = field(
         default=None,
@@ -112,3 +112,6 @@ class DataArguments:
 
         if self.streaming and self.max_samples is not None:
             raise ValueError("`max_samples` is incompatible with `streaming`.")
+
+        if self.neat_packing and not self.packing:
+            raise ValueError("`neat_packing` requires `packing` is True.")
