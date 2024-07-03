@@ -78,22 +78,22 @@ TRAINING_STAGES = {
 
 STAGES_USE_PAIR_DATA = {"rm", "dpo"}
 
-SUPPORTED_CLASS_FOR_S2ATTN = {"llama"}
-
-SUPPORTED_CLASS_EFFECIENT_PACKING = [
+SUPPORTED_CLASS_FOR_BLOCK_DIAG_ATTN = {
+    "falcon",
+    "gemma",
+    "gemma2",
+    "jamba",
     "llama",
     "mistral",
     "mixtral",
-    "qwen2",
-    "qwen2_moe",
-    "falcon",
     "phi",
     "phi3",
-    "gemma",
-    "gemmoe",
+    "qwen2",
+    "qwen2_moe",
     "starcoder2",
-    "jamba"
-]
+}
+
+SUPPORTED_CLASS_FOR_S2ATTN = {"llama"}
 
 V_HEAD_WEIGHTS_NAME = "value_head.bin"
 
