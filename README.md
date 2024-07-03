@@ -610,6 +610,7 @@ If you have a project that should be incorporated, please contact via email or c
 1. **[Chinese-LLaVA-Med](https://github.com/BUAADreamer/Chinese-LLaVA-Med)**: A multimodal large language model specialized in Chinese medical domain, based on LLaVA-1.5-7B.
 1. **[AutoRE](https://github.com/THUDM/AutoRE)**: A document-level relation extraction system based on large language models.
 1. **[NVIDIA RTX AI Toolkit](https://github.com/NVIDIA/RTX-AI-Toolkit)**: SDKs for fine-tuning LLMs on Windows PC for NVIDIA RTX.
+1. **[LazyLLM](https://github.com/LazyAGI/LazyLLM)**: Easyest and lazyest way for building multi-agent LLMs applications with further finetuning which is supported by LLaMA-Factory.
 
 </details>
 
