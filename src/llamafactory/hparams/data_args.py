@@ -112,6 +112,3 @@ class DataArguments:
 
         if self.streaming and self.max_samples is not None:
             raise ValueError("`max_samples` is incompatible with `streaming`.")
-
-        if self.neat_packing and not self.packing:
-            raise ValueError("`neat_packing` requires `packing` is True.")
