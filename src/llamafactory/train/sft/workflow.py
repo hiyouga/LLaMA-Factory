@@ -28,6 +28,7 @@ from ..trainer_utils import create_modelcard_and_push
 from .metric import ComputeMetrics, compute_accuracy, eval_logit_processor
 from .trainer import CustomSeq2SeqTrainer
 
+
 if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments, TrainerCallback
 
