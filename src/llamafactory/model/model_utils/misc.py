@@ -36,6 +36,10 @@ def find_all_linear_modules(model: "PreTrainedModel", freeze_vision: bool) -> Li
         forbidden_modules.add("output")
     elif model.config.model_type in ["llava", "paligemma"]:
         forbidden_modules.add("multi_modal_projector")
+    elif model.config.model_type == "phi3_v":
+        forbidden_modules.add("0")
+        forbidden_modules.add("1")
+        forbidden_modules.add("2")
 
     if freeze_vision:
         forbidden_modules.add("vision_tower")
