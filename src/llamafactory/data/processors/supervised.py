@@ -102,7 +102,7 @@ def preprocess_supervised_dataset(
         if len(examples["prompt"][i]) % 2 != 1 or len(examples["response"][i]) != 1:
             logger.warning("Dropped invalid example: {}".format(examples["prompt"][i] + examples["response"][i]))
             continue
-        
+
         if model_args.visual_inputs_type == "glm4v_like":
             assert len(examples["images"][i]) <= 1, "GLM4v only support 1 image train yet."
             model_inputs["image_inputs"].append(get_pixel_values(examples["images"][i], None, "glm4v_like"))

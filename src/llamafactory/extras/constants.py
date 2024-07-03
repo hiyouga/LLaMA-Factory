@@ -549,7 +549,7 @@ register_model_group(
 
 register_model_group(
     models={
-        "GLM-4v-9B": {
+        "GLM-4v-9B-Chat": {
             DownloadSource.DEFAULT: "THUDM/glm-4v-9b",
             DownloadSource.MODELSCOPE: "ZhipuAI/glm-4v-9b",
         }
@@ -931,7 +931,7 @@ register_model_group(
 
 register_model_group(
     models={
-        "Phi-3-vision-128k-instruct": {
+        "Phi-3-vision-128k-Chat": {
             DownloadSource.DEFAULT: "microsoft/Phi-3-vision-128k-instruct",
             DownloadSource.MODELSCOPE: "LLM-Research/Phi-3-medium-128k-instruct",
         }
