@@ -79,6 +79,7 @@ TRAINING_STAGES = {
 STAGES_USE_PAIR_DATA = {"rm", "dpo"}
 
 SUPPORTED_CLASS_FOR_BLOCK_DIAG_ATTN = {
+    "cohere",
     "falcon",
     "gemma",
     "gemma2",
