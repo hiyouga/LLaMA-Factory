@@ -160,22 +160,30 @@ def preprocess_packed_supervised_dataset(
     model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
     knapsacks = greedy_knapsack(lengths, data_args.cutoff_len)
     for knapsack in knapsacks:
-        packed_input_ids, packed_labels = [], []
-        for length in knapsack:
+        packed_input_ids, packed_attention_masks, packed_labels = [], [], []
+        for i, length in enumerate(knapsack):
             index = length2indexes[length].pop()
             packed_input_ids += batch_input_ids[index]
             packed_labels += batch_labels[index]
+            if data_args.neat_packing:
+                packed_attention_masks += [i + 1] * len(batch_input_ids[index])  # start from 1
+            else:
+                packed_attention_masks += [1] * len(batch_input_ids[index])
 
         if len(packed_input_ids) < data_args.cutoff_len:
             pad_length = data_args.cutoff_len - len(packed_input_ids)
             packed_input_ids += [tokenizer.pad_token_id] * pad_length
             packed_labels += [IGNORE_INDEX] * pad_length
+            if data_args.neat_packing:
+                packed_attention_masks += [0] * pad_length
+            else:
+                packed_attention_masks += [1] * pad_length  # more efficient flash_attn
 
         if len(packed_input_ids) != data_args.cutoff_len:
             raise ValueError("The length of packed example should be identical to the cutoff length.")
 
         model_inputs["input_ids"].append(packed_input_ids)
-        model_inputs["attention_mask"].append([1] * data_args.cutoff_len)
+        model_inputs["attention_mask"].append(packed_attention_masks)
         model_inputs["labels"].append(packed_labels)
 
     return model_inputs
