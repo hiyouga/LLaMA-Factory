@@ -82,14 +82,11 @@ SUPPORTED_CLASS_FOR_BLOCK_DIAG_ATTN = {
     "falcon",
     "gemma",
     "gemma2",
-    "jamba",
     "llama",
     "mistral",
-    "mixtral",
     "phi",
     "phi3",
     "qwen2",
-    "qwen2_moe",
     "starcoder2",
 }
 
