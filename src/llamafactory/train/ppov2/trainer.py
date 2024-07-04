@@ -1,66 +1,115 @@
-import json
+# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+#
+# This code is inspired by the HuggingFace's TRL library.
+# https://github.com/huggingface/trl/blob/main/trl/trainer/ppov2_trainer.py
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import math
 import os
 import sys
-import math
 import warnings
 from types import MethodType
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+
 import torch
+from accelerate.utils import DistributedDataParallelKwargs
+from tqdm import tqdm
 from transformers import GenerationConfig, Trainer, TrainerControl, TrainerState
 from transformers.optimization import get_scheduler
+from transformers.trainer import DEFAULT_CALLBACKS
 from transformers.trainer_callback import CallbackHandler
+from transformers.trainer_pt_utils import remove_dummy_checkpoint
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 from transformers.utils import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
 from trl.trainer.ppov2_trainer import PPOv2Config, PPOv2Trainer
 from trl.core import PPODecorators, logprobs_from_logits
 from trl.models.utils import unwrap_model_for_generation
-from accelerate.utils import DistributedDataParallelKwargs
-from tqdm import tqdm
 
-# Define logger
-import logging
-logger = logging.getLogger(__name__)
+from ...extras.logging import get_logger
+from ...extras.misc import AverageMeter, count_parameters, get_current_device, get_logits_processor
+from ..callbacks import FixValueHeadModelCallback, SaveProcessorCallback
+from ..trainer_utils import create_custom_optimzer, create_custom_scheduler
+from .ppov2_utils import dump_layernorm, get_rewards_from_server, replace_model, restore_layernorm
+
+
+if TYPE_CHECKING:
+    from datasets import Dataset
+    from transformers import (
+        DataCollatorWithPadding,
+        PreTrainedTokenizer,
+        ProcessorMixin,
+        Seq2SeqTrainingArguments,
+        TrainerCallback,
+    )
+    from trl import AutoModelForCausalLMWithValueHead
+
+    from ...hparams import FinetuningArguments, GeneratingArguments, ModelArguments
+
+
+logger = get_logger(__name__)
+
 
 class CustomPPOv2Trainer(PPOv2Trainer, Trainer):
+    r"""
+    Inherits PPOv2Trainer.
+    """
+
     def __init__(
         self,
-        model_args,
-        training_args,
-        finetuning_args,
-        generating_args,
-        callbacks,
-        model,
-        reward_model,
-        ref_model,
-        tokenizer,
-        processor,
-        dataset,
-        data_collator,
-    ):
+        model_args: "ModelArguments",
+        training_args: "Seq2SeqTrainingArguments",
+        finetuning_args: "FinetuningArguments",
+        generating_args: "GeneratingArguments",
+        callbacks: Optional[List["TrainerCallback"]],
+        model: "AutoModelForCausalLMWithValueHead",
+        reward_model: Optional["AutoModelForCausalLMWithValueHead"],
+        ref_model: Optional["AutoModelForCausalLMWithValueHead"],
+        tokenizer: "PreTrainedTokenizer",
+        processor: Optional["ProcessorMixin"],
+        dataset: "Dataset",
+        data_collator: "DataCollatorWithPadding",
+    ) -> None:
         backward_batch_size = training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps
-        ppo_config = PPOv2Config(
-            model_name=model_args.model_name_or_path,
-            learning_rate=training_args.learning_rate,
-            mini_batch_size=training_args.per_device_train_batch_size,
+        ppov2_config = PPOv2Config(
+            base_model=model_args.model_name_or_path,
+            # learning_rate=training_args.learning_rate,
+            num_mini_batches=training_args.per_device_train_batch_size,
             batch_size=backward_batch_size * finetuning_args.ppo_buffer_size,
-            gradient_accumulation_steps=training_args.gradient_accumulation_steps,
-            ppo_epochs=finetuning_args.ppo_epochs,
-            max_grad_norm=training_args.max_grad_norm,
-            seed=training_args.seed,
+            # gradient_accumulation_steps=training_args.gradient_accumulation_steps,
+            num_ppo_epochs=finetuning_args.ppo_epochs,
+            # max_grad_norm=training_args.max_grad_norm,
+            # seed=training_args.seed,
+            # optimize_device_cache=True,
             target=finetuning_args.ppo_target,
+            use_score_scaling=finetuning_args.ppo_score_norm,
+            use_score_norm=finetuning_args.ppo_score_norm,
             whiten_rewards=finetuning_args.ppo_whiten_rewards,
             accelerator_kwargs={"step_scheduler_with_optimizer": False},
             log_with=training_args.report_to[0] if training_args.report_to else None,
             project_kwargs={"logging_dir": training_args.logging_dir},
         )
 
+        # Add deepspeed config
         if training_args.deepspeed_plugin is not None:
-            ppo_config.accelerator_kwargs["kwargs_handlers"] = [
+            ppov2_config.accelerator_kwargs["kwargs_handlers"] = [
                 DistributedDataParallelKwargs(find_unused_parameters=training_args.ddp_find_unused_parameters)
             ]
-            ppo_config.accelerator_kwargs["deepspeed_plugin"] = training_args.deepspeed_plugin
-            if ppo_config.log_with == "tensorboard":
-                ppo_config.log_with = None
+            ppov2_config.accelerator_kwargs["deepspeed_plugin"] = training_args.deepspeed_plugin
+            if ppov2_config.log_with == "tensorboard":  # tensorboard raises error about accelerator_kwargs
+                ppov2_config.log_with = None
 
+        # Create optimizer and scheduler
         if training_args.max_steps > 0:
             num_training_steps = training_args.max_steps
         else:
@@ -70,11 +119,11 @@ class CustomPPOv2Trainer(PPOv2Trainer, Trainer):
         optimizer = self.create_optimizer(model, training_args, finetuning_args)
         scheduler = self.create_scheduler(training_args, num_training_steps, optimizer)
 
-        PPOTrainer.__init__(
+        PPOv2Trainer.__init__(
             self,
-            config=ppo_config,
-            model=model,
-            ref_model=ref_model,
+            config=ppov2_config,
+            ref_policy=ref_model,
+            reward_model = reward_model,
             tokenizer=tokenizer,
             dataset=dataset,
             data_collator=data_collator,
@@ -84,8 +133,7 @@ class CustomPPOv2Trainer(PPOv2Trainer, Trainer):
         self.args = training_args
         self.model_args = model_args
         self.finetuning_args = finetuning_args
-        self.reward_model = reward_model
-        self.current_device = get_current_device()
+        self.current_device = get_current_device()  # patch for deepspeed training
 
         self.generation_config = GenerationConfig(
             pad_token_id=self.tokenizer.pad_token_id,
@@ -105,14 +153,14 @@ class CustomPPOv2Trainer(PPOv2Trainer, Trainer):
             logger.info("max_steps is given, it will override any value given in num_train_epochs")
 
         self.amp_context = torch.autocast(self.current_device.type)
-        warnings.simplefilter("ignore")
+        warnings.simplefilter("ignore")  # remove gc warnings on ref model
 
         if finetuning_args.reward_model_type == "full":
             if self.is_deepspeed_enabled:
                 if not (
                     getattr(reward_model.pretrained_model, "is_loaded_in_8bit", False)
                     or getattr(reward_model.pretrained_model, "is_loaded_in_4bit", False)
-                ):
+                ):  # quantized models are already set on the correct device
                     self.reward_model = self._prepare_deepspeed(self.reward_model)
             else:
                 self.reward_model = self.accelerator.prepare_model(self.reward_model, evaluation_mode=True)
@@ -128,7 +176,10 @@ class CustomPPOv2Trainer(PPOv2Trainer, Trainer):
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
 
-    def ppo_train(self, resume_from_checkpoint=None):
+    def ppo_train(self, resume_from_checkpoint: Optional[str] = None) -> None:
+        r"""
+        Implements training loop for the PPO stage, like _inner_training_loop() in Huggingface's Trainer.
+        """
         if resume_from_checkpoint is not None:
             raise ValueError("`resume_from_checkpoint` will be supported in the future version.")
 
@@ -182,8 +233,9 @@ class CustomPPOv2Trainer(PPOv2Trainer, Trainer):
                 dataiter = iter(self.dataloader)
                 batch = next(dataiter)
 
+            # Get inputs
             self.model.eval()
-            self.tokenizer.padding_side = "right"
+            self.tokenizer.padding_side = "right"  # change padding side
             queries, responses, rewards = [], [], []
             for idx in range(0, self.config.batch_size, self.config.mini_batch_size):
                 mini_batch_queries, mini_batch_responses = self.get_inputs(
@@ -194,182 +246,254 @@ class CustomPPOv2Trainer(PPOv2Trainer, Trainer):
                 responses.extend(mini_batch_responses)
                 rewards.extend(mini_batch_rewards)
 
+            # Run PPOv2 step
             self.model.train()
             stats = self.step(queries, responses, rewards)
-            self.tokenizer.padding_side = "left"
-            loss_meter.update(float(stats["ppo/loss/total"]), n=len(rewards))
+            self.tokenizer.padding_side = "left"  # restore padding side
+            loss_meter.update(float(stats["ppov2/loss/total"]), n=len(rewards))
             reward_meter.update(torch.stack(rewards).mean().item(), n=len(rewards))
 
             if self.config.log_with is not None:
                 try:
-                    batch["query"]
-                    batch["response"] = responses
-                    batch["reward"] = rewards
-                    self.accelerator.log(batch, step=step)
-                except Exception as e:
-                    logger.warning(f"Logging failed at step {step}: {e}")
+                    batch["query"] = self.tokenizer.batch_decode(queries, skip_special_tokens=True)
+                    batch["response"] = self.tokenizer.batch_decode(responses, skip_special_tokens=True)
+                    self.log_stats(stats, batch, rewards)
+                except Exception:
+                    logger.warning("Failed to save stats due to unknown errors.")
 
             self.state.global_step += 1
-            self.state.log_history.append(stats)
+            self.callback_handler.on_step_end(self.args, self.state, self.control)
 
-            self.control = self.callback_handler.on_step_end(self.args, self.state, self.control)
-            self._maybe_log_save_evaluate(tr_loss=loss_meter.avg, model=self.model, trial=None, epoch=None)
+            if self.is_local_process_zero() and (step + 1) % self.args.logging_steps == 0:
+                logs = dict(
+                    loss=round(loss_meter.avg, 4),
+                    reward=round(reward_meter.avg, 4),
+                    learning_rate=stats["ppov2/learning_rate"],
+                    epoch=round(step / steps_in_epoch, 2),
+                )
+                tqdm.write(str(logs))
+                logs["step"] = step
+                self.state.log_history.append(logs)
+                self.callback_handler.on_log(self.args, self.state, self.control, logs)
+                loss_meter.reset()
+                reward_meter.reset()
 
-            if self.control.should_training_stop:
+            if (step + 1) % self.args.save_steps == 0:  # save checkpoint
+                self.save_model(
+                    os.path.join(self.args.output_dir, "{}-{}".format(PREFIX_CHECKPOINT_DIR, self.state.global_step))
+                )
+                self.callback_handler.on_save(self.args, self.state, self.control)
+
+            if self.control.should_epoch_stop or self.control.should_training_stop:
                 break
 
         self.callback_handler.on_train_end(self.args, self.state, self.control)
-        self.state.is_world_process_zero = self.is_world_process_zero()
-        if self.is_world_process_zero():
-            self._save_training_summary()
 
-        return loss_meter.avg
+    def create_optimizer(
+        self,
+        model: "AutoModelForCausalLMWithValueHead",
+        training_args: "Seq2SeqTrainingArguments",
+        finetuning_args: "FinetuningArguments",
+    ) -> "torch.optim.Optimizer":
+        optimizer = create_custom_optimzer(model, training_args, finetuning_args)
+        if optimizer is None:
+            decay_params, nodecay_params = [], []
+            decay_param_names = self.get_decay_parameter_names(model)
+            for name, param in model.named_parameters():
+                if param.requires_grad:
+                    if name in decay_param_names:
+                        decay_params.append(param)
+                    else:
+                        nodecay_params.append(param)
 
-    def get_inputs(self, batch):
-        """
-        Prepares inputs for the model.
-        """
-        inputs = self.tokenizer(batch["text"], return_tensors="pt", padding=True, truncation=True, max_length=512)
-        inputs = {k: v.to(self.current_device) for k, v in inputs.items()}
-        return inputs
+            optim_class, optim_kwargs = Trainer.get_optimizer_cls_and_kwargs(training_args)
+            param_groups = [
+                dict(params=nodecay_params),
+                dict(params=decay_params, weight_decay=training_args.weight_decay),
+            ]
+            optimizer = optim_class(param_groups, **optim_kwargs)
 
-    def get_rewards(self, queries, responses):
-        """
-        Calculates rewards for the generated responses.
-        """
-        with torch.no_grad():
-            rewards = []
-            for query, response in zip(queries, responses):
-                reward = self.reward_model(query, response)
-                rewards.append(reward)
-        return rewards
-
-    def create_optimizer(self, model, training_args, finetuning_args):
-        """
-        Creates optimizer for training.
-        """
-        no_decay = ["bias", "LayerNorm.weight"]
-        optimizer_grouped_parameters = [
-            {
-                "params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
-                "weight_decay": training_args.weight_decay,
-            },
-            {
-                "params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)],
-                "weight_decay": 0.0,
-            },
-        ]
-        optimizer = torch.optim.AdamW(optimizer_grouped_parameters, lr=training_args.learning_rate)
         return optimizer
 
-    def create_scheduler(self, training_args, num_training_steps, optimizer):
-        """
-        Creates scheduler for learning rate adjustment.
-        """
-        scheduler = get_scheduler(
-            name=training_args.lr_scheduler_type,
+    def create_scheduler(
+        self, training_args: "Seq2SeqTrainingArguments", num_training_steps: int, optimizer: "torch.optim.Optimizer"
+    ) -> "torch.optim.lr_scheduler.LRScheduler":
+        create_custom_scheduler(training_args, num_training_steps, optimizer)
+        lr_scheduler = get_scheduler(
+            training_args.lr_scheduler_type,
             optimizer=optimizer,
-            num_warmup_steps=training_args.warmup_steps,
+            num_warmup_steps=training_args.get_warmup_steps(num_training_steps),
             num_training_steps=num_training_steps,
         )
-        return scheduler
+        return lr_scheduler
 
-    def _maybe_log_save_evaluate(self, tr_loss, model, trial, epoch):
+    @torch.no_grad()
+    def get_inputs(self, batch: Dict[str, "torch.Tensor"]) -> Tuple[List["torch.Tensor"], List["torch.Tensor"]]:
+        r"""
+        Generates model's responses given queries.
         """
-        Performs logging, saving and evaluation if needed.
-        """
-        if self.control.should_log:
-            logs = {}
-            logs["loss"] = tr_loss
-            self.state.log_history.append(logs)
-            self.control = self.callback_handler.on_log(self.args, self.state, self.control)
-        
-        if self.control.should_save:
-            self._save_checkpoint(self.model, trial, metrics=None)
-            self.control = self.callback_handler.on_save(self.args, self.state, self.control)
-        
-        if self.control.should_evaluate:
-            metrics = self.evaluate()
-            self.control = self.callback_handler.on_evaluate(self.args, self.state, self.control)
+        if batch["input_ids"].size(0) == 1:  # handle llama2 ppo with gradient accumulation > 1
+            start_index = (batch["input_ids"][0] != self.tokenizer.pad_token_id).nonzero()[0].item()
+            for k, v in batch.items():
+                batch[k] = v[:, start_index:]
 
-    def _save_checkpoint(self, model, trial, metrics=None):
-        """
-        Saves model checkpoint.
-        """
-        checkpoint_folder = f"{PREFIX_CHECKPOINT_DIR}-{self.state.global_step}"
-        checkpoint_dir = os.path.join(self.args.output_dir, checkpoint_folder)
+        with unwrap_model_for_generation(self.model, self.accelerator) as unwrapped_model:
+            unwrapped_model: "AutoModelForCausalLMWithValueHead" = self.accelerator.unwrap_model(self.model)
+            if self.model_args.upcast_layernorm:
+                layernorm_params = dump_layernorm(unwrapped_model)
 
-        self.store_flos()
-        if hasattr(model, "module"):
-            state_dict = model.module.state_dict()
+            generate_output: "torch.Tensor" = unwrapped_model.generate(
+                generation_config=self.generation_config, logits_processor=get_logits_processor(), **batch
+            )
+            if self.model_args.upcast_layernorm:
+                restore_layernorm(unwrapped_model, layernorm_params)
+
+        query = batch["input_ids"].detach().cpu()
+        response = generate_output[:, batch["input_ids"].size(-1) :].detach().cpu()
+        queries, responses = [], []
+        for i in range(len(query)):
+            query_start_index = (query[i] != self.tokenizer.pad_token_id).nonzero()[0].item()
+            response_indexes = (response[i] != self.tokenizer.pad_token_id).nonzero()
+
+            if len(response_indexes) == 0:  # allow empty response
+                response_length = 1
+            elif self.tokenizer.eos_token_id == self.tokenizer.pad_token_id:  # include eos token
+                response_length = response_indexes[-1].item() + 2
+            else:
+                response_length = response_indexes[-1].item() + 1
+
+            queries.append(query[i, query_start_index:])  # remove padding from left
+            responses.append(response[i, :response_length])  # remove padding from right
+
+        return queries, responses
+
+    @torch.no_grad()
+    def get_rewards(
+        self,
+        queries: List["torch.Tensor"],
+        responses: List["torch.Tensor"],
+    ) -> List["torch.Tensor"]:
+        r"""
+        Computes scores using given reward model.
+
+        Both inputs and outputs are put on CPU.
+        """
+        if self.finetuning_args.reward_model_type == "api":
+            token_ids = [torch.cat((q, r), dim=-1).tolist() for q, r in zip(queries, responses)]
+            messages = self.tokenizer.batch_decode(token_ids, skip_special_tokens=True)
+            return get_rewards_from_server(self.reward_model, messages)
+
+        batch: Dict[str, "torch.Tensor"] = self.prepare_model_inputs(queries, responses)
+        unwrapped_model: "AutoModelForCausalLMWithValueHead" = self.accelerator.unwrap_model(self.model)
+
+        if self.finetuning_args.reward_model_type == "lora":
+            replace_model(unwrapped_model, target="reward")
+            reward_model = self.model
         else:
-            state_dict = model.state_dict()
+            reward_model = self.reward_model
 
-        torch.save(state_dict, os.path.join(checkpoint_dir, WEIGHTS_NAME))
-        with open(os.path.join(checkpoint_dir, "trainer_state.json"), "w") as f:
-            json.dump(self.state_dict(), f)
+        with unwrap_model_for_generation(reward_model, self.accelerator), self.amp_context:  # support bf16
+            _, _, values = reward_model(**batch, return_dict=True, use_cache=False)
 
-        if metrics is not None and self.is_world_process_zero():
-            with open(os.path.join(checkpoint_dir, "metrics.json"), "w") as f:
-                json.dump(metrics, f)
+        if self.finetuning_args.reward_model_type == "lora":
+            replace_model(unwrapped_model, target="default")
 
-        self.control = self.callback_handler.on_save(self.args, self.state, self.control)
+        rewards = values.gather(dim=-1, index=(batch["attention_mask"].sum(dim=-1, keepdim=True) - 1))
+        return rewards.float().detach()  # use fp32 type
 
-    def evaluate(self):
+    @PPODecorators.empty_device_cache()
+    def batched_forward_pass(
+        self,
+        model: "AutoModelForCausalLMWithValueHead",
+        queries: "torch.Tensor",
+        responses: "torch.Tensor",
+        model_inputs: Dict[str, Any],
+        return_logits: bool = False,
+        response_masks: Optional["torch.Tensor"] = None,
+    ) -> Tuple["torch.Tensor", Optional["torch.Tensor"], "torch.Tensor", "torch.Tensor"]:
+        r"""
+        Calculates model outputs in multiple batches.
+
+        Subclass and override to inject custom behavior.
         """
-        Evaluation logic.
+        bs = len(queries)
+        fbs = self.config.mini_batch_size
+        all_logprobs = []
+        all_logits = []
+        all_masks = []
+        all_values = []
+
+        for i in range(math.ceil(bs / fbs)):
+            input_kwargs = {key: value[i * fbs : (i + 1) * fbs] for key, value in model_inputs.items()}
+            query_batch = queries[i * fbs : (i + 1) * fbs]
+            response_batch = responses[i * fbs : (i + 1) * fbs]
+            if response_masks is not None:
+                response_masks_batch = response_masks[i * fbs : (i + 1) * fbs]
+            input_ids = input_kwargs["input_ids"]
+            attention_mask = input_kwargs["attention_mask"]
+
+            with self.amp_context:  # support bf16
+                logits, _, values = model(**input_kwargs, return_dict=True, use_cache=False)
+
+            logprobs = logprobs_from_logits(logits[:, :-1, :], input_ids[:, 1:])
+            masks = torch.zeros_like(attention_mask)
+            masks[:, :-1] = attention_mask[:, 1:]
+
+            for j in range(len(query_batch)):
+                start = len(query_batch[j]) - 1
+                if attention_mask[j, 0] == 0:  # offset left padding
+                    start += attention_mask[j, :].nonzero()[0].item()
+                end = start + len(response_batch[j])
+
+                if response_masks is not None:
+                    response_masks_batch = torch.cat((torch.zeros_like(query_batch[j]), response_masks_batch[j]))[1:]
+
+                masks[j, :start] = 0
+                masks[j, end:] = 0
+                if response_masks is not None:
+                    masks[j, start:end] = masks[j, start:end] * response_masks_batch[j][start:end]
+
+            if return_logits:
+                all_logits.append(logits)
+            else:
+                del logits
+
+            all_values.append(values)
+            all_logprobs.append(logprobs)
+            all_masks.append(masks)
+
+        return (
+            torch.cat(all_logprobs),
+            torch.cat(all_logits)[:, :-1] if return_logits else None,
+            torch.cat(all_values)[:, :-1],
+            torch.cat(all_masks)[:, :-1],
+        )
+
+    def save_model(self, output_dir: Optional[str] = None) -> None:
+        r"""
+        Saves model checkpoint.
+
+        Subclass and override to inject custom behavior.
         """
-        # Custom evaluation logic
-        return {"eval_loss": 0.0}  # Replace with actual evaluation metrics
+        if output_dir is None:
+            output_dir = self.args.output_dir
 
-def get_current_device():
-    """
-    Get the current device (CPU or GPU).
-    """
-    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if self.is_fsdp_enabled or self.is_deepspeed_enabled:
+            try:
+                state_dict = self.accelerator.get_state_dict(self.model)  # must be called at all ranks
+                if self.args.should_save:
+                    self._save(output_dir, state_dict=state_dict)
+            except ValueError:
+                logger.warning(
+                    " stage3_gather_16bit_weights_on_model_save=false. Saving the full checkpoint instead,"
+                    " use zero_to_fp32.py to recover weights"
+                )
+                if self.args.should_save:
+                    self._save(output_dir, state_dict={})
+                # remove the dummy state_dict
+                remove_dummy_checkpoint(self.args.should_save, output_dir, [WEIGHTS_NAME, SAFE_WEIGHTS_NAME])
+                self.model.save_checkpoint(output_dir)
 
-def count_parameters(model):
-    """
-    Count the number of parameters in the model.
-    """
-    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    non_trainable_params = sum(p.numel() for p in model.parameters() if not p.requires_grad)
-    return trainable_params, non_trainable_params
-
-class AverageMeter:
-    """
-    Computes and stores the average and current value.
-    """
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
-
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
-
-class FixValueHeadModelCallback:
-    """
-    A callback to fix value head model during PPOv2 training.
-    """
-    def on_step_end(self, args, state, control, **kwargs):
-        # Custom logic for fixing value head model
-        return control
-
-class SaveProcessorCallback:
-    """
-    A callback to save processor during PPOv2 training.
-    """
-    def __init__(self, processor):
-        self.processor = processor
-
-    def on_save(self, args, state, control, **kwargs):
-        # Custom logic for saving processor
-        return control
+        elif self.args.should_save:
+            unwrapped_model: "AutoModelForCausalLMWithValueHead" = self.accelerator.unwrap_model(self.model)
+            self._save(output_dir, state_dict=unwrapped_model.state_dict())
