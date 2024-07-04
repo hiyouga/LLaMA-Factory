@@ -41,7 +41,7 @@ def prepare_4d_attention_mask(attention_mask_with_indices: "torch.Tensor", dtype
                 [x, x, o, x, x, x],
                 [x, x, o, o, x, x],
                 [x, x, o, o, o, x],
-                [x, x, o, x, x, x],
+                [x, x, x, x, x, x],
             ]
         ]
     ]
