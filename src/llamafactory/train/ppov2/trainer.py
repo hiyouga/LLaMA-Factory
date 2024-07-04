@@ -10,7 +10,7 @@ from transformers.optimization import get_scheduler
 from transformers.trainer_callback import CallbackHandler
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 from transformers.utils import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
-from trl import PPOConfig, PPOTrainer
+from trl.trainer.ppov2_trainer import PPOv2Config, PPOv2Trainer
 from trl.core import PPODecorators, logprobs_from_logits
 from trl.models.utils import unwrap_model_for_generation
 from accelerate.utils import DistributedDataParallelKwargs
@@ -20,7 +20,7 @@ from tqdm import tqdm
 import logging
 logger = logging.getLogger(__name__)
 
-class CustomPPOv2Trainer(PPOTrainer, Trainer):
+class CustomPPOv2Trainer(PPOv2Trainer, Trainer):
     def __init__(
         self,
         model_args,
@@ -37,7 +37,7 @@ class CustomPPOv2Trainer(PPOTrainer, Trainer):
         data_collator,
     ):
         backward_batch_size = training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps
-        ppo_config = PPOConfig(
+        ppo_config = PPOv2Config(
             model_name=model_args.model_name_or_path,
             learning_rate=training_args.learning_rate,
             mini_batch_size=training_args.per_device_train_batch_size,
