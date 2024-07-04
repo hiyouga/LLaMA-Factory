@@ -1,3 +1,10 @@
+import json
+import os
+import sys
+import math
+import warnings
+from types import MethodType
+import torch
 from transformers import GenerationConfig, Trainer, TrainerControl, TrainerState
 from transformers.optimization import get_scheduler
 from transformers.trainer_callback import CallbackHandler
@@ -6,9 +13,12 @@ from transformers.utils import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
 from trl import PPOConfig, PPOTrainer
 from trl.core import PPODecorators, logprobs_from_logits
 from trl.models.utils import unwrap_model_for_generation
-import torch
 from accelerate.utils import DistributedDataParallelKwargs
 from tqdm import tqdm
+
+# Define logger
+import logging
+logger = logging.getLogger(__name__)
 
 class CustomPPOv2Trainer(PPOTrainer, Trainer):
     def __init__(
@@ -347,7 +357,7 @@ class AverageMeter:
 
 class FixValueHeadModelCallback:
     """
-    A callback to fix value head model during PPO training.
+    A callback to fix value head model during PPOv2 training.
     """
     def on_step_end(self, args, state, control, **kwargs):
         # Custom logic for fixing value head model
@@ -355,7 +365,7 @@ class FixValueHeadModelCallback:
 
 class SaveProcessorCallback:
     """
-    A callback to save processor during PPO training.
+    A callback to save processor during PPOv2 training.
     """
     def __init__(self, processor):
         self.processor = processor
