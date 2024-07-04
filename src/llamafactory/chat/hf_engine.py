@@ -119,7 +119,7 @@ class HuggingfaceEngine(BaseEngine):
         stop: Optional[Union[str, List[str]]] = input_kwargs.pop("stop", None)
 
         if stop is not None:
-            logger.warning("Stop parameter is not supported in Huggingface engine yet.")
+            logger.warning("Stop parameter is not supported by the huggingface engine yet.")
 
         generating_args = generating_args.copy()
         generating_args.update(
