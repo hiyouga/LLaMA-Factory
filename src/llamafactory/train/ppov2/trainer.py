@@ -7,6 +7,7 @@ from types import MethodType
 import torch
 from transformers import GenerationConfig, Trainer, TrainerControl, TrainerState
 from transformers.optimization import get_scheduler
+from transformers.trainer import DEFAULT_CALLBACKS
 from transformers.trainer_callback import CallbackHandler
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 from transformers.utils import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
@@ -70,7 +71,7 @@ class CustomPPOv2Trainer(PPOv2Trainer, Trainer):
         optimizer = self.create_optimizer(model, training_args, finetuning_args)
         scheduler = self.create_scheduler(training_args, num_training_steps, optimizer)
 
-        PPOTrainer.__init__(
+        PPOv2Trainer.__init__(
             self,
             config=ppo_config,
             model=model,
