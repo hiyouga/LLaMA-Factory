@@ -33,6 +33,11 @@ class DataArguments:
         default=None,
         metadata={"help": "The name of provided dataset(s) to use. Use commas to separate multiple datasets."},
     )
+    eval_dataset: Optional[str] = field(
+        default=None,
+        metadata={"help": "The name of provided dataset(s) to use for eval during training. "
+                          "Use commas to separate multiple datasets."},
+    )
     dataset_dir: str = field(
         default="data",
         metadata={"help": "Path to the folder containing the datasets."},
@@ -104,6 +109,10 @@ class DataArguments:
     tokenized_path: Optional[str] = field(
         default=None,
         metadata={"help": "Path to save or load the tokenized datasets."},
+    )
+    eval_tokenized_path: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to save or load the tokenized eval datasets."},
     )
 
     def __post_init__(self):
