@@ -172,9 +172,19 @@
   "deepctrl": {
     "ms_hub_url": "deepctrl/deepctrl-sft-data"
   },
-  "adgen": {
+  "adgen_train": {
     "hf_hub_url": "HasturOfficial/adgen",
     "ms_hub_url": "AI-ModelScope/adgen",
+    "split": "train",
+    "columns": {
+      "prompt": "content",
+      "response": "summary"
+    }
+  },
+  "adgen_val": {
+    "hf_hub_url": "HasturOfficial/adgen",
+    "ms_hub_url": "AI-ModelScope/adgen",
+    "split": "validation",
     "columns": {
       "prompt": "content",
       "response": "summary"
