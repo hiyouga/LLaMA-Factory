@@ -56,7 +56,7 @@ def _encode_feedback_example(
         kl_messages = prompt + [kl_response[1]]
 
     prompt_ids, response_ids = template.encode_oneturn(tokenizer, messages, system, tools)
-    _, kl_response_ids = template.encode_oneturn(tokenizer, kl_messages, system, tools)
+    kl_prompt_ids, kl_response_ids = template.encode_oneturn(tokenizer, kl_messages, system, tools)
 
     if template.efficient_eos:
         response_ids += [tokenizer.eos_token_id]
@@ -65,17 +65,19 @@ def _encode_feedback_example(
     if processor is not None and hasattr(processor, "image_seq_length"):  # paligemma models
         image_token_id = tokenizer.convert_tokens_to_ids(template.image_token)
         prompt_ids = [image_token_id] * getattr(processor, "image_seq_length") + prompt_ids
+        kl_prompt_ids = [image_token_id] * getattr(processor, "image_seq_length") + kl_prompt_ids
 
-    # do not consider the kl_response
     source_len, target_len = infer_seqlen(len(prompt_ids), len(response_ids), data_args.cutoff_len)
     prompt_ids = prompt_ids[:source_len]
     response_ids = response_ids[:target_len]
-    kl_response_ids = kl_response_ids[:target_len]
+    kl_source_len, kl_target_len = infer_seqlen(len(kl_prompt_ids), len(kl_response_ids), data_args.cutoff_len)
+    kl_prompt_ids = kl_prompt_ids[:kl_source_len]
+    kl_response_ids = kl_response_ids[:kl_target_len]
 
     input_ids = prompt_ids + response_ids
-    labels = [IGNORE_INDEX] * len(prompt_ids) + response_ids
-    kl_input_ids = prompt_ids + kl_response_ids
-    kl_labels = [IGNORE_INDEX] * len(prompt_ids) + kl_response_ids
+    labels = [IGNORE_INDEX] * source_len + response_ids
+    kl_input_ids = kl_prompt_ids + kl_response_ids
+    kl_labels = [IGNORE_INDEX] * kl_source_len + kl_response_ids
 
     return input_ids, labels, kl_input_ids, kl_labels, kto_tag
 
