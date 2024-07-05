@@ -63,9 +63,9 @@ def _encode_pairwise_example(
     rejected_ids = rejected_ids[:target_len]
 
     chosen_input_ids = prompt_ids + chosen_ids
-    chosen_labels = [IGNORE_INDEX] * len(prompt_ids) + chosen_ids
+    chosen_labels = [IGNORE_INDEX] * source_len + chosen_ids
     rejected_input_ids = prompt_ids + rejected_ids
-    rejected_labels = [IGNORE_INDEX] * len(prompt_ids) + rejected_ids
+    rejected_labels = [IGNORE_INDEX] * source_len + rejected_ids
 
     return chosen_input_ids, chosen_labels, rejected_input_ids, rejected_labels
 
