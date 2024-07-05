@@ -65,9 +65,9 @@ def _encode_supervised_example(
         if data_args.train_on_prompt:
             source_mask = source_ids
         elif turn_idx != 0 and template.efficient_eos:
-            source_mask = [tokenizer.eos_token_id] + [IGNORE_INDEX] * (len(source_ids) - 1)
+            source_mask = [tokenizer.eos_token_id] + [IGNORE_INDEX] * (source_len - 1)
         else:
-            source_mask = [IGNORE_INDEX] * len(source_ids)
+            source_mask = [IGNORE_INDEX] * source_len
 
         input_ids += source_ids + target_ids
         labels += source_mask + target_ids
