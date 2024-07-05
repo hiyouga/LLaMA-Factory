@@ -65,7 +65,7 @@ def calculate_lr(
     )
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
-    trainset = get_dataset(model_args, data_args, training_args, stage, **tokenizer_module)
+    dataset_module = get_dataset(model_args, data_args, training_args, stage, **tokenizer_module)
     if stage == "pt":
         data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
     elif stage == "sft":
@@ -73,7 +73,7 @@ def calculate_lr(
     else:
         raise NotImplementedError("Stage does not supported: {}.".format(stage))
 
-    dataloader = DataLoader(trainset, batch_size, shuffle=False, collate_fn=data_collator, pin_memory=True)
+    dataloader = DataLoader(dataset_module["eval_dataset"], batch_size, shuffle=False, collate_fn=data_collator, pin_memory=True)
     valid_tokens, total_tokens = 0, 0
     for batch in tqdm(dataloader):
         valid_tokens += torch.sum(batch["labels"] != IGNORE_INDEX).item()
