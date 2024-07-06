@@ -113,7 +113,10 @@ def gen_cmd(args: Dict[str, Any]) -> str:
     for k, v in clean_cmd(args).items():
         cmd_lines.append("    --{} {} ".format(k, str(v)))
 
-    cmd_text = "\\\n".join(cmd_lines)
+    if os.name == "nt":
+        cmd_text = "`\n".join(cmd_lines)
+    else:
+        cmd_text = "\\\n".join(cmd_lines)
     cmd_text = "```bash\n{}\n```".format(cmd_text)
     return cmd_text
 
