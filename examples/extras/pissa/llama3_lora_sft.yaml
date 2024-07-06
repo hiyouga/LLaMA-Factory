@@ -7,7 +7,7 @@ do_train: true
 finetuning_type: lora
 lora_target: all
 pissa_init: true
-pissa_iter: 4
+pissa_iter: 16
 pissa_convert: true
 
 ### dataset
