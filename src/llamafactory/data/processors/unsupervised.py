@@ -72,7 +72,7 @@ def preprocess_unsupervised_dataset(
 ) -> Dict[str, List[List[int]]]:
     # build inputs with format `<bos> X` and labels with format `Y <eos>`
     model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
-    if processor is not None and model_args.visual_inputs_type == "vision_tower":
+    if processor is not None and model_args.visual_inputs_type in ["vision_tower","phi3v_like"]:
         model_inputs["pixel_values"] = []
         if hasattr(processor, "image_seq_length"):  # paligemma models
             model_inputs["token_type_ids"] = []
@@ -110,7 +110,7 @@ def preprocess_unsupervised_dataset(
         model_inputs["input_ids"].append(input_ids)
         model_inputs["attention_mask"].append([1] * len(input_ids))
         model_inputs["labels"].append(labels)
-        if processor is not None and model_args.visual_inputs_type == "vision_tower":
+        if processor is not None and model_args.visual_inputs_type in ["vision_tower","phi3v_like"]:
             model_inputs["pixel_values"].append(get_pixel_values(examples["images"][i], processor))
             if hasattr(processor, "image_seq_length"):  # paligemma models
                 model_inputs["token_type_ids"].append(get_paligemma_token_type_ids(len(input_ids), processor))
