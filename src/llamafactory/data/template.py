@@ -511,6 +511,23 @@ _register_template(
 
 
 _register_template(
+    name="codegeex4",
+    format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>\n"]),
+    format_system=StringFormatter(slots=["<|system|>\n{{content}}"]),
+    format_function=FunctionFormatter(slots=[], tool_format="glm4"),
+    format_observation=StringFormatter(slots=["<|observation|>\n{{content}}<|assistant|>\n"]),
+    format_tools=ToolFormatter(tool_format="glm4"),
+    format_prefix=EmptyFormatter(slots=["[gMASK]<sop>"]),
+    default_system=(
+        "你是一位智能编程助手，你叫CodeGeeX。你会为用户回答关于编程、代码、计算机方面的任何问题，"
+        "并提供格式规范、可以执行、准确安全的代码，并在必要时提供详细的解释。"
+    ),
+    stop_words=["<|user|>", "<|observation|>"],
+    efficient_eos=True,
+)
+
+
+_register_template(
     name="cohere",
     format_user=StringFormatter(
         slots=[
