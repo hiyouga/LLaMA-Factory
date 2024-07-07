@@ -81,3 +81,8 @@ def is_vllm_available():
 @lru_cache
 def is_vllm_version_greater_than_0_5():
     return _get_package_version("vllm") >= version.parse("0.5.0")
+
+
+@lru_cache
+def is_vllm_version_greater_than_0_5_1():
+    return _get_package_version("vllm") >= version.parse("0.5.1")
