@@ -185,7 +185,7 @@ class Runner:
             args["additional_target"] = get("train.additional_target") or None
 
             if args["use_llama_pro"]:
-                args["num_layer_trainable"] = get("train.num_layer_trainable")
+                args["freeze_trainable_layers"] = get("train.freeze_trainable_layers")
 
         # rlhf config
         if args["stage"] == "ppo":
