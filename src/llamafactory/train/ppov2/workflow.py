@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from ...hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
 
 
-def run_ppov2(
+def run_ppo(
     model_args: "ModelArguments",
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",

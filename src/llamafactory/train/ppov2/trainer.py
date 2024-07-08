@@ -1,7 +1,7 @@
 # Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
 #
 # This code is inspired by the HuggingFace's TRL library.
-# https://github.com/huggingface/trl/blob/main/trl/trainer/ppov2_trainer.py
+# https://github.com/huggingface/trl/blob/v0.8.0/trl/trainer/ppo_trainer.py
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,8 @@ from transformers.trainer_callback import CallbackHandler
 from transformers.trainer_pt_utils import remove_dummy_checkpoint
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 from transformers.utils import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
-from trl.trainer.ppov2_trainer import PPOv2Config, PPOv2Trainer
+from trl.trainer.ppov2_trainer import PPOv2Trainer
+from trl.trainer.ppov2_config import PPOv2Config
 from trl.core import PPODecorators, logprobs_from_logits
 from trl.models.utils import unwrap_model_for_generation
 
@@ -40,7 +41,7 @@ from ...extras.logging import get_logger
 from ...extras.misc import AverageMeter, count_parameters, get_current_device, get_logits_processor
 from ..callbacks import FixValueHeadModelCallback, SaveProcessorCallback
 from ..trainer_utils import create_custom_optimzer, create_custom_scheduler
-from .ppov2_utils import dump_layernorm, get_rewards_from_server, replace_model, restore_layernorm
+from .ppo_utils import dump_layernorm, get_rewards_from_server, replace_model, restore_layernorm
 
 
 if TYPE_CHECKING:
@@ -81,16 +82,16 @@ class CustomPPOv2Trainer(PPOv2Trainer, Trainer):
         data_collator: "DataCollatorWithPadding",
     ) -> None:
         backward_batch_size = training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps
-        ppov2_config = PPOv2Config(
-            base_model=model_args.model_name_or_path,
-            # learning_rate=training_args.learning_rate,
-            num_mini_batches=training_args.per_device_train_batch_size,
+        ppo_config = PPOv2Config(
+            model_name=model_args.model_name_or_path,
+            learning_rate=training_args.learning_rate,
+            mini_batch_size=training_args.per_device_train_batch_size,
             batch_size=backward_batch_size * finetuning_args.ppo_buffer_size,
-            # gradient_accumulation_steps=training_args.gradient_accumulation_steps,
-            num_ppo_epochs=finetuning_args.ppo_epochs,
-            # max_grad_norm=training_args.max_grad_norm,
-            # seed=training_args.seed,
-            # optimize_device_cache=True,
+            gradient_accumulation_steps=training_args.gradient_accumulation_steps,
+            ppo_epochs=finetuning_args.ppo_epochs,
+            max_grad_norm=training_args.max_grad_norm,
+            seed=training_args.seed,
+            optimize_device_cache=True,
             target=finetuning_args.ppo_target,
             use_score_scaling=finetuning_args.ppo_score_norm,
             use_score_norm=finetuning_args.ppo_score_norm,
@@ -102,12 +103,12 @@ class CustomPPOv2Trainer(PPOv2Trainer, Trainer):
 
         # Add deepspeed config
         if training_args.deepspeed_plugin is not None:
-            ppov2_config.accelerator_kwargs["kwargs_handlers"] = [
+            ppo_config.accelerator_kwargs["kwargs_handlers"] = [
                 DistributedDataParallelKwargs(find_unused_parameters=training_args.ddp_find_unused_parameters)
             ]
-            ppov2_config.accelerator_kwargs["deepspeed_plugin"] = training_args.deepspeed_plugin
-            if ppov2_config.log_with == "tensorboard":  # tensorboard raises error about accelerator_kwargs
-                ppov2_config.log_with = None
+            ppo_config.accelerator_kwargs["deepspeed_plugin"] = training_args.deepspeed_plugin
+            if ppo_config.log_with == "tensorboard":  # tensorboard raises error about accelerator_kwargs
+                ppo_config.log_with = None
 
         # Create optimizer and scheduler
         if training_args.max_steps > 0:
@@ -121,9 +122,9 @@ class CustomPPOv2Trainer(PPOv2Trainer, Trainer):
 
         PPOv2Trainer.__init__(
             self,
-            config=ppov2_config,
-            ref_policy=ref_model,
-            reward_model = reward_model,
+            config=ppo_config,
+            model=model,
+            ref_model=ref_model,
             tokenizer=tokenizer,
             dataset=dataset,
             data_collator=data_collator,
@@ -133,6 +134,7 @@ class CustomPPOv2Trainer(PPOv2Trainer, Trainer):
         self.args = training_args
         self.model_args = model_args
         self.finetuning_args = finetuning_args
+        self.reward_model = reward_model
         self.current_device = get_current_device()  # patch for deepspeed training
 
         self.generation_config = GenerationConfig(
@@ -246,11 +248,11 @@ class CustomPPOv2Trainer(PPOv2Trainer, Trainer):
                 responses.extend(mini_batch_responses)
                 rewards.extend(mini_batch_rewards)
 
-            # Run PPOv2 step
+            # Run PPO step
             self.model.train()
             stats = self.step(queries, responses, rewards)
             self.tokenizer.padding_side = "left"  # restore padding side
-            loss_meter.update(float(stats["ppov2/loss/total"]), n=len(rewards))
+            loss_meter.update(float(stats["ppo/loss/total"]), n=len(rewards))
             reward_meter.update(torch.stack(rewards).mean().item(), n=len(rewards))
 
             if self.config.log_with is not None:
@@ -268,7 +270,7 @@ class CustomPPOv2Trainer(PPOv2Trainer, Trainer):
                 logs = dict(
                     loss=round(loss_meter.avg, 4),
                     reward=round(reward_meter.avg, 4),
-                    learning_rate=stats["ppov2/learning_rate"],
+                    learning_rate=stats["ppo/learning_rate"],
                     epoch=round(step / steps_in_epoch, 2),
                 )
                 tqdm.write(str(logs))
@@ -497,3 +499,4 @@ class CustomPPOv2Trainer(PPOv2Trainer, Trainer):
         elif self.args.should_save:
             unwrapped_model: "AutoModelForCausalLMWithValueHead" = self.accelerator.unwrap_model(self.model)
             self._save(output_dir, state_dict=unwrapped_model.state_dict())
+
