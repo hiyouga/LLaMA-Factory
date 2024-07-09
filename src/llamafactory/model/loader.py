@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any, Dict, Optional, TypedDict
 
-from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForVision2Seq, AutoProcessor, AutoTokenizer
+from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForVision2Seq, AutoProcessor, AutoTokenizer, LlamaForCausalLM
 from trl import AutoModelForCausalLMWithValueHead
 
 from ..extras.logging import get_logger

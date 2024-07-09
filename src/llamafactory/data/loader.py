@@ -143,6 +143,18 @@ def get_dataset(
         if has_tokenized_data(data_args.tokenized_path):
             logger.warning("Loading dataset from disk will ignore other data arguments.")
             dataset = load_from_disk(data_args.tokenized_path)
+            # ---lsy---
+            to_remove = [col for col in dataset.column_names if col != "input_ids"]
+            # import copy
+            # first_item = copy.deepcopy(dataset[0]['input_ids'])
+            def update_column(example):
+                example['input_ids'] = example['input_ids'][:data_args.cutoff_len]
+                # example['input_ids'] = first_item[:data_args.cutoff_len]
+                return example
+
+            # # 使用 map 方法添加新列
+            dataset = dataset.map(update_column,remove_columns=to_remove)
+            # ---lsy---
             logger.info("Loaded tokenized dataset from {}.".format(data_args.tokenized_path))
             if data_args.streaming:
                 dataset = dataset.to_iterable_dataset()
@@ -166,6 +178,7 @@ def get_dataset(
             data_args, training_args, stage, template, tokenizer, processor
         )
         column_names = list(next(iter(dataset)).keys())
+        logger.debug(f"remove_columns:{column_names}")
         kwargs = {}
         if not data_args.streaming:
             kwargs = dict(
@@ -175,9 +188,9 @@ def get_dataset(
             )
 
         dataset = dataset.map(preprocess_func, batched=True, remove_columns=column_names, **kwargs)
-
+  
         if data_args.tokenized_path is not None:
-            if training_args.should_save:
+            if training_args.should_save:  
                 dataset.save_to_disk(data_args.tokenized_path)
                 logger.info("Tokenized dataset saved at {}.".format(data_args.tokenized_path))
                 logger.info("Please restart the training with `tokenized_path: {}`.".format(data_args.tokenized_path))

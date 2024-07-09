@@ -294,7 +294,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
             str(model_args.compute_dtype),
         )
     )
-
+    logger.info(f"seed is:{training_args.seed}")
     transformers.set_seed(training_args.seed)
 
     return model_args, data_args, training_args, finetuning_args, generating_args

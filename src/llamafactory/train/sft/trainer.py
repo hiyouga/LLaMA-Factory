@@ -136,7 +136,6 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             writer.write("\n".join(res))
 
 class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
-
     def compute_loss(self, model, inputs, return_outputs=False):
         """
         How the loss is computed by Trainer. By default, all models return the loss in the first element.
@@ -189,8 +188,6 @@ class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
                 for b in range(bs):
                     normalizer=valid_label_cnt_all[b].item()
                     loss[b]=loss_fn(shift_logits[b], shift_labels[b])/normalizer
-                #print(f"loss={loss}, rank={os.environ['RANK']}")
-                #time.sleep(60)
                 loss = loss.mean()*n_gpus
 
         return (loss, outputs) if return_outputs else loss
@@ -230,7 +227,7 @@ class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
         if hasattr(data_collator, "seq_algo") and data_collator.seq_algo != "data_parallel":
             return DataLoader(train_dataset, **dataloader_params)
         return self.accelerator.prepare(DataLoader(train_dataset, **dataloader_params))
-
+        
     def get_eval_dataloader(self, eval_dataset) -> DataLoader:
         """
         Returns the evaluation [`~torch.utils.data.DataLoader`].
