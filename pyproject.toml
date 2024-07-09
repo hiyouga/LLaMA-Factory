@@ -13,7 +13,7 @@ select = ["C", "E", "F", "I", "W"]
 
 [tool.ruff.lint.isort]
 lines-after-imports = 2
-known-first-party = ["llmtuner"]
+known-first-party = ["llamafactory"]
 known-third-party = [
     "accelerate",
     "datasets",

@@ -5,9 +5,9 @@ from setuptools import find_packages, setup
 
 
 def get_version():
-    with open(os.path.join("src", "llmtuner", "__init__.py"), "r", encoding="utf-8") as f:
+    with open(os.path.join("src", "llamafactory", "extras", "env.py"), "r", encoding="utf-8") as f:
         file_content = f.read()
-        pattern = r"{0}\W*=\W*\"([^\"]+)\"".format("__version__")
+        pattern = r"{}\W*=\W*\"([^\"]+)\"".format("VERSION")
         (version,) = re.findall(pattern, file_content)
         return version
 
@@ -20,24 +20,26 @@ def get_requires():
 
 
 extra_require = {
+    "torch": ["torch>=1.13.1"],
+    "torch-npu": ["torch==2.1.0", "torch-npu==2.1.0.post3", "decorator"],
     "metrics": ["nltk", "jieba", "rouge-chinese"],
     "deepspeed": ["deepspeed>=0.10.0,<=0.14.0"],
     "bitsandbytes": ["bitsandbytes>=0.39.0"],
-    "vllm": ["vllm>=0.4.0"],
+    "vllm": ["vllm>=0.4.3"],
     "galore": ["galore-torch"],
     "badam": ["badam"],
     "gptq": ["optimum>=1.16.0", "auto-gptq>=0.5.0"],
     "awq": ["autoawq"],
     "aqlm": ["aqlm[gpu]>=1.1.0"],
-    "qwen": ["tiktoken", "transformers_stream_generator"],
+    "qwen": ["transformers_stream_generator"],
     "modelscope": ["modelscope"],
-    "quality": ["ruff"],
+    "dev": ["ruff", "pytest"],
 }
 
 
 def main():
     setup(
-        name="llmtuner",
+        name="llamafactory",
         version=get_version(),
         author="hiyouga",
         author_email="hiyouga" "@" "buaa.edu.cn",
@@ -52,7 +54,7 @@ def main():
         python_requires=">=3.8.0",
         install_requires=get_requires(),
         extras_require=extra_require,
-        entry_points={"console_scripts": ["llamafactory-cli = llmtuner.cli:main"]},
+        entry_points={"console_scripts": ["llamafactory-cli = llamafactory.cli:main"]},
         classifiers=[
             "Development Status :: 4 - Beta",
             "Intended Audience :: Developers",

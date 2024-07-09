@@ -154,7 +154,7 @@ class MMLU(datasets.GeneratorBasedBuilder):
         ]
 
     def _generate_examples(self, filepath):
-        df = pd.read_csv(filepath)
+        df = pd.read_csv(filepath, header=None)
         df.columns = ["question", "A", "B", "C", "D", "answer"]
 
         for i, instance in enumerate(df.to_dict(orient="records")):

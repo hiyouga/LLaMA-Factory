@@ -34,7 +34,8 @@ class HhRlhfEn(datasets.GeneratorBasedBuilder):
         features = datasets.Features(
             {
                 "instruction": datasets.Value("string"),
-                "output": datasets.Sequence(datasets.Value("string")),
+                "chosen": datasets.Value("string"),
+                "rejected": datasets.Value("string"),
                 "history": datasets.Sequence(datasets.Sequence(datasets.Value("string"))),
             }
         )
@@ -79,5 +80,5 @@ class HhRlhfEn(datasets.GeneratorBasedBuilder):
                             break
                         prompt = prompt[:human_idx]
 
-                    yield key, {"instruction": query, "output": [r_accept, r_reject], "history": history}
+                    yield key, {"instruction": query, "chosen": r_accept, "rejected": r_reject, "history": history}
                     key += 1

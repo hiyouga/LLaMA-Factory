@@ -1,0 +1,19 @@
+### model
+model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
+adapter_name_or_path: saves/llama3-8b/lora/sft
+
+### method
+finetuning_type: lora
+
+### dataset
+task: mmlu
+split: test
+template: fewshot
+lang: en
+n_shot: 5
+
+### output
+save_dir: saves/llama3-8b/lora/eval
+
+### eval
+batch_size: 4

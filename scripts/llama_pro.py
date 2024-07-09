@@ -1,5 +1,5 @@
 # coding=utf-8
-# Performs block expansion for LLaMA, Mistral or Qwen1.5 models.
+# Performs block expansion for LLaMA, Mistral, Qwen1.5 or Yi models.
 # Usage: python llama_pro.py --model_name_or_path meta-llama/Llama-2-7b-hf --output_dir llama2_pro --num_expand 8
 # Inspired by: https://github.com/TencentARC/LLaMA-Pro/blob/main/scripts/block_expansion.py
 
@@ -104,11 +104,10 @@ def block_expansion(
         print("Model weights saved in {}".format(output_dir))
 
     print("Fine-tune this model with:")
-    print("  --model_name_or_path {} \\".format(output_dir))
-    print("  --finetuning_type freeze \\")
-    print("  --name_module_trainable all \\")
-    print("  --num_layer_trainable {} \\".format(num_expand))
-    print("  --use_llama_pro")
+    print("model_name_or_path: {}".format(output_dir))
+    print("finetuning_type: freeze")
+    print("freeze_trainable_layers: {}".format(num_expand))
+    print("use_llama_pro: true")
 
 
 if __name__ == "__main__":

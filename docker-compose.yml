@@ -1,20 +1,25 @@
-version: '3.8'
-
 services:
-  llama-factory:
+  llamafactory:
     build:
       dockerfile: Dockerfile
       context: .
-    container_name: llama_factory
+      args:
+        INSTALL_BNB: false
+        INSTALL_VLLM: false
+        INSTALL_DEEPSPEED: false
+        PIP_INDEX: https://pypi.org/simple
+    container_name: llamafactory
     volumes:
       - ./hf_cache:/root/.cache/huggingface/
       - ./data:/app/data
       - ./output:/app/output
-    environment:
-      - CUDA_VISIBLE_DEVICES=0
     ports:
       - "7860:7860"
+      - "8000:8000"
     ipc: host
+    tty: true
+    stdin_open: true
+    command: bash
     deploy:
       resources:
         reservations:

@@ -1,0 +1,15 @@
+debug: false
+deepspeed_config:
+  deepspeed_config_file: examples/deepspeed/ds_z3_offload_config.json
+  deepspeed_multinode_launcher: standard
+  zero3_init_flag: true
+distributed_type: DEEPSPEED
+num_processes: 16
+downcast_bf16: 'no'
+main_training_function: main
+rdzv_backend: c10d
+same_network: false
+tpu_env: []
+tpu_use_cluster: false
+tpu_use_sudo: false
+use_cpu: false

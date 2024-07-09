@@ -1,4 +1,4 @@
-from llmtuner.train.tuner import run_exp
+from llamafactory.train.tuner import run_exp
 
 
 def main():

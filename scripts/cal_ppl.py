@@ -12,10 +12,10 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import DataCollatorForLanguageModeling, DataCollatorForSeq2Seq
 
-from llmtuner.data import get_dataset
-from llmtuner.extras.constants import IGNORE_INDEX
-from llmtuner.hparams import get_train_args
-from llmtuner.model import load_model, load_tokenizer
+from llamafactory.data import get_dataset
+from llamafactory.extras.constants import IGNORE_INDEX
+from llamafactory.hparams import get_train_args
+from llamafactory.model import load_model, load_tokenizer
 
 
 @dataclass
