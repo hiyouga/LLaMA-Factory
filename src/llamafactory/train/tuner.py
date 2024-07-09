@@ -15,7 +15,6 @@ from .pt import run_pt
 from .rm import run_rm
 from .sft import run_sft
 
-import os
 
 if TYPE_CHECKING:
     from transformers import TrainerCallback

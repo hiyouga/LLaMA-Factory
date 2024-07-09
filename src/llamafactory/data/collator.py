@@ -2,11 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Sequence
 
 import torch
-<<<<<<< Updated upstream
-from transformers import DataCollatorForSeq2Seq
-=======
 from transformers import DataCollatorForSeq2Seq, DataCollatorForLanguageModeling
->>>>>>> Stashed changes
 from typing import Any, Callable, Dict, List, NewType, Optional, Tuple, Union
 from llamafactory.easy_context import prepare_seq_parallel_sft_inputs
 

@@ -227,7 +227,7 @@ class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
         if hasattr(data_collator, "seq_algo") and data_collator.seq_algo != "data_parallel":
             return DataLoader(train_dataset, **dataloader_params)
         return self.accelerator.prepare(DataLoader(train_dataset, **dataloader_params))
-        
+
     def get_eval_dataloader(self, eval_dataset) -> DataLoader:
         """
         Returns the evaluation [`~torch.utils.data.DataLoader`].
