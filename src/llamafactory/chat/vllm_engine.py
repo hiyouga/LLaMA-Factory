@@ -135,7 +135,7 @@ class VllmEngine(BaseEngine):
             if is_vllm_version_greater_than_0_5_1():
                 multi_modal_data = {"image": pixel_values}
             elif is_vllm_version_greater_than_0_5():
-                multi_modal_data = ImagePixelData(image=pixel_values)   
+                multi_modal_data = ImagePixelData(image=pixel_values)
             else:  # TODO: remove vllm 0.4.3 support
                 multi_modal_data = MultiModalData(type=MultiModalData.Type.IMAGE, data=pixel_values)
         else:
