@@ -86,26 +86,26 @@ def run_sft(
         trainer.save_model()
         trainer.log_metrics("train", train_result.metrics)
         trainer.save_metrics("train", train_result.metrics)
-        trainer.save_state()
+        # trainer.save_state()
         if trainer.is_world_process_zero() and finetuning_args.plot_loss:
             plot_loss(training_args.output_dir, keys=["loss", "eval_loss"])
 
-    # Evaluation
-    if training_args.do_eval:
-        metrics = trainer.evaluate(metric_key_prefix="eval", **gen_kwargs)
-        if training_args.predict_with_generate:  # eval_loss will be wrong if predict_with_generate is enabled
-            metrics.pop("eval_loss", None)
-        trainer.log_metrics("eval", metrics)
-        trainer.save_metrics("eval", metrics)
+    # # Evaluation
+    # if training_args.do_eval:
+    #     metrics = trainer.evaluate(metric_key_prefix="eval", **gen_kwargs)
+    #     if training_args.predict_with_generate:  # eval_loss will be wrong if predict_with_generate is enabled
+    #         metrics.pop("eval_loss", None)
+    #     trainer.log_metrics("eval", metrics)
+    #     trainer.save_metrics("eval", metrics)
 
-    # Predict
-    if training_args.do_predict:
-        predict_results = trainer.predict(dataset, metric_key_prefix="predict", **gen_kwargs)
-        if training_args.predict_with_generate:  # predict_loss will be wrong if predict_with_generate is enabled
-            predict_results.metrics.pop("predict_loss", None)
-        trainer.log_metrics("predict", predict_results.metrics)
-        trainer.save_metrics("predict", predict_results.metrics)
-        trainer.save_predictions(predict_results)
+    # # Predict
+    # if training_args.do_predict:
+    #     predict_results = trainer.predict(dataset, metric_key_prefix="predict", **gen_kwargs)
+    #     if training_args.predict_with_generate:  # predict_loss will be wrong if predict_with_generate is enabled
+    #         predict_results.metrics.pop("predict_loss", None)
+    #     trainer.log_metrics("predict", predict_results.metrics)
+    #     trainer.save_metrics("predict", predict_results.metrics)
+    #     trainer.save_predictions(predict_results)
 
     # Create model card
     create_modelcard_and_push(trainer, model_args, data_args, training_args, finetuning_args)

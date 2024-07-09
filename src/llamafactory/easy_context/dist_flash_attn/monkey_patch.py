@@ -15,7 +15,6 @@ from einops import rearrange
 from .lightseq_async_attn import _lightseq_forward, _lightseq_backward
 from .async_communication import initialize_distributed, reset_global_memory_buffer
 
-
 # define a global buffer to save flash attention outputs
 # it's called global because it saves the outputs for all layers
 global_flash_attn_out_buffer = None
@@ -497,7 +496,7 @@ def forward(
     next_decoder_cache = () if use_cache else None
 
     # apply flash-attention friendly gradient checkpointing
-    if self.gradient_checkpointing:
+    if self.gradient_checkpointing and self.training:
         for idx in range(len(self.layers) + 1):
             if output_hidden_states:
                 all_hidden_states += (hidden_states,)

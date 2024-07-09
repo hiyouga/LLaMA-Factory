@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Sequence
 
 import torch
-from transformers import DataCollatorForSeq2Seq
+from transformers import DataCollatorForSeq2Seq, DataCollatorForLanguageModeling
 from typing import Any, Callable, Dict, List, NewType, Optional, Tuple, Union
 from llamafactory.easy_context import prepare_seq_parallel_sft_inputs
 
@@ -84,13 +84,12 @@ class KTODataCollatorWithPadding(DataCollatorForSeq2Seq):
 @dataclass
 class SeqParallelDataCollator(DataCollatorForSeq2Seq):
     r"""
-    Data collator for sequence parallel.
+    Data collator for sequence parallel in supervised finetune(sft) stage.
     """
     seq_algo: str = "data_parallel"
     rank: int = 0
     world_size: int = 8
     device: Optional[Any] = None
-
     def __call__(self, features: Sequence[Dict[str, Any]], return_tensors=None) -> Dict[str, torch.Tensor]:
         batch = super().__call__(features, return_tensors)
         if self.seq_algo == "data_parallel":
@@ -98,12 +97,41 @@ class SeqParallelDataCollator(DataCollatorForSeq2Seq):
         input_ids = batch["input_ids"]
         attention_mask = batch["attention_mask"]
         labels = batch["labels"]
-        batch = prepare_seq_parallel_sft_inputs(self.seq_algo,
-                                                input_ids=input_ids,
-                                                attention_mask=attention_mask,
-                                                position_ids=None,
-                                                labels=labels,
-                                                rank=self.rank,
-                                                world_size=self.world_size,
+        batch = prepare_seq_parallel_sft_inputs(self.seq_algo, 
+                                                input_ids=input_ids, 
+                                                attention_mask=attention_mask, 
+                                                position_ids=None, 
+                                                labels=labels, 
+                                                rank=self.rank, 
+                                                world_size=self.world_size, 
+                                                device=self.device)
+        return batch
+
+
+@dataclass
+class SeqParallelDataCollatorForLanguageModeling(DataCollatorForLanguageModeling):
+    r"""
+    Data collator for sequence parallel in pretrain(pt) stage.
+    Reuse the sequence parallel distributing function for sft stage.
+    """
+    seq_algo: str = "data_parallel"
+    rank: int = 0
+    world_size: int = 8
+    device: Optional[Any] = None
+    
+    def __call__(self, examples: List[Union[List[int], Any, Dict[str, Any]]]) -> Dict[str, Any]:
+        batch = super().__call__(examples)
+        if self.seq_algo == "data_parallel":
+            return batch
+        input_ids = batch["input_ids"]
+        attention_mask = batch["attention_mask"]
+        labels = batch["labels"]
+        batch = prepare_seq_parallel_sft_inputs(self.seq_algo, 
+                                                input_ids=input_ids, 
+                                                attention_mask=attention_mask, 
+                                                position_ids=None, 
+                                                labels=labels, 
+                                                rank=self.rank, 
+                                                world_size=self.world_size, 
                                                 device=self.device)
         return batch
