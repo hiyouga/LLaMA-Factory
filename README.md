@@ -240,6 +240,7 @@ You also can add a custom chat template to [template.py](src/llamafactory/data/t
 - [OpenOrca (en)](https://huggingface.co/datasets/Open-Orca/OpenOrca)
 - [SlimOrca (en)](https://huggingface.co/datasets/Open-Orca/SlimOrca)
 - [MathInstruct (en)](https://huggingface.co/datasets/TIGER-Lab/MathInstruct)
+- [Magpie (en & other langs)](https://huggingface.co/Magpie-Align)
 - [Firefly 1.1M (zh)](https://huggingface.co/datasets/YeungNLP/firefly-train-1.1M)
 - [Wiki QA (en)](https://huggingface.co/datasets/wiki_qa)
 - [Web QA (zh)](https://huggingface.co/datasets/suolyer/webqa)
