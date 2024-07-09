@@ -8,6 +8,12 @@
   "alpaca_zh_demo": {
     "file_name": "alpaca_zh_demo.json"
   },
+  "long_sft_32k": {
+    "file_name": "sample_long_sft_32k_48M.json"
+  },
+  "long_sft_128k": {
+    "file_name": "sample_long_sft_128k.parquet"
+  },
   "glaive_toolcall_en_demo": {
     "file_name": "glaive_toolcall_en_demo.json",
     "formatting": "sharegpt",

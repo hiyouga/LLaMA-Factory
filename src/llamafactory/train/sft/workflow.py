@@ -5,13 +5,18 @@ from typing import TYPE_CHECKING, List, Optional
 from transformers import DataCollatorForSeq2Seq
 
 from ...data import get_dataset, split_dataset
+from ...data.collator import SeqParallelDataCollator
 from ...extras.constants import IGNORE_INDEX
 from ...extras.misc import get_logits_processor
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
 from ..trainer_utils import create_modelcard_and_push
 from .metric import ComputeMetrics
-from .trainer import CustomSeq2SeqTrainer
+from .trainer import CustomSeq2SeqTrainer, CustomSeqParallelTrainer
+
+import torch
+import os
+from ...easy_context import apply_seq_parallel_monkey_patch
 
 
 if TYPE_CHECKING:
@@ -32,6 +37,7 @@ def run_sft(
     tokenizer = tokenizer_module["tokenizer"]
     dataset = get_dataset(model_args, data_args, training_args, stage="sft", **tokenizer_module)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
+    apply_seq_parallel_monkey_patch(finetuning_args.parallel_mode, "llama")
 
     if training_args.predict_with_generate:
         tokenizer.padding_side = "left"  # use left-padding in generation
@@ -39,19 +45,25 @@ def run_sft(
     if getattr(model, "is_quantized", False) and not training_args.do_train:
         setattr(model, "_hf_peft_config_loaded", True)  # hack here: make model compatible with prediction
 
-    data_collator = DataCollatorForSeq2Seq(
+    local_rank = int(os.getenv("LOCAL_RANK"))
+    world_size = torch.distributed.get_world_size()
+    print(f"seq_len: {data_args.cutoff_len}")
+    data_collator = SeqParallelDataCollator(
         tokenizer=tokenizer,
-        pad_to_multiple_of=8 if tokenizer.padding_side == "right" else None,  # for shift short attention
+        pad_to_multiple_of=data_args.cutoff_len if tokenizer.padding_side == "right" else None,
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
+        seq_algo=finetuning_args.parallel_mode,
+        rank=torch.distributed.get_rank(),
+        world_size=world_size,
+        device=torch.device("cuda", local_rank)
     )
-
     # Override the decoding parameters of Seq2SeqTrainer
     training_args.generation_max_length = training_args.generation_max_length or data_args.cutoff_len
     training_args.generation_num_beams = data_args.eval_num_beams or training_args.generation_num_beams
     training_args.remove_unused_columns = False if model_args.visual_inputs else training_args.remove_unused_columns
 
     # Initialize our Trainer
-    trainer = CustomSeq2SeqTrainer(
+    trainer = CustomSeqParallelTrainer(
         model=model,
         args=training_args,
         finetuning_args=finetuning_args,

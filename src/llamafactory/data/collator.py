@@ -3,7 +3,8 @@ from typing import Any, Dict, Sequence
 
 import torch
 from transformers import DataCollatorForSeq2Seq
-
+from typing import Any, Callable, Dict, List, NewType, Optional, Tuple, Union
+from llamafactory.easy_context import prepare_seq_parallel_sft_inputs
 
 @dataclass
 class PairwiseDataCollatorWithPadding(DataCollatorForSeq2Seq):
@@ -78,4 +79,31 @@ class KTODataCollatorWithPadding(DataCollatorForSeq2Seq):
             batch["kl_token_type_ids"] = kl_batch["token_type_ids"]
 
         batch["kto_tags"] = torch.tensor(kto_tags)
+        return batch
+
+@dataclass
+class SeqParallelDataCollator(DataCollatorForSeq2Seq):
+    r"""
+    Data collator for sequence parallel.
+    """
+    seq_algo: str = "data_parallel"
+    rank: int = 0
+    world_size: int = 8
+    device: Optional[Any] = None
+
+    def __call__(self, features: Sequence[Dict[str, Any]], return_tensors=None) -> Dict[str, torch.Tensor]:
+        batch = super().__call__(features, return_tensors)
+        if self.seq_algo == "data_parallel":
+            return batch
+        input_ids = batch["input_ids"]
+        attention_mask = batch["attention_mask"]
+        labels = batch["labels"]
+        batch = prepare_seq_parallel_sft_inputs(self.seq_algo,
+                                                input_ids=input_ids,
+                                                attention_mask=attention_mask,
+                                                position_ids=None,
+                                                labels=labels,
+                                                rank=self.rank,
+                                                world_size=self.world_size,
+                                                device=self.device)
         return batch
