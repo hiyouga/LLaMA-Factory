@@ -5,6 +5,7 @@ NGPUS=${NGPUS:-8}
 WORLD_SIZE=${WORLD_SIZE:-1}
 NUM_PROCESSES=$[${NGPUS}*$[WORLD_SIZE]]
 SEQ_LEN=${SEQ_LEN:-32768}
+SP_GROUP_SIZE=${SP_GROUP_SIZE:-1}
 BATCH_SIZE=${BATCH_SIZE:-1}
 export PYTORCH_CUDA_ALLOC_CONF='max_split_size_mb:1024' 
 export WANDB_DISABLED=true
@@ -29,6 +30,7 @@ src/train.py \
 --do_train \
 --finetuning_type full \
 --parallel_mode dist_flash_attn \
+--seq_parallel_size ${SP_GROUP_SIZE} \
 --deepspeed examples/deepspeed/ds_z3_offload_config.json \
 --dataset long_sft_128k \
 --template llama3 \
