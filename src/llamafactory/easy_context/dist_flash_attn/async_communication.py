@@ -39,7 +39,7 @@ _fwd_recv_volume = 0
 _bwd_send_volume = 0
 _bwd_recv_volume = 0
 
-def initialize_distributed():
+def initialize_distributed(sequence_parallel_size=None):
     if dist.is_initialized():
         if dist.get_rank() == 0:
             print(
@@ -55,12 +55,13 @@ def initialize_distributed():
         global_world_size = dist.get_world_size()
         torch.cuda.set_device(dist.get_rank() % local_world_size)
 
-    _initialize_sequence_parallel()
+    _initialize_sequence_parallel(sequence_parallel_size=sequence_parallel_size)
    # create_nccl_communicators()
 
 def _initialize_sequence_parallel(sequence_parallel_size=None):
     # Get world size and rank. Ensure some consistencies.
-    assert sequence_parallel_size is None, "Multiple sequence parallel group not implemented."
+    # assert sequence_parallel_size is None, "Multiple sequence parallel group not implemented."
+    print(f"sequence_parallel_size is {sequence_parallel_size}")
     assert torch.distributed.is_initialized()
     world_size: int = torch.distributed.get_world_size()
 

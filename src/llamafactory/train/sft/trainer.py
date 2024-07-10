@@ -171,8 +171,6 @@ class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
             # We don't use .loss here since the model may return tuples instead of ModelOutput.
             if self.finetuning_args.parallel_mode== "data_parallel":
                 loss = outputs["loss"] if isinstance(outputs, dict) else outputs[0]
-                #print(f"loss={loss}, rank={os.environ['RANK']}")
-                #time.sleep(60)
             else:
                 loss_fn = CrossEntropyLoss(reduction='sum')
                 labels = inputs.pop("labels")
@@ -225,6 +223,12 @@ class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
             dataloader_params["worker_init_fn"] = seed_worker
             dataloader_params["prefetch_factor"] = self.args.dataloader_prefetch_factor
         if hasattr(data_collator, "seq_algo") and data_collator.seq_algo != "data_parallel":
+            seq_parallel_size = self.finetuning_args.seq_parallel_size
+            if seq_parallel_size != -1:
+                world_size = int(os.environ['WORLD_SIZE'])
+                assert seq_parallel_size != 0 and world_size % seq_parallel_size == 0, f"world_size: {world_size} should be devide by seq_parallel_size: {seq_parallel_size}"
+                data_parallel_size = world_size // seq_parallel_size
+                dataloader_params["batch_size"] = dataloader_params["batch_size"] * data_parallel_size
             return DataLoader(train_dataset, **dataloader_params)
         return self.accelerator.prepare(DataLoader(train_dataset, **dataloader_params))
 
@@ -274,5 +278,11 @@ class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
             self._eval_dataloader = eval_dataloader
 
         if hasattr(data_collator, "seq_algo") and data_collator.seq_algo != "data_parallel":
+            seq_parallel_size = self.args.seq_parallel_size
+            if seq_parallel_size != -1:
+                world_size = int(os.environ['WORLD_SIZE'])
+                assert seq_parallel_size != 0 and world_size % seq_parallel_size == 0, f"world_size: {world_size} should be devide by seq_parallel_size: {seq_parallel_size}"
+                data_parallel_size = world_size // seq_parallel_size
+                dataloader_params["batch_size"] = dataloader_params["batch_size"] * data_parallel_size
             return eval_dataloader
         return self.accelerator.prepare(eval_dataloader)
