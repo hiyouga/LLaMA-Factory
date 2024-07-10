@@ -48,7 +48,7 @@ def save_model(
     template: str,
     visual_inputs: bool,
     export_size: int,
-    export_quantization_bit: int,
+    export_quantization_bit: str,
     export_quantization_dataset: str,
     export_device: str,
     export_legacy_format: bool,
