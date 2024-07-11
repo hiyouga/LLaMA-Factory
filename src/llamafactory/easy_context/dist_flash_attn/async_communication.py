@@ -65,7 +65,7 @@ def _initialize_sequence_parallel(sequence_parallel_size=None):
     world_size: int = torch.distributed.get_world_size()
     print(f"sequence_parallel_size is {sequence_parallel_size}, world_size is {world_size}")
 
-    if sequence_parallel_size is None:
+    if sequence_parallel_size is None or sequence_parallel_size == -1:
         sequence_parallel_size = world_size
     else:
         assert world_size % sequence_parallel_size == 0
