@@ -39,7 +39,7 @@ src/train.py \
 --overwrite_cache \
 --preprocessing_num_workers 16 \
 --output_dir ./output/70B_32K_bs_1M_rope_1M_step_1000_lr_2e-5 \
---logging_steps 10 \
+--logging_steps 1 \
 --save_steps 500 \
 --plot_loss \
 --overwrite_output_dir \
@@ -53,7 +53,7 @@ src/train.py \
 --ddp_timeout 180000000 \
 --val_size 0.1 \
 --eval_strategy steps \
---eval_steps 2
+--eval_steps 1000
 
 # In the saved files, there are model-00001-of-00003.safetensors to model-00001-of-00003.safetensors. Somehow model.safetensors is unnecessary and should be removed.
 # rm output/7B_32K_bs_1M_rope_1M_step_1000_lr_2e-5/model.safetensors

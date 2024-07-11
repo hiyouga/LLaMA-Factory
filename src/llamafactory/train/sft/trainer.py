@@ -278,7 +278,7 @@ class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
             self._eval_dataloader = eval_dataloader
 
         if hasattr(data_collator, "seq_algo") and data_collator.seq_algo != "data_parallel":
-            seq_parallel_size = self.args.seq_parallel_size
+            seq_parallel_size = self.finetuning_args.seq_parallel_size
             if seq_parallel_size != -1:
                 world_size = int(os.environ['WORLD_SIZE'])
                 assert seq_parallel_size != 0 and world_size % seq_parallel_size == 0, f"world_size: {world_size} should be devide by seq_parallel_size: {seq_parallel_size}"
