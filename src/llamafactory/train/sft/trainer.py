@@ -192,7 +192,7 @@ class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
                 for b in range(bs):
                     normalizer=valid_label_cnt_all[b].item()
                     loss[b]=loss_fn(shift_logits[b], shift_labels[b])/normalizer
-                loss = loss.mean()*n_gpus
+                loss = loss.mean()*sp_size
 
         return (loss, outputs) if return_outputs else loss
 

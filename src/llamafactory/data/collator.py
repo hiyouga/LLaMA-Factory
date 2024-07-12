@@ -99,8 +99,12 @@ class SeqParallelDataCollator(DataCollatorForSeq2Seq):
         input_ids = batch["input_ids"]
         attention_mask = batch["attention_mask"]
         labels = batch["labels"]
+        seq_rank = self.rank
+        seq_worlds_size = self.world_size
         if self.seq_parallel_size != -1:
             dp_rank = self.rank // self.seq_parallel_size
+            seq_rank = self.rank % self.seq_parallel_size
+            seq_worlds_size = self.seq_parallel_size
             bs = len(input_ids)
             data_group_size = self.world_size // self.seq_parallel_size
             group_bs = bs // data_group_size
@@ -112,8 +116,8 @@ class SeqParallelDataCollator(DataCollatorForSeq2Seq):
                                                 attention_mask=attention_mask,
                                                 position_ids=None,
                                                 labels=labels,
-                                                rank=self.rank,
-                                                world_size=self.world_size,
+                                                rank=seq_rank,
+                                                world_size=seq_worlds_size,
                                                 device=self.device)
         return batch
 
@@ -134,8 +138,12 @@ class SeqParallelDataCollatorForLanguageModeling(DataCollatorForLanguageModeling
         batch = super().__call__(examples)
         if self.seq_algo == "data_parallel":
             return batch
+        seq_rank = self.rank
+        seq_worlds_size = self.world_size
         if self.seq_parallel_size != -1:
             dp_rank = self.rank // self.seq_parallel_size
+            seq_rank = self.rank % self.seq_parallel_size
+            seq_worlds_size = self.seq_parallel_size
             bs = len(input_ids)
             data_group_size = self.world_size // self.seq_parallel_size
             group_bs = bs // data_group_size
@@ -150,7 +158,7 @@ class SeqParallelDataCollatorForLanguageModeling(DataCollatorForLanguageModeling
                                                 attention_mask=attention_mask,
                                                 position_ids=None,
                                                 labels=labels,
-                                                rank=self.rank,
-                                                world_size=self.world_size,
+                                                rank=seq_rank,
+                                                world_size=seq_worlds_size,
                                                 device=self.device)
         return batch
