@@ -38,6 +38,9 @@ if TYPE_CHECKING:
     from ...hparams import FinetuningArguments
 
 
+from transformers import Trainer
+from typing import Union, Optional, Dict, Tuple, Literal
+
 class CustomDPOTrainer(DPOTrainer):
     def __init__(
         self,
@@ -54,7 +57,6 @@ class CustomDPOTrainer(DPOTrainer):
                 disable_dropout_in_model(ref_model)
 
         self.finetuning_args = finetuning_args
-        self.f_divergence_type = "reverse_kl"
         self.reference_free = False
         self.use_dpo_data_collator = True  # hack to avoid warning
         self.generate_during_eval = False  # disable at evaluation
@@ -75,6 +77,9 @@ class CustomDPOTrainer(DPOTrainer):
         self.ftx_gamma = finetuning_args.pref_ftx
         self.label_smoothing = finetuning_args.dpo_label_smoothing
         self.simpo_gamma = finetuning_args.simpo_gamma
+
+        # 新增初始化 f_divergence_type
+        self.f_divergence_type = finetuning_args.f_divergence_type  # 确保 finetuning_args 有这个属性
 
         Trainer.__init__(self, model=model, **kwargs)
         if not hasattr(self, "accelerator"):
