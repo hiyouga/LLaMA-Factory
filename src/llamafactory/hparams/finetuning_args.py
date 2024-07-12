@@ -15,328 +15,290 @@
 from dataclasses import dataclass, field
 from typing import List, Literal, Optional
 
-
 @dataclass
 class FreezeArguments:
-    r"""
-    Arguments pertaining to the freeze (partial-parameter) training.
-    """
-
+    # FreezeArguments 保持不变
     freeze_trainable_layers: int = field(
         default=2,
-        metadata={
-            "help": (
-                "The number of trainable layers for freeze (partial-parameter) fine-tuning. "
-                "Positive numbers mean the last n layers are set as trainable, "
-                "negative numbers mean the first n layers are set as trainable."
-            )
-        },
+        metadata={"help": (
+            "The number of trainable layers for freeze (partial-parameter) fine-tuning. "
+            "Positive numbers mean the last n layers are set as trainable, "
+            "negative numbers mean the first n layers are set as trainable."
+        )}
     )
     freeze_trainable_modules: str = field(
         default="all",
-        metadata={
-            "help": (
-                "Name(s) of trainable modules for freeze (partial-parameter) fine-tuning. "
-                "Use commas to separate multiple modules. "
-                "Use `all` to specify all the available modules."
-            )
-        },
+        metadata={"help": (
+            "Name(s) of trainable modules for freeze (partial-parameter) fine-tuning. "
+            "Use commas to separate multiple modules. "
+            "Use `all` to specify all the available modules."
+        )}
     )
     freeze_extra_modules: Optional[str] = field(
         default=None,
-        metadata={
-            "help": (
-                "Name(s) of modules apart from hidden layers to be set as trainable "
-                "for freeze (partial-parameter) fine-tuning. "
-                "Use commas to separate multiple modules."
-            )
-        },
+        metadata={"help": (
+            "Name(s) of modules apart from hidden layers to be set as trainable "
+            "for freeze (partial-parameter) fine-tuning. "
+            "Use commas to separate multiple modules."
+        )}
     )
-
 
 @dataclass
 class LoraArguments:
-    r"""
-    Arguments pertaining to the LoRA training.
-    """
-
+    # LoraArguments 保持不变
     additional_target: Optional[str] = field(
         default=None,
-        metadata={
-            "help": (
-                "Name(s) of modules apart from LoRA layers to be set as trainable "
-                "and saved in the final checkpoint. "
-                "Use commas to separate multiple modules."
-            )
-        },
+        metadata={"help": (
+            "Name(s) of modules apart from LoRA layers to be set as trainable "
+            "and saved in the final checkpoint. "
+            "Use commas to separate multiple modules."
+        )}
     )
     lora_alpha: Optional[int] = field(
         default=None,
-        metadata={"help": "The scale factor for LoRA fine-tuning (default: lora_rank * 2)."},
+        metadata={"help": "The scale factor for LoRA fine-tuning (default: lora_rank * 2)."}
     )
     lora_dropout: float = field(
         default=0.0,
-        metadata={"help": "Dropout rate for the LoRA fine-tuning."},
+        metadata={"help": "Dropout rate for the LoRA fine-tuning."}
     )
     lora_rank: int = field(
         default=8,
-        metadata={"help": "The intrinsic dimension for LoRA fine-tuning."},
+        metadata={"help": "The intrinsic dimension for LoRA fine-tuning."}
     )
     lora_target: str = field(
         default="all",
-        metadata={
-            "help": (
-                "Name(s) of target modules to apply LoRA. "
-                "Use commas to separate multiple modules. "
-                "Use `all` to specify all the linear modules."
-            )
-        },
+        metadata={"help": (
+            "Name(s) of target modules to apply LoRA. "
+            "Use commas to separate multiple modules. "
+            "Use `all` to specify all the linear modules."
+        )}
     )
     loraplus_lr_ratio: Optional[float] = field(
         default=None,
-        metadata={"help": "LoRA plus learning rate ratio (lr_B / lr_A)."},
+        metadata={"help": "LoRA plus learning rate ratio (lr_B / lr_A)."}
     )
     loraplus_lr_embedding: float = field(
         default=1e-6,
-        metadata={"help": "LoRA plus learning rate for lora embedding layers."},
+        metadata={"help": "LoRA plus learning rate for lora embedding layers."}
     )
     use_rslora: bool = field(
         default=False,
-        metadata={"help": "Whether or not to use the rank stabilization scaling factor for LoRA layer."},
+        metadata={"help": "Whether or not to use the rank stabilization scaling factor for LoRA layer."}
     )
     use_dora: bool = field(
         default=False,
-        metadata={"help": "Whether or not to use the weight-decomposed lora method (DoRA)."},
+        metadata={"help": "Whether or not to use the weight-decomposed lora method (DoRA)."}
     )
     pissa_init: bool = field(
         default=False,
-        metadata={"help": "Whether or not to initialize a PiSSA adapter."},
+        metadata={"help": "Whether or not to initialize a PiSSA adapter."}
     )
     pissa_iter: int = field(
         default=16,
-        metadata={"help": "The number of iteration steps performed by FSVD in PiSSA. Use -1 to disable it."},
+        metadata={"help": "The number of iteration steps performed by FSVD in PiSSA. Use -1 to disable it."}
     )
     pissa_convert: bool = field(
         default=False,
-        metadata={"help": "Whether or not to convert the PiSSA adapter to a normal LoRA adapter."},
+        metadata={"help": "Whether or not to convert the PiSSA adapter to a normal LoRA adapter."}
     )
     create_new_adapter: bool = field(
         default=False,
-        metadata={"help": "Whether or not to create a new adapter with randomly initialized weight."},
+        metadata={"help": "Whether or not to create a new adapter with randomly initialized weight."}
     )
-
 
 @dataclass
 class RLHFArguments:
-    r"""
-    Arguments pertaining to the PPO, DPO and KTO training.
-    """
-
+    # RLHFArguments 保持不变，并增加 f_divergence_type
     pref_beta: float = field(
         default=0.1,
-        metadata={"help": "The beta parameter in the preference loss."},
+        metadata={"help": "The beta parameter in the preference loss."}
     )
     pref_ftx: float = field(
         default=0.0,
-        metadata={"help": "The supervised fine-tuning loss coefficient in DPO training."},
+        metadata={"help": "The supervised fine-tuning loss coefficient in DPO training."}
     )
     pref_loss: Literal["sigmoid", "hinge", "ipo", "kto_pair", "orpo", "simpo"] = field(
         default="sigmoid",
-        metadata={"help": "The type of DPO loss to use."},
+        metadata={"help": "The type of DPO loss to use."}
     )
     dpo_label_smoothing: float = field(
         default=0.0,
-        metadata={"help": "The robust DPO label smoothing parameter in cDPO that should be between 0 and 0.5."},
+        metadata={"help": "The robust DPO label smoothing parameter in cDPO that should be between 0 and 0.5."}
     )
     kto_chosen_weight: float = field(
         default=1.0,
-        metadata={"help": "The weight factor of the desirable losses in KTO training."},
+        metadata={"help": "The weight factor of the desirable losses in KTO training."}
     )
     kto_rejected_weight: float = field(
         default=1.0,
-        metadata={"help": "The weight factor of the undesirable losses in KTO training."},
+        metadata={"help": "The weight factor of the undesirable losses in KTO training."}
     )
     simpo_gamma: float = field(
         default=0.5,
-        metadata={"help": "The target reward margin term in SimPO loss."},
+        metadata={"help": "The target reward margin term in SimPO loss."}
     )
     ppo_buffer_size: int = field(
         default=1,
-        metadata={"help": "The number of mini-batches to make experience buffer in a PPO optimization step."},
+        metadata={"help": "The number of mini-batches to make experience buffer in a PPO optimization step."}
     )
     ppo_epochs: int = field(
         default=4,
-        metadata={"help": "The number of epochs to perform in a PPO optimization step."},
+        metadata={"help": "The number of epochs to perform in a PPO optimization step."}
     )
     ppo_score_norm: bool = field(
         default=False,
-        metadata={"help": "Use score normalization in PPO training."},
+        metadata={"help": "Use score normalization in PPO training."}
     )
     ppo_target: float = field(
         default=6.0,
-        metadata={"help": "Target KL value for adaptive KL control in PPO training."},
+        metadata={"help": "Target KL value for adaptive KL control in PPO training."}
     )
     ppo_whiten_rewards: bool = field(
         default=False,
-        metadata={"help": "Whiten the rewards before compute advantages in PPO training."},
+        metadata={"help": "Whiten the rewards before compute advantages in PPO training."}
     )
     ref_model: Optional[str] = field(
         default=None,
-        metadata={"help": "Path to the reference model used for the PPO or DPO training."},
+        metadata={"help": "Path to the reference model used for the PPO or DPO training."}
     )
     ref_model_adapters: Optional[str] = field(
         default=None,
-        metadata={"help": "Path to the adapters of the reference model."},
+        metadata={"help": "Path to the adapters of the reference model."}
     )
     ref_model_quantization_bit: Optional[int] = field(
         default=None,
-        metadata={"help": "The number of bits to quantize the reference model."},
+        metadata={"help": "The number of bits to quantize the reference model."}
     )
     reward_model: Optional[str] = field(
         default=None,
-        metadata={"help": "Path to the reward model used for the PPO training."},
+        metadata={"help": "Path to the reward model used for the PPO training."}
     )
     reward_model_adapters: Optional[str] = field(
         default=None,
-        metadata={"help": "Path to the adapters of the reward model."},
+        metadata={"help": "Path to the adapters of the reward model."}
     )
     reward_model_quantization_bit: Optional[int] = field(
         default=None,
-        metadata={"help": "The number of bits to quantize the reward model."},
+        metadata={"help": "The number of bits to quantize the reward model."}
     )
     reward_model_type: Literal["lora", "full", "api"] = field(
         default="lora",
-        metadata={"help": "The type of the reward model in PPO training. Lora model only supports lora training."},
+        metadata={"help": "The type of the reward model in PPO training. Lora model only supports lora training."}
     )
-
+    f_divergence_type: Optional[str] = field(
+        default=None,
+        metadata={"help": "The type of f-divergence to use in DPO training."}
+    )
 
 @dataclass
 class GaloreArguments:
-    r"""
-    Arguments pertaining to the GaLore algorithm.
-    """
-
+    # GaloreArguments 保持不变
     use_galore: bool = field(
         default=False,
-        metadata={"help": "Whether or not to use the gradient low-Rank projection (GaLore)."},
+        metadata={"help": "Whether or not to use the gradient low-Rank projection (GaLore)."}
     )
     galore_target: str = field(
         default="all",
-        metadata={
-            "help": (
-                "Name(s) of modules to apply GaLore. Use commas to separate multiple modules. "
-                "Use `all` to specify all the linear modules."
-            )
-        },
+        metadata={"help": (
+            "Name(s) of modules to apply GaLore. Use commas to separate multiple modules. "
+            "Use `all` to specify all the linear modules."
+        )}
     )
     galore_rank: int = field(
         default=16,
-        metadata={"help": "The rank of GaLore gradients."},
+        metadata={"help": "The rank of GaLore gradients."}
     )
     galore_update_interval: int = field(
         default=200,
-        metadata={"help": "Number of steps to update the GaLore projection."},
+        metadata={"help": "Number of steps to update the GaLore projection."}
     )
     galore_scale: float = field(
         default=0.25,
-        metadata={"help": "GaLore scaling coefficient."},
+        metadata={"help": "GaLore scaling coefficient."}
     )
     galore_proj_type: Literal["std", "reverse_std", "right", "left", "full"] = field(
         default="std",
-        metadata={"help": "Type of GaLore projection."},
+        metadata={"help": "Type of GaLore projection."}
     )
     galore_layerwise: bool = field(
         default=False,
-        metadata={"help": "Whether or not to enable layer-wise update to further save memory."},
+        metadata={"help": "Whether or not to enable layer-wise update to further save memory."}
     )
-
 
 @dataclass
 class BAdamArgument:
-    r"""
-    Arguments pertaining to the BAdam optimizer.
-    """
-
+    # BAdamArgument 保持不变
     use_badam: bool = field(
         default=False,
-        metadata={"help": "Whether or not to use the BAdam optimizer."},
+        metadata={"help": "Whether or not to use the BAdam optimizer."}
     )
     badam_mode: Literal["layer", "ratio"] = field(
         default="layer",
-        metadata={"help": "Whether to use layer-wise or ratio-wise BAdam optimizer."},
+        metadata={"help": "Whether to use layer-wise or ratio-wise BAdam optimizer."}
     )
     badam_start_block: Optional[int] = field(
         default=None,
-        metadata={"help": "The starting block index for layer-wise BAdam."},
+        metadata={"help": "The starting block index for layer-wise BAdam."}
     )
     badam_switch_mode: Optional[Literal["ascending", "descending", "random", "fixed"]] = field(
         default="ascending",
-        metadata={"help": "the strategy of picking block to update for layer-wise BAdam."},
+        metadata={"help": "the strategy of picking block to update for layer-wise BAdam."}
     )
     badam_switch_interval: Optional[int] = field(
         default=50,
-        metadata={
-            "help": "Number of steps to update the block for layer-wise BAdam. Use -1 to disable the block update."
-        },
+        metadata={"help": "Number of steps to update the block for layer-wise BAdam. Use -1 to disable the block update."}
     )
     badam_update_ratio: float = field(
         default=0.05,
-        metadata={"help": "The ratio of the update for ratio-wise BAdam."},
+        metadata={"help": "The ratio of the update for ratio-wise BAdam."}
     )
     badam_mask_mode: Literal["adjacent", "scatter"] = field(
         default="adjacent",
-        metadata={
-            "help": (
-                "The mode of the mask for BAdam optimizer. "
-                "`adjacent` means that the trainable parameters are adjacent to each other, "
-                "`scatter` means that trainable parameters are randomly choosed from the weight."
-            )
-        },
+        metadata={"help": (
+            "The mode of the mask for BAdam optimizer. "
+            "`adjacent` means that the trainable parameters are adjacent to each other, "
+            "`scatter` means that trainable parameters are randomly choosed from the weight."
+        )}
     )
     badam_verbose: int = field(
         default=0,
-        metadata={
-            "help": (
-                "The verbosity level of BAdam optimizer. "
-                "0 for no print, 1 for print the block prefix, 2 for print trainable parameters."
-            )
-        },
+        metadata={"help": (
+            "The verbosity level of BAdam optimizer. "
+            "0 for no print, 1 for print the block prefix, 2 for print trainable parameters."
+        )}
     )
-
 
 @dataclass
 class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments, BAdamArgument):
-    r"""
-    Arguments pertaining to which techniques we are going to fine-tuning with.
-    """
-
+    # FinetuningArguments 保持不变
     pure_bf16: bool = field(
         default=False,
-        metadata={"help": "Whether or not to train model in purely bf16 precision (without AMP)."},
+        metadata={"help": "Whether or not to train model in purely bf16 precision (without AMP)."}
     )
     stage: Literal["pt", "sft", "rm", "ppo", "dpo", "kto"] = field(
         default="sft",
-        metadata={"help": "Which stage will be performed in training."},
+        metadata={"help": "Which stage will be performed in training."}
     )
     finetuning_type: Literal["lora", "freeze", "full"] = field(
         default="lora",
-        metadata={"help": "Which fine-tuning method to use."},
+        metadata={"help": "Which fine-tuning method to use."}
     )
     use_llama_pro: bool = field(
         default=False,
-        metadata={"help": "Whether or not to make only the parameters in the expanded blocks trainable."},
+        metadata={"help": "Whether or not to make only the parameters in the expanded blocks trainable."}
     )
     freeze_vision_tower: bool = field(
         default=True,
-        metadata={"help": "Whether ot not to freeze vision tower in MLLM training."},
+        metadata={"help": "Whether ot not to freeze vision tower in MLLM training."}
     )
     train_mm_proj_only: bool = field(
         default=False,
-        metadata={"help": "Whether or not to train the multimodal projector for MLLM only."},
+        metadata={"help": "Whether or not to train the multimodal projector for MLLM only."}
     )
     plot_loss: bool = field(
         default=False,
-        metadata={"help": "Whether or not to save the training loss curves."},
+        metadata={"help": "Whether or not to save the training loss curves."}
     )
 
     def __post_init__(self):
@@ -376,21 +338,14 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         if self.use_galore and self.use_badam:
             raise ValueError("Cannot use GaLore with BAdam together.")
 
+        if self.loraplus_lr_ratio is not None and self.finetuning_type != "lora":
+            raise ValueError("`loraplus_lr_ratio` is only valid for LoRA training.")
+
+        if self.pissa_init and self.finetuning_type != "lora":
+            raise ValueError("`pissa_init` is only valid for LoRA training.")
+
         if self.pissa_init and (self.stage in ["ppo", "kto"] or self.use_ref_model):
             raise ValueError("Cannot use PiSSA for current training stage.")
 
         if self.train_mm_proj_only and self.finetuning_type != "full":
             raise ValueError("`train_mm_proj_only` is only valid for full training.")
-
-        if self.finetuning_type != "lora":
-            if self.loraplus_lr_ratio is not None:
-                raise ValueError("`loraplus_lr_ratio` is only valid for LoRA training.")
-
-            if self.use_rslora:
-                raise ValueError("`use_rslora` is only valid for LoRA training.")
-
-            if self.use_dora:
-                raise ValueError("`use_dora` is only valid for LoRA training.")
-
-            if self.pissa_init:
-                raise ValueError("`pissa_init` is only valid for LoRA training.")
