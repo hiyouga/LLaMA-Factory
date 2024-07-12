@@ -136,6 +136,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             writer.write("\n".join(res))
 
 class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
+    from transformers.trainer import _is_peft_model, MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
     def compute_loss(self, model, inputs, return_outputs=False):
         """
         How the loss is computed by Trainer. By default, all models return the loss in the first element.
@@ -172,13 +173,18 @@ class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
             if self.finetuning_args.parallel_mode== "data_parallel":
                 loss = outputs["loss"] if isinstance(outputs, dict) else outputs[0]
             else:
+                sp_size = self.finetuning_args.seq_parallel_size
                 loss_fn = CrossEntropyLoss(reduction='sum')
                 labels = inputs.pop("labels")
                 logits = outputs["logits"] if isinstance(outputs, dict) else outputs[1]
                 valid_label_cnt = (labels!=-100).sum(1)[None, :]
                 valid_label_cnt_gather = self.accelerator.gather(valid_label_cnt)
                 n_gpus = valid_label_cnt_gather.shape[0]
-                valid_label_cnt_all =valid_label_cnt_gather.sum(0)
+                if sp_size == -1:
+                    sp_size = n_gpus
+                dp_size = n_gpus // sp_size
+                dp_rank = self.accelerator.process_index // dp_size
+                valid_label_cnt_all =valid_label_cnt_gather[dp_rank * sp_size : (dp_rank+1) * sp_size].sum(0)
                 shift_logits = logits.contiguous()
                 shift_labels = labels.contiguous()
                 bs = len(shift_labels)
