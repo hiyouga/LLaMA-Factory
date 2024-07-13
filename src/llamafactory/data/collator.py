@@ -28,11 +28,10 @@ def prepare_4d_attention_mask(attention_mask_with_indices: "torch.Tensor", dtype
     while handles packed sequences and transforms the mask to lower triangular form to prevent future peeking.
 
     e.g.
-    ```
+    ```python
+    # input
     [[1, 1, 2, 2, 2, 0]]
-    ```
-    ->
-    ```
+    # output
     [
         [
             [
