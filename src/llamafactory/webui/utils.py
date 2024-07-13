@@ -117,6 +117,7 @@ def gen_cmd(args: Dict[str, Any]) -> str:
         cmd_text = "`\n".join(cmd_lines)
     else:
         cmd_text = "\\\n".join(cmd_lines)
+
     cmd_text = "```bash\n{}\n```".format(cmd_text)
     return cmd_text
 
