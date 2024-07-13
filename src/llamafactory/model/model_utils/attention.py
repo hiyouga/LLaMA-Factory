@@ -15,6 +15,7 @@
 from typing import TYPE_CHECKING
 
 from transformers.utils import is_flash_attn_2_available, is_torch_sdpa_available
+from transformers.utils.versions import require_version
 
 from ...extras.logging import get_logger
 
@@ -31,15 +32,17 @@ logger = get_logger(__name__)
 def configure_attn_implementation(
     config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool
 ) -> None:
-    if getattr(config, "model_type", None) == "gemma2" and is_trainable:  # gemma2 adopts soft-cap attention
-        if model_args.flash_attn == "auto":
-            logger.warning("Gemma-2 models should use eager attention in training, change `flash_attn` to disabled.")
-            model_args.flash_attn = "disabled"
-        elif model_args.flash_attn != "disabled":
-            logger.warning(
-                "Gemma-2 models should use eager attention in training, but you set `flash_attn: {}`. "
-                "Will proceed at your own risk.".format(model_args.flash_attn)
-            )
+    if getattr(config, "model_type", None) == "gemma2" and is_trainable:
+        if model_args.flash_attn == "auto" or model_args.flash_attn == "fa2":
+            if is_flash_attn_2_available():
+                require_version("transformers>=4.42.4", "To fix: pip install transformers>=4.42.4")
+                logger.warning("Gemma-2 should use flash attention 2, change `flash_attn` to fa2.")
+                model_args.flash_attn = "fa2"
+            else:
+                logger.warning("Gemma-2 should use eager attention, change `flash_attn` to disabled.")
+                model_args.flash_attn = "disabled"
+        elif model_args.flash_attn == "sdpa":
+            raise ValueError("Gemma-2 should use soft-capping attention, while the SDPA attention is not compatible.")
 
     if model_args.flash_attn == "auto":
         return
