@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import asyncio
+import os
 from threading import Thread
 from typing import TYPE_CHECKING, Any, AsyncGenerator, Dict, Generator, List, Optional, Sequence
 
@@ -115,13 +116,11 @@ class ChatModel:
 
 
 def run_chat() -> None:
-    try:
-        import platform
-
-        if platform.system() != "Windows":
+    if os.name != "nt":
+        try:
             import readline  # noqa: F401
-    except ImportError:
-        print("Install `readline` for a better experience.")
+        except ImportError:
+            print("Install `readline` for a better experience.")
 
     chat_model = ChatModel()
     messages = []
