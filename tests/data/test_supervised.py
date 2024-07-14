@@ -47,7 +47,7 @@ def test_supervised(num_samples: int):
     model_args, data_args, training_args, _, _ = get_train_args(TRAIN_ARGS)
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
-    tokenized_data = get_dataset(model_args, data_args, training_args, stage="sft", **tokenizer_module)
+    dataset_module = get_dataset(model_args, data_args, training_args, stage="sft", **tokenizer_module)
 
     ref_tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA)
 
@@ -63,5 +63,5 @@ def test_supervised(num_samples: int):
             {"role": "assistant", "content": original_data[index]["output"]},
         ]
         templated_result = ref_tokenizer.apply_chat_template(messages, tokenize=False)
-        decoded_result = tokenizer.decode(tokenized_data["input_ids"][index])
+        decoded_result = tokenizer.decode(dataset_module["train_dataset"]["input_ids"][index])
         assert templated_result == decoded_result
