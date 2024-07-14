@@ -200,9 +200,6 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if training_args.max_steps == -1 and data_args.streaming:
         raise ValueError("Please specify `max_steps` in streaming mode.")
 
-    if training_args.do_train and training_args.predict_with_generate:
-        raise ValueError("`predict_with_generate` cannot be set as True while training.")
-
     if training_args.do_train and data_args.dataset is None:
         raise ValueError("Please specify dataset for training.")
 
@@ -210,6 +207,9 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         data_args.eval_dataset is None and data_args.val_size < 1e-6
     ):
         raise ValueError("Please specify dataset for evaluation.")
+
+    if training_args.predict_with_generate and data_args.eval_dataset is None:
+        raise ValueError("Cannot use `predict_with_generate` if `eval_dataset` is None.")
 
     if training_args.do_train and model_args.quantization_device_map == "auto":
         raise ValueError("Cannot use device map for quantized models in training.")
