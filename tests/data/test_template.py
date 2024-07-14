@@ -44,7 +44,7 @@ def _check_tokenization(
 
 
 def _check_single_template(model_id: str, template_name: str, prompt_str: str, answer_str: str, use_fast: bool):
-    tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast=use_fast)
+    tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast=use_fast, token=os.environ.get("HF_TOKEN", None))
     content_str = tokenizer.apply_chat_template(MESSAGES, tokenize=False).rstrip("\n")  # avoid extra newline
     content_ids = tokenizer.encode(content_str, add_special_tokens=False)
     template = get_template_and_fix_tokenizer(tokenizer, name=template_name)

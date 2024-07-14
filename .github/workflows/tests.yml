@@ -20,6 +20,12 @@ jobs:
   tests:
     runs-on: ubuntu-latest
 
+    environment:
+      name: tests
+
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
