@@ -17,7 +17,7 @@
 
 from typing import TYPE_CHECKING, List, Optional
 
-from ...data import SFTDataCollatorWith4DAttentionMask, get_dataset, split_dataset
+from ...data import SFTDataCollatorWith4DAttentionMask, get_dataset
 from ...extras.constants import IGNORE_INDEX
 from ...extras.misc import get_logits_processor
 from ...extras.ploting import plot_loss
@@ -75,8 +75,8 @@ def run_sft(
         callbacks=callbacks,
         compute_metrics=ComputeMetrics(tokenizer) if training_args.predict_with_generate else compute_accuracy,
         preprocess_logits_for_metrics=None if training_args.predict_with_generate else eval_logit_processor,
-        **tokenizer_module,
         **dataset_module,
+        **tokenizer_module,
     )
 
     # Keyword arguments for `model.generate`

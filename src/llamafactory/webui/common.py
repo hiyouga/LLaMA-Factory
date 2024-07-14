@@ -174,8 +174,8 @@ def load_dataset_info(dataset_dir: str) -> Dict[str, Dict[str, Any]]:
     r"""
     Loads dataset_info.json.
     """
-    if dataset_dir == "ONLINE":
-        logger.info("dataset_dir is ONLINE, using online dataset.")
+    if dataset_dir == "ONLINE" or dataset_dir.startswith("REMOTE:"):
+        logger.info("dataset_dir is {}, using online dataset.".format(dataset_dir))
         return {}
 
     try:

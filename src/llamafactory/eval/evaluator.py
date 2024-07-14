@@ -37,7 +37,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import inspect
 import json
 import os
 from typing import Any, Dict, List, Optional
@@ -88,18 +87,13 @@ class Evaluator:
         pbar = tqdm(categorys.keys(), desc="Processing subjects", position=0)
         results = {}
         for subject in pbar:
-            if "trust_remote_code" in inspect.signature(load_dataset).parameters:  # for datasets==2.16.0
-                kwargs = {"trust_remote_code": True}
-            else:
-                kwargs = {}
-
             dataset = load_dataset(
                 path=os.path.join(self.eval_args.task_dir, self.eval_args.task),
                 name=subject,
                 cache_dir=self.model_args.cache_dir,
                 download_mode=self.eval_args.download_mode,
                 token=self.model_args.hf_hub_token,
-                **kwargs,
+                trust_remote_code=True,
             )
             pbar.set_postfix_str(categorys[subject]["name"])
             inputs, outputs, labels = [], [], []
