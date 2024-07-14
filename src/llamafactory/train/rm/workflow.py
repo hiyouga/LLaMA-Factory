@@ -17,7 +17,7 @@
 
 from typing import TYPE_CHECKING, List, Optional
 
-from ...data import PairwiseDataCollatorWithPadding, get_dataset, split_dataset
+from ...data import PairwiseDataCollatorWithPadding, get_dataset
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
 from ..callbacks import fix_valuehead_checkpoint
@@ -56,8 +56,8 @@ def run_rm(
         data_collator=data_collator,
         callbacks=callbacks,
         compute_metrics=compute_accuracy,
-        **tokenizer_module,
         **dataset_module,
+        **tokenizer_module,
     )
 
     # Training

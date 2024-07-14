@@ -104,7 +104,7 @@ def _verify_model_args(
             raise ValueError("Quantized model only accepts a single adapter. Merge them first.")
 
     if data_args.template == "yi" and model_args.use_fast_tokenizer:
-        logger.warning("We should use slow tokenizer for the Yi models.")
+        logger.warning("We should use slow tokenizer for the Yi models. Change `use_fast_tokenizer` to False.")
         model_args.use_fast_tokenizer = False
 
 
@@ -203,6 +203,14 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if training_args.do_train and training_args.predict_with_generate:
         raise ValueError("`predict_with_generate` cannot be set as True while training.")
 
+    if training_args.do_train and data_args.dataset is None:
+        raise ValueError("Please specify dataset for training.")
+
+    if (training_args.do_eval or training_args.do_predict) and (
+        data_args.eval_dataset is None and data_args.val_size < 1e-6
+    ):
+        raise ValueError("Please specify dataset for evaluation.")
+
     if training_args.do_train and model_args.quantization_device_map == "auto":
         raise ValueError("Cannot use device map for quantized models in training.")
 
@@ -242,7 +250,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         raise ValueError("Unsloth is incompatible with DeepSpeed ZeRO-3.")
 
     if data_args.neat_packing and not data_args.packing:
-        logger.warning("`neat_packing` requires `packing` is True. Change it to True.")
+        logger.warning("`neat_packing` requires `packing` is True. Change `packing` to True.")
         data_args.packing = True
 
     _verify_model_args(model_args, data_args, finetuning_args)
