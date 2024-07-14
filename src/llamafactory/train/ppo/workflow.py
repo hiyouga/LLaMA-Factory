@@ -63,8 +63,8 @@ def run_ppo(
         model=model,
         reward_model=reward_model,
         ref_model=ref_model,
-        dataset=dataset_module["train_dataset"],
         data_collator=data_collator,
+        **dataset_module,
         **tokenizer_module,
     )
 

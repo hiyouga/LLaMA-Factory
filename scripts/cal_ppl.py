@@ -83,11 +83,12 @@ def cal_ppl(
             train_on_prompt=train_on_prompt,
             output_dir="dummy_dir",
             overwrite_cache=True,
+            do_train=True,
         )
     )
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
-    dataset_module = get_dataset(model_args, data_args, training_args, stage, **tokenizer_module)
+    trainset = get_dataset(model_args, data_args, training_args, stage, **tokenizer_module)["train_dataset"]
     model = load_model(tokenizer, model_args, finetuning_args, is_trainable=False)
     if stage == "pt":
         data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
@@ -100,7 +101,7 @@ def cal_ppl(
     else:
         raise NotImplementedError("Stage does not supported: {}.".format(stage))
 
-    dataloader = DataLoader(dataset_module["eval_dataset"], batch_size, shuffle=False, collate_fn=data_collator, pin_memory=True)
+    dataloader = DataLoader(trainset, batch_size, shuffle=False, collate_fn=data_collator, pin_memory=True)
     criterion = torch.nn.CrossEntropyLoss(reduction="none")
     total_ppl = 0
     perplexities = []
