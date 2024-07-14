@@ -259,7 +259,7 @@ class Runner:
             use_unsloth=(get("top.booster") == "unsloth"),
             visual_inputs=get("top.visual_inputs"),
             dataset_dir=get("eval.dataset_dir"),
-            dataset=",".join(get("eval.dataset")),
+            eval_dataset=",".join(get("eval.dataset")),
             cutoff_len=get("eval.cutoff_len"),
             max_samples=int(get("eval.max_samples")),
             per_device_eval_batch_size=get("eval.batch_size"),

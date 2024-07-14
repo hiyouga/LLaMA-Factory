@@ -181,7 +181,7 @@
       "response": "summary"
     }
   },
-  "adgen_val": {
+  "adgen_eval": {
     "hf_hub_url": "HasturOfficial/adgen",
     "ms_hub_url": "AI-ModelScope/adgen",
     "split": "validation",

@@ -17,7 +17,7 @@
 
 from typing import TYPE_CHECKING, List, Optional
 
-from ...data import PairwiseDataCollatorWithPadding, get_dataset, split_dataset
+from ...data import PairwiseDataCollatorWithPadding, get_dataset
 from ...extras.constants import IGNORE_INDEX
 from ...extras.ploting import plot_loss
 from ...hparams import ModelArguments
@@ -70,8 +70,8 @@ def run_dpo(
         finetuning_args=finetuning_args,
         data_collator=data_collator,
         callbacks=callbacks,
-        **tokenizer_module,
         **dataset_module,
+        **tokenizer_module,
     )
 
     # Training

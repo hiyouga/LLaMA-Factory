@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, List, Optional
 
 from transformers import DataCollatorForLanguageModeling
 
-from ...data import get_dataset, split_dataset
+from ...data import get_dataset
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
 from ..trainer_utils import create_modelcard_and_push
@@ -53,8 +53,8 @@ def run_pt(
         finetuning_args=finetuning_args,
         data_collator=data_collator,
         callbacks=callbacks,
-        **tokenizer_module,
         **dataset_module,
+        **tokenizer_module,
     )
 
     # Training
