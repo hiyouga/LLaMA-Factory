@@ -79,7 +79,11 @@ def _set_transformers_logging(log_level: Optional[int] = logging.INFO) -> None:
     transformers.utils.logging.enable_explicit_format()
 
 
-def _verify_model_args(model_args: "ModelArguments", finetuning_args: "FinetuningArguments") -> None:
+def _verify_model_args(
+    model_args: "ModelArguments",
+    data_args: "DataArguments",
+    finetuning_args: "FinetuningArguments",
+) -> None:
     if model_args.adapter_name_or_path is not None and finetuning_args.finetuning_type != "lora":
         raise ValueError("Adapter is only valid for the LoRA method.")
 
@@ -98,6 +102,10 @@ def _verify_model_args(model_args: "ModelArguments", finetuning_args: "Finetunin
 
         if model_args.adapter_name_or_path is not None and len(model_args.adapter_name_or_path) != 1:
             raise ValueError("Quantized model only accepts a single adapter. Merge them first.")
+
+    if data_args.template == "yi" and model_args.use_fast_tokenizer:
+        logger.warning("We should use slow tokenizer for the Yi models.")
+        model_args.use_fast_tokenizer = False
 
 
 def _check_extra_dependencies(
@@ -237,7 +245,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         logger.warning("`neat_packing` requires `packing` is True. Change it to True.")
         data_args.packing = True
 
-    _verify_model_args(model_args, finetuning_args)
+    _verify_model_args(model_args, data_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args, training_args)
 
     if (
@@ -361,7 +369,7 @@ def get_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
     if finetuning_args.stage == "rm" and model_args.visual_inputs:
         raise ValueError("Reward server does not support MLLM yet. Stay tuned.")
 
-    _verify_model_args(model_args, finetuning_args)
+    _verify_model_args(model_args, data_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args)
 
     if model_args.export_dir is not None and model_args.export_device == "cpu":
@@ -384,7 +392,7 @@ def get_eval_args(args: Optional[Dict[str, Any]] = None) -> _EVAL_CLS:
     if model_args.infer_backend == "vllm":
         raise ValueError("vLLM backend is only available for API, CLI and Web.")
 
-    _verify_model_args(model_args, finetuning_args)
+    _verify_model_args(model_args, data_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args)
 
     model_args.device_map = "auto"
