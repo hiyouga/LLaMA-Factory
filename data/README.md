@@ -11,9 +11,9 @@ Currently we support datasets in **alpaca** and **sharegpt** format.
   "formatting": "the format of the dataset. (optional, default: alpaca, can be chosen from {alpaca, sharegpt})",
   "ranking": "whether the dataset is a preference dataset or not. (default: False)",
   "subset": "the name of the subset. (optional, default: None)",
+  "split": "the name of dataset split to be used. (optional, default: train)",
   "folder": "the name of the folder of the dataset repository on the Hugging Face hub. (optional, default: None)",
-  "num_samples": "the number of samples in the dataset used for training. (optional, default: None)", 
-  "split": "which dataset split to use for training and evaluation (optional, default: train)",
+  "num_samples": "the number of samples in the dataset to be used. (optional, default: None)",
   "columns (optional)": {
     "prompt": "the column name in the dataset containing the prompts. (default: instruction)",
     "query": "the column name in the dataset containing the queries. (default: input)",
