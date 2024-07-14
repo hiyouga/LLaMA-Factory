@@ -44,13 +44,14 @@ def length_cdf(
             cutoff_len=1_000_000,
             output_dir="dummy_dir",
             overwrite_cache=True,
+            do_train=True,
         )
     )
     tokenizer_module = load_tokenizer(model_args)
-    dataset_module = get_dataset(model_args, data_args, training_args, stage="sft", **tokenizer_module)
-    total_num = len(dataset_module["eval_dataset"])
+    trainset = get_dataset(model_args, data_args, training_args, stage="sft", **tokenizer_module)["train_dataset"]
+    total_num = len(trainset)
     length_dict = defaultdict(int)
-    for sample in tqdm(dataset_module["eval_dataset"]["input_ids"]):
+    for sample in tqdm(trainset["input_ids"]):
         length_dict[len(sample) // interval * interval] += 1
 
     length_tuples = list(length_dict.items())
