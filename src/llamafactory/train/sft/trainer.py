@@ -174,7 +174,7 @@ class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
             if self.finetuning_args.parallel_mode== "data_parallel":
                 loss = outputs["loss"] if isinstance(outputs, dict) else outputs[0]
             else:
-                sp_size = self.finetuning_args.seq_parallel_size
+                sp_size = self.finetuning_args.sp_size
                 loss_fn = CrossEntropyLoss(reduction='sum')
                 labels = inputs.pop("labels")
                 logits = outputs["logits"] if isinstance(outputs, dict) else outputs[1]
