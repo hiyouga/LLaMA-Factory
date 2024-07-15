@@ -4,7 +4,7 @@ import os
 
 import torch
 import torch.distributed as dist
-from torch.distributed import batch_isend_irecv, P2POp, isend, irecv
+from torch.distributed import batch_isend_irecv, P2POp, isend, irecv, get_process_group_ranks
 
 # Sequence parallel group that the current rank belongs to.
 _SEQUENCE_PARALLEL_GROUP = None
@@ -39,7 +39,7 @@ _fwd_recv_volume = 0
 _bwd_send_volume = 0
 _bwd_recv_volume = 0
 
-def initialize_distributed():
+def initialize_distributed(sequence_parallel_size=None):
     if dist.is_initialized():
         if dist.get_rank() == 0:
             print(
@@ -55,16 +55,17 @@ def initialize_distributed():
         global_world_size = dist.get_world_size()
         torch.cuda.set_device(dist.get_rank() % local_world_size)
 
-    _initialize_sequence_parallel()
+    _initialize_sequence_parallel(sequence_parallel_size=sequence_parallel_size)
    # create_nccl_communicators()
 
 def _initialize_sequence_parallel(sequence_parallel_size=None):
     # Get world size and rank. Ensure some consistencies.
-    assert sequence_parallel_size is None, "Multiple sequence parallel group not implemented."
+    # assert sequence_parallel_size is None, "Multiple sequence parallel group not implemented."
     assert torch.distributed.is_initialized()
     world_size: int = torch.distributed.get_world_size()
+    print(f"sequence_parallel_size is {sequence_parallel_size}, world_size is {world_size}")
 
-    if sequence_parallel_size is None:
+    if sequence_parallel_size is None or sequence_parallel_size == -1:
         sequence_parallel_size = world_size
     else:
         assert world_size % sequence_parallel_size == 0
@@ -265,6 +266,7 @@ def maybe_send_recv_fwd_qkvo(q: torch.Tensor, peer_q: torch.Tensor,
     seq_group = get_sequence_parallel_group()
     seq_rank = get_sequence_parallel_rank()
     seq_world_size = get_sequence_parallel_size()
+    seq_offset = get_process_group_ranks(seq_group)[0]
 
     # Handles for operations that actually need to be wait before going to the next iteration.
     # For instance, QKV sender never needs to wait -> it seems fusing these calls help scheduler; 
@@ -293,7 +295,7 @@ def maybe_send_recv_fwd_qkvo(q: torch.Tensor, peer_q: torch.Tensor,
         if time_step < (seq_world_size // 2 - 1):
             #print(f"t={time_step}: R={seq_rank} sends q to {maybe_send_rank % seq_world_size} (not wait)")
             #q_send_handles.append(P2POp(op=isend, tensor=q, peer=maybe_send_rank % seq_world_size, group=seq_group))
-            all_handles.append(P2POp(op=isend, tensor=q, peer=maybe_send_rank % seq_world_size, group=seq_group))
+            all_handles.append(P2POp(op=isend, tensor=q, peer=maybe_send_rank % seq_world_size + seq_offset, group=seq_group))
             if debug:
                 _fwd_send_volume += torch.numel(q) * q.element_size()
     else:
@@ -301,8 +303,8 @@ def maybe_send_recv_fwd_qkvo(q: torch.Tensor, peer_q: torch.Tensor,
         #print(f"t={time_step}: R={seq_rank} sends kv to {maybe_send_rank} (not wait)")
         #kv_send_handles.append(P2POp(op=isend, tensor=k, peer=maybe_send_rank, group=seq_group))
         #kv_send_handles.append(P2POp(op=isend, tensor=v, peer=maybe_send_rank, group=seq_group))
-        all_handles.append(P2POp(op=isend, tensor=k, peer=maybe_send_rank, group=seq_group))
-        all_handles.append(P2POp(op=isend, tensor=v, peer=maybe_send_rank, group=seq_group))
+        all_handles.append(P2POp(op=isend, tensor=k, peer=maybe_send_rank + seq_offset, group=seq_group))
+        all_handles.append(P2POp(op=isend, tensor=v, peer=maybe_send_rank + seq_offset, group=seq_group))
         if debug:
             _fwd_send_volume += torch.numel(k) * k.element_size()
             _fwd_send_volume += torch.numel(v) * v.element_size()
@@ -312,7 +314,7 @@ def maybe_send_recv_fwd_qkvo(q: torch.Tensor, peer_q: torch.Tensor,
         if time_step < (seq_world_size // 2 - 1):
         #    print(f"t={time_step}: R={seq_rank} receives q from {maybe_recv_rank % seq_world_size} (wait)")
             #q_recv_handles.append(P2POp(op=irecv, tensor=peer_q, peer=maybe_recv_rank % seq_world_size, group=seq_group))
-            all_handles.append(P2POp(op=irecv, tensor=peer_q, peer=maybe_recv_rank % seq_world_size, group=seq_group))
+            all_handles.append(P2POp(op=irecv, tensor=peer_q, peer=maybe_recv_rank % seq_world_size + seq_offset, group=seq_group))
             if debug:
                 _fwd_recv_volume += torch.numel(peer_q) * peer_q.element_size()
     else:
@@ -320,8 +322,8 @@ def maybe_send_recv_fwd_qkvo(q: torch.Tensor, peer_q: torch.Tensor,
         #print(f"t={time_step}: R={seq_rank} receivs kv from {maybe_recv_rank} (wait)")
         #kv_recv_handles.append(P2POp(op=irecv, tensor=peer_k, peer=maybe_recv_rank, group=seq_group))
         #kv_recv_handles.append(P2POp(op=irecv, tensor=peer_v, peer=maybe_recv_rank, group=seq_group))
-        all_handles.append(P2POp(op=irecv, tensor=peer_k, peer=maybe_recv_rank, group=seq_group))
-        all_handles.append(P2POp(op=irecv, tensor=peer_v, peer=maybe_recv_rank, group=seq_group))
+        all_handles.append(P2POp(op=irecv, tensor=peer_k, peer=maybe_recv_rank + seq_offset, group=seq_group))
+        all_handles.append(P2POp(op=irecv, tensor=peer_v, peer=maybe_recv_rank + seq_offset, group=seq_group))
         if debug:
             _fwd_recv_volume += torch.numel(peer_k) * peer_k.element_size()
             _fwd_recv_volume += torch.numel(peer_v) * peer_v.element_size()
@@ -332,14 +334,14 @@ def maybe_send_recv_fwd_qkvo(q: torch.Tensor, peer_q: torch.Tensor,
         for t in o_stats:
          #   print(f"t={time_step}: R={seq_rank} sends o to {maybe_send_rank_o % seq_world_size} (wait)")
             #o_send_handles.append(P2POp(op=isend, tensor=t, peer=maybe_send_rank_o % seq_world_size, group=seq_group))
-            all_handles.append(P2POp(op=isend, tensor=t, peer=maybe_send_rank_o % seq_world_size, group=seq_group))
+            all_handles.append(P2POp(op=isend, tensor=t, peer=maybe_send_rank_o % seq_world_size + seq_offset, group=seq_group))
             if debug:
                 _fwd_send_volume += torch.numel(t) * t.element_size()
     if maybe_recv_rank_o >= seq_world_size and time_step > 1 :
         for t in o_stats:
           #  print(f"t={time_step}: R={seq_rank} receives o from {maybe_recv_rank_o % seq_world_size} (wait)")
             #o_recv_handles.append(P2POp(op=irecv, tensor=t, peer=maybe_recv_rank_o % seq_world_size, group=seq_group))
-            all_handles.append(P2POp(op=irecv, tensor=t, peer=maybe_recv_rank_o % seq_world_size, group=seq_group))
+            all_handles.append(P2POp(op=irecv, tensor=t, peer=maybe_recv_rank_o % seq_world_size + seq_offset, group=seq_group))
             if debug:
                 _fwd_recv_volume += torch.numel(t) * t.element_size()
     
@@ -367,6 +369,7 @@ def maybe_send_recv_bwd_qkvo(dq_delta: torch.Tensor, dk_delta: torch.Tensor,
     seq_group = get_sequence_parallel_group()
     seq_rank = get_sequence_parallel_rank()
     seq_world_size = get_sequence_parallel_size()
+    seq_offset = get_process_group_ranks(seq_group)[0]
 
     all_handles = []
     maybe_send_rank = seq_rank + (time_step + 1)
@@ -378,10 +381,10 @@ def maybe_send_recv_bwd_qkvo(dq_delta: torch.Tensor, dk_delta: torch.Tensor,
     if maybe_send_rank >= seq_world_size:
         #send q, no one needs to do remote computation in the last time step
         if time_step < (seq_world_size // 2 - 1):
-            all_handles.append(P2POp(op=isend, tensor=q, peer=maybe_send_rank % seq_world_size, group=seq_group))
-            all_handles.append(P2POp(op=isend, tensor=L, peer=maybe_send_rank % seq_world_size, group=seq_group))
-            all_handles.append(P2POp(op=isend, tensor=o, peer=maybe_send_rank % seq_world_size, group=seq_group))
-            all_handles.append(P2POp(op=isend, tensor=do, peer=maybe_send_rank % seq_world_size, group=seq_group))
+            all_handles.append(P2POp(op=isend, tensor=q, peer=maybe_send_rank % seq_world_size + seq_offset, group=seq_group))
+            all_handles.append(P2POp(op=isend, tensor=L, peer=maybe_send_rank % seq_world_size + seq_offset, group=seq_group))
+            all_handles.append(P2POp(op=isend, tensor=o, peer=maybe_send_rank % seq_world_size + seq_offset, group=seq_group))
+            all_handles.append(P2POp(op=isend, tensor=do, peer=maybe_send_rank % seq_world_size + seq_offset, group=seq_group))
             if debug:
                 _bwd_send_volume += torch.numel(q) * q.element_size()
                 _bwd_send_volume += torch.numel(L) * L.element_size()
@@ -389,8 +392,8 @@ def maybe_send_recv_bwd_qkvo(dq_delta: torch.Tensor, dk_delta: torch.Tensor,
                 _bwd_send_volume += torch.numel(do) * do.element_size()
     else:
         # send kv
-        all_handles.append(P2POp(op=isend, tensor=k, peer=maybe_send_rank, group=seq_group))
-        all_handles.append(P2POp(op=isend, tensor=v, peer=maybe_send_rank, group=seq_group))
+        all_handles.append(P2POp(op=isend, tensor=k, peer=maybe_send_rank + seq_offset, group=seq_group))
+        all_handles.append(P2POp(op=isend, tensor=v, peer=maybe_send_rank + seq_offset, group=seq_group))
         if debug:
             _bwd_send_volume += torch.numel(k) * k.element_size()
             _bwd_send_volume += torch.numel(v) * v.element_size()
@@ -398,10 +401,10 @@ def maybe_send_recv_bwd_qkvo(dq_delta: torch.Tensor, dk_delta: torch.Tensor,
     if maybe_recv_rank < 0:
         # recv q, no one needs to do remote computation in the last time step
         if time_step < (seq_world_size // 2 - 1):
-            all_handles.append(P2POp(op=irecv, tensor=peer_q, peer=maybe_recv_rank % seq_world_size, group=seq_group))
-            all_handles.append(P2POp(op=irecv, tensor=peer_L, peer=maybe_recv_rank % seq_world_size, group=seq_group))
-            all_handles.append(P2POp(op=irecv, tensor=peer_o, peer=maybe_recv_rank % seq_world_size, group=seq_group))
-            all_handles.append(P2POp(op=irecv, tensor=peer_do, peer=maybe_recv_rank % seq_world_size, group=seq_group))
+            all_handles.append(P2POp(op=irecv, tensor=peer_q, peer=maybe_recv_rank % seq_world_size + seq_offset, group=seq_group))
+            all_handles.append(P2POp(op=irecv, tensor=peer_L, peer=maybe_recv_rank % seq_world_size + seq_offset, group=seq_group))
+            all_handles.append(P2POp(op=irecv, tensor=peer_o, peer=maybe_recv_rank % seq_world_size + seq_offset, group=seq_group))
+            all_handles.append(P2POp(op=irecv, tensor=peer_do, peer=maybe_recv_rank % seq_world_size + seq_offset, group=seq_group))
             if debug:
                 _bwd_recv_volume += torch.numel(peer_q) * peer_q.element_size()
                 _bwd_recv_volume += torch.numel(peer_L) * peer_L.element_size()
@@ -409,8 +412,8 @@ def maybe_send_recv_bwd_qkvo(dq_delta: torch.Tensor, dk_delta: torch.Tensor,
                 _bwd_recv_volume += torch.numel(peer_do) * peer_do.element_size()
     else:
         # recv kv
-        all_handles.append(P2POp(op=irecv, tensor=peer_k, peer=maybe_recv_rank, group=seq_group))
-        all_handles.append(P2POp(op=irecv, tensor=peer_v, peer=maybe_recv_rank, group=seq_group))
+        all_handles.append(P2POp(op=irecv, tensor=peer_k, peer=maybe_recv_rank + seq_offset, group=seq_group))
+        all_handles.append(P2POp(op=irecv, tensor=peer_v, peer=maybe_recv_rank + seq_offset, group=seq_group))
         if debug:
             _bwd_recv_volume += torch.numel(peer_k) * peer_k.element_size()
             _bwd_recv_volume += torch.numel(peer_v) * peer_v.element_size()
@@ -425,27 +428,27 @@ def maybe_send_recv_bwd_qkvo(dq_delta: torch.Tensor, dk_delta: torch.Tensor,
     if time_step > 1:
         if maybe_send_rank_dqkv < 0:
             #print(f"BWD t={time_step}: R={seq_rank} sends dq delta to {maybe_send_rank_dqkv % seq_world_size}")
-            all_handles.append(P2POp(op=isend, tensor=dq_delta, peer=maybe_send_rank_dqkv % seq_world_size, group=seq_group))
+            all_handles.append(P2POp(op=isend, tensor=dq_delta, peer=maybe_send_rank_dqkv % seq_world_size + seq_offset, group=seq_group))
             if debug:
                 _bwd_send_volume += torch.numel(dq_delta) * dq_delta.element_size()
         else:
             #print(f"BWD t={time_step}: R={seq_rank} sends dkv delta to {maybe_send_rank_dqkv}")
-            all_handles.append(P2POp(op=isend, tensor=dk_delta, peer=maybe_send_rank_dqkv, group=seq_group))
-            all_handles.append(P2POp(op=isend, tensor=dv_delta, peer=maybe_send_rank_dqkv, group=seq_group))
+            all_handles.append(P2POp(op=isend, tensor=dk_delta, peer=maybe_send_rank_dqkv + seq_offset, group=seq_group))
+            all_handles.append(P2POp(op=isend, tensor=dv_delta, peer=maybe_send_rank_dqkv + seq_offset, group=seq_group))
             if debug:
                 _bwd_send_volume += torch.numel(dk_delta) * dk_delta.element_size()
                 _bwd_send_volume += torch.numel(dv_delta) * dv_delta.element_size()
 
         if maybe_recv_rank_dqkv >= seq_world_size:
             #print(f"BWD t={time_step}: R={seq_rank} receives dq delta to {maybe_recv_rank_dqkv % seq_world_size}")
-            all_handles.append(P2POp(op=irecv, tensor=dq_delta, peer=maybe_recv_rank_dqkv % seq_world_size, group=seq_group))
+            all_handles.append(P2POp(op=irecv, tensor=dq_delta, peer=maybe_recv_rank_dqkv % seq_world_size + seq_offset, group=seq_group))
             is_update_dq = True
             if debug:
                 _bwd_recv_volume += torch.numel(dq_delta) * dq_delta.element_size()
         else: 
             #print(f"BWD t={time_step}: R={seq_rank} receives dk dv delta from {maybe_recv_rank_dqkv}")
-            all_handles.append(P2POp(op=irecv, tensor=dk_delta_from_peer, peer=maybe_recv_rank_dqkv, group=seq_group))
-            all_handles.append(P2POp(op=irecv, tensor=dv_delta_from_peer, peer=maybe_recv_rank_dqkv, group=seq_group))
+            all_handles.append(P2POp(op=irecv, tensor=dk_delta_from_peer, peer=maybe_recv_rank_dqkv + seq_offset, group=seq_group))
+            all_handles.append(P2POp(op=irecv, tensor=dv_delta_from_peer, peer=maybe_recv_rank_dqkv + seq_offset, group=seq_group))
             is_update_dkv = True
             if debug:
                 _bwd_recv_volume += torch.numel(dk_delta_from_peer) * dk_delta_from_peer.element_size()
@@ -461,6 +464,7 @@ def maybe_send_recv_bwd_last_dkv(dk_delta: torch.Tensor, dv_delta: torch.Tensor,
     seq_group = get_sequence_parallel_group()
     seq_rank = get_sequence_parallel_rank()
     seq_world_size = get_sequence_parallel_size()
+    seq_offset = get_process_group_ranks(seq_group)[0]
     
     if seq_world_size == 1: return [], is_update_last_dkv
 
@@ -477,15 +481,15 @@ def maybe_send_recv_bwd_last_dkv(dk_delta: torch.Tensor, dv_delta: torch.Tensor,
         
         if maybe_send_rank >= 0:
             # print(f"BWD t={time_step}: R={seq_rank} last send dkv to {maybe_send_rank}")
-            all_handles.append(P2POp(op=isend, tensor=dk_delta, peer=maybe_send_rank, group=seq_group))
-            all_handles.append(P2POp(op=isend, tensor=dv_delta, peer=maybe_send_rank, group=seq_group))
+            all_handles.append(P2POp(op=isend, tensor=dk_delta, peer=maybe_send_rank + seq_offset, group=seq_group))
+            all_handles.append(P2POp(op=isend, tensor=dv_delta, peer=maybe_send_rank + seq_offset, group=seq_group))
             if debug:
                 _bwd_send_volume += torch.numel(dk_delta) * dk_delta.element_size()
                 _bwd_send_volume += torch.numel(dv_delta) * dv_delta.element_size()
         if maybe_recv_rank < seq_world_size:
             # print(f"BWD t={time_step}: R={seq_rank} last receive dkv from {maybe_recv_rank}")
-            all_handles.append(P2POp(op=irecv, tensor=dk_delta, peer=maybe_recv_rank, group=seq_group))
-            all_handles.append(P2POp(op=irecv, tensor=dv_delta, peer=maybe_recv_rank, group=seq_group))
+            all_handles.append(P2POp(op=irecv, tensor=dk_delta, peer=maybe_recv_rank + seq_offset, group=seq_group))
+            all_handles.append(P2POp(op=irecv, tensor=dv_delta, peer=maybe_recv_rank + seq_offset, group=seq_group))
             if debug:
                 _bwd_recv_volume += torch.numel(dk_delta) * dk_delta.element_size()
                 _bwd_recv_volume += torch.numel(dv_delta) * dv_delta.element_size()

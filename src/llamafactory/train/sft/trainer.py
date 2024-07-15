@@ -136,6 +136,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             writer.write("\n".join(res))
 
 class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
+    from transformers.trainer import _is_peft_model, MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
     def compute_loss(self, model, inputs, return_outputs=False):
         """
         How the loss is computed by Trainer. By default, all models return the loss in the first element.
@@ -171,16 +172,19 @@ class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
             # We don't use .loss here since the model may return tuples instead of ModelOutput.
             if self.finetuning_args.parallel_mode== "data_parallel":
                 loss = outputs["loss"] if isinstance(outputs, dict) else outputs[0]
-                #print(f"loss={loss}, rank={os.environ['RANK']}")
-                #time.sleep(60)
             else:
+                sp_size = self.finetuning_args.seq_parallel_size
                 loss_fn = CrossEntropyLoss(reduction='sum')
                 labels = inputs.pop("labels")
                 logits = outputs["logits"] if isinstance(outputs, dict) else outputs[1]
                 valid_label_cnt = (labels!=-100).sum(1)[None, :]
                 valid_label_cnt_gather = self.accelerator.gather(valid_label_cnt)
                 n_gpus = valid_label_cnt_gather.shape[0]
-                valid_label_cnt_all =valid_label_cnt_gather.sum(0)
+                if sp_size == -1:
+                    sp_size = n_gpus
+                dp_size = n_gpus // sp_size
+                dp_rank = self.accelerator.process_index // sp_size
+                valid_label_cnt_all =valid_label_cnt_gather[dp_rank * sp_size : (dp_rank+1) * sp_size].sum(0).detach()
                 shift_logits = logits.contiguous()
                 shift_labels = labels.contiguous()
                 bs = len(shift_labels)
@@ -188,7 +192,7 @@ class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
                 for b in range(bs):
                     normalizer=valid_label_cnt_all[b].item()
                     loss[b]=loss_fn(shift_logits[b], shift_labels[b])/normalizer
-                loss = loss.mean()*n_gpus
+                loss = loss.mean()*sp_size
 
         return (loss, outputs) if return_outputs else loss
 
@@ -225,6 +229,12 @@ class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
             dataloader_params["worker_init_fn"] = seed_worker
             dataloader_params["prefetch_factor"] = self.args.dataloader_prefetch_factor
         if hasattr(data_collator, "seq_algo") and data_collator.seq_algo != "data_parallel":
+            seq_parallel_size = self.finetuning_args.seq_parallel_size
+            if seq_parallel_size != -1:
+                world_size = int(os.environ['WORLD_SIZE'])
+                assert seq_parallel_size != 0 and world_size % seq_parallel_size == 0, f"world_size: {world_size} should be devide by seq_parallel_size: {seq_parallel_size}"
+                data_parallel_size = world_size // seq_parallel_size
+                dataloader_params["batch_size"] = dataloader_params["batch_size"] * data_parallel_size
             return DataLoader(train_dataset, **dataloader_params)
         return self.accelerator.prepare(DataLoader(train_dataset, **dataloader_params))
 
@@ -274,5 +284,11 @@ class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
             self._eval_dataloader = eval_dataloader
 
         if hasattr(data_collator, "seq_algo") and data_collator.seq_algo != "data_parallel":
+            seq_parallel_size = self.finetuning_args.seq_parallel_size
+            if seq_parallel_size != -1:
+                world_size = int(os.environ['WORLD_SIZE'])
+                assert seq_parallel_size != 0 and world_size % seq_parallel_size == 0, f"world_size: {world_size} should be devide by seq_parallel_size: {seq_parallel_size}"
+                data_parallel_size = world_size // seq_parallel_size
+                dataloader_params["batch_size"] = dataloader_params["batch_size"] * data_parallel_size
             return eval_dataloader
         return self.accelerator.prepare(eval_dataloader)

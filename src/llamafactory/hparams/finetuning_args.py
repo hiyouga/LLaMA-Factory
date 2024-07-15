@@ -316,6 +316,12 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         default="data_parallel",
         metadata={"help": "which sequence parallel mode to use."},
     )
+    seq_parallel_size: int = field(
+        default=-1,
+        metadata={
+            "help": "used for use seq_parallel and data_parallel simultaneously, -1 for all gpus parallels in sequence_length axis, n for n_gpus makes a sequence_parallel group"
+        }
+    )
 
     def __post_init__(self):
         def split_arg(arg):

@@ -86,10 +86,12 @@ class SeqParallelDataCollator(DataCollatorForSeq2Seq):
     r"""
     Data collator for sequence parallel in supervised finetune(sft) stage.
     """
-    seq_algo: str = "data_parallel"
+    seq_algo: str = "data_parallel",
+    seq_parallel_size: int = -1
     rank: int = 0
     world_size: int = 8
     device: Optional[Any] = None
+
     def __call__(self, features: Sequence[Dict[str, Any]], return_tensors=None) -> Dict[str, torch.Tensor]:
         batch = super().__call__(features, return_tensors)
         if self.seq_algo == "data_parallel":
@@ -97,13 +99,25 @@ class SeqParallelDataCollator(DataCollatorForSeq2Seq):
         input_ids = batch["input_ids"]
         attention_mask = batch["attention_mask"]
         labels = batch["labels"]
-        batch = prepare_seq_parallel_sft_inputs(self.seq_algo, 
-                                                input_ids=input_ids, 
-                                                attention_mask=attention_mask, 
-                                                position_ids=None, 
-                                                labels=labels, 
-                                                rank=self.rank, 
-                                                world_size=self.world_size, 
+        seq_rank = self.rank
+        seq_worlds_size = self.world_size
+        if self.seq_parallel_size != -1:
+            dp_rank = self.rank // self.seq_parallel_size
+            seq_rank = self.rank % self.seq_parallel_size
+            seq_worlds_size = self.seq_parallel_size
+            bs = len(input_ids)
+            data_group_size = self.world_size // self.seq_parallel_size
+            group_bs = bs // data_group_size
+            input_ids = input_ids[dp_rank * group_bs: (dp_rank + 1) * group_bs]
+            attention_mask = attention_mask[dp_rank * group_bs: (dp_rank + 1) * group_bs]
+            labels = labels[dp_rank * group_bs: (dp_rank + 1) * group_bs]
+        batch = prepare_seq_parallel_sft_inputs(self.seq_algo,
+                                                input_ids=input_ids,
+                                                attention_mask=attention_mask,
+                                                position_ids=None,
+                                                labels=labels,
+                                                rank=seq_rank,
+                                                world_size=seq_worlds_size,
                                                 device=self.device)
         return batch
 
@@ -115,23 +129,36 @@ class SeqParallelDataCollatorForLanguageModeling(DataCollatorForLanguageModeling
     Reuse the sequence parallel distributing function for sft stage.
     """
     seq_algo: str = "data_parallel"
+    seq_parallel_size: int = -1
     rank: int = 0
     world_size: int = 8
     device: Optional[Any] = None
-    
+
     def __call__(self, examples: List[Union[List[int], Any, Dict[str, Any]]]) -> Dict[str, Any]:
         batch = super().__call__(examples)
         if self.seq_algo == "data_parallel":
             return batch
+        seq_rank = self.rank
+        seq_worlds_size = self.world_size
+        if self.seq_parallel_size != -1:
+            dp_rank = self.rank // self.seq_parallel_size
+            seq_rank = self.rank % self.seq_parallel_size
+            seq_worlds_size = self.seq_parallel_size
+            bs = len(input_ids)
+            data_group_size = self.world_size // self.seq_parallel_size
+            group_bs = bs // data_group_size
+            input_ids = input_ids[dp_rank * group_bs: (dp_rank + 1) * group_bs]
+            attention_mask = attention_mask[dp_rank * group_bs: (dp_rank + 1) * group_bs]
+            labels = labels[dp_rank * group_bs: (dp_rank + 1) * group_bs]
         input_ids = batch["input_ids"]
         attention_mask = batch["attention_mask"]
         labels = batch["labels"]
-        batch = prepare_seq_parallel_sft_inputs(self.seq_algo, 
-                                                input_ids=input_ids, 
-                                                attention_mask=attention_mask, 
-                                                position_ids=None, 
-                                                labels=labels, 
-                                                rank=self.rank, 
-                                                world_size=self.world_size, 
+        batch = prepare_seq_parallel_sft_inputs(self.seq_algo,
+                                                input_ids=input_ids,
+                                                attention_mask=attention_mask,
+                                                position_ids=None,
+                                                labels=labels,
+                                                rank=seq_rank,
+                                                world_size=seq_worlds_size,
                                                 device=self.device)
         return batch
