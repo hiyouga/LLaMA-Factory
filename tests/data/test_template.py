@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 
 HF_TOKEN = os.environ.get("HF_TOKEN", None)
-IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
+print(HF_TOKEN)
 
 TINY_LLAMA = os.environ.get("TINY_LLAMA", "llamafactory/tiny-random-Llama-3")
 
