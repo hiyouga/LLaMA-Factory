@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 
 HF_TOKEN = os.environ.get("HF_TOKEN", None)
-print(HF_TOKEN)
+raise ValueError("test: " + str(HF_TOKEN))
 
 TINY_LLAMA = os.environ.get("TINY_LLAMA", "llamafactory/tiny-random-Llama-3")
 
