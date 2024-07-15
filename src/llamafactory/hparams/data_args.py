@@ -41,10 +41,6 @@ class DataArguments:
         default="data",
         metadata={"help": "Path to the folder containing the datasets."},
     )
-    split: str = field(
-        default="train",
-        metadata={"help": "Which dataset split to use for training and evaluation."},
-    )
     cutoff_len: int = field(
         default=1024,
         metadata={"help": "The cutoff length of the tokenized inputs in the dataset."},
