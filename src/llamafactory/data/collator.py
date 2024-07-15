@@ -129,7 +129,7 @@ class SeqParallelDataCollatorForLanguageModeling(DataCollatorForLanguageModeling
     Reuse the sequence parallel distributing function for sft stage.
     """
     seq_algo: str = "data_parallel"
-    seq_parallel_size: int = -1
+    sp_size: int = -1
     rank: int = 0
     world_size: int = 8
     device: Optional[Any] = None
