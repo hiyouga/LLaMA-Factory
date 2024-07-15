@@ -183,7 +183,6 @@ class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
                 n_gpus = valid_label_cnt_gather.shape[0]
                 if sp_size == -1:
                     sp_size = n_gpus
-                dp_size = n_gpus // sp_size
                 dp_rank = self.accelerator.process_index // sp_size
                 valid_label_cnt_all =valid_label_cnt_gather[dp_rank * sp_size : (dp_rank+1) * sp_size].sum(0).detach()
                 shift_logits = logits.contiguous()

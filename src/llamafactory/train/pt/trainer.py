@@ -95,24 +95,25 @@ class CustomSeqParallelTrainer(CustomTrainer):
                 loss = outputs["loss"] if isinstance(outputs, dict) else outputs[0]
 
             else:
-                loss_fn = CrossEntropyLoss()
+                sp_size = self.finetuning_args.sp_size
+                loss_fn = CrossEntropyLoss(reduction='sum')
                 labels = inputs.pop("labels")
                 logits = outputs["logits"] if isinstance(outputs, dict) else outputs[1]
-                
-                # valid_label_cnt = (labels!=-100).sum(1)[None, :]
-                # print(f"valid label cnt:{valid_label_cnt}")
-                # valid_label_cnt_gather = self.accelerator.gather(valid_label_cnt)
-                # # valid_label_cnt_gather:[ngpus, bs]
-                # n_gpus = valid_label_cnt_gather.shape[0]
-                # valid_label_cnt_all =valid_label_cnt_gather.sum(0) #[bs]
+                valid_label_cnt = (labels!=-100).sum(1)[None, :]
+                valid_label_cnt_gather = self.accelerator.gather(valid_label_cnt)
+                n_gpus = valid_label_cnt_gather.shape[0]
+                if sp_size == -1:
+                    sp_size = n_gpus
+                dp_rank = self.accelerator.process_index // sp_size
+                valid_label_cnt_all =valid_label_cnt_gather[dp_rank * sp_size : (dp_rank+1) * sp_size].sum(0).detach()
                 shift_logits = logits.contiguous()
                 shift_labels = labels.contiguous()
                 bs = len(shift_labels)
                 loss = torch.zeros(bs, dtype=shift_logits.dtype, device=shift_labels.device)
-                
                 for b in range(bs):
-                    loss[b]=loss_fn(shift_logits[b], shift_labels[b])
-                loss = loss.mean()
+                    normalizer=valid_label_cnt_all[b].item()
+                    loss[b]=loss_fn(shift_logits[b], shift_labels[b])/normalizer
+                loss = loss.mean()*sp_size
 
         return (loss, outputs) if return_outputs else loss
 
