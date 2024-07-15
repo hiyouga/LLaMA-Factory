@@ -9,6 +9,7 @@ SP_SIZE=${SP_SIZE:-1}
 BATCH_SIZE=${BATCH_SIZE:-1}
 export PYTORCH_CUDA_ALLOC_CONF='max_split_size_mb:1024' 
 export WANDB_DISABLED=true
+export NCCL_DEBUG=WARN
 echo ${RANK}/$[WORLD_SIZE]
 if [ ${MASTER_ADDR} == 'localhost' ]; then
     export MASTER_ADDR=`hostname -i`
@@ -35,7 +36,7 @@ src/train.py \
 --dataset long_sft_128k \
 --template llama3 \
 --cutoff_len ${SEQ_LEN} \
---max_samples 1000 \
+--max_steps 10 \
 --overwrite_cache \
 --preprocessing_num_workers 16 \
 --output_dir ./output/70B_32K_bs_1M_rope_1M_step_1000_lr_2e-5 \
@@ -46,7 +47,7 @@ src/train.py \
 --per_device_train_batch_size ${BATCH_SIZE} \
 --gradient_accumulation_steps 4 \
 --learning_rate 2e-5 \
---num_train_epochs 3.0 \
+--num_train_epochs 1.0 \
 --lr_scheduler_type cosine \
 --warmup_ratio 0.1 \
 --bf16 \
