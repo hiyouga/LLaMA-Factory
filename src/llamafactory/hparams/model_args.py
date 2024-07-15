@@ -226,6 +226,7 @@ class ModelArguments:
         self.compute_dtype: Optional["torch.dtype"] = None
         self.device_map: Optional[Union[str, Dict[str, Any]]] = None
         self.model_max_length: Optional[int] = None
+        self.block_diag_attn: bool = False
 
         if self.split_special_tokens and self.use_fast_tokenizer:
             raise ValueError("`split_special_tokens` is only supported for slow tokenizers.")
@@ -253,4 +254,5 @@ class ModelArguments:
         new_arg.compute_dtype = old_arg.compute_dtype
         new_arg.device_map = old_arg.device_map
         new_arg.model_max_length = old_arg.model_max_length
+        new_arg.block_diag_attn = old_arg.block_diag_attn
         return new_arg

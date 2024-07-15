@@ -17,9 +17,7 @@
 
 from typing import TYPE_CHECKING, List, Optional
 
-from transformers import DataCollatorForSeq2Seq
-
-from ...data import get_dataset, split_dataset
+from ...data import SFTDataCollatorWith4DAttentionMask, get_dataset
 from ...extras.constants import IGNORE_INDEX
 from ...extras.misc import get_logits_processor
 from ...extras.ploting import plot_loss
@@ -45,7 +43,7 @@ def run_sft(
 ):
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
-    dataset = get_dataset(model_args, data_args, training_args, stage="sft", **tokenizer_module)
+    dataset_module = get_dataset(model_args, data_args, training_args, stage="sft", **tokenizer_module)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
 
     if training_args.predict_with_generate:
@@ -54,10 +52,13 @@ def run_sft(
     if getattr(model, "is_quantized", False) and not training_args.do_train:
         setattr(model, "_hf_peft_config_loaded", True)  # hack here: make model compatible with prediction
 
-    data_collator = DataCollatorForSeq2Seq(
+    data_collator = SFTDataCollatorWith4DAttentionMask(
         tokenizer=tokenizer,
         pad_to_multiple_of=8 if tokenizer.padding_side == "right" else None,  # for shift short attention
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
+        block_diag_attn=model_args.block_diag_attn,
+        attn_implementation=getattr(model.config, "_attn_implementation", None),
+        compute_dtype=model_args.compute_dtype,
     )
 
     # Override the decoding parameters of Seq2SeqTrainer
@@ -74,8 +75,8 @@ def run_sft(
         callbacks=callbacks,
         compute_metrics=ComputeMetrics(tokenizer) if training_args.predict_with_generate else compute_accuracy,
         preprocess_logits_for_metrics=None if training_args.predict_with_generate else eval_logit_processor,
+        **dataset_module,
         **tokenizer_module,
-        **split_dataset(dataset, data_args, training_args),
     )
 
     # Keyword arguments for `model.generate`
@@ -104,12 +105,12 @@ def run_sft(
 
     # Predict
     if training_args.do_predict:
-        predict_results = trainer.predict(dataset, metric_key_prefix="predict", **gen_kwargs)
+        predict_results = trainer.predict(dataset_module["eval_dataset"], metric_key_prefix="predict", **gen_kwargs)
         if training_args.predict_with_generate:  # predict_loss will be wrong if predict_with_generate is enabled
             predict_results.metrics.pop("predict_loss", None)
         trainer.log_metrics("predict", predict_results.metrics)
         trainer.save_metrics("predict", predict_results.metrics)
-        trainer.save_predictions(dataset, predict_results)
+        trainer.save_predictions(dataset_module["eval_dataset"], predict_results)
 
     # Create model card
     create_modelcard_and_push(trainer, model_args, data_args, training_args, finetuning_args)

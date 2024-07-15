@@ -5,6 +5,7 @@ FROM nvcr.io/nvidia/pytorch:24.02-py3
 # Define environments
 ENV MAX_JOBS=4
 ENV FLASH_ATTENTION_FORCE_BUILD=TRUE
+ENV VLLM_WORKER_MULTIPROC_METHOD=spawn
 
 # Define installation arguments
 ARG INSTALL_BNB=false
@@ -23,13 +24,6 @@ RUN pip config set global.index-url "$PIP_INDEX" && \
     python -m pip install --upgrade pip && \
     python -m pip install -r requirements.txt
 
-# Rebuild flash attention
-RUN pip uninstall -y transformer-engine flash-attn && \
-    if [ "$INSTALL_FLASHATTN" == "true" ]; then \
-        pip uninstall -y ninja && pip install ninja && \
-        pip install --no-cache-dir flash-attn --no-build-isolation; \
-    fi
-
 # Copy the rest of the application into the image
 COPY . /app
 
@@ -45,6 +39,13 @@ RUN EXTRA_PACKAGES="metrics"; \
         EXTRA_PACKAGES="${EXTRA_PACKAGES},deepspeed"; \
     fi; \
     pip install -e ".[$EXTRA_PACKAGES]"
+
+# Rebuild flash attention
+RUN pip uninstall -y transformer-engine flash-attn && \
+    if [ "$INSTALL_FLASHATTN" == "true" ]; then \
+        pip uninstall -y ninja && pip install ninja && \
+        pip install --no-cache-dir flash-attn --no-build-isolation; \
+    fi
 
 # Set up volumes
 VOLUME [ "/root/.cache/huggingface", "/root/.cache/modelscope", "/app/data", "/app/output" ]

@@ -79,9 +79,8 @@ def fix_valuehead_checkpoint(
         if name.startswith("v_head."):
             v_head_state_dict[name] = param
         else:
-            decoder_state_dict[name.replace("pretrained_model.", "")] = param
+            decoder_state_dict[name.replace("pretrained_model.", "", 1)] = param
 
-    os.remove(path_to_checkpoint)
     model.pretrained_model.save_pretrained(
         output_dir, state_dict=decoder_state_dict or None, safe_serialization=safe_serialization
     )
@@ -91,6 +90,7 @@ def fix_valuehead_checkpoint(
     else:
         torch.save(v_head_state_dict, os.path.join(output_dir, V_HEAD_WEIGHTS_NAME))
 
+    os.remove(path_to_checkpoint)
     logger.info("Value head model saved at: {}".format(output_dir))
 
 
@@ -134,7 +134,7 @@ class PissaConvertCallback(TrainerCallback):
         if args.should_save:
             model = kwargs.pop("model")
             pissa_init_dir = os.path.join(args.output_dir, "pissa_init")
-            logger.info("Initial PiSSA adatper will be saved at: {}.".format(pissa_init_dir))
+            logger.info("Initial PiSSA adapter will be saved at: {}.".format(pissa_init_dir))
             if isinstance(model, PeftModel):
                 init_lora_weights = getattr(model.peft_config["default"], "init_lora_weights")
                 setattr(model.peft_config["default"], "init_lora_weights", True)

@@ -126,7 +126,6 @@ def configure_quantization(
             require_version("autoawq", "To fix: pip install autoawq")
 
         if quant_method == QuantizationMethod.AQLM:
-            require_version("transformers>=4.39.0", "To fix: pip install transformers>=4.39.0")
             require_version("aqlm>=1.1.0", "To fix: pip install aqlm[gpu]>=1.1.0")
             quantization_config["bits"] = 2
 

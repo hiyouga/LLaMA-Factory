@@ -138,9 +138,9 @@ class Runner:
             warmup_steps=get("train.warmup_steps"),
             neftune_noise_alpha=get("train.neftune_alpha") or None,
             optim=get("train.optim"),
+            packing=get("train.packing") or get("train.neat_packing"),
+            neat_packing=get("train.neat_packing"),
             resize_vocab=get("train.resize_vocab"),
-            packing=get("train.packing"),
-            upcast_layernorm=get("train.upcast_layernorm"),
             use_llama_pro=get("train.use_llama_pro"),
             shift_attn=get("train.shift_attn"),
             report_to="all" if get("train.report_to") else "none",
@@ -185,7 +185,7 @@ class Runner:
             args["additional_target"] = get("train.additional_target") or None
 
             if args["use_llama_pro"]:
-                args["num_layer_trainable"] = get("train.num_layer_trainable")
+                args["freeze_trainable_layers"] = get("train.freeze_trainable_layers")
 
         # rlhf config
         if args["stage"] == "ppo":
@@ -259,7 +259,7 @@ class Runner:
             use_unsloth=(get("top.booster") == "unsloth"),
             visual_inputs=get("top.visual_inputs"),
             dataset_dir=get("eval.dataset_dir"),
-            dataset=",".join(get("eval.dataset")),
+            eval_dataset=",".join(get("eval.dataset")),
             cutoff_len=get("eval.cutoff_len"),
             max_samples=int(get("eval.max_samples")),
             per_device_eval_batch_size=get("eval.batch_size"),

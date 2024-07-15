@@ -78,6 +78,19 @@ TRAINING_STAGES = {
 
 STAGES_USE_PAIR_DATA = {"rm", "dpo"}
 
+SUPPORTED_CLASS_FOR_BLOCK_DIAG_ATTN = {
+    "cohere",
+    "falcon",
+    "gemma",
+    "gemma2",
+    "llama",
+    "mistral",
+    "phi",
+    "phi3",
+    "qwen2",
+    "starcoder2",
+}
+
 SUPPORTED_CLASS_FOR_S2ATTN = {"llama"}
 
 V_HEAD_WEIGHTS_NAME = "value_head.bin"
@@ -283,6 +296,17 @@ register_model_group(
         },
     },
     template="llama2_zh",
+)
+
+
+register_model_group(
+    models={
+        "CodeGeeX4-9B-Chat": {
+            DownloadSource.DEFAULT: "THUDM/codegeex4-all-9b",
+            DownloadSource.MODELSCOPE: "ZhipuAI/codegeex4-all-9b",
+        },
+    },
+    template="codegeex4",
 )
 
 
@@ -604,6 +628,25 @@ register_model_group(
         "InternLM2-20B-Chat": {
             DownloadSource.DEFAULT: "internlm/internlm2-chat-20b",
             DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2-chat-20b",
+        },
+    },
+    template="intern2",
+)
+
+
+register_model_group(
+    models={
+        "InternLM2.5-7B": {
+            DownloadSource.DEFAULT: "internlm/internlm2_5-7b",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-7b",
+        },
+        "InternLM2.5-7B-Chat": {
+            DownloadSource.DEFAULT: "internlm/internlm2_5-7b-chat",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-7b-chat",
+        },
+        "InternLM2.5-7B-1M-Chat": {
+            DownloadSource.DEFAULT: "internlm/internlm2_5-7b-chat-1m",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-7b-chat-1m",
         },
     },
     template="intern2",
