@@ -136,13 +136,14 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             writer.write("\n".join(res))
 
 class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
-    from transformers.trainer import _is_peft_model, MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
+
     def compute_loss(self, model, inputs, return_outputs=False):
         """
         How the loss is computed by Trainer. By default, all models return the loss in the first element.
 
         Subclass and override for custom behavior.
         """
+        from transformers.trainer import _is_peft_model, MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
         if self.label_smoother is not None and "labels" in inputs:
             labels = inputs.pop("labels")
         else:
@@ -229,12 +230,12 @@ class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
             dataloader_params["worker_init_fn"] = seed_worker
             dataloader_params["prefetch_factor"] = self.args.dataloader_prefetch_factor
         if hasattr(data_collator, "seq_algo") and data_collator.seq_algo != "data_parallel":
-            seq_parallel_size = self.finetuning_args.seq_parallel_size
-            if seq_parallel_size != -1:
+            sp_size = self.finetuning_args.sp_size
+            if sp_size != -1:
                 world_size = int(os.environ['WORLD_SIZE'])
-                assert seq_parallel_size != 0 and world_size % seq_parallel_size == 0, f"world_size: {world_size} should be devide by seq_parallel_size: {seq_parallel_size}"
-                data_parallel_size = world_size // seq_parallel_size
-                dataloader_params["batch_size"] = dataloader_params["batch_size"] * data_parallel_size
+                assert sp_size != 0 and world_size % sp_size == 0, f"world_size: {world_size} should be devide by seq_parallel_size: {sp_size}"
+                dp_size = world_size // sp_size
+                dataloader_params["batch_size"] = dataloader_params["batch_size"] * dp_size
             return DataLoader(train_dataset, **dataloader_params)
         return self.accelerator.prepare(DataLoader(train_dataset, **dataloader_params))
 
@@ -284,11 +285,11 @@ class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
             self._eval_dataloader = eval_dataloader
 
         if hasattr(data_collator, "seq_algo") and data_collator.seq_algo != "data_parallel":
-            seq_parallel_size = self.finetuning_args.seq_parallel_size
-            if seq_parallel_size != -1:
+            sp_size = self.finetuning_args.sp_size
+            if sp_size != -1:
                 world_size = int(os.environ['WORLD_SIZE'])
-                assert seq_parallel_size != 0 and world_size % seq_parallel_size == 0, f"world_size: {world_size} should be devide by seq_parallel_size: {seq_parallel_size}"
-                data_parallel_size = world_size // seq_parallel_size
-                dataloader_params["batch_size"] = dataloader_params["batch_size"] * data_parallel_size
+                assert sp_size != 0 and world_size % sp_size == 0, f"world_size: {world_size} should be devide by seq_parallel_size: {sp_size}"
+                dp_size = world_size // sp_size
+                dataloader_params["batch_size"] = dataloader_params["batch_size"] * dp_size
             return eval_dataloader
         return self.accelerator.prepare(eval_dataloader)
