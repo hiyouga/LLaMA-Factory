@@ -6,8 +6,7 @@ adapter_name_or_path: saves/llama3-8b/lora/sft
 finetuning_type: lora
 
 ### dataset
-task: mmlu
-split: test
+task: mmlu_test  # choices: [mmlu_test, ceval_validation, cmmlu_test]
 template: fewshot
 lang: en
 n_shot: 5
