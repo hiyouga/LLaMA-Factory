@@ -22,7 +22,7 @@ from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
 from ..callbacks import fix_valuehead_checkpoint
 from ..trainer_utils import create_modelcard_and_push
-from .metric import compute_accuracy
+from .metric import ComputeAccuracy
 from .trainer import PairwiseTrainer
 
 
@@ -55,7 +55,7 @@ def run_rm(
         finetuning_args=finetuning_args,
         data_collator=data_collator,
         callbacks=callbacks,
-        compute_metrics=compute_accuracy,
+        compute_metrics=ComputeAccuracy(),
         **dataset_module,
         **tokenizer_module,
     )
