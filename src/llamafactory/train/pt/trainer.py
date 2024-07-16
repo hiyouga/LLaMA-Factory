@@ -11,6 +11,7 @@ from transformers.utils import is_datasets_available
 from transformers.trainer_utils import seed_worker
 import datasets
 from torch.nn import CrossEntropyLoss
+import os
 
 if TYPE_CHECKING:
     import torch
@@ -62,6 +63,7 @@ class CustomSeqParallelTrainer(CustomTrainer):
 
         Subclass and override for custom behavior.
         """
+        from transformers.trainer import _is_peft_model, MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
         if self.label_smoother is not None and "labels" in inputs:
             labels = inputs.pop("labels")
         else:
@@ -93,24 +95,25 @@ class CustomSeqParallelTrainer(CustomTrainer):
                 loss = outputs["loss"] if isinstance(outputs, dict) else outputs[0]
 
             else:
-                loss_fn = CrossEntropyLoss()
+                sp_size = self.finetuning_args.sp_size
+                loss_fn = CrossEntropyLoss(reduction='sum')
                 labels = inputs.pop("labels")
                 logits = outputs["logits"] if isinstance(outputs, dict) else outputs[1]
-                
-                # valid_label_cnt = (labels!=-100).sum(1)[None, :]
-                # print(f"valid label cnt:{valid_label_cnt}")
-                # valid_label_cnt_gather = self.accelerator.gather(valid_label_cnt)
-                # # valid_label_cnt_gather:[ngpus, bs]
-                # n_gpus = valid_label_cnt_gather.shape[0]
-                # valid_label_cnt_all =valid_label_cnt_gather.sum(0) #[bs]
+                valid_label_cnt = (labels!=-100).sum(1)[None, :]
+                valid_label_cnt_gather = self.accelerator.gather(valid_label_cnt)
+                n_gpus = valid_label_cnt_gather.shape[0]
+                if sp_size == -1:
+                    sp_size = n_gpus
+                dp_rank = self.accelerator.process_index // sp_size
+                valid_label_cnt_all =valid_label_cnt_gather[dp_rank * sp_size : (dp_rank+1) * sp_size].sum(0).detach()
                 shift_logits = logits.contiguous()
                 shift_labels = labels.contiguous()
                 bs = len(shift_labels)
                 loss = torch.zeros(bs, dtype=shift_logits.dtype, device=shift_labels.device)
-                
                 for b in range(bs):
-                    loss[b]=loss_fn(shift_logits[b], shift_labels[b])
-                loss = loss.mean()
+                    normalizer=valid_label_cnt_all[b].item()
+                    loss[b]=loss_fn(shift_logits[b], shift_labels[b])/normalizer
+                loss = loss.mean()*sp_size
 
         return (loss, outputs) if return_outputs else loss
 
@@ -148,6 +151,12 @@ class CustomSeqParallelTrainer(CustomTrainer):
             dataloader_params["prefetch_factor"] = self.args.dataloader_prefetch_factor
 
         if hasattr(data_collator, "seq_algo") and data_collator.seq_algo != "data_parallel":
+            sp_size = self.finetuning_args.sp_size
+            if sp_size != -1:
+                world_size = int(os.environ['WORLD_SIZE'])
+                assert sp_size != 0 and world_size % sp_size == 0, f"world_size: {world_size} should be devide by seq_parallel_size: {sp_size}"
+                dp_size = world_size // sp_size
+                dataloader_params["batch_size"] = dataloader_params["batch_size"] * dp_size
             return DataLoader(train_dataset, **dataloader_params)
         return self.accelerator.prepare(DataLoader(train_dataset, **dataloader_params))
     
@@ -197,5 +206,11 @@ class CustomSeqParallelTrainer(CustomTrainer):
             self._eval_dataloader = eval_dataloader
 
         if hasattr(data_collator, "seq_algo") and data_collator.seq_algo != "data_parallel":
+            sp_size = self.finetuning_args.sp_size
+            if sp_size != -1:
+                world_size = int(os.environ['WORLD_SIZE'])
+                assert sp_size != 0 and world_size % sp_size == 0, f"world_size: {world_size} should be devide by seq_parallel_size: {sp_size}"
+                dp_size = world_size // sp_size
+                dataloader_params["batch_size"] = dataloader_params["batch_size"] * dp_size
             return eval_dataloader
         return self.accelerator.prepare(eval_dataloader)

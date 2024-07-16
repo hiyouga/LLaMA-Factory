@@ -37,7 +37,7 @@ def run_sft(
     tokenizer = tokenizer_module["tokenizer"]
     dataset = get_dataset(model_args, data_args, training_args, stage="sft", **tokenizer_module)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
-    apply_seq_parallel_monkey_patch(finetuning_args.parallel_mode, "llama", seq_parallel_size=finetuning_args.seq_parallel_size)
+    apply_seq_parallel_monkey_patch(finetuning_args.parallel_mode, "llama", sp_size=finetuning_args.sp_size)
 
     if training_args.predict_with_generate:
         tokenizer.padding_side = "left"  # use left-padding in generation
@@ -53,7 +53,7 @@ def run_sft(
         pad_to_multiple_of=data_args.cutoff_len if tokenizer.padding_side == "right" else None,
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
         seq_algo=finetuning_args.parallel_mode,
-        seq_parallel_size=finetuning_args.seq_parallel_size,
+        sp_size=finetuning_args.sp_size,
         rank=torch.distributed.get_rank(),
         world_size=world_size,
         device=torch.device("cuda", local_rank)
@@ -87,7 +87,7 @@ def run_sft(
         trainer.save_model()
         trainer.log_metrics("train", train_result.metrics)
         trainer.save_metrics("train", train_result.metrics)
-        # trainer.save_state()
+        trainer.save_state()
         if trainer.is_world_process_zero() and finetuning_args.plot_loss:
             plot_loss(training_args.output_dir, keys=["loss", "eval_loss"])
 

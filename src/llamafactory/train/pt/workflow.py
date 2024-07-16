@@ -32,7 +32,7 @@ def run_pt(
     tokenizer = tokenizer_module["tokenizer"]
     dataset = get_dataset(model_args, data_args, training_args, stage="pt", **tokenizer_module)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
-    apply_seq_parallel_monkey_patch(finetuning_args.parallel_mode, "llama")
+    apply_seq_parallel_monkey_patch(finetuning_args.parallel_mode, "llama", sp_size=finetuning_args.sp_size)
 
     # data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
     local_rank = int(os.getenv("LOCAL_RANK"))
@@ -42,6 +42,7 @@ def run_pt(
         tokenizer=tokenizer, 
         mlm=False,
         seq_algo=finetuning_args.parallel_mode,
+        sp_size=finetuning_args.sp_size,
         rank=torch.distributed.get_rank(),
         world_size=torch.distributed.get_world_size(),
         device=torch.device("cuda", local_rank)

@@ -39,7 +39,7 @@ _fwd_recv_volume = 0
 _bwd_send_volume = 0
 _bwd_recv_volume = 0
 
-def initialize_distributed(sequence_parallel_size=None):
+def initialize_distributed(sp_size=None):
     if dist.is_initialized():
         if dist.get_rank() == 0:
             print(
@@ -55,7 +55,7 @@ def initialize_distributed(sequence_parallel_size=None):
         global_world_size = dist.get_world_size()
         torch.cuda.set_device(dist.get_rank() % local_world_size)
 
-    _initialize_sequence_parallel(sequence_parallel_size=sequence_parallel_size)
+    _initialize_sequence_parallel(sp_size)
    # create_nccl_communicators()
 
 def _initialize_sequence_parallel(sequence_parallel_size=None):
