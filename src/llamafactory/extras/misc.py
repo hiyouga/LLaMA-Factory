@@ -17,7 +17,7 @@
 
 import gc
 import os
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Tuple, Union
 
 import torch
 import transformers.dynamic_module_utils
@@ -43,6 +43,8 @@ except Exception:
 
 
 if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
     from ..hparams import ModelArguments
 
 
@@ -176,6 +178,17 @@ def is_gpu_or_npu_available() -> bool:
     Checks if the GPU or NPU is available.
     """
     return is_torch_npu_available() or is_torch_cuda_available()
+
+
+def numpify(inputs: Union["NDArray", "torch.Tensor"]) -> "NDArray":
+    if isinstance(inputs, torch.Tensor):
+        inputs = inputs.cpu()
+        if inputs.dtype == torch.bfloat16:  # numpy does not support bfloat16 until 1.21.4
+            inputs = inputs.to(torch.float32)
+
+        inputs = inputs.numpy()
+
+    return inputs
 
 
 def skip_check_imports() -> None:
