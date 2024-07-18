@@ -32,7 +32,7 @@ if is_gradio_available():
     import gradio as gr
 
 
-def create_ui(demo_mode: bool = False) -> gr.Blocks:
+def create_ui(demo_mode: bool = False) -> "gr.Blocks":
     engine = Engine(demo_mode=demo_mode, pure_chat=False)
 
     with gr.Blocks(title="LLaMA Board", css=CSS) as demo:
@@ -67,7 +67,7 @@ def create_ui(demo_mode: bool = False) -> gr.Blocks:
     return demo
 
 
-def create_web_demo() -> gr.Blocks:
+def create_web_demo() -> "gr.Blocks":
     engine = Engine(pure_chat=True)
 
     with gr.Blocks(title="Web Demo", css=CSS) as demo:
