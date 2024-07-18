@@ -159,6 +159,7 @@ def _get_preprocessed_dataset(
     dataset: Optional[Union["Dataset", "IterableDataset"]],
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
+    model_args: "ModelArguments",
     stage: Literal["pt", "sft", "rm", "ppo", "kto"],
     template: "Template",
     tokenizer: "PreTrainedTokenizer",
@@ -169,7 +170,7 @@ def _get_preprocessed_dataset(
         return None
 
     preprocess_func, print_function = get_preprocess_and_print_func(
-        data_args, stage, template, tokenizer, processor, do_generate=(training_args.predict_with_generate and is_eval)
+        data_args, model_args, stage, template, tokenizer, processor, do_generate=(training_args.predict_with_generate and is_eval)
     )
     column_names = list(next(iter(dataset)).keys())
     kwargs = {}
@@ -238,7 +239,7 @@ def get_dataset(
             dataset, data_args, training_args, model_args, stage, template, tokenizer, processor, is_eval=False
         )
         eval_dataset = _get_preprocessed_dataset(
-            eval_dataset, data_args, training_args, stage, template, tokenizer, processor, is_eval=True
+            eval_dataset, data_args, training_args, model_args, stage, template, tokenizer, processor, is_eval=True
         )
 
         if data_args.val_size > 1e-6:

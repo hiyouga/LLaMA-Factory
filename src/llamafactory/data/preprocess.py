@@ -35,7 +35,6 @@ if TYPE_CHECKING:
 
 def get_preprocess_and_print_func(
     data_args: "DataArguments",
-    training_args: "Seq2SeqTrainingArguments",
     model_args: "ModelArguments",
     stage: Literal["pt", "sft", "rm", "ppo", "kto"],
     template: "Template",
