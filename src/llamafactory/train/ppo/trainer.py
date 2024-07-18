@@ -119,7 +119,9 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             num_training_steps = training_args.max_steps
         else:
             total_train_batch_size = backward_batch_size * finetuning_args.ppo_buffer_size * training_args.world_size
-            num_training_steps = training_args.num_train_epochs * math.ceil(len(train_dataset) / total_train_batch_size)
+            num_training_steps = training_args.num_train_epochs * math.ceil(
+                len(train_dataset) / total_train_batch_size
+            )
 
         optimizer = self.create_optimizer(model, training_args, finetuning_args)
         scheduler = self.create_scheduler(training_args, num_training_steps, optimizer)
