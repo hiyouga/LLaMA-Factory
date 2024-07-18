@@ -14,13 +14,7 @@
 
 import os
 
-import torch
-from peft import LoraModel, PeftModel
-from transformers import AutoModelForCausalLM
-
-from llamafactory.extras.misc import get_current_device
-from llamafactory.hparams import get_infer_args, get_train_args
-from llamafactory.model import load_model, load_tokenizer
+from llamafactory.train.test_utils import compare_model, load_infer_model, load_reference_model, load_train_model
 
 
 TINY_LLAMA = os.environ.get("TINY_LLAMA", "llamafactory/tiny-random-Llama-3")
@@ -54,37 +48,14 @@ INFER_ARGS = {
 }
 
 
-def compare_model(model_a: "torch.nn.Module", model_b: "torch.nn.Module"):
-    state_dict_a = model_a.state_dict()
-    state_dict_b = model_b.state_dict()
-    assert set(state_dict_a.keys()) == set(state_dict_b.keys())
-    for name in state_dict_a.keys():
-        assert torch.allclose(state_dict_a[name], state_dict_b[name], rtol=1e-4, atol=1e-5)
-
-
-def test_pissa_init():
-    model_args, _, _, finetuning_args, _ = get_train_args(TRAIN_ARGS)
-    tokenizer_module = load_tokenizer(model_args)
-    model = load_model(tokenizer_module["tokenizer"], model_args, finetuning_args, is_trainable=True)
-
-    base_model = AutoModelForCausalLM.from_pretrained(
-        TINY_LLAMA_PISSA, torch_dtype=torch.float16, device_map=get_current_device()
-    )
-    ref_model = PeftModel.from_pretrained(base_model, TINY_LLAMA_PISSA, subfolder="pissa_init", is_trainable=True)
-    for param in filter(lambda p: p.requires_grad, ref_model.parameters()):
-        param.data = param.data.to(torch.float32)
-
+def test_pissa_train():
+    model = load_train_model(**TRAIN_ARGS)
+    ref_model = load_reference_model(TINY_LLAMA_PISSA, TINY_LLAMA_PISSA, use_pissa=True, is_trainable=True)
     compare_model(model, ref_model)
 
 
 def test_pissa_inference():
-    model_args, _, finetuning_args, _ = get_infer_args(INFER_ARGS)
-    tokenizer_module = load_tokenizer(model_args)
-    model = load_model(tokenizer_module["tokenizer"], model_args, finetuning_args, is_trainable=False)
-
-    base_model = AutoModelForCausalLM.from_pretrained(
-        TINY_LLAMA_PISSA, torch_dtype=torch.float16, device_map=get_current_device()
-    )
-    ref_model: "LoraModel" = PeftModel.from_pretrained(base_model, TINY_LLAMA_PISSA, subfolder="pissa_init")
+    model = load_infer_model(**INFER_ARGS)
+    ref_model = load_reference_model(TINY_LLAMA_PISSA, TINY_LLAMA_PISSA, use_pissa=True, is_trainable=False)
     ref_model = ref_model.merge_and_unload()
     compare_model(model, ref_model)
