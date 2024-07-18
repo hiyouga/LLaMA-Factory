@@ -41,17 +41,17 @@ class DataArguments:
         default="data",
         metadata={"help": "Path to the folder containing the datasets."},
     )
-    train_last_turn_only: Optional[bool] = field(
-        default=False,
-        metadata={"help": "Whether or not to train the last turn only."},
-    )
     cutoff_len: int = field(
         default=1024,
         metadata={"help": "The cutoff length of the tokenized inputs in the dataset."},
     )
     train_on_prompt: bool = field(
         default=False,
-        metadata={"help": "Whether to disable the mask on the prompt or not."},
+        metadata={"help": "Whether or not to disable the mask on the prompt."},
+    )
+    mask_history: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to mask the history and train on the last turn only."},
     )
     streaming: bool = field(
         default=False,
