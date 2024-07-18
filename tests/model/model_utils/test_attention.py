@@ -16,8 +16,7 @@ import os
 
 from transformers.utils import is_flash_attn_2_available, is_torch_sdpa_available
 
-from llamafactory.hparams import get_infer_args
-from llamafactory.model import load_model, load_tokenizer
+from llamafactory.train.test_utils import load_infer_model
 
 
 TINY_LLAMA = os.environ.get("TINY_LLAMA", "llamafactory/tiny-random-Llama-3")
@@ -42,9 +41,7 @@ def test_attention():
         "fa2": "LlamaFlashAttention2",
     }
     for requested_attention in attention_available:
-        model_args, _, finetuning_args, _ = get_infer_args({"flash_attn": requested_attention, **INFER_ARGS})
-        tokenizer_module = load_tokenizer(model_args)
-        model = load_model(tokenizer_module["tokenizer"], model_args, finetuning_args)
+        model = load_infer_model(flash_attn=requested_attention, **INFER_ARGS)
         for module in model.modules():
             if "Attention" in module.__class__.__name__:
                 assert module.__class__.__name__ == llama_attention_classes[requested_attention]
