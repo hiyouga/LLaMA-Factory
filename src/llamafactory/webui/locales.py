@@ -505,20 +505,6 @@ LOCALES = {
             "info": "使用的优化器：adamw_torch、adamw_8bit 或 adafactor。",
         },
     },
-    "resize_vocab": {
-        "en": {
-            "label": "Resize token embeddings",
-            "info": "Resize the tokenizer vocab and the embedding layers.",
-        },
-        "ru": {
-            "label": "Изменение размера токенных эмбеддингов",
-            "info": "Изменить размер словаря токенизатора и слоев эмбеддинга.",
-        },
-        "zh": {
-            "label": "更改词表大小",
-            "info": "更改分词器词表和嵌入层的大小。",
-        },
-    },
     "packing": {
         "en": {
             "label": "Pack sequences",
@@ -533,18 +519,60 @@ LOCALES = {
             "info": "将序列打包为等长样本。",
         },
     },
-    "upcast_layernorm": {
+    "neat_packing": {
         "en": {
-            "label": "Upcast LayerNorm",
-            "info": "Upcast weights of layernorm in float32.",
+            "label": "Use neat packing",
+            "info": "Avoid cross-attention between packed sequences.",
         },
         "ru": {
-            "label": "Приведение весов LayerNorm",
-            "info": "Приведение весов LayerNorm к float32.",
+            "label": "Используйте аккуратную упаковку",
+            "info": "избегайте перекрестного внимания между упакованными последовательностями.",
         },
         "zh": {
-            "label": "缩放归一化层",
-            "info": "将归一化层权重缩放至 32 位精度。",
+            "label": "使用无污染打包",
+            "info": "避免打包后的序列产生交叉注意力。",
+        },
+    },
+    "train_on_prompt": {
+        "en": {
+            "label": "Train on prompt",
+            "info": "Disable the label mask on the prompt (only for SFT).",
+        },
+        "ru": {
+            "label": "Тренировка на подсказке",
+            "info": "Отключить маску меток на подсказке (только для SFT).",
+        },
+        "zh": {
+            "label": "学习提示词",
+            "info": "不在提示词的部分添加掩码（仅适用于 SFT）。",
+        },
+    },
+    "mask_history": {
+        "en": {
+            "label": "Mask history",
+            "info": "Train on the last turn only (only for SFT).",
+        },
+        "ru": {
+            "label": "История масок",
+            "info": "Тренироваться только на последнем шаге (только для SFT).",
+        },
+        "zh": {
+            "label": "不学习历史对话",
+            "info": "仅学习最后一轮对话（仅适用于 SFT）。",
+        },
+    },
+    "resize_vocab": {
+        "en": {
+            "label": "Resize token embeddings",
+            "info": "Resize the tokenizer vocab and the embedding layers.",
+        },
+        "ru": {
+            "label": "Изменение размера токенных эмбеддингов",
+            "info": "Изменить размер словаря токенизатора и слоев эмбеддинга.",
+        },
+        "zh": {
+            "label": "更改词表大小",
+            "info": "更改分词器词表和嵌入层的大小。",
         },
     },
     "use_llama_pro": {

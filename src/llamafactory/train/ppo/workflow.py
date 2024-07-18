@@ -43,7 +43,7 @@ def run_ppo(
 ):
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
-    dataset = get_dataset(model_args, data_args, training_args, stage="ppo", **tokenizer_module)
+    dataset_module = get_dataset(model_args, data_args, training_args, stage="ppo", **tokenizer_module)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train, add_valuehead=True)
 
     tokenizer.padding_side = "left"  # use left-padding in generation while using right-padding in training
@@ -54,7 +54,7 @@ def run_ppo(
     reward_model = create_reward_model(model, model_args, finetuning_args)
 
     # Initialize our Trainer
-    ppo_trainer = CustomPPOTrainer(
+    ppo_trainer: "CustomPPOTrainer" = CustomPPOTrainer(
         model_args=model_args,
         training_args=training_args,
         finetuning_args=finetuning_args,
@@ -63,8 +63,8 @@ def run_ppo(
         model=model,
         reward_model=reward_model,
         ref_model=ref_model,
-        dataset=dataset,
         data_collator=data_collator,
+        **dataset_module,
         **tokenizer_module,
     )
 

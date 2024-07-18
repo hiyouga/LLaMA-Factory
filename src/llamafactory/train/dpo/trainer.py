@@ -54,6 +54,7 @@ class CustomDPOTrainer(DPOTrainer):
                 disable_dropout_in_model(ref_model)
 
         self.finetuning_args = finetuning_args
+        self.f_divergence_type = "reverse_kl"
         self.reference_free = False
         self.use_dpo_data_collator = True  # hack to avoid warning
         self.generate_during_eval = False  # disable at evaluation

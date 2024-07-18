@@ -79,7 +79,7 @@ def create_modelcard_and_push(
         "tags": ["llama-factory", finetuning_args.finetuning_type],
     }
     if data_args.dataset is not None:
-        kwargs["dataset"] = [dataset.strip() for dataset in data_args.dataset.split(",")]
+        kwargs["dataset"] = data_args.dataset
 
     if model_args.use_unsloth:
         kwargs["tags"] = kwargs["tags"] + ["unsloth"]
