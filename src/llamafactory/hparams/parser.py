@@ -218,7 +218,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         raise ValueError("Cannot use device map for quantized models in training.")
 
     if finetuning_args.pissa_init and is_deepspeed_zero3_enabled():
-        raise ValueError("PiSSA is incompatible with DeepSpeed ZeRO-3.")
+        raise ValueError("Please use scripts/pissa_init.py to initialize PiSSA in DeepSpeed ZeRO-3.")
 
     if finetuning_args.pure_bf16:
         if not is_torch_bf16_gpu_available():
