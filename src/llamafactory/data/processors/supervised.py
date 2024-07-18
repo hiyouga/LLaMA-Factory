@@ -70,7 +70,11 @@ def _encode_supervised_example(
             source_mask = [IGNORE_INDEX] * source_len
 
         input_ids += source_ids + target_ids
-        labels += source_mask + target_ids
+        
+        if data_args.train_last_turn_only and turn_idx != len(encoded_pairs) - 1:
+            labels += source_mask + [IGNORE_INDEX] * len(target_ids)
+        else:
+            labels += source_mask + target_ids
 
     if template.efficient_eos:
         input_ids += [tokenizer.eos_token_id]
