@@ -536,6 +536,20 @@ LOCALES = {
             "info": "更改分词器词表和嵌入层的大小。",
         },
     },
+    "train_last_turn_only": {
+        "en": {
+            "label": "Train last turn only",
+            "info": "Train the model with the last turn only in multi turn.",
+        },
+        "ru": {
+            "label": "Обучать только последний поворот",
+            "info": "Обучать модель только последним поворотом в многоповоротном диалоге.",
+        },
+        "zh": {
+            "label": "仅最后一轮参与训练",
+            "info": "多轮对话仅使用最后一轮计算loss。",
+        },
+    },
     "use_llama_pro": {
         "en": {
             "label": "Enable LLaMA Pro",

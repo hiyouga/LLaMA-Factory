@@ -125,6 +125,7 @@ class Runner:
             visual_inputs=get("top.visual_inputs"),
             dataset_dir=get("train.dataset_dir"),
             dataset=",".join(get("train.dataset")),
+            train_last_turn_only=get("train.train_last_turn_only"),
             cutoff_len=get("train.cutoff_len"),
             learning_rate=float(get("train.learning_rate")),
             num_train_epochs=float(get("train.num_train_epochs")),
