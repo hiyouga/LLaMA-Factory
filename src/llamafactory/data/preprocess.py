@@ -88,6 +88,7 @@ def get_preprocess_and_print_func(
             tokenizer=tokenizer,
             processor=processor,
             data_args=data_args,
+            model_args=model_args,
         )
         print_function = partial(print_pairwise_dataset_example, tokenizer=tokenizer)
     elif stage == "kto":
