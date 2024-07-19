@@ -242,6 +242,11 @@ def get_dataset(
             eval_dataset, data_args, training_args, model_args, stage, template, tokenizer, processor, is_eval=True
         )
 
+        if model_args.visual_inputs_type == "glm4v_like":
+            # Datasets can't set column images because of images is a feature of examples.
+            dataset = dataset.rename_column("image_inputs", "images")
+            eval_dataset = eval_dataset.rename_column("image_inputs", "images") if eval_dataset is not None else None
+
         if data_args.val_size > 1e-6:
             dataset_dict = split_dataset(dataset, data_args, seed=training_args.seed)
         else:
@@ -259,9 +264,6 @@ def get_dataset(
                 dataset_dict["validation"] = eval_dataset
 
             dataset_dict = DatasetDict(dataset_dict)
-
-        if model_args.visual_inputs_type == "glm4v_like":
-            dataset = dataset.rename_column("image_inputs", "images")
 
         if data_args.tokenized_path is not None:
             if training_args.should_save:
