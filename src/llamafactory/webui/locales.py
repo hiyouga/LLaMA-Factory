@@ -18,7 +18,7 @@ LOCALES = {
             "label": "Lang",
         },
         "ru": {
-            "label": "Русский",
+            "label": "язык",
         },
         "zh": {
             "label": "语言",
