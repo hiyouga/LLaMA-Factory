@@ -21,7 +21,6 @@ from peft import PeftModel
 from transformers import PreTrainedModel, PreTrainedTokenizerBase, is_torch_npu_available
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.modeling_utils import is_fsdp_enabled
-from transformers.utils.versions import require_version
 
 from ..extras.logging import get_logger
 from ..extras.misc import infer_optim_dtype
