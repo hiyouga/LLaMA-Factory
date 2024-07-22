@@ -140,6 +140,8 @@ class Runner:
             optim=get("train.optim"),
             packing=get("train.packing") or get("train.neat_packing"),
             neat_packing=get("train.neat_packing"),
+            train_on_prompt=get("train.train_on_prompt"),
+            mask_history=get("train.mask_history"),
             resize_vocab=get("train.resize_vocab"),
             use_llama_pro=get("train.use_llama_pro"),
             shift_attn=get("train.shift_attn"),

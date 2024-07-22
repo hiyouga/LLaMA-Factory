@@ -38,9 +38,11 @@ def _encode_supervised_example(
     template: "Template",
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"],
-    data_args: "DataArguments",
     exists_images: bool,
     exists_videos: bool,
+    cutoff_len: int,
+    train_on_prompt: bool,
+    mask_history: bool,
 ) -> Tuple[List[int], List[int]]:
     if processor is not None:
         processor_class = type(processor).__name__
@@ -72,23 +74,28 @@ def _encode_supervised_example(
     total_length = 1 if template.efficient_eos else 0
     
     for turn_idx, (source_ids, target_ids) in enumerate(encoded_pairs):
-        if total_length >= data_args.cutoff_len:
+        if total_length >= cutoff_len:
             break
 
-        source_len, target_len = infer_seqlen(len(source_ids), len(target_ids), data_args.cutoff_len - total_length)
+        source_len, target_len = infer_seqlen(len(source_ids), len(target_ids), cutoff_len - total_length)
         source_ids = source_ids[:source_len]
         target_ids = target_ids[:target_len]
         total_length += source_len + target_len
 
-        if data_args.train_on_prompt:
-            source_mask = source_ids
+        if train_on_prompt:
+            source_label = source_ids
         elif turn_idx != 0 and template.efficient_eos:
-            source_mask = [tokenizer.eos_token_id] + [IGNORE_INDEX] * (source_len - 1)
+            source_label = [tokenizer.eos_token_id] + [IGNORE_INDEX] * (source_len - 1)
         else:
-            source_mask = [IGNORE_INDEX] * source_len
+            source_label = [IGNORE_INDEX] * source_len
+
+        if mask_history and turn_idx != len(encoded_pairs) - 1:
+            target_label = [IGNORE_INDEX] * target_len
+        else:
+            target_label = target_ids
 
         input_ids += source_ids + target_ids
-        labels += source_mask + target_ids
+        labels += source_label + target_label
 
     if template.efficient_eos:
         input_ids += [tokenizer.eos_token_id]
@@ -139,9 +146,11 @@ def preprocess_supervised_dataset(
             template=template,
             tokenizer=tokenizer,
             processor=processor,
-            data_args=data_args,
             exists_images=len(examples["images"][i]) > 0,
             exists_videos=len(examples['videos'][i]) > 0,
+            cutoff_len=data_args.cutoff_len,
+            train_on_prompt=data_args.train_on_prompt,
+            mask_history=data_args.mask_history,
         )
 
         model_inputs["input_ids"].append(input_ids)
@@ -192,9 +201,11 @@ def preprocess_packed_supervised_dataset(
             template=template,
             tokenizer=tokenizer,
             processor=None,
-            data_args=data_args,
             exists_images=len(examples["images"][i]) > 0,
             exists_videos=len(examples["videos"][i]) > 0,
+            cutoff_len=data_args.cutoff_len - 1,  # reserved for the padding token
+            train_on_prompt=data_args.train_on_prompt,
+            mask_history=data_args.mask_history,
         )
         length = len(input_ids)
         if length > data_args.cutoff_len:
@@ -207,7 +218,7 @@ def preprocess_packed_supervised_dataset(
             valid_num += 1
 
     model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
-    knapsacks = greedy_knapsack(lengths, data_args.cutoff_len)
+    knapsacks = greedy_knapsack(lengths, data_args.cutoff_len - 1)  # reserved for the padding token
     for knapsack in knapsacks:
         packed_input_ids, packed_attention_masks, packed_labels = [], [], []
         for i, length in enumerate(knapsack):

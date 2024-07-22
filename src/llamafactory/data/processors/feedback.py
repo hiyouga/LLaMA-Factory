@@ -38,9 +38,9 @@ def _encode_feedback_example(
     template: "Template",
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"],
-    data_args: "DataArguments",
     exists_images: bool,
     exists_videos: bool,
+    cutoff_len: int,
 ) -> Tuple[List[int], List[int], List[int], List[int], bool]:
     if processor is not None:
         processor_class = type(processor).__name__
@@ -89,10 +89,10 @@ def _encode_feedback_example(
         prompt_ids = [image_token_id] * getattr(processor, "image_seq_length") + prompt_ids
         kl_prompt_ids = [image_token_id] * getattr(processor, "image_seq_length") + kl_prompt_ids
 
-    source_len, target_len = infer_seqlen(len(prompt_ids), len(response_ids), data_args.cutoff_len)
+    source_len, target_len = infer_seqlen(len(prompt_ids), len(response_ids), cutoff_len)
     prompt_ids = prompt_ids[:source_len]
     response_ids = response_ids[:target_len]
-    kl_source_len, kl_target_len = infer_seqlen(len(kl_prompt_ids), len(kl_response_ids), data_args.cutoff_len)
+    kl_source_len, kl_target_len = infer_seqlen(len(kl_prompt_ids), len(kl_response_ids), cutoff_len)
     kl_prompt_ids = kl_prompt_ids[:kl_source_len]
     kl_response_ids = kl_response_ids[:kl_target_len]
 
@@ -142,9 +142,9 @@ def preprocess_feedback_dataset(
             template=template,
             tokenizer=tokenizer,
             processor=processor,
-            data_args=data_args,
             exists_images=len(examples["images"][i]) > 0,
             exists_videos=len(examples['videos'][i]) > 0,
+            cutoff_len=data_args.cutoff_len,
         )
         model_inputs["input_ids"].append(input_ids)
         model_inputs["attention_mask"].append([1] * len(input_ids))

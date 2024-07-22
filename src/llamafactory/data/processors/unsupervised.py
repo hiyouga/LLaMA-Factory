@@ -36,9 +36,9 @@ def _encode_unsupervised_example(
     template: "Template",
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"],
-    data_args: "DataArguments",
     exists_images: bool,
     exists_videos: bool,
+    cutoff_len: int,
 ) -> Tuple[List[int], List[int]]:
     if processor is not None:
         processor_class = type(processor).__name__
@@ -71,7 +71,7 @@ def _encode_unsupervised_example(
         image_token_id = tokenizer.convert_tokens_to_ids(template.image_token)
         input_ids = [image_token_id] * getattr(processor, "image_seq_length") + input_ids
 
-    source_len, target_len = infer_seqlen(len(input_ids), len(labels), data_args.cutoff_len)
+    source_len, target_len = infer_seqlen(len(input_ids), len(labels), cutoff_len)
     input_ids = input_ids[:source_len]
     labels = labels[:target_len]
     return input_ids, labels
@@ -118,9 +118,9 @@ def preprocess_unsupervised_dataset(
             template=template,
             tokenizer=tokenizer,
             processor=processor,
-            data_args=data_args,
             exists_images=len(examples["images"][i]) > 0,
             exists_videos=len(examples['videos'][i]) > 0,
+            cutoff_len=data_args.cutoff_len,
         )
         model_inputs["input_ids"].append(input_ids)
         model_inputs["attention_mask"].append([1] * len(input_ids))

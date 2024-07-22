@@ -47,7 +47,11 @@ class DataArguments:
     )
     train_on_prompt: bool = field(
         default=False,
-        metadata={"help": "Whether to disable the mask on the prompt or not."},
+        metadata={"help": "Whether or not to disable the mask on the prompt."},
+    )
+    mask_history: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to mask the history and train on the last turn only."},
     )
     streaming: bool = field(
         default=False,

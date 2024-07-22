@@ -99,6 +99,10 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
                 neat_packing = gr.Checkbox()
 
             with gr.Column():
+                train_on_prompt = gr.Checkbox()
+                mask_history = gr.Checkbox()
+
+            with gr.Column():
                 resize_vocab = gr.Checkbox()
                 use_llama_pro = gr.Checkbox()
 
@@ -115,6 +119,8 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             optim,
             packing,
             neat_packing,
+            train_on_prompt,
+            mask_history,
             resize_vocab,
             use_llama_pro,
             shift_attn,
@@ -131,6 +137,8 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             optim=optim,
             packing=packing,
             neat_packing=neat_packing,
+            train_on_prompt=train_on_prompt,
+            mask_history=mask_history,
             resize_vocab=resize_vocab,
             use_llama_pro=use_llama_pro,
             shift_attn=shift_attn,
