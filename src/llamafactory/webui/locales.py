@@ -18,7 +18,7 @@ LOCALES = {
             "label": "Lang",
         },
         "ru": {
-            "label": "Русский",
+            "label": "язык",
         },
         "zh": {
             "label": "语言",
@@ -520,6 +520,34 @@ LOCALES = {
         "zh": {
             "label": "使用无污染打包",
             "info": "避免打包后的序列产生交叉注意力。",
+        },
+    },
+    "train_on_prompt": {
+        "en": {
+            "label": "Train on prompt",
+            "info": "Disable the label mask on the prompt (only for SFT).",
+        },
+        "ru": {
+            "label": "Тренировка на подсказке",
+            "info": "Отключить маску меток на подсказке (только для SFT).",
+        },
+        "zh": {
+            "label": "学习提示词",
+            "info": "不在提示词的部分添加掩码（仅适用于 SFT）。",
+        },
+    },
+    "mask_history": {
+        "en": {
+            "label": "Mask history",
+            "info": "Train on the last turn only (only for SFT).",
+        },
+        "ru": {
+            "label": "История масок",
+            "info": "Тренироваться только на последнем шаге (только для SFT).",
+        },
+        "zh": {
+            "label": "不学习历史对话",
+            "info": "仅学习最后一轮对话（仅适用于 SFT）。",
         },
     },
     "resize_vocab": {

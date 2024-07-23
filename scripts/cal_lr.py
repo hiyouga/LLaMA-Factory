@@ -61,11 +61,12 @@ def calculate_lr(
             packing=packing,
             output_dir="dummy_dir",
             overwrite_cache=True,
+            do_train=True,
         )
     )
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
-    trainset = get_dataset(model_args, data_args, training_args, stage, **tokenizer_module)
+    trainset = get_dataset(model_args, data_args, training_args, stage, **tokenizer_module)["train_dataset"]
     if stage == "pt":
         data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
     elif stage == "sft":

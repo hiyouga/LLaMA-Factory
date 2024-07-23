@@ -17,12 +17,12 @@
 
 from typing import TYPE_CHECKING, List, Optional
 
-from ...data import PairwiseDataCollatorWithPadding, get_dataset, split_dataset
+from ...data import PairwiseDataCollatorWithPadding, get_dataset
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
 from ..callbacks import fix_valuehead_checkpoint
 from ..trainer_utils import create_modelcard_and_push
-from .metric import compute_accuracy
+from .metric import ComputeAccuracy
 from .trainer import PairwiseTrainer
 
 
@@ -41,7 +41,7 @@ def run_rm(
 ):
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
-    dataset = get_dataset(model_args, data_args, training_args, stage="rm", **tokenizer_module)
+    dataset_module = get_dataset(model_args, data_args, training_args, stage="rm", **tokenizer_module)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train, add_valuehead=True)
     data_collator = PairwiseDataCollatorWithPadding(tokenizer, pad_to_multiple_of=8)
 
@@ -55,9 +55,9 @@ def run_rm(
         finetuning_args=finetuning_args,
         data_collator=data_collator,
         callbacks=callbacks,
-        compute_metrics=compute_accuracy,
+        compute_metrics=ComputeAccuracy(),
+        **dataset_module,
         **tokenizer_module,
-        **split_dataset(dataset, data_args, training_args),
     )
 
     # Training
@@ -81,7 +81,7 @@ def run_rm(
 
     # Predict
     if training_args.do_predict:
-        predict_results = trainer.predict(dataset, metric_key_prefix="predict")
+        predict_results = trainer.predict(dataset_module["eval_dataset"], metric_key_prefix="predict")
         trainer.log_metrics("predict", predict_results.metrics)
         trainer.save_metrics("predict", predict_results.metrics)
         trainer.save_predictions(predict_results)
