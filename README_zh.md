@@ -21,7 +21,7 @@
 
 **微调大模型可以像这样轻松…**
 
-https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd-d76c6d0a6594
+https://github.com/user-attachments/assets/e6ce34b0-52d5-4f3e-a830-592106c4c272
 
 选择你的打开方式：
 
