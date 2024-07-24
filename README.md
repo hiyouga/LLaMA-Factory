@@ -161,7 +161,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [Falcon](https://huggingface.co/tiiuae)                      | 7B/11B/40B/180B                  | falcon    |
 | [Gemma/Gemma 2/CodeGemma](https://huggingface.co/google)     | 2B/7B/9B/27B                     | gemma     |
 | [GLM-4](https://huggingface.co/THUDM)                        | 9B                               | glm4      |
-| [InternLM2](https://huggingface.co/internlm)                 | 7B/20B                           | intern2   |
+| [InternLM2/InternLM2.5](https://huggingface.co/internlm)     | 7B/20B                           | intern2   |
 | [Llama](https://github.com/facebookresearch/llama)           | 7B/13B/33B/65B                   | -         |
 | [Llama 2](https://huggingface.co/meta-llama)                 | 7B/13B/70B                       | llama2    |
 | [Llama 3/Llama 3.1](https://huggingface.co/meta-llama)       | 8B/70B                           | llama3    |
