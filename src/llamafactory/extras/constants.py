@@ -820,6 +820,11 @@ register_model_group(
         },
         "Mistral-7B-v0.3-Chat": {
             DownloadSource.DEFAULT: "mistralai/Mistral-7B-Instruct-v0.3",
+            DownloadSource.MODELSCOPE: "LLM-Research/Mistral-7B-Instruct-v0.3",
+        },
+        "Mistral-Nemo-Chat": {
+            DownloadSource.DEFAULT: "mistralai/Mistral-Nemo-Instruct-2407",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Mistral-Nemo-Instruct-2407",
         },
     },
     template="mistral",
