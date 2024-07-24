@@ -21,7 +21,7 @@
 
 **Fine-tuning a large language model can be easy as...**
 
-https://github.com/hiyouga/LLaMA-Factory/assets/16256802/9840a653-7e9c-41c8-ae89-7ace5698baf6
+https://github.com/user-attachments/assets/7c96b465-9df7-45f4-8053-bf03e58386d3
 
 Choose your path:
 
