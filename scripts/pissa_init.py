@@ -62,6 +62,7 @@ def quantize_pissa(
     pissa_dir = os.path.join(output_dir, "pissa_init")
 
     # Save PiSSA model
+    setattr(peft_model.peft_config["default"], "base_model_name_or_path", os.path.abspath(output_dir))
     setattr(peft_model.peft_config["default"], "init_lora_weights", True)  # don't apply pissa again
     peft_model.save_pretrained(pissa_dir, safe_serialization=save_safetensors)
     print("Adapter weights saved in {}".format(pissa_dir))
