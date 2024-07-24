@@ -67,7 +67,7 @@ def quantize_loftq(
     loftq_dir = os.path.join(output_dir, "loftq_init")
 
     # Save LoftQ model
-    setattr(peft_model.peft_config["default"], "base_model_name_or_path", output_dir)
+    setattr(peft_model.peft_config["default"], "base_model_name_or_path", os.path.abspath(output_dir))
     setattr(peft_model.peft_config["default"], "init_lora_weights", True)  # don't apply loftq again
     peft_model.save_pretrained(loftq_dir, safe_serialization=save_safetensors)
     print("Adapter weights saved in {}".format(loftq_dir))
