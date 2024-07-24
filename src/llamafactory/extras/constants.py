@@ -741,6 +741,35 @@ register_model_group(
 
 register_model_group(
     models={
+        "LLaMA3.1-8B": {
+            DownloadSource.DEFAULT: "meta-llama/Meta-Llama-3.1-8B",
+            DownloadSource.MODELSCOPE: "LLM-Research/Meta-Llama-3.1-8B",
+        },
+        "LLaMA3.1-70B": {
+            DownloadSource.DEFAULT: "meta-llama/Meta-Llama-3.1-70B",
+            DownloadSource.MODELSCOPE: "LLM-Research/Meta-Llama-3.1-70B",
+        },
+        "LLaMA3.1-405B": {
+            DownloadSource.DEFAULT: "meta-llama/Meta-Llama-3.1-405B",
+        },
+        "LLaMA3.1-8B-Chat": {
+            DownloadSource.DEFAULT: "meta-llama/Meta-Llama-3.1-8B-Instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Meta-Llama-3.1-8B-Instruct",
+        },
+        "LLaMA3.1-70B-Chat": {
+            DownloadSource.DEFAULT: "meta-llama/Meta-Llama-3.1-70B-Instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Meta-Llama-3.1-70B-Instruct",
+        },
+        "LLaMA3.1-405B-Chat": {
+            DownloadSource.DEFAULT: "meta-llama/Meta-Llama-3.1-405B-Instruct",
+        },
+    },
+    template="llama3",
+)
+
+
+register_model_group(
+    models={
         "LLaVA1.5-7B-Chat": {
             DownloadSource.DEFAULT: "llava-hf/llava-1.5-7b-hf",
         },
