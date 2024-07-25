@@ -422,16 +422,24 @@ For CUDA users:
 
 ```bash
 cd docker/docker-cuda/
-docker-compose up -d
-docker-compose exec llamafactory bash
+docker compose up -d
+docker compose exec llamafactory bash
 ```
 
 For Ascend NPU users:
 
 ```bash
 cd docker/docker-npu/
-docker-compose up -d
-docker-compose exec llamafactory bash
+docker compose up -d
+docker compose exec llamafactory bash
+```
+
+For ROCm users:
+
+```bash
+cd docker/docker-rocm/
+docker compose up -d
+docker compose exec llamafactory bash
 ```
 
 <details><summary>Build without Docker Compose</summary>
@@ -486,6 +494,34 @@ docker run -dit \
     --device /dev/davinci_manager \
     --device /dev/devmm_svm \
     --device /dev/hisi_hdc \
+    --shm-size 16G \
+    --name llamafactory \
+    llamafactory:latest
+
+docker exec -it llamafactory bash
+```
+
+For ROCm users:
+
+```bash
+docker build -f ./docker/docker-rocm/Dockerfile \
+    --build-arg INSTALL_BNB=false \
+    --build-arg INSTALL_VLLM=false \
+    --build-arg INSTALL_DEEPSPEED=false \
+    --build-arg INSTALL_FLASHATTN=false \
+    --build-arg PIP_INDEX=https://pypi.org/simple \
+    -t llamafactory:latest .
+
+docker run -dit \
+    -v ./hf_cache:/root/.cache/huggingface \
+    -v ./ms_cache:/root/.cache/modelscope \
+    -v ./data:/app/data \
+    -v ./output:/app/output \
+    -v ./saves:/app/saves \
+    -p 7860:7860 \
+    -p 8000:8000 \
+    --device=/dev/kfd \
+	--device=/dev/dri \
     --shm-size 16G \
     --name llamafactory \
     llamafactory:latest
