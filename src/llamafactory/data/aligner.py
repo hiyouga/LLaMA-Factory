@@ -120,14 +120,14 @@ def convert_sharegpt(
     even_tags = (dataset_attr.assistant_tag, dataset_attr.function_tag)
     accept_tags = (odd_tags, even_tags)
     for i, messages in enumerate(examples[dataset_attr.messages]):
+        if len(messages) == 0:
+            continue
+
         if dataset_attr.system_tag and messages[0][dataset_attr.role_tag] == dataset_attr.system_tag:
             system = messages[0][dataset_attr.content_tag]
             messages = messages[1:]
         else:
             system = examples[dataset_attr.system][i] if dataset_attr.system else ""
-
-        if len(messages) == 0:
-            continue
 
         aligned_messages = []
         broken_data = False
