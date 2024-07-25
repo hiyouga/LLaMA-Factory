@@ -47,7 +47,7 @@ llamafactory-cli train examples/train_lora/llama3_lora_reward.yaml
 llamafactory-cli train examples/train_lora/llama3_lora_ppo.yaml
 ```
 
-#### DPO/ORPO/SimPO Training
+#### DPO/ORPO/SimPO/PPOv2 Training
 
 ```bash
 llamafactory-cli train examples/train_lora/llama3_lora_dpo.yaml
