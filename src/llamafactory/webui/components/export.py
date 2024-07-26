@@ -66,7 +66,7 @@ def save_model(
         error = ALERTS["err_no_dataset"][lang]
     elif export_quantization_bit not in GPTQ_BITS and not checkpoint_path:
         error = ALERTS["err_no_adapter"][lang]
-    elif export_quantization_bit in GPTQ_BITS and isinstance(checkpoint_path, list):
+    elif export_quantization_bit in GPTQ_BITS and checkpoint_path and isinstance(checkpoint_path, list):
         error = ALERTS["err_gptq_lora"][lang]
 
     if error:
