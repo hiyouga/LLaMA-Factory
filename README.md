@@ -200,6 +200,9 @@ You also can add a custom chat template to [template.py](src/llamafactory/data/t
 | ORPO Training          | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | SimPO Training         | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
+> [!TIP]
+> The implementation details of PPO can be found in [this blog](https://newfacade.github.io/notes-on-reinforcement-learning/17-ppo-trl.html).
+
 ## Provided Datasets
 
 <details><summary>Pre-training datasets</summary>
