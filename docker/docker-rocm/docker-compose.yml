@@ -23,7 +23,7 @@ services:
     tty: true
     stdin_open: true
     command: bash
-    devices:                                                                                      
-      - /dev/kfd:/dev/kfd                                                                         
+    devices:
+      - /dev/kfd:/dev/kfd
       - /dev/dri:/dev/dri
     restart: unless-stopped
