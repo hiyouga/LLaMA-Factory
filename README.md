@@ -437,7 +437,7 @@ docker compose up -d
 docker compose exec llamafactory bash
 ```
 
-For ROCm users:
+For AMD ROCm users:
 
 ```bash
 cd docker/docker-rocm/
@@ -504,7 +504,7 @@ docker run -dit \
 docker exec -it llamafactory bash
 ```
 
-For ROCm users:
+For AMD ROCm users:
 
 ```bash
 docker build -f ./docker/docker-rocm/Dockerfile \
@@ -523,8 +523,8 @@ docker run -dit \
     -v ./saves:/app/saves \
     -p 7860:7860 \
     -p 8000:8000 \
-    --device=/dev/kfd \
-	--device=/dev/dri \
+    --device /dev/kfd \
+    --device /dev/dri \
     --shm-size 16G \
     --name llamafactory \
     llamafactory:latest
