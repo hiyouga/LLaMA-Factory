@@ -177,7 +177,7 @@ https://github.com/user-attachments/assets/e6ce34b0-52d5-4f3e-a830-592106c4c272
 | [Yi/Yi-1.5](https://huggingface.co/01-ai)                    | 6B/9B/34B                        | yi        |
 | [Yi-VL](https://huggingface.co/01-ai)                        | 6B/34B                           | yi_vl     |
 | [Yuan 2](https://huggingface.co/IEITYuan)                    | 2B/51B/102B                      | yuan      |
-
+| [MiniCPM](https://huggingface.co/openbmb)                    | 1B/2B                            | cpm       |
 > [!NOTE]
 > 对于所有“基座”（Base）模型，`template` 参数可以是 `default`, `alpaca`, `vicuna` 等任意值。但“对话”（Instruct/Chat）模型请务必使用**对应的模板**。
 >

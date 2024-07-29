@@ -177,6 +177,8 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [Yi/Yi-1.5](https://huggingface.co/01-ai)                    | 6B/9B/34B                        | yi        |
 | [Yi-VL](https://huggingface.co/01-ai)                        | 6B/34B                           | yi_vl     |
 | [Yuan 2](https://huggingface.co/IEITYuan)                    | 2B/51B/102B                      | yuan      |
+| [MiniCPM](https://huggingface.co/openbmb)                    | 1B/2B                            | cpm       |
+
 
 > [!NOTE]
 > For the "base" models, the `template` argument can be chosen from `default`, `alpaca`, `vicuna` etc. But make sure to use the **corresponding template** for the "instruct/chat" models.
