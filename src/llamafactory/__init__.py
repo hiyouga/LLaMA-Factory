@@ -35,7 +35,6 @@ Dependency graph:
     transformers==4.41.2 (chatglm)
 """
 
-
 from .cli import VERSION
 
 
