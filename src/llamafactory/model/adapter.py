@@ -102,7 +102,8 @@ def _setup_freeze_tuning(
 
     hidden_modules = set()
     non_hidden_modules = set()
-    for name, _ in model.named_parameters():
+
+    def _get_modules(name):
         if ".0." in name:
             hidden_modules.add(name.split(".0.")[-1].split(".")[0])
         elif ".1." in name:  # MoD starts from layer 1
@@ -110,6 +111,13 @@ def _setup_freeze_tuning(
 
         if re.search(r"\.\d+\.", name) is None:
             non_hidden_modules.add(name.split(".")[-2])
+
+    for name, _ in model.named_parameters():
+        _get_modules(name)
+            
+    if hasattr(model, "lm_head"):
+        for name, _ in model.lm_head.named_parameters():
+            _get_modules(f"lm_head.{name}")
 
     trainable_layers = []
     for module_name in finetuning_args.freeze_trainable_modules:
