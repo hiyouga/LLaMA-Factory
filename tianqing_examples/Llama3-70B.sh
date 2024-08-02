@@ -33,7 +33,7 @@ src/train.py \
 --parallel_mode dist_flash_attn \
 --sp_size ${SP_SIZE} \
 --deepspeed examples/deepspeed/ds_z3_offload_config.json \
---dataset long_sft_128k \
+--dataset long_sft_32k \
 --template llama3 \
 --cutoff_len ${SEQ_LEN} \
 --max_steps 10 \
