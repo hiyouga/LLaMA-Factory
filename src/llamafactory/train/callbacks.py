@@ -162,11 +162,12 @@ class PissaConvertCallback(TrainerCallback):
                 setattr(model.peft_config["default"], "init_lora_weights", init_lora_weights)
                 model.save_pretrained(
                     pissa_convert_dir, safe_serialization=args.save_safetensors, convert_pissa_to_lora=pissa_init_dir
-                )
+                )  # TODO: use `path_initial_model_for_weight_conversion` (peft>=0.12.0)
                 model.load_adapter(pissa_backup_dir, "default", is_trainable=True)
                 model.set_adapter("default")
-                if "pissa_init" in model.peft_config.keys():
+                if "pissa_init" in model.peft_config.keys():  # backward compatibility (peft<0.12.0)
                     model.delete_adapter("pissa_init")
+
                 setattr(model.peft_config["default"], "init_lora_weights", init_lora_weights)
 
 
