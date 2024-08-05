@@ -41,11 +41,11 @@ from typing import TYPE_CHECKING, Tuple
 
 import torch
 import torch.nn.functional as F
-import transformers.models
 from transformers.utils.versions import require_version
 
 from ...extras.constants import SUPPORTED_CLASS_FOR_BLOCK_DIAG_ATTN
 from ...extras.logging import get_logger
+from ...extras.packages import is_transformers_version_greater_than_4_43
 
 
 if TYPE_CHECKING:
@@ -114,7 +114,15 @@ def get_unpad_data(attention_mask: "torch.Tensor") -> Tuple["torch.Tensor", "tor
 
 
 def _patch_for_block_diag_attn(model_type: str) -> None:
-    require_version("transformers>=4.41.2,<=4.42.4", "To fix: pip install transformers>=4.41.2,<=4.42.4")
+    require_version("transformers>=4.41.2,<=4.43.4", "To fix: pip install transformers>=4.41.2,<=4.43.4")
+    if is_transformers_version_greater_than_4_43():
+        import transformers.modeling_flash_attention_utils
+
+        transformers.modeling_flash_attention_utils._get_unpad_data = get_unpad_data
+        return
+
+    import transformers.models
+
     if model_type == "cohere":
         transformers.models.cohere.modeling_cohere._get_unpad_data = get_unpad_data
     elif model_type == "falcon":
