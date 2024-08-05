@@ -134,9 +134,10 @@ def _create_stream_chat_completion_chunk(
     delta: "ChatCompletionMessage",
     index: Optional[int] = 0,
     finish_reason: Optional["Finish"] = None,
+    usage: Optional["ChatCompletionResponseUsage"] = None
 ) -> str:
     choice_data = ChatCompletionStreamResponseChoice(index=index, delta=delta, finish_reason=finish_reason)
-    chunk = ChatCompletionStreamResponse(id=completion_id, model=model, choices=[choice_data])
+    chunk = ChatCompletionStreamResponse(id=completion_id, model=model, choices=[choice_data], usage=usage)
     return jsonify(chunk)
 
 
@@ -196,6 +197,7 @@ async def create_stream_chat_completion_response(
 ) -> AsyncGenerator[str, None]:
     completion_id = "chatcmpl-{}".format(uuid.uuid4().hex)
     input_messages, system, tools, image = _process_request(request)
+
     if tools:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot stream function calls.")
 
@@ -205,6 +207,8 @@ async def create_stream_chat_completion_response(
     yield _create_stream_chat_completion_chunk(
         completion_id=completion_id, model=request.model, delta=ChatCompletionMessage(role=Role.ASSISTANT, content="")
     )
+    response_text = ""
+    prompt_length = 0
     async for new_token in chat_model.astream_chat(
         input_messages,
         system,
@@ -216,13 +220,22 @@ async def create_stream_chat_completion_response(
         max_new_tokens=request.max_tokens,
         stop=request.stop,
     ):
+        prompt_length = chat_model.engine.prompt_length
         if len(new_token) != 0:
+            response_text += new_token
             yield _create_stream_chat_completion_chunk(
                 completion_id=completion_id, model=request.model, delta=ChatCompletionMessage(content=new_token)
             )
-
+    usage = None
+    if request.stream_options is not None and request.stream_options.get('include_usage', False):
+        response_length = len(chat_model.engine.tokenizer.encode(response_text, add_special_tokens=False))
+        usage = ChatCompletionResponseUsage(
+            prompt_tokens=prompt_length,
+            completion_tokens=response_length,
+            total_tokens=prompt_length + response_length,
+        )
     yield _create_stream_chat_completion_chunk(
-        completion_id=completion_id, model=request.model, delta=ChatCompletionMessage(), finish_reason=Finish.STOP
+        completion_id=completion_id, model=request.model, delta=ChatCompletionMessage(), finish_reason=Finish.STOP, usage=usage
     )
     yield "[DONE]"
 
