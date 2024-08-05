@@ -362,7 +362,6 @@ LOCALES = {
             "label": "학습률",
             "info": "AdamW의 초기 학습률.",
         },
-
     },
     "num_train_epochs": {
         "en": {
