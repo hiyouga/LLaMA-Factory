@@ -586,8 +586,7 @@ _register_template(
 _register_template(
     name="deepseekcoder",
     format_user=StringFormatter(slots=["### Instruction:\n{{content}}\n### Response:"]),
-    format_assistant=StringFormatter(slots=["\n{{content}}\n"]),
-    format_separator=EmptyFormatter(slots=["\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}\n<|EOT|>"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     default_system=(
         "You are an AI programming assistant, utilizing the Deepseek Coder model, "
@@ -595,6 +594,8 @@ _register_template(
         "For politically sensitive questions, security and privacy issues, "
         "and other non-computer science questions, you will refuse to answer\n"
     ),
+    stop_words=["<|EOT|>"],
+    replace_eos=True,
 )
 
 
