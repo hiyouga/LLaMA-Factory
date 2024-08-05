@@ -535,10 +535,6 @@ register_model_group(
             DownloadSource.DEFAULT: "google/gemma-2-2b",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-2b",
         },
-        "Gemma-2-2B-Chat": {
-            DownloadSource.DEFAULT: "google/gemma-2-2b-it",
-            DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-2b-it",
-        },
         "Gemma-2-9B": {
             DownloadSource.DEFAULT: "google/gemma-2-9b",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-9b",
@@ -546,6 +542,10 @@ register_model_group(
         "Gemma-2-27B": {
             DownloadSource.DEFAULT: "google/gemma-2-27b",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-27b",
+        },
+        "Gemma-2-2B-Chat": {
+            DownloadSource.DEFAULT: "google/gemma-2-2b-it",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-2b-it",
         },
         "Gemma-2-9B-Chat": {
             DownloadSource.DEFAULT: "google/gemma-2-9b-it",
