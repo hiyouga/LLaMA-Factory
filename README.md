@@ -300,20 +300,20 @@ huggingface-cli login
 | Mandatory    | Minimum | Recommend |
 | ------------ | ------- | --------- |
 | python       | 3.8     | 3.11      |
-| torch        | 1.13.1  | 2.3.0     |
-| transformers | 4.41.2  | 4.41.2    |
-| datasets     | 2.16.0  | 2.19.2    |
-| accelerate   | 0.30.1  | 0.30.1    |
-| peft         | 0.11.1  | 0.11.1    |
-| trl          | 0.8.6   | 0.9.4     |
+| torch        | 1.13.1  | 2.4.0     |
+| transformers | 4.41.2  | 4.43.4    |
+| datasets     | 2.16.0  | 2.20.0    |
+| accelerate   | 0.30.1  | 0.32.0    |
+| peft         | 0.11.1  | 0.12.0    |
+| trl          | 0.8.6   | 0.9.6     |
 
 | Optional     | Minimum | Recommend |
 | ------------ | ------- | --------- |
 | CUDA         | 11.6    | 12.2      |
 | deepspeed    | 0.10.0  | 0.14.0    |
 | bitsandbytes | 0.39.0  | 0.43.1    |
-| vllm         | 0.4.3   | 0.4.3     |
-| flash-attn   | 2.3.0   | 2.5.9     |
+| vllm         | 0.4.3   | 0.5.0     |
+| flash-attn   | 2.3.0   | 2.6.3     |
 
 ### Hardware Requirement
 
