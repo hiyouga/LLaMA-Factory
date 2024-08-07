@@ -28,6 +28,7 @@ from ..extras.constants import (
     SUPPORTED_MODELS,
     TRAINING_STAGES,
     VISION_MODELS,
+    VISION_TYPES,
     DownloadSource,
 )
 from ..extras.logging import get_logger
@@ -122,7 +123,7 @@ def get_prefix(model_name: str) -> str:
     return model_name.split("-")[0]
 
 
-def get_model_info(model_name: str) -> Tuple[str, str, bool]:
+def get_model_info(model_name: str) -> Tuple[str, str, bool, str]:
     r"""
     Gets the necessary information of this model.
 
@@ -131,7 +132,8 @@ def get_model_info(model_name: str) -> Tuple[str, str, bool]:
         template (str)
         visual (bool)
     """
-    return get_model_path(model_name), get_template(model_name), get_visual(model_name)
+    visual = get_visual(model_name)
+    return get_model_path(model_name), get_template(model_name), visual[0], visual[1]
 
 
 def get_template(model_name: str) -> str:
@@ -143,11 +145,14 @@ def get_template(model_name: str) -> str:
     return "default"
 
 
-def get_visual(model_name: str) -> bool:
+def get_visual(model_name: str) -> Tuple[bool, str]:
     r"""
     Judges if the model is a vision language model.
     """
-    return get_prefix(model_name) in VISION_MODELS
+    if get_prefix(model_name) in VISION_MODELS:
+        return True, VISION_TYPES[get_prefix(model_name)]
+    else:
+        return False, "none"
 
 
 def list_checkpoints(model_name: str, finetuning_type: str) -> "gr.Dropdown":

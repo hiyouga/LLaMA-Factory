@@ -99,6 +99,8 @@ V_HEAD_SAFE_WEIGHTS_NAME = "value_head.safetensors"
 
 VISION_MODELS = set()
 
+VISION_TYPES = dict()
+
 
 class DownloadSource(str, Enum):
     DEFAULT = "hf"
@@ -109,6 +111,7 @@ def register_model_group(
     models: Dict[str, Dict[DownloadSource, str]],
     template: Optional[str] = None,
     vision: bool = False,
+    vision_type: str = "vision_tower",
 ) -> None:
     prefix = None
     for name, path in models.items():
@@ -121,6 +124,7 @@ def register_model_group(
         DEFAULT_TEMPLATE[prefix] = template
     if vision:
         VISION_MODELS.add(prefix)
+        VISION_TYPES[prefix] = vision_type
 
 
 register_model_group(
@@ -581,6 +585,19 @@ register_model_group(
 
 register_model_group(
     models={
+        "GLM-4v-9B-Chat": {
+            DownloadSource.DEFAULT: "THUDM/glm-4v-9b",
+            DownloadSource.MODELSCOPE: "ZhipuAI/glm-4v-9b",
+        }
+    },
+    template="glm4_v",
+    vision=True,
+    vision_type="glm4v_like",
+)
+
+
+register_model_group(
+    models={
         "InternLM-7B": {
             DownloadSource.DEFAULT: "internlm/internlm-7b",
             DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm-7b",
@@ -952,6 +969,7 @@ register_model_group(
         },
     },
     vision=True,
+    vision_type="vision_tower",
 )
 
 
@@ -997,6 +1015,19 @@ register_model_group(
         },
     },
     template="phi",
+)
+
+
+register_model_group(
+    models={
+        "Phi-3-vision-128k-Chat": {
+            DownloadSource.DEFAULT: "microsoft/Phi-3-vision-128k-instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Phi-3-medium-128k-instruct",
+        }
+    },
+    template="phi_v",
+    vision=True,
+    vision_type="phi3v_like",
 )
 
 
@@ -1302,6 +1333,23 @@ register_model_group(
         },
     },
     template="qwen",
+)
+
+
+register_model_group(
+    models={
+        "Qwen-VL-Chat": {
+            DownloadSource.DEFAULT: "Qwen/Qwen-VL-Chat",
+            DownloadSource.MODELSCOPE: "qwen/Qwen2-0.5B",
+        },
+        "Qwen-VL": {
+            DownloadSource.DEFAULT: "Qwen/Qwen-VL",
+            DownloadSource.MODELSCOPE: "qwen/wen-VL",
+        },
+    },
+    template="qwen_vl",
+    vision=True,
+    vision_type="qwen_vl_like",
 )
 
 

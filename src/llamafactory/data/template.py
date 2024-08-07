@@ -39,6 +39,7 @@ class Template:
     format_tools: "Formatter"
     format_separator: "Formatter"
     format_prefix: "Formatter"
+    format_image: "Formatter"
     default_system: str
     stop_words: List[str]
     image_token: str
@@ -203,6 +204,7 @@ def _register_template(
     format_tools: Optional["Formatter"] = None,
     format_separator: Optional["Formatter"] = None,
     format_prefix: Optional["Formatter"] = None,
+    format_image: Optional["Formatter"] = None,
     default_system: str = "",
     stop_words: Sequence[str] = [],
     image_token: str = "<image>",
@@ -252,6 +254,7 @@ def _register_template(
         format_tools=format_tools or default_tool_formatter,
         format_separator=format_separator or default_separator_formatter,
         format_prefix=format_prefix or default_prefix_formatter,
+        format_image=format_image,
         default_system=default_system,
         stop_words=stop_words,
         image_token=image_token,
@@ -654,6 +657,21 @@ _register_template(
 
 
 _register_template(
+    name="glm4_v",
+    format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>"]),
+    format_assistant=StringFormatter(slots=["\n{{content}}"]),
+    format_system=StringFormatter(slots=["<|system|>\n{{content}}"]),
+    format_function=FunctionFormatter(slots=[], tool_format="glm4"),
+    format_observation=StringFormatter(slots=["<|observation|>\n{{content}}<|assistant|>"]),
+    format_tools=ToolFormatter(tool_format="glm4"),
+    format_prefix=EmptyFormatter(slots=["[gMASK]<sop>"]),
+    format_image=EmptyFormatter(slots=["<|begin_of_image|><|endoftext|><|end_of_image|>"]),
+    stop_words=["<|user|>", "<|observation|>"],
+    efficient_eos=True,
+)
+
+
+_register_template(
     name="intern",
     format_user=StringFormatter(slots=["<|User|>:{{content}}\n<|Bot|>:"]),
     format_system=StringFormatter(slots=["<|System|>:{{content}}\n"]),
@@ -771,11 +789,36 @@ _register_template(
 
 
 _register_template(
+    name="phi_v",
+    format_user=StringFormatter(slots=["<|user|>\n{{content}}<|end|>\n<|assistant|>\n"]),
+    format_system=StringFormatter(slots=["<|system|>\n{{content}}<|end|>\n"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<|end|>"],
+    image_token="<|image|>",
+    replace_eos=True,
+)
+
+
+_register_template(
     name="qwen",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     format_observation=StringFormatter(slots=["<|im_start|>tool\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_separator=EmptyFormatter(slots=["\n"]),
+    default_system="You are a helpful assistant.",
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
+)
+
+
+_register_template(
+    name="qwen_vl",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_observation=StringFormatter(slots=["<|im_start|>tool\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    format_image=StringFormatter(slots=["<img>{{content}}</img>"]),
     default_system="You are a helpful assistant.",
     stop_words=["<|im_end|>"],
     replace_eos=True,

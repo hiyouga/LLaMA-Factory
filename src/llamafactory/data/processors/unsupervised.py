@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
 from ...extras.logging import get_logger
@@ -22,7 +23,7 @@ from .processor_utils import get_paligemma_token_type_ids, get_pixel_values, inf
 if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer, ProcessorMixin
 
-    from ...hparams import DataArguments
+    from ...hparams import DataArguments, ModelArguments
     from ..template import Template
 
 
@@ -67,18 +68,34 @@ def preprocess_unsupervised_dataset(
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"],
     data_args: "DataArguments",
+    model_args: "ModelArguments",
 ) -> Dict[str, List[List[int]]]:
     # build inputs with format `<bos> X` and labels with format `Y <eos>`
     model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
-    if processor is not None:
+    if processor is not None and model_args.visual_inputs_type in ["vision_tower","phi3v_like"]:
         model_inputs["pixel_values"] = []
         if hasattr(processor, "image_seq_length"):  # paligemma models
             model_inputs["token_type_ids"] = []
+    elif model_args.visual_inputs_type == "glm4v_like":
+        model_inputs["image_inputs"] = []
 
     for i in range(len(examples["prompt"])):
         if len(examples["prompt"][i]) % 2 != 1:
             logger.warning("Dropped invalid example: {}".format(examples["prompt"][i] + examples["response"][i]))
             continue
+
+        if model_args.visual_inputs_type == "glm4v_like":
+            assert len(examples["images"][i]) <= 1, "GLM4v only support 1 image train yet."
+            model_inputs["image_inputs"].append(get_pixel_values(examples["images"][i], None, "glm4v_like"))
+            examples["prompt"][i][0]["content"] = (
+                template.format_image.apply()[0] + examples["prompt"][i][-1]["content"]
+            )
+        elif model_args.visual_inputs_type == "qwen_vl_like":
+            assert len(examples["images"][i]) <= 1, "qwen_vl only support 1 image train yet."
+            examples["prompt"][i][0]["content"] = (
+                template.format_image.apply(content=os.path.join(data_args.dataset_dir, examples["images"][i][0]))[0]
+                + examples["prompt"][i][0]["content"]
+            )
 
         input_ids, labels = _encode_unsupervised_example(
             prompt=examples["prompt"][i],
@@ -93,7 +110,7 @@ def preprocess_unsupervised_dataset(
         model_inputs["input_ids"].append(input_ids)
         model_inputs["attention_mask"].append([1] * len(input_ids))
         model_inputs["labels"].append(labels)
-        if processor is not None:
+        if processor is not None and model_args.visual_inputs_type in ["vision_tower","phi3v_like"]:
             model_inputs["pixel_values"].append(get_pixel_values(examples["images"][i], processor))
             if hasattr(processor, "image_seq_length"):  # paligemma models
                 model_inputs["token_type_ids"].append(get_paligemma_token_type_ids(len(input_ids), processor))

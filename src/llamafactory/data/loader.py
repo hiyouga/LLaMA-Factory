@@ -132,7 +132,7 @@ def _load_single_dataset(
         max_samples = min(data_args.max_samples, len(dataset))
         dataset = dataset.select(range(max_samples))
 
-    return align_dataset(dataset, dataset_attr, data_args, training_args)
+    return align_dataset(dataset, dataset_attr, data_args, training_args, model_args)
 
 
 def _get_merged_dataset(
@@ -159,6 +159,7 @@ def _get_preprocessed_dataset(
     dataset: Optional[Union["Dataset", "IterableDataset"]],
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
+    model_args: "ModelArguments",
     stage: Literal["pt", "sft", "rm", "ppo", "kto"],
     template: "Template",
     tokenizer: "PreTrainedTokenizer",
@@ -169,7 +170,7 @@ def _get_preprocessed_dataset(
         return None
 
     preprocess_func, print_function = get_preprocess_and_print_func(
-        data_args, stage, template, tokenizer, processor, do_generate=(training_args.predict_with_generate and is_eval)
+        data_args, model_args, stage, template, tokenizer, processor, do_generate=(training_args.predict_with_generate and is_eval)
     )
     column_names = list(next(iter(dataset)).keys())
     kwargs = {}
@@ -235,11 +236,16 @@ def get_dataset(
 
     with training_args.main_process_first(desc="pre-process dataset"):
         dataset = _get_preprocessed_dataset(
-            dataset, data_args, training_args, stage, template, tokenizer, processor, is_eval=False
+            dataset, data_args, training_args, model_args, stage, template, tokenizer, processor, is_eval=False
         )
         eval_dataset = _get_preprocessed_dataset(
-            eval_dataset, data_args, training_args, stage, template, tokenizer, processor, is_eval=True
+            eval_dataset, data_args, training_args, model_args, stage, template, tokenizer, processor, is_eval=True
         )
+
+        if model_args.visual_inputs_type == "glm4v_like":
+            # Datasets can't set column images because of images is a feature of examples.
+            dataset = dataset.rename_column("image_inputs", "images")
+            eval_dataset = eval_dataset.rename_column("image_inputs", "images") if eval_dataset is not None else None
 
         if data_args.val_size > 1e-6:
             dataset_dict = split_dataset(dataset, data_args, seed=training_args.seed)

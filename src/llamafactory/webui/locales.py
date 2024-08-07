@@ -197,6 +197,17 @@ LOCALES = {
             "label": "시각적 입력",
         },
     },
+    "visual_inputs_type": {
+        "en": {
+            "label": "Visual inputs type",
+        },
+        "ru": {
+            "label": "Тип визуальных входов",
+        },
+        "zh": {
+            "label": "图像输入类型",
+        },
+    },
     "training_stage": {
         "en": {
             "label": "Stage",
