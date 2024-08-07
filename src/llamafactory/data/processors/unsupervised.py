@@ -97,6 +97,8 @@ def preprocess_unsupervised_dataset(
             model_inputs["pixel_values"].append(get_pixel_values(examples["images"][i], processor))
             if hasattr(processor, "image_seq_length"):  # paligemma models
                 model_inputs["token_type_ids"].append(get_paligemma_token_type_ids(len(input_ids), processor))
+    if not examples['response'][0]:  # pop labels if response is not str
+        model_inputs.pop('labels')
 
     return model_inputs
 
