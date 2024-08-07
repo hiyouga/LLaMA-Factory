@@ -28,7 +28,7 @@ from trl.trainer import disable_dropout_in_model
 
 from ...extras.constants import IGNORE_INDEX
 from ..callbacks import SaveProcessorCallback
-from ..trainer_utils import create_custom_optimzer, create_custom_scheduler, get_batch_logps
+from ..trainer_utils import create_custom_optimizer, create_custom_scheduler, get_batch_logps
 
 
 if TYPE_CHECKING:
@@ -101,7 +101,7 @@ class CustomKTOTrainer(KTOTrainer):
 
     def create_optimizer(self) -> "torch.optim.Optimizer":
         if self.optimizer is None:
-            self.optimizer = create_custom_optimzer(self.model, self.args, self.finetuning_args)
+            self.optimizer = create_custom_optimizer(self.model, self.args, self.finetuning_args)
         return super().create_optimizer()
 
     def create_scheduler(
