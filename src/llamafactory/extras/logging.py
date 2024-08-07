@@ -48,11 +48,13 @@ class LoggerHandler(logging.Handler):
         if record.name == "httpx":
             return
 
-        log_entry = self.format(record)
-        self.thread_pool.submit(self._write_log, log_entry)
+        if hasattr(LoggerHandler, 'thread_pool'):
+            log_entry = self.format(record)
+            self.thread_pool.submit(self._write_log, log_entry)
 
     def close(self) -> None:
-        self.thread_pool.shutdown(wait=True)
+        if hasattr(LoggerHandler, 'thread_pool'):
+            self.thread_pool.shutdown(wait=True)
         return super().close()
 
 
