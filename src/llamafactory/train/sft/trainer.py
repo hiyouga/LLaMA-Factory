@@ -88,9 +88,10 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         Subclass and override to inject custom behavior.
         """
         labels = inputs["labels"].detach().clone() if "labels" in inputs else None  # backup labels
-        if self.args.predict_with_generate:
+        prompt_len = inputs["input_ids"].size(-1)
+        if labels is not None and self.args.predict_with_generate:
             assert self.tokenizer.padding_side == "left", "This method only accepts left-padded tensor."
-            prompt_len, label_len = inputs["input_ids"].size(-1), inputs["labels"].size(-1)
+            label_len = inputs["labels"].size(-1)
             if prompt_len > label_len:
                 inputs["labels"] = self._pad_tensors_to_target_len(inputs["labels"], inputs["input_ids"])
             if label_len > prompt_len:  # truncate the labels instead of padding the inputs (llama2 fp16 compatibility)
