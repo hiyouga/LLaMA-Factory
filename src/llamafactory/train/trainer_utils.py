@@ -366,7 +366,7 @@ def _create_badam_optimizer(
     return optimizer
 
 
-def create_custom_optimzer(
+def create_custom_optimizer(
     model: "PreTrainedModel",
     training_args: "Seq2SeqTrainingArguments",
     finetuning_args: "FinetuningArguments",
