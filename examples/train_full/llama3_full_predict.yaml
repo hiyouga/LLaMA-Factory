@@ -7,7 +7,7 @@ do_predict: true
 finetuning_type: full
 
 ### dataset
-dataset: identity,alpaca_en_demo
+eval_dataset: alpaca_en_demo
 template: llama3
 cutoff_len: 1024
 max_samples: 50
