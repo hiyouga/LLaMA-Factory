@@ -69,12 +69,16 @@ class Template:
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
+        mask_history: bool = False,
     ) -> List[Tuple[List[int], List[int]]]:
         r"""
         Returns multiple pairs of token ids representing prompts and responses respectively.
         """
         encoded_messages = self._encode(tokenizer, messages, system, tools)
-        return [(encoded_messages[i], encoded_messages[i + 1]) for i in range(0, len(encoded_messages), 2)]
+        if not mask_history:
+            return [(encoded_messages[i], encoded_messages[i + 1]) for i in range(0, len(encoded_messages), 2)]
+        else:
+            return [(encoded_messages[i], encoded_messages[i + 1]) for i in range(len(encoded_messages)-2, -1, -2)]
 
     def extract_tool(self, content: str) -> Union[str, List[Tuple[str, str]]]:
         r"""
