@@ -16,10 +16,11 @@
 # limitations under the License.
 
 import warnings
+import gc
 from collections import defaultdict
 from contextlib import nullcontext
 from types import MethodType
-from typing import TYPE_CHECKING, Dict, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Literal, Optional, Tuple, Union, Any
 
 import torch
 import torch.nn.functional as F
@@ -186,7 +187,7 @@ class CustomDPOTrainer(DPOTrainer):
         chosen_logits, rejected_logits = all_logits.split(batch_size, dim=0)
         chosen_length, _ = valid_length.split(batch_size, dim=0)
         return chosen_logps, rejected_logps, chosen_logits, rejected_logits, chosen_logps / chosen_length
-
+    
     def compute_reference_log_probs(
         self, model: "PreTrainedModel", batch: Dict[str, "torch.Tensor"]
     ) -> Tuple[Optional["torch.Tensor"], Optional["torch.Tensor"]]:
@@ -253,3 +254,10 @@ class CustomDPOTrainer(DPOTrainer):
             metrics["{}odds_ratio_loss".format(prefix)] = ((losses - sft_loss) / self.beta).detach().mean().cpu()
 
         return losses.mean(), metrics
+
+    def training_step(self, model: nn.Module, inputs: Dict[str, Union[torch.Tensor, Any]]) -> torch.Tensor:
+        loss_step = super().training_step(model, inputs)
+        torch.cuda.empty_cache()
+        gc.collect()
+        return loss_step
+    
