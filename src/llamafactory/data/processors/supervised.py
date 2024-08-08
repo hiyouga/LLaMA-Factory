@@ -53,7 +53,7 @@ def _encode_supervised_example(
         input_ids += [image_token_id] * getattr(processor, "image_seq_length")
         labels += [IGNORE_INDEX] * getattr(processor, "image_seq_length")
 
-    encoded_pairs = template.encode_multiturn(tokenizer, messages, system, tools)
+    encoded_pairs = template.encode_multiturn(tokenizer, messages, system, tools, mask_history)
     total_length = 1 if template.efficient_eos else 0
     for turn_idx, (source_ids, target_ids) in enumerate(encoded_pairs):
         if total_length >= cutoff_len:
@@ -71,14 +71,15 @@ def _encode_supervised_example(
         else:
             source_label = [IGNORE_INDEX] * source_len
 
-        if mask_history and turn_idx != len(encoded_pairs) - 1:
-            target_label = [IGNORE_INDEX] * target_len
+        if mask_history:
+            target_label = target_ids if turn_idx==0 else [IGNORE_INDEX] * target_len
+            input_ids = source_ids + target_ids + input_ids
+            labels = source_label + target_label + labels
         else:
             target_label = target_ids
-
-        input_ids += source_ids + target_ids
-        labels += source_label + target_label
-
+            input_ids += source_ids + target_ids
+            labels += source_label + target_label
+            
     if template.efficient_eos:
         input_ids += [tokenizer.eos_token_id]
         labels += [tokenizer.eos_token_id]
