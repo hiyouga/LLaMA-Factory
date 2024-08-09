@@ -192,7 +192,7 @@ llamafactory-cli train examples/extras/badam/llama3_full_sft.yaml
 #### 使用 Adam-mini 进行全参数训练
 
 ```bash
-llamafactory-cli train examples/extras/adam_mini/llama3_full_sft.yaml
+llamafactory-cli train examples/extras/adam_mini/qwen2_full_sft.yaml
 ```
 
 #### LoRA+ 微调
