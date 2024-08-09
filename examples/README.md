@@ -189,6 +189,12 @@ llamafactory-cli train examples/extras/galore/llama3_full_sft.yaml
 llamafactory-cli train examples/extras/badam/llama3_full_sft.yaml
 ```
 
+#### Full-Parameter Fine-Tuning using Adam-mini
+
+```bash
+llamafactory-cli train examples/extras/adam_mini/llama3_full_sft.yaml
+```
+
 #### LoRA+ Fine-Tuning
 
 ```bash
