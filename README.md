@@ -537,9 +537,10 @@ docker exec -it llamafactory bash
 
 <details><summary>Details about volume</summary>
 
-- hf_cache: Utilize Hugging Face cache on the host machine. Reassignable if a cache already exists in a different directory.
-- data: Place datasets on this dir of the host machine so that they can be selected on LLaMA Board GUI.
-- output: Set export dir to this location so that the merged result can be accessed directly on the host machine.
+- `hf_cache`: Utilize Hugging Face cache on the host machine. Reassignable if a cache already exists in a different directory.
+- `ms_cache`: Similar to Hugging Face cache but for ModelScope users.
+- `data`: Place datasets on this dir of the host machine so that they can be selected on LLaMA Board GUI.
+- `output`: Set export dir to this location so that the merged result can be accessed directly on the host machine.
 
 </details>
 
