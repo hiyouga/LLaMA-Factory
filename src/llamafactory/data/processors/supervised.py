@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
-from .processor_utils import get_paligemma_token_type_ids, get_pixel_values, greedy_knapsack, infer_seqlen
+from .processor_utils import get_paligemma_token_type_ids, get_pixel_values, get_pixel_values_videos, greedy_knapsack, infer_seqlen
 
 
 if TYPE_CHECKING:
@@ -38,23 +38,41 @@ def _encode_supervised_example(
     template: "Template",
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"],
+    exists_images: bool,
+    exists_videos: bool,
     cutoff_len: int,
     train_on_prompt: bool,
     mask_history: bool,
 ) -> Tuple[List[int], List[int]]:
-    if processor is not None and not hasattr(processor, "image_seq_length"):  # llava-like models
-        prompt[0]["content"] = template.image_token + prompt[0]["content"]
+    if processor is not None:
+        processor_class = type(processor).__name__
+        if processor_class != 'PaliGemmaProcessor':
+            if template.image_token not in prompt[0]["content"] and exists_videos:
+                prompt[0]["content"] = template.video_token + prompt[0]["content"]
+            if template.video_token not in prompt[0]["content"] and exists_images:
+                prompt[0]["content"] = template.image_token + prompt[0]["content"]
 
     messages = prompt + response
     input_ids, labels = [], []
 
-    if processor is not None and hasattr(processor, "image_seq_length"):  # paligemma models
+    if processor is not None and processor_class == 'PaliGemmaProcessor':  # paligemma models
         image_token_id = tokenizer.convert_tokens_to_ids(template.image_token)
         input_ids += [image_token_id] * getattr(processor, "image_seq_length")
         labels += [IGNORE_INDEX] * getattr(processor, "image_seq_length")
 
+    if processor is not None and processor_class == 'Idefics2Processor':
+        fake_image_token = processor.fake_image_token.content
+        image_str = f"{fake_image_token}{template.image_token * processor.image_seq_len}{fake_image_token}"
+        image_str = image_str * 5
+        for j in range(len(messages)):
+            content = messages[j]['content']
+            content = content.replace(template.image_token, image_str)
+            content = content.replace(f"{fake_image_token}{fake_image_token}", f"{fake_image_token}")
+            messages[j]['content'] = content
+            
     encoded_pairs = template.encode_multiturn(tokenizer, messages, system, tools)
     total_length = 1 if template.efficient_eos else 0
+    
     for turn_idx, (source_ids, target_ids) in enumerate(encoded_pairs):
         if total_length >= cutoff_len:
             break
@@ -96,9 +114,23 @@ def preprocess_supervised_dataset(
     # build inputs with format `<bos> X Y <eos>` and labels with format `<ignore> ... <ignore> Y <eos>`
     # for multiturn examples, we only mask the prompt part in each prompt-response pair.
     model_inputs = {"input_ids": [], "attention_mask": [], "labels": []}
+
+    image_keys = template.image_data_key
+    video_keys = template.video_data_key
+    processor_class = None
+
     if processor is not None:
-        model_inputs["pixel_values"] = []
-        if hasattr(processor, "image_seq_length"):  # paligemma models
+        if len(examples["images"][0]):
+            for image_key in image_keys:
+                model_inputs[image_key] = []
+
+        if len(examples["videos"][0]):
+            for video_key in video_keys:
+                model_inputs[video_key] = []
+
+        processor_class = type(processor).__name__
+
+        if processor_class == 'PaliGemmaProcessor':  # paligemma models
             model_inputs["token_type_ids"] = []
 
     for i in range(len(examples["prompt"])):
@@ -114,17 +146,32 @@ def preprocess_supervised_dataset(
             template=template,
             tokenizer=tokenizer,
             processor=processor,
+            exists_images=len(examples["images"][i]) > 0,
+            exists_videos=len(examples['videos'][i]) > 0,
             cutoff_len=data_args.cutoff_len,
             train_on_prompt=data_args.train_on_prompt,
             mask_history=data_args.mask_history,
         )
+
         model_inputs["input_ids"].append(input_ids)
         model_inputs["attention_mask"].append([1] * len(input_ids))
         model_inputs["labels"].append(labels)
         if processor is not None:
-            model_inputs["pixel_values"].append(get_pixel_values(examples["images"][i], processor))
-            if hasattr(processor, "image_seq_length"):  # paligemma models
-                model_inputs["token_type_ids"].append(get_paligemma_token_type_ids(len(input_ids), processor))
+            if len(examples["images"][i]):
+                image_data = get_pixel_values(examples["images"][i], processor, image_keys)
+                for image_key in image_keys:
+                    image_value = image_data[image_key]
+                    if image_value.shape[0] == 1:
+                        model_inputs[image_key].append(image_value[0])
+                if processor_class == 'PaliGemmaProcessor':  # paligemma models
+                    model_inputs["token_type_ids"].append(get_paligemma_token_type_ids(len(input_ids), processor))
+
+            if len(examples["videos"][i]):
+                video_data = get_pixel_values_videos(examples["videos"][i], processor, video_keys)
+                for video_key in video_keys:
+                    video_value = video_data[video_key]
+                    if video_value.shape[0] == 1:
+                        model_inputs[video_key].append(video_value[0])
 
     return model_inputs
 
@@ -154,6 +201,8 @@ def preprocess_packed_supervised_dataset(
             template=template,
             tokenizer=tokenizer,
             processor=None,
+            exists_images=len(examples["images"][i]) > 0,
+            exists_videos=len(examples["videos"][i]) > 0,
             cutoff_len=data_args.cutoff_len - 1,  # reserved for the padding token
             train_on_prompt=data_args.train_on_prompt,
             mask_history=data_args.mask_history,

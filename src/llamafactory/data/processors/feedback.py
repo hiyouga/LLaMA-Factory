@@ -38,10 +38,17 @@ def _encode_feedback_example(
     template: "Template",
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"],
+    exists_images: bool,
+    exists_videos: bool,
     cutoff_len: int,
 ) -> Tuple[List[int], List[int], List[int], List[int], bool]:
-    if processor is not None and not hasattr(processor, "image_seq_length"):  # llava-like models
-        prompt[0]["content"] = template.image_token + prompt[0]["content"]
+    if processor is not None:
+        processor_class = type(processor).__name__
+        if processor_class != 'PaliGemmaProcessor':
+            if template.image_token not in prompt[0]["content"] and exists_videos:
+                prompt[0]["content"] = template.video_token + prompt[0]["content"]
+            if template.video_token not in prompt[0]["content"] and exists_images:
+                prompt[0]["content"] = template.image_token + prompt[0]["content"]
 
     if response[0]["content"]:  # desired example
         kto_tag = True
@@ -55,6 +62,21 @@ def _encode_feedback_example(
     else:
         kl_messages = prompt + [kl_response[1]]
 
+    if processor is not None and processor_class == 'Idefics2Processor':
+        fake_image_token = processor.fake_image_token.content
+        image_str = f"{fake_image_token}{template.image_token * processor.image_seq_len}{fake_image_token}"
+        image_str = image_str * 5
+        for j in range(len(messages)):
+            content = messages[j]['content']
+            content = content.replace(template.image_token, image_str)
+            content = content.replace(f"{fake_image_token}{fake_image_token}", f"{fake_image_token}")
+            messages[j]['content'] = content
+        for j in range(len(kl_messages)):
+            content = kl_messages[j]['content']
+            content = content.replace(template.image_token, image_str)
+            content = content.replace(f"{fake_image_token}{fake_image_token}", f"{fake_image_token}")
+            kl_messages[j]['content'] = content
+
     prompt_ids, response_ids = template.encode_oneturn(tokenizer, messages, system, tools)
     kl_prompt_ids, kl_response_ids = template.encode_oneturn(tokenizer, kl_messages, system, tools)
 
@@ -62,7 +84,7 @@ def _encode_feedback_example(
         response_ids += [tokenizer.eos_token_id]
         kl_response_ids += [tokenizer.eos_token_id]
 
-    if processor is not None and hasattr(processor, "image_seq_length"):  # paligemma models
+    if processor is not None and processor_class == 'PaliGemmaProcessor':  # paligemma models
         image_token_id = tokenizer.convert_tokens_to_ids(template.image_token)
         prompt_ids = [image_token_id] * getattr(processor, "image_seq_length") + prompt_ids
         kl_prompt_ids = [image_token_id] * getattr(processor, "image_seq_length") + kl_prompt_ids
@@ -120,6 +142,8 @@ def preprocess_feedback_dataset(
             template=template,
             tokenizer=tokenizer,
             processor=processor,
+            exists_images=len(examples["images"][i]) > 0,
+            exists_videos=len(examples['videos'][i]) > 0,
             cutoff_len=data_args.cutoff_len,
         )
         model_inputs["input_ids"].append(input_ids)

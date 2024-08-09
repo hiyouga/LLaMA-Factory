@@ -78,9 +78,10 @@ class ChatModel:
         system: Optional[str] = None,
         tools: Optional[str] = None,
         image: Optional["NDArray"] = None,
+        video: Optional["NDArray"] = None,
         **input_kwargs,
     ) -> Generator[str, None, None]:
-        generator = self.astream_chat(messages, system, tools, image, **input_kwargs)
+        generator = self.astream_chat(messages, system, tools, image, video, **input_kwargs)
         while True:
             try:
                 task = asyncio.run_coroutine_threadsafe(generator.__anext__(), self._loop)
@@ -94,9 +95,10 @@ class ChatModel:
         system: Optional[str] = None,
         tools: Optional[str] = None,
         image: Optional["NDArray"] = None,
+        video: Optional["NDArray"] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
-        async for new_token in self.engine.stream_chat(messages, system, tools, image, **input_kwargs):
+        async for new_token in self.engine.stream_chat(messages, system, tools, image, video, **input_kwargs):
             yield new_token
 
     def get_scores(

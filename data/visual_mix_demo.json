@@ -1,0 +1,56 @@
+[
+  {
+    "messages": [
+      {
+        "content": "<video>Why is this video funny?<image>",
+        "role": "user"
+      },
+      {
+        "content": "Because a baby is reading, and he is so cute!",
+        "role": "assistant"
+      }
+    ],
+    "videos": [
+      "mllm_demo_data/1.mp4"
+    ],
+    "images": [
+      "mllm_demo_data/1.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "<video>What is she doing?<image>",
+        "role": "user"
+      },
+      {
+        "content": "She is cooking",
+        "role": "assistant"
+      }
+    ],
+    "videos": [
+      "mllm_demo_data/2.avi"
+    ],
+    "images": [
+      "mllm_demo_data/2.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "<video>Why is this video funny?<image>",
+        "role": "user"
+      },
+      {
+        "content": "A baby is playing!",
+        "role": "assistant"
+      }
+    ],
+    "videos": [
+      "mllm_demo_data/3.mp4"
+    ],
+    "images": [
+      "mllm_demo_data/3.jpg"
+    ]
+  }
+]
