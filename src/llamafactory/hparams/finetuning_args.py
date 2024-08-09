@@ -326,6 +326,10 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         default=False,
         metadata={"help": "Whether or not to make only the parameters in the expanded blocks trainable."},
     )
+    use_adam_mini: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use the Adam-mini optimizer."},
+    )
     freeze_vision_tower: bool = field(
         default=True,
         metadata={"help": "Whether ot not to freeze vision tower in MLLM training."},
@@ -341,10 +345,6 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
     plot_loss: bool = field(
         default=False,
         metadata={"help": "Whether or not to save the training loss curves."},
-    )
-    use_adammini: bool = field(
-        default=False,
-        metadata={"help": "Whether or not to use AdamMini optimizer."},
     )
 
     def __post_init__(self):
