@@ -206,6 +206,8 @@ def get_dataset(
     template = get_template_and_fix_tokenizer(tokenizer, data_args.template, data_args.tool_format)
     if data_args.train_on_prompt and template.efficient_eos:
         raise ValueError("Current template does not support `train_on_prompt`.")
+    if stage!="sft" and data_args.mask_history:
+        raise ValueError("`Train on the last turn only` is only valid for sft training.")
 
     # Load tokenized dataset
     if data_args.tokenized_path is not None:
