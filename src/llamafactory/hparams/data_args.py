@@ -143,4 +143,4 @@ class DataArguments:
             raise ValueError("`max_samples` is incompatible with `streaming`.")
 
         if self.mask_history and self.train_on_prompt:
-            raise ValueError("`Train on the last turn only` does not support `train_on_prompt`.")
+            raise ValueError("`mask_history` is incompatible with `train_on_prompt`.")
