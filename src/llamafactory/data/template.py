@@ -190,6 +190,57 @@ class Llama2Template(Template):
         return encoded_messages
 
 
+
+@dataclass
+class MistralV2Template(Template):
+    def _encode(
+        self,
+        tokenizer: "PreTrainedTokenizer",
+        messages: Sequence[Dict[str, str]],
+        system: Optional[str],
+        tools: Optional[str],
+    ) -> List[List[int]]:
+        r"""
+        Mistral V2 adds the system prompt prior to the last user message.
+        (https://github.com/mistralai/mistral-common/blob/main/src/mistral_common/tokens/tokenizers/sentencepiece.py#L282)
+        
+        Encodes formatted inputs to pairs of token ids.
+        Turn 0: prefix + query        resp
+        Turn t: system + query                    resp
+        """
+        system = system or self.default_system
+        encoded_messages = []
+        for i, message in enumerate(messages):
+            elements = []
+
+            if i == 0:
+                elements += self.format_prefix.apply()
+                if tools:
+                    tool_text = self.format_tools.apply(content=tools)[0] if tools else ""
+                    elements += self.format_system.apply(content=(tool_text))
+
+            if i > 0 and i % 2 == 0:
+                elements += self.format_separator.apply()
+
+            if i == len(messages) - 1 and system:
+                elements += self.format_system.apply(content=(system))
+
+            if message["role"] == Role.USER.value:
+                elements += self.format_user.apply(content=message["content"], idx=str(i // 2))
+            elif message["role"] == Role.ASSISTANT.value:
+                elements += self.format_assistant.apply(content=message["content"])
+            elif message["role"] == Role.OBSERVATION.value:
+                elements += self.format_observation.apply(content=message["content"])
+            elif message["role"] == Role.FUNCTION.value:
+                elements += self.format_function.apply(content=message["content"])
+            else:
+                raise NotImplementedError("Unexpected role: {}".format(message["role"]))
+
+            encoded_messages.append(self._convert_elements_to_ids(tokenizer, elements))
+
+        return encoded_messages
+
+
 TEMPLATES: Dict[str, Template] = {}
 
 
@@ -718,6 +769,14 @@ _register_template(
 _register_template(
     name="mistral",
     format_user=StringFormatter(slots=["[INST] {{content}} [/INST]"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+)
+
+
+_register_template(
+    name="mistral_v2",
+    format_user=StringFormatter(slots=["[INST] {{content}} [/INST]"]),
+    format_system=StringFormatter(slots=["{{content}}\n\n"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
 )
 
