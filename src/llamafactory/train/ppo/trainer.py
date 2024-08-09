@@ -39,7 +39,7 @@ from trl.models.utils import unwrap_model_for_generation
 from ...extras.logging import get_logger
 from ...extras.misc import AverageMeter, count_parameters, get_current_device, get_logits_processor
 from ..callbacks import FixValueHeadModelCallback, SaveProcessorCallback
-from ..trainer_utils import create_custom_optimzer, create_custom_scheduler
+from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
 from .ppo_utils import dump_layernorm, get_rewards_from_server, replace_model, restore_layernorm
 
 
@@ -303,7 +303,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         training_args: "Seq2SeqTrainingArguments",
         finetuning_args: "FinetuningArguments",
     ) -> "torch.optim.Optimizer":
-        optimizer = create_custom_optimzer(model, training_args, finetuning_args)
+        optimizer = create_custom_optimizer(model, training_args, finetuning_args)
         if optimizer is None:
             decay_params, nodecay_params = [], []
             decay_param_names = self.get_decay_parameter_names(model)
