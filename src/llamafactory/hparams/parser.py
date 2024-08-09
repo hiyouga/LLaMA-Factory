@@ -128,6 +128,9 @@ def _check_extra_dependencies(
     if finetuning_args.use_badam:
         require_version("badam>=1.2.1", "To fix: pip install badam>=1.2.1")
 
+    if finetuning_args.use_adam_mini:
+        require_version("adam-mini", "To fix: pip install adam-mini")
+
     if finetuning_args.plot_loss:
         require_version("matplotlib", "To fix: pip install matplotlib")
 
