@@ -586,7 +586,7 @@ _register_template(
 _register_template(
     name="deepseekcoder",
     format_user=StringFormatter(slots=["### Instruction:\n{{content}}\n### Response:"]),
-    format_assistant=StringFormatter(slots=["\n{{content}}\n"]),
+    format_assistant=StringFormatter(slots=["\n{{content}}\n<|EOT|>"]),
     format_separator=EmptyFormatter(slots=["\n"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     default_system=(
