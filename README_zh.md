@@ -537,9 +537,10 @@ docker exec -it llamafactory bash
 
 <details><summary>数据卷详情</summary>
 
-- hf_cache：使用宿主机的 Hugging Face 缓存文件夹，允许更改为新的目录。
-- data：宿主机中存放数据集的文件夹路径。
-- output：将导出目录设置为该路径后，即可在宿主机中访问导出后的模型。
+- `hf_cache`：使用宿主机的 Hugging Face 缓存文件夹，允许更改为新的目录。
+- `ms_cache`：类似 Hugging Face 缓存文件夹，为 ModelScope 用户提供。
+- `data`：宿主机中存放数据集的文件夹路径。
+- `output`：将导出目录设置为该路径后，即可在宿主机中访问导出后的模型。
 
 </details>
 
