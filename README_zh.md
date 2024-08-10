@@ -556,7 +556,7 @@ API_PORT=8000 llamafactory-cli api examples/inference/llama3_vllm.yaml
 ```
 
 > [!TIP]
-> API 文档请查阅 https://platform.openai.com/docs/api-reference/chat/create。
+> API 文档请查阅[这里](https://platform.openai.com/docs/api-reference/chat/create)。
 
 ### 从魔搭社区下载
 
