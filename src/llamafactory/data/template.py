@@ -190,9 +190,17 @@ class Llama2Template(Template):
         return encoded_messages
 
 
+def get_last_user_message_index(messages: Sequence[Dict[str, str]]) -> int:
+    for i, message in enumerate(messages[::-1]):
+        if message["role"] == Role.USER.value:
+            return len(messages) - i - 1
+    logger.warning("No user message found.")
+    return 0
+
 
 @dataclass
 class MistralV2Template(Template):
+
     def _encode(
         self,
         tokenizer: "PreTrainedTokenizer",
@@ -210,23 +218,23 @@ class MistralV2Template(Template):
         """
         system = system or self.default_system
         encoded_messages = []
+        last_user_message_idx = get_last_user_message_index(messages)
         for i, message in enumerate(messages):
             elements = []
-
             if i == 0:
                 elements += self.format_prefix.apply()
                 if tools:
-                    tool_text = self.format_tools.apply(content=tools)[0] if tools else ""
-                    elements += self.format_system.apply(content=(tool_text))
+                    elements += self.format_tools.apply(content=tools)[0] if tools else ""
 
             if i > 0 and i % 2 == 0:
                 elements += self.format_separator.apply()
 
-            if i == len(messages) - 1 and system:
-                elements += self.format_system.apply(content=(system))
-
             if message["role"] == Role.USER.value:
-                elements += self.format_user.apply(content=message["content"], idx=str(i // 2))
+                user_slot = self.format_user.apply(content=message["content"], idx=str(i // 2))
+                if i == last_user_message_idx and system:
+                    elements += self.format_system.apply(content=system)
+                    user_slot = user_slot[0].split(" ", 1)[-1]
+                elements += user_slot
             elif message["role"] == Role.ASSISTANT.value:
                 elements += self.format_assistant.apply(content=message["content"])
             elif message["role"] == Role.OBSERVATION.value:
@@ -287,7 +295,12 @@ def _register_template(
     ```
     """
     eos_slots = [] if efficient_eos else [{"eos_token"}]
-    template_class = Llama2Template if name.startswith("llama2") else Template
+    if name.startswith("llama2"):
+        template_class = Llama2Template
+    elif name.startswith("mistral_v2"):
+        template_class = MistralV2Template
+    else:
+        template_class = Template
     default_user_formatter = StringFormatter(slots=["{{content}}"])
     default_assistant_formatter = StringFormatter(slots=["{{content}}"] + eos_slots)
     default_function_formatter = FunctionFormatter(slots=eos_slots, tool_format="default")
@@ -776,7 +789,7 @@ _register_template(
 _register_template(
     name="mistral_v2",
     format_user=StringFormatter(slots=["[INST] {{content}} [/INST]"]),
-    format_system=StringFormatter(slots=["{{content}}\n\n"]),
+    format_system=StringFormatter(slots=["[INST] {{content}}\n\n"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
 )
 
