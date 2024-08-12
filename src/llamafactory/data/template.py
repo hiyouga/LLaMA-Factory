@@ -320,7 +320,7 @@ def _get_jinja_template(template: "Template", tokenizer: "PreTrainedTokenizer") 
     jinja_template += "{% for message in messages %}"
     jinja_template += "{% set content = message['content'] %}"
     if isinstance(template, Llama2Template):
-        jinja_template += "{% if loop.index0 == 0 and system_message is defined %}"
+        jinja_template += "{% if system_message is defined and (loop.index0 == 0 and messages[0]['role'] != 'system' or loop.index0 == 1 and messages[0]['role'] == 'system') %}"
         jinja_template += "{% set content = " + system_message + " + message['content'] %}"
         jinja_template += "{% endif %}"
 
