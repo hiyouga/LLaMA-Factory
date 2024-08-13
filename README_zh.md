@@ -26,8 +26,10 @@ https://github.com/user-attachments/assets/e6ce34b0-52d5-4f3e-a830-592106c4c272
 选择你的打开方式：
 
 - **Colab**：https://colab.research.google.com/drive/1d5KQtbemerlSDSxZIfAaWXhKr30QypiK?usp=sharing
-- **PAI-DSW**: https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory
+- **PAI-DSW**：https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory
 - **本地机器**：请见[如何使用](#如何使用)
+- **中文新手教程**： https://zhuanlan.zhihu.com/p/695287607
+- **中文项目文档**： https://llamafactory.readthedocs.io/zh-cn/latest/
 
 ## 目录
 
