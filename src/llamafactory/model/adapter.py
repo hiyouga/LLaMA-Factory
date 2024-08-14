@@ -298,6 +298,8 @@ def init_adapter(
         logger.info("Pure bf16 / BAdam detected, remaining trainable params in half precision.")
     elif model_args.quantization_bit is None and (is_deepspeed_zero3_enabled() or is_fsdp_enabled()):
         logger.info("ZeRO3 / FSDP detected, remaining trainable params in float32.")
+    elif model_args.use_unsloth:
+        logger.info("Unsloth detected, using auto half precision backend.")
     else:
         logger.info("Upcasting trainable params to float32.")
         cast_trainable_params_to_fp32 = True
