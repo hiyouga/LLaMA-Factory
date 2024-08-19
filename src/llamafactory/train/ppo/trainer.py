@@ -135,6 +135,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             dataset=train_dataset,
             data_collator=data_collator,
             lr_scheduler=scheduler,
+            optimizer=optimizer,
         )
 
         self.args = training_args
