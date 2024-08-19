@@ -141,6 +141,8 @@ def get_device_count() -> int:
         return torch.npu.device_count()
     elif is_torch_cuda_available():
         return torch.cuda.device_count()
+    elif is_torch_xpu_available():
+        return torch.xpu.device_count()
     else:
         return 0
 
