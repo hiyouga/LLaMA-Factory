@@ -787,7 +787,10 @@ _register_template(
     format_user=StringFormatter(slots=["<|im_start|>question\n{{content}}<|im_end|>\n<|im_start|>answer\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     format_separator=EmptyFormatter(slots=["\n"]),
-    default_system="You are a helpful assistant.",
+    default_system=(
+        "You are an AI assistant named Sailor created by Sea AI Lab. "
+        "Your answer should be friendly, unbiased, faithful, informative and detailed."
+    ),
     stop_words=["<|im_end|>"],
     replace_eos=True,
 )
