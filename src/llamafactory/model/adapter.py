@@ -16,6 +16,7 @@ import re
 from typing import TYPE_CHECKING
 
 import torch
+from accelerate.utils import find_tied_parameters
 from peft import LoraConfig, LoraModel, PeftModel, TaskType, get_peft_model
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.modeling_utils import is_fsdp_enabled
@@ -110,6 +111,12 @@ def _setup_freeze_tuning(
 
         if re.search(r"\.\d+\.", name) is None:
             non_hidden_modules.add(name.split(".")[-2])
+
+    tied_params = find_tied_parameters(model)
+    if tied_params:
+        for param in tied_params[0]:
+            if param.endswith(".weight") and param.split(".")[-2] not in non_hidden_modules:
+                non_hidden_modules.add(param.split(".")[-2])
 
     trainable_layers = []
     for module_name in finetuning_args.freeze_trainable_modules:
