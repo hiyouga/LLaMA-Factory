@@ -57,7 +57,8 @@ class VllmEngine(BaseEngine):
     ) -> None:
         config = load_config(model_args)  # may download model from ms hub
         if getattr(config, "quantization_config", None):  # gptq models should use float16
-            quantization_config: Dict[str, Any] = getattr(config, "quantization_config", None)
+            quantization_config: Dict[str, Any] = getattr(
+                config, "quantization_config", None)
             quant_method = quantization_config.get("quant_method", "")
             if quant_method == QuantizationMethod.GPTQ and model_args.infer_dtype == "auto":
                 model_args.infer_dtype = "float16"
@@ -67,7 +68,8 @@ class VllmEngine(BaseEngine):
         self.tokenizer = tokenizer_module["tokenizer"]
         self.processor = tokenizer_module["processor"]
         self.tokenizer.padding_side = "left"
-        self.template = get_template_and_fix_tokenizer(self.tokenizer, data_args.template, data_args.tool_format)
+        self.template = get_template_and_fix_tokenizer(
+            self.tokenizer, data_args.template, data_args.tool_format)
         self.generating_args = generating_args.to_dict()
 
         engine_args = {
@@ -90,8 +92,10 @@ class VllmEngine(BaseEngine):
             patch_size = config.vision_config.patch_size
             self.image_feature_size = (image_size // patch_size) ** 2
             engine_args["image_input_type"] = "pixel_values"
-            engine_args["image_token_id"] = self.tokenizer.convert_tokens_to_ids(self.template.image_token)
-            engine_args["image_input_shape"] = "1,3,{},{}".format(image_size, image_size)
+            engine_args["image_token_id"] = self.tokenizer.convert_tokens_to_ids(
+                self.template.image_token)
+            engine_args["image_input_shape"] = "1,3,{},{}".format(
+                image_size, image_size)
             engine_args["image_feature_size"] = self.image_feature_size
             if getattr(config, "is_yi_vl_derived_model", None):
                 import vllm.model_executor.models.llava
@@ -99,9 +103,11 @@ class VllmEngine(BaseEngine):
                 logger.info("Detected Yi-VL model, applying projector patch.")
                 vllm.model_executor.models.llava.LlavaMultiModalProjector = LlavaMultiModalProjectorForYiVLForVLLM
 
-        self.model = AsyncLLMEngine.from_engine_args(AsyncEngineArgs(**engine_args))
+        self.model = AsyncLLMEngine.from_engine_args(
+            AsyncEngineArgs(**engine_args))
         if model_args.adapter_name_or_path is not None:
-            self.lora_request = LoRARequest("default", 1, model_args.adapter_name_or_path[0])
+            self.lora_request = LoRARequest(
+                "default", 1, model_args.adapter_name_or_path[0])
         else:
             self.lora_request = None
 
@@ -121,7 +127,8 @@ class VllmEngine(BaseEngine):
             and not hasattr(self.processor, "image_seq_length")
             and self.template.image_token not in messages[0]["content"]
         ):  # llava-like models (TODO: paligemma models)
-            messages[0]["content"] = self.template.image_token * self.image_feature_size + messages[0]["content"]
+            messages[0]["content"] = self.template.image_token * \
+                self.image_feature_size + messages[0]["content"]
 
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or self.generating_args["default_system"]
@@ -130,14 +137,17 @@ class VllmEngine(BaseEngine):
         )
 
         if self.processor is not None and image is not None:  # add image features
-            image_processor: "BaseImageProcessor" = getattr(self.processor, "image_processor")
-            pixel_values = image_processor(image, return_tensors="pt")["pixel_values"]
+            image_processor: "BaseImageProcessor" = getattr(
+                self.processor, "image_processor")
+            pixel_values = image_processor(image, return_tensors="pt")[
+                "pixel_values"]
             if is_vllm_version_greater_than_0_5_1():
                 multi_modal_data = {"image": pixel_values}
             elif is_vllm_version_greater_than_0_5():
                 multi_modal_data = ImagePixelData(image=pixel_values)
             else:  # TODO: remove vllm 0.4.3 support
-                multi_modal_data = MultiModalData(type=MultiModalData.Type.IMAGE, data=pixel_values)
+                multi_modal_data = MultiModalData(
+                    type=MultiModalData.Type.IMAGE, data=pixel_values)
         else:
             multi_modal_data = None
 
@@ -148,10 +158,17 @@ class VllmEngine(BaseEngine):
         top_p: Optional[float] = input_kwargs.pop("top_p", None)
         top_k: Optional[float] = input_kwargs.pop("top_k", None)
         num_return_sequences: int = input_kwargs.pop("num_return_sequences", 1)
-        repetition_penalty: Optional[float] = input_kwargs.pop("repetition_penalty", None)
-        length_penalty: Optional[float] = input_kwargs.pop("length_penalty", None)
+        repetition_penalty: Optional[float] = input_kwargs.pop(
+            "repetition_penalty", None)
+        length_penalty: Optional[float] = input_kwargs.pop(
+            "length_penalty", None)
+        frequency_penalty: Optional[float] = input_kwargs.pop(
+            "frequency_penalty", None)
+        presence_penalty: Optional[float] = input_kwargs.pop(
+            "presence_penalty", None)
         max_length: Optional[int] = input_kwargs.pop("max_length", None)
-        max_new_tokens: Optional[int] = input_kwargs.pop("max_new_tokens", None)
+        max_new_tokens: Optional[int] = input_kwargs.pop(
+            "max_new_tokens", None)
         stop: Optional[Union[str, List[str]]] = input_kwargs.pop("stop", None)
 
         if "max_new_tokens" in self.generating_args:
@@ -171,22 +188,33 @@ class VllmEngine(BaseEngine):
         sampling_params = SamplingParams(
             n=num_return_sequences,
             repetition_penalty=(
-                repetition_penalty if repetition_penalty is not None else self.generating_args["repetition_penalty"]
+                repetition_penalty if repetition_penalty is not None else self.generating_args[
+                    "repetition_penalty"]
             )
             or 1.0,  # repetition_penalty must > 0
-            temperature=temperature if temperature is not None else self.generating_args["temperature"],
-            top_p=(top_p if top_p is not None else self.generating_args["top_p"]) or 1.0,  # top_p must > 0
+            frequency_penalty=(
+                frequency_penalty if frequency_penalty is not None else self.generating_args["frequency_penalty"]) or 0,
+            presence_penalty=(
+                presence_penalty if presence_penalty is not None else self.generating_args["presence_penalty"]) or 0,
+            temperature=temperature if temperature is not None else self.generating_args[
+                "temperature"],
+            # top_p must > 0
+            top_p=(
+                top_p if top_p is not None else self.generating_args["top_p"]) or 1.0,
             top_k=top_k if top_k is not None else self.generating_args["top_k"],
             use_beam_search=use_beam_search,
-            length_penalty=length_penalty if length_penalty is not None else self.generating_args["length_penalty"],
+            length_penalty=length_penalty if length_penalty is not None else self.generating_args[
+                "length_penalty"],
             stop=stop,
-            stop_token_ids=[self.tokenizer.eos_token_id] + self.tokenizer.additional_special_tokens_ids,
+            stop_token_ids=[self.tokenizer.eos_token_id] + \
+            self.tokenizer.additional_special_tokens_ids,
             max_tokens=max_tokens,
             skip_special_tokens=True,
         )
-
+        print('sampling_params: ', sampling_params)
         result_generator = self.model.generate(
-            inputs={"prompt_token_ids": prompt_ids, "multi_modal_data": multi_modal_data},
+            inputs={"prompt_token_ids": prompt_ids,
+                    "multi_modal_data": multi_modal_data},
             sampling_params=sampling_params,
             request_id=request_id,
             lora_request=self.lora_request,
@@ -230,7 +258,7 @@ class VllmEngine(BaseEngine):
         generated_text = ""
         generator = await self._generate(messages, system, tools, image, **input_kwargs)
         async for result in generator:
-            delta_text = result.outputs[0].text[len(generated_text) :]
+            delta_text = result.outputs[0].text[len(generated_text):]
             generated_text = result.outputs[0].text
             yield delta_text
 

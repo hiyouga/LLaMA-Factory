@@ -99,6 +99,8 @@ class ChatCompletionRequest(BaseModel):
     do_sample: Optional[bool] = None
     temperature: Optional[float] = None
     top_p: Optional[float] = None
+    frequency_penalty: Optional[float] = None
+    presence_penalty: Optional[float] = None
     n: int = 1
     max_tokens: Optional[int] = None
     stop: Optional[Union[str, List[str]]] = None
