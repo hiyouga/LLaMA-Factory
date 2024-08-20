@@ -36,7 +36,7 @@ def configure_attn_implementation(
         if model_args.flash_attn == "auto" or model_args.flash_attn == "fa2":
             if is_flash_attn_2_available():
                 require_version("transformers>=4.42.4", "To fix: pip install transformers>=4.42.4")
-                require_version("flash_attn>=2.6.0", "To fix: pip install flash_attn>=2.6.0")
+                require_version("flash_attn>=2.6.3", "To fix: pip install flash_attn>=2.6.3")
                 logger.warning("Gemma-2 should use flash attention 2, change `flash_attn` to fa2.")
                 model_args.flash_attn = "fa2"
             else:

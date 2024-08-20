@@ -326,7 +326,11 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         default=False,
         metadata={"help": "Whether or not to make only the parameters in the expanded blocks trainable."},
     )
-    freeze_vision: bool = field(
+    use_adam_mini: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use the Adam-mini optimizer."},
+    )
+    freeze_vision_tower: bool = field(
         default=True,
         metadata={"help": "Whether ot not to freeze vision module in MLLM training."},
     )

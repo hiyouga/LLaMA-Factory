@@ -266,6 +266,13 @@
     "hf_hub_url": "Magpie-Align/Magpie-Pro-300K-Filtered",
     "formatting": "sharegpt"
   },
+  "magpie_ultra": {
+    "hf_hub_url": "argilla/magpie-ultra-v0.1",
+    "columns": {
+      "prompt": "instruction",
+      "response": "response"
+    }
+  },
   "web_instruct": {
     "hf_hub_url": "TIGER-Lab/WebInstructSub",
     "columns": {
