@@ -111,6 +111,7 @@ def _load_single_dataset(
             token=model_args.hf_hub_token,
             streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
             trust_remote_code=True,
+            revision=dataset_attr.revision,
         )
 
     if data_args.streaming and (dataset_attr.load_from == "file"):  # faster than specifying streaming=True
