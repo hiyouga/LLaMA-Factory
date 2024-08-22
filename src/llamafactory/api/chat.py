@@ -17,6 +17,7 @@ import io
 import json
 import os
 import uuid
+import numpy
 from typing import TYPE_CHECKING, AsyncGenerator, Dict, List, Optional, Tuple
 
 from ..data import Role as DataRole
@@ -112,7 +113,7 @@ def _process_request(
                     else:  # web uri
                         image_path = requests.get(image_url, stream=True).raw
 
-                    image = Image.open(image_path).convert("RGB")
+                    image = numpy.array(Image.open(image_path).convert("RGB"))
         else:
             input_messages.append({"role": ROLE_MAPPING[message.role], "content": message.content})
 
