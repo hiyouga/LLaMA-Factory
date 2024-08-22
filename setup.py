@@ -47,6 +47,7 @@ extra_require = {
     "vllm": ["vllm>=0.4.3"],
     "galore": ["galore-torch"],
     "badam": ["badam>=1.2.1"],
+    "adam-mini": ["adam-mini"],
     "qwen": ["transformers_stream_generator"],
     "modelscope": ["modelscope"],
     "dev": ["ruff", "pytest"],

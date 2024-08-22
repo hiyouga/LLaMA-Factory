@@ -1,17 +1,16 @@
-# Use the Ubuntu 22.04 image with CANN 8.0.rc1
-# More versions can be found at https://hub.docker.com/r/ascendai/cann/tags
-# FROM ascendai/cann:8.0.rc1-910-ubuntu22.04-py3.8
-FROM ascendai/cann:8.0.rc1-910b-ubuntu22.04-py3.8
-# FROM ascendai/cann:8.0.rc1-910-openeuler22.03-py3.8
-# FROM ascendai/cann:8.0.rc1-910b-openeuler22.03-py3.8
+FROM hardandheavy/transformers-rocm:2.1.0
 
 # Define environments
-ENV DEBIAN_FRONTEND=noninteractive
+ENV MAX_JOBS=4
+ENV FLASH_ATTENTION_FORCE_BUILD=TRUE
+ENV VLLM_WORKER_MULTIPROC_METHOD=spawn
 
 # Define installation arguments
+ARG INSTALL_BNB=false
+ARG INSTALL_VLLM=false
 ARG INSTALL_DEEPSPEED=false
+ARG INSTALL_FLASHATTN=false
 ARG PIP_INDEX=https://pypi.org/simple
-ARG TORCH_INDEX=https://download.pytorch.org/whl/cpu
 
 # Set the working directory
 WORKDIR /app
@@ -19,7 +18,7 @@ WORKDIR /app
 # Install the requirements
 COPY requirements.txt /app
 RUN pip config set global.index-url "$PIP_INDEX" && \
-    pip config set global.extra-index-url "$TORCH_INDEX" && \
+    pip config set global.extra-index-url "$PIP_INDEX" && \
     python -m pip install --upgrade pip && \
     python -m pip install -r requirements.txt
 
@@ -27,11 +26,24 @@ RUN pip config set global.index-url "$PIP_INDEX" && \
 COPY . /app
 
 # Install the LLaMA Factory
-RUN EXTRA_PACKAGES="torch-npu,metrics"; \
+RUN EXTRA_PACKAGES="metrics"; \
+    if [ "$INSTALL_BNB" == "true" ]; then \
+        EXTRA_PACKAGES="${EXTRA_PACKAGES},bitsandbytes"; \
+    fi; \
+    if [ "$INSTALL_VLLM" == "true" ]; then \
+        EXTRA_PACKAGES="${EXTRA_PACKAGES},vllm"; \
+    fi; \
     if [ "$INSTALL_DEEPSPEED" == "true" ]; then \
         EXTRA_PACKAGES="${EXTRA_PACKAGES},deepspeed"; \
     fi; \
     pip install -e ".[$EXTRA_PACKAGES]"
+
+# Rebuild flash attention
+RUN pip uninstall -y transformer-engine flash-attn && \
+    if [ "$INSTALL_FLASHATTN" == "true" ]; then \
+        pip uninstall -y ninja && pip install ninja && \
+        pip install --no-cache-dir flash-attn --no-build-isolation; \
+    fi
 
 # Set up volumes
 VOLUME [ "/root/.cache/huggingface", "/root/.cache/modelscope", "/app/data", "/app/output" ]

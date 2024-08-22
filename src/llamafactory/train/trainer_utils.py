@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
 import torch
 from transformers import Trainer
 from transformers.integrations import is_deepspeed_zero3_enabled
+from transformers.modeling_utils import is_fsdp_enabled
 from transformers.optimization import get_scheduler
 from transformers.pytorch_utils import ALL_LAYERNORM_LAYERS
 from transformers.trainer_pt_utils import get_parameter_names
@@ -366,7 +367,32 @@ def _create_badam_optimizer(
     return optimizer
 
 
-def create_custom_optimzer(
+def _create_adam_mini_optimizer(
+    model: "PreTrainedModel",
+    training_args: "Seq2SeqTrainingArguments",
+) -> "torch.optim.Optimizer":
+    from adam_mini import Adam_mini
+
+    hidden_size = getattr(model.config, "hidden_size", None)
+    num_q_head = getattr(model.config, "num_attention_heads", None)
+    num_kv_head = getattr(model.config, "num_key_value_heads", None)
+
+    optimizer = Adam_mini(
+        named_parameters=model.named_parameters(),
+        lr=training_args.learning_rate,
+        betas=(training_args.adam_beta1, training_args.adam_beta2),
+        eps=training_args.adam_epsilon,
+        weight_decay=training_args.weight_decay,
+        model_sharding=is_fsdp_enabled() or is_deepspeed_zero3_enabled(),
+        dim=hidden_size,
+        n_heads=num_q_head,
+        n_kv_heads=num_kv_head,
+    )
+    logger.info("Using Adam-mini optimizer.")
+    return optimizer
+
+
+def create_custom_optimizer(
     model: "PreTrainedModel",
     training_args: "Seq2SeqTrainingArguments",
     finetuning_args: "FinetuningArguments",
@@ -379,6 +405,9 @@ def create_custom_optimzer(
 
     if finetuning_args.use_badam:
         return _create_badam_optimizer(model, training_args, finetuning_args)
+
+    if finetuning_args.use_adam_mini:
+        return _create_adam_mini_optimizer(model, training_args)
 
 
 def create_custom_scheduler(
