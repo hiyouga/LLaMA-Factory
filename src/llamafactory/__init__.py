@@ -20,19 +20,17 @@ Level:
 
 Dependency graph:
   main:
-    transformers>=4.41.2
-    datasets>=2.16.0
-    accelerate>=0.30.1
-    peft>=0.11.1
-    trl>=0.8.6
+    transformers>=4.41.2,<=4.43.4
+    datasets>=2.16.0,<=2.20.0
+    accelerate>=0.30.1,<=0.32.0
+    peft>=0.11.1,<=0.12.0
+    trl>=0.8.6,<=0.9.6
   attention:
     transformers>=4.42.4 (gemma+fa2)
   longlora:
-    transformers>=4.41.2,<=4.42.4
+    transformers>=4.41.2,<=4.43.4
   packing:
-    transformers>=4.41.2,<=4.42.4
-  patcher:
-    transformers==4.41.2 (chatglm)
+    transformers>=4.41.2,<=4.43.4
 """
 
 from .cli import VERSION

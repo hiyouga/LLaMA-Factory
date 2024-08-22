@@ -531,6 +531,10 @@ register_model_group(
         "Gemma-1.1-7B-Chat": {
             DownloadSource.DEFAULT: "google/gemma-1.1-7b-it",
         },
+        "Gemma-2-2B": {
+            DownloadSource.DEFAULT: "google/gemma-2-2b",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-2b",
+        },
         "Gemma-2-9B": {
             DownloadSource.DEFAULT: "google/gemma-2-9b",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-9b",
@@ -538,6 +542,10 @@ register_model_group(
         "Gemma-2-27B": {
             DownloadSource.DEFAULT: "google/gemma-2-27b",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-27b",
+        },
+        "Gemma-2-2B-Chat": {
+            DownloadSource.DEFAULT: "google/gemma-2-2b-it",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-2b-it",
         },
         "Gemma-2-9B-Chat": {
             DownloadSource.DEFAULT: "google/gemma-2-9b-it",
@@ -1236,6 +1244,18 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen2-57B-A14B",
             DownloadSource.MODELSCOPE: "qwen/Qwen2-57B-A14B",
         },
+        "Qwen2-Math-1.5B": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2-Math-1.5B",
+            DownloadSource.MODELSCOPE: "qwen/Qwen2-Math-1.5B",
+        },
+        "Qwen2-Math-7B": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2-Math-7B",
+            DownloadSource.MODELSCOPE: "qwen/Qwen2-Math-7B",
+        },
+        "Qwen2-Math-72B": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2-Math-72B",
+            DownloadSource.MODELSCOPE: "qwen/Qwen2-Math-72B",
+        },
         "Qwen2-0.5B-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-0.5B-Instruct",
             DownloadSource.MODELSCOPE: "qwen/Qwen2-0.5B-Instruct",
@@ -1255,6 +1275,18 @@ register_model_group(
         "Qwen2-MoE-57B-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-57B-A14B-Instruct",
             DownloadSource.MODELSCOPE: "qwen/Qwen2-57B-A14B-Instruct",
+        },
+        "Qwen2-Math-1.5B-Chat": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2-Math-1.5B-Instruct",
+            DownloadSource.MODELSCOPE: "qwen/Qwen2-Math-1.5B-Instruct",
+        },
+        "Qwen2-Math-7B-Chat": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2-Math-7B-Instruct",
+            DownloadSource.MODELSCOPE: "qwen/Qwen2-Math-7B-Instruct",
+        },
+        "Qwen2-Math-72B-Chat": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2-Math-72B-Instruct",
+            DownloadSource.MODELSCOPE: "qwen/Qwen2-Math-72B-Instruct",
         },
         "Qwen2-0.5B-int8-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-0.5B-Instruct-GPTQ-Int8",
