@@ -54,7 +54,7 @@ def _setup_full_tuning(
 
     logger.info("Fine-tuning method: Full")
     forbidden_modules = set()
-    if model_args.visual_inputs and finetuning_args.freeze_vision:
+    if model_args.visual_inputs and finetuning_args.freeze_vision_tower:
         forbidden_modules.add(VISION_FREEZE_MAP[model_args.visual_inputs_type])
 
     if model_args.visual_inputs and finetuning_args.train_mm_proj_only:
@@ -138,7 +138,7 @@ def _setup_freeze_tuning(
             trainable_layers.append(module_name)
 
     forbidden_modules = set()
-    if model_args.visual_inputs and finetuning_args.freeze_vision:
+    if model_args.visual_inputs and finetuning_args.freeze_vision_tower:
         forbidden_modules.add(VISION_FREEZE_MAP[model_args.visual_inputs_type])
 
     for name, param in model.named_parameters():
@@ -211,14 +211,14 @@ def _setup_lora_tuning(
 
     if is_trainable and adapter_to_resume is None:  # create new lora weights while training
         if len(finetuning_args.lora_target) == 1 and finetuning_args.lora_target[0] == "all":
-            target_modules = find_all_linear_modules(model, finetuning_args.freeze_vision)
+            target_modules = find_all_linear_modules(model, finetuning_args.freeze_vision_tower)
         else:
             target_modules = finetuning_args.lora_target
 
         if finetuning_args.use_llama_pro:
             target_modules = find_expanded_modules(model, target_modules, finetuning_args.freeze_trainable_layers)
 
-        if finetuning_args.freeze_vision and model_args.visual_inputs_type != "none":
+        if finetuning_args.freeze_vision_tower and model_args.visual_inputs_type != "none":
             target_modules = f"^(?!.*{VISION_FREEZE_MAP[model_args.visual_inputs_type]})." + "*(?:{}).*".format(
                 "|".join(target_modules)
             )

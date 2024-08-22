@@ -188,7 +188,7 @@ def _create_galore_optimizer(
     finetuning_args: "FinetuningArguments",
 ) -> "torch.optim.Optimizer":
     if len(finetuning_args.galore_target) == 1 and finetuning_args.galore_target[0] == "all":
-        galore_targets = find_all_linear_modules(model, finetuning_args.freeze_vision)
+        galore_targets = find_all_linear_modules(model, finetuning_args.freeze_vision_tower)
     else:
         galore_targets = finetuning_args.galore_target
 

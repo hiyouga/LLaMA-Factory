@@ -359,7 +359,7 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         self.lora_target: List[str] = split_arg(self.lora_target)
         self.additional_target: Optional[List[str]] = split_arg(self.additional_target)
         self.galore_target: List[str] = split_arg(self.galore_target)
-        self.freeze_vision = self.freeze_vision or self.train_mm_proj_only
+        self.freeze_vision_tower = self.freeze_vision_tower or self.train_mm_proj_only
         self.use_ref_model = self.stage == "dpo" and self.pref_loss not in ["orpo", "simpo"]
 
         assert self.finetuning_type in ["lora", "freeze", "full"], "Invalid fine-tuning method."
