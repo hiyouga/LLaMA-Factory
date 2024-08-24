@@ -133,6 +133,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             ref_model=ref_model,
             tokenizer=tokenizer,
             dataset=train_dataset,
+            optimizer=optimizer,
             data_collator=data_collator,
             lr_scheduler=scheduler,
         )

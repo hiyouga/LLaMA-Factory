@@ -26,12 +26,11 @@ from ..extras.logging import get_logger
 from ..extras.misc import get_logits_processor
 from ..model import load_model, load_tokenizer
 from .base_engine import BaseEngine, Response
-
+from ..data.processors.processor_utils import get_pixel_values, get_pixel_values_videos
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
     from transformers import PreTrainedModel, PreTrainedTokenizer, ProcessorMixin
-    from transformers.image_processing_utils import BaseImageProcessor
     from trl import PreTrainedModelWrapper
 
     from ..data import Template
@@ -79,29 +78,57 @@ class HuggingfaceEngine(BaseEngine):
         system: Optional[str] = None,
         tools: Optional[str] = None,
         image: Optional["NDArray"] = None,
+        video: Optional["NDArray"] = None,
         input_kwargs: Optional[Dict[str, Any]] = {},
     ) -> Tuple[Dict[str, Any], int]:
+        processor_class = "" if processor is None else type(processor).__name__
+
+        visual_token_flag = template.image_token in messages[0]["content"] or \
+                            template.video_token in messages[0]["content"]
+
         if (
             processor is not None
             and image is not None
-            and not hasattr(processor, "image_seq_length")
+            and not processor_class == 'PaliGemmaProcessor'
             and template.image_token not in messages[0]["content"]
-        ):  # llava-like models
+            and not visual_token_flag
+        ):
             messages[0]["content"] = template.image_token + messages[0]["content"]
+
+        if (
+            processor is not None
+            and video is not None
+            and template.video_token not in messages[0]["content"]
+            and not visual_token_flag
+        ):
+            messages[0]["content"] = template.video_token + messages[0]["content"]
+
+        if processor_class == 'Idefics2Processor':
+            fake_image_token = processor.fake_image_token.content
+            image_str = f"{fake_image_token}{template.image_token * processor.image_seq_len}{fake_image_token}"
+            image_str = image_str * 5
+            for j in range(len(messages)):
+                content = messages[j]['content']
+                content = content.replace(template.image_token, image_str)
+                content = content.replace(f"{fake_image_token}{fake_image_token}", f"{fake_image_token}")
+                messages[j]['content'] = content
 
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or generating_args["default_system"]
         pixel_values = None
+        pixel_values_video = None
         prompt_ids, _ = template.encode_oneturn(
             tokenizer=tokenizer, messages=paired_messages, system=system, tools=tools
         )
+
         if processor is not None and image is not None:  # add image features
-            image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
-            batch_feature = image_processor(image, return_tensors="pt")
-            pixel_values = batch_feature.to(model.device)["pixel_values"]  # shape (B, C, H, W)
-            if hasattr(processor, "image_seq_length"):  # paligemma models
+            pixel_values = get_pixel_values([image], processor, template.image_data_key)
+            if processor_class == 'PaliGemmaProcessor':  # paligemma models
                 image_token_id = tokenizer.convert_tokens_to_ids(template.image_token)
                 prompt_ids = [image_token_id] * getattr(processor, "image_seq_length") + prompt_ids
+
+        if processor is not None and video is not None:  # add video features
+            pixel_values_video = get_pixel_values_videos([video], processor, template.video_data_key)
 
         prompt_length = len(prompt_ids)
         inputs = torch.tensor([prompt_ids], device=model.device)
@@ -165,7 +192,12 @@ class HuggingfaceEngine(BaseEngine):
         )
 
         if pixel_values is not None:
-            gen_kwargs["pixel_values"] = pixel_values
+            for key in template.image_data_key:
+                gen_kwargs[key] = pixel_values[key].to(model.device)
+
+        if pixel_values_video is not None:
+            for key in template.video_data_key:
+                gen_kwargs[key] = pixel_values_video[key].to(model.device)
 
         return gen_kwargs, prompt_length
 
@@ -181,10 +213,11 @@ class HuggingfaceEngine(BaseEngine):
         system: Optional[str] = None,
         tools: Optional[str] = None,
         image: Optional["NDArray"] = None,
+        video: Optional["NDArray"] = None,
         input_kwargs: Optional[Dict[str, Any]] = {},
     ) -> List["Response"]:
         gen_kwargs, prompt_length = HuggingfaceEngine._process_args(
-            model, tokenizer, processor, template, generating_args, messages, system, tools, image, input_kwargs
+            model, tokenizer, processor, template, generating_args, messages, system, tools, image, video, input_kwargs
         )
         generate_output = model.generate(**gen_kwargs)
         response_ids = generate_output[:, prompt_length:]
@@ -216,10 +249,11 @@ class HuggingfaceEngine(BaseEngine):
         system: Optional[str] = None,
         tools: Optional[str] = None,
         image: Optional["NDArray"] = None,
+        video: Optional["NDArray"] = None,
         input_kwargs: Optional[Dict[str, Any]] = {},
     ) -> Callable[[], str]:
         gen_kwargs, _ = HuggingfaceEngine._process_args(
-            model, tokenizer, processor, template, generating_args, messages, system, tools, image, input_kwargs
+            model, tokenizer, processor, template, generating_args, messages, system, tools, image, video, input_kwargs
         )
         streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
         gen_kwargs["streamer"] = streamer
@@ -273,6 +307,7 @@ class HuggingfaceEngine(BaseEngine):
         system: Optional[str] = None,
         tools: Optional[str] = None,
         image: Optional["NDArray"] = None,
+        video: Optional["NDArray"] = None,
         **input_kwargs,
     ) -> List["Response"]:
         if not self.can_generate:
@@ -289,6 +324,7 @@ class HuggingfaceEngine(BaseEngine):
             system,
             tools,
             image,
+            video,
             input_kwargs,
         )
         async with self.semaphore:
@@ -301,6 +337,7 @@ class HuggingfaceEngine(BaseEngine):
         system: Optional[str] = None,
         tools: Optional[str] = None,
         image: Optional["NDArray"] = None,
+        video: Optional["NDArray"] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
         if not self.can_generate:
@@ -317,6 +354,7 @@ class HuggingfaceEngine(BaseEngine):
             system,
             tools,
             image,
+            video,
             input_kwargs,
         )
         async with self.semaphore:

@@ -46,6 +46,9 @@ def create_chat_box(
                     with gr.Column() as image_box:
                         image = gr.Image(sources=["upload"], type="numpy")
 
+                    with gr.Column() as video_box:
+                        video = gr.Video(sources=["upload"])
+
                 query = gr.Textbox(show_label=False, lines=8)
                 submit_btn = gr.Button(variant="primary")
 
@@ -63,7 +66,7 @@ def create_chat_box(
         [chatbot, messages, query],
     ).then(
         engine.chatter.stream,
-        [chatbot, messages, system, tools, image, max_new_tokens, top_p, temperature],
+        [chatbot, messages, system, tools, image, video, max_new_tokens, top_p, temperature],
         [chatbot, messages],
     )
     clear_btn.click(lambda: ([], []), outputs=[chatbot, messages])
@@ -77,7 +80,9 @@ def create_chat_box(
             system=system,
             tools=tools,
             image_box=image_box,
+            video_box=video_box,
             image=image,
+            video=video,
             query=query,
             submit_btn=submit_btn,
             max_new_tokens=max_new_tokens,

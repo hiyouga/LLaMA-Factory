@@ -48,14 +48,30 @@ def _convert_images(images: List[Any], dataset_attr: "DatasetAttr", data_args: "
     return outputs
 
 
+def _convert_videos(videos: List[Any], dataset_attr: "DatasetAttr", data_args: "DataArguments") -> List[Any]:
+    r"""
+    Optionally concatenates image path to dataset dir when loading from local disk.
+    """
+    outputs = []
+    if dataset_attr.load_from in ["script", "file"]:
+        for video in videos:
+            if isinstance(video, str) and os.path.isfile(os.path.join(data_args.dataset_dir, video)):
+                outputs.append(os.path.join(data_args.dataset_dir, video))
+            else:
+                outputs.append(video)
+
+    return outputs
+
+
 def convert_alpaca(
     examples: Dict[str, List[Any]], dataset_attr: "DatasetAttr", data_args: "DataArguments"
 ) -> Dict[str, List[Any]]:
     r"""
     Converts alpaca format dataset to the standard format.
     """
-    outputs = {"prompt": [], "response": [], "system": [], "tools": [], "images": []}
+    outputs = {"prompt": [], "response": [], "system": [], "tools": [], "images": [], "videos": []}
     convert_images = partial(_convert_images, dataset_attr=dataset_attr, data_args=data_args)
+    convert_videos = partial(_convert_videos, dataset_attr=dataset_attr, data_args=data_args)
     for i in range(len(examples[dataset_attr.prompt])):
         prompt = []
         if dataset_attr.history and isinstance(examples[dataset_attr.history][i], list):
@@ -97,6 +113,7 @@ def convert_alpaca(
         outputs["system"].append(examples[dataset_attr.system][i] if dataset_attr.system else "")
         outputs["tools"].append(examples[dataset_attr.tools][i] if dataset_attr.tools else "")
         outputs["images"].append(convert_images(examples[dataset_attr.images][i]) if dataset_attr.images else [])
+        outputs["videos"].append(convert_videos(examples[dataset_attr.videos][i]) if dataset_attr.videos else [])
 
     return outputs
 
@@ -107,8 +124,9 @@ def convert_sharegpt(
     r"""
     Converts sharegpt format dataset to the standard format.
     """
-    outputs = {"prompt": [], "response": [], "system": [], "tools": [], "images": []}
+    outputs = {"prompt": [], "response": [], "system": [], "tools": [], "images": [], "videos": []}
     convert_images = partial(_convert_images, dataset_attr=dataset_attr, data_args=data_args)
+    convert_videos = partial(_convert_videos, dataset_attr=dataset_attr, data_args=data_args)
     tag_mapping = {
         dataset_attr.user_tag: Role.USER.value,
         dataset_attr.assistant_tag: Role.ASSISTANT.value,
@@ -185,6 +203,7 @@ def convert_sharegpt(
         outputs["system"].append(system)
         outputs["tools"].append(examples[dataset_attr.tools][i] if dataset_attr.tools else "")
         outputs["images"].append(convert_images(examples[dataset_attr.images][i]) if dataset_attr.images else [])
+        outputs["videos"].append(convert_videos(examples[dataset_attr.videos][i]) if dataset_attr.videos else [])
 
     return outputs
 
@@ -220,6 +239,7 @@ def align_dataset(
             "system": {"dtype": "string", "_type": "Value"},
             "tools": {"dtype": "string", "_type": "Value"},
             "images": [{"_type": "Image"}],
+            "videos": [{"dtype": "string", "_type": "Value"}],
         }
     )
     kwargs = {}

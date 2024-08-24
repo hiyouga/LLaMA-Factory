@@ -16,8 +16,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
-from .processor_utils import get_paligemma_token_type_ids, get_pixel_values, infer_seqlen
-
+from .processor_utils import get_paligemma_token_type_ids, get_pixel_values, infer_seqlen, get_pixel_values_videos
 
 if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer, ProcessorMixin
@@ -37,13 +36,36 @@ def _encode_pairwise_example(
     template: "Template",
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"],
+    exists_images: bool,
+    exists_videos: bool,
     cutoff_len: int,
 ) -> Tuple[List[int], List[int], List[int], List[int]]:
-    if processor is not None and not hasattr(processor, "image_seq_length"):  # llava-like models
-        prompt[0]["content"] = template.image_token + prompt[0]["content"]
+    if processor is not None:
+        processor_class = type(processor).__name__
+        if processor_class != 'PaliGemmaProcessor':
+            if template.image_token not in prompt[0]["content"] and exists_videos:
+                prompt[0]["content"] = template.video_token + prompt[0]["content"]
+            if template.video_token not in prompt[0]["content"] and exists_images:
+                prompt[0]["content"] = template.image_token + prompt[0]["content"]
 
     chosen_messages = prompt + [response[0]]
     rejected_messages = prompt + [response[1]]
+
+    if processor is not None and processor_class == 'Idefics2Processor':
+        fake_image_token = processor.fake_image_token.content
+        image_str = f"{fake_image_token}{template.image_token * processor.image_seq_len}{fake_image_token}"
+        image_str = image_str * 5
+        for j in range(len(chosen_messages)):
+            content = chosen_messages[j]['content']
+            content = content.replace(template.image_token, image_str)
+            content = content.replace(f"{fake_image_token}{fake_image_token}", f"{fake_image_token}")
+            chosen_messages[j]['content'] = content
+        for j in range(len(rejected_messages)):
+            content = rejected_messages[j]['content']
+            content = content.replace(template.image_token, image_str)
+            content = content.replace(f"{fake_image_token}{fake_image_token}", f"{fake_image_token}")
+            rejected_messages[j]['content'] = content
+
     prompt_ids, chosen_ids = template.encode_oneturn(tokenizer, chosen_messages, system, tools)
     _, rejected_ids = template.encode_oneturn(tokenizer, rejected_messages, system, tools)
 
@@ -51,7 +73,7 @@ def _encode_pairwise_example(
         chosen_ids += [tokenizer.eos_token_id]
         rejected_ids += [tokenizer.eos_token_id]
 
-    if processor is not None and hasattr(processor, "image_seq_length"):  # paligemma models
+    if processor is not None and processor_class == 'PaliGemmaProcessor':  # paligemma models
         image_token_id = tokenizer.convert_tokens_to_ids(template.image_token)
         prompt_ids = [image_token_id] * getattr(processor, "image_seq_length") + prompt_ids
 
@@ -85,9 +107,23 @@ def preprocess_pairwise_dataset(
         "rejected_attention_mask": [],
         "rejected_labels": [],
     }
+
+    image_keys = template.image_data_key
+    video_keys = template.video_data_key
+    processor_class = None
+
     if processor is not None:
-        model_inputs["pixel_values"] = []
-        if hasattr(processor, "image_seq_length"):  # paligemma models
+        if len(examples["images"][0]):
+            for image_key in image_keys:
+                model_inputs[image_key] = []
+
+        if len(examples["videos"][0]):
+            for video_key in video_keys:
+                model_inputs[video_key] = []
+
+        processor_class = type(processor).__name__
+
+        if processor_class == 'PaliGemmaProcessor':  # paligemma models
             model_inputs["chosen_token_type_ids"] = []
             model_inputs["rejected_token_type_ids"] = []
 
@@ -104,8 +140,11 @@ def preprocess_pairwise_dataset(
             template=template,
             tokenizer=tokenizer,
             processor=processor,
+            exists_images=len(examples["images"][i]) > 0,
+            exists_videos=len(examples['videos'][i]) > 0,
             cutoff_len=data_args.cutoff_len,
         )
+
         model_inputs["chosen_input_ids"].append(chosen_input_ids)
         model_inputs["chosen_attention_mask"].append([1] * len(chosen_input_ids))
         model_inputs["chosen_labels"].append(chosen_labels)
@@ -113,14 +152,26 @@ def preprocess_pairwise_dataset(
         model_inputs["rejected_attention_mask"].append([1] * len(rejected_input_ids))
         model_inputs["rejected_labels"].append(rejected_labels)
         if processor is not None:
-            model_inputs["pixel_values"].append(get_pixel_values(examples["images"][i], processor))
-            if hasattr(processor, "image_seq_length"):  # paligemma models
-                model_inputs["chosen_token_type_ids"].append(
-                    get_paligemma_token_type_ids(len(chosen_input_ids), processor)
-                )
-                model_inputs["rejected_token_type_ids"].append(
-                    get_paligemma_token_type_ids(len(rejected_input_ids), processor)
-                )
+            if len(examples["images"][i]):
+                image_data = get_pixel_values(examples["images"][i], processor, image_keys)
+                for image_key in image_keys:
+                    image_value = image_data[image_key]
+                    if image_value.shape[0] == 1:
+                        model_inputs[image_key].append(image_value[0])
+                if processor_class == 'PaliGemmaProcessor':  # paligemma models
+                    model_inputs["chosen_token_type_ids"].append(
+                        get_paligemma_token_type_ids(len(chosen_input_ids), processor)
+                    )
+                    model_inputs["rejected_token_type_ids"].append(
+                        get_paligemma_token_type_ids(len(rejected_input_ids), processor)
+                    )
+
+            if len(examples["videos"][i]):
+                video_data = get_pixel_values_videos(examples["videos"][i], processor, video_keys)
+                for video_key in video_keys:
+                    video_value = video_data[video_key]
+                    if video_value.shape[0] == 1:
+                        model_inputs[video_key].append(video_value[0])
 
     return model_inputs
 
