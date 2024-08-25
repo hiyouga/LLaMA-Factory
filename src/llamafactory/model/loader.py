@@ -115,10 +115,12 @@ def load_config(model_args: "ModelArguments") -> "PretrainedConfig":
     """
     init_kwargs = _get_init_kwargs(model_args)
     if "LLaVA-NeXT-Video" in model_args.model_name_or_path:
+        from transformers import PretrainedConfig
+        official_config = PretrainedConfig.from_pretrained(model_args.model_name_or_path, **init_kwargs)
         from transformers import LlavaNextVideoConfig, CLIPVisionConfig, LlamaConfig
-        config = LlavaNextVideoConfig(CLIPVisionConfig(), LlamaConfig())
+        config = LlavaNextVideoConfig(CLIPVisionConfig(**official_config.vision_config), LlamaConfig(**official_config.text_config))
         setattr(config, "visual_inputs", True)
-        return config # no use codes
+        return config
     return AutoConfig.from_pretrained(model_args.model_name_or_path, **init_kwargs)
 
 
@@ -135,6 +137,7 @@ def load_model(
     init_kwargs = _get_init_kwargs(model_args)
     config = load_config(model_args)
     patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
+
     model = None
     lazy_load = False
     if model_args.use_unsloth:
@@ -146,16 +149,13 @@ def load_model(
     if model is None and not lazy_load:
         init_kwargs["config"] = config
         init_kwargs["pretrained_model_name_or_path"] = model_args.model_name_or_path
+
         if model_args.mixture_of_depths == "load":
             model = load_mod_pretrained_model(**init_kwargs)
         elif model_args.visual_inputs:
             if "llava_next_video" == getattr(config, "model_type"):
                 from transformers import LlavaNextVideoForConditionalGeneration
-                model = LlavaNextVideoForConditionalGeneration.from_pretrained(
-                    model_args.model_name_or_path, 
-                    torch_dtype=torch.float16, 
-                    low_cpu_mem_usage=True, # optional
-                )
+                model = LlavaNextVideoForConditionalGeneration.from_pretrained(**init_kwargs)
             else:
                 model = AutoModelForVision2Seq.from_pretrained(**init_kwargs)
         elif model_args.train_from_scratch:
