@@ -14,12 +14,13 @@
 
 import base64
 import io
-import re
 import json
 import os
+import re
 import uuid
-import numpy as np
 from typing import TYPE_CHECKING, AsyncGenerator, Dict, List, Optional, Tuple
+
+import numpy as np
 
 from ..data import Role as DataRole
 from ..extras.logging import get_logger
