@@ -5,21 +5,19 @@ from typing import List, Optional, Tuple, Union
 
 import torch
 from torch import nn
+import torch.nn.functional as F
 from torch.utils.checkpoint import _get_autocast_kwargs, check_backward_validity, get_device_states, set_device_states, detach_variable
 
 import transformers
 from transformers.models.llama.modeling_llama import apply_rotary_pos_emb, BaseModelOutputWithPast, CausalLMOutputWithPast
+from transformers.utils import logging
 
 from einops import rearrange
 
 from .lightseq_async_attn import _lightseq_forward, _lightseq_backward
 from .async_communication import initialize_distributed, reset_global_memory_buffer
 from transformers.cache_utils import Cache
-import pycuda
-import pycuda.driver as drv
-import pycuda.autoinit
-import numpy as np
-import time, os
+from .offload_buffer import offload_buffer, OffloadBuffer
 
 # define a global buffer to save flash attention outputs
 # it's called global because it saves the outputs for all layers
@@ -32,97 +30,7 @@ local_res_grad_buffer = None
 # hooks for the gradients of residual
 global_hooks = []
 
-class Singleton(object):
-    _instance = None
-    def __new__(class_, *args, **kwargs):
-        if not isinstance(class_._instance, class_):
-            class_._instance = object.__new__(class_, *args, **kwargs)
-        return class_._instance
-
-class GlobalBufferManager(Singleton):
-
-    def init(self, num_layers, offload_percent, shape, dtype, device):
-        torch.cuda.empty_cache()
-        if hasattr(self, 'initialized'):
-            return
-        self.layer_num = num_layers
-        self.gpu_layer_num = int(num_layers * offload_percent)
-        self.cpu_layer_num = num_layers - self.gpu_layer_num
-        self.gpu_buffer = [None for _ in range(self.gpu_layer_num)]
-        self.cpu_buffer = drv.pagelocked_empty([self.cpu_layer_num] + shape, dtype=np.float16)
-        bs, num_heads, seq_len, emb_size = shape
-        shape_h = [bs, seq_len, num_heads * emb_size]
-        shape_a = [bs, seq_len]
-        self.hidden_state_gpu_buffer = [None for _ in range(self.gpu_layer_num)]
-        self.hidden_state_cpu_buffer = drv.pagelocked_empty([self.cpu_layer_num] + shape_h, dtype=np.float16)
-        self.position_id_gpu_buffer = [None for _ in range(self.gpu_layer_num)]
-        self.position_id_cpu_buffer = drv.pagelocked_empty([self.cpu_layer_num] + shape_a, dtype=np.float16)
-        self.d2h_stream = drv.Stream()
-        self.h2d_streams = [drv.Stream() for _ in range(self.gpu_layer_num)]
-        self.initialized = True
-
-    def save_flash_attn_out(self, layer_idx, out):
-        if layer_idx < 0:
-            layer_idx = self.layer_num + layer_idx
-        if layer_idx < self.cpu_layer_num:
-            drv.memcpy_dtoh_async(self.cpu_buffer[layer_idx], out.data_ptr(), self.d2h_stream)
-        else:
-            idx = layer_idx - self.cpu_layer_num
-            self.gpu_buffer[idx] = out
-            
-    def save_hidden_states(self, layer_idx, *hs):
-        if layer_idx < 0:
-            layer_idx = self.layer_num + layer_idx
-        hidden_state = hs[0]
-        position_id = hs[1]
-        if layer_idx < self.cpu_layer_num:
-            drv.memcpy_dtoh_async(self.hidden_state_cpu_buffer[layer_idx], hidden_state.data_ptr(), self.d2h_stream)
-            drv.memcpy_dtoh_async(self.position_id_cpu_buffer[layer_idx], position_id.data_ptr(), self.d2h_stream)
-        else:
-            idx = layer_idx - self.cpu_layer_num
-            self.hidden_state_gpu_buffer[idx] = hidden_state
-            self.position_id_gpu_buffer[idx] = position_id
-
-    def get_flash_attn_out(self, layer_idx):
-        if layer_idx < 0:
-            layer_idx = self.layer_num + layer_idx
-        if layer_idx >= self.cpu_layer_num:
-            return self.gpu_buffer[layer_idx - self.cpu_layer_num]
-        idx = self.gpu_layer_num -1 - (self.cpu_layer_num - 1 - layer_idx) % self.gpu_layer_num
-        self.h2d_streams[idx].synchronize()
-        return self.gpu_buffer[idx]
-    
-    def get_hidden_states(self, layer_idx):
-        if layer_idx < 0:
-            layer_idx = self.layer_num + layer_idx
-        if layer_idx >= self.cpu_layer_num:
-            return self.hidden_state_gpu_buffer[layer_idx - self.cpu_layer_num], self.position_id_gpu_buffer[layer_idx - self.cpu_layer_num]
-        idx = self.gpu_layer_num -1 - (self.cpu_layer_num - 1 - layer_idx) % self.gpu_layer_num
-        self.h2d_streams[idx].synchronize()
-        return self.hidden_state_gpu_buffer[idx], self.position_id_gpu_buffer[idx]
-
-    def free_layer_gpu_buffer(self, layer_idx):
-        if layer_idx < 0:
-            layer_idx = self.layer_num + layer_idx
-        if layer_idx == self.layer_num - 1:
-            self.d2h_stream.synchronize()
-        cpu_layer_idx = layer_idx - self.gpu_layer_num
-        if layer_idx >= self.cpu_layer_num:
-            idx = layer_idx - self.cpu_layer_num
-        else:
-            idx = self.gpu_layer_num -1 - (self.cpu_layer_num - 1 - layer_idx) % self.gpu_layer_num
-        self.gpu_buffer[idx].grad = None
-        if cpu_layer_idx < 0:
-            self.gpu_buffer[idx] = None
-            self.hidden_state_gpu_buffer[idx] = None
-            self.position_id_gpu_buffer[idx] = None
-            return
-        drv.memcpy_htod_async(self.gpu_buffer[idx].data_ptr(), self.cpu_buffer[cpu_layer_idx], self.h2d_streams[idx])
-        drv.memcpy_htod_async(self.hidden_state_gpu_buffer[idx].data_ptr(), self.hidden_state_cpu_buffer[cpu_layer_idx], self.h2d_streams[idx])
-        drv.memcpy_htod_async(self.position_id_gpu_buffer[idx].data_ptr(), self.position_id_cpu_buffer[cpu_layer_idx], self.h2d_streams[idx])
-        
-global_buffer = GlobalBufferManager()
-
+logger = logging.get_logger(__name__)
 def init_flash_attn_buffers(num_layers):
     # update the global buffer according to number of layers
     global global_flash_attn_out_buffer
@@ -201,10 +109,12 @@ class CheckpointFunctionEndWithFlashAttention(torch.autograd.Function):
 
         # Save non-tensor inputs in ctx, keep a placeholder None for tensors
         # to be filled out during the backward.
+        global offload_buffer
         ctx.inputs = []
-        ctx.tensor_indices = {}
+        ctx.tensor_indices = []
+        ctx.tensor_indices_dict = {}
         tensor_inputs = []
-        global global_buffer
+
         hidden_state = None
         position_ids = None
         for i, arg in enumerate(args):
@@ -213,13 +123,16 @@ class CheckpointFunctionEndWithFlashAttention(torch.autograd.Function):
                 ctx.inputs.append(None)
             else:
                 if torch.is_tensor(arg):
-                    # tensor_inputs.append(arg)
-                    if len(arg.shape) == 3:
-                        hidden_state = arg
-                        ctx.tensor_indices[i] = 'hidden_state'
-                    elif len(arg.shape) == 2:
-                        position_ids = arg
-                        ctx.tensor_indices[i] = 'position_ids'
+                    if offload_buffer.enable_offload:
+                        if len(arg.shape) == 3:
+                            hidden_state = arg
+                            ctx.tensor_indices_dict[i] = 'hidden_state'
+                        elif len(arg.shape) == 2:
+                            position_ids = arg
+                            ctx.tensor_indices_dict[i] = 'position_ids'
+                    else:
+                        tensor_inputs.append(arg)
+                        ctx.tensor_indices.append(i)
                     ctx.inputs.append(None)
                 else:
                     ctx.inputs.append(arg)
@@ -231,16 +144,18 @@ class CheckpointFunctionEndWithFlashAttention(torch.autograd.Function):
             # lightseq version
             _, _, _, out, softmax_lse = _lightseq_forward(q, k, v, True, softmax_scale, comm_mode='lightseq')
             rng_state = None
-
             # save flash attention output to global buffer
-            # save_flash_attn_out_to_global_buffer(ctx.layer_idx, out)
+            if offload_buffer.enable_offload:
+                offload_buffer.save_flash_attn_out(ctx.layer_idx, out)
+                offload_buffer.save_hidden_states(ctx.layer_idx, hidden_state, position_ids)
+                ctx.save_for_backward(softmax_lse)
+            else:
+                save_flash_attn_out_to_global_buffer(ctx.layer_idx, out)
+                tensor_inputs += [softmax_lse]
+                ctx.save_for_backward(*tensor_inputs)
 
-            global_buffer.save_flash_attn_out(ctx.layer_idx, out)
-            global_buffer.save_hidden_states(ctx.layer_idx, hidden_state, position_ids)
-            # tensor_inputs += [softmax_lse]
             ctx.softmax_scale = softmax_scale
-        
-        ctx.save_for_backward(softmax_lse)
+
         return out, residual
 
     @staticmethod
@@ -251,26 +166,28 @@ class CheckpointFunctionEndWithFlashAttention(torch.autograd.Function):
                 " is passed to .backward(). Please use .backward() and do not pass its `inputs`"
                 " argument.")
         # Copy the list to avoid modifying original list.
+        global offload_buffer
         inputs = list(ctx.inputs)
         tensor_indices = ctx.tensor_indices
-        # tensors = ctx.saved_tensors
-        softmax_lse = ctx.saved_tensors[0]
-        # tensors, softmax_lse = tensors[:-1], tensors[-1]
-        global global_buffer
-        hidden_state, position_ids = global_buffer.get_hidden_states(ctx.layer_idx)
-        # Fill in inputs with appropriate saved tensors.
-        # Fill the flash attention output first
-        if ctx.layer_idx > 0:
-            # inputs[0] should be flash attention output
-            # inputs[0] = get_flash_attn_out_from_global_buffer(ctx.layer_idx-1)
-            inputs[0] = global_buffer.get_flash_attn_out(ctx.layer_idx-1)
-        # for i, idx in enumerate(tensor_indices):
-        #     inputs[idx] = tensors[i]
-        for k, v in tensor_indices.items():
-            if v == 'hidden_state':
-                inputs[k] = hidden_state
-            if v == 'position_ids':
-                inputs[k] = position_ids
+        tensor_indices_dict = ctx.tensor_indices_dict
+        tensors = ctx.saved_tensors
+        if offload_buffer.enable_offload:
+            softmax_lse = tensors[0]
+            hidden_state, position_ids = offload_buffer.get_hidden_states(ctx.layer_idx)
+            if ctx.layer_idx > 0:
+                inputs[0] = offload_buffer.get_flash_attn_out(ctx.layer_idx-1)
+            for k, v in tensor_indices_dict.items():
+                if v == 'hidden_state':
+                    inputs[k] = hidden_state
+                if v == 'position_ids':
+                    inputs[k] = position_ids
+        else:
+            tensors, softmax_lse = tensors[:-1], tensors[-1]
+            if ctx.layer_idx > 0:
+                inputs[0] = get_flash_attn_out_from_global_buffer(ctx.layer_idx-1)
+            for i, idx in enumerate(tensor_indices):
+                inputs[idx] = tensors[i]
+
         # Stash the surrounding rng state, and mimic the state that was
         # present at this time during forward.  Restore the surrounding state
         # when we're done.
@@ -299,7 +216,10 @@ class CheckpointFunctionEndWithFlashAttention(torch.autograd.Function):
         #dk = torch.empty(k.shape, dtype=q.dtype, device=q.device)
         #dv = torch.empty(v.shape, dtype=q.dtype, device=q.device)
         # out = get_flash_attn_out_from_global_buffer(ctx.layer_idx)
-        out = global_buffer.get_flash_attn_out(ctx.layer_idx)
+        if offload_buffer.enable_offload:
+            out = offload_buffer.get_flash_attn_out(ctx.layer_idx)
+        else:
+            out = get_flash_attn_out_from_global_buffer(ctx.layer_idx)
 
         # todo get dout
         dout = args[0]
@@ -315,11 +235,13 @@ class CheckpointFunctionEndWithFlashAttention(torch.autograd.Function):
         grads = tuple(inp.grad if isinstance(inp, torch.Tensor) else None
                       for inp in detached_inputs)
         # write flash attention output gradients to buffer
-        if ctx.layer_idx > 0:
-            # write_gradient_to_flash_attn_out(ctx.layer_idx-1, detached_inputs[0].grad)
-            global_buffer.get_flash_attn_out(ctx.layer_idx-1).grad = detached_inputs[0].grad
-        # free_flash_attn_out_buffer(ctx.layer_idx)
-        global_buffer.free_layer_gpu_buffer(ctx.layer_idx)
+        if offload_buffer.enable_offload:
+            if ctx.layer_idx > 0:
+                offload_buffer.get_flash_attn_out(ctx.layer_idx-1).grad = detached_inputs[0].grad
+            offload_buffer.free_layer_gpu_buffer(ctx.layer_idx)
+        else:
+            if ctx.layer_idx > 0:
+                write_gradient_to_flash_attn_out(ctx.layer_idx-1, detached_inputs[0].grad)
         return (None, None, None) + grads
 
 
@@ -391,12 +313,14 @@ class CheckpointFunctionLastModule(torch.autograd.Function):
         inputs = list(ctx.inputs)
         tensor_indices = ctx.tensor_indices
         tensors = ctx.saved_tensors
-        global global_buffer
+        global offload_buffer
         # Fill in inputs with appropriate saved tensors.
         # Fill the flash attention output first
         # inputs[0] should be flash attention output
-        # inputs[0] = get_flash_attn_out_from_global_buffer(-1)
-        inputs[0] = global_buffer.get_flash_attn_out(-1)
+        if offload_buffer.enable_offload:
+            inputs[0] = offload_buffer.get_flash_attn_out(-1)
+        else:
+            inputs[0] = get_flash_attn_out_from_global_buffer(-1)
         for i, idx in enumerate(tensor_indices):
             inputs[idx] = tensors[i]
 
@@ -435,9 +359,10 @@ class CheckpointFunctionLastModule(torch.autograd.Function):
         grads = tuple(inp.grad if isinstance(inp, torch.Tensor) else None
                       for inp in detached_inputs)
         # write flash attention output gradients to buffer
-        # write_gradient_to_flash_attn_out(-1, detached_inputs[0].grad)
-        global_buffer.get_flash_attn_out(-1).grad = detached_inputs[0].grad
-
+        if offload_buffer.enable_offload:
+            offload_buffer.get_flash_attn_out(-1).grad = detached_inputs[0].grad
+        else:
+            write_gradient_to_flash_attn_out(-1, detached_inputs[0].grad)
         return (None, None) + grads
 
 def checkpoint_last_module(function, *args, use_reentrant: bool = True, **kwargs):
@@ -598,15 +523,14 @@ def forward(
             pass
         # initialize the global buffer
         # init_flash_attn_buffers(len(self.layers))
-        global global_buffer
-        global_buffer.init(
-            self.config.num_hidden_layers,
-            offload_percent=0.25,
-            shape=[batch_size, self.config.num_attention_heads, seq_length, self.config.hidden_size // self.config.num_attention_heads],
-            dtype=hidden_states.dtype,
-            device=hidden_states.device
-        )
-
+        global offload_buffer
+        if offload_buffer.enable_offload:
+            offload_buffer.allocate(
+                self.config.num_hidden_layers,
+                shape=[batch_size, self.config.num_attention_heads, seq_length, self.config.hidden_size // self.config.num_attention_heads]
+            )
+        else:
+            init_flash_attn_buffers(len(self.layers))
         if use_cache:
             try:
                 logger.warning_once(
@@ -782,8 +706,10 @@ def llama_model_forward(
         attentions=outputs.attentions,
     )
 
-def apply_dist_flash_attn_monkey_patch_llama(sp_size=None):
+def apply_dist_flash_attn_monkey_patch_llama(sp_size=None, enable_offload=False, offload_percent=0.):
     initialize_distributed(sp_size=sp_size)
+    global offload_buffer
+    offload_buffer = OffloadBuffer(enable_offload=enable_offload, offload_percent=offload_percent)
     transformers.models.llama.modeling_llama.LlamaModel.forward = forward
     transformers.models.llama.modeling_llama.LlamaDecoderLayer.forward = llama_layer_forward
     transformers.models.llama.modeling_llama.LlamaForCausalLM.forward = llama_model_forward

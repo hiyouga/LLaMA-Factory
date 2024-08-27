@@ -64,7 +64,7 @@ def prepare_seq_parallel_sft_inputs(
         raise ValueError(f"Invalid seq_algo: {seq_algo}")
     
 def apply_seq_parallel_monkey_patch(
-    seq_algo, model, sp_size=None
+    seq_algo, model, sp_size=None, enable_offload=False, offload_percent=0.
 ):
     assert seq_algo in ["zigzag_ring_attn", "dist_flash_attn", "ulysses_attn", "data_parallel"], f"Invalid seq_algo: {seq_algo}"
     assert model in ["llama", "mistral"], f"Invalid model: {model}"
@@ -75,7 +75,7 @@ def apply_seq_parallel_monkey_patch(
     elif seq_algo == "zigzag_ring_attn" and model == "mistral":
         apply_zigzag_ring_attn_monkey_patch_mistral()
     elif seq_algo == "dist_flash_attn" and model == "llama":
-        apply_dist_flash_attn_monkey_patch_llama(sp_size=sp_size)
+        apply_dist_flash_attn_monkey_patch_llama(sp_size=sp_size, enable_offload=enable_offload, offload_percent=offload_percent)
     elif seq_algo == "ulysses_attn" and model == "llama":
         apply_ulysses_attn_monkey_patch_llama()
     else:
