@@ -107,15 +107,14 @@ def _process_request(
                     input_messages.append({"role": ROLE_MAPPING[message.role], "content": input_item.text})
                 else:
                     image_url = input_item.image_url.url
-                    if re.match("^data:image\/(png|jpg|jpeg|gif|bmp);base64,(.+)$", image_url):
-                        image_data = base64.b64decode(image_url.split(",", maxsplit=1)[1])
-                        image_path = io.BytesIO(image_data)
+                    if re.match(r"^data:image\/(png|jpg|jpeg|gif|bmp);base64,(.+)$", image_url):  # base64 image
+                        image_stream = io.BytesIO(base64.b64decode(image_url.split(",", maxsplit=1)[1]))
                     elif os.path.isfile(image_url):  # local file
-                        image_path = open(image_url, "rb")
+                        image_stream = open(image_url, "rb")
                     else:  # web uri
-                        image_path = requests.get(image_url, stream=True).raw
+                        image_stream = requests.get(image_url, stream=True).raw
 
-                    image = np.array(Image.open(image_path).convert("RGB"))
+                    image = np.array(Image.open(image_stream).convert("RGB"))
         else:
             input_messages.append({"role": ROLE_MAPPING[message.role], "content": message.content})
 
