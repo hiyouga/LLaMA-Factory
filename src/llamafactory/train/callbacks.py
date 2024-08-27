@@ -35,6 +35,7 @@ from transformers.utils import (
 
 from ..extras.constants import TRAINER_LOG, V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
 from ..extras.logging import LoggerHandler, get_logger
+from ..extras.misc import get_peak_memory
 
 
 if is_safetensors_available():
@@ -304,14 +305,21 @@ class LogCallback(TrainerCallback):
             percentage=round(self.cur_steps / self.max_steps * 100, 2) if self.max_steps != 0 else 100,
             elapsed_time=self.elapsed_time,
             remaining_time=self.remaining_time,
-            throughput="{:.2f}".format(state.num_input_tokens_seen / (time.time() - self.start_time)),
-            total_tokens=state.num_input_tokens_seen,
         )
+        if state.num_input_tokens_seen:
+            logs["throughput"] = round(state.num_input_tokens_seen / (time.time() - self.start_time), 2)
+            logs["total_tokens"] = state.num_input_tokens_seen
+
+        if os.environ.get("RECORD_VRAM", "0").lower() in ["true", "1"]:
+            vram_allocated, vram_reserved = get_peak_memory()
+            logs["vram_allocated"] = round(vram_allocated / 1024 / 1024 / 1024, 2)
+            logs["vram_reserved"] = round(vram_reserved / 1024 / 1024 / 1024, 2)
+
         logs = {k: v for k, v in logs.items() if v is not None}
         if self.webui_mode and all(key in logs for key in ["loss", "learning_rate", "epoch"]):
             logger.info(
                 "{{'loss': {:.4f}, 'learning_rate': {:2.4e}, 'epoch': {:.2f}, 'throughput': {}}}".format(
-                    logs["loss"], logs["learning_rate"], logs["epoch"], logs["throughput"]
+                    logs["loss"], logs["learning_rate"], logs["epoch"], logs.get("throughput")
                 )
             )
 
