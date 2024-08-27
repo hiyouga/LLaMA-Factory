@@ -170,7 +170,13 @@ def _get_preprocessed_dataset(
         return None
 
     preprocess_func, print_function = get_preprocess_and_print_func(
-        data_args, model_args, stage, template, tokenizer, processor, do_generate=(training_args.predict_with_generate and is_eval)
+        data_args,
+        model_args,
+        stage,
+        template,
+        tokenizer,
+        processor,
+        do_generate=(training_args.predict_with_generate and is_eval),
     )
     column_names = list(next(iter(dataset)).keys())
     kwargs = {}

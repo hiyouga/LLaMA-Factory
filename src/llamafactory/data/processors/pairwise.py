@@ -76,7 +76,7 @@ def preprocess_pairwise_dataset(
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"],
     data_args: "DataArguments",
-    model_args: "ModelArguments"
+    model_args: "ModelArguments",
 ) -> Dict[str, List[List[int]]]:
     # build input pairs with format `<bos> X`, `Y1 <eos>` and `Y2 <eos>`
     model_inputs = {
@@ -87,7 +87,7 @@ def preprocess_pairwise_dataset(
         "rejected_attention_mask": [],
         "rejected_labels": [],
     }
-    if processor is not None and model_args.visual_inputs_type in ["vision_tower","phi3v_like"]:
+    if processor is not None and model_args.visual_inputs_type in ["vision_tower", "phi3v_like"]:
         model_inputs["pixel_values"] = []
         if hasattr(processor, "image_seq_length"):  # paligemma models
             model_inputs["chosen_token_type_ids"] = []
@@ -129,7 +129,7 @@ def preprocess_pairwise_dataset(
         model_inputs["rejected_input_ids"].append(rejected_input_ids)
         model_inputs["rejected_attention_mask"].append([1] * len(rejected_input_ids))
         model_inputs["rejected_labels"].append(rejected_labels)
-        if processor is not None and model_args.visual_inputs_type in ["vision_tower","phi3v_like"]:
+        if processor is not None and model_args.visual_inputs_type in ["vision_tower", "phi3v_like"]:
             model_inputs["pixel_values"].append(get_pixel_values(examples["images"][i], processor))
             if hasattr(processor, "image_seq_length"):  # paligemma models
                 model_inputs["chosen_token_type_ids"].append(
