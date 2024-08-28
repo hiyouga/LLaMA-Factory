@@ -212,7 +212,7 @@ def _setup_lora_tuning(
             target_modules = find_expanded_modules(model, target_modules, finetuning_args.freeze_trainable_layers)
 
         if model_args.visual_inputs and finetuning_args.freeze_vision_tower:
-            target_modules = "^(?!.*vision_tower).*(?:{}).*".format("|".join(target_modules))
+            target_modules = "^(?!.*(?:vision_tower|visual)).*(?:{}).*".format("|".join(target_modules))
 
         if (
             finetuning_args.use_dora
