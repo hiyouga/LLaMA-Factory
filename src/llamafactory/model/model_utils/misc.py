@@ -36,6 +36,8 @@ def find_all_linear_modules(model: "PreTrainedModel", freeze_vision_tower: bool)
         forbidden_modules.add("output")
     elif model.config.model_type in ["llava", "paligemma"]:
         forbidden_modules.add("multi_modal_projector")
+    elif model.config.model_type in ["qwen2_vl"]:
+        forbidden_modules.add("merger")
 
     if freeze_vision_tower:
         forbidden_modules.add("vision_tower")
