@@ -115,8 +115,8 @@ def load_config(model_args: "ModelArguments") -> "PretrainedConfig":
     """
     init_kwargs = _get_init_kwargs(model_args)
     if "LLaVA-NeXT-Video" in model_args.model_name_or_path:
+        from transformers import PretrainedConfig, LlavaNextVideoConfig, CLIPVisionConfig, LlamaConfig
         official_config = PretrainedConfig.from_pretrained(model_args.model_name_or_path, **init_kwargs)
-        from transformers import LlavaNextVideoConfig, CLIPVisionConfig, LlamaConfig
         config = LlavaNextVideoConfig(CLIPVisionConfig(**official_config.vision_config), LlamaConfig(**official_config.text_config))
         setattr(config, "visual_inputs", True)
         return config
