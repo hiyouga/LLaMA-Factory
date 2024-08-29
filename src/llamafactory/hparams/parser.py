@@ -116,7 +116,7 @@ def _check_extra_dependencies(
     if model_args.use_unsloth:
         require_version("unsloth", "Please install unsloth: https://github.com/unslothai/unsloth")
 
-    if model_args.use_liger_kernel:
+    if model_args.enable_liger_kernel:
         require_version("liger-kernel", "To fix: pip install liger-kernel")
 
     if model_args.mixture_of_depths is not None:

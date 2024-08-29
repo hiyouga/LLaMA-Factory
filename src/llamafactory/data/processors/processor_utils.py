@@ -13,20 +13,7 @@
 # limitations under the License.
 
 import bisect
-from typing import TYPE_CHECKING, List, Sequence, Tuple
-
-from ...extras.packages import is_pillow_available
-
-
-if is_pillow_available():
-    from PIL import Image
-
-
-if TYPE_CHECKING:
-    from numpy.typing import NDArray
-    from PIL.Image import Image as ImageObject
-    from transformers import ProcessorMixin
-    from transformers.image_processing_utils import BaseImageProcessor
+from typing import List, Sequence, Tuple
 
 
 def search_for_fit(numbers: Sequence[int], capacity: int) -> int:
@@ -59,37 +46,6 @@ def greedy_knapsack(numbers: List[int], capacity: int) -> List[List[int]]:
         knapsacks.append(current_knapsack)
 
     return knapsacks
-
-
-def get_pixel_values(images: Sequence["ImageObject"], processor: "ProcessorMixin") -> "NDArray":
-    r"""
-    Processes visual inputs. (currently only supports a single image)
-    """
-    image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
-    image = images[0] if len(images) != 0 else Image.new("RGB", (100, 100), (255, 255, 255))
-    return image_processor(image, return_tensors="pt")["pixel_values"][0]  # shape (C, H, W)
-
-
-def get_paligemma_token_type_ids(input_len: int, processor: "ProcessorMixin") -> List[int]:
-    r"""
-    Gets paligemma token type ids for computing loss.
-    """
-    image_seq_length = getattr(processor, "image_seq_length")
-    return [0] * image_seq_length + [1] * (input_len - image_seq_length)
-
-
-def get_qwen2vl_image_inputs(images: Sequence["ImageObject"], processor: "ProcessorMixin") -> "NDArray":
-    r"""
-    Processes visual inputs. support multi images
-    """
-    image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
-    if len(images) != 0:
-        image_inputs = image_processor(images=images, return_tensors="pt")
-    else:
-        image = Image.new("RGB", (56, 56), (255, 255, 255))
-        image_inputs = image_processor(images=[image], return_tensors="pt")
-        image_inputs["image_grid_thw"][0][0] = 0
-    return {"pixel_values": image_inputs["pixel_values"], "image_grid_thw": image_inputs["image_grid_thw"]}
 
 
 def infer_seqlen(source_len: int, target_len: int, cutoff_len: int) -> Tuple[int, int]:
