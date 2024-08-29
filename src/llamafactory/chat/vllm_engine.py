@@ -16,6 +16,7 @@ import uuid
 from typing import TYPE_CHECKING, Any, AsyncGenerator, AsyncIterator, Dict, List, Optional, Sequence, Union
 
 from ..data import get_template_and_fix_tokenizer
+from ..extras.constants import IMAGE_PLACEHOLDER
 from ..extras.logging import get_logger
 from ..extras.misc import get_device_count
 from ..extras.packages import is_vllm_available, is_vllm_version_greater_than_0_5, is_vllm_version_greater_than_0_5_1
@@ -115,13 +116,11 @@ class VllmEngine(BaseEngine):
     ) -> AsyncIterator["RequestOutput"]:
         request_id = "chatcmpl-{}".format(uuid.uuid4().hex)
 
-        if (
-            self.processor is not None
-            and image is not None
-            and not hasattr(self.processor, "image_seq_length")
-            and self.template.image_token not in messages[0]["content"]
-        ):  # llava-like models (TODO: paligemma models)
-            messages[0]["content"] = self.template.image_token * self.image_feature_size + messages[0]["content"]
+        if image is not None:
+            if IMAGE_PLACEHOLDER not in messages[0]["content"]:
+                messages[0]["content"] = IMAGE_PLACEHOLDER + messages[0]["content"]
+
+            messages = self.template.mm_plugin.process_messages(messages, [image], self.processor)
 
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or self.generating_args["default_system"]
