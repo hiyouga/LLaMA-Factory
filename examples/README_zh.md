@@ -33,6 +33,7 @@ llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
 
 ```bash
 llamafactory-cli train examples/train_lora/llava1_5_lora_sft.yaml
+llamafactory-cli train examples/train_lora/qwen2vl_lora_sft.yaml
 ```
 
 #### 奖励模型训练
