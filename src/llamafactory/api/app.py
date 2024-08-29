@@ -57,7 +57,8 @@ async def lifespan(app: "FastAPI"):  # collects GPU memory
 
 
 def create_app(chat_model: "ChatModel") -> "FastAPI":
-    app = FastAPI(lifespan=lifespan)
+    root_path = os.environ.get("FASTAPI_ROOT_PATH", "")
+    app = FastAPI(lifespan=lifespan, root_path=root_path)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
