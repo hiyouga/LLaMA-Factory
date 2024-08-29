@@ -47,6 +47,8 @@ FILEEXT2TYPE = {
 
 IGNORE_INDEX = -100
 
+IMAGE_PLACEHOLDER = "<image>"
+
 LAYERNORM_NAMES = {"norm", "ln"}
 
 LLAMABOARD_CONFIG = "llamaboard_config.yaml"
@@ -785,7 +787,7 @@ register_model_group(
             DownloadSource.DEFAULT: "llava-hf/llava-1.5-13b-hf",
         },
     },
-    template="vicuna",
+    template="llava",
     vision=True,
 )
 
@@ -930,27 +932,28 @@ register_model_group(
 
 register_model_group(
     models={
-        "PaliGemma-3B-pt-224": {
+        "PaliGemma-3B-pt-224-Chat": {
             DownloadSource.DEFAULT: "google/paligemma-3b-pt-224",
             DownloadSource.MODELSCOPE: "AI-ModelScope/paligemma-3b-pt-224",
         },
-        "PaliGemma-3B-pt-448": {
+        "PaliGemma-3B-pt-448-Chat": {
             DownloadSource.DEFAULT: "google/paligemma-3b-pt-448",
             DownloadSource.MODELSCOPE: "AI-ModelScope/paligemma-3b-pt-448",
         },
-        "PaliGemma-3B-pt-896": {
+        "PaliGemma-3B-pt-896-Chat": {
             DownloadSource.DEFAULT: "google/paligemma-3b-pt-896",
             DownloadSource.MODELSCOPE: "AI-ModelScope/paligemma-3b-pt-896",
         },
-        "PaliGemma-3B-mix-224": {
+        "PaliGemma-3B-mix-224-Chat": {
             DownloadSource.DEFAULT: "google/paligemma-3b-mix-224",
             DownloadSource.MODELSCOPE: "AI-ModelScope/paligemma-3b-mix-224",
         },
-        "PaliGemma-3B-mix-448": {
+        "PaliGemma-3B-mix-448-Chat": {
             DownloadSource.DEFAULT: "google/paligemma-3b-mix-448",
             DownloadSource.MODELSCOPE: "AI-ModelScope/paligemma-3b-mix-448",
         },
     },
+    template="paligemma",
     vision=True,
 )
 
@@ -1326,6 +1329,34 @@ register_model_group(
         },
     },
     template="qwen",
+)
+
+
+register_model_group(
+    models={
+        "Qwen2VL-2B-Chat": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2-VL-2B-Instruct",
+            DownloadSource.MODELSCOPE: "qwen/Qwen2-VL-2B-Instruct",
+        },
+        "Qwen2VL-7B-Chat": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2-VL-7B-Instruct",
+            DownloadSource.MODELSCOPE: "qwen/Qwen2-VL-7B-Instruct",
+        },
+        "Qwen2VL-2B-int8-Chat": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2-VL-2B-Instruct-GPTQ-Int8",
+        },
+        "Qwen2VL-2B-int4-Chat": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2-VL-2B-Instruct-AWQ",
+        },
+        "Qwen2VL-7B-int8-Chat": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2-VL-7B-Instruct-GPTQ-Int8",
+        },
+        "Qwen2VL-7B-int4-Chat": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2-VL-7B-Instruct-AWQ",
+        },
+    },
+    template="qwen2_vl",
+    vision=True,
 )
 
 
