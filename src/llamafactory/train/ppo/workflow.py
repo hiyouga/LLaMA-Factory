@@ -17,9 +17,7 @@
 
 from typing import TYPE_CHECKING, List, Optional
 
-from transformers import DataCollatorWithPadding
-
-from ...data import get_dataset
+from ...data import CustomDataCollatorForSeq2Seq, get_dataset
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
 from ..callbacks import fix_valuehead_checkpoint
@@ -47,7 +45,7 @@ def run_ppo(
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train, add_valuehead=True)
 
     tokenizer.padding_side = "left"  # use left-padding in generation while using right-padding in training
-    data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+    data_collator = CustomDataCollatorForSeq2Seq(tokenizer=tokenizer)
 
     # Create reference model and reward model
     ref_model = create_ref_model(model_args, finetuning_args, add_valuehead=True)
