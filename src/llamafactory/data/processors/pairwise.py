@@ -70,7 +70,7 @@ def preprocess_pairwise_dataset(
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"],
     data_args: "DataArguments",
-) -> Dict[str, List[List[int]]]:
+) -> Dict[str, List[Any]]:
     # build input pairs with format `<bos> X`, `Y1 <eos>` and `Y2 <eos>`
     model_inputs = defaultdict(list)
     for i in range(len(examples["prompt"])):
