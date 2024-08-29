@@ -74,6 +74,9 @@ class BasePlugin:
         images: Sequence["ImageObject"],
         processor: Optional["ProcessorMixin"],
     ) -> List[Dict[str, str]]:
+        r"""
+        Pre-processes input messages before tokenization for VLMs.
+        """
         return messages
 
     def process_token_ids(
@@ -83,6 +86,9 @@ class BasePlugin:
         tokenizer: "PreTrainedTokenizer",
         processor: Optional["ProcessorMixin"],
     ) -> Tuple[List[int], Optional[List[int]]]:
+        r"""
+        Pre-processes token ids after tokenization for VLMs.
+        """
         return input_ids, labels
 
     def get_mm_inputs(
@@ -91,6 +97,9 @@ class BasePlugin:
         feature_seqlens: Dict[str, int],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Any]:
+        r"""
+        Builds batched multimodal inputs for VLMs.
+        """
         return {}
 
     def process_model_inputs(
@@ -100,6 +109,9 @@ class BasePlugin:
         feature_seqlens: Dict[str, int],
         processor: Optional["ProcessorMixin"],
     ) -> None:
+        r"""
+        Appends multimodal inputs to model inputs for VLMs.
+        """
         return
 
 
