@@ -62,7 +62,7 @@ def preprocess_unsupervised_dataset(
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"],
     data_args: "DataArguments",
-) -> Dict[str, List[List[int]]]:
+) -> Dict[str, List[Any]]:
     # build inputs with format `<bos> X` and labels with format `Y <eos>`
     model_inputs = defaultdict(list)
     for i in range(len(examples["prompt"])):
