@@ -27,7 +27,7 @@ logger = get_logger(__name__)
 
 
 def configure_liger_kernel(config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool) -> None:
-    if not is_trainable or not model_args.use_liger_kernel:
+    if not is_trainable or not model_args.enable_liger_kernel:
         return
 
     if getattr(config, "model_type", None) == "gemma":

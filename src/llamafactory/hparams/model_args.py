@@ -117,7 +117,7 @@ class ModelArguments:
         default=False,
         metadata={"help": "Whether or not to use unsloth's optimization for the LoRA training."},
     )
-    use_liger_kernel: bool = field(
+    enable_liger_kernel: bool = field(
         default=False,
         metadata={"help": "Whether or not to enable liger kernel for faster training."},
     )
