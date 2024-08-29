@@ -32,12 +32,16 @@ def configure_liger_kernel(config: "PretrainedConfig", model_args: "ModelArgumen
 
     if getattr(config, "model_type", None) == "gemma":
         from liger_kernel.transformers import apply_liger_kernel_to_gemma as apply_liger_kernel
+    elif getattr(config, "model_type", None) == "gemma2":
+        from liger_kernel.transformers import apply_liger_kernel_to_gemma2 as apply_liger_kernel
     elif getattr(config, "model_type", None) == "llama":
         from liger_kernel.transformers import apply_liger_kernel_to_llama as apply_liger_kernel
     elif getattr(config, "model_type", None) == "mistral":
         from liger_kernel.transformers import apply_liger_kernel_to_mistral as apply_liger_kernel
     elif getattr(config, "model_type", None) == "mixtral":
         from liger_kernel.transformers import apply_liger_kernel_to_mixtral as apply_liger_kernel
+    elif getattr(config, "model_type", None) == "phi3":
+        from liger_kernel.transformers import apply_liger_kernel_to_phi3 as apply_liger_kernel
     elif getattr(config, "model_type", None) == "qwen2":
         from liger_kernel.transformers import apply_liger_kernel_to_qwen2 as apply_liger_kernel
     else:
