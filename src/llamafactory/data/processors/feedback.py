@@ -84,7 +84,7 @@ def preprocess_feedback_dataset(
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"],
     data_args: "DataArguments",
-) -> Dict[str, List[List[int]]]:
+) -> Dict[str, List[Any]]:
     # create unrelated input-output pairs for estimating the KL term by flipping the matched pairs
     kl_response = examples["response"][::-1]
     model_inputs = defaultdict(list)
