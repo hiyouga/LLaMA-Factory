@@ -75,8 +75,7 @@ def fix_valuehead_checkpoint(
         state_dict: Dict[str, torch.Tensor] = torch.load(path_to_checkpoint, map_location="cpu")
 
     os.remove(path_to_checkpoint)
-    decoder_state_dict = {}
-    v_head_state_dict = {}
+    decoder_state_dict, v_head_state_dict = {}, {}
     for name, param in state_dict.items():
         if name.startswith("v_head."):
             v_head_state_dict[name] = param
