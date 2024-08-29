@@ -42,6 +42,8 @@ class Template:
     default_system: str
     stop_words: List[str]
     image_token: str
+    vision_start_token: str
+    vision_end_token: str
     efficient_eos: bool
     replace_eos: bool
 
@@ -206,6 +208,8 @@ def _register_template(
     default_system: str = "",
     stop_words: Sequence[str] = [],
     image_token: str = "<image>",
+    vision_start_token: str = "<|vision_start|>",
+    vision_end_token: str = "<|vision_end|>",
     efficient_eos: bool = False,
     replace_eos: bool = False,
 ) -> None:
@@ -255,6 +259,8 @@ def _register_template(
         default_system=default_system,
         stop_words=stop_words,
         image_token=image_token,
+        vision_start_token=vision_start_token,
+        vision_end_token=vision_end_token,
         efficient_eos=efficient_eos,
         replace_eos=replace_eos,
     )
@@ -778,6 +784,21 @@ _register_template(
     format_observation=StringFormatter(slots=["<|im_start|>tool\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_separator=EmptyFormatter(slots=["\n"]),
     default_system="You are a helpful assistant.",
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
+)
+
+
+_register_template(
+    name="qwen2vl",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_observation=StringFormatter(slots=["<|im_start|>tool\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    default_system="You are a helpful assistant.",
+    image_token="<|image_pad|>",
+    vision_start_token="<|vision_start|>",
+    vision_end_token="<|vision_end|>",
     stop_words=["<|im_end|>"],
     replace_eos=True,
 )
