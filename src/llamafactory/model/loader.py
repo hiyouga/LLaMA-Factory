@@ -99,6 +99,11 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
     except Exception:
         processor = None
 
+    # Avoid load tokenizer, see:
+    # https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/models/auto/processing_auto.py#L324
+    if "Processor" not in processor.__class__.__name__:
+        processor = None
+
     return {"tokenizer": tokenizer, "processor": processor}
 
 
