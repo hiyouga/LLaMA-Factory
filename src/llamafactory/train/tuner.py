@@ -132,7 +132,7 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
         if model_args.export_hub_model_id is not None:
             tokenizer.push_to_hub(model_args.export_hub_model_id, token=model_args.hf_hub_token)
 
-        if model_args.visual_inputs and processor is not None:
+        if processor is not None:
             getattr(processor, "image_processor").save_pretrained(model_args.export_dir)
             if model_args.export_hub_model_id is not None:
                 getattr(processor, "image_processor").push_to_hub(
