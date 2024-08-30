@@ -172,7 +172,7 @@ Regarding the above dataset, the *dataset description* in `dataset_info.json` sh
 
 - [Example dataset](mllm_demo.json)
 
-Multimodal datasets require a `images` column containing the paths to the input images. Currently we only support one image.
+Multimodal datasets require a `images` column containing the paths to the input images.
 
 ```json
 [
