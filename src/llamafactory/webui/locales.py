@@ -183,20 +183,6 @@ LOCALES = {
             "label": "부스터",
         },
     },
-    "visual_inputs": {
-        "en": {
-            "label": "Visual inputs",
-        },
-        "ru": {
-            "label": "визуальные входы",
-        },
-        "zh": {
-            "label": "图像输入",
-        },
-        "ko": {
-            "label": "시각적 입력",
-        },
-    },
     "training_stage": {
         "en": {
             "label": "Stage",
