@@ -18,36 +18,14 @@ if TYPE_CHECKING:
     from transformers.image_processing_utils import BaseImageProcessor
 
 
-def get_pixel_values(images: Sequence["ImageObject"], processor: "ProcessorMixin") -> "torch.Tensor":
+def _get_mm_inputs(images: Sequence["ImageObject"], processor: "ProcessorMixin") -> Dict[str, "torch.Tensor"]:
     r"""
-    Processes visual inputs. (currently only supports a single image)
+    Processes visual inputs.
 
-    Returns:
+    Returns: (llava and paligemma)
         pixel_values: tensor with shape (B, C, H, W)
-    """
-    image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
-    image = images[0] if len(images) != 0 else Image.new("RGB", (100, 100), (255, 255, 255))
-    return image_processor([image], return_tensors="pt")["pixel_values"]
 
-
-def get_paligemma_token_type_ids(input_len: int, processor: "ProcessorMixin") -> List[List[int]]:
-    r"""
-    Gets paligemma token type ids for computing loss.
-
-    Returns:
-        token_type_ids: shape (1, seq_len)
-    """
-    image_seq_length = getattr(processor, "image_seq_length")
-    return [[0] * image_seq_length + [1] * (input_len - image_seq_length)]
-
-
-def get_qwen2vl_image_inputs(
-    images: Sequence["ImageObject"], processor: "ProcessorMixin"
-) -> Dict[str, "torch.Tensor"]:
-    r"""
-    Processes qwen2-vl visual inputs. Supports multiple images.
-
-    Returns:
+    Returns: (qwen2-vl)
         pixel_values: tensor with shape (num_patches, patch_dim)
         image_grid_thw: tensot with shape (num_images, 3), where the three numbers are time, width, height
 
@@ -59,9 +37,22 @@ def get_qwen2vl_image_inputs(
     else:
         image = Image.new("RGB", (56, 56), (255, 255, 255))
         image_inputs = image_processor(images=[image], return_tensors="pt")
-        image_inputs["image_grid_thw"][0][0] = 0  # fake image
+        if "image_grid_thw" in image_inputs:  # fake image for qwen2-vl
+            image_inputs["image_grid_thw"][0][0] = 0
 
-    return {"pixel_values": image_inputs["pixel_values"], "image_grid_thw": image_inputs["image_grid_thw"]}
+    return image_inputs
+
+
+def _get_paligemma_token_type_ids(input_len: int, processor: "ProcessorMixin") -> List[List[int]]:
+    r"""
+    Gets paligemma token type ids for computing loss.
+
+    Returns:
+        token_type_ids: shape (1, seq_len)
+    """
+    image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
+    image_seq_length: int = getattr(image_processor, "image_seq_length")
+    return [[0] * image_seq_length + [1] * (input_len - image_seq_length)]
 
 
 class BasePlugin:
@@ -131,8 +122,9 @@ class LlavaPlugin(BasePlugin):
                 if image_count > 1:
                     raise ValueError("Llava model only accepts one image per sample.")
 
-                content = content.replace(IMAGE_PLACEHOLDER, self.image_token, 1)
+                content = content.replace(IMAGE_PLACEHOLDER, "{{image}}", 1)
 
+            content = content.replace("{{image}}", self.image_token)
             new_messages.append({"role": message["role"], "content": content})
 
         return new_messages
@@ -143,7 +135,7 @@ class LlavaPlugin(BasePlugin):
         feature_seqlens: Dict[str, int],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Any]:
-        return {"pixel_values": get_pixel_values(images, processor)}
+        return _get_mm_inputs(images, processor)
 
     def process_model_inputs(
         self,
@@ -153,7 +145,8 @@ class LlavaPlugin(BasePlugin):
         processor: Optional["ProcessorMixin"],
     ) -> None:
         mm_inputs = self.get_mm_inputs(images, feature_seqlens, processor)
-        model_inputs["pixel_values"].append(mm_inputs["pixel_values"][0])
+        for key, value in mm_inputs.items():
+            model_inputs[key].append(value[0])
 
 
 class PaliGemmaPlugin(BasePlugin):
@@ -200,9 +193,9 @@ class PaliGemmaPlugin(BasePlugin):
         feature_seqlens: Dict[str, int],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Any]:
-        mm_inputs = {"pixel_values": get_pixel_values(images, processor)}
+        mm_inputs = _get_mm_inputs(images, processor)
         for feature_name, feature_length in feature_seqlens.items():
-            mm_inputs[feature_name] = get_paligemma_token_type_ids(feature_length, processor)
+            mm_inputs[feature_name] = _get_paligemma_token_type_ids(feature_length, processor)
 
         return mm_inputs
 
@@ -214,9 +207,8 @@ class PaliGemmaPlugin(BasePlugin):
         processor: Optional["ProcessorMixin"],
     ) -> None:
         mm_inputs = self.get_mm_inputs(images, feature_seqlens, processor)
-        model_inputs["pixel_values"].append(mm_inputs["pixel_values"][0])
-        for feature_name in feature_seqlens.keys():
-            model_inputs[feature_name].append(mm_inputs[feature_name][0])
+        for key, value in mm_inputs.items():
+            model_inputs[key].append(value[0])
 
 
 class Qwen2vlPlugin(BasePlugin):
@@ -229,7 +221,7 @@ class Qwen2vlPlugin(BasePlugin):
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
         merge_length: int = getattr(image_processor, "merge_size") ** 2
         if len(images) > 0:
-            image_grid_thw = get_qwen2vl_image_inputs(images, processor)["image_grid_thw"]
+            image_grid_thw = _get_mm_inputs(images, processor)["image_grid_thw"]
 
         index = 0
         new_messages = []
@@ -255,7 +247,7 @@ class Qwen2vlPlugin(BasePlugin):
         feature_seqlens: Dict[str, int],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Any]:
-        return get_qwen2vl_image_inputs(images, processor)
+        return _get_mm_inputs(images, processor)
 
     def process_model_inputs(
         self,
@@ -265,11 +257,12 @@ class Qwen2vlPlugin(BasePlugin):
         processor: Optional["ProcessorMixin"],
     ) -> None:
         mm_inputs = self.get_mm_inputs(images, feature_seqlens, processor)
-        model_inputs["pixel_values"].append(mm_inputs["pixel_values"])
-        model_inputs["image_grid_thw"].append(mm_inputs["image_grid_thw"])
+        for key, value in mm_inputs.items():
+            model_inputs[key].append(value)  # support multi-image
 
 
 PLUGINS = {
+    "base": BasePlugin,
     "llava": LlavaPlugin,
     "paligemma": PaliGemmaPlugin,
     "qwen2_vl": Qwen2vlPlugin,
