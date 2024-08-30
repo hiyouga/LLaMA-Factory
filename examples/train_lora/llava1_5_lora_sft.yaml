@@ -1,6 +1,5 @@
 ### model
 model_name_or_path: llava-hf/llava-1.5-7b-hf
-visual_inputs: true
 
 ### method
 stage: sft
