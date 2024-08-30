@@ -86,7 +86,7 @@ class VllmEngine(BaseEngine):
             "max_lora_rank": model_args.vllm_max_lora_rank,
         }
 
-        if model_args.visual_inputs:
+        if getattr(config, "model_type", None) == "llava":
             image_size = config.vision_config.image_size
             patch_size = config.vision_config.patch_size
             self.image_feature_size = (image_size // patch_size) ** 2

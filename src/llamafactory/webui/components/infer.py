@@ -15,6 +15,7 @@
 from typing import TYPE_CHECKING, Dict
 
 from ...extras.packages import is_gradio_available
+from ..common import get_visual
 from .chatbot import create_chat_box
 
 
@@ -64,9 +65,9 @@ def create_infer_tab(engine: "Engine") -> Dict[str, "Component"]:
         lambda: ([], []), outputs=[chatbot, messages]
     ).then(lambda: gr.Column(visible=engine.chatter.loaded), outputs=[chat_elems["chat_box"]])
 
-    engine.manager.get_elem_by_id("top.visual_inputs").change(
-        lambda enabled: gr.Column(visible=enabled),
-        [engine.manager.get_elem_by_id("top.visual_inputs")],
+    engine.manager.get_elem_by_id("top.model_name").change(
+        lambda model_name: gr.Column(visible=get_visual(model_name)),
+        [engine.manager.get_elem_by_id("top.model_name")],
         [chat_elems["image_box"]],
     )
 
