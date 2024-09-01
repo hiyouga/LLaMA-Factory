@@ -89,11 +89,9 @@ class HuggingfaceEngine(BaseEngine):
 
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or generating_args["default_system"]
-        prompt_ids, _ = template.encode_oneturn(
-            tokenizer=tokenizer, messages=paired_messages, system=system, tools=tools
-        )
+        prompt_ids, _ = template.encode_oneturn(tokenizer, paired_messages, system, tools)
         if image is not None:
-            prompt_ids, _ = template.mm_plugin.process_token_ids(prompt_ids, None, tokenizer, processor)
+            prompt_ids, _ = template.mm_plugin.process_token_ids(prompt_ids, None, [image], tokenizer, processor)
 
         prompt_length = len(prompt_ids)
         inputs = torch.tensor([prompt_ids], device=model.device)

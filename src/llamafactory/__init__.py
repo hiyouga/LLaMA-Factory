@@ -33,7 +33,7 @@ Dependency graph:
     transformers>=4.41.2,<=4.44.3
 """
 
-from .cli import VERSION
+from .extras.env import VERSION
 
 
 __version__ = VERSION
