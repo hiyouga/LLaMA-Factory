@@ -99,6 +99,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
         processor = AutoProcessor.from_pretrained(model_args.model_name_or_path, **init_kwargs)
         setattr(processor, "tokenizer", tokenizer)
         setattr(processor, "image_seqlen", get_image_seqlen(config))
+        setattr(processor, "image_resolution", model_args.image_resolution)
     except Exception:
         processor = None
 
