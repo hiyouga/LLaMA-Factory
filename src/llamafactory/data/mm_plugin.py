@@ -208,7 +208,7 @@ class Qwen2vlPlugin(BasePlugin):
     ) -> List[Dict[str, str]]:
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
         merge_length: int = getattr(image_processor, "merge_size") ** 2
-        if len(images) > 0:
+        if len(images) != 0:
             image_grid_thw = _get_mm_inputs(images, processor)["image_grid_thw"]
         else:
             image_grid_thw = []
