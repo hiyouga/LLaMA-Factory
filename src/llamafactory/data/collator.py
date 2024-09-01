@@ -142,14 +142,14 @@ class PairwiseDataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
                     "attention_mask": feature["{}_attention_mask".format(key)],
                     "labels": feature["{}_labels".format(key)],
                 }
+                if "{}_token_type_ids".format(key) in feature:
+                    target_feature["token_type_ids"] = feature["{}_token_type_ids".format(key)]
+
                 if "pixel_values" in feature:  # image data are same for chosen and rejected
                     target_feature["pixel_values"] = feature["pixel_values"]
 
                 if "image_grid_thw" in feature:
                     target_feature["image_grid_thw"] = feature["image_grid_thw"]
-
-                if "{}_token_type_ids".format(key) in feature:
-                    target_feature["token_type_ids"] = feature["{}_token_type_ids".format(key)]
 
                 concatenated_features.append(target_feature)
 
@@ -177,15 +177,15 @@ class KTODataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
                 "attention_mask": feature["kl_attention_mask"],
                 "labels": feature["kl_labels"],
             }
+            if "token_type_ids" in feature:
+                target_feature["token_type_ids"] = feature["token_type_ids"]
+                kl_feature["token_type_ids"] = feature["kl_token_type_ids"]
+
             if "pixel_values" in feature:
                 target_feature["pixel_values"] = feature["pixel_values"]
 
             if "image_grid_thw" in feature:
                 target_feature["image_grid_thw"] = feature["image_grid_thw"]
-
-            if "token_type_ids" in feature:
-                target_feature["token_type_ids"] = feature["token_type_ids"]
-                kl_feature["token_type_ids"] = feature["kl_token_type_ids"]
 
             target_features.append(target_feature)
             kl_features.append(kl_feature)
