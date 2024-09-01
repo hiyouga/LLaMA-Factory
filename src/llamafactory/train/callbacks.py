@@ -318,7 +318,7 @@ class LogCallback(TrainerCallback):
         if self.webui_mode and all(key in logs for key in ["loss", "learning_rate", "epoch"]):
             logger.info(
                 "{{'loss': {:.4f}, 'learning_rate': {:2.4e}, 'epoch': {:.2f}, 'throughput': {}}}".format(
-                    logs["loss"], logs["learning_rate"], logs["epoch"], logs.get("throughput")
+                    logs["loss"], logs["learning_rate"], logs["epoch"], logs.get("throughput", "N/A")
                 )
             )
 
