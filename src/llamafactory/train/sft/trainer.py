@@ -28,6 +28,7 @@ from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
 from ..callbacks import PissaConvertCallback, SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
+from ..push_to_ms import PushToMsHubMixin
 
 
 if TYPE_CHECKING:
@@ -41,7 +42,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-class CustomSeq2SeqTrainer(Seq2SeqTrainer):
+class CustomSeq2SeqTrainer(PushToMsHubMixin, Seq2SeqTrainer):
     r"""
     Inherits Seq2SeqTrainer to compute generative metrics such as BLEU and ROUGE.
     """
