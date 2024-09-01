@@ -27,7 +27,7 @@ from .vllm_engine import VllmEngine
 
 
 if TYPE_CHECKING:
-    from numpy.typing import NDArray
+    from PIL.Image import Image
 
     from .base_engine import BaseEngine, Response
 
@@ -56,7 +56,7 @@ class ChatModel:
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        image: Optional["NDArray"] = None,
+        image: Optional["Image"] = None,
         **input_kwargs,
     ) -> List["Response"]:
         task = asyncio.run_coroutine_threadsafe(self.achat(messages, system, tools, image, **input_kwargs), self._loop)
@@ -67,7 +67,7 @@ class ChatModel:
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        image: Optional["NDArray"] = None,
+        image: Optional["Image"] = None,
         **input_kwargs,
     ) -> List["Response"]:
         return await self.engine.chat(messages, system, tools, image, **input_kwargs)
@@ -77,7 +77,7 @@ class ChatModel:
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        image: Optional["NDArray"] = None,
+        image: Optional["Image"] = None,
         **input_kwargs,
     ) -> Generator[str, None, None]:
         generator = self.astream_chat(messages, system, tools, image, **input_kwargs)
@@ -93,7 +93,7 @@ class ChatModel:
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        image: Optional["NDArray"] = None,
+        image: Optional["Image"] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
         async for new_token in self.engine.stream_chat(messages, system, tools, image, **input_kwargs):
