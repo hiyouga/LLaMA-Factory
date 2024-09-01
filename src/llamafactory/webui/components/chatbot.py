@@ -44,7 +44,7 @@ def create_chat_box(
                         tools = gr.Textbox(show_label=False, lines=3)
 
                     with gr.Column() as image_box:
-                        image = gr.Image(sources=["upload"], type="numpy")
+                        image = gr.Image(sources=["upload"], type="pil")
 
                 query = gr.Textbox(show_label=False, lines=8)
                 submit_btn = gr.Button(variant="primary")

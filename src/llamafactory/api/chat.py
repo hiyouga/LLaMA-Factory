@@ -20,8 +20,6 @@ import re
 import uuid
 from typing import TYPE_CHECKING, AsyncGenerator, Dict, List, Optional, Tuple
 
-import numpy as np
-
 from ..data import Role as DataRole
 from ..extras.logging import get_logger
 from ..extras.packages import is_fastapi_available, is_pillow_available, is_requests_available
@@ -114,7 +112,7 @@ def _process_request(
                     else:  # web uri
                         image_stream = requests.get(image_url, stream=True).raw
 
-                    image = np.array(Image.open(image_stream).convert("RGB"))
+                    image = Image.open(image_stream).convert("RGB")
         else:
             input_messages.append({"role": ROLE_MAPPING[message.role], "content": message.content})
 
