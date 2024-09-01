@@ -14,7 +14,7 @@
 
 import os
 from functools import partial
-from typing import TYPE_CHECKING, Any, Dict, List, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Sequence, Union
 
 from datasets import Features
 
@@ -33,19 +33,17 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-def _convert_images(images: List[Any], dataset_attr: "DatasetAttr", data_args: "DataArguments") -> List[Any]:
+def _convert_images(images: Sequence[Any], dataset_attr: "DatasetAttr", data_args: "DataArguments") -> List[Any]:
     r"""
     Optionally concatenates image path to dataset dir when loading from local disk.
     """
-    outputs = []
+    images = images[:]
     if dataset_attr.load_from in ["script", "file"]:
-        for image in images:
-            if isinstance(image, str) and os.path.isfile(os.path.join(data_args.dataset_dir, image)):
-                outputs.append(os.path.join(data_args.dataset_dir, image))
-            else:
-                outputs.append(image)
+        for i in range(len(images)):
+            if isinstance(images[i], str) and os.path.isfile(os.path.join(data_args.dataset_dir, images[i])):
+                images[i] = os.path.join(data_args.dataset_dir, images[i])
 
-    return outputs
+    return images
 
 
 def convert_alpaca(

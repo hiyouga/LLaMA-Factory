@@ -138,6 +138,10 @@ class ModelArguments:
         default=False,
         metadata={"help": "Whether or not to randomly initialize the model weights."},
     )
+    image_resolution: int = field(
+        default=512,
+        metadata={"help": "Keeps the height or width of image below this resolution."},
+    )
     infer_backend: Literal["huggingface", "vllm"] = field(
         default="huggingface",
         metadata={"help": "Backend engine used at inference."},
