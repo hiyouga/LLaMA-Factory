@@ -82,7 +82,7 @@ class LlavaMultiModalProjectorForYiVLForVLLM(LlavaMultiModalProjectorForYiVL):
 
 def autocast_projector_dtype(model: "PreTrainedModel", model_args: "ModelArguments") -> None:
     r"""
-    Casts projector output to half precision for quantized VLMs.
+    Casts projector output to half precision for fine-tuning quantized VLMs.
     """
 
     def _mm_projector_forward_post_hook(
@@ -134,6 +134,22 @@ def get_forbidden_modules(config: "PretrainedConfig", finetuning_args: "Finetuni
             raise ValueError("Qwen2-VL models do not support `train_mm_proj_only`.")
 
     return forbidden_modules
+
+
+def get_image_seqlen(config: "PretrainedConfig") -> int:
+    r"""
+    Computes the number of special tokens per image.
+    """
+    if getattr(config, "model_type", None) == "llava":
+        image_seqlen = (config.vision_config.image_size // config.vision_config.patch_size) ** 2
+        if getattr(config, "vision_feature_select_strategy", "default") == "full":  # add [CLS] token
+            image_seqlen += 1
+    elif getattr(config, "model_type", None) == "paligemma":
+        image_seqlen = config.vision_config.num_image_tokens
+    elif getattr(config, "model_type", None) == "qwen2_vl":  # variable length
+        image_seqlen = -1
+
+    return image_seqlen
 
 
 def patch_target_modules(
