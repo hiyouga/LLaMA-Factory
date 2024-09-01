@@ -176,7 +176,6 @@ class CustomDPOTrainer(DPOTrainer):
             batch = {k: v.detach().clone() for k, v in batch.items()}  # avoid error
 
         all_logits: "torch.Tensor" = model(**batch, return_dict=True, use_cache=False).logits.to(torch.float32)
-
         all_logps, valid_length = get_batch_logps(logits=all_logits, labels=batch["labels"])
         if self.loss_type in ["ipo", "orpo", "simpo"]:
             all_logps = all_logps / valid_length
