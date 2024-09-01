@@ -124,9 +124,7 @@ class VllmEngine(BaseEngine):
 
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or self.generating_args["default_system"]
-        prompt_ids, _ = self.template.encode_oneturn(
-            tokenizer=self.tokenizer, messages=paired_messages, system=system, tools=tools
-        )
+        prompt_ids, _ = self.template.encode_oneturn(self.tokenizer, paired_messages, system, tools)
 
         if self.processor is not None and image is not None:  # add image features
             image_processor: "BaseImageProcessor" = getattr(self.processor, "image_processor")

@@ -138,3 +138,17 @@ class GLM4ToolUtils(ToolUtils):
             return content
 
         return [(tool_name, json.dumps(arguments, ensure_ascii=False))]
+
+
+TOOLS = {
+    "default": DefaultToolUtils(),
+    "glm4": GLM4ToolUtils(),
+}
+
+
+def get_tool_utils(name: str) -> "ToolUtils":
+    tool_utils = TOOLS.get(name, None)
+    if tool_utils is None:
+        raise ValueError("Tool utils `{}` not found.".format(name))
+
+    return tool_utils
