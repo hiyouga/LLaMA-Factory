@@ -14,9 +14,7 @@
 
 import json
 import os
-from typing import TYPE_CHECKING, Dict, Generator, List, Optional, Sequence, Tuple
-
-from numpy.typing import NDArray
+from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Sequence, Tuple
 
 from ..chat import ChatModel
 from ..data import Role
@@ -134,7 +132,7 @@ class WebChatModel(ChatModel):
         messages: Sequence[Dict[str, str]],
         system: str,
         tools: str,
-        image: Optional[NDArray],
+        image: Optional[Any],
         max_new_tokens: int,
         top_p: float,
         temperature: float,
