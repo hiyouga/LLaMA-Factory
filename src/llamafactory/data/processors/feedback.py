@@ -21,6 +21,7 @@ from .processor_utils import infer_seqlen
 
 
 if TYPE_CHECKING:
+    from PIL.Image import Image
     from transformers import PreTrainedTokenizer, ProcessorMixin
 
     from ...hparams import DataArguments
@@ -36,11 +37,12 @@ def _encode_feedback_example(
     kl_response: Sequence[Dict[str, str]],
     system: Optional[str],
     tools: Optional[str],
+    images: Sequence["Image"],
     template: "Template",
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"],
     cutoff_len: int,
-) -> Tuple[List[int], List[int], List[int], List[int], bool]:
+) -> Tuple[List[int], List[int], List[int], List[int], bool, Dict[str, Any]]:
     if response[0]["content"]:  # desired example
         kto_tag = True
         messages = prompt + [response[0]]
@@ -53,6 +55,8 @@ def _encode_feedback_example(
     else:
         kl_messages = prompt + [kl_response[1]]
 
+    messages = template.mm_plugin.process_messages(messages, images, processor)
+    kl_messages = template.mm_plugin.process_messages(kl_messages, images, processor)
     prompt_ids, response_ids = template.encode_oneturn(tokenizer, messages, system, tools)
     kl_prompt_ids, kl_response_ids = template.encode_oneturn(tokenizer, kl_messages, system, tools)
 
@@ -60,8 +64,8 @@ def _encode_feedback_example(
         response_ids += [tokenizer.eos_token_id]
         kl_response_ids += [tokenizer.eos_token_id]
 
-    prompt_ids, _ = template.mm_plugin.process_token_ids(prompt_ids, None, tokenizer, processor)
-    kl_prompt_ids, _ = template.mm_plugin.process_token_ids(kl_prompt_ids, None, tokenizer, processor)
+    prompt_ids, _ = template.mm_plugin.process_token_ids(prompt_ids, None, images, tokenizer, processor)
+    kl_prompt_ids, _ = template.mm_plugin.process_token_ids(kl_prompt_ids, None, images, tokenizer, processor)
 
     source_len, target_len = infer_seqlen(len(prompt_ids), len(response_ids), cutoff_len)
     prompt_ids = prompt_ids[:source_len]
@@ -74,8 +78,15 @@ def _encode_feedback_example(
     labels = [IGNORE_INDEX] * source_len + response_ids
     kl_input_ids = kl_prompt_ids + kl_response_ids
     kl_labels = [IGNORE_INDEX] * kl_source_len + kl_response_ids
-
-    return input_ids, labels, kl_input_ids, kl_labels, kto_tag
+    extra_inputs = template.mm_plugin.get_mm_inputs(
+        images=images,
+        feature_seqlens={
+            "token_type_ids": len(input_ids),
+            "kl_token_type_ids": len(kl_input_ids),
+        },
+        processor=processor,
+    )
+    return input_ids, labels, kl_input_ids, kl_labels, kto_tag, extra_inputs
 
 
 def preprocess_feedback_dataset(
@@ -93,13 +104,13 @@ def preprocess_feedback_dataset(
             logger.warning("Dropped invalid example: {}".format(examples["prompt"][i] + examples["response"][i]))
             continue
 
-        prompt = template.mm_plugin.process_messages(examples["prompt"][i], examples["images"][i], processor)
-        input_ids, labels, kl_input_ids, kl_labels, kto_tag = _encode_feedback_example(
-            prompt=prompt,
+        input_ids, labels, kl_input_ids, kl_labels, kto_tag, extra_inputs = _encode_feedback_example(
+            prompt=examples["prompt"][i],
             response=examples["response"][i],
             kl_response=kl_response[i],
             system=examples["system"][i],
             tools=examples["tools"][i],
+            images=examples["images"][i],
             template=template,
             tokenizer=tokenizer,
             processor=processor,
@@ -112,15 +123,8 @@ def preprocess_feedback_dataset(
         model_inputs["kl_attention_mask"].append([1] * len(kl_input_ids))
         model_inputs["kl_labels"].append(kl_labels)
         model_inputs["kto_tags"].append(kto_tag)
-        template.mm_plugin.process_model_inputs(
-            model_inputs=model_inputs,
-            images=examples["images"][i],
-            feature_seqlens={
-                "token_type_ids": len(input_ids),
-                "kl_token_type_ids": len(kl_input_ids),
-            },
-            processor=processor,
-        )
+        for key, value in extra_inputs.items():
+            model_inputs[key].append(value)
 
     desirable_num = sum([1 for tag in model_inputs["kto_tags"] if tag])
     undesirable_num = len(model_inputs["kto_tags"]) - desirable_num
