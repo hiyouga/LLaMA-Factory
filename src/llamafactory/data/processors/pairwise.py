@@ -21,6 +21,7 @@ from .processor_utils import infer_seqlen
 
 
 if TYPE_CHECKING:
+    from PIL.Image import Image
     from transformers import PreTrainedTokenizer, ProcessorMixin
 
     from ...hparams import DataArguments
@@ -35,13 +36,14 @@ def _encode_pairwise_example(
     response: Sequence[Dict[str, str]],
     system: Optional[str],
     tools: Optional[str],
+    images: Sequence["Image"],
     template: "Template",
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"],
     cutoff_len: int,
-) -> Tuple[List[int], List[int], List[int], List[int]]:
-    chosen_messages = prompt + [response[0]]
-    rejected_messages = prompt + [response[1]]
+) -> Tuple[List[int], List[int], List[int], List[int], Dict[str, Any]]:
+    chosen_messages = template.mm_plugin.process_messages(prompt + [response[0]], images, processor)
+    rejected_messages = template.mm_plugin.process_messages(prompt + [response[1]], images, processor)
     prompt_ids, chosen_ids = template.encode_oneturn(tokenizer, chosen_messages, system, tools)
     _, rejected_ids = template.encode_oneturn(tokenizer, rejected_messages, system, tools)
 
@@ -49,7 +51,7 @@ def _encode_pairwise_example(
         chosen_ids += [tokenizer.eos_token_id]
         rejected_ids += [tokenizer.eos_token_id]
 
-    prompt_ids, _ = template.mm_plugin.process_token_ids(prompt_ids, None, tokenizer, processor)
+    prompt_ids, _ = template.mm_plugin.process_token_ids(prompt_ids, None, images, tokenizer, processor)
     # consider the response is more important
     source_len, target_len = infer_seqlen(len(prompt_ids), max(len(chosen_ids), len(rejected_ids)), cutoff_len)
     prompt_ids = prompt_ids[:source_len]
@@ -60,8 +62,15 @@ def _encode_pairwise_example(
     chosen_labels = [IGNORE_INDEX] * source_len + chosen_ids
     rejected_input_ids = prompt_ids + rejected_ids
     rejected_labels = [IGNORE_INDEX] * source_len + rejected_ids
-
-    return chosen_input_ids, chosen_labels, rejected_input_ids, rejected_labels
+    extra_inputs = template.mm_plugin.get_mm_inputs(
+        images=images,
+        feature_seqlens={
+            "chosen_token_type_ids": len(chosen_input_ids),
+            "rejected_token_type_ids": len(rejected_input_ids),
+        },
+        processor=processor,
+    )
+    return chosen_input_ids, chosen_labels, rejected_input_ids, rejected_labels, extra_inputs
 
 
 def preprocess_pairwise_dataset(
@@ -78,12 +87,12 @@ def preprocess_pairwise_dataset(
             logger.warning("Dropped invalid example: {}".format(examples["prompt"][i] + examples["response"][i]))
             continue
 
-        prompt = template.mm_plugin.process_messages(examples["prompt"][i], examples["images"][i], processor)
-        chosen_input_ids, chosen_labels, rejected_input_ids, rejected_labels = _encode_pairwise_example(
-            prompt=prompt,
+        chosen_input_ids, chosen_labels, rejected_input_ids, rejected_labels, extra_inputs = _encode_pairwise_example(
+            prompt=examples["prompt"][i],
             response=examples["response"][i],
             system=examples["system"][i],
             tools=examples["tools"][i],
+            images=examples["images"][i],
             template=template,
             tokenizer=tokenizer,
             processor=processor,
@@ -95,15 +104,8 @@ def preprocess_pairwise_dataset(
         model_inputs["rejected_input_ids"].append(rejected_input_ids)
         model_inputs["rejected_attention_mask"].append([1] * len(rejected_input_ids))
         model_inputs["rejected_labels"].append(rejected_labels)
-        template.mm_plugin.process_model_inputs(
-            model_inputs=model_inputs,
-            images=examples["images"][i],
-            feature_seqlens={
-                "chosen_token_type_ids": len(chosen_input_ids),
-                "rejected_token_type_ids": len(rejected_input_ids),
-            },
-            processor=processor,
-        )
+        for key, value in extra_inputs.items():
+            model_inputs[key].append(value)
 
     return model_inputs
 
