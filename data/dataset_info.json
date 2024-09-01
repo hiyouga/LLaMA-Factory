@@ -340,6 +340,14 @@
       "assistant_tag": "assistant"
     }
   },
+  "pokemon_cap": {
+    "hf_hub_url": "llamafactory/pokemon-gpt4o-captions",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "images": "images"
+    }
+  },
   "mllm_pt_demo": {
     "hf_hub_url": "BUAADreamer/mllm_pt_demo",
     "formatting": "sharegpt",
