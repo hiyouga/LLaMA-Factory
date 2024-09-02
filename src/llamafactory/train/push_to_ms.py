@@ -107,13 +107,15 @@ class PushToMsHubMixin:
             hub_token = os.environ.get('MODELSCOPE_API_TOKEN')
         if hub_token is not None:
             api.login(hub_token)
+        else:
+            raise ValueError('Please specify a token by `--hub_token` or `MODELSCOPE_API_TOKEN=xxx`')
         visibility = ModelVisibility.PRIVATE if hub_private_repo else ModelVisibility.PUBLIC
 
         if '/' not in hub_model_id:
             user_name = ModelScopeConfig.get_user_info()[0]
             assert isinstance(user_name, str)
             hub_model_id = f'{user_name}/{hub_model_id}'
-            logger.info(f"'/' not in hub_model_id, setting hub_model_id: {hub_model_id}")
+            logger.info(f"'/' not in hub_model_id, pushing to personal repo {hub_model_id}")
         try:
             api.create_model(hub_model_id, visibility)
         except HTTPError:
