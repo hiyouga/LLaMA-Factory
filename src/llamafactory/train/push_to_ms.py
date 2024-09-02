@@ -70,7 +70,6 @@ class PushToMsHubMixin:
             folder_path = os.path.dirname(folder_path)
             logger.warn(f'ModelScope does not support submitting a part of the sub-folders, all files in {folder_path} will be submitted.')
             ignore_patterns = []
-        logger.info(f'pushing models from {path_in_repo}, folder: {folder_path}')
         push_to_hub(
             repo_id,
             folder_path,
