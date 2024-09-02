@@ -54,7 +54,7 @@ def eval_logit_processor(logits: "torch.Tensor", labels: "torch.Tensor") -> "tor
     if logits.dim() != 3:
         raise ValueError("Cannot process the logits.")
 
-    return torch.argmax(logits, dim=-1).cpu()
+    return torch.argmax(logits, dim=-1)
 
 
 @dataclass
