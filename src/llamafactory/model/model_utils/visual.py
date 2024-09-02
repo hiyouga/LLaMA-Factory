@@ -91,9 +91,10 @@ def autocast_projector_dtype(model: "PreTrainedModel", model_args: "ModelArgumen
         return output.to(model_args.compute_dtype)
 
     if getattr(model, "quantization_method", None):
-        if getattr(model.config, "model_type", None) in ["llava", "paligemma"]:
+        model_type = getattr(model.config, "model_type", None)
+        if model_type in ["llava", "paligemma"]:
             mm_projector: "torch.nn.Module" = getattr(model, "multi_modal_projector")
-        elif getattr(model.config, "model_type", None) == "qwen2_vl":
+        elif model_type == "qwen2_vl":
             mm_projector: "torch.nn.Module" = getattr(getattr(model, "visual"), "merger")
         else:
             return
@@ -106,7 +107,8 @@ def configure_visual_model(config: "PretrainedConfig") -> None:
     r"""
     Patches VLMs before loading them.
     """
-    if getattr(config, "model_type", None) == "llava":  # required for ds zero3 and valuehead models
+    model_type = getattr(config, "model_type", None)
+    if model_type == "llava":  # required for ds zero3 and valuehead models
         setattr(config, "hidden_size", getattr(config.text_config, "hidden_size", None))
 
     if getattr(config, "is_yi_vl_derived_model", None):
@@ -118,15 +120,16 @@ def get_forbidden_modules(config: "PretrainedConfig", finetuning_args: "Finetuni
     r"""
     Freezes vision tower and language model for VLM full/freeze tuning.
     """
+    model_type = getattr(config, "model_type", None)
     forbidden_modules = set()
-    if getattr(config, "model_type", None) in ["llava", "paligemma"]:
+    if model_type in ["llava", "paligemma"]:
         if finetuning_args.freeze_vision_tower:
             forbidden_modules.add("vision_tower")
 
         if finetuning_args.train_mm_proj_only:
             forbidden_modules.add("language_model")
 
-    elif getattr(config, "model_type", None) == "qwen2_vl":
+    elif model_type == "qwen2_vl":
         if finetuning_args.freeze_vision_tower:
             forbidden_modules.add("visual")
 
@@ -140,13 +143,14 @@ def get_image_seqlen(config: "PretrainedConfig") -> int:
     r"""
     Computes the number of special tokens per image.
     """
-    if getattr(config, "model_type", None) == "llava":
+    model_type = getattr(config, "model_type", None)
+    if model_type == "llava":
         image_seqlen = (config.vision_config.image_size // config.vision_config.patch_size) ** 2
         if getattr(config, "vision_feature_select_strategy", "default") == "full":  # add [CLS] token
             image_seqlen += 1
-    elif getattr(config, "model_type", None) == "paligemma":
+    elif model_type == "paligemma":
         image_seqlen = config.vision_config.num_image_tokens
-    elif getattr(config, "model_type", None) == "qwen2_vl":  # variable length
+    elif model_type == "qwen2_vl":  # variable length
         image_seqlen = -1
 
     return image_seqlen
@@ -158,12 +162,16 @@ def patch_target_modules(
     r"""
     Freezes vision tower for VLM LoRA tuning.
     """
-    if not finetuning_args.freeze_vision_tower:
-        return target_modules
-
-    if getattr(config, "model_type", None) in ["llava", "paligemma"]:
-        return "^(?!.*vision_tower).*(?:{}).*".format("|".join(target_modules))
-    elif getattr(config, "model_type", None) == "qwen2_vl":
-        return "^(?!.*visual).*(?:{}).*".format("|".join(target_modules))
+    model_type = getattr(config, "model_type", None)
+    if finetuning_args.freeze_vision_tower:
+        if model_type in ["llava", "paligemma"]:
+            return "^(?!.*vision_tower).*(?:{}).*".format("|".join(target_modules))
+        elif model_type == "qwen2_vl":
+            return "^(?!.*visual).*(?:{}).*".format("|".join(target_modules))
+        else:
+            return target_modules
     else:
-        return target_modules
+        if model_type == "qwen2_vl":
+            return "^(?!.*patch_embed).*(?:{}).*".format("|".join(target_modules))
+        else:
+            return target_modules
