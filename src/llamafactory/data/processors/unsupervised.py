@@ -21,10 +21,10 @@ from .processor_utils import infer_seqlen
 
 
 if TYPE_CHECKING:
-    from PIL.Image import Image
     from transformers import PreTrainedTokenizer, ProcessorMixin
 
     from ...hparams import DataArguments
+    from ..mm_plugin import ImageInput
     from ..template import Template
 
 
@@ -36,12 +36,12 @@ def _encode_unsupervised_example(
     response: Sequence[Dict[str, str]],
     system: Optional[str],
     tools: Optional[str],
-    images: Sequence["Image"],
+    images: Sequence["ImageInput"],
     template: "Template",
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"],
     cutoff_len: int,
-) -> Tuple[List[int], List[int], Dict[str, Any]]:
+) -> Tuple[List[int], List[int]]:
     if len(response) == 1:
         messages = prompt + response
     else:
@@ -56,10 +56,7 @@ def _encode_unsupervised_example(
     source_len, target_len = infer_seqlen(len(input_ids), len(labels), cutoff_len)
     input_ids = input_ids[:source_len]
     labels = labels[:target_len]
-    extra_inputs = template.mm_plugin.get_mm_inputs(
-        images=images, feature_seqlens={"token_type_ids": len(input_ids)}, processor=processor
-    )
-    return input_ids, labels, extra_inputs
+    return input_ids, labels
 
 
 def preprocess_unsupervised_dataset(
@@ -71,17 +68,17 @@ def preprocess_unsupervised_dataset(
 ) -> Dict[str, List[Any]]:
     # build inputs with format `<bos> X` and labels with format `Y <eos>`
     model_inputs = defaultdict(list)
-    for i in range(len(examples["prompt"])):
-        if len(examples["prompt"][i]) % 2 != 1:
-            logger.warning("Dropped invalid example: {}".format(examples["prompt"][i] + examples["response"][i]))
+    for i in range(len(examples["_prompt"])):
+        if len(examples["_prompt"][i]) % 2 != 1:
+            logger.warning("Dropped invalid example: {}".format(examples["_prompt"][i] + examples["_response"][i]))
             continue
 
-        input_ids, labels, extra_inputs = _encode_unsupervised_example(
-            prompt=examples["prompt"][i],
-            response=examples["response"][i],
-            system=examples["system"][i],
-            tools=examples["tools"][i],
-            images=examples["images"][i],
+        input_ids, labels = _encode_unsupervised_example(
+            prompt=examples["_prompt"][i],
+            response=examples["_response"][i],
+            system=examples["_system"][i],
+            tools=examples["_tools"][i],
+            images=examples["_images"][i] or [],
             template=template,
             tokenizer=tokenizer,
             processor=processor,
@@ -90,8 +87,7 @@ def preprocess_unsupervised_dataset(
         model_inputs["input_ids"].append(input_ids)
         model_inputs["attention_mask"].append([1] * len(input_ids))
         model_inputs["labels"].append(labels)
-        for key, value in extra_inputs.items():
-            model_inputs[key].append(value)
+        model_inputs["images"].append(examples["_images"][i])
 
     return model_inputs
 

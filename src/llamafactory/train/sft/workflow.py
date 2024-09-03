@@ -43,24 +43,26 @@ def run_sft(
 ):
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
-    dataset_module = get_dataset(model_args, data_args, training_args, stage="sft", **tokenizer_module)
+    dataset_module, template = get_dataset(model_args, data_args, training_args, stage="sft", **tokenizer_module)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
 
     if getattr(model, "is_quantized", False) and not training_args.do_train:
         setattr(model, "_hf_peft_config_loaded", True)  # hack here: make model compatible with prediction
 
     data_collator = SFTDataCollatorWith4DAttentionMask(
-        tokenizer=tokenizer,
+        template=template,
         pad_to_multiple_of=8 if training_args.do_train else None,  # for shift short attention
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
         block_diag_attn=model_args.block_diag_attn,
         attn_implementation=getattr(model.config, "_attn_implementation", None),
         compute_dtype=model_args.compute_dtype,
+        **tokenizer_module,
     )
 
     # Override the decoding parameters of Seq2SeqTrainer
     training_args.generation_max_length = training_args.generation_max_length or data_args.cutoff_len
     training_args.generation_num_beams = data_args.eval_num_beams or training_args.generation_num_beams
+    training_args.remove_unused_columns = False  # important for multimodal and pairwise dataset
 
     # Metric utils
     metric_module = {}

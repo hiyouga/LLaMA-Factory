@@ -105,7 +105,7 @@ def load_reference_model(
 def load_train_dataset(**kwargs) -> "Dataset":
     model_args, data_args, training_args, _, _ = get_train_args(kwargs)
     tokenizer_module = load_tokenizer(model_args)
-    dataset_module = get_dataset(model_args, data_args, training_args, stage=kwargs["stage"], **tokenizer_module)
+    dataset_module, _ = get_dataset(model_args, data_args, training_args, stage=kwargs["stage"], **tokenizer_module)
     return dataset_module["train_dataset"]
 
 

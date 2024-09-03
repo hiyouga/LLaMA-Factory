@@ -156,7 +156,7 @@ class HuggingfaceEngine(BaseEngine):
 
         if image is not None:
             mm_inputs = template.mm_plugin.get_mm_inputs(
-                images=[image], feature_seqlens={"token_type_ids": prompt_length}, processor=processor
+                images=[image], imglens=[1], seqlens=[prompt_length], processor=processor
             )
             for key, value in mm_inputs.items():
                 value = value if isinstance(value, torch.Tensor) else torch.tensor(value)

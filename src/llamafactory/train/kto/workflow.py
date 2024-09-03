@@ -41,13 +41,14 @@ def run_kto(
 ):
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
-    dataset_module = get_dataset(model_args, data_args, training_args, stage="kto", **tokenizer_module)
+    dataset_module, template = get_dataset(model_args, data_args, training_args, stage="kto", **tokenizer_module)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
 
     data_collator = KTODataCollatorWithPadding(
-        tokenizer=tokenizer,
+        template=template,
         pad_to_multiple_of=8,
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
+        **tokenizer_module,
     )
 
     # Create reference model
@@ -57,7 +58,7 @@ def run_kto(
         ref_model = create_ref_model(model_args, finetuning_args)
 
     # Update arguments
-    training_args.remove_unused_columns = False  # important for pairwise dataset
+    training_args.remove_unused_columns = False  # important for multimodal and pairwise dataset
 
     # Initialize our Trainer
     trainer = CustomKTOTrainer(
