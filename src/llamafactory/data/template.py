@@ -349,7 +349,7 @@ def get_template_and_fix_tokenizer(
     name: Optional[str] = None,
     tool_format: Optional[str] = None,
 ) -> Template:
-    if name == "qwen2_vl":
+    if name in ["llava", "paligemma", "qwen2_vl"]:
         require_version(
             "transformers>=4.45.0.dev0", "To fix: pip install git+https://github.com/huggingface/transformers.git"
         )
