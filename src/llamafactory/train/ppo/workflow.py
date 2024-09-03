@@ -41,11 +41,11 @@ def run_ppo(
 ):
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
-    dataset_module = get_dataset(model_args, data_args, training_args, stage="ppo", **tokenizer_module)
+    dataset_module, template = get_dataset(model_args, data_args, training_args, stage="ppo", **tokenizer_module)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train, add_valuehead=True)
 
     tokenizer.padding_side = "left"  # use left-padding in generation while using right-padding in training
-    data_collator = MultiModalDataCollatorForSeq2Seq(tokenizer=tokenizer)
+    data_collator = MultiModalDataCollatorForSeq2Seq(template=template, **tokenizer_module)
 
     # Create reference model and reward model
     ref_model = create_ref_model(model_args, finetuning_args, add_valuehead=True)
