@@ -156,7 +156,7 @@ class HuggingfaceEngine(BaseEngine):
 
         if image is not None:
             mm_inputs = template.mm_plugin.get_mm_inputs(
-                images=[image], feature_seqlens={"token_type_ids": prompt_length}, processor=processor
+                images=[image], imglens=[1], seqlens=[prompt_length], processor=processor
             )
             if "_images" in mm_inputs:
                 mm_inputs = {"images" if k == "_images" else k: v for k, v.unsqueeze(0) in mm_inputs.items()}

@@ -14,7 +14,7 @@
 
 import os
 import sys
-from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Tuple, Union
 
 import numpy as np
 from datasets import DatasetDict, load_dataset, load_from_disk
@@ -180,7 +180,13 @@ def _get_preprocessed_dataset(
             desc="Running tokenizer on dataset",
         )
 
-    dataset = dataset.map(preprocess_func, batched=True, remove_columns=column_names, **kwargs)
+    dataset = dataset.map(
+        preprocess_func,
+        batched=True,
+        batch_size=data_args.preprocessing_batch_size,
+        remove_columns=column_names,
+        **kwargs,
+    )
     if "_images" in dataset.column_names:
         # Datasets can't set column images because of images is a feature of examples.
         # See also https://github.com/huggingface/datasets/issues/7135
@@ -206,7 +212,7 @@ def get_dataset(
     stage: Literal["pt", "sft", "rm", "ppo", "kto"],
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"] = None,
-) -> "DatasetModule":
+) -> Tuple["DatasetModule", "Template"]:
     template = get_template_and_fix_tokenizer(tokenizer, data_args.template, data_args.tool_format)
     if data_args.train_on_prompt and template.efficient_eos:
         raise ValueError("Current template does not support `train_on_prompt`.")
@@ -277,4 +283,4 @@ def get_dataset(
         if "validation" in dataset_dict:
             dataset_module["eval_dataset"] = dataset_dict["validation"]
 
-        return dataset_module
+        return dataset_module, template
