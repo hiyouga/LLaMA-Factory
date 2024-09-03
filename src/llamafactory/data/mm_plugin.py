@@ -1,5 +1,6 @@
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
+from io import BytesIO
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, TypedDict, Union
 
 from PIL.Image import Image
 from transformers import ProcessorMixin
@@ -9,34 +10,53 @@ from ..extras.packages import is_pillow_available
 
 
 if is_pillow_available():
-    import torch
     from PIL import Image
+    from PIL.Image import Image as ImageObject
 
 
 if TYPE_CHECKING:
-    from PIL.Image import Image as ImageObject
+    import torch
     from transformers import PreTrainedTokenizer, ProcessorMixin
     from transformers.image_processing_utils import BaseImageProcessor
 
+    class EncodedImage(TypedDict):
+        path: Optional[str]
+        bytes: Optional[bytes]
 
-def _regularize_images(images: Sequence["ImageObject"], processor: "ProcessorMixin") -> List["ImageObject"]:
+    ImageInput = Union[str, EncodedImage, ImageObject]
+
+
+def _regularize_images(images: Sequence["ImageInput"], processor: "ProcessorMixin") -> List["ImageObject"]:
     r"""
-    Regularizes images to avoid error. Including resizing and mode convert.
+    Regularizes images to avoid error. Including reading, resizing and converting.
     """
-    images = images[:]
     image_resolution = getattr(processor, "image_resolution", 512)
-    for i in range(len(images)):
-        if max(images[i].width, images[i].height) > image_resolution:
-            factor = image_resolution / max(images[i].width, images[i].height)
-            images[i] = images[i].resize((int(images[i].width * factor), int(images[i].height * factor)))
+    results = []
+    for image in images:
+        if isinstance(image, str):
+            image = Image.open(image)
+        elif isinstance(image, dict):
+            if image["bytes"] is not None:
+                image = Image.open(BytesIO(image["bytes"]))
+            else:
+                image = Image.open(image["path"])
 
-        if images[i].mode != "RGB":
-            images[i] = images[i].convert("RGB")
+        if not isinstance(image, ImageObject):
+            raise ValueError("Expect input is a list of Images, but got {}.".format(type(image)))
 
-    return images
+        if max(image.width, image.height) > image_resolution:
+            factor = image_resolution / max(image.width, image.height)
+            image = image.resize((int(image.width * factor), int(image.height * factor)))
+
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+
+        results.append(image)
+
+    return results
 
 
-def _get_mm_inputs(images: Sequence["ImageObject"], processor: "ProcessorMixin") -> Dict[str, "torch.Tensor"]:
+def _get_mm_inputs(images: Sequence["ImageInput"], processor: "ProcessorMixin") -> Dict[str, "torch.Tensor"]:
     r"""
     Processes visual inputs.
 
@@ -53,26 +73,27 @@ def _get_mm_inputs(images: Sequence["ImageObject"], processor: "ProcessorMixin")
     if len(images) != 0:
         images = _regularize_images(images, processor)
         image_inputs = image_processor(images=images, return_tensors="pt")
-    else:  # add NoneType for fake images
-        image = Image.new("RGB", (64, 64), (255, 255, 255))
-        image_inputs = image_processor(images=[image], return_tensors="pt")
-        image_inputs = {key: None for key in image_inputs.keys()}
+    else:
+        image_inputs = {}
 
     return image_inputs
 
 
 def _get_paligemma_token_type_ids(
-    images: Sequence["ImageObject"], input_len: int, processor: "ProcessorMixin"
+    imglens: Sequence[int], seqlens: Sequence[int], processor: "ProcessorMixin"
 ) -> List[List[int]]:
     r"""
     Gets paligemma token type ids for computing loss.
 
     Returns:
-        token_type_ids: shape (1, seq_len)
+        batch_token_type_ids: shape (batch_size, sequence_length)
     """
-    num_images = len(images)
-    image_seqlen = num_images * getattr(processor, "image_seqlen")
-    return [[0] * image_seqlen + [1] * (input_len - image_seqlen)]
+    batch_token_type_ids = []
+    for imglen, seqlen in zip(imglens, seqlens):
+        image_seqlen = imglen * getattr(processor, "image_seqlen")
+        batch_token_type_ids.append([0] * image_seqlen + [1] * (seqlen - image_seqlen))
+
+    return batch_token_type_ids
 
 
 class BasePlugin:
@@ -82,7 +103,7 @@ class BasePlugin:
     def process_messages(
         self,
         messages: Sequence[Dict[str, str]],
-        images: Sequence["ImageObject"],
+        images: Sequence["ImageInput"],
         processor: Optional["ProcessorMixin"],
     ) -> List[Dict[str, str]]:
         r"""
@@ -94,7 +115,7 @@ class BasePlugin:
         self,
         input_ids: List[int],
         labels: Optional[List[int]],
-        images: Sequence["ImageObject"],
+        images: Sequence["ImageInput"],
         tokenizer: "PreTrainedTokenizer",
         processor: Optional["ProcessorMixin"],
     ) -> Tuple[List[int], Optional[List[int]]]:
@@ -105,10 +126,11 @@ class BasePlugin:
 
     def get_mm_inputs(
         self,
-        images: Sequence["ImageObject"],
-        feature_seqlens: Dict[str, int],
+        images: Sequence["ImageInput"],
+        imglens: Sequence[int],
+        seqlens: Sequence[int],
         processor: Optional["ProcessorMixin"],
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         r"""
         Builds batched multimodal inputs for VLMs.
         """
@@ -119,31 +141,32 @@ class LlavaPlugin(BasePlugin):
     def process_messages(
         self,
         messages: Sequence[Dict[str, str]],
-        images: Sequence["ImageObject"],
+        images: Sequence["ImageInput"],
         processor: Optional["ProcessorMixin"],
     ) -> List[Dict[str, str]]:
-        num_images = 0
+        num_image_tokens = 0
         image_seqlen = getattr(processor, "image_seqlen")
         messages = deepcopy(messages)
         for message in messages:
             content = message["content"]
             while IMAGE_PLACEHOLDER in content:
-                num_images += 1
+                num_image_tokens += 1
                 content = content.replace(IMAGE_PLACEHOLDER, "{{image}}", 1)
 
             message["content"] = content.replace("{{image}}", self.image_token * image_seqlen)
 
-        if len(images) != num_images:
+        if len(images) != num_image_tokens:
             raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
 
         return messages
 
     def get_mm_inputs(
         self,
-        images: Sequence["ImageObject"],
-        feature_seqlens: Dict[str, int],
+        images: Sequence["ImageInput"],
+        imglens: Sequence[int],
+        seqlens: Sequence[int],
         processor: Optional["ProcessorMixin"],
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         return _get_mm_inputs(images, processor)
 
 
@@ -151,20 +174,20 @@ class PaliGemmaPlugin(BasePlugin):
     def process_messages(
         self,
         messages: Sequence[Dict[str, str]],
-        images: Sequence["ImageObject"],
+        images: Sequence["ImageInput"],
         processor: Optional["ProcessorMixin"],
     ) -> List[Dict[str, str]]:
-        num_images = 0
+        num_image_tokens = 0
         messages = deepcopy(messages)
         for message in messages:
             content = message["content"]
             while IMAGE_PLACEHOLDER in content:
-                num_images += 1
+                num_image_tokens += 1
                 content = content.replace(IMAGE_PLACEHOLDER, "{{image}}", 1)
 
             message["content"] = content.replace("{{image}}", "")
 
-        if len(images) != num_images:
+        if len(images) != num_image_tokens:
             raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
 
         return messages
@@ -173,7 +196,7 @@ class PaliGemmaPlugin(BasePlugin):
         self,
         input_ids: List[int],
         labels: Optional[List[int]],
-        images: Sequence["ImageObject"],
+        images: Sequence["ImageInput"],
         tokenizer: "PreTrainedTokenizer",
         processor: Optional["ProcessorMixin"],
     ) -> Tuple[List[int], Optional[List[int]]]:
@@ -188,14 +211,13 @@ class PaliGemmaPlugin(BasePlugin):
 
     def get_mm_inputs(
         self,
-        images: Sequence["ImageObject"],
-        feature_seqlens: Dict[str, int],
+        images: Sequence["ImageInput"],
+        imglens: Sequence[int],
+        seqlens: Sequence[int],
         processor: Optional["ProcessorMixin"],
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         mm_inputs = _get_mm_inputs(images, processor)
-        for feature_name, feature_length in feature_seqlens.items():
-            mm_inputs[feature_name] = _get_paligemma_token_type_ids(images, feature_length, processor)
-
+        mm_inputs["token_type_ids"] = _get_paligemma_token_type_ids(imglens, seqlens, processor)
         return mm_inputs
 
 
@@ -203,7 +225,7 @@ class Qwen2vlPlugin(BasePlugin):
     def process_messages(
         self,
         messages: Sequence[Dict[str, str]],
-        images: Sequence["ImageObject"],
+        images: Sequence["ImageInput"],
         processor: Optional["ProcessorMixin"],
     ) -> List[Dict[str, str]]:
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
@@ -213,36 +235,37 @@ class Qwen2vlPlugin(BasePlugin):
         else:
             image_grid_thw = []
 
-        num_images = 0
+        num_image_tokens = 0
         messages = deepcopy(messages)
         for message in messages:
             content = message["content"]
             while IMAGE_PLACEHOLDER in content:
-                if num_images >= len(image_grid_thw):
+                if num_image_tokens >= len(image_grid_thw):
                     raise ValueError("`len(images)` is less than the number of {} tokens.".format(IMAGE_PLACEHOLDER))
 
                 content = content.replace(
                     IMAGE_PLACEHOLDER,
                     "<|vision_start|>{}<|vision_end|>".format(
-                        self.image_token * (image_grid_thw[num_images].prod() // merge_length)
+                        self.image_token * (image_grid_thw[num_image_tokens].prod() // merge_length)
                     ),
                     1,
                 )
-                num_images += 1
+                num_image_tokens += 1
 
             message["content"] = content
 
-        if len(images) != num_images:
+        if len(images) != num_image_tokens:
             raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
 
         return messages
 
     def get_mm_inputs(
         self,
-        images: Sequence["ImageObject"],
-        feature_seqlens: Dict[str, int],
+        images: Sequence["ImageInput"],
+        imglens: Sequence[int],
+        seqlens: Sequence[int],
         processor: Optional["ProcessorMixin"],
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         return _get_mm_inputs(images, processor)
 
 
