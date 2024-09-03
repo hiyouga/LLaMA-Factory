@@ -42,6 +42,8 @@ def find_all_linear_modules(model: "PreTrainedModel", freeze_vision_tower: bool)
     if freeze_vision_tower:
         if model_type == "qwen2_vl":
             forbidden_modules.add("visual")
+        elif model_type == "chatglm":
+            forbidden_modules.add("vision")
         else:
             forbidden_modules.add("vision_tower")
 

@@ -249,6 +249,16 @@ class Qwen2vlPlugin(BasePlugin):
 
 
 class Glm4vPlugin(BasePlugin):
+    def __init__(self, image_token: str) -> None:
+        super().__init__(image_token)
+        self.transform = transforms.Compose(
+            [
+                transforms.Resize((1120, 1120), interpolation=transforms.InterpolationMode.BICUBIC),
+                transforms.ToTensor(),
+                transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711)),
+            ]
+        )
+
     def process_messages(
         self,
         messages: Sequence[Dict[str, str]],
@@ -282,15 +292,9 @@ class Glm4vPlugin(BasePlugin):
     def get_mm_inputs(
         self, images: Sequence[Image], feature_seqlens: Dict[str, int], processor: ProcessorMixin | None
     ) -> Dict[str, Any]:
-        transform = transforms.Compose(
-            [
-                transforms.Resize((1120, 1120), interpolation=transforms.InterpolationMode.BICUBIC),
-                transforms.ToTensor(),
-                transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711)),
-            ]
-        )
-        images = [transform(image) for image in images]
-        return {"images": torch.stack(images)}
+        if len(images) > 1:
+            raise ValueError("Glm-4v-9b supports only one image as input per example.")
+        return {"_images": self.transform(images[0])}
 
 
 PLUGINS = {

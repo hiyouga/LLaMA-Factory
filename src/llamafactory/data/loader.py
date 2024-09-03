@@ -181,6 +181,10 @@ def _get_preprocessed_dataset(
         )
 
     dataset = dataset.map(preprocess_func, batched=True, remove_columns=column_names, **kwargs)
+    if "_images" in dataset.column_names:
+        # Datasets can't set column images because of images is a feature of examples.
+        # See also https://github.com/huggingface/datasets/issues/7135
+        dataset = dataset.rename_column("_images", "images")
 
     if training_args.should_log:
         try:
