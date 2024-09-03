@@ -452,6 +452,17 @@
       "images": "images"
     }
   },
+  "vlfeedback": {
+    "hf_hub_url": "Zhihui/VLFeedback",
+    "ranking": true,
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "chosen": "chosen",
+      "rejected": "rejected",
+      "images": "images"
+    }
+  },
   "orca_pairs": {
     "hf_hub_url": "Intel/orca_dpo_pairs",
     "ranking": true,
