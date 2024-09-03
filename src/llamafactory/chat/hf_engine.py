@@ -159,7 +159,7 @@ class HuggingfaceEngine(BaseEngine):
                 images=[image], feature_seqlens={"token_type_ids": prompt_length}, processor=processor
             )
             if "_images" in mm_inputs:
-                mm_inputs = {"images" if k == "_images" else k: v for k, v in mm_inputs.items()}
+                mm_inputs = {"images" if k == "_images" else k: v for k, v.unsqueeze(0) in mm_inputs.items()}
             for key, value in mm_inputs.items():
                 value = value if isinstance(value, torch.Tensor) else torch.tensor(value)
                 gen_kwargs[key] = value.to(model.device)
