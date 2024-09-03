@@ -2,6 +2,8 @@ from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
 from PIL.Image import Image
+from PIL.Image import Image as ImageObject
+from torchvision import transforms
 from transformers import ProcessorMixin
 
 from ..extras.constants import IGNORE_INDEX, IMAGE_PLACEHOLDER
@@ -246,11 +248,57 @@ class Qwen2vlPlugin(BasePlugin):
         return _get_mm_inputs(images, processor)
 
 
+class Glm4vPlugin(BasePlugin):
+    def process_messages(
+        self,
+        messages: Sequence[Dict[str, str]],
+        images: Sequence["ImageObject"],
+        processor: Optional["ProcessorMixin"],
+    ) -> List[Dict[str, str]]:
+        num_images = 0
+        result_messages = []
+        for message in messages:
+            result_message = deepcopy(message)
+
+            content = deepcopy(message["content"])
+            while IMAGE_PLACEHOLDER in content:
+                if num_images >= len(images):
+                    raise ValueError("`len(images)` is less than the number of {} tokens.".format(IMAGE_PLACEHOLDER))
+
+                content = content.replace(
+                    IMAGE_PLACEHOLDER,
+                    "<|begin_of_image|><|endoftext|><|end_of_image|>",
+                    1,
+                )
+                num_images += 1
+
+            result_message["content"] = content
+            result_messages.append(result_message)
+
+        if len(images) != num_images:
+            raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
+        return result_messages
+
+    def get_mm_inputs(
+        self, images: Sequence[Image], feature_seqlens: Dict[str, int], processor: ProcessorMixin | None
+    ) -> Dict[str, Any]:
+        transform = transforms.Compose(
+            [
+                transforms.Resize((1120, 1120), interpolation=transforms.InterpolationMode.BICUBIC),
+                transforms.ToTensor(),
+                transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711)),
+            ]
+        )
+        images = [transform(image) for image in images]
+        return {"images": torch.stack(images)}
+
+
 PLUGINS = {
     "base": BasePlugin,
     "llava": LlavaPlugin,
     "paligemma": PaliGemmaPlugin,
     "qwen2_vl": Qwen2vlPlugin,
+    "glm4v": Glm4vPlugin,
 }
 
 
