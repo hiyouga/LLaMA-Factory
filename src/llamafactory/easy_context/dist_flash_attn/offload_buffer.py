@@ -16,14 +16,14 @@ class OffloadBuffer:
         self.cpu_layer_num = int(num_layers * self.offload_percent)
         self.gpu_layer_num = num_layers - self.cpu_layer_num
         self.gpu_buffer = [None for _ in range(self.gpu_layer_num)]
-        self.cpu_buffer = [torch.empty([self.cpu_layer_num] + shape, dtype=torch.bfloat16) for _ in range(self.cpu_layer_num)]
+        self.cpu_buffer = [torch.empty(shape, dtype=torch.bfloat16, pin_memory=True) for _ in range(self.cpu_layer_num)]
         bs, num_heads, seq_len, emb_size = shape
         shape_h = [bs, seq_len, num_heads * emb_size]
         shape_a = [bs, seq_len]
         self.hidden_state_gpu_buffer = [None for _ in range(self.gpu_layer_num)]
-        self.hidden_state_cpu_buffer = [torch.empty([self.cpu_layer_num] + shape_h, dtype=torch.bfloat16) for _ in range(self.cpu_layer_num)]
+        self.hidden_state_cpu_buffer = [torch.empty(shape_h, dtype=torch.bfloat16, pin_memory=True) for _ in range(self.cpu_layer_num)]
         self.position_id_gpu_buffer = [None for _ in range(self.gpu_layer_num)]
-        self.position_id_cpu_buffer = [torch.empty([self.cpu_layer_num] + shape_a, dtype=torch.bfloat16) for _ in range(self.cpu_layer_num)]
+        self.position_id_cpu_buffer = [torch.empty(shape_a, dtype=torch.bfloat16, pin_memory=True) for _ in range(self.cpu_layer_num)]
         _, self.d2h_stream = cuda.cudart.cudaStreamCreate()
         self.h2d_streams = []
         for i in range(self.gpu_layer_num):
@@ -98,8 +98,9 @@ class OffloadBuffer:
         _ = cuda.cudart.cudaMemcpyAsync(pgb.data_ptr(), pcb.data_ptr(), pgb.nelement() * pgb.element_size(), cuda.cudart.cudaMemcpyKind.cudaMemcpyHostToDevice, self.h2d_streams[idx])
         
     def __del__(self):
-        cuda.cudart.cudaStreamDestroy(self.d2h_stream)
-        for i in range(self.gpu_layer_num):
-            cuda.cudart.cudaStreamDestroy(self.h2d_streams[i])
+        if self.allocated:
+            cuda.cudart.cudaStreamDestroy(self.d2h_stream)
+            for i in range(self.gpu_layer_num):
+                cuda.cudart.cudaStreamDestroy(self.h2d_streams[i])
         
 offload_buffer = None
