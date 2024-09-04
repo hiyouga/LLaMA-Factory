@@ -23,6 +23,7 @@
     "system": "数据集代表系统提示的表头名称（默认：None）",
     "tools": "数据集代表工具描述的表头名称（默认：None）",
     "images": "数据集代表图像输入的表头名称（默认：None）",
+    "videos": "数据集代表视频输入的表头名称（默认：None）",
     "chosen": "数据集代表更优回答的表头名称（默认：None）",
     "rejected": "数据集代表更差回答的表头名称（默认：None）",
     "kto_tag": "数据集代表 KTO 标签的表头名称（默认：None）"
@@ -168,11 +169,11 @@ KTO 数据集需要额外添加一个 `kto_tag` 列，包含 bool 类型的人�
 }
 ```
 
-### 多模态数据集
+### 多模态图像数据集
 
 - [样例数据集](mllm_demo.json)
 
-多模态数据集需要额外添加一个 `images` 列，包含输入图像的路径。
+多模态图像数据集需要额外添加一个 `images` 列，包含输入图像的路径。
 
 ```json
 [
@@ -197,6 +198,39 @@ KTO 数据集需要额外添加一个 `kto_tag` 列，包含 bool 类型的人�
     "query": "input",
     "response": "output",
     "images": "images"
+  }
+}
+```
+
+### 多模态视频数据集
+
+- [样例数据集](mllm_demo_video.json)
+
+多模态视频数据集需要额外添加一个 `videos` 列，包含输入视频的路径。
+
+```json
+[
+  {
+    "instruction": "人类指令（必填）",
+    "input": "人类输入（选填）",
+    "output": "模型回答（必填）",
+    "videos": [
+      "视频路径（必填）"
+    ]
+  }
+]
+```
+
+对于上述格式的数据，`dataset_info.json` 中的*数据集描述*应为：
+
+```json
+"数据集名称": {
+  "file_name": "data.json",
+  "columns": {
+    "prompt": "instruction",
+    "query": "input",
+    "response": "output",
+    "videos": "videos"
   }
 }
 ```
