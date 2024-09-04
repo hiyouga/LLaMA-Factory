@@ -117,7 +117,7 @@ def test_encode_multiturn(use_fast: bool):
 def test_jinja_template(use_fast: bool):
     tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA, use_fast=use_fast)
     ref_tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA, use_fast=use_fast)
-    get_template_and_fix_tokenizer(tokenizer, name="llama3")
+    get_template_and_fix_tokenizer(tokenizer, DataArguments(template="llama3"))
     assert tokenizer.chat_template != ref_tokenizer.chat_template
     assert tokenizer.apply_chat_template(MESSAGES) == ref_tokenizer.apply_chat_template(MESSAGES)
 
