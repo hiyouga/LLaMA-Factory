@@ -17,7 +17,6 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, Union
 
 from transformers.utils.versions import require_version
 
-from ..extras.constants import IMAGE_PLACEHOLDER
 from ..extras.logging import get_logger
 from .data_utils import Role
 from .formatter import EmptyFormatter, FunctionFormatter, StringFormatter, ToolFormatter
@@ -213,7 +212,7 @@ def _register_template(
     stop_words: Sequence[str] = [],
     efficient_eos: bool = False,
     replace_eos: bool = False,
-    mm_plugin: "BasePlugin" = get_mm_plugin(name="base", image_token=IMAGE_PLACEHOLDER),
+    mm_plugin: "BasePlugin" = get_mm_plugin(name="base"),
 ) -> None:
     r"""
     Registers a chat template.
@@ -826,7 +825,7 @@ _register_template(
     default_system="You are a helpful assistant.",
     stop_words=["<|im_end|>"],
     replace_eos=True,
-    mm_plugin=get_mm_plugin(name="qwen2_vl", image_token="<|image_pad|>"),
+    mm_plugin=get_mm_plugin(name="qwen2_vl", image_token="<|image_pad|>", video_token="<|video_pad|>"),
 )
 
 

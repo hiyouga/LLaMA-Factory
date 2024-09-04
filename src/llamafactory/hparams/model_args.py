@@ -142,6 +142,10 @@ class ModelArguments:
         default=512,
         metadata={"help": "Keeps the height or width of image below this resolution."},
     )
+    video_fps: float = field(
+        default=2.0,
+        metadata={"help": "The frames to sample per second for video training."},
+    )
     infer_backend: Literal["huggingface", "vllm"] = field(
         default="huggingface",
         metadata={"help": "Backend engine used at inference."},
