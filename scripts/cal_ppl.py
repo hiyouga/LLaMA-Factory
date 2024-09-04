@@ -23,7 +23,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import DataCollatorForLanguageModeling, DataCollatorForSeq2Seq
 
-from llamafactory.data import get_dataset
+from llamafactory.data import get_dataset, get_template_and_fix_tokenizer
 from llamafactory.extras.constants import IGNORE_INDEX
 from llamafactory.hparams import get_train_args
 from llamafactory.model import load_model, load_tokenizer
@@ -88,7 +88,8 @@ def cal_ppl(
     )
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
-    trainset = get_dataset(model_args, data_args, training_args, stage, **tokenizer_module)["train_dataset"]
+    template = get_template_and_fix_tokenizer(tokenizer, data_args)
+    trainset = get_dataset(template, model_args, data_args, training_args, stage, **tokenizer_module)["train_dataset"]
     model = load_model(tokenizer, model_args, finetuning_args, is_trainable=False)
     if stage == "pt":
         data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
