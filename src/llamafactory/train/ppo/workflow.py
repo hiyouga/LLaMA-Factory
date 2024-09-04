@@ -17,7 +17,7 @@
 
 from typing import TYPE_CHECKING, List, Optional
 
-from ...data import MultiModalDataCollatorForSeq2Seq, get_dataset
+from ...data import MultiModalDataCollatorForSeq2Seq, get_dataset, get_template_and_fix_tokenizer
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
 from ..callbacks import fix_valuehead_checkpoint
@@ -41,7 +41,8 @@ def run_ppo(
 ):
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
-    dataset_module, template = get_dataset(model_args, data_args, training_args, stage="ppo", **tokenizer_module)
+    template = get_template_and_fix_tokenizer(tokenizer, data_args)
+    dataset_module = get_dataset(template, model_args, data_args, training_args, stage="ppo", **tokenizer_module)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train, add_valuehead=True)
 
     tokenizer.padding_side = "left"  # use left-padding in generation while using right-padding in training
