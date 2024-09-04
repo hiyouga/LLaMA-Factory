@@ -2,8 +2,8 @@ from copy import deepcopy
 from io import BytesIO
 from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, TypedDict, Union
 
-from torchvision import transforms
 import numpy as np
+from torchvision import transforms
 
 from ..extras.constants import IGNORE_INDEX, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
 from ..extras.packages import is_pillow_available, is_pyav_available
@@ -363,8 +363,8 @@ class Qwen2vlPlugin(BasePlugin):
 
 
 class Glm4vPlugin(BasePlugin):
-    def __init__(self, image_token: str) -> None:
-        super().__init__(image_token)
+    def __init__(self, image_token: Optional[str], video_token: Optional[str]) -> None:
+        super().__init__(image_token, video_token)
         self.transform = transforms.Compose(
             [
                 transforms.Resize((1120, 1120), interpolation=transforms.InterpolationMode.BICUBIC),
