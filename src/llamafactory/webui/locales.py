@@ -1691,6 +1691,20 @@ LOCALES = {
             "label": "이미지 (선택 사항)",
         },
     },
+    "video": {
+        "en": {
+            "label": "Video (optional)",
+        },
+        "ru": {
+            "label": "Видео (по желанию)",
+        },
+        "zh": {
+            "label": "视频（非必填）",
+        },
+        "ko": {
+            "label": "비디오 (선택 사항)",
+        },
+    },
     "query": {
         "en": {
             "placeholder": "Input...",

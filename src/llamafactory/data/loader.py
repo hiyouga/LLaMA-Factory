@@ -14,7 +14,7 @@
 
 import os
 import sys
-from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Union
 
 import numpy as np
 from datasets import DatasetDict, load_dataset, load_from_disk
@@ -27,7 +27,6 @@ from .aligner import align_dataset
 from .data_utils import merge_dataset, split_dataset
 from .parser import get_dataset_list
 from .preprocess import get_preprocess_and_print_func
-from .template import get_template_and_fix_tokenizer
 
 
 if TYPE_CHECKING:
@@ -206,17 +205,14 @@ def _get_preprocessed_dataset(
 
 
 def get_dataset(
+    template: "Template",
     model_args: "ModelArguments",
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
     stage: Literal["pt", "sft", "rm", "ppo", "kto"],
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"] = None,
-) -> Tuple["DatasetModule", "Template"]:
-    template = get_template_and_fix_tokenizer(tokenizer, data_args.template, data_args.tool_format)
-    if data_args.train_on_prompt and template.efficient_eos:
-        raise ValueError("Current template does not support `train_on_prompt`.")
-
+) -> "DatasetModule":
     # Load tokenized dataset
     if data_args.tokenized_path is not None:
         if has_tokenized_data(data_args.tokenized_path):
@@ -227,6 +223,7 @@ def get_dataset(
             dataset_module: Dict[str, "Dataset"] = {}
             if "train" in dataset_dict:
                 dataset_module["train_dataset"] = dataset_dict["train"]
+
             if "validation" in dataset_dict:
                 dataset_module["eval_dataset"] = dataset_dict["validation"]
 
@@ -280,7 +277,8 @@ def get_dataset(
         dataset_module = {}
         if "train" in dataset_dict:
             dataset_module["train_dataset"] = dataset_dict["train"]
+
         if "validation" in dataset_dict:
             dataset_module["eval_dataset"] = dataset_dict["validation"]
 
-        return dataset_module, template
+        return dataset_module

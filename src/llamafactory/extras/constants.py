@@ -95,6 +95,8 @@ SUPPORTED_CLASS_FOR_BLOCK_DIAG_ATTN = {
 
 SUPPORTED_CLASS_FOR_S2ATTN = {"llama"}
 
+VIDEO_PLACEHOLDER = "<video>"
+
 V_HEAD_WEIGHTS_NAME = "value_head.bin"
 
 V_HEAD_SAFE_WEIGHTS_NAME = "value_head.safetensors"
@@ -1642,6 +1644,18 @@ register_model_group(
         "Yi-1.5-34B-Chat": {
             DownloadSource.DEFAULT: "01-ai/Yi-1.5-34B-Chat",
             DownloadSource.MODELSCOPE: "01ai/Yi-1.5-34B-Chat",
+        },
+        "Yi-Coder-1.5B": {
+            DownloadSource.DEFAULT: "01-ai/Yi-Coder-1.5B",
+        },
+        "Yi-Coder-9B": {
+            DownloadSource.DEFAULT: "01-ai/Yi-Coder-9B",
+        },
+        "Yi-Coder-1.5B-Chat": {
+            DownloadSource.DEFAULT: "01-ai/Yi-Coder-1.5B-Chat",
+        },
+        "Yi-Coder-9B-Chat": {
+            DownloadSource.DEFAULT: "01-ai/Yi-Coder-9B-Chat",
         },
     },
     template="yi",

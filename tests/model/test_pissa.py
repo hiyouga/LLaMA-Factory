@@ -14,6 +14,8 @@
 
 import os
 
+import pytest
+
 from llamafactory.train.test_utils import compare_model, load_infer_model, load_reference_model, load_train_model
 
 
@@ -47,13 +49,17 @@ INFER_ARGS = {
     "infer_dtype": "float16",
 }
 
+CI_OS = os.environ.get("CI_OS", "")
 
+
+@pytest.mark.skipif(CI_OS.startswith("windows"), reason="Skip for windows.")
 def test_pissa_train():
     model = load_train_model(**TRAIN_ARGS)
     ref_model = load_reference_model(TINY_LLAMA_PISSA, TINY_LLAMA_PISSA, use_pissa=True, is_trainable=True)
     compare_model(model, ref_model)
 
 
+@pytest.mark.skipif(CI_OS.startswith("windows"), reason="Skip for windows.")
 def test_pissa_inference():
     model = load_infer_model(**INFER_ARGS)
     ref_model = load_reference_model(TINY_LLAMA_PISSA, TINY_LLAMA_PISSA, use_pissa=True, is_trainable=False)
