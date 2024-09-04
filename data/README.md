@@ -23,6 +23,7 @@ Currently we support datasets in **alpaca** and **sharegpt** format.
     "system": "the column name in the dataset containing the system prompts. (default: None)",
     "tools": "the column name in the dataset containing the tool description. (default: None)",
     "images": "the column name in the dataset containing the image inputs. (default: None)",
+    "videos": "the column name in the dataset containing the videos inputs. (default: None)",
     "chosen": "the column name in the dataset containing the chosen answers. (default: None)",
     "rejected": "the column name in the dataset containing the rejected answers. (default: None)",
     "kto_tag": "the column name in the dataset containing the kto tags. (default: None)"
@@ -168,11 +169,11 @@ Regarding the above dataset, the *dataset description* in `dataset_info.json` sh
 }
 ```
 
-### Multimodal Dataset
+### Multimodal Image Dataset
 
 - [Example dataset](mllm_demo.json)
 
-Multimodal datasets require a `images` column containing the paths to the input images.
+Multimodal image datasets require a `images` column containing the paths to the input images.
 
 ```json
 [
@@ -197,6 +198,39 @@ Regarding the above dataset, the *dataset description* in `dataset_info.json` sh
     "query": "input",
     "response": "output",
     "images": "images"
+  }
+}
+```
+
+### Multimodal Video Dataset
+
+- [Example dataset](mllm_demo_video.json)
+
+Multimodal video datasets require a `videos` column containing the paths to the input videos.
+
+```json
+[
+  {
+    "instruction": "human instruction (required)",
+    "input": "human input (optional)",
+    "output": "model response (required)",
+    "videos": [
+      "video path (required)"
+    ]
+  }
+]
+```
+
+Regarding the above dataset, the *dataset description* in `dataset_info.json` should be:
+
+```json
+"dataset_name": {
+  "file_name": "data.json",
+  "columns": {
+    "prompt": "instruction",
+    "query": "input",
+    "response": "output",
+    "videos": "videos"
   }
 }
 ```
