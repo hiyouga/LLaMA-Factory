@@ -29,7 +29,7 @@ jobs:
         os:
           - "ubuntu-latest"
           - "windows-latest"
-          - "macos-latest"
+          - "macos-12"
 
     runs-on: ${{ matrix.os }}
 
@@ -38,6 +38,7 @@ jobs:
 
     env:
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      CI_OS: ${{ matrix.os }}
 
     steps:
       - name: Checkout
