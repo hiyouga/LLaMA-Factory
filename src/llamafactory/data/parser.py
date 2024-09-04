@@ -43,6 +43,7 @@ class DatasetAttr:
     system: Optional[str] = None
     tools: Optional[str] = None
     images: Optional[str] = None
+    videos: Optional[str] = None
     # rlhf columns
     chosen: Optional[str] = None
     rejected: Optional[str] = None
@@ -126,7 +127,7 @@ def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -
         dataset_attr.set_attr("num_samples", dataset_info[name])
 
         if "columns" in dataset_info[name]:
-            column_names = ["system", "tools", "images", "chosen", "rejected", "kto_tag"]
+            column_names = ["system", "tools", "images", "videos", "chosen", "rejected", "kto_tag"]
             if dataset_attr.formatting == "alpaca":
                 column_names.extend(["prompt", "query", "response", "history"])
             else:

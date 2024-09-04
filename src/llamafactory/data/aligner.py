@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments
 
     from ..hparams import DataArguments
-    from .mm_plugin import ImageInput
+    from .mm_plugin import ImageInput, VideoInput
     from .parser import DatasetAttr
 
 
@@ -50,6 +50,26 @@ def _convert_images(
                 images[i] = os.path.join(data_args.dataset_dir, images[i])
 
     return images
+
+
+def _convert_videos(
+    videos: Sequence["VideoInput"],
+    dataset_attr: "DatasetAttr",
+    data_args: "DataArguments",
+) -> Optional[List["VideoInput"]]:
+    r"""
+    Optionally concatenates video path to dataset dir when loading from local disk.
+    """
+    if len(videos) == 0:
+        return None
+
+    videos = videos[:]
+    if dataset_attr.load_from in ["script", "file"]:
+        for i in range(len(videos)):
+            if isinstance(videos[i], str) and os.path.isfile(os.path.join(data_args.dataset_dir, videos[i])):
+                videos[i] = os.path.join(data_args.dataset_dir, videos[i])
+
+    return videos
 
 
 def convert_alpaca(
@@ -96,12 +116,14 @@ def convert_alpaca(
         response = []
 
     convert_images = partial(_convert_images, dataset_attr=dataset_attr, data_args=data_args)
+    convert_videos = partial(_convert_videos, dataset_attr=dataset_attr, data_args=data_args)
     output = {
         "_prompt": prompt,
         "_response": response,
         "_system": example[dataset_attr.system] if dataset_attr.system else "",
         "_tools": example[dataset_attr.tools] if dataset_attr.tools else "",
         "_images": convert_images(example[dataset_attr.images]) if dataset_attr.images else None,
+        "_videos": convert_videos(example[dataset_attr.videos]) if dataset_attr.videos else None,
     }
     return output
 
@@ -187,12 +209,14 @@ def convert_sharegpt(
         prompt, response = [], []
 
     convert_images = partial(_convert_images, dataset_attr=dataset_attr, data_args=data_args)
+    convert_videos = partial(_convert_videos, dataset_attr=dataset_attr, data_args=data_args)
     output = {
         "_prompt": prompt,
         "_response": response,
         "_system": system,
         "_tools": example[dataset_attr.tools] if dataset_attr.tools else "",
         "_images": convert_images(example[dataset_attr.images]) if dataset_attr.images else None,
+        "_videos": convert_videos(example[dataset_attr.videos]) if dataset_attr.videos else None,
     }
     return output
 
@@ -210,6 +234,7 @@ def align_dataset(
         _system: "..."
         _tools: "...",
         _images: [],
+        _videos: [],
     """
     if dataset_attr.formatting == "alpaca":
         convert_func = partial(convert_alpaca, dataset_attr=dataset_attr, data_args=data_args)
