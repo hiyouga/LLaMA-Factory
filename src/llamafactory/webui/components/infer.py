@@ -68,7 +68,7 @@ def create_infer_tab(engine: "Engine") -> Dict[str, "Component"]:
     engine.manager.get_elem_by_id("top.model_name").change(
         lambda model_name: gr.Column(visible=get_visual(model_name)),
         [engine.manager.get_elem_by_id("top.model_name")],
-        [chat_elems["image_box"]],
+        [chat_elems["mm_box"]],
     )
 
     return elem_dict

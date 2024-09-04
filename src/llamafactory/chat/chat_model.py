@@ -27,8 +27,7 @@ from .vllm_engine import VllmEngine
 
 
 if TYPE_CHECKING:
-    from PIL.Image import Image
-
+    from ..data.mm_plugin import ImageInput, VideoInput
     from .base_engine import BaseEngine, Response
 
 
@@ -56,10 +55,13 @@ class ChatModel:
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        image: Optional["Image"] = None,
+        image: Optional["ImageInput"] = None,
+        video: Optional["VideoInput"] = None,
         **input_kwargs,
     ) -> List["Response"]:
-        task = asyncio.run_coroutine_threadsafe(self.achat(messages, system, tools, image, **input_kwargs), self._loop)
+        task = asyncio.run_coroutine_threadsafe(
+            self.achat(messages, system, tools, image, video, **input_kwargs), self._loop
+        )
         return task.result()
 
     async def achat(
@@ -67,20 +69,22 @@ class ChatModel:
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        image: Optional["Image"] = None,
+        image: Optional["ImageInput"] = None,
+        video: Optional["VideoInput"] = None,
         **input_kwargs,
     ) -> List["Response"]:
-        return await self.engine.chat(messages, system, tools, image, **input_kwargs)
+        return await self.engine.chat(messages, system, tools, image, video, **input_kwargs)
 
     def stream_chat(
         self,
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        image: Optional["Image"] = None,
+        image: Optional["ImageInput"] = None,
+        video: Optional["VideoInput"] = None,
         **input_kwargs,
     ) -> Generator[str, None, None]:
-        generator = self.astream_chat(messages, system, tools, image, **input_kwargs)
+        generator = self.astream_chat(messages, system, tools, image, video, **input_kwargs)
         while True:
             try:
                 task = asyncio.run_coroutine_threadsafe(generator.__anext__(), self._loop)
@@ -93,10 +97,11 @@ class ChatModel:
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        image: Optional["Image"] = None,
+        image: Optional["ImageInput"] = None,
+        video: Optional["VideoInput"] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
-        async for new_token in self.engine.stream_chat(messages, system, tools, image, **input_kwargs):
+        async for new_token in self.engine.stream_chat(messages, system, tools, image, video, **input_kwargs):
             yield new_token
 
     def get_scores(
