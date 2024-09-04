@@ -52,6 +52,7 @@ INFER_ARGS = {
 CI_OS = os.environ.get("CI_OS", "")
 
 
+@pytest.mark.skipif(CI_OS.startswith("windows"), reason="Skip for windows.")
 def test_pissa_train():
     model = load_train_model(**TRAIN_ARGS)
     ref_model = load_reference_model(TINY_LLAMA_PISSA, TINY_LLAMA_PISSA, use_pissa=True, is_trainable=True)
