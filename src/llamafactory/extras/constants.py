@@ -1633,6 +1633,18 @@ register_model_group(
             DownloadSource.DEFAULT: "01-ai/Yi-1.5-34B-Chat",
             DownloadSource.MODELSCOPE: "01ai/Yi-1.5-34B-Chat",
         },
+        "Yi-Coder-1.5B": {
+            DownloadSource.DEFAULT: "01-ai/Yi-Coder-1.5B",
+        },
+        "Yi-Coder-9B": {
+            DownloadSource.DEFAULT: "01-ai/Yi-Coder-9B",
+        },
+        "Yi-Coder-1.5B-Chat": {
+            DownloadSource.DEFAULT: "01-ai/Yi-Coder-1.5B-Chat",
+        },
+        "Yi-Coder-9B-Chat": {
+            DownloadSource.DEFAULT: "01-ai/Yi-Coder-9B-Chat",
+        },
     },
     template="yi",
 )

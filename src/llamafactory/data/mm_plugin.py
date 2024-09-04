@@ -105,7 +105,7 @@ def _get_mm_inputs(
     It holds num_patches == torch.prod(image_grid_thw)
     """
     image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
-    input_dict = {"images": None, "videos": None}
+    input_dict = {"images": None}  # default key
     if len(images) != 0:
         images = _regularize_images(images, processor)
         input_dict["images"] = images
@@ -114,7 +114,7 @@ def _get_mm_inputs(
         videos = _regularize_videos(videos, processor)
         input_dict["videos"] = videos
 
-    if input_dict["images"] is not None or input_dict["videos"] is not None:
+    if input_dict.get("images", None) is not None or input_dict.get("videos", None) is not None:
         return image_processor(**input_dict, return_tensors="pt")
     else:
         return {}
