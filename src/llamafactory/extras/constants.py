@@ -95,6 +95,8 @@ SUPPORTED_CLASS_FOR_BLOCK_DIAG_ATTN = {
 
 SUPPORTED_CLASS_FOR_S2ATTN = {"llama"}
 
+VIDEO_PLACEHOLDER = "<video>"
+
 V_HEAD_WEIGHTS_NAME = "value_head.bin"
 
 V_HEAD_SAFE_WEIGHTS_NAME = "value_head.safetensors"
