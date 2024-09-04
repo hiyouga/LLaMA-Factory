@@ -179,6 +179,9 @@ def _get_preprocessed_dataset(
             load_from_cache_file=(not data_args.overwrite_cache) or (training_args.local_process_index != 0),
             desc="Running tokenizer on dataset",
         )
+        if data_args.dataset_map_batch_size:
+            # Set the batch size conditionally without considering the default variable of the batch size in the map function
+            kwargs.update(batch_size=data_args.dataset_map_batch_size)
 
     dataset = dataset.map(
         preprocess_func,
