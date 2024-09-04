@@ -3,14 +3,14 @@ name: tests
 on:
   push:
     branches:
-      - main
+      - "main"
     paths:
       - "**.py"
       - "requirements.txt"
       - ".github/workflows/*.yml"
   pull_request:
     branches:
-      - main
+      - "main"
     paths:
       - "**.py"
       - "requirements.txt"
@@ -18,7 +18,20 @@ on:
 
 jobs:
   tests:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+        os:
+          - "ubuntu-latest"
+          - "windows-latest"
+          - "macos-latest"
+
+    runs-on: ${{ matrix.os }}
 
     environment:
       name: tests
@@ -33,7 +46,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.8"
+          python-version: ${{ matrix.python-version }}
           cache: "pip"
           cache-dependency-path: "setup.py"
 
