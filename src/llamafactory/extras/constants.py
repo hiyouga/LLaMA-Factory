@@ -806,6 +806,15 @@ register_model_group(
     template="cpm",
 )
 
+register_model_group(
+    models={
+        "MiniCPM3-4B": {
+            DownloadSource.DEFAULT: "openbmb/MiniCPM3-4B",
+            DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM3-4B",
+        },
+    },
+    template="cpm3",
+)
 
 register_model_group(
     models={
