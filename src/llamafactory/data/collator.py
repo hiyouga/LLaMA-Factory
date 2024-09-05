@@ -81,8 +81,8 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
     def __call__(self, features: Sequence[Dict[str, Any]]) -> Dict[str, "torch.Tensor"]:
         batch_images, batch_videos, batch_imglens, batch_vidlens, batch_seqlens = [], [], [], [], []
         for feature in features:
-            images = feature.pop("images") or []  # avoid NoneType
-            videos = feature.pop("videos") or []
+            images = feature.pop("images", None) or []
+            videos = feature.pop("videos", None) or []
             batch_images.extend(images)
             batch_videos.extend(videos)
             batch_imglens.append(len(images))

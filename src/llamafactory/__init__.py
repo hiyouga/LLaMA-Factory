@@ -28,9 +28,9 @@ Dependency graph:
   attention:
     transformers>=4.42.4 (gemma+fa2)
   longlora:
-    transformers>=4.41.2,<=4.44.3
+    transformers>=4.41.2,<=4.45.0
   packing:
-    transformers>=4.41.2,<=4.44.3
+    transformers>=4.41.2,<=4.45.0
 
 Disable version checking: DISABLE_VERSION_CHECK=1
 Enable VRAM recording: RECORD_VRAM=1
