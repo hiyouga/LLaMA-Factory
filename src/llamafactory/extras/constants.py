@@ -806,6 +806,7 @@ register_model_group(
     template="cpm",
 )
 
+
 register_model_group(
     models={
         "MiniCPM3-4B": {
@@ -815,6 +816,7 @@ register_model_group(
     },
     template="cpm3",
 )
+
 
 register_model_group(
     models={
