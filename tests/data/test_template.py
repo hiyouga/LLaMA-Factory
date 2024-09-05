@@ -158,7 +158,7 @@ def test_qwen_template():
     _check_template("Qwen/Qwen2-7B-Instruct", "qwen", prompt_str, answer_str, extra_str="\n")
 
 
-@pytest.mark.skip(reason="The fast tokenizer of Yi model is corrupted.")
+@pytest.mark.xfail(reason="The fast tokenizer of Yi model is corrupted.")
 def test_yi_template():
     prompt_str = (
         "<|im_start|>user\nHow are you<|im_end|>\n"
