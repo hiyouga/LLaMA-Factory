@@ -560,6 +560,15 @@ _register_template(
 
 
 _register_template(
+    name="cpm3",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    stop_words=["<|im_end|>"],
+)
+
+
+_register_template(
     name="dbrx",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
