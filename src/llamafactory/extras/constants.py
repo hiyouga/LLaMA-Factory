@@ -811,6 +811,17 @@ register_model_group(
 
 register_model_group(
     models={
+        "MiniCPM3-4B": {
+            DownloadSource.DEFAULT: "openbmb/MiniCPM3-4B",
+            DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM3-4B",
+        },
+    },
+    template="cpm3",
+)
+
+
+register_model_group(
+    models={
         "Mistral-7B-v0.1": {
             DownloadSource.DEFAULT: "mistralai/Mistral-7B-v0.1",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Mistral-7B-v0.1",
