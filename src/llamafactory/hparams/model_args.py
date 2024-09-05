@@ -23,12 +23,133 @@ from typing_extensions import Self
 
 
 @dataclass
-class ModelArguments:
+class QuantizationArguments:
+    r"""
+    Arguments pertaining to the quantization method.
+    """
+
+    quantization_method: Literal["bitsandbytes", "hqq", "eetq"] = field(
+        default="bitsandbytes",
+        metadata={"help": "Quantization method to use for on-the-fly quantization."},
+    )
+    quantization_bit: Optional[int] = field(
+        default=None,
+        metadata={"help": "The number of bits to quantize the model using on-the-fly quantization."},
+    )
+    quantization_type: Literal["fp4", "nf4"] = field(
+        default="nf4",
+        metadata={"help": "Quantization data type to use in bitsandbytes int4 training."},
+    )
+    double_quantization: bool = field(
+        default=True,
+        metadata={"help": "Whether or not to use double quantization in bitsandbytes int4 training."},
+    )
+    quantization_device_map: Optional[Literal["auto"]] = field(
+        default=None,
+        metadata={"help": "Device map used to infer the 4-bit quantized model, needs bitsandbytes>=0.43.0."},
+    )
+
+
+@dataclass
+class ProcessorArguments:
+    r"""
+    Arguments pertaining to the image processor.
+    """
+
+    image_resolution: int = field(
+        default=512,
+        metadata={"help": "Keeps the height or width of image below this resolution."},
+    )
+    video_resolution: int = field(
+        default=128,
+        metadata={"help": "Keeps the height or width of video below this resolution."},
+    )
+    video_fps: float = field(
+        default=2.0,
+        metadata={"help": "The frames to sample per second for video inputs."},
+    )
+    video_maxlen: int = field(
+        default=64,
+        metadata={"help": "The maximum number of sampled frames for video inputs."},
+    )
+
+
+@dataclass
+class ExportArguments:
+    r"""
+    Arguments pertaining to the model export.
+    """
+
+    export_dir: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to the directory to save the exported model."},
+    )
+    export_size: int = field(
+        default=1,
+        metadata={"help": "The file shard size (in GB) of the exported model."},
+    )
+    export_device: Literal["cpu", "auto"] = field(
+        default="cpu",
+        metadata={"help": "The device used in model export, use `auto` to accelerate exporting."},
+    )
+    export_quantization_bit: Optional[int] = field(
+        default=None,
+        metadata={"help": "The number of bits to quantize the exported model."},
+    )
+    export_quantization_dataset: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to the dataset or dataset name to use in quantizing the exported model."},
+    )
+    export_quantization_nsamples: int = field(
+        default=128,
+        metadata={"help": "The number of samples used for quantization."},
+    )
+    export_quantization_maxlen: int = field(
+        default=1024,
+        metadata={"help": "The maximum length of the model inputs used for quantization."},
+    )
+    export_legacy_format: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to save the `.bin` files instead of `.safetensors`."},
+    )
+    export_hub_model_id: Optional[str] = field(
+        default=None,
+        metadata={"help": "The name of the repository if push the model to the Hugging Face hub."},
+    )
+
+
+@dataclass
+class VllmArguments:
+    r"""
+    Arguments pertaining to the vLLM worker.
+    """
+
+    vllm_maxlen: int = field(
+        default=2048,
+        metadata={"help": "Maximum sequence (prompt + response) length of the vLLM engine."},
+    )
+    vllm_gpu_util: float = field(
+        default=0.9,
+        metadata={"help": "The fraction of GPU memory in (0,1) to be used for the vLLM engine."},
+    )
+    vllm_enforce_eager: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to disable CUDA graph in the vLLM engine."},
+    )
+    vllm_max_lora_rank: int = field(
+        default=32,
+        metadata={"help": "Maximum rank of all LoRAs in the vLLM engine."},
+    )
+
+
+@dataclass
+class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments, VllmArguments):
     r"""
     Arguments pertaining to which model/config/tokenizer we are going to fine-tune or infer.
     """
 
-    model_name_or_path: str = field(
+    model_name_or_path: Optional[str] = field(
+        default=None,
         metadata={
             "help": "Path to the model weight or identifier from huggingface.co/models or modelscope.cn/models."
         },
@@ -74,26 +195,6 @@ class ModelArguments:
         default=True,
         metadata={"help": "Whether or not to use memory-efficient model loading."},
     )
-    quantization_method: Literal["bitsandbytes", "hqq", "eetq"] = field(
-        default="bitsandbytes",
-        metadata={"help": "Quantization method to use for on-the-fly quantization."},
-    )
-    quantization_bit: Optional[int] = field(
-        default=None,
-        metadata={"help": "The number of bits to quantize the model using bitsandbytes."},
-    )
-    quantization_type: Literal["fp4", "nf4"] = field(
-        default="nf4",
-        metadata={"help": "Quantization data type to use in int4 training."},
-    )
-    double_quantization: bool = field(
-        default=True,
-        metadata={"help": "Whether or not to use double quantization in int4 training."},
-    )
-    quantization_device_map: Optional[Literal["auto"]] = field(
-        default=None,
-        metadata={"help": "Device map used to infer the 4-bit quantized model, needs bitsandbytes>=0.43.0."},
-    )
     rope_scaling: Optional[Literal["linear", "dynamic"]] = field(
         default=None,
         metadata={"help": "Which scaling strategy should be adopted for the RoPE embeddings."},
@@ -138,33 +239,9 @@ class ModelArguments:
         default=False,
         metadata={"help": "Whether or not to randomly initialize the model weights."},
     )
-    image_resolution: int = field(
-        default=512,
-        metadata={"help": "Keeps the height or width of image below this resolution."},
-    )
-    video_fps: float = field(
-        default=2.0,
-        metadata={"help": "The frames to sample per second for video training."},
-    )
     infer_backend: Literal["huggingface", "vllm"] = field(
         default="huggingface",
         metadata={"help": "Backend engine used at inference."},
-    )
-    vllm_maxlen: int = field(
-        default=2048,
-        metadata={"help": "Maximum sequence (prompt + response) length of the vLLM engine."},
-    )
-    vllm_gpu_util: float = field(
-        default=0.9,
-        metadata={"help": "The fraction of GPU memory in (0,1) to be used for the vLLM engine."},
-    )
-    vllm_enforce_eager: bool = field(
-        default=False,
-        metadata={"help": "Whether or not to disable CUDA graph in the vLLM engine."},
-    )
-    vllm_max_lora_rank: int = field(
-        default=32,
-        metadata={"help": "Maximum rank of all LoRAs in the vLLM engine."},
     )
     offload_folder: str = field(
         default="offload",
@@ -185,42 +262,6 @@ class ModelArguments:
     ms_hub_token: Optional[str] = field(
         default=None,
         metadata={"help": "Auth token to log in with ModelScope Hub."},
-    )
-    export_dir: Optional[str] = field(
-        default=None,
-        metadata={"help": "Path to the directory to save the exported model."},
-    )
-    export_size: int = field(
-        default=1,
-        metadata={"help": "The file shard size (in GB) of the exported model."},
-    )
-    export_device: Literal["cpu", "auto"] = field(
-        default="cpu",
-        metadata={"help": "The device used in model export, use `auto` to accelerate exporting."},
-    )
-    export_quantization_bit: Optional[int] = field(
-        default=None,
-        metadata={"help": "The number of bits to quantize the exported model."},
-    )
-    export_quantization_dataset: Optional[str] = field(
-        default=None,
-        metadata={"help": "Path to the dataset or dataset name to use in quantizing the exported model."},
-    )
-    export_quantization_nsamples: int = field(
-        default=128,
-        metadata={"help": "The number of samples used for quantization."},
-    )
-    export_quantization_maxlen: int = field(
-        default=1024,
-        metadata={"help": "The maximum length of the model inputs used for quantization."},
-    )
-    export_legacy_format: bool = field(
-        default=False,
-        metadata={"help": "Whether or not to save the `.bin` files instead of `.safetensors`."},
-    )
-    export_hub_model_id: Optional[str] = field(
-        default=None,
-        metadata={"help": "The name of the repository if push the model to the Hugging Face hub."},
     )
     print_param_status: bool = field(
         default=False,
@@ -248,6 +289,9 @@ class ModelArguments:
     )
 
     def __post_init__(self):
+        if self.model_name_or_path is None:
+            raise ValueError("Please provide `model_name_or_path`.")
+
         if self.split_special_tokens and self.use_fast_tokenizer:
             raise ValueError("`split_special_tokens` is only supported for slow tokenizers.")
 
