@@ -36,7 +36,6 @@ TRAIN_ARGS = {
     "overwrite_output_dir": True,
     "per_device_train_batch_size": 1,
     "max_steps": 1,
-    "fp16": True,
 }
 
 INFER_ARGS = {
@@ -48,18 +47,20 @@ INFER_ARGS = {
     "export_dir": "llama3_export",
 }
 
+OS_NAME = os.environ.get("OS_NAME", "")
+
 
 @pytest.mark.parametrize(
     "stage,dataset",
     [
         ("pt", "c4_demo"),
         ("sft", "alpaca_en_demo"),
-        ("rm", "dpo_en_demo"),
+        pytest.param("rm", "dpo_en_demo", marks=pytest.mark.xfail(OS_NAME.startswith("windows"), reason="OS error.")),
         ("dpo", "dpo_en_demo"),
         ("kto", "kto_en_demo"),
     ],
 )
-def test_train(stage: str, dataset: str):
+def test_run_exp(stage: str, dataset: str):
     output_dir = "train_{}".format(stage)
     run_exp({"stage": stage, "dataset": dataset, "output_dir": output_dir, **TRAIN_ARGS})
     assert os.path.exists(output_dir)
