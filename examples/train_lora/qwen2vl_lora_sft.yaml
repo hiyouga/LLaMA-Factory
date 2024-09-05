@@ -8,7 +8,7 @@ finetuning_type: lora
 lora_target: all
 
 ### dataset
-dataset: mllm_demo,identity
+dataset: mllm_demo,identity  # video: mllm_video_demo
 template: qwen2_vl
 cutoff_len: 1024
 max_samples: 1000
