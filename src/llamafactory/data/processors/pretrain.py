@@ -36,7 +36,7 @@ def preprocess_pretrain_dataset(
         if data_args.template == "gemma":
             text_examples = [tokenizer.bos_token + example for example in text_examples]
 
-        result = tokenizer(text_examples, add_special_tokens=False, max_length=data_args.cutoff_len, truncation=True)
+        result = tokenizer(text_examples, add_special_tokens=False, truncation=True, max_length=data_args.cutoff_len)
     else:
         tokenized_examples = tokenizer(text_examples, add_special_tokens=False)
         concatenated_examples = {k: list(chain(*tokenized_examples[k])) for k in tokenized_examples.keys()}
