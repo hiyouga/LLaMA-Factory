@@ -100,7 +100,9 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
         setattr(processor, "tokenizer", tokenizer)
         setattr(processor, "image_seqlen", get_image_seqlen(config))
         setattr(processor, "image_resolution", model_args.image_resolution)
+        setattr(processor, "video_resolution", model_args.video_resolution)
         setattr(processor, "video_fps", model_args.video_fps)
+        setattr(processor, "video_maxlen", model_args.video_maxlen)
         if getattr(config, "model_type", None) == "qwen2_vl":
             setattr(processor, "video_factor", 2)
         else:
