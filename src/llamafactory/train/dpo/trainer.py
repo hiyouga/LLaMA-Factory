@@ -320,31 +320,7 @@ class CustomDPOTrainer(DPOTrainer):
             reference_chosen_logps, reference_rejected_logps, *_ = self.concatenated_forward(ref_model, batch)
 
         return reference_chosen_logps, reference_rejected_logps
-    def dpop_loss(
-        self,
-        policy_chosen_logps: torch.FloatTensor,
-        policy_rejected_logps: torch.FloatTensor,
-        reference_chosen_logps: torch.FloatTensor,
-        reference_rejected_logps: torch.FloatTensor,
-    ):
-        pi_logratios = policy_chosen_logps - policy_rejected_logps
-        ref_logratios = reference_chosen_logps - reference_rejected_logps
 
-        logits = pi_logratios - ref_logratios
-        # add regularization here
-        positive_reg = reference_chosen_logps - policy_chosen_logps
-
-        losses = - ( F.logsigmoid(self.beta * logits) - self.dpop_lambda * torch.clamp(
-            positive_reg, min=0 # lambda * max(0, ratio)
-        ))
-        chosen_rewards = (
-            self.beta * (policy_chosen_logps - reference_chosen_logps).detach()
-        )
-        rejected_rewards = (
-            self.beta * (policy_rejected_logps - reference_rejected_logps).detach()
-        )
-
-        return losses, chosen_rewards, rejected_rewards
     def get_batch_loss_metrics(
         self,
         model: "PreTrainedModel",
