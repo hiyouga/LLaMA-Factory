@@ -15,6 +15,8 @@
 import uuid
 from typing import TYPE_CHECKING, Any, AsyncGenerator, AsyncIterator, Dict, List, Optional, Sequence, Union
 
+from typing_extensions import override
+
 from ..data import get_template_and_fix_tokenizer
 from ..extras.constants import IMAGE_PLACEHOLDER
 from ..extras.logging import get_logger
@@ -191,6 +193,7 @@ class VllmEngine(BaseEngine):
         )
         return result_generator
 
+    @override
     async def chat(
         self,
         messages: Sequence[Dict[str, str]],
@@ -218,6 +221,7 @@ class VllmEngine(BaseEngine):
 
         return results
 
+    @override
     async def stream_chat(
         self,
         messages: Sequence[Dict[str, str]],
@@ -234,6 +238,7 @@ class VllmEngine(BaseEngine):
             generated_text = result.outputs[0].text
             yield delta_text
 
+    @override
     async def get_scores(
         self,
         batch_input: List[str],

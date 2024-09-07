@@ -36,6 +36,7 @@ Disable version checking: DISABLE_VERSION_CHECK=1
 Enable VRAM recording: RECORD_VRAM=1
 Force check imports: FORCE_CHECK_IMPORTS=1
 Force using torchrun: FORCE_TORCHRUN=1
+Set logging verbosity: LLAMAFACTORY_VERBOSITY=WARN
 Use modelscope: USE_MODELSCOPE_HUB=1
 """
 

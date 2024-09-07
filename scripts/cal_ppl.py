@@ -55,7 +55,7 @@ class PairwiseDataCollatorWithPadding(DataCollatorForSeq2Seq):
         return super().__call__(chosen_features)
 
 
-def cal_ppl(
+def calculate_ppl(
     model_name_or_path: str,
     save_name: str,
     batch_size: int = 4,
@@ -130,4 +130,4 @@ def cal_ppl(
 
 
 if __name__ == "__main__":
-    fire.Fire(cal_ppl)
+    fire.Fire(calculate_ppl)
