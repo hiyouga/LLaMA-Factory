@@ -26,6 +26,7 @@ import torch.nn.functional as F
 from transformers import Trainer
 from trl import DPOTrainer
 from trl.trainer import disable_dropout_in_model
+from typing_extensions import override
 
 from ...extras.constants import IGNORE_INDEX
 from ..callbacks import PissaConvertCallback, SaveProcessorCallback
@@ -104,11 +105,13 @@ class CustomDPOTrainer(DPOTrainer):
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
 
+    @override
     def create_optimizer(self) -> "torch.optim.Optimizer":
         if self.optimizer is None:
             self.optimizer = create_custom_optimizer(self.model, self.args, self.finetuning_args)
         return super().create_optimizer()
 
+    @override
     def create_scheduler(
         self, num_training_steps: int, optimizer: Optional["torch.optim.Optimizer"] = None
     ) -> "torch.optim.lr_scheduler.LRScheduler":
@@ -164,6 +167,7 @@ class CustomDPOTrainer(DPOTrainer):
 
         return losses, chosen_rewards, rejected_rewards
 
+    @override
     def concatenated_forward(
         self, model: "PreTrainedModel", batch: Dict[str, "torch.Tensor"]
     ) -> Tuple["torch.Tensor", "torch.Tensor", "torch.Tensor", "torch.Tensor", "torch.Tensor"]:
@@ -186,6 +190,7 @@ class CustomDPOTrainer(DPOTrainer):
         chosen_length, _ = valid_length.split(batch_size, dim=0)
         return chosen_logps, rejected_logps, chosen_logits, rejected_logits, chosen_logps / chosen_length
 
+    @override
     def compute_reference_log_probs(
         self, model: "PreTrainedModel", batch: Dict[str, "torch.Tensor"]
     ) -> Tuple[Optional["torch.Tensor"], Optional["torch.Tensor"]]:
@@ -207,6 +212,7 @@ class CustomDPOTrainer(DPOTrainer):
 
         return reference_chosen_logps, reference_rejected_logps
 
+    @override
     def get_batch_loss_metrics(
         self,
         model: "PreTrainedModel",
