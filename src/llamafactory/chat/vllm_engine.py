@@ -21,7 +21,7 @@ from ..data import get_template_and_fix_tokenizer
 from ..extras.constants import IMAGE_PLACEHOLDER
 from ..extras.logging import get_logger
 from ..extras.misc import get_device_count
-from ..extras.packages import is_vllm_available, is_vllm_version_greater_than_0_5, is_vllm_version_greater_than_0_5_1
+from ..extras.packages import is_vllm_available
 from ..model import load_config, load_tokenizer
 from ..model.model_utils.quantization import QuantizationMethod
 from ..model.model_utils.visual import LlavaMultiModalProjectorForYiVLForVLLM
@@ -32,17 +32,8 @@ if is_vllm_available():
     from vllm import AsyncEngineArgs, AsyncLLMEngine, RequestOutput, SamplingParams
     from vllm.lora.request import LoRARequest
 
-    if is_vllm_version_greater_than_0_5_1():
-        pass
-    elif is_vllm_version_greater_than_0_5():
-        from vllm.multimodal.image import ImagePixelData
-    else:
-        from vllm.sequence import MultiModalData
-
 
 if TYPE_CHECKING:
-    from transformers.image_processing_utils import BaseImageProcessor
-
     from ..data.mm_plugin import ImageInput, VideoInput
     from ..hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
 
@@ -88,19 +79,11 @@ class VllmEngine(BaseEngine):
             "max_lora_rank": model_args.vllm_max_lora_rank,
         }
 
-        if getattr(config, "model_type", None) == "llava":
-            image_size = config.vision_config.image_size
-            patch_size = config.vision_config.patch_size
-            self.image_feature_size = (image_size // patch_size) ** 2
-            engine_args["image_input_type"] = "pixel_values"
-            engine_args["image_token_id"] = self.tokenizer.convert_tokens_to_ids(self.template.image_token)
-            engine_args["image_input_shape"] = "1,3,{},{}".format(image_size, image_size)
-            engine_args["image_feature_size"] = self.image_feature_size
-            if getattr(config, "is_yi_vl_derived_model", None):
-                import vllm.model_executor.models.llava
+        if getattr(config, "is_yi_vl_derived_model", None):
+            import vllm.model_executor.models.llava
 
-                logger.info("Detected Yi-VL model, applying projector patch.")
-                vllm.model_executor.models.llava.LlavaMultiModalProjector = LlavaMultiModalProjectorForYiVLForVLLM
+            logger.info("Detected Yi-VL model, applying projector patch.")
+            vllm.model_executor.models.llava.LlavaMultiModalProjector = LlavaMultiModalProjectorForYiVLForVLLM
 
         self.model = AsyncLLMEngine.from_engine_args(AsyncEngineArgs(**engine_args))
         if model_args.adapter_name_or_path is not None:
@@ -118,29 +101,13 @@ class VllmEngine(BaseEngine):
         **input_kwargs,
     ) -> AsyncIterator["RequestOutput"]:
         request_id = "chatcmpl-{}".format(uuid.uuid4().hex)
-
         if image is not None:
             if IMAGE_PLACEHOLDER not in messages[0]["content"]:
                 messages[0]["content"] = IMAGE_PLACEHOLDER + messages[0]["content"]
 
-            messages = self.template.mm_plugin.process_messages(messages, [image], self.processor)
-
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or self.generating_args["default_system"]
         prompt_ids, _ = self.template.encode_oneturn(self.tokenizer, paired_messages, system, tools)
-
-        if self.processor is not None and image is not None:  # add image features
-            image_processor: "BaseImageProcessor" = getattr(self.processor, "image_processor")
-            pixel_values = image_processor(image, return_tensors="pt")["pixel_values"]
-            if is_vllm_version_greater_than_0_5_1():
-                multi_modal_data = {"image": pixel_values}
-            elif is_vllm_version_greater_than_0_5():
-                multi_modal_data = ImagePixelData(image=pixel_values)
-            else:  # TODO: remove vllm 0.4.3 support
-                multi_modal_data = MultiModalData(type=MultiModalData.Type.IMAGE, data=pixel_values)
-        else:
-            multi_modal_data = None
-
         prompt_length = len(prompt_ids)
 
         use_beam_search: bool = self.generating_args["num_beams"] > 1
@@ -184,6 +151,11 @@ class VllmEngine(BaseEngine):
             max_tokens=max_tokens,
             skip_special_tokens=True,
         )
+
+        if image is not None:  # add image features
+            multi_modal_data = {"image": image}
+        else:
+            multi_modal_data = None
 
         result_generator = self.model.generate(
             inputs={"prompt_token_ids": prompt_ids, "multi_modal_data": multi_modal_data},
