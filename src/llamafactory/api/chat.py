@@ -52,9 +52,8 @@ if is_requests_available():
 
 
 if TYPE_CHECKING:
-    from numpy.typing import NDArray
-
     from ..chat import ChatModel
+    from ..data.mm_plugin import ImageInput
     from .protocol import ChatCompletionRequest, ScoreEvaluationRequest
 
 
@@ -70,7 +69,7 @@ ROLE_MAPPING = {
 
 def _process_request(
     request: "ChatCompletionRequest",
-) -> Tuple[List[Dict[str, str]], Optional[str], Optional[str], Optional["NDArray"]]:
+) -> Tuple[List[Dict[str, str]], Optional[str], Optional[str], Optional["ImageInput"]]:
     logger.info("==== request ====\n{}".format(json.dumps(dictify(request), indent=2, ensure_ascii=False)))
 
     if len(request.messages) == 0:

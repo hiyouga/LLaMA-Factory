@@ -32,6 +32,7 @@ from transformers.utils import (
     WEIGHTS_NAME,
     is_safetensors_available,
 )
+from typing_extensions import override
 
 from ..extras.constants import TRAINER_LOG, V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
 from ..extras.logging import LoggerHandler, get_logger
@@ -95,6 +96,7 @@ def fix_valuehead_checkpoint(
 
 
 class FixValueHeadModelCallback(TrainerCallback):
+    @override
     def on_save(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
         Event called after a checkpoint save.
@@ -114,6 +116,7 @@ class SaveProcessorCallback(TrainerCallback):
         """
         self.processor = processor
 
+    @override
     def on_train_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
         Event called at the end of training.
@@ -127,6 +130,7 @@ class PissaConvertCallback(TrainerCallback):
     Initializes a callback for converting the PiSSA adapter to a normal one.
     """
 
+    @override
     def on_train_begin(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
         Event called at the beginning of training.
@@ -141,6 +145,7 @@ class PissaConvertCallback(TrainerCallback):
                 model.save_pretrained(pissa_init_dir, safe_serialization=args.save_safetensors)
                 setattr(model.peft_config["default"], "init_lora_weights", init_lora_weights)
 
+    @override
     def on_train_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
         Event called at the end of training.
@@ -226,6 +231,7 @@ class LogCallback(TrainerCallback):
             self.thread_pool.shutdown(wait=True)
             self.thread_pool = None
 
+    @override
     def on_init_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
         Event called at the end of the initialization of the `Trainer`.
@@ -238,6 +244,7 @@ class LogCallback(TrainerCallback):
             logger.warning("Previous trainer log in this folder will be deleted.")
             os.remove(os.path.join(args.output_dir, TRAINER_LOG))
 
+    @override
     def on_train_begin(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
         Event called at the beginning of training.
@@ -247,12 +254,14 @@ class LogCallback(TrainerCallback):
             self._reset(max_steps=state.max_steps)
             self._create_thread_pool(output_dir=args.output_dir)
 
+    @override
     def on_train_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
         Event called at the end of training.
         """
         self._close_thread_pool()
 
+    @override
     def on_substep_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
         Event called at the end of an substep during gradient accumulation.
@@ -261,6 +270,7 @@ class LogCallback(TrainerCallback):
             control.should_epoch_stop = True
             control.should_training_stop = True
 
+    @override
     def on_step_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
         Event called at the end of a training step.
@@ -269,6 +279,7 @@ class LogCallback(TrainerCallback):
             control.should_epoch_stop = True
             control.should_training_stop = True
 
+    @override
     def on_evaluate(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
         Event called after an evaluation phase.
@@ -276,6 +287,7 @@ class LogCallback(TrainerCallback):
         if not self.do_train:
             self._close_thread_pool()
 
+    @override
     def on_predict(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
         Event called after a successful prediction.
@@ -283,6 +295,7 @@ class LogCallback(TrainerCallback):
         if not self.do_train:
             self._close_thread_pool()
 
+    @override
     def on_log(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
         Event called after logging the last logs.
@@ -325,6 +338,7 @@ class LogCallback(TrainerCallback):
         if self.thread_pool is not None:
             self.thread_pool.submit(self._write_log, args.output_dir, logs)
 
+    @override
     def on_prediction_step(
         self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs
     ):
