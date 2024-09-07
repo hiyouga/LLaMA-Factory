@@ -103,7 +103,6 @@ class HuggingfaceEngine(BaseEngine):
         prompt_ids, _ = template.mm_plugin.process_token_ids(
             prompt_ids, None, mm_input_dict["images"], mm_input_dict["videos"], tokenizer, processor
         )
-
         prompt_length = len(prompt_ids)
         inputs = torch.tensor([prompt_ids], device=model.device)
         attention_mask = torch.ones_like(inputs, dtype=torch.bool)
