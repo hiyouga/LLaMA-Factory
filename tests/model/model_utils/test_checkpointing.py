@@ -54,7 +54,7 @@ def test_checkpointing_disable():
 def test_unsloth_gradient_checkpointing():
     model = load_train_model(use_unsloth_gc=True, **TRAIN_ARGS)
     for module in filter(lambda m: hasattr(m, "gradient_checkpointing"), model.modules()):
-        assert module._gradient_checkpointing_func.__self__.__name__ == "UnslothGradientCheckpointing"
+        assert module._gradient_checkpointing_func.__self__.__name__ == "UnslothGradientCheckpointing"  # classmethod
 
 
 def test_upcast_layernorm():
