@@ -39,7 +39,7 @@
 
 import json
 import os
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import numpy as np
 import torch
@@ -54,6 +54,10 @@ from ..model import load_model, load_tokenizer
 from .template import get_eval_template
 
 
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
+
 class Evaluator:
     def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
         self.model_args, self.data_args, self.eval_args, finetuning_args = get_eval_args(args)
@@ -65,7 +69,7 @@ class Evaluator:
         self.choice_inputs = [self.tokenizer.encode(ch, add_special_tokens=False)[-1] for ch in CHOICES]
 
     @torch.inference_mode()
-    def batch_inference(self, batch_input: Dict[str, torch.Tensor]) -> List[str]:
+    def batch_inference(self, batch_input: Dict[str, "torch.Tensor"]) -> List[str]:
         logits = self.model(**batch_input).logits
         lengths = torch.sum(batch_input["attention_mask"], dim=-1)
         word_probs = torch.stack([logits[i, lengths[i] - 1] for i in range(len(lengths))], dim=0)
@@ -132,7 +136,7 @@ class Evaluator:
         pbar.close()
         self._save_results(category_corrects, results)
 
-    def _save_results(self, category_corrects: Dict[str, np.ndarray], results: Dict[str, Dict[int, str]]) -> None:
+    def _save_results(self, category_corrects: Dict[str, "NDArray"], results: Dict[str, Dict[int, str]]) -> None:
         score_info = "\n".join(
             [
                 "{:>15}: {:.2f}".format(category_name, 100 * np.mean(category_correct))
