@@ -763,6 +763,7 @@ register_model_group(
         },
         "LLaMA3.1-405B": {
             DownloadSource.DEFAULT: "meta-llama/Meta-Llama-3.1-405B",
+            DownloadSource.MODELSCOPE: "LLM-Research/Meta-Llama-3.1-405B",
         },
         "LLaMA3.1-8B-Chat": {
             DownloadSource.DEFAULT: "meta-llama/Meta-Llama-3.1-8B-Instruct",
@@ -774,6 +775,7 @@ register_model_group(
         },
         "LLaMA3.1-405B-Chat": {
             DownloadSource.DEFAULT: "meta-llama/Meta-Llama-3.1-405B-Instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Meta-Llama-3.1-405B-Instruct",
         },
     },
     template="llama3",
@@ -1357,15 +1359,19 @@ register_model_group(
         },
         "Qwen2VL-2B-int8-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-VL-2B-Instruct-GPTQ-Int8",
+            DownloadSource.MODELSCOPE: "qwen/Qwen2-VL-2B-Instruct-GPTQ-Int8",
         },
         "Qwen2VL-2B-int4-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-VL-2B-Instruct-AWQ",
+            DownloadSource.MODELSCOPE: "qwen/Qwen2-VL-2B-Instruct-AWQ",
         },
         "Qwen2VL-7B-int8-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-VL-7B-Instruct-GPTQ-Int8",
+            DownloadSource.MODELSCOPE: "qwen/Qwen2-VL-7B-Instruct-GPTQ-Int8",
         },
         "Qwen2VL-7B-int4-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-VL-7B-Instruct-AWQ",
+            DownloadSource.MODELSCOPE: "qwen/Qwen2-VL-7B-Instruct-AWQ",
         },
     },
     template="qwen2_vl",
@@ -1646,15 +1652,19 @@ register_model_group(
         },
         "Yi-Coder-1.5B": {
             DownloadSource.DEFAULT: "01-ai/Yi-Coder-1.5B",
+            DownloadSource.MODELSCOPE: "01ai/Yi-Coder-1.5B",
         },
         "Yi-Coder-9B": {
             DownloadSource.DEFAULT: "01-ai/Yi-Coder-9B",
+            DownloadSource.MODELSCOPE: "01ai/Yi-Coder-9B",
         },
         "Yi-Coder-1.5B-Chat": {
             DownloadSource.DEFAULT: "01-ai/Yi-Coder-1.5B-Chat",
+            DownloadSource.MODELSCOPE: "01ai/Yi-Coder-1.5B-Chat",
         },
         "Yi-Coder-9B-Chat": {
             DownloadSource.DEFAULT: "01-ai/Yi-Coder-9B-Chat",
+            DownloadSource.MODELSCOPE: "01ai/Yi-Coder-9B-Chat",
         },
     },
     template="yi",
