@@ -14,11 +14,12 @@
 
 import os
 import re
+from typing import List
 
 from setuptools import find_packages, setup
 
 
-def get_version():
+def get_version() -> str:
     with open(os.path.join("src", "llamafactory", "extras", "env.py"), "r", encoding="utf-8") as f:
         file_content = f.read()
         pattern = r"{}\W*=\W*\"([^\"]+)\"".format("VERSION")
@@ -26,11 +27,19 @@ def get_version():
         return version
 
 
-def get_requires():
+def get_requires() -> List[str]:
     with open("requirements.txt", "r", encoding="utf-8") as f:
         file_content = f.read()
         lines = [line.strip() for line in file_content.strip().split("\n") if not line.startswith("#")]
         return lines
+
+
+def get_console_scripts() -> List[str]:
+    console_scripts = ["llamafactory-cli = llamafactory.cli:main"]
+    if os.environ.get("ENABLE_SHORT_CONSOLE", "1").lower() in ["true", "1"]:
+        console_scripts.append("lmf = llamafactory.cli:main")
+
+    return console_scripts
 
 
 extra_require = {
@@ -72,7 +81,7 @@ def main():
         python_requires=">=3.8.0",
         install_requires=get_requires(),
         extras_require=extra_require,
-        entry_points={"console_scripts": ["llamafactory-cli = llamafactory.cli:main"]},
+        entry_points={"console_scripts": get_console_scripts()},
         classifiers=[
             "Development Status :: 4 - Beta",
             "Intended Audience :: Developers",
