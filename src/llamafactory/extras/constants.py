@@ -829,7 +829,7 @@ register_model_group(
 
 register_model_group(
     models={
-        "MiniCPM3-4B": {
+        "MiniCPM3-4B-Chat": {
             DownloadSource.DEFAULT: "openbmb/MiniCPM3-4B",
             DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM3-4B",
         },
