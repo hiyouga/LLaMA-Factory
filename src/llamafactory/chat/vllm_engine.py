@@ -21,11 +21,16 @@ from ..data import get_template_and_fix_tokenizer
 from ..extras.constants import IMAGE_PLACEHOLDER
 from ..extras.logging import get_logger
 from ..extras.misc import get_device_count
-from ..extras.packages import is_vllm_available
+from ..extras.packages import is_pillow_available, is_vllm_available
 from ..model import load_config, load_tokenizer
 from ..model.model_utils.quantization import QuantizationMethod
 from ..model.model_utils.visual import LlavaMultiModalProjectorForYiVLForVLLM
 from .base_engine import BaseEngine, Response
+
+
+if is_pillow_available():
+    from PIL import Image
+    from PIL.Image import Image as ImageObject
 
 
 if is_vllm_available():
@@ -153,6 +158,12 @@ class VllmEngine(BaseEngine):
         )
 
         if image is not None:  # add image features
+            if not isinstance(image, (str, ImageObject)):
+                raise ValueError("Expected image input is a path or PIL.Image, but got {}.".format(type(image)))
+
+            if isinstance(image, str):
+                image = Image.open(image).convert("RGB")
+
             multi_modal_data = {"image": image}
         else:
             multi_modal_data = None
