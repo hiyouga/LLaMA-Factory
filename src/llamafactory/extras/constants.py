@@ -631,9 +631,21 @@ register_model_group(
 
 register_model_group(
     models={
+        "InternLM2.5-1.8B": {
+            DownloadSource.DEFAULT: "internlm/internlm2_5-1_8b",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-1_8b",
+        },
         "InternLM2.5-7B": {
             DownloadSource.DEFAULT: "internlm/internlm2_5-7b",
             DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-7b",
+        },
+        "InternLM2.5-20B": {
+            DownloadSource.DEFAULT: "internlm/internlm2_5-20b",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-20b",
+        },
+        "InternLM2.5-1.8B-Chat": {
+            DownloadSource.DEFAULT: "internlm/internlm2_5-1_8b-chat",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-1_8b-chat",
         },
         "InternLM2.5-7B-Chat": {
             DownloadSource.DEFAULT: "internlm/internlm2_5-7b-chat",
@@ -642,6 +654,10 @@ register_model_group(
         "InternLM2.5-7B-1M-Chat": {
             DownloadSource.DEFAULT: "internlm/internlm2_5-7b-chat-1m",
             DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-7b-chat-1m",
+        },
+        "InternLM2.5-20B-Chat": {
+            DownloadSource.DEFAULT: "internlm/internlm2_5-20b-chat",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-20b-chat",
         },
     },
     template="intern2",
