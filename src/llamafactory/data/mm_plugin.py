@@ -12,6 +12,7 @@ from ..extras.packages import is_pillow_available, is_pyav_available
 
 if is_pillow_available():
     from PIL import Image
+    from PIL.Image import Image as ImageObject
 
 
 if is_pyav_available():
@@ -21,7 +22,6 @@ if is_pyav_available():
 if TYPE_CHECKING:
     import torch
     from av.stream import Stream
-    from PIL.Image import Image as ImageObject
     from transformers import PreTrainedTokenizer, ProcessorMixin
     from transformers.image_processing_utils import BaseImageProcessor
 
