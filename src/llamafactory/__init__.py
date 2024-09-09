@@ -22,7 +22,7 @@ Dependency graph:
   main:
     transformers>=4.41.2,<=4.45.0
     datasets>=2.16.0,<=2.21.0
-    accelerate>=0.30.1,<=0.33.0
+    accelerate>=0.30.1,<=0.34.2
     peft>=0.11.1,<=0.12.0
     trl>=0.8.6,<=0.9.6
   attention:
