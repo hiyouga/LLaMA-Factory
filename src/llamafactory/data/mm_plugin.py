@@ -264,7 +264,7 @@ class Idefics2Plugin(BasePlugin):
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         self._validate_input(images, videos)
-        return _get_mm_inputs(images, videos, processor)
+        return self._get_mm_inputs(images, videos, processor)
 
 
 class LlavaPlugin(BasePlugin):
@@ -341,7 +341,7 @@ class LlavaNextPlugin(BasePlugin):
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         self._validate_input(images, videos)
-        return _get_mm_inputs(images, videos, processor)
+        return self._get_mm_inputs(images, videos, processor)
 
 
 class LlavaNextVideoPlugin(BasePlugin):
@@ -386,9 +386,9 @@ class LlavaNextVideoPlugin(BasePlugin):
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         self._validate_input(images, videos)
         video_processor = getattr(processor, "video_processor")
-        res = _get_mm_inputs(images, [], processor)
+        res = self._get_mm_inputs(images, [], processor)
         if len(videos) != 0:
-            videos = _regularize_videos(videos, processor)
+            videos = self._regularize_videos(videos)
             video_res = video_processor(videos, return_tensors="pt")
             res.update(video_res)
         return res
@@ -589,7 +589,7 @@ class VideoLlavaPlugin(BasePlugin):
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         self._validate_input(images, videos)
-        return _get_mm_inputs(images, videos, processor)
+        return self._get_mm_inputs(images, videos, processor)
 
 
 PLUGINS = {
