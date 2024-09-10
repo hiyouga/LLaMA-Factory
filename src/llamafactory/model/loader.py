@@ -103,12 +103,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
         setattr(processor, "video_resolution", model_args.video_resolution)
         setattr(processor, "video_fps", model_args.video_fps)
         setattr(processor, "video_maxlen", model_args.video_maxlen)
-        if getattr(config, "model_type", None) == "qwen2_vl":
-            setattr(processor, "video_factor", 2)
-        else:
-            setattr(processor, "video_factor", 1)
-    except Exception as e:
-        print(e)
+    except Exception:
         processor = None
 
     # Avoid load tokenizer, see:
