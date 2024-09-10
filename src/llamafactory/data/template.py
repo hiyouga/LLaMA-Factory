@@ -681,6 +681,16 @@ _register_template(
 
 
 _register_template(
+    name="idefics2",
+    format_user=StringFormatter(slots=["User:{{content}}<end_of_utterance>\nAssistant:"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    stop_words=["<end_of_utterance>"],
+    replace_eos=True,
+    mm_plugin=get_mm_plugin(name="idefics2", image_token="<image>"),
+)
+
+
+_register_template(
     name="intern",
     format_user=StringFormatter(slots=["<|User|>:{{content}}\n<|Bot|>:"]),
     format_system=StringFormatter(slots=["<|System|>:{{content}}\n"]),
@@ -750,6 +760,28 @@ _register_template(
         "The assistant gives helpful, detailed, and polite answers to the user's questions."
     ),
     mm_plugin=get_mm_plugin(name="llava", image_token="<image>"),
+)
+
+
+_register_template(
+    name="llava_next",
+    format_user=StringFormatter(slots=["USER: {{content}} ASSISTANT:"]),
+    default_system=(
+        "A chat between a curious user and an artificial intelligence assistant. "
+        "The assistant gives helpful, detailed, and polite answers to the user's questions."
+    ),
+    mm_plugin=get_mm_plugin(name="llava_next", image_token="<image>"),
+)
+
+
+_register_template(
+    name="llava_next_video",
+    format_user=StringFormatter(slots=["USER: {{content}} ASSISTANT:"]),
+    default_system=(
+        "A chat between a curious user and an artificial intelligence assistant. "
+        "The assistant gives helpful, detailed, and polite answers to the user's questions."
+    ),
+    mm_plugin=get_mm_plugin(name="llava_next_video", image_token="<image>", video_token="<video>"),
 )
 
 
@@ -894,6 +926,17 @@ _register_template(
         "A chat between a curious user and an artificial intelligence assistant. "
         "The assistant gives helpful, detailed, and polite answers to the user's questions."
     ),
+)
+
+
+_register_template(
+    name="video_llava",
+    format_user=StringFormatter(slots=["USER: {{content}} ASSISTANT:"]),
+    default_system=(
+        "A chat between a curious user and an artificial intelligence assistant. "
+        "The assistant gives helpful, detailed, and polite answers to the user's questions."
+    ),
+    mm_plugin=get_mm_plugin(name="video_llava", image_token="<image>", video_token="<video>"),
 )
 
 
