@@ -296,11 +296,11 @@ class LlavaPlugin(BasePlugin):
 class LlavaNextPlugin(BasePlugin):
     @override
     def process_messages(
-            self,
-            messages: Sequence[Dict[str, str]],
-            images: Sequence["ImageInput"],
-            videos: Sequence["VideoInput"],
-            processor: Optional["ProcessorMixin"],
+        self,
+        messages: Sequence[Dict[str, str]],
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        processor: Optional["ProcessorMixin"],
     ) -> List[Dict[str, str]]:
         self._validate_input(images, videos)
         num_image_tokens = 0
@@ -318,13 +318,13 @@ class LlavaNextPlugin(BasePlugin):
 
     @override
     def get_mm_inputs(
-            self,
-            images: Sequence["ImageInput"],
-            videos: Sequence["VideoInput"],
-            imglens: Sequence[int],
-            vidlens: Sequence[int],
-            seqlens: Sequence[int],
-            processor: Optional["ProcessorMixin"],
+        self,
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        imglens: Sequence[int],
+        vidlens: Sequence[int],
+        seqlens: Sequence[int],
+        processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         self._validate_input(images, videos)
         return _get_mm_inputs(images, videos, processor)
@@ -378,6 +378,7 @@ class LlavaNextVideoPlugin(BasePlugin):
             video_res = video_processor(videos, return_tensors="pt")
             res.update(video_res)
         return res
+
 
 class PaliGemmaPlugin(BasePlugin):
     @override
