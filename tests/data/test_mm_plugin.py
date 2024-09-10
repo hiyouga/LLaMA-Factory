@@ -142,7 +142,7 @@ def test_idefics2_plugin():
     check_inputs = {"plugin": idefics2_plugin, "tokenizer": tokenizer, "processor": processor}
     mm_messages = copy.deepcopy(MM_MESSAGES)
     fake_image_token = processor.fake_image_token.content
-    image_str = f"{fake_image_token}{"<image>" * processor.image_seq_len}{fake_image_token}"
+    image_str = f"{fake_image_token}{'<image>' * processor.image_seq_len}{fake_image_token}"
     image_str = image_str * 5
     for message in mm_messages:
         content = message["content"]
