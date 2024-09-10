@@ -585,6 +585,23 @@ register_model_group(
 
 register_model_group(
     models={
+        "Idefics2-Base": {
+            DownloadSource.DEFAULT: "HuggingFaceM4/idefics2-8b-base",
+        },
+        "Idefics2-Chat": {
+            DownloadSource.DEFAULT: "HuggingFaceM4/idefics2-8b",
+        },
+        "Idefics2-Chatty": {
+            DownloadSource.DEFAULT: "HuggingFaceM4/idefics2-8b-chatty",
+        },
+    },
+    template="idefics2",
+    vision=True,
+)
+
+
+register_model_group(
+    models={
         "InternLM-7B": {
             DownloadSource.DEFAULT: "internlm/internlm-7b",
             DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm-7b",
@@ -808,6 +825,49 @@ register_model_group(
         },
     },
     template="llava",
+    vision=True,
+)
+
+
+register_model_group(
+    models={
+        "LLaVA-NeXT-7B-Chat": {
+            DownloadSource.DEFAULT: "llava-hf/llava-v1.6-vicuna-7b-hf",
+        },
+        "LLaVA-NeXT-13B-Chat": {
+            DownloadSource.DEFAULT: "llava-hf/llava-v1.6-vicuna-13b-hf",
+        },
+        "LLaVA-NeXT-34B-Chat": {
+            DownloadSource.DEFAULT: "llava-hf/llava-v1.6-34b-hf",
+        },
+        "LLaVA-NeXT-Mistral-7B-Chat": {
+            DownloadSource.DEFAULT: "llava-hf/llava-v1.6-mistral-7b-hf",
+        },
+    },
+    template="llava_next",
+    vision=True,
+)
+
+
+register_model_group(
+    models={
+        "LLaVA-NeXT-Video-7B-Chat": {
+            DownloadSource.DEFAULT: "llava-hf/LLaVA-NeXT-Video-7B-hf",
+        },
+        "LLaVA-NeXT-Video-34B-Chat": {
+            DownloadSource.DEFAULT: "llava-hf/LLaVA-NeXT-Video-34B-hf",
+        },
+        "LLaVA-NeXT-Video-7B-32k-Chat": {
+            DownloadSource.DEFAULT: "llava-hf/LLaVA-NeXT-Video-7B-32K-hf",
+        },
+        "LLaVA-NeXT-Video-7B-DPO": {
+            DownloadSource.DEFAULT: "llava-hf/LLaVA-NeXT-Video-7B-DPO-hf",
+        },
+        "LLaVA-NeXT-Video-34B-DPO": {
+            DownloadSource.DEFAULT: "llava-hf/LLaVA-NeXT-Video-34B-DPO-hf",
+        },
+    },
+    template="llava_next_video",
     vision=True,
 )
 
@@ -1472,6 +1532,17 @@ register_model_group(
         },
     },
     template="vicuna",
+)
+
+
+register_model_group(
+    models={
+        "Video-LLaVA-7B-Chat": {
+            DownloadSource.DEFAULT: "LanguageBind/Video-LLaVA-7B-hf",
+        },
+    },
+    template="video_llava",
+    vision=True,
 )
 
 
