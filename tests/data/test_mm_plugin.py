@@ -148,7 +148,7 @@ def test_idefics2_plugin():
         content = message["content"]
         content = content.replace("<image>", image_str)
         content = content.replace(f"{fake_image_token}{fake_image_token}", f"{fake_image_token}")
-        message['content'] = content
+        message["content"] = content
     check_inputs["expected_mm_inputs"] = _get_mm_inputs(processor)
     _check_plugin(**check_inputs)
 
@@ -157,10 +157,7 @@ def test_llava_next_plugin():
     tokenizer, processor = _load_tokenizer_module(model_name_or_path="llava-hf/llava-v1.6-vicuna-7b-hf")
     llava_next_plugin = get_mm_plugin(name="llava_next", image_token="<image>")
     check_inputs = {"plugin": llava_next_plugin, "tokenizer": tokenizer, "processor": processor}
-    check_inputs["expected_mm_messages"] = [
-        {key: value for key, value in message.items()}
-        for message in MM_MESSAGES
-    ]
+    check_inputs["expected_mm_messages"] = MM_MESSAGES
     check_inputs["expected_mm_inputs"] = _get_mm_inputs(processor)
     _check_plugin(**check_inputs)
 
@@ -169,10 +166,7 @@ def test_llava_next_video_plugin():
     tokenizer, processor = _load_tokenizer_module(model_name_or_path="llava-hf/LLaVA-NeXT-Video-7B-hf")
     llava_next_video_plugin = get_mm_plugin(name="llava_next_video", image_token="<image>", video_token="<video>")
     check_inputs = {"plugin": llava_next_video_plugin, "tokenizer": tokenizer, "processor": processor}
-    check_inputs["expected_mm_messages"] = [
-        {key: value for key, value in message.items()}
-        for message in MM_MESSAGES
-    ]
+    check_inputs["expected_mm_messages"] = MM_MESSAGES
     check_inputs["expected_mm_inputs"] = _get_mm_inputs(processor)
     _check_plugin(**check_inputs)
 
@@ -214,9 +208,6 @@ def test_video_llava_plugin():
     tokenizer, processor = _load_tokenizer_module(model_name_or_path="LanguageBind/Video-LLaVA-7B-hf")
     video_llava_plugin = get_mm_plugin(name="video_llava", image_token="<image>", video_token="<video>")
     check_inputs = {"plugin": video_llava_plugin, "tokenizer": tokenizer, "processor": processor}
-    check_inputs["expected_mm_messages"] = [
-        {key: value for key, value in message.items()}
-        for message in MM_MESSAGES
-    ]
+    check_inputs["expected_mm_messages"] = MM_MESSAGES
     check_inputs["expected_mm_inputs"] = _get_mm_inputs(processor)
     _check_plugin(**check_inputs)
