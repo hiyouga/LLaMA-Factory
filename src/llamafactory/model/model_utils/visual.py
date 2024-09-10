@@ -108,7 +108,7 @@ def configure_visual_model(config: "PretrainedConfig") -> None:
     Patches VLMs before loading them.
     """
     model_type = getattr(config, "model_type", None)
-    if model_type == "llava":  # required for ds zero3 and valuehead models
+    if model_type in ["llava", "llava_next", "video_llava", "idefics2", "llava_next_video"]:  # required for ds zero3 and valuehead models
         setattr(config, "hidden_size", getattr(config.text_config, "hidden_size", None))
 
     if getattr(config, "is_yi_vl_derived_model", None):
@@ -150,7 +150,7 @@ def get_image_seqlen(config: "PretrainedConfig") -> int:
             image_seqlen += 1
     elif model_type == "paligemma":
         image_seqlen = config.vision_config.num_image_tokens
-    elif model_type == "qwen2_vl":  # variable length
+    else:
         image_seqlen = -1
 
     return image_seqlen
