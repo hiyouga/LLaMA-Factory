@@ -320,7 +320,15 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         default=-1,
         metadata={
             "help": "allow using seq_parallel and data_parallel simultaneously, -1 for all gpus parallels in sequence_length axis, n for n_gpus makes a sequence_parallel group"
-        }
+        },
+    )
+    sp_enable_offload: bool = field(
+        default=False,
+        metadata={"help": "whether enable offload activation to cpu for dist_flash_attn"},
+    )
+    sp_offload_percent: float = field(
+        default=0.0,
+        metadata={"help": "0 for remain all activation memory in gpu, 1 for offload all activation memory in cpu"}
     )
 
     def __post_init__(self):
