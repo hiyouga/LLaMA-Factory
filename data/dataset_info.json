@@ -622,5 +622,19 @@
       "prompt": "content"
     },
     "folder": "python"
+  },
+  "TF-ID-arxiv-papers_example": {
+    "file_name": "TF-ID-arxiv-papers_example.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "images": "images"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
   }
 }

@@ -77,8 +77,14 @@ def _encode_supervised_example(
             input_ids = source_ids + target_ids + input_ids
             labels = source_label + target_label + labels
         else:
-            input_ids += source_ids + target_ids
-            labels += source_label + target_label
+            if template.name == "florence2":
+                # Florence2Plugin will make sure messages only contain one round
+                # florence2 is an encoder-decoder model
+                input_ids = source_ids
+                labels = target_ids
+            else:
+                input_ids += source_ids + target_ids
+                labels += source_label + target_label
 
     if template.efficient_eos:
         input_ids += [tokenizer.eos_token_id]
@@ -101,7 +107,6 @@ def preprocess_supervised_dataset(
         if len(examples["_prompt"][i]) % 2 != 1 or len(examples["_response"][i]) != 1:
             logger.warning("Dropped invalid example: {}".format(examples["_prompt"][i] + examples["_response"][i]))
             continue
-
         input_ids, labels = _encode_supervised_example(
             prompt=examples["_prompt"][i],
             response=examples["_response"][i],

@@ -14,10 +14,8 @@ if is_pillow_available():
     from PIL import Image
     from PIL.Image import Image as ImageObject
 
-
 if is_pyav_available():
     import av
-
 
 if TYPE_CHECKING:
     import torch
@@ -147,7 +145,7 @@ class BasePlugin:
         r"""
         Processes visual inputs.
 
-        Returns: (llava and paligemma)
+        Returns: (llava, paligemma and florence2)
             pixel_values: tensor with shape (B, C, H, W)
 
         Returns: (qwen2-vl)
@@ -417,11 +415,52 @@ class Qwen2vlPlugin(BasePlugin):
         return self._get_mm_inputs(images, videos, processor)
 
 
+class Florence2Plugin(BasePlugin):
+    @override
+    def process_messages(
+        self,
+        messages: Sequence[Dict[str, str]],
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        processor: Optional["ProcessorMixin"],
+    ) -> List[Dict[str, str]]:
+        r"""
+        Pre-processes input messages before tokenization for VLMs.
+        """
+        # The predefined tasks in florence2 have specific prompt words. https://huggingface.co/microsoft/Florence-2-base-ft/blob/9803f52844ec1ae5df004e6089262e9a23e527fd/processing_florence2.py#L112
+        # modeling_florence2.py will concat image feature and text features. https://huggingface.co/microsoft/Florence-2-base-ft/blob/9803f52844ec1ae5df004e6089262e9a23e527fd/modeling_florence2.py#L2737
+        self._validate_input(images, videos)
+        for message in messages:
+            if message["role"] == "system":
+                raise ValueError("florence2 does not support system messages.")
+
+            if message["role"] == "user":
+                message["content"] = processor._construct_prompts([message["content"]])[0]
+
+        if len(messages) != 2:
+            raise ValueError(f"florence2 only support two messages(1 round): {len(messages)}")
+        return messages
+
+    @override
+    def get_mm_inputs(
+        self,
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        imglens: Sequence[int],
+        vidlens: Sequence[int],
+        seqlens: Sequence[int],
+        processor: Optional["ProcessorMixin"],
+    ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
+        self._validate_input(images, videos)
+        return self._get_mm_inputs(images, videos, processor)
+
+
 PLUGINS = {
     "base": BasePlugin,
     "llava": LlavaPlugin,
     "paligemma": PaliGemmaPlugin,
     "qwen2_vl": Qwen2vlPlugin,
+    "florence2": Florence2Plugin,
 }
 
 

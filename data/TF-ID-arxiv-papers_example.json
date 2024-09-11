@@ -1,0 +1,32 @@
+[
+  {
+    "messages": [
+      {
+        "content": "<OD>",
+        "role": "user"
+      },
+      {
+        "content": "table<loc_92><loc_84><loc_911><loc_245>",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "TF-ID-arxiv-papers_demo_data/arxiv_2407_03169_2.png"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "<OD>",
+        "role": "user"
+      },
+      {
+        "content": "table<loc_173><loc_507><loc_837><loc_656>figure<loc_170><loc_80><loc_827><loc_403>",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "TF-ID-arxiv-papers_demo_data/arxiv_2407_02687_7.png"
+    ]
+  }
+]

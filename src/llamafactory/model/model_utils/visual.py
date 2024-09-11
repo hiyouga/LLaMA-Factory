@@ -30,7 +30,6 @@ if TYPE_CHECKING:
 
     from ...hparams import FinetuningArguments, ModelArguments
 
-
 logger = get_logger(__name__)
 transformers_logger = logging.get_logger(__name__)
 
@@ -136,6 +135,13 @@ def get_forbidden_modules(config: "PretrainedConfig", finetuning_args: "Finetuni
         if finetuning_args.train_mm_proj_only:
             raise ValueError("Qwen2-VL models do not support `train_mm_proj_only`.")
 
+    elif model_type == "florence2":
+        if finetuning_args.freeze_vision_tower:
+            forbidden_modules.add("vision_tower")
+
+        if finetuning_args.train_mm_proj_only:
+            raise ValueError("florence2 models do not support `train_mm_proj_only`.")
+
     return forbidden_modules
 
 
@@ -152,6 +158,11 @@ def get_image_seqlen(config: "PretrainedConfig") -> int:
         image_seqlen = config.vision_config.num_image_tokens
     elif model_type == "qwen2_vl":  # variable length
         image_seqlen = -1
+    elif model_type == "florence2":
+        # Florence2 does not need to add image_token placeholder in the prompt, as modeling_florence2.py will merge image features and text features.
+        # https://huggingface.co/microsoft/Florence-2-large/blob/39ddb416a9819d9fa1bacad7b7899099ae4b0a59/modeling_florence2.py#L2737
+        # hard-coded, cannot find a method to calculate image_seqlen from config.
+        image_seqlen = 577
 
     return image_seqlen
 

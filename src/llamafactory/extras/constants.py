@@ -1736,3 +1736,26 @@ register_model_group(
     },
     template="zephyr",
 )
+
+register_model_group(
+    models={
+        "Florence-2-base": {
+            DownloadSource.DEFAULT: "microsoft/Florence-2-base",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Florence-2-base",
+        },
+        "Florence-2-base-ft": {
+            DownloadSource.DEFAULT: "microsoft/Florence-2-base-ft",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Florence-2-base-ft",
+        },
+        "Florence-2-large": {
+            DownloadSource.DEFAULT: "microsoft/Florence-2-large",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Florence-2-large",
+        },
+        "Florence-2-large-ft": {
+            DownloadSource.DEFAULT: "microsoft/Florence-2-large-ft",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Florence-2-large-ft",
+        },
+    },
+    template="florence2",
+    vision=True,
+)

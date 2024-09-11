@@ -67,21 +67,28 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
     """
     init_kwargs = _get_init_kwargs(model_args)
     config = load_config(model_args)
-    try:
-        tokenizer = AutoTokenizer.from_pretrained(
-            model_args.model_name_or_path,
-            use_fast=model_args.use_fast_tokenizer,
-            split_special_tokens=model_args.split_special_tokens,
-            padding_side="right",
-            **init_kwargs,
-        )
-    except ValueError:  # try the fast one
-        tokenizer = AutoTokenizer.from_pretrained(
-            model_args.model_name_or_path,
-            use_fast=True,
-            padding_side="right",
-            **init_kwargs,
-        )
+    is_florence2 = getattr(config, "model_type", None) == 'florence2'
+
+    if is_florence2:
+        # Florence-2 has a custom tokenizer, see:
+        # https://huggingface.co/microsoft/Florence-2-base-ft/blob/main/processing_florence2.py#L85
+        tokenizer = AutoProcessor.from_pretrained(model_args.model_name_or_path, **init_kwargs).tokenizer
+    else:
+        try:
+            tokenizer = AutoTokenizer.from_pretrained(
+                model_args.model_name_or_path,
+                use_fast=model_args.use_fast_tokenizer,
+                split_special_tokens=model_args.split_special_tokens,
+                padding_side="right",
+                **init_kwargs,
+            )
+        except ValueError:  # try the fast one
+            tokenizer = AutoTokenizer.from_pretrained(
+                model_args.model_name_or_path,
+                use_fast=True,
+                padding_side="right",
+                **init_kwargs,
+            )
 
     if model_args.new_special_tokens is not None:
         num_added_tokens = tokenizer.add_special_tokens(

@@ -37,6 +37,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class Template:
+    name: str
     format_user: "Formatter"
     format_assistant: "Formatter"
     format_system: "Formatter"
@@ -251,6 +252,7 @@ def _register_template(
     default_separator_formatter = EmptyFormatter()
     default_prefix_formatter = EmptyFormatter()
     TEMPLATES[name] = template_class(
+        name=name,
         format_user=format_user or default_user_formatter,
         format_assistant=format_assistant or default_assistant_formatter,
         format_system=format_system or default_user_formatter,
@@ -983,4 +985,12 @@ _register_template(
     name="ziya",
     format_user=StringFormatter(slots=["<human>:{{content}}\n<bot>:"]),
     format_separator=EmptyFormatter(slots=["\n"]),
+)
+
+
+_register_template(
+    name="florence2",
+    format_user=StringFormatter(slots=["{{content}}"]),
+    stop_words=["</s>"],
+    mm_plugin=get_mm_plugin(name="florence2", image_token=""),
 )

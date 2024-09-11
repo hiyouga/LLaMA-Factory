@@ -161,7 +161,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 ## Supported Models
 
 | Model                                                             | Model size                       | Template  |
-| ----------------------------------------------------------------- | -------------------------------- | --------- |
+|-------------------------------------------------------------------|----------------------------------| --------- |
 | [Baichuan 2](https://huggingface.co/baichuan-inc)                 | 7B/13B                           | baichuan2 |
 | [BLOOM/BLOOMZ](https://huggingface.co/bigscience)                 | 560M/1.1B/1.7B/3B/7.1B/176B      | -         |
 | [ChatGLM3](https://huggingface.co/THUDM)                          | 6B                               | chatglm3  |
@@ -188,6 +188,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [Yi/Yi-1.5 (Code)](https://huggingface.co/01-ai)                  | 1.5B/6B/9B/34B                   | yi        |
 | [Yi-VL](https://huggingface.co/01-ai)                             | 6B/34B                           | yi_vl     |
 | [Yuan 2](https://huggingface.co/IEITYuan)                         | 2B/51B/102B                      | yuan      |
+| [Florence 2](https://huggingface.co/microsoft/Florence-2-large)                 | 0.23B/0.77B                   | florence2   |
 
 > [!NOTE]
 > For the "base" models, the `template` argument can be chosen from `default`, `alpaca`, `vicuna` etc. But make sure to use the **corresponding template** for the "instruct/chat" models.

@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Sequence, Tuple
 import pytest
 import torch
 from PIL import Image
+from transformers import AutoProcessor
 
 from llamafactory.data.mm_plugin import get_mm_plugin
 from llamafactory.hparams import ModelArguments
@@ -29,7 +30,6 @@ if TYPE_CHECKING:
     from transformers.image_processing_utils import BaseImageProcessor
 
     from llamafactory.data.mm_plugin import BasePlugin
-
 
 HF_TOKEN = os.environ.get("HF_TOKEN", None)
 
@@ -167,3 +167,30 @@ def test_qwen2_vl_plugin():
     ]
     check_inputs["expected_mm_inputs"] = _get_mm_inputs(processor)
     _check_plugin(**check_inputs)
+
+
+def test_florence2_plugin_without_predefined_task():
+    processor = AutoProcessor.from_pretrained("microsoft/Florence-2-base-ft", trust_remote_code=True)
+    tokenizer = processor.tokenizer
+    florence2_plugin = get_mm_plugin(name="florence2", image_token="")
+    check_inputs = {"plugin": florence2_plugin, "tokenizer": tokenizer, "processor": processor}
+    check_inputs["expected_mm_messages"] = MM_MESSAGES
+    check_inputs["expected_mm_inputs"] = _get_mm_inputs(processor)
+    _check_plugin(**check_inputs)
+
+
+def test_florence2_plugin_with_predefined_task():
+    florence2_mm_input_messages = [
+        {"role": "user", "content": "<OD>"},
+        {"role": "assistant", "content": "table<loc_123><loc_123><loc_123><loc_123>"},
+    ]
+    florence2_mm_output_messages = [
+        {"role": "user", "content": "Locate the objects with category name in the image."},
+        {"role": "assistant", "content": "table<loc_123><loc_123><loc_123><loc_123>"},
+    ]
+    processor = AutoProcessor.from_pretrained("microsoft/Florence-2-base-ft", trust_remote_code=True)
+    plugin = get_mm_plugin(name="florence2", image_token="")
+    assert (
+        plugin.process_messages(florence2_mm_input_messages, IMAGES, NO_VIDEOS, processor)
+        == florence2_mm_output_messages
+    )
