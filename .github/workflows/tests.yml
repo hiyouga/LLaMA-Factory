@@ -39,6 +39,7 @@ jobs:
     env:
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
       OS_NAME: ${{ matrix.os }}
+      PYTHONIOENCODING: "utf-8"
 
     steps:
       - name: Checkout
