@@ -72,7 +72,7 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
     processor = tokenizer_module["processor"]
-    get_template_and_fix_tokenizer(tokenizer, data_args.template)
+    get_template_and_fix_tokenizer(tokenizer, data_args)
     model = load_model(tokenizer, model_args, finetuning_args)  # must after fixing tokenizer to resize vocab
 
     if getattr(model, "quantization_method", None) is not None and model_args.adapter_name_or_path is not None:

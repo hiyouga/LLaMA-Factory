@@ -38,7 +38,7 @@ jobs:
 
     env:
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
-      CI_OS: ${{ matrix.os }}
+      OS_NAME: ${{ matrix.os }}
 
     steps:
       - name: Checkout

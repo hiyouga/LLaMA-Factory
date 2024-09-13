@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, Union
 
 from transformers.utils.versions import require_version
+from typing_extensions import override
 
 from ..extras.logging import get_logger
 from .data_utils import Role
@@ -152,6 +153,7 @@ class Template:
 
 @dataclass
 class Llama2Template(Template):
+    @override
     def _encode(
         self,
         tokenizer: "PreTrainedTokenizer",
@@ -195,7 +197,7 @@ class Llama2Template(Template):
         return encoded_messages
 
 
-TEMPLATES: Dict[str, Template] = {}
+TEMPLATES: Dict[str, "Template"] = {}
 
 
 def _register_template(
@@ -305,6 +307,9 @@ def _convert_slots_to_jinja(slots: "SLOTS", tokenizer: "PreTrainedTokenizer", pl
 
 
 def _get_jinja_template(template: "Template", tokenizer: "PreTrainedTokenizer") -> str:
+    r"""
+    Returns the jinja template.
+    """
     jinja_template = ""
 
     prefix = _convert_slots_to_jinja(template.format_prefix.apply(), tokenizer)
@@ -345,10 +350,14 @@ def _get_jinja_template(template: "Template", tokenizer: "PreTrainedTokenizer") 
 
 
 def get_template_and_fix_tokenizer(tokenizer: "PreTrainedTokenizer", data_args: "DataArguments") -> "Template":
+    r"""
+    Gets chat template and fixes the tokenizer.
+    """
     if data_args.template in ["llava", "paligemma", "qwen2_vl"]:
         require_version(
             "transformers>=4.45.0.dev0", "To fix: pip install git+https://github.com/huggingface/transformers.git"
         )
+        require_version("accelerate>=0.34.0", "To fix: pip install accelerate>=0.34.0")
 
     if data_args.template is None:
         template = TEMPLATES["empty"]  # placeholder
@@ -571,6 +580,15 @@ _register_template(
     name="cpm",
     format_user=StringFormatter(slots=["<用户>{{content}}<AI>"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+)
+
+
+_register_template(
+    name="cpm3",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<|im_end|>"],
 )
 
 

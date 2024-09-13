@@ -643,9 +643,21 @@ register_model_group(
 
 register_model_group(
     models={
+        "InternLM2.5-1.8B": {
+            DownloadSource.DEFAULT: "internlm/internlm2_5-1_8b",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-1_8b",
+        },
         "InternLM2.5-7B": {
             DownloadSource.DEFAULT: "internlm/internlm2_5-7b",
             DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-7b",
+        },
+        "InternLM2.5-20B": {
+            DownloadSource.DEFAULT: "internlm/internlm2_5-20b",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-20b",
+        },
+        "InternLM2.5-1.8B-Chat": {
+            DownloadSource.DEFAULT: "internlm/internlm2_5-1_8b-chat",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-1_8b-chat",
         },
         "InternLM2.5-7B-Chat": {
             DownloadSource.DEFAULT: "internlm/internlm2_5-7b-chat",
@@ -654,6 +666,10 @@ register_model_group(
         "InternLM2.5-7B-1M-Chat": {
             DownloadSource.DEFAULT: "internlm/internlm2_5-7b-chat-1m",
             DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-7b-chat-1m",
+        },
+        "InternLM2.5-20B-Chat": {
+            DownloadSource.DEFAULT: "internlm/internlm2_5-20b-chat",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-20b-chat",
         },
     },
     template="intern2",
@@ -775,6 +791,7 @@ register_model_group(
         },
         "LLaMA3.1-405B": {
             DownloadSource.DEFAULT: "meta-llama/Meta-Llama-3.1-405B",
+            DownloadSource.MODELSCOPE: "LLM-Research/Meta-Llama-3.1-405B",
         },
         "LLaMA3.1-8B-Chat": {
             DownloadSource.DEFAULT: "meta-llama/Meta-Llama-3.1-8B-Instruct",
@@ -786,6 +803,7 @@ register_model_group(
         },
         "LLaMA3.1-405B-Chat": {
             DownloadSource.DEFAULT: "meta-llama/Meta-Llama-3.1-405B-Instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Meta-Llama-3.1-405B-Instruct",
         },
     },
     template="llama3",
@@ -818,6 +836,17 @@ register_model_group(
         },
     },
     template="cpm",
+)
+
+
+register_model_group(
+    models={
+        "MiniCPM3-4B-Chat": {
+            DownloadSource.DEFAULT: "openbmb/MiniCPM3-4B",
+            DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM3-4B",
+        },
+    },
+    template="cpm3",
 )
 
 
@@ -1358,15 +1387,19 @@ register_model_group(
         },
         "Qwen2VL-2B-int8-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-VL-2B-Instruct-GPTQ-Int8",
+            DownloadSource.MODELSCOPE: "qwen/Qwen2-VL-2B-Instruct-GPTQ-Int8",
         },
         "Qwen2VL-2B-int4-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-VL-2B-Instruct-AWQ",
+            DownloadSource.MODELSCOPE: "qwen/Qwen2-VL-2B-Instruct-AWQ",
         },
         "Qwen2VL-7B-int8-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-VL-7B-Instruct-GPTQ-Int8",
+            DownloadSource.MODELSCOPE: "qwen/Qwen2-VL-7B-Instruct-GPTQ-Int8",
         },
         "Qwen2VL-7B-int4-Chat": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-VL-7B-Instruct-AWQ",
+            DownloadSource.MODELSCOPE: "qwen/Qwen2-VL-7B-Instruct-AWQ",
         },
     },
     template="qwen2_vl",
@@ -1647,15 +1680,19 @@ register_model_group(
         },
         "Yi-Coder-1.5B": {
             DownloadSource.DEFAULT: "01-ai/Yi-Coder-1.5B",
+            DownloadSource.MODELSCOPE: "01ai/Yi-Coder-1.5B",
         },
         "Yi-Coder-9B": {
             DownloadSource.DEFAULT: "01-ai/Yi-Coder-9B",
+            DownloadSource.MODELSCOPE: "01ai/Yi-Coder-9B",
         },
         "Yi-Coder-1.5B-Chat": {
             DownloadSource.DEFAULT: "01-ai/Yi-Coder-1.5B-Chat",
+            DownloadSource.MODELSCOPE: "01ai/Yi-Coder-1.5B-Chat",
         },
         "Yi-Coder-9B-Chat": {
             DownloadSource.DEFAULT: "01-ai/Yi-Coder-9B-Chat",
+            DownloadSource.MODELSCOPE: "01ai/Yi-Coder-9B-Chat",
         },
     },
     template="yi",

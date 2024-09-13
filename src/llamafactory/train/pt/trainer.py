@@ -16,6 +16,7 @@ from types import MethodType
 from typing import TYPE_CHECKING, Optional
 
 from transformers import Trainer
+from typing_extensions import override
 
 from ...extras.logging import get_logger
 from ..callbacks import PissaConvertCallback, SaveProcessorCallback
@@ -55,11 +56,13 @@ class CustomTrainer(Trainer):
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
 
+    @override
     def create_optimizer(self) -> "torch.optim.Optimizer":
         if self.optimizer is None:
             self.optimizer = create_custom_optimizer(self.model, self.args, self.finetuning_args)
         return super().create_optimizer()
 
+    @override
     def create_scheduler(
         self, num_training_steps: int, optimizer: Optional["torch.optim.Optimizer"] = None
     ) -> "torch.optim.lr_scheduler.LRScheduler":
