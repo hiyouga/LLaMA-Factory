@@ -4,6 +4,7 @@ from io import BytesIO
 from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, TypedDict, Union
 
 import numpy as np
+import torch
 from torchvision import transforms
 from typing_extensions import override
 
@@ -21,7 +22,6 @@ if is_pyav_available():
 
 
 if TYPE_CHECKING:
-    import torch
     from av.stream import Stream
     from transformers import PreTrainedTokenizer, ProcessorMixin
     from transformers.image_processing_utils import BaseImageProcessor
@@ -469,9 +469,13 @@ class Glm4vPlugin(BasePlugin):
         seqlens: Sequence[int],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
-        if len(images) > 1:
-            raise ValueError("Glm-4v-9b supports only one image as input per example.")
-        return {"_images": self.transform(images[0])}
+        image_tensors = None
+        transformed_images = []
+        for image in images:
+            transformed_images.append(self.transform(Image.open(image) if isinstance(image, str) else image))
+        image_tensors = torch.stack(transformed_images)
+
+        return {"images": image_tensors}
 
 
 PLUGINS = {
