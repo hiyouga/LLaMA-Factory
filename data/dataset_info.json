@@ -2,6 +2,9 @@
   "identity": {
     "file_name": "identity.json"
   },
+  "qizhen":{
+    "file_name":"/mnt/e/AI/modle/QiZhenGPT/QiZhenGPT/data/train/sft-20k.json"
+  },
   "alpaca_en_demo": {
     "file_name": "alpaca_en_demo.json"
   },
