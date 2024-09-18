@@ -1,1 +1,1 @@
-from push_to_ms import PushToMsHub
+from .push_to_ms import PushToMsHub
