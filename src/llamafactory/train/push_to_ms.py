@@ -69,7 +69,7 @@ def upload_folder(
         token or PushToMsHub.ms_token,
         commit_message=commit_message,
         ignore_file_pattern=ignore_patterns,
-        revision=revision,
+        revision=revision or 'master',
         tag=path_in_repo)
     return CommitInfo(
         commit_url=f'https://www.modelscope.cn/models/{repo_id}/files',
