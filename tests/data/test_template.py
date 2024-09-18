@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import json
 import os
 from typing import TYPE_CHECKING, List, Sequence
 
@@ -21,10 +21,8 @@ from transformers import AutoTokenizer
 from llamafactory.data import get_template_and_fix_tokenizer
 from llamafactory.hparams import DataArguments
 
-
 if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer
-
 
 HF_TOKEN = os.environ.get("HF_TOKEN", None)
 
@@ -36,6 +34,81 @@ MESSAGES = [
     {"role": "user", "content": "你好"},
     {"role": "assistant", "content": "很高兴认识你！"},
 ]
+
+TOOL_MESSAGES = {
+    "tools": [
+        {
+            "type": "function",
+            "function": {
+                "name": "get_news",
+                "description": "获取最新新闻文章",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "category": {"type": "string", "description": "要检索的新闻文章类别"},
+                        "country": {"type": "string", "description": "获取新闻文章的国家"}
+                    },
+                    "required": ["category"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "search_books",
+                "description": "根据提供的标准搜索书籍",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string", "description": "这本书的标题"},
+                        "author": {"type": "string", "description": "这本书的作者"},
+                        "genre": {"type": "string", "description": "这本书的类型"}
+                    }
+                }
+            }
+        }
+    ],
+    "messages": [
+        {
+            "role": "user",
+            "content": "你能帮我找到最新的美国体育新闻吗？"
+        },
+        {
+            "role": "tool_calls",
+            "content": [
+                {
+                    "type": "function",
+                    "function": {"name": "get_news", "arguments": {"category": "运动", "country": "美国"}}
+                }
+            ]
+        },
+        {
+            "role": "tool",
+            "content": json.dumps(
+                {"title": "NBA总决赛：湖人队对阵热火队", "link": "NBA官方网站"},
+                ensure_ascii=False
+            ),
+        },
+        {
+            "role": "tool",
+            "content": json.dumps(
+                {"title": "NFL：爱国者队击败酋长队", "link": "https://www.nfl.com/新闻"},
+                ensure_ascii=False
+            ),
+        },
+        {
+            "role": "tool",
+            "content": json.dumps(
+                {"title": "MLB：道奇队赢得世界系列赛", "link": "https://www.mlb.com/新闻"},
+                ensure_ascii=False
+            )
+        },
+        {
+            "role": "assistant",
+            "content": "1. NBA总决赛：湖人队对阵热火队\n2. NFL：爱国者队击败酋长队\n3. MLB：道奇队赢得世界系列赛"
+        }
+    ],
+}
 
 
 def _check_tokenization(
@@ -168,3 +241,118 @@ def test_yi_template():
     )
     answer_str = "很高兴认识你！<|im_end|>"
     _check_template("01-ai/Yi-1.5-6B-Chat", "yi", prompt_str, answer_str)
+
+
+@pytest.mark.xfail(reason="The fast tokenizer of mistral model is corrupted.")
+def test_mistral_template():
+    TEMPLATE = r"""
+{%- if not tools is defined %}
+    {%- set tools = none %}
+{%- endif %}
+{%- set user_messages = messages | selectattr("role", "equalto", "user") | list %}
+
+{%- for message in lmessages | rejectattr("role", "equalto", "tool") | rejectattr("role", "equalto", "tool_results") | selectattr("tool_calls", "undefined") %}
+    {%- if (message["role"] == "user") != (loop.index0 % 2 == 0) %}
+        {{- raise_exception("Conversation roles must alternate user/assistant/user/assistant/...") }}
+    {%- endif %}
+{%- endfor %}
+
+{{- bos_token }}
+{%- for message in messages %}
+    {%- if message["role"] == "user" %}
+        {%- if tools is not none and (message == user_messages[-1]) %}
+            {{- "[AVAILABLE_TOOLS] [" }}
+            {%- for tool in tools %}
+                {%- set tool = tool.function %}
+                {{- '{"type": "function", "function": {' }}
+                {%- for key, val in tool.items() if key != "return" %}
+                    {%- if val is string %}
+                        {{- '"' + key + '": "' + val + '"' }}
+                    {%- else %}
+                        {{- '"' + key + '": ' + val|tojson }}
+                    {%- endif %}
+                    {%- if not loop.last %}
+                        {{- ", " }}
+                    {%- endif %}
+                {%- endfor %}
+                {{- "}}" }}
+                {%- if not loop.last %}
+                    {{- ", " }}
+                {%- else %}
+                    {{- "]" }}
+                {%- endif %}
+            {%- endfor %}
+            {{- "[/AVAILABLE_TOOLS]" }}
+        {%- endif %}
+        {{- "[INST] " + message["content"] + "[/INST]" }}
+    {%- elif message["role"] == "tool_calls" or message.tool_calls is defined %}
+        {%- if message.tool_calls is defined %}
+            {%- set tool_calls = message.tool_calls %}
+        {%- else %}
+            {%- set tool_calls = message.content %}
+        {%- endif %}
+        {{- "[TOOL_CALLS] [" }}
+        {%- for tool_call in tool_calls %}
+            {%- set out = tool_call.function|tojson %}
+            {{- out }}
+            {%- if not loop.last %}
+                {{- ", " }}
+            {%- else %}
+                {{- "]" }}
+            {%- endif %}
+        {%- endfor %}
+    {%- elif message["role"] == "assistant" %}
+        {{- " " + message["content"] }}
+    {%- elif message["role"] == "tool_results" or message["role"] == "tool" %}
+        {%- if message.content is defined and message.content.content is defined %}
+            {%- set content = message.content.content %}
+        {%- else %}
+            {%- set content = message.content %}
+        {%- endif %}
+        {{- '[TOOL_RESULTS] {"content": ' + content|string + "}[/TOOL_RESULTS]" }}
+    {%- else %}
+        {{- raise_exception("Only user and assistant roles are supported, with the exception of an initial optional system message!") }}
+    {%- endif %}
+{%- endfor %}
+"""
+    tokenizer: PreTrainedTokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-Instruct-v0.3")
+    template = get_template_and_fix_tokenizer(tokenizer, DataArguments(template="mistral"))
+
+    content_str = tokenizer.apply_chat_template(
+        conversation=TOOL_MESSAGES['messages'],
+        tools=TOOL_MESSAGES['tools'],
+        chat_template=TEMPLATE,
+        tokenize=False
+    )
+    content_ids = tokenizer.apply_chat_template(
+        conversation=TOOL_MESSAGES['messages'],
+        tools=TOOL_MESSAGES['tools'],
+        chat_template=TEMPLATE,
+        tokenize=True
+    )
+    encoded_pairs = template.encode_multiturn(
+        tokenizer,
+        [
+            TOOL_MESSAGES['messages'][0],
+            {
+                "role": "function",
+                "content": json.dumps([function['function'] for function in TOOL_MESSAGES['messages'][1]['content']])
+            },
+            {
+                "role": "observation",
+                "content": json.dumps([item['content'] for item in TOOL_MESSAGES['messages'][2:-1]])
+            },
+            TOOL_MESSAGES['messages'][-1],
+        ],
+        tools=json.dumps([tool['function'] for tool in TOOL_MESSAGES['tools']])
+    )
+
+    final_ids = []
+    for prompt, response in encoded_pairs:
+        final_ids.extend(prompt)
+        final_ids.extend(response)
+
+    final_str = tokenizer.decode(final_ids)
+
+    assert content_str == final_str
+    assert content_ids == final_ids

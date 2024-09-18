@@ -21,8 +21,8 @@ from typing_extensions import override
 from ..extras.logging import get_logger
 from .data_utils import Role
 from .formatter import EmptyFormatter, FunctionFormatter, StringFormatter, ToolFormatter
+from .formatter import MistralFunctionFormatter, MistralObservationFormatter
 from .mm_plugin import get_mm_plugin
-
 
 if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer
@@ -30,7 +30,6 @@ if TYPE_CHECKING:
     from ..hparams import DataArguments
     from .formatter import SLOTS, Formatter
     from .mm_plugin import BasePlugin
-
 
 logger = get_logger(__name__)
 
@@ -416,7 +415,6 @@ _register_template(
     ),
 )
 
-
 _register_template(
     name="aquila",
     format_user=StringFormatter(slots=["Human: {{content}}###Assistant:"]),
@@ -429,7 +427,6 @@ _register_template(
     efficient_eos=True,
 )
 
-
 _register_template(
     name="atom",
     format_user=StringFormatter(
@@ -438,20 +435,17 @@ _register_template(
     format_assistant=StringFormatter(slots=["{{content}}\n", {"eos_token"}]),
 )
 
-
 _register_template(
     name="baichuan",
     format_user=StringFormatter(slots=[{"token": "<reserved_102>"}, "{{content}}", {"token": "<reserved_103>"}]),
     efficient_eos=True,
 )
 
-
 _register_template(
     name="baichuan2",
     format_user=StringFormatter(slots=["<reserved_106>{{content}}<reserved_107>"]),
     efficient_eos=True,
 )
-
 
 _register_template(
     name="belle",
@@ -460,12 +454,10 @@ _register_template(
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
 )
 
-
 _register_template(
     name="bluelm",
     format_user=StringFormatter(slots=[{"token": "[|Human|]:"}, "{{content}}", {"token": "[|AI|]:"}]),
 )
-
 
 _register_template(
     name="breeze",
@@ -474,7 +466,6 @@ _register_template(
     efficient_eos=True,
 )
 
-
 _register_template(
     name="chatglm2",
     format_user=StringFormatter(slots=["[Round {{idx}}]\n\n问：{{content}}\n\n答："]),
@@ -482,7 +473,6 @@ _register_template(
     format_prefix=EmptyFormatter(slots=[{"token": "[gMASK]"}, {"token": "sop"}]),
     efficient_eos=True,
 )
-
 
 _register_template(
     name="chatglm3",
@@ -499,7 +489,6 @@ _register_template(
     efficient_eos=True,
 )
 
-
 _register_template(
     name="chatml",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -509,7 +498,6 @@ _register_template(
     stop_words=["<|im_end|>", "<|im_start|>"],
     replace_eos=True,
 )
-
 
 _register_template(
     name="chatml_de",
@@ -522,12 +510,10 @@ _register_template(
     replace_eos=True,
 )
 
-
 _register_template(
     name="codegeex2",
     format_prefix=EmptyFormatter(slots=[{"token": "[gMASK]"}, {"token": "sop"}]),
 )
-
 
 _register_template(
     name="codegeex4",
@@ -545,7 +531,6 @@ _register_template(
     efficient_eos=True,
 )
 
-
 _register_template(
     name="cohere",
     format_user=StringFormatter(
@@ -560,13 +545,11 @@ _register_template(
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
 )
 
-
 _register_template(
     name="cpm",
     format_user=StringFormatter(slots=["<用户>{{content}}<AI>"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
 )
-
 
 _register_template(
     name="cpm3",
@@ -575,7 +558,6 @@ _register_template(
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|im_end|>"],
 )
-
 
 _register_template(
     name="dbrx",
@@ -602,14 +584,12 @@ _register_template(
     replace_eos=True,
 )
 
-
 _register_template(
     name="deepseek",
     format_user=StringFormatter(slots=["User: {{content}}\n\nAssistant:"]),
     format_system=StringFormatter(slots=["{{content}}\n\n"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
 )
-
 
 _register_template(
     name="deepseekcoder",
@@ -625,7 +605,6 @@ _register_template(
     ),
 )
 
-
 _register_template(
     name="default",
     format_user=StringFormatter(slots=["Human: {{content}}\nAssistant:"]),
@@ -633,12 +612,10 @@ _register_template(
     format_separator=EmptyFormatter(slots=["\n"]),
 )
 
-
 _register_template(
     name="empty",
     efficient_eos=True,
 )
-
 
 _register_template(
     name="falcon",
@@ -647,13 +624,11 @@ _register_template(
     efficient_eos=True,
 )
 
-
 _register_template(
     name="fewshot",
     format_separator=EmptyFormatter(slots=["\n\n"]),
     efficient_eos=True,
 )
-
 
 _register_template(
     name="gemma",
@@ -665,7 +640,6 @@ _register_template(
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     efficient_eos=True,
 )
-
 
 _register_template(
     name="glm4",
@@ -680,7 +654,6 @@ _register_template(
     efficient_eos=True,
 )
 
-
 _register_template(
     name="intern",
     format_user=StringFormatter(slots=["<|User|>:{{content}}\n<|Bot|>:"]),
@@ -690,7 +663,6 @@ _register_template(
     stop_words=["<eoa>"],
     efficient_eos=True,  # internlm tokenizer cannot set eos_token_id
 )
-
 
 _register_template(
     name="intern2",
@@ -702,13 +674,11 @@ _register_template(
     efficient_eos=True,  # internlm2 tokenizer cannot set eos_token_id
 )
 
-
 _register_template(
     name="llama2",
     format_user=StringFormatter(slots=[{"bos_token"}, "[INST] {{content}} [/INST]"]),
     format_system=StringFormatter(slots=["<<SYS>>\n{{content}}\n<</SYS>>\n\n"]),
 )
-
 
 _register_template(
     name="llama2_zh",
@@ -716,7 +686,6 @@ _register_template(
     format_system=StringFormatter(slots=["<<SYS>>\n{{content}}\n<</SYS>>\n\n"]),
     default_system="You are a helpful assistant. 你是一个乐于助人的助手。",
 )
-
 
 _register_template(
     name="llama3",
@@ -742,7 +711,6 @@ _register_template(
     replace_eos=True,
 )
 
-
 _register_template(
     name="llava",
     format_user=StringFormatter(slots=["USER: {{content}} ASSISTANT:"]),
@@ -753,13 +721,16 @@ _register_template(
     mm_plugin=get_mm_plugin(name="llava", image_token="<image>"),
 )
 
-
 _register_template(
     name="mistral",
-    format_user=StringFormatter(slots=["[INST] {{content}} [/INST]"]),
+    format_user=StringFormatter(slots=["[INST] {{content}}[/INST]"]),
+    format_assistant=StringFormatter(slots=[" {{content}}"]),  # mistral add space here
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    format_function=MistralFunctionFormatter(slots=[], tool_format="mistral"),
+    format_observation=MistralObservationFormatter(tool_format="mistral"),
+    format_tools=ToolFormatter(tool_format="mistral"),
+    efficient_eos=True,
 )
-
 
 _register_template(
     name="olmo",
@@ -767,13 +738,11 @@ _register_template(
     format_prefix=EmptyFormatter(slots=[{"eos_token"}]),
 )
 
-
 _register_template(
     name="openchat",
     format_user=StringFormatter(slots=["GPT4 Correct User: {{content}}", {"eos_token"}, "GPT4 Correct Assistant:"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
 )
-
 
 _register_template(
     name="openchat-3.6",
@@ -790,13 +759,11 @@ _register_template(
     replace_eos=True,
 )
 
-
 _register_template(
     name="orion",
     format_user=StringFormatter(slots=["Human: {{content}}\n\nAssistant: ", {"eos_token"}]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
 )
-
 
 _register_template(
     name="paligemma",
@@ -810,7 +777,6 @@ _register_template(
     mm_plugin=get_mm_plugin(name="paligemma", image_token="<image>"),
 )
 
-
 _register_template(
     name="phi",
     format_user=StringFormatter(slots=["<|user|>\n{{content}}<|end|>\n<|assistant|>\n"]),
@@ -820,7 +786,6 @@ _register_template(
     stop_words=["<|end|>"],
     replace_eos=True,
 )
-
 
 _register_template(
     name="qwen",
@@ -833,7 +798,6 @@ _register_template(
     replace_eos=True,
 )
 
-
 _register_template(
     name="qwen2_vl",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -845,7 +809,6 @@ _register_template(
     replace_eos=True,
     mm_plugin=get_mm_plugin(name="qwen2_vl", image_token="<|image_pad|>", video_token="<|video_pad|>"),
 )
-
 
 _register_template(
     name="sailor",
@@ -860,14 +823,12 @@ _register_template(
     replace_eos=True,
 )
 
-
 _register_template(
     name="solar",
     format_user=StringFormatter(slots=["### User:\n{{content}}\n\n### Assistant:\n"]),
     format_system=StringFormatter(slots=["### System:\n{{content}}\n\n"]),
     efficient_eos=True,
 )
-
 
 _register_template(
     name="starchat",
@@ -878,7 +839,6 @@ _register_template(
     replace_eos=True,
 )
 
-
 _register_template(
     name="telechat",
     format_user=StringFormatter(slots=["<_user>{{content}}<_bot>"]),
@@ -886,7 +846,6 @@ _register_template(
     stop_words=["<_end>"],
     replace_eos=True,
 )
-
 
 _register_template(
     name="vicuna",
@@ -896,7 +855,6 @@ _register_template(
         "The assistant gives helpful, detailed, and polite answers to the user's questions."
     ),
 )
-
 
 _register_template(
     name="xuanyuan",
@@ -908,12 +866,10 @@ _register_template(
     ),
 )
 
-
 _register_template(
     name="xverse",
     format_user=StringFormatter(slots=["Human: {{content}}\n\nAssistant: "]),
 )
-
 
 _register_template(
     name="yayi",
@@ -934,7 +890,6 @@ _register_template(
     stop_words=["<|End|>"],
 )
 
-
 _register_template(
     name="yi",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -943,7 +898,6 @@ _register_template(
     stop_words=["<|im_end|>"],
     replace_eos=True,
 )
-
 
 _register_template(
     name="yi_vl",
@@ -961,7 +915,6 @@ _register_template(
     mm_plugin=get_mm_plugin(name="llava", image_token="<image>"),
 )
 
-
 _register_template(
     name="yuan",
     format_user=StringFormatter(slots=["{{content}}", {"token": "<sep>"}]),
@@ -970,14 +923,12 @@ _register_template(
     replace_eos=True,
 )
 
-
 _register_template(
     name="zephyr",
     format_user=StringFormatter(slots=["<|user|>\n{{content}}", {"eos_token"}, "<|assistant|>\n"]),
     format_system=StringFormatter(slots=["<|system|>\n{{content}}", {"eos_token"}]),
     default_system="You are Zephyr, a helpful assistant.",
 )
-
 
 _register_template(
     name="ziya",

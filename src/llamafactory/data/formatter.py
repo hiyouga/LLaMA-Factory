@@ -23,7 +23,6 @@ from typing_extensions import override
 from .data_utils import SLOTS
 from .tool_utils import get_tool_utils
 
-
 if TYPE_CHECKING:
     from .tool_utils import FunctionCall
 
@@ -126,6 +125,51 @@ class FunctionFormatter(Formatter):
                 else:
                     raise RuntimeError("Input must be string, set[str] or dict[str, str], got {}".format(type(slot)))
 
+        return elements
+
+
+@dataclass
+class MistralFunctionFormatter(Formatter):
+    @override
+    def apply(self, **kwargs) -> SLOTS:
+        content = kwargs.pop("content")
+        functions: List[Tuple[str, str]] = []
+        try:
+            tool_calls = json.loads(content)
+            if not isinstance(tool_calls, list):  # parallel function call
+                tool_calls = [tool_calls]
+
+            for tool_call in tool_calls:
+                functions.append((tool_call["name"], json.dumps(tool_call["arguments"], ensure_ascii=False)))
+
+        except json.JSONDecodeError:
+            functions = []
+
+        elements = []
+        for name, arguments in functions:
+            elements.append(f"""{{"name": "{name}", "arguments": {arguments}}}""")
+        elements = ["[TOOL_CALLS] [" + ", ".join(elements) + "]"]
+
+        return elements
+
+
+@dataclass
+class MistralObservationFormatter(Formatter):
+    def __post_init__(self):
+        self.slots = get_tool_utils(self.tool_format).get_function_slots() + self.slots
+
+    @override
+    def apply(self, **kwargs) -> SLOTS:
+        content = kwargs.pop("content")
+        tool_results: List[Tuple[str, str]]
+        try:
+            tool_results = json.loads(content)
+        except json.JSONDecodeError:
+            tool_results = []
+
+        elements = []
+        for result in tool_results:
+            elements.append(f"[TOOL_RESULTS] {{\"content\": {result}}}[/TOOL_RESULTS]")
         return elements
 
 
