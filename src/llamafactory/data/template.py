@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from ..hparams import DataArguments
     from .formatter import SLOTS, Formatter
     from .mm_plugin import BasePlugin
+    from .tool_utils import FunctionCall
 
 
 logger = logging.get_logger(__name__)
@@ -83,7 +84,7 @@ class Template:
         encoded_messages = self._encode(tokenizer, messages, system, tools)
         return [(encoded_messages[i], encoded_messages[i + 1]) for i in range(0, len(encoded_messages), 2)]
 
-    def extract_tool(self, content: str) -> Union[str, List[Tuple[str, str]]]:
+    def extract_tool(self, content: str) -> Union[str, List["FunctionCall"]]:
         r"""
         Extracts tool message.
         """
@@ -244,7 +245,7 @@ def _register_template(
     )
     ```
     """
-    template_class = Llama2Template if name.startswith("llama2") else Template
+    template_class = Llama2Template if any(k in name for k in ("llama2", "mistral")) else Template
     default_slots = ["{{content}}"] if efficient_eos else ["{{content}}", {"eos_token"}]
     default_user_formatter = StringFormatter(slots=["{{content}}"])
     default_assistant_formatter = StringFormatter(slots=default_slots)
@@ -854,7 +855,11 @@ _register_template(
 # copied from mistral template
 _register_template(
     name="llava_next_mistral",
-    format_user=StringFormatter(slots=["[INST] {{content}} [/INST]"]),
+    format_user=StringFormatter(slots=["[INST] {{content}}[/INST]"]),
+    format_assistant=StringFormatter(slots=[" {{content}}", {"eos_token"}]),
+    format_function=FunctionFormatter(slots=["[TOOL_CALLS] ", "{{content}}", {"eos_token"}], tool_format="mistral"),
+    format_observation=StringFormatter(slots=["""[TOOL_RESULTS] {"content": {{content}}}[/TOOL_RESULTS]"""]),
+    format_tools=ToolFormatter(tool_format="mistral"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     mm_plugin=get_mm_plugin(name="llava_next", image_token="<image>"),
 )
@@ -902,7 +907,11 @@ _register_template(
 # copied from mistral template
 _register_template(
     name="llava_next_video_mistral",
-    format_user=StringFormatter(slots=["[INST] {{content}} [/INST]"]),
+    format_user=StringFormatter(slots=["[INST] {{content}}[/INST]"]),
+    format_assistant=StringFormatter(slots=[" {{content}}", {"eos_token"}]),
+    format_function=FunctionFormatter(slots=["[TOOL_CALLS] ", "{{content}}", {"eos_token"}], tool_format="mistral"),
+    format_observation=StringFormatter(slots=["""[TOOL_RESULTS] {"content": {{content}}}[/TOOL_RESULTS]"""]),
+    format_tools=ToolFormatter(tool_format="mistral"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     mm_plugin=get_mm_plugin(name="llava_next_video", image_token="<image>", video_token="<video>"),
 )
@@ -939,7 +948,11 @@ _register_template(
 
 _register_template(
     name="mistral",
-    format_user=StringFormatter(slots=["[INST] {{content}} [/INST]"]),
+    format_user=StringFormatter(slots=["[INST] {{content}}[/INST]"]),
+    format_assistant=StringFormatter(slots=[" {{content}}", {"eos_token"}]),
+    format_function=FunctionFormatter(slots=["[TOOL_CALLS] ", "{{content}}", {"eos_token"}], tool_format="mistral"),
+    format_observation=StringFormatter(slots=["""[TOOL_RESULTS] {"content": {{content}}}[/TOOL_RESULTS]"""]),
+    format_tools=ToolFormatter(tool_format="mistral"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
 )
 
