@@ -72,6 +72,8 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 ## Changelog
 
+[24/09/19] We support fine-tuning the **[Qwen2.5](https://qwenlm.github.io/blog/qwen2.5/)** models.
+
 [24/08/30] We support fine-tuning the **[Qwen2-VL](https://qwenlm.github.io/blog/qwen2-vl/)** models. Thank [@simonJJJ](https://github.com/simonJJJ)'s PR.
 
 [24/08/27] We support **[Liger Kernel](https://github.com/linkedin/Liger-Kernel)**. Try `enable_liger_kernel: true` for efficient training.
@@ -182,7 +184,8 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [Phi-1.5/Phi-2](https://huggingface.co/microsoft)                 | 1.3B/2.7B                        | -         |
 | [Phi-3](https://huggingface.co/microsoft)                         | 4B/7B/14B                        | phi       |
 | [Qwen/Qwen1.5/Qwen2 (Code/Math/MoE)](https://huggingface.co/Qwen) | 0.5B/1.5B/4B/7B/14B/32B/72B/110B | qwen      |
-| [Qwen2-VL](https://huggingface.co/Qwen)                           | 2B/7B                            | qwen2_vl  |
+| [Qwen2.5 (Code/Math)](https://huggingface.co/Qwen)                | 0.5B/1.5B/3B/7B/14B/32B/72B      | qwen      |
+| [Qwen2-VL](https://huggingface.co/Qwen)                           | 2B/7B/72B                        | qwen2_vl  |
 | [StarCoder 2](https://huggingface.co/bigcode)                     | 3B/7B/15B                        | -         |
 | [XVERSE](https://huggingface.co/xverse)                           | 7B/13B/65B                       | xverse    |
 | [Yi/Yi-1.5 (Code)](https://huggingface.co/01-ai)                  | 1.5B/6B/9B/34B                   | yi        |
