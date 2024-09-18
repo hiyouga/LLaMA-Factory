@@ -168,7 +168,7 @@ async def create_chat_completion_response(
         if isinstance(result, list):
             tool_calls = []
             for tool in result:
-                function = Function(name=tool[0], arguments=tool[1])
+                function = Function(name=tool.name, arguments=tool.arguments)
                 tool_calls.append(FunctionCall(id=f"call_{uuid.uuid4().hex}", function=function))
 
             response_message = ChatCompletionMessage(role=Role.ASSISTANT, tool_calls=tool_calls)
