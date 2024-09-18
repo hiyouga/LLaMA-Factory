@@ -821,6 +821,15 @@ _register_template(
     replace_eos=True,
 )
 
+_register_template(
+    name="phi-small",
+    format_user=StringFormatter(slots=["<|user|>\n{{content}}<|end|>\n<|assistant|>\n"]),
+    format_system=StringFormatter(slots=["<|system|>\n{{content}}<|end|>\n"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    format_prefix=EmptyFormatter(slots=[{"<|endoftext|>"}]),
+    stop_words=["<|end|>"],
+    replace_eos=True,
+)
 
 _register_template(
     name="qwen",
