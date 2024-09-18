@@ -19,8 +19,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, Literal, Optional, Sequence
 
 import torch
-from transformers import DataCollatorForSeq2Seq
-
+from transformers import DataCollatorForSeq2Seq, DefaultDataCollator, default_data_collator, PreTrainedTokenizerBase
 
 if TYPE_CHECKING:
     from transformers import ProcessorMixin
@@ -117,6 +116,42 @@ class SFTDataCollatorWith4DAttentionMask(MultiModalDataCollatorForSeq2Seq):
         if self.block_diag_attn and self.attn_implementation != "flash_attention_2":
             features["attention_mask"] = prepare_4d_attention_mask(features["attention_mask"], self.compute_dtype)
 
+        return features
+
+
+@dataclass
+class SFTDataCollatorWithFlattingPacking(DefaultDataCollator):
+    r"""
+    Data collator for flatting packing.
+    """
+
+    tokenizer: PreTrainedTokenizerBase = None
+    label_pad_token_id: int = -100
+    template: Optional["Template"] = None
+    processor: Optional["ProcessorMixin"] = None
+    return_position_ids: bool = True
+
+    def __call__(self, features: Sequence[Dict[str, Any]], return_tensors=None) -> Dict[str, "torch.Tensor"]:
+        # todo: not support multi-model
+        if return_tensors is None:
+            return_tensors = self.return_tensors
+        is_labels_provided = "labels" in features[0]
+        ret = {"input_ids": [], "labels": []}
+        if self.return_position_ids:
+            ret.update({"position_ids": []})
+        for instances in features:
+            for input_ids, labels in zip(instances["input_ids"], instances["labels"]):
+                ret["input_ids"] += input_ids
+                if is_labels_provided:
+                    ret["labels"] += [self.label_pad_token_id] + labels[1:]
+                else:
+                    ret["labels"] += [self.label_pad_token_id] + input_ids[1:]
+                if self.return_position_ids:
+                    ret["position_ids"] += list(range(len(input_ids)))
+
+        assert len(ret["input_ids"]) == len(ret["labels"])
+
+        features: Dict[str, "torch.Tensor"] = default_data_collator([ret], return_tensors)
         return features
 
 

@@ -17,20 +17,23 @@
 
 from typing import TYPE_CHECKING, List, Optional
 
-from ...data import SFTDataCollatorWith4DAttentionMask, get_dataset, get_template_and_fix_tokenizer
+from ...data import SFTDataCollatorWith4DAttentionMask, SFTDataCollatorWithFlattingPacking, get_dataset, \
+    get_template_and_fix_tokenizer
 from ...extras.constants import IGNORE_INDEX
 from ...extras.misc import get_logits_processor
 from ...extras.ploting import plot_loss
+from ...extras.logging import get_logger
 from ...model import load_model, load_tokenizer
 from ..trainer_utils import create_modelcard_and_push
 from .metric import ComputeAccuracy, ComputeSimilarity, eval_logit_processor
 from .trainer import CustomSeq2SeqTrainer
 
-
 if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments, TrainerCallback
 
     from ...hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
+
+logger = get_logger(__name__)
 
 
 def run_sft(
@@ -50,15 +53,29 @@ def run_sft(
     if getattr(model, "is_quantized", False) and not training_args.do_train:
         setattr(model, "_hf_peft_config_loaded", True)  # hack here: make model compatible with prediction
 
-    data_collator = SFTDataCollatorWith4DAttentionMask(
-        template=template,
-        pad_to_multiple_of=8 if training_args.do_train else None,  # for shift short attention
-        label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
-        block_diag_attn=model_args.block_diag_attn,
-        attn_implementation=getattr(model.config, "_attn_implementation", None),
-        compute_dtype=model_args.compute_dtype,
-        **tokenizer_module,
-    )
+    if (
+        data_args.packing and
+        data_args.flat_packing and
+        (getattr(model.config, "_attn_implementation", None) != "flash_attention_2")
+    ):
+        logger.warning("The `flat_packing` only support `flash_attention_2`! Maybe cause Out of memory!")
+
+    if (data_args.packing and data_args.flat_packing):
+        data_collator = SFTDataCollatorWithFlattingPacking(
+            template=template,
+            label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
+            **tokenizer_module,
+        )
+    else:
+        data_collator = SFTDataCollatorWith4DAttentionMask(
+            template=template,
+            pad_to_multiple_of=8 if training_args.do_train else None,  # for shift short attention
+            label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
+            block_diag_attn=model_args.block_diag_attn,
+            attn_implementation=getattr(model.config, "_attn_implementation", None),
+            compute_dtype=model_args.compute_dtype,
+            **tokenizer_module,
+        )
 
     # Override the decoding parameters of Seq2SeqTrainer
     training_args.generation_max_length = training_args.generation_max_length or data_args.cutoff_len

@@ -22,9 +22,9 @@ from .processors.supervised import (
     preprocess_packed_supervised_dataset,
     preprocess_supervised_dataset,
     print_supervised_dataset_example,
+    print_flatting_supervised_dataset_example,
 )
 from .processors.unsupervised import preprocess_unsupervised_dataset, print_unsupervised_dataset_example
-
 
 if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer, ProcessorMixin
@@ -78,8 +78,10 @@ def get_preprocess_and_print_func(
                 processor=processor,
                 data_args=data_args,
             )
-
-        print_function = partial(print_supervised_dataset_example, tokenizer=tokenizer)
+        if data_args.packing and data_args.flat_packing:
+            print_function = partial(print_flatting_supervised_dataset_example, tokenizer=tokenizer)
+        else:
+            print_function = partial(print_supervised_dataset_example, tokenizer=tokenizer)
     elif stage == "rm":
         preprocess_func = partial(
             preprocess_pairwise_dataset,

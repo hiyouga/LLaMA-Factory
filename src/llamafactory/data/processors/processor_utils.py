@@ -28,6 +28,8 @@ def greedy_knapsack(numbers: List[int], capacity: int) -> List[List[int]]:
     r"""
     An efficient greedy algorithm with binary search for the knapsack problem.
     """
+    # filter out numbers that are larger than the capacity
+    numbers = [number for number in numbers if number <= capacity]
     numbers.sort()  # sort numbers in ascending order for binary search
     knapsacks = []
 
@@ -42,6 +44,10 @@ def greedy_knapsack(numbers: List[int], capacity: int) -> List[List[int]]:
 
             remaining_capacity -= numbers[index]  # update the remaining capacity
             current_knapsack.append(numbers.pop(index))  # add the number to knapsack
+
+        # avoid endless loop
+        if remaining_capacity == capacity:
+            break
 
         knapsacks.append(current_knapsack)
 

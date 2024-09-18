@@ -105,6 +105,14 @@ class DataArguments:
         default=False,
         metadata={"help": "Enable sequence packing without cross-attention."},
     )
+    flat_packing: bool = field(
+        default=False,
+        metadata={"help": "Enable sequence packing with flattening, need flash atten."}
+    )
+    allow_truncation: bool = field(
+        default=False,
+        metadata={"help": "Allow truncation when processing supervised examples."}
+    )
     tool_format: Optional[str] = field(
         default=None,
         metadata={"help": "Tool format to use for constructing function calling examples."},
@@ -148,3 +156,6 @@ class DataArguments:
 
         if self.mask_history and self.train_on_prompt:
             raise ValueError("`mask_history` is incompatible with `train_on_prompt`.")
+
+        if self.neat_packing and self.flat_packing:
+            raise ValueError("`neat_packing` is incompatible with `flat_packing`.")
