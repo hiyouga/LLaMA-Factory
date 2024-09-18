@@ -73,6 +73,8 @@ https://github.com/user-attachments/assets/e6ce34b0-52d5-4f3e-a830-592106c4c272
 
 ## 更新日志
 
+[24/09/19] 我们支持了 **[Qwen2.5](https://qwenlm.github.io/blog/qwen2.5/)** 模型的微调。
+
 [24/08/30] 我们支持了 **[Qwen2-VL](https://qwenlm.github.io/blog/qwen2-vl/)** 模型的微调。感谢 [@simonJJJ](https://github.com/simonJJJ) 的 PR。
 
 [24/08/27] 我们支持了 **[Liger Kernel](https://github.com/linkedin/Liger-Kernel)**。请使用 `enable_liger_kernel: true` 来加速训练。
@@ -183,7 +185,8 @@ https://github.com/user-attachments/assets/e6ce34b0-52d5-4f3e-a830-592106c4c272
 | [Phi-1.5/Phi-2](https://huggingface.co/microsoft)                 | 1.3B/2.7B                        | -         |
 | [Phi-3](https://huggingface.co/microsoft)                         | 4B/7B/14B                        | phi       |
 | [Qwen/Qwen1.5/Qwen2 (Code/Math/MoE)](https://huggingface.co/Qwen) | 0.5B/1.5B/4B/7B/14B/32B/72B/110B | qwen      |
-| [Qwen2-VL](https://huggingface.co/Qwen)                           | 2B/7B                            | qwen2_vl  |
+| [Qwen2.5 (Code/Math)](https://huggingface.co/Qwen)                | 0.5B/1.5B/3B/7B/14B/32B/72B      | qwen      |
+| [Qwen2-VL](https://huggingface.co/Qwen)                           | 2B/7B/72B                        | qwen2_vl  |
 | [StarCoder 2](https://huggingface.co/bigcode)                     | 3B/7B/15B                        | -         |
 | [XVERSE](https://huggingface.co/xverse)                           | 7B/13B/65B                       | xverse    |
 | [Yi/Yi-1.5 (Code)](https://huggingface.co/01-ai)                  | 1.5B/6B/9B/34B                   | yi        |
