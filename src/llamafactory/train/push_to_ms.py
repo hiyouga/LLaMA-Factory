@@ -7,7 +7,7 @@ from typing import List, Optional, Union
 from huggingface_hub import RepoUrl
 from huggingface_hub.hf_api import CommitInfo, future_compatible
 from requests.exceptions import HTTPError
-from transformers.utils import logging, strtobool
+from transformers.utils import logging
 from ..extras.misc import use_modelscope
 
 logger = logging.get_logger(__name__)
@@ -15,20 +15,20 @@ logger = logging.get_logger(__name__)
 
 def create_repo(repo_id: str, *, token: Union[str, bool, None] = None, private: bool = False, **kwargs) -> RepoUrl:
     from modelscope.hub.repository import Repository
-    hub_model_id = PushToMsHubMixin.create_ms_repo(repo_id, token, private)
-    PushToMsHubMixin.ms_token = token
+    hub_model_id = PushToMsHub.create_ms_repo(repo_id, token, private)
+    PushToMsHub.ms_token = token
     with tempfile.TemporaryDirectory() as temp_cache_dir:
         repo = Repository(temp_cache_dir, hub_model_id)
-        PushToMsHubMixin.add_patterns_to_gitattributes(repo, ['*.safetensors', '*.bin', '*.pt'])
+        PushToMsHub.add_patterns_to_gitattributes(repo, ['*.safetensors', '*.bin', '*.pt'])
         # Add 'runs/' to .gitignore, ignore tensorboard files
-        PushToMsHubMixin.add_patterns_to_gitignore(repo, ['runs/', 'images/'])
-        PushToMsHubMixin.add_patterns_to_file(
+        PushToMsHub.add_patterns_to_gitignore(repo, ['runs/', 'images/'])
+        PushToMsHub.add_patterns_to_file(
             repo,
             'configuration.json', ['{"framework": "pytorch", "task": "text-generation", "allow_remote": true}'],
             ignore_push_error=True)
         # Add '*.sagemaker' to .gitignore if using SageMaker
         if os.environ.get('SM_TRAINING_ENV'):
-            PushToMsHubMixin.add_patterns_to_gitignore(repo, ['*.sagemaker-uploading', '*.sagemaker-uploaded'],
+            PushToMsHub.add_patterns_to_gitignore(repo, ['*.sagemaker-uploading', '*.sagemaker-uploaded'],
                                                        'Add `*.sagemaker` patterns to .gitignore')
     return RepoUrl(url=hub_model_id, )
 
@@ -66,7 +66,7 @@ def upload_folder(
     push_to_hub(
         repo_id,
         folder_path,
-        token or PushToMsHubMixin.ms_token,
+        token or PushToMsHub.ms_token,
         commit_message=commit_message,
         ignore_file_pattern=ignore_patterns,
         revision=revision,
@@ -79,7 +79,8 @@ def upload_folder(
     )
 
 
-class PushToMsHubMixin:
+class PushToMsHub:
+    """This class is used to patch the uploading operation, when user choose to use modelscope hub to upload models."""
 
     _use_hf_hub = not use_modelscope()
     ms_token = None
@@ -163,7 +164,7 @@ class PushToMsHubMixin:
 
     @staticmethod
     def add_patterns_to_gitignore(repo, patterns: List[str], commit_message: Optional[str] = None) -> None:
-        PushToMsHubMixin.add_patterns_to_file(repo, '.gitignore', patterns, commit_message, ignore_push_error=True)
+        PushToMsHub.add_patterns_to_file(repo, '.gitignore', patterns, commit_message, ignore_push_error=True)
 
     @staticmethod
     def add_patterns_to_gitattributes(repo, patterns: List[str], commit_message: Optional[str] = None) -> None:
@@ -176,4 +177,4 @@ class PushToMsHubMixin:
         file_name = '.gitattributes'
         if commit_message is None:
             commit_message = f'Add `{patterns[0]}` patterns to {file_name}'
-        PushToMsHubMixin.add_patterns_to_file(repo, file_name, new_patterns, commit_message, ignore_push_error=True)
+        PushToMsHub.add_patterns_to_file(repo, file_name, new_patterns, commit_message, ignore_push_error=True)

@@ -41,7 +41,6 @@ from ...extras.misc import AverageMeter, count_parameters, get_current_device, g
 from ..callbacks import FixValueHeadModelCallback, SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
 from .ppo_utils import dump_layernorm, get_rewards_from_server, replace_model, restore_layernorm
-from ..push_to_ms import PushToMsHubMixin
 
 
 if TYPE_CHECKING:
@@ -61,7 +60,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-class CustomPPOTrainer(PushToMsHubMixin, PPOTrainer, Trainer):
+class CustomPPOTrainer(PPOTrainer, Trainer):
     r"""
     Inherits PPOTrainer.
     """

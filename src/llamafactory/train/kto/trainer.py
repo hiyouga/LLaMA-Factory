@@ -29,7 +29,6 @@ from trl.trainer import disable_dropout_in_model
 from ...extras.constants import IGNORE_INDEX
 from ..callbacks import SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler, get_batch_logps
-from ..push_to_ms import PushToMsHubMixin
 
 
 if TYPE_CHECKING:
@@ -39,7 +38,7 @@ if TYPE_CHECKING:
     from ...hparams import FinetuningArguments
 
 
-class CustomKTOTrainer(PushToMsHubMixin, KTOTrainer):
+class CustomKTOTrainer(KTOTrainer):
     def __init__(
         self,
         model: Union["PreTrainedModel", torch.nn.Module],

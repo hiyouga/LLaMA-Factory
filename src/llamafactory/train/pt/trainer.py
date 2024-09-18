@@ -20,7 +20,6 @@ from transformers import Trainer
 from ...extras.logging import get_logger
 from ..callbacks import PissaConvertCallback, SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
-from ..push_to_ms import PushToMsHubMixin
 
 
 if TYPE_CHECKING:
@@ -33,7 +32,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-class CustomTrainer(PushToMsHubMixin, Trainer):
+class CustomTrainer(Trainer):
     r"""
     Inherits Trainer for custom optimizer.
     """
