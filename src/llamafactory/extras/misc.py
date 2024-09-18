@@ -81,7 +81,7 @@ def check_dependencies() -> None:
     else:
         require_version("transformers>=4.41.2,<=4.45.0", "To fix: pip install transformers>=4.41.2,<=4.45.0")
         require_version("datasets>=2.16.0,<=2.21.0", "To fix: pip install datasets>=2.16.0,<=2.21.0")
-        require_version("accelerate>=0.30.1,<=0.33.0", "To fix: pip install accelerate>=0.30.1,<=0.33.0")
+        require_version("accelerate>=0.30.1,<=0.34.2", "To fix: pip install accelerate>=0.30.1,<=0.34.2")
         require_version("peft>=0.11.1,<=0.12.0", "To fix: pip install peft>=0.11.1,<=0.12.0")
         require_version("trl>=0.8.6,<=0.9.6", "To fix: pip install trl>=0.8.6,<=0.9.6")
 
@@ -195,6 +195,9 @@ def is_gpu_or_npu_available() -> bool:
 
 
 def numpify(inputs: Union["NDArray", "torch.Tensor"]) -> "NDArray":
+    r"""
+    Casts a torch tensor or a numpy array to a numpy array.
+    """
     if isinstance(inputs, torch.Tensor):
         inputs = inputs.cpu()
         if inputs.dtype == torch.bfloat16:  # numpy does not support bfloat16 until 1.21.4
@@ -206,6 +209,9 @@ def numpify(inputs: Union["NDArray", "torch.Tensor"]) -> "NDArray":
 
 
 def skip_check_imports() -> None:
+    r"""
+    Avoids flash attention import error in custom model files.
+    """
     if os.environ.get("FORCE_CHECK_IMPORTS", "0").lower() not in ["true", "1"]:
         transformers.dynamic_module_utils.check_imports = get_relative_imports
 

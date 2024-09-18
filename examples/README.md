@@ -36,6 +36,18 @@ llamafactory-cli train examples/train_lora/llava1_5_lora_sft.yaml
 llamafactory-cli train examples/train_lora/qwen2vl_lora_sft.yaml
 ```
 
+#### DPO/ORPO/SimPO Training
+
+```bash
+llamafactory-cli train examples/train_lora/llama3_lora_dpo.yaml
+```
+
+#### Multimodal DPO/ORPO/SimPO Training
+
+```bash
+llamafactory-cli train examples/train_lora/qwen2vl_lora_dpo.yaml
+```
+
 #### Reward Modeling
 
 ```bash
@@ -46,12 +58,6 @@ llamafactory-cli train examples/train_lora/llama3_lora_reward.yaml
 
 ```bash
 llamafactory-cli train examples/train_lora/llama3_lora_ppo.yaml
-```
-
-#### DPO/ORPO/SimPO Training
-
-```bash
-llamafactory-cli train examples/train_lora/llama3_lora_dpo.yaml
 ```
 
 #### KTO Training

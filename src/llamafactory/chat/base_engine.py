@@ -18,11 +18,11 @@ from typing import TYPE_CHECKING, Any, AsyncGenerator, Dict, List, Literal, Opti
 
 
 if TYPE_CHECKING:
-    from numpy.typing import NDArray
     from transformers import PreTrainedModel, PreTrainedTokenizer
     from vllm import AsyncLLMEngine
 
     from ..data import Template
+    from ..data.mm_plugin import ImageInput, VideoInput
     from ..hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
 
 
@@ -35,6 +35,12 @@ class Response:
 
 
 class BaseEngine(ABC):
+    r"""
+    Base class for inference engine of chat models.
+
+    Must implements async methods: chat(), stream_chat() and get_scores().
+    """
+
     model: Union["PreTrainedModel", "AsyncLLMEngine"]
     tokenizer: "PreTrainedTokenizer"
     can_generate: bool
@@ -48,7 +54,11 @@ class BaseEngine(ABC):
         data_args: "DataArguments",
         finetuning_args: "FinetuningArguments",
         generating_args: "GeneratingArguments",
-    ) -> None: ...
+    ) -> None:
+        r"""
+        Initializes an inference engine.
+        """
+        ...
 
     @abstractmethod
     async def chat(
@@ -56,9 +66,14 @@ class BaseEngine(ABC):
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        image: Optional["NDArray"] = None,
+        image: Optional["ImageInput"] = None,
+        video: Optional["VideoInput"] = None,
         **input_kwargs,
-    ) -> List["Response"]: ...
+    ) -> List["Response"]:
+        r"""
+        Gets a list of responses of the chat model.
+        """
+        ...
 
     @abstractmethod
     async def stream_chat(
@@ -66,13 +81,22 @@ class BaseEngine(ABC):
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        image: Optional["NDArray"] = None,
+        image: Optional["ImageInput"] = None,
+        video: Optional["VideoInput"] = None,
         **input_kwargs,
-    ) -> AsyncGenerator[str, None]: ...
+    ) -> AsyncGenerator[str, None]:
+        r"""
+        Gets the response token-by-token of the chat model.
+        """
+        ...
 
     @abstractmethod
     async def get_scores(
         self,
         batch_input: List[str],
         **input_kwargs,
-    ) -> List[float]: ...
+    ) -> List[float]:
+        r"""
+        Gets a list of scores of the reward model.
+        """
+        ...

@@ -25,7 +25,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import DataCollatorForLanguageModeling, DataCollatorForSeq2Seq
 
-from llamafactory.data import get_dataset
+from llamafactory.data import get_dataset, get_template_and_fix_tokenizer
 from llamafactory.extras.constants import IGNORE_INDEX
 from llamafactory.hparams import get_train_args
 from llamafactory.model import load_tokenizer
@@ -39,7 +39,7 @@ def calculate_lr(
     model_name_or_path: str,
     batch_size: int,  # total batch size, namely (batch size * gradient accumulation * world size)
     stage: Literal["pt", "sft"] = "sft",
-    dataset: str = "alpaca_en",
+    dataset: str = "alpaca_en_demo",
     dataset_dir: str = "data",
     template: str = "default",
     cutoff_len: int = 1024,  # i.e. maximum input length during training
@@ -48,7 +48,8 @@ def calculate_lr(
 ):
     r"""
     Calculates the optimal learning rate for 7B/13B models using LLaMA's hyper-parameters.
-    Usage: python cal_lr.py --model_name_or_path path_to_model --dataset alpaca_en --cutoff_len 1024 --batch_size 16
+    Usage:
+    python cal_lr.py --model_name_or_path path_to_model --dataset alpaca_en_demo --cutoff_len 1024 --batch_size 16
     """
     model_args, data_args, training_args, _, _ = get_train_args(
         dict(
@@ -66,7 +67,8 @@ def calculate_lr(
     )
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
-    trainset = get_dataset(model_args, data_args, training_args, stage, **tokenizer_module)["train_dataset"]
+    template = get_template_and_fix_tokenizer(tokenizer, data_args)
+    trainset = get_dataset(template, model_args, data_args, training_args, stage, **tokenizer_module)["train_dataset"]
     if stage == "pt":
         data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
     elif stage == "sft":

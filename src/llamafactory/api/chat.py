@@ -20,8 +20,6 @@ import re
 import uuid
 from typing import TYPE_CHECKING, AsyncGenerator, Dict, List, Optional, Tuple
 
-import numpy as np
-
 from ..data import Role as DataRole
 from ..extras.logging import get_logger
 from ..extras.packages import is_fastapi_available, is_pillow_available, is_requests_available
@@ -54,9 +52,8 @@ if is_requests_available():
 
 
 if TYPE_CHECKING:
-    from numpy.typing import NDArray
-
     from ..chat import ChatModel
+    from ..data.mm_plugin import ImageInput
     from .protocol import ChatCompletionRequest, ScoreEvaluationRequest
 
 
@@ -72,7 +69,7 @@ ROLE_MAPPING = {
 
 def _process_request(
     request: "ChatCompletionRequest",
-) -> Tuple[List[Dict[str, str]], Optional[str], Optional[str], Optional["NDArray"]]:
+) -> Tuple[List[Dict[str, str]], Optional[str], Optional[str], Optional["ImageInput"]]:
     logger.info("==== request ====\n{}".format(json.dumps(dictify(request), indent=2, ensure_ascii=False)))
 
     if len(request.messages) == 0:
@@ -114,7 +111,7 @@ def _process_request(
                     else:  # web uri
                         image_stream = requests.get(image_url, stream=True).raw
 
-                    image = np.array(Image.open(image_stream).convert("RGB"))
+                    image = Image.open(image_stream).convert("RGB")
         else:
             input_messages.append({"role": ROLE_MAPPING[message.role], "content": message.content})
 
@@ -232,8 +229,9 @@ async def create_stream_chat_completion_response(
 async def create_score_evaluation_response(
     request: "ScoreEvaluationRequest", chat_model: "ChatModel"
 ) -> "ScoreEvaluationResponse":
+    score_id = "scoreval-{}".format(uuid.uuid4().hex)
     if len(request.messages) == 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid request")
 
     scores = await chat_model.aget_scores(request.messages, max_length=request.max_length)
-    return ScoreEvaluationResponse(model=request.model, scores=scores)
+    return ScoreEvaluationResponse(id=score_id, model=request.model, scores=scores)

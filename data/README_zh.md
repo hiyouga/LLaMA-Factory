@@ -23,6 +23,7 @@
     "system": "数据集代表系统提示的表头名称（默认：None）",
     "tools": "数据集代表工具描述的表头名称（默认：None）",
     "images": "数据集代表图像输入的表头名称（默认：None）",
+    "videos": "数据集代表视频输入的表头名称（默认：None）",
     "chosen": "数据集代表更优回答的表头名称（默认：None）",
     "rejected": "数据集代表更差回答的表头名称（默认：None）",
     "kto_tag": "数据集代表 KTO 标签的表头名称（默认：None）"
@@ -107,7 +108,7 @@
 
 ### 偏好数据集
 
-偏好数据集用于奖励模型训练、DPO 训练和 ORPO 训练。
+偏好数据集用于奖励模型训练、DPO 训练、ORPO 训练和 SimPO 训练。
 
 它需要在 `chosen` 列中提供更优的回答，并在 `rejected` 列中提供更差的回答。
 
@@ -139,67 +140,15 @@
 
 ### KTO 数据集
 
-- [样例数据集](kto_en_demo.json)
+KTO 数据集需要提供额外的 `kto_tag` 列。详情请参阅 [sharegpt](#sharegpt-格式)。
 
-KTO 数据集需要额外添加一个 `kto_tag` 列，包含 bool 类型的人类反馈。
+### 多模态图像数据集
 
-```json
-[
-  {
-    "instruction": "人类指令（必填）",
-    "input": "人类输入（选填）",
-    "output": "模型回答（必填）",
-    "kto_tag": "人类反馈 [true/false]（必填）"
-  }
-]
-```
+多模态图像数据集需要提供额外的 `images` 列。详情请参阅 [sharegpt](#sharegpt-格式)。
 
-对于上述格式的数据，`dataset_info.json` 中的*数据集描述*应为：
+### 多模态视频数据集
 
-```json
-"数据集名称": {
-  "file_name": "data.json",
-  "columns": {
-    "prompt": "instruction",
-    "query": "input",
-    "response": "output",
-    "kto_tag": "kto_tag"
-  }
-}
-```
-
-### 多模态数据集
-
-- [样例数据集](mllm_demo.json)
-
-多模态数据集需要额外添加一个 `images` 列，包含输入图像的路径。
-
-```json
-[
-  {
-    "instruction": "人类指令（必填）",
-    "input": "人类输入（选填）",
-    "output": "模型回答（必填）",
-    "images": [
-      "图像路径（必填）"
-    ]
-  }
-]
-```
-
-对于上述格式的数据，`dataset_info.json` 中的*数据集描述*应为：
-
-```json
-"数据集名称": {
-  "file_name": "data.json",
-  "columns": {
-    "prompt": "instruction",
-    "query": "input",
-    "response": "output",
-    "images": "images"
-  }
-}
-```
+多模态视频数据集需要提供额外的 `videos` 列。详情请参阅 [sharegpt](#sharegpt-格式)。
 
 ## Sharegpt 格式
 
@@ -252,6 +201,10 @@ KTO 数据集需要额外添加一个 `kto_tag` 列，包含 bool 类型的人�
 }
 ```
 
+### 预训练数据集
+
+尚不支持，请使用 [alpaca](#alpaca-格式) 格式。
+
 ### 偏好数据集
 
 - [样例数据集](dpo_zh_demo.json)
@@ -302,6 +255,125 @@ Sharegpt 格式的偏好数据集同样需要在 `chosen` 列中提供更优的�
 }
 ```
 
+### KTO 数据集
+
+- [样例数据集](kto_en_demo.json)
+
+KTO 数据集需要额外添加一个 `kto_tag` 列，包含 bool 类型的人类反馈。
+
+```json
+[
+  {
+    "conversations": [
+      {
+        "from": "human",
+        "value": "人类指令"
+      },
+      {
+        "from": "gpt",
+        "value": "模型回答"
+      }
+    ],
+    "kto_tag": "人类反馈 [true/false]（必填）"
+  }
+]
+```
+
+对于上述格式的数据，`dataset_info.json` 中的*数据集描述*应为：
+
+```json
+"数据集名称": {
+  "file_name": "data.json",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "conversations",
+    "kto_tag": "kto_tag"
+  }
+}
+```
+
+### 多模态图像数据集
+
+- [样例数据集](mllm_demo.json)
+
+多模态图像数据集需要额外添加一个 `images` 列，包含输入图像的路径。
+
+注意图片的数量必须与文本中所有 `<image>` 标记的数量严格一致。
+
+```json
+[
+  {
+    "conversations": [
+      {
+        "from": "human",
+        "value": "<image>人类指令"
+      },
+      {
+        "from": "gpt",
+        "value": "模型回答"
+      }
+    ],
+    "images": [
+      "图像路径（必填）"
+    ]
+  }
+]
+```
+
+对于上述格式的数据，`dataset_info.json` 中的*数据集描述*应为：
+
+```json
+"数据集名称": {
+  "file_name": "data.json",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "conversations",
+    "images": "images"
+  }
+}
+```
+
+### 多模态视频数据集
+
+- [样例数据集](mllm_video_demo.json)
+
+多模态视频数据集需要额外添加一个 `videos` 列，包含输入视频的路径。
+
+注意视频的数量必须与文本中所有 `<video>` 标记的数量严格一致。
+
+```json
+[
+  {
+    "conversations": [
+      {
+        "from": "human",
+        "value": "<video>人类指令"
+      },
+      {
+        "from": "gpt",
+        "value": "模型回答"
+      }
+    ],
+    "videos": [
+      "视频路径（必填）"
+    ]
+  }
+]
+```
+
+对于上述格式的数据，`dataset_info.json` 中的*数据集描述*应为：
+
+```json
+"数据集名称": {
+  "file_name": "data.json",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "conversations",
+    "videos": "videos"
+  }
+}
+```
+
 ### OpenAI 格式
 
 OpenAI 格式仅仅是 sharegpt 格式的一种特殊情况，其中第一条消息可能是系统提示词。
@@ -345,7 +417,3 @@ OpenAI 格式仅仅是 sharegpt 格式的一种特殊情况，其中第一条消
   }
 }
 ```
-
-Sharegpt 格式中的 KTO 数据集和多模态数据集与 alpaca 格式的类似。
-
-预训练数据集**不支持** sharegpt 格式。
