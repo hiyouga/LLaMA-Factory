@@ -182,7 +182,8 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [OLMo](https://huggingface.co/allenai)                            | 1B/7B                            | -         |
 | [PaliGemma](https://huggingface.co/google)                        | 3B                               | paligemma |
 | [Phi-1.5/Phi-2](https://huggingface.co/microsoft)                 | 1.3B/2.7B                        | -         |
-| [Phi-3](https://huggingface.co/microsoft)                         | 4B/7B/14B                        | phi       |
+| [Phi-3](https://huggingface.co/microsoft)                         | 4B/14B                           | phi       |
+| [Phi-3-small](https://huggingface.co/microsoft)                   | 7B                               | phi-small |
 | [Qwen/Qwen1.5/Qwen2 (Code/Math/MoE)](https://huggingface.co/Qwen) | 0.5B/1.5B/4B/7B/14B/32B/72B/110B | qwen      |
 | [Qwen2.5 (Code/Math)](https://huggingface.co/Qwen)                | 0.5B/1.5B/3B/7B/14B/32B/72B      | qwen      |
 | [Qwen2-VL](https://huggingface.co/Qwen)                           | 2B/7B/72B                        | qwen2_vl  |
