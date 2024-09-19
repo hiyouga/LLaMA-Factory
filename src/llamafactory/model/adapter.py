@@ -133,6 +133,25 @@ def _setup_freeze_tuning(
         else:
             param.requires_grad_(False)
 
+    '''在使用ppo_freeze的时候，model为qwen1.5-0.5b的时候，第一次load actor model的时候添加数据类型的转换
+    config文件:
+    model_name_or_path: /LLMs/Qwen1.5-0.5B-Chat
+    reward_model: /output/Qwen1.5-0.5B-Chat/full/reward
+    reward_model_type: full
+    
+    ### method
+    stage: ppo
+    do_train: true
+    finetuning_type: freeze
+    freeze_extra_modules: lm_head
+    
+    '''
+    if finetuning_args.stage == "ppo":
+        for name, param in model.named_parameters():
+            if not any(forbidden_module in name for forbidden_module in forbidden_modules):
+                if cast_trainable_params_to_fp32:
+                    param.data = param.data.to(torch.float32)
+
     logger.info("Set trainable layers: {}".format(",".join(trainable_layers)))
 
 
