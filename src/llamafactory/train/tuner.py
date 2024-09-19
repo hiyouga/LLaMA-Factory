@@ -77,12 +77,13 @@ def quantize_model(args: Optional[Dict[str, Any]] = None):
         import json
         with open(Path(json_file), encoding="utf-8") as open_json_file:
             res = json.loads(open_json_file.read())
-
-
-    if not (res["export_quantization_bit"] is not None and res["export_quantization_method"] == "auto_round"):
+    model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_args(args)
+    if not (model_args.export_quantization_bit is not None and model_args.export_quantization_method == "auto_round"):
         return res
 
-    model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_args(args)
+    if model_args.export_quantization_bit not in [4]:
+        raise ValueError("AutoRound only accepts 4 bits quantization.")
+
     require_version("auto_round>=0.3.0", "To fix: pip install auto_round>=0.3.0")
     require_version("auto_gptq>=0.7.1", "To fix: pip install auto_gptq>=0.7.1")
 
