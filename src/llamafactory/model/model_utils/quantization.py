@@ -132,7 +132,7 @@ def configure_quantization(
         quant_bits = quantization_config.get("bits", "?")
         logger.info("Loading {}-bit {}-quantized model.".format(quant_bits, quant_method.upper()))
 
-    elif model_args.export_quantization_bit is not None:  # auto-gptq
+    elif model_args.export_quantization_bit is not None and not model_args.export_quantization_method=="auto_round":  # auto-gptq
         if model_args.export_quantization_bit not in [8, 4, 3, 2]:
             raise ValueError("AutoGPTQ only accepts 2/3/4/8-bit quantization.")
 

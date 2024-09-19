@@ -27,7 +27,7 @@ from .extras.logging import get_logger
 from .extras.misc import get_device_count
 from .train.tuner import export_model, run_exp
 from .webui.interface import run_web_demo, run_web_ui
-
+import shlex
 
 USAGE = (
     "-" * 70
@@ -86,11 +86,18 @@ def main():
     elif command == Command.EXPORT:
         export_model()
     elif command == Command.TRAIN:
+        from .train.tuner import quantize_model
+        args = quantize_model()
         force_torchrun = os.environ.get("FORCE_TORCHRUN", "0").lower() in ["true", "1"]
         if force_torchrun or get_device_count() > 1:
             master_addr = os.environ.get("MASTER_ADDR", "127.0.0.1")
             master_port = os.environ.get("MASTER_PORT", str(random.randint(20001, 29999)))
             logger.info("Initializing distributed tasks at: {}:{}".format(master_addr, master_port))
+            args_list = []
+            for key, value in args.items():
+                args_list.append(f'--{key}')
+                args_list.append(str(value))
+
             process = subprocess.run(
                 (
                     "torchrun --nnodes {nnodes} --node_rank {node_rank} --nproc_per_node {nproc_per_node} "
@@ -102,7 +109,7 @@ def main():
                     master_addr=master_addr,
                     master_port=master_port,
                     file_name=launcher.__file__,
-                    args=" ".join(sys.argv[1:]),
+                    args=' '.join(shlex.quote(arg) for arg in args_list)
                 ),
                 shell=True,
             )
@@ -119,3 +126,6 @@ def main():
         print(USAGE)
     else:
         raise NotImplementedError("Unknown command: {}.".format(command))
+
+if __name__ == "__main__": ##TODO remove this
+    main()

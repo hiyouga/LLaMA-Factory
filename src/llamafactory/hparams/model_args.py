@@ -96,6 +96,10 @@ class ExportArguments:
         default=None,
         metadata={"help": "The number of bits to quantize the exported model."},
     )
+    export_quantization_method: Optional[str] = field(
+        default=None,
+        metadata={"help": "The method to quantize the exported model."},
+    )
     export_quantization_dataset: Optional[str] = field(
         default=None,
         metadata={"help": "Path to the dataset or dataset name to use in quantizing the exported model."},
