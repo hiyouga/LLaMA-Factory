@@ -113,7 +113,7 @@ class FunctionFormatter(Formatter):
                 functions.append((tool_call["name"], json.dumps(tool_call["arguments"], ensure_ascii=False)))
 
         except json.JSONDecodeError:
-            raise RuntimeError("Not Valid functions Message {}".format(str([content])))
+            raise RuntimeError("Invalid JSON format in function message: {}".format(content)
 
         elements = []
         for name, arguments in functions:
@@ -141,7 +141,7 @@ class ToolFormatter(Formatter):
             tools = json.loads(content)
             return [self.tool_utils.tool_formatter(tools) if len(tools) != 0 else ""]
         except json.JSONDecodeError:
-            raise RuntimeError("Not Valid functions Message {}".format(str([content])))
+            raise RuntimeError("Invalid JSON format in tool description: {}".format(content)
 
 
     @override
