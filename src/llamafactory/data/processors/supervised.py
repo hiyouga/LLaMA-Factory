@@ -44,6 +44,7 @@ def _encode_supervised_example(
     cutoff_len: int,
     train_on_prompt: bool,
     mask_history: bool,
+    packing: bool = False,
 ) -> Tuple[List[int], List[int]]:
     messages = template.mm_plugin.process_messages(prompt + response, images, videos, processor)
     input_ids, labels = template.mm_plugin.process_token_ids([], [], images, videos, tokenizer, processor)
@@ -54,6 +55,9 @@ def _encode_supervised_example(
 
     for turn_idx, (source_ids, target_ids) in enumerate(encoded_pairs):
         if total_length >= cutoff_len:
+            logger.warning(f"cutoff_len {cutoff_len} is too small for the input turn_idx: {turn_idx}, drop it source.")
+            if packing:
+                raise ValueError("Packing dataset needs a larger cutoff_len")
             break
 
         source_len, target_len = infer_seqlen(len(source_ids), len(target_ids), cutoff_len - total_length)
@@ -157,6 +161,7 @@ def preprocess_packed_supervised_dataset(
             cutoff_len=data_args.cutoff_len - 1,  # reserved for the padding token
             train_on_prompt=data_args.train_on_prompt,
             mask_history=data_args.mask_history,
+            packing=data_args.packing,
         )
         length = len(input_ids)
         if length > data_args.cutoff_len:
