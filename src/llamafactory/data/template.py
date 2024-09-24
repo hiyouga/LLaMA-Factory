@@ -686,14 +686,14 @@ _register_template(
 _register_template(
     name="glm4_long",
     format_user=StringFormatter(slots=["<|user|>\n{{content}}"]),
-    format_assistant=StringFormatter(slots=["<|assistant|>\n{{content}}",{"eos_token"}]),
+    format_assistant=StringFormatter(slots=["<|assistant|>\n{{content}}"]),
     format_system=StringFormatter(slots=["<|system|>\n{{content}}"]),
     format_function=FunctionFormatter(slots=[], tool_format="glm4"),
     format_observation=StringFormatter(slots=["<|observation|>\n{{content}}<|assistant|>"]),
     format_tools=ToolFormatter(tool_format="glm4"),
     stop_words=["<|user|>", "<|observation|>"],
     # default_system= "",
-    efficient_eos=False,
+    efficient_eos=True,
 )
 
 _register_template(

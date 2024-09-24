@@ -168,3 +168,27 @@ def test_yi_template():
     )
     answer_str = "很高兴认识你！<|im_end|>"
     _check_template("01-ai/Yi-1.5-6B-Chat", "yi", prompt_str, answer_str)
+
+
+
+@pytest.mark.xfail(reason="The fast tokenizer of glm4 LongWriter model is corrupted.")
+def test_glm_long_template():
+    prompt_str = (
+        "<|user|>\nHow are you"
+        "<|assistant|>\nI am fine!"
+        "<|user|>\n你好"
+        "<|assistant|>\n"
+    )
+    answer_str = "很高兴认识你！"
+    model_id = "/mnt/ceph/develop/jiawei/model_checkpoint/LongWriter-glm4-9b"
+
+    tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast=False, token=HF_TOKEN, trust_remote_code=True)
+    content_str = tokenizer.apply_chat_template(MESSAGES, tokenize=False)
+    content_ids = tokenizer.apply_chat_template(MESSAGES, tokenize=True)
+    template = get_template_and_fix_tokenizer(tokenizer, DataArguments(template="glm4_long"))
+    prompt_ids, answer_ids = template.encode_oneturn(tokenizer, MESSAGES)
+    assert content_str == prompt_str + answer_str
+    input_ids = content_ids[0]
+    assert input_ids == prompt_ids + answer_ids
+    _check_tokenization(tokenizer, (prompt_ids, answer_ids), (prompt_str, answer_str))
+    return content_ids

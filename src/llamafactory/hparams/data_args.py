@@ -45,6 +45,12 @@ class DataArguments:
         default=1024,
         metadata={"help": "The cutoff length of the tokenized inputs in the dataset."},
     )
+    pack_data_preprocess: bool = field(
+        default=False,
+        metadata={"help": """defult 'False', When pack_data_preprocess is true, cutoff_len is not used for truncating the input;
+                            instead, it checks whether the training input parameter exceeds this value.
+                            If it does, an error is raised."""},
+    )
     train_on_prompt: bool = field(
         default=False,
         metadata={"help": "Whether or not to disable the mask on the prompt."},

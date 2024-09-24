@@ -622,5 +622,13 @@
       "prompt": "content"
     },
     "folder": "python"
+  },
+  "nlp_paper_inst": {
+    "file_name": "nlp_paper_inst.json",
+    "columns": {
+      "prompt": "prompt", 
+      "response": "response",
+      "system": "system"
+    }
   }
 }

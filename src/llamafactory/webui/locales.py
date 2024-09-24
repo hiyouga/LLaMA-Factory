@@ -651,6 +651,30 @@ LOCALES = {
             "info": "패킹된 시퀀스 간의 크로스 어텐션을 피합니다.",
         },
     },
+    "pack_data_preprocess": {
+        "en": {
+            "label": "Preprocess pack data",
+            "info": """cutoff_len is not used for truncating the input;
+                    instead, it checks whether the training input parameter exceeds this value.
+                    If it does, an error is raised.""",
+        },
+        "ru": {
+            "label": "Предобработка упакованных данных",
+            "info": "избегайте перекрестного внимания между упакованными последовательностями."
+        },
+        "zh": {
+            "label": "提前打包数据",
+            "info": """cutoff_len 不用于截断输入；
+                    相反，它会检查训练输入参数是否超出此值。
+                    如果超出，则会引发错误。""",
+        },
+        "ko": {
+            "label": "데이터 전처리",
+            "info": """cutoff_len은 입력을 자르는 데 사용되지 않으며;
+                    대신, 훈련 입력 매개변수가 이 값을 초과하는지 확인합니다.
+                    초과할 경우 오류가 발생합니다."""
+        },
+    },
     "train_on_prompt": {
         "en": {
             "label": "Train on prompt",

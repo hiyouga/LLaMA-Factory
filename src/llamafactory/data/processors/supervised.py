@@ -44,26 +44,34 @@ def _encode_supervised_example(
     cutoff_len: int,
     train_on_prompt: bool,
     mask_history: bool,
-    packing: bool = False,
+    pack_data_preprocess: bool = False,
 ) -> Tuple[List[int], List[int]]:
     messages = template.mm_plugin.process_messages(prompt + response, images, videos, processor)
     input_ids, labels = template.mm_plugin.process_token_ids([], [], images, videos, tokenizer, processor)
     encoded_pairs = template.encode_multiturn(tokenizer, messages, system, tools)
-    total_length = len(input_ids) + (1 if template.efficient_eos else 0)
+    eos_indice = len(input_ids) + (1 if template.efficient_eos else 0)
     if mask_history:
         encoded_pairs = encoded_pairs[::-1]  # high priority for last turns
 
     for turn_idx, (source_ids, target_ids) in enumerate(encoded_pairs):
-        if total_length >= cutoff_len:
-            logger.warning(f"cutoff_len {cutoff_len} is too small for the input turn_idx: {turn_idx}, drop it source.")
-            if packing:
-                raise ValueError("Packing dataset needs a larger cutoff_len")
-            break
 
-        source_len, target_len = infer_seqlen(len(source_ids), len(target_ids), cutoff_len - total_length)
+        if pack_data_preprocess and len(source_ids)+len(target_ids) >= cutoff_len:
+            raise ValueError(f"""Packing dataset `len(source_ids)+len(target_ids)` needs a larger cutoff_len:
+                              {len(source_ids)+len(target_ids)}> {cutoff_len}""")
+        else:
+            if eos_indice >= cutoff_len:
+                logger.warning(f"""cutoff_len {cutoff_len} is too small for the input turn_idx: {turn_idx}, drop it.
+                            eg: The eos_indice is exactly one less than the bubble length, causing the last one to be discarded.
+                            """)
+                break
+        if pack_data_preprocess:
+            source_len, target_len = infer_seqlen(len(source_ids), len(target_ids), len(source_ids)+len(target_ids))
+        else:
+            source_len, target_len = infer_seqlen(len(source_ids), len(target_ids), cutoff_len - eos_indice)
+
         source_ids = source_ids[:source_len]
         target_ids = target_ids[:target_len]
-        total_length += source_len + target_len
+        eos_indice += source_len + target_len
 
         if train_on_prompt:
             source_label = source_ids
@@ -161,7 +169,7 @@ def preprocess_packed_supervised_dataset(
             cutoff_len=data_args.cutoff_len - 1,  # reserved for the padding token
             train_on_prompt=data_args.train_on_prompt,
             mask_history=data_args.mask_history,
-            packing=data_args.packing,
+            pack_data_preprocess=data_args.pack_data_preprocess,
         )
         length = len(input_ids)
         if length > data_args.cutoff_len:

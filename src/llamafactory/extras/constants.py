@@ -585,6 +585,16 @@ register_model_group(
 
 register_model_group(
     models={
+        "LongWriter-glm4-9b": {
+            DownloadSource.DEFAULT: "THUDM/LongWriter-glm4-9b",
+        }
+    },
+    template="glm4_long",
+)
+
+
+register_model_group(
+    models={
         "InternLM-7B": {
             DownloadSource.DEFAULT: "internlm/internlm-7b",
             DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm-7b",
