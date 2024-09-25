@@ -139,5 +139,5 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
                     model_args.export_hub_model_id, token=model_args.hf_hub_token
                 )
 
-    except Exception:
-        logger.warning("Cannot save tokenizer, please copy the files manually.")
+    except Exception as e:
+        logger.warning("Cannot save tokenizer, please copy the files manually. Error: {}".format(e))
