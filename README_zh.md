@@ -176,7 +176,7 @@ https://github.com/user-attachments/assets/e6ce34b0-52d5-4f3e-a830-592106c4c272
 | [InternLM2/InternLM2.5](https://huggingface.co/internlm)          | 7B/20B                           | intern2   |
 | [Llama](https://github.com/facebookresearch/llama)                | 7B/13B/33B/65B                   | -         |
 | [Llama 2](https://huggingface.co/meta-llama)                      | 7B/13B/70B                       | llama2    |
-| [Llama 3/Llama 3.1](https://huggingface.co/meta-llama)            | 8B/70B                           | llama3    |
+| [Llama 3/Llama 3.1/Llama3.2](https://huggingface.co/meta-llama)   | 1B/3B/8B/70B                     | llama3    |
 | [LLaVA-1.5](https://huggingface.co/llava-hf)                      | 7B/13B                           | llava     |
 | [MiniCPM](https://huggingface.co/openbmb)                         | 1B/2B/4B                         | cpm/cpm3  |
 | [Mistral/Mixtral](https://huggingface.co/mistralai)               | 7B/8x7B/8x22B                    | mistral   |
