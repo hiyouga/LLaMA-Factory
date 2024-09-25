@@ -82,6 +82,9 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
             padding_side="right",
             **init_kwargs,
         )
+    except Exception as e:
+        logger.error("Failed to load tokenizer. Error: {}".format(e))
+        raise e
 
     if model_args.new_special_tokens is not None:
         num_added_tokens = tokenizer.add_special_tokens(
@@ -103,12 +106,13 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
         setattr(processor, "video_resolution", model_args.video_resolution)
         setattr(processor, "video_fps", model_args.video_fps)
         setattr(processor, "video_maxlen", model_args.video_maxlen)
-    except Exception:
+    except Exception as e:
+        logger.warning("Failed to load processor. Error: {}".format(e))
         processor = None
 
     # Avoid load tokenizer, see:
     # https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/models/auto/processing_auto.py#L324
-    if "Processor" not in processor.__class__.__name__:
+    if processor and "Processor" not in processor.__class__.__name__:
         processor = None
 
     return {"tokenizer": tokenizer, "processor": processor}
