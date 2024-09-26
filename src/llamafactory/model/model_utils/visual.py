@@ -160,7 +160,9 @@ def get_image_seqlen(config: "PretrainedConfig") -> int:
     else:
         image_seqlen = -1
     elif model_type == "mllama":
-        image_seqlen = ((config.vision_config.image_size // config.vision_config.patch_size) ** 2 + 1) * config.vision_config.max_num_tiles
+        image_seqlen = (
+            (config.vision_config.image_size // config.vision_config.patch_size) ** 2 + 1
+        ) * config.vision_config.max_num_tiles
 
     return image_seqlen
 
