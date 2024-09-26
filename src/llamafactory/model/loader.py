@@ -119,6 +119,44 @@ def load_config(model_args: "ModelArguments") -> "PretrainedConfig":
     Loads model config.
     """
     init_kwargs = _get_init_kwargs(model_args)
+    if "pixtral" in model_args.model_name_or_path:
+        from transformers import PretrainedConfig
+
+        class PixtralVisionConfig(PretrainedConfig):
+            model_type = "pixtral"
+
+            def __init__(
+                self,
+                hidden_size=1024,
+                intermediate_size=4096,
+                num_hidden_layers=24,
+                num_attention_heads=16,
+                num_channels=3,
+                image_size=1024,
+                patch_size=16,
+                hidden_act="gelu",
+                attention_dropout=0.0,
+                rope_theta=10000.0,
+                tie_word_embeddings=False,
+                **kwargs,
+            ):
+                super().__init__(**kwargs)
+
+                self.hidden_size = hidden_size
+                self.intermediate_size = intermediate_size
+                self.num_hidden_layers = num_hidden_layers
+                self.num_attention_heads = num_attention_heads
+                self.num_channels = num_channels
+                self.patch_size = patch_size
+                self.image_size = image_size
+                self.attention_dropout = attention_dropout
+                self.hidden_act = hidden_act
+                self.rope_theta = rope_theta
+                self.tie_word_embeddings = tie_word_embeddings
+                self.head_dim = hidden_size // num_attention_heads
+                
+        return PixtralVisionConfig()
+    
     return AutoConfig.from_pretrained(model_args.model_name_or_path, **init_kwargs)
 
 

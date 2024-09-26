@@ -323,6 +323,12 @@ class PaliGemmaPlugin(BasePlugin):
         mm_inputs["token_type_ids"] = _get_paligemma_token_type_ids(imglens, seqlens, processor)
         return mm_inputs
 
+class PixtralPlugin(BasePlugin):
+    #TODO preprocess according to Pixtral hf
+    from transformers import LlavaForConditionalGeneration
+    @override
+    def _preprocess_image(self, image: "ImageObject", **kwargs) -> "ImageObject":
+        pass
 
 class Qwen2vlPlugin(BasePlugin):
     @override
