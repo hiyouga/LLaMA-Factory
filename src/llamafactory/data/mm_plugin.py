@@ -686,18 +686,11 @@ class MllamaPlugin(BasePlugin):
         processor: Optional["ProcessorMixin"],
     ) -> List[Dict[str, str]]:
         self._validate_input(images, videos)
-        num_image_tokens = 0
         messages = deepcopy(messages)
         for message in messages:
             content = message["content"]
-            while IMAGE_PLACEHOLDER in content:
-                num_image_tokens += 1
-                content = content.replace(IMAGE_PLACEHOLDER, "<|image|>", 1)
-
+            content = content.replace(IMAGE_PLACEHOLDER, "<|image|>", 1)
             message["content"] = content
-
-        if len(images) != num_image_tokens:
-            raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
 
         return messages
 
@@ -710,7 +703,7 @@ class MllamaPlugin(BasePlugin):
         seqlens: Sequence[int],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
-        super().get_mm_inputs(images, videos, imglens, vidlens, seqlens, processor)
+        self._get_mm_inputs(images, videos, processor)
         if images is not None:
             images = [Image.open(image) if isinstance(image, str) else image for image in images]
             image_features = processor.image_processor(images)
