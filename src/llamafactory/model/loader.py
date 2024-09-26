@@ -83,8 +83,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
             **init_kwargs,
         )
     except Exception as e:
-        logger.error("Failed to load tokenizer. Error: {}".format(e))
-        raise e
+        raise OSError("Failed to load tokenizer") from e
 
     if model_args.new_special_tokens is not None:
         num_added_tokens = tokenizer.add_special_tokens(
