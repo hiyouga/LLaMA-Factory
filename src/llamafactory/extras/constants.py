@@ -802,15 +802,19 @@ register_model_group(
     models={
         "LLaMA3.2-1B": {
             DownloadSource.DEFAULT: "meta-llama/Llama-3.2-1B",
+            DownloadSource.MODELSCOPE: "LLM-Research/Llama-3.2-1B",
         },
         "LLaMA3.2-3B": {
             DownloadSource.DEFAULT: "meta-llama/Llama-3.2-3B",
+            DownloadSource.MODELSCOPE: "LLM-Research/Llama-3.2-3B",
         },
         "LLaMA3.2-1B-Instruct": {
             DownloadSource.DEFAULT: "meta-llama/Llama-3.2-1B-Instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Llama-3.2-1B-Instruct",
         },
         "LLaMA3.2-3B-Instruct": {
             DownloadSource.DEFAULT: "meta-llama/Llama-3.2-3B-Instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Llama-3.2-3B-Instruct",
         },
     },
     template="llama3",
