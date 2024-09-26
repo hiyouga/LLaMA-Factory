@@ -821,6 +821,13 @@ _register_template(
     replace_eos=True,
 )
 
+_register_template(
+    name="pixtral",
+    format_user=StringFormatter(slots=["[INST] {{content}} [/INST]"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    mm_plugin=get_mm_plugin(name="pixtral", image_token="[IMG]")
+)
+
 
 _register_template(
     name="qwen",
