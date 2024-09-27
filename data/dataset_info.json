@@ -622,5 +622,13 @@
       "prompt": "content"
     },
     "folder": "python"
+  },
+  "Oral_QA": {
+    "file_name": "Oral_QA_zh_online+gen.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
   }
 }
