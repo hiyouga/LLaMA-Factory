@@ -585,23 +585,6 @@ register_model_group(
 
 register_model_group(
     models={
-        "Idefics2-Base": {
-            DownloadSource.DEFAULT: "HuggingFaceM4/idefics2-8b-base",
-        },
-        "Idefics2-Chat": {
-            DownloadSource.DEFAULT: "HuggingFaceM4/idefics2-8b",
-        },
-        "Idefics2-Chatty": {
-            DownloadSource.DEFAULT: "HuggingFaceM4/idefics2-8b-chatty",
-        },
-    },
-    template="idefics2",
-    vision=True,
-)
-
-
-register_model_group(
-    models={
         "InternLM-7B": {
             DownloadSource.DEFAULT: "internlm/internlm-7b",
             DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm-7b",

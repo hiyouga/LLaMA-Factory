@@ -119,15 +119,6 @@ def load_config(model_args: "ModelArguments") -> "PretrainedConfig":
     Loads model config.
     """
     init_kwargs = _get_init_kwargs(model_args)
-    if "LLaVA-NeXT-Video" in model_args.model_name_or_path:
-        from transformers import CLIPVisionConfig, LlamaConfig, LlavaNextVideoConfig, PretrainedConfig
-
-        official_config = PretrainedConfig.from_pretrained(model_args.model_name_or_path, **init_kwargs)
-        config = LlavaNextVideoConfig(
-            CLIPVisionConfig(**official_config.vision_config), LlamaConfig(**official_config.text_config)
-        )
-        setattr(config, "visual_inputs", True)
-        return config
     return AutoConfig.from_pretrained(model_args.model_name_or_path, **init_kwargs)
 
 
@@ -164,11 +155,6 @@ def load_model(
                 load_class = AutoModelForVision2Seq
             else:
                 load_class = AutoModelForCausalLM
-                if "llava_next_video" == getattr(config, "model_type"):
-                    from transformers import LlavaNextVideoForConditionalGeneration
-
-                    load_class = LlavaNextVideoForConditionalGeneration
-
             if model_args.train_from_scratch:
                 model = load_class.from_config(config)
             else:
