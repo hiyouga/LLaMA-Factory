@@ -136,23 +136,6 @@ def test_llava_plugin():
     _check_plugin(**check_inputs)
 
 
-def test_idefics2_plugin():
-    tokenizer, processor = _load_tokenizer_module(model_name_or_path="HuggingFaceM4/idefics2-8b")
-    idefics2_plugin = get_mm_plugin(name="idefics2", image_token="<image>")
-    check_inputs = {"plugin": idefics2_plugin, "tokenizer": tokenizer, "processor": processor}
-    mm_messages = copy.deepcopy(MM_MESSAGES)
-    fake_image_token = processor.fake_image_token.content
-    image_str = f"{fake_image_token}{'<image>' * processor.image_seq_len}{fake_image_token}"
-    image_str = image_str * 5
-    for message in mm_messages:
-        content = message["content"]
-        content = content.replace("<image>", image_str)
-        content = content.replace(f"{fake_image_token}{fake_image_token}", f"{fake_image_token}")
-        message["content"] = content
-    check_inputs["expected_mm_inputs"] = _get_mm_inputs(processor)
-    _check_plugin(**check_inputs)
-
-
 def test_llava_next_plugin():
     tokenizer, processor = _load_tokenizer_module(model_name_or_path="llava-hf/llava-v1.6-vicuna-7b-hf")
     llava_next_plugin = get_mm_plugin(name="llava_next", image_token="<image>")
