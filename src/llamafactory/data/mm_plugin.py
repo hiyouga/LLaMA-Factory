@@ -4,6 +4,7 @@ from io import BytesIO
 from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, TypedDict, Union
 
 import numpy as np
+from transformers.image_utils import get_image_size, to_numpy_array
 from typing_extensions import override
 
 from ..extras.constants import IGNORE_INDEX, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
@@ -173,7 +174,6 @@ class BasePlugin:
                 video_maxlen=getattr(processor, "video_maxlen", 64),
             )
             input_dict["videos"] = videos
-
         if input_dict.get("images", None) is not None or input_dict.get("videos", None) is not None:
             return image_processor(**input_dict, return_tensors="pt")
         else:
@@ -221,50 +221,6 @@ class BasePlugin:
         """
         self._validate_input(images, videos)
         return {}
-
-
-class Idefics2Plugin(BasePlugin):
-    @override
-    def process_messages(
-        self,
-        messages: Sequence[Dict[str, str]],
-        images: Sequence["ImageInput"],
-        videos: Sequence["VideoInput"],
-        processor: Optional["ProcessorMixin"],
-    ) -> List[Dict[str, str]]:
-        self._validate_input(images, videos)
-        num_image_tokens = 0
-        messages = deepcopy(messages)
-        fake_image_token = processor.fake_image_token.content
-        image_str = f"{fake_image_token}{self.image_token * processor.image_seq_len}{fake_image_token}"
-        image_str = image_str * 5
-
-        for message in messages:
-            content = message["content"]
-            while IMAGE_PLACEHOLDER in content:
-                num_image_tokens += 1
-                content = content.replace(IMAGE_PLACEHOLDER, "{{image}}", 1)
-            content = content.replace("{{image}}", image_str)
-            content = content.replace(f"{fake_image_token}{fake_image_token}", f"{fake_image_token}")
-            message["content"] = content
-
-        if len(images) != num_image_tokens:
-            raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
-
-        return messages
-
-    @override
-    def get_mm_inputs(
-        self,
-        images: Sequence["ImageInput"],
-        videos: Sequence["VideoInput"],
-        imglens: Sequence[int],
-        vidlens: Sequence[int],
-        seqlens: Sequence[int],
-        processor: Optional["ProcessorMixin"],
-    ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
-        self._validate_input(images, videos)
-        return self._get_mm_inputs(images, videos, processor)
 
 
 class LlavaPlugin(BasePlugin):
@@ -319,15 +275,33 @@ class LlavaNextPlugin(BasePlugin):
         self._validate_input(images, videos)
         num_image_tokens = 0
         messages = deepcopy(messages)
-        for message in messages:
-            content = message["content"]
-            while IMAGE_PLACEHOLDER in content:
-                num_image_tokens += 1
-                content = content.replace(IMAGE_PLACEHOLDER, "{{image}}", 1)
+        if getattr(processor, "patch_size") is None or getattr(processor, "vision_feature_select_strategy") is None:
+            for message in messages:
+                content = message["content"]
+                while self.image_token in content:
+                    num_image_tokens += 1
+                    content = content.replace(self.image_token, "{{image}}", 1)
+        else:
+            mm_inputs = self._get_mm_inputs(images, videos, processor)
+            image_sizes = iter(mm_inputs["image_sizes"])
+            height, width = get_image_size(to_numpy_array(mm_inputs["pixel_values"][0][0]))
+            for message in messages:
+                content = message["content"]
+                while self.image_token in content:
+                    image_size = next(image_sizes)
+                    orig_height, orig_width = image_size
+                    image_seqlen = processor._get_number_of_features(orig_height, orig_width, height, width)
+                    if processor.vision_feature_select_strategy == "default":
+                        image_seqlen -= 1
+                    num_image_tokens += 1
+                    print(image_seqlen)
+                    content = content.replace(self.image_token, "{{image}}" * image_seqlen, 1)
+
+                message['content'] = content.replace("{{image}}", self.image_token)
 
         if len(images) != num_image_tokens:
             raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
-
+        print(messages)
         return messages
 
     @override
@@ -341,8 +315,8 @@ class LlavaNextPlugin(BasePlugin):
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         self._validate_input(images, videos)
-        return self._get_mm_inputs(images, videos, processor)
-
+        res = self._get_mm_inputs(images, videos, processor)
+        return res
 
 class LlavaNextVideoPlugin(BasePlugin):
     @override
@@ -357,14 +331,47 @@ class LlavaNextVideoPlugin(BasePlugin):
         num_image_tokens = 0
         num_video_tokens = 0
         messages = deepcopy(messages)
-        for message in messages:
-            content = message["content"]
-            while IMAGE_PLACEHOLDER in content:
-                num_image_tokens += 1
-                content = content.replace(IMAGE_PLACEHOLDER, "{{image}}", 1)
-            while VIDEO_PLACEHOLDER in content:
-                num_video_tokens += 1
-                content = content.replace(VIDEO_PLACEHOLDER, "{{video}}", 1)
+        if getattr(processor, "patch_size") is None or getattr(processor, "vision_feature_select_strategy") is None:
+            for message in messages:
+                content = message["content"]
+                while self.image_token in content:
+                    num_image_tokens += 1
+                    content = content.replace(self.image_token, "{{image}}", 1)
+                while self.video_token in content:
+                    num_video_tokens += 1
+                    content = content.replace(self.video_token, "{{video}}", 1)
+        else:
+            mm_inputs = self._get_mm_inputs(images, videos, processor)
+            if "pixel_values" in mm_inputs:
+                image_sizes = iter(mm_inputs["image_sizes"])
+                height, width = get_image_size(to_numpy_array(mm_inputs["pixel_values"][0][0]))
+                for message in messages:
+                    content = message["content"]
+
+                    while self.image_token in content:
+                        image_size = next(image_sizes)
+                        orig_height, orig_width = image_size
+                        image_seqlen = processor._get_number_of_features(orig_height, orig_width, height, width)
+                        if processor.vision_feature_select_strategy == "default":
+                            image_seqlen -= 1
+                        num_image_tokens += 1
+                        content = content.replace(self.image_token, "{{image}}" * image_seqlen, 1)
+
+                    message['content'] = content.replace("{{image}}", self.image_token)
+
+            if "pixel_values_videos" in mm_inputs:
+                one_video = to_numpy_array(mm_inputs.get("pixel_values_videos")[0])
+                height, width = get_image_size(one_video[0])
+                num_frames = one_video.shape[0]  # frame dim is always after batch dim
+                image_seqlen = (height // processor.patch_size) * (width // processor.patch_size)
+                video_seqlen = image_seqlen // 4 * num_frames  # divide by 4 needed for avg pooling layer
+
+                for message in messages:
+                    content = message["content"]
+                    while self.video_token in content:
+                        num_video_tokens += 1
+                        content = content.replace(self.video_token, "{{video}}", 1)
+                    message['content'] = content.replace("{{video}}", self.video_token * video_seqlen)
 
         if len(images) != num_image_tokens:
             raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
@@ -392,6 +399,19 @@ class LlavaNextVideoPlugin(BasePlugin):
             video_res = video_processor(videos, return_tensors="pt")
             res.update(video_res)
         return res
+
+    @override
+    def _regularize_videos(self, videos: Sequence["VideoInput"], **kwargs) -> List[List["ImageObject"]]:
+        r"""
+        Regularizes videos to avoid error. Including reading, resizing and converting.
+        """
+        videos = super()._regularize_videos(
+            videos,
+            image_resolution=128,
+            video_fps=1.0,
+            video_maxlen=64,
+        )
+        return videos
 
 
 class PaliGemmaPlugin(BasePlugin):
@@ -561,14 +581,42 @@ class VideoLlavaPlugin(BasePlugin):
         num_image_tokens = 0
         num_video_tokens = 0
         messages = deepcopy(messages)
-        for message in messages:
-            content = message["content"]
-            while IMAGE_PLACEHOLDER in content:
-                num_image_tokens += 1
-                content = content.replace(IMAGE_PLACEHOLDER, "{{image}}", 1)
-            while VIDEO_PLACEHOLDER in content:
-                num_video_tokens += 1
-                content = content.replace(VIDEO_PLACEHOLDER, "{{video}}", 1)
+        if getattr(processor, "patch_size") is None or getattr(processor, "vision_feature_select_strategy") is None:
+            for message in messages:
+                content = message["content"]
+                while self.image_token in content:
+                    num_image_tokens += 1
+                    content = content.replace(self.image_token, "{{image}}", 1)
+                while self.video_token in content:
+                    num_video_tokens += 1
+                    content = content.replace(self.video_token, "{{video}}", 1)
+        else:
+            mm_inputs = self._get_mm_inputs(images, videos, processor)
+            if "pixel_values_images" in mm_inputs.keys():
+                height, width = get_image_size(to_numpy_array(mm_inputs.get("pixel_values_images")[0]))
+                num_frames = 1
+
+            if "pixel_values_videos" in mm_inputs.keys():
+                one_video = to_numpy_array(mm_inputs.get("pixel_values_videos")[0])
+                height, width = get_image_size(one_video[0])
+                num_frames = one_video.shape[0]  # frame dim is always after batch dim
+
+            image_seqlen = (height // processor.patch_size) * (width // processor.patch_size) + 1
+            video_seqlen = num_image_tokens * num_frames
+            if processor.vision_feature_select_strategy == "default":
+                image_seqlen -= 1
+
+            for message in messages:
+                content = message["content"]
+                while self.image_token in content:
+                    num_image_tokens += 1
+                    content = content.replace(self.image_token, "{{image}}", 1)
+                while self.video_token in content:
+                    num_image_tokens += 1
+                    content = content.replace(self.video_token, "{{video}}", 1)
+
+                message["content"] = content.replace("{{image}}", self.image_token * image_seqlen)
+                message["content"] = content.replace("{{video}}", self.video_token * video_seqlen)
 
         if len(images) != num_image_tokens:
             raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
@@ -591,10 +639,22 @@ class VideoLlavaPlugin(BasePlugin):
         self._validate_input(images, videos)
         return self._get_mm_inputs(images, videos, processor)
 
+    @override
+    def _regularize_videos(self, videos: Sequence["VideoInput"], **kwargs) -> List[List["ImageObject"]]:
+        r"""
+        Regularizes videos to avoid error. Including reading, resizing and converting.
+        """
+        videos = super()._regularize_videos(
+            videos,
+            image_resolution=128,
+            video_fps=1.0,
+            video_maxlen=64,
+        )
+        return videos
+
 
 PLUGINS = {
     "base": BasePlugin,
-    "idefics2": Idefics2Plugin,
     "llava": LlavaPlugin,
     "llava_next": LlavaNextPlugin,
     "llava_next_video": LlavaNextVideoPlugin,
