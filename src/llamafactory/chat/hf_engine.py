@@ -168,7 +168,7 @@ class HuggingfaceEngine(BaseEngine):
         for key, value in mm_inputs.items():
             value = value if isinstance(value, torch.Tensor) else torch.tensor(value)
             gen_kwargs[key] = value.to(model.device)
-
+            
         return gen_kwargs, prompt_length
 
     @staticmethod
