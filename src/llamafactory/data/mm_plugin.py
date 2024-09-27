@@ -294,14 +294,12 @@ class LlavaNextPlugin(BasePlugin):
                     if processor.vision_feature_select_strategy == "default":
                         image_seqlen -= 1
                     num_image_tokens += 1
-                    print(image_seqlen)
                     content = content.replace(self.image_token, "{{image}}" * image_seqlen, 1)
 
                 message['content'] = content.replace("{{image}}", self.image_token)
 
         if len(images) != num_image_tokens:
             raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
-        print(messages)
         return messages
 
     @override
