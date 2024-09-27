@@ -180,7 +180,7 @@ def test_glm_long_template():
         "<|assistant|>\n"
     )
     answer_str = "很高兴认识你！"
-    model_id = "/mnt/ceph/develop/jiawei/model_checkpoint/LongWriter-glm4-9b"
+    model_id = "THUDM/LongWriter-glm4-9b"
 
     tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast=False, token=HF_TOKEN, trust_remote_code=True)
     content_str = tokenizer.apply_chat_template(MESSAGES, tokenize=False)

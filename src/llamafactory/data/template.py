@@ -692,7 +692,6 @@ _register_template(
     format_observation=StringFormatter(slots=["<|observation|>\n{{content}}<|assistant|>"]),
     format_tools=ToolFormatter(tool_format="glm4"),
     stop_words=["<|user|>", "<|observation|>"],
-    # default_system= "",
     efficient_eos=True,
 )
 
