@@ -325,14 +325,6 @@ class PaliGemmaPlugin(BasePlugin):
         return mm_inputs
 
 class PixtralPlugin(BasePlugin):
-    # @override
-    # def _preprocess_image(self, image: "ImageObject", **kwargs) -> "ImageObject":
-    #     image = super()._preprocess_image(image, **kwargs)
-    #     UP_SIZE = (512,512)
-    #     image = image.resize(UP_SIZE, resample=Image.NEAREST)
-
-    #     return image
-    
     @override
     def process_messages(
         self,
@@ -396,16 +388,15 @@ class PixtralPlugin(BasePlugin):
         seqlens: Sequence[int],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
-        
         self._validate_input(images, videos)
         mm_inputs = self._get_mm_inputs(images, videos, processor)
-        if mm_inputs.get('image_sizes'):
-            del mm_inputs['image_sizes']
-            # TODO fix this type error
-            # if isinstance(mm_inputs.get("pixel_values"), list): #List[List[torch.tensor]] -> [B C W H]
-            # recommend for batch==1 for one gpu or it will rise the error of BatchEncoding.
+        if mm_inputs.get("image_sizes"):
+            mm_inputs.pop("image_sizes")
+            
+            if isinstance(mm_inputs.get("pixel_values"), list) and len(mm_inputs.get("pixel_values")[0]) >= 2:
+                raise ValueError("Now it only supports batchsize=1 on per gpu due to `List[tensor]` can not pack into BachEncoding")
+            
             mm_inputs["pixel_values"] = mm_inputs.get("pixel_values")[0][0].unsqueeze(0)
-        # mm_inputs["pixel_values"] = mm_inputs.get("pixel_values")
 
         return mm_inputs
 
