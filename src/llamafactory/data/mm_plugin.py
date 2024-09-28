@@ -24,7 +24,6 @@ if TYPE_CHECKING:
     from av.stream import Stream
     from transformers import PreTrainedTokenizer, ProcessorMixin
     from transformers.image_processing_utils import BaseImageProcessor
-    from transformers.processing_utils import _validate_images_text_input_order, ProcessingKwargs
 
     class EncodedImage(TypedDict):
         path: Optional[str]
@@ -392,7 +391,7 @@ class PixtralPlugin(BasePlugin):
         mm_inputs = self._get_mm_inputs(images, videos, processor)
         if mm_inputs.get("image_sizes"):
             mm_inputs.pop("image_sizes")
-            
+
             if isinstance(mm_inputs.get("pixel_values"), list) and len(mm_inputs.get("pixel_values")[0]) >= 2:
                 raise ValueError("Now it only supports batchsize=1 on per gpu due to `List[tensor]` can not pack into BachEncoding")
             
