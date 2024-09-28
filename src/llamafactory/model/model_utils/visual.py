@@ -96,7 +96,6 @@ def autocast_projector_dtype(model: "PreTrainedModel", model_args: "ModelArgumen
             mm_projector: "torch.nn.Module" = getattr(model, "multi_modal_projector")
         elif model_type == "qwen2_vl":
             mm_projector: "torch.nn.Module" = getattr(getattr(model, "visual"), "merger")
-        # TODO check it
         elif model_type == "pixtral":
             mm_projector: "torch.nn.Module" = getattr(model, "vision_language_adapte")
         else:
@@ -128,7 +127,6 @@ def get_forbidden_modules(config: "PretrainedConfig", finetuning_args: "Finetuni
     if model_type in ["llava", "paligemma", "pixtral"]:
         if finetuning_args.freeze_vision_tower:
             forbidden_modules.add("vision_tower")
-            #TODO check it
             forbidden_modules.add("vision_encoder")
 
         if finetuning_args.train_mm_proj_only:
