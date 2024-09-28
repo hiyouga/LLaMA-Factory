@@ -1059,9 +1059,9 @@ register_model_group(
 
 register_model_group(
     models={
-        "Pixtral-12B-2409": {
-            DownloadSource.DEFAULT: "mistralai/Pixtral-12B-2409",
-            DownloadSource.MODELSCOPE: "LLM-Research/Pixtral-12B-2409",
+        "Pixtral-12B": {
+            DownloadSource.DEFAULT: "mistral-community/pixtral-12b",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/pixtral-12b",
         }
     },
     template="mistral",
