@@ -37,10 +37,11 @@ def configure_attn_implementation(
             if is_flash_attn_2_available():
                 require_version("transformers>=4.42.4", "To fix: pip install transformers>=4.42.4")
                 require_version("flash_attn>=2.6.3", "To fix: pip install flash_attn>=2.6.3")
-                logger.warning("Gemma-2 should use flash attention 2, change `flash_attn` to fa2.")
-                model_args.flash_attn = "fa2"
+                if model_args.flash_attn != "fa2":
+                    logger.warning("Gemma-2 should use flash attention 2, change `flash_attn` to fa2.")
+                    model_args.flash_attn = "fa2"
             else:
-                logger.warning("Gemma-2 should use eager attention, change `flash_attn` to disabled.")
+                logger.warning("FlashAttention-2 is not installed, use eager attention.")
                 model_args.flash_attn = "disabled"
         elif model_args.flash_attn == "sdpa":
             logger.warning("Gemma-2 should use soft-capping attention, while the SDPA attention does not support it.")
