@@ -854,12 +854,6 @@ register_model_group(
         "LLaVA-NeXT-LLaMA3-8B-Chat": {
             DownloadSource.DEFAULT: "llava-hf/llama3-llava-next-8b-hf",
         },
-        "LLaVA-NeXT-LLaMA3-72B-Chat": {
-            DownloadSource.DEFAULT: "llava-hf/llava-next-72b-hf",
-        },
-        "LLaVA-NeXT-LLaMA3-110B-Chat": {
-            DownloadSource.DEFAULT: "llava-hf/llava-next-110b-hf",
-        },
     },
     template="llava_next_llama3",
     vision=True,
@@ -873,6 +867,20 @@ register_model_group(
         },
     },
     template="llava_next_mistral",
+    vision=True,
+)
+
+
+register_model_group(
+    models={
+        "LLaVA-NeXT-Qwen-1.5-72B-Chat": {
+            DownloadSource.DEFAULT: "llava-hf/llava-next-72b-hf",
+        },
+        "LLaVA-NeXT-Qwen-1.5-110B-Chat": {
+            DownloadSource.DEFAULT: "llava-hf/llava-next-110b-hf",
+        },
+    },
+    template="llava_next_qwen",
     vision=True,
 )
 
@@ -893,14 +901,22 @@ register_model_group(
         "LLaVA-NeXT-Video-7B-Chat": {
             DownloadSource.DEFAULT: "llava-hf/LLaVA-NeXT-Video-7B-hf",
         },
-        "LLaVA-NeXT-Video-7B-32k-Chat": {
-            DownloadSource.DEFAULT: "llava-hf/LLaVA-NeXT-Video-7B-32K-hf",
-        },
         "LLaVA-NeXT-Video-7B-DPO-Chat": {
             DownloadSource.DEFAULT: "llava-hf/LLaVA-NeXT-Video-7B-DPO-hf",
         },
     },
     template="llava_next_video",
+    vision=True,
+)
+
+
+register_model_group(
+    models={
+        "LLaVA-NeXT-Video-Mistral-7B-32k-Chat": {
+            DownloadSource.DEFAULT: "llava-hf/LLaVA-NeXT-Video-7B-32K-hf",
+        },
+    },
+    template="llava_next_video_mistral",
     vision=True,
 )
 
