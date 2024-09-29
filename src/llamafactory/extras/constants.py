@@ -896,7 +896,7 @@ register_model_group(
         "LLaVA-NeXT-Video-7B-32k-Chat": {
             DownloadSource.DEFAULT: "llava-hf/LLaVA-NeXT-Video-7B-32K-hf",
         },
-        "LLaVA-NeXT-Video-7B-DPO": {
+        "LLaVA-NeXT-Video-7B-DPO-Chat": {
             DownloadSource.DEFAULT: "llava-hf/LLaVA-NeXT-Video-7B-DPO-hf",
         },
     },
@@ -910,7 +910,7 @@ register_model_group(
         "LLaVA-NeXT-Video-Yi-34B-Chat": {
             DownloadSource.DEFAULT: "llava-hf/LLaVA-NeXT-Video-34B-hf",
         },
-        "LLaVA-NeXT-Video-Yi-34B-DPO": {
+        "LLaVA-NeXT-Video-Yi-34B-DPO-Chat": {
             DownloadSource.DEFAULT: "llava-hf/LLaVA-NeXT-Video-34B-DPO-hf",
         },
     },
