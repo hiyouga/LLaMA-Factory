@@ -405,9 +405,9 @@ class LlavaNextVideoPlugin(BasePlugin):
         """
         videos = super()._regularize_videos(
             videos,
-            image_resolution=128,
+            image_resolution=168,
             video_fps=1.0,
-            video_maxlen=64,
+            video_maxlen=16,
         )
         return videos
 
@@ -644,9 +644,9 @@ class VideoLlavaPlugin(BasePlugin):
         """
         videos = super()._regularize_videos(
             videos,
-            image_resolution=128,
+            image_resolution=224,
             video_fps=1.0,
-            video_maxlen=64,
+            video_maxlen=8,
         )
         return videos
 
