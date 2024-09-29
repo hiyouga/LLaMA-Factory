@@ -61,7 +61,6 @@ extra_require = {
     "qwen": ["transformers_stream_generator"],
     "modelscope": ["modelscope"],
     "dev": ["ruff", "pytest"],
-    "av": ["av>=13.0.0"],
 }
 
 
