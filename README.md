@@ -163,7 +163,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 ## Supported Models
 
 | Model                                                             | Model size                       | Template         |
-| ----------------------------------------------------------------- |----------------------------------| ---------------- |
+| ----------------------------------------------------------------- | -------------------------------- | ---------------- |
 | [Baichuan 2](https://huggingface.co/baichuan-inc)                 | 7B/13B                           | baichuan2        |
 | [BLOOM/BLOOMZ](https://huggingface.co/bigscience)                 | 560M/1.1B/1.7B/3B/7.1B/176B      | -                |
 | [ChatGLM3](https://huggingface.co/THUDM)                          | 6B                               | chatglm3         |
