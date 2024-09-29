@@ -816,6 +816,7 @@ _register_template(
     stop_words=["<|im_end|>"],
     replace_eos=True,
     replace_jinja_template=False,
+    mm_plugin=get_mm_plugin(name="llava_next", image_token="<image>"),
 )
 
 
