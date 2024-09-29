@@ -159,7 +159,6 @@ class BasePlugin:
         """
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
         video_processor: "BaseImageProcessor" = getattr(processor, "video_processor", image_processor)
-        res = super()._get_mm_inputs(images, [], processor)
         input_dict = {"images": None}  # default key
         if len(images) != 0:
             images = self._regularize_images(
