@@ -843,14 +843,47 @@ register_model_group(
         "LLaVA-NeXT-13B-Chat": {
             DownloadSource.DEFAULT: "llava-hf/llava-v1.6-vicuna-13b-hf",
         },
-        "LLaVA-NeXT-34B-Chat": {
-            DownloadSource.DEFAULT: "llava-hf/llava-v1.6-34b-hf",
+    },
+    template="llava_next",
+    vision=True,
+)
+
+
+register_model_group(
+    models={
+        "LLaVA-NeXT-LLaMA3-8B-Chat": {
+            DownloadSource.DEFAULT: "llava-hf/llama3-llava-next-8b-hf",
         },
+        "LLaVA-NeXT-LLaMA3-72B-Chat": {
+            DownloadSource.DEFAULT: "llava-hf/llava-next-72b-hf",
+        },
+        "LLaVA-NeXT-LLaMA3-110B-Chat": {
+            DownloadSource.DEFAULT: "llava-hf/llava-next-110b-hf",
+        },
+    },
+    template="llava_next_llama3",
+    vision=True,
+)
+
+
+register_model_group(
+    models={
         "LLaVA-NeXT-Mistral-7B-Chat": {
             DownloadSource.DEFAULT: "llava-hf/llava-v1.6-mistral-7b-hf",
         },
     },
-    template="llava_next",
+    template="llava_next_mistral",
+    vision=True,
+)
+
+
+register_model_group(
+    models={
+        "LLaVA-NeXT-Yi-34B-Chat": {
+            DownloadSource.DEFAULT: "llava-hf/llava-v1.6-34b-hf",
+        },
+    },
+    template="llava_next_yi",
     vision=True,
 )
 
@@ -860,20 +893,28 @@ register_model_group(
         "LLaVA-NeXT-Video-7B-Chat": {
             DownloadSource.DEFAULT: "llava-hf/LLaVA-NeXT-Video-7B-hf",
         },
-        "LLaVA-NeXT-Video-34B-Chat": {
-            DownloadSource.DEFAULT: "llava-hf/LLaVA-NeXT-Video-34B-hf",
-        },
         "LLaVA-NeXT-Video-7B-32k-Chat": {
             DownloadSource.DEFAULT: "llava-hf/LLaVA-NeXT-Video-7B-32K-hf",
         },
         "LLaVA-NeXT-Video-7B-DPO": {
             DownloadSource.DEFAULT: "llava-hf/LLaVA-NeXT-Video-7B-DPO-hf",
         },
-        "LLaVA-NeXT-Video-34B-DPO": {
+    },
+    template="llava_next_video",
+    vision=True,
+)
+
+
+register_model_group(
+    models={
+        "LLaVA-NeXT-Video-Yi-34B-Chat": {
+            DownloadSource.DEFAULT: "llava-hf/LLaVA-NeXT-Video-34B-hf",
+        },
+        "LLaVA-NeXT-Video-Yi-34B-DPO": {
             DownloadSource.DEFAULT: "llava-hf/LLaVA-NeXT-Video-34B-DPO-hf",
         },
     },
-    template="llava_next_video",
+    template="llava_next_video_yi",
     vision=True,
 )
 
