@@ -165,7 +165,7 @@ def get_patch_size(config: "PretrainedConfig") -> int:
     r"""
     Computes the patch size of the vit.
     """
-    patch_size = getattr(config.vision_config, "patch_size", 14)
+    patch_size = getattr(config.vision_config, "patch_size", -1)
     return patch_size
 
 
