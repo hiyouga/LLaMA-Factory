@@ -4,6 +4,7 @@ from io import BytesIO
 from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, TypedDict, Union
 
 import numpy as np
+from transformers.image_utils import get_image_size, to_numpy_array
 from typing_extensions import override
 
 from ..extras.constants import IGNORE_INDEX, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
@@ -157,6 +158,7 @@ class BasePlugin:
         It holds num_patches == torch.prod(image_grid_thw)
         """
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
+        video_processor: "BaseImageProcessor" = getattr(processor, "video_processor", image_processor)
         input_dict = {"images": None}  # default key
         if len(images) != 0:
             images = self._regularize_images(
@@ -174,10 +176,16 @@ class BasePlugin:
             )
             input_dict["videos"] = videos
 
-        if input_dict.get("images", None) is not None or input_dict.get("videos", None) is not None:
-            return image_processor(**input_dict, return_tensors="pt")
-        else:
-            return {}
+        mm_inputs = {}
+        if image_processor != video_processor:
+            if input_dict.get("images") is not None:
+                mm_inputs.update(image_processor(input_dict["images"], return_tensors="pt"))
+            if input_dict.get("videos") is not None:
+                mm_inputs.update(video_processor(input_dict["videos"], return_tensors="pt"))
+        elif input_dict.get("images") is not None or input_dict.get("videos") is not None:  # same processor (qwen2-vl)
+            mm_inputs.update(image_processor(**input_dict, return_tensors="pt"))
+
+        return mm_inputs
 
     def process_messages(
         self,
@@ -246,6 +254,122 @@ class LlavaPlugin(BasePlugin):
 
         if len(images) != num_image_tokens:
             raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
+
+        return messages
+
+    @override
+    def get_mm_inputs(
+        self,
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        imglens: Sequence[int],
+        vidlens: Sequence[int],
+        seqlens: Sequence[int],
+        processor: Optional["ProcessorMixin"],
+    ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
+        self._validate_input(images, videos)
+        return self._get_mm_inputs(images, videos, processor)
+
+
+class LlavaNextPlugin(BasePlugin):
+    @override
+    def process_messages(
+        self,
+        messages: Sequence[Dict[str, str]],
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        processor: Optional["ProcessorMixin"],
+    ) -> List[Dict[str, str]]:
+        self._validate_input(images, videos)
+        num_image_tokens = 0
+        messages = deepcopy(messages)
+        mm_inputs = self._get_mm_inputs(images, videos, processor)
+        if "image_sizes" in mm_inputs:
+            image_sizes = iter(mm_inputs["image_sizes"])
+        if "pixel_values" in mm_inputs:
+            height, width = get_image_size(to_numpy_array(mm_inputs["pixel_values"][0][0]))
+        for message in messages:
+            content = message["content"]
+            while self.image_token in content:
+                image_size = next(image_sizes)
+                orig_height, orig_width = image_size
+                image_seqlen = processor._get_number_of_features(orig_height, orig_width, height, width)
+                if processor.vision_feature_select_strategy == "default":
+                    image_seqlen -= 1
+                num_image_tokens += 1
+                content = content.replace(self.image_token, "{{image}}" * image_seqlen, 1)
+
+            message["content"] = content.replace("{{image}}", self.image_token)
+
+        if len(images) != num_image_tokens:
+            raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
+        return messages
+
+    @override
+    def get_mm_inputs(
+        self,
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        imglens: Sequence[int],
+        vidlens: Sequence[int],
+        seqlens: Sequence[int],
+        processor: Optional["ProcessorMixin"],
+    ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
+        self._validate_input(images, videos)
+        res = self._get_mm_inputs(images, videos, processor)
+        return res
+
+
+class LlavaNextVideoPlugin(BasePlugin):
+    @override
+    def process_messages(
+        self,
+        messages: Sequence[Dict[str, str]],
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        processor: Optional["ProcessorMixin"],
+    ) -> List[Dict[str, str]]:
+        self._validate_input(images, videos)
+        num_image_tokens = 0
+        num_video_tokens = 0
+        messages = deepcopy(messages)
+        mm_inputs = self._get_mm_inputs(images, videos, processor)
+        if "pixel_values" in mm_inputs:
+            image_sizes = iter(mm_inputs["image_sizes"])
+            height, width = get_image_size(to_numpy_array(mm_inputs["pixel_values"][0][0]))
+            for message in messages:
+                content = message["content"]
+
+                while self.image_token in content:
+                    image_size = next(image_sizes)
+                    orig_height, orig_width = image_size
+                    image_seqlen = processor._get_number_of_features(orig_height, orig_width, height, width)
+                    if processor.vision_feature_select_strategy == "default":
+                        image_seqlen -= 1
+                    num_image_tokens += 1
+                    content = content.replace(self.image_token, "{{image}}" * image_seqlen, 1)
+
+                message["content"] = content.replace("{{image}}", self.image_token)
+
+        if "pixel_values_videos" in mm_inputs:
+            pixel_values_video = to_numpy_array(mm_inputs.get("pixel_values_videos")[0])
+            height, width = get_image_size(pixel_values_video[0])
+            num_frames = pixel_values_video.shape[0]  # frame dim is always after batch dim
+            image_seqlen = (height // processor.patch_size) * (width // processor.patch_size)
+            video_seqlen = image_seqlen // 4 * num_frames  # divide by 4 needed for avg pooling layer
+
+            for message in messages:
+                content = message["content"]
+                while self.video_token in content:
+                    num_video_tokens += 1
+                    content = content.replace(self.video_token, "{{video}}", 1)
+                message["content"] = content.replace("{{video}}", self.video_token * video_seqlen)
+
+        if len(images) != num_image_tokens:
+            raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
+
+        if len(videos) != num_video_tokens:
+            raise ValueError("The number of videos does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
 
         return messages
 
@@ -417,11 +541,77 @@ class Qwen2vlPlugin(BasePlugin):
         return self._get_mm_inputs(images, videos, processor)
 
 
+class VideoLlavaPlugin(BasePlugin):
+    @override
+    def process_messages(
+        self,
+        messages: Sequence[Dict[str, str]],
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        processor: Optional["ProcessorMixin"],
+    ) -> List[Dict[str, str]]:
+        self._validate_input(images, videos)
+        num_image_tokens = 0
+        num_video_tokens = 0
+        messages = deepcopy(messages)
+        mm_inputs = self._get_mm_inputs(images, videos, processor)
+        num_frames = 0
+        exist_images = "pixel_values_images" in mm_inputs
+        exist_videos = "pixel_values_videos" in mm_inputs
+        if exist_videos or exist_images:
+            if exist_images:
+                height, width = get_image_size(to_numpy_array(mm_inputs.get("pixel_values_images")[0]))
+                num_frames = 1
+            if exist_videos:
+                pixel_values_video = to_numpy_array(mm_inputs.get("pixel_values_videos")[0])
+                height, width = get_image_size(pixel_values_video[0])
+                num_frames = pixel_values_video.shape[0]  # frame dim is always after batch dim
+            image_seqlen = (height // processor.patch_size) * (width // processor.patch_size) + 1
+            video_seqlen = image_seqlen * num_frames
+            if processor.vision_feature_select_strategy == "default":
+                image_seqlen -= 1
+            for message in messages:
+                content = message["content"]
+                while self.image_token in content:
+                    num_image_tokens += 1
+                    content = content.replace(self.image_token, "{{image}}", 1)
+                while self.video_token in content:
+                    num_video_tokens += 1
+                    content = content.replace(self.video_token, "{{video}}", 1)
+
+                content = content.replace("{{image}}", self.image_token * image_seqlen)
+                message["content"] = content.replace("{{video}}", self.video_token * video_seqlen)
+
+        if len(images) != num_image_tokens:
+            raise ValueError("The number of images does not match the number of {} tokens".format(self.image_token))
+
+        if len(videos) != num_video_tokens:
+            raise ValueError("The number of videos does not match the number of {} tokens".format(self.video_token))
+
+        return messages
+
+    @override
+    def get_mm_inputs(
+        self,
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        imglens: Sequence[int],
+        vidlens: Sequence[int],
+        seqlens: Sequence[int],
+        processor: Optional["ProcessorMixin"],
+    ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
+        self._validate_input(images, videos)
+        return self._get_mm_inputs(images, videos, processor)
+
+
 PLUGINS = {
     "base": BasePlugin,
     "llava": LlavaPlugin,
+    "llava_next": LlavaNextPlugin,
+    "llava_next_video": LlavaNextVideoPlugin,
     "paligemma": PaliGemmaPlugin,
     "qwen2_vl": Qwen2vlPlugin,
+    "video_llava": VideoLlavaPlugin,
 }
 
 
