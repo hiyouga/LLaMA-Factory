@@ -782,6 +782,14 @@ _register_template(
         ]
     ),
     format_system=StringFormatter(slots=["<|start_header_id|>system<|end_header_id|>\n\n{{content}}<|eot_id|>"]),
+    format_observation=StringFormatter(
+        slots=[
+            (
+                "<|start_header_id|>tool<|end_header_id|>\n\n{{content}}<|eot_id|>"
+                "<|start_header_id|>assistant<|end_header_id|>\n\n"
+            )
+        ]
+    ),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|eot_id|>"],
     replace_eos=True,
@@ -801,11 +809,13 @@ _register_template(
 _register_template(
     name="llava_next_qwen",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_observation=StringFormatter(slots=["<|im_start|>tool\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_separator=EmptyFormatter(slots=["\n"]),
+    default_system="You are a helpful assistant.",
     stop_words=["<|im_end|>"],
     replace_eos=True,
     replace_jinja_template=False,
-    mm_plugin=get_mm_plugin(name="llava_next", image_token="<image>"),
 )
 
 
