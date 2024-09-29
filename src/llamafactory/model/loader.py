@@ -25,7 +25,7 @@ from .model_utils.misc import register_autoclass
 from .model_utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
 from .model_utils.unsloth import load_unsloth_pretrained_model
 from .model_utils.valuehead import load_valuehead_params
-from .model_utils.visual import get_image_seqlen
+from .model_utils.visual import get_image_seqlen, get_patch_size, get_vision_feature_select_strategy
 from .patcher import patch_config, patch_model, patch_tokenizer, patch_valuehead_model
 
 
@@ -100,9 +100,11 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
         setattr(processor, "tokenizer", tokenizer)
         setattr(processor, "image_seqlen", get_image_seqlen(config))
         setattr(processor, "image_resolution", model_args.image_resolution)
+        setattr(processor, "patch_size", get_patch_size(config))
         setattr(processor, "video_resolution", model_args.video_resolution)
         setattr(processor, "video_fps", model_args.video_fps)
         setattr(processor, "video_maxlen", model_args.video_maxlen)
+        setattr(processor, "vision_feature_select_strategy", get_vision_feature_select_strategy(config))
     except Exception:
         processor = None
 
