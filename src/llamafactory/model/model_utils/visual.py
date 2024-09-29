@@ -161,6 +161,22 @@ def get_image_seqlen(config: "PretrainedConfig") -> int:
     return image_seqlen
 
 
+def get_patch_size(config: "PretrainedConfig") -> int:
+    r"""
+    Computes the patch size of the vit.
+    """
+    patch_size = getattr(config.vision_config, "patch_size", 14)
+    return patch_size
+
+
+def get_vision_feature_select_strategy(config: "PretrainedConfig") -> int:
+    r"""
+    Get the vision_feature_select_strategy.
+    """
+    vision_feature_select_strategy = getattr(config, "vision_feature_select_strategy", "default")
+    return vision_feature_select_strategy
+
+
 def patch_target_modules(
     config: "PretrainedConfig", finetuning_args: "FinetuningArguments", target_modules: Sequence[str]
 ) -> Union[str, List[str]]:
