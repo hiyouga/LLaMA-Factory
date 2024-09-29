@@ -291,7 +291,7 @@ class LlavaNextPlugin(BasePlugin):
                 num_image_tokens += 1
                 content = content.replace(self.image_token, "{{image}}" * image_seqlen, 1)
 
-            message['content'] = content.replace("{{image}}", self.image_token)
+            message["content"] = content.replace("{{image}}", self.image_token)
 
         if len(images) != num_image_tokens:
             raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
@@ -341,7 +341,7 @@ class LlavaNextVideoPlugin(BasePlugin):
                     num_image_tokens += 1
                     content = content.replace(self.image_token, "{{image}}" * image_seqlen, 1)
 
-                message['content'] = content.replace("{{image}}", self.image_token)
+                message["content"] = content.replace("{{image}}", self.image_token)
 
         if "pixel_values_videos" in mm_inputs:
             one_video = to_numpy_array(mm_inputs.get("pixel_values_videos")[0])
@@ -355,7 +355,7 @@ class LlavaNextVideoPlugin(BasePlugin):
                 while self.video_token in content:
                     num_video_tokens += 1
                     content = content.replace(self.video_token, "{{video}}", 1)
-                message['content'] = content.replace("{{video}}", self.video_token * video_seqlen)
+                message["content"] = content.replace("{{video}}", self.video_token * video_seqlen)
 
         if len(images) != num_image_tokens:
             raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
@@ -388,13 +388,13 @@ class LlavaNextVideoPlugin(BasePlugin):
 
     @override
     def get_mm_inputs(
-            self,
-            images: Sequence["ImageInput"],
-            videos: Sequence["VideoInput"],
-            imglens: Sequence[int],
-            vidlens: Sequence[int],
-            seqlens: Sequence[int],
-            processor: Optional["ProcessorMixin"],
+        self,
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        imglens: Sequence[int],
+        vidlens: Sequence[int],
+        seqlens: Sequence[int],
+        processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         self._validate_input(images, videos)
         return self._get_mm_inputs(images, videos, processor)
