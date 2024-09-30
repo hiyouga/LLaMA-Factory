@@ -25,8 +25,7 @@ from .model_utils.misc import register_autoclass
 from .model_utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
 from .model_utils.unsloth import load_unsloth_pretrained_model
 from .model_utils.valuehead import load_valuehead_params
-from .model_utils.visual import get_image_seqlen, get_patch_size, get_vision_feature_select_strategy
-from .patcher import patch_config, patch_model, patch_tokenizer, patch_valuehead_model
+from .patcher import patch_config, patch_model, patch_processor, patch_tokenizer, patch_valuehead_model
 
 
 if TYPE_CHECKING:
@@ -61,7 +60,7 @@ def _get_init_kwargs(model_args: "ModelArguments") -> Dict[str, Any]:
 
 def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
     r"""
-    Loads pretrained tokenizer.
+    Loads pretrained tokenizer and optionally loads processor.
 
     Note: including inplace operation of model_args.
     """
@@ -94,17 +93,9 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
             logger.warning("New tokens have been added, changed `resize_vocab` to True.")
 
     patch_tokenizer(tokenizer)
-
     try:
         processor = AutoProcessor.from_pretrained(model_args.model_name_or_path, **init_kwargs)
-        setattr(processor, "tokenizer", tokenizer)
-        setattr(processor, "image_seqlen", get_image_seqlen(config))
-        setattr(processor, "image_resolution", model_args.image_resolution)
-        setattr(processor, "patch_size", get_patch_size(config))
-        setattr(processor, "video_resolution", model_args.video_resolution)
-        setattr(processor, "video_fps", model_args.video_fps)
-        setattr(processor, "video_maxlen", model_args.video_maxlen)
-        setattr(processor, "vision_feature_select_strategy", get_vision_feature_select_strategy(config))
+        patch_processor(processor, config, tokenizer, model_args)
     except Exception:
         processor = None
 
