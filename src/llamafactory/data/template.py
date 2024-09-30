@@ -648,10 +648,8 @@ _register_template(
     name="exaone",
     format_user=StringFormatter(slots=["[|user|]{{content}}\n[|assistant|]"]),
     format_system=StringFormatter(slots=["[|system|]{{content}}[|endofturn|]\n"]),
-    format_assistant=StringFormatter(slots=["{{content}}[|endofturn|]\n"]),
     format_separator=EmptyFormatter(slots=["\n"]),
     format_prefix=EmptyFormatter(slots=[""]),
-    stop_words=["[|endofturn|]"],
     efficient_eos=True,
 )
 
