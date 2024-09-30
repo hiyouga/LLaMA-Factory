@@ -142,10 +142,7 @@ def test_llava_next_plugin():
     check_inputs = {"plugin": llava_next_plugin, "tokenizer": tokenizer, "processor": processor}
     image_seqlen = 1176
     check_inputs["expected_mm_messages"] = [
-        {
-            key: value.replace("<image>", "<image>" * image_seqlen)
-            for key, value in message.items()
-        }
+        {key: value.replace("<image>", "<image>" * image_seqlen) for key, value in message.items()}
         for message in MM_MESSAGES
     ]
     check_inputs["expected_mm_inputs"] = _get_mm_inputs(processor)
@@ -158,10 +155,7 @@ def test_llava_next_video_plugin():
     check_inputs = {"plugin": llava_next_video_plugin, "tokenizer": tokenizer, "processor": processor}
     image_seqlen = 1176
     check_inputs["expected_mm_messages"] = [
-        {
-            key: value.replace("<image>", "<image>" * image_seqlen)
-            for key, value in message.items()
-        }
+        {key: value.replace("<image>", "<image>" * image_seqlen) for key, value in message.items()}
         for message in MM_MESSAGES
     ]
     check_inputs["expected_mm_inputs"] = _get_mm_inputs(processor)
@@ -207,10 +201,7 @@ def test_video_llava_plugin():
     check_inputs = {"plugin": video_llava_plugin, "tokenizer": tokenizer, "processor": processor}
     image_seqlen = 256
     check_inputs["expected_mm_messages"] = [
-        {
-            key: value.replace("<image>", "<image>" * image_seqlen)
-            for key, value in message.items()
-        }
+        {key: value.replace("<image>", "<image>" * image_seqlen) for key, value in message.items()}
         for message in MM_MESSAGES
     ]
     check_inputs["expected_mm_inputs"] = _get_mm_inputs(processor)
