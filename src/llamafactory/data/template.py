@@ -645,6 +645,14 @@ _register_template(
 
 
 _register_template(
+    name="exaone",
+    format_user=StringFormatter(slots=["[|user|]{{content}}\n[|assistant|]"]),
+    format_system=StringFormatter(slots=["[|system|]{{content}}[|endofturn|]\n"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+)
+
+
+_register_template(
     name="falcon",
     format_user=StringFormatter(slots=["User: {{content}}\nFalcon:"]),
     format_separator=EmptyFormatter(slots=["\n"]),
