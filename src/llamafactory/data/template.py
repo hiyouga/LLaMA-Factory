@@ -649,8 +649,6 @@ _register_template(
     format_user=StringFormatter(slots=["[|user|]{{content}}\n[|assistant|]"]),
     format_system=StringFormatter(slots=["[|system|]{{content}}[|endofturn|]\n"]),
     format_separator=EmptyFormatter(slots=["\n"]),
-    format_prefix=EmptyFormatter(slots=[""]),
-    efficient_eos=True,
 )
 
 
