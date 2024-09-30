@@ -471,7 +471,8 @@ register_model_group(
     template="deepseekcoder",
 )
 
-regiter_model_group(
+
+register_model_group(
     models={
         "EXAONE-3.0-7.8B-Instruct": {
             DownloadSource.DEFAULT: "LGAI-EXAONE/EXAONE-3.0-7.8B-Instruct",
