@@ -25,6 +25,7 @@ from .eval.evaluator import run_eval
 from .extras.env import VERSION, print_env
 from .extras.logging import get_logger
 from .extras.misc import get_device_count
+from .openai_train import run_oai_train
 from .train.tuner import export_model, run_exp
 from .webui.interface import run_web_demo, run_web_ui
 
@@ -71,6 +72,7 @@ class Command(str, Enum):
     WEBUI = "webui"
     VER = "version"
     HELP = "help"
+    OAI_TRAIN = "openai_train"
 
 
 def main():
@@ -81,6 +83,8 @@ def main():
         run_chat()
     elif command == Command.ENV:
         print_env()
+    elif command == Command.OAI_TRAIN:
+        run_oai_train()
     elif command == Command.EVAL:
         run_eval()
     elif command == Command.EXPORT:

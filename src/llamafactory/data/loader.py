@@ -15,9 +15,9 @@
 import os
 import sys
 from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Union
-
+import json
 import numpy as np
-from datasets import DatasetDict, load_dataset, load_from_disk
+from datasets import DatasetDict, load_dataset, load_from_disk, Dataset, features
 from transformers.utils.versions import require_version
 
 from ..extras.constants import FILEEXT2TYPE
@@ -137,6 +137,8 @@ def _load_single_dataset(
     return align_dataset(dataset, dataset_attr, data_args, training_args)
 
 
+
+
 def _get_merged_dataset(
     dataset_names: Optional[Sequence[str]],
     model_args: "ModelArguments",
@@ -144,21 +146,30 @@ def _get_merged_dataset(
     training_args: "Seq2SeqTrainingArguments",
     stage: Literal["pt", "sft", "rm", "ppo", "kto"],
 ) -> Optional[Union["Dataset", "IterableDataset"]]:
-    r"""
+    """
     Gets the merged datasets in the standard format.
     """
     if dataset_names is None:
         return None
 
     datasets = []
-    for dataset_attr in get_dataset_list(dataset_names, data_args.dataset_dir):
-        if (stage == "rm" and dataset_attr.ranking is False) or (stage != "rm" and dataset_attr.ranking is True):
-            raise ValueError("The dataset is not applicable in the current training stage.")
 
+    if dataset_names[0] == 'oai_finetune':
+        if len(dataset_names) != 2:
+            raise ValueError("For OAI fine-tuning, dataset_names should contain exactly two elements: 'oai_finetune' and the data file path.")
+        
+        oai_dataset_path = dataset_names[1]
+        dataset_attr = get_dataset_list(["oai_dataset"], data_args.dataset_dir, isOai=True, oai_dataset=oai_dataset_path)[0]
         datasets.append(_load_single_dataset(dataset_attr, model_args, data_args, training_args))
+    else:
+        for dataset_attr in get_dataset_list(dataset_names, data_args.dataset_dir):
+            if (stage == "rm" and dataset_attr.ranking is False) or (stage != "rm" and dataset_attr.ranking is True):
+                raise ValueError("The dataset is not applicable in the current training stage.")
+            datasets.append(_load_single_dataset(dataset_attr, model_args, data_args, training_args))
 
-    return merge_dataset(datasets, data_args, seed=training_args.seed)
+    merged_dataset = merge_dataset(datasets, data_args, seed=training_args.seed)
 
+    return merged_dataset
 
 def _get_preprocessed_dataset(
     dataset: Optional[Union["Dataset", "IterableDataset"]],

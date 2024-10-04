@@ -71,14 +71,34 @@ class DatasetAttr:
         setattr(self, key, obj.get(key, default))
 
 
-def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -> List["DatasetAttr"]:
-    r"""
+
+def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str, isOai=False, oai_dataset=None) -> List["DatasetAttr"]:
+    """
     Gets the attributes of the datasets.
     """
     if dataset_names is None:
         dataset_names = []
 
-    if dataset_dir == "ONLINE":
+    if isOai and oai_dataset is not None:
+        # Use the provided OAI dataset configuration
+        dataset_info = {
+            "oai_dataset": {
+                "file_name": oai_dataset,
+                "formatting": "sharegpt",
+                "columns": {
+                    "messages": "messages"
+                },
+                "tags": {
+                    "role_tag": "role",
+                    "content_tag": "content",
+                    "user_tag": "user",
+                    "assistant_tag": "assistant",
+                    "system_tag": "system"
+                }
+            }
+        }
+        dataset_names = ["oai_dataset"]
+    elif dataset_dir == "ONLINE":
         dataset_info = None
     else:
         if dataset_dir.startswith("REMOTE:"):
@@ -91,8 +111,7 @@ def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -
                 dataset_info = json.load(f)
         except Exception as err:
             if len(dataset_names) != 0:
-                raise ValueError("Cannot open {} due to {}.".format(config_path, str(err)))
-
+                raise ValueError(f"Cannot open {config_path} due to {str(err)}.")
             dataset_info = None
 
     dataset_list: List["DatasetAttr"] = []
@@ -100,17 +119,10 @@ def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -
         if dataset_info is None:  # dataset_dir is ONLINE
             load_from = "ms_hub" if use_modelscope() else "hf_hub"
             dataset_attr = DatasetAttr(load_from, dataset_name=name)
-            dataset_list.append(dataset_attr)
-            continue
-
-        if name not in dataset_info:
-            raise ValueError("Undefined dataset {} in {}.".format(name, DATA_CONFIG))
-
-        has_hf_url = "hf_hub_url" in dataset_info[name]
-        has_ms_url = "ms_hub_url" in dataset_info[name]
-
-        if has_hf_url or has_ms_url:
-            if (use_modelscope() and has_ms_url) or (not has_hf_url):
+        elif isOai and name == "oai_dataset":
+            dataset_attr = DatasetAttr("file", dataset_name=dataset_info[name]["file_name"])
+        elif "hf_hub_url" in dataset_info[name] or "ms_hub_url" in dataset_info[name]:
+            if (use_modelscope() and "ms_hub_url" in dataset_info[name]) or ("hf_hub_url" not in dataset_info[name]):
                 dataset_attr = DatasetAttr("ms_hub", dataset_name=dataset_info[name]["ms_hub_url"])
             else:
                 dataset_attr = DatasetAttr("hf_hub", dataset_name=dataset_info[name]["hf_hub_url"])
