@@ -110,6 +110,9 @@ def patch_config(
     if getattr(config, "model_type", None) == "qwen2" and is_trainable and model_args.flash_attn == "fa2":
         setattr(config, "use_cache", False)  # qwen2 does not support use_cache when using flash attn
 
+    if "LlavaLlamaForCausalLM" in getattr(config, "architectures", []):
+        raise ValueError("Please download llava models with hf-compatible format: https://huggingface.co/llava-hf")
+
     # deepspeed zero3 is not compatible with low_cpu_mem_usage
     init_kwargs["low_cpu_mem_usage"] = model_args.low_cpu_mem_usage and (not is_deepspeed_zero3_enabled())
 
