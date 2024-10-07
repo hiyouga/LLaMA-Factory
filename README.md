@@ -30,6 +30,9 @@ Choose your path:
 - **Local machine**: Please refer to [usage](#getting-started)
 - **Documentation (WIP)**: https://llamafactory.readthedocs.io/zh-cn/latest/
 
+> [!NOTE]
+> Except for the above links, all other websites are unauthorized third-party websites. Please carefully use them.
+
 ## Table of Contents
 
 - [Features](#features)
