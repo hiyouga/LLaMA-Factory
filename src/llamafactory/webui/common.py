@@ -115,13 +115,6 @@ def get_model_path(model_name: str) -> str:
     return model_path
 
 
-def get_prefix(model_name: str) -> str:
-    r"""
-    Gets the prefix of the model name to obtain the model family.
-    """
-    return model_name.split("-")[0]
-
-
 def get_model_info(model_name: str) -> Tuple[str, str]:
     r"""
     Gets the necessary information of this model.
@@ -137,21 +130,14 @@ def get_template(model_name: str) -> str:
     r"""
     Gets the template name if the model is a chat model.
     """
-    if (
-        model_name
-        and any(suffix in model_name for suffix in ("-Chat", "-Instruct"))
-        and get_prefix(model_name) in DEFAULT_TEMPLATE
-    ):
-        return DEFAULT_TEMPLATE[get_prefix(model_name)]
-
-    return "default"
+    return DEFAULT_TEMPLATE.get(model_name, "default")
 
 
 def get_visual(model_name: str) -> bool:
     r"""
     Judges if the model is a vision language model.
     """
-    return get_prefix(model_name) in VISION_MODELS
+    return model_name in VISION_MODELS
 
 
 def list_checkpoints(model_name: str, finetuning_type: str) -> "gr.Dropdown":
