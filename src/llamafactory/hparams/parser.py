@@ -57,7 +57,7 @@ def _parse_args(parser: "HfArgumentParser", args: Optional[Dict[str, Any]] = Non
     if args is not None:
         return parser.parse_dict(args)
 
-    if len(sys.argv) == 2 and sys.argv[1].endswith(".yaml"):
+    if len(sys.argv) == 2 and (sys.argv[1].endswith(".yaml") or sys.argv[1].endswith(".yml")):
         return parser.parse_yaml_file(os.path.abspath(sys.argv[1]))
 
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
@@ -123,7 +123,7 @@ def _check_extra_dependencies(
         require_version("mixture-of-depth>=1.1.6", "To fix: pip install mixture-of-depth>=1.1.6")
 
     if model_args.infer_backend == "vllm":
-        require_version("vllm>=0.4.3,<=0.6.0", "To fix: pip install vllm>=0.4.3,<=0.6.0")
+        require_version("vllm>=0.4.3,<=0.6.2", "To fix: pip install vllm>=0.4.3,<=0.6.2")
 
     if finetuning_args.use_galore:
         require_version("galore_torch", "To fix: pip install galore_torch")
