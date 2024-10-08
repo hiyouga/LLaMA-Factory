@@ -140,4 +140,4 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
                 )
 
     except Exception as e:
-        logger.warning("Cannot save tokenizer, please copy the files manually. Error: {}".format(e))
+        logger.warning("Cannot save tokenizer, please copy the files manually: {}.".format(e))

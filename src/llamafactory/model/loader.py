@@ -83,7 +83,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
             **init_kwargs,
         )
     except Exception as e:
-        raise OSError("Failed to load tokenizer") from e
+        raise OSError("Failed to load tokenizer.") from e
 
     if model_args.new_special_tokens is not None:
         num_added_tokens = tokenizer.add_special_tokens(
@@ -100,12 +100,12 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
         processor = AutoProcessor.from_pretrained(model_args.model_name_or_path, **init_kwargs)
         patch_processor(processor, config, tokenizer, model_args)
     except Exception as e:
-        logger.warning("Failed to load processor. Error: {}".format(e))
+        logger.warning("Processor was not found: {}.".format(e))
         processor = None
 
     # Avoid load tokenizer, see:
     # https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/models/auto/processing_auto.py#L324
-    if processor and "Processor" not in processor.__class__.__name__:
+    if processor is not None and "Processor" not in processor.__class__.__name__:
         processor = None
 
     return {"tokenizer": tokenizer, "processor": processor}
