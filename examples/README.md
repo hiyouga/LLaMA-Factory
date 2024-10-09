@@ -89,9 +89,11 @@ llamafactory-cli train examples/train_lora/llama3_lora_predict.yaml
 #### Supervised Fine-Tuning on Multiple Nodes
 
 ```bash
-FORCE_TORCHRUN=1 NNODES=2 RANK=0 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
-FORCE_TORCHRUN=1 NNODES=2 RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
+FORCE_TORCHRUN=1 NNODES=2 RDZV_ID=12345 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
+FORCE_TORCHRUN=1 NNODES=2 RDZV_ID=12345 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
 ```
+
+`RDZV_ID` is a unique job id (shared by all nodes participating in the job), see also [note-on-rendezvous-backend](https://pytorch.org/docs/stable/elastic/run.html#note-on-rendezvous-backend).
 
 #### Supervised Fine-Tuning with DeepSpeed ZeRO-3 (Weight Sharding)
 
