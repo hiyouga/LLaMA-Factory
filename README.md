@@ -17,7 +17,7 @@
 
 👋 Join our [WeChat](assets/wechat.jpg) or [NPU user group](assets/wechat_npu.jpg).
 
-\[ English | [中文](README_zh.md) \]
+\[ English | [中文](README_zh.md) | [日本語](README_ja.md) \]
 
 **Fine-tuning a large language model can be easy as...**
 
