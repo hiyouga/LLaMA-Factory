@@ -91,21 +91,22 @@ def main():
             master_addr = os.environ.get("MASTER_ADDR", "127.0.0.1")
             master_port = os.environ.get("MASTER_PORT", str(random.randint(20001, 29999)))
             logger.info("Initializing distributed tasks at: {}:{}".format(master_addr, master_port))
-            process = subprocess.run(
-                (
-                    "torchrun --nnodes {nnodes} --node_rank {node_rank} --nproc_per_node {nproc_per_node} "
-                    "--master_addr {master_addr} --master_port {master_port} {file_name} {args}"
-                ).format(
-                    nnodes=os.environ.get("NNODES", "1"),
-                    node_rank=os.environ.get("RANK", "0"),
-                    nproc_per_node=os.environ.get("NPROC_PER_NODE", str(get_device_count())),
-                    master_addr=master_addr,
-                    master_port=master_port,
-                    file_name=launcher.__file__,
-                    args=" ".join(sys.argv[1:]),
-                ),
-                shell=True,
+            rdzv_id = os.environ.get("RDZV_ID", str(random.randint(30001, 39999)))
+            nproc_per_node = os.environ.get("NPROC_PER_NODE", str(get_device_count()))
+            cmd = (
+                "torchrun --nnodes {nnodes} --rdzv_id {rdzv_id} --rdzv_backend c10d --nproc_per_node {nproc_per_node} "
+                "--rdzv_endpoint {master_addr}:{master_port} {file_name} {args}"
+            ).format(
+                nnodes=os.environ.get("NNODES", "1"),
+                rdzv_id=rdzv_id,
+                nproc_per_node=nproc_per_node,
+                master_addr=master_addr,
+                master_port=master_port,
+                file_name=launcher.__file__,
+                args=" ".join(sys.argv[1:]),
             )
+            logger.info(f"Complete torchrun command to start the training: {cmd}")
+            process = subprocess.run(cmd, shell=True)
             sys.exit(process.returncode)
         else:
             run_exp()

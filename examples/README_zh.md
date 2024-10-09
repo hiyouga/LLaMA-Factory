@@ -89,9 +89,11 @@ llamafactory-cli train examples/train_lora/llama3_lora_predict.yaml
 #### 多机指令监督微调
 
 ```bash
-FORCE_TORCHRUN=1 NNODES=2 RANK=0 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
-FORCE_TORCHRUN=1 NNODES=2 RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
+FORCE_TORCHRUN=1 NNODES=2 RDZV_ID=12345 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
+FORCE_TORCHRUN=1 NNODES=2 RDZV_ID=12345 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
 ```
+
+`RDZV_ID` 为多机训练的作业 ID，归属同一组训练的节点共享此 ID。参见 [note-on-rendezvous-backend](https://pytorch.org/docs/stable/elastic/run.html#note-on-rendezvous-backend)。
 
 #### 使用 DeepSpeed ZeRO-3 平均分配显存
 
