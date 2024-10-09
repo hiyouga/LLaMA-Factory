@@ -17,6 +17,7 @@ from .trainer import CustomSeq2SeqTrainer, CustomSeqParallelTrainer
 import torch
 import os
 from ...easy_context import apply_seq_parallel_monkey_patch
+from ...easy_context.dist_flash_attn.offload_buffer import offload_buffer
 
 
 if TYPE_CHECKING:
@@ -37,7 +38,7 @@ def run_sft(
     tokenizer = tokenizer_module["tokenizer"]
     dataset = get_dataset(model_args, data_args, training_args, stage="sft", **tokenizer_module)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
-    apply_seq_parallel_monkey_patch(finetuning_args.parallel_mode, "llama", sp_size=finetuning_args.sp_size)
+    apply_seq_parallel_monkey_patch(finetuning_args.parallel_mode, "llama", sp_size=finetuning_args.sp_size, enable_offload=finetuning_args.sp_enable_offload, offload_percent=finetuning_args.sp_offload_percent)
 
     if training_args.predict_with_generate:
         tokenizer.padding_side = "left"  # use left-padding in generation
@@ -90,6 +91,10 @@ def run_sft(
         trainer.save_state()
         if trainer.is_world_process_zero() and finetuning_args.plot_loss:
             plot_loss(training_args.output_dir, keys=["loss", "eval_loss"])
+    
+    global offload_buffer
+    if offload_buffer is not None:
+        offload_buffer = None
 
     # # Evaluation
     # if training_args.do_eval:

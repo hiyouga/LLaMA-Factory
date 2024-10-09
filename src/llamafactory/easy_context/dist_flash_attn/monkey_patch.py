@@ -1,19 +1,23 @@
 """
 Materialization-aware gradient checkpointing monkey patch.
 """
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import torch
 from torch import nn
+import torch.nn.functional as F
 from torch.utils.checkpoint import _get_autocast_kwargs, check_backward_validity, get_device_states, set_device_states, detach_variable
 
 import transformers
-from transformers.models.llama.modeling_llama import apply_rotary_pos_emb, BaseModelOutputWithPast
+from transformers.models.llama.modeling_llama import apply_rotary_pos_emb, BaseModelOutputWithPast, CausalLMOutputWithPast
+from transformers.utils import logging
 
 from einops import rearrange
 
 from .lightseq_async_attn import _lightseq_forward, _lightseq_backward
 from .async_communication import initialize_distributed, reset_global_memory_buffer
+from transformers.cache_utils import Cache
+from .offload_buffer import offload_buffer, OffloadBuffer
 
 # define a global buffer to save flash attention outputs
 # it's called global because it saves the outputs for all layers
@@ -26,6 +30,7 @@ local_res_grad_buffer = None
 # hooks for the gradients of residual
 global_hooks = []
 
+logger = logging.get_logger(__name__)
 def init_flash_attn_buffers(num_layers):
     # update the global buffer according to number of layers
     global global_flash_attn_out_buffer
@@ -40,7 +45,7 @@ def clean_hook():
 
 def clear_all_buffers_at_the_end_of_training():
     # call it at the end of training 
-    global lobal_flash_attn_out_buffer
+    global global_flash_attn_out_buffer
     global_flash_attn_out_buffer = None
     global local_res_grad_buffer
     local_res_grad_buffer = None
@@ -104,17 +109,30 @@ class CheckpointFunctionEndWithFlashAttention(torch.autograd.Function):
 
         # Save non-tensor inputs in ctx, keep a placeholder None for tensors
         # to be filled out during the backward.
+        global offload_buffer
         ctx.inputs = []
         ctx.tensor_indices = []
+        ctx.tensor_indices_dict = {}
         tensor_inputs = []
+
+        hidden_state = None
+        position_ids = None
         for i, arg in enumerate(args):
             if i == 0 and ctx.layer_idx != 0:
                 # flash attention output is saved to the global buffer during forward
                 ctx.inputs.append(None)
             else:
                 if torch.is_tensor(arg):
-                    tensor_inputs.append(arg)
-                    ctx.tensor_indices.append(i)
+                    if offload_buffer.enable_offload:
+                        if len(arg.shape) == 3:
+                            hidden_state = arg
+                            ctx.tensor_indices_dict[i] = 'hidden_state'
+                        elif len(arg.shape) == 2:
+                            position_ids = arg
+                            ctx.tensor_indices_dict[i] = 'position_ids'
+                    else:
+                        tensor_inputs.append(arg)
+                        ctx.tensor_indices.append(i)
                     ctx.inputs.append(None)
                 else:
                     ctx.inputs.append(arg)
@@ -126,13 +144,17 @@ class CheckpointFunctionEndWithFlashAttention(torch.autograd.Function):
             # lightseq version
             _, _, _, out, softmax_lse = _lightseq_forward(q, k, v, True, softmax_scale, comm_mode='lightseq')
             rng_state = None
-
             # save flash attention output to global buffer
-            save_flash_attn_out_to_global_buffer(ctx.layer_idx, out)
-            tensor_inputs += [softmax_lse]
+            if offload_buffer.enable_offload:
+                offload_buffer.save_flash_attn_out(ctx.layer_idx, out)
+                offload_buffer.save_hidden_states(ctx.layer_idx, hidden_state, position_ids)
+                ctx.save_for_backward(softmax_lse)
+            else:
+                save_flash_attn_out_to_global_buffer(ctx.layer_idx, out)
+                tensor_inputs += [softmax_lse]
+                ctx.save_for_backward(*tensor_inputs)
+
             ctx.softmax_scale = softmax_scale
-        
-        ctx.save_for_backward(*tensor_inputs)
 
         return out, residual
 
@@ -144,18 +166,27 @@ class CheckpointFunctionEndWithFlashAttention(torch.autograd.Function):
                 " is passed to .backward(). Please use .backward() and do not pass its `inputs`"
                 " argument.")
         # Copy the list to avoid modifying original list.
+        global offload_buffer
         inputs = list(ctx.inputs)
         tensor_indices = ctx.tensor_indices
+        tensor_indices_dict = ctx.tensor_indices_dict
         tensors = ctx.saved_tensors
-        tensors, softmax_lse = tensors[:-1], tensors[-1]
-
-        # Fill in inputs with appropriate saved tensors.
-        # Fill the flash attention output first
-        if ctx.layer_idx > 0:
-            # inputs[0] should be flash attention output
-            inputs[0] = get_flash_attn_out_from_global_buffer(ctx.layer_idx-1)
-        for i, idx in enumerate(tensor_indices):
-            inputs[idx] = tensors[i]
+        if offload_buffer.enable_offload:
+            softmax_lse = tensors[0]
+            hidden_state, position_ids = offload_buffer.get_hidden_states(ctx.layer_idx)
+            if ctx.layer_idx > 0:
+                inputs[0] = offload_buffer.get_flash_attn_out(ctx.layer_idx-1)
+            for k, v in tensor_indices_dict.items():
+                if v == 'hidden_state':
+                    inputs[k] = hidden_state
+                if v == 'position_ids':
+                    inputs[k] = position_ids
+        else:
+            tensors, softmax_lse = tensors[:-1], tensors[-1]
+            if ctx.layer_idx > 0:
+                inputs[0] = get_flash_attn_out_from_global_buffer(ctx.layer_idx-1)
+            for i, idx in enumerate(tensor_indices):
+                inputs[idx] = tensors[i]
 
         # Stash the surrounding rng state, and mimic the state that was
         # present at this time during forward.  Restore the surrounding state
@@ -184,7 +215,12 @@ class CheckpointFunctionEndWithFlashAttention(torch.autograd.Function):
         #dq = torch.empty(q.shape, dtype=q.dtype, device=q.device)
         #dk = torch.empty(k.shape, dtype=q.dtype, device=q.device)
         #dv = torch.empty(v.shape, dtype=q.dtype, device=q.device)
-        out = get_flash_attn_out_from_global_buffer(ctx.layer_idx)
+        # out = get_flash_attn_out_from_global_buffer(ctx.layer_idx)
+        if offload_buffer.enable_offload:
+            out = offload_buffer.get_flash_attn_out(ctx.layer_idx)
+        else:
+            out = get_flash_attn_out_from_global_buffer(ctx.layer_idx)
+
         # todo get dout
         dout = args[0]
 
@@ -198,11 +234,14 @@ class CheckpointFunctionEndWithFlashAttention(torch.autograd.Function):
 
         grads = tuple(inp.grad if isinstance(inp, torch.Tensor) else None
                       for inp in detached_inputs)
-        
         # write flash attention output gradients to buffer
-        if ctx.layer_idx > 0:
-            write_gradient_to_flash_attn_out(ctx.layer_idx-1, detached_inputs[0].grad)
-
+        if offload_buffer.enable_offload:
+            if ctx.layer_idx > 0:
+                offload_buffer.get_flash_attn_out(ctx.layer_idx-1).grad = detached_inputs[0].grad
+            offload_buffer.free_layer_gpu_buffer(ctx.layer_idx)
+        else:
+            if ctx.layer_idx > 0:
+                write_gradient_to_flash_attn_out(ctx.layer_idx-1, detached_inputs[0].grad)
         return (None, None, None) + grads
 
 
@@ -274,11 +313,14 @@ class CheckpointFunctionLastModule(torch.autograd.Function):
         inputs = list(ctx.inputs)
         tensor_indices = ctx.tensor_indices
         tensors = ctx.saved_tensors
-
+        global offload_buffer
         # Fill in inputs with appropriate saved tensors.
         # Fill the flash attention output first
         # inputs[0] should be flash attention output
-        inputs[0] = get_flash_attn_out_from_global_buffer(-1)
+        if offload_buffer.enable_offload:
+            inputs[0] = offload_buffer.get_flash_attn_out(-1)
+        else:
+            inputs[0] = get_flash_attn_out_from_global_buffer(-1)
         for i, idx in enumerate(tensor_indices):
             inputs[idx] = tensors[i]
 
@@ -316,10 +358,11 @@ class CheckpointFunctionLastModule(torch.autograd.Function):
         torch.autograd.backward(outputs_with_grad, args_with_grad)
         grads = tuple(inp.grad if isinstance(inp, torch.Tensor) else None
                       for inp in detached_inputs)
-        
         # write flash attention output gradients to buffer
-        write_gradient_to_flash_attn_out(-1, detached_inputs[0].grad)
-
+        if offload_buffer.enable_offload:
+            offload_buffer.get_flash_attn_out(-1).grad = detached_inputs[0].grad
+        else:
+            write_gradient_to_flash_attn_out(-1, detached_inputs[0].grad)
         return (None, None) + grads
 
 def checkpoint_last_module(function, *args, use_reentrant: bool = True, **kwargs):
@@ -479,8 +522,15 @@ def forward(
         except:
             pass
         # initialize the global buffer
-        init_flash_attn_buffers(len(self.layers))
-
+        # init_flash_attn_buffers(len(self.layers))
+        global offload_buffer
+        if offload_buffer.enable_offload:
+            offload_buffer.allocate(
+                self.config.num_hidden_layers,
+                shape=[batch_size, self.config.num_attention_heads, seq_length, self.config.hidden_size // self.config.num_attention_heads]
+            )
+        else:
+            init_flash_attn_buffers(len(self.layers))
         if use_cache:
             try:
                 logger.warning_once(
@@ -601,8 +651,65 @@ def forward(
         attentions=all_self_attns,
     )
 
+def llama_model_forward(
+        self,
+        input_ids: torch.LongTensor = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        position_ids: Optional[torch.LongTensor] = None,
+        past_key_values: Optional[Union[Cache, List[torch.FloatTensor]]] = None,
+        inputs_embeds: Optional[torch.FloatTensor] = None,
+        labels: Optional[torch.LongTensor] = None,
+        use_cache: Optional[bool] = None,
+        output_attentions: Optional[bool] = None,
+        output_hidden_states: Optional[bool] = None,
+        return_dict: Optional[bool] = None,
+        cache_position: Optional[torch.LongTensor] = None,
+    ) -> Union[Tuple, CausalLMOutputWithPast]:
+    output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
+    output_hidden_states = (
+        output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
+    )
+    return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+    
+    # decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
+    outputs = self.model(
+        input_ids=input_ids,
+        attention_mask=attention_mask,
+        position_ids=position_ids,
+        past_key_values=past_key_values,
+        inputs_embeds=inputs_embeds,
+        use_cache=use_cache,
+        output_attentions=output_attentions,
+        output_hidden_states=output_hidden_states,
+        return_dict=return_dict,
+        cache_position=cache_position,
+    )
+    
+    hidden_states = outputs[0]
+    if self.config.pretraining_tp > 1:
+        lm_head_slices = self.lm_head.weight.split(self.vocab_size // self.config.pretraining_tp, dim=0)
+        logits = [F.linear(hidden_states, lm_head_slices[i]) for i in range(self.config.pretraining_tp)]
+        logits = torch.cat(logits, dim=-1)
+    else:
+        logits = self.lm_head(hidden_states)
+    logits = logits.float()
+    
+    loss = None
+    if not return_dict:
+        output = (logits,) + outputs[1:]
+        return (loss,) + output if loss is not None else output
+    return CausalLMOutputWithPast(
+        loss=loss,
+        logits=logits,
+        past_key_values=outputs.past_key_values,
+        hidden_states=outputs.hidden_states,
+        attentions=outputs.attentions,
+    )
 
-def apply_dist_flash_attn_monkey_patch_llama(sp_size=None):
+def apply_dist_flash_attn_monkey_patch_llama(sp_size=None, enable_offload=False, offload_percent=0.):
     initialize_distributed(sp_size=sp_size)
+    global offload_buffer
+    offload_buffer = OffloadBuffer(enable_offload=enable_offload, offload_percent=offload_percent)
     transformers.models.llama.modeling_llama.LlamaModel.forward = forward
     transformers.models.llama.modeling_llama.LlamaDecoderLayer.forward = llama_layer_forward
+    transformers.models.llama.modeling_llama.LlamaForCausalLM.forward = llama_model_forward
