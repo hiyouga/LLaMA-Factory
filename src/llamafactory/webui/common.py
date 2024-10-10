@@ -31,7 +31,7 @@ from ..extras.constants import (
     DownloadSource,
 )
 from ..extras.logging import get_logger
-from ..extras.misc import use_modelscope
+from ..extras.misc import use_modelscope, use_openmind
 from ..extras.packages import is_gradio_available
 
 
@@ -111,6 +111,13 @@ def get_model_path(model_name: str) -> str:
         and model_path == path_dict.get(DownloadSource.DEFAULT)
     ):  # replace path
         model_path = path_dict.get(DownloadSource.MODELSCOPE)
+
+    if (
+        use_openmind()
+        and path_dict.get(DownloadSource.MODELERS)
+        and model_path == path_dict.get(DownloadSource.DEFAULT)
+    ):  # replace path
+        model_path = path_dict.get(DownloadSource.MODELERS)
 
     return model_path
 

@@ -267,6 +267,10 @@ class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments,
         default=None,
         metadata={"help": "Auth token to log in with ModelScope Hub."},
     )
+    om_hub_token: Optional[str] = field(
+        default=None,
+        metadata={"help": "Auth token to log in with Modelers Hub."},
+    )
     print_param_status: bool = field(
         default=False,
         metadata={"help": "For debugging purposes, print the status of the parameters in the model."},

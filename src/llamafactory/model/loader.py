@@ -19,7 +19,7 @@ from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForVision2Se
 from trl import AutoModelForCausalLMWithValueHead
 
 from ..extras.logging import get_logger
-from ..extras.misc import count_parameters, skip_check_imports, try_download_model_from_ms
+from ..extras.misc import count_parameters, skip_check_imports, try_download_model_from_other_hub
 from .adapter import init_adapter
 from .model_utils.liger_kernel import apply_liger_kernel
 from .model_utils.misc import register_autoclass
@@ -50,7 +50,7 @@ def _get_init_kwargs(model_args: "ModelArguments") -> Dict[str, Any]:
     Note: including inplace operation of model_args.
     """
     skip_check_imports()
-    model_args.model_name_or_path = try_download_model_from_ms(model_args)
+    model_args.model_name_or_path = try_download_model_from_other_hub(model_args)
     return {
         "trust_remote_code": True,
         "cache_dir": model_args.cache_dir,
