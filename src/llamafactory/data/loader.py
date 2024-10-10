@@ -94,7 +94,7 @@ def _load_single_dataset(
                 name=data_name,
                 data_dir=data_dir,
                 data_files=data_files,
-                split=data_args.split,
+                split=dataset_attr.split,
                 cache_dir=cache_dir,
                 token=model_args.ms_hub_token,
                 streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
