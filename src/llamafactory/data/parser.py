@@ -98,6 +98,7 @@ def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -
     dataset_list: List["DatasetAttr"] = []
     for name in dataset_names:
         if dataset_info is None: # dataset_dir is ONLINE
+            load_from = None
             if use_openmind():
                 load_from = "om_hub"
             if use_modelscope():
