@@ -417,8 +417,7 @@ source /usr/local/Ascend/ascend-toolkit/set_env.sh
 
 ### 数据准备
 
-关于数据集文件的格式，请参考 [data/README_zh.md](data/README_zh.md) 的内容。你可以使用 HuggingFace , ModelScope 或者 Modelers 上的数据集或加载本地数据集。
-
+关于数据集文件的格式，请参考 [data/README_zh.md](data/README_zh.md) 的内容。你可以使用 HuggingFace / ModelScope / Modelers 上的数据集或加载本地数据集。
 > [!NOTE]
 > 使用自定义数据集时，请更新 `data/dataset_info.json` 文件。
 
