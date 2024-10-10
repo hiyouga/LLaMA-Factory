@@ -563,7 +563,7 @@ register_model_group(
         "Gemma-2-9B-Instruct": {
             DownloadSource.DEFAULT: "google/gemma-2-9b-it",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-9b-it",
-            DownloadSource.MODELERS: "LlamaFactory/Qwen2-VL-2B-Instruct"
+            DownloadSource.MODELERS: "LlamaFactory/gemma-2-2b-it"
         },
         "Gemma-2-27B-Instruct": {
             DownloadSource.DEFAULT: "google/gemma-2-27b-it",
