@@ -96,7 +96,7 @@ def _load_single_dataset(
                 data_files=data_files,
                 split=dataset_attr.split,
                 cache_dir=cache_dir,
-                token=model_args.ms_hub_token,
+                token=model_args.om_hub_token,
                 streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
             )
         except ImportError:
