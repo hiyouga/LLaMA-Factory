@@ -60,6 +60,7 @@ extra_require = {
     "adam-mini": ["adam-mini"],
     "qwen": ["transformers_stream_generator"],
     "modelscope": ["modelscope"],
+    "openmind": ["openmind"],
     "dev": ["ruff", "pytest"],
 }
 

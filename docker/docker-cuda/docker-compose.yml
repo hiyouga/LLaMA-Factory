@@ -16,6 +16,7 @@ services:
     volumes:
       - ../../hf_cache:/root/.cache/huggingface
       - ../../ms_cache:/root/.cache/modelscope
+      - ../../om_cache:/root/.cache/openmind
       - ../../data:/app/data
       - ../../output:/app/output
     ports:
