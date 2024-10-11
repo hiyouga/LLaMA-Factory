@@ -25,6 +25,7 @@ import torch
 from transformers import Trainer
 from trl import KTOTrainer
 from trl.trainer import disable_dropout_in_model
+from typing_extensions import override
 
 from ...extras.constants import IGNORE_INDEX
 from ..callbacks import SaveProcessorCallback
@@ -99,23 +100,27 @@ class CustomKTOTrainer(KTOTrainer):
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
 
+    @override
     def create_optimizer(self) -> "torch.optim.Optimizer":
         if self.optimizer is None:
             self.optimizer = create_custom_optimizer(self.model, self.args, self.finetuning_args)
         return super().create_optimizer()
 
+    @override
     def create_scheduler(
         self, num_training_steps: int, optimizer: Optional["torch.optim.Optimizer"] = None
     ) -> "torch.optim.lr_scheduler.LRScheduler":
         create_custom_scheduler(self.args, num_training_steps, optimizer)
         return super().create_scheduler(num_training_steps, optimizer)
 
+    @override
     def _get_train_sampler(self) -> Optional["torch.utils.data.Sampler"]:
         r"""
         Replaces the sequential sampler of KTO Trainer created by trl with the random sampler.
         """
         return Trainer._get_train_sampler(self)
 
+    @override
     def forward(
         self, model: "PreTrainedModel", batch: Dict[str, "torch.Tensor"], prefix: Literal["", "kl_"] = ""
     ) -> Tuple["torch.Tensor", "torch.Tensor"]:
@@ -127,17 +132,20 @@ class CustomKTOTrainer(KTOTrainer):
             "input_ids": batch["{}input_ids".format(prefix)],
             "attention_mask": batch["{}attention_mask".format(prefix)],
         }
-        if "pixel_values" in batch:
-            model_inputs["pixel_values"] = batch["pixel_values"]
-
         if "{}token_type_ids".format(prefix) in batch:
             model_inputs["token_type_ids"] = batch["{}token_type_ids".format(prefix)]
 
-        logits = model(**model_inputs, return_dict=True, use_cache=False).logits.to(torch.float32)
+        if "pixel_values" in batch:
+            model_inputs["pixel_values"] = batch["pixel_values"]
 
+        if "image_grid_thw" in batch:
+            model_inputs["image_grid_thw"] = batch["image_grid_thw"]
+
+        logits = model(**model_inputs, return_dict=True, use_cache=False).logits.to(torch.float32)
         logps, valid_length = get_batch_logps(logits=logits, labels=batch["{}labels".format(prefix)])
         return logps, logps / valid_length
 
+    @override
     def concatenated_forward(
         self, model: "PreTrainedModel", batch: Dict[str, "torch.Tensor"]
     ) -> Tuple["torch.Tensor", "torch.Tensor", "torch.Tensor", "torch.Tensor"]:
@@ -153,6 +161,7 @@ class CustomKTOTrainer(KTOTrainer):
         chosen_logps_avg = target_logps_avg[batch["kto_tags"]]
         return chosen_logps, rejected_logps, kl_logps, chosen_logps_avg
 
+    @override
     def compute_reference_log_probs(
         self, model: "PreTrainedModel", batch: Dict[str, "torch.Tensor"]
     ) -> Tuple["torch.Tensor", "torch.Tensor", "torch.Tensor"]:
@@ -173,6 +182,7 @@ class CustomKTOTrainer(KTOTrainer):
 
         return reference_chosen_logps, reference_rejected_logps, reference_kl_logps
 
+    @override
     def get_batch_loss_metrics(
         self,
         model: "PreTrainedModel",

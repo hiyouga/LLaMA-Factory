@@ -21,11 +21,12 @@ from trl import AutoModelForCausalLMWithValueHead
 from ..extras.logging import get_logger
 from ..extras.misc import count_parameters, skip_check_imports, try_download_model_from_ms
 from .adapter import init_adapter
+from .model_utils.liger_kernel import apply_liger_kernel
 from .model_utils.misc import register_autoclass
 from .model_utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
 from .model_utils.unsloth import load_unsloth_pretrained_model
 from .model_utils.valuehead import load_valuehead_params
-from .patcher import patch_config, patch_model, patch_tokenizer, patch_valuehead_model
+from .patcher import patch_config, patch_model, patch_processor, patch_tokenizer, patch_valuehead_model
 
 
 if TYPE_CHECKING:
@@ -60,11 +61,12 @@ def _get_init_kwargs(model_args: "ModelArguments") -> Dict[str, Any]:
 
 def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
     r"""
-    Loads pretrained tokenizer.
+    Loads pretrained tokenizer and optionally loads processor.
 
     Note: including inplace operation of model_args.
     """
     init_kwargs = _get_init_kwargs(model_args)
+    config = load_config(model_args)
     try:
         tokenizer = AutoTokenizer.from_pretrained(
             model_args.model_name_or_path,
@@ -80,6 +82,8 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
             padding_side="right",
             **init_kwargs,
         )
+    except Exception as e:
+        raise OSError("Failed to load tokenizer.") from e
 
     if model_args.new_special_tokens is not None:
         num_added_tokens = tokenizer.add_special_tokens(
@@ -92,18 +96,16 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
             logger.warning("New tokens have been added, changed `resize_vocab` to True.")
 
     patch_tokenizer(tokenizer)
+    try:
+        processor = AutoProcessor.from_pretrained(model_args.model_name_or_path, **init_kwargs)
+        patch_processor(processor, config, tokenizer, model_args)
+    except Exception as e:
+        logger.warning("Processor was not found: {}.".format(e))
+        processor = None
 
-    if model_args.visual_inputs:
-        try:
-            processor = AutoProcessor.from_pretrained(model_args.model_name_or_path, **init_kwargs)
-            setattr(processor, "tokenizer", tokenizer)
-        except Exception:
-            raise ValueError(
-                "This multimodal LLM is not supported.\n"
-                "Download LLaVA-1.5 models from: https://huggingface.co/llava-hf\n"
-                "Download Yi-VL models from: https://huggingface.co/BUAADreamer"
-            )
-    else:
+    # Avoid load tokenizer, see:
+    # https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/models/auto/processing_auto.py#L324
+    if processor is not None and "Processor" not in processor.__class__.__name__:
         processor = None
 
     return {"tokenizer": tokenizer, "processor": processor}
@@ -130,6 +132,7 @@ def load_model(
     init_kwargs = _get_init_kwargs(model_args)
     config = load_config(model_args)
     patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
+    apply_liger_kernel(config, model_args, is_trainable, require_logits=(finetuning_args.stage not in ["pt", "sft"]))
 
     model = None
     lazy_load = False
@@ -145,12 +148,15 @@ def load_model(
 
         if model_args.mixture_of_depths == "load":
             model = load_mod_pretrained_model(**init_kwargs)
-        elif model_args.visual_inputs:
-            model = AutoModelForVision2Seq.from_pretrained(**init_kwargs)
-        elif model_args.train_from_scratch:
-            model = AutoModelForCausalLM.from_config(config)
         else:
-            model = AutoModelForCausalLM.from_pretrained(**init_kwargs)
+            if type(config) in AutoModelForVision2Seq._model_mapping.keys():  # assume built-in models
+                load_class = AutoModelForVision2Seq
+            else:
+                load_class = AutoModelForCausalLM
+            if model_args.train_from_scratch:
+                model = load_class.from_config(config)
+            else:
+                model = load_class.from_pretrained(**init_kwargs)
 
         if model_args.mixture_of_depths == "convert":
             model = convert_pretrained_model_to_mod(model, config, model_args)

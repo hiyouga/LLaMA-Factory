@@ -148,7 +148,7 @@ LOCALES = {
         },
         "zh": {
             "label": "提示模板",
-            "info": "构建提示词时使用的模板",
+            "info": "构建提示词时使用的模板。",
         },
         "ko": {
             "label": "프롬프트 템플릿",
@@ -181,20 +181,6 @@ LOCALES = {
         },
         "ko": {
             "label": "부스터",
-        },
-    },
-    "visual_inputs": {
-        "en": {
-            "label": "Visual inputs",
-        },
-        "ru": {
-            "label": "визуальные входы",
-        },
-        "zh": {
-            "label": "图像输入",
-        },
-        "ko": {
-            "label": "시각적 입력",
         },
     },
     "training_stage": {
@@ -1703,6 +1689,20 @@ LOCALES = {
         },
         "ko": {
             "label": "이미지 (선택 사항)",
+        },
+    },
+    "video": {
+        "en": {
+            "label": "Video (optional)",
+        },
+        "ru": {
+            "label": "Видео (по желанию)",
+        },
+        "zh": {
+            "label": "视频（非必填）",
+        },
+        "ko": {
+            "label": "비디오 (선택 사항)",
         },
     },
     "query": {

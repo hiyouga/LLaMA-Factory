@@ -32,9 +32,11 @@ from transformers.utils import (
     WEIGHTS_NAME,
     is_safetensors_available,
 )
+from typing_extensions import override
 
 from ..extras.constants import TRAINER_LOG, V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
 from ..extras.logging import LoggerHandler, get_logger
+from ..extras.misc import get_peak_memory
 
 
 if is_safetensors_available():
@@ -73,8 +75,8 @@ def fix_valuehead_checkpoint(
         path_to_checkpoint = os.path.join(output_dir, WEIGHTS_NAME)
         state_dict: Dict[str, torch.Tensor] = torch.load(path_to_checkpoint, map_location="cpu")
 
-    decoder_state_dict = {}
-    v_head_state_dict = {}
+    os.remove(path_to_checkpoint)
+    decoder_state_dict, v_head_state_dict = {}, {}
     for name, param in state_dict.items():
         if name.startswith("v_head."):
             v_head_state_dict[name] = param
@@ -90,43 +92,52 @@ def fix_valuehead_checkpoint(
     else:
         torch.save(v_head_state_dict, os.path.join(output_dir, V_HEAD_WEIGHTS_NAME))
 
-    os.remove(path_to_checkpoint)
     logger.info("Value head model saved at: {}".format(output_dir))
 
 
 class FixValueHeadModelCallback(TrainerCallback):
+    r"""
+    A callback for fixing the checkpoint for valuehead models.
+    """
+
+    @override
     def on_save(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
         Event called after a checkpoint save.
         """
         if args.should_save:
+            output_dir = os.path.join(args.output_dir, "{}-{}".format(PREFIX_CHECKPOINT_DIR, state.global_step))
             fix_valuehead_checkpoint(
-                model=kwargs.pop("model"),
-                output_dir=os.path.join(args.output_dir, "{}-{}".format(PREFIX_CHECKPOINT_DIR, state.global_step)),
-                safe_serialization=args.save_safetensors,
+                model=kwargs.pop("model"), output_dir=output_dir, safe_serialization=args.save_safetensors
             )
 
 
 class SaveProcessorCallback(TrainerCallback):
+    r"""
+    A callback for saving the processor.
+    """
+
     def __init__(self, processor: "ProcessorMixin") -> None:
-        r"""
-        Initializes a callback for saving the processor.
-        """
         self.processor = processor
 
+    @override
+    def on_save(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
+        if args.should_save:
+            output_dir = os.path.join(args.output_dir, "{}-{}".format(PREFIX_CHECKPOINT_DIR, state.global_step))
+            getattr(self.processor, "image_processor").save_pretrained(output_dir)
+
+    @override
     def on_train_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
-        r"""
-        Event called at the end of training.
-        """
         if args.should_save:
             getattr(self.processor, "image_processor").save_pretrained(args.output_dir)
 
 
 class PissaConvertCallback(TrainerCallback):
     r"""
-    Initializes a callback for converting the PiSSA adapter to a normal one.
+    A callback for converting the PiSSA adapter to a normal one.
     """
 
+    @override
     def on_train_begin(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         r"""
         Event called at the beginning of training.
@@ -141,10 +152,8 @@ class PissaConvertCallback(TrainerCallback):
                 model.save_pretrained(pissa_init_dir, safe_serialization=args.save_safetensors)
                 setattr(model.peft_config["default"], "init_lora_weights", init_lora_weights)
 
+    @override
     def on_train_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
-        r"""
-        Event called at the end of training.
-        """
         if args.should_save:
             model = kwargs.pop("model")
             pissa_init_dir = os.path.join(args.output_dir, "pissa_init")
@@ -172,21 +181,22 @@ class PissaConvertCallback(TrainerCallback):
 
 
 class LogCallback(TrainerCallback):
+    r"""
+    A callback for logging training and evaluation status.
+    """
+
     def __init__(self) -> None:
-        r"""
-        Initializes a callback for logging training and evaluation status.
-        """
-        """ Progress """
+        # Progress
         self.start_time = 0
         self.cur_steps = 0
         self.max_steps = 0
         self.elapsed_time = ""
         self.remaining_time = ""
         self.thread_pool: Optional["ThreadPoolExecutor"] = None
-        """ Status """
+        # Status
         self.aborted = False
         self.do_train = False
-        """ Web UI """
+        # Web UI
         self.webui_mode = os.environ.get("LLAMABOARD_ENABLED", "0").lower() in ["true", "1"]
         if self.webui_mode:
             signal.signal(signal.SIGABRT, self._set_abort)
@@ -226,10 +236,8 @@ class LogCallback(TrainerCallback):
             self.thread_pool.shutdown(wait=True)
             self.thread_pool = None
 
+    @override
     def on_init_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
-        r"""
-        Event called at the end of the initialization of the `Trainer`.
-        """
         if (
             args.should_save
             and os.path.exists(os.path.join(args.output_dir, TRAINER_LOG))
@@ -238,55 +246,41 @@ class LogCallback(TrainerCallback):
             logger.warning("Previous trainer log in this folder will be deleted.")
             os.remove(os.path.join(args.output_dir, TRAINER_LOG))
 
+    @override
     def on_train_begin(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
-        r"""
-        Event called at the beginning of training.
-        """
         if args.should_save:
             self.do_train = True
             self._reset(max_steps=state.max_steps)
             self._create_thread_pool(output_dir=args.output_dir)
 
+    @override
     def on_train_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
-        r"""
-        Event called at the end of training.
-        """
         self._close_thread_pool()
 
+    @override
     def on_substep_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
-        r"""
-        Event called at the end of an substep during gradient accumulation.
-        """
         if self.aborted:
             control.should_epoch_stop = True
             control.should_training_stop = True
 
+    @override
     def on_step_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
-        r"""
-        Event called at the end of a training step.
-        """
         if self.aborted:
             control.should_epoch_stop = True
             control.should_training_stop = True
 
+    @override
     def on_evaluate(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
-        r"""
-        Event called after an evaluation phase.
-        """
         if not self.do_train:
             self._close_thread_pool()
 
+    @override
     def on_predict(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
-        r"""
-        Event called after a successful prediction.
-        """
         if not self.do_train:
             self._close_thread_pool()
 
+    @override
     def on_log(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
-        r"""
-        Event called after logging the last logs.
-        """
         if not args.should_save:
             return
 
@@ -304,26 +298,31 @@ class LogCallback(TrainerCallback):
             percentage=round(self.cur_steps / self.max_steps * 100, 2) if self.max_steps != 0 else 100,
             elapsed_time=self.elapsed_time,
             remaining_time=self.remaining_time,
-            throughput="{:.2f}".format(state.num_input_tokens_seen / (time.time() - self.start_time)),
-            total_tokens=state.num_input_tokens_seen,
         )
+        if state.num_input_tokens_seen:
+            logs["throughput"] = round(state.num_input_tokens_seen / (time.time() - self.start_time), 2)
+            logs["total_tokens"] = state.num_input_tokens_seen
+
+        if os.environ.get("RECORD_VRAM", "0").lower() in ["true", "1"]:
+            vram_allocated, vram_reserved = get_peak_memory()
+            logs["vram_allocated"] = round(vram_allocated / 1024 / 1024 / 1024, 2)
+            logs["vram_reserved"] = round(vram_reserved / 1024 / 1024 / 1024, 2)
+
         logs = {k: v for k, v in logs.items() if v is not None}
         if self.webui_mode and all(key in logs for key in ["loss", "learning_rate", "epoch"]):
             logger.info(
                 "{{'loss': {:.4f}, 'learning_rate': {:2.4e}, 'epoch': {:.2f}, 'throughput': {}}}".format(
-                    logs["loss"], logs["learning_rate"], logs["epoch"], logs["throughput"]
+                    logs["loss"], logs["learning_rate"], logs["epoch"], logs.get("throughput", "N/A")
                 )
             )
 
         if self.thread_pool is not None:
             self.thread_pool.submit(self._write_log, args.output_dir, logs)
 
+    @override
     def on_prediction_step(
         self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs
     ):
-        r"""
-        Event called after a prediction step.
-        """
         if self.do_train:
             return
 

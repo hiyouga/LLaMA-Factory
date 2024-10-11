@@ -38,6 +38,20 @@
       "assistant_tag": "assistant"
     }
   },
+  "mllm_video_demo": {
+    "file_name": "mllm_video_demo.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "videos": "videos"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
   "alpaca_en": {
     "hf_hub_url": "llamafactory/alpaca_en",
     "ms_hub_url": "llamafactory/alpaca_en"
@@ -340,6 +354,14 @@
       "assistant_tag": "assistant"
     }
   },
+  "pokemon_cap": {
+    "hf_hub_url": "llamafactory/pokemon-gpt4o-captions",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "images": "images"
+    }
+  },
   "mllm_pt_demo": {
     "hf_hub_url": "BUAADreamer/mllm_pt_demo",
     "formatting": "sharegpt",
@@ -431,6 +453,28 @@
       "prompt": "instruction",
       "chosen": "chosen",
       "rejected": "rejected"
+    }
+  },
+  "rlhf_v": {
+    "hf_hub_url": "llamafactory/RLHF-V",
+    "ranking": true,
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "chosen": "chosen",
+      "rejected": "rejected",
+      "images": "images"
+    }
+  },
+  "vlfeedback": {
+    "hf_hub_url": "Zhihui/VLFeedback",
+    "ranking": true,
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "chosen": "chosen",
+      "rejected": "rejected",
+      "images": "images"
     }
   },
   "orca_pairs": {

@@ -19,6 +19,8 @@ import pytest
 from transformers import AutoTokenizer
 
 from llamafactory.data import get_template_and_fix_tokenizer
+from llamafactory.data.template import _get_jinja_template
+from llamafactory.hparams import DataArguments
 
 
 if TYPE_CHECKING:
@@ -51,7 +53,7 @@ def _check_single_template(
     tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast=use_fast, token=HF_TOKEN)
     content_str = tokenizer.apply_chat_template(MESSAGES, tokenize=False)
     content_ids = tokenizer.apply_chat_template(MESSAGES, tokenize=True)
-    template = get_template_and_fix_tokenizer(tokenizer, name=template_name)
+    template = get_template_and_fix_tokenizer(tokenizer, DataArguments(template=template_name))
     prompt_ids, answer_ids = template.encode_oneturn(tokenizer, MESSAGES)
     assert content_str == prompt_str + answer_str + extra_str
     assert content_ids == prompt_ids + answer_ids + tokenizer.encode(extra_str, add_special_tokens=False)
@@ -78,7 +80,7 @@ def _check_template(model_id: str, template_name: str, prompt_str: str, answer_s
 @pytest.mark.parametrize("use_fast", [True, False])
 def test_encode_oneturn(use_fast: bool):
     tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA, use_fast=use_fast)
-    template = get_template_and_fix_tokenizer(tokenizer, name="llama3")
+    template = get_template_and_fix_tokenizer(tokenizer, DataArguments(template="llama3"))
     prompt_ids, answer_ids = template.encode_oneturn(tokenizer, MESSAGES)
     prompt_str = (
         "<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\nHow are you<|eot_id|>"
@@ -93,7 +95,7 @@ def test_encode_oneturn(use_fast: bool):
 @pytest.mark.parametrize("use_fast", [True, False])
 def test_encode_multiturn(use_fast: bool):
     tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA, use_fast=use_fast)
-    template = get_template_and_fix_tokenizer(tokenizer, name="llama3")
+    template = get_template_and_fix_tokenizer(tokenizer, DataArguments(template="llama3"))
     encoded_pairs = template.encode_multiturn(tokenizer, MESSAGES)
     prompt_str_1 = (
         "<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\nHow are you<|eot_id|>"
@@ -116,7 +118,8 @@ def test_encode_multiturn(use_fast: bool):
 def test_jinja_template(use_fast: bool):
     tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA, use_fast=use_fast)
     ref_tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA, use_fast=use_fast)
-    get_template_and_fix_tokenizer(tokenizer, name="llama3")
+    template = get_template_and_fix_tokenizer(tokenizer, DataArguments(template="llama3"))
+    tokenizer.chat_template = _get_jinja_template(template, tokenizer)  # llama3 template no replace
     assert tokenizer.chat_template != ref_tokenizer.chat_template
     assert tokenizer.apply_chat_template(MESSAGES) == ref_tokenizer.apply_chat_template(MESSAGES)
 
@@ -157,7 +160,7 @@ def test_qwen_template():
     _check_template("Qwen/Qwen2-7B-Instruct", "qwen", prompt_str, answer_str, extra_str="\n")
 
 
-@pytest.mark.skip(reason="The fast tokenizer of Yi model is corrupted.")
+@pytest.mark.xfail(reason="The fast tokenizer of Yi model is corrupted.")
 def test_yi_template():
     prompt_str = (
         "<|im_start|>user\nHow are you<|im_end|>\n"

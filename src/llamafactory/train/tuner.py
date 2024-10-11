@@ -72,7 +72,7 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
     processor = tokenizer_module["processor"]
-    get_template_and_fix_tokenizer(tokenizer, data_args.template)
+    get_template_and_fix_tokenizer(tokenizer, data_args)
     model = load_model(tokenizer, model_args, finetuning_args)  # must after fixing tokenizer to resize vocab
 
     if getattr(model, "quantization_method", None) is not None and model_args.adapter_name_or_path is not None:
@@ -132,12 +132,12 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
         if model_args.export_hub_model_id is not None:
             tokenizer.push_to_hub(model_args.export_hub_model_id, token=model_args.hf_hub_token)
 
-        if model_args.visual_inputs and processor is not None:
+        if processor is not None:
             getattr(processor, "image_processor").save_pretrained(model_args.export_dir)
             if model_args.export_hub_model_id is not None:
                 getattr(processor, "image_processor").push_to_hub(
                     model_args.export_hub_model_id, token=model_args.hf_hub_token
                 )
 
-    except Exception:
-        logger.warning("Cannot save tokenizer, please copy the files manually.")
+    except Exception as e:
+        logger.warning("Cannot save tokenizer, please copy the files manually: {}.".format(e))

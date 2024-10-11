@@ -38,6 +38,10 @@ def _get_package_version(name: str) -> "Version":
         return version.parse("0.0.0")
 
 
+def is_pyav_available():
+    return _is_package_available("av")
+
+
 def is_fastapi_available():
     return _is_package_available("fastapi")
 
@@ -81,13 +85,3 @@ def is_uvicorn_available():
 
 def is_vllm_available():
     return _is_package_available("vllm")
-
-
-@lru_cache
-def is_vllm_version_greater_than_0_5():
-    return _get_package_version("vllm") >= version.parse("0.5.0")
-
-
-@lru_cache
-def is_vllm_version_greater_than_0_5_1():
-    return _get_package_version("vllm") >= version.parse("0.5.1")

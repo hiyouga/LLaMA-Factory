@@ -59,7 +59,7 @@ class Engine:
             init_dict["train.output_dir"] = {"value": "train_{}".format(current_time)}
             init_dict["train.config_path"] = {"value": "{}.yaml".format(current_time)}
             init_dict["eval.output_dir"] = {"value": "eval_{}".format(current_time)}
-            init_dict["infer.image_box"] = {"visible": False}
+            init_dict["infer.mm_box"] = {"visible": False}
 
             if user_config.get("last_model", None):
                 init_dict["top.model_name"] = {"value": user_config["last_model"]}
