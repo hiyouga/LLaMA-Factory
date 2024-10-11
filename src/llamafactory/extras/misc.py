@@ -237,11 +237,9 @@ def try_download_model_from_other_hub(model_args: "ModelArguments") -> str:
 
     if use_openmind():
         try:
-            import openmind
             from openmind.utils.hub import snapshot_download
 
-            revision = "main" if model_args.model_revision == "main" else model_args.model_revision
-            return snapshot_download(model_args.model_name_or_path, revision=revision, cache_dir=model_args.cache_dir)
+            return snapshot_download(model_args.model_name_or_path, revision=model_args.model_revision, cache_dir=model_args.cache_dir)
         except ImportError:
             raise ImportError("Please install openmind and openmind_hub via `pip install openmind -U`")
 
