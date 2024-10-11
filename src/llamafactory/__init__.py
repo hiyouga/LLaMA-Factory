@@ -38,6 +38,7 @@ Force check imports: FORCE_CHECK_IMPORTS=1
 Force using torchrun: FORCE_TORCHRUN=1
 Set logging verbosity: LLAMAFACTORY_VERBOSITY=WARN
 Use modelscope: USE_MODELSCOPE_HUB=1
+Use openmind: USE_OPENMIND_HUB=1
 """
 
 from .extras.env import VERSION
