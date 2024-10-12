@@ -70,7 +70,7 @@ def gen_loss_plot(trainer_log: List[Dict[str, Any]]) -> "matplotlib.figure.Figur
     return fig
 
 
-def plot_loss(save_dictionary: os.PathLike, keys: List[str] = ["loss"]) -> None:
+def plot_loss(save_dictionary: str, keys: List[str] = ["loss"]) -> None:
     r"""
     Plots loss curves and saves the image.
     """

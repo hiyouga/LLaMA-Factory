@@ -26,7 +26,7 @@ from transformers import HfArgumentParser, Seq2SeqTrainingArguments
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.training_args import ParallelMode
-from transformers.utils import is_torch_bf16_gpu_available
+from transformers.utils import is_torch_bf16_gpu_available, is_torch_npu_available
 from transformers.utils.versions import require_version
 
 from ..extras.constants import CHECKPOINT_NAMES
@@ -57,7 +57,7 @@ def _parse_args(parser: "HfArgumentParser", args: Optional[Dict[str, Any]] = Non
     if args is not None:
         return parser.parse_dict(args)
 
-    if len(sys.argv) == 2 and sys.argv[1].endswith(".yaml"):
+    if len(sys.argv) == 2 and (sys.argv[1].endswith(".yaml") or sys.argv[1].endswith(".yml")):
         return parser.parse_yaml_file(os.path.abspath(sys.argv[1]))
 
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
@@ -116,17 +116,23 @@ def _check_extra_dependencies(
     if model_args.use_unsloth:
         require_version("unsloth", "Please install unsloth: https://github.com/unslothai/unsloth")
 
+    if model_args.enable_liger_kernel:
+        require_version("liger-kernel", "To fix: pip install liger-kernel")
+
     if model_args.mixture_of_depths is not None:
         require_version("mixture-of-depth>=1.1.6", "To fix: pip install mixture-of-depth>=1.1.6")
 
     if model_args.infer_backend == "vllm":
-        require_version("vllm>=0.4.3", "To fix: pip install vllm>=0.4.3")
+        require_version("vllm>=0.4.3,<=0.6.3", "To fix: pip install vllm>=0.4.3,<=0.6.3")
 
     if finetuning_args.use_galore:
         require_version("galore_torch", "To fix: pip install galore_torch")
 
     if finetuning_args.use_badam:
         require_version("badam>=1.2.1", "To fix: pip install badam>=1.2.1")
+
+    if finetuning_args.use_adam_mini:
+        require_version("adam-mini", "To fix: pip install adam-mini")
 
     if finetuning_args.plot_loss:
         require_version("matplotlib", "To fix: pip install matplotlib")
@@ -163,11 +169,15 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if finetuning_args.stage != "pt" and data_args.template is None:
         raise ValueError("Please specify which `template` to use.")
 
-    if finetuning_args.stage != "sft" and training_args.predict_with_generate:
-        raise ValueError("`predict_with_generate` cannot be set as True except SFT.")
+    if finetuning_args.stage != "sft":
+        if training_args.predict_with_generate:
+            raise ValueError("`predict_with_generate` cannot be set as True except SFT.")
 
-    if finetuning_args.stage != "sft" and data_args.neat_packing:
-        raise ValueError("`neat_packing` cannot be set as True except SFT.")
+        if data_args.neat_packing:
+            raise ValueError("`neat_packing` cannot be set as True except SFT.")
+
+        if data_args.train_on_prompt or data_args.mask_history:
+            raise ValueError("`train_on_prompt` or `mask_history` cannot be set as True except SFT.")
 
     if finetuning_args.stage == "sft" and training_args.do_predict and not training_args.predict_with_generate:
         raise ValueError("Please enable `predict_with_generate` to save model predictions.")
@@ -175,21 +185,18 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if finetuning_args.stage in ["rm", "ppo"] and training_args.load_best_model_at_end:
         raise ValueError("RM and PPO stages do not support `load_best_model_at_end`.")
 
-    if finetuning_args.stage == "ppo" and not training_args.do_train:
-        raise ValueError("PPO training does not support evaluation, use the SFT stage to evaluate models.")
+    if finetuning_args.stage == "ppo":
+        if not training_args.do_train:
+            raise ValueError("PPO training does not support evaluation, use the SFT stage to evaluate models.")
 
-    if finetuning_args.stage == "ppo" and model_args.shift_attn:
-        raise ValueError("PPO training is incompatible with S^2-Attn.")
+        if model_args.shift_attn:
+            raise ValueError("PPO training is incompatible with S^2-Attn.")
 
-    if finetuning_args.stage == "ppo" and finetuning_args.reward_model_type == "lora" and model_args.use_unsloth:
-        raise ValueError("Unsloth does not support lora reward model.")
+        if finetuning_args.reward_model_type == "lora" and model_args.use_unsloth:
+            raise ValueError("Unsloth does not support lora reward model.")
 
-    if (
-        finetuning_args.stage == "ppo"
-        and training_args.report_to
-        and training_args.report_to[0] not in ["wandb", "tensorboard"]
-    ):
-        raise ValueError("PPO only accepts wandb or tensorboard logger.")
+        if training_args.report_to and training_args.report_to[0] not in ["wandb", "tensorboard"]:
+            raise ValueError("PPO only accepts wandb or tensorboard logger.")
 
     if training_args.parallel_mode == ParallelMode.NOT_DISTRIBUTED:
         raise ValueError("Please launch distributed training with `llamafactory-cli` or `torchrun`.")
@@ -208,11 +215,15 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     ):
         raise ValueError("Please specify dataset for evaluation.")
 
-    if training_args.predict_with_generate and data_args.eval_dataset is None:
-        raise ValueError("Cannot use `predict_with_generate` if `eval_dataset` is None.")
+    if training_args.predict_with_generate:
+        if is_deepspeed_zero3_enabled():
+            raise ValueError("`predict_with_generate` is incompatible with DeepSpeed ZeRO-3.")
 
-    if training_args.predict_with_generate and finetuning_args.compute_accuracy:
-        raise ValueError("Cannot use `predict_with_generate` and `compute_accuracy` together.")
+        if data_args.eval_dataset is None:
+            raise ValueError("Cannot use `predict_with_generate` if `eval_dataset` is None.")
+
+        if finetuning_args.compute_accuracy:
+            raise ValueError("Cannot use `predict_with_generate` and `compute_accuracy` together.")
 
     if training_args.do_train and model_args.quantization_device_map == "auto":
         raise ValueError("Cannot use device map for quantized models in training.")
@@ -221,7 +232,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         raise ValueError("Please use scripts/pissa_init.py to initialize PiSSA in DeepSpeed ZeRO-3.")
 
     if finetuning_args.pure_bf16:
-        if not is_torch_bf16_gpu_available():
+        if not (is_torch_bf16_gpu_available() or (is_torch_npu_available() and torch.npu.is_bf16_supported())):
             raise ValueError("This device does not support `pure_bf16`.")
 
         if is_deepspeed_zero3_enabled():
@@ -245,9 +256,6 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
     if model_args.infer_backend == "vllm":
         raise ValueError("vLLM backend is only available for API, CLI and Web.")
-
-    if model_args.visual_inputs and data_args.packing:
-        raise ValueError("Cannot use packing in MLLM fine-tuning.")
 
     if model_args.use_unsloth and is_deepspeed_zero3_enabled():
         raise ValueError("Unsloth is incompatible with DeepSpeed ZeRO-3.")
@@ -376,9 +384,6 @@ def get_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
 
         if model_args.adapter_name_or_path is not None and len(model_args.adapter_name_or_path) != 1:
             raise ValueError("vLLM only accepts a single adapter. Merge them first.")
-
-    if finetuning_args.stage == "rm" and model_args.visual_inputs:
-        raise ValueError("Reward server does not support MLLM yet. Stay tuned.")
 
     _verify_model_args(model_args, data_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args)

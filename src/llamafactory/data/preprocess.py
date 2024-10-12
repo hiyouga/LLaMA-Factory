@@ -50,7 +50,7 @@ def get_preprocess_and_print_func(
         print_function = partial(print_unsupervised_dataset_example, tokenizer=tokenizer)
     elif stage == "sft" and not do_generate:
         if data_args.packing:
-            if data_args.neat_packing:
+            if data_args.neat_packing:  # hack datasets to have int32 attention mask
                 from datasets.arrow_writer import OptimizedTypedSequence, TypedSequence
 
                 def __init__(self, data, **kwargs):
@@ -67,6 +67,7 @@ def get_preprocess_and_print_func(
                 preprocess_packed_supervised_dataset,
                 template=template,
                 tokenizer=tokenizer,
+                processor=processor,
                 data_args=data_args,
             )
         else:

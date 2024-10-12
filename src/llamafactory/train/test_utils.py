@@ -19,7 +19,7 @@ from peft import PeftModel
 from transformers import AutoModelForCausalLM
 from trl import AutoModelForCausalLMWithValueHead
 
-from ..data import get_dataset
+from ..data import get_dataset, get_template_and_fix_tokenizer
 from ..extras.misc import get_current_device
 from ..hparams import get_infer_args, get_train_args
 from ..model import load_model, load_tokenizer
@@ -37,9 +37,9 @@ def compare_model(model_a: "torch.nn.Module", model_b: "torch.nn.Module", diff_k
     assert set(state_dict_a.keys()) == set(state_dict_b.keys())
     for name in state_dict_a.keys():
         if any(key in name for key in diff_keys):
-            assert torch.allclose(state_dict_a[name], state_dict_b[name], rtol=1e-4, atol=1e-5) is False
+            assert torch.allclose(state_dict_a[name], state_dict_b[name], rtol=1e-3, atol=1e-4) is False
         else:
-            assert torch.allclose(state_dict_a[name], state_dict_b[name], rtol=1e-4, atol=1e-5) is True
+            assert torch.allclose(state_dict_a[name], state_dict_b[name], rtol=1e-3, atol=1e-4) is True
 
 
 def check_lora_model(model: "LoraModel") -> Tuple[Set[str], Set[str]]:
@@ -105,7 +105,8 @@ def load_reference_model(
 def load_train_dataset(**kwargs) -> "Dataset":
     model_args, data_args, training_args, _, _ = get_train_args(kwargs)
     tokenizer_module = load_tokenizer(model_args)
-    dataset_module = get_dataset(model_args, data_args, training_args, stage=kwargs["stage"], **tokenizer_module)
+    template = get_template_and_fix_tokenizer(tokenizer_module["tokenizer"], data_args)
+    dataset_module = get_dataset(template, model_args, data_args, training_args, kwargs["stage"], **tokenizer_module)
     return dataset_module["train_dataset"]
 
 

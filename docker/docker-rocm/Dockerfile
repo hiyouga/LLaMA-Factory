@@ -1,4 +1,4 @@
-FROM hardandheavy/transformers-rocm:2.1.0
+FROM hardandheavy/transformers-rocm:2.2.0
 
 # Define environments
 ENV MAX_JOBS=4
@@ -10,6 +10,8 @@ ARG INSTALL_BNB=false
 ARG INSTALL_VLLM=false
 ARG INSTALL_DEEPSPEED=false
 ARG INSTALL_FLASHATTN=false
+ARG INSTALL_LIGER_KERNEL=false
+ARG INSTALL_HQQ=false
 ARG PIP_INDEX=https://pypi.org/simple
 
 # Set the working directory
@@ -35,6 +37,12 @@ RUN EXTRA_PACKAGES="metrics"; \
     fi; \
     if [ "$INSTALL_DEEPSPEED" == "true" ]; then \
         EXTRA_PACKAGES="${EXTRA_PACKAGES},deepspeed"; \
+    fi; \
+    if [ "$INSTALL_LIGER_KERNEL" == "true" ]; then \
+        EXTRA_PACKAGES="${EXTRA_PACKAGES},liger-kernel"; \
+    fi; \
+    if [ "$INSTALL_HQQ" == "true" ]; then \
+        EXTRA_PACKAGES="${EXTRA_PACKAGES},hqq"; \
     fi; \
     pip install -e ".[$EXTRA_PACKAGES]"
 

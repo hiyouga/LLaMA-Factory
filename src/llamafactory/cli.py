@@ -118,4 +118,4 @@ def main():
     elif command == Command.HELP:
         print(USAGE)
     else:
-        raise NotImplementedError("Unknown command: {}".format(command))
+        raise NotImplementedError("Unknown command: {}.".format(command))

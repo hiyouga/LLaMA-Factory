@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Literal, Optional, Sequence
 from transformers.utils import cached_file
 
 from ..extras.constants import DATA_CONFIG
-from ..extras.misc import use_modelscope
+from ..extras.misc import use_modelscope, use_openmind
 
 
 @dataclass
@@ -30,7 +30,7 @@ class DatasetAttr:
     """
 
     # basic configs
-    load_from: Literal["hf_hub", "ms_hub", "script", "file"]
+    load_from: Literal["hf_hub", "ms_hub", "om_hub", "script", "file"]
     dataset_name: str
     formatting: Literal["alpaca", "sharegpt"] = "alpaca"
     ranking: bool = False
@@ -43,6 +43,7 @@ class DatasetAttr:
     system: Optional[str] = None
     tools: Optional[str] = None
     images: Optional[str] = None
+    videos: Optional[str] = None
     # rlhf columns
     chosen: Optional[str] = None
     rejected: Optional[str] = None
@@ -97,7 +98,12 @@ def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -
     dataset_list: List["DatasetAttr"] = []
     for name in dataset_names:
         if dataset_info is None:  # dataset_dir is ONLINE
-            load_from = "ms_hub" if use_modelscope() else "hf_hub"
+            if use_modelscope():
+                load_from = "ms_hub"
+            elif use_openmind():
+                load_from = "om_hub"
+            else:
+                load_from = "hf_hub"
             dataset_attr = DatasetAttr(load_from, dataset_name=name)
             dataset_list.append(dataset_attr)
             continue
@@ -107,10 +113,13 @@ def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -
 
         has_hf_url = "hf_hub_url" in dataset_info[name]
         has_ms_url = "ms_hub_url" in dataset_info[name]
+        has_om_url = "om_hub_url" in dataset_info[name]
 
-        if has_hf_url or has_ms_url:
-            if (use_modelscope() and has_ms_url) or (not has_hf_url):
+        if has_hf_url or has_ms_url or has_om_url:
+            if has_ms_url and (use_modelscope() or not has_hf_url):
                 dataset_attr = DatasetAttr("ms_hub", dataset_name=dataset_info[name]["ms_hub_url"])
+            elif has_om_url and (use_openmind() or not has_hf_url):
+                dataset_attr = DatasetAttr("om_hub", dataset_name=dataset_info[name]["om_hub_url"])
             else:
                 dataset_attr = DatasetAttr("hf_hub", dataset_name=dataset_info[name]["hf_hub_url"])
         elif "script_url" in dataset_info[name]:
@@ -126,7 +135,7 @@ def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -
         dataset_attr.set_attr("num_samples", dataset_info[name])
 
         if "columns" in dataset_info[name]:
-            column_names = ["system", "tools", "images", "chosen", "rejected", "kto_tag"]
+            column_names = ["system", "tools", "images", "videos", "chosen", "rejected", "kto_tag"]
             if dataset_attr.formatting == "alpaca":
                 column_names.extend(["prompt", "query", "response", "history"])
             else:

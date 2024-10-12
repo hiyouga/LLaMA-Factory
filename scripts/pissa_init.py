@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 def quantize_pissa(
     model_name_or_path: str,
     output_dir: str,
-    pissa_iter: int = 4,
+    pissa_iter: int = 16,
     lora_alpha: int = None,
     lora_rank: int = 16,
     lora_dropout: float = 0,

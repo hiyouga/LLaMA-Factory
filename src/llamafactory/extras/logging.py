@@ -1,4 +1,7 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2024 Optuna, HuggingFace Inc. and the LlamaFactory team.
+#
+# This code is inspired by the HuggingFace's transformers library.
+# https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/utils/logging.py
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,14 +18,21 @@
 import logging
 import os
 import sys
+import threading
 from concurrent.futures import ThreadPoolExecutor
+from typing import Optional
 
 from .constants import RUNNING_LOG
 
 
+_thread_lock = threading.RLock()
+_default_handler: Optional["logging.Handler"] = None
+_default_log_level: "logging._Level" = logging.INFO
+
+
 class LoggerHandler(logging.Handler):
     r"""
-    Logger handler used in Web UI.
+    Redirects the logging output to the logging file for LLaMA Board.
     """
 
     def __init__(self, output_dir: str) -> None:
@@ -56,27 +66,56 @@ class LoggerHandler(logging.Handler):
         return super().close()
 
 
-def get_logger(name: str) -> logging.Logger:
+def _get_default_logging_level() -> "logging._Level":
     r"""
-    Gets a standard logger with a stream hander to stdout.
+    Returns the default logging level.
     """
-    formatter = logging.Formatter(
-        fmt="%(asctime)s - %(levelname)s - %(name)s - %(message)s", datefmt="%m/%d/%Y %H:%M:%S"
-    )
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(formatter)
+    env_level_str = os.environ.get("LLAMAFACTORY_VERBOSITY", None)
+    if env_level_str:
+        if env_level_str.upper() in logging._nameToLevel:
+            return logging._nameToLevel[env_level_str.upper()]
+        else:
+            raise ValueError("Unknown logging level: {}.".format(env_level_str))
 
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
-    logger.addHandler(handler)
-
-    return logger
+    return _default_log_level
 
 
-def reset_logging() -> None:
+def _get_library_name() -> str:
+    return __name__.split(".")[0]
+
+
+def _get_library_root_logger() -> "logging.Logger":
+    return logging.getLogger(_get_library_name())
+
+
+def _configure_library_root_logger() -> None:
     r"""
-    Removes basic config of root logger. (unused in script)
+    Configures root logger using a stdout stream handler with an explicit format.
     """
-    root = logging.getLogger()
-    list(map(root.removeHandler, root.handlers))
-    list(map(root.removeFilter, root.filters))
+    global _default_handler
+
+    with _thread_lock:
+        if _default_handler:
+            return
+
+        formatter = logging.Formatter(
+            fmt="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+            datefmt="%m/%d/%Y %H:%M:%S",
+        )
+        _default_handler = logging.StreamHandler(sys.stdout)
+        _default_handler.setFormatter(formatter)
+        library_root_logger = _get_library_root_logger()
+        library_root_logger.addHandler(_default_handler)
+        library_root_logger.setLevel(_get_default_logging_level())
+        library_root_logger.propagate = False
+
+
+def get_logger(name: Optional[str] = None) -> "logging.Logger":
+    r"""
+    Returns a logger with the specified name. It it not supposed to be accessed externally.
+    """
+    if name is None:
+        name = _get_library_name()
+
+    _configure_library_root_logger()
+    return logging.getLogger(name)

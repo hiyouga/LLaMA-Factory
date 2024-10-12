@@ -2,7 +2,7 @@
   {
     "messages": [
       {
-        "content": "Who are they?",
+        "content": "<image>Who are they?",
         "role": "user"
       },
       {
@@ -25,7 +25,7 @@
   {
     "messages": [
       {
-        "content": "Who is he?",
+        "content": "<image>Who is he?",
         "role": "user"
       },
       {
@@ -48,7 +48,7 @@
   {
     "messages": [
       {
-        "content": "Please describe this image",
+        "content": "<image>Please describe this image",
         "role": "user"
       },
       {
@@ -71,7 +71,7 @@
   {
     "messages": [
       {
-        "content": "他们是谁？",
+        "content": "<image>他们是谁？",
         "role": "user"
       },
       {
@@ -94,7 +94,7 @@
   {
     "messages": [
       {
-        "content": "他是谁？",
+        "content": "<image>他是谁？",
         "role": "user"
       },
       {
@@ -117,7 +117,7 @@
   {
     "messages": [
       {
-        "content": "请描述这张图片",
+        "content": "<image>请描述这张图片",
         "role": "user"
       },
       {
