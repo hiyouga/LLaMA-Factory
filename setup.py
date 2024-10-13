@@ -54,12 +54,13 @@ extra_require = {
     "gptq": ["optimum>=1.17.0", "auto-gptq>=0.5.0"],
     "awq": ["autoawq"],
     "aqlm": ["aqlm[gpu]>=1.1.0"],
-    "vllm": ["vllm>=0.4.3,<=0.6.2"],
+    "vllm": ["vllm>=0.4.3,<=0.6.3"],
     "galore": ["galore-torch"],
     "badam": ["badam>=1.2.1"],
     "adam-mini": ["adam-mini"],
     "qwen": ["transformers_stream_generator"],
     "modelscope": ["modelscope"],
+    "openmind": ["openmind"],
     "dev": ["ruff", "pytest"],
 }
 
