@@ -107,6 +107,7 @@ VISION_MODELS = set()
 class DownloadSource(str, Enum):
     DEFAULT = "hf"
     MODELSCOPE = "ms"
+    OPENMIND = "om"
 
 
 def register_model_group(
@@ -163,14 +164,17 @@ register_model_group(
         "Baichuan2-13B-Base": {
             DownloadSource.DEFAULT: "baichuan-inc/Baichuan2-13B-Base",
             DownloadSource.MODELSCOPE: "baichuan-inc/Baichuan2-13B-Base",
+            DownloadSource.OPENMIND: "Baichuan/Baichuan2_13b_base_pt",
         },
         "Baichuan2-7B-Chat": {
             DownloadSource.DEFAULT: "baichuan-inc/Baichuan2-7B-Chat",
             DownloadSource.MODELSCOPE: "baichuan-inc/Baichuan2-7B-Chat",
+            DownloadSource.OPENMIND: "Baichuan/Baichuan2_7b_chat_pt",
         },
         "Baichuan2-13B-Chat": {
             DownloadSource.DEFAULT: "baichuan-inc/Baichuan2-13B-Chat",
             DownloadSource.MODELSCOPE: "baichuan-inc/Baichuan2-13B-Chat",
+            DownloadSource.OPENMIND: "Baichuan/Baichuan2_13b_chat_pt",
         },
     },
     template="baichuan2",
@@ -555,10 +559,12 @@ register_model_group(
         "Gemma-2-2B-Instruct": {
             DownloadSource.DEFAULT: "google/gemma-2-2b-it",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-2b-it",
+            DownloadSource.OPENMIND: "LlamaFactory/gemma-2-2b-it",
         },
         "Gemma-2-9B-Instruct": {
             DownloadSource.DEFAULT: "google/gemma-2-9b-it",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-9b-it",
+            DownloadSource.OPENMIND: "LlamaFactory/gemma-2-9b-it",
         },
         "Gemma-2-27B-Instruct": {
             DownloadSource.DEFAULT: "google/gemma-2-27b-it",
@@ -578,6 +584,7 @@ register_model_group(
         "GLM-4-9B-Chat": {
             DownloadSource.DEFAULT: "THUDM/glm-4-9b-chat",
             DownloadSource.MODELSCOPE: "ZhipuAI/glm-4-9b-chat",
+            DownloadSource.OPENMIND: "LlamaFactory/glm-4-9b-chat",
         },
         "GLM-4-9B-1M-Chat": {
             DownloadSource.DEFAULT: "THUDM/glm-4-9b-chat-1m",
@@ -632,6 +639,7 @@ register_model_group(
         "InternLM2.5-1.8B": {
             DownloadSource.DEFAULT: "internlm/internlm2_5-1_8b",
             DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-1_8b",
+            DownloadSource.OPENMIND: "Intern/internlm2_5-1_8b",
         },
         "InternLM2.5-7B": {
             DownloadSource.DEFAULT: "internlm/internlm2_5-7b",
@@ -640,22 +648,27 @@ register_model_group(
         "InternLM2.5-20B": {
             DownloadSource.DEFAULT: "internlm/internlm2_5-20b",
             DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-20b",
+            DownloadSource.OPENMIND: "Intern/internlm2_5-20b",
         },
         "InternLM2.5-1.8B-Chat": {
             DownloadSource.DEFAULT: "internlm/internlm2_5-1_8b-chat",
             DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-1_8b-chat",
+            DownloadSource.OPENMIND: "Intern/internlm2_5-1_8b-chat",
         },
         "InternLM2.5-7B-Chat": {
             DownloadSource.DEFAULT: "internlm/internlm2_5-7b-chat",
             DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-7b-chat",
+            DownloadSource.OPENMIND: "Intern/internlm2_5-7b-chat",
         },
         "InternLM2.5-7B-1M-Chat": {
             DownloadSource.DEFAULT: "internlm/internlm2_5-7b-chat-1m",
             DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-7b-chat-1m",
+            DownloadSource.OPENMIND: "Intern/internlm2_5-7b-chat-1m",
         },
         "InternLM2.5-20B-Chat": {
             DownloadSource.DEFAULT: "internlm/internlm2_5-20b-chat",
             DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2_5-20b-chat",
+            DownloadSource.OPENMIND: "Intern/internlm2_5-20b-chat",
         },
     },
     template="intern2",
@@ -756,6 +769,7 @@ register_model_group(
         "Llama-3-8B-Chinese-Chat": {
             DownloadSource.DEFAULT: "shenzhi-wang/Llama3-8B-Chinese-Chat",
             DownloadSource.MODELSCOPE: "LLM-Research/Llama3-8B-Chinese-Chat",
+            DownloadSource.OPENMIND: "LlamaFactory/Llama3-Chinese-8B-Instruct",
         },
         "Llama-3-70B-Chinese-Chat": {
             DownloadSource.DEFAULT: "shenzhi-wang/Llama3-70B-Chinese-Chat",
@@ -960,6 +974,7 @@ register_model_group(
         "MiniCPM3-4B-Chat": {
             DownloadSource.DEFAULT: "openbmb/MiniCPM3-4B",
             DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM3-4B",
+            DownloadSource.OPENMIND: "LlamaFactory/MiniCPM3-4B",
         },
     },
     template="cpm3",
@@ -1421,14 +1436,17 @@ register_model_group(
         "Qwen2-0.5B-Instruct": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-0.5B-Instruct",
             DownloadSource.MODELSCOPE: "qwen/Qwen2-0.5B-Instruct",
+            DownloadSource.OPENMIND: "LlamaFactory/Qwen2-0.5B-Instruct",
         },
         "Qwen2-1.5B-Instruct": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-1.5B-Instruct",
             DownloadSource.MODELSCOPE: "qwen/Qwen2-1.5B-Instruct",
+            DownloadSource.OPENMIND: "LlamaFactory/Qwen2-1.5B-Instruct",
         },
         "Qwen2-7B-Instruct": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-7B-Instruct",
             DownloadSource.MODELSCOPE: "qwen/Qwen2-7B-Instruct",
+            DownloadSource.OPENMIND: "LlamaFactory/Qwen2-7B-Instruct",
         },
         "Qwen2-72B-Instruct": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-72B-Instruct",
@@ -1711,10 +1729,12 @@ register_model_group(
         "Qwen2-VL-2B-Instruct": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-VL-2B-Instruct",
             DownloadSource.MODELSCOPE: "qwen/Qwen2-VL-2B-Instruct",
+            DownloadSource.OPENMIND: "LlamaFactory/Qwen2-VL-2B-Instruct",
         },
         "Qwen2-VL-7B-Instruct": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-VL-7B-Instruct",
             DownloadSource.MODELSCOPE: "qwen/Qwen2-VL-7B-Instruct",
+            DownloadSource.OPENMIND: "LlamaFactory/Qwen2-VL-7B-Instruct",
         },
         "Qwen2-VL-72B-Instruct": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-VL-72B-Instruct",
@@ -1813,10 +1833,12 @@ register_model_group(
         "TeleChat-7B-Chat": {
             DownloadSource.DEFAULT: "Tele-AI/telechat-7B",
             DownloadSource.MODELSCOPE: "TeleAI/telechat-7B",
+            DownloadSource.OPENMIND: "TeleAI/TeleChat-7B-pt",
         },
         "TeleChat-12B-Chat": {
             DownloadSource.DEFAULT: "Tele-AI/TeleChat-12B",
             DownloadSource.MODELSCOPE: "TeleAI/TeleChat-12B",
+            DownloadSource.OPENMIND: "TeleAI/TeleChat-12B-pt",
         },
         "TeleChat-12B-v2-Chat": {
             DownloadSource.DEFAULT: "Tele-AI/TeleChat-12B-v2",
@@ -2035,6 +2057,7 @@ register_model_group(
         "Yi-1.5-6B-Chat": {
             DownloadSource.DEFAULT: "01-ai/Yi-1.5-6B-Chat",
             DownloadSource.MODELSCOPE: "01ai/Yi-1.5-6B-Chat",
+            DownloadSource.OPENMIND: "LlamaFactory/Yi-1.5-6B-Chat",
         },
         "Yi-1.5-9B-Chat": {
             DownloadSource.DEFAULT: "01-ai/Yi-1.5-9B-Chat",
