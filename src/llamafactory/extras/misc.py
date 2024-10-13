@@ -231,18 +231,35 @@ def torch_gc() -> None:
         torch.cuda.empty_cache()
 
 
-def try_download_model_from_ms(model_args: "ModelArguments") -> str:
-    if not use_modelscope() or os.path.exists(model_args.model_name_or_path):
+def try_download_model_from_other_hub(model_args: "ModelArguments") -> str:
+    if (not use_modelscope() and not use_openmind()) or os.path.exists(model_args.model_name_or_path):
         return model_args.model_name_or_path
 
-    try:
+    if use_modelscope():
+        require_version("modelscope>=1.11.0", "To fix: pip install modelscope>=1.11.0")
         from modelscope import snapshot_download
 
         revision = "master" if model_args.model_revision == "main" else model_args.model_revision
-        return snapshot_download(model_args.model_name_or_path, revision=revision, cache_dir=model_args.cache_dir)
-    except ImportError:
-        raise ImportError("Please install modelscope via `pip install modelscope -U`")
+        return snapshot_download(
+            model_args.model_name_or_path,
+            revision=revision,
+            cache_dir=model_args.cache_dir,
+        )
+
+    if use_openmind():
+        require_version("openmind>=0.8.0", "To fix: pip install openmind>=0.8.0")
+        from openmind.utils.hub import snapshot_download
+
+        return snapshot_download(
+            model_args.model_name_or_path,
+            revision=model_args.model_revision,
+            cache_dir=model_args.cache_dir,
+        )
 
 
 def use_modelscope() -> bool:
     return os.environ.get("USE_MODELSCOPE_HUB", "0").lower() in ["true", "1"]
+
+
+def use_openmind() -> bool:
+    return os.environ.get("USE_OPENMIND_HUB", "0").lower() in ["true", "1"]
