@@ -477,7 +477,7 @@ class PixtralPlugin(BasePlugin):
 
                 if image_input_sizes is None:
                     raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
-                
+
                 image_size =  image_input_sizes[0][img_id]
                 height, width = image_size
                 num_height_tokens = height // patch_size
@@ -500,7 +500,7 @@ class PixtralPlugin(BasePlugin):
             raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
 
         return messages
-    
+
     @override
     def get_mm_inputs(
         self,
@@ -515,11 +515,6 @@ class PixtralPlugin(BasePlugin):
         mm_inputs = self._get_mm_inputs(images, videos, processor)
         if mm_inputs.get("image_sizes"):
             mm_inputs.pop("image_sizes")
-
-            if isinstance(mm_inputs.get("pixel_values"), list) and len(mm_inputs.get("pixel_values")[0]) >= 2:
-                raise ValueError("Now it only supports batchsize=1 on per gpu due to `List[tensor]` can not pack into BachEncoding")
-            
-            mm_inputs["pixel_values"] = mm_inputs.get("pixel_values")[0][0].unsqueeze(0)
 
         return mm_inputs
 
