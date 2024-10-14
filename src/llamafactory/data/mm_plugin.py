@@ -692,6 +692,12 @@ def get_mm_plugin(
     video_token: Optional[str] = None,
 ) -> "BasePlugin":
     plugin_class = PLUGINS.get(name, None)
+    if plugin_class == "PixtralPlugin":
+        from transformers.utils.versions import require_version
+        try:
+            require_version("transformers==4.46.0.dev0")
+        except Exception as e:
+            raise ImportError("PixtralPlugin requires transformers==4.46.0.dev0. Please install it first.")
     if plugin_class is None:
         raise ValueError("Multimodal plugin `{}` not found.".format(name))
 
