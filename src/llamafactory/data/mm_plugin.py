@@ -678,8 +678,8 @@ PLUGINS = {
     "llava_next": LlavaNextPlugin,
     "llava_next_video": LlavaNextVideoPlugin,
     "paligemma": PaliGemmaPlugin,
-    "qwen2_vl": Qwen2vlPlugin,
     "pixtral": PixtralPlugin,
+    "qwen2_vl": Qwen2vlPlugin,
     "video_llava": VideoLlavaPlugin,
 }
 
