@@ -697,7 +697,7 @@ def get_mm_plugin(
         try:
             require_version("transformers==4.46.0.dev0")
         except Exception as e:
-            raise ImportError("PixtralPlugin requires transformers==4.46.0.dev0. Please install it first.")
+            raise ImportError("PixtralPlugin requires transformers>=4.46.0.dev0. Please install it first.")
     if plugin_class is None:
         raise ValueError("Multimodal plugin `{}` not found.".format(name))
 
