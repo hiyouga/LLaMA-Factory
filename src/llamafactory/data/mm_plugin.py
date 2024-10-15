@@ -513,6 +513,12 @@ class PixtralPlugin(BasePlugin):
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         self._validate_input(images, videos)
         mm_inputs = self._get_mm_inputs(images, videos, processor)
+        # hack for hf engine
+        if mm_inputs.get("pixel_values") and len(mm_inputs.get("pixel_values")[0]) == 1:
+            mm_inputs["pixel_values"] = mm_inputs["pixel_values"][0][0].unsqueeze(0)
+
+        if mm_inputs.get("image_sizes"):
+            del mm_inputs["image_sizes"]
 
         return mm_inputs
 
