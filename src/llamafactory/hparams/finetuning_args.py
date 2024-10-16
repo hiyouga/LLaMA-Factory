@@ -148,6 +148,10 @@ class RLHFArguments:
         default=0.0,
         metadata={"help": "The robust DPO label smoothing parameter in cDPO that should be between 0 and 0.5."},
     )
+    dpop_lambda: float = field(
+        default=0.0,
+        metadata={"help": "The weight factor of the penalty term in DPOP training."},
+    )
     kto_chosen_weight: float = field(
         default=1.0,
         metadata={"help": "The weight factor of the desirable losses in KTO training."},
