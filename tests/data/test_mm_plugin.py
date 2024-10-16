@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import os
-from typing import TYPE_CHECKING, Any, Dict, List, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Sequence, Tuple
 
 import pytest
 import torch
