@@ -116,7 +116,6 @@ def load_config(model_args: "ModelArguments") -> "PretrainedConfig":
     Loads model config.
     """
     init_kwargs = _get_init_kwargs(model_args)
-    
     return AutoConfig.from_pretrained(model_args.model_name_or_path, **init_kwargs)
 
 
