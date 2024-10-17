@@ -447,6 +447,80 @@ class PaliGemmaPlugin(BasePlugin):
         mm_inputs["token_type_ids"] = _get_paligemma_token_type_ids(imglens, seqlens, processor)
         return mm_inputs
 
+class PixtralPlugin(BasePlugin):
+    @override
+    def process_messages(
+        self,
+        messages: Sequence[Dict[str, str]],
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        processor: Optional["ProcessorMixin"],
+    ) -> List[Dict[str, str]]:
+        patch_size = processor.patch_size
+        image_token = processor.image_token
+        image_break_token = processor.image_break_token
+        image_end_token = processor.image_end_token
+
+        self._validate_input(images, videos)
+        num_image_tokens = 0
+        img_kwargs = self._get_mm_inputs(images, videos, processor)
+        image_input_sizes = None
+
+        if img_kwargs.get("pixel_values") is not None:
+            image_input_sizes = img_kwargs["image_sizes"]
+
+        messages = deepcopy(messages)
+        for message in messages:
+            content = message["content"]
+            img_id = 0
+            while IMAGE_PLACEHOLDER in content:
+
+                if image_input_sizes is None:
+                    raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
+
+                image_size =  image_input_sizes[0][img_id]
+                height, width = image_size
+                num_height_tokens = height // patch_size
+                num_width_tokens = width // patch_size
+                replace_tokens = [
+                    [image_token] * num_width_tokens + [image_break_token]
+                ] * num_height_tokens
+                # Flatten list
+                replace_tokens = [item for sublist in replace_tokens for item in sublist]
+                replace_tokens[-1] = image_end_token
+                replace_str = "".join(replace_tokens)
+                content = content.replace(IMAGE_PLACEHOLDER, replace_str, 1)
+
+                img_id += 1
+                num_image_tokens += 1
+
+            message["content"] = content
+
+        if len(images) != num_image_tokens:
+            raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
+
+        return messages
+
+    @override
+    def get_mm_inputs(
+        self,
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        imglens: Sequence[int],
+        vidlens: Sequence[int],
+        seqlens: Sequence[int],
+        processor: Optional["ProcessorMixin"],
+    ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
+        self._validate_input(images, videos)
+        mm_inputs = self._get_mm_inputs(images, videos, processor)
+        # hack for hf engine
+        if mm_inputs.get("pixel_values") and len(mm_inputs.get("pixel_values")[0]) == 1:
+            mm_inputs["pixel_values"] = mm_inputs["pixel_values"][0][0].unsqueeze(0)
+
+        if mm_inputs.get("image_sizes"):
+            del mm_inputs["image_sizes"]
+
+        return mm_inputs
 
 class Qwen2vlPlugin(BasePlugin):
     @override
@@ -610,6 +684,7 @@ PLUGINS = {
     "llava_next": LlavaNextPlugin,
     "llava_next_video": LlavaNextVideoPlugin,
     "paligemma": PaliGemmaPlugin,
+    "pixtral": PixtralPlugin,
     "qwen2_vl": Qwen2vlPlugin,
     "video_llava": VideoLlavaPlugin,
 }
@@ -621,6 +696,12 @@ def get_mm_plugin(
     video_token: Optional[str] = None,
 ) -> "BasePlugin":
     plugin_class = PLUGINS.get(name, None)
+    if plugin_class == "PixtralPlugin":
+        from transformers.utils.versions import require_version
+        try:
+            require_version("transformers==4.46.0.dev0")
+        except Exception as e:
+            raise ImportError("PixtralPlugin requires transformers>=4.46.0.dev0. Please install it first.")
     if plugin_class is None:
         raise ValueError("Multimodal plugin `{}` not found.".format(name))
 
