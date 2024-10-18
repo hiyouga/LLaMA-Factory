@@ -166,7 +166,6 @@ def _get_merged_dataset(
     """
     if dataset_names is None:
         return None
-
     datasets = []
     for dataset_attr in get_dataset_list(dataset_names, data_args.dataset_dir):
         if (stage == "rm" and dataset_attr.ranking is False) or (stage != "rm" and dataset_attr.ranking is True):
@@ -244,7 +243,6 @@ def get_dataset(
             logger.warning("Loading dataset from disk will ignore other data arguments.")
             dataset_dict: "DatasetDict" = load_from_disk(data_args.tokenized_path)
             logger.info("Loaded tokenized dataset from {}.".format(data_args.tokenized_path))
-
             dataset_module: Dict[str, "Dataset"] = {}
             if "train" in dataset_dict:
                 dataset_module["train_dataset"] = dataset_dict["train"]
