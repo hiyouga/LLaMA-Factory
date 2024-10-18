@@ -5,7 +5,7 @@ model_name_or_path: /import/ml-sc-nlpcheckpoints-scratch3/jonathanl/generic_chec
 stage: sft
 do_train: true
 finetuning_type: full
-deepspeed: /import/ml-sc-scratch5/etashg/llama3.2/LLaMA-Factory/examples/deepspeed/jonathan.json
+deepspeed: /import/ml-sc-scratch4/shubhangiu/LLaMA-Factory/examples/deepspeed/jonathan.json
 
 ### dataset
 dataset: llava-med 
