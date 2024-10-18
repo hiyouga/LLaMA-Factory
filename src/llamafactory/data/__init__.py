@@ -17,17 +17,18 @@ from .collator import (
     MultiModalDataCollatorForSeq2Seq,
     PairwiseDataCollatorWithPadding,
     SFTDataCollatorWith4DAttentionMask,
+    SFTDataCollatorWithFlattingPacking,
 )
 from .data_utils import Role, split_dataset
 from .loader import get_dataset
 from .template import TEMPLATES, Template, get_template_and_fix_tokenizer
-
 
 __all__ = [
     "KTODataCollatorWithPadding",
     "MultiModalDataCollatorForSeq2Seq",
     "PairwiseDataCollatorWithPadding",
     "SFTDataCollatorWith4DAttentionMask",
+    "SFTDataCollatorWithFlattingPacking",
     "Role",
     "split_dataset",
     "get_dataset",
