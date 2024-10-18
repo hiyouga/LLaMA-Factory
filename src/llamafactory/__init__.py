@@ -20,7 +20,7 @@ Level:
 
 Dependency graph:
   main:
-    transformers>=4.41.2,<=4.45.0
+    transformers>=4.41.2,<=4.45.2
     datasets>=2.16.0,<=2.21.0
     accelerate>=0.30.1,<=0.34.2
     peft>=0.11.1,<=0.12.0
@@ -28,9 +28,9 @@ Dependency graph:
   attention:
     transformers>=4.42.4 (gemma+fa2)
   longlora:
-    transformers>=4.41.2,<=4.45.0
+    transformers>=4.41.2,<=4.45.2
   packing:
-    transformers>=4.41.2,<=4.45.0
+    transformers>=4.41.2,<=4.45.2
 
 Disable version checking: DISABLE_VERSION_CHECK=1
 Enable VRAM recording: RECORD_VRAM=1
@@ -38,6 +38,7 @@ Force check imports: FORCE_CHECK_IMPORTS=1
 Force using torchrun: FORCE_TORCHRUN=1
 Set logging verbosity: LLAMAFACTORY_VERBOSITY=WARN
 Use modelscope: USE_MODELSCOPE_HUB=1
+Use openmind: USE_OPENMIND_HUB=1
 """
 
 from .extras.env import VERSION

@@ -92,7 +92,7 @@ def autocast_projector_dtype(model: "PreTrainedModel", model_args: "ModelArgumen
 
     if getattr(model, "quantization_method", None):
         model_type = getattr(model.config, "model_type", None)
-        if model_type in ["llava", "paligemma"]:
+        if model_type in ["llava", "llava_next", "llava_next_video", "paligemma", "video_llava"]:
             mm_projector: "torch.nn.Module" = getattr(model, "multi_modal_projector")
         elif model_type == "qwen2_vl":
             mm_projector: "torch.nn.Module" = getattr(getattr(model, "visual"), "merger")
@@ -108,7 +108,13 @@ def configure_visual_model(config: "PretrainedConfig") -> None:
     Patches VLMs before loading them.
     """
     model_type = getattr(config, "model_type", None)
-    if model_type == "llava":  # required for ds zero3 and valuehead models
+    if model_type in [
+        "llava",
+        "llava_next",
+        "llava_next_video",
+        "paligemma",
+        "video_llava",
+    ]:  # required for ds zero3 and valuehead models
         setattr(config, "hidden_size", getattr(config.text_config, "hidden_size", None))
 
     if getattr(config, "is_yi_vl_derived_model", None):
@@ -122,7 +128,7 @@ def get_forbidden_modules(config: "PretrainedConfig", finetuning_args: "Finetuni
     """
     model_type = getattr(config, "model_type", None)
     forbidden_modules = set()
-    if model_type in ["llava", "paligemma"]:
+    if model_type in ["llava", "llava_next", "llava_next_video", "paligemma", "video_llava"]:
         if finetuning_args.freeze_vision_tower:
             forbidden_modules.add("vision_tower")
 
@@ -150,10 +156,26 @@ def get_image_seqlen(config: "PretrainedConfig") -> int:
             image_seqlen += 1
     elif model_type == "paligemma":
         image_seqlen = config.vision_config.num_image_tokens
-    elif model_type == "qwen2_vl":  # variable length
+    else:
         image_seqlen = -1
 
     return image_seqlen
+
+
+def get_patch_size(config: "PretrainedConfig") -> int:
+    r"""
+    Computes the patch size of the vit.
+    """
+    patch_size = getattr(config.vision_config, "patch_size", -1)
+    return patch_size
+
+
+def get_vision_feature_select_strategy(config: "PretrainedConfig") -> int:
+    r"""
+    Get the vision_feature_select_strategy.
+    """
+    vision_feature_select_strategy = getattr(config, "vision_feature_select_strategy", "default")
+    return vision_feature_select_strategy
 
 
 def patch_target_modules(
@@ -164,7 +186,7 @@ def patch_target_modules(
     """
     model_type = getattr(config, "model_type", None)
     if finetuning_args.freeze_vision_tower:
-        if model_type in ["llava", "paligemma"]:
+        if model_type in ["llava", "llava_next", "llava_next_video", "paligemma", "video_llava"]:
             return "^(?!.*vision_tower).*(?:{}).*".format("|".join(target_modules))
         elif model_type == "qwen2_vl":
             return "^(?!.*visual).*(?:{}).*".format("|".join(target_modules))

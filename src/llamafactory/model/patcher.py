@@ -27,18 +27,23 @@ from ..extras.misc import infer_optim_dtype
 from .model_utils.attention import configure_attn_implementation, print_attn_implementation
 from .model_utils.checkpointing import prepare_model_for_training
 from .model_utils.embedding import resize_embedding_layer
-from .model_utils.liger_kernel import configure_liger_kernel
 from .model_utils.longlora import configure_longlora
 from .model_utils.moe import add_z3_leaf_module, configure_moe
 from .model_utils.packing import configure_packing
 from .model_utils.quantization import configure_quantization
 from .model_utils.rope import configure_rope
 from .model_utils.valuehead import prepare_valuehead_model
-from .model_utils.visual import autocast_projector_dtype, configure_visual_model
+from .model_utils.visual import (
+    autocast_projector_dtype,
+    configure_visual_model,
+    get_image_seqlen,
+    get_patch_size,
+    get_vision_feature_select_strategy,
+)
 
 
 if TYPE_CHECKING:
-    from transformers import PretrainedConfig, PreTrainedTokenizer
+    from transformers import PretrainedConfig, PreTrainedTokenizer, ProcessorMixin
     from trl import AutoModelForCausalLMWithValueHead
 
     from ..hparams import ModelArguments
@@ -50,6 +55,22 @@ logger = get_logger(__name__)
 def patch_tokenizer(tokenizer: "PreTrainedTokenizer") -> None:
     if "PreTrainedTokenizerBase" not in str(tokenizer._pad.__func__):
         tokenizer._pad = MethodType(PreTrainedTokenizerBase._pad, tokenizer)
+
+
+def patch_processor(
+    processor: "ProcessorMixin",
+    config: "PretrainedConfig",
+    tokenizer: "PreTrainedTokenizer",
+    model_args: "ModelArguments",
+) -> None:
+    setattr(processor, "tokenizer", tokenizer)
+    setattr(processor, "image_seqlen", get_image_seqlen(config))
+    setattr(processor, "image_resolution", model_args.image_resolution)
+    setattr(processor, "patch_size", get_patch_size(config))
+    setattr(processor, "video_resolution", model_args.video_resolution)
+    setattr(processor, "video_fps", model_args.video_fps)
+    setattr(processor, "video_maxlen", model_args.video_maxlen)
+    setattr(processor, "vision_feature_select_strategy", get_vision_feature_select_strategy(config))
 
 
 def patch_config(
@@ -71,7 +92,6 @@ def patch_config(
 
     configure_attn_implementation(config, model_args, is_trainable)
     configure_rope(config, model_args, is_trainable)
-    configure_liger_kernel(config, model_args, is_trainable)
     configure_longlora(config, model_args, is_trainable)
     configure_quantization(config, tokenizer, model_args, init_kwargs)
     configure_moe(config, model_args, is_trainable)
@@ -89,6 +109,9 @@ def patch_config(
 
     if getattr(config, "model_type", None) == "qwen2" and is_trainable and model_args.flash_attn == "fa2":
         setattr(config, "use_cache", False)  # qwen2 does not support use_cache when using flash attn
+
+    if "LlavaLlamaForCausalLM" in getattr(config, "architectures", []):
+        raise ValueError("Please download llava models with hf-compatible format: https://huggingface.co/llava-hf")
 
     # deepspeed zero3 is not compatible with low_cpu_mem_usage
     init_kwargs["low_cpu_mem_usage"] = model_args.low_cpu_mem_usage and (not is_deepspeed_zero3_enabled())
