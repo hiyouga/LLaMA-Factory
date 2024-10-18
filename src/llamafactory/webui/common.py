@@ -31,7 +31,7 @@ from ..extras.constants import (
     DownloadSource,
 )
 from ..extras.logging import get_logger
-from ..extras.misc import use_modelscope
+from ..extras.misc import use_modelscope, use_openmind
 from ..extras.packages import is_gradio_available
 
 
@@ -109,17 +109,17 @@ def get_model_path(model_name: str) -> str:
         use_modelscope()
         and path_dict.get(DownloadSource.MODELSCOPE)
         and model_path == path_dict.get(DownloadSource.DEFAULT)
-    ):  # replace path
+    ):  # replace hf path with ms path
         model_path = path_dict.get(DownloadSource.MODELSCOPE)
 
+    if (
+        use_openmind()
+        and path_dict.get(DownloadSource.OPENMIND)
+        and model_path == path_dict.get(DownloadSource.DEFAULT)
+    ):  # replace hf path with om path
+        model_path = path_dict.get(DownloadSource.OPENMIND)
+
     return model_path
-
-
-def get_prefix(model_name: str) -> str:
-    r"""
-    Gets the prefix of the model name to obtain the model family.
-    """
-    return model_name.split("-")[0]
 
 
 def get_model_info(model_name: str) -> Tuple[str, str]:
@@ -137,16 +137,14 @@ def get_template(model_name: str) -> str:
     r"""
     Gets the template name if the model is a chat model.
     """
-    if model_name and model_name.endswith("Chat") and get_prefix(model_name) in DEFAULT_TEMPLATE:
-        return DEFAULT_TEMPLATE[get_prefix(model_name)]
-    return "default"
+    return DEFAULT_TEMPLATE.get(model_name, "default")
 
 
 def get_visual(model_name: str) -> bool:
     r"""
     Judges if the model is a vision language model.
     """
-    return get_prefix(model_name) in VISION_MODELS
+    return model_name in VISION_MODELS
 
 
 def list_checkpoints(model_name: str, finetuning_type: str) -> "gr.Dropdown":
