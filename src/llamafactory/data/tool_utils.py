@@ -23,7 +23,6 @@ from typing_extensions import override
 
 from .data_utils import SLOTS
 
-
 DEFAULT_TOOL_PROMPT = (
     "You have access to the following tools:\n{tool_text}"
     "Use the following format if using a tool:\n"
@@ -34,12 +33,12 @@ DEFAULT_TOOL_PROMPT = (
     "```\n"
 )
 
-
 GLM4_TOOL_PROMPT = (
     "你是一个名为 ChatGLM 的人工智能助手。你是基于智谱AI训练的语言模型 GLM-4 模型开发的，"
     "你的任务是针对用户的问题和要求提供适当的答复和支持。# 可用工具{tool_text}"
 )
 
+MISTRAL_TOOL_PROMPT = "[AVAILABLE_TOOLS] {tools}[/AVAILABLE_TOOLS]"
 
 FunctionCall = namedtuple("FunctionCall", ["name", "arguments"])
 
@@ -168,8 +167,36 @@ class GLM4ToolUtils(ToolUtils):
         return [(tool_name, json.dumps(arguments, ensure_ascii=False))]
 
 
+class MistralToolUtils(ToolUtils):
+    @override
+    @staticmethod
+    def get_function_slots() -> SLOTS:
+        return ["[TOOL_RESULTS] ", "{\"content\": {{results}}}", "[/TOOL_RESULTS]"]
+
+    @override
+    @staticmethod
+    def tool_formatter(tools: List[Dict[str, Any]]) -> str:
+        tools = json.dumps([{"type": "function", "function": tool} for tool in tools],ensure_ascii=False)
+        return MISTRAL_TOOL_PROMPT.format(tools=tools)
+
+    @override
+    @staticmethod
+    def tool_extractor(content: str) -> Union[str, List["FunctionCall"]]:
+        if "\n" not in content:
+            return content
+
+        tool_name, tool_input = content.split("\n", maxsplit=1)
+        try:
+            arguments = json.loads(tool_input)
+        except json.JSONDecodeError:
+            return content
+
+        return [(tool_name, json.dumps(arguments, ensure_ascii=False))]
+
+
 TOOLS = {
     "default": DefaultToolUtils(),
+    "mistral": MistralToolUtils(),
     "glm4": GLM4ToolUtils(),
 }
 
