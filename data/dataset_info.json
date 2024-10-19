@@ -627,7 +627,6 @@
   },
   "llava-med-train": {
     "hf_hub_url": "Shubhangi29/llava_med_instruct_60k_inline_mention_filtered",
-    "subset": "train",
     "formatting": "sharegpt",
     "columns": {
       "messages": "conversations",
@@ -642,7 +641,6 @@
   },
   "llava-med-val": {
     "hf_hub_url": "Shubhangi29/llava_med_instruct_60k_inline_mention_filtered",
-    "subset": "validation",
     "formatting": "sharegpt",
     "columns": {
       "messages": "conversations",

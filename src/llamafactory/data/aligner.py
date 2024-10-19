@@ -42,7 +42,7 @@ def _convert_images(
     """
     if len(images) == 0:
         return None
-
+   
     images = images[:]
     if dataset_attr.load_from in ["script", "file"]:
         for i in range(len(images)):
@@ -207,15 +207,19 @@ def convert_sharegpt(
     if broken_data:
         logger.warning("Skipping this abnormal example.")
         prompt, response = [], []
-
+    
     convert_images = partial(_convert_images, dataset_attr=dataset_attr, data_args=data_args)
     convert_videos = partial(_convert_videos, dataset_attr=dataset_attr, data_args=data_args)
+
+    if dataset_attr.images and not isinstance(example[dataset_attr.images], List):
+        _images = [example[dataset_attr.images]]
+
     output = {
         "_prompt": prompt,
         "_response": response,
         "_system": system,
         "_tools": example[dataset_attr.tools] if dataset_attr.tools else "",
-        "_images": convert_images(example[dataset_attr.images]) if dataset_attr.images else None,
+        "_images": convert_images(_images) if dataset_attr.images else None,
         "_videos": convert_videos(example[dataset_attr.videos]) if dataset_attr.videos else None,
     }
     return output
