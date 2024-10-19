@@ -55,7 +55,7 @@ _EVAL_CLS = Tuple[ModelArguments, DataArguments, EvaluationArguments, Finetuning
 
 def _parse_args(parser: "HfArgumentParser", args: Optional[Dict[str, Any]] = None) -> Tuple[Any]:
     if args is not None:
-        return parser.parse_dict(args)
+        return parser.parse_dict(args, allow_extra_keys=True)
 
     if len(sys.argv) == 2 and (sys.argv[1].endswith(".yaml") or sys.argv[1].endswith(".yml")):
         return parser.parse_yaml_file(os.path.abspath(sys.argv[1]))
