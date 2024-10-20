@@ -82,6 +82,7 @@ class VllmEngine(BaseEngine):
             "enforce_eager": model_args.vllm_enforce_eager,
             "enable_lora": model_args.adapter_name_or_path is not None,
             "max_lora_rank": model_args.vllm_max_lora_rank,
+            "num_scheduler_steps":8
         }
 
         if getattr(config, "is_yi_vl_derived_model", None):
