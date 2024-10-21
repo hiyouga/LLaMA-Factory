@@ -68,7 +68,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     )
 
     with gr.Row():
-        cutoff_len = gr.Slider(minimum=4, maximum=65536, value=1024, step=1)
+        cutoff_len = gr.Slider(minimum=4, maximum=131072, value=1024, step=1)
         batch_size = gr.Slider(minimum=1, maximum=1024, value=2, step=1)
         gradient_accumulation_steps = gr.Slider(minimum=1, maximum=1024, value=8, step=1)
         val_size = gr.Slider(minimum=0, maximum=1, value=0, step=0.001)
@@ -95,11 +95,15 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
 
         with gr.Row():
             with gr.Column():
-                resize_vocab = gr.Checkbox()
                 packing = gr.Checkbox()
+                neat_packing = gr.Checkbox()
 
             with gr.Column():
-                upcast_layernorm = gr.Checkbox()
+                train_on_prompt = gr.Checkbox()
+                mask_history = gr.Checkbox()
+
+            with gr.Column():
+                resize_vocab = gr.Checkbox()
                 use_llama_pro = gr.Checkbox()
 
             with gr.Column():
@@ -113,9 +117,11 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             warmup_steps,
             neftune_alpha,
             optim,
-            resize_vocab,
             packing,
-            upcast_layernorm,
+            neat_packing,
+            train_on_prompt,
+            mask_history,
+            resize_vocab,
             use_llama_pro,
             shift_attn,
             report_to,
@@ -129,9 +135,11 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             warmup_steps=warmup_steps,
             neftune_alpha=neftune_alpha,
             optim=optim,
-            resize_vocab=resize_vocab,
             packing=packing,
-            upcast_layernorm=upcast_layernorm,
+            neat_packing=neat_packing,
+            train_on_prompt=train_on_prompt,
+            mask_history=mask_history,
+            resize_vocab=resize_vocab,
             use_llama_pro=use_llama_pro,
             shift_attn=shift_attn,
             report_to=report_to,

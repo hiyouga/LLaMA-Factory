@@ -35,6 +35,7 @@ from transformers.utils.versions import require_version
 
 from ...extras.constants import SUPPORTED_CLASS_FOR_S2ATTN
 from ...extras.logging import get_logger
+from ...extras.packages import is_transformers_version_greater_than_4_43
 
 
 if TYPE_CHECKING:
@@ -43,21 +44,22 @@ if TYPE_CHECKING:
     from ...hparams import ModelArguments
 
 
-logger = logging.get_logger(__name__)
+transformers_logger = logging.get_logger(__name__)
 
 
 # Modified from:
 # https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/models/llama/modeling_llama.py
 def llama_attention_forward(
     self: "LlamaAttention",
-    hidden_states: torch.Tensor,
-    attention_mask: Optional[torch.Tensor] = None,
-    position_ids: Optional[torch.LongTensor] = None,
+    hidden_states: "torch.Tensor",
+    attention_mask: Optional["torch.Tensor"] = None,
+    position_ids: Optional["torch.LongTensor"] = None,
     past_key_value: Optional["Cache"] = None,
     output_attentions: bool = False,
-    cache_position: Optional[torch.LongTensor] = None,
+    cache_position: Optional["torch.LongTensor"] = None,
+    position_embeddings: Optional[Tuple["torch.Tensor", "torch.Tensor"]] = None,
     **kwargs,
-) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
+) -> Tuple["torch.Tensor", Optional["torch.Tensor"], Optional[Tuple["torch.Tensor"]]]:
     bsz, q_len, _ = hidden_states.size()
 
     query_states: "torch.Tensor" = self.q_proj(hidden_states)
@@ -68,10 +70,12 @@ def llama_attention_forward(
     key_states = key_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
     value_states = value_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
 
-    cos, sin = self.rotary_emb(value_states, position_ids)
-    query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin)
+    if position_embeddings is None:
+        cos, sin = self.rotary_emb(value_states, position_ids)
+    else:
+        cos, sin = position_embeddings
 
-    past_key_value = getattr(self, "past_key_value", past_key_value)
+    query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin)
 
     if past_key_value is not None:
         cache_kwargs = {"sin": sin, "cos": cos, "cache_position": cache_position}
@@ -85,7 +89,7 @@ def llama_attention_forward(
         assert q_len % groupsz == 0, "q_len {} should be divisible by group size {}.".format(q_len, groupsz)
         num_groups = q_len // groupsz
 
-        def shift(state: torch.Tensor) -> torch.Tensor:
+        def shift(state: "torch.Tensor") -> "torch.Tensor":
             state = state.transpose(1, 2)  # output: (bsz, seq_len, n_heads, head_dim)
             state = torch.cat(
                 (state[:, :, : self.num_heads // 2], state[:, :, self.num_heads // 2 :].roll(-groupsz // 2, dims=1)),
@@ -132,14 +136,15 @@ def llama_attention_forward(
 # https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/models/llama/modeling_llama.py
 def llama_flash_attention_2_forward(
     self: "LlamaFlashAttention2",
-    hidden_states: torch.Tensor,
-    attention_mask: Optional[torch.Tensor] = None,
-    position_ids: Optional[torch.LongTensor] = None,
+    hidden_states: "torch.Tensor",
+    attention_mask: Optional["torch.Tensor"] = None,
+    position_ids: Optional["torch.LongTensor"] = None,
     past_key_value: Optional["Cache"] = None,
     output_attentions: bool = False,
-    cache_position: Optional[torch.LongTensor] = None,
+    cache_position: Optional["torch.LongTensor"] = None,
+    position_embeddings: Optional[Tuple["torch.Tensor", "torch.Tensor"]] = None,
     **kwargs,
-) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
+) -> Tuple["torch.Tensor", Optional["torch.Tensor"], Optional[Tuple["torch.Tensor"]]]:
     # LlamaFlashAttention2 attention does not support output_attentions
     output_attentions = False
 
@@ -153,10 +158,12 @@ def llama_flash_attention_2_forward(
     key_states = key_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
     value_states = value_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
 
-    cos, sin = self.rotary_emb(value_states, position_ids)
-    query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin)
+    if position_embeddings is None:
+        cos, sin = self.rotary_emb(value_states, position_ids)
+    else:
+        cos, sin = position_embeddings
 
-    past_key_value = getattr(self, "past_key_value", past_key_value)
+    query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin)
 
     if past_key_value is not None:
         cache_kwargs = {"sin": sin, "cos": cos, "cache_position": cache_position}
@@ -181,7 +188,7 @@ def llama_flash_attention_2_forward(
         else:
             target_dtype = self.q_proj.weight.dtype
 
-        logger.warning_once("The input hidden states seems to be silently casted in float32.")
+        transformers_logger.warning_once("The input hidden states seems to be silently casted in float32.")
         query_states = query_states.to(target_dtype)
         key_states = key_states.to(target_dtype)
         value_states = value_states.to(target_dtype)
@@ -191,7 +198,7 @@ def llama_flash_attention_2_forward(
         assert q_len % groupsz == 0, "q_len {} should be divisible by group size {}.".format(q_len, groupsz)
         num_groups = q_len // groupsz
 
-        def shift(state: torch.Tensor) -> torch.Tensor:
+        def shift(state: "torch.Tensor") -> "torch.Tensor":
             state = torch.cat(
                 (state[:, :, : self.num_heads // 2], state[:, :, self.num_heads // 2 :].roll(-groupsz // 2, dims=1)),
                 dim=2,
@@ -202,9 +209,24 @@ def llama_flash_attention_2_forward(
         if attention_mask is not None:
             attention_mask = attention_mask[:, :groupsz].repeat(num_groups, 1)
 
-    attn_output: torch.Tensor = self._flash_attention_forward(
-        query_states, key_states, value_states, attention_mask, query_states.size(1), dropout=dropout_rate
-    )
+    if is_transformers_version_greater_than_4_43():
+        from transformers.modeling_flash_attention_utils import _flash_attention_forward
+
+        attn_output: "torch.Tensor" = _flash_attention_forward(
+            query_states,
+            key_states,
+            value_states,
+            attention_mask,
+            query_states.size(1),
+            dropout=dropout_rate,
+            sliding_window=getattr(self, "sliding_window", None),
+            use_top_left_mask=self._flash_attn_uses_top_left_mask,
+            is_causal=self.is_causal,
+        )
+    else:
+        attn_output: "torch.Tensor" = self._flash_attention_forward(
+            query_states, key_states, value_states, attention_mask, query_states.size(1), dropout=dropout_rate
+        )
 
     if getattr(self.config, "group_size_ratio", None) and self.training:  # shift back
         attn_output.reshape(bsz, q_len, self.num_heads, self.head_dim)
@@ -229,16 +251,19 @@ def llama_flash_attention_2_forward(
 # https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/models/llama/modeling_llama.py
 def llama_sdpa_attention_forward(
     self: "LlamaSdpaAttention",
-    hidden_states: torch.Tensor,
-    attention_mask: Optional[torch.Tensor] = None,
-    position_ids: Optional[torch.LongTensor] = None,
+    hidden_states: "torch.Tensor",
+    attention_mask: Optional["torch.Tensor"] = None,
+    position_ids: Optional["torch.LongTensor"] = None,
     past_key_value: Optional["Cache"] = None,
     output_attentions: bool = False,
-    cache_position: Optional[torch.LongTensor] = None,
+    cache_position: Optional["torch.LongTensor"] = None,
+    position_embeddings: Optional[Tuple["torch.Tensor", "torch.Tensor"]] = None,
     **kwargs,
-) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
+) -> Tuple["torch.Tensor", Optional["torch.Tensor"], Optional[Tuple["torch.Tensor"]]]:
     if output_attentions:
-        logger.warning_once("SDPA does not support `output_attentions=True`. Falling back to the vanilla attention")
+        transformers_logger.warning_once(
+            "SDPA does not support `output_attentions=True`. Falling back to the vanilla attention"
+        )
         return llama_attention_forward(
             self,
             hidden_states=hidden_states,
@@ -260,7 +285,11 @@ def llama_sdpa_attention_forward(
     key_states = key_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
     value_states = value_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
 
-    cos, sin = self.rotary_emb(value_states, position_ids)
+    if position_embeddings is None:
+        cos, sin = self.rotary_emb(value_states, position_ids)
+    else:
+        cos, sin = position_embeddings
+
     query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin)
 
     if past_key_value is not None:
@@ -275,7 +304,7 @@ def llama_sdpa_attention_forward(
         assert q_len % groupsz == 0, "q_len {} should be divisible by group size {}.".format(q_len, groupsz)
         num_groups = q_len // groupsz
 
-        def shift(state: torch.Tensor) -> torch.Tensor:
+        def shift(state: "torch.Tensor") -> "torch.Tensor":
             state = state.transpose(1, 2)  # output: (bsz, seq_len, n_heads, head_dim)
             state = torch.cat(
                 (state[:, :, : self.num_heads // 2], state[:, :, self.num_heads // 2 :].roll(-groupsz // 2, dims=1)),
@@ -291,18 +320,19 @@ def llama_sdpa_attention_forward(
     if attention_mask is not None:
         causal_mask = causal_mask[:, :, :, : key_states.shape[-2]]
 
-    if query_states.device.type == "cuda" and causal_mask is not None:
+    if query_states.device.type == "cuda" and causal_mask is not None:  # avoid pytorch bug
         query_states = query_states.contiguous()
         key_states = key_states.contiguous()
         value_states = value_states.contiguous()
 
+    is_causal = True if causal_mask is None and q_len > 1 else False
     attn_output = torch.nn.functional.scaled_dot_product_attention(
         query_states,
         key_states,
         value_states,
         attn_mask=causal_mask,
         dropout_p=self.attention_dropout if self.training else 0.0,
-        is_causal=causal_mask is None and q_len > 1,
+        is_causal=is_causal,
     )
     attn_output = attn_output.transpose(1, 2).contiguous()
 
@@ -323,7 +353,7 @@ def llama_sdpa_attention_forward(
 
 
 def _apply_llama_patch() -> None:
-    require_version("transformers==4.41.2", "To fix: pip install transformers==4.41.2")
+    require_version("transformers>=4.41.2,<=4.45.2", "To fix: pip install transformers>=4.41.2,<=4.45.2")
     LlamaAttention.forward = llama_attention_forward
     LlamaFlashAttention2.forward = llama_flash_attention_2_forward
     LlamaSdpaAttention.forward = llama_sdpa_attention_forward

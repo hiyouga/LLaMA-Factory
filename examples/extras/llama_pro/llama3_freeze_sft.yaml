@@ -1,5 +1,5 @@
 ### model
-model_name_or_path: models/llama3-8b-instruct-pro
+model_name_or_path: models/llama3-8b-pro
 
 ### method
 stage: sft
@@ -18,7 +18,7 @@ overwrite_cache: true
 preprocessing_num_workers: 16
 
 ### output
-output_dir: saves/llama3-8b-instruct-pro/freeze/sft
+output_dir: saves/llama3-8b-pro/freeze/sft
 logging_steps: 10
 save_steps: 500
 plot_loss: true

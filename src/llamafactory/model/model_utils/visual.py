@@ -15,11 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, List, Sequence, Set, Tuple, Union
 
 import torch
 import transformers.models
 from transformers.activations import ACT2FN
+from transformers.utils import logging
 
 from ...extras.logging import get_logger
 
@@ -27,10 +28,11 @@ from ...extras.logging import get_logger
 if TYPE_CHECKING:
     from transformers import LlavaConfig, PretrainedConfig, PreTrainedModel
 
-    from ...hparams import ModelArguments
+    from ...hparams import FinetuningArguments, ModelArguments
 
 
 logger = get_logger(__name__)
+transformers_logger = logging.get_logger(__name__)
 
 
 class LlavaMultiModalProjectorForYiVL(torch.nn.Module):
@@ -61,7 +63,7 @@ class LlavaMultiModalProjectorForYiVL(torch.nn.Module):
             else:
                 target_dtype = self.linear_1.weight.dtype
 
-            logger.warning_once("The hidden states seems to be silently casted in float32.")
+            transformers_logger.warning_once("The hidden states seems to be silently casted in float32.")
             hidden_states = hidden_states.to(target_dtype)
 
         return hidden_states
@@ -78,24 +80,120 @@ class LlavaMultiModalProjectorForYiVLForVLLM(LlavaMultiModalProjectorForYiVL):
         self.act = ACT2FN[projector_hidden_act]
 
 
-def autocast_projector_dtype(
-    model: "PreTrainedModel", model_args: "ModelArguments", mm_projector_name: str = "multi_modal_projector"
-) -> None:
+def autocast_projector_dtype(model: "PreTrainedModel", model_args: "ModelArguments") -> None:
+    r"""
+    Casts projector output to half precision for fine-tuning quantized VLMs.
+    """
+
     def _mm_projector_forward_post_hook(
         module: "torch.nn.Module", args: Tuple["torch.Tensor"], output: "torch.Tensor"
     ) -> "torch.Tensor":
         return output.to(model_args.compute_dtype)
 
-    if hasattr(model, mm_projector_name) and getattr(model, "quantization_method", None):
+    if getattr(model, "quantization_method", None):
+        model_type = getattr(model.config, "model_type", None)
+        if model_type in ["llava", "llava_next", "llava_next_video", "paligemma", "video_llava"]:
+            mm_projector: "torch.nn.Module" = getattr(model, "multi_modal_projector")
+        elif model_type == "qwen2_vl":
+            mm_projector: "torch.nn.Module" = getattr(getattr(model, "visual"), "merger")
+        else:
+            return
+
         logger.info("Casting multimodal projector outputs in {}.".format(model_args.compute_dtype))
-        mm_projector: "torch.nn.Module" = getattr(model, mm_projector_name)
         mm_projector.register_forward_hook(_mm_projector_forward_post_hook)
 
 
 def configure_visual_model(config: "PretrainedConfig") -> None:
-    if getattr(config, "model_type", None) == "llava":  # required for ds zero3 and valuehead models
+    r"""
+    Patches VLMs before loading them.
+    """
+    model_type = getattr(config, "model_type", None)
+    if model_type in [
+        "llava",
+        "llava_next",
+        "llava_next_video",
+        "paligemma",
+        "video_llava",
+    ]:  # required for ds zero3 and valuehead models
         setattr(config, "hidden_size", getattr(config.text_config, "hidden_size", None))
 
     if getattr(config, "is_yi_vl_derived_model", None):
         logger.info("Detected Yi-VL model, applying projector patch.")
         transformers.models.llava.modeling_llava.LlavaMultiModalProjector = LlavaMultiModalProjectorForYiVL
+
+
+def get_forbidden_modules(config: "PretrainedConfig", finetuning_args: "FinetuningArguments") -> Set[str]:
+    r"""
+    Freezes vision tower and language model for VLM full/freeze tuning.
+    """
+    model_type = getattr(config, "model_type", None)
+    forbidden_modules = set()
+    if model_type in ["llava", "llava_next", "llava_next_video", "paligemma", "video_llava"]:
+        if finetuning_args.freeze_vision_tower:
+            forbidden_modules.add("vision_tower")
+
+        if finetuning_args.train_mm_proj_only:
+            forbidden_modules.add("language_model")
+
+    elif model_type == "qwen2_vl":
+        if finetuning_args.freeze_vision_tower:
+            forbidden_modules.add("visual")
+
+        if finetuning_args.train_mm_proj_only:
+            raise ValueError("Qwen2-VL models do not support `train_mm_proj_only`.")
+
+    return forbidden_modules
+
+
+def get_image_seqlen(config: "PretrainedConfig") -> int:
+    r"""
+    Computes the number of special tokens per image.
+    """
+    model_type = getattr(config, "model_type", None)
+    if model_type == "llava":
+        image_seqlen = (config.vision_config.image_size // config.vision_config.patch_size) ** 2
+        if getattr(config, "vision_feature_select_strategy", "default") == "full":  # add [CLS] token
+            image_seqlen += 1
+    elif model_type == "paligemma":
+        image_seqlen = config.vision_config.num_image_tokens
+    else:
+        image_seqlen = -1
+
+    return image_seqlen
+
+
+def get_patch_size(config: "PretrainedConfig") -> int:
+    r"""
+    Computes the patch size of the vit.
+    """
+    patch_size = getattr(config.vision_config, "patch_size", -1)
+    return patch_size
+
+
+def get_vision_feature_select_strategy(config: "PretrainedConfig") -> int:
+    r"""
+    Get the vision_feature_select_strategy.
+    """
+    vision_feature_select_strategy = getattr(config, "vision_feature_select_strategy", "default")
+    return vision_feature_select_strategy
+
+
+def patch_target_modules(
+    config: "PretrainedConfig", finetuning_args: "FinetuningArguments", target_modules: Sequence[str]
+) -> Union[str, List[str]]:
+    r"""
+    Freezes vision tower for VLM LoRA tuning.
+    """
+    model_type = getattr(config, "model_type", None)
+    if finetuning_args.freeze_vision_tower:
+        if model_type in ["llava", "llava_next", "llava_next_video", "paligemma", "video_llava"]:
+            return "^(?!.*vision_tower).*(?:{}).*".format("|".join(target_modules))
+        elif model_type == "qwen2_vl":
+            return "^(?!.*visual).*(?:{}).*".format("|".join(target_modules))
+        else:
+            return target_modules
+    else:
+        if model_type == "qwen2_vl":
+            return "^(?!.*patch_embed).*(?:{}).*".format("|".join(target_modules))
+        else:
+            return target_modules

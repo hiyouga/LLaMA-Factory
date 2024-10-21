@@ -17,12 +17,10 @@
 
 from typing import TYPE_CHECKING, List, Optional
 
-from transformers import DataCollatorWithPadding
-
-from ...data import get_dataset
+from ...data import MultiModalDataCollatorForSeq2Seq, get_dataset, get_template_and_fix_tokenizer
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
-from ..callbacks import FixValueHeadModelCallback, fix_valuehead_checkpoint
+from ..callbacks import fix_valuehead_checkpoint
 from ..trainer_utils import create_ref_model, create_reward_model
 from .trainer import CustomPPOTrainer
 
@@ -43,28 +41,29 @@ def run_ppo(
 ):
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
-    dataset = get_dataset(model_args, data_args, training_args, stage="ppo", **tokenizer_module)
+    template = get_template_and_fix_tokenizer(tokenizer, data_args)
+    dataset_module = get_dataset(template, model_args, data_args, training_args, stage="ppo", **tokenizer_module)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train, add_valuehead=True)
 
     tokenizer.padding_side = "left"  # use left-padding in generation while using right-padding in training
-    data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+    data_collator = MultiModalDataCollatorForSeq2Seq(template=template, **tokenizer_module)
 
     # Create reference model and reward model
     ref_model = create_ref_model(model_args, finetuning_args, add_valuehead=True)
     reward_model = create_reward_model(model, model_args, finetuning_args)
 
     # Initialize our Trainer
-    ppo_trainer = CustomPPOTrainer(
+    ppo_trainer: "CustomPPOTrainer" = CustomPPOTrainer(
         model_args=model_args,
         training_args=training_args,
         finetuning_args=finetuning_args,
         generating_args=generating_args,
-        callbacks=callbacks + [FixValueHeadModelCallback()],
+        callbacks=callbacks,
         model=model,
         reward_model=reward_model,
         ref_model=ref_model,
-        dataset=dataset,
         data_collator=data_collator,
+        **dataset_module,
         **tokenizer_module,
     )
 

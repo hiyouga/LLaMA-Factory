@@ -37,10 +37,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import inspect
 import json
 import os
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import numpy as np
 import torch
@@ -55,18 +54,22 @@ from ..model import load_model, load_tokenizer
 from .template import get_eval_template
 
 
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
+
 class Evaluator:
     def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
         self.model_args, self.data_args, self.eval_args, finetuning_args = get_eval_args(args)
         self.tokenizer = load_tokenizer(self.model_args)["tokenizer"]
         self.tokenizer.padding_side = "right"  # avoid overflow issue in batched inference for llama2
-        self.template = get_template_and_fix_tokenizer(self.tokenizer, self.data_args.template)
+        self.template = get_template_and_fix_tokenizer(self.tokenizer, self.data_args)
         self.model = load_model(self.tokenizer, self.model_args, finetuning_args)
         self.eval_template = get_eval_template(self.eval_args.lang)
         self.choice_inputs = [self.tokenizer.encode(ch, add_special_tokens=False)[-1] for ch in CHOICES]
 
     @torch.inference_mode()
-    def batch_inference(self, batch_input: Dict[str, torch.Tensor]) -> List[str]:
+    def batch_inference(self, batch_input: Dict[str, "torch.Tensor"]) -> List[str]:
         logits = self.model(**batch_input).logits
         lengths = torch.sum(batch_input["attention_mask"], dim=-1)
         word_probs = torch.stack([logits[i, lengths[i] - 1] for i in range(len(lengths))], dim=0)
@@ -74,8 +77,11 @@ class Evaluator:
         return [chr(ord("A") + offset.item()) for offset in torch.argmax(choice_probs, dim=-1)]
 
     def eval(self) -> None:
+        eval_task = self.eval_args.task.split("_")[0]
+        eval_split = self.eval_args.task.split("_")[1]
+
         mapping = cached_file(
-            path_or_repo_id=os.path.join(self.eval_args.task_dir, self.eval_args.task),
+            path_or_repo_id=os.path.join(self.eval_args.task_dir, eval_task),
             filename="mapping.json",
             cache_dir=self.model_args.cache_dir,
             token=self.model_args.hf_hub_token,
@@ -88,27 +94,22 @@ class Evaluator:
         pbar = tqdm(categorys.keys(), desc="Processing subjects", position=0)
         results = {}
         for subject in pbar:
-            if "trust_remote_code" in inspect.signature(load_dataset).parameters:  # for datasets==2.16.0
-                kwargs = {"trust_remote_code": True}
-            else:
-                kwargs = {}
-
             dataset = load_dataset(
-                path=os.path.join(self.eval_args.task_dir, self.eval_args.task),
+                path=os.path.join(self.eval_args.task_dir, eval_task),
                 name=subject,
                 cache_dir=self.model_args.cache_dir,
                 download_mode=self.eval_args.download_mode,
                 token=self.model_args.hf_hub_token,
-                **kwargs,
+                trust_remote_code=True,
             )
             pbar.set_postfix_str(categorys[subject]["name"])
             inputs, outputs, labels = [], [], []
-            for i in trange(len(dataset[self.data_args.split]), desc="Formatting batches", position=1, leave=False):
+            for i in trange(len(dataset[eval_split]), desc="Formatting batches", position=1, leave=False):
                 support_set = (
                     dataset["train"].shuffle().select(range(min(self.eval_args.n_shot, len(dataset["train"]))))
                 )
                 messages = self.eval_template.format_example(
-                    target_data=dataset[self.data_args.split][i],
+                    target_data=dataset[eval_split][i],
                     support_set=support_set,
                     subject_name=categorys[subject]["name"],
                 )
@@ -135,7 +136,7 @@ class Evaluator:
         pbar.close()
         self._save_results(category_corrects, results)
 
-    def _save_results(self, category_corrects: Dict[str, np.ndarray], results: Dict[str, Dict[int, str]]) -> None:
+    def _save_results(self, category_corrects: Dict[str, "NDArray"], results: Dict[str, Dict[int, str]]) -> None:
         score_info = "\n".join(
             [
                 "{:>15}: {:.2f}".format(category_name, 100 * np.mean(category_correct))

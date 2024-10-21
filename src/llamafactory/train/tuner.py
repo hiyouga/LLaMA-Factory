@@ -57,7 +57,7 @@ def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: List["TrainerCallb
     elif finetuning_args.stage == "kto":
         run_kto(model_args, data_args, training_args, finetuning_args, callbacks)
     else:
-        raise ValueError("Unknown task.")
+        raise ValueError("Unknown task: {}.".format(finetuning_args.stage))
 
 
 def export_model(args: Optional[Dict[str, Any]] = None) -> None:
@@ -72,21 +72,26 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
     processor = tokenizer_module["processor"]
-    get_template_and_fix_tokenizer(tokenizer, data_args.template)
+    get_template_and_fix_tokenizer(tokenizer, data_args)
     model = load_model(tokenizer, model_args, finetuning_args)  # must after fixing tokenizer to resize vocab
 
-    if getattr(model, "quantization_method", None) and model_args.adapter_name_or_path is not None:
+    if getattr(model, "quantization_method", None) is not None and model_args.adapter_name_or_path is not None:
         raise ValueError("Cannot merge adapters to a quantized model.")
 
     if not isinstance(model, PreTrainedModel):
         raise ValueError("The model is not a `PreTrainedModel`, export aborted.")
 
-    if getattr(model, "quantization_method", None) is None:  # cannot convert dtype of a quantized model
-        output_dtype = getattr(model.config, "torch_dtype", torch.float16)
+    if getattr(model, "quantization_method", None) is not None:  # quantized model adopts float16 type
+        setattr(model.config, "torch_dtype", torch.float16)
+    else:
+        if model_args.infer_dtype == "auto":
+            output_dtype = getattr(model.config, "torch_dtype", torch.float16)
+        else:
+            output_dtype = getattr(torch, model_args.infer_dtype)
+
         setattr(model.config, "torch_dtype", output_dtype)
         model = model.to(output_dtype)
-    else:
-        setattr(model.config, "torch_dtype", torch.float16)
+        logger.info("Convert model dtype to: {}.".format(output_dtype))
 
     model.save_pretrained(
         save_directory=model_args.export_dir,
@@ -127,12 +132,12 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
         if model_args.export_hub_model_id is not None:
             tokenizer.push_to_hub(model_args.export_hub_model_id, token=model_args.hf_hub_token)
 
-        if model_args.visual_inputs and processor is not None:
+        if processor is not None:
             getattr(processor, "image_processor").save_pretrained(model_args.export_dir)
             if model_args.export_hub_model_id is not None:
                 getattr(processor, "image_processor").push_to_hub(
                     model_args.export_hub_model_id, token=model_args.hf_hub_token
                 )
 
-    except Exception:
-        logger.warning("Cannot save tokenizer, please copy the files manually.")
+    except Exception as e:
+        logger.warning("Cannot save tokenizer, please copy the files manually: {}.".format(e))

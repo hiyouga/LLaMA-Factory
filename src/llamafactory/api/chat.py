@@ -16,6 +16,7 @@ import base64
 import io
 import json
 import os
+import re
 import uuid
 from typing import TYPE_CHECKING, AsyncGenerator, Dict, List, Optional, Tuple
 
@@ -51,9 +52,8 @@ if is_requests_available():
 
 
 if TYPE_CHECKING:
-    from numpy.typing import NDArray
-
     from ..chat import ChatModel
+    from ..data.mm_plugin import ImageInput
     from .protocol import ChatCompletionRequest, ScoreEvaluationRequest
 
 
@@ -69,7 +69,7 @@ ROLE_MAPPING = {
 
 def _process_request(
     request: "ChatCompletionRequest",
-) -> Tuple[List[Dict[str, str]], Optional[str], Optional[str], Optional["NDArray"]]:
+) -> Tuple[List[Dict[str, str]], Optional[str], Optional[str], Optional["ImageInput"]]:
     logger.info("==== request ====\n{}".format(json.dumps(dictify(request), indent=2, ensure_ascii=False)))
 
     if len(request.messages) == 0:
@@ -104,15 +104,14 @@ def _process_request(
                     input_messages.append({"role": ROLE_MAPPING[message.role], "content": input_item.text})
                 else:
                     image_url = input_item.image_url.url
-                    if image_url.startswith("data:image"):  # base64 image
-                        image_data = base64.b64decode(image_url.split(",", maxsplit=1)[1])
-                        image_path = io.BytesIO(image_data)
+                    if re.match(r"^data:image\/(png|jpg|jpeg|gif|bmp);base64,(.+)$", image_url):  # base64 image
+                        image_stream = io.BytesIO(base64.b64decode(image_url.split(",", maxsplit=1)[1]))
                     elif os.path.isfile(image_url):  # local file
-                        image_path = open(image_url, "rb")
+                        image_stream = open(image_url, "rb")
                     else:  # web uri
-                        image_path = requests.get(image_url, stream=True).raw
+                        image_stream = requests.get(image_url, stream=True).raw
 
-                    image = Image.open(image_path).convert("RGB")
+                    image = Image.open(image_stream).convert("RGB")
         else:
             input_messages.append({"role": ROLE_MAPPING[message.role], "content": message.content})
 
@@ -230,8 +229,9 @@ async def create_stream_chat_completion_response(
 async def create_score_evaluation_response(
     request: "ScoreEvaluationRequest", chat_model: "ChatModel"
 ) -> "ScoreEvaluationResponse":
+    score_id = "scoreval-{}".format(uuid.uuid4().hex)
     if len(request.messages) == 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid request")
 
     scores = await chat_model.aget_scores(request.messages, max_length=request.max_length)
-    return ScoreEvaluationResponse(model=request.model, scores=scores)
+    return ScoreEvaluationResponse(id=score_id, model=request.model, scores=scores)
