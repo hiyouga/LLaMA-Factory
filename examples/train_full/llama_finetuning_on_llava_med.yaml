@@ -38,3 +38,7 @@ eval_dataset: llava-med-val
 per_device_eval_batch_size: 4
 eval_strategy: steps
 eval_steps: 100
+
+### report 
+report_to: wandb
+run_name: test_run
