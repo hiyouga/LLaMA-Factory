@@ -640,17 +640,17 @@
     }
   },
   "llava-med-val": {
-    "hf_hub_url": "Shubhangi29/llava_med_instruct_60k_inline_mention_filtered",
-    "formatting": "sharegpt",
-    "columns": {
-      "messages": "conversations",
-      "images": "image"
-    },
-    "tags": {
-      "role_tag": "from",
-      "content_tag": "value",
-      "user_tag": "human",
-      "assistant_tag": "gpt"
-    }
+  "hf_hub_url": "Shubhangi29/llava_med_instruct_60k_inline_mention_filtered",
+  "formatting": "sharegpt",
+  "columns": {
+   "messages": "conversations",
+   "images": "image"
+  },
+  "tags": {
+   "role_tag": "from",
+   "content_tag": "value",
+   "user_tag": "human",
+   "assistant_tag": "gpt"
   }
+ }
 }

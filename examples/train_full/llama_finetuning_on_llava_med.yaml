@@ -9,11 +9,16 @@ deepspeed: /import/ml-sc-scratch4/shubhangiu/LLaMA-Factory/examples/deepspeed/jo
 
 ### dataset
 dataset: llava-med-train  
-template: llava
-cutoff_len: 512
+template: llama3_vl
+cutoff_len: 8192
 overwrite_cache: true
-preprocessing_num_workers: 1
+preprocessing_num_workers: 4
 
+### eval
+eval_dataset: llava-med-val
+per_device_eval_batch_size: 4
+eval_strategy: steps
+eval_steps: 100
 
 ### output
 output_dir: saves/llama-3.2-11b/full/sft
@@ -23,7 +28,7 @@ plot_loss: true
 overwrite_output_dir: true
 
 ### train
-per_device_train_batch_size: 2
+per_device_train_batch_size: 4
 gradient_accumulation_steps: 8
 learning_rate: 2.0e-5
 num_train_epochs: 3
@@ -32,12 +37,6 @@ warmup_ratio: 0.03
 weight_decay: 0.
 bf16: true
 ddp_timeout: 180000000
-
-### eval
-eval_dataset: llava-med-val 
-per_device_eval_batch_size: 4
-eval_strategy: steps
-eval_steps: 100
 
 ### report 
 report_to: wandb
