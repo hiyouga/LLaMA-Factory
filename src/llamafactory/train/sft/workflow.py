@@ -17,7 +17,6 @@ from .trainer import CustomSeq2SeqTrainer, CustomSeqParallelTrainer
 import torch
 import os
 from ...easy_context import apply_seq_parallel_monkey_patch
-from ...easy_context.dist_flash_attn.offload_buffer import offload_buffer
 
 
 if TYPE_CHECKING:
@@ -91,10 +90,6 @@ def run_sft(
         trainer.save_state()
         if trainer.is_world_process_zero() and finetuning_args.plot_loss:
             plot_loss(training_args.output_dir, keys=["loss", "eval_loss"])
-    
-    global offload_buffer
-    if offload_buffer is not None:
-        offload_buffer = None
 
     # # Evaluation
     # if training_args.do_eval:

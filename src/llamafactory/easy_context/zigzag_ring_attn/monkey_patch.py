@@ -4,7 +4,7 @@ import warnings
 import torch
 import torch.utils.checkpoint
 from ring_flash_attn.zigzag_ring_flash_attn import zigzag_ring_flash_attn_func
-
+from functools import partial
 
 def new_flash_attn_forward(
     self,
@@ -16,6 +16,7 @@ def new_flash_attn_forward(
     dropout=0.0,
     softmax_scale=None,
     use_sliding_windows=False,
+    group=None
 ):
     if not self._flash_attn_uses_top_left_mask:
         causal = self.is_causal
@@ -33,6 +34,7 @@ def new_flash_attn_forward(
         dropout,
         softmax_scale,
         causal=causal,
+        group=group
     )
 
     return attn_output
@@ -49,12 +51,12 @@ def new_decoder_forward(
     cache_position: Optional[torch.LongTensor] = None,
     **kwargs,
 ) -> Tuple[torch.FloatTensor, Optional[Tuple[torch.FloatTensor, torch.FloatTensor]]]:
-    assert isinstance(
-        self.self_attn, transformers.models.llama.modeling_llama.LlamaFlashAttention2
-    ) or isinstance(
-        self.self_attn,
-        transformers.models.mistral.modeling_mistral.MistralFlashAttention2,
-    ), "Please toggle on the Flash Attention 2 implementation when using zigzag ring attention monkey patch."
+    # assert isinstance(
+    #     self.self_attn, transformers.models.llama.modeling_llama.LlamaFlashAttention2
+    # ) or isinstance(
+    #     self.self_attn,
+    #     transformers.models.mistral.modeling_mistral.MistralFlashAttention2,
+    # ), "Please toggle on the Flash Attention 2 implementation when using zigzag ring attention monkey patch."
 
     if "padding_mask" in kwargs:
         warnings.warn(
@@ -95,18 +97,39 @@ def new_decoder_forward(
     return outputs
 
 
-def apply_zigzag_ring_attn_monkey_patch_llama():
+def get_sp_process_group(sequence_parallel_size=None):
+    if sequence_parallel_size is None:
+        return None
+    assert torch.distributed.is_initialized()
+    world_size: int = torch.distributed.get_world_size()
+    print(f"sequence_parallel_size is {sequence_parallel_size}, world_size is {world_size}")
+    if sequence_parallel_size is None or sequence_parallel_size == -1:
+        sequence_parallel_size = world_size
+    else:
+        assert world_size % sequence_parallel_size == 0
+    num_sequence_parallel_groups: int = world_size // sequence_parallel_size
+    rank = torch.distributed.get_rank()
+
+    for i in range(num_sequence_parallel_groups):
+        ranks = range(i * sequence_parallel_size, (i + 1) * sequence_parallel_size)
+        if rank in ranks:
+            group = torch.distributed.new_group(ranks)
+            return group
+
+def apply_zigzag_ring_attn_monkey_patch_llama(sp_size=None):
+    sp_group = get_sp_process_group(sp_size)
     transformers.models.llama.modeling_llama.LlamaFlashAttention2._flash_attention_forward = (
-        new_flash_attn_forward
+        partial(new_flash_attn_forward, group=sp_group)
     )
     transformers.models.llama.modeling_llama.LlamaDecoderLayer.forward = (
         new_decoder_forward
     )
 
 
-def apply_zigzag_ring_attn_monkey_patch_mistral():
+def apply_zigzag_ring_attn_monkey_patch_mistral(sp_size=None):
+    sp_group = get_sp_process_group(sp_size)
     transformers.models.mistral.modeling_mistral.MistralFlashAttention2._flash_attention_forward = (
-        new_flash_attn_forward
+        partial(new_flash_attn_forward, group=sp_group)
     )
     transformers.models.mistral.modeling_mistral.MistralDecoderLayer.forward = (
         new_decoder_forward
