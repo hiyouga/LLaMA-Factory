@@ -84,7 +84,7 @@ def patch_config(
         if model_args.infer_dtype != "auto" and not is_trainable:
             model_args.compute_dtype = getattr(torch, model_args.infer_dtype)
         else:
-            model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
+            model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config.to_dict(), "torch_dtype", None))
 
     if is_torch_npu_available():
         use_jit_compile = os.environ.get("JIT_COMPILE", "0").lower() in ["true", "1"]
@@ -102,15 +102,15 @@ def patch_config(
         setattr(config, "use_cache", True)
         logger.info("Using KV cache for faster generation.")
 
-    if getattr(config, "model_type", None) == "qwen":
+    if getattr(config.to_dict(), "model_type", None) == "qwen":
         setattr(config, "use_flash_attn", model_args.flash_attn == "fa2")
         for dtype_name, dtype in [("fp16", torch.float16), ("bf16", torch.bfloat16), ("fp32", torch.float32)]:
             setattr(config, dtype_name, model_args.compute_dtype == dtype)
 
-    if getattr(config, "model_type", None) == "qwen2" and is_trainable and model_args.flash_attn == "fa2":
+    if getattr(config.to_dict(), "model_type", None) == "qwen2" and is_trainable and model_args.flash_attn == "fa2":
         setattr(config, "use_cache", False)  # qwen2 does not support use_cache when using flash attn
 
-    if "LlavaLlamaForCausalLM" in getattr(config, "architectures", []):
+    if "LlavaLlamaForCausalLM" in getattr(config.to_dict(), "architectures", []):
         raise ValueError("Please download llava models with hf-compatible format: https://huggingface.co/llava-hf")
 
     # deepspeed zero3 is not compatible with low_cpu_mem_usage
