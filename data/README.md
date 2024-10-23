@@ -46,7 +46,7 @@ Currently we support datasets in **alpaca** and **sharegpt** format.
 
 * [Example dataset](alpaca_en_demo.json)
 
-In supervised fine-tuning, the `instruction` column will be concatenated with the `input` column and used as the human prompt, then the human prompt would be `instruction\ninput`. The `output` column represents the model response.
+In supervised fine-tuning, the `instruction` column will be concatenated with the `input` column and used as the human prompt, then the human prompt would be `instruction\input`. The `output` column represents the model response.
 
 The `system` column will be used as the system prompt if specified.
 
