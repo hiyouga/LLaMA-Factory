@@ -708,6 +708,8 @@ If you have a project that should be incorporated, please contact via email or c
 1. **[AutoRE](https://github.com/THUDM/AutoRE)**: A document-level relation extraction system based on large language models.
 1. **[NVIDIA RTX AI Toolkit](https://github.com/NVIDIA/RTX-AI-Toolkit)**: SDKs for fine-tuning LLMs on Windows PC for NVIDIA RTX.
 1. **[LazyLLM](https://github.com/LazyAGI/LazyLLM)**: An easy and lazy way for building multi-agent LLMs applications and supports model fine-tuning via LLaMA Factory.
+1. **[RAG-Retrieval](https://github.com/NLPJCL/RAG-Retrieval)**：RAG-Retrieval provides the full pipeline for RAG retrieval model fine-tuning, inference, and distillation code.[[Best practices for LLM on Reranker tasks: A simple experiment report（with code）]](https://zhuanlan.zhihu.com/p/987727357)
+
 
 </details>
 
