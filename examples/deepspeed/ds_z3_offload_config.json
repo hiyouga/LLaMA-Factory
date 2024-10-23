@@ -28,9 +28,9 @@
     "overlap_comm": true,
     "contiguous_gradients": true,
     "sub_group_size": 1e9,
-    "reduce_bucket_size": "auto",
-    "stage3_prefetch_bucket_size": "auto",
-    "stage3_param_persistence_threshold": "auto",
+    "reduce_bucket_size": 1e9,
+    "stage3_prefetch_bucket_size": 1e9,
+    "stage3_param_persistence_threshold": 1e5,
     "stage3_max_live_parameters": 1e9,
     "stage3_max_reuse_distance": 1e9,
     "stage3_gather_16bit_weights_on_model_save": true

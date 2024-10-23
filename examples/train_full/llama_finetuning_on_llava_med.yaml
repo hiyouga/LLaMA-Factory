@@ -1,0 +1,43 @@
+### model
+model_name_or_path: /import/ml-sc-nlpcheckpoints-scratch3/jonathanl/generic_checkpoints/llama3.2/Llama-3.2-11B-Vision-Instruct
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full
+deepspeed: /import/ml-sc-scratch4/shubhangiu/LLaMA-Factory/examples/deepspeed/ds_z3_offload_config.json
+
+### dataset
+dataset: llava-med-train  
+template: llama3_vl
+cutoff_len: 1024
+overwrite_cache: true
+preprocessing_num_workers: 4
+
+### eval
+eval_dataset: llava-med-val
+per_device_eval_batch_size: 1
+eval_strategy: steps
+eval_steps: 100
+
+### output
+output_dir: saves/llama-3.2-11b/full/sft
+logging_steps: 1
+save_steps: 5000
+plot_loss: true
+overwrite_output_dir: true
+
+### train
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 16
+learning_rate: 2.0e-5
+num_train_epochs: 3
+lr_scheduler_type: cosine
+warmup_ratio: 0.03
+weight_decay: 0.
+bf16: true
+ddp_timeout: 180000000
+
+### report 
+report_to: wandb
+run_name: test_run
