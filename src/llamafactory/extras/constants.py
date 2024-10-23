@@ -1185,7 +1185,7 @@ register_model_group(
         }
     },
     template="pixtral",
-    vision=True
+    vision=True,
 )
 
 
