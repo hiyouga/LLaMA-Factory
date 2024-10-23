@@ -709,7 +709,7 @@ run_name: test_run # 可选
 1. **[AutoRE](https://github.com/THUDM/AutoRE)**：基于大语言模型的文档级关系抽取系统。
 1. **[NVIDIA RTX AI Toolkit](https://github.com/NVIDIA/RTX-AI-Toolkit)**：在 Windows 主机上利用英伟达 RTX 设备进行大型语言模型微调的开发包。
 1. **[LazyLLM](https://github.com/LazyAGI/LazyLLM)**：一个低代码构建多 Agent 大模型应用的开发工具，支持基于 LLaMA Factory 的模型微调.
-1. **[RAG-Retrieval](https://github.com/NLPJCL/RAG-Retrieval)**：RAG-Retrieval 提供了全链路的RAG检索微调(train)和推理(infer)以及蒸馏(distill)代码。[[LLM在Reranker任务上的最佳实践？A simple experiment report（with code）]](https://zhuanlan.zhihu.com/p/987727357)
+1. **[RAG-Retrieval](https://github.com/NLPJCL/RAG-Retrieval)**：RAG-Retrieval 提供了全链路的RAG检索模型微调(train)和推理(infer)以及蒸馏(distill)代码。[[LLM在Reranker任务上的最佳实践？A simple experiment report（with code）]](https://zhuanlan.zhihu.com/p/987727357)
 
 
 </details>
