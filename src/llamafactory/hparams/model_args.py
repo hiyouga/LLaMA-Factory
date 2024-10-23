@@ -140,6 +140,10 @@ class VllmArguments:
         default=32,
         metadata={"help": "Maximum rank of all LoRAs in the vLLM engine."},
     )
+    vllm_num_scheduler_steps: int = field(
+        default=8,
+        metadata={"help": "Steps of multi step scheduling in the vLLM engine."},
+    )
 
 
 @dataclass
