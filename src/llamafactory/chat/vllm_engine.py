@@ -72,7 +72,7 @@ class VllmEngine(BaseEngine):
 
         engine_args = {
             "model": model_args.model_name_or_path,
-            "trust_remote_code": True,
+            "trust_remote_code": model_args.trust_remote_code,
             "download_dir": model_args.cache_dir,
             "dtype": model_args.infer_dtype,
             "max_model_len": model_args.vllm_maxlen,
