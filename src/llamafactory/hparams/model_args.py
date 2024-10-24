@@ -305,6 +305,16 @@ class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments,
         init=False,
         metadata={"help": "Whether use block diag attention or not, derived from `neat_packing`. Do not specify it."},
     )
+    trust_remote_code: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Whether to trust the execution of code from datasets/models defined on the Hub. "
+                "This option should only be set to `True` for repositories you trust and in which "
+                "you have read the code, as it will execute code present on the Hub on your local machine."
+            )
+        },
+    )
 
     def __post_init__(self):
         if self.model_name_or_path is None:
