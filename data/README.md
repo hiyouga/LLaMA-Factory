@@ -1,6 +1,8 @@
 The [dataset_info.json](dataset_info.json) contains all available datasets. If you are using a custom dataset, please **make sure** to add a *dataset description* in `dataset_info.json` and specify `dataset: dataset_name` before training to use it.
 
 Currently we support datasets in **alpaca** and **sharegpt** format.
+> [!TIP]
+> ```sample_dataset``` has been provided in the [dataset_info.json](dataset_info.json) as an example. Please update it according to your usuage rather than creating  a new one.
 
 ```json
 "dataset_name": {
