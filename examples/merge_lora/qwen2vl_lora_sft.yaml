@@ -5,6 +5,7 @@ model_name_or_path: Qwen/Qwen2-VL-7B-Instruct
 adapter_name_or_path: saves/qwen2_vl-7b/lora/sft
 template: qwen2_vl
 finetuning_type: lora
+trust_remote_code: true
 
 ### export
 export_dir: models/qwen2_vl_lora_sft

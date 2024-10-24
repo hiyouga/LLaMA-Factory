@@ -52,7 +52,7 @@ def _get_init_kwargs(model_args: "ModelArguments") -> Dict[str, Any]:
     skip_check_imports()
     model_args.model_name_or_path = try_download_model_from_other_hub(model_args)
     return {
-        "trust_remote_code": True,
+        "trust_remote_code": model_args.trust_remote_code,
         "cache_dir": model_args.cache_dir,
         "revision": model_args.model_revision,
         "token": model_args.hf_hub_token,
@@ -155,7 +155,7 @@ def load_model(
                 load_class = AutoModelForCausalLM
 
             if model_args.train_from_scratch:
-                model = load_class.from_config(config, trust_remote_code=True)
+                model = load_class.from_config(config, trust_remote_code=model_args.trust_remote_code)
             else:
                 model = load_class.from_pretrained(**init_kwargs)
 

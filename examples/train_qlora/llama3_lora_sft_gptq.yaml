@@ -1,5 +1,6 @@
 ### model
 model_name_or_path: TechxGenus/Meta-Llama-3-8B-Instruct-GPTQ
+trust_remote_code: true
 
 ### method
 stage: sft
