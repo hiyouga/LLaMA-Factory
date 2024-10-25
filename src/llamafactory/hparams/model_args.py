@@ -285,6 +285,10 @@ class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments,
         default=False,
         metadata={"help": "For debugging purposes, print the status of the parameters in the model."},
     )
+    trust_remote_code: bool = field(
+        default=False,
+        metadata={"help": "Whether to trust the execution of code from datasets/models defined on the Hub or not."},
+    )
     compute_dtype: Optional[torch.dtype] = field(
         default=None,
         init=False,
@@ -304,16 +308,6 @@ class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments,
         default=False,
         init=False,
         metadata={"help": "Whether use block diag attention or not, derived from `neat_packing`. Do not specify it."},
-    )
-    trust_remote_code: bool = field(
-        default=False,
-        metadata={
-            "help": (
-                "Whether to trust the execution of code from datasets/models defined on the Hub. "
-                "This option should only be set to `True` for repositories you trust and in which "
-                "you have read the code, as it will execute code present on the Hub on your local machine."
-            )
-        },
     )
 
     def __post_init__(self):
