@@ -1,5 +1,6 @@
 ### model
 model_name_or_path: models/llama3-8b-pro
+trust_remote_code: true
 
 ### method
 stage: sft
