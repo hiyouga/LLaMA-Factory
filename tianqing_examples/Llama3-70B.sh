@@ -1,12 +1,15 @@
 # You can observe that the number of steps for different stage is quite different. They are not magic number. They are set to those numbers simply because I esitimate the time it takes to finish the training, and 
 # choose the number such that it fits my daily schedule>_<. This is for you to exactly reproduce my results. You many change the steps to other numbers if you want to.
-MODEL_DIR=${MODEL_DIR:-"/root/model/Meta-Llama-3-70B"}
+MODEL_DIR=${MODEL_DIR:-"/mnt/zj-gpfs/home/qianhao/models/Meta-Llama-3-70B/"}
 NGPUS=${NGPUS:-8}
 WORLD_SIZE=${WORLD_SIZE:-1}
 NUM_PROCESSES=$[${NGPUS}*$[WORLD_SIZE]]
 SEQ_LEN=${SEQ_LEN:-32768}
 SP_SIZE=${SP_SIZE:-1}
 BATCH_SIZE=${BATCH_SIZE:-1}
+PARALLEL_MODE=${PARALLEL_MODE:-"dist_flash_attn"}
+DATASET=${DATASET:-"long_sft_32k"}
+ACC=${ACC:-4}
 export PYTORCH_CUDA_ALLOC_CONF='max_split_size_mb:1024' 
 export WANDB_DISABLED=true
 export NCCL_DEBUG=WARN
@@ -30,10 +33,10 @@ src/train.py \
 --stage sft \
 --do_train \
 --finetuning_type full \
---parallel_mode dist_flash_attn \
+--parallel_mode ${PARALLEL_MODE} \
 --sp_size ${SP_SIZE} \
 --deepspeed examples/deepspeed/ds_z3_offload_config.json \
---dataset long_sft_32k \
+--dataset ${DATASET} \
 --template llama3 \
 --cutoff_len ${SEQ_LEN} \
 --max_steps 10 \
@@ -45,7 +48,7 @@ src/train.py \
 --plot_loss \
 --overwrite_output_dir \
 --per_device_train_batch_size ${BATCH_SIZE} \
---gradient_accumulation_steps 4 \
+--gradient_accumulation_steps ${ACC} \
 --learning_rate 2e-5 \
 --num_train_epochs 1.0 \
 --lr_scheduler_type cosine \
