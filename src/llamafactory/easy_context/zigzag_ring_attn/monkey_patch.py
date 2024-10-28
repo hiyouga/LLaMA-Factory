@@ -4,7 +4,7 @@ import warnings
 import torch
 import torch.utils.checkpoint
 from ring_flash_attn.zigzag_ring_flash_attn import zigzag_ring_flash_attn_func
-from functools import partial
+from functools import partialmethod
 
 def new_flash_attn_forward(
     self,
@@ -51,12 +51,12 @@ def new_decoder_forward(
     cache_position: Optional[torch.LongTensor] = None,
     **kwargs,
 ) -> Tuple[torch.FloatTensor, Optional[Tuple[torch.FloatTensor, torch.FloatTensor]]]:
-    # assert isinstance(
-    #     self.self_attn, transformers.models.llama.modeling_llama.LlamaFlashAttention2
-    # ) or isinstance(
-    #     self.self_attn,
-    #     transformers.models.mistral.modeling_mistral.MistralFlashAttention2,
-    # ), "Please toggle on the Flash Attention 2 implementation when using zigzag ring attention monkey patch."
+    assert isinstance(
+        self.self_attn, transformers.models.llama.modeling_llama.LlamaFlashAttention2
+    ) or isinstance(
+        self.self_attn,
+        transformers.models.mistral.modeling_mistral.MistralFlashAttention2,
+    ), "Please toggle on the Flash Attention 2 implementation when using zigzag ring attention monkey patch."
 
     if "padding_mask" in kwargs:
         warnings.warn(
@@ -119,7 +119,7 @@ def get_sp_process_group(sequence_parallel_size=None):
 def apply_zigzag_ring_attn_monkey_patch_llama(sp_size=None):
     sp_group = get_sp_process_group(sp_size)
     transformers.models.llama.modeling_llama.LlamaFlashAttention2._flash_attention_forward = (
-        partial(new_flash_attn_forward, group=sp_group)
+        partialmethod(new_flash_attn_forward, group=sp_group)
     )
     transformers.models.llama.modeling_llama.LlamaDecoderLayer.forward = (
         new_decoder_forward
@@ -129,7 +129,7 @@ def apply_zigzag_ring_attn_monkey_patch_llama(sp_size=None):
 def apply_zigzag_ring_attn_monkey_patch_mistral(sp_size=None):
     sp_group = get_sp_process_group(sp_size)
     transformers.models.mistral.modeling_mistral.MistralFlashAttention2._flash_attention_forward = (
-        partial(new_flash_attn_forward, group=sp_group)
+        partialmethod(new_flash_attn_forward, group=sp_group)
     )
     transformers.models.mistral.modeling_mistral.MistralDecoderLayer.forward = (
         new_decoder_forward
