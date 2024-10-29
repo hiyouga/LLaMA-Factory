@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright 2024 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,7 +60,7 @@ def length_cdf(
     for length, count in length_tuples:
         count_accu += count
         prob_accu += count / total_num * 100
-        print("{:d} ({:.2f}%) samples have length < {}.".format(count_accu, prob_accu, length + interval))
+        print(f"{count_accu:d} ({prob_accu:.2f}%) samples have length < {length + interval}.")
 
 
 if __name__ == "__main__":
