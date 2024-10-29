@@ -29,6 +29,7 @@ from trl.trainer import disable_dropout_in_model
 from typing_extensions import override
 
 from ...extras.constants import IGNORE_INDEX
+from ...extras.packages import is_transformers_version_equal_to_4_46
 from ..callbacks import PissaConvertCallback, SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler, get_batch_logps
 
@@ -117,6 +118,13 @@ class CustomDPOTrainer(DPOTrainer):
     ) -> "torch.optim.lr_scheduler.LRScheduler":
         create_custom_scheduler(self.args, num_training_steps, optimizer)
         return super().create_scheduler(num_training_steps, optimizer)
+
+    @override
+    def get_batch_samples(self, epoch_iterator, num_batches):
+        r"""
+        Replaces the method of KTO Trainer with the one of the standard Trainer.
+        """
+        return Trainer.get_batch_samples(self, epoch_iterator, num_batches)
 
     def odds_ratio_loss(self, chosen_logps: "torch.Tensor", rejected_logps: "torch.Tensor") -> "torch.Tensor":
         r"""
@@ -258,3 +266,15 @@ class CustomDPOTrainer(DPOTrainer):
             metrics[f"{prefix}odds_ratio_loss"] = ((losses - sft_loss) / self.beta).detach().mean().cpu()
 
         return losses.mean(), metrics
+
+    @override
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+        r"""
+        Fixes the loss value for transformers 4.46.0.
+        https://github.com/huggingface/transformers/blob/v4.46.0/src/transformers/trainer.py#L3605
+        """
+        loss = super().compute_loss(model, inputs, return_outputs)
+        if kwargs.pop("num_items_in_batch", False) and is_transformers_version_equal_to_4_46():
+            loss /= self.args.gradient_accumulation_steps
+
+        return loss
