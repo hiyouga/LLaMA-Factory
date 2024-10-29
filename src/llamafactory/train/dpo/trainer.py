@@ -156,7 +156,7 @@ class CustomDPOTrainer(DPOTrainer):
             elif self.loss_type == "simpo":
                 losses = self.simpo_loss(policy_chosen_logps, policy_rejected_logps)
             else:
-                raise NotImplementedError("Unknown loss type: {}.".format(self.loss_type))
+                raise NotImplementedError(f"Unknown loss type: {self.loss_type}.")
 
             chosen_rewards = self.beta * policy_chosen_logps.to(self.accelerator.device).detach()
             rejected_rewards = self.beta * policy_rejected_logps.to(self.accelerator.device).detach()
@@ -245,16 +245,16 @@ class CustomDPOTrainer(DPOTrainer):
         reward_accuracies = (chosen_rewards > rejected_rewards).float()
 
         prefix = "eval_" if train_eval == "eval" else ""
-        metrics["{}rewards/chosen".format(prefix)] = chosen_rewards.mean().cpu()
-        metrics["{}rewards/rejected".format(prefix)] = rejected_rewards.mean().cpu()
-        metrics["{}rewards/accuracies".format(prefix)] = reward_accuracies.mean().cpu()
-        metrics["{}rewards/margins".format(prefix)] = (chosen_rewards - rejected_rewards).mean().cpu()
-        metrics["{}logps/rejected".format(prefix)] = policy_rejected_logps.detach().mean().cpu()
-        metrics["{}logps/chosen".format(prefix)] = policy_chosen_logps.detach().mean().cpu()
-        metrics["{}logits/rejected".format(prefix)] = policy_rejected_logits.detach().mean().cpu()
-        metrics["{}logits/chosen".format(prefix)] = policy_chosen_logits.detach().mean().cpu()
+        metrics[f"{prefix}rewards/chosen"] = chosen_rewards.mean().cpu()
+        metrics[f"{prefix}rewards/rejected"] = rejected_rewards.mean().cpu()
+        metrics[f"{prefix}rewards/accuracies"] = reward_accuracies.mean().cpu()
+        metrics[f"{prefix}rewards/margins"] = (chosen_rewards - rejected_rewards).mean().cpu()
+        metrics[f"{prefix}logps/rejected"] = policy_rejected_logps.detach().mean().cpu()
+        metrics[f"{prefix}logps/chosen"] = policy_chosen_logps.detach().mean().cpu()
+        metrics[f"{prefix}logits/rejected"] = policy_rejected_logits.detach().mean().cpu()
+        metrics[f"{prefix}logits/chosen"] = policy_chosen_logits.detach().mean().cpu()
         if self.loss_type == "orpo":
-            metrics["{}sft_loss".format(prefix)] = sft_loss.detach().mean().cpu()
-            metrics["{}odds_ratio_loss".format(prefix)] = ((losses - sft_loss) / self.beta).detach().mean().cpu()
+            metrics[f"{prefix}sft_loss"] = sft_loss.detach().mean().cpu()
+            metrics[f"{prefix}odds_ratio_loss"] = ((losses - sft_loss) / self.beta).detach().mean().cpu()
 
         return losses.mean(), metrics

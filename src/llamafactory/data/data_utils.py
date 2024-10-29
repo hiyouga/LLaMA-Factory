@@ -70,7 +70,7 @@ def merge_dataset(
             stopping_strategy="first_exhausted" if data_args.mix_strategy.endswith("under") else "all_exhausted",
         )
     else:
-        raise ValueError("Unknown mixing strategy: {}.".format(data_args.mix_strategy))
+        raise ValueError(f"Unknown mixing strategy: {data_args.mix_strategy}.")
 
 
 def split_dataset(

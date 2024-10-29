@@ -100,7 +100,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
         processor = AutoProcessor.from_pretrained(model_args.model_name_or_path, **init_kwargs)
         patch_processor(processor, config, tokenizer, model_args)
     except Exception as e:
-        logger.warning("Processor was not found: {}.".format(e))
+        logger.warning(f"Processor was not found: {e}.")
         processor = None
 
     # Avoid load tokenizer, see:
@@ -180,7 +180,7 @@ def load_model(
         vhead_params = load_valuehead_params(vhead_path, model_args)
         if vhead_params is not None:
             model.load_state_dict(vhead_params, strict=False)
-            logger.info("Loaded valuehead from checkpoint: {}".format(vhead_path))
+            logger.info(f"Loaded valuehead from checkpoint: {vhead_path}")
 
     if not is_trainable:
         model.requires_grad_(False)
@@ -198,7 +198,7 @@ def load_model(
             trainable_params, all_param, 100 * trainable_params / all_param
         )
     else:
-        param_stats = "all params: {:,}".format(all_param)
+        param_stats = f"all params: {all_param:,}"
 
     logger.info(param_stats)
 

@@ -54,7 +54,7 @@ def load_valuehead_params(path_or_repo_id: str, model_args: "ModelArguments") ->
     except Exception as err:
         err_text = str(err)
 
-    logger.info("Provided path ({}) does not contain value head weights: {}.".format(path_or_repo_id, err_text))
+    logger.info(f"Provided path ({path_or_repo_id}) does not contain value head weights: {err_text}.")
     logger.info("Ignore the above message if you are not resuming the training of a value head model.")
     return None
 
