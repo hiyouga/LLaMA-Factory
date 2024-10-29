@@ -160,7 +160,7 @@ def preprocess_packed_supervised_dataset(
         )
         length = len(input_ids)
         if length > data_args.cutoff_len:
-            logger.warning("Dropped lengthy example with length {} > {}.".format(length, data_args.cutoff_len))
+            logger.warning(f"Dropped lengthy example with length {length} > {data_args.cutoff_len}.")
         else:
             lengths.append(length)
             length2indexes[length].append(valid_num)
@@ -212,4 +212,4 @@ def print_supervised_dataset_example(example: Dict[str, List[int]], tokenizer: "
     print("input_ids:\n{}".format(example["input_ids"]))
     print("inputs:\n{}".format(tokenizer.decode(example["input_ids"], skip_special_tokens=False)))
     print("label_ids:\n{}".format(example["labels"]))
-    print("labels:\n{}".format(tokenizer.decode(valid_labels, skip_special_tokens=False)))
+    print(f"labels:\n{tokenizer.decode(valid_labels, skip_special_tokens=False)}")

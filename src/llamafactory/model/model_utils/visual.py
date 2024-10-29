@@ -99,7 +99,7 @@ def autocast_projector_dtype(model: "PreTrainedModel", model_args: "ModelArgumen
         else:
             return
 
-        logger.info("Casting multimodal projector outputs in {}.".format(model_args.compute_dtype))
+        logger.info(f"Casting multimodal projector outputs in {model_args.compute_dtype}.")
         mm_projector.register_forward_hook(_mm_projector_forward_post_hook)
 
 
