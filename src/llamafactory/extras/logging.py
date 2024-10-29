@@ -75,7 +75,7 @@ def _get_default_logging_level() -> "logging._Level":
         if env_level_str.upper() in logging._nameToLevel:
             return logging._nameToLevel[env_level_str.upper()]
         else:
-            raise ValueError("Unknown logging level: {}.".format(env_level_str))
+            raise ValueError(f"Unknown logging level: {env_level_str}.")
 
     return _default_log_level
 
