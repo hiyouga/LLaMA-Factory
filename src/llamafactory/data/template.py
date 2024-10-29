@@ -934,6 +934,7 @@ _register_template(
     replace_eos=True,
 )
 
+
 _register_template(
     name="pixtral",
     format_user=StringFormatter(slots=["[INST] {{content}} [/INST]"]),
