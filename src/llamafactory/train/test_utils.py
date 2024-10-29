@@ -37,9 +37,9 @@ def compare_model(model_a: "torch.nn.Module", model_b: "torch.nn.Module", diff_k
     assert set(state_dict_a.keys()) == set(state_dict_b.keys())
     for name in state_dict_a.keys():
         if any(key in name for key in diff_keys):
-            assert torch.allclose(state_dict_a[name], state_dict_b[name], rtol=1e-2, atol=1e-3) is False
+            assert torch.allclose(state_dict_a[name], state_dict_b[name], rtol=1e-4, atol=1e-5) is False
         else:
-            assert torch.allclose(state_dict_a[name], state_dict_b[name], rtol=1e-2, atol=1e-3) is True
+            assert torch.allclose(state_dict_a[name], state_dict_b[name], rtol=1e-4, atol=1e-5) is True
 
 
 def check_lora_model(model: "LoraModel") -> Tuple[Set[str], Set[str]]:
