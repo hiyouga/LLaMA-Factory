@@ -8,9 +8,9 @@ import datasets
 _HF_ENDPOINT = os.getenv("HF_ENDPOINT", "https://huggingface.co")
 _DESCRIPTION = "Human preference data about helpfulness and harmlessness."
 _CITATION = ""
-_HOMEPAGE = "{}/datasets/Anthropic/hh-rlhf".format(_HF_ENDPOINT)
+_HOMEPAGE = f"{_HF_ENDPOINT}/datasets/Anthropic/hh-rlhf"
 _LICENSE = "mit"
-_URL = "{}/datasets/Anthropic/hh-rlhf/resolve/main/".format(_HF_ENDPOINT)
+_URL = f"{_HF_ENDPOINT}/datasets/Anthropic/hh-rlhf/resolve/main/"
 _URLS = {
     "train": [
         _URL + "harmless-base/train.jsonl.gz",
@@ -53,7 +53,7 @@ class HhRlhfEn(datasets.GeneratorBasedBuilder):
     def _generate_examples(self, filepaths: List[str]):
         key = 0
         for filepath in filepaths:
-            with open(filepath, "r", encoding="utf-8") as f:
+            with open(filepath, encoding="utf-8") as f:
                 for row in f:
                     data = json.loads(row)
                     chosen = data["chosen"]

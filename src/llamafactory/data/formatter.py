@@ -83,14 +83,14 @@ class StringFormatter(Formatter):
             if isinstance(slot, str):
                 for name, value in kwargs.items():
                     if not isinstance(value, str):
-                        raise RuntimeError("Expected a string, got {}".format(value))
+                        raise RuntimeError(f"Expected a string, got {value}")
 
                     slot = slot.replace("{{" + name + "}}", value, 1)
                 elements.append(slot)
             elif isinstance(slot, (dict, set)):
                 elements.append(slot)
             else:
-                raise RuntimeError("Input must be string, set[str] or dict[str, str], got {}".format(type(slot)))
+                raise RuntimeError(f"Input must be string, set[str] or dict[str, str], got {type(slot)}")
 
         return elements
 
@@ -113,7 +113,7 @@ class FunctionFormatter(Formatter):
                 functions.append((tool_call["name"], json.dumps(tool_call["arguments"], ensure_ascii=False)))
 
         except json.JSONDecodeError:
-            raise RuntimeError("Invalid JSON format in function message: {}".format(str([content])))  # flat string
+            raise RuntimeError(f"Invalid JSON format in function message: {str([content])}")  # flat string
 
         elements = []
         for name, arguments in functions:
@@ -124,7 +124,7 @@ class FunctionFormatter(Formatter):
                 elif isinstance(slot, (dict, set)):
                     elements.append(slot)
                 else:
-                    raise RuntimeError("Input must be string, set[str] or dict[str, str], got {}".format(type(slot)))
+                    raise RuntimeError(f"Input must be string, set[str] or dict[str, str], got {type(slot)}")
 
         return elements
 
@@ -141,7 +141,7 @@ class ToolFormatter(Formatter):
             tools = json.loads(content)
             return [self.tool_utils.tool_formatter(tools) if len(tools) != 0 else ""]
         except json.JSONDecodeError:
-            raise RuntimeError("Invalid JSON format in tool description: {}".format(str([content])))  # flat string
+            raise RuntimeError(f"Invalid JSON format in tool description: {str([content])}")  # flat string
 
     @override
     def extract(self, content: str) -> Union[str, List["FunctionCall"]]:

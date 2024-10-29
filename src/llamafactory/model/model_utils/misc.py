@@ -67,12 +67,12 @@ def find_expanded_modules(model: "PreTrainedModel", target_modules: List[str], n
 
     if num_layers % num_layer_trainable != 0:
         raise ValueError(
-            "`num_layers` {} should be divisible by `num_layer_trainable` {}.".format(num_layers, num_layer_trainable)
+            f"`num_layers` {num_layers} should be divisible by `num_layer_trainable` {num_layer_trainable}."
         )
 
     stride = num_layers // num_layer_trainable
     trainable_layer_ids = range(stride - 1, num_layers + stride - 1, stride)
-    trainable_layers = [".{:d}.".format(idx) for idx in trainable_layer_ids]
+    trainable_layers = [f".{idx:d}." for idx in trainable_layer_ids]
     module_names = []
     for name, _ in model.named_modules():
         if any(target_module in name for target_module in target_modules) and any(
