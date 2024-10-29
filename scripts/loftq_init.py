@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
 #
 # This code is based on the HuggingFace's PEFT library.
@@ -70,19 +69,19 @@ def quantize_loftq(
     setattr(peft_model.peft_config["default"], "base_model_name_or_path", os.path.abspath(output_dir))
     setattr(peft_model.peft_config["default"], "init_lora_weights", True)  # don't apply loftq again
     peft_model.save_pretrained(loftq_dir, safe_serialization=save_safetensors)
-    print("Adapter weights saved in {}".format(loftq_dir))
+    print(f"Adapter weights saved in {loftq_dir}")
 
     # Save base model
     base_model: "PreTrainedModel" = peft_model.unload()
     base_model.save_pretrained(output_dir, safe_serialization=save_safetensors)
     tokenizer.save_pretrained(output_dir)
-    print("Model weights saved in {}".format(output_dir))
+    print(f"Model weights saved in {output_dir}")
 
     print("- Fine-tune this model with:")
-    print("model_name_or_path: {}".format(output_dir))
-    print("adapter_name_or_path: {}".format(loftq_dir))
+    print(f"model_name_or_path: {output_dir}")
+    print(f"adapter_name_or_path: {loftq_dir}")
     print("finetuning_type: lora")
-    print("quantization_bit: {}".format(loftq_bits))
+    print(f"quantization_bit: {loftq_bits}")
 
 
 if __name__ == "__main__":

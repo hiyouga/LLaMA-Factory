@@ -75,7 +75,7 @@ def plot_loss(save_dictionary: str, keys: List[str] = ["loss"]) -> None:
     Plots loss curves and saves the image.
     """
     plt.switch_backend("agg")
-    with open(os.path.join(save_dictionary, TRAINER_STATE_NAME), "r", encoding="utf-8") as f:
+    with open(os.path.join(save_dictionary, TRAINER_STATE_NAME), encoding="utf-8") as f:
         data = json.load(f)
 
     for key in keys:
@@ -92,7 +92,7 @@ def plot_loss(save_dictionary: str, keys: List[str] = ["loss"]) -> None:
         plt.figure()
         plt.plot(steps, metrics, color="#1f77b4", alpha=0.4, label="original")
         plt.plot(steps, smooth(metrics), color="#1f77b4", label="smoothed")
-        plt.title("training {} of {}".format(key, save_dictionary))
+        plt.title(f"training {key} of {save_dictionary}")
         plt.xlabel("step")
         plt.ylabel(key)
         plt.legend()

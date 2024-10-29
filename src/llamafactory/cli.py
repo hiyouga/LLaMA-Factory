@@ -47,7 +47,7 @@ USAGE = (
 WELCOME = (
     "-" * 58
     + "\n"
-    + "| Welcome to LLaMA Factory, version {}".format(VERSION)
+    + f"| Welcome to LLaMA Factory, version {VERSION}"
     + " " * (21 - len(VERSION))
     + "|\n|"
     + " " * 56
@@ -90,7 +90,7 @@ def main():
         if force_torchrun or get_device_count() > 1:
             master_addr = os.environ.get("MASTER_ADDR", "127.0.0.1")
             master_port = os.environ.get("MASTER_PORT", str(random.randint(20001, 29999)))
-            logger.info("Initializing distributed tasks at: {}:{}".format(master_addr, master_port))
+            logger.info(f"Initializing distributed tasks at: {master_addr}:{master_port}")
             process = subprocess.run(
                 (
                     "torchrun --nnodes {nnodes} --node_rank {node_rank} --nproc_per_node {nproc_per_node} "
@@ -118,4 +118,4 @@ def main():
     elif command == Command.HELP:
         print(USAGE)
     else:
-        raise NotImplementedError("Unknown command: {}.".format(command))
+        raise NotImplementedError(f"Unknown command: {command}.")

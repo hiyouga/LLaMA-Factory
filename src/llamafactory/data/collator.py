@@ -137,9 +137,9 @@ class PairwiseDataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
         for key in ("chosen", "rejected"):
             for feature in features:
                 target_feature = {
-                    "input_ids": feature["{}_input_ids".format(key)],
-                    "attention_mask": feature["{}_attention_mask".format(key)],
-                    "labels": feature["{}_labels".format(key)],
+                    "input_ids": feature[f"{key}_input_ids"],
+                    "attention_mask": feature[f"{key}_attention_mask"],
+                    "labels": feature[f"{key}_labels"],
                     "images": feature["images"],
                     "videos": feature["videos"],
                 }
