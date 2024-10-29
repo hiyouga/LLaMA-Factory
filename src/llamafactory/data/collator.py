@@ -99,6 +99,9 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
 
         features: Dict[str, "torch.Tensor"] = super().__call__(features)
         features.update(mm_inputs)
+        if isinstance(features.get("pixel_values"), list):  # for pixtral inputs
+            features = features.data  # use default_collate() instead of BatchEncoding.to()
+
         return features
 
 

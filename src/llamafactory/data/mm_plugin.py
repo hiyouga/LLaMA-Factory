@@ -448,6 +448,70 @@ class PaliGemmaPlugin(BasePlugin):
         return mm_inputs
 
 
+class PixtralPlugin(BasePlugin):
+    @override
+    def process_messages(
+        self,
+        messages: Sequence[Dict[str, str]],
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        processor: Optional["ProcessorMixin"],
+    ) -> List[Dict[str, str]]:
+        self._validate_input(images, videos)
+        patch_size = getattr(processor, "patch_size")
+        image_token = getattr(processor, "image_token")
+        image_break_token = getattr(processor, "image_break_token")
+        image_end_token = getattr(processor, "image_end_token")
+
+        num_image_tokens = 0
+        messages = deepcopy(messages)
+        mm_inputs = self._get_mm_inputs(images, videos, processor)
+        image_input_sizes = mm_inputs.get("image_sizes", None)
+        for message in messages:
+            content = message["content"]
+            while IMAGE_PLACEHOLDER in content:
+                if image_input_sizes is None:
+                    raise ValueError(
+                        "The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER)
+                    )
+
+                image_size = image_input_sizes[0][num_image_tokens]
+                height, width = image_size
+                num_height_tokens = height // patch_size
+                num_width_tokens = width // patch_size
+                replace_tokens = [[image_token] * num_width_tokens + [image_break_token]] * num_height_tokens
+                replace_tokens = [item for sublist in replace_tokens for item in sublist]  # flatten list
+                replace_tokens[-1] = image_end_token
+                replace_str = "".join(replace_tokens)
+                content = content.replace(IMAGE_PLACEHOLDER, replace_str, 1)
+                num_image_tokens += 1
+
+            message["content"] = content
+
+        if len(images) != num_image_tokens:
+            raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
+
+        return messages
+
+    @override
+    def get_mm_inputs(
+        self,
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        imglens: Sequence[int],
+        vidlens: Sequence[int],
+        seqlens: Sequence[int],
+        processor: Optional["ProcessorMixin"],
+    ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
+        self._validate_input(images, videos)
+        mm_inputs = self._get_mm_inputs(images, videos, processor)
+        if mm_inputs.get("pixel_values"):
+            mm_inputs["pixel_values"] = mm_inputs["pixel_values"][0]
+
+        mm_inputs.pop("image_sizes", None)
+        return mm_inputs
+
+
 class Qwen2vlPlugin(BasePlugin):
     @override
     def _preprocess_image(self, image: "ImageObject", **kwargs) -> "ImageObject":
@@ -610,6 +674,7 @@ PLUGINS = {
     "llava_next": LlavaNextPlugin,
     "llava_next_video": LlavaNextVideoPlugin,
     "paligemma": PaliGemmaPlugin,
+    "pixtral": PixtralPlugin,
     "qwen2_vl": Qwen2vlPlugin,
     "video_llava": VideoLlavaPlugin,
 }
