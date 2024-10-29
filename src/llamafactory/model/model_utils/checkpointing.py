@@ -111,7 +111,7 @@ def _gradient_checkpointing_enable(
     from torch.utils.checkpoint import checkpoint
 
     if not self.supports_gradient_checkpointing:
-        raise ValueError("{} does not support gradient checkpointing.".format(self.__class__.__name__))
+        raise ValueError(f"{self.__class__.__name__} does not support gradient checkpointing.")
 
     if gradient_checkpointing_kwargs is None:
         gradient_checkpointing_kwargs = {"use_reentrant": True}

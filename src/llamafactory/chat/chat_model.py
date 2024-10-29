@@ -53,7 +53,7 @@ class ChatModel:
         elif model_args.infer_backend == "vllm":
             self.engine: "BaseEngine" = VllmEngine(model_args, data_args, finetuning_args, generating_args)
         else:
-            raise NotImplementedError("Unknown backend: {}".format(model_args.infer_backend))
+            raise NotImplementedError(f"Unknown backend: {model_args.infer_backend}")
 
         self._loop = asyncio.new_event_loop()
         self._thread = Thread(target=_start_background_loop, args=(self._loop,), daemon=True)

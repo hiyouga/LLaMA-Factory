@@ -182,7 +182,7 @@ def _setup_lora_tuning(
             model = model.merge_and_unload()
 
         if len(adapter_to_merge) > 0:
-            logger.info("Merged {} adapter(s).".format(len(adapter_to_merge)))
+            logger.info(f"Merged {len(adapter_to_merge)} adapter(s).")
 
         if adapter_to_resume is not None:  # resume lora training
             if model_args.use_unsloth:
@@ -239,8 +239,8 @@ def _setup_lora_tuning(
                     logger.info("Using PiSSA initialization.")
                     peft_kwargs["init_lora_weights"] = "pissa"
                 else:
-                    logger.info("Using PiSSA initialization with FSVD steps {}.".format(finetuning_args.pissa_iter))
-                    peft_kwargs["init_lora_weights"] = "pissa_niter_{}".format(finetuning_args.pissa_iter)
+                    logger.info(f"Using PiSSA initialization with FSVD steps {finetuning_args.pissa_iter}.")
+                    peft_kwargs["init_lora_weights"] = f"pissa_niter_{finetuning_args.pissa_iter}"
 
             lora_config = LoraConfig(
                 task_type=TaskType.CAUSAL_LM,
@@ -300,6 +300,6 @@ def init_adapter(
             config, model, model_args, finetuning_args, is_trainable, cast_trainable_params_to_fp32
         )
     else:
-        raise NotImplementedError("Unknown finetuning type: {}.".format(finetuning_args.finetuning_type))
+        raise NotImplementedError(f"Unknown finetuning type: {finetuning_args.finetuning_type}.")
 
     return model
