@@ -65,7 +65,7 @@ def configure_attn_implementation(
 
         requested_attn_implementation = "flash_attention_2"
     else:
-        raise NotImplementedError("Unknown attention type: {}".format(model_args.flash_attn))
+        raise NotImplementedError(f"Unknown attention type: {model_args.flash_attn}")
 
     if getattr(config, "model_type", None) == "internlm2":  # special case for custom models
         setattr(config, "attn_implementation", requested_attn_implementation)

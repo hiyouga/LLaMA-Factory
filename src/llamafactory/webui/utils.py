@@ -111,14 +111,14 @@ def gen_cmd(args: Dict[str, Any]) -> str:
     """
     cmd_lines = ["llamafactory-cli train "]
     for k, v in clean_cmd(args).items():
-        cmd_lines.append("    --{} {} ".format(k, str(v)))
+        cmd_lines.append(f"    --{k} {str(v)} ")
 
     if os.name == "nt":
         cmd_text = "`\n".join(cmd_lines)
     else:
         cmd_text = "\\\n".join(cmd_lines)
 
-    cmd_text = "```bash\n{}\n```".format(cmd_text)
+    cmd_text = f"```bash\n{cmd_text}\n```"
     return cmd_text
 
 
@@ -139,9 +139,9 @@ def get_eval_results(path: os.PathLike) -> str:
     r"""
     Gets scores after evaluation.
     """
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         result = json.dumps(json.load(f), indent=4)
-    return "```json\n{}\n```\n".format(result)
+    return f"```json\n{result}\n```\n"
 
 
 def get_time() -> str:
@@ -161,13 +161,13 @@ def get_trainer_info(output_path: os.PathLike, do_train: bool) -> Tuple[str, "gr
 
     running_log_path = os.path.join(output_path, RUNNING_LOG)
     if os.path.isfile(running_log_path):
-        with open(running_log_path, "r", encoding="utf-8") as f:
+        with open(running_log_path, encoding="utf-8") as f:
             running_log = f.read()
 
     trainer_log_path = os.path.join(output_path, TRAINER_LOG)
     if os.path.isfile(trainer_log_path):
         trainer_log: List[Dict[str, Any]] = []
-        with open(trainer_log_path, "r", encoding="utf-8") as f:
+        with open(trainer_log_path, encoding="utf-8") as f:
             for line in f:
                 trainer_log.append(json.loads(line))
 
@@ -193,7 +193,7 @@ def load_args(config_path: str) -> Optional[Dict[str, Any]]:
     Loads saved arguments.
     """
     try:
-        with open(config_path, "r", encoding="utf-8") as f:
+        with open(config_path, encoding="utf-8") as f:
             return safe_load(f)
     except Exception:
         return None
@@ -211,7 +211,7 @@ def list_config_paths(current_time: str) -> "gr.Dropdown":
     r"""
     Lists all the saved configuration files.
     """
-    config_files = ["{}.yaml".format(current_time)]
+    config_files = [f"{current_time}.yaml"]
     if os.path.isdir(DEFAULT_CONFIG_DIR):
         for file_name in os.listdir(DEFAULT_CONFIG_DIR):
             if file_name.endswith(".yaml") and file_name not in config_files:
@@ -224,7 +224,7 @@ def list_output_dirs(model_name: Optional[str], finetuning_type: str, current_ti
     r"""
     Lists all the directories that can resume from.
     """
-    output_dirs = ["train_{}".format(current_time)]
+    output_dirs = [f"train_{current_time}"]
     if model_name:
         save_dir = get_save_dir(model_name, finetuning_type)
         if save_dir and os.path.isdir(save_dir):
