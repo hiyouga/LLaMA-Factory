@@ -20,7 +20,7 @@ from setuptools import find_packages, setup
 
 
 def get_version() -> str:
-    with open(os.path.join("src", "llamafactory", "extras", "env.py"), "r", encoding="utf-8") as f:
+    with open(os.path.join("src", "llamafactory", "extras", "env.py"), encoding="utf-8") as f:
         file_content = f.read()
         pattern = r"{}\W*=\W*\"([^\"]+)\"".format("VERSION")
         (version,) = re.findall(pattern, file_content)
@@ -28,7 +28,7 @@ def get_version() -> str:
 
 
 def get_requires() -> List[str]:
-    with open("requirements.txt", "r", encoding="utf-8") as f:
+    with open("requirements.txt", encoding="utf-8") as f:
         file_content = f.read()
         lines = [line.strip() for line in file_content.strip().split("\n") if not line.startswith("#")]
         return lines
@@ -61,7 +61,7 @@ extra_require = {
     "qwen": ["transformers_stream_generator"],
     "modelscope": ["modelscope"],
     "openmind": ["openmind"],
-    "dev": ["ruff", "pytest"],
+    "dev": ["pre-commit", "ruff", "pytest"],
 }
 
 
@@ -72,7 +72,7 @@ def main():
         author="hiyouga",
         author_email="hiyouga" "@" "buaa.edu.cn",
         description="Easy-to-use LLM fine-tuning framework",
-        long_description=open("README.md", "r", encoding="utf-8").read(),
+        long_description=open("README.md", encoding="utf-8").read(),
         long_description_content_type="text/markdown",
         keywords=["LLaMA", "BLOOM", "Falcon", "LLM", "ChatGPT", "transformer", "pytorch", "deep learning"],
         license="Apache 2.0 License",
