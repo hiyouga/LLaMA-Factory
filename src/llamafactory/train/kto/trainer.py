@@ -28,6 +28,7 @@ from trl.trainer import disable_dropout_in_model
 from typing_extensions import override
 
 from ...extras.constants import IGNORE_INDEX
+from ...extras.packages import is_transformers_version_equal_to_4_46
 from ..callbacks import SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler, get_batch_logps
 
@@ -121,6 +122,13 @@ class CustomKTOTrainer(KTOTrainer):
         return Trainer._get_train_sampler(self)
 
     @override
+    def get_batch_samples(self, epoch_iterator, num_batches):
+        r"""
+        Replaces the method of KTO Trainer with the one of the standard Trainer.
+        """
+        return Trainer.get_batch_samples(self, epoch_iterator, num_batches)
+
+    @override
     def forward(
         self, model: "PreTrainedModel", batch: Dict[str, "torch.Tensor"], prefix: Literal["", "kl_"] = ""
     ) -> Tuple["torch.Tensor", "torch.Tensor"]:
@@ -129,11 +137,11 @@ class CustomKTOTrainer(KTOTrainer):
         """
         batch = {k: v.detach().clone() for k, v in batch.items()}  # avoid error
         model_inputs = {
-            "input_ids": batch["{}input_ids".format(prefix)],
-            "attention_mask": batch["{}attention_mask".format(prefix)],
+            "input_ids": batch[f"{prefix}input_ids"],
+            "attention_mask": batch[f"{prefix}attention_mask"],
         }
-        if "{}token_type_ids".format(prefix) in batch:
-            model_inputs["token_type_ids"] = batch["{}token_type_ids".format(prefix)]
+        if f"{prefix}token_type_ids" in batch:
+            model_inputs["token_type_ids"] = batch[f"{prefix}token_type_ids"]
 
         if "pixel_values" in batch:
             model_inputs["pixel_values"] = batch["pixel_values"]
@@ -142,7 +150,7 @@ class CustomKTOTrainer(KTOTrainer):
             model_inputs["image_grid_thw"] = batch["image_grid_thw"]
 
         logits = model(**model_inputs, return_dict=True, use_cache=False).logits.to(torch.float32)
-        logps, valid_length = get_batch_logps(logits=logits, labels=batch["{}labels".format(prefix)])
+        logps, valid_length = get_batch_logps(logits=logits, labels=batch[f"{prefix}labels"])
         return logps, logps / valid_length
 
     @override
@@ -231,3 +239,15 @@ class CustomKTOTrainer(KTOTrainer):
         metrics["kl"] = kl.item()
 
         return losses, metrics
+
+    @override
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+        r"""
+        Fixes the loss value for transformers 4.46.0.
+        https://github.com/huggingface/transformers/blob/v4.46.0/src/transformers/trainer.py#L3605
+        """
+        loss = super().compute_loss(model, inputs, return_outputs)
+        if kwargs.pop("num_items_in_batch", False) and is_transformers_version_equal_to_4_46():
+            loss /= self.args.gradient_accumulation_steps
+
+        return loss
