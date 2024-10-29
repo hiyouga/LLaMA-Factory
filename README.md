@@ -46,7 +46,7 @@ Choose your path:
 - [Projects using LLaMA Factory](#projects-using-llama-factory)
 - [License](#license)
 - [Citation](#citation)
-- [Acknowledgement](#acknowledgement)
+- [Acknowledgment](#acknowledgement)
 
 ## Features
 
