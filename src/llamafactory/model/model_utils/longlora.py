@@ -86,7 +86,7 @@ def llama_attention_forward(
 
     if getattr(self.config, "group_size_ratio", None) and self.training:  # shift
         groupsz = int(q_len * getattr(self.config, "group_size_ratio"))
-        assert q_len % groupsz == 0, "q_len {} should be divisible by group size {}.".format(q_len, groupsz)
+        assert q_len % groupsz == 0, f"q_len {q_len} should be divisible by group size {groupsz}."
         num_groups = q_len // groupsz
 
         def shift(state: "torch.Tensor") -> "torch.Tensor":
@@ -195,7 +195,7 @@ def llama_flash_attention_2_forward(
 
     if getattr(self.config, "group_size_ratio", None) and self.training:  # shift
         groupsz = int(q_len * getattr(self.config, "group_size_ratio"))
-        assert q_len % groupsz == 0, "q_len {} should be divisible by group size {}.".format(q_len, groupsz)
+        assert q_len % groupsz == 0, f"q_len {q_len} should be divisible by group size {groupsz}."
         num_groups = q_len // groupsz
 
         def shift(state: "torch.Tensor") -> "torch.Tensor":
@@ -301,7 +301,7 @@ def llama_sdpa_attention_forward(
 
     if getattr(self.config, "group_size_ratio", None) and self.training:  # shift
         groupsz = int(q_len * getattr(self.config, "group_size_ratio"))
-        assert q_len % groupsz == 0, "q_len {} should be divisible by group size {}.".format(q_len, groupsz)
+        assert q_len % groupsz == 0, f"q_len {q_len} should be divisible by group size {groupsz}."
         num_groups = q_len // groupsz
 
         def shift(state: "torch.Tensor") -> "torch.Tensor":
@@ -353,7 +353,7 @@ def llama_sdpa_attention_forward(
 
 
 def _apply_llama_patch() -> None:
-    require_version("transformers>=4.41.2,<=4.45.2", "To fix: pip install transformers>=4.41.2,<=4.45.2")
+    require_version("transformers>=4.41.2,<=4.46.0", "To fix: pip install transformers>=4.41.2,<=4.46.0")
     LlamaAttention.forward = llama_attention_forward
     LlamaFlashAttention2.forward = llama_flash_attention_2_forward
     LlamaSdpaAttention.forward = llama_sdpa_attention_forward
