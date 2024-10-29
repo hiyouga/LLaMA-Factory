@@ -166,7 +166,11 @@ class HuggingfaceEngine(BaseEngine):
 
         mm_inputs = template.mm_plugin.get_mm_inputs(**mm_input_dict, seqlens=[prompt_length], processor=processor)
         for key, value in mm_inputs.items():
-            value = value if isinstance(value, torch.Tensor) else torch.tensor(value)
+            if isinstance(value, list) and all(isinstance(v, torch.Tensor) for v in value):  # for pixtral inputs
+                value = torch.stack(value)  # assume they have same sizes
+            elif not isinstance(value, torch.Tensor):
+                value = torch.tensor(value)
+
             gen_kwargs[key] = value.to(model.device)
 
         return gen_kwargs, prompt_length
