@@ -113,6 +113,7 @@ def configure_visual_model(config: "PretrainedConfig") -> None:
         "llava_next",
         "llava_next_video",
         "paligemma",
+        "pixtral",
         "video_llava",
     ]:  # required for ds zero3 and valuehead models
         setattr(config, "hidden_size", getattr(config.text_config, "hidden_size", None))
