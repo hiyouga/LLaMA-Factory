@@ -158,5 +158,4 @@ class MMLU(datasets.GeneratorBasedBuilder):
         df = pd.read_csv(filepath, header=None)
         df.columns = ["question", "A", "B", "C", "D", "answer"]
 
-        for i, instance in enumerate(df.to_dict(orient="records")):
-            yield i, instance
+        yield from enumerate(df.to_dict(orient="records"))

@@ -177,6 +177,6 @@ TOOLS = {
 def get_tool_utils(name: str) -> "ToolUtils":
     tool_utils = TOOLS.get(name, None)
     if tool_utils is None:
-        raise ValueError("Tool utils `{}` not found.".format(name))
+        raise ValueError(f"Tool utils `{name}` not found.")
 
     return tool_utils
