@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright 2024 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -100,7 +99,7 @@ def compute_device_flops(world_size: int) -> float:
     elif "4090" in device_name:
         return 98 * 1e12 * world_size
     else:
-        raise NotImplementedError("Device not supported: {}.".format(device_name))
+        raise NotImplementedError(f"Device not supported: {device_name}.")
 
 
 def calculate_mfu(
@@ -140,10 +139,10 @@ def calculate_mfu(
         "bf16": True,
     }
     if deepspeed_stage in [2, 3]:
-        args["deepspeed"] = "examples/deepspeed/ds_z{}_config.json".format(deepspeed_stage)
+        args["deepspeed"] = f"examples/deepspeed/ds_z{deepspeed_stage}_config.json"
 
     run_exp(args)
-    with open(os.path.join("saves", "test_mfu", "all_results.json"), "r", encoding="utf-8") as f:
+    with open(os.path.join("saves", "test_mfu", "all_results.json"), encoding="utf-8") as f:
         result = json.load(f)
 
     if dist.is_initialized():
@@ -157,7 +156,7 @@ def calculate_mfu(
         * compute_model_flops(model_name_or_path, total_batch_size, seq_length)
         / compute_device_flops(world_size)
     )
-    print("MFU: {:.2f}%".format(mfu_value * 100))
+    print(f"MFU: {mfu_value * 100:.2f}%")
 
 
 if __name__ == "__main__":
