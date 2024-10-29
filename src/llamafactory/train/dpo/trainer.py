@@ -29,6 +29,7 @@ from trl.trainer import disable_dropout_in_model
 from typing_extensions import override
 
 from ...extras.constants import IGNORE_INDEX
+from ...extras.packages import is_transformers_version_equal_to_4_46
 from ..callbacks import PissaConvertCallback, SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler, get_batch_logps
 
@@ -118,6 +119,13 @@ class CustomDPOTrainer(DPOTrainer):
         create_custom_scheduler(self.args, num_training_steps, optimizer)
         return super().create_scheduler(num_training_steps, optimizer)
 
+    @override
+    def get_batch_samples(self, epoch_iterator, num_batches):
+        r"""
+        Replaces the method of KTO Trainer with the one of the standard Trainer.
+        """
+        return Trainer.get_batch_samples(self, epoch_iterator, num_batches)
+
     def odds_ratio_loss(self, chosen_logps: "torch.Tensor", rejected_logps: "torch.Tensor") -> "torch.Tensor":
         r"""
         Computes ORPO's odds ratio (OR) loss for batched log probabilities of the policy model.
@@ -156,7 +164,7 @@ class CustomDPOTrainer(DPOTrainer):
             elif self.loss_type == "simpo":
                 losses = self.simpo_loss(policy_chosen_logps, policy_rejected_logps)
             else:
-                raise NotImplementedError("Unknown loss type: {}.".format(self.loss_type))
+                raise NotImplementedError(f"Unknown loss type: {self.loss_type}.")
 
             chosen_rewards = self.beta * policy_chosen_logps.to(self.accelerator.device).detach()
             rejected_rewards = self.beta * policy_rejected_logps.to(self.accelerator.device).detach()
@@ -245,16 +253,28 @@ class CustomDPOTrainer(DPOTrainer):
         reward_accuracies = (chosen_rewards > rejected_rewards).float()
 
         prefix = "eval_" if train_eval == "eval" else ""
-        metrics["{}rewards/chosen".format(prefix)] = chosen_rewards.mean().cpu()
-        metrics["{}rewards/rejected".format(prefix)] = rejected_rewards.mean().cpu()
-        metrics["{}rewards/accuracies".format(prefix)] = reward_accuracies.mean().cpu()
-        metrics["{}rewards/margins".format(prefix)] = (chosen_rewards - rejected_rewards).mean().cpu()
-        metrics["{}logps/rejected".format(prefix)] = policy_rejected_logps.detach().mean().cpu()
-        metrics["{}logps/chosen".format(prefix)] = policy_chosen_logps.detach().mean().cpu()
-        metrics["{}logits/rejected".format(prefix)] = policy_rejected_logits.detach().mean().cpu()
-        metrics["{}logits/chosen".format(prefix)] = policy_chosen_logits.detach().mean().cpu()
+        metrics[f"{prefix}rewards/chosen"] = chosen_rewards.mean().cpu()
+        metrics[f"{prefix}rewards/rejected"] = rejected_rewards.mean().cpu()
+        metrics[f"{prefix}rewards/accuracies"] = reward_accuracies.mean().cpu()
+        metrics[f"{prefix}rewards/margins"] = (chosen_rewards - rejected_rewards).mean().cpu()
+        metrics[f"{prefix}logps/rejected"] = policy_rejected_logps.detach().mean().cpu()
+        metrics[f"{prefix}logps/chosen"] = policy_chosen_logps.detach().mean().cpu()
+        metrics[f"{prefix}logits/rejected"] = policy_rejected_logits.detach().mean().cpu()
+        metrics[f"{prefix}logits/chosen"] = policy_chosen_logits.detach().mean().cpu()
         if self.loss_type == "orpo":
-            metrics["{}sft_loss".format(prefix)] = sft_loss.detach().mean().cpu()
-            metrics["{}odds_ratio_loss".format(prefix)] = ((losses - sft_loss) / self.beta).detach().mean().cpu()
+            metrics[f"{prefix}sft_loss"] = sft_loss.detach().mean().cpu()
+            metrics[f"{prefix}odds_ratio_loss"] = ((losses - sft_loss) / self.beta).detach().mean().cpu()
 
         return losses.mean(), metrics
+
+    @override
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+        r"""
+        Fixes the loss value for transformers 4.46.0.
+        https://github.com/huggingface/transformers/blob/v4.46.0/src/transformers/trainer.py#L3605
+        """
+        loss = super().compute_loss(model, inputs, return_outputs)
+        if kwargs.pop("num_items_in_batch", False) and is_transformers_version_equal_to_4_46():
+            loss /= self.args.gradient_accumulation_steps
+
+        return loss

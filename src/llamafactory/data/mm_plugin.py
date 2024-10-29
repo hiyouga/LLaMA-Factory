@@ -111,7 +111,7 @@ class BasePlugin:
                     image = Image.open(image["path"])
 
             if not isinstance(image, ImageObject):
-                raise ValueError("Expect input is a list of Images, but got {}.".format(type(image)))
+                raise ValueError(f"Expect input is a list of Images, but got {type(image)}.")
 
             results.append(self._preprocess_image(image, **kwargs))
 
@@ -253,7 +253,7 @@ class LlavaPlugin(BasePlugin):
             message["content"] = content.replace("{{image}}", self.image_token * image_seqlen)
 
         if len(images) != num_image_tokens:
-            raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
+            raise ValueError(f"The number of images does not match the number of {IMAGE_PLACEHOLDER} tokens")
 
         return messages
 
@@ -302,7 +302,7 @@ class LlavaNextPlugin(BasePlugin):
             message["content"] = content.replace("{{image}}", self.image_token)
 
         if len(images) != num_image_tokens:
-            raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
+            raise ValueError(f"The number of images does not match the number of {IMAGE_PLACEHOLDER} tokens")
         return messages
 
     @override
@@ -366,10 +366,10 @@ class LlavaNextVideoPlugin(BasePlugin):
                 message["content"] = content.replace("{{video}}", self.video_token * video_seqlen)
 
         if len(images) != num_image_tokens:
-            raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
+            raise ValueError(f"The number of images does not match the number of {IMAGE_PLACEHOLDER} tokens")
 
         if len(videos) != num_video_tokens:
-            raise ValueError("The number of videos does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
+            raise ValueError(f"The number of videos does not match the number of {IMAGE_PLACEHOLDER} tokens")
 
         return messages
 
@@ -408,7 +408,7 @@ class PaliGemmaPlugin(BasePlugin):
             message["content"] = content.replace("{{image}}", "")
 
         if len(images) != num_image_tokens:
-            raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
+            raise ValueError(f"The number of images does not match the number of {IMAGE_PLACEHOLDER} tokens")
 
         return messages
 
@@ -562,7 +562,7 @@ class Qwen2vlPlugin(BasePlugin):
             content = message["content"]
             while IMAGE_PLACEHOLDER in content:
                 if num_image_tokens >= len(image_grid_thw):
-                    raise ValueError("`len(images)` is less than the number of {} tokens.".format(IMAGE_PLACEHOLDER))
+                    raise ValueError(f"`len(images)` is less than the number of {IMAGE_PLACEHOLDER} tokens.")
 
                 content = content.replace(
                     IMAGE_PLACEHOLDER,
@@ -575,7 +575,7 @@ class Qwen2vlPlugin(BasePlugin):
 
             while VIDEO_PLACEHOLDER in content:
                 if num_video_tokens >= len(video_grid_thw):
-                    raise ValueError("`len(videos)` is less than the number of {} tokens.".format(VIDEO_PLACEHOLDER))
+                    raise ValueError(f"`len(videos)` is less than the number of {VIDEO_PLACEHOLDER} tokens.")
 
                 content = content.replace(
                     VIDEO_PLACEHOLDER,
@@ -589,10 +589,10 @@ class Qwen2vlPlugin(BasePlugin):
             message["content"] = content
 
         if len(images) != num_image_tokens:
-            raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
+            raise ValueError(f"The number of images does not match the number of {IMAGE_PLACEHOLDER} tokens")
 
         if len(videos) != num_video_tokens:
-            raise ValueError("The number of videos does not match the number of {} tokens".format(VIDEO_PLACEHOLDER))
+            raise ValueError(f"The number of videos does not match the number of {VIDEO_PLACEHOLDER} tokens")
 
         return messages
 
@@ -652,10 +652,10 @@ class VideoLlavaPlugin(BasePlugin):
                 message["content"] = content.replace("{{video}}", self.video_token * video_seqlen)
 
         if len(images) != num_image_tokens:
-            raise ValueError("The number of images does not match the number of {} tokens".format(self.image_token))
+            raise ValueError(f"The number of images does not match the number of {self.image_token} tokens")
 
         if len(videos) != num_video_tokens:
-            raise ValueError("The number of videos does not match the number of {} tokens".format(self.video_token))
+            raise ValueError(f"The number of videos does not match the number of {self.video_token} tokens")
 
         return messages
 
@@ -692,6 +692,6 @@ def get_mm_plugin(
 ) -> "BasePlugin":
     plugin_class = PLUGINS.get(name, None)
     if plugin_class is None:
-        raise ValueError("Multimodal plugin `{}` not found.".format(name))
+        raise ValueError(f"Multimodal plugin `{name}` not found.")
 
     return plugin_class(image_token, video_token)

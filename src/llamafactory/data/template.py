@@ -147,7 +147,7 @@ class Template:
                 elif "eos_token" in elem and tokenizer.eos_token_id is not None:
                     token_ids += [tokenizer.eos_token_id]
             else:
-                raise ValueError("Input must be string, set[str] or dict[str, str], got {}".format(type(elem)))
+                raise ValueError(f"Input must be string, set[str] or dict[str, str], got {type(elem)}")
 
         return token_ids
 
@@ -275,9 +275,9 @@ def _add_or_replace_eos_token(tokenizer: "PreTrainedTokenizer", eos_token: str) 
     num_added_tokens = tokenizer.add_special_tokens({"eos_token": eos_token})
 
     if is_added:
-        logger.info("Add eos token: {}".format(tokenizer.eos_token))
+        logger.info(f"Add eos token: {tokenizer.eos_token}")
     else:
-        logger.info("Replace eos token: {}".format(tokenizer.eos_token))
+        logger.info(f"Replace eos token: {tokenizer.eos_token}")
 
     if num_added_tokens > 0:
         logger.warning("New tokens have been added, make sure `resize_vocab` is True.")
@@ -365,13 +365,13 @@ def get_template_and_fix_tokenizer(tokenizer: "PreTrainedTokenizer", data_args: 
     else:
         template = TEMPLATES.get(data_args.template, None)
         if template is None:
-            raise ValueError("Template {} does not exist.".format(data_args.template))
+            raise ValueError(f"Template {data_args.template} does not exist.")
 
     if data_args.train_on_prompt and template.efficient_eos:
         raise ValueError("Current template does not support `train_on_prompt`.")
 
     if data_args.tool_format is not None:
-        logger.info("Using tool format: {}.".format(data_args.tool_format))
+        logger.info(f"Using tool format: {data_args.tool_format}.")
         eos_slots = [] if template.efficient_eos else [{"eos_token"}]
         template.format_function = FunctionFormatter(slots=eos_slots, tool_format=data_args.tool_format)
         template.format_tools = ToolFormatter(tool_format=data_args.tool_format)
@@ -389,7 +389,7 @@ def get_template_and_fix_tokenizer(tokenizer: "PreTrainedTokenizer", data_args: 
 
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
-        logger.info("Add pad token: {}".format(tokenizer.pad_token))
+        logger.info(f"Add pad token: {tokenizer.pad_token}")
 
     if stop_words:
         num_added_tokens = tokenizer.add_special_tokens(
