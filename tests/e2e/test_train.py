@@ -61,7 +61,7 @@ OS_NAME = os.environ.get("OS_NAME", "")
     ],
 )
 def test_run_exp(stage: str, dataset: str):
-    output_dir = "train_{}".format(stage)
+    output_dir = f"train_{stage}"
     run_exp({"stage": stage, "dataset": dataset, "output_dir": output_dir, **TRAIN_ARGS})
     assert os.path.exists(output_dir)
 

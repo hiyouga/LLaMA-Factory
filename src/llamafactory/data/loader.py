@@ -51,7 +51,7 @@ def _load_single_dataset(
     r"""
     Loads a single dataset and aligns it to the standard format.
     """
-    logger.info("Loading dataset {}...".format(dataset_attr))
+    logger.info(f"Loading dataset {dataset_attr}...")
     data_path, data_name, data_dir, data_files = None, None, None, None
     if dataset_attr.load_from in ["hf_hub", "ms_hub", "om_hub"]:
         data_path = dataset_attr.dataset_name
@@ -77,12 +77,12 @@ def _load_single_dataset(
             data_files.append(local_path)
             data_path = FILEEXT2TYPE.get(local_path.split(".")[-1], None)
         else:
-            raise ValueError("File {} not found.".format(local_path))
+            raise ValueError(f"File {local_path} not found.")
 
         if data_path is None:
             raise ValueError("Allowed file types: {}.".format(",".join(FILEEXT2TYPE.keys())))
     else:
-        raise NotImplementedError("Unknown load type: {}.".format(dataset_attr.load_from))
+        raise NotImplementedError(f"Unknown load type: {dataset_attr.load_from}.")
 
     if dataset_attr.load_from == "ms_hub":
         require_version("modelscope>=1.11.0", "To fix: pip install modelscope>=1.11.0")
@@ -145,7 +145,7 @@ def _load_single_dataset(
 
         assert len(indexes) == dataset_attr.num_samples, "Sample num mismatched."
         dataset = dataset.select(indexes)
-        logger.info("Sampled {} examples from dataset {}.".format(dataset_attr.num_samples, dataset_attr))
+        logger.info(f"Sampled {dataset_attr.num_samples} examples from dataset {dataset_attr}.")
 
     if data_args.max_samples is not None:  # truncate dataset
         max_samples = min(data_args.max_samples, len(dataset))
@@ -243,7 +243,7 @@ def get_dataset(
         if has_tokenized_data(data_args.tokenized_path):
             logger.warning("Loading dataset from disk will ignore other data arguments.")
             dataset_dict: "DatasetDict" = load_from_disk(data_args.tokenized_path)
-            logger.info("Loaded tokenized dataset from {}.".format(data_args.tokenized_path))
+            logger.info(f"Loaded tokenized dataset from {data_args.tokenized_path}.")
 
             dataset_module: Dict[str, "Dataset"] = {}
             if "train" in dataset_dict:
@@ -294,8 +294,8 @@ def get_dataset(
         if data_args.tokenized_path is not None:
             if training_args.should_save:
                 dataset_dict.save_to_disk(data_args.tokenized_path)
-                logger.info("Tokenized dataset saved at {}.".format(data_args.tokenized_path))
-                logger.info("Please restart the training with `tokenized_path: {}`.".format(data_args.tokenized_path))
+                logger.info(f"Tokenized dataset saved at {data_args.tokenized_path}.")
+                logger.info(f"Please restart the training with `tokenized_path: {data_args.tokenized_path}`.")
 
             sys.exit(0)
 
