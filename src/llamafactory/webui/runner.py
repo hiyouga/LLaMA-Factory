@@ -231,7 +231,7 @@ class Runner:
         if get("train.ds_stage") != "none":
             ds_stage = get("train.ds_stage")
             ds_offload = "offload_" if get("train.ds_offload") else ""
-            args["deepspeed"] = os.path.join(DEFAULT_CACHE_DIR, "ds_z{}_{}config.json".format(ds_stage, ds_offload))
+            args["deepspeed"] = os.path.join(DEFAULT_CACHE_DIR, f"ds_z{ds_stage}_{ds_offload}config.json")
 
         return args
 
@@ -313,7 +313,7 @@ class Runner:
             if args.get("deepspeed", None) is not None:
                 env["FORCE_TORCHRUN"] = "1"
 
-            self.trainer = Popen("llamafactory-cli train {}".format(save_cmd(args)), env=env, shell=True)
+            self.trainer = Popen(f"llamafactory-cli train {save_cmd(args)}", env=env, shell=True)
             yield from self.monitor()
 
     def _form_config_dict(self, data: Dict["Component", Any]) -> Dict[str, Any]:
