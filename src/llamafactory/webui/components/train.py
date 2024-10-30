@@ -91,7 +91,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             save_steps = gr.Slider(minimum=10, maximum=5000, value=100, step=10)
             warmup_steps = gr.Slider(minimum=0, maximum=5000, value=0, step=1)
             neftune_alpha = gr.Slider(minimum=0, maximum=10, value=0, step=0.1)
-            optim = gr.Textbox(value="adamw_torch")
+            extra_args = gr.Textbox(value='{"optim": "adamw_torch"}')
 
         with gr.Row():
             with gr.Column():
@@ -116,7 +116,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             save_steps,
             warmup_steps,
             neftune_alpha,
-            optim,
+            extra_args,
             packing,
             neat_packing,
             train_on_prompt,
@@ -134,7 +134,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             save_steps=save_steps,
             warmup_steps=warmup_steps,
             neftune_alpha=neftune_alpha,
-            optim=optim,
+            extra_args=extra_args,
             packing=packing,
             neat_packing=neat_packing,
             train_on_prompt=train_on_prompt,
