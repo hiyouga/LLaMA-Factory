@@ -101,7 +101,7 @@ class CustomDPOTrainer(DPOTrainer):
             self.callback_handler.add_callback(PissaConvertCallback)
 
         if finetuning_args.use_badam:
-            from badam import BAdamCallback, clip_grad_norm_old_version
+            from badam import BAdamCallback, clip_grad_norm_old_version  # type: ignore
 
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
@@ -274,7 +274,7 @@ class CustomDPOTrainer(DPOTrainer):
         https://github.com/huggingface/transformers/blob/v4.46.0/src/transformers/trainer.py#L3605
         """
         loss = super().compute_loss(model, inputs, return_outputs)
-        if kwargs.pop("num_items_in_batch", False) and is_transformers_version_equal_to_4_46():
+        if is_transformers_version_equal_to_4_46() and kwargs.pop("num_items_in_batch", False):
             loss /= self.args.gradient_accumulation_steps
 
         return loss
