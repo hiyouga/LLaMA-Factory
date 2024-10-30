@@ -114,7 +114,7 @@ def get_unpad_data(attention_mask: "torch.Tensor") -> Tuple["torch.Tensor", "tor
 
 
 def _patch_for_block_diag_attn(model_type: str) -> None:
-    require_version("transformers>=4.41.2,<=4.46.0", "To fix: pip install transformers>=4.41.2,<=4.46.0")
+    require_version("transformers>=4.41.2,<=4.46.1", "To fix: pip install transformers>=4.41.2,<=4.46.1")
     if is_transformers_version_greater_than_4_43():
         import transformers.modeling_flash_attention_utils
 
