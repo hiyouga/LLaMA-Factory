@@ -356,16 +356,15 @@ def get_template_and_fix_tokenizer(tokenizer: "PreTrainedTokenizer", data_args: 
     r"""
     Gets chat template and fixes the tokenizer.
     """
-    if data_args.template in ["llava", "paligemma", "qwen2_vl"]:
-        require_version("transformers>=4.45.0", "To fix: pip install transformers>=4.45.0")
-        require_version("accelerate>=0.34.0", "To fix: pip install accelerate>=0.34.0")
-
     if data_args.template is None:
         template = TEMPLATES["empty"]  # placeholder
     else:
         template = TEMPLATES.get(data_args.template, None)
         if template is None:
             raise ValueError(f"Template {data_args.template} does not exist.")
+
+    if template.mm_plugin.__class__.__name__ != "BasePlugin":
+        require_version("transformers>=4.45.0", "To fix: pip install transformers>=4.45.0")
 
     if data_args.train_on_prompt and template.efficient_eos:
         raise ValueError("Current template does not support `train_on_prompt`.")
