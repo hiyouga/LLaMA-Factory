@@ -69,25 +69,24 @@ def _load_single_dataset(
         if os.path.isdir(local_path):  # is directory
             for file_name in os.listdir(local_path):
                 data_files.append(os.path.join(local_path, file_name))
-                if data_path is None:
-                    data_path = FILEEXT2TYPE.get(file_name.split(".")[-1], None)
-                elif data_path != FILEEXT2TYPE.get(file_name.split(".")[-1], None):
-                    raise ValueError("File types should be identical.")
         elif os.path.isfile(local_path):  # is file
             data_files.append(local_path)
-            data_path = FILEEXT2TYPE.get(local_path.split(".")[-1], None)
         else:
             raise ValueError(f"File {local_path} not found.")
 
+        data_path = FILEEXT2TYPE.get(os.path.splitext(data_files[0])[-1][1:], None)
         if data_path is None:
             raise ValueError("Allowed file types: {}.".format(",".join(FILEEXT2TYPE.keys())))
+
+        if any(data_path != FILEEXT2TYPE.get(os.path.splitext(data_file)[-1][1:], None) for data_file in data_files):
+            raise ValueError("File types should be identical.")
     else:
         raise NotImplementedError(f"Unknown load type: {dataset_attr.load_from}.")
 
     if dataset_attr.load_from == "ms_hub":
         require_version("modelscope>=1.11.0", "To fix: pip install modelscope>=1.11.0")
-        from modelscope import MsDataset
-        from modelscope.utils.config_ds import MS_DATASETS_CACHE
+        from modelscope import MsDataset  # type: ignore
+        from modelscope.utils.config_ds import MS_DATASETS_CACHE  # type: ignore
 
         cache_dir = model_args.cache_dir or MS_DATASETS_CACHE
         dataset = MsDataset.load(
@@ -98,15 +97,15 @@ def _load_single_dataset(
             split=dataset_attr.split,
             cache_dir=cache_dir,
             token=model_args.ms_hub_token,
-            use_streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
+            use_streaming=data_args.streaming,
         )
         if isinstance(dataset, MsDataset):
             dataset = dataset.to_hf_dataset()
 
     elif dataset_attr.load_from == "om_hub":
         require_version("openmind>=0.8.0", "To fix: pip install openmind>=0.8.0")
-        from openmind import OmDataset
-        from openmind.utils.hub import OM_DATASETS_CACHE
+        from openmind import OmDataset  # type: ignore
+        from openmind.utils.hub import OM_DATASETS_CACHE  # type: ignore
 
         cache_dir = model_args.cache_dir or OM_DATASETS_CACHE
         dataset = OmDataset.load_dataset(
@@ -117,7 +116,7 @@ def _load_single_dataset(
             split=dataset_attr.split,
             cache_dir=cache_dir,
             token=model_args.om_hub_token,
-            streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
+            streaming=data_args.streaming,
         )
     else:
         dataset = load_dataset(
@@ -128,12 +127,9 @@ def _load_single_dataset(
             split=dataset_attr.split,
             cache_dir=model_args.cache_dir,
             token=model_args.hf_hub_token,
-            streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
+            streaming=data_args.streaming,
             trust_remote_code=True,
         )
-
-    if data_args.streaming and (dataset_attr.load_from == "file"):  # faster than specifying streaming=True
-        dataset = dataset.to_iterable_dataset()  # TODO: add num shards parameter
 
     if dataset_attr.num_samples is not None and not data_args.streaming:
         target_num = dataset_attr.num_samples
