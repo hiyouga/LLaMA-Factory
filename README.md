@@ -30,6 +30,10 @@ Choose your path:
 - **Local machine**: Please refer to [usage](#getting-started)
 - **Documentation (WIP)**: https://llamafactory.readthedocs.io/zh-cn/latest/
 
+Recent activities:
+
+- **2024/10/18-2024/11/30**: Build a personal tour guide bot using PAI+LLaMA Factory. [[website]](https://developer.aliyun.com/topic/llamafactory2)
+
 > [!NOTE]
 > Except for the above links, all other websites are unauthorized third-party websites. Please carefully use them.
 
