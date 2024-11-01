@@ -226,6 +226,14 @@ class BasePlugin:
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         r"""
         Builds batched multimodal inputs for VLMs.
+
+        Arguments:
+            images: a list of image inputs, shape (num_images,)
+            videos: a list of video inputs, shape (num_videos,)
+            imglens: number of images in each sample, shape (batch_size,)
+            vidlens: number of videos in each sample, shape (batch_size,)
+            seqlens: number of tokens in each sample, shape (batch_size,)
+            processor: a processor for pre-processing images and videos
         """
         self._validate_input(images, videos)
         return {}
