@@ -692,6 +692,17 @@ _register_template(
 
 
 _register_template(
+    name="granite3",
+    format_user=StringFormatter(slots=["<|start_of_role|>user<|end_of_role|>{{content}}<|end_of_text|>\n<|start_of_role|>assistant<|end_of_role|>"]),
+    format_system=StringFormatter(slots=["<|start_of_role|>system<|end_of_role|>{{content}}<|end_of_text|>\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|end_of_text|>\n"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    stop_words=["<|end_of_text|>"],
+    replace_eos=True,
+    replace_jinja_template=True,
+)
+
+_register_template(
     name="intern",
     format_user=StringFormatter(slots=["<|User|>:{{content}}\n<|Bot|>:"]),
     format_system=StringFormatter(slots=["<|System|>:{{content}}\n"]),
