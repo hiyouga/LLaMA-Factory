@@ -584,6 +584,8 @@ API_PORT=8000 llamafactory-cli api examples/inference/llama3_vllm.yaml
 
 > [!TIP]
 > Visit [this page](https://platform.openai.com/docs/api-reference/chat/create) for API document.
+>
+> Examples: [Image understanding](scripts/test_image.py) | [Function calling](scripts/test_toolcall.py)
 
 ### Download from ModelScope Hub
 
