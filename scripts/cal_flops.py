@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright 2024 Microsoft Corporation and the LlamaFactory team.
 #
 # This code is inspired by the Microsoft's DeepSpeed library.
@@ -27,7 +26,7 @@ from llamafactory.chat import ChatModel
 def calculate_flops(
     model_name_or_path: str,
     batch_size: int = 1,
-    seq_length: int = 256,
+    seq_length: int = 512,
     flash_attn: str = "auto",
 ):
     r"""

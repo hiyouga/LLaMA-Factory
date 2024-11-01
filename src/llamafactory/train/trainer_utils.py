@@ -26,6 +26,7 @@ from transformers.modeling_utils import is_fsdp_enabled
 from transformers.optimization import get_scheduler
 from transformers.pytorch_utils import ALL_LAYERNORM_LAYERS
 from transformers.trainer_pt_utils import get_parameter_names
+from typing_extensions import override
 
 from ..extras.constants import IGNORE_INDEX
 from ..extras.logging import get_logger
@@ -60,9 +61,11 @@ class DummyOptimizer(torch.optim.Optimizer):
         self.optimizer_dict = optimizer_dict
         super().__init__([dummy_tensor], {"lr": lr})
 
+    @override
     def zero_grad(self, set_to_none: bool = True) -> None:
         pass
 
+    @override
     def step(self, closure: Optional[Callable[[], float]] = None) -> Optional[float]:
         pass
 
@@ -113,7 +116,7 @@ def create_ref_model(
         ref_model = load_model(
             tokenizer, ref_model_args, ref_finetuning_args, is_trainable=False, add_valuehead=add_valuehead
         )
-        logger.info("Created reference model from {}".format(finetuning_args.ref_model))
+        logger.info(f"Created reference model from {finetuning_args.ref_model}")
     else:
         if finetuning_args.finetuning_type == "lora":
             ref_model = None
@@ -137,7 +140,7 @@ def create_reward_model(
     """
     if finetuning_args.reward_model_type == "api":
         assert finetuning_args.reward_model.startswith("http"), "Please provide full url."
-        logger.info("Use reward server {}".format(finetuning_args.reward_model))
+        logger.info(f"Use reward server {finetuning_args.reward_model}")
         return finetuning_args.reward_model
     elif finetuning_args.reward_model_type == "lora":
         model.pretrained_model.load_adapter(finetuning_args.reward_model, "reward")
@@ -154,7 +157,7 @@ def create_reward_model(
         model.register_buffer(
             "default_head_bias", torch.zeros_like(vhead_params["v_head.summary.bias"]), persistent=False
         )
-        logger.info("Loaded adapter weights of reward model from {}".format(finetuning_args.reward_model))
+        logger.info(f"Loaded adapter weights of reward model from {finetuning_args.reward_model}")
         return None
     else:
         reward_model_args = ModelArguments.copyfrom(
@@ -168,7 +171,7 @@ def create_reward_model(
         reward_model = load_model(
             tokenizer, reward_model_args, reward_finetuning_args, is_trainable=False, add_valuehead=True
         )
-        logger.info("Loaded full weights of reward model from {}".format(finetuning_args.reward_model))
+        logger.info(f"Loaded full weights of reward model from {finetuning_args.reward_model}")
         logger.warning("Please ensure the ppo model and reward model share SAME tokenizer and vocabulary.")
         return reward_model
 
@@ -228,7 +231,7 @@ def _create_galore_optimizer(
     elif training_args.optim == "adafactor":
         optim_class = GaLoreAdafactor
     else:
-        raise NotImplementedError("Unknow optim: {}".format(training_args.optim))
+        raise NotImplementedError(f"Unknow optim: {training_args.optim}")
 
     if finetuning_args.galore_layerwise:
         if training_args.gradient_accumulation_steps != 1:
@@ -302,7 +305,7 @@ def _create_loraplus_optimizer(
         dict(params=param_dict["embedding"], lr=embedding_lr, weight_decay=training_args.weight_decay),
     ]
     optimizer = optim_class(param_groups, **optim_kwargs)
-    logger.info("Using LoRA+ optimizer with loraplus lr ratio {:.2f}.".format(finetuning_args.loraplus_lr_ratio))
+    logger.info(f"Using LoRA+ optimizer with loraplus lr ratio {finetuning_args.loraplus_lr_ratio:.2f}.")
     return optimizer
 
 

@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright 2024 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,21 +17,21 @@ from collections import defaultdict
 import fire
 from tqdm import tqdm
 
-from llamafactory.data import get_dataset
+from llamafactory.data import get_dataset, get_template_and_fix_tokenizer
 from llamafactory.hparams import get_train_args
 from llamafactory.model import load_tokenizer
 
 
 def length_cdf(
     model_name_or_path: str,
-    dataset: str = "alpaca_en",
+    dataset: str = "alpaca_en_demo",
     dataset_dir: str = "data",
     template: str = "default",
     interval: int = 1000,
 ):
     r"""
     Calculates the distribution of the input lengths in the dataset.
-    Usage: python length_cdf.py --model_name_or_path path_to_model --dataset alpaca_en --template default
+    Usage: python length_cdf.py --model_name_or_path path_to_model --dataset alpaca_en_demo --template default
     """
     model_args, data_args, training_args, _, _ = get_train_args(
         dict(
@@ -48,7 +47,8 @@ def length_cdf(
         )
     )
     tokenizer_module = load_tokenizer(model_args)
-    trainset = get_dataset(model_args, data_args, training_args, stage="sft", **tokenizer_module)["train_dataset"]
+    template = get_template_and_fix_tokenizer(tokenizer_module["tokenizer"], data_args)
+    trainset = get_dataset(template, model_args, data_args, training_args, "sft", **tokenizer_module)["train_dataset"]
     total_num = len(trainset)
     length_dict = defaultdict(int)
     for sample in tqdm(trainset["input_ids"]):
@@ -60,7 +60,7 @@ def length_cdf(
     for length, count in length_tuples:
         count_accu += count
         prob_accu += count / total_num * 100
-        print("{:d} ({:.2f}%) samples have length < {}.".format(count_accu, prob_accu, length + interval))
+        print(f"{count_accu:d} ({prob_accu:.2f}%) samples have length < {length + interval}.")
 
 
 if __name__ == "__main__":

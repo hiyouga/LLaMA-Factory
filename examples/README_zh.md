@@ -33,6 +33,19 @@ llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
 
 ```bash
 llamafactory-cli train examples/train_lora/llava1_5_lora_sft.yaml
+llamafactory-cli train examples/train_lora/qwen2vl_lora_sft.yaml
+```
+
+#### DPO/ORPO/SimPO 训练
+
+```bash
+llamafactory-cli train examples/train_lora/llama3_lora_dpo.yaml
+```
+
+#### 多模态 DPO/ORPO/SimPO 训练
+
+```bash
+llamafactory-cli train examples/train_lora/qwen2vl_lora_dpo.yaml
 ```
 
 #### 奖励模型训练
@@ -45,12 +58,6 @@ llamafactory-cli train examples/train_lora/llama3_lora_reward.yaml
 
 ```bash
 llamafactory-cli train examples/train_lora/llama3_lora_ppo.yaml
-```
-
-#### DPO/ORPO/SimPO 训练
-
-```bash
-llamafactory-cli train examples/train_lora/llama3_lora_dpo.yaml
 ```
 
 #### KTO 训练
@@ -131,6 +138,12 @@ FORCE_TORCHRUN=1 llamafactory-cli train examples/train_full/llama3_full_sft_ds3.
 ```bash
 FORCE_TORCHRUN=1 NNODES=2 RANK=0 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_full/llama3_full_sft_ds3.yaml
 FORCE_TORCHRUN=1 NNODES=2 RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_full/llama3_full_sft_ds3.yaml
+```
+
+#### 多模态指令监督微调
+
+```bash
+FORCE_TORCHRUN=1 llamafactory-cli train examples/train_full/qwen2vl_full_sft.yaml
 ```
 
 #### 批量预测并计算 BLEU 和 ROUGE 分数

@@ -16,6 +16,7 @@ import base64
 import io
 import json
 import os
+import re
 import uuid
 from typing import TYPE_CHECKING, AsyncGenerator, Dict, List, Optional, Tuple
 
@@ -51,9 +52,8 @@ if is_requests_available():
 
 
 if TYPE_CHECKING:
-    from numpy.typing import NDArray
-
     from ..chat import ChatModel
+    from ..data.mm_plugin import ImageInput
     from .protocol import ChatCompletionRequest, ScoreEvaluationRequest
 
 
@@ -69,8 +69,8 @@ ROLE_MAPPING = {
 
 def _process_request(
     request: "ChatCompletionRequest",
-) -> Tuple[List[Dict[str, str]], Optional[str], Optional[str], Optional["NDArray"]]:
-    logger.info("==== request ====\n{}".format(json.dumps(dictify(request), indent=2, ensure_ascii=False)))
+) -> Tuple[List[Dict[str, str]], Optional[str], Optional[str], Optional[List["ImageInput"]]]:
+    logger.info(f"==== request ====\n{json.dumps(dictify(request), indent=2, ensure_ascii=False)}")
 
     if len(request.messages) == 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid length")
@@ -84,7 +84,7 @@ def _process_request(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only supports u/a/u/a/u...")
 
     input_messages = []
-    image = None
+    images = []
     for i, message in enumerate(request.messages):
         if i % 2 == 0 and message.role not in [Role.USER, Role.TOOL]:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role")
@@ -104,18 +104,18 @@ def _process_request(
                     input_messages.append({"role": ROLE_MAPPING[message.role], "content": input_item.text})
                 else:
                     image_url = input_item.image_url.url
-                    if image_url.startswith("data:image"):  # base64 image
-                        image_data = base64.b64decode(image_url.split(",", maxsplit=1)[1])
-                        image_path = io.BytesIO(image_data)
+                    if re.match(r"^data:image\/(png|jpg|jpeg|gif|bmp);base64,(.+)$", image_url):  # base64 image
+                        image_stream = io.BytesIO(base64.b64decode(image_url.split(",", maxsplit=1)[1]))
                     elif os.path.isfile(image_url):  # local file
-                        image_path = open(image_url, "rb")
+                        image_stream = open(image_url, "rb")
                     else:  # web uri
-                        image_path = requests.get(image_url, stream=True).raw
+                        image_stream = requests.get(image_url, stream=True).raw
 
-                    image = Image.open(image_path).convert("RGB")
+                    images.append(Image.open(image_stream).convert("RGB"))
         else:
             input_messages.append({"role": ROLE_MAPPING[message.role], "content": message.content})
 
+    images = None if len(images) == 0 else images
     tool_list = request.tools
     if isinstance(tool_list, list) and len(tool_list):
         try:
@@ -125,7 +125,7 @@ def _process_request(
     else:
         tools = None
 
-    return input_messages, system, tools, image
+    return input_messages, system, tools, images
 
 
 def _create_stream_chat_completion_chunk(
@@ -134,23 +134,22 @@ def _create_stream_chat_completion_chunk(
     delta: "ChatCompletionMessage",
     index: Optional[int] = 0,
     finish_reason: Optional["Finish"] = None,
-    usage: Optional["ChatCompletionResponseUsage"] = None
 ) -> str:
     choice_data = ChatCompletionStreamResponseChoice(index=index, delta=delta, finish_reason=finish_reason)
-    chunk = ChatCompletionStreamResponse(id=completion_id, model=model, choices=[choice_data], usage=usage)
+    chunk = ChatCompletionStreamResponse(id=completion_id, model=model, choices=[choice_data])
     return jsonify(chunk)
 
 
 async def create_chat_completion_response(
     request: "ChatCompletionRequest", chat_model: "ChatModel"
 ) -> "ChatCompletionResponse":
-    completion_id = "chatcmpl-{}".format(uuid.uuid4().hex)
-    input_messages, system, tools, image = _process_request(request)
+    completion_id = f"chatcmpl-{uuid.uuid4().hex}"
+    input_messages, system, tools, images = _process_request(request)
     responses = await chat_model.achat(
         input_messages,
         system,
         tools,
-        image,
+        images,
         do_sample=request.do_sample,
         temperature=request.temperature,
         top_p=request.top_p,
@@ -171,7 +170,7 @@ async def create_chat_completion_response(
             tool_calls = []
             for tool in result:
                 function = Function(name=tool[0], arguments=tool[1])
-                tool_calls.append(FunctionCall(id="call_{}".format(uuid.uuid4().hex), function=function))
+                tool_calls.append(FunctionCall(id=f"call_{uuid.uuid4().hex}", function=function))
 
             response_message = ChatCompletionMessage(role=Role.ASSISTANT, tool_calls=tool_calls)
             finish_reason = Finish.TOOL
@@ -195,9 +194,8 @@ async def create_chat_completion_response(
 async def create_stream_chat_completion_response(
     request: "ChatCompletionRequest", chat_model: "ChatModel"
 ) -> AsyncGenerator[str, None]:
-    completion_id = "chatcmpl-{}".format(uuid.uuid4().hex)
-    input_messages, system, tools, image = _process_request(request)
-
+    completion_id = f"chatcmpl-{uuid.uuid4().hex}"
+    input_messages, system, tools, images = _process_request(request)
     if tools:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot stream function calls.")
 
@@ -207,35 +205,24 @@ async def create_stream_chat_completion_response(
     yield _create_stream_chat_completion_chunk(
         completion_id=completion_id, model=request.model, delta=ChatCompletionMessage(role=Role.ASSISTANT, content="")
     )
-    response_text = ""
-    prompt_length = 0
     async for new_token in chat_model.astream_chat(
         input_messages,
         system,
         tools,
-        image,
+        images,
         do_sample=request.do_sample,
         temperature=request.temperature,
         top_p=request.top_p,
         max_new_tokens=request.max_tokens,
         stop=request.stop,
     ):
-        prompt_length = chat_model.engine.prompt_length
         if len(new_token) != 0:
-            response_text += new_token
             yield _create_stream_chat_completion_chunk(
                 completion_id=completion_id, model=request.model, delta=ChatCompletionMessage(content=new_token)
             )
-    usage = None
-    if request.stream_options is not None and request.stream_options.get('include_usage', False):
-        response_length = len(chat_model.engine.tokenizer.encode(response_text, add_special_tokens=False))
-        usage = ChatCompletionResponseUsage(
-            prompt_tokens=prompt_length,
-            completion_tokens=response_length,
-            total_tokens=prompt_length + response_length,
-        )
+
     yield _create_stream_chat_completion_chunk(
-        completion_id=completion_id, model=request.model, delta=ChatCompletionMessage(), finish_reason=Finish.STOP, usage=usage
+        completion_id=completion_id, model=request.model, delta=ChatCompletionMessage(), finish_reason=Finish.STOP
     )
     yield "[DONE]"
 
@@ -243,8 +230,9 @@ async def create_stream_chat_completion_response(
 async def create_score_evaluation_response(
     request: "ScoreEvaluationRequest", chat_model: "ChatModel"
 ) -> "ScoreEvaluationResponse":
+    score_id = f"scoreval-{uuid.uuid4().hex}"
     if len(request.messages) == 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid request")
 
     scores = await chat_model.aget_scores(request.messages, max_length=request.max_length)
-    return ScoreEvaluationResponse(model=request.model, scores=scores)
+    return ScoreEvaluationResponse(id=score_id, model=request.model, scores=scores)

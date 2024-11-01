@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
 #
 # This code is based on the HuggingFace's PEFT library.
@@ -54,7 +53,7 @@ def quantize_pissa(
         lora_alpha=lora_alpha if lora_alpha is not None else lora_rank * 2,
         lora_dropout=lora_dropout,
         target_modules=lora_target,
-        init_lora_weights="pissa" if pissa_iter == -1 else "pissa_niter_{}".format(pissa_iter),
+        init_lora_weights="pissa" if pissa_iter == -1 else f"pissa_niter_{pissa_iter}",
     )
 
     # Init PiSSA model
@@ -65,17 +64,17 @@ def quantize_pissa(
     setattr(peft_model.peft_config["default"], "base_model_name_or_path", os.path.abspath(output_dir))
     setattr(peft_model.peft_config["default"], "init_lora_weights", True)  # don't apply pissa again
     peft_model.save_pretrained(pissa_dir, safe_serialization=save_safetensors)
-    print("Adapter weights saved in {}".format(pissa_dir))
+    print(f"Adapter weights saved in {pissa_dir}")
 
     # Save base model
     base_model: "PreTrainedModel" = peft_model.unload()
     base_model.save_pretrained(output_dir, safe_serialization=save_safetensors)
     tokenizer.save_pretrained(output_dir)
-    print("Model weights saved in {}".format(output_dir))
+    print(f"Model weights saved in {output_dir}")
 
     print("- Fine-tune this model with:")
-    print("model_name_or_path: {}".format(output_dir))
-    print("adapter_name_or_path: {}".format(pissa_dir))
+    print(f"model_name_or_path: {output_dir}")
+    print(f"adapter_name_or_path: {pissa_dir}")
     print("finetuning_type: lora")
     print("pissa_init: false")
     print("pissa_convert: true")

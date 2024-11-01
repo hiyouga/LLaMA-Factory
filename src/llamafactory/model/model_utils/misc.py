@@ -28,17 +28,22 @@ def find_all_linear_modules(model: "PreTrainedModel", freeze_vision_tower: bool)
     r"""
     Finds all available modules to apply lora or galore.
     """
+    model_type = getattr(model.config, "model_type", None)
     forbidden_modules = {"lm_head"}
-
-    if model.config.model_type == "chatglm":
+    if model_type == "chatglm":
         forbidden_modules.add("output_layer")
-    elif model.config.model_type == "internlm2":
+    elif model_type == "internlm2":
         forbidden_modules.add("output")
-    elif model.config.model_type in ["llava", "paligemma"]:
+    elif model_type in ["llava", "llava_next", "llava_next_video", "paligemma", "video_llava"]:
         forbidden_modules.add("multi_modal_projector")
+    elif model_type == "qwen2_vl":
+        forbidden_modules.add("merger")
 
     if freeze_vision_tower:
-        forbidden_modules.add("vision_tower")
+        if model_type == "qwen2_vl":
+            forbidden_modules.add("visual")
+        else:
+            forbidden_modules.add("vision_tower")
 
     module_names = set()
     for name, module in model.named_modules():
@@ -62,12 +67,12 @@ def find_expanded_modules(model: "PreTrainedModel", target_modules: List[str], n
 
     if num_layers % num_layer_trainable != 0:
         raise ValueError(
-            "`num_layers` {} should be divisible by `num_layer_trainable` {}.".format(num_layers, num_layer_trainable)
+            f"`num_layers` {num_layers} should be divisible by `num_layer_trainable` {num_layer_trainable}."
         )
 
     stride = num_layers // num_layer_trainable
     trainable_layer_ids = range(stride - 1, num_layers + stride - 1, stride)
-    trainable_layers = [".{:d}.".format(idx) for idx in trainable_layer_ids]
+    trainable_layers = [f".{idx:d}." for idx in trainable_layer_ids]
     module_names = []
     for name, _ in model.named_modules():
         if any(target_module in name for target_module in target_modules) and any(
