@@ -1,0 +1,38 @@
+ 
+
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 WANDB_API_KEY=974207f7173417ef95d2ebad4cbe7f2f9668a093 llamafactory-cli train \
+    --stage sft \
+    --do_train True \
+    --model_name_or_path /mnt/ceph/develop/jiawei/model_checkpoint/LongWriter-glm4-9b-base \
+    --preprocessing_num_workers 1 \
+    --finetuning_type lora \
+    --template glm4 \
+    --flash_attn auto \
+    --dataset_dir data \
+    --dataset nlp_paper_inst \
+    --cutoff_len 21000 \
+    --learning_rate 2e-5 \
+    --num_train_epochs 1.0 \
+    --max_samples 100000 \
+    --per_device_train_batch_size 1 \
+    --gradient_accumulation_steps 2 \
+    --lr_scheduler_type cosine \
+    --max_grad_norm 1.0 \
+    --logging_steps 1 \
+    --save_steps 1 \
+    --warmup_steps 0 \
+    --warmup_ratio 0.03 \
+    --weight_decay 0.1 \
+    --optim adamw_torch \
+    --packing True \
+    --report_to wandb \
+    --run_name LongWriter-test4 \
+    --output_dir saves/LongWriter-glm4-9b-base/lora/train_2024-11-01-test4 \
+    --bf16 True \
+    --plot_loss True \
+    --ddp_timeout 180000000 \
+    --include_num_input_tokens_seen True \
+    --lora_rank 8 \
+    --lora_alpha 32 \
+    --lora_dropout 0.05 \
+    --lora_target all 

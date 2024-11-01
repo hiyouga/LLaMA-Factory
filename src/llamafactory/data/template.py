@@ -680,20 +680,6 @@ _register_template(
     efficient_eos=True,
 )
 
-# TODO long-eos task, need your default_system on exists dataset propert 'system' keys
-# build inputs with format `<bos> X Y <eos>`
-# but labels with format ` Y ` not `<eos>` for long-eos task
-_register_template(
-    name="glm4_long",
-    format_user=StringFormatter(slots=["<|user|>\n{{content}}"]),
-    format_assistant=StringFormatter(slots=["<|assistant|>\n{{content}}"]),
-    format_system=StringFormatter(slots=["<|system|>\n{{content}}"]),
-    format_function=FunctionFormatter(slots=[], tool_format="glm4"),
-    format_observation=StringFormatter(slots=["<|observation|>\n{{content}}<|assistant|>"]),
-    format_tools=ToolFormatter(tool_format="glm4"),
-    stop_words=["<|user|>", "<|observation|>"],
-    efficient_eos=True,
-)
 
 _register_template(
     name="intern",
