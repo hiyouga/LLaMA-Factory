@@ -101,14 +101,14 @@ class VllmEngine(BaseEngine):
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        image: Optional["ImageInput"] = None,
-        video: Optional["VideoInput"] = None,
+        images: Optional[Sequence["ImageInput"]] = None,
+        videos: Optional[Sequence["VideoInput"]] = None,
         **input_kwargs,
     ) -> AsyncIterator["RequestOutput"]:
         request_id = f"chatcmpl-{uuid.uuid4().hex}"
-        if image is not None:
+        if images is not None:
             if IMAGE_PLACEHOLDER not in messages[0]["content"]:
-                messages[0]["content"] = IMAGE_PLACEHOLDER + messages[0]["content"]
+                messages[0]["content"] = IMAGE_PLACEHOLDER * len(images) + messages[0]["content"]
 
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or self.generating_args["default_system"]
@@ -157,14 +157,18 @@ class VllmEngine(BaseEngine):
             skip_special_tokens=True,
         )
 
-        if image is not None:  # add image features
-            if not isinstance(image, (str, ImageObject)):
-                raise ValueError(f"Expected image input is a path or PIL.Image, but got {type(image)}.")
+        if images is not None:  # add image features
+            image_data = []
+            for image in images:
+                if not isinstance(image, (str, ImageObject)):
+                    raise ValueError(f"Expected image input is a path or PIL.Image, but got {type(image)}.")
 
-            if isinstance(image, str):
-                image = Image.open(image).convert("RGB")
+                if isinstance(image, str):
+                    image = Image.open(image).convert("RGB")
 
-            multi_modal_data = {"image": image}
+                image_data.append(image)
+
+            multi_modal_data = {"image": image_data}
         else:
             multi_modal_data = None
 
@@ -182,12 +186,12 @@ class VllmEngine(BaseEngine):
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        image: Optional["ImageInput"] = None,
-        video: Optional["VideoInput"] = None,
+        images: Optional[Sequence["ImageInput"]] = None,
+        videos: Optional[Sequence["VideoInput"]] = None,
         **input_kwargs,
     ) -> List["Response"]:
         final_output = None
-        generator = await self._generate(messages, system, tools, image, video, **input_kwargs)
+        generator = await self._generate(messages, system, tools, images, videos, **input_kwargs)
         async for request_output in generator:
             final_output = request_output
 
@@ -210,12 +214,12 @@ class VllmEngine(BaseEngine):
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        image: Optional["ImageInput"] = None,
-        video: Optional["VideoInput"] = None,
+        images: Optional[Sequence["ImageInput"]] = None,
+        videos: Optional[Sequence["VideoInput"]] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
         generated_text = ""
-        generator = await self._generate(messages, system, tools, image, video, **input_kwargs)
+        generator = await self._generate(messages, system, tools, images, videos, **input_kwargs)
         async for result in generator:
             delta_text = result.outputs[0].text[len(generated_text) :]
             generated_text = result.outputs[0].text

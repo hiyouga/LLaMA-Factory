@@ -66,8 +66,8 @@ class BaseEngine(ABC):
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        image: Optional["ImageInput"] = None,
-        video: Optional["VideoInput"] = None,
+        images: Optional[Sequence["ImageInput"]] = None,
+        videos: Optional[Sequence["VideoInput"]] = None,
         **input_kwargs,
     ) -> List["Response"]:
         r"""
@@ -81,8 +81,8 @@ class BaseEngine(ABC):
         messages: Sequence[Dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        image: Optional["ImageInput"] = None,
-        video: Optional["VideoInput"] = None,
+        images: Optional[Sequence["ImageInput"]] = None,
+        videos: Optional[Sequence["VideoInput"]] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
         r"""
