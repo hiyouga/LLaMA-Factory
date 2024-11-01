@@ -107,7 +107,7 @@ class VllmEngine(BaseEngine):
     ) -> AsyncIterator["RequestOutput"]:
         request_id = f"chatcmpl-{uuid.uuid4().hex}"
         if images is not None:
-            if IMAGE_PLACEHOLDER not in messages[0]["content"]:
+            if not any(IMAGE_PLACEHOLDER not in message["content"] for message in messages):
                 messages[0]["content"] = IMAGE_PLACEHOLDER * len(images) + messages[0]["content"]
 
         paired_messages = messages + [{"role": "assistant", "content": ""}]
