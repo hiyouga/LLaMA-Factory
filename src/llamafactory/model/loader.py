@@ -19,7 +19,7 @@ from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForVision2Se
 from trl import AutoModelForCausalLMWithValueHead
 
 from ..extras.logging import get_logger
-from ..extras.misc import count_parameters, skip_check_imports, try_download_model_from_ms
+from ..extras.misc import count_parameters, skip_check_imports, try_download_model_from_other_hub
 from .adapter import init_adapter
 from .model_utils.liger_kernel import apply_liger_kernel
 from .model_utils.misc import register_autoclass
@@ -50,7 +50,7 @@ def _get_init_kwargs(model_args: "ModelArguments") -> Dict[str, Any]:
     Note: including inplace operation of model_args.
     """
     skip_check_imports()
-    model_args.model_name_or_path = try_download_model_from_ms(model_args)
+    model_args.model_name_or_path = try_download_model_from_other_hub(model_args)
     return {
         "trust_remote_code": True,
         "cache_dir": model_args.cache_dir,
@@ -100,7 +100,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
         processor = AutoProcessor.from_pretrained(model_args.model_name_or_path, **init_kwargs)
         patch_processor(processor, config, tokenizer, model_args)
     except Exception as e:
-        logger.warning("Processor was not found: {}.".format(e))
+        logger.warning(f"Processor was not found: {e}.")
         processor = None
 
     # Avoid load tokenizer, see:
@@ -153,8 +153,9 @@ def load_model(
                 load_class = AutoModelForVision2Seq
             else:
                 load_class = AutoModelForCausalLM
+
             if model_args.train_from_scratch:
-                model = load_class.from_config(config)
+                model = load_class.from_config(config, trust_remote_code=True)
             else:
                 model = load_class.from_pretrained(**init_kwargs)
 
@@ -179,7 +180,7 @@ def load_model(
         vhead_params = load_valuehead_params(vhead_path, model_args)
         if vhead_params is not None:
             model.load_state_dict(vhead_params, strict=False)
-            logger.info("Loaded valuehead from checkpoint: {}".format(vhead_path))
+            logger.info(f"Loaded valuehead from checkpoint: {vhead_path}")
 
     if not is_trainable:
         model.requires_grad_(False)
@@ -197,7 +198,7 @@ def load_model(
             trainable_params, all_param, 100 * trainable_params / all_param
         )
     else:
-        param_stats = "all params: {:,}".format(all_param)
+        param_stats = f"all params: {all_param:,}"
 
     logger.info(param_stats)
 

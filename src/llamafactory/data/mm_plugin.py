@@ -111,7 +111,7 @@ class BasePlugin:
                     image = Image.open(image["path"])
 
             if not isinstance(image, ImageObject):
-                raise ValueError("Expect input is a list of Images, but got {}.".format(type(image)))
+                raise ValueError(f"Expect input is a list of Images, but got {type(image)}.")
 
             results.append(self._preprocess_image(image, **kwargs))
 
@@ -253,7 +253,7 @@ class LlavaPlugin(BasePlugin):
             message["content"] = content.replace("{{image}}", self.image_token * image_seqlen)
 
         if len(images) != num_image_tokens:
-            raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
+            raise ValueError(f"The number of images does not match the number of {IMAGE_PLACEHOLDER} tokens")
 
         return messages
 
@@ -302,7 +302,7 @@ class LlavaNextPlugin(BasePlugin):
             message["content"] = content.replace("{{image}}", self.image_token)
 
         if len(images) != num_image_tokens:
-            raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
+            raise ValueError(f"The number of images does not match the number of {IMAGE_PLACEHOLDER} tokens")
         return messages
 
     @override
@@ -366,10 +366,10 @@ class LlavaNextVideoPlugin(BasePlugin):
                 message["content"] = content.replace("{{video}}", self.video_token * video_seqlen)
 
         if len(images) != num_image_tokens:
-            raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
+            raise ValueError(f"The number of images does not match the number of {IMAGE_PLACEHOLDER} tokens")
 
         if len(videos) != num_video_tokens:
-            raise ValueError("The number of videos does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
+            raise ValueError(f"The number of videos does not match the number of {IMAGE_PLACEHOLDER} tokens")
 
         return messages
 
@@ -408,7 +408,7 @@ class PaliGemmaPlugin(BasePlugin):
             message["content"] = content.replace("{{image}}", "")
 
         if len(images) != num_image_tokens:
-            raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
+            raise ValueError(f"The number of images does not match the number of {IMAGE_PLACEHOLDER} tokens")
 
         return messages
 
@@ -445,6 +445,68 @@ class PaliGemmaPlugin(BasePlugin):
         self._validate_input(images, videos)
         mm_inputs = self._get_mm_inputs(images, videos, processor)
         mm_inputs["token_type_ids"] = _get_paligemma_token_type_ids(imglens, seqlens, processor)
+        return mm_inputs
+
+
+class PixtralPlugin(BasePlugin):
+    @override
+    def process_messages(
+        self,
+        messages: Sequence[Dict[str, str]],
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        processor: Optional["ProcessorMixin"],
+    ) -> List[Dict[str, str]]:
+        self._validate_input(images, videos)
+        patch_size = getattr(processor, "patch_size")
+        image_token = getattr(processor, "image_token")
+        image_break_token = getattr(processor, "image_break_token")
+        image_end_token = getattr(processor, "image_end_token")
+
+        num_image_tokens = 0
+        messages = deepcopy(messages)
+        mm_inputs = self._get_mm_inputs(images, videos, processor)
+        image_input_sizes = mm_inputs.get("image_sizes", None)
+        for message in messages:
+            content = message["content"]
+            while IMAGE_PLACEHOLDER in content:
+                if image_input_sizes is None:
+                    raise ValueError(f"The number of images does not match the number of {IMAGE_PLACEHOLDER} tokens")
+
+                image_size = image_input_sizes[0][num_image_tokens]
+                height, width = image_size
+                num_height_tokens = height // patch_size
+                num_width_tokens = width // patch_size
+                replace_tokens = [[image_token] * num_width_tokens + [image_break_token]] * num_height_tokens
+                replace_tokens = [item for sublist in replace_tokens for item in sublist]  # flatten list
+                replace_tokens[-1] = image_end_token
+                replace_str = "".join(replace_tokens)
+                content = content.replace(IMAGE_PLACEHOLDER, replace_str, 1)
+                num_image_tokens += 1
+
+            message["content"] = content
+
+        if len(images) != num_image_tokens:
+            raise ValueError(f"The number of images does not match the number of {IMAGE_PLACEHOLDER} tokens")
+
+        return messages
+
+    @override
+    def get_mm_inputs(
+        self,
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        imglens: Sequence[int],
+        vidlens: Sequence[int],
+        seqlens: Sequence[int],
+        processor: Optional["ProcessorMixin"],
+    ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
+        self._validate_input(images, videos)
+        mm_inputs = self._get_mm_inputs(images, videos, processor)
+        if mm_inputs.get("pixel_values"):
+            mm_inputs["pixel_values"] = mm_inputs["pixel_values"][0]
+
+        mm_inputs.pop("image_sizes", None)
         return mm_inputs
 
 
@@ -493,7 +555,7 @@ class Qwen2vlPlugin(BasePlugin):
             content = message["content"]
             while IMAGE_PLACEHOLDER in content:
                 if num_image_tokens >= len(image_grid_thw):
-                    raise ValueError("`len(images)` is less than the number of {} tokens.".format(IMAGE_PLACEHOLDER))
+                    raise ValueError(f"`len(images)` is less than the number of {IMAGE_PLACEHOLDER} tokens.")
 
                 content = content.replace(
                     IMAGE_PLACEHOLDER,
@@ -506,7 +568,7 @@ class Qwen2vlPlugin(BasePlugin):
 
             while VIDEO_PLACEHOLDER in content:
                 if num_video_tokens >= len(video_grid_thw):
-                    raise ValueError("`len(videos)` is less than the number of {} tokens.".format(VIDEO_PLACEHOLDER))
+                    raise ValueError(f"`len(videos)` is less than the number of {VIDEO_PLACEHOLDER} tokens.")
 
                 content = content.replace(
                     VIDEO_PLACEHOLDER,
@@ -520,10 +582,10 @@ class Qwen2vlPlugin(BasePlugin):
             message["content"] = content
 
         if len(images) != num_image_tokens:
-            raise ValueError("The number of images does not match the number of {} tokens".format(IMAGE_PLACEHOLDER))
+            raise ValueError(f"The number of images does not match the number of {IMAGE_PLACEHOLDER} tokens")
 
         if len(videos) != num_video_tokens:
-            raise ValueError("The number of videos does not match the number of {} tokens".format(VIDEO_PLACEHOLDER))
+            raise ValueError(f"The number of videos does not match the number of {VIDEO_PLACEHOLDER} tokens")
 
         return messages
 
@@ -583,10 +645,10 @@ class VideoLlavaPlugin(BasePlugin):
                 message["content"] = content.replace("{{video}}", self.video_token * video_seqlen)
 
         if len(images) != num_image_tokens:
-            raise ValueError("The number of images does not match the number of {} tokens".format(self.image_token))
+            raise ValueError(f"The number of images does not match the number of {self.image_token} tokens")
 
         if len(videos) != num_video_tokens:
-            raise ValueError("The number of videos does not match the number of {} tokens".format(self.video_token))
+            raise ValueError(f"The number of videos does not match the number of {self.video_token} tokens")
 
         return messages
 
@@ -610,6 +672,7 @@ PLUGINS = {
     "llava_next": LlavaNextPlugin,
     "llava_next_video": LlavaNextVideoPlugin,
     "paligemma": PaliGemmaPlugin,
+    "pixtral": PixtralPlugin,
     "qwen2_vl": Qwen2vlPlugin,
     "video_llava": VideoLlavaPlugin,
 }
@@ -622,6 +685,6 @@ def get_mm_plugin(
 ) -> "BasePlugin":
     plugin_class = PLUGINS.get(name, None)
     if plugin_class is None:
-        raise ValueError("Multimodal plugin `{}` not found.".format(name))
+        raise ValueError(f"Multimodal plugin `{name}` not found.")
 
     return plugin_class(image_token, video_token)

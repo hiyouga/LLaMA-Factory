@@ -70,7 +70,7 @@ ROLE_MAPPING = {
 def _process_request(
     request: "ChatCompletionRequest",
 ) -> Tuple[List[Dict[str, str]], Optional[str], Optional[str], Optional["ImageInput"]]:
-    logger.info("==== request ====\n{}".format(json.dumps(dictify(request), indent=2, ensure_ascii=False)))
+    logger.info(f"==== request ====\n{json.dumps(dictify(request), indent=2, ensure_ascii=False)}")
 
     if len(request.messages) == 0:
         raise HTTPException(
@@ -154,7 +154,7 @@ def _create_stream_chat_completion_chunk(
 async def create_chat_completion_response(
     request: "ChatCompletionRequest", chat_model: "ChatModel"
 ) -> "ChatCompletionResponse":
-    completion_id = "chatcmpl-{}".format(uuid.uuid4().hex)
+    completion_id = f"chatcmpl-{uuid.uuid4().hex}"
     input_messages, system, tools, image = _process_request(request)
     responses = await chat_model.achat(
         input_messages,
@@ -184,8 +184,7 @@ async def create_chat_completion_response(
             tool_calls = []
             for tool in result:
                 function = Function(name=tool[0], arguments=tool[1])
-                tool_calls.append(FunctionCall(id="call_{}".format(
-                    uuid.uuid4().hex), function=function))
+                tool_calls.append(FunctionCall(id=f"call_{uuid.uuid4().hex}", function=function))
 
             response_message = ChatCompletionMessage(
                 role=Role.ASSISTANT, tool_calls=tool_calls)
@@ -212,7 +211,7 @@ async def create_chat_completion_response(
 async def create_stream_chat_completion_response(
     request: "ChatCompletionRequest", chat_model: "ChatModel"
 ) -> AsyncGenerator[str, None]:
-    completion_id = "chatcmpl-{}".format(uuid.uuid4().hex)
+    completion_id = f"chatcmpl-{uuid.uuid4().hex}"
     input_messages, system, tools, image = _process_request(request)
     if tools:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
@@ -254,7 +253,7 @@ async def create_stream_chat_completion_response(
 async def create_score_evaluation_response(
     request: "ScoreEvaluationRequest", chat_model: "ChatModel"
 ) -> "ScoreEvaluationResponse":
-    score_id = "scoreval-{}".format(uuid.uuid4().hex)
+    score_id = f"scoreval-{uuid.uuid4().hex}"
     if len(request.messages) == 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid request")

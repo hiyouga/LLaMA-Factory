@@ -108,7 +108,7 @@ class VllmEngine(BaseEngine):
         video: Optional["VideoInput"] = None,
         **input_kwargs,
     ) -> AsyncIterator["RequestOutput"]:
-        request_id = "chatcmpl-{}".format(uuid.uuid4().hex)
+        request_id = f"chatcmpl-{uuid.uuid4().hex}"
         if image is not None:
             if IMAGE_PLACEHOLDER not in messages[0]["content"]:
                 messages[0]["content"] = IMAGE_PLACEHOLDER + messages[0]["content"]
@@ -180,7 +180,7 @@ class VllmEngine(BaseEngine):
 
         if image is not None:  # add image features
             if not isinstance(image, (str, ImageObject)):
-                raise ValueError("Expected image input is a path or PIL.Image, but got {}.".format(type(image)))
+                raise ValueError(f"Expected image input is a path or PIL.Image, but got {type(image)}.")
 
             if isinstance(image, str):
                 image = Image.open(image).convert("RGB")

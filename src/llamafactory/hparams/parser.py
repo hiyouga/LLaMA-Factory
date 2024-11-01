@@ -67,8 +67,8 @@ def _parse_args(parser: "HfArgumentParser", args: Optional[Dict[str, Any]] = Non
 
     if unknown_args:
         print(parser.format_help())
-        print("Got unknown args, potentially deprecated arguments: {}".format(unknown_args))
-        raise ValueError("Some specified arguments are not used by the HfArgumentParser: {}".format(unknown_args))
+        print(f"Got unknown args, potentially deprecated arguments: {unknown_args}")
+        raise ValueError(f"Some specified arguments are not used by the HfArgumentParser: {unknown_args}")
 
     return (*parsed_args,)
 
@@ -123,7 +123,7 @@ def _check_extra_dependencies(
         require_version("mixture-of-depth>=1.1.6", "To fix: pip install mixture-of-depth>=1.1.6")
 
     if model_args.infer_backend == "vllm":
-        require_version("vllm>=0.4.3,<=0.6.2", "To fix: pip install vllm>=0.4.3,<=0.6.2")
+        require_version("vllm>=0.4.3,<=0.6.3", "To fix: pip install vllm>=0.4.3,<=0.6.3")
 
     if finetuning_args.use_galore:
         require_version("galore_torch", "To fix: pip install galore_torch")
@@ -323,7 +323,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
 
         if last_checkpoint is not None:
             training_args.resume_from_checkpoint = last_checkpoint
-            logger.info("Resuming training from {}.".format(training_args.resume_from_checkpoint))
+            logger.info(f"Resuming training from {training_args.resume_from_checkpoint}.")
             logger.info("Change `output_dir` or use `overwrite_output_dir` to avoid.")
 
     if (

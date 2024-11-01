@@ -31,7 +31,7 @@ from ..extras.constants import (
     DownloadSource,
 )
 from ..extras.logging import get_logger
-from ..extras.misc import use_modelscope
+from ..extras.misc import use_modelscope, use_openmind
 from ..extras.packages import is_gradio_available
 
 
@@ -75,7 +75,7 @@ def load_config() -> Dict[str, Any]:
     Loads user config if exists.
     """
     try:
-        with open(get_config_path(), "r", encoding="utf-8") as f:
+        with open(get_config_path(), encoding="utf-8") as f:
             return safe_load(f)
     except Exception:
         return {"lang": None, "last_model": None, "path_dict": {}, "cache_dir": None}
@@ -109,8 +109,15 @@ def get_model_path(model_name: str) -> str:
         use_modelscope()
         and path_dict.get(DownloadSource.MODELSCOPE)
         and model_path == path_dict.get(DownloadSource.DEFAULT)
-    ):  # replace path
+    ):  # replace hf path with ms path
         model_path = path_dict.get(DownloadSource.MODELSCOPE)
+
+    if (
+        use_openmind()
+        and path_dict.get(DownloadSource.OPENMIND)
+        and model_path == path_dict.get(DownloadSource.DEFAULT)
+    ):  # replace hf path with om path
+        model_path = path_dict.get(DownloadSource.OPENMIND)
 
     return model_path
 
@@ -165,14 +172,14 @@ def load_dataset_info(dataset_dir: str) -> Dict[str, Dict[str, Any]]:
     Loads dataset_info.json.
     """
     if dataset_dir == "ONLINE" or dataset_dir.startswith("REMOTE:"):
-        logger.info("dataset_dir is {}, using online dataset.".format(dataset_dir))
+        logger.info(f"dataset_dir is {dataset_dir}, using online dataset.")
         return {}
 
     try:
-        with open(os.path.join(dataset_dir, DATA_CONFIG), "r", encoding="utf-8") as f:
+        with open(os.path.join(dataset_dir, DATA_CONFIG), encoding="utf-8") as f:
             return json.load(f)
     except Exception as err:
-        logger.warning("Cannot open {} due to {}.".format(os.path.join(dataset_dir, DATA_CONFIG), str(err)))
+        logger.warning(f"Cannot open {os.path.join(dataset_dir, DATA_CONFIG)} due to {str(err)}.")
         return {}
 
 
