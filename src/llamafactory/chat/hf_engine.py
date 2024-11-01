@@ -86,12 +86,12 @@ class HuggingfaceEngine(BaseEngine):
         mm_input_dict = {"images": [], "videos": [], "imglens": [0], "vidlens": [0]}
         if images is not None:
             mm_input_dict.update({"images": images, "imglens": [len(images)]})
-            if IMAGE_PLACEHOLDER not in messages[0]["content"]:
+            if not any(IMAGE_PLACEHOLDER not in message["content"] for message in messages):
                 messages[0]["content"] = IMAGE_PLACEHOLDER * len(images) + messages[0]["content"]
 
         if videos is not None:
             mm_input_dict.update({"videos": videos, "vidlens": [len(videos)]})
-            if VIDEO_PLACEHOLDER not in messages[0]["content"]:
+            if not any(VIDEO_PLACEHOLDER not in message["content"] for message in messages):
                 messages[0]["content"] = VIDEO_PLACEHOLDER * len(videos) + messages[0]["content"]
 
         messages = template.mm_plugin.process_messages(
