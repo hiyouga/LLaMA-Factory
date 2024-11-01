@@ -12,7 +12,7 @@ repos:
     -   id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
     -   id: no-commit-to-branch
-        args: ['--branch', 'master']
+        args: ['--branch', 'main']
 
 -   repo: https://github.com/asottile/pyupgrade
     rev: v3.17.0
