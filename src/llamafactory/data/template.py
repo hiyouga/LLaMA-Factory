@@ -941,8 +941,9 @@ _register_template(
     replace_eos=True,
 )
 
+
 _register_template(
-    name="phi-small",
+    name="phi_small",
     format_user=StringFormatter(slots=["<|user|>\n{{content}}<|end|>\n<|assistant|>\n"]),
     format_system=StringFormatter(slots=["<|system|>\n{{content}}<|end|>\n"]),
     format_separator=EmptyFormatter(slots=["\n"]),
@@ -950,6 +951,7 @@ _register_template(
     stop_words=["<|end|>"],
     replace_eos=True,
 )
+
 
 _register_template(
     name="pixtral",
