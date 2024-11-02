@@ -18,7 +18,6 @@ from typing import TYPE_CHECKING, Optional
 from transformers import Trainer
 from typing_extensions import override
 
-from ...extras.logging import get_logger
 from ...extras.packages import is_transformers_version_equal_to_4_46
 from ..callbacks import PissaConvertCallback, SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
@@ -29,9 +28,6 @@ if TYPE_CHECKING:
     from transformers import ProcessorMixin
 
     from ...hparams import FinetuningArguments
-
-
-logger = get_logger(__name__)
 
 
 class CustomTrainer(Trainer):

@@ -22,8 +22,8 @@ from . import launcher
 from .api.app import run_api
 from .chat.chat_model import run_chat
 from .eval.evaluator import run_eval
+from .extras import logging
 from .extras.env import VERSION, print_env
-from .extras.logging import get_logger
 from .extras.misc import get_device_count
 from .train.tuner import export_model, run_exp
 from .webui.interface import run_web_demo, run_web_ui
@@ -56,7 +56,7 @@ WELCOME = (
     + "-" * 58
 )
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 @unique
@@ -90,7 +90,7 @@ def main():
         if force_torchrun or get_device_count() > 1:
             master_addr = os.getenv("MASTER_ADDR", "127.0.0.1")
             master_port = os.getenv("MASTER_PORT", str(random.randint(20001, 29999)))
-            logger.info(f"Initializing distributed tasks at: {master_addr}:{master_port}")
+            logger.info_rank0(f"Initializing distributed tasks at: {master_addr}:{master_port}")
             process = subprocess.run(
                 (
                     "torchrun --nnodes {nnodes} --node_rank {node_rank} --nproc_per_node {nproc_per_node} "
