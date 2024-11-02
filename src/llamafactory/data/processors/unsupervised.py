@@ -15,7 +15,7 @@
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
-from ...extras.logging import get_logger
+from ...extras import logging
 from ..data_utils import Role
 from .processor_utils import infer_seqlen
 
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from ..template import Template
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 def _encode_unsupervised_example(
@@ -71,7 +71,9 @@ def preprocess_unsupervised_dataset(
     model_inputs = defaultdict(list)
     for i in range(len(examples["_prompt"])):
         if len(examples["_prompt"][i]) % 2 != 1:
-            logger.warning("Dropped invalid example: {}".format(examples["_prompt"][i] + examples["_response"][i]))
+            logger.warning_rank0(
+                "Dropped invalid example: {}".format(examples["_prompt"][i] + examples["_response"][i])
+            )
             continue
 
         input_ids, labels = _encode_unsupervised_example(
