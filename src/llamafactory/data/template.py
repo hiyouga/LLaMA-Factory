@@ -398,11 +398,11 @@ def get_template_and_fix_tokenizer(tokenizer: "PreTrainedTokenizer", data_args: 
         if num_added_tokens > 0:
             logger.warning("New tokens have been added, make sure `resize_vocab` is True.")
 
-    if template.replace_jinja_template:
+    if tokenizer.chat_template is None or template.replace_jinja_template:
         try:
             tokenizer.chat_template = _get_jinja_template(template, tokenizer)
-        except ValueError:
-            logger.info("Cannot add this chat template to tokenizer.")
+        except ValueError as e:
+            logger.info(f"Cannot add this chat template to tokenizer: {e}.")
 
     return template
 
