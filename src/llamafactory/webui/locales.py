@@ -87,20 +87,6 @@ LOCALES = {
             "label": "체크포인트 경로",
         },
     },
-    "advanced_tab": {
-        "en": {
-            "label": "Advanced configurations",
-        },
-        "ru": {
-            "label": "Расширенные конфигурации",
-        },
-        "zh": {
-            "label": "高级设置",
-        },
-        "ko": {
-            "label": "고급 설정",
-        },
-    },
     "quantization_bit": {
         "en": {
             "label": "Quantization bit",
@@ -581,11 +567,11 @@ LOCALES = {
     },
     "neftune_alpha": {
         "en": {
-            "label": "NEFTune Alpha",
+            "label": "NEFTune alpha",
             "info": "Magnitude of noise adding to embedding vectors.",
         },
         "ru": {
-            "label": "NEFTune Alpha",
+            "label": "NEFTune alpha",
             "info": "Величина шума, добавляемого к векторам вложений.",
         },
         "zh": {
@@ -597,22 +583,22 @@ LOCALES = {
             "info": "임베딩 벡터에 추가되는 노이즈의 크기.",
         },
     },
-    "optim": {
+    "extra_args": {
         "en": {
-            "label": "Optimizer",
-            "info": "The optimizer to use: adamw_torch, adamw_8bit or adafactor.",
+            "label": "Extra arguments",
+            "info": "Extra arguments passed to the trainer in JSON format.",
         },
         "ru": {
-            "label": "Оптимизатор",
-            "info": "Оптимизатор для использования: adamw_torch, adamw_8bit или adafactor.",
+            "label": "Дополнительные аргументы",
+            "info": "Дополнительные аргументы, которые передаются тренеру в формате JSON.",
         },
         "zh": {
-            "label": "优化器",
-            "info": "使用的优化器：adamw_torch、adamw_8bit 或 adafactor。",
+            "label": "额外参数",
+            "info": "以 JSON 格式传递给训练器的额外参数。",
         },
         "ko": {
-            "label": "옵티마이저",
-            "info": "사용할 옵티마이저: adamw_torch, adamw_8bit 또는 adafactor 등.",
+            "label": "추가 인수",
+            "info": "JSON 형식으로 트레이너에게 전달할 추가 인수입니다.",
         },
     },
     "packing": {

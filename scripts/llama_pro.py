@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright 2024 Tencent Inc. and the LlamaFactory team.
 #
 # This code is inspired by the Tencent's LLaMA-Pro library.
@@ -40,7 +39,7 @@ if TYPE_CHECKING:
 
 
 def change_name(name: str, old_index: int, new_index: int) -> str:
-    return name.replace(".{:d}.".format(old_index), ".{:d}.".format(new_index))
+    return name.replace(f".{old_index:d}.", f".{new_index:d}.")
 
 
 def block_expansion(
@@ -76,27 +75,27 @@ def block_expansion(
     state_dict = model.state_dict()
 
     if num_layers % num_expand != 0:
-        raise ValueError("`num_layers` {} should be divisible by `num_expand` {}.".format(num_layers, num_expand))
+        raise ValueError(f"`num_layers` {num_layers} should be divisible by `num_expand` {num_expand}.")
 
     split = num_layers // num_expand
     layer_cnt = 0
     output_state_dict = OrderedDict()
     for i in range(num_layers):
         for key, value in state_dict.items():
-            if ".{:d}.".format(i) in key:
+            if f".{i:d}." in key:
                 output_state_dict[change_name(key, i, layer_cnt)] = value
 
-        print("Add layer {} copied from layer {}".format(layer_cnt, i))
+        print(f"Add layer {layer_cnt} copied from layer {i}")
         layer_cnt += 1
         if (i + 1) % split == 0:
             for key, value in state_dict.items():
-                if ".{:d}.".format(i) in key:
+                if f".{i:d}." in key:
                     if "down_proj" in key or "o_proj" in key:
                         output_state_dict[change_name(key, i, layer_cnt)] = torch.zeros_like(value)
                     else:
                         output_state_dict[change_name(key, i, layer_cnt)] = torch.clone(value)
 
-            print("Add layer {} expanded from layer {}".format(layer_cnt, i))
+            print(f"Add layer {layer_cnt} expanded from layer {i}")
             layer_cnt += 1
 
     for key, value in state_dict.items():
@@ -113,17 +112,17 @@ def block_expansion(
             torch.save(shard, os.path.join(output_dir, shard_file))
 
     if index is None:
-        print("Model weights saved in {}".format(os.path.join(output_dir, weights_name)))
+        print(f"Model weights saved in {os.path.join(output_dir, weights_name)}")
     else:
         index_name = SAFE_WEIGHTS_INDEX_NAME if save_safetensors else WEIGHTS_INDEX_NAME
         with open(os.path.join(output_dir, index_name), "w", encoding="utf-8") as f:
             json.dump(index, f, indent=2, sort_keys=True)
-        print("Model weights saved in {}".format(output_dir))
+        print(f"Model weights saved in {output_dir}")
 
     print("- Fine-tune this model with:")
-    print("model_name_or_path: {}".format(output_dir))
+    print(f"model_name_or_path: {output_dir}")
     print("finetuning_type: freeze")
-    print("freeze_trainable_layers: {}".format(num_expand))
+    print(f"freeze_trainable_layers: {num_expand}")
     print("use_llama_pro: true")
 
 

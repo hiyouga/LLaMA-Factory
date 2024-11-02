@@ -16,7 +16,7 @@ import os
 from functools import partial
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Union
 
-from ..extras.logging import get_logger
+from ..extras import logging
 from .data_utils import Role
 
 
@@ -29,45 +29,51 @@ if TYPE_CHECKING:
     from .parser import DatasetAttr
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 def _convert_images(
-    images: Sequence["ImageInput"],
+    images: Union["ImageInput", Sequence["ImageInput"]],
     dataset_attr: "DatasetAttr",
     data_args: "DataArguments",
 ) -> Optional[List["ImageInput"]]:
     r"""
     Optionally concatenates image path to dataset dir when loading from local disk.
     """
-    if len(images) == 0:
+    if not isinstance(images, list):
+        images = [images]
+    elif len(images) == 0:
         return None
+    else:
+        images = images[:]
 
-    images = images[:]
     if dataset_attr.load_from in ["script", "file"]:
         for i in range(len(images)):
-            if isinstance(images[i], str) and os.path.isfile(os.path.join(data_args.dataset_dir, images[i])):
-                images[i] = os.path.join(data_args.dataset_dir, images[i])
+            if isinstance(images[i], str) and os.path.isfile(os.path.join(data_args.image_dir, images[i])):
+                images[i] = os.path.join(data_args.image_dir, images[i])
 
     return images
 
 
 def _convert_videos(
-    videos: Sequence["VideoInput"],
+    videos: Union["VideoInput", Sequence["VideoInput"]],
     dataset_attr: "DatasetAttr",
     data_args: "DataArguments",
 ) -> Optional[List["VideoInput"]]:
     r"""
     Optionally concatenates video path to dataset dir when loading from local disk.
     """
-    if len(videos) == 0:
+    if not isinstance(videos, list):
+        videos = [videos]
+    elif len(videos) == 0:
         return None
+    else:
+        videos = videos[:]
 
-    videos = videos[:]
     if dataset_attr.load_from in ["script", "file"]:
         for i in range(len(videos)):
-            if isinstance(videos[i], str) and os.path.isfile(os.path.join(data_args.dataset_dir, videos[i])):
-                videos[i] = os.path.join(data_args.dataset_dir, videos[i])
+            if isinstance(videos[i], str) and os.path.isfile(os.path.join(data_args.image_dir, videos[i])):
+                videos[i] = os.path.join(data_args.image_dir, videos[i])
 
     return videos
 
@@ -161,7 +167,7 @@ def convert_sharegpt(
     broken_data = False
     for turn_idx, message in enumerate(messages):
         if message[dataset_attr.role_tag] not in accept_tags[turn_idx % 2]:
-            logger.warning("Invalid role tag in {}.".format(messages))
+            logger.warning_rank0(f"Invalid role tag in {messages}.")
             broken_data = True
 
         aligned_messages.append(
@@ -171,7 +177,7 @@ def convert_sharegpt(
     if (not dataset_attr.ranking and len(aligned_messages) % 2 != 0) or (
         dataset_attr.ranking and len(aligned_messages) % 2 == 0
     ):
-        logger.warning("Invalid message count in {}.".format(messages))
+        logger.warning_rank0(f"Invalid message count in {messages}.")
         broken_data = True
 
     if dataset_attr.kto_tag and isinstance(example[dataset_attr.kto_tag], bool):  # kto example
@@ -192,7 +198,7 @@ def convert_sharegpt(
             chosen[dataset_attr.role_tag] not in accept_tags[-1]
             or rejected[dataset_attr.role_tag] not in accept_tags[-1]
         ):
-            logger.warning("Invalid role tag in {}.".format([chosen, rejected]))
+            logger.warning_rank0(f"Invalid role tag in {[chosen, rejected]}.")
             broken_data = True
 
         prompt = aligned_messages
@@ -205,7 +211,7 @@ def convert_sharegpt(
         response = aligned_messages[-1:]
 
     if broken_data:
-        logger.warning("Skipping this abnormal example.")
+        logger.warning_rank0("Skipping this abnormal example.")
         prompt, response = [], []
 
     convert_images = partial(_convert_images, dataset_attr=dataset_attr, data_args=data_args)
