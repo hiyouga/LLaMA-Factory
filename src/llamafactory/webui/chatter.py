@@ -141,7 +141,14 @@ class WebChatModel(ChatModel):
         chatbot[-1][1] = ""
         response = ""
         for new_text in self.stream_chat(
-            messages, system, tools, image, video, max_new_tokens=max_new_tokens, top_p=top_p, temperature=temperature
+            messages,
+            system,
+            tools,
+            images=[image] if image else None,
+            videos=[video] if video else None,
+            max_new_tokens=max_new_tokens,
+            top_p=top_p,
+            temperature=temperature,
         ):
             response += new_text
             if tools:

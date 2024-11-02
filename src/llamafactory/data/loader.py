@@ -20,8 +20,8 @@ import numpy as np
 from datasets import DatasetDict, load_dataset, load_from_disk
 from transformers.utils.versions import require_version
 
+from ..extras import logging
 from ..extras.constants import FILEEXT2TYPE
-from ..extras.logging import get_logger
 from ..extras.misc import has_tokenized_data
 from .aligner import align_dataset
 from .data_utils import merge_dataset, split_dataset
@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     from .template import Template
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 def _load_single_dataset(
@@ -51,9 +51,9 @@ def _load_single_dataset(
     r"""
     Loads a single dataset and aligns it to the standard format.
     """
-    logger.info("Loading dataset {}...".format(dataset_attr))
+    logger.info_rank0(f"Loading dataset {dataset_attr}...")
     data_path, data_name, data_dir, data_files = None, None, None, None
-    if dataset_attr.load_from in ["hf_hub", "ms_hub"]:
+    if dataset_attr.load_from in ["hf_hub", "ms_hub", "om_hub"]:
         data_path = dataset_attr.dataset_name
         data_name = dataset_attr.subset
         data_dir = dataset_attr.folder
@@ -69,25 +69,24 @@ def _load_single_dataset(
         if os.path.isdir(local_path):  # is directory
             for file_name in os.listdir(local_path):
                 data_files.append(os.path.join(local_path, file_name))
-                if data_path is None:
-                    data_path = FILEEXT2TYPE.get(file_name.split(".")[-1], None)
-                elif data_path != FILEEXT2TYPE.get(file_name.split(".")[-1], None):
-                    raise ValueError("File types should be identical.")
         elif os.path.isfile(local_path):  # is file
             data_files.append(local_path)
-            data_path = FILEEXT2TYPE.get(local_path.split(".")[-1], None)
         else:
-            raise ValueError("File {} not found.".format(local_path))
+            raise ValueError(f"File {local_path} not found.")
 
+        data_path = FILEEXT2TYPE.get(os.path.splitext(data_files[0])[-1][1:], None)
         if data_path is None:
             raise ValueError("Allowed file types: {}.".format(",".join(FILEEXT2TYPE.keys())))
+
+        if any(data_path != FILEEXT2TYPE.get(os.path.splitext(data_file)[-1][1:], None) for data_file in data_files):
+            raise ValueError("File types should be identical.")
     else:
-        raise NotImplementedError("Unknown load type: {}.".format(dataset_attr.load_from))
+        raise NotImplementedError(f"Unknown load type: {dataset_attr.load_from}.")
 
     if dataset_attr.load_from == "ms_hub":
         require_version("modelscope>=1.11.0", "To fix: pip install modelscope>=1.11.0")
-        from modelscope import MsDataset
-        from modelscope.utils.config_ds import MS_DATASETS_CACHE
+        from modelscope import MsDataset  # type: ignore
+        from modelscope.utils.config_ds import MS_DATASETS_CACHE  # type: ignore
 
         cache_dir = model_args.cache_dir or MS_DATASETS_CACHE
         dataset = MsDataset.load(
@@ -98,10 +97,27 @@ def _load_single_dataset(
             split=dataset_attr.split,
             cache_dir=cache_dir,
             token=model_args.ms_hub_token,
-            use_streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
+            use_streaming=data_args.streaming,
         )
         if isinstance(dataset, MsDataset):
             dataset = dataset.to_hf_dataset()
+
+    elif dataset_attr.load_from == "om_hub":
+        require_version("openmind>=0.8.0", "To fix: pip install openmind>=0.8.0")
+        from openmind import OmDataset  # type: ignore
+        from openmind.utils.hub import OM_DATASETS_CACHE  # type: ignore
+
+        cache_dir = model_args.cache_dir or OM_DATASETS_CACHE
+        dataset = OmDataset.load_dataset(
+            path=data_path,
+            name=data_name,
+            data_dir=data_dir,
+            data_files=data_files,
+            split=dataset_attr.split,
+            cache_dir=cache_dir,
+            token=model_args.om_hub_token,
+            streaming=data_args.streaming,
+        )
     else:
         dataset = load_dataset(
             path=data_path,
@@ -111,12 +127,9 @@ def _load_single_dataset(
             split=dataset_attr.split,
             cache_dir=model_args.cache_dir,
             token=model_args.hf_hub_token,
-            streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
+            streaming=data_args.streaming,
             trust_remote_code=True,
         )
-
-    if data_args.streaming and (dataset_attr.load_from == "file"):  # faster than specifying streaming=True
-        dataset = dataset.to_iterable_dataset()  # TODO: add num shards parameter
 
     if dataset_attr.num_samples is not None and not data_args.streaming:
         target_num = dataset_attr.num_samples
@@ -128,7 +141,7 @@ def _load_single_dataset(
 
         assert len(indexes) == dataset_attr.num_samples, "Sample num mismatched."
         dataset = dataset.select(indexes)
-        logger.info("Sampled {} examples from dataset {}.".format(dataset_attr.num_samples, dataset_attr))
+        logger.info_rank0(f"Sampled {dataset_attr.num_samples} examples from dataset {dataset_attr}.")
 
     if data_args.max_samples is not None:  # truncate dataset
         max_samples = min(data_args.max_samples, len(dataset))
@@ -224,9 +237,9 @@ def get_dataset(
     # Load tokenized dataset
     if data_args.tokenized_path is not None:
         if has_tokenized_data(data_args.tokenized_path):
-            logger.warning("Loading dataset from disk will ignore other data arguments.")
+            logger.warning_rank0("Loading dataset from disk will ignore other data arguments.")
             dataset_dict: "DatasetDict" = load_from_disk(data_args.tokenized_path)
-            logger.info("Loaded tokenized dataset from {}.".format(data_args.tokenized_path))
+            logger.info_rank0(f"Loaded tokenized dataset from {data_args.tokenized_path}.")
 
             dataset_module: Dict[str, "Dataset"] = {}
             if "train" in dataset_dict:
@@ -277,8 +290,8 @@ def get_dataset(
         if data_args.tokenized_path is not None:
             if training_args.should_save:
                 dataset_dict.save_to_disk(data_args.tokenized_path)
-                logger.info("Tokenized dataset saved at {}.".format(data_args.tokenized_path))
-                logger.info("Please restart the training with `tokenized_path: {}`.".format(data_args.tokenized_path))
+                logger.info_rank0(f"Tokenized dataset saved at {data_args.tokenized_path}.")
+                logger.info_rank0(f"Please restart the training with `tokenized_path: {data_args.tokenized_path}`.")
 
             sys.exit(0)
 

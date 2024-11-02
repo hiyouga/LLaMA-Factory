@@ -15,8 +15,8 @@
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
+from ...extras import logging
 from ...extras.constants import IGNORE_INDEX
-from ...extras.logging import get_logger
 from .processor_utils import infer_seqlen
 
 
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from ..template import Template
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 def _encode_feedback_example(
@@ -94,7 +94,9 @@ def preprocess_feedback_dataset(
     model_inputs = defaultdict(list)
     for i in range(len(examples["_prompt"])):
         if len(examples["_prompt"][i]) % 2 != 1 or len(examples["_response"][i]) < 2:
-            logger.warning("Dropped invalid example: {}".format(examples["_prompt"][i] + examples["_response"][i]))
+            logger.warning_rank0(
+                "Dropped invalid example: {}".format(examples["_prompt"][i] + examples["_response"][i])
+            )
             continue
 
         input_ids, labels, kl_input_ids, kl_labels, kto_tag = _encode_feedback_example(
@@ -123,6 +125,6 @@ def preprocess_feedback_dataset(
     desirable_num = sum([1 for tag in model_inputs["kto_tags"] if tag])
     undesirable_num = len(model_inputs["kto_tags"]) - desirable_num
     if desirable_num == 0 or undesirable_num == 0:
-        logger.warning("Your dataset only has one preference type.")
+        logger.warning_rank0("Your dataset only has one preference type.")
 
     return model_inputs

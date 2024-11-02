@@ -24,7 +24,8 @@ import torch
 from transformers import Trainer
 from typing_extensions import override
 
-from ...extras.logging import get_logger
+from ...extras import logging
+from ...extras.packages import is_transformers_version_equal_to_4_46
 from ..callbacks import FixValueHeadModelCallback, PissaConvertCallback, SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
 
@@ -36,7 +37,7 @@ if TYPE_CHECKING:
     from ...hparams import FinetuningArguments
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 class PairwiseTrainer(Trainer):
@@ -59,7 +60,7 @@ class PairwiseTrainer(Trainer):
             self.add_callback(PissaConvertCallback)
 
         if finetuning_args.use_badam:
-            from badam import BAdamCallback, clip_grad_norm_old_version
+            from badam import BAdamCallback, clip_grad_norm_old_version  # type: ignore
 
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
@@ -79,7 +80,7 @@ class PairwiseTrainer(Trainer):
 
     @override
     def compute_loss(
-        self, model: "PreTrainedModel", inputs: Dict[str, "torch.Tensor"], return_outputs: bool = False
+        self, model: "PreTrainedModel", inputs: Dict[str, "torch.Tensor"], return_outputs: bool = False, **kwargs
     ) -> Union["torch.Tensor", Tuple["torch.Tensor", List["torch.Tensor"]]]:
         r"""
         Computes pairwise loss. The first n examples are chosen and the last n examples are rejected.
@@ -98,6 +99,10 @@ class PairwiseTrainer(Trainer):
         chosen_scores, rejected_scores = chosen_scores.squeeze(), rejected_scores.squeeze()
 
         loss = -torch.nn.functional.logsigmoid(chosen_scores.float() - rejected_scores.float()).mean()
+
+        if is_transformers_version_equal_to_4_46() and kwargs.pop("num_items_in_batch", False):
+            loss /= self.args.gradient_accumulation_steps  # fixes the loss value for transformers 4.46.0
+
         if return_outputs:
             return loss, (loss, chosen_scores, rejected_scores)
         else:
@@ -113,7 +118,7 @@ class PairwiseTrainer(Trainer):
             return
 
         output_prediction_file = os.path.join(self.args.output_dir, "generated_predictions.jsonl")
-        logger.info(f"Saving prediction results to {output_prediction_file}")
+        logger.info_rank0(f"Saving prediction results to {output_prediction_file}")
         chosen_scores, rejected_scores = predict_results.predictions
 
         with open(output_prediction_file, "w", encoding="utf-8") as writer:

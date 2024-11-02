@@ -19,7 +19,7 @@ import torch
 from llamafactory.train.test_utils import load_infer_model, load_train_model
 
 
-TINY_LLAMA = os.environ.get("TINY_LLAMA", "llamafactory/tiny-random-Llama-3")
+TINY_LLAMA = os.getenv("TINY_LLAMA", "llamafactory/tiny-random-Llama-3")
 
 TRAIN_ARGS = {
     "model_name_or_path": TINY_LLAMA,

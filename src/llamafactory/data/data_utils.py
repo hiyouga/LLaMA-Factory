@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Set, TypedDict
 
 from datasets import DatasetDict, concatenate_datasets, interleave_datasets
 
-from ..extras.logging import get_logger
+from ..extras import logging
 
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from ..hparams import DataArguments
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 SLOTS = Sequence[Union[str, Set[str], Dict[str, str]]]
@@ -56,12 +56,12 @@ def merge_dataset(
         return all_datasets[0]
     elif data_args.mix_strategy == "concat":
         if data_args.streaming:
-            logger.warning("The samples between different datasets will not be mixed in streaming mode.")
+            logger.warning_once("The samples between different datasets will not be mixed in streaming mode.")
 
         return concatenate_datasets(all_datasets)
     elif data_args.mix_strategy.startswith("interleave"):
         if not data_args.streaming:
-            logger.warning("We recommend using `mix_strategy=concat` in non-streaming mode.")
+            logger.warning_once("We recommend using `mix_strategy=concat` in non-streaming mode.")
 
         return interleave_datasets(
             datasets=all_datasets,
@@ -70,7 +70,7 @@ def merge_dataset(
             stopping_strategy="first_exhausted" if data_args.mix_strategy.endswith("under") else "all_exhausted",
         )
     else:
-        raise ValueError("Unknown mixing strategy: {}.".format(data_args.mix_strategy))
+        raise ValueError(f"Unknown mixing strategy: {data_args.mix_strategy}.")
 
 
 def split_dataset(

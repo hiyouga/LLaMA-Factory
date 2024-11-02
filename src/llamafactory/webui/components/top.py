@@ -41,13 +41,12 @@ def create_top() -> Dict[str, "Component"]:
         finetuning_type = gr.Dropdown(choices=METHODS, value="lora", scale=1)
         checkpoint_path = gr.Dropdown(multiselect=True, allow_custom_value=True, scale=6)
 
-    with gr.Accordion(open=False) as advanced_tab:
-        with gr.Row():
-            quantization_bit = gr.Dropdown(choices=["none", "8", "4"], value="none", allow_custom_value=True, scale=2)
-            quantization_method = gr.Dropdown(choices=["bitsandbytes", "hqq", "eetq"], value="bitsandbytes", scale=2)
-            template = gr.Dropdown(choices=list(TEMPLATES.keys()), value="default", scale=2)
-            rope_scaling = gr.Radio(choices=["none", "linear", "dynamic"], value="none", scale=3)
-            booster = gr.Radio(choices=["auto", "flashattn2", "unsloth", "liger_kernel"], value="auto", scale=5)
+    with gr.Row():
+        quantization_bit = gr.Dropdown(choices=["none", "8", "4"], value="none", allow_custom_value=True, scale=2)
+        quantization_method = gr.Dropdown(choices=["bitsandbytes", "hqq", "eetq"], value="bitsandbytes", scale=2)
+        template = gr.Dropdown(choices=list(TEMPLATES.keys()), value="default", scale=2)
+        rope_scaling = gr.Radio(choices=["none", "linear", "dynamic"], value="none", scale=3)
+        booster = gr.Radio(choices=["auto", "flashattn2", "unsloth", "liger_kernel"], value="auto", scale=5)
 
     model_name.change(get_model_info, [model_name], [model_path, template], queue=False).then(
         list_checkpoints, [model_name, finetuning_type], [checkpoint_path], queue=False
@@ -66,7 +65,6 @@ def create_top() -> Dict[str, "Component"]:
         model_path=model_path,
         finetuning_type=finetuning_type,
         checkpoint_path=checkpoint_path,
-        advanced_tab=advanced_tab,
         quantization_bit=quantization_bit,
         quantization_method=quantization_method,
         template=template,
