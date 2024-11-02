@@ -100,7 +100,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
         processor = AutoProcessor.from_pretrained(model_args.model_name_or_path, **init_kwargs)
         patch_processor(processor, config, tokenizer, model_args)
     except Exception as e:
-        logger.warning(f"Processor was not found: {e}.")
+        logger.debug(f"Processor was not found: {e}.")
         processor = None
 
     # Avoid load tokenizer, see:
