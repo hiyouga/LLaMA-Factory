@@ -1184,14 +1184,6 @@ register_model_group(
             DownloadSource.DEFAULT: "microsoft/Phi-3-mini-128k-instruct",
             DownloadSource.MODELSCOPE: "LLM-Research/Phi-3-mini-128k-instruct",
         },
-        "Phi-3-7B-8k-Instruct": {
-            DownloadSource.DEFAULT: "microsoft/Phi-3-small-8k-instruct",
-            DownloadSource.MODELSCOPE: "LLM-Research/Phi-3-small-8k-instruct",
-        },
-        "Phi-3-7B-128k-Instruct": {
-            DownloadSource.DEFAULT: "microsoft/Phi-3-small-128k-instruct",
-            DownloadSource.MODELSCOPE: "LLM-Research/Phi-3-small-128k-instruct",
-        },
         "Phi-3-14B-8k-Instruct": {
             DownloadSource.DEFAULT: "microsoft/Phi-3-medium-4k-instruct",
             DownloadSource.MODELSCOPE: "LLM-Research/Phi-3-medium-4k-instruct",
@@ -1202,6 +1194,21 @@ register_model_group(
         },
     },
     template="phi",
+)
+
+
+register_model_group(
+    models={
+        "Phi-3-7B-8k-Instruct": {
+            DownloadSource.DEFAULT: "microsoft/Phi-3-small-8k-instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Phi-3-small-8k-instruct",
+        },
+        "Phi-3-7B-128k-Instruct": {
+            DownloadSource.DEFAULT: "microsoft/Phi-3-small-128k-instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Phi-3-small-128k-instruct",
+        },
+    },
+    template="phi_small",
 )
 
 
