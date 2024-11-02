@@ -33,41 +33,47 @@ logger = get_logger(__name__)
 
 
 def _convert_images(
-    images: Sequence["ImageInput"],
+    images: Union["ImageInput", Sequence["ImageInput"]],
     dataset_attr: "DatasetAttr",
     data_args: "DataArguments",
 ) -> Optional[List["ImageInput"]]:
     r"""
     Optionally concatenates image path to dataset dir when loading from local disk.
     """
-    if len(images) == 0:
+    if not isinstance(images, list):
+        images = [images]
+    elif len(images) == 0:
         return None
+    else:
+        images = images[:]
 
-    images = images[:]
     if dataset_attr.load_from in ["script", "file"]:
         for i in range(len(images)):
-            if isinstance(images[i], str) and os.path.isfile(os.path.join(data_args.dataset_dir, images[i])):
-                images[i] = os.path.join(data_args.dataset_dir, images[i])
+            if isinstance(images[i], str) and os.path.isfile(os.path.join(data_args.image_dir, images[i])):
+                images[i] = os.path.join(data_args.image_dir, images[i])
 
     return images
 
 
 def _convert_videos(
-    videos: Sequence["VideoInput"],
+    videos: Union["VideoInput", Sequence["VideoInput"]],
     dataset_attr: "DatasetAttr",
     data_args: "DataArguments",
 ) -> Optional[List["VideoInput"]]:
     r"""
     Optionally concatenates video path to dataset dir when loading from local disk.
     """
-    if len(videos) == 0:
+    if not isinstance(videos, list):
+        videos = [videos]
+    elif len(videos) == 0:
         return None
+    else:
+        videos = videos[:]
 
-    videos = videos[:]
     if dataset_attr.load_from in ["script", "file"]:
         for i in range(len(videos)):
-            if isinstance(videos[i], str) and os.path.isfile(os.path.join(data_args.dataset_dir, videos[i])):
-                videos[i] = os.path.join(data_args.dataset_dir, videos[i])
+            if isinstance(videos[i], str) and os.path.isfile(os.path.join(data_args.image_dir, videos[i])):
+                videos[i] = os.path.join(data_args.image_dir, videos[i])
 
     return videos
 
