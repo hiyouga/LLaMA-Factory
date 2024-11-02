@@ -18,4 +18,4 @@ style:
 	ruff format $(check_dirs)
 
 test:
-	CUDA_VISIBLE_DEVICES= WANDB_DISABLED=true pytest tests/
+	CUDA_VISIBLE_DEVICES= WANDB_DISABLED=true pytest -vv tests/
