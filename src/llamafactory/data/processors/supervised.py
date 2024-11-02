@@ -15,8 +15,8 @@
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
+from ...extras import logging
 from ...extras.constants import IGNORE_INDEX
-from ...extras.logging import get_logger
 from .processor_utils import greedy_knapsack, infer_seqlen
 
 
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from ..template import Template
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 def _encode_supervised_example(
@@ -99,7 +99,9 @@ def preprocess_supervised_dataset(
     model_inputs = defaultdict(list)
     for i in range(len(examples["_prompt"])):
         if len(examples["_prompt"][i]) % 2 != 1 or len(examples["_response"][i]) != 1:
-            logger.warning("Dropped invalid example: {}".format(examples["_prompt"][i] + examples["_response"][i]))
+            logger.warning_rank0(
+                "Dropped invalid example: {}".format(examples["_prompt"][i] + examples["_response"][i])
+            )
             continue
 
         input_ids, labels = _encode_supervised_example(
@@ -141,7 +143,9 @@ def preprocess_packed_supervised_dataset(
     length2indexes = defaultdict(list)
     for i in range(len(examples["_prompt"])):
         if len(examples["_prompt"][i]) % 2 != 1 or len(examples["_response"][i]) != 1:
-            logger.warning("Dropped invalid example: {}".format(examples["_prompt"][i] + examples["_response"][i]))
+            logger.warning_rank0(
+                "Dropped invalid example: {}".format(examples["_prompt"][i] + examples["_response"][i])
+            )
             continue
 
         input_ids, labels = _encode_supervised_example(
@@ -160,7 +164,7 @@ def preprocess_packed_supervised_dataset(
         )
         length = len(input_ids)
         if length > data_args.cutoff_len:
-            logger.warning("Dropped lengthy example with length {} > {}.".format(length, data_args.cutoff_len))
+            logger.warning_rank0(f"Dropped lengthy example with length {length} > {data_args.cutoff_len}.")
         else:
             lengths.append(length)
             length2indexes[length].append(valid_num)
@@ -212,4 +216,4 @@ def print_supervised_dataset_example(example: Dict[str, List[int]], tokenizer: "
     print("input_ids:\n{}".format(example["input_ids"]))
     print("inputs:\n{}".format(tokenizer.decode(example["input_ids"], skip_special_tokens=False)))
     print("label_ids:\n{}".format(example["labels"]))
-    print("labels:\n{}".format(tokenizer.decode(valid_labels, skip_special_tokens=False)))
+    print(f"labels:\n{tokenizer.decode(valid_labels, skip_special_tokens=False)}")

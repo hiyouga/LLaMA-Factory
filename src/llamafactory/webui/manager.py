@@ -29,7 +29,7 @@ class Manager:
         Adds elements to manager.
         """
         for elem_name, elem in elem_dict.items():
-            elem_id = "{}.{}".format(tab_name, elem_name)
+            elem_id = f"{tab_name}.{elem_name}"
             self._id_to_elem[elem_id] = elem
             self._elem_to_id[elem] = elem_id
 

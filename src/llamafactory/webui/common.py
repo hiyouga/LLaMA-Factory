@@ -19,6 +19,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from yaml import safe_dump, safe_load
 
+from ..extras import logging
 from ..extras.constants import (
     CHECKPOINT_NAMES,
     DATA_CONFIG,
@@ -30,8 +31,7 @@ from ..extras.constants import (
     VISION_MODELS,
     DownloadSource,
 )
-from ..extras.logging import get_logger
-from ..extras.misc import use_modelscope
+from ..extras.misc import use_modelscope, use_openmind
 from ..extras.packages import is_gradio_available
 
 
@@ -39,7 +39,7 @@ if is_gradio_available():
     import gradio as gr
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 DEFAULT_CACHE_DIR = "cache"
@@ -56,7 +56,7 @@ def get_save_dir(*paths: str) -> os.PathLike:
     Gets the path to saved model checkpoints.
     """
     if os.path.sep in paths[-1]:
-        logger.warning("Found complex path, some features may be not available.")
+        logger.warning_rank0("Found complex path, some features may be not available.")
         return paths[-1]
 
     paths = (path.replace(" ", "").strip() for path in paths)
@@ -75,7 +75,7 @@ def load_config() -> Dict[str, Any]:
     Loads user config if exists.
     """
     try:
-        with open(get_config_path(), "r", encoding="utf-8") as f:
+        with open(get_config_path(), encoding="utf-8") as f:
             return safe_load(f)
     except Exception:
         return {"lang": None, "last_model": None, "path_dict": {}, "cache_dir": None}
@@ -109,17 +109,17 @@ def get_model_path(model_name: str) -> str:
         use_modelscope()
         and path_dict.get(DownloadSource.MODELSCOPE)
         and model_path == path_dict.get(DownloadSource.DEFAULT)
-    ):  # replace path
+    ):  # replace hf path with ms path
         model_path = path_dict.get(DownloadSource.MODELSCOPE)
 
+    if (
+        use_openmind()
+        and path_dict.get(DownloadSource.OPENMIND)
+        and model_path == path_dict.get(DownloadSource.DEFAULT)
+    ):  # replace hf path with om path
+        model_path = path_dict.get(DownloadSource.OPENMIND)
+
     return model_path
-
-
-def get_prefix(model_name: str) -> str:
-    r"""
-    Gets the prefix of the model name to obtain the model family.
-    """
-    return model_name.split("-")[0]
 
 
 def get_model_info(model_name: str) -> Tuple[str, str]:
@@ -137,21 +137,14 @@ def get_template(model_name: str) -> str:
     r"""
     Gets the template name if the model is a chat model.
     """
-    if (
-        model_name
-        and any(suffix in model_name for suffix in ("-Chat", "-Instruct"))
-        and get_prefix(model_name) in DEFAULT_TEMPLATE
-    ):
-        return DEFAULT_TEMPLATE[get_prefix(model_name)]
-
-    return "default"
+    return DEFAULT_TEMPLATE.get(model_name, "default")
 
 
 def get_visual(model_name: str) -> bool:
     r"""
     Judges if the model is a vision language model.
     """
-    return get_prefix(model_name) in VISION_MODELS
+    return model_name in VISION_MODELS
 
 
 def list_checkpoints(model_name: str, finetuning_type: str) -> "gr.Dropdown":
@@ -179,14 +172,14 @@ def load_dataset_info(dataset_dir: str) -> Dict[str, Dict[str, Any]]:
     Loads dataset_info.json.
     """
     if dataset_dir == "ONLINE" or dataset_dir.startswith("REMOTE:"):
-        logger.info("dataset_dir is {}, using online dataset.".format(dataset_dir))
+        logger.info_rank0(f"dataset_dir is {dataset_dir}, using online dataset.")
         return {}
 
     try:
-        with open(os.path.join(dataset_dir, DATA_CONFIG), "r", encoding="utf-8") as f:
+        with open(os.path.join(dataset_dir, DATA_CONFIG), encoding="utf-8") as f:
             return json.load(f)
     except Exception as err:
-        logger.warning("Cannot open {} due to {}.".format(os.path.join(dataset_dir, DATA_CONFIG), str(err)))
+        logger.warning_rank0(f"Cannot open {os.path.join(dataset_dir, DATA_CONFIG)} due to {str(err)}.")
         return {}
 
 

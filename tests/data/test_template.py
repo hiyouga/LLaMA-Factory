@@ -19,6 +19,7 @@ import pytest
 from transformers import AutoTokenizer
 
 from llamafactory.data import get_template_and_fix_tokenizer
+from llamafactory.data.template import _get_jinja_template
 from llamafactory.hparams import DataArguments
 
 
@@ -26,9 +27,9 @@ if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer
 
 
-HF_TOKEN = os.environ.get("HF_TOKEN", None)
+HF_TOKEN = os.getenv("HF_TOKEN")
 
-TINY_LLAMA = os.environ.get("TINY_LLAMA", "llamafactory/tiny-random-Llama-3")
+TINY_LLAMA = os.getenv("TINY_LLAMA", "llamafactory/tiny-random-Llama-3")
 
 MESSAGES = [
     {"role": "user", "content": "How are you"},
@@ -117,7 +118,8 @@ def test_encode_multiturn(use_fast: bool):
 def test_jinja_template(use_fast: bool):
     tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA, use_fast=use_fast)
     ref_tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA, use_fast=use_fast)
-    get_template_and_fix_tokenizer(tokenizer, DataArguments(template="llama3"))
+    template = get_template_and_fix_tokenizer(tokenizer, DataArguments(template="llama3"))
+    tokenizer.chat_template = _get_jinja_template(template, tokenizer)  # llama3 template no replace
     assert tokenizer.chat_template != ref_tokenizer.chat_template
     assert tokenizer.apply_chat_template(MESSAGES) == ref_tokenizer.apply_chat_template(MESSAGES)
 

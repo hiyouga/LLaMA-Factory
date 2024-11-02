@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import json
-import logging
 import os
 import signal
 import sys
@@ -34,8 +33,8 @@ from transformers.utils import (
 )
 from typing_extensions import override
 
+from ..extras import logging
 from ..extras.constants import TRAINER_LOG, V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
-from ..extras.logging import LoggerHandler, get_logger
 from ..extras.misc import get_peak_memory
 
 
@@ -48,7 +47,7 @@ if TYPE_CHECKING:
     from trl import AutoModelForCausalLMWithValueHead
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 def fix_valuehead_checkpoint(
@@ -92,7 +91,7 @@ def fix_valuehead_checkpoint(
     else:
         torch.save(v_head_state_dict, os.path.join(output_dir, V_HEAD_WEIGHTS_NAME))
 
-    logger.info("Value head model saved at: {}".format(output_dir))
+    logger.info_rank0(f"Value head model saved at: {output_dir}")
 
 
 class FixValueHeadModelCallback(TrainerCallback):
@@ -106,7 +105,7 @@ class FixValueHeadModelCallback(TrainerCallback):
         Event called after a checkpoint save.
         """
         if args.should_save:
-            output_dir = os.path.join(args.output_dir, "{}-{}".format(PREFIX_CHECKPOINT_DIR, state.global_step))
+            output_dir = os.path.join(args.output_dir, f"{PREFIX_CHECKPOINT_DIR}-{state.global_step}")
             fix_valuehead_checkpoint(
                 model=kwargs.pop("model"), output_dir=output_dir, safe_serialization=args.save_safetensors
             )
@@ -123,13 +122,13 @@ class SaveProcessorCallback(TrainerCallback):
     @override
     def on_save(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         if args.should_save:
-            output_dir = os.path.join(args.output_dir, "{}-{}".format(PREFIX_CHECKPOINT_DIR, state.global_step))
-            getattr(self.processor, "image_processor").save_pretrained(output_dir)
+            output_dir = os.path.join(args.output_dir, f"{PREFIX_CHECKPOINT_DIR}-{state.global_step}")
+            self.processor.save_pretrained(output_dir)
 
     @override
     def on_train_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         if args.should_save:
-            getattr(self.processor, "image_processor").save_pretrained(args.output_dir)
+            self.processor.save_pretrained(args.output_dir)
 
 
 class PissaConvertCallback(TrainerCallback):
@@ -145,7 +144,7 @@ class PissaConvertCallback(TrainerCallback):
         if args.should_save:
             model = kwargs.pop("model")
             pissa_init_dir = os.path.join(args.output_dir, "pissa_init")
-            logger.info("Initial PiSSA adapter will be saved at: {}.".format(pissa_init_dir))
+            logger.info_rank0(f"Initial PiSSA adapter will be saved at: {pissa_init_dir}.")
             if isinstance(model, PeftModel):
                 init_lora_weights = getattr(model.peft_config["default"], "init_lora_weights")
                 setattr(model.peft_config["default"], "init_lora_weights", True)
@@ -159,7 +158,7 @@ class PissaConvertCallback(TrainerCallback):
             pissa_init_dir = os.path.join(args.output_dir, "pissa_init")
             pissa_backup_dir = os.path.join(args.output_dir, "pissa_backup")
             pissa_convert_dir = os.path.join(args.output_dir, "pissa_converted")
-            logger.info("Converted PiSSA adapter will be saved at: {}.".format(pissa_convert_dir))
+            logger.info_rank0(f"Converted PiSSA adapter will be saved at: {pissa_convert_dir}.")
             # 1. save a pissa backup with init_lora_weights: True
             # 2. save a converted lora with init_lora_weights: pissa
             # 3. load the pissa backup with init_lora_weights: True
@@ -200,8 +199,8 @@ class LogCallback(TrainerCallback):
         self.webui_mode = os.environ.get("LLAMABOARD_ENABLED", "0").lower() in ["true", "1"]
         if self.webui_mode:
             signal.signal(signal.SIGABRT, self._set_abort)
-            self.logger_handler = LoggerHandler(os.environ.get("LLAMABOARD_WORKDIR"))
-            logging.root.addHandler(self.logger_handler)
+            self.logger_handler = logging.LoggerHandler(os.environ.get("LLAMABOARD_WORKDIR"))
+            logging.add_handler(self.logger_handler)
             transformers.logging.add_handler(self.logger_handler)
 
     def _set_abort(self, signum, frame) -> None:
@@ -243,7 +242,7 @@ class LogCallback(TrainerCallback):
             and os.path.exists(os.path.join(args.output_dir, TRAINER_LOG))
             and args.overwrite_output_dir
         ):
-            logger.warning("Previous trainer log in this folder will be deleted.")
+            logger.warning_once("Previous trainer log in this folder will be deleted.")
             os.remove(os.path.join(args.output_dir, TRAINER_LOG))
 
     @override
@@ -288,13 +287,13 @@ class LogCallback(TrainerCallback):
         logs = dict(
             current_steps=self.cur_steps,
             total_steps=self.max_steps,
-            loss=state.log_history[-1].get("loss", None),
-            eval_loss=state.log_history[-1].get("eval_loss", None),
-            predict_loss=state.log_history[-1].get("predict_loss", None),
-            reward=state.log_history[-1].get("reward", None),
-            accuracy=state.log_history[-1].get("rewards/accuracies", None),
-            learning_rate=state.log_history[-1].get("learning_rate", None),
-            epoch=state.log_history[-1].get("epoch", None),
+            loss=state.log_history[-1].get("loss"),
+            eval_loss=state.log_history[-1].get("eval_loss"),
+            predict_loss=state.log_history[-1].get("predict_loss"),
+            reward=state.log_history[-1].get("reward"),
+            accuracy=state.log_history[-1].get("rewards/accuracies"),
+            lr=state.log_history[-1].get("learning_rate"),
+            epoch=state.log_history[-1].get("epoch"),
             percentage=round(self.cur_steps / self.max_steps * 100, 2) if self.max_steps != 0 else 100,
             elapsed_time=self.elapsed_time,
             remaining_time=self.remaining_time,
@@ -305,16 +304,17 @@ class LogCallback(TrainerCallback):
 
         if os.environ.get("RECORD_VRAM", "0").lower() in ["true", "1"]:
             vram_allocated, vram_reserved = get_peak_memory()
-            logs["vram_allocated"] = round(vram_allocated / 1024 / 1024 / 1024, 2)
-            logs["vram_reserved"] = round(vram_reserved / 1024 / 1024 / 1024, 2)
+            logs["vram_allocated"] = round(vram_allocated / (1024**3), 2)
+            logs["vram_reserved"] = round(vram_reserved / (1024**3), 2)
 
         logs = {k: v for k, v in logs.items() if v is not None}
-        if self.webui_mode and all(key in logs for key in ["loss", "learning_rate", "epoch"]):
-            logger.info(
-                "{{'loss': {:.4f}, 'learning_rate': {:2.4e}, 'epoch': {:.2f}, 'throughput': {}}}".format(
-                    logs["loss"], logs["learning_rate"], logs["epoch"], logs.get("throughput", "N/A")
-                )
-            )
+        if self.webui_mode and all(key in logs for key in ("loss", "lr", "epoch")):
+            log_str = f"'loss': {logs['loss']:.4f}, 'learning_rate': {logs['lr']:2.4e}, 'epoch': {logs['epoch']:.2f}"
+            for extra_key in ("reward", "accuracy", "throughput"):
+                if logs.get(extra_key):
+                    log_str += f", '{extra_key}': {logs[extra_key]:.2f}"
+
+            logger.info_rank0("{" + log_str + "}")
 
         if self.thread_pool is not None:
             self.thread_pool.submit(self._write_log, args.output_dir, logs)
