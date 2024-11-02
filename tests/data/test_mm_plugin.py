@@ -31,9 +31,9 @@ if TYPE_CHECKING:
     from llamafactory.data.mm_plugin import BasePlugin
 
 
-HF_TOKEN = os.environ.get("HF_TOKEN", None)
+HF_TOKEN = os.getenv("HF_TOKEN")
 
-TINY_LLAMA = os.environ.get("TINY_LLAMA", "llamafactory/tiny-random-Llama-3")
+TINY_LLAMA = os.getenv("TINY_LLAMA", "llamafactory/tiny-random-Llama-3")
 
 MM_MESSAGES = [
     {"role": "user", "content": "<image>What is in this image?"},

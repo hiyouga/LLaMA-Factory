@@ -27,9 +27,9 @@ if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer
 
 
-HF_TOKEN = os.environ.get("HF_TOKEN", None)
+HF_TOKEN = os.getenv("HF_TOKEN")
 
-TINY_LLAMA = os.environ.get("TINY_LLAMA", "llamafactory/tiny-random-Llama-3")
+TINY_LLAMA = os.getenv("TINY_LLAMA", "llamafactory/tiny-random-Llama-3")
 
 MESSAGES = [
     {"role": "user", "content": "How are you"},
