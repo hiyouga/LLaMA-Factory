@@ -98,6 +98,7 @@ class Runner:
 
     def _finalize(self, lang: str, finish_info: str) -> str:
         finish_info = ALERTS["info_aborted"][lang] if self.aborted else finish_info
+        gr.Info(finish_info)
         self.trainer = None
         self.aborted = False
         self.running = False
@@ -357,6 +358,7 @@ class Runner:
         progress_bar = self.manager.get_elem_by_id("{}.progress_bar".format("train" if self.do_train else "eval"))
         loss_viewer = self.manager.get_elem_by_id("train.loss_viewer") if self.do_train else None
 
+        running_log = ""
         while self.trainer is not None:
             if self.aborted:
                 yield {
@@ -392,7 +394,7 @@ class Runner:
                 finish_info = ALERTS["err_failed"][lang]
 
         return_dict = {
-            output_box: self._finalize(lang, finish_info),
+            output_box: self._finalize(lang, finish_info) + "\n\n" + running_log,
             progress_bar: gr.Slider(visible=False),
         }
         yield return_dict
