@@ -23,8 +23,8 @@ from transformers import GenerationConfig, TextIteratorStreamer
 from typing_extensions import override
 
 from ..data import get_template_and_fix_tokenizer
+from ..extras import logging
 from ..extras.constants import IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
-from ..extras.logging import get_logger
 from ..extras.misc import get_logits_processor
 from ..model import load_model, load_tokenizer
 from .base_engine import BaseEngine, Response
@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     from ..hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 class HuggingfaceEngine(BaseEngine):
@@ -63,11 +63,11 @@ class HuggingfaceEngine(BaseEngine):
         try:
             asyncio.get_event_loop()
         except RuntimeError:
-            logger.warning("There is no current event loop, creating a new one.")
+            logger.warning_once("There is no current event loop, creating a new one.")
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
-        self.semaphore = asyncio.Semaphore(int(os.environ.get("MAX_CONCURRENT", "1")))
+        self.semaphore = asyncio.Semaphore(int(os.getenv("MAX_CONCURRENT", "1")))
 
     @staticmethod
     def _process_args(
@@ -119,7 +119,7 @@ class HuggingfaceEngine(BaseEngine):
         stop: Optional[Union[str, List[str]]] = input_kwargs.pop("stop", None)
 
         if stop is not None:
-            logger.warning("Stop parameter is not supported by the huggingface engine yet.")
+            logger.warning_rank0("Stop parameter is not supported by the huggingface engine yet.")
 
         generating_args = generating_args.copy()
         generating_args.update(
