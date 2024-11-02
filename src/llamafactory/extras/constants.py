@@ -602,7 +602,7 @@ register_model_group(
             DownloadSource.DEFAULT: "IndexTeam/Index-1.9B-Chat",
             DownloadSource.MODELSCOPE: "IndexTeam/Index-1.9B-Chat",
         },
-        "Index-1.9B-Character": {
+        "Index-1.9B-Character-Chat": {
             DownloadSource.DEFAULT: "IndexTeam/Index-1.9B-Character",
             DownloadSource.MODELSCOPE: "IndexTeam/Index-1.9B-Character",
         },
@@ -614,7 +614,7 @@ register_model_group(
             DownloadSource.DEFAULT: "IndexTeam/Index-1.9B-Pure",
             DownloadSource.MODELSCOPE: "IndexTeam/Index-1.9B-Pure",
         },
-        "Index-1.9B-32K": {
+        "Index-1.9B-Chat-32K": {
             DownloadSource.DEFAULT: "IndexTeam/Index-1.9B-32K",
             DownloadSource.MODELSCOPE: "IndexTeam/Index-1.9B-32K",
         },
