@@ -41,6 +41,10 @@ class DataArguments:
         default="data",
         metadata={"help": "Path to the folder containing the datasets."},
     )
+    image_dir: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to the folder containing the images or videos. Defaults to `dataset_dir`."},
+    )
     cutoff_len: int = field(
         default=1024,
         metadata={"help": "The cutoff length of the tokenized inputs in the dataset."},
@@ -111,7 +115,13 @@ class DataArguments:
     )
     tokenized_path: Optional[str] = field(
         default=None,
-        metadata={"help": "Path to save or load the tokenized datasets."},
+        metadata={
+            "help": (
+                "Path to save or load the tokenized datasets. "
+                "If tokenized_path not exists, it will save the tokenized datasets. "
+                "If tokenized_path exists, it will load the tokenized datasets."
+            )
+        },
     )
 
     def __post_init__(self):
@@ -122,6 +132,9 @@ class DataArguments:
 
         self.dataset = split_arg(self.dataset)
         self.eval_dataset = split_arg(self.eval_dataset)
+
+        if self.image_dir is None:
+            self.image_dir = self.dataset_dir
 
         if self.dataset is None and self.val_size > 1e-6:
             raise ValueError("Cannot specify `val_size` if `dataset` is None.")
