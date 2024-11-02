@@ -22,7 +22,7 @@ from transformers.trainer import TRAINING_ARGS_NAME
 
 from ..extras.constants import LLAMABOARD_CONFIG, PEFT_METHODS, TRAINING_STAGES
 from ..extras.misc import is_gpu_or_npu_available, torch_gc
-from ..extras.packages import is_gradio_available
+from ..extras.packages import is_gradio_available, is_transformers_version_equal_to_4_46
 from .common import DEFAULT_CACHE_DIR, DEFAULT_CONFIG_DIR, QUANTIZATION_BITS, get_save_dir, load_config
 from .locales import ALERTS, LOCALES
 from .utils import abort_process, gen_cmd, get_eval_results, get_trainer_info, load_args, save_args, save_cmd
@@ -152,7 +152,7 @@ class Runner:
             pure_bf16=(get("train.compute_type") == "pure_bf16"),
             plot_loss=True,
             ddp_timeout=180000000,
-            include_num_input_tokens_seen=True,
+            include_num_input_tokens_seen=False if is_transformers_version_equal_to_4_46() else True,  # FIXME
             **json.loads(get("train.extra_args")),
         )
 
