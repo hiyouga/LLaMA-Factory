@@ -115,7 +115,6 @@ def _process_request(
         else:
             input_messages.append({"role": ROLE_MAPPING[message.role], "content": message.content})
 
-    images = None if len(images) == 0 else images
     tool_list = request.tools
     if isinstance(tool_list, list) and len(tool_list):
         try:
@@ -125,7 +124,7 @@ def _process_request(
     else:
         tools = None
 
-    return input_messages, system, tools, images
+    return input_messages, system, tools, images or None
 
 
 def _create_stream_chat_completion_chunk(
