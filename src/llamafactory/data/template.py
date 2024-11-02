@@ -692,6 +692,14 @@ _register_template(
 
 
 _register_template(
+    name="index",
+    format_user=StringFormatter(slots=["reserved_0{{content}}reserved_1"]),
+    format_system=StringFormatter(slots=["<unk>{{content}}"]),
+    efficient_eos=True,
+)
+
+
+_register_template(
     name="intern",
     format_user=StringFormatter(slots=["<|User|>:{{content}}\n<|Bot|>:"]),
     format_system=StringFormatter(slots=["<|System|>:{{content}}\n"]),
