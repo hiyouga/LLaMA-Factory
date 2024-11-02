@@ -20,8 +20,8 @@ import numpy as np
 from datasets import DatasetDict, load_dataset, load_from_disk
 from transformers.utils.versions import require_version
 
+from ..extras import logging
 from ..extras.constants import FILEEXT2TYPE
-from ..extras.logging import get_logger
 from ..extras.misc import has_tokenized_data
 from .aligner import align_dataset
 from .data_utils import merge_dataset, split_dataset
@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     from .template import Template
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 def _load_single_dataset(
@@ -51,7 +51,7 @@ def _load_single_dataset(
     r"""
     Loads a single dataset and aligns it to the standard format.
     """
-    logger.info(f"Loading dataset {dataset_attr}...")
+    logger.info_rank0(f"Loading dataset {dataset_attr}...")
     data_path, data_name, data_dir, data_files = None, None, None, None
     if dataset_attr.load_from in ["hf_hub", "ms_hub", "om_hub"]:
         data_path = dataset_attr.dataset_name
@@ -141,7 +141,7 @@ def _load_single_dataset(
 
         assert len(indexes) == dataset_attr.num_samples, "Sample num mismatched."
         dataset = dataset.select(indexes)
-        logger.info(f"Sampled {dataset_attr.num_samples} examples from dataset {dataset_attr}.")
+        logger.info_rank0(f"Sampled {dataset_attr.num_samples} examples from dataset {dataset_attr}.")
 
     if data_args.max_samples is not None:  # truncate dataset
         max_samples = min(data_args.max_samples, len(dataset))
@@ -237,9 +237,9 @@ def get_dataset(
     # Load tokenized dataset
     if data_args.tokenized_path is not None:
         if has_tokenized_data(data_args.tokenized_path):
-            logger.warning("Loading dataset from disk will ignore other data arguments.")
+            logger.warning_rank0("Loading dataset from disk will ignore other data arguments.")
             dataset_dict: "DatasetDict" = load_from_disk(data_args.tokenized_path)
-            logger.info(f"Loaded tokenized dataset from {data_args.tokenized_path}.")
+            logger.info_rank0(f"Loaded tokenized dataset from {data_args.tokenized_path}.")
 
             dataset_module: Dict[str, "Dataset"] = {}
             if "train" in dataset_dict:
@@ -290,8 +290,8 @@ def get_dataset(
         if data_args.tokenized_path is not None:
             if training_args.should_save:
                 dataset_dict.save_to_disk(data_args.tokenized_path)
-                logger.info(f"Tokenized dataset saved at {data_args.tokenized_path}.")
-                logger.info(f"Please restart the training with `tokenized_path: {data_args.tokenized_path}`.")
+                logger.info_rank0(f"Tokenized dataset saved at {data_args.tokenized_path}.")
+                logger.info_rank0(f"Please restart the training with `tokenized_path: {data_args.tokenized_path}`.")
 
             sys.exit(0)
 
