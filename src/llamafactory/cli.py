@@ -86,19 +86,19 @@ def main():
     elif command == Command.EXPORT:
         export_model()
     elif command == Command.TRAIN:
-        force_torchrun = os.environ.get("FORCE_TORCHRUN", "0").lower() in ["true", "1"]
+        force_torchrun = os.getenv("FORCE_TORCHRUN", "0").lower() in ["true", "1"]
         if force_torchrun or get_device_count() > 1:
-            master_addr = os.environ.get("MASTER_ADDR", "127.0.0.1")
-            master_port = os.environ.get("MASTER_PORT", str(random.randint(20001, 29999)))
+            master_addr = os.getenv("MASTER_ADDR", "127.0.0.1")
+            master_port = os.getenv("MASTER_PORT", str(random.randint(20001, 29999)))
             logger.info(f"Initializing distributed tasks at: {master_addr}:{master_port}")
             process = subprocess.run(
                 (
                     "torchrun --nnodes {nnodes} --node_rank {node_rank} --nproc_per_node {nproc_per_node} "
                     "--master_addr {master_addr} --master_port {master_port} {file_name} {args}"
                 ).format(
-                    nnodes=os.environ.get("NNODES", "1"),
-                    node_rank=os.environ.get("RANK", "0"),
-                    nproc_per_node=os.environ.get("NPROC_PER_NODE", str(get_device_count())),
+                    nnodes=os.getenv("NNODES", "1"),
+                    node_rank=os.getenv("NODE_RANK", "0"),
+                    nproc_per_node=os.getenv("NPROC_PER_NODE", str(get_device_count())),
                     master_addr=master_addr,
                     master_port=master_port,
                     file_name=launcher.__file__,
