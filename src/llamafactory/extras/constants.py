@@ -598,6 +598,33 @@ register_model_group(
 
 register_model_group(
     models={
+        "Index-1.9B-Chat": {
+            DownloadSource.DEFAULT: "IndexTeam/Index-1.9B-Chat",
+            DownloadSource.MODELSCOPE: "IndexTeam/Index-1.9B-Chat",
+        },
+        "Index-1.9B-Character": {
+            DownloadSource.DEFAULT: "IndexTeam/Index-1.9B-Character",
+            DownloadSource.MODELSCOPE: "IndexTeam/Index-1.9B-Character",
+        },
+        "Index-1.9B-Base": {
+            DownloadSource.DEFAULT: "IndexTeam/Index-1.9B",
+            DownloadSource.MODELSCOPE: "IndexTeam/Index-1.9B",
+        },
+        "Index-1.9B-Base-Pure": {
+            DownloadSource.DEFAULT: "IndexTeam/Index-1.9B-Pure",
+            DownloadSource.MODELSCOPE: "IndexTeam/Index-1.9B-Pure",
+        },
+        "Index-1.9B-32K": {
+            DownloadSource.DEFAULT: "IndexTeam/Index-1.9B-32K",
+            DownloadSource.MODELSCOPE: "IndexTeam/Index-1.9B-32K",
+        },
+    },
+    template="index",
+)
+
+
+register_model_group(
+    models={
         "InternLM-7B": {
             DownloadSource.DEFAULT: "internlm/internlm-7b",
             DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm-7b",
