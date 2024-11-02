@@ -23,8 +23,8 @@ from llamafactory.chat import ChatModel
 def main():
     chat_model = ChatModel()
     app = create_app(chat_model)
-    api_host = os.environ.get("API_HOST", "0.0.0.0")
-    api_port = int(os.environ.get("API_PORT", "8000"))
+    api_host = os.getenv("API_HOST", "0.0.0.0")
+    api_port = int(os.getenv("API_PORT", "8000"))
     print(f"Visit http://localhost:{api_port}/docs for API document.")
     uvicorn.run(app, host=api_host, port=api_port)
 
