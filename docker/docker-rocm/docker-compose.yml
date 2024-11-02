@@ -8,11 +8,14 @@ services:
         INSTALL_VLLM: false
         INSTALL_DEEPSPEED: false
         INSTALL_FLASHATTN: false
+        INSTALL_LIGER_KERNEL: false
+        INSTALL_HQQ: false
         PIP_INDEX: https://pypi.org/simple
     container_name: llamafactory
     volumes:
       - ../../hf_cache:/root/.cache/huggingface
       - ../../ms_cache:/root/.cache/modelscope
+      - ../../om_cache:/root/.cache/openmind
       - ../../data:/app/data
       - ../../output:/app/output
       - ../../saves:/app/saves

@@ -29,6 +29,7 @@ from trl.trainer import disable_dropout_in_model
 from typing_extensions import override
 
 from ...extras.constants import IGNORE_INDEX
+from ...extras.packages import is_transformers_version_equal_to_4_46
 from ..callbacks import PissaConvertCallback, SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler, get_batch_logps
 
@@ -100,7 +101,7 @@ class CustomDPOTrainer(DPOTrainer):
             self.callback_handler.add_callback(PissaConvertCallback)
 
         if finetuning_args.use_badam:
-            from badam import BAdamCallback, clip_grad_norm_old_version
+            from badam import BAdamCallback, clip_grad_norm_old_version  # type: ignore
 
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
@@ -117,6 +118,13 @@ class CustomDPOTrainer(DPOTrainer):
     ) -> "torch.optim.lr_scheduler.LRScheduler":
         create_custom_scheduler(self.args, num_training_steps, optimizer)
         return super().create_scheduler(num_training_steps, optimizer)
+
+    @override
+    def get_batch_samples(self, epoch_iterator, num_batches):
+        r"""
+        Replaces the method of KTO Trainer with the one of the standard Trainer.
+        """
+        return Trainer.get_batch_samples(self, epoch_iterator, num_batches)
 
     def odds_ratio_loss(self, chosen_logps: "torch.Tensor", rejected_logps: "torch.Tensor") -> "torch.Tensor":
         r"""
@@ -156,7 +164,7 @@ class CustomDPOTrainer(DPOTrainer):
             elif self.loss_type == "simpo":
                 losses = self.simpo_loss(policy_chosen_logps, policy_rejected_logps)
             else:
-                raise NotImplementedError("Unknown loss type: {}.".format(self.loss_type))
+                raise NotImplementedError(f"Unknown loss type: {self.loss_type}.")
 
             chosen_rewards = self.beta * policy_chosen_logps.to(self.accelerator.device).detach()
             rejected_rewards = self.beta * policy_rejected_logps.to(self.accelerator.device).detach()
@@ -242,19 +250,59 @@ class CustomDPOTrainer(DPOTrainer):
         if self.ftx_gamma > 1e-6:
             losses += self.ftx_gamma * sft_loss
 
-        reward_accuracies = (chosen_rewards > rejected_rewards).float()
-
         prefix = "eval_" if train_eval == "eval" else ""
-        metrics["{}rewards/chosen".format(prefix)] = chosen_rewards.mean().cpu()
-        metrics["{}rewards/rejected".format(prefix)] = rejected_rewards.mean().cpu()
-        metrics["{}rewards/accuracies".format(prefix)] = reward_accuracies.mean().cpu()
-        metrics["{}rewards/margins".format(prefix)] = (chosen_rewards - rejected_rewards).mean().cpu()
-        metrics["{}logps/rejected".format(prefix)] = policy_rejected_logps.detach().mean().cpu()
-        metrics["{}logps/chosen".format(prefix)] = policy_chosen_logps.detach().mean().cpu()
-        metrics["{}logits/rejected".format(prefix)] = policy_rejected_logits.detach().mean().cpu()
-        metrics["{}logits/chosen".format(prefix)] = policy_chosen_logits.detach().mean().cpu()
+        metrics[f"{prefix}rewards/chosen"] = chosen_rewards.mean().item()
+        metrics[f"{prefix}rewards/rejected"] = rejected_rewards.mean().item()
+        metrics[f"{prefix}rewards/accuracies"] = (chosen_rewards > rejected_rewards).float().mean().item()
+        metrics[f"{prefix}rewards/margins"] = (chosen_rewards - rejected_rewards).mean().item()
+        metrics[f"{prefix}logps/rejected"] = policy_chosen_logps.mean().item()
+        metrics[f"{prefix}logps/chosen"] = policy_rejected_logps.mean().item()
+        metrics[f"{prefix}logits/rejected"] = policy_chosen_logits.mean().item()
+        metrics[f"{prefix}logits/chosen"] = policy_rejected_logits.mean().item()
         if self.loss_type == "orpo":
-            metrics["{}sft_loss".format(prefix)] = sft_loss.detach().mean().cpu()
-            metrics["{}odds_ratio_loss".format(prefix)] = ((losses - sft_loss) / self.beta).detach().mean().cpu()
+            metrics[f"{prefix}sft_loss"] = sft_loss.mean().item()
+            metrics[f"{prefix}odds_ratio_loss"] = ((losses - sft_loss) / self.beta).mean().item()
 
         return losses.mean(), metrics
+
+    @override
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+        r"""
+        Fixes the loss value for transformers 4.46.0.
+        https://github.com/huggingface/transformers/blob/v4.46.0/src/transformers/trainer.py#L3605
+        """
+        loss = super().compute_loss(model, inputs, return_outputs)
+        if is_transformers_version_equal_to_4_46() and kwargs.pop("num_items_in_batch", False):
+            if return_outputs:
+                return (loss[0] / self.args.gradient_accumulation_steps, *loss[1:])
+            else:
+                return loss / self.args.gradient_accumulation_steps
+
+        return loss
+
+    @override
+    def log(self, logs: Dict[str, float]) -> None:
+        r"""
+        Log `logs` on the various objects watching training, including stored metrics.
+        """
+        # logs either has "loss" or "eval_loss"
+        train_eval = "train" if "loss" in logs else "eval"
+        # Add averaged stored metrics to logs
+        key_list, metric_list = [], []
+        for key, metrics in self._stored_metrics[train_eval].items():
+            key_list.append(key)
+            metric_list.append(torch.tensor(metrics, dtype=torch.float).to(self.accelerator.device).mean().item())
+
+        del self._stored_metrics[train_eval]
+        if len(metric_list) < 10:  # pad to for all reduce
+            for i in range(10 - len(metric_list)):
+                key_list.append(f"dummy_{i}")
+                metric_list.append(0.0)
+
+        metric_list = torch.tensor(metric_list, dtype=torch.float).to(self.accelerator.device)
+        metric_list = self.accelerator.reduce(metric_list, "mean").tolist()
+        for key, metric in zip(key_list, metric_list):  # add remaining items
+            if not key.startswith("dummy_"):
+                logs[key] = metric
+
+        return Trainer.log(self, logs)

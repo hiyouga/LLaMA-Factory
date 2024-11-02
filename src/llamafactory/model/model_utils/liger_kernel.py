@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import inspect
 from typing import TYPE_CHECKING
 
-from ...extras.logging import get_logger
+from ...extras import logging
 
 
 if TYPE_CHECKING:
@@ -23,10 +24,15 @@ if TYPE_CHECKING:
     from ...hparams import ModelArguments
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
-def configure_liger_kernel(config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool) -> None:
+def apply_liger_kernel(
+    config: "PretrainedConfig",
+    model_args: "ModelArguments",
+    is_trainable: bool,
+    require_logits: bool,
+) -> None:
     if not is_trainable or not model_args.enable_liger_kernel:
         return
 
@@ -48,8 +54,14 @@ def configure_liger_kernel(config: "PretrainedConfig", model_args: "ModelArgumen
     elif model_type == "qwen2_vl":
         from liger_kernel.transformers import apply_liger_kernel_to_qwen2_vl as apply_liger_kernel
     else:
-        logger.warning("Current model does not support liger kernel.")
+        logger.warning_rank0("Current model does not support liger kernel.")
         return
 
-    apply_liger_kernel()
-    logger.info("Liger kernel has been applied to the model.")
+    if require_logits and "fused_linear_cross_entropy" in inspect.signature(apply_liger_kernel).parameters:
+        logger.info_rank0("Current training stage does not support chunked cross entropy.")
+        kwargs = {"fused_linear_cross_entropy": False}
+    else:
+        kwargs = {}
+
+    apply_liger_kernel(**kwargs)
+    logger.info_rank0("Liger kernel has been applied to the model.")
