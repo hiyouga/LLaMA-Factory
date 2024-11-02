@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright 2024 Microsoft Corporation and the LlamaFactory team.
 #
 # This code is inspired by the Microsoft's DeepSpeed library.

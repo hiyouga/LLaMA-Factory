@@ -87,7 +87,7 @@ class Evaluator:
             token=self.model_args.hf_hub_token,
         )
 
-        with open(mapping, "r", encoding="utf-8") as f:
+        with open(mapping, encoding="utf-8") as f:
             categorys: Dict[str, Dict[str, str]] = json.load(f)
 
         category_corrects = {subj: np.array([], dtype="bool") for subj in SUBJECTS}
@@ -139,7 +139,7 @@ class Evaluator:
     def _save_results(self, category_corrects: Dict[str, "NDArray"], results: Dict[str, Dict[int, str]]) -> None:
         score_info = "\n".join(
             [
-                "{:>15}: {:.2f}".format(category_name, 100 * np.mean(category_correct))
+                f"{category_name:>15}: {100 * np.mean(category_correct):.2f}"
                 for category_name, category_correct in category_corrects.items()
                 if len(category_correct)
             ]
