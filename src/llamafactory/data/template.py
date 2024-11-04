@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, Union
 from transformers.utils.versions import require_version
 from typing_extensions import override
 
-from ..extras.logging import get_logger
+from ..extras import logging
 from .data_utils import Role
 from .formatter import EmptyFormatter, FunctionFormatter, StringFormatter, ToolFormatter
 from .mm_plugin import get_mm_plugin
@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from .mm_plugin import BasePlugin
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 @dataclass
@@ -275,12 +275,12 @@ def _add_or_replace_eos_token(tokenizer: "PreTrainedTokenizer", eos_token: str) 
     num_added_tokens = tokenizer.add_special_tokens({"eos_token": eos_token})
 
     if is_added:
-        logger.info(f"Add eos token: {tokenizer.eos_token}")
+        logger.info_rank0(f"Add eos token: {tokenizer.eos_token}")
     else:
-        logger.info(f"Replace eos token: {tokenizer.eos_token}")
+        logger.info_rank0(f"Replace eos token: {tokenizer.eos_token}")
 
     if num_added_tokens > 0:
-        logger.warning("New tokens have been added, make sure `resize_vocab` is True.")
+        logger.warning_rank0("New tokens have been added, make sure `resize_vocab` is True.")
 
 
 def _jinja_escape(content: str) -> str:
@@ -388,21 +388,21 @@ def get_template_and_fix_tokenizer(tokenizer: "PreTrainedTokenizer", data_args: 
 
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
-        logger.info(f"Add pad token: {tokenizer.pad_token}")
+        logger.info_rank0(f"Add pad token: {tokenizer.pad_token}")
 
     if stop_words:
         num_added_tokens = tokenizer.add_special_tokens(
             dict(additional_special_tokens=stop_words), replace_additional_special_tokens=False
         )
-        logger.info("Add {} to stop words.".format(",".join(stop_words)))
+        logger.info_rank0("Add {} to stop words.".format(",".join(stop_words)))
         if num_added_tokens > 0:
-            logger.warning("New tokens have been added, make sure `resize_vocab` is True.")
+            logger.warning_rank0("New tokens have been added, make sure `resize_vocab` is True.")
 
-    if template.replace_jinja_template:
+    if tokenizer.chat_template is None or template.replace_jinja_template:
         try:
             tokenizer.chat_template = _get_jinja_template(template, tokenizer)
-        except ValueError:
-            logger.info("Cannot add this chat template to tokenizer.")
+        except ValueError as e:
+            logger.info_rank0(f"Cannot add this chat template to tokenizer: {e}.")
 
     return template
 
@@ -702,6 +702,15 @@ _register_template(
     replace_jinja_template=True,
 )
 
+
+_register_template(
+    name="index",
+    format_user=StringFormatter(slots=["reserved_0{{content}}reserved_1"]),
+    format_system=StringFormatter(slots=["<unk>{{content}}"]),
+    efficient_eos=True,
+)
+
+
 _register_template(
     name="intern",
     format_user=StringFormatter(slots=["<|User|>:{{content}}\n<|Bot|>:"]),
@@ -940,6 +949,17 @@ _register_template(
     format_system=StringFormatter(slots=["<|system|>\n{{content}}<|end|>\n"]),
     format_separator=EmptyFormatter(slots=["\n"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<|end|>"],
+    replace_eos=True,
+)
+
+
+_register_template(
+    name="phi_small",
+    format_user=StringFormatter(slots=["<|user|>\n{{content}}<|end|>\n<|assistant|>\n"]),
+    format_system=StringFormatter(slots=["<|system|>\n{{content}}<|end|>\n"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    format_prefix=EmptyFormatter(slots=[{"<|endoftext|>"}]),
     stop_words=["<|end|>"],
     replace_eos=True,
 )

@@ -25,8 +25,8 @@ import torch
 from transformers import Seq2SeqTrainer
 from typing_extensions import override
 
+from ...extras import logging
 from ...extras.constants import IGNORE_INDEX
-from ...extras.logging import get_logger
 from ...extras.packages import is_transformers_version_equal_to_4_46
 from ..callbacks import PissaConvertCallback, SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
@@ -40,7 +40,7 @@ if TYPE_CHECKING:
     from ...hparams import FinetuningArguments
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 class CustomSeq2SeqTrainer(Seq2SeqTrainer):
@@ -87,7 +87,11 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         """
         loss = super().compute_loss(model, inputs, return_outputs, **kwargs)
         if is_transformers_version_equal_to_4_46() and not getattr(self, "model_accepts_loss_kwargs", False):
-            loss /= self.args.gradient_accumulation_steps  # other model should not scale the loss
+            # other model should not scale the loss
+            if return_outputs:
+                return (loss[0] / self.args.gradient_accumulation_steps, *loss[1:])
+            else:
+                return loss / self.args.gradient_accumulation_steps
 
         return loss
 
@@ -142,7 +146,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             return
 
         output_prediction_file = os.path.join(self.args.output_dir, "generated_predictions.jsonl")
-        logger.info(f"Saving prediction results to {output_prediction_file}")
+        logger.info_rank0(f"Saving prediction results to {output_prediction_file}")
 
         labels = np.where(
             predict_results.label_ids != IGNORE_INDEX, predict_results.label_ids, self.tokenizer.pad_token_id

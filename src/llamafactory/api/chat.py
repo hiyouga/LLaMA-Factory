@@ -21,7 +21,7 @@ import uuid
 from typing import TYPE_CHECKING, AsyncGenerator, Dict, List, Optional, Tuple
 
 from ..data import Role as DataRole
-from ..extras.logging import get_logger
+from ..extras import logging
 from ..extras.packages import is_fastapi_available, is_pillow_available, is_requests_available
 from .common import dictify, jsonify
 from .protocol import (
@@ -57,7 +57,7 @@ if TYPE_CHECKING:
     from .protocol import ChatCompletionRequest, ScoreEvaluationRequest
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 ROLE_MAPPING = {
     Role.USER: DataRole.USER.value,
     Role.ASSISTANT: DataRole.ASSISTANT.value,
@@ -70,7 +70,7 @@ ROLE_MAPPING = {
 def _process_request(
     request: "ChatCompletionRequest",
 ) -> Tuple[List[Dict[str, str]], Optional[str], Optional[str], Optional[List["ImageInput"]]]:
-    logger.info(f"==== request ====\n{json.dumps(dictify(request), indent=2, ensure_ascii=False)}")
+    logger.info_rank0(f"==== request ====\n{json.dumps(dictify(request), indent=2, ensure_ascii=False)}")
 
     if len(request.messages) == 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid length")
@@ -115,7 +115,6 @@ def _process_request(
         else:
             input_messages.append({"role": ROLE_MAPPING[message.role], "content": message.content})
 
-    images = None if len(images) == 0 else images
     tool_list = request.tools
     if isinstance(tool_list, list) and len(tool_list):
         try:
@@ -125,7 +124,7 @@ def _process_request(
     else:
         tools = None
 
-    return input_messages, system, tools, images
+    return input_messages, system, tools, images or None
 
 
 def _create_stream_chat_completion_chunk(

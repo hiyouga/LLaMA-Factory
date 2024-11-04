@@ -22,7 +22,7 @@ from transformers.trainer import TRAINING_ARGS_NAME
 
 from ..extras.constants import LLAMABOARD_CONFIG, PEFT_METHODS, TRAINING_STAGES
 from ..extras.misc import is_gpu_or_npu_available, torch_gc
-from ..extras.packages import is_gradio_available
+from ..extras.packages import is_gradio_available, is_transformers_version_equal_to_4_46
 from .common import DEFAULT_CACHE_DIR, DEFAULT_CONFIG_DIR, QUANTIZATION_BITS, get_save_dir, load_config
 from .locales import ALERTS, LOCALES
 from .utils import abort_process, gen_cmd, get_eval_results, get_trainer_info, load_args, save_args, save_cmd
@@ -98,6 +98,7 @@ class Runner:
 
     def _finalize(self, lang: str, finish_info: str) -> str:
         finish_info = ALERTS["info_aborted"][lang] if self.aborted else finish_info
+        gr.Info(finish_info)
         self.trainer = None
         self.aborted = False
         self.running = False
@@ -152,7 +153,7 @@ class Runner:
             pure_bf16=(get("train.compute_type") == "pure_bf16"),
             plot_loss=True,
             ddp_timeout=180000000,
-            include_num_input_tokens_seen=True,
+            include_num_input_tokens_seen=False if is_transformers_version_equal_to_4_46() else True,  # FIXME
             **json.loads(get("train.extra_args")),
         )
 
@@ -357,6 +358,7 @@ class Runner:
         progress_bar = self.manager.get_elem_by_id("{}.progress_bar".format("train" if self.do_train else "eval"))
         loss_viewer = self.manager.get_elem_by_id("train.loss_viewer") if self.do_train else None
 
+        running_log = ""
         while self.trainer is not None:
             if self.aborted:
                 yield {
@@ -392,7 +394,7 @@ class Runner:
                 finish_info = ALERTS["err_failed"][lang]
 
         return_dict = {
-            output_box: self._finalize(lang, finish_info),
+            output_box: self._finalize(lang, finish_info) + "\n\n" + running_log,
             progress_bar: gr.Slider(visible=False),
         }
         yield return_dict
