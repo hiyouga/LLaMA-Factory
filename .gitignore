@@ -168,3 +168,7 @@ config/
 saves/
 output/
 wandb/
+# dataset
+data/*.json
+# model
+saves/*/*
