@@ -1,0 +1,3 @@
+[submodule "lm-evaluation-harness"]
+	path = lm-evaluation-harness
+	url = https://github.com/MLAI-Yonsei/lm-evaluation-harness.git
