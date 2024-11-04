@@ -171,4 +171,4 @@ wandb/
 # dataset
 data/*.json
 # model
-saves/*/*
+saves/*/*data/llama3_edu_v3.json
