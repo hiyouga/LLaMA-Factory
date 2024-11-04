@@ -1,5 +1,5 @@
 ### model
-model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
+model_name_or_path: akjindal53244/Llama-3.1-Storm-8B
 
 ### method
 stage: sft
@@ -8,25 +8,25 @@ finetuning_type: lora
 lora_target: all
 
 ### dataset
-dataset: identity,alpaca_en_demo
+dataset: llama3_edu_v3
 template: llama3
-cutoff_len: 1024
-max_samples: 1000
+cutoff_len: 90000
+max_samples: 250000
 overwrite_cache: true
 preprocessing_num_workers: 16
 
 ### output
-output_dir: saves/llama3-8b/lora/sft
-logging_steps: 10
-save_steps: 500
+output_dir: saves/llama3_edu_v3
+logging_steps: 1000
+save_steps: 10000
 plot_loss: true
 overwrite_output_dir: true
 
 ### train
-per_device_train_batch_size: 1
-gradient_accumulation_steps: 8
-learning_rate: 1.0e-4
-num_train_epochs: 3.0
+per_device_train_batch_size: 6
+gradient_accumulation_steps: 1
+learning_rate: 5.0e-5
+num_train_epochs: 15.0
 lr_scheduler_type: cosine
 warmup_ratio: 0.1
 bf16: true
@@ -34,6 +34,10 @@ ddp_timeout: 180000000
 
 ### eval
 val_size: 0.1
-per_device_eval_batch_size: 1
+per_device_eval_batch_size: 4
 eval_strategy: steps
-eval_steps: 500
+eval_steps: 10000
+
+# for wandb report
+# report_to: wandb
+# run_name: LLaMA3_edu_v3
