@@ -182,6 +182,7 @@ https://github.com/user-attachments/assets/e6ce34b0-52d5-4f3e-a830-592106c4c272
 | [Falcon](https://huggingface.co/tiiuae)                           | 7B/11B/40B/180B                  | falcon           |
 | [Gemma/Gemma 2/CodeGemma](https://huggingface.co/google)          | 2B/7B/9B/27B                     | gemma            |
 | [GLM-4](https://huggingface.co/THUDM)                             | 9B                               | glm4             |
+| [Granite 3.0](https://huggingface.co/ibm-granite)                 | 1B/2B/3B/8B                      | granite3         |
 | [Index](https://huggingface.co/IndexTeam)                         | 1.9B                             | index            |
 | [InternLM2/InternLM2.5](https://huggingface.co/internlm)          | 7B/20B                           | intern2          |
 | [Llama](https://github.com/facebookresearch/llama)                | 7B/13B/33B/65B                   | -                |
