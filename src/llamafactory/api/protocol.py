@@ -103,7 +103,6 @@ class ChatCompletionRequest(BaseModel):
     max_tokens: Optional[int] = None
     stop: Optional[Union[str, List[str]]] = None
     stream: bool = False
-    stream_options: Optional[Dict[str, bool]] = None
 
 
 class ChatCompletionResponseChoice(BaseModel):
@@ -139,7 +138,6 @@ class ChatCompletionStreamResponse(BaseModel):
     created: int = Field(default_factory=lambda: int(time.time()))
     model: str
     choices: List[ChatCompletionStreamResponseChoice]
-    usage: Optional[ChatCompletionResponseUsage] = None
 
 
 class ScoreEvaluationRequest(BaseModel):
