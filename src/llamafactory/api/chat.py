@@ -112,6 +112,7 @@ def _process_request(
                         image_stream = requests.get(image_url, stream=True).raw
 
                     images.append(Image.open(image_stream).convert("RGB"))
+                    input_messages.append({"role": ROLE_MAPPING[message.role], "content": input_item.text})
         else:
             input_messages.append({"role": ROLE_MAPPING[message.role], "content": message.content})
 
