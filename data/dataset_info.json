@@ -624,5 +624,77 @@
       "prompt": "content"
     },
     "folder": "python"
+  },
+  "llama3_edu_v3" : {
+
+    "file_name": "llama3_edu_v3.json",
+    
+    
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+      
+    }
+  },
+  "Solvook_instruction_ver3_te" : {
+
+    "file_name": "Solvook_instruction_ver3_te.json",
+    
+    
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+      
+    }
+  },
+  "ver3_method_top3_te" : {
+
+    "file_name": "ver3_method_top3_te.json",
+    
+    
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+      
+    }
+  },
+  "ver3_paragraph_top3_te" : {
+
+    "file_name": "ver3_paragraph_top3_te.json",
+    
+    
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+      
+    }
+  },
+  "ver3_relation_top3_te" : {
+
+    "file_name": "ver3_relation_top3_te.json",
+    
+    
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+      
+    }
+  },
+  "ver3_skill_top3_te" : {
+
+    "file_name": "ver3_skill_top3_te.json",
+    
+    
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+      
+    }
   }
 }
