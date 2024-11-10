@@ -46,7 +46,7 @@ class DataArguments:
         metadata={"help": "Path to the folder containing the images or videos. Defaults to `dataset_dir`."},
     )
     cutoff_len: int = field(
-        default=1024,
+        default=2048,
         metadata={"help": "The cutoff length of the tokenized inputs in the dataset."},
     )
     train_on_prompt: bool = field(
