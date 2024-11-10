@@ -83,6 +83,7 @@ class VllmEngine(BaseEngine):
             "enable_lora": model_args.adapter_name_or_path is not None,
             "max_lora_rank": model_args.vllm_max_lora_rank,
         }
+        engine_args.update(model_args.vllm_config)
 
         if getattr(config, "is_yi_vl_derived_model", None):
             import vllm.model_executor.models.llava
@@ -173,7 +174,7 @@ class VllmEngine(BaseEngine):
             multi_modal_data = None
 
         result_generator = self.model.generate(
-            inputs={"prompt_token_ids": prompt_ids, "multi_modal_data": multi_modal_data},
+            {"prompt_token_ids": prompt_ids, "multi_modal_data": multi_modal_data},
             sampling_params=sampling_params,
             request_id=request_id,
             lora_request=self.lora_request,
