@@ -15,10 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 from dataclasses import dataclass, field, fields
 from typing import Any, Dict, Literal, Optional, Union
 
 import torch
+from transformers.training_args import _convert_str_dict
 from typing_extensions import Self
 
 
@@ -125,7 +127,7 @@ class VllmArguments:
     """
 
     vllm_maxlen: int = field(
-        default=2048,
+        default=4096,
         metadata={"help": "Maximum sequence (prompt + response) length of the vLLM engine."},
     )
     vllm_gpu_util: float = field(
@@ -139,6 +141,10 @@ class VllmArguments:
     vllm_max_lora_rank: int = field(
         default=32,
         metadata={"help": "Maximum rank of all LoRAs in the vLLM engine."},
+    )
+    vllm_config: Optional[Union[dict, str]] = field(
+        default=None,
+        metadata={"help": "Config to initialize the vllm engine. Please use JSON strings."},
     )
 
 
@@ -311,6 +317,9 @@ class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments,
 
         if self.export_quantization_bit is not None and self.export_quantization_dataset is None:
             raise ValueError("Quantization dataset is necessary for exporting.")
+
+        if isinstance(self.vllm_config, str) and self.vllm_config.startswith("{"):
+            self.vllm_config = _convert_str_dict(json.loads(self.vllm_config))
 
     @classmethod
     def copyfrom(cls, source: "Self", **kwargs) -> "Self":
