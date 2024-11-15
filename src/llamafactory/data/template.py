@@ -912,6 +912,19 @@ _register_template(
 
 
 _register_template(
+    name="opencoder",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_observation=StringFormatter(slots=["<|im_start|>tool\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    default_system="You are OpenCoder, created by OpenCoder Team.",
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
+    replace_jinja_template=False,
+)
+
+
+_register_template(
     name="orion",
     format_user=StringFormatter(slots=["Human: {{content}}\n\nAssistant: ", {"eos_token"}]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
