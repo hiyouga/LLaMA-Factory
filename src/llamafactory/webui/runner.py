@@ -154,8 +154,8 @@ class Runner:
             plot_loss=True,
             ddp_timeout=180000000,
             include_num_input_tokens_seen=False if is_transformers_version_equal_to_4_46() else True,  # FIXME
-            **json.loads(get("train.extra_args")),
         )
+        args.update(json.loads(get("train.extra_args")))
 
         # checkpoints
         if get("top.checkpoint_path"):
