@@ -16,6 +16,7 @@
 # limitations under the License.
 
 from typing import TYPE_CHECKING, List, Optional
+import torch.distributed as dist
 
 from ...data import PairwiseDataCollatorWithPadding, get_dataset, get_template_and_fix_tokenizer
 from ...extras.constants import IGNORE_INDEX
@@ -64,6 +65,11 @@ def run_dpo(
     # Update arguments
     training_args.remove_unused_columns = False  # important for multimodal and pairwise dataset
 
+    effi_token_num = 0.0
+    for data in dataset_module["train_dataset"]:
+        effi_token_num += len(data["chosen_input_ids"])
+        effi_token_num += len(data["rejected_input_ids"])
+
     # Initialize our Trainer
     trainer = CustomDPOTrainer(
         model=model,
@@ -79,6 +85,10 @@ def run_dpo(
     # Training
     if training_args.do_train:
         train_result = trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
+        train_result.metrics['effective_tokens_per_sec'] = effi_token_num * train_result.metrics['epoch'] / train_result.metrics['train_runtime']
+        if dist.is_initialized():
+            train_result.metrics['effective_tokens_per_sec'] = train_result.metrics['effective_tokens_per_sec'] / dist.get_world_size()
+
         trainer.save_model()
         trainer.log_metrics("train", train_result.metrics)
         trainer.save_metrics("train", train_result.metrics)
