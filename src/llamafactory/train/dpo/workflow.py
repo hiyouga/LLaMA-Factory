@@ -66,10 +66,10 @@ def run_dpo(
     # Update arguments
     training_args.remove_unused_columns = False  # important for multimodal and pairwise dataset
 
-    effi_token_num = 0.0
+    effective_token_num = 0.0
     for data in dataset_module["train_dataset"]:
-        effi_token_num += len(data["chosen_input_ids"])
-        effi_token_num += len(data["rejected_input_ids"])
+        effective_token_num += len(data["chosen_input_ids"])
+        effective_token_num += len(data["rejected_input_ids"])
 
     # Initialize our Trainer
     trainer = CustomDPOTrainer(
@@ -87,7 +87,7 @@ def run_dpo(
     if training_args.do_train:
         train_result = trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
         train_result.metrics["effective_tokens_per_sec"] = (
-            effi_token_num * train_result.metrics["epoch"] / train_result.metrics["train_runtime"]
+            effective_token_num * train_result.metrics["epoch"] / train_result.metrics["train_runtime"]
         )
         if dist.is_initialized():
             train_result.metrics["effective_tokens_per_sec"] = (
