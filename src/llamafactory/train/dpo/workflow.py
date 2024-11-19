@@ -16,6 +16,7 @@
 # limitations under the License.
 
 from typing import TYPE_CHECKING, List, Optional
+
 import torch.distributed as dist
 
 from ...data import PairwiseDataCollatorWithPadding, get_dataset, get_template_and_fix_tokenizer
@@ -85,9 +86,13 @@ def run_dpo(
     # Training
     if training_args.do_train:
         train_result = trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
-        train_result.metrics['effective_tokens_per_sec'] = effi_token_num * train_result.metrics['epoch'] / train_result.metrics['train_runtime']
+        train_result.metrics["effective_tokens_per_sec"] = (
+            effi_token_num * train_result.metrics["epoch"] / train_result.metrics["train_runtime"]
+        )
         if dist.is_initialized():
-            train_result.metrics['effective_tokens_per_sec'] = train_result.metrics['effective_tokens_per_sec'] / dist.get_world_size()
+            train_result.metrics["effective_tokens_per_sec"] = (
+                train_result.metrics["effective_tokens_per_sec"] / dist.get_world_size()
+            )
 
         trainer.save_model()
         trainer.log_metrics("train", train_result.metrics)
