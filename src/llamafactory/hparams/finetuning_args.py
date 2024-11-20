@@ -346,6 +346,10 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         default=False,
         metadata={"help": "Whether or not to save the training loss curves."},
     )
+    include_effective_tokens_per_second: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to compute effective tokens per second."},
+    )
 
     def __post_init__(self):
         def split_arg(arg):
