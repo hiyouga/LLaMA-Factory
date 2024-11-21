@@ -19,7 +19,7 @@ from .processors.feedback import preprocess_feedback_dataset
 from .processors.pairwise import preprocess_pairwise_dataset, print_pairwise_dataset_example
 from .processors.pretrain import preprocess_pretrain_dataset
 from .processors.supervised import (
-    preprocess_packed_supervised_dataset,
+    preprocess_packed_supervised_dataset,preprocess_packed_supervised_dataset_fullDataGroup,
     preprocess_supervised_dataset,
     print_supervised_dataset_example,
 )
@@ -64,7 +64,8 @@ def get_preprocess_and_print_func(
 
                 OptimizedTypedSequence.__init__ = __init__
             preprocess_func = partial(
-                preprocess_packed_supervised_dataset,
+                #preprocess_packed_supervised_dataset,
+                preprocess_packed_supervised_dataset_fullDataGroup,
                 template=template,
                 tokenizer=tokenizer,
                 processor=processor,
