@@ -545,8 +545,20 @@
       "kto_tag": "label"
     }
   },
-  "wiki_demo": {
-    "file_name": "wiki_demo.txt",
+  "legal-aggrement 1": {
+    "file_name": "legal-aggrement 1.txt",
+    "columns": {
+      "prompt": "text"
+    }
+  },
+  "legal-aggrement 2": {
+    "file_name": "legal-agreement 2.txt",
+    "columns": {
+      "prompt": "text"
+    }
+  },
+  "CUAD": {
+    "file_name": "combined_contracts.txt",
     "columns": {
       "prompt": "text"
     }
