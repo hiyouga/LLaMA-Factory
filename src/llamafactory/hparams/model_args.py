@@ -59,12 +59,12 @@ class ProcessorArguments:
     """
 
     image_resolution: int = field(
-        default=512,
-        metadata={"help": "Keeps the height or width of image below this resolution."},
+        default=512 * 512,
+        metadata={"help": "Keeps the number of pixels of image below this resolution."},
     )
     video_resolution: int = field(
-        default=128,
-        metadata={"help": "Keeps the height or width of video below this resolution."},
+        default=128 * 128,
+        metadata={"help": "Keeps the number of pixels of video below this resolution."},
     )
     video_fps: float = field(
         default=2.0,
