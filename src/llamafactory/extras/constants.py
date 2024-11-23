@@ -857,6 +857,22 @@ register_model_group(
 
 register_model_group(
     models={
+        "Llama-3.2-11B-Vision-Instruct": {
+            DownloadSource.DEFAULT: "meta-llama/Llama-3.2-11B-Vision-Instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Llama-3.2-11B-Vision-Instruct",
+        },
+        "Llama-3.2-90B-Vision-Instruct": {
+            DownloadSource.DEFAULT: "meta-llama/Llama-3.2-90B-Vision-Instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Llama-3.2-90B-Vision-Instruct",
+        },
+    },
+    template="mllama",
+    vision=True,
+)
+
+
+register_model_group(
+    models={
         "LLaVA-1.5-7B-Chat": {
             DownloadSource.DEFAULT: "llava-hf/llava-1.5-7b-hf",
             DownloadSource.MODELSCOPE: "swift/llava-1.5-7b-hf",
