@@ -186,6 +186,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [Llama](https://github.com/facebookresearch/llama)                | 7B/13B/33B/65B                   | -                |
 | [Llama 2](https://huggingface.co/meta-llama)                      | 7B/13B/70B                       | llama2           |
 | [Llama 3-3.2](https://huggingface.co/meta-llama)                  | 1B/3B/8B/70B                     | llama3           |
+| [Llama 3.2 Vision](https://huggingface.co/meta-llama)             | 11B/90B                          | mllama           |
 | [LLaVA-1.5](https://huggingface.co/llava-hf)                      | 7B/13B                           | llava            |
 | [LLaVA-NeXT](https://huggingface.co/llava-hf)                     | 7B/8B/13B/34B/72B/110B           | llava_next       |
 | [LLaVA-NeXT-Video](https://huggingface.co/llava-hf)               | 7B/34B                           | llava_next_video |
