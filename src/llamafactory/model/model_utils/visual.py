@@ -191,6 +191,8 @@ def patch_target_modules(
     if finetuning_args.freeze_vision_tower:
         if model_type in ["llava", "llava_next", "llava_next_video", "paligemma", "pixtral", "video_llava"]:
             return "^(?!.*vision_tower).*(?:{}).*".format("|".join(target_modules))
+        elif model_type == "mllama":
+            return "^(?!.*vision_model).*(?:{}).*".format("|".join(target_modules))
         elif model_type == "qwen2_vl":
             return "^(?!.*visual).*(?:{}).*".format("|".join(target_modules))
         else:
