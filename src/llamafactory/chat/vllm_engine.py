@@ -113,9 +113,9 @@ class VllmEngine(BaseEngine):
                 messages[0]["content"] = IMAGE_PLACEHOLDER * len(images) + messages[0]["content"]
 
         if self.template.mm_plugin.__class__.__name__ == "Qwen2vlPlugin":  # temporary solution
-            image_str = "<|vision_start|>" + self.template.mm_plugin.image_token + "<|vision_end|>"
+            image_str = f"<|vision_start|>{self.template.mm_plugin.image_token}<|vision_end|>"
         else:
-            image_str = self.template.mm_plugin.image_token
+            image_str = self.template.mm_plugin.image_token or ""
 
         paired_messages = [
             {"role": message["role"], "content": message["content"].replace(IMAGE_PLACEHOLDER, image_str)}
