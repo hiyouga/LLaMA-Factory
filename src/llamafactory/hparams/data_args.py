@@ -41,6 +41,10 @@ class DataArguments:
         default="data",
         metadata={"help": "Path to the folder containing the datasets."},
     )
+     custom_config: Optional[str] = field(
+        default=None,
+        metadata={"help": "The path of custom config to use for training. ."},
+    )
     image_dir: Optional[str] = field(
         default=None,
         metadata={"help": "Path to the folder containing the images or videos. Defaults to `dataset_dir`."},
