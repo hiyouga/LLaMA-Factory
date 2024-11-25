@@ -112,6 +112,7 @@ def configure_visual_model(config: "PretrainedConfig") -> None:
         "llava",
         "llava_next",
         "llava_next_video",
+        "mllama",
         "paligemma",
         "pixtral",
         "video_llava",
