@@ -426,7 +426,7 @@
     }
   },
   "dpo_mix_en": {
-    "hf_hub_url": "hiyouga/DPO-En-Zh-20k",
+    "hf_hub_url": "llamafactory/DPO-En-Zh-20k",
     "subset": "en",
     "ranking": true,
     "formatting": "sharegpt",
@@ -437,7 +437,7 @@
     }
   },
   "dpo_mix_zh": {
-    "hf_hub_url": "hiyouga/DPO-En-Zh-20k",
+    "hf_hub_url": "llamafactory/DPO-En-Zh-20k",
     "subset": "zh",
     "ranking": true,
     "formatting": "sharegpt",
