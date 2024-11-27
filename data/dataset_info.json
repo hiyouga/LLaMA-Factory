@@ -297,7 +297,8 @@
     }
   },
   "openo1_sft": {
-    "hf_hub_url": "O1-OPEN/OpenO1-SFT",
+    "hf_hub_url": "llamafactory/OpenO1-SFT",
+    "ms_hub_url": "llamafactory/OpenO1-SFT",
     "columns": {
       "prompt": "prompt",
       "response": "response"
