@@ -296,6 +296,13 @@
       "response": "answer"
     }
   },
+  "openo1_sft": {
+    "hf_hub_url": "O1-OPEN/OpenO1-SFT",
+    "columns": {
+      "prompt": "prompt",
+      "response": "response"
+    }
+  },
   "llava_1k_en": {
     "hf_hub_url": "BUAADreamer/llava-en-zh-2k",
     "subset": "en",
