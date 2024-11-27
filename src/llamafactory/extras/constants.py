@@ -1000,6 +1000,17 @@ register_model_group(
 
 register_model_group(
     models={
+        "Marco-o1-Chat": {
+            DownloadSource.DEFAULT: "AIDC-AI/Marco-o1",
+            DownloadSource.MODELSCOPE: "AIDC-AI/Marco-o1",
+        },
+    },
+    template="marco",
+)
+
+
+register_model_group(
+    models={
         "MiniCPM-2B-SFT-Chat": {
             DownloadSource.DEFAULT: "openbmb/MiniCPM-2B-sft-bf16",
             DownloadSource.MODELSCOPE: "OpenBMB/miniCPM-bf16",
