@@ -296,6 +296,14 @@
       "response": "answer"
     }
   },
+  "openo1_sft": {
+    "hf_hub_url": "llamafactory/OpenO1-SFT",
+    "ms_hub_url": "llamafactory/OpenO1-SFT",
+    "columns": {
+      "prompt": "prompt",
+      "response": "response"
+    }
+  },
   "llava_1k_en": {
     "hf_hub_url": "BUAADreamer/llava-en-zh-2k",
     "subset": "en",
