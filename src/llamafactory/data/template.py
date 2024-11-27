@@ -1059,6 +1059,38 @@ _register_template(
 
 
 _register_template(
+    name="skywork_o1",
+    format_user=StringFormatter(
+        slots=[
+            (
+                "<|start_header_id|>user<|end_header_id|>\n\n{{content}}<|eot_id|>"
+                "<|start_header_id|>assistant<|end_header_id|>\n\n"
+            )
+        ]
+    ),
+    format_system=StringFormatter(slots=["<|start_header_id|>system<|end_header_id|>\n\n{{content}}<|eot_id|>"]),
+    format_observation=StringFormatter(
+        slots=[
+            (
+                "<|start_header_id|>tool<|end_header_id|>\n\n{{content}}<|eot_id|>"
+                "<|start_header_id|>assistant<|end_header_id|>\n\n"
+            )
+        ]
+    ),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    default_system=(
+        "You are Skywork-o1, a thinking model developed by Skywork AI, specializing in solving complex problems "
+        "involving mathematics, coding, and logical reasoning through deep thought. When faced with a user's request, "
+        "you first engage in a lengthy and in-depth thinking process to explore possible solutions to the problem. "
+        "After completing your thoughts, you then provide a detailed explanation of the solution process "
+        "in your response."
+    ),
+    stop_words=["<|eot_id|>"],
+    replace_eos=True,
+)
+
+
+_register_template(
     name="solar",
     format_user=StringFormatter(slots=["### User:\n{{content}}\n\n### Assistant:\n"]),
     format_system=StringFormatter(slots=["### System:\n{{content}}\n\n"]),
