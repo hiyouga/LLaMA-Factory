@@ -1925,6 +1925,16 @@ register_model_group(
 
 register_model_group(
     models={
+        "Skywork-o1-Open-Llama-3.1-8B": {
+            DownloadSource.DEFAULT: "Skywork/Skywork-o1-Open-Llama-3.1-8B",
+        }
+    },
+    template="skywork_o1",
+)
+
+
+register_model_group(
+    models={
         "StarCoder2-3B": {
             DownloadSource.DEFAULT: "bigcode/starcoder2-3b",
             DownloadSource.MODELSCOPE: "AI-ModelScope/starcoder2-3b",
