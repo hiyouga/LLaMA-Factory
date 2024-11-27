@@ -512,6 +512,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="chatml_de",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -578,6 +579,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="dbrx",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -728,6 +730,7 @@ _register_template(
 )
 
 
+# copied from llama2 template
 _register_template(
     name="llama2_zh",
     format_user=StringFormatter(slots=[{"bos_token"}, "[INST] {{content}} [/INST]"]),
@@ -762,6 +765,7 @@ _register_template(
 )
 
 
+# copied from llama3 template
 _register_template(
     name="mllama",
     format_user=StringFormatter(
@@ -789,6 +793,7 @@ _register_template(
 )
 
 
+# copied from vicuna template
 _register_template(
     name="llava",
     format_user=StringFormatter(slots=["USER: {{content}} ASSISTANT:"]),
@@ -800,6 +805,7 @@ _register_template(
 )
 
 
+# copied from vicuna template
 _register_template(
     name="llava_next",
     format_user=StringFormatter(slots=["USER: {{content}} ASSISTANT:"]),
@@ -811,6 +817,7 @@ _register_template(
 )
 
 
+# copied from llama3 template
 _register_template(
     name="llava_next_llama3",
     format_user=StringFormatter(
@@ -838,6 +845,7 @@ _register_template(
 )
 
 
+# copied from mistral template
 _register_template(
     name="llava_next_mistral",
     format_user=StringFormatter(slots=["[INST] {{content}} [/INST]"]),
@@ -846,6 +854,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="llava_next_qwen",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -860,6 +869,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="llava_next_yi",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -871,6 +881,7 @@ _register_template(
 )
 
 
+# copied from vicuna template
 _register_template(
     name="llava_next_video",
     format_user=StringFormatter(slots=["USER: {{content}} ASSISTANT:"]),
@@ -882,6 +893,7 @@ _register_template(
 )
 
 
+# copied from mistral template
 _register_template(
     name="llava_next_video_mistral",
     format_user=StringFormatter(slots=["[INST] {{content}} [/INST]"]),
@@ -890,6 +902,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="llava_next_video_yi",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -901,6 +914,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="marco",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -954,6 +968,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="opencoder",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -974,6 +989,7 @@ _register_template(
 )
 
 
+# copied from gemma template
 _register_template(
     name="paligemma",
     format_user=StringFormatter(slots=["<start_of_turn>user\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]),
@@ -1017,6 +1033,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="qwen",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -1030,6 +1047,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="qwen2_vl",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -1058,6 +1076,7 @@ _register_template(
 )
 
 
+# copied from llama3 template
 _register_template(
     name="skywork_o1",
     format_user=StringFormatter(
@@ -1175,6 +1194,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="yi",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
