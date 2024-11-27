@@ -30,7 +30,7 @@ from .kto import run_kto
 from .ppo import run_ppo
 from .pt import run_pt
 from .rm import run_rm
-from .sft import run_sft
+from .sft import aif_run_sft as run_sft
 
 
 if TYPE_CHECKING:
@@ -42,6 +42,7 @@ logger = get_logger(__name__)
 
 def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: List["TrainerCallback"] = []) -> None:
     callbacks.append(LogCallback())
+    print(f"args: {args}")
     model_args, data_args, training_args, finetuning_args, generating_args = get_train_args(args)
 
     if finetuning_args.stage == "pt":

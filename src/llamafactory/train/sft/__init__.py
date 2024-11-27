@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .workflow import run_sft
+from .workflow import run_sft, aif_run_sft
 
 
-__all__ = ["run_sft"]
+__all__ = ["run_sft", "aif_run_sft"]

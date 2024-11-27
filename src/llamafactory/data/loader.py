@@ -307,3 +307,131 @@ def get_dataset(
             dataset_module["eval_dataset"] = dataset_dict["validation"]
 
         return dataset_module
+
+
+from datasets import Dataset
+
+
+def _aif_get_longest_dataset_module(dataset_module: Dict[str, "Dataset"], total_train_batch_size: int, total_eval_batch_size: int) -> "DatasetModule":
+    '''
+    function: 从每个数据集中获取最长的sample，并复制1个total_batch，构成一个流程测试的数据集
+    inputs: 
+        dataset_module: 数据集字典
+        total_train_batch_size: 训练batch size
+        total_eval_batch_size: 评估batch size
+    outputs: 
+        longest_dataset_module: 数据集字典
+    '''
+    # 从原始数据集中获取最长的sample
+    longest_dataset_module = {}
+    for dataset_name, dataset in dataset_module.items():
+        max_len = 0
+        longest_sample = None
+
+        # 初始化一个空的Dataset，表头跟dataset一致
+        longest_dataset_module[dataset_name] = {'input_ids': [], 'attention_mask': [], 'labels': [], 'images': [], 'videos': []}
+        for sample in dataset:
+            if len(sample['input_ids']) + len(sample['labels']) > max_len:
+                max_len = len(sample['input_ids']) + len(sample['labels'])
+                longest_sample = sample
+        # 复制1个total_batch，构成一个流程测试的数据集
+        for _ in range(total_train_batch_size):
+            longest_dataset_module[dataset_name]['input_ids'].append(longest_sample['input_ids'])
+            longest_dataset_module[dataset_name]['attention_mask'].append(longest_sample['attention_mask'])
+            longest_dataset_module[dataset_name]['labels'].append(longest_sample['labels'])
+            longest_dataset_module[dataset_name]['images'].append(longest_sample['images'])
+            longest_dataset_module[dataset_name]['videos'].append(longest_sample['videos'])
+        longest_dataset_module[dataset_name] = Dataset.from_dict(longest_dataset_module[dataset_name])
+
+    return longest_dataset_module
+
+
+def aif_get_dataset(
+    template: "Template",
+    model_args: "ModelArguments",
+    data_args: "DataArguments",
+    training_args: "Seq2SeqTrainingArguments",
+    stage: Literal["pt", "sft", "rm", "ppo", "kto"],
+    tokenizer: "PreTrainedTokenizer",
+    processor: Optional["ProcessorMixin"] = None,
+) -> "DatasetModule":
+    r"""
+    Gets the train dataset and optionally gets the evaluation dataset.
+    """
+    # Load tokenized dataset
+    if data_args.tokenized_path is not None:
+        if has_tokenized_data(data_args.tokenized_path):
+            logger.warning("Loading dataset from disk will ignore other data arguments.")
+            dataset_dict: "DatasetDict" = load_from_disk(data_args.tokenized_path)
+            logger.info("Loaded tokenized dataset from {}.".format(data_args.tokenized_path))
+
+            dataset_module: Dict[str, "Dataset"] = {}
+            if "train" in dataset_dict:
+                dataset_module["train_dataset"] = dataset_dict["train"]
+
+            if "validation" in dataset_dict:
+                dataset_module["eval_dataset"] = dataset_dict["validation"]
+
+            if data_args.streaming:
+                dataset_module = {k: v.to_iterable_dataset() for k, v in dataset_module.items()}
+
+            return dataset_module
+
+        if data_args.streaming:
+            raise ValueError("Turn off `streaming` when saving dataset to disk.")
+
+    # Load and preprocess dataset
+    with training_args.main_process_first(desc="load dataset"):
+        dataset = _get_merged_dataset(data_args.dataset, model_args, data_args, training_args, stage)
+        eval_dataset = _get_merged_dataset(data_args.eval_dataset, model_args, data_args, training_args, stage)
+
+    with training_args.main_process_first(desc="pre-process dataset"):
+        dataset = _get_preprocessed_dataset(
+            dataset, data_args, training_args, stage, template, tokenizer, processor, is_eval=False
+        )
+        eval_dataset = _get_preprocessed_dataset(
+            eval_dataset, data_args, training_args, stage, template, tokenizer, processor, is_eval=True
+        )
+
+        if data_args.val_size > 1e-6:
+            dataset_dict = split_dataset(dataset, data_args, seed=training_args.seed)
+        else:
+            dataset_dict = {}
+            if dataset is not None:
+                if data_args.streaming:
+                    dataset = dataset.shuffle(buffer_size=data_args.buffer_size, seed=training_args.seed)
+
+                dataset_dict["train"] = dataset
+
+            if eval_dataset is not None:
+                if data_args.streaming:
+                    eval_dataset = eval_dataset.shuffle(buffer_size=data_args.buffer_size, seed=training_args.seed)
+
+                dataset_dict["validation"] = eval_dataset
+
+            dataset_dict = DatasetDict(dataset_dict)
+
+        if data_args.tokenized_path is not None:
+            if training_args.should_save:
+                dataset_dict.save_to_disk(data_args.tokenized_path)
+                logger.info("Tokenized dataset saved at {}.".format(data_args.tokenized_path))
+                logger.info("Please restart the training with `tokenized_path: {}`.".format(data_args.tokenized_path))
+
+            sys.exit(0)
+
+        dataset_module = {}
+        if "train" in dataset_dict:
+            dataset_module["train_dataset"] = dataset_dict["train"]
+
+        if "validation" in dataset_dict:
+            dataset_module["eval_dataset"] = dataset_dict["validation"]
+
+        # 从每个数据集中获取最长的sample，并复制1个total_batch，构成一个流程测试的数据集
+        world_size = int(os.environ.get("WORLD_SIZE", 1))
+        total_train_batch_size = training_args.gradient_accumulation_steps * training_args.train_batch_size * world_size
+        total_eval_batch_size = training_args.per_device_eval_batch_size * world_size
+        longest_dataset_module = _aif_get_longest_dataset_module(dataset_module, 
+                                                                 total_train_batch_size, 
+                                                                 total_eval_batch_size)
+
+        return dataset_module, longest_dataset_module
