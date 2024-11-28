@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import socket
 
 from ..extras.packages import is_gradio_available
 from .common import save_config
@@ -35,7 +36,7 @@ if is_gradio_available():
 def create_ui(demo_mode: bool = False) -> "gr.Blocks":
     engine = Engine(demo_mode=demo_mode, pure_chat=False)
 
-    with gr.Blocks(title="LLaMA Board", css=CSS) as demo:
+    with gr.Blocks(title=f"LLaMA Board ({socket.gethostname()})", css=CSS) as demo:
         if demo_mode:
             gr.HTML("<h1><center>LLaMA Board: A One-stop Web UI for Getting Started with LLaMA Factory</center></h1>")
             gr.HTML(
