@@ -202,7 +202,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [Phi-3](https://huggingface.co/microsoft)                         | 4B/14B                           | phi              |
 | [Phi-3-small](https://huggingface.co/microsoft)                   | 7B                               | phi_small        |
 | [Pixtral](https://huggingface.co/mistralai)                       | 12B                              | pixtral          |
-| [Qwen (1-2.5) (Code/Math/MoE)](https://huggingface.co/Qwen)       | 0.5B/1.5B/3B/7B/14B/32B/72B/110B | qwen             |
+| [Qwen/QwQ (1-2.5) (Code/Math/MoE)](https://huggingface.co/Qwen)   | 0.5B/1.5B/3B/7B/14B/32B/72B/110B | qwen             |
 | [Qwen2-VL](https://huggingface.co/Qwen)                           | 2B/7B/72B                        | qwen2_vl         |
 | [Skywork o1](https://huggingface.co/Skywork)                      | 8B                               | skywork_o1       |
 | [StarCoder 2](https://huggingface.co/bigcode)                     | 3B/7B/15B                        | -                |
