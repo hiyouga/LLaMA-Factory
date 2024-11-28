@@ -24,6 +24,7 @@ services:
       - "8000:8000"
     ipc: host
     tty: true
+    shm_size: '16gb'
     stdin_open: true
     command: bash
     deploy:

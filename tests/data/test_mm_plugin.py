@@ -61,7 +61,7 @@ INPUT_IDS = [0, 1, 2, 3, 4]
 
 LABELS = [0, 1, 2, 3, 4]
 
-SEQLENS = [1024]
+BATCH_IDS = [[1] * 1024]
 
 
 def _get_mm_inputs(processor: "ProcessorMixin") -> Dict[str, "torch.Tensor"]:
@@ -105,7 +105,7 @@ def _check_plugin(
         expected_labels,
     )
     _is_close(
-        plugin.get_mm_inputs(IMAGES, NO_VIDEOS, IMGLENS, NO_VIDLENS, SEQLENS, processor),
+        plugin.get_mm_inputs(IMAGES, NO_VIDEOS, IMGLENS, NO_VIDLENS, BATCH_IDS, processor),
         expected_mm_inputs,
     )
     # test text_messages
@@ -115,7 +115,7 @@ def _check_plugin(
         LABELS,
     )
     _is_close(
-        plugin.get_mm_inputs(NO_IMAGES, NO_VIDEOS, NO_IMGLENS, NO_VIDLENS, SEQLENS, processor),
+        plugin.get_mm_inputs(NO_IMAGES, NO_VIDEOS, NO_IMGLENS, NO_VIDLENS, BATCH_IDS, processor),
         expected_no_mm_inputs,
     )
 

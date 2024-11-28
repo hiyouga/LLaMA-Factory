@@ -512,6 +512,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="chatml_de",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -578,6 +579,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="dbrx",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -728,6 +730,7 @@ _register_template(
 )
 
 
+# copied from llama2 template
 _register_template(
     name="llama2_zh",
     format_user=StringFormatter(slots=[{"bos_token"}, "[INST] {{content}} [/INST]"]),
@@ -762,6 +765,35 @@ _register_template(
 )
 
 
+# copied from llama3 template
+_register_template(
+    name="mllama",
+    format_user=StringFormatter(
+        slots=[
+            (
+                "<|start_header_id|>user<|end_header_id|>\n\n{{content}}<|eot_id|>"
+                "<|start_header_id|>assistant<|end_header_id|>\n\n"
+            )
+        ]
+    ),
+    format_system=StringFormatter(slots=["<|start_header_id|>system<|end_header_id|>\n\n{{content}}<|eot_id|>"]),
+    format_observation=StringFormatter(
+        slots=[
+            (
+                "<|start_header_id|>tool<|end_header_id|>\n\n{{content}}<|eot_id|>"
+                "<|start_header_id|>assistant<|end_header_id|>\n\n"
+            )
+        ]
+    ),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<|eot_id|>"],
+    replace_eos=True,
+    replace_jinja_template=False,
+    mm_plugin=get_mm_plugin(name="mllama", image_token="<|image|>"),
+)
+
+
+# copied from vicuna template
 _register_template(
     name="llava",
     format_user=StringFormatter(slots=["USER: {{content}} ASSISTANT:"]),
@@ -773,6 +805,7 @@ _register_template(
 )
 
 
+# copied from vicuna template
 _register_template(
     name="llava_next",
     format_user=StringFormatter(slots=["USER: {{content}} ASSISTANT:"]),
@@ -784,6 +817,7 @@ _register_template(
 )
 
 
+# copied from llama3 template
 _register_template(
     name="llava_next_llama3",
     format_user=StringFormatter(
@@ -811,6 +845,7 @@ _register_template(
 )
 
 
+# copied from mistral template
 _register_template(
     name="llava_next_mistral",
     format_user=StringFormatter(slots=["[INST] {{content}} [/INST]"]),
@@ -819,6 +854,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="llava_next_qwen",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -833,6 +869,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="llava_next_yi",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -844,6 +881,7 @@ _register_template(
 )
 
 
+# copied from vicuna template
 _register_template(
     name="llava_next_video",
     format_user=StringFormatter(slots=["USER: {{content}} ASSISTANT:"]),
@@ -855,6 +893,7 @@ _register_template(
 )
 
 
+# copied from mistral template
 _register_template(
     name="llava_next_video_mistral",
     format_user=StringFormatter(slots=["[INST] {{content}} [/INST]"]),
@@ -863,6 +902,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="llava_next_video_yi",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -871,6 +911,23 @@ _register_template(
     stop_words=["<|im_end|>"],
     replace_eos=True,
     mm_plugin=get_mm_plugin(name="llava_next_video", image_token="<image>", video_token="<video>"),
+)
+
+
+# copied from chatml template
+_register_template(
+    name="marco",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_observation=StringFormatter(slots=["<|im_start|>tool\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_separator=EmptyFormatter(slots=["\n"]),
+    default_system=(
+        "你是一个经过良好训练的AI助手，你的名字是Marco-o1.由阿里国际数字商业集团的AI Business创造.\n## 重要！！！！！\n"
+        "当你回答问题时，你的思考应该在<Thought>内完成，<Output>内输出你的结果。\n"
+        "<Thought>应该尽可能是英文，但是有2个特例，一个是对原文中的引用，另一个是是数学应该使用markdown格式，<Output>内的输出需要遵循用户输入的语言。\n"
+    ),
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
 )
 
 
@@ -911,6 +968,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="opencoder",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -931,6 +989,7 @@ _register_template(
 )
 
 
+# copied from gemma template
 _register_template(
     name="paligemma",
     format_user=StringFormatter(slots=["<start_of_turn>user\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]),
@@ -974,6 +1033,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="qwen",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -987,6 +1047,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="qwen2_vl",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -1011,6 +1072,39 @@ _register_template(
         "Your answer should be friendly, unbiased, faithful, informative and detailed."
     ),
     stop_words=["<|im_end|>"],
+    replace_eos=True,
+)
+
+
+# copied from llama3 template
+_register_template(
+    name="skywork_o1",
+    format_user=StringFormatter(
+        slots=[
+            (
+                "<|start_header_id|>user<|end_header_id|>\n\n{{content}}<|eot_id|>"
+                "<|start_header_id|>assistant<|end_header_id|>\n\n"
+            )
+        ]
+    ),
+    format_system=StringFormatter(slots=["<|start_header_id|>system<|end_header_id|>\n\n{{content}}<|eot_id|>"]),
+    format_observation=StringFormatter(
+        slots=[
+            (
+                "<|start_header_id|>tool<|end_header_id|>\n\n{{content}}<|eot_id|>"
+                "<|start_header_id|>assistant<|end_header_id|>\n\n"
+            )
+        ]
+    ),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    default_system=(
+        "You are Skywork-o1, a thinking model developed by Skywork AI, specializing in solving complex problems "
+        "involving mathematics, coding, and logical reasoning through deep thought. When faced with a user's request, "
+        "you first engage in a lengthy and in-depth thinking process to explore possible solutions to the problem. "
+        "After completing your thoughts, you then provide a detailed explanation of the solution process "
+        "in your response."
+    ),
+    stop_words=["<|eot_id|>"],
     replace_eos=True,
 )
 
@@ -1100,6 +1194,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="yi",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),

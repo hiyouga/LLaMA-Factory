@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, Literal, Optional, Sequence
 
 import torch
+import torch.nn.functional as F
 from transformers import DataCollatorForSeq2Seq
 
 
@@ -79,7 +80,7 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
     processor: Optional["ProcessorMixin"] = None
 
     def __call__(self, features: Sequence[Dict[str, Any]]) -> Dict[str, "torch.Tensor"]:
-        batch_images, batch_videos, batch_imglens, batch_vidlens, batch_seqlens = [], [], [], [], []
+        batch_images, batch_videos, batch_imglens, batch_vidlens, batch_input_ids = [], [], [], [], []
         for feature in features:
             images = feature.pop("images", None) or []
             videos = feature.pop("videos", None) or []
@@ -87,10 +88,10 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             batch_videos.extend(videos)
             batch_imglens.append(len(images))
             batch_vidlens.append(len(videos))
-            batch_seqlens.append(len(feature["input_ids"]))
+            batch_input_ids.append(feature["input_ids"])
 
         mm_inputs = self.template.mm_plugin.get_mm_inputs(
-            batch_images, batch_videos, batch_imglens, batch_vidlens, batch_seqlens, self.processor
+            batch_images, batch_videos, batch_imglens, batch_vidlens, batch_input_ids, self.processor
         )
         if "token_type_ids" in mm_inputs:
             token_type_ids = mm_inputs.pop("token_type_ids")
@@ -98,6 +99,12 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                 feature["token_type_ids"] = token_type_ids[i]
 
         features: Dict[str, "torch.Tensor"] = super().__call__(features)
+        if "cross_attention_mask" in mm_inputs:  # for mllama inputs
+            cross_attention_mask = mm_inputs.pop("cross_attention_mask")
+            seq_len = features["input_ids"].size(1)
+            orig_len = cross_attention_mask.size(1)
+            mm_inputs["cross_attention_mask"] = F.pad(cross_attention_mask, (0, 0, 0, 0, 0, seq_len - orig_len))
+
         features.update(mm_inputs)
         if isinstance(features.get("pixel_values"), list):  # for pixtral inputs
             features = features.data  # use default_collate() instead of BatchEncoding.to()

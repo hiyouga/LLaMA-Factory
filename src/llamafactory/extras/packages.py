@@ -75,8 +75,8 @@ def is_starlette_available():
 
 
 @lru_cache
-def is_transformers_version_greater_than_4_43():
-    return _get_package_version("transformers") >= version.parse("4.43.0")
+def is_transformers_version_greater_than(content: str):
+    return _get_package_version("transformers") >= version.parse(content)
 
 
 @lru_cache
