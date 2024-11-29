@@ -130,6 +130,7 @@ def _load_single_dataset(
             streaming=data_args.streaming,
             num_proc=data_args.preprocessing_num_workers,
             trust_remote_code=True,
+            revision=dataset_attr.revision,
         )
 
     if dataset_attr.num_samples is not None and not data_args.streaming:
