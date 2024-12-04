@@ -594,7 +594,7 @@ API_PORT=8000 llamafactory-cli api examples/inference/llama3_vllm.yaml
 > [!TIP]
 > Visit [this page](https://platform.openai.com/docs/api-reference/chat/create) for API document.
 >
-> Examples: [Image understanding](scripts/test_image.py) | [Function calling](scripts/test_toolcall.py)
+> Examples: [Image understanding](scripts/api_example/test_image.py) | [Function calling](scripts/api_example/test_toolcall.py)
 
 ### Download from ModelScope Hub
 
@@ -726,7 +726,6 @@ If you have a project that should be incorporated, please contact via email or c
 1. **[NVIDIA RTX AI Toolkit](https://github.com/NVIDIA/RTX-AI-Toolkit)**: SDKs for fine-tuning LLMs on Windows PC for NVIDIA RTX.
 1. **[LazyLLM](https://github.com/LazyAGI/LazyLLM)**: An easy and lazy way for building multi-agent LLMs applications and supports model fine-tuning via LLaMA Factory.
 1. **[RAG-Retrieval](https://github.com/NLPJCL/RAG-Retrieval)**: A full pipeline for RAG retrieval model fine-tuning, inference, and distillation. [[blog]](https://zhuanlan.zhihu.com/p/987727357)
-
 
 </details>
 

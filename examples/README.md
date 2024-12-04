@@ -13,6 +13,8 @@ Make sure to execute these commands in the `LLaMA-Factory` directory.
 
 Use `CUDA_VISIBLE_DEVICES` (GPU) or `ASCEND_RT_VISIBLE_DEVICES` (NPU) to choose computing devices.
 
+By default, LLaMA-Factory uses all visible computing devices.
+
 ## Examples
 
 ### LoRA Fine-Tuning
@@ -80,12 +82,6 @@ llamafactory-cli train examples/train_lora/llama3_preprocess.yaml
 llamafactory-cli eval examples/train_lora/llama3_lora_eval.yaml
 ```
 
-#### Batch Predicting and Computing BLEU and ROUGE Scores
-
-```bash
-llamafactory-cli train examples/train_lora/llama3_lora_predict.yaml
-```
-
 #### Supervised Fine-Tuning on Multiple Nodes
 
 ```bash
@@ -146,12 +142,6 @@ FORCE_TORCHRUN=1 NNODES=2 RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llama
 FORCE_TORCHRUN=1 llamafactory-cli train examples/train_full/qwen2vl_full_sft.yaml
 ```
 
-#### Batch Predicting and Computing BLEU and ROUGE Scores
-
-```bash
-llamafactory-cli train examples/train_full/llama3_full_predict.yaml
-```
-
 ### Merging LoRA Adapters and Quantization
 
 #### Merge LoRA Adapters
@@ -170,13 +160,19 @@ llamafactory-cli export examples/merge_lora/llama3_gptq.yaml
 
 ### Inferring LoRA Fine-Tuned Models
 
-#### Use CLI
+#### Batch Generation using vLLM Tensor Parallel
+
+```
+python scripts/vllm_infer.py --model_name_or_path path_to_merged_model --dataset alpaca_en_demo
+```
+
+#### Use CLI ChatBox
 
 ```bash
 llamafactory-cli chat examples/inference/llama3_lora_sft.yaml
 ```
 
-#### Use Web UI
+#### Use Web UI ChatBox
 
 ```bash
 llamafactory-cli webchat examples/inference/llama3_lora_sft.yaml
@@ -237,4 +233,10 @@ llamafactory-cli train examples/extras/llama_pro/llama3_freeze_sft.yaml
 
 ```bash
 bash examples/extras/fsdp_qlora/train.sh
+```
+
+#### Computing BLEU and ROUGE Scores
+
+```bash
+llamafactory-cli train examples/extras/nlg_eval/llama3_lora_predict.yaml
 ```
