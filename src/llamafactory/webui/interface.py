@@ -35,7 +35,7 @@ if is_gradio_available():
 
 def create_ui(demo_mode: bool = False) -> "gr.Blocks":
     engine = Engine(demo_mode=demo_mode, pure_chat=False)
-    hostname = os.getenv("HOSTNAME", os.getenv("COMPUTERNAME", platform.node())).split('.')[0]
+    hostname = os.getenv("HOSTNAME", os.getenv("COMPUTERNAME", platform.node())).split(".")[0]
 
     with gr.Blocks(title=f"LLaMA Board ({hostname})", css=CSS) as demo:
         if demo_mode:
