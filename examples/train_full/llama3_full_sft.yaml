@@ -4,9 +4,8 @@ model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
 ### method
 stage: sft
 do_train: true
-finetuning_type: lora
-lora_target: all
-deepspeed: examples/deepspeed/ds_z0_config.json
+finetuning_type: full
+deepspeed: examples/deepspeed/ds_z3_config.json  # choices: [ds_z0_config.json, ds_z2_config.json, ds_z3_config.json]
 
 ### dataset
 dataset: identity,alpaca_en_demo
@@ -17,7 +16,7 @@ overwrite_cache: true
 preprocessing_num_workers: 16
 
 ### output
-output_dir: saves/llama3-8b/lora/sft
+output_dir: saves/llama3-8b/full/sft
 logging_steps: 10
 save_steps: 500
 plot_loss: true
@@ -26,7 +25,7 @@ overwrite_output_dir: true
 ### train
 per_device_train_batch_size: 1
 gradient_accumulation_steps: 2
-learning_rate: 1.0e-4
+learning_rate: 1.0e-5
 num_train_epochs: 3.0
 lr_scheduler_type: cosine
 warmup_ratio: 0.1
