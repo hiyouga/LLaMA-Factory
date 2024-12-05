@@ -86,6 +86,10 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
     template: Optional["Template"] = None
     processor: Optional["ProcessorMixin"] = None
 
+    def __post_init__(self):
+        if self.template is None:
+            raise ValueError("Template is required for MultiModalDataCollator.")
+
     def __call__(self, features: Sequence[Dict[str, Any]]) -> Dict[str, "torch.Tensor"]:
         batch_images, batch_videos, batch_imglens, batch_vidlens, batch_input_ids = [], [], [], [], []
         for feature in features:
