@@ -6,6 +6,7 @@ stage: sft
 do_train: true
 finetuning_type: full
 freeze_vision_tower: true  # choices: [true, false]
+train_mm_proj_only: false  # choices: [true, false]
 deepspeed: examples/deepspeed/ds_z3_config.json  # choices: [ds_z0_config.json, ds_z2_config.json, ds_z3_config.json]
 
 ### dataset
