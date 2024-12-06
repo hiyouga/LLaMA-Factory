@@ -5,6 +5,7 @@ model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
 adapter_name_or_path: saves/llama3-8b/lora/sft
 template: llama3
 finetuning_type: lora
+trust_remote_code: true
 
 ### export
 export_dir: models/llama3_lora_sft
