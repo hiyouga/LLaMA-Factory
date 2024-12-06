@@ -70,7 +70,7 @@ def prepare_zigzag_ring_attn_sft_inputs(
     )
     return {
         "input_ids": local_input_ids,
-        "attention_mask": local_attention_mask,
+        "attention_mask": None,
         "position_ids": local_position_ids,
         "labels": local_labels,
     }
