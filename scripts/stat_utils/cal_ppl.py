@@ -20,16 +20,16 @@ import fire
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import DataCollatorForLanguageModeling, DataCollatorForSeq2Seq
+from transformers import DataCollatorForLanguageModeling
 
-from llamafactory.data import get_dataset, get_template_and_fix_tokenizer
+from llamafactory.data import MultiModalDataCollatorForSeq2Seq, get_dataset, get_template_and_fix_tokenizer
 from llamafactory.extras.constants import IGNORE_INDEX
 from llamafactory.hparams import get_train_args
 from llamafactory.model import load_model, load_tokenizer
 
 
 @dataclass
-class PairwiseDataCollatorWithPadding(DataCollatorForSeq2Seq):
+class PairwiseDataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
     r"""
     Data collator for pairwise data.
     """
@@ -39,24 +39,25 @@ class PairwiseDataCollatorWithPadding(DataCollatorForSeq2Seq):
     def __call__(self, features: Sequence[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
         r"""
         Pads batched data to the longest sequence in the batch.
-
-        We generate 2 * n examples where the first n examples represent chosen examples and
-        the last n examples represent rejected examples.
         """
         chosen_features = []
         for feature in features:
-            prompt_len, answer_len = len(feature["prompt_ids"]), len(feature["chosen_ids"])
-            input_ids = feature["prompt_ids"] + feature["chosen_ids"]
-            attention_mask = [1] * (prompt_len + answer_len)
-            labels = input_ids if self.train_on_prompt else [IGNORE_INDEX] * prompt_len + feature["chosen_ids"]
-            chosen_features.append({"input_ids": input_ids, "attention_mask": attention_mask, "labels": labels})
+            chosen_features.append(
+                {
+                    "input_ids": feature["chosen_input_ids"],
+                    "attention_mask": feature["chosen_attention_mask"],
+                    "labels": feature["chosen_input_ids"] if self.train_on_prompt else feature["chosen_labels"],
+                    "images": feature["images"],
+                    "videos": feature["videos"],
+                }
+            )
 
         return super().__call__(chosen_features)
 
 
 def calculate_ppl(
     model_name_or_path: str,
-    save_name: str,
+    save_name: str = "ppl.json",
     batch_size: int = 4,
     stage: Literal["pt", "sft", "rm"] = "sft",
     dataset: str = "alpaca_en_demo",
@@ -68,7 +69,8 @@ def calculate_ppl(
 ):
     r"""
     Calculates the ppl on the dataset of the pre-trained models.
-    Usage: python cal_ppl.py --model_name_or_path path_to_model --dataset alpaca_en_demo --save_name ppl.json
+    Usage: export CUDA_VISIBLE_DEVICES=0
+    python cal_ppl.py --model_name_or_path path_to_model --dataset alpaca_en_demo --save_name ppl.json
     """
     model_args, data_args, training_args, finetuning_args, _ = get_train_args(
         dict(
@@ -93,10 +95,12 @@ def calculate_ppl(
     if stage == "pt":
         data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
     elif stage == "sft":
-        data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, label_pad_token_id=IGNORE_INDEX)
+        data_collator = MultiModalDataCollatorForSeq2Seq(
+            template=template, tokenizer=tokenizer, label_pad_token_id=IGNORE_INDEX
+        )
     elif stage == "rm":
         data_collator = PairwiseDataCollatorWithPadding(
-            tokenizer=tokenizer, label_pad_token_id=IGNORE_INDEX, train_on_prompt=train_on_prompt
+            template=template, tokenizer=tokenizer, label_pad_token_id=IGNORE_INDEX, train_on_prompt=train_on_prompt
         )
     else:
         raise NotImplementedError(f"Stage does not supported: {stage}.")

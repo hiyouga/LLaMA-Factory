@@ -3,3 +3,4 @@ adapter_name_or_path: saves/llama3-8b/lora/sft
 template: llama3
 finetuning_type: lora
 trust_remote_code: true
+infer_backend: huggingface  # choices: [huggingface, vllm]

@@ -13,6 +13,8 @@
 
 使用 `CUDA_VISIBLE_DEVICES`（GPU）或 `ASCEND_RT_VISIBLE_DEVICES`（NPU）选择计算设备。
 
+LLaMA-Factory 默认使用所有可见的计算设备。
+
 ## 示例
 
 ### LoRA 微调
@@ -80,12 +82,6 @@ llamafactory-cli train examples/train_lora/llama3_preprocess.yaml
 llamafactory-cli eval examples/train_lora/llama3_lora_eval.yaml
 ```
 
-#### 批量预测并计算 BLEU 和 ROUGE 分数
-
-```bash
-llamafactory-cli train examples/train_lora/llama3_lora_predict.yaml
-```
-
 #### 多机指令监督微调
 
 ```bash
@@ -130,26 +126,20 @@ llamafactory-cli train examples/train_qlora/llama3_lora_sft_aqlm.yaml
 #### 在单机上进行指令监督微调
 
 ```bash
-FORCE_TORCHRUN=1 llamafactory-cli train examples/train_full/llama3_full_sft_ds3.yaml
+FORCE_TORCHRUN=1 llamafactory-cli train examples/train_full/llama3_full_sft.yaml
 ```
 
 #### 在多机上进行指令监督微调
 
 ```bash
-FORCE_TORCHRUN=1 NNODES=2 RANK=0 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_full/llama3_full_sft_ds3.yaml
-FORCE_TORCHRUN=1 NNODES=2 RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_full/llama3_full_sft_ds3.yaml
+FORCE_TORCHRUN=1 NNODES=2 NODE_RANK=0 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_full/llama3_full_sft.yaml
+FORCE_TORCHRUN=1 NNODES=2 NODE_RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_full/llama3_full_sft.yaml
 ```
 
 #### 多模态指令监督微调
 
 ```bash
 FORCE_TORCHRUN=1 llamafactory-cli train examples/train_full/qwen2vl_full_sft.yaml
-```
-
-#### 批量预测并计算 BLEU 和 ROUGE 分数
-
-```bash
-llamafactory-cli train examples/train_full/llama3_full_predict.yaml
 ```
 
 ### 合并 LoRA 适配器与模型量化
@@ -170,13 +160,19 @@ llamafactory-cli export examples/merge_lora/llama3_gptq.yaml
 
 ### 推理 LoRA 模型
 
-#### 使用命令行接口
+#### 使用 vLLM+TP 批量推理
+
+```
+python scripts/vllm_infer.py --model_name_or_path path_to_merged_model --dataset alpaca_en_demo
+```
+
+#### 使用命令行对话框
 
 ```bash
 llamafactory-cli chat examples/inference/llama3_lora_sft.yaml
 ```
 
-#### 使用浏览器界面
+#### 使用浏览器对话框
 
 ```bash
 llamafactory-cli webchat examples/inference/llama3_lora_sft.yaml
@@ -237,4 +233,10 @@ llamafactory-cli train examples/extras/llama_pro/llama3_freeze_sft.yaml
 
 ```bash
 bash examples/extras/fsdp_qlora/train.sh
+```
+
+#### 计算 BLEU 和 ROUGE 分数
+
+```bash
+llamafactory-cli train examples/extras/nlg_eval/llama3_lora_predict.yaml
 ```
