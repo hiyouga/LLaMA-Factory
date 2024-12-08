@@ -49,8 +49,13 @@ def _convert_images(
 
     if dataset_attr.load_from in ["script", "file"]:
         for i in range(len(images)):
-            if isinstance(images[i], str) and os.path.isfile(os.path.join(data_args.image_dir, images[i])):
-                images[i] = os.path.join(data_args.image_dir, images[i])
+            if isinstance(images[i], str):
+                if os.path.isfile(os.path.join(data_args.image_dir, images[i])):
+                    images[i] = os.path.join(data_args.image_dir, images[i])
+                else:
+                    logger.warning_once(
+                        f"Image {images[i]} does not exist in {data_args.image_dir}. Using original path."
+                    )
 
     return images
 
