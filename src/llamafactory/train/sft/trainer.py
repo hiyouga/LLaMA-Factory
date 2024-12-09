@@ -181,8 +181,10 @@ class CustomSeqParallelTrainer(CustomSeq2SeqTrainer):
             # We don't use .loss here since the model may return tuples instead of ModelOutput.
             if self.finetuning_args.parallel_mode== "data_parallel":
                 loss = outputs["loss"] if isinstance(outputs, dict) else outputs[0]
+                if self.args.average_tokens_across_devices and self.model_accepts_loss_kwargs:
+                    loss *= self.accelerator.num_processes
             else:
-                if num_items_in_batch is None or (num_items_in_batch is not None and not self.args.average_tokens_across_devices):
+                if num_items_in_batch is None or self.finetuning_args.per_instance_loss:
                     sp_size = self.finetuning_args.sp_size
                     loss_fn = CrossEntropyLoss(reduction='sum')
                     labels = inputs.pop("labels")

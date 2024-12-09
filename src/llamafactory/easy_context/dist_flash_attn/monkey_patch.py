@@ -664,6 +664,8 @@ def llama_model_forward(
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
         cache_position: Optional[torch.LongTensor] = None,
+        num_logits_to_keep: int = 0,
+        **loss_kwargs,
     ) -> Union[Tuple, CausalLMOutputWithPast]:
     output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
     output_hidden_states = (
@@ -691,10 +693,12 @@ def llama_model_forward(
         logits = [F.linear(hidden_states, lm_head_slices[i]) for i in range(self.config.pretraining_tp)]
         logits = torch.cat(logits, dim=-1)
     else:
-        logits = self.lm_head(hidden_states)
+        logits = self.lm_head(hidden_states[:, -num_logits_to_keep:, :])
     logits = logits.float()
     
     loss = None
+    if labels is not None:
+        loss = self.loss_function(logits=logits, labels=labels, vocab_size=self.config.vocab_size, **loss_kwargs)
     if not return_dict:
         output = (logits,) + outputs[1:]
         return (loss,) + output if loss is not None else output
