@@ -49,10 +49,11 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
     """
 
     def __init__(
-        self, finetuning_args: "FinetuningArguments", processor: Optional["ProcessorMixin"], **kwargs
+        self, finetuning_args: "FinetuningArguments", processor: Optional["ProcessorMixin"], gen_kwargs: Optional[Dict[str, Any]], **kwargs
     ) -> None:
         super().__init__(**kwargs)
         self.finetuning_args = finetuning_args
+        self.gen_kwargs = gen_kwargs
 
         if processor is not None:
             self.add_callback(SaveProcessorCallback(processor))
@@ -119,7 +120,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                 inputs["labels"] = inputs["labels"][:, :prompt_len]
 
         loss, generated_tokens, _ = super().prediction_step(  # ignore the returned labels (may be truncated)
-            model, inputs, prediction_loss_only=prediction_loss_only, ignore_keys=ignore_keys
+            model, inputs, prediction_loss_only=prediction_loss_only, ignore_keys=ignore_keys, **self.gen_kwargs
         )
         if generated_tokens is not None and self.args.predict_with_generate:
             generated_tokens[:, :prompt_len] = self.tokenizer.pad_token_id
