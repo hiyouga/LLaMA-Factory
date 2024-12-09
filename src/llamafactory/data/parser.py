@@ -39,6 +39,7 @@ class DatasetAttr:
     split: str = "train"
     folder: Optional[str] = None
     num_samples: Optional[int] = None
+    revision: Optional[str] = None
     # common columns
     system: Optional[str] = None
     tools: Optional[str] = None
@@ -121,7 +122,11 @@ def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -
             elif has_om_url and (use_openmind() or not has_hf_url):
                 dataset_attr = DatasetAttr("om_hub", dataset_name=dataset_info[name]["om_hub_url"])
             else:
-                dataset_attr = DatasetAttr("hf_hub", dataset_name=dataset_info[name]["hf_hub_url"])
+                dataset_attr = DatasetAttr(
+                    "hf_hub",
+                    dataset_name=dataset_info[name]["hf_hub_url"],
+                    revision=dataset_info[name].get("revision")
+                )
         elif "script_url" in dataset_info[name]:
             dataset_attr = DatasetAttr("script", dataset_name=dataset_info[name]["script_url"])
         else:
