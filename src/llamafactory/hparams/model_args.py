@@ -169,6 +169,14 @@ class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments,
             )
         },
     )
+    combination_type: Optional[str] = field(
+        default=None,
+        metadata={"help": "The merging type can be one of []"},
+    )
+    combination_weights: Optional[float] = field(
+        default=None,
+        metadata={"help": "List of weights for each adapter. "},
+    )
     adapter_folder: Optional[str] = field(
         default=None,
         metadata={"help": "The folder containing the adapter weights to load."},

@@ -16,7 +16,7 @@ import re
 from typing import TYPE_CHECKING
 
 import torch
-from peft import LoraConfig, LoraModel, PeftModel, TaskType, get_peft_model
+from peft import LoraConfig, LoraModel, PeftModel, TaskType, get_peft_model, PeftModelForCausalLM
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.modeling_utils import is_fsdp_enabled
 
@@ -177,9 +177,59 @@ def _setup_lora_tuning(
             "token": model_args.hf_hub_token,
         }
 
-        for adapter in adapter_to_merge:
-            model: "LoraModel" = PeftModel.from_pretrained(model, adapter, **init_kwargs)
+        if len(adapter_to_merge) > 1 and model_args.combination_type is not None:
+            if model_args.combination_weights is None :
+                raise ValueError(f"Combination_weights must be provided, if you use '{model_args.combination_type}' to merge lora adapters.")
+            elif len(model_args.combination_weights) != len(adapter_to_merge):
+                raise ValueError(f"The number of combination_weights must be consistent with the number of adapters")
+
+            weights = model_args.combination_weights
+            index = 0
+            adapter_names = []
+            for idx, adapter in enumerate(adapter_to_merge):
+                adapter_name = 'ad_' + str(index)
+                print(adapter_name)
+                if idx == 0:
+                    model = PeftModelForCausalLM.from_pretrained(model, adapter , adapter_name="ad_0")
+                else:
+                    model.load_adapter(adapter, adapter_name)
+                adapter_names.append(adapter_name)
+                index += 1
+            # Since the merge_and_unload() operation will be performed according to the original structure after the LoRA is merged. 
+            # The LoRA weight will be scaled at that step.
+            # So the weight will be adjusted during the merge to eliminate the impact of the scaling operation during the adapter merge on the merge weight.
+            adapter_scaling = []
+            for adapter_name in adapter_names:
+                adapter_config = model.peft_config[adapter_name]
+                adapter_scaling.append(adapter_config.lora_alpha / adapter_config.r)
+
+            weighted_adapter_name = "merged_weighted_ad" 
+            if model_args.combination_type in ['cat','svd']:
+                weights = [wi / ai for ai, wi in zip(adapter_scaling, weights)]
+                model.add_weighted_adapter(
+                    adapters = adapter_names,
+                    weights = weights,
+                    adapter_name = weighted_adapter_name,
+                    combination_type = model_args.combination_type,
+                )
+            elif model_args.combination_type in ['linear']:
+                weights = [wi**2/ai for ai, wi in zip(adapter_scaling, weights)]
+                print(weights)
+                model.add_weighted_adapter(
+                    adapters = adapter_names,
+                    weights = weights,
+                    adapter_name = weighted_adapter_name,
+                    combination_type = model_args.combination_type,
+                )
+            model.set_adapter(weighted_adapter_name)
+            for name in adapter_names:
+                model.delete_adapter(name)
             model = model.merge_and_unload()
+
+        else: 
+            for adapter in adapter_to_merge:
+                model: "LoraModel" = PeftModel.from_pretrained(model, adapter, **init_kwargs)
+                model = model.merge_and_unload()
 
         if len(adapter_to_merge) > 0:
             logger.info_rank0(f"Merged {len(adapter_to_merge)} adapter(s).")
