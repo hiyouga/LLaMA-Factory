@@ -697,7 +697,7 @@ def llama_model_forward(
     logits = logits.float()
     
     loss = None
-    if labels is not None:
+    if labels is not None and hasattr(self, 'loss_function'):
         loss = self.loss_function(logits=logits, labels=labels, vocab_size=self.config.vocab_size, **loss_kwargs)
     if not return_dict:
         output = (logits,) + outputs[1:]
