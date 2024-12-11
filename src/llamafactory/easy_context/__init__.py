@@ -2,7 +2,6 @@ from .dist_flash_attn.prepare_input import prepare_dist_flash_attn_inputs, prepa
 from .dist_flash_attn.monkey_patch import apply_dist_flash_attn_monkey_patch_llama
 from .zigzag_ring_attn.prepare_inputs import prepare_zigzag_ring_attn_inputs, prepare_zigzag_ring_attn_sft_inputs
 from .zigzag_ring_attn.monkey_patch import apply_zigzag_ring_attn_monkey_patch_llama    
-from .zigzag_ring_attn.monkey_patch import apply_zigzag_ring_attn_monkey_patch_mistral
 from .unsloth_offloaded_gradient_checkpoint.monkey_patch import apply_unsloth_offloaded_gradient_checkpoint_monkey_patch
 from .ulysses_attn.prepare_inputs import prepare_ulysses_attn_inputs, prepare_ulysses_attn_sft_inputs
 from .ulysses_attn.monkey_patch import apply_ulysses_attn_monkey_patch_llama 
@@ -72,8 +71,6 @@ def apply_seq_parallel_monkey_patch(
         return
     elif seq_algo == "zigzag_ring_attn" and model == "llama":
         apply_zigzag_ring_attn_monkey_patch_llama(sp_size=sp_size)
-    elif seq_algo == "zigzag_ring_attn" and model == "mistral":
-        apply_zigzag_ring_attn_monkey_patch_mistral(sp_size=sp_size)
     elif seq_algo == "dist_flash_attn" and model == "llama":
         apply_dist_flash_attn_monkey_patch_llama(sp_size=sp_size, enable_offload=enable_offload, offload_percent=offload_percent)
     elif seq_algo == "ulysses_attn" and model == "llama":

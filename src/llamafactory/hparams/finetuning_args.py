@@ -330,10 +330,6 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         default=0.0,
         metadata={"help": "0 for remain all activation memory in gpu, 1 for offload all activation memory in cpu"}
     )
-    per_instance_loss: bool = field(
-        default=False,
-        metadata={"help": "if update transformers to 4.46.3, the loss will be calculated in a global batch by default, enable per_instance_loss will calculate loss in each instance"}
-    )
 
     def __post_init__(self):
         def split_arg(arg):

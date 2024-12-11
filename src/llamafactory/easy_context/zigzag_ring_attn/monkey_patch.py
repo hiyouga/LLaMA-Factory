@@ -227,23 +227,3 @@ def apply_zigzag_ring_attn_monkey_patch_llama(sp_size=None):
         transformers.models.llama.modeling_llama.LlamaDecoderLayer.forward = (
             new_decoder_forward
         )
-
-
-def apply_zigzag_ring_attn_monkey_patch_mistral(sp_size=None):
-    sp_group = get_sp_process_group(sp_size)
-    if hasattr(transformers.models.llama.modeling_llama.LlamaFlashAttention2, '_flash_attention_forward'):
-        transformers.models.llama.modeling_llama.LlamaFlashAttention2._flash_attention_forward = (
-            partialmethod(new_flash_attn_forward, group=sp_group)
-        )
-    else:
-        transformers.models.llama.modeling_llama._flash_attention_forward = (
-            partial(new_flash_attn_forward_v2, group=sp_group)
-        )
-    if "position_embeddings" in inspect.getfullargspec(transformers.models.llama.modeling_llama.LlamaDecoderLayer.forward).args:
-        transformers.models.llama.modeling_llama.LlamaDecoderLayer.forward = (
-            new_decoder_forward_v2
-        )
-    else:
-        transformers.models.llama.modeling_llama.LlamaDecoderLayer.forward = (
-            new_decoder_forward
-        )
