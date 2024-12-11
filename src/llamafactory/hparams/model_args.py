@@ -171,7 +171,7 @@ class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments,
     )
     combination_type: Optional[str] = field(
         default=None,
-        metadata={"help": "The merging type can be one of []"},
+        metadata={"help": "The merging type can be one of ['cat','svd','linear']"},
     )
     combination_weights: Optional[float] = field(
         default=None,
