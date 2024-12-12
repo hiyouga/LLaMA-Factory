@@ -47,6 +47,7 @@ def run_kto(
 
     data_collator = KTODataCollatorWithPadding(
         template=template,
+        model=model,
         pad_to_multiple_of=8,
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
         **tokenizer_module,
