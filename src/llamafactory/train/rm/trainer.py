@@ -25,7 +25,7 @@ from transformers import Trainer
 from typing_extensions import override
 
 from ...extras import logging
-from ...extras.packages import is_transformers_version_equal_to_4_46
+from ...extras.packages import is_transformers_version_equal_to_4_46, is_transformers_version_greater_than
 from ..callbacks import FixValueHeadModelCallback, PissaConvertCallback, SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
 
@@ -48,6 +48,9 @@ class PairwiseTrainer(Trainer):
     def __init__(
         self, finetuning_args: "FinetuningArguments", processor: Optional["ProcessorMixin"], **kwargs
     ) -> None:
+        if is_transformers_version_greater_than("4.46"):
+            kwargs["processing_class"] = kwargs.pop("tokenizer")
+
         super().__init__(**kwargs)
         self.finetuning_args = finetuning_args
         self.can_return_loss = True  # override property to return eval_loss

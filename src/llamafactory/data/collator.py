@@ -121,6 +121,15 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                 feature["token_type_ids"] = token_type_ids[i]
 
         features: Dict[str, "torch.Tensor"] = super().__call__(features)
+
+        if self.model is not None and hasattr(self.model, "get_rope_index"):  # for qwen2vl mrope
+            features["position_ids"], _ = self.model.get_rope_index(
+                input_ids=features["input_ids"],
+                image_grid_thw=mm_inputs.get("image_grid_thw", None),
+                video_grid_thw=mm_inputs.get("video_grid_thw", None),
+                attention_mask=features["attention_mask"],
+            )
+
         if "cross_attention_mask" in mm_inputs:  # for mllama inputs when pad_to_multiple_of is enabled
             cross_attention_mask = mm_inputs.pop("cross_attention_mask")
             seq_len = features["input_ids"].size(1)
