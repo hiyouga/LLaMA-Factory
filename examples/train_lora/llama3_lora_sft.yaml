@@ -1,39 +1,43 @@
 ### model
-model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
+# 指定了要使用的预训练模型名字或路径。这里使用的是 meta-llama/Meta-Llama-3-8B-Instruct，这是一个经过指令调优的 8B 参数的 LLaMA 模型。
+# model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
+model_name_or_path: /opt/ai-platform/lldataset/240/modelscope/hub/meta-llama/Meta-Llama-3-8B-Instruct
 
 ### method
-stage: sft
-do_train: true
-finetuning_type: lora
-lora_target: all
+stage: sft             # 指定了微调的阶段，这里是 sft（Supervised Fine-Tuning），表示监督微调。
+do_train: true         # 指定了是否进行训练。
+finetuning_type: lora  # 指定了微调的类型，这里是 lora。
+lora_target: all       # 指定了要进行 lora 微调的目标，这里是 all，表示对所有层进行微调。
 
 ### dataset
-dataset: identity,alpaca_en_demo
-template: llama3
-cutoff_len: 2048
-max_samples: 1000
-overwrite_cache: true
-preprocessing_num_workers: 16
+# dataset: identity,alpaca_en_demo  # 指定了要使用的数据集，这里是 identity 和 alpaca_en_demo。
+dataset: alpaca_zh_demo           # 使用中文的一个数据集，。
+template: llama3                  # 指定了要使用的模板，这里是 llama3。
+cutoff_len: 2048                  # 指定了截断长度，这里是 2048。
+max_samples: 1000                 # 指定了最大样本数，这里是 1000。
+overwrite_cache: true             # 指定了是否覆盖缓存。
+preprocessing_num_workers: 16     # 指定了预处理时的工作线程数，这里是 16。
 
 ### output
-output_dir: saves/llama3-8b/lora/sft
-logging_steps: 10
-save_steps: 500
-plot_loss: true
-overwrite_output_dir: true
+output_dir: saves/llama3-8b/lora/sft   # 指定了输出目录，这里是 saves/llama3-8b/lora/sft。
+logging_steps: 10                      # 指定了日志输出的步数，这里是 10。
+save_steps: 500                        # 指定了保存模型的步数，这里是 500。
+plot_loss: true                        # 指定了是否绘制损失曲线。
+overwrite_output_dir: true             # 指定了是否覆盖输出目录。
 
 ### train
-per_device_train_batch_size: 1
-gradient_accumulation_steps: 8
-learning_rate: 1.0e-4
-num_train_epochs: 3.0
-lr_scheduler_type: cosine
-warmup_ratio: 0.1
-bf16: true
-ddp_timeout: 180000000
+per_device_train_batch_size: 1       # 指定了训练时每个设备的批量大小，这里是 1。
+gradient_accumulation_steps: 8       # 指定了梯度累积的步数，这里是 8。
+learning_rate: 1.0e-4                # 指定了学习率，这里是 1.0e-4。
+num_train_epochs: 3.0                # 指定了训练的总轮数，这里是 3.0。
+lr_scheduler_type: cosine            # 指定了学习率调度器的类型，这里是 cosine。
+warmup_ratio: 0.1                    # 指定了预热比例，这里是 0.1。
+bf16: true                           # 指定了是否使用 bf16 精度。
+ddp_timeout: 180000000               # 指定了 ddp 超时时间，这里是 180000000。
 
 ### eval
-val_size: 0.1
-per_device_eval_batch_size: 1
-eval_strategy: steps
-eval_steps: 500
+val_size: 0.1                          # 指定了验证集的大小，这里是 0.1。
+per_device_eval_batch_size: 1          # 指定了验证时每个设备的批量大小，这里是 1。
+eval_strategy: steps                   # 指定了评估策略，这里是 steps。
+eval_steps: 500                        # 指定了评估的步数，这里是 500。
+
