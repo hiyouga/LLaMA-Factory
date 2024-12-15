@@ -18,7 +18,7 @@
 
 👋 加入我们的[微信群](assets/wechat.jpg)或 [NPU 用户群](assets/wechat_npu.jpg)。
 
-\[ [English](README.md) | 中文 \]
+\[ [English](README.md) | 中文 | [日本語](README_ja.md) \]
 
 **微调大模型可以像这样轻松…**
 
