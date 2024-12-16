@@ -61,7 +61,7 @@ def convert_to_instruction_format(input_data):
 
 # 原始输入数据
 # 通过加载本地文件获取输入
-with open('实体属性集1000.json', 'r', encoding='utf-8') as file:
+with open('实体属性集.json', 'r', encoding='utf-8') as file:
   input_data = json.load(file)
 
 # 转换数据
@@ -71,5 +71,5 @@ result = convert_to_instruction_format(input_data)
 # print(json.dumps(result, ensure_ascii=False, indent=2))
 
 # 存储处理后的json到本地文件
-with open('../entity1000.json', 'w', encoding='utf-8') as file:
+with open('../entity.json', 'w', encoding='utf-8') as file:
    json.dump(result, file, ensure_ascii=False, indent=2)

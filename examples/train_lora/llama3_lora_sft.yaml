@@ -15,7 +15,7 @@ dataset: entity           # 使用中文的一个数据集，。
 #dataset: alpaca_zh_demo           # 使用中文的一个数据集，。
 template: llama3                  # 指定了要使用的模板，这里是 llama3。
 cutoff_len: 2048                  # 指定了截断长度，这里是 2048。
-max_samples: 1000                 # 指定了最大样本数，这里是 1000。
+max_samples: 10000                 # 指定了最大样本数，这里是 1000。
 overwrite_cache: true             # 指定了是否覆盖缓存。
 preprocessing_num_workers: 16     # 指定了预处理时的工作线程数，这里是 16。
 
@@ -30,7 +30,7 @@ overwrite_output_dir: true             # 指定了是否覆盖输出目录。
 ### train
 per_device_train_batch_size: 1       # 指定了训练时每个设备的批量大小，这里是 1。
 gradient_accumulation_steps: 8       # 指定了梯度累积的步数，这里是 8。
-learning_rate: 1.0e-4                # 指定了学习率，这里是 1.0e-4。
+learning_rate: 1.0e-5                # 指定了学习率，这里是 1.0e-4。
 num_train_epochs: 5.0                # 指定了训练的总轮数，这里是 3.0。
 lr_scheduler_type: cosine            # 指定了学习率调度器的类型，这里是 cosine。
 warmup_ratio: 0.1                    # 指定了预热比例，这里是 0.1。
