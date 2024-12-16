@@ -1,7 +1,7 @@
 ### model
 # 指定了要使用的预训练模型名字或路径。这里使用的是 meta-llama/Meta-Llama-3-8B-Instruct，这是一个经过指令调优的 8B 参数的 LLaMA 模型。
 # model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
-model_name_or_path: /opt/ai-platform/lldataset/240/modelscope/hub/meta-llama/Meta-Llama-3-8B-Instruct
+model_name_or_path: /workspace/LLaMA-Factory/modelscope/hub/meta-llama/Meta-Llama-3-8B-Instruct
 
 ### method
 stage: sft             # 指定了微调的阶段，这里是 sft（Supervised Fine-Tuning），表示监督微调。
