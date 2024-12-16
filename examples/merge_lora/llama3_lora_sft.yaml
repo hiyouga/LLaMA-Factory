@@ -8,7 +8,7 @@ template: llama3
 finetuning_type: lora
 
 ### export
-export_dir: models/llama3_lora_sft
+export_dir: models/llama3_lora_sft_entity
 export_size: 2
 #export_device: cpu
 export_device: gpu
