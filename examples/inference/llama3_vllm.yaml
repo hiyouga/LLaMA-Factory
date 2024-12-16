@@ -1,4 +1,5 @@
-model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
+#model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
+model_name_or_path: models/llama3_lora_sft
 template: llama3
 infer_backend: vllm
 vllm_enforce_eager: true
