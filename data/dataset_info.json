@@ -1,4 +1,7 @@
 {
+  "entity": {
+    "file_name": "entity1000.json"
+  },
   "identity": {
     "file_name": "identity.json"
   },
