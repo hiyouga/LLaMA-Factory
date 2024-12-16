@@ -28,12 +28,13 @@ def clean_data(input_data):
     # 深拷贝数据并清洗
     cleaned_item = {
       "INDIVIDUAL_DATA_PROPERTY_NAME": clean_text(
-        item.get("INDIVIDUAL_DATA_PROPERTY_NAME", "")),
+          item.get("INDIVIDUAL_DATA_PROPERTY_NAME", "")),
       "DATA_PROPERTY_VALUE": clean_text(item.get("DATA_PROPERTY_VALUE", ""))
     }
     cleaned_data.append(cleaned_item)
 
   return cleaned_data
+
 
 def convert_to_instruction_format(input_data):
   """
@@ -48,20 +49,23 @@ def convert_to_instruction_format(input_data):
   instruction_dataset = []
 
   for item in input_data:
-    input =         item.get("INDIVIDUAL_DATA_PROPERTY_NAME", "")
-    value =        item.get("DATA_PROPERTY_VALUE", "")
+    input = item.get("dp_name", "")
+    value = item.get("dp_value", "")
     instruction_item = {
-      "instruction": "根据给定的属性，提供对应的数值",
-      "input": input,
+      "instruction": input,
+      "input": "",
+      # "instruction": "根据给定的属性，提供对应的数值",
+      # "input": input,
       "output": value if value != '/' else '暂无数据'
     }
     instruction_dataset.append(instruction_item)
 
   return instruction_dataset
 
+
 # 原始输入数据
 # 通过加载本地文件获取输入
-with open('实体属性集.json', 'r', encoding='utf-8') as file:
+with open('疾病与药物.json', 'r', encoding='utf-8') as file:
   input_data = json.load(file)
 
 # 转换数据
@@ -72,4 +76,4 @@ result = convert_to_instruction_format(input_data)
 
 # 存储处理后的json到本地文件
 with open('../entity.json', 'w', encoding='utf-8') as file:
-   json.dump(result, file, ensure_ascii=False, indent=2)
+  json.dump(result, file, ensure_ascii=False, indent=2)
