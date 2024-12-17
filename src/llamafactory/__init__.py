@@ -30,7 +30,7 @@ Dependency graph:
   longlora:
     transformers>=4.41.2,<=4.46.1
   packing:
-    transformers>=4.41.2,<=4.46.1
+    transformers>=4.43.0,<=4.46.1
 
 Disable version checking: DISABLE_VERSION_CHECK=1
 Enable VRAM recording: RECORD_VRAM=1
