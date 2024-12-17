@@ -116,17 +116,21 @@ class FunctionFormatter(Formatter):
             raise RuntimeError(f"Invalid JSON format in function message: {str([content])}")  # flat string
 
         elements = []
-        for name, arguments in functions:
-            for slot in self.function_slots:
-                if isinstance(slot, str):
-                    slot = slot.replace("{{name}}", name).replace("{{arguments}}", arguments)
-                    elements.append(slot)
-                elif isinstance(slot, (dict, set)):
-                    elements.append(slot)
-                else:
-                    raise RuntimeError(f"Input must be string, set[str] or dict[str, str], got {type(slot)}")
+        for slot in self.slots:
+            if slot == "{{content}}":
+                for name, arguments in functions:
+                    for slot in self.function_slots:
+                        if isinstance(slot, str):
+                            slot = slot.replace("{{name}}", name).replace("{{arguments}}", arguments)
+                            elements.append(slot)
+                        elif isinstance(slot, (dict, set)):
+                            elements.append(slot)
+                        else:
+                            raise RuntimeError(f"Input must be string, set[str] or dict[str, str], got {type(slot)}")
+            else:
+                elements.append(slot)
 
-        return elements + self.slots
+        return elements
 
 
 @dataclass
