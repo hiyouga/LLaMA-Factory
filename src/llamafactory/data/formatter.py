@@ -98,7 +98,7 @@ class StringFormatter(Formatter):
 @dataclass
 class FunctionFormatter(Formatter):
     def __post_init__(self):
-        self.slots = get_tool_utils(self.tool_format).get_function_slots() + self.slots
+        self.function_slots = get_tool_utils(self.tool_format).get_function_slots()
 
     @override
     def apply(self, **kwargs) -> SLOTS:
@@ -117,7 +117,7 @@ class FunctionFormatter(Formatter):
 
         elements = []
         for name, arguments in functions:
-            for slot in self.slots:
+            for slot in self.function_slots:
                 if isinstance(slot, str):
                     slot = slot.replace("{{name}}", name).replace("{{arguments}}", arguments)
                     elements.append(slot)
@@ -126,7 +126,7 @@ class FunctionFormatter(Formatter):
                 else:
                     raise RuntimeError(f"Input must be string, set[str] or dict[str, str], got {type(slot)}")
 
-        return elements
+        return elements + self.slots
 
 
 @dataclass
