@@ -1,0 +1,18 @@
+torchrun  --standalone --nnodes=1 --nproc-per-node=8  src/train.py \
+--stage sft \
+--model_name_or_path meta-llama/Meta-Llama-3-8B-Instruct  \
+--do_train \
+--dataset alpaca_en_demo \
+--template llama3 \
+--finetuning_type lora \
+--output_dir  saves/llama3-8b/lora/ \
+--overwrite_cache \
+--per_device_train_batch_size 1 \
+--gradient_accumulation_steps 8 \
+--lr_scheduler_type cosine \
+--logging_steps 100 \
+--save_steps 500 \
+--learning_rate 1e-4 \
+--num_train_epochs 2.0 \
+--plot_loss \
+--bf16
