@@ -129,7 +129,7 @@ def _load_single_dataset(
             token=model_args.hf_hub_token,
             streaming=data_args.streaming,
             num_proc=data_args.preprocessing_num_workers,
-            trust_remote_code=True,
+            trust_remote_code=model_args.trust_remote_code,
         )
 
     if dataset_attr.num_samples is not None and not data_args.streaming:
