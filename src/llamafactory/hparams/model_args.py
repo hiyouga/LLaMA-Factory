@@ -237,6 +237,10 @@ class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments,
         default=False,
         metadata={"help": "Whether or not to disable gradient checkpointing."},
     )
+    use_reentrant_gc: bool = field(
+        default=True,
+        metadata={"help": "Whether or not to use reentrant gradient checkpointing."},
+    )
     upcast_layernorm: bool = field(
         default=False,
         metadata={"help": "Whether or not to upcast the layernorm weights in fp32."},
