@@ -81,19 +81,6 @@ TRAINING_STAGES = {
 
 STAGES_USE_PAIR_DATA = {"rm", "dpo"}
 
-SUPPORTED_CLASS_FOR_BLOCK_DIAG_ATTN = {
-    "cohere",
-    "falcon",
-    "gemma",
-    "gemma2",
-    "llama",
-    "mistral",
-    "phi",
-    "phi3",
-    "qwen2",
-    "starcoder2",
-}
-
 SUPPORTED_CLASS_FOR_S2ATTN = {"llama"}
 
 VIDEO_PLACEHOLDER = os.environ.get("VIDEO_PLACEHOLDER", "<video>")
