@@ -244,11 +244,11 @@ def _register_template(
     )
     ```
     """
-    eos_slots = [] if efficient_eos else [{"eos_token"}]
     template_class = Llama2Template if name.startswith("llama2") else Template
+    default_slots = ["{{content}}"] if efficient_eos else ["{{content}}", {"eos_token"}]
     default_user_formatter = StringFormatter(slots=["{{content}}"])
-    default_assistant_formatter = StringFormatter(slots=["{{content}}"] + eos_slots)
-    default_function_formatter = FunctionFormatter(slots=eos_slots, tool_format="default")
+    default_assistant_formatter = StringFormatter(slots=default_slots)
+    default_function_formatter = FunctionFormatter(slots=default_slots, tool_format="default")
     default_tool_formatter = ToolFormatter(tool_format="default")
     default_separator_formatter = EmptyFormatter()
     default_prefix_formatter = EmptyFormatter()
@@ -371,8 +371,8 @@ def get_template_and_fix_tokenizer(tokenizer: "PreTrainedTokenizer", data_args: 
 
     if data_args.tool_format is not None:
         logger.info_rank0(f"Using tool format: {data_args.tool_format}.")
-        eos_slots = [] if template.efficient_eos else [{"eos_token"}]
-        template.format_function = FunctionFormatter(slots=eos_slots, tool_format=data_args.tool_format)
+        default_slots = ["{{content}}"] if template.efficient_eos else ["{{content}}", {"eos_token"}]
+        template.format_function = FunctionFormatter(slots=default_slots, tool_format=data_args.tool_format)
         template.format_tools = ToolFormatter(tool_format=data_args.tool_format)
 
     stop_words = template.stop_words
@@ -490,7 +490,7 @@ _register_template(
     format_user=StringFormatter(slots=[{"token": "<|user|>"}, "\n", "{{content}}", {"token": "<|assistant|>"}]),
     format_assistant=StringFormatter(slots=["\n", "{{content}}"]),
     format_system=StringFormatter(slots=[{"token": "<|system|>"}, "\n", "{{content}}"]),
-    format_function=FunctionFormatter(slots=[], tool_format="glm4"),
+    format_function=FunctionFormatter(slots=["{{content}}"], tool_format="glm4"),
     format_observation=StringFormatter(
         slots=[{"token": "<|observation|>"}, "\n", "{{content}}", {"token": "<|assistant|>"}]
     ),
@@ -535,7 +535,7 @@ _register_template(
     name="codegeex4",
     format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>\n"]),
     format_system=StringFormatter(slots=["<|system|>\n{{content}}"]),
-    format_function=FunctionFormatter(slots=[], tool_format="glm4"),
+    format_function=FunctionFormatter(slots=["{{content}}"], tool_format="glm4"),
     format_observation=StringFormatter(slots=["<|observation|>\n{{content}}<|assistant|>\n"]),
     format_tools=ToolFormatter(tool_format="glm4"),
     format_prefix=EmptyFormatter(slots=["[gMASK]<sop>"]),
@@ -684,7 +684,7 @@ _register_template(
     format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>"]),
     format_assistant=StringFormatter(slots=["\n{{content}}"]),
     format_system=StringFormatter(slots=["<|system|>\n{{content}}"]),
-    format_function=FunctionFormatter(slots=[], tool_format="glm4"),
+    format_function=FunctionFormatter(slots=["{{content}}"], tool_format="glm4"),
     format_observation=StringFormatter(slots=["<|observation|>\n{{content}}<|assistant|>"]),
     format_tools=ToolFormatter(tool_format="glm4"),
     format_prefix=EmptyFormatter(slots=["[gMASK]<sop>"]),
@@ -750,7 +750,7 @@ _register_template(
         ]
     ),
     format_system=StringFormatter(slots=["<|start_header_id|>system<|end_header_id|>\n\n{{content}}<|eot_id|>"]),
-    format_function=FunctionFormatter(slots=["<|eom_id|>"], tool_format="llama3"),
+    format_function=FunctionFormatter(slots=["{{content}}", "<|eot_id|>"], tool_format="llama3"),
     format_observation=StringFormatter(
         slots=[
             (
@@ -779,7 +779,7 @@ _register_template(
         ]
     ),
     format_system=StringFormatter(slots=["<|start_header_id|>system<|end_header_id|>\n\n{{content}}<|eot_id|>"]),
-    format_function=FunctionFormatter(slots=["<|eom_id|>"], tool_format="llama3"),
+    format_function=FunctionFormatter(slots=["{{content}}", "<|eot_id|>"], tool_format="llama3"),
     format_observation=StringFormatter(
         slots=[
             (
@@ -833,7 +833,7 @@ _register_template(
         ]
     ),
     format_system=StringFormatter(slots=["<|start_header_id|>system<|end_header_id|>\n\n{{content}}<|eot_id|>"]),
-    format_function=FunctionFormatter(slots=["<|eom_id|>"], tool_format="llama3"),
+    format_function=FunctionFormatter(slots=["{{content}}", "<|eot_id|>"], tool_format="llama3"),
     format_observation=StringFormatter(
         slots=[
             (
