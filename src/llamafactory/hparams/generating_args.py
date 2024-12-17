@@ -64,6 +64,10 @@ class GeneratingArguments:
         default=None,
         metadata={"help": "Default system message to use in chat completion."},
     )
+    skip_special_tokens: bool = field(
+        default=True,
+        metadata={"help": "Whether or not to remove special tokens in the decoding."},
+    )
 
     def to_dict(self) -> Dict[str, Any]:
         args = asdict(self)
