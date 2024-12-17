@@ -170,7 +170,7 @@ class VllmEngine(BaseEngine):
             stop=stop,
             stop_token_ids=[self.tokenizer.eos_token_id] + self.tokenizer.additional_special_tokens_ids,
             max_tokens=max_tokens,
-            skip_special_tokens=True,
+            skip_special_tokens=self.generating_args["skip_special_tokens"],
         )
 
         if images is not None:  # add image features
