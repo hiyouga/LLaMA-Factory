@@ -216,7 +216,7 @@ def _register_template(
     stop_words: Sequence[str] = [],
     efficient_eos: bool = False,
     replace_eos: bool = False,
-    replace_jinja_template: bool = True,
+    replace_jinja_template: bool = False,
     mm_plugin: "BasePlugin" = get_mm_plugin(name="base"),
 ) -> None:
     r"""
@@ -416,6 +416,7 @@ _register_template(
         "Below is an instruction that describes a task. "
         "Write a response that appropriately completes the request.\n\n"
     ),
+    replace_jinja_template=True,
 )
 
 
@@ -510,6 +511,7 @@ _register_template(
     format_separator=EmptyFormatter(slots=["\n"]),
     stop_words=["<|im_end|>", "<|im_start|>"],
     replace_eos=True,
+    replace_jinja_template=True,
 )
 
 
@@ -523,6 +525,7 @@ _register_template(
     default_system="Du bist ein freundlicher und hilfsbereiter KI-Assistent.",
     stop_words=["<|im_end|>", "<|im_start|>"],
     replace_eos=True,
+    replace_jinja_template=True,
 )
 
 
@@ -676,7 +679,6 @@ _register_template(
     format_separator=EmptyFormatter(slots=["<end_of_turn>\n"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     efficient_eos=True,
-    replace_jinja_template=False,
 )
 
 
@@ -763,8 +765,6 @@ _register_template(
     format_tools=ToolFormatter(tool_format="llama3"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|eot_id|>", "<|eom_id|>"],
-    replace_eos=True,
-    replace_jinja_template=False,
 )
 
 
@@ -792,8 +792,6 @@ _register_template(
     format_tools=ToolFormatter(tool_format="llama3"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|eot_id|>", "<|eom_id|>"],
-    replace_eos=True,
-    replace_jinja_template=False,
     mm_plugin=get_mm_plugin(name="mllama", image_token="<|image|>"),
 )
 
@@ -846,8 +844,6 @@ _register_template(
     format_tools=ToolFormatter(tool_format="llama3"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|eot_id|>", "<|eom_id|>"],
-    replace_eos=True,
-    replace_jinja_template=False,
     mm_plugin=get_mm_plugin(name="llava_next", image_token="<image>"),
 )
 
@@ -875,7 +871,6 @@ _register_template(
     default_system="You are a helpful assistant.",
     stop_words=["<|im_end|>"],
     replace_eos=True,
-    replace_jinja_template=False,
     mm_plugin=get_mm_plugin(name="llava_next", image_token="<image>"),
 )
 
@@ -996,8 +991,6 @@ _register_template(
     format_separator=EmptyFormatter(slots=["\n"]),
     default_system="You are OpenCoder, created by OpenCoder Team.",
     stop_words=["<|im_end|>"],
-    replace_eos=True,
-    replace_jinja_template=False,
 )
 
 
@@ -1061,8 +1054,6 @@ _register_template(
     format_separator=EmptyFormatter(slots=["\n"]),
     default_system="You are a helpful assistant.",
     stop_words=["<|im_end|>"],
-    replace_eos=True,
-    replace_jinja_template=False,
 )
 
 
@@ -1075,8 +1066,6 @@ _register_template(
     format_separator=EmptyFormatter(slots=["\n"]),
     default_system="You are a helpful assistant.",
     stop_words=["<|im_end|>"],
-    replace_eos=True,
-    replace_jinja_template=False,
     mm_plugin=get_mm_plugin(name="qwen2_vl", image_token="<|image_pad|>", video_token="<|video_pad|>"),
 )
 
@@ -1091,7 +1080,6 @@ _register_template(
         "Your answer should be friendly, unbiased, faithful, informative and detailed."
     ),
     stop_words=["<|im_end|>"],
-    replace_eos=True,
 )
 
 
@@ -1124,7 +1112,6 @@ _register_template(
         "in your response."
     ),
     stop_words=["<|eot_id|>"],
-    replace_eos=True,
 )
 
 
@@ -1162,6 +1149,7 @@ _register_template(
         "A chat between a curious user and an artificial intelligence assistant. "
         "The assistant gives helpful, detailed, and polite answers to the user's questions."
     ),
+    replace_jinja_template=True,
 )
 
 
