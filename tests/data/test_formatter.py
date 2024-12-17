@@ -194,3 +194,53 @@ def test_mistral_multi_tool_extractor():
         ("test_tool", """{"foo": "bar", "size": 10}"""),
         ("another_tool", """{"foo": "job", "size": 2}"""),
     ]
+
+
+def test_qwen_function_formatter():
+    formatter = FunctionFormatter(slots=["{{content}}", "<|im_end|>"], tool_format="qwen")
+    tool_calls = json.dumps(FUNCTION)
+    assert formatter.apply(content=tool_calls) == [
+        """<tool_call>\n{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}\n</tool_call>""",
+        "<|im_end|>",
+    ]
+
+
+def test_qwen_multi_function_formatter():
+    formatter = FunctionFormatter(slots=["{{content}}", "<|im_end|>"], tool_format="qwen")
+    tool_calls = json.dumps([FUNCTION] * 2)
+    assert formatter.apply(content=tool_calls) == [
+        """<tool_call>\n{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}\n</tool_call>\n"""
+        """<tool_call>\n{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}\n</tool_call>""",
+        "<|im_end|>",
+    ]
+
+
+def test_qwen_tool_formatter():
+    formatter = ToolFormatter(tool_format="qwen")
+    wrapped_tool = {"type": "function", "function": TOOLS[0]}
+    assert formatter.apply(content=json.dumps(TOOLS)) == [
+        "\n\n# Tools\n\nYou may call one or more functions to assist with the user query.\n\n"
+        "You are provided with function signatures within <tools></tools> XML tags:\n<tools>"
+        f"\n{json.dumps(wrapped_tool, ensure_ascii=False)}"
+        "\n</tools>\n\nFor each function call, return a json object with function name and arguments within "
+        """<tool_call></tool_call> XML tags:\n<tool_call>\n{"name": <function-name>, """
+        """"arguments": <args-json-object>}\n</tool_call><|im_end|>\n"""
+    ]
+
+
+def test_qwen_tool_extractor():
+    formatter = ToolFormatter(tool_format="qwen")
+    result = """<tool_call>\n{"name": "test_tool", "arguments": {"foo": "bar", "size": 10}}\n</tool_call>"""
+    assert formatter.extract(result) == [("test_tool", """{"foo": "bar", "size": 10}""")]
+
+
+def test_qwen_multi_tool_extractor():
+    formatter = ToolFormatter(tool_format="qwen")
+    result = (
+        """<tool_call>\n{"name": "test_tool", "arguments": {"foo": "bar", "size": 10}}\n</tool_call>\n"""
+        """<tool_call>\n{"name": "another_tool", "arguments": {"foo": "job", "size": 2}}\n</tool_call>"""
+    )
+    assert formatter.extract(result) == [
+        ("test_tool", """{"foo": "bar", "size": 10}"""),
+        ("another_tool", """{"foo": "job", "size": 2}"""),
+    ]
