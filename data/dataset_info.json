@@ -1,4 +1,10 @@
 {
+  "train": {
+    "file_name": "alpaca_train_dataset.json"
+  },
+  "test": {
+    "file_name": "alpaca_test_dataset.json"
+  },
   "entity": {
     "file_name": "ddtj.json"
   },
