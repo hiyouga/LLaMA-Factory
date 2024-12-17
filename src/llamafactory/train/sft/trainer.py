@@ -141,7 +141,9 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         padded_tensor[:, -src_tensor.shape[-1] :] = src_tensor  # adopt left-padding
         return padded_tensor.contiguous()  # in contiguous memory
 
-    def save_predictions(self, dataset: "Dataset", predict_results: "PredictionOutput") -> None:
+    def save_predictions(
+        self, dataset: "Dataset", predict_results: "PredictionOutput", gen_kwargs: Dict[str, Any]
+    ) -> None:
         r"""
         Saves model predictions to `output_dir`.
 
@@ -168,8 +170,12 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                 preds[i] = np.concatenate((preds[i][pad_len[0] :], preds[i][: pad_len[0]]), axis=-1)
 
         decoded_inputs = self.processing_class.batch_decode(dataset["input_ids"], skip_special_tokens=False)
-        decoded_preds = self.processing_class.batch_decode(preds, skip_special_tokens=True)
-        decoded_labels = self.processing_class.batch_decode(labels, skip_special_tokens=True)
+        decoded_preds = self.processing_class.batch_decode(
+            preds, skip_special_tokens=gen_kwargs["skip_special_tokens"]
+        )
+        decoded_labels = self.processing_class.batch_decode(
+            labels, skip_special_tokens=gen_kwargs["skip_special_tokens"]
+        )
 
         with open(output_prediction_file, "w", encoding="utf-8") as f:
             for text, pred, label in zip(decoded_inputs, decoded_preds, decoded_labels):
