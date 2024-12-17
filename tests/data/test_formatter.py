@@ -47,7 +47,7 @@ def test_string_formatter():
 
 
 def test_function_formatter():
-    formatter = FunctionFormatter(slots=["</s>"], tool_format="default")
+    formatter = FunctionFormatter(slots=["{{content}}", "</s>"], tool_format="default")
     tool_calls = json.dumps(FUNCTION)
     assert formatter.apply(content=tool_calls) == [
         """Action: tool_name\nAction Input: {"foo": "bar", "size": 10}\n""",
@@ -56,7 +56,7 @@ def test_function_formatter():
 
 
 def test_multi_function_formatter():
-    formatter = FunctionFormatter(slots=["</s>"], tool_format="default")
+    formatter = FunctionFormatter(slots=["{{content}}", "</s>"], tool_format="default")
     tool_calls = json.dumps([FUNCTION] * 2)
     assert formatter.apply(content=tool_calls) == [
         """Action: tool_name\nAction Input: {"foo": "bar", "size": 10}\n""",
@@ -102,7 +102,7 @@ def test_default_multi_tool_extractor():
 
 
 def test_glm4_function_formatter():
-    formatter = FunctionFormatter(tool_format="glm4")
+    formatter = FunctionFormatter(slots=["{{content}}"], tool_format="glm4")
     tool_calls = json.dumps(FUNCTION)
     assert formatter.apply(content=tool_calls) == ["""tool_name\n{"foo": "bar", "size": 10}"""]
 
@@ -123,19 +123,20 @@ def test_glm4_tool_extractor():
 
 
 def test_llama3_function_formatter():
-    formatter = FunctionFormatter(tool_format="llama3")
+    formatter = FunctionFormatter(slots=["{{content}}", "<|eot_id|>"], tool_format="llama3")
     tool_calls = json.dumps({"name": "tool_name", "arguments": {"foo": "bar", "size": 10}})
     assert formatter.apply(content=tool_calls) == [
-        """{"name": "tool_name", "parameters": {"foo": "bar", "size": 10}}"""
+        """{"name": "tool_name", "parameters": {"foo": "bar", "size": 10}}""",
+        "<|eot_id|>",
     ]
 
 
 def test_llama3_tool_formatter():
     formatter = ToolFormatter(tool_format="llama3")
-    cur_time = datetime.now().strftime("%d %b %Y")
+    date = datetime.now().strftime("%d %b %Y")
     wrapped_tool = {"type": "function", "function": TOOLS[0]}
     assert formatter.apply(content=json.dumps(TOOLS)) == [
-        f"Environment: ipython\nCutting Knowledge Date: December 2023\nToday Date: {cur_time}\n\n"
+        f"Cutting Knowledge Date: December 2023\nToday Date: {date}\n\n"
         "You have access to the following functions. To call a function, please respond with JSON for a function call. "
         """Respond in the format {"name": function name, "parameters": dictionary of argument name and its value}. """
         f"Do not use variables.\n\n{json.dumps(wrapped_tool, indent=4)}\n\n"
