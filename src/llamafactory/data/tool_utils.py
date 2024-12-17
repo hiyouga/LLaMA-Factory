@@ -46,7 +46,7 @@ GLM4_TOOL_PROMPT = (
 
 
 LLAMA3_TOOL_PROMPT = (
-    "Environment: ipython\nCutting Knowledge Date: December 2023\nToday Date: {cur_time}\n\n"
+    "Cutting Knowledge Date: December 2023\nToday Date: {date}\n\n"
     "You have access to the following functions. To call a function, please respond with JSON for a function call. "
     """Respond in the format {{"name": function name, "parameters": dictionary of argument name and its value}}. """
     "Do not use variables.\n\n{tool_text}"
@@ -180,6 +180,8 @@ class GLM4ToolUtils(ToolUtils):
 class Llama3ToolUtils(ToolUtils):
     r"""
     Llama 3.x tool using template with `tools_in_user_message=False`.
+
+    Reference: https://www.llama.com/docs/model-cards-and-prompt-formats/llama3_1/#json-based-tool-calling
     """
 
     @override
@@ -190,13 +192,13 @@ class Llama3ToolUtils(ToolUtils):
     @override
     @staticmethod
     def tool_formatter(tools: List[Dict[str, Any]]) -> str:
-        cur_time = datetime.now().strftime("%d %b %Y")
+        date = datetime.now().strftime("%d %b %Y")
         tool_text = ""
         for tool in tools:
             wrapped_tool = {"type": "function", "function": tool}
             tool_text += json.dumps(wrapped_tool, indent=4, ensure_ascii=False) + "\n\n"
 
-        return LLAMA3_TOOL_PROMPT.format(cur_time=cur_time, tool_text=tool_text)
+        return LLAMA3_TOOL_PROMPT.format(date=date, tool_text=tool_text)
 
     @override
     @staticmethod
