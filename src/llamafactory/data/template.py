@@ -750,16 +750,18 @@ _register_template(
         ]
     ),
     format_system=StringFormatter(slots=["<|start_header_id|>system<|end_header_id|>\n\n{{content}}<|eot_id|>"]),
+    format_function=FunctionFormatter(slots=["<|eom_id|>"], tool_format="llama3"),
     format_observation=StringFormatter(
         slots=[
             (
-                "<|start_header_id|>tool<|end_header_id|>\n\n{{content}}<|eot_id|>"
+                "<|start_header_id|>ipython<|end_header_id|>\n\n{{content}}<|eot_id|>"
                 "<|start_header_id|>assistant<|end_header_id|>\n\n"
             )
         ]
     ),
+    format_tools=ToolFormatter(tool_format="llama3"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
-    stop_words=["<|eot_id|>"],
+    stop_words=["<|eot_id|>", "<|eom_id|>"],
     replace_eos=True,
     replace_jinja_template=False,
 )
@@ -777,16 +779,18 @@ _register_template(
         ]
     ),
     format_system=StringFormatter(slots=["<|start_header_id|>system<|end_header_id|>\n\n{{content}}<|eot_id|>"]),
+    format_function=FunctionFormatter(slots=["<|eom_id|>"], tool_format="llama3"),
     format_observation=StringFormatter(
         slots=[
             (
-                "<|start_header_id|>tool<|end_header_id|>\n\n{{content}}<|eot_id|>"
+                "<|start_header_id|>ipython<|end_header_id|>\n\n{{content}}<|eot_id|>"
                 "<|start_header_id|>assistant<|end_header_id|>\n\n"
             )
         ]
     ),
+    format_tools=ToolFormatter(tool_format="llama3"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
-    stop_words=["<|eot_id|>"],
+    stop_words=["<|eot_id|>", "<|eom_id|>"],
     replace_eos=True,
     replace_jinja_template=False,
     mm_plugin=get_mm_plugin(name="mllama", image_token="<|image|>"),
@@ -829,16 +833,18 @@ _register_template(
         ]
     ),
     format_system=StringFormatter(slots=["<|start_header_id|>system<|end_header_id|>\n\n{{content}}<|eot_id|>"]),
+    format_function=FunctionFormatter(slots=["<|eom_id|>"], tool_format="llama3"),
     format_observation=StringFormatter(
         slots=[
             (
-                "<|start_header_id|>tool<|end_header_id|>\n\n{{content}}<|eot_id|>"
+                "<|start_header_id|>ipython<|end_header_id|>\n\n{{content}}<|eot_id|>"
                 "<|start_header_id|>assistant<|end_header_id|>\n\n"
             )
         ]
     ),
+    format_tools=ToolFormatter(tool_format="llama3"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
-    stop_words=["<|eot_id|>"],
+    stop_words=["<|eot_id|>", "<|eom_id|>"],
     replace_eos=True,
     replace_jinja_template=False,
     mm_plugin=get_mm_plugin(name="llava_next", image_token="<image>"),
