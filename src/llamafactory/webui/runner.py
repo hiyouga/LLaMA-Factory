@@ -152,6 +152,7 @@ class Runner:
             bf16=(get("train.compute_type") == "bf16"),
             pure_bf16=(get("train.compute_type") == "pure_bf16"),
             plot_loss=True,
+            trust_remote_code=True,
             ddp_timeout=180000000,
             include_num_input_tokens_seen=False if is_transformers_version_equal_to_4_46() else True,  # FIXME
         )
@@ -268,6 +269,7 @@ class Runner:
             top_p=get("eval.top_p"),
             temperature=get("eval.temperature"),
             output_dir=get_save_dir(model_name, finetuning_type, get("eval.output_dir")),
+            trust_remote_code=True,
         )
 
         if get("eval.predict"):

@@ -285,6 +285,10 @@ class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments,
         default=False,
         metadata={"help": "For debugging purposes, print the status of the parameters in the model."},
     )
+    trust_remote_code: bool = field(
+        default=False,
+        metadata={"help": "Whether to trust the execution of code from datasets/models defined on the Hub or not."},
+    )
     compute_dtype: Optional[torch.dtype] = field(
         default=None,
         init=False,
