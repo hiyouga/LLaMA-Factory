@@ -1149,8 +1149,17 @@ _register_template(
     name="telechat",
     format_user=StringFormatter(slots=["<_user>{{content}}<_bot>"]),
     format_system=StringFormatter(slots=["<_system>{{content}}<_end>"]),
-    stop_words=["<_end>"],
-    replace_eos=True,
+)
+
+
+_register_template(
+    name="telechat2",
+    format_user=StringFormatter(slots=["<_user>{{content}}<_bot>"]),
+    format_system=StringFormatter(slots=["<_system>{{content}}"]),
+    default_system=(
+        "你是中国电信星辰语义大模型，英文名是TeleChat，你是由中电信人工智能科技有限公司和中国电信人工智能研究院（TeleAI）研发的人工智能助手。"
+    ),
+    replace_jinja_template=False,
 )
 
 
