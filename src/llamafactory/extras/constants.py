@@ -585,6 +585,45 @@ register_model_group(
 
 register_model_group(
     models={
+        "Granite-3.0-8B-Instruct": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.0-8b-instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.0-8b-instruct",
+        },
+        "Granite-3.0-8B-Base": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.0-8b-base",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.0-8b-base",
+        },
+        "Granite-3.0-2B-Instruct": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.0-2b-instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.0-2b-instruct",
+        },
+        "Granite-3.0-2B-Base": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.0-2b-base",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.0-2b-base",
+        },
+        "Granite-3.0-3B-A800M-Instruct": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.0-3b-a800m-instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.0-3b-a800m-instruct",
+        },
+        "Granite-3.0-3B-A800M-Base": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.0-3b-a800m-base",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.0-3b-a800m-base",
+        },
+        "Granite-3.0-1B-A400M-Instruct": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.0-1b-a400m-instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.0-1b-a400m-instruct",
+        },
+        "Granite-3.0-1B-A400M-Base": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.0-1b-a400m-base",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.0-1b-a400m-base",
+        },
+    },
+    template="granite3",
+)
+
+
+register_model_group(
+    models={
         "Index-1.9B-Chat": {
             DownloadSource.DEFAULT: "IndexTeam/Index-1.9B-Chat",
             DownloadSource.MODELSCOPE: "IndexTeam/Index-1.9B-Chat",
