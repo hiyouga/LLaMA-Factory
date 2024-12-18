@@ -105,7 +105,7 @@ def register_model_group(
 ) -> None:
     for name, path in models.items():
         SUPPORTED_MODELS[name] = path
-        if template is not None and any(suffix in name for suffix in ("-Chat", "-Instruct")):
+        if template is not None and (any(suffix in name for suffix in ("-Chat", "-Instruct")) or vision):
             DEFAULT_TEMPLATE[name] = template
         if vision:
             VISION_MODELS.add(name)
@@ -848,9 +848,17 @@ register_model_group(
 
 register_model_group(
     models={
+        "Llama-3.2-11B-Vision": {
+            DownloadSource.DEFAULT: "meta-llama/Llama-3.2-11B-Vision",
+            DownloadSource.MODELSCOPE: "LLM-Research/Llama-3.2-11B-Vision",
+        },
         "Llama-3.2-11B-Vision-Instruct": {
             DownloadSource.DEFAULT: "meta-llama/Llama-3.2-11B-Vision-Instruct",
             DownloadSource.MODELSCOPE: "LLM-Research/Llama-3.2-11B-Vision-Instruct",
+        },
+        "Llama-3.2-90B-Vision": {
+            DownloadSource.DEFAULT: "meta-llama/Llama-3.2-90B-Vision",
+            DownloadSource.MODELSCOPE: "LLM-Research/Llama-3.2-90B-Vision",
         },
         "Llama-3.2-90B-Vision-Instruct": {
             DownloadSource.DEFAULT: "meta-llama/Llama-3.2-90B-Vision-Instruct",
@@ -1175,25 +1183,62 @@ register_model_group(
 
 register_model_group(
     models={
-        "PaliGemma-3B-pt-224-Chat": {
+        "PaliGemma-3B-pt-224": {
             DownloadSource.DEFAULT: "google/paligemma-3b-pt-224",
             DownloadSource.MODELSCOPE: "AI-ModelScope/paligemma-3b-pt-224",
         },
-        "PaliGemma-3B-pt-448-Chat": {
+        "PaliGemma-3B-pt-448": {
             DownloadSource.DEFAULT: "google/paligemma-3b-pt-448",
             DownloadSource.MODELSCOPE: "AI-ModelScope/paligemma-3b-pt-448",
         },
-        "PaliGemma-3B-pt-896-Chat": {
+        "PaliGemma-3B-pt-896": {
             DownloadSource.DEFAULT: "google/paligemma-3b-pt-896",
             DownloadSource.MODELSCOPE: "AI-ModelScope/paligemma-3b-pt-896",
         },
-        "PaliGemma-3B-mix-224-Chat": {
+        "PaliGemma-3B-mix-224": {
             DownloadSource.DEFAULT: "google/paligemma-3b-mix-224",
             DownloadSource.MODELSCOPE: "AI-ModelScope/paligemma-3b-mix-224",
         },
-        "PaliGemma-3B-mix-448-Chat": {
+        "PaliGemma-3B-mix-448": {
             DownloadSource.DEFAULT: "google/paligemma-3b-mix-448",
             DownloadSource.MODELSCOPE: "AI-ModelScope/paligemma-3b-mix-448",
+        },
+    },
+    template="paligemma",
+    vision=True,
+)
+
+
+register_model_group(
+    models={
+        "PaliGemma2-3B-pt-224": {
+            DownloadSource.DEFAULT: "google/paligemma2-3b-pt-224",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/paligemma2-3b-pt-224",
+        },
+        "PaliGemma2-3B-pt-448": {
+            DownloadSource.DEFAULT: "google/paligemma2-3b-pt-448",
+        },
+        "PaliGemma2-3B-pt-896": {
+            DownloadSource.DEFAULT: "google/paligemma2-3b-pt-896",
+        },
+        "PaliGemma2-10B-pt-224": {
+            DownloadSource.DEFAULT: "google/paligemma2-10b-pt-224",
+        },
+        "PaliGemma2-10B-pt-448": {
+            DownloadSource.DEFAULT: "google/paligemma2-10b-pt-448",
+        },
+        "PaliGemma2-10B-pt-896": {
+            DownloadSource.DEFAULT: "google/paligemma2-10b-pt-896",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/paligemma2-10b-pt-896",
+        },
+        "PaliGemma2-28B-pt-224": {
+            DownloadSource.DEFAULT: "google/paligemma2-28b-pt-224",
+        },
+        "PaliGemma2-28B-pt-448": {
+            DownloadSource.DEFAULT: "google/paligemma2-28b-pt-448",
+        },
+        "PaliGemma2-28B-pt-896": {
+            DownloadSource.DEFAULT: "google/paligemma2-28b-pt-896",
         },
     },
     template="paligemma",
@@ -1255,7 +1300,7 @@ register_model_group(
 
 register_model_group(
     models={
-        "Pixtral-12B-Chat": {
+        "Pixtral-12B-Instruct": {
             DownloadSource.DEFAULT: "mistral-community/pixtral-12b",
             DownloadSource.MODELSCOPE: "AI-ModelScope/pixtral-12b",
         }
@@ -1958,10 +2003,13 @@ register_model_group(
             DownloadSource.OPENMIND: "TeleAI/TeleChat-7B-pt",
         },
         "TeleChat-12B-Chat": {
-            DownloadSource.DEFAULT: "Tele-AI/TeleChat-12B",
-            DownloadSource.MODELSCOPE: "TeleAI/TeleChat-12B",
+            DownloadSource.DEFAULT: "Tele-AI/TeleChat-12B-v2",
+            DownloadSource.MODELSCOPE: "TeleAI/TeleChat-12B-v2",
             DownloadSource.OPENMIND: "TeleAI/TeleChat-12B-pt",
-        }
+        },
+        "TeleChat-52B-Chat": {
+            DownloadSource.DEFAULT: "Tele-AI/TeleChat-52B",
+        },
     },
     template="telechat",
 )
@@ -1977,13 +2025,8 @@ register_model_group(
             DownloadSource.DEFAULT: "Tele-AI/TeleChat2-7B",
             DownloadSource.MODELSCOPE: "TeleAI/TeleChat2-7B",
         },
-        "TeleChat2-12B-Chat": {
-            DownloadSource.DEFAULT: "Tele-AI/TeleChat-12B-v2",
-            DownloadSource.MODELSCOPE: "TeleAI/TeleChat-12B-v2",
-        },
         "TeleChat2-35B-Chat": {
-            DownloadSource.DEFAULT: "Tele-AI/TeleChat2-35B",
-            DownloadSource.MODELSCOPE: "TeleAI/TeleChat2-35B",
+            DownloadSource.MODELSCOPE: "TeleAI/TeleChat2-35B-Nov",
         },
         "TeleChat2-115B-Chat": {
             DownloadSource.DEFAULT: "Tele-AI/TeleChat2-115B",
