@@ -30,15 +30,19 @@ LOCALES = {
     "model_name": {
         "en": {
             "label": "Model name",
+            "info": "Input the name prefix to search for the model.",
         },
         "ru": {
             "label": "Название модели",
+            "info": "Введите префикс имени для поиска модели.",
         },
         "zh": {
             "label": "模型名称",
+            "info": "输入首单词以检索模型。",
         },
         "ko": {
             "label": "모델 이름",
+            "info": "모델을 검색하기 위해 이름 접두어를 입력하세요.",
         },
     },
     "model_path": {
