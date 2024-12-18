@@ -1961,13 +1961,36 @@ register_model_group(
             DownloadSource.DEFAULT: "Tele-AI/TeleChat-12B",
             DownloadSource.MODELSCOPE: "TeleAI/TeleChat-12B",
             DownloadSource.OPENMIND: "TeleAI/TeleChat-12B-pt",
+        }
+    },
+    template="telechat",
+)
+
+
+register_model_group(
+    models={
+        "TeleChat2-3B-Chat": {
+            DownloadSource.DEFAULT: "Tele-AI/TeleChat2-3B",
+            DownloadSource.MODELSCOPE: "TeleAI/TeleChat2-3B",
         },
-        "TeleChat-12B-v2-Chat": {
+        "TeleChat2-7B-Chat": {
+            DownloadSource.DEFAULT: "Tele-AI/TeleChat2-7B",
+            DownloadSource.MODELSCOPE: "TeleAI/TeleChat2-7B",
+        },
+        "TeleChat2-12B-Chat": {
             DownloadSource.DEFAULT: "Tele-AI/TeleChat-12B-v2",
             DownloadSource.MODELSCOPE: "TeleAI/TeleChat-12B-v2",
         },
+        "TeleChat2-35B-Chat": {
+            DownloadSource.DEFAULT: "Tele-AI/TeleChat2-35B",
+            DownloadSource.MODELSCOPE: "TeleAI/TeleChat2-35B",
+        },
+        "TeleChat2-115B-Chat": {
+            DownloadSource.DEFAULT: "Tele-AI/TeleChat2-115B",
+            DownloadSource.MODELSCOPE: "TeleAI/TeleChat2-115B",
+        },
     },
-    template="telechat",
+    template="telechat2",
 )
 
 
