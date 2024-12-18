@@ -32,10 +32,6 @@ Choose your path:
 - **PAI-DSW**: [Llama3 Example](https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory) | [Qwen2-VL Example](https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory_qwen2vl)
 - **Amazon SageMaker**: [Blog](https://aws.amazon.com/cn/blogs/china/a-one-stop-code-free-model-fine-tuning-deployment-platform-based-on-sagemaker-and-llama-factory/)
 
-Recent activities:
-
-- **2024/10/18-2024/11/30**: Build a personal tour guide bot using PAI+LLaMA Factory. [[website]](https://developer.aliyun.com/topic/llamafactory2)
-
 > [!NOTE]
 > Except for the above links, all other websites are unauthorized third-party websites. Please carefully use them.
 
@@ -206,7 +202,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [MiniCPM](https://huggingface.co/openbmb)                         | 1B/2B/4B                         | cpm/cpm3         |
 | [Mistral/Mixtral](https://huggingface.co/mistralai)               | 7B/8x7B/8x22B                    | mistral          |
 | [OLMo](https://huggingface.co/allenai)                            | 1B/7B                            | -                |
-| [PaliGemma](https://huggingface.co/google)                        | 3B                               | paligemma        |
+| [PaliGemma/PaliGemma2](https://huggingface.co/google)             | 3B/10B/28B                       | paligemma        |
 | [Phi-1.5/Phi-2](https://huggingface.co/microsoft)                 | 1.3B/2.7B                        | -                |
 | [Phi-3](https://huggingface.co/microsoft)                         | 4B/14B                           | phi              |
 | [Phi-3-small](https://huggingface.co/microsoft)                   | 7B                               | phi_small        |
@@ -215,7 +211,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [Qwen2-VL](https://huggingface.co/Qwen)                           | 2B/7B/72B                        | qwen2_vl         |
 | [Skywork o1](https://huggingface.co/Skywork)                      | 8B                               | skywork_o1       |
 | [StarCoder 2](https://huggingface.co/bigcode)                     | 3B/7B/15B                        | -                |
-| [TeleChat2](https://huggingface.co/Tele-AI)                       | 3B/7B/12B/35B/115B               | telechat2        |
+| [TeleChat2](https://huggingface.co/Tele-AI)                       | 3B/7B/35B/115B                   | telechat2        |
 | [XVERSE](https://huggingface.co/xverse)                           | 7B/13B/65B                       | xverse           |
 | [Yi/Yi-1.5 (Code)](https://huggingface.co/01-ai)                  | 1.5B/6B/9B/34B                   | yi               |
 | [Yi-VL](https://huggingface.co/01-ai)                             | 6B/34B                           | yi_vl            |
