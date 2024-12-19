@@ -465,7 +465,7 @@ def get_swanlab_callback(finetuning_args: "FinetuningArguments") -> "TrainerCall
     """
     import swanlab
     from swanlab.integration.transformers import SwanLabCallback
-    
+
     if finetuning_args.swanlab_api_key is not None:
         swanlab.login(api_key=finetuning_args.swanlab_api_key)
 
