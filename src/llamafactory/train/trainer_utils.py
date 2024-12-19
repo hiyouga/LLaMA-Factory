@@ -463,6 +463,18 @@ def get_swanlab_callback(finetuning_args: "FinetuningArguments") -> "TrainerCall
     r"""
     Gets the callback for logging to SwanLab.
     """
-    from swanlab.integration.huggingface import SwanLabCallback
+    import swanlab
+    from swanlab.integration.transformers import SwanLabCallback
+    
+    if finetuning_args.swanlab_api_key is not None:
+        swanlab.login(api_key=finetuning_args.swanlab_api_key)
 
-    return SwanLabCallback()
+    swanlab_callback = SwanLabCallback(
+        project=finetuning_args.swanlab_project,
+        workspace=finetuning_args.swanlab_workspace,
+        experiment_name=finetuning_args.swanlab_experiment_name,
+        description=finetuning_args.swanlab_description,
+        mode=finetuning_args.swanlab_mode,
+    )
+
+    return swanlab_callback
