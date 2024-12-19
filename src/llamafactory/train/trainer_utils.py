@@ -475,6 +475,7 @@ def get_swanlab_callback(finetuning_args: "FinetuningArguments") -> "TrainerCall
         experiment_name=finetuning_args.swanlab_experiment_name,
         description=finetuning_args.swanlab_description,
         mode=finetuning_args.swanlab_mode,
+        config={"Framework": "🦙LLaMA Factory"},
     )
 
     return swanlab_callback
