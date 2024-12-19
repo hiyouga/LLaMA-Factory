@@ -172,6 +172,3 @@ saves/
 output/
 wandb/
 generated_predictions.jsonl
-
-# unittest
-dummy_dir/
