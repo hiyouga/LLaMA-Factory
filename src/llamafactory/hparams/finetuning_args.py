@@ -334,6 +334,10 @@ class SwanLabArguments:
         default=None,
         metadata={"help": "The API key for SwanLab."},
     )
+    swanlab_config: dict = field(
+        default={"Framework": "🦙LLaMA Factory"},
+        metadata={"help": "The configuration file for SwanLab."},
+    )
 
 
 @dataclass
