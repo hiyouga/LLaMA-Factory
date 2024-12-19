@@ -22,6 +22,7 @@ Currently we support datasets in **alpaca** and **sharegpt** format.
     "messages": "the column name in the dataset containing the messages. (default: conversations)",
     "system": "the column name in the dataset containing the system prompts. (default: None)",
     "tools": "the column name in the dataset containing the tool description. (default: None)",
+    "loss_mask": "The column names of responses used for model learning in multi-turn datasets (default: None)",
     "images": "the column name in the dataset containing the image inputs. (default: None)",
     "videos": "the column name in the dataset containing the videos inputs. (default: None)",
     "chosen": "the column name in the dataset containing the chosen answers. (default: None)",
@@ -52,6 +53,8 @@ The `system` column will be used as the system prompt if specified.
 
 The `history` column is a list consisting of string tuples representing prompt-response pairs in the history messages. Note that the responses in the history **will also be learned by the model** in supervised fine-tuning.
 
+The `loss_mask` column is a list composed of integers 0 or 1, and its length should be consistent with the number of dialogue turns in the sample multiplied by 2 (for example, if the dialogue has 3 turns, the list length should be 6). A value of 1 indicates that the corresponding output content participates in the loss calculation, while a value of 0 indicates that it does not participate.
+
 ```json
 [
   {
@@ -62,7 +65,8 @@ The `history` column is a list consisting of string tuples representing prompt-r
     "history": [
       ["human instruction in the first round (optional)", "model response in the first round (optional)"],
       ["human instruction in the second round (optional)", "model response in the second round (optional)"]
-    ]
+    ],
+    "loss_mask": [0, 0, 0, 1, 0, 1] # "used to indicate which data participates in loss calculation (optional)"
   }
 ]
 ```
@@ -77,7 +81,8 @@ Regarding the above dataset, the *dataset description* in `dataset_info.json` sh
     "query": "input",
     "response": "output",
     "system": "system",
-    "history": "history"
+    "history": "history",
+    "loss_mask": "loss_mask"
   }
 }
 ```
@@ -160,6 +165,8 @@ Compared to the alpaca format, the sharegpt format allows the datasets have **mo
 
 Note that the human and observation should appear in odd positions, while gpt and function should appear in even positions.
 
+The `loss_mask` column is a list composed of integers 0 or 1, and its length should be consistent with the length of the conversations in this sample. A value of 1 indicates that the corresponding position's GPT and function content participate in the loss calculation, while a value of 0 indicates that they do not participate.
+
 ```json
 [
   {
@@ -182,7 +189,8 @@ Note that the human and observation should appear in odd positions, while gpt an
       }
     ],
     "system": "system prompt (optional)",
-    "tools": "tool description (optional)"
+    "tools": "tool description (optional)",
+    "loss_mask": [0, 0, 0, 1] # "used to indicate which data participates in loss calculation (optional)"
   }
 ]
 ```
@@ -196,7 +204,8 @@ Regarding the above dataset, the *dataset description* in `dataset_info.json` sh
   "columns": {
     "messages": "conversations",
     "system": "system",
-    "tools": "tools"
+    "tools": "tools",
+    "loss_mask": "loss_mask"
   }
 }
 ```
