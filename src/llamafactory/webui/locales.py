@@ -1353,6 +1353,20 @@ LOCALES = {
             "info": "비율-BAdam의 업데이트 비율.",
         },
     },
+    "swanlab_tab": {
+        "en": {
+            "label": "SwanLab configurations",
+        },
+        "ru": {
+            "label": "Конфигурации SwanLab",
+        },
+        "zh": {
+            "label": "SwanLab 参数设置",
+        },
+        "ko": {
+            "label": "SwanLab 설정",
+        },
+    },
     "cmd_preview_btn": {
         "en": {
             "value": "Preview command",
