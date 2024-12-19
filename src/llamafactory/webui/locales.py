@@ -1367,6 +1367,112 @@ LOCALES = {
             "label": "SwanLab 설정",
         },
     },
+    "use_swanlab": {
+        "en": {
+            "label": "Use SwanLab",
+            "info": "Enable SwanLab for experiment tracking and visualization.",
+        },
+        "ru": {
+            "label": "Использовать SwanLab",
+            "info": "Включить SwanLab для отслеживания и визуализации экспериментов.",
+        },
+        "zh": {
+            "label": "使用 SwanLab",
+            "info": "启用 SwanLab 进行实验跟踪和可视化。",
+        },
+        "ko": {
+            "label": "SwanLab 사용",
+            "info": "SwanLab를 사용하여 실험을 추적하고 시각화합니다.",
+        },
+    },
+    "swanlab_api_key": {
+        "en": {
+            "label": "API key",
+            "info": "The API key for SwanLab.",
+        },
+        "ru": {
+            "label": "API ключ",
+            "info": "API ключ для SwanLab.",
+        },
+        "zh": {
+            "label": "API 密钥",
+            "info": "SwanLab 的 API 密钥。",
+        },
+        "ko": {
+            "label": "API 키",
+            "info": "SwanLab의 API 키.",
+        },
+    },
+    "swanlab_project": {
+        "en": {
+            "label": "SwanLab project",
+        },
+        "ru": {
+            "label": "Проект SwanLab",
+        },
+        "zh": {
+            "label": "SwanLab 项目",
+        },
+        "ko": {
+            "label": "SwanLab 프로젝트",
+        },
+    },
+    "swanlab_workspace": {
+        "en": {
+            "label": "SwanLab workspace",
+        },
+        "ru": {
+            "label": "Рабочая область SwanLab",
+        },
+        "zh": {
+            "label": "SwanLab 工作区",
+        },
+        "ko": {
+            "label": "SwanLab 작업 영역",
+        },
+    },
+    "swanlab_experiment_name": {
+        "en": {
+            "label": "SwanLab experiment name",
+        },
+        "ru": {
+            "label": "Имя эксперимента SwanLab",
+        },
+        "zh": {
+            "label": "SwanLab 实验名称",
+        },
+        "ko": {
+            "label": "SwanLab 실험 이름",
+        },
+    },
+    "swanlab_description": {
+        "en": {
+            "label": "SwanLab experiment description",
+        },
+        "ru": {
+            "label": "Описание эксперимента SwanLab",
+        },
+        "zh": {
+            "label": "SwanLab 实验描述",
+        },
+        "ko": {
+            "label": "SwanLab 실험 설명",
+        },
+    },
+    "swanlab_mode": {
+        "en": {
+            "label": "SwanLab mode",
+        },
+        "ru": {
+            "label": "Режим SwanLab",
+        },
+        "zh": {
+            "label": "SwanLab 模式",
+        },
+        "ko": {
+            "label": "SwanLab 모드",
+        },
+    },
     "cmd_preview_btn": {
         "en": {
             "value": "Preview command",
