@@ -13,8 +13,9 @@
 # limitations under the License.
 
 from types import MethodType
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
+import torch
 from transformers import Trainer
 from typing_extensions import override
 
@@ -24,8 +25,7 @@ from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
 
 
 if TYPE_CHECKING:
-    import torch
-    from transformers import ProcessorMixin
+    from transformers import PreTrainedModel, ProcessorMixin
 
     from ...hparams import FinetuningArguments
 
@@ -70,7 +70,16 @@ class CustomTrainer(Trainer):
         return super().create_scheduler(num_training_steps, optimizer)
 
     @override
-    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+    def _get_train_sampler(self) -> Optional["torch.utils.data.Sampler"]:
+        if self.finetuning_args.disable_shuffling:
+            return torch.utils.data.SequentialSampler(self.train_dataset)
+
+        return super()._get_train_sampler()
+
+    @override
+    def compute_loss(
+        self, model: "PreTrainedModel", inputs: Dict[str, "torch.Tensor"], return_outputs: bool = False, **kwargs
+    ) -> Union["torch.Tensor", Tuple["torch.Tensor", List["torch.Tensor"]]]:
         r"""
         Fixes the loss value for transformers 4.46.0.
         https://github.com/huggingface/transformers/blob/v4.46.0/src/transformers/trainer.py#L3605
