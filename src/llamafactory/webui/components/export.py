@@ -84,6 +84,7 @@ def save_model(
         export_quantization_dataset=export_quantization_dataset,
         export_device=export_device,
         export_legacy_format=export_legacy_format,
+        trust_remote_code=True,
     )
 
     if checkpoint_path:
