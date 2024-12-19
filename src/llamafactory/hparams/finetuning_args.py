@@ -311,19 +311,19 @@ class SwanLabArguments:
         metadata={"help": "Whether or not to use the SwanLab (an experiment tracking and visualization tools)."},
     )
     swanlab_project: str = field(
-        default="",
+        default=None,
         metadata={"help": "The project name in SwanLab."},
     )
     swanlab_workspace: str = field(
-        default="",
+        default=None,
         metadata={"help": "The workspace name in SwanLab."},
     )
     swanlab_experiment_name: str = field(
-        default="",
+        default=None,
         metadata={"help": "The experiment name in SwanLab."},
     )
     swanlab_description: str = field(
-        default="",
+        default=None,
         metadata={"help": "The experiment description in SwanLab."},
     )
     swanlab_mode: Literal["cloud", "local", "disabled"] = field(
@@ -331,7 +331,7 @@ class SwanLabArguments:
         metadata={"help": "The mode of SwanLab."},
     )
     swanlab_api_key: str = field(
-        default="",
+        default=None,
         metadata={"help": "The API key for SwanLab."},
     )
 
