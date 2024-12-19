@@ -61,6 +61,7 @@ extra_require = {
     "qwen": ["transformers_stream_generator"],
     "modelscope": ["modelscope"],
     "openmind": ["openmind"],
+    "swanlab": ["swanlab"],
     "dev": ["pre-commit", "ruff", "pytest"],
 }
 
