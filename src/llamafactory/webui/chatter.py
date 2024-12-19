@@ -91,6 +91,7 @@ class WebChatModel(ChatModel):
             rope_scaling=get("top.rope_scaling") if get("top.rope_scaling") in ["linear", "dynamic"] else None,
             infer_backend=get("infer.infer_backend"),
             infer_dtype=get("infer.infer_dtype"),
+            trust_remote_code=True,
         )
 
         if checkpoint_path:
