@@ -30,8 +30,8 @@ from typing_extensions import override
 
 from ...extras.constants import IGNORE_INDEX
 from ...extras.packages import is_transformers_version_equal_to_4_46
-from ..callbacks import PissaConvertCallback, SaveProcessorCallback
-from ..trainer_utils import create_custom_optimizer, create_custom_scheduler, get_batch_logps, get_swanlab_callback
+from ..callbacks import SaveProcessorCallback
+from ..trainer_utils import create_custom_optimizer, create_custom_scheduler, get_batch_logps
 
 
 if TYPE_CHECKING:
@@ -97,17 +97,11 @@ class CustomDPOTrainer(DPOTrainer):
         if processor is not None:
             self.add_callback(SaveProcessorCallback(processor))
 
-        if finetuning_args.pissa_convert:
-            self.callback_handler.add_callback(PissaConvertCallback)
-
         if finetuning_args.use_badam:
             from badam import BAdamCallback, clip_grad_norm_old_version  # type: ignore
 
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
-
-        if finetuning_args.use_swanlab:
-            self.add_callback(get_swanlab_callback(finetuning_args))
 
     @override
     def create_optimizer(self) -> "torch.optim.Optimizer":
