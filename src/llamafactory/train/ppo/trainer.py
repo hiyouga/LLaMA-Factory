@@ -40,7 +40,7 @@ from typing_extensions import override
 from ...extras import logging
 from ...extras.misc import AverageMeter, count_parameters, get_current_device, get_logits_processor
 from ..callbacks import FixValueHeadModelCallback, SaveProcessorCallback
-from ..trainer_utils import create_custom_optimizer, create_custom_scheduler, get_swanlab_callback
+from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
 from .ppo_utils import dump_layernorm, get_rewards_from_server, replace_model, restore_layernorm
 
 
@@ -185,9 +185,6 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
 
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
-
-        if finetuning_args.use_swanlab:
-            self.add_callback(get_swanlab_callback(finetuning_args))
 
     def ppo_train(self, resume_from_checkpoint: Optional[str] = None) -> None:
         r"""
