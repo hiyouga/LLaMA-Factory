@@ -308,11 +308,31 @@ class BAdamArgument:
 class SwanLabArguments:
     use_swanlab: bool = field(
         default=False,
-        metadata={"help": ""},
+        metadata={"help": "Whether or not to use the SwanLab (an experiment tracking and visualization tools)."},
     )
-    swanlab_name: str = field(
+    swanlab_project: str = field(
         default="",
-        metadata={},
+        metadata={"help": "The project name in SwanLab."},
+    )
+    swanlab_workspace: str = field(
+        default="",
+        metadata={"help": "The workspace name in SwanLab."},
+    )
+    swanlab_experiment_name: str = field(
+        default="",
+        metadata={"help": "The experiment name in SwanLab."},
+    )
+    swanlab_description: str = field(
+        default="",
+        metadata={"help": "The experiment description in SwanLab."},
+    )
+    swanlab_mode: Literal["cloud", "local", "disabled"] = field(
+        default="cloud",
+        metadata={"help": "The mode of SwanLab."},
+    )
+    swanlab_api_key: str = field(
+        default="",
+        metadata={"help": "The API key for SwanLab."},
     )
 
 
