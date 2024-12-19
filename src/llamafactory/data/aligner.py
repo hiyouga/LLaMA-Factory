@@ -128,6 +128,7 @@ def convert_alpaca(
         "_response": response,
         "_system": example[dataset_attr.system] if dataset_attr.system else "",
         "_tools": example[dataset_attr.tools] if dataset_attr.tools else "",
+        "_loss_mask": example[dataset_attr.loss_mask] if dataset_attr.loss_mask else [],
         "_images": convert_images(example[dataset_attr.images]) if dataset_attr.images else None,
         "_videos": convert_videos(example[dataset_attr.videos]) if dataset_attr.videos else None,
     }
@@ -221,6 +222,7 @@ def convert_sharegpt(
         "_response": response,
         "_system": system,
         "_tools": example[dataset_attr.tools] if dataset_attr.tools else "",
+        "_loss_mask": example[dataset_attr.loss_mask] if dataset_attr.loss_mask else [],
         "_images": convert_images(example[dataset_attr.images]) if dataset_attr.images else None,
         "_videos": convert_videos(example[dataset_attr.videos]) if dataset_attr.videos else None,
     }

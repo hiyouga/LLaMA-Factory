@@ -87,6 +87,7 @@ def preprocess_pairwise_dataset(
             response=examples["_response"][i],
             system=examples["_system"][i],
             tools=examples["_tools"][i],
+            loss_mask=examples["_loss_mask"][i],
             images=examples["_images"][i] or [],
             videos=examples["_videos"][i] or [],
             template=template,
