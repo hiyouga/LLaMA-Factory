@@ -270,6 +270,18 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
         )
     )
 
+    with gr.Accordion(open=False) as swanlab_tab:
+        with gr.Row():
+            use_swanlab = gr.Checkbox()
+
+    input_elems.update({use_swanlab})
+    elem_dict.update(
+        dict(
+            swanlab_tab=swanlab_tab,
+            use_swanlab=use_swanlab,
+        )
+    )
+
     with gr.Row():
         cmd_preview_btn = gr.Button()
         arg_save_btn = gr.Button()
