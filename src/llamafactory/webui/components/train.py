@@ -280,7 +280,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             swanlab_description = gr.Textbox(value="", placeholder="Experiment description", interactive=True)
             swanlab_mode = gr.Dropdown(choices=["cloud", "local", "disabled"], value="cloud", interactive=True)
 
-    input_elems.update({use_swanlab})
+    input_elems.update({use_swanlab, swanlab_api_key, swanlab_project, swanlab_workspace, swanlab_experiment_name, swanlab_description, swanlab_mode})
     elem_dict.update(
         dict(
             swanlab_tab=swanlab_tab,
