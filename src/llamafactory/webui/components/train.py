@@ -273,12 +273,24 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     with gr.Accordion(open=False) as swanlab_tab:
         with gr.Row():
             use_swanlab = gr.Checkbox()
+            swanlab_api_key = gr.Textbox(value="", placeholder="API key", interactive=True)
+            swanlab_project = gr.Textbox(value="", placeholder="Project name", interactive=True)
+            swanlab_workspace = gr.Textbox(value="", placeholder="Workspace name", interactive=True)
+            swanlab_experiment_name = gr.Textbox(value="", placeholder="Experiment name", interactive=True)
+            swanlab_description = gr.Textbox(value="", placeholder="Experiment description", interactive=True)
+            swanlab_mode = gr.Dropdown(choices=["cloud", "local", "disabled"], value="cloud", interactive=True)
 
     input_elems.update({use_swanlab})
     elem_dict.update(
         dict(
             swanlab_tab=swanlab_tab,
             use_swanlab=use_swanlab,
+            swanlab_api_key=swanlab_api_key,
+            swanlab_project=swanlab_project,
+            swanlab_workspace=swanlab_workspace,
+            swanlab_experiment_name=swanlab_experiment_name,
+            swanlab_description=swanlab_description,
+            swanlab_mode=swanlab_mode,
         )
     )
 
