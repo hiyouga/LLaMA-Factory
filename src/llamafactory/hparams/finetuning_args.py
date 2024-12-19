@@ -305,7 +305,21 @@ class BAdamArgument:
 
 
 @dataclass
-class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments, BAdamArgument):
+class SwanLabArguments:
+    use_swanlab: bool = field(
+        default=False,
+        metadata={"help": ""},
+    )
+    swanlab_name: str = field(
+        default="",
+        metadata={},
+    )
+
+
+@dataclass
+class FinetuningArguments(
+    FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments, BAdamArgument, SwanLabArguments
+):
     r"""
     Arguments pertaining to which techniques we are going to fine-tuning with.
     """
