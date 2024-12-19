@@ -19,7 +19,7 @@ import warnings
 from collections import defaultdict
 from contextlib import nullcontext
 from types import MethodType
-from typing import TYPE_CHECKING, Dict, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Tuple, Union
 
 import torch
 from transformers import Trainer
@@ -119,6 +119,9 @@ class CustomKTOTrainer(KTOTrainer):
         r"""
         Replaces the sequential sampler of KTO Trainer created by trl with the random sampler.
         """
+        if self.finetuning_args.disable_shuffling:
+            return torch.utils.data.SequentialSampler(self.train_dataset)
+
         return Trainer._get_train_sampler(self)
 
     @override
@@ -245,7 +248,9 @@ class CustomKTOTrainer(KTOTrainer):
         return losses, metrics
 
     @override
-    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+    def compute_loss(
+        self, model: "PreTrainedModel", inputs: Dict[str, "torch.Tensor"], return_outputs: bool = False, **kwargs
+    ) -> Union["torch.Tensor", Tuple["torch.Tensor", List["torch.Tensor"]]]:
         r"""
         Fixes the loss value for transformers 4.46.0.
         https://github.com/huggingface/transformers/blob/v4.46.0/src/transformers/trainer.py#L3605
