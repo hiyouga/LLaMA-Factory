@@ -311,7 +311,7 @@ class SwanLabArguments:
         metadata={"help": "Whether or not to use the SwanLab (an experiment tracking and visualization tool)."},
     )
     swanlab_project: str = field(
-        default="LLaMA Factory",
+        default="llamafactory",
         metadata={"help": "The project name in SwanLab."},
     )
     swanlab_workspace: str = field(
