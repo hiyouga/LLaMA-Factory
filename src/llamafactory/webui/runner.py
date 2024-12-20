@@ -147,6 +147,7 @@ class Runner:
             report_to="all" if get("train.report_to") else "none",
             use_galore=get("train.use_galore"),
             use_badam=get("train.use_badam"),
+            use_swanlab=get("train.use_swanlab"),
             output_dir=get_save_dir(model_name, finetuning_type, get("train.output_dir")),
             fp16=(get("train.compute_type") == "fp16"),
             bf16=(get("train.compute_type") == "bf16"),
@@ -227,6 +228,15 @@ class Runner:
             args["badam_switch_mode"] = get("train.badam_switch_mode")
             args["badam_switch_interval"] = get("train.badam_switch_interval")
             args["badam_update_ratio"] = get("train.badam_update_ratio")
+
+        # swanlab config
+        if get("train.use_swanlab"):
+            args["swanlab_api_key"] = get("train.swanlab_api_key")
+            args["swanlab_project"] = get("train.swanlab_project")
+            args["swanlab_workspace"] = get("train.swanlab_workspace")
+            args["swanlab_experiment_name"] = get("train.swanlab_experiment_name")
+            args["swanlab_mode"] = get("train.swanlab_mode")
+            
 
         # eval config
         if get("train.val_size") > 1e-6 and args["stage"] != "ppo":

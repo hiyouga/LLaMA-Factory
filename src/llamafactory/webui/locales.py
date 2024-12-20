@@ -1353,6 +1353,121 @@ LOCALES = {
             "info": "비율-BAdam의 업데이트 비율.",
         },
     },
+    "swanlab_tab": {
+        "en": {
+            "label": "SwanLab configurations",
+        },
+        "ru": {
+            "label": "Конфигурации SwanLab",
+        },
+        "zh": {
+            "label": "SwanLab 参数设置",
+        },
+        "ko": {
+            "label": "SwanLab 설정",
+        },
+    },
+    "use_swanlab": {
+        "en": {
+            "label": "Use SwanLab",
+            "info": "Enable SwanLab for experiment tracking and visualization.",
+        },
+        "ru": {
+            "label": "Использовать SwanLab",
+            "info": "Включить SwanLab для отслеживания и визуализации экспериментов.",
+        },
+        "zh": {
+            "label": "使用 SwanLab",
+            "info": "启用 SwanLab 进行实验跟踪和可视化。",
+        },
+        "ko": {
+            "label": "SwanLab 사용",
+            "info": "SwanLab를 사용하여 실험을 추적하고 시각화합니다.",
+        },
+    },
+    "swanlab_api_key": {
+        "en": {
+            "label": "API Key(optional)",
+            "info": "API key for SwanLab. Once logged in, no need to login again in the programming environment.",
+        },
+        "ru": {
+            "label": "API ключ(Необязательный)",
+            "info": "API ключ для SwanLab. После входа в программное окружение, нет необходимости входить снова.",
+        },
+        "zh": {
+            "label": "API密钥(选填)",
+            "info": "用于在编程环境登录SwanLab，已登录则无需填写。",
+        },
+        "ko": {
+            "label": "API 키(선택 사항)",
+            "info": "SwanLab의 API 키. 프로그래밍 환경에 로그인한 후 다시 로그인할 필요가 없습니다.",
+        },
+    },
+    "swanlab_project": {
+        "en": {
+            "label": "Project(optional)",
+        },
+        "ru": {
+            "label": "Проект(Необязательный)",
+        },
+        "zh": {
+            "label": "项目(选填)",
+        },
+        "ko": {
+            "label": "프로젝트(선택 사항)",
+        },
+    },
+    "swanlab_workspace": {
+        "en": {
+            "label": "Workspace(optional)",
+            "info": "Workspace for SwanLab. If not filled, it defaults to the personal workspace.",
+            
+        },
+        "ru": {
+            "label": "Рабочая область(Необязательный)",
+            "info": "Рабочая область SwanLab, если не заполнено, то по умолчанию в личной рабочей области.",
+        },
+        "zh": {
+            "label": "Workspace(选填)",
+            "info": "SwanLab组织的工作区，如不填写则默认在个人工作区下",
+        },
+        "ko": {
+            "label": "작업 영역(선택 사항)",
+            "info": "SwanLab 조직의 작업 영역, 비어 있으면 기본적으로 개인 작업 영역에 있습니다.",
+        },
+    },
+    "swanlab_experiment_name": {
+        "en": {
+            "label": "Experiment name (optional)",
+        },
+        "ru": {
+            "label": "Имя эксперимента(Необязательный)",
+        },
+        "zh": {
+            "label": "实验名(选填)  ",
+        },
+        "ko": {
+            "label": "실험 이름(선택 사항)",
+        },
+    },
+    "swanlab_mode": {
+        "en": {
+            "label": "Mode",
+            "info": "Cloud or offline version.",    
+        },
+        "ru": {
+            "label": "Режим",
+            "info": "Версия в облаке или локальная версия.",
+        },
+        "zh": {
+            "label": "模式",
+            "info": "云端版或离线版",
+        },
+        "ko": {
+            "label": "모드",
+            "info": "클라우드 버전 또는 오프라인 버전.",
+        },
+    },
     "cmd_preview_btn": {
         "en": {
             "value": "Preview command",

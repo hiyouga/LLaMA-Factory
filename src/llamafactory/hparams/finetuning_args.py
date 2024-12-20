@@ -305,7 +305,37 @@ class BAdamArgument:
 
 
 @dataclass
-class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments, BAdamArgument):
+class SwanLabArguments:
+    use_swanlab: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use the SwanLab (an experiment tracking and visualization tool)."},
+    )
+    swanlab_project: str = field(
+        default="llamafactory",
+        metadata={"help": "The project name in SwanLab."},
+    )
+    swanlab_workspace: str = field(
+        default=None,
+        metadata={"help": "The workspace name in SwanLab."},
+    )
+    swanlab_experiment_name: str = field(
+        default=None,
+        metadata={"help": "The experiment name in SwanLab."},
+    )
+    swanlab_mode: Literal["cloud", "local"] = field(
+        default="cloud",
+        metadata={"help": "The mode of SwanLab."},
+    )
+    swanlab_api_key: str = field(
+        default=None,
+        metadata={"help": "The API key for SwanLab."},
+    )
+
+
+@dataclass
+class FinetuningArguments(
+    FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments, BAdamArgument, SwanLabArguments
+):
     r"""
     Arguments pertaining to which techniques we are going to fine-tuning with.
     """

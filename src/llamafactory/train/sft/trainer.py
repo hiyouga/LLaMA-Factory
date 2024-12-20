@@ -29,7 +29,7 @@ from ...extras import logging
 from ...extras.constants import IGNORE_INDEX
 from ...extras.packages import is_transformers_version_equal_to_4_46, is_transformers_version_greater_than
 from ..callbacks import PissaConvertCallback, SaveProcessorCallback
-from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
+from ..trainer_utils import create_custom_optimizer, create_custom_scheduler, get_swanlab_callback
 
 
 if TYPE_CHECKING:
@@ -70,6 +70,9 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
+
+        if finetuning_args.use_swanlab:
+            self.add_callback(get_swanlab_callback(finetuning_args))
 
     @override
     def create_optimizer(self) -> "torch.optim.Optimizer":

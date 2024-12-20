@@ -40,7 +40,7 @@ if is_galore_available():
 
 
 if TYPE_CHECKING:
-    from transformers import PreTrainedModel, Seq2SeqTrainingArguments
+    from transformers import PreTrainedModel, Seq2SeqTrainingArguments, TrainerCallback
     from trl import AutoModelForCausalLMWithValueHead
 
     from ..hparams import DataArguments
@@ -457,3 +457,24 @@ def get_batch_logps(
     labels[labels == label_pad_token_id] = 0  # dummy token
     per_token_logps = torch.gather(logits.log_softmax(-1), dim=2, index=labels.unsqueeze(2)).squeeze(2)
     return (per_token_logps * loss_mask).sum(-1), loss_mask.sum(-1)
+
+
+def get_swanlab_callback(finetuning_args: "FinetuningArguments") -> "TrainerCallback":
+    r"""
+    Gets the callback for logging to SwanLab.
+    """
+    import swanlab
+    from swanlab.integration.transformers import SwanLabCallback
+
+    if finetuning_args.swanlab_api_key is not None:
+        swanlab.login(api_key=finetuning_args.swanlab_api_key)
+
+    swanlab_callback = SwanLabCallback(
+        project=finetuning_args.swanlab_project,
+        workspace=finetuning_args.swanlab_workspace,
+        experiment_name=finetuning_args.swanlab_experiment_name,
+        mode=finetuning_args.swanlab_mode,
+        config={"Framework": "🦙LLaMA Factory"},
+    )
+
+    return swanlab_callback
