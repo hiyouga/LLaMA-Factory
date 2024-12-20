@@ -273,7 +273,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     with gr.Accordion(open=False) as swanlab_tab:
         with gr.Row():
             use_swanlab = gr.Checkbox()
-            swanlab_project = gr.Textbox(value="LLaMA-Factory", placeholder="Project name", interactive=True)
+            swanlab_project = gr.Textbox(value="llamafactory", placeholder="Project name", interactive=True)
             swanlab_experiment_name = gr.Textbox(value="", placeholder="Experiment name", interactive=True)
             swanlab_workspace = gr.Textbox(value="", placeholder="Workspace name", interactive=True)
             swanlab_api_key = gr.Textbox(value="", placeholder="API key", interactive=True)
