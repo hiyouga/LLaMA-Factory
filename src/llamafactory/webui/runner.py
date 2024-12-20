@@ -235,7 +235,6 @@ class Runner:
             args["swanlab_project"] = get("train.swanlab_project")
             args["swanlab_workspace"] = get("train.swanlab_workspace")
             args["swanlab_experiment_name"] = get("train.swanlab_experiment_name")
-            args["swanlab_description"] = get("train.swanlab_description")
             args["swanlab_mode"] = get("train.swanlab_mode")
             
 

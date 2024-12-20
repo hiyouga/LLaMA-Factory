@@ -322,11 +322,7 @@ class SwanLabArguments:
         default=None,
         metadata={"help": "The experiment name in SwanLab."},
     )
-    swanlab_description: str = field(
-        default=None,
-        metadata={"help": "The experiment description in SwanLab."},
-    )
-    swanlab_mode: Literal["cloud", "local", "disabled"] = field(
+    swanlab_mode: Literal["cloud", "local"] = field(
         default="cloud",
         metadata={"help": "The mode of SwanLab."},
     )
