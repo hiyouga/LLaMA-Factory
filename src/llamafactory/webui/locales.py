@@ -1438,7 +1438,7 @@ LOCALES = {
     },
     "swanlab_experiment_name": {
         "en": {
-            "label": "Experiment_name(optional)",
+            "label": "Experiment name (optional)",
         },
         "ru": {
             "label": "Имя эксперимента(Необязательный)",
