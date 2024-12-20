@@ -308,10 +308,10 @@ class BAdamArgument:
 class SwanLabArguments:
     use_swanlab: bool = field(
         default=False,
-        metadata={"help": "Whether or not to use the SwanLab (an experiment tracking and visualization tools)."},
+        metadata={"help": "Whether or not to use the SwanLab (an experiment tracking and visualization tool)."},
     )
     swanlab_project: str = field(
-        default=None,
+        default="LLaMA Factory",
         metadata={"help": "The project name in SwanLab."},
     )
     swanlab_workspace: str = field(
