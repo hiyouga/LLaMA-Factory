@@ -175,6 +175,7 @@ def _setup_lora_tuning(
             "cache_dir": model_args.cache_dir,
             "revision": model_args.model_revision,
             "token": model_args.hf_hub_token,
+            "torch_device": 'cpu',
         }
 
         for adapter in adapter_to_merge:
