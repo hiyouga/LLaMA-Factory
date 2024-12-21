@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from dataclasses import dataclass, field
-from typing import List, Literal, Optional
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, List, Literal, Optional
 
 
 @dataclass
@@ -318,7 +318,7 @@ class SwanLabArguments:
         default=None,
         metadata={"help": "The workspace name in SwanLab."},
     )
-    swanlab_experiment_name: str = field(
+    swanlab_run_name: str = field(
         default=None,
         metadata={"help": "The experiment name in SwanLab."},
     )
@@ -440,3 +440,8 @@ class FinetuningArguments(
 
             if self.pissa_init:
                 raise ValueError("`pissa_init` is only valid for LoRA training.")
+
+    def to_dict(self) -> Dict[str, Any]:
+        args = asdict(self)
+        args = {k: f"<{k.upper()}>" if k.endswith("api_key") else v for k, v in args.items()}
+        return args

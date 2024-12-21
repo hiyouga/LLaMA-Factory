@@ -1119,7 +1119,7 @@ LOCALES = {
             "info": "Нормализация оценок в тренировке PPO.",
         },
         "zh": {
-            "label": "奖励模型",
+            "label": "归一化分数",
             "info": "PPO 训练中归一化奖励分数。",
         },
         "ko": {
@@ -1385,86 +1385,85 @@ LOCALES = {
             "info": "SwanLab를 사용하여 실험을 추적하고 시각화합니다.",
         },
     },
-    "swanlab_api_key": {
-        "en": {
-            "label": "API Key(optional)",
-            "info": "API key for SwanLab. Once logged in, no need to login again in the programming environment.",
-        },
-        "ru": {
-            "label": "API ключ(Необязательный)",
-            "info": "API ключ для SwanLab. После входа в программное окружение, нет необходимости входить снова.",
-        },
-        "zh": {
-            "label": "API密钥(选填)",
-            "info": "用于在编程环境登录SwanLab，已登录则无需填写。",
-        },
-        "ko": {
-            "label": "API 키(선택 사항)",
-            "info": "SwanLab의 API 키. 프로그래밍 환경에 로그인한 후 다시 로그인할 필요가 없습니다.",
-        },
-    },
     "swanlab_project": {
         "en": {
-            "label": "Project(optional)",
+            "label": "SwanLab project",
         },
         "ru": {
-            "label": "Проект(Необязательный)",
+            "label": "SwanLab Проект",
         },
         "zh": {
-            "label": "项目(选填)",
+            "label": "SwanLab 项目名",
         },
         "ko": {
-            "label": "프로젝트(선택 사항)",
+            "label": "SwanLab 프로젝트",
+        },
+    },
+    "swanlab_run_name": {
+        "en": {
+            "label": "SwanLab experiment name (optional)",
+        },
+        "ru": {
+            "label": "SwanLab Имя эксперимента (опционально)",
+        },
+        "zh": {
+            "label": "SwanLab 实验名（非必填）",
+        },
+        "ko": {
+            "label": "SwanLab 실험 이름 (선택 사항)",
         },
     },
     "swanlab_workspace": {
         "en": {
-            "label": "Workspace(optional)",
-            "info": "Workspace for SwanLab. If not filled, it defaults to the personal workspace.",
-            
+            "label": "SwanLab workspace (optional)",
+            "info": "Workspace for SwanLab. Defaults to the personal workspace.",
         },
         "ru": {
-            "label": "Рабочая область(Необязательный)",
+            "label": "SwanLab Рабочая область (опционально)",
             "info": "Рабочая область SwanLab, если не заполнено, то по умолчанию в личной рабочей области.",
         },
         "zh": {
-            "label": "Workspace(选填)",
-            "info": "SwanLab组织的工作区，如不填写则默认在个人工作区下",
+            "label": "SwanLab 工作区（非必填）",
+            "info": "SwanLab 的工作区，默认在个人工作区下。",
         },
         "ko": {
-            "label": "작업 영역(선택 사항)",
+            "label": "SwanLab 작업 영역 (선택 사항)",
             "info": "SwanLab 조직의 작업 영역, 비어 있으면 기본적으로 개인 작업 영역에 있습니다.",
         },
     },
-    "swanlab_experiment_name": {
+    "swanlab_api_key": {
         "en": {
-            "label": "Experiment name (optional)",
+            "label": "SwanLab API key (optional)",
+            "info": "API key for SwanLab.",
         },
         "ru": {
-            "label": "Имя эксперимента(Необязательный)",
+            "label": "SwanLab API ключ (опционально)",
+            "info": "API ключ для SwanLab.",
         },
         "zh": {
-            "label": "实验名(选填)  ",
+            "label": "SwanLab API密钥（非必填）",
+            "info": "用于在编程环境登录 SwanLab，已登录则无需填写。",
         },
         "ko": {
-            "label": "실험 이름(선택 사항)",
+            "label": "SwanLab API 키 (선택 사항)",
+            "info": "SwanLab의 API 키.",
         },
     },
     "swanlab_mode": {
         "en": {
-            "label": "Mode",
-            "info": "Cloud or offline version.",    
+            "label": "SwanLab mode",
+            "info": "Cloud or offline version.",
         },
         "ru": {
-            "label": "Режим",
+            "label": "SwanLab Режим",
             "info": "Версия в облаке или локальная версия.",
         },
         "zh": {
-            "label": "模式",
-            "info": "云端版或离线版",
+            "label": "SwanLab 模式",
+            "info": "使用云端版或离线版 SwanLab。",
         },
         "ko": {
-            "label": "모드",
+            "label": "SwanLab 모드",
             "info": "클라우드 버전 또는 오프라인 버전.",
         },
     },
