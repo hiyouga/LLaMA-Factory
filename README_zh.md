@@ -55,6 +55,7 @@ https://github.com/user-attachments/assets/e6ce34b0-52d5-4f3e-a830-592106c4c272
   - [从魔搭社区下载](#从魔搭社区下载)
   - [从魔乐社区下载](#从魔乐社区下载)
   - [使用 W&B 面板](#使用-wb-面板)
+  - [使用 SwanLab 面板](#使用-swanlab-面板)
 - [使用了 LLaMA Factory 的项目](#使用了-llama-factory-的项目)
 - [协议](#协议)
 - [引用](#引用)
@@ -67,7 +68,7 @@ https://github.com/user-attachments/assets/e6ce34b0-52d5-4f3e-a830-592106c4c272
 - **多种精度**：16 比特全参数微调、冻结微调、LoRA 微调和基于 AQLM/AWQ/GPTQ/LLM.int8/HQQ/EETQ 的 2/3/4/5/6/8 比特 QLoRA 微调。
 - **先进算法**：[GaLore](https://github.com/jiaweizzhao/GaLore)、[BAdam](https://github.com/Ledzy/BAdam)、[Adam-mini](https://github.com/zyushun/Adam-mini)、DoRA、LongLoRA、LLaMA Pro、Mixture-of-Depths、LoRA+、LoftQ、PiSSA 和 Agent 微调。
 - **实用技巧**：[FlashAttention-2](https://github.com/Dao-AILab/flash-attention)、[Unsloth](https://github.com/unslothai/unsloth)、[Liger Kernel](https://github.com/linkedin/Liger-Kernel)、RoPE scaling、NEFTune 和 rsLoRA。
-- **实验监控**：LlamaBoard、TensorBoard、Wandb、MLflow 等等。
+- **实验监控**：LlamaBoard、TensorBoard、Wandb、MLflow、SwanLab 等等。
 - **极速推理**：基于 vLLM 的 OpenAI 风格 API、浏览器界面和命令行接口。
 
 ## 性能指标
@@ -86,6 +87,8 @@ https://github.com/user-attachments/assets/e6ce34b0-52d5-4f3e-a830-592106c4c272
 </details>
 
 ## 更新日志
+
+[24/12/21] 我们支持了 **[SwanLab](https://github.com/SwanHubX/SwanLab)** 跟踪与可视化实验。详细用法请参考 [此部分](#使用-wb-面板)。 
 
 [24/11/27] 我们支持了 **[Skywork-o1](https://huggingface.co/Skywork/Skywork-o1-Open-Llama-3.1-8B)** 模型的微调和 **[OpenO1](https://huggingface.co/datasets/O1-OPEN/OpenO1-SFT)** 数据集。
 
@@ -633,6 +636,23 @@ run_name: test_run # 可选
 ```
 
 在启动训练任务时，将 `WANDB_API_KEY` 设置为[密钥](https://wandb.ai/authorize)来登录 W&B 账户。
+
+### 使用 SwanLab 面板
+
+若要使用 [SwanLab](https://github.com/SwanHubX/SwanLab) 记录实验数据，请在 yaml 文件中添加下面的参数。
+
+```yaml
+use_swanlab: true
+swanlab_project: test_run # 可选
+swanlab_experiment_name: test_experiment # 可选
+```
+
+在启动训练任务时，登录SwanLab账户有以下三种方式：
+
+方式一：在 yaml 文件中添加 `swanlab_api_key=<your_api_key>` ，并设置为你的 [API 密钥](https://swanlab.cn/settings)。
+方式二：将环境变量 `SWANLAB_API_KEY` 设置为你的 [API 密钥](https://swanlab.cn/settings)。
+方式三：启动前使用 `swanlab login` 命令完成登录。
+
 
 ## 使用了 LLaMA Factory 的项目
 
