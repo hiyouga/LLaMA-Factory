@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from dataclasses import dataclass, field
-from typing import Literal, Optional
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, Literal, Optional
 
 
 @dataclass
@@ -161,3 +161,6 @@ class DataArguments:
 
         if self.mask_history and self.train_on_prompt:
             raise ValueError("`mask_history` is incompatible with `train_on_prompt`.")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
