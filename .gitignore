@@ -171,4 +171,5 @@ config/
 saves/
 output/
 wandb/
+swanlog/
 generated_predictions.jsonl

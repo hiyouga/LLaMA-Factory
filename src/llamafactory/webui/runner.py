@@ -231,12 +231,11 @@ class Runner:
 
         # swanlab config
         if get("train.use_swanlab"):
-            args["swanlab_api_key"] = get("train.swanlab_api_key")
             args["swanlab_project"] = get("train.swanlab_project")
+            args["swanlab_run_name"] = get("train.swanlab_run_name")
             args["swanlab_workspace"] = get("train.swanlab_workspace")
-            args["swanlab_experiment_name"] = get("train.swanlab_experiment_name")
+            args["swanlab_api_key"] = get("train.swanlab_api_key")
             args["swanlab_mode"] = get("train.swanlab_mode")
-            
 
         # eval config
         if get("train.val_size") > 1e-6 and args["stage"] != "ppo":

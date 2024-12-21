@@ -16,7 +16,7 @@
 # limitations under the License.
 
 import json
-from dataclasses import dataclass, field, fields
+from dataclasses import asdict, dataclass, field, fields
 from typing import Any, Dict, Literal, Optional, Union
 
 import torch
@@ -344,3 +344,8 @@ class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments,
             setattr(result, name, value)
 
         return result
+
+    def to_dict(self) -> Dict[str, Any]:
+        args = asdict(self)
+        args = {k: f"<{k.upper()}>" if k.endswith("token") else v for k, v in args.items()}
+        return args
