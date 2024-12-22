@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, List, Optional
 
 from ...data import PairwiseDataCollatorWithPadding, get_dataset, get_template_and_fix_tokenizer
 from ...extras.constants import IGNORE_INDEX
+from ...extras.misc import calculate_tps
 from ...extras.ploting import plot_loss
 from ...hparams import ModelArguments
 from ...model import load_model, load_tokenizer
@@ -47,6 +48,7 @@ def run_dpo(
 
     data_collator = PairwiseDataCollatorWithPadding(
         template=template,
+        model=model,
         pad_to_multiple_of=8,
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
         **tokenizer_module,
@@ -80,6 +82,11 @@ def run_dpo(
     if training_args.do_train:
         train_result = trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
         trainer.save_model()
+        if finetuning_args.include_effective_tokens_per_second:
+            train_result.metrics["effective_tokens_per_sec"] = calculate_tps(
+                dataset_module["train_dataset"], train_result.metrics, stage="rm"
+            )
+
         trainer.log_metrics("train", train_result.metrics)
         trainer.save_metrics("train", train_result.metrics)
         trainer.save_state()

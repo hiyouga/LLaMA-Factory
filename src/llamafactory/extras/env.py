@@ -26,7 +26,7 @@ import trl
 from transformers.utils import is_torch_cuda_available, is_torch_npu_available
 
 
-VERSION = "0.9.1.dev0"
+VERSION = "0.9.2.dev0"
 
 
 def print_env() -> None:
@@ -72,4 +72,4 @@ def print_env() -> None:
     except Exception:
         pass
 
-    print("\n" + "\n".join(["- {}: {}".format(key, value) for key, value in info.items()]) + "\n")
+    print("\n" + "\n".join([f"- {key}: {value}" for key, value in info.items()]) + "\n")

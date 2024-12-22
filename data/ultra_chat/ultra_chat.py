@@ -20,9 +20,9 @@ _CITATION = """\
 }
 """
 
-_HOMEPAGE = "{}/datasets/stingning/ultrachat".format(_HF_ENDPOINT)
+_HOMEPAGE = f"{_HF_ENDPOINT}/datasets/stingning/ultrachat"
 _LICENSE = "cc-by-nc-4.0"
-_BASE_DATA_URL = "{}/datasets/stingning/ultrachat/resolve/main/train_{{idx}}.jsonl".format(_HF_ENDPOINT)
+_BASE_DATA_URL = f"{_HF_ENDPOINT}/datasets/stingning/ultrachat/resolve/main/train_{{idx}}.jsonl"
 
 
 class UltraChat(datasets.GeneratorBasedBuilder):
@@ -42,7 +42,7 @@ class UltraChat(datasets.GeneratorBasedBuilder):
 
     def _generate_examples(self, filepaths: List[str]):
         for filepath in filepaths:
-            with open(filepath, "r", encoding="utf-8") as f:
+            with open(filepath, encoding="utf-8") as f:
                 for row in f:
                     try:
                         data = json.loads(row)

@@ -16,15 +16,12 @@ import json
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import List, Optional, Union
 
 from typing_extensions import override
 
 from .data_utils import SLOTS
-from .tool_utils import get_tool_utils
-
-if TYPE_CHECKING:
-    from .tool_utils import FunctionCall
+from .tool_utils import FunctionCall, get_tool_utils
 
 
 @dataclass
@@ -82,14 +79,14 @@ class StringFormatter(Formatter):
             if isinstance(slot, str):
                 for name, value in kwargs.items():
                     if not isinstance(value, str):
-                        raise RuntimeError("Expected a string, got {}".format(value))
+                        raise RuntimeError(f"Expected a string, got {value}")
 
                     slot = slot.replace("{{" + name + "}}", value, 1)
                 elements.append(slot)
             elif isinstance(slot, (dict, set)):
                 elements.append(slot)
             else:
-                raise RuntimeError("Input must be string, set[str] or dict[str, str], got {}".format(type(slot)))
+                raise RuntimeError(f"Input must be string, set[str] or dict[str, str], got {type(slot)}")
 
         return elements
 
@@ -97,33 +94,31 @@ class StringFormatter(Formatter):
 @dataclass
 class FunctionFormatter(Formatter):
     def __post_init__(self):
-        self.slots = get_tool_utils(self.tool_format).get_function_slots() + self.slots
+        self.tool_utils = get_tool_utils(self.tool_format)
 
     @override
     def apply(self, **kwargs) -> SLOTS:
         content = kwargs.pop("content")
-        functions: List[Tuple[str, str]] = []
+        functions: List["FunctionCall"] = []
         try:
             tool_calls = json.loads(content)
             if not isinstance(tool_calls, list):  # parallel function call
                 tool_calls = [tool_calls]
 
             for tool_call in tool_calls:
-                functions.append((tool_call["name"], json.dumps(tool_call["arguments"], ensure_ascii=False)))
+                functions.append(
+                    FunctionCall(tool_call["name"], json.dumps(tool_call["arguments"], ensure_ascii=False))
+                )
 
         except json.JSONDecodeError:
-            raise RuntimeError("Invalid JSON format in function message: {}".format(str([content])))  # flat string
+            raise RuntimeError(f"Invalid JSON format in function message: {str([content])}")  # flat string
 
         elements = []
-        for name, arguments in functions:
-            for slot in self.slots:
-                if isinstance(slot, str):
-                    slot = slot.replace("{{name}}", name).replace("{{arguments}}", arguments)
-                    elements.append(slot)
-                elif isinstance(slot, (dict, set)):
-                    elements.append(slot)
-                else:
-                    raise RuntimeError("Input must be string, set[str] or dict[str, str], got {}".format(type(slot)))
+        for slot in self.slots:
+            if slot == "{{content}}":
+                elements += self.tool_utils.function_formatter(functions)
+            else:
+                elements.append(slot)
 
         return elements
 
@@ -185,7 +180,7 @@ class ToolFormatter(Formatter):
             tools = json.loads(content)
             return [self.tool_utils.tool_formatter(tools) if len(tools) != 0 else ""]
         except json.JSONDecodeError:
-            raise RuntimeError("Invalid JSON format in tool description: {}".format(str([content])))  # flat string
+            raise RuntimeError(f"Invalid JSON format in tool description: {str([content])}")  # flat string
 
     @override
     def extract(self, content: str) -> Union[str, List["FunctionCall"]]:

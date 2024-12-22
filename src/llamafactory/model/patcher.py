@@ -22,7 +22,7 @@ from transformers import PreTrainedModel, PreTrainedTokenizerBase, is_torch_npu_
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.modeling_utils import is_fsdp_enabled
 
-from ..extras.logging import get_logger
+from ..extras import logging
 from ..extras.misc import infer_optim_dtype
 from .model_utils.attention import configure_attn_implementation, print_attn_implementation
 from .model_utils.checkpointing import prepare_model_for_training
@@ -49,7 +49,7 @@ if TYPE_CHECKING:
     from ..hparams import ModelArguments
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 def patch_tokenizer(tokenizer: "PreTrainedTokenizer") -> None:
@@ -66,11 +66,11 @@ def patch_processor(
     setattr(processor, "tokenizer", tokenizer)
     setattr(processor, "image_seqlen", get_image_seqlen(config))
     setattr(processor, "image_resolution", model_args.image_resolution)
-    setattr(processor, "patch_size", get_patch_size(config))
+    setattr(processor, "patch_size", get_patch_size(config, processor))
     setattr(processor, "video_resolution", model_args.video_resolution)
     setattr(processor, "video_fps", model_args.video_fps)
     setattr(processor, "video_maxlen", model_args.video_maxlen)
-    setattr(processor, "vision_feature_select_strategy", get_vision_feature_select_strategy(config))
+    setattr(processor, "vision_feature_select_strategy", get_vision_feature_select_strategy(config, processor))
 
 
 def patch_config(
@@ -96,11 +96,11 @@ def patch_config(
     configure_quantization(config, tokenizer, model_args, init_kwargs)
     configure_moe(config, model_args, is_trainable)
     configure_visual_model(config)
-    configure_packing(config, model_args, is_trainable)
+    configure_packing(model_args, is_trainable)
 
     if model_args.use_cache and not is_trainable:
         setattr(config, "use_cache", True)
-        logger.info("Using KV cache for faster generation.")
+        logger.info_rank0("Using KV cache for faster generation.")
 
     if getattr(config, "model_type", None) == "qwen":
         setattr(config, "use_flash_attn", model_args.flash_attn == "fa2")
@@ -165,7 +165,7 @@ def patch_model(
     try:
         model.add_model_tags(["llama-factory"])
     except Exception:
-        logger.warning("Cannot properly tag the model.")
+        logger.warning_rank0("Cannot properly tag the model.")
 
 
 def patch_valuehead_model(model: "AutoModelForCausalLMWithValueHead") -> None:

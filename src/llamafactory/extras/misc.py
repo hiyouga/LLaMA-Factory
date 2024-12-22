@@ -17,9 +17,10 @@
 
 import gc
 import os
-from typing import TYPE_CHECKING, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Literal, Sequence, Tuple, Union
 
 import torch
+import torch.distributed as dist
 import transformers.dynamic_module_utils
 from transformers import InfNanRemoveLogitsProcessor, LogitsProcessorList
 from transformers.dynamic_module_utils import get_relative_imports
@@ -32,7 +33,7 @@ from transformers.utils import (
 )
 from transformers.utils.versions import require_version
 
-from .logging import get_logger
+from . import logging
 
 
 _is_fp16_available = is_torch_npu_available() or is_torch_cuda_available()
@@ -48,7 +49,7 @@ if TYPE_CHECKING:
     from ..hparams import ModelArguments
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 class AverageMeter:
@@ -76,14 +77,29 @@ def check_dependencies() -> None:
     r"""
     Checks the version of the required packages.
     """
-    if os.environ.get("DISABLE_VERSION_CHECK", "0").lower() in ["true", "1"]:
-        logger.warning("Version checking has been disabled, may lead to unexpected behaviors.")
+    if os.getenv("DISABLE_VERSION_CHECK", "0").lower() in ["true", "1"]:
+        logger.warning_once("Version checking has been disabled, may lead to unexpected behaviors.")
     else:
-        require_version("transformers>=4.41.2,<=4.45.2", "To fix: pip install transformers>=4.41.2,<=4.45.2")
-        require_version("datasets>=2.16.0,<=2.21.0", "To fix: pip install datasets>=2.16.0,<=2.21.0")
-        require_version("accelerate>=0.30.1,<=0.34.2", "To fix: pip install accelerate>=0.30.1,<=0.34.2")
+        require_version("transformers>=4.41.2,<=4.46.1", "To fix: pip install transformers>=4.41.2,<=4.46.1")
+        require_version("datasets>=2.16.0,<=3.1.0", "To fix: pip install datasets>=2.16.0,<=3.1.0")
+        require_version("accelerate>=0.34.0,<=1.0.1", "To fix: pip install accelerate>=0.34.0,<=1.0.1")
         require_version("peft>=0.11.1,<=0.12.0", "To fix: pip install peft>=0.11.1,<=0.12.0")
         require_version("trl>=0.8.6,<=0.9.6", "To fix: pip install trl>=0.8.6,<=0.9.6")
+
+
+def calculate_tps(dataset: Sequence[Dict[str, Any]], metrics: Dict[str, float], stage: Literal["sft", "rm"]) -> float:
+    r"""
+    Calculates effective tokens per second.
+    """
+    effective_token_num = 0
+    for data in dataset:
+        if stage == "sft":
+            effective_token_num += len(data["input_ids"])
+        elif stage == "rm":
+            effective_token_num += len(data["chosen_input_ids"]) + len(data["rejected_input_ids"])
+
+    result = effective_token_num * metrics["epoch"] / metrics["train_runtime"]
+    return result / dist.get_world_size() if dist.is_initialized() else result
 
 
 def count_parameters(model: "torch.nn.Module") -> Tuple[int, int]:
@@ -237,7 +253,7 @@ def try_download_model_from_other_hub(model_args: "ModelArguments") -> str:
 
     if use_modelscope():
         require_version("modelscope>=1.11.0", "To fix: pip install modelscope>=1.11.0")
-        from modelscope import snapshot_download
+        from modelscope import snapshot_download  # type: ignore
 
         revision = "master" if model_args.model_revision == "main" else model_args.model_revision
         return snapshot_download(
@@ -248,7 +264,7 @@ def try_download_model_from_other_hub(model_args: "ModelArguments") -> str:
 
     if use_openmind():
         require_version("openmind>=0.8.0", "To fix: pip install openmind>=0.8.0")
-        from openmind.utils.hub import snapshot_download
+        from openmind.utils.hub import snapshot_download  # type: ignore
 
         return snapshot_download(
             model_args.model_name_or_path,

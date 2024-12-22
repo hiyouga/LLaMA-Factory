@@ -20,29 +20,38 @@ import torch
 from transformers import PreTrainedModel
 
 from ..data import get_template_and_fix_tokenizer
+from ..extras import logging
 from ..extras.constants import V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
-from ..extras.logging import get_logger
 from ..hparams import get_infer_args, get_train_args
 from ..model import load_model, load_tokenizer
-from .callbacks import LogCallback
+from .callbacks import LogCallback, PissaConvertCallback, ReporterCallback
 from .dpo import run_dpo
 from .kto import run_kto
 from .ppo import run_ppo
 from .pt import run_pt
 from .rm import run_rm
 from .sft import run_sft
+from .trainer_utils import get_swanlab_callback
 
 
 if TYPE_CHECKING:
     from transformers import TrainerCallback
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: List["TrainerCallback"] = []) -> None:
     callbacks.append(LogCallback())
     model_args, data_args, training_args, finetuning_args, generating_args = get_train_args(args)
+
+    if finetuning_args.pissa_convert:
+        callbacks.append(PissaConvertCallback())
+
+    if finetuning_args.use_swanlab:
+        callbacks.append(get_swanlab_callback(finetuning_args))
+
+    callbacks.append(ReporterCallback(model_args, data_args, finetuning_args, generating_args))  # add to last
 
     if finetuning_args.stage == "pt":
         run_pt(model_args, data_args, training_args, finetuning_args, callbacks)
@@ -57,7 +66,7 @@ def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: List["TrainerCallb
     elif finetuning_args.stage == "kto":
         run_kto(model_args, data_args, training_args, finetuning_args, callbacks)
     else:
-        raise ValueError("Unknown task: {}.".format(finetuning_args.stage))
+        raise ValueError(f"Unknown task: {finetuning_args.stage}.")
 
 
 def export_model(args: Optional[Dict[str, Any]] = None) -> None:
@@ -91,18 +100,18 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
 
         setattr(model.config, "torch_dtype", output_dtype)
         model = model.to(output_dtype)
-        logger.info("Convert model dtype to: {}.".format(output_dtype))
+        logger.info_rank0(f"Convert model dtype to: {output_dtype}.")
 
     model.save_pretrained(
         save_directory=model_args.export_dir,
-        max_shard_size="{}GB".format(model_args.export_size),
+        max_shard_size=f"{model_args.export_size}GB",
         safe_serialization=(not model_args.export_legacy_format),
     )
     if model_args.export_hub_model_id is not None:
         model.push_to_hub(
             model_args.export_hub_model_id,
             token=model_args.hf_hub_token,
-            max_shard_size="{}GB".format(model_args.export_size),
+            max_shard_size=f"{model_args.export_size}GB",
             safe_serialization=(not model_args.export_legacy_format),
         )
 
@@ -117,13 +126,13 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
                 os.path.join(vhead_path, V_HEAD_SAFE_WEIGHTS_NAME),
                 os.path.join(model_args.export_dir, V_HEAD_SAFE_WEIGHTS_NAME),
             )
-            logger.info("Copied valuehead to {}.".format(model_args.export_dir))
+            logger.info_rank0(f"Copied valuehead to {model_args.export_dir}.")
         elif os.path.exists(os.path.join(vhead_path, V_HEAD_WEIGHTS_NAME)):
             shutil.copy(
                 os.path.join(vhead_path, V_HEAD_WEIGHTS_NAME),
                 os.path.join(model_args.export_dir, V_HEAD_WEIGHTS_NAME),
             )
-            logger.info("Copied valuehead to {}.".format(model_args.export_dir))
+            logger.info_rank0(f"Copied valuehead to {model_args.export_dir}.")
 
     try:
         tokenizer.padding_side = "left"  # restore padding side
@@ -133,11 +142,9 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
             tokenizer.push_to_hub(model_args.export_hub_model_id, token=model_args.hf_hub_token)
 
         if processor is not None:
-            getattr(processor, "image_processor").save_pretrained(model_args.export_dir)
+            processor.save_pretrained(model_args.export_dir)
             if model_args.export_hub_model_id is not None:
-                getattr(processor, "image_processor").push_to_hub(
-                    model_args.export_hub_model_id, token=model_args.hf_hub_token
-                )
+                processor.push_to_hub(model_args.export_hub_model_id, token=model_args.hf_hub_token)
 
     except Exception as e:
-        logger.warning("Cannot save tokenizer, please copy the files manually: {}.".format(e))
+        logger.warning_rank0(f"Cannot save tokenizer, please copy the files manually: {e}.")

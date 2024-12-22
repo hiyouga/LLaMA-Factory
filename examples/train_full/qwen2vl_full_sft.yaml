@@ -1,16 +1,19 @@
 ### model
 model_name_or_path: Qwen/Qwen2-VL-7B-Instruct
+trust_remote_code: true
 
 ### method
 stage: sft
 do_train: true
 finetuning_type: full
-deepspeed: examples/deepspeed/ds_z3_config.json
+freeze_vision_tower: true  # choices: [true, false]
+train_mm_proj_only: false  # choices: [true, false]
+deepspeed: examples/deepspeed/ds_z3_config.json  # choices: [ds_z0_config.json, ds_z2_config.json, ds_z3_config.json]
 
 ### dataset
-dataset: mllm_demo,identity
+dataset: mllm_demo,identity,alpaca_en_demo
 template: qwen2_vl
-cutoff_len: 1024
+cutoff_len: 2048
 max_samples: 1000
 overwrite_cache: true
 preprocessing_num_workers: 16
@@ -26,7 +29,7 @@ overwrite_output_dir: true
 per_device_train_batch_size: 1
 gradient_accumulation_steps: 2
 learning_rate: 1.0e-5
-num_train_epochs: 3.0
+num_train_epochs: 30.0
 lr_scheduler_type: cosine
 warmup_ratio: 0.1
 bf16: true

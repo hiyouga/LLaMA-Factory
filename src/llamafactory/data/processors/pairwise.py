@@ -15,8 +15,8 @@
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
+from ...extras import logging
 from ...extras.constants import IGNORE_INDEX
-from ...extras.logging import get_logger
 from .processor_utils import infer_seqlen
 
 
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from ..template import Template
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 def _encode_pairwise_example(
@@ -77,7 +77,9 @@ def preprocess_pairwise_dataset(
     model_inputs = defaultdict(list)
     for i in range(len(examples["_prompt"])):
         if len(examples["_prompt"][i]) % 2 != 1 or len(examples["_response"][i]) < 2:
-            logger.warning("Dropped invalid example: {}".format(examples["_prompt"][i] + examples["_response"][i]))
+            logger.warning_rank0(
+                "Dropped invalid example: {}".format(examples["_prompt"][i] + examples["_response"][i])
+            )
             continue
 
         chosen_input_ids, chosen_labels, rejected_input_ids, rejected_labels = _encode_pairwise_example(
@@ -110,8 +112,8 @@ def print_pairwise_dataset_example(example: Dict[str, List[int]], tokenizer: "Pr
     print("chosen_input_ids:\n{}".format(example["chosen_input_ids"]))
     print("chosen_inputs:\n{}".format(tokenizer.decode(example["chosen_input_ids"], skip_special_tokens=False)))
     print("chosen_label_ids:\n{}".format(example["chosen_labels"]))
-    print("chosen_labels:\n{}".format(tokenizer.decode(valid_chosen_labels, skip_special_tokens=False)))
+    print(f"chosen_labels:\n{tokenizer.decode(valid_chosen_labels, skip_special_tokens=False)}")
     print("rejected_input_ids:\n{}".format(example["rejected_input_ids"]))
     print("rejected_inputs:\n{}".format(tokenizer.decode(example["rejected_input_ids"], skip_special_tokens=False)))
     print("rejected_label_ids:\n{}".format(example["rejected_labels"]))
-    print("rejected_labels:\n{}".format(tokenizer.decode(valid_rejected_labels, skip_special_tokens=False)))
+    print(f"rejected_labels:\n{tokenizer.decode(valid_rejected_labels, skip_special_tokens=False)}")

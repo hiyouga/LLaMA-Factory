@@ -19,7 +19,16 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, Literal, Optional, Sequence
 
 import torch
+import torch.nn.functional as F
 from transformers import DataCollatorForSeq2Seq, DefaultDataCollator, default_data_collator, PreTrainedTokenizerBase
+
+from ..extras.constants import IGNORE_INDEX, IMAGE_PLACEHOLDER
+from ..extras.packages import is_pillow_available
+
+
+if is_pillow_available():
+    from PIL import Image
+
 
 if TYPE_CHECKING:
     from transformers import ProcessorMixin
@@ -71,14 +80,18 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
     r"""
     Data collator that supports VLMs.
 
-    Features should contain input_ids, attention_mask, labels and images.
+    Features should contain input_ids, attention_mask, labels, and optionally contain images and videos.
     """
 
     template: Optional["Template"] = None
     processor: Optional["ProcessorMixin"] = None
 
+    def __post_init__(self):
+        if self.template is None:
+            raise ValueError("Template is required for MultiModalDataCollator.")
+
     def __call__(self, features: Sequence[Dict[str, Any]]) -> Dict[str, "torch.Tensor"]:
-        batch_images, batch_videos, batch_imglens, batch_vidlens, batch_seqlens = [], [], [], [], []
+        batch_images, batch_videos, batch_imglens, batch_vidlens, batch_input_ids = [], [], [], [], []
         for feature in features:
             images = feature.pop("images", None) or []
             videos = feature.pop("videos", None) or []
@@ -86,10 +99,27 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             batch_videos.extend(videos)
             batch_imglens.append(len(images))
             batch_vidlens.append(len(videos))
-            batch_seqlens.append(len(feature["input_ids"]))
+            batch_input_ids.append(feature["input_ids"])
+
+        if self.processor is not None and sum(batch_imglens) == 0:  # avoid process hanging in zero3/fsdp case
+            fake_messages = [{"role": "user", "content": IMAGE_PLACEHOLDER}]
+            fake_images = [Image.new("RGB", (64, 64), (255, 255, 255))]
+            fake_messages = self.template.mm_plugin.process_messages(fake_messages, fake_images, [], self.processor)
+            fake_input_ids = self.processor.tokenizer.encode(fake_messages[0]["content"], add_special_tokens=False)
+            if self.tokenizer.padding_side == "right":
+                features[0]["input_ids"] = features[0]["input_ids"] + fake_input_ids
+                features[0]["attention_mask"] = features[0]["attention_mask"] + [0] * len(fake_input_ids)
+                features[0]["labels"] = features[0]["labels"] + [IGNORE_INDEX] * len(fake_input_ids)
+            else:
+                features[0]["input_ids"] = fake_input_ids + features[0]["input_ids"]
+                features[0]["attention_mask"] = [0] * len(fake_input_ids) + features[0]["attention_mask"]
+                features[0]["labels"] = [IGNORE_INDEX] * len(fake_input_ids) + features[0]["labels"]
+
+            batch_images = fake_images
+            batch_input_ids[0] = features[0]["input_ids"]
 
         mm_inputs = self.template.mm_plugin.get_mm_inputs(
-            batch_images, batch_videos, batch_imglens, batch_vidlens, batch_seqlens, self.processor
+            batch_images, batch_videos, batch_imglens, batch_vidlens, batch_input_ids, self.processor
         )
         if "token_type_ids" in mm_inputs:
             token_type_ids = mm_inputs.pop("token_type_ids")
@@ -97,7 +127,25 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                 feature["token_type_ids"] = token_type_ids[i]
 
         features: Dict[str, "torch.Tensor"] = super().__call__(features)
+
+        if self.model is not None and hasattr(self.model, "get_rope_index"):  # for qwen2vl mrope
+            features["position_ids"], features["rope_deltas"] = self.model.get_rope_index(
+                input_ids=features["input_ids"],
+                image_grid_thw=mm_inputs.get("image_grid_thw", None),
+                video_grid_thw=mm_inputs.get("video_grid_thw", None),
+                attention_mask=features["attention_mask"],
+            )
+
+        if "cross_attention_mask" in mm_inputs:  # for mllama inputs when pad_to_multiple_of is enabled
+            cross_attention_mask = mm_inputs.pop("cross_attention_mask")
+            seq_len = features["input_ids"].size(1)
+            orig_len = cross_attention_mask.size(1)
+            mm_inputs["cross_attention_mask"] = F.pad(cross_attention_mask, (0, 0, 0, 0, 0, seq_len - orig_len))
+
         features.update(mm_inputs)
+        if isinstance(features.get("pixel_values"), list):  # for pixtral inputs
+            features = features.data  # use default_collate() instead of BatchEncoding.to()
+
         return features
 
 
@@ -172,9 +220,9 @@ class PairwiseDataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
         for key in ("chosen", "rejected"):
             for feature in features:
                 target_feature = {
-                    "input_ids": feature["{}_input_ids".format(key)],
-                    "attention_mask": feature["{}_attention_mask".format(key)],
-                    "labels": feature["{}_labels".format(key)],
+                    "input_ids": feature[f"{key}_input_ids"],
+                    "attention_mask": feature[f"{key}_attention_mask"],
+                    "labels": feature[f"{key}_labels"],
                     "images": feature["images"],
                     "videos": feature["videos"],
                 }

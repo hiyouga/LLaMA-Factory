@@ -18,7 +18,7 @@ import torch
 from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForVision2Seq, AutoProcessor, AutoTokenizer
 from trl import AutoModelForCausalLMWithValueHead
 
-from ..extras.logging import get_logger
+from ..extras import logging
 from ..extras.misc import count_parameters, skip_check_imports, try_download_model_from_other_hub
 from .adapter import init_adapter
 from .model_utils.liger_kernel import apply_liger_kernel
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from ..hparams import FinetuningArguments, ModelArguments
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 class TokenizerModule(TypedDict):
@@ -52,7 +52,7 @@ def _get_init_kwargs(model_args: "ModelArguments") -> Dict[str, Any]:
     skip_check_imports()
     model_args.model_name_or_path = try_download_model_from_other_hub(model_args)
     return {
-        "trust_remote_code": True,
+        "trust_remote_code": model_args.trust_remote_code,
         "cache_dir": model_args.cache_dir,
         "revision": model_args.model_revision,
         "token": model_args.hf_hub_token,
@@ -90,17 +90,17 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
             dict(additional_special_tokens=model_args.new_special_tokens),
             replace_additional_special_tokens=False,
         )
-        logger.info("Add {} to special tokens.".format(",".join(model_args.new_special_tokens)))
+        logger.info_rank0("Add {} to special tokens.".format(",".join(model_args.new_special_tokens)))
         if num_added_tokens > 0 and not model_args.resize_vocab:
             model_args.resize_vocab = True
-            logger.warning("New tokens have been added, changed `resize_vocab` to True.")
+            logger.warning_rank0("New tokens have been added, changed `resize_vocab` to True.")
 
     patch_tokenizer(tokenizer)
     try:
         processor = AutoProcessor.from_pretrained(model_args.model_name_or_path, **init_kwargs)
         patch_processor(processor, config, tokenizer, model_args)
     except Exception as e:
-        logger.warning("Processor was not found: {}.".format(e))
+        logger.debug(f"Processor was not found: {e}.")
         processor = None
 
     # Avoid load tokenizer, see:
@@ -153,8 +153,9 @@ def load_model(
                 load_class = AutoModelForVision2Seq
             else:
                 load_class = AutoModelForCausalLM
+
             if model_args.train_from_scratch:
-                model = load_class.from_config(config)
+                model = load_class.from_config(config, trust_remote_code=model_args.trust_remote_code)
             else:
                 model = load_class.from_pretrained(**init_kwargs)
 
@@ -179,7 +180,7 @@ def load_model(
         vhead_params = load_valuehead_params(vhead_path, model_args)
         if vhead_params is not None:
             model.load_state_dict(vhead_params, strict=False)
-            logger.info("Loaded valuehead from checkpoint: {}".format(vhead_path))
+            logger.info_rank0(f"Loaded valuehead from checkpoint: {vhead_path}")
 
     if not is_trainable:
         model.requires_grad_(False)
@@ -197,9 +198,9 @@ def load_model(
             trainable_params, all_param, 100 * trainable_params / all_param
         )
     else:
-        param_stats = "all params: {:,}".format(all_param)
+        param_stats = f"all params: {all_param:,}"
 
-    logger.info(param_stats)
+    logger.info_rank0(param_stats)
 
     if model_args.print_param_status:
         for name, param in model.named_parameters():

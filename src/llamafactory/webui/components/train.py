@@ -68,7 +68,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     )
 
     with gr.Row():
-        cutoff_len = gr.Slider(minimum=4, maximum=131072, value=1024, step=1)
+        cutoff_len = gr.Slider(minimum=4, maximum=131072, value=2048, step=1)
         batch_size = gr.Slider(minimum=1, maximum=1024, value=2, step=1)
         gradient_accumulation_steps = gr.Slider(minimum=1, maximum=1024, value=8, step=1)
         val_size = gr.Slider(minimum=0, maximum=1, value=0, step=0.001)
@@ -91,7 +91,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             save_steps = gr.Slider(minimum=10, maximum=5000, value=100, step=10)
             warmup_steps = gr.Slider(minimum=0, maximum=5000, value=0, step=1)
             neftune_alpha = gr.Slider(minimum=0, maximum=10, value=0, step=0.1)
-            optim = gr.Textbox(value="adamw_torch")
+            extra_args = gr.Textbox(value='{"optim": "adamw_torch"}')
 
         with gr.Row():
             with gr.Column():
@@ -116,7 +116,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             save_steps,
             warmup_steps,
             neftune_alpha,
-            optim,
+            extra_args,
             packing,
             neat_packing,
             train_on_prompt,
@@ -134,7 +134,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             save_steps=save_steps,
             warmup_steps=warmup_steps,
             neftune_alpha=neftune_alpha,
-            optim=optim,
+            extra_args=extra_args,
             packing=packing,
             neat_packing=neat_packing,
             train_on_prompt=train_on_prompt,
@@ -267,6 +267,30 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             badam_switch_mode=badam_switch_mode,
             badam_switch_interval=badam_switch_interval,
             badam_update_ratio=badam_update_ratio,
+        )
+    )
+
+    with gr.Accordion(open=False) as swanlab_tab:
+        with gr.Row():
+            use_swanlab = gr.Checkbox()
+            swanlab_project = gr.Textbox(value="llamafactory")
+            swanlab_run_name = gr.Textbox()
+            swanlab_workspace = gr.Textbox()
+            swanlab_api_key = gr.Textbox()
+            swanlab_mode = gr.Dropdown(choices=["cloud", "local"], value="cloud")
+
+    input_elems.update(
+        {use_swanlab, swanlab_project, swanlab_run_name, swanlab_workspace, swanlab_api_key, swanlab_mode}
+    )
+    elem_dict.update(
+        dict(
+            swanlab_tab=swanlab_tab,
+            use_swanlab=use_swanlab,
+            swanlab_project=swanlab_project,
+            swanlab_run_name=swanlab_run_name,
+            swanlab_workspace=swanlab_workspace,
+            swanlab_api_key=swanlab_api_key,
+            swanlab_mode=swanlab_mode,
         )
     )
 

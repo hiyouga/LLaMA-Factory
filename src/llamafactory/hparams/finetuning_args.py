@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from dataclasses import dataclass, field
-from typing import List, Literal, Optional
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, List, Literal, Optional
 
 
 @dataclass
@@ -305,7 +305,37 @@ class BAdamArgument:
 
 
 @dataclass
-class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments, BAdamArgument):
+class SwanLabArguments:
+    use_swanlab: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use the SwanLab (an experiment tracking and visualization tool)."},
+    )
+    swanlab_project: str = field(
+        default="llamafactory",
+        metadata={"help": "The project name in SwanLab."},
+    )
+    swanlab_workspace: str = field(
+        default=None,
+        metadata={"help": "The workspace name in SwanLab."},
+    )
+    swanlab_run_name: str = field(
+        default=None,
+        metadata={"help": "The experiment name in SwanLab."},
+    )
+    swanlab_mode: Literal["cloud", "local"] = field(
+        default="cloud",
+        metadata={"help": "The mode of SwanLab."},
+    )
+    swanlab_api_key: str = field(
+        default=None,
+        metadata={"help": "The API key for SwanLab."},
+    )
+
+
+@dataclass
+class FinetuningArguments(
+    FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments, BAdamArgument, SwanLabArguments
+):
     r"""
     Arguments pertaining to which techniques we are going to fine-tuning with.
     """
@@ -342,9 +372,17 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         default=False,
         metadata={"help": "Whether or not to compute the token-level accuracy at evaluation."},
     )
+    disable_shuffling: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to disable the shuffling of the training set."},
+    )
     plot_loss: bool = field(
         default=False,
         metadata={"help": "Whether or not to save the training loss curves."},
+    )
+    include_effective_tokens_per_second: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to compute effective tokens per second."},
     )
 
     def __post_init__(self):
@@ -402,3 +440,8 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
 
             if self.pissa_init:
                 raise ValueError("`pissa_init` is only valid for LoRA training.")
+
+    def to_dict(self) -> Dict[str, Any]:
+        args = asdict(self)
+        args = {k: f"<{k.upper()}>" if k.endswith("api_key") else v for k, v in args.items()}
+        return args

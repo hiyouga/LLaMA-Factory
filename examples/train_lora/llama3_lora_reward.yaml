@@ -1,5 +1,6 @@
 ### model
 model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
+trust_remote_code: true
 
 ### method
 stage: rm
@@ -10,7 +11,7 @@ lora_target: all
 ### dataset
 dataset: dpo_en_demo
 template: llama3
-cutoff_len: 1024
+cutoff_len: 2048
 max_samples: 1000
 overwrite_cache: true
 preprocessing_num_workers: 16

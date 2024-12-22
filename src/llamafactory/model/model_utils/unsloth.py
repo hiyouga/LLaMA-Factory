@@ -14,7 +14,7 @@
 
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
-from ...extras.logging import get_logger
+from ...extras import logging
 from ...extras.misc import get_current_device
 
 
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from ...hparams import ModelArguments
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 def _get_unsloth_kwargs(
@@ -39,7 +39,7 @@ def _get_unsloth_kwargs(
         "device_map": {"": get_current_device()},
         "rope_scaling": getattr(config, "rope_scaling", None),
         "fix_tokenizer": False,
-        "trust_remote_code": True,
+        "trust_remote_code": model_args.trust_remote_code,
         "use_gradient_checkpointing": "unsloth",
     }
 
@@ -56,7 +56,7 @@ def load_unsloth_pretrained_model(
     try:
         model, _ = FastLanguageModel.from_pretrained(**unsloth_kwargs)
     except NotImplementedError:
-        logger.warning("Unsloth does not support model type {}.".format(getattr(config, "model_type", None)))
+        logger.warning_rank0("Unsloth does not support model type {}.".format(getattr(config, "model_type", None)))
         model = None
         model_args.use_unsloth = False
 

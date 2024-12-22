@@ -19,14 +19,14 @@ from typing import TYPE_CHECKING
 import torch
 from transformers.integrations import is_deepspeed_zero3_enabled
 
-from ...extras.logging import get_logger
+from ...extras import logging
 
 
 if TYPE_CHECKING:
     from transformers import PreTrainedModel, PreTrainedTokenizer
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 def _noisy_mean_initialization(embed_weight: "torch.Tensor", num_new_tokens: int) -> None:
@@ -69,4 +69,4 @@ def resize_embedding_layer(model: "PreTrainedModel", tokenizer: "PreTrainedToken
             _noisy_mean_initialization(model.get_input_embeddings().weight.data, num_new_tokens)
             _noisy_mean_initialization(model.get_output_embeddings().weight.data, num_new_tokens)
 
-        logger.info("Resized token embeddings from {} to {}.".format(current_embedding_size, new_embedding_size))
+        logger.info_rank0(f"Resized token embeddings from {current_embedding_size} to {new_embedding_size}.")

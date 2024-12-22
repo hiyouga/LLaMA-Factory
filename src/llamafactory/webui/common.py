@@ -19,6 +19,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from yaml import safe_dump, safe_load
 
+from ..extras import logging
 from ..extras.constants import (
     CHECKPOINT_NAMES,
     DATA_CONFIG,
@@ -30,7 +31,6 @@ from ..extras.constants import (
     VISION_MODELS,
     DownloadSource,
 )
-from ..extras.logging import get_logger
 from ..extras.misc import use_modelscope, use_openmind
 from ..extras.packages import is_gradio_available
 
@@ -39,7 +39,7 @@ if is_gradio_available():
     import gradio as gr
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 DEFAULT_CACHE_DIR = "cache"
@@ -56,7 +56,7 @@ def get_save_dir(*paths: str) -> os.PathLike:
     Gets the path to saved model checkpoints.
     """
     if os.path.sep in paths[-1]:
-        logger.warning("Found complex path, some features may be not available.")
+        logger.warning_rank0("Found complex path, some features may be not available.")
         return paths[-1]
 
     paths = (path.replace(" ", "").strip() for path in paths)
@@ -75,7 +75,7 @@ def load_config() -> Dict[str, Any]:
     Loads user config if exists.
     """
     try:
-        with open(get_config_path(), "r", encoding="utf-8") as f:
+        with open(get_config_path(), encoding="utf-8") as f:
             return safe_load(f)
     except Exception:
         return {"lang": None, "last_model": None, "path_dict": {}, "cache_dir": None}
@@ -172,14 +172,14 @@ def load_dataset_info(dataset_dir: str) -> Dict[str, Dict[str, Any]]:
     Loads dataset_info.json.
     """
     if dataset_dir == "ONLINE" or dataset_dir.startswith("REMOTE:"):
-        logger.info("dataset_dir is {}, using online dataset.".format(dataset_dir))
+        logger.info_rank0(f"dataset_dir is {dataset_dir}, using online dataset.")
         return {}
 
     try:
-        with open(os.path.join(dataset_dir, DATA_CONFIG), "r", encoding="utf-8") as f:
+        with open(os.path.join(dataset_dir, DATA_CONFIG), encoding="utf-8") as f:
             return json.load(f)
     except Exception as err:
-        logger.warning("Cannot open {} due to {}.".format(os.path.join(dataset_dir, DATA_CONFIG), str(err)))
+        logger.warning_rank0(f"Cannot open {os.path.join(dataset_dir, DATA_CONFIG)} due to {str(err)}.")
         return {}
 
 

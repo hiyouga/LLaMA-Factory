@@ -47,6 +47,7 @@ def run_kto(
 
     data_collator = KTODataCollatorWithPadding(
         template=template,
+        model=model,
         pad_to_multiple_of=8,
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
         **tokenizer_module,
@@ -81,7 +82,7 @@ def run_kto(
         trainer.save_metrics("train", train_result.metrics)
         trainer.save_state()
         if trainer.is_world_process_zero() and finetuning_args.plot_loss:
-            plot_loss(training_args.output_dir, keys=["loss", "eval_loss", "train/rewards/chosen"])
+            plot_loss(training_args.output_dir, keys=["loss", "eval_loss", "rewards/chosen"])
 
     # Evaluation
     if training_args.do_eval:

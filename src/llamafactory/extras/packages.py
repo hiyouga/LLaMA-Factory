@@ -75,8 +75,13 @@ def is_starlette_available():
 
 
 @lru_cache
-def is_transformers_version_greater_than_4_43():
-    return _get_package_version("transformers") >= version.parse("4.43.0")
+def is_transformers_version_greater_than(content: str):
+    return _get_package_version("transformers") >= version.parse(content)
+
+
+@lru_cache
+def is_transformers_version_equal_to_4_46():
+    return version.parse("4.46.0") <= _get_package_version("transformers") <= version.parse("4.46.1")
 
 
 def is_uvicorn_available():

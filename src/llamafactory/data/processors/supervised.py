@@ -15,8 +15,8 @@ import itertools
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
+from ...extras import logging
 from ...extras.constants import IGNORE_INDEX
-from ...extras.logging import get_logger
 from .processor_utils import greedy_knapsack, infer_seqlen
 
 if TYPE_CHECKING:
@@ -26,7 +26,8 @@ if TYPE_CHECKING:
     from ..mm_plugin import ImageInput, VideoInput
     from ..template import Template
 
-logger = get_logger(__name__)
+
+logger = logging.get_logger(__name__)
 
 
 def _encode_supervised_example(
@@ -100,7 +101,9 @@ def preprocess_supervised_dataset(
     model_inputs = defaultdict(list)
     for i in range(len(examples["_prompt"])):
         if len(examples["_prompt"][i]) % 2 != 1 or len(examples["_response"][i]) != 1:
-            logger.warning("Dropped invalid example: {}".format(examples["_prompt"][i] + examples["_response"][i]))
+            logger.warning_rank0(
+                "Dropped invalid example: {}".format(examples["_prompt"][i] + examples["_response"][i])
+            )
             continue
 
         input_ids, labels = _encode_supervised_example(
@@ -145,7 +148,9 @@ def preprocess_packed_supervised_dataset(
     num_reserved = 0 if data_args.flat_packing else 1
     for i in range(len(examples["_prompt"])):
         if len(examples["_prompt"][i]) % 2 != 1 or len(examples["_response"][i]) != 1:
-            logger.warning("Dropped invalid example: {}".format(examples["_prompt"][i] + examples["_response"][i]))
+            logger.warning_rank0(
+                "Dropped invalid example: {}".format(examples["_prompt"][i] + examples["_response"][i])
+            )
             continue
 
         input_ids, labels = _encode_supervised_example(
@@ -163,6 +168,7 @@ def preprocess_packed_supervised_dataset(
             mask_history=data_args.mask_history,
         )
         length = len(input_ids)
+
         if length > data_args.cutoff_len - num_reserved:
             invalid_num += 1
         else:
@@ -242,3 +248,4 @@ def print_flatting_supervised_dataset_example(example: Dict[str, List[int]], tok
     print("inputs:\n{}".format(tokenizer.decode(input_ids, skip_special_tokens=False)))
     print("label_ids:\n{}".format(list(itertools.chain(*example["labels"]))))
     print("labels:\n{}".format(tokenizer.decode(valid_labels), skip_special_tokens=False))
+

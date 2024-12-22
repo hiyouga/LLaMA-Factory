@@ -13,24 +13,21 @@
 # limitations under the License.
 
 from types import MethodType
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
+import torch
 from transformers import Trainer
 from typing_extensions import override
 
-from ...extras.logging import get_logger
-from ..callbacks import PissaConvertCallback, SaveProcessorCallback
+from ...extras.packages import is_transformers_version_equal_to_4_46, is_transformers_version_greater_than
+from ..callbacks import SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
 
 
 if TYPE_CHECKING:
-    import torch
-    from transformers import ProcessorMixin
+    from transformers import PreTrainedModel, ProcessorMixin
 
     from ...hparams import FinetuningArguments
-
-
-logger = get_logger(__name__)
 
 
 class CustomTrainer(Trainer):
@@ -41,17 +38,17 @@ class CustomTrainer(Trainer):
     def __init__(
         self, finetuning_args: "FinetuningArguments", processor: Optional["ProcessorMixin"], **kwargs
     ) -> None:
+        if is_transformers_version_greater_than("4.46"):
+            kwargs["processing_class"] = kwargs.pop("tokenizer")
+
         super().__init__(**kwargs)
         self.finetuning_args = finetuning_args
 
         if processor is not None:
             self.add_callback(SaveProcessorCallback(processor))
 
-        if finetuning_args.pissa_convert:
-            self.add_callback(PissaConvertCallback)
-
         if finetuning_args.use_badam:
-            from badam import BAdamCallback, clip_grad_norm_old_version
+            from badam import BAdamCallback, clip_grad_norm_old_version  # type: ignore
 
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
@@ -68,3 +65,28 @@ class CustomTrainer(Trainer):
     ) -> "torch.optim.lr_scheduler.LRScheduler":
         create_custom_scheduler(self.args, num_training_steps, optimizer)
         return super().create_scheduler(num_training_steps, optimizer)
+
+    @override
+    def _get_train_sampler(self) -> Optional["torch.utils.data.Sampler"]:
+        if self.finetuning_args.disable_shuffling:
+            return torch.utils.data.SequentialSampler(self.train_dataset)
+
+        return super()._get_train_sampler()
+
+    @override
+    def compute_loss(
+        self, model: "PreTrainedModel", inputs: Dict[str, "torch.Tensor"], return_outputs: bool = False, **kwargs
+    ) -> Union["torch.Tensor", Tuple["torch.Tensor", List["torch.Tensor"]]]:
+        r"""
+        Fixes the loss value for transformers 4.46.0.
+        https://github.com/huggingface/transformers/blob/v4.46.0/src/transformers/trainer.py#L3605
+        """
+        loss = super().compute_loss(model, inputs, return_outputs, **kwargs)
+        if is_transformers_version_equal_to_4_46() and not getattr(self, "model_accepts_loss_kwargs", False):
+            # other model should not scale the loss
+            if return_outputs:
+                return (loss[0] / self.args.gradient_accumulation_steps, *loss[1:])
+            else:
+                return loss / self.args.gradient_accumulation_steps
+
+        return loss

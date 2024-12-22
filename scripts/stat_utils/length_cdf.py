@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright 2024 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +31,8 @@ def length_cdf(
 ):
     r"""
     Calculates the distribution of the input lengths in the dataset.
-    Usage: python length_cdf.py --model_name_or_path path_to_model --dataset alpaca_en_demo --template default
+    Usage: export CUDA_VISIBLE_DEVICES=0
+    python length_cdf.py --model_name_or_path path_to_model --dataset alpaca_en_demo --template default
     """
     model_args, data_args, training_args, _, _ = get_train_args(
         dict(
@@ -61,7 +61,7 @@ def length_cdf(
     for length, count in length_tuples:
         count_accu += count
         prob_accu += count / total_num * 100
-        print("{:d} ({:.2f}%) samples have length < {}.".format(count_accu, prob_accu, length + interval))
+        print(f"{count_accu:d} ({prob_accu:.2f}%) samples have length < {length + interval}.")
 
 
 if __name__ == "__main__":
