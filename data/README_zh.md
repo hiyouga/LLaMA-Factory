@@ -22,6 +22,7 @@
     "messages": "数据集代表消息列表的表头名称（默认：conversations）",
     "system": "数据集代表系统提示的表头名称（默认：None）",
     "tools": "数据集代表工具描述的表头名称（默认：None）",
+    "loss_mask": "数据集多轮数据中哪些response用于模型学习的表头名称（默认：None）",
     "images": "数据集代表图像输入的表头名称（默认：None）",
     "videos": "数据集代表视频输入的表头名称（默认：None）",
     "chosen": "数据集代表更优回答的表头名称（默认：None）",
@@ -52,6 +53,8 @@
 
 `history` 列是由多个字符串二元组构成的列表，分别代表历史消息中每轮对话的指令和回答。注意在指令监督微调时，历史消息中的回答内容**也会被用于模型学习**。
 
+`loss_mask` 列是由int型0或者1组成的列表，长度应该与本条样本对话轮数*2 保持一致（例如下面数据对话3轮，则列表长度为6），1表示对应位置output内容参与loss计算，0则表示不参与。
+
 ```json
 [
   {
@@ -62,7 +65,8 @@
     "history": [
       ["第一轮指令（选填）", "第一轮回答（选填）"],
       ["第二轮指令（选填）", "第二轮回答（选填）"]
-    ]
+    ],
+    "loss_mask": [0, 0, 0, 1, 0, 1] # "用于标识哪些数据参与loss计算（选填）"
   }
 ]
 ```
@@ -77,7 +81,8 @@
     "query": "input",
     "response": "output",
     "system": "system",
-    "history": "history"
+    "history": "history",
+    "loss_mask": "loss_mask"
   }
 }
 ```
@@ -160,6 +165,8 @@ KTO 数据集需要提供额外的 `kto_tag` 列。详情请参阅 [sharegpt](#s
 
 注意其中 human 和 observation 必须出现在奇数位置，gpt 和 function 必须出现在偶数位置。
 
+`loss_mask` 列是由int型0或者1组成的列表，长度应该与本条样本conversations的长度 保持一致，1表示对应位置的 gpt 和 function内容参与loss计算，0则表示不参与。
+
 ```json
 [
   {
@@ -182,7 +189,8 @@ KTO 数据集需要提供额外的 `kto_tag` 列。详情请参阅 [sharegpt](#s
       }
     ],
     "system": "系统提示词（选填）",
-    "tools": "工具描述（选填）"
+    "tools": "工具描述（选填）",
+    "loss_mask": [0, 0, 0, 1] # "用于标识哪些数据参与loss计算（选填）"
   }
 ]
 ```
@@ -196,7 +204,8 @@ KTO 数据集需要提供额外的 `kto_tag` 列。详情请参阅 [sharegpt](#s
   "columns": {
     "messages": "conversations",
     "system": "system",
-    "tools": "tools"
+    "tools": "tools",
+    "loss_mask": "loss_mask"
   }
 }
 ```
