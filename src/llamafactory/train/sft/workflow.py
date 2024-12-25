@@ -17,7 +17,7 @@
 
 from typing import TYPE_CHECKING, List, Optional
 
-from ...data import SFTDataCollatorWith4DAttentionMask, get_dataset, aif_get_dataset, get_template_and_fix_tokenizer
+from ...data import SFTDataCollatorWith4DAttentionMask, get_dataset, get_template_and_fix_tokenizer
 from ...extras.constants import IGNORE_INDEX
 from ...extras.misc import get_logits_processor
 from ...extras.ploting import plot_loss
@@ -32,6 +32,10 @@ if TYPE_CHECKING:
 
     from ...hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
 
+# ================================= AIFactory Custom Code Start =================================
+from ...data import aif_get_dataset
+
+# ================================= AIFactory Custom Code End =================================
 
 def run_sft(
     model_args: "ModelArguments",
@@ -124,10 +128,12 @@ def run_sft(
     # Create model card
     create_modelcard_and_push(trainer, model_args, data_args, training_args, finetuning_args)
 
-# ================================= AIFactory Custom Code =================================
+# ================================= AIFactory Custom Code Begin =================================
 import copy
 from ...extras.logging import get_logger
 import torch
+import os
+import json
 
 logger = get_logger(__name__)
 
@@ -185,6 +191,7 @@ def aif_run_sft(
     temp_training_args.num_train_epochs = 1
     temp_training_args.save_strategy = 'no' # 不保存checkpoint
     temp_training_args.load_best_model_at_end = False # 不保存最佳模型
+    temp_training_args.report_to = [] # 不保存日志
     trainer = CustomSeq2SeqTrainer(
         model=model,
         args=temp_training_args,
@@ -202,8 +209,8 @@ def aif_run_sft(
     if training_args.do_eval:
         metrics = trainer.evaluate(metric_key_prefix="eval", **gen_kwargs)
     # 计算显存占用情况
-    print(f'Cuda memory summary: \n{torch.cuda.memory_summary()}')
-    print(f'Max memory allocated: {torch.cuda.max_memory_allocated() / 1024 / 1024 / 1024} GB')
+    logger.info(f'Cuda memory summary: \n{torch.cuda.memory_summary()}')
+    logger.info(f'Max memory allocated: {torch.cuda.max_memory_allocated() / 1024 / 1024 / 1024} GB')
     # 释放trainer资源
     del trainer
     logger.info('============ Train with longest samples done. ============')
@@ -236,6 +243,7 @@ def aif_run_sft(
         tokenizer.padding_side = "left"  # use left-padding in generation
 
     # Evaluation
+    logger.info('============ Start to evaluate... ============')
     if training_args.do_eval:
         metrics = trainer.evaluate(metric_key_prefix="eval", **gen_kwargs)
         if training_args.predict_with_generate:  # eval_loss will be wrong if predict_with_generate is enabled
@@ -244,6 +252,7 @@ def aif_run_sft(
         trainer.save_metrics("eval", metrics)
 
     # Predict
+    logger.info('============ Start to predict... ============')
     if training_args.do_predict:
         predict_results = trainer.predict(dataset_module["eval_dataset"], metric_key_prefix="predict", **gen_kwargs)
         if training_args.predict_with_generate:  # predict_loss will be wrong if predict_with_generate is enabled
@@ -252,6 +261,35 @@ def aif_run_sft(
         trainer.save_metrics("predict", predict_results.metrics)
         trainer.save_predictions(dataset_module["eval_dataset"], predict_results)
 
+        # 检查是否rank=0
+        if trainer.is_world_process_zero():
+            # 从eval_dataset中读取image
+            to_add = {"images": [], "videos": []}
+            for i in range(len(dataset_module["eval_dataset"])):
+                for key in to_add.keys():
+                    value = dataset_module["eval_dataset"][i].get(key, None)
+                    if value is not None:
+                        to_add[key].append(value[0])
+                    else:
+                        to_add[key].append(None)
+            # 读取prediction文件，并添加对应的字段
+            new_predictions = []
+            prediction_fpath = os.path.join(training_args.output_dir, 'generated_predictions.jsonl')
+            with open(prediction_fpath, 'r') as f:
+                for i, line in enumerate(f):
+                    data = json.loads(line)
+                    for key in to_add.keys():
+                        value = to_add[key][i]
+                        if value is not None:
+                            data[key] = value
+                    new_predictions.append(data)
+            # 写入文件
+            with open(prediction_fpath, 'w') as f:
+                for data in new_predictions:
+                    json.dump(data, f, ensure_ascii=False)
+                    f.write('\n')
+
     # Create model card
     create_modelcard_and_push(trainer, model_args, data_args, training_args, finetuning_args)
     logger.info('============ Process done. ============')
+# ================================= AIFactory Custom Code End =================================

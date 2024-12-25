@@ -39,6 +39,25 @@ if TYPE_CHECKING:
     from ...hparams import FinetuningArguments
 
 
+# *************** AIFactory Custom Code Begin ***************
+import time
+import math
+from transformers.utils import (
+    is_torch_xla_available,
+)
+from transformers.trainer_utils import (
+    speed_metrics
+)
+if is_torch_xla_available():
+    import torch_xla.core.xla_model as xm
+else:
+    IS_XLA_FSDPV2_POST_2_2 = False
+
+from transformers.debug_utils import DebugOption
+from torch.utils.data import Dataset
+# *************** AIFactory Custom Code End ***************
+
+
 logger = get_logger(__name__)
 
 
@@ -93,6 +112,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         """
         labels = inputs["labels"] if "labels" in inputs else None
         if self.args.predict_with_generate:
+            logger.info(f'padding_side: {self.tokenizer.padding_side}')
             assert self.tokenizer.padding_side == "left", "This method only accepts left-padded tensor."
             labels = labels.detach().clone() if labels is not None else None  # backup labels
             prompt_len, label_len = inputs["input_ids"].size(-1), inputs["labels"].size(-1)
@@ -153,3 +173,164 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                 res.append(json.dumps({"prompt": text, "label": label, "predict": pred}, ensure_ascii=False))
 
             writer.write("\n".join(res))
+
+    
+    # *************** AIFactory Custom Code Begin ***************
+    def _merge_eval_metrics(self, metrics: Dict[str, float], eval_dataset: Dict[str, Dataset]) -> Dict[str, float]:
+        # 将metrics按照每个数据集的样本数进行加权平均
+        new_metrics = {}
+        all_losses = []
+        all_runtime = []
+        all_samples_per_second = []
+        all_steps_per_second = []
+        all_epochs = []
+        for dataset_name, dataset in eval_dataset.items():
+            loss = metrics[f'eval_{dataset_name}_loss']
+            all_losses.append(loss * len(dataset))
+            new_metrics[f'eval_{dataset_name}_loss'] = loss
+            
+            runtime = metrics[f'eval_{dataset_name}_runtime']
+            all_runtime.append(runtime * len(dataset))
+
+            samples_per_second = metrics[f'eval_{dataset_name}_samples_per_second']
+            all_samples_per_second.append(samples_per_second * len(dataset))
+
+            steps_per_second = metrics[f'eval_{dataset_name}_steps_per_second']
+            all_steps_per_second.append(steps_per_second * len(dataset))
+
+            epoch = metrics[f'epoch']
+            all_epochs.append(epoch * len(dataset))
+
+        new_metrics['eval_loss'] = sum(all_losses) / sum(len(dataset) for dataset in eval_dataset.values())
+        new_metrics['eval_runtime'] = sum(all_runtime) / sum(len(dataset) for dataset in eval_dataset.values())
+        new_metrics['eval_samples_per_second'] = sum(all_samples_per_second) / sum(len(dataset) for dataset in eval_dataset.values())
+        new_metrics['eval_steps_per_second'] = sum(all_steps_per_second) / sum(len(dataset) for dataset in eval_dataset.values())
+        new_metrics['epoch'] = sum(all_epochs) / sum(len(dataset) for dataset in eval_dataset.values())
+
+        return new_metrics
+
+
+    def aif_evaluate(
+        self,
+        eval_dataset: Optional[Union[Dataset, Dict[str, Dataset]]] = None,
+        ignore_keys: Optional[List[str]] = None,
+        metric_key_prefix: str = "eval",
+        **gen_kwargs,
+    ) -> Dict[str, float]:
+        """
+        Run evaluation and returns metrics.
+
+        The calling script will be responsible for providing a method to compute metrics, as they are task-dependent
+        (pass it to the init `compute_metrics` argument).
+
+        You can also subclass and override this method to inject custom behavior.
+
+        Args:
+            eval_dataset (Union[`Dataset`, Dict[str, `Dataset`]), *optional*):
+                Pass a dataset if you wish to override `self.eval_dataset`. If it is a [`~datasets.Dataset`], columns
+                not accepted by the `model.forward()` method are automatically removed. If it is a dictionary, it will
+                evaluate on each dataset, prepending the dictionary key to the metric name. Datasets must implement the
+                `__len__` method.
+
+                <Tip>
+
+                If you pass a dictionary with names of datasets as keys and datasets as values, evaluate will run
+                separate evaluations on each dataset. This can be useful to monitor how training affects other
+                datasets or simply to get a more fine-grained evaluation.
+                When used with `load_best_model_at_end`, make sure `metric_for_best_model` references exactly one
+                of the datasets. If you, for example, pass in `{"data1": data1, "data2": data2}` for two datasets
+                `data1` and `data2`, you could specify `metric_for_best_model="eval_data1_loss"` for using the
+                loss on `data1` and `metric_for_best_model="eval_data2_loss"` for the loss on `data2`.
+
+                </Tip>
+
+            ignore_keys (`List[str]`, *optional*):
+                A list of keys in the output of your model (if it is a dictionary) that should be ignored when
+                gathering predictions.
+            metric_key_prefix (`str`, *optional*, defaults to `"eval"`):
+                An optional prefix to be used as the metrics key prefix. For example the metrics "bleu" will be named
+                "eval_bleu" if the prefix is "eval" (default)
+
+        Returns:
+            A dictionary containing the evaluation loss and the potential metrics computed from the predictions. The
+            dictionary also contains the epoch number which comes from the training state.
+        """
+        gen_kwargs = gen_kwargs.copy()
+        print(f'padding_side: {self.tokenizer.padding_side}')
+
+        # Use legacy argument setting if a) the option is not explicitly passed; and b) the argument is set in the
+        # training args
+        if (
+            gen_kwargs.get("max_length") is None
+            and gen_kwargs.get("max_new_tokens") is None
+            and self.args.generation_max_length is not None
+        ):
+            gen_kwargs["max_length"] = self.args.generation_max_length
+        if gen_kwargs.get("num_beams") is None and self.args.generation_num_beams is not None:
+            gen_kwargs["num_beams"] = self.args.generation_num_beams
+        # We don't want to drop samples in general
+        self.gather_function = self.accelerator.gather
+        self._gen_kwargs = gen_kwargs
+
+        # handle multipe eval datasets
+        override = eval_dataset is not None
+        eval_dataset = eval_dataset if override else self.eval_dataset
+        if isinstance(eval_dataset, dict):
+            metrics = {}
+            for eval_dataset_name, _eval_dataset in eval_dataset.items():
+                dataset_metrics = self.evaluate(
+                    eval_dataset=_eval_dataset if override else eval_dataset_name,
+                    ignore_keys=ignore_keys,
+                    metric_key_prefix=f"{metric_key_prefix}_{eval_dataset_name}",
+                )
+                metrics.update(dataset_metrics)
+            # 将metrics按照每个数据集的样本数进行加权平均
+            metrics = self._merge_eval_metrics(metrics, eval_dataset)
+            return metrics
+
+        # memory metrics - must set up as early as possible
+        self._memory_tracker.start()
+
+        eval_dataloader = self.get_eval_dataloader(eval_dataset)
+        if self.is_fsdp_xla_v2_enabled:
+            eval_dataloader = tpu_spmd_dataloader(eval_dataloader)
+
+        start_time = time.time()
+
+        eval_loop = self.prediction_loop if self.args.use_legacy_prediction_loop else self.evaluation_loop
+        output = eval_loop(
+            eval_dataloader,
+            description="Evaluation",
+            # No point gathering the predictions if there are no metrics, otherwise we defer to
+            # self.args.prediction_loss_only
+            prediction_loss_only=True if self.compute_metrics is None else None,
+            ignore_keys=ignore_keys,
+            metric_key_prefix=metric_key_prefix,
+        )
+
+        total_batch_size = self.args.eval_batch_size * self.args.world_size
+        if f"{metric_key_prefix}_jit_compilation_time" in output.metrics:
+            start_time += output.metrics[f"{metric_key_prefix}_jit_compilation_time"]
+        if f"{metric_key_prefix}_model_preparation_time" in output.metrics:
+            start_time += output.metrics[f"{metric_key_prefix}_model_preparation_time"]
+        output.metrics.update(
+            speed_metrics(
+                metric_key_prefix,
+                start_time,
+                num_samples=output.num_samples,
+                num_steps=math.ceil(output.num_samples / total_batch_size),
+            )
+        )
+
+        self.log(output.metrics)
+
+        if DebugOption.TPU_METRICS_DEBUG in self.args.debug:
+            # tpu-comment: Logging debug metrics for PyTorch/XLA (compile, execute times, ops, etc.)
+            xm.master_print(met.metrics_report())
+
+        self.control = self.callback_handler.on_evaluate(self.args, self.state, self.control, output.metrics)
+
+        self._memory_tracker.stop_and_update_metrics(output.metrics)
+
+        return output.metrics
+    # *************** AIFactory Custom Code End ***************
