@@ -2017,6 +2017,10 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen2-VL-72B-Instruct-AWQ",
             DownloadSource.MODELSCOPE: "Qwen/Qwen2-VL-72B-Instruct-AWQ",
         },
+        "QVQ-72B-Preview": {
+            DownloadSource.DEFAULT: "Qwen/QVQ-72B-Preview",
+            DownloadSource.MODELSCOPE: "Qwen/QVQ-72B-Preview",
+        },
     },
     template="qwen2_vl",
     vision=True,
