@@ -155,6 +155,7 @@ async def create_chat_completion_response(
         max_new_tokens=request.max_tokens,
         num_return_sequences=request.n,
         stop=request.stop,
+        logit_bias=request.logit_bias,
     )
 
     prompt_length, response_length = 0, 0
@@ -214,6 +215,7 @@ async def create_stream_chat_completion_response(
         top_p=request.top_p,
         max_new_tokens=request.max_tokens,
         stop=request.stop,
+        logit_bias=request.logit_bias,
     ):
         if len(new_token) != 0:
             yield _create_stream_chat_completion_chunk(

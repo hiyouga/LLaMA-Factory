@@ -117,9 +117,16 @@ class HuggingfaceEngine(BaseEngine):
         max_length: Optional[int] = input_kwargs.pop("max_length", None)
         max_new_tokens: Optional[int] = input_kwargs.pop("max_new_tokens", None)
         stop: Optional[Union[str, List[str]]] = input_kwargs.pop("stop", None)
+        logit_bias: Optional[Union[Dict[int, float], Dict[str, float]]] = input_kwargs.pop("logit_bias", None)
 
         if stop is not None:
             logger.warning_rank0("Stop parameter is not supported by the huggingface engine yet.")
+        
+        if logit_bias is not None:
+            logit_bias = {
+                int(token): bias
+                for token, bias in logit_bias.items()
+            }
 
         generating_args = generating_args.copy()
         generating_args.update(
@@ -135,6 +142,7 @@ class HuggingfaceEngine(BaseEngine):
                 length_penalty=length_penalty if length_penalty is not None else generating_args["length_penalty"],
                 eos_token_id=[tokenizer.eos_token_id] + tokenizer.additional_special_tokens_ids,
                 pad_token_id=tokenizer.pad_token_id,
+                logit_bias=logit_bias,
             )
         )
 
