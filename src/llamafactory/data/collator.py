@@ -128,6 +128,7 @@ class PairwiseDataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
     r"""
     Data collator for pairwise data.
     """
+    require_position_ids: bool = False
 
     def __call__(self, features: Sequence[Dict[str, Any]]) -> Dict[str, "torch.Tensor"]:
         r"""
@@ -143,10 +144,12 @@ class PairwiseDataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
                     "input_ids": feature[f"{key}_input_ids"],
                     "attention_mask": feature[f"{key}_attention_mask"],
                     "labels": feature[f"{key}_labels"],
-                    "position_ids": feature["{}_position_ids".format(key)],
                     "images": feature["images"],
                     "videos": feature["videos"],
                 }
+                if self.require_position_ids:
+                    # if requires, would be padded to cutoff_len in preprocessing
+                    target_feature["position_ids"] = feature["{}_position_ids".format(key)]
                 concatenated_features.append(target_feature)
 
         return super().__call__(concatenated_features)
