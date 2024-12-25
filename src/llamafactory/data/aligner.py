@@ -17,7 +17,7 @@ from functools import partial
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Union
 
 from ..extras import logging
-from .data_utils import Role
+from .data_utils import Role, merge_messages
 
 
 if TYPE_CHECKING:
@@ -152,7 +152,7 @@ def convert_sharegpt(
     odd_tags = (dataset_attr.user_tag, dataset_attr.observation_tag)
     even_tags = (dataset_attr.assistant_tag, dataset_attr.function_tag)
     accept_tags = (odd_tags, even_tags)
-    messages = example[dataset_attr.messages]
+    messages = merge_messages(example[dataset_attr.messages], dataset_attr)
     if (
         dataset_attr.system_tag
         and len(messages) != 0

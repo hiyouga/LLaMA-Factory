@@ -17,6 +17,8 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Set, TypedDict
 
 from datasets import DatasetDict, concatenate_datasets, interleave_datasets
 
+from .parser import DatasetAttr
+
 from ..extras import logging
 
 
@@ -90,3 +92,29 @@ def split_dataset(
         val_size = int(data_args.val_size) if data_args.val_size > 1 else data_args.val_size
         dataset = dataset.train_test_split(test_size=val_size, seed=seed)
         return DatasetDict({"train": dataset["train"], "validation": dataset["test"]})
+
+
+def merge_messages(messages: Sequence[Dict[str, str]], dataset_attr: "DatasetAttr") -> List[Dict[str, str]]:
+    # merge obversation messages
+    new_messages = []
+    waiting_message = []
+
+    def append_waiting_message():
+        if len(waiting_message) == 1:
+            new_messages.append(waiting_message[0])
+        else:
+            assert waiting_message[0]["role"] == dataset_attr.observation_tag
+            new_messages.append(
+                {"role": dataset_attr.observation_tag, "content": [m["content"] for m in waiting_message]}
+            )
+
+    for message in messages:
+        if len(waiting_message) > 0 and message["role"] != waiting_message[-1]["role"]:
+            append_waiting_message()
+            waiting_message = []
+        waiting_message.append(message)
+
+    if len(waiting_message) > 0:
+        append_waiting_message()
+
+    return new_messages
