@@ -22,6 +22,7 @@ from ..extras import logging
 from ..extras.misc import count_parameters, skip_check_imports, try_download_model_from_other_hub
 from .adapter import init_adapter
 from .model_utils.liger_kernel import apply_liger_kernel
+from .model_utils.sequence_parallel import apply_sequence_parallel
 from .model_utils.misc import register_autoclass
 from .model_utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
 from .model_utils.unsloth import load_unsloth_pretrained_model
@@ -133,6 +134,7 @@ def load_model(
     config = load_config(model_args)
     patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
     apply_liger_kernel(config, model_args, is_trainable, require_logits=(finetuning_args.stage not in ["pt", "sft"]))
+    sequence_parallel_group = apply_sequence_parallel(model_args)  # monkey patching, similar to liger_kernel
 
     model = None
     lazy_load = False
@@ -210,4 +212,5 @@ def load_model(
                 )
             )
 
+    model.sequence_parallel_group = sequence_parallel_group
     return model

@@ -143,6 +143,7 @@ class PairwiseDataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
                     "input_ids": feature[f"{key}_input_ids"],
                     "attention_mask": feature[f"{key}_attention_mask"],
                     "labels": feature[f"{key}_labels"],
+                    "position_ids": feature["{}_position_ids".format(key)],
                     "images": feature["images"],
                     "videos": feature["videos"],
                 }

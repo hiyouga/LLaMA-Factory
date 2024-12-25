@@ -23,6 +23,8 @@ from typing import TYPE_CHECKING, Dict, Literal, Optional, Tuple, Union
 
 import torch
 import torch.nn.functional as F
+import torch.distributed as dist
+from torch.utils.data import SequentialSampler
 from transformers import Trainer
 from trl import DPOTrainer
 from trl.trainer import disable_dropout_in_model
@@ -188,7 +190,7 @@ class CustomDPOTrainer(DPOTrainer):
             batch = {k: v.detach().clone() for k, v in batch.items()}  # avoid error
 
         all_logits: "torch.Tensor" = model(**batch, return_dict=True, use_cache=False).logits.to(torch.float32)
-        all_logps, valid_length = get_batch_logps(logits=all_logits, labels=batch["labels"])
+        all_logps, valid_length = get_batch_logps(logits=all_logits, labels=batch["labels"], shift_labels=model.sequence_parallel_group is None)  # shift labels if no sequence parallel
         if self.loss_type in ["ipo", "orpo", "simpo"]:
             all_logps = all_logps / valid_length
 
@@ -240,12 +242,25 @@ class CustomDPOTrainer(DPOTrainer):
         ) = self.concatenated_forward(model, batch)
 
         reference_chosen_logps, reference_rejected_logps = self.compute_reference_log_probs(model, batch)
+        
+        # TODO: correct logits reduction if necessary. Now we only reduce logps
+        sp_group = model.sequence_parallel_group
+        if sp_group is not None:
+            dist.all_reduce(policy_chosen_logps, op=dist.ReduceOp.SUM, group=sp_group)
+            dist.all_reduce(policy_rejected_logps, op=dist.ReduceOp.SUM, group=sp_group)
+            dist.all_reduce(reference_chosen_logps, op=dist.ReduceOp.SUM, group=sp_group)
+            dist.all_reduce(reference_rejected_logps, op=dist.ReduceOp.SUM, group=sp_group)
+
         losses, chosen_rewards, rejected_rewards = self.compute_preference_loss(
             policy_chosen_logps,
             policy_rejected_logps,
             reference_chosen_logps,
             reference_rejected_logps,
         )
+        
+        rank = dist.get_rank()
+        print(f"rank {rank}, losses {losses}, ref chosen logps {reference_chosen_logps}, ref rejected logps {reference_rejected_logps}")
+
         sft_loss = -policy_chosen_logps_avg
         if self.ftx_gamma > 1e-6:
             losses += self.ftx_gamma * sft_loss
@@ -306,3 +321,6 @@ class CustomDPOTrainer(DPOTrainer):
                 logs[key] = metric
 
         return Trainer.log(self, logs)
+    
+    def _get_train_sampler(self):
+        return SequentialSampler(self.train_dataset)
