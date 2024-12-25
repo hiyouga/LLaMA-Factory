@@ -104,6 +104,7 @@ class Template:
         """
         system = system or self.default_system
         encoded_messages = []
+        messages = self.merge_messages(messages)
         for i, message in enumerate(messages):
             elements = []
 
@@ -121,7 +122,11 @@ class Template:
             elif message["role"] == Role.ASSISTANT.value:
                 elements += self.format_assistant.apply(content=message["content"])
             elif message["role"] == Role.OBSERVATION.value:
-                elements += self.format_observation.apply(content=message["content"])
+                if isinstance(message["content"], list):
+                    for m in message["content"]:
+                        elements += self.format_observation.apply(content=m)
+                else:
+                    elements += self.format_observation.apply(content=message["content"])
             elif message["role"] == Role.FUNCTION.value:
                 elements += self.format_function.apply(content=message["content"])
             else:
@@ -152,6 +157,31 @@ class Template:
 
         return token_ids
 
+    @staticmethod
+    def merge_messages(messages: Sequence[Dict[str, str]]) -> List[Dict[str, str]]:
+        # merge obversation messages
+        new_messages = []
+        waiting_message = []
+
+        def append_waiting_message():
+            if len(waiting_message) == 1:
+                new_messages.append(waiting_message[0])
+            else:
+                assert waiting_message[0]["role"] == Role.OBSERVATION.value
+                new_messages.append(
+                    {"role": Role.OBSERVATION.value, "content": [m["content"] for m in waiting_message]}
+                )
+        for message in messages:
+            if len(waiting_message) > 0 and message["role"] != waiting_message[-1]["role"]:
+                append_waiting_message()
+                waiting_message = []
+            waiting_message.append(message)
+
+        if len(waiting_message) > 0:
+            append_waiting_message()
+
+        return new_messages
+
 
 @dataclass
 class Llama2Template(Template):
@@ -170,6 +200,7 @@ class Llama2Template(Template):
         """
         system = system or self.default_system
         encoded_messages = []
+        messages = self.merge_messages(messages)
         for i, message in enumerate(messages):
             elements = []
 
@@ -188,7 +219,11 @@ class Llama2Template(Template):
             elif message["role"] == Role.ASSISTANT.value:
                 elements += self.format_assistant.apply(content=message["content"])
             elif message["role"] == Role.OBSERVATION.value:
-                elements += self.format_observation.apply(content=message["content"])
+                if isinstance(message["content"], list):
+                    for m in message["content"]:
+                        elements += self.format_observation.apply(content=m)
+                else:
+                    elements += self.format_observation.apply(content=message["content"])
             elif message["role"] == Role.FUNCTION.value:
                 elements += self.format_function.apply(content=message["content"])
             else:
