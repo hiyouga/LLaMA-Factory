@@ -120,3 +120,6 @@ def main():
         print(USAGE)
     else:
         raise NotImplementedError(f"Unknown command: {command}.")
+
+if __name__ == "__main__":
+    main()
