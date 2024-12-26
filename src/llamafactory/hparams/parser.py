@@ -259,6 +259,12 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if model_args.use_unsloth and is_deepspeed_zero3_enabled():
         raise ValueError("Unsloth is incompatible with DeepSpeed ZeRO-3.")
 
+    if data_args.cutoff_len % model_args.sequence_parallel_size != 0:
+        raise ValueError("cutoff_len must be a multiple of sequence_parallel_size.")
+    
+    if model_args.sequence_parallel_size > 1 and (data_args.cutoff_len // model_args.sequence_parallel_size) % 8 != 0:
+        raise ValueError("cutoff_len must be a multiple of 8 after dividing sequence_parallel_size. With sequence parallel, we first pad to cutoff_len and then split the sequence. All the DataCollators pad to multiple of 8, which is hard-coded in LLaMA-Factory. If the splitted sequences are not already mutliple of 8, padding it to be would effectively change the original sequence and is wrong. Please increase cutoff_len just a little to satify this condition.")
+
     if data_args.neat_packing and not data_args.packing:
         logger.warning_rank0("`neat_packing` requires `packing` is True. Change `packing` to True.")
         data_args.packing = True
