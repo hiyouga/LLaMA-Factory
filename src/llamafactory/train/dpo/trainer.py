@@ -73,6 +73,8 @@ class CustomDPOTrainer(DPOTrainer):
         self.ref_model = ref_model
         self._stored_metrics = defaultdict(lambda: defaultdict(list))
 
+        self._has_dummy_forwarded = False
+
         # dpo hyperparams
         self.beta = finetuning_args.pref_beta
         self.loss_type = finetuning_args.pref_loss
@@ -322,5 +324,20 @@ class CustomDPOTrainer(DPOTrainer):
 
         return Trainer.log(self, logs)
     
+    @override
+    def training_step(self, model, inputs):
+        # TODO: sequence_parallel modes other than 'zigzag-ring' may not need dummy forward
+        if not self._has_dummy_forwarded and model.sequence_parallel_group is not None:
+            model.eval()
+            with torch.no_grad():
+                _ = model(**inputs)
+            model.train()
+            self._has_dummy_forwarded = True
+        return super().training_step(model, inputs)
+
+    @override
     def _get_train_sampler(self):
-        return SequentialSampler(self.train_dataset)
+        if self.model.sequence_parallel_group is not None:
+            return SequentialSampler(self.train_dataset)
+        else:
+            return super()._get_train_sampler()
