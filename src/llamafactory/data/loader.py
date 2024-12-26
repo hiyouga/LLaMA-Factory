@@ -274,7 +274,7 @@ def sequence_parallel_decorator(get_dataset):
                     chunks = list()
                     for row in v:
                         if row is None:
-                            chunks += [None] * 2
+                            chunks += [None] * model_args.sequence_parallel_size
                         else:
                             chunks += preprocess_sp_dataset(row, model_args.sequence_parallel_size, model_args.sequence_parallel_mode)
                     examples[k] = chunks
