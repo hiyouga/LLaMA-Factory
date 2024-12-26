@@ -94,22 +94,30 @@ def split_dataset(
         return DatasetDict({"train": dataset["train"], "validation": dataset["test"]})
 
 
-def merge_messages(messages: Sequence[Dict[str, str]], dataset_attr: "DatasetAttr") -> List[Dict[str, str]]:
+def continuous_messages(messages: Sequence[Dict[str, str]], dataset_attr: "DatasetAttr") -> List[Dict[str, str]]:
     # merge obversation messages
     new_messages = []
     waiting_message = []
 
     def append_waiting_message():
         if len(waiting_message) == 1:
-            new_messages.append(waiting_message[0])
-        else:
-            assert waiting_message[0]["role"] == dataset_attr.observation_tag
             new_messages.append(
-                {"role": dataset_attr.observation_tag, "content": [m["content"] for m in waiting_message]}
+                {
+                    dataset_attr.role_tag: waiting_message[0][dataset_attr.role_tag],
+                    dataset_attr.content_tag: [m[dataset_attr.content_tag] for m in waiting_message],
+                }
+            )
+        else:
+            assert waiting_message[0][dataset_attr.role_tag] == dataset_attr.observation_tag
+            new_messages.append(
+                {
+                    dataset_attr.role_tag: dataset_attr.observation_tag,
+                    dataset_attr.content_tag: [m[dataset_attr.content_tag] for m in waiting_message],
+                }
             )
 
     for message in messages:
-        if len(waiting_message) > 0 and message["role"] != waiting_message[-1]["role"]:
+        if len(waiting_message) > 0 and message[dataset_attr.role_tag] != waiting_message[-1][dataset_attr.role_tag]:
             append_waiting_message()
             waiting_message = []
         waiting_message.append(message)

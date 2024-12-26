@@ -117,9 +117,11 @@ class Template:
                 elements += self.format_separator.apply()
 
             if message["role"] == Role.USER.value:
-                elements += self.format_user.apply(content=message["content"], idx=str(i // 2))
+                content = "".join(message["content"]) if isinstance(message["content"], list) else message["content"]
+                elements += self.format_user.apply(content=content, idx=str(i // 2))
             elif message["role"] == Role.ASSISTANT.value:
-                elements += self.format_assistant.apply(content=message["content"])
+                content = "".join(message["content"]) if isinstance(message["content"], list) else message["content"]
+                elements += self.format_assistant.apply(content=content)
             elif message["role"] == Role.OBSERVATION.value:
                 if isinstance(message["content"], list):
                     for m in message["content"]:
@@ -127,7 +129,8 @@ class Template:
                 else:
                     elements += self.format_observation.apply(content=message["content"])
             elif message["role"] == Role.FUNCTION.value:
-                elements += self.format_function.apply(content=message["content"])
+                content = "".join(message["content"]) if isinstance(message["content"], list) else message["content"]
+                elements += self.format_function.apply(content=content)
             else:
                 raise NotImplementedError("Unexpected role: {}".format(message["role"]))
 
@@ -155,6 +158,7 @@ class Template:
                 raise ValueError(f"Input must be string, set[str] or dict[str, str], got {type(elem)}")
 
         return token_ids
+
 
 @dataclass
 class Llama2Template(Template):
@@ -187,9 +191,11 @@ class Llama2Template(Template):
                 elements += self.format_separator.apply()
 
             if message["role"] == Role.USER.value:
-                elements += self.format_user.apply(content=system_text + message["content"])
+                content = "".join(message["content"]) if isinstance(message["content"], list) else  message["content"]
+                elements += self.format_user.apply(content=system_text + content)
             elif message["role"] == Role.ASSISTANT.value:
-                elements += self.format_assistant.apply(content=message["content"])
+                content = "".join(message["content"]) if isinstance(message["content"], list) else  message["content"]
+                elements += self.format_assistant.apply(content=content)
             elif message["role"] == Role.OBSERVATION.value:
                 if isinstance(message["content"], list):
                     for m in message["content"]:
@@ -197,7 +203,8 @@ class Llama2Template(Template):
                 else:
                     elements += self.format_observation.apply(content=message["content"])
             elif message["role"] == Role.FUNCTION.value:
-                elements += self.format_function.apply(content=message["content"])
+                content = "".join(message["content"]) if isinstance(message["content"], list) else  message["content"]
+                elements += self.format_function.apply(content=content)
             else:
                 raise NotImplementedError("Unexpected role: {}".format(message["role"]))
 
