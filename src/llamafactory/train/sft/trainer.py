@@ -22,6 +22,9 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
+import torch.distributed as dist
+from torch.nn import CrossEntropyLoss
+from torch.utils.data import SequentialSampler
 from transformers import Seq2SeqTrainer
 from typing_extensions import override
 
@@ -54,6 +57,8 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         super().__init__(**kwargs)
         self.finetuning_args = finetuning_args
 
+        self._has_dummy_forwarded = False
+
         if processor is not None:
             self.add_callback(SaveProcessorCallback(processor))
 
@@ -78,6 +83,24 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
     ) -> "torch.optim.lr_scheduler.LRScheduler":
         create_custom_scheduler(self.args, num_training_steps, optimizer)
         return super().create_scheduler(num_training_steps, optimizer)
+    
+    @override
+    def training_step(self, model, inputs):
+        # TODO: sequence_parallel modes other than 'zigzag-ring' may not need dummy forward
+        if not self._has_dummy_forwarded and model.sequence_parallel_group is not None:
+            model.eval()
+            with torch.no_grad():
+                _ = model(**inputs)
+            model.train()
+            self._has_dummy_forwarded = True
+        return super().training_step(model, inputs)
+    
+    @override
+    def _get_train_sampler(self):
+        if self.model.sequence_parallel_group is not None:
+            return SequentialSampler(self.train_dataset)
+        else:
+            return super()._get_train_sampler()
 
     @override
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
@@ -85,7 +108,30 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         Fixes the loss value for transformers 4.46.0.
         https://github.com/huggingface/transformers/blob/v4.46.0/src/transformers/trainer.py#L3605
         """
-        loss = super().compute_loss(model, inputs, return_outputs, **kwargs)
+        if model.sequence_parallel_group is None:  # no sequence parallel, compute as it is
+            loss = super().compute_loss(model, inputs, return_outputs, **kwargs)
+        else:
+            # compute loss without shift labels, as we have already shifted labels in data processing when using sequence parallel
+            _, outputs = super().compute_loss(model, inputs, return_outputs=True, **kwargs)
+            # Flatten the tokens
+            loss_fct = CrossEntropyLoss(reduction='sum')
+            logits, labels = outputs["logits"] if isinstance(outputs, dict) else outputs[1], inputs['labels']
+            logits = logits.view(-1, model.vocab_size)
+            labels = labels.view(-1)
+            # Enable model parallelism
+            labels = labels.to(logits.device)
+            loss = loss_fct(logits, labels)
+
+            # weighted reduce within sequence_parallel_group
+            sp_group = model.sequence_parallel_group
+            dist.all_reduce(loss, op=dist.ReduceOp.SUM, group=sp_group)
+            label_num = (labels != loss_fct.ignore_index).sum()
+            dist.all_reduce(label_num, op=dist.ReduceOp.SUM, group=sp_group)
+            loss /= label_num
+
+        # now is single-sequence loss
+        # print('loss', loss.shape, loss)
+
         if is_transformers_version_equal_to_4_46() and not getattr(self, "model_accepts_loss_kwargs", False):
             # other model should not scale the loss
             if return_outputs:

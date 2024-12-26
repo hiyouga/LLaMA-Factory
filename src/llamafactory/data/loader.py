@@ -14,6 +14,7 @@
 
 import os
 import sys
+import functools
 from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Union
 
 import numpy as np
@@ -21,7 +22,7 @@ from datasets import DatasetDict, load_dataset, load_from_disk
 from transformers.utils.versions import require_version
 
 from ..extras import logging
-from ..extras.constants import FILEEXT2TYPE
+from ..extras.constants import FILEEXT2TYPE, IGNORE_INDEX
 from ..extras.misc import has_tokenized_data
 from .aligner import align_dataset
 from .data_utils import merge_dataset, split_dataset, preprocess_sp_dataset
@@ -222,25 +223,15 @@ def _get_preprocessed_dataset(
     return dataset
 
 
-import functools
-import torch.distributed as dist
-from ..extras.constants import IGNORE_INDEX
 def sequence_parallel_decorator(get_dataset):
     @functools.wraps(get_dataset)
     def sequence_parallel_processor(*args, **kwargs):
         dataset_module = get_dataset(*args, **kwargs)
-
         # get arguments
         # NOTE: hard-coded indexing seems inevitable in such decorator style implementation?
-        model_args, data_args = args[1], args[2]
+        model_args, data_args, training_args = args[1], args[2], args[3]
         tokenizer = kwargs['tokenizer']        
-
         if model_args.sequence_parallel_size > 1:
-            if dist.get_rank() == 0:
-                dataset_module['train_dataset'].map(lambda example: print(len(example['chosen_input_ids'])))
-                print(dataset_module['train_dataset'])
-                # print('zhs zhs label_pad_token_id:', IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id)
-
             def pad_sequence(examples):
                 max_length = data_args.cutoff_len
                 input_pad_token_id = tokenizer.pad_token_id
@@ -252,13 +243,12 @@ def sequence_parallel_decorator(get_dataset):
                         pad_token_id = input_pad_token_id
                     elif k.endswith('labels'):
                         pad_token_id = label_pad_token_id
-                        # label先往前挪一位，然后在if外面pad
-                        v = [seq[1:] for seq in v]  # FIXME 真正正确需要先做这件事儿！
+                        # shift labels here
+                        v = [seq[1:] for seq in v]
                     elif k.endswith('attention_mask'):
                         pad_token_id = 0
                     elif k.endswith('position_ids'):
-                        pad_token_id = max_length - 1  # pad最大位置
-                        # assert max_length == len(seq)
+                        pad_token_id = max_length - 1  # pad the max position id
                     elif k == 'images' or k == 'videos':
                         pad_token_id = -1
                         continue  # TODO: haven't tested multi-modal yet
@@ -283,22 +273,12 @@ def sequence_parallel_decorator(get_dataset):
             # padding then split
             for k in dataset_module:
                 dataset = dataset_module[k]
+                if data_args.shuffle_for_sequence_parallel:
+                    dataset = dataset.shuffle(seed=training_args.seed)
                 padded_dataset = dataset.map(pad_sequence, batched=True)
-                if dist.get_rank() == 0:
-                    padded_dataset.map(lambda example: print(len(example['chosen_input_ids'])))
-                    print(padded_dataset)
-                # dataset_module[k] = padded_dataset
                 sp_dataset = padded_dataset.map(sp_split, batched=True)
                 dataset_module[k] = sp_dataset
-                if dist.get_rank() == 0:
-                    dataset_module['train_dataset'].map(lambda example: print(len(example['chosen_input_ids'])))
-                    print(dataset_module['train_dataset'])
 
-            if dist.get_rank() == 0:
-                print('dataset:')
-                for i in range(model_args.sequence_parallel_size):
-                    half = len(dataset_module['train_dataset']['chosen_input_ids'][i]) // 2
-                    print(dataset_module['train_dataset']['chosen_input_ids'][i][:6], dataset_module['train_dataset']['chosen_input_ids'][i][half - 3 : half + 3], dataset_module['train_dataset']['chosen_input_ids'][i][-6:])
         else:
             # no sequence parallelism
             pass
