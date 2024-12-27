@@ -200,7 +200,7 @@ class CustomDPOTrainer(DPOTrainer):
         chosen_logps, rejected_logps = all_logps.split(batch_size, dim=0)
         chosen_logits, rejected_logits = all_logits.split(batch_size, dim=0)
         chosen_length, _ = valid_length.split(batch_size, dim=0)
-        return chosen_logps, rejected_logps, chosen_logits, rejected_logits, chosen_logps / chosen_length
+        return chosen_logps, rejected_logps, chosen_logits, rejected_logits, chosen_length
 
     @override
     def compute_reference_log_probs(
@@ -240,18 +240,19 @@ class CustomDPOTrainer(DPOTrainer):
             policy_rejected_logps,
             policy_chosen_logits,
             policy_rejected_logits,
-            policy_chosen_logps_avg,
+            policy_chosen_length,
         ) = self.concatenated_forward(model, batch)
 
         reference_chosen_logps, reference_rejected_logps = self.compute_reference_log_probs(model, batch)
         
-        # TODO: correct logits reduction if necessary. Now we only reduce logps
+        # NOTE: correct logits reduction if necessary. Now we only reduce logps
         sp_group = model.sequence_parallel_group
         if sp_group is not None:
             dist.all_reduce(policy_chosen_logps, op=dist.ReduceOp.SUM, group=sp_group)
             dist.all_reduce(policy_rejected_logps, op=dist.ReduceOp.SUM, group=sp_group)
             dist.all_reduce(reference_chosen_logps, op=dist.ReduceOp.SUM, group=sp_group)
             dist.all_reduce(reference_rejected_logps, op=dist.ReduceOp.SUM, group=sp_group)
+            dist.all_reduce(policy_chosen_length, op=dist.ReduceOp.SUM, group=sp_group)
 
         losses, chosen_rewards, rejected_rewards = self.compute_preference_loss(
             policy_chosen_logps,
@@ -261,8 +262,7 @@ class CustomDPOTrainer(DPOTrainer):
         )
         
         rank = dist.get_rank()
-        print(f"rank {rank}, losses {losses}, ref chosen logps {reference_chosen_logps}, ref rejected logps {reference_rejected_logps}")
-
+        policy_chosen_logps_avg = policy_chosen_logps / policy_chosen_length
         sft_loss = -policy_chosen_logps_avg
         if self.ftx_gamma > 1e-6:
             losses += self.ftx_gamma * sft_loss
