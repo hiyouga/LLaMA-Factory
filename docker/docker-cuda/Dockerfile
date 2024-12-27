@@ -22,6 +22,7 @@ ARG HTTP_PROXY=
 # Set the working directory
 WORKDIR /app
 
+# Set http proxy
 RUN if [ -n "$HTTP_PROXY" ]; then \  
         echo "Configuring proxy..."; \  
         export http_proxy=$HTTP_PROXY; \  
@@ -82,6 +83,7 @@ RUN pip uninstall -y transformer-engine flash-attn && \
     fi
 
 
+# Unset http proxy
 RUN if [ -n "$HTTP_PROXY" ]; then \
         unset http_proxy; \
         unset https_proxy; \
