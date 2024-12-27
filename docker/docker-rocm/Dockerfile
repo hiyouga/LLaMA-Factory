@@ -13,16 +13,28 @@ ARG INSTALL_FLASHATTN=false
 ARG INSTALL_LIGER_KERNEL=false
 ARG INSTALL_HQQ=false
 ARG PIP_INDEX=https://pypi.org/simple
+ARG HTTP_PROXY=
 
 # Set the working directory
 WORKDIR /app
+
+# Set http proxy
+RUN if [ -n "$HTTP_PROXY" ]; then \  
+        echo "Configuring proxy..."; \  
+        export http_proxy=$HTTP_PROXY; \  
+        export https_proxy=$HTTP_PROXY; \  
+    fi
 
 # Install the requirements
 COPY requirements.txt /app
 RUN pip config set global.index-url "$PIP_INDEX" && \
     pip config set global.extra-index-url "$PIP_INDEX" && \
     python -m pip install --upgrade pip && \
-    python -m pip install -r requirements.txt
+    if [ -n "$HTTP_PROXY" ]; then \  
+        python -m pip install --proxy=$HTTP_PROXY -r requirements.txt; \  
+    else \  
+        python -m pip install -r requirements.txt; \  
+    fi
 
 # Copy the rest of the application into the image
 COPY . /app
@@ -44,13 +56,29 @@ RUN EXTRA_PACKAGES="metrics"; \
     if [ "$INSTALL_HQQ" == "true" ]; then \
         EXTRA_PACKAGES="${EXTRA_PACKAGES},hqq"; \
     fi; \
-    pip install -e ".[$EXTRA_PACKAGES]"
+    if [ -n "$HTTP_PROXY" ]; then \  
+        pip install --proxy=$HTTP_PROXY -e ".[$EXTRA_PACKAGES]"; \  
+    else \  
+        pip install -e ".[$EXTRA_PACKAGES]"; \  
+    fi
 
 # Rebuild flash attention
 RUN pip uninstall -y transformer-engine flash-attn && \
     if [ "$INSTALL_FLASHATTN" == "true" ]; then \
-        pip uninstall -y ninja && pip install ninja && \
-        pip install --no-cache-dir flash-attn --no-build-isolation; \
+        pip uninstall -y ninja && \
+        if [ -n "$HTTP_PROXY" ]; then \
+            pip install --proxy=$HTTP_PROXY ninja && \
+            pip install --proxy=$HTTP_PROXY --no-cache-dir flash-attn --no-build-isolation; \
+        else \  
+            pip install ninja && \  
+            pip install --no-cache-dir flash-attn --no-build-isolation; \
+        fi; \
+    fi
+
+# Unset http proxy
+RUN if [ -n "$HTTP_PROXY" ]; then \
+        unset http_proxy; \
+        unset https_proxy; \
     fi
 
 # Set up volumes
