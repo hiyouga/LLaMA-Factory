@@ -45,6 +45,9 @@ def greedy_knapsack(numbers: List[int], capacity: int) -> List[List[int]]:
             remaining_capacity -= numbers[index]  # update the remaining capacity
             current_knapsack.append(numbers.pop(index))  # add the number to knapsack
 
+        if remaining_capacity == capacity:
+            break
+
         knapsacks.append(current_knapsack)
 
     return knapsacks
