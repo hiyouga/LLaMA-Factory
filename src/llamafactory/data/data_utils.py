@@ -125,6 +125,7 @@ def continuous_messages(messages: Sequence[Dict[str, str]], dataset_attr: "Datas
     if len(waiting_message) > 0:
         append_waiting_message()
 
-    if len(new_messages) == len(messages):
-        return messages
+    # must all messages no continuous roles
+    # if len(new_messages) == len(messages):
+    #     return messages
     return new_messages
