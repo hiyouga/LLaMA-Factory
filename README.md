@@ -1,45 +1,76 @@
 <div align="center">
 <h1>
-  360-LLaMA-Factory: A More User-Friendly Post-Training Tool with Sequence Parallelism
+  360-LLaMA-Factory: More User-Friendly Post-Training with Sequence Parallelism
 </h1>
 </div>
-<br>
 <p align="center">
-  We add sequence parallelism into LLaMA-Factory, supporting SFT and DPO with (zigzag) ring attention and other parallelism modes. Please refer to this README and the <a href="https://ai.360.com"> original LLaMA-Factory README</a>.
+  We added Sequence Parallelism (SP) into LLaMA-Factory, with plug-and-play usage requiring only one extra dependency and one extra argument.
+  We believe LLaMA-Factory with SP is more user-friendly than the few existing SP frameworks due to the wider popularity and fuller functionality of LLaMA-Factory.
+  
+  We support most post-training methods such as SFT and DPO-variants (DPO, NCA, ORPO, etc.) with <a href="https://github.com/zhuzilin/ring-flash-attention"> (zigzag) ring attention</a> SP.
+  Under SP of 8 GPUs, with zero3-offload and gradient checkpointing **but no other optimization**, **full-parameter SFT** could reach lengths of 210k(7B) and 120k(72B), while **full-parameter DPO** 84k(7B) and 46k(72B).
+  
+  Please refer to this README and the <a href="https://github.com/hiyouga/LLaMA-Factory/blob/main/README.md"> original LLaMA-Factory README</a>.
 </p>
 
 <br>
 
-## Installation & Usage
+## Introduction
 
-Following the installation guide of LLaMA-Factory, you only need one additional dependency:
+360-LLaMA-Factory is extremely easy to install and use. We build upon LLaMA-Factory and ring-flash-attention and their contributions are well acknowledged. We also plan to incorporate DeepSpeed Ulysses and llama3-style SP as alternative sequence parallelism modes.
 
-`pip install ring-flash-attn`
+Installation & Usage is almost the same as the original LLaMA-Factory.
+Compared to the few existing SP frameworks, 360-LLaMA-Factory has fewer potential bugs and better and fuller functionality thanks to LLaMA-Factory.
 
-To train SFT or DPO with sequence parallelism, you only need to note two arguments:
+### Installation & Usage
+
+Following the installation guide of LLaMA-Factory, you only need one extra dependency:
+
+```shell
+pip install ring-flash-attn
+```
+
+The rest is the same with LLaMA-Factory, except that you clone and use this repo:
+```shell
+git clone https://github.com/Qihoo360/360-LLaMA-Factory.git
+cd 360-LLaMA-Factory
+pip install -e ".[torch,metrics]"  # or `pip install --no-deps -e .`
+                                   # no need to pip install if you use it as `deepspeed src/train.py`
+```
+
+
+To train with sequence parallelism, you only need one extra argument:
 
 ```shell
 deepspeed --hostfile=hostfile.4nodes src/train.py \
-    ...
-    --cutoff_len 100000 \  # the long sequence length you would like to train on
-    --sequence_parallel_size 4
+    --sequence_parallel_size 4 \  # the extra argument regarding sequence parallelism
+    --cutoff_len 100000 \         # LLaMA-Factory's original argument, the sequence length you'd like to trian on. Data would be first padded to this length and then preprocessed with sequence parallelism
 ```
 
-You could also refer to `360-example.sh`.
+You could also refer to `360-example.sh` for SFT and DPO scripts.
 
 
-## SFT
+### Comparison with existing SP frameworks
+
+We'll make a table here
+frameworks with SP:
+Swift: wrong loss
+xTuner: no maintance, incompatabiliy with later transformers and model versions, logging and saving mechanism tricky
+OpenRLHF: logging and saving mechanism tricky, cleaner (fewer dependencies) but fewer functionalities
+other frameworks no SP
+
+
+## benchmark
+
+### SFT
 
 | **Device**     | **Model**         | **Sequence Parallel Size** | **Max Length** | **Full Parameter SFT** |
 |----------------|-------------------|----------------------------|----------------|------------------------|
-| **8 × A100**   | **Qwen2.5-7B**   | 4                          | 100k            | ✅                     |
-| **8 × A100**   | **Qwen2.5-7B**   | 8                          | 200k            | ✅                     |
-| **8 × A100**   | **Qwen2.5-14B**  | 4                          | 100k            | ✅                     |
-| **8 × A100**   | **Qwen2.5-14B**  | 8                          | 150k            | ✅                     |
-| **32 × A100**  | **Qwen2.5-72B**  | 8                          | 80k            | ✅                     |
-| **32 × A100**  | **Qwen2.5-72B**  | 16                         | 100k            | ✅                     |
+| **8 × A100**   | **Qwen2.5-7B**   | 8                          | 210k            | ✅                     |
+| **8 × A100**   | **Qwen2.5-14B**  | 8                          | 175k            | ✅                     |
+| **32 × A100**  | **Qwen2.5-72B**  | 8                          | 128k            | ✅                     |
 
-## DPO
+### DPO
 
 | **Device**     | **Model**         | **Sequence Parallel Size** | **Max Length** | **Full Parameter DPO** |
 |----------------|-------------------|----------------------------|----------------|------------------------|
@@ -50,19 +81,27 @@ You could also refer to `360-example.sh`.
 | **32 × A100**  | **Qwen2.5-72B**  | 8                          | 46k            | ✅                     |
 | **32 × A100**  | **Qwen2.5-72B**  | 16                         | 86k            | ✅                     |
 
-### Results
+### Correctness
+SFT/DPO loss curves
+SP on/off, almost overlap
+
+<!-- ### Results
 1. **7B** model supports up to **84k** sequence length training on a single machine with 8 GPUs.
 2. **14B** model supports up to **72k** sequence length training on a single machine with 8 GPUs.
 3. **72B** model supports up to **84k** sequence length training on a 32-GPU distributed setup.
 
-Our methods demonstrate exceptional long-context handling capabilities, effectively supporting large-scale, long-sequence tasks across various hardware configurations.
+Our methods demonstrate exceptional long-context handling capabilities, effectively supporting large-scale, long-sequence tasks across various hardware configurations. -->
 
-## Features
+<!-- ## Features
 - **Various Methods**: Support advanced algorithms, derived from LLama-factory, support PPO, DPO, KTO, ORPO, etc.
-- **Sequence Parallel**: Supports long text sequence parallel and implements DPO sequence parallel based on RingAttention.
+- **Sequence Parallel**: Supports long text sequence parallel and implements DPO sequence parallel based on RingAttention. -->
+
 
 ## Todo list
-- [ ] **Precompute**: Precompute the logits of the reference model to reduce video memory usage
+- [ ] **Precompute**: Precompute the logits of the reference model to reduce memory during DPO
+- [ ] **logits.float()/contiguous()**: huge memory consumption on long sequences, could be optimized
+- [ ] **Overall SP**: add SP to train/pt, rm, kto
+- [ ] **Other SP modes**: DeepSpeed Ulysses and llama3-style SP
 
 
 ## Citation
@@ -80,23 +119,4 @@ If you find our work helpful, please kindly cite as:
 
 ## Acknowledgement
 
-This repo benefits from [PEFT](https://github.com/huggingface/peft), [TRL](https://github.com/huggingface/trl), [QLoRA](https://github.com/artidoro/qlora) and [FastChat](https://github.com/lm-sys/FastChat). Thanks for their wonderful works.
-
-
-## Draft
-先只开通用优化：zero3 offload, gradient checkpointing，全参微调。调研其他影响DPO的通用优化。
-q25-instruct 7B 14B 单机压测DPO最大长度（sp8）、32k和128k典型长度需要sp多少
-72B 4台机器压测
-
-logits.float()和logits.contiguous()注掉
-
-precompute可以测，先不commit
-
-
-## reproducibility 实验复现
-
-训练loss曲线，开序列并行 vs 不开序列并行
-需要都用SequentialSampler
-
-DPO on Qwen2-1.5B-Instruct,
-starts both at 0.6931 (or 0.6914 depending on dtype and device) without any dropout
+This repo benefits from [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory), [ring-flash-attention](https://github.com/zhuzilin/ring-flash-attention), [EasyContext](https://github.com/jzhang38/EasyContext) and all repos they benefited from. Thanks for their wonderful works.
