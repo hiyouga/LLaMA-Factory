@@ -612,8 +612,16 @@
       "prompt": "text"
     }
   },
-  "finemath": {
+  "finemath-4plus": {
     "hf_hub_url": "HuggingFaceTB/finemath",
+    "subset": "finemath-4plus",
+    "columns": {
+      "prompt": "text"
+    }
+  },
+  "finemath-3plus": {
+    "hf_hub_url": "HuggingFaceTB/finemath",
+    "subset": "finemath-3plus",
     "columns": {
       "prompt": "text"
     }
