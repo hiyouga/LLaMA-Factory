@@ -318,25 +318,25 @@ def get_dataset(
 
 # ================================= AIFactory Custom Code Begin =================================
 def _aif_get_longest_dataset_module(dataset_module: Dict[str, "Dataset"], 
-                                    total_train_batch_size: int, 
-                                    total_eval_batch_size: int) -> "DatasetModule":
+                                    datasets_lens: Dict[str, int]) -> "DatasetModule":
     '''
     function: 从每个数据集中获取最长的sample，并复制1个total_batch，构成一个流程测试的数据集
     inputs: 
         dataset_module: 数据集字典
-        total_train_batch_size: 训练batch size
-        total_eval_batch_size: 评估batch size
+        datasets_lens: 数据集长度字典
     outputs: 
         longest_dataset_module: 数据集字典
     '''
     # 从原始数据集中获取最长的sample
     longest_dataset_module = {}
+    dataset_lens = {}
     for dataset_name, dataset in dataset_module.items():
         max_len = 0
         longest_sample = None
 
         # 初始化一个空的Dataset，表头跟dataset一致
-        longest_dataset_module[dataset_name] = {'input_ids': [], 'attention_mask': [], 'labels': [], 'images': [], 'videos': []}
+        columns = list(dataset.features.keys())
+        longest_dataset_module[dataset_name] = {column: [] for column in columns}
         if type(dataset) == dict:
             for dataset_part in dataset.values():
                 for sample in dataset_part:
@@ -349,12 +349,9 @@ def _aif_get_longest_dataset_module(dataset_module: Dict[str, "Dataset"],
                     max_len = len(sample['input_ids']) + len(sample['labels'])
                     longest_sample = sample
         # 复制1个total_batch，构成一个流程测试的数据集
-        for _ in range(total_train_batch_size):
-            longest_dataset_module[dataset_name]['input_ids'].append(longest_sample['input_ids'])
-            longest_dataset_module[dataset_name]['attention_mask'].append(longest_sample['attention_mask'])
-            longest_dataset_module[dataset_name]['labels'].append(longest_sample['labels'])
-            longest_dataset_module[dataset_name]['images'].append(longest_sample['images'])
-            longest_dataset_module[dataset_name]['videos'].append(longest_sample['videos'])
+        for _ in range(datasets_lens[dataset_name]):
+            for column in columns:
+                longest_dataset_module[dataset_name][column].append(longest_sample[column])
         longest_dataset_module[dataset_name] = Dataset.from_dict(longest_dataset_module[dataset_name])
 
     return longest_dataset_module
@@ -644,9 +641,11 @@ def aif_get_dataset(
         world_size = int(os.environ.get("WORLD_SIZE", 1))
         total_train_batch_size = training_args.gradient_accumulation_steps * training_args.train_batch_size * world_size
         total_eval_batch_size = training_args.per_device_eval_batch_size * world_size
-        longest_dataset_module = _aif_get_longest_dataset_module(dataset_module, 
-                                                                 total_train_batch_size * 10, 
-                                                                 total_eval_batch_size * 10)
+        datasets_lens = {
+            "train_dataset": total_train_batch_size * 10,
+            "eval_dataset": total_eval_batch_size * 10
+        }
+        longest_dataset_module = _aif_get_longest_dataset_module(dataset_module, datasets_lens)
         return dataset_module, longest_dataset_module
 
 

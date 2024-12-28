@@ -32,10 +32,6 @@ if TYPE_CHECKING:
 
     from ...hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
 
-# ================================= AIFactory Custom Code Start =================================
-from ...data import aif_get_dataset
-
-# ================================= AIFactory Custom Code End =================================
 
 def run_sft(
     model_args: "ModelArguments",
@@ -128,14 +124,28 @@ def run_sft(
     # Create model card
     create_modelcard_and_push(trainer, model_args, data_args, training_args, finetuning_args)
 
+
 # ================================= AIFactory Custom Code Begin =================================
 import copy
 from ...extras.logging import get_logger
 import torch
 import os
 import json
+from ...data import aif_get_dataset
+from transformers import TrainerCallback
+import wandb
 
 logger = get_logger(__name__)
+
+
+# class AIFCustomLogCallback(TrainerCallback):
+#     def on_log(self, args, state, control, logs=None, **kwargs):
+#         if logs is not None:
+#             logs["global_step"] = state.global_step
+#             # 检查是否启用了wandb
+#             # 检查trainer是否使用wandb记录日志
+#             if wandb.run is not None:
+#                 wandb.log(logs, step=state.global_step)
 
 
 def aif_run_sft(
@@ -146,6 +156,9 @@ def aif_run_sft(
     generating_args: "GeneratingArguments",
     callbacks: Optional[List["TrainerCallback"]] = None,
 ):
+    # 通过回调函数，添加global_step到log
+    # callbacks.append(AIFCustomLogCallback())
+    
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
     template = get_template_and_fix_tokenizer(tokenizer, data_args)
@@ -192,6 +205,7 @@ def aif_run_sft(
     temp_training_args.save_strategy = 'no' # 不保存checkpoint
     temp_training_args.load_best_model_at_end = False # 不保存最佳模型
     temp_training_args.report_to = [] # 不保存日志
+    temp_training_args.learning_rate = 0.0
     trainer = CustomSeq2SeqTrainer(
         model=model,
         args=temp_training_args,
@@ -205,9 +219,6 @@ def aif_run_sft(
     # Training
     if training_args.do_train:
         train_result = trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
-    # Evaluation
-    if training_args.do_eval:
-        metrics = trainer.evaluate(metric_key_prefix="eval", **gen_kwargs)
     # 计算显存占用情况
     logger.info(f'Cuda memory summary: \n{torch.cuda.memory_summary()}')
     logger.info(f'Max memory allocated: {torch.cuda.max_memory_allocated() / 1024 / 1024 / 1024} GB')
