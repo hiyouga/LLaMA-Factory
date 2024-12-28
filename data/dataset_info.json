@@ -612,6 +612,12 @@
       "prompt": "text"
     }
   },
+  "finemath": {
+    "hf_hub_url": "HuggingFaceTB/finemath",
+    "columns": {
+      "prompt": "text"
+    }
+  },
   "fineweb_edu": {
     "hf_hub_url": "HuggingFaceFW/fineweb-edu",
     "columns": {
