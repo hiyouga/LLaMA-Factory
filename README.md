@@ -123,8 +123,6 @@ You could also refer to [360-example.sh](360-example.sh) for example SFT and DPO
 | OpenRLHF              | ✅     | ✅                                    | llama3-style SP               | more advanced & customizable       | ring-flash-attn, not much                           | didn't consider gradient accumulation                                |
 | 360-LLaMA-Factory     | ✅     | ✅                                    | zigzag ring attention         | easier plug&play use, less customizable | ring-flash-attn, trl, etc                     | ✅ (inherits transformers)                                            |
 
-<br>
-
 
 To the best of our knowledge, 360-LLaMA-Factory is the first open-source project to systematically integrate Sequence Parallelism (SP) into LLaMA-Factory.
 
@@ -174,8 +172,8 @@ While it has been pointed out that (zigzag) ring attention exhibits [certain num
 
 We have been post-training SFT and DPO with SP without any notable issues on the resulting model's performance. We are confident 360-LLaMA-Factory *works and is correct*.
 
-![#sft](assets/sft.png){width=360}
-![#dpo](assets/dpo.png){width=360}
+![#sft](assets/sft.png)
+![#dpo](assets/dpo.png)
 
 
 ## Developing Notes
