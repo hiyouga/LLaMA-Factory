@@ -68,7 +68,7 @@ extra_require = {
 def main():
     setup(
         name="llamafactory",
-        version=get_version(),
+        version="0.9.1post1",
         author="hiyouga",
         author_email="hiyouga" "@" "buaa.edu.cn",
         description="Easy-to-use LLM fine-tuning framework",

@@ -28,7 +28,6 @@ deepspeed --hostfile=hostfile.2nodes src/train.py \
     --bf16 True \
     --flash_attn fa2 \
     --gradient_checkpointing True \
-    --report_to tensorboard \
     --seed 42 \
     --sequence_parallel_size 8 \
     --packing True
@@ -62,7 +61,6 @@ deepspeed --hostfile=hostfile.1mac src/train.py \
     --deepspeed examples/deepspeed/ds_z3_offload_config.json \
     --flash_attn fa2 \
     --gradient_checkpointing True \
-    --report_to tensorboard \
     --bf16 True \
     --ddp_timeout 180000000 \
     --seed 42 \

@@ -85,7 +85,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         return super().create_scheduler(num_training_steps, optimizer)
     
     @override
-    def training_step(self, model, inputs):
+    def training_step(self, model, inputs, *args, **kwargs):
         # TODO: sequence_parallel modes other than 'zigzag-ring' may not need dummy forward
         if not self._has_dummy_forwarded and model.sequence_parallel_group is not None:
             model.eval()
@@ -93,7 +93,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                 _ = model(**inputs)
             model.train()
             self._has_dummy_forwarded = True
-        return super().training_step(model, inputs)
+        return super().training_step(model, inputs, *args, **kwargs)
     
     @override
     def _get_train_sampler(self):
