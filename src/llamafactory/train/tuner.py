@@ -42,7 +42,6 @@ logger = get_logger(__name__)
 
 def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: List["TrainerCallback"] = []) -> None:
     callbacks.append(LogCallback())
-    print(f"args: {args}")
     model_args, data_args, training_args, finetuning_args, generating_args = get_train_args(args)
 
     if finetuning_args.stage == "pt":

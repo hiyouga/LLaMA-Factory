@@ -227,6 +227,9 @@ def aif_run_sft(
     logger.info('============ Train with longest samples done. ============')
 
     logger.info('============ Start to train with all samples... ============')
+    # 打印当前python环境
+    logger.info(f'Python environment: {sys.executable}')
+    logger.info(f'Training args: {training_args}')
     # Initialize our Trainer
     trainer = CustomSeq2SeqTrainer(
         model=model,
