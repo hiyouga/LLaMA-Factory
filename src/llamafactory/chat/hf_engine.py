@@ -171,7 +171,7 @@ class HuggingfaceEngine(BaseEngine):
             elif not isinstance(value, torch.Tensor):
                 value = torch.tensor(value)
 
-            if torch.is_floating_point(value):
+            if torch.is_floating_point(value):  # cast data dtype for paligemma
                 value = value.to(model.dtype)
 
             gen_kwargs[key] = value.to(model.device)
