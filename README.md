@@ -1,9 +1,4 @@
-<div align="center">
-<h1>
-  360-LLaMA-Factory: Plug-and-Play Sequence Parallelism for Post-Training
-  <!-- More User-Friendly Post-Training with Sequence Parallelism -->
-</h1>
-</div>
+![# 360-LLaMA-Factory](assets/360lf-logo.png)
 
 **Using [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory) with Sequence Parallelism can be as easy as...**
 ```yaml
@@ -22,13 +17,14 @@ Standing on the shoulders of giants ([LLaMA-Factory](https://github.com/hiyouga/
 360-LLaMA-Factory adds Sequence Parallelism (SP), more specifically zigzag-ring-attention, into LLaMA-Factory, supporting most post-training methods including SFT and DPO (plus its variants).
 
 With zero3-offload and gradient checkpointing **but no other optimization**, 8 x A800 SP extends training length of **full-parameter SFT** to 210k(7B) and 128k(72B), while **full-parameter DPO** to 84k(7B) and 46k(72B).
-With more custom optimization tricks (e.g. commenting `logtis = logits.float()`, unsloth or liger kernel), life of long-context training would be much easier even with `sequence_parallel_size` of `2`.
+With more custom optimization tricks (e.g. commenting `logtis = logits.float()`, liger kernel, DPO precompute etc.), life of long-context training would be much easier even with `sequence_parallel_size` of `2`.
 <!-- Typical use cases of 32k could be covered with sequence_parallel_size of just 2. -->
 
 We believe SP is of great significance as multi-modal LLMs process longer sequences of tokens, and 360-LLaMA-Factory patches this critical missing piece into the most widely-used LLM Post-Training framework.
 Our SP implementation in 360-LLaMA-Factory introduces minimal code change, is highly modular and has its correctness verified.
 While we first released it here,
 we're looking to merge it into LLaMA-Factory and have submitted a PR.
+Before that, this codebase could be used directly in place of the original LLaMA-Factory codebase -- 360-LLaMA-Factory's behavior is *identical* to the original one without SP.
 
 <!-- Please refer to this README and the <a href="https://github.com/hiyouga/LLaMA-Factory/blob/main/README.md"> original LLaMA-Factory README</a>. -->
 
@@ -37,6 +33,8 @@ we're looking to merge it into LLaMA-Factory and have submitted a PR.
 
 - [Getting Started](#getting-started)
     - [Installation](#installation)
+        - [Fresh-Start](#fresh-start)
+        - [Incremental](#incremental)
     - [Quickstart](#quickstart)
 - [Comparison with Existing SP Frameworks](#comparison-with-existing-sp-frameworks)
 - [Benchmarking 360-LLaMA-Factory](#benchmarking-360-llama-factory)
@@ -92,7 +90,7 @@ The degree of Sequence Parallelism (SP) is controlled by the argument `sequence_
 
 To train with SP, you only need to set `sequence_parallel_size` greater than `1`, often to `2`, `4`, `8` or `16` as long as it evenly divides your total number of GPUs.
 
-The argument `cutoff_len` should also be noted as it is now strictly the sequence length you'd like to train on. Your data would be automatically padded and then preprocessed for SP.
+The argument `cutoff_len` should also be noted as it is now strictly the sequence length you'd like to train on -- you could just set it to be the max length of you data. Your data would be automatically padded and then preprocessed for SP.
 
 You could simply set these two arguments in your config yaml file: 
 ```yaml
@@ -128,12 +126,13 @@ To the best of our knowledge, 360-LLaMA-Factory is the first open-source project
 
 It is acknowledged that there are already a few open-source projects with SP for post-training. Among them, however,
 - [Swift](https://github.com/modelscope/swift) is wrong in its DPO loss computation; 
-- the SP backend Swift based on, [XTuner](https://github.com/modelscope/ms-swift), is no longer actively maintained and is tricky to run with recent versions of transformers and open-source LLMs; 
+- [XTuner](https://github.com/modelscope/ms-swift), the SP backend Swift based on, is no longer actively maintained and is tricky to run with recent versions of transformers and open-source LLMs; 
 - [Megatron-LM](https://github.com/NVIDIA/Megatron-LM) supported SP (they call context-parallelism) in 2024, but it requires non-trivial efforts to run DPO with context-parallelism and it's not huggingface-native, requiring tedious model convertion;
 - [EasyContext](https://github.com/jzhang38/EasyContext) is huggingface-native but has no data parallelism with SP and lacks SFT or DPO support;
 - [OpenRLHF](https://github.com/OpenRLHF/OpenRLHF) is arguably the only alternative choice we would recommend besides 360-LLaMA-Factory as its implementation is also correct with active community support. In terms of software engineering, OpenRLHF is on the opposite end of 360-LLaMA-Factory: OpenRLHF has much fewer dependencies with self-written Trainer classes instead of inheriting `tansformers`'s Trainer, while 360-LLaMA-Factory, as LLaMA-Factory, inherits much from `trl`, `transformers` and other libraries. Generally OpenRLHF is more suitable for more advanced custom use and modification, while 360-LLaMA-Factory for general-purpose argument-specifiable use (e.g. easily combined with unsloth or liger-kernel).
 
-We gratefully acknowledge these projects' pioneering work. In fact, we have been internally using our own bespoke version of EasyContext for SP post-training throughout the year, and have only recently decided to migrate our modification on EasyContext into LLaMA-Factory. The SP backend EasyContext and 360-LLaMA-Factory used, [ring-flash-attention](https://github.com/zhuzilin/ring-flash-attention), is also the same as OpenRLHF.
+While our detailed implementation of data processing and loss computation is different from all above, 
+we gratefully acknowledge these projects' pioneering work. In fact, we have been internally using our own bespoke version of EasyContext for SP post-training throughout the year, and have only recently decided to migrate our modification on EasyContext into LLaMA-Factory. The SP backend EasyContext and 360-LLaMA-Factory used, [ring-flash-attention](https://github.com/zhuzilin/ring-flash-attention), is also the same as OpenRLHF.
 We also plan to add other SP modes such as DeepSpeed Ulysses as XTuner did.
 
 
@@ -187,7 +186,9 @@ We believe SP is in essence a change to model since all SP methods have to chang
 
 SP is applied to the model in a way similar to liger kernels:
 ```python
-apply_liger_kernel
+# in src/llamafactory/model/loader.py
+...
+apply_liger_kernel(config, model_args, is_trainable, require_logits=(finetuning_args.stage not in ["pt", "sft"]))  # LLaMA-Factory's original code
 sequence_parallel_group = apply_sequence_parallel(model_args)  # monkey patch to change the model's attention forward to SP
 ...
 model.sequence_parallel_group = sequence_parallel_group  # register the model to be SP, otherwise None
@@ -220,6 +221,8 @@ With zigzag ring attention, we also noticed numerical instability of the very fi
 - [ ] **logits.float()/contiguous()**: huge memory consumption on long sequences, could be optimized
 - [ ] **Overall SP**: add SP to train/pt, rm, kto
 - [ ] **Other SP modes**: DeepSpeed Ulysses and llama3-style SP
+- [ ] **Data processing speed**: could be optimized
+
 
 ## License
 
