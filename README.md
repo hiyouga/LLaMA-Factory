@@ -191,6 +191,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [ChatGLM3](https://huggingface.co/THUDM)                          | 6B                               | chatglm3         |
 | [Command R](https://huggingface.co/CohereForAI)                   | 35B/104B                         | cohere           |
 | [DeepSeek (Code/MoE)](https://huggingface.co/deepseek-ai)         | 7B/16B/67B/236B                  | deepseek         |
+| [DeepSeek 2.5/3](https://huggingface.co/deepseek-ai)              | 236B/685B                        | deepseek3        |
 | [Falcon](https://huggingface.co/tiiuae)                           | 7B/11B/40B/180B                  | falcon           |
 | [Gemma/Gemma 2/CodeGemma](https://huggingface.co/google)          | 2B/7B/9B/27B                     | gemma            |
 | [GLM-4](https://huggingface.co/THUDM)                             | 9B                               | glm4             |
