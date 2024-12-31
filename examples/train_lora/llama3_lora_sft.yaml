@@ -9,6 +9,7 @@ finetuning_type: lora
 lora_target: all
 
 ### dataset
+dataset_dir: /home/ray/default/lf/data/
 dataset: identity,alpaca_en_demo
 template: llama3
 cutoff_len: 2048
@@ -38,3 +39,10 @@ val_size: 0.1
 per_device_eval_batch_size: 1
 eval_strategy: steps
 eval_steps: 500
+
+
+### ray setup
+resources_per_worker:
+  GPU: 1
+num_workers: 4
+# placement_strategy: ...

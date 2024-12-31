@@ -27,7 +27,7 @@ from .extras.env import VERSION, print_env
 from .extras.misc import get_device_count
 from .train.tuner import export_model, run_exp
 from .webui.interface import run_web_demo, run_web_ui
-
+from .integrations.ray.ray_utils import should_use_ray
 
 USAGE = (
     "-" * 70
@@ -87,7 +87,8 @@ def main():
         export_model()
     elif command == Command.TRAIN:
         force_torchrun = os.getenv("FORCE_TORCHRUN", "0").lower() in ["true", "1"]
-        if force_torchrun or get_device_count() > 1:
+        use_ray = should_use_ray()
+        if force_torchrun or (get_device_count() > 1 and not use_ray):
             master_addr = os.getenv("MASTER_ADDR", "127.0.0.1")
             master_port = os.getenv("MASTER_PORT", str(random.randint(20001, 29999)))
             logger.info_rank0(f"Initializing distributed tasks at: {master_addr}:{master_port}")
