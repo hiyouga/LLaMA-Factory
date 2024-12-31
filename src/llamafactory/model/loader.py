@@ -133,6 +133,10 @@ def load_model(
     init_kwargs = _get_init_kwargs(model_args)
     config = load_config(model_args)
     patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
+    if model_args.sequence_parallel_size > 1 and hasattr(config, "attention_dropout") and config.attention_dropout != 0.0:
+        logger.warning_rank0("Sequence Parallel doesn't support attention_dropout yet. Forcing it to zero.")
+        config.attention_dropout = 0.0
+
     apply_liger_kernel(config, model_args, is_trainable, require_logits=(finetuning_args.stage not in ["pt", "sft"]))
     sequence_parallel_group = apply_sequence_parallel(model_args)  # monkey patching, similar to liger_kernel
 

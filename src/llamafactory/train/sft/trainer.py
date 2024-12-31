@@ -26,6 +26,7 @@ import torch.distributed as dist
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import SequentialSampler
 from transformers import Seq2SeqTrainer
+from transformers.trainer import _is_peft_model
 from typing_extensions import override
 
 from ...extras import logging
@@ -116,7 +117,13 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             # Flatten the tokens
             loss_fct = CrossEntropyLoss(reduction='sum')
             logits, labels = outputs["logits"] if isinstance(outputs, dict) else outputs[1], inputs['labels']
-            logits = logits.view(-1, model.vocab_size)
+            # Get vocab_size
+            unwrapped_model = self.accelerator.unwrap_model(model)
+            if _is_peft_model(unwrapped_model):
+                vocab_size = unwrapped_model.base_model.model.config.vocab_size
+            else:
+                vocab_size = unwrapped_model.config.vocab_size
+            logits = logits.view(-1, vocab_size)
             labels = labels.view(-1)
             # Enable model parallelism
             labels = labels.to(logits.device)
