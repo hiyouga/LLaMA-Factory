@@ -1,4 +1,4 @@
-![# 360-LLaMA-Factory](assets/360lf-logo.png)
+![# 360-LLaMA-Factory](assets/360lf-logo-zhinao.png)
 
 **Using [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory) with Sequence Parallelism can be as easy as...**
 ```yaml
