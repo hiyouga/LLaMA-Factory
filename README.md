@@ -23,8 +23,10 @@ With more custom optimization tricks (e.g. commenting `logtis = logits.float()`,
 We believe SP is of great significance as multi-modal LLMs process longer sequences of tokens, and 360-LLaMA-Factory patches this critical missing piece into the most widely-used LLM Post-Training framework.
 Our SP implementation in 360-LLaMA-Factory introduces minimal code change, is highly modular and has its correctness verified.
 While we first released it here,
-we're looking to merge it into LLaMA-Factory and have submitted a PR.
+we're looking to merge it into LLaMA-Factory and have already contacted LLaMA-Factory's author.
 Before that, this codebase could be used directly in place of the original LLaMA-Factory codebase -- 360-LLaMA-Factory's behavior is *identical* to the original one without SP.
+
+[WeChat Group here.](assets/wechat-group-360.JPG)
 
 <!-- Please refer to this README and the <a href="https://github.com/hiyouga/LLaMA-Factory/blob/main/README.md"> original LLaMA-Factory README</a>. -->
 
@@ -179,7 +181,6 @@ We have been post-training SFT and DPO with SP without any notable issues on the
 
 ### Modularity
 We believe our SP implementation in 360-LLaMA-Factory introduces minimal code change and is highly modular.
-We have submitted a PR to LLaMA-Factory and will work cooperatively for it to be merged.
 
 SP mainly changes three modules: data processing, model and loss computation.
 We believe SP is in essence a change to model since all SP methods have to change the attention forward method somehow, otherwise no correct computation could be achieved given the split of sequences on multiple GPUs. Therefore, we add `sequence_parallel_size` in `model_args.py`.
