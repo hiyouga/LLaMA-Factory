@@ -188,7 +188,6 @@ SP is applied to the model in a way similar to liger kernels:
 ```python
 # in src/llamafactory/model/loader.py
 ...
-apply_liger_kernel(config, model_args, is_trainable, require_logits=(finetuning_args.stage not in ["pt", "sft"]))  # LLaMA-Factory's original code
 sequence_parallel_group = apply_sequence_parallel(model_args)  # monkey patch to change the model's attention forward to SP
 ...
 model.sequence_parallel_group = sequence_parallel_group  # register the model to be SP, otherwise None
@@ -219,10 +218,17 @@ With zigzag ring attention, we also noticed numerical instability of the very fi
 ### ToDos
 - [ ] **Precompute**: Precompute the logits of the reference model to reduce memory during DPO
 - [ ] **logits.float()/contiguous()**: huge memory consumption on long sequences, could be optimized
-- [ ] **Overall SP**: add SP to train/pt, rm, kto
+- [ ] **Overall SP compatability**: test & support unsloth, liger kernel, etc; add SP to train/pt, rm, kto
 - [ ] **Other SP modes**: DeepSpeed Ulysses and llama3-style SP
 - [ ] **Data processing speed**: could be optimized
 
+### Limitations
+
+Due to the limitation of Ring Flash Attention, the following parameter is not currently supported in sequence parallelism:
+
+- **attention_dropout**: This parameter is set in config.json in the model directory. If attention_dropout is not zero when sequence parallelism is enabled, we reset it to zero.
+
+You can find more detail in [ring-flash-attention](https://github.com/zhuzilin/ring-flash-attention).
 
 ## License
 
