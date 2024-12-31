@@ -89,8 +89,8 @@ def convert_alpaca(
     prompt = []
     if dataset_attr.history and isinstance(example[dataset_attr.history], list):
         for old_prompt, old_response in example[dataset_attr.history]:
-            prompt.append({"role": Role.USER.value, "content": old_prompt})
-            prompt.append({"role": Role.ASSISTANT.value, "content": old_response})
+            prompt.append({"role": Role.USER.value, "content": old_prompt, "train": data_args.train_on_prompt})
+            prompt.append({"role": Role.ASSISTANT.value, "content": old_response, "train": not data_args.mask_history})
 
     query = []
     if dataset_attr.prompt and example[dataset_attr.prompt]:
@@ -99,7 +99,7 @@ def convert_alpaca(
     if dataset_attr.query and example[dataset_attr.query]:
         query.append(example[dataset_attr.query])
 
-    prompt.append({"role": Role.USER.value, "content": "\n".join(query)})  # "prompt\nquery"
+    prompt.append({"role": Role.USER.value, "content": "\n".join(query), "train": data_args.train_on_prompt})  # "prompt\nquery"
 
     if dataset_attr.kto_tag and isinstance(example[dataset_attr.kto_tag], bool):  # kto example
         response = [{"role": Role.ASSISTANT.value, "content": example[dataset_attr.response]}]
@@ -117,7 +117,7 @@ def convert_alpaca(
             {"role": Role.ASSISTANT.value, "content": example[dataset_attr.rejected]},
         ]
     elif dataset_attr.response and isinstance(example[dataset_attr.response], str):  # normal example
-        response = [{"role": Role.ASSISTANT.value, "content": example[dataset_attr.response]}]
+        response = [{"role": Role.ASSISTANT.value, "content": example[dataset_attr.response], "train": True}]
     else:  # unsupervised
         response = []
 
@@ -170,9 +170,22 @@ def convert_sharegpt(
             logger.warning_rank0(f"Invalid role tag in {messages}.")
             broken_data = True
 
-        aligned_messages.append(
-            {"role": tag_mapping[message[dataset_attr.role_tag]], "content": message[dataset_attr.content_tag]}
-        )
+        if message[dataset_attr.role_tag] in even_tags:
+            if data_args.mask_history and turn_idx != len(messages) - 1:
+                train = False
+            else:
+                train = message.get(dataset_attr.train_tag, True)
+        else:
+            if data_args.train_on_prompt:
+                train = True
+            else:
+                train = message.get(dataset_attr.train_tag, False)
+
+        aligned_messages.append({
+            "role": tag_mapping[message[dataset_attr.role_tag]],
+            "content": message[dataset_attr.content_tag],
+            "train": train,
+        })
 
     if (not dataset_attr.ranking and len(aligned_messages) % 2 != 0) or (
         dataset_attr.ranking and len(aligned_messages) % 2 == 0
