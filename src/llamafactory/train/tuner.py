@@ -30,7 +30,7 @@ from .kto import run_kto
 from .ppo import run_ppo
 from .pt import run_pt
 from .rm import run_rm
-from .sft import run_sft
+from .sft import aif_run_sft as run_sft
 
 
 if TYPE_CHECKING:

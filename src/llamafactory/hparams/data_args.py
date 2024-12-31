@@ -113,6 +113,10 @@ class DataArguments:
         default=None,
         metadata={"help": "Path to save or load the tokenized datasets."},
     )
+    eval_one_by_one: bool = field(
+        default=False,
+        metadata={"help": "Enable one-by-one evaluation."},
+    )
 
     def __post_init__(self):
         def split_arg(arg):

@@ -19,7 +19,7 @@ from .collator import (
     SFTDataCollatorWith4DAttentionMask,
 )
 from .data_utils import Role, split_dataset
-from .loader import get_dataset
+from .loader import get_dataset, aif_get_dataset, aif_split_eval_dataset
 from .template import TEMPLATES, Template, get_template_and_fix_tokenizer
 
 
@@ -31,6 +31,8 @@ __all__ = [
     "Role",
     "split_dataset",
     "get_dataset",
+    "aif_get_dataset",
+    "aif_split_eval_dataset",
     "TEMPLATES",
     "Template",
     "get_template_and_fix_tokenizer",

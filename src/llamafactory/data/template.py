@@ -356,7 +356,10 @@ def get_template_and_fix_tokenizer(tokenizer: "PreTrainedTokenizer", data_args: 
     r"""
     Gets chat template and fixes the tokenizer.
     """
-    if data_args.template in ["llava", "paligemma", "qwen2_vl"]:
+    if data_args.template == "qwen2_vl":
+        require_version("transformers==4.45.0.dev0", "To fix: pip install transformers>=4.45.0")
+        require_version("accelerate>=0.34.0", "To fix: pip install accelerate>=0.34.0")
+    elif data_args.template in ["llava", "paligemma"]:
         require_version("transformers>=4.45.0", "To fix: pip install transformers>=4.45.0")
         require_version("accelerate>=0.34.0", "To fix: pip install accelerate>=0.34.0")
 
