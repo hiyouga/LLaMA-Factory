@@ -620,19 +620,19 @@ register_model_group(
 
 register_model_group(
     models={
-        "GPT2-Small": {
+        "GPT-2-Small": {
             DownloadSource.DEFAULT: "openai-community/gpt2",
             DownloadSource.MODELSCOPE: "AI-ModelScope/gpt2",
         },
-        "GPT2-Medium": {
+        "GPT-2-Medium": {
             DownloadSource.DEFAULT: "openai-community/gpt2-medium",
             DownloadSource.MODELSCOPE: "AI-ModelScope/gpt2-medium",
         },
-        "GPT2-Large": {
+        "GPT-2-Large": {
             DownloadSource.DEFAULT: "openai-community/gpt2-large",
             DownloadSource.MODELSCOPE: "AI-ModelScope/gpt2-large",
         },
-        "GPT2-XL": {
+        "GPT-2-XL": {
             DownloadSource.DEFAULT: "openai-community/gpt2-xl",
             DownloadSource.MODELSCOPE: "goodbai95/GPT2-xl",
         },
