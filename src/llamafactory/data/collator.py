@@ -118,7 +118,7 @@ class SFTDataCollatorWith4DAttentionMask(MultiModalDataCollatorForSeq2Seq):
 
     def __call__(self, features: Sequence[Dict[str, Any]]) -> Dict[str, "torch.Tensor"]:
         if not self.require_position_ids:
-            features = [{k: v for k, v in d.items() if k != 'position_ids'} for d in features]
+            features = [{k: v for k, v in d.items() if k != "position_ids"} for d in features]
         features = super().__call__(features)
         if self.block_diag_attn and self.attn_implementation != "flash_attention_2":
             features["attention_mask"] = prepare_4d_attention_mask(features["attention_mask"], self.compute_dtype)
@@ -131,6 +131,7 @@ class PairwiseDataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
     r"""
     Data collator for pairwise data.
     """
+
     require_position_ids: bool = False
 
     def __call__(self, features: Sequence[Dict[str, Any]]) -> Dict[str, "torch.Tensor"]:
@@ -152,7 +153,7 @@ class PairwiseDataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
                 }
                 if self.require_position_ids:
                     # if requires, would be padded to cutoff_len in preprocessing
-                    target_feature["position_ids"] = feature["{}_position_ids".format(key)]
+                    target_feature["position_ids"] = feature[f"{key}_position_ids"]
                 concatenated_features.append(target_feature)
 
         return super().__call__(concatenated_features)

@@ -111,7 +111,9 @@ class DataArguments:
     )
     shuffle_for_sequence_parallel: bool = field(
         default=True,
-        metadata={"help": "Shuffle dataset before sequence parallel preprocessing (should shuffle before pad & split)."},
+        metadata={
+            "help": "Shuffle dataset before sequence parallel preprocessing (should shuffle before pad & split)."
+        },
     )
     tool_format: Optional[str] = field(
         default=None,

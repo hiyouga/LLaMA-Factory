@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import functools
 import os
 import sys
-import functools
 from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Union
 
 import numpy as np
@@ -25,7 +25,7 @@ from ..extras import logging
 from ..extras.constants import FILEEXT2TYPE, IGNORE_INDEX
 from ..extras.misc import has_tokenized_data
 from .aligner import align_dataset
-from .data_utils import merge_dataset, split_dataset, preprocess_sp_dataset
+from .data_utils import merge_dataset, preprocess_sp_dataset, split_dataset
 from .parser import get_dataset_list
 from .preprocess import get_preprocess_and_print_func
 
@@ -230,8 +230,9 @@ def sequence_parallel_decorator(get_dataset):
         # get arguments
         # NOTE: hard-coded indexing seems inevitable in such decorator style implementation?
         model_args, data_args, training_args = args[1], args[2], args[3]
-        tokenizer = kwargs['tokenizer']        
+        tokenizer = kwargs["tokenizer"]
         if model_args.sequence_parallel_size > 1:
+
             def pad_sequence(examples):
                 max_length = data_args.cutoff_len
                 input_pad_token_id = tokenizer.pad_token_id
@@ -239,17 +240,17 @@ def sequence_parallel_decorator(get_dataset):
                 label_pad_token_id = IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
 
                 for k, v in examples.items():
-                    if k.endswith('input_ids'):
+                    if k.endswith("input_ids"):
                         pad_token_id = input_pad_token_id
-                    elif k.endswith('labels'):
+                    elif k.endswith("labels"):
                         pad_token_id = label_pad_token_id
                         # shift labels here
                         v = [seq[1:] for seq in v]
-                    elif k.endswith('attention_mask'):
+                    elif k.endswith("attention_mask"):
                         pad_token_id = 0
-                    elif k.endswith('position_ids'):
+                    elif k.endswith("position_ids"):
                         pad_token_id = max_length - 1  # pad the max position id
-                    elif k == 'images' or k == 'videos':
+                    elif k == "images" or k == "videos":
                         pad_token_id = -1
                         continue  # TODO: haven't tested multi-modal yet
                     else:
@@ -266,7 +267,9 @@ def sequence_parallel_decorator(get_dataset):
                         if row is None:
                             chunks += [None] * model_args.sequence_parallel_size
                         else:
-                            chunks += preprocess_sp_dataset(row, model_args.sequence_parallel_size, model_args.sequence_parallel_mode)
+                            chunks += preprocess_sp_dataset(
+                                row, model_args.sequence_parallel_size, model_args.sequence_parallel_mode
+                            )
                     examples[k] = chunks
                 return examples
 
@@ -282,9 +285,9 @@ def sequence_parallel_decorator(get_dataset):
         else:
             # no sequence parallelism
             pass
-        
+
         return dataset_module
-    
+
     return sequence_parallel_processor
 
 

@@ -1,4 +1,4 @@
-# modified from 
+# modified from
 # 1. https://github.com/zhuzilin/ring-flash-attention/blob/main/ring_flash_attn/adapters/hf_adapter.py
 # 2. https://github.com/jzhang38/EasyContext/
 from functools import partial
@@ -22,12 +22,7 @@ def new_flash_attn_forward(
     **kwargs,
 ):
     attn_output = zigzag_ring_flash_attn_func(
-        query_states,
-        key_states,
-        value_states,
-        dropout,
-        causal=is_causal,
-        group=group
+        query_states, key_states, value_states, dropout, causal=is_causal, group=group
     )
 
     return attn_output
@@ -51,21 +46,21 @@ def init_sp_group(sp_size):
 def apply_sequence_parallel(model_args):
     if model_args.sequence_parallel_size == 1:
         return None  # no sequence parallelism
-    
+
     # init sequence-parallel groups here
     group_this = init_sp_group(model_args.sequence_parallel_size)
 
     try:
         # old_flash_attention_forward = transformers.modeling_flash_attention_utils._flash_attention_forward
-        if model_args.sequence_parallel_mode == 'zigzag-ring':
+        if model_args.sequence_parallel_mode == "zigzag-ring":
             new_flash_attention_forward = partial(new_flash_attn_forward, group=group_this)
             # assert check_params(old_flash_attention_forward, new_flash_attention_forward)
         else:
-            raise NotImplementedError('Other sequence parallel modes are to be implemented.')
-        
+            raise NotImplementedError("Other sequence parallel modes are to be implemented.")
+
         # monkey patching
         transformers.modeling_flash_attention_utils._flash_attention_forward = new_flash_attention_forward
-    except:
+    except Exception:
         raise ValueError(
             f"The current transformer version {transformers.__version__} is not supported. "
             "please pip install transformers within the versions that llama-factory requires. "

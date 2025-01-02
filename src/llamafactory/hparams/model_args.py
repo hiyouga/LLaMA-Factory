@@ -231,7 +231,9 @@ class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments,
     )
     sequence_parallel_size: int = field(
         default=1,
-        metadata={"help": "Number of GPUs to process one data sequence. Values greater than 1 means enabling sequence parallelism."},
+        metadata={
+            "help": "Number of GPUs to process one data sequence. Values greater than 1 means enabling sequence parallelism."
+        },
     )
     sequence_parallel_mode: Literal["zigzag-ring", "llama3", "ulysses"] = field(
         default="zigzag-ring",

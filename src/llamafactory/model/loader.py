@@ -22,9 +22,9 @@ from ..extras import logging
 from ..extras.misc import count_parameters, skip_check_imports, try_download_model_from_other_hub
 from .adapter import init_adapter
 from .model_utils.liger_kernel import apply_liger_kernel
-from .model_utils.sequence_parallel import apply_sequence_parallel
 from .model_utils.misc import register_autoclass
 from .model_utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
+from .model_utils.sequence_parallel import apply_sequence_parallel
 from .model_utils.unsloth import load_unsloth_pretrained_model
 from .model_utils.valuehead import load_valuehead_params
 from .patcher import patch_config, patch_model, patch_processor, patch_tokenizer, patch_valuehead_model
@@ -133,7 +133,11 @@ def load_model(
     init_kwargs = _get_init_kwargs(model_args)
     config = load_config(model_args)
     patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
-    if model_args.sequence_parallel_size > 1 and hasattr(config, "attention_dropout") and config.attention_dropout != 0.0:
+    if (
+        model_args.sequence_parallel_size > 1
+        and hasattr(config, "attention_dropout")
+        and config.attention_dropout != 0.0
+    ):
         logger.warning_rank0("Sequence Parallel doesn't support attention_dropout yet. Forcing it to zero.")
         config.attention_dropout = 0.0
 

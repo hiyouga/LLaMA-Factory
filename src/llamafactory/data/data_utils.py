@@ -94,7 +94,7 @@ def split_dataset(
 
 # modified from https://github.com/jzhang38/EasyContext/
 def preprocess_sp_dataset(seq_ids, world_size, sequence_parallel_mode):
-    if sequence_parallel_mode == 'zigzag-ring':
+    if sequence_parallel_mode == "zigzag-ring":
         step = len(seq_ids) // (2 * world_size)
         value_chunks = [seq_ids[s : s + step] for s in range(0, len(seq_ids), step)]
         local_values = list()
@@ -102,4 +102,4 @@ def preprocess_sp_dataset(seq_ids, world_size, sequence_parallel_mode):
             local_values.append(value_chunks[rank] + value_chunks[2 * world_size - rank - 1])
         return local_values
     else:
-        raise NotImplementedError('Other sequence parallel modes are to be implemented.')
+        raise NotImplementedError("Other sequence parallel modes are to be implemented.")

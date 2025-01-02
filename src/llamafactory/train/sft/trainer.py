@@ -84,7 +84,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
     ) -> "torch.optim.lr_scheduler.LRScheduler":
         create_custom_scheduler(self.args, num_training_steps, optimizer)
         return super().create_scheduler(num_training_steps, optimizer)
-    
+
     @override
     def training_step(self, model, inputs, *args, **kwargs):
         # TODO: sequence_parallel modes other than 'zigzag-ring' may not need dummy forward
@@ -95,7 +95,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             model.train()
             self._has_dummy_forwarded = True
         return super().training_step(model, inputs, *args, **kwargs)
-    
+
     @override
     def _get_train_sampler(self):
         if self.model.sequence_parallel_group is not None:
@@ -115,8 +115,8 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             # compute loss without shift labels, as we have already shifted labels in data processing when using sequence parallel
             _, outputs = super().compute_loss(model, inputs, return_outputs=True, **kwargs)
             # Flatten the tokens
-            loss_fct = CrossEntropyLoss(reduction='sum')
-            logits, labels = outputs["logits"] if isinstance(outputs, dict) else outputs[1], inputs['labels']
+            loss_fct = CrossEntropyLoss(reduction="sum")
+            logits, labels = outputs["logits"] if isinstance(outputs, dict) else outputs[1], inputs["labels"]
             # Get vocab_size
             unwrapped_model = self.accelerator.unwrap_model(model)
             if _is_peft_model(unwrapped_model):
