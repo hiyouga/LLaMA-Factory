@@ -2,6 +2,21 @@
   "identity": {
     "file_name": "identity.json"
   },
+  "text_to_sql_data": {
+    "file_name": "text_to_sql_data.json"
+  },
+  "rag": {
+    "file_name": "rag.json"
+  },
+  "hate_speech_detection": {
+    "file_name": "hate_speech_detection_data.json"
+  },
+  "esg": {
+    "file_name": "esg_data_train.json"
+  },
+  "esg_binary_classification": {
+    "file_name": "esg_binary_classification_train.json"
+  },
   "alpaca_en_demo": {
     "file_name": "alpaca_en_demo.json"
   },
@@ -38,24 +53,9 @@
       "assistant_tag": "assistant"
     }
   },
-  "mllm_video_demo": {
-    "file_name": "mllm_video_demo.json",
-    "formatting": "sharegpt",
-    "columns": {
-      "messages": "messages",
-      "videos": "videos"
-    },
-    "tags": {
-      "role_tag": "role",
-      "content_tag": "content",
-      "user_tag": "user",
-      "assistant_tag": "assistant"
-    }
-  },
   "alpaca_en": {
     "hf_hub_url": "llamafactory/alpaca_en",
-    "ms_hub_url": "llamafactory/alpaca_en",
-    "om_hub_url": "HaM/alpaca_en"
+    "ms_hub_url": "llamafactory/alpaca_en"
   },
   "alpaca_zh": {
     "hf_hub_url": "llamafactory/alpaca_zh",
@@ -67,8 +67,7 @@
   },
   "alpaca_gpt4_zh": {
     "hf_hub_url": "llamafactory/alpaca_gpt4_zh",
-    "ms_hub_url": "llamafactory/alpaca_gpt4_zh",
-    "om_hub_url": "State_Cloud/alpaca-gpt4-data-zh"
+    "ms_hub_url": "llamafactory/alpaca_gpt4_zh"
   },
   "glaive_toolcall_en": {
     "hf_hub_url": "llamafactory/glaive_toolcall_en",
@@ -188,19 +187,9 @@
   "deepctrl": {
     "ms_hub_url": "deepctrl/deepctrl-sft-data"
   },
-  "adgen_train": {
+  "adgen": {
     "hf_hub_url": "HasturOfficial/adgen",
     "ms_hub_url": "AI-ModelScope/adgen",
-    "split": "train",
-    "columns": {
-      "prompt": "content",
-      "response": "summary"
-    }
-  },
-  "adgen_eval": {
-    "hf_hub_url": "HasturOfficial/adgen",
-    "ms_hub_url": "AI-ModelScope/adgen",
-    "split": "validation",
     "columns": {
       "prompt": "content",
       "response": "summary"
@@ -274,36 +263,6 @@
   "ruozhiba_gpt4": {
     "hf_hub_url": "hfl/ruozhiba_gpt4_turbo"
   },
-  "neo_sft": {
-    "hf_hub_url": "m-a-p/neo_sft_phase2",
-    "formatting": "sharegpt"
-  },
-  "magpie_pro_300k": {
-    "hf_hub_url": "Magpie-Align/Magpie-Pro-300K-Filtered",
-    "formatting": "sharegpt"
-  },
-  "magpie_ultra": {
-    "hf_hub_url": "argilla/magpie-ultra-v0.1",
-    "columns": {
-      "prompt": "instruction",
-      "response": "response"
-    }
-  },
-  "web_instruct": {
-    "hf_hub_url": "TIGER-Lab/WebInstructSub",
-    "columns": {
-      "prompt": "question",
-      "response": "answer"
-    }
-  },
-  "openo1_sft": {
-    "hf_hub_url": "llamafactory/OpenO1-SFT",
-    "ms_hub_url": "llamafactory/OpenO1-SFT",
-    "columns": {
-      "prompt": "prompt",
-      "response": "response"
-    }
-  },
   "llava_1k_en": {
     "hf_hub_url": "BUAADreamer/llava-en-zh-2k",
     "subset": "en",
@@ -362,14 +321,6 @@
       "content_tag": "content",
       "user_tag": "user",
       "assistant_tag": "assistant"
-    }
-  },
-  "pokemon_cap": {
-    "hf_hub_url": "llamafactory/pokemon-gpt4o-captions",
-    "formatting": "sharegpt",
-    "columns": {
-      "messages": "conversations",
-      "images": "images"
     }
   },
   "mllm_pt_demo": {
@@ -434,7 +385,7 @@
     }
   },
   "dpo_mix_en": {
-    "hf_hub_url": "llamafactory/DPO-En-Zh-20k",
+    "hf_hub_url": "hiyouga/DPO-En-Zh-20k",
     "subset": "en",
     "ranking": true,
     "formatting": "sharegpt",
@@ -445,7 +396,7 @@
     }
   },
   "dpo_mix_zh": {
-    "hf_hub_url": "llamafactory/DPO-En-Zh-20k",
+    "hf_hub_url": "hiyouga/DPO-En-Zh-20k",
     "subset": "zh",
     "ranking": true,
     "formatting": "sharegpt",
@@ -453,38 +404,6 @@
       "messages": "conversations",
       "chosen": "chosen",
       "rejected": "rejected"
-    }
-  },
-  "ultrafeedback": {
-    "hf_hub_url": "llamafactory/ultrafeedback_binarized",
-    "ms_hub_url": "llamafactory/ultrafeedback_binarized",
-    "ranking": true,
-    "columns": {
-      "prompt": "instruction",
-      "chosen": "chosen",
-      "rejected": "rejected"
-    }
-  },
-  "rlhf_v": {
-    "hf_hub_url": "llamafactory/RLHF-V",
-    "ranking": true,
-    "formatting": "sharegpt",
-    "columns": {
-      "messages": "conversations",
-      "chosen": "chosen",
-      "rejected": "rejected",
-      "images": "images"
-    }
-  },
-  "vlfeedback": {
-    "hf_hub_url": "Zhihui/VLFeedback",
-    "ranking": true,
-    "formatting": "sharegpt",
-    "columns": {
-      "messages": "conversations",
-      "chosen": "chosen",
-      "rejected": "rejected",
-      "images": "images"
     }
   },
   "orca_pairs": {
@@ -544,15 +463,6 @@
       "assistant_tag": "assistant"
     }
   },
-  "ultrafeedback_kto": {
-    "hf_hub_url": "argilla/ultrafeedback-binarized-preferences-cleaned-kto",
-    "ms_hub_url": "AI-ModelScope/ultrafeedback-binarized-preferences-cleaned-kto",
-    "columns": {
-      "prompt": "prompt",
-      "response": "completion",
-      "kto_tag": "label"
-    }
-  },
   "wiki_demo": {
     "file_name": "wiki_demo.txt",
     "columns": {
@@ -606,18 +516,6 @@
       "prompt": "text"
     }
   },
-  "fineweb": {
-    "hf_hub_url": "HuggingFaceFW/fineweb",
-    "columns": {
-      "prompt": "text"
-    }
-  },
-  "fineweb_edu": {
-    "hf_hub_url": "HuggingFaceFW/fineweb-edu",
-    "columns": {
-      "prompt": "text"
-    }
-  },
   "the_stack": {
     "hf_hub_url": "bigcode/the-stack",
     "ms_hub_url": "AI-ModelScope/the-stack",
@@ -632,5 +530,8 @@
       "prompt": "content"
     },
     "folder": "python"
-  }
+  },
+"company_extract":{
+    "file_name": "company_extract.json"
+}
 }
