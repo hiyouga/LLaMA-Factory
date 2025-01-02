@@ -620,6 +620,28 @@ register_model_group(
 
 register_model_group(
     models={
+        "GPT2-Small": {
+            DownloadSource.DEFAULT: "openai-community/gpt2",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/gpt2",
+        },
+        "GPT2-Medium": {
+            DownloadSource.DEFAULT: "openai-community/gpt2-medium",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/gpt2-medium",
+        },
+        "GPT2-Large": {
+            DownloadSource.DEFAULT: "openai-community/gpt2-large",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/gpt2-large",
+        },
+        "GPT2-XL": {
+            DownloadSource.DEFAULT: "openai-community/gpt2-xl",
+            DownloadSource.MODELSCOPE: "goodbai95/GPT2-xl",
+        },
+    },
+)
+
+
+register_model_group(
+    models={
         "Granite-3.0-1B-A400M-Base": {
             DownloadSource.DEFAULT: "ibm-granite/granite-3.0-1b-a400m-base",
             DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.0-1b-a400m-base",
