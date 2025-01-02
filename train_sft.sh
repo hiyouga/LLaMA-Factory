@@ -2,15 +2,15 @@ deepspeed --num_gpus 2 --master_port=9901 src/train.py \
 	--deepspeed ds_z3_config.json \
     --stage sft \
     --do_train \
-    --model_name_or_path meta-llama/Llama-3.1-8B-Instruct \
+    --model_name_or_path meta-llama/Llama-3.2-3B-Instruct \
     --dataset company_extract \
     --template llama3-company-extract \
     --finetuning_type lora \
     --lora_target all \
     --output_dir checkpoint \
     --overwrite_cache \
-    --per_device_train_batch_size 16 \
-    --gradient_accumulation_steps 32 \
+    --per_device_train_batch_size 8 \
+    --gradient_accumulation_steps 8 \
     --lr_scheduler_type cosine \
     --logging_steps 10 \
     --save_steps 100 \
