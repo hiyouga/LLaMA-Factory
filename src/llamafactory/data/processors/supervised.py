@@ -53,13 +53,16 @@ def _encode_supervised_example(
         encoded_pairs = encoded_pairs[::-1]  # high priority for last turns
 
     for turn_idx, (source_ids, target_ids) in enumerate(encoded_pairs):
-        if total_length >= cutoff_len:
+        if total_length >= cutoff_len and cutoff_len > 0:
             break
 
-        source_len, target_len = infer_seqlen(len(source_ids), len(target_ids), cutoff_len - total_length)
-        source_ids = source_ids[:source_len]
-        target_ids = target_ids[:target_len]
-        total_length += source_len + target_len
+        if cutoff_len > 0:
+            source_len, target_len = infer_seqlen(len(source_ids), len(target_ids), cutoff_len - total_length)
+            source_ids = source_ids[:source_len]
+            target_ids = target_ids[:target_len]
+            total_length += source_len + target_len
+        else:
+            source_len, target_len = len(source_ids), len(target_ids)
 
         if train_on_prompt:
             source_label = source_ids
@@ -158,7 +161,7 @@ def preprocess_packed_supervised_dataset(
             template=template,
             tokenizer=tokenizer,
             processor=processor,
-            cutoff_len=data_args.cutoff_len - 1,  # reserved for the padding token
+            cutoff_len=data_args.cutoff_len - 1 if data_args.allow_truncation else 0,  # reserved for the padding token
             train_on_prompt=data_args.train_on_prompt,
             mask_history=data_args.mask_history,
         )

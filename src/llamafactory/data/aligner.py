@@ -17,7 +17,7 @@ from functools import partial
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Union
 
 from ..extras import logging
-from .data_utils import Role
+from .data_utils import Role, continuous_messages
 
 
 if TYPE_CHECKING:
@@ -152,13 +152,16 @@ def convert_sharegpt(
     odd_tags = (dataset_attr.user_tag, dataset_attr.observation_tag)
     even_tags = (dataset_attr.assistant_tag, dataset_attr.function_tag)
     accept_tags = (odd_tags, even_tags)
-    messages = example[dataset_attr.messages]
+    messages = continuous_messages(example[dataset_attr.messages], dataset_attr)
     if (
         dataset_attr.system_tag
         and len(messages) != 0
         and messages[0][dataset_attr.role_tag] == dataset_attr.system_tag
     ):
-        system = messages[0][dataset_attr.content_tag]
+        if isinstance(messages[0][dataset_attr.content_tag], list):
+            system = "".join(messages[0][dataset_attr.content_tag])
+        else:
+            system = messages[0][dataset_attr.content_tag]
         messages = messages[1:]
     else:
         system = example[dataset_attr.system] if dataset_attr.system else ""

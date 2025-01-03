@@ -31,6 +31,8 @@ def greedy_knapsack(numbers: List[int], capacity: int) -> List[List[int]]:
     numbers.sort()  # sort numbers in ascending order for binary search
     knapsacks = []
 
+    # filter out numbers that are larger than the capacity
+    numbers = [number for number in numbers if number <= capacity]
     while numbers:
         current_knapsack = []
         remaining_capacity = capacity
@@ -42,6 +44,9 @@ def greedy_knapsack(numbers: List[int], capacity: int) -> List[List[int]]:
 
             remaining_capacity -= numbers[index]  # update the remaining capacity
             current_knapsack.append(numbers.pop(index))  # add the number to knapsack
+
+        if remaining_capacity == capacity:
+            break
 
         knapsacks.append(current_knapsack)
 

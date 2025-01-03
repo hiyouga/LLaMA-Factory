@@ -64,6 +64,8 @@ def test_pairwise_data(num_samples: int):
         rejected_messages = original_data["conversations"][index] + [original_data["rejected"][index]]
         chosen_messages = _convert_sharegpt_to_openai(chosen_messages)
         rejected_messages = _convert_sharegpt_to_openai(rejected_messages)
+        chosen_messages = [{"role": msg['role'], "content": msg['content'][0]} for msg in chosen_messages]
+        rejected_messages = [{"role": msg['role'], "content": msg['content'][0]} for msg in rejected_messages]
         ref_chosen_input_ids = ref_tokenizer.apply_chat_template(chosen_messages)
         chosen_prompt_len = len(ref_tokenizer.apply_chat_template(chosen_messages[:-1], add_generation_prompt=True))
         ref_chosen_labels = [IGNORE_INDEX] * chosen_prompt_len + ref_chosen_input_ids[chosen_prompt_len:]

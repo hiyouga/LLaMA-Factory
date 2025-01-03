@@ -109,6 +109,10 @@ class DataArguments:
         default=False,
         metadata={"help": "Enable sequence packing without cross-attention."},
     )
+    allow_truncation: bool = field(
+        default=False,
+        metadata={"help": "Allow truncation when processing supervised examples."}
+    )
     tool_format: Optional[str] = field(
         default=None,
         metadata={"help": "Tool format to use for constructing function calling examples."},
