@@ -127,6 +127,26 @@ class LoraArguments:
 
 
 @dataclass
+class DistillingArguments:
+    r"""
+    Arguments pertaining to the distilling training.
+    """
+
+    distilling_lambda: float = field(
+        default=0.5,
+        metadata={"help": "The lambda parameter in the distilling loss."},
+    )
+    teacher_model: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to the teacher model used for the distilling."},
+    )
+    teacher_model_adapters: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to the adapters of the teacher model."},
+    )
+
+
+@dataclass
 class RLHFArguments:
     r"""
     Arguments pertaining to the PPO, DPO and KTO training.
@@ -334,7 +354,7 @@ class SwanLabArguments:
 
 @dataclass
 class FinetuningArguments(
-    FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments, BAdamArgument, SwanLabArguments
+    FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments, BAdamArgument, SwanLabArguments, DistillingArguments
 ):
     r"""
     Arguments pertaining to which techniques we are going to fine-tuning with.
@@ -344,7 +364,7 @@ class FinetuningArguments(
         default=False,
         metadata={"help": "Whether or not to train model in purely bf16 precision (without AMP)."},
     )
-    stage: Literal["pt", "sft", "rm", "ppo", "dpo", "kto"] = field(
+    stage: Literal["pt", "sft", "rm", "ppo", "dpo", "kto", "distilling"] = field(
         default="sft",
         metadata={"help": "Which stage will be performed in training."},
     )
