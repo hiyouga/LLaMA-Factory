@@ -21,5 +21,3 @@ pyyaml
 numpy<2.0.0
 av
 tyro<0.9.0
-ring-flash-attn==0.1.3
-flash-attn

@@ -62,13 +62,14 @@ extra_require = {
     "modelscope": ["modelscope"],
     "openmind": ["openmind"],
     "dev": ["pre-commit", "ruff", "pytest"],
+    "sp": ["ring-flash-attn", "flash-attn"],
 }
 
 
 def main():
     setup(
         name="llamafactory",
-        version="0.9.1post1",
+        version=get_version(),
         author="hiyouga",
         author_email="hiyouga" "@" "buaa.edu.cn",
         description="Easy-to-use LLM fine-tuning framework",
