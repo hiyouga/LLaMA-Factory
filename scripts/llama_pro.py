@@ -24,7 +24,7 @@ import fire
 import torch
 from safetensors.torch import save_file
 from tqdm import tqdm
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, PreTrainedModel
 from transformers.modeling_utils import (
     SAFE_WEIGHTS_INDEX_NAME,
     SAFE_WEIGHTS_NAME,
@@ -35,7 +35,7 @@ from transformers.modeling_utils import (
 
 
 if TYPE_CHECKING:
-    from transformers import PretrainedConfig, PreTrainedModel
+    from transformers import PretrainedConfig
 
 
 def change_name(name: str, old_index: int, new_index: int) -> str:
@@ -61,17 +61,18 @@ def block_expansion(
     tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
     tokenizer.save_pretrained(output_dir)
 
-    config: "PretrainedConfig" = AutoConfig.from_pretrained(model_name_or_path)  # load the original one
+    config = AutoConfig.from_pretrained(model_name_or_path)  # load the original one
     if save_safetensors:
         setattr(config, "tie_word_embeddings", False)  # safetensors does not allow shared weights
 
-    model: "PreTrainedModel" = AutoModelForCausalLM.from_pretrained(
+    model = AutoModelForCausalLM.from_pretrained(
         model_name_or_path,
         config=config,
         torch_dtype="auto",
         trust_remote_code=True,
         low_cpu_mem_usage=True,
     )
+    assert isinstance(model, PreTrainedModel)  # type hint
     state_dict = model.state_dict()
 
     if num_layers % num_expand != 0:
@@ -85,7 +86,7 @@ def block_expansion(
             if f".{i:d}." in key:
                 output_state_dict[change_name(key, i, layer_cnt)] = value
 
-        print(f"Add layer {layer_cnt} copied from layer {i}")
+        print(f"Add layer {layer_cnt} copied from layer {i}.")
         layer_cnt += 1
         if (i + 1) % split == 0:
             for key, value in state_dict.items():
@@ -95,7 +96,7 @@ def block_expansion(
                     else:
                         output_state_dict[change_name(key, i, layer_cnt)] = torch.clone(value)
 
-            print(f"Add layer {layer_cnt} expanded from layer {i}")
+            print(f"Add layer {layer_cnt} expanded from layer {i}.")
             layer_cnt += 1
 
     for key, value in state_dict.items():
@@ -112,12 +113,13 @@ def block_expansion(
             torch.save(shard, os.path.join(output_dir, shard_file))
 
     if index is None:
-        print(f"Model weights saved in {os.path.join(output_dir, weights_name)}")
+        print(f"Model weights saved in {os.path.join(output_dir, weights_name)}.")
     else:
         index_name = SAFE_WEIGHTS_INDEX_NAME if save_safetensors else WEIGHTS_INDEX_NAME
         with open(os.path.join(output_dir, index_name), "w", encoding="utf-8") as f:
             json.dump(index, f, indent=2, sort_keys=True)
-        print(f"Model weights saved in {output_dir}")
+
+        print(f"Model weights saved in {output_dir}.")
 
     print("- Fine-tune this model with:")
     print(f"model_name_or_path: {output_dir}")
