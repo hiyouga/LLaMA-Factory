@@ -98,6 +98,8 @@ class CustomDistillingTrainer(Seq2SeqTrainer):
     def compute_loss(
         self, model: "PreTrainedModel", inputs: Dict[str, "torch.Tensor"], return_outputs: bool = False, **kwargs
     ) -> Union["torch.Tensor", Tuple["torch.Tensor", List["torch.Tensor"]]]:
+        labels = inputs.get("labels")
+        padding_mask = labels.eq(-100)
         label_loss, outputs = super().compute_loss(model, inputs, return_outputs=True, **kwargs)
         with torch.no_grad():
             teacher_outputs = self.teacher_model(**inputs)
@@ -108,8 +110,15 @@ class CustomDistillingTrainer(Seq2SeqTrainer):
         student_logprob = torch.nn.functional.log_softmax(
             outputs.logits / self.finetuning_args.distilling_temperature, dim=-1
         )
-        kl_loss = teacher_prob * (teacher_prob.log() - student_logprob)
-        loss = self.finetuning_args.distilling_lambda * kl_loss.mean() + label_loss
+        kl_losses = (teacher_prob * (teacher_prob.log() - student_logprob)).sum(dim=-1)
+        kl_losses.masked_fill_(padding_mask, 0)
+        num_active_elements = padding_mask.numel() - padding_mask.long().sum()
+        loss = (
+            self.finetuning_args.distilling_lambda
+            * kl_losses.mean()
+            / (num_active_elements * student_logprob.shape[-1])
+            + label_loss
+        )
 
         if kwargs.get("num_items_in_batch") and not getattr(self, "model_accepts_loss_kwargs", False):
             loss = loss / self.args.gradient_accumulation_steps
