@@ -64,6 +64,7 @@ def vllm_infer(
             template=template,
             cutoff_len=cutoff_len,
             max_samples=max_samples,
+            preprocessing_num_workers=16,
             vllm_config=vllm_config,
             temperature=temperature,
             top_p=top_p,
