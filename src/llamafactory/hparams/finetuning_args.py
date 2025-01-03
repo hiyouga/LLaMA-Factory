@@ -136,6 +136,10 @@ class DistillingArguments:
         default=0.5,
         metadata={"help": "The lambda parameter in the distilling loss."},
     )
+    distilling_temperature: float = field(
+        default=1.0,
+        metadata={"help": "The temperature parameter in the distilling softmax."},
+    )
     teacher_model: Optional[str] = field(
         default=None,
         metadata={"help": "Path to the teacher model used for the distilling."},
@@ -354,7 +358,13 @@ class SwanLabArguments:
 
 @dataclass
 class FinetuningArguments(
-    FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments, BAdamArgument, SwanLabArguments, DistillingArguments
+    FreezeArguments,
+    LoraArguments,
+    RLHFArguments,
+    GaloreArguments,
+    BAdamArgument,
+    SwanLabArguments,
+    DistillingArguments,
 ):
     r"""
     Arguments pertaining to which techniques we are going to fine-tuning with.

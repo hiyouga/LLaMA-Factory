@@ -15,4 +15,4 @@
 from .workflow import run_distilling
 
 
-__all__ = ["distilling"]
+__all__ = ["run_distilling"]

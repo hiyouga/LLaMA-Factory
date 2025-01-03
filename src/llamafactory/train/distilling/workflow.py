@@ -22,8 +22,8 @@ from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
 from ...extras.misc import calculate_tps, get_logits_processor
 from ...extras.ploting import plot_loss
+from ...hparams import FinetuningArguments, ModelArguments
 from ...model import load_model, load_tokenizer
-from ...hparams import ModelArguments, FinetuningArguments
 from ..trainer_utils import create_modelcard_and_push
 from .trainer import CustomDistillingTrainer
 
@@ -59,12 +59,12 @@ def run_distilling(
         adapter_name_or_path=finetuning_args.teacher_model_adapters,
     )
     teacher_finetuning_args = FinetuningArguments()
-    teacher_model = load_model(
-        tokenizer, teacher_model_args, teacher_finetuning_args, is_trainable=False
-    )
+    teacher_model = load_model(tokenizer, teacher_model_args, teacher_finetuning_args, is_trainable=False)
     # Compare model and teacher tokenizer
     teacher_tokenizer = load_tokenizer(teacher_model_args)["tokenizer"]
-    assert teacher_tokenizer.get_vocab() == tokenizer.get_vocab(), "The teacher's and student's tokenizers must have the same vocabulary dictionary."
+    assert (
+        teacher_tokenizer.get_vocab() == tokenizer.get_vocab()
+    ), "The teacher's and student's tokenizers must have the same vocabulary dictionary."
 
     if getattr(model, "is_quantized", False) and not training_args.do_train:
         setattr(model, "_hf_peft_config_loaded", True)  # hack here: make model compatible with prediction
@@ -95,7 +95,7 @@ def run_distilling(
         data_collator=data_collator,
         callbacks=callbacks,
         **dataset_module,
-        **tokenizer_module
+        **tokenizer_module,
     )
 
     # Keyword arguments for `model.generate`

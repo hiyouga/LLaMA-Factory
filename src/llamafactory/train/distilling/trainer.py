@@ -102,11 +102,15 @@ class CustomDistillingTrainer(Seq2SeqTrainer):
         with torch.no_grad():
             teacher_outputs = self.teacher_model(**inputs)
         # Shape: (batch_size, seq_len, vocab_size)
-        teacher_prob = torch.nn.functional.softmax(teacher_outputs.logits, dim=-1)
-        student_logprob = torch.nn.functional.log_softmax(outputs.logits, dim=-1)
+        teacher_prob = torch.nn.functional.softmax(
+            teacher_outputs.logits / self.finetuning_args.distilling_temperature, dim=-1
+        )
+        student_logprob = torch.nn.functional.log_softmax(
+            outputs.logits / self.finetuning_args.distilling_temperature, dim=-1
+        )
         kl_loss = teacher_prob * (teacher_prob.log() - student_logprob)
         loss = self.finetuning_args.distilling_lambda * kl_loss.mean() + label_loss
-        
+
         if kwargs.get("num_items_in_batch") and not getattr(self, "model_accepts_loss_kwargs", False):
             loss = loss / self.args.gradient_accumulation_steps
 
