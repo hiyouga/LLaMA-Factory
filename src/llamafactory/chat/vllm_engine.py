@@ -140,6 +140,7 @@ class VllmEngine(BaseEngine):
         max_length: Optional[int] = input_kwargs.pop("max_length", None)
         max_new_tokens: Optional[int] = input_kwargs.pop("max_new_tokens", None)
         stop: Optional[Union[str, List[str]]] = input_kwargs.pop("stop", None)
+        logit_bias: Optional[Union[Dict[int, float], Dict[str, float]]] = input_kwargs.pop("logit_bias", None)
 
         if length_penalty is not None:
             logger.warning_rank0("Length penalty is not supported by the vllm engine yet.")
@@ -158,6 +159,12 @@ class VllmEngine(BaseEngine):
         if max_new_tokens:
             max_tokens = max_new_tokens
 
+        if logit_bias:
+            logit_bias = {
+                int(token): bias
+                for token, bias in logit_bias.items()
+            }
+
         sampling_params = SamplingParams(
             n=num_return_sequences,
             repetition_penalty=(
@@ -171,6 +178,7 @@ class VllmEngine(BaseEngine):
             stop_token_ids=[self.tokenizer.eos_token_id] + self.tokenizer.additional_special_tokens_ids,
             max_tokens=max_tokens,
             skip_special_tokens=self.generating_args["skip_special_tokens"],
+            logit_bias=logit_bias,
         )
 
         if images is not None:  # add image features

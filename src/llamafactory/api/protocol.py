@@ -103,6 +103,7 @@ class ChatCompletionRequest(BaseModel):
     max_tokens: Optional[int] = None
     stop: Optional[Union[str, List[str]]] = None
     stream: bool = False
+    logit_bias: Optional[Union[Dict[int, float], Dict[str, float]]] = None
 
 
 class ChatCompletionResponseChoice(BaseModel):
