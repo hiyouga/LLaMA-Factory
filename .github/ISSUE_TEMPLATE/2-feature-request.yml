@@ -1,0 +1,23 @@
+name: "\U0001F680 Feature request"
+description: Submit a request for a new feature
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: description
+    validations:
+      required: true
+    attributes:
+      label: Description
+      description: |
+        A clear and concise description of the feature proposal.
+        请详细描述您希望加入的新功能特性。
+
+  - type: textarea
+    id: contribution
+    validations:
+      required: false
+    attributes:
+      label: Pull Request
+      description: |
+        Have you already created the relevant PR and submitted the code?
+        您是否已经创建了相关 PR 并提交了代码？
