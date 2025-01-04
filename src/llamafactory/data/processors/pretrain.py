@@ -52,3 +52,8 @@ def preprocess_pretrain_dataset(
                 result["input_ids"][i][0] = tokenizer.bos_token_id
 
     return result
+
+
+def print_pretrain_dataset_example(example: Dict[str, List[int]], tokenizer: "PreTrainedTokenizer") -> None:
+    print("input_ids:\n{}".format(example["input_ids"]))
+    print("inputs:\n{}".format(tokenizer.decode(example["input_ids"], skip_special_tokens=False)))
