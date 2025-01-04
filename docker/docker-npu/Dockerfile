@@ -12,16 +12,28 @@ ENV DEBIAN_FRONTEND=noninteractive
 ARG INSTALL_DEEPSPEED=false
 ARG PIP_INDEX=https://pypi.org/simple
 ARG TORCH_INDEX=https://download.pytorch.org/whl/cpu
+ARG HTTP_PROXY=
 
 # Set the working directory
 WORKDIR /app
+
+# Set http proxy
+RUN if [ -n "$HTTP_PROXY" ]; then \  
+        echo "Configuring proxy..."; \  
+        export http_proxy=$HTTP_PROXY; \  
+        export https_proxy=$HTTP_PROXY; \  
+    fi
 
 # Install the requirements
 COPY requirements.txt /app
 RUN pip config set global.index-url "$PIP_INDEX" && \
     pip config set global.extra-index-url "$TORCH_INDEX" && \
     python -m pip install --upgrade pip && \
-    python -m pip install -r requirements.txt
+    if [ -n "$HTTP_PROXY" ]; then \  
+        python -m pip install --proxy=$HTTP_PROXY -r requirements.txt; \  
+    else \  
+        python -m pip install -r requirements.txt; \  
+    fi
 
 # Copy the rest of the application into the image
 COPY . /app
@@ -31,7 +43,17 @@ RUN EXTRA_PACKAGES="torch-npu,metrics"; \
     if [ "$INSTALL_DEEPSPEED" == "true" ]; then \
         EXTRA_PACKAGES="${EXTRA_PACKAGES},deepspeed"; \
     fi; \
-    pip install -e ".[$EXTRA_PACKAGES]"
+    if [ -n "$HTTP_PROXY" ]; then \  
+        pip install --proxy=$HTTP_PROXY -e ".[$EXTRA_PACKAGES]"; \  
+    else \  
+        pip install -e ".[$EXTRA_PACKAGES]"; \  
+    fi
+
+# Unset http proxy
+RUN if [ -n "$HTTP_PROXY" ]; then \
+        unset http_proxy; \
+        unset https_proxy; \
+    fi
 
 # Set up volumes
 VOLUME [ "/root/.cache/huggingface", "/root/.cache/modelscope", "/app/data", "/app/output" ]
