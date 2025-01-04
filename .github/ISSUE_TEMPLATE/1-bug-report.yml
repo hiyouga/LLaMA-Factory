@@ -1,11 +1,11 @@
-name: "\U0001F41B Bug / Help"
+name: "\U0001F41B Bug / help"
 description: Create a report to help us improve the LLaMA Factory
 body:
   - type: markdown
     attributes:
       value: |
-        Issues included in **FAQs** or those with **insufficient** information may be closed without a response.
-        包含在**常见问题**内或提供信息**不完整**的 issues 可能不会被回复。
+        Issues included in **[FAQs](https://github.com/hiyouga/LLaMA-Factory/issues/4614)** or those with **insufficient** information may be closed without a response.
+        包含在 **[常见问题](https://github.com/hiyouga/LLaMA-Factory/issues/4614)** 内或提供信息**不完整**的 issues 可能不会被回复。
 
   - type: checkboxes
     id: reminder
@@ -38,25 +38,15 @@ body:
     attributes:
       label: Reproduction
       description: |
-        Please provide code snippets, error messages and stack traces that reproduces the problem.
-        请提供运行参数，错误信息以及异常堆栈以便于我们复现该问题。
-        Remember to use Markdown tags to correctly format your code.
-        请合理使用 Markdown 标签来格式化您的文本。
+        Please provide entry arguments, error messages and stack traces that reproduces the problem.
+        请提供入口参数，错误日志以及异常堆栈以便于我们复现问题。
+        Remember to wrap your log messages with \`\`\`.
+        请务必使用 Markdown 标签 \`\`\` 来包裹您的日志信息。
 
-      placeholder: |
-        ```bash
-        llamafactory-cli train ...
+      value: |
+        ```text
+        Put your message here.
         ```
-
-  - type: textarea
-    id: expected-behavior
-    validations:
-      required: false
-    attributes:
-      label: Expected behavior
-      description: |
-        Please provide a clear and concise description of what you would expect to happen.
-        请提供您原本的目的，即这段代码的期望行为。
 
   - type: textarea
     id: others
