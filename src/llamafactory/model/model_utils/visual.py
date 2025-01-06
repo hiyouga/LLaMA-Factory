@@ -142,6 +142,10 @@ def get_forbidden_modules(config: "PretrainedConfig", finetuning_args: "Finetuni
             forbidden_modules.update({"visual.patch_embed", "visual.blocks", "model", "lm_head"})
         elif finetuning_args.freeze_vision_tower:
             forbidden_modules.add("visual")
+    
+    elif model_type == "minicpmv":
+        if finetuning_args.freeze_vision_tower:
+            forbidden_modules.add("vpm")
 
     return forbidden_modules
 
@@ -196,6 +200,8 @@ def patch_target_modules(
             return "^(?!.*vision_model).*(?:{}).*".format("|".join(target_modules))
         elif model_type == "qwen2_vl":
             return "^(?!.*visual).*(?:{}).*".format("|".join(target_modules))
+        elif model_type == "minicpmv":
+            return "^(?!.*vpm).*(?:{}).*".format("|".join(target_modules))
         else:
             return target_modules
     else:
