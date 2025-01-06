@@ -366,6 +366,7 @@ class CpmOPlugin(BasePlugin):
             position_ids_ = list(range(input_ids_.size(0)))
             # print(input_ids_.shape, len(position_ids_)
             position_ids.append(position_ids_)
+        #TODO add pad
         position_ids = torch.tensor(position_ids, dtype=torch.int64)
         mm_inputs.update({
             "image_bound": image_bounds_list,
