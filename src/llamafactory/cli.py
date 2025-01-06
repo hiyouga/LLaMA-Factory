@@ -25,9 +25,10 @@ from .eval.evaluator import run_eval
 from .extras import logging
 from .extras.env import VERSION, print_env
 from .extras.misc import get_device_count
+from .integrations.ray.ray_utils import should_use_ray
 from .train.tuner import export_model, run_exp
 from .webui.interface import run_web_demo, run_web_ui
-from .integrations.ray.ray_utils import should_use_ray
+
 
 USAGE = (
     "-" * 70

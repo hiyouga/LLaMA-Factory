@@ -9,7 +9,7 @@ finetuning_type: lora
 lora_target: all
 
 ### dataset
-dataset_dir: /home/ray/default/lf/data/
+dataset_dir: /home/ray/default/LLaMA-Factory/data/
 dataset: identity,alpaca_en_demo
 template: llama3
 cutoff_len: 2048
