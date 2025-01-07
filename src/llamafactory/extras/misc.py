@@ -229,7 +229,7 @@ def skip_check_imports() -> None:
     r"""
     Avoids flash attention import error in custom model files.
     """
-    if os.environ.get("FORCE_CHECK_IMPORTS", "0").lower() not in ["true", "1"]:
+    if os.getenv("FORCE_CHECK_IMPORTS", "0").lower() not in ["true", "1"]:
         transformers.dynamic_module_utils.check_imports = get_relative_imports
 
 
@@ -275,8 +275,12 @@ def try_download_model_from_other_hub(model_args: "ModelArguments") -> str:
 
 
 def use_modelscope() -> bool:
-    return os.environ.get("USE_MODELSCOPE_HUB", "0").lower() in ["true", "1"]
+    return os.getenv("USE_MODELSCOPE_HUB", "0").lower() in ["true", "1"]
 
 
 def use_openmind() -> bool:
-    return os.environ.get("USE_OPENMIND_HUB", "0").lower() in ["true", "1"]
+    return os.getenv("USE_OPENMIND_HUB", "0").lower() in ["true", "1"]
+
+
+def use_ray() -> bool:
+    return os.getenv("USE_RAY", "0").lower() in ["true", "1"]
