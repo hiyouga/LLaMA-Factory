@@ -1,5 +1,5 @@
 ### model
-model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
+model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct  # or use local absolute path
 trust_remote_code: true
 
 ### method
@@ -10,6 +10,7 @@ lora_target: all
 
 ### dataset
 dataset: identity,alpaca_en_demo
+dataset_dir: REMOTE:llamafactory/demo_data  # or use local absolute path
 template: llama3
 cutoff_len: 2048
 max_samples: 1000
@@ -17,7 +18,7 @@ overwrite_cache: true
 preprocessing_num_workers: 16
 
 ### output
-output_dir: saves/llama3-8b/lora/sft
+output_dir: tmp_dir
 logging_steps: 10
 save_steps: 500
 plot_loss: true
@@ -38,3 +39,10 @@ val_size: 0.1
 per_device_eval_batch_size: 1
 eval_strategy: steps
 eval_steps: 500
+
+### ray
+ray_run_name: llama3_8b_sft_lora
+ray_num_workers: 4  # number of GPUs to use
+resources_per_worker:
+  GPU: 1
+placement_strategy: PACK
