@@ -18,11 +18,10 @@ from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Union
 
 import numpy as np
 from datasets import DatasetDict, load_dataset, load_from_disk
-from transformers.utils.versions import require_version
 
 from ..extras import logging
 from ..extras.constants import FILEEXT2TYPE
-from ..extras.misc import has_tokenized_data
+from ..extras.misc import check_version, has_tokenized_data
 from .aligner import align_dataset
 from .data_utils import merge_dataset, split_dataset
 from .parser import get_dataset_list
@@ -84,7 +83,7 @@ def _load_single_dataset(
         raise NotImplementedError(f"Unknown load type: {dataset_attr.load_from}.")
 
     if dataset_attr.load_from == "ms_hub":
-        require_version("modelscope>=1.11.0", "To fix: pip install modelscope>=1.11.0")
+        check_version("modelscope>=1.11.0", mandatory=True)
         from modelscope import MsDataset  # type: ignore
         from modelscope.utils.config_ds import MS_DATASETS_CACHE  # type: ignore
 
@@ -103,7 +102,7 @@ def _load_single_dataset(
             dataset = dataset.to_hf_dataset()
 
     elif dataset_attr.load_from == "om_hub":
-        require_version("openmind>=0.8.0", "To fix: pip install openmind>=0.8.0")
+        check_version("openmind>=0.8.0", mandatory=True)
         from openmind import OmDataset  # type: ignore
         from openmind.utils.hub import OM_DATASETS_CACHE  # type: ignore
 
