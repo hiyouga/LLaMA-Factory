@@ -15,13 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import os
 import sys
-from typing import Any, Dict, Optional, Tuple
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
 import transformers
-from transformers import HfArgumentParser, Seq2SeqTrainingArguments
+import yaml
+from transformers import HfArgumentParser
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.training_args import ParallelMode
@@ -36,33 +39,42 @@ from .evaluation_args import EvaluationArguments
 from .finetuning_args import FinetuningArguments
 from .generating_args import GeneratingArguments
 from .model_args import ModelArguments
+from .training_args import RayArguments, TrainingArguments
 
 
 logger = logging.get_logger(__name__)
 
-
 check_dependencies()
 
 
-_TRAIN_ARGS = [ModelArguments, DataArguments, Seq2SeqTrainingArguments, FinetuningArguments, GeneratingArguments]
-_TRAIN_CLS = Tuple[ModelArguments, DataArguments, Seq2SeqTrainingArguments, FinetuningArguments, GeneratingArguments]
+_TRAIN_ARGS = [ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
+_TRAIN_CLS = Tuple[ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
 _INFER_ARGS = [ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _INFER_CLS = Tuple[ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _EVAL_ARGS = [ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments]
 _EVAL_CLS = Tuple[ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments]
 
 
-def _parse_args(parser: "HfArgumentParser", args: Optional[Dict[str, Any]] = None) -> Tuple[Any]:
+def read_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> Union[Dict[str, Any], List[str]]:
     if args is not None:
-        return parser.parse_dict(args)
+        return args
 
     if len(sys.argv) == 2 and (sys.argv[1].endswith(".yaml") or sys.argv[1].endswith(".yml")):
-        return parser.parse_yaml_file(os.path.abspath(sys.argv[1]))
+        return yaml.safe_load(Path(sys.argv[1]).absolute().read_text())
+    elif len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
+        return json.loads(Path(sys.argv[1]).absolute().read_text())
+    else:
+        return sys.argv[1:]
 
-    if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
-        return parser.parse_json_file(os.path.abspath(sys.argv[1]))
 
-    (*parsed_args, unknown_args) = parser.parse_args_into_dataclasses(return_remaining_strings=True)
+def _parse_args(
+    parser: "HfArgumentParser", args: Optional[Union[Dict[str, Any], List[str]]] = None, allow_extra_keys: bool = False
+) -> Tuple[Any]:
+    args = read_args(args)
+    if isinstance(args, dict):
+        return parser.parse_dict(args, allow_extra_keys=allow_extra_keys)
+
+    (*parsed_args, unknown_args) = parser.parse_args_into_dataclasses(args=args, return_remaining_strings=True)
 
     if unknown_args:
         print(parser.format_help())
@@ -110,7 +122,7 @@ def _verify_model_args(
 def _check_extra_dependencies(
     model_args: "ModelArguments",
     finetuning_args: "FinetuningArguments",
-    training_args: Optional["Seq2SeqTrainingArguments"] = None,
+    training_args: Optional["TrainingArguments"] = None,
 ) -> None:
     if os.getenv("DISABLE_VERSION_CHECK", "0").lower() in ["true", "1"]:
         logger.warning_once("Version checking has been disabled, may lead to unexpected behaviors.")
@@ -146,22 +158,28 @@ def _check_extra_dependencies(
         require_version("rouge_chinese", "To fix: pip install rouge-chinese")
 
 
-def _parse_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
+def _parse_train_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _TRAIN_CLS:
     parser = HfArgumentParser(_TRAIN_ARGS)
     return _parse_args(parser, args)
 
 
-def _parse_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
+def _parse_infer_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _INFER_CLS:
     parser = HfArgumentParser(_INFER_ARGS)
     return _parse_args(parser, args)
 
 
-def _parse_eval_args(args: Optional[Dict[str, Any]] = None) -> _EVAL_CLS:
+def _parse_eval_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _EVAL_CLS:
     parser = HfArgumentParser(_EVAL_ARGS)
     return _parse_args(parser, args)
 
 
-def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
+def get_ray_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> RayArguments:
+    parser = HfArgumentParser(RayArguments)
+    (ray_args,) = _parse_args(parser, args, allow_extra_keys=True)
+    return ray_args
+
+
+def get_train_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _TRAIN_CLS:
     model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_args(args)
 
     # Setup logging
@@ -371,7 +389,7 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     return model_args, data_args, training_args, finetuning_args, generating_args
 
 
-def get_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
+def get_infer_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _INFER_CLS:
     model_args, data_args, finetuning_args, generating_args = _parse_infer_args(args)
 
     _set_transformers_logging()
@@ -404,7 +422,7 @@ def get_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
     return model_args, data_args, finetuning_args, generating_args
 
 
-def get_eval_args(args: Optional[Dict[str, Any]] = None) -> _EVAL_CLS:
+def get_eval_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _EVAL_CLS:
     model_args, data_args, eval_args, finetuning_args = _parse_eval_args(args)
 
     _set_transformers_logging()
