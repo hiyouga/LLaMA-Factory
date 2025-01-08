@@ -62,6 +62,10 @@ def is_pillow_available():
     return _is_package_available("PIL")
 
 
+def is_ray_available():
+    return _is_package_available("ray")
+
+
 def is_requests_available():
     return _is_package_available("requests")
 

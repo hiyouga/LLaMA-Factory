@@ -35,7 +35,7 @@ from typing_extensions import override
 
 from ..extras import logging
 from ..extras.constants import TRAINER_LOG, V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
-from ..extras.misc import get_peak_memory
+from ..extras.misc import get_peak_memory, use_ray
 
 
 if is_safetensors_available():
@@ -194,7 +194,7 @@ class LogCallback(TrainerCallback):
         self.do_train = False
         # Web UI
         self.webui_mode = os.environ.get("LLAMABOARD_ENABLED", "0").lower() in ["true", "1"]
-        if self.webui_mode:
+        if self.webui_mode and not use_ray():
             signal.signal(signal.SIGABRT, self._set_abort)
             self.logger_handler = logging.LoggerHandler(os.environ.get("LLAMABOARD_WORKDIR"))
             logging.add_handler(self.logger_handler)
@@ -383,7 +383,7 @@ class ReporterCallback(TrainerCallback):
             )
 
         if self.finetuning_args.use_swanlab:
-            import swanlab
+            import swanlab  # type: ignore
 
             swanlab.config.update(
                 {
