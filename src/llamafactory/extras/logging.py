@@ -68,7 +68,7 @@ class LoggerHandler(logging.Handler):
 
 class _Logger(logging.Logger):
     r"""
-    A logger that supports info_rank0 and warning_once.
+    A logger that supports rank0 logging.
     """
 
     def info_rank0(self, *args, **kwargs) -> None:
@@ -77,7 +77,7 @@ class _Logger(logging.Logger):
     def warning_rank0(self, *args, **kwargs) -> None:
         self.warning(*args, **kwargs)
 
-    def warning_once(self, *args, **kwargs) -> None:
+    def warning_rank0_once(self, *args, **kwargs) -> None:
         self.warning(*args, **kwargs)
 
 
@@ -163,11 +163,11 @@ def warning_rank0(self: "logging.Logger", *args, **kwargs) -> None:
 
 
 @lru_cache(None)
-def warning_once(self: "logging.Logger", *args, **kwargs) -> None:
+def warning_rank0_once(self: "logging.Logger", *args, **kwargs) -> None:
     if int(os.getenv("LOCAL_RANK", "0")) == 0:
         self.warning(*args, **kwargs)
 
 
 logging.Logger.info_rank0 = info_rank0
 logging.Logger.warning_rank0 = warning_rank0
-logging.Logger.warning_once = warning_once
+logging.Logger.warning_rank0_once = warning_rank0_once

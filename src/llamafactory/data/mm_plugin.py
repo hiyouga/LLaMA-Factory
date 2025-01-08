@@ -73,10 +73,14 @@ class BasePlugin:
         Validates if this model accepts the input modalities.
         """
         if len(images) != 0 and self.image_token is None:
-            raise ValueError("This model does not support image input.")
+            raise ValueError(
+                "This model does not support image input. Please check whether the correct `template` is used."
+            )
 
         if len(videos) != 0 and self.video_token is None:
-            raise ValueError("This model does not support video input.")
+            raise ValueError(
+                "This model does not support video input. Please check whether the correct `template` is used."
+            )
 
     def _preprocess_image(self, image: "ImageObject", **kwargs) -> "ImageObject":
         r"""
