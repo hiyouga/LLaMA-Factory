@@ -22,7 +22,8 @@ from transformers import PreTrainedModel
 from ..data import get_template_and_fix_tokenizer
 from ..extras import logging
 from ..extras.constants import V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
-from ..hparams import get_infer_args, get_train_args
+from ..extras.packages import is_ray_available
+from ..hparams import get_infer_args, get_ray_args, get_train_args, read_args
 from ..model import load_model, load_tokenizer
 from .callbacks import LogCallback, PissaConvertCallback, ReporterCallback
 from .dpo import run_dpo
@@ -31,7 +32,11 @@ from .ppo import run_ppo
 from .pt import run_pt
 from .rm import run_rm
 from .sft import run_sft
-from .trainer_utils import get_swanlab_callback
+from .trainer_utils import get_ray_trainer, get_swanlab_callback
+
+
+if is_ray_available():
+    from ray.train.huggingface.transformers import RayTrainReportCallback
 
 
 if TYPE_CHECKING:
@@ -41,10 +46,12 @@ if TYPE_CHECKING:
 logger = logging.get_logger(__name__)
 
 
-def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: List["TrainerCallback"] = []) -> None:
-    callbacks.append(LogCallback())
+def _training_function(config: Dict[str, Any]) -> None:
+    args = config.get("args")
+    callbacks: List[Any] = config.get("callbacks")
     model_args, data_args, training_args, finetuning_args, generating_args = get_train_args(args)
 
+    callbacks.append(LogCallback())
     if finetuning_args.pissa_convert:
         callbacks.append(PissaConvertCallback())
 
@@ -67,6 +74,22 @@ def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: List["TrainerCallb
         run_kto(model_args, data_args, training_args, finetuning_args, callbacks)
     else:
         raise ValueError(f"Unknown task: {finetuning_args.stage}.")
+
+
+def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: Optional[List["TrainerCallback"]] = None) -> None:
+    args = read_args(args)
+    ray_args = get_ray_args(args)
+    callbacks = callbacks or []
+    if ray_args.use_ray:
+        callbacks.append(RayTrainReportCallback())
+        trainer = get_ray_trainer(
+            training_function=_training_function,
+            train_loop_config={"args": args, "callbacks": callbacks},
+            ray_args=ray_args,
+        )
+        trainer.fit()
+    else:
+        _training_function(config={"args": args, "callbacks": callbacks})
 
 
 def export_model(args: Optional[Dict[str, Any]] = None) -> None:
