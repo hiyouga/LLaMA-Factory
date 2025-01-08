@@ -122,7 +122,7 @@ def run_sft(
 
     # Predict
     if training_args.do_predict:
-        logger.warning_once("Batch generation can be very slow. Consider using `scripts/vllm_infer.py` instead.")
+        logger.warning_rank0_once("Batch generation can be very slow. Consider using `scripts/vllm_infer.py` instead.")
         predict_results = trainer.predict(dataset_module["eval_dataset"], metric_key_prefix="predict", **gen_kwargs)
         trainer.log_metrics("predict", predict_results.metrics)
         trainer.save_metrics("predict", predict_results.metrics)

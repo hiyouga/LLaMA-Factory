@@ -15,10 +15,10 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, Union
 
-from transformers.utils.versions import require_version
 from typing_extensions import override
 
 from ..extras import logging
+from ..extras.misc import check_version
 from .data_utils import Role
 from .formatter import EmptyFormatter, FunctionFormatter, StringFormatter, ToolFormatter
 from .mm_plugin import get_mm_plugin
@@ -365,7 +365,7 @@ def get_template_and_fix_tokenizer(tokenizer: "PreTrainedTokenizer", data_args: 
             raise ValueError(f"Template {data_args.template} does not exist.")
 
     if template.mm_plugin.__class__.__name__ != "BasePlugin":
-        require_version("transformers>=4.45.0", "To fix: pip install transformers>=4.45.0")
+        check_version("transformers>=4.45.0")
 
     if data_args.train_on_prompt and template.efficient_eos:
         raise ValueError("Current template does not support `train_on_prompt`.")
