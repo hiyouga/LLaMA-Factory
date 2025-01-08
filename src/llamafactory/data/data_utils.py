@@ -56,12 +56,12 @@ def merge_dataset(
         return all_datasets[0]
     elif data_args.mix_strategy == "concat":
         if data_args.streaming:
-            logger.warning_once("The samples between different datasets will not be mixed in streaming mode.")
+            logger.warning_rank0_once("The samples between different datasets will not be mixed in streaming mode.")
 
         return concatenate_datasets(all_datasets)
     elif data_args.mix_strategy.startswith("interleave"):
         if not data_args.streaming:
-            logger.warning_once("We recommend using `mix_strategy=concat` in non-streaming mode.")
+            logger.warning_rank0_once("We recommend using `mix_strategy=concat` in non-streaming mode.")
 
         return interleave_datasets(
             datasets=all_datasets,
