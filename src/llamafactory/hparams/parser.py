@@ -75,7 +75,7 @@ def _parse_args(
 
     (*parsed_args, unknown_args) = parser.parse_args_into_dataclasses(args=args, return_remaining_strings=True)
 
-    if unknown_args:
+    if unknown_args and not allow_extra_keys:
         print(parser.format_help())
         print(f"Got unknown args, potentially deprecated arguments: {unknown_args}")
         raise ValueError(f"Some specified arguments are not used by the HfArgumentParser: {unknown_args}")
