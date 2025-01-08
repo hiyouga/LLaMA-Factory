@@ -18,7 +18,8 @@
 # limitations under the License.
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 from transformers import Trainer
@@ -31,7 +32,7 @@ from typing_extensions import override
 
 from ..extras import logging
 from ..extras.constants import IGNORE_INDEX
-from ..extras.packages import is_galore_available
+from ..extras.packages import is_galore_available, is_ray_available
 from ..hparams import FinetuningArguments, ModelArguments
 from ..model import find_all_linear_modules, load_model, load_tokenizer, load_valuehead_params
 
@@ -40,11 +41,16 @@ if is_galore_available():
     from galore_torch import GaLoreAdafactor, GaLoreAdamW, GaLoreAdamW8bit  # type: ignore
 
 
+if is_ray_available():
+    from ray.train import RunConfig, ScalingConfig
+    from ray.train.torch import TorchTrainer
+
+
 if TYPE_CHECKING:
-    from transformers import PreTrainedModel, Seq2SeqTrainingArguments, TrainerCallback
+    from transformers import PreTrainedModel, TrainerCallback
     from trl import AutoModelForCausalLMWithValueHead
 
-    from ..hparams import DataArguments
+    from ..hparams import DataArguments, RayArguments, TrainingArguments
 
 
 logger = logging.get_logger(__name__)
@@ -75,7 +81,7 @@ def create_modelcard_and_push(
     trainer: "Trainer",
     model_args: "ModelArguments",
     data_args: "DataArguments",
-    training_args: "Seq2SeqTrainingArguments",
+    training_args: "TrainingArguments",
     finetuning_args: "FinetuningArguments",
 ) -> None:
     kwargs = {
@@ -188,7 +194,7 @@ def _get_decay_parameter_names(model: "PreTrainedModel") -> List[str]:
 
 def _create_galore_optimizer(
     model: "PreTrainedModel",
-    training_args: "Seq2SeqTrainingArguments",
+    training_args: "TrainingArguments",
     finetuning_args: "FinetuningArguments",
 ) -> "torch.optim.Optimizer":
     if len(finetuning_args.galore_target) == 1 and finetuning_args.galore_target[0] == "all":
@@ -272,7 +278,7 @@ def _create_galore_optimizer(
 
 def _create_loraplus_optimizer(
     model: "PreTrainedModel",
-    training_args: "Seq2SeqTrainingArguments",
+    training_args: "TrainingArguments",
     finetuning_args: "FinetuningArguments",
 ) -> "torch.optim.Optimizer":
     default_lr = training_args.learning_rate
@@ -312,7 +318,7 @@ def _create_loraplus_optimizer(
 
 def _create_badam_optimizer(
     model: "PreTrainedModel",
-    training_args: "Seq2SeqTrainingArguments",
+    training_args: "TrainingArguments",
     finetuning_args: "FinetuningArguments",
 ) -> "torch.optim.Optimizer":
     decay_params, nodecay_params = [], []
@@ -373,7 +379,7 @@ def _create_badam_optimizer(
 
 def _create_adam_mini_optimizer(
     model: "PreTrainedModel",
-    training_args: "Seq2SeqTrainingArguments",
+    training_args: "TrainingArguments",
 ) -> "torch.optim.Optimizer":
     from adam_mini import Adam_mini  # type: ignore
 
@@ -398,7 +404,7 @@ def _create_adam_mini_optimizer(
 
 def create_custom_optimizer(
     model: "PreTrainedModel",
-    training_args: "Seq2SeqTrainingArguments",
+    training_args: "TrainingArguments",
     finetuning_args: "FinetuningArguments",
 ) -> Optional["torch.optim.Optimizer"]:
     if finetuning_args.use_galore:
@@ -415,7 +421,7 @@ def create_custom_optimizer(
 
 
 def create_custom_scheduler(
-    training_args: "Seq2SeqTrainingArguments",
+    training_args: "TrainingArguments",
     num_training_steps: int,
     optimizer: Optional["torch.optim.Optimizer"] = None,
 ) -> None:
@@ -499,3 +505,28 @@ def get_swanlab_callback(finetuning_args: "FinetuningArguments") -> "TrainerCall
         config={"Framework": "🦙LlamaFactory"},
     )
     return swanlab_callback
+
+
+def get_ray_trainer(
+    training_function: Callable,
+    train_loop_config: Dict[str, Any],
+    ray_args: "RayArguments",
+) -> "TorchTrainer":
+    if not ray_args.use_ray:
+        raise ValueError("Ray was not enabled. Please set `USE_RAY=1` to enable ray.")
+
+    trainer = TorchTrainer(
+        training_function,
+        train_loop_config=train_loop_config,
+        scaling_config=ScalingConfig(
+            num_workers=ray_args.ray_num_workers,
+            resources_per_worker=ray_args.resources_per_worker,
+            placement_strategy=ray_args.placement_strategy,
+            use_gpu=True,
+        ),
+        run_config=RunConfig(
+            name=ray_args.ray_run_name,
+            storage_path=Path("./saves").absolute().as_posix(),
+        ),
+    )
+    return trainer
