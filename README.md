@@ -200,6 +200,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [Granite 3.0-3.1](https://huggingface.co/ibm-granite)             | 1B/2B/3B/8B                      | granite3         |
 | [Index](https://huggingface.co/IndexTeam)                         | 1.9B                             | index            |
 | [InternLM2/InternLM2.5](https://huggingface.co/internlm)          | 7B/20B                           | intern2          |
+| [InternLM3](https://huggingface.co/internlm)                      | 8B                               | intern3          |
 | [Llama](https://github.com/facebookresearch/llama)                | 7B/13B/33B/65B                   | -                |
 | [Llama 2](https://huggingface.co/meta-llama)                      | 7B/13B/70B                       | llama2           |
 | [Llama 3-3.3](https://huggingface.co/meta-llama)                  | 1B/3B/8B/70B                     | llama3           |
