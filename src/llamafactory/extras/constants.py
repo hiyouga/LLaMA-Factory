@@ -817,6 +817,15 @@ register_model_group(
     template="intern2",
 )
 
+register_model_group(
+    models={
+        "InternLM-8B": {
+            DownloadSource.DEFAULT: "internlm/internlm3-8b",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm3-8b",
+        },
+    },
+    template="intern3",
+)
 
 register_model_group(
     models={
