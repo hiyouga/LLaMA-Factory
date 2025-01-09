@@ -1,22 +1,29 @@
 name: "\U0001F41B Bug / help"
 description: Create a report to help us improve the LLaMA Factory
+labels: ["bug", "pending"]
 body:
   - type: markdown
     attributes:
       value: |
         Issues included in **[FAQs](https://github.com/hiyouga/LLaMA-Factory/issues/4614)** or those with **insufficient** information may be closed without a response.
-        包含在 **[常见问题](https://github.com/hiyouga/LLaMA-Factory/issues/4614)** 内或提供信息**不完整**的 issues 可能不会被回复。
+        已经包含在 **[常见问题](https://github.com/hiyouga/LLaMA-Factory/issues/4614)** 内或提供信息**不完整**的 issues 可能不会被回复。
+
+  - type: markdown
+    attributes:
+      value: |
+        Please do not create issues that are not related to framework bugs under this category, use **[Discussions](https://github.com/hiyouga/LLaMA-Factory/discussions/categories/q-a)** instead.
+        请勿在此分类下创建和框架 bug 无关的 issues，请使用 **[讨论区](https://github.com/hiyouga/LLaMA-Factory/discussions/categories/q-a)**。
 
   - type: checkboxes
     id: reminder
     attributes:
       label: Reminder
       description: |
-        Please ensure you have read the README carefully and searched the existing issues (including FAQs).
-        请确保您已经认真阅读了 README 并且搜索过现有的 issues（包括常见问题）。
+        Please ensure you have read the above rules carefully and searched the existing issues (including FAQs).
+        请确保您已经认真阅读了上述规则并且搜索过现有的 issues（包括常见问题）。
 
       options:
-        - label: I have read the README and searched the existing issues.
+        - label: I have read the above rules and searched the existing issues.
           required: true
 
   - type: textarea
