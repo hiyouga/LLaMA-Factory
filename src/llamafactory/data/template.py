@@ -396,8 +396,7 @@ _register_template(
     format_user=StringFormatter(slots=["### Instruction:\n{{content}}\n\n### Response:\n"]),
     format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}, "\n\n"]),
     default_system=(
-        "Below is an instruction that describes a task. "
-        "Write a response that appropriately completes the request.\n\n"
+        "Below is an instruction that describes a task. Write a response that appropriately completes the request.\n\n"
     ),
     replace_jinja_template=True,
 )

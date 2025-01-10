@@ -100,8 +100,7 @@ def test_encode_multiturn(use_fast: bool):
     )
     answer_str_1 = "I am fine!<|eot_id|>"
     prompt_str_2 = (
-        "<|start_header_id|>user<|end_header_id|>\n\n你好<|eot_id|>"
-        "<|start_header_id|>assistant<|end_header_id|>\n\n"
+        "<|start_header_id|>user<|end_header_id|>\n\n你好<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
     )
     answer_str_2 = "很高兴认识你！<|eot_id|>"
     _check_tokenization(
