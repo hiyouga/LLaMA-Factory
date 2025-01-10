@@ -145,7 +145,11 @@ def get_forbidden_modules(config: "PretrainedConfig", finetuning_args: "Finetuni
     
     elif model_type == "minicpmv":
         if finetuning_args.freeze_vision_tower:
+            print("******************", model_type)
             forbidden_modules.add("vpm")
+            forbidden_modules.add("apm")
+            forbidden_modules.add("resampler")
+            forbidden_modules.add("tts")
 
     return forbidden_modules
 
