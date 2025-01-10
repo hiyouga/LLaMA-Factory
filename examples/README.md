@@ -95,6 +95,12 @@ FORCE_TORCHRUN=1 NNODES=2 NODE_RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 
 FORCE_TORCHRUN=1 llamafactory-cli train examples/train_lora/llama3_lora_sft_ds3.yaml
 ```
 
+#### Supervised Fine-Tuning with Ray on 4 GPUs
+
+```bash
+USE_RAY=1 llamafactory-cli train examples/train_full/llama3_lora_sft_ray.yaml
+```
+
 ### QLoRA Fine-Tuning
 
 #### Supervised Fine-Tuning with 4/8-bit Bitsandbytes/HQQ/EETQ Quantization (Recommended)
