@@ -46,6 +46,9 @@ def find_all_linear_modules(model: "PreTrainedModel", freeze_vision_tower: bool)
             forbidden_modules.add("visual")
         elif model_type in ["minicpmv"]:
             forbidden_modules.add("vpm")
+            forbidden_modules.add("apm")
+            forbidden_modules.add("resampler")
+            forbidden_modules.add("tts")
         else:
             forbidden_modules.add("vision_tower")
 
