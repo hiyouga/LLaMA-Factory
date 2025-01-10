@@ -149,14 +149,14 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
         features.update(mm_inputs)
         if isinstance(features.get("pixel_values"), list):  # for pixtral inputs
             features = features.data  # use default_collate() instead of BatchEncoding.to()
-            
-        if "image_bound" in features: # for minicpmv inputs
+
+        if "image_bound" in features:  # for minicpmv inputs
             features = self.template.mm_plugin.pad_data(features)
             new_features = {}
             new_features.update({"data": features})
             new_features.update(features)
             features = new_features
-            
+
         return features
 
 

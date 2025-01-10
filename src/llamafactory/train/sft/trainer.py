@@ -24,7 +24,6 @@ import numpy as np
 import torch
 from transformers import Seq2SeqTrainer
 from typing_extensions import override
-import copy
 
 from ...extras import logging
 from ...extras.constants import IGNORE_INDEX
