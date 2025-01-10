@@ -25,9 +25,6 @@ import torch.nn as nn
 import transformers
 from transformers.models.llama.modeling_llama import (
     Cache,
-    LlamaAttention,
-    LlamaFlashAttention2,
-    LlamaSdpaAttention,
     apply_rotary_pos_emb,
     repeat_kv,
 )
@@ -354,6 +351,11 @@ def llama_sdpa_attention_forward(
 
 def _apply_llama_patch() -> None:
     check_version("transformers>=4.41.2,<=4.46.1")
+    from transformers.models.llama.modeling_llama import (
+        LlamaAttention,
+        LlamaFlashAttention2,
+        LlamaSdpaAttention
+    )
     LlamaAttention.forward = llama_attention_forward
     LlamaFlashAttention2.forward = llama_flash_attention_2_forward
     LlamaSdpaAttention.forward = llama_sdpa_attention_forward

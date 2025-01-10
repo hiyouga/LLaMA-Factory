@@ -444,6 +444,33 @@ source /usr/local/Ascend/ascend-toolkit/set_env.sh
 
 下载预构建 Docker 镜像：[32GB](http://mirrors.cn-central-221.ovaijisuan.com/detail/130.html) | [64GB](http://mirrors.cn-central-221.ovaijisuan.com/detail/131.html)
 
+如果要在 Ascend NPU中使用 基于bitsandbytes 的nf4 QLoRA量化，请执行如下3个步骤
+1. 手动编译bnb：请参考 bitsandbytes npu版本的[安装文档](https://huggingface.co/docs/bitsandbytes/installation?backend=Ascend+NPU&platform=Ascend+NPU)完成bnb的编译安装，编译要求环境cmake版本不低于3.22.1，g++版本不低于12.x
+```
+# 从源码安装bitsandbytes
+# 克隆bitsandbytes仓库, Ascend NPU目前在multi-backend-refactor中支持
+git clone -b multi-backend-refactor https://github.com/bitsandbytes-foundation/bitsandbytes.git
+cd bitsandbytes/
+
+# 安装依赖
+pip install -r requirements-dev.txt
+
+# 安装编译工具依赖，该步骤在不同系统上命令有所不同，供参考
+apt-get install -y build-essential cmake
+
+# 编译 & 安装
+cmake -DCOMPUTE_BACKEND=npu -S .
+make
+pip install -e .
+```
+2. 安装使用transformers的main分支版本
+```
+git clone -b https://github.com/huggingface/transformers.git
+cd transformers
+pip install .
+```
+3. 设置训练参数中的double_quantization参数为false，可参考[示例](examples/train_qlora/llama3_lora_sft_otfq_npu.yaml)
+
 </details>
 
 ### 数据准备
