@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, TypedDi
 
 import numpy as np
 import torch
-from torch.nn.utils.rnn import pad_sequence
 from transformers.image_utils import get_image_size, to_numpy_array
 from typing_extensions import override
 
@@ -349,26 +348,6 @@ class CpmOPlugin(BasePlugin):
             )
 
         return mm_inputs
-
-    def trim_and_pad(self, seq, padding_value=0):
-        return pad_sequence(seq, batch_first=True, padding_value=padding_value)
-
-    def pad_data(self, features):
-        features["position_ids"] = [torch.arange(input_ids.size(0)).long() for input_ids in features["input_ids"]]
-        features["input_ids"] = self.trim_and_pad(
-            features["input_ids"],
-        )
-        features["position_ids"] = self.trim_and_pad(
-            features["position_ids"],
-        )
-        features["labels"] = self.trim_and_pad(
-            features["labels"],
-            padding_value=-100,
-        )
-        features["attention_mask"] = self.trim_and_pad(
-            features["attention_mask"],
-        )
-        return features
 
     @override
     def get_mm_inputs(
