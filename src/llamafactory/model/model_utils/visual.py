@@ -171,13 +171,6 @@ def get_forbidden_modules(config: "PretrainedConfig", finetuning_args: "Finetuni
             logger.info_rank0(f"Set language model not trainable: {language_model_keys}.")
             forbidden_modules.update(language_model_keys)
 
-    elif model_type == "minicpmv":
-        if finetuning_args.freeze_vision_tower:
-            forbidden_modules.add("vpm")
-            forbidden_modules.add("apm")
-            forbidden_modules.add("resampler")
-            forbidden_modules.add("tts")
-
     return forbidden_modules
 
 
@@ -254,6 +247,12 @@ _register_composite_model(
 
 _register_composite_model(
     model_type="llava_next_video",
+)
+
+
+_register_composite_model(
+    model_type="minicpmv",
+    vision_model_keys=["vpm", "apm", "resampler", "tts"],
 )
 
 
