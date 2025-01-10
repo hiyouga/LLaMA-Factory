@@ -152,14 +152,11 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
         features.update(mm_inputs)
         if isinstance(features.get("pixel_values"), list):  # for pixtral inputs
             features = features.data  # use default_collate() instead of BatchEncoding.to()
-
+        
         if "image_bound" in features:  # for minicpmv inputs
             features["position_ids"] = [torch.arange(input_ids.size(0)).long() for input_ids in features["input_ids"]]
             features["position_ids"] = pad_sequence(features["position_ids"], batch_first=True, padding_value=0)
-            features["labels"] = pad_sequence(features["labels"], batch_first=True, padding_value=-100)
-            features["attention_mask"] = pad_sequence(features["attention_mask"], batch_first=True, padding_value=0)
-            new_features = {}
-            new_features.update({"data": features})
+            new_features = {"data": features}
             new_features.update(features)
             features = new_features
 
