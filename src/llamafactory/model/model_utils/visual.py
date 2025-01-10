@@ -142,7 +142,7 @@ def get_forbidden_modules(config: "PretrainedConfig", finetuning_args: "Finetuni
             forbidden_modules.update({"visual.patch_embed", "visual.blocks", "model", "lm_head"})
         elif finetuning_args.freeze_vision_tower:
             forbidden_modules.add("visual")
-    
+
     elif model_type == "minicpmv":
         if finetuning_args.freeze_vision_tower:
             forbidden_modules.add("vpm")
