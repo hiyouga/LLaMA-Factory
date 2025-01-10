@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, Literal, Optional, Sequence
 
 import torch
+from torch.nn.utils.rnn import pad_sequence
 import torch.nn.functional as F
 from transformers import DataCollatorForSeq2Seq
 
@@ -34,6 +35,10 @@ if TYPE_CHECKING:
     from transformers import ProcessorMixin
 
     from .template import Template
+
+
+def pad(seq, padding_value=0):
+    return pad_sequence(seq, batch_first=True, padding_value=padding_value)
 
 
 def prepare_4d_attention_mask(attention_mask_with_indices: "torch.Tensor", dtype: "torch.dtype") -> "torch.Tensor":
@@ -151,7 +156,11 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             features = features.data  # use default_collate() instead of BatchEncoding.to()
 
         if "image_bound" in features:  # for minicpmv inputs
-            features = self.template.mm_plugin.pad_data(features)
+            features["position_ids"] = [torch.arange(input_ids.size(0)).long() for input_ids in features["input_ids"]]
+            features["input_ids"] = pad(features["input_ids"],)
+            features["position_ids"] = pad(features["position_ids"])
+            features["labels"] = pad(features["labels"], padding_value=-100)
+            features["attention_mask"] = pad(features["attention_mask"],)
             new_features = {}
             new_features.update({"data": features})
             new_features.update(features)
