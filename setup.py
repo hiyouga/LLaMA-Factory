@@ -71,7 +71,7 @@ def main():
         name="llamafactory",
         version=get_version(),
         author="hiyouga",
-        author_email="hiyouga" "@" "buaa.edu.cn",
+        author_email="hiyouga AT buaa.edu.cn",
         description="Easy-to-use LLM fine-tuning framework",
         long_description=open("README.md", encoding="utf-8").read(),
         long_description_content_type="text/markdown",
