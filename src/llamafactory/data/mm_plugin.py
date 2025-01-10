@@ -281,7 +281,7 @@ class CpmOPlugin(BasePlugin):
             mm_inputs = self._get_mm_inputs(images, videos, processor)
 
             pattern = "(<image>./</image>)"
-            images, image_sizes, _ = mm_inputs["pixel_values"], mm_inputs["image_sizes"], mm_inputs["tgt_sizes"]
+            images, image_sizes = mm_inputs["pixel_values"], mm_inputs["image_sizes"]
 
             image_index = 0
             for index, message in enumerate(messages):
@@ -334,6 +334,7 @@ class CpmOPlugin(BasePlugin):
                     new_images.append(images[idx : idx + valid_image_nums])
                     idx += valid_image_nums
                 images = new_images
+                
             image_inputs = image_processor(
                 images, do_pad=True, max_slice_nums=image_processor.max_slice_nums, return_tensors="pt"
             )
