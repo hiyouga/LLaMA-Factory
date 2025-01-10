@@ -1424,6 +1424,14 @@ register_model_group(
             DownloadSource.DEFAULT: "microsoft/Phi-3-medium-128k-instruct",
             DownloadSource.MODELSCOPE: "LLM-Research/Phi-3-medium-128k-instruct",
         },
+        "Phi-3.5-4B-instruct": {
+            DownloadSource.DEFAULT: "microsoft/Phi-3.5-mini-instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Phi-3.5-mini-instruct",
+        },
+        "Phi-3.5-MoE-42B-A6.6B-instruct": {
+            DownloadSource.DEFAULT: "microsoft/Phi-3.5-MoE-instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Phi-3.5-MoE-instruct",
+        },
     },
     template="phi",
 )
@@ -1441,6 +1449,17 @@ register_model_group(
         },
     },
     template="phi_small",
+)
+
+
+register_model_group(
+    models={
+        "Phi-4-14B-Instruct": {
+            DownloadSource.DEFAULT: "microsoft/phi-4",
+            DownloadSource.MODELSCOPE: "LLM-Research/phi-4",
+        },
+    },
+    template="phi4",
 )
 
 
