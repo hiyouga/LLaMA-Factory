@@ -15,6 +15,7 @@
 from typing import TYPE_CHECKING, List
 
 from ...extras import logging
+from .visual import COMPOSITE_MODELS
 
 
 if TYPE_CHECKING:
@@ -34,23 +35,12 @@ def find_all_linear_modules(model: "PreTrainedModel", freeze_vision_tower: bool)
         forbidden_modules.add("output_layer")
     elif model_type == "internlm2":
         forbidden_modules.add("output")
-    elif model_type in ["llava", "llava_next", "llava_next_video", "mllama", "paligemma", "video_llava"]:
-        forbidden_modules.add("multi_modal_projector")
-    elif model_type == "qwen2_vl":
-        forbidden_modules.add("merger")
 
-    if freeze_vision_tower:
-        if model_type == "mllama":
-            forbidden_modules.add("vision_model")
-        elif model_type == "qwen2_vl":
-            forbidden_modules.add("visual")
-        elif model_type in ["minicpmv"]:
-            forbidden_modules.add("vpm")
-            forbidden_modules.add("apm")
-            forbidden_modules.add("resampler")
-            forbidden_modules.add("tts")
-        else:
-            forbidden_modules.add("vision_tower")
+    if model_type in COMPOSITE_MODELS:
+        forbidden_modules.add(COMPOSITE_MODELS[model_type].projector_key)
+
+    if freeze_vision_tower and model_type in COMPOSITE_MODELS:
+        forbidden_modules.update(COMPOSITE_MODELS[model_type].vision_model_keys)
 
     module_names = set()
     for name, module in model.named_modules():
