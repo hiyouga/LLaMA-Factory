@@ -16,7 +16,8 @@ from typing import TYPE_CHECKING, Sequence
 
 import torch
 from transformers.integrations import is_deepspeed_zero3_enabled
-from transformers.utils.versions import require_version
+
+from ...extras.misc import check_version
 
 
 if TYPE_CHECKING:
@@ -26,7 +27,7 @@ if TYPE_CHECKING:
 
 
 def _set_z3_leaf_modules(model: "PreTrainedModel", leaf_modules: Sequence["torch.nn.Module"]) -> None:
-    require_version("deepspeed>=0.13.0", "To fix: pip install deepspeed>=0.13.0")
+    check_version("deepspeed>=0.13.0")
     from deepspeed.utils import set_z3_leaf_modules  # type: ignore
 
     set_z3_leaf_modules(model, leaf_modules)
