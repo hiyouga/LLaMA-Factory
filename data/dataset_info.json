@@ -533,5 +533,8 @@
   },
 "company_extract":{
     "file_name": "company_extract.json"
+},
+"deidentification":{
+    "file_name": "deidentification.json"
 }
 }
