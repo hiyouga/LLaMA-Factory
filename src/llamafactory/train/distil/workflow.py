@@ -25,7 +25,7 @@ from ...extras.ploting import plot_loss
 from ...hparams import FinetuningArguments, ModelArguments
 from ...model import load_model, load_tokenizer
 from ..trainer_utils import create_modelcard_and_push
-from .trainer import CustomDistillingTrainer
+from .trainer import CustomDistillationTrainer
 
 
 if TYPE_CHECKING:
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-def run_distilling(
+def run_distillation(
     model_args: "ModelArguments",
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
@@ -87,7 +87,7 @@ def run_distilling(
     training_args.remove_unused_columns = False  # important for multimodal dataset
 
     # Initialize our Trainer
-    trainer = CustomDistillingTrainer(
+    trainer = CustomDistillationTrainer(
         model=model,
         teacher_model=teacher_model,
         args=training_args,

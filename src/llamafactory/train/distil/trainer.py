@@ -15,27 +15,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-import os
+from copy import deepcopy
 from types import MethodType
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
-import numpy as np
 import torch
 from transformers import Seq2SeqTrainer
 from typing_extensions import override
 
 from ...extras import logging
-from ...extras.constants import IGNORE_INDEX
 from ...extras.packages import is_transformers_version_greater_than
 from ..callbacks import SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
 
 
 if TYPE_CHECKING:
-    from torch.utils.data import Dataset
     from transformers import PreTrainedModel, PreTrainedTokenizer, ProcessorMixin
-    from transformers.trainer import PredictionOutput
 
     from ...hparams import FinetuningArguments
 
@@ -43,7 +38,7 @@ if TYPE_CHECKING:
 logger = logging.get_logger(__name__)
 
 
-class CustomDistillingTrainer(Seq2SeqTrainer):
+class CustomDistillationTrainer(Seq2SeqTrainer):
     r"""
     Inherits Seq2SeqTrainer to compute generative metrics such as BLEU and ROUGE.
     """
@@ -60,9 +55,17 @@ class CustomDistillingTrainer(Seq2SeqTrainer):
         else:
             self.processing_class: "PreTrainedTokenizer" = kwargs.get("tokenizer")
 
-        self.teacher_model = teacher_model
-
         super().__init__(**kwargs)
+
+        if teacher_model is not None:
+            if self.is_deepspeed_enabled:
+                if not (
+                    getattr(teacher_model, "is_loaded_in_8bit", False)
+                    or getattr(teacher_model, "is_loaded_in_4bit", False)
+                ):  # quantized models are already set on the correct device
+                    self.teacher_model = self._prepare_deepspeed(teacher_model)
+            else:
+                self.teacher_model = self.accelerator.prepare_model(teacher_model, evaluation_mode=True)
         self.finetuning_args = finetuning_args
 
         if processor is not None:
@@ -101,6 +104,7 @@ class CustomDistillingTrainer(Seq2SeqTrainer):
         labels = inputs.get("labels")
         padding_mask = labels.eq(-100)
         label_loss, outputs = super().compute_loss(model, inputs, return_outputs=True, **kwargs)
+        self.teacher_model.eval()
         with torch.no_grad():
             teacher_outputs = self.teacher_model(**inputs)
         # Shape: (batch_size, seq_len, vocab_size)
@@ -125,66 +129,30 @@ class CustomDistillingTrainer(Seq2SeqTrainer):
 
         return (loss, outputs) if return_outputs else loss
 
-    @override
-    def prediction_step(
-        self,
-        model: "torch.nn.Module",
-        inputs: Dict[str, Union["torch.Tensor", Any]],
-        prediction_loss_only: bool,
-        ignore_keys: Optional[List[str]] = None,
-        **gen_kwargs,
-    ) -> Tuple[Optional[float], Optional["torch.Tensor"], Optional["torch.Tensor"]]:
-        r"""
-        Removes the prompt part in the generated tokens.
+    def _prepare_deepspeed(self, model: "PreTrainedModel"):
+        import deepspeed  # type: ignore
 
-        Subclass and override to inject custom behavior.
-        """
-        if self.args.predict_with_generate:  # do not pass labels to model when generate
-            labels = inputs.pop("labels", None)
-        else:
-            labels = inputs.get("labels")
+        deepspeed_plugin = self.accelerator.state.deepspeed_plugin
+        config_kwargs = deepcopy(deepspeed_plugin.deepspeed_config)
 
-        loss, generated_tokens, _ = super().prediction_step(
-            model, inputs, prediction_loss_only=prediction_loss_only, ignore_keys=ignore_keys, **gen_kwargs
-        )
-        if generated_tokens is not None and self.args.predict_with_generate:
-            generated_tokens[:, : inputs["input_ids"].size(-1)] = self.processing_class.pad_token_id
-            generated_tokens = generated_tokens.contiguous()
+        if model is not None:
+            if hasattr(model, "config"):
+                hidden_size = (
+                    max(model.config.hidden_sizes)
+                    if getattr(model.config, "hidden_sizes", None)
+                    else getattr(model.config, "hidden_size", None)
+                )
+                if hidden_size is not None and config_kwargs["zero_optimization"]["stage"] == 3:
+                    config_kwargs.update(
+                        {
+                            "zero_optimization.reduce_bucket_size": hidden_size * hidden_size,
+                            "zero_optimization.stage3_param_persistence_threshold": 10 * hidden_size,
+                            "zero_optimization.stage3_prefetch_bucket_size": 0.9 * hidden_size * hidden_size,
+                        }
+                    )
 
-        return loss, generated_tokens, labels
-
-    def save_predictions(
-        self, dataset: "Dataset", predict_results: "PredictionOutput", skip_special_tokens: bool = True
-    ) -> None:
-        r"""
-        Saves model predictions to `output_dir`.
-
-        A custom behavior that not contained in Seq2SeqTrainer.
-        """
-        if not self.is_world_process_zero():
-            return
-
-        output_prediction_file = os.path.join(self.args.output_dir, "generated_predictions.jsonl")
-        logger.info_rank0(f"Saving prediction results to {output_prediction_file}")
-
-        labels = np.where(
-            predict_results.label_ids != IGNORE_INDEX, predict_results.label_ids, self.processing_class.pad_token_id
-        )
-        preds = np.where(
-            predict_results.predictions != IGNORE_INDEX,
-            predict_results.predictions,
-            self.processing_class.pad_token_id,
-        )
-
-        for i in range(len(preds)):
-            pad_len = np.nonzero(preds[i] != self.processing_class.pad_token_id)[0]
-            if len(pad_len):  # move pad token to last
-                preds[i] = np.concatenate((preds[i][pad_len[0] :], preds[i][: pad_len[0]]), axis=-1)
-
-        decoded_inputs = self.processing_class.batch_decode(dataset["input_ids"], skip_special_tokens=False)
-        decoded_preds = self.processing_class.batch_decode(preds, skip_special_tokens=skip_special_tokens)
-        decoded_labels = self.processing_class.batch_decode(labels, skip_special_tokens=skip_special_tokens)
-
-        with open(output_prediction_file, "w", encoding="utf-8") as f:
-            for text, pred, label in zip(decoded_inputs, decoded_preds, decoded_labels):
-                f.write(json.dumps({"prompt": text, "predict": pred, "label": label}, ensure_ascii=False) + "\n")
+        if config_kwargs["zero_optimization"]["stage"] != 3:
+            config_kwargs["zero_optimization"]["stage"] = 0
+        model, *_ = deepspeed.initialize(model=model, config=config_kwargs)
+        model.eval()
+        return model

@@ -127,9 +127,9 @@ class LoraArguments:
 
 
 @dataclass
-class DistillingArguments:
+class DistillationArguments:
     r"""
-    Arguments pertaining to the distilling training.
+    Arguments pertaining to the distillation training.
     """
 
     distilling_lambda: float = field(
@@ -364,7 +364,7 @@ class FinetuningArguments(
     GaloreArguments,
     BAdamArgument,
     SwanLabArguments,
-    DistillingArguments,
+    DistillationArguments,
 ):
     r"""
     Arguments pertaining to which techniques we are going to fine-tuning with.
@@ -374,7 +374,7 @@ class FinetuningArguments(
         default=False,
         metadata={"help": "Whether or not to train model in purely bf16 precision (without AMP)."},
     )
-    stage: Literal["pt", "sft", "rm", "ppo", "dpo", "kto", "distilling"] = field(
+    stage: Literal["pt", "sft", "rm", "ppo", "dpo", "kto", "distillation"] = field(
         default="sft",
         metadata={"help": "Which stage will be performed in training."},
     )

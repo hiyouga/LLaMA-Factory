@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .workflow import run_distilling
+from .workflow import run_distillation
 
 
-__all__ = ["run_distilling"]
+__all__ = ["run_distillation"]
