@@ -414,7 +414,7 @@ To enable FlashAttention-2 on the Windows platform, you need to install the prec
 
 <details><summary>For Ascend NPU users</summary>
 
-To install LLaMA Factory on Ascend NPU devices, please specify extra dependencies: `pip install -e ".[torch-npu,metrics]"`. Additionally, you need to install the **[Ascend CANN Toolkit and Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**. Please follow the [installation tutorial](https://www.hiascend.com/document/detail/en/CANNCommunityEdition/600alphaX/softwareinstall/instg/atlasdeploy_03_0031.html) or use the following commands:
+To install LLaMA Factory on Ascend NPU devices, please upgrade Python to version 3.10 or higher and specify extra dependencies: `pip install -e ".[torch-npu,metrics]"`. Additionally, you need to install the **[Ascend CANN Toolkit and Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**. Please follow the [installation tutorial](https://www.hiascend.com/document/detail/en/CANNCommunityEdition/600alphaX/softwareinstall/instg/atlasdeploy_03_0031.html) or use the following commands:
 
 ```bash
 # replace the url according to your CANN version and devices
@@ -445,7 +445,7 @@ Download the pre-built Docker images: [32GB](http://mirrors.cn-central-221.ovaij
 
 To use nf4 QLoRA quantization based on bitsandbytes in Ascend NPU, please follow these 3 steps:
 
-1. Manually compile bnb: Refer to [the installation documentation]((https://huggingface.co/docs/bitsandbytes/installation?backend=Ascend+NPU&platform=Ascend+NPU)) for the NPU version of bitsandbytes to complete the compilation and installation of bnb. The compilation requires a cmake version of at least 3.22.1 and a g++ version of at least 12.x.
+1. Manually compile bnb: Refer to [the installation documentation](https://huggingface.co/docs/bitsandbytes/installation?backend=Ascend+NPU&platform=Ascend+NPU) for the NPU version of bitsandbytes to complete the compilation and installation of bnb. The compilation requires a cmake version of at least 3.22.1 and a g++ version of at least 12.x.
 ```bash
 # Install bitsandbytes from source
 # Clone bitsandbytes repo, Ascend NPU backend is currently enabled on multi-backend-refactor branch

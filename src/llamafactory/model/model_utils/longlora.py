@@ -26,7 +26,7 @@ import transformers
 from transformers.models.llama.modeling_llama import (
     Cache,
     apply_rotary_pos_emb,
-    repeat_kv,
+    repeat_kv
 )
 
 from ...extras import logging
