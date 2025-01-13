@@ -157,7 +157,7 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             features["position_ids"] = [torch.arange(input_ids.size(0)).long() for input_ids in features["input_ids"]]
             features["position_ids"] = pad_sequence(features["position_ids"], batch_first=True, padding_value=0)
             new_features = {"data": features}
-            new_features.update(features)
+            new_features.update({"labels": features['labels']})
             features = new_features
 
         return features
