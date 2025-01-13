@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Any, Dict, Literal, Optional, Sequence
 
 import torch
 import torch.nn.functional as F
+from torch.nn.utils.rnn import pad_sequence
 from transformers import DataCollatorForSeq2Seq
 
 from ..extras.constants import IGNORE_INDEX, IMAGE_PLACEHOLDER
@@ -101,7 +102,9 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             batch_vidlens.append(len(videos))
             batch_input_ids.append(feature["input_ids"])
 
-        if self.processor is not None and sum(batch_imglens) == 0:  # avoid process hanging in zero3/fsdp case
+        if (
+            self.processor is not None and sum(batch_imglens) == 0 and sum(batch_vidlens) == 0
+        ):  # avoid process hanging in zero3/fsdp case
             fake_messages = [{"role": "user", "content": IMAGE_PLACEHOLDER}]
             fake_images = [Image.new("RGB", (64, 64), (255, 255, 255))]
             fake_messages = self.template.mm_plugin.process_messages(fake_messages, fake_images, [], self.processor)
@@ -149,6 +152,13 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
         features.update(mm_inputs)
         if isinstance(features.get("pixel_values"), list):  # for pixtral inputs
             features = features.data  # use default_collate() instead of BatchEncoding.to()
+
+        if "image_bound" in features:  # for minicpmv inputs
+            features["position_ids"] = [torch.arange(input_ids.size(0)).long() for input_ids in features["input_ids"]]
+            features["position_ids"] = pad_sequence(features["position_ids"], batch_first=True, padding_value=0)
+            new_features = {"data": features}
+            new_features.update({"labels": features["labels"]})
+            features = new_features
 
         return features
 
