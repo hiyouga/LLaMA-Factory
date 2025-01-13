@@ -578,17 +578,6 @@ _register_template(
 
 # copied from chatml template
 _register_template(
-    name="cpm_v",
-    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
-    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
-    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
-    stop_words=["<|im_end|>"],
-    mm_plugin=get_mm_plugin(name="cpm_v", image_token="<image>", video_token="<video>"),
-)
-
-
-# copied from chatml template
-_register_template(
     name="dbrx",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
@@ -958,6 +947,17 @@ _register_template(
         "<Thought>应该尽可能是英文，但是有2个特例，一个是对原文中的引用，另一个是是数学应该使用markdown格式，<Output>内的输出需要遵循用户输入的语言。\n"
     ),
     stop_words=["<|im_end|>"],
+)
+
+
+# copied from chatml template
+_register_template(
+    name="minicpm_v",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    stop_words=["<|im_end|>"],
+    mm_plugin=get_mm_plugin(name="minicpm_v", image_token="<image>", video_token="<video>"),
 )
 
 
