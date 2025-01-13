@@ -133,7 +133,7 @@ class HuggingfaceEngine(BaseEngine):
                 if repetition_penalty is not None
                 else generating_args["repetition_penalty"],
                 length_penalty=length_penalty if length_penalty is not None else generating_args["length_penalty"],
-                eos_token_id=[tokenizer.eos_token_id] + tokenizer.additional_special_tokens_ids,
+                eos_token_id=template.get_stop_token_ids(tokenizer),
                 pad_token_id=tokenizer.pad_token_id,
             )
         )

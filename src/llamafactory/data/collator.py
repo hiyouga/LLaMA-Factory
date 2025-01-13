@@ -153,12 +153,9 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             features = features.data  # use default_collate() instead of BatchEncoding.to()
 
         if "image_bound" in features:  # for minicpmv inputs
-            features["position_ids"] = (
-                torch.arange(features["input_ids"].size(1)).long().unsqueeze(0).expand_as(features["input_ids"])
-            )
-            new_features = {"data": features}
-            new_features.update({"labels": features["labels"]})
-            features = new_features
+            bsz, seq_length = features["input_ids"].shape
+            features["position_ids"] = torch.arange(seq_length).long().repeat(bsz, 1)
+            return {"data": features, "labels": features["labels"]}
 
         return features
 

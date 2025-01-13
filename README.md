@@ -209,7 +209,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 | [LLaVA-NeXT](https://huggingface.co/llava-hf)                     | 7B/8B/13B/34B/72B/110B           | llava_next       |
 | [LLaVA-NeXT-Video](https://huggingface.co/llava-hf)               | 7B/34B                           | llava_next_video |
 | [MiniCPM](https://huggingface.co/openbmb)                         | 1B/2B/4B                         | cpm/cpm3         |
-| [MiniCPM-V-2.6/MiniCPM-O-2.6](https://huggingface.co/openbmb)                   | 8B                               | minicpm_v            |
+| [MiniCPM-o-2.6/MiniCPM-V-2.6](https://huggingface.co/openbmb)     | 8B                               | minicpm_v        |
 | [Mistral/Mixtral](https://huggingface.co/mistralai)               | 7B/8x7B/8x22B                    | mistral          |
 | [OLMo](https://huggingface.co/allenai)                            | 1B/7B                            | -                |
 | [PaliGemma/PaliGemma2](https://huggingface.co/google)             | 3B/10B/28B                       | paligemma        |
@@ -403,11 +403,15 @@ Extra dependencies available: torch, torch-npu, metrics, deepspeed, liger-kernel
 
 <details><summary>For Windows users</summary>
 
+#### Install BitsAndBytes
+
 If you want to enable the quantized LoRA (QLoRA) on the Windows platform, you need to install a pre-built version of `bitsandbytes` library, which supports CUDA 11.1 to 12.2, please select the appropriate [release version](https://github.com/jllllll/bitsandbytes-windows-webui/releases/tag/wheels) based on your CUDA version.
 
 ```bash
 pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.41.2.post2-py3-none-win_amd64.whl
 ```
+
+#### Install Flash Attention-2
 
 To enable FlashAttention-2 on the Windows platform, you need to install the precompiled `flash-attn` library, which supports CUDA 12.1 to 12.2. Please download the corresponding version from [flash-attention](https://github.com/bdashore3/flash-attention/releases) based on your requirements.
 
@@ -415,7 +419,7 @@ To enable FlashAttention-2 on the Windows platform, you need to install the prec
 
 <details><summary>For Ascend NPU users</summary>
 
-To install LLaMA Factory on Ascend NPU devices, please specify extra dependencies: `pip install -e ".[torch-npu,metrics]"`. Additionally, you need to install the **[Ascend CANN Toolkit and Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**. Please follow the [installation tutorial](https://www.hiascend.com/document/detail/en/CANNCommunityEdition/600alphaX/softwareinstall/instg/atlasdeploy_03_0031.html) or use the following commands:
+To install LLaMA Factory on Ascend NPU devices, please upgrade Python to version 3.10 or higher and specify extra dependencies: `pip install -e ".[torch-npu,metrics]"`. Additionally, you need to install the **[Ascend CANN Toolkit and Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**. Please follow the [installation tutorial](https://www.hiascend.com/document/detail/en/CANNCommunityEdition/600alphaX/softwareinstall/instg/atlasdeploy_03_0031.html) or use the following commands:
 
 ```bash
 # replace the url according to your CANN version and devices
@@ -443,6 +447,40 @@ Remember to use `ASCEND_RT_VISIBLE_DEVICES` instead of `CUDA_VISIBLE_DEVICES` to
 If you cannot infer model on NPU devices, try setting `do_sample: false` in the configurations.
 
 Download the pre-built Docker images: [32GB](http://mirrors.cn-central-221.ovaijisuan.com/detail/130.html) | [64GB](http://mirrors.cn-central-221.ovaijisuan.com/detail/131.html)
+
+#### Install BitsAndBytes
+
+To use QLoRA based on bitsandbytes on Ascend NPU, please follow these 3 steps:
+
+1. Manually compile bitsandbytes: Refer to [the installation documentation](https://huggingface.co/docs/bitsandbytes/installation?backend=Ascend+NPU&platform=Ascend+NPU) for the NPU version of bitsandbytes to complete the compilation and installation. The compilation requires a cmake version of at least 3.22.1 and a g++ version of at least 12.x.
+
+```bash
+# Install bitsandbytes from source
+# Clone bitsandbytes repo, Ascend NPU backend is currently enabled on multi-backend-refactor branch
+git clone -b multi-backend-refactor https://github.com/bitsandbytes-foundation/bitsandbytes.git
+cd bitsandbytes/
+
+# Install dependencies
+pip install -r requirements-dev.txt
+
+# Install the dependencies for the compilation tools. Note that the commands for this step may vary depending on the operating system. The following are provided for reference
+apt-get install -y build-essential cmake
+
+# Compile & install  
+cmake -DCOMPUTE_BACKEND=npu -S .
+make
+pip install .
+```
+
+2. Install transformers from the main branch.
+
+```bash
+git clone -b https://github.com/huggingface/transformers.git
+cd transformers
+pip install .
+```
+
+3. Set `double_quantization: false` in the configuration. You can refer to the [example](examples/train_qlora/llama3_lora_sft_bnb_npu.yaml).
 
 </details>
 
