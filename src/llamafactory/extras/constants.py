@@ -1170,7 +1170,7 @@ register_model_group(
             DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM-V-2_6",
         },
     },
-    template="cpm_o",
+    template="cpm_v",
 )
 
 
