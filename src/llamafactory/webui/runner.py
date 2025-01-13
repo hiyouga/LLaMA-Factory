@@ -19,6 +19,7 @@ from subprocess import Popen, TimeoutExpired
 from typing import TYPE_CHECKING, Any, Dict, Generator, Optional
 
 from transformers.trainer import TRAINING_ARGS_NAME
+from transformers.utils import is_torch_npu_available
 
 from ..extras.constants import LLAMABOARD_CONFIG, PEFT_METHODS, TRAINING_STAGES
 from ..extras.misc import is_gpu_or_npu_available, torch_gc, use_ray
@@ -172,6 +173,7 @@ class Runner:
         if get("top.quantization_bit") in QUANTIZATION_BITS:
             args["quantization_bit"] = int(get("top.quantization_bit"))
             args["quantization_method"] = get("top.quantization_method")
+            args["double_quantization"] = not is_torch_npu_available()
 
         # freeze config
         if args["finetuning_type"] == "freeze":
