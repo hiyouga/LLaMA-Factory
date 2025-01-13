@@ -251,6 +251,12 @@ _register_composite_model(
 
 
 _register_composite_model(
+    model_type="minicpmv",
+    vision_model_keys=["vpm", "apm", "resampler", "tts"],
+)
+
+
+_register_composite_model(
     model_type="paligemma",
 )
 
