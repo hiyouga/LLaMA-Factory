@@ -22,10 +22,10 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.8"  # TODO: remove py38 in next transformers release
           - "3.9"
           - "3.10"
           - "3.11"
+          - "3.12"
         os:
           - "ubuntu-latest"
           - "windows-latest"
