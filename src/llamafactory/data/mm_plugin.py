@@ -384,7 +384,7 @@ class CpmOPlugin(BasePlugin):
         image_bounds_list = []
         valid_image_nums_ls = []
         flag = False
-        
+
         for input_ids in batch_ids:
             input_ids_ = torch.tensor(input_ids)
             start_cond = (input_ids_ == processor.tokenizer.im_start_id) | (
@@ -405,8 +405,8 @@ class CpmOPlugin(BasePlugin):
                 ]
             )
             image_bounds_list.append(image_bounds)
-        
-        if not flag and len(images)>0:
+
+        if not flag and len(images) > 0:
             valid_image_nums_ls = [1 for _ in range(len(batch_ids))]
             image_bounds_list = [torch.arange(64) for _ in range(len(batch_ids))]
 

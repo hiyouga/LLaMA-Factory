@@ -76,11 +76,16 @@ def _is_close(batch_a: Dict[str, Any], batch_b: Dict[str, Any]) -> None:
         if isinstance(batch_a[key], torch.Tensor):
             assert torch.allclose(batch_a[key], batch_b[key], rtol=1e-4, atol=1e-5)
         elif isinstance(batch_a[key], list) and all(isinstance(item, torch.Tensor) for item in batch_a[key]):
-                assert len(batch_a[key]) == len(batch_b[key])
-                for tensor_a, tensor_b in zip(batch_a[key], batch_b[key]):
-                    assert torch.allclose(tensor_a, tensor_b, rtol=1e-4, atol=1e-5)
-        elif isinstance(batch_a[key], list) and all(isinstance(item, list) for item in batch_a[key]) \
-            and len(batch_a[key])>0 and len(batch_a[key][0])>0 and isinstance(batch_a[key][0][0], torch.Tensor):
+            assert len(batch_a[key]) == len(batch_b[key])
+            for tensor_a, tensor_b in zip(batch_a[key], batch_b[key]):
+                assert torch.allclose(tensor_a, tensor_b, rtol=1e-4, atol=1e-5)
+        elif (
+            isinstance(batch_a[key], list)
+            and all(isinstance(item, list) for item in batch_a[key])
+            and len(batch_a[key]) > 0
+            and len(batch_a[key][0]) > 0
+            and isinstance(batch_a[key][0][0], torch.Tensor)
+        ):
             for item_a, item_b in zip(batch_a[key], batch_b[key]):
                 assert len(item_a) == len(item_a)
                 for tensor_a, tensor_b in zip(item_a, item_b):
@@ -140,18 +145,19 @@ def test_cpm_o_plugin():
     check_inputs = {"plugin": cpm_o_plugin, **tokenizer_module}
     image_seqlen = 64
     check_inputs["expected_mm_messages"] = [
-        {key: value.replace("<image>", f"<image_id>0</image_id><image>{'<unk>' * image_seqlen}</image>") for key, value in message.items()}
+        {
+            key: value.replace("<image>", f"<image_id>0</image_id><image>{'<unk>' * image_seqlen}</image>")
+            for key, value in message.items()
+        }
         for message in MM_MESSAGES
     ]
     check_inputs["expected_mm_inputs"] = {
-        "pixel_values": [[]], 
-        "image_sizes": [[]], 
-        "tgt_sizes": [[]], 
-        "image_bound": [torch.tensor([], dtype=torch.int64).reshape(0,2)]
+        "pixel_values": [[]],
+        "image_sizes": [[]],
+        "tgt_sizes": [[]],
+        "image_bound": [torch.tensor([], dtype=torch.int64).reshape(0, 2)],
     }
-    check_inputs["expected_no_mm_inputs"] = {
-        "image_bound": [torch.tensor([], dtype=torch.int64).reshape(0,2)]
-    }
+    check_inputs["expected_no_mm_inputs"] = {"image_bound": [torch.tensor([], dtype=torch.int64).reshape(0, 2)]}
     _check_plugin(**check_inputs)
 
 
