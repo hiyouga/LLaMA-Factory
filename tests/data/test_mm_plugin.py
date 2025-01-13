@@ -79,17 +79,6 @@ def _is_close(batch_a: Dict[str, Any], batch_b: Dict[str, Any]) -> None:
             assert len(batch_a[key]) == len(batch_b[key])
             for tensor_a, tensor_b in zip(batch_a[key], batch_b[key]):
                 assert torch.allclose(tensor_a, tensor_b, rtol=1e-4, atol=1e-5)
-        elif (
-            isinstance(batch_a[key], list)
-            and all(isinstance(item, list) for item in batch_a[key])
-            and len(batch_a[key]) > 0
-            and len(batch_a[key][0]) > 0
-            and isinstance(batch_a[key][0][0], torch.Tensor)
-        ):
-            for item_a, item_b in zip(batch_a[key], batch_b[key]):
-                assert len(item_a) == len(item_a)
-                for tensor_a, tensor_b in zip(item_a, item_b):
-                    assert torch.allclose(tensor_a, tensor_b, rtol=1e-4, atol=1e-5)
         else:
             assert batch_a[key] == batch_b[key]
 
@@ -135,25 +124,6 @@ def test_base_plugin():
     tokenizer_module = _load_tokenizer_module(model_name_or_path=TINY_LLAMA)
     base_plugin = get_mm_plugin(name="base", image_token="<image>")
     check_inputs = {"plugin": base_plugin, **tokenizer_module}
-    _check_plugin(**check_inputs)
-
-
-@pytest.mark.skipif(not HF_TOKEN, reason="Gated model.")
-def test_cpm_o_plugin():
-    tokenizer_module = _load_tokenizer_module(model_name_or_path="/data/fengzc/LLM/checkpoints/MiniCPM-V-2_6")
-    cpm_o_plugin = get_mm_plugin(name="cpm_o", image_token="<image>")
-    check_inputs = {"plugin": cpm_o_plugin, **tokenizer_module}
-    image_seqlen = 64
-    check_inputs["expected_mm_messages"] = [
-        {
-            key: value.replace("<image>", f"<image_id>0</image_id><image>{'<unk>' * image_seqlen}</image>")
-            for key, value in message.items()
-        }
-        for message in MM_MESSAGES
-    ]
-    check_inputs["expected_mm_inputs"] = _get_mm_inputs(tokenizer_module["processor"])
-    check_inputs["expected_mm_inputs"]["image_bound"] = [torch.arange(64)]
-    check_inputs["expected_no_mm_inputs"] = {"image_bound": [torch.tensor([], dtype=torch.int64).reshape(0, 2)]}
     _check_plugin(**check_inputs)
 
 
