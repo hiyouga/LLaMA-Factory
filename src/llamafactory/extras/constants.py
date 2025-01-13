@@ -1170,7 +1170,18 @@ register_model_group(
             DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM-V-2_6",
         },
     },
-    template="cpm_v",
+    template="minicpm_v",
+)
+
+
+register_model_group(
+    models={
+        "MiniCPM-o-2_6-Chat": {
+            DownloadSource.DEFAULT: "openbmb/MiniCPM-o-2_6",
+            DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM-o-2_6",
+        },
+    },
+    template="minicpm_v",
 )
 
 
