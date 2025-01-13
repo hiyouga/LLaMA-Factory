@@ -19,15 +19,10 @@ from transformers import Seq2SeqTrainingArguments
 
 from llamafactory.data import get_dataset, get_template_and_fix_tokenizer
 from llamafactory.extras.constants import IGNORE_INDEX
-from llamafactory.extras.misc import get_device_count
-from llamafactory.extras.packages import is_pillow_available, is_vllm_available
+from llamafactory.extras.misc import check_version, get_device_count
+from llamafactory.extras.packages import is_vllm_available
 from llamafactory.hparams import get_infer_args
 from llamafactory.model import load_tokenizer
-
-
-if is_pillow_available():
-    from PIL import Image
-    from PIL.Image import Image as ImageObject
 
 
 if is_vllm_available():
@@ -51,11 +46,13 @@ def vllm_infer(
     max_new_tokens: int = 1024,
     repetition_penalty: float = 1.0,
     pipeline_parallel_size: int = 1,
+    image_resolution: int = 512 * 512,
 ):
     r"""
     Performs batch generation using vLLM engine, which supports tensor parallelism.
     Usage: python vllm_infer.py --model_name_or_path meta-llama/Llama-2-7b-hf --template llama --dataset alpaca_en_demo
     """
+    check_version("vllm>=0.4.3,<=0.6.5")
     if pipeline_parallel_size > get_device_count():
         raise ValueError("Pipeline parallel size should be smaller than the number of gpus.")
 
@@ -88,15 +85,9 @@ def vllm_infer(
     inputs, prompts, labels = [], [], []
     for sample in dataset_module["train_dataset"]:
         if sample["images"]:
-            multi_modal_data = {"image": []}
-            for image in sample["images"]:
-                if not isinstance(image, (str, ImageObject)):
-                    raise ValueError(f"Expected image input is a path or PIL.Image, but got {type(image)}.")
-
-                if isinstance(image, str):
-                    image = Image.open(image).convert("RGB")
-
-                multi_modal_data["image"].append(image)
+            multi_modal_data = {
+                "image": template_obj.mm_plugin._regularize_images(sample["images"], image_resolution=image_resolution)
+            }
         else:
             multi_modal_data = None
 
