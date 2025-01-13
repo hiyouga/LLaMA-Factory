@@ -949,10 +949,10 @@ class MllamaPlugin(BasePlugin):
 
 PLUGINS = {
     "base": BasePlugin,
-    "minicpm_v": MiniCPMVPlugin,
     "llava": LlavaPlugin,
     "llava_next": LlavaNextPlugin,
     "llava_next_video": LlavaNextVideoPlugin,
+    "minicpm_v": MiniCPMVPlugin,
     "paligemma": PaliGemmaPlugin,
     "pixtral": PixtralPlugin,
     "qwen2_vl": Qwen2vlPlugin,
