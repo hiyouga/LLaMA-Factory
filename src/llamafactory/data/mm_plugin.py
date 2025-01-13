@@ -254,7 +254,7 @@ class BasePlugin:
         return {}
 
 
-class CpmOPlugin(BasePlugin):
+class CpmVPlugin(BasePlugin):
     @override
     def process_messages(
         self,
@@ -949,7 +949,7 @@ class MllamaPlugin(BasePlugin):
 
 PLUGINS = {
     "base": BasePlugin,
-    "cpm_o": CpmOPlugin,
+    "cpm_v": CpmVPlugin,
     "llava": LlavaPlugin,
     "llava_next": LlavaNextPlugin,
     "llava_next_video": LlavaNextVideoPlugin,
