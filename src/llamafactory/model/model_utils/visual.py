@@ -253,6 +253,7 @@ _register_composite_model(
 _register_composite_model(
     model_type="minicpmv",
     vision_model_keys=["vpm", "apm", "resampler", "tts"],
+    language_model_keys=["llm"],
 )
 
 
