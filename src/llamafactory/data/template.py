@@ -89,6 +89,16 @@ class Template:
         """
         return self.format_tools.extract(content)
 
+    def get_stop_token_ids(self, tokenizer: "PreTrainedTokenizer") -> List[int]:
+        r"""
+        Returns stop token ids.
+        """
+        stop_token_ids = {tokenizer.eos_token_id}
+        for token in self.stop_words:
+            stop_token_ids.add(tokenizer.convert_tokens_to_ids(token))
+
+        return list(stop_token_ids)
+
     def _encode(
         self,
         tokenizer: "PreTrainedTokenizer",
@@ -205,7 +215,7 @@ def _register_template(
     format_tools: Optional["Formatter"] = None,
     format_prefix: Optional["Formatter"] = None,
     default_system: str = "",
-    stop_words: Sequence[str] = [],
+    stop_words: Optional[Sequence[str]] = None,
     efficient_eos: bool = False,
     replace_eos: bool = False,
     replace_jinja_template: bool = False,
@@ -248,7 +258,7 @@ def _register_template(
         format_tools=format_tools or default_tool_formatter,
         format_prefix=format_prefix or default_prefix_formatter,
         default_system=default_system,
-        stop_words=stop_words,
+        stop_words=stop_words or [],
         efficient_eos=efficient_eos,
         replace_eos=replace_eos,
         replace_jinja_template=replace_jinja_template,
@@ -566,6 +576,7 @@ _register_template(
 )
 
 
+# copied from chatml template
 _register_template(
     name="cpm_v",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),

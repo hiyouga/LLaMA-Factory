@@ -94,6 +94,8 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
     ) -> Union["torch.Tensor", Tuple["torch.Tensor", List["torch.Tensor"]]]:
         r"""
         Fixes the loss value. See https://github.com/huggingface/transformers/pull/35438 for details.
+
+        It should be removed after https://github.com/huggingface/transformers/pull/35651 is merged.
         """
         loss = super().compute_loss(model, inputs, return_outputs, **kwargs)
         if kwargs.get("num_items_in_batch") and not getattr(self, "model_accepts_loss_kwargs", False):
