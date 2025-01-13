@@ -403,11 +403,15 @@ Extra dependencies available: torch, torch-npu, metrics, deepspeed, liger-kernel
 
 <details><summary>For Windows users</summary>
 
+#### Install BitsAndBytes
+
 If you want to enable the quantized LoRA (QLoRA) on the Windows platform, you need to install a pre-built version of `bitsandbytes` library, which supports CUDA 11.1 to 12.2, please select the appropriate [release version](https://github.com/jllllll/bitsandbytes-windows-webui/releases/tag/wheels) based on your CUDA version.
 
 ```bash
 pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.41.2.post2-py3-none-win_amd64.whl
 ```
+
+#### Install Flash Attention-2
 
 To enable FlashAttention-2 on the Windows platform, you need to install the precompiled `flash-attn` library, which supports CUDA 12.1 to 12.2. Please download the corresponding version from [flash-attention](https://github.com/bdashore3/flash-attention/releases) based on your requirements.
 
@@ -444,9 +448,12 @@ If you cannot infer model on NPU devices, try setting `do_sample: false` in the 
 
 Download the pre-built Docker images: [32GB](http://mirrors.cn-central-221.ovaijisuan.com/detail/130.html) | [64GB](http://mirrors.cn-central-221.ovaijisuan.com/detail/131.html)
 
-To use nf4 QLoRA quantization based on bitsandbytes in Ascend NPU, please follow these 3 steps:
+#### Install BitsAndBytes
 
-1. Manually compile bnb: Refer to [the installation documentation](https://huggingface.co/docs/bitsandbytes/installation?backend=Ascend+NPU&platform=Ascend+NPU) for the NPU version of bitsandbytes to complete the compilation and installation of bnb. The compilation requires a cmake version of at least 3.22.1 and a g++ version of at least 12.x.
+To use QLoRA based on bitsandbytes on Ascend NPU, please follow these 3 steps:
+
+1. Manually compile bitsandbytes: Refer to [the installation documentation](https://huggingface.co/docs/bitsandbytes/installation?backend=Ascend+NPU&platform=Ascend+NPU) for the NPU version of bitsandbytes to complete the compilation and installation. The compilation requires a cmake version of at least 3.22.1 and a g++ version of at least 12.x.
+
 ```bash
 # Install bitsandbytes from source
 # Clone bitsandbytes repo, Ascend NPU backend is currently enabled on multi-backend-refactor branch
@@ -462,15 +469,19 @@ apt-get install -y build-essential cmake
 # Compile & install  
 cmake -DCOMPUTE_BACKEND=npu -S .
 make
-pip install -e .
+pip install .
 ```
-2. Install and use the main branch version of transformers.
-```
+
+2. Install transformers from the main branch.
+
+```bash
 git clone -b https://github.com/huggingface/transformers.git
 cd transformers
 pip install .
 ```
-3. Set the double_quantization parameter to false in the training configuration. You can refer to the [example](examples/train_qlora/llama3_lora_sft_otfq_npu.yaml) for guidance.
+
+3. Set `double_quantization: false` in the configuration. You can refer to the [example](examples/train_qlora/llama3_lora_sft_bnb_npu.yaml).
+
 </details>
 
 ### Data Preparation

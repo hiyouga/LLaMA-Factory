@@ -56,6 +56,9 @@ def vllm_infer(
     Performs batch generation using vLLM engine, which supports tensor parallelism.
     Usage: python vllm_infer.py --model_name_or_path meta-llama/Llama-2-7b-hf --template llama --dataset alpaca_en_demo
     """
+    if pipeline_parallel_size > get_device_count():
+        raise ValueError("Pipeline parallel size should be smaller than the number of gpus.")
+
     model_args, data_args, _, generating_args = get_infer_args(
         dict(
             model_name_or_path=model_name_or_path,

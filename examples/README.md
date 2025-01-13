@@ -109,6 +109,12 @@ USE_RAY=1 llamafactory-cli train examples/train_full/llama3_lora_sft_ray.yaml
 llamafactory-cli train examples/train_qlora/llama3_lora_sft_otfq.yaml
 ```
 
+#### Supervised Fine-Tuning with 4-bit Bitsandbytes Quantization on Ascend NPU
+
+```bash
+llamafactory-cli train examples/train_qlora/llama3_lora_sft_bnb_npu.yaml
+```
+
 #### Supervised Fine-Tuning with 4/8-bit GPTQ Quantization
 
 ```bash
