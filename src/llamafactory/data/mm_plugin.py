@@ -269,9 +269,10 @@ class CpmVPlugin(BasePlugin):
         messages = deepcopy(messages)
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
         mm_inputs = {}
+        if len(images) != 0 and len(videos) != 0:
+            raise ValueError("MiniCPM-V model does not support input images and videos at the same time.")
 
         if len(videos) != 0:
-            assert len(images) == 0, "Only support video and image sft seperately"
             max_slice_nums = 2
             use_image_id = False
             mm_inputs = self._get_mm_inputs([], videos, processor)
@@ -286,10 +287,9 @@ class CpmVPlugin(BasePlugin):
                 content = content.replace(IMAGE_PLACEHOLDER, "{{image}}", 1)
 
             while VIDEO_PLACEHOLDER in content:
+                video_seqlen = len(mm_inputs["pixel_values"][num_video_tokens]) if self.expand_mm_tokens else 1
+                content = content.replace(VIDEO_PLACEHOLDER, "{{image}}" * video_seqlen, 1)
                 num_video_tokens += 1
-                content = content.replace(
-                    VIDEO_PLACEHOLDER, "{{image}}" * len(mm_inputs["pixel_values"][num_video_tokens - 1]), 1
-                )
 
             message["content"] = content.replace("{{image}}", "(<image>./</image>)")
 
@@ -310,10 +310,7 @@ class CpmVPlugin(BasePlugin):
                         final_text
                         + text_chunks[i]
                         + image_processor.get_slice_image_placeholder(
-                            image_sizes[0][i],
-                            i,
-                            max_slice_nums,
-                            use_image_id,
+                            image_sizes[0][i], i, max_slice_nums, use_image_id
                         )
                     )
                 final_text += text_chunks[-1]
@@ -338,7 +335,6 @@ class CpmVPlugin(BasePlugin):
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
 
         mm_inputs = {}
-
         if len(images) != 0:
             images = self._regularize_images(
                 images,
@@ -351,6 +347,7 @@ class CpmVPlugin(BasePlugin):
                 for valid_image_nums in valid_image_nums_ls:
                     new_images.append(images[idx : idx + valid_image_nums])
                     idx += valid_image_nums
+
                 images = new_images
 
             image_inputs = image_processor(
@@ -383,7 +380,6 @@ class CpmVPlugin(BasePlugin):
         self._validate_input(images, videos)
         image_bounds_list = []
         valid_image_nums_ls = []
-
         for input_ids in batch_ids:
             input_ids_ = torch.tensor(input_ids)
             start_cond = (input_ids_ == processor.tokenizer.im_start_id) | (
@@ -424,8 +420,8 @@ class LlavaPlugin(BasePlugin):
         for message in messages:
             content = message["content"]
             while IMAGE_PLACEHOLDER in content:
-                num_image_tokens += 1
                 content = content.replace(IMAGE_PLACEHOLDER, "{{image}}" * image_seqlen, 1)
+                num_image_tokens += 1
 
             message["content"] = content.replace("{{image}}", self.image_token)
 
@@ -478,8 +474,8 @@ class LlavaNextPlugin(BasePlugin):
                 else:
                     image_seqlen = 1
 
-                num_image_tokens += 1
                 content = content.replace(IMAGE_PLACEHOLDER, "{{image}}" * image_seqlen, 1)
+                num_image_tokens += 1
 
             message["content"] = content.replace("{{image}}", self.image_token)
 
@@ -529,8 +525,8 @@ class LlavaNextVideoPlugin(BasePlugin):
                     else:
                         image_seqlen = 1
 
-                    num_image_tokens += 1
                     content = content.replace(IMAGE_PLACEHOLDER, "{{image}}" * image_seqlen, 1)
+                    num_image_tokens += 1
 
                 message["content"] = content.replace("{{image}}", self.image_token)
 
@@ -586,8 +582,8 @@ class PaliGemmaPlugin(BasePlugin):
         for message in messages:
             content = message["content"]
             while IMAGE_PLACEHOLDER in content:
-                num_image_tokens += 1
                 content = content.replace(IMAGE_PLACEHOLDER, "{{image}}", 1)
+                num_image_tokens += 1
 
             message["content"] = content.replace("{{image}}", "")
 
@@ -840,12 +836,12 @@ class VideoLlavaPlugin(BasePlugin):
             for message in messages:
                 content = message["content"]
                 while IMAGE_PLACEHOLDER in content:
-                    num_image_tokens += 1
                     content = content.replace(IMAGE_PLACEHOLDER, "{{image}}" * image_seqlen, 1)
+                    num_image_tokens += 1
 
                 while VIDEO_PLACEHOLDER in content:
-                    num_video_tokens += 1
                     content = content.replace(VIDEO_PLACEHOLDER, "{{video}}" * video_seqlen, 1)
+                    num_video_tokens += 1
 
                 content = content.replace("{{image}}", self.image_token)
                 message["content"] = content.replace("{{video}}", self.video_token)
