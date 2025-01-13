@@ -20,7 +20,6 @@ from typing import TYPE_CHECKING, Any, Dict, Literal, Optional, Sequence
 
 import torch
 import torch.nn.functional as F
-from torch.nn.utils.rnn import pad_sequence
 from transformers import DataCollatorForSeq2Seq
 
 from ..extras.constants import IGNORE_INDEX, IMAGE_PLACEHOLDER
@@ -154,11 +153,10 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             features = features.data  # use default_collate() instead of BatchEncoding.to()
 
         if "image_bound" in features:  # for minicpmv inputs
-            features["position_ids"] = [torch.arange(input_ids.size(0)).long() for input_ids in features["input_ids"]]
-            features["position_ids"] = pad_sequence(features["position_ids"], batch_first=True, padding_value=0)
-            new_features = {"data": features}
-            new_features.update({"labels": features["labels"]})
-            features = new_features
+            features["position_ids"] = (
+                torch.arange(features["input_ids"].size(1)).long().unsqueeze(0).expand_as(features["input_ids"])
+            )
+            return {"data": features, "labels": features["labels"]}
 
         return features
 
