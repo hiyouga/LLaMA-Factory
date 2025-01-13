@@ -383,7 +383,6 @@ class CpmOPlugin(BasePlugin):
         self._validate_input(images, videos)
         image_bounds_list = []
         valid_image_nums_ls = []
-        flag = False
 
         for input_ids in batch_ids:
             input_ids_ = torch.tensor(input_ids)
@@ -395,8 +394,6 @@ class CpmOPlugin(BasePlugin):
             image_start_tokens += 1
             image_end_tokens = torch.where(end_cond)[0]
             valid_image_nums = max(len(image_start_tokens), len(image_end_tokens))
-            if valid_image_nums > 0:
-                flag = True
             valid_image_nums_ls.append(valid_image_nums)
             image_bounds = torch.hstack(
                 [
@@ -405,10 +402,6 @@ class CpmOPlugin(BasePlugin):
                 ]
             )
             image_bounds_list.append(image_bounds)
-
-        if not flag and len(images) > 0:
-            valid_image_nums_ls = [1 for _ in range(len(batch_ids))]
-            image_bounds_list = [torch.arange(64) for _ in range(len(batch_ids))]
 
         mm_inputs = self._get_mm_inputs(images, videos, processor, valid_image_nums_ls=valid_image_nums_ls)
         mm_inputs.update({"image_bound": image_bounds_list})
