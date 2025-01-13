@@ -133,7 +133,7 @@ def _check_extra_dependencies(
         check_version("mixture-of-depth>=1.1.6", mandatory=True)
 
     if model_args.infer_backend == "vllm":
-        check_version("vllm>=0.4.3,<0.6.7")
+        check_version("vllm>=0.4.3,<=0.6.5")
         check_version("vllm", mandatory=True)
 
     if finetuning_args.use_galore:
