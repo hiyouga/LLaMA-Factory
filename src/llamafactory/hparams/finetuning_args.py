@@ -286,7 +286,7 @@ class ApolloArguments:
         default="random",
         metadata={"help": "Type of APOLLO low-rank projection algorithm (svd or random)."},
     )
-    apollo_proj_type: Literal["std", "right", "left",] = field(
+    apollo_proj_type: Literal["std", "right", "left"] = field(
         default="std",
         metadata={"help": "Type of APOLLO projection."},
     )
@@ -475,17 +475,11 @@ class FinetuningArguments(
         if self.use_llama_pro and self.finetuning_type == "full":
             raise ValueError("`use_llama_pro` is only valid for Freeze or LoRA training.")
 
-        if self.finetuning_type == "lora" and (self.use_galore or self.use_badam or self.use_apollo):
-            raise ValueError("Cannot use LoRA with GaLore or BAdam together.")
+        if self.finetuning_type == "lora" and (self.use_galore or self.use_apollo or self.use_badam):
+            raise ValueError("Cannot use LoRA with GaLore, APOLLO or BAdam together.")
 
-        if self.use_galore and self.use_badam:
-            raise ValueError("Cannot use GaLore with BAdam together.")
-
-        if self.use_galore and self.use_apollo:
-            raise ValueError("Cannot use GaLore with APOLLO together.")
-
-        if self.use_badam and self.use_apollo:
-            raise ValueError("Cannot use BAdam with APOLLO together.")
+        if int(self.use_galore) + int(self.use_apollo) + (self.use_badam) > 1:
+            raise ValueError("Cannot use GaLore, APOLLO or BAdam together.")
 
         if self.pissa_init and (self.stage in ["ppo", "kto"] or self.use_ref_model):
             raise ValueError("Cannot use PiSSA for current training stage.")
