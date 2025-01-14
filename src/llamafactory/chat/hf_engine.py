@@ -163,26 +163,25 @@ class HuggingfaceEngine(BaseEngine):
             generation_config=GenerationConfig(**generating_args),
             logits_processor=get_logits_processor(),
         )
-        
-        if getattr(model.config, "model_type") == "minicpmv":
-            gen_kwargs['input_ids'] = inputs
 
         mm_inputs = template.mm_plugin.get_mm_inputs(**mm_input_dict, batch_ids=[prompt_ids], processor=processor)
         for key, value in mm_inputs.items():
             if isinstance(value, list) and all(isinstance(v, torch.Tensor) for v in value):  # for pixtral inputs
                 value = torch.stack(value)  # assume they have same sizes
-            elif isinstance(value, list) and isinstance(value[0], list):  # for minicpmv inputs
-                value = torch.stack([torch.stack([item for item in per_value]) for per_value in value])
+            elif isinstance(value, list) and all(isinstance(v, list) for v in value):  # for minicpmv inputs
+                value = torch.stack([torch.stack(per_value) for per_value in value])
             elif not isinstance(value, torch.Tensor):
                 value = torch.tensor(value)
 
-            if torch.is_tensor(value) and torch.is_floating_point(value):  # cast data dtype for paligemma
+            if torch.is_floating_point(value):  # cast data dtype for paligemma
                 value = value.to(model.dtype)
 
-            if torch.is_tensor(value):
-                gen_kwargs[key] = value.to(model.device)
-            else:
-                gen_kwargs[key] = value
+            gen_kwargs[key] = value.to(model.device)
+
+        if getattr(model.config, "model_type", None) in ["minicpmv", "minicpmo"]:
+            gen_kwargs["input_ids"] = inputs
+            del gen_kwargs["image_sizes"]
+            gen_kwargs["tokenizer"] = tokenizer
 
         return gen_kwargs, prompt_length
 
@@ -214,14 +213,10 @@ class HuggingfaceEngine(BaseEngine):
             videos,
             input_kwargs,
         )
-        
-        if getattr(model.config, "model_type") == "minicpmv":
-            gen_kwargs['tokenizer'] = tokenizer
-            del gen_kwargs['image_sizes']
-            generate_output = model._generate(**gen_kwargs)
-        else:
-            generate_output = model.generate(**gen_kwargs)
-            
+        generate_output = model.generate(**gen_kwargs)
+        if isinstance(generate_output, tuple):
+            generate_output = generate_output[1][0]  # for minicpm_o
+
         response_ids = generate_output[:, prompt_length:]
         response = tokenizer.batch_decode(
             response_ids, skip_special_tokens=generating_args["skip_special_tokens"], clean_up_tokenization_spaces=True
