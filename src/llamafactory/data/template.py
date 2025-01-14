@@ -735,11 +735,10 @@ _register_template(
 _register_template(
     name="intern3",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
-    format_separator=EmptyFormatter(slots=["<|im_end|>\n"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
-    stop_words=["<|im_end|>"],
-    efficient_eos=True,  # internlm3 tokenizer cannot set eos_token_id
+    stop_words=["<|im_end|>"]
 )
 
 _register_template(
