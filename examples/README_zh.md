@@ -204,6 +204,12 @@ llamafactory-cli api examples/inference/llama3_lora_sft.yaml
 llamafactory-cli train examples/extras/galore/llama3_full_sft.yaml
 ```
 
+#### 使用 APOLLO 进行全参数训练
+
+```bash
+llamafactory-cli train examples/extras/apollo/llama3_full_sft.yaml
+```
+
 #### 使用 BAdam 进行全参数训练
 
 ```bash

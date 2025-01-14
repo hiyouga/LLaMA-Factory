@@ -204,6 +204,12 @@ llamafactory-cli api examples/inference/llama3_lora_sft.yaml
 llamafactory-cli train examples/extras/galore/llama3_full_sft.yaml
 ```
 
+#### Full-Parameter Fine-Tuning using APOLLO
+
+```bash
+llamafactory-cli train examples/extras/apollo/llama3_full_sft.yaml
+```
+
 #### Full-Parameter Fine-Tuning using BAdam
 
 ```bash
