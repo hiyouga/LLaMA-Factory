@@ -109,7 +109,7 @@ def patch_config(
 
     if getattr(config, "model_type", None) == "qwen2" and is_trainable and model_args.flash_attn == "fa2":
         setattr(config, "use_cache", False)  # qwen2 does not support use_cache when using flash attn
-    
+
     if getattr(config, "model_type", None) == "minicpmo":
         setattr(config, "init_audio", False)
         setattr(config, "init_tts", False)
