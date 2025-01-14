@@ -87,7 +87,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 </details>
 
 ## Changelog
-[25/01/12] We supported fine-tuning the **[InternLM3](https://huggingface.co/collections/internlm/internlm25-66853f32717072d17581bc13/)** models. Thank [@hhaAndroid](https://github.com/hhaAndroid)'s PR.
+[25/01/15] We supported fine-tuning the **[InternLM3](https://huggingface.co/collections/internlm/)** models. Thank [@hhaAndroid](https://github.com/hhaAndroid)'s PR.
 
 [24/12/21] We supported using **[SwanLab](https://github.com/SwanHubX/SwanLab)** for experiment tracking and visualization. See [this section](#use-swanlab-logger) for details.
 
