@@ -85,7 +85,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
         )
     except Exception as e:
         raise OSError("Failed to load tokenizer.") from e
-        
+
     if model_args.model_max_length is not None and tokenizer.model_max_length != model_args.model_max_length:
         tokenizer.model_max_length = model_args.model_max_length
 
