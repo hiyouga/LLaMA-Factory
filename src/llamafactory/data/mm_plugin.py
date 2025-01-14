@@ -896,6 +896,7 @@ class MllamaPlugin(BasePlugin):
         images: Sequence["ImageInput"],
         videos: Sequence["VideoInput"],
         processor: "ProcessorMixin",
+        **kwargs,
     ) -> Dict[str, "torch.Tensor"]:
         r"""
         Processes visual inputs for mllama because its image processor only accepts List[List[ImageInput]].
@@ -909,8 +910,14 @@ class MllamaPlugin(BasePlugin):
             num_tiles: List[List[int]] with shape (batch_size, num_images_in_batch). For example, (2, 1).
         """
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
+        imglens: List[int] = kwargs["imglens"]
         images = self._regularize_images(images, image_resolution=getattr(processor, "image_resolution", 512 * 512))
-        return image_processor([[image] for image in images], return_tensors="pt")
+        batch_images = []
+        for image_length in imglens:
+            batch_images.append(images[:image_length])
+            images = images[image_length:]
+
+        return image_processor(batch_images, return_tensors="pt")
 
     def get_mm_inputs(
         self,
@@ -922,10 +929,7 @@ class MllamaPlugin(BasePlugin):
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         self._validate_input(images, videos)
-        if len(images) != len(batch_ids):
-            raise ValueError("Mllama only supports one image per sample.")
-
-        mm_inputs = self._get_mm_inputs(images, videos, processor)
+        mm_inputs = self._get_mm_inputs(images, videos, processor, imglens=imglens)
         num_tiles = mm_inputs.pop("num_tiles")
         image_token_id = getattr(processor, "image_token_id")
         max_image_tiles = getattr(processor.image_processor, "max_image_tiles")
