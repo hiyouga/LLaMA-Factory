@@ -224,7 +224,7 @@ class Runner:
             args["galore_update_interval"] = get("train.galore_update_interval")
             args["galore_scale"] = get("train.galore_scale")
             args["galore_target"] = get("train.galore_target")
-        
+
         # apollo config
         if args["use_apollo"]:
             args["apollo_rank"] = get("train.apollo_rank")

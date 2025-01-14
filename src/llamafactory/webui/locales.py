@@ -1162,19 +1162,19 @@ LOCALES = {
     "use_galore": {
         "en": {
             "label": "Use GaLore",
-            "info": "Enable gradient low-Rank projection.",
+            "info": "Use GaLore optimizer.",
         },
         "ru": {
             "label": "Использовать GaLore",
-            "info": "Включить проекцию градиента на низкоранговое пространство.",
+            "info": "Используйте оптимизатор GaLore.",
         },
         "zh": {
             "label": "使用 GaLore",
-            "info": "使用梯度低秩投影。",
+            "info": "使用 GaLore 优化器。",
         },
         "ko": {
             "label": "GaLore 사용",
-            "info": "그레디언트 로우 랭크 프로젝션을 활성화합니다.",
+            "info": "GaLore 최적화를 사용하세요.",
         },
     },
     "galore_rank": {
@@ -1266,19 +1266,19 @@ LOCALES = {
     "use_apollo": {
         "en": {
             "label": "Use APOLLO",
-            "info": "Enable gradient low-Rank projection.",
+            "info": "Use APOLLO optimizer.",
         },
         "ru": {
             "label": "Использовать APOLLO",
-            "info": "Включить проекцию градиента на низкоранговое пространство.",
+            "info": "Используйте оптимизатор APOLLO.",
         },
         "zh": {
             "label": "使用 APOLLO",
-            "info": "使用梯度低秩投影。",
+            "info": "使用 APOLLO 优化器。",
         },
         "ko": {
             "label": "APOLLO 사용",
-            "info": "그레디언트 로우 랭크 프로젝션을 활성화합니다.",
+            "info": "APOLLO 최적화를 사용하세요.",
         },
     },
     "apollo_rank": {

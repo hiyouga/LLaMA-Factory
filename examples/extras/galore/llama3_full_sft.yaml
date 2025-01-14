@@ -7,8 +7,8 @@ stage: sft
 do_train: true
 finetuning_type: full
 use_galore: true
-galore_layerwise: true
-galore_target: mlp,self_attn
+galore_layerwise: true  # choices: [true, false], use false for DDP training
+galore_target: all
 galore_rank: 128
 galore_scale: 2.0
 
@@ -29,7 +29,7 @@ overwrite_output_dir: true
 
 ### train
 per_device_train_batch_size: 1
-gradient_accumulation_steps: 1
+gradient_accumulation_steps: 1  # use 1 for layerwise galore
 learning_rate: 1.0e-5
 num_train_epochs: 3.0
 lr_scheduler_type: cosine
