@@ -128,6 +128,9 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             # Enable model parallelism
             labels = labels.to(logits.device)
             loss = loss_fct(logits, labels)
+            # Since the gradient accumulation formula has changed after transformers version 4.46, we need to add a special judgment here.
+            if is_transformers_version_equal_to_4_46():
+                loss /= self.args.gradient_accumulation_steps
 
             # weighted reduce within sequence_parallel_group
             sp_group = model.sequence_parallel_group
