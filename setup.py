@@ -56,6 +56,7 @@ extra_require = {
     "aqlm": ["aqlm[gpu]>=1.1.0"],
     "vllm": ["vllm>=0.4.3,<=0.6.5"],
     "galore": ["galore-torch"],
+    "apollo": ["apollo-torch"],
     "badam": ["badam>=1.2.1"],
     "adam-mini": ["adam-mini"],
     "qwen": ["transformers_stream_generator"],

@@ -250,6 +250,25 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
         )
     )
 
+    with gr.Accordion(open=False) as apollo_tab:
+        with gr.Row():
+            use_apollo = gr.Checkbox()
+            apollo_rank = gr.Slider(minimum=1, maximum=1024, value=16, step=1)
+            apollo_update_interval = gr.Slider(minimum=1, maximum=1024, value=200, step=1)
+            apollo_scale = gr.Slider(minimum=0, maximum=1, value=0.25, step=0.01)
+            apollo_target = gr.Textbox(value="all")
+    input_elems.update({use_apollo, apollo_rank, apollo_update_interval, apollo_scale, apollo_target})
+    elem_dict.update(
+        dict(
+            apollo_tab=apollo_tab,
+            use_apollo=use_apollo,
+            apollo_rank=apollo_rank,
+            apollo_update_interval=apollo_update_interval,
+            apollo_scale=apollo_scale,
+            apollo_target=apollo_target,
+        )
+    )
+
     with gr.Accordion(open=False) as badam_tab:
         with gr.Row():
             use_badam = gr.Checkbox()
