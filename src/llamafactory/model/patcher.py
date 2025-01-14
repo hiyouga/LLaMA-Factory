@@ -109,6 +109,10 @@ def patch_config(
 
     if getattr(config, "model_type", None) == "qwen2" and is_trainable and model_args.flash_attn == "fa2":
         setattr(config, "use_cache", False)  # qwen2 does not support use_cache when using flash attn
+    
+    if getattr(config, "model_type", None) == "minicpmo":
+        setattr(config, "init_audio", False)
+        setattr(config, "init_tts", False)
 
     if "LlavaLlamaForCausalLM" in getattr(config, "architectures", []):
         raise ValueError("Please download llava models with hf-compatible format: https://huggingface.co/llava-hf")
@@ -145,7 +149,9 @@ def patch_model(
     ):
         gen_config.do_sample = True
 
-    if "GenerationMixin" not in str(model.generate.__func__):
+    if getattr(model.config, "model_type") not in ["minicpmv", "minicpmo"] and "GenerationMixin" not in str(
+        model.generate.__func__
+    ):
         model.generate = MethodType(PreTrainedModel.generate, model)
 
     if add_valuehead:

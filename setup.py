@@ -68,6 +68,7 @@ extra_require = {
         "msgpack",
         "referencing",
         "jsonschema_specifications",
+        "librosa",
     ],
     "modelscope": ["modelscope"],
     "openmind": ["openmind"],
