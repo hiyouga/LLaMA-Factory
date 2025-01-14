@@ -1249,6 +1249,110 @@ LOCALES = {
             "info": "GaLore를 적용할 모듈의 이름. 모듈 간에는 쉼표(,)로 구분하십시오.",
         },
     },
+    "apollo_tab": {
+        "en": {
+            "label": "APOLLO configurations",
+        },
+        "ru": {
+            "label": "Конфигурации APOLLO",
+        },
+        "zh": {
+            "label": "APOLLO 参数设置",
+        },
+        "ko": {
+            "label": "APOLLO 구성",
+        },
+    },
+    "use_apollo": {
+        "en": {
+            "label": "Use APOLLO",
+            "info": "Enable gradient low-Rank projection.",
+        },
+        "ru": {
+            "label": "Использовать APOLLO",
+            "info": "Включить проекцию градиента на низкоранговое пространство.",
+        },
+        "zh": {
+            "label": "使用 APOLLO",
+            "info": "使用梯度低秩投影。",
+        },
+        "ko": {
+            "label": "APOLLO 사용",
+            "info": "그레디언트 로우 랭크 프로젝션을 활성화합니다.",
+        },
+    },
+    "apollo_rank": {
+        "en": {
+            "label": "APOLLO rank",
+            "info": "The rank of APOLLO gradients.",
+        },
+        "ru": {
+            "label": "Ранг APOLLO",
+            "info": "Ранг градиентов APOLLO.",
+        },
+        "zh": {
+            "label": "APOLLO 秩",
+            "info": "APOLLO 梯度的秩大小。",
+        },
+        "ko": {
+            "label": "APOLLO 랭크",
+            "info": "APOLLO 그레디언트의 랭크.",
+        },
+    },
+    "apollo_update_interval": {
+        "en": {
+            "label": "Update interval",
+            "info": "Number of steps to update the APOLLO projection.",
+        },
+        "ru": {
+            "label": "Интервал обновления",
+            "info": "Количество шагов для обновления проекции APOLLO.",
+        },
+        "zh": {
+            "label": "更新间隔",
+            "info": "相邻两次投影更新的步数。",
+        },
+        "ko": {
+            "label": "업데이트 간격",
+            "info": "APOLLO 프로젝션을 업데이트할 간격의 스텝 수.",
+        },
+    },
+    "apollo_scale": {
+        "en": {
+            "label": "APOLLO scale",
+            "info": "APOLLO scaling coefficient.",
+        },
+        "ru": {
+            "label": "LoRA Alpha",
+            "info": "Коэффициент масштабирования APOLLO.",
+        },
+        "zh": {
+            "label": "APOLLO 缩放系数",
+            "info": "APOLLO 缩放系数大小。",
+        },
+        "ko": {
+            "label": "APOLLO 스케일",
+            "info": "APOLLO 스케일링 계수.",
+        },
+    },
+    "apollo_target": {
+        "en": {
+            "label": "APOLLO modules",
+            "info": "Name(s) of modules to apply APOLLO. Use commas to separate multiple modules.",
+        },
+        "ru": {
+            "label": "Модули APOLLO",
+            "info": "Имена модулей для применения APOLLO. Используйте запятые для разделения нескольких модулей.",
+        },
+        "zh": {
+            "label": "APOLLO 作用模块",
+            "info": "应用 APOLLO 的模块名称。使用英文逗号分隔多个名称。",
+        },
+        "ko": {
+            "label": "APOLLO 모듈",
+            "info": "APOLLO를 적용할 모듈의 이름. 모듈 간에는 쉼표(,)로 구분하십시오.",
+        },
+    },
     "badam_tab": {
         "en": {
             "label": "BAdam configurations",
