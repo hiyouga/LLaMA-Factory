@@ -169,7 +169,7 @@ class HuggingfaceEngine(BaseEngine):
             if isinstance(value, list) and all(isinstance(v, torch.Tensor) for v in value):  # for pixtral inputs
                 value = torch.stack(value)  # assume they have same sizes
             elif isinstance(value, list) and all(isinstance(v, list) for v in value):  # for minicpmv inputs
-                value = torch.stack([torch.stack(per_value) for per_value in value])
+                value = torch.stack([torch.stack(v) for v in value])
             elif not isinstance(value, torch.Tensor):
                 value = torch.tensor(value)
 
@@ -215,7 +215,7 @@ class HuggingfaceEngine(BaseEngine):
         )
         generate_output = model.generate(**gen_kwargs)
         if isinstance(generate_output, tuple):
-            generate_output = generate_output[1][0]  # for minicpm_o
+            generate_output = generate_output[1][0]  # post-process the minicpm_o output
 
         response_ids = generate_output[:, prompt_length:]
         response = tokenizer.batch_decode(
