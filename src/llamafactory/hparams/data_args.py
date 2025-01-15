@@ -99,7 +99,7 @@ class DataArguments:
     )
     val_size: float = field(
         default=0.0,
-        metadata={"help": "Size of the development set, should be an integer or a float in range `[0,1)`."},
+        metadata={"help": "Size of the validation set, should be an integer or a float in range `[0,1)`."},
     )
     packing: Optional[bool] = field(
         default=None,

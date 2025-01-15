@@ -6,11 +6,12 @@ trust_remote_code: true
 stage: sft
 do_train: true
 finetuning_type: full
-use_galore: true
-galore_layerwise: true  # choices: [true, false], use false for DDP training
-galore_target: all
-galore_rank: 128
-galore_scale: 2.0
+use_apollo: true
+apollo_layerwise: true  # choices: [true, false], use false for DDP training
+apollo_target: all
+apollo_rank: 128
+apollo_scale: 32.0
+apollo_scale_type: channel
 
 ### dataset
 dataset: identity,alpaca_en_demo
@@ -29,7 +30,7 @@ overwrite_output_dir: true
 
 ### train
 per_device_train_batch_size: 1
-gradient_accumulation_steps: 1  # use 1 for layerwise galore
+gradient_accumulation_steps: 1  # use 1 for layerwise apollo
 learning_rate: 1.0e-5
 num_train_epochs: 3.0
 lr_scheduler_type: cosine

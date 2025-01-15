@@ -50,6 +50,10 @@ def is_galore_available():
     return _is_package_available("galore_torch")
 
 
+def is_apollo_available():
+    return _is_package_available("apollo_torch")
+
+
 def is_gradio_available():
     return _is_package_available("gradio")
 
