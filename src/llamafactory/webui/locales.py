@@ -468,7 +468,7 @@ LOCALES = {
     "val_size": {
         "en": {
             "label": "Val size",
-            "info": "Proportion of data in the dev set.",
+            "info": "Percentage of validation set from the entire dataset.",
         },
         "ru": {
             "label": "Размер валидации",
