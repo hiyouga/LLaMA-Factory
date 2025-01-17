@@ -30,11 +30,10 @@ if TYPE_CHECKING:
 
 
 def create_top() -> Dict[str, "Component"]:
-    available_models = list(SUPPORTED_MODELS.keys()) + ["Custom"]
-
     with gr.Row():
-        lang = gr.Dropdown(choices=["en", "ru", "zh", "ko"], scale=1)
-        model_name = gr.Dropdown(choices=available_models, scale=3)
+        lang = gr.Dropdown(choices=["en", "ru", "zh", "ko"], value=None, scale=1)
+        available_models = list(SUPPORTED_MODELS.keys()) + ["Custom"]
+        model_name = gr.Dropdown(choices=available_models, value=None, scale=3)
         model_path = gr.Textbox(scale=3)
 
     with gr.Row():
