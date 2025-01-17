@@ -8,6 +8,7 @@ trust_remote_code: true
 stage: sft
 do_train: true
 finetuning_type: lora
+lora_rank: 8
 lora_target: all
 
 ### dataset
@@ -36,7 +37,7 @@ bf16: true
 ddp_timeout: 180000000
 
 ### eval
-val_size: 0.1
-per_device_eval_batch_size: 1
-eval_strategy: steps
-eval_steps: 500
+# val_size: 0.1
+# per_device_eval_batch_size: 1
+# eval_strategy: steps
+# eval_steps: 500

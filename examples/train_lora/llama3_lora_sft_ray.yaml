@@ -6,6 +6,7 @@ trust_remote_code: true
 stage: sft
 do_train: true
 finetuning_type: lora
+lora_rank: 8
 lora_target: all
 
 ### dataset
@@ -24,6 +25,13 @@ save_steps: 500
 plot_loss: true
 overwrite_output_dir: true
 
+### ray
+ray_run_name: llama3_8b_sft_lora
+ray_num_workers: 4  # number of GPUs to use
+resources_per_worker:
+  GPU: 1
+placement_strategy: PACK
+
 ### train
 per_device_train_batch_size: 1
 gradient_accumulation_steps: 8
@@ -35,14 +43,7 @@ bf16: true
 ddp_timeout: 180000000
 
 ### eval
-val_size: 0.1
-per_device_eval_batch_size: 1
-eval_strategy: steps
-eval_steps: 500
-
-### ray
-ray_run_name: llama3_8b_sft_lora
-ray_num_workers: 4  # number of GPUs to use
-resources_per_worker:
-  GPU: 1
-placement_strategy: PACK
+# val_size: 0.1
+# per_device_eval_batch_size: 1
+# eval_strategy: steps
+# eval_steps: 500
