@@ -805,6 +805,23 @@ _register_template(
     replace_eos=True,
 )
 
+_register_template(
+    name="llama3-deidentification",
+    format_user=StringFormatter(
+        slots=[
+            (
+                "<|start_header_id|>user<|end_header_id|>\n\n{{content}}<|eot_id|>"
+                "<|start_header_id|>assistant<|end_header_id|>"
+            )
+        ]
+    ),
+    format_system=StringFormatter(
+        slots=[{"bos_token"}, "<|start_header_id|>system<|end_header_id|>\n\n{{content}}<|eot_id|>"]
+    ),
+    default_system="당신은 개인정보를 감춰주는 로봇입니다.\n\n## 지시 사항 ##\n1.주어진 대화에서 사람이름을 [PERSON1], [PERSON2] 등으로 등장 순서에 따라 대체하고, 동일한 이름이 반복될 경우 같은 대치어를 사용합니다.\n2.연락처, 이메일, 주소 , 계좌번호도 각각 [CONTACT1], [CONTACT2] 등, [EMAIL1],[EMAIL2] 등, [ADDRESS1],[ADDRESS2]등 , [ACCOUNT1], [ACCOUNT2] 등 으로 대치하고 동일한 정보가 반복되는 경우에는 같은 대치어를 사용합니다.\n3.대치어를 작성할때 글머리 기호나, 나열식 방식을 쓰지말고 평문으로 이어서 쓰십시오 \n4.위 규칙은 대화 전체에 걸쳐 일관되게 적용합니다. \n당신이 개인정보를 감출 대화내역입니다. \n: 입력:",
+    stop_words=["<|eot_id|>"],
+    replace_eos=True,
+)
 
 
 # copied from llama3 template
