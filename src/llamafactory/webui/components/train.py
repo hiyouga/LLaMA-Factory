@@ -39,9 +39,8 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     elem_dict = dict()
 
     with gr.Row():
-        training_stage = gr.Dropdown(
-            choices=list(TRAINING_STAGES.keys()), value=list(TRAINING_STAGES.keys())[0], scale=1
-        )
+        stages = list(TRAINING_STAGES.keys())
+        training_stage = gr.Dropdown(choices=stages, value=stages[0], scale=1)
         dataset_dir = gr.Textbox(value=DEFAULT_DATA_DIR, scale=1)
         dataset = gr.Dropdown(multiselect=True, allow_custom_value=True, scale=4)
         preview_elems = create_preview_box(dataset_dir, dataset)
@@ -107,8 +106,12 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
                 use_llama_pro = gr.Checkbox()
 
             with gr.Column():
-                shift_attn = gr.Checkbox()
-                report_to = gr.Checkbox()
+                report_to = gr.Dropdown(
+                    choices=["none", "all", "wandb", "mlflow", "neptune", "tensorboard"],
+                    value=["none"],
+                    allow_custom_value=True,
+                    multiselect=True,
+                )
 
     input_elems.update(
         {
@@ -123,7 +126,6 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             mask_history,
             resize_vocab,
             use_llama_pro,
-            shift_attn,
             report_to,
         }
     )
@@ -141,7 +143,6 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             mask_history=mask_history,
             resize_vocab=resize_vocab,
             use_llama_pro=use_llama_pro,
-            shift_attn=shift_attn,
             report_to=report_to,
         )
     )

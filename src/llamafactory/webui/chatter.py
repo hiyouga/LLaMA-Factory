@@ -14,7 +14,7 @@
 
 import json
 import os
-from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Tuple
 
 from ..chat import ChatModel
 from ..data import Role
@@ -120,17 +120,17 @@ class WebChatModel(ChatModel):
 
     def append(
         self,
-        chatbot: List[List[Optional[str]]],
-        messages: Sequence[Dict[str, str]],
+        chatbot: List[Dict[str, str]],
+        messages: List[Dict[str, str]],
         role: str,
         query: str,
-    ) -> Tuple[List[List[Optional[str]]], List[Dict[str, str]], str]:
-        return chatbot + [[query, None]], messages + [{"role": role, "content": query}], ""
+    ) -> Tuple[List[Dict[str, str]], List[Dict[str, str]], str]:
+        return chatbot + [{"role": "user", "content": query}], messages + [{"role": role, "content": query}], ""
 
     def stream(
         self,
-        chatbot: List[List[Optional[str]]],
-        messages: Sequence[Dict[str, str]],
+        chatbot: List[Dict[str, str]],
+        messages: List[Dict[str, str]],
         system: str,
         tools: str,
         image: Optional[Any],
@@ -138,8 +138,8 @@ class WebChatModel(ChatModel):
         max_new_tokens: int,
         top_p: float,
         temperature: float,
-    ) -> Generator[Tuple[List[List[Optional[str]]], List[Dict[str, str]]], None, None]:
-        chatbot[-1][1] = ""
+    ) -> Generator[Tuple[List[Dict[str, str]], List[Dict[str, str]]], None, None]:
+        chatbot.append({"role": "assistant", "content": ""})
         response = ""
         for new_text in self.stream_chat(
             messages,
@@ -166,5 +166,5 @@ class WebChatModel(ChatModel):
                 output_messages = messages + [{"role": Role.ASSISTANT.value, "content": result}]
                 bot_text = result
 
-            chatbot[-1][1] = bot_text
+            chatbot[-1] = {"role": "assistant", "content": bot_text}
             yield chatbot, output_messages
