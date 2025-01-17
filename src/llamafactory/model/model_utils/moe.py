@@ -61,7 +61,7 @@ def add_z3_leaf_module(model: "PreTrainedModel") -> None:
 
         _set_z3_leaf_modules(model, [MixtralSparseMoeBlock])
 
-    if model_type == "qwen2moe":
+    if model_type == "qwen2_moe":
         from transformers.models.qwen2_moe.modeling_qwen2_moe import Qwen2MoeSparseMoeBlock
 
         _set_z3_leaf_modules(model, [Qwen2MoeSparseMoeBlock])
