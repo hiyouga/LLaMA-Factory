@@ -91,7 +91,7 @@ class BasePlugin:
         if (image.width * image.height) > image_resolution:
             resize_factor = math.sqrt(image_resolution / (image.width * image.height))
             width, height = int(image.width * resize_factor), int(image.height * resize_factor)
-            image = image.resize((width, height), resample=Image.NEAREST)
+            image = image.resize((width, height), resample=Image.Resampling.NEAREST)
 
         if image.mode != "RGB":
             image = image.convert("RGB")
@@ -780,15 +780,15 @@ class Qwen2vlPlugin(BasePlugin):
         image = super()._preprocess_image(image, **kwargs)
         if min(image.width, image.height) < 28:
             width, height = max(image.width, 28), max(image.height, 28)
-            image = image.resize((width, height), resample=Image.NEAREST)
+            image = image.resize((width, height), resample=Image.Resampling.NEAREST)
 
         if image.width / image.height > 200:
             width, height = image.height * 180, image.height
-            image = image.resize((width, height), resample=Image.NEAREST)
+            image = image.resize((width, height), resample=Image.Resampling.NEAREST)
 
         if image.height / image.width > 200:
             width, height = image.width, image.width * 180
-            image = image.resize((width, height), resample=Image.NEAREST)
+            image = image.resize((width, height), resample=Image.Resampling.NEAREST)
 
         return image
 
