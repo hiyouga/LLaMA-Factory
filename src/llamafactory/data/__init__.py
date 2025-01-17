@@ -17,6 +17,7 @@ from .collator import (
     MultiModalDataCollatorForSeq2Seq,
     PairwiseDataCollatorWithPadding,
     SFTDataCollatorWith4DAttentionMask,
+    RAFTDataCollatorWith4DAttentionMask,
 )
 from .data_utils import Role, split_dataset
 from .loader import get_dataset

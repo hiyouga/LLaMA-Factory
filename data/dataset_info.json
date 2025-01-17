@@ -433,6 +433,17 @@
       "rejected": "rejected"
     }
   },
+  "raft_demo": {
+    "file_name": "raft_demo.jsonl",
+    "load_from": "file",
+    "formatting": "raft",
+    "columns": {
+        "prompt": "instruction",
+        "response": "output",
+        "positive_context": "positive_context",
+        "negative_context": "negative_context"
+    }
+  },
   "dpo_mix_en": {
     "hf_hub_url": "llamafactory/DPO-En-Zh-20k",
     "subset": "en",

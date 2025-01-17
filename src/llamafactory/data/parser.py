@@ -63,6 +63,8 @@ class DatasetAttr:
     observation_tag: Optional[str] = "observation"
     function_tag: Optional[str] = "function_call"
     system_tag: Optional[str] = "system"
+    positive_context: Optional[str] = "positive_context"
+    negative_context: Optional[str] = "negative_context"  
 
     def __repr__(self) -> str:
         return self.dataset_name
