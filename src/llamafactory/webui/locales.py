@@ -713,24 +713,6 @@ LOCALES = {
             "info": "확장된 블록의 매개변수를 학습 가능하게 만듭니다.",
         },
     },
-    "shift_attn": {
-        "en": {
-            "label": "Enable S^2 Attention",
-            "info": "Use shift short attention proposed by LongLoRA.",
-        },
-        "ru": {
-            "label": "Включить S^2 внимание",
-            "info": "Использовать сдвиг внимания на короткие дистанции предложенный LongLoRA.",
-        },
-        "zh": {
-            "label": "使用 S^2 Attention",
-            "info": "使用 LongLoRA 提出的 shift short attention。",
-        },
-        "ko": {
-            "label": "S^2 Attention 사용",
-            "info": "LongLoRA에서 제안한 shift short attention을 사용합니다.",
-        },
-    },
     "report_to": {
         "en": {
             "label": "Enable external logger",
