@@ -33,7 +33,7 @@ def create_chat_box(
     engine: "Engine", visible: bool = False
 ) -> Tuple["Component", "Component", Dict[str, "Component"]]:
     with gr.Column(visible=visible) as chat_box:
-        chatbot = gr.Chatbot(show_copy_button=True)
+        chatbot = gr.Chatbot(type="messages", show_copy_button=True)
         messages = gr.State([])
         with gr.Row():
             with gr.Column(scale=4):
