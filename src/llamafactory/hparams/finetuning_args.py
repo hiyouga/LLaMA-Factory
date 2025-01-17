@@ -238,7 +238,7 @@ class GaloreArguments:
         metadata={"help": "Number of steps to update the GaLore projection."},
     )
     galore_scale: float = field(
-        default=0.25,
+        default=2.0,
         metadata={"help": "GaLore scaling coefficient."},
     )
     galore_proj_type: Literal["std", "reverse_std", "right", "left", "full"] = field(
@@ -279,7 +279,7 @@ class ApolloArguments:
         metadata={"help": "Number of steps to update the APOLLO projection."},
     )
     apollo_scale: float = field(
-        default=1.0,
+        default=32.0,
         metadata={"help": "APOLLO scaling coefficient."},
     )
     apollo_proj: Literal["svd", "random"] = field(

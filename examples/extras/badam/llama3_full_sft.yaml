@@ -37,7 +37,7 @@ lr_scheduler_type: cosine
 warmup_ratio: 0.1
 
 ### eval
-val_size: 0.1
-per_device_eval_batch_size: 1
-eval_strategy: steps
-eval_steps: 500
+# val_size: 0.1
+# per_device_eval_batch_size: 1
+# eval_strategy: steps
+# eval_steps: 500
