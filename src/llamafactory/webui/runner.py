@@ -144,8 +144,7 @@ class Runner:
             mask_history=get("train.mask_history"),
             resize_vocab=get("train.resize_vocab"),
             use_llama_pro=get("train.use_llama_pro"),
-            shift_attn=get("train.shift_attn"),
-            report_to="all" if get("train.report_to") else "none",
+            report_to=get("train.report_to"),
             use_galore=get("train.use_galore"),
             use_apollo=get("train.use_apollo"),
             use_badam=get("train.use_badam"),
@@ -238,6 +237,12 @@ class Runner:
             args["badam_switch_mode"] = get("train.badam_switch_mode")
             args["badam_switch_interval"] = get("train.badam_switch_interval")
             args["badam_update_ratio"] = get("train.badam_update_ratio")
+
+        # report_to
+        if "none" in args["report_to"]:
+            args["report_to"] = "none"
+        elif "all" in args["report_to"]:
+            args["report_to"] = "all"
 
         # swanlab config
         if get("train.use_swanlab"):
