@@ -111,7 +111,12 @@ def gen_cmd(args: Dict[str, Any]) -> str:
     """
     cmd_lines = ["llamafactory-cli train "]
     for k, v in clean_cmd(args).items():
-        cmd_lines.append(f"    --{k} {str(v)} ")
+        if isinstance(v, dict):
+            cmd_lines.append(f"    --{k} {json.dumps(v, ensure_ascii=False)} ")
+        elif isinstance(v, list):
+            cmd_lines.append(f"    --{k} {' '.join(map(str, v))} ")
+        else:
+            cmd_lines.append(f"    --{k} {str(v)} ")
 
     if os.name == "nt":
         cmd_text = "`\n".join(cmd_lines)
