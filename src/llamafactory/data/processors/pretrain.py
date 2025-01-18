@@ -33,7 +33,7 @@ def preprocess_pretrain_dataset(
     text_examples = [messages[0]["content"] + eos_token for messages in examples["_prompt"]]
 
     if not data_args.packing:
-        if data_args.template == "gemma":
+        if getattr(tokenizer, "add_bos_token", False):
             text_examples = [tokenizer.bos_token + example for example in text_examples]
 
         result = tokenizer(text_examples, add_special_tokens=False, truncation=True, max_length=data_args.cutoff_len)
@@ -47,7 +47,7 @@ def preprocess_pretrain_dataset(
             k: [t[i : i + block_size] for i in range(0, total_length, block_size)]
             for k, t in concatenated_examples.items()
         }
-        if data_args.template == "gemma":
+        if getattr(tokenizer, "add_bos_token", False):
             for i in range(len(result["input_ids"])):
                 result["input_ids"][i][0] = tokenizer.bos_token_id
 
