@@ -499,7 +499,7 @@ pip install .
 2. Install transformers from the main branch.
 
 ```bash
-git clone -b https://github.com/huggingface/transformers.git
+git clone -b main https://github.com/huggingface/transformers.git
 cd transformers
 pip install .
 ```
