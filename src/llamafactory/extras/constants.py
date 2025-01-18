@@ -22,6 +22,8 @@ from peft.utils import WEIGHTS_NAME as ADAPTER_WEIGHTS_NAME
 from transformers.utils import SAFE_WEIGHTS_INDEX_NAME, SAFE_WEIGHTS_NAME, WEIGHTS_INDEX_NAME, WEIGHTS_NAME
 
 
+AUDIO_PLACEHOLDER = os.environ.get("AUDIO_PLACEHOLDER", "<audio>")
+
 CHECKPOINT_NAMES = {
     SAFE_ADAPTER_WEIGHTS_NAME,
     ADAPTER_WEIGHTS_NAME,
@@ -2063,6 +2065,22 @@ register_model_group(
         },
     },
     template="qwen",
+)
+
+
+register_model_group(
+    models={
+        "Qwen2-Audio-7B": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2-Audio-7B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2-Audio-7B",
+        },
+        "Qwen2-Audio-7B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2-Audio-7B-Instruct",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2-Audio-7B-Instruct",
+        },
+    },
+    template="qwen2_audio",
+    vision=True,
 )
 
 

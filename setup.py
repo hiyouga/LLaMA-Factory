@@ -71,6 +71,7 @@ extra_require = {
         "jsonschema_specifications",
         "librosa",
     ],
+    "audio": ["torchaudio", "librosa", "pyctcdecode", "phonemizer", "kenlm"],
     "modelscope": ["modelscope"],
     "openmind": ["openmind"],
     "swanlab": ["swanlab"],

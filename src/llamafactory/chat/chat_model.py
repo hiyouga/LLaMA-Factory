@@ -27,7 +27,7 @@ from .vllm_engine import VllmEngine
 
 
 if TYPE_CHECKING:
-    from ..data.mm_plugin import ImageInput, VideoInput
+    from ..data.mm_plugin import ImageInput, VideoInput, AudioInput
     from .base_engine import BaseEngine, Response
 
 
@@ -66,6 +66,7 @@ class ChatModel:
         tools: Optional[str] = None,
         images: Optional[Sequence["ImageInput"]] = None,
         videos: Optional[Sequence["VideoInput"]] = None,
+        audios: Optional[Sequence["AudioInput"]] = None,
         **input_kwargs,
     ) -> List["Response"]:
         r"""
@@ -83,6 +84,7 @@ class ChatModel:
         tools: Optional[str] = None,
         images: Optional[Sequence["ImageInput"]] = None,
         videos: Optional[Sequence["VideoInput"]] = None,
+        audios: Optional[Sequence["AudioInput"]] = None,
         **input_kwargs,
     ) -> List["Response"]:
         r"""
@@ -97,6 +99,7 @@ class ChatModel:
         tools: Optional[str] = None,
         images: Optional[Sequence["ImageInput"]] = None,
         videos: Optional[Sequence["VideoInput"]] = None,
+        audios: Optional[Sequence["AudioInput"]] = None,
         **input_kwargs,
     ) -> Generator[str, None, None]:
         r"""
@@ -117,12 +120,13 @@ class ChatModel:
         tools: Optional[str] = None,
         images: Optional[Sequence["ImageInput"]] = None,
         videos: Optional[Sequence["VideoInput"]] = None,
+        audios: Optional[Sequence["AudioInput"]] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
         r"""
         Asynchronously gets the response token-by-token of the chat model.
         """
-        async for new_token in self.engine.stream_chat(messages, system, tools, images, videos, **input_kwargs):
+        async for new_token in self.engine.stream_chat(messages, system, tools, images, videos, audios, **input_kwargs):
             yield new_token
 
     def get_scores(

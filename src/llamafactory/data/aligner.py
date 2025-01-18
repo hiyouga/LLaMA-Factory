@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments
 
     from ..hparams import DataArguments
-    from .mm_plugin import ImageInput, VideoInput
+    from .mm_plugin import ImageInput, VideoInput, AudioInput
     from .parser import DatasetAttr
 
 
@@ -78,6 +78,29 @@ def _convert_videos(
     return videos
 
 
+def _convert_audios(
+    audios: Union["AudioInput", Sequence["AudioInput"]],
+    dataset_attr: "DatasetAttr",
+    data_args: "DataArguments",
+) -> Optional[List["AudioInput"]]:
+    r"""
+    Optionally concatenates audio path to dataset dir when loading from local disk.
+    """
+    if not isinstance(audios, list):
+        audios = [audios]
+    elif len(audios) == 0:
+        return None
+    else:
+        audios = audios[:]
+
+    if dataset_attr.load_from in ["script", "file"]:
+        for i in range(len(audios)):
+            if isinstance(audios[i], str) and os.path.isfile(os.path.join(data_args.image_dir, audios[i])):
+                audios[i] = os.path.join(data_args.image_dir, audios[i])
+
+    return audios
+
+
 def convert_alpaca(
     example: Dict[str, Any],
     dataset_attr: "DatasetAttr",
@@ -123,6 +146,7 @@ def convert_alpaca(
 
     convert_images = partial(_convert_images, dataset_attr=dataset_attr, data_args=data_args)
     convert_videos = partial(_convert_videos, dataset_attr=dataset_attr, data_args=data_args)
+    convert_audios = partial(_convert_audios, dataset_attr=dataset_attr, data_args=data_args)
     output = {
         "_prompt": prompt,
         "_response": response,
@@ -130,6 +154,7 @@ def convert_alpaca(
         "_tools": example[dataset_attr.tools] if dataset_attr.tools else "",
         "_images": convert_images(example[dataset_attr.images]) if dataset_attr.images else None,
         "_videos": convert_videos(example[dataset_attr.videos]) if dataset_attr.videos else None,
+        "_audios": convert_audios(example[dataset_attr.audios]) if dataset_attr.audios else None,
     }
     return output
 
@@ -216,6 +241,7 @@ def convert_sharegpt(
 
     convert_images = partial(_convert_images, dataset_attr=dataset_attr, data_args=data_args)
     convert_videos = partial(_convert_videos, dataset_attr=dataset_attr, data_args=data_args)
+    convert_audios = partial(_convert_audios, dataset_attr=dataset_attr, data_args=data_args)
     output = {
         "_prompt": prompt,
         "_response": response,
@@ -223,6 +249,7 @@ def convert_sharegpt(
         "_tools": example[dataset_attr.tools] if dataset_attr.tools else "",
         "_images": convert_images(example[dataset_attr.images]) if dataset_attr.images else None,
         "_videos": convert_videos(example[dataset_attr.videos]) if dataset_attr.videos else None,
+        "_audios": convert_audios(example[dataset_attr.audios]) if dataset_attr.audios else None,
     }
     return output
 
@@ -241,6 +268,7 @@ def align_dataset(
         _tools: "...",
         _images: [],
         _videos: [],
+        _audios: [],
     """
     if dataset_attr.formatting == "alpaca":
         convert_func = partial(convert_alpaca, dataset_attr=dataset_attr, data_args=data_args)

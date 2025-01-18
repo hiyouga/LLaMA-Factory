@@ -147,6 +147,7 @@ class WebChatModel(ChatModel):
             tools,
             images=[image] if image else None,
             videos=[video] if video else None,
+            audios=[audio] if audio else None,
             max_new_tokens=max_new_tokens,
             top_p=top_p,
             temperature=temperature,

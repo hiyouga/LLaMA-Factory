@@ -16,7 +16,7 @@ import os
 from typing import TYPE_CHECKING, Any, Dict, Optional, TypedDict
 
 import torch
-from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForVision2Seq, AutoProcessor, AutoTokenizer
+from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForVision2Seq, Qwen2AudioForConditionalGeneration, AutoProcessor, AutoTokenizer
 from trl import AutoModelForCausalLMWithValueHead
 
 from ..extras import logging
@@ -104,7 +104,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
         processor = AutoProcessor.from_pretrained(model_args.model_name_or_path, **init_kwargs)
         patch_processor(processor, config, tokenizer, model_args)
     except Exception as e:
-        logger.debug(f"Processor was not found: {e}.")
+        logger.info(f"Processor was not found: {e}.")
         processor = None
 
     # Avoid load tokenizer, see:
@@ -155,6 +155,8 @@ def load_model(
         else:
             if type(config) in AutoModelForVision2Seq._model_mapping.keys():  # assume built-in models
                 load_class = AutoModelForVision2Seq
+            elif getattr(config, "model_type", None)=="qwen2_audio":
+                load_class = Qwen2AudioForConditionalGeneration
             else:
                 load_class = AutoModelForCausalLM
 

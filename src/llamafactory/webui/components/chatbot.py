@@ -49,6 +49,9 @@ def create_chat_box(
 
                         with gr.Tab("Video"):
                             video = gr.Video(sources=["upload"])
+                            
+                        with gr.Tab("Audio"):
+                            audio = gr.Audio(sources=["upload"])
 
                 query = gr.Textbox(show_label=False, lines=8)
                 submit_btn = gr.Button(variant="primary")
@@ -67,7 +70,7 @@ def create_chat_box(
         [chatbot, messages, query],
     ).then(
         engine.chatter.stream,
-        [chatbot, messages, system, tools, image, video, max_new_tokens, top_p, temperature],
+        [chatbot, messages, system, tools, image, video, audio, max_new_tokens, top_p, temperature],
         [chatbot, messages],
     )
     clear_btn.click(lambda: ([], []), outputs=[chatbot, messages])
@@ -83,6 +86,7 @@ def create_chat_box(
             mm_box=mm_box,
             image=image,
             video=video,
+            audio=audio,
             query=query,
             submit_btn=submit_btn,
             max_new_tokens=max_new_tokens,

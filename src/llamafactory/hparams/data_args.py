@@ -43,7 +43,7 @@ class DataArguments:
     )
     image_dir: Optional[str] = field(
         default=None,
-        metadata={"help": "Path to the folder containing the images or videos. Defaults to `dataset_dir`."},
+        metadata={"help": "Path to the folder containing the images, videos or audios. Defaults to `dataset_dir`."},
     )
     cutoff_len: int = field(
         default=2048,
