@@ -501,7 +501,7 @@ pip install .
 2. 安装 transformers 的 main 分支版本。
 
 ```bash
-git clone -b https://github.com/huggingface/transformers.git
+git clone -b main https://github.com/huggingface/transformers.git
 cd transformers
 pip install .
 ```
