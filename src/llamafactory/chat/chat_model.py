@@ -27,7 +27,7 @@ from .vllm_engine import VllmEngine
 
 
 if TYPE_CHECKING:
-    from ..data.mm_plugin import ImageInput, VideoInput, AudioInput
+    from ..data.mm_plugin import AudioInput, ImageInput, VideoInput
     from .base_engine import BaseEngine, Response
 
 
@@ -73,7 +73,7 @@ class ChatModel:
         Gets a list of responses of the chat model.
         """
         task = asyncio.run_coroutine_threadsafe(
-            self.achat(messages, system, tools, images, videos, **input_kwargs), self._loop
+            self.achat(messages, system, tools, images, videos, audios, **input_kwargs), self._loop
         )
         return task.result()
 
@@ -90,7 +90,7 @@ class ChatModel:
         r"""
         Asynchronously gets a list of responses of the chat model.
         """
-        return await self.engine.chat(messages, system, tools, images, videos, **input_kwargs)
+        return await self.engine.chat(messages, system, tools, images, videos, audios, **input_kwargs)
 
     def stream_chat(
         self,
@@ -105,7 +105,7 @@ class ChatModel:
         r"""
         Gets the response token-by-token of the chat model.
         """
-        generator = self.astream_chat(messages, system, tools, images, videos, **input_kwargs)
+        generator = self.astream_chat(messages, system, tools, images, videos, audios, **input_kwargs)
         while True:
             try:
                 task = asyncio.run_coroutine_threadsafe(generator.__anext__(), self._loop)
@@ -126,7 +126,9 @@ class ChatModel:
         r"""
         Asynchronously gets the response token-by-token of the chat model.
         """
-        async for new_token in self.engine.stream_chat(messages, system, tools, images, videos, audios, **input_kwargs):
+        async for new_token in self.engine.stream_chat(
+            messages, system, tools, images, videos, audios, **input_kwargs
+        ):
             yield new_token
 
     def get_scores(

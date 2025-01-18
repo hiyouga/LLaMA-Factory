@@ -19,7 +19,7 @@ from typing_extensions import override
 
 from ..data import get_template_and_fix_tokenizer
 from ..extras import logging
-from ..extras.constants import IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER, AUDIO_PLACEHOLDER
+from ..extras.constants import AUDIO_PLACEHOLDER, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
 from ..extras.misc import get_device_count
 from ..extras.packages import is_pillow_available, is_vllm_available
 from ..model import load_config, load_tokenizer
@@ -39,7 +39,7 @@ if is_vllm_available():
 
 
 if TYPE_CHECKING:
-    from ..data.mm_plugin import ImageInput, VideoInput, AudioInput
+    from ..data.mm_plugin import AudioInput, ImageInput, VideoInput
     from ..hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
 
 
@@ -123,7 +123,7 @@ class VllmEngine(BaseEngine):
             mm_input_dict.update({"videos": videos, "vidlens": [len(videos)]})
             if not any(VIDEO_PLACEHOLDER in message["content"] for message in messages):
                 messages[0]["content"] = VIDEO_PLACEHOLDER * len(videos) + messages[0]["content"]
-        
+
         if audios is not None:
             mm_input_dict.update({"audios": audios, "audiolens": [len(audios)]})
             if not any(AUDIO_PLACEHOLDER in message["content"] for message in messages):

@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from vllm import AsyncLLMEngine
 
     from ..data import Template
-    from ..data.mm_plugin import ImageInput, VideoInput, AudioInput
+    from ..data.mm_plugin import AudioInput, ImageInput, VideoInput
     from ..hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
 
 

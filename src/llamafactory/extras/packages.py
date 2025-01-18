@@ -42,6 +42,10 @@ def is_pyav_available():
     return _is_package_available("av")
 
 
+def is_librosa_available():
+    return _is_package_available("librosa")
+
+
 def is_fastapi_available():
     return _is_package_available("fastapi")
 

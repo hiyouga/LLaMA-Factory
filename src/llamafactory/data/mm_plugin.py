@@ -6,12 +6,20 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, TypedDi
 
 import numpy as np
 import torch
-import librosa
 from transformers.image_utils import get_image_size, to_numpy_array
 from typing_extensions import override
 
-from ..extras.constants import IGNORE_INDEX, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER, AUDIO_PLACEHOLDER
-from ..extras.packages import is_pillow_available, is_pyav_available, is_transformers_version_greater_than
+from ..extras.constants import AUDIO_PLACEHOLDER, IGNORE_INDEX, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
+from ..extras.packages import (
+    is_librosa_available,
+    is_pillow_available,
+    is_pyav_available,
+    is_transformers_version_greater_than,
+)
+
+
+if is_librosa_available():
+    import librosa
 
 
 if is_pillow_available():
@@ -86,7 +94,7 @@ class BasePlugin:
             raise ValueError(
                 "This model does not support video input. Please check whether the correct `template` is used."
             )
-        
+
         if len(audios) != 0 and self.audio_token is None:
             raise ValueError(
                 "This model does not support audio input. Please check whether the correct `template` is used."
@@ -100,7 +108,7 @@ class BasePlugin:
         if (image.width * image.height) > image_resolution:
             resize_factor = math.sqrt(image_resolution / (image.width * image.height))
             width, height = int(image.width * resize_factor), int(image.height * resize_factor)
-            image = image.resize((width, height), resample=Image.NEAREST)
+            image = image.resize((width, height), resample=Image.Resampling.NEAREST)
 
         if image.mode != "RGB":
             image = image.convert("RGB")
@@ -169,7 +177,7 @@ class BasePlugin:
         processor: "ProcessorMixin",
     ) -> Dict[str, "torch.Tensor"]:
         raise NotImplementedError
-    
+
     def _get_mm_inputs(
         self,
         images: Sequence["ImageInput"],
@@ -459,9 +467,12 @@ class MiniCPMVPlugin(BasePlugin):
         self._validate_input(images, videos, audios)
         num_image_tokens = 0
         num_video_tokens = 0
+        num_audio_tokens = 0
         messages = deepcopy(messages)
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
         mm_inputs = {}
+        audio_inputs = {}
+        audio_parts = []
         if len(images) != 0 and len(videos) != 0:
             raise ValueError("MiniCPM-V model does not support input images and videos at the same time.")
 
@@ -473,7 +484,7 @@ class MiniCPMVPlugin(BasePlugin):
             max_slice_nums = image_processor.max_slice_nums
             use_image_id = image_processor.use_image_id
 
-        for message in messages:
+        for i, message in enumerate(messages):
             content = message["content"]
             while IMAGE_PLACEHOLDER in content:
                 content = content.replace(IMAGE_PLACEHOLDER, "{{image}}", 1)
@@ -484,10 +495,21 @@ class MiniCPMVPlugin(BasePlugin):
                 content = content.replace(VIDEO_PLACEHOLDER, "{{image}}" * video_seqlen, 1)
                 num_video_tokens += 1
 
-            message["content"] = content.replace("{{image}}", "(<image>./</image>)")
+            while AUDIO_PLACEHOLDER in content:
+                audio_parts.append(i)
+                content = content.replace(AUDIO_PLACEHOLDER, "{{audio}}", 1)
+                num_audio_tokens += 1
+
+            message["content"] = content.replace("{{image}}", "(<image>./</image>)").replace(
+                "{{audio}}", "(<audio>./</audio>)"
+            )
 
         if num_image_tokens > 0:
             mm_inputs = self._get_mm_inputs(images, [], processor)
+
+        if num_audio_tokens > 0:
+            audio_parts_ls = [audio_parts]
+            audio_inputs = self._get_audio_inputs(audios, processor, audio_parts_ls=audio_parts_ls, ret_phs=True)
 
         if mm_inputs:
             pattern = "(<image>./</image>)"
@@ -510,13 +532,63 @@ class MiniCPMVPlugin(BasePlugin):
                 final_text += text_chunks[-1]
                 messages[index]["content"] = final_text
 
+        if audio_inputs:
+            pattern = "(<audio>./</audio>)"
+
+            for index, message in enumerate(messages):
+                text = message["content"]
+                audio_tags = re.findall(pattern, text)
+                text_chunks = text.split(pattern)
+                final_text = ""
+                for i in range(len(audio_tags)):
+                    audio_placeholder = audio_inputs["audio_phs"][0][i]
+                    final_text = final_text + text_chunks[i] + audio_placeholder
+
+                final_text += text_chunks[-1]
+                messages[index]["content"] = final_text
+
         if len(images) != num_image_tokens:
             raise ValueError(f"The number of images does not match the number of {IMAGE_PLACEHOLDER} tokens.")
 
         if len(videos) != num_video_tokens:
             raise ValueError(f"The number of videos does not match the number of {VIDEO_PLACEHOLDER} tokens.")
 
+        if len(audios) != num_audio_tokens:
+            raise ValueError(f"The number of audios does not match the number of {AUDIO_PLACEHOLDER} tokens.")
+
         return messages
+
+    @override
+    def _get_audio_inputs(
+        self,
+        audios: Sequence["AudioInput"],
+        processor: "ProcessorMixin",
+        **kwargs,
+    ) -> Dict[str, "torch.Tensor"]:
+        audio_inputs = {}
+        audio_parts_ls = kwargs.get("audio_parts_ls", None)
+        if len(audios) != 0:
+            new_audios = []
+            for audio in audios:
+                new_audios.append(librosa.load(audio, sr=processor.feature_extractor.sampling_rate)[0])
+
+            audios_ls = []
+            idx = 0
+            for audio_parts in audio_parts_ls:
+                audios_ls.append(new_audios[idx : idx + len(audio_parts)])
+                idx += len(audio_parts)
+
+            audio_features, audio_feature_lens, audio_phs = processor.audio_feature_extract(
+                audios_ls,
+                audio_parts_ls,
+                chunk_input=True,
+                sampling_rate=16000,
+            )
+            audio_inputs = {"audio_features": audio_features, "audio_feature_lens": audio_feature_lens}
+            if kwargs.get("ret_phs", False):
+                audio_inputs.update({"audio_phs": audio_phs})
+
+        return audio_inputs
 
     @override
     def _get_mm_inputs(
@@ -573,6 +645,8 @@ class MiniCPMVPlugin(BasePlugin):
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         self._validate_input(images, videos, audios)
+
+        # image bound
         image_bounds_list = []
         valid_image_nums_ls = []
         for input_ids in batch_ids:
@@ -595,7 +669,37 @@ class MiniCPMVPlugin(BasePlugin):
             image_bounds_list.append(image_bounds)
 
         mm_inputs = self._get_mm_inputs(images, videos, processor, valid_image_nums_ls=valid_image_nums_ls)
+        if "tgt_sizes" not in mm_inputs:
+            dummy_data = [torch.empty(0) for _ in range(len(batch_ids))]
+            mm_inputs.update({"tgt_sizes": dummy_data, "pixel_values": dummy_data, "image_sizes": dummy_data})
+
         mm_inputs.update({"image_bound": image_bounds_list})
+
+        if len(audios) > 0:
+            # audio bound
+            audio_bounds_ls = []
+            spk_bounds_ls = []
+            audio_parts_ls = []
+
+            for input_ids, audiolen in zip(batch_ids, audiolens):
+                input_ids_ = torch.tensor(input_ids)
+                audio_start_idx = torch.where(input_ids_ == processor.tokenizer.audio_start_id)[0]
+                audio_end_idx = torch.where(input_ids_ == processor.tokenizer.audio_end_id)[0]
+                assert len(audio_start_idx) == len(audio_end_idx)
+                audio_bounds = torch.hstack([(audio_start_idx + 1).unsqueeze(-1), audio_end_idx.unsqueeze(-1)])
+                audio_bounds_ls.append(audio_bounds)
+                audio_parts_ls.append(list(range(audiolen)))
+
+                spk_start_idx = torch.where(input_ids_ == processor.tokenizer.spk_start_id)[0]
+                spk_end_idx = torch.where(input_ids_ == processor.tokenizer.spk_end_id)[0]
+                assert len(spk_start_idx) == len(spk_end_idx)
+                spk_bounds = torch.hstack([(spk_start_idx + 1).unsqueeze(-1), spk_end_idx.unsqueeze(-1)])
+                spk_bounds_ls.append(spk_bounds)
+
+            audio_inputs = self._get_audio_inputs(audios, processor, audio_parts_ls=audio_parts_ls)
+            mm_inputs.update(audio_inputs)
+            mm_inputs.update({"audio_bounds": audio_bounds_ls, "spk_bounds": spk_bounds_ls})
+
         return mm_inputs
 
 
@@ -715,6 +819,7 @@ class PaliGemmaPlugin(BasePlugin):
         labels: Optional[List[int]],
         images: Sequence["ImageInput"],
         videos: Sequence["VideoInput"],
+        audios: Sequence["AudioInput"],
         tokenizer: "PreTrainedTokenizer",
         processor: Optional["ProcessorMixin"],
     ) -> Tuple[List[int], Optional[List[int]]]:
@@ -829,9 +934,8 @@ class Qwen2audioPlugin(BasePlugin):
         self._validate_input(images, videos, audios)
         audio_inputs = self._get_audio_inputs(audios, processor)
 
-        expanded_text = []
         audio_lengths = audio_inputs["feature_attention_mask"].sum(-1).tolist()
-        
+
         num_audio_tokens = 0
         for message in messages:
             content = message["content"]
@@ -872,7 +976,7 @@ class Qwen2audioPlugin(BasePlugin):
             raise ValueError(f"The number of audios does not match the number of {AUDIO_PLACEHOLDER} tokens.")
 
         return messages
-    
+
     @override
     def _get_audio_inputs(
         self,
@@ -880,17 +984,24 @@ class Qwen2audioPlugin(BasePlugin):
         processor: "ProcessorMixin",
     ) -> Dict[str, "torch.Tensor"]:
         audio_inputs = {}
-        if len(audios)!=0:
+        if len(audios) != 0:
             new_audios = []
             for audio in audios:
-                new_audios.append(librosa.load(audio, sr=processor.feature_extractor.sampling_rate)[0])
-            
+                audio = librosa.load(audio, sr=processor.feature_extractor.sampling_rate)[0]
+                new_audios.append(audio)
+
             audio_inputs = processor.feature_extractor(
-                new_audios, sampling_rate=16000, return_attention_mask=True, padding="max_length", return_tensors="pt",
+                new_audios,
+                sampling_rate=processor.feature_extractor.sampling_rate,
+                return_attention_mask=True,
+                padding="max_length",
+                return_tensors="pt",
             )
-            audio_inputs["feature_attention_mask"] = audio_inputs["attention_mask"] # rename attention_mask to prevent conflicts later on
+            audio_inputs["feature_attention_mask"] = audio_inputs[
+                "attention_mask"
+            ]  # rename attention_mask to prevent conflicts later on
             del audio_inputs["attention_mask"]
-        
+
         return audio_inputs
 
     @override
@@ -915,15 +1026,15 @@ class Qwen2vlPlugin(BasePlugin):
         image = super()._preprocess_image(image, **kwargs)
         if min(image.width, image.height) < 28:
             width, height = max(image.width, 28), max(image.height, 28)
-            image = image.resize((width, height), resample=Image.NEAREST)
+            image = image.resize((width, height), resample=Image.Resampling.NEAREST)
 
         if image.width / image.height > 200:
             width, height = image.height * 180, image.height
-            image = image.resize((width, height), resample=Image.NEAREST)
+            image = image.resize((width, height), resample=Image.Resampling.NEAREST)
 
         if image.height / image.width > 200:
             width, height = image.width, image.width * 180
-            image = image.resize((width, height), resample=Image.NEAREST)
+            image = image.resize((width, height), resample=Image.Resampling.NEAREST)
 
         return image
 

@@ -16,7 +16,14 @@ import os
 from typing import TYPE_CHECKING, Any, Dict, Optional, TypedDict
 
 import torch
-from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForVision2Seq, Qwen2AudioForConditionalGeneration, AutoProcessor, AutoTokenizer
+from transformers import (
+    AutoConfig,
+    AutoModelForCausalLM,
+    AutoModelForVision2Seq,
+    AutoProcessor,
+    AutoTokenizer,
+    Qwen2AudioForConditionalGeneration,
+)
 from trl import AutoModelForCausalLMWithValueHead
 
 from ..extras import logging
@@ -86,25 +93,12 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
     except Exception as e:
         raise OSError("Failed to load tokenizer.") from e
 
-    if model_args.model_max_length is not None and tokenizer.model_max_length != model_args.model_max_length:
-        tokenizer.model_max_length = model_args.model_max_length
-
-    if model_args.new_special_tokens is not None:
-        num_added_tokens = tokenizer.add_special_tokens(
-            dict(additional_special_tokens=model_args.new_special_tokens),
-            replace_additional_special_tokens=False,
-        )
-        logger.info_rank0("Add {} to special tokens.".format(",".join(model_args.new_special_tokens)))
-        if num_added_tokens > 0 and not model_args.resize_vocab:
-            model_args.resize_vocab = True
-            logger.warning_rank0("New tokens have been added, changed `resize_vocab` to True.")
-
-    patch_tokenizer(tokenizer)
+    patch_tokenizer(tokenizer, model_args)
     try:
         processor = AutoProcessor.from_pretrained(model_args.model_name_or_path, **init_kwargs)
         patch_processor(processor, config, tokenizer, model_args)
     except Exception as e:
-        logger.info(f"Processor was not found: {e}.")
+        logger.debug(f"Processor was not found: {e}.")
         processor = None
 
     # Avoid load tokenizer, see:
@@ -155,7 +149,7 @@ def load_model(
         else:
             if type(config) in AutoModelForVision2Seq._model_mapping.keys():  # assume built-in models
                 load_class = AutoModelForVision2Seq
-            elif getattr(config, "model_type", None)=="qwen2_audio":
+            elif getattr(config, "model_type", None) == "qwen2_audio":
                 load_class = Qwen2AudioForConditionalGeneration
             else:
                 load_class = AutoModelForCausalLM

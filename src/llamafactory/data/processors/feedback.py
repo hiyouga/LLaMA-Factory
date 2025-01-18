@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer, ProcessorMixin
 
     from ...hparams import DataArguments
-    from ..mm_plugin import ImageInput, VideoInput, AudioInput
+    from ..mm_plugin import AudioInput, ImageInput, VideoInput
     from ..template import Template
 
 
@@ -66,8 +66,12 @@ def _encode_feedback_example(
         response_ids += [tokenizer.eos_token_id]
         kl_response_ids += [tokenizer.eos_token_id]
 
-    prompt_ids, _ = template.mm_plugin.process_token_ids(prompt_ids, None, images, videos, audios, tokenizer, processor)
-    kl_prompt_ids, _ = template.mm_plugin.process_token_ids(kl_prompt_ids, None, images, videos, audios, tokenizer, processor)
+    prompt_ids, _ = template.mm_plugin.process_token_ids(
+        prompt_ids, None, images, videos, audios, tokenizer, processor
+    )
+    kl_prompt_ids, _ = template.mm_plugin.process_token_ids(
+        kl_prompt_ids, None, images, videos, audios, tokenizer, processor
+    )
 
     source_len, target_len = infer_seqlen(len(prompt_ids), len(response_ids), cutoff_len)
     prompt_ids = prompt_ids[:source_len]

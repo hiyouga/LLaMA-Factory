@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments
 
     from ..hparams import DataArguments
-    from .mm_plugin import ImageInput, VideoInput, AudioInput
+    from .mm_plugin import AudioInput, ImageInput, VideoInput
     from .parser import DatasetAttr
 
 

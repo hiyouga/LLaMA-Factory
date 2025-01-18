@@ -49,9 +49,9 @@ def create_chat_box(
 
                         with gr.Tab("Video"):
                             video = gr.Video(sources=["upload"])
-                            
+
                         with gr.Tab("Audio"):
-                            audio = gr.Audio(sources=["upload"])
+                            audio = gr.Audio(sources=["upload"], type="filepath")
 
                 query = gr.Textbox(show_label=False, lines=8)
                 submit_btn = gr.Button(variant="primary")
