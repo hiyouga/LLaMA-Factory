@@ -817,6 +817,15 @@ register_model_group(
     template="intern2",
 )
 
+register_model_group(
+    models={
+        "InternLM3-8B-Chat": {
+            DownloadSource.DEFAULT: "internlm/internlm3-8b-instruct",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm3-8b-instruct",
+        },
+    },
+    template="intern3",
+)
 
 register_model_group(
     models={
@@ -1165,6 +1174,28 @@ register_model_group(
 
 register_model_group(
     models={
+        "MiniCPM-o-2_6-Chat": {
+            DownloadSource.DEFAULT: "openbmb/MiniCPM-o-2_6",
+            DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM-o-2_6",
+        },
+    },
+    template="minicpm_v",
+)
+
+
+register_model_group(
+    models={
+        "MiniCPM-V-2_6-Chat": {
+            DownloadSource.DEFAULT: "openbmb/MiniCPM-V-2_6",
+            DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM-V-2_6",
+        },
+    },
+    template="minicpm_v",
+)
+
+
+register_model_group(
+    models={
         "Mistral-7B-v0.1": {
             DownloadSource.DEFAULT: "mistralai/Mistral-7B-v0.1",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Mistral-7B-v0.1",
@@ -1413,6 +1444,14 @@ register_model_group(
             DownloadSource.DEFAULT: "microsoft/Phi-3-medium-128k-instruct",
             DownloadSource.MODELSCOPE: "LLM-Research/Phi-3-medium-128k-instruct",
         },
+        "Phi-3.5-4B-instruct": {
+            DownloadSource.DEFAULT: "microsoft/Phi-3.5-mini-instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Phi-3.5-mini-instruct",
+        },
+        "Phi-3.5-MoE-42B-A6.6B-instruct": {
+            DownloadSource.DEFAULT: "microsoft/Phi-3.5-MoE-instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Phi-3.5-MoE-instruct",
+        },
     },
     template="phi",
 )
@@ -1430,6 +1469,17 @@ register_model_group(
         },
     },
     template="phi_small",
+)
+
+
+register_model_group(
+    models={
+        "Phi-4-14B-Instruct": {
+            DownloadSource.DEFAULT: "microsoft/phi-4",
+            DownloadSource.MODELSCOPE: "LLM-Research/phi-4",
+        },
+    },
+    template="phi4",
 )
 
 

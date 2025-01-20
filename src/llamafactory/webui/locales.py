@@ -15,10 +15,10 @@
 LOCALES = {
     "lang": {
         "en": {
-            "label": "Lang",
+            "label": "Language",
         },
         "ru": {
-            "label": "язык",
+            "label": "Язык",
         },
         "zh": {
             "label": "语言",
@@ -30,11 +30,11 @@ LOCALES = {
     "model_name": {
         "en": {
             "label": "Model name",
-            "info": "Input the name prefix to search for the model.",
+            "info": "Input the initial name to search for the model.",
         },
         "ru": {
             "label": "Название модели",
-            "info": "Введите префикс имени для поиска модели.",
+            "info": "Введите начальное имя для поиска модели.",
         },
         "zh": {
             "label": "模型名称",
@@ -42,7 +42,7 @@ LOCALES = {
         },
         "ko": {
             "label": "모델 이름",
-            "info": "모델을 검색하기 위해 이름 접두어를 입력하세요.",
+            "info": "모델을 검색할 초기 이름을 입력하세요.",
         },
     },
     "model_path": {
@@ -129,48 +129,50 @@ LOCALES = {
     },
     "template": {
         "en": {
-            "label": "Prompt template",
-            "info": "The template used in constructing prompts.",
+            "label": "Chat template",
+            "info": "The chat template used in constructing prompts.",
         },
         "ru": {
-            "label": "Шаблон запроса",
-            "info": "Шаблон, используемый при формировании запросов.",
+            "label": "Шаблон чата",
+            "info": "Шаблон чата используемый для составления подсказок.",
         },
         "zh": {
-            "label": "提示模板",
+            "label": "对话模板",
             "info": "构建提示词时使用的模板。",
         },
         "ko": {
-            "label": "프롬프트 템플릿",
-            "info": "프롬프트 구성에 사용될 템플릿.",
+            "label": "채팅 템플릿",
+            "info": "프롬프트 작성에 사용되는 채팅 템플릿.",
         },
     },
     "rope_scaling": {
         "en": {
             "label": "RoPE scaling",
+            "info": "RoPE scaling method to use.",
         },
         "ru": {
             "label": "Масштабирование RoPE",
+            "info": "Метод масштабирования RoPE для использования.",
         },
-        "zh": {
-            "label": "RoPE 插值方法",
-        },
+        "zh": {"label": "RoPE 插值方法", "info": "RoPE 插值时使用的方法。"},
         "ko": {
             "label": "RoPE 스케일링",
+            "info": "사용할 RoPE 스케일링 방법.",
         },
     },
     "booster": {
         "en": {
             "label": "Booster",
+            "info": "Approach used to boost training speed.",
         },
         "ru": {
             "label": "Ускоритель",
+            "info": "Подход, используемый для ускорения обучения.",
         },
-        "zh": {
-            "label": "加速方式",
-        },
+        "zh": {"label": "加速方式", "info": "使用的加速方法。"},
         "ko": {
             "label": "부스터",
+            "info": "훈련 속도를 향상시키기 위해 사용된 접근 방식.",
         },
     },
     "training_stage": {
@@ -468,7 +470,7 @@ LOCALES = {
     "val_size": {
         "en": {
             "label": "Val size",
-            "info": "Proportion of data in the dev set.",
+            "info": "Percentage of validation set from the entire dataset.",
         },
         "ru": {
             "label": "Размер валидации",
@@ -711,24 +713,6 @@ LOCALES = {
         "ko": {
             "label": "LLaMA Pro 사용",
             "info": "확장된 블록의 매개변수를 학습 가능하게 만듭니다.",
-        },
-    },
-    "shift_attn": {
-        "en": {
-            "label": "Enable S^2 Attention",
-            "info": "Use shift short attention proposed by LongLoRA.",
-        },
-        "ru": {
-            "label": "Включить S^2 внимание",
-            "info": "Использовать сдвиг внимания на короткие дистанции предложенный LongLoRA.",
-        },
-        "zh": {
-            "label": "使用 S^2 Attention",
-            "info": "使用 LongLoRA 提出的 shift short attention。",
-        },
-        "ko": {
-            "label": "S^2 Attention 사용",
-            "info": "LongLoRA에서 제안한 shift short attention을 사용합니다.",
         },
     },
     "report_to": {
@@ -1162,19 +1146,19 @@ LOCALES = {
     "use_galore": {
         "en": {
             "label": "Use GaLore",
-            "info": "Enable gradient low-Rank projection.",
+            "info": "Use GaLore optimizer.",
         },
         "ru": {
             "label": "Использовать GaLore",
-            "info": "Включить проекцию градиента на низкоранговое пространство.",
+            "info": "Используйте оптимизатор GaLore.",
         },
         "zh": {
             "label": "使用 GaLore",
-            "info": "使用梯度低秩投影。",
+            "info": "使用 GaLore 优化器。",
         },
         "ko": {
             "label": "GaLore 사용",
-            "info": "그레디언트 로우 랭크 프로젝션을 활성화합니다.",
+            "info": "GaLore 최적화를 사용하세요.",
         },
     },
     "galore_rank": {
@@ -1247,6 +1231,110 @@ LOCALES = {
         "ko": {
             "label": "GaLore 모듈",
             "info": "GaLore를 적용할 모듈의 이름. 모듈 간에는 쉼표(,)로 구분하십시오.",
+        },
+    },
+    "apollo_tab": {
+        "en": {
+            "label": "APOLLO configurations",
+        },
+        "ru": {
+            "label": "Конфигурации APOLLO",
+        },
+        "zh": {
+            "label": "APOLLO 参数设置",
+        },
+        "ko": {
+            "label": "APOLLO 구성",
+        },
+    },
+    "use_apollo": {
+        "en": {
+            "label": "Use APOLLO",
+            "info": "Use APOLLO optimizer.",
+        },
+        "ru": {
+            "label": "Использовать APOLLO",
+            "info": "Используйте оптимизатор APOLLO.",
+        },
+        "zh": {
+            "label": "使用 APOLLO",
+            "info": "使用 APOLLO 优化器。",
+        },
+        "ko": {
+            "label": "APOLLO 사용",
+            "info": "APOLLO 최적화를 사용하세요.",
+        },
+    },
+    "apollo_rank": {
+        "en": {
+            "label": "APOLLO rank",
+            "info": "The rank of APOLLO gradients.",
+        },
+        "ru": {
+            "label": "Ранг APOLLO",
+            "info": "Ранг градиентов APOLLO.",
+        },
+        "zh": {
+            "label": "APOLLO 秩",
+            "info": "APOLLO 梯度的秩大小。",
+        },
+        "ko": {
+            "label": "APOLLO 랭크",
+            "info": "APOLLO 그레디언트의 랭크.",
+        },
+    },
+    "apollo_update_interval": {
+        "en": {
+            "label": "Update interval",
+            "info": "Number of steps to update the APOLLO projection.",
+        },
+        "ru": {
+            "label": "Интервал обновления",
+            "info": "Количество шагов для обновления проекции APOLLO.",
+        },
+        "zh": {
+            "label": "更新间隔",
+            "info": "相邻两次投影更新的步数。",
+        },
+        "ko": {
+            "label": "업데이트 간격",
+            "info": "APOLLO 프로젝션을 업데이트할 간격의 스텝 수.",
+        },
+    },
+    "apollo_scale": {
+        "en": {
+            "label": "APOLLO scale",
+            "info": "APOLLO scaling coefficient.",
+        },
+        "ru": {
+            "label": "LoRA Alpha",
+            "info": "Коэффициент масштабирования APOLLO.",
+        },
+        "zh": {
+            "label": "APOLLO 缩放系数",
+            "info": "APOLLO 缩放系数大小。",
+        },
+        "ko": {
+            "label": "APOLLO 스케일",
+            "info": "APOLLO 스케일링 계수.",
+        },
+    },
+    "apollo_target": {
+        "en": {
+            "label": "APOLLO modules",
+            "info": "Name(s) of modules to apply APOLLO. Use commas to separate multiple modules.",
+        },
+        "ru": {
+            "label": "Модули APOLLO",
+            "info": "Имена модулей для применения APOLLO. Используйте запятые для разделения нескольких модулей.",
+        },
+        "zh": {
+            "label": "APOLLO 作用模块",
+            "info": "应用 APOLLO 的模块名称。使用英文逗号分隔多个名称。",
+        },
+        "ko": {
+            "label": "APOLLO 모듈",
+            "info": "APOLLO를 적용할 모듈의 이름. 모듈 간에는 쉼표(,)로 구분하십시오.",
         },
     },
     "badam_tab": {

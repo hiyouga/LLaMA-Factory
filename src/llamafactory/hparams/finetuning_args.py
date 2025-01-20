@@ -262,7 +262,7 @@ class GaloreArguments:
         metadata={"help": "Number of steps to update the GaLore projection."},
     )
     galore_scale: float = field(
-        default=0.25,
+        default=2.0,
         metadata={"help": "GaLore scaling coefficient."},
     )
     galore_proj_type: Literal["std", "reverse_std", "right", "left", "full"] = field(
@@ -272,6 +272,59 @@ class GaloreArguments:
     galore_layerwise: bool = field(
         default=False,
         metadata={"help": "Whether or not to enable layer-wise update to further save memory."},
+    )
+
+
+@dataclass
+class ApolloArguments:
+    r"""
+    Arguments pertaining to the APOLLO algorithm.
+    """
+
+    use_apollo: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use the APOLLO optimizer."},
+    )
+    apollo_target: str = field(
+        default="all",
+        metadata={
+            "help": (
+                "Name(s) of modules to apply APOLLO. Use commas to separate multiple modules. "
+                "Use `all` to specify all the linear modules."
+            )
+        },
+    )
+    apollo_rank: int = field(
+        default=16,
+        metadata={"help": "The rank of APOLLO gradients."},
+    )
+    apollo_update_interval: int = field(
+        default=200,
+        metadata={"help": "Number of steps to update the APOLLO projection."},
+    )
+    apollo_scale: float = field(
+        default=32.0,
+        metadata={"help": "APOLLO scaling coefficient."},
+    )
+    apollo_proj: Literal["svd", "random"] = field(
+        default="random",
+        metadata={"help": "Type of APOLLO low-rank projection algorithm (svd or random)."},
+    )
+    apollo_proj_type: Literal["std", "right", "left"] = field(
+        default="std",
+        metadata={"help": "Type of APOLLO projection."},
+    )
+    apollo_scale_type: Literal["channel", "tensor"] = field(
+        default="channel",
+        metadata={"help": "Type of APOLLO scaling (channel or tensor)."},
+    )
+    apollo_layerwise: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to enable layer-wise update to further save memory."},
+    )
+    apollo_scale_front: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use the norm-growth limiter in front of gradient scaling."},
     )
 
 
@@ -362,6 +415,7 @@ class FinetuningArguments(
     LoraArguments,
     RLHFArguments,
     GaloreArguments,
+    ApolloArguments,
     BAdamArgument,
     SwanLabArguments,
     DistillationArguments,
@@ -393,6 +447,10 @@ class FinetuningArguments(
     freeze_vision_tower: bool = field(
         default=True,
         metadata={"help": "Whether ot not to freeze vision tower in MLLM training."},
+    )
+    freeze_multi_modal_projector: bool = field(
+        default=True,
+        metadata={"help": "Whether or not to freeze the multi modal projector in MLLM training."},
     )
     train_mm_proj_only: bool = field(
         default=False,
@@ -427,7 +485,9 @@ class FinetuningArguments(
         self.lora_target: List[str] = split_arg(self.lora_target)
         self.additional_target: Optional[List[str]] = split_arg(self.additional_target)
         self.galore_target: List[str] = split_arg(self.galore_target)
+        self.apollo_target: List[str] = split_arg(self.apollo_target)
         self.freeze_vision_tower = self.freeze_vision_tower or self.train_mm_proj_only
+        self.freeze_multi_modal_projector = self.freeze_multi_modal_projector and not self.train_mm_proj_only
         self.use_ref_model = self.stage == "dpo" and self.pref_loss not in ["orpo", "simpo"]
 
         assert self.finetuning_type in ["lora", "freeze", "full"], "Invalid fine-tuning method."
@@ -446,11 +506,11 @@ class FinetuningArguments(
         if self.use_llama_pro and self.finetuning_type == "full":
             raise ValueError("`use_llama_pro` is only valid for Freeze or LoRA training.")
 
-        if self.finetuning_type == "lora" and (self.use_galore or self.use_badam):
-            raise ValueError("Cannot use LoRA with GaLore or BAdam together.")
+        if self.finetuning_type == "lora" and (self.use_galore or self.use_apollo or self.use_badam):
+            raise ValueError("Cannot use LoRA with GaLore, APOLLO or BAdam together.")
 
-        if self.use_galore and self.use_badam:
-            raise ValueError("Cannot use GaLore with BAdam together.")
+        if int(self.use_galore) + int(self.use_apollo) + (self.use_badam) > 1:
+            raise ValueError("Cannot use GaLore, APOLLO or BAdam together.")
 
         if self.pissa_init and (self.stage in ["ppo", "kto"] or self.use_ref_model):
             raise ValueError("Cannot use PiSSA for current training stage.")

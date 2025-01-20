@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from typing import TYPE_CHECKING, Any, Dict, Optional, TypedDict
 
 import torch
@@ -85,17 +86,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
     except Exception as e:
         raise OSError("Failed to load tokenizer.") from e
 
-    if model_args.new_special_tokens is not None:
-        num_added_tokens = tokenizer.add_special_tokens(
-            dict(additional_special_tokens=model_args.new_special_tokens),
-            replace_additional_special_tokens=False,
-        )
-        logger.info_rank0("Add {} to special tokens.".format(",".join(model_args.new_special_tokens)))
-        if num_added_tokens > 0 and not model_args.resize_vocab:
-            model_args.resize_vocab = True
-            logger.warning_rank0("New tokens have been added, changed `resize_vocab` to True.")
-
-    patch_tokenizer(tokenizer)
+    patch_tokenizer(tokenizer, model_args)
     try:
         processor = AutoProcessor.from_pretrained(model_args.model_name_or_path, **init_kwargs)
         patch_processor(processor, config, tokenizer, model_args)
@@ -202,12 +193,8 @@ def load_model(
 
     logger.info_rank0(param_stats)
 
-    if model_args.print_param_status:
+    if model_args.print_param_status and int(os.getenv("LOCAL_RANK", "0")) == 0:
         for name, param in model.named_parameters():
-            print(
-                "name: {}, dtype: {}, device: {}, trainable: {}".format(
-                    name, param.dtype, param.device, param.requires_grad
-                )
-            )
+            print(f"name: {name}, dtype: {param.dtype}, device: {param.device}, trainable: {param.requires_grad}")
 
     return model

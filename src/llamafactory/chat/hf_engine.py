@@ -63,7 +63,7 @@ class HuggingfaceEngine(BaseEngine):
         try:
             asyncio.get_event_loop()
         except RuntimeError:
-            logger.warning_once("There is no current event loop, creating a new one.")
+            logger.warning_rank0_once("There is no current event loop, creating a new one.")
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
@@ -133,7 +133,7 @@ class HuggingfaceEngine(BaseEngine):
                 if repetition_penalty is not None
                 else generating_args["repetition_penalty"],
                 length_penalty=length_penalty if length_penalty is not None else generating_args["length_penalty"],
-                eos_token_id=[tokenizer.eos_token_id] + tokenizer.additional_special_tokens_ids,
+                eos_token_id=template.get_stop_token_ids(tokenizer),
                 pad_token_id=tokenizer.pad_token_id,
             )
         )
@@ -168,6 +168,8 @@ class HuggingfaceEngine(BaseEngine):
         for key, value in mm_inputs.items():
             if isinstance(value, list) and all(isinstance(v, torch.Tensor) for v in value):  # for pixtral inputs
                 value = torch.stack(value)  # assume they have same sizes
+            elif isinstance(value, list) and all(isinstance(v, list) for v in value):  # for minicpmv inputs
+                value = torch.stack([torch.stack(v) for v in value])
             elif not isinstance(value, torch.Tensor):
                 value = torch.tensor(value)
 
@@ -175,6 +177,11 @@ class HuggingfaceEngine(BaseEngine):
                 value = value.to(model.dtype)
 
             gen_kwargs[key] = value.to(model.device)
+
+        if getattr(model.config, "model_type", None) in ["minicpmv", "minicpmo"]:
+            gen_kwargs["input_ids"] = inputs
+            del gen_kwargs["image_sizes"]
+            gen_kwargs["tokenizer"] = tokenizer
 
         return gen_kwargs, prompt_length
 
@@ -207,6 +214,9 @@ class HuggingfaceEngine(BaseEngine):
             input_kwargs,
         )
         generate_output = model.generate(**gen_kwargs)
+        if isinstance(generate_output, tuple):
+            generate_output = generate_output[1][0]  # post-process the minicpm_o output
+
         response_ids = generate_output[:, prompt_length:]
         response = tokenizer.batch_decode(
             response_ids, skip_special_tokens=generating_args["skip_special_tokens"], clean_up_tokenization_spaces=True

@@ -101,7 +101,9 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             batch_vidlens.append(len(videos))
             batch_input_ids.append(feature["input_ids"])
 
-        if self.processor is not None and sum(batch_imglens) == 0:  # avoid process hanging in zero3/fsdp case
+        if (
+            self.processor is not None and sum(batch_imglens) == 0 and sum(batch_vidlens) == 0
+        ):  # avoid process hanging in zero3/fsdp case
             fake_messages = [{"role": "user", "content": IMAGE_PLACEHOLDER}]
             fake_images = [Image.new("RGB", (64, 64), (255, 255, 255))]
             fake_messages = self.template.mm_plugin.process_messages(fake_messages, fake_images, [], self.processor)
@@ -149,6 +151,11 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
         features.update(mm_inputs)
         if isinstance(features.get("pixel_values"), list):  # for pixtral inputs
             features = features.data  # use default_collate() instead of BatchEncoding.to()
+
+        if "image_bound" in features:  # for minicpmv inputs
+            bsz, seq_length = features["input_ids"].shape
+            features["position_ids"] = torch.arange(seq_length).long().repeat(bsz, 1)
+            return {"data": features, "input_ids": features["input_ids"], "labels": features["labels"]}
 
         return features
 

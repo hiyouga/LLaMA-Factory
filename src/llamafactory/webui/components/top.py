@@ -30,11 +30,10 @@ if TYPE_CHECKING:
 
 
 def create_top() -> Dict[str, "Component"]:
-    available_models = list(SUPPORTED_MODELS.keys()) + ["Custom"]
-
     with gr.Row():
-        lang = gr.Dropdown(choices=["en", "ru", "zh", "ko"], scale=1)
-        model_name = gr.Dropdown(choices=available_models, scale=3)
+        lang = gr.Dropdown(choices=["en", "ru", "zh", "ko"], value=None, scale=1)
+        available_models = list(SUPPORTED_MODELS.keys()) + ["Custom"]
+        model_name = gr.Dropdown(choices=available_models, value=None, scale=3)
         model_path = gr.Textbox(scale=3)
 
     with gr.Row():
@@ -42,11 +41,11 @@ def create_top() -> Dict[str, "Component"]:
         checkpoint_path = gr.Dropdown(multiselect=True, allow_custom_value=True, scale=6)
 
     with gr.Row():
-        quantization_bit = gr.Dropdown(choices=["none", "8", "4"], value="none", allow_custom_value=True, scale=2)
-        quantization_method = gr.Dropdown(choices=["bitsandbytes", "hqq", "eetq"], value="bitsandbytes", scale=2)
-        template = gr.Dropdown(choices=list(TEMPLATES.keys()), value="default", scale=2)
-        rope_scaling = gr.Radio(choices=["none", "linear", "dynamic"], value="none", scale=3)
-        booster = gr.Radio(choices=["auto", "flashattn2", "unsloth", "liger_kernel"], value="auto", scale=5)
+        quantization_bit = gr.Dropdown(choices=["none", "8", "4"], value="none", allow_custom_value=True)
+        quantization_method = gr.Dropdown(choices=["bitsandbytes", "hqq", "eetq"], value="bitsandbytes")
+        template = gr.Dropdown(choices=list(TEMPLATES.keys()), value="default")
+        rope_scaling = gr.Dropdown(choices=["none", "linear", "dynamic", "yarn", "llama3"], value="none")
+        booster = gr.Dropdown(choices=["auto", "flashattn2", "unsloth", "liger_kernel"], value="auto")
 
     model_name.change(get_model_info, [model_name], [model_path, template], queue=False).then(
         list_checkpoints, [model_name, finetuning_type], [checkpoint_path], queue=False

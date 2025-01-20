@@ -24,6 +24,7 @@ from transformers.modeling_utils import is_fsdp_enabled
 
 from ..extras import logging
 from ..extras.misc import infer_optim_dtype
+from ..extras.packages import is_transformers_version_greater_than
 from .model_utils.attention import configure_attn_implementation, print_attn_implementation
 from .model_utils.checkpointing import prepare_model_for_training
 from .model_utils.embedding import resize_embedding_layer
@@ -52,9 +53,22 @@ if TYPE_CHECKING:
 logger = logging.get_logger(__name__)
 
 
-def patch_tokenizer(tokenizer: "PreTrainedTokenizer") -> None:
+def patch_tokenizer(tokenizer: "PreTrainedTokenizer", model_args: "ModelArguments") -> None:
     if "PreTrainedTokenizerBase" not in str(tokenizer._pad.__func__):
         tokenizer._pad = MethodType(PreTrainedTokenizerBase._pad, tokenizer)
+
+    if model_args.model_max_length is not None and tokenizer.model_max_length != model_args.model_max_length:
+        tokenizer.model_max_length = model_args.model_max_length
+
+    if model_args.new_special_tokens is not None:
+        num_added_tokens = tokenizer.add_special_tokens(
+            dict(additional_special_tokens=model_args.new_special_tokens),
+            replace_additional_special_tokens=False,
+        )
+        logger.info_rank0("Add {} to special tokens.".format(",".join(model_args.new_special_tokens)))
+        if num_added_tokens > 0 and not model_args.resize_vocab:
+            model_args.resize_vocab = True
+            logger.warning_rank0("New tokens have been added, changed `resize_vocab` to True.")
 
 
 def patch_processor(
@@ -110,8 +124,15 @@ def patch_config(
     if getattr(config, "model_type", None) == "qwen2" and is_trainable and model_args.flash_attn == "fa2":
         setattr(config, "use_cache", False)  # qwen2 does not support use_cache when using flash attn
 
+    if getattr(config, "model_type", None) == "minicpmo":
+        setattr(config, "init_audio", False)
+        setattr(config, "init_tts", False)
+
     if "LlavaLlamaForCausalLM" in getattr(config, "architectures", []):
         raise ValueError("Please download llava models with hf-compatible format: https://huggingface.co/llava-hf")
+
+    if getattr(config, "model_type", None) == "internlm3" and not is_transformers_version_greater_than("4.47.1"):
+        raise RuntimeError("InternLM3 model requires transformers>=4.47.1, please upgrade it.")
 
     # deepspeed zero3 is not compatible with low_cpu_mem_usage
     init_kwargs["low_cpu_mem_usage"] = model_args.low_cpu_mem_usage and (not is_deepspeed_zero3_enabled())
@@ -145,7 +166,9 @@ def patch_model(
     ):
         gen_config.do_sample = True
 
-    if "GenerationMixin" not in str(model.generate.__func__):
+    if getattr(model.config, "model_type", None) not in ["minicpmv", "minicpmo"] and "GenerationMixin" not in str(
+        model.generate.__func__
+    ):
         model.generate = MethodType(PreTrainedModel.generate, model)
 
     if add_valuehead:

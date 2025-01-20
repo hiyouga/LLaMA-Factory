@@ -39,9 +39,8 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
     elem_dict = dict()
 
     with gr.Row():
-        training_stage = gr.Dropdown(
-            choices=list(TRAINING_STAGES.keys()), value=list(TRAINING_STAGES.keys())[0], scale=1
-        )
+        stages = list(TRAINING_STAGES.keys())
+        training_stage = gr.Dropdown(choices=stages, value=stages[0], scale=1)
         dataset_dir = gr.Textbox(value=DEFAULT_DATA_DIR, scale=1)
         dataset = gr.Dropdown(multiselect=True, allow_custom_value=True, scale=4)
         preview_elems = create_preview_box(dataset_dir, dataset)
@@ -107,8 +106,12 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
                 use_llama_pro = gr.Checkbox()
 
             with gr.Column():
-                shift_attn = gr.Checkbox()
-                report_to = gr.Checkbox()
+                report_to = gr.Dropdown(
+                    choices=["none", "all", "wandb", "mlflow", "neptune", "tensorboard"],
+                    value=["none"],
+                    allow_custom_value=True,
+                    multiselect=True,
+                )
 
     input_elems.update(
         {
@@ -123,7 +126,6 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             mask_history,
             resize_vocab,
             use_llama_pro,
-            shift_attn,
             report_to,
         }
     )
@@ -141,7 +143,6 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             mask_history=mask_history,
             resize_vocab=resize_vocab,
             use_llama_pro=use_llama_pro,
-            shift_attn=shift_attn,
             report_to=report_to,
         )
     )
@@ -234,8 +235,8 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
         with gr.Row():
             use_galore = gr.Checkbox()
             galore_rank = gr.Slider(minimum=1, maximum=1024, value=16, step=1)
-            galore_update_interval = gr.Slider(minimum=1, maximum=1024, value=200, step=1)
-            galore_scale = gr.Slider(minimum=0, maximum=1, value=0.25, step=0.01)
+            galore_update_interval = gr.Slider(minimum=1, maximum=2048, value=200, step=1)
+            galore_scale = gr.Slider(minimum=0, maximum=100, value=2.0, step=0.1)
             galore_target = gr.Textbox(value="all")
 
     input_elems.update({use_galore, galore_rank, galore_update_interval, galore_scale, galore_target})
@@ -247,6 +248,26 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             galore_update_interval=galore_update_interval,
             galore_scale=galore_scale,
             galore_target=galore_target,
+        )
+    )
+
+    with gr.Accordion(open=False) as apollo_tab:
+        with gr.Row():
+            use_apollo = gr.Checkbox()
+            apollo_rank = gr.Slider(minimum=1, maximum=1024, value=16, step=1)
+            apollo_update_interval = gr.Slider(minimum=1, maximum=2048, value=200, step=1)
+            apollo_scale = gr.Slider(minimum=0, maximum=100, value=32.0, step=0.1)
+            apollo_target = gr.Textbox(value="all")
+
+    input_elems.update({use_apollo, apollo_rank, apollo_update_interval, apollo_scale, apollo_target})
+    elem_dict.update(
+        dict(
+            apollo_tab=apollo_tab,
+            use_apollo=use_apollo,
+            apollo_rank=apollo_rank,
+            apollo_update_interval=apollo_update_interval,
+            apollo_scale=apollo_scale,
+            apollo_target=apollo_target,
         )
     )
 

@@ -15,56 +15,67 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import os
 import sys
-from typing import Any, Dict, Optional, Tuple
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
 import transformers
-from transformers import HfArgumentParser, Seq2SeqTrainingArguments
+import yaml
+from transformers import HfArgumentParser
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.training_args import ParallelMode
 from transformers.utils import is_torch_bf16_gpu_available, is_torch_npu_available
-from transformers.utils.versions import require_version
 
 from ..extras import logging
 from ..extras.constants import CHECKPOINT_NAMES
-from ..extras.misc import check_dependencies, get_current_device
+from ..extras.misc import check_dependencies, check_version, get_current_device
 from .data_args import DataArguments
 from .evaluation_args import EvaluationArguments
 from .finetuning_args import FinetuningArguments
 from .generating_args import GeneratingArguments
 from .model_args import ModelArguments
+from .training_args import RayArguments, TrainingArguments
 
 
 logger = logging.get_logger(__name__)
 
-
 check_dependencies()
 
 
-_TRAIN_ARGS = [ModelArguments, DataArguments, Seq2SeqTrainingArguments, FinetuningArguments, GeneratingArguments]
-_TRAIN_CLS = Tuple[ModelArguments, DataArguments, Seq2SeqTrainingArguments, FinetuningArguments, GeneratingArguments]
+_TRAIN_ARGS = [ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
+_TRAIN_CLS = Tuple[ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
 _INFER_ARGS = [ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _INFER_CLS = Tuple[ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _EVAL_ARGS = [ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments]
 _EVAL_CLS = Tuple[ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments]
 
 
-def _parse_args(parser: "HfArgumentParser", args: Optional[Dict[str, Any]] = None) -> Tuple[Any]:
+def read_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> Union[Dict[str, Any], List[str]]:
     if args is not None:
-        return parser.parse_dict(args)
+        return args
 
     if len(sys.argv) == 2 and (sys.argv[1].endswith(".yaml") or sys.argv[1].endswith(".yml")):
-        return parser.parse_yaml_file(os.path.abspath(sys.argv[1]))
+        return yaml.safe_load(Path(sys.argv[1]).absolute().read_text())
+    elif len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
+        return json.loads(Path(sys.argv[1]).absolute().read_text())
+    else:
+        return sys.argv[1:]
 
-    if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
-        return parser.parse_json_file(os.path.abspath(sys.argv[1]))
 
-    (*parsed_args, unknown_args) = parser.parse_args_into_dataclasses(return_remaining_strings=True)
+def _parse_args(
+    parser: "HfArgumentParser", args: Optional[Union[Dict[str, Any], List[str]]] = None, allow_extra_keys: bool = False
+) -> Tuple[Any]:
+    args = read_args(args)
+    if isinstance(args, dict):
+        return parser.parse_dict(args, allow_extra_keys=allow_extra_keys)
 
-    if unknown_args:
+    (*parsed_args, unknown_args) = parser.parse_args_into_dataclasses(args=args, return_remaining_strings=True)
+
+    if unknown_args and not allow_extra_keys:
         print(parser.format_help())
         print(f"Got unknown args, potentially deprecated arguments: {unknown_args}")
         raise ValueError(f"Some specified arguments are not used by the HfArgumentParser: {unknown_args}")
@@ -110,58 +121,64 @@ def _verify_model_args(
 def _check_extra_dependencies(
     model_args: "ModelArguments",
     finetuning_args: "FinetuningArguments",
-    training_args: Optional["Seq2SeqTrainingArguments"] = None,
+    training_args: Optional["TrainingArguments"] = None,
 ) -> None:
-    if os.getenv("DISABLE_VERSION_CHECK", "0").lower() in ["true", "1"]:
-        logger.warning_once("Version checking has been disabled, may lead to unexpected behaviors.")
-        return
-
     if model_args.use_unsloth:
-        require_version("unsloth", "Please install unsloth: https://github.com/unslothai/unsloth")
+        check_version("unsloth", mandatory=True)
 
     if model_args.enable_liger_kernel:
-        require_version("liger-kernel", "To fix: pip install liger-kernel")
+        check_version("liger-kernel", mandatory=True)
 
     if model_args.mixture_of_depths is not None:
-        require_version("mixture-of-depth>=1.1.6", "To fix: pip install mixture-of-depth>=1.1.6")
+        check_version("mixture-of-depth>=1.1.6", mandatory=True)
 
     if model_args.infer_backend == "vllm":
-        require_version("vllm>=0.4.3,<0.6.7", "To fix: pip install vllm>=0.4.3,<0.6.7")
+        check_version("vllm>=0.4.3,<=0.6.5")
+        check_version("vllm", mandatory=True)
 
     if finetuning_args.use_galore:
-        require_version("galore_torch", "To fix: pip install galore_torch")
+        check_version("galore_torch", mandatory=True)
+
+    if finetuning_args.use_apollo:
+        check_version("apollo_torch", mandatory=True)
 
     if finetuning_args.use_badam:
-        require_version("badam>=1.2.1", "To fix: pip install badam>=1.2.1")
+        check_version("badam>=1.2.1", mandatory=True)
 
     if finetuning_args.use_adam_mini:
-        require_version("adam-mini", "To fix: pip install adam-mini")
+        check_version("adam-mini", mandatory=True)
 
     if finetuning_args.plot_loss:
-        require_version("matplotlib", "To fix: pip install matplotlib")
+        check_version("matplotlib", mandatory=True)
 
     if training_args is not None and training_args.predict_with_generate:
-        require_version("jieba", "To fix: pip install jieba")
-        require_version("nltk", "To fix: pip install nltk")
-        require_version("rouge_chinese", "To fix: pip install rouge-chinese")
+        check_version("jieba", mandatory=True)
+        check_version("nltk", mandatory=True)
+        check_version("rouge_chinese", mandatory=True)
 
 
-def _parse_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
+def _parse_train_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _TRAIN_CLS:
     parser = HfArgumentParser(_TRAIN_ARGS)
     return _parse_args(parser, args)
 
 
-def _parse_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
+def _parse_infer_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _INFER_CLS:
     parser = HfArgumentParser(_INFER_ARGS)
     return _parse_args(parser, args)
 
 
-def _parse_eval_args(args: Optional[Dict[str, Any]] = None) -> _EVAL_CLS:
+def _parse_eval_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _EVAL_CLS:
     parser = HfArgumentParser(_EVAL_ARGS)
     return _parse_args(parser, args)
 
 
-def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
+def get_ray_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> RayArguments:
+    parser = HfArgumentParser(RayArguments)
+    (ray_args,) = _parse_args(parser, args, allow_extra_keys=True)
+    return ray_args
+
+
+def get_train_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _TRAIN_CLS:
     model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_args(args)
 
     # Setup logging
@@ -241,21 +258,21 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
         if is_deepspeed_zero3_enabled():
             raise ValueError("`pure_bf16` is incompatible with DeepSpeed ZeRO-3.")
 
-    if (
-        finetuning_args.use_galore
-        and finetuning_args.galore_layerwise
-        and training_args.parallel_mode == ParallelMode.DISTRIBUTED
-    ):
-        raise ValueError("Distributed training does not support layer-wise GaLore.")
+    if training_args.parallel_mode == ParallelMode.DISTRIBUTED:
+        if finetuning_args.use_galore and finetuning_args.galore_layerwise:
+            raise ValueError("Distributed training does not support layer-wise GaLore.")
 
-    if finetuning_args.use_badam and training_args.parallel_mode == ParallelMode.DISTRIBUTED:
-        if finetuning_args.badam_mode == "ratio":
-            raise ValueError("Radio-based BAdam does not yet support distributed training, use layer-wise BAdam.")
-        elif not is_deepspeed_zero3_enabled():
-            raise ValueError("Layer-wise BAdam only supports DeepSpeed ZeRO-3 training.")
+        if finetuning_args.use_apollo and finetuning_args.apollo_layerwise:
+            raise ValueError("Distributed training does not support layer-wise APOLLO.")
 
-    if finetuning_args.use_galore and training_args.deepspeed is not None:
-        raise ValueError("GaLore is incompatible with DeepSpeed yet.")
+        if finetuning_args.use_badam:
+            if finetuning_args.badam_mode == "ratio":
+                raise ValueError("Radio-based BAdam does not yet support distributed training, use layer-wise BAdam.")
+            elif not is_deepspeed_zero3_enabled():
+                raise ValueError("Layer-wise BAdam only supports DeepSpeed ZeRO-3 training.")
+
+    if training_args.deepspeed is not None and (finetuning_args.use_galore or finetuning_args.use_apollo):
+        raise ValueError("GaLore and APOLLO are incompatible with DeepSpeed yet.")
 
     if model_args.infer_backend == "vllm":
         raise ValueError("vLLM backend is only available for API, CLI and Web.")
@@ -287,9 +304,13 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
     if training_args.do_train and (not training_args.fp16) and (not training_args.bf16):
         logger.warning_rank0("We recommend enable mixed precision training.")
 
-    if training_args.do_train and finetuning_args.use_galore and not finetuning_args.pure_bf16:
+    if (
+        training_args.do_train
+        and (finetuning_args.use_galore or finetuning_args.use_apollo)
+        and not finetuning_args.pure_bf16
+    ):
         logger.warning_rank0(
-            "Using GaLore with mixed precision training may significantly increases GPU memory usage."
+            "Using GaLore or APOLLO with mixed precision training may significantly increases GPU memory usage."
         )
 
     if (not training_args.do_train) and model_args.quantization_bit is not None:
@@ -365,13 +386,12 @@ def get_train_args(args: Optional[Dict[str, Any]] = None) -> _TRAIN_CLS:
             str(model_args.compute_dtype),
         )
     )
-
     transformers.set_seed(training_args.seed)
 
     return model_args, data_args, training_args, finetuning_args, generating_args
 
 
-def get_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
+def get_infer_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _INFER_CLS:
     model_args, data_args, finetuning_args, generating_args = _parse_infer_args(args)
 
     _set_transformers_logging()
@@ -404,7 +424,7 @@ def get_infer_args(args: Optional[Dict[str, Any]] = None) -> _INFER_CLS:
     return model_args, data_args, finetuning_args, generating_args
 
 
-def get_eval_args(args: Optional[Dict[str, Any]] = None) -> _EVAL_CLS:
+def get_eval_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _EVAL_CLS:
     model_args, data_args, eval_args, finetuning_args = _parse_eval_args(args)
 
     _set_transformers_logging()
