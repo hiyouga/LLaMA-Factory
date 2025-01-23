@@ -112,8 +112,8 @@ def patch_config(
         setattr(config, "use_cache", False)  # qwen2 does not support use_cache when using flash attn
 
     if getattr(config, "model_type", None) == "minicpmo":
-        setattr(config, "init_audio", False)
-        setattr(config, "init_tts", False)
+        setattr(config, "init_audio", True)
+        setattr(config, "init_tts", True)
 
     if "LlavaLlamaForCausalLM" in getattr(config, "architectures", []):
         raise ValueError("Please download llava models with hf-compatible format: https://huggingface.co/llava-hf")
