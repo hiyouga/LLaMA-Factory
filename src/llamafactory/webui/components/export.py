@@ -18,7 +18,7 @@ from ...extras.constants import PEFT_METHODS
 from ...extras.misc import torch_gc
 from ...extras.packages import is_gradio_available
 from ...train.tuner import export_model
-from ..common import GPTQ_BITS, get_save_dir
+from ..common import get_save_dir, load_config
 from ..locales import ALERTS
 
 
@@ -30,6 +30,9 @@ if TYPE_CHECKING:
     from gradio.components import Component
 
     from ..engine import Engine
+
+
+GPTQ_BITS = ["8", "4", "3", "2"]
 
 
 def can_quantize(checkpoint_path: Union[str, List[str]]) -> "gr.Dropdown":
@@ -54,6 +57,7 @@ def save_model(
     export_dir: str,
     export_hub_model_id: str,
 ) -> Generator[str, None, None]:
+    user_config = load_config()
     error = ""
     if not model_name:
         error = ALERTS["err_no_model"][lang]
@@ -75,6 +79,7 @@ def save_model(
 
     args = dict(
         model_name_or_path=model_path,
+        cache_dir=user_config.get("cache_dir", None),
         finetuning_type=finetuning_type,
         template=template,
         export_dir=export_dir,
