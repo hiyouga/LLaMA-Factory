@@ -181,13 +181,11 @@ class SFTDataCollatorWith4DAttentionMask(MultiModalDataCollatorForSeq2Seq):
 
         return features
 
-
 @dataclass
 class PairwiseDataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
     r"""
     Data collator for pairwise data.
     """
-
     def __call__(self, features: Sequence[Dict[str, Any]]) -> Dict[str, "torch.Tensor"]:
         r"""
         Pads batched data to the longest sequence in the batch.
@@ -208,6 +206,59 @@ class PairwiseDataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
                 concatenated_features.append(target_feature)
 
         return super().__call__(concatenated_features)
+
+@dataclass
+class PairwiseDataCollatorWithPaddingFree(MultiModalDataCollatorForSeq2Seq):
+    r"""
+    Data collator for pairwise data.
+    """
+    def __call__(self, features: Sequence[Dict[str, Any]]) -> Dict[str, "torch.Tensor"]:
+        r"""
+        Pads batched data to the longest sequence in the batch.
+
+        We generate 2 * n examples where the first n examples represent chosen examples and
+        the last n examples represent rejected examples.
+        """
+        concatenated_features = []
+        for key in ("chosen", "rejected"):
+            for feature in features:
+                target_feature = {
+                    "input_ids": feature[f"{key}_input_ids"],
+                    "attention_mask": feature[f"{key}_attention_mask"],
+                    "labels": feature[f"{key}_labels"],
+                    "images": feature["images"],
+                    "videos": feature["videos"],
+                }
+                concatenated_features.append(target_feature)
+
+        batch = super().__call__(concatenated_features)
+        # remove padding, `attention_mask` and add `position_ids`
+        attn_mask = batch.pop("attention_mask")
+        batch["input_ids"] = batch["input_ids"][attn_mask.bool()].unsqueeze(0)
+        batch["position_ids"] = attn_mask.cumsum(1)[attn_mask.bool()].unsqueeze(0) - 1
+        batch["labels"] = batch["labels"][attn_mask.bool()].unsqueeze(0)
+        batch["labels"][batch["position_ids"] == 0] = IGNORE_INDEX
+
+        # Calculate cumulative sequence lengths for queries and keys to prevent graph breaks during further computations.
+        flattened_position_ids = batch["position_ids"].flatten()
+        indices_q = torch.arange(
+            flattened_position_ids.size(0), device=flattened_position_ids.device, dtype=torch.int32
+        )
+        batch["cu_seq_lens_q"] = torch.cat(
+            (
+                indices_q[flattened_position_ids == 0],
+                torch.tensor(
+                    flattened_position_ids.size(), device=flattened_position_ids.device, dtype=torch.int32
+                ),
+            )
+        )
+        batch["cu_seq_lens_k"] = batch["cu_seq_lens_q"]
+
+        # Determine maximum sequence lengths to prevent graph breaks during further computations.
+        batch["max_length_k"] = flattened_position_ids.max().item() + 1
+        batch["max_length_q"] = batch["max_length_k"]
+
+        return batch
 
 
 @dataclass

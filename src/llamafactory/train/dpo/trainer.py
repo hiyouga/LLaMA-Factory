@@ -48,6 +48,7 @@ class CustomDPOTrainer(DPOTrainer):
         finetuning_args: "FinetuningArguments",
         processor: Optional["ProcessorMixin"],
         disable_dropout: bool = True,
+        padding_free: bool = False,
         **kwargs,
     ):
         if is_transformers_version_greater_than("4.46"):
@@ -65,6 +66,7 @@ class CustomDPOTrainer(DPOTrainer):
         self.generate_during_eval = False  # disable at evaluation
         self.label_pad_token_id = IGNORE_INDEX
         self.padding_value = 0
+        self.padding_free = padding_free
         self.is_encoder_decoder = model.config.is_encoder_decoder
         self.precompute_ref_log_probs = False
         self._precomputed_train_ref_log_probs = False
@@ -196,14 +198,20 @@ class CustomDPOTrainer(DPOTrainer):
             batch = nested_detach(batch, clone=True)  # avoid error
 
         all_logits: "torch.Tensor" = model(**batch, return_dict=True, use_cache=False).logits.to(torch.float32)
-        all_logps, valid_length = get_batch_logps(logits=all_logits, labels=batch["labels"])
+        # position_ids are used for padding-free
+        position_ids = batch.get("position_ids") if self.padding_free else None
+        all_logps, valid_length = get_batch_logps(logits=all_logits, labels=batch["labels"], position_ids=position_ids)
         if self.loss_type in ["ipo", "orpo", "simpo"]:
             all_logps = all_logps / valid_length
-
-        batch_size = batch["input_ids"].size(0) // 2
-        chosen_logps, rejected_logps = all_logps.split(batch_size, dim=0)
-        chosen_logits, rejected_logits = all_logits.split(batch_size, dim=0)
-        chosen_length, _ = valid_length.split(batch_size, dim=0)
+        chosen_logps, rejected_logps = all_logps.chunk(2, dim=0)
+        if self.padding_free:
+            starts = (batch["position_ids"] == 0).nonzero(as_tuple=True)[1]
+            mid = starts[starts.shape[0] // 2]
+            chosen_logits = all_logits[:, :mid]
+            rejected_logits = all_logits[:, mid:]
+        else:
+            chosen_logits, rejected_logits = all_logits.chunk(2, dim=0)
+        chosen_length, _ = valid_length.chunk(2, dim=0)
 
         if self.loss_type in ["ipo", "orpo", "simpo"]:
             return chosen_logps, rejected_logps, chosen_logits, rejected_logits, chosen_logps

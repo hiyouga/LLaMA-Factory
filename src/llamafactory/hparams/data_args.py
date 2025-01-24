@@ -109,6 +109,15 @@ class DataArguments:
         default=False,
         metadata={"help": "Enable sequence packing without cross-attention."},
     )
+    padding_free: bool = field(
+        default=False,
+        metadata={
+            "help": "Whether forward passes are performed without padding by flattening all sequences in the batch "
+            "into a single continuous sequence. This approach requires associating a `position_ids` vector to track "
+            "positional information. Currently, this is only supported with DPO and the `flash_attention_2` mechanism,"
+            " as they can handle the flattened batch structure."
+        },
+    )
     tool_format: Optional[str] = field(
         default=None,
         metadata={"help": "Tool format to use for constructing function calling examples."},

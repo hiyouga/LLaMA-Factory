@@ -541,7 +541,10 @@ def create_custom_scheduler(
 
 
 def get_batch_logps(
-    logits: "torch.Tensor", labels: "torch.Tensor", label_pad_token_id: int = IGNORE_INDEX
+    logits: "torch.Tensor",
+    labels: "torch.Tensor",
+    label_pad_token_id: int = IGNORE_INDEX,
+    position_ids: Optional["torch.Tensor"] = None,
 ) -> Tuple["torch.Tensor", "torch.Tensor"]:
     r"""
     Computes the log probabilities of the given labels under the given logits.
@@ -558,6 +561,21 @@ def get_batch_logps(
     loss_mask = labels != label_pad_token_id
     labels[labels == label_pad_token_id] = 0  # dummy token
     per_token_logps = torch.gather(logits.log_softmax(-1), dim=2, index=labels.unsqueeze(2)).squeeze(2)
+    # position_ids are used for padding-free
+    if position_ids is not None:
+        # unpack logps here
+        starts = (position_ids == 0).nonzero()[:, 1]
+        seqs = []
+        mask_seqs = []
+        masked_per_token_logps = (per_token_logps * loss_mask)
+        for i in range(len(starts) - 1):
+            seqs.append(masked_per_token_logps[:, starts[i]: starts[i + 1]].sum(-1))
+            mask_seqs.append(loss_mask[:, starts[i]: starts[i + 1]].sum(-1))
+        seqs.append(masked_per_token_logps[:, starts[-1]:].sum(-1))
+        mask_seqs.append(loss_mask[:, starts[-1]:].sum(-1))
+        all_logps = torch.stack(seqs)
+        all_mask = torch.stack(mask_seqs)
+        return all_logps, all_mask
     return (per_token_logps * loss_mask).sum(-1), loss_mask.sum(-1)
 
 
