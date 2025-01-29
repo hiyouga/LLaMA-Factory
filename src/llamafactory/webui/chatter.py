@@ -157,6 +157,7 @@ class WebChatModel(ChatModel):
             top_p=top_p,
             temperature=temperature,
         ):
+            new_text = '' if any(t in new_text for t in ('<think>', '</think>')) else new_text
             response += new_text
             if tools:
                 result = self.engine.template.extract_tool(response)
