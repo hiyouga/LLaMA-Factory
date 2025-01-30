@@ -25,7 +25,7 @@ from transformers import Trainer
 from typing_extensions import override
 
 from ...extras import logging
-from ...extras.packages import is_transformers_version_equal_to_4_46, is_transformers_version_greater_than
+from ...extras.packages import is_transformers_version_greater_than
 from ..callbacks import FixValueHeadModelCallback, SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
 
@@ -107,10 +107,6 @@ class PairwiseTrainer(Trainer):
         chosen_scores, rejected_scores = chosen_scores.squeeze(), rejected_scores.squeeze()
 
         loss = -torch.nn.functional.logsigmoid(chosen_scores.float() - rejected_scores.float()).mean()
-
-        if is_transformers_version_equal_to_4_46() and kwargs.get("num_items_in_batch"):
-            loss /= self.args.gradient_accumulation_steps  # fixes the loss value for transformers 4.46.0-4.46.1
-
         if return_outputs:
             return loss, (loss, chosen_scores, rejected_scores)
         else:

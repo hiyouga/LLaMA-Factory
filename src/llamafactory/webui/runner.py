@@ -23,7 +23,7 @@ from transformers.utils import is_torch_npu_available
 
 from ..extras.constants import LLAMABOARD_CONFIG, PEFT_METHODS, TRAINING_STAGES
 from ..extras.misc import is_gpu_or_npu_available, torch_gc, use_ray
-from ..extras.packages import is_gradio_available, is_transformers_version_equal_to_4_46
+from ..extras.packages import is_gradio_available
 from .common import (
     DEFAULT_CACHE_DIR,
     DEFAULT_CONFIG_DIR,
@@ -180,7 +180,7 @@ class Runner:
             plot_loss=True,
             trust_remote_code=True,
             ddp_timeout=180000000,
-            include_num_input_tokens_seen=False if is_transformers_version_equal_to_4_46() else True,  # FIXME
+            include_num_input_tokens_seen=True,
         )
         args.update(json.loads(get("train.extra_args")))
 
