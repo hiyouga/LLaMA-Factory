@@ -350,7 +350,7 @@ def llama_sdpa_attention_forward(
 
 
 def _apply_llama_patch() -> None:
-    check_version("transformers>=4.41.2,<=4.46.1")
+    check_version("transformers>=4.41.2,<4.48.0")
     LlamaAttention.forward = llama_attention_forward
     LlamaFlashAttention2.forward = llama_flash_attention_2_forward
     LlamaSdpaAttention.forward = llama_sdpa_attention_forward

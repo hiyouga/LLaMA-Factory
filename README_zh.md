@@ -379,11 +379,11 @@ huggingface-cli login
 
 | 必需项       | 至少     | 推荐      |
 | ------------ | ------- | --------- |
-| python       | 3.8     | 3.11      |
+| python       | 3.9     | 3.10      |
 | torch        | 1.13.1  | 2.4.0     |
-| transformers | 4.41.2  | 4.43.4    |
-| datasets     | 2.16.0  | 2.20.0    |
-| accelerate   | 0.30.1  | 0.32.0    |
+| transformers | 4.41.2  | 4.45.2    |
+| datasets     | 2.16.0  | 3.2.0     |
+| accelerate   | 0.34.0  | 1.2.1     |
 | peft         | 0.11.1  | 0.12.0    |
 | trl          | 0.8.6   | 0.9.6     |
 
@@ -392,8 +392,8 @@ huggingface-cli login
 | CUDA         | 11.6    | 12.2      |
 | deepspeed    | 0.10.0  | 0.14.0    |
 | bitsandbytes | 0.39.0  | 0.43.1    |
-| vllm         | 0.4.3   | 0.5.0     |
-| flash-attn   | 2.3.0   | 2.6.3     |
+| vllm         | 0.4.3   | 0.6.6     |
+| flash-attn   | 2.3.0   | 2.7.2     |
 
 ### 硬件依赖
 
