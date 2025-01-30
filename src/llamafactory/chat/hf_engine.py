@@ -176,7 +176,10 @@ class HuggingfaceEngine(BaseEngine):
             if torch.is_floating_point(value):  # cast data dtype for paligemma
                 value = value.to(model.dtype)
 
-            gen_kwargs[key] = value.to(model.device)
+            if key == "second_per_grid_ts":  # qwen2.5vl special case
+                gen_kwargs[key] = value.tolist()
+            else:
+                gen_kwargs[key] = value.to(model.device)
 
         if getattr(model.config, "model_type", None) in ["minicpmv", "minicpmo"]:
             gen_kwargs["input_ids"] = inputs
