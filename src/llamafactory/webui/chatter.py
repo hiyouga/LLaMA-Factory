@@ -36,6 +36,30 @@ if is_gradio_available():
     import gradio as gr
 
 
+def _format_response(text: str, lang: str) -> str:
+    r"""
+    Post-processes the response text.
+
+    Based on: https://huggingface.co/spaces/Lyte/DeepSeek-R1-Distill-Qwen-1.5B-Demo-GGUF/blob/main/app.py
+    """
+    if "<think>" not in text:
+        return text
+
+    text = text.replace("<think>", "")
+    result = text.split("</think>", maxsplit=1)
+    if len(result) == 1:
+        summary = ALERTS["info_thinking"][lang]
+        thought, answer = text, ""
+    else:
+        summary = ALERTS["info_thought"][lang]
+        thought, answer = result
+
+    return (
+        f"<details open><summary class='thinking-summary'><span>{summary}</span></summary>\n\n"
+        f"<div class='thinking-container'>\n{thought}\n</div>\n</details>{answer}"
+    )
+
+
 class WebChatModel(ChatModel):
     def __init__(self, manager: "Manager", demo_mode: bool = False, lazy_init: bool = True) -> None:
         self.manager = manager
@@ -124,19 +148,26 @@ class WebChatModel(ChatModel):
         torch_gc()
         yield ALERTS["info_unloaded"][lang]
 
+    @staticmethod
     def append(
-        self,
         chatbot: List[Dict[str, str]],
         messages: List[Dict[str, str]],
         role: str,
         query: str,
     ) -> Tuple[List[Dict[str, str]], List[Dict[str, str]], str]:
+        r"""
+        Adds the user input to chatbot.
+
+        Inputs: infer.chatbot, infer.messages, infer.role, infer.query
+        Output: infer.chatbot, infer.messages
+        """
         return chatbot + [{"role": "user", "content": query}], messages + [{"role": role, "content": query}], ""
 
     def stream(
         self,
         chatbot: List[Dict[str, str]],
         messages: List[Dict[str, str]],
+        lang: str,
         system: str,
         tools: str,
         image: Optional[Any],
@@ -145,6 +176,12 @@ class WebChatModel(ChatModel):
         top_p: float,
         temperature: float,
     ) -> Generator[Tuple[List[Dict[str, str]], List[Dict[str, str]]], None, None]:
+        r"""
+        Generates output text in stream.
+
+        Inputs: infer.chatbot, infer.messages, infer.system, infer.tools, infer.image, infer.video, ...
+        Output: infer.chatbot, infer.messages
+        """
         chatbot.append({"role": "assistant", "content": ""})
         response = ""
         for new_text in self.stream_chat(
@@ -157,7 +194,6 @@ class WebChatModel(ChatModel):
             top_p=top_p,
             temperature=temperature,
         ):
-            new_text = '' if any(t in new_text for t in ('<think>', '</think>')) else new_text
             response += new_text
             if tools:
                 result = self.engine.template.extract_tool(response)
@@ -166,12 +202,12 @@ class WebChatModel(ChatModel):
 
             if isinstance(result, list):
                 tool_calls = [{"name": tool.name, "arguments": json.loads(tool.arguments)} for tool in result]
-                tool_calls = json.dumps(tool_calls, indent=4, ensure_ascii=False)
+                tool_calls = json.dumps(tool_calls, ensure_ascii=False)
                 output_messages = messages + [{"role": Role.FUNCTION.value, "content": tool_calls}]
                 bot_text = "```json\n" + tool_calls + "\n```"
             else:
                 output_messages = messages + [{"role": Role.ASSISTANT.value, "content": result}]
-                bot_text = result
+                bot_text = _format_response(result, lang)
 
             chatbot[-1] = {"role": "assistant", "content": bot_text}
             yield chatbot, output_messages
