@@ -24,9 +24,20 @@ from transformers.utils import is_torch_npu_available
 from ..extras.constants import LLAMABOARD_CONFIG, PEFT_METHODS, TRAINING_STAGES
 from ..extras.misc import is_gpu_or_npu_available, torch_gc, use_ray
 from ..extras.packages import is_gradio_available, is_transformers_version_equal_to_4_46
-from .common import DEFAULT_CACHE_DIR, DEFAULT_CONFIG_DIR, get_save_dir, load_config
+from .common import (
+    DEFAULT_CACHE_DIR,
+    DEFAULT_CONFIG_DIR,
+    abort_process,
+    gen_cmd,
+    get_save_dir,
+    load_args,
+    load_config,
+    load_eval_results,
+    save_args,
+    save_cmd,
+)
+from .control import get_trainer_info
 from .locales import ALERTS, LOCALES
-from .utils import abort_process, gen_cmd, get_eval_results, get_trainer_info, load_args, save_args, save_cmd
 
 
 if is_gradio_available():
@@ -40,6 +51,10 @@ if TYPE_CHECKING:
 
 
 class Runner:
+    r"""
+    A class to manage the running status of the trainers.
+    """
+
     def __init__(self, manager: "Manager", demo_mode: bool = False) -> None:
         self.manager = manager
         self.demo_mode = demo_mode
@@ -57,6 +72,9 @@ class Runner:
             abort_process(self.trainer.pid)
 
     def _initialize(self, data: Dict["Component", Any], do_train: bool, from_preview: bool) -> str:
+        r"""
+        Validates the configuration.
+        """
         get = lambda elem_id: data[self.manager.get_elem_by_id(elem_id)]
         lang, model_name, model_path = get("top.lang"), get("top.model_name"), get("top.model_path")
         dataset = get("train.dataset") if do_train else get("eval.dataset")
@@ -98,6 +116,9 @@ class Runner:
         return ""
 
     def _finalize(self, lang: str, finish_info: str) -> str:
+        r"""
+        Cleans the cached memory and resets the runner.
+        """
         finish_info = ALERTS["info_aborted"][lang] if self.aborted else finish_info
         gr.Info(finish_info)
         self.trainer = None
@@ -108,6 +129,9 @@ class Runner:
         return finish_info
 
     def _parse_train_args(self, data: Dict["Component", Any]) -> Dict[str, Any]:
+        r"""
+        Builds and validates the training arguments.
+        """
         get = lambda elem_id: data[self.manager.get_elem_by_id(elem_id)]
         model_name, finetuning_type = get("top.model_name"), get("top.finetuning_type")
         user_config = load_config()
@@ -268,6 +292,9 @@ class Runner:
         return args
 
     def _parse_eval_args(self, data: Dict["Component", Any]) -> Dict[str, Any]:
+        r"""
+        Builds and validates the evaluation arguments.
+        """
         get = lambda elem_id: data[self.manager.get_elem_by_id(elem_id)]
         model_name, finetuning_type = get("top.model_name"), get("top.finetuning_type")
         user_config = load_config()
@@ -319,6 +346,9 @@ class Runner:
         return args
 
     def _preview(self, data: Dict["Component", Any], do_train: bool) -> Generator[Dict["Component", str], None, None]:
+        r"""
+        Previews the training commands.
+        """
         output_box = self.manager.get_elem_by_id("{}.output_box".format("train" if do_train else "eval"))
         error = self._initialize(data, do_train, from_preview=True)
         if error:
@@ -329,6 +359,9 @@ class Runner:
             yield {output_box: gen_cmd(args)}
 
     def _launch(self, data: Dict["Component", Any], do_train: bool) -> Generator[Dict["Component", Any], None, None]:
+        r"""
+        Starts the training process.
+        """
         output_box = self.manager.get_elem_by_id("{}.output_box".format("train" if do_train else "eval"))
         error = self._initialize(data, do_train, from_preview=False)
         if error:
@@ -339,7 +372,7 @@ class Runner:
             args = self._parse_train_args(data) if do_train else self._parse_eval_args(data)
 
             os.makedirs(args["output_dir"], exist_ok=True)
-            save_args(os.path.join(args["output_dir"], LLAMABOARD_CONFIG), self._form_config_dict(data))
+            save_args(os.path.join(args["output_dir"], LLAMABOARD_CONFIG), self._build_config_dict(data))
 
             env = deepcopy(os.environ)
             env["LLAMABOARD_ENABLED"] = "1"
@@ -350,7 +383,10 @@ class Runner:
             self.trainer = Popen(["llamafactory-cli", "train", save_cmd(args)], env=env)
             yield from self.monitor()
 
-    def _form_config_dict(self, data: Dict["Component", Any]) -> Dict[str, Any]:
+    def _build_config_dict(self, data: Dict["Component", Any]) -> Dict[str, Any]:
+        r"""
+        Builds a dictionary containing the current training configuration.
+        """
         config_dict = {}
         skip_ids = ["top.lang", "top.model_path", "train.output_dir", "train.config_path"]
         for elem, value in data.items():
@@ -373,6 +409,9 @@ class Runner:
         yield from self._launch(data, do_train=False)
 
     def monitor(self):
+        r"""
+        Monitors the training progress and logs.
+        """
         self.aborted = False
         self.running = True
 
@@ -416,7 +455,7 @@ class Runner:
                 finish_info = ALERTS["err_failed"][lang]
         else:
             if os.path.exists(os.path.join(output_path, "all_results.json")) or use_ray():
-                finish_info = get_eval_results(os.path.join(output_path, "all_results.json"))
+                finish_info = load_eval_results(os.path.join(output_path, "all_results.json"))
             else:
                 finish_info = ALERTS["err_failed"][lang]
 
@@ -427,6 +466,9 @@ class Runner:
         yield return_dict
 
     def save_args(self, data):
+        r"""
+        Saves the training configuration to config path.
+        """
         output_box = self.manager.get_elem_by_id("train.output_box")
         error = self._initialize(data, do_train=True, from_preview=True)
         if error:
@@ -438,10 +480,13 @@ class Runner:
         os.makedirs(DEFAULT_CONFIG_DIR, exist_ok=True)
         save_path = os.path.join(DEFAULT_CONFIG_DIR, config_path)
 
-        save_args(save_path, self._form_config_dict(data))
+        save_args(save_path, self._build_config_dict(data))
         return {output_box: ALERTS["info_config_saved"][lang] + save_path}
 
     def load_args(self, lang: str, config_path: str):
+        r"""
+        Loads the training configuration from config path.
+        """
         output_box = self.manager.get_elem_by_id("train.output_box")
         config_dict = load_args(os.path.join(DEFAULT_CONFIG_DIR, config_path))
         if config_dict is None:
@@ -455,6 +500,9 @@ class Runner:
         return output_dict
 
     def check_output_dir(self, lang: str, model_name: str, finetuning_type: str, output_dir: str):
+        r"""
+        Restore the training status if output_dir exists.
+        """
         output_box = self.manager.get_elem_by_id("train.output_box")
         output_dict: Dict["Component", Any] = {output_box: LOCALES["output_box"][lang]["value"]}
         if model_name and output_dir and os.path.isdir(get_save_dir(model_name, finetuning_type, output_dir)):

@@ -19,8 +19,8 @@ from transformers.trainer_utils import SchedulerType
 from ...extras.constants import TRAINING_STAGES
 from ...extras.misc import get_device_count
 from ...extras.packages import is_gradio_available
-from ..common import DEFAULT_DATA_DIR, list_checkpoints, list_datasets
-from ..utils import change_stage, list_config_paths, list_output_dirs
+from ..common import DEFAULT_DATA_DIR
+from ..control import change_stage, list_checkpoints, list_config_paths, list_datasets, list_output_dirs
 from .data import create_preview_box
 
 

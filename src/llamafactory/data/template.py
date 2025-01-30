@@ -719,6 +719,13 @@ _register_template(
     format_assistant=StringFormatter(slots=["{{content}}<eoa>\n"]),
     format_system=StringFormatter(slots=["<|System|>:{{content}}\n"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    default_system=(
+        "You are an AI assistant whose name is InternLM (书生·浦语).\n"
+        "- InternLM (书生·浦语) is a conversational language model that is developed by Shanghai AI Laboratory "
+        "(上海人工智能实验室). It is designed to be helpful, honest, and harmless.\n"
+        "- InternLM (书生·浦语) can understand and communicate fluently in the language "
+        "chosen by the user such as English and 中文."
+    ),
     stop_words=["<eoa>"],
 )
 
@@ -729,17 +736,13 @@ _register_template(
     format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
-    stop_words=["<|im_end|>"],
-)
-
-
-# copied from intern2 template
-_register_template(
-    name="intern3",
-    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
-    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
-    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
-    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    default_system=(
+        "You are an AI assistant whose name is InternLM (书生·浦语).\n"
+        "- InternLM (书生·浦语) is a conversational language model that is developed by Shanghai AI Laboratory "
+        "(上海人工智能实验室). It is designed to be helpful, honest, and harmless.\n"
+        "- InternLM (书生·浦语) can understand and communicate fluently in the language "
+        "chosen by the user such as English and 中文."
+    ),
     stop_words=["<|im_end|>"],
 )
 

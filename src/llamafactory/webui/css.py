@@ -20,6 +20,29 @@ CSS = r"""
   border-radius: 100vh !important;
 }
 
+.thinking-summary {
+  padding: 8px !important;
+}
+
+.thinking-summary span {
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 4px !important;
+  padding: 4px !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  background: #333333 !important;
+}
+
+.thinking-container {
+  border-left: 2px solid #a6a6a6 !important;
+  padding-left: 10px !important;
+  margin: 4px 0 !important;
+}
+
+.thinking-container p {
+  color: #a6a6a6 !important;
+}
+
 .modal-box {
   position: fixed !important;
   top: 50%;
