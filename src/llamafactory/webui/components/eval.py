@@ -15,7 +15,8 @@
 from typing import TYPE_CHECKING, Dict
 
 from ...extras.packages import is_gradio_available
-from ..common import DEFAULT_DATA_DIR, list_datasets
+from ..common import DEFAULT_DATA_DIR
+from ..control import list_datasets
 from .data import create_preview_box
 
 

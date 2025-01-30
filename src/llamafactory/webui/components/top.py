@@ -17,8 +17,8 @@ from typing import TYPE_CHECKING, Dict
 from ...data import TEMPLATES
 from ...extras.constants import METHODS, SUPPORTED_MODELS
 from ...extras.packages import is_gradio_available
-from ..common import get_model_info, list_checkpoints, save_config
-from ..utils import can_quantize, can_quantize_to
+from ..common import save_config
+from ..control import can_quantize, can_quantize_to, get_model_info, list_checkpoints
 
 
 if is_gradio_available():

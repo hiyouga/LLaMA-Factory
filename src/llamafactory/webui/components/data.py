@@ -40,6 +40,9 @@ def next_page(page_index: int, total_num: int) -> int:
 
 
 def can_preview(dataset_dir: str, dataset: list) -> "gr.Button":
+    r"""
+    Checks if the dataset is a local dataset.
+    """
     try:
         with open(os.path.join(dataset_dir, DATA_CONFIG), encoding="utf-8") as f:
             dataset_info = json.load(f)
@@ -67,6 +70,9 @@ def _load_data_file(file_path: str) -> List[Any]:
 
 
 def get_preview(dataset_dir: str, dataset: list, page_index: int) -> Tuple[int, list, "gr.Column"]:
+    r"""
+    Gets the preview samples from the dataset.
+    """
     with open(os.path.join(dataset_dir, DATA_CONFIG), encoding="utf-8") as f:
         dataset_info = json.load(f)
 
