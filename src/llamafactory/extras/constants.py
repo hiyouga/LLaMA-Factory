@@ -1928,6 +1928,14 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen2.5-72B-Instruct",
             DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-72B-Instruct",
         },
+        "Qwen2.5-7B-Instruct-1M": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-7B-Instruct-1M",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-7B-Instruct-1M",
+        },
+        "Qwen2.5-14B-Instruct-1M": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-14B-Instruct-1M",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-14B-Instruct-1M",
+        },
         "Qwen2.5-0.5B-Instruct-GPTQ-Int8": {
             DownloadSource.DEFAULT: "Qwen/Qwen2.5-0.5B-Instruct-GPTQ-Int8",
             DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-0.5B-Instruct-GPTQ-Int8",
@@ -2148,6 +2156,18 @@ register_model_group(
         "QVQ-72B-Preview": {
             DownloadSource.DEFAULT: "Qwen/QVQ-72B-Preview",
             DownloadSource.MODELSCOPE: "Qwen/QVQ-72B-Preview",
+        },
+        "Qwen2.5-VL-3B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-VL-3B-Instruct",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-VL-3B-Instruct",
+        },
+        "Qwen2.5-VL-7B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-VL-7B-Instruct",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-VL-7B-Instruct",
+        },
+        "Qwen2.5-VL-72B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-VL-72B-Instruct",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-VL-72B-Instruct",
         },
     },
     template="qwen2_vl",
