@@ -14,8 +14,10 @@
 
 import os
 
+import pytest
 from transformers.utils import is_flash_attn_2_available, is_torch_sdpa_available
 
+from llamafactory.extras.packages import is_transformers_version_greater_than
 from llamafactory.train.test_utils import load_infer_model
 
 
@@ -27,6 +29,7 @@ INFER_ARGS = {
 }
 
 
+@pytest.mark.xfail(is_transformers_version_greater_than("4.48"), reason="Attention refactor.")
 def test_attention():
     attention_available = ["disabled"]
     if is_torch_sdpa_available():
