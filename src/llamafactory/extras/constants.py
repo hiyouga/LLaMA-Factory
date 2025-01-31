@@ -1201,23 +1201,44 @@ register_model_group(
 
 register_model_group(
     models={
-        "MiniCPM-o-2_6-Chat": {
+        "MiniCPM-o-2_6": {
             DownloadSource.DEFAULT: "openbmb/MiniCPM-o-2_6",
             DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM-o-2_6",
         },
     },
     template="minicpm_v",
+    vision=True,
 )
 
 
 register_model_group(
     models={
-        "MiniCPM-V-2_6-Chat": {
+        "MiniCPM-V-2_6": {
             DownloadSource.DEFAULT: "openbmb/MiniCPM-V-2_6",
             DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM-V-2_6",
         },
     },
     template="minicpm_v",
+    vision=True,
+)
+
+
+register_model_group(
+    models={
+        "Ministral-8B-Instruct-2410": {
+            DownloadSource.DEFAULT: "mistralai/Ministral-8B-Instruct-2410",
+            DownloadSource.MODELSCOPE: "mistralai/Ministral-8B-Instruct-2410",
+        },
+        "Mistral-Nemo-Base-2407": {
+            DownloadSource.DEFAULT: "mistralai/Mistral-Nemo-Base-2407",
+            DownloadSource.MODELSCOPE: "LLM-Research/Mistral-Nemo-Base-2407",
+        },
+        "Mistral-Nemo-Instruct-2407": {
+            DownloadSource.DEFAULT: "mistralai/Mistral-Nemo-Instruct-2407",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Mistral-Nemo-Instruct-2407",
+        },
+    },
+    template="ministral",
 )
 
 
@@ -1227,31 +1248,43 @@ register_model_group(
             DownloadSource.DEFAULT: "mistralai/Mistral-7B-v0.1",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Mistral-7B-v0.1",
         },
-        "Mistral-7B-Instruct-v0.1": {
-            DownloadSource.DEFAULT: "mistralai/Mistral-7B-Instruct-v0.1",
-            DownloadSource.MODELSCOPE: "AI-ModelScope/Mistral-7B-Instruct-v0.1",
-        },
         "Mistral-7B-v0.2": {
             DownloadSource.DEFAULT: "alpindale/Mistral-7B-v0.2-hf",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Mistral-7B-v0.2-hf",
+        },
+        "Mistral-7B-v0.3": {
+            DownloadSource.DEFAULT: "mistralai/Mistral-7B-v0.3",
+            DownloadSource.MODELSCOPE: "LLM-Research/mistral-7b-v0.3",
+        },
+        "Mistral-7B-Instruct-v0.1": {
+            DownloadSource.DEFAULT: "mistralai/Mistral-7B-Instruct-v0.1",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Mistral-7B-Instruct-v0.1",
         },
         "Mistral-7B-Instruct-v0.2": {
             DownloadSource.DEFAULT: "mistralai/Mistral-7B-Instruct-v0.2",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Mistral-7B-Instruct-v0.2",
         },
-        "Mistral-7B-v0.3": {
-            DownloadSource.DEFAULT: "mistralai/Mistral-7B-v0.3",
-        },
         "Mistral-7B-Instruct-v0.3": {
             DownloadSource.DEFAULT: "mistralai/Mistral-7B-Instruct-v0.3",
             DownloadSource.MODELSCOPE: "LLM-Research/Mistral-7B-Instruct-v0.3",
         },
-        "Mistral-Nemo-Instruct-2407": {
-            DownloadSource.DEFAULT: "mistralai/Mistral-Nemo-Instruct-2407",
-            DownloadSource.MODELSCOPE: "AI-ModelScope/Mistral-Nemo-Instruct-2407",
-        },
     },
     template="mistral",
+)
+
+
+register_model_group(
+    models={
+        "Mistral-Small-24B-Base-2501": {
+            DownloadSource.DEFAULT: "mistralai/Mistral-Small-24B-Base-2501",
+            DownloadSource.MODELSCOPE: "mistralai/Mistral-Small-24B-Base-2501",
+        },
+        "Mistral-Small-24B-Instruct-2501": {
+            DownloadSource.DEFAULT: "mistralai/Mistral-Small-24B-Instruct-2501",
+            DownloadSource.MODELSCOPE: "mistralai/Mistral-Small-24B-Instruct-2501",
+        },
+    },
+    template="mistral_small",
 )
 
 
@@ -1261,13 +1294,13 @@ register_model_group(
             DownloadSource.DEFAULT: "mistralai/Mixtral-8x7B-v0.1",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Mixtral-8x7B-v0.1",
         },
-        "Mixtral-8x7B-v0.1-Instruct": {
-            DownloadSource.DEFAULT: "mistralai/Mixtral-8x7B-Instruct-v0.1",
-            DownloadSource.MODELSCOPE: "AI-ModelScope/Mixtral-8x7B-Instruct-v0.1",
-        },
         "Mixtral-8x22B-v0.1": {
             DownloadSource.DEFAULT: "mistralai/Mixtral-8x22B-v0.1",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Mixtral-8x22B-v0.1",
+        },
+        "Mixtral-8x7B-v0.1-Instruct": {
+            DownloadSource.DEFAULT: "mistralai/Mixtral-8x7B-Instruct-v0.1",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Mixtral-8x7B-Instruct-v0.1",
         },
         "Mixtral-8x22B-v0.1-Instruct": {
             DownloadSource.DEFAULT: "mistralai/Mixtral-8x22B-Instruct-v0.1",
