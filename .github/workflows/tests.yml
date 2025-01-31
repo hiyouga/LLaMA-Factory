@@ -33,9 +33,6 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
-    environment:
-      name: tests
-
     env:
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
       OS_NAME: ${{ matrix.os }}
