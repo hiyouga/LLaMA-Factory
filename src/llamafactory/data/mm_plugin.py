@@ -319,7 +319,7 @@ class LlavaNextPlugin(BasePlugin):
                 if self.expand_mm_tokens:
                     orig_height, orig_width = next(image_sizes)
                     image_seqlen = processor._get_number_of_features(orig_height, orig_width, height, width)
-                    if getattr(processor, "vision_feature_select_strategy") == "default":
+                    if getattr(processor, "vision_feature_select_strategy", "default") == "default":
                         image_seqlen -= 1
                 else:
                     image_seqlen = 1
@@ -370,7 +370,7 @@ class LlavaNextVideoPlugin(BasePlugin):
                     if self.expand_mm_tokens:
                         orig_height, orig_width = next(image_sizes)
                         image_seqlen = processor._get_number_of_features(orig_height, orig_width, height, width)
-                        if getattr(processor, "vision_feature_select_strategy") == "default":
+                        if getattr(processor, "vision_feature_select_strategy", "default") == "default":
                             image_seqlen -= 1
                     else:
                         image_seqlen = 1
@@ -915,7 +915,7 @@ class VideoLlavaPlugin(BasePlugin):
 
                 image_seqlen = (height // processor.patch_size) * (width // processor.patch_size) + 1
                 video_seqlen = image_seqlen * num_frames
-                if getattr(processor, "vision_feature_select_strategy") == "default":
+                if getattr(processor, "vision_feature_select_strategy", "default") == "default":
                     image_seqlen -= 1
             else:
                 image_seqlen, video_seqlen = 1, 1
