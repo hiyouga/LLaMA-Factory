@@ -183,8 +183,8 @@ class HuggingfaceEngine(BaseEngine):
 
         if getattr(model.config, "model_type", None) in ["minicpmv", "minicpmo"]:
             gen_kwargs["input_ids"] = inputs
-            del gen_kwargs["image_sizes"]
             gen_kwargs["tokenizer"] = tokenizer
+            gen_kwargs.pop("image_sizes", None)
 
         return gen_kwargs, prompt_length
 
