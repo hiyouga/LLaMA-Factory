@@ -18,11 +18,12 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, Literal, Optional, Sequence
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 from transformers import DataCollatorForSeq2Seq
 
-from ..extras.constants import IGNORE_INDEX, IMAGE_PLACEHOLDER
+from ..extras.constants import AUDIO_PLACEHOLDER, IGNORE_INDEX, IMAGE_PLACEHOLDER
 from ..extras.packages import is_pillow_available
 
 
@@ -118,15 +119,33 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             and sum(batch_vidlens) == 0
             and sum(batch_audiolens) == 0
         ):  # avoid process hanging in zero3/fsdp case
-            fake_messages = [{"role": "user", "content": IMAGE_PLACEHOLDER}]
-            fake_images = [Image.new("RGB", (64, 64), (255, 255, 255))]
-            fake_messages = self.template.mm_plugin.process_messages(
-                fake_messages, fake_images, [], [], self.processor
-            )
-            fake_input_ids = self.tokenizer.encode(fake_messages[0]["content"], add_special_tokens=False)
-            fake_input_ids, _ = self.template.mm_plugin.process_token_ids(
-                fake_input_ids, None, fake_images, [], [], self.tokenizer, self.processor
-            )
+            if self.template.mm_plugin.image_token is not None:
+                fake_messages = [{"role": "user", "content": IMAGE_PLACEHOLDER}]
+                fake_images = [Image.new("RGB", (64, 64), (255, 255, 255))]
+                fake_messages = self.template.mm_plugin.process_messages(
+                    fake_messages, fake_images, [], [], self.processor
+                )
+                fake_input_ids = self.tokenizer.encode(fake_messages[0]["content"], add_special_tokens=False)
+                fake_input_ids, _ = self.template.mm_plugin.process_token_ids(
+                    fake_input_ids, None, fake_images, [], [], self.tokenizer, self.processor
+                )
+                batch_images = fake_images
+                batch_imglens[0] = 1
+                batch_input_ids[0] = features[0]["input_ids"]
+            elif self.template.mm_plugin.audio_token is not None:
+                fake_messages = [{"role": "user", "content": AUDIO_PLACEHOLDER}]
+                fake_audios = [np.zeros(1600)]
+                fake_messages = self.template.mm_plugin.process_messages(
+                    fake_messages, [], [], fake_audios, self.processor
+                )
+                fake_input_ids = self.tokenizer.encode(fake_messages[0]["content"], add_special_tokens=False)
+                fake_input_ids, _ = self.template.mm_plugin.process_token_ids(
+                    fake_input_ids, None, [], [], fake_audios, self.tokenizer, self.processor
+                )
+                batch_audios = fake_audios
+                batch_audiolens[0] = 1
+                batch_input_ids[0] = features[0]["input_ids"]
+
             if self.tokenizer.padding_side == "right":
                 features[0]["input_ids"] = features[0]["input_ids"] + fake_input_ids
                 features[0]["attention_mask"] = features[0]["attention_mask"] + [0] * len(fake_input_ids)
@@ -135,10 +154,6 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                 features[0]["input_ids"] = fake_input_ids + features[0]["input_ids"]
                 features[0]["attention_mask"] = [0] * len(fake_input_ids) + features[0]["attention_mask"]
                 features[0]["labels"] = [IGNORE_INDEX] * len(fake_input_ids) + features[0]["labels"]
-
-            batch_images = fake_images
-            batch_imglens[0] = 1
-            batch_input_ids[0] = features[0]["input_ids"]
 
         mm_inputs = self.template.mm_plugin.get_mm_inputs(
             batch_images,
@@ -158,12 +173,16 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
         features: Dict[str, "torch.Tensor"] = super().__call__(features)
 
         if self.model is not None and hasattr(self.model, "get_rope_index"):  # for qwen2vl mrope
-            features["position_ids"], features["rope_deltas"] = self.model.get_rope_index(
-                input_ids=features["input_ids"],
-                image_grid_thw=mm_inputs.get("image_grid_thw", None),
-                video_grid_thw=mm_inputs.get("video_grid_thw", None),
-                attention_mask=features["attention_mask"],
-            )
+            rope_index_kwargs = {
+                "input_ids": features["input_ids"],
+                "image_grid_thw": mm_inputs.get("image_grid_thw"),
+                "video_grid_thw": mm_inputs.get("video_grid_thw"),
+                "attention_mask": features["attention_mask"],
+            }
+            if "second_per_grid_ts" in mm_inputs:
+                rope_index_kwargs["second_per_grid_ts"] = mm_inputs.get("second_per_grid_ts")
+
+            features["position_ids"], features["rope_deltas"] = self.model.get_rope_index(**rope_index_kwargs)
 
         if "cross_attention_mask" in mm_inputs:  # for mllama inputs when pad_to_multiple_of is enabled
             cross_attention_mask = mm_inputs.pop("cross_attention_mask")

@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 from typing import TYPE_CHECKING, Dict, Tuple
 
 from ...data import Role
 from ...extras.packages import is_gradio_available
-from ..utils import check_json_schema
+from ..locales import ALERTS
 
 
 if is_gradio_available():
@@ -29,9 +30,27 @@ if TYPE_CHECKING:
     from ..engine import Engine
 
 
+def check_json_schema(text: str, lang: str) -> None:
+    r"""
+    Checks if the json schema is valid.
+    """
+    try:
+        tools = json.loads(text)
+        if tools:
+            assert isinstance(tools, list)
+            for tool in tools:
+                if "name" not in tool:
+                    raise NotImplementedError("Name not found.")
+    except NotImplementedError:
+        gr.Warning(ALERTS["err_tool_name"][lang])
+    except Exception:
+        gr.Warning(ALERTS["err_json_schema"][lang])
+
+
 def create_chat_box(
     engine: "Engine", visible: bool = False
 ) -> Tuple["Component", "Component", Dict[str, "Component"]]:
+    lang = engine.manager.get_elem_by_id("top.lang")
     with gr.Column(visible=visible) as chat_box:
         chatbot = gr.Chatbot(type="messages", show_copy_button=True)
         messages = gr.State([])
@@ -70,7 +89,7 @@ def create_chat_box(
         [chatbot, messages, query],
     ).then(
         engine.chatter.stream,
-        [chatbot, messages, system, tools, image, video, audio, max_new_tokens, top_p, temperature],
+        [chatbot, messages, lang, system, tools, image, video, audio, max_new_tokens, top_p, temperature],
         [chatbot, messages],
     )
     clear_btn.click(lambda: ([], []), outputs=[chatbot, messages])

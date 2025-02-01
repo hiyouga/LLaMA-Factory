@@ -17,8 +17,8 @@ from typing import TYPE_CHECKING, Dict
 from ...data import TEMPLATES
 from ...extras.constants import METHODS, SUPPORTED_MODELS
 from ...extras.packages import is_gradio_available
-from ..common import get_model_info, list_checkpoints, save_config
-from ..utils import can_quantize, can_quantize_to
+from ..common import save_config
+from ..control import can_quantize, can_quantize_to, get_model_info, list_checkpoints
 
 
 if is_gradio_available():
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
 def create_top() -> Dict[str, "Component"]:
     with gr.Row():
-        lang = gr.Dropdown(choices=["en", "ru", "zh", "ko"], value=None, scale=1)
+        lang = gr.Dropdown(choices=["en", "ru", "zh", "ko", "ja"], value=None, scale=1)
         available_models = list(SUPPORTED_MODELS.keys()) + ["Custom"]
         model_name = gr.Dropdown(choices=available_models, value=None, scale=3)
         model_path = gr.Textbox(scale=3)
