@@ -137,7 +137,7 @@ def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -
         if "columns" in dataset_info[name]:
             column_names = ["system", "tools", "images", "videos", "chosen", "rejected", "kto_tag"]
             if dataset_attr.formatting == "alpaca":
-                column_names.extend(["prompt", "query", "response", "history"])
+                column_names.extend(["prompt", "query", "response", "history", "loss_mask"])
             else:
                 column_names.extend(["messages"])
 

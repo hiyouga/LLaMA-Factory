@@ -36,6 +36,7 @@ def _encode_supervised_example(
     response: Sequence[Dict[str, str]],
     system: Optional[str],
     tools: Optional[str],
+    loss_mask: Optional[List[int]],
     images: Sequence["ImageInput"],
     videos: Sequence["VideoInput"],
     template: "Template",
@@ -47,12 +48,12 @@ def _encode_supervised_example(
 ) -> Tuple[List[int], List[int]]:
     messages = template.mm_plugin.process_messages(prompt + response, images, videos, processor)
     input_ids, labels = template.mm_plugin.process_token_ids([], [], images, videos, tokenizer, processor)
-    encoded_pairs = template.encode_multiturn(tokenizer, messages, system, tools)
+    encoded_pairs = template.encode_multiturn(tokenizer, messages, system, tools, loss_mask)
     total_length = len(input_ids) + (1 if template.efficient_eos else 0)
     if mask_history:
         encoded_pairs = encoded_pairs[::-1]  # high priority for last turns
 
-    for turn_idx, (source_ids, target_ids) in enumerate(encoded_pairs):
+    for turn_idx, (source_ids, target_ids, use_label) in enumerate(encoded_pairs):
         if total_length >= cutoff_len:
             break
 
@@ -68,7 +69,7 @@ def _encode_supervised_example(
         else:
             source_label = [IGNORE_INDEX] * source_len
 
-        if mask_history and turn_idx != 0:  # train on the last turn only
+        if (mask_history and turn_idx != 0) or not use_label:  # train on the last turn only
             target_label = [IGNORE_INDEX] * target_len
         else:
             target_label = target_ids
@@ -109,6 +110,7 @@ def preprocess_supervised_dataset(
             response=examples["_response"][i],
             system=examples["_system"][i],
             tools=examples["_tools"][i],
+            loss_mask=examples["_loss_mask"][i],
             images=examples["_images"][i] or [],
             videos=examples["_videos"][i] or [],
             template=template,
@@ -153,6 +155,7 @@ def preprocess_packed_supervised_dataset(
             response=examples["_response"][i],
             system=examples["_system"][i],
             tools=examples["_tools"][i],
+            loss_mask=examples["_loss_mask"][i],
             images=examples["_images"][i] or [],
             videos=examples["_videos"][i] or [],
             template=template,
