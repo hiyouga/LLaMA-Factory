@@ -155,7 +155,7 @@ def _get_merged_dataset(
     model_args: "ModelArguments",
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
-    stage: Literal["pt", "sft", "rm", "ppo", "kto"],
+    stage: Literal["pt", "sft", "rm", "ppo", "kto", "raft"],
 ) -> Optional[Union["Dataset", "IterableDataset"]]:
     r"""
     Gets the merged datasets in the standard format.
@@ -165,8 +165,23 @@ def _get_merged_dataset(
 
     datasets = []
     for dataset_attr in get_dataset_list(dataset_names, data_args.dataset_dir):
-        if (stage == "rm" and dataset_attr.ranking is False) or (stage != "rm" and dataset_attr.ranking is True):
-            raise ValueError("The dataset is not applicable in the current training stage.")
+        if stage == "rm" and dataset_attr.ranking is False:
+            raise ValueError("The dataset is not applicable for reward modeling.")
+        elif stage != "rm" and dataset_attr.ranking is True:
+            raise ValueError("The ranking dataset is only applicable for reward modeling.")
+        elif stage == "raft":
+            if dataset_attr.formatting != "raft":
+                raise ValueError(f"Dataset {dataset_attr.dataset_name} is not in RAFT format (formatting != 'raft')")
+            
+            if not all(hasattr(dataset_attr, col) for col in ["positive_context", "negative_context"]):
+                raise ValueError(
+                    f"Dataset {dataset_attr.dataset_name} missing required RAFT columns: positive_context and negative_context"
+                )
+            
+            logger.info_rank0(
+                f"Using RAFT format for dataset {dataset_attr.dataset_name} "
+                f"with p={data_args.raft_p}, num_distractors={data_args.raft_num_distract}"
+            )
 
         datasets.append(_load_single_dataset(dataset_attr, model_args, data_args, training_args))
 
@@ -177,7 +192,7 @@ def _get_preprocessed_dataset(
     dataset: Optional[Union["Dataset", "IterableDataset"]],
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
-    stage: Literal["pt", "sft", "rm", "ppo", "kto"],
+    stage: Literal["pt", "sft", "rm", "ppo", "kto", "raft"],
     template: "Template",
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"] = None,
@@ -227,7 +242,7 @@ def get_dataset(
     model_args: "ModelArguments",
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
-    stage: Literal["pt", "sft", "rm", "ppo", "kto"],
+    stage: Literal["pt", "sft", "rm", "ppo", "kto", "raft"],
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"] = None,
 ) -> "DatasetModule":

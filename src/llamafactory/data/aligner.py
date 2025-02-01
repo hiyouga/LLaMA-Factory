@@ -19,6 +19,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Union
 from ..extras import logging
 from .data_utils import Role
 
+from datasets.features import Features, Value, Sequence as SequenceFeature
+
 
 if TYPE_CHECKING:
     from datasets import Dataset, IterableDataset
@@ -227,6 +229,60 @@ def convert_sharegpt(
     return output
 
 
+def convert_raft(
+    example: Dict[str, Any],
+    dataset_attr: "DatasetAttr",
+    data_args: "DataArguments",
+) -> Dict[str, Any]:
+
+    prompt = []
+    if dataset_attr.history and example.get(dataset_attr.history):
+        for old_prompt, old_response in example[dataset_attr.history]:
+            prompt.append({"role": Role.USER.value, "content": old_prompt})
+            prompt.append({"role": Role.ASSISTANT.value, "content": old_response})
+
+    query = []
+    if dataset_attr.prompt and example[dataset_attr.prompt]:
+        query.append(example[dataset_attr.prompt])
+
+    if dataset_attr.query and example.get(dataset_attr.query):
+        query.append(example[dataset_attr.query])
+
+    prompt.append({"role": Role.USER.value, "content": "\n".join(query)})
+
+    response = [{"role": Role.ASSISTANT.value, "content": example[dataset_attr.response]}] if example.get(dataset_attr.response) else []
+
+    positive_contexts = []
+    if dataset_attr.positive_context and example.get(dataset_attr.positive_context):
+        contexts = example[dataset_attr.positive_context]
+        if isinstance(contexts, str):
+            positive_contexts = [contexts]
+        elif isinstance(contexts, list):
+            positive_contexts = contexts
+
+    negative_contexts = []
+    if dataset_attr.negative_context and example.get(dataset_attr.negative_context):
+        contexts = example[dataset_attr.negative_context]
+        if isinstance(contexts, str):
+            negative_contexts = [contexts]
+        elif isinstance(contexts, list):
+            negative_contexts = contexts
+
+    convert_images = partial(_convert_images, dataset_attr=dataset_attr, data_args=data_args)
+    convert_videos = partial(_convert_videos, dataset_attr=dataset_attr, data_args=data_args)
+
+    output = {
+        "_prompt": prompt,  # List[Dict[str, str]]
+        "_response": response,  # List[Dict[str, str]]
+        "_system": example.get(dataset_attr.system, ""),  # str
+        "_tools": example.get(dataset_attr.tools, ""),  # str
+        "_images": convert_images(example.get(dataset_attr.images)) if dataset_attr.images else None,
+        "_videos": convert_videos(example.get(dataset_attr.videos)) if dataset_attr.videos else None,
+        "_positive_context": positive_contexts,  # List[str]
+        "_negative_context": negative_contexts,  # List[str]
+    }
+    return output
+
 def align_dataset(
     dataset: Union["Dataset", "IterableDataset"],
     dataset_attr: "DatasetAttr",
@@ -236,14 +292,18 @@ def align_dataset(
     r"""
     Aligned dataset:
         _prompt: [{"role": "user", "content": "..."}] * (2T - 1)
-        _response: [{"role": "assistant", "content": "..."}] * N (N > 1 for ranking dataset)
+        _response: [{"role": "assistant", "content": "..."}] * N
         _system: "..."
-        _tools: "...",
-        _images: [],
-        _videos: [],
+        _tools: "..."
+        _images: []
+        _videos: []
+        _positive_context: []  # for RAFT format
+        _negative_context: []  # for RAFT format
     """
     if dataset_attr.formatting == "alpaca":
         convert_func = partial(convert_alpaca, dataset_attr=dataset_attr, data_args=data_args)
+    elif dataset_attr.formatting == "raft":
+        convert_func = partial(convert_raft, dataset_attr=dataset_attr, data_args=data_args)
     else:
         convert_func = partial(convert_sharegpt, dataset_attr=dataset_attr, data_args=data_args)
 
@@ -256,9 +316,21 @@ def align_dataset(
             desc="Converting format of dataset",
         )
 
+    features = Features({
+        "_prompt": [{"role": Value("string"), "content": Value("string")}],
+        "_response": [{"role": Value("string"), "content": Value("string")}],
+        "_system": Value("string"),
+        "_tools": Value("string"),
+        "_images": SequenceFeature(Value("string"), length=-1) if dataset_attr.images else Value("null"),
+        "_videos": SequenceFeature(Value("string"), length=-1) if dataset_attr.videos else Value("null"),
+        "_positive_context": SequenceFeature(Value("string"), length=-1),
+        "_negative_context": SequenceFeature(Value("string"), length=-1)
+    })
+
     return dataset.map(
         convert_func,
         batched=False,
         remove_columns=column_names,
+        features=features,
         **kwargs,
     )

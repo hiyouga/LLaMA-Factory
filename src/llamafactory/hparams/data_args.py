@@ -113,6 +113,14 @@ class DataArguments:
         default=None,
         metadata={"help": "Tool format to use for constructing function calling examples."},
     )
+    raft_p: float = field(
+        default=1.0,
+        metadata={"help": "Probability of including oracle context in RAFT format"},
+    )
+    raft_num_distract: int = field(
+        default=0,
+        metadata={"help": "Number of distractor contexts in RAFT format"}
+    )
     tokenized_path: Optional[str] = field(
         default=None,
         metadata={
