@@ -15,11 +15,10 @@
 from typing import TYPE_CHECKING, Any, Dict
 
 from .chatter import WebChatModel
-from .common import load_config
+from .common import create_ds_config, get_time, load_config
 from .locales import LOCALES
 from .manager import Manager
 from .runner import Runner
-from .utils import create_ds_config, get_time
 
 
 if TYPE_CHECKING:
@@ -27,6 +26,10 @@ if TYPE_CHECKING:
 
 
 class Engine:
+    r"""
+    A general engine to control the behaviors of Web UI.
+    """
+
     def __init__(self, demo_mode: bool = False, pure_chat: bool = False) -> None:
         self.demo_mode = demo_mode
         self.pure_chat = pure_chat
@@ -38,7 +41,7 @@ class Engine:
 
     def _update_component(self, input_dict: Dict[str, Dict[str, Any]]) -> Dict["Component", "Component"]:
         r"""
-        Gets the dict to update the components.
+        Updates gradio components according to the (elem_id, properties) mapping.
         """
         output_dict: Dict["Component", "Component"] = {}
         for elem_id, elem_attr in input_dict.items():
@@ -48,9 +51,11 @@ class Engine:
         return output_dict
 
     def resume(self):
-        user_config = load_config() if not self.demo_mode else {}
+        r"""
+        Gets the initial value of gradio components and restores training status if necessary.
+        """
+        user_config = load_config() if not self.demo_mode else {}  # do not use config in demo mode
         lang = user_config.get("lang", None) or "en"
-
         init_dict = {"top.lang": {"value": lang}, "infer.chat_box": {"visible": self.chatter.loaded}}
 
         if not self.pure_chat:
@@ -74,6 +79,9 @@ class Engine:
                 yield self._update_component({"eval.resume_btn": {"value": True}})
 
     def change_lang(self, lang: str):
+        r"""
+        Updates the displayed language of gradio components.
+        """
         return {
             elem: elem.__class__(**LOCALES[elem_name][lang])
             for elem_name, elem in self.manager.get_elem_iter()

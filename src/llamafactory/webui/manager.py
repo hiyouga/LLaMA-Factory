@@ -20,6 +20,10 @@ if TYPE_CHECKING:
 
 
 class Manager:
+    r"""
+    A class to manage all the gradio components in Web UI.
+    """
+
     def __init__(self) -> None:
         self._id_to_elem: Dict[str, "Component"] = {}
         self._elem_to_id: Dict["Component", str] = {}

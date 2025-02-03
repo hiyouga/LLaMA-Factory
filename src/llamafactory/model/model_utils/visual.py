@@ -286,3 +286,11 @@ _register_composite_model(
     vision_model_keys=["visual.patch_embed", "visual.blocks"],
     language_model_keys=["model", "lm_head"],
 )
+
+
+_register_composite_model(
+    model_type="qwen2_5_vl",
+    projector_key="visual.merger",
+    vision_model_keys=["visual.patch_embed", "visual.blocks"],
+    language_model_keys=["model", "lm_head"],
+)
