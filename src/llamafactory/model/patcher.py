@@ -126,7 +126,7 @@ def patch_config(
 
     if getattr(config, "model_type", None) == "minicpmo":
         setattr(config, "init_audio", True)
-        setattr(config, "init_tts", True)
+        setattr(config, "init_tts", False)
 
     if "LlavaLlamaForCausalLM" in getattr(config, "architectures", []):
         raise ValueError("Please download llava models with hf-compatible format: https://huggingface.co/llava-hf")
