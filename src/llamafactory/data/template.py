@@ -642,7 +642,7 @@ _register_template(
 
 _register_template(
     name="empty",
-    efficient_eos=True,
+    format_assistant=StringFormatter(slots=["{{content}}"]),
 )
 
 
