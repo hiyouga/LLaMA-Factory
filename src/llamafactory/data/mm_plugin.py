@@ -663,7 +663,7 @@ class MiniCPMVPlugin(BasePlugin):
         # image bound
         image_bounds_list = []
         valid_image_nums_ls = []
-        for input_ids in batch_ids:
+        for i, input_ids in enumerate(batch_ids):
             input_ids_ = torch.tensor(input_ids)
             start_cond = (input_ids_ == processor.tokenizer.im_start_id) | (
                 input_ids_ == processor.tokenizer.slice_start_id
@@ -672,12 +672,11 @@ class MiniCPMVPlugin(BasePlugin):
             image_start_tokens = torch.where(start_cond)[0]
             image_start_tokens += 1
             image_end_tokens = torch.where(end_cond)[0]
-            valid_image_nums = max(len(image_start_tokens), len(image_end_tokens))
-            valid_image_nums_ls.append(valid_image_nums)
+            valid_image_nums_ls.append(imglens[i])
             image_bounds = torch.hstack(
                 [
-                    image_start_tokens[:valid_image_nums].unsqueeze(-1),
-                    image_end_tokens[:valid_image_nums].unsqueeze(-1),
+                    image_start_tokens.unsqueeze(-1),
+                    image_end_tokens.unsqueeze(-1),
                 ]
             )
             image_bounds_list.append(image_bounds)

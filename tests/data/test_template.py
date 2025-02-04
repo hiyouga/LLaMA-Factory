@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -152,6 +152,7 @@ def test_llama3_template(use_fast: bool):
     _check_template("meta-llama/Meta-Llama-3-8B-Instruct", "llama3", prompt_str, answer_str, use_fast)
 
 
+@pytest.mark.skipif(not HF_TOKEN, reason="Gated model.")
 @pytest.mark.parametrize(
     "use_fast", [True, pytest.param(False, marks=pytest.mark.xfail(reason="Phi-4 slow tokenizer is broken."))]
 )
@@ -166,6 +167,7 @@ def test_phi4_template(use_fast: bool):
     _check_template("microsoft/phi-4", "phi4", prompt_str, answer_str, use_fast)
 
 
+@pytest.mark.skipif(not HF_TOKEN, reason="Gated model.")
 @pytest.mark.parametrize("use_fast", [True, False])
 def test_qwen_template(use_fast: bool):
     prompt_str = (

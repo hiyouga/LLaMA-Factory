@@ -447,7 +447,7 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 
 #### 安装 Flash Attention-2
 
-如果要在 Windows 平台上开启 FlashAttention-2，需要安装预编译的 `flash-attn` 库，支持 CUDA 12.1 到 12.2，请根据需求到 [flash-attention](https://github.com/bdashore3/flash-attention/releases) 下载对应版本安装。
+如果要在 Windows 平台上开启 FlashAttention-2，请使用 [flash-attention-windows-wheel](https://huggingface.co/lldacing/flash-attention-windows-wheel) 中的脚本自行编译与安装。
 
 </details>
 

@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ QWEN_TOOL_PROMPT = (
     "You are provided with function signatures within <tools></tools> XML tags:\n<tools>{tool_text}"
     "\n</tools>\n\nFor each function call, return a json object with function name and arguments within "
     """<tool_call></tool_call> XML tags:\n<tool_call>\n{{"name": <function-name>, """
-    """"arguments": <args-json-object>}}\n</tool_call><|im_end|>\n"""
+    """"arguments": <args-json-object>}}\n</tool_call>"""
 )
 
 
