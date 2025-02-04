@@ -167,7 +167,7 @@ def test_phi4_template(use_fast: bool):
     _check_template("microsoft/phi-4", "phi4", prompt_str, answer_str, use_fast)
 
 
-@pytest.mark.skipif(not HF_TOKEN, reason="Gated model.")
+@pytest.mark.skipif(not HF_TOKEN, reason="Gated model.")  # TODO: why it is gated?
 @pytest.mark.parametrize("use_fast", [True, False])
 def test_qwen_template(use_fast: bool):
     prompt_str = (
