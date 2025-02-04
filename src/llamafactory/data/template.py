@@ -129,16 +129,7 @@ class Template:
             elif message["role"] == Role.OBSERVATION.value:
                 elements += self.format_observation.apply(content=message["content"])
             elif message["role"] == Role.FUNCTION.value:
-                # If '<FUNCTION_CALL>: \n' is included in the message content, then extract thought and function call
-                thoughts = message["content"].split('<FUNCTION_CALL>: \n')[0]
-                function_call = '\n'.join(message["content"].split('<FUNCTION_CALL>: \n')[1:])
-                content_elements = self.format_assistant.apply(content=thoughts)
-                # pop the redundant eos_token
-                eos_idx = content_elements.index({'eos_token'})
-                content_elements.pop(eos_idx)
-                function_elements = self.format_function.apply(content=function_call)
-                # combine thoughts and function call
-                elements += content_elements + function_elements
+                elements += self.format_function.apply(content=message["content"])
             else:
                 raise NotImplementedError("Unexpected role: {}".format(message["role"]))
 
