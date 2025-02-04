@@ -1,4 +1,4 @@
-# Copyright 2024 imoneoi and the LlamaFactory team.
+# Copyright 2025 imoneoi and the LlamaFactory team.
 #
 # This code is inspired by the imoneoi's OpenChat library.
 # https://github.com/imoneoi/openchat/blob/3.6.0/ochat/training_deepspeed/train.py
