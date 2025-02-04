@@ -99,7 +99,7 @@ class FunctionFormatter(Formatter):
     @override
     def apply(self, **kwargs) -> SLOTS:
         content = kwargs.pop("content")
-        regex = re.compile(r"<think>(.+?)</think>", re.DOTALL)
+        regex = re.compile(r"<think>(.*)</think>", re.DOTALL)
         thought = re.search(regex, content)
         if thought:
             content = content.replace(thought.group(0), "")
