@@ -107,7 +107,9 @@ def register_model_group(
 ) -> None:
     for name, path in models.items():
         SUPPORTED_MODELS[name] = path
-        if template is not None and (any(suffix in name for suffix in ("-Chat", "-Distill", "-Instruct")) or multimodal):
+        if template is not None and (
+            any(suffix in name for suffix in ("-Chat", "-Distill", "-Instruct")) or multimodal
+        ):
             DEFAULT_TEMPLATE[name] = template
         if multimodal:
             MULTIMODAL_SUPPORTED_MODELS.add(name)

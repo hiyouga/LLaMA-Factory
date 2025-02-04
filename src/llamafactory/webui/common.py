@@ -26,9 +26,9 @@ from ..extras import logging
 from ..extras.constants import (
     DATA_CONFIG,
     DEFAULT_TEMPLATE,
+    MULTIMODAL_SUPPORTED_MODELS,
     SUPPORTED_MODELS,
     TRAINING_ARGS,
-    MULTIMODAL_SUPPORTED_MODELS,
     DownloadSource,
 )
 from ..extras.misc import use_modelscope, use_openmind
