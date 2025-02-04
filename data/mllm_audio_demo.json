@@ -1,0 +1,47 @@
+[
+  {
+    "messages": [
+      {
+        "content": "<audio>What's that sound?",
+        "role": "user"
+      },
+      {
+        "content": "It is the sound of glass shattering.",
+        "role": "assistant"
+      }
+    ],
+    "audios": [
+      "mllm_demo_data/1.mp3"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "<audio>What can you hear?",
+        "role": "user"
+      },
+      {
+        "content": "A woman is coughing.",
+        "role": "assistant"
+      }
+    ],
+    "audios": [
+      "mllm_demo_data/2.wav"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "<audio>What does the person say?",
+        "role": "user"
+      },
+      {
+        "content": "Mister Quiller is the apostle of the middle classes and we are glad to welcome his gospel.",
+        "role": "assistant"
+      }
+    ],
+    "audios": [
+      "mllm_demo_data/3.flac"
+    ]
+  }
+]
