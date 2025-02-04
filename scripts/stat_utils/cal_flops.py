@@ -1,4 +1,4 @@
-# Copyright 2024 Microsoft Corporation and the LlamaFactory team.
+# Copyright 2025 Microsoft Corporation and the LlamaFactory team.
 #
 # This code is inspired by the Microsoft's DeepSpeed library.
 # https://www.deepspeed.ai/tutorials/flops-profiler/
