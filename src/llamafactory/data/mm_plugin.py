@@ -51,7 +51,7 @@ if TYPE_CHECKING:
 
     ImageInput = Union[str, bytes, EncodedImage, ImageObject]
     VideoInput = str
-    AudioInput = str
+    AudioInput = Union[str, NDArray]
 
 
 def _get_paligemma_token_type_ids(
@@ -145,7 +145,7 @@ class BasePlugin:
                     image = Image.open(image["path"])
 
             if not isinstance(image, ImageObject):
-                raise ValueError(f"Expect input is a list of Images, but got {type(image)}.")
+                raise ValueError(f"Expect input is a list of images, but got {type(image)}.")
 
             results.append(self._preprocess_image(image, **kwargs))
 
@@ -180,10 +180,11 @@ class BasePlugin:
         results = []
         sampling_rate = kwargs["sampling_rate"]
         for audio in audios:
-            if isinstance(audio, np.ndarray):
-                pass
             if isinstance(audio, str):
                 audio = librosa.load(audio, sr=sampling_rate)[0]
+
+            if not isinstance(audio, np.ndarray):
+                raise ValueError(f"Expect input is a list of audios, but got {type(audio)}.")
 
             results.append(audio)
 
