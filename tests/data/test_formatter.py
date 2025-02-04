@@ -224,7 +224,7 @@ def test_qwen_tool_formatter():
         f"\n{json.dumps(wrapped_tool, ensure_ascii=False)}"
         "\n</tools>\n\nFor each function call, return a json object with function name and arguments within "
         """<tool_call></tool_call> XML tags:\n<tool_call>\n{"name": <function-name>, """
-        """"arguments": <args-json-object>}\n</tool_call><|im_end|>\n"""
+        """"arguments": <args-json-object>}\n</tool_call>"""
     ]
 
 
