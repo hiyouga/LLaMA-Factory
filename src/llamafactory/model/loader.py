@@ -19,10 +19,10 @@ import torch
 from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
+    AutoModelForSeq2SeqLM,
     AutoModelForVision2Seq,
     AutoProcessor,
     AutoTokenizer,
-    Qwen2AudioForConditionalGeneration,
 )
 from trl import AutoModelForCausalLMWithValueHead
 
@@ -149,8 +149,8 @@ def load_model(
         else:
             if type(config) in AutoModelForVision2Seq._model_mapping.keys():  # assume built-in models
                 load_class = AutoModelForVision2Seq
-            elif getattr(config, "model_type", None) == "qwen2_audio":
-                load_class = Qwen2AudioForConditionalGeneration
+            elif type(config) in AutoModelForSeq2SeqLM._model_mapping.keys():
+                load_class = AutoModelForSeq2SeqLM
             else:
                 load_class = AutoModelForCausalLM
 

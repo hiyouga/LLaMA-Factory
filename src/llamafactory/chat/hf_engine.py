@@ -84,7 +84,7 @@ class HuggingfaceEngine(BaseEngine):
         audios: Optional[Sequence["AudioInput"]] = None,
         input_kwargs: Optional[Dict[str, Any]] = {},
     ) -> Tuple[Dict[str, Any], int]:
-        mm_input_dict = {"images": [], "videos": [], "audios": [], "imglens": [0], "vidlens": [0], "audiolens": [0]}
+        mm_input_dict = {"images": [], "videos": [], "audios": [], "imglens": [0], "vidlens": [0], "audlens": [0]}
         if images is not None:
             mm_input_dict.update({"images": images, "imglens": [len(images)]})
             if not any(IMAGE_PLACEHOLDER in message["content"] for message in messages):
@@ -96,7 +96,7 @@ class HuggingfaceEngine(BaseEngine):
                 messages[0]["content"] = VIDEO_PLACEHOLDER * len(videos) + messages[0]["content"]
 
         if audios is not None:
-            mm_input_dict.update({"audios": audios, "audiolens": [len(audios)]})
+            mm_input_dict.update({"audios": audios, "audlens": [len(audios)]})
             if not any(AUDIO_PLACEHOLDER in message["content"] for message in messages):
                 messages[0]["content"] = AUDIO_PLACEHOLDER * len(audios) + messages[0]["content"]
 

@@ -60,7 +60,7 @@ NO_IMGLENS = [0]
 
 NO_VIDLENS = [0]
 
-NO_AUDIOLENS = [0]
+NO_AUDLENS = [0]
 
 INPUT_IDS = [0, 1, 2, 3, 4]
 
@@ -109,7 +109,7 @@ def _check_plugin(
         expected_labels,
     )
     _is_close(
-        plugin.get_mm_inputs(IMAGES, NO_VIDEOS, NO_AUDIOS, IMGLENS, NO_VIDLENS, NO_AUDIOLENS, BATCH_IDS, processor),
+        plugin.get_mm_inputs(IMAGES, NO_VIDEOS, NO_AUDIOS, IMGLENS, NO_VIDLENS, NO_AUDLENS, BATCH_IDS, processor),
         expected_mm_inputs,
     )
     # test text_messages
@@ -120,7 +120,7 @@ def _check_plugin(
     )
     _is_close(
         plugin.get_mm_inputs(
-            NO_IMAGES, NO_VIDEOS, NO_AUDIOS, NO_IMGLENS, NO_VIDLENS, NO_AUDIOLENS, BATCH_IDS, processor
+            NO_IMAGES, NO_VIDEOS, NO_AUDIOS, NO_IMGLENS, NO_VIDLENS, NO_AUDLENS, BATCH_IDS, processor
         ),
         expected_no_mm_inputs,
     )

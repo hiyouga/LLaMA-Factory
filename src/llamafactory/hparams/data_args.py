@@ -41,7 +41,7 @@ class DataArguments:
         default="data",
         metadata={"help": "Path to the folder containing the datasets."},
     )
-    image_dir: Optional[str] = field(
+    media_dir: Optional[str] = field(
         default=None,
         metadata={"help": "Path to the folder containing the images, videos or audios. Defaults to `dataset_dir`."},
     )
@@ -133,8 +133,8 @@ class DataArguments:
         self.dataset = split_arg(self.dataset)
         self.eval_dataset = split_arg(self.eval_dataset)
 
-        if self.image_dir is None:
-            self.image_dir = self.dataset_dir
+        if self.media_dir is None:
+            self.media_dir = self.dataset_dir
 
         if self.dataset is None and self.val_size > 1e-6:
             raise ValueError("Cannot specify `val_size` if `dataset` is None.")

@@ -78,7 +78,7 @@ def patch_processor(
     model_args: "ModelArguments",
 ) -> None:
     setattr(processor, "tokenizer", tokenizer)
-    if getattr(config, "vision_config", None) is not None:
+    if getattr(config, "vision_config", None) is not None:  # visual models
         setattr(processor, "image_seqlen", get_image_seqlen(config))
         setattr(processor, "image_resolution", model_args.image_resolution)
         setattr(processor, "patch_size", get_patch_size(config, processor))

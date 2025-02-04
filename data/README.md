@@ -301,7 +301,7 @@ Regarding the above dataset, the *dataset description* in `dataset_info.json` sh
 
 - [Example dataset](mllm_demo.json)
 
-Multimodal image datasets require a `images` column containing the paths to the input images.
+Multimodal image datasets require an `images` column containing the paths to the input images.
 
 The number of images should be identical to the `<image>` tokens in the conversations.
 
@@ -383,7 +383,7 @@ Regarding the above dataset, the *dataset description* in `dataset_info.json` sh
 
 - [Example dataset](mllm_audio_demo.json)
 
-Multimodal audio datasets require a `audios` column containing the paths to the input audios.
+Multimodal audio datasets require an `audios` column containing the paths to the input audios.
 
 The number of audios should be identical to the `<audio>` tokens in the conversations.
 

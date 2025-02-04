@@ -60,6 +60,8 @@ METHODS = ["full", "freeze", "lora"]
 
 MOD_SUPPORTED_MODELS = {"bloom", "falcon", "gemma", "llama", "mistral", "mixtral", "phi", "starcoder2"}
 
+MULTIMODAL_SUPPORTED_MODELS = set()
+
 PEFT_METHODS = {"lora"}
 
 RUNNING_LOG = "running_log.txt"
@@ -91,8 +93,6 @@ V_HEAD_WEIGHTS_NAME = "value_head.bin"
 
 V_HEAD_SAFE_WEIGHTS_NAME = "value_head.safetensors"
 
-VISION_MODELS = set()
-
 
 class DownloadSource(str, Enum):
     DEFAULT = "hf"
@@ -103,14 +103,14 @@ class DownloadSource(str, Enum):
 def register_model_group(
     models: Dict[str, Dict[DownloadSource, str]],
     template: Optional[str] = None,
-    vision: bool = False,
+    multimodal: bool = False,
 ) -> None:
     for name, path in models.items():
         SUPPORTED_MODELS[name] = path
-        if template is not None and (any(suffix in name for suffix in ("-Chat", "-Distill", "-Instruct")) or vision):
+        if template is not None and (any(suffix in name for suffix in ("-Chat", "-Distill", "-Instruct")) or multimodal):
             DEFAULT_TEMPLATE[name] = template
-        if vision:
-            VISION_MODELS.add(name)
+        if multimodal:
+            MULTIMODAL_SUPPORTED_MODELS.add(name)
 
 
 register_model_group(
@@ -1032,7 +1032,7 @@ register_model_group(
         },
     },
     template="mllama",
-    vision=True,
+    multimodal=True,
 )
 
 
@@ -1048,7 +1048,7 @@ register_model_group(
         },
     },
     template="llava",
-    vision=True,
+    multimodal=True,
 )
 
 
@@ -1064,7 +1064,7 @@ register_model_group(
         },
     },
     template="llava_next",
-    vision=True,
+    multimodal=True,
 )
 
 
@@ -1076,7 +1076,7 @@ register_model_group(
         },
     },
     template="llava_next_mistral",
-    vision=True,
+    multimodal=True,
 )
 
 
@@ -1088,7 +1088,7 @@ register_model_group(
         },
     },
     template="llava_next_llama3",
-    vision=True,
+    multimodal=True,
 )
 
 
@@ -1100,7 +1100,7 @@ register_model_group(
         },
     },
     template="llava_next_yi",
-    vision=True,
+    multimodal=True,
 )
 
 
@@ -1116,7 +1116,7 @@ register_model_group(
         },
     },
     template="llava_next_qwen",
-    vision=True,
+    multimodal=True,
 )
 
 
@@ -1132,7 +1132,7 @@ register_model_group(
         },
     },
     template="llava_next_video",
-    vision=True,
+    multimodal=True,
 )
 
 
@@ -1144,7 +1144,7 @@ register_model_group(
         },
     },
     template="llava_next_video_mistral",
-    vision=True,
+    multimodal=True,
 )
 
 
@@ -1159,7 +1159,7 @@ register_model_group(
         },
     },
     template="llava_next_video_yi",
-    vision=True,
+    multimodal=True,
 )
 
 
@@ -1209,7 +1209,7 @@ register_model_group(
         },
     },
     template="minicpm_v",
-    vision=True,
+    multimodal=True,
 )
 
 
@@ -1221,7 +1221,7 @@ register_model_group(
         },
     },
     template="minicpm_v",
-    vision=True,
+    multimodal=True,
 )
 
 
@@ -1426,7 +1426,7 @@ register_model_group(
         },
     },
     template="paligemma",
-    vision=True,
+    multimodal=True,
 )
 
 
@@ -1470,7 +1470,7 @@ register_model_group(
         },
     },
     template="paligemma",
-    vision=True,
+    multimodal=True,
 )
 
 
@@ -1553,7 +1553,7 @@ register_model_group(
         }
     },
     template="pixtral",
-    vision=True,
+    multimodal=True,
 )
 
 
@@ -2148,7 +2148,7 @@ register_model_group(
         },
     },
     template="qwen2_audio",
-    vision=True,
+    multimodal=True,
 )
 
 
@@ -2222,7 +2222,7 @@ register_model_group(
         },
     },
     template="qwen2_vl",
-    vision=True,
+    multimodal=True,
 )
 
 
@@ -2347,7 +2347,7 @@ register_model_group(
         },
     },
     template="video_llava",
-    vision=True,
+    multimodal=True,
 )
 
 
@@ -2574,7 +2574,7 @@ register_model_group(
         },
     },
     template="yi_vl",
-    vision=True,
+    multimodal=True,
 )
 
 

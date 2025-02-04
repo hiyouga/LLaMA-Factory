@@ -890,7 +890,7 @@ _register_template(
 )
 
 
-# copied from chatml template
+# copied from qwen template
 _register_template(
     name="llava_next_qwen",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -1155,7 +1155,7 @@ _register_template(
 )
 
 
-# copied from chatml template
+# copied from qwen template
 _register_template(
     name="qwen2_vl",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),

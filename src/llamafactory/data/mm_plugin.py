@@ -40,7 +40,9 @@ if is_transformers_version_greater_than("4.45.0"):
 
 if TYPE_CHECKING:
     from av.stream import Stream
+    from numpy.typing import NDArray
     from transformers import PreTrainedTokenizer, ProcessorMixin
+    from transformers.feature_extraction_sequence_utils import SequenceFeatureExtractor
     from transformers.image_processing_utils import BaseImageProcessor
 
     class EncodedImage(TypedDict):
@@ -104,7 +106,7 @@ class BasePlugin:
         r"""
         Pre-processes a single image.
         """
-        image_resolution: int = kwargs.get("image_resolution")
+        image_resolution: int = kwargs["image_resolution"]
         if (image.width * image.height) > image_resolution:
             resize_factor = math.sqrt(image_resolution / (image.width * image.height))
             width, height = int(image.width * resize_factor), int(image.height * resize_factor)
@@ -119,8 +121,8 @@ class BasePlugin:
         r"""
         Computes video sample frames according to fps.
         """
-        video_fps: float = kwargs.get("video_fps")
-        video_maxlen: int = kwargs.get("video_maxlen")
+        video_fps: float = kwargs["video_fps"]
+        video_maxlen: int = kwargs["video_maxlen"]
         total_frames = video_stream.frames
         sample_frames = float(video_stream.duration * video_stream.time_base) * video_fps
         sample_frames = min(total_frames, video_maxlen, sample_frames)
@@ -171,6 +173,22 @@ class BasePlugin:
 
         return results
 
+    def _regularize_audios(self, audios: Sequence["AudioInput"], **kwargs) -> List["NDArray"]:
+        r"""
+        Regularizes audios to avoid error. Including reading and resampling.
+        """
+        results = []
+        sampling_rate = kwargs["sampling_rate"]
+        for audio in audios:
+            if isinstance(audio, np.ndarray):
+                pass
+            if isinstance(audio, str):
+                audio = librosa.load(audio, sr=sampling_rate)[0]
+
+            results.append(audio)
+
+        return results
+
     def _get_mm_inputs(
         self,
         images: Sequence["ImageInput"],
@@ -190,15 +208,17 @@ class BasePlugin:
 
         It holds num_patches == torch.prod(image_grid_thw)
         """
-        image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
+        image_processor: "BaseImageProcessor" = getattr(processor, "image_processor", None)
         video_processor: "BaseImageProcessor" = getattr(processor, "video_processor", image_processor)
-        input_dict = {"images": None}  # default key
+        feature_extractor: "SequenceFeatureExtractor" = getattr(processor, "feature_extractor", None)
+        mm_inputs = {}
+
         if len(images) != 0:
             images = self._regularize_images(
                 images,
                 image_resolution=getattr(processor, "image_resolution", 768 * 768),
             )
-            input_dict["images"] = images
+            mm_inputs.update(image_processor(images, return_tensors="pt"))
 
         if len(videos) != 0:
             videos = self._regularize_videos(
@@ -207,16 +227,23 @@ class BasePlugin:
                 video_fps=getattr(processor, "video_fps", 2.0),
                 video_maxlen=getattr(processor, "video_maxlen", 128),
             )
-            input_dict["videos"] = videos
+            mm_inputs.update(video_processor(videos, return_tensors="pt"))
 
-        mm_inputs = {}
-        if image_processor != video_processor:
-            if input_dict.get("images") is not None:
-                mm_inputs.update(image_processor(input_dict["images"], return_tensors="pt"))
-            if input_dict.get("videos") is not None:
-                mm_inputs.update(video_processor(input_dict["videos"], return_tensors="pt"))
-        elif input_dict.get("images") is not None or input_dict.get("videos") is not None:  # same processor (qwen2-vl)
-            mm_inputs.update(image_processor(**input_dict, return_tensors="pt"))
+        if len(audios) != 0:
+            audios = self._regularize_audios(
+                audios,
+                sampling_rate=getattr(feature_extractor, "sampling_rate", 16000),
+            )
+            mm_inputs.update(
+                feature_extractor(
+                    audios,
+                    sampling_rate=getattr(feature_extractor, "sampling_rate", 16000),
+                    return_attention_mask=True,
+                    padding="max_length",
+                    return_tensors="pt",
+                )
+            )
+            mm_inputs["feature_attention_mask"] = mm_inputs.pop("attention_mask")  # prevent conflicts
 
         return mm_inputs
 
@@ -257,7 +284,7 @@ class BasePlugin:
         audios: Sequence["AudioInput"],
         imglens: Sequence[int],
         vidlens: Sequence[int],
-        audiolens: Sequence[int],
+        audlens: Sequence[int],
         batch_ids: Sequence[List[int]],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
@@ -269,6 +296,7 @@ class BasePlugin:
             videos: a list of video inputs, shape (num_videos,)
             imglens: number of images in each sample, shape (batch_size,)
             vidlens: number of videos in each sample, shape (batch_size,)
+            audlens: number of audios in each sample, shape (batch_size,)
             batch_ids: token ids of input samples, shape (batch_size, seq_len)
             processor: a processor for pre-processing images and videos
         """
@@ -311,7 +339,7 @@ class LlavaPlugin(BasePlugin):
         audios: Sequence["AudioInput"],
         imglens: Sequence[int],
         vidlens: Sequence[int],
-        audiolens: Sequence[int],
+        audlens: Sequence[int],
         batch_ids: Sequence[List[int]],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
@@ -368,7 +396,7 @@ class LlavaNextPlugin(BasePlugin):
         audios: Sequence["AudioInput"],
         imglens: Sequence[int],
         vidlens: Sequence[int],
-        audiolens: Sequence[int],
+        audlens: Sequence[int],
         batch_ids: Sequence[List[int]],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
@@ -440,7 +468,7 @@ class LlavaNextVideoPlugin(BasePlugin):
         audios: Sequence["AudioInput"],
         imglens: Sequence[int],
         vidlens: Sequence[int],
-        audiolens: Sequence[int],
+        audlens: Sequence[int],
         batch_ids: Sequence[List[int]],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
@@ -508,7 +536,6 @@ class MiniCPMVPlugin(BasePlugin):
         if mm_inputs:
             pattern = "(<image>./</image>)"
             image_sizes = mm_inputs["image_sizes"]
-
             for index, message in enumerate(messages):
                 text = message["content"]
                 image_tags = re.findall(pattern, text)
@@ -528,7 +555,6 @@ class MiniCPMVPlugin(BasePlugin):
 
         if audio_inputs:
             pattern = "(<audio>./</audio>)"
-
             for index, message in enumerate(messages):
                 text = message["content"]
                 audio_tags = re.findall(pattern, text)
@@ -627,7 +653,7 @@ class MiniCPMVPlugin(BasePlugin):
         audios: Sequence["AudioInput"],
         imglens: Sequence[int],
         vidlens: Sequence[int],
-        audiolens: Sequence[int],
+        audlens: Sequence[int],
         batch_ids: Sequence[List[int]],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
@@ -668,7 +694,7 @@ class MiniCPMVPlugin(BasePlugin):
             spk_bounds_ls = []
             audio_parts_ls = []
 
-            for input_ids, audiolen in zip(batch_ids, audiolens):
+            for input_ids, audiolen in zip(batch_ids, audlens):
                 input_ids_ = torch.tensor(input_ids)
                 audio_start_idx = torch.where(input_ids_ == processor.tokenizer.audio_start_id)[0]
                 audio_end_idx = torch.where(input_ids_ == processor.tokenizer.audio_end_id)[0]
@@ -751,7 +777,7 @@ class MllamaPlugin(BasePlugin):
         audios: Sequence["AudioInput"],
         imglens: Sequence[int],
         vidlens: Sequence[int],
-        audiolens: Sequence[int],
+        audlens: Sequence[int],
         batch_ids: Sequence[List[int]],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
@@ -829,7 +855,7 @@ class PaliGemmaPlugin(BasePlugin):
         audios: Sequence["AudioInput"],
         imglens: Sequence[int],
         vidlens: Sequence[int],
-        audiolens: Sequence[int],
+        audlens: Sequence[int],
         batch_ids: Sequence[List[int]],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
@@ -896,7 +922,7 @@ class PixtralPlugin(BasePlugin):
         audios: Sequence["AudioInput"],
         imglens: Sequence[int],
         vidlens: Sequence[int],
-        audiolens: Sequence[int],
+        audlens: Sequence[int],
         batch_ids: Sequence[List[int]],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
@@ -920,6 +946,8 @@ class Qwen2AudioPlugin(BasePlugin):
         processor: Optional["ProcessorMixin"],
     ) -> List[Dict[str, str]]:
         self._validate_input(images, videos, audios)
+        bos_token: str = getattr(processor, "audio_bos_token")
+        eos_token: str = getattr(processor, "audio_eos_token")
         mm_inputs = self._get_mm_inputs([], [], audios, processor)
         if "feature_attention_mask" in mm_inputs:
             audio_lengths = mm_inputs["feature_attention_mask"].sum(-1).tolist()
@@ -927,36 +955,14 @@ class Qwen2AudioPlugin(BasePlugin):
         num_audio_tokens = 0
         for message in messages:
             content = message["content"]
-            replace_str = []
             while AUDIO_PLACEHOLDER in content:
                 audio_length = audio_lengths.pop(0)
                 input_length = (audio_length - 1) // 2 + 1
-                audio_seq_len = (input_length - 2) // 2 + 1
-
-                expanded_audio_token = processor.audio_token * audio_seq_len
-
-                audio_token_start_idx = content.find(AUDIO_PLACEHOLDER)
-                audio_token_end_idx = audio_token_start_idx + len(AUDIO_PLACEHOLDER)
-
-                has_bos = (
-                    content[audio_token_start_idx - len(processor.audio_bos_token) : audio_token_start_idx]
-                    == processor.audio_bos_token
+                audio_seqlen = (input_length - 2) // 2 + 1 if self.expand_mm_tokens else 1
+                content = content.replace(
+                    AUDIO_PLACEHOLDER, f"{bos_token}{self.audio_token * audio_seqlen}{eos_token}", 1
                 )
-                has_eos = (
-                    content[audio_token_end_idx : audio_token_end_idx + len(processor.audio_eos_token)]
-                    == processor.audio_eos_token
-                )
-
-                # Check if this audio token is surrounded by bos/eos tokens
-                if not has_bos and not has_eos:
-                    expanded_audio_token = processor.audio_bos_token + expanded_audio_token + processor.audio_eos_token
-
-                replace_str.append(expanded_audio_token)
-                content = content.replace(AUDIO_PLACEHOLDER, "{{audio}}", 1)
                 num_audio_tokens += 1
-
-            while "{{audio}}" in content:
-                content = content.replace("{{audio}}", replace_str.pop(0), 1)
 
             message["content"] = content
 
@@ -966,37 +972,6 @@ class Qwen2AudioPlugin(BasePlugin):
         return messages
 
     @override
-    def _get_mm_inputs(
-        self,
-        images: Sequence["ImageInput"],
-        videos: Sequence["VideoInput"],
-        audios: Sequence["AudioInput"],
-        processor: "ProcessorMixin",
-        **kwargs,
-    ) -> Dict[str, "torch.Tensor"]:
-        mm_inputs = {}
-        if len(audios) != 0:
-            new_audios = []
-            for audio in audios:
-                if not isinstance(audio, np.ndarray):
-                    audio = librosa.load(audio, sr=processor.feature_extractor.sampling_rate)[0]
-                new_audios.append(audio)
-
-            mm_inputs = processor.feature_extractor(
-                new_audios,
-                sampling_rate=processor.feature_extractor.sampling_rate,
-                return_attention_mask=True,
-                padding="max_length",
-                return_tensors="pt",
-            )
-            mm_inputs["feature_attention_mask"] = mm_inputs[
-                "attention_mask"
-            ]  # rename attention_mask to prevent conflicts later on
-            del mm_inputs["attention_mask"]
-
-        return mm_inputs
-
-    @override
     def get_mm_inputs(
         self,
         images: Sequence["ImageInput"],
@@ -1004,7 +979,7 @@ class Qwen2AudioPlugin(BasePlugin):
         audios: Sequence["AudioInput"],
         imglens: Sequence[int],
         vidlens: Sequence[int],
-        audiolens: Sequence[int],
+        audlens: Sequence[int],
         batch_ids: Sequence[List[int]],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
@@ -1111,7 +1086,7 @@ class Qwen2vlPlugin(BasePlugin):
         audios: Sequence["AudioInput"],
         imglens: Sequence[int],
         vidlens: Sequence[int],
-        audiolens: Sequence[int],
+        audlens: Sequence[int],
         batch_ids: Sequence[List[int]],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
@@ -1191,7 +1166,7 @@ class VideoLlavaPlugin(BasePlugin):
         audios: Sequence["AudioInput"],
         imglens: Sequence[int],
         vidlens: Sequence[int],
-        audiolens: Sequence[int],
+        audlens: Sequence[int],
         batch_ids: Sequence[List[int]],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:

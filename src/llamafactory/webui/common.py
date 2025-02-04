@@ -28,7 +28,7 @@ from ..extras.constants import (
     DEFAULT_TEMPLATE,
     SUPPORTED_MODELS,
     TRAINING_ARGS,
-    VISION_MODELS,
+    MULTIMODAL_SUPPORTED_MODELS,
     DownloadSource,
 )
 from ..extras.misc import use_modelscope, use_openmind
@@ -136,18 +136,18 @@ def get_template(model_name: str) -> str:
     return DEFAULT_TEMPLATE.get(model_name, "default")
 
 
-def get_visual(model_name: str) -> bool:
-    r"""
-    Judges if the model is a vision language model.
-    """
-    return model_name in VISION_MODELS
-
-
 def get_time() -> str:
     r"""
     Gets current date and time.
     """
     return datetime.now().strftime(r"%Y-%m-%d-%H-%M-%S")
+
+
+def is_multimodal(model_name: str) -> bool:
+    r"""
+    Judges if the model is a vision language model.
+    """
+    return model_name in MULTIMODAL_SUPPORTED_MODELS
 
 
 def load_dataset_info(dataset_dir: str) -> Dict[str, Dict[str, Any]]:
