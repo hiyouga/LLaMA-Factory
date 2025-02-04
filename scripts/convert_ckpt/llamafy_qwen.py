@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,16 +19,11 @@ from typing import Any, Dict
 
 import fire
 import torch
+from huggingface_hub import split_torch_state_dict_into_shards
 from safetensors import safe_open
 from safetensors.torch import save_file
 from tqdm import tqdm
-from transformers.modeling_utils import (
-    SAFE_WEIGHTS_INDEX_NAME,
-    SAFE_WEIGHTS_NAME,
-    WEIGHTS_INDEX_NAME,
-    WEIGHTS_NAME,
-    shard_checkpoint,
-)
+from transformers.modeling_utils import SAFE_WEIGHTS_INDEX_NAME, SAFE_WEIGHTS_NAME, WEIGHTS_INDEX_NAME, WEIGHTS_NAME
 from transformers.utils import check_min_version
 
 
@@ -49,60 +44,68 @@ def save_weight(input_dir: str, output_dir: str, shard_size: str, save_safetenso
                 for key in f.keys():
                     qwen_state_dict[key] = f.get_tensor(key)
 
-    llama2_state_dict: Dict[str, torch.Tensor] = OrderedDict()
+    llama_state_dict: Dict[str, torch.Tensor] = OrderedDict()
     torch_dtype = None
     for key, value in tqdm(qwen_state_dict.items(), desc="Convert format"):
         if torch_dtype is None:
             torch_dtype = value.dtype
         if "wte" in key:
-            llama2_state_dict["model.embed_tokens.weight"] = value
+            llama_state_dict["model.embed_tokens.weight"] = value
         elif "ln_f" in key:
-            llama2_state_dict["model.norm.weight"] = value
+            llama_state_dict["model.norm.weight"] = value
         else:
             key = key.replace("transformer.h", "model.layers")
             if "attn.c_attn" in key:
                 proj_size = value.size(0) // 3
-                llama2_state_dict[key.replace("attn.c_attn", "self_attn.q_proj")] = value[:proj_size, ...]
-                llama2_state_dict[key.replace("attn.c_attn", "self_attn.k_proj")] = value[
+                llama_state_dict[key.replace("attn.c_attn", "self_attn.q_proj")] = value[:proj_size, ...]
+                llama_state_dict[key.replace("attn.c_attn", "self_attn.k_proj")] = value[
                     proj_size : 2 * proj_size, ...
                 ]
-                llama2_state_dict[key.replace("attn.c_attn", "self_attn.v_proj")] = value[2 * proj_size :, ...]
+                llama_state_dict[key.replace("attn.c_attn", "self_attn.v_proj")] = value[2 * proj_size :, ...]
             elif "attn.c_proj" in key:
-                llama2_state_dict[key.replace("attn.c_proj", "self_attn.o_proj")] = value
-                llama2_state_dict[key.replace("attn.c_proj.weight", "self_attn.o_proj.bias")] = torch.zeros_like(
+                llama_state_dict[key.replace("attn.c_proj", "self_attn.o_proj")] = value
+                llama_state_dict[key.replace("attn.c_proj.weight", "self_attn.o_proj.bias")] = torch.zeros_like(
                     value[:, 0]
                 ).squeeze()
             elif "ln_1" in key:
-                llama2_state_dict[key.replace("ln_1", "input_layernorm")] = value
+                llama_state_dict[key.replace("ln_1", "input_layernorm")] = value
             elif "ln_2" in key:
-                llama2_state_dict[key.replace("ln_2", "post_attention_layernorm")] = value
+                llama_state_dict[key.replace("ln_2", "post_attention_layernorm")] = value
             elif "mlp.w1" in key:
-                llama2_state_dict[key.replace("mlp.w1", "mlp.up_proj")] = value
+                llama_state_dict[key.replace("mlp.w1", "mlp.up_proj")] = value
             elif "mlp.w2" in key:
-                llama2_state_dict[key.replace("mlp.w2", "mlp.gate_proj")] = value
+                llama_state_dict[key.replace("mlp.w2", "mlp.gate_proj")] = value
             elif "mlp.c_proj" in key:
-                llama2_state_dict[key.replace("mlp.c_proj", "mlp.down_proj")] = value
+                llama_state_dict[key.replace("mlp.c_proj", "mlp.down_proj")] = value
             elif "lm_head" in key:
-                llama2_state_dict[key] = value
+                llama_state_dict[key] = value
             else:
                 raise KeyError(f"Unable to process key {key}")
 
     weights_name = SAFE_WEIGHTS_NAME if save_safetensors else WEIGHTS_NAME
-    shards, index = shard_checkpoint(llama2_state_dict, max_shard_size=shard_size, weights_name=weights_name)
-
-    for shard_file, shard in tqdm(shards.items(), desc="Save weights"):
+    filename_pattern = weights_name.replace(".bin", "{suffix}.bin").replace(".safetensors", "{suffix}.safetensors")
+    state_dict_split = split_torch_state_dict_into_shards(
+        llama_state_dict, filename_pattern=filename_pattern, max_shard_size=shard_size
+    )
+    for shard_file, tensors in tqdm(state_dict_split.filename_to_tensors.items(), desc="Save weights"):
+        shard = {tensor: llama_state_dict[tensor].contiguous() for tensor in tensors}
         if save_safetensors:
             save_file(shard, os.path.join(output_dir, shard_file), metadata={"format": "pt"})
         else:
             torch.save(shard, os.path.join(output_dir, shard_file))
 
-    if index is None:
-        print(f"Model weights saved in {os.path.join(output_dir, weights_name)}")
+    if not state_dict_split.is_sharded:
+        print(f"Model weights saved in {os.path.join(output_dir, weights_name)}.")
     else:
+        index = {
+            "metadata": state_dict_split.metadata,
+            "weight_map": state_dict_split.tensor_to_filename,
+        }
         index_name = SAFE_WEIGHTS_INDEX_NAME if save_safetensors else WEIGHTS_INDEX_NAME
         with open(os.path.join(output_dir, index_name), "w", encoding="utf-8") as f:
             json.dump(index, f, indent=2, sort_keys=True)
-        print(f"Model weights saved in {output_dir}")
+
+        print(f"Model weights saved in {output_dir}.")
 
     return str(torch_dtype).replace("torch.", "")
 
@@ -134,6 +137,7 @@ def save_config(input_dir: str, output_dir: str, torch_dtype: str):
 
     with open(os.path.join(output_dir, CONFIG_NAME), "w", encoding="utf-8") as f:
         json.dump(llama2_config_dict, f, indent=2)
+
     print(f"Model config saved in {os.path.join(output_dir, CONFIG_NAME)}")
 
 
