@@ -49,6 +49,7 @@ class PairwiseDataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
                     "labels": feature["chosen_input_ids"] if self.train_on_prompt else feature["chosen_labels"],
                     "images": feature["images"],
                     "videos": feature["videos"],
+                    "audios": feature["audios"],
                 }
             )
 
