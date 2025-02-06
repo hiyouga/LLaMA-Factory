@@ -55,6 +55,9 @@ _EVAL_CLS = Tuple[ModelArguments, DataArguments, EvaluationArguments, Finetuning
 
 
 def read_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> Union[Dict[str, Any], List[str]]:
+    r"""
+    Gets arguments from the command line or a config file.
+    """
     if args is not None:
         return args
 
@@ -80,7 +83,7 @@ def _parse_args(
         print(f"Got unknown args, potentially deprecated arguments: {unknown_args}")
         raise ValueError(f"Some specified arguments are not used by the HfArgumentParser: {unknown_args}")
 
-    return (*parsed_args,)
+    return tuple(parsed_args)
 
 
 def _set_transformers_logging() -> None:
@@ -159,17 +162,20 @@ def _check_extra_dependencies(
 
 def _parse_train_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _TRAIN_CLS:
     parser = HfArgumentParser(_TRAIN_ARGS)
-    return _parse_args(parser, args)
+    allow_extra_keys = os.getenv("ALLOW_EXTRA_ARGS", "0").lower() in ["true", "1"]
+    return _parse_args(parser, args, allow_extra_keys=allow_extra_keys)
 
 
 def _parse_infer_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _INFER_CLS:
     parser = HfArgumentParser(_INFER_ARGS)
-    return _parse_args(parser, args)
+    allow_extra_keys = os.getenv("ALLOW_EXTRA_ARGS", "0").lower() in ["true", "1"]
+    return _parse_args(parser, args, allow_extra_keys=allow_extra_keys)
 
 
 def _parse_eval_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _EVAL_CLS:
     parser = HfArgumentParser(_EVAL_ARGS)
-    return _parse_args(parser, args)
+    allow_extra_keys = os.getenv("ALLOW_EXTRA_ARGS", "0").lower() in ["true", "1"]
+    return _parse_args(parser, args, allow_extra_keys=allow_extra_keys)
 
 
 def get_ray_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> RayArguments:
