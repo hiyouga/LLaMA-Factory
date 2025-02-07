@@ -2,6 +2,68 @@
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "llamafactory"
+dynamic = ["version"]  # Since you're getting version from env.py
+description = "Easy-to-use LLM fine-tuning framework"
+authors = [
+    { name = "hiyouga", email = "hiyouga@buaa.edu.cn" }
+]
+requires-python = ">=3.9.0"
+readme = "README.md"
+license = { text = "Apache 2.0 License" }
+keywords = ["LLaMA", "BLOOM", "Falcon", "LLM", "ChatGPT", "transformer", "pytorch", "deep learning"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "transformers>=4.41.2,<=4.45.2; python_version<'3.10'",
+    "transformers>=4.41.2,<=4.48.2,!=4.46.*,!=4.47.*,!=4.48.0; python_version>='3.10'",
+    "datasets>=2.16.0,<=3.2.0",
+    "accelerate>=0.34.0,<=1.2.1",
+    "peft>=0.11.1,<=0.12.0",
+    "trl>=0.8.6,<=0.9.6",
+    "tokenizers>=0.19.0,<=0.21.0",
+    "gradio>=4.38.0,<=5.12.0",
+    "pandas>=2.0.0",
+    "scipy",
+    "einops",
+    "sentencepiece",
+    "tiktoken",
+    "protobuf",
+    "uvicorn",
+    "pydantic",
+    "fastapi",
+    "sse-starlette",
+    "matplotlib>=3.7.0",
+    "fire",
+    "packaging",
+    "pyyaml",
+    "numpy<2.0.0",
+    "av",
+    "librosa",
+    "tyro<0.9.0",
+    "torch>=1.13.1",
+    "nltk", 
+    "jieba", 
+    "rouge-chinese",
+    "ray @ https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-3.0.0.dev0-cp310-cp310-manylinux2014_x86_64.whl",
+    "hf_transfer",
+]
+
+[project.scripts]
+llamafactory-cli = "llamafactory.cli:main"
 [tool.ruff]
 target-version = "py38"
 line-length = 119
