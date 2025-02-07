@@ -65,6 +65,12 @@ def add_z3_leaf_module(model: "PreTrainedModel") -> None:
         from transformers.models.qwen2_moe.modeling_qwen2_moe import Qwen2MoeSparseMoeBlock
 
         _set_z3_leaf_modules(model, [Qwen2MoeSparseMoeBlock])
+    
+    if model_type == 'deepseek_v3':
+        # deepseek_v3 moe module set as leaf node
+        for layer in model.model.layers:
+            if 'DeepseekV3MoE' in str(type(layer.mlp)):
+                layer.mlp._z3_leaf=True
 
 
 def configure_moe(config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool) -> None:
