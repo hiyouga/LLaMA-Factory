@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 from types import MethodType
 from typing import TYPE_CHECKING, Any, Dict
 
@@ -23,7 +22,7 @@ from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.modeling_utils import is_fsdp_enabled
 
 from ..extras import logging
-from ..extras.misc import infer_optim_dtype
+from ..extras.misc import infer_optim_dtype, is_env_enabled
 from ..extras.packages import is_transformers_version_greater_than
 from .model_utils.attention import configure_attn_implementation, print_attn_implementation
 from .model_utils.checkpointing import prepare_model_for_training
@@ -102,8 +101,7 @@ def patch_config(
             model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
 
     if is_torch_npu_available():
-        use_jit_compile = os.environ.get("JIT_COMPILE", "0").lower() in ["true", "1"]
-        torch.npu.set_compile_mode(jit_compile=use_jit_compile)
+        torch.npu.set_compile_mode(jit_compile=is_env_enabled("JIT_COMPILE"))
 
     configure_attn_implementation(config, model_args, is_trainable)
     configure_rope(config, model_args, is_trainable)

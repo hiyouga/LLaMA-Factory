@@ -36,7 +36,7 @@ def get_requires() -> List[str]:
 
 def get_console_scripts() -> List[str]:
     console_scripts = ["llamafactory-cli = llamafactory.cli:main"]
-    if os.environ.get("ENABLE_SHORT_CONSOLE", "1").lower() in ["true", "1"]:
+    if os.getenv("ENABLE_SHORT_CONSOLE", "1").lower() in ["true", "y", "1"]:
         console_scripts.append("lmf = llamafactory.cli:main")
 
     return console_scripts
@@ -54,7 +54,7 @@ extra_require = {
     "gptq": ["optimum>=1.17.0", "auto-gptq>=0.5.0"],
     "awq": ["autoawq"],
     "aqlm": ["aqlm[gpu]>=1.1.0"],
-    "vllm": ["vllm>=0.4.3,<=0.6.5"],
+    "vllm": ["vllm>=0.4.3,<=0.7.2"],
     "galore": ["galore-torch"],
     "apollo": ["apollo-torch"],
     "badam": ["badam>=1.2.1"],
