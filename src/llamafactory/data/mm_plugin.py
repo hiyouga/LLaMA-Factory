@@ -224,15 +224,22 @@ class BasePlugin:
             mm_inputs.update(image_processor(images, return_tensors="pt"))
 
         if len(videos) != 0:
-            videos = self._regularize_videos(
-                videos,
-                image_resolution=getattr(processor, "video_resolution", 256 * 256),
-                video_fps=getattr(processor, "video_fps", 2.0),
-                video_maxlen=getattr(processor, "video_maxlen", 128),
-            )
             if "videos" in inspect.signature(video_processor.preprocess).parameters:  # qwen2vl processor
+                videos, fps_per_video = self._regularize_videos(
+                    videos,
+                    image_resolution=getattr(processor, "video_resolution", 256 * 256),
+                    video_fps=getattr(processor, "video_fps", 2.0),
+                    video_maxlen=getattr(processor, "video_maxlen", 128),
+                )
                 mm_inputs.update(video_processor(images=None, videos=videos, return_tensors="pt"))
+                mm_inputs.update({'fps_per_video':fps_per_video})
             else:
+                videos = self._regularize_videos(
+                    videos,
+                    image_resolution=getattr(processor, "video_resolution", 256 * 256),
+                    video_fps=getattr(processor, "video_fps", 2.0),
+                    video_maxlen=getattr(processor, "video_maxlen", 128),
+                )
                 mm_inputs.update(video_processor(videos, return_tensors="pt"))
 
         if len(audios) != 0:
@@ -1013,6 +1020,7 @@ class Qwen2vlPlugin(BasePlugin):
     @override
     def _regularize_videos(self, videos: Sequence["VideoInput"], **kwargs) -> List[List["ImageObject"]]:
         results = []
+        fps_per_video = []
         for video in videos:
             container = av.open(video, "r")
             video_stream = next(stream for stream in container.streams if stream.type == "video")
@@ -1027,9 +1035,11 @@ class Qwen2vlPlugin(BasePlugin):
                 frames.append(frames[-1])
 
             frames = self._regularize_images(frames, **kwargs)
-            results.append(frames)
 
-        return results
+            results.append(frames)
+            fps_per_video.append(len(sample_indices) / video_stream.duration / video_stream.time_base)
+
+        return results, fps_per_video
 
     @override
     def process_messages(
@@ -1096,11 +1106,10 @@ class Qwen2vlPlugin(BasePlugin):
         self._validate_input(images, videos, audios)
         mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
-        if "second_per_grid_ts" in getattr(image_processor, "model_input_names", []) and "video_grid_thw" in mm_inputs:
-            video_fps = getattr(processor, "video_fps", 2.0)
-            mm_inputs["second_per_grid_ts"] = [image_processor.temporal_patch_size / video_fps] * len(
-                mm_inputs["video_grid_thw"]
-            )
+        if "second_per_grid_ts" in getattr(image_processor, "model_input_names", []) and "video_grid_thw" in mm_inputs: # for qwen_2_5_vl
+            fps_per_video = mm_inputs.get("fps_per_video", [2.0] * len(mm_inputs["video_grid_thw"]))
+            mm_inputs["second_per_grid_ts"] = [image_processor.temporal_patch_size / fps for fps in fps_per_video]
+            mm_inputs.pop("fps_per_video")
 
         return mm_inputs
 
