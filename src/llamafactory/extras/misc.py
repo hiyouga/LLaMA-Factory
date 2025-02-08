@@ -78,7 +78,7 @@ def check_version(requirement: str, mandatory: bool = False) -> None:
     r"""
     Optionally checks the package version.
     """
-    if os.getenv("DISABLE_VERSION_CHECK", "0").lower() in ["true", "1"] and not mandatory:
+    if is_env_enabled("DISABLE_VERSION_CHECK") and not mandatory:
         logger.warning_rank0_once("Version checking has been disabled, may lead to unexpected behaviors.")
         return
 
@@ -94,7 +94,7 @@ def check_dependencies() -> None:
     r"""
     Checks the version of the required packages.
     """
-    check_version("transformers>=4.41.2,<=4.48.2,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0")
+    check_version("transformers>=4.41.2,<=4.48.3,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0")
     check_version("datasets>=2.16.0,<=3.2.0")
     check_version("accelerate>=0.34.0,<=1.2.1")
     check_version("peft>=0.11.1,<=0.12.0")
@@ -226,6 +226,13 @@ def is_gpu_or_npu_available() -> bool:
     return is_torch_npu_available() or is_torch_cuda_available()
 
 
+def is_env_enabled(env_var: str, default: str = "0") -> bool:
+    r"""
+    Checks if the environment variable is enabled.
+    """
+    return os.getenv(env_var, default).lower() in ["true", "y", "1"]
+
+
 def numpify(inputs: Union["NDArray", "torch.Tensor"]) -> "NDArray":
     r"""
     Casts a torch tensor or a numpy array to a numpy array.
@@ -244,7 +251,7 @@ def skip_check_imports() -> None:
     r"""
     Avoids flash attention import error in custom model files.
     """
-    if os.getenv("FORCE_CHECK_IMPORTS", "0").lower() not in ["true", "1"]:
+    if not is_env_enabled("FORCE_CHECK_IMPORTS"):
         transformers.dynamic_module_utils.check_imports = get_relative_imports
 
 
@@ -290,12 +297,12 @@ def try_download_model_from_other_hub(model_args: "ModelArguments") -> str:
 
 
 def use_modelscope() -> bool:
-    return os.getenv("USE_MODELSCOPE_HUB", "0").lower() in ["true", "1"]
+    return is_env_enabled("USE_MODELSCOPE_HUB")
 
 
 def use_openmind() -> bool:
-    return os.getenv("USE_OPENMIND_HUB", "0").lower() in ["true", "1"]
+    return is_env_enabled("USE_OPENMIND_HUB")
 
 
 def use_ray() -> bool:
-    return os.getenv("USE_RAY", "0").lower() in ["true", "1"]
+    return is_env_enabled("USE_RAY")
