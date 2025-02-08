@@ -318,6 +318,20 @@
       "response": "response"
     }
   },
+  "open_thoughts": {
+    "hf_hub_url": "open-thoughts/OpenThoughts-114k",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "system": "system"
+    },
+    "tags": {
+      "role_tag": "from",
+      "content_tag": "value",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
   "llava_1k_en": {
     "hf_hub_url": "BUAADreamer/llava-en-zh-2k",
     "subset": "en",
