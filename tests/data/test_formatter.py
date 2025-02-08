@@ -150,20 +150,20 @@ def test_llama3_tool_extractor():
 
 
 def test_mistral_function_formatter():
-    formatter = FunctionFormatter(slots=["[TOOL_CALLS] ", "{{content}}", "</s>"], tool_format="mistral")
+    formatter = FunctionFormatter(slots=["[TOOL_CALLS] {{content}}", "</s>"], tool_format="mistral")
     tool_calls = json.dumps(FUNCTION)
     assert formatter.apply(content=tool_calls) == [
-        "[TOOL_CALLS] ",
+        "[TOOL_CALLS] "
         """[{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}]""",
         "</s>",
     ]
 
 
 def test_mistral_multi_function_formatter():
-    formatter = FunctionFormatter(slots=["[TOOL_CALLS] ", "{{content}}", "</s>"], tool_format="mistral")
+    formatter = FunctionFormatter(slots=["[TOOL_CALLS] {{content}}", "</s>"], tool_format="mistral")
     tool_calls = json.dumps([FUNCTION] * 2)
     assert formatter.apply(content=tool_calls) == [
-        "[TOOL_CALLS] ",
+        "[TOOL_CALLS] "
         """[{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}, """
         """{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}]""",
         "</s>",
@@ -197,21 +197,21 @@ def test_mistral_multi_tool_extractor():
 
 
 def test_qwen_function_formatter():
-    formatter = FunctionFormatter(slots=["{{content}}", "<|im_end|>"], tool_format="qwen")
+    formatter = FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="qwen")
     tool_calls = json.dumps(FUNCTION)
     assert formatter.apply(content=tool_calls) == [
-        """<tool_call>\n{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}\n</tool_call>""",
-        "<|im_end|>",
+        """<tool_call>\n{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}\n</tool_call>"""
+        "<|im_end|>\n"
     ]
 
 
 def test_qwen_multi_function_formatter():
-    formatter = FunctionFormatter(slots=["{{content}}", "<|im_end|>"], tool_format="qwen")
+    formatter = FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="qwen")
     tool_calls = json.dumps([FUNCTION] * 2)
     assert formatter.apply(content=tool_calls) == [
         """<tool_call>\n{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}\n</tool_call>\n"""
-        """<tool_call>\n{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}\n</tool_call>""",
-        "<|im_end|>",
+        """<tool_call>\n{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}\n</tool_call>"""
+        "<|im_end|>\n"
     ]
 
 
