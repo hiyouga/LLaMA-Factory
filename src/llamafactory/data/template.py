@@ -47,6 +47,7 @@ class Template:
     format_prefix: "Formatter"
     default_system: str
     stop_words: List[str]
+    thought_words: Tuple[str, str]
     efficient_eos: bool
     replace_eos: bool
     replace_jinja_template: bool
@@ -216,6 +217,7 @@ def _register_template(
     format_prefix: Optional["Formatter"] = None,
     default_system: str = "",
     stop_words: Optional[Sequence[str]] = None,
+    thought_words: Optional[Tuple[str, str]] = None,
     efficient_eos: bool = False,
     replace_eos: bool = False,
     replace_jinja_template: bool = False,
@@ -260,6 +262,7 @@ def _register_template(
         format_prefix=format_prefix or default_prefix_formatter,
         default_system=default_system,
         stop_words=stop_words or [],
+        thought_words=thought_words or ("<think>", "</think>"),
         efficient_eos=efficient_eos,
         replace_eos=replace_eos,
         replace_jinja_template=replace_jinja_template,
