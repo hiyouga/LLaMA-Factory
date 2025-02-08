@@ -45,6 +45,8 @@ def print_env() -> None:
     if is_torch_cuda_available():
         info["PyTorch version"] += " (GPU)"
         info["GPU type"] = torch.cuda.get_device_name()
+        info["GPU number"] = torch.cuda.device_count()
+        info["GPU memory"] = f"{torch.cuda.mem_get_info()[1] / (1024**3):.2f}GB"
 
     if is_torch_npu_available():
         info["PyTorch version"] += " (NPU)"
@@ -59,7 +61,7 @@ def print_env() -> None:
         pass
 
     try:
-        import bitsandbytes
+        import bitsandbytes  # type: ignore
 
         info["Bitsandbytes version"] = bitsandbytes.__version__
     except Exception:
