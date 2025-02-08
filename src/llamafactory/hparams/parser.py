@@ -32,7 +32,7 @@ from transformers.utils import is_torch_bf16_gpu_available, is_torch_npu_availab
 
 from ..extras import logging
 from ..extras.constants import CHECKPOINT_NAMES
-from ..extras.misc import check_dependencies, check_version, get_current_device
+from ..extras.misc import check_dependencies, check_version, get_current_device, is_env_enabled
 from .data_args import DataArguments
 from .evaluation_args import EvaluationArguments
 from .finetuning_args import FinetuningArguments
@@ -136,7 +136,7 @@ def _check_extra_dependencies(
         check_version("mixture-of-depth>=1.1.6", mandatory=True)
 
     if model_args.infer_backend == "vllm":
-        check_version("vllm>=0.4.3,<=0.6.5")
+        check_version("vllm>=0.4.3,<=0.7.2")
         check_version("vllm", mandatory=True)
 
     if finetuning_args.use_galore:
@@ -162,19 +162,19 @@ def _check_extra_dependencies(
 
 def _parse_train_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _TRAIN_CLS:
     parser = HfArgumentParser(_TRAIN_ARGS)
-    allow_extra_keys = os.getenv("ALLOW_EXTRA_ARGS", "0").lower() in ["true", "1"]
+    allow_extra_keys = is_env_enabled("ALLOW_EXTRA_ARGS")
     return _parse_args(parser, args, allow_extra_keys=allow_extra_keys)
 
 
 def _parse_infer_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _INFER_CLS:
     parser = HfArgumentParser(_INFER_ARGS)
-    allow_extra_keys = os.getenv("ALLOW_EXTRA_ARGS", "0").lower() in ["true", "1"]
+    allow_extra_keys = is_env_enabled("ALLOW_EXTRA_ARGS")
     return _parse_args(parser, args, allow_extra_keys=allow_extra_keys)
 
 
 def _parse_eval_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _EVAL_CLS:
     parser = HfArgumentParser(_EVAL_ARGS)
-    allow_extra_keys = os.getenv("ALLOW_EXTRA_ARGS", "0").lower() in ["true", "1"]
+    allow_extra_keys = is_env_enabled("ALLOW_EXTRA_ARGS")
     return _parse_args(parser, args, allow_extra_keys=allow_extra_keys)
 
 
