@@ -36,17 +36,17 @@ if is_gradio_available():
     import gradio as gr
 
 
-def _format_response(text: str, lang: str) -> str:
+def _format_response(text: str, lang: str, thought_words: Tuple[str, str] = ("<think>", "</think>")) -> str:
     r"""
     Post-processes the response text.
 
     Based on: https://huggingface.co/spaces/Lyte/DeepSeek-R1-Distill-Qwen-1.5B-Demo-GGUF/blob/main/app.py
     """
-    if "<think>" not in text:
+    if thought_words[0] not in text:
         return text
 
-    text = text.replace("<think>", "")
-    result = text.split("</think>", maxsplit=1)
+    text = text.replace(thought_words[0], "")
+    result = text.split(thought_words[1], maxsplit=1)
     if len(result) == 1:
         summary = ALERTS["info_thinking"][lang]
         thought, answer = text, ""
@@ -209,7 +209,7 @@ class WebChatModel(ChatModel):
                 bot_text = "```json\n" + tool_calls + "\n```"
             else:
                 output_messages = messages + [{"role": Role.ASSISTANT.value, "content": result}]
-                bot_text = _format_response(result, lang)
+                bot_text = _format_response(result, lang, self.engine.template.thought_words)
 
             chatbot[-1] = {"role": "assistant", "content": bot_text}
             yield chatbot, output_messages
