@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 from types import MethodType
 from typing import TYPE_CHECKING, Any, Dict
 
@@ -23,7 +22,7 @@ from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.modeling_utils import is_fsdp_enabled
 
 from ..extras import logging
-from ..extras.misc import infer_optim_dtype
+from ..extras.misc import infer_optim_dtype, is_env_enabled
 from ..extras.packages import is_transformers_version_greater_than
 from .model_utils.attention import configure_attn_implementation, print_attn_implementation
 from .model_utils.checkpointing import prepare_model_for_training
@@ -78,13 +77,14 @@ def patch_processor(
     model_args: "ModelArguments",
 ) -> None:
     setattr(processor, "tokenizer", tokenizer)
-    setattr(processor, "image_seqlen", get_image_seqlen(config))
-    setattr(processor, "image_resolution", model_args.image_resolution)
-    setattr(processor, "patch_size", get_patch_size(config, processor))
-    setattr(processor, "video_resolution", model_args.video_resolution)
-    setattr(processor, "video_fps", model_args.video_fps)
-    setattr(processor, "video_maxlen", model_args.video_maxlen)
-    setattr(processor, "vision_feature_select_strategy", get_vision_feature_select_strategy(config, processor))
+    if getattr(config, "vision_config", None) is not None:  # visual models
+        setattr(processor, "image_seqlen", get_image_seqlen(config))
+        setattr(processor, "image_resolution", model_args.image_resolution)
+        setattr(processor, "patch_size", get_patch_size(config, processor))
+        setattr(processor, "video_resolution", model_args.video_resolution)
+        setattr(processor, "video_fps", model_args.video_fps)
+        setattr(processor, "video_maxlen", model_args.video_maxlen)
+        setattr(processor, "vision_feature_select_strategy", get_vision_feature_select_strategy(config, processor))
 
 
 def patch_config(
@@ -101,8 +101,7 @@ def patch_config(
             model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
 
     if is_torch_npu_available():
-        use_jit_compile = os.environ.get("JIT_COMPILE", "0").lower() in ["true", "1"]
-        torch.npu.set_compile_mode(jit_compile=use_jit_compile)
+        torch.npu.set_compile_mode(jit_compile=is_env_enabled("JIT_COMPILE"))
 
     configure_attn_implementation(config, model_args, is_trainable)
     configure_rope(config, model_args, is_trainable)

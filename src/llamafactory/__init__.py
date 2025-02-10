@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ Level:
 
 Dependency graph:
   main:
-    transformers>=4.41.2,<=4.48.2,!=4.46.*,!=4.47.*,!=4.48.0
+    transformers>=4.41.2,<=4.48.3,!=4.46.*,!=4.47.*,!=4.48.0
     datasets>=2.16.0,<=3.2.0
     accelerate>=0.34.0,<=1.2.1
     peft>=0.11.1,<=0.12.0
@@ -30,7 +30,7 @@ Dependency graph:
   longlora:
     transformers>=4.41.2,<4.48.0
   packing:
-    transformers>=4.43.0,<=4.48.2
+    transformers>=4.43.0
 
 Disable version checking: DISABLE_VERSION_CHECK=1
 Enable VRAM recording: RECORD_VRAM=1

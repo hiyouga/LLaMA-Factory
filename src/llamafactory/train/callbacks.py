@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ from typing_extensions import override
 
 from ..extras import logging
 from ..extras.constants import TRAINER_LOG, V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
-from ..extras.misc import get_peak_memory, use_ray
+from ..extras.misc import get_peak_memory, is_env_enabled, use_ray
 
 
 if is_safetensors_available():
@@ -193,7 +193,7 @@ class LogCallback(TrainerCallback):
         self.aborted = False
         self.do_train = False
         # Web UI
-        self.webui_mode = os.environ.get("LLAMABOARD_ENABLED", "0").lower() in ["true", "1"]
+        self.webui_mode = is_env_enabled("LLAMABOARD_ENABLED")
         if self.webui_mode and not use_ray():
             signal.signal(signal.SIGABRT, self._set_abort)
             self.logger_handler = logging.LoggerHandler(os.environ.get("LLAMABOARD_WORKDIR"))
@@ -299,7 +299,7 @@ class LogCallback(TrainerCallback):
             logs["throughput"] = round(state.num_input_tokens_seen / (time.time() - self.start_time), 2)
             logs["total_tokens"] = state.num_input_tokens_seen
 
-        if os.environ.get("RECORD_VRAM", "0").lower() in ["true", "1"]:
+        if is_env_enabled("RECORD_VRAM"):
             vram_allocated, vram_reserved = get_peak_memory()
             logs["vram_allocated"] = round(vram_allocated / (1024**3), 2)
             logs["vram_reserved"] = round(vram_reserved / (1024**3), 2)

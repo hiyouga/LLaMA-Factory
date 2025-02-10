@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # This code is inspired by the Dan's test library.
 # https://github.com/hendrycks/test/blob/master/evaluate_flan.py

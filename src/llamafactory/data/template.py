@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ class Template:
     format_prefix: "Formatter"
     default_system: str
     stop_words: List[str]
+    thought_words: Tuple[str, str]
     efficient_eos: bool
     replace_eos: bool
     replace_jinja_template: bool
@@ -216,6 +217,7 @@ def _register_template(
     format_prefix: Optional["Formatter"] = None,
     default_system: str = "",
     stop_words: Optional[Sequence[str]] = None,
+    thought_words: Optional[Tuple[str, str]] = None,
     efficient_eos: bool = False,
     replace_eos: bool = False,
     replace_jinja_template: bool = False,
@@ -260,6 +262,7 @@ def _register_template(
         format_prefix=format_prefix or default_prefix_formatter,
         default_system=default_system,
         stop_words=stop_words or [],
+        thought_words=thought_words or ("<think>", "</think>"),
         efficient_eos=efficient_eos,
         replace_eos=replace_eos,
         replace_jinja_template=replace_jinja_template,
@@ -642,7 +645,7 @@ _register_template(
 
 _register_template(
     name="empty",
-    efficient_eos=True,
+    format_assistant=StringFormatter(slots=["{{content}}"]),
 )
 
 
@@ -890,7 +893,7 @@ _register_template(
 )
 
 
-# copied from chatml template
+# copied from qwen template
 _register_template(
     name="llava_next_qwen",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
@@ -979,7 +982,7 @@ _register_template(
     format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     stop_words=["<|im_end|>"],
-    mm_plugin=get_mm_plugin(name="minicpm_v", image_token="<image>", video_token="<video>"),
+    mm_plugin=get_mm_plugin(name="minicpm_v", image_token="<image>", video_token="<video>", audio_token="<audio>"),
 )
 
 
@@ -1144,6 +1147,18 @@ _register_template(
 
 
 # copied from chatml template
+_register_template(
+    name="qwen2_audio",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    default_system="You are a helpful assistant.",
+    stop_words=["<|im_end|>"],
+    mm_plugin=get_mm_plugin(name="qwen2_audio", audio_token="<|AUDIO|>"),
+)
+
+
+# copied from qwen template
 _register_template(
     name="qwen2_vl",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),

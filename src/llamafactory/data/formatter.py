@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -86,19 +86,25 @@ class StringFormatter(Formatter):
             elif isinstance(slot, (dict, set)):
                 elements.append(slot)
             else:
-                raise RuntimeError(f"Input must be string, set[str] or dict[str, str], got {type(slot)}")
+                raise RuntimeError(f"Input must be string, set[str] or dict[str, str], got {type(slot)}.")
 
         return elements
 
 
 @dataclass
-class FunctionFormatter(Formatter):
+class FunctionFormatter(StringFormatter):
     def __post_init__(self):
+        super().__post_init__()
         self.tool_utils = get_tool_utils(self.tool_format)
 
     @override
     def apply(self, **kwargs) -> SLOTS:
-        content = kwargs.pop("content")
+        content: str = kwargs.pop("content")
+        regex = re.compile(r"<think>(.*)</think>", re.DOTALL)
+        thought = re.search(regex, content)
+        if thought:
+            content = content.replace(thought.group(0), "")
+
         functions: List["FunctionCall"] = []
         try:
             tool_calls = json.loads(content)
@@ -111,16 +117,13 @@ class FunctionFormatter(Formatter):
                 )
 
         except json.JSONDecodeError:
-            raise RuntimeError(f"Invalid JSON format in function message: {str([content])}")  # flat string
+            raise RuntimeError(f"Invalid JSON format in function message: {str([content])}.")  # flat string
 
-        elements = []
-        for slot in self.slots:
-            if slot == "{{content}}":
-                elements += self.tool_utils.function_formatter(functions)
-            else:
-                elements.append(slot)
+        function_str = self.tool_utils.function_formatter(functions)
+        if thought:
+            function_str = thought.group(1) + function_str
 
-        return elements
+        return super().apply(content=function_str)
 
 
 @dataclass
@@ -135,7 +138,7 @@ class ToolFormatter(Formatter):
             tools = json.loads(content)
             return [self.tool_utils.tool_formatter(tools) if len(tools) != 0 else ""]
         except json.JSONDecodeError:
-            raise RuntimeError(f"Invalid JSON format in tool description: {str([content])}")  # flat string
+            raise RuntimeError(f"Invalid JSON format in tool description: {str([content])}.")  # flat string
 
     @override
     def extract(self, content: str) -> Union[str, List["FunctionCall"]]:

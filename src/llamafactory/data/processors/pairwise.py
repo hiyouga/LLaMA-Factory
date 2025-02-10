@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer, ProcessorMixin
 
     from ...hparams import DataArguments
-    from ..mm_plugin import ImageInput, VideoInput
+    from ..mm_plugin import AudioInput, ImageInput, VideoInput
     from ..template import Template
 
 
@@ -38,13 +38,14 @@ def _encode_pairwise_example(
     tools: Optional[str],
     images: Sequence["ImageInput"],
     videos: Sequence["VideoInput"],
+    audios: Sequence["AudioInput"],
     template: "Template",
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"],
     cutoff_len: int,
 ) -> Tuple[List[int], List[int], List[int], List[int]]:
-    chosen_messages = template.mm_plugin.process_messages(prompt + [response[0]], images, videos, processor)
-    rejected_messages = template.mm_plugin.process_messages(prompt + [response[1]], images, videos, processor)
+    chosen_messages = template.mm_plugin.process_messages(prompt + [response[0]], images, videos, audios, processor)
+    rejected_messages = template.mm_plugin.process_messages(prompt + [response[1]], images, videos, audios, processor)
     prompt_ids, chosen_ids = template.encode_oneturn(tokenizer, chosen_messages, system, tools)
     _, rejected_ids = template.encode_oneturn(tokenizer, rejected_messages, system, tools)
 
@@ -52,7 +53,9 @@ def _encode_pairwise_example(
         chosen_ids += [tokenizer.eos_token_id]
         rejected_ids += [tokenizer.eos_token_id]
 
-    prompt_ids, _ = template.mm_plugin.process_token_ids(prompt_ids, None, images, videos, tokenizer, processor)
+    prompt_ids, _ = template.mm_plugin.process_token_ids(
+        prompt_ids, None, images, videos, audios, tokenizer, processor
+    )
     # consider the response is more important
     source_len, target_len = infer_seqlen(len(prompt_ids), max(len(chosen_ids), len(rejected_ids)), cutoff_len)
     prompt_ids = prompt_ids[:source_len]
@@ -89,6 +92,7 @@ def preprocess_pairwise_dataset(
             tools=examples["_tools"][i],
             images=examples["_images"][i] or [],
             videos=examples["_videos"][i] or [],
+            audios=examples["_audios"][i] or [],
             template=template,
             tokenizer=tokenizer,
             processor=processor,
@@ -102,6 +106,7 @@ def preprocess_pairwise_dataset(
         model_inputs["rejected_labels"].append(rejected_labels)
         model_inputs["images"].append(examples["_images"][i])
         model_inputs["videos"].append(examples["_videos"][i])
+        model_inputs["audios"].append(examples["_audios"][i])
 
     return model_inputs
 

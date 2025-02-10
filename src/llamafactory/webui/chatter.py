@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,17 +36,17 @@ if is_gradio_available():
     import gradio as gr
 
 
-def _format_response(text: str, lang: str) -> str:
+def _format_response(text: str, lang: str, thought_words: Tuple[str, str] = ("<think>", "</think>")) -> str:
     r"""
     Post-processes the response text.
 
     Based on: https://huggingface.co/spaces/Lyte/DeepSeek-R1-Distill-Qwen-1.5B-Demo-GGUF/blob/main/app.py
     """
-    if "<think>" not in text:
+    if thought_words[0] not in text:
         return text
 
-    text = text.replace("<think>", "")
-    result = text.split("</think>", maxsplit=1)
+    text = text.replace(thought_words[0], "")
+    result = text.split(thought_words[1], maxsplit=1)
     if len(result) == 1:
         summary = ALERTS["info_thinking"][lang]
         thought, answer = text, ""
@@ -172,6 +172,7 @@ class WebChatModel(ChatModel):
         tools: str,
         image: Optional[Any],
         video: Optional[Any],
+        audio: Optional[Any],
         max_new_tokens: int,
         top_p: float,
         temperature: float,
@@ -190,6 +191,7 @@ class WebChatModel(ChatModel):
             tools,
             images=[image] if image else None,
             videos=[video] if video else None,
+            audios=[audio] if audio else None,
             max_new_tokens=max_new_tokens,
             top_p=top_p,
             temperature=temperature,
@@ -207,7 +209,7 @@ class WebChatModel(ChatModel):
                 bot_text = "```json\n" + tool_calls + "\n```"
             else:
                 output_messages = messages + [{"role": Role.ASSISTANT.value, "content": result}]
-                bot_text = _format_response(result, lang)
+                bot_text = _format_response(result, lang, self.engine.template.thought_words)
 
             chatbot[-1] = {"role": "assistant", "content": bot_text}
             yield chatbot, output_messages

@@ -38,6 +38,20 @@
       "assistant_tag": "assistant"
     }
   },
+  "mllm_audio_demo": {
+    "file_name": "mllm_audio_demo.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "audios": "audios"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
   "mllm_video_demo": {
     "file_name": "mllm_video_demo.json",
     "formatting": "sharegpt",
@@ -302,6 +316,20 @@
     "columns": {
       "prompt": "prompt",
       "response": "response"
+    }
+  },
+  "open_thoughts": {
+    "hf_hub_url": "open-thoughts/OpenThoughts-114k",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "system": "system"
+    },
+    "tags": {
+      "role_tag": "from",
+      "content_tag": "value",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
     }
   },
   "llava_1k_en": {

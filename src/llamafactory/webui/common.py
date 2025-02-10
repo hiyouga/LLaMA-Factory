@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ from ..extras import logging
 from ..extras.constants import (
     DATA_CONFIG,
     DEFAULT_TEMPLATE,
+    MULTIMODAL_SUPPORTED_MODELS,
     SUPPORTED_MODELS,
     TRAINING_ARGS,
-    VISION_MODELS,
     DownloadSource,
 )
 from ..extras.misc import use_modelscope, use_openmind
@@ -136,18 +136,18 @@ def get_template(model_name: str) -> str:
     return DEFAULT_TEMPLATE.get(model_name, "default")
 
 
-def get_visual(model_name: str) -> bool:
-    r"""
-    Judges if the model is a vision language model.
-    """
-    return model_name in VISION_MODELS
-
-
 def get_time() -> str:
     r"""
     Gets current date and time.
     """
     return datetime.now().strftime(r"%Y-%m-%d-%H-%M-%S")
+
+
+def is_multimodal(model_name: str) -> bool:
+    r"""
+    Judges if the model is a vision language model.
+    """
+    return model_name in MULTIMODAL_SUPPORTED_MODELS
 
 
 def load_dataset_info(dataset_dir: str) -> Dict[str, Dict[str, Any]]:

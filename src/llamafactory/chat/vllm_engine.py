@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ from typing_extensions import override
 
 from ..data import get_template_and_fix_tokenizer
 from ..extras import logging
-from ..extras.constants import IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
+from ..extras.constants import AUDIO_PLACEHOLDER, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
 from ..extras.misc import get_device_count
 from ..extras.packages import is_pillow_available, is_vllm_available
 from ..model import load_config, load_tokenizer
@@ -39,7 +39,7 @@ if is_vllm_available():
 
 
 if TYPE_CHECKING:
-    from ..data.mm_plugin import ImageInput, VideoInput
+    from ..data.mm_plugin import AudioInput, ImageInput, VideoInput
     from ..hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
 
 
@@ -109,10 +109,11 @@ class VllmEngine(BaseEngine):
         tools: Optional[str] = None,
         images: Optional[Sequence["ImageInput"]] = None,
         videos: Optional[Sequence["VideoInput"]] = None,
+        audios: Optional[Sequence["AudioInput"]] = None,
         **input_kwargs,
     ) -> AsyncIterator["RequestOutput"]:
         request_id = f"chatcmpl-{uuid.uuid4().hex}"
-        mm_input_dict = {"images": [], "videos": [], "imglens": [0], "vidlens": [0]}
+        mm_input_dict = {"images": [], "videos": [], "audios": [], "imglens": [0], "vidlens": [0], "audlens": [0]}
         if images is not None:
             mm_input_dict.update({"images": images, "imglens": [len(images)]})
             if not any(IMAGE_PLACEHOLDER in message["content"] for message in messages):
@@ -123,8 +124,13 @@ class VllmEngine(BaseEngine):
             if not any(VIDEO_PLACEHOLDER in message["content"] for message in messages):
                 messages[0]["content"] = VIDEO_PLACEHOLDER * len(videos) + messages[0]["content"]
 
+        if audios is not None:
+            mm_input_dict.update({"audios": audios, "audlens": [len(audios)]})
+            if not any(AUDIO_PLACEHOLDER in message["content"] for message in messages):
+                messages[0]["content"] = AUDIO_PLACEHOLDER * len(audios) + messages[0]["content"]
+
         messages = self.template.mm_plugin.process_messages(
-            messages, mm_input_dict["images"], mm_input_dict["videos"], self.processor
+            messages, mm_input_dict["images"], mm_input_dict["videos"], mm_input_dict["audios"], self.processor
         )
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or self.generating_args["default_system"]
@@ -202,10 +208,11 @@ class VllmEngine(BaseEngine):
         tools: Optional[str] = None,
         images: Optional[Sequence["ImageInput"]] = None,
         videos: Optional[Sequence["VideoInput"]] = None,
+        audios: Optional[Sequence["AudioInput"]] = None,
         **input_kwargs,
     ) -> List["Response"]:
         final_output = None
-        generator = await self._generate(messages, system, tools, images, videos, **input_kwargs)
+        generator = await self._generate(messages, system, tools, images, videos, audios, **input_kwargs)
         async for request_output in generator:
             final_output = request_output
 
@@ -230,10 +237,11 @@ class VllmEngine(BaseEngine):
         tools: Optional[str] = None,
         images: Optional[Sequence["ImageInput"]] = None,
         videos: Optional[Sequence["VideoInput"]] = None,
+        audios: Optional[Sequence["AudioInput"]] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
         generated_text = ""
-        generator = await self._generate(messages, system, tools, images, videos, **input_kwargs)
+        generator = await self._generate(messages, system, tools, images, videos, audios, **input_kwargs)
         async for result in generator:
             delta_text = result.outputs[0].text[len(generated_text) :]
             generated_text = result.outputs[0].text

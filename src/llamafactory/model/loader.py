@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,14 @@ import os
 from typing import TYPE_CHECKING, Any, Dict, Optional, TypedDict
 
 import torch
-from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForVision2Seq, AutoProcessor, AutoTokenizer
+from transformers import (
+    AutoConfig,
+    AutoModelForCausalLM,
+    AutoModelForSeq2SeqLM,
+    AutoModelForVision2Seq,
+    AutoProcessor,
+    AutoTokenizer,
+)
 from trl import AutoModelForCausalLMWithValueHead
 
 from ..extras import logging
@@ -142,6 +149,8 @@ def load_model(
         else:
             if type(config) in AutoModelForVision2Seq._model_mapping.keys():  # assume built-in models
                 load_class = AutoModelForVision2Seq
+            elif type(config) in AutoModelForSeq2SeqLM._model_mapping.keys():
+                load_class = AutoModelForSeq2SeqLM
             else:
                 load_class = AutoModelForCausalLM
 

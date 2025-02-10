@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer, ProcessorMixin
 
     from ...hparams import DataArguments
-    from ..mm_plugin import ImageInput, VideoInput
+    from ..mm_plugin import AudioInput, ImageInput, VideoInput
     from ..template import Template
 
 
@@ -38,6 +38,7 @@ def _encode_unsupervised_example(
     tools: Optional[str],
     images: Sequence["ImageInput"],
     videos: Sequence["VideoInput"],
+    audios: Sequence["AudioInput"],
     template: "Template",
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"],
@@ -48,12 +49,12 @@ def _encode_unsupervised_example(
     else:
         messages = prompt + [{"role": Role.ASSISTANT.value, "content": ""}]
 
-    messages = template.mm_plugin.process_messages(messages, images, videos, processor)
+    messages = template.mm_plugin.process_messages(messages, images, videos, audios, processor)
     input_ids, labels = template.encode_oneturn(tokenizer, messages, system, tools)
     if template.efficient_eos:
         labels += [tokenizer.eos_token_id]
 
-    input_ids, _ = template.mm_plugin.process_token_ids(input_ids, None, images, videos, tokenizer, processor)
+    input_ids, _ = template.mm_plugin.process_token_ids(input_ids, None, images, videos, audios, tokenizer, processor)
     source_len, target_len = infer_seqlen(len(input_ids), len(labels), cutoff_len)
     input_ids = input_ids[:source_len]
     labels = labels[:target_len]
@@ -83,6 +84,7 @@ def preprocess_unsupervised_dataset(
             tools=examples["_tools"][i],
             images=examples["_images"][i] or [],
             videos=examples["_videos"][i] or [],
+            audios=examples["_audios"][i] or [],
             template=template,
             tokenizer=tokenizer,
             processor=processor,
@@ -93,6 +95,7 @@ def preprocess_unsupervised_dataset(
         model_inputs["labels"].append(labels)
         model_inputs["images"].append(examples["_images"][i])
         model_inputs["videos"].append(examples["_videos"][i])
+        model_inputs["audios"].append(examples["_audios"][i])
 
     return model_inputs
 

@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -123,11 +123,10 @@ def test_glm4_tool_extractor():
 
 
 def test_llama3_function_formatter():
-    formatter = FunctionFormatter(slots=["{{content}}", "<|eot_id|>"], tool_format="llama3")
+    formatter = FunctionFormatter(slots=["{{content}}<|eot_id|>"], tool_format="llama3")
     tool_calls = json.dumps({"name": "tool_name", "arguments": {"foo": "bar", "size": 10}})
     assert formatter.apply(content=tool_calls) == [
-        """{"name": "tool_name", "parameters": {"foo": "bar", "size": 10}}""",
-        "<|eot_id|>",
+        """{"name": "tool_name", "parameters": {"foo": "bar", "size": 10}}<|eot_id|>"""
     ]
 
 
@@ -150,20 +149,19 @@ def test_llama3_tool_extractor():
 
 
 def test_mistral_function_formatter():
-    formatter = FunctionFormatter(slots=["[TOOL_CALLS] ", "{{content}}", "</s>"], tool_format="mistral")
+    formatter = FunctionFormatter(slots=["[TOOL_CALLS] {{content}}", "</s>"], tool_format="mistral")
     tool_calls = json.dumps(FUNCTION)
     assert formatter.apply(content=tool_calls) == [
-        "[TOOL_CALLS] ",
-        """[{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}]""",
+        "[TOOL_CALLS] " """[{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}]""",
         "</s>",
     ]
 
 
 def test_mistral_multi_function_formatter():
-    formatter = FunctionFormatter(slots=["[TOOL_CALLS] ", "{{content}}", "</s>"], tool_format="mistral")
+    formatter = FunctionFormatter(slots=["[TOOL_CALLS] {{content}}", "</s>"], tool_format="mistral")
     tool_calls = json.dumps([FUNCTION] * 2)
     assert formatter.apply(content=tool_calls) == [
-        "[TOOL_CALLS] ",
+        "[TOOL_CALLS] "
         """[{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}, """
         """{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}]""",
         "</s>",
@@ -197,21 +195,20 @@ def test_mistral_multi_tool_extractor():
 
 
 def test_qwen_function_formatter():
-    formatter = FunctionFormatter(slots=["{{content}}", "<|im_end|>"], tool_format="qwen")
+    formatter = FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="qwen")
     tool_calls = json.dumps(FUNCTION)
     assert formatter.apply(content=tool_calls) == [
-        """<tool_call>\n{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}\n</tool_call>""",
-        "<|im_end|>",
+        """<tool_call>\n{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}\n</tool_call><|im_end|>\n"""
     ]
 
 
 def test_qwen_multi_function_formatter():
-    formatter = FunctionFormatter(slots=["{{content}}", "<|im_end|>"], tool_format="qwen")
+    formatter = FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="qwen")
     tool_calls = json.dumps([FUNCTION] * 2)
     assert formatter.apply(content=tool_calls) == [
         """<tool_call>\n{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}\n</tool_call>\n"""
-        """<tool_call>\n{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}\n</tool_call>""",
-        "<|im_end|>",
+        """<tool_call>\n{"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}\n</tool_call>"""
+        "<|im_end|>\n"
     ]
 
 
@@ -224,7 +221,7 @@ def test_qwen_tool_formatter():
         f"\n{json.dumps(wrapped_tool, ensure_ascii=False)}"
         "\n</tools>\n\nFor each function call, return a json object with function name and arguments within "
         """<tool_call></tool_call> XML tags:\n<tool_call>\n{"name": <function-name>, """
-        """"arguments": <args-json-object>}\n</tool_call><|im_end|>\n"""
+        """"arguments": <args-json-object>}\n</tool_call>"""
     ]
 
 

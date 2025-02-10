@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 import os
 import platform
 
+from ..extras.misc import is_env_enabled
 from ..extras.packages import is_gradio_available
 from .common import save_config
 from .components import (
@@ -87,14 +88,14 @@ def create_web_demo() -> "gr.Blocks":
 
 
 def run_web_ui() -> None:
-    gradio_ipv6 = os.getenv("GRADIO_IPV6", "0").lower() in ["true", "1"]
-    gradio_share = os.getenv("GRADIO_SHARE", "0").lower() in ["true", "1"]
+    gradio_ipv6 = is_env_enabled("GRADIO_IPV6")
+    gradio_share = is_env_enabled("GRADIO_SHARE")
     server_name = os.getenv("GRADIO_SERVER_NAME", "[::]" if gradio_ipv6 else "0.0.0.0")
     create_ui().queue().launch(share=gradio_share, server_name=server_name, inbrowser=True)
 
 
 def run_web_demo() -> None:
-    gradio_ipv6 = os.getenv("GRADIO_IPV6", "0").lower() in ["true", "1"]
-    gradio_share = os.getenv("GRADIO_SHARE", "0").lower() in ["true", "1"]
+    gradio_ipv6 = is_env_enabled("GRADIO_IPV6")
+    gradio_share = is_env_enabled("GRADIO_SHARE")
     server_name = os.getenv("GRADIO_SERVER_NAME", "[::]" if gradio_ipv6 else "0.0.0.0")
     create_web_demo().queue().launch(share=gradio_share, server_name=server_name, inbrowser=True)

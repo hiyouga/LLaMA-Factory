@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 from typing import TYPE_CHECKING, Dict
 
 from ...extras.packages import is_gradio_available
-from ..common import get_visual
+from ..common import is_multimodal
 from .chatbot import create_chat_box
 
 
@@ -66,7 +66,7 @@ def create_infer_tab(engine: "Engine") -> Dict[str, "Component"]:
     ).then(lambda: gr.Column(visible=engine.chatter.loaded), outputs=[chat_elems["chat_box"]])
 
     engine.manager.get_elem_by_id("top.model_name").change(
-        lambda model_name: gr.Column(visible=get_visual(model_name)),
+        lambda model_name: gr.Column(visible=is_multimodal(model_name)),
         [engine.manager.get_elem_by_id("top.model_name")],
         [chat_elems["mm_box"]],
     )
