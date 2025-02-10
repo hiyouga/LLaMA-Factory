@@ -51,6 +51,7 @@ def test_feedback_data(num_samples: int):
     indexes = random.choices(range(len(original_data)), k=num_samples)
     for index in indexes:
         messages = original_data["messages"][index]
+        messages = [{"role": msg['role'], "content": msg['content'][0]} for msg in messages]
         ref_input_ids = ref_tokenizer.apply_chat_template(messages)
         prompt_len = len(ref_tokenizer.apply_chat_template(messages[:-1], add_generation_prompt=True))
         ref_labels = [IGNORE_INDEX] * prompt_len + ref_input_ids[prompt_len:]

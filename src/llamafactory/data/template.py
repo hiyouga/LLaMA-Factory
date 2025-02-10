@@ -124,13 +124,20 @@ class Template:
                     elements += self.format_system.apply(content=(system + tool_text))
 
             if message["role"] == Role.USER.value:
-                elements += self.format_user.apply(content=message["content"], idx=str(i // 2))
+                content = "".join(message["content"]) if isinstance(message["content"], list) else message["content"]
+                elements += self.format_user.apply(content=content, idx=str(i // 2))
             elif message["role"] == Role.ASSISTANT.value:
-                elements += self.format_assistant.apply(content=message["content"])
+                content = "".join(message["content"]) if isinstance(message["content"], list) else message["content"]
+                elements += self.format_assistant.apply(content=content)
             elif message["role"] == Role.OBSERVATION.value:
-                elements += self.format_observation.apply(content=message["content"])
+                if isinstance(message["content"], list):
+                    for m in message["content"]:
+                        elements += self.format_observation.apply(content=m)
+                else:
+                    elements += self.format_observation.apply(content=message["content"])
             elif message["role"] == Role.FUNCTION.value:
-                elements += self.format_function.apply(content=message["content"])
+                content = "".join(message["content"]) if isinstance(message["content"], list) else message["content"]
+                elements += self.format_function.apply(content=content)
             else:
                 raise NotImplementedError("Unexpected role: {}".format(message["role"]))
 
@@ -188,13 +195,20 @@ class Llama2Template(Template):
                     system_text = self.format_system.apply(content=(system + tool_text))[0]
 
             if message["role"] == Role.USER.value:
-                elements += self.format_user.apply(content=system_text + message["content"])
+                content = "".join(message["content"]) if isinstance(message["content"], list) else  message["content"]
+                elements += self.format_user.apply(content=system_text + content)
             elif message["role"] == Role.ASSISTANT.value:
-                elements += self.format_assistant.apply(content=message["content"])
+                content = "".join(message["content"]) if isinstance(message["content"], list) else  message["content"]
+                elements += self.format_assistant.apply(content=content)
             elif message["role"] == Role.OBSERVATION.value:
-                elements += self.format_observation.apply(content=message["content"])
+                if isinstance(message["content"], list):
+                    for m in message["content"]:
+                        elements += self.format_observation.apply(content=m)
+                else:
+                    elements += self.format_observation.apply(content=message["content"])
             elif message["role"] == Role.FUNCTION.value:
-                elements += self.format_function.apply(content=message["content"])
+                content = "".join(message["content"]) if isinstance(message["content"], list) else  message["content"]
+                elements += self.format_function.apply(content=content)
             else:
                 raise NotImplementedError("Unexpected role: {}".format(message["role"]))
 
