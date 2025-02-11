@@ -104,7 +104,7 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
     processor = tokenizer_module["processor"]
-    get_template_and_fix_tokenizer(tokenizer, data_args)
+    template = get_template_and_fix_tokenizer(tokenizer, data_args)
     model = load_model(tokenizer, model_args, finetuning_args)  # must after fixing tokenizer to resize vocab
 
     if getattr(model, "quantization_method", None) is not None and model_args.adapter_name_or_path is not None:
@@ -171,3 +171,7 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
 
     except Exception as e:
         logger.warning_rank0(f"Cannot save tokenizer, please copy the files manually: {e}.")
+
+    with open(os.path.join(model_args.export_dir, "Modelfile"), "w", encoding="utf-8") as f:
+        f.write(template.get_ollama_modelfile(tokenizer))
+        logger.info_rank0(f"Saved ollama modelfile to {model_args.export_dir}.")
