@@ -98,7 +98,7 @@ FORCE_TORCHRUN=1 llamafactory-cli train examples/train_lora/llama3_lora_sft_ds3.
 #### Supervised Fine-Tuning with Ray on 4 GPUs
 
 ```bash
-USE_RAY=1 llamafactory-cli train examples/train_full/llama3_lora_sft_ray.yaml
+USE_RAY=1 llamafactory-cli train examples/train_lora/llama3_lora_sft_ray.yaml
 ```
 
 ### QLoRA Fine-Tuning
