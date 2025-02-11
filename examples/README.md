@@ -170,6 +170,12 @@ llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
 llamafactory-cli export examples/merge_lora/llama3_gptq.yaml
 ```
 
+### Save Ollama modelfile
+
+```bash
+llamafactory-cli export examples/merge_lora/llama3_full_sft.yaml
+```
+
 ### Inferring LoRA Fine-Tuned Models
 
 #### Batch Generation using vLLM Tensor Parallel
