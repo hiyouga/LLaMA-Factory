@@ -1549,7 +1549,7 @@ register_model_group(
 
 register_model_group(
     models={
-        "Pixtral-12B-Instruct": {
+        "Pixtral-12B": {
             DownloadSource.DEFAULT: "mistral-community/pixtral-12b",
             DownloadSource.MODELSCOPE: "AI-ModelScope/pixtral-12b",
         }
