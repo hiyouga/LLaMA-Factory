@@ -1028,7 +1028,7 @@ class Qwen2vlPlugin(BasePlugin):
 
             frames = self._regularize_images(frames, **kwargs)
             results.append(frames)
-            if video_stream.duration is not None:
+            if video_stream.duration is None:
                 fps_per_video.append(2.0)
             else:
                 fps_per_video.append(len(sample_indices) / float(video_stream.duration * video_stream.time_base))
