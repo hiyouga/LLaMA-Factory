@@ -25,7 +25,7 @@ from ..extras.misc import check_version, has_tokenized_data
 from .converter import align_dataset
 from .data_utils import merge_dataset, split_dataset
 from .parser import get_dataset_list
-from .processors import (
+from .processor import (
     FeedbackDatasetProcessor,
     PackedSupervisedDatasetProcessor,
     PairwiseDatasetProcessor,
@@ -42,7 +42,7 @@ if TYPE_CHECKING:
     from ..hparams import DataArguments, ModelArguments
     from .data_utils import DatasetModule
     from .parser import DatasetAttr
-    from .processors import DatasetProcessor
+    from .processor import DatasetProcessor
     from .template import Template
 
 
