@@ -131,6 +131,7 @@ def test_ollama_modelfile():
         '{{ else if eq .Role "assistant" }}{{ .Content }}<|eot_id|>{{ end }}{{ end }}"""\n\n'
         'PARAMETER stop "<|eom_id|>"\n'
         'PARAMETER stop "<|eot_id|>"\n'
+        "PARAMETER num_ctx 4096\n"
     )
 
 

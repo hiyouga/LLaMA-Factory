@@ -318,11 +318,18 @@ class Template:
     def get_ollama_modelfile(self, tokenizer: "PreTrainedTokenizer") -> str:
         r"""
         Returns the ollama modelfile.
+
+        TODO: support function calling.
         """
         modelfile = f'FROM .\n\nTEMPLATE """{self._get_ollama_template(tokenizer)}"""\n\n'
+
+        if self.default_system:
+            modelfile += f'SYSTEM system "{self.default_system}"\n\n'
+
         for stop_token_id in self.get_stop_token_ids(tokenizer):
             modelfile += f'PARAMETER stop "{tokenizer.convert_ids_to_tokens(stop_token_id)}"\n'
 
+        modelfile += "PARAMETER num_ctx 4096\n"
         return modelfile
 
 
