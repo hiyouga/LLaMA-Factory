@@ -1027,7 +1027,9 @@ class Qwen2vlPlugin(BasePlugin):
         return image
 
     @override
-    def _regularize_videos(self, videos: Sequence["VideoInput"], **kwargs) -> Tuple[List[List["ImageObject"]], List[float]]:
+    def _regularize_videos(
+        self, videos: Sequence["VideoInput"], **kwargs
+    ) -> Tuple[List[List["ImageObject"]], List[float]]:
         results, fps_per_video = [], []
         for video in videos:
             container = av.open(video, "r")
