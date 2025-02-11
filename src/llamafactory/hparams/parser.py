@@ -192,9 +192,6 @@ def get_train_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _
         _set_transformers_logging()
 
     # Check arguments
-    if finetuning_args.stage != "pt" and data_args.template is None:
-        raise ValueError("Please specify which `template` to use.")
-
     if finetuning_args.stage != "sft":
         if training_args.predict_with_generate:
             raise ValueError("`predict_with_generate` cannot be set as True except SFT.")
@@ -402,9 +399,6 @@ def get_infer_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _
 
     _set_transformers_logging()
 
-    if data_args.template is None:
-        raise ValueError("Please specify which `template` to use.")
-
     if model_args.infer_backend == "vllm":
         if finetuning_args.stage != "sft":
             raise ValueError("vLLM engine only supports auto-regressive models.")
@@ -434,9 +428,6 @@ def get_eval_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _E
     model_args, data_args, eval_args, finetuning_args = _parse_eval_args(args)
 
     _set_transformers_logging()
-
-    if data_args.template is None:
-        raise ValueError("Please specify which `template` to use.")
 
     if model_args.infer_backend == "vllm":
         raise ValueError("vLLM backend is only available for API, CLI and Web.")
