@@ -119,6 +119,22 @@ def test_jinja_template(use_fast: bool):
     assert tokenizer.apply_chat_template(MESSAGES) == ref_tokenizer.apply_chat_template(MESSAGES)
 
 
+def test_ollama_modelfile():
+    tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA)
+    template = get_template_and_fix_tokenizer(tokenizer, DataArguments(template="llama3"))
+    assert template.get_ollama_modelfile(tokenizer) == (
+        "FROM .\n\n"
+        'TEMPLATE """<|begin_of_text|>'
+        "{{ if .System }}<|start_header_id|>system<|end_header_id|>\n\n{{ .System }}<|eot_id|>{{ end }}"
+        '{{ range .Messages }}{{ if eq .Role "user" }}<|start_header_id|>user<|end_header_id|>\n\n{{ .Content }}'
+        "<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+        '{{ else if eq .Role "assistant" }}{{ .Content }}<|eot_id|>{{ end }}{{ end }}"""\n\n'
+        'PARAMETER stop "<|eom_id|>"\n'
+        'PARAMETER stop "<|eot_id|>"\n'
+        "PARAMETER num_ctx 4096\n"
+    )
+
+
 def test_get_stop_token_ids():
     tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA)
     template = get_template_and_fix_tokenizer(tokenizer, DataArguments(template="llama3"))

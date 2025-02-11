@@ -170,6 +170,12 @@ llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
 llamafactory-cli export examples/merge_lora/llama3_gptq.yaml
 ```
 
+### 保存 Ollama 配置文件
+
+```bash
+llamafactory-cli export examples/merge_lora/llama3_full_sft.yaml
+```
+
 ### 推理 LoRA 模型
 
 #### 使用 vLLM+TP 批量推理
