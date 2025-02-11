@@ -468,16 +468,82 @@ def _register_template(
     )
 
 
+def parse_template(tokenizer: "PreTrainedTokenizer") -> "Template":
+    r"""
+    Extracts a chat template from the tokenizer.
+    """
+
+    def find_diff(short_str: str, long_str: str) -> str:
+        i, j = 0, 0
+        diff = ""
+        while i < len(short_str) and j < len(long_str):
+            if short_str[i] == long_str[j]:
+                i += 1
+                j += 1
+            else:
+                diff += long_str[j]
+                j += 1
+
+        return diff
+
+    prefix = tokenizer.decode(tokenizer.encode(""))
+
+    messages = [{"role": "system", "content": "{{content}}"}]
+    system_slot = tokenizer.apply_chat_template(messages, add_generation_prompt=False, tokenize=False)[len(prefix) :]
+
+    messages = [{"role": "system", "content": ""}, {"role": "user", "content": "{{content}}"}]
+    user_slot_empty_system = tokenizer.apply_chat_template(messages, add_generation_prompt=True, tokenize=False)
+    user_slot_empty_system = user_slot_empty_system[len(prefix) :]
+
+    messages = [{"role": "user", "content": "{{content}}"}]
+    user_slot = tokenizer.apply_chat_template(messages, add_generation_prompt=True, tokenize=False)
+    user_slot = user_slot[len(prefix) :]
+
+    messages = [{"role": "user", "content": "{{content}}"}, {"role": "assistant", "content": "{{content}}"}]
+    assistant_slot = tokenizer.apply_chat_template(messages, add_generation_prompt=False, tokenize=False)
+    assistant_slot = assistant_slot[len(prefix) + len(user_slot) :]
+
+    if len(user_slot) > len(user_slot_empty_system):
+        default_system = find_diff(user_slot_empty_system, user_slot)
+        sole_system = system_slot.replace("{{content}}", default_system, 1)
+        user_slot = user_slot[len(sole_system) :]
+    else:  # if defaut_system is empty, user_slot_empty_system will be longer than user_slot
+        default_system = ""
+
+    return Template(
+        format_user=StringFormatter(slots=[user_slot]),
+        format_assistant=StringFormatter(slots=[assistant_slot]),
+        format_system=StringFormatter(slots=[system_slot]),
+        format_function=FunctionFormatter(slots=[assistant_slot], tool_format="default"),
+        format_observation=StringFormatter(slots=[user_slot]),
+        format_tools=ToolFormatter(tool_format="default"),
+        format_prefix=EmptyFormatter(slots=[prefix]) if prefix else EmptyFormatter(),
+        default_system=default_system,
+        stop_words=[],
+        thought_words=("<think>", "</think>"),
+        efficient_eos=False,
+        replace_eos=False,
+        replace_jinja_template=False,
+        mm_plugin=get_mm_plugin(name="base"),
+    )
+
+
 def get_template_and_fix_tokenizer(tokenizer: "PreTrainedTokenizer", data_args: "DataArguments") -> "Template":
     r"""
     Gets chat template and fixes the tokenizer.
     """
     if data_args.template is None:
-        template = TEMPLATES["empty"]  # placeholder
+        if isinstance(tokenizer.chat_template, str):
+            logger.warning_rank0("`template` was not specified, try parsing the chat template from the tokenizer.")
+            template = parse_template(tokenizer)
+        else:
+            logger.warning_rank0("`template` was not specified, use `empty` template.")
+            template = TEMPLATES["empty"]  # placeholder
     else:
-        template = TEMPLATES.get(data_args.template, None)
-        if template is None:
+        if data_args.template not in TEMPLATES:
             raise ValueError(f"Template {data_args.template} does not exist.")
+
+        template = TEMPLATES[data_args.template]
 
     if template.mm_plugin.__class__.__name__ != "BasePlugin":
         check_version("transformers>=4.45.0")
