@@ -19,6 +19,7 @@ import pytest
 from transformers import AutoTokenizer
 
 from llamafactory.data import get_template_and_fix_tokenizer
+from llamafactory.data.template import parse_template
 from llamafactory.hparams import DataArguments
 
 
@@ -208,3 +209,27 @@ def test_yi_template(use_fast: bool):
     )
     answer_str = "很高兴认识你！<|im_end|>\n"
     _check_template("01-ai/Yi-1.5-6B-Chat", "yi", prompt_str, answer_str, use_fast)
+
+
+def test_parse_template():
+    tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA, token=HF_TOKEN)
+    template = parse_template(tokenizer)
+    assert template.format_user.slots == [
+        "<|start_header_id|>user<|end_header_id|>\n\n{{content}}<|eot_id|>"
+        "<|start_header_id|>assistant<|end_header_id|>\n\n"
+    ]
+    assert template.format_assistant.slots == ["{{content}}<|eot_id|>"]
+    assert template.format_system.slots == ["<|start_header_id|>system<|end_header_id|>\n\n{{content}}<|eot_id|>"]
+    assert template.format_prefix.slots == ["<|begin_of_text|>"]
+    assert template.default_system == ""
+
+
+@pytest.mark.skipif(not HF_TOKEN, reason="Gated model.")
+def test_parse_qwen_template():
+    tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2-7B-Instruct", token=HF_TOKEN)
+    template = parse_template(tokenizer)
+    assert template.format_user.slots == ["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]
+    assert template.format_assistant.slots == ["{{content}}<|im_end|>\n"]
+    assert template.format_system.slots == ["<|im_start|>system\n{{content}}<|im_end|>\n"]
+    assert template.format_prefix.slots == []
+    assert template.default_system == "You are a helpful assistant."
