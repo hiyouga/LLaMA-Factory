@@ -324,7 +324,7 @@ class Template:
         modelfile = f'FROM .\n\nTEMPLATE """{self._get_ollama_template(tokenizer)}"""\n\n'
 
         if self.default_system:
-            modelfile += f'SYSTEM system "{self.default_system}"\n\n'
+            modelfile += f'SYSTEM """{self.default_system}"""\n\n'
 
         for stop_token_id in self.get_stop_token_ids(tokenizer):
             modelfile += f'PARAMETER stop "{tokenizer.convert_ids_to_tokens(stop_token_id)}"\n'
