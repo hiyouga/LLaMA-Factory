@@ -106,7 +106,7 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             batch_audlens.append(len(audios))
             batch_input_ids.append(feature["input_ids"])
 
-        fake_input_ids = None
+        fake_input_ids = []
         if (
             self.template.mm_plugin.image_token is not None and sum(batch_imglens) == 0 and sum(batch_vidlens) == 0
         ):  # avoid process hanging in zero3/fsdp case
@@ -115,10 +115,11 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             fake_messages = self.template.mm_plugin.process_messages(
                 fake_messages, fake_images, [], [], self.processor
             )
-            fake_input_ids = self.tokenizer.encode(fake_messages[0]["content"], add_special_tokens=False)
-            fake_input_ids, _ = self.template.mm_plugin.process_token_ids(
-                fake_input_ids, None, fake_images, [], [], self.tokenizer, self.processor
+            _fake_input_ids = self.tokenizer.encode(fake_messages[0]["content"], add_special_tokens=False)
+            _fake_input_ids, _ = self.template.mm_plugin.process_token_ids(
+                _fake_input_ids, None, fake_images, [], [], self.tokenizer, self.processor
             )
+            fake_input_ids.extend(_fake_input_ids)
             batch_images = fake_images
             batch_imglens[0] = 1
 
@@ -130,14 +131,15 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             fake_messages = self.template.mm_plugin.process_messages(
                 fake_messages, [], [], fake_audios, self.processor
             )
-            fake_input_ids = self.tokenizer.encode(fake_messages[0]["content"], add_special_tokens=False)
-            fake_input_ids, _ = self.template.mm_plugin.process_token_ids(
-                fake_input_ids, None, [], [], fake_audios, self.tokenizer, self.processor
+            _fake_input_ids = self.tokenizer.encode(fake_messages[0]["content"], add_special_tokens=False)
+            _fake_input_ids, _ = self.template.mm_plugin.process_token_ids(
+                _fake_input_ids, None, [], [], fake_audios, self.tokenizer, self.processor
             )
+            fake_input_ids.extend(_fake_input_ids)
             batch_audios = fake_audios
             batch_audlens[0] = 1
 
-        if fake_input_ids is not None:
+        if len(fake_input_ids) != 0:
             if self.tokenizer.padding_side == "right":
                 features[0]["input_ids"] = features[0]["input_ids"] + fake_input_ids
                 features[0]["attention_mask"] = features[0]["attention_mask"] + [0] * len(fake_input_ids)
