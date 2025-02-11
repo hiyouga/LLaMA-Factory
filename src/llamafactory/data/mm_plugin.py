@@ -645,6 +645,12 @@ class MiniCPMVPlugin(BasePlugin):
                 chunk_input=True,
                 sampling_rate=16000,
             )
+            audio_feature_lens = [
+                torch.tensor(audio_feature_len)
+                if not isinstance(audio_feature_len, torch.Tensor)
+                else audio_feature_len
+                for audio_feature_len in audio_feature_lens
+            ]
             mm_inputs.update({"audio_features": audio_features, "audio_feature_lens": audio_feature_lens})
             if kwargs.get("ret_phs", False):
                 mm_inputs.update({"audio_phs": audio_phs})
