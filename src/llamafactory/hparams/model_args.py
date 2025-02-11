@@ -87,7 +87,7 @@ class ExportArguments:
         metadata={"help": "Path to the directory to save the exported model."},
     )
     export_size: int = field(
-        default=1,
+        default=5,
         metadata={"help": "The file shard size (in GB) of the exported model."},
     )
     export_device: Literal["cpu", "auto"] = field(
