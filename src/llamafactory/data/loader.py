@@ -180,7 +180,7 @@ def _get_merged_dataset(
         datasets[dataset_name] = _load_single_dataset(dataset_attr, model_args, data_args, training_args)
 
     if merge:
-        return merge_dataset(datasets.values(), data_args, seed=training_args.seed)
+        return merge_dataset(list(datasets.values()), data_args, seed=training_args.seed)
     else:
         return datasets
 
