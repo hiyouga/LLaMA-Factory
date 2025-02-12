@@ -28,6 +28,7 @@ from .extras.misc import get_device_count, is_env_enabled, use_ray
 from .train.tuner import export_model, run_exp
 from .webui.interface import run_web_demo, run_web_ui
 
+
 USAGE = (
     "-" * 70
     + "\n"

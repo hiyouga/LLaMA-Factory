@@ -4,9 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "llamafactory"
-dynamic = ["version", "dependencies", "optional-dependencies", "classifiers", "keywords", "authors", "license"]
-description = "Easy-to-use LLM fine-tuning framework"
-readme = "README.md"
+dynamic = ["version", "dependencies", "optional-dependencies", "classifiers", "keywords", "authors", "license", "description", "readme"]
 requires-python = ">=3.10"
 
 [project.scripts]
