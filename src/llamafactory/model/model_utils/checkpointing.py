@@ -89,6 +89,7 @@ def get_custom_gradient_checkpointing_func(gradient_checkpointing_func: Callable
             for arg in args:
                 if torch.is_tensor(arg) and torch.is_floating_point(arg):
                     arg.requires_grad_(True)
+                    break  # assume the first tensor is always the hidden states
 
         return gradient_checkpointing_func(func, *args, **kwargs)
 
