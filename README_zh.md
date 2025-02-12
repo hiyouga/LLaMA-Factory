@@ -438,6 +438,23 @@ pip install -e ".[torch,metrics]"
 > [!TIP]
 > 遇到包冲突时，可使用 `pip install --no-deps -e .` 解决。
 
+<details><summary>使用 <b>uv</b> 构建虚拟环境</summary>
+
+创建隔离的 Python 环境：
+
+```bash
+uv sync --extra torch --extra metrics --prerelease=allow
+```
+
+在环境中运行 LLaMA-Factory：
+
+```bash
+uv run --prerelease=allow llamafactory-cli train examples/train_lora/llama3_lora_pretrain.yaml
+```
+
+</details>
+
+
 <details><summary>Windows 用户指南</summary>
 
 #### 安装 BitsAndBytes
