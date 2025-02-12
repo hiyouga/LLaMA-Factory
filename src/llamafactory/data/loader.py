@@ -165,7 +165,7 @@ def _get_merged_dataset(
     training_args: "Seq2SeqTrainingArguments",
     stage: Literal["pt", "sft", "rm", "ppo", "kto"],
     merge: bool = True,
-) -> Optional[Union["Dataset", "IterableDataset"]]:
+) -> Optional[Union["Dataset", "IterableDataset", Dict[str, "Dataset"]]]:
     r"""
     Returns the merged datasets in the standard format.
     """
@@ -236,7 +236,7 @@ def _get_preprocessed_dataset(
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"] = None,
     is_eval: bool = False,
-) -> Optional[Union["Dataset", "IterableDataset", Dict[str, "Dataset"]]]:
+) -> Optional[Union["Dataset", "IterableDataset"]]:
     r"""
     Preprocesses the dataset, including format checking and tokenization.
     """
@@ -318,7 +318,7 @@ def get_dataset(
     with training_args.main_process_first(desc="load dataset"):
         dataset = _get_merged_dataset(data_args.dataset, model_args, data_args, training_args, stage)
         eval_dataset = _get_merged_dataset(
-            data_args.eval_dataset, model_args, data_args, training_args, stage, merge=data_args.streaming
+            data_args.eval_dataset, model_args, data_args, training_args, stage, merge=False
         )
 
     with training_args.main_process_first(desc="pre-process dataset"):
@@ -374,7 +374,7 @@ def get_dataset(
         eval_datasets_map = {}
         for key in dataset_dict.keys():
             if key.startswith("validation_"):
-                eval_datasets_map[key] = dataset_dict[key]
+                eval_datasets_map[key[len("validation_") :]] = dataset_dict[key]
 
         if len(eval_datasets_map):
             dataset_module["eval_dataset"] = eval_datasets_map
