@@ -41,7 +41,7 @@ class DatasetConverter:
         Optionally concatenates media path to media dir when loading from local disk.
         """
         if not isinstance(medias, list):
-            medias = [medias]
+            medias = [medias] if medias is not None else []
         elif len(medias) == 0:
             return None
         else:
