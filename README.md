@@ -436,6 +436,22 @@ Extra dependencies available: torch, torch-npu, metrics, deepspeed, liger-kernel
 > [!TIP]
 > Use `pip install --no-deps -e .` to resolve package conflicts.
 
+<details><summary>Setting up a virtual environment with <b>uv</b></summary>
+
+Create an isolated Python environment with uv:
+
+```bash
+uv sync --extra torch --extra metrics --prerelease=allow
+```
+
+Run LLaMA-Factory in the isolated environment:
+
+```bash
+uv run --prerelease=allow llamafactory-cli train examples/train_lora/llama3_lora_pretrain.yaml
+```
+
+</details>
+
 <details><summary>For Windows users</summary>
 
 #### Install BitsAndBytes
