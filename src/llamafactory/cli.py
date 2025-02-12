@@ -28,9 +28,6 @@ from .extras.misc import get_device_count, use_ray
 from .train.tuner import export_model, run_exp
 from .webui.interface import run_web_demo, run_web_ui
 
-import ray
-ray.init(runtime_env={"working_dir": ".", "py_executable": "uv run --isolated", "env_vars": {"HF_TOKEN": "HF_TOKEN_HERE", "HF_HUB_ENABLE_HF_TRANSFER": "1"}})
-
 USAGE = (
     "-" * 70
     + "\n"
