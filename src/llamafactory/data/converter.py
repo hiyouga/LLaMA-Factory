@@ -47,15 +47,12 @@ class DatasetConverter:
         else:
             medias = medias[:]
 
-        if self.dataset_attr.load_from in ["script", "file"]:
+        if self.dataset_attr.load_from in ["script", "file"] and isinstance(medias[0], str):
             for i in range(len(medias)):
-                if isinstance(medias[i], str):
-                    if os.path.isfile(os.path.join(self.data_args.media_dir, medias[i])):
-                        medias[i] = os.path.join(self.data_args.media_dir, medias[i])
-                    else:
-                        logger.warning_rank0_once(
-                            f"Media {medias[i]} does not exist in {self.data_args.media_dir}. Using original path."
-                        )
+                if os.path.isfile(os.path.join(self.data_args.media_dir, medias[i])):
+                    medias[i] = os.path.join(self.data_args.media_dir, medias[i])
+                else:
+                    logger.warning_rank0_once(f"Media {medias[i]} does not exist in `media_dir`. Use original path.")
 
         return medias
 
