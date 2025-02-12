@@ -81,9 +81,6 @@ def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: Optional[List["Tra
     ray_args = get_ray_args(args)
     callbacks = callbacks or []
     if ray_args.use_ray:
-        import ray
-        # --prerelease=allow is needed due to "swanlab" extra 
-        ray.init(runtime_env={"working_dir": ".", "py_executable": "uv run --isolated --prerelease=allow --extra torch --extra metrics", "env_vars": {"HF_TOKEN": os.getenv("HF_TOKEN", "empty")}})
         callbacks.append(RayTrainReportCallback())
         trainer = get_ray_trainer(
             training_function=_training_function,
