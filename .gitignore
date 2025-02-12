@@ -162,6 +162,9 @@ cython_debug/
 # vscode
 .vscode/
 
+# uv
+uv.lock
+
 # custom .gitignore
 ms_cache/
 hf_cache/
