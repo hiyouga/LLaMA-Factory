@@ -1,6 +1,8 @@
+import inspect
 import math
 import re
 from copy import deepcopy
+from dataclasses import dataclass
 from io import BytesIO
 from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, TypedDict, Union
 
@@ -71,12 +73,12 @@ def _get_paligemma_token_type_ids(
     return batch_token_type_ids
 
 
-class BasePlugin:
-    def __init__(self, image_token: Optional[str], video_token: Optional[str], audio_token: Optional[str]) -> None:
-        self.image_token = image_token
-        self.video_token = video_token
-        self.audio_token = audio_token
-        self.expand_mm_tokens = True
+@dataclass
+class MMPluginMixin:
+    image_token: Optional[str]
+    video_token: Optional[str]
+    audio_token: Optional[str]
+    expand_mm_tokens: bool = True
 
     def _validate_input(
         self,
@@ -102,11 +104,10 @@ class BasePlugin:
                 "This model does not support audio input. Please check whether the correct `template` is used."
             )
 
-    def _preprocess_image(self, image: "ImageObject", **kwargs) -> "ImageObject":
+    def _preprocess_image(self, image: "ImageObject", image_resolution: int, **kwargs) -> "ImageObject":
         r"""
         Pre-processes a single image.
         """
-        image_resolution: int = kwargs["image_resolution"]
         if (image.width * image.height) > image_resolution:
             resize_factor = math.sqrt(image_resolution / (image.width * image.height))
             width, height = int(image.width * resize_factor), int(image.height * resize_factor)
@@ -117,16 +118,19 @@ class BasePlugin:
 
         return image
 
-    def _get_video_sample_frames(self, video_stream: "Stream", **kwargs) -> int:
+    def _get_video_sample_indices(
+        self, video_stream: "Stream", video_fps: float, video_maxlen: int, **kwargs
+    ) -> List[int]:
         r"""
-        Computes video sample frames according to fps.
+        Computes video sample indices according to fps.
         """
-        video_fps: float = kwargs["video_fps"]
-        video_maxlen: int = kwargs["video_maxlen"]
         total_frames = video_stream.frames
-        sample_frames = float(video_stream.duration * video_stream.time_base) * video_fps
+        if total_frames == 0:  # infinite video
+            return np.linspace(0, video_maxlen - 1, video_maxlen).astype(np.int32)
+
+        sample_frames = math.floor(float(video_stream.duration * video_stream.time_base) * video_fps)
         sample_frames = min(total_frames, video_maxlen, sample_frames)
-        return math.floor(sample_frames)
+        return np.linspace(0, total_frames - 1, sample_frames).astype(np.int32)
 
     def _regularize_images(self, images: Sequence["ImageInput"], **kwargs) -> List["ImageObject"]:
         r"""
@@ -159,9 +163,7 @@ class BasePlugin:
         for video in videos:
             container = av.open(video, "r")
             video_stream = next(stream for stream in container.streams if stream.type == "video")
-            total_frames = video_stream.frames
-            sample_frames = self._get_video_sample_frames(video_stream, **kwargs)
-            sample_indices = np.linspace(0, total_frames - 1, sample_frames).astype(np.int32)
+            sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
             frames: List["ImageObject"] = []
             container.seek(0)
             for frame_idx, frame in enumerate(container.decode(video_stream)):
@@ -173,12 +175,11 @@ class BasePlugin:
 
         return results
 
-    def _regularize_audios(self, audios: Sequence["AudioInput"], **kwargs) -> List["NDArray"]:
+    def _regularize_audios(self, audios: Sequence["AudioInput"], sampling_rate: float, **kwargs) -> List["NDArray"]:
         r"""
         Regularizes audios to avoid error. Including reading and resampling.
         """
         results = []
-        sampling_rate = kwargs["sampling_rate"]
         for audio in audios:
             if isinstance(audio, str):
                 audio = librosa.load(audio, sr=sampling_rate)[0]
@@ -216,8 +217,7 @@ class BasePlugin:
 
         if len(images) != 0:
             images = self._regularize_images(
-                images,
-                image_resolution=getattr(processor, "image_resolution", 768 * 768),
+                images, image_resolution=getattr(processor, "image_resolution", 768 * 768)
             )
             mm_inputs.update(image_processor(images, return_tensors="pt"))
 
@@ -228,7 +228,10 @@ class BasePlugin:
                 video_fps=getattr(processor, "video_fps", 2.0),
                 video_maxlen=getattr(processor, "video_maxlen", 128),
             )
-            mm_inputs.update(video_processor(videos, return_tensors="pt"))
+            if "videos" in inspect.signature(video_processor.preprocess).parameters:  # for qwen2_vl and video_llava
+                mm_inputs.update(video_processor(images=None, videos=videos, return_tensors="pt"))
+            else:  # for llava_next_video
+                mm_inputs.update(video_processor(videos, return_tensors="pt"))
 
         if len(audios) != 0:
             audios = self._regularize_audios(
@@ -248,6 +251,9 @@ class BasePlugin:
 
         return mm_inputs
 
+
+@dataclass
+class BasePlugin(MMPluginMixin):
     def process_messages(
         self,
         messages: Sequence[Dict[str, str]],
@@ -305,6 +311,7 @@ class BasePlugin:
         return {}
 
 
+@dataclass
 class LlavaPlugin(BasePlugin):
     @override
     def process_messages(
@@ -348,6 +355,7 @@ class LlavaPlugin(BasePlugin):
         return self._get_mm_inputs(images, videos, audios, processor)
 
 
+@dataclass
 class LlavaNextPlugin(BasePlugin):
     @override
     def process_messages(
@@ -405,6 +413,7 @@ class LlavaNextPlugin(BasePlugin):
         return self._get_mm_inputs(images, videos, audios, processor)
 
 
+@dataclass
 class LlavaNextVideoPlugin(BasePlugin):
     @override
     def process_messages(
@@ -439,12 +448,15 @@ class LlavaNextVideoPlugin(BasePlugin):
                 message["content"] = content.replace("{{image}}", self.image_token)
 
         if "pixel_values_videos" in mm_inputs:
-            pixel_values_video = to_numpy_array(mm_inputs.get("pixel_values_videos")[0])
-            height, width = get_image_size(pixel_values_video[0])
-            num_frames = pixel_values_video.shape[0]  # frame dim is always after batch dim
-            image_seqlen = (height // processor.patch_size) * (width // processor.patch_size)
-            video_seqlen = image_seqlen // 4 * num_frames  # divide by 4 needed for avg pooling layer
-            video_seqlen = video_seqlen if self.expand_mm_tokens else 1
+            if self.expand_mm_tokens:
+                pixel_values_video = to_numpy_array(mm_inputs.get("pixel_values_videos")[0])
+                height, width = get_image_size(pixel_values_video[0])
+                num_frames = pixel_values_video.shape[0]  # frame dim is always after batch dim
+                image_seqlen = (height // processor.patch_size) * (width // processor.patch_size)
+                video_seqlen = image_seqlen // 4 * num_frames  # divide by 4 needed for avg pooling layer
+            else:
+                video_seqlen = 1
+
             for message in messages:
                 content = message["content"]
                 while VIDEO_PLACEHOLDER in content:
@@ -477,6 +489,7 @@ class LlavaNextVideoPlugin(BasePlugin):
         return self._get_mm_inputs(images, videos, audios, processor)
 
 
+@dataclass
 class MiniCPMVPlugin(BasePlugin):
     @override
     def process_messages(
@@ -640,6 +653,7 @@ class MiniCPMVPlugin(BasePlugin):
                 chunk_input=True,
                 sampling_rate=16000,
             )
+            audio_feature_lens = [torch.tensor(audio_feature_len) for audio_feature_len in audio_feature_lens]
             mm_inputs.update({"audio_features": audio_features, "audio_feature_lens": audio_feature_lens})
             if kwargs.get("ret_phs", False):
                 mm_inputs.update({"audio_phs": audio_phs})
@@ -659,7 +673,6 @@ class MiniCPMVPlugin(BasePlugin):
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         self._validate_input(images, videos, audios)
-
         # image bound
         image_bounds_list = []
         valid_image_nums_ls = []
@@ -716,6 +729,7 @@ class MiniCPMVPlugin(BasePlugin):
         return mm_inputs
 
 
+@dataclass
 class MllamaPlugin(BasePlugin):
     @override
     def process_messages(
@@ -746,7 +760,7 @@ class MllamaPlugin(BasePlugin):
         videos: Sequence["VideoInput"],
         audios: Sequence["AudioInput"],
         processor: "ProcessorMixin",
-        **kwargs,
+        imglens: List[int],
     ) -> Dict[str, "torch.Tensor"]:
         r"""
         Processes visual inputs for mllama because its image processor only accepts List[List[ImageInput]].
@@ -760,7 +774,6 @@ class MllamaPlugin(BasePlugin):
             num_tiles: List[List[int]] with shape (batch_size, num_images_in_batch). For example, (2, 1).
         """
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
-        imglens: List[int] = kwargs["imglens"]
         images = self._regularize_images(images, image_resolution=getattr(processor, "image_resolution", 768 * 768))
         batch_images = []
         for image_length in imglens:
@@ -782,7 +795,7 @@ class MllamaPlugin(BasePlugin):
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         self._validate_input(images, videos, audios)
-        mm_inputs = self._get_mm_inputs(images, videos, audios, processor, imglens=imglens)
+        mm_inputs = self._get_mm_inputs(images, videos, audios, processor, imglens)
         num_tiles = mm_inputs.pop("num_tiles")
         image_token_id = getattr(processor, "image_token_id")
         max_image_tiles = getattr(processor.image_processor, "max_image_tiles")
@@ -800,6 +813,7 @@ class MllamaPlugin(BasePlugin):
         return mm_inputs
 
 
+@dataclass
 class PaliGemmaPlugin(BasePlugin):
     @override
     def process_messages(
@@ -866,6 +880,7 @@ class PaliGemmaPlugin(BasePlugin):
         return mm_inputs
 
 
+@dataclass
 class PixtralPlugin(BasePlugin):
     @override
     def process_messages(
@@ -935,6 +950,7 @@ class PixtralPlugin(BasePlugin):
         return mm_inputs
 
 
+@dataclass
 class Qwen2AudioPlugin(BasePlugin):
     @override
     def process_messages(
@@ -956,9 +972,13 @@ class Qwen2AudioPlugin(BasePlugin):
         for message in messages:
             content = message["content"]
             while AUDIO_PLACEHOLDER in content:
-                audio_length = audio_lengths.pop(0)
-                input_length = (audio_length - 1) // 2 + 1
-                audio_seqlen = (input_length - 2) // 2 + 1 if self.expand_mm_tokens else 1
+                if self.expand_mm_tokens:
+                    audio_length = audio_lengths.pop(0)
+                    input_length = (audio_length - 1) // 2 + 1
+                    audio_seqlen = (input_length - 2) // 2 + 1
+                else:
+                    audio_seqlen = 1
+
                 content = content.replace(
                     AUDIO_PLACEHOLDER, f"{bos_token}{self.audio_token * audio_seqlen}{eos_token}", 1
                 )
@@ -987,6 +1007,7 @@ class Qwen2AudioPlugin(BasePlugin):
         return self._get_mm_inputs(images, videos, audios, processor)
 
 
+@dataclass
 class Qwen2vlPlugin(BasePlugin):
     @override
     def _preprocess_image(self, image: "ImageObject", **kwargs) -> "ImageObject":
@@ -1006,14 +1027,14 @@ class Qwen2vlPlugin(BasePlugin):
         return image
 
     @override
-    def _regularize_videos(self, videos: Sequence["VideoInput"], **kwargs) -> List[List["ImageObject"]]:
-        results = []
+    def _regularize_videos(
+        self, videos: Sequence["VideoInput"], **kwargs
+    ) -> Tuple[List[List["ImageObject"]], List[float]]:
+        results, fps_per_video = [], []
         for video in videos:
             container = av.open(video, "r")
             video_stream = next(stream for stream in container.streams if stream.type == "video")
-            total_frames = video_stream.frames
-            sample_frames = self._get_video_sample_frames(video_stream, **kwargs)
-            sample_indices = np.linspace(0, total_frames - 1, sample_frames).astype(np.int32)
+            sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
             frames: List["ImageObject"] = []
             container.seek(0)
             for frame_idx, frame in enumerate(container.decode(video_stream)):
@@ -1025,8 +1046,40 @@ class Qwen2vlPlugin(BasePlugin):
 
             frames = self._regularize_images(frames, **kwargs)
             results.append(frames)
+            if video_stream.duration is None:
+                fps_per_video.append(2.0)
+            else:
+                fps_per_video.append(len(sample_indices) / float(video_stream.duration * video_stream.time_base))
 
-        return results
+        return results, fps_per_video
+
+    @override
+    def _get_mm_inputs(
+        self,
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        audios: Sequence["AudioInput"],
+        processor: "ProcessorMixin",
+    ) -> Dict[str, "torch.Tensor"]:
+        image_processor: "BaseImageProcessor" = getattr(processor, "image_processor", None)
+        mm_inputs = {}
+        if len(images) != 0:
+            images = self._regularize_images(
+                images, image_resolution=getattr(processor, "image_resolution", 768 * 768)
+            )
+            mm_inputs.update(image_processor(images, return_tensors="pt"))
+
+        if len(videos) != 0:
+            videos, fps_per_video = self._regularize_videos(
+                videos,
+                image_resolution=getattr(processor, "video_resolution", 256 * 256),
+                video_fps=getattr(processor, "video_fps", 2.0),
+                video_maxlen=getattr(processor, "video_maxlen", 128),
+            )
+            mm_inputs.update(image_processor(images=None, videos=videos, return_tensors="pt"))
+            mm_inputs["fps_per_video"] = fps_per_video
+
+        return mm_inputs
 
     @override
     def process_messages(
@@ -1092,16 +1145,15 @@ class Qwen2vlPlugin(BasePlugin):
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         self._validate_input(images, videos, audios)
         mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+        fps_per_video = mm_inputs.pop("fps_per_video", [])
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
-        if "second_per_grid_ts" in getattr(image_processor, "model_input_names", []) and "video_grid_thw" in mm_inputs:
-            video_fps = getattr(processor, "video_fps", 2.0)
-            mm_inputs["second_per_grid_ts"] = [image_processor.temporal_patch_size / video_fps] * len(
-                mm_inputs["video_grid_thw"]
-            )
+        if "second_per_grid_ts" in getattr(image_processor, "model_input_names", []) and fps_per_video:
+            mm_inputs["second_per_grid_ts"] = [image_processor.temporal_patch_size / fps for fps in fps_per_video]
 
         return mm_inputs
 
 
+@dataclass
 class VideoLlavaPlugin(BasePlugin):
     @override
     def process_messages(

@@ -1,0 +1,10 @@
+### model
+model_name_or_path: saves/llama3-8b/full/sft
+template: llama3
+trust_remote_code: true
+
+### export
+export_dir: output/llama3_full_sft
+export_size: 5
+export_device: cpu
+export_legacy_format: false

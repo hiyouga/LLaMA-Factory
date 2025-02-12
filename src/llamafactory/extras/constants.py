@@ -2156,6 +2156,18 @@ register_model_group(
 
 register_model_group(
     models={
+        "Qwen2-VL-2B": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2-VL-2B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2-VL-2B",
+        },
+        "Qwen2-VL-7B": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2-VL-7B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2-VL-7B",
+        },
+        "Qwen2-VL-72B": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2-VL-72B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2-VL-72B",
+        },
         "Qwen2-VL-2B-Instruct": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-VL-2B-Instruct",
             DownloadSource.MODELSCOPE: "Qwen/Qwen2-VL-2B-Instruct",
