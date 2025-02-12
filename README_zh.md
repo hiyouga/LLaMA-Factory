@@ -440,7 +440,7 @@ pip install -e ".[torch,metrics]"
 
 <details><summary>使用 <b>uv</b> 构建虚拟环境</summary>
 
-创建隔离的 Python 环境：
+使用 [uv](https://github.com/astral-sh/uv) 创建隔离的 Python 环境：
 
 ```bash
 uv sync --extra torch --extra metrics --prerelease=allow
