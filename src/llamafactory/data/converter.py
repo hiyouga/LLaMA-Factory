@@ -36,23 +36,28 @@ class DatasetConverter:
     dataset_attr: "DatasetAttr"
     data_args: "DataArguments"
 
-    def _find_medias(self, inputs: Union[Any, Sequence[Any]]) -> Optional[List[Any]]:
+    def _find_medias(self, medias: Union[Any, Sequence[Any]]) -> Optional[List[Any]]:
         r"""
         Optionally concatenates media path to media dir when loading from local disk.
         """
-        if not isinstance(inputs, list):
-            inputs = [inputs]
-        elif len(inputs) == 0:
+        if not isinstance(medias, list):
+            medias = [medias]
+        elif len(medias) == 0:
             return None
         else:
-            inputs = inputs[:]
+            medias = medias[:]
 
         if self.dataset_attr.load_from in ["script", "file"]:
-            for i in range(len(inputs)):
-                if isinstance(inputs[i], str) and os.path.isfile(os.path.join(self.data_args.media_dir, inputs[i])):
-                    inputs[i] = os.path.join(self.data_args.media_dir, inputs[i])
+            for i in range(len(medias)):
+                if isinstance(medias[i], str):
+                    if os.path.isfile(os.path.join(self.data_args.media_dir, medias[i])):
+                        medias[i] = os.path.join(self.data_args.media_dir, medias[i])
+                    else:
+                        logger.warning_rank0_once(
+                            f"Media {medias[i]} does not exist in {self.data_args.media_dir}. Using original path."
+                        )
 
-        return inputs
+        return medias
 
     @abstractmethod
     def __call__(self, example: Dict[str, Any]) -> Dict[str, Any]:
