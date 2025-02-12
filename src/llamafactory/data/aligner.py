@@ -69,9 +69,6 @@ def convert_alpaca(
             prompt.append({"role": Role.ASSISTANT.value, "content": old_response})
 
     query = []
-    if dataset_attr.prompt and example[dataset_attr.prompt]:
-        query.append(example[dataset_attr.prompt])
-
     if dataset_attr.query and example[dataset_attr.query]:
         query.append(example[dataset_attr.query])
 
@@ -101,7 +98,7 @@ def convert_alpaca(
     output = {
         "_prompt": prompt,
         "_response": response,
-        "_system": example[dataset_attr.system] if dataset_attr.system else "",
+        "_system": example[dataset_attr.prompt] if dataset_attr.prompt else "",
         "_tools": example[dataset_attr.tools] if dataset_attr.tools else "",
         "_images": regularize_medias(example[dataset_attr.images]) if dataset_attr.images else None,
         "_videos": regularize_medias(example[dataset_attr.videos]) if dataset_attr.videos else None,
