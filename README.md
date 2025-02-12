@@ -438,7 +438,7 @@ Extra dependencies available: torch, torch-npu, metrics, deepspeed, liger-kernel
 
 <details><summary>Setting up a virtual environment with <b>uv</b></summary>
 
-Create an isolated Python environment with uv:
+Create an isolated Python environment with [uv](https://github.com/astral-sh/uv):
 
 ```bash
 uv sync --extra torch --extra metrics --prerelease=allow
