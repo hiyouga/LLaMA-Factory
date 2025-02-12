@@ -13,7 +13,42 @@
 # limitations under the License.
 
 import bisect
-from typing import List, Sequence, Tuple
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
+
+
+if TYPE_CHECKING:
+    from transformers import PreTrainedTokenizer, ProcessorMixin
+
+    from ...hparams import DataArguments
+    from ..template import Template
+
+
+@dataclass
+class DatasetProcessor(ABC):
+    r"""
+    A class for data processors.
+    """
+
+    template: "Template"
+    tokenizer: "PreTrainedTokenizer"
+    processor: Optional["ProcessorMixin"]
+    data_args: "DataArguments"
+
+    @abstractmethod
+    def preprocess_dataset(self, examples: Dict[str, List[Any]]) -> Dict[str, List[Any]]:
+        r"""
+        Builds model inputs from the examples.
+        """
+        ...
+
+    @abstractmethod
+    def print_data_example(self, example: Dict[str, List[int]]) -> None:
+        r"""
+        Print a data example to stdout.
+        """
+        ...
 
 
 def search_for_fit(numbers: Sequence[int], capacity: int) -> int:

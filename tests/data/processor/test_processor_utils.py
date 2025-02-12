@@ -16,7 +16,7 @@ from typing import Tuple
 
 import pytest
 
-from llamafactory.data.processors.processor_utils import infer_seqlen
+from llamafactory.data.processor.processor_utils import infer_seqlen
 
 
 @pytest.mark.parametrize(
