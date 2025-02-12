@@ -2,6 +2,30 @@
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "llamafactory"
+dynamic = ["version", "dependencies", "optional-dependencies", "classifiers", "keywords", "authors", "license", "description", "readme"]
+requires-python = ">=3.10"
+
+[project.scripts]
+llamafactory-cli = "llamafactory.cli:main"
+
+[tool.uv]
+conflicts = [
+    [
+        {extra = "aqlm" },
+        {extra = "torch-npu" },
+    ],
+    [
+        {extra = "torch-npu" },
+        {extra = "liger-kernel" },
+    ],
+    [
+        {extra = "vllm" },
+        {extra = "torch-npu" },
+    ]
+]
+
 [tool.ruff]
 target-version = "py38"
 line-length = 119
