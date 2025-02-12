@@ -236,7 +236,7 @@ def _get_preprocessed_dataset(
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"] = None,
     is_eval: bool = False,
-) -> Optional[Union["Dataset", "IterableDataset"]]:
+) -> Optional[Union["Dataset", "IterableDataset", Dict[str, "Dataset"]]]:
     r"""
     Preprocesses the dataset, including format checking and tokenization.
     """
@@ -317,7 +317,9 @@ def get_dataset(
     # Load and preprocess dataset
     with training_args.main_process_first(desc="load dataset"):
         dataset = _get_merged_dataset(data_args.dataset, model_args, data_args, training_args, stage)
-        eval_dataset = _get_merged_dataset(data_args.eval_dataset, model_args, data_args, training_args, stage, merge=data_args.streaming)
+        eval_dataset = _get_merged_dataset(
+            data_args.eval_dataset, model_args, data_args, training_args, stage, merge=data_args.streaming
+        )
 
     with training_args.main_process_first(desc="pre-process dataset"):
         dataset = _get_preprocessed_dataset(
@@ -330,8 +332,8 @@ def get_dataset(
                 )
         else:
             eval_dataset = _get_preprocessed_dataset(
-                    eval_dataset, data_args, training_args, stage, template, tokenizer, processor, is_eval=True
-                )
+                eval_dataset, data_args, training_args, stage, template, tokenizer, processor, is_eval=True
+            )
 
         if data_args.val_size > 1e-6:
             dataset_dict = split_dataset(dataset, data_args, seed=training_args.seed)
@@ -365,7 +367,7 @@ def get_dataset(
         dataset_module = {}
         if "train" in dataset_dict:
             dataset_module["train_dataset"] = dataset_dict["train"]
-            
+
         if "validation" in dataset_dict:
             dataset_module["eval_dataset"] = dataset_dict["validation"]
 
