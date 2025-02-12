@@ -87,9 +87,10 @@ def _parse_args(
 
 
 def _set_transformers_logging() -> None:
-    transformers.utils.logging.set_verbosity_info()
-    transformers.utils.logging.enable_default_handler()
-    transformers.utils.logging.enable_explicit_format()
+    if os.getenv("LLAMAFACTORY_VERBOSITY", "INFO") in ["DEBUG", "INFO"]:
+        transformers.utils.logging.set_verbosity_info()
+        transformers.utils.logging.enable_default_handler()
+        transformers.utils.logging.enable_explicit_format()
 
 
 def _verify_model_args(
