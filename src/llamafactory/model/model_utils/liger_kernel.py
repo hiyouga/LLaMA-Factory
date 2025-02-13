@@ -52,7 +52,7 @@ def apply_liger_kernel_to_qwen2_5_vl(
         modeling_qwen2_5_vl.Qwen2_5_VLForConditionalGeneration.forward = qwen2_vl_lce_forward
 
     if swiglu:
-        modeling_qwen2_5_vl.Qwen2_5_VLMLP = LigerSwiGLUMLP
+        modeling_qwen2_5_vl.Qwen2MLP = LigerSwiGLUMLP
 
 
 def apply_liger_kernel(
