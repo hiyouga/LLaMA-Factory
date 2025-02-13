@@ -39,6 +39,11 @@ def apply_liger_kernel_to_qwen2_5_vl(
     from liger_kernel.transformers.qwen2vl_mrope import liger_multimodal_rotary_pos_emb
     from transformers.models.qwen2_5_vl import modeling_qwen2_5_vl
 
+    def get_dtype(self: "modeling_qwen2_5_vl.Qwen2_5_VisionTransformerPretrainedModel"):
+        return self.dtype
+
+    modeling_qwen2_5_vl.Qwen2_5_VisionTransformerPretrainedModel.get_dtype = get_dtype
+
     if rope:
         modeling_qwen2_5_vl.apply_multimodal_rotary_pos_emb = liger_multimodal_rotary_pos_emb
 
