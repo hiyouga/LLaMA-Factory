@@ -16,7 +16,11 @@ class RayArguments:
 
     ray_run_name: Optional[str] = field(
         default=None,
-        metadata={"help": "The training results will be saved at `saves/ray_run_name`."},
+        metadata={"help": "The training results will be saved at `<ray_storage_path>/ray_run_name`."},
+    )
+    ray_storage_path: str = field(
+        default="./saves",
+        metadata={"help": "The storage path to save training results to"},
     )
     ray_num_workers: int = field(
         default=1,
