@@ -1142,6 +1142,7 @@ register_template(
     format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     stop_words=["<|im_end|>"],
+    default_system="You are a helpful assistant.",
     mm_plugin=get_mm_plugin(name="minicpm_v", image_token="<image>", video_token="<video>"),
 )
 
@@ -1153,6 +1154,7 @@ register_template(
     format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     stop_words=["<|im_end|>"],
+    default_system="You are Qwen, created by Alibaba Cloud. You are a helpful assistant.",
     mm_plugin=get_mm_plugin(name="minicpm_v", image_token="<image>", video_token="<video>", audio_token="<audio>"),
 )
 
