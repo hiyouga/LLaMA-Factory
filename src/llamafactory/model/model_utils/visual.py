@@ -42,6 +42,7 @@ class CompositeModel:
     projector_key: str
     vision_model_keys: List[str]
     language_model_keys: List[str]
+    lora_conflict_keys: List[str]
 
     def get_projector(self, module: "torch.nn.Module") -> "torch.nn.Module":
         for key in self.projector_key.split("."):
@@ -58,15 +59,14 @@ def _register_composite_model(
     projector_key: Optional[str] = None,
     vision_model_keys: Optional[List[str]] = None,
     language_model_keys: Optional[List[str]] = None,
+    lora_conflict_keys: Optional[List[str]] = None,
 ):
-    projector_key = projector_key or "multi_modal_projector"
-    vision_model_keys = vision_model_keys or ["vision_tower"]
-    language_model_keys = language_model_keys or ["language_model"]
     COMPOSITE_MODELS[model_type] = CompositeModel(
         model_type=model_type,
-        projector_key=projector_key,
-        vision_model_keys=vision_model_keys,
-        language_model_keys=language_model_keys,
+        projector_key=projector_key or "multi_modal_projector",
+        vision_model_keys=vision_model_keys or ["vision_tower"],
+        language_model_keys=language_model_keys or ["language_model"],
+        lora_conflict_keys=lora_conflict_keys or [],
     )
 
 
@@ -216,21 +216,19 @@ def patch_target_modules(
     Freezes vision tower for VLM LoRA tuning.
     """
     model_type = getattr(model.config, "model_type", None)
-    vit_model_type = getattr(getattr(model.config, "vision_config", None), "model_type", None)
-    forbidden_modules = get_forbidden_modules(model.config, finetuning_args)
-    if model_type in ["qwen2_vl", "qwen2_5_vl"]:  # avoid attaching lora to Conv3D layer
-        forbidden_modules.add("patch_embed")
-    elif vit_model_type == "pixtral":
-        forbidden_modules.add("patch_conv")
+    if model_type in COMPOSITE_MODELS:
+        forbidden_modules = get_forbidden_modules(model.config, finetuning_args)
+        forbidden_modules.update(COMPOSITE_MODELS[model_type].lora_conflict_keys)
+        module_names = []
+        for name, _ in model.named_modules():
+            if any(target_module in name for target_module in target_modules) and not any(
+                forbidden_module in name for forbidden_module in forbidden_modules
+            ):
+                module_names.append(name)
 
-    module_names = []
-    for name, _ in model.named_modules():
-        if any(target_module in name for target_module in target_modules) and not any(
-            forbidden_module in name for forbidden_module in forbidden_modules
-        ):
-            module_names.append(name)
-
-    return module_names
+        return module_names
+    else:
+        return target_modules
 
 
 _register_composite_model(
@@ -250,16 +248,18 @@ _register_composite_model(
 
 _register_composite_model(
     model_type="minicpmv",
-    vision_model_keys=["vpm", "resampler"],
+    projector_key="resampler",
+    vision_model_keys=["vpm"],
     language_model_keys=["llm"],
 )
 
 
 _register_composite_model(
     model_type="minicpmo",
-    projector_key="projector",
-    vision_model_keys=["vpm", "resampler", "apm", "audio_avg_pooler", "audio_projection_layer", "tts"],
+    projector_key="resampler",
+    vision_model_keys=["vpm", "apm", "audio_avg_pooler", "audio_projection_layer", "tts"],
     language_model_keys=["llm"],
+    lora_conflict_keys=["audio_projection_layer"],
 )
 
 
@@ -290,6 +290,7 @@ _register_composite_model(
     projector_key="visual.merger",
     vision_model_keys=["visual.patch_embed", "visual.blocks"],
     language_model_keys=["model", "lm_head"],
+    lora_conflict_keys=["patch_embed"],
 )
 
 
@@ -298,4 +299,5 @@ _register_composite_model(
     projector_key="visual.merger",
     vision_model_keys=["visual.patch_embed", "visual.blocks"],
     language_model_keys=["model", "lm_head"],
+    lora_conflict_keys=["patch_embed"],
 )
