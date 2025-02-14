@@ -77,7 +77,7 @@ def find_expanded_modules(model: "PreTrainedModel", target_modules: List[str], n
         ):
             module_names.append(name)
 
-    logger.info_rank0("Apply lora to layers: {}".format(",".join(map(str, trainable_layer_ids))))
+    logger.info_rank0("Apply lora to layers: {}.".format(",".join(map(str, trainable_layer_ids))))
     return module_names
 
 
