@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Set, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Set, Tuple
 
 import torch
 import transformers
@@ -210,29 +210,27 @@ def get_vision_feature_select_strategy(config: "PretrainedConfig", processor: "P
 
 
 def patch_target_modules(
-    config: "PretrainedConfig", finetuning_args: "FinetuningArguments", target_modules: Sequence[str]
-) -> Union[str, List[str]]:
+    model: "PreTrainedModel", finetuning_args: "FinetuningArguments", target_modules: Sequence[str]
+) -> List[str]:
     r"""
     Freezes vision tower for VLM LoRA tuning.
     """
-    model_type = getattr(config, "model_type", None)
-    vit_model_type = getattr(getattr(config, "vision_config", None), "model_type", None)
-    if finetuning_args.freeze_vision_tower:
-        if model_type in COMPOSITE_MODELS:
-            vision_model_keys = COMPOSITE_MODELS[model_type].vision_model_keys
-            logger.info_rank0(f"Set vision model not trainable: {vision_model_keys}.")
-            vision_model_keys = "|".join(vision_model_keys)
-            target_modules = "|".join(target_modules)
-            return f"^(?!.*{vision_model_keys}).*(?:{target_modules}).*"
-        else:
-            return target_modules
-    else:
-        if model_type == "qwen2_vl":  # avoid attaching lora to Conv3D layer
-            return "^(?!.*patch_embed).*(?:{}).*".format("|".join(target_modules))
-        elif vit_model_type == "pixtral":
-            return "^(?!.*patch_conv).*(?:{}).*".format("|".join(target_modules))
-        else:
-            return target_modules
+    model_type = getattr(model.config, "model_type", None)
+    vit_model_type = getattr(getattr(model.config, "vision_config", None), "model_type", None)
+    forbidden_modules = get_forbidden_modules(model.config, finetuning_args)
+    if model_type in ["qwen2_vl", "qwen2_5_vl"]:  # avoid attaching lora to Conv3D layer
+        forbidden_modules.add("patch_embed")
+    elif vit_model_type == "pixtral":
+        forbidden_modules.add("patch_conv")
+
+    module_names = []
+    for name, _ in model.named_modules():
+        if any(target_module in name for target_module in target_modules) and not any(
+            forbidden_module in name for forbidden_module in forbidden_modules
+        ):
+            module_names.append(name)
+
+    return module_names
 
 
 _register_composite_model(
@@ -252,14 +250,15 @@ _register_composite_model(
 
 _register_composite_model(
     model_type="minicpmv",
-    vision_model_keys=["vpm"],
+    vision_model_keys=["vpm", "resampler"],
     language_model_keys=["llm"],
 )
 
 
 _register_composite_model(
     model_type="minicpmo",
-    vision_model_keys=["vpm", "apm", "resampler", "tts"],
+    projector_key="projector",
+    vision_model_keys=["vpm", "resampler", "apm", "audio_avg_pooler", "audio_projection_layer", "tts"],
     language_model_keys=["llm"],
 )
 

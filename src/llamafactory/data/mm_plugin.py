@@ -1147,7 +1147,7 @@ class Qwen2vlPlugin(BasePlugin):
         mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
         fps_per_video = mm_inputs.pop("fps_per_video", [])
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
-        if "second_per_grid_ts" in getattr(image_processor, "model_input_names", []) and fps_per_video:
+        if "second_per_grid_ts" in processor.model_input_names and fps_per_video:
             mm_inputs["second_per_grid_ts"] = [image_processor.temporal_patch_size / fps for fps in fps_per_video]
 
         return mm_inputs
