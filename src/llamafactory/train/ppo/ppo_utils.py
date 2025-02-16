@@ -17,6 +17,7 @@ from contextlib import nullcontext
 from typing import TYPE_CHECKING, Dict, List, Literal, Optional
 
 import torch
+import torch.nn.functional as F
 from transformers.integrations import is_deepspeed_zero3_enabled
 
 from ...extras.packages import is_requests_available
@@ -86,3 +87,12 @@ def restore_layernorm(model: "PreTrainedModel", layernorm_params: Optional[Dict[
     for name, param in model.named_parameters():
         if name in layernorm_params:
             param.data = layernorm_params[name]
+
+
+def logprobs_from_logits(logits: torch.Tensor, labels: torch.Tensor, gather: bool = True) -> torch.Tensor:
+    logp = F.log_softmax(logits, dim=2)
+
+    if not gather:
+        return logp
+    logpy = torch.gather(logp, 2, labels.unsqueeze(2)).squeeze(-1)
+    return logpy
