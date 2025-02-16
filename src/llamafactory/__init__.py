@@ -24,7 +24,7 @@ Dependency graph:
     datasets>=2.16.0,<=3.2.0
     accelerate>=0.34.0,<=1.2.1
     peft>=0.11.1,<=0.12.0
-    trl>=0.8.6,<=0.9.6
+    trl>=0.15.0
   attention:
     transformers>=4.42.4 (gemma+fa2)
   longlora:

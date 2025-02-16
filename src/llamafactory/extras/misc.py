@@ -98,7 +98,7 @@ def check_dependencies() -> None:
     check_version("datasets>=2.16.0,<=3.2.0")
     check_version("accelerate>=0.34.0,<=1.2.1")
     check_version("peft>=0.11.1,<=0.12.0")
-    check_version("trl>=0.8.6,<=0.9.6")
+    check_version("trl>=0.15.0")
     if is_transformers_version_greater_than("4.46.0") and not is_transformers_version_greater_than("4.48.1"):
         logger.warning_rank0_once("There are known bugs in transformers v4.46.0-v4.48.0, please use other versions.")
 
