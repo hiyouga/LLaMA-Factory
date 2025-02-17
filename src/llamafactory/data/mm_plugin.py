@@ -1112,9 +1112,13 @@ class Qwen2vlPlugin(BasePlugin):
         self._validate_input(images, videos, audios)
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
         merge_length: int = getattr(image_processor, "merge_size") ** 2
-        mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
-        image_grid_thw = mm_inputs.get("image_grid_thw", [])
-        video_grid_thw = mm_inputs.get("video_grid_thw", [])
+        if self.expand_mm_tokens:
+            mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+            image_grid_thw = mm_inputs.get("image_grid_thw", [])
+            video_grid_thw = mm_inputs.get("video_grid_thw", [])
+        else:
+            image_grid_thw = [None] * len(images)
+            video_grid_thw = [None] * len(videos)
 
         num_image_tokens, num_video_tokens = 0, 0
         messages = deepcopy(messages)

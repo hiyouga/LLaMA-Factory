@@ -21,16 +21,11 @@ from ..data import get_template_and_fix_tokenizer
 from ..extras import logging
 from ..extras.constants import AUDIO_PLACEHOLDER, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
 from ..extras.misc import get_device_count
-from ..extras.packages import is_pillow_available, is_vllm_available
+from ..extras.packages import is_vllm_available
 from ..model import load_config, load_tokenizer
 from ..model.model_utils.quantization import QuantizationMethod
 from ..model.model_utils.visual import LlavaMultiModalProjectorForYiVLForVLLM
 from .base_engine import BaseEngine, Response
-
-
-if is_pillow_available():
-    from PIL import Image
-    from PIL.Image import Image as ImageObject
 
 
 if is_vllm_available():
@@ -54,6 +49,7 @@ class VllmEngine(BaseEngine):
         finetuning_args: "FinetuningArguments",
         generating_args: "GeneratingArguments",
     ) -> None:
+        self.model_args = model_args
         config = load_config(model_args)  # may download model from ms hub
         if getattr(config, "quantization_config", None):  # gptq models should use float16
             quantization_config: Dict[str, Any] = getattr(config, "quantization_config", None)
@@ -180,15 +176,13 @@ class VllmEngine(BaseEngine):
         )
 
         if images is not None:  # add image features
-            multi_modal_data = {"image": []}
-            for image in images:
-                if not isinstance(image, (str, ImageObject)):
-                    raise ValueError(f"Expected image input is a path or PIL.Image, but got {type(image)}.")
-
-                if isinstance(image, str):
-                    image = Image.open(image).convert("RGB")
-
-                multi_modal_data["image"].append(image)
+            multi_modal_data = {
+                "image": self.template.mm_plugin._regularize_images(
+                    images,
+                    image_max_pixels=self.model_args.image_max_pixels,
+                    image_min_pixels=self.model_args.image_min_pixels,
+                )
+            }
         else:
             multi_modal_data = None
 
