@@ -1,7 +1,5 @@
 ### model
 model_name_or_path: llava-hf/llava-1.5-7b-hf
-image_resolution: 262144
-video_resolution: 16384
 trust_remote_code: true
 
 ### method
