@@ -187,8 +187,6 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             mm_inputs["cross_attention_mask"] = F.pad(cross_attention_mask, (0, 0, 0, 0, 0, seq_len - orig_len))
 
         features.update(mm_inputs)
-        if isinstance(features.get("pixel_values"), list):  # for pixtral inputs
-            features = features.data  # use default_collate() instead of BatchEncoding.to()
 
         if "image_bound" in features:  # for minicpmv inputs
             bsz, seq_length = features["input_ids"].shape
