@@ -20,7 +20,7 @@ Level:
 
 Dependency graph:
   main:
-    transformers>=4.41.2,<=4.48.3,!=4.46.*,!=4.47.*,!=4.48.0
+    transformers>=4.41.2,<=4.49.0,!=4.46.*,!=4.47.*,!=4.48.0
     datasets>=2.16.0,<=3.2.0
     accelerate>=0.34.0,<=1.2.1
     peft>=0.11.1,<=0.12.0
