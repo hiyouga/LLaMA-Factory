@@ -319,18 +319,36 @@
     }
   },
   "open_thoughts": {
-    "hf_hub_url": "open-thoughts/OpenThoughts-114k",
+    "hf_hub_url": "llamafactory/OpenThoughts-114k",
     "formatting": "sharegpt",
     "columns": {
-      "messages": "conversations",
-      "system": "system"
+      "messages": "messages"
     },
     "tags": {
-      "role_tag": "from",
-      "content_tag": "value",
+      "role_tag": "role",
+      "content_tag": "content",
       "user_tag": "user",
-      "assistant_tag": "assistant"
+      "assistant_tag": "assistant",
+      "system_tag": "system"
     }
+  },
+  "open_r1_math": {
+    "hf_hub_url": "llamafactory/OpenR1-Math-94k",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant",
+      "system_tag": "system"
+    }
+  },
+  "chinese_r1_distill": {
+    "hf_hub_url": "Congliu/Chinese-DeepSeek-R1-Distill-data-110k-SFT",
+    "ms_hub_url": "liucong/Chinese-DeepSeek-R1-Distill-data-110k-SFT"
   },
   "llava_1k_en": {
     "hf_hub_url": "BUAADreamer/llava-en-zh-2k",
