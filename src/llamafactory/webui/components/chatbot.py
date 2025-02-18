@@ -76,7 +76,7 @@ def create_chat_box(
                 submit_btn = gr.Button(variant="primary")
 
             with gr.Column(scale=1):
-                max_new_tokens = gr.Slider(minimum=8, maximum=4096, value=512, step=1)
+                max_new_tokens = gr.Slider(minimum=8, maximum=8192, value=1024, step=1)
                 top_p = gr.Slider(minimum=0.01, maximum=1.0, value=0.7, step=0.01)
                 temperature = gr.Slider(minimum=0.01, maximum=1.5, value=0.95, step=0.01)
                 clear_btn = gr.Button()

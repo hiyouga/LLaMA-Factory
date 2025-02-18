@@ -25,12 +25,15 @@ CSS = r"""
 }
 
 .thinking-summary span {
-  border: 1px solid #e0e0e0 !important;
   border-radius: 4px !important;
   padding: 4px !important;
   cursor: pointer !important;
   font-size: 14px !important;
-  background: #333333 !important;
+  background: rgb(245, 245, 245) !important;
+}
+
+.dark .thinking-summary span {
+  background: rgb(73, 73, 73) !important;
 }
 
 .thinking-container {
