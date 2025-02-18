@@ -392,7 +392,7 @@ huggingface-cli login
 | ------------ | ------- | --------- |
 | python       | 3.9     | 3.10      |
 | torch        | 1.13.1  | 2.4.0     |
-| transformers | 4.41.2  | 4.45.2    |
+| transformers | 4.41.2  | 4.49.0    |
 | datasets     | 2.16.0  | 3.2.0     |
 | accelerate   | 0.34.0  | 1.2.1     |
 | peft         | 0.11.1  | 0.12.0    |
@@ -401,9 +401,9 @@ huggingface-cli login
 | 可选项       | 至少     | 推荐      |
 | ------------ | ------- | --------- |
 | CUDA         | 11.6    | 12.2      |
-| deepspeed    | 0.10.0  | 0.14.0    |
+| deepspeed    | 0.10.0  | 0.16.2    |
 | bitsandbytes | 0.39.0  | 0.43.1    |
-| vllm         | 0.4.3   | 0.6.6     |
+| vllm         | 0.4.3   | 0.7.2     |
 | flash-attn   | 2.3.0   | 2.7.2     |
 
 ### 硬件依赖
