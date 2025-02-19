@@ -569,14 +569,16 @@ class MiniCPMVPlugin(BasePlugin):
 
         if audio_inputs:
             pattern = "(<audio>./</audio>)"
+            idx = 0
             for index, message in enumerate(messages):
                 text = message["content"]
                 audio_tags = re.findall(pattern, text)
                 text_chunks = text.split(pattern)
                 final_text = ""
                 for i in range(len(audio_tags)):
-                    audio_placeholder = audio_inputs["audio_phs"][0][i]
+                    audio_placeholder = audio_inputs["audio_phs"][0][idx]
                     final_text = final_text + text_chunks[i] + audio_placeholder
+                    idx += 1
 
                 final_text += text_chunks[-1]
                 messages[index]["content"] = final_text
@@ -649,7 +651,7 @@ class MiniCPMVPlugin(BasePlugin):
 
             audio_features, audio_feature_lens, audio_phs = processor.audio_feature_extract(
                 audios_ls,
-                audio_parts_ls,
+                audio_parts=None, # audio_parts_ls,
                 chunk_input=True,
                 sampling_rate=16000,
             )
