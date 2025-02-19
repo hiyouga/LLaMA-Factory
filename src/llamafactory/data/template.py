@@ -824,6 +824,32 @@ _register_template(
 )
 
 
+# copied from chatml template
+_register_template(
+    name="qwen-news-analysis",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+   # format_tools=ToolFormatter(tool_format="qwen"),
+   # format_separator=EmptyFormatter(slots=["\n"]),
+    default_system="""당신은 주어진 뉴스를 분석하는 챗봇입니다. 
+**지시사항**:
+- 주어진 뉴스에 대하여 summary, advr, stk_code, sent_score 분석하고 json 형태로 출력하세요. 
+- summary는 1~3줄 사이로 작성합니다.
+- advr는 해당 본문이 광고면 1 광고가 아닐경우에 0 으로 정수 1개의 값으로 출력하세요.
+- stk_code는 해당 본문에서 언급된 종목명을 찾고, 그 종목명의 종목 코드를 찾아 파이썬 리스트 형태로 작성하세요. 
+- sent_score는 해당 본문이 긍정적일경우 1 부정적일경우 -1 , 긍정적이지도 부정적이지도 않을경우 0 으로 정수 1개의 값을 출력하세요 
+- 본문: 이 주어지면 결과: 다음에 json 형태로 작성하세요
+
+**예시**:
+본문:제목 : "스타트업 주주도 쉽게" 삼성증권, 온라인 주총장 확대</div>                           [머니S 안효건 기자]<br/>삼성증권이 '온라인 주총(주주총회)장' 서비스 범위를 비상장사로 확대했다.<br/><br/>4일 삼성증권에 따르면 온라인  주총장은 법인 고객에 제공하는 온라인 전자투표 시스템이다. 주주들이 주총에 참석하거나 우편 전송해야 가능했던 의결권 행사를 온라인 처 리할 수 있게 했다. <br/><br/>2020년 시작한 서비스는 현재 920개 상장사가 이용한다. 고객사와 진행한 증자와 블록딜 등 규모는 1조5000억원 을 넘었다. 삼성증권은 기업별 전담직원을 배치하고 주총 정보 조회도 제공한다.<br/><br/>올해부터는 범위를 상장사에서 비상장사로 확대해 유망 스타트업도 이용할 수 있다. 삼성증권 관계자는 "주식보상과 증자 등 임시주총이 잦은 스타트업 경영을 돕고 성장에 실질적인 도움이 되는 서비스를 지속 개발하겠다"고 밝혔다.<br/><br/><div style="margin-bottom:30px;">해당 기사는 머니S(<a href="http://moneys.mt.co.kr" target="_blank">moneys.mt.co.kr</a>)에서 제공한 것이며 저작권은 제공 매체에 있습니다. 기사 내용 관련 문의는 해당 언론사에 하시기 바랍니다.
+결과:{'summary': '삼성증권이 온라인 주주총회 서비스를 비상장사로 확대하여 스타트업도 이를 이용할 수 있게 되었습니다. 이 서비스는 주주들이 주총 참석 없이 온라인으로 의결권을 행사할 수 있는 전자투표 시스템을 제공합니다. 이를 통해 스타트업의 주식 보상과 증자 등의 경영 활동을 지원하고, 성장을 위한 실질적 도움을 주고자 합니다.', 'advr_tp': '0', 'stk_code': ['016360'], 'sent_score': '0'}
+
+""",
+    stop_words=["<|im_end|>"],
+)
+
+
+
 # copied from llama3 template
 _register_template(
     name="mllama",

@@ -536,5 +536,12 @@
 },
 "deidentification":{
     "file_name": "deidentification.json"
-}
+},
+"news_analysis":{
+    "hf_hub_url": "irene93/news-analysis-ko",
+    "columns": {
+	    "prompt":"body",
+	    "response":"analysis"
+    }
+  }
 }
