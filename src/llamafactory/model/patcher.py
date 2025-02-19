@@ -79,9 +79,11 @@ def patch_processor(
     setattr(processor, "tokenizer", tokenizer)
     if getattr(config, "vision_config", None) is not None:  # visual models
         setattr(processor, "image_seqlen", get_image_seqlen(config))
-        setattr(processor, "image_resolution", model_args.image_resolution)
         setattr(processor, "patch_size", get_patch_size(config, processor))
-        setattr(processor, "video_resolution", model_args.video_resolution)
+        setattr(processor, "image_max_pixels", model_args.image_max_pixels)
+        setattr(processor, "image_min_pixels", model_args.image_min_pixels)
+        setattr(processor, "video_max_pixels", model_args.video_max_pixels)
+        setattr(processor, "video_min_pixels", model_args.video_min_pixels)
         setattr(processor, "video_fps", model_args.video_fps)
         setattr(processor, "video_maxlen", model_args.video_maxlen)
         setattr(processor, "vision_feature_select_strategy", get_vision_feature_select_strategy(config, processor))

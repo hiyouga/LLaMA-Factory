@@ -104,12 +104,19 @@ class MMPluginMixin:
                 "This model does not support audio input. Please check whether the correct `template` is used."
             )
 
-    def _preprocess_image(self, image: "ImageObject", image_resolution: int, **kwargs) -> "ImageObject":
+    def _preprocess_image(
+        self, image: "ImageObject", image_max_pixels: int, image_min_pixels: int, **kwargs
+    ) -> "ImageObject":
         r"""
         Pre-processes a single image.
         """
-        if (image.width * image.height) > image_resolution:
-            resize_factor = math.sqrt(image_resolution / (image.width * image.height))
+        if (image.width * image.height) > image_max_pixels:
+            resize_factor = math.sqrt(image_max_pixels / (image.width * image.height))
+            width, height = int(image.width * resize_factor), int(image.height * resize_factor)
+            image = image.resize((width, height), resample=Image.Resampling.NEAREST)
+
+        if (image.width * image.height) < image_min_pixels:
+            resize_factor = math.sqrt(image_min_pixels / (image.width * image.height))
             width, height = int(image.width * resize_factor), int(image.height * resize_factor)
             image = image.resize((width, height), resample=Image.Resampling.NEAREST)
 
@@ -217,14 +224,17 @@ class MMPluginMixin:
 
         if len(images) != 0:
             images = self._regularize_images(
-                images, image_resolution=getattr(processor, "image_resolution", 768 * 768)
+                images,
+                image_max_pixels=getattr(processor, "image_max_pixels", 768 * 768),
+                image_min_pixels=getattr(processor, "image_min_pixels", 32 * 32),
             )
             mm_inputs.update(image_processor(images, return_tensors="pt"))
 
         if len(videos) != 0:
             videos = self._regularize_videos(
                 videos,
-                image_resolution=getattr(processor, "video_resolution", 256 * 256),
+                image_max_pixels=getattr(processor, "video_max_pixels", 256 * 256),
+                image_min_pixels=getattr(processor, "video_min_pixels", 16 * 16),
                 video_fps=getattr(processor, "video_fps", 2.0),
                 video_maxlen=getattr(processor, "video_maxlen", 128),
             )
@@ -370,10 +380,8 @@ class LlavaNextPlugin(BasePlugin):
         num_image_tokens = 0
         messages = deepcopy(messages)
         mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
-        if "image_sizes" in mm_inputs:
-            image_sizes = iter(mm_inputs["image_sizes"])
-
         if "pixel_values" in mm_inputs:
+            image_sizes = iter(mm_inputs["image_sizes"].tolist())
             height, width = get_image_size(to_numpy_array(mm_inputs["pixel_values"][0][0]))
 
         for message in messages:
@@ -429,7 +437,7 @@ class LlavaNextVideoPlugin(BasePlugin):
         messages = deepcopy(messages)
         mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
         if "pixel_values" in mm_inputs:
-            image_sizes = iter(mm_inputs["image_sizes"])
+            image_sizes = iter(mm_inputs["image_sizes"].tolist())
             height, width = get_image_size(to_numpy_array(mm_inputs["pixel_values"][0][0]))
             for message in messages:
                 content = message["content"]
@@ -508,7 +516,6 @@ class MiniCPMVPlugin(BasePlugin):
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
         mm_inputs = {}
         audio_inputs = {}
-        audio_parts = []
         if len(images) != 0 and len(videos) != 0:
             raise ValueError("MiniCPM-V model does not support input images and videos at the same time.")
 
@@ -532,7 +539,6 @@ class MiniCPMVPlugin(BasePlugin):
                 num_video_tokens += 1
 
             while AUDIO_PLACEHOLDER in content:
-                audio_parts.append(i)
                 content = content.replace(AUDIO_PLACEHOLDER, "{{audio}}", 1)
                 num_audio_tokens += 1
 
@@ -544,12 +550,12 @@ class MiniCPMVPlugin(BasePlugin):
             mm_inputs = self._get_mm_inputs(images, [], [], processor)
 
         if num_audio_tokens > 0:
-            audio_parts_ls = [audio_parts]
-            audio_inputs = self._get_mm_inputs([], [], audios, processor, audio_parts_ls=audio_parts_ls, ret_phs=True)
+            audio_inputs = self._get_mm_inputs([], [], audios, processor, ret_phs=True)
 
         if mm_inputs:
             pattern = "(<image>./</image>)"
             image_sizes = mm_inputs["image_sizes"]
+            idx = 0
             for index, message in enumerate(messages):
                 text = message["content"]
                 image_tags = re.findall(pattern, text)
@@ -560,9 +566,10 @@ class MiniCPMVPlugin(BasePlugin):
                         final_text
                         + text_chunks[i]
                         + image_processor.get_slice_image_placeholder(
-                            image_sizes[0][i], i, max_slice_nums, use_image_id
+                            image_sizes[0][idx], idx, max_slice_nums, use_image_id
                         )
                     )
+                    idx += 1
 
                 final_text += text_chunks[-1]
                 messages[index]["content"] = final_text
@@ -608,7 +615,8 @@ class MiniCPMVPlugin(BasePlugin):
         if len(images) != 0:
             images = self._regularize_images(
                 images,
-                image_resolution=getattr(processor, "image_resolution", 768 * 768),
+                image_max_pixels=getattr(processor, "image_max_pixels", 768 * 768),
+                image_min_pixels=getattr(processor, "image_min_pixels", 32 * 32),
             )
             if "valid_image_nums_ls" in kwargs:
                 valid_image_nums_ls = kwargs["valid_image_nums_ls"]
@@ -628,7 +636,8 @@ class MiniCPMVPlugin(BasePlugin):
         if len(videos) != 0:
             videos = self._regularize_videos(
                 videos,
-                image_resolution=getattr(processor, "video_resolution", 256 * 256),
+                image_max_pixels=getattr(processor, "video_max_pixels", 256 * 256),
+                image_min_pixels=getattr(processor, "video_min_pixels", 16 * 16),
                 video_fps=getattr(processor, "video_fps", 2.0),
                 video_maxlen=getattr(processor, "video_maxlen", 128),
             )
@@ -636,22 +645,24 @@ class MiniCPMVPlugin(BasePlugin):
             mm_inputs.update(video_inputs)
 
         if len(audios) != 0:
-            audio_parts_ls = kwargs.get("audio_parts_ls", None)
             new_audios = []
             for audio in audios:
                 if not isinstance(audio, np.ndarray):
                     audio = librosa.load(audio, sr=processor.feature_extractor.sampling_rate)[0]
                 new_audios.append(audio)
 
-            audios_ls = []
-            idx = 0
-            for audio_parts in audio_parts_ls:
-                audios_ls.append(new_audios[idx : idx + len(audio_parts)])
-                idx += len(audio_parts)
+            if "valid_audio_nums_ls" in kwargs:
+                valid_audio_nums_ls = kwargs["valid_audio_nums_ls"]
+                audios_ls = []
+                idx = 0
+                for valid_audio_nums in valid_audio_nums_ls:
+                    audios_ls.append(new_audios[idx : idx + valid_audio_nums])
+                    idx += valid_audio_nums
+            else:
+                audios_ls = [new_audios]
 
             audio_features, audio_feature_lens, audio_phs = processor.audio_feature_extract(
                 audios_ls,
-                audio_parts=None, # audio_parts_ls,
                 chunk_input=True,
                 sampling_rate=16000,
             )
@@ -707,7 +718,7 @@ class MiniCPMVPlugin(BasePlugin):
             # audio bound
             audio_bounds_ls = []
             spk_bounds_ls = []
-            audio_parts_ls = []
+            valid_audio_nums_ls = []
 
             for input_ids, audiolen in zip(batch_ids, audlens):
                 input_ids_ = torch.tensor(input_ids)
@@ -716,7 +727,7 @@ class MiniCPMVPlugin(BasePlugin):
                 assert len(audio_start_idx) == len(audio_end_idx)
                 audio_bounds = torch.hstack([(audio_start_idx + 1).unsqueeze(-1), audio_end_idx.unsqueeze(-1)])
                 audio_bounds_ls.append(audio_bounds)
-                audio_parts_ls.append(list(range(audiolen)))
+                valid_audio_nums_ls.append(audiolen)
 
                 spk_start_idx = torch.where(input_ids_ == processor.tokenizer.spk_start_id)[0]
                 spk_end_idx = torch.where(input_ids_ == processor.tokenizer.spk_end_id)[0]
@@ -724,7 +735,7 @@ class MiniCPMVPlugin(BasePlugin):
                 spk_bounds = torch.hstack([(spk_start_idx + 1).unsqueeze(-1), spk_end_idx.unsqueeze(-1)])
                 spk_bounds_ls.append(spk_bounds)
 
-            audio_inputs = self._get_mm_inputs([], [], audios, processor, audio_parts_ls=audio_parts_ls)
+            audio_inputs = self._get_mm_inputs([], [], audios, processor, valid_audio_nums_ls=valid_audio_nums_ls)
             mm_inputs.update(audio_inputs)
             mm_inputs.update({"audio_bounds": audio_bounds_ls, "spk_bounds": spk_bounds_ls})
 
@@ -776,7 +787,11 @@ class MllamaPlugin(BasePlugin):
             num_tiles: List[List[int]] with shape (batch_size, num_images_in_batch). For example, (2, 1).
         """
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
-        images = self._regularize_images(images, image_resolution=getattr(processor, "image_resolution", 768 * 768))
+        images = self._regularize_images(
+            images,
+            image_max_pixels=getattr(processor, "image_max_pixels", 768 * 768),
+            image_min_pixels=getattr(processor, "image_min_pixels", 32 * 32),
+        )
         batch_images = []
         for image_length in imglens:
             batch_images.append(images[:image_length])
@@ -902,16 +917,14 @@ class PixtralPlugin(BasePlugin):
         num_image_tokens = 0
         messages = deepcopy(messages)
         mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
-        image_input_sizes = mm_inputs.get("image_sizes", None)
+        if "pixel_values" in mm_inputs:
+            image_sizes = iter(mm_inputs["image_sizes"].tolist())
+
         for message in messages:
             content = message["content"]
             while IMAGE_PLACEHOLDER in content:
-                if image_input_sizes is None:
-                    raise ValueError("Cannot get image input sizes.")
-
                 if self.expand_mm_tokens:
-                    image_size = image_input_sizes[0][num_image_tokens]
-                    height, width = image_size
+                    height, width = next(image_sizes)
                     num_height_tokens = height // patch_size
                     num_width_tokens = width // patch_size
                     replace_tokens = [[image_token] * num_width_tokens + [image_break_token]] * num_height_tokens
@@ -945,9 +958,6 @@ class PixtralPlugin(BasePlugin):
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         self._validate_input(images, videos, audios)
         mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
-        if mm_inputs.get("pixel_values"):
-            mm_inputs["pixel_values"] = mm_inputs["pixel_values"][0]
-
         mm_inputs.pop("image_sizes", None)
         return mm_inputs
 
@@ -1067,14 +1077,17 @@ class Qwen2vlPlugin(BasePlugin):
         mm_inputs = {}
         if len(images) != 0:
             images = self._regularize_images(
-                images, image_resolution=getattr(processor, "image_resolution", 768 * 768)
+                images,
+                image_max_pixels=getattr(processor, "image_max_pixels", 768 * 768),
+                image_min_pixels=getattr(processor, "image_min_pixels", 32 * 32),
             )
             mm_inputs.update(image_processor(images, return_tensors="pt"))
 
         if len(videos) != 0:
             videos, fps_per_video = self._regularize_videos(
                 videos,
-                image_resolution=getattr(processor, "video_resolution", 256 * 256),
+                image_max_pixels=getattr(processor, "video_max_pixels", 256 * 256),
+                image_min_pixels=getattr(processor, "video_min_pixels", 16 * 16),
                 video_fps=getattr(processor, "video_fps", 2.0),
                 video_maxlen=getattr(processor, "video_maxlen", 128),
             )
@@ -1095,9 +1108,13 @@ class Qwen2vlPlugin(BasePlugin):
         self._validate_input(images, videos, audios)
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
         merge_length: int = getattr(image_processor, "merge_size") ** 2
-        mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
-        image_grid_thw = mm_inputs.get("image_grid_thw", [])
-        video_grid_thw = mm_inputs.get("video_grid_thw", [])
+        if self.expand_mm_tokens:
+            mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+            image_grid_thw = mm_inputs.get("image_grid_thw", [])
+            video_grid_thw = mm_inputs.get("video_grid_thw", [])
+        else:
+            image_grid_thw = [None] * len(images)
+            video_grid_thw = [None] * len(videos)
 
         num_image_tokens, num_video_tokens = 0, 0
         messages = deepcopy(messages)

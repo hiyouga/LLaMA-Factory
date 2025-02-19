@@ -46,13 +46,14 @@ def vllm_infer(
     max_new_tokens: int = 1024,
     repetition_penalty: float = 1.0,
     pipeline_parallel_size: int = 1,
-    image_resolution: int = 512 * 512,
+    image_max_pixels: int = 768 * 768,
+    image_min_pixels: int = 32 * 32,
 ):
     r"""
     Performs batch generation using vLLM engine, which supports tensor parallelism.
     Usage: python vllm_infer.py --model_name_or_path meta-llama/Llama-2-7b-hf --template llama --dataset alpaca_en_demo
     """
-    check_version("vllm>=0.4.3,<=0.6.5")
+    check_version("vllm>=0.4.3,<=0.7.2")
     if pipeline_parallel_size > get_device_count():
         raise ValueError("Pipeline parallel size should be smaller than the number of gpus.")
 
@@ -86,7 +87,9 @@ def vllm_infer(
     for sample in dataset_module["train_dataset"]:
         if sample["images"]:
             multi_modal_data = {
-                "image": template_obj.mm_plugin._regularize_images(sample["images"], image_resolution=image_resolution)
+                "image": template_obj.mm_plugin._regularize_images(
+                    sample["images"], image_max_pixels=image_max_pixels, image_min_pixels=image_min_pixels
+                )
             }
         else:
             multi_modal_data = None
