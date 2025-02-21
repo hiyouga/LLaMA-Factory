@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, Type, T
 
 import numpy as np
 import torch
-from transformers.image_utils import get_image_size, to_numpy_array
+from transformers.image_utils import get_image_size, to_numpy_array, make_flat_list_of_images, make_batched_videos
 from typing_extensions import override
 
 from ..extras.constants import AUDIO_PLACEHOLDER, IGNORE_INDEX, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
@@ -320,6 +320,84 @@ class BasePlugin(MMPluginMixin):
         self._validate_input(images, videos, audios)
         return {}
 
+@dataclass
+class InternVLPlugin(BasePlugin):
+    @override
+    def process_messages(
+        self,
+        messages: Sequence[Dict[str, str]],
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        audios: Sequence["AudioInput"],
+        processor: Optional["ProcessorMixin"],
+    ) -> List[Dict[str, str]]:
+        self._validate_input(images, videos, audios)
+        num_image_tokens = 0
+        image_seqlen = getattr(processor, "image_seqlen") if self.expand_mm_tokens else 1
+        messages = deepcopy(messages)
+        mm_inputs = self._get_mm_inputs(images, videos, audios, processor, )
+        for message in messages:
+            content = messages['content']
+            while IMAGE_PLACEHOLDER in content:
+                # TOFIX
+                pass
+    @override
+    def _get_mm_inputs(
+        self,
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        audios: Sequence["AudioInput"],
+        processor: "ProcessorMixin",
+        **kwargs,
+    ) -> Dict[str, "torch.Tensor"]:
+        image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
+        image_kwargs = processor.image_processor.to_dict()
+
+        mm_inputs = {}
+        
+        if len(images) > 0:
+            images = make_flat_list_of_images(images)
+            image_inputs = self.image_processor(images=images, **image_kwargs)
+            image_num_patches = image_inputs.pop("num_patches")
+            image_pixel_values = image_inputs.pop("pixel_values")
+            image_num_patches_indices = np.cumsum(image_num_patches)
+
+            mm_inputs.update("image_pixel_values", image_pixel_values)
+            mm_inputs.update("image_num_patches_indices", image_num_patches_indices)
+            
+        if len(videos) > 0:
+            videos = make_batched_videos(videos)
+            num_frames_per_video = [len(video) for video in videos]
+            patch_indices = np.cumsum(num_frames_per_video)
+            image_kwargs["crop_to_patches"] = False
+            video_inputs = self.image_processor(images=videos, **image_kwargs)
+            video_num_patches = video_inputs.pop("num_patches")
+            video_pixel_values = video_inputs.pop("pixel_values")
+            video_num_patches_indices = np.cumsum(video_num_patches)
+            
+            mm_inputs.update("video_patch_indices", patch_indices)
+            mm_inputs.update("video_pixel_values", video_pixel_values)
+            mm_inputs.update("video_num_patches_indices", video_num_patches_indices)
+            
+        return mm_inputs
+    
+    @override
+    def get_mm_inputs(
+        self,
+        images: Sequence["ImageInput"],
+        videos: Sequence["VideoInput"],
+        audios: Sequence["AudioInput"],
+        imglens: Sequence[int],
+        vidlens: Sequence[int],
+        audlens: Sequence[int],
+        batch_ids: Sequence[List[int]],
+        processor: Optional["ProcessorMixin"],
+    ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
+        self._validate_input(images, videos, audios)
+        
+        mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+
+        return self._get_mm_inputs(images, videos, audios, processor)
 
 @dataclass
 class LlavaPlugin(BasePlugin):
