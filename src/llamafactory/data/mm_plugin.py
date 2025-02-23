@@ -20,16 +20,11 @@ from typing_extensions import override
 
 from ..extras.constants import AUDIO_PLACEHOLDER, IGNORE_INDEX, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
 from ..extras.packages import (
-    is_decord_available,
     is_librosa_available,
     is_pillow_available,
     is_pyav_available,
     is_transformers_version_greater_than,
 )
-
-
-if is_decord_available():
-    pass
 
 
 if is_librosa_available():
