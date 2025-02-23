@@ -860,6 +860,18 @@ register_model_group(
 
 register_model_group(
     models={
+        "InternVL2_5-1B": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL2_5-1B",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2-7b",
+        },
+    },
+    template="intern_vl",
+    multimodal=True
+)
+
+
+register_model_group(
+    models={
         "Jamba-v0.1": {
             DownloadSource.DEFAULT: "ai21labs/Jamba-v0.1",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Jamba-v0.1",

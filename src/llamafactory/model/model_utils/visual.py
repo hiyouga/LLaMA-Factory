@@ -230,6 +230,9 @@ def patch_target_modules(
     else:
         return target_modules
 
+_register_composite_model(
+    model_type="intern_vl",
+)
 
 _register_composite_model(
     model_type="llava",
@@ -265,6 +268,13 @@ _register_composite_model(
 
 _register_composite_model(
     model_type="paligemma",
+)
+
+
+_register_composite_model(
+    model_type="pixtral",
+    vision_model_keys="vision_encoder",
+    projector_key="vision_language_adapter"
 )
 
 

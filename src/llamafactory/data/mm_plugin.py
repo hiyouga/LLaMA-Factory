@@ -8,7 +8,14 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple, Type, T
 
 import numpy as np
 import torch
-from transformers.image_utils import get_image_size, make_batched_videos, make_flat_list_of_images, to_numpy_array, concatenate_list
+from transformers.image_utils import (
+    load_images,
+    get_image_size, 
+    make_batched_videos, 
+    make_flat_list_of_images, 
+    to_numpy_array, 
+    concatenate_list
+)
 from typing_extensions import override
 
 from ..extras.constants import AUDIO_PLACEHOLDER, IGNORE_INDEX, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
@@ -338,7 +345,9 @@ class InternVLPlugin(BasePlugin):
         messages = deepcopy(messages)
         mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
 
-        image_pixel_patch_list = mm_inputs['image_num_patches']
+        image_pixel_patch_list = mm_inputs.get('image_num_patches', None) # pathes of images
+        video_num_patches = mm_inputs.get("video_num_patches", None) # all patches for frames of videos
+        video_patch_indices = mm_inputs.get('video_patch_indices', None) # num frames of per video
 
         for message in messages:
             content = message['content']
@@ -349,18 +358,30 @@ class InternVLPlugin(BasePlugin):
                             f"<img>{'<IMG_CONTEXT>' * image_seqlen * image_pixel_patch_list[num_image_tokens]}</img>",
                             1,
                         )
-            num_image_tokens += 1
+                num_image_tokens += 1
+            message['content'] = content
 
             while VIDEO_PLACEHOLDER in content:
-                pass
-
-
+                import pdb; pdb.set_trace()
+                current_patch_index = video_patch_indices[num_video_tokens - 1] if num_video_tokens > 0 else 0
+                end_patch_index = video_patch_indices[num_video_tokens]
+                num_patches = list(video_num_patches[current_patch_index:end_patch_index])
+                video_replaced_prompt = "\n".join(
+                            f"Frame{i+1}: <img>{'<IMG_CONTEXT>'*self.image_seq_length* num_patches[i]}</img>"
+                            for i in range(len(num_patches))
+                        )
+                content = content.replace(VIDEO_PLACEHOLDER, video_replaced_prompt, 1)
+                num_video_tokens += 1
+            message['content'] = content
+            
 
             if len(images) != num_image_tokens:
                 raise ValueError(f"The number of images does not match the number of {IMAGE_PLACEHOLDER} tokens.")
             
-            if len(videos) != num_image_tokens:
+            if len(videos) != num_video_tokens:
                 raise ValueError(f"The number of videos does not match the number of {VIDEO_PLACEHOLDER} tokens.")
+        
+        return messages
 
 
                 
@@ -379,14 +400,19 @@ class InternVLPlugin(BasePlugin):
         mm_inputs = {}
         image_video_patches = []
 
-        if len(images) > 0:
+        if len(images) !=0 and isinstance(images[0], str):
+            images = load_images(images)
+        # if isinstance(videos[0], str):
+        #     videos = load
+
+        if len(images) != 0:
             images = make_flat_list_of_images(images)
             image_inputs = image_processor(images=images, **image_kwargs)
             image_num_patches = image_inputs.pop("num_patches")
             image_pixel_values = image_inputs.pop("pixel_values")
             image_num_patches_indices = np.cumsum(image_num_patches)
 
-        if len(videos) > 0:
+        if len(videos) != 0:
             videos = make_batched_videos(videos)
             num_frames_per_video = [len(video) for video in videos]
             patch_indices = np.cumsum(num_frames_per_video)
@@ -398,27 +424,28 @@ class InternVLPlugin(BasePlugin):
 
         # gather all of the pixel_values
         # FIXME IMAGE First Now
-        if images is not None and image_pixel_values is not None:
+        if len(images) != 0 and image_pixel_values is not None:
             for i in range(len(images)):
                 start_index = image_num_patches_indices[i - 1] if i > 0 else 0
                 end_index = image_num_patches_indices[i]
                 image_video_patches.append(image_pixel_values[start_index:end_index])
 
-        if videos is not None and video_pixel_values is not None:
+        if len(videos) != 0 and video_pixel_values is not None:
             for i in range(len(videos)):
                 current_patch_index = patch_indices[i - 1] if i > 0 else 0
                 end_patch_index = patch_indices[i]
                 start_index = video_num_patches_indices[current_patch_index] if i > 0 else 0
                 end_index = video_num_patches_indices[end_patch_index - 1]
                 image_video_patches.append(video_pixel_values[start_index:end_index])
-        
-        mm_inputs={"pixel_values": concatenate_list(image_video_patches)}
-        mm_inputs.update({"image_num_patches": image_num_patches})
-        mm_inputs.update({"image_num_patches_indices": image_num_patches_indices})
 
-        mm_inputs.update({"video_patch_indices": patch_indices})
-        mm_inputs.update({"video_num_patches": video_num_patches})
-        mm_inputs.update({"video_num_patches_indices": video_num_patches_indices})
+        if len(images) != 0:
+            pixel_values_list = concatenate_list(image_video_patches)
+            mm_inputs={"pixel_values": torch.stack([torch.tensor(patch_ndarray) for patch_ndarray in pixel_values_list])}
+            mm_inputs.update({"image_num_patches": image_num_patches})
+
+        if len(videos) != 0:
+            mm_inputs.update({"video_patch_indices": patch_indices})
+            mm_inputs.update({"video_num_patches": video_num_patches})
 
         return mm_inputs
 
@@ -436,8 +463,12 @@ class InternVLPlugin(BasePlugin):
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
         self._validate_input(images, videos, audios)
 
-        # mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
-        return self._get_mm_inputs(images, videos, audios, processor)
+        mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+        mm_inputs.pop("image_num_patches", None)
+        mm_inputs.pop("video_patch_indices", None)
+        mm_inputs.pop("video_num_patches", None)
+
+        return mm_inputs
 
 @dataclass
 class LlavaPlugin(BasePlugin):
@@ -1375,6 +1406,7 @@ PLUGINS = {
     "qwen2_audio": Qwen2AudioPlugin,
     "qwen2_vl": Qwen2vlPlugin,
     "video_llava": VideoLlavaPlugin,
+    "intern_vl": InternVLPlugin
 }
 
 
