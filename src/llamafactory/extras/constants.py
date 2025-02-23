@@ -862,11 +862,11 @@ register_model_group(
     models={
         "InternVL2_5-1B": {
             DownloadSource.DEFAULT: "OpenGVLab/InternVL2_5-1B",
-            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/internlm2-7b",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL2_5-1B",
         },
     },
     template="intern_vl",
-    multimodal=True
+    multimodal=True,
 )
 
 

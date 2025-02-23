@@ -19,9 +19,9 @@ import torch
 from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
+    AutoModelForImageTextToText,
     AutoModelForSeq2SeqLM,
     AutoModelForVision2Seq,
-    AutoModelForImageTextToText,
     AutoProcessor,
     AutoTokenizer,
 )
