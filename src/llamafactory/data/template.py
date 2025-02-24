@@ -985,6 +985,18 @@ register_template(
 )
 
 
+register_template(
+    name="moonlight",
+    format_user=StringFormatter(
+        slots=["<|im_user|>user<|im_middle|>{{content}}<|im_end|><|im_assistant|>assistant<|im_middle|>"]
+    ),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>"]),
+    format_system=StringFormatter(slots=["<|im_system|>system<|im_middle|>{{content}}<|im_end|>"]),
+    default_system="You are a helpful assistant provided by Moonshot-AI.",
+    stop_words=["<|im_end|>"],
+)
+
+
 # copied from vicuna template
 register_template(
     name="llava",

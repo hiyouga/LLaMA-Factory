@@ -34,6 +34,7 @@ bf16: true
 ddp_timeout: 180000000
 
 ### eval
+# eval_dataset: alpaca_en_demo
 # val_size: 0.1
 # per_device_eval_batch_size: 1
 # eval_strategy: steps
