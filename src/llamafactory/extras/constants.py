@@ -1317,6 +1317,21 @@ register_model_group(
 
 register_model_group(
     models={
+        "Moonlight-16B-A3B": {
+            DownloadSource.DEFAULT: "moonshotai/Moonlight-16B-A3B",
+            DownloadSource.MODELSCOPE: "moonshotai/Moonlight-16B-A3B",
+        },
+        "Moonlight-16B-A3B-Instruct": {
+            DownloadSource.DEFAULT: "moonshotai/Moonlight-16B-A3B-Instruct",
+            DownloadSource.MODELSCOPE: "moonshotai/Moonlight-16B-A3B-Instruct",
+        },
+    },
+    template="moonlight",
+)
+
+
+register_model_group(
+    models={
         "OLMo-1B": {
             DownloadSource.DEFAULT: "allenai/OLMo-1B-hf",
         },
