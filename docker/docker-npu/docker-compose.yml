@@ -4,7 +4,7 @@ services:
       dockerfile: ./docker/docker-npu/Dockerfile
       context: ../..
       args:
-        INSTALL_DEEPSPEED: false
+        INSTALL_DEEPSPEED: "false"
         PIP_INDEX: https://pypi.org/simple
     container_name: llamafactory
     volumes:
