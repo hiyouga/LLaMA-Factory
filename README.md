@@ -477,12 +477,12 @@ To install LLaMA Factory on Ascend NPU devices, please upgrade Python to version
 ```bash
 # replace the url according to your CANN version and devices
 # install CANN Toolkit
-wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C17SPC701/Ascend-cann-toolkit_8.0.RC1.alpha001_linux-"$(uname -i)".run
-bash Ascend-cann-toolkit_8.0.RC1.alpha001_linux-"$(uname -i)".run --install
+wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C20SPC702/Ascend-cann-toolkit_8.0.0.alpha002_linux-"$(uname -i)".run
+bash Ascend-cann-toolkit_8.0.0.alpha002_linux-"$(uname -i)".run --install
 
 # install CANN Kernels
-wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C17SPC701/Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run
-bash Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run --install
+wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C20SPC702/Ascend-cann-kernels-910b_8.0.0.alpha002_linux-"$(uname -i)".run
+bash Ascend-cann-kernels-910b_8.0.0.alpha002_linux-"$(uname -i)".run --install
 
 # set env variables
 source /usr/local/Ascend/ascend-toolkit/set_env.sh
@@ -490,10 +490,10 @@ source /usr/local/Ascend/ascend-toolkit/set_env.sh
 
 | Requirement  | Minimum | Recommend   |
 | ------------ | ------- | ----------- |
-| CANN         | 8.0.RC1 | 8.0.RC1     |
-| torch        | 2.1.0   | 2.1.0       |
-| torch-npu    | 2.1.0   | 2.1.0.post3 |
-| deepspeed    | 0.13.2  | 0.13.2      |
+| CANN         | 8.0.RC1 | 8.0.0.alpha002     |
+| torch        | 2.1.0   | 2.4.0      |
+| torch-npu    | 2.1.0   | 2.4.0.post2 |
+| deepspeed    | 0.13.2  | 0.16.2     |
 
 Remember to use `ASCEND_RT_VISIBLE_DEVICES` instead of `CUDA_VISIBLE_DEVICES` to specify the device to use.
 
