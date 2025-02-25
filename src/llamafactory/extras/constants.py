@@ -1485,6 +1485,30 @@ register_model_group(
             DownloadSource.DEFAULT: "google/paligemma2-28b-pt-896",
             DownloadSource.MODELSCOPE: "AI-ModelScope/paligemma2-28b-pt-896",
         },
+        "PaliGemma2-3B-mix-224": {
+            DownloadSource.DEFAULT: "google/paligemma2-3b-mix-224",
+            DownloadSource.MODELSCOPE: "mlx-community/paligemma2-3b-mix-224-bf16",
+        },
+        "PaliGemma2-3B-mix-448": {
+            DownloadSource.DEFAULT: "google/paligemma2-3b-mix-448",
+            DownloadSource.MODELSCOPE: "mlx-community/paligemma2-3b-mix-448-bf16",
+        },
+        "PaliGemma2-10B-mix-224": {
+            DownloadSource.DEFAULT: "google/paligemma2-10b-mix-224",
+            DownloadSource.MODELSCOPE: "mlx-community/paligemma2-10b-mix-224-bf16",
+        },
+        "PaliGemma2-10B-mix-448": {
+            DownloadSource.DEFAULT: "google/paligemma2-10b-mix-448",
+            DownloadSource.MODELSCOPE: "mlx-community/paligemma2-10b-mix-448-bf16",
+        },
+        "PaliGemma2-28B-mix-224": {
+            DownloadSource.DEFAULT: "google/paligemma2-28b-mix-224",
+            DownloadSource.MODELSCOPE: "mlx-community/paligemma2-28b-mix-224-bf16",
+        },
+        "PaliGemma2-28B-mix-448": {
+            DownloadSource.DEFAULT: "google/paligemma2-28b-mix-448",
+            DownloadSource.MODELSCOPE: "mlx-community/paligemma2-28b-mix-448-bf16",
+        },
     },
     template="paligemma",
     multimodal=True,
