@@ -1329,6 +1329,21 @@ register_model_group(
 
 register_model_group(
     models={
+        "Moonlight-16B-A3B": {
+            DownloadSource.DEFAULT: "moonshotai/Moonlight-16B-A3B",
+            DownloadSource.MODELSCOPE: "moonshotai/Moonlight-16B-A3B",
+        },
+        "Moonlight-16B-A3B-Instruct": {
+            DownloadSource.DEFAULT: "moonshotai/Moonlight-16B-A3B-Instruct",
+            DownloadSource.MODELSCOPE: "moonshotai/Moonlight-16B-A3B-Instruct",
+        },
+    },
+    template="moonlight",
+)
+
+
+register_model_group(
+    models={
         "OLMo-1B": {
             DownloadSource.DEFAULT: "allenai/OLMo-1B-hf",
         },
@@ -2245,6 +2260,18 @@ register_model_group(
         "Qwen2.5-VL-72B-Instruct": {
             DownloadSource.DEFAULT: "Qwen/Qwen2.5-VL-72B-Instruct",
             DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-VL-72B-Instruct",
+        },
+        "Qwen2.5-VL-3B-Instruct-AWQ": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-VL-3B-Instruct-AWQ",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-VL-3B-Instruct-AWQ",
+        },
+        "Qwen2.5-VL-7B-Instruct-AWQ": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-VL-7B-Instruct-AWQ",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-VL-7B-Instruct-AWQ",
+        },
+        "Qwen2.5-VL-72B-Instruct-AWQ": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-VL-72B-Instruct-AWQ",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-VL-72B-Instruct-AWQ",
         },
     },
     template="qwen2_vl",
