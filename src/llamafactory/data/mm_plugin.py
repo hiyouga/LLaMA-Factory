@@ -11,7 +11,6 @@ import torch
 from transformers.image_utils import (
     concatenate_list,
     get_image_size,
-    load_images,
     make_batched_videos,
     make_flat_list_of_images,
     to_numpy_array,
@@ -340,7 +339,6 @@ class InternVLPlugin(BasePlugin):
         frame_indices = np.array(
             [int(start_idx + (seg_size / 2) + np.round(seg_size * idx)) for idx in range(num_segments)]
         )
-        # print(f"\033[31m{len(frame_indices)}\033[0m")
         return frame_indices
 
     @override
@@ -431,15 +429,18 @@ class InternVLPlugin(BasePlugin):
         **kwargs,
     ) -> Dict[str, "torch.Tensor"]:
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
-        image_kwargs = image_processor.to_dict()  # get image processor args
+        image_kwargs = image_processor.to_dict()  # get image processor args #FIXME some keys are useless
 
         mm_inputs = {}
         image_video_patches = []
 
         if len(images) != 0 and isinstance(images[0], str):
-            images = load_images(images)
-        # if isinstance(videos[0], str):
-        #     videos = load
+            images = self._regularize_images(
+                images,
+                image_max_pixels=getattr(processor, "image_max_pixels", 1024 * 1024),  # anyres max pixels?
+                image_min_pixels=getattr(processor, "image_min_pixels", 32 * 32),
+            )
+
         if len(videos) != 0 and isinstance(videos[0], str):
             videos, _ = self._regularize_videos(videos, **image_kwargs)
 
@@ -1437,6 +1438,7 @@ class VideoLlavaPlugin(BasePlugin):
 
 PLUGINS = {
     "base": BasePlugin,
+    "intern_vl": InternVLPlugin,
     "llava": LlavaPlugin,
     "llava_next": LlavaNextPlugin,
     "llava_next_video": LlavaNextVideoPlugin,
@@ -1447,7 +1449,6 @@ PLUGINS = {
     "qwen2_audio": Qwen2AudioPlugin,
     "qwen2_vl": Qwen2vlPlugin,
     "video_llava": VideoLlavaPlugin,
-    "intern_vl": InternVLPlugin,
 }
 
 
