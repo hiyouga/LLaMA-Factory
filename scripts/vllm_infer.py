@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import json
+from typing import Optional
 
 import fire
 from transformers import Seq2SeqTrainingArguments
@@ -45,7 +46,7 @@ def vllm_infer(
     top_k: int = 50,
     max_new_tokens: int = 1024,
     repetition_penalty: float = 1.0,
-    seed: int = None,
+    seed: Optional[int] = None,
     pipeline_parallel_size: int = 1,
     image_max_pixels: int = 768 * 768,
     image_min_pixels: int = 32 * 32,
