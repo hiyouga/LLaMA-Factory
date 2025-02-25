@@ -4,12 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "llamafactory"
-dynamic = ["version", "dependencies", "optional-dependencies", "classifiers", "keywords", "authors", "license", "description", "readme"]
-requires-python = ">=3.10"
-
-[project.scripts]
-llamafactory-cli = "llamafactory.cli:main"
-lmf = "llamafactory.cli:main"
+dynamic = [
+    "version",
+    "dependencies",
+    "optional-dependencies",
+    "requires-python",
+    "scripts",
+    "authors",
+    "description",
+    "readme",
+    "license",
+    "keywords",
+    "classifiers"
+]
 
 [tool.ruff]
 target-version = "py38"
