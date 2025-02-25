@@ -1394,23 +1394,23 @@ LOCALES = {
     "use_galore": {
         "en": {
             "label": "Use GaLore",
-            "info": "Use GaLore optimizer.",
+            "info": "Use [GaLore](https://github.com/jiaweizzhao/GaLore) optimizer.",
         },
         "ru": {
             "label": "Использовать GaLore",
-            "info": "Используйте оптимизатор GaLore.",
+            "info": "Используйте оптимизатор [GaLore](https://github.com/jiaweizzhao/GaLore).",
         },
         "zh": {
             "label": "使用 GaLore",
-            "info": "使用 GaLore 优化器。",
+            "info": "使用 [GaLore](https://github.com/jiaweizzhao/GaLore) 优化器。",
         },
         "ko": {
             "label": "GaLore 사용",
-            "info": "GaLore 최적화를 사용하세요.",
+            "info": "[GaLore](https://github.com/jiaweizzhao/GaLore) 최적화를 사용하세요.",
         },
         "ja": {
             "label": "GaLore を使用",
-            "info": "GaLore オプティマイザーを使用します。",
+            "info": "[GaLore](https://github.com/jiaweizzhao/GaLore) オプティマイザーを使用します。",
         },
     },
     "galore_rank": {
@@ -1521,23 +1521,23 @@ LOCALES = {
     "use_apollo": {
         "en": {
             "label": "Use APOLLO",
-            "info": "Use APOLLO optimizer.",
+            "info": "Use [APOLLO](https://github.com/zhuhanqing/APOLLO) optimizer.",
         },
         "ru": {
             "label": "Использовать APOLLO",
-            "info": "Используйте оптимизатор APOLLO.",
+            "info": "Используйте оптимизатор [APOLLO](https://github.com/zhuhanqing/APOLLO).",
         },
         "zh": {
             "label": "使用 APOLLO",
-            "info": "使用 APOLLO 优化器。",
+            "info": "使用 [APOLLO](https://github.com/zhuhanqing/APOLLO) 优化器。",
         },
         "ko": {
             "label": "APOLLO 사용",
-            "info": "APOLLO 최적화를 사용하세요.",
+            "info": "[APOLLO](https://github.com/zhuhanqing/APOLLO) 최적화를 사용하세요.",
         },
         "ja": {
             "label": "APOLLO を使用",
-            "info": "APOLLO オプティマイザーを使用します。",
+            "info": "[APOLLO](https://github.com/zhuhanqing/APOLLO) オプティマイザーを使用します。",
         },
     },
     "apollo_rank": {
@@ -1648,23 +1648,23 @@ LOCALES = {
     "use_badam": {
         "en": {
             "label": "Use BAdam",
-            "info": "Enable the BAdam optimizer.",
+            "info": "Enable the [BAdam](https://github.com/Ledzy/BAdam) optimizer.",
         },
         "ru": {
             "label": "Использовать BAdam",
-            "info": "Включите оптимизатор BAdam.",
+            "info": "Включите оптимизатор [BAdam](https://github.com/Ledzy/BAdam).",
         },
         "zh": {
             "label": "使用 BAdam",
-            "info": "使用 BAdam 优化器。",
+            "info": "使用 [BAdam](https://github.com/Ledzy/BAdam) 优化器。",
         },
         "ko": {
             "label": "BAdam 사용",
-            "info": "BAdam 옵티마이저를 사용합니다.",
+            "info": "[BAdam](https://github.com/Ledzy/BAdam) 옵티마이저를 사용합니다.",
         },
         "ja": {
             "label": "BAdam を使用",
-            "info": "BAdam オプティマイザーを使用します。",
+            "info": "[BAdam](https://github.com/Ledzy/BAdam) オプティマイザーを使用します。",
         },
     },
     "badam_mode": {
@@ -1775,23 +1775,23 @@ LOCALES = {
     "use_swanlab": {
         "en": {
             "label": "Use SwanLab",
-            "info": "Enable SwanLab for experiment tracking and visualization.",
+            "info": "Enable [SwanLab](https://swanlab.cn/) for experiment tracking and visualization.",
         },
         "ru": {
             "label": "Использовать SwanLab",
-            "info": "Включить SwanLab для отслеживания и визуализации экспериментов.",
+            "info": "Включить [SwanLab](https://swanlab.cn/) для отслеживания и визуализации экспериментов.",
         },
         "zh": {
             "label": "使用 SwanLab",
-            "info": "启用 SwanLab 进行实验跟踪和可视化。",
+            "info": "启用 [SwanLab](https://swanlab.cn/) 进行实验跟踪和可视化。",
         },
         "ko": {
             "label": "SwanLab 사용",
-            "info": "SwanLab를 사용하여 실험을 추적하고 시각화합니다.",
+            "info": "[SwanLab](https://swanlab.cn/) 를 사용하여 실험을 추적하고 시각화합니다.",
         },
         "ja": {
             "label": "SwanLab を使用",
-            "info": "SwanLab を有効にして実験の追跡と可視化を行います。",
+            "info": "[SwanLab](https://swanlab.cn/) を有効にして実験の追跡と可視化を行います。",
         },
     },
     "swanlab_project": {
@@ -1860,7 +1860,7 @@ LOCALES = {
             "info": "API ключ для SwanLab.",
         },
         "zh": {
-            "label": "SwanLab API密钥（非必填）",
+            "label": "SwanLab API 密钥（非必填）",
             "info": "用于在编程环境登录 SwanLab，已登录则无需填写。",
         },
         "ko": {

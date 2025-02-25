@@ -40,7 +40,7 @@ Choose your path:
 - **Documentation (WIP)**: https://llamafactory.readthedocs.io/zh-cn/latest/
 - **Colab**: https://colab.research.google.com/drive/1eRTPn37ltBbYsISy9Aw2NuI2Aq5CQrD9?usp=sharing
 - **Local machine**: Please refer to [usage](#getting-started)
-- **PAI-DSW**: [Llama3 Example](https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory) | [Qwen2-VL Example](https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory_qwen2vl)
+- **PAI-DSW**: [Llama3 Example](https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory) | [Qwen2-VL Example](https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory_qwen2vl) | [DeepSeek-R1-Distill Example](https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory_deepseek_r1_distill_7b)
 - **Amazon SageMaker**: [Blog](https://aws.amazon.com/cn/blogs/china/a-one-stop-code-free-model-fine-tuning-deployment-platform-based-on-sagemaker-and-llama-factory/)
 
 > [!NOTE]
@@ -480,12 +480,12 @@ To install LLaMA Factory on Ascend NPU devices, please upgrade Python to version
 ```bash
 # replace the url according to your CANN version and devices
 # install CANN Toolkit
-wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C17SPC701/Ascend-cann-toolkit_8.0.RC1.alpha001_linux-"$(uname -i)".run
-bash Ascend-cann-toolkit_8.0.RC1.alpha001_linux-"$(uname -i)".run --install
+wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C20SPC702/Ascend-cann-toolkit_8.0.0.alpha002_linux-"$(uname -i)".run
+bash Ascend-cann-toolkit_8.0.0.alpha002_linux-"$(uname -i)".run --install
 
 # install CANN Kernels
-wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C17SPC701/Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run
-bash Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run --install
+wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C20SPC702/Ascend-cann-kernels-910b_8.0.0.alpha002_linux-"$(uname -i)".run
+bash Ascend-cann-kernels-910b_8.0.0.alpha002_linux-"$(uname -i)".run --install
 
 # set env variables
 source /usr/local/Ascend/ascend-toolkit/set_env.sh
@@ -493,10 +493,10 @@ source /usr/local/Ascend/ascend-toolkit/set_env.sh
 
 | Requirement  | Minimum | Recommend   |
 | ------------ | ------- | ----------- |
-| CANN         | 8.0.RC1 | 8.0.RC1     |
-| torch        | 2.1.0   | 2.1.0       |
-| torch-npu    | 2.1.0   | 2.1.0.post3 |
-| deepspeed    | 0.13.2  | 0.13.2      |
+| CANN         | 8.0.RC1 | 8.0.0.alpha002     |
+| torch        | 2.1.0   | 2.4.0      |
+| torch-npu    | 2.1.0   | 2.4.0.post2 |
+| deepspeed    | 0.13.2  | 0.16.2     |
 
 Remember to use `ASCEND_RT_VISIBLE_DEVICES` instead of `CUDA_VISIBLE_DEVICES` to specify the device to use.
 
