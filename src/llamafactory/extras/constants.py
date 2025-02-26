@@ -860,9 +860,14 @@ register_model_group(
 
 register_model_group(
     models={
-        "InternVL2_5-1B": {
-            DownloadSource.DEFAULT: "OpenGVLab/InternVL2_5-1B",
-            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL2_5-1B",
+        "InternVL2_5-1B-MPO": {
+            DownloadSource.DEFAULT: "kingsley01/InternVL2_5-1B-MPO-hf",
+        },
+        "InternVL2_5-4B-MPO": {
+            DownloadSource.DEFAULT: "kingsley01/InternVL2_5-4B-MPO-hf",
+        },
+        "InternVL2_5-8B-MPO": {
+            DownloadSource.DEFAULT: "kingsley01/InternVL2_5-8B-MPO-hf",
         },
     },
     template="intern_vl",
