@@ -388,7 +388,7 @@ class InternVLPlugin(BasePlugin):
         audios: Sequence["AudioInput"],
         processor: Optional["ProcessorMixin"],
     ) -> List[Dict[str, str]]:
-        self._validate_input(images, videos, audios)
+        self._validate_input(processor, images, videos, audios)
         num_image_tokens = 0
         num_video_tokens = 0
         image_seqlen = getattr(processor, "image_seq_length") if self.expand_mm_tokens else 1
@@ -514,7 +514,7 @@ class InternVLPlugin(BasePlugin):
         batch_ids: Sequence[List[int]],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
-        self._validate_input(images, videos, audios)
+        self._validate_input(processor, images, videos, audios)
 
         mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
         mm_inputs.pop("image_num_patches", None)
