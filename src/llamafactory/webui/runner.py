@@ -423,7 +423,8 @@ class Runner:
         output_box = self.manager.get_elem_by_id("{}.output_box".format("train" if self.do_train else "eval"))
         progress_bar = self.manager.get_elem_by_id("{}.progress_bar".format("train" if self.do_train else "eval"))
         loss_viewer = self.manager.get_elem_by_id("train.loss_viewer") if self.do_train else None
-
+        swanlab_link = self.manager.get_elem_by_id("train.swanlab_link") if self.do_train else None
+        
         running_log = ""
         while self.trainer is not None:
             if self.aborted:
@@ -432,16 +433,16 @@ class Runner:
                     progress_bar: gr.Slider(visible=False),
                 }
             else:
-                running_log, running_progress, running_loss = get_trainer_info(output_path, self.do_train)
+                running_log, running_progress, running_loss, swanlab_exp_link = get_trainer_info(output_path, self.do_train)
                 return_dict = {
                     output_box: running_log,
                     progress_bar: running_progress,
                 }
+                if swanlab_exp_link is not None:
+                    return_dict[swanlab_link] = swanlab_exp_link
                 if running_loss is not None:
                     return_dict[loss_viewer] = running_loss
-
                 yield return_dict
-
             try:
                 self.trainer.wait(2)
                 self.trainer = None

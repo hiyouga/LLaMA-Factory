@@ -14,6 +14,7 @@
 
 import json
 import os
+import yaml
 from typing import Any, Dict, List, Optional, Tuple
 
 from transformers.trainer_utils import get_last_checkpoint
@@ -100,7 +101,8 @@ def get_trainer_info(output_path: os.PathLike, do_train: bool) -> Tuple[str, "gr
     running_log = ""
     running_progress = gr.Slider(visible=False)
     running_loss = None
-
+    swanlab_exp_link = "waiting"
+    
     running_log_path = os.path.join(output_path, RUNNING_LOG)
     if os.path.isfile(running_log_path):
         with open(running_log_path, encoding="utf-8") as f:
@@ -127,7 +129,21 @@ def get_trainer_info(output_path: os.PathLike, do_train: bool) -> Tuple[str, "gr
             if do_train and is_matplotlib_available():
                 running_loss = gr.Plot(gen_loss_plot(trainer_log))
 
-    return running_log, running_progress, running_loss
+    swanlab_config_path = os.path.join(output_path, "swanlab_public_config.json")
+    if os.path.isfile(swanlab_config_path):
+        with open(swanlab_config_path, encoding="utf-8") as f:
+            swanlab_public_config = json.load(f)
+            swanlab_exp_link = swanlab_public_config["cloud"]["experiment_url"]
+            if swanlab_exp_link is None:  # local mode
+                swanlab_exp_link = "only show link in cloud mode"
+    training_args_path = os.path.join(output_path, "llamaboard_config.yaml")
+    if os.path.isfile(training_args_path):
+        with open(training_args_path, encoding="utf-8") as f:
+            use_swanlab = yaml.load(f, Loader=yaml.FullLoader)["train.use_swanlab"]
+            if not use_swanlab:
+                swanlab_exp_link = "not using swanlab"  # not using swanlab
+
+    return running_log, running_progress, running_loss, swanlab_exp_link
 
 
 def list_checkpoints(model_name: str, finetuning_type: str) -> "gr.Dropdown":

@@ -1894,6 +1894,28 @@ LOCALES = {
             "info": "クラウド版またはオフライン版 SwanLab を使用します。",
         },
     },
+    "swanlab_link": {
+        "en": {
+            "label": "SwanLab link",
+            "info": "Experimental links in Cloud mode"
+        },
+        "ru": {
+            "label": "SwanLab ссылка",
+            "info": "Ссылка на SwanLab (cloud mode)"
+        },
+        "zh": {
+            "label": "SwanLab 链接",
+            "info": "Cloud模式下的实验链接",
+        },
+        "ko": {
+            "label": "SwanLab 링크",
+            "info": "SwanLab 의 링크 (cloud mode)"
+        },
+        "ja": {
+            "label": "SwanLab リンク",
+            "info": "SwanLab のリンク (cloud mode)"
+        },
+    },
     "cmd_preview_btn": {
         "en": {
             "value": "Preview command",
