@@ -594,7 +594,7 @@ def get_swanlab_callback(finetuning_args: "FinetuningArguments") -> "TrainerCall
     if finetuning_args.swanlab_api_key is not None:
         swanlab.login(api_key=finetuning_args.swanlab_api_key)
         
-    class LLaMAFactoryCallback(SwanLabCallback):
+    class LLaMAFactorySwanLabCallback(SwanLabCallback):
         def setup(self, args, state, model, **kwargs):
             self._initialized = True
             if not state.is_world_process_zero:
@@ -617,7 +617,7 @@ def get_swanlab_callback(finetuning_args: "FinetuningArguments") -> "TrainerCall
             with open(os.path.join(args.output_dir, "swanlab_public_config.json"), "w") as f:
                 f.write(json.dumps(swanlab_public_config, indent=4))
         
-    swanlab_callback = LLaMAFactoryCallback(
+    swanlab_callback = LLaMAFactorySwanLabCallback(
         project=finetuning_args.swanlab_project,
         workspace=finetuning_args.swanlab_workspace,
         experiment_name=finetuning_args.swanlab_run_name,
