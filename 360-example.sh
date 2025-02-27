@@ -30,7 +30,9 @@ deepspeed --hostfile=hostfile.2nodes src/train.py \
     --gradient_checkpointing True \
     --seed 42 \
     --sequence_parallel_size 8 \
-    --packing True
+    --packing True \
+    --preprocessing_num_workers 32 \
+    --report_to tensorboard
 
 # dpo
 deepspeed --hostfile=hostfile.1mac src/train.py \
