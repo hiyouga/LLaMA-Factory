@@ -17,6 +17,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
+import os
 from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
@@ -31,7 +33,7 @@ from transformers.trainer_pt_utils import get_parameter_names
 from typing_extensions import override
 
 from ..extras import logging
-from ..extras.constants import IGNORE_INDEX
+from ..extras.constants import IGNORE_INDEX, SWANLAB_CONFIG
 from ..extras.packages import is_apollo_available, is_galore_available, is_ray_available
 from ..hparams import FinetuningArguments, ModelArguments
 from ..model import find_all_linear_modules, load_model, load_tokenizer, load_valuehead_params
@@ -51,7 +53,7 @@ if is_ray_available():
 
 
 if TYPE_CHECKING:
-    from transformers import PreTrainedModel, TrainerCallback
+    from transformers import PreTrainedModel, TrainerCallback, TrainerState
     from trl import AutoModelForCausalLMWithValueHead
 
     from ..hparams import DataArguments, RayArguments, TrainingArguments
@@ -587,41 +589,27 @@ def get_swanlab_callback(finetuning_args: "FinetuningArguments") -> "TrainerCall
     Gets the callback for logging to SwanLab.
     """
     import swanlab  # type: ignore
-    import os
-    import json
     from swanlab.integration.transformers import SwanLabCallback  # type: ignore
 
     if finetuning_args.swanlab_api_key is not None:
         swanlab.login(api_key=finetuning_args.swanlab_api_key)
-        
-    class LLaMAFactorySwanLabCallback(SwanLabCallback):
-        def setup(self, args, state, model, **kwargs):
-            self._initialized = True
+
+    class SwanLabCallbackExtension(SwanLabCallback):
+        def setup(self, args: "TrainingArguments", state: "TrainerState", model: "PreTrainedModel", **kwargs):
             if not state.is_world_process_zero:
                 return
-            swanlab.config["FRAMEWORK"] = "🤗transformers"
-            swanlab.config["UPPER_FRAMEWORK"] = "🦙LlamaFactory"
-            # If the experiment is not registered, register it
-            if self._experiment.get_run() is None:
-                self._experiment.init(**self._swanlab_init)
-            combined_dict = {}
-            if args:
-                combined_dict = {**args.to_sanitized_dict()}
-            # Set the config
-            if hasattr(model, "config") and model.config is not None:
-                model_config = model.config if isinstance(model.config, dict) else model.config.to_dict()
-                combined_dict = {**model_config, **combined_dict}
-            self._experiment.config.update(combined_dict)
-            # Write the config to the output directory
+
+            super().setup(args, state, model, **kwargs)
             swanlab_public_config = self._experiment.get_run().public.json()
-            with open(os.path.join(args.output_dir, "swanlab_public_config.json"), "w") as f:
-                f.write(json.dumps(swanlab_public_config, indent=4))
-        
-    swanlab_callback = LLaMAFactorySwanLabCallback(
+            with open(os.path.join(args.output_dir, SWANLAB_CONFIG), "w") as f:
+                f.write(json.dumps(swanlab_public_config, indent=2))
+
+    swanlab_callback = SwanLabCallbackExtension(
         project=finetuning_args.swanlab_project,
         workspace=finetuning_args.swanlab_workspace,
         experiment_name=finetuning_args.swanlab_run_name,
         mode=finetuning_args.swanlab_mode,
+        config={"Framework": "🦙LlamaFactory"},
     )
     return swanlab_callback
 
