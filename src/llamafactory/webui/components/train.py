@@ -299,9 +299,18 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             swanlab_workspace = gr.Textbox()
             swanlab_api_key = gr.Textbox()
             swanlab_mode = gr.Dropdown(choices=["cloud", "local"], value="cloud")
+            swanlab_link = gr.Markdown(visible=False, container=True)
 
     input_elems.update(
-        {use_swanlab, swanlab_project, swanlab_run_name, swanlab_workspace, swanlab_api_key, swanlab_mode}
+        {
+            use_swanlab,
+            swanlab_project,
+            swanlab_run_name,
+            swanlab_workspace,
+            swanlab_api_key,
+            swanlab_mode,
+            swanlab_link,
+        }
     )
     elem_dict.update(
         dict(
@@ -312,6 +321,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             swanlab_workspace=swanlab_workspace,
             swanlab_api_key=swanlab_api_key,
             swanlab_mode=swanlab_mode,
+            swanlab_link=swanlab_link,
         )
     )
 
@@ -364,7 +374,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             loss_viewer=loss_viewer,
         )
     )
-    output_elems = [output_box, progress_bar, loss_viewer]
+    output_elems = [output_box, progress_bar, loss_viewer, swanlab_link]
 
     cmd_preview_btn.click(engine.runner.preview_train, input_elems, output_elems, concurrency_limit=None)
     start_btn.click(engine.runner.run_train, input_elems, output_elems)
