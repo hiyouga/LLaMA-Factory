@@ -2814,4 +2814,11 @@ ALERTS = {
         "ko": "모델이 내보내졌습니다.",
         "ja": "モデルのエクスポートが完了しました。",
     },
+    "info_swanlab_link": {
+        "en": "### SwanLab Link\n",
+        "ru": "### SwanLab ссылка\n",
+        "zh": "### SwanLab 链接\n",
+        "ko": "### SwanLab 링크\n",
+        "ja": "### SwanLab リンク\n",
+    },
 }
