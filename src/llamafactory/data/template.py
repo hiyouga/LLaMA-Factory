@@ -613,6 +613,16 @@ register_template(
 
 
 register_template(
+    name="bailing",
+    format_user=StringFormatter(slots=["<role>HUMAN</role>{{content}}<role>ASSISTANT</role>"]),
+    format_system=StringFormatter(slots=["<role>SYSTEM</role>{{content}}"]),
+    format_observation=StringFormatter(slots=["<role>OBSERVATION</role>{{content}}<role>ASSISTANT</role>"]),
+    stop_words=["<|endoftext|>"],
+    efficient_eos=True,
+)
+
+
+register_template(
     name="belle",
     format_user=StringFormatter(slots=["Human: {{content}}\n\nBelle: "]),
     format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}, "\n\n"]),
@@ -1548,15 +1558,4 @@ register_template(
     name="ziya",
     format_user=StringFormatter(slots=["<human>:{{content}}\n<bot>:"]),
     format_assistant=StringFormatter(slots=["{{content}}\n"]),
-)
-
-
-register_template(
-    name="bailing",
-    format_user=StringFormatter(slots=["<role>HUMAN</role>{{content}}<role>ASSISTANT</role>"]),
-    format_system=StringFormatter(slots=["<role>SYSTEM</role>{{content}}"]),
-    format_observation=StringFormatter(slots=["<role>OBSERVATION</role>{{content}}<role>ASSISTANT</role>"]),
-    stop_words=["<|endoftext|>"],
-    efficient_eos=True,
-    replace_jinja_template=False,  # bailing不要替换tokenizer config里的chat_template，可能有未知问题
 )
