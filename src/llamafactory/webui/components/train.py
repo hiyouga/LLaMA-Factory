@@ -299,7 +299,7 @@ def create_train_tab(engine: "Engine") -> Dict[str, "Component"]:
             swanlab_workspace = gr.Textbox()
             swanlab_api_key = gr.Textbox()
             swanlab_mode = gr.Dropdown(choices=["cloud", "local"], value="cloud")
-            swanlab_link = gr.Markdown(visible=False, container=True)
+            swanlab_link = gr.Markdown(visible=False)
 
     input_elems.update(
         {
