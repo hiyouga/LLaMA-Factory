@@ -17,7 +17,8 @@
 
 from typing import TYPE_CHECKING, List, Optional
 
-from ...data import PairwiseDataCollatorWithPadding, get_dataset, get_template_and_fix_tokenizer
+from ...data import (PairwiseDataCollatorWithPadding, PairwiseDataCollatorWithPaddingFree,
+                     get_dataset, get_template_and_fix_tokenizer)
 from ...extras.constants import IGNORE_INDEX
 from ...extras.misc import calculate_tps
 from ...extras.ploting import plot_loss
@@ -46,7 +47,8 @@ def run_dpo(
     dataset_module = get_dataset(template, model_args, data_args, training_args, stage="rm", **tokenizer_module)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
 
-    data_collator = PairwiseDataCollatorWithPadding(
+    cls = PairwiseDataCollatorWithPaddingFree if data_args.padding_free else PairwiseDataCollatorWithPadding
+    data_collator = cls(
         template=template,
         model=model,
         pad_to_multiple_of=8,
@@ -74,6 +76,7 @@ def run_dpo(
         finetuning_args=finetuning_args,
         data_collator=data_collator,
         callbacks=callbacks,
+        padding_free=data_args.padding_free,
         **dataset_module,
         **tokenizer_module,
     )
