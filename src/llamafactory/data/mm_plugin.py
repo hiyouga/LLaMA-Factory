@@ -993,6 +993,7 @@ class Qwen2AudioPlugin(BasePlugin):
         self._validate_input(processor, images, videos, audios)
         bos_token: str = getattr(processor, "audio_bos_token")
         eos_token: str = getattr(processor, "audio_eos_token")
+        messages = deepcopy(messages)
         mm_inputs = self._get_mm_inputs([], [], audios, processor)
         if "feature_attention_mask" in mm_inputs:
             audio_lengths = mm_inputs["feature_attention_mask"].sum(-1).tolist()
