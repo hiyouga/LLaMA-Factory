@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from copy import deepcopy
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
@@ -38,11 +39,11 @@ class PairwiseDatasetProcessor(DatasetProcessor):
         videos: Sequence["VideoInput"],
         audios: Sequence["AudioInput"],
     ) -> Tuple[List[int], List[int], List[int], List[int]]:
-        prompt_chosen = [p.copy() for p in prompt] + [response[0]]
+        prompt_chosen = deepcopy(prompt + [response[0]])
+        prompt_rejected = deepcopy(prompt + [response[1]])
         chosen_messages = self.template.mm_plugin.process_messages(
             prompt_chosen, images, videos, audios, self.processor
         )
-        prompt_rejected = [p.copy() for p in prompt] + [response[1]]
         rejected_messages = self.template.mm_plugin.process_messages(
             prompt_rejected, images, videos, audios, self.processor
         )
