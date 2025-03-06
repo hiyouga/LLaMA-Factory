@@ -54,7 +54,7 @@ extra_require = {
     "gptq": ["optimum>=1.17.0", "auto-gptq>=0.5.0"],
     "awq": ["autoawq"],
     "aqlm": ["aqlm[gpu]>=1.1.0"],
-    "vllm": ["vllm>=0.4.3,<=0.7.2"],
+    "vllm": ["vllm>=0.4.3,<=0.7.3"],
     "galore": ["galore-torch"],
     "apollo": ["apollo-torch"],
     "badam": ["badam>=1.2.1"],
