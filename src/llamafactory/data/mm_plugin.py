@@ -1042,15 +1042,15 @@ class Qwen2VLPlugin(BasePlugin):
         image = super()._preprocess_image(image, **kwargs)
         if min(image.width, image.height) < 28:
             width, height = max(image.width, 28), max(image.height, 28)
-            image = image.resize((width, height), resample=Image.Resampling.NEAREST)
+            image = image.resize((width, height))
 
         if image.width / image.height > 200:
             width, height = image.height * 180, image.height
-            image = image.resize((width, height), resample=Image.Resampling.NEAREST)
+            image = image.resize((width, height))
 
         if image.height / image.width > 200:
             width, height = image.width, image.width * 180
-            image = image.resize((width, height), resample=Image.Resampling.NEAREST)
+            image = image.resize((width, height))
 
         return image
 
