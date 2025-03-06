@@ -126,6 +126,7 @@ class HuggingfaceEngine(BaseEngine):
         num_return_sequences: int = input_kwargs.pop("num_return_sequences", 1)
         repetition_penalty: Optional[float] = input_kwargs.pop("repetition_penalty", None)
         length_penalty: Optional[float] = input_kwargs.pop("length_penalty", None)
+        skip_special_tokens: Optional[bool] = input_kwargs.pop("skip_special_tokens", None)
         max_length: Optional[int] = input_kwargs.pop("max_length", None)
         max_new_tokens: Optional[int] = input_kwargs.pop("max_new_tokens", None)
         stop: Optional[Union[str, List[str]]] = input_kwargs.pop("stop", None)
@@ -145,6 +146,9 @@ class HuggingfaceEngine(BaseEngine):
                 if repetition_penalty is not None
                 else generating_args["repetition_penalty"],
                 length_penalty=length_penalty if length_penalty is not None else generating_args["length_penalty"],
+                skip_special_tokens=skip_special_tokens
+                if skip_special_tokens is not None
+                else generating_args["skip_special_tokens"],
                 eos_token_id=template.get_stop_token_ids(tokenizer),
                 pad_token_id=tokenizer.pad_token_id,
             )
@@ -241,7 +245,9 @@ class HuggingfaceEngine(BaseEngine):
 
         response_ids = generate_output[:, prompt_length:]
         response = tokenizer.batch_decode(
-            response_ids, skip_special_tokens=generating_args["skip_special_tokens"], clean_up_tokenization_spaces=True
+            response_ids,
+            skip_special_tokens=getattr(gen_kwargs["generation_config"], "skip_special_tokens", True),
+            clean_up_tokenization_spaces=True,
         )
         results = []
         for i in range(len(response)):
@@ -289,7 +295,9 @@ class HuggingfaceEngine(BaseEngine):
             input_kwargs,
         )
         streamer = TextIteratorStreamer(
-            tokenizer, skip_prompt=True, skip_special_tokens=generating_args["skip_special_tokens"]
+            tokenizer,
+            skip_prompt=True,
+            skip_special_tokens=getattr(gen_kwargs["generation_config"], "skip_special_tokens", True),
         )
         gen_kwargs["streamer"] = streamer
         thread = Thread(target=model.generate, kwargs=gen_kwargs, daemon=True)
