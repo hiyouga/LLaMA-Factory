@@ -30,6 +30,7 @@ from ..extras.constants import AttentionFunction, EngineName, RopeScaling
 class BaseModelArguments:
     r"""Arguments pertaining to the model."""
 
+
     model_name_or_path: Optional[str] = field(
         default=None,
         metadata={
@@ -310,6 +311,36 @@ class VllmArguments:
     def __post_init__(self):
         if isinstance(self.vllm_config, str) and self.vllm_config.startswith("{"):
             self.vllm_config = _convert_str_dict(json.loads(self.vllm_config))
+
+
+@dataclass
+class SGLangArguments:
+    r"""
+    Arguments pertaining to the SGLang worker.
+    """
+
+    sglang_maxlen: int = field(
+        default=8192,
+        metadata={
+            "help": "Maximum sequence (prompt + response) length of the SGLang engine."
+        },
+    )
+    sglang_mem_fraction: float = field(
+        default=0.9,
+        metadata={
+            "help": "The memory fraction (0-1) to be used for the SGLang engine."
+        },
+    )
+    sglang_tp_size: int = field(
+        default=1,
+        metadata={"help": "Tensor parallel size for the SGLang engine."},
+    )
+    sglang_config: Optional[Union[dict, str]] = field(
+        default=None,
+        metadata={
+            "help": "Config to initialize the SGLang engine. Please use JSON strings."
+        },
+    )
 
 
 @dataclass

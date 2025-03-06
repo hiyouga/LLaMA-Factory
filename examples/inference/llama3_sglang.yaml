@@ -2,21 +2,31 @@ model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct  # path to your Llama 3 
 infer_backend: sglang  # Use the SGLang backend for inference
 template: llama3  # Use the Llama 3 prompt template
 
+# SGLang specific arguments with conservative memory settings
+sglang_maxlen: 4096  # Reduced from 8192 to avoid memory issues
+sglang_mem_fraction: 0.7  # Reduced from 0.9 to avoid OOM errors
+sglang_tp_size: 1  # Tensor parallel size (only applied if > 1)
+
 # Inference parameters
 do_sample: true
 temperature: 0.7
 top_p: 0.9
-max_new_tokens: 2048
+max_new_tokens: 1024  # Reduced from 2048 to save memory
 repetition_penalty: 1.05
 
-# SGLang specific parameters (optional)
-# These will be passed to SGLang Engine
-# You can configure memory limits, tensor parallelism, etc.
+# Additional SGLang specific parameters with memory optimizations
 sglang_config:
-  max_model_len: 8192  # Set the maximum model context length
-  tensor_parallel_size: 1  # Use only 1 GPU - increase for multi-GPU inference
-  device_config:
-    device: "cuda"  # Options: "cuda", "cpu", etc.
+  # Core options - memory optimized
+  device: "cuda"  # Device to use (cuda or cpu)
+  log_level: "error"  # Suppress most logs to avoid cluttering output
+
+  # Memory optimization settings
+  chunked_prefill_size: 2048  # Process input in chunks to save memory
+  max_running_requests: 1  # Process only one request at a time
+  allow_auto_truncate: true  # Allow truncation if context is too long
+
+  # Runtime options
+  random_seed: 42  # For reproducibility
 
 # Default system prompt (optional)
 default_system: "You are a helpful assistant."

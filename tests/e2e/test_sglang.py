@@ -13,11 +13,25 @@
 # limitations under the License.
 
 import os
+import sys
 import time
 
 import pytest
 
-from llamafactory.chat import ChatModel
+
+# Add project root to path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "")))
+
+# Check if SGLang is installed
+try:
+    import importlib.util
+
+    SGLANG_AVAILABLE = importlib.util.find_spec("sglang") is not None
+except ImportError:
+    SGLANG_AVAILABLE = False
+
+# Import directly from src
+from src.llamafactory.chat import ChatModel
 
 
 TINY_LLAMA = os.getenv("TINY_LLAMA", "llamafactory/tiny-random-Llama-3")
@@ -41,8 +55,9 @@ EXPECTED_RESPONSE = "_rho"  # This should match the expected response for tiny-r
 
 
 @pytest.mark.skipif(
-    not os.path.exists(os.path.join(os.path.dirname(__file__), "../../src/llamafactory/chat/sglang_engine.py")),
-    reason="SGLang engine file not found",
+    not os.path.exists(os.path.join(os.path.dirname(__file__), "../../src/llamafactory/chat/sglang_engine.py"))
+    or not SGLANG_AVAILABLE,
+    reason="SGLang engine file not found or SGLang is not installed",
 )
 def test_sglang_chat():
     """Test the SGLang engine's chat functionality"""
@@ -62,8 +77,9 @@ def test_sglang_chat():
 
 
 @pytest.mark.skipif(
-    not os.path.exists(os.path.join(os.path.dirname(__file__), "../../src/llamafactory/chat/sglang_engine.py")),
-    reason="SGLang engine file not found",
+    not os.path.exists(os.path.join(os.path.dirname(__file__), "../../src/llamafactory/chat/sglang_engine.py"))
+    or not SGLANG_AVAILABLE,
+    reason="SGLang engine file not found or SGLang is not installed",
 )
 def test_sglang_stream_chat():
     """Test the SGLang engine's streaming chat functionality"""
@@ -83,8 +99,9 @@ def test_sglang_stream_chat():
 
 
 @pytest.mark.skipif(
-    not os.path.exists(os.path.join(os.path.dirname(__file__), "../../src/llamafactory/chat/sglang_engine.py")),
-    reason="SGLang engine file not found",
+    not os.path.exists(os.path.join(os.path.dirname(__file__), "../../src/llamafactory/chat/sglang_engine.py"))
+    or not SGLANG_AVAILABLE,
+    reason="SGLang engine file not found or SGLang is not installed",
 )
 def test_sglang_batch_inference():
     """Test the SGLang engine's batch inference capability"""
@@ -116,8 +133,9 @@ def test_sglang_batch_inference():
 
 
 @pytest.mark.skipif(
-    not os.path.exists(os.path.join(os.path.dirname(__file__), "../../src/llamafactory/chat/sglang_engine.py")),
-    reason="SGLang engine file not found",
+    not os.path.exists(os.path.join(os.path.dirname(__file__), "../../src/llamafactory/chat/sglang_engine.py"))
+    or not SGLANG_AVAILABLE,
+    reason="SGLang engine file not found or SGLang is not installed",
 )
 def test_sglang_get_scores():
     """Test the SGLang engine's scoring functionality"""
@@ -147,6 +165,10 @@ def test_sglang_get_scores():
 
 # Run tests if executed directly
 if __name__ == "__main__":
+    if not SGLANG_AVAILABLE:
+        print("SGLang is not available. Please install it with 'pip install sglang'")
+        sys.exit(1)
+
     print("Testing SGLang engine...")
     test_sglang_chat()
     test_sglang_stream_chat()
