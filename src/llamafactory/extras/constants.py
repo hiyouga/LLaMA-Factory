@@ -2174,6 +2174,10 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/QwQ-32B-Preview",
             DownloadSource.MODELSCOPE: "Qwen/QwQ-32B-Preview",
         },
+        "QwQ-32B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/QwQ-32B",
+            DownloadSource.MODELSCOPE: "Qwen/QwQ-32B",
+        },
     },
     template="qwen",
 )

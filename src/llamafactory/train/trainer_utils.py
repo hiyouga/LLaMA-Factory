@@ -600,15 +600,14 @@ def get_swanlab_callback(finetuning_args: "FinetuningArguments") -> "TrainerCall
                 return
 
             super().setup(args, state, model, **kwargs)
-            
             try:
                 if hasattr(self, "_swanlab"):
                     swanlab_public_config = self._swanlab.get_run().public.json()
                 else:  # swanlab <= 0.4.9
                     swanlab_public_config = self._experiment.get_run().public.json()
-            except Exception as e:
+            except Exception:
                 swanlab_public_config = {}
-                
+
             with open(os.path.join(args.output_dir, SWANLAB_CONFIG), "w") as f:
                 f.write(json.dumps(swanlab_public_config, indent=2))
 
