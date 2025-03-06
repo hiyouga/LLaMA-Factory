@@ -139,6 +139,7 @@ class VllmEngine(BaseEngine):
         num_return_sequences: int = input_kwargs.pop("num_return_sequences", 1)
         repetition_penalty: Optional[float] = input_kwargs.pop("repetition_penalty", None)
         length_penalty: Optional[float] = input_kwargs.pop("length_penalty", None)
+        skip_special_tokens: Optional[bool] = input_kwargs.pop("skip_special_tokens", None)
         max_length: Optional[int] = input_kwargs.pop("max_length", None)
         max_new_tokens: Optional[int] = input_kwargs.pop("max_new_tokens", None)
         stop: Optional[Union[str, List[str]]] = input_kwargs.pop("stop", None)
@@ -172,7 +173,9 @@ class VllmEngine(BaseEngine):
             stop=stop,
             stop_token_ids=self.template.get_stop_token_ids(self.tokenizer),
             max_tokens=max_tokens,
-            skip_special_tokens=self.generating_args["skip_special_tokens"],
+            skip_special_tokens=skip_special_tokens
+            if skip_special_tokens is not None
+            else self.generating_args["skip_special_tokens"],
         )
 
         if images is not None:  # add image features
