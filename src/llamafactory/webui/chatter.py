@@ -36,14 +36,21 @@ if is_gradio_available():
     import gradio as gr
 
 
-def _format_response(text: str, lang: str, thought_words: Tuple[str, str] = ("<think>", "</think>")) -> str:
+def _escape_html(text: str) -> str:
+    r"""
+    Escapes HTML characters.
+    """
+    return text.replace("<", "&lt;").replace(">", "&gt;")
+
+
+def _format_response(text: str, lang: str, escape_html: bool, thought_words: Tuple[str, str]) -> str:
     r"""
     Post-processes the response text.
 
     Based on: https://huggingface.co/spaces/Lyte/DeepSeek-R1-Distill-Qwen-1.5B-Demo-GGUF/blob/main/app.py
     """
     if thought_words[0] not in text:
-        return text
+        return _escape_html(text) if escape_html else text
 
     text = text.replace(thought_words[0], "")
     result = text.split(thought_words[1], maxsplit=1)
@@ -53,6 +60,9 @@ def _format_response(text: str, lang: str, thought_words: Tuple[str, str] = ("<t
     else:
         summary = ALERTS["info_thought"][lang]
         thought, answer = result
+
+    if escape_html:
+        thought, answer = _escape_html(thought), _escape_html(answer)
 
     return (
         f"<details open><summary class='thinking-summary'><span>{summary}</span></summary>\n\n"
@@ -154,14 +164,19 @@ class WebChatModel(ChatModel):
         messages: List[Dict[str, str]],
         role: str,
         query: str,
+        escape_html: bool,
     ) -> Tuple[List[Dict[str, str]], List[Dict[str, str]], str]:
         r"""
         Adds the user input to chatbot.
 
-        Inputs: infer.chatbot, infer.messages, infer.role, infer.query
-        Output: infer.chatbot, infer.messages
+        Inputs: infer.chatbot, infer.messages, infer.role, infer.query, infer.escape_html
+        Output: infer.chatbot, infer.messages, infer.query
         """
-        return chatbot + [{"role": "user", "content": query}], messages + [{"role": role, "content": query}], ""
+        return (
+            chatbot + [{"role": "user", "content": _escape_html(query) if escape_html else query}],
+            messages + [{"role": role, "content": query}],
+            "",
+        )
 
     def stream(
         self,
@@ -176,6 +191,8 @@ class WebChatModel(ChatModel):
         max_new_tokens: int,
         top_p: float,
         temperature: float,
+        skip_special_tokens: bool,
+        escape_html: bool,
     ) -> Generator[Tuple[List[Dict[str, str]], List[Dict[str, str]]], None, None]:
         r"""
         Generates output text in stream.
@@ -195,6 +212,7 @@ class WebChatModel(ChatModel):
             max_new_tokens=max_new_tokens,
             top_p=top_p,
             temperature=temperature,
+            skip_special_tokens=skip_special_tokens,
         ):
             response += new_text
             if tools:
@@ -209,7 +227,7 @@ class WebChatModel(ChatModel):
                 bot_text = "```json\n" + tool_calls + "\n```"
             else:
                 output_messages = messages + [{"role": Role.ASSISTANT.value, "content": result}]
-                bot_text = _format_response(result, lang, self.engine.template.thought_words)
+                bot_text = _format_response(result, lang, escape_html, self.engine.template.thought_words)
 
             chatbot[-1] = {"role": "assistant", "content": bot_text}
             yield chatbot, output_messages
