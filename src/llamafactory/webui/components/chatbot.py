@@ -79,17 +79,33 @@ def create_chat_box(
                 max_new_tokens = gr.Slider(minimum=8, maximum=8192, value=1024, step=1)
                 top_p = gr.Slider(minimum=0.01, maximum=1.0, value=0.7, step=0.01)
                 temperature = gr.Slider(minimum=0.01, maximum=1.5, value=0.95, step=0.01)
+                skip_special_tokens = gr.Checkbox(value=True)
+                escape_html = gr.Checkbox(value=True)
                 clear_btn = gr.Button()
 
     tools.input(check_json_schema, inputs=[tools, engine.manager.get_elem_by_id("top.lang")])
 
     submit_btn.click(
         engine.chatter.append,
-        [chatbot, messages, role, query],
+        [chatbot, messages, role, query, escape_html],
         [chatbot, messages, query],
     ).then(
         engine.chatter.stream,
-        [chatbot, messages, lang, system, tools, image, video, audio, max_new_tokens, top_p, temperature],
+        [
+            chatbot,
+            messages,
+            lang,
+            system,
+            tools,
+            image,
+            video,
+            audio,
+            max_new_tokens,
+            top_p,
+            temperature,
+            skip_special_tokens,
+            escape_html,
+        ],
         [chatbot, messages],
     )
     clear_btn.click(lambda: ([], []), outputs=[chatbot, messages])
@@ -111,6 +127,8 @@ def create_chat_box(
             max_new_tokens=max_new_tokens,
             top_p=top_p,
             temperature=temperature,
+            skip_special_tokens=skip_special_tokens,
+            escape_html=escape_html,
             clear_btn=clear_btn,
         ),
     )
