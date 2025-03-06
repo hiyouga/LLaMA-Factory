@@ -1,0 +1,22 @@
+model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct  # path to your Llama 3 model
+infer_backend: sglang  # Use the SGLang backend for inference
+template: llama3  # Use the Llama 3 prompt template
+
+# Inference parameters
+do_sample: true
+temperature: 0.7
+top_p: 0.9
+max_new_tokens: 2048
+repetition_penalty: 1.05
+
+# SGLang specific parameters (optional)
+# These will be passed to SGLang Engine
+# You can configure memory limits, tensor parallelism, etc.
+sglang_config:
+  max_model_len: 8192  # Set the maximum model context length
+  tensor_parallel_size: 1  # Use only 1 GPU - increase for multi-GPU inference
+  device_config:
+    device: "cuda"  # Options: "cuda", "cpu", etc.
+
+# Default system prompt (optional)
+default_system: "You are a helpful assistant."

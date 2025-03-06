@@ -365,3 +365,29 @@ class ModelArguments(VllmArguments, ExportArguments, ProcessorArguments, Quantiz
         args = asdict(self)
         args = {k: f"<{k.upper()}>" if k.endswith("token") else v for k, v in args.items()}
         return args
+
+
+@dataclass
+class SGLangArguments:
+    r"""
+    Arguments pertaining to the SGLang worker.
+    """
+
+    sglang_maxlen: int = field(
+        default=8192,
+        metadata={
+            "help": "Maximum sequence (prompt + response) length of the SGLang engine."
+        },
+    )
+    sglang_gpu_util: float = field(
+        default=0.9,
+        metadata={
+            "help": "The fraction of GPU memory in (0,1) to be used for the SGLang engine."
+        },
+    )
+    sglang_config: Optional[Union[dict, str]] = field(
+        default=None,
+        metadata={
+            "help": "Config to initialize the SGLang engine. Please use JSON strings."
+        },
+    )

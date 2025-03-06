@@ -25,9 +25,9 @@ from ..hparams import (
     FinetuningArguments,
     GeneratingArguments,
     ModelArguments,
-    QuantizationMethod,
 )
 from ..model import load_config, load_tokenizer
+from ..model.model_utils.quantization import QuantizationMethod
 from ..template import get_template_and_fix_tokenizer
 from .base_engine import BaseEngine, Response
 
@@ -73,13 +73,19 @@ class SGLangEngine(BaseEngine):
             "model_path": model_args.model_name_or_path,
             "dtype": model_args.infer_dtype,
             "tensor_parallel_size": get_device_count() or 1,
-            "max_model_len": model_args.get("max_model_length", 4096),  # Default to 4096 if not specified
+            "max_model_len": model_args.sglang_maxlen,  # Use sglang_maxlen from SGLangArguments
             "trust_remote_code": model_args.trust_remote_code,
             "download_dir": model_args.cache_dir,
+            # Add memory utilization from args
+            "gpu_memory_utilization": model_args.sglang_gpu_util,
         }
 
         # Add SGLang-specific configuration if provided
-        if hasattr(model_args, "sglang_config") and isinstance(model_args.sglang_config, dict):
+        if model_args.sglang_config is not None:
+            if isinstance(model_args.sglang_config, str):
+                import json
+
+                model_args.sglang_config = json.loads(model_args.sglang_config)
             engine_args.update(model_args.sglang_config)
 
         # Initialize the SGLang engine using the correct approach
@@ -102,6 +108,8 @@ class SGLangEngine(BaseEngine):
         """
         Internal helper method for text generation using SGLang.
         """
+        # request_id = f"chatcmpl-{uuid.uuid4().hex}"
+
         # Handle multimodal inputs if provided
         mm_input_dict = {"images": [], "videos": [], "audios": [], "imglens": [0], "vidlens": [0], "audlens": [0]}
         if images is not None:
@@ -136,7 +144,7 @@ class SGLangEngine(BaseEngine):
         temperature = input_kwargs.pop("temperature", self.generating_args["temperature"])
         top_p = input_kwargs.pop("top_p", self.generating_args["top_p"])
         top_k = input_kwargs.pop("top_k", self.generating_args["top_k"])
-        input_kwargs.pop("num_return_sequences", 1)
+        # num_return_sequences = input_kwargs.pop("num_return_sequences", 1)
         repetition_penalty = input_kwargs.pop("repetition_penalty", self.generating_args["repetition_penalty"])
         max_new_tokens = input_kwargs.pop("max_new_tokens", self.generating_args.get("max_new_tokens", 2048))
         stop = input_kwargs.pop("stop", None)
@@ -302,9 +310,10 @@ class SGLangEngine(BaseEngine):
         """
         Gets scores for a batch of inputs (logprobs).
         """
-        input_kwargs.pop("temperature", 0.0)
-        input_kwargs.pop("top_p", 1.0)
-        input_kwargs.pop("top_k", -1)
+        # Extract parameters or use defaults
+        # temperature = input_kwargs.pop("temperature", 0.0)
+        # top_p = input_kwargs.pop("top_p", 1.0)
+        # top_k = input_kwargs.pop("top_k", -1)
 
         scores = []
 
@@ -312,7 +321,7 @@ class SGLangEngine(BaseEngine):
         # Note: This is a simplification - the actual implementation depends on
         # how SGLang supports scoring or logprob calculation
         for text in batch_input:
-            sampling_params = {"temperature": 0, "max_tokens": 0}
+            sampling_params = {"temperature": 0, "max_tokens": 32}
 
             result = await self.model.async_generate(text, sampling_params)
             # Extract logprob or score from result
