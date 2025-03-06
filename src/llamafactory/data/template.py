@@ -1268,9 +1268,17 @@ register_template(
 )
 
 
-# copied from gemma template
 register_template(
     name="paligemma",
+    format_user=StringFormatter(slots=["{{content}}\n"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    mm_plugin=get_mm_plugin(name="paligemma", image_token="<image>"),
+)
+
+
+# copied from gemma template
+register_template(
+    name="paligemma_chat",
     format_user=StringFormatter(slots=["<start_of_turn>user\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]),
     format_assistant=StringFormatter(slots=["{{content}}<end_of_turn>\n"]),
     format_observation=StringFormatter(
