@@ -16,17 +16,6 @@ repetition_penalty: 1.05
 
 # Additional SGLang specific parameters with memory optimizations
 sglang_config:
-  # Core options - memory optimized
-  device: "cuda"  # Device to use (cuda or cpu)
   log_level: "error"  # Suppress most logs to avoid cluttering output
-
-  # Memory optimization settings
-  chunked_prefill_size: 2048  # Process input in chunks to save memory
-  max_running_requests: 1  # Process only one request at a time
-  allow_auto_truncate: true  # Allow truncation if context is too long
-
-  # Runtime options
+  tp_size: 1  # Explicitly disable tensor parallelism
   random_seed: 42  # For reproducibility
-
-# Default system prompt (optional)
-default_system: "You are a helpful assistant."

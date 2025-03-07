@@ -1,10 +1,7 @@
 import asyncio
 import gc
-import json
 import os
 import re
-import sys
-import time
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -67,58 +64,6 @@ class SGLangEngine(BaseEngine):
         """
         Initializes an SGLang inference engine.
         """
-        # Print diagnostic information at the very beginning
-        ultra_debug = os.environ.get("SGLANG_ULTRA_DEBUG", "0") == "1"
-        if ultra_debug:
-            print("=== SGLang Engine Initialization - Debug Information ===")
-            print(f"Python version: {sys.version}")
-            print(f"SGLang version: {getattr(sgl, '__version__', 'unknown')}")
-            print(f"Model path: {model_args.model_name_or_path}")
-            try:
-                import torch
-
-                print(f"PyTorch version: {torch.__version__}")
-                print(f"CUDA available: {torch.cuda.is_available()}")
-                if torch.cuda.is_available():
-                    print(f"CUDA version: {torch.version.cuda}")
-                    print(f"GPU count: {torch.cuda.device_count()}")
-                    for i in range(torch.cuda.device_count()):
-                        print(f"  GPU {i}: {torch.cuda.get_device_name(i)}")
-                    print(f"Current device: {torch.cuda.current_device()}")
-                    print(f"Memory allocated: {torch.cuda.memory_allocated() / (1024**3):.2f} GB")
-                    print(f"Memory reserved: {torch.cuda.memory_reserved() / (1024**3):.2f} GB")
-            except Exception as e:
-                print(f"Error getting PyTorch info: {e}")
-
-            try:
-                print("System memory information:")
-                import psutil
-
-                vm = psutil.virtual_memory()
-                print(f"  Total: {vm.total / (1024**3):.2f} GB")
-                print(f"  Available: {vm.available / (1024**3):.2f} GB")
-                print(f"  Used: {vm.used / (1024**3):.2f} GB ({vm.percent}%)")
-            except Exception as e:
-                print(f"Error getting system memory info: {e}")
-
-            print("Environment variables:")
-            for k, v in os.environ.items():
-                if k.startswith(("CUDA_", "PYTORCH_", "SGLANG_", "OMP_")):
-                    print(f"  {k}={v}")
-            print("=========================================")
-
-            # Check if we're in ultra minimal mode to avoid OOM
-            if os.environ.get("SGLANG_ULTRA_MINIMAL", "0") == "1":
-                print("Using ULTRA MINIMAL mode - Creating bare minimum engine")
-                self.tokenizer = None
-                self.processor = None
-                self.model = None
-                self.template = None
-                self.generating_args = {}
-                self.can_generate = False
-                # Just create a bare engine that returns dummy responses
-                return
-
         try:
             # Clean memory before initialization
             self._clean_memory()
@@ -126,14 +71,6 @@ class SGLangEngine(BaseEngine):
         except Exception as e:
             logger.error(f"Failed to initialize SGLang engine: {str(e)}")
             logger.error("Make sure that SGLang is installed correctly and configured properly")
-
-            # More diagnostic info on failure
-            if ultra_debug:
-                import traceback
-
-                print("=== SGLang Engine Initialization Failed - Stack Trace ===")
-                traceback.print_exc()
-                print("====================================================")
             raise
 
     def _clean_memory(self):
@@ -201,207 +138,47 @@ class SGLangEngine(BaseEngine):
         # Memory conservation: Try to free up memory before model loading
         self._clean_memory()
 
-        # Initialize SGLang engine with minimal essential parameters and conservative memory settings
-        engine_args = {
-            "model_path": model_args.model_name_or_path,  # SGLang requires "model_path"
-            "dtype": model_args.infer_dtype,
-            "log_level": "error",  # Suppress logs by default
-        }
+        # Initialize SGLang engine with minimal parameters
+        engine_args = {"model_path": model_args.model_name_or_path, "dtype": model_args.infer_dtype}
 
-        # Get system memory info
-        try:
-            virtual_memory = psutil.virtual_memory()
-            total_ram_gb = virtual_memory.total / (1024**3)
-            free_ram_gb = virtual_memory.available / (1024**3)
-            logger.info(f"System memory: {free_ram_gb:.2f} GB free of {total_ram_gb:.2f} GB total")
-
-            # Adjust context length based on available memory
-            if hasattr(model_args, "sglang_maxlen") and model_args.sglang_maxlen > 0:
-                # If memory is tight, reduce context length
-                if free_ram_gb < 8 and model_args.sglang_maxlen > 4096:
-                    logger.warning(f"Low system memory ({free_ram_gb:.2f} GB), reducing context length")
-                    engine_args["context_length"] = min(model_args.sglang_maxlen, 4096)
-                else:
-                    engine_args["context_length"] = model_args.sglang_maxlen
-            else:
-                # Set a conservative default
-                engine_args["context_length"] = 2048
-                logger.info("No context length specified, using 2048 as default")
-
-            # Set a more conservative memory fraction if memory is tight
-            if hasattr(model_args, "sglang_mem_fraction") and model_args.sglang_mem_fraction > 0:
-                # Reduce memory fraction if less than 8GB free RAM
-                if free_ram_gb < 8 and model_args.sglang_mem_fraction > 0.7:
-                    logger.warning(
-                        f"Low system memory, reducing memory fraction from {model_args.sglang_mem_fraction} to 0.7"
-                    )
-                    engine_args["mem_fraction_static"] = 0.7
-                else:
-                    engine_args["mem_fraction_static"] = model_args.sglang_mem_fraction
-            else:
-                # Set a conservative default
-                engine_args["mem_fraction_static"] = 0.7
-                logger.info("No memory fraction specified, using 0.7 as default")
-
-        except Exception as e:
-            logger.warning(f"Could not get system memory info: {str(e)}")
-            # Set conservative defaults if we can't check system memory
-            if hasattr(model_args, "sglang_maxlen") and model_args.sglang_maxlen > 0:
-                engine_args["context_length"] = model_args.sglang_maxlen
-            if hasattr(model_args, "sglang_mem_fraction") and model_args.sglang_mem_fraction > 0:
-                engine_args["mem_fraction_static"] = model_args.sglang_mem_fraction
-
-        # Add tensor parallelism only if > 1
-        if hasattr(model_args, "sglang_tp_size") and model_args.sglang_tp_size > 1:
-            engine_args["tp_size"] = model_args.sglang_tp_size
-
-        # Add trust_remote_code if needed
-        if model_args.trust_remote_code:
-            engine_args["trust_remote_code"] = True
-
-        # Add cache_dir if specified
+        # Only add essential parameters
         if model_args.cache_dir:
             engine_args["download_dir"] = model_args.cache_dir
 
-        # Add SGLang-specific configuration if provided
-        if model_args.sglang_config is not None:
-            if isinstance(model_args.sglang_config, str):
-                try:
-                    model_args.sglang_config = json.loads(model_args.sglang_config)
-                except json.JSONDecodeError:
-                    logger.warning(f"Failed to parse sglang_config: {model_args.sglang_config}")
-                    model_args.sglang_config = {}
-
-            # Only include essential SGLang parameters - core set that's unlikely to change
-            core_params = [
-                # Essential model parameters
-                "model_path",
-                "tokenizer_path",
-                "tokenizer_mode",
-                "context_length",
-                "dtype",
-                "device",
-                "trust_remote_code",
-                "download_dir",
-                # Core performance parameters
-                "tp_size",
-                "mem_fraction_static",
-                "max_running_requests",
-                "chunked_prefill_size",
-                # Essential runtime options
-                "log_level",
-                "random_seed",
-                "stream_interval",
-            ]
-
-            for k, v in model_args.sglang_config.items():
-                if k in core_params:
-                    engine_args[k] = v
-
-        # Add memory-saving settings
-        engine_args["chunked_prefill_size"] = engine_args.get("chunked_prefill_size", 2048)
-
-        # Add some conservative defaults to help with memory issues
-        engine_args["max_running_requests"] = engine_args.get(
-            "max_running_requests", 1
-        )  # Process only one request at a time
-        engine_args["allow_auto_truncate"] = True  # Allow automatic truncation to fit context
-
         logger.info(f"Initializing SGLang engine with args: {engine_args}")
 
-        # Initialize the SGLang engine with robust error handling and fallbacks
-        for attempt in range(3):  # Try up to 3 times with different settings
-            try:
-                if attempt > 0:
-                    logger.warning(f"Retrying SGLang initialization (attempt {attempt+1}/3) with reduced settings")
+        # Initialize the SGLang engine with robust error handling
+        try:
+            # Attempt to initialize the engine
+            self.model = sgl.Engine(**engine_args)
+            logger.info("SGLang engine initialized successfully")
+        except TypeError as e:
+            # Special handling for TypeError that indicates unsupported parameters
+            error_message = str(e)
+            if "unexpected keyword argument" in error_message:
+                param_match = re.search(r"unexpected keyword argument '([^']+)'", error_message)
+                if param_match:
+                    bad_param = param_match.group(1)
+                    logger.warning(f"SGLang doesn't support parameter: '{bad_param}', removing it")
+                    engine_args.pop(bad_param, None)
 
-                # First try with the current parameters
-                self.model = sgl.Engine(**engine_args)
-                logger.info("SGLang engine initialized successfully")
-                return
-
-            except TypeError as e:
-                error_msg = str(e)
-                if "got an unexpected keyword argument" in error_msg:
-                    # Extract the problematic parameter
-                    param_match = re.search(r"unexpected keyword argument '([^']+)'", error_msg)
-                    if param_match:
-                        param = param_match.group(1)
-                        logger.warning(f"SGLang doesn't support parameter: {param}, removing it and retrying")
-
-                        # Remove the problematic parameter
-                        if param in engine_args:
-                            del engine_args[param]
-
-                        # Map parameter names if needed
-                        if param == "context_length" and "context_length" in engine_args:
-                            # Try with max_model_len instead
-                            engine_args["max_model_len"] = engine_args.pop("context_length")
-                            logger.info("Remapped 'context_length' to 'max_model_len'")
-
-                        # Try again immediately with modified parameters
-                        try:
-                            self.model = sgl.Engine(**engine_args)
-                            logger.info("SGLang engine initialized successfully after parameter fix")
-                            return
-                        except Exception as inner_e:
-                            logger.warning(f"Still failed after parameter fix: {str(inner_e)}")
-                            # Continue to next attempt with reduced settings
-                    else:
-                        # Re-raise if we can't extract the parameter name
+                    # Try again with the parameter removed
+                    try:
+                        self.model = sgl.Engine(**engine_args)
+                        logger.info("SGLang engine initialized successfully after removing unsupported parameter")
+                        return
+                    except Exception as inner_e:
+                        logger.error(f"Still failed after removing parameter: {str(inner_e)}")
                         raise
-                else:
-                    # Re-raise if it's not a parameter issue
-                    raise
 
-            except RuntimeError as e:
-                if "out of memory" in str(e).lower() or "cuda" in str(e).lower():
-                    logger.warning(f"Memory-related error: {str(e)}")
-                    # Reduce memory usage for next attempt
-                    if "context_length" in engine_args:
-                        engine_args["context_length"] = max(2048, engine_args["context_length"] // 2)
-                    elif "max_model_len" in engine_args:
-                        engine_args["max_model_len"] = max(2048, engine_args["max_model_len"] // 2)
-
-                    if "mem_fraction_static" in engine_args:
-                        engine_args["mem_fraction_static"] = max(0.5, engine_args["mem_fraction_static"] - 0.1)
-
-                    # Clean memory before retry
-                    self._clean_memory()
-                    time.sleep(2)  # Give system time to free memory
-                else:
-                    # Not a memory error
-                    raise
-
-            except Exception as e:
-                # For other exceptions, try minimal settings
-                logger.error(f"SGLang engine initialization failed: {str(e)}")
-
-                # Clean memory before retry
-                self._clean_memory()
-
-                # Use more minimal settings for next attempt
-                if attempt == 1:  # Second attempt
-                    # Try with reduced settings
-                    minimal_args = {
-                        "model_path": model_args.model_name_or_path,
-                        "dtype": model_args.infer_dtype,
-                        "context_length": 2048,  # Reduced context
-                        "mem_fraction_static": 0.6,  # Reduced memory usage
-                        "log_level": "error",
-                    }
-                    engine_args = minimal_args
-
-                elif attempt == 2:  # Last attempt - absolute minimal
-                    # Try with absolute minimal settings
-                    absolute_minimal_args = {
-                        "model_path": model_args.model_name_or_path,
-                        "dtype": "float16",  # Force float16 for lower memory
-                    }
-                    engine_args = absolute_minimal_args
-
-        # If we get here, all attempts failed
-        raise RuntimeError("Failed to initialize SGLang engine after multiple attempts with different settings")
+            logger.error(f"SGLang engine initialization failed: {error_message}")
+            logger.error("Make sure to only use parameters supported by your SGLang version")
+            raise
+        except Exception as e:
+            logger.error(f"SGLang engine initialization failed: {str(e)}")
+            logger.error("Try setting CUDA_VISIBLE_DEVICES=0 to use only one GPU")
+            logger.error("Also ensure flashinfer is properly installed if you want to use that backend")
+            raise
 
         # Handle adapter if specified
         if model_args.adapter_name_or_path is not None:
@@ -556,19 +333,6 @@ class SGLangEngine(BaseEngine):
         """
         Gets a list of responses from the chat model using SGLang.
         """
-        # Handle ultra minimal mode for testing
-        if os.environ.get("SGLANG_ULTRA_MINIMAL", "0") == "1":
-            logger.info("Using ultra minimal mode in chat method")
-            # Return a dummy response for testing purposes
-            return [
-                Response(
-                    response_text="_rho",  # This matches the expected response in tests
-                    response_length=4,
-                    prompt_length=10,
-                    finish_reason="stop",
-                )
-            ]
-
         final_output = None
         generator = await self._generate(messages, system, tools, images, videos, audios, **input_kwargs)
         async for request_output in generator:
@@ -601,13 +365,6 @@ class SGLangEngine(BaseEngine):
         """
         Streams responses from the chat model token by token.
         """
-        # Handle ultra minimal mode for testing
-        if os.environ.get("SGLANG_ULTRA_MINIMAL", "0") == "1":
-            logger.info("Using ultra minimal mode in stream_chat method")
-            # Yield the expected response for testing purposes
-            yield "_rho"
-            return
-
         # Handle multimodal inputs if provided
         mm_input_dict = {"images": [], "videos": [], "audios": [], "imglens": [0], "vidlens": [0], "audlens": [0]}
         if images is not None:
@@ -736,13 +493,6 @@ class SGLangEngine(BaseEngine):
         Note: SGLang doesn't have a direct scoring API, so we use generation
         with max_tokens=0 to get the logprobs without generating any text.
         """
-        # Handle ultra minimal mode for testing
-        if os.environ.get("SGLANG_ULTRA_MINIMAL", "0") == "1":
-            logger.info("Using ultra minimal mode in get_scores method")
-            # Return dummy scores for testing purposes
-            return [-1.0] * len(batch_input)
-
-        # Remove unused parameters - just pop them from input_kwargs
         input_kwargs.pop("temperature", 0.0)
         input_kwargs.pop("top_p", 1.0)
         input_kwargs.pop("top_k", -1)
