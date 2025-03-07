@@ -36,7 +36,6 @@ TRAIN_ARGS = {
     "finetuning_type": "full",
     "template": "llama3",
     "cutoff_len": 8192,
-    "overwrite_cache": True,
     "output_dir": "dummy_dir",
     "overwrite_output_dir": True,
     "fp16": True,

@@ -32,7 +32,6 @@ TRAIN_ARGS = {
     "dataset": TINY_DATA,
     "dataset_dir": "ONLINE",
     "cutoff_len": 8192,
-    "overwrite_cache": False,
     "output_dir": "dummy_dir",
     "overwrite_output_dir": True,
     "fp16": True,
