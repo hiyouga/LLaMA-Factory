@@ -277,16 +277,16 @@ def sequence_parallel_decorator(get_dataset):
                     dataset = dataset.shuffle(seed=training_args.seed)
                 kwargs = dict(
                     num_proc=data_args.preprocessing_num_workers,
-                    # load_from_cache_file=(not data_args.overwrite_cache) or (training_args.local_process_index != 0),
+                    load_from_cache_file=(not data_args.overwrite_cache) or (training_args.local_process_index != 0),
                     desc="Running padding split on dataset",
                 )
-                padded_dataset = dataset.map(pad_sequence, batched=True, **kwargs)
+                padded_dataset = dataset.map(pad_sequence, batched=True, batch_size=data_args.preprocessing_batch_size, **kwargs)
                 kwargs = dict(
                     num_proc=data_args.preprocessing_num_workers,
-                    # load_from_cache_file=(not data_args.overwrite_cache) or (training_args.local_process_index != 0),
+                    load_from_cache_file=(not data_args.overwrite_cache) or (training_args.local_process_index != 0),
                     desc="Running sequence parallel split on dataset",
                 )
-                sp_dataset = padded_dataset.map(sp_split, batched=True, **kwargs)
+                sp_dataset = padded_dataset.map(sp_split, batched=True, batch_size=data_args.preprocessing_batch_size, **kwargs)
                 dataset_module[k] = sp_dataset
 
         else:
