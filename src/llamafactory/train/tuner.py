@@ -86,6 +86,9 @@ def _training_function(config: Dict[str, Any]) -> None:
 
 def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: Optional[List["TrainerCallback"]] = None) -> None:
     args = read_args(args)
+    if "-h" in args or "--help" in args:
+        get_train_args(args)
+
     ray_args = get_ray_args(args)
     callbacks = callbacks or []
     if ray_args.use_ray:
