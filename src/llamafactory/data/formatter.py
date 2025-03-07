@@ -121,7 +121,7 @@ class FunctionFormatter(StringFormatter):
 
         function_str = self.tool_utils.function_formatter(functions)
         if thought:
-            function_str = thought.group(1) + function_str
+            function_str = thought.group(0) + function_str
 
         return super().apply(content=function_str)
 
