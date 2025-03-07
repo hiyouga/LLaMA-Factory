@@ -2412,6 +2412,40 @@ LOCALES = {
             "label": "温度",
         },
     },
+    "skip_special_tokens": {
+        "en": {
+            "label": "Skip special tokens",
+        },
+        "ru": {
+            "label": "Пропустить специальные токены",
+        },
+        "zh": {
+            "label": "跳过特殊 token",
+        },
+        "ko": {
+            "label": "스페셜 토큰을 건너뛰기",
+        },
+        "ja": {
+            "label": "スペシャルトークンをスキップ",
+        },
+    },
+    "escape_html": {
+        "en": {
+            "label": "Escape HTML tags",
+        },
+        "ru": {
+            "label": "Исключить HTML теги",
+        },
+        "zh": {
+            "label": "转义 HTML 标签",
+        },
+        "ko": {
+            "label": "HTML 태그 이스케이프",
+        },
+        "ja": {
+            "label": "HTML タグをエスケープ",
+        },
+    },
     "clear_btn": {
         "en": {
             "value": "Clear history",
@@ -2813,5 +2847,12 @@ ALERTS = {
         "zh": "模型导出完成。",
         "ko": "모델이 내보내졌습니다.",
         "ja": "モデルのエクスポートが完了しました。",
+    },
+    "info_swanlab_link": {
+        "en": "### SwanLab Link\n",
+        "ru": "### SwanLab ссылка\n",
+        "zh": "### SwanLab 链接\n",
+        "ko": "### SwanLab 링크\n",
+        "ja": "### SwanLab リンク\n",
     },
 }

@@ -131,12 +131,12 @@ class MMPluginMixin:
         if (image.width * image.height) > image_max_pixels:
             resize_factor = math.sqrt(image_max_pixels / (image.width * image.height))
             width, height = int(image.width * resize_factor), int(image.height * resize_factor)
-            image = image.resize((width, height), resample=Image.Resampling.NEAREST)
+            image = image.resize((width, height))
 
         if (image.width * image.height) < image_min_pixels:
             resize_factor = math.sqrt(image_min_pixels / (image.width * image.height))
             width, height = int(image.width * resize_factor), int(image.height * resize_factor)
-            image = image.resize((width, height), resample=Image.Resampling.NEAREST)
+            image = image.resize((width, height))
 
         if image.mode != "RGB":
             image = image.convert("RGB")
@@ -712,9 +712,7 @@ class MiniCPMVPlugin(BasePlugin):
         processor: Optional["ProcessorMixin"],
     ) -> List[Dict[str, str]]:
         self._validate_input(processor, images, videos, audios)
-        num_image_tokens = 0
-        num_video_tokens = 0
-        num_audio_tokens = 0
+        num_image_tokens, num_video_tokens, num_audio_tokens = 0, 0, 0
         messages = deepcopy(messages)
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
         mm_inputs = {}
@@ -1184,6 +1182,7 @@ class Qwen2AudioPlugin(BasePlugin):
         self._validate_input(processor, images, videos, audios)
         bos_token: str = getattr(processor, "audio_bos_token")
         eos_token: str = getattr(processor, "audio_eos_token")
+        messages = deepcopy(messages)
         mm_inputs = self._get_mm_inputs([], [], audios, processor)
         if "feature_attention_mask" in mm_inputs:
             audio_lengths = mm_inputs["feature_attention_mask"].sum(-1).tolist()
@@ -1228,21 +1227,21 @@ class Qwen2AudioPlugin(BasePlugin):
 
 
 @dataclass
-class Qwen2vlPlugin(BasePlugin):
+class Qwen2VLPlugin(BasePlugin):
     @override
     def _preprocess_image(self, image: "ImageObject", **kwargs) -> "ImageObject":
         image = super()._preprocess_image(image, **kwargs)
         if min(image.width, image.height) < 28:
             width, height = max(image.width, 28), max(image.height, 28)
-            image = image.resize((width, height), resample=Image.Resampling.NEAREST)
+            image = image.resize((width, height))
 
         if image.width / image.height > 200:
             width, height = image.height * 180, image.height
-            image = image.resize((width, height), resample=Image.Resampling.NEAREST)
+            image = image.resize((width, height))
 
         if image.height / image.width > 200:
             width, height = image.width, image.width * 180
-            image = image.resize((width, height), resample=Image.Resampling.NEAREST)
+            image = image.resize((width, height))
 
         return image
 
@@ -1314,7 +1313,10 @@ class Qwen2vlPlugin(BasePlugin):
         processor: Optional["ProcessorMixin"],
     ) -> List[Dict[str, str]]:
         self._validate_input(processor, images, videos, audios)
+        num_image_tokens, num_video_tokens = 0, 0
+        messages = deepcopy(messages)
         image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
+
         merge_length: int = getattr(image_processor, "merge_size") ** 2
         if self.expand_mm_tokens:
             mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
@@ -1324,8 +1326,6 @@ class Qwen2vlPlugin(BasePlugin):
             image_grid_thw = [None] * len(images)
             video_grid_thw = [None] * len(videos)
 
-        num_image_tokens, num_video_tokens = 0, 0
-        messages = deepcopy(messages)
         for message in messages:
             content = message["content"]
             while IMAGE_PLACEHOLDER in content:
@@ -1464,7 +1464,7 @@ PLUGINS = {
     "paligemma": PaliGemmaPlugin,
     "pixtral": PixtralPlugin,
     "qwen2_audio": Qwen2AudioPlugin,
-    "qwen2_vl": Qwen2vlPlugin,
+    "qwen2_vl": Qwen2VLPlugin,
     "video_llava": VideoLlavaPlugin,
 }
 

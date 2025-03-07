@@ -613,6 +613,16 @@ register_template(
 
 
 register_template(
+    name="bailing",
+    format_user=StringFormatter(slots=["<role>HUMAN</role>{{content}}<role>ASSISTANT</role>"]),
+    format_system=StringFormatter(slots=["<role>SYSTEM</role>{{content}}"]),
+    format_observation=StringFormatter(slots=["<role>OBSERVATION</role>{{content}}<role>ASSISTANT</role>"]),
+    stop_words=["<|endoftext|>"],
+    efficient_eos=True,
+)
+
+
+register_template(
     name="belle",
     format_user=StringFormatter(slots=["Human: {{content}}\n\nBelle: "]),
     format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}, "\n\n"]),
@@ -1272,9 +1282,17 @@ register_template(
 )
 
 
-# copied from gemma template
 register_template(
     name="paligemma",
+    format_user=StringFormatter(slots=["{{content}}\n"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    mm_plugin=get_mm_plugin(name="paligemma", image_token="<image>"),
+)
+
+
+# copied from gemma template
+register_template(
+    name="paligemma_chat",
     format_user=StringFormatter(slots=["<start_of_turn>user\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]),
     format_assistant=StringFormatter(slots=["{{content}}<end_of_turn>\n"]),
     format_observation=StringFormatter(

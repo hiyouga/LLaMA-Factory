@@ -87,6 +87,8 @@ STAGES_USE_PAIR_DATA = {"rm", "dpo"}
 
 SUPPORTED_CLASS_FOR_S2ATTN = {"llama"}
 
+SWANLAB_CONFIG = "swanlab_public_config.json"
+
 VIDEO_PLACEHOLDER = os.environ.get("VIDEO_PLACEHOLDER", "<video>")
 
 V_HEAD_WEIGHTS_NAME = "value_head.bin"
@@ -2188,6 +2190,10 @@ register_model_group(
         "QwQ-32B-Preview-Instruct": {
             DownloadSource.DEFAULT: "Qwen/QwQ-32B-Preview",
             DownloadSource.MODELSCOPE: "Qwen/QwQ-32B-Preview",
+        },
+        "QwQ-32B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/QwQ-32B",
+            DownloadSource.MODELSCOPE: "Qwen/QwQ-32B",
         },
     },
     template="qwen",

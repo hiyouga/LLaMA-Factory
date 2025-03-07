@@ -137,7 +137,7 @@ def _check_extra_dependencies(
         check_version("mixture-of-depth>=1.1.6", mandatory=True)
 
     if model_args.infer_backend == "vllm":
-        check_version("vllm>=0.4.3,<=0.7.2")
+        check_version("vllm>=0.4.3,<=0.7.3")
         check_version("vllm", mandatory=True)
 
     if finetuning_args.use_galore:
@@ -382,10 +382,10 @@ def get_train_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _
 
     # Log on each process the small summary
     logger.info(
-        "Process rank: {}, device: {}, n_gpu: {}, distributed training: {}, compute dtype: {}".format(
-            training_args.local_rank,
+        "Process rank: {}, world size: {}, device: {}, distributed training: {}, compute dtype: {}".format(
+            training_args.process_index,
+            training_args.world_size,
             training_args.device,
-            training_args.n_gpu,
             training_args.parallel_mode == ParallelMode.DISTRIBUTED,
             str(model_args.compute_dtype),
         )

@@ -17,6 +17,7 @@ import shutil
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import torch
+import torch.distributed as dist
 from transformers import PreTrainedModel
 
 from ..data import get_template_and_fix_tokenizer
@@ -76,9 +77,18 @@ def _training_function(config: Dict[str, Any]) -> None:
     else:
         raise ValueError(f"Unknown task: {finetuning_args.stage}.")
 
+    try:
+        if dist.is_initialized():
+            dist.destroy_process_group()
+    except Exception as e:
+        logger.warning(f"Failed to destroy process group: {e}.")
+
 
 def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: Optional[List["TrainerCallback"]] = None) -> None:
     args = read_args(args)
+    if "-h" in args or "--help" in args:
+        get_train_args(args)
+
     ray_args = get_ray_args(args)
     callbacks = callbacks or []
     if ray_args.use_ray:
