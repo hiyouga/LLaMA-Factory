@@ -17,13 +17,13 @@ import sys
 from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Union
 
 import numpy as np
-from datasets import DatasetDict, load_dataset, load_from_disk
+from datasets import load_dataset, load_from_disk
 
 from ..extras import logging
 from ..extras.constants import FILEEXT2TYPE
 from ..extras.misc import check_version, has_tokenized_data
 from .converter import align_dataset
-from .data_utils import merge_dataset, split_dataset
+from .data_utils import get_dataset_module, merge_dataset, split_dataset
 from .parser import get_dataset_list
 from .processor import (
     FeedbackDatasetProcessor,
@@ -292,23 +292,12 @@ def get_dataset(
     if data_args.tokenized_path is not None:
         if has_tokenized_data(data_args.tokenized_path):
             logger.warning_rank0("Loading dataset from disk will ignore other data arguments.")
-            tokenized_data: Union["Dataset", "DatasetDict"] = load_from_disk(data_args.tokenized_path)
-            logger.info_rank0(f"Loaded tokenized dataset from {data_args.tokenized_path}.")
-
-            dataset_module: Dict[str, "Dataset"] = {}
-            if isinstance(tokenized_data, DatasetDict):
-                if "train" in tokenized_data:
-                    dataset_module["train_dataset"] = tokenized_data["train"]
-
-                if "validation" in tokenized_data:
-                    dataset_module["eval_dataset"] = tokenized_data["validation"]
-
-            else:  # single dataset
-                dataset_module["train_dataset"] = tokenized_data
-
+            tokenized_data = load_from_disk(data_args.tokenized_path)
+            dataset_module = get_dataset_module(tokenized_data)
             if data_args.streaming:
-                dataset_module = {k: v.to_iterable_dataset() for k, v in dataset_module.items()}
+                dataset_module["train_dataset"] = dataset_module["train_dataset"].to_iterable_dataset()
 
+            logger.info_rank0(f"Loaded tokenized dataset from {data_args.tokenized_path}.")
             return dataset_module
 
         if data_args.streaming:
@@ -335,27 +324,7 @@ def get_dataset(
                 eval_dataset, data_args, training_args, stage, template, tokenizer, processor, is_eval=True
             )
 
-        if data_args.val_size > 1e-6:
-            dataset_dict = split_dataset(dataset, data_args, seed=training_args.seed)
-        else:
-            dataset_dict = {}
-            if dataset is not None:
-                if data_args.streaming:
-                    dataset = dataset.shuffle(buffer_size=data_args.buffer_size, seed=training_args.seed)
-
-                dataset_dict["train"] = dataset
-
-            if eval_dataset is not None:
-                if isinstance(eval_dataset, dict):
-                    dataset_dict.update({f"validation_{name}": data for name, data in eval_dataset.items()})
-                else:
-                    if data_args.streaming:
-                        eval_dataset = eval_dataset.shuffle(buffer_size=data_args.buffer_size, seed=training_args.seed)
-
-                    dataset_dict["validation"] = eval_dataset
-
-            dataset_dict = DatasetDict(dataset_dict)
-
+        dataset_dict = split_dataset(dataset, eval_dataset, data_args, seed=training_args.seed)
         if data_args.tokenized_path is not None:  # save tokenized dataset to disk and exit
             if training_args.should_save:
                 dataset_dict.save_to_disk(data_args.tokenized_path)
@@ -364,19 +333,4 @@ def get_dataset(
 
             sys.exit(0)
 
-        dataset_module = {}
-        if "train" in dataset_dict:
-            dataset_module["train_dataset"] = dataset_dict["train"]
-
-        if "validation" in dataset_dict:
-            dataset_module["eval_dataset"] = dataset_dict["validation"]
-        else:
-            eval_dataset = {}
-            for key in dataset_dict.keys():
-                if key.startswith("validation_"):
-                    eval_dataset[key[len("validation_") :]] = dataset_dict[key]
-
-            if len(eval_dataset):
-                dataset_module["eval_dataset"] = eval_dataset
-
-        return dataset_module
+        return get_dataset_module(dataset_dict)
