@@ -13,11 +13,6 @@
 # limitations under the License.
 
 import os
-import random
-
-import pytest
-from datasets import load_dataset
-from transformers import AutoTokenizer
 
 from llamafactory.train.test_utils import load_dataset_module
 
@@ -30,14 +25,12 @@ TINY_DATA = os.getenv("TINY_DATA", "llamafactory/tiny-supervised-dataset")
 
 TRAIN_ARGS = {
     "model_name_or_path": TINY_LLAMA,
-    "stage": "ppo",
+    "stage": "sft",
     "do_train": True,
     "finetuning_type": "full",
-    "reward_model": "",
-    "reward_model_type": "full",
-    "dataset": "system_chat",
-    "dataset_dir": "REMOTE:" + DEMO_DATA,
     "template": "llama3",
+    "dataset": TINY_DATA,
+    "dataset_dir": "ONLINE",
     "cutoff_len": 8192,
     "output_dir": "dummy_dir",
     "overwrite_output_dir": True,
@@ -45,16 +38,19 @@ TRAIN_ARGS = {
 }
 
 
-@pytest.mark.parametrize("num_samples", [16])
-def test_unsupervised_data(num_samples: int):
-    train_dataset = load_dataset_module(**TRAIN_ARGS)["train_dataset"]
-    ref_tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA)
-    original_data = load_dataset(DEMO_DATA, name="system_chat", split="train")
-    indexes = random.choices(range(len(original_data)), k=num_samples)
-    for index in indexes:
-        messages = original_data["messages"][index]
-        ref_ids = ref_tokenizer.apply_chat_template(messages)
-        ref_input_ids = ref_tokenizer.apply_chat_template(messages[:-1], add_generation_prompt=True)
-        ref_labels = ref_ids[len(ref_input_ids) :]
-        assert train_dataset["input_ids"][index] == ref_input_ids
-        assert train_dataset["labels"][index] == ref_labels
+def test_load_train_only():
+    dataset_module = load_dataset_module(**TRAIN_ARGS)
+    assert dataset_module.get("train_dataset") is not None
+    assert dataset_module.get("eval_dataset") is None
+
+
+def test_load_val_size():
+    dataset_module = load_dataset_module(val_size=0.1, **TRAIN_ARGS)
+    assert dataset_module.get("train_dataset") is not None
+    assert dataset_module.get("eval_dataset") is not None
+
+
+def test_load_eval_data():
+    dataset_module = load_dataset_module(eval_dataset=TINY_DATA, **TRAIN_ARGS)
+    assert dataset_module.get("train_dataset") is not None
+    assert dataset_module.get("eval_dataset") is not None

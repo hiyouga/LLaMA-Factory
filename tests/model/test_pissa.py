@@ -34,7 +34,6 @@ TRAIN_ARGS = {
     "dataset_dir": "ONLINE",
     "template": "llama3",
     "cutoff_len": 1024,
-    "overwrite_cache": True,
     "output_dir": "dummy_dir",
     "overwrite_output_dir": True,
     "fp16": True,
