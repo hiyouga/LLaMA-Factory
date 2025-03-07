@@ -387,7 +387,7 @@ class SwanLabArguments:
 
 @dataclass
 class FinetuningArguments(
-    FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments, ApolloArguments, BAdamArgument, SwanLabArguments
+    SwanLabArguments, BAdamArgument, ApolloArguments, GaloreArguments, RLHFArguments, LoraArguments, FreezeArguments
 ):
     r"""
     Arguments pertaining to which techniques we are going to fine-tuning with.
