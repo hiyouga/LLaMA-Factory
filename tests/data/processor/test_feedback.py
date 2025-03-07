@@ -20,7 +20,7 @@ from datasets import load_dataset
 from transformers import AutoTokenizer
 
 from llamafactory.extras.constants import IGNORE_INDEX
-from llamafactory.train.test_utils import load_train_dataset
+from llamafactory.train.test_utils import load_dataset_module
 
 
 DEMO_DATA = os.getenv("DEMO_DATA", "llamafactory/demo_data")
@@ -36,7 +36,6 @@ TRAIN_ARGS = {
     "dataset_dir": "REMOTE:" + DEMO_DATA,
     "template": "llama3",
     "cutoff_len": 8192,
-    "overwrite_cache": True,
     "output_dir": "dummy_dir",
     "overwrite_output_dir": True,
     "fp16": True,
@@ -45,7 +44,7 @@ TRAIN_ARGS = {
 
 @pytest.mark.parametrize("num_samples", [16])
 def test_feedback_data(num_samples: int):
-    train_dataset = load_train_dataset(**TRAIN_ARGS)
+    train_dataset = load_dataset_module(**TRAIN_ARGS)["train_dataset"]
     ref_tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA)
     original_data = load_dataset(DEMO_DATA, name="kto_en_demo", split="train")
     indexes = random.choices(range(len(original_data)), k=num_samples)
