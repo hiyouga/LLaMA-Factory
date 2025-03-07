@@ -38,7 +38,6 @@ TRAIN_ARGS = {
     "dataset_dir": "ONLINE",
     "template": "llama3",
     "cutoff_len": 1024,
-    "overwrite_cache": False,
     "overwrite_output_dir": True,
     "per_device_train_batch_size": 1,
     "max_steps": 1,
