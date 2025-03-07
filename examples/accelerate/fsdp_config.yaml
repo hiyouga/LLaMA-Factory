@@ -14,7 +14,7 @@ fsdp_config:
   fsdp_use_orig_params: true
 machine_rank: 0
 main_training_function: main
-mixed_precision: fp16 # or bf16
+mixed_precision: bf16 # or fp16
 num_machines: 1 # the number of nodes
 num_processes: 2 # the number of GPUs in all nodes
 rdzv_backend: static
