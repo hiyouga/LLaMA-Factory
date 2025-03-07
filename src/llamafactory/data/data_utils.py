@@ -43,7 +43,7 @@ class Role(str, Enum):
 
 class DatasetModule(TypedDict):
     train_dataset: Optional[Union["Dataset", "IterableDataset"]]
-    eval_dataset: Optional[Union["Dataset", "IterableDataset"]]
+    eval_dataset: Optional[Union["Dataset", "IterableDataset", Dict[str, "Dataset"]]]
 
 
 def merge_dataset(
