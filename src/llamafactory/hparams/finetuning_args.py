@@ -383,6 +383,10 @@ class SwanLabArguments:
         default=None,
         metadata={"help": "The API key for SwanLab."},
     )
+    swanlab_logdir: str = field(
+        default=None,
+        metadata={"help": "The log directory for SwanLab."},
+    )
 
 
 @dataclass
