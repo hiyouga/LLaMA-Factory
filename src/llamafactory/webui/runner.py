@@ -275,6 +275,7 @@ class Runner:
             args["swanlab_workspace"] = get("train.swanlab_workspace")
             args["swanlab_api_key"] = get("train.swanlab_api_key")
             args["swanlab_mode"] = get("train.swanlab_mode")
+            args["swanlab_logdir"] = get("train.swanlab_logdir")
 
         # eval config
         if get("train.val_size") > 1e-6 and args["stage"] != "ppo":
