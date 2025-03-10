@@ -238,7 +238,7 @@ class SGLangEngine(BaseEngine):
         stop = input_kwargs.pop("stop", None)
 
         # Prepare minimal SGLang generation parameters
-        sampling_params = {"max_tokens": max_new_tokens}
+        sampling_params = {"max_new_tokens": max_new_tokens}
 
         # Only add non-default parameters
         if temperature > 0:
@@ -278,7 +278,7 @@ class SGLangEngine(BaseEngine):
                     logger.warning(f"Error with initial generation attempt: {str(e)}, trying minimal params")
                     # Try with minimal parameters
                     result = await asyncio.to_thread(
-                        self.model.generate, [prompt_text], {"max_tokens": max_new_tokens}
+                        self.model.generate, [prompt_text], {"max_new_tokens": max_new_tokens}
                     )
 
                 if not result:
@@ -402,7 +402,7 @@ class SGLangEngine(BaseEngine):
         stop = input_kwargs.pop("stop", None)
 
         # Prepare minimal SGLang generation parameters
-        sampling_params = {"max_tokens": max_new_tokens}
+        sampling_params = {"max_new_tokens": max_new_tokens}
 
         # Only add non-default parameters
         if temperature > 0:
@@ -501,7 +501,7 @@ class SGLangEngine(BaseEngine):
 
         try:
             # Minimal parameters for scoring only
-            sampling_params = {"max_tokens": 0}
+            sampling_params = {"max_new_tokens": 0}
 
             # Process each input separately with robust error handling
             for text in batch_input:
