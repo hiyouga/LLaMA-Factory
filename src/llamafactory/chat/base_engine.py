@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 
     from ..data import Template
     from ..data.mm_plugin import AudioInput, ImageInput, VideoInput
+    from ..extras.constants import EngineName
     from ..hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
 
 
@@ -41,6 +42,7 @@ class BaseEngine(ABC):
     Must implements async methods: chat(), stream_chat() and get_scores().
     """
 
+    name: "EngineName"
     model: Union["PreTrainedModel", "AsyncLLMEngine"]
     tokenizer: "PreTrainedTokenizer"
     can_generate: bool
