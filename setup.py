@@ -46,7 +46,7 @@ extra_require = {
     "torch": ["torch>=1.13.1"],
     "torch-npu": ["torch==2.4.0", "torch-npu==2.4.0.post2", "decorator"],
     "metrics": ["nltk", "jieba", "rouge-chinese"],
-    "deepspeed": ["deepspeed>=0.10.0,<=0.16.2"],
+    "deepspeed": ["deepspeed>=0.10.0,<=0.16.4"],
     "liger-kernel": ["liger-kernel"],
     "bitsandbytes": ["bitsandbytes>=0.39.0"],
     "hqq": ["hqq"],

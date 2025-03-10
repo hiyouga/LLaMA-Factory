@@ -96,10 +96,29 @@ V_HEAD_WEIGHTS_NAME = "value_head.bin"
 V_HEAD_SAFE_WEIGHTS_NAME = "value_head.safetensors"
 
 
+class AttentionFunction(str, Enum):
+    AUTO = "auto"
+    DISABLED = "disabled"
+    SDPA = "sdpa"
+    FA2 = "fa2"
+
+
+class EngineName(str, Enum):
+    HF = "huggingface"
+    VLLM = "vllm"
+
+
 class DownloadSource(str, Enum):
     DEFAULT = "hf"
     MODELSCOPE = "ms"
     OPENMIND = "om"
+
+
+class RopeScaling(str, Enum):
+    LINEAR = "linear"
+    DYNAMIC = "dynamic"
+    YARN = "yarn"
+    LLAMA3 = "llama3"
 
 
 def register_model_group(

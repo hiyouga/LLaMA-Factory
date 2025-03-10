@@ -20,23 +20,16 @@ from llamafactory.hparams import FinetuningArguments, ModelArguments
 from llamafactory.model.adapter import init_adapter
 
 
-@pytest.mark.parametrize(
-    "freeze_vision_tower,freeze_multi_modal_projector,train_mm_proj_only",
-    [
-        (False, False, False),
-        (False, True, False),
-        (True, False, False),
-        (True, True, False),
-        (True, False, True),
-    ],
-)
-def test_visual_full(freeze_vision_tower: bool, freeze_multi_modal_projector: bool, train_mm_proj_only: bool):
+@pytest.mark.parametrize("freeze_vision_tower", (False, True))
+@pytest.mark.parametrize("freeze_multi_modal_projector", (False, True))
+@pytest.mark.parametrize("freeze_language_model", (False, True))
+def test_visual_full(freeze_vision_tower: bool, freeze_multi_modal_projector: bool, freeze_language_model: bool):
     model_args = ModelArguments(model_name_or_path="Qwen/Qwen2-VL-2B-Instruct")
     finetuning_args = FinetuningArguments(
         finetuning_type="full",
         freeze_vision_tower=freeze_vision_tower,
         freeze_multi_modal_projector=freeze_multi_modal_projector,
-        train_mm_proj_only=train_mm_proj_only,
+        freeze_language_model=freeze_language_model,
     )
     config = AutoConfig.from_pretrained(model_args.model_name_or_path)
     with torch.device("meta"):
@@ -49,10 +42,10 @@ def test_visual_full(freeze_vision_tower: bool, freeze_multi_modal_projector: bo
         elif "visual.merger" in name:
             assert param.requires_grad != freeze_multi_modal_projector
         else:
-            assert param.requires_grad != train_mm_proj_only
+            assert param.requires_grad != freeze_language_model
 
 
-@pytest.mark.parametrize("freeze_vision_tower", [False, True])
+@pytest.mark.parametrize("freeze_vision_tower", (False, True))
 def test_visual_lora(freeze_vision_tower: bool):
     model_args = ModelArguments(model_name_or_path="Qwen/Qwen2-VL-2B-Instruct")
     finetuning_args = FinetuningArguments(finetuning_type="lora", freeze_vision_tower=freeze_vision_tower)
