@@ -19,6 +19,7 @@ import torch
 from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
+    AutoModelForImageTextToText,
     AutoModelForSeq2SeqLM,
     AutoModelForVision2Seq,
     AutoProcessor,
@@ -149,6 +150,8 @@ def load_model(
         else:
             if type(config) in AutoModelForVision2Seq._model_mapping.keys():  # assume built-in models
                 load_class = AutoModelForVision2Seq
+            elif type(config) in AutoModelForImageTextToText._model_mapping.keys():
+                load_class = AutoModelForImageTextToText
             elif type(config) in AutoModelForSeq2SeqLM._model_mapping.keys():
                 load_class = AutoModelForSeq2SeqLM
             else:
