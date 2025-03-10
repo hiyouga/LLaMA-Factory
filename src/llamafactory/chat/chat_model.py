@@ -20,6 +20,7 @@ import os
 from threading import Thread
 from typing import TYPE_CHECKING, Any, AsyncGenerator, Dict, Generator, List, Optional, Sequence
 
+from ..extras.constants import EngineName
 from ..extras.misc import torch_gc
 from ..hparams import get_infer_args
 from .hf_engine import HuggingfaceEngine
@@ -47,10 +48,9 @@ class ChatModel:
 
     def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
         model_args, data_args, finetuning_args, generating_args = get_infer_args(args)
-        self.engine_type = model_args.infer_backend
-        if model_args.infer_backend == "huggingface":
+        if model_args.infer_backend == EngineName.HF:
             self.engine: "BaseEngine" = HuggingfaceEngine(model_args, data_args, finetuning_args, generating_args)
-        elif model_args.infer_backend == "vllm":
+        elif model_args.infer_backend == EngineName.VLLM:
             self.engine: "BaseEngine" = VllmEngine(model_args, data_args, finetuning_args, generating_args)
         else:
             raise NotImplementedError(f"Unknown backend: {model_args.infer_backend}")

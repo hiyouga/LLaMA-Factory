@@ -403,7 +403,7 @@ huggingface-cli login
 | Optional     | Minimum | Recommend |
 | ------------ | ------- | --------- |
 | CUDA         | 11.6    | 12.2      |
-| deepspeed    | 0.10.0  | 0.16.2    |
+| deepspeed    | 0.10.0  | 0.16.4    |
 | bitsandbytes | 0.39.0  | 0.43.1    |
 | vllm         | 0.4.3   | 0.7.3     |
 | flash-attn   | 2.3.0   | 2.7.2     |
@@ -490,12 +490,12 @@ bash Ascend-cann-kernels-910b_8.0.0.alpha002_linux-"$(uname -i)".run --install
 source /usr/local/Ascend/ascend-toolkit/set_env.sh
 ```
 
-| Requirement  | Minimum | Recommend   |
-| ------------ | ------- | ----------- |
-| CANN         | 8.0.RC1 | 8.0.0.alpha002     |
-| torch        | 2.1.0   | 2.4.0      |
-| torch-npu    | 2.1.0   | 2.4.0.post2 |
-| deepspeed    | 0.13.2  | 0.16.2     |
+| Requirement  | Minimum | Recommend      |
+| ------------ | ------- | -------------- |
+| CANN         | 8.0.RC1 | 8.0.0.alpha002 |
+| torch        | 2.1.0   | 2.4.0          |
+| torch-npu    | 2.1.0   | 2.4.0.post2    |
+| deepspeed    | 0.13.2  | 0.13.2         |
 
 Remember to use `ASCEND_RT_VISIBLE_DEVICES` instead of `CUDA_VISIBLE_DEVICES` to specify the device to use.
 

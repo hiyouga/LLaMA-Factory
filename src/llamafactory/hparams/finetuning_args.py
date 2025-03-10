@@ -419,15 +419,15 @@ class FinetuningArguments(
     )
     freeze_vision_tower: bool = field(
         default=True,
-        metadata={"help": "Whether ot not to freeze vision tower in MLLM training."},
+        metadata={"help": "Whether ot not to freeze the vision tower in MLLM training."},
     )
     freeze_multi_modal_projector: bool = field(
         default=True,
         metadata={"help": "Whether or not to freeze the multi modal projector in MLLM training."},
     )
-    train_mm_proj_only: bool = field(
+    freeze_language_model: bool = field(
         default=False,
-        metadata={"help": "Whether or not to train the multimodal projector for MLLM only."},
+        metadata={"help": "Whether or not to freeze the language model in MLLM training."},
     )
     compute_accuracy: bool = field(
         default=False,
@@ -459,8 +459,6 @@ class FinetuningArguments(
         self.additional_target: Optional[List[str]] = split_arg(self.additional_target)
         self.galore_target: List[str] = split_arg(self.galore_target)
         self.apollo_target: List[str] = split_arg(self.apollo_target)
-        self.freeze_vision_tower = self.freeze_vision_tower or self.train_mm_proj_only
-        self.freeze_multi_modal_projector = self.freeze_multi_modal_projector and not self.train_mm_proj_only
         self.use_ref_model = self.stage == "dpo" and self.pref_loss not in ["orpo", "simpo"]
 
         assert self.finetuning_type in ["lora", "freeze", "full"], "Invalid fine-tuning method."
@@ -487,9 +485,6 @@ class FinetuningArguments(
 
         if self.pissa_init and (self.stage in ["ppo", "kto"] or self.use_ref_model):
             raise ValueError("Cannot use PiSSA for current training stage.")
-
-        if self.train_mm_proj_only and self.finetuning_type != "full":
-            raise ValueError("`train_mm_proj_only` is only valid for full training.")
 
         if self.finetuning_type != "lora":
             if self.loraplus_lr_ratio is not None:

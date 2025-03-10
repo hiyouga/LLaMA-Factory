@@ -10,7 +10,7 @@
         "role": "assistant"
       },
       {
-        "content": "What are they doing?",
+        "content": "What are they doing?<image>",
         "role": "user"
       },
       {
@@ -19,6 +19,7 @@
       }
     ],
     "images": [
+      "mllm_demo_data/1.jpg",
       "mllm_demo_data/1.jpg"
     ]
   },
@@ -79,7 +80,7 @@
         "role": "assistant"
       },
       {
-        "content": "他们在做什么？",
+        "content": "他们在做什么？<image>",
         "role": "user"
       },
       {
@@ -88,6 +89,7 @@
       }
     ],
     "images": [
+      "mllm_demo_data/1.jpg",
       "mllm_demo_data/1.jpg"
     ]
   },
