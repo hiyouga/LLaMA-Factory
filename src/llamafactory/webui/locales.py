@@ -1894,6 +1894,28 @@ LOCALES = {
             "info": "クラウド版またはオフライン版 SwanLab を使用します。",
         },
     },
+    "swanlab_logdir": {
+        "en": {
+            "label": "SwanLab log directory",
+            "info": "The log directory for SwanLab.",
+        },
+        "ru": {
+            "label": "SwanLab 로그 디렉토리",
+            "info": "SwanLab의 로그 디렉토리.",
+        },
+        "zh": {
+            "label": "SwanLab 日志目录",
+            "info": "SwanLab 的日志目录。",
+        },
+        "ko": {
+            "label": "SwanLab 로그 디렉토리",
+            "info": "SwanLab의 로그 디렉토리.",
+        },
+        "ja": {
+            "label": "SwanLab ログ ディレクトリ",
+            "info": "SwanLab のログ ディレクトリ。",
+        },
+    },
     "cmd_preview_btn": {
         "en": {
             "value": "Preview command",

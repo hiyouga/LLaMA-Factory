@@ -363,15 +363,15 @@ class SwanLabArguments:
         default=False,
         metadata={"help": "Whether or not to use the SwanLab (an experiment tracking and visualization tool)."},
     )
-    swanlab_project: str = field(
+    swanlab_project: Optional[str] = field(
         default="llamafactory",
         metadata={"help": "The project name in SwanLab."},
     )
-    swanlab_workspace: str = field(
+    swanlab_workspace: Optional[str] = field(
         default=None,
         metadata={"help": "The workspace name in SwanLab."},
     )
-    swanlab_run_name: str = field(
+    swanlab_run_name: Optional[str] = field(
         default=None,
         metadata={"help": "The experiment name in SwanLab."},
     )
@@ -379,9 +379,13 @@ class SwanLabArguments:
         default="cloud",
         metadata={"help": "The mode of SwanLab."},
     )
-    swanlab_api_key: str = field(
+    swanlab_api_key: Optional[str] = field(
         default=None,
         metadata={"help": "The API key for SwanLab."},
+    )
+    swanlab_logdir: Optional[str] = field(
+        default=None,
+        metadata={"help": "The log directory for SwanLab."},
     )
 
 
