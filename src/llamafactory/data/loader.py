@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import os
-import sys
 from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Union
 
 import numpy as np
@@ -325,12 +324,10 @@ def get_dataset(
             )
 
         dataset_dict = split_dataset(dataset, eval_dataset, data_args, seed=training_args.seed)
-        if data_args.tokenized_path is not None:  # save tokenized dataset to disk and exit
+        if data_args.tokenized_path is not None:  # save tokenized dataset to disk
             if training_args.should_save:
                 dataset_dict.save_to_disk(data_args.tokenized_path)
                 logger.info_rank0(f"Tokenized dataset is saved at {data_args.tokenized_path}.")
-                logger.info_rank0(f"Please restart the training with `tokenized_path: {data_args.tokenized_path}`.")
-
-            sys.exit(0)
+                logger.info_rank0(f"Please launch the training with `tokenized_path: {data_args.tokenized_path}`.")
 
         return get_dataset_module(dataset_dict)
