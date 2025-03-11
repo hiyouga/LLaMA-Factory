@@ -135,6 +135,23 @@ def test_base_plugin():
     _check_plugin(**check_inputs)
 
 
+def test_internvl_plugin():
+    image_seqlen = 256
+    tokenizer_module = _load_tokenizer_module(model_name_or_path="kingsley01/InternVL2_5-1B-MPO-hf")
+    internvl_plugin = get_mm_plugin("intern_vl", image_token="<image>", video_token="<video>")
+    check_inputs = {"plugin": internvl_plugin, **tokenizer_module}
+    check_inputs["expected_mm_messages"] = [
+        {
+            key: value.replace("<image>", f"<img>{'<IMG_CONTEXT>' * image_seqlen * 1}</img>")
+            for key, value in message.items()
+        }
+        for message in MM_MESSAGES
+    ]
+    check_inputs["expected_mm_inputs"] = _get_mm_inputs(tokenizer_module["processor"])
+    check_inputs["expected_mm_inputs"].pop("num_patches", None)
+    _check_plugin(**check_inputs)
+
+
 def test_llava_plugin():
     image_seqlen = 576
     tokenizer_module = _load_tokenizer_module(model_name_or_path="llava-hf/llava-1.5-7b-hf")

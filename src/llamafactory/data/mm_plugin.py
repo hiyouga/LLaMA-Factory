@@ -25,7 +25,13 @@ from typing import TYPE_CHECKING, Literal, Optional, TypedDict, Union
 
 import numpy as np
 import torch
-from transformers.image_utils import get_image_size, to_numpy_array
+from transformers.image_utils import (
+    concatenate_list,
+    get_image_size,
+    make_batched_videos,
+    make_flat_list_of_images,
+    to_numpy_array,
+)
 from typing_extensions import override
 
 from ..extras.constants import AUDIO_PLACEHOLDER, IGNORE_INDEX, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
@@ -430,6 +436,191 @@ class Gemma3Plugin(BasePlugin):
         mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
         mm_inputs.pop("num_crops", None)
         mm_inputs["token_type_ids"] = _get_gemma3_token_type_ids(batch_ids, processor)
+        return mm_inputs
+
+
+@dataclass
+class InternVLPlugin(BasePlugin):
+    @override
+    def _get_video_sample_indices(self, video_fps, max_frame, first_idx=0, **kwargs):  # frames selection for internvl
+        start, end = -100000, 100000
+        num_segments = 32
+        start_idx = max(first_idx, round(start * video_fps))
+        end_idx = min(round(end * video_fps), max_frame)
+        seg_size = float(end_idx - start_idx) / num_segments
+        frame_indices = np.array(
+            [int(start_idx + (seg_size / 2) + np.round(seg_size * idx)) for idx in range(num_segments)]
+        )
+        return frame_indices
+
+    @override
+    def _regularize_videos(
+        self, videos: list["VideoInput"], **kwargs
+    ) -> tuple[list[list["ImageObject"]], list[float]]:
+        results, fps_per_video = [], []
+        for video in videos:
+            container = av.open(video, "r")
+            video_stream = next(stream for stream in container.streams if stream.type == "video")
+            max_frame = sum(1 for _ in container.decode(video=0)) - 1
+            fps = video_stream.average_rate
+            sample_indices = self._get_video_sample_indices(max_frame=max_frame, video_fps=fps)
+            frames: list["ImageObject"] = []
+            container.seek(0)
+            for frame_idx, frame in enumerate(container.decode(video_stream)):
+                if frame_idx in sample_indices:
+                    frames.append(frame.to_image())
+
+            frames = self._regularize_images(frames, image_max_pixels=768 * 768, image_min_pixels=32 * 32)
+            results.append(frames)
+            if video_stream.duration is None:
+                fps_per_video.append(2.0)
+            else:
+                fps_per_video.append(len(sample_indices) / float(video_stream.duration * video_stream.time_base))
+
+        return results, fps_per_video
+
+    @override
+    def process_messages(
+        self,
+        messages: list[dict[str, str]],
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        processor: Optional["MMProcessor"],
+    ) -> list[dict[str, str]]:
+        self._validate_input(processor, images, videos, audios)
+        num_image_tokens = 0
+        num_video_tokens = 0
+        image_seqlen = getattr(processor, "image_seq_length") if self.expand_mm_tokens else 1
+        messages = deepcopy(messages)
+        mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+
+        image_pixel_patch_list = mm_inputs.get("image_num_patches", None)  # pathes of images
+        video_num_patches = mm_inputs.get("video_num_patches", None)  # all patches for frames of videos
+        video_patch_indices = mm_inputs.get("video_patch_indices", None)  # num frames of per video
+
+        for message in messages:
+            content = message["content"]
+            while IMAGE_PLACEHOLDER in content:
+                # TOFIX
+                content = content.replace(
+                    IMAGE_PLACEHOLDER,
+                    f"<img>{'<IMG_CONTEXT>' * image_seqlen * image_pixel_patch_list[num_image_tokens]}</img>",
+                    1,
+                )
+                num_image_tokens += 1
+            message["content"] = content
+
+            while VIDEO_PLACEHOLDER in content:
+                current_patch_index = video_patch_indices[num_video_tokens - 1] if num_video_tokens > 0 else 0
+                end_patch_index = video_patch_indices[num_video_tokens]
+                num_patches = list(video_num_patches[current_patch_index:end_patch_index])
+                video_replaced_prompt = "\n".join(
+                    f"Frame{i+1}: <img>{'<IMG_CONTEXT>'* image_seqlen * num_patches[i]}</img>"
+                    for i in range(len(num_patches))
+                )
+                content = content.replace(VIDEO_PLACEHOLDER, video_replaced_prompt, 1)
+                num_video_tokens += 1
+            message["content"] = content
+
+            if len(images) != num_image_tokens:
+                raise ValueError(f"The number of images does not match the number of {IMAGE_PLACEHOLDER} tokens.")
+
+            if len(videos) != num_video_tokens:
+                raise ValueError(f"The number of videos does not match the number of {VIDEO_PLACEHOLDER} tokens.")
+
+        return messages
+
+    @override
+    def _get_mm_inputs(
+        self,
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        processor: "ProcessorMixin",
+        **kwargs,
+    ) -> dict[str, "torch.Tensor"]:
+        image_processor: "BaseImageProcessor" = getattr(processor, "image_processor")
+        image_kwargs = image_processor.to_dict()  # get image processor args #FIXME some keys are useless
+
+        mm_inputs = {}
+        image_video_patches = []
+
+        if len(images) != 0 and isinstance(images[0], str):
+            images = self._regularize_images(
+                images,
+                image_max_pixels=getattr(processor, "image_max_pixels", 1024 * 1024),  # anyres max pixels?
+                image_min_pixels=getattr(processor, "image_min_pixels", 32 * 32),
+            )
+
+        if len(videos) != 0 and isinstance(videos[0], str):
+            videos, _ = self._regularize_videos(videos, **image_kwargs)
+
+        if len(images) != 0:
+            images = make_flat_list_of_images(images)
+            image_inputs = image_processor(images=images, **image_kwargs)
+            image_num_patches = image_inputs.pop("num_patches")
+            image_pixel_values = image_inputs.pop("pixel_values")
+            image_num_patches_indices = np.cumsum(image_num_patches)
+
+        if len(videos) != 0:
+            videos = make_batched_videos(videos)
+            num_frames_per_video = [len(video) for video in videos]
+            patch_indices = np.cumsum(num_frames_per_video)
+            image_kwargs["crop_to_patches"] = False
+            video_inputs = image_processor(images=videos, **image_kwargs)
+            video_num_patches = video_inputs.pop("num_patches")
+            video_pixel_values = video_inputs.pop("pixel_values")
+            video_num_patches_indices = np.cumsum(video_num_patches)
+
+        # gather all of the pixel_values
+        # FIXME IMAGE First Now
+        if len(images) != 0 and image_pixel_values is not None:
+            for i in range(len(images)):
+                start_index = image_num_patches_indices[i - 1] if i > 0 else 0
+                end_index = image_num_patches_indices[i]
+                image_video_patches.append(image_pixel_values[start_index:end_index])
+
+        if len(videos) != 0 and video_pixel_values is not None:
+            for i in range(len(videos)):
+                current_patch_index = patch_indices[i - 1] if i > 0 else 0
+                end_patch_index = patch_indices[i]
+                start_index = video_num_patches_indices[current_patch_index] if i > 0 else 0
+                end_index = video_num_patches_indices[end_patch_index - 1]
+                image_video_patches.append(video_pixel_values[start_index:end_index])
+
+        if len(images) != 0:
+            pixel_values_list = concatenate_list(image_video_patches)
+            mm_inputs = {
+                "pixel_values": torch.stack([torch.tensor(patch_ndarray) for patch_ndarray in pixel_values_list])
+            }
+            mm_inputs.update({"image_num_patches": image_num_patches})
+
+        if len(videos) != 0:
+            mm_inputs.update({"video_patch_indices": patch_indices})
+            mm_inputs.update({"video_num_patches": video_num_patches})
+
+        return mm_inputs
+
+    @override
+    def get_mm_inputs(
+        self,
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        imglens: list[int],
+        vidlens: list[int],
+        audlens: list[int],
+        batch_ids: list[list[int]],
+        processor: Optional["MMProcessor"],
+    ) -> dict[str, Union[list[int], "torch.Tensor"]]:
+        self._validate_input(processor, images, videos, audios)
+
+        mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+        mm_inputs.pop("image_num_patches", None)
+        mm_inputs.pop("video_patch_indices", None)
+        mm_inputs.pop("video_num_patches", None)
+
         return mm_inputs
 
 
@@ -1282,6 +1473,7 @@ class VideoLlavaPlugin(BasePlugin):
 PLUGINS = {
     "base": BasePlugin,
     "gemma3": Gemma3Plugin,
+    "intern_vl": InternVLPlugin,
     "llava": LlavaPlugin,
     "llava_next": LlavaNextPlugin,
     "llava_next_video": LlavaNextVideoPlugin,
