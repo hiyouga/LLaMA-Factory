@@ -71,6 +71,10 @@ class BaseModelArguments:
         default=None,
         metadata={"help": "Special tokens to be added into the tokenizer. Use commas to separate multiple tokens."},
     )
+    new_normal_tokens: Optional[str] = field(
+        default=None,
+        metadata={"help": "Normal tokens to be added into the tokenizer. Use commas to separate multiple tokens."},
+    )
     model_revision: str = field(
         default="main",
         metadata={"help": "The specific model version to use (can be a branch name, tag name or commit id)."},
@@ -180,6 +184,9 @@ class BaseModelArguments:
 
         if self.new_special_tokens is not None:  # support multiple special tokens
             self.new_special_tokens = [token.strip() for token in self.new_special_tokens.split(",")]
+
+        if self.new_normal_tokens is not None:  # support multiple normal tokens
+            self.new_normal_tokens = [token.strip() for token in self.new_normal_tokens.split(",")]
 
 
 @dataclass
