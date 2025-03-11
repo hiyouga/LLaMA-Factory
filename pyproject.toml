@@ -19,13 +19,35 @@ dynamic = [
 ]
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py39"
 line-length = 119
 indent-width = 4
 
 [tool.ruff.lint]
-ignore = ["C408", "C901", "E501", "E731", "E741", "W605"]
-select = ["C", "E", "F", "I", "W"]
+ignore = [
+    "C408", # collection
+    "C901", # complex
+    "E731", # lambda function
+    "E741", # ambiguous var name
+    "D100", # no doc public module
+    "D101", # no doc public class
+    "D102", # no doc public method
+    "D103", # no doc public function
+    "D104", # no doc public package
+    "D105", # no doc magic method
+    "D107", # no doc __init__
+]
+extend-select = [
+    "C",      # complexity
+    "E",      # error
+    "F",      # pyflakes
+    "I",      # isort
+    "W",      # warning
+    "UP",     # pyupgrade
+    "D",      # pydocstyle
+    "PT009",  # pytest assert
+    "RUF022", # sort __all__
+]
 
 [tool.ruff.lint.isort]
 lines-after-imports = 2
@@ -40,6 +62,9 @@ known-third-party = [
     "transformers",
     "trl"
 ]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.ruff.format]
 quote-style = "double"

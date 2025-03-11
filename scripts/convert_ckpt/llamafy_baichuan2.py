@@ -15,7 +15,7 @@
 import json
 import os
 from collections import OrderedDict
-from typing import Any, Dict
+from typing import Any
 
 import fire
 import torch
@@ -29,13 +29,13 @@ CONFIG_NAME = "config.json"
 
 
 def save_weight(input_dir: str, output_dir: str, shard_size: str, save_safetensors: bool):
-    baichuan2_state_dict: Dict[str, torch.Tensor] = OrderedDict()
+    baichuan2_state_dict: dict[str, torch.Tensor] = OrderedDict()
     for filepath in tqdm(os.listdir(input_dir), desc="Load weights"):
         if os.path.isfile(os.path.join(input_dir, filepath)) and filepath.endswith(".bin"):
             shard_weight = torch.load(os.path.join(input_dir, filepath), map_location="cpu")
             baichuan2_state_dict.update(shard_weight)
 
-    llama_state_dict: Dict[str, torch.Tensor] = OrderedDict()
+    llama_state_dict: dict[str, torch.Tensor] = OrderedDict()
     for key, value in tqdm(baichuan2_state_dict.items(), desc="Convert format"):
         if "W_pack" in key:
             proj_size = value.size(0) // 3
@@ -75,7 +75,7 @@ def save_weight(input_dir: str, output_dir: str, shard_size: str, save_safetenso
 
 def save_config(input_dir: str, output_dir: str):
     with open(os.path.join(input_dir, CONFIG_NAME), encoding="utf-8") as f:
-        llama2_config_dict: Dict[str, Any] = json.load(f)
+        llama2_config_dict: dict[str, Any] = json.load(f)
 
     llama2_config_dict["architectures"] = ["LlamaForCausalLM"]
     llama2_config_dict.pop("auto_map", None)
@@ -94,8 +94,8 @@ def llamafy_baichuan2(
     shard_size: str = "2GB",
     save_safetensors: bool = True,
 ):
-    r"""
-    Converts the Baichuan2-7B model in the same format as LLaMA2-7B.
+    r"""Convert the Baichuan2-7B model in the same format as LLaMA2-7B.
+
     Usage: python llamafy_baichuan2.py --input_dir input --output_dir output
     Converted model: https://huggingface.co/hiyouga/Baichuan2-7B-Base-LLaMAfied
     """

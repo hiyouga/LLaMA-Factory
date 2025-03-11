@@ -14,7 +14,7 @@
 
 import json
 import os
-from typing import Sequence
+from collections.abc import Sequence
 
 from openai import OpenAI
 from transformers.utils.versions import require_version

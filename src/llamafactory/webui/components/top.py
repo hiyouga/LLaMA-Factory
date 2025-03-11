@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING
 
 from ...data import TEMPLATES
 from ...extras.constants import METHODS, SUPPORTED_MODELS
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from gradio.components import Component
 
 
-def create_top() -> Dict[str, "Component"]:
+def create_top() -> dict[str, "Component"]:
     with gr.Row():
         lang = gr.Dropdown(choices=["en", "ru", "zh", "ko", "ja"], value=None, scale=1)
         available_models = list(SUPPORTED_MODELS.keys()) + ["Custom"]

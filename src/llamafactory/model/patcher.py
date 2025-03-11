@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from types import MethodType
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any
 
 import torch
 from peft import PeftModel
@@ -93,7 +93,7 @@ def patch_config(
     config: "PretrainedConfig",
     tokenizer: "PreTrainedTokenizer",
     model_args: "ModelArguments",
-    init_kwargs: Dict[str, Any],
+    init_kwargs: dict[str, Any],
     is_trainable: bool,
 ) -> None:
     if model_args.compute_dtype is None:  # priority: bf16 > fp16 > fp32

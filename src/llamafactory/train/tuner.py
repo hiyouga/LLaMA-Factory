@@ -14,7 +14,7 @@
 
 import os
 import shutil
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import torch
 import torch.distributed as dist
@@ -48,9 +48,9 @@ if TYPE_CHECKING:
 logger = logging.get_logger(__name__)
 
 
-def _training_function(config: Dict[str, Any]) -> None:
+def _training_function(config: dict[str, Any]) -> None:
     args = config.get("args")
-    callbacks: List[Any] = config.get("callbacks")
+    callbacks: list[Any] = config.get("callbacks")
     model_args, data_args, training_args, finetuning_args, generating_args = get_train_args(args)
 
     callbacks.append(LogCallback())
@@ -84,7 +84,7 @@ def _training_function(config: Dict[str, Any]) -> None:
         logger.warning(f"Failed to destroy process group: {e}.")
 
 
-def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: Optional[List["TrainerCallback"]] = None) -> None:
+def run_exp(args: Optional[dict[str, Any]] = None, callbacks: Optional[list["TrainerCallback"]] = None) -> None:
     args = read_args(args)
     if "-h" in args or "--help" in args:
         get_train_args(args)
@@ -103,7 +103,7 @@ def run_exp(args: Optional[Dict[str, Any]] = None, callbacks: Optional[List["Tra
         _training_function(config={"args": args, "callbacks": callbacks})
 
 
-def export_model(args: Optional[Dict[str, Any]] = None) -> None:
+def export_model(args: Optional[dict[str, Any]] = None) -> None:
     model_args, data_args, finetuning_args, _ = get_infer_args(args)
 
     if model_args.export_dir is None:

@@ -1,6 +1,5 @@
 import json
 import os
-from typing import List
 
 import datasets
 
@@ -50,7 +49,7 @@ class HhRlhfEn(datasets.GeneratorBasedBuilder):
             datasets.SplitGenerator(name=datasets.Split.TEST, gen_kwargs={"filepaths": file_path["test"]}),
         ]
 
-    def _generate_examples(self, filepaths: List[str]):
+    def _generate_examples(self, filepaths: list[str]):
         key = 0
         for filepath in filepaths:
             with open(filepath, encoding="utf-8") as f:
