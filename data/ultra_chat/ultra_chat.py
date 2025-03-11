@@ -1,6 +1,5 @@
 import json
 import os
-from typing import List
 
 import datasets
 
@@ -11,7 +10,7 @@ _DESCRIPTION = "UltraChat: Large-scale, Informative, and Diverse Multi-round Dia
 
 _CITATION = """\
 @misc{UltraChat,
-  author = {Ding, Ning and Chen, Yulin and Xu, Bokai and Hu, Shengding and Qin, Yujia and Liu, Zhiyuan and Sun, Maosong and Zhou, Bowen},
+  author = {Ding, Ning and Chen, Yulin and Xu, Bokai and Hu, Shengding and others},
   title = {UltraChat: A Large-scale Auto-generated Multi-round Dialogue Data},
   year = {2023},
   publisher = {GitHub},
@@ -40,7 +39,7 @@ class UltraChat(datasets.GeneratorBasedBuilder):
         file_paths = [dl_manager.download(_BASE_DATA_URL.format(idx=idx)) for idx in range(10)]  # multiple shards
         return [datasets.SplitGenerator(name=datasets.Split.TRAIN, gen_kwargs={"filepaths": file_paths})]
 
-    def _generate_examples(self, filepaths: List[str]):
+    def _generate_examples(self, filepaths: list[str]):
         for filepath in filepaths:
             with open(filepath, encoding="utf-8") as f:
                 for row in f:
@@ -49,7 +48,7 @@ class UltraChat(datasets.GeneratorBasedBuilder):
                     except Exception:
                         continue
                     key: int = data["id"]
-                    content: List[str] = data["data"]
+                    content: list[str] = data["data"]
                     if len(content) % 2 == 1:
                         content.pop(-1)
                     if len(content) < 2:

@@ -38,9 +38,7 @@ def _noisy_mean_initialization(embed_weight: "torch.Tensor", num_new_tokens: int
 
 
 def resize_embedding_layer(model: "PreTrainedModel", tokenizer: "PreTrainedTokenizer") -> None:
-    r"""
-    Resize token embeddings.
-    """
+    r"""Resize token embeddings."""
     if is_deepspeed_zero3_enabled():
         import deepspeed  # type: ignore
 

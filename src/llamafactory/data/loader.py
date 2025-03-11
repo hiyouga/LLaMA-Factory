@@ -13,7 +13,8 @@
 # limitations under the License.
 
 import os
-from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Union
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import numpy as np
 from datasets import load_dataset, load_from_disk
@@ -54,9 +55,7 @@ def _load_single_dataset(
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
 ) -> Union["Dataset", "IterableDataset"]:
-    r"""
-    Loads a single dataset and aligns it to the standard format.
-    """
+    r"""Load a single dataset and aligns it to the standard format."""
     logger.info_rank0(f"Loading dataset {dataset_attr}...")
     data_path, data_name, data_dir, data_files = None, None, None, None
     if dataset_attr.load_from in ["hf_hub", "ms_hub", "om_hub"]:
@@ -164,10 +163,8 @@ def _get_merged_dataset(
     training_args: "Seq2SeqTrainingArguments",
     stage: Literal["pt", "sft", "rm", "ppo", "kto"],
     merge: bool = True,
-) -> Optional[Union["Dataset", "IterableDataset", Dict[str, "Dataset"]]]:
-    r"""
-    Returns the merged datasets in the standard format.
-    """
+) -> Optional[Union["Dataset", "IterableDataset", dict[str, "Dataset"]]]:
+    r"""Return the merged datasets in the standard format."""
     if dataset_names is None:
         return None
 
@@ -192,9 +189,7 @@ def _get_dataset_processor(
     processor: Optional["ProcessorMixin"],
     do_generate: bool = False,
 ) -> "DatasetProcessor":
-    r"""
-    Returns the corresponding dataset processor.
-    """
+    r"""Return the corresponding dataset processor."""
     if stage == "pt":
         dataset_processor_class = PretrainDatasetProcessor
     elif stage == "sft" and not do_generate:
@@ -236,9 +231,7 @@ def _get_preprocessed_dataset(
     processor: Optional["ProcessorMixin"] = None,
     is_eval: bool = False,
 ) -> Optional[Union["Dataset", "IterableDataset"]]:
-    r"""
-    Preprocesses the dataset, including format checking and tokenization.
-    """
+    r"""Preprocesses the dataset, including format checking and tokenization."""
     if dataset is None:
         return None
 
@@ -284,9 +277,7 @@ def get_dataset(
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"] = None,
 ) -> "DatasetModule":
-    r"""
-    Gets the train dataset and optionally gets the evaluation dataset.
-    """
+    r"""Get the train dataset and optionally gets the evaluation dataset."""
     # Load tokenized dataset if path exists
     if data_args.tokenized_path is not None:
         if has_tokenized_data(data_args.tokenized_path):

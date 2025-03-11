@@ -9,9 +9,9 @@ from .unsupervised import UnsupervisedDatasetProcessor
 __all__ = [
     "DatasetProcessor",
     "FeedbackDatasetProcessor",
+    "PackedSupervisedDatasetProcessor",
     "PairwiseDatasetProcessor",
     "PretrainDatasetProcessor",
-    "PackedSupervisedDatasetProcessor",
     "SupervisedDatasetProcessor",
     "UnsupervisedDatasetProcessor",
 ]

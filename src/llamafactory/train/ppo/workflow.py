@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 from ...data import MultiModalDataCollatorForSeq2Seq, get_dataset, get_template_and_fix_tokenizer
 from ...extras.ploting import plot_loss
@@ -37,7 +37,7 @@ def run_ppo(
     training_args: "Seq2SeqTrainingArguments",
     finetuning_args: "FinetuningArguments",
     generating_args: "GeneratingArguments",
-    callbacks: Optional[List["TrainerCallback"]] = None,
+    callbacks: Optional[list["TrainerCallback"]] = None,
 ):
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
@@ -53,7 +53,7 @@ def run_ppo(
     reward_model = create_reward_model(model, model_args, finetuning_args)
 
     # Initialize our Trainer
-    ppo_trainer: "CustomPPOTrainer" = CustomPPOTrainer(
+    ppo_trainer: CustomPPOTrainer = CustomPPOTrainer(
         model_args=model_args,
         training_args=training_args,
         finetuning_args=finetuning_args,

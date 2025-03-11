@@ -14,8 +14,9 @@
 
 import os
 from abc import abstractmethod
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Type, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from ..extras import logging
 from .data_utils import Role
@@ -36,10 +37,8 @@ class DatasetConverter:
     dataset_attr: "DatasetAttr"
     data_args: "DataArguments"
 
-    def _find_medias(self, medias: Union[Any, Sequence[Any]]) -> Optional[List[Any]]:
-        r"""
-        Optionally concatenates media path to media dir when loading from local disk.
-        """
+    def _find_medias(self, medias: Union[Any, Sequence[Any]]) -> Optional[list[Any]]:
+        r"""Optionally concatenate media path to media dir when loading from local disk."""
         if not isinstance(medias, list):
             medias = [medias] if medias is not None else []
         elif len(medias) == 0:
@@ -57,16 +56,14 @@ class DatasetConverter:
         return medias
 
     @abstractmethod
-    def __call__(self, example: Dict[str, Any]) -> Dict[str, Any]:
-        r"""
-        Converts a single example in the dataset to the standard format.
-        """
+    def __call__(self, example: dict[str, Any]) -> dict[str, Any]:
+        r"""Convert a single example in the dataset to the standard format."""
         ...
 
 
 @dataclass
 class AlpacaDatasetConverter(DatasetConverter):
-    def __call__(self, example: Dict[str, Any]) -> Dict[str, Any]:
+    def __call__(self, example: dict[str, Any]) -> dict[str, Any]:
         prompt = []
         if self.dataset_attr.history and isinstance(example[self.dataset_attr.history], list):
             for old_prompt, old_response in example[self.dataset_attr.history]:
@@ -116,7 +113,7 @@ class AlpacaDatasetConverter(DatasetConverter):
 
 @dataclass
 class SharegptDatasetConverter(DatasetConverter):
-    def __call__(self, example: Dict[str, Any]) -> Dict[str, Any]:
+    def __call__(self, example: dict[str, Any]) -> dict[str, Any]:
         tag_mapping = {
             self.dataset_attr.user_tag: Role.USER.value,
             self.dataset_attr.assistant_tag: Role.ASSISTANT.value,
@@ -216,10 +213,8 @@ DATASET_CONVERTERS = {
 }
 
 
-def register_dataset_converter(name: str, dataset_converter: Type["DatasetConverter"]) -> None:
-    r"""
-    Register a new dataset converter.
-    """
+def register_dataset_converter(name: str, dataset_converter: type["DatasetConverter"]) -> None:
+    r"""Register a new dataset converter."""
     if name in DATASET_CONVERTERS:
         raise ValueError(f"Dataset converter {name} already exists.")
 
@@ -227,9 +222,7 @@ def register_dataset_converter(name: str, dataset_converter: Type["DatasetConver
 
 
 def get_dataset_converter(name: str, dataset_attr: "DatasetAttr", data_args: "DataArguments") -> "DatasetConverter":
-    r"""
-    Gets a dataset converter.
-    """
+    r"""Get a dataset converter."""
     if name not in DATASET_CONVERTERS:
         raise ValueError(f"Dataset converter {name} not found.")
 
@@ -242,17 +235,17 @@ def align_dataset(
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
 ) -> Union["Dataset", "IterableDataset"]:
-    r"""
-    Aligned dataset:
-        _prompt: [{"role": "user", "content": "..."}] * (2T - 1)
-        _response: [{"role": "assistant", "content": "..."}] * N (N > 1 for ranking dataset)
-        _system: "..."
-        _tools: "...",
-        _images: [],
-        _videos: [],
-        _audios: [],
-    """
+    r"""Align the dataset to a specific format.
 
+    Aligned dataset:
+    _prompt: [{"role": "user", "content": "..."}] * (2T - 1)
+    _response: [{"role": "assistant", "content": "..."}] * N (N > 1 for ranking dataset)
+    _system: "..."
+    _tools: "..."
+    _images: []
+    _videos: []
+    _audios: []
+    """
     column_names = list(next(iter(dataset)).keys())
     kwargs = {}
     if not data_args.streaming:
