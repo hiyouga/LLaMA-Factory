@@ -74,4 +74,13 @@ def print_env() -> None:
     except Exception:
         pass
 
+    try:
+        import subprocess
+
+        commit_info = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
+        commit_hash = commit_info.stdout.strip()
+        info["Git commit"] = commit_hash
+    except Exception:
+        pass
+
     print("\n" + "\n".join([f"- {key}: {value}" for key, value in info.items()]) + "\n")
