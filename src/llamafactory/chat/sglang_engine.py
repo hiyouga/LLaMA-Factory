@@ -266,10 +266,7 @@ class SGLangEngine(BaseEngine):
                 # Try different API methods with proper error handling
                 result = None
                 try:
-                    # First try the async method if available
-                    if hasattr(self.model, "generate_async"):
-                        result = await self.model.generate_async([prompt_text], sampling_params)
-                    elif hasattr(self.model, "async_generate"):  # Alternative name in some versions
+                    if hasattr(self.model, "async_generate"):
                         result = await self.model.async_generate([prompt_text], sampling_params)
                     else:
                         # Fallback to non-async API
@@ -506,10 +503,7 @@ class SGLangEngine(BaseEngine):
             # Process each input separately with robust error handling
             for text in batch_input:
                 try:
-                    # Try different API methods
-                    if hasattr(self.model, "generate_async"):
-                        result = await self.model.generate_async([text], sampling_params)
-                    elif hasattr(self.model, "async_generate"):
+                    if hasattr(self.model, "async_generate"):
                         result = await self.model.async_generate([text], sampling_params)
                     else:
                         # Fallback to non-async API

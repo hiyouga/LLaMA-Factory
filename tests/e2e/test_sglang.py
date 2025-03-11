@@ -88,6 +88,6 @@ if __name__ == "__main__":
         sys.exit(1)
 
     print("Testing SGLang engine...")
-    # test_chat()
-    test_stream_chat()
+    test_chat()
+    # test_stream_chat()
     print("All SGLang tests passed!")
