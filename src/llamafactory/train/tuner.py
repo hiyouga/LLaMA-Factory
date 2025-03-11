@@ -185,6 +185,7 @@ def export_model(args: Optional[Dict[str, Any]] = None) -> None:
     except Exception as e:
         logger.warning_rank0(f"Cannot save tokenizer, please copy the files manually: {e}.")
 
-    with open(os.path.join(model_args.export_dir, "Modelfile"), "w", encoding="utf-8") as f:
+    ollama_modelfile = os.path.join(model_args.export_dir, "Modelfile")
+    with open(ollama_modelfile, "w", encoding="utf-8") as f:
         f.write(template.get_ollama_modelfile(tokenizer))
-        logger.info_rank0(f"Saved ollama modelfile to {model_args.export_dir}.")
+        logger.info_rank0(f"Ollama modelfile saved in {ollama_modelfile}")
