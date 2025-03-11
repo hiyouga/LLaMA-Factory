@@ -15,7 +15,7 @@
 import json
 import os
 from collections import OrderedDict
-from typing import Any, Dict
+from typing import Any
 
 import fire
 import torch
@@ -37,14 +37,14 @@ CONFIG_NAME = "config.json"
 
 
 def save_weight(input_dir: str, output_dir: str, shard_size: str, save_safetensors: bool) -> str:
-    qwen_state_dict: Dict[str, torch.Tensor] = OrderedDict()
+    qwen_state_dict: dict[str, torch.Tensor] = OrderedDict()
     for filepath in tqdm(os.listdir(input_dir), desc="Load weights"):
         if os.path.isfile(os.path.join(input_dir, filepath)) and filepath.endswith(".safetensors"):
             with safe_open(os.path.join(input_dir, filepath), framework="pt", device="cpu") as f:
                 for key in f.keys():
                     qwen_state_dict[key] = f.get_tensor(key)
 
-    llama_state_dict: Dict[str, torch.Tensor] = OrderedDict()
+    llama_state_dict: dict[str, torch.Tensor] = OrderedDict()
     torch_dtype = None
     for key, value in tqdm(qwen_state_dict.items(), desc="Convert format"):
         if torch_dtype is None:
@@ -112,9 +112,9 @@ def save_weight(input_dir: str, output_dir: str, shard_size: str, save_safetenso
 
 def save_config(input_dir: str, output_dir: str, torch_dtype: str):
     with open(os.path.join(input_dir, CONFIG_NAME), encoding="utf-8") as f:
-        qwen_config_dict: Dict[str, Any] = json.load(f)
+        qwen_config_dict: dict[str, Any] = json.load(f)
 
-    llama2_config_dict: Dict[str, Any] = OrderedDict()
+    llama2_config_dict: dict[str, Any] = OrderedDict()
     llama2_config_dict["architectures"] = ["LlamaForCausalLM"]
     llama2_config_dict["hidden_act"] = "silu"
     llama2_config_dict["hidden_size"] = qwen_config_dict["hidden_size"]
@@ -147,8 +147,8 @@ def llamafy_qwen(
     shard_size: str = "2GB",
     save_safetensors: bool = False,
 ):
-    r"""
-    Converts the Qwen models in the same format as LLaMA2.
+    r"""Convert the Qwen models in the same format as LLaMA2.
+
     Usage: python llamafy_qwen.py --input_dir input --output_dir output
     Converted model: https://huggingface.co/hiyouga/Qwen-14B-Chat-LLaMAfied
     """

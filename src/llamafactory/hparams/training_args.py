@@ -10,9 +10,7 @@ from ..extras.misc import use_ray
 
 @dataclass
 class RayArguments:
-    r"""
-    Arguments pertaining to the Ray training.
-    """
+    r"""Arguments pertaining to the Ray training."""
 
     ray_run_name: Optional[str] = field(
         default=None,
@@ -43,9 +41,7 @@ class RayArguments:
 
 @dataclass
 class TrainingArguments(RayArguments, Seq2SeqTrainingArguments):
-    r"""
-    Arguments pertaining to the trainer.
-    """
+    r"""Arguments pertaining to the trainer."""
 
     def __post_init__(self):
         Seq2SeqTrainingArguments.__post_init__(self)

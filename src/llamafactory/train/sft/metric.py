@@ -17,7 +17,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
 import torch
@@ -45,9 +45,7 @@ if is_rouge_available():
 
 
 def eval_logit_processor(logits: "torch.Tensor", labels: "torch.Tensor") -> "torch.Tensor":
-    r"""
-    Computes the token with the largest likelihood to reduce memory footprint.
-    """
+    r"""Compute the token with the largest likelihood to reduce memory footprint."""
     if isinstance(logits, (list, tuple)):
         if logits[0].dim() == 3:  # (batch_size, seq_len, vocab_size)
             logits = logits[0]
@@ -62,11 +60,9 @@ def eval_logit_processor(logits: "torch.Tensor", labels: "torch.Tensor") -> "tor
 
 @dataclass
 class ComputeAccuracy:
-    r"""
-    Computes accuracy and supports `batch_eval_metrics`.
-    """
+    r"""Compute accuracy and support `batch_eval_metrics`."""
 
-    def _dump(self) -> Optional[Dict[str, float]]:
+    def _dump(self) -> Optional[dict[str, float]]:
         result = None
         if hasattr(self, "score_dict"):
             result = {k: float(np.mean(v)) for k, v in self.score_dict.items()}
@@ -77,7 +73,7 @@ class ComputeAccuracy:
     def __post_init__(self):
         self._dump()
 
-    def __call__(self, eval_preds: "EvalPrediction", compute_result: bool = True) -> Optional[Dict[str, float]]:
+    def __call__(self, eval_preds: "EvalPrediction", compute_result: bool = True) -> Optional[dict[str, float]]:
         preds, labels = numpify(eval_preds.predictions), numpify(eval_preds.label_ids)
         for i in range(len(preds)):
             pred, label = preds[i, :-1], labels[i, 1:]
@@ -90,15 +86,14 @@ class ComputeAccuracy:
 
 @dataclass
 class ComputeSimilarity:
-    r"""
-    Computes text similarity scores and supports `batch_eval_metrics`.
+    r"""Compute text similarity scores and support `batch_eval_metrics`.
 
     Wraps the tokenizer into metric functions, used in CustomSeq2SeqTrainer.
     """
 
     tokenizer: "PreTrainedTokenizer"
 
-    def _dump(self) -> Optional[Dict[str, float]]:
+    def _dump(self) -> Optional[dict[str, float]]:
         result = None
         if hasattr(self, "score_dict"):
             result = {k: float(np.mean(v)) for k, v in self.score_dict.items()}
@@ -109,7 +104,7 @@ class ComputeSimilarity:
     def __post_init__(self):
         self._dump()
 
-    def __call__(self, eval_preds: "EvalPrediction", compute_result: bool = True) -> Optional[Dict[str, float]]:
+    def __call__(self, eval_preds: "EvalPrediction", compute_result: bool = True) -> Optional[dict[str, float]]:
         preds, labels = numpify(eval_preds.predictions), numpify(eval_preds.label_ids)
 
         preds = np.where(preds != IGNORE_INDEX, preds, self.tokenizer.pad_token_id)

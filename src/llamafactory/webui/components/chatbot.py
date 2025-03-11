@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import json
-from typing import TYPE_CHECKING, Dict, Tuple
+from typing import TYPE_CHECKING
 
 from ...data import Role
 from ...extras.packages import is_gradio_available
@@ -31,9 +31,7 @@ if TYPE_CHECKING:
 
 
 def check_json_schema(text: str, lang: str) -> None:
-    r"""
-    Checks if the json schema is valid.
-    """
+    r"""Check if the json schema is valid."""
     try:
         tools = json.loads(text)
         if tools:
@@ -49,7 +47,7 @@ def check_json_schema(text: str, lang: str) -> None:
 
 def create_chat_box(
     engine: "Engine", visible: bool = False
-) -> Tuple["Component", "Component", Dict[str, "Component"]]:
+) -> tuple["Component", "Component", dict[str, "Component"]]:
     lang = engine.manager.get_elem_by_id("top.lang")
     with gr.Column(visible=visible) as chat_box:
         chatbot = gr.Chatbot(type="messages", show_copy_button=True)

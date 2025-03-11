@@ -18,7 +18,8 @@ import json
 import os
 import re
 import uuid
-from typing import TYPE_CHECKING, AsyncGenerator, Dict, List, Optional, Tuple
+from collections.abc import AsyncGenerator
+from typing import TYPE_CHECKING, Optional
 
 from ..data import Role as DataRole
 from ..extras import logging
@@ -71,7 +72,7 @@ ROLE_MAPPING = {
 
 def _process_request(
     request: "ChatCompletionRequest",
-) -> Tuple[List[Dict[str, str]], Optional[str], Optional[str], Optional[List["ImageInput"]]]:
+) -> tuple[list[dict[str, str]], Optional[str], Optional[str], Optional[list["ImageInput"]]]:
     if is_env_enabled("API_VERBOSE", "1"):
         logger.info_rank0(f"==== request ====\n{json.dumps(dictify(request), indent=2, ensure_ascii=False)}")
 

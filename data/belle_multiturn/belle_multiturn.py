@@ -10,7 +10,7 @@ _DESCRIPTION = "BELLE multiturn chat dataset."
 
 _CITATION = """\
 @article{belle2023exploring,
-  title={Exploring the Impact of Instruction Data Scaling on Large Language Models: An Empirical Study on Real-World Use Cases},
+  title={Exploring the Impact of Instruction Data Scaling on Large Language Models},
   author={Yunjie Ji, Yong Deng, Yan Gong, Yiping Peng, Qiang Niu, Lei Zhang, Baochang Ma, Xiangang Li},
   journal={arXiv preprint arXiv:2303.14742},
   year={2023}

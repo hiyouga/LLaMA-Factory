@@ -13,8 +13,9 @@
 # limitations under the License.
 
 from abc import ABC, abstractmethod
+from collections.abc import AsyncGenerator, Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, AsyncGenerator, Dict, List, Literal, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
 
 if TYPE_CHECKING:
@@ -36,8 +37,7 @@ class Response:
 
 
 class BaseEngine(ABC):
-    r"""
-    Base class for inference engine of chat models.
+    r"""Base class for inference engine of chat models.
 
     Must implements async methods: chat(), stream_chat() and get_scores().
     """
@@ -47,7 +47,7 @@ class BaseEngine(ABC):
     tokenizer: "PreTrainedTokenizer"
     can_generate: bool
     template: "Template"
-    generating_args: Dict[str, Any]
+    generating_args: dict[str, Any]
 
     @abstractmethod
     def __init__(
@@ -57,31 +57,27 @@ class BaseEngine(ABC):
         finetuning_args: "FinetuningArguments",
         generating_args: "GeneratingArguments",
     ) -> None:
-        r"""
-        Initializes an inference engine.
-        """
+        r"""Initialize an inference engine."""
         ...
 
     @abstractmethod
     async def chat(
         self,
-        messages: Sequence[Dict[str, str]],
+        messages: Sequence[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
         images: Optional[Sequence["ImageInput"]] = None,
         videos: Optional[Sequence["VideoInput"]] = None,
         audios: Optional[Sequence["AudioInput"]] = None,
         **input_kwargs,
-    ) -> List["Response"]:
-        r"""
-        Gets a list of responses of the chat model.
-        """
+    ) -> list["Response"]:
+        r"""Get a list of responses of the chat model."""
         ...
 
     @abstractmethod
     async def stream_chat(
         self,
-        messages: Sequence[Dict[str, str]],
+        messages: Sequence[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
         images: Optional[Sequence["ImageInput"]] = None,
@@ -89,18 +85,14 @@ class BaseEngine(ABC):
         audios: Optional[Sequence["AudioInput"]] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
-        r"""
-        Gets the response token-by-token of the chat model.
-        """
+        r"""Get the response token-by-token of the chat model."""
         ...
 
     @abstractmethod
     async def get_scores(
         self,
-        batch_input: List[str],
+        batch_input: list[str],
         **input_kwargs,
-    ) -> List[float]:
-        r"""
-        Gets a list of scores of the reward model.
-        """
+    ) -> list[float]:
+        r"""Get a list of scores of the reward model."""
         ...
