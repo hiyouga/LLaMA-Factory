@@ -13,7 +13,8 @@
 # limitations under the License.
 
 import os
-from typing import TYPE_CHECKING, Sequence
+from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 import pytest
 from transformers import AutoTokenizer
@@ -42,8 +43,7 @@ MESSAGES = [
 def _check_tokenization(
     tokenizer: "PreTrainedTokenizer", batch_input_ids: Sequence[Sequence[int]], batch_text: Sequence[str]
 ) -> None:
-    r"""
-    Checks token ids and texts.
+    r"""Check token ids and texts.
 
     encode(text) == token_ids
     decode(token_ids) == text
@@ -54,8 +54,7 @@ def _check_tokenization(
 
 
 def _check_template(model_id: str, template_name: str, prompt_str: str, answer_str: str, use_fast: bool) -> None:
-    r"""
-    Checks template.
+    r"""Check template.
 
     Args:
         model_id: the model id on hugging face hub.
@@ -63,6 +62,7 @@ def _check_template(model_id: str, template_name: str, prompt_str: str, answer_s
         prompt_str: the string corresponding to the prompt part.
         answer_str: the string corresponding to the answer part.
         use_fast: whether to use fast tokenizer.
+
     """
     tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast=use_fast, token=HF_TOKEN)
     content_str = tokenizer.apply_chat_template(MESSAGES, tokenize=False)

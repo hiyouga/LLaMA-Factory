@@ -19,7 +19,7 @@
 import os
 import random
 from enum import Enum, unique
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any
 
 import torch
 from datasets import load_dataset
@@ -43,9 +43,7 @@ logger = logging.get_logger(__name__)
 
 @unique
 class QuantizationMethod(str, Enum):
-    r"""
-    Borrowed from `transformers.utils.quantization_config.QuantizationMethod`.
-    """
+    r"""Borrowed from `transformers.utils.quantization_config.QuantizationMethod`."""
 
     BITS_AND_BYTES = "bitsandbytes"
     GPTQ = "gptq"
@@ -56,10 +54,8 @@ class QuantizationMethod(str, Enum):
     HQQ = "hqq"
 
 
-def _get_quantization_dataset(tokenizer: "PreTrainedTokenizer", model_args: "ModelArguments") -> List[Dict[str, Any]]:
-    r"""
-    Prepares the tokenized dataset to perform AutoGPTQ. Do not use tensor output for JSON serialization.
-    """
+def _get_quantization_dataset(tokenizer: "PreTrainedTokenizer", model_args: "ModelArguments") -> list[dict[str, Any]]:
+    r"""Prepare the tokenized dataset to perform AutoGPTQ. Do not use tensor output for JSON serialization."""
     if os.path.isfile(model_args.export_quantization_dataset):
         data_path = FILEEXT2TYPE.get(model_args.export_quantization_dataset.split(".")[-1], None)
         data_files = model_args.export_quantization_dataset
@@ -84,7 +80,7 @@ def _get_quantization_dataset(tokenizer: "PreTrainedTokenizer", model_args: "Mod
                 raise ValueError("Cannot find satisfying example, considering decrease `export_quantization_maxlen`.")
 
             sample_idx = random.randint(0, len(dataset) - 1)
-            sample: Dict[str, "torch.Tensor"] = tokenizer(dataset[sample_idx]["text"], return_tensors="pt")
+            sample: dict[str, torch.Tensor] = tokenizer(dataset[sample_idx]["text"], return_tensors="pt")
             n_try += 1
             if sample["input_ids"].size(1) > maxlen:
                 break  # TODO: fix large maxlen
@@ -101,11 +97,9 @@ def configure_quantization(
     config: "PretrainedConfig",
     tokenizer: "PreTrainedTokenizer",
     model_args: "ModelArguments",
-    init_kwargs: Dict[str, Any],
+    init_kwargs: dict[str, Any],
 ) -> None:
-    r"""
-    Priority: PTQ-quantized (train/infer) > AutoGPTQ (export) > On-the-fly quantization (train/infer)
-    """
+    r"""Priority: PTQ-quantized (train/infer) > AutoGPTQ (export) > On-the-fly quantization (train/infer)."""
     if getattr(config, "quantization_config", None):  # ptq
         if model_args.quantization_bit is not None:
             logger.warning_rank0("`quantization_bit` will not affect on the PTQ-quantized models.")
@@ -113,7 +107,7 @@ def configure_quantization(
         if is_deepspeed_zero3_enabled() or is_fsdp_enabled():
             raise ValueError("DeepSpeed ZeRO-3 or FSDP is incompatible with PTQ-quantized models.")
 
-        quantization_config: Dict[str, Any] = getattr(config, "quantization_config", None)
+        quantization_config: dict[str, Any] = getattr(config, "quantization_config", None)
         quant_method = quantization_config.get("quant_method", "")
 
         if quant_method == QuantizationMethod.GPTQ:

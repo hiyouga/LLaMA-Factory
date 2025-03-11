@@ -14,7 +14,8 @@
 
 import json
 import os
-from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional, Tuple
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Any, Optional
 
 from transformers.utils import is_torch_npu_available
 
@@ -37,15 +38,12 @@ if is_gradio_available():
 
 
 def _escape_html(text: str) -> str:
-    r"""
-    Escapes HTML characters.
-    """
+    r"""Escape HTML characters."""
     return text.replace("<", "&lt;").replace(">", "&gt;")
 
 
-def _format_response(text: str, lang: str, escape_html: bool, thought_words: Tuple[str, str]) -> str:
-    r"""
-    Post-processes the response text.
+def _format_response(text: str, lang: str, escape_html: bool, thought_words: tuple[str, str]) -> str:
+    r"""Post-process the response text.
 
     Based on: https://huggingface.co/spaces/Lyte/DeepSeek-R1-Distill-Qwen-1.5B-Demo-GGUF/blob/main/app.py
     """
@@ -74,7 +72,7 @@ class WebChatModel(ChatModel):
     def __init__(self, manager: "Manager", demo_mode: bool = False, lazy_init: bool = True) -> None:
         self.manager = manager
         self.demo_mode = demo_mode
-        self.engine: Optional["BaseEngine"] = None
+        self.engine: Optional[BaseEngine] = None
 
         if not lazy_init:  # read arguments from command line
             super().__init__()
@@ -160,14 +158,13 @@ class WebChatModel(ChatModel):
 
     @staticmethod
     def append(
-        chatbot: List[Dict[str, str]],
-        messages: List[Dict[str, str]],
+        chatbot: list[dict[str, str]],
+        messages: list[dict[str, str]],
         role: str,
         query: str,
         escape_html: bool,
-    ) -> Tuple[List[Dict[str, str]], List[Dict[str, str]], str]:
-        r"""
-        Adds the user input to chatbot.
+    ) -> tuple[list[dict[str, str]], list[dict[str, str]], str]:
+        r"""Add the user input to chatbot.
 
         Inputs: infer.chatbot, infer.messages, infer.role, infer.query, infer.escape_html
         Output: infer.chatbot, infer.messages, infer.query
@@ -180,8 +177,8 @@ class WebChatModel(ChatModel):
 
     def stream(
         self,
-        chatbot: List[Dict[str, str]],
-        messages: List[Dict[str, str]],
+        chatbot: list[dict[str, str]],
+        messages: list[dict[str, str]],
         lang: str,
         system: str,
         tools: str,
@@ -193,9 +190,8 @@ class WebChatModel(ChatModel):
         temperature: float,
         skip_special_tokens: bool,
         escape_html: bool,
-    ) -> Generator[Tuple[List[Dict[str, str]], List[Dict[str, str]]], None, None]:
-        r"""
-        Generates output text in stream.
+    ) -> Generator[tuple[list[dict[str, str]], list[dict[str, str]]], None, None]:
+        r"""Generate output text in stream.
 
         Inputs: infer.chatbot, infer.messages, infer.system, infer.tools, infer.image, infer.video, ...
         Output: infer.chatbot, infer.messages

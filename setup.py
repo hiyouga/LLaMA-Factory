@@ -14,7 +14,6 @@
 
 import os
 import re
-from typing import List
 
 from setuptools import find_packages, setup
 
@@ -27,14 +26,14 @@ def get_version() -> str:
         return version
 
 
-def get_requires() -> List[str]:
+def get_requires() -> list[str]:
     with open("requirements.txt", encoding="utf-8") as f:
         file_content = f.read()
         lines = [line.strip() for line in file_content.strip().split("\n") if not line.startswith("#")]
         return lines
 
 
-def get_console_scripts() -> List[str]:
+def get_console_scripts() -> list[str]:
     console_scripts = ["llamafactory-cli = llamafactory.cli:main"]
     if os.getenv("ENABLE_SHORT_CONSOLE", "1").lower() in ["true", "y", "1"]:
         console_scripts.append("lmf = llamafactory.cli:main")

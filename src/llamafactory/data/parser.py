@@ -14,8 +14,9 @@
 
 import json
 import os
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, Dict, List, Literal, Optional, Sequence
+from typing import Any, Literal, Optional
 
 from transformers.utils import cached_file
 
@@ -25,9 +26,7 @@ from ..extras.misc import use_modelscope, use_openmind
 
 @dataclass
 class DatasetAttr:
-    r"""
-    Dataset attributes.
-    """
+    r"""Dataset attributes."""
 
     # basic configs
     load_from: Literal["hf_hub", "ms_hub", "om_hub", "script", "file"]
@@ -68,10 +67,10 @@ class DatasetAttr:
     def __repr__(self) -> str:
         return self.dataset_name
 
-    def set_attr(self, key: str, obj: Dict[str, Any], default: Optional[Any] = None) -> None:
+    def set_attr(self, key: str, obj: dict[str, Any], default: Optional[Any] = None) -> None:
         setattr(self, key, obj.get(key, default))
 
-    def join(self, attr: Dict[str, Any]) -> None:
+    def join(self, attr: dict[str, Any]) -> None:
         self.set_attr("formatting", attr, default="alpaca")
         self.set_attr("ranking", attr, default=False)
         self.set_attr("subset", attr)
@@ -92,10 +91,8 @@ class DatasetAttr:
                 self.set_attr(tag, attr["tags"])
 
 
-def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -> List["DatasetAttr"]:
-    r"""
-    Gets the attributes of the datasets.
-    """
+def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -> list["DatasetAttr"]:
+    r"""Get the attributes of the datasets."""
     if dataset_names is None:
         dataset_names = []
 
@@ -116,7 +113,7 @@ def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -
 
             dataset_info = None
 
-    dataset_list: List["DatasetAttr"] = []
+    dataset_list: list[DatasetAttr] = []
     for name in dataset_names:
         if dataset_info is None:  # dataset_dir is ONLINE
             if use_modelscope():

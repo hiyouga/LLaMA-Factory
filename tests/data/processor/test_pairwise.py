@@ -14,7 +14,6 @@
 
 import os
 import random
-from typing import Dict, List
 
 import pytest
 from datasets import load_dataset
@@ -43,7 +42,7 @@ TRAIN_ARGS = {
 }
 
 
-def _convert_sharegpt_to_openai(messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
+def _convert_sharegpt_to_openai(messages: list[dict[str, str]]) -> list[dict[str, str]]:
     role_mapping = {"human": "user", "gpt": "assistant", "system": "system"}
     new_messages = []
     for message in messages:
