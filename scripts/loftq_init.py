@@ -38,8 +38,8 @@ def quantize_loftq(
     lora_target: tuple = ("q_proj", "v_proj"),
     save_safetensors: bool = True,
 ):
-    r"""
-    Initializes LoRA weights with LoRA-fine-tuning-aware Quantization (LoftQ)
+    r"""Initialize LoRA weights with LoRA-fine-tuning-aware Quantization (LoftQ).
+
     Usage: python loftq_init.py --model_name_or_path path_to_model --output_dir output_dir
     """
     if isinstance(lora_target, str):
@@ -72,7 +72,7 @@ def quantize_loftq(
     print(f"Adapter weights saved in {loftq_dir}")
 
     # Save base model
-    base_model: "PreTrainedModel" = peft_model.unload()
+    base_model: PreTrainedModel = peft_model.unload()
     base_model.save_pretrained(output_dir, safe_serialization=save_safetensors)
     tokenizer.save_pretrained(output_dir)
     print(f"Model weights saved in {output_dir}")

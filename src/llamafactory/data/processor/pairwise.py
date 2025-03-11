@@ -13,7 +13,8 @@
 # limitations under the License.
 
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any, Optional
 
 from ...extras import logging
 from ...extras.constants import IGNORE_INDEX
@@ -30,14 +31,14 @@ logger = logging.get_logger(__name__)
 class PairwiseDatasetProcessor(DatasetProcessor):
     def _encode_data_example(
         self,
-        prompt: Sequence[Dict[str, str]],
-        response: Sequence[Dict[str, str]],
+        prompt: Sequence[dict[str, str]],
+        response: Sequence[dict[str, str]],
         system: Optional[str],
         tools: Optional[str],
         images: Sequence["ImageInput"],
         videos: Sequence["VideoInput"],
         audios: Sequence["AudioInput"],
-    ) -> Tuple[List[int], List[int], List[int], List[int]]:
+    ) -> tuple[list[int], list[int], list[int], list[int]]:
         chosen_messages = self.template.mm_plugin.process_messages(
             prompt + [response[0]], images, videos, audios, self.processor
         )
@@ -68,7 +69,7 @@ class PairwiseDatasetProcessor(DatasetProcessor):
         rejected_labels = [IGNORE_INDEX] * source_len + rejected_ids
         return chosen_input_ids, chosen_labels, rejected_input_ids, rejected_labels
 
-    def preprocess_dataset(self, examples: Dict[str, List[Any]]) -> Dict[str, List[Any]]:
+    def preprocess_dataset(self, examples: dict[str, list[Any]]) -> dict[str, list[Any]]:
         # build input pairs with format `<bos> X`, `Y1 <eos>` and `Y2 <eos>`
         model_inputs = defaultdict(list)
         for i in range(len(examples["_prompt"])):
@@ -99,7 +100,7 @@ class PairwiseDatasetProcessor(DatasetProcessor):
 
         return model_inputs
 
-    def print_data_example(self, example: Dict[str, List[int]]) -> None:
+    def print_data_example(self, example: dict[str, list[int]]) -> None:
         valid_chosen_labels = list(filter(lambda x: x != IGNORE_INDEX, example["chosen_labels"]))
         valid_rejected_labels = list(filter(lambda x: x != IGNORE_INDEX, example["rejected_labels"]))
         print("chosen_input_ids:\n{}".format(example["chosen_input_ids"]))

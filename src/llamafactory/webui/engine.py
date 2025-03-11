@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any
 
 from .chatter import WebChatModel
 from .common import create_ds_config, get_time, load_config
@@ -26,9 +26,7 @@ if TYPE_CHECKING:
 
 
 class Engine:
-    r"""
-    A general engine to control the behaviors of Web UI.
-    """
+    r"""A general engine to control the behaviors of Web UI."""
 
     def __init__(self, demo_mode: bool = False, pure_chat: bool = False) -> None:
         self.demo_mode = demo_mode
@@ -39,11 +37,9 @@ class Engine:
         if not demo_mode:
             create_ds_config()
 
-    def _update_component(self, input_dict: Dict[str, Dict[str, Any]]) -> Dict["Component", "Component"]:
-        r"""
-        Updates gradio components according to the (elem_id, properties) mapping.
-        """
-        output_dict: Dict["Component", "Component"] = {}
+    def _update_component(self, input_dict: dict[str, dict[str, Any]]) -> dict["Component", "Component"]:
+        r"""Update gradio components according to the (elem_id, properties) mapping."""
+        output_dict: dict[Component, Component] = {}
         for elem_id, elem_attr in input_dict.items():
             elem = self.manager.get_elem_by_id(elem_id)
             output_dict[elem] = elem.__class__(**elem_attr)
@@ -51,9 +47,7 @@ class Engine:
         return output_dict
 
     def resume(self):
-        r"""
-        Gets the initial value of gradio components and restores training status if necessary.
-        """
+        r"""Get the initial value of gradio components and restores training status if necessary."""
         user_config = load_config() if not self.demo_mode else {}  # do not use config in demo mode
         lang = user_config.get("lang", None) or "en"
         init_dict = {"top.lang": {"value": lang}, "infer.chat_box": {"visible": self.chatter.loaded}}
@@ -79,9 +73,7 @@ class Engine:
                 yield self._update_component({"eval.resume_btn": {"value": True}})
 
     def change_lang(self, lang: str):
-        r"""
-        Updates the displayed language of gradio components.
-        """
+        r"""Update the displayed language of gradio components."""
         return {
             elem: elem.__class__(**LOCALES[elem_name][lang])
             for elem_name, elem in self.manager.get_elem_iter()

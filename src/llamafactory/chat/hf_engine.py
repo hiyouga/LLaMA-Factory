@@ -15,8 +15,9 @@
 import asyncio
 import concurrent.futures
 import os
+from collections.abc import AsyncGenerator, Sequence
 from threading import Thread
-from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
 import torch
 from transformers import GenerationConfig, TextIteratorStreamer
@@ -76,15 +77,15 @@ class HuggingfaceEngine(BaseEngine):
         tokenizer: "PreTrainedTokenizer",
         processor: Optional["ProcessorMixin"],
         template: "Template",
-        generating_args: Dict[str, Any],
-        messages: Sequence[Dict[str, str]],
+        generating_args: dict[str, Any],
+        messages: Sequence[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
         images: Optional[Sequence["ImageInput"]] = None,
         videos: Optional[Sequence["VideoInput"]] = None,
         audios: Optional[Sequence["AudioInput"]] = None,
-        input_kwargs: Optional[Dict[str, Any]] = {},
-    ) -> Tuple[Dict[str, Any], int]:
+        input_kwargs: Optional[dict[str, Any]] = {},
+    ) -> tuple[dict[str, Any], int]:
         mm_input_dict = {"images": [], "videos": [], "audios": [], "imglens": [0], "vidlens": [0], "audlens": [0]}
         if images is not None:
             mm_input_dict.update({"images": images, "imglens": [len(images)]})
@@ -130,7 +131,7 @@ class HuggingfaceEngine(BaseEngine):
         skip_special_tokens: Optional[bool] = input_kwargs.pop("skip_special_tokens", None)
         max_length: Optional[int] = input_kwargs.pop("max_length", None)
         max_new_tokens: Optional[int] = input_kwargs.pop("max_new_tokens", None)
-        stop: Optional[Union[str, List[str]]] = input_kwargs.pop("stop", None)
+        stop: Optional[Union[str, list[str]]] = input_kwargs.pop("stop", None)
 
         if stop is not None:
             logger.warning_rank0("Stop parameter is not supported by the huggingface engine yet.")
@@ -217,15 +218,15 @@ class HuggingfaceEngine(BaseEngine):
         tokenizer: "PreTrainedTokenizer",
         processor: Optional["ProcessorMixin"],
         template: "Template",
-        generating_args: Dict[str, Any],
-        messages: Sequence[Dict[str, str]],
+        generating_args: dict[str, Any],
+        messages: Sequence[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
         images: Optional[Sequence["ImageInput"]] = None,
         videos: Optional[Sequence["VideoInput"]] = None,
         audios: Optional[Sequence["AudioInput"]] = None,
-        input_kwargs: Optional[Dict[str, Any]] = {},
-    ) -> List["Response"]:
+        input_kwargs: Optional[dict[str, Any]] = {},
+    ) -> list["Response"]:
         gen_kwargs, prompt_length = HuggingfaceEngine._process_args(
             model,
             tokenizer,
@@ -272,14 +273,14 @@ class HuggingfaceEngine(BaseEngine):
         tokenizer: "PreTrainedTokenizer",
         processor: Optional["ProcessorMixin"],
         template: "Template",
-        generating_args: Dict[str, Any],
-        messages: Sequence[Dict[str, str]],
+        generating_args: dict[str, Any],
+        messages: Sequence[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
         images: Optional[Sequence["ImageInput"]] = None,
         videos: Optional[Sequence["VideoInput"]] = None,
         audios: Optional[Sequence["AudioInput"]] = None,
-        input_kwargs: Optional[Dict[str, Any]] = {},
+        input_kwargs: Optional[dict[str, Any]] = {},
     ) -> Callable[[], str]:
         gen_kwargs, _ = HuggingfaceEngine._process_args(
             model,
@@ -317,12 +318,12 @@ class HuggingfaceEngine(BaseEngine):
     def _get_scores(
         model: "PreTrainedModelWrapper",
         tokenizer: "PreTrainedTokenizer",
-        batch_input: List[str],
-        input_kwargs: Optional[Dict[str, Any]] = {},
-    ) -> List[float]:
+        batch_input: list[str],
+        input_kwargs: Optional[dict[str, Any]] = {},
+    ) -> list[float]:
         max_length: Optional[int] = input_kwargs.pop("max_length", None)
         device = getattr(model.pretrained_model, "device", "cuda")
-        inputs: Dict[str, "torch.Tensor"] = tokenizer(
+        inputs: dict[str, torch.Tensor] = tokenizer(
             batch_input,
             padding=True,
             truncation=True,
@@ -330,21 +331,21 @@ class HuggingfaceEngine(BaseEngine):
             return_tensors="pt",
             add_special_tokens=False,
         ).to(device)
-        values: "torch.Tensor" = model(**inputs, return_dict=True, use_cache=False)[-1]
+        values: torch.Tensor = model(**inputs, return_dict=True, use_cache=False)[-1]
         scores = values.gather(dim=-1, index=(inputs["attention_mask"].sum(dim=-1, keepdim=True) - 1))
         return scores
 
     @override
     async def chat(
         self,
-        messages: Sequence[Dict[str, str]],
+        messages: Sequence[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
         images: Optional[Sequence["ImageInput"]] = None,
         videos: Optional[Sequence["VideoInput"]] = None,
         audios: Optional[Sequence["AudioInput"]] = None,
         **input_kwargs,
-    ) -> List["Response"]:
+    ) -> list["Response"]:
         if not self.can_generate:
             raise ValueError("The current model does not support `chat`.")
 
@@ -370,7 +371,7 @@ class HuggingfaceEngine(BaseEngine):
     @override
     async def stream_chat(
         self,
-        messages: Sequence[Dict[str, str]],
+        messages: Sequence[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
         images: Optional[Sequence["ImageInput"]] = None,
@@ -408,9 +409,9 @@ class HuggingfaceEngine(BaseEngine):
     @override
     async def get_scores(
         self,
-        batch_input: List[str],
+        batch_input: list[str],
         **input_kwargs,
-    ) -> List[float]:
+    ) -> list[float]:
         if self.can_generate:
             raise ValueError("Cannot get scores using an auto-regressive model.")
 

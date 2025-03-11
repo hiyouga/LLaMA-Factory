@@ -17,14 +17,14 @@
 
 from dataclasses import dataclass
 from itertools import chain
-from typing import Any, Dict, List
+from typing import Any
 
 from .processor_utils import DatasetProcessor
 
 
 @dataclass
 class PretrainDatasetProcessor(DatasetProcessor):
-    def preprocess_dataset(self, examples: Dict[str, List[Any]]) -> Dict[str, List[Any]]:
+    def preprocess_dataset(self, examples: dict[str, list[Any]]) -> dict[str, list[Any]]:
         # build grouped texts with format `X1 X2 X3 ...` if packing is enabled
         eos_token = "<|end_of_text|>" if self.data_args.template == "llama3" else self.tokenizer.eos_token
         text_examples = [messages[0]["content"] + eos_token for messages in examples["_prompt"]]
@@ -52,6 +52,6 @@ class PretrainDatasetProcessor(DatasetProcessor):
 
         return result
 
-    def print_data_example(self, example: Dict[str, List[int]]) -> None:
+    def print_data_example(self, example: dict[str, list[int]]) -> None:
         print("input_ids:\n{}".format(example["input_ids"]))
         print("inputs:\n{}".format(self.tokenizer.decode(example["input_ids"], skip_special_tokens=False)))

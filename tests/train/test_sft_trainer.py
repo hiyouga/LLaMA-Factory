@@ -14,7 +14,7 @@
 
 import os
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any
 
 import pytest
 from transformers import DataCollatorWithPadding
@@ -46,9 +46,9 @@ TRAIN_ARGS = {
 
 @dataclass
 class DataCollatorWithVerbose(DataCollatorWithPadding):
-    verbose_list: List[Dict[str, Any]] = field(default_factory=list)
+    verbose_list: list[dict[str, Any]] = field(default_factory=list)
 
-    def __call__(self, features: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def __call__(self, features: list[dict[str, Any]]) -> dict[str, Any]:
         self.verbose_list.extend(features)
         batch = super().__call__(features)
         return {k: v[:, :1] for k, v in batch.items()}  # truncate input length

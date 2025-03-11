@@ -31,9 +31,7 @@ if TYPE_CHECKING:
 
 
 class CustomTrainer(Trainer):
-    r"""
-    Inherits Trainer for custom optimizer.
-    """
+    r"""Inherit Trainer for custom optimizer."""
 
     def __init__(
         self, finetuning_args: "FinetuningArguments", processor: Optional["ProcessorMixin"], **kwargs

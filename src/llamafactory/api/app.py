@@ -16,9 +16,7 @@ import asyncio
 import os
 from contextlib import asynccontextmanager
 from functools import partial
-from typing import Optional
-
-from typing_extensions import Annotated
+from typing import Annotated, Optional
 
 from ..chat import ChatModel
 from ..extras.constants import EngineName

@@ -16,14 +16,12 @@
 # limitations under the License.
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal, Optional
 
 
 @dataclass
 class DataArguments:
-    r"""
-    Arguments pertaining to what data we are going to input our model for training and evaluation.
-    """
+    r"""Arguments pertaining to what data we are going to input our model for training and evaluation."""
 
     template: Optional[str] = field(
         default=None,
@@ -162,5 +160,5 @@ class DataArguments:
         if self.mask_history and self.train_on_prompt:
             raise ValueError("`mask_history` is incompatible with `train_on_prompt`.")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)

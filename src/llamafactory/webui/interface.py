@@ -48,7 +48,7 @@ def create_ui(demo_mode: bool = False) -> "gr.Blocks":
             gr.DuplicateButton(value="Duplicate Space for private use", elem_classes="duplicate-button")
 
         engine.manager.add_elems("top", create_top())
-        lang: "gr.Dropdown" = engine.manager.get_elem_by_id("top.lang")
+        lang: gr.Dropdown = engine.manager.get_elem_by_id("top.lang")
 
         with gr.Tab("Train"):
             engine.manager.add_elems("train", create_train_tab(engine))
