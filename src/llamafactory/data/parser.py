@@ -99,6 +99,33 @@ def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -
     if dataset_dir == "ONLINE":
         dataset_info = None
     else:
+        if dataset_dir.startswith("s3://"):
+            import tempfile
+            import pyarrow.fs as fs
+            import logging
+
+            # Parse S3 URI into bucket and key components
+            s3_uri = dataset_dir
+            key = "/".join(s3_uri.replace("s3://", "").split("/")[1:])
+
+            # Create temporary directory for downloaded files
+            temp_dir = tempfile.mkdtemp(prefix="llamafactory_")
+            logging.info(f"Created temporary directory: {temp_dir}")
+
+            # Download the dataset file
+            local_file_path = os.path.join(temp_dir, os.path.basename(key))
+
+            try:
+                logging.info(f"Downloading {s3_uri} to {local_file_path}")
+                fs.copy_files(s3_uri, local_file_path)
+
+                # Update dataset_dir to point to the local path
+                dataset_dir = local_file_path
+                logging.info(f"Successfully downloaded S3 file. Using local path: {dataset_dir}")
+
+            except Exception as e:
+                raise ValueError(f"Failed to download dataset from S3: {str(e)}")
+
         if dataset_dir.startswith("REMOTE:"):
             config_path = cached_file(path_or_repo_id=dataset_dir[7:], filename=DATA_CONFIG, repo_type="dataset")
         else:
