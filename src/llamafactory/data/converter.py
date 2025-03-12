@@ -67,8 +67,14 @@ class AlpacaDatasetConverter(DatasetConverter):
         prompt = []
         if self.dataset_attr.history and isinstance(example[self.dataset_attr.history], list):
             for old_prompt, old_response in example[self.dataset_attr.history]:
-                prompt.append({"role": Role.USER.value, "content": old_prompt})
-                prompt.append({"role": Role.ASSISTANT.value, "content": old_response})
+                prompt.append({
+                    "role": Role.USER.value, "content": old_prompt,
+                    "train": self.data_args.train_on_prompt
+                })
+                prompt.append({
+                    "role": Role.ASSISTANT.value, "content": old_response,
+                    "train": not self.data_args.mask_history
+                })
 
         query = []
         if self.dataset_attr.prompt and example[self.dataset_attr.prompt]:
@@ -77,7 +83,10 @@ class AlpacaDatasetConverter(DatasetConverter):
         if self.dataset_attr.query and example[self.dataset_attr.query]:
             query.append(example[self.dataset_attr.query])
 
-        prompt.append({"role": Role.USER.value, "content": "\n".join(query)})  # "prompt\nquery"
+        prompt.append({
+            "role": Role.USER.value, "content": "\n".join(query),
+            "train": self.data_args.train_on_prompt
+        })  # "prompt\nquery"
 
         if self.dataset_attr.kto_tag and isinstance(example[self.dataset_attr.kto_tag], bool):  # kto example
             response = [{"role": Role.ASSISTANT.value, "content": example[self.dataset_attr.response]}]
@@ -95,7 +104,7 @@ class AlpacaDatasetConverter(DatasetConverter):
                 {"role": Role.ASSISTANT.value, "content": example[self.dataset_attr.rejected]},
             ]
         elif self.dataset_attr.response and isinstance(example[self.dataset_attr.response], str):  # normal example
-            response = [{"role": Role.ASSISTANT.value, "content": example[self.dataset_attr.response]}]
+            response = [{"role": Role.ASSISTANT.value, "content": example[self.dataset_attr.response], "train": True}]
         else:  # unsupervised
             response = []
 
@@ -143,12 +152,22 @@ class SharegptDatasetConverter(DatasetConverter):
                 broken_data = True
                 break
 
-            aligned_messages.append(
-                {
-                    "role": tag_mapping[message[self.dataset_attr.role_tag]],
-                    "content": message[self.dataset_attr.content_tag],
-                }
-            )
+            if message[self.dataset_attr.role_tag] in even_tags:
+                if self.data_args.mask_history and turn_idx != len(messages) - 1:
+                    train = False
+                else:
+                    train = message.get(self.dataset_attr.train_tag, True)
+            else:
+                if self.data_args.train_on_prompt:
+                    train = True
+                else:
+                    train = message.get(self.dataset_attr.train_tag, False)
+
+            aligned_messages.append({
+                "role": tag_mapping[message[self.dataset_attr.role_tag]],
+                "content": message[self.dataset_attr.content_tag],
+                "train": train,
+            })
 
         if (not self.dataset_attr.ranking and len(aligned_messages) % 2 != 0) or (
             self.dataset_attr.ranking and len(aligned_messages) % 2 == 0
