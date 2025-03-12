@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
@@ -180,7 +179,7 @@ def get_forbidden_modules(config: "PretrainedConfig", finetuning_args: "Finetuni
 
 
 def patch_target_modules(
-    model: "PreTrainedModel", finetuning_args: "FinetuningArguments", target_modules: Sequence[str]
+    model: "PreTrainedModel", finetuning_args: "FinetuningArguments", target_modules: list[str]
 ) -> list[str]:
     r"""Freeze vision tower for VLM LoRA tuning."""
     model_type = getattr(model.config, "model_type", None)

@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import os
-from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -97,7 +96,7 @@ def _check_plugin(
     plugin: "BasePlugin",
     tokenizer: "PreTrainedTokenizer",
     processor: "ProcessorMixin",
-    expected_mm_messages: Sequence[dict[str, str]] = MM_MESSAGES,
+    expected_mm_messages: list[dict[str, str]] = MM_MESSAGES,
     expected_input_ids: list[int] = INPUT_IDS,
     expected_labels: list[int] = LABELS,
     expected_mm_inputs: dict[str, Any] = {},
