@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional, Union
 
@@ -57,7 +56,7 @@ class Template:
     def encode_oneturn(
         self,
         tokenizer: "PreTrainedTokenizer",
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
     ) -> tuple[list[int], list[int]]:
@@ -73,7 +72,7 @@ class Template:
     def encode_multiturn(
         self,
         tokenizer: "PreTrainedTokenizer",
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
     ) -> list[tuple[list[int], list[int]]]:
@@ -115,7 +114,7 @@ class Template:
     def _encode(
         self,
         tokenizer: "PreTrainedTokenizer",
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str],
         tools: Optional[str],
     ) -> list[list[int]]:
@@ -316,7 +315,7 @@ class Llama2Template(Template):
     def _encode(
         self,
         tokenizer: "PreTrainedTokenizer",
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: str,
         tools: str,
     ) -> list[list[int]]:
@@ -391,7 +390,7 @@ def register_template(
     format_tools: Optional["Formatter"] = None,
     format_prefix: Optional["Formatter"] = None,
     default_system: str = "",
-    stop_words: Optional[Sequence[str]] = None,
+    stop_words: Optional[list[str]] = None,
     thought_words: Optional[tuple[str, str]] = None,
     efficient_eos: bool = False,
     replace_eos: bool = False,

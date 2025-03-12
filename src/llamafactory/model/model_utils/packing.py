@@ -1,4 +1,4 @@
-# Copyright 2024 Musab Gultekin and the LlamaFactory team.
+# Copyright 2025 Musab Gultekin and the LlamaFactory team.
 #
 # This code is based on the Musab Gultekin's functionary library.
 # https://github.com/MeetKai/functionary/blob/main/functionary/train/packing/monkey_patch_packing.py
