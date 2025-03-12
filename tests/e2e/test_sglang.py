@@ -52,6 +52,8 @@ MESSAGES = [
 
 # Expected response from the test model
 
+chat_model = ChatModel(INFER_ARGS)
+
 
 @pytest.mark.skipif(
     not SGLANG_AVAILABLE,
@@ -59,7 +61,6 @@ MESSAGES = [
 )
 def test_chat():
     """Test the SGLang engine's basic chat functionality"""
-    chat_model = ChatModel(INFER_ARGS)
     assert chat_model.engine_type == "sglang", f"Expected engine type 'sglang', got '{chat_model.engine_type}'"
     response = chat_model.chat(MESSAGES)[0]
     # TODO: Change to EXPECTED_RESPONSE
@@ -72,7 +73,6 @@ def test_chat():
 )
 def test_stream_chat():
     """Test the SGLang engine's streaming chat functionality"""
-    chat_model = ChatModel(INFER_ARGS)
 
     # Test that we get a streaming response
     response = ""
@@ -99,6 +99,6 @@ if __name__ == "__main__":
         sys.exit(1)
 
     print("Testing SGLang engine...")
-    # test_chat()
+    test_chat()
     test_stream_chat()
     print("All SGLang tests passed!")

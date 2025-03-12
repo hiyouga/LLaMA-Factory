@@ -2,6 +2,11 @@ import asyncio
 import gc
 import os
 import re
+import subprocess
+import time
+import requests
+import atexit
+import json
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -109,7 +114,7 @@ class SGLangEngine(BaseEngine):
         finetuning_args: "FinetuningArguments",
         generating_args: "GeneratingArguments",
     ) -> None:
-        """Internal method to initialize the SGLang engine with proper error handling"""
+        """Initialize a SGLang server and connect to it via HTTP"""
         # Log SGLang version for debugging
         try:
             sgl_version = getattr(sgl, "__version__", "unknown")
@@ -138,51 +143,86 @@ class SGLangEngine(BaseEngine):
         # Memory conservation: Try to free up memory before model loading
         self._clean_memory()
 
-        # Initialize SGLang engine with minimal parameters
-        engine_args = {"model_path": model_args.model_name_or_path, "dtype": model_args.infer_dtype}
+        # Find an available port for the server
+        self.port = find_available_port()
+        self.host = "127.0.0.1"
+        self.base_url = f"http://{self.host}:{self.port}"
 
-        # Only add essential parameters
+        # Prepare SGLang server launch command
+        cmd = [
+            "python",
+            "-m",
+            "sglang.launch_server",
+            "--model-path",
+            model_args.model_name_or_path,
+            "--host",
+            self.host,
+            "--port",
+            str(self.port),
+        ]
+
+        # Add dtype if specified
+        if model_args.infer_dtype and model_args.infer_dtype != "auto":
+            cmd.extend(["--dtype", model_args.infer_dtype])
+
+        # Add cache dir if specified
         if model_args.cache_dir:
-            engine_args["download_dir"] = model_args.cache_dir
+            cmd.extend(["--download-dir", model_args.cache_dir])
 
-        logger.info(f"Initializing SGLang engine with args: {engine_args}")
-
-        # Initialize the SGLang engine with robust error handling
+        # Launch the server process
+        logger.info(f"Starting SGLang server with command: {' '.join(cmd)}")
         try:
-            # Attempt to initialize the engine
-            self.model = sgl.Engine(**engine_args)
-            logger.info("SGLang engine initialized successfully")
-        except TypeError as e:
-            # Special handling for TypeError that indicates unsupported parameters
-            error_message = str(e)
-            if "unexpected keyword argument" in error_message:
-                param_match = re.search(r"unexpected keyword argument '([^']+)'", error_message)
-                if param_match:
-                    bad_param = param_match.group(1)
-                    logger.warning(f"SGLang doesn't support parameter: '{bad_param}', removing it")
-                    engine_args.pop(bad_param, None)
+            self.server_process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+            )
 
-                    # Try again with the parameter removed
-                    try:
-                        self.model = sgl.Engine(**engine_args)
-                        logger.info("SGLang engine initialized successfully after removing unsupported parameter")
-                        return
-                    except Exception as inner_e:
-                        logger.error(f"Still failed after removing parameter: {str(inner_e)}")
-                        raise
+            # Register cleanup handler to terminate server when Python exits
+            atexit.register(self._cleanup_server)
 
-            logger.error(f"SGLang engine initialization failed: {error_message}")
-            logger.error("Make sure to only use parameters supported by your SGLang version")
-            raise
+            # Wait for server to be ready
+            server_ready = wait_for_server(self.base_url, timeout=60)
+            if not server_ready:
+                raise RuntimeError("Timed out waiting for SGLang server to start")
+
+            # Get model info to verify server is working correctly
+            try:
+                response = requests.get(f"{self.base_url}/get_model_info")
+                if response.status_code == 200:
+                    model_info = response.json()
+                    logger.info(f"SGLang server model info: {model_info}")
+                else:
+                    logger.warning(f"Failed to get model info: {response.status_code}")
+            except Exception as e:
+                logger.warning(f"Error getting model info: {str(e)}")
+
+            logger.info(f"SGLang server initialized successfully at {self.base_url}")
         except Exception as e:
-            logger.error(f"SGLang engine initialization failed: {str(e)}")
-            logger.error("Try setting CUDA_VISIBLE_DEVICES=0 to use only one GPU")
-            logger.error("Also ensure flashinfer is properly installed if you want to use that backend")
-            raise
+            logger.error(f"Failed to start SGLang server: {str(e)}")
+            self._cleanup_server()  # Make sure to clean up any started process
+            raise RuntimeError(f"SGLang server initialization failed: {str(e)}")
 
         # Handle adapter if specified
         if model_args.adapter_name_or_path is not None:
             logger.warning("Adapter loading is not yet implemented for SGLang engine")
+
+    def _cleanup_server(self):
+        """Clean up the server process when the engine is destroyed"""
+        if hasattr(self, "server_process") and self.server_process:
+            try:
+                logger.info("Terminating SGLang server process")
+                self.server_process.terminate()
+                self.server_process.wait(timeout=10)
+                logger.info("SGLang server process terminated")
+            except Exception as e:
+                logger.warning(f"Error terminating SGLang server: {str(e)}")
+                try:
+                    self.server_process.kill()
+                except Exception:
+                    pass
 
     async def _generate(
         self,
@@ -196,7 +236,7 @@ class SGLangEngine(BaseEngine):
         **input_kwargs,
     ) -> AsyncIterator[Any]:
         """
-        Internal helper method for text generation using SGLang.
+        Internal helper method for text generation using SGLang server.
         """
         # Handle multimodal inputs if provided
         mm_input_dict = {"images": [], "videos": [], "audios": [], "imglens": [0], "vidlens": [0], "audlens": [0]}
@@ -237,78 +277,84 @@ class SGLangEngine(BaseEngine):
         max_new_tokens = input_kwargs.pop("max_new_tokens", self.generating_args.get("max_new_tokens", 2048))
         stop = input_kwargs.pop("stop", None)
 
-        # Prepare minimal SGLang generation parameters
-        sampling_params = {"max_new_tokens": max_new_tokens}
+        # Prepare sampling parameters for SGLang
+        sampling_params = {
+            "temperature": temperature if temperature > 0 else 0.01,
+            "top_p": top_p if top_p < 1.0 else 0.95,
+            "max_new_tokens": max_new_tokens,
+        }
 
-        # Only add non-default parameters
-        if temperature > 0:
-            sampling_params["temperature"] = temperature
-        if top_p < 1.0:
-            sampling_params["top_p"] = top_p
+        # Add additional parameters
         if top_k > 0:
             sampling_params["top_k"] = top_k
         if repetition_penalty != 1.0:
             sampling_params["repetition_penalty"] = repetition_penalty
-
-        # Add stop sequences if provided
         if stop:
-            if isinstance(stop, str):
-                sampling_params["stop"] = [stop]
-            else:
-                sampling_params["stop"] = stop
+            sampling_params["stop"] = [stop] if isinstance(stop, str) else stop
 
         # Create an async generator to yield results
         async def generate():
             try:
-                # Generate using SGLang's API
+                # Generate using SGLang HTTP API
                 logger.info(f"Generating with prompt: {prompt_text[:100]}...")
 
-                # Try different API methods with proper error handling
-                result = None
-                try:
-                    if hasattr(self.model, "async_generate"):
-                        result = await self.model.async_generate([prompt_text], sampling_params)
-                    else:
-                        # Fallback to non-async API
-                        result = await asyncio.to_thread(self.model.generate, [prompt_text], sampling_params)
-                except Exception as e:
-                    logger.warning(f"Error with initial generation attempt: {str(e)}, trying minimal params")
-                    # Try with minimal parameters
-                    result = await asyncio.to_thread(
-                        self.model.generate, [prompt_text], {"max_new_tokens": max_new_tokens}
-                    )
+                # Prepare request data
+                request_data = {"text": prompt_text, "sampling_params": sampling_params}
 
-                if not result:
-                    raise RuntimeError("Generation failed with no result")
-
-                # Extract the result
-                if isinstance(result, list) and len(result) > 0:
-                    if "text" in result[0]:
-                        generated_text = result[0]["text"]
-                    else:
-                        # Try to find the output in various response formats
-                        generated_text = str(result[0])
-                else:
-                    # Fallback for other result types
-                    generated_text = str(result)
-
-                token_ids = self.tokenizer.encode(generated_text, add_special_tokens=False)
-
-                # Determine finish reason
-                finish_reason = "stop"
-                if len(token_ids) >= max_new_tokens:
-                    finish_reason = "length"
-
-                # Create a response object
-                output = type(
-                    "ResponseOutput",
-                    (),
-                    {"text": generated_text, "token_ids": token_ids, "finish_reason": finish_reason},
+                # Make HTTP request to SGLang server
+                response = await asyncio.to_thread(
+                    requests.post, f"{self.base_url}/generate", json=request_data
                 )
 
-                result_obj = type("RequestOutput", (), {"outputs": [output], "prompt_token_ids": prompt_ids})
+                if response.status_code != 200:
+                    raise RuntimeError(
+                        f"SGLang server error: {response.status_code}, {response.text}"
+                    )
 
-                yield result_obj
+                response_data = response.json()
+
+                # Process the response
+                if "text" in response_data:
+                    generated_text = response_data["text"]
+                    meta_info = response_data.get("meta_info", {})
+                    finish_reason = "stop"
+
+                    # Extract finish reason if available
+                    if "finish_reason" in meta_info:
+                        fr = meta_info["finish_reason"]
+                        if isinstance(fr, dict) and "type" in fr:
+                            finish_reason = fr["type"]
+                        elif isinstance(fr, str):
+                            finish_reason = fr
+                    elif len(generated_text) >= max_new_tokens:
+                        finish_reason = "length"
+
+                    # Encode text to get token IDs
+                    token_ids = self.tokenizer.encode(
+                        generated_text, add_special_tokens=False
+                    )
+
+                    # Create response objects
+                    output = type(
+                        "ResponseOutput",
+                        (),
+                        {
+                            "text": generated_text,
+                            "token_ids": token_ids,
+                            "finish_reason": finish_reason,
+                        },
+                    )
+
+                    result_obj = type(
+                        "RequestOutput",
+                        (),
+                        {"outputs": [output], "prompt_token_ids": prompt_ids},
+                    )
+
+                    yield result_obj
+                else:
+                    raise RuntimeError(f"Unexpected response format: {response_data}")
+
             except Exception as e:
                 logger.error(f"Error in SGLang generation: {str(e)}")
                 raise
@@ -360,7 +406,7 @@ class SGLangEngine(BaseEngine):
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
         """
-        Streams responses from the chat model token by token.
+        Streams responses from the chat model token by token via SGLang server.
         """
         # Handle multimodal inputs if provided
         mm_input_dict = {"images": [], "videos": [], "audios": [], "imglens": [0], "vidlens": [0], "audlens": [0]}
@@ -398,128 +444,93 @@ class SGLangEngine(BaseEngine):
         max_new_tokens = input_kwargs.pop("max_new_tokens", self.generating_args.get("max_new_tokens", 2048))
         stop = input_kwargs.pop("stop", None)
 
-        # Prepare minimal SGLang generation parameters
-        sampling_params = {"max_new_tokens": max_new_tokens}
+        # Prepare sampling parameters for SGLang
+        sampling_params = {
+            "temperature": temperature if temperature > 0 else 0.01,
+            "top_p": top_p if top_p < 1.0 else 0.95,
+            "max_new_tokens": max_new_tokens,
+        }
 
-        # Only add non-default parameters
-        if temperature > 0:
-            sampling_params["temperature"] = temperature
-        if top_p < 1.0:
-            sampling_params["top_p"] = top_p
+        # Add additional parameters
         if top_k > 0:
             sampling_params["top_k"] = top_k
         if repetition_penalty != 1.0:
             sampling_params["repetition_penalty"] = repetition_penalty
-
-        # Add stop sequences if provided
         if stop:
-            if isinstance(stop, str):
-                sampling_params["stop"] = [stop]
-            else:
-                sampling_params["stop"] = stop
+            sampling_params["stop"] = [stop] if isinstance(stop, str) else stop
+
+        request_data = {
+            "text": prompt_text,
+            "sampling_params": sampling_params,
+            "stream": True,
+        }
+
+        logger.info(f"Streaming with prompt: {prompt_text[:100]}...")
 
         try:
-            logger.info(f"Streaming with prompt: {prompt_text[:100]}...")
-            previous_text = ""
-
-            # Use async_generate with stream=True if available
-            if hasattr(self.model, "async_generate"):
-                logger.info("Using async_generate with streaming")
-                # Pass stream as a separate parameter, not in sampling_params
-                stream_iterator = await self.model.async_generate(
-                    prompt=[prompt_text], sampling_params=sampling_params, stream=True
+            # We need to run this in a thread since it's blocking I/O
+            def stream_request():
+                response = requests.post(
+                    f"{self.base_url}/generate",
+                    json=request_data,
+                    stream=True,  # Enable streaming on the request
                 )
 
-                # Process the stream using the async iterator
-                async for output in stream_iterator:
-                    if isinstance(output, dict) and "text" in output:
-                        # Extract incremental text
-                        current_text = output["text"]
-                        # Only yield the new part of the text
-                        new_text = current_text[len(previous_text) :]
-                        previous_text = current_text
-                        yield new_text
-                    elif isinstance(output, dict):
-                        # Try other formats
-                        if "content" in output:
-                            yield output["content"]
-                        elif "delta" in output and "content" in output["delta"]:
-                            yield output["delta"]["content"]
-                        elif "token" in output and isinstance(output["token"], dict) and "text" in output["token"]:
-                            for token in output["token"]["text"]:
-                                yield token
-                    elif isinstance(output, str):
-                        yield output
-                    else:
-                        # Try to convert unknown formats to string
-                        try:
-                            yield str(output)
-                        except Exception:
-                            logger.warning(f"Could not convert output to string: {type(output)}")
-            else:
-                # Fall back to synchronous generate with stream=True
-                logger.info("Using synchronous generation with streaming in async context")
+                if response.status_code != 200:
+                    raise RuntimeError(
+                        f"SGLang server error: {response.status_code}, {response.text}"
+                    )
 
-                # Run synchronous generate in a thread and pass stream as a separate parameter
-                stream_generator = await asyncio.to_thread(
-                    self.model.generate, prompt=[prompt_text], sampling_params=sampling_params, stream=True
-                )
+                # Stream processing similar to the example
+                text_so_far = ""
+                for chunk in response.iter_lines(decode_unicode=False):
+                    if not chunk:
+                        continue
 
-                # Process the outputs from the generator
-                for output in stream_generator:
-                    if isinstance(output, dict) and "text" in output:
-                        current_text = output["text"]
-                        new_text = current_text[len(previous_text) :]
-                        previous_text = current_text
-                        yield new_text
-                    elif isinstance(output, dict):
-                        # Try other formats
-                        if "content" in output:
-                            yield output["content"]
-                        elif "delta" in output and "content" in output["delta"]:
-                            yield output["delta"]["content"]
-                        elif "token" in output and isinstance(output["token"], dict) and "text" in output["token"]:
-                            for token in output["token"]["text"]:
-                                yield token
-                    elif isinstance(output, str):
-                        yield output
-                    else:
+                    chunk = chunk.decode("utf-8")
+
+                    # Handle streaming format from SGLang server
+                    if chunk.startswith("data:"):
+                        if chunk == "data: [DONE]":
+                            break
+
                         try:
-                            yield str(output)
-                        except Exception:
-                            logger.warning(f"Could not convert output to string: {type(output)}")
+                            data = json.loads(chunk[5:].strip("\n"))
+                            if "text" in data:
+                                current_text = data["text"].strip()
+                                new_text = current_text[len(text_so_far) :]
+                                text_so_far = current_text
+                                yield new_text
+                        except json.JSONDecodeError as e:
+                            logger.warning(
+                                f"Failed to parse chunk as JSON: {chunk}, error: {str(e)}"
+                            )
+                            # Try to extract any text content if possible
+                            if "text" in chunk:
+                                try:
+                                    start = chunk.find('"text":') + 8
+                                    end = chunk.find('",', start)
+                                    if end == -1:
+                                        end = chunk.find('"}', start)
+                                    if start > 0 and end > start:
+                                        text = chunk[start:end].strip('"')
+                                        yield text
+                                except Exception:
+                                    pass
+
+                # Return any remaining text if available
+                if text_so_far:
+                    pass  # We already yielded all text incrementally
+
+            # Run the streaming request in a thread and process responses
+            stream_gen = await asyncio.to_thread(stream_request)
+            for text in stream_gen:
+                yield text
 
         except Exception as e:
             logger.error(f"Error in SGLang streaming: {str(e)}")
-            # Try fallback to non-streaming generation
-            try:
-                logger.info("Attempting fallback to non-streaming generation")
-
-                # Call generate without streaming
-                result = await asyncio.to_thread(
-                    self.model.generate, prompt=[prompt_text], sampling_params=sampling_params
-                )
-
-                # Process the result
-                if isinstance(result, list) and len(result) > 0:
-                    if "text" in result[0]:
-                        yield result[0]["text"]
-                    elif isinstance(result[0], dict):
-                        # Try to find text in other fields
-                        for field in ["content", "generated_text", "response"]:
-                            if field in result[0]:
-                                yield result[0][field]
-                                break
-                        else:
-                            # If no recognized field found, convert to string
-                            yield str(result[0])
-                    else:
-                        yield str(result[0])
-                else:
-                    yield str(result)
-            except Exception as e2:
-                logger.error(f"Fallback generation also failed: {str(e2)}")
-                raise e
+            # Yield an error message as a last resort
+            yield f"[Error in text generation: {str(e)}]"
 
     @override
     async def get_scores(
@@ -528,10 +539,7 @@ class SGLangEngine(BaseEngine):
         **input_kwargs,
     ) -> List[float]:
         """
-        Gets scores for a batch of inputs (logprobs).
-
-        Note: SGLang doesn't have a direct scoring API, so we use generation
-        with max_tokens=0 to get the logprobs without generating any text.
+        Gets scores for a batch of inputs (logprobs) using the SGLang server.
         """
         input_kwargs.pop("temperature", 0.0)
         input_kwargs.pop("top_p", 1.0)
@@ -540,35 +548,44 @@ class SGLangEngine(BaseEngine):
         scores = []
 
         try:
-            # Minimal parameters for scoring only
-            sampling_params = {"max_new_tokens": 0}
-
             # Process each input separately with robust error handling
             for text in batch_input:
                 try:
-                    if hasattr(self.model, "async_generate"):
-                        result = await self.model.async_generate([text], sampling_params)
-                    else:
-                        # Fallback to non-async API
-                        result = await asyncio.to_thread(self.model.generate, [text], sampling_params)
+                    # Prepare minimal parameters for scoring only
+                    request_data = {
+                        "text": text,
+                        "max_new_tokens": 0,  # No generation, just scoring
+                    }
+
+                    # Send request to server
+                    response = await asyncio.to_thread(
+                        requests.post, f"{self.base_url}/generate", json=request_data
+                    )
+
+                    if response.status_code != 200:
+                        logger.warning(
+                            f"Error scoring input: status code {response.status_code}"
+                        )
+                        scores.append(0.0)
+                        continue
+
+                    result = response.json()
 
                     # Default score
                     log_prob = 0.0
 
-                    # Extract score from various possible result formats
-                    if isinstance(result, list) and len(result) > 0:
-                        item = result[0]
-                        if isinstance(item, dict):
-                            # Try different field names for logprobs
-                            for field in ["logprob", "cum_logprob", "log_prob", "score"]:
-                                if field in item:
-                                    try:
-                                        val = item[field]
-                                        log_prob = -float(val) if val is not None else 0.0
-                                        break
-                                    except (ValueError, TypeError):
-                                        # Handle non-numeric values
-                                        continue
+                    # Extract score from meta_info if available
+                    if "meta_info" in result:
+                        meta_info = result["meta_info"]
+                        for field in ["logprob", "cum_logprob", "log_prob", "score"]:
+                            if field in meta_info:
+                                try:
+                                    val = meta_info[field]
+                                    log_prob = -float(val) if val is not None else 0.0
+                                    break
+                                except (ValueError, TypeError):
+                                    # Handle non-numeric values
+                                    continue
 
                     scores.append(log_prob)
                 except Exception as e:
@@ -580,3 +597,40 @@ class SGLangEngine(BaseEngine):
             logger.error(f"Error in SGLang scoring: {str(e)}")
             # Return default scores in case of error
             return [0.0] * len(batch_input)
+
+    def __del__(self):
+        """Ensure server is cleaned up when object is deleted"""
+        self._cleanup_server()
+        # Also unregister from atexit to avoid duplicate cleanup
+        try:
+            atexit.unregister(self._cleanup_server)
+        except Exception:
+            pass
+
+
+def find_available_port():
+    """Find an available port on the local machine."""
+    import socket
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(("", 0))
+    port = sock.getsockname()[1]
+    sock.close()
+    return port
+
+
+def wait_for_server(url, timeout=120, interval=1.0):
+    """Wait for the SGLang server to be ready."""
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            response = requests.get(f"{url}/health")
+            if response.status_code == 200:
+                logger.info(f"SGLang server is ready at {url}")
+                return True
+        except requests.RequestException:
+            pass
+        time.sleep(interval)
+
+    logger.error(f"Timed out waiting for SGLang server at {url}")
+    return False
