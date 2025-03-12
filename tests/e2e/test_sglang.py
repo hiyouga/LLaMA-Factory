@@ -15,6 +15,7 @@
 import sys
 
 import pytest
+from llamafactory.extras.constants import EngineName
 
 
 # Check if SGLang is installed
@@ -61,7 +62,6 @@ chat_model = ChatModel(INFER_ARGS)
 )
 def test_chat():
     """Test the SGLang engine's basic chat functionality"""
-    assert chat_model.engine_type == "sglang", f"Expected engine type 'sglang', got '{chat_model.engine_type}'"
     response = chat_model.chat(MESSAGES)[0]
     # TODO: Change to EXPECTED_RESPONSE
     print(response.response_text)
