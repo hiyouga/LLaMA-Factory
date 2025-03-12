@@ -47,8 +47,6 @@ body:
       description: |
         Please provide entry arguments, error messages and stack traces that reproduces the problem.
         请提供入口参数，错误日志以及异常堆栈以便于我们复现问题。
-        Remember to wrap your log messages with \`\`\`.
-        请务必使用 Markdown 标签 \`\`\` 来包裹您的日志信息。
 
       value: |
         ```text
