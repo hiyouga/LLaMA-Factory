@@ -17,7 +17,7 @@ import os
 import pytest
 import torch
 
-from llamafactory.extras.misc import get_current_device
+from llamafactory.extras.misc import get_current_device, is_torch_hpu_available
 from llamafactory.train.test_utils import load_train_model
 
 
@@ -38,14 +38,26 @@ TRAIN_ARGS = {
     "fp16": True,
 }
 
+if is_torch_hpu_available():
+    TRAIN_ARGS.update(
+        {
+            "use_habana": True,
+            "fp16": False,
+            "bf16": True,
+        }
+    )
+
 
 @pytest.mark.parametrize("disable_gradient_checkpointing", [False, True])
 def test_vanilla_checkpointing(disable_gradient_checkpointing: bool):
+    if not disable_gradient_checkpointing and is_torch_hpu_available():
+        TRAIN_ARGS["gradient_checkpointing"] = True
     model = load_train_model(disable_gradient_checkpointing=disable_gradient_checkpointing, **TRAIN_ARGS)
     for module in filter(lambda m: hasattr(m, "gradient_checkpointing"), model.modules()):
         assert getattr(module, "gradient_checkpointing") != disable_gradient_checkpointing
 
 
+@pytest.mark.skipif(is_torch_hpu_available(), reason="Not supported on HPU.")
 def test_unsloth_gradient_checkpointing():
     model = load_train_model(use_unsloth_gc=True, **TRAIN_ARGS)
     for module in filter(lambda m: hasattr(m, "gradient_checkpointing"), model.modules()):
@@ -61,6 +73,7 @@ def test_upcast_layernorm():
 
 def test_upcast_lmhead_output():
     model = load_train_model(upcast_lmhead_output=True, **TRAIN_ARGS)
-    inputs = torch.randn((1, 16), dtype=torch.float16, device=get_current_device())
+    dtype = torch.bfloat16 if is_torch_hpu_available() else torch.float16
+    inputs = torch.randn((1, 16), dtype=dtype, device=get_current_device())
     outputs: torch.Tensor = model.get_output_embeddings()(inputs)
     assert outputs.dtype == torch.float32

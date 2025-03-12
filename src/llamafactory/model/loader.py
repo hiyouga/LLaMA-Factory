@@ -151,6 +151,7 @@ def load_model(
             if model_args.train_from_scratch:
                 model = load_class.from_config(config, trust_remote_code=model_args.trust_remote_code)
             else:
+                init_kwargs["trust_remote_code"] = model_args.trust_remote_code
                 model = load_class.from_pretrained(**init_kwargs)
 
         if model_args.mixture_of_depths == "convert":
@@ -158,7 +159,8 @@ def load_model(
 
     if not lazy_load:
         patch_model(model, tokenizer, model_args, is_trainable, add_valuehead)
-        register_autoclass(config, model, tokenizer)
+        if model_args.trust_remote_code:
+            register_autoclass(config, model, tokenizer)
 
     model = init_adapter(config, model, model_args, finetuning_args, is_trainable)
 
@@ -175,6 +177,20 @@ def load_model(
         if vhead_params is not None:
             model.load_state_dict(vhead_params, strict=False)
             logger.info_rank0(f"Loaded valuehead from checkpoint: {vhead_path}")
+
+    if "use_habana" in vars(model_args) and model_args.use_habana:
+        model = model.to("hpu")
+
+    if "use_hpu_graphs" in vars(model_args) and model_args.use_hpu_graphs:
+        # copied from https://github.com/huggingface/optimum-habana/blob/v1.13.2/examples/text-generation/utils.py#L271
+        from habana_frameworks.torch.hpu import wrap_in_hpu_graph
+        from optimum.habana.transformers.trainer import _is_peft_model
+
+        model = wrap_in_hpu_graph(model)
+        if _is_peft_model(model):
+            model.base_model = wrap_in_hpu_graph(model.base_model)
+            if model.peft_type == "ADAPTION_PROMPT":
+                model.base_model.model = wrap_in_hpu_graph(model.base_model.model)
 
     if not is_trainable:
         model.requires_grad_(False)

@@ -5,6 +5,9 @@
   "alpaca_en_demo": {
     "file_name": "alpaca_en_demo.json"
   },
+  "tatsu_lab_alpaca": {
+    "hf_hub_url": "tatsu-lab/alpaca"
+  },
   "alpaca_zh_demo": {
     "file_name": "alpaca_zh_demo.json"
   },

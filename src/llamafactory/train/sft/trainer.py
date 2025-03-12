@@ -27,6 +27,7 @@ from typing_extensions import override
 
 from ...extras import logging
 from ...extras.constants import IGNORE_INDEX
+from ...extras.misc import is_torch_hpu_available
 from ...extras.packages import is_transformers_version_greater_than
 from ..callbacks import SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
@@ -38,6 +39,10 @@ if TYPE_CHECKING:
     from transformers.trainer import PredictionOutput
 
     from ...hparams import FinetuningArguments
+
+
+if is_torch_hpu_available():
+    from optimum.habana import GaudiSeq2SeqTrainer as Seq2SeqTrainer
 
 
 logger = logging.get_logger(__name__)

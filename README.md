@@ -400,13 +400,15 @@ huggingface-cli login
 | peft         | 0.11.1  | 0.12.0    |
 | trl          | 0.8.6   | 0.9.6     |
 
-| Optional     | Minimum | Recommend |
-| ------------ | ------- | --------- |
-| CUDA         | 11.6    | 12.2      |
-| deepspeed    | 0.10.0  | 0.16.4    |
-| bitsandbytes | 0.39.0  | 0.43.1    |
-| vllm         | 0.4.3   | 0.7.3     |
-| flash-attn   | 2.3.0   | 2.7.2     |
+| Optional       | Minimum | Recommend |
+| -------------- | ------- | --------- |
+| CUDA           | 11.6    | 12.2      |
+| deepspeed      | 0.10.0  | 0.16.4    |
+| bitsandbytes   | 0.39.0  | 0.43.1    |
+| vllm           | 0.4.3   | 0.7.3     |
+| flash-attn     | 2.3.0   | 2.7.2     |
+| habana-*       | 1.19.0  | 1.20.0    |
+| optimum-habana | 1.15    | 1.16.0    |
 
 ### Hardware Requirement
 
@@ -538,6 +540,16 @@ pip install .
 
 </details>
 
+<details><summary>For Gaudi HPU users</summary>
+
+Please follow the instructions in the [Intel Gaudi Installation Guide](https://docs.habana.ai/en/latest/Installation_Guide/index.html) to set up your environment, including the `$PYTHON` environment variable. This guide will walk you through the process of configuring your system to run on Gaudi HPU devices.
+
+To run `llamafactory-cli`, use the Docker setup referenced in the [Docker Installation ](https://docs.habana.ai/en/latest/Installation_Guide/Additional_Installation/Docker_Installation.html) Guide. Follow the instructions provided to install LLaMA-Factory within the Docker environment. Compatible `optimum-habana` releases are specified above. Note that most LLaMA-Factory features and optimizations, including inferencing, training (SFT, DPO, etc.), LoRA fine-tuning, and distributed training with DeepSpeed and DDP, are supported on Gaudi HPU devices.
+
+The examples directory contains various YAML and JSON configuration files tailored for Gaudi-specific configurations with DeepSpeed, covering both training and inference. These files are optimized to transparently leverage Gaudi's performance enhancements and can be identified by the inclusion of `gaudi` in their filenames. When creating custom configurations, it is recommended to use or modify these files to achieve better performance on Gaudi HPU devices.
+
+</details>
+
 ### Data Preparation
 
 Please refer to [data/README.md](data/README.md) for checking the details about the format of dataset files. You can either use datasets on HuggingFace / ModelScope / Modelers hub or load the dataset in local disk.
@@ -578,6 +590,14 @@ docker compose up -d
 docker compose exec llamafactory bash
 ```
 
+For HPU users:
+
+```bash
+cd docker/docker-hpu/
+docker compose up -d
+docker compose exec llamafactory bash
+```
+
 For Ascend NPU users:
 
 ```bash
@@ -608,6 +628,43 @@ docker build -f ./docker/docker-cuda/Dockerfile \
     -t llamafactory:latest .
 
 docker run -dit --gpus=all \
+    -v ./hf_cache:/root/.cache/huggingface \
+    -v ./ms_cache:/root/.cache/modelscope \
+    -v ./om_cache:/root/.cache/openmind \
+    -v ./data:/app/data \
+    -v ./output:/app/output \
+    -p 7860:7860 \
+    -p 8000:8000 \
+    --shm-size 16G \
+    --name llamafactory \
+    llamafactory:latest
+
+docker exec -it llamafactory bash
+```
+
+For HPU users:
+
+```bash
+docker build -f ./docker/docker-hpu/Dockerfile \
+    --build-arg INSTALL_BNB=false \
+    --build-arg INSTALL_VLLM=false \
+    --build-arg INSTALL_DEEPSPEED=false \
+    --build-arg INSTALL_FLASHATTN=false \
+    --build-arg PIP_INDEX=https://pypi.org/simple \
+    --build-arg http_proxy=${http_proxy} \
+    --build-arg https_proxy=${https_proxy} \
+    --build-arg ftp_proxy=${ftp_proxy} \
+    --build-arg no_proxy=${no_proxy:-localhost} \
+    -t llamafactory:latest .
+
+docker run -dit --runtime=habana \
+    --cap-add=sys_nice --cap_drop=net_raw --ipc=host \
+    -e http_proxy=${http_proxy} \
+    -e https_proxy=${https_proxy} \
+    -e ftp_proxy=${ftp_proxy} \
+    -e no_proxy=${no_proxy:-localhost} \
+    -e HABANA_VISIBLE_DEVICES=${HABANA_VISIBLE_DEVICES:-all} \
+    -e OMPI_MCA_btl_vader_single_copy_mechanism=${OMPI_MCA_btl_vader_single_copy_mechanism:-none} \
     -v ./hf_cache:/root/.cache/huggingface \
     -v ./ms_cache:/root/.cache/modelscope \
     -v ./om_cache:/root/.cache/openmind \

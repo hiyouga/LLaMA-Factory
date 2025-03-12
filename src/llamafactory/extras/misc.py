@@ -18,6 +18,7 @@
 import gc
 import os
 from collections.abc import Sequence
+from functools import lru_cache
 from typing import TYPE_CHECKING, Any, Literal, Union
 
 import torch
@@ -38,12 +39,27 @@ from . import logging
 from .packages import is_transformers_version_greater_than
 
 
+@lru_cache(maxsize=None)
+def is_torch_hpu_available() -> bool:
+    try:
+        import habana_frameworks.torch.core  # noqa: F401
+    except ImportError:
+        return False
+
+    return torch.hpu.is_available()
+
+
 _is_fp16_available = is_torch_npu_available() or is_torch_cuda_available()
+if is_torch_hpu_available():
+    import habana_frameworks.torch.utils.experimental as htexp
+    from habana_frameworks.torch.hpu import is_bf16_supported as is_torch_bf16_gpu_available
+
+    _is_fp16_available = htexp._is_fp16_supported()
+
 try:
     _is_bf16_available = is_torch_bf16_gpu_available() or (is_torch_npu_available() and torch.npu.is_bf16_supported())
 except Exception:
     _is_bf16_available = False
-
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -89,9 +105,15 @@ def check_version(requirement: str, mandatory: bool = False) -> None:
 
 def check_dependencies() -> None:
     r"""Check the version of the required packages."""
-    check_version("transformers>=4.41.2,<=4.49.0,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0")
-    check_version("datasets>=2.16.0,<=3.3.2")
-    check_version("accelerate>=0.34.0,<=1.4.0")
+    if is_torch_hpu_available():
+        check_version("transformers>=4.41.2,<=4.45.2")
+        check_version("optimum-habana>=1.13.2")
+        check_version("datasets>=2.16.0,<=3.2.0")
+        check_version("accelerate>=0.33.0,<0.34.0")
+    else:
+        check_version("transformers>=4.41.2,<=4.49.0,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0")
+        check_version("datasets>=2.16.0,<=3.3.2")
+        check_version("accelerate>=0.34.0,<=1.4.0")
     check_version("peft>=0.11.1,<=0.12.0")
     check_version("trl>=0.8.6,<=0.9.6")
     if is_transformers_version_greater_than("4.46.0") and not is_transformers_version_greater_than("4.48.1"):
@@ -148,6 +170,8 @@ def get_current_device() -> "torch.device":
         device = "mps:{}".format(os.environ.get("LOCAL_RANK", "0"))
     elif is_torch_cuda_available():
         device = "cuda:{}".format(os.environ.get("LOCAL_RANK", "0"))
+    elif is_torch_hpu_available():
+        device = "hpu:{}".format(os.environ.get("LOCAL_RANK", "0"))
     else:
         device = "cpu"
 
@@ -162,6 +186,8 @@ def get_device_count() -> int:
         return torch.npu.device_count()
     elif is_torch_cuda_available():
         return torch.cuda.device_count()
+    elif is_torch_hpu_available():
+        return torch.hpu.device_count()
     else:
         return 0
 
@@ -179,6 +205,8 @@ def get_peak_memory() -> tuple[int, int]:
         return torch.npu.max_memory_allocated(), torch.npu.max_memory_reserved()
     elif is_torch_cuda_available():
         return torch.cuda.max_memory_allocated(), torch.cuda.max_memory_reserved()
+    elif is_torch_hpu_available():
+        return torch.hpu.max_memory_allocated(), torch.hpu.max_memory_reserved()
     else:
         return 0, 0
 
@@ -199,8 +227,8 @@ def infer_optim_dtype(model_dtype: "torch.dtype") -> "torch.dtype":
 
 
 def is_gpu_or_npu_available() -> bool:
-    r"""Check if the GPU or NPU is available."""
-    return is_torch_npu_available() or is_torch_cuda_available()
+    r"""Check if the GPU or NPU or HPU is available."""
+    return is_torch_npu_available() or is_torch_cuda_available() or is_torch_hpu_available()
 
 
 def is_env_enabled(env_var: str, default: str = "0") -> bool:

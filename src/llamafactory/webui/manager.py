@@ -15,6 +15,8 @@
 from collections.abc import Generator
 from typing import TYPE_CHECKING
 
+from ..extras.misc import is_torch_hpu_available
+
 
 if TYPE_CHECKING:
     from gradio.components import Component
@@ -56,7 +58,7 @@ class Manager:
 
     def get_base_elems(self) -> set["Component"]:
         r"""Get the base elements that are commonly used."""
-        return {
+        elements = {
             self._id_to_elem["top.lang"],
             self._id_to_elem["top.model_name"],
             self._id_to_elem["top.model_path"],
@@ -68,3 +70,15 @@ class Manager:
             self._id_to_elem["top.rope_scaling"],
             self._id_to_elem["top.booster"],
         }
+
+        if is_torch_hpu_available():
+            elements.update(
+                {
+                    self._id_to_elem["top.use_habana"],
+                    self._id_to_elem["top.gaudi_config_name"],
+                    self._id_to_elem["top.use_lazy_mode"],
+                    self._id_to_elem["top.use_hpu_graphs"],
+                }
+            )
+
+        return elements

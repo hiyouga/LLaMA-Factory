@@ -339,6 +339,60 @@ class ModelArguments(VllmArguments, ExportArguments, ProcessorArguments, Quantiz
         init=False,
         metadata={"help": "Whether use block diag attention or not, derived from `neat_packing`. Do not specify it."},
     )
+    trust_remote_code: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Whether to trust the execution of code from datasets/models defined on the Hub. "
+                "This option should only be set to `True` for repositories you trust and in which "
+                "you have read the code, as it will execute code present on the Hub on your local machine."
+            )
+        },
+    )
+    attn_softmax_bf16: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Whether to run attention softmax layer in bf16 precision for fine-tuning. The current support is limited to Llama only."
+            )
+        },
+    )
+    use_flash_attention: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Whether to use Habana flash attention for fine-tuning. The current support is limited to Llama only."
+            )
+        },
+    )
+    flash_attention_recompute: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Whether to enable recompute in Habana flash attention for fine-tuning."
+                " It is applicable only when use_flash_attention is True."
+            )
+        },
+    )
+    flash_attention_causal_mask: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Whether to enable causal mask in Habana flash attention for fine-tuning."
+                " It is applicable only when use_flash_attention is True."
+            )
+        },
+    )
+    flash_attention_fp8: bool = field(
+        default=False,
+        metadata={"help": ("Whether to enable flash attention in FP8.")},
+    )
+    use_fused_rope: bool = field(
+        default=True,
+        metadata={
+            "help": ("Whether to use Habana fused-rope for fine-tuning. The current support is limited to Llama only.")
+        },
+    )
 
     def __post_init__(self):
         BaseModelArguments.__post_init__(self)
@@ -365,3 +419,31 @@ class ModelArguments(VllmArguments, ExportArguments, ProcessorArguments, Quantiz
         args = asdict(self)
         args = {k: f"<{k.upper()}>" if k.endswith("token") else v for k, v in args.items()}
         return args
+
+
+@dataclass
+class GaudiModelArguments(ModelArguments):
+    r"""
+    Arguments pertaining to which model/config/tokenizer we are going to fine-tune or infer.
+    """
+
+    use_habana: bool = field(
+        default=False,
+        metadata={"help": "Whether to use Habana's HPU for running the model."},
+    )
+    use_lazy_mode: bool = field(
+        default=False,
+        metadata={"help": "Whether to use lazy mode for running the model."},
+    )
+    use_hpu_graphs: bool = field(
+        default=False,
+        metadata={
+            "help": "Deprecated, use `use_hpu_graphs_for_inference` instead. Whether to use HPU graphs for performing inference."
+        },
+    )
+    use_hpu_graphs_for_inference: Optional[bool] = field(
+        default=False,
+        metadata={
+            "help": "Whether to use HPU graphs for performing inference. It will speed up latency but may not be compatible with some operations."
+        },
+    )

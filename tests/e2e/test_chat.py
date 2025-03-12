@@ -15,6 +15,7 @@
 import os
 
 from llamafactory.chat import ChatModel
+from llamafactory.extras.misc import is_torch_hpu_available
 
 
 TINY_LLAMA = os.getenv("TINY_LLAMA", "llamafactory/tiny-random-Llama-3")
@@ -33,6 +34,14 @@ MESSAGES = [
 ]
 
 EXPECTED_RESPONSE = "_rho"
+
+if is_torch_hpu_available():
+    INFER_ARGS.update(
+        {
+            "use_habana": True,
+            "infer_dtype": "bfloat16",
+        }
+    )
 
 
 def test_chat():

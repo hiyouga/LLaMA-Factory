@@ -26,7 +26,7 @@ from typing_extensions import override
 from ..data import get_template_and_fix_tokenizer
 from ..extras import logging
 from ..extras.constants import AUDIO_PLACEHOLDER, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER, EngineName
-from ..extras.misc import get_logits_processor
+from ..extras.misc import get_logits_processor, is_torch_hpu_available
 from ..model import load_model, load_tokenizer
 from .base_engine import BaseEngine, Response
 
@@ -39,6 +39,8 @@ if TYPE_CHECKING:
     from ..data.mm_plugin import AudioInput, ImageInput, VideoInput
     from ..hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
 
+if is_torch_hpu_available():
+    from optimum.habana.transformers.generation import GaudiGenerationConfig as GenerationConfig
 
 logger = logging.get_logger(__name__)
 
@@ -62,6 +64,9 @@ class HuggingfaceEngine(BaseEngine):
             self.tokenizer, model_args, finetuning_args, is_trainable=False, add_valuehead=(not self.can_generate)
         )  # must after fixing tokenizer to resize vocab
         self.generating_args = generating_args.to_dict()
+        if is_torch_hpu_available():
+            self.generating_args["use_hpu_graphs"] = model_args.use_hpu_graphs
+            self.generating_args["use_lazy_mode"] = model_args.use_lazy_mode
         try:
             asyncio.get_event_loop()
         except RuntimeError:
@@ -200,6 +205,15 @@ class HuggingfaceEngine(BaseEngine):
                 gen_kwargs[key] = value.tolist()
             else:
                 gen_kwargs[key] = value.to(model.device)
+
+        # Gaudi specific options
+        if is_torch_hpu_available():
+            gen_kwargs.update(
+                dict(
+                    lazy_mode=generating_args.get("use_lazy_mode", False),
+                    hpu_graphs=generating_args.get("use_hpu_graphs", False),
+                )
+            )
 
         if getattr(model.config, "model_type", None) in ["minicpmv", "minicpmo"]:
             gen_kwargs["input_ids"] = inputs

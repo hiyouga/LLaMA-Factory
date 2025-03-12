@@ -17,6 +17,7 @@ import os
 import pytest
 from transformers.utils import is_flash_attn_2_available, is_torch_sdpa_available
 
+from llamafactory.extras.misc import is_torch_hpu_available
 from llamafactory.extras.packages import is_transformers_version_greater_than
 from llamafactory.train.test_utils import load_infer_model
 
@@ -27,6 +28,9 @@ INFER_ARGS = {
     "model_name_or_path": TINY_LLAMA,
     "template": "llama3",
 }
+
+if is_torch_hpu_available():
+    INFER_ARGS["use_habana"] = True
 
 
 @pytest.mark.xfail(is_transformers_version_greater_than("4.48"), reason="Attention refactor.")
@@ -43,6 +47,10 @@ def test_attention():
         "sdpa": "LlamaSdpaAttention",
         "fa2": "LlamaFlashAttention2",
     }
+    if is_torch_hpu_available():
+        llama_attention_classes["disabled"] = "GaudiLlamaAttention"
+        llama_attention_classes["sdpa"] = "GaudiLlamaAttention"
+
     for requested_attention in attention_available:
         model = load_infer_model(flash_attn=requested_attention, **INFER_ARGS)
         for module in model.modules():

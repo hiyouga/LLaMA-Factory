@@ -5,7 +5,11 @@ from typing import Literal, Optional, Union
 from transformers import Seq2SeqTrainingArguments
 from transformers.training_args import _convert_str_dict
 
-from ..extras.misc import use_ray
+from ..extras.misc import is_torch_hpu_available, use_ray
+
+
+if is_torch_hpu_available():
+    from optimum.habana import GaudiSeq2SeqTrainingArguments as Seq2SeqTrainingArguments
 
 
 @dataclass
