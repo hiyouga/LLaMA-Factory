@@ -418,62 +418,105 @@ class SGLangEngine(BaseEngine):
             else:
                 sampling_params["stop"] = stop
 
-        # Set stream to true for streaming
-        sampling_params["stream"] = True
-
         try:
-            # Use SGLang's streaming API with proper fallbacks
             logger.info(f"Streaming with prompt: {prompt_text[:100]}...")
+            previous_text = ""
 
-            # Try different possible streaming methods
-            streaming_method = None
-            if hasattr(self.model, "generate_stream_async"):
-                streaming_method = self.model.generate_stream_async
-            elif hasattr(self.model, "generate_stream"):
-                # Wrap in asyncio.to_thread to make non-async methods work in async context
-                streaming_method = lambda text, params: asyncio.to_thread(self.model.generate_stream, text, params)
+            # Use async_generate with stream=True if available
+            if hasattr(self.model, "async_generate"):
+                logger.info("Using async_generate with streaming")
+                # Pass stream as a separate parameter, not in sampling_params
+                stream_iterator = await self.model.async_generate(
+                    prompt=[prompt_text], sampling_params=sampling_params, stream=True
+                )
+
+                # Process the stream using the async iterator
+                async for output in stream_iterator:
+                    if isinstance(output, dict) and "text" in output:
+                        # Extract incremental text
+                        current_text = output["text"]
+                        # Only yield the new part of the text
+                        new_text = current_text[len(previous_text) :]
+                        previous_text = current_text
+                        yield new_text
+                    elif isinstance(output, dict):
+                        # Try other formats
+                        if "content" in output:
+                            yield output["content"]
+                        elif "delta" in output and "content" in output["delta"]:
+                            yield output["delta"]["content"]
+                        elif "token" in output and isinstance(output["token"], dict) and "text" in output["token"]:
+                            for token in output["token"]["text"]:
+                                yield token
+                    elif isinstance(output, str):
+                        yield output
+                    else:
+                        # Try to convert unknown formats to string
+                        try:
+                            yield str(output)
+                        except Exception:
+                            logger.warning(f"Could not convert output to string: {type(output)}")
             else:
-                # Fallback to non-streaming generation
-                logger.warning("Streaming API not available, falling back to regular generation")
-                result = await asyncio.to_thread(self.model.generate, [prompt_text], sampling_params)
-                yield result[0]["text"]
-                return
+                # Fall back to synchronous generate with stream=True
+                logger.info("Using synchronous generation with streaming in async context")
 
-            # Generate stream
-            stream_iterator = await streaming_method([prompt_text], sampling_params)
+                # Run synchronous generate in a thread and pass stream as a separate parameter
+                stream_generator = await asyncio.to_thread(
+                    self.model.generate, prompt=[prompt_text], sampling_params=sampling_params, stream=True
+                )
 
-            # Process streaming output based on different possible formats
-            async for output in stream_iterator:
-                if isinstance(output, dict):
-                    if "token" in output and isinstance(output["token"], dict) and "text" in output["token"]:
-                        # Handle {"token": {"text": ["token1", "token2"]}}
-                        for token in output["token"]["text"]:
-                            yield token
-                    elif "text" in output:
-                        # Handle {"text": "token"}
-                        yield output["text"]
-                    elif "content" in output:
-                        # Handle {"content": "token"} alternative format
-                        yield output["content"]
-                    elif "delta" in output and "content" in output["delta"]:
-                        # Handle ChatCompletion-like format
-                        yield output["delta"]["content"]
-                elif isinstance(output, str):
-                    # Direct string output
-                    yield output
-                else:
-                    # Try to convert unknown formats to string
-                    try:
-                        yield str(output)
-                    except Exception:
-                        pass
+                # Process the outputs from the generator
+                for output in stream_generator:
+                    if isinstance(output, dict) and "text" in output:
+                        current_text = output["text"]
+                        new_text = current_text[len(previous_text) :]
+                        previous_text = current_text
+                        yield new_text
+                    elif isinstance(output, dict):
+                        # Try other formats
+                        if "content" in output:
+                            yield output["content"]
+                        elif "delta" in output and "content" in output["delta"]:
+                            yield output["delta"]["content"]
+                        elif "token" in output and isinstance(output["token"], dict) and "text" in output["token"]:
+                            for token in output["token"]["text"]:
+                                yield token
+                    elif isinstance(output, str):
+                        yield output
+                    else:
+                        try:
+                            yield str(output)
+                        except Exception:
+                            logger.warning(f"Could not convert output to string: {type(output)}")
+
         except Exception as e:
             logger.error(f"Error in SGLang streaming: {str(e)}")
             # Try fallback to non-streaming generation
             try:
-                sampling_params["stream"] = False
-                result = await asyncio.to_thread(self.model.generate, [prompt_text], sampling_params)
-                yield result[0]["text"]
+                logger.info("Attempting fallback to non-streaming generation")
+
+                # Call generate without streaming
+                result = await asyncio.to_thread(
+                    self.model.generate, prompt=[prompt_text], sampling_params=sampling_params
+                )
+
+                # Process the result
+                if isinstance(result, list) and len(result) > 0:
+                    if "text" in result[0]:
+                        yield result[0]["text"]
+                    elif isinstance(result[0], dict):
+                        # Try to find text in other fields
+                        for field in ["content", "generated_text", "response"]:
+                            if field in result[0]:
+                                yield result[0][field]
+                                break
+                        else:
+                            # If no recognized field found, convert to string
+                            yield str(result[0])
+                    else:
+                        yield str(result[0])
+                else:
+                    yield str(result)
             except Exception as e2:
                 logger.error(f"Fallback generation also failed: {str(e2)}")
                 raise e
