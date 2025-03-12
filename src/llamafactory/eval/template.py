@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections.abc import Sequence
 from dataclasses import dataclass
 
 from ..data import Role
@@ -35,7 +34,7 @@ class EvalTemplate:
         return "".join([example["question"]] + candidates + [self.answer]), example["answer"]
 
     def format_example(
-        self, target_data: dict[str, str], support_set: Sequence[dict[str, str]], subject_name: str
+        self, target_data: dict[str, str], support_set: list[dict[str, str]], subject_name: str
     ) -> list[dict[str, str]]:
         r"""Convert dataset examples to messages."""
         messages = []

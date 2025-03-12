@@ -14,7 +14,6 @@
 
 import json
 import os
-from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any, Literal, Optional
 
@@ -91,7 +90,7 @@ class DatasetAttr:
                 self.set_attr(tag, attr["tags"])
 
 
-def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -> list["DatasetAttr"]:
+def get_dataset_list(dataset_names: Optional[list[str]], dataset_dir: str) -> list["DatasetAttr"]:
     r"""Get the attributes of the datasets."""
     if dataset_names is None:
         dataset_names = []

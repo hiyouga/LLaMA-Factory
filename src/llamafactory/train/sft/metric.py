@@ -1,4 +1,4 @@
-# Copyright 2024 HuggingFace Inc., THUDM, and the LlamaFactory team.
+# Copyright 2025 HuggingFace Inc., THUDM, and the LlamaFactory team.
 #
 # This code is inspired by the HuggingFace's transformers library and the THUDM's ChatGLM implementation.
 # https://github.com/huggingface/transformers/blob/v4.40.0/examples/pytorch/summarization/run_summarization.py
@@ -37,11 +37,11 @@ if is_jieba_available():
 
 
 if is_nltk_available():
-    from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
+    from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu  # type: ignore
 
 
 if is_rouge_available():
-    from rouge_chinese import Rouge
+    from rouge_chinese import Rouge  # type: ignore
 
 
 def eval_logit_processor(logits: "torch.Tensor", labels: "torch.Tensor") -> "torch.Tensor":

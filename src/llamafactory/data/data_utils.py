@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections.abc import Sequence
 from enum import Enum, unique
 from typing import TYPE_CHECKING, Optional, TypedDict, Union
 
@@ -30,7 +29,7 @@ if TYPE_CHECKING:
 logger = logging.get_logger(__name__)
 
 
-SLOTS = Sequence[Union[str, set[str], dict[str, str]]]
+SLOTS = list[Union[str, set[str], dict[str, str]]]
 
 
 @unique

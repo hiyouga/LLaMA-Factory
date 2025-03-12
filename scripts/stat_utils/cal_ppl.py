@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import json
-from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any, Literal, Optional
 
@@ -35,7 +34,7 @@ class PairwiseDataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
 
     train_on_prompt: bool = False
 
-    def __call__(self, features: Sequence[dict[str, Any]]) -> dict[str, torch.Tensor]:
+    def __call__(self, features: list[dict[str, Any]]) -> dict[str, torch.Tensor]:
         r"""Pad batched data to the longest sequence in the batch."""
         chosen_features = []
         for feature in features:

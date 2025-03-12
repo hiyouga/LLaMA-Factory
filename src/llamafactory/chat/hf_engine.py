@@ -15,7 +15,7 @@
 import asyncio
 import concurrent.futures
 import os
-from collections.abc import AsyncGenerator, Sequence
+from collections.abc import AsyncGenerator
 from threading import Thread
 from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
@@ -78,12 +78,12 @@ class HuggingfaceEngine(BaseEngine):
         processor: Optional["ProcessorMixin"],
         template: "Template",
         generating_args: dict[str, Any],
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        images: Optional[Sequence["ImageInput"]] = None,
-        videos: Optional[Sequence["VideoInput"]] = None,
-        audios: Optional[Sequence["AudioInput"]] = None,
+        images: Optional[list["ImageInput"]] = None,
+        videos: Optional[list["VideoInput"]] = None,
+        audios: Optional[list["AudioInput"]] = None,
         input_kwargs: Optional[dict[str, Any]] = {},
     ) -> tuple[dict[str, Any], int]:
         mm_input_dict = {"images": [], "videos": [], "audios": [], "imglens": [0], "vidlens": [0], "audlens": [0]}
@@ -219,12 +219,12 @@ class HuggingfaceEngine(BaseEngine):
         processor: Optional["ProcessorMixin"],
         template: "Template",
         generating_args: dict[str, Any],
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        images: Optional[Sequence["ImageInput"]] = None,
-        videos: Optional[Sequence["VideoInput"]] = None,
-        audios: Optional[Sequence["AudioInput"]] = None,
+        images: Optional[list["ImageInput"]] = None,
+        videos: Optional[list["VideoInput"]] = None,
+        audios: Optional[list["AudioInput"]] = None,
         input_kwargs: Optional[dict[str, Any]] = {},
     ) -> list["Response"]:
         gen_kwargs, prompt_length = HuggingfaceEngine._process_args(
@@ -274,12 +274,12 @@ class HuggingfaceEngine(BaseEngine):
         processor: Optional["ProcessorMixin"],
         template: "Template",
         generating_args: dict[str, Any],
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        images: Optional[Sequence["ImageInput"]] = None,
-        videos: Optional[Sequence["VideoInput"]] = None,
-        audios: Optional[Sequence["AudioInput"]] = None,
+        images: Optional[list["ImageInput"]] = None,
+        videos: Optional[list["VideoInput"]] = None,
+        audios: Optional[list["AudioInput"]] = None,
         input_kwargs: Optional[dict[str, Any]] = {},
     ) -> Callable[[], str]:
         gen_kwargs, _ = HuggingfaceEngine._process_args(
@@ -338,12 +338,12 @@ class HuggingfaceEngine(BaseEngine):
     @override
     async def chat(
         self,
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        images: Optional[Sequence["ImageInput"]] = None,
-        videos: Optional[Sequence["VideoInput"]] = None,
-        audios: Optional[Sequence["AudioInput"]] = None,
+        images: Optional[list["ImageInput"]] = None,
+        videos: Optional[list["VideoInput"]] = None,
+        audios: Optional[list["AudioInput"]] = None,
         **input_kwargs,
     ) -> list["Response"]:
         if not self.can_generate:
@@ -371,12 +371,12 @@ class HuggingfaceEngine(BaseEngine):
     @override
     async def stream_chat(
         self,
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        images: Optional[Sequence["ImageInput"]] = None,
-        videos: Optional[Sequence["VideoInput"]] = None,
-        audios: Optional[Sequence["AudioInput"]] = None,
+        images: Optional[list["ImageInput"]] = None,
+        videos: Optional[list["VideoInput"]] = None,
+        audios: Optional[list["AudioInput"]] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
         if not self.can_generate:
