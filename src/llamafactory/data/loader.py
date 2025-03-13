@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import os
-from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import numpy as np
@@ -157,7 +156,7 @@ def _load_single_dataset(
 
 
 def _get_merged_dataset(
-    dataset_names: Optional[Sequence[str]],
+    dataset_names: Optional[list[str]],
     model_args: "ModelArguments",
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",

@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import os
-from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 import pytest
@@ -41,7 +40,7 @@ MESSAGES = [
 
 
 def _check_tokenization(
-    tokenizer: "PreTrainedTokenizer", batch_input_ids: Sequence[Sequence[int]], batch_text: Sequence[str]
+    tokenizer: "PreTrainedTokenizer", batch_input_ids: list[list[int]], batch_text: list[str]
 ) -> None:
     r"""Check token ids and texts.
 

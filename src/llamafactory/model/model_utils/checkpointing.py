@@ -1,4 +1,4 @@
-# Copyright 2024 HuggingFace Inc., Daniel Han-Chen & the Unsloth team and the LlamaFactory team.
+# Copyright 2025 HuggingFace Inc., Daniel Han-Chen & the Unsloth team and the LlamaFactory team.
 #
 # This code is inspired by the HuggingFace's Transformers and PEFT library,
 # https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/modeling_utils.py

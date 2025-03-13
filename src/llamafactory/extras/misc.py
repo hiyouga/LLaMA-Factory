@@ -1,4 +1,4 @@
-# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+# Copyright 2025 HuggingFace Inc. and the LlamaFactory team.
 #
 # This code is inspired by the HuggingFace's PEFT library.
 # https://github.com/huggingface/peft/blob/v0.10.0/src/peft/peft_model.py
@@ -17,8 +17,6 @@
 
 import gc
 import os
-from collections.abc import Sequence
-from functools import lru_cache
 from typing import TYPE_CHECKING, Any, Literal, Union
 
 import torch
@@ -120,7 +118,7 @@ def check_dependencies() -> None:
         logger.warning_rank0_once("There are known bugs in transformers v4.46.0-v4.48.0, please use other versions.")
 
 
-def calculate_tps(dataset: Sequence[dict[str, Any]], metrics: dict[str, float], stage: Literal["sft", "rm"]) -> float:
+def calculate_tps(dataset: list[dict[str, Any]], metrics: dict[str, float], stage: Literal["sft", "rm"]) -> float:
     r"""Calculate effective tokens per second."""
     effective_token_num = 0
     for data in dataset:

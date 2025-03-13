@@ -58,6 +58,10 @@ jobs:
         run: |
           make style && make quality
 
+      - name: Check license
+        run: |
+          make license
+
       - name: Test with pytest
         run: |
           make test

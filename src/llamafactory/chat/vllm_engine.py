@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import uuid
-from collections.abc import AsyncGenerator, AsyncIterator, Sequence
+from collections.abc import AsyncGenerator, AsyncIterator
 from typing import TYPE_CHECKING, Any, Optional, Union
 
 from typing_extensions import override
@@ -102,12 +102,12 @@ class VllmEngine(BaseEngine):
 
     async def _generate(
         self,
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        images: Optional[Sequence["ImageInput"]] = None,
-        videos: Optional[Sequence["VideoInput"]] = None,
-        audios: Optional[Sequence["AudioInput"]] = None,
+        images: Optional[list["ImageInput"]] = None,
+        videos: Optional[list["VideoInput"]] = None,
+        audios: Optional[list["AudioInput"]] = None,
         **input_kwargs,
     ) -> AsyncIterator["RequestOutput"]:
         request_id = f"chatcmpl-{uuid.uuid4().hex}"
@@ -202,12 +202,12 @@ class VllmEngine(BaseEngine):
     @override
     async def chat(
         self,
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        images: Optional[Sequence["ImageInput"]] = None,
-        videos: Optional[Sequence["VideoInput"]] = None,
-        audios: Optional[Sequence["AudioInput"]] = None,
+        images: Optional[list["ImageInput"]] = None,
+        videos: Optional[list["VideoInput"]] = None,
+        audios: Optional[list["AudioInput"]] = None,
         **input_kwargs,
     ) -> list["Response"]:
         final_output = None
@@ -231,12 +231,12 @@ class VllmEngine(BaseEngine):
     @override
     async def stream_chat(
         self,
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        images: Optional[Sequence["ImageInput"]] = None,
-        videos: Optional[Sequence["VideoInput"]] = None,
-        audios: Optional[Sequence["AudioInput"]] = None,
+        images: Optional[list["ImageInput"]] = None,
+        videos: Optional[list["VideoInput"]] = None,
+        audios: Optional[list["AudioInput"]] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
         generated_text = ""

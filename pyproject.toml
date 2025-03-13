@@ -27,6 +27,7 @@ indent-width = 4
 ignore = [
     "C408", # collection
     "C901", # complex
+    "E501", # line too long
     "E731", # lambda function
     "E741", # ambiguous var name
     "D100", # no doc public module

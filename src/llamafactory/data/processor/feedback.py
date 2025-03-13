@@ -13,7 +13,6 @@
 # limitations under the License.
 
 from collections import defaultdict
-from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, Optional
 
 from ...extras import logging
@@ -31,14 +30,14 @@ logger = logging.get_logger(__name__)
 class FeedbackDatasetProcessor(DatasetProcessor):
     def _encode_data_example(
         self,
-        prompt: Sequence[dict[str, str]],
-        response: Sequence[dict[str, str]],
-        kl_response: Sequence[dict[str, str]],
+        prompt: list[dict[str, str]],
+        response: list[dict[str, str]],
+        kl_response: list[dict[str, str]],
         system: Optional[str],
         tools: Optional[str],
-        images: Sequence["ImageInput"],
-        videos: Sequence["VideoInput"],
-        audios: Sequence["AudioInput"],
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
     ) -> tuple[list[int], list[int], list[int], list[int], bool]:
         if response[0]["content"]:  # desired example
             kto_tag = True

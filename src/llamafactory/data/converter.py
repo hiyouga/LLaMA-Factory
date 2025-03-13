@@ -14,7 +14,6 @@
 
 import os
 from abc import abstractmethod
-from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Optional, Union
 
@@ -37,7 +36,7 @@ class DatasetConverter:
     dataset_attr: "DatasetAttr"
     data_args: "DataArguments"
 
-    def _find_medias(self, medias: Union[Any, Sequence[Any]]) -> Optional[list[Any]]:
+    def _find_medias(self, medias: Union[Any, list[Any]]) -> Optional[list[Any]]:
         r"""Optionally concatenate media path to media dir when loading from local disk."""
         if not isinstance(medias, list):
             medias = [medias] if medias is not None else []

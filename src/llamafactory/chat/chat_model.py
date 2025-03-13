@@ -1,4 +1,4 @@
-# Copyright 2024 THUDM and the LlamaFactory team.
+# Copyright 2025 THUDM and the LlamaFactory team.
 #
 # This code is inspired by the THUDM's ChatGLM implementation.
 # https://github.com/THUDM/ChatGLM-6B/blob/main/cli_demo.py
@@ -17,7 +17,7 @@
 
 import asyncio
 import os
-from collections.abc import AsyncGenerator, Generator, Sequence
+from collections.abc import AsyncGenerator, Generator
 from threading import Thread
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -61,12 +61,12 @@ class ChatModel:
 
     def chat(
         self,
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        images: Optional[Sequence["ImageInput"]] = None,
-        videos: Optional[Sequence["VideoInput"]] = None,
-        audios: Optional[Sequence["AudioInput"]] = None,
+        images: Optional[list["ImageInput"]] = None,
+        videos: Optional[list["VideoInput"]] = None,
+        audios: Optional[list["AudioInput"]] = None,
         **input_kwargs,
     ) -> list["Response"]:
         r"""Get a list of responses of the chat model."""
@@ -77,12 +77,12 @@ class ChatModel:
 
     async def achat(
         self,
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        images: Optional[Sequence["ImageInput"]] = None,
-        videos: Optional[Sequence["VideoInput"]] = None,
-        audios: Optional[Sequence["AudioInput"]] = None,
+        images: Optional[list["ImageInput"]] = None,
+        videos: Optional[list["VideoInput"]] = None,
+        audios: Optional[list["AudioInput"]] = None,
         **input_kwargs,
     ) -> list["Response"]:
         r"""Asynchronously get a list of responses of the chat model."""
@@ -90,12 +90,12 @@ class ChatModel:
 
     def stream_chat(
         self,
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        images: Optional[Sequence["ImageInput"]] = None,
-        videos: Optional[Sequence["VideoInput"]] = None,
-        audios: Optional[Sequence["AudioInput"]] = None,
+        images: Optional[list["ImageInput"]] = None,
+        videos: Optional[list["VideoInput"]] = None,
+        audios: Optional[list["AudioInput"]] = None,
         **input_kwargs,
     ) -> Generator[str, None, None]:
         r"""Get the response token-by-token of the chat model."""
@@ -109,12 +109,12 @@ class ChatModel:
 
     async def astream_chat(
         self,
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        images: Optional[Sequence["ImageInput"]] = None,
-        videos: Optional[Sequence["VideoInput"]] = None,
-        audios: Optional[Sequence["AudioInput"]] = None,
+        images: Optional[list["ImageInput"]] = None,
+        videos: Optional[list["VideoInput"]] = None,
+        audios: Optional[list["AudioInput"]] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
         r"""Asynchronously get the response token-by-token of the chat model."""

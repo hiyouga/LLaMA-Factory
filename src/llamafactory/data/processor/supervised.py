@@ -13,7 +13,6 @@
 # limitations under the License.
 
 from collections import defaultdict
-from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -33,13 +32,13 @@ logger = logging.get_logger(__name__)
 class SupervisedDatasetProcessor(DatasetProcessor):
     def _encode_data_example(
         self,
-        prompt: Sequence[dict[str, str]],
-        response: Sequence[dict[str, str]],
+        prompt: list[dict[str, str]],
+        response: list[dict[str, str]],
         system: Optional[str],
         tools: Optional[str],
-        images: Sequence["ImageInput"],
-        videos: Sequence["VideoInput"],
-        audios: Sequence["AudioInput"],
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
     ) -> tuple[list[int], list[int]]:
         messages = self.template.mm_plugin.process_messages(prompt + response, images, videos, audios, self.processor)
         input_ids, labels = self.template.mm_plugin.process_token_ids(
