@@ -124,6 +124,7 @@ def _load_single_dataset(
             streaming=data_args.streaming,
         )
     else:
+        # does this work with s3?
         dataset = load_dataset(
             path=data_path,
             name=data_name,

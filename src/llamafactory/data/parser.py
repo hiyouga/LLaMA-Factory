@@ -29,7 +29,7 @@ class DatasetAttr:
     r"""Dataset attributes."""
 
     # basic configs
-    load_from: Literal["hf_hub", "ms_hub", "om_hub", "script", "file"]
+    load_from: Literal["hf_hub", "ms_hub", "om_hub", "script", "file", "s3"]
     dataset_name: str
     formatting: Literal["alpaca", "sharegpt"] = "alpaca"
     ranking: bool = False
@@ -99,33 +99,6 @@ def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -
     if dataset_dir == "ONLINE":
         dataset_info = None
     else:
-        if dataset_dir.startswith("s3://"):
-            import tempfile
-            import pyarrow.fs as fs
-            import logging
-
-            # Parse S3 URI into bucket and key components
-            s3_uri = dataset_dir
-            key = "/".join(s3_uri.replace("s3://", "").split("/")[1:])
-
-            # Create temporary directory for downloaded files
-            temp_dir = tempfile.mkdtemp(prefix="llamafactory_")
-            logging.info(f"Created temporary directory: {temp_dir}")
-
-            # Download the dataset file
-            local_file_path = os.path.join(temp_dir, os.path.basename(key))
-
-            try:
-                logging.info(f"Downloading {s3_uri} to {local_file_path}")
-                fs.copy_files(s3_uri, local_file_path)
-
-                # Update dataset_dir to point to the local path
-                dataset_dir = local_file_path
-                logging.info(f"Successfully downloaded S3 file. Using local path: {dataset_dir}")
-
-            except Exception as e:
-                raise ValueError(f"Failed to download dataset from S3: {str(e)}")
-
         if dataset_dir.startswith("REMOTE:"):
             config_path = cached_file(path_or_repo_id=dataset_dir[7:], filename=DATA_CONFIG, repo_type="dataset")
         else:
@@ -147,6 +120,8 @@ def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -
                 load_from = "ms_hub"
             elif use_openmind():
                 load_from = "om_hub"
+            elif name.startswith("s3://"):
+                load_from = "s3"
             else:
                 load_from = "hf_hub"
             dataset_attr = DatasetAttr(load_from, dataset_name=name)
@@ -159,12 +134,15 @@ def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -
         has_hf_url = "hf_hub_url" in dataset_info[name]
         has_ms_url = "ms_hub_url" in dataset_info[name]
         has_om_url = "om_hub_url" in dataset_info[name]
+        has_s3_url = "s3://" in dataset_info[name]
 
-        if has_hf_url or has_ms_url or has_om_url:
+        if has_hf_url or has_ms_url or has_om_url or has_s3_url:
             if has_ms_url and (use_modelscope() or not has_hf_url):
                 dataset_attr = DatasetAttr("ms_hub", dataset_name=dataset_info[name]["ms_hub_url"])
             elif has_om_url and (use_openmind() or not has_hf_url):
                 dataset_attr = DatasetAttr("om_hub", dataset_name=dataset_info[name]["om_hub_url"])
+            elif has_s3_url:
+                dataset_attr = DatasetAttr("s3", dataset_name=dataset_info[name]["s3_url"])
             else:
                 dataset_attr = DatasetAttr("hf_hub", dataset_name=dataset_info[name]["hf_hub_url"])
         elif "script_url" in dataset_info[name]:
