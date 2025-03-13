@@ -50,8 +50,12 @@ class SGLangEngine(BaseEngine):
     """Inference engine for SGLang models.
 
     This class wraps the SGLang engine to provide a consistent interface for text generation
-    that matches LLaMA Factory's requirements. It uses the offline SGLang engine (not the HTTP server)
-    and focuses on the core parameters needed for generation.
+    that matches LLaMA Factory's requirements. It uses the SGLang HTTP server approach for
+    better interaction and performance. The engine launches a server process and communicates
+    with it via HTTP requests.
+
+    For more details on the SGLang HTTP server approach, see:
+    https://docs.sglang.ai/backend/send_request.html
     """
 
     def __init__(
