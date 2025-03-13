@@ -90,6 +90,30 @@ def _load_single_dataset(
     else:
         raise NotImplementedError(f"Unknown load type: {dataset_attr.load_from}.")
 
+    if dataset_attr.load_from == "s3":
+        logger.info_rank0(f"Downloading dataset from S3: {dataset_attr.dataset_name}")
+        if dataset_attr.dataset_name.startswith("s3://"):
+            import tempfile
+            import pyarrow.fs as fs
+            import logging
+
+            # Parse S3 URI into bucket and key components
+            s3_uri = dataset_attr.dataset_name
+            key = "/".join(s3_uri.replace("s3://", "").split("/")[1:])
+            # Create temporary directory for downloaded files
+            temp_dir = tempfile.mkdtemp(prefix="llamafactory_")
+            logging.info(f"Created temporary directory: {temp_dir}")
+            # Download the dataset file
+            local_file_path = os.path.join(temp_dir, os.path.basename(key))
+            try:
+                logging.info(f"Downloading {s3_uri} to {local_file_path}")
+                fs.copy_files(s3_uri, local_file_path)
+                # Update dataset_dir to point to the local path
+                dataset_attr.dataset_name = local_file_path
+                logging.info(f"Successfully downloaded S3 file. Using local path: {dataset_attr.dataset_name}")
+            except Exception as e:
+                raise ValueError(f"Failed to download dataset from S3: {str(e)}")
+
     if dataset_attr.load_from == "ms_hub":
         check_version("modelscope>=1.11.0", mandatory=True)
         from modelscope import MsDataset  # type: ignore
