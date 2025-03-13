@@ -1,0 +1,53 @@
+### model
+model_name_or_path: HuggingFaceTB/SmolLM2-360M
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full
+# deepspeed: examples/deepspeed/ds_z0_config.json  # choices: [ds_z0_config.json, ds_z2_config.json, ds_z3_config.json]
+
+## dataset
+dataset: s3://nfclib-dev/datasets/ft/ft-lb-user-qa-v01_jsonl/,s3://nfclib-dev/datasets/ft/ft-lb-user-qa-v01_jsonl
+dataset_dir: ONLINE
+template: chatml
+cutoff_len: 1024
+# max_samples: 1000
+overwrite_cache: true
+preprocessing_num_workers: 32
+
+### ray
+ray_run_name: llama3_8b_sft_lora
+ray_storage_path: s3://nfai-dev-usw2/models/test/
+ray_num_workers: 1  # number of GPUs to use
+resources_per_worker:
+  GPU: 1
+placement_strategy: PACK
+
+### output
+# output_dir: saves/LB-2-360M-Instruct_v01
+logging_steps: 10
+save_steps: 2662
+plot_loss: true
+overwrite_output_dir: true
+
+### train
+per_device_train_batch_size: 48
+gradient_accumulation_steps: 1
+learning_rate: 1.0e-6
+num_train_epochs: 5.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.05
+bf16: true
+ddp_timeout: 180000000
+
+report_to: wandb
+run_name: LB-2-360M-Instruct_v01
+
+### eval
+# val_size: 0.1
+# per_device_eval_batch_size: 1
+# eval_strategy: steps
+# eval_steps: 500
+
