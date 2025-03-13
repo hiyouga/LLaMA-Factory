@@ -911,6 +911,20 @@ register_template(
 
 
 register_template(
+    name="intern_vl",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    default_system=(
+        "你是书生·万象，英文名是InternVL，是由上海人工智能实验室、清华大学及多家合作单位联合开发的多模态大语言模型。"
+    ),
+    stop_words=["<|im_end|>"],
+    mm_plugin=get_mm_plugin(name="intern_vl", image_token="<image>", video_token="<video>"),
+)
+
+
+register_template(
     name="llama2",
     format_user=StringFormatter(slots=[{"bos_token"}, "[INST] {{content}} [/INST]"]),
     format_system=StringFormatter(slots=["<<SYS>>\n{{content}}\n<</SYS>>\n\n"]),
