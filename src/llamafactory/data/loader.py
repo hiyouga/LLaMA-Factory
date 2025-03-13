@@ -56,9 +56,11 @@ def _load_single_dataset(
     training_args: "Seq2SeqTrainingArguments",
 ) -> Union["Dataset", "IterableDataset"]:
     r"""Load a single dataset and aligns it to the standard format."""
-    logger.info_rank0(f"Loading dataset {dataset_attr}...")
+    # logger.info_rank0(f"Loading dataset {dataset_attr}...")
+    logger.info_rank0(f"TEST MODS")
+
     data_path, data_name, data_dir, data_files = None, None, None, None
-    if dataset_attr.load_from in ["hf_hub", "ms_hub", "om_hub"]:
+    if dataset_attr.load_from in ["hf_hub", "ms_hub", "om_hub", "s3"]:
         data_path = dataset_attr.dataset_name
         data_name = dataset_attr.subset
         data_dir = dataset_attr.folder
@@ -125,6 +127,12 @@ def _load_single_dataset(
         )
     else:
         # does this work with s3?
+        logger.info_rank0("loading dataset from hf_hub and s3")
+        logger.info_rank0(f"data_path: {data_path}")
+        logger.info_rank0(f"data_name: {data_name}")
+        logger.info_rank0(f"data_dir: {data_dir}")
+        logger.info_rank0(f"data_files: {data_files}")
+
         dataset = load_dataset(
             path=data_path,
             name=data_name,
