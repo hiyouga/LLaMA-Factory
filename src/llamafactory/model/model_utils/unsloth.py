@@ -24,8 +24,7 @@ from ..extras.constants import (
 if TYPE_CHECKING:
     from transformers import PretrainedConfig, PreTrainedModel
 
-    from ...hparams import ModelArguments
-
+    from ..hparams import FinetuningArguments, ModelArguments
 
 logger = logging.get_logger(__name__)
 
@@ -74,14 +73,18 @@ def get_unsloth_peft_model(
     model: "PreTrainedModel", model_args: "ModelArguments", peft_kwargs: dict[str, Any]
 ) -> "PreTrainedModel":
     r"""Get the peft model for the pretrained model with unsloth. Used in training."""
-    from unsloth import FastLanguageModel  # type: ignore
-
     unsloth_peft_kwargs = {
         "model": model,
         "max_seq_length": model_args.model_max_length,
         "use_gradient_checkpointing": "unsloth",
     }
-    return FastLanguageModel.get_peft_model(**peft_kwargs, **unsloth_peft_kwargs)
+    
+    if is_multimodal(model_args.model_name_or_path):
+        from unsloth import FastVisionModel as UnslothModel # type: ignore
+    else:
+        from unsloth import FastLanguageModel as UnslothModel # type: ignore
+    
+    return UnslothModel.get_peft_model(**peft_kwargs, **unsloth_peft_kwargs)
 
 
 def load_unsloth_peft_model(
