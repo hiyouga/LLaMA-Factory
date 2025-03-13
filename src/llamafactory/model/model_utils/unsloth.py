@@ -17,6 +17,9 @@ from typing import TYPE_CHECKING, Any, Optional
 from ...extras import logging
 from ...extras.misc import get_current_device
 
+from ..extras.constants import (
+    MULTIMODAL_SUPPORTED_MODELS
+)
 
 if TYPE_CHECKING:
     from transformers import PretrainedConfig, PreTrainedModel
@@ -26,6 +29,9 @@ if TYPE_CHECKING:
 
 logger = logging.get_logger(__name__)
 
+def is_multimodal(model_name: str) -> bool:
+    r"""Judge if the model is a vision language model."""
+    return model_name in MULTIMODAL_SUPPORTED_MODELS
 
 def _get_unsloth_kwargs(
     config: "PretrainedConfig", model_name_or_path: str, model_args: "ModelArguments"
@@ -48,11 +54,14 @@ def load_unsloth_pretrained_model(
     config: "PretrainedConfig", model_args: "ModelArguments"
 ) -> Optional["PreTrainedModel"]:
     r"""Optionally load pretrained model with unsloth. Used in training."""
-    from unsloth import FastLanguageModel  # type: ignore
-
     unsloth_kwargs = _get_unsloth_kwargs(config, model_args.model_name_or_path, model_args)
+    if is_multimodal(model_args.model_name_or_path):
+        from unsloth import FastVisionModel as UnslothModel
+    else:
+        from unsloth import FastLanguageModel as UnslothModel # type: ignore
+
     try:
-        model, _ = FastLanguageModel.from_pretrained(**unsloth_kwargs)
+        model, _ = UnslothModel.from_pretrained(**unsloth_kwargs)
     except NotImplementedError:
         logger.warning_rank0("Unsloth does not support model type {}.".format(getattr(config, "model_type", None)))
         model = None
