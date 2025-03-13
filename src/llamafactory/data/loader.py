@@ -186,6 +186,11 @@ def _load_single_dataset(
         max_samples = min(data_args.max_samples, len(dataset))
         dataset = dataset.select(range(max_samples))
 
+    logger.info_rank0(f"Loaded dataset {dataset_attr} with {len(dataset)} examples.")
+    logger.info_rank0(f"Dataset: {dataset}")
+    logger.info_rank0(f"Dataset columns: {dataset.column_names}")
+    logger.info_rank0(f"Dataset args: {data_args}")
+    logger.info_rank0(f"Dataset training args: {training_args}")
     return align_dataset(dataset, dataset_attr, data_args, training_args)
 
 
