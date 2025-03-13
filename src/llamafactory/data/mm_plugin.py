@@ -290,7 +290,18 @@ class MMPluginMixin:
             if imglens is not None:
                 images = _make_batched_images(images, imglens)
 
-            mm_inputs.update(image_processor(images, return_tensors="pt"))
+            image_processor_kwargs = {}
+            if getattr(processor, "image_do_pan_and_scan", False):  # gemma3 image processor
+                image_processor_kwargs.update(
+                    {
+                        "do_pan_and_scan": True,
+                        "pan_and_scan_min_crop_size": 256,
+                        "pan_and_scan_max_num_crops": 4,
+                        "pan_and_scan_min_ratio_to_activate": 1.2,
+                    }
+                )
+
+            mm_inputs.update(image_processor(images, return_tensors="pt", **image_processor_kwargs))
 
         if len(videos) != 0:
             video_processor: BaseImageProcessor = getattr(
@@ -401,10 +412,23 @@ class Gemma3Plugin(BasePlugin):
         boi_token: str = getattr(processor, "boi_token")
         full_image_sequence: str = getattr(processor, "full_image_sequence")
         image_str = full_image_sequence if self.expand_mm_tokens else boi_token
+
+        do_pan_and_scan: bool = getattr(processor, "image_do_pan_and_scan", False)
+        if do_pan_and_scan:
+            mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+
         for message in messages:
             content = message["content"]
             while IMAGE_PLACEHOLDER in content:
-                content = content.replace(IMAGE_PLACEHOLDER, "{{image}}", 1)
+                if do_pan_and_scan:
+                    image_placeholder_str = (
+                        "Here is the original image {{image}} and here are some crops to help you see better "
+                        + " ".join(["{{image}}"] * mm_inputs["num_crops"][0][num_image_tokens])
+                    )
+                else:
+                    image_placeholder_str = "{{image}}"
+
+                content = content.replace(IMAGE_PLACEHOLDER, image_placeholder_str, 1)
                 num_image_tokens += 1
 
             message["content"] = content.replace("{{image}}", image_str)
