@@ -33,7 +33,7 @@
 
 **Fine-tuning a large language model can be easy as...**
 
-https://github.com/user-attachments/assets/7c96b465-9df7-45f4-8053-bf03e58386d3
+https://github.com/user-attachments/assets/319abcde-7b31-4874-8969-b30b0f64c96a
 
 Choose your path:
 
