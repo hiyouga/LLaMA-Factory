@@ -50,8 +50,8 @@ def patch_tokenizer(tokenizer: "PreTrainedTokenizer", model_args: "ModelArgument
     if "PreTrainedTokenizerBase" not in str(tokenizer._pad.__func__):
         tokenizer._pad = MethodType(PreTrainedTokenizerBase._pad, tokenizer)
 
-    if model_args.model_max_length is not None and tokenizer.model_max_length != model_args.model_max_length:
-        tokenizer.model_max_length = model_args.model_max_length
+    if model_args.model_max_length is not None and tokenizer.model_max_length < model_args.model_max_length:
+        tokenizer.model_max_length = model_args.model_max_length  # enlarge the tokenizer max length
 
     if model_args.new_special_tokens is not None:
         num_added_tokens = tokenizer.add_special_tokens(
@@ -72,6 +72,7 @@ def patch_processor(
     setattr(processor, "tokenizer", tokenizer)
     setattr(processor, "image_max_pixels", model_args.image_max_pixels)
     setattr(processor, "image_min_pixels", model_args.image_min_pixels)
+    setattr(processor, "image_do_pan_and_scan", model_args.image_do_pan_and_scan)
     setattr(processor, "video_max_pixels", model_args.video_max_pixels)
     setattr(processor, "video_min_pixels", model_args.video_min_pixels)
     setattr(processor, "video_fps", model_args.video_fps)

@@ -218,6 +218,10 @@ class ProcessorArguments:
         default=32 * 32,
         metadata={"help": "The minimum number of pixels of image inputs."},
     )
+    image_do_pan_and_scan: bool = field(
+        default=False,
+        metadata={"help": "Use pan and scan to process image for gemma3."},
+    )
     video_max_pixels: int = field(
         default=256 * 256,
         metadata={"help": "The maximum number of pixels of video inputs."},
@@ -234,6 +238,13 @@ class ProcessorArguments:
         default=128,
         metadata={"help": "The maximum number of sampled frames for video inputs."},
     )
+
+    def __post_init__(self):
+        if self.image_max_pixels < self.image_min_pixels:
+            raise ValueError("`image_max_pixels` cannot be smaller than `image_min_pixels`.")
+
+        if self.video_max_pixels < self.video_min_pixels:
+            raise ValueError("`video_max_pixels` cannot be smaller than `video_min_pixels`.")
 
 
 @dataclass
@@ -342,6 +353,7 @@ class ModelArguments(VllmArguments, ExportArguments, ProcessorArguments, Quantiz
 
     def __post_init__(self):
         BaseModelArguments.__post_init__(self)
+        ProcessorArguments.__post_init__(self)
         ExportArguments.__post_init__(self)
         VllmArguments.__post_init__(self)
 
