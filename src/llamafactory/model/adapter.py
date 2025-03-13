@@ -231,7 +231,7 @@ def _setup_lora_tuning(
         }
 
         if model_args.use_unsloth:
-            model = get_unsloth_peft_model(model, model_args, finetuning_args, peft_kwargs)
+            model = get_unsloth_peft_model(model, model_args, peft_kwargs)
         else:
             if finetuning_args.pissa_init:
                 if finetuning_args.pissa_iter == -1:
