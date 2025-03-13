@@ -15,7 +15,6 @@
 import sys
 
 import pytest
-from llamafactory.extras.constants import EngineName
 
 
 # Check if SGLang is installed
@@ -61,7 +60,7 @@ chat_model = ChatModel(INFER_ARGS)
     reason="SGLang is not installed",
 )
 def test_chat():
-    """Test the SGLang engine's basic chat functionality"""
+    """Test the SGLang engine's basic chat functionality."""
     response = chat_model.chat(MESSAGES)[0]
     # TODO: Change to EXPECTED_RESPONSE
     print(response.response_text)
@@ -72,8 +71,7 @@ def test_chat():
     reason="SGLang is not installed",
 )
 def test_stream_chat():
-    """Test the SGLang engine's streaming chat functionality"""
-
+    """Test the SGLang engine's streaming chat functionality."""
     # Test that we get a streaming response
     response = ""
     tokens_received = 0

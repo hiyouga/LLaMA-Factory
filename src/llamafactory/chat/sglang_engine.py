@@ -1,24 +1,20 @@
 import asyncio
+import atexit
 import gc
+import json
 import os
-import re
 import subprocess
 import time
-import requests
-import atexit
-import json
+from collections.abc import AsyncGenerator, AsyncIterator, Sequence
 from typing import (
     TYPE_CHECKING,
     Any,
-    AsyncGenerator,
-    AsyncIterator,
-    Dict,
-    List,
     Optional,
-    Sequence,
+    Union,
 )
 
 import psutil
+import requests
 
 # Import SGLang correctly
 import sglang as sgl
@@ -32,6 +28,7 @@ from ..extras.constants import (
     VIDEO_PLACEHOLDER,
 )
 from ..extras.logging import get_logger
+from ..extras.misc import find_available_port, get_device_count
 from ..hparams import (
     DataArguments,
     FinetuningArguments,
@@ -51,8 +48,7 @@ logger = get_logger(__name__)
 
 
 class SGLangEngine(BaseEngine):
-    """
-    Inference engine for SGLang models.
+    """Inference engine for SGLang models.
 
     This class wraps the SGLang engine to provide a consistent interface for text generation
     that matches LLaMA Factory's requirements. It uses the offline SGLang engine (not the HTTP server)
@@ -66,9 +62,7 @@ class SGLangEngine(BaseEngine):
         finetuning_args: "FinetuningArguments",
         generating_args: "GeneratingArguments",
     ) -> None:
-        """
-        Initializes an SGLang inference engine.
-        """
+        """Initializes an SGLang inference engine."""
         try:
             # Clean memory before initialization
             self._clean_memory()
@@ -79,7 +73,7 @@ class SGLangEngine(BaseEngine):
             raise
 
     def _clean_memory(self):
-        """Free memory before initializing the engine"""
+        """Free memory before initializing the engine."""
         # Force garbage collection
         gc.collect()
 
@@ -114,7 +108,7 @@ class SGLangEngine(BaseEngine):
         finetuning_args: "FinetuningArguments",
         generating_args: "GeneratingArguments",
     ) -> None:
-        """Initialize a SGLang server and connect to it via HTTP"""
+        """Initialize a SGLang server and connect to it via HTTP."""
         # Log SGLang version for debugging
         try:
             sgl_version = getattr(sgl, "__version__", "unknown")
@@ -127,7 +121,7 @@ class SGLangEngine(BaseEngine):
 
         # Handle quantization config if present
         if getattr(config, "quantization_config", None):
-            quantization_config: Dict[str, Any] = getattr(config, "quantization_config", None)
+            quantization_config: dict[str, Any] = getattr(config, "quantization_config", None)
             quant_method = quantization_config.get("quant_method", "")
             if quant_method == QuantizationMethod.GPTQ and model_args.infer_dtype == "auto":
                 model_args.infer_dtype = "float16"
@@ -159,6 +153,8 @@ class SGLangEngine(BaseEngine):
             self.host,
             "--port",
             str(self.port),
+            "--tp-size",
+            str(model_args.sglang_tp_size if model_args.sglang_tp_size > 1 else get_device_count() or 1),
         ]
 
         # Add dtype if specified
@@ -210,7 +206,7 @@ class SGLangEngine(BaseEngine):
             logger.warning("Adapter loading is not yet implemented for SGLang engine")
 
     def _cleanup_server(self):
-        """Clean up the server process when the engine is destroyed"""
+        """Clean up the server process when the engine is destroyed."""
         if hasattr(self, "server_process") and self.server_process:
             try:
                 logger.info("Terminating SGLang server process")
@@ -226,7 +222,7 @@ class SGLangEngine(BaseEngine):
 
     async def _generate(
         self,
-        messages: Sequence[Dict[str, str]],
+        messages: Sequence[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
         # Need to explore more about multimodal inputs
@@ -235,9 +231,7 @@ class SGLangEngine(BaseEngine):
         audios: Optional[Sequence["AudioInput"]] = None,
         **input_kwargs,
     ) -> AsyncIterator[Any]:
-        """
-        Internal helper method for text generation using SGLang server.
-        """
+        """Internal helper method for text generation using SGLang server."""
         # Handle multimodal inputs if provided
         mm_input_dict = {"images": [], "videos": [], "audios": [], "imglens": [0], "vidlens": [0], "audlens": [0]}
         if images is not None:
@@ -269,13 +263,24 @@ class SGLangEngine(BaseEngine):
         prompt_text = self.tokenizer.decode(prompt_ids, skip_special_tokens=True)
 
         # Extract generation parameters from input_kwargs or use defaults
-        temperature = input_kwargs.pop("temperature", self.generating_args["temperature"])
-        top_p = input_kwargs.pop("top_p", self.generating_args["top_p"])
-        top_k = input_kwargs.pop("top_k", self.generating_args["top_k"])
+        temperature: Optional[float] = input_kwargs.pop("temperature", None)
+        top_p: Optional[float] = input_kwargs.pop("top_p", None)
+        top_k: Optional[float] = input_kwargs.pop("top_k", None)
         input_kwargs.pop("num_return_sequences", 1)  # Still pop it but don't assign to variable
-        repetition_penalty = input_kwargs.pop("repetition_penalty", self.generating_args["repetition_penalty"])
-        max_new_tokens = input_kwargs.pop("max_new_tokens", self.generating_args.get("max_new_tokens", 2048))
-        stop = input_kwargs.pop("stop", None)
+        repetition_penalty: Optional[float] = input_kwargs.pop("repetition_penalty", None)
+        max_new_tokens: Optional[int] = input_kwargs.pop("max_new_tokens", None)
+        stop: Optional[Union[str, list[str]]] = input_kwargs.pop("stop", None)
+
+        # Use parameter values or fall back to generating_args defaults
+        temperature = temperature if temperature is not None else self.generating_args["temperature"]
+        top_p = top_p if top_p is not None else self.generating_args["top_p"]
+        top_k = top_k if top_k is not None else self.generating_args["top_k"]
+        repetition_penalty = (
+            repetition_penalty if repetition_penalty is not None else self.generating_args["repetition_penalty"]
+        )
+        max_new_tokens = (
+            max_new_tokens if max_new_tokens is not None else self.generating_args.get("max_new_tokens", 2048)
+        )
 
         # Prepare sampling parameters for SGLang
         sampling_params = {
@@ -302,14 +307,10 @@ class SGLangEngine(BaseEngine):
                 request_data = {"text": prompt_text, "sampling_params": sampling_params}
 
                 # Make HTTP request to SGLang server
-                response = await asyncio.to_thread(
-                    requests.post, f"{self.base_url}/generate", json=request_data
-                )
+                response = await asyncio.to_thread(requests.post, f"{self.base_url}/generate", json=request_data)
 
                 if response.status_code != 200:
-                    raise RuntimeError(
-                        f"SGLang server error: {response.status_code}, {response.text}"
-                    )
+                    raise RuntimeError(f"SGLang server error: {response.status_code}, {response.text}")
 
                 response_data = response.json()
 
@@ -330,9 +331,7 @@ class SGLangEngine(BaseEngine):
                         finish_reason = "length"
 
                     # Encode text to get token IDs
-                    token_ids = self.tokenizer.encode(
-                        generated_text, add_special_tokens=False
-                    )
+                    token_ids = self.tokenizer.encode(generated_text, add_special_tokens=False)
 
                     # Create response objects
                     output = type(
@@ -365,17 +364,15 @@ class SGLangEngine(BaseEngine):
     @override
     async def chat(
         self,
-        messages: Sequence[Dict[str, str]],
+        messages: Sequence[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
         images: Optional[Sequence["ImageInput"]] = None,
         videos: Optional[Sequence["VideoInput"]] = None,
         audios: Optional[Sequence["AudioInput"]] = None,
         **input_kwargs,
-    ) -> List["Response"]:
-        """
-        Gets a list of responses from the chat model using SGLang.
-        """
+    ) -> list["Response"]:
+        """Gets a list of responses from the chat model using SGLang."""
         final_output = None
         generator = await self._generate(messages, system, tools, images, videos, audios, **input_kwargs)
         async for request_output in generator:
@@ -397,7 +394,7 @@ class SGLangEngine(BaseEngine):
     @override
     async def stream_chat(
         self,
-        messages: Sequence[Dict[str, str]],
+        messages: Sequence[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
         images: Optional[Sequence["ImageInput"]] = None,
@@ -405,9 +402,7 @@ class SGLangEngine(BaseEngine):
         audios: Optional[Sequence["AudioInput"]] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
-        """
-        Streams responses from the chat model token by token via SGLang server.
-        """
+        """Streams responses from the chat model token by token via SGLang server."""
         # Handle multimodal inputs if provided
         mm_input_dict = {"images": [], "videos": [], "audios": [], "imglens": [0], "vidlens": [0], "audlens": [0]}
         if images is not None:
@@ -437,12 +432,23 @@ class SGLangEngine(BaseEngine):
         prompt_text = self.tokenizer.decode(prompt_ids, skip_special_tokens=True)
 
         # Extract generation parameters from input_kwargs or use defaults
-        temperature = input_kwargs.pop("temperature", self.generating_args["temperature"])
-        top_p = input_kwargs.pop("top_p", self.generating_args["top_p"])
-        top_k = input_kwargs.pop("top_k", self.generating_args["top_k"])
-        repetition_penalty = input_kwargs.pop("repetition_penalty", self.generating_args["repetition_penalty"])
-        max_new_tokens = input_kwargs.pop("max_new_tokens", self.generating_args.get("max_new_tokens", 2048))
-        stop = input_kwargs.pop("stop", None)
+        temperature: Optional[float] = input_kwargs.pop("temperature", None)
+        top_p: Optional[float] = input_kwargs.pop("top_p", None)
+        top_k: Optional[float] = input_kwargs.pop("top_k", None)
+        repetition_penalty: Optional[float] = input_kwargs.pop("repetition_penalty", None)
+        max_new_tokens: Optional[int] = input_kwargs.pop("max_new_tokens", None)
+        stop: Optional[Union[str, list[str]]] = input_kwargs.pop("stop", None)
+
+        # Use parameter values or fall back to generating_args defaults
+        temperature = temperature if temperature is not None else self.generating_args["temperature"]
+        top_p = top_p if top_p is not None else self.generating_args["top_p"]
+        top_k = top_k if top_k is not None else self.generating_args["top_k"]
+        repetition_penalty = (
+            repetition_penalty if repetition_penalty is not None else self.generating_args["repetition_penalty"]
+        )
+        max_new_tokens = (
+            max_new_tokens if max_new_tokens is not None else self.generating_args.get("max_new_tokens", 2048)
+        )
 
         # Prepare sampling parameters for SGLang
         sampling_params = {
@@ -477,9 +483,7 @@ class SGLangEngine(BaseEngine):
                 )
 
                 if response.status_code != 200:
-                    raise RuntimeError(
-                        f"SGLang server error: {response.status_code}, {response.text}"
-                    )
+                    raise RuntimeError(f"SGLang server error: {response.status_code}, {response.text}")
 
                 # Stream processing similar to the example
                 text_so_far = ""
@@ -502,9 +506,7 @@ class SGLangEngine(BaseEngine):
                                 text_so_far = current_text
                                 yield new_text
                         except json.JSONDecodeError as e:
-                            logger.warning(
-                                f"Failed to parse chunk as JSON: {chunk}, error: {str(e)}"
-                            )
+                            logger.warning(f"Failed to parse chunk as JSON: {chunk}, error: {str(e)}")
                             # Try to extract any text content if possible
                             if "text" in chunk:
                                 try:
@@ -535,12 +537,10 @@ class SGLangEngine(BaseEngine):
     @override
     async def get_scores(
         self,
-        batch_input: List[str],
+        batch_input: list[str],
         **input_kwargs,
-    ) -> List[float]:
-        """
-        Gets scores for a batch of inputs (logprobs) using the SGLang server.
-        """
+    ) -> list[float]:
+        """Gets scores for a batch of inputs (logprobs) using the SGLang server."""
         input_kwargs.pop("temperature", 0.0)
         input_kwargs.pop("top_p", 1.0)
         input_kwargs.pop("top_k", -1)
@@ -558,14 +558,10 @@ class SGLangEngine(BaseEngine):
                     }
 
                     # Send request to server
-                    response = await asyncio.to_thread(
-                        requests.post, f"{self.base_url}/generate", json=request_data
-                    )
+                    response = await asyncio.to_thread(requests.post, f"{self.base_url}/generate", json=request_data)
 
                     if response.status_code != 200:
-                        logger.warning(
-                            f"Error scoring input: status code {response.status_code}"
-                        )
+                        logger.warning(f"Error scoring input: status code {response.status_code}")
                         scores.append(0.0)
                         continue
 
@@ -599,24 +595,13 @@ class SGLangEngine(BaseEngine):
             return [0.0] * len(batch_input)
 
     def __del__(self):
-        """Ensure server is cleaned up when object is deleted"""
+        """Ensure server is cleaned up when object is deleted."""
         self._cleanup_server()
         # Also unregister from atexit to avoid duplicate cleanup
         try:
             atexit.unregister(self._cleanup_server)
         except Exception:
             pass
-
-
-def find_available_port():
-    """Find an available port on the local machine."""
-    import socket
-
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(("", 0))
-    port = sock.getsockname()[1]
-    sock.close()
-    return port
 
 
 def wait_for_server(url, timeout=120, interval=1.0):

@@ -5,7 +5,7 @@ template: llama3  # Use the Llama 3 prompt template
 # SGLang specific arguments with conservative memory settings
 sglang_maxlen: 4096  # Reduced from 8192 to avoid memory issues
 sglang_mem_fraction: 0.7  # Reduced from 0.9 to avoid OOM errors
-sglang_tp_size: 1  # Tensor parallel size (only applied if > 1)
+sglang_tp_size: 1  # If set to 1, will use get_device_count() or 1, otherwise uses the specified value
 
 # Inference parameters
 do_sample: true
@@ -17,5 +17,5 @@ repetition_penalty: 1.05
 # Additional SGLang specific parameters with memory optimizations
 sglang_config:
   log_level: "error"  # Suppress most logs to avoid cluttering output
-  tp_size: 1  # Explicitly disable tensor parallelism
+  tp_size: 1  # Will be overridden by the auto-detected tp_size from sglang_tp_size parameter
   random_seed: 42  # For reproducibility

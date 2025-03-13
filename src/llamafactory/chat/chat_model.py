@@ -54,7 +54,7 @@ class ChatModel:
         elif model_args.infer_backend == EngineName.VLLM:
             self.engine: BaseEngine = VllmEngine(model_args, data_args, finetuning_args, generating_args)
         elif model_args.infer_backend == EngineName.SGLANG:
-            self.engine: "BaseEngine" = SGLangEngine(model_args, data_args, finetuning_args, generating_args)
+            self.engine: BaseEngine = SGLangEngine(model_args, data_args, finetuning_args, generating_args)
         else:
             raise NotImplementedError(f"Unknown backend: {model_args.infer_backend}")
 

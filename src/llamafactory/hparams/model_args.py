@@ -314,21 +314,15 @@ class VllmArguments:
 
 @dataclass
 class SGLangArguments:
-    r"""
-    Arguments pertaining to the SGLang worker.
-    """
+    r"""Arguments pertaining to the SGLang worker."""
 
     sglang_maxlen: int = field(
         default=8192,
-        metadata={
-            "help": "Maximum sequence (prompt + response) length of the SGLang engine."
-        },
+        metadata={"help": "Maximum sequence (prompt + response) length of the SGLang engine."},
     )
     sglang_mem_fraction: float = field(
         default=0.9,
-        metadata={
-            "help": "The memory fraction (0-1) to be used for the SGLang engine."
-        },
+        metadata={"help": "The memory fraction (0-1) to be used for the SGLang engine."},
     )
     sglang_tp_size: int = field(
         default=1,
@@ -336,14 +330,18 @@ class SGLangArguments:
     )
     sglang_config: Optional[Union[dict, str]] = field(
         default=None,
-        metadata={
-            "help": "Config to initialize the SGLang engine. Please use JSON strings."
-        },
+        metadata={"help": "Config to initialize the SGLang engine. Please use JSON strings."},
     )
+
+    def __post_init__(self):
+        if isinstance(self.sglang_config, str) and self.sglang_config.startswith("{"):
+            self.sglang_config = _convert_str_dict(json.loads(self.sglang_config))
 
 
 @dataclass
-class ModelArguments(VllmArguments, ExportArguments, ProcessorArguments, QuantizationArguments, BaseModelArguments):
+class ModelArguments(
+    VllmArguments, SGLangArguments, ExportArguments, ProcessorArguments, QuantizationArguments, BaseModelArguments
+):
     r"""Arguments pertaining to which model/config/tokenizer we are going to fine-tune or infer.
 
     The class on the most right will be displayed first.
@@ -374,6 +372,7 @@ class ModelArguments(VllmArguments, ExportArguments, ProcessorArguments, Quantiz
         BaseModelArguments.__post_init__(self)
         ExportArguments.__post_init__(self)
         VllmArguments.__post_init__(self)
+        SGLangArguments.__post_init__(self)
 
     @classmethod
     def copyfrom(cls, source: "Self", **kwargs) -> "Self":
@@ -395,5 +394,3 @@ class ModelArguments(VllmArguments, ExportArguments, ProcessorArguments, Quantiz
         args = asdict(self)
         args = {k: f"<{k.upper()}>" if k.endswith("token") else v for k, v in args.items()}
         return args
-
-
