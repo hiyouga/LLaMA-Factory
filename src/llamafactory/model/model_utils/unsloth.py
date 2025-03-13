@@ -16,21 +16,21 @@ from typing import TYPE_CHECKING, Any, Optional
 
 from ...extras import logging
 from ...extras.misc import get_current_device
+from ..extras.constants import MULTIMODAL_SUPPORTED_MODELS
 
-from ..extras.constants import (
-    MULTIMODAL_SUPPORTED_MODELS
-)
 
 if TYPE_CHECKING:
     from transformers import PretrainedConfig, PreTrainedModel
 
-    from ..hparams import FinetuningArguments, ModelArguments
+    from ..hparams import ModelArguments
 
 logger = logging.get_logger(__name__)
+
 
 def is_multimodal(model_name: str) -> bool:
     r"""Judge if the model is a vision language model."""
     return model_name in MULTIMODAL_SUPPORTED_MODELS
+
 
 def _get_unsloth_kwargs(
     config: "PretrainedConfig", model_name_or_path: str, model_args: "ModelArguments"
@@ -54,9 +54,9 @@ def load_unsloth_pretrained_model(
 ) -> Optional["PreTrainedModel"]:
     r"""Optionally load pretrained model with unsloth. Used in training."""
     if is_multimodal(model_args.model_name_or_path):
-        from unsloth import FastVisionModel as UnslothModel # type: ignore
+        from unsloth import FastVisionModel as UnslothModel  # type: ignore
     else:
-        from unsloth import FastLanguageModel as UnslothModel # type: ignore
+        from unsloth import FastLanguageModel as UnslothModel  # type: ignore
 
     unsloth_kwargs = _get_unsloth_kwargs(config, model_args.model_name_or_path, model_args)
     try:
@@ -74,16 +74,16 @@ def get_unsloth_peft_model(
 ) -> "PreTrainedModel":
     r"""Get the peft model for the pretrained model with unsloth. Used in training."""
     if is_multimodal(model_args.model_name_or_path):
-        from unsloth import FastVisionModel as UnslothModel # type: ignore
+        from unsloth import FastVisionModel as UnslothModel  # type: ignore
     else:
-        from unsloth import FastLanguageModel as UnslothModel # type: ignore
-        
+        from unsloth import FastLanguageModel as UnslothModel  # type: ignore
+
     unsloth_peft_kwargs = {
         "model": model,
         "max_seq_length": model_args.model_max_length,
         "use_gradient_checkpointing": "unsloth",
     }
-    
+
     return UnslothModel.get_peft_model(**peft_kwargs, **unsloth_peft_kwargs)
 
 
@@ -92,9 +92,9 @@ def load_unsloth_peft_model(
 ) -> "PreTrainedModel":
     r"""Load peft model with unsloth. Used in both training and inference."""
     if is_multimodal(model_args.model_name_or_path):
-        from unsloth import FastVisionModel as UnslothModel # type: ignore
+        from unsloth import FastVisionModel as UnslothModel  # type: ignore
     else:
-        from unsloth import FastLanguageModel as UnslothModel # type: ignore
+        from unsloth import FastLanguageModel as UnslothModel  # type: ignore
 
     unsloth_kwargs = _get_unsloth_kwargs(config, model_args.adapter_name_or_path[0], model_args)
     try:
