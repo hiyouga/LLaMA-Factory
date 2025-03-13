@@ -3,8 +3,6 @@ import atexit
 import gc
 import json
 import os
-import subprocess
-import time
 from collections.abc import AsyncGenerator, AsyncIterator, Sequence
 from typing import (
     TYPE_CHECKING,
@@ -19,6 +17,7 @@ import requests
 # Import SGLang correctly
 import sglang as sgl
 import torch
+from sglang.utils import launch_server_cmd, terminate_process, wait_for_server
 from typing_extensions import override
 
 from ..data import get_template_and_fix_tokenizer
@@ -143,59 +142,42 @@ class SGLangEngine(BaseEngine):
         self.base_url = f"http://{self.host}:{self.port}"
 
         # Prepare SGLang server launch command
-        cmd = [
-            "python",
-            "-m",
-            "sglang.launch_server",
-            "--model-path",
-            model_args.model_name_or_path,
-            "--host",
-            self.host,
-            "--port",
-            str(self.port),
-            "--tp-size",
-            str(model_args.sglang_tp_size if model_args.sglang_tp_size > 1 else get_device_count() or 1),
-        ]
+        launch_cmd = f"python -m sglang.launch_server --model-path {model_args.model_name_or_path} --host {self.host} --port {self.port} --tp-size {model_args.sglang_tp_size if model_args.sglang_tp_size > 1 else get_device_count() or 1}"
 
         # Add dtype if specified
         if model_args.infer_dtype and model_args.infer_dtype != "auto":
-            cmd.extend(["--dtype", model_args.infer_dtype])
+            launch_cmd += f" --dtype {model_args.infer_dtype}"
 
         # Add cache dir if specified
         if model_args.cache_dir:
-            cmd.extend(["--download-dir", model_args.cache_dir])
+            launch_cmd += f" --download-dir {model_args.cache_dir}"
 
-        # Launch the server process
-        logger.info(f"Starting SGLang server with command: {' '.join(cmd)}")
+        # Launch the server process using SGLang's utility
+        logger.info(f"Starting SGLang server with command: {launch_cmd}")
         try:
-            self.server_process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,
-            )
+            # Use the SGLang utility to launch the server
+            self.server_process, _ = launch_server_cmd(launch_cmd)
 
             # Register cleanup handler to terminate server when Python exits
             atexit.register(self._cleanup_server)
 
-            # Wait for server to be ready
-            server_ready = wait_for_server(self.base_url, timeout=60)
-            if not server_ready:
+            # Wait for server to be ready using SGLang's utility
+            logger.info(f"Waiting for SGLang server to be ready at {self.base_url}...")
+            if not wait_for_server(self.base_url, timeout=60):
                 raise RuntimeError("Timed out waiting for SGLang server to start")
 
-            # Get model info to verify server is working correctly
+            logger.info(f"SGLang server initialized successfully at {self.base_url}")
+
+            # Optionally get model info for debugging purposes
             try:
-                response = requests.get(f"{self.base_url}/get_model_info")
+                response = requests.get(f"{self.base_url}/get_model_info", timeout=5)
                 if response.status_code == 200:
                     model_info = response.json()
                     logger.info(f"SGLang server model info: {model_info}")
-                else:
-                    logger.warning(f"Failed to get model info: {response.status_code}")
             except Exception as e:
-                logger.warning(f"Error getting model info: {str(e)}")
+                # This is non-critical, so just log a debug message
+                logger.debug(f"Note: Could not get model info: {str(e)}")
 
-            logger.info(f"SGLang server initialized successfully at {self.base_url}")
         except Exception as e:
             logger.error(f"Failed to start SGLang server: {str(e)}")
             self._cleanup_server()  # Make sure to clean up any started process
@@ -210,15 +192,11 @@ class SGLangEngine(BaseEngine):
         if hasattr(self, "server_process") and self.server_process:
             try:
                 logger.info("Terminating SGLang server process")
-                self.server_process.terminate()
-                self.server_process.wait(timeout=10)
+                # Use SGLang's utility to terminate the process
+                terminate_process(self.server_process)
                 logger.info("SGLang server process terminated")
             except Exception as e:
                 logger.warning(f"Error terminating SGLang server: {str(e)}")
-                try:
-                    self.server_process.kill()
-                except Exception:
-                    pass
 
     async def _generate(
         self,
@@ -602,20 +580,3 @@ class SGLangEngine(BaseEngine):
             atexit.unregister(self._cleanup_server)
         except Exception:
             pass
-
-
-def wait_for_server(url, timeout=120, interval=1.0):
-    """Wait for the SGLang server to be ready."""
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        try:
-            response = requests.get(f"{url}/health")
-            if response.status_code == 200:
-                logger.info(f"SGLang server is ready at {url}")
-                return True
-        except requests.RequestException:
-            pass
-        time.sleep(interval)
-
-    logger.error(f"Timed out waiting for SGLang server at {url}")
-    return False
