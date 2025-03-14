@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from typing import TYPE_CHECKING, Any, Optional
+
 from transformers import AutoConfig
 
 from ...extras import logging
