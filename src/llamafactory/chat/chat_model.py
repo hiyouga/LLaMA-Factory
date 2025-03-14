@@ -25,6 +25,7 @@ from ..extras.constants import EngineName
 from ..extras.misc import torch_gc
 from ..hparams import get_infer_args
 from .hf_engine import HuggingfaceEngine
+from .sglang_engine import SGLangEngine
 from .vllm_engine import VllmEngine
 
 
@@ -52,6 +53,8 @@ class ChatModel:
             self.engine: BaseEngine = HuggingfaceEngine(model_args, data_args, finetuning_args, generating_args)
         elif model_args.infer_backend == EngineName.VLLM:
             self.engine: BaseEngine = VllmEngine(model_args, data_args, finetuning_args, generating_args)
+        elif model_args.infer_backend == EngineName.SGLANG:
+            self.engine: BaseEngine = SGLangEngine(model_args, data_args, finetuning_args, generating_args)
         else:
             raise NotImplementedError(f"Unknown backend: {model_args.infer_backend}")
 

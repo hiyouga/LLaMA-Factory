@@ -106,6 +106,7 @@ class AttentionFunction(str, Enum):
 class EngineName(str, Enum):
     HF = "huggingface"
     VLLM = "vllm"
+    SGLANG = "sglang"
 
 
 class DownloadSource(str, Enum):
