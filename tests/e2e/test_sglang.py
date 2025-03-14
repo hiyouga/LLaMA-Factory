@@ -16,90 +16,56 @@ import sys
 
 import pytest
 
-
-# Check if SGLang is installed
-try:
-    import importlib.util
-
-    SGLANG_AVAILABLE = importlib.util.find_spec("sglang") is not None
-except ImportError:
-    SGLANG_AVAILABLE = False
-
-# Import directly from src
 from llamafactory.chat import ChatModel
+from llamafactory.extras.packages import is_sglang_available
 
 
-# Configuration for tests
-
-# TODO: Change to llamafactory/tiny-random-Llama-3
 MODEL_NAME = "meta-llama/Llama-3.2-1B-Instruct"
 
-# Basic inference args
+
 INFER_ARGS = {
     "model_name_or_path": MODEL_NAME,
     "finetuning_type": "lora",
     "template": "llama3",
     "infer_dtype": "float16",
-    "infer_backend": "sglang",  # Use the SGLang backend
+    "infer_backend": "sglang",
     "do_sample": False,
     "max_new_tokens": 1,
 }
 
-# Test messages
+
 MESSAGES = [
     {"role": "user", "content": "Hi"},
 ]
 
-# Expected response from the test model
 
-
-@pytest.mark.skipif(
-    not SGLANG_AVAILABLE,
-    reason="SGLang is not installed",
-)
+@pytest.mark.skipif(not is_sglang_available(), reason="SGLang is not installed")
 def test_chat():
-    """Test the SGLang engine's basic chat functionality."""
-    # Instantiate ChatModel inside the function
+    r"""Test the SGLang engine's basic chat functionality."""
     chat_model = ChatModel(INFER_ARGS)
     response = chat_model.chat(MESSAGES)[0]
     # TODO: Change to EXPECTED_RESPONSE
     print(response.response_text)
 
 
-@pytest.mark.skipif(
-    not SGLANG_AVAILABLE,
-    reason="SGLang is not installed",
-)
+@pytest.mark.skipif(not is_sglang_available(), reason="SGLang is not installed")
 def test_stream_chat():
-    """Test the SGLang engine's streaming chat functionality."""
-    # Instantiate ChatModel inside the function
+    r"""Test the SGLang engine's streaming chat functionality."""
     chat_model = ChatModel(INFER_ARGS)
 
-    # Test that we get a streaming response
     response = ""
-    tokens_received = 0
     for token in chat_model.stream_chat(MESSAGES):
         response += token
-        tokens_received += 1
-        print(f"Received token: '{token}'")
 
-    print(f"Complete response: '{response}'")
-    print(f"Received {tokens_received} tokens")
-
-    # Verify we got a non-empty response
+    print("Complete response:", response)
     assert response, "Should receive a non-empty response"
-
-    # Verify we received multiple tokens (streaming is working)
-    assert tokens_received > 0, "Should receive at least one token"
 
 
 # Run tests if executed directly
 if __name__ == "__main__":
-    if not SGLANG_AVAILABLE:
-        print("SGLang is not available. Please install it with online docs.")
+    if not is_sglang_available():
+        print("SGLang is not available. Please install it.")
         sys.exit(1)
 
-    print("Testing SGLang engine...")
     test_chat()
     test_stream_chat()
-    print("All SGLang tests passed!")

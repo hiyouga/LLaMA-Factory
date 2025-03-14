@@ -291,7 +291,7 @@ class VllmArguments:
         metadata={"help": "Maximum sequence (prompt + response) length of the vLLM engine."},
     )
     vllm_gpu_util: float = field(
-        default=0.9,
+        default=0.7,
         metadata={"help": "The fraction of GPU memory in (0,1) to be used for the vLLM engine."},
     )
     vllm_enforce_eager: bool = field(
@@ -317,15 +317,15 @@ class SGLangArguments:
     r"""Arguments pertaining to the SGLang worker."""
 
     sglang_maxlen: int = field(
-        default=8192,
+        default=4096,
         metadata={"help": "Maximum sequence (prompt + response) length of the SGLang engine."},
     )
     sglang_mem_fraction: float = field(
-        default=0.9,
+        default=0.7,
         metadata={"help": "The memory fraction (0-1) to be used for the SGLang engine."},
     )
     sglang_tp_size: int = field(
-        default=1,
+        default=-1,
         metadata={"help": "Tensor parallel size for the SGLang engine."},
     )
     sglang_config: Optional[Union[dict, str]] = field(
@@ -340,7 +340,7 @@ class SGLangArguments:
 
 @dataclass
 class ModelArguments(
-    VllmArguments, SGLangArguments, ExportArguments, ProcessorArguments, QuantizationArguments, BaseModelArguments
+    SGLangArguments, VllmArguments, ExportArguments, ProcessorArguments, QuantizationArguments, BaseModelArguments
 ):
     r"""Arguments pertaining to which model/config/tokenizer we are going to fine-tune or infer.
 

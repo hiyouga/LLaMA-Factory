@@ -252,4 +252,4 @@ class VllmEngine(BaseEngine):
         batch_input: list[str],
         **input_kwargs,
     ) -> list[float]:
-        raise NotImplementedError("vLLM engine does not support get_scores.")
+        raise NotImplementedError("vLLM engine does not support `get_scores`.")
