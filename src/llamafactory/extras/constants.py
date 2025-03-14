@@ -133,7 +133,7 @@ def register_model_group(
         ):
             DEFAULT_TEMPLATE[name] = template
         if multimodal:
-            MULTIMODAL_SUPPORTED_MODELS.add(name)
+            MULTIMODAL_SUPPORTED_MODELS.add({name: template})
 
 
 register_model_group(
