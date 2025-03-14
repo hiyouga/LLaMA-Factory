@@ -12,37 +12,49 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import uuid
-from collections.abc import AsyncGenerator, AsyncIterator
+import asyncio
+import atexit
+import json
+from collections.abc import AsyncGenerator, AsyncIterator, Sequence
 from typing import TYPE_CHECKING, Any, Optional, Union
 
+import requests
 from typing_extensions import override
 
 from ..data import get_template_and_fix_tokenizer
 from ..extras import logging
 from ..extras.constants import AUDIO_PLACEHOLDER, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER, EngineName
-from ..extras.misc import get_device_count
-from ..extras.packages import is_vllm_available
+from ..extras.misc import get_device_count, torch_gc
+from ..extras.packages import is_sglang_available
+from ..hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
 from ..model import load_config, load_tokenizer
 from ..model.model_utils.quantization import QuantizationMethod
-from ..model.model_utils.visual import LlavaMultiModalProjectorForYiVLForVLLM
 from .base_engine import BaseEngine, Response
 
 
-if is_vllm_available():
-    from vllm import AsyncEngineArgs, AsyncLLMEngine, RequestOutput, SamplingParams
-    from vllm.lora.request import LoRARequest
+if is_sglang_available():
+    from sglang.utils import launch_server_cmd, terminate_process, wait_for_server
 
 
 if TYPE_CHECKING:
     from ..data.mm_plugin import AudioInput, ImageInput, VideoInput
-    from ..hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
 
 
 logger = logging.get_logger(__name__)
 
 
-class VllmEngine(BaseEngine):
+class SGLangEngine(BaseEngine):
+    """Inference engine for SGLang models.
+
+    This class wraps the SGLang engine to provide a consistent interface for text generation
+    that matches LLaMA Factory's requirements. It uses the SGLang HTTP server approach for
+    better interaction and performance. The engine launches a server process and communicates
+    with it via HTTP requests.
+
+    For more details on the SGLang HTTP server approach, see:
+    https://docs.sglang.ai/backend/send_request.html
+    """
+
     def __init__(
         self,
         model_args: "ModelArguments",
@@ -50,7 +62,7 @@ class VllmEngine(BaseEngine):
         finetuning_args: "FinetuningArguments",
         generating_args: "GeneratingArguments",
     ) -> None:
-        self.name = EngineName.VLLM
+        self.name = EngineName.SGLANG
         self.model_args = model_args
         config = load_config(model_args)  # may download model from ms hub
         if getattr(config, "quantization_config", None):  # gptq models should use float16
@@ -65,40 +77,52 @@ class VllmEngine(BaseEngine):
         self.processor = tokenizer_module["processor"]
         self.tokenizer.padding_side = "left"
         self.template = get_template_and_fix_tokenizer(self.tokenizer, data_args)
-        self.template.mm_plugin.expand_mm_tokens = False  # for vllm generate
+        self.template.mm_plugin.expand_mm_tokens = False  # for sglang generate
         self.generating_args = generating_args.to_dict()
 
-        engine_args = {
-            "model": model_args.model_name_or_path,
-            "trust_remote_code": model_args.trust_remote_code,
-            "download_dir": model_args.cache_dir,
-            "dtype": model_args.infer_dtype,
-            "max_model_len": model_args.vllm_maxlen,
-            "tensor_parallel_size": get_device_count() or 1,
-            "gpu_memory_utilization": model_args.vllm_gpu_util,
-            "disable_log_stats": True,
-            "disable_log_requests": True,
-            "enforce_eager": model_args.vllm_enforce_eager,
-            "enable_lora": model_args.adapter_name_or_path is not None,
-            "max_lora_rank": model_args.vllm_max_lora_rank,
-        }
-        if self.template.mm_plugin.__class__.__name__ != "BasePlugin":
-            engine_args["limit_mm_per_prompt"] = {"image": 4, "video": 2}
+        launch_cmd = [
+            "python3 -m sglang.launch_server",
+            f"--model-path {model_args.model_name_or_path}",
+            f"--dtype {model_args.infer_dtype}",
+            f"--context-length {model_args.sglang_maxlen}",
+            f"--mem-fraction-static {model_args.sglang_mem_fraction}",
+            f"--tp-size {model_args.sglang_tp_size if model_args.sglang_tp_size != -1 else get_device_count() or 1}",
+            f"--download-dir {model_args.cache_dir}",
+            "--log-level error",
+        ]
+        launch_cmd = " ".join(launch_cmd)
+        logger.info_rank0(f"Starting SGLang server with command: {launch_cmd}")
+        try:
+            torch_gc()
+            self.server_process, port = launch_server_cmd(launch_cmd)
+            self.base_url = f"http://localhost:{port}"
+            atexit.register(self._cleanup_server)
 
-        if isinstance(model_args.vllm_config, dict):
-            engine_args.update(model_args.vllm_config)
+            logger.info_rank0(f"Waiting for SGLang server to be ready at {self.base_url}")
+            wait_for_server(self.base_url, timeout=300)
+            logger.info_rank0(f"SGLang server initialized successfully at {self.base_url}")
+            try:
+                response = requests.get(f"{self.base_url}/get_model_info", timeout=5)
+                if response.status_code == 200:
+                    model_info = response.json()
+                    logger.info(f"SGLang server model info: {model_info}")
+            except Exception as e:
+                logger.debug(f"Note: could not get model info: {str(e)}")
 
-        if getattr(config, "is_yi_vl_derived_model", None):
-            import vllm.model_executor.models.llava
+        except Exception as e:
+            logger.error(f"Failed to start SGLang server: {str(e)}")
+            self._cleanup_server()  # make sure to clean up any started process
+            raise RuntimeError(f"SGLang server initialization failed: {str(e)}.")
 
-            logger.info_rank0("Detected Yi-VL model, applying projector patch.")
-            vllm.model_executor.models.llava.LlavaMultiModalProjector = LlavaMultiModalProjectorForYiVLForVLLM
-
-        self.model = AsyncLLMEngine.from_engine_args(AsyncEngineArgs(**engine_args))
-        if model_args.adapter_name_or_path is not None:
-            self.lora_request = LoRARequest("default", 1, model_args.adapter_name_or_path[0])
-        else:
-            self.lora_request = None
+    def _cleanup_server(self):
+        r"""Clean up the server process when the engine is destroyed."""
+        if hasattr(self, "server_process") and self.server_process:
+            try:
+                logger.info("Terminating SGLang server process")
+                terminate_process(self.server_process)
+                logger.info("SGLang server process terminated")
+            except Exception as e:
+                logger.warning(f"Error terminating SGLang server: {str(e)}")
 
     async def _generate(
         self,
@@ -109,8 +133,7 @@ class VllmEngine(BaseEngine):
         videos: Optional[list["VideoInput"]] = None,
         audios: Optional[list["AudioInput"]] = None,
         **input_kwargs,
-    ) -> AsyncIterator["RequestOutput"]:
-        request_id = f"chatcmpl-{uuid.uuid4().hex}"
+    ) -> AsyncIterator[dict[str, Any]]:
         mm_input_dict = {"images": [], "videos": [], "audios": [], "imglens": [0], "vidlens": [0], "audlens": [0]}
         if images is not None:
             mm_input_dict.update({"images": images, "imglens": [len(images)]})
@@ -140,14 +163,13 @@ class VllmEngine(BaseEngine):
         top_k: Optional[float] = input_kwargs.pop("top_k", None)
         num_return_sequences: int = input_kwargs.pop("num_return_sequences", 1)
         repetition_penalty: Optional[float] = input_kwargs.pop("repetition_penalty", None)
-        length_penalty: Optional[float] = input_kwargs.pop("length_penalty", None)
         skip_special_tokens: Optional[bool] = input_kwargs.pop("skip_special_tokens", None)
         max_length: Optional[int] = input_kwargs.pop("max_length", None)
         max_new_tokens: Optional[int] = input_kwargs.pop("max_new_tokens", None)
         stop: Optional[Union[str, list[str]]] = input_kwargs.pop("stop", None)
 
-        if length_penalty is not None:
-            logger.warning_rank0("Length penalty is not supported by the vllm engine yet.")
+        if num_return_sequences != 1:
+            raise NotImplementedError("SGLang only supports n=1.")
 
         if "max_new_tokens" in self.generating_args:
             max_tokens = self.generating_args["max_new_tokens"]
@@ -163,69 +185,66 @@ class VllmEngine(BaseEngine):
         if max_new_tokens:
             max_tokens = max_new_tokens
 
-        sampling_params = SamplingParams(
-            n=num_return_sequences,
-            repetition_penalty=(
+        sampling_params = {
+            "temperature": temperature if temperature is not None else self.generating_args["temperature"],
+            "top_p": (top_p if top_p is not None else self.generating_args["top_p"]) or 1.0,  # top_p must > 0
+            "top_k": (top_k if top_k is not None else self.generating_args["top_k"]) or -1,  # top_k must > 0
+            "stop": stop,
+            "stop_token_ids": self.template.get_stop_token_ids(self.tokenizer),
+            "max_new_tokens": max_tokens,
+            "repetition_penalty": (
                 repetition_penalty if repetition_penalty is not None else self.generating_args["repetition_penalty"]
             )
             or 1.0,  # repetition_penalty must > 0
-            temperature=temperature if temperature is not None else self.generating_args["temperature"],
-            top_p=(top_p if top_p is not None else self.generating_args["top_p"]) or 1.0,  # top_p must > 0
-            top_k=(top_k if top_k is not None else self.generating_args["top_k"]) or -1,  # top_k must > 0
-            stop=stop,
-            stop_token_ids=self.template.get_stop_token_ids(self.tokenizer),
-            max_tokens=max_tokens,
-            skip_special_tokens=skip_special_tokens
+            "skip_special_tokens": skip_special_tokens
             if skip_special_tokens is not None
             else self.generating_args["skip_special_tokens"],
-        )
+        }
 
-        if images is not None:  # add image features
-            multi_modal_data = {
-                "image": self.template.mm_plugin._regularize_images(
-                    images,
-                    image_max_pixels=self.model_args.image_max_pixels,
-                    image_min_pixels=self.model_args.image_min_pixels,
-                )
+        def stream_request():
+            json_data = {
+                "input_ids": prompt_ids,
+                "sampling_params": sampling_params,
+                "stream": True,
             }
-        else:
-            multi_modal_data = None
+            response = requests.post(f"{self.base_url}/generate", json=json_data, stream=True)
+            if response.status_code != 200:
+                raise RuntimeError(f"SGLang server error: {response.status_code}, {response.text}")
 
-        result_generator = self.model.generate(
-            {"prompt_token_ids": prompt_ids, "multi_modal_data": multi_modal_data},
-            sampling_params=sampling_params,
-            request_id=request_id,
-            lora_request=self.lora_request,
-        )
-        return result_generator
+            for chunk in response.iter_lines(decode_unicode=False):
+                chunk = str(chunk.decode("utf-8"))
+                if chunk == "data: [DONE]":
+                    break
+
+                if chunk and chunk.startswith("data:"):
+                    yield json.loads(chunk[5:].strip("\n"))
+
+        return await asyncio.to_thread(stream_request)
 
     @override
     async def chat(
         self,
-        messages: list[dict[str, str]],
+        messages: Sequence[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        images: Optional[list["ImageInput"]] = None,
-        videos: Optional[list["VideoInput"]] = None,
-        audios: Optional[list["AudioInput"]] = None,
+        images: Optional[Sequence["ImageInput"]] = None,
+        videos: Optional[Sequence["VideoInput"]] = None,
+        audios: Optional[Sequence["AudioInput"]] = None,
         **input_kwargs,
     ) -> list["Response"]:
         final_output = None
         generator = await self._generate(messages, system, tools, images, videos, audios, **input_kwargs)
-        async for request_output in generator:
+        for request_output in generator:
             final_output = request_output
 
-        results = []
-        for output in final_output.outputs:
-            results.append(
-                Response(
-                    response_text=output.text,
-                    response_length=len(output.token_ids),
-                    prompt_length=len(final_output.prompt_token_ids),
-                    finish_reason=output.finish_reason,
-                )
+        results = [
+            Response(
+                response_text=final_output["text"],
+                response_length=final_output["meta_info"]["completion_tokens"],
+                prompt_length=final_output["meta_info"]["prompt_tokens"],
+                finish_reason="stop" if final_output["meta_info"]["finish_reason"] == "stop" else "length",
             )
-
+        ]
         return results
 
     @override
@@ -241,9 +260,9 @@ class VllmEngine(BaseEngine):
     ) -> AsyncGenerator[str, None]:
         generated_text = ""
         generator = await self._generate(messages, system, tools, images, videos, audios, **input_kwargs)
-        async for result in generator:
-            delta_text = result.outputs[0].text[len(generated_text) :]
-            generated_text = result.outputs[0].text
+        for result in generator:
+            delta_text = result["text"][len(generated_text) :]
+            generated_text = result["text"]
             yield delta_text
 
     @override
@@ -252,4 +271,12 @@ class VllmEngine(BaseEngine):
         batch_input: list[str],
         **input_kwargs,
     ) -> list[float]:
-        raise NotImplementedError("vLLM engine does not support `get_scores`.")
+        raise NotImplementedError("SGLang engine does not support `get_scores`.")
+
+    def __del__(self):
+        r"""Ensure server is cleaned up when object is deleted."""
+        self._cleanup_server()
+        try:
+            atexit.unregister(self._cleanup_server)
+        except Exception:
+            pass
