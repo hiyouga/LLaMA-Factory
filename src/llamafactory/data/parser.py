@@ -29,7 +29,7 @@ class DatasetAttr:
     r"""Dataset attributes."""
 
     # basic configs
-    load_from: Literal["hf_hub", "ms_hub", "om_hub", "script", "file", "s3"]
+    load_from: Literal["hf_hub", "ms_hub", "om_hub", "script", "file"]
     dataset_name: str
     formatting: Literal["alpaca", "sharegpt"] = "alpaca"
     ranking: bool = False
@@ -120,8 +120,6 @@ def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -
                 load_from = "ms_hub"
             elif use_openmind():
                 load_from = "om_hub"
-            elif name.startswith("s3://"):
-                load_from = "s3"
             else:
                 load_from = "hf_hub"
             dataset_attr = DatasetAttr(load_from, dataset_name=name)
@@ -134,15 +132,12 @@ def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -
         has_hf_url = "hf_hub_url" in dataset_info[name]
         has_ms_url = "ms_hub_url" in dataset_info[name]
         has_om_url = "om_hub_url" in dataset_info[name]
-        has_s3_url = "s3://" in dataset_info[name]
 
-        if has_hf_url or has_ms_url or has_om_url or has_s3_url:
+        if has_hf_url or has_ms_url or has_om_url:
             if has_ms_url and (use_modelscope() or not has_hf_url):
                 dataset_attr = DatasetAttr("ms_hub", dataset_name=dataset_info[name]["ms_hub_url"])
             elif has_om_url and (use_openmind() or not has_hf_url):
                 dataset_attr = DatasetAttr("om_hub", dataset_name=dataset_info[name]["om_hub_url"])
-            elif has_s3_url:
-                dataset_attr = DatasetAttr("s3", dataset_name=dataset_info[name]["s3_url"])
             else:
                 dataset_attr = DatasetAttr("hf_hub", dataset_name=dataset_info[name]["hf_hub_url"])
         elif "script_url" in dataset_info[name]:

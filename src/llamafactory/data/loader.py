@@ -56,35 +56,9 @@ def _load_single_dataset(
     training_args: "Seq2SeqTrainingArguments",
 ) -> Union["Dataset", "IterableDataset"]:
     r"""Load a single dataset and aligns it to the standard format."""
-    # logger.info_rank0(f"Loading dataset {dataset_attr}...")
-    logger.info_rank0(f"TEST MODS")
-
-    if dataset_attr.load_from == "s3":
-        logger.info_rank0(f"Downloading dataset from S3: {dataset_attr.dataset_name}")
-        if dataset_attr.dataset_name.startswith("s3://"):
-            import tempfile
-            import pyarrow.fs as fs
-            import logging
-
-            # Parse S3 URI into bucket and key components
-            s3_uri = dataset_attr.dataset_name
-            key = "/".join(s3_uri.replace("s3://", "").split("/")[1:])
-            # Create temporary directory for downloaded files
-            temp_dir = tempfile.mkdtemp(prefix="llamafactory_")
-            logging.info(f"Created temporary directory: {temp_dir}")
-            # Download the dataset file
-            local_file_path = os.path.join(temp_dir, os.path.basename(key))
-            try:
-                logging.info(f"Downloading {s3_uri} to {local_file_path}")
-                fs.copy_files(s3_uri, local_file_path)
-                # Update dataset_dir to point to the local path
-                dataset_attr.dataset_name = local_file_path
-                logging.info(f"Successfully downloaded S3 file. Using local path: {dataset_attr.dataset_name}")
-            except Exception as e:
-                raise ValueError(f"Failed to download dataset from S3: {str(e)}")
-
+    logger.info_rank0(f"Loading dataset {dataset_attr}...")
     data_path, data_name, data_dir, data_files = None, None, None, None
-    if dataset_attr.load_from in ["hf_hub", "ms_hub", "om_hub", "s3"]:
+    if dataset_attr.load_from in ["hf_hub", "ms_hub", "om_hub"]:
         data_path = dataset_attr.dataset_name
         data_name = dataset_attr.subset
         data_dir = dataset_attr.folder
@@ -150,13 +124,6 @@ def _load_single_dataset(
             streaming=data_args.streaming,
         )
     else:
-        # does this work with s3?
-        logger.info_rank0("loading dataset from hf_hub and s3")
-        logger.info_rank0(f"data_path: {data_path}")
-        logger.info_rank0(f"data_name: {data_name}")
-        logger.info_rank0(f"data_dir: {data_dir}")
-        logger.info_rank0(f"data_files: {data_files}")
-
         dataset = load_dataset(
             path=data_path,
             name=data_name,
@@ -186,11 +153,6 @@ def _load_single_dataset(
         max_samples = min(data_args.max_samples, len(dataset))
         dataset = dataset.select(range(max_samples))
 
-    logger.info_rank0(f"Loaded dataset {dataset_attr} with {len(dataset)} examples.")
-    logger.info_rank0(f"Dataset: {dataset}")
-    logger.info_rank0(f"Dataset columns: {dataset.column_names}")
-    logger.info_rank0(f"Dataset args: {data_args}")
-    logger.info_rank0(f"Dataset training args: {training_args}")
     return align_dataset(dataset, dataset_attr, data_args, training_args)
 
 
