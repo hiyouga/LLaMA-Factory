@@ -1,6 +1,8 @@
 model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
 adapter_name_or_path: saves/llama3-8b/lora/sft
 template: llama3
-trust_remote_code: true
-infer_backend: huggingface  # choices: [huggingface, vllm]
+finetuning_type: lora
+use_habana: true
+use_lazy_mode: true
+use_hpu_graphs: true
 trust_remote_code: true

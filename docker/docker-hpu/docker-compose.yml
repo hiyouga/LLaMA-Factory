@@ -1,0 +1,37 @@
+services:
+  llamafactory:
+    build:
+      dockerfile: ./docker/docker-hpu/Dockerfile
+      context: ../..
+      args:
+        INSTALL_BNB: false
+        INSTALL_VLLM: false
+        INSTALL_DEEPSPEED: false
+        INSTALL_FLASHATTN: false
+        INSTALL_LIGER_KERNEL: false
+        INSTALL_HQQ: false
+        INSTALL_EETQ: false
+        PIP_INDEX: https://pypi.org/simple
+    container_name: llamafactory
+    environment:
+      - HABANA_VISIBLE_DEVICES=${HABANA_VISIBLE_DEVICES:-all}
+      - OMPI_MCA_btl_vader_single_copy_mechanism=${OMPI_MCA_btl_vader_single_copy_mechanism:-none}
+    volumes:
+      - ../../hf_cache:/root/.cache/huggingface
+      - ../../ms_cache:/root/.cache/modelscope
+      - ../../om_cache:/root/.cache/openmind
+      - ../../data:/app/data
+      - ../../output:/app/output
+    cap_add:
+      - SYS_NICE
+    cap_drop:
+      - NET_RAW
+    ports:
+      - "7860:7860"
+      - "8000:8000"
+    ipc: host
+    tty: true
+    shm_size: '16gb'
+    stdin_open: true
+    command: bash
+    restart: unless-stopped
