@@ -877,6 +877,7 @@ register_template(
     stop_words=["<|eos|>"]
 )
 
+
 register_template(
     name="index",
     format_user=StringFormatter(slots=["reserved_0{{content}}reserved_1"]),

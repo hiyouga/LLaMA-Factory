@@ -237,7 +237,7 @@ https://github.com/user-attachments/assets/e6ce34b0-52d5-4f3e-a830-592106c4c272
 | [GLM-4](https://huggingface.co/THUDM)                             | 9B                               | glm4                |
 | [GPT-2](https://huggingface.co/openai-community)                  | 0.1B/0.4B/0.8B/1.5B              | -                   |
 | [Granite 3.0-3.1](https://huggingface.co/ibm-granite)             | 1B/2B/3B/8B                      | granite3            |
-| [Hunyuan](https://huggingface.co/tencent/Hunyuan-7B-Instruct)    | 7B                               | Hunyuan             |
+| [Hunyuan](https://huggingface.co/tencent/Hunyuan-7B-Instruct) | 7B | hunyuan |
 | [Index](https://huggingface.co/IndexTeam)                         | 1.9B                             | index               |
 | [InternLM 2-3](https://huggingface.co/internlm)                   | 7B/8B/20B                        | intern2             |
 | [Llama](https://github.com/facebookresearch/llama)                | 7B/13B/33B/65B                   | -                   |
