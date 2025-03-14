@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from typing import TYPE_CHECKING, Any, Optional
+from transformers import AutoConfig
 
 from ...extras import logging
 from ...extras.misc import get_current_device
@@ -27,8 +28,9 @@ if TYPE_CHECKING:
 logger = logging.get_logger(__name__)
 
 
-def is_multimodal(model_type: str) -> bool:
+def is_multimodal(model_name_or_path: str) -> bool:
     r"""Judge if the model is a vision language model."""
+    model_type = AutoConfig.from_pretrained(model_name_or_path).model_type
     return model_type in list(MULTIMODAL_SUPPORTED_MODELS.value())
 
 
