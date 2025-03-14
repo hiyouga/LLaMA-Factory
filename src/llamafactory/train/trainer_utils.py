@@ -515,6 +515,40 @@ def create_custom_scheduler(
     num_training_steps: int,
     optimizer: Optional["torch.optim.Optimizer"] = None,
 ) -> None:
+    # 处理warmup_stable_decay学习率调度器的参数
+    if training_args.lr_scheduler_type == "warmup_stable_decay":
+        # 计算num_warmup_steps
+        num_warmup_steps = training_args.get_warmup_steps(num_training_steps)
+        
+        # 计算num_stable_steps和num_decay_steps
+        # 默认设置：稳定阶段占非预热部分的1/3，衰减阶段占非预热部分的2/3
+        remaining_steps = num_training_steps - num_warmup_steps
+        num_stable_steps = remaining_steps // 3
+        num_decay_steps = remaining_steps - num_stable_steps
+        
+        # 首先获取training_args.lr_scheduler_kwargs中的值
+        scheduler_kwargs = training_args.lr_scheduler_kwargs or {}
+        
+        # 只在缺少必需参数时才使用默认值
+        default_kwargs = {
+            "num_stable_steps": num_stable_steps,
+            "num_decay_steps": num_decay_steps,
+            "min_lr_ratio": 0.0,  # 添加默认值
+            "num_cycles": 0.5  # 添加默认值
+        }
+        
+        # 只添加scheduler_kwargs中不存在的默认值
+        for key, value in default_kwargs.items():
+            if key not in scheduler_kwargs:
+                scheduler_kwargs[key] = value
+        
+        # 更新training_args.lr_scheduler_kwargs，这样DeepSpeed也能访问到这些参数
+        training_args.lr_scheduler_kwargs = scheduler_kwargs
+        scheduler_specific_kwargs = scheduler_kwargs
+    else:
+        scheduler_specific_kwargs = training_args.lr_scheduler_kwargs
+
+    # 处理DummyOptimizer的情况
     if optimizer is not None and isinstance(optimizer, DummyOptimizer):
         optimizer_dict = optimizer.optimizer_dict
         scheduler_dict: dict[torch.nn.Parameter, torch.optim.lr_scheduler.LRScheduler] = {}
@@ -525,7 +559,7 @@ def create_custom_scheduler(
                 optimizer=optimizer_dict[param],
                 num_warmup_steps=training_args.get_warmup_steps(num_training_steps),
                 num_training_steps=num_training_steps,
-                scheduler_specific_kwargs=training_args.lr_scheduler_kwargs,
+                scheduler_specific_kwargs=scheduler_specific_kwargs,
             )
 
         def scheduler_hook(param: "torch.nn.Parameter"):
