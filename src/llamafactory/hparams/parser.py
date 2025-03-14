@@ -31,7 +31,7 @@ from transformers.training_args import ParallelMode
 from transformers.utils import is_torch_bf16_gpu_available, is_torch_npu_available
 
 from ..extras import logging
-from ..extras.constants import CHECKPOINT_NAMES
+from ..extras.constants import CHECKPOINT_NAMES, EngineName
 from ..extras.misc import check_dependencies, check_version, get_current_device, is_env_enabled
 from .data_args import DataArguments
 from .evaluation_args import EvaluationArguments
@@ -134,9 +134,12 @@ def _check_extra_dependencies(
     if model_args.mixture_of_depths is not None:
         check_version("mixture-of-depth>=1.1.6", mandatory=True)
 
-    if model_args.infer_backend == "vllm":
+    if model_args.infer_backend == EngineName.VLLM:
         check_version("vllm>=0.4.3,<=0.7.3")
         check_version("vllm", mandatory=True)
+    elif model_args.infer_backend == EngineName.SGLANG:
+        check_version("sglang>=0.4.4")
+        check_version("sglang", mandatory=True)
 
     if finetuning_args.use_galore:
         check_version("galore_torch", mandatory=True)
