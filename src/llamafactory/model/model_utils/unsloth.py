@@ -27,9 +27,9 @@ if TYPE_CHECKING:
 logger = logging.get_logger(__name__)
 
 
-def is_multimodal(model_name: str) -> bool:
+def is_multimodal(model_type: str) -> bool:
     r"""Judge if the model is a vision language model."""
-    return model_name in list(MULTIMODAL_SUPPORTED_MODELS.keys())
+    return model_type in list(MULTIMODAL_SUPPORTED_MODELS.value())
 
 
 def _get_unsloth_kwargs(
