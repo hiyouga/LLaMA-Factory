@@ -2743,3 +2743,14 @@ register_model_group(
     },
     template="zephyr",
 )
+
+
+register_model_group(
+    models={
+        "Hunyuan-7B-Instruct": {
+            DownloadSource.DEFAULT: "tencent/Hunyuan-7B-Instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Hunyuan-7B-Instruct",
+        },
+    },
+    template="hunyuan",
+)
