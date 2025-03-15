@@ -224,8 +224,8 @@ https://github.com/user-attachments/assets/e6ce34b0-52d5-4f3e-a830-592106c4c272
 
 ## 模型
 
-| 模型名                                                             | 参数量                              | Template            |
-| ----------------------------------------------------------------- |----------------------------------| ------------------- |
+| 模型名                                                             | 参数量                            | Template            |
+| ----------------------------------------------------------------- | -------------------------------- | ------------------- |
 | [Baichuan 2](https://huggingface.co/baichuan-inc)                 | 7B/13B                           | baichuan2           |
 | [BLOOM/BLOOMZ](https://huggingface.co/bigscience)                 | 560M/1.1B/1.7B/3B/7.1B/176B      | -                   |
 | [ChatGLM3](https://huggingface.co/THUDM)                          | 6B                               | chatglm3            |
