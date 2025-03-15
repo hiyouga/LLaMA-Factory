@@ -106,6 +106,7 @@ class AttentionFunction(str, Enum):
 class EngineName(str, Enum):
     HF = "huggingface"
     VLLM = "vllm"
+    SGLANG = "sglang"
 
 
 class DownloadSource(str, Enum):
@@ -805,6 +806,17 @@ register_model_group(
         },
     },
     template="granite3",
+)
+
+
+register_model_group(
+    models={
+        "Hunyuan-7B-Instruct": {
+            DownloadSource.DEFAULT: "tencent/Hunyuan-7B-Instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Hunyuan-7B-Instruct",
+        },
+    },
+    template="hunyuan",
 )
 
 

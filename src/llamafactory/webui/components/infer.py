@@ -34,7 +34,7 @@ def create_infer_tab(engine: "Engine") -> dict[str, "Component"]:
     elem_dict = dict()
 
     with gr.Row():
-        infer_backend = gr.Dropdown(choices=["huggingface", "vllm"], value="huggingface")
+        infer_backend = gr.Dropdown(choices=["huggingface", "vllm", "sglang"], value="huggingface")
         infer_dtype = gr.Dropdown(choices=["auto", "float16", "bfloat16", "float32"], value="auto")
 
     with gr.Row():
