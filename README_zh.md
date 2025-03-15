@@ -224,8 +224,8 @@ https://github.com/user-attachments/assets/e6ce34b0-52d5-4f3e-a830-592106c4c272
 
 ## 模型
 
-| 模型名                                                             | 参数量                            | Template            |
-| ----------------------------------------------------------------- | -------------------------------- | ------------------- |
+| 模型名                                                             | 参数量                              | Template            |
+| ----------------------------------------------------------------- |----------------------------------| ------------------- |
 | [Baichuan 2](https://huggingface.co/baichuan-inc)                 | 7B/13B                           | baichuan2           |
 | [BLOOM/BLOOMZ](https://huggingface.co/bigscience)                 | 560M/1.1B/1.7B/3B/7.1B/176B      | -                   |
 | [ChatGLM3](https://huggingface.co/THUDM)                          | 6B                               | chatglm3            |
@@ -239,6 +239,7 @@ https://github.com/user-attachments/assets/e6ce34b0-52d5-4f3e-a830-592106c4c272
 | [GLM-4](https://huggingface.co/THUDM)                             | 9B                               | glm4                |
 | [GPT-2](https://huggingface.co/openai-community)                  | 0.1B/0.4B/0.8B/1.5B              | -                   |
 | [Granite 3.0-3.1](https://huggingface.co/ibm-granite)             | 1B/2B/3B/8B                      | granite3            |
+| [Hunyuan](https://huggingface.co/tencent/)                        | 7B                               |                     |
 | [Index](https://huggingface.co/IndexTeam)                         | 1.9B                             | index               |
 | [InternLM 2-3](https://huggingface.co/internlm)                   | 7B/8B/20B                        | intern2             |
 | [Llama](https://github.com/facebookresearch/llama)                | 7B/13B/33B/65B                   | -                   |
