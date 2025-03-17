@@ -34,7 +34,7 @@
 
 **微调大模型可以像这样轻松…**
 
-https://github.com/user-attachments/assets/e6ce34b0-52d5-4f3e-a830-592106c4c272
+https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 
 选择你的打开方式：
 
