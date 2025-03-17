@@ -32,7 +32,7 @@ logger = logging.get_logger(__name__)
 def is_multimodal(model_name_or_path: str) -> bool:
     r"""Judge if the model is a vision language model."""
     model_type = AutoConfig.from_pretrained(model_name_or_path).model_type
-    return model_type in list(MULTIMODAL_SUPPORTED_MODELS.value())
+    return model_type in list(MULTIMODAL_SUPPORTED_MODELS.values())
 
 
 def _get_unsloth_kwargs(
