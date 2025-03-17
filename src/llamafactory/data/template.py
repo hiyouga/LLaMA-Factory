@@ -777,15 +777,17 @@ register_template(
 
 register_template(
     name="default",
-    format_user=StringFormatter(slots=["Human: {{content}}\nAssistant:"]),
+    format_user=StringFormatter(slots=["Human: {{content}}", {"eos_token"}, "\nAssistant:"]),
     format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}, "\n"]),
-    format_system=StringFormatter(slots=["System: {{content}}\n"]),
+    format_system=StringFormatter(slots=["System: {{content}}", {"eos_token"}, "\n"]),
+    replace_jinja_template=True,
 )
 
 
 register_template(
     name="empty",
     format_assistant=StringFormatter(slots=["{{content}}"]),
+    replace_jinja_template=True,
 )
 
 
@@ -809,6 +811,7 @@ register_template(
     name="fewshot",
     format_assistant=StringFormatter(slots=["{{content}}\n\n"]),
     efficient_eos=True,
+    replace_jinja_template=True,
 )
 
 
