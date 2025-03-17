@@ -18,7 +18,7 @@ from transformers import AutoConfig
 
 from ...extras import logging
 from ...extras.misc import get_current_device
-from ..extras.constants import MULTIMODAL_SUPPORTED_MODELS
+from ...extras.constants import MULTIMODAL_SUPPORTED_MODELS
 
 
 if TYPE_CHECKING:
