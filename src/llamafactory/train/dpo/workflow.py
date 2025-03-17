@@ -51,6 +51,7 @@ def run_dpo(
         model=model,
         pad_to_multiple_of=8,
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
+        require_position_ids=model_args.sequence_parallel_size > 1,
         **tokenizer_module,
     )
 

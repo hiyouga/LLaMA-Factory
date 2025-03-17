@@ -18,7 +18,7 @@ from .pretrain import PretrainDatasetProcessor
 from .processor_utils import DatasetProcessor
 from .supervised import PackedSupervisedDatasetProcessor, SupervisedDatasetProcessor
 from .unsupervised import UnsupervisedDatasetProcessor
-
+from .sequence_parallel import SequenceParallelPaddingProcessor, SequenceParallelSplitProcessor
 
 __all__ = [
     "DatasetProcessor",
@@ -28,4 +28,6 @@ __all__ = [
     "PretrainDatasetProcessor",
     "SupervisedDatasetProcessor",
     "UnsupervisedDatasetProcessor",
+    "SequenceParallelPaddingProcessor",
+    "SequenceParallelSplitProcessor"
 ]

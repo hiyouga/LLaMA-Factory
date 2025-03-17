@@ -62,6 +62,7 @@ def run_sft(
         block_diag_attn=model_args.block_diag_attn,
         attn_implementation=getattr(model.config, "_attn_implementation", None),
         compute_dtype=model_args.compute_dtype,
+        require_position_ids=model_args.sequence_parallel_size > 1,
         **tokenizer_module,
     )
 

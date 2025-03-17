@@ -536,7 +536,7 @@ def create_custom_scheduler(
 
 
 def get_batch_logps(
-    logits: "torch.Tensor", labels: "torch.Tensor", label_pad_token_id: int = IGNORE_INDEX
+    logits: "torch.Tensor", labels: "torch.Tensor", label_pad_token_id: int = IGNORE_INDEX, shift_labels: bool = True
 ) -> tuple["torch.Tensor", "torch.Tensor"]:
     r"""Compute the log probabilities of the given labels under the given logits.
 
@@ -547,9 +547,9 @@ def get_batch_logps(
     """
     if logits.shape[:-1] != labels.shape:
         raise ValueError("Logits (batchsize x seqlen) and labels must have the same shape.")
-
-    labels = labels[:, 1:].clone()
-    logits = logits[:, :-1, :]
+    if shift_labels:
+        labels = labels[:, 1:].clone()
+        logits = logits[:, :-1, :]
     loss_mask = labels != label_pad_token_id
     labels[labels == label_pad_token_id] = 0  # dummy token
     per_token_logps = torch.gather(logits.log_softmax(-1), dim=2, index=labels.unsqueeze(2)).squeeze(2)

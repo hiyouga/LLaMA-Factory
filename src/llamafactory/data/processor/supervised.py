@@ -107,6 +107,7 @@ class SupervisedDatasetProcessor(DatasetProcessor):
             )
             model_inputs["input_ids"].append(input_ids)
             model_inputs["attention_mask"].append([1] * len(input_ids))
+            model_inputs["position_ids"].append(list(range(len(input_ids))))
             model_inputs["labels"].append(labels)
             model_inputs["images"].append(examples["_images"][i])
             model_inputs["videos"].append(examples["_videos"][i])
@@ -192,6 +193,7 @@ class PackedSupervisedDatasetProcessor(SupervisedDatasetProcessor):
 
             model_inputs["input_ids"].append(packed_input_ids)
             model_inputs["attention_mask"].append(packed_attention_masks)
+            model_inputs["position_ids"].append(list(range(len(input_ids))))
             model_inputs["labels"].append(packed_labels)
             model_inputs["images"].append(packed_images or None)
             model_inputs["videos"].append(packed_videos or None)

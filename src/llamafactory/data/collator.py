@@ -218,8 +218,11 @@ class SFTDataCollatorWith4DAttentionMask(MultiModalDataCollatorForSeq2Seq):
     block_diag_attn: bool = False
     attn_implementation: Literal["eager", "sdpa", "flash_attention_2"] = "eager"
     compute_dtype: "torch.dtype" = torch.float32
+    require_position_ids: bool = False
 
     def __call__(self, features: list[dict[str, Any]]) -> dict[str, "torch.Tensor"]:
+        if not self.require_position_ids:
+            features = [{k: v for k, v in d.items() if k != "position_ids"} for d in features]
         features = super().__call__(features)
         if self.block_diag_attn and self.attn_implementation != "flash_attention_2":
             features["attention_mask"] = prepare_4d_attention_mask(features["attention_mask"], self.compute_dtype)
@@ -234,6 +237,8 @@ class SFTDataCollatorWith4DAttentionMask(MultiModalDataCollatorForSeq2Seq):
 @dataclass
 class PairwiseDataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
     r"""Data collator for pairwise data."""
+
+    require_position_ids: bool = False
 
     def __call__(self, features: list[dict[str, Any]]) -> dict[str, "torch.Tensor"]:
         r"""Pad batched data to the longest sequence in the batch.
@@ -252,6 +257,9 @@ class PairwiseDataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
                     "videos": feature["videos"],
                     "audios": feature["audios"],
                 }
+                if self.require_position_ids:
+                    # if requires, would be padded to cutoff_len in preprocessing
+                    target_feature["position_ids"] = feature[f"{key}_position_ids"]
                 concatenated_features.append(target_feature)
 
         return super().__call__(concatenated_features)

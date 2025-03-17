@@ -22,7 +22,9 @@ from types import MethodType
 from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import torch
+import torch.distributed as dist
 import torch.nn.functional as F
+from torch.utils.data import SequentialSampler
 from transformers import Trainer
 from trl import DPOTrainer
 from trl.trainer import disable_dropout_in_model
@@ -74,6 +76,7 @@ class CustomDPOTrainer(DPOTrainer):
         self.ref_model = ref_model
         self._stored_metrics = defaultdict(lambda: defaultdict(list))
 
+        self._has_dummy_forwarded = False
         # dpo hyperparams
         self.beta = finetuning_args.pref_beta
         self.loss_type = finetuning_args.pref_loss
@@ -122,7 +125,7 @@ class CustomDPOTrainer(DPOTrainer):
 
     @override
     def _get_train_sampler(self) -> Optional["torch.utils.data.Sampler"]:
-        if self.finetuning_args.disable_shuffling:
+        if self.finetuning_args.disable_shuffling or self.model.sequence_parallel_group is not None:
             return torch.utils.data.SequentialSampler(self.train_dataset)
 
         return super()._get_train_sampler()
@@ -187,7 +190,9 @@ class CustomDPOTrainer(DPOTrainer):
             batch = nested_detach(batch, clone=True)  # avoid error
 
         all_logits: torch.Tensor = model(**batch, return_dict=True, use_cache=False).logits.to(torch.float32)
-        all_logps, valid_length = get_batch_logps(logits=all_logits, labels=batch["labels"])
+        all_logps, valid_length = get_batch_logps(
+            logits=all_logits, labels=batch["labels"], shift_labels=model.sequence_parallel_group is None
+        )  # shift labels if no sequence parallel
         if self.loss_type in ["ipo", "orpo", "simpo"]:
             all_logps = all_logps / valid_length
 
@@ -199,7 +204,7 @@ class CustomDPOTrainer(DPOTrainer):
         if self.loss_type in ["ipo", "orpo", "simpo"]:
             return chosen_logps, rejected_logps, chosen_logits, rejected_logits, chosen_logps
         else:
-            return chosen_logps, rejected_logps, chosen_logits, rejected_logits, chosen_logps / chosen_length
+            return chosen_logps, rejected_logps, chosen_logits, rejected_logits, chosen_length
 
     @override
     def compute_reference_log_probs(
@@ -235,16 +240,26 @@ class CustomDPOTrainer(DPOTrainer):
             policy_rejected_logps,
             policy_chosen_logits,
             policy_rejected_logits,
-            policy_chosen_logps_avg,
+            policy_chosen_length,
         ) = self.concatenated_forward(model, batch)
 
         reference_chosen_logps, reference_rejected_logps = self.compute_reference_log_probs(model, batch)
+        # NOTE: correct logits reduction if necessary. Now we only reduce logps
+        sp_group = model.sequence_parallel_group
+        if sp_group is not None:
+            dist.all_reduce(policy_chosen_logps, op=dist.ReduceOp.SUM, group=sp_group)
+            dist.all_reduce(policy_rejected_logps, op=dist.ReduceOp.SUM, group=sp_group)
+            dist.all_reduce(reference_chosen_logps, op=dist.ReduceOp.SUM, group=sp_group)
+            dist.all_reduce(reference_rejected_logps, op=dist.ReduceOp.SUM, group=sp_group)
+            dist.all_reduce(policy_chosen_length, op=dist.ReduceOp.SUM, group=sp_group)
+
         losses, chosen_rewards, rejected_rewards = self.compute_preference_loss(
             policy_chosen_logps,
             policy_rejected_logps,
             reference_chosen_logps,
             reference_rejected_logps,
         )
+        policy_chosen_logps_avg = policy_chosen_logps / policy_chosen_length
         sft_loss = -policy_chosen_logps_avg
         if self.ftx_gamma > 1e-6:
             losses += self.ftx_gamma * sft_loss
@@ -295,3 +310,14 @@ class CustomDPOTrainer(DPOTrainer):
                 logs[key] = metric
 
         return Trainer.log(self, logs, *args, **kwargs)
+
+    @override
+    def training_step(self, model, inputs, *args, **kwargs):
+        # TODO: sequence_parallel modes other than 'zigzag-ring' may not need dummy forward
+        if not self._has_dummy_forwarded and model.sequence_parallel_group is not None:
+            model.eval()
+            with torch.no_grad():
+                _ = model(**inputs)
+            model.train()
+            self._has_dummy_forwarded = True
+        return super().training_step(model, inputs, *args, **kwargs)

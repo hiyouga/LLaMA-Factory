@@ -44,6 +44,23 @@ class DatasetProcessor(ABC):
         r"""Print a data example to stdout."""
         ...
 
+@dataclass
+class SequenceParallelProcessor(ABC):
+    r"""
+    A class for data processors.
+    """
+
+    tokenizer: "PreTrainedTokenizer"
+    data_args: "DataArguments"
+    model_args: "ModelArguments"
+
+    @abstractmethod
+    def preprocess_dataset(self, examples: dict[str, list[Any]]) -> dict[str, list[Any]]:
+        r"""
+        Builds model inputs from the examples.
+        """
+        ...
+
 
 def search_for_fit(numbers: list[int], capacity: int) -> int:
     r"""Find the index of largest number that fits into the knapsack with the given capacity."""
