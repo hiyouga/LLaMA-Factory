@@ -73,8 +73,10 @@ class AlpacaDatasetConverter(DatasetConverter):
         if self.dataset_attr.prompt and example[self.dataset_attr.prompt]:
             query.append(example[self.dataset_attr.prompt])
 
-        if self.dataset_attr.query and example[self.dataset_attr.query]:
-            query.append(example[self.dataset_attr.query])
+        if self.dataset_attr.query:
+            query_value = example.get(self.dataset_attr.query)
+            if query_value is not None:
+                query.append(query_value)
 
         prompt.append({"role": Role.USER.value, "content": "\n".join(query)})  # "prompt\nquery"
 
