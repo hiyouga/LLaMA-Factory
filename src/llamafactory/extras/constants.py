@@ -134,7 +134,8 @@ def register_model_group(
         ):
             DEFAULT_TEMPLATE[name] = template
         if multimodal:
-            MULTIMODAL_SUPPORTED_MODELS[name] = template
+            model_type = AutoConfig.from_pretrained(path[DownloadSource.DEFAULT]).model_type
+            MULTIMODAL_SUPPORTED_MODELS[name] = model_type
 
 
 register_model_group(
