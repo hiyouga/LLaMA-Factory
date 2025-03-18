@@ -32,7 +32,13 @@ logger = logging.get_logger(__name__)
 def is_multimodal(model_name_or_path: str) -> bool:
     r"""Judge if the model is a vision language model."""
     model_type = AutoConfig.from_pretrained(model_name_or_path).model_type
-    return model_type in list(MULTIMODAL_SUPPORTED_MODELS.values())
+    is_vision_model = hasattr(config, 'vision_config') or \
+                    hasattr(config, 'image_size') or \
+                    hasattr(config, 'vision_tower') or \
+                    'vision' in config.model_type.lower() or \
+                    'clip' in config.model_type.lower() or \
+                    'vit' in config.model_type.lower()
+    return is_vision_model
 
 
 def _get_unsloth_kwargs(
