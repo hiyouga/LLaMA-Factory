@@ -884,8 +884,8 @@ register_template(
     format_user=StringFormatter(slots=["<|bos|>user\n{{content}}<|eos|>\n<|bos|>assistant\n"]),
     format_assistant=StringFormatter(slots=["{{content}}<|eos|>\n"]),
     format_system=StringFormatter(slots=["<|bos|>system\n{{content}}<|eos|>\n"]),
-    format_prefix=EmptyFormatter(slots=["<|bos|>"] ),
-    stop_words=["<|eos|>"]
+    format_prefix=EmptyFormatter(slots=["<|bos|>"]),
+    stop_words=["<|eos|>"],
 )
 
 
