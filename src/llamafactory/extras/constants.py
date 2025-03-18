@@ -60,7 +60,7 @@ METHODS = ["full", "freeze", "lora"]
 
 MOD_SUPPORTED_MODELS = {"bloom", "falcon", "gemma", "llama", "mistral", "mixtral", "phi", "starcoder2"}
 
-MULTIMODAL_SUPPORTED_MODELS = dict()
+MULTIMODAL_SUPPORTED_MODELS = set()
 
 PEFT_METHODS = {"lora"}
 
@@ -134,8 +134,7 @@ def register_model_group(
         ):
             DEFAULT_TEMPLATE[name] = template
         if multimodal:
-            model_type = AutoConfig.from_pretrained(path[DownloadSource.DEFAULT]).model_type
-            MULTIMODAL_SUPPORTED_MODELS[name] = model_type
+            MULTIMODAL_SUPPORTED_MODELS.add(name)
 
 
 register_model_group(
