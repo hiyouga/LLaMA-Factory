@@ -29,7 +29,7 @@ logger = logging.get_logger(__name__)
 
 def is_multimodal(model_name_or_path: str) -> bool:
     r"""Judge if the model is a vision language model."""
-    model_type = AutoConfig.from_pretrained(model_name_or_path).model_type
+    config = AutoConfig.from_pretrained(model_name_or_path)
     is_vision_model = hasattr(config, 'vision_config') or \
                     hasattr(config, 'image_size') or \
                     hasattr(config, 'vision_tower') or \
