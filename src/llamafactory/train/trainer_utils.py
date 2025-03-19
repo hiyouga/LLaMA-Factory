@@ -44,8 +44,7 @@ if is_galore_available():
 
 
 if is_apollo_available():
-    from apollo_torch import APOLLOAdamW  # type: ignore
-
+    from apollo_torch import APOLLOAdamW, QAPOLLOAdamW  # type: ignore
 
 if is_ray_available():
     from ray.train import RunConfig, ScalingConfig
@@ -362,6 +361,104 @@ def _create_apollo_optimizer(
     logger.info_rank0(f"Using APOLLO optimizer with args: {apollo_kwargs}.")
     return optimizer
 
+def _create_qapollo_optimizer(
+    model: "PreTrainedModel",
+    training_args: "TrainingArguments",
+    finetuning_args: "FinetuningArguments",
+) -> "torch.optim.Optimizer":
+    if len(finetuning_args.qapollo_target) == 1 and finetuning_args.qapollo_target[0] == "all":
+        qapollo_targets = find_all_linear_modules(model, finetuning_args.freeze_vision_tower)
+    else:
+        qapollo_targets = finetuning_args.qapollo_target
+
+    qapollo_params: list[torch.nn.Parameter] = []
+    for name, module in model.named_modules():
+        if isinstance(module, torch.nn.Linear) and any(target in name for target in qapollo_targets):
+            for param in module.parameters():
+                if param.requires_grad and len(param.shape) > 1:
+                    qapollo_params.append(param)
+
+    qapollo_kwargs = {
+        "rank": finetuning_args.qapollo_rank,
+        "proj": finetuning_args.qapollo_proj,
+        "proj_type": finetuning_args.qapollo_proj_type,
+        "update_proj_gap": finetuning_args.qapollo_update_interval,
+        "scale": finetuning_args.qapollo_scale,
+        "scale_type": finetuning_args.qapollo_scale_type,
+        "scale_front": finetuning_args.qapollo_scale_front,
+    }
+
+    # Quantization-specific parameters
+    quant_kwargs = {
+        "optim_bits": finetuning_args.qapollo_optim_bits,
+        "min_8bit_size": finetuning_args.qapollo_min_8bit_size,
+        "percentile_clipping": finetuning_args.qapollo_percentile_clipping,
+        "block_wise": finetuning_args.qapollo_block_wise,
+        "is_paged": finetuning_args.qapollo_is_paged,
+    }
+    
+    # Merge qapollo kwargs with quantization kwargs
+    qapollo_kwargs.update(quant_kwargs)
+
+    id_qapollo_params = {id(param) for param in qapollo_params}
+    decay_params, nodecay_params = [], []  # they are non-qapollo parameters
+    trainable_params: list[torch.nn.Parameter] = []  # qapollo_params + decay_params + nodecay_params
+    decay_param_names = _get_decay_parameter_names(model)
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            trainable_params.append(param)
+            if id(param) not in id_qapollo_params:
+                if name in decay_param_names:
+                    decay_params.append(param)
+                else:
+                    nodecay_params.append(param)
+
+    _, optim_kwargs = Trainer.get_optimizer_cls_and_kwargs(training_args)
+
+    # Remove any args that might conflict with BNB optimizer settings
+    bnb_incompatible_args = ["eps", "betas", "weight_decay"]
+    for key in bnb_incompatible_args:
+        if key in optim_kwargs:
+            del optim_kwargs[key]
+
+    optim_class = QAPOLLOAdamW
+
+    if finetuning_args.qapollo_layerwise:
+        logger.warning_rank0("The displayed gradient norm will be all zeros in layerwise Q-APOLLO.")
+        if training_args.gradient_accumulation_steps != 1:
+            raise ValueError("Per-layer Q-APOLLO does not support gradient accumulation.")
+
+        optimizer_dict: dict[torch.Tensor, torch.optim.Optimizer] = {}
+        for param in nodecay_params:
+            param_groups = [dict(params=[param], weight_decay=0.0)]
+            optimizer_dict[param] = optim_class(param_groups, **optim_kwargs)
+        for param in decay_params:
+            param_groups = [dict(params=[param], weight_decay=training_args.weight_decay)]
+            optimizer_dict[param] = optim_class(param_groups, **optim_kwargs)
+        for param in qapollo_params:  # qapollo params have weight decay
+            param_groups = [dict(params=[param], weight_decay=training_args.weight_decay, **qapollo_kwargs)]
+            optimizer_dict[param] = optim_class(param_groups, **optim_kwargs)
+
+        def optimizer_hook(param: "torch.nn.Parameter"):
+            if param.grad is not None:
+                optimizer_dict[param].step()
+                optimizer_dict[param].zero_grad()
+
+        for param in trainable_params:
+            param.register_post_accumulate_grad_hook(optimizer_hook)
+
+        optimizer = DummyOptimizer(lr=training_args.learning_rate, optimizer_dict=optimizer_dict)
+    else:
+        param_groups = [
+            dict(params=nodecay_params, weight_decay=0.0),
+            dict(params=decay_params, weight_decay=training_args.weight_decay),
+            dict(params=qapollo_params, weight_decay=training_args.weight_decay, **qapollo_kwargs),
+        ]
+        optimizer = optim_class(param_groups, **optim_kwargs)
+
+    logger.info_rank0(f"Using Q-APOLLO optimizer with args: {qapollo_kwargs}.")
+    return optimizer
+
 
 def _create_loraplus_optimizer(
     model: "PreTrainedModel",
@@ -499,6 +596,9 @@ def create_custom_optimizer(
 
     if finetuning_args.use_apollo:
         return _create_apollo_optimizer(model, training_args, finetuning_args)
+    
+    if finetuning_args.use_qapollo:
+        return _create_qapollo_optimizer(model, training_args, finetuning_args)
 
     if finetuning_args.loraplus_lr_ratio is not None:
         return _create_loraplus_optimizer(model, training_args, finetuning_args)

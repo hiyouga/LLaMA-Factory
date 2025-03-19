@@ -293,6 +293,80 @@ class ApolloArguments:
         metadata={"help": "Whether or not to use the norm-growth limiter in front of gradient scaling."},
     )
 
+@dataclass
+class QApolloArguments:
+    r"""Arguments pertaining to the Quantized APOLLO (QAPOLLO) algorithm."""
+
+    use_qapollo: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use the Quantized APOLLO optimizer."},
+    )
+    qapollo_target: str = field(
+        default="all",
+        metadata={
+            "help": (
+                "Name(s) of modules to apply QAPOLLO. Use commas to separate multiple modules. "
+                "Use `all` to specify all the linear modules."
+            )
+        },
+    )
+    qapollo_rank: int = field(
+        default=16,
+        metadata={"help": "The rank of QAPOLLO gradients."},
+    )
+    qapollo_update_interval: int = field(
+        default=200,
+        metadata={"help": "Number of steps to update the QAPOLLO projection."},
+    )
+    qapollo_scale: float = field(
+        default=32.0,
+        metadata={"help": "QAPOLLO scaling coefficient."},
+    )
+    qapollo_proj: Literal["svd", "random"] = field(
+        default="random",
+        metadata={"help": "Type of QAPOLLO low-rank projection algorithm (svd or random)."},
+    )
+    qapollo_proj_type: Literal["std", "right", "left"] = field(
+        default="std",
+        metadata={"help": "Type of QAPOLLO projection."},
+    )
+    qapollo_scale_type: Literal["channel", "tensor"] = field(
+        default="channel",
+        metadata={"help": "Type of QAPOLLO scaling (channel or tensor)."},
+    )
+    qapollo_layerwise: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to enable layer-wise update to further save memory."},
+    )
+    qapollo_scale_front: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use the norm-growth limiter in front of gradient scaling."},
+    )
+    # Additional parameters for quantization
+    qapollo_optim_bits: int = field(
+        default=32,
+        metadata={"help": "Bit precision for optimizer states. Use 32 for full precision or 8 for quantized states."},
+    )
+    qapollo_min_8bit_size: int = field(
+        default=4096,
+        metadata={"help": "Minimum size for parameters to be quantized to 8-bit."},
+    )
+    qapollo_percentile_clipping: int = field(
+        default=100,
+        metadata={"help": "Percentile for gradient clipping. 100 means no clipping."},
+    )
+    qapollo_block_wise: bool = field(
+        default=True,
+        metadata={"help": "Whether to use block-wise quantization for optimizer states."},
+    )
+    qapollo_is_paged: bool = field(
+        default=False,
+        metadata={"help": "Whether to use paged memory for optimizer states to reduce GPU memory usage."},
+    )
+    qapollo_stochastic_rounding: bool = field(
+        default=False,
+        metadata={"help": "Whether to use stochastic rounding for quantization to improve accuracy."},
+    )
 
 @dataclass
 class BAdamArgument:
@@ -379,7 +453,7 @@ class SwanLabArguments:
 
 @dataclass
 class FinetuningArguments(
-    SwanLabArguments, BAdamArgument, ApolloArguments, GaloreArguments, RLHFArguments, LoraArguments, FreezeArguments
+    SwanLabArguments, BAdamArgument, ApolloArguments, QApolloArguments, GaloreArguments, RLHFArguments, LoraArguments, FreezeArguments
 ):
     r"""Arguments pertaining to which techniques we are going to fine-tuning with."""
 

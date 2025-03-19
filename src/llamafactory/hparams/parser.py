@@ -270,14 +270,17 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
         if finetuning_args.use_apollo and finetuning_args.apollo_layerwise:
             raise ValueError("Distributed training does not support layer-wise APOLLO.")
 
+        if finetuning_args.use_qapollo and finetuning_args.apollo_layerwise:
+            raise ValueError("Distributed training does not support layer-wise Q-APOLLO.")
+
         if finetuning_args.use_badam:
             if finetuning_args.badam_mode == "ratio":
                 raise ValueError("Radio-based BAdam does not yet support distributed training, use layer-wise BAdam.")
             elif not is_deepspeed_zero3_enabled():
                 raise ValueError("Layer-wise BAdam only supports DeepSpeed ZeRO-3 training.")
 
-    if training_args.deepspeed is not None and (finetuning_args.use_galore or finetuning_args.use_apollo):
-        raise ValueError("GaLore and APOLLO are incompatible with DeepSpeed yet.")
+    if training_args.deepspeed is not None and (finetuning_args.use_galore or finetuning_args.use_apollo or finetuning_args.use_qapollo):
+        raise ValueError("GaLore/APOLLO/Q-APOLLO are incompatible with DeepSpeed yet.")
 
     if model_args.infer_backend == "vllm":
         raise ValueError("vLLM backend is only available for API, CLI and Web.")
