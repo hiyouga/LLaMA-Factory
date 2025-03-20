@@ -69,6 +69,7 @@ extra_require = {
         "msgpack",
         "referencing",
         "jsonschema_specifications",
+        "transformers==4.48.3",
     ],
     "modelscope": ["modelscope"],
     "openmind": ["openmind"],
