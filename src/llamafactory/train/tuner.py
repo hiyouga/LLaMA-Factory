@@ -23,7 +23,7 @@ from transformers import PreTrainedModel
 from ..data import get_template_and_fix_tokenizer
 from ..extras import logging
 from ..extras.constants import V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
-from ..extras.misc import infer_optim_dtype
+from ..extras.misc import infer_optim_dtype, is_torch_hpu_available
 from ..extras.packages import is_ray_available
 from ..hparams import get_infer_args, get_ray_args, get_train_args, read_args
 from ..model import load_model, load_tokenizer
@@ -128,8 +128,9 @@ def export_model(args: Optional[dict[str, Any]] = None) -> None:
     if not isinstance(model, PreTrainedModel):
         raise ValueError("The model is not a `PreTrainedModel`, export aborted.")
 
-    if getattr(model, "quantization_method", None) is not None:  # quantized model adopts float16 type
-        setattr(model.config, "torch_dtype", torch.float16)
+    if getattr(model, "quantization_method", None) is not None:  # quantized model adopts float16/bfloat16 type
+        qdtype = torch.bfloat16 if is_torch_hpu_available() else torch.float16
+        setattr(model.config, "torch_dtype", qdtype)
     else:
         if model_args.infer_dtype == "auto":
             output_dtype = getattr(model.config, "torch_dtype", torch.float32)

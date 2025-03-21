@@ -121,6 +121,14 @@ class DataArguments:
             )
         },
     )
+    pad_to_multiple_of: Optional[int] = field(
+        default=8,
+        metadata={"help": "Pad the input to multiple of so there are fewer shapes in the input."},
+    )
+    dataset_concatenation: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Whether to concatenate the sentence for more efficient training."},
+    )
 
     def __post_init__(self):
         def split_arg(arg):

@@ -212,6 +212,62 @@ LOCALES = {
             "info": "トレーニング速度を向上させるためのアプローチ。",
         },
     },
+    "use_habana": {
+        "en": {
+            "label": "Use Habana",
+        },
+        "ru": {
+            "label": "использовать Habana",
+        },
+        "zh": {
+            "label": "使用 Habana",
+        },
+        "ko": {
+            "label": "Habana 사용",
+        },
+    },
+    "gaudi_config_name": {
+        "en": {
+            "label": "Gaudi config name",
+        },
+        "ru": {
+            "label": "Имя конфигурации Gaudi",
+        },
+        "zh": {
+            "label": "Gaudi 配置名称",
+        },
+        "ko": {
+            "label": "Gaudi 설정 이름",
+        },
+    },
+    "use_lazy_mode": {
+        "en": {
+            "label": "Use lazy mode",
+        },
+        "ru": {
+            "label": "использовать ленивый режим",
+        },
+        "zh": {
+            "label": "使用懒惰模式",
+        },
+        "ko": {
+            "label": "레이지 모드를 사용",
+        },
+    },
+    "use_hpu_graphs": {
+        "en": {
+            "label": "Use HPU graphs",
+        },
+        "ru": {
+            "label": "использовать графики HPU",
+        },
+        "zh": {
+            "label": "使用 HPU 图表",
+        },
+        "ko": {
+            "label": "HPU 그래프 사용",
+        },
+    },
     "training_stage": {
         "en": {
             "label": "Stage",
@@ -2765,7 +2821,7 @@ ALERTS = {
         "ko": "Config 파일을 찾을 수 없습니다.",
         "ja": "設定ファイルが見つかりません。",
     },
-    "warn_no_cuda": {
+    "warn_no_accelerator": {
         "en": "CUDA environment was not detected.",
         "ru": "Среда CUDA не обнаружена.",
         "zh": "未检测到 CUDA 环境。",

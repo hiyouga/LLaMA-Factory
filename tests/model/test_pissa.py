@@ -16,6 +16,7 @@ import os
 
 import pytest
 
+from llamafactory.extras.misc import is_torch_hpu_available
 from llamafactory.train.test_utils import compare_model, load_infer_model, load_reference_model, load_train_model
 
 
@@ -48,6 +49,22 @@ INFER_ARGS = {
     "infer_dtype": "float16",
 }
 
+if is_torch_hpu_available():
+    TRAIN_ARGS.update(
+        {
+            "use_habana": True,
+            "gaudi_config_name": "Habana/llama",
+            "fp16": False,
+            "bf16": True,
+        }
+    )
+    INFER_ARGS.update(
+        {
+            "use_habana": True,
+            "infer_dtype": "bfloat16",
+        }
+    )
+
 OS_NAME = os.getenv("OS_NAME", "")
 
 
@@ -63,4 +80,5 @@ def test_pissa_inference():
     model = load_infer_model(**INFER_ARGS)
     ref_model = load_reference_model(TINY_LLAMA_PISSA, TINY_LLAMA_PISSA, use_pissa=True, is_trainable=False)
     ref_model = ref_model.merge_and_unload()
-    compare_model(model, ref_model)
+    atol = 1e-3 if is_torch_hpu_available() else 1e-5
+    compare_model(model, ref_model, atol=atol)
