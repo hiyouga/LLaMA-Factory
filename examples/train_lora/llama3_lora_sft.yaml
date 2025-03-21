@@ -1,5 +1,5 @@
 ### model
-model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
+model_name_or_path: "/home/jovyan/LLaMA-Factory/meta-llama/Meta-Llama-3.1-8B-Instruct/Meta-Llama-3.1-8B-Instruct"
 trust_remote_code: true
 
 ### method
@@ -9,13 +9,13 @@ finetuning_type: lora
 lora_rank: 8
 lora_target: all
 
-### dataset
-dataset: identity,alpaca_en_demo
+### datasetls
+dataset: belle_0.5m
 template: llama3
 cutoff_len: 2048
 max_samples: 1000
 overwrite_cache: true
-preprocessing_num_workers: 16
+preprocessing_num_workers: 8
 dataloader_num_workers: 4
 
 ### output

@@ -117,8 +117,7 @@
     "ms_hub_url": "AI-ModelScope/train_1M_CN"
   },
   "belle_0.5m": {
-    "hf_hub_url": "BelleGroup/train_0.5M_CN",
-    "ms_hub_url": "AI-ModelScope/train_0.5M_CN"
+    "file_name":"/home/jovyan/LLaMA-Factory/data/train_0.5M_CN/Belle_open_source_0.5M.json"
   },
   "belle_dialog": {
     "hf_hub_url": "BelleGroup/generated_chat_0.4M",
