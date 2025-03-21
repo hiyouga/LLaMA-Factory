@@ -59,33 +59,23 @@ WELCOME = (
 logger = logging.get_logger(__name__)
 
 
-@unique
-class Command(str, Enum):
-    API = "api"
-    CHAT = "chat"
-    ENV = "env"
-    EVAL = "eval"
-    EXPORT = "export"
-    TRAIN = "train"
-    WEBDEMO = "webchat"
-    WEBUI = "webui"
-    VER = "version"
-    HELP = "help"
+CMD_FUNC_MAP = {
+    "api": run_api,
+    "chat": run_chat,
+    "env": print_env,
+    "eval": run_eval,
+    "export": export_model,
+    "train": run_exp,
+    "webchat": run_web_demo,
+    "webui": run_web_ui,
+    "version": print(WELCOME),
+    "help": print(USAGE),
+}
 
 
 def main():
-    command = sys.argv.pop(1) if len(sys.argv) != 1 else Command.HELP
-    if command == Command.API:
-        run_api()
-    elif command == Command.CHAT:
-        run_chat()
-    elif command == Command.ENV:
-        print_env()
-    elif command == Command.EVAL:
-        run_eval()
-    elif command == Command.EXPORT:
-        export_model()
-    elif command == Command.TRAIN:
+    command = sys.argv.pop(1) if len(sys.argv) != 1 else "help"
+    if command == "train":
         force_torchrun = is_env_enabled("FORCE_TORCHRUN")
         if force_torchrun or (get_device_count() > 1 and not use_ray()):
             nnodes = os.getenv("NNODES", "1")
@@ -116,16 +106,8 @@ def main():
             sys.exit(process.returncode)
         else:
             run_exp()
-    elif command == Command.WEBDEMO:
-        run_web_demo()
-    elif command == Command.WEBUI:
-        run_web_ui()
-    elif command == Command.VER:
-        print(WELCOME)
-    elif command == Command.HELP:
-        print(USAGE)
     else:
-        print(f"Unknown command: {command}.\n{USAGE}")
+        CMD_FUNC_MAP[command]()
 
 
 if __name__ == "__main__":
