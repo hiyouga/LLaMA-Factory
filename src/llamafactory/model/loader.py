@@ -120,6 +120,7 @@ def load_model(
     finetuning_args: "FinetuningArguments",
     is_trainable: bool = False,
     add_valuehead: bool = False,
+    full_determinism: bool = False,
 ) -> "PreTrainedModel":
     r"""Load pretrained model."""
     init_kwargs = _get_init_kwargs(model_args)
@@ -134,7 +135,7 @@ def load_model(
         config.attention_dropout = 0.0
 
     apply_liger_kernel(config, model_args, is_trainable, require_logits=(finetuning_args.stage not in ["pt", "sft"]))
-    sequence_parallel_group = apply_sequence_parallel(model_args)  # monkey patching, similar to liger_kernel
+    sequence_parallel_group = apply_sequence_parallel(model_args, full_determinism)  # monkey patching, similar to liger_kernel
 
     model = None
     lazy_load = False

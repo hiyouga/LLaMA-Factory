@@ -149,5 +149,9 @@ def preprocess_sp_dataset(seq_ids, world_size, sequence_parallel_mode):
         for rank in range(world_size):
             local_values.append(value_chunks[rank] + value_chunks[2 * world_size - rank - 1])
         return local_values
+    elif sequence_parallel_mode == "ulysses":
+        step = len(seq_ids) // world_size
+        local_values = [seq_ids[s : s + step] for s in range(0, len(seq_ids), step)]
+        return local_values
     else:
         raise NotImplementedError('Other sequence parallel modes are to be implemented.')
