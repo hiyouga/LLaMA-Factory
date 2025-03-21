@@ -14,7 +14,6 @@
 
 import bisect
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -46,7 +45,7 @@ class DatasetProcessor(ABC):
         ...
 
 
-def search_for_fit(numbers: Sequence[int], capacity: int) -> int:
+def search_for_fit(numbers: list[int], capacity: int) -> int:
     r"""Find the index of largest number that fits into the knapsack with the given capacity."""
     index = bisect.bisect(numbers, capacity)
     return -1 if index == 0 else (index - 1)

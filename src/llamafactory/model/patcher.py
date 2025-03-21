@@ -33,13 +33,7 @@ from .model_utils.packing import configure_packing
 from .model_utils.quantization import configure_quantization
 from .model_utils.rope import configure_rope
 from .model_utils.valuehead import prepare_valuehead_model
-from .model_utils.visual import (
-    autocast_projector_dtype,
-    configure_visual_model,
-    get_image_seqlen,
-    get_patch_size,
-    get_vision_feature_select_strategy,
-)
+from .model_utils.visual import autocast_projector_dtype, configure_visual_model
 
 
 if TYPE_CHECKING:
@@ -56,8 +50,8 @@ def patch_tokenizer(tokenizer: "PreTrainedTokenizer", model_args: "ModelArgument
     if "PreTrainedTokenizerBase" not in str(tokenizer._pad.__func__):
         tokenizer._pad = MethodType(PreTrainedTokenizerBase._pad, tokenizer)
 
-    if model_args.model_max_length is not None and tokenizer.model_max_length != model_args.model_max_length:
-        tokenizer.model_max_length = model_args.model_max_length
+    if model_args.model_max_length is not None and tokenizer.model_max_length < model_args.model_max_length:
+        tokenizer.model_max_length = model_args.model_max_length  # enlarge the tokenizer max length
 
     if model_args.new_special_tokens is not None:
         num_added_tokens = tokenizer.add_special_tokens(
@@ -72,21 +66,17 @@ def patch_tokenizer(tokenizer: "PreTrainedTokenizer", model_args: "ModelArgument
 
 def patch_processor(
     processor: "ProcessorMixin",
-    config: "PretrainedConfig",
     tokenizer: "PreTrainedTokenizer",
     model_args: "ModelArguments",
 ) -> None:
     setattr(processor, "tokenizer", tokenizer)
-    if getattr(config, "vision_config", None) is not None:  # visual models
-        setattr(processor, "image_seqlen", get_image_seqlen(config))
-        setattr(processor, "patch_size", get_patch_size(config, processor))
-        setattr(processor, "image_max_pixels", model_args.image_max_pixels)
-        setattr(processor, "image_min_pixels", model_args.image_min_pixels)
-        setattr(processor, "video_max_pixels", model_args.video_max_pixels)
-        setattr(processor, "video_min_pixels", model_args.video_min_pixels)
-        setattr(processor, "video_fps", model_args.video_fps)
-        setattr(processor, "video_maxlen", model_args.video_maxlen)
-        setattr(processor, "vision_feature_select_strategy", get_vision_feature_select_strategy(config, processor))
+    setattr(processor, "image_max_pixels", model_args.image_max_pixels)
+    setattr(processor, "image_min_pixels", model_args.image_min_pixels)
+    setattr(processor, "image_do_pan_and_scan", model_args.image_do_pan_and_scan)
+    setattr(processor, "video_max_pixels", model_args.video_max_pixels)
+    setattr(processor, "video_min_pixels", model_args.video_min_pixels)
+    setattr(processor, "video_fps", model_args.video_fps)
+    setattr(processor, "video_maxlen", model_args.video_maxlen)
 
 
 def patch_config(

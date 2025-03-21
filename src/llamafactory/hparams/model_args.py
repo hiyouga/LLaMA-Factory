@@ -1,4 +1,4 @@
-# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+# Copyright 2025 HuggingFace Inc. and the LlamaFactory team.
 #
 # This code is inspired by the HuggingFace's transformers library.
 # https://github.com/huggingface/transformers/blob/v4.40.0/examples/pytorch/language-modeling/run_clm.py
@@ -218,6 +218,10 @@ class ProcessorArguments:
         default=32 * 32,
         metadata={"help": "The minimum number of pixels of image inputs."},
     )
+    image_do_pan_and_scan: bool = field(
+        default=False,
+        metadata={"help": "Use pan and scan to process image for gemma3."},
+    )
     video_max_pixels: int = field(
         default=256 * 256,
         metadata={"help": "The maximum number of pixels of video inputs."},
@@ -234,6 +238,13 @@ class ProcessorArguments:
         default=128,
         metadata={"help": "The maximum number of sampled frames for video inputs."},
     )
+
+    def __post_init__(self):
+        if self.image_max_pixels < self.image_min_pixels:
+            raise ValueError("`image_max_pixels` cannot be smaller than `image_min_pixels`.")
+
+        if self.video_max_pixels < self.video_min_pixels:
+            raise ValueError("`video_max_pixels` cannot be smaller than `video_min_pixels`.")
 
 
 @dataclass
@@ -291,7 +302,7 @@ class VllmArguments:
         metadata={"help": "Maximum sequence (prompt + response) length of the vLLM engine."},
     )
     vllm_gpu_util: float = field(
-        default=0.9,
+        default=0.7,
         metadata={"help": "The fraction of GPU memory in (0,1) to be used for the vLLM engine."},
     )
     vllm_enforce_eager: bool = field(
@@ -313,7 +324,35 @@ class VllmArguments:
 
 
 @dataclass
-class ModelArguments(VllmArguments, ExportArguments, ProcessorArguments, QuantizationArguments, BaseModelArguments):
+class SGLangArguments:
+    r"""Arguments pertaining to the SGLang worker."""
+
+    sglang_maxlen: int = field(
+        default=4096,
+        metadata={"help": "Maximum sequence (prompt + response) length of the SGLang engine."},
+    )
+    sglang_mem_fraction: float = field(
+        default=0.7,
+        metadata={"help": "The memory fraction (0-1) to be used for the SGLang engine."},
+    )
+    sglang_tp_size: int = field(
+        default=-1,
+        metadata={"help": "Tensor parallel size for the SGLang engine."},
+    )
+    sglang_config: Optional[Union[dict, str]] = field(
+        default=None,
+        metadata={"help": "Config to initialize the SGLang engine. Please use JSON strings."},
+    )
+
+    def __post_init__(self):
+        if isinstance(self.sglang_config, str) and self.sglang_config.startswith("{"):
+            self.sglang_config = _convert_str_dict(json.loads(self.sglang_config))
+
+
+@dataclass
+class ModelArguments(
+    SGLangArguments, VllmArguments, ExportArguments, ProcessorArguments, QuantizationArguments, BaseModelArguments
+):
     r"""Arguments pertaining to which model/config/tokenizer we are going to fine-tune or infer.
 
     The class on the most right will be displayed first.
@@ -342,8 +381,10 @@ class ModelArguments(VllmArguments, ExportArguments, ProcessorArguments, Quantiz
 
     def __post_init__(self):
         BaseModelArguments.__post_init__(self)
+        ProcessorArguments.__post_init__(self)
         ExportArguments.__post_init__(self)
         VllmArguments.__post_init__(self)
+        SGLangArguments.__post_init__(self)
 
     @classmethod
     def copyfrom(cls, source: "Self", **kwargs) -> "Self":

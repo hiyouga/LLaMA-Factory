@@ -106,6 +106,7 @@ class AttentionFunction(str, Enum):
 class EngineName(str, Enum):
     HF = "huggingface"
     VLLM = "vllm"
+    SGLANG = "sglang"
 
 
 class DownloadSource(str, Enum):
@@ -650,8 +651,48 @@ register_model_group(
             DownloadSource.DEFAULT: "google/gemma-2-27b-it",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-27b-it",
         },
+        "Gemma-3-1B": {
+            DownloadSource.DEFAULT: "google/gemma-3-1b-pt",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-1b-pt",
+        },
+        "Gemma-3-1B-Instruct": {
+            DownloadSource.DEFAULT: "google/gemma-3-1b-it",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-1b-it",
+        },
     },
     template="gemma",
+)
+
+
+register_model_group(
+    models={
+        "Gemma-3-4B": {
+            DownloadSource.DEFAULT: "google/gemma-3-4b-pt",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-4b-pt",
+        },
+        "Gemma-3-12B": {
+            DownloadSource.DEFAULT: "google/gemma-3-12b-pt",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-12b-pt",
+        },
+        "Gemma-3-27B": {
+            DownloadSource.DEFAULT: "google/gemma-3-27b-pt",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-27b-pt",
+        },
+        "Gemma-3-4B-Instruct": {
+            DownloadSource.DEFAULT: "google/gemma-3-4b-it",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-4b-it",
+        },
+        "Gemma-3-12B-Instruct": {
+            DownloadSource.DEFAULT: "google/gemma-3-12b-it",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-12b-it",
+        },
+        "Gemma-3-27B-Instruct": {
+            DownloadSource.DEFAULT: "google/gemma-3-27b-it",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-27b-it",
+        },
+    },
+    template="gemma3",
+    multimodal=True,
 )
 
 
@@ -765,6 +806,17 @@ register_model_group(
         },
     },
     template="granite3",
+)
+
+
+register_model_group(
+    models={
+        "Hunyuan-7B-Instruct": {
+            DownloadSource.DEFAULT: "tencent/Hunyuan-7B-Instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Hunyuan-7B-Instruct",
+        },
+    },
+    template="hunyuan",
 )
 
 

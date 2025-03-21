@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional, Union
 
@@ -57,7 +56,7 @@ class Template:
     def encode_oneturn(
         self,
         tokenizer: "PreTrainedTokenizer",
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
     ) -> tuple[list[int], list[int]]:
@@ -73,7 +72,7 @@ class Template:
     def encode_multiturn(
         self,
         tokenizer: "PreTrainedTokenizer",
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
     ) -> list[tuple[list[int], list[int]]]:
@@ -115,7 +114,7 @@ class Template:
     def _encode(
         self,
         tokenizer: "PreTrainedTokenizer",
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str],
         tools: Optional[str],
     ) -> list[list[int]]:
@@ -310,11 +309,13 @@ class Template:
 
 @dataclass
 class Llama2Template(Template):
+    r"""A template that fuse the system message to first user message."""
+
     @override
     def _encode(
         self,
         tokenizer: "PreTrainedTokenizer",
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: str,
         tools: str,
     ) -> list[list[int]]:
@@ -389,7 +390,7 @@ def register_template(
     format_tools: Optional["Formatter"] = None,
     format_prefix: Optional["Formatter"] = None,
     default_system: str = "",
-    stop_words: Optional[Sequence[str]] = None,
+    stop_words: Optional[list[str]] = None,
     thought_words: Optional[tuple[str, str]] = None,
     efficient_eos: bool = False,
     replace_eos: bool = False,
@@ -776,15 +777,17 @@ register_template(
 
 register_template(
     name="default",
-    format_user=StringFormatter(slots=["Human: {{content}}\nAssistant:"]),
+    format_user=StringFormatter(slots=["Human: {{content}}", {"eos_token"}, "\nAssistant:"]),
     format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}, "\n"]),
-    format_system=StringFormatter(slots=["System: {{content}}\n"]),
+    format_system=StringFormatter(slots=["System: {{content}}", {"eos_token"}, "\n"]),
+    replace_jinja_template=True,
 )
 
 
 register_template(
     name="empty",
     format_assistant=StringFormatter(slots=["{{content}}"]),
+    replace_jinja_template=True,
 )
 
 
@@ -808,6 +811,7 @@ register_template(
     name="fewshot",
     format_assistant=StringFormatter(slots=["{{content}}\n\n"]),
     efficient_eos=True,
+    replace_jinja_template=True,
 )
 
 
@@ -815,10 +819,29 @@ register_template(
     name="gemma",
     format_user=StringFormatter(slots=["<start_of_turn>user\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]),
     format_assistant=StringFormatter(slots=["{{content}}<end_of_turn>\n"]),
+    format_system=StringFormatter(slots=["{{content}}\n\n"]),
     format_observation=StringFormatter(
         slots=["<start_of_turn>tool\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]
     ),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<end_of_turn>"],
+    template_class=Llama2Template,
+)
+
+
+# copied from gemma template
+register_template(
+    name="gemma3",
+    format_user=StringFormatter(slots=["<start_of_turn>user\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<end_of_turn>\n"]),
+    format_system=StringFormatter(slots=["{{content}}\n\n"]),
+    format_observation=StringFormatter(
+        slots=["<start_of_turn>tool\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]
+    ),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<end_of_turn>"],
+    mm_plugin=get_mm_plugin("gemma3", image_token="<image_soft_token>"),
+    template_class=Llama2Template,
 )
 
 
@@ -853,6 +876,16 @@ register_template(
     format_user=StringFormatter(slots=["reserved_0{{content}}reserved_1"]),
     format_system=StringFormatter(slots=["<unk>{{content}}"]),
     efficient_eos=True,
+)
+
+
+register_template(
+    name="hunyuan",
+    format_user=StringFormatter(slots=["<|bos|>user\n{{content}}<|eos|>\n<|bos|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|eos|>\n"]),
+    format_system=StringFormatter(slots=["<|bos|>system\n{{content}}<|eos|>\n"]),
+    format_prefix=EmptyFormatter(slots=["<|bos|>"]),
+    stop_words=["<|eos|>"],
 )
 
 
@@ -1243,6 +1276,7 @@ register_template(
     format_user=StringFormatter(slots=["{{content}}\n"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     mm_plugin=get_mm_plugin(name="paligemma", image_token="<image>"),
+    template_class=Llama2Template,
 )
 
 
@@ -1255,7 +1289,9 @@ register_template(
         slots=["<start_of_turn>tool\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]
     ),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<end_of_turn>"],
     mm_plugin=get_mm_plugin(name="paligemma", image_token="<image>"),
+    template_class=Llama2Template,
 )
 
 

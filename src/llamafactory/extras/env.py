@@ -1,4 +1,4 @@
-# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+# Copyright 2025 HuggingFace Inc. and the LlamaFactory team.
 #
 # This code is inspired by the HuggingFace's transformers library.
 # https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/commands/env.py
@@ -26,7 +26,7 @@ import trl
 from transformers.utils import is_torch_cuda_available, is_torch_npu_available
 
 
-VERSION = "0.9.2"
+VERSION = "0.9.3.dev0"
 
 
 def print_env() -> None:
