@@ -78,8 +78,11 @@ def _training_function(config: dict[str, Any]) -> None:
     else:
         raise ValueError(f"Unknown task: {finetuning_args.stage}.")
 
+    if is_ray_available() and ray.is_initialized():
+        return  # if ray is intialized it will destroy the process group on return
+
     try:
-        if dist.is_initialized() and not ray.is_initialized(): # if ray is intialized it will destroy the process group on return
+        if dist.is_initialized():
             dist.destroy_process_group()
     except Exception as e:
         logger.warning(f"Failed to destroy process group: {e}.")
