@@ -38,6 +38,7 @@ from .trainer_utils import get_ray_trainer, get_swanlab_callback
 
 
 if is_ray_available():
+    import ray
     from ray.train.huggingface.transformers import RayTrainReportCallback
 
 
@@ -78,7 +79,7 @@ def _training_function(config: dict[str, Any]) -> None:
         raise ValueError(f"Unknown task: {finetuning_args.stage}.")
 
     try:
-        if dist.is_initialized():
+        if dist.is_initialized() and not ray.is_initialized(): # if ray is intialized it will destroy the process group on return
             dist.destroy_process_group()
     except Exception as e:
         logger.warning(f"Failed to destroy process group: {e}.")
