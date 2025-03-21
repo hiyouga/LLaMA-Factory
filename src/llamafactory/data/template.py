@@ -174,10 +174,11 @@ class Template:
             stop_words = stop_words[1:]
 
         if tokenizer.eos_token_id is None:
-            self._add_or_replace_eos_token(tokenizer, eos_token="<|endoftext|>")
+        self._add_or_replace_eos_token(tokenizer, eos_token="<|im_end|>")
 
+        # Assign a dedicated PAD token instead of using the EOS token.
         if tokenizer.pad_token_id is None:
-            tokenizer.pad_token = tokenizer.eos_token
+            tokenizer.pad_token = "<|dummy_85|>"
             logger.info_rank0(f"Add pad token: {tokenizer.pad_token}")
 
         if stop_words:
@@ -1317,11 +1318,13 @@ register_template(
 register_template(
     name="phi4",
     format_user=StringFormatter(
-        slots=["<|im_start|>user<|im_sep|>{{content}}<|im_end|><|im_start|>assistant<|im_sep|>"]
+        slots=["<|im_start|>user<|im_sep|>{{content}}<|im_end|>"]
     ),
     format_assistant=StringFormatter(slots=["{{content}}<|im_end|>"]),
     format_system=StringFormatter(slots=["<|im_start|>system<|im_sep|>{{content}}<|im_end|>"]),
     stop_words=["<|im_end|>"],
+    replace_eos=True,
+    replace_jinja_template=True
 )
 
 
