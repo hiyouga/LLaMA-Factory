@@ -2,10 +2,15 @@ import json
 import sys
 import time
 
-import jieba
-import jsonlines
-from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
-from rouge_chinese import Rouge
+
+try:
+    import jieba
+    import jsonlines
+    from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
+    from rouge_chinese import Rouge
+except Exception:
+    print("Failed to start, please install these requirements:\n\t pip install jieba jsonlines nltk rouge_chinese")
+    sys.exit(1)
 
 
 def main(filename: str):
