@@ -155,8 +155,8 @@ def _load_single_dataset(
         assert len(indexes) == target_num, "Sample num mismatched."
         
         dataset = dataset.select(indexes)
-        logger.info_rank0(f"Sampled {target_num} examples from dataset {dataset_attr}.")
-
+        logger.info(f"Sampled {target_num} examples from dataset {dataset_attr}.")
+    
     if data_args.max_samples is not None:  # truncate dataset
         max_samples = min(data_args.max_samples, len(dataset))
         dataset = dataset.select(range(max_samples))
