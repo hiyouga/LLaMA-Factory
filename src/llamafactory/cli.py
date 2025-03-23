@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import os
-import random
 import subprocess
 import sys
 from enum import Enum, unique
@@ -24,7 +23,7 @@ from .chat.chat_model import run_chat
 from .eval.evaluator import run_eval
 from .extras import logging
 from .extras.env import VERSION, print_env
-from .extras.misc import get_device_count, is_env_enabled, use_ray
+from .extras.misc import find_available_port, get_device_count, is_env_enabled, use_ray
 from .train.tuner import export_model, run_exp
 from .webui.interface import run_web_demo, run_web_ui
 
@@ -92,7 +91,7 @@ def main():
             node_rank = os.getenv("NODE_RANK", "0")
             nproc_per_node = os.getenv("NPROC_PER_NODE", str(get_device_count()))
             master_addr = os.getenv("MASTER_ADDR", "127.0.0.1")
-            master_port = os.getenv("MASTER_PORT", str(random.randint(20001, 29999)))
+            master_port = os.getenv("MASTER_PORT", str(find_available_port()))
             logger.info_rank0(f"Initializing {nproc_per_node} distributed tasks at: {master_addr}:{master_port}")
             if int(nnodes) > 1:
                 print(f"Multi-node training enabled: num nodes: {nnodes}, node rank: {node_rank}")
