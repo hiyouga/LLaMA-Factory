@@ -1,28 +1,21 @@
 import json
 import logging
-import sys
 import time
 
 import fire
+from datasets import load_dataset
 
 
 try:
     import jieba
-    from datasets import load_dataset
     from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
     from rouge_chinese import Rouge
-except Exception as err:
-    print(
-        f"Failed to start, please install these requirements:\n{err}\n\t pip install jieba jsonlines nltk rouge_chinese datasets"
-    )
-    sys.exit(1)
 
-try:
-    # 关掉输出
     jieba.setLogLevel(logging.CRITICAL)
     jieba.initialize()
-except Exception as err:
-    print(f"failed to initialize jieba, exiting,\n{err}")
+except ImportError:
+    print("Please install llamafactory with `pip install -e .[metrics]`.")
+    raise
 
 
 def compute_metrics(sample):
@@ -53,9 +46,7 @@ def compute_metrics(sample):
 def main(filename: str):
     start_time = time.time()
     dataset = load_dataset("json", data_files=filename, split="train")
-
-    # 多进程
-    dataset = dataset.map(compute_metrics, num_proc=6, remove_columns=dataset.column_names)
+    dataset = dataset.map(compute_metrics, num_proc=8, remove_columns=dataset.column_names)
     score_dict = dataset.to_dict()
 
     average_score = {}
@@ -63,13 +54,10 @@ def main(filename: str):
         print(f"{task}: {sum(scores) / len(scores):.4f}")
         average_score[task] = sum(scores) / len(scores)
 
-    json.dump(
-        average_score,
-        open("predictions_score.json", "w+", encoding="utf-8"),
-        indent=4,
-    )
-    print(f"\nDone in {time.time() - start_time: .3f}s \nscore file saved to predictions_score.json")
-    # return average_score
+    with open("predictions_score.json", "w", encoding="utf-8") as f:
+        json.dump(average_score, f, indent=4)
+
+    print(f"\nDone in {time.time() - start_time:.3f}s.\nScore file saved to predictions_score.json")
 
 
 if __name__ == "__main__":
