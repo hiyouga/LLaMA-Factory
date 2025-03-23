@@ -1,5 +1,5 @@
 # Use the Gaudi v1.19.1 official image with PyTorch 2.5.1
-FROM vault.habana.ai/gaudi-docker/1.19.1/ubuntu22.04/habanalabs/pytorch-installer-2.5.1:latest
+FROM vault.habana.ai/gaudi-docker/1.20.0/ubuntu22.04/habanalabs/pytorch-installer-2.6.0:latest
 
 # Define environments
 ENV MAX_JOBS=4
