@@ -17,7 +17,7 @@ import os
 from dataclasses import dataclass
 from typing import Any, Literal, Optional
 
-from transformers.utils import cached_file
+from huggingface_hub import hf_hub_download
 
 from ..extras.constants import DATA_CONFIG
 from ..extras.misc import use_modelscope, use_openmind
@@ -99,7 +99,7 @@ def get_dataset_list(dataset_names: Optional[list[str]], dataset_dir: str) -> li
         dataset_info = None
     else:
         if dataset_dir.startswith("REMOTE:"):
-            config_path = cached_file(path_or_repo_id=dataset_dir[7:], filename=DATA_CONFIG, repo_type="dataset")
+            config_path = hf_hub_download(repo_id=dataset_dir[7:], filename=DATA_CONFIG, repo_type="dataset")
         else:
             config_path = os.path.join(dataset_dir, DATA_CONFIG)
 
