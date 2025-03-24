@@ -74,6 +74,8 @@ def apply_liger_kernel(
         from liger_kernel.transformers import apply_liger_kernel_to_gemma as apply_liger_kernel
     elif model_type == "gemma2":
         from liger_kernel.transformers import apply_liger_kernel_to_gemma2 as apply_liger_kernel
+    elif model_type == "gemma3":
+        from liger_kernel.transformers import apply_liger_kernel_to_gemma3 as apply_liger_kernel
     elif model_type == "llama":
         from liger_kernel.transformers import apply_liger_kernel_to_llama as apply_liger_kernel
     elif model_type == "mistral":
