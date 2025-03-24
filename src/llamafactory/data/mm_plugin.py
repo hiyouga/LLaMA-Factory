@@ -143,6 +143,9 @@ class MMPluginMixin:
     ) -> None:
         r"""Validate if this model accepts the input modalities."""
         image_processor: BaseImageProcessor = getattr(processor, "image_processor", None)
+        video_processor: BaseImageProcessor = getattr(
+            processor, "video_processor", getattr(processor, "image_processor", None)
+        )
         feature_extractor: SequenceFeatureExtractor = getattr(processor, "feature_extractor", None)
         if len(images) != 0 and self.image_token is None:
             raise ValueError(
@@ -164,6 +167,9 @@ class MMPluginMixin:
 
         if self.image_token is not None and image_processor is None:
             raise ValueError("Image processor was not found, please check and update your processor config.")
+
+        if self.video_token is not None and video_processor is None:
+            raise ValueError("Video processor was not found, please check and update your processor config.")
 
         if self.audio_token is not None and feature_extractor is None:
             raise ValueError("Audio feature extractor was not found, please check and update your processor config.")
