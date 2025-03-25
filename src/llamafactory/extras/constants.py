@@ -2346,6 +2346,10 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen2.5-VL-7B-Instruct",
             DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-VL-7B-Instruct",
         },
+        "Qwen2.5-VL-32B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-VL-32B-Instruct",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-VL-32B-Instruct",
+        },
         "Qwen2.5-VL-72B-Instruct": {
             DownloadSource.DEFAULT: "Qwen/Qwen2.5-VL-72B-Instruct",
             DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-VL-72B-Instruct",
