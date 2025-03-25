@@ -12,7 +12,7 @@ body:
     attributes:
       value: |
         Please do not create issues that are not related to framework bugs under this category, use **[Discussions](https://github.com/hiyouga/LLaMA-Factory/discussions/categories/q-a)** instead.
-        请勿在此分类下创建和框架 bug 无关的 issues，请使用 **[讨论区](https://github.com/hiyouga/LLaMA-Factory/discussions/categories/q-a)**。
+        请勿在此分类下创建和框架 bug 无关的 issues，训练问题求助请使用 **[讨论区](https://github.com/hiyouga/LLaMA-Factory/discussions/categories/q-a)**。
 
   - type: checkboxes
     id: reminder
