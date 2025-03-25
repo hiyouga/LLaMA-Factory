@@ -583,6 +583,15 @@ def get_swanlab_callback(finetuning_args: "FinetuningArguments") -> "TrainerCall
     if finetuning_args.swanlab_api_key is not None:
         swanlab.login(api_key=finetuning_args.swanlab_api_key)
 
+    if finetuning_args.swanlab_lark_webhook_url is not None:
+        from swanlab.plugin.notification import LarkCallback  # type: ignore
+
+        lark_callback = LarkCallback(
+            webhook_url=finetuning_args.swanlab_lark_webhook_url,
+            secret=finetuning_args.swanlab_lark_secret,
+        )
+        swanlab.register_callbacks([lark_callback])
+
     class SwanLabCallbackExtension(SwanLabCallback):
         def setup(self, args: "TrainingArguments", state: "TrainerState", model: "PreTrainedModel", **kwargs):
             if not state.is_world_process_zero:
