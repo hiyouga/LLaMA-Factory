@@ -59,6 +59,7 @@ jobs:
           python -m pip install ".[torch,dev]"
 
       - name: Cache files
+        id: hf-hub-cache
         uses: actions/cache@v4
         with:
           path: ${{ runner.temp }}/huggingface
@@ -77,3 +78,4 @@ jobs:
           make test
         env:
           HF_HOME: ${{ runner.temp }}/huggingface
+          HF_HUB_OFFLINE: "${{ steps.hf-hub-cache.outputs.cache-hit == 'true' && '1' || '0' }}"

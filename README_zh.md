@@ -263,7 +263,7 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 | [Pixtral](https://huggingface.co/mistralai)                       | 12B                              | pixtral             |
 | [Qwen/QwQ (1-2.5) (Code/Math/MoE)](https://huggingface.co/Qwen)   | 0.5B/1.5B/3B/7B/14B/32B/72B/110B | qwen                |
 | [Qwen2-Audio](https://huggingface.co/Qwen)                        | 7B                               | qwen2_audio         |
-| [Qwen2-VL/Qwen2.5-VL/QVQ](https://huggingface.co/Qwen)            | 2B/3B/7B/72B                     | qwen2_vl            |
+| [Qwen2-VL/Qwen2.5-VL/QVQ](https://huggingface.co/Qwen)            | 2B/3B/7B/32B/72B                 | qwen2_vl            |
 | [Skywork o1](https://huggingface.co/Skywork)                      | 8B                               | skywork_o1          |
 | [StarCoder 2](https://huggingface.co/bigcode)                     | 3B/7B/15B                        | -                   |
 | [TeleChat2](https://huggingface.co/Tele-AI)                       | 3B/7B/35B/115B                   | telechat2           |
@@ -401,11 +401,11 @@ huggingface-cli login
 | 必需项       | 至少     | 推荐      |
 | ------------ | ------- | --------- |
 | python       | 3.9     | 3.10      |
-| torch        | 1.13.1  | 2.5.1     |
-| transformers | 4.41.2  | 4.49.0    |
+| torch        | 1.13.1  | 2.6.0     |
+| transformers | 4.41.2  | 4.50.0    |
 | datasets     | 2.16.0  | 3.2.0     |
 | accelerate   | 0.34.0  | 1.2.1     |
-| peft         | 0.11.1  | 0.12.0    |
+| peft         | 0.14.0  | 0.15.0    |
 | trl          | 0.8.6   | 0.9.6     |
 
 | 可选项       | 至少     | 推荐      |
