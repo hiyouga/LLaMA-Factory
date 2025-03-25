@@ -59,6 +59,9 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             self.processing_class: PreTrainedTokenizer = kwargs.get("tokenizer")
 
         super().__init__(**kwargs)
+        if processor is not None:
+            self.model_accepts_loss_kwargs = False
+
         self.finetuning_args = finetuning_args
         if gen_kwargs is not None:
             # https://github.com/huggingface/transformers/blob/v4.45.0/src/transformers/trainer_seq2seq.py#L287
@@ -92,6 +95,10 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             return torch.utils.data.SequentialSampler(self.train_dataset)
 
         return super()._get_train_sampler()
+
+    @override
+    def compute_loss(self, model, inputs, *args, **kwargs):
+        return super().compute_loss(model, inputs, *args, **kwargs)
 
     @override
     def prediction_step(

@@ -122,6 +122,7 @@ class WebChatModel(ChatModel):
             enable_liger_kernel=(get("top.booster") == "liger_kernel"),
             infer_backend=get("infer.infer_backend"),
             infer_dtype=get("infer.infer_dtype"),
+            vllm_enforce_eager=True,
             trust_remote_code=True,
         )
 

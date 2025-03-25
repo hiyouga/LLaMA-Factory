@@ -88,10 +88,10 @@ def check_version(requirement: str, mandatory: bool = False) -> None:
 
 def check_dependencies() -> None:
     r"""Check the version of the required packages."""
-    check_version("transformers>=4.41.2,<=4.49.0,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0")
-    check_version("datasets>=2.16.0,<=3.3.2")
-    check_version("accelerate>=0.34.0,<=1.4.0")
-    check_version("peft>=0.11.1,<=0.12.0")
+    check_version("transformers>=4.41.2,<=4.50.0,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0")
+    check_version("datasets>=2.16.0,<=3.4.1")
+    check_version("accelerate>=0.34.0,<=1.5.2")
+    check_version("peft>=0.14.0,<=0.15.0")
     check_version("trl>=0.8.6,<=0.9.6")
     if is_transformers_version_greater_than("4.46.0") and not is_transformers_version_greater_than("4.48.1"):
         logger.warning_rank0_once("There are known bugs in transformers v4.46.0-v4.48.0, please use other versions.")

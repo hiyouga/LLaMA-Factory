@@ -19,10 +19,10 @@ Level:
 
 Dependency graph:
   main:
-    transformers>=4.41.2,<=4.49.0,!=4.46.*,!=4.47.*,!=4.48.0
-    datasets>=2.16.0,<=3.3.2
-    accelerate>=0.34.0,<=1.4.0
-    peft>=0.11.1,<=0.12.0
+    transformers>=4.41.2,<=4.50.0,!=4.46.*,!=4.47.*,!=4.48.0
+    datasets>=2.16.0,<=3.4.1
+    accelerate>=0.34.0,<=1.5.2
+    peft>=0.14.0,<=0.15.0
     trl>=0.8.6,<=0.9.6
   attention:
     transformers>=4.42.4 (gemma+fa2)
