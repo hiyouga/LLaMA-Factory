@@ -46,8 +46,8 @@ def calculate_lr(
     is_mistral_or_gemma: bool = False,  # mistral and gemma models opt for a smaller learning rate,
     packing: bool = False,
 ):
-    r"""
-    Calculates the optimal learning rate for 7B/13B models using LLaMA's hyper-parameters.
+    r"""Calculates the optimal learning rate for 7B/13B models using LLaMA's hyper-parameters.
+
     Usage:
     python cal_lr.py --model_name_or_path path_to_model --dataset alpaca_en_demo --cutoff_len 1024 --batch_size 16
     """

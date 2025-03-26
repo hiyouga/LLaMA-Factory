@@ -1,3 +1,6 @@
+# Copyright (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
 import math
 from copy import deepcopy
 from io import BytesIO
@@ -36,8 +39,7 @@ if TYPE_CHECKING:
 def _get_paligemma_token_type_ids(
     imglens: Sequence[int], seqlens: Sequence[int], processor: "ProcessorMixin"
 ) -> List[List[int]]:
-    r"""
-    Gets paligemma token type ids for computing loss.
+    r"""Gets paligemma token type ids for computing loss.
 
     Returns:
         batch_token_type_ids: shape (batch_size, sequence_length)
@@ -60,9 +62,7 @@ class BasePlugin:
         images: Sequence["ImageInput"],
         videos: Sequence["VideoInput"],
     ) -> None:
-        r"""
-        Validates if this model accepts the input modalities.
-        """
+        r"""Validates if this model accepts the input modalities."""
         if len(images) != 0 and self.image_token is None:
             raise ValueError("This model does not support image input.")
 
@@ -70,9 +70,7 @@ class BasePlugin:
             raise ValueError("This model does not support video input.")
 
     def _preprocess_image(self, image: "ImageObject", **kwargs) -> "ImageObject":
-        r"""
-        Pre-processes a single image.
-        """
+        r"""Pre-processes a single image."""
         image_resolution: int = kwargs.get("image_resolution")
         if max(image.width, image.height) > image_resolution:
             resize_factor = image_resolution / max(image.width, image.height)
@@ -85,9 +83,7 @@ class BasePlugin:
         return image
 
     def _get_video_sample_frames(self, video_stream: "Stream", **kwargs) -> int:
-        r"""
-        Computes video sample frames according to fps.
-        """
+        r"""Computes video sample frames according to fps."""
         video_fps: float = kwargs.get("video_fps")
         video_maxlen: int = kwargs.get("video_maxlen")
         total_frames = video_stream.frames
@@ -96,8 +92,9 @@ class BasePlugin:
         return math.floor(sample_frames)
 
     def _regularize_images(self, images: Sequence["ImageInput"], **kwargs) -> List["ImageObject"]:
-        r"""
-        Regularizes images to avoid error. Including reading and pre-processing.
+        r"""Regularizes images to avoid error.
+
+        Including reading and pre-processing.
         """
         results = []
         for image in images:
@@ -117,8 +114,9 @@ class BasePlugin:
         return results
 
     def _regularize_videos(self, videos: Sequence["VideoInput"], **kwargs) -> List[List["ImageObject"]]:
-        r"""
-        Regularizes videos to avoid error. Including reading, resizing and converting.
+        r"""Regularizes videos to avoid error.
+
+        Including reading, resizing and converting.
         """
         results = []
         for video in videos:
@@ -144,8 +142,7 @@ class BasePlugin:
         videos: Sequence["VideoInput"],
         processor: "ProcessorMixin",
     ) -> Dict[str, "torch.Tensor"]:
-        r"""
-        Processes visual inputs.
+        r"""Processes visual inputs.
 
         Returns: (llava and paligemma)
             pixel_values: tensor with shape (B, C, H, W)
@@ -186,9 +183,7 @@ class BasePlugin:
         videos: Sequence["VideoInput"],
         processor: Optional["ProcessorMixin"],
     ) -> List[Dict[str, str]]:
-        r"""
-        Pre-processes input messages before tokenization for VLMs.
-        """
+        r"""Pre-processes input messages before tokenization for VLMs."""
         self._validate_input(images, videos)
         return messages
 
@@ -201,9 +196,7 @@ class BasePlugin:
         tokenizer: "PreTrainedTokenizer",
         processor: Optional["ProcessorMixin"],
     ) -> Tuple[List[int], Optional[List[int]]]:
-        r"""
-        Pre-processes token ids after tokenization for VLMs.
-        """
+        r"""Pre-processes token ids after tokenization for VLMs."""
         self._validate_input(images, videos)
         return input_ids, labels
 
@@ -216,9 +209,7 @@ class BasePlugin:
         seqlens: Sequence[int],
         processor: Optional["ProcessorMixin"],
     ) -> Dict[str, Union[List[int], "torch.Tensor"]]:
-        r"""
-        Builds batched multimodal inputs for VLMs.
-        """
+        r"""Builds batched multimodal inputs for VLMs."""
         self._validate_input(images, videos)
         return {}
 

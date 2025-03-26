@@ -129,9 +129,9 @@ class HuggingfaceEngine(BaseEngine):
                 top_p=top_p if top_p is not None else generating_args["top_p"],
                 top_k=top_k if top_k is not None else generating_args["top_k"],
                 num_return_sequences=num_return_sequences,
-                repetition_penalty=repetition_penalty
-                if repetition_penalty is not None
-                else generating_args["repetition_penalty"],
+                repetition_penalty=(
+                    repetition_penalty if repetition_penalty is not None else generating_args["repetition_penalty"]
+                ),
                 length_penalty=length_penalty if length_penalty is not None else generating_args["length_penalty"],
                 eos_token_id=[tokenizer.eos_token_id] + tokenizer.additional_special_tokens_ids,
                 pad_token_id=tokenizer.pad_token_id,

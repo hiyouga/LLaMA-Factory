@@ -29,9 +29,7 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-def configure_attn_implementation(
-    config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool
-) -> None:
+def configure_attn_implementation(config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool) -> None:
     if getattr(config, "model_type", None) == "gemma2" and is_trainable:
         if model_args.flash_attn == "auto" or model_args.flash_attn == "fa2":
             if is_flash_attn_2_available():

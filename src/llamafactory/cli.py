@@ -18,6 +18,8 @@ import subprocess
 import sys
 from enum import Enum, unique
 
+from transformers.utils import is_torch_xpu_available
+
 from . import launcher
 from .api.app import run_api
 from .chat.chat_model import run_chat
@@ -57,6 +59,7 @@ WELCOME = (
 )
 
 logger = get_logger(__name__)
+logger.info("test")
 
 
 @unique
@@ -89,8 +92,19 @@ def main():
         force_torchrun = os.environ.get("FORCE_TORCHRUN", "0").lower() in ["true", "1"]
         if force_torchrun or get_device_count() > 1:
             master_addr = os.environ.get("MASTER_ADDR", "127.0.0.1")
-            master_port = os.environ.get("MASTER_PORT", str(random.randint(20001, 29999)))
+            master_port = os.environ.get("MASTER_PORT", str(random.randint(29501, 29999)))
+            os.environ["MASTER_ADDR"] = master_addr  # your master address
+            os.environ["MASTER_PORT"] = master_port  # your master port
             logger.info("Initializing distributed tasks at: {}:{}".format(master_addr, master_port))
+            if is_torch_xpu_available():
+                process = subprocess.run(
+                    ("mpiexec -np 2 -l python  {file_name} {args}").format(
+                        file_name=launcher.__file__,
+                        args=" ".join(sys.argv[1:]),
+                    ),
+                    shell=False,
+                )
+                sys.exit(process.returncode)
             process = subprocess.run(
                 (
                     "torchrun --nnodes {nnodes} --node_rank {node_rank} --nproc_per_node {nproc_per_node} "
@@ -104,7 +118,7 @@ def main():
                     file_name=launcher.__file__,
                     args=" ".join(sys.argv[1:]),
                 ),
-                shell=True,
+                shell=False,
             )
             sys.exit(process.returncode)
         else:

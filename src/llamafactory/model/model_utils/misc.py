@@ -25,9 +25,7 @@ logger = get_logger(__name__)
 
 
 def find_all_linear_modules(model: "PreTrainedModel", freeze_vision_tower: bool) -> List[str]:
-    r"""
-    Finds all available modules to apply lora or galore.
-    """
+    r"""Finds all available modules to apply lora or galore."""
     model_type = getattr(model.config, "model_type", None)
     forbidden_modules = {"lm_head"}
     if model_type == "chatglm":
@@ -58,9 +56,7 @@ def find_all_linear_modules(model: "PreTrainedModel", freeze_vision_tower: bool)
 
 
 def find_expanded_modules(model: "PreTrainedModel", target_modules: List[str], num_layer_trainable: int) -> List[str]:
-    r"""
-    Finds the modules in the expanded blocks to apply lora.
-    """
+    r"""Finds the modules in the expanded blocks to apply lora."""
     num_layers = getattr(model.config, "num_hidden_layers", None)
     if not num_layers:
         raise ValueError("Model was not supported.")

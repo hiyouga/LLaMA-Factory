@@ -52,9 +52,7 @@ GPTQ_BITS = ["8", "4", "3", "2"]
 
 
 def get_save_dir(*paths: str) -> os.PathLike:
-    r"""
-    Gets the path to saved model checkpoints.
-    """
+    r"""Gets the path to saved model checkpoints."""
     if os.path.sep in paths[-1]:
         logger.warning("Found complex path, some features may be not available.")
         return paths[-1]
@@ -64,16 +62,12 @@ def get_save_dir(*paths: str) -> os.PathLike:
 
 
 def get_config_path() -> os.PathLike:
-    r"""
-    Gets the path to user config.
-    """
+    r"""Gets the path to user config."""
     return os.path.join(DEFAULT_CACHE_DIR, USER_CONFIG)
 
 
 def load_config() -> Dict[str, Any]:
-    r"""
-    Loads user config if exists.
-    """
+    r"""Loads user config if exists."""
     try:
         with open(get_config_path(), "r", encoding="utf-8") as f:
             return safe_load(f)
@@ -82,9 +76,7 @@ def load_config() -> Dict[str, Any]:
 
 
 def save_config(lang: str, model_name: Optional[str] = None, model_path: Optional[str] = None) -> None:
-    r"""
-    Saves user config.
-    """
+    r"""Saves user config."""
     os.makedirs(DEFAULT_CACHE_DIR, exist_ok=True)
     user_config = load_config()
     user_config["lang"] = lang or user_config["lang"]
@@ -99,9 +91,7 @@ def save_config(lang: str, model_name: Optional[str] = None, model_path: Optiona
 
 
 def get_model_path(model_name: str) -> str:
-    r"""
-    Gets the model path according to the model name.
-    """
+    r"""Gets the model path according to the model name."""
     user_config = load_config()
     path_dict: Dict["DownloadSource", str] = SUPPORTED_MODELS.get(model_name, defaultdict(str))
     model_path = user_config["path_dict"].get(model_name, "") or path_dict.get(DownloadSource.DEFAULT, "")
@@ -116,15 +106,12 @@ def get_model_path(model_name: str) -> str:
 
 
 def get_prefix(model_name: str) -> str:
-    r"""
-    Gets the prefix of the model name to obtain the model family.
-    """
+    r"""Gets the prefix of the model name to obtain the model family."""
     return model_name.split("-")[0]
 
 
 def get_model_info(model_name: str) -> Tuple[str, str]:
-    r"""
-    Gets the necessary information of this model.
+    r"""Gets the necessary information of this model.
 
     Returns:
         model_path (str)
@@ -134,25 +121,19 @@ def get_model_info(model_name: str) -> Tuple[str, str]:
 
 
 def get_template(model_name: str) -> str:
-    r"""
-    Gets the template name if the model is a chat model.
-    """
+    r"""Gets the template name if the model is a chat model."""
     if model_name and model_name.endswith("Chat") and get_prefix(model_name) in DEFAULT_TEMPLATE:
         return DEFAULT_TEMPLATE[get_prefix(model_name)]
     return "default"
 
 
 def get_visual(model_name: str) -> bool:
-    r"""
-    Judges if the model is a vision language model.
-    """
+    r"""Judges if the model is a vision language model."""
     return get_prefix(model_name) in VISION_MODELS
 
 
 def list_checkpoints(model_name: str, finetuning_type: str) -> "gr.Dropdown":
-    r"""
-    Lists all available checkpoints.
-    """
+    r"""Lists all available checkpoints."""
     checkpoints = []
     if model_name:
         save_dir = get_save_dir(model_name, finetuning_type)
@@ -170,9 +151,7 @@ def list_checkpoints(model_name: str, finetuning_type: str) -> "gr.Dropdown":
 
 
 def load_dataset_info(dataset_dir: str) -> Dict[str, Dict[str, Any]]:
-    r"""
-    Loads dataset_info.json.
-    """
+    r"""Loads dataset_info.json."""
     if dataset_dir == "ONLINE" or dataset_dir.startswith("REMOTE:"):
         logger.info("dataset_dir is {}, using online dataset.".format(dataset_dir))
         return {}
@@ -186,9 +165,7 @@ def load_dataset_info(dataset_dir: str) -> Dict[str, Dict[str, Any]]:
 
 
 def list_datasets(dataset_dir: str = None, training_stage: str = list(TRAINING_STAGES.keys())[0]) -> "gr.Dropdown":
-    r"""
-    Lists all available datasets in the dataset dir for the training stage.
-    """
+    r"""Lists all available datasets in the dataset dir for the training stage."""
     dataset_info = load_dataset_info(dataset_dir if dataset_dir is not None else DEFAULT_DATA_DIR)
     ranking = TRAINING_STAGES[training_stage] in STAGES_USE_PAIR_DATA
     datasets = [k for k, v in dataset_info.items() if v.get("ranking", False) == ranking]

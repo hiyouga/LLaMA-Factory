@@ -34,13 +34,9 @@ logger = get_logger(__name__)
 
 
 class CustomTrainer(Trainer):
-    r"""
-    Inherits Trainer for custom optimizer.
-    """
+    r"""Inherits Trainer for custom optimizer."""
 
-    def __init__(
-        self, finetuning_args: "FinetuningArguments", processor: Optional["ProcessorMixin"], **kwargs
-    ) -> None:
+    def __init__(self, finetuning_args: "FinetuningArguments", processor: Optional["ProcessorMixin"], **kwargs) -> None:
         super().__init__(**kwargs)
         self.finetuning_args = finetuning_args
 

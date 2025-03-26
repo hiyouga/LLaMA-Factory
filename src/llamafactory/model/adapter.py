@@ -263,8 +263,7 @@ def init_adapter(
     finetuning_args: "FinetuningArguments",
     is_trainable: bool,
 ) -> "PreTrainedModel":
-    r"""
-    Initializes the adapters.
+    r"""Initializes the adapters.
 
     Support full-parameter, freeze and LoRA training.
 

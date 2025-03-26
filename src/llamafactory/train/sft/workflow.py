@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, List, Optional
 from ...data import SFTDataCollatorWith4DAttentionMask, get_dataset, get_template_and_fix_tokenizer
 from ...extras.constants import IGNORE_INDEX
 from ...extras.misc import get_logits_processor
-from ...extras.ploting import plot_loss
+from ...extras.plotting import plot_loss
 from ...model import load_model, load_tokenizer
 from ..trainer_utils import create_modelcard_and_push
 from .metric import ComputeAccuracy, ComputeSimilarity, eval_logit_processor

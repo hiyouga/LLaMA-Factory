@@ -58,9 +58,7 @@ class Template:
         system: Optional[str] = None,
         tools: Optional[str] = None,
     ) -> Tuple[List[int], List[int]]:
-        r"""
-        Returns a single pair of token ids representing prompt and response respectively.
-        """
+        r"""Returns a single pair of token ids representing prompt and response respectively."""
         encoded_messages = self._encode(tokenizer, messages, system, tools)
         prompt_ids = []
         for encoded_ids in encoded_messages[:-1]:
@@ -76,16 +74,12 @@ class Template:
         system: Optional[str] = None,
         tools: Optional[str] = None,
     ) -> List[Tuple[List[int], List[int]]]:
-        r"""
-        Returns multiple pairs of token ids representing prompts and responses respectively.
-        """
+        r"""Returns multiple pairs of token ids representing prompts and responses respectively."""
         encoded_messages = self._encode(tokenizer, messages, system, tools)
         return [(encoded_messages[i], encoded_messages[i + 1]) for i in range(0, len(encoded_messages), 2)]
 
     def extract_tool(self, content: str) -> Union[str, List[Tuple[str, str]]]:
-        r"""
-        Extracts tool message.
-        """
+        r"""Extracts tool message."""
         return self.format_tools.extract(content)
 
     def _encode(
@@ -95,8 +89,8 @@ class Template:
         system: Optional[str],
         tools: Optional[str],
     ) -> List[List[int]]:
-        r"""
-        Encodes formatted inputs to pairs of token ids.
+        r"""Encodes formatted inputs to pairs of token ids.
+
         Turn 0: prefix + system + query        resp
         Turn t: sep + query                    resp
         """
@@ -130,9 +124,7 @@ class Template:
         return encoded_messages
 
     def _convert_elements_to_ids(self, tokenizer: "PreTrainedTokenizer", elements: "SLOTS") -> List[int]:
-        r"""
-        Converts elements to token ids.
-        """
+        r"""Converts elements to token ids."""
         token_ids = []
         for elem in elements:
             if isinstance(elem, str):
@@ -161,8 +153,8 @@ class Llama2Template(Template):
         system: str,
         tools: str,
     ) -> List[List[int]]:
-        r"""
-        Encodes formatted inputs to pairs of token ids.
+        r"""Encodes formatted inputs to pairs of token ids.
+
         Turn 0: prefix + system + query        resp
         Turn t: sep + query                    resp
         """
@@ -216,8 +208,7 @@ def _register_template(
     replace_eos: bool = False,
     mm_plugin: "BasePlugin" = get_mm_plugin(name="base"),
 ) -> None:
-    r"""
-    Registers a chat template.
+    r"""Registers a chat template.
 
     To add the following chat template:
     ```
@@ -307,9 +298,7 @@ def _convert_slots_to_jinja(slots: "SLOTS", tokenizer: "PreTrainedTokenizer", pl
 
 
 def _get_jinja_template(template: "Template", tokenizer: "PreTrainedTokenizer") -> str:
-    r"""
-    Returns the jinja template.
-    """
+    r"""Returns the jinja template."""
     jinja_template = ""
 
     prefix = _convert_slots_to_jinja(template.format_prefix.apply(), tokenizer)
@@ -350,9 +339,7 @@ def _get_jinja_template(template: "Template", tokenizer: "PreTrainedTokenizer") 
 
 
 def get_template_and_fix_tokenizer(tokenizer: "PreTrainedTokenizer", data_args: "DataArguments") -> "Template":
-    r"""
-    Gets chat template and fixes the tokenizer.
-    """
+    r"""Gets chat template and fixes the tokenizer."""
     if data_args.template in ["llava", "paligemma", "qwen2_vl"]:
         require_version(
             "transformers>=4.45.0.dev0", "To fix: pip install git+https://github.com/huggingface/transformers.git"
@@ -658,9 +645,7 @@ _register_template(
 _register_template(
     name="gemma",
     format_user=StringFormatter(slots=["<start_of_turn>user\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]),
-    format_observation=StringFormatter(
-        slots=["<start_of_turn>tool\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]
-    ),
+    format_observation=StringFormatter(slots=["<start_of_turn>tool\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]),
     format_separator=EmptyFormatter(slots=["<end_of_turn>\n"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     efficient_eos=True,
@@ -801,9 +786,7 @@ _register_template(
 _register_template(
     name="paligemma",
     format_user=StringFormatter(slots=["<start_of_turn>user\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]),
-    format_observation=StringFormatter(
-        slots=["<start_of_turn>tool\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]
-    ),
+    format_observation=StringFormatter(slots=["<start_of_turn>tool\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]),
     format_separator=EmptyFormatter(slots=["<end_of_turn>\n"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     efficient_eos=True,

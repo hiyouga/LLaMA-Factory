@@ -46,32 +46,24 @@ FunctionCall = namedtuple("FunctionCall", ["name", "arguments"])
 
 @dataclass
 class ToolUtils(ABC):
-    """
-    Base class for tool utilities.
-    """
+    """Base class for tool utilities."""
 
     @staticmethod
     @abstractmethod
     def get_function_slots() -> SLOTS:
-        r"""
-        Gets a list of slots corresponding to a single function call.
-        """
+        r"""Gets a list of slots corresponding to a single function call."""
         ...
 
     @staticmethod
     @abstractmethod
     def tool_formatter(tools: List[Dict[str, Any]]) -> str:
-        r"""
-        Generates the system message describing all the available tools.
-        """
+        r"""Generates the system message describing all the available tools."""
         ...
 
     @staticmethod
     @abstractmethod
     def tool_extractor(content: str) -> Union[str, List["FunctionCall"]]:
-        r"""
-        Extracts all the function calls from the response message.
-        """
+        r"""Extracts all the function calls from the response message."""
         ...
 
 

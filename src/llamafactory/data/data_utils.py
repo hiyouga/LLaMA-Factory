@@ -49,9 +49,7 @@ class DatasetModule(TypedDict):
 def merge_dataset(
     all_datasets: List[Union["Dataset", "IterableDataset"]], data_args: "DataArguments", seed: int
 ) -> Union["Dataset", "IterableDataset"]:
-    r"""
-    Merges multiple datasets to a unified dataset.
-    """
+    r"""Merges multiple datasets to a unified dataset."""
     if len(all_datasets) == 1:
         return all_datasets[0]
     elif data_args.mix_strategy == "concat":
@@ -73,11 +71,8 @@ def merge_dataset(
         raise ValueError("Unknown mixing strategy: {}.".format(data_args.mix_strategy))
 
 
-def split_dataset(
-    dataset: Union["Dataset", "IterableDataset"], data_args: "DataArguments", seed: int
-) -> "DatasetDict":
-    r"""
-    Splits the dataset and returns a dataset dict containing train set and validation set.
+def split_dataset(dataset: Union["Dataset", "IterableDataset"], data_args: "DataArguments", seed: int) -> "DatasetDict":
+    r"""Splits the dataset and returns a dataset dict containing train set and validation set.
 
     Supports both map dataset and iterable dataset.
     """

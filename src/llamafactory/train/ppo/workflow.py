@@ -18,7 +18,7 @@
 from typing import TYPE_CHECKING, List, Optional
 
 from ...data import MultiModalDataCollatorForSeq2Seq, get_dataset, get_template_and_fix_tokenizer
-from ...extras.ploting import plot_loss
+from ...extras.plotting import plot_loss
 from ...model import load_model, load_tokenizer
 from ..callbacks import fix_valuehead_checkpoint
 from ..trainer_utils import create_ref_model, create_reward_model

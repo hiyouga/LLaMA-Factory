@@ -29,8 +29,7 @@ if TYPE_CHECKING:
 
 
 def prepare_4d_attention_mask(attention_mask_with_indices: "torch.Tensor", dtype: "torch.dtype") -> "torch.Tensor":
-    r"""
-    Expands the attention mask with indices from (batch_size, seq_len) to (batch_size, 1, seq_len, seq_len),
+    r"""Expands the attention mask with indices from (batch_size, seq_len) to (batch_size, 1, seq_len, seq_len),
     while handles packed sequences and transforms the mask to lower triangular form to prevent future peeking.
 
     e.g.
@@ -69,8 +68,7 @@ def prepare_4d_attention_mask(attention_mask_with_indices: "torch.Tensor", dtype
 
 @dataclass
 class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
-    r"""
-    Data collator that supports VLMs.
+    r"""Data collator that supports VLMs.
 
     Features should contain input_ids, attention_mask, labels and images.
     """
@@ -104,9 +102,7 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
 
 @dataclass
 class SFTDataCollatorWith4DAttentionMask(MultiModalDataCollatorForSeq2Seq):
-    r"""
-    Data collator for 4d attention mask.
-    """
+    r"""Data collator for 4d attention mask."""
 
     block_diag_attn: bool = False
     attn_implementation: Literal["eager", "sdpa", "flash_attention_2"] = "eager"
@@ -122,13 +118,10 @@ class SFTDataCollatorWith4DAttentionMask(MultiModalDataCollatorForSeq2Seq):
 
 @dataclass
 class PairwiseDataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
-    r"""
-    Data collator for pairwise data.
-    """
+    r"""Data collator for pairwise data."""
 
     def __call__(self, features: Sequence[Dict[str, Any]]) -> Dict[str, "torch.Tensor"]:
-        r"""
-        Pads batched data to the longest sequence in the batch.
+        r"""Pads batched data to the longest sequence in the batch.
 
         We generate 2 * n examples where the first n examples represent chosen examples and
         the last n examples represent rejected examples.
@@ -150,9 +143,7 @@ class PairwiseDataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
 
 @dataclass
 class KTODataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
-    r"""
-    Data collator for KTO data.
-    """
+    r"""Data collator for KTO data."""
 
     def __call__(self, features: Sequence[Dict[str, Any]]) -> Dict[str, "torch.Tensor"]:
         target_features = []

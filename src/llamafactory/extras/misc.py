@@ -52,9 +52,7 @@ logger = get_logger(__name__)
 
 
 class AverageMeter:
-    r"""
-    Computes and stores the average and current value.
-    """
+    r"""Computes and stores the average and current value."""
 
     def __init__(self):
         self.reset()
@@ -73,9 +71,7 @@ class AverageMeter:
 
 
 def check_dependencies() -> None:
-    r"""
-    Checks the version of the required packages.
-    """
+    r"""Checks the version of the required packages."""
     if os.environ.get("DISABLE_VERSION_CHECK", "0").lower() in ["true", "1"]:
         logger.warning("Version checking has been disabled, may lead to unexpected behaviors.")
     else:
@@ -87,9 +83,7 @@ def check_dependencies() -> None:
 
 
 def count_parameters(model: "torch.nn.Module") -> Tuple[int, int]:
-    r"""
-    Returns the number of trainable parameters and number of all parameters in the model.
-    """
+    r"""Returns the number of trainable parameters and number of all parameters in the model."""
     trainable_params, all_param = 0, 0
     for param in model.parameters():
         num_params = param.numel()
@@ -116,9 +110,7 @@ def count_parameters(model: "torch.nn.Module") -> Tuple[int, int]:
 
 
 def get_current_device() -> "torch.device":
-    r"""
-    Gets the current available device.
-    """
+    r"""Gets the current available device."""
     if is_torch_xpu_available():
         device = "xpu:{}".format(os.environ.get("LOCAL_RANK", "0"))
     elif is_torch_npu_available():
@@ -134,9 +126,7 @@ def get_current_device() -> "torch.device":
 
 
 def get_device_count() -> int:
-    r"""
-    Gets the number of available GPU or NPU devices.
-    """
+    r"""Gets the number of available GPU or NPU devices."""
     if is_torch_xpu_available():
         return torch.xpu.device_count()
     elif is_torch_npu_available():
@@ -148,18 +138,14 @@ def get_device_count() -> int:
 
 
 def get_logits_processor() -> "LogitsProcessorList":
-    r"""
-    Gets logits processor that removes NaN and Inf logits.
-    """
+    r"""Gets logits processor that removes NaN and Inf logits."""
     logits_processor = LogitsProcessorList()
     logits_processor.append(InfNanRemoveLogitsProcessor())
     return logits_processor
 
 
 def get_peak_memory() -> Tuple[int, int]:
-    r"""
-    Gets the peak memory usage for the current device (in Bytes).
-    """
+    r"""Gets the peak memory usage for the current device (in Bytes)."""
     if is_torch_npu_available():
         return torch.npu.max_memory_allocated(), torch.npu.max_memory_reserved()
     elif is_torch_cuda_available():
@@ -169,16 +155,12 @@ def get_peak_memory() -> Tuple[int, int]:
 
 
 def has_tokenized_data(path: "os.PathLike") -> bool:
-    r"""
-    Checks if the path has a tokenized dataset.
-    """
+    r"""Checks if the path has a tokenized dataset."""
     return os.path.isdir(path) and len(os.listdir(path)) > 0
 
 
 def infer_optim_dtype(model_dtype: "torch.dtype") -> "torch.dtype":
-    r"""
-    Infers the optimal dtype according to the model_dtype and device compatibility.
-    """
+    r"""Infers the optimal dtype according to the model_dtype and device compatibility."""
     if _is_bf16_available and model_dtype == torch.bfloat16:
         return torch.bfloat16
     elif _is_fp16_available:
@@ -188,16 +170,12 @@ def infer_optim_dtype(model_dtype: "torch.dtype") -> "torch.dtype":
 
 
 def is_gpu_or_npu_available() -> bool:
-    r"""
-    Checks if the GPU or NPU is available.
-    """
-    return is_torch_npu_available() or is_torch_cuda_available()
+    r"""Checks if the GPU or NPU is available."""
+    return is_torch_npu_available() or is_torch_cuda_available() or is_torch_xpu_available()
 
 
 def numpify(inputs: Union["NDArray", "torch.Tensor"]) -> "NDArray":
-    r"""
-    Casts a torch tensor or a numpy array to a numpy array.
-    """
+    r"""Casts a torch tensor or a numpy array to a numpy array."""
     if isinstance(inputs, torch.Tensor):
         inputs = inputs.cpu()
         if inputs.dtype == torch.bfloat16:  # numpy does not support bfloat16 until 1.21.4
@@ -209,17 +187,13 @@ def numpify(inputs: Union["NDArray", "torch.Tensor"]) -> "NDArray":
 
 
 def skip_check_imports() -> None:
-    r"""
-    Avoids flash attention import error in custom model files.
-    """
+    r"""Avoids flash attention import error in custom model files."""
     if os.environ.get("FORCE_CHECK_IMPORTS", "0").lower() not in ["true", "1"]:
         transformers.dynamic_module_utils.check_imports = get_relative_imports
 
 
 def torch_gc() -> None:
-    r"""
-    Collects GPU or NPU memory.
-    """
+    r"""Collects GPU or NPU memory."""
     gc.collect()
     if is_torch_xpu_available():
         torch.xpu.empty_cache()

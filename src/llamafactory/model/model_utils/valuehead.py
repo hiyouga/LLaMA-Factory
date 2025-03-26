@@ -31,8 +31,7 @@ logger = get_logger(__name__)
 
 
 def load_valuehead_params(path_or_repo_id: str, model_args: "ModelArguments") -> Dict[str, torch.Tensor]:
-    r"""
-    Loads value head parameters from Hugging Face Hub or local disk.
+    r"""Loads value head parameters from Hugging Face Hub or local disk.
 
     Returns: dict with keys `v_head.summary.weight` and `v_head.summary.bias`.
     """
@@ -50,7 +49,7 @@ def load_valuehead_params(path_or_repo_id: str, model_args: "ModelArguments") ->
 
     try:
         vhead_file = cached_file(filename=V_HEAD_WEIGHTS_NAME, **kwargs)
-        return torch.load(vhead_file, map_location="cpu")
+        return torch.load(vhead_file, map_location="cpu", weights_only=False)
     except Exception as err:
         err_text = str(err)
 

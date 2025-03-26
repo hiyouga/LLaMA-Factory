@@ -53,7 +53,7 @@ LAYERNORM_NAMES = {"norm", "ln"}
 
 LLAMABOARD_CONFIG = "llamaboard_config.yaml"
 
-METHODS = ["full", "freeze", "lora"]
+METHODS = ["full", "freeze", "lora", "clip", "Adaclip"]
 
 MOD_SUPPORTED_MODELS = {"bloom", "falcon", "gemma", "llama", "mistral", "mixtral", "phi", "starcoder2"}
 
@@ -76,7 +76,10 @@ TRAINING_STAGES = {
     "DPO": "dpo",
     "KTO": "kto",
     "Pre-Training": "pt",
+    "clip": "sft_clip",
+    "Adaclip": "sft_adaclip",
 }
+CLIP_TRAINER = ["CLIP_Adapter_hf", "CLIP_Bias_hf", "CLIP_VPT_hf", "CLIP_Fullfinetune_hf", "Tip_Adapter"]
 
 STAGES_USE_PAIR_DATA = {"rm", "dpo"}
 
@@ -1735,4 +1738,18 @@ register_model_group(
         },
     },
     template="zephyr",
+)
+
+register_model_group(
+    models={
+        "ViT-B/16": {
+            DownloadSource.DEFAULT: "vit_b16",
+            DownloadSource.MODELSCOPE: "vit_b16",
+        },
+        "ViT-B/32": {
+            DownloadSource.DEFAULT: "vit_b32",
+            DownloadSource.MODELSCOPE: "vit_b32",
+        },
+    },
+    template="clip",
 )

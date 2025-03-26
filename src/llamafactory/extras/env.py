@@ -49,7 +49,7 @@ def print_env() -> None:
     if is_torch_npu_available():
         info["PyTorch version"] += " (NPU)"
         info["NPU type"] = torch.npu.get_device_name()
-        info["CANN version"] = torch.version.cann
+        info["CAN version"] = torch.version.can
 
     try:
         import deepspeed  # type: ignore

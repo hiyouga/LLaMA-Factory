@@ -37,8 +37,7 @@ def _start_background_loop(loop: "asyncio.AbstractEventLoop") -> None:
 
 
 class ChatModel:
-    r"""
-    General class for chat models. Backed by huggingface or vllm engines.
+    r"""General class for chat models. Backed by huggingface or vllm engines.
 
     Supports both sync and async methods.
     Sync methods: chat(), stream_chat() and get_scores().
@@ -68,9 +67,7 @@ class ChatModel:
         video: Optional["VideoInput"] = None,
         **input_kwargs,
     ) -> List["Response"]:
-        r"""
-        Gets a list of responses of the chat model.
-        """
+        r"""Gets a list of responses of the chat model."""
         task = asyncio.run_coroutine_threadsafe(
             self.achat(messages, system, tools, image, video, **input_kwargs), self._loop
         )
@@ -85,9 +82,7 @@ class ChatModel:
         video: Optional["VideoInput"] = None,
         **input_kwargs,
     ) -> List["Response"]:
-        r"""
-        Asynchronously gets a list of responses of the chat model.
-        """
+        r"""Asynchronously gets a list of responses of the chat model."""
         return await self.engine.chat(messages, system, tools, image, video, **input_kwargs)
 
     def stream_chat(
@@ -99,9 +94,7 @@ class ChatModel:
         video: Optional["VideoInput"] = None,
         **input_kwargs,
     ) -> Generator[str, None, None]:
-        r"""
-        Gets the response token-by-token of the chat model.
-        """
+        r"""Gets the response token-by-token of the chat model."""
         generator = self.astream_chat(messages, system, tools, image, video, **input_kwargs)
         while True:
             try:
@@ -119,9 +112,7 @@ class ChatModel:
         video: Optional["VideoInput"] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
-        r"""
-        Asynchronously gets the response token-by-token of the chat model.
-        """
+        r"""Asynchronously gets the response token-by-token of the chat model."""
         async for new_token in self.engine.stream_chat(messages, system, tools, image, video, **input_kwargs):
             yield new_token
 
@@ -130,9 +121,7 @@ class ChatModel:
         batch_input: List[str],
         **input_kwargs,
     ) -> List[float]:
-        r"""
-        Gets a list of scores of the reward model.
-        """
+        r"""Gets a list of scores of the reward model."""
         task = asyncio.run_coroutine_threadsafe(self.aget_scores(batch_input, **input_kwargs), self._loop)
         return task.result()
 
@@ -141,9 +130,7 @@ class ChatModel:
         batch_input: List[str],
         **input_kwargs,
     ) -> List[float]:
-        r"""
-        Asynchronously gets a list of scores of the reward model.
-        """
+        r"""Asynchronously gets a list of scores of the reward model."""
         return await self.engine.get_scores(batch_input, **input_kwargs)
 
 

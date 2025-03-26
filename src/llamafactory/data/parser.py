@@ -25,9 +25,7 @@ from ..extras.misc import use_modelscope
 
 @dataclass
 class DatasetAttr:
-    r"""
-    Dataset attributes.
-    """
+    r"""Dataset attributes."""
 
     # basic configs
     load_from: Literal["hf_hub", "ms_hub", "script", "file"]
@@ -72,9 +70,7 @@ class DatasetAttr:
 
 
 def get_dataset_list(dataset_names: Optional[Sequence[str]], dataset_dir: str) -> List["DatasetAttr"]:
-    r"""
-    Gets the attributes of the datasets.
-    """
+    r"""Gets the attributes of the datasets."""
     if dataset_names is None:
         dataset_names = []
 

@@ -44,8 +44,7 @@ class TokenizerModule(TypedDict):
 
 
 def _get_init_kwargs(model_args: "ModelArguments") -> Dict[str, Any]:
-    r"""
-    Gets arguments to load config/tokenizer/model.
+    r"""Gets arguments to load config/tokenizer/model.
 
     Note: including inplace operation of model_args.
     """
@@ -60,8 +59,7 @@ def _get_init_kwargs(model_args: "ModelArguments") -> Dict[str, Any]:
 
 
 def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
-    r"""
-    Loads pretrained tokenizer.
+    r"""Loads pretrained tokenizer.
 
     Note: including inplace operation of model_args.
     """
@@ -115,9 +113,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
 
 
 def load_config(model_args: "ModelArguments") -> "PretrainedConfig":
-    r"""
-    Loads model config.
-    """
+    r"""Loads model config."""
     init_kwargs = _get_init_kwargs(model_args)
     return AutoConfig.from_pretrained(model_args.model_name_or_path, **init_kwargs)
 
@@ -129,9 +125,7 @@ def load_model(
     is_trainable: bool = False,
     add_valuehead: bool = False,
 ) -> "PreTrainedModel":
-    r"""
-    Loads pretrained model.
-    """
+    r"""Loads pretrained model."""
     init_kwargs = _get_init_kwargs(model_args)
     config = load_config(model_args)
     patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)

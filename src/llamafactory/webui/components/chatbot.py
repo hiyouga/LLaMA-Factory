@@ -29,9 +29,7 @@ if TYPE_CHECKING:
     from ..engine import Engine
 
 
-def create_chat_box(
-    engine: "Engine", visible: bool = False
-) -> Tuple["Component", "Component", Dict[str, "Component"]]:
+def create_chat_box(engine: "Engine", visible: bool = False) -> Tuple["Component", "Component", Dict[str, "Component"]]:
     with gr.Column(visible=visible) as chat_box:
         chatbot = gr.Chatbot(show_copy_button=True)
         messages = gr.State([])

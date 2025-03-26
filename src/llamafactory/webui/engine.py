@@ -37,19 +37,16 @@ class Engine:
             create_ds_config()
 
     def _update_component(self, input_dict: Dict[str, Dict[str, Any]]) -> Dict["Component", "Component"]:
-        r"""
-        Gets the dict to update the components.
-        """
+        r"""Gets the dict to update the components."""
         output_dict: Dict["Component", "Component"] = {}
         for elem_id, elem_attr in input_dict.items():
             elem = self.manager.get_elem_by_id(elem_id)
             output_dict[elem] = elem.__class__(**elem_attr)
-
         return output_dict
 
     def resume(self):
         user_config = load_config() if not self.demo_mode else {}
-        lang = user_config.get("lang", None) or "en"
+        lang = user_config.get("lang", None) or "zh"
 
         init_dict = {"top.lang": {"value": lang}, "infer.chat_box": {"visible": self.chatter.loaded}}
 

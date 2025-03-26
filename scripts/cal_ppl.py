@@ -31,15 +31,12 @@ from llamafactory.model import load_model, load_tokenizer
 
 @dataclass
 class PairwiseDataCollatorWithPadding(DataCollatorForSeq2Seq):
-    r"""
-    Data collator for pairwise data.
-    """
+    r"""Data collator for pairwise data."""
 
     train_on_prompt: bool = False
 
     def __call__(self, features: Sequence[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
-        r"""
-        Pads batched data to the longest sequence in the batch.
+        r"""Pads batched data to the longest sequence in the batch.
 
         We generate 2 * n examples where the first n examples represent chosen examples and
         the last n examples represent rejected examples.
@@ -67,8 +64,8 @@ def calculate_ppl(
     max_samples: Optional[int] = None,
     train_on_prompt: bool = False,
 ):
-    r"""
-    Calculates the ppl on the dataset of the pre-trained models.
+    r"""Calculates the ppl on the dataset of the pre-trained models.
+
     Usage: python cal_ppl.py --model_name_or_path path_to_model --dataset alpaca_en_demo --save_name ppl.json
     """
     model_args, data_args, training_args, finetuning_args, _ = get_train_args(

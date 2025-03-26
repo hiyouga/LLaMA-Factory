@@ -58,8 +58,7 @@ logger = get_logger(__name__)
 
 
 def get_seqlens_in_batch(attention_mask: "torch.Tensor") -> "torch.Tensor":
-    r"""
-    Gets the sequnce lengths in the current batch.
+    r"""Gets the sequence lengths in the current batch.
 
     e.g.
     ```python
@@ -85,8 +84,7 @@ def get_seqlens_in_batch(attention_mask: "torch.Tensor") -> "torch.Tensor":
 
 
 def get_unpad_data(attention_mask: "torch.Tensor") -> Tuple["torch.Tensor", "torch.Tensor", int]:
-    r"""
-    Prepares the indices and seqlens for flash attn varlen function.
+    r"""Prepares the indices and seqlens for flash attn varlen function.
 
     Returns:
         indices: indices of non-masked tokens from the flattened sequence.

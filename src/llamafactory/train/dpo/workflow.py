@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, List, Optional
 
 from ...data import PairwiseDataCollatorWithPadding, get_dataset, get_template_and_fix_tokenizer
 from ...extras.constants import IGNORE_INDEX
-from ...extras.ploting import plot_loss
+from ...extras.plotting import plot_loss
 from ...hparams import ModelArguments
 from ...model import load_model, load_tokenizer
 from ..trainer_utils import create_modelcard_and_push, create_ref_model

@@ -38,7 +38,7 @@ def save_weight(input_dir: str, output_dir: str, shard_size: str, save_safetenso
     baichuan2_state_dict: Dict[str, torch.Tensor] = OrderedDict()
     for filepath in tqdm(os.listdir(input_dir), desc="Load weights"):
         if os.path.isfile(os.path.join(input_dir, filepath)) and filepath.endswith(".bin"):
-            shard_weight = torch.load(os.path.join(input_dir, filepath), map_location="cpu")
+            shard_weight = torch.load(os.path.join(input_dir, filepath), map_location="cpu", weights_only=False)
             baichuan2_state_dict.update(shard_weight)
 
     llama2_state_dict: Dict[str, torch.Tensor] = OrderedDict()
@@ -91,8 +91,8 @@ def llamafy_baichuan2(
     shard_size: str = "2GB",
     save_safetensors: bool = True,
 ):
-    r"""
-    Converts the Baichuan2-7B model in the same format as LLaMA2-7B.
+    r"""Converts the Baichuan2-7B model in the same format as LLaMA2-7B.
+
     Usage: python llamafy_baichuan2.py --input_dir input --output_dir output
     Converted model: https://huggingface.co/hiyouga/Baichuan2-7B-Base-LLaMAfied
     """

@@ -37,9 +37,7 @@ def _convert_images(
     dataset_attr: "DatasetAttr",
     data_args: "DataArguments",
 ) -> Optional[List["ImageInput"]]:
-    r"""
-    Optionally concatenates image path to dataset dir when loading from local disk.
-    """
+    r"""Optionally concatenates image path to dataset dir when loading from local disk."""
     if len(images) == 0:
         return None
 
@@ -57,9 +55,7 @@ def _convert_videos(
     dataset_attr: "DatasetAttr",
     data_args: "DataArguments",
 ) -> Optional[List["VideoInput"]]:
-    r"""
-    Optionally concatenates video path to dataset dir when loading from local disk.
-    """
+    r"""Optionally concatenates video path to dataset dir when loading from local disk."""
     if len(videos) == 0:
         return None
 
@@ -77,9 +73,7 @@ def convert_alpaca(
     dataset_attr: "DatasetAttr",
     data_args: "DataArguments",
 ) -> Dict[str, Any]:
-    r"""
-    Converts alpaca format dataset to the standard format.
-    """
+    r"""Converts alpaca format dataset to the standard format."""
     prompt = []
     if dataset_attr.history and isinstance(example[dataset_attr.history], list):
         for old_prompt, old_response in example[dataset_attr.history]:
@@ -133,9 +127,7 @@ def convert_sharegpt(
     dataset_attr: "DatasetAttr",
     data_args: "DataArguments",
 ) -> Dict[str, Any]:
-    r"""
-    Converts sharegpt format dataset to the standard format.
-    """
+    r"""Converts sharegpt format dataset to the standard format."""
     tag_mapping = {
         dataset_attr.user_tag: Role.USER.value,
         dataset_attr.assistant_tag: Role.ASSISTANT.value,
@@ -147,11 +139,7 @@ def convert_sharegpt(
     even_tags = (dataset_attr.assistant_tag, dataset_attr.function_tag)
     accept_tags = (odd_tags, even_tags)
     messages = example[dataset_attr.messages]
-    if (
-        dataset_attr.system_tag
-        and len(messages) != 0
-        and messages[0][dataset_attr.role_tag] == dataset_attr.system_tag
-    ):
+    if dataset_attr.system_tag and len(messages) != 0 and messages[0][dataset_attr.role_tag] == dataset_attr.system_tag:
         system = messages[0][dataset_attr.content_tag]
         messages = messages[1:]
     else:

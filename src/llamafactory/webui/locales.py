@@ -201,6 +201,86 @@ LOCALES = {
             "info": "수행할 학습 방법.",
         },
     },
+    "optuna": {
+        "en": {
+            "label": "whether to use optuna",
+        },
+        "ru": {
+            "label": "Этап",
+            "info": "Этап выполнения обучения.",
+        },
+        "zh": {
+            "label": "是否使用optuna",
+        },
+        "ko": {
+            "label": "학습 단계",
+            "info": "수행할 학습 방법.",
+        },
+    },
+    "n_trials": {
+        "en": {
+            "label": "number of trained times",
+        },
+        "ru": {
+            "label": "Этап",
+            "info": "Этап выполнения обучения.",
+        },
+        "zh": {
+            "label": "optuna调参轮数",
+        },
+        "ko": {
+            "label": "학습 단계",
+            "info": "수행할 학습 방법.",
+        },
+    },
+    "n_warmup_steps": {
+        "en": {
+            "label": "n_warmup_steps",
+        },
+        "ru": {
+            "label": "Этап",
+            "info": "Этап выполнения обучения.",
+        },
+        "zh": {
+            "label": "预热轮数",
+        },
+        "ko": {
+            "label": "학습 단계",
+            "info": "수행할 학습 방법.",
+        },
+    },
+    "sampler": {
+        "en": {
+            "label": "optuna sampler",
+        },
+        "ru": {
+            "label": "Этап",
+            "info": "Этап выполнения обучения.",
+        },
+        "zh": {
+            "label": "optuna使用的sampler",
+        },
+        "ko": {
+            "label": "학습 단계",
+            "info": "수행할 학습 방법.",
+        },
+    },
+    "opt_params": {
+        "en": {
+            "label": "self-defined optuna train param",
+        },
+        "ru": {
+            "label": "Этап",
+            "info": "Этап выполнения обучения.",
+        },
+        "zh": {
+            "label": "自定义optuna调参",
+        },
+        "ko": {
+            "label": "학습 단계",
+            "info": "수행할 학습 방법.",
+        },
+    },
     "dataset_dir": {
         "en": {
             "label": "Data dir",
@@ -245,6 +325,292 @@ LOCALES = {
         },
         "ko": {
             "value": "데이터셋 미리보기",
+        },
+    },
+    "few_shot_num": {
+        "en": {
+            "label": "clip_finetune few_shot_num",
+            "info": "0 means use full dataset",
+        },
+        "ru": {
+            "label": "clip_finetune method",
+        },
+        "zh": {"label": "小样本学习的样本数量", "info": "使用完整数据集选择0"},
+        "ko": {
+            "label": "clip_trainer",
+        },
+    },
+    "clip_trainer": {
+        "en": {
+            "label": "clip_finetune method",
+        },
+        "ru": {
+            "label": "clip_finetune method",
+        },
+        "zh": {
+            "label": "CLIP微调方法",
+        },
+        "ko": {
+            "label": "clip_trainer",
+        },
+    },
+    "clip_bias_term": {
+        "en": {
+            "label": "layer you want to train specifically",
+        },
+        "ru": {
+            "label": "clip_finetune method",
+        },
+        "zh": {
+            "label": "仅训练所填层",
+        },
+        "ko": {
+            "label": "clip_trainer",
+        },
+    },
+    "clip_bias_exclude": {
+        "en": {
+            "label": "layer you don't want to train specifically",
+        },
+        "ru": {
+            "label": "clip_finetune method",
+        },
+        "zh": {
+            "label": "不训练的层",
+        },
+        "ko": {
+            "label": "clip_trainer",
+        },
+    },
+    "use_abs": {
+        "en": {
+            "label": "whether to use angle based search",
+        },
+        "ru": {
+            "label": "clip_finetune method",
+        },
+        "zh": {
+            "label": "是否使用angle based search",
+        },
+        "ko": {
+            "label": "clip_trainer",
+        },
+    },
+    "use_abs_group": {
+        "en": {
+            "label": "whether to use group angle based search",
+        },
+        "ru": {
+            "label": "clip_finetune method",
+        },
+        "zh": {
+            "label": "是否使用分组的angle based search",
+        },
+        "ko": {
+            "label": "clip_trainer",
+        },
+    },
+    "abs_group_name": {
+        "en": {
+            "label": "how to separate group",
+        },
+        "ru": {
+            "label": "clip_finetune method",
+        },
+        "zh": {
+            "label": "如何划分组",
+        },
+        "ko": {
+            "label": "clip_trainer",
+        },
+    },
+    "keep_min": {
+        "en": {
+            "label": "keep min layer in group",
+        },
+        "ru": {
+            "label": "clip_finetune method",
+        },
+        "zh": {
+            "label": "保留组中最小层",
+        },
+        "ko": {
+            "label": "clip_trainer",
+        },
+    },
+    "keep_layers": {
+        "en": {
+            "label": "number of kept layers",
+        },
+        "ru": {
+            "label": "clip_finetune method",
+        },
+        "zh": {
+            "label": "保留组中层数",
+        },
+        "ko": {
+            "label": "clip_trainer",
+        },
+    },
+    "tip_load_cache": {
+        "en": {
+            "label": "whether to use cached data",
+        },
+        "ru": {
+            "label": "clip_finetune method",
+        },
+        "zh": {
+            "label": "是否使用缓存过的数据",
+            "info": "如果是在这个数据集的初次训练，请不要勾选",
+        },
+        "ko": {
+            "label": "clip_trainer",
+        },
+    },
+    "augment_epoch": {
+        "en": {
+            "label": "epoch used in train cache data",
+        },
+        "ru": {
+            "label": "clip_finetune method",
+        },
+        "zh": {
+            "label": "训练缓存数据的轮数",
+        },
+        "ko": {
+            "label": "clip_trainer",
+        },
+    },
+    "tip_alpha": {
+        "en": {
+            "label": "alpha",
+            "info": "controls how much to combine newly adapted predictions from the cache model",
+        },
+        "ru": {
+            "label": "clip_finetune method",
+        },
+        "zh": {
+            "label": "alpha",
+            "info": "控制从缓存模型得到的预测与原本模型的预测的结合值",
+        },
+        "ko": {
+            "label": "clip_trainer",
+        },
+    },
+    "tip_beta": {
+        "en": {
+            "label": "beta",
+            "info": "controls the sharpness of the affinities",
+        },
+        "ru": {
+            "label": "clip_finetune method",
+        },
+        "zh": {
+            "label": "beta",
+            "info": "控制缓存模型的锐度值",
+        },
+        "ko": {
+            "label": "clip_trainer",
+        },
+    },
+    "new": {
+        "en": {
+            "label": "whether to use fixed size cache",
+        },
+        "ru": {
+            "label": "clip_finetune method",
+        },
+        "zh": {"label": "是否将缓存大小固定", "info": "选中意味着将缓存大小固定，所有数据集的训练出的数据都融合到一起"},
+        "ko": {
+            "label": "clip_trainer",
+        },
+    },
+    "new_dataset": {
+        "en": {
+            "label": "is this a new dataset for fixed size cache",
+        },
+        "ru": {
+            "label": "dataset_config_file",
+        },
+        "zh": {
+            "label": "是否是从未训练过的数据集",
+        },
+        "ko": {
+            "label": "dataset_config_file",
+        },
+    },
+    "search_best": {
+        "en": {
+            "label": "whether to search best alpha and beta",
+        },
+        "ru": {
+            "label": "dataset_config_file",
+        },
+        "zh": {
+            "label": "是否自动搜索最佳的alpha和beta组合",
+        },
+        "ko": {
+            "label": "dataset_config_file",
+        },
+    },
+    "dataset_config_file": {
+        "en": {
+            "label": "dataset_config_file",
+        },
+        "ru": {
+            "label": "dataset_config_file",
+        },
+        "zh": {
+            "label": "数据集配置文件",
+        },
+        "ko": {
+            "label": "dataset_config_file",
+        },
+    },
+    "config_file": {
+        "en": {
+            "label": "trainer config_file directory",
+        },
+        "ru": {
+            "label": "trainer config_file directory",
+        },
+        "zh": {
+            "label": "训练配置文件路径",
+        },
+        "ko": {
+            "label": "config_file",
+        },
+    },
+    "xpu": {
+        "en": {
+            "label": "use xpu",
+            "info": "default not to use",
+        },
+        "ru": {
+            "label": "use xpu",
+        },
+        "zh": {
+            "label": "是否使用xpu",
+            "info": "默认不使用",
+        },
+        "ko": {
+            "label": "use xpu",
+        },
+    },
+    "optuna": {
+        "en": {
+            "label": "use optuna",
+            "info": "default not to use",
+        },
+        "ru": {
+            "label": "use optuna",
+        },
+        "zh": {
+            "label": "是否使用optuna自动调参",
+            "info": "默认不使用",
+        },
+        "ko": {
+            "label": "use optuna",
         },
     },
     "preview_count": {
@@ -449,8 +815,8 @@ LOCALES = {
             "info": "Количество образцов для обработки на каждом GPU.",
         },
         "zh": {
-            "label": "批处理大小",
-            "info": "每个 GPU 处理的样本数量。",
+            "label": "批处理大小(BS)",
+            "info": "每个 GPU 处理的样本数量(BS)。",
         },
         "ko": {
             "label": "배치 크기",
@@ -520,6 +886,20 @@ LOCALES = {
         },
         "zh": {
             "label": "其它参数设置",
+        },
+        "ko": {
+            "label": "추가 구성(configuration)",
+        },
+    },
+    "optuna_tab": {
+        "en": {
+            "label": "optuna configuration",
+        },
+        "ru": {
+            "label": "Дополнительные конфигурации",
+        },
+        "zh": {
+            "label": "optuna参数设置",
         },
         "ko": {
             "label": "추가 구성(configuration)",
@@ -1268,6 +1648,146 @@ LOCALES = {
         },
         "zh": {
             "label": "BAdam 参数设置",
+        },
+        "ko": {
+            "label": "BAdam 설정",
+        },
+    },
+    "clip_batch_size": {
+        "en": {
+            "label": "clip_batch_size",
+        },
+        "ru": {
+            "label": "Конфигурации BAdam",
+        },
+        "zh": {
+            "label": "clip 训练阶段BS",
+        },
+        "ko": {
+            "label": "BAdam 설정",
+        },
+    },
+    "clip_finetune_tab": {
+        "en": {
+            "label": "Clip_Finetune_tab",
+        },
+        "ru": {
+            "label": "Конфигурации BAdam",
+        },
+        "zh": {
+            "label": "Clip_Finetune 参数设置",
+        },
+        "ko": {
+            "label": "BAdam 설정",
+        },
+    },
+    "adaclip_finetune_tab": {
+        "en": {
+            "label": "Adaclip_finetune_tab",
+        },
+        "ru": {
+            "label": "Конфигурации BAdam",
+        },
+        "zh": {
+            "label": "Adaclip_finetune 参数设置",
+        },
+        "ko": {
+            "label": "BAdam 설정",
+        },
+    },
+    "adaclip_batch_size": {
+        "en": {
+            "label": "Adaclip batch_size",
+        },
+        "ru": {
+            "label": "Конфигурации BAdam",
+        },
+        "zh": {
+            "label": "Adaclip 训练阶段BS",
+        },
+        "ko": {
+            "label": "BAdam 설정",
+        },
+    },
+    "adaclip_top_k": {
+        "en": {
+            "label": "Adaclip top_k",
+        },
+        "ru": {
+            "label": "Конфигурации BAdam",
+        },
+        "zh": {
+            "label": "Adaclip top_k",
+        },
+        "ko": {
+            "label": "BAdam 설정",
+        },
+    },
+    "freeze_cnn": {
+        "en": {
+            "label": "Adaclip freeze_cnn",
+        },
+        "ru": {
+            "label": "Конфигурации BAdam",
+        },
+        "zh": {
+            "label": "Adaclip freeze_cnn",
+        },
+        "ko": {
+            "label": "BAdam 설정",
+        },
+    },
+    "frame_agg": {
+        "en": {
+            "label": "Adaclip frame_agg",
+        },
+        "ru": {
+            "label": "Конфигурации BAdam",
+        },
+        "zh": {
+            "label": "Adaclip frame_agg",
+        },
+        "ko": {
+            "label": "BAdam 설정",
+        },
+    },
+    "config": {
+        "en": {
+            "label": "Adaclip config file path",
+        },
+        "ru": {
+            "label": "Конфигурации BAdam",
+        },
+        "zh": {
+            "label": "Adaclip 配置文件",
+        },
+        "ko": {
+            "label": "BAdam 설정",
+        },
+    },
+    "frames_dir": {
+        "en": {
+            "label": "Adaclip dataset dir",
+        },
+        "ru": {
+            "label": "Конфигурации BAdam",
+        },
+        "zh": {
+            "label": "Adaclip 数据集路径",
+        },
+        "ko": {
+            "label": "BAdam 설정",
+        },
+    },
+    "pretrain_model_path": {
+        "en": {
+            "label": "Adaclip pretrain_model_path",
+        },
+        "ru": {
+            "label": "Конфигурации BAdam",
+        },
+        "zh": {
+            "label": "Adaclip 预训练模型路径",
         },
         "ko": {
             "label": "BAdam 설정",

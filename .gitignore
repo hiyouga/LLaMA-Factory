@@ -160,10 +160,13 @@ cython_debug/
 .idea/
 
 # custom .gitignore
+*.db
+*.csv
 ms_cache/
 hf_cache/
 cache/
-config/
+
 saves/
 output/
+tensorboard/
 wandb/

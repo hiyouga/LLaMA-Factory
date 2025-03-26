@@ -24,9 +24,7 @@ from typing_extensions import Self
 
 @dataclass
 class QuantizationArguments:
-    r"""
-    Arguments pertaining to the quantization method.
-    """
+    r"""Arguments pertaining to the quantization method."""
 
     quantization_method: Literal["bitsandbytes", "hqq", "eetq"] = field(
         default="bitsandbytes",
@@ -52,9 +50,7 @@ class QuantizationArguments:
 
 @dataclass
 class ProcessorArguments:
-    r"""
-    Arguments pertaining to the image processor.
-    """
+    r"""Arguments pertaining to the image processor."""
 
     image_resolution: int = field(
         default=512,
@@ -76,9 +72,7 @@ class ProcessorArguments:
 
 @dataclass
 class ExportArguments:
-    r"""
-    Arguments pertaining to the model export.
-    """
+    r"""Arguments pertaining to the model export."""
 
     export_dir: Optional[str] = field(
         default=None,
@@ -120,9 +114,7 @@ class ExportArguments:
 
 @dataclass
 class VllmArguments:
-    r"""
-    Arguments pertaining to the vLLM worker.
-    """
+    r"""Arguments pertaining to the vLLM worker."""
 
     vllm_maxlen: int = field(
         default=2048,
@@ -144,15 +136,11 @@ class VllmArguments:
 
 @dataclass
 class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments, VllmArguments):
-    r"""
-    Arguments pertaining to which model/config/tokenizer we are going to fine-tune or infer.
-    """
+    r"""Arguments pertaining to which model/config/tokenizer we are going to fine-tune or infer."""
 
     model_name_or_path: Optional[str] = field(
         default=None,
-        metadata={
-            "help": "Path to the model weight or identifier from huggingface.co/models or modelscope.cn/models."
-        },
+        metadata={"help": "Path to the model weight or identifier from huggingface.co/models or modelscope.cn/models."},
     )
     adapter_name_or_path: Optional[str] = field(
         default=None,

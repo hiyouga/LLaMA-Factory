@@ -43,13 +43,9 @@ logger = get_logger(__name__)
 
 
 class CustomSeq2SeqTrainer(Seq2SeqTrainer):
-    r"""
-    Inherits Seq2SeqTrainer to compute generative metrics such as BLEU and ROUGE.
-    """
+    r"""Inherits Seq2SeqTrainer to compute generative metrics such as BLEU and ROGUE."""
 
-    def __init__(
-        self, finetuning_args: "FinetuningArguments", processor: Optional["ProcessorMixin"], **kwargs
-    ) -> None:
+    def __init__(self, finetuning_args: "FinetuningArguments", processor: Optional["ProcessorMixin"], **kwargs) -> None:
         super().__init__(**kwargs)
         self.finetuning_args = finetuning_args
 
@@ -86,8 +82,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         prediction_loss_only: bool,
         ignore_keys: Optional[List[str]] = None,
     ) -> Tuple[Optional[float], Optional["torch.Tensor"], Optional["torch.Tensor"]]:
-        r"""
-        Removes the prompt part in the generated tokens.
+        r"""Removes the prompt part in the generated tokens.
 
         Subclass and override to inject custom behavior.
         """
@@ -111,17 +106,14 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         return loss, generated_tokens, labels
 
     def _pad_tensors_to_target_len(self, src_tensor: "torch.Tensor", tgt_tensor: "torch.Tensor") -> "torch.Tensor":
-        r"""
-        Pads the tensor to the same length as the target tensor.
-        """
+        r"""Pads the tensor to the same length as the target tensor."""
         assert self.tokenizer.pad_token_id is not None, "Pad token is required."
         padded_tensor = self.tokenizer.pad_token_id * torch.ones_like(tgt_tensor)
         padded_tensor[:, -src_tensor.shape[-1] :] = src_tensor  # adopt left-padding
         return padded_tensor.contiguous()  # in contiguous memory
 
     def save_predictions(self, dataset: "Dataset", predict_results: "PredictionOutput") -> None:
-        r"""
-        Saves model predictions to `output_dir`.
+        r"""Saves model predictions to `output_dir`.
 
         A custom behavior that not contained in Seq2SeqTrainer.
         """

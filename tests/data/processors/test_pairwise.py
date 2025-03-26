@@ -68,9 +68,7 @@ def test_pairwise_data(num_samples: int):
         chosen_prompt_len = len(ref_tokenizer.apply_chat_template(chosen_messages[:-1], add_generation_prompt=True))
         ref_chosen_labels = [IGNORE_INDEX] * chosen_prompt_len + ref_chosen_input_ids[chosen_prompt_len:]
         ref_rejected_input_ids = ref_tokenizer.apply_chat_template(rejected_messages)
-        rejected_prompt_len = len(
-            ref_tokenizer.apply_chat_template(rejected_messages[:-1], add_generation_prompt=True)
-        )
+        rejected_prompt_len = len(ref_tokenizer.apply_chat_template(rejected_messages[:-1], add_generation_prompt=True))
         ref_rejected_labels = [IGNORE_INDEX] * rejected_prompt_len + ref_rejected_input_ids[rejected_prompt_len:]
         assert train_dataset["chosen_input_ids"][index] == ref_chosen_input_ids
         assert train_dataset["chosen_labels"][index] == ref_chosen_labels

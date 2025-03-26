@@ -18,9 +18,7 @@ from typing import List, Literal, Optional
 
 @dataclass
 class FreezeArguments:
-    r"""
-    Arguments pertaining to the freeze (partial-parameter) training.
-    """
+    r"""Arguments pertaining to the freeze (partial-parameter) training."""
 
     freeze_trainable_layers: int = field(
         default=2,
@@ -56,9 +54,7 @@ class FreezeArguments:
 
 @dataclass
 class LoraArguments:
-    r"""
-    Arguments pertaining to the LoRA training.
-    """
+    r"""Arguments pertaining to the LoRA training."""
 
     additional_target: Optional[str] = field(
         default=None,
@@ -128,9 +124,7 @@ class LoraArguments:
 
 @dataclass
 class RLHFArguments:
-    r"""
-    Arguments pertaining to the PPO, DPO and KTO training.
-    """
+    r"""Arguments pertaining to the PPO, DPO and KTO training."""
 
     pref_beta: float = field(
         default=0.1,
@@ -212,9 +206,7 @@ class RLHFArguments:
 
 @dataclass
 class GaloreArguments:
-    r"""
-    Arguments pertaining to the GaLore algorithm.
-    """
+    r"""Arguments pertaining to the GaLore algorithm."""
 
     use_galore: bool = field(
         default=False,
@@ -253,9 +245,7 @@ class GaloreArguments:
 
 @dataclass
 class BAdamArgument:
-    r"""
-    Arguments pertaining to the BAdam optimizer.
-    """
+    r"""Arguments pertaining to the BAdam optimizer."""
 
     use_badam: bool = field(
         default=False,
@@ -306,15 +296,13 @@ class BAdamArgument:
 
 @dataclass
 class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments, BAdamArgument):
-    r"""
-    Arguments pertaining to which techniques we are going to fine-tuning with.
-    """
+    r"""Arguments pertaining to which techniques we are going to fine-tuning with."""
 
     pure_bf16: bool = field(
         default=False,
         metadata={"help": "Whether or not to train model in purely bf16 precision (without AMP)."},
     )
-    stage: Literal["pt", "sft", "rm", "ppo", "dpo", "kto"] = field(
+    stage: Literal["pt", "sft", "rm", "ppo", "dpo", "kto", "sft_clip"] = field(
         default="sft",
         metadata={"help": "Which stage will be performed in training."},
     )
@@ -362,7 +350,7 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         self.freeze_vision_tower = self.freeze_vision_tower or self.train_mm_proj_only
         self.use_ref_model = self.stage == "dpo" and self.pref_loss not in ["orpo", "simpo"]
 
-        assert self.finetuning_type in ["lora", "freeze", "full"], "Invalid fine-tuning method."
+        assert self.finetuning_type in ["lora", "freeze", "full", "clip", "Adaclip"], "Invalid fine-tuning method."
         assert self.ref_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
         assert self.reward_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
 

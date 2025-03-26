@@ -32,9 +32,7 @@ if TYPE_CHECKING:
 
 
 def get_rewards_from_server(server_url: str, messages: List[str]) -> List["torch.Tensor"]:
-    r"""
-    Gets reward scores from the API server.
-    """
+    r"""Gets reward scores from the API server."""
     headers = {"Content-Type": "application/json"}
     payload = {"model": "model", "messages": messages}
     response = requests.post(server_url, json=payload, headers=headers)
@@ -43,8 +41,9 @@ def get_rewards_from_server(server_url: str, messages: List[str]) -> List["torch
 
 
 def replace_model(model: "AutoModelForCausalLMWithValueHead", target: Literal["default", "reward"]) -> None:
-    r"""
-    Replaces the default/reward modules in the model. The model is already unwrapped.
+    r"""Replaces the default/reward modules in the model.
+
+    The model is already unwrapped.
     """
     v_head_layer = model.v_head.summary
     if is_deepspeed_zero3_enabled():
@@ -67,8 +66,9 @@ def replace_model(model: "AutoModelForCausalLMWithValueHead", target: Literal["d
 
 
 def dump_layernorm(model: "PreTrainedModel") -> Dict[str, "torch.Tensor"]:
-    r"""
-    Dumps the layernorm parameters in the model. The model is already unwrapped (and gathered).
+    r"""Dumps the layernorm parameters in the model.
+
+    The model is already unwrapped (and gathered).
     """
     layer_norm_params = {}
     for name, param in model.named_parameters():
@@ -80,8 +80,9 @@ def dump_layernorm(model: "PreTrainedModel") -> Dict[str, "torch.Tensor"]:
 
 
 def restore_layernorm(model: "PreTrainedModel", layernorm_params: Optional[Dict[str, "torch.Tensor"]] = None) -> None:
-    r"""
-    Restores the layernorm parameters in the model. The model is already unwrapped (and gathered).
+    r"""Restores the layernorm parameters in the model.
+
+    The model is already unwrapped (and gathered).
     """
     for name, param in model.named_parameters():
         if name in layernorm_params:

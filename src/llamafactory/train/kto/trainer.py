@@ -115,18 +115,14 @@ class CustomKTOTrainer(KTOTrainer):
 
     @override
     def _get_train_sampler(self) -> Optional["torch.utils.data.Sampler"]:
-        r"""
-        Replaces the sequential sampler of KTO Trainer created by trl with the random sampler.
-        """
+        r"""Replaces the sequential sampler of KTO Trainer created by trl with the random sampler."""
         return Trainer._get_train_sampler(self)
 
     @override
     def forward(
         self, model: "PreTrainedModel", batch: Dict[str, "torch.Tensor"], prefix: Literal["", "kl_"] = ""
     ) -> Tuple["torch.Tensor", "torch.Tensor"]:
-        r"""
-        Runs forward pass and computes the log probabilities.
-        """
+        r"""Runs forward pass and computes the log probabilities."""
         batch = {k: v.detach().clone() for k, v in batch.items()}  # avoid error
         model_inputs = {
             "input_ids": batch["{}input_ids".format(prefix)],
@@ -165,9 +161,7 @@ class CustomKTOTrainer(KTOTrainer):
     def compute_reference_log_probs(
         self, model: "PreTrainedModel", batch: Dict[str, "torch.Tensor"]
     ) -> Tuple["torch.Tensor", "torch.Tensor", "torch.Tensor"]:
-        r"""
-        Computes log probabilities of the reference model.
-        """
+        r"""Computes log probabilities of the reference model."""
         if self.ref_model is None:
             ref_model = model
             ref_context = self.accelerator.unwrap_model(model).disable_adapter()
@@ -188,9 +182,7 @@ class CustomKTOTrainer(KTOTrainer):
         model: "PreTrainedModel",
         batch: Dict[str, "torch.Tensor"],
     ) -> Tuple["torch.Tensor", Dict[str, "torch.Tensor"]]:
-        r"""
-        Computes the DPO loss and other metrics for the given batch of inputs for train or test.
-        """
+        r"""Computes the DPO loss and other metrics for the given batch of inputs for train or test."""
         metrics = {}
         policy_chosen_logps, policy_rejected_logps, policy_kl_logps, policy_chosen_logps_avg = (
             self.concatenated_forward(model, batch)

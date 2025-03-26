@@ -144,8 +144,8 @@ def llamafy_qwen(
     shard_size: str = "2GB",
     save_safetensors: bool = False,
 ):
-    r"""
-    Converts the Qwen models in the same format as LLaMA2.
+    r"""Converts the Qwen models in the same format as LLaMA2.
+
     Usage: python llamafy_qwen.py --input_dir input --output_dir output
     Converted model: https://huggingface.co/hiyouga/Qwen-14B-Chat-LLaMAfied
     """

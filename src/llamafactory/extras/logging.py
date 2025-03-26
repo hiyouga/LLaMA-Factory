@@ -16,6 +16,9 @@
 # limitations under the License.
 
 import logging
+
+
+logging.basicConfig(level=logging.INFO)
 import os
 import sys
 import threading
@@ -31,9 +34,7 @@ _default_log_level: "logging._Level" = logging.INFO
 
 
 class LoggerHandler(logging.Handler):
-    r"""
-    Redirects the logging output to the logging file for LLaMA Board.
-    """
+    r"""Redirects the logging output to the logging file for LLaMA Board."""
 
     def __init__(self, output_dir: str) -> None:
         super().__init__()
@@ -67,9 +68,7 @@ class LoggerHandler(logging.Handler):
 
 
 def _get_default_logging_level() -> "logging._Level":
-    r"""
-    Returns the default logging level.
-    """
+    r"""Returns the default logging level."""
     env_level_str = os.environ.get("LLAMAFACTORY_VERBOSITY", None)
     if env_level_str:
         if env_level_str.upper() in logging._nameToLevel:
@@ -89,9 +88,7 @@ def _get_library_root_logger() -> "logging.Logger":
 
 
 def _configure_library_root_logger() -> None:
-    r"""
-    Configures root logger using a stdout stream handler with an explicit format.
-    """
+    r"""Configures root logger using a stdout stream handler with an explicit format."""
     global _default_handler
 
     with _thread_lock:
@@ -111,8 +108,9 @@ def _configure_library_root_logger() -> None:
 
 
 def get_logger(name: Optional[str] = None) -> "logging.Logger":
-    r"""
-    Returns a logger with the specified name. It it not supposed to be accessed externally.
+    r"""Returns a logger with the specified name.
+
+    It it not supposed to be accessed externally.
     """
     if name is None:
         name = _get_library_name()

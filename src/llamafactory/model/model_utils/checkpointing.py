@@ -40,9 +40,7 @@ logger = get_logger(__name__)
 
 def get_unsloth_gradient_checkpointing_func() -> Callable:
     class UnslothGradientCheckpointing(torch.autograd.Function):
-        r"""
-        Saves VRAM by smartly offloading to RAM.
-        """
+        r"""Saves VRAM by smartly offloading to RAM."""
 
         @staticmethod
         @torch.cuda.amp.custom_fwd
@@ -77,9 +75,7 @@ def get_unsloth_gradient_checkpointing_func() -> Callable:
 
 
 def get_custom_gradient_checkpointing_func(gradient_checkpointing_func: Callable) -> Callable:
-    r"""
-    Only applies gradient checkpointing to trainable layers.
-    """
+    r"""Only applies gradient checkpointing to trainable layers."""
 
     @wraps(gradient_checkpointing_func)
     def custom_gradient_checkpointing_func(func: Callable, *args: Union["torch.Tensor", Any], **kwargs):
@@ -103,8 +99,7 @@ def _gradient_checkpointing_enable(
     gradient_checkpointing_kwargs: Optional[Dict[str, Any]] = None,
     use_unsloth_gc: bool = False,
 ) -> None:
-    r"""
-    Activates gradient checkpointing for the current model.
+    r"""Activates gradient checkpointing for the current model.
 
     Modification of the original method to enable gradient checkpointing for block-wise optimizer.
     """

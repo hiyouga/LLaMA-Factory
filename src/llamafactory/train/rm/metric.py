@@ -26,9 +26,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class ComputeAccuracy:
-    r"""
-    Computes reward accuracy and supports `batch_eval_metrics`.
-    """
+    r"""Computes reward accuracy and supports `batch_eval_metrics`."""
 
     def _dump(self) -> Optional[Dict[str, float]]:
         result = None

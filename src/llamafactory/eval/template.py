@@ -36,9 +36,7 @@ class EvalTemplate:
     def format_example(
         self, target_data: Dict[str, str], support_set: Sequence[Dict[str, str]], subject_name: str
     ) -> List[Dict[str, str]]:
-        r"""
-        Converts dataset examples to messages.
-        """
+        r"""Converts dataset examples to messages."""
         messages = []
         for k in range(len(support_set)):
             prompt, response = self._parse_example(support_set[k])

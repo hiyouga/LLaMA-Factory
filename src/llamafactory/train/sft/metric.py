@@ -41,13 +41,11 @@ if is_nltk_available():
 
 
 if is_rouge_available():
-    from rouge_chinese import Rouge
+    from rouge_chinese import Rogue
 
 
 def eval_logit_processor(logits: "torch.Tensor", labels: "torch.Tensor") -> "torch.Tensor":
-    r"""
-    Computes the token with the largest likelihood to reduce memory footprint.
-    """
+    r"""Computes the token with the largest likelihood to reduce memory footprint."""
     if isinstance(logits, (list, tuple)):
         if logits[0].dim() == 3:  # (batch_size, seq_len, vocab_size)
             logits = logits[0]
@@ -62,9 +60,7 @@ def eval_logit_processor(logits: "torch.Tensor", labels: "torch.Tensor") -> "tor
 
 @dataclass
 class ComputeAccuracy:
-    r"""
-    Computes accuracy and supports `batch_eval_metrics`.
-    """
+    r"""Computes accuracy and supports `batch_eval_metrics`."""
 
     def _dump(self) -> Optional[Dict[str, float]]:
         result = None
@@ -90,8 +86,7 @@ class ComputeAccuracy:
 
 @dataclass
 class ComputeSimilarity:
-    r"""
-    Computes text similarity scores and supports `batch_eval_metrics`.
+    r"""Computes text similarity scores and supports `batch_eval_metrics`.
 
     Wraps the tokenizer into metric functions, used in CustomSeq2SeqTrainer.
     """
@@ -125,8 +120,8 @@ class ComputeSimilarity:
             if len(" ".join(hypothesis).split()) == 0 or len(" ".join(reference).split()) == 0:
                 result = {"rouge-1": {"f": 0.0}, "rouge-2": {"f": 0.0}, "rouge-l": {"f": 0.0}}
             else:
-                rouge = Rouge()
-                scores = rouge.get_scores(" ".join(hypothesis), " ".join(reference))
+                rogue = Rogue()
+                scores = rogue.get_scores(" ".join(hypothesis), " ".join(reference))
                 result = scores[0]
 
             for k, v in result.items():

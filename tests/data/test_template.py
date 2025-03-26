@@ -61,8 +61,7 @@ def _check_single_template(
 
 
 def _check_template(model_id: str, template_name: str, prompt_str: str, answer_str: str, extra_str: str = "") -> None:
-    """
-    Checks template for both the slow tokenizer and the fast tokenizer.
+    """Checks template for both the slow tokenizer and the fast tokenizer.
 
     Args:
         model_id: the model id on hugging face hub.
@@ -102,8 +101,7 @@ def test_encode_multiturn(use_fast: bool):
     )
     answer_str_1 = "I am fine!<|eot_id|>"
     prompt_str_2 = (
-        "<|start_header_id|>user<|end_header_id|>\n\n你好<|eot_id|>"
-        "<|start_header_id|>assistant<|end_header_id|>\n\n"
+        "<|start_header_id|>user<|end_header_id|>\n\n你好<|eot_id|>" "<|start_header_id|>assistant<|end_header_id|>\n\n"
     )
     answer_str_2 = "很高兴认识你！<|eot_id|>"
     _check_tokenization(

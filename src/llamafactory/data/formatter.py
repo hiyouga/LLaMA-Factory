@@ -35,14 +35,11 @@ class Formatter(ABC):
 
     @abstractmethod
     def apply(self, **kwargs) -> SLOTS:
-        r"""
-        Forms a list of slots according to the inputs to encode.
-        """
+        r"""Forms a list of slots according to the inputs to encode."""
         ...
 
     def extract(self, content: str) -> Union[str, List["FunctionCall"]]:
-        r"""
-        Extract a list of tuples from the response message if using tools.
+        r"""Extract a list of tuples from the response message if using tools.
 
         Each tuple consists of function name and function arguments.
         """

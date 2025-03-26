@@ -18,9 +18,7 @@ from typing import Any, Dict, Optional
 
 @dataclass
 class GeneratingArguments:
-    r"""
-    Arguments pertaining to specify the decoding parameters.
-    """
+    r"""Arguments pertaining to specify the decoding parameters."""
 
     do_sample: bool = field(
         default=True,

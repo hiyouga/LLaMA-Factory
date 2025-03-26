@@ -35,8 +35,7 @@ class Response:
 
 
 class BaseEngine(ABC):
-    r"""
-    Base class for inference engine of chat models.
+    r"""Base class for inference engine of chat models.
 
     Must implements async methods: chat(), stream_chat() and get_scores().
     """
@@ -55,9 +54,7 @@ class BaseEngine(ABC):
         finetuning_args: "FinetuningArguments",
         generating_args: "GeneratingArguments",
     ) -> None:
-        r"""
-        Initializes an inference engine.
-        """
+        r"""Initializes an inference engine."""
         ...
 
     @abstractmethod
@@ -70,9 +67,7 @@ class BaseEngine(ABC):
         video: Optional["VideoInput"] = None,
         **input_kwargs,
     ) -> List["Response"]:
-        r"""
-        Gets a list of responses of the chat model.
-        """
+        r"""Gets a list of responses of the chat model."""
         ...
 
     @abstractmethod
@@ -85,9 +80,7 @@ class BaseEngine(ABC):
         video: Optional["VideoInput"] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
-        r"""
-        Gets the response token-by-token of the chat model.
-        """
+        r"""Gets the response token-by-token of the chat model."""
         ...
 
     @abstractmethod
@@ -96,7 +89,5 @@ class BaseEngine(ABC):
         batch_input: List[str],
         **input_kwargs,
     ) -> List[float]:
-        r"""
-        Gets a list of scores of the reward model.
-        """
+        r"""Gets a list of scores of the reward model."""
         ...

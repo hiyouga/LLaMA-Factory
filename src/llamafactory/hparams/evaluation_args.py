@@ -21,9 +21,7 @@ from datasets import DownloadMode
 
 @dataclass
 class EvaluationArguments:
-    r"""
-    Arguments pertaining to specify the evaluation parameters.
-    """
+    r"""Arguments pertaining to specify the evaluation parameters."""
 
     task: str = field(
         metadata={"help": "Name of the evaluation task."},
@@ -46,7 +44,7 @@ class EvaluationArguments:
     )
     n_shot: int = field(
         default=5,
-        metadata={"help": "Number of examplars for few-shot learning."},
+        metadata={"help": "Number of exemplars for few-shot learning."},
     )
     save_dir: Optional[str] = field(
         default=None,

@@ -81,9 +81,7 @@ class LlavaMultiModalProjectorForYiVLForVLLM(LlavaMultiModalProjectorForYiVL):
 
 
 def autocast_projector_dtype(model: "PreTrainedModel", model_args: "ModelArguments") -> None:
-    r"""
-    Casts projector output to half precision for fine-tuning quantized VLMs.
-    """
+    r"""Casts projector output to half precision for fine-tuning quantized VLMs."""
 
     def _mm_projector_forward_post_hook(
         module: "torch.nn.Module", args: Tuple["torch.Tensor"], output: "torch.Tensor"
@@ -104,9 +102,7 @@ def autocast_projector_dtype(model: "PreTrainedModel", model_args: "ModelArgumen
 
 
 def configure_visual_model(config: "PretrainedConfig") -> None:
-    r"""
-    Patches VLMs before loading them.
-    """
+    r"""Patches VLMs before loading them."""
     model_type = getattr(config, "model_type", None)
     if model_type == "llava":  # required for ds zero3 and valuehead models
         setattr(config, "hidden_size", getattr(config.text_config, "hidden_size", None))
@@ -117,9 +113,7 @@ def configure_visual_model(config: "PretrainedConfig") -> None:
 
 
 def get_forbidden_modules(config: "PretrainedConfig", finetuning_args: "FinetuningArguments") -> Set[str]:
-    r"""
-    Freezes vision tower and language model for VLM full/freeze tuning.
-    """
+    r"""Freezes vision tower and language model for VLM full/freeze tuning."""
     model_type = getattr(config, "model_type", None)
     forbidden_modules = set()
     if model_type in ["llava", "paligemma"]:
@@ -140,9 +134,7 @@ def get_forbidden_modules(config: "PretrainedConfig", finetuning_args: "Finetuni
 
 
 def get_image_seqlen(config: "PretrainedConfig") -> int:
-    r"""
-    Computes the number of special tokens per image.
-    """
+    r"""Computes the number of special tokens per image."""
     model_type = getattr(config, "model_type", None)
     if model_type == "llava":
         image_seqlen = (config.vision_config.image_size // config.vision_config.patch_size) ** 2
@@ -159,9 +151,7 @@ def get_image_seqlen(config: "PretrainedConfig") -> int:
 def patch_target_modules(
     config: "PretrainedConfig", finetuning_args: "FinetuningArguments", target_modules: Sequence[str]
 ) -> Union[str, List[str]]:
-    r"""
-    Freezes vision tower for VLM LoRA tuning.
-    """
+    r"""Freezes vision tower for VLM LoRA tuning."""
     model_type = getattr(config, "model_type", None)
     if finetuning_args.freeze_vision_tower:
         if model_type in ["llava", "paligemma"]:

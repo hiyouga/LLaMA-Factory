@@ -44,9 +44,7 @@ logger = get_logger(__name__)
 
 @unique
 class QuantizationMethod(str, Enum):
-    r"""
-    Borrowed from `transformers.utils.quantization_config.QuantizationMethod`.
-    """
+    r"""Borrowed from `transformers.utils.quantization_config.QuantizationMethod`."""
 
     BITS_AND_BYTES = "bitsandbytes"
     GPTQ = "gptq"
@@ -58,8 +56,9 @@ class QuantizationMethod(str, Enum):
 
 
 def _get_quantization_dataset(tokenizer: "PreTrainedTokenizer", model_args: "ModelArguments") -> List[Dict[str, Any]]:
-    r"""
-    Prepares the tokenized dataset to perform AutoGPTQ. Do not use tensor output for JSON serialization.
+    r"""Prepares the tokenized dataset to perform AutoGPTQ.
+
+    Do not use tensor output for JSON serialization.
     """
     if os.path.isfile(model_args.export_quantization_dataset):
         data_path = FILEEXT2TYPE.get(model_args.export_quantization_dataset.split(".")[-1], None)

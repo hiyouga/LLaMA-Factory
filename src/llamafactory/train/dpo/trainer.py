@@ -119,9 +119,7 @@ class CustomDPOTrainer(DPOTrainer):
         return super().create_scheduler(num_training_steps, optimizer)
 
     def odds_ratio_loss(self, chosen_logps: "torch.Tensor", rejected_logps: "torch.Tensor") -> "torch.Tensor":
-        r"""
-        Computes ORPO's odds ratio (OR) loss for batched log probabilities of the policy model.
-        """
+        r"""Computes ORPO's odds ratio (OR) loss for batched log probabilities of the policy model."""
         log_odds = (chosen_logps - rejected_logps) - (
             torch.log1p(-torch.exp(chosen_logps)) - torch.log1p(-torch.exp(rejected_logps))
         )
@@ -131,9 +129,7 @@ class CustomDPOTrainer(DPOTrainer):
         return orpo_loss
 
     def simpo_loss(self, chosen_logps: "torch.Tensor", rejected_logps: "torch.Tensor") -> "torch.Tensor":
-        r"""
-        Computes SimPO loss for batched log probabilities of the policy model.
-        """
+        r"""Computes SimPO loss for batched log probabilities of the policy model."""
         pi_logratios = chosen_logps - rejected_logps
         gamma_logratios = self.simpo_gamma / self.beta
         logits = pi_logratios - gamma_logratios
@@ -147,9 +143,7 @@ class CustomDPOTrainer(DPOTrainer):
         reference_chosen_logps: Optional["torch.Tensor"],
         reference_rejected_logps: Optional["torch.Tensor"],
     ) -> Tuple["torch.Tensor", "torch.Tensor", "torch.Tensor"]:
-        r"""
-        Computes loss for preference learning.
-        """
+        r"""Computes loss for preference learning."""
         if not self.finetuning_args.use_ref_model:
             if self.loss_type == "orpo":
                 losses = self.odds_ratio_loss(policy_chosen_logps, policy_rejected_logps)
@@ -171,8 +165,7 @@ class CustomDPOTrainer(DPOTrainer):
     def concatenated_forward(
         self, model: "PreTrainedModel", batch: Dict[str, "torch.Tensor"]
     ) -> Tuple["torch.Tensor", "torch.Tensor", "torch.Tensor", "torch.Tensor", "torch.Tensor"]:
-        r"""
-        Computes the sum log probabilities of the labels under given logits if loss_type is not IPO, ORPO or SimPO.
+        r"""Computes the sum log probabilities of the labels under given logits if loss_type is not IPO, ORPO or SimPO.
 
         Otherwise the average log probabilities.
         """
@@ -194,9 +187,7 @@ class CustomDPOTrainer(DPOTrainer):
     def compute_reference_log_probs(
         self, model: "PreTrainedModel", batch: Dict[str, "torch.Tensor"]
     ) -> Tuple[Optional["torch.Tensor"], Optional["torch.Tensor"]]:
-        r"""
-        Computes log probabilities of the reference model.
-        """
+        r"""Computes log probabilities of the reference model."""
         if not self.finetuning_args.use_ref_model:
             return None, None
 
@@ -219,9 +210,7 @@ class CustomDPOTrainer(DPOTrainer):
         batch: Dict[str, "torch.Tensor"],
         train_eval: Literal["train", "eval"] = "train",
     ) -> Tuple["torch.Tensor", Dict[str, "torch.Tensor"]]:
-        r"""
-        Computes the DPO loss and other metrics for the given batch of inputs for train or test.
-        """
+        r"""Computes the DPO loss and other metrics for the given batch of inputs for train or test."""
         metrics = {}
         (
             policy_chosen_logps,

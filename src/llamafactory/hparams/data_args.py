@@ -21,9 +21,7 @@ from typing import Literal, Optional
 
 @dataclass
 class DataArguments:
-    r"""
-    Arguments pertaining to what data we are going to input our model for training and evaluation.
-    """
+    r"""Arguments pertaining to what data we are going to input our model for training and evaluation."""
 
     template: Optional[str] = field(
         default=None,

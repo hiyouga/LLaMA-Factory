@@ -50,9 +50,7 @@ logger = get_logger(__name__)
 
 
 class DummyOptimizer(torch.optim.Optimizer):
-    r"""
-    A dummy optimizer used for the GaLore algorithm.
-    """
+    r"""A dummy optimizer used for the GaLore algorithm."""
 
     def __init__(
         self, lr: float = 1e-3, optimizer_dict: Optional[Dict["torch.nn.Parameter", "torch.optim.Optimizer"]] = None
@@ -99,8 +97,7 @@ def create_modelcard_and_push(
 def create_ref_model(
     model_args: "ModelArguments", finetuning_args: "FinetuningArguments", add_valuehead: bool = False
 ) -> Optional[Union["PreTrainedModel", "AutoModelForCausalLMWithValueHead"]]:
-    r"""
-    Creates reference model for PPO/DPO training. Evaluation mode is not supported.
+    r"""Creates reference model for PPO/DPO training. Evaluation mode is not supported.
 
     The valuehead parameter is randomly initialized since it is useless for PPO training.
     """
@@ -135,9 +132,7 @@ def create_ref_model(
 def create_reward_model(
     model: "AutoModelForCausalLMWithValueHead", model_args: "ModelArguments", finetuning_args: "FinetuningArguments"
 ) -> Optional["AutoModelForCausalLMWithValueHead"]:
-    r"""
-    Creates reward model for PPO training.
-    """
+    r"""Creates reward model for PPO training."""
     if finetuning_args.reward_model_type == "api":
         assert finetuning_args.reward_model.startswith("http"), "Please provide full url."
         logger.info("Use reward server {}".format(finetuning_args.reward_model))
@@ -177,8 +172,9 @@ def create_reward_model(
 
 
 def _get_decay_parameter_names(model: "PreTrainedModel") -> List[str]:
-    r"""
-    Returns a list of names of parameters with weight decay. (weights in non-layernorm layers)
+    r"""Returns a list of names of parameters with weight decay.
+
+    (weights in non-layernorm layers)
     """
     decay_parameters = get_parameter_names(model, ALL_LAYERNORM_LAYERS)
     decay_parameters = [name for name in decay_parameters if "bias" not in name]
@@ -231,7 +227,7 @@ def _create_galore_optimizer(
     elif training_args.optim == "adafactor":
         optim_class = GaLoreAdafactor
     else:
-        raise NotImplementedError("Unknow optim: {}".format(training_args.optim))
+        raise NotImplementedError("Unknown optim: {}".format(training_args.optim))
 
     if finetuning_args.galore_layerwise:
         if training_args.gradient_accumulation_steps != 1:
@@ -441,8 +437,7 @@ def create_custom_scheduler(
 def get_batch_logps(
     logits: "torch.Tensor", labels: "torch.Tensor", label_pad_token_id: int = IGNORE_INDEX
 ) -> Tuple["torch.Tensor", "torch.Tensor"]:
-    r"""
-    Computes the log probabilities of the given labels under the given logits.
+    r"""Computes the log probabilities of the given labels under the given logits.
 
     Returns:
         logps: A tensor of shape (batch_size,) containing the sum of log probabilities.

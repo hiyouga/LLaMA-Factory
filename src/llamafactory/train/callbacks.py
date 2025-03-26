@@ -27,11 +27,7 @@ import transformers
 from peft import PeftModel
 from transformers import PreTrainedModel, ProcessorMixin, TrainerCallback
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR, has_length
-from transformers.utils import (
-    SAFE_WEIGHTS_NAME,
-    WEIGHTS_NAME,
-    is_safetensors_available,
-)
+from transformers.utils import SAFE_WEIGHTS_NAME, WEIGHTS_NAME, is_safetensors_available
 from typing_extensions import override
 
 from ..extras.constants import TRAINER_LOG, V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
@@ -54,8 +50,7 @@ logger = get_logger(__name__)
 def fix_valuehead_checkpoint(
     model: "AutoModelForCausalLMWithValueHead", output_dir: str, safe_serialization: bool
 ) -> None:
-    r"""
-    The model is already unwrapped.
+    r"""The model is already unwrapped.
 
     There are three cases:
     1. full tuning without ds_zero3: state_dict = {"model.layers.*": ..., "v_head.summary.*": ...}
@@ -73,7 +68,7 @@ def fix_valuehead_checkpoint(
             state_dict: Dict[str, torch.Tensor] = {key: f.get_tensor(key) for key in f.keys()}
     else:
         path_to_checkpoint = os.path.join(output_dir, WEIGHTS_NAME)
-        state_dict: Dict[str, torch.Tensor] = torch.load(path_to_checkpoint, map_location="cpu")
+        state_dict: Dict[str, torch.Tensor] = torch.load(path_to_checkpoint, map_location="cpu", weights_only=False)
 
     os.remove(path_to_checkpoint)
     decoder_state_dict, v_head_state_dict = {}, {}
@@ -96,15 +91,11 @@ def fix_valuehead_checkpoint(
 
 
 class FixValueHeadModelCallback(TrainerCallback):
-    r"""
-    A callback for fixing the checkpoint for valuehead models.
-    """
+    r"""A callback for fixing the checkpoint for valuehead models."""
 
     @override
     def on_save(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
-        r"""
-        Event called after a checkpoint save.
-        """
+        r"""Event called after a checkpoint save."""
         if args.should_save:
             output_dir = os.path.join(args.output_dir, "{}-{}".format(PREFIX_CHECKPOINT_DIR, state.global_step))
             fix_valuehead_checkpoint(
@@ -113,9 +104,7 @@ class FixValueHeadModelCallback(TrainerCallback):
 
 
 class SaveProcessorCallback(TrainerCallback):
-    r"""
-    A callback for saving the processor.
-    """
+    r"""A callback for saving the processor."""
 
     def __init__(self, processor: "ProcessorMixin") -> None:
         self.processor = processor
@@ -133,15 +122,11 @@ class SaveProcessorCallback(TrainerCallback):
 
 
 class PissaConvertCallback(TrainerCallback):
-    r"""
-    A callback for converting the PiSSA adapter to a normal one.
-    """
+    r"""A callback for converting the PiSSA adapter to a normal one."""
 
     @override
     def on_train_begin(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
-        r"""
-        Event called at the beginning of training.
-        """
+        r"""Event called at the beginning of training."""
         if args.should_save:
             model = kwargs.pop("model")
             pissa_init_dir = os.path.join(args.output_dir, "pissa_init")
@@ -181,9 +166,7 @@ class PissaConvertCallback(TrainerCallback):
 
 
 class LogCallback(TrainerCallback):
-    r"""
-    A callback for logging training and evaluation status.
-    """
+    r"""A callback for logging training and evaluation status."""
 
     def __init__(self) -> None:
         # Progress
@@ -320,9 +303,7 @@ class LogCallback(TrainerCallback):
             self.thread_pool.submit(self._write_log, args.output_dir, logs)
 
     @override
-    def on_prediction_step(
-        self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs
-    ):
+    def on_prediction_step(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         if self.do_train:
             return
 

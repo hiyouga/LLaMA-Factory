@@ -50,8 +50,8 @@ def block_expansion(
     shard_size: str = "2GB",
     save_safetensors: bool = True,
 ):
-    r"""
-    Performs block expansion for LLaMA, Mistral, Qwen1.5 or Yi models.
+    r"""Performs block expansion for LLaMA, Mistral, Qwen1.5 or Yi models.
+
     Usage: python llama_pro.py --model_name_or_path meta-llama/Llama-2-7b-hf --output_dir llama2_pro --num_expand 8
     """
     config: "PretrainedConfig" = AutoConfig.from_pretrained(model_name_or_path)

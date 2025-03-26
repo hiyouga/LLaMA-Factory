@@ -17,6 +17,7 @@ from copy import deepcopy
 from subprocess import Popen, TimeoutExpired
 from typing import TYPE_CHECKING, Any, Dict, Generator, Optional
 
+import psutil
 from transformers.trainer import TRAINING_ARGS_NAME
 
 from ..extras.constants import LLAMABOARD_CONFIG, PEFT_METHODS, TRAINING_STAGES
@@ -37,15 +38,26 @@ if TYPE_CHECKING:
     from .manager import Manager
 
 
+def find_pid_by_description(process_description):
+    pids = []
+    for proc in psutil.process_iter(["pid", "name", "cmdline"]):
+        pid = proc.info["pid"]
+        cmdline = proc.info.get("cmdline", [])
+        if process_description in " ".join(cmdline):
+            print(f"PID: {pid}, Description: {proc.info['name']}, Command Line: {' '.join(cmdline)}")
+            pids.append(pid)
+    return pids
+
+
 class Runner:
     def __init__(self, manager: "Manager", demo_mode: bool = False) -> None:
         self.manager = manager
         self.demo_mode = demo_mode
-        """ Resume """
+        """Resume."""
         self.trainer: Optional["Popen"] = None
         self.do_train = True
         self.running_data: Dict["Component", Any] = None
-        """ State """
+        """State."""
         self.aborted = False
         self.running = False
 
@@ -53,6 +65,10 @@ class Runner:
         self.aborted = True
         if self.trainer is not None:
             abort_process(self.trainer.pid)
+            pids = find_pid_by_description("llamafactory-cli train")
+            for pid in pids:
+                abort_process(pid)
+            self.running = False
 
     def _initialize(self, data: Dict["Component", Any], do_train: bool, from_preview: bool) -> str:
         get = lambda elem_id: data[self.manager.get_elem_by_id(elem_id)]
@@ -103,7 +119,7 @@ class Runner:
         get = lambda elem_id: data[self.manager.get_elem_by_id(elem_id)]
         model_name, finetuning_type = get("top.model_name"), get("top.finetuning_type")
         user_config = load_config()
-
+        # 将UI传入的参数同步到args中，train.*是UI传入的参数
         args = dict(
             stage=TRAINING_STAGES[get("train.training_stage")],
             do_train=True,
@@ -148,6 +164,40 @@ class Runner:
             plot_loss=True,
             ddp_timeout=180000000,
             include_num_input_tokens_seen=True,
+            clip_batch_size=get("train.batch_size"),
+            few_shot_num=get("train.few_shot_num"),
+            clip_logging_steps=get("train.logging_steps"),
+            clip_bias_term=get("train.clip_bias_term"),
+            use_abs=get("train.use_abs"),
+            use_abs_group=get("train.use_abs_group"),
+            abs_group_name=get("train.abs_group_name"),
+            keep_min=get("train.keep_min"),
+            keep_layers=get("train.keep_layers"),
+            clip_bias_exclude=get("train.clip_bias_exclude"),
+            trainer=get("train.clip_trainer"),
+            dataset_config_file=get("train.dataset_config_file"),
+            config_file=get("train.config_file"),
+            tip_load_cache=get("train.tip_load_cache"),
+            tip_beta=get("train.tip_beta"),
+            tip_alpha=get("train.tip_alpha"),
+            new=get("train.new"),
+            new_dataset=get("train.new_dataset"),
+            search_best=get("train.search_best"),
+            xpu=get("train.xpu"),
+            adaclip_xpu=get("train.xpu"),
+            root=get("train.dataset_dir"),
+            adaclip_batch_size=int(get("train.batch_size")),
+            config=get("train.config"),
+            adaclip_top_k=int(get("train.adaclip_top_k")),
+            freeze_cnn=get("train.freeze_cnn"),
+            frame_agg=get("train.frame_agg"),
+            frames_dir=get("train.dataset_dir"),
+            resume=get("top.model_path"),
+            optuna=get("train.optuna"),
+            n_trials=int(get("train.n_trials")),
+            n_warmup_steps=int(get("train.n_warmup_steps")),
+            sampler=get("train.sampler"),
+            opt_params=get("train.opt_params"),
         )
 
         # checkpoints
@@ -301,9 +351,10 @@ class Runner:
             gr.Warning(error)
             yield {output_box: error}
         else:
+            self.abort = False
             self.do_train, self.running_data = do_train, data
             args = self._parse_train_args(data) if do_train else self._parse_eval_args(data)
-
+            print(args)
             os.makedirs(args["output_dir"], exist_ok=True)
             save_args(os.path.join(args["output_dir"], LLAMABOARD_CONFIG), self._form_config_dict(data))
 
@@ -313,7 +364,7 @@ class Runner:
             if args.get("deepspeed", None) is not None:
                 env["FORCE_TORCHRUN"] = "1"
 
-            self.trainer = Popen("llamafactory-cli train {}".format(save_cmd(args)), env=env, shell=True)
+            self.trainer = Popen("llamafactory-cli train {}".format(save_cmd(args)), env=env, shell=True)  # nosec
             yield from self.monitor()
 
     def _form_config_dict(self, data: Dict["Component", Any]) -> Dict[str, Any]:
@@ -375,10 +426,13 @@ class Runner:
                 continue
 
         if self.do_train:
+
             if os.path.exists(os.path.join(output_path, TRAINING_ARGS_NAME)):
                 finish_info = ALERTS["info_finished"][lang]
             else:
                 finish_info = ALERTS["err_failed"][lang]
+            if "clip" in output_path:
+                finish_info = ALERTS["info_finished"][lang]
         else:
             if os.path.exists(os.path.join(output_path, "all_results.json")):
                 finish_info = get_eval_results(os.path.join(output_path, "all_results.json"))
