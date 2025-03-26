@@ -375,6 +375,14 @@ class SwanLabArguments:
         default=None,
         metadata={"help": "The log directory for SwanLab."},
     )
+    swanlab_lark_webhook_url: Optional[str] = field(
+        default=None,
+        metadata={"help": "The Lark(飞书) webhook URL for SwanLab."},
+    )
+    swanlab_lark_secret: Optional[str] = field(
+        default=None,
+        metadata={"help": "The Lark(飞书) secret for SwanLab."},
+    )
 
 
 @dataclass
