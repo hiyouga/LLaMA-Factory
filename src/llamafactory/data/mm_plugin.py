@@ -991,7 +991,11 @@ class PixtralPlugin(BasePlugin):
         if self.expand_mm_tokens:
             mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
             if "pixel_values" in mm_inputs:
-                image_sizes = iter(mm_inputs["image_sizes"].tolist())
+                # BC for transformers < 4.49.0
+                if isinstance(mm_inputs["image_sizes"], list):
+                    image_sizes = iter(mm_inputs["image_sizes"][0])
+                else:
+                    image_sizes = iter(mm_inputs["image_sizes"].tolist())
                 image_break_token: str = getattr(processor, "image_break_token")
                 image_end_token: str = getattr(processor, "image_end_token")
 
@@ -1033,6 +1037,11 @@ class PixtralPlugin(BasePlugin):
     ) -> dict[str, Union[list[int], "torch.Tensor"]]:
         self._validate_input(processor, images, videos, audios)
         mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+        # ref to this commit https://github.com/huggingface/transformers/pull/35122
+        # after transformers 4.49.0, the `image_sizes` is mandatory as an input parameter for Pixtral VisionEncoder forwarding.
+        # it can be passed into `LlavaConditionalGeneration` as a parameter.
+        if not is_transformers_version_greater_than("4.49.0"):
+            mm_inputs.pop("image_sizes", None)
         return mm_inputs
 
 
@@ -1093,6 +1102,108 @@ class Qwen2AudioPlugin(BasePlugin):
     ) -> dict[str, Union[list[int], "torch.Tensor"]]:
         self._validate_input(processor, images, videos, audios)
         return self._get_mm_inputs(images, videos, audios, processor)
+
+
+class Qwen2OmniPlugin(BasePlugin):
+    @override
+    def _get_mm_inputs(
+        self,
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        processor: "MMProcessor",
+        imglens: Optional[list[int]] = None,
+    ) -> dict[str, "torch.Tensor"]:
+        mm_inputs = {}
+        if len(images) != 0:
+            image_processor: BaseImageProcessor = getattr(processor, "omni_processor", None) # FIXME
+            images = self._regularize_images(
+                images,
+                image_max_pixels=getattr(processor, "image_max_pixels", 768 * 768),
+                image_min_pixels=getattr(processor, "image_min_pixels", 32 * 32),
+            )
+            if imglens is not None:
+                images = _make_batched_images(images, imglens)
+
+            image_processor_kwargs = {}
+            mm_inputs.update(image_processor(images, return_tensors="pt", **image_processor_kwargs))
+
+        if len(videos) != 0:
+            video_processor: BaseImageProcessor = getattr(
+                processor, "video_processor", getattr(processor, "image_processor", None)
+            )
+            videos = self._regularize_videos(
+                videos,
+                image_max_pixels=getattr(processor, "video_max_pixels", 256 * 256),
+                image_min_pixels=getattr(processor, "video_min_pixels", 16 * 16),
+                video_fps=getattr(processor, "video_fps", 2.0),
+                video_maxlen=getattr(processor, "video_maxlen", 128),
+            )
+            if "videos" in inspect.signature(video_processor.preprocess).parameters:  # for qwen2_vl and video_llava
+                mm_inputs.update(video_processor(images=None, videos=videos, return_tensors="pt"))
+                fps = [2.0] * len(videos) # FIXME
+                video_second_per_grid = [fps[i] / video_processor.temporal_patch_size for i in range(len(fps))]
+                mm_inputs.update("video_second_per_grid", video_second_per_grid)
+
+            else:  # for llava_next_video
+                mm_inputs.update(video_processor(videos, return_tensors="pt"))
+
+        if len(audios) != 0:
+            feature_extractor: SequenceFeatureExtractor = getattr(processor, "feature_extractor", None)
+            audios = self._regularize_audios(
+                audios,
+                sampling_rate=getattr(feature_extractor, "sampling_rate", 16000),
+            )
+            mm_inputs.update(
+                feature_extractor(
+                    audios,
+                    sampling_rate=getattr(feature_extractor, "sampling_rate", 16000),
+                    return_attention_mask=True,
+                    padding="max_length",
+                    return_tensors="pt",
+                )
+            )
+            mm_inputs["feature_attention_mask"] = mm_inputs.pop("attention_mask")  # prevent conflicts
+
+        return mm_inputs
+    @override
+    def process_messages(
+        self,
+        messages: list[dict[str, str]],
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        processor: Optional["MMProcessor"],
+    ) -> list[dict[str, str]]:
+        self._validate_input(processor, images, videos, audios)
+        messages = deepcopy(messages)
+        if self.expand_mm_tokens:
+            mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+        num_audio_tokens, num_image_tokens, num_video_tokens = 0, 0, 0
+
+        for message in messages:
+            content = message["content"]
+            while AUDIO_PLACEHOLDER in content:
+                content = content.replace(AUDIO_PLACEHOLDER, f"<|audio_bos|>{self.audio_token}<|audio_eos|>", 1)
+                num_audio_tokens += 1
+            while IMAGE_PLACEHOLDER in content:
+                content = content.replace(IMAGE_PLACEHOLDER, f"<|vision_bos|>{self.image_token}<|vision_eos|>", 1)
+                num_image_tokens += 1
+            while VIDEO_PLACEHOLDER in content:
+                content = content.replace(VIDEO_PLACEHOLDER, f"<|vision_bos|>{self.video_token}<|vision_eos|>", 1)
+                num_video_tokens += 1
+
+
+            message["content"] = content
+
+        if len(audios) != num_audio_tokens:
+            raise ValueError(f"The number of audios does not match the number of {AUDIO_PLACEHOLDER} tokens.")
+        if len(images) != num_image_tokens:
+            raise ValueError(f"The number of images does not match the number of {IMAGE_PLACEHOLDER} tokens.")
+        if len(videos) != num_video_tokens:
+            raise ValueError(f"The number of videos does not match the number of {VIDEO_PLACEHOLDER} tokens.")
+
+        return messages
 
 
 @dataclass
