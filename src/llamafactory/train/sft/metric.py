@@ -41,7 +41,7 @@ if is_nltk_available():
 
 
 if is_rouge_available():
-    from rouge_chinese import Rogue
+    from rouge_chinese import Rouge
 
 
 def eval_logit_processor(logits: "torch.Tensor", labels: "torch.Tensor") -> "torch.Tensor":
