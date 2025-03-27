@@ -232,7 +232,6 @@ def test_pixtral_plugin():
         for message in MM_MESSAGES
     ]
     check_inputs["expected_mm_inputs"] = _get_mm_inputs(tokenizer_module["processor"])
-    check_inputs["expected_mm_inputs"].pop("image_sizes")
     check_inputs["expected_mm_inputs"]["pixel_values"] = check_inputs["expected_mm_inputs"]["pixel_values"][0]
     _check_plugin(**check_inputs)
 
