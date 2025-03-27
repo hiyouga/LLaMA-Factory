@@ -1033,7 +1033,6 @@ class PixtralPlugin(BasePlugin):
     ) -> dict[str, Union[list[int], "torch.Tensor"]]:
         self._validate_input(processor, images, videos, audios)
         mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
-        mm_inputs.pop("image_sizes", None)
         return mm_inputs
 
 
