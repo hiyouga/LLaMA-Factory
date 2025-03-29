@@ -85,7 +85,7 @@ class DataArguments:
     )
     dataset_shards: Optional[int] = field(
         default=None,
-        metadata={"help": "The number of shards to split the dataset into. Only used in streaming mode. This number limits the number of dataloader workers that can be used on a streaming dataset, thus should be set to the same as dataloader_num_workers."},
+        metadata={"help": "The number of shards to split the dataset into. Only used in streaming mode. This should be set to the same as dataloader_num_workers. Not setting this while streaming data will cause the dataset to be non-sharded and thus only can be processed using one worker."},
     )
     max_samples: Optional[int] = field(
         default=None,
