@@ -83,6 +83,10 @@ class DataArguments:
         default=None,
         metadata={"help": "The number of processes to use for the pre-processing."},
     )
+    dataset_shards: Optional[int] = field(
+        default=None,
+        metadata={"help": "The number of shards to split the dataset into. Only used in streaming mode. This number limits the number of dataloader workers that can be used on a streaming dataset, thus should be set to the same as dataloader_num_workers."},
+    )
     max_samples: Optional[int] = field(
         default=None,
         metadata={"help": "For debugging purposes, truncate the number of examples for each dataset."},
