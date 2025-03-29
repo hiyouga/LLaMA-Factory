@@ -1181,18 +1181,29 @@ class Qwen2OmniPlugin(BasePlugin):
     ) -> list[dict[str, str]]:
         self._validate_input(processor, images, videos, audios)
         messages = deepcopy(messages)
-        # if self.expand_mm_tokens:
-        #     mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+        if self.expand_mm_tokens:
+            mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
         num_audio_tokens, num_image_tokens, num_video_tokens = 0, 0, 0
 
         for message in messages:
             content = message["content"]
+            # audio_input
+            if "feature_attention_mask" in mm_inputs:
+                input_lengths = (mm_inputs["feature_attention_mask"].sum(-1).numpy() - 1) // 2 + 1
+                audio_lengths = (input_lengths - 2) // 2 + 1
+            if mm_inputs.get("image_grid_thw", None) is not None:
+                image_grid_thw = mm_inputs["image_grid_thw"]
+                merge_length = processor.omni_processor.merge_size ** 2
             while AUDIO_PLACEHOLDER in content:
-                content = content.replace(AUDIO_PLACEHOLDER, f"<|audio_bos|>{self.audio_token}<|audio_eos|>", 1)
+                audio_token_replace_length = audio_lengths[num_audio_tokens]
+                content = content.replace(AUDIO_PLACEHOLDER,
+                                          f"<|audio_bos|>{self.audio_token * audio_token_replace_length}<|audio_eos|>", 1)
                 num_audio_tokens += 1
             while IMAGE_PLACEHOLDER in content:
-                content = content.replace(IMAGE_PLACEHOLDER, f"<|vision_bos|>{self.image_token}<|vision_eos|>", 1)
+                image_token_replace_length = image_grid_thw[num_image_tokens].prod() // merge_length
+                content = content.replace(IMAGE_PLACEHOLDER, f"<|vision_bos|>{self.image_token * image_token_replace_length}<|vision_eos|>", 1)
                 num_image_tokens += 1
+            # TODO handle video_input and use_audio_in_video
             while VIDEO_PLACEHOLDER in content:
                 content = content.replace(VIDEO_PLACEHOLDER, f"<|vision_bos|>{self.video_token}<|vision_eos|>", 1)
                 num_video_tokens += 1

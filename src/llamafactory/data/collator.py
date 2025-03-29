@@ -121,50 +121,50 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             batch_audlens.append(len(audios))
             batch_input_ids.append(feature["input_ids"])
 
-        # fake_input_ids = []
-        # if (
-        #     self.template.mm_plugin.image_token is not None and sum(batch_imglens) == 0 and sum(batch_vidlens) == 0
-        # ):  # avoid process hanging in zero3/fsdp case
-        #     fake_messages = [{"role": "user", "content": IMAGE_PLACEHOLDER}]
-        #     fake_images = [Image.new("RGB", (64, 64), (255, 255, 255))]
-        #     fake_messages = self.template.mm_plugin.process_messages(
-        #         fake_messages, fake_images, [], [], self.processor
-        #     )
-        #     _fake_input_ids = self.tokenizer.encode(fake_messages[0]["content"], add_special_tokens=False)
-        #     _fake_input_ids, _ = self.template.mm_plugin.process_token_ids(
-        #         _fake_input_ids, None, fake_images, [], [], self.tokenizer, self.processor
-        #     )
-        #     fake_input_ids.extend(_fake_input_ids)
-        #     batch_images = fake_images
-        #     batch_imglens[0] = 1
+        fake_input_ids = []
+        if (
+            self.template.mm_plugin.image_token is not None and sum(batch_imglens) == 0 and sum(batch_vidlens) == 0
+        ):  # avoid process hanging in zero3/fsdp case
+            fake_messages = [{"role": "user", "content": IMAGE_PLACEHOLDER}]
+            fake_images = [Image.new("RGB", (64, 64), (255, 255, 255))]
+            fake_messages = self.template.mm_plugin.process_messages(
+                fake_messages, fake_images, [], [], self.processor
+            )
+            _fake_input_ids = self.tokenizer.encode(fake_messages[0]["content"], add_special_tokens=False)
+            _fake_input_ids, _ = self.template.mm_plugin.process_token_ids(
+                _fake_input_ids, None, fake_images, [], [], self.tokenizer, self.processor
+            )
+            fake_input_ids.extend(_fake_input_ids)
+            batch_images = fake_images
+            batch_imglens[0] = 1
 
-        # if (
-        #     self.template.mm_plugin.audio_token is not None and sum(batch_audlens) == 0
-        # ):  # avoid process hanging in zero3/fsdp case
-        #     fake_messages = [{"role": "user", "content": AUDIO_PLACEHOLDER}]
-        #     fake_audios = [np.zeros(1600)]
-        #     fake_messages = self.template.mm_plugin.process_messages(
-        #         fake_messages, [], [], fake_audios, self.processor
-        #     )
-        #     _fake_input_ids = self.tokenizer.encode(fake_messages[0]["content"], add_special_tokens=False)
-        #     _fake_input_ids, _ = self.template.mm_plugin.process_token_ids(
-        #         _fake_input_ids, None, [], [], fake_audios, self.tokenizer, self.processor
-        #     )
-        #     fake_input_ids.extend(_fake_input_ids)
-        #     batch_audios = fake_audios
-        #     batch_audlens[0] = 1
+        if (
+            self.template.mm_plugin.audio_token is not None and sum(batch_audlens) == 0
+        ):  # avoid process hanging in zero3/fsdp case
+            fake_messages = [{"role": "user", "content": AUDIO_PLACEHOLDER}]
+            fake_audios = [np.zeros(1600)]
+            fake_messages = self.template.mm_plugin.process_messages(
+                fake_messages, [], [], fake_audios, self.processor
+            )
+            _fake_input_ids = self.tokenizer.encode(fake_messages[0]["content"], add_special_tokens=False)
+            _fake_input_ids, _ = self.template.mm_plugin.process_token_ids(
+                _fake_input_ids, None, [], [], fake_audios, self.tokenizer, self.processor
+            )
+            fake_input_ids.extend(_fake_input_ids)
+            batch_audios = fake_audios
+            batch_audlens[0] = 1
 
-        # if len(fake_input_ids) != 0:
-        #     if self.tokenizer.padding_side == "right":
-        #         features[0]["input_ids"] = features[0]["input_ids"] + fake_input_ids
-        #         features[0]["attention_mask"] = features[0]["attention_mask"] + [0] * len(fake_input_ids)
-        #         features[0]["labels"] = features[0]["labels"] + [IGNORE_INDEX] * len(fake_input_ids)
-        #     else:
-        #         features[0]["input_ids"] = fake_input_ids + features[0]["input_ids"]
-        #         features[0]["attention_mask"] = [0] * len(fake_input_ids) + features[0]["attention_mask"]
-        #         features[0]["labels"] = [IGNORE_INDEX] * len(fake_input_ids) + features[0]["labels"]
+        if len(fake_input_ids) != 0:
+            if self.tokenizer.padding_side == "right":
+                features[0]["input_ids"] = features[0]["input_ids"] + fake_input_ids
+                features[0]["attention_mask"] = features[0]["attention_mask"] + [0] * len(fake_input_ids)
+                features[0]["labels"] = features[0]["labels"] + [IGNORE_INDEX] * len(fake_input_ids)
+            else:
+                features[0]["input_ids"] = fake_input_ids + features[0]["input_ids"]
+                features[0]["attention_mask"] = [0] * len(fake_input_ids) + features[0]["attention_mask"]
+                features[0]["labels"] = [IGNORE_INDEX] * len(fake_input_ids) + features[0]["labels"]
 
-        #     batch_input_ids[0] = features[0]["input_ids"]
+            batch_input_ids[0] = features[0]["input_ids"]
 
         mm_inputs = self.template.mm_plugin.get_mm_inputs(
             batch_images,
@@ -194,19 +194,14 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                 rope_index_kwargs["second_per_grid_ts"] = mm_inputs.get("second_per_grid_ts")
 
             if self.model.audio_tower and self.model.visual: # for qwen2omni
-                # features.update(self.model.prepare_inputs_for_generation(**rope_index_kwargs))
-                feature_attention_mask = mm_inputs["feature_attention_mask"] # ??
-                audio_feature_lengths = torch.sum(feature_attention_mask, dim=1) # FIXME need to get video image lengths
-                raw_input_ids = rope_index_kwargs.pop("input_ids", None)
-                rope_index_kwargs["audio_seqlens"] =  audio_feature_lengths # prepare for input
-                # rope_index_kwargs["raw_attention_mask"] = rope_index_kwargs.pop("attention_mask")
+                feature_attention_mask = mm_inputs.get("feature_attention_mask", None) # ??
+                if feature_attention_mask is not None:
+                    audio_feature_lengths = torch.sum(feature_attention_mask, dim=1) # FIXME need to get video image lengths
+                    rope_index_kwargs["audio_seqlens"] =  audio_feature_lengths # prepare for input
 
-                # prepare for input features shape
-                new_position_ids, features["rope_deltas"] = self.model.get_rope_index(
-                    raw_input_ids,
-                    **rope_index_kwargs
-                )
-                feature["position_ids"] = new_position_ids.clone() # avoid inplace operation
+                # avoid inplace operation FIXME
+                new_position_ids, features["rope_deltas"] = self.model.get_rope_index(**rope_index_kwargs)
+                feature["position_ids"] = new_position_ids.clone()
             else: # for qwen2vl
                 features["position_ids"], features["rope_deltas"] = self.model.get_rope_index(**rope_index_kwargs)
 
@@ -222,30 +217,7 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             bsz, seq_length = features["input_ids"].shape
             features["position_ids"] = torch.arange(seq_length).long().repeat(bsz, 1)
             return {"data": features, "input_ids": features["input_ids"], "labels": features["labels"]}
-        # debug
-        if features["labels"].shape != features["input_ids"].shape and 0: # modify labels according to modified input_ids
-            audio_feature_lengths = torch.sum(mm_inputs["feature_attention_mask"], dim=1)
-            assert len(features["labels"]) == len(audio_feature_lengths), f"{len(features['labels'])} != {len(audio_feature_lengths)}"
-            assert len(features["labels"]) == len(features["input_ids"]), f"{len(features['labels'])} != {len(features['input_ids'])}"
-            aduio_token_ids = self.processor(self.template.mm_plugin.audio_token)['input_ids'][0][0]
-            image_token_ids = self.processor.tokenizer(self.template.mm_plugin.image_token)
-            video_token_ids = self.processor.tokenizer(self.template.mm_plugin.video_token)
-            labels = []
-            # assume that one audio in one sample
-            for i, (label_tensor, audio_seq_len, input_ids_tensor) in zip(range(len(features["labels"])), zip(features["labels"], audio_feature_lengths, features["input_ids"])):
-                if audio_seq_len == 0:
-                    labels.append(label_tensor)
-                else:
-                    tmp_labels = []
-                    audio_match = torch.where(input_ids_tensor == aduio_token_ids)[0]
-                    print(audio_seq_len)
-                    audio_st ,audio_ed = audio_match[0].item(), audio_match[-1].item()
-                    length = audio_ed - audio_st
-                    labels_audio_st = torch.where(label_tensor == aduio_token_ids)[0] # only
-                    tmp_labels = [*label_tensor.tolist()[:labels_audio_st], *([IGNORE_INDEX] * length), *label_tensor.tolist()[labels_audio_st:]]
-                    labels.append(torch.tensor(tmp_labels))
-            features["labels"] = labels
-            
+
         return features
 
 
