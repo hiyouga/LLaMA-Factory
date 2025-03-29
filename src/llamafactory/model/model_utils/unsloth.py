@@ -14,17 +14,29 @@
 
 from typing import TYPE_CHECKING, Any, Optional
 
+from transformers import AutoConfig
+
 from ...extras import logging
 from ...extras.misc import get_current_device
-
 
 if TYPE_CHECKING:
     from transformers import PretrainedConfig, PreTrainedModel
 
-    from ...hparams import ModelArguments
-
+    from ..hparams import ModelArguments
 
 logger = logging.get_logger(__name__)
+
+
+def is_multimodal(model_name_or_path: str) -> bool:
+    r"""Judge if the model is a vision language model."""
+    config = AutoConfig.from_pretrained(model_name_or_path)
+    is_vision_model = hasattr(config, 'vision_config') or \
+                    hasattr(config, 'image_size') or \
+                    hasattr(config, 'vision_tower') or \
+                    'vision' in config.model_type.lower() or \
+                    'clip' in config.model_type.lower() or \
+                    'vit' in config.model_type.lower()
+    return is_vision_model
 
 
 def _get_unsloth_kwargs(
@@ -48,11 +60,14 @@ def load_unsloth_pretrained_model(
     config: "PretrainedConfig", model_args: "ModelArguments"
 ) -> Optional["PreTrainedModel"]:
     r"""Optionally load pretrained model with unsloth. Used in training."""
-    from unsloth import FastLanguageModel  # type: ignore
+    if is_multimodal(model_args.model_name_or_path):
+        from unsloth import FastVisionModel as UnslothModel  # type: ignore
+    else:
+        from unsloth import FastLanguageModel as UnslothModel  # type: ignore
 
     unsloth_kwargs = _get_unsloth_kwargs(config, model_args.model_name_or_path, model_args)
     try:
-        model, _ = FastLanguageModel.from_pretrained(**unsloth_kwargs)
+        model, _ = UnslothModel.from_pretrained(**unsloth_kwargs)
     except NotImplementedError:
         logger.warning_rank0("Unsloth does not support model type {}.".format(getattr(config, "model_type", None)))
         model = None
@@ -65,32 +80,39 @@ def get_unsloth_peft_model(
     model: "PreTrainedModel", model_args: "ModelArguments", peft_kwargs: dict[str, Any]
 ) -> "PreTrainedModel":
     r"""Get the peft model for the pretrained model with unsloth. Used in training."""
-    from unsloth import FastLanguageModel  # type: ignore
+    if is_multimodal(model_args.model_name_or_path):
+        from unsloth import FastVisionModel as UnslothModel  # type: ignore
+    else:
+        from unsloth import FastLanguageModel as UnslothModel  # type: ignore
 
     unsloth_peft_kwargs = {
         "model": model,
         "max_seq_length": model_args.model_max_length,
         "use_gradient_checkpointing": "unsloth",
     }
-    return FastLanguageModel.get_peft_model(**peft_kwargs, **unsloth_peft_kwargs)
+
+    return UnslothModel.get_peft_model(**peft_kwargs, **unsloth_peft_kwargs)
 
 
 def load_unsloth_peft_model(
     config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool
 ) -> "PreTrainedModel":
     r"""Load peft model with unsloth. Used in both training and inference."""
-    from unsloth import FastLanguageModel  # type: ignore
+    if is_multimodal(model_args.model_name_or_path):
+        from unsloth import FastVisionModel as UnslothModel  # type: ignore
+    else:
+        from unsloth import FastLanguageModel as UnslothModel  # type: ignore
 
     unsloth_kwargs = _get_unsloth_kwargs(config, model_args.adapter_name_or_path[0], model_args)
     try:
         if not is_trainable:
             unsloth_kwargs["use_gradient_checkpointing"] = False
 
-        model, _ = FastLanguageModel.from_pretrained(**unsloth_kwargs)
+        model, _ = UnslothModel.from_pretrained(**unsloth_kwargs)
     except NotImplementedError:
         raise ValueError("Unsloth does not support model type {}.".format(getattr(config, "model_type", None)))
 
     if not is_trainable:
-        FastLanguageModel.for_inference(model)
+        UnslothModel.for_inference(model)
 
     return model
