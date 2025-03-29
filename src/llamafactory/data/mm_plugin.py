@@ -146,6 +146,9 @@ class MMPluginMixin:
         video_processor: BaseImageProcessor = getattr(
             processor, "video_processor", getattr(processor, "image_processor", None)
         )
+        if image_processor is None and video_processor is None: # hack for qwen2_5_omni
+            image_processor, video_processor = getattr(processor, "omni_processor", None), getattr(processor, "omni_processor", None)
+
         feature_extractor: SequenceFeatureExtractor = getattr(processor, "feature_extractor", None)
         if len(images) != 0 and self.image_token is None:
             raise ValueError(
@@ -1143,10 +1146,10 @@ class Qwen2OmniPlugin(BasePlugin):
                 mm_inputs.update(video_processor(images=None, videos=videos, return_tensors="pt"))
                 fps = [2.0] * len(videos) # FIXME
                 video_second_per_grid = [fps[i] / video_processor.temporal_patch_size for i in range(len(fps))]
-                mm_inputs.update("video_second_per_grid", video_second_per_grid)
+                mm_inputs.update("second_per_grid_ts", video_second_per_grid)
 
-            else:  # for llava_next_video
-                mm_inputs.update(video_processor(videos, return_tensors="pt"))
+            else:
+                raise NotImplementedError
 
         if len(audios) != 0:
             feature_extractor: SequenceFeatureExtractor = getattr(processor, "feature_extractor", None)
@@ -1166,6 +1169,7 @@ class Qwen2OmniPlugin(BasePlugin):
             mm_inputs["feature_attention_mask"] = mm_inputs.pop("attention_mask")  # prevent conflicts
 
         return mm_inputs
+
     @override
     def process_messages(
         self,
@@ -1177,8 +1181,8 @@ class Qwen2OmniPlugin(BasePlugin):
     ) -> list[dict[str, str]]:
         self._validate_input(processor, images, videos, audios)
         messages = deepcopy(messages)
-        if self.expand_mm_tokens:
-            mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+        # if self.expand_mm_tokens:
+        #     mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
         num_audio_tokens, num_image_tokens, num_video_tokens = 0, 0, 0
 
         for message in messages:
@@ -1430,6 +1434,7 @@ PLUGINS = {
     "paligemma": PaliGemmaPlugin,
     "pixtral": PixtralPlugin,
     "qwen2_audio": Qwen2AudioPlugin,
+    "qwen2_omni": Qwen2OmniPlugin,
     "qwen2_vl": Qwen2VLPlugin,
     "video_llava": VideoLlavaPlugin,
 }
