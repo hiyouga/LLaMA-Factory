@@ -190,7 +190,6 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                 "video_grid_thw": mm_inputs.get("video_grid_thw"),
                 "attention_mask": features["attention_mask"],
             }
-            # rope_index_kwargs["second_per_grid_ts"] = mm_inputs.get("second_per_grid_ts", None)
 
             if self.model.audio_tower and self.model.visual: # for qwen2omni
                 feature_attention_mask = mm_inputs.get("feature_attention_mask", None) # ??
@@ -200,7 +199,6 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
 
                 delta0 = (1 - rope_index_kwargs["attention_mask"]).sum(dim=-1).unsqueeze(1)
                 # avoid conflict
-                # rope_index_kwargs["second_per_grids"] = mm_inputs.pop("second_per_grids_ts",None)
                 rope_index_kwargs["second_per_grids"] = mm_inputs.get("video_second_per_grid", None)
                 new_position_ids, rope_deltas = self.model.get_rope_index(**rope_index_kwargs)
                 features["position_ids"], features["rope_deltas"] = new_position_ids.clone(), rope_deltas - delta0 # avoid inplace operation FIXME
