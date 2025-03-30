@@ -190,8 +190,7 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                 "video_grid_thw": mm_inputs.get("video_grid_thw"),
                 "attention_mask": features["attention_mask"],
             }
-            if "second_per_grid_ts" in mm_inputs:
-                rope_index_kwargs["second_per_grid_ts"] = mm_inputs.get("second_per_grid_ts")
+            # rope_index_kwargs["second_per_grid_ts"] = mm_inputs.get("second_per_grid_ts", None)
 
             if self.model.audio_tower and self.model.visual: # for qwen2omni
                 feature_attention_mask = mm_inputs.get("feature_attention_mask", None) # ??
@@ -199,9 +198,12 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                     audio_feature_lengths = torch.sum(feature_attention_mask, dim=1) # FIXME need to get video image lengths
                     rope_index_kwargs["audio_seqlens"] =  audio_feature_lengths # prepare for input
 
-                # avoid inplace operation FIXME
-                new_position_ids, features["rope_deltas"] = self.model.get_rope_index(**rope_index_kwargs)
-                feature["position_ids"] = new_position_ids.clone()
+                delta0 = (1 - rope_index_kwargs["attention_mask"]).sum(dim=-1).unsqueeze(1)
+                # avoid conflict
+                # rope_index_kwargs["second_per_grids"] = mm_inputs.pop("second_per_grids_ts",None)
+                rope_index_kwargs["second_per_grids"] = mm_inputs.get("video_second_per_grid", None)
+                new_position_ids, rope_deltas = self.model.get_rope_index(**rope_index_kwargs)
+                features["position_ids"], features["rope_deltas"] = new_position_ids.clone(), rope_deltas - delta0 # avoid inplace operation FIXME
             else: # for qwen2vl
                 features["position_ids"], features["rope_deltas"] = self.model.get_rope_index(**rope_index_kwargs)
 

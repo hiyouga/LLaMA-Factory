@@ -148,7 +148,7 @@ def load_model(
                 load_class = AutoModelForImageTextToText
             elif type(config) in AutoModelForSeq2SeqLM._model_mapping.keys():  # audio-text
                 load_class = AutoModelForSeq2SeqLM
-            elif type(config) in AutoModelForTextToWaveform._model_mapping.keys():  # audio hack for qwen2_5_omni #
+            elif type(config) in AutoModelForTextToWaveform._model_mapping.keys():  # audio hack for qwen2_5_omni
                 load_class = AutoModelForTextToWaveform
             else:
                 load_class = AutoModelForCausalLM
@@ -158,7 +158,8 @@ def load_model(
             else:
                 model = load_class.from_pretrained(**init_kwargs)
                 if load_class is AutoModelForTextToWaveform:
-                    model = model.thinker # use part of Omni model
+                    model = model.thinker  # use part of Omni model
+
 
         if model_args.mixture_of_depths == "convert":
             model = convert_pretrained_model_to_mod(model, config, model_args)
