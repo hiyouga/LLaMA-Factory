@@ -372,10 +372,6 @@ class ModelArguments(
         init=False,
         metadata={"help": "Device map for model placement, derived from training stage. Do not specify it."},
     )
-    enable_audio_output: bool = field(
-        default=False,
-        metadata={"help": "Whether or not to enable audio output."},
-    ),
     model_max_length: Optional[int] = field(
         default=None,
         init=False,
