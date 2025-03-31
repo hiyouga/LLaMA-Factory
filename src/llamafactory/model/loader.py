@@ -21,6 +21,7 @@ from transformers import (
     AutoModelForCausalLM,
     AutoModelForImageTextToText,
     AutoModelForSeq2SeqLM,
+    AutoModelForTextToWaveform,
     AutoModelForVision2Seq,
     AutoProcessor,
     AutoTokenizer,
@@ -147,6 +148,8 @@ def load_model(
                 load_class = AutoModelForImageTextToText
             elif type(config) in AutoModelForSeq2SeqLM._model_mapping.keys():  # audio-text
                 load_class = AutoModelForSeq2SeqLM
+            elif type(config) in AutoModelForTextToWaveform._model_mapping.keys():  # audio hack for qwen2_5_omni
+                load_class = AutoModelForTextToWaveform
             else:
                 load_class = AutoModelForCausalLM
 
@@ -154,6 +157,8 @@ def load_model(
                 model = load_class.from_config(config, trust_remote_code=model_args.trust_remote_code)
             else:
                 model = load_class.from_pretrained(**init_kwargs)
+                if load_class is AutoModelForTextToWaveform:
+                    model = model.thinker  # use part of Omni model
 
         if model_args.mixture_of_depths == "convert":
             model = convert_pretrained_model_to_mod(model, config, model_args)
