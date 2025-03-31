@@ -679,5 +679,9 @@
       "prompt": "content"
     },
     "folder": "python"
+  },
+  "MNLI": {
+  "hf_hub_url": "nyu-mll/glue",
+  "subset": "mnli"
   }
 }

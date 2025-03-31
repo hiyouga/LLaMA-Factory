@@ -56,13 +56,13 @@ LAYERNORM_NAMES = {"norm", "ln"}
 
 LLAMABOARD_CONFIG = "llamaboard_config.yaml"
 
-METHODS = ["full", "freeze", "lora"]
+METHODS = ["full", "freeze", "lora", "prompt tuning", "prefix tuning", "p-tuning", "DePT", "ADePT", "MPT", "ATTEMPT", "adapters", "adapter fusion", "IA3", "BitFit"]
 
 MOD_SUPPORTED_MODELS = {"bloom", "falcon", "gemma", "llama", "mistral", "mixtral", "phi", "starcoder2"}
 
 MULTIMODAL_SUPPORTED_MODELS = set()
 
-PEFT_METHODS = {"lora"}
+PEFT_METHODS = {"lora", "prompt tuning", "prefix tuning", "p-tuning", "DePT", "ADePT", "MPT", "ATTEMPT", "adapters", "adapter fusion", "IA3", "BitFit"}
 
 RUNNING_LOG = "running_log.txt"
 
