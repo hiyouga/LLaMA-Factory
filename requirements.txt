@@ -22,6 +22,7 @@ fire
 packaging
 pyyaml
 numpy<2.0.0
+pydantic<=2.10.6
 av
 librosa
 tyro<0.9.0
