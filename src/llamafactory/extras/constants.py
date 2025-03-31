@@ -19,6 +19,7 @@ from typing import Optional
 
 from peft.utils import SAFETENSORS_WEIGHTS_NAME as SAFE_ADAPTER_WEIGHTS_NAME
 from peft.utils import WEIGHTS_NAME as ADAPTER_WEIGHTS_NAME
+from peft import PromptTuningConfig, PrefixTuningConfig, MultitaskPromptTuningConfig, PromptEncoderConfig, IA3Config
 from transformers.utils import SAFE_WEIGHTS_INDEX_NAME, SAFE_WEIGHTS_NAME, WEIGHTS_INDEX_NAME, WEIGHTS_NAME
 
 
@@ -56,13 +57,24 @@ LAYERNORM_NAMES = {"norm", "ln"}
 
 LLAMABOARD_CONFIG = "llamaboard_config.yaml"
 
-METHODS = ["full", "freeze", "lora", "prompt tuning", "prefix tuning", "p-tuning", "DePT", "ADePT", "MPT", "ATTEMPT", "adapters", "adapter fusion", "IA3", "BitFit"]
+HF_PEFT_METHODS = ["prompt tuning", "prefix tuning", "p-tuning", "IA3", "MPT"]
+CUSTOM_PEFT_METHODS = ["DePT", "ADePT", "ATTEMPT", "adapters", "adapter fusion", "BitFit"]
+
+PEFT_CONFIG_MAPPING = {
+    "prompt tuning": PromptTuningConfig, 
+    "prefix tuning": PrefixTuningConfig, 
+    "p-tuning": PromptEncoderConfig, 
+    "MPT": MultitaskPromptTuningConfig, 
+    "IA3": IA3Config,
+    }
+
+METHODS = ["full", "freeze", "lora"] + HF_PEFT_METHODS + CUSTOM_PEFT_METHODS
 
 MOD_SUPPORTED_MODELS = {"bloom", "falcon", "gemma", "llama", "mistral", "mixtral", "phi", "starcoder2"}
 
 MULTIMODAL_SUPPORTED_MODELS = set()
 
-PEFT_METHODS = {"lora", "prompt tuning", "prefix tuning", "p-tuning", "DePT", "ADePT", "MPT", "ATTEMPT", "adapters", "adapter fusion", "IA3", "BitFit"}
+PEFT_METHODS = {"lora"} | set(HF_PEFT_METHODS) | set(CUSTOM_PEFT_METHODS)
 
 RUNNING_LOG = "running_log.txt"
 
