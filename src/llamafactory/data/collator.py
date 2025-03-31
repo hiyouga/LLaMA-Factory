@@ -192,7 +192,7 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             }
 
             if self.model.audio_tower and self.model.visual:  # for qwen2omni
-                feature_attention_mask = mm_inputs.get("feature_attention_mask", None)  # ??
+                feature_attention_mask = mm_inputs.get("feature_attention_mask", None)
                 if feature_attention_mask is not None:
                     audio_feature_lengths = torch.sum(
                         feature_attention_mask, dim=1

@@ -1259,7 +1259,7 @@ class Qwen2OmniPlugin(BasePlugin):
                         )
                         .flatten()
                         * mm_inputs["video_second_per_grid"][num_video_tokens]
-                        * 25  # FIXME hardcode of position_id_per_seconds=25..
+                        * 25  # FIXME hardcode of position_id_per_seconds=25
                     ).long()
                     t_ntoken_per_chunk = 50  # FIXME hardcode: [25 * 2]
                     video_chunk_indices = processor.get_chunked_index(video_t_index, t_ntoken_per_chunk)
