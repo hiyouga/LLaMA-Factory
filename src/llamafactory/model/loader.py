@@ -160,7 +160,6 @@ def load_model(
                 if load_class is AutoModelForTextToWaveform:
                     model = model.thinker  # use part of Omni model
 
-
         if model_args.mixture_of_depths == "convert":
             model = convert_pretrained_model_to_mod(model, config, model_args)
 

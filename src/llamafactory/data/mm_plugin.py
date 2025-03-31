@@ -146,8 +146,11 @@ class MMPluginMixin:
         video_processor: BaseImageProcessor = getattr(
             processor, "video_processor", getattr(processor, "image_processor", None)
         )
-        if image_processor is None and video_processor is None: # hack for qwen2_5_omni
-            image_processor, video_processor = getattr(processor, "omni_processor", None), getattr(processor, "omni_processor", None)
+        if image_processor is None and video_processor is None:  # hack for qwen2_5_omni
+            image_processor, video_processor = (
+                getattr(processor, "omni_processor", None),
+                getattr(processor, "omni_processor", None),
+            )
 
         feature_extractor: SequenceFeatureExtractor = getattr(processor, "feature_extractor", None)
         if len(images) != 0 and self.image_token is None:
@@ -1119,7 +1122,7 @@ class Qwen2OmniPlugin(BasePlugin):
     ) -> dict[str, "torch.Tensor"]:
         mm_inputs = {}
         if len(images) != 0:
-            image_processor: BaseImageProcessor = getattr(processor, "omni_processor", None) # FIXME
+            image_processor: BaseImageProcessor = getattr(processor, "omni_processor", None)  # FIXME
             images = self._regularize_images(
                 images,
                 image_max_pixels=getattr(processor, "image_max_pixels", 768 * 768),
@@ -1144,9 +1147,9 @@ class Qwen2OmniPlugin(BasePlugin):
             )
             if "videos" in inspect.signature(video_processor.preprocess).parameters:  # for qwen2_vl and video_llava
                 mm_inputs.update(video_processor(images=None, videos=videos, return_tensors="pt"))
-                fps = [2.0] * len(videos) # FIXME hardcode
+                fps = [2.0] * len(videos)  # FIXME hardcode
                 video_second_per_grid = [fps[i] / video_processor.temporal_patch_size for i in range(len(fps))]
-                mm_inputs["video_second_per_grid"] =  torch.tensor(video_second_per_grid)
+                mm_inputs["video_second_per_grid"] = torch.tensor(video_second_per_grid)
 
             else:
                 raise NotImplementedError
@@ -1192,16 +1195,18 @@ class Qwen2OmniPlugin(BasePlugin):
             audio_lengths = (input_lengths - 2) // 2 + 1
         if mm_inputs.get("image_grid_thw", None) is not None:
             image_grid_thw = mm_inputs["image_grid_thw"]
-            merge_length = processor.omni_processor.merge_size ** 2
+            merge_length = processor.omni_processor.merge_size**2
         if mm_inputs.get("video_grid_thw", None) is not None:
             video_grid_thw = mm_inputs["video_grid_thw"]
-            merge_length = processor.omni_processor.merge_size ** 2
+            merge_length = processor.omni_processor.merge_size**2
 
         if use_audio_in_video:
             assert audio_lengths is not None, "audio_lengths should be exist when use_audio_in_video is `True`"
-            assert mm_inputs.get("video_grid_thw", None) is not None, "video_grid_thw should be exist when use_audio_in_video is `True`"
+            assert mm_inputs.get("video_grid_thw", None) is not None, (
+                "video_grid_thw should be exist when use_audio_in_video is `True`"
+            )
             positions_list = []
-            for i, message in enumerate(messages): # get multimodal index when use_audio
+            for i, message in enumerate(messages):  # get multimodal index when use_audio
                 positions = []
                 for special_token in [self.audio_token, self.image_token, self.video_token]:
                     start = 0
@@ -1213,57 +1218,62 @@ class Qwen2OmniPlugin(BasePlugin):
                         start = pos + len(special_token)
                 positions_list.append(positions.sort(key=lambda x: x[0]))
 
-
         for message in messages:
             content = message["content"]
             # separate with audio-video
             while IMAGE_PLACEHOLDER in content:
-                    image_token_replace_length = image_grid_thw[num_image_tokens].prod() // merge_length
-                    content = content.replace(IMAGE_PLACEHOLDER, f"<|vision_bos|>{self.image_token * image_token_replace_length}<|vision_eos|>", 1)
-                    num_image_tokens += 1
+                image_token_replace_length = image_grid_thw[num_image_tokens].prod() // merge_length
+                content = content.replace(
+                    IMAGE_PLACEHOLDER,
+                    f"<|vision_bos|>{self.image_token * image_token_replace_length}<|vision_eos|>",
+                    1,
+                )
+                num_image_tokens += 1
 
             if not use_audio_in_video:
                 while AUDIO_PLACEHOLDER in content:
                     audio_token_replace_length = audio_lengths[num_audio_tokens]
-                    content = content.replace(AUDIO_PLACEHOLDER, f"<|audio_bos|>{self.audio_token * audio_token_replace_length}<|audio_eos|>", 1)
+                    content = content.replace(
+                        AUDIO_PLACEHOLDER,
+                        f"<|audio_bos|>{self.audio_token * audio_token_replace_length}<|audio_eos|>",
+                        1,
+                    )
                     num_audio_tokens += 1
                 # TODO handle video_input and use_audio_in_video
                 while VIDEO_PLACEHOLDER in content:
                     video_replace_length = video_grid_thw[num_video_tokens].prod() // merge_length
-                    content = content.replace(VIDEO_PLACEHOLDER, f"<|vision_bos|>{self.video_token * video_replace_length}<|vision_eos|>", 1)
+                    content = content.replace(
+                        VIDEO_PLACEHOLDER, f"<|vision_bos|>{self.video_token * video_replace_length}<|vision_eos|>", 1
+                    )
                     num_video_tokens += 1
-            else: # if use the audio of video # deal video token and audio token togather
+            else:  # if use the audio of video # deal video token and audio token togather
                 while VIDEO_PLACEHOLDER in content:
                     audio_t_index = torch.arange(audio_lengths[num_audio_tokens])
                     video_t_index = (
-                            torch.arange(video_grid_thw[num_video_tokens][0])
-                            .view(-1, 1, 1)
-                            .expand(
-                                -1,
-                                video_grid_thw[num_video_tokens][1] // self.omni_processor.merge_size,
-                                video_grid_thw[num_video_tokens][2] // self.omni_processor.merge_size,
-                            )
-                            .flatten()
-                            * mm_inputs["video_second_per_grid"][num_video_tokens]
-                            * 25 # FIXME hardcode of position_id_per_seconds=25..
-                        ).long()
-                    t_ntoken_per_chunk = 50 # FIXME hardcode: [25 * 2]
+                        torch.arange(video_grid_thw[num_video_tokens][0])
+                        .view(-1, 1, 1)
+                        .expand(
+                            -1,
+                            video_grid_thw[num_video_tokens][1] // self.omni_processor.merge_size,
+                            video_grid_thw[num_video_tokens][2] // self.omni_processor.merge_size,
+                        )
+                        .flatten()
+                        * mm_inputs["video_second_per_grid"][num_video_tokens]
+                        * 25  # FIXME hardcode of position_id_per_seconds=25..
+                    ).long()
+                    t_ntoken_per_chunk = 50  # FIXME hardcode: [25 * 2]
                     video_chunk_indices = processor.get_chunked_index(video_t_index, t_ntoken_per_chunk)
                     audio_chunk_indices = self.get_chunked_index(audio_t_index, t_ntoken_per_chunk)
                     placeholder_string = ""
                     for j in range(max(len(video_chunk_indices), len(audio_chunk_indices))):
-                            video_chunk_index = video_chunk_indices[j] if j < len(video_chunk_indices) else None
-                            audio_chunk_index = audio_chunk_indices[j] if j < len(audio_chunk_indices) else None
-                            placeholder_string = "<|vision_bos|>" + "<|audio_bos|>"
-                            if video_chunk_index is not None:
-                                placeholder_string += self.video_token * (
-                                    video_chunk_index[1] - video_chunk_index[0]
-                                )
-                            if audio_chunk_index is not None:
-                                placeholder_string += self.audio_token * (
-                                    audio_chunk_index[1] - audio_chunk_index[0]
-                                )
-                            placeholder_string += ("<|audio_eos|>" + "<|vision_eos|>")
+                        video_chunk_index = video_chunk_indices[j] if j < len(video_chunk_indices) else None
+                        audio_chunk_index = audio_chunk_indices[j] if j < len(audio_chunk_indices) else None
+                        placeholder_string = "<|vision_bos|>" + "<|audio_bos|>"
+                        if video_chunk_index is not None:
+                            placeholder_string += self.video_token * (video_chunk_index[1] - video_chunk_index[0])
+                        if audio_chunk_index is not None:
+                            placeholder_string += self.audio_token * (audio_chunk_index[1] - audio_chunk_index[0])
+                        placeholder_string += "<|audio_eos|>" + "<|vision_eos|>"
                     content = content.replace(VIDEO_PLACEHOLDER, placeholder_string, 1)
                     content = content.replace(AUDIO_PLACEHOLDER, "", 1)
                     num_audio_tokens += 1
