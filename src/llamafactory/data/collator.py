@@ -190,8 +190,10 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                 "video_grid_thw": mm_inputs.get("video_grid_thw"),
                 "attention_mask": features["attention_mask"],
             }
+            if "second_per_grid_ts" in mm_inputs:  # for qwen2vl
+                rope_index_kwargs["second_per_grid_ts"] = mm_inputs.get("second_per_grid_ts")
 
-            if self.model.audio_tower and self.model.visual:  # for qwen2omni
+            if getattr(self.model.config, "model_type", None) == "qwen2_5_omni":  # for qwen2omni
                 feature_attention_mask = mm_inputs.get("feature_attention_mask", None)
                 if feature_attention_mask is not None:
                     audio_feature_lengths = torch.sum(
