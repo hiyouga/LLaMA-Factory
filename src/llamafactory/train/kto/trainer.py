@@ -127,9 +127,9 @@ class CustomKTOTrainer(KTOTrainer):
         return Trainer._get_train_sampler(self)
 
     @override
-    def get_batch_samples(self, epoch_iterator, num_batches):
+    def get_batch_samples(self, *args, **kwargs):
         r"""Replace the method of KTO Trainer with the one of the standard Trainer."""
-        return Trainer.get_batch_samples(self, epoch_iterator, num_batches)
+        return Trainer.get_batch_samples(self, *args, **kwargs)
 
     @override
     def forward(

@@ -2272,6 +2272,18 @@ register_model_group(
 
 register_model_group(
     models={
+        "Qwen2.5-Omni-7B": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-Omni-7B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-Omni-7B",
+        }
+    },
+    template="qwen2_omni",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
         "Qwen2-VL-2B": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-VL-2B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen2-VL-2B",
@@ -2345,6 +2357,10 @@ register_model_group(
         "Qwen2.5-VL-7B-Instruct": {
             DownloadSource.DEFAULT: "Qwen/Qwen2.5-VL-7B-Instruct",
             DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-VL-7B-Instruct",
+        },
+        "Qwen2.5-VL-32B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-VL-32B-Instruct",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-VL-32B-Instruct",
         },
         "Qwen2.5-VL-72B-Instruct": {
             DownloadSource.DEFAULT: "Qwen/Qwen2.5-VL-72B-Instruct",
