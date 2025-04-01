@@ -242,6 +242,10 @@ class ProcessorArguments:
         default=128,
         metadata={"help": "The maximum number of sampled frames for video inputs."},
     )
+    audio_sampling_rate: int = field(
+        default=16000,
+        metadata={"help": "The sampling rate of audio inputs."},
+    )
 
     def __post_init__(self):
         if self.image_max_pixels < self.image_min_pixels:
