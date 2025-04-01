@@ -206,7 +206,7 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 
 [23/08/11] 我们支持了指令模型的 **[DPO 训练](https://arxiv.org/abs/2305.18290)**。详细用法请参照 [examples](examples/README_zh.md)。
 
-[23/07/31] 我们支持了**数据流式加载**。请使用 `streaming: true` 和 `max_steps: 10000` 参数来流式加载数据集。 用 `dataset_shards` 来开启多进程加载。
+[23/07/31] 我们支持了**数据流式加载**。请使用 `streaming: true` 和 `max_steps: 10000` 参数来流式加载数据集。
 
 [23/07/29] 我们在 Hugging Face 发布了两个 13B 指令微调模型。详细内容请查阅我们的 Hugging Face 项目（[LLaMA-2](https://huggingface.co/hiyouga/Llama-2-Chinese-13b-chat) / [Baichuan](https://huggingface.co/hiyouga/Baichuan-13B-sft)）。
 
@@ -414,7 +414,7 @@ huggingface-cli login
 | CUDA         | 11.6    | 12.2      |
 | deepspeed    | 0.10.0  | 0.16.4    |
 | bitsandbytes | 0.39.0  | 0.43.1    |
-| vllm         | 0.4.3   | 0.7.3     |
+| vllm         | 0.4.3   | 0.8.2     |
 | flash-attn   | 2.3.0   | 2.7.2     |
 
 ### 硬件依赖
