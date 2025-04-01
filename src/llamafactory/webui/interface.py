@@ -14,6 +14,8 @@
 
 import os
 import platform
+import httpx
+
 
 from ..extras.misc import is_env_enabled
 from ..extras.packages import is_gradio_available
@@ -88,10 +90,26 @@ def create_web_demo() -> "gr.Blocks":
 
 
 def run_web_ui() -> None:
+    os.environ["no_proxy"] = "localhost,127.0.0.1,0.0.0.0"
     gradio_ipv6 = is_env_enabled("GRADIO_IPV6")
     gradio_share = is_env_enabled("GRADIO_SHARE")
     server_name = os.getenv("GRADIO_SERVER_NAME", "[::]" if gradio_ipv6 else "0.0.0.0")
-    create_ui().queue().launch(share=gradio_share, server_name=server_name, inbrowser=True)
+    httpx.HTTPCORE_OPTS = {"trust_env": False}
+
+    try:
+        demo = create_ui().queue()
+        demo.launch(
+            share=gradio_share,
+            server_name=server_name,
+            inbrowser=True,
+            prevent_thread_lock=False,
+            show_error=True,
+            quiet=True,
+            favicon_path=None
+        )
+    except Exception as e:
+        print(f"Error launching web UI: {str(e)}")
+        raise
 
 
 def run_web_demo() -> None:
