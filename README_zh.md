@@ -414,7 +414,7 @@ huggingface-cli login
 | CUDA         | 11.6    | 12.2      |
 | deepspeed    | 0.10.0  | 0.16.4    |
 | bitsandbytes | 0.39.0  | 0.43.1    |
-| vllm         | 0.4.3   | 0.7.3     |
+| vllm         | 0.4.3   | 0.8.2     |
 | flash-attn   | 2.3.0   | 2.7.2     |
 
 ### 硬件依赖
