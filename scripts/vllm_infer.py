@@ -92,8 +92,20 @@ def vllm_infer(
             multi_modal_data = {
                 "image": template_obj.mm_plugin._regularize_images(
                     sample["images"], image_max_pixels=image_max_pixels, image_min_pixels=image_min_pixels
-                )
+                )["images"]
             }
+        elif sample["videos"]:
+            multi_modal_data = {
+                "video": template_obj.mm_plugin._regularize_videos(
+                    sample["videos"], image_max_pixels=image_max_pixels, image_min_pixels=image_min_pixels
+                )["videos"]
+            }
+        elif sample["audios"]:
+            audio_data = template_obj.mm_plugin._regularize_audios(
+                sample["audios"],
+                sampling_rate=16000,
+            )
+            multi_modal_data = {"audio": zip(audio_data["audios"], audio_data["sampling_rates"])}
         else:
             multi_modal_data = None
 
@@ -131,7 +143,7 @@ def vllm_infer(
         "enable_lora": model_args.adapter_name_or_path is not None,
     }
     if template_obj.mm_plugin.__class__.__name__ != "BasePlugin":
-        engine_args["limit_mm_per_prompt"] = {"image": 4, "video": 2}
+        engine_args["limit_mm_per_prompt"] = {"image": 4, "video": 2, "audio": 2}
 
     if isinstance(model_args.vllm_config, dict):
         engine_args.update(model_args.vllm_config)
