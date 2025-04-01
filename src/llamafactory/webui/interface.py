@@ -14,10 +14,8 @@
 
 import os
 import platform
-import httpx
 
-
-from ..extras.misc import is_env_enabled
+from ..extras.misc import fix_proxy, is_env_enabled
 from ..extras.packages import is_gradio_available
 from .common import save_config
 from .components import (
@@ -74,8 +72,9 @@ def create_ui(demo_mode: bool = False) -> "gr.Blocks":
 
 def create_web_demo() -> "gr.Blocks":
     engine = Engine(pure_chat=True)
+    hostname = os.getenv("HOSTNAME", os.getenv("COMPUTERNAME", platform.node())).split(".")[0]
 
-    with gr.Blocks(title="Web Demo", css=CSS) as demo:
+    with gr.Blocks(title=f"LLaMA Factory Web Demo ({hostname})", css=CSS) as demo:
         lang = gr.Dropdown(choices=["en", "ru", "zh", "ko", "ja"], scale=1)
         engine.manager.add_elems("top", dict(lang=lang))
 
@@ -90,30 +89,18 @@ def create_web_demo() -> "gr.Blocks":
 
 
 def run_web_ui() -> None:
-    os.environ["no_proxy"] = "localhost,127.0.0.1,0.0.0.0"
     gradio_ipv6 = is_env_enabled("GRADIO_IPV6")
     gradio_share = is_env_enabled("GRADIO_SHARE")
     server_name = os.getenv("GRADIO_SERVER_NAME", "[::]" if gradio_ipv6 else "0.0.0.0")
-    httpx.HTTPCORE_OPTS = {"trust_env": False}
-
-    try:
-        demo = create_ui().queue()
-        demo.launch(
-            share=gradio_share,
-            server_name=server_name,
-            inbrowser=True,
-            prevent_thread_lock=False,
-            show_error=True,
-            quiet=True,
-            favicon_path=None
-        )
-    except Exception as e:
-        print(f"Error launching web UI: {str(e)}")
-        raise
+    print("Visit http://ip:port for Web UI, e.g., http://127.0.0.1:7860")
+    fix_proxy(ipv6_enabled=gradio_ipv6)
+    create_ui().queue().launch(share=gradio_share, server_name=server_name, inbrowser=True)
 
 
 def run_web_demo() -> None:
     gradio_ipv6 = is_env_enabled("GRADIO_IPV6")
     gradio_share = is_env_enabled("GRADIO_SHARE")
     server_name = os.getenv("GRADIO_SERVER_NAME", "[::]" if gradio_ipv6 else "0.0.0.0")
+    print("Visit http://ip:port for Web UI, e.g., http://127.0.0.1:7860")
+    fix_proxy(ipv6_enabled=gradio_ipv6)
     create_web_demo().queue().launch(share=gradio_share, server_name=server_name, inbrowser=True)
