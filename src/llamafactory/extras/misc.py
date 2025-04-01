@@ -17,6 +17,7 @@
 
 import gc
 import os
+import socket
 from typing import TYPE_CHECKING, Any, Literal, Union
 
 import torch
@@ -278,10 +279,16 @@ def use_ray() -> bool:
 
 def find_available_port() -> int:
     """Find an available port on the local machine."""
-    import socket
-
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind(("", 0))
     port = sock.getsockname()[1]
     sock.close()
     return port
+
+
+def fix_proxy(ipv6_enabled: bool) -> None:
+    """Fix proxy settings for gradio ui."""
+    os.environ["no_proxy"] = "localhost,127.0.0.1,0.0.0.0"
+    if ipv6_enabled:
+        for name in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY"):
+            os.environ.pop(name, None)
