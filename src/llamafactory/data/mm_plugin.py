@@ -1405,7 +1405,7 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
                             video_grid_thw[num_video_tokens][2] // self.image_processor.merge_size,
                         )
                         .flatten()
-                        * mm_inputs["video_second_per_grid"][num_video_tokens]
+                        * mm_inputs["second_per_grid_ts"][num_video_tokens]
                         * 25  # FIXME hardcode of position_id_per_seconds=25
                     ).long()
                     t_ntoken_per_chunk = 50  # FIXME hardcode: [25 * 2]
