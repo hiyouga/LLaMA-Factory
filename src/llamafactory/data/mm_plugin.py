@@ -1271,7 +1271,9 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
             )
             mm_inputs.update(image_processor(images=None, videos=video_dict["videos"], return_tensors="pt"))
             temporal_patch_size: int = getattr(image_processor, "temporal_patch_size", 2)
-            mm_inputs["video_second_per_grid"] = torch.tensor([temporal_patch_size / fps for fps in video_dict["fps_per_video"])])
+            mm_inputs["video_second_per_grid"] = torch.tensor(
+                [temporal_patch_size / fps for fps in video_dict["fps_per_video"]]
+            )
 
         if len(audios) != 0:
             audios = self._regularize_audios(
