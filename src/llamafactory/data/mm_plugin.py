@@ -1179,7 +1179,9 @@ class Qwen2VLPlugin(BasePlugin):
                 video_maxlen=getattr(processor, "video_maxlen", 128),
             )
             mm_inputs.update(image_processor(images=None, videos=video_data["videos"], return_tensors="pt"))
-            mm_inputs["fps_per_video"] = video_data["fps_per_video"]
+            temporal_patch_size: int = getattr(image_processor, "temporal_patch_size", 2)
+            if "second_per_grid_ts" in processor.model_input_names:
+                mm_inputs["second_per_grid_ts"] = [temporal_patch_size / fps for fps in video_data["fps_per_video"]]
 
         return mm_inputs
 
@@ -1238,28 +1240,6 @@ class Qwen2VLPlugin(BasePlugin):
 
         return messages
 
-    @override
-    def get_mm_inputs(
-        self,
-        images: list["ImageInput"],
-        videos: list["VideoInput"],
-        audios: list["AudioInput"],
-        imglens: list[int],
-        vidlens: list[int],
-        audlens: list[int],
-        batch_ids: list[list[int]],
-        processor: Optional["MMProcessor"],
-    ) -> dict[str, Union[list[int], "torch.Tensor"]]:
-        self._validate_input(processor, images, videos, audios)
-        mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
-        fps_per_video = mm_inputs.pop("fps_per_video", [])
-        image_processor: BaseImageProcessor = getattr(processor, "image_processor")
-        temporal_patch_size: int = getattr(image_processor, "temporal_patch_size", 2)
-        if "second_per_grid_ts" in processor.model_input_names and fps_per_video:
-            mm_inputs["second_per_grid_ts"] = [temporal_patch_size / fps for fps in fps_per_video]
-
-        return mm_inputs
-
 
 class Qwen2OmniPlugin(Qwen2VLPlugin):
     @override
@@ -1290,12 +1270,8 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
                 video_maxlen=getattr(processor, "video_maxlen", 128),
             )
             mm_inputs.update(image_processor(images=None, videos=video_dict["videos"], return_tensors="pt"))
-            mm_inputs["fps_per_video"] = video_dict["fps_per_video"]
-            video_second_per_grid = [
-                video_dict["fps_per_video"][i] / image_processor.temporal_patch_size
-                for i in range(len(video_dict["fps_per_video"]))
-            ]
-            mm_inputs["video_second_per_grid"] = torch.tensor(video_second_per_grid)  # can reuse in `process_messages`
+            temporal_patch_size: int = getattr(image_processor, "temporal_patch_size", 2)
+            mm_inputs["video_second_per_grid"] = torch.tensor([temporal_patch_size / fps for fps in video_dict["fps_per_video"])])
 
         if len(audios) != 0:
             audios = self._regularize_audios(
