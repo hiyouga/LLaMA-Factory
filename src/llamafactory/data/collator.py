@@ -203,7 +203,6 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
 
                 delta0 = (1 - rope_index_kwargs["attention_mask"]).sum(dim=-1).unsqueeze(1)
                 # avoid conflict
-                rope_index_kwargs["second_per_grids"] = mm_inputs.get("video_second_per_grid", None)
                 new_position_ids, rope_deltas = self.model.get_rope_index(**rope_index_kwargs)
                 features["position_ids"], features["rope_deltas"] = (
                     new_position_ids.clone(),
