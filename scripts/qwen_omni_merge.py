@@ -19,7 +19,7 @@ import shutil
 
 import fire
 from peft import PeftModel
-from transformers import AutoModel, AutoProcessor, AutoTokenizer
+from transformers import AutoModel, AutoProcessor, AutoTokenizer, Qwen2_5OmniThinkerForConditionalGeneration
 
 
 def merge_lora(
@@ -31,7 +31,7 @@ def merge_lora(
 ):
     """Load the original model, tokenizer, and processor configuration, merge the LoRA weights.
 
-    for a specified submodule, and save the final merged model along with its configurations.
+    For a specified submodule, and save the final merged model along with its configurations.
 
     Args:
         base_model_path (str): Path to the original model directory.
@@ -86,5 +86,47 @@ def merge_lora(
         print(f"File '{extra_file}' not found in {base_model_path}, skipping copy.")
 
 
+def save_full_model(
+    saved_thinker_path: str,
+    base_model_path: str,
+    save_path: str,
+    extra_file: str = "spk_dict.pt",
+):
+    """Load the saved thinker module and the original model, replace the thinker in the original model.
+
+    Then save the complete model along with its tokenizer and processor configuration.
+
+    Args:
+        saved_thinker_path (str): Path to the saved thinker weights.
+        base_model_path (str): Directory path of the original model.
+        save_path (str): Directory where the final complete model will be saved.
+        extra_file (str): Name of the extra file to be copied (default: "spk_dict.pt").
+    """
+    # Load the thinker module
+    thinker = Qwen2_5OmniThinkerForConditionalGeneration.from_pretrained(saved_thinker_path, device_map="cpu")
+    # Load the original model
+    base_model = AutoModel.from_pretrained(base_model_path, device_map="cpu")
+    # Replace the thinker module in the original model
+    base_model.thinker = thinker
+
+    # Load the processor and tokenizer
+    processor = AutoProcessor.from_pretrained(base_model_path, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(base_model_path, trust_remote_code=True)
+
+    # Save the complete model along with its configurations
+    base_model.save_pretrained(save_path)
+    tokenizer.save_pretrained(save_path)
+    processor.save_pretrained(save_path)
+    print(f"Complete model, tokenizer, and processor configuration have been saved to {save_path}.")
+
+    source_file = os.path.join(base_model_path, extra_file)
+    target_file = os.path.join(save_path, extra_file)
+    if os.path.exists(source_file):
+        shutil.copy(source_file, target_file)
+        print(f"File '{extra_file}' copied from {base_model_path} to {save_path}.")
+    else:
+        print(f"File '{extra_file}' not found in {base_model_path}, skipping copy.")
+
+
 if __name__ == "__main__":
-    fire.Fire(merge_lora)
+    fire.Fire({"save_full": save_full_model, "merge_lora": merge_lora})

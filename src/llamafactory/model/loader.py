@@ -157,7 +157,7 @@ def load_model(
                 model = load_class.from_config(config, trust_remote_code=model_args.trust_remote_code)
             else:
                 model = load_class.from_pretrained(**init_kwargs)
-                if load_class is AutoModelForTextToWaveform:
+                if getattr(model.config, "model_type", None) == "qwen2_5_omni":
                     model = model.thinker  # use part of Omni model
 
         if model_args.mixture_of_depths == "convert":
