@@ -16,11 +16,12 @@ from typing import TYPE_CHECKING
 
 from transformers.trainer_utils import SchedulerType
 
-from ...extras.constants import TRAINING_STAGES
+from ...extras.constants import TRAINING_STAGES, PEFT_CONFIG_MAPPING
 from ...extras.misc import get_device_count
 from ...extras.packages import is_gradio_available
 from ..common import DEFAULT_DATA_DIR
 from ..control import change_stage, list_checkpoints, list_config_paths, list_datasets, list_output_dirs
+from ..locales import LOCALES
 from .data import create_preview_box
 
 
@@ -207,6 +208,19 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
             additional_target=additional_target,
         )
     )
+
+    for peft_config_name in PEFT_CONFIG_MAPPING:
+        with gr.Accordion(open=False) as peft_tab:
+            peft_name = peft_config_name.lower().replace(" ", "_")
+
+            elem_dict.update(
+                {peft_name: peft_tab}
+            )
+
+            LOCALES.update(
+                {peft_name: {"en": {"label": f"{peft_config_name} configurations"}}}
+            )
+
 
     with gr.Accordion(open=False) as rlhf_tab:
         with gr.Row():
