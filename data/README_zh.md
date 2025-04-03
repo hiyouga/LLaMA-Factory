@@ -13,7 +13,7 @@
   "subset": "数据集子集的名称（可选，默认：None）",
   "split": "所使用的数据集切分（可选，默认：train）",
   "folder": "Hugging Face 仓库的文件夹名称（可选，默认：None）",
-  "num_samples": "该数据集所使用的样本数量。（可选，默认：None）",
+  "num_samples": "该数据集中用于训练的样本数量，整数为随机选择，百分比为均匀选择。（可选，默认：None）",
   "columns（可选）": {
     "prompt": "数据集代表提示词的表头名称（默认：instruction）",
     "query": "数据集代表请求的表头名称（默认：input）",
