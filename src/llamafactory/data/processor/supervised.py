@@ -46,8 +46,6 @@ class SupervisedDatasetProcessor(DatasetProcessor):
         )
         encoded_pairs = self.template.encode_multiturn(self.tokenizer, messages, system, tools)
         total_length = len(input_ids) + (1 if self.template.efficient_eos else 0)
-        if self.data_args.mask_history:
-            encoded_pairs = encoded_pairs[::-1]  # high priority for last turns
 
         for turn_idx, (source_ids, target_ids) in enumerate(encoded_pairs):
             if total_length >= self.data_args.cutoff_len:
@@ -60,24 +58,20 @@ class SupervisedDatasetProcessor(DatasetProcessor):
             target_ids = target_ids[:target_len]
             total_length += source_len + target_len
 
-            if self.data_args.train_on_prompt:
+            if messages[turn_idx * 2]["train"]:
                 source_label = source_ids
             elif self.template.efficient_eos:
                 source_label = [self.tokenizer.eos_token_id] + [IGNORE_INDEX] * (source_len - 1)
             else:
                 source_label = [IGNORE_INDEX] * source_len
 
-            if self.data_args.mask_history and turn_idx != 0:  # train on the last turn only
-                target_label = [IGNORE_INDEX] * target_len
-            else:
+            if messages[turn_idx * 2 + 1]["train"]:
                 target_label = target_ids
-
-            if self.data_args.mask_history:  # reversed sequences
-                input_ids = source_ids + target_ids + input_ids
-                labels = source_label + target_label + labels
             else:
-                input_ids += source_ids + target_ids
-                labels += source_label + target_label
+                target_label = [IGNORE_INDEX] * target_len
+
+            input_ids += source_ids + target_ids
+            labels += source_label + target_label
 
         if self.template.efficient_eos:
             input_ids += [self.tokenizer.eos_token_id]
