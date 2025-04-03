@@ -16,13 +16,13 @@ import os
 from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import numpy as np
-from datasets import load_dataset, load_from_disk
+from datasets import load_dataset, load_from_disk, Dataset
 
 from ..extras import logging
 from ..extras.constants import FILEEXT2TYPE
 from ..extras.misc import check_version, has_tokenized_data
 from .converter import align_dataset
-from .data_utils import get_dataset_module, merge_dataset, split_dataset
+from .data_utils import get_dataset_module, merge_dataset, split_dataset, read_cloud_json
 from .parser import get_dataset_list
 from .processor import (
     FeedbackDatasetProcessor,
@@ -66,6 +66,9 @@ def _load_single_dataset(
         data_path = os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)
         data_name = dataset_attr.subset
         data_dir = dataset_attr.folder
+
+    elif dataset_attr.load_from == "cloud_file":
+        data = read_cloud_json(dataset_attr.dataset_name)
 
     elif dataset_attr.load_from == "file":
         data_files = []
@@ -121,6 +124,11 @@ def _load_single_dataset(
             cache_dir=cache_dir,
             token=model_args.om_hub_token,
             streaming=data_args.streaming,
+        )
+    elif dataset_attr.load_from == "cloud_file":
+        dataset = Dataset.from_list(
+            data,
+            split=dataset_attr.split,
         )
     else:
         dataset = load_dataset(
