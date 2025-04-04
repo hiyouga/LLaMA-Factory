@@ -258,6 +258,15 @@ _register_composite_model(
 
 
 _register_composite_model(
+    model_type="qwen2_5_omni_thinker",
+    projector_key="visual.merger",
+    vision_model_keys=["visual.patch_embed", "visual.blocks", "audio_tower"],
+    language_model_keys=["model", "lm_head"],
+    lora_conflict_keys=["patch_embed"],
+)
+
+
+_register_composite_model(
     model_type="qwen2_vl",
     projector_key="visual.merger",
     vision_model_keys=["visual.patch_embed", "visual.blocks"],

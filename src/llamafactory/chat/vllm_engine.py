@@ -83,7 +83,7 @@ class VllmEngine(BaseEngine):
             "max_lora_rank": model_args.vllm_max_lora_rank,
         }
         if self.template.mm_plugin.__class__.__name__ != "BasePlugin":
-            engine_args["limit_mm_per_prompt"] = {"image": 4, "video": 2}
+            engine_args["limit_mm_per_prompt"] = {"image": 4, "video": 2, "audio": 2}
 
         if isinstance(model_args.vllm_config, dict):
             engine_args.update(model_args.vllm_config)
@@ -111,24 +111,17 @@ class VllmEngine(BaseEngine):
         **input_kwargs,
     ) -> AsyncIterator["RequestOutput"]:
         request_id = f"chatcmpl-{uuid.uuid4().hex}"
-        mm_input_dict = {"images": [], "videos": [], "audios": [], "imglens": [0], "vidlens": [0], "audlens": [0]}
-        if images is not None:
-            mm_input_dict.update({"images": images, "imglens": [len(images)]})
-            if not any(IMAGE_PLACEHOLDER in message["content"] for message in messages):
-                messages[0]["content"] = IMAGE_PLACEHOLDER * len(images) + messages[0]["content"]
+        if images is not None and not any(IMAGE_PLACEHOLDER in message["content"] for message in messages):
+            messages[0]["content"] = IMAGE_PLACEHOLDER * len(images) + messages[0]["content"]
 
-        if videos is not None:
-            mm_input_dict.update({"videos": videos, "vidlens": [len(videos)]})
-            if not any(VIDEO_PLACEHOLDER in message["content"] for message in messages):
-                messages[0]["content"] = VIDEO_PLACEHOLDER * len(videos) + messages[0]["content"]
+        if videos is not None and not any(VIDEO_PLACEHOLDER in message["content"] for message in messages):
+            messages[0]["content"] = VIDEO_PLACEHOLDER * len(videos) + messages[0]["content"]
 
-        if audios is not None:
-            mm_input_dict.update({"audios": audios, "audlens": [len(audios)]})
-            if not any(AUDIO_PLACEHOLDER in message["content"] for message in messages):
-                messages[0]["content"] = AUDIO_PLACEHOLDER * len(audios) + messages[0]["content"]
+        if audios is not None and not any(AUDIO_PLACEHOLDER in message["content"] for message in messages):
+            messages[0]["content"] = AUDIO_PLACEHOLDER * len(audios) + messages[0]["content"]
 
         messages = self.template.mm_plugin.process_messages(
-            messages, mm_input_dict["images"], mm_input_dict["videos"], mm_input_dict["audios"], self.processor
+            messages, images or [], videos or [], audios or [], self.processor
         )
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or self.generating_args["default_system"]
@@ -186,8 +179,24 @@ class VllmEngine(BaseEngine):
                     images,
                     image_max_pixels=self.model_args.image_max_pixels,
                     image_min_pixels=self.model_args.image_min_pixels,
-                )
+                )["images"]
             }
+        elif videos is not None:
+            multi_modal_data = {
+                "video": self.template.mm_plugin._regularize_videos(
+                    videos,
+                    image_max_pixels=self.model_args.video_max_pixels,
+                    image_min_pixels=self.model_args.video_min_pixels,
+                    video_fps=self.model_args.video_fps,
+                    video_maxlen=self.model_args.video_maxlen,
+                )["videos"]
+            }
+        elif audios is not None:
+            audio_data = self.template.mm_plugin._regularize_audios(
+                audios,
+                sampling_rate=self.model_args.audio_sampling_rate,
+            )
+            multi_modal_data = {"audio": zip(audio_data["audios"], audio_data["sampling_rates"])}
         else:
             multi_modal_data = None
 

@@ -222,6 +222,10 @@ class ProcessorArguments:
         default=False,
         metadata={"help": "Use pan and scan to process image for gemma3."},
     )
+    use_audio_in_video: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use audio in video inputs."},
+    )
     video_max_pixels: int = field(
         default=256 * 256,
         metadata={"help": "The maximum number of pixels of video inputs."},
@@ -237,6 +241,10 @@ class ProcessorArguments:
     video_maxlen: int = field(
         default=128,
         metadata={"help": "The maximum number of sampled frames for video inputs."},
+    )
+    audio_sampling_rate: int = field(
+        default=16000,
+        metadata={"help": "The sampling rate of audio inputs."},
     )
 
     def __post_init__(self):
