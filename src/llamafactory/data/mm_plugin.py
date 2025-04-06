@@ -15,11 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import hashlib
 import inspect
 import math
 import re
 from copy import deepcopy
 from dataclasses import dataclass
+from functools import cache
 from io import BytesIO
 from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TypedDict, Union
 
@@ -1309,6 +1311,37 @@ class Qwen2VLPlugin(BasePlugin):
 
 
 class Qwen2OmniPlugin(Qwen2VLPlugin):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._mm_inputs_cache = {}
+
+    def _hash_data(self, data):
+        if isinstance(data, Image.Image):
+            if data.mode != "RGB":
+                data = data.convert("RGB")
+            image_bytes = data.tobytes()
+            return hashlib.md5(image_bytes).hexdigest()
+        if isinstance(data, str):
+            return data
+        elif isinstance(data, np.ndarray):
+            return hashlib.md5(data.tobytes()).hexdigest()
+        elif isinstance(data, (list, tuple)):
+            return tuple(self._hash_data(item) for item in data)
+        else:
+            return str(data)
+
+    def _generate_cache_key(self, images, videos, audios, processor):
+        key = (
+            self._hash_data(images),
+            self._hash_data(videos),
+            self._hash_data(audios),
+            str(processor.__class__),
+        )
+        return key
+    
+    def _clean_cache(self):
+        self._mm_inputs_cache = {}
+
     @override
     def _get_mm_inputs(
         self,
@@ -1317,6 +1350,12 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
         audios: list["AudioInput"],
         processor: "MMProcessor",
     ) -> dict[str, "torch.Tensor"]:
+        cache_key = self._generate_cache_key(images, videos, audios, processor)
+        # if cache_key in self._mm_inputs_cache:
+        #     print(f"Cache hit for key: {cache_key}")
+        #     print(f"Cache size: {len(list(self._mm_inputs_cache.keys()))}")
+            # return self._mm_inputs_cache[cache_key]
+
         image_processor: BaseImageProcessor = getattr(processor, "image_processor", None)
         feature_extractor: SequenceFeatureExtractor = getattr(processor, "feature_extractor", None)
         mm_inputs = {}
@@ -1358,6 +1397,7 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
             )
             mm_inputs["feature_attention_mask"] = mm_inputs.pop("attention_mask")  # prevent conflicts
 
+        # self._mm_inputs_cache[cache_key] = mm_inputs
         return mm_inputs
 
     @override
