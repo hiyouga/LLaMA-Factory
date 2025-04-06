@@ -89,7 +89,7 @@ def check_version(requirement: str, mandatory: bool = False) -> None:
 
 def check_dependencies() -> None:
     r"""Check the version of the required packages."""
-    check_version("transformers>=4.41.2,<=4.50.0,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0")
+    check_version("transformers>=4.41.2,<=4.51.0,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0")
     check_version("datasets>=2.16.0,<=3.4.1")
     check_version("accelerate>=0.34.0,<=1.5.2")
     check_version("peft>=0.14.0,<=0.15.0")
