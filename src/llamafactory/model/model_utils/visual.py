@@ -204,6 +204,12 @@ _register_composite_model(
 
 
 _register_composite_model(
+    model_type="llama4",
+    vision_model_keys=["vision_model"],
+)
+
+
+_register_composite_model(
     model_type="llava",
 )
 

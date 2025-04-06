@@ -968,6 +968,26 @@ register_template(
 )
 
 
+register_template(
+    name="llama4",
+    format_user=StringFormatter(
+        slots=["<|header_start|>user<|header_end|>\n\n{{content}}<|eot|><|header_start|>assistant<|header_end|>\n\n"]
+    ),
+    format_assistant=StringFormatter(slots=["{{content}}<|eot|>"]),
+    format_system=StringFormatter(slots=["<|header_start|>system<|header_end|>\n\n{{content}}<|eot|>"]),
+    format_function=FunctionFormatter(slots=["{{content}}<|eot|>"], tool_format="llama3"),
+    format_observation=StringFormatter(
+        slots=[
+            "<|header_start|>ipython<|header_end|>\n\n{{content}}<|eot|><|header_start|>assistant<|header_end|>\n\n"
+        ]
+    ),
+    format_tools=ToolFormatter(tool_format="llama3"),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<|eot|>", "<|eom|>"],
+    mm_plugin=get_mm_plugin(name="llama4", image_token="<|image|>"),
+)
+
+
 # copied from llama3 template
 register_template(
     name="mllama",
