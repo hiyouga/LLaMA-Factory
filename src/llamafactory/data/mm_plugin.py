@@ -21,7 +21,6 @@ import math
 import re
 from copy import deepcopy
 from dataclasses import dataclass
-from functools import cache
 from io import BytesIO
 from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TypedDict, Union
 
@@ -1338,7 +1337,7 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
             str(processor.__class__),
         )
         return key
-    
+
     def _clean_cache(self):
         self._mm_inputs_cache = {}
 
@@ -1351,10 +1350,8 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
         processor: "MMProcessor",
     ) -> dict[str, "torch.Tensor"]:
         cache_key = self._generate_cache_key(images, videos, audios, processor)
-        # if cache_key in self._mm_inputs_cache:
-        #     print(f"Cache hit for key: {cache_key}")
-        #     print(f"Cache size: {len(list(self._mm_inputs_cache.keys()))}")
-            # return self._mm_inputs_cache[cache_key]
+        if cache_key in self._mm_inputs_cache:
+            return self._mm_inputs_cache[cache_key]
 
         image_processor: BaseImageProcessor = getattr(processor, "image_processor", None)
         feature_extractor: SequenceFeatureExtractor = getattr(processor, "feature_extractor", None)
@@ -1397,7 +1394,7 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
             )
             mm_inputs["feature_attention_mask"] = mm_inputs.pop("attention_mask")  # prevent conflicts
 
-        # self._mm_inputs_cache[cache_key] = mm_inputs
+        self._mm_inputs_cache[cache_key] = mm_inputs
         return mm_inputs
 
     @override
