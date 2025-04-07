@@ -42,7 +42,7 @@ def create_top() -> dict[str, "Component"]:
 
     with gr.Row():
         quantization_bit = gr.Dropdown(choices=["none", "8", "4"], value="none", allow_custom_value=True)
-        quantization_method = gr.Dropdown(choices=["bitsandbytes", "hqq", "eetq"], value="bitsandbytes")
+        quantization_method = gr.Dropdown(choices=["bnb", "hqq", "eetq"], value="bnb")
         template = gr.Dropdown(choices=list(TEMPLATES.keys()), value="default")
         rope_scaling = gr.Dropdown(choices=["none", "linear", "dynamic", "yarn", "llama3"], value="none")
         booster = gr.Dropdown(choices=["auto", "flashattn2", "unsloth", "liger_kernel"], value="auto")

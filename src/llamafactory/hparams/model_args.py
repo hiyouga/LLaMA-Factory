@@ -23,7 +23,7 @@ import torch
 from transformers.training_args import _convert_str_dict
 from typing_extensions import Self
 
-from ..extras.constants import AttentionFunction, EngineName, RopeScaling
+from ..extras.constants import AttentionFunction, EngineName, QuantizationMethod, RopeScaling
 
 
 @dataclass
@@ -184,8 +184,8 @@ class BaseModelArguments:
 class QuantizationArguments:
     r"""Arguments pertaining to the quantization method."""
 
-    quantization_method: Literal["bitsandbytes", "hqq", "eetq"] = field(
-        default="bitsandbytes",
+    quantization_method: QuantizationMethod = field(
+        default=QuantizationMethod.BNB,
         metadata={"help": "Quantization method to use for on-the-fly quantization."},
     )
     quantization_bit: Optional[int] = field(

@@ -24,12 +24,12 @@ from llamafactory.train.test_utils import load_dataset_module
 
 DEMO_DATA = os.getenv("DEMO_DATA", "llamafactory/demo_data")
 
-TINY_LLAMA = os.getenv("TINY_LLAMA", "llamafactory/tiny-random-Llama-3")
+TINY_LLAMA3 = os.getenv("TINY_LLAMA3", "llamafactory/tiny-random-Llama-3")
 
 TINY_DATA = os.getenv("TINY_DATA", "llamafactory/tiny-supervised-dataset")
 
 TRAIN_ARGS = {
-    "model_name_or_path": TINY_LLAMA,
+    "model_name_or_path": TINY_LLAMA3,
     "stage": "ppo",
     "do_train": True,
     "finetuning_type": "full",
@@ -48,7 +48,7 @@ TRAIN_ARGS = {
 @pytest.mark.parametrize("num_samples", [16])
 def test_unsupervised_data(num_samples: int):
     train_dataset = load_dataset_module(**TRAIN_ARGS)["train_dataset"]
-    ref_tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA)
+    ref_tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA3)
     original_data = load_dataset(DEMO_DATA, name="system_chat", split="train")
     indexes = random.choices(range(len(original_data)), k=num_samples)
     for index in indexes:
