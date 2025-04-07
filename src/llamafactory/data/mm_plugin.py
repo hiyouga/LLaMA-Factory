@@ -493,8 +493,8 @@ class Llama4Plugin(BasePlugin):
         messages = deepcopy(messages)
         for message in messages:
             content = message["content"]
-            placeholder_count = content.count(IMAGE_PLACEHOLDER)
             if self.expand_mm_tokens:
+                placeholder_count = content.count(IMAGE_PLACEHOLDER)
                 prompt_splits = content.split(IMAGE_PLACEHOLDER)
                 new_content = []
                 for local_image_index, split_part in enumerate(prompt_splits):
@@ -507,6 +507,8 @@ class Llama4Plugin(BasePlugin):
                         new_content.append(tokens_for_this_image)
 
                 content = "".join(new_content)
+            else:
+                content = content.replace(IMAGE_PLACEHOLDER, self.image_token)
 
             message["content"] = content
 
