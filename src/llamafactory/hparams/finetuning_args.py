@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from dataclasses import dataclass, field
-from typing import List, Literal, Optional
+from dataclasses import asdict, dataclass, field
+from typing import Any, Literal, Optional
 
 
 @dataclass
@@ -230,7 +230,7 @@ class GaloreArguments:
         metadata={"help": "Number of steps to update the GaLore projection."},
     )
     galore_scale: float = field(
-        default=0.25,
+        default=2.0,
         metadata={"help": "GaLore scaling coefficient."},
     )
     galore_proj_type: Literal["std", "reverse_std", "right", "left", "full"] = field(
@@ -240,6 +240,57 @@ class GaloreArguments:
     galore_layerwise: bool = field(
         default=False,
         metadata={"help": "Whether or not to enable layer-wise update to further save memory."},
+    )
+
+
+@dataclass
+class ApolloArguments:
+    r"""Arguments pertaining to the APOLLO algorithm."""
+
+    use_apollo: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use the APOLLO optimizer."},
+    )
+    apollo_target: str = field(
+        default="all",
+        metadata={
+            "help": (
+                "Name(s) of modules to apply APOLLO. Use commas to separate multiple modules. "
+                "Use `all` to specify all the linear modules."
+            )
+        },
+    )
+    apollo_rank: int = field(
+        default=16,
+        metadata={"help": "The rank of APOLLO gradients."},
+    )
+    apollo_update_interval: int = field(
+        default=200,
+        metadata={"help": "Number of steps to update the APOLLO projection."},
+    )
+    apollo_scale: float = field(
+        default=32.0,
+        metadata={"help": "APOLLO scaling coefficient."},
+    )
+    apollo_proj: Literal["svd", "random"] = field(
+        default="random",
+        metadata={"help": "Type of APOLLO low-rank projection algorithm (svd or random)."},
+    )
+    apollo_proj_type: Literal["std", "right", "left"] = field(
+        default="std",
+        metadata={"help": "Type of APOLLO projection."},
+    )
+    apollo_scale_type: Literal["channel", "tensor"] = field(
+        default="channel",
+        metadata={"help": "Type of APOLLO scaling (channel or tensor)."},
+    )
+    apollo_layerwise: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to enable layer-wise update to further save memory."},
+    )
+    apollo_scale_front: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use the norm-growth limiter in front of gradient scaling."},
     )
 
 
@@ -295,7 +346,49 @@ class BAdamArgument:
 
 
 @dataclass
-class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreArguments, BAdamArgument):
+class SwanLabArguments:
+    use_swanlab: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use the SwanLab (an experiment tracking and visualization tool)."},
+    )
+    swanlab_project: Optional[str] = field(
+        default="llamafactory",
+        metadata={"help": "The project name in SwanLab."},
+    )
+    swanlab_workspace: Optional[str] = field(
+        default=None,
+        metadata={"help": "The workspace name in SwanLab."},
+    )
+    swanlab_run_name: Optional[str] = field(
+        default=None,
+        metadata={"help": "The experiment name in SwanLab."},
+    )
+    swanlab_mode: Literal["cloud", "local"] = field(
+        default="cloud",
+        metadata={"help": "The mode of SwanLab."},
+    )
+    swanlab_api_key: Optional[str] = field(
+        default=None,
+        metadata={"help": "The API key for SwanLab."},
+    )
+    swanlab_logdir: Optional[str] = field(
+        default=None,
+        metadata={"help": "The log directory for SwanLab."},
+    )
+    swanlab_lark_webhook_url: Optional[str] = field(
+        default=None,
+        metadata={"help": "The Lark(飞书) webhook URL for SwanLab."},
+    )
+    swanlab_lark_secret: Optional[str] = field(
+        default=None,
+        metadata={"help": "The Lark(飞书) secret for SwanLab."},
+    )
+
+
+@dataclass
+class FinetuningArguments(
+    SwanLabArguments, BAdamArgument, ApolloArguments, GaloreArguments, RLHFArguments, LoraArguments, FreezeArguments
+):
     r"""Arguments pertaining to which techniques we are going to fine-tuning with."""
 
     pure_bf16: bool = field(
@@ -320,19 +413,31 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
     )
     freeze_vision_tower: bool = field(
         default=True,
-        metadata={"help": "Whether ot not to freeze vision tower in MLLM training."},
+        metadata={"help": "Whether ot not to freeze the vision tower in MLLM training."},
     )
-    train_mm_proj_only: bool = field(
+    freeze_multi_modal_projector: bool = field(
+        default=True,
+        metadata={"help": "Whether or not to freeze the multi modal projector in MLLM training."},
+    )
+    freeze_language_model: bool = field(
         default=False,
-        metadata={"help": "Whether or not to train the multimodal projector for MLLM only."},
+        metadata={"help": "Whether or not to freeze the language model in MLLM training."},
     )
     compute_accuracy: bool = field(
         default=False,
         metadata={"help": "Whether or not to compute the token-level accuracy at evaluation."},
     )
+    disable_shuffling: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to disable the shuffling of the training set."},
+    )
     plot_loss: bool = field(
         default=False,
         metadata={"help": "Whether or not to save the training loss curves."},
+    )
+    include_effective_tokens_per_second: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to compute effective tokens per second."},
     )
 
     def __post_init__(self):
@@ -341,13 +446,13 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
                 return [item.strip() for item in arg.split(",")]
             return arg
 
-        self.freeze_trainable_modules: List[str] = split_arg(self.freeze_trainable_modules)
-        self.freeze_extra_modules: Optional[List[str]] = split_arg(self.freeze_extra_modules)
+        self.freeze_trainable_modules: list[str] = split_arg(self.freeze_trainable_modules)
+        self.freeze_extra_modules: Optional[list[str]] = split_arg(self.freeze_extra_modules)
         self.lora_alpha: int = self.lora_alpha or self.lora_rank * 2
-        self.lora_target: List[str] = split_arg(self.lora_target)
-        self.additional_target: Optional[List[str]] = split_arg(self.additional_target)
-        self.galore_target: List[str] = split_arg(self.galore_target)
-        self.freeze_vision_tower = self.freeze_vision_tower or self.train_mm_proj_only
+        self.lora_target: list[str] = split_arg(self.lora_target)
+        self.additional_target: Optional[list[str]] = split_arg(self.additional_target)
+        self.galore_target: list[str] = split_arg(self.galore_target)
+        self.apollo_target: list[str] = split_arg(self.apollo_target)
         self.use_ref_model = self.stage == "dpo" and self.pref_loss not in ["orpo", "simpo"]
 
         assert self.finetuning_type in ["lora", "freeze", "full", "clip", "Adaclip"], "Invalid fine-tuning method."
@@ -366,17 +471,14 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         if self.use_llama_pro and self.finetuning_type == "full":
             raise ValueError("`use_llama_pro` is only valid for Freeze or LoRA training.")
 
-        if self.finetuning_type == "lora" and (self.use_galore or self.use_badam):
-            raise ValueError("Cannot use LoRA with GaLore or BAdam together.")
+        if self.finetuning_type == "lora" and (self.use_galore or self.use_apollo or self.use_badam):
+            raise ValueError("Cannot use LoRA with GaLore, APOLLO or BAdam together.")
 
-        if self.use_galore and self.use_badam:
-            raise ValueError("Cannot use GaLore with BAdam together.")
+        if int(self.use_galore) + int(self.use_apollo) + (self.use_badam) > 1:
+            raise ValueError("Cannot use GaLore, APOLLO or BAdam together.")
 
         if self.pissa_init and (self.stage in ["ppo", "kto"] or self.use_ref_model):
             raise ValueError("Cannot use PiSSA for current training stage.")
-
-        if self.train_mm_proj_only and self.finetuning_type != "full":
-            raise ValueError("`train_mm_proj_only` is only valid for full training.")
 
         if self.finetuning_type != "lora":
             if self.loraplus_lr_ratio is not None:
@@ -390,3 +492,8 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
 
             if self.pissa_init:
                 raise ValueError("`pissa_init` is only valid for LoRA training.")
+
+    def to_dict(self) -> dict[str, Any]:
+        args = asdict(self)
+        args = {k: f"<{k.upper()}>" if k.endswith("api_key") else v for k, v in args.items()}
+        return args

@@ -1,0 +1,61 @@
+name: "\U0001F41B Bug / help"
+description: Create a report to help us improve the LLaMA Factory
+labels: ["bug", "pending"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Issues included in **[FAQs](https://github.com/hiyouga/LLaMA-Factory/issues/4614)** or those with **insufficient** information may be closed without a response.
+        已经包含在 **[常见问题](https://github.com/hiyouga/LLaMA-Factory/issues/4614)** 内或提供信息**不完整**的 issues 可能不会被回复。
+
+  - type: markdown
+    attributes:
+      value: |
+        Please do not create issues that are not related to framework bugs under this category, use **[Discussions](https://github.com/hiyouga/LLaMA-Factory/discussions/categories/q-a)** instead.
+        请勿在此分类下创建和框架 bug 无关的 issues，训练问题求助请使用 **[讨论区](https://github.com/hiyouga/LLaMA-Factory/discussions/categories/q-a)**。
+
+  - type: checkboxes
+    id: reminder
+    attributes:
+      label: Reminder
+      description: |
+        Please ensure you have read the above rules carefully and searched the existing issues (including FAQs).
+        请确保您已经认真阅读了上述规则并且搜索过现有的 issues（包括常见问题）。
+
+      options:
+        - label: I have read the above rules and searched the existing issues.
+          required: true
+
+  - type: textarea
+    id: system-info
+    validations:
+      required: true
+    attributes:
+      label: System Info
+      description: |
+        Please share your system info with us. You can run the command **llamafactory-cli env** and copy-paste its output below.
+        请提供您的系统信息。您可以在命令行运行 **llamafactory-cli env** 并将其输出复制到该文本框中。
+
+      placeholder: llamafactory version, platform, python version, ...
+
+  - type: textarea
+    id: reproduction
+    validations:
+      required: true
+    attributes:
+      label: Reproduction
+      description: |
+        Please provide entry arguments, error messages and stack traces that reproduces the problem.
+        请提供入口参数，错误日志以及异常堆栈以便于我们复现问题。
+
+      value: |
+        ```text
+        Put your message here.
+        ```
+
+  - type: textarea
+    id: others
+    validations:
+      required: false
+    attributes:
+      label: Others

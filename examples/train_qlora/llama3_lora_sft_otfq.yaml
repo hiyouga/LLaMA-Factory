@@ -2,17 +2,19 @@
 model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
 quantization_bit: 4
 quantization_method: bitsandbytes  # choices: [bitsandbytes (4/8), hqq (2/3/4/5/6/8), eetq (8)]
+trust_remote_code: true
 
 ### method
 stage: sft
 do_train: true
 finetuning_type: lora
+lora_rank: 8
 lora_target: all
 
 ### dataset
 dataset: identity,alpaca_en_demo
 template: llama3
-cutoff_len: 1024
+cutoff_len: 2048
 max_samples: 1000
 overwrite_cache: true
 preprocessing_num_workers: 16
@@ -35,7 +37,7 @@ bf16: true
 ddp_timeout: 180000000
 
 ### eval
-val_size: 0.1
-per_device_eval_batch_size: 1
-eval_strategy: steps
-eval_steps: 500
+# val_size: 0.1
+# per_device_eval_batch_size: 1
+# eval_strategy: steps
+# eval_steps: 500

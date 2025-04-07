@@ -1,4 +1,4 @@
-# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+# Copyright 2025 HuggingFace Inc. and the LlamaFactory team.
 #
 # This code is inspired by the HuggingFace's PEFT library.
 # https://github.com/huggingface/peft/blob/v0.10.0/src/peft/peft_model.py
@@ -17,9 +17,11 @@
 
 import gc
 import os
-from typing import TYPE_CHECKING, Tuple, Union
+import socket
+from typing import TYPE_CHECKING, Any, Literal, Union
 
 import torch
+import torch.distributed as dist
 import transformers.dynamic_module_utils
 from transformers import InfNanRemoveLogitsProcessor, LogitsProcessorList
 from transformers.dynamic_module_utils import get_relative_imports
@@ -32,7 +34,8 @@ from transformers.utils import (
 )
 from transformers.utils.versions import require_version
 
-from .logging import get_logger
+from . import logging
+from .packages import is_transformers_version_greater_than
 
 
 _is_fp16_available = is_torch_npu_available() or is_torch_cuda_available()
@@ -48,11 +51,11 @@ if TYPE_CHECKING:
     from ..hparams import ModelArguments
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 class AverageMeter:
-    r"""Computes and stores the average and current value."""
+    r"""Compute and store the average and current value."""
 
     def __init__(self):
         self.reset()
@@ -70,20 +73,46 @@ class AverageMeter:
         self.avg = self.sum / self.count
 
 
-def check_dependencies() -> None:
-    r"""Checks the version of the required packages."""
-    if os.environ.get("DISABLE_VERSION_CHECK", "0").lower() in ["true", "1"]:
-        logger.warning("Version checking has been disabled, may lead to unexpected behaviors.")
+def check_version(requirement: str, mandatory: bool = False) -> None:
+    r"""Optionally check the package version."""
+    if is_env_enabled("DISABLE_VERSION_CHECK") and not mandatory:
+        logger.warning_rank0_once("Version checking has been disabled, may lead to unexpected behaviors.")
+        return
+
+    if mandatory:
+        hint = f"To fix: run `pip install {requirement}`."
     else:
-        require_version("transformers>=4.41.2,<=4.45.0", "To fix: pip install transformers>=4.41.2,<=4.45.0")
-        require_version("datasets>=2.16.0,<=2.21.0", "To fix: pip install datasets>=2.16.0,<=2.21.0")
-        require_version("accelerate>=0.30.1,<=0.34.2", "To fix: pip install accelerate>=0.30.1,<=0.34.2")
-        require_version("peft>=0.11.1,<=0.12.0", "To fix: pip install peft>=0.11.1,<=0.12.0")
-        require_version("trl>=0.8.6,<=0.9.6", "To fix: pip install trl>=0.8.6,<=0.9.6")
+        hint = f"To fix: run `pip install {requirement}` or set `DISABLE_VERSION_CHECK=1` to skip this check."
+
+    require_version(requirement, hint)
 
 
-def count_parameters(model: "torch.nn.Module") -> Tuple[int, int]:
-    r"""Returns the number of trainable parameters and number of all parameters in the model."""
+def check_dependencies() -> None:
+    r"""Check the version of the required packages."""
+    check_version("transformers>=4.41.2,<=4.51.0,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0")
+    check_version("datasets>=2.16.0,<=3.4.1")
+    check_version("accelerate>=0.34.0,<=1.5.2")
+    check_version("peft>=0.14.0,<=0.15.0")
+    check_version("trl>=0.8.6,<=0.9.6")
+    if is_transformers_version_greater_than("4.46.0") and not is_transformers_version_greater_than("4.48.1"):
+        logger.warning_rank0_once("There are known bugs in transformers v4.46.0-v4.48.0, please use other versions.")
+
+
+def calculate_tps(dataset: list[dict[str, Any]], metrics: dict[str, float], stage: Literal["sft", "rm"]) -> float:
+    r"""Calculate effective tokens per second."""
+    effective_token_num = 0
+    for data in dataset:
+        if stage == "sft":
+            effective_token_num += len(data["input_ids"])
+        elif stage == "rm":
+            effective_token_num += len(data["chosen_input_ids"]) + len(data["rejected_input_ids"])
+
+    result = effective_token_num * metrics["epoch"] / metrics["train_runtime"]
+    return result / dist.get_world_size() if dist.is_initialized() else result
+
+
+def count_parameters(model: "torch.nn.Module") -> tuple[int, int]:
+    r"""Return the number of trainable parameters and number of all parameters in the model."""
     trainable_params, all_param = 0, 0
     for param in model.parameters():
         num_params = param.numel()
@@ -110,7 +139,7 @@ def count_parameters(model: "torch.nn.Module") -> Tuple[int, int]:
 
 
 def get_current_device() -> "torch.device":
-    r"""Gets the current available device."""
+    r"""Get the current available device."""
     if is_torch_xpu_available():
         device = "xpu:{}".format(os.environ.get("LOCAL_RANK", "0"))
     elif is_torch_npu_available():
@@ -126,7 +155,7 @@ def get_current_device() -> "torch.device":
 
 
 def get_device_count() -> int:
-    r"""Gets the number of available GPU or NPU devices."""
+    r"""Get the number of available GPU or NPU devices."""
     if is_torch_xpu_available():
         return torch.xpu.device_count()
     elif is_torch_npu_available():
@@ -138,14 +167,14 @@ def get_device_count() -> int:
 
 
 def get_logits_processor() -> "LogitsProcessorList":
-    r"""Gets logits processor that removes NaN and Inf logits."""
+    r"""Get logits processor that removes NaN and Inf logits."""
     logits_processor = LogitsProcessorList()
     logits_processor.append(InfNanRemoveLogitsProcessor())
     return logits_processor
 
 
-def get_peak_memory() -> Tuple[int, int]:
-    r"""Gets the peak memory usage for the current device (in Bytes)."""
+def get_peak_memory() -> tuple[int, int]:
+    r"""Get the peak memory usage for the current device (in Bytes)."""
     if is_torch_npu_available():
         return torch.npu.max_memory_allocated(), torch.npu.max_memory_reserved()
     elif is_torch_cuda_available():
@@ -155,12 +184,12 @@ def get_peak_memory() -> Tuple[int, int]:
 
 
 def has_tokenized_data(path: "os.PathLike") -> bool:
-    r"""Checks if the path has a tokenized dataset."""
+    r"""Check if the path has a tokenized dataset."""
     return os.path.isdir(path) and len(os.listdir(path)) > 0
 
 
 def infer_optim_dtype(model_dtype: "torch.dtype") -> "torch.dtype":
-    r"""Infers the optimal dtype according to the model_dtype and device compatibility."""
+    r"""Infer the optimal dtype according to the model_dtype and device compatibility."""
     if _is_bf16_available and model_dtype == torch.bfloat16:
         return torch.bfloat16
     elif _is_fp16_available:
@@ -170,12 +199,17 @@ def infer_optim_dtype(model_dtype: "torch.dtype") -> "torch.dtype":
 
 
 def is_gpu_or_npu_available() -> bool:
-    r"""Checks if the GPU or NPU is available."""
-    return is_torch_npu_available() or is_torch_cuda_available() or is_torch_xpu_available()
+    r"""Check if the GPU or NPU is available."""
+    return is_torch_npu_available() or is_torch_cuda_available()
+
+
+def is_env_enabled(env_var: str, default: str = "0") -> bool:
+    r"""Check if the environment variable is enabled."""
+    return os.getenv(env_var, default).lower() in ["true", "y", "1"]
 
 
 def numpify(inputs: Union["NDArray", "torch.Tensor"]) -> "NDArray":
-    r"""Casts a torch tensor or a numpy array to a numpy array."""
+    r"""Cast a torch tensor or a numpy array to a numpy array."""
     if isinstance(inputs, torch.Tensor):
         inputs = inputs.cpu()
         if inputs.dtype == torch.bfloat16:  # numpy does not support bfloat16 until 1.21.4
@@ -187,13 +221,13 @@ def numpify(inputs: Union["NDArray", "torch.Tensor"]) -> "NDArray":
 
 
 def skip_check_imports() -> None:
-    r"""Avoids flash attention import error in custom model files."""
-    if os.environ.get("FORCE_CHECK_IMPORTS", "0").lower() not in ["true", "1"]:
+    r"""Avoid flash attention import error in custom model files."""
+    if not is_env_enabled("FORCE_CHECK_IMPORTS"):
         transformers.dynamic_module_utils.check_imports = get_relative_imports
 
 
 def torch_gc() -> None:
-    r"""Collects GPU or NPU memory."""
+    r"""Collect GPU or NPU memory."""
     gc.collect()
     if is_torch_xpu_available():
         torch.xpu.empty_cache()
@@ -205,18 +239,56 @@ def torch_gc() -> None:
         torch.cuda.empty_cache()
 
 
-def try_download_model_from_ms(model_args: "ModelArguments") -> str:
-    if not use_modelscope() or os.path.exists(model_args.model_name_or_path):
+def try_download_model_from_other_hub(model_args: "ModelArguments") -> str:
+    if (not use_modelscope() and not use_openmind()) or os.path.exists(model_args.model_name_or_path):
         return model_args.model_name_or_path
 
-    try:
-        from modelscope import snapshot_download
+    if use_modelscope():
+        check_version("modelscope>=1.11.0", mandatory=True)
+        from modelscope import snapshot_download  # type: ignore
 
         revision = "master" if model_args.model_revision == "main" else model_args.model_revision
-        return snapshot_download(model_args.model_name_or_path, revision=revision, cache_dir=model_args.cache_dir)
-    except ImportError:
-        raise ImportError("Please install modelscope via `pip install modelscope -U`")
+        return snapshot_download(
+            model_args.model_name_or_path,
+            revision=revision,
+            cache_dir=model_args.cache_dir,
+        )
+
+    if use_openmind():
+        check_version("openmind>=0.8.0", mandatory=True)
+        from openmind.utils.hub import snapshot_download  # type: ignore
+
+        return snapshot_download(
+            model_args.model_name_or_path,
+            revision=model_args.model_revision,
+            cache_dir=model_args.cache_dir,
+        )
 
 
 def use_modelscope() -> bool:
-    return os.environ.get("USE_MODELSCOPE_HUB", "0").lower() in ["true", "1"]
+    return is_env_enabled("USE_MODELSCOPE_HUB")
+
+
+def use_openmind() -> bool:
+    return is_env_enabled("USE_OPENMIND_HUB")
+
+
+def use_ray() -> bool:
+    return is_env_enabled("USE_RAY")
+
+
+def find_available_port() -> int:
+    """Find an available port on the local machine."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(("", 0))
+    port = sock.getsockname()[1]
+    sock.close()
+    return port
+
+
+def fix_proxy(ipv6_enabled: bool) -> None:
+    """Fix proxy settings for gradio ui."""
+    os.environ["no_proxy"] = "localhost,127.0.0.1,0.0.0.0"
+    if ipv6_enabled:
+        for name in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY"):
+            os.environ.pop(name, None)

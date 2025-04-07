@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,20 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import os
+from collections.abc import Generator
 from copy import deepcopy
 from subprocess import Popen, TimeoutExpired
-from typing import TYPE_CHECKING, Any, Dict, Generator, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import psutil
 from transformers.trainer import TRAINING_ARGS_NAME
+from transformers.utils import is_torch_npu_available
 
 from ..extras.constants import LLAMABOARD_CONFIG, PEFT_METHODS, TRAINING_STAGES
-from ..extras.misc import is_gpu_or_npu_available, torch_gc
+from ..extras.misc import is_gpu_or_npu_available, torch_gc, use_ray
 from ..extras.packages import is_gradio_available
-from .common import DEFAULT_CACHE_DIR, DEFAULT_CONFIG_DIR, QUANTIZATION_BITS, get_save_dir, load_config
+from .common import (
+    DEFAULT_CACHE_DIR,
+    DEFAULT_CONFIG_DIR,
+    abort_process,
+    gen_cmd,
+    get_save_dir,
+    load_args,
+    load_config,
+    load_eval_results,
+    save_args,
+    save_cmd,
+)
+from .control import get_trainer_info
 from .locales import ALERTS, LOCALES
-from .utils import abort_process, gen_cmd, get_eval_results, get_trainer_info, load_args, save_args, save_cmd
 
 
 if is_gradio_available():
@@ -50,14 +64,25 @@ def find_pid_by_description(process_description):
 
 
 class Runner:
+    r"""A class to manage the running status of the trainers."""
+
     def __init__(self, manager: "Manager", demo_mode: bool = False) -> None:
+        r"""Init a runner."""
         self.manager = manager
         self.demo_mode = demo_mode
+<<<<<<< HEAD
         """Resume."""
         self.trainer: Optional["Popen"] = None
         self.do_train = True
         self.running_data: Dict["Component", Any] = None
         """State."""
+=======
+        """ Resume """
+        self.trainer: Optional[Popen] = None
+        self.do_train = True
+        self.running_data: dict[Component, Any] = None
+        """ State """
+>>>>>>> 7e0cdb1a76c1ac6b69de86d4ba40e9395f883cdb
         self.aborted = False
         self.running = False
 
@@ -70,7 +95,8 @@ class Runner:
                 abort_process(pid)
             self.running = False
 
-    def _initialize(self, data: Dict["Component", Any], do_train: bool, from_preview: bool) -> str:
+    def _initialize(self, data: dict["Component", Any], do_train: bool, from_preview: bool) -> str:
+        r"""Validate the configuration."""
         get = lambda elem_id: data[self.manager.get_elem_by_id(elem_id)]
         lang, model_name, model_path = get("top.lang"), get("top.model_name"), get("top.model_path")
         dataset = get("train.dataset") if do_train else get("eval.dataset")
@@ -94,6 +120,11 @@ class Runner:
             if not get("train.output_dir"):
                 return ALERTS["err_no_output_dir"][lang]
 
+            try:
+                json.loads(get("train.extra_args"))
+            except json.JSONDecodeError:
+                return ALERTS["err_json_schema"][lang]
+
             stage = TRAINING_STAGES[get("train.training_stage")]
             if stage == "ppo" and not get("train.reward_model"):
                 return ALERTS["err_no_reward_model"][lang]
@@ -107,7 +138,9 @@ class Runner:
         return ""
 
     def _finalize(self, lang: str, finish_info: str) -> str:
+        r"""Clean the cached memory and resets the runner."""
         finish_info = ALERTS["info_aborted"][lang] if self.aborted else finish_info
+        gr.Info(finish_info)
         self.trainer = None
         self.aborted = False
         self.running = False
@@ -115,7 +148,8 @@ class Runner:
         torch_gc()
         return finish_info
 
-    def _parse_train_args(self, data: Dict["Component", Any]) -> Dict[str, Any]:
+    def _parse_train_args(self, data: dict["Component", Any]) -> dict[str, Any]:
+        r"""Build and validate the training arguments."""
         get = lambda elem_id: data[self.manager.get_elem_by_id(elem_id)]
         model_name, finetuning_type = get("top.model_name"), get("top.finetuning_type")
         user_config = load_config()
@@ -128,7 +162,7 @@ class Runner:
             preprocessing_num_workers=16,
             finetuning_type=finetuning_type,
             template=get("top.template"),
-            rope_scaling=get("top.rope_scaling") if get("top.rope_scaling") in ["linear", "dynamic"] else None,
+            rope_scaling=get("top.rope_scaling") if get("top.rope_scaling") != "none" else None,
             flash_attn="fa2" if get("top.booster") == "flashattn2" else "auto",
             use_unsloth=(get("top.booster") == "unsloth"),
             enable_liger_kernel=(get("top.booster") == "liger_kernel"),
@@ -146,22 +180,23 @@ class Runner:
             save_steps=get("train.save_steps"),
             warmup_steps=get("train.warmup_steps"),
             neftune_noise_alpha=get("train.neftune_alpha") or None,
-            optim=get("train.optim"),
             packing=get("train.packing") or get("train.neat_packing"),
             neat_packing=get("train.neat_packing"),
             train_on_prompt=get("train.train_on_prompt"),
             mask_history=get("train.mask_history"),
             resize_vocab=get("train.resize_vocab"),
             use_llama_pro=get("train.use_llama_pro"),
-            shift_attn=get("train.shift_attn"),
-            report_to="all" if get("train.report_to") else "none",
+            report_to=get("train.report_to"),
             use_galore=get("train.use_galore"),
+            use_apollo=get("train.use_apollo"),
             use_badam=get("train.use_badam"),
+            use_swanlab=get("train.use_swanlab"),
             output_dir=get_save_dir(model_name, finetuning_type, get("train.output_dir")),
             fp16=(get("train.compute_type") == "fp16"),
             bf16=(get("train.compute_type") == "bf16"),
             pure_bf16=(get("train.compute_type") == "pure_bf16"),
             plot_loss=True,
+            trust_remote_code=True,
             ddp_timeout=180000000,
             include_num_input_tokens_seen=True,
             clip_batch_size=get("train.batch_size"),
@@ -199,6 +234,7 @@ class Runner:
             sampler=get("train.sampler"),
             opt_params=get("train.opt_params"),
         )
+        args.update(json.loads(get("train.extra_args")))
 
         # checkpoints
         if get("top.checkpoint_path"):
@@ -210,9 +246,10 @@ class Runner:
                 args["model_name_or_path"] = get_save_dir(model_name, finetuning_type, get("top.checkpoint_path"))
 
         # quantization
-        if get("top.quantization_bit") in QUANTIZATION_BITS:
+        if get("top.quantization_bit") != "none":
             args["quantization_bit"] = int(get("top.quantization_bit"))
             args["quantization_method"] = get("top.quantization_method")
+            args["double_quantization"] = not is_torch_npu_available()
 
         # freeze config
         if args["finetuning_type"] == "freeze":
@@ -263,12 +300,33 @@ class Runner:
             args["galore_scale"] = get("train.galore_scale")
             args["galore_target"] = get("train.galore_target")
 
+        # apollo config
+        if args["use_apollo"]:
+            args["apollo_rank"] = get("train.apollo_rank")
+            args["apollo_update_interval"] = get("train.apollo_update_interval")
+            args["apollo_scale"] = get("train.apollo_scale")
+            args["apollo_target"] = get("train.apollo_target")
+
         # badam config
         if args["use_badam"]:
             args["badam_mode"] = get("train.badam_mode")
             args["badam_switch_mode"] = get("train.badam_switch_mode")
             args["badam_switch_interval"] = get("train.badam_switch_interval")
             args["badam_update_ratio"] = get("train.badam_update_ratio")
+
+        # report_to
+        if "none" in args["report_to"]:
+            args["report_to"] = "none"
+        elif "all" in args["report_to"]:
+            args["report_to"] = "all"
+
+        # swanlab config
+        if get("train.use_swanlab"):
+            args["swanlab_project"] = get("train.swanlab_project")
+            args["swanlab_run_name"] = get("train.swanlab_run_name")
+            args["swanlab_workspace"] = get("train.swanlab_workspace")
+            args["swanlab_api_key"] = get("train.swanlab_api_key")
+            args["swanlab_mode"] = get("train.swanlab_mode")
 
         # eval config
         if get("train.val_size") > 1e-6 and args["stage"] != "ppo":
@@ -281,11 +339,12 @@ class Runner:
         if get("train.ds_stage") != "none":
             ds_stage = get("train.ds_stage")
             ds_offload = "offload_" if get("train.ds_offload") else ""
-            args["deepspeed"] = os.path.join(DEFAULT_CACHE_DIR, "ds_z{}_{}config.json".format(ds_stage, ds_offload))
+            args["deepspeed"] = os.path.join(DEFAULT_CACHE_DIR, f"ds_z{ds_stage}_{ds_offload}config.json")
 
         return args
 
-    def _parse_eval_args(self, data: Dict["Component", Any]) -> Dict[str, Any]:
+    def _parse_eval_args(self, data: dict["Component", Any]) -> dict[str, Any]:
+        r"""Build and validate the evaluation arguments."""
         get = lambda elem_id: data[self.manager.get_elem_by_id(elem_id)]
         model_name, finetuning_type = get("top.model_name"), get("top.finetuning_type")
         user_config = load_config()
@@ -298,7 +357,7 @@ class Runner:
             finetuning_type=finetuning_type,
             quantization_method=get("top.quantization_method"),
             template=get("top.template"),
-            rope_scaling=get("top.rope_scaling") if get("top.rope_scaling") in ["linear", "dynamic"] else None,
+            rope_scaling=get("top.rope_scaling") if get("top.rope_scaling") != "none" else None,
             flash_attn="fa2" if get("top.booster") == "flashattn2" else "auto",
             use_unsloth=(get("top.booster") == "unsloth"),
             dataset_dir=get("eval.dataset_dir"),
@@ -311,6 +370,7 @@ class Runner:
             top_p=get("eval.top_p"),
             temperature=get("eval.temperature"),
             output_dir=get_save_dir(model_name, finetuning_type, get("eval.output_dir")),
+            trust_remote_code=True,
         )
 
         if get("eval.predict"):
@@ -328,13 +388,15 @@ class Runner:
                 args["model_name_or_path"] = get_save_dir(model_name, finetuning_type, get("top.checkpoint_path"))
 
         # quantization
-        if get("top.quantization_bit") in QUANTIZATION_BITS:
+        if get("top.quantization_bit") != "none":
             args["quantization_bit"] = int(get("top.quantization_bit"))
             args["quantization_method"] = get("top.quantization_method")
+            args["double_quantization"] = not is_torch_npu_available()
 
         return args
 
-    def _preview(self, data: Dict["Component", Any], do_train: bool) -> Generator[Dict["Component", str], None, None]:
+    def _preview(self, data: dict["Component", Any], do_train: bool) -> Generator[dict["Component", str], None, None]:
+        r"""Preview the training commands."""
         output_box = self.manager.get_elem_by_id("{}.output_box".format("train" if do_train else "eval"))
         error = self._initialize(data, do_train, from_preview=True)
         if error:
@@ -344,7 +406,8 @@ class Runner:
             args = self._parse_train_args(data) if do_train else self._parse_eval_args(data)
             yield {output_box: gen_cmd(args)}
 
-    def _launch(self, data: Dict["Component", Any], do_train: bool) -> Generator[Dict["Component", Any], None, None]:
+    def _launch(self, data: dict["Component", Any], do_train: bool) -> Generator[dict["Component", Any], None, None]:
+        r"""Start the training process."""
         output_box = self.manager.get_elem_by_id("{}.output_box".format("train" if do_train else "eval"))
         error = self._initialize(data, do_train, from_preview=False)
         if error:
@@ -356,7 +419,7 @@ class Runner:
             args = self._parse_train_args(data) if do_train else self._parse_eval_args(data)
             print(args)
             os.makedirs(args["output_dir"], exist_ok=True)
-            save_args(os.path.join(args["output_dir"], LLAMABOARD_CONFIG), self._form_config_dict(data))
+            save_args(os.path.join(args["output_dir"], LLAMABOARD_CONFIG), self._build_config_dict(data))
 
             env = deepcopy(os.environ)
             env["LLAMABOARD_ENABLED"] = "1"
@@ -364,10 +427,15 @@ class Runner:
             if args.get("deepspeed", None) is not None:
                 env["FORCE_TORCHRUN"] = "1"
 
+<<<<<<< HEAD
             self.trainer = Popen("llamafactory-cli train {}".format(save_cmd(args)), env=env, shell=True)  # nosec
+=======
+            self.trainer = Popen(["llamafactory-cli", "train", save_cmd(args)], env=env)
+>>>>>>> 7e0cdb1a76c1ac6b69de86d4ba40e9395f883cdb
             yield from self.monitor()
 
-    def _form_config_dict(self, data: Dict["Component", Any]) -> Dict[str, Any]:
+    def _build_config_dict(self, data: dict["Component", Any]) -> dict[str, Any]:
+        r"""Build a dictionary containing the current training configuration."""
         config_dict = {}
         skip_ids = ["top.lang", "top.model_path", "train.output_dir", "train.config_path"]
         for elem, value in data.items():
@@ -390,6 +458,7 @@ class Runner:
         yield from self._launch(data, do_train=False)
 
     def monitor(self):
+        r"""Monitorgit the training progress and logs."""
         self.aborted = False
         self.running = True
 
@@ -401,7 +470,9 @@ class Runner:
         output_box = self.manager.get_elem_by_id("{}.output_box".format("train" if self.do_train else "eval"))
         progress_bar = self.manager.get_elem_by_id("{}.progress_bar".format("train" if self.do_train else "eval"))
         loss_viewer = self.manager.get_elem_by_id("train.loss_viewer") if self.do_train else None
+        swanlab_link = self.manager.get_elem_by_id("train.swanlab_link") if self.do_train else None
 
+        running_log = ""
         while self.trainer is not None:
             if self.aborted:
                 yield {
@@ -409,16 +480,18 @@ class Runner:
                     progress_bar: gr.Slider(visible=False),
                 }
             else:
-                running_log, running_progress, running_loss = get_trainer_info(output_path, self.do_train)
+                running_log, running_progress, running_info = get_trainer_info(lang, output_path, self.do_train)
                 return_dict = {
                     output_box: running_log,
                     progress_bar: running_progress,
                 }
-                if running_loss is not None:
-                    return_dict[loss_viewer] = running_loss
+                if "loss_viewer" in running_info:
+                    return_dict[loss_viewer] = running_info["loss_viewer"]
+
+                if "swanlab_link" in running_info:
+                    return_dict[swanlab_link] = running_info["swanlab_link"]
 
                 yield return_dict
-
             try:
                 self.trainer.wait(2)
                 self.trainer = None
@@ -426,26 +499,31 @@ class Runner:
                 continue
 
         if self.do_train:
+<<<<<<< HEAD
 
             if os.path.exists(os.path.join(output_path, TRAINING_ARGS_NAME)):
+=======
+            if os.path.exists(os.path.join(output_path, TRAINING_ARGS_NAME)) or use_ray():
+>>>>>>> 7e0cdb1a76c1ac6b69de86d4ba40e9395f883cdb
                 finish_info = ALERTS["info_finished"][lang]
             else:
                 finish_info = ALERTS["err_failed"][lang]
             if "clip" in output_path:
                 finish_info = ALERTS["info_finished"][lang]
         else:
-            if os.path.exists(os.path.join(output_path, "all_results.json")):
-                finish_info = get_eval_results(os.path.join(output_path, "all_results.json"))
+            if os.path.exists(os.path.join(output_path, "all_results.json")) or use_ray():
+                finish_info = load_eval_results(os.path.join(output_path, "all_results.json"))
             else:
                 finish_info = ALERTS["err_failed"][lang]
 
         return_dict = {
-            output_box: self._finalize(lang, finish_info),
+            output_box: self._finalize(lang, finish_info) + "\n\n" + running_log,
             progress_bar: gr.Slider(visible=False),
         }
         yield return_dict
 
     def save_args(self, data):
+        r"""Save the training configuration to config path."""
         output_box = self.manager.get_elem_by_id("train.output_box")
         error = self._initialize(data, do_train=True, from_preview=True)
         if error:
@@ -457,25 +535,27 @@ class Runner:
         os.makedirs(DEFAULT_CONFIG_DIR, exist_ok=True)
         save_path = os.path.join(DEFAULT_CONFIG_DIR, config_path)
 
-        save_args(save_path, self._form_config_dict(data))
+        save_args(save_path, self._build_config_dict(data))
         return {output_box: ALERTS["info_config_saved"][lang] + save_path}
 
     def load_args(self, lang: str, config_path: str):
+        r"""Load the training configuration from config path."""
         output_box = self.manager.get_elem_by_id("train.output_box")
         config_dict = load_args(os.path.join(DEFAULT_CONFIG_DIR, config_path))
         if config_dict is None:
             gr.Warning(ALERTS["err_config_not_found"][lang])
             return {output_box: ALERTS["err_config_not_found"][lang]}
 
-        output_dict: Dict["Component", Any] = {output_box: ALERTS["info_config_loaded"][lang]}
+        output_dict: dict[Component, Any] = {output_box: ALERTS["info_config_loaded"][lang]}
         for elem_id, value in config_dict.items():
             output_dict[self.manager.get_elem_by_id(elem_id)] = value
 
         return output_dict
 
     def check_output_dir(self, lang: str, model_name: str, finetuning_type: str, output_dir: str):
+        r"""Restore the training status if output_dir exists."""
         output_box = self.manager.get_elem_by_id("train.output_box")
-        output_dict: Dict["Component", Any] = {output_box: LOCALES["output_box"][lang]["value"]}
+        output_dict: dict[Component, Any] = {output_box: LOCALES["output_box"][lang]["value"]}
         if model_name and output_dir and os.path.isdir(get_save_dir(model_name, finetuning_type, output_dir)):
             gr.Warning(ALERTS["warn_output_dir_exists"][lang])
             output_dict[output_box] = ALERTS["warn_output_dir_exists"][lang]

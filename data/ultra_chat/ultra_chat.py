@@ -1,6 +1,20 @@
+# Copyright 2025 the LlamaFactory team.
+# Copyright 2020 The HuggingFace Datasets Authors and the current dataset script contributor.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import json
 import os
-from typing import List
 
 import datasets
 
@@ -11,7 +25,7 @@ _DESCRIPTION = "UltraChat: Large-scale, Informative, and Diverse Multi-round Dia
 
 _CITATION = """\
 @misc{UltraChat,
-  author = {Ding, Ning and Chen, Yulin and Xu, Bokai and Hu, Shengding and Qin, Yujia and Liu, Zhiyuan and Sun, Maosong and Zhou, Bowen},
+  author = {Ding, Ning and Chen, Yulin and Xu, Bokai and Hu, Shengding and others},
   title = {UltraChat: A Large-scale Auto-generated Multi-round Dialogue Data},
   year = {2023},
   publisher = {GitHub},
@@ -20,9 +34,9 @@ _CITATION = """\
 }
 """
 
-_HOMEPAGE = "{}/datasets/stingning/ultrachat".format(_HF_ENDPOINT)
+_HOMEPAGE = f"{_HF_ENDPOINT}/datasets/stingning/ultrachat"
 _LICENSE = "cc-by-nc-4.0"
-_BASE_DATA_URL = "{}/datasets/stingning/ultrachat/resolve/main/train_{{idx}}.jsonl".format(_HF_ENDPOINT)
+_BASE_DATA_URL = f"{_HF_ENDPOINT}/datasets/stingning/ultrachat/resolve/main/train_{{idx}}.jsonl"
 
 
 class UltraChat(datasets.GeneratorBasedBuilder):
@@ -40,16 +54,16 @@ class UltraChat(datasets.GeneratorBasedBuilder):
         file_paths = [dl_manager.download(_BASE_DATA_URL.format(idx=idx)) for idx in range(10)]  # multiple shards
         return [datasets.SplitGenerator(name=datasets.Split.TRAIN, gen_kwargs={"filepaths": file_paths})]
 
-    def _generate_examples(self, filepaths: List[str]):
+    def _generate_examples(self, filepaths: list[str]):
         for filepath in filepaths:
-            with open(filepath, "r", encoding="utf-8") as f:
+            with open(filepath, encoding="utf-8") as f:
                 for row in f:
                     try:
                         data = json.loads(row)
                     except Exception:
                         continue
                     key: int = data["id"]
-                    content: List[str] = data["data"]
+                    content: list[str] = data["data"]
                     if len(content) % 2 == 1:
                         content.pop(-1)
                     if len(content) < 2:

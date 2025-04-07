@@ -1,0 +1,4 @@
+model_name_or_path: saves/llama3-8b/full/sft
+template: llama3
+infer_backend: huggingface  # choices: [huggingface, vllm]
+trust_remote_code: true
