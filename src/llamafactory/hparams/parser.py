@@ -60,7 +60,7 @@ _TRAIN_ARGS = [
     AdaclipArguments,
     OptunaArguments,
 ]
-_TRAIN_CLS = Tuple[
+_TRAIN_CLS = [
     ModelArguments,
     DataArguments,
     TrainingArguments,
@@ -79,7 +79,7 @@ _INFER_ARGS = [
     AdaclipArguments,
     OptunaArguments,
 ]
-_INFER_CLS = Tuple[
+_INFER_CLS = [
     ModelArguments,
     DataArguments,
     FinetuningArguments,
@@ -97,7 +97,7 @@ _EVAL_ARGS = [
     AdaclipArguments,
     OptunaArguments,
 ]
-_EVAL_CLS = Tuple[
+_EVAL_CLS = [
     ModelArguments,
     DataArguments,
     EvaluationArguments,
@@ -242,7 +242,7 @@ def get_ray_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> Ray
 
 
 def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _TRAIN_CLS:
-    model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_args(args)
+    model_args, data_args, training_args, finetuning_args, generating_args, clip_args, adaclip_args, optuna_args = _parse_train_args(args)
 
     # Setup logging
     if training_args.should_log:

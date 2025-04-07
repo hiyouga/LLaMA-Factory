@@ -63,7 +63,7 @@ def create_chat_box(
                     with gr.Column() as mm_box:
                         with gr.Tab("Image"):
                             image = gr.Image(type="pil")
-
+                            
                         with gr.Tab("Video"):
                             video = gr.Video()
 

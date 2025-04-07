@@ -313,7 +313,7 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
             swanlab_mode,
             swanlab_link,
         }
-    }
+    )
     elem_dict.update(
         dict(
             swanlab_tab=swanlab_tab,
@@ -452,6 +452,7 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
                 outputs=[tip_load_cache, augment_epoch, tip_beta, tip_alpha, new, new_dataset, search_best],
             )
             new.change(select_new, inputs=[new], outputs=[new_dataset])
+
     input_elems.update(
         {
             clip_trainer,
@@ -472,8 +473,8 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
             new,
             new_dataset,
             search_best,
+        }
     )
-    
     elem_dict.update(
         dict(
             clip_finetune_tab=clip_finetune_tab,

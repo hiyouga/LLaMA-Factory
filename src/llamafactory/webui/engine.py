@@ -37,30 +37,18 @@ class Engine:
         if not demo_mode:
             create_ds_config()
 
-<<<<<<< HEAD
-    def _update_component(self, input_dict: Dict[str, Dict[str, Any]]) -> Dict["Component", "Component"]:
-        r"""Gets the dict to update the components."""
-        output_dict: Dict["Component", "Component"] = {}
-=======
     def _update_component(self, input_dict: dict[str, dict[str, Any]]) -> dict["Component", "Component"]:
         r"""Update gradio components according to the (elem_id, properties) mapping."""
         output_dict: dict[Component, Component] = {}
->>>>>>> 7e0cdb1a76c1ac6b69de86d4ba40e9395f883cdb
         for elem_id, elem_attr in input_dict.items():
             elem = self.manager.get_elem_by_id(elem_id)
             output_dict[elem] = elem.__class__(**elem_attr)
         return output_dict
 
     def resume(self):
-<<<<<<< HEAD
-        user_config = load_config() if not self.demo_mode else {}
-        lang = user_config.get("lang", None) or "zh"
-
-=======
         r"""Get the initial value of gradio components and restores training status if necessary."""
         user_config = load_config() if not self.demo_mode else {}  # do not use config in demo mode
-        lang = user_config.get("lang", None) or "en"
->>>>>>> 7e0cdb1a76c1ac6b69de86d4ba40e9395f883cdb
+        lang = user_config.get("lang", None) or "zh"
         init_dict = {"top.lang": {"value": lang}, "infer.chat_box": {"visible": self.chatter.loaded}}
 
         if not self.pure_chat:

@@ -52,17 +52,6 @@ if TYPE_CHECKING:
     from .manager import Manager
 
 
-def find_pid_by_description(process_description):
-    pids = []
-    for proc in psutil.process_iter(["pid", "name", "cmdline"]):
-        pid = proc.info["pid"]
-        cmdline = proc.info.get("cmdline", [])
-        if process_description in " ".join(cmdline):
-            print(f"PID: {pid}, Description: {proc.info['name']}, Command Line: {' '.join(cmdline)}")
-            pids.append(pid)
-    return pids
-
-
 class Runner:
     r"""A class to manage the running status of the trainers."""
 
@@ -70,19 +59,11 @@ class Runner:
         r"""Init a runner."""
         self.manager = manager
         self.demo_mode = demo_mode
-<<<<<<< HEAD
-        """Resume."""
-        self.trainer: Optional["Popen"] = None
-        self.do_train = True
-        self.running_data: Dict["Component", Any] = None
-        """State."""
-=======
         """ Resume """
         self.trainer: Optional[Popen] = None
         self.do_train = True
         self.running_data: dict[Component, Any] = None
         """ State """
->>>>>>> 7e0cdb1a76c1ac6b69de86d4ba40e9395f883cdb
         self.aborted = False
         self.running = False
 
@@ -90,10 +71,6 @@ class Runner:
         self.aborted = True
         if self.trainer is not None:
             abort_process(self.trainer.pid)
-            pids = find_pid_by_description("llamafactory-cli train")
-            for pid in pids:
-                abort_process(pid)
-            self.running = False
 
     def _initialize(self, data: dict["Component", Any], do_train: bool, from_preview: bool) -> str:
         r"""Validate the configuration."""
@@ -427,11 +404,7 @@ class Runner:
             if args.get("deepspeed", None) is not None:
                 env["FORCE_TORCHRUN"] = "1"
 
-<<<<<<< HEAD
-            self.trainer = Popen("llamafactory-cli train {}".format(save_cmd(args)), env=env, shell=True)  # nosec
-=======
             self.trainer = Popen(["llamafactory-cli", "train", save_cmd(args)], env=env)
->>>>>>> 7e0cdb1a76c1ac6b69de86d4ba40e9395f883cdb
             yield from self.monitor()
 
     def _build_config_dict(self, data: dict["Component", Any]) -> dict[str, Any]:
@@ -499,12 +472,7 @@ class Runner:
                 continue
 
         if self.do_train:
-<<<<<<< HEAD
-
-            if os.path.exists(os.path.join(output_path, TRAINING_ARGS_NAME)):
-=======
             if os.path.exists(os.path.join(output_path, TRAINING_ARGS_NAME)) or use_ray():
->>>>>>> 7e0cdb1a76c1ac6b69de86d4ba40e9395f883cdb
                 finish_info = ALERTS["info_finished"][lang]
             else:
                 finish_info = ALERTS["err_failed"][lang]

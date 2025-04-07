@@ -123,6 +123,7 @@ def run_exp(args: Optional[dict[str, Any]] = None, callbacks: Optional[list["Tra
 
 
 def export_model(args: Optional[dict[str, Any]] = None) -> None:
+    
     model_args, data_args, finetuning_args, _ = get_infer_args(args)
 
     if model_args.export_dir is None:

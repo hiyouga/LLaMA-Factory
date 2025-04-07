@@ -14,6 +14,7 @@
 
 import json
 import os
+import re
 from typing import Any, Optional
 
 from transformers.trainer_utils import get_last_checkpoint
@@ -28,7 +29,7 @@ from ..extras.constants import (
     TRAINING_STAGES,
 )
 from ..extras.packages import is_gradio_available, is_matplotlib_available
-from ..extras.ploting import gen_loss_plot
+from ..extras.ploting import gen_loss_plot, gen_loss_plot_clip, gen_loss_plot_adaclip
 from ..model import QuantizationMethod
 from .common import DEFAULT_CONFIG_DIR, DEFAULT_DATA_DIR, get_model_path, get_save_dir, get_template, load_dataset_info
 from .locales import ALERTS
@@ -99,30 +100,99 @@ def get_trainer_info(lang: str, output_path: os.PathLike, do_train: bool) -> tup
     running_info = {}
 
     running_log_path = os.path.join(output_path, RUNNING_LOG)
+    trainer_log_path = os.path.join(output_path, TRAINER_LOG)
+    
+    if not os.path.exists(trainer_log_path):
+        with open(trainer_log_path, 'w', encoding="utf-8") as file:
+            file.write('')
+    if not os.path.exists(running_log_path):
+        with open(running_log_path, 'w', encoding="utf-8") as file:
+            file.write('')
     if os.path.isfile(running_log_path):
         with open(running_log_path, encoding="utf-8") as f:
             running_log = f.read()[-20000:]  # avoid lengthy log
-
-    trainer_log_path = os.path.join(output_path, TRAINER_LOG)
+    print(trainer_log_path)
+    print(running_log_path)
     if os.path.isfile(trainer_log_path):
         trainer_log: list[dict[str, Any]] = []
-        with open(trainer_log_path, encoding="utf-8") as f:
-            for line in f:
-                trainer_log.append(json.loads(line))
+        if "Adaclip" in output_path and "Adaclip" in running_log_path:
+            if os.path.isfile(running_log_path):
+                with open(running_log_path, "r", encoding="utf-8") as f:
+                    for line in f:
+                        if "Finish training" in line:
+                            trainer_log: List[Dict[str, Any]] = []
+                        if "Loss" in line:
+                            trainer_log.append(line)
+                if len(trainer_log) != 0:
+                    latest_log = trainer_log[-1]
+                    matches = re.findall(r"[+\-]?(?=\.\d|\d)(?:0|[1-9]\d*)?(?:\.\d*)?(?:\d[eE][+\-]?\d+)|[+-]?\d+\.\d+|[+-]?\d+",
+                                            line)
+                    if len(matches) < 2:
+                        return running_log, running_progress, running_loss
+                    current_epoch = int(matches[8])
+                    current_batch = int(matches[9])
+                    total_batch = int(matches[10])
+                    current_steps = (current_epoch ) * total_batch + current_batch
+                    total_steps = (current_epoch + 1) * total_batch
+                    percentage = current_steps / total_steps * 100
+                    eta = matches[13] + ":" + matches[14] + ":" + matches[15]
+                    label = "Running {:d}/{:d}:".format(
+                        current_steps,
+                        total_steps
+                    )
+                    running_progress = gr.Slider(label=label, value=percentage, visible=True)
+                    #running_progress_acc = gr.Slider(label=label, value=percentage, visible=True)
+                    if do_train and is_matplotlib_available():
+                        running_info["loss_viewer"] = gr.Plot(gen_loss_plot_adaclip(trainer_log))
+        elif "clip" in trainer_log_path:
+            with open(trainer_log_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    if "Finish training" in line:
+                        trainer_log: List[Dict[str, Any]] = []
+                    if "loss" in line:
+                        trainer_log.append(line)
+            if len(trainer_log) != 0:
+                latest_log = trainer_log[-1]
+                matches = re.findall("[+\-]?(?=\.\d|\d)(?:0|[1-9]\d*)?(?:\.\d*)?(?:\d[eE][+\-]?\d+)|[+-]?\d+\.\d+|[+-]?\d+",
+                                         line)
+                if len(matches) < 2:
+                    return running_log, running_progress, running_loss
+                current_epoch = int(matches[0])
+                total_epoch = int(matches[1])
+                current_batch = int(matches[2])
+                total_batch = int(matches[3])
+                current_steps = (current_epoch - 1) * total_batch + current_batch
+                total_steps = (total_epoch - 1) * total_batch + current_batch
+                percentage = current_steps / total_steps * 100
+                eta = matches[13] + ":" + matches[14] + ":" + matches[15]
+                label = "Running {:d}/{:d}: eta {} ".format(
+                    current_steps,
+                    total_steps,
+                    eta
+                )
+                running_progress = gr.Slider(label=label, value=percentage, visible=True)
+                #running_progress_acc = gr.Slider(label=label, value=percentage, visible=True)
 
-        if len(trainer_log) != 0:
-            latest_log = trainer_log[-1]
-            percentage = latest_log["percentage"]
-            label = "Running {:d}/{:d}: {} < {}".format(
-                latest_log["current_steps"],
-                latest_log["total_steps"],
-                latest_log["elapsed_time"],
-                latest_log["remaining_time"],
-            )
-            running_progress = gr.Slider(label=label, value=percentage, visible=True)
+                if do_train and is_matplotlib_available():
+                    running_info["loss_viewer"] = gr.Plot(gen_loss_plot_clip(trainer_log))
+        else:
+            with open(trainer_log_path, encoding="utf-8") as f:
+                for line in f:
+                    trainer_log.append(json.loads(line))
 
-            if do_train and is_matplotlib_available():
-                running_info["loss_viewer"] = gr.Plot(gen_loss_plot(trainer_log))
+            if len(trainer_log) != 0:
+                latest_log = trainer_log[-1]
+                percentage = latest_log["percentage"]
+                label = "Running {:d}/{:d}: {} < {}".format(
+                    latest_log["current_steps"],
+                    latest_log["total_steps"],
+                    latest_log["elapsed_time"],
+                    latest_log["remaining_time"],
+                )
+                running_progress = gr.Slider(label=label, value=percentage, visible=True)
+
+                if do_train and is_matplotlib_available():
+                    running_info["loss_viewer"] = gr.Plot(gen_loss_plot(trainer_log))
 
     swanlab_config_path = os.path.join(output_path, SWANLAB_CONFIG)
     if os.path.isfile(swanlab_config_path):

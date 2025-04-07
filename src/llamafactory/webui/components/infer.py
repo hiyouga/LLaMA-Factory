@@ -53,10 +53,8 @@ def create_infer_tab(engine: "Engine") -> dict[str, "Component"]:
             info_box=info_box,
         )
     )
-
     chatbot, messages, chat_elems = create_chat_box(engine, visible=False)
     elem_dict.update(chat_elems)
-
     load_btn.click(engine.chatter.load_model, input_elems, [info_box]).then(
         lambda: gr.Column(visible=engine.chatter.loaded), outputs=[chat_elems["chat_box"]]
     )
@@ -70,5 +68,4 @@ def create_infer_tab(engine: "Engine") -> dict[str, "Component"]:
         [engine.manager.get_elem_by_id("top.model_name")],
         [chat_elems["mm_box"]],
     )
-
     return elem_dict

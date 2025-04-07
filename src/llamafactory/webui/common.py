@@ -32,7 +32,7 @@ from ..extras.constants import (
     DownloadSource,
 )
 from ..extras.misc import use_modelscope, use_openmind
-
+import psutil
 
 logger = logging.get_logger(__name__)
 
@@ -50,18 +50,13 @@ def abort_process(pid: int) -> None:
         if children:
             for child in children:
                 abort_process(child.pid)
-
-        os.kill(pid, signal.SIGABRT)
+        psutil.Process(pid).kill()
     except Exception:
         pass
 
 
 def get_save_dir(*paths: str) -> os.PathLike:
-<<<<<<< HEAD
-    r"""Gets the path to saved model checkpoints."""
-=======
     r"""Get the path to saved model checkpoints."""
->>>>>>> 7e0cdb1a76c1ac6b69de86d4ba40e9395f883cdb
     if os.path.sep in paths[-1]:
         logger.warning_rank0("Found complex path, some features may be not available.")
         return paths[-1]
@@ -70,15 +65,6 @@ def get_save_dir(*paths: str) -> os.PathLike:
     return os.path.join(DEFAULT_SAVE_DIR, *paths)
 
 
-<<<<<<< HEAD
-def get_config_path() -> os.PathLike:
-    r"""Gets the path to user config."""
-    return os.path.join(DEFAULT_CACHE_DIR, USER_CONFIG)
-
-
-def load_config() -> Dict[str, Any]:
-    r"""Loads user config if exists."""
-=======
 def _get_config_path() -> os.PathLike:
     r"""Get the path to user config."""
     return os.path.join(DEFAULT_CACHE_DIR, USER_CONFIG)
@@ -86,7 +72,6 @@ def _get_config_path() -> os.PathLike:
 
 def load_config() -> dict[str, Union[str, dict[str, Any]]]:
     r"""Load user config if exists."""
->>>>>>> 7e0cdb1a76c1ac6b69de86d4ba40e9395f883cdb
     try:
         with open(_get_config_path(), encoding="utf-8") as f:
             return safe_load(f)
@@ -95,11 +80,7 @@ def load_config() -> dict[str, Union[str, dict[str, Any]]]:
 
 
 def save_config(lang: str, model_name: Optional[str] = None, model_path: Optional[str] = None) -> None:
-<<<<<<< HEAD
-    r"""Saves user config."""
-=======
     r"""Save user config."""
->>>>>>> 7e0cdb1a76c1ac6b69de86d4ba40e9395f883cdb
     os.makedirs(DEFAULT_CACHE_DIR, exist_ok=True)
     user_config = load_config()
     user_config["lang"] = lang or user_config["lang"]
@@ -114,11 +95,7 @@ def save_config(lang: str, model_name: Optional[str] = None, model_path: Optiona
 
 
 def get_model_path(model_name: str) -> str:
-<<<<<<< HEAD
-    r"""Gets the model path according to the model name."""
-=======
     r"""Get the model path according to the model name."""
->>>>>>> 7e0cdb1a76c1ac6b69de86d4ba40e9395f883cdb
     user_config = load_config()
     path_dict: dict[DownloadSource, str] = SUPPORTED_MODELS.get(model_name, defaultdict(str))
     model_path = user_config["path_dict"].get(model_name, "") or path_dict.get(DownloadSource.DEFAULT, "")
@@ -139,55 +116,6 @@ def get_model_path(model_name: str) -> str:
     return model_path
 
 
-<<<<<<< HEAD
-def get_prefix(model_name: str) -> str:
-    r"""Gets the prefix of the model name to obtain the model family."""
-    return model_name.split("-")[0]
-
-
-def get_model_info(model_name: str) -> Tuple[str, str]:
-    r"""Gets the necessary information of this model.
-
-    Returns:
-        model_path (str)
-        template (str)
-    """
-    return get_model_path(model_name), get_template(model_name)
-
-
-def get_template(model_name: str) -> str:
-    r"""Gets the template name if the model is a chat model."""
-    if model_name and model_name.endswith("Chat") and get_prefix(model_name) in DEFAULT_TEMPLATE:
-        return DEFAULT_TEMPLATE[get_prefix(model_name)]
-    return "default"
-
-
-def get_visual(model_name: str) -> bool:
-    r"""Judges if the model is a vision language model."""
-    return get_prefix(model_name) in VISION_MODELS
-
-
-def list_checkpoints(model_name: str, finetuning_type: str) -> "gr.Dropdown":
-    r"""Lists all available checkpoints."""
-    checkpoints = []
-    if model_name:
-        save_dir = get_save_dir(model_name, finetuning_type)
-        if save_dir and os.path.isdir(save_dir):
-            for checkpoint in os.listdir(save_dir):
-                if os.path.isdir(os.path.join(save_dir, checkpoint)) and any(
-                    os.path.isfile(os.path.join(save_dir, checkpoint, name)) for name in CHECKPOINT_NAMES
-                ):
-                    checkpoints.append(checkpoint)
-
-    if finetuning_type in PEFT_METHODS:
-        return gr.Dropdown(value=[], choices=checkpoints, multiselect=True)
-    else:
-        return gr.Dropdown(value=None, choices=checkpoints, multiselect=False)
-
-
-def load_dataset_info(dataset_dir: str) -> Dict[str, Dict[str, Any]]:
-    r"""Loads dataset_info.json."""
-=======
 def get_template(model_name: str) -> str:
     r"""Get the template name if the model is a chat/distill/instruct model."""
     return DEFAULT_TEMPLATE.get(model_name, "default")
@@ -205,7 +133,6 @@ def is_multimodal(model_name: str) -> bool:
 
 def load_dataset_info(dataset_dir: str) -> dict[str, dict[str, Any]]:
     r"""Load dataset_info.json."""
->>>>>>> 7e0cdb1a76c1ac6b69de86d4ba40e9395f883cdb
     if dataset_dir == "ONLINE" or dataset_dir.startswith("REMOTE:"):
         logger.info_rank0(f"dataset_dir is {dataset_dir}, using online dataset.")
         return {}
@@ -218,14 +145,6 @@ def load_dataset_info(dataset_dir: str) -> dict[str, dict[str, Any]]:
         return {}
 
 
-<<<<<<< HEAD
-def list_datasets(dataset_dir: str = None, training_stage: str = list(TRAINING_STAGES.keys())[0]) -> "gr.Dropdown":
-    r"""Lists all available datasets in the dataset dir for the training stage."""
-    dataset_info = load_dataset_info(dataset_dir if dataset_dir is not None else DEFAULT_DATA_DIR)
-    ranking = TRAINING_STAGES[training_stage] in STAGES_USE_PAIR_DATA
-    datasets = [k for k, v in dataset_info.items() if v.get("ranking", False) == ranking]
-    return gr.Dropdown(choices=datasets)
-=======
 def load_args(config_path: str) -> Optional[dict[str, Any]]:
     r"""Load the training configuration from config path."""
     try:
@@ -344,4 +263,3 @@ def create_ds_config() -> None:
     ds_config["zero_optimization"]["offload_param"] = offload_config
     with open(os.path.join(DEFAULT_CACHE_DIR, "ds_z3_offload_config.json"), "w", encoding="utf-8") as f:
         json.dump(ds_config, f, indent=2)
->>>>>>> 7e0cdb1a76c1ac6b69de86d4ba40e9395f883cdb

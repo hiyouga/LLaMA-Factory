@@ -34,11 +34,7 @@ def _set_z3_leaf_modules(model: "PreTrainedModel", leaf_modules: list["torch.nn.
 
 
 def add_z3_leaf_module(model: "PreTrainedModel") -> None:
-<<<<<<< HEAD
-    r"""Sets module as a leaf module to skip partitioning in deepspeed zero3."""
-=======
     r"""Set module as a leaf module to skip partitioning in deepspeed zero3."""
->>>>>>> 7e0cdb1a76c1ac6b69de86d4ba40e9395f883cdb
     if not is_deepspeed_zero3_enabled():
         return
 

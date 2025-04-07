@@ -37,7 +37,6 @@ if is_gradio_available():
 def create_ui(demo_mode: bool = False) -> "gr.Blocks":
     engine = Engine(demo_mode=demo_mode, pure_chat=False)
     hostname = os.getenv("HOSTNAME", os.getenv("COMPUTERNAME", platform.node())).split(".")[0]
-
     with gr.Blocks(title=f"LLaMA Board ({hostname})", css=CSS) as demo:
         if demo_mode:
             gr.HTML("<h1><center>LLaMA Board: A One-stop Web UI for Getting Started with LLaMA Factory</center></h1>")
@@ -62,11 +61,9 @@ def create_ui(demo_mode: bool = False) -> "gr.Blocks":
         if not demo_mode:
             with gr.Tab("Export"):
                 engine.manager.add_elems("export", create_export_tab(engine))
-
         demo.load(engine.resume, outputs=engine.manager.get_elem_list(), concurrency_limit=None)
         lang.change(engine.change_lang, [lang], engine.manager.get_elem_list(), queue=False)
         lang.input(save_config, inputs=[lang], queue=False)
-
     return demo
 
 

@@ -15,6 +15,7 @@
 import json
 import math
 import os
+import re
 from typing import Any
 
 from transformers.trainer import TRAINER_STATE_NAME
@@ -65,6 +66,70 @@ def gen_loss_plot(trainer_log: list[dict[str, Any]]) -> "matplotlib.figure.Figur
     ax.set_ylabel("loss")
     return fig
 
+def gen_loss_plot_adaclip(trainer_log: list[dict[str, Any]]) -> "matplotlib.figure.Figure":
+    r"""Plots loss curves in LlamaBoard."""
+    plt.close("all")
+    plt.switch_backend("agg")
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    steps, losses = [], []
+    for log in trainer_log:
+        if "Loss" in log:
+            matches = re.findall(
+                r"[+\-]?(?=\.\d|\d)(?:0|[1-9]\d*)?(?:\.\d*)?(?:\d[eE][+\-]?\d+)|[+-]?\d+\.\d+|[+-]?\d+", log
+            )
+            current_epoch = int(matches[8])
+            current_batch = int(matches[9])
+            total_batch = int(matches[10])
+            current_steps = (current_epoch) * total_batch + current_batch
+            total_steps = (current_epoch + 1) * total_batch
+            loss = float(matches[12])
+            steps.append(current_steps)
+            losses.append(loss)
+
+    ax.plot(steps, losses, color="#1f77b4", alpha=0.4, label="original")
+    ax.plot(steps, smooth(losses), color="#1f77b4", label="smoothed")
+    ax.legend()
+    ax.set_xlabel("step")
+    ax.set_ylabel("loss")
+    return fig
+
+
+def gen_loss_plot_clip(trainer_log: list[dict[str, Any]]) -> "matplotlib.figure.Figure":
+    r"""Plots loss curves in LlamaBoard."""
+    plt.close("all")
+    plt.switch_backend("agg")
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 2, 1)
+    bx = fig.add_subplot(1, 2, 2)
+    steps, losses, access = [], [], []
+    for log in trainer_log:
+        if "loss" in log:
+            matches = re.findall(
+                "[+\-]?(?=\.\d|\d)(?:0|[1-9]\d*)?(?:\.\d*)?(?:\d[eE][+\-]?\d+)|[+-]?\d+\.\d+|[+-]?\d+", log
+            )
+            current_epoch = int(matches[0])
+            total_epoch = int(matches[1])
+            current_batch = int(matches[2])
+            total_batch = int(matches[3])
+            current_steps = (current_epoch - 1) * total_batch + current_batch
+            loss = float(matches[9])
+            acc = float(matches[11])
+            steps.append(current_steps)
+            losses.append(loss)
+            access.append(acc)
+
+    ax.plot(steps, losses, color="#1f77b4", alpha=0.4, label="original")
+    ax.plot(steps, smooth(losses), color="#1f77b4", label="smoothed")
+    bx.plot(steps, access, color="#1f77b4", alpha=0.4, label="original")
+    bx.plot(steps, smooth(access), color="#1f77b4", label="smoothed")
+    ax.legend()
+    ax.set_xlabel("step")
+    ax.set_ylabel("loss")
+    bx.legend()
+    bx.set_xlabel("step")
+    bx.set_ylabel("acc")
+    return fig
 
 def plot_loss(save_dictionary: str, keys: list[str] = ["loss"]) -> None:
     r"""Plot loss curves and saves the image."""
