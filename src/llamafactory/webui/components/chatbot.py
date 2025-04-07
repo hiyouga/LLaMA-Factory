@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import TYPE_CHECKING, Dict, Tuple
+import json
+from typing import TYPE_CHECKING
 
 from ...data import Role
 from ...extras.packages import is_gradio_available
-from ..utils import check_json_schema
+from ..locales import ALERTS
 
 
 if is_gradio_available():
@@ -29,9 +30,27 @@ if TYPE_CHECKING:
     from ..engine import Engine
 
 
-def create_chat_box(engine: "Engine", visible: bool = False) -> Tuple["Component", "Component", Dict[str, "Component"]]:
+def check_json_schema(text: str, lang: str) -> None:
+    r"""Check if the json schema is valid."""
+    try:
+        tools = json.loads(text)
+        if tools:
+            assert isinstance(tools, list)
+            for tool in tools:
+                if "name" not in tool:
+                    raise NotImplementedError("Name not found.")
+    except NotImplementedError:
+        gr.Warning(ALERTS["err_tool_name"][lang])
+    except Exception:
+        gr.Warning(ALERTS["err_json_schema"][lang])
+
+
+def create_chat_box(
+    engine: "Engine", visible: bool = False
+) -> tuple["Component", "Component", dict[str, "Component"]]:
+    lang = engine.manager.get_elem_by_id("top.lang")
     with gr.Column(visible=visible) as chat_box:
-        chatbot = gr.Chatbot(show_copy_button=True)
+        chatbot = gr.Chatbot(type="messages", show_copy_button=True)
         messages = gr.State([])
         with gr.Row():
             with gr.Column(scale=4):
@@ -43,29 +62,48 @@ def create_chat_box(engine: "Engine", visible: bool = False) -> Tuple["Component
 
                     with gr.Column() as mm_box:
                         with gr.Tab("Image"):
-                            image = gr.Image(sources=["upload"], type="pil")
-
+                            image = gr.Image(type="pil")
+                            
                         with gr.Tab("Video"):
-                            video = gr.Video(sources=["upload"])
+                            video = gr.Video()
+
+                        with gr.Tab("Audio"):
+                            audio = gr.Audio(type="filepath")
 
                 query = gr.Textbox(show_label=False, lines=8)
                 submit_btn = gr.Button(variant="primary")
 
             with gr.Column(scale=1):
-                max_new_tokens = gr.Slider(minimum=8, maximum=4096, value=512, step=1)
+                max_new_tokens = gr.Slider(minimum=8, maximum=8192, value=1024, step=1)
                 top_p = gr.Slider(minimum=0.01, maximum=1.0, value=0.7, step=0.01)
                 temperature = gr.Slider(minimum=0.01, maximum=1.5, value=0.95, step=0.01)
+                skip_special_tokens = gr.Checkbox(value=True)
+                escape_html = gr.Checkbox(value=True)
                 clear_btn = gr.Button()
 
     tools.input(check_json_schema, inputs=[tools, engine.manager.get_elem_by_id("top.lang")])
 
     submit_btn.click(
         engine.chatter.append,
-        [chatbot, messages, role, query],
+        [chatbot, messages, role, query, escape_html],
         [chatbot, messages, query],
     ).then(
         engine.chatter.stream,
-        [chatbot, messages, system, tools, image, video, max_new_tokens, top_p, temperature],
+        [
+            chatbot,
+            messages,
+            lang,
+            system,
+            tools,
+            image,
+            video,
+            audio,
+            max_new_tokens,
+            top_p,
+            temperature,
+            skip_special_tokens,
+            escape_html,
+        ],
         [chatbot, messages],
     )
     clear_btn.click(lambda: ([], []), outputs=[chatbot, messages])
@@ -81,11 +119,14 @@ def create_chat_box(engine: "Engine", visible: bool = False) -> Tuple["Component
             mm_box=mm_box,
             image=image,
             video=video,
+            audio=audio,
             query=query,
             submit_btn=submit_btn,
             max_new_tokens=max_new_tokens,
             top_p=top_p,
             temperature=temperature,
+            skip_special_tokens=skip_special_tokens,
+            escape_html=escape_html,
             clear_btn=clear_btn,
         ),
     )

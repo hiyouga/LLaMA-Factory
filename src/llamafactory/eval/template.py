@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import Dict, List, Sequence, Tuple
 
 from ..data import Role
 from ..extras.constants import CHOICES
@@ -25,18 +24,19 @@ class EvalTemplate:
     choice: str
     answer: str
 
-    def _parse_example(self, example: Dict[str, str]) -> Tuple[str, str]:
-        r"""
+    def _parse_example(self, example: dict[str, str]) -> tuple[str, str]:
+        r"""Parse eval example.
+
         input: a dict with keys {"question", "A", "B", "C", "D", "answer"}
-        output: a tuple of (prompt, response)
+        output: a tuple of (prompt, response).
         """
         candidates = [self.choice.format(choice=ch, content=example[ch]) for ch in CHOICES if ch in example]
         return "".join([example["question"]] + candidates + [self.answer]), example["answer"]
 
     def format_example(
-        self, target_data: Dict[str, str], support_set: Sequence[Dict[str, str]], subject_name: str
-    ) -> List[Dict[str, str]]:
-        r"""Converts dataset examples to messages."""
+        self, target_data: dict[str, str], support_set: list[dict[str, str]], subject_name: str
+    ) -> list[dict[str, str]]:
+        r"""Convert dataset examples to messages."""
         messages = []
         for k in range(len(support_set)):
             prompt, response = self._parse_example(support_set[k])
@@ -50,7 +50,7 @@ class EvalTemplate:
         return messages
 
 
-eval_templates: Dict[str, "EvalTemplate"] = {}
+eval_templates: dict[str, "EvalTemplate"] = {}
 
 
 def _register_eval_template(name: str, system: str, choice: str, answer: str) -> None:
@@ -59,7 +59,7 @@ def _register_eval_template(name: str, system: str, choice: str, answer: str) ->
 
 def get_eval_template(name: str) -> "EvalTemplate":
     eval_template = eval_templates.get(name, None)
-    assert eval_template is not None, "Template {} does not exist.".format(name)
+    assert eval_template is not None, f"Template {name} does not exist."
     return eval_template
 
 

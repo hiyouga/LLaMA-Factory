@@ -1,6 +1,7 @@
 name: tests
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - "main"
@@ -21,11 +22,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version:
-          - "3.8"
+        python:
           - "3.9"
           - "3.10"
           - "3.11"
+          - "3.12"
         os:
           - "ubuntu-latest"
           - "windows-latest"
@@ -33,8 +34,9 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
-    environment:
-      name: tests
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.os }}-${{ matrix.python }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
     env:
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -47,20 +49,33 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python }}
           cache: "pip"
           cache-dependency-path: "setup.py"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install git+https://github.com/huggingface/transformers.git
           python -m pip install ".[torch,dev]"
+
+      - name: Cache files
+        id: hf-hub-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/huggingface
+          key: huggingface-${{ matrix.os }}-${{ matrix.python }}-${{ hashFiles('tests/version.txt') }}
 
       - name: Check quality
         run: |
           make style && make quality
 
+      - name: Check license
+        run: |
+          make license
+
       - name: Test with pytest
         run: |
           make test
+        env:
+          HF_HOME: ${{ runner.temp }}/huggingface
+          HF_HUB_OFFLINE: "${{ steps.hf-hub-cache.outputs.cache-hit == 'true' && '1' || '0' }}"

@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,9 @@
 # limitations under the License.
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Optional
+from typing import Any, Optional
+
+from transformers import GenerationConfig
 
 
 @dataclass
@@ -31,7 +33,9 @@ class GeneratingArguments:
     top_p: float = field(
         default=0.7,
         metadata={
-            "help": "The smallest set of most probable tokens with probabilities that add up to top_p or higher are kept."
+            "help": (
+                "The smallest set of most probable tokens with probabilities that add up to top_p or higher are kept."
+            )
         },
     )
     top_k: int = field(
@@ -62,11 +66,22 @@ class GeneratingArguments:
         default=None,
         metadata={"help": "Default system message to use in chat completion."},
     )
+    skip_special_tokens: bool = field(
+        default=True,
+        metadata={"help": "Whether or not to remove special tokens in the decoding."},
+    )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, obey_generation_config: bool = False) -> dict[str, Any]:
         args = asdict(self)
         if args.get("max_new_tokens", -1) > 0:
             args.pop("max_length", None)
         else:
             args.pop("max_new_tokens", None)
+
+        if obey_generation_config:
+            generation_config = GenerationConfig()
+            for key in list(args.keys()):
+                if not hasattr(generation_config, key):
+                    args.pop(key)
+
         return args

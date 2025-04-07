@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,14 +24,14 @@ from .template import TEMPLATES, Template, get_template_and_fix_tokenizer
 
 
 __all__ = [
+    "TEMPLATES",
     "KTODataCollatorWithPadding",
     "MultiModalDataCollatorForSeq2Seq",
     "PairwiseDataCollatorWithPadding",
-    "SFTDataCollatorWith4DAttentionMask",
     "Role",
-    "split_dataset",
-    "get_dataset",
-    "TEMPLATES",
+    "SFTDataCollatorWith4DAttentionMask",
     "Template",
+    "get_dataset",
     "get_template_and_fix_tokenizer",
+    "split_dataset",
 ]

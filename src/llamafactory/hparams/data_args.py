@@ -1,4 +1,4 @@
-# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+# Copyright 2025 HuggingFace Inc. and the LlamaFactory team.
 #
 # This code is inspired by the HuggingFace's transformers library.
 # https://github.com/huggingface/transformers/blob/v4.40.0/examples/pytorch/language-modeling/run_clm.py
@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from dataclasses import dataclass, field
-from typing import Literal, Optional
+from dataclasses import asdict, dataclass, field
+from typing import Any, Literal, Optional
 
 
 @dataclass
@@ -39,8 +39,12 @@ class DataArguments:
         default="data",
         metadata={"help": "Path to the folder containing the datasets."},
     )
+    media_dir: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to the folder containing the images, videos or audios. Defaults to `dataset_dir`."},
+    )
     cutoff_len: int = field(
-        default=1024,
+        default=2048,
         metadata={"help": "The cutoff length of the tokenized inputs in the dataset."},
     )
     train_on_prompt: bool = field(
@@ -93,7 +97,7 @@ class DataArguments:
     )
     val_size: float = field(
         default=0.0,
-        metadata={"help": "Size of the development set, should be an integer or a float in range `[0,1)`."},
+        metadata={"help": "Size of the validation set, should be an integer or a float in range `[0,1)`."},
     )
     packing: Optional[bool] = field(
         default=None,
@@ -109,7 +113,13 @@ class DataArguments:
     )
     tokenized_path: Optional[str] = field(
         default=None,
-        metadata={"help": "Path to save or load the tokenized datasets."},
+        metadata={
+            "help": (
+                "Path to save or load the tokenized datasets. "
+                "If tokenized_path not exists, it will save the tokenized datasets. "
+                "If tokenized_path exists, it will load the tokenized datasets."
+            )
+        },
     )
 
     def __post_init__(self):
@@ -120,6 +130,9 @@ class DataArguments:
 
         self.dataset = split_arg(self.dataset)
         self.eval_dataset = split_arg(self.eval_dataset)
+
+        if self.media_dir is None:
+            self.media_dir = self.dataset_dir
 
         if self.dataset is None and self.val_size > 1e-6:
             raise ValueError("Cannot specify `val_size` if `dataset` is None.")
@@ -146,3 +159,6 @@ class DataArguments:
 
         if self.mask_history and self.train_on_prompt:
             raise ValueError("`mask_history` is incompatible with `train_on_prompt`.")
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)

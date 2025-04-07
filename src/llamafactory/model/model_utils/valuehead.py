@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING
 
 import torch
 from transformers.utils import cached_file
 
+from ...extras import logging
 from ...extras.constants import V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
-from ...extras.logging import get_logger
 
 
 if TYPE_CHECKING:
@@ -27,11 +27,11 @@ if TYPE_CHECKING:
     from ...hparams import ModelArguments
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
-def load_valuehead_params(path_or_repo_id: str, model_args: "ModelArguments") -> Dict[str, torch.Tensor]:
-    r"""Loads value head parameters from Hugging Face Hub or local disk.
+def load_valuehead_params(path_or_repo_id: str, model_args: "ModelArguments") -> dict[str, torch.Tensor]:
+    r"""Load value head parameters from Hugging Face Hub or local disk.
 
     Returns: dict with keys `v_head.summary.weight` and `v_head.summary.bias`.
     """
@@ -53,8 +53,8 @@ def load_valuehead_params(path_or_repo_id: str, model_args: "ModelArguments") ->
     except Exception as err:
         err_text = str(err)
 
-    logger.info("Provided path ({}) does not contain value head weights: {}.".format(path_or_repo_id, err_text))
-    logger.info("Ignore the above message if you are not resuming the training of a value head model.")
+    logger.info_rank0(f"Provided path ({path_or_repo_id}) does not contain value head weights: {err_text}.")
+    logger.info_rank0("Ignore the above message if you are not resuming the training of a value head model.")
     return None
 
 

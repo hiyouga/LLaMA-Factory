@@ -1,6 +1,20 @@
+# Copyright 2025 the LlamaFactory team.
+# Copyright 2020 The HuggingFace Datasets Authors and the current dataset script contributor.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import json
 import os
-from typing import List
 
 import datasets
 
@@ -8,9 +22,9 @@ import datasets
 _HF_ENDPOINT = os.getenv("HF_ENDPOINT", "https://huggingface.co")
 _DESCRIPTION = "Human preference data about helpfulness and harmlessness."
 _CITATION = ""
-_HOMEPAGE = "{}/datasets/Anthropic/hh-rlhf".format(_HF_ENDPOINT)
+_HOMEPAGE = f"{_HF_ENDPOINT}/datasets/Anthropic/hh-rlhf"
 _LICENSE = "mit"
-_URL = "{}/datasets/Anthropic/hh-rlhf/resolve/main/".format(_HF_ENDPOINT)
+_URL = f"{_HF_ENDPOINT}/datasets/Anthropic/hh-rlhf/resolve/main/"
 _URLS = {
     "train": [
         _URL + "harmless-base/train.jsonl.gz",
@@ -50,10 +64,10 @@ class HhRlhfEn(datasets.GeneratorBasedBuilder):
             datasets.SplitGenerator(name=datasets.Split.TEST, gen_kwargs={"filepaths": file_path["test"]}),
         ]
 
-    def _generate_examples(self, filepaths: List[str]):
+    def _generate_examples(self, filepaths: list[str]):
         key = 0
         for filepath in filepaths:
-            with open(filepath, "r", encoding="utf-8") as f:
+            with open(filepath, encoding="utf-8") as f:
                 for row in f:
                     data = json.loads(row)
                     chosen = data["chosen"]

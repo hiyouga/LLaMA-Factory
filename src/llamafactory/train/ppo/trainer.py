@@ -1,4 +1,4 @@
-# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+# Copyright 2025 HuggingFace Inc. and the LlamaFactory team.
 #
 # This code is inspired by the HuggingFace's TRL library.
 # https://github.com/huggingface/trl/blob/v0.8.0/trl/trainer/ppo_trainer.py
@@ -20,7 +20,7 @@ import os
 import sys
 import warnings
 from types import MethodType
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Optional
 
 import torch
 from accelerate.utils import DistributedDataParallelKwargs
@@ -37,7 +37,7 @@ from trl.core import PPODecorators, logprobs_from_logits
 from trl.models.utils import unwrap_model_for_generation
 from typing_extensions import override
 
-from ...extras.logging import get_logger
+from ...extras import logging
 from ...extras.misc import AverageMeter, count_parameters, get_current_device, get_logits_processor
 from ..callbacks import FixValueHeadModelCallback, SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
@@ -58,11 +58,11 @@ if TYPE_CHECKING:
     from ...hparams import FinetuningArguments, GeneratingArguments, ModelArguments
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 class CustomPPOTrainer(PPOTrainer, Trainer):
-    r"""Inherits PPOTrainer."""
+    r"""Inherit PPOTrainer."""
 
     def __init__(
         self,
@@ -70,7 +70,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         training_args: "Seq2SeqTrainingArguments",
         finetuning_args: "FinetuningArguments",
         generating_args: "GeneratingArguments",
-        callbacks: Optional[List["TrainerCallback"]],
+        callbacks: Optional[list["TrainerCallback"]],
         model: "AutoModelForCausalLMWithValueHead",
         reward_model: Optional["AutoModelForCausalLMWithValueHead"],
         ref_model: Optional["AutoModelForCausalLMWithValueHead"],
@@ -110,7 +110,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             ]
             ppo_config.accelerator_kwargs["deepspeed_plugin"] = training_args.deepspeed_plugin
             if ppo_config.log_with is not None:
-                logger.warning("PPOTrainer cannot use external logger when DeepSpeed is enabled.")
+                logger.warning_rank0("PPOTrainer cannot use external logger when DeepSpeed is enabled.")
                 ppo_config.log_with = None
 
         # Create optimizer and scheduler
@@ -156,7 +156,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             callbacks, self.accelerator.unwrap_model(self.model), self.tokenizer, self.optimizer, self.lr_scheduler
         )
         if self.args.max_steps > 0:
-            logger.info("max_steps is given, it will override any value given in num_train_epochs")
+            logger.info_rank0("max_steps is given, it will override any value given in num_train_epochs")
 
         self.amp_context = torch.autocast(self.current_device.type)
         warnings.simplefilter("ignore")  # remove gc warnings on ref model
@@ -177,13 +177,13 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             self.add_callback(SaveProcessorCallback(processor))
 
         if finetuning_args.use_badam:
-            from badam import BAdamCallback, clip_grad_norm_old_version
+            from badam import BAdamCallback, clip_grad_norm_old_version  # type: ignore
 
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
 
     def ppo_train(self, resume_from_checkpoint: Optional[str] = None) -> None:
-        r"""Implements training loop for the PPO stage, like _inner_training_loop() in Huggingface's Trainer."""
+        r"""Implement training loop for the PPO stage, like _inner_training_loop() in Huggingface's Trainer."""
         if resume_from_checkpoint is not None:
             raise ValueError("`resume_from_checkpoint` will be supported in the future version.")
 
@@ -210,20 +210,17 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         self.state.is_local_process_zero = self.is_local_process_zero()
         self.state.is_world_process_zero = self.is_world_process_zero()
 
-        if self.is_world_process_zero():
-            logger.info("***** Running training *****")
-            logger.info("  Num examples = {:,}".format(num_examples))
-            logger.info("  Num Epochs = {:,}".format(num_train_epochs))
-            logger.info("  Instantaneous batch size per device = {:,}".format(self.args.per_device_train_batch_size))
-            logger.info(
-                "  Total train batch size (w. parallel, buffer, distributed & accumulation) = {:,}".format(
-                    total_train_batch_size
-                )
-            )
-            logger.info("  Gradient Accumulation steps = {:,}".format(self.args.gradient_accumulation_steps))
-            logger.info("  Num optimization epochs per batch = {:,}".format(self.finetuning_args.ppo_epochs))
-            logger.info("  Total training steps = {:,}".format(max_steps))
-            logger.info("  Number of trainable parameters = {:,}".format(count_parameters(self.model)[0]))
+        logger.info_rank0("***** Running training *****")
+        logger.info_rank0(f"  Num examples = {num_examples:,}")
+        logger.info_rank0(f"  Num Epochs = {num_train_epochs:,}")
+        logger.info_rank0(f"  Instantaneous batch size per device = {self.args.per_device_train_batch_size:,}")
+        logger.info_rank0(
+            f"  Total train batch size (w. parallel, buffer, distributed & accumulation) = {total_train_batch_size:,}"
+        )
+        logger.info_rank0(f"  Gradient Accumulation steps = {self.args.gradient_accumulation_steps:,}")
+        logger.info_rank0(f"  Num optimization epochs per batch = {self.finetuning_args.ppo_epochs:,}")
+        logger.info_rank0(f"  Total training steps = {max_steps:,}")
+        logger.info_rank0(f"  Number of trainable parameters = {count_parameters(self.model)[0]:,}")
 
         dataiter = iter(self.dataloader)
         loss_meter = AverageMeter()
@@ -242,9 +239,11 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             self.tokenizer.padding_side = "right"  # change padding side
             queries, responses, rewards = [], [], []
             for idx in range(0, self.config.batch_size, self.config.mini_batch_size):
-                mini_batch_queries, mini_batch_responses = self.get_inputs(
-                    batch[idx : idx + self.config.mini_batch_size]
-                )
+                mini_batch = {
+                    "input_ids": batch["input_ids"][idx : idx + self.config.mini_batch_size],
+                    "attention_mask": batch["attention_mask"][idx : idx + self.config.mini_batch_size],
+                }
+                mini_batch_queries, mini_batch_responses = self.get_inputs(mini_batch)
                 mini_batch_rewards = self.get_rewards(mini_batch_queries, mini_batch_responses)
                 queries.extend(mini_batch_queries)
                 responses.extend(mini_batch_responses)
@@ -263,7 +262,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
                     batch["response"] = self.tokenizer.batch_decode(responses, skip_special_tokens=True)
                     self.log_stats(stats, batch, rewards)
                 except Exception:
-                    logger.warning("Failed to save stats due to unknown errors.")
+                    logger.warning_rank0("Failed to save stats due to unknown errors.")
 
             self.state.global_step += 1
             self.callback_handler.on_step_end(self.args, self.state, self.control)
@@ -284,7 +283,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
 
             if (step + 1) % self.args.save_steps == 0:  # save checkpoint
                 self.save_model(
-                    os.path.join(self.args.output_dir, "{}-{}".format(PREFIX_CHECKPOINT_DIR, self.state.global_step))
+                    os.path.join(self.args.output_dir, f"{PREFIX_CHECKPOINT_DIR}-{self.state.global_step}")
                 )
                 self.callback_handler.on_save(self.args, self.state, self.control)
 
@@ -334,19 +333,19 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         return lr_scheduler
 
     @torch.no_grad()
-    def get_inputs(self, batch: Dict[str, "torch.Tensor"]) -> Tuple[List["torch.Tensor"], List["torch.Tensor"]]:
-        r"""Generates model's responses given queries."""
+    def get_inputs(self, batch: dict[str, "torch.Tensor"]) -> tuple[list["torch.Tensor"], list["torch.Tensor"]]:
+        r"""Generate model's responses given queries."""
         if batch["input_ids"].size(0) == 1:  # handle llama2 ppo with gradient accumulation > 1
             start_index = (batch["input_ids"][0] != self.tokenizer.pad_token_id).nonzero()[0].item()
             for k, v in batch.items():
                 batch[k] = v[:, start_index:]
 
         with unwrap_model_for_generation(self.model, self.accelerator) as unwrapped_model:
-            unwrapped_model: "AutoModelForCausalLMWithValueHead" = self.accelerator.unwrap_model(self.model)
+            unwrapped_model: AutoModelForCausalLMWithValueHead = self.accelerator.unwrap_model(self.model)
             if self.model_args.upcast_layernorm:
                 layernorm_params = dump_layernorm(unwrapped_model)
 
-            generate_output: "torch.Tensor" = unwrapped_model.generate(
+            generate_output: torch.Tensor = unwrapped_model.generate(
                 generation_config=self.generation_config, logits_processor=get_logits_processor(), **batch
             )
             if self.model_args.upcast_layernorm:
@@ -374,10 +373,10 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
     @torch.no_grad()
     def get_rewards(
         self,
-        queries: List["torch.Tensor"],
-        responses: List["torch.Tensor"],
-    ) -> List["torch.Tensor"]:
-        r"""Computes scores using given reward model.
+        queries: list["torch.Tensor"],
+        responses: list["torch.Tensor"],
+    ) -> list["torch.Tensor"]:
+        r"""Compute scores using given reward model.
 
         Both inputs and outputs are put on CPU.
         """
@@ -386,8 +385,8 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             messages = self.tokenizer.batch_decode(token_ids, skip_special_tokens=False)
             return get_rewards_from_server(self.reward_model, messages)
 
-        batch: Dict[str, "torch.Tensor"] = self.prepare_model_inputs(queries, responses)
-        unwrapped_model: "AutoModelForCausalLMWithValueHead" = self.accelerator.unwrap_model(self.model)
+        batch: dict[str, torch.Tensor] = self.prepare_model_inputs(queries, responses)
+        unwrapped_model: AutoModelForCausalLMWithValueHead = self.accelerator.unwrap_model(self.model)
 
         if self.finetuning_args.reward_model_type == "lora":
             replace_model(unwrapped_model, target="reward")
@@ -396,7 +395,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             reward_model = self.reward_model
 
         with unwrap_model_for_generation(reward_model, self.accelerator), self.amp_context:  # support bf16
-            values: "torch.Tensor" = reward_model(**batch, return_dict=True, use_cache=False)[-1]
+            values: torch.Tensor = reward_model(**batch, return_dict=True, use_cache=False)[-1]
 
         if self.finetuning_args.reward_model_type == "lora":
             replace_model(unwrapped_model, target="default")
@@ -411,11 +410,11 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         model: "AutoModelForCausalLMWithValueHead",
         queries: "torch.Tensor",
         responses: "torch.Tensor",
-        model_inputs: Dict[str, Any],
+        model_inputs: dict[str, Any],
         return_logits: bool = False,
         response_masks: Optional["torch.Tensor"] = None,
-    ) -> Tuple["torch.Tensor", Optional["torch.Tensor"], "torch.Tensor", "torch.Tensor"]:
-        r"""Calculates model outputs in multiple batches.
+    ) -> tuple["torch.Tensor", Optional["torch.Tensor"], "torch.Tensor", "torch.Tensor"]:
+        r"""Calculate model outputs in multiple batches.
 
         Subclass and override to inject custom behavior.
         """
@@ -474,7 +473,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
 
     @override
     def save_model(self, output_dir: Optional[str] = None) -> None:
-        r"""Saves model checkpoint.
+        r"""Save model checkpoint.
 
         Subclass and override to inject custom behavior.
         """
@@ -487,7 +486,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
                 if self.args.should_save:
                     self._save(output_dir, state_dict=state_dict)
             except ValueError:
-                logger.warning(
+                logger.warning_rank0(
                     " stage3_gather_16bit_weights_on_model_save=false. Saving the full checkpoint instead,"
                     " use zero_to_fp32.py to recover weights"
                 )
@@ -498,5 +497,5 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
                 self.model.save_checkpoint(output_dir)
 
         elif self.args.should_save:
-            unwrapped_model: "AutoModelForCausalLMWithValueHead" = self.accelerator.unwrap_model(self.model)
+            unwrapped_model: AutoModelForCausalLMWithValueHead = self.accelerator.unwrap_model(self.model)
             self._save(output_dir, state_dict=unwrapped_model.state_dict())

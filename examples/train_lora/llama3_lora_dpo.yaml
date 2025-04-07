@@ -1,10 +1,12 @@
 ### model
 model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
+trust_remote_code: true
 
 ### method
 stage: dpo
 do_train: true
 finetuning_type: lora
+lora_rank: 8
 lora_target: all
 pref_beta: 0.1
 pref_loss: sigmoid  # choices: [sigmoid (dpo), orpo, simpo]
@@ -12,10 +14,11 @@ pref_loss: sigmoid  # choices: [sigmoid (dpo), orpo, simpo]
 ### dataset
 dataset: dpo_en_demo
 template: llama3
-cutoff_len: 1024
+cutoff_len: 2048
 max_samples: 1000
 overwrite_cache: true
 preprocessing_num_workers: 16
+dataloader_num_workers: 4
 
 ### output
 output_dir: saves/llama3-8b/lora/dpo
@@ -23,6 +26,7 @@ logging_steps: 10
 save_steps: 500
 plot_loss: true
 overwrite_output_dir: true
+save_only_model: false
 
 ### train
 per_device_train_batch_size: 1
@@ -33,9 +37,11 @@ lr_scheduler_type: cosine
 warmup_ratio: 0.1
 bf16: true
 ddp_timeout: 180000000
+resume_from_checkpoint: null
 
 ### eval
-val_size: 0.1
-per_device_eval_batch_size: 1
-eval_strategy: steps
-eval_steps: 500
+# eval_dataset: dpo_en_demo
+# val_size: 0.1
+# per_device_eval_batch_size: 1
+# eval_strategy: steps
+# eval_steps: 500

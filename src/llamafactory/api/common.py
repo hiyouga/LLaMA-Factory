@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,14 +13,14 @@
 # limitations under the License.
 
 import json
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any
 
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
 
 
-def dictify(data: "BaseModel") -> Dict[str, Any]:
+def dictify(data: "BaseModel") -> dict[str, Any]:
     try:  # pydantic v2
         return data.model_dump(exclude_unset=True)
     except AttributeError:  # pydantic v1

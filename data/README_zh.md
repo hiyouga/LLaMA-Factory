@@ -24,6 +24,7 @@
     "tools": "数据集代表工具描述的表头名称（默认：None）",
     "images": "数据集代表图像输入的表头名称（默认：None）",
     "videos": "数据集代表视频输入的表头名称（默认：None）",
+    "audios": "数据集代表音频输入的表头名称（默认：None）",
     "chosen": "数据集代表更优回答的表头名称（默认：None）",
     "rejected": "数据集代表更差回答的表头名称（默认：None）",
     "kto_tag": "数据集代表 KTO 标签的表头名称（默认：None）"
@@ -149,6 +150,10 @@ KTO 数据集需要提供额外的 `kto_tag` 列。详情请参阅 [sharegpt](#s
 ### 多模态视频数据集
 
 多模态视频数据集需要提供额外的 `videos` 列。详情请参阅 [sharegpt](#sharegpt-格式)。
+
+### 多模态音频数据集
+
+多模态音频数据集需要提供额外的 `audios` 列。详情请参阅 [sharegpt](#sharegpt-格式)。
 
 ## Sharegpt 格式
 
@@ -373,6 +378,48 @@ KTO 数据集需要额外添加一个 `kto_tag` 列，包含 bool 类型的人�
   }
 }
 ```
+
+### 多模态音频数据集
+
+- [样例数据集](mllm_audio_demo.json)
+
+多模态音频数据集需要额外添加一个 `audios` 列，包含输入音频的路径。
+
+注意音频的数量必须与文本中所有 `<audio>` 标记的数量严格一致。
+
+```json
+[
+  {
+    "conversations": [
+      {
+        "from": "human",
+        "value": "<audio>人类指令"
+      },
+      {
+        "from": "gpt",
+        "value": "模型回答"
+      }
+    ],
+    "audios": [
+      "音频路径（必填）"
+    ]
+  }
+]
+```
+
+对于上述格式的数据，`dataset_info.json` 中的*数据集描述*应为：
+
+```json
+"数据集名称": {
+  "file_name": "data.json",
+  "formatting": "sharegpt",
+  "columns": {
+    "messages": "conversations",
+    "audios": "audios"
+  }
+}
+```
+
 
 ### OpenAI 格式
 

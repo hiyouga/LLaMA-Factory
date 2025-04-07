@@ -1,4 +1,4 @@
-# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+# Copyright 2025 HuggingFace Inc. and the LlamaFactory team.
 #
 # This code is inspired by the HuggingFace's Transformers and Optimum library.
 # https://github.com/huggingface/transformers/blob/v4.41.0/src/transformers/utils/quantization_config.py
@@ -19,18 +19,17 @@
 import os
 import random
 from enum import Enum, unique
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any
 
 import torch
 from datasets import load_dataset
 from transformers import BitsAndBytesConfig, EetqConfig, GPTQConfig, HqqConfig
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.modeling_utils import is_fsdp_enabled
-from transformers.utils.versions import require_version
 
+from ...extras import logging
 from ...extras.constants import FILEEXT2TYPE
-from ...extras.logging import get_logger
-from ...extras.misc import get_current_device
+from ...extras.misc import check_version, get_current_device
 
 
 if TYPE_CHECKING:
@@ -39,7 +38,7 @@ if TYPE_CHECKING:
     from ...hparams import ModelArguments
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 @unique
@@ -55,11 +54,8 @@ class QuantizationMethod(str, Enum):
     HQQ = "hqq"
 
 
-def _get_quantization_dataset(tokenizer: "PreTrainedTokenizer", model_args: "ModelArguments") -> List[Dict[str, Any]]:
-    r"""Prepares the tokenized dataset to perform AutoGPTQ.
-
-    Do not use tensor output for JSON serialization.
-    """
+def _get_quantization_dataset(tokenizer: "PreTrainedTokenizer", model_args: "ModelArguments") -> list[dict[str, Any]]:
+    r"""Prepare the tokenized dataset to perform AutoGPTQ. Do not use tensor output for JSON serialization."""
     if os.path.isfile(model_args.export_quantization_dataset):
         data_path = FILEEXT2TYPE.get(model_args.export_quantization_dataset.split(".")[-1], None)
         data_files = model_args.export_quantization_dataset
@@ -84,7 +80,7 @@ def _get_quantization_dataset(tokenizer: "PreTrainedTokenizer", model_args: "Mod
                 raise ValueError("Cannot find satisfying example, considering decrease `export_quantization_maxlen`.")
 
             sample_idx = random.randint(0, len(dataset) - 1)
-            sample: Dict[str, "torch.Tensor"] = tokenizer(dataset[sample_idx]["text"], return_tensors="pt")
+            sample: dict[str, torch.Tensor] = tokenizer(dataset[sample_idx]["text"], return_tensors="pt")
             n_try += 1
             if sample["input_ids"].size(1) > maxlen:
                 break  # TODO: fix large maxlen
@@ -101,42 +97,40 @@ def configure_quantization(
     config: "PretrainedConfig",
     tokenizer: "PreTrainedTokenizer",
     model_args: "ModelArguments",
-    init_kwargs: Dict[str, Any],
+    init_kwargs: dict[str, Any],
 ) -> None:
-    r"""
-    Priority: PTQ-quantized (train/infer) > AutoGPTQ (export) > On-the-fly quantization (train/infer)
-    """
+    r"""Priority: PTQ-quantized (train/infer) > AutoGPTQ (export) > On-the-fly quantization (train/infer)."""
     if getattr(config, "quantization_config", None):  # ptq
         if model_args.quantization_bit is not None:
-            logger.warning("`quantization_bit` will not affect on the PTQ-quantized models.")
+            logger.warning_rank0("`quantization_bit` will not affect on the PTQ-quantized models.")
 
         if is_deepspeed_zero3_enabled() or is_fsdp_enabled():
             raise ValueError("DeepSpeed ZeRO-3 or FSDP is incompatible with PTQ-quantized models.")
 
-        quantization_config: Dict[str, Any] = getattr(config, "quantization_config", None)
+        quantization_config: dict[str, Any] = getattr(config, "quantization_config", None)
         quant_method = quantization_config.get("quant_method", "")
 
         if quant_method == QuantizationMethod.GPTQ:
-            require_version("auto_gptq>=0.5.0", "To fix: pip install auto_gptq>=0.5.0")
+            check_version("auto_gptq>=0.5.0", mandatory=True)
             quantization_config.pop("disable_exllama", None)  # remove deprecated args
             quantization_config["use_exllama"] = False  # disable exllama
 
         if quant_method == QuantizationMethod.AWQ:
-            require_version("autoawq", "To fix: pip install autoawq")
+            check_version("autoawq", mandatory=True)
 
         if quant_method == QuantizationMethod.AQLM:
-            require_version("aqlm>=1.1.0", "To fix: pip install aqlm[gpu]>=1.1.0")
+            check_version("aqlm>=1.1.0", mandatory=True)
             quantization_config["bits"] = 2
 
         quant_bits = quantization_config.get("bits", "?")
-        logger.info("Loading {}-bit {}-quantized model.".format(quant_bits, quant_method.upper()))
+        logger.info_rank0(f"Loading {quant_bits}-bit {quant_method.upper()}-quantized model.")
 
     elif model_args.export_quantization_bit is not None:  # auto-gptq
         if model_args.export_quantization_bit not in [8, 4, 3, 2]:
             raise ValueError("AutoGPTQ only accepts 2/3/4/8-bit quantization.")
 
-        require_version("optimum>=1.17.0", "To fix: pip install optimum>=1.17.0")
-        require_version("auto_gptq>=0.5.0", "To fix: pip install auto_gptq>=0.5.0")
+        check_version("optimum>=1.17.0", mandatory=True)
+        check_version("auto_gptq>=0.5.0", mandatory=True)
         from accelerate.utils import get_max_memory
 
         if getattr(config, "model_type", None) == "chatglm":
@@ -148,15 +142,15 @@ def configure_quantization(
         )
         init_kwargs["device_map"] = "auto"
         init_kwargs["max_memory"] = get_max_memory()
-        logger.info("Quantizing model to {} bit with AutoGPTQ.".format(model_args.export_quantization_bit))
+        logger.info_rank0(f"Quantizing model to {model_args.export_quantization_bit} bit with AutoGPTQ.")
 
     elif model_args.quantization_bit is not None:  # on-the-fly
         if model_args.quantization_method == QuantizationMethod.BITS_AND_BYTES.value:
             if model_args.quantization_bit == 8:
-                require_version("bitsandbytes>=0.37.0", "To fix: pip install bitsandbytes>=0.37.0")
+                check_version("bitsandbytes>=0.37.0", mandatory=True)
                 init_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_8bit=True)
             elif model_args.quantization_bit == 4:
-                require_version("bitsandbytes>=0.39.0", "To fix: pip install bitsandbytes>=0.39.0")
+                check_version("bitsandbytes>=0.39.0", mandatory=True)
                 init_kwargs["quantization_config"] = BitsAndBytesConfig(
                     load_in_4bit=True,
                     bnb_4bit_compute_dtype=model_args.compute_dtype,
@@ -174,11 +168,11 @@ def configure_quantization(
                 if model_args.quantization_bit != 4:
                     raise ValueError("Only 4-bit quantized model can use fsdp+qlora or auto device map.")
 
-                require_version("bitsandbytes>=0.43.0", "To fix: pip install bitsandbytes>=0.43.0")
+                check_version("bitsandbytes>=0.43.0", mandatory=True)
             else:
                 init_kwargs["device_map"] = {"": get_current_device()}  # change auto device map for inference
 
-            logger.info("Quantizing model to {} bit with bitsandbytes.".format(model_args.quantization_bit))
+            logger.info_rank0(f"Quantizing model to {model_args.quantization_bit} bit with bitsandbytes.")
         elif model_args.quantization_method == QuantizationMethod.HQQ.value:
             if model_args.quantization_bit not in [8, 6, 5, 4, 3, 2, 1]:
                 raise ValueError("HQQ only accepts 1/2/3/4/5/6/8-bit quantization.")
@@ -186,11 +180,11 @@ def configure_quantization(
             if is_deepspeed_zero3_enabled() or is_fsdp_enabled():
                 raise ValueError("HQQ quantization is incompatible with DeepSpeed ZeRO-3 or FSDP.")
 
-            require_version("hqq", "To fix: pip install hqq")
+            check_version("hqq", mandatory=True)
             init_kwargs["quantization_config"] = HqqConfig(
                 nbits=model_args.quantization_bit, quant_zero=False, quant_scale=False, axis=0
             )  # use ATEN kernel (axis=0) for performance
-            logger.info("Quantizing model to {} bit with HQQ.".format(model_args.quantization_bit))
+            logger.info_rank0(f"Quantizing model to {model_args.quantization_bit} bit with HQQ.")
         elif model_args.quantization_method == QuantizationMethod.EETQ.value:
             if model_args.quantization_bit != 8:
                 raise ValueError("EETQ only accepts 8-bit quantization.")
@@ -198,6 +192,6 @@ def configure_quantization(
             if is_deepspeed_zero3_enabled() or is_fsdp_enabled():
                 raise ValueError("EETQ quantization is incompatible with DeepSpeed ZeRO-3 or FSDP.")
 
-            require_version("eetq", "To fix: pip install eetq")
+            check_version("eetq", mandatory=True)
             init_kwargs["quantization_config"] = EetqConfig()
-            logger.info("Quantizing model to {} bit with EETQ.".format(model_args.quantization_bit))
+            logger.info_rank0(f"Quantizing model to {model_args.quantization_bit} bit with EETQ.")

@@ -1,4 +1,4 @@
-# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+# Copyright 2025 HuggingFace Inc. and the LlamaFactory team.
 #
 # This code is inspired by the HuggingFace's transformers library.
 # https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/trainer.py
@@ -18,14 +18,15 @@
 import json
 import os
 from types import MethodType
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 import torch
 from transformers import Trainer
 from typing_extensions import override
 
-from ...extras.logging import get_logger
-from ..callbacks import FixValueHeadModelCallback, PissaConvertCallback, SaveProcessorCallback
+from ...extras import logging
+from ...extras.packages import is_transformers_version_greater_than
+from ..callbacks import FixValueHeadModelCallback, SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
 
 
@@ -36,14 +37,20 @@ if TYPE_CHECKING:
     from ...hparams import FinetuningArguments
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 class PairwiseTrainer(Trainer):
     r"""Inherits Trainer to compute pairwise loss."""
 
-    def __init__(self, finetuning_args: "FinetuningArguments", processor: Optional["ProcessorMixin"], **kwargs) -> None:
+    def __init__(
+        self, finetuning_args: "FinetuningArguments", processor: Optional["ProcessorMixin"], **kwargs
+    ) -> None:
+        if is_transformers_version_greater_than("4.46"):
+            kwargs["processing_class"] = kwargs.pop("tokenizer")
+
         super().__init__(**kwargs)
+        self.model_accepts_loss_kwargs = False  # overwrite trainer's default behavior
         self.finetuning_args = finetuning_args
         self.can_return_loss = True  # override property to return eval_loss
         self.add_callback(FixValueHeadModelCallback)
@@ -51,11 +58,8 @@ class PairwiseTrainer(Trainer):
         if processor is not None:
             self.add_callback(SaveProcessorCallback(processor))
 
-        if finetuning_args.pissa_convert:
-            self.add_callback(PissaConvertCallback)
-
         if finetuning_args.use_badam:
-            from badam import BAdamCallback, clip_grad_norm_old_version
+            from badam import BAdamCallback, clip_grad_norm_old_version  # type: ignore
 
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
@@ -74,10 +78,17 @@ class PairwiseTrainer(Trainer):
         return super().create_scheduler(num_training_steps, optimizer)
 
     @override
+    def _get_train_sampler(self) -> Optional["torch.utils.data.Sampler"]:
+        if self.finetuning_args.disable_shuffling:
+            return torch.utils.data.SequentialSampler(self.train_dataset)
+
+        return super()._get_train_sampler()
+
+    @override
     def compute_loss(
-        self, model: "PreTrainedModel", inputs: Dict[str, "torch.Tensor"], return_outputs: bool = False
-    ) -> Union["torch.Tensor", Tuple["torch.Tensor", List["torch.Tensor"]]]:
-        r"""Computes pairwise loss. The first n examples are chosen and the last n examples are rejected.
+        self, model: "PreTrainedModel", inputs: dict[str, "torch.Tensor"], return_outputs: bool = False, **kwargs
+    ) -> Union["torch.Tensor", tuple["torch.Tensor", list["torch.Tensor"]]]:
+        r"""Compute pairwise loss. The first n examples are chosen and the last n examples are rejected.
 
         Subclass and override to inject custom behavior.
 
@@ -99,7 +110,7 @@ class PairwiseTrainer(Trainer):
             return loss
 
     def save_predictions(self, predict_results: "PredictionOutput") -> None:
-        r"""Saves model predictions to `output_dir`.
+        r"""Save model predictions to `output_dir`.
 
         A custom behavior that not contained in Seq2SeqTrainer.
         """
@@ -107,11 +118,11 @@ class PairwiseTrainer(Trainer):
             return
 
         output_prediction_file = os.path.join(self.args.output_dir, "generated_predictions.jsonl")
-        logger.info(f"Saving prediction results to {output_prediction_file}")
+        logger.info_rank0(f"Saving prediction results to {output_prediction_file}")
         chosen_scores, rejected_scores = predict_results.predictions
 
         with open(output_prediction_file, "w", encoding="utf-8") as writer:
-            res: List[str] = []
+            res: list[str] = []
             for c_score, r_score in zip(chosen_scores, rejected_scores):
                 res.append(json.dumps({"chosen": round(float(c_score), 2), "rejected": round(float(r_score), 2)}))
 
