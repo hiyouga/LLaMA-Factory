@@ -18,10 +18,12 @@ cutoff_len: 2048
 max_samples: 50
 overwrite_cache: true
 preprocessing_num_workers: 16
+dataloader_num_workers: 4
 
 ### output
 output_dir: saves/llama3-8b/lora/predict
 overwrite_output_dir: true
+report_to: none  # choices: [none, wandb, tensorboard, swanlab, mlflow]
 
 ### eval
 per_device_eval_batch_size: 1
