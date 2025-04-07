@@ -111,8 +111,6 @@ def get_trainer_info(lang: str, output_path: os.PathLike, do_train: bool) -> tup
     if os.path.isfile(running_log_path):
         with open(running_log_path, encoding="utf-8") as f:
             running_log = f.read()[-20000:]  # avoid lengthy log
-    print(trainer_log_path)
-    print(running_log_path)
     if os.path.isfile(trainer_log_path):
         trainer_log: list[dict[str, Any]] = []
         if "Adaclip" in output_path and "Adaclip" in running_log_path:
@@ -121,21 +119,20 @@ def get_trainer_info(lang: str, output_path: os.PathLike, do_train: bool) -> tup
                     for line in f:
                         if "Finish training" in line:
                             trainer_log: List[Dict[str, Any]] = []
-                        if "Loss" in line:
+                        if "Train Epoch" in line:
                             trainer_log.append(line)
                 if len(trainer_log) != 0:
                     latest_log = trainer_log[-1]
                     matches = re.findall(r"[+\-]?(?=\.\d|\d)(?:0|[1-9]\d*)?(?:\.\d*)?(?:\d[eE][+\-]?\d+)|[+-]?\d+\.\d+|[+-]?\d+",
-                                            line)
+                                            latest_log)
                     if len(matches) < 2:
                         return running_log, running_progress, running_loss
-                    current_epoch = int(matches[8])
-                    current_batch = int(matches[9])
-                    total_batch = int(matches[10])
+                    current_epoch = int(matches[6])
+                    current_batch = int(matches[7])
+                    total_batch = int(matches[8])
                     current_steps = (current_epoch ) * total_batch + current_batch
                     total_steps = (current_epoch + 1) * total_batch
                     percentage = current_steps / total_steps * 100
-                    eta = matches[13] + ":" + matches[14] + ":" + matches[15]
                     label = "Running {:d}/{:d}:".format(
                         current_steps,
                         total_steps

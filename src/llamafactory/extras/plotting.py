@@ -1,26 +1,38 @@
-# Copyright (C) 2025 Intel Corporation
-# SPDX-License-Identifier: Apache-2.0
+# Copyright 2025 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import json
 import math
 import os
 import re
-from typing import Any, Dict, List
+from typing import Any
 
 from transformers.trainer import TRAINER_STATE_NAME
 
-from .logging import get_logger
+from . import logging
 from .packages import is_matplotlib_available
+
 
 if is_matplotlib_available():
     import matplotlib.figure
     import matplotlib.pyplot as plt
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
-def smooth(scalars: List[float]) -> List[float]:
+def smooth(scalars: list[float]) -> list[float]:
     r"""EMA implementation according to TensorBoard."""
     if len(scalars) == 0:
         return []
@@ -35,8 +47,8 @@ def smooth(scalars: List[float]) -> List[float]:
     return smoothed
 
 
-def gen_loss_plot(trainer_log: List[Dict[str, Any]]) -> "matplotlib.figure.Figure":
-    r"""Plots loss curves in LlamaBoard."""
+def gen_loss_plot(trainer_log: list[dict[str, Any]]) -> "matplotlib.figure.Figure":
+    r"""Plot loss curves in LlamaBoard."""
     plt.close("all")
     plt.switch_backend("agg")
     fig = plt.figure()
@@ -54,8 +66,7 @@ def gen_loss_plot(trainer_log: List[Dict[str, Any]]) -> "matplotlib.figure.Figur
     ax.set_ylabel("loss")
     return fig
 
-
-def gen_loss_plot_adaclip(trainer_log: List[Dict[str, Any]]) -> "matplotlib.figure.Figure":
+def gen_loss_plot_adaclip(trainer_log: list[dict[str, Any]]) -> "matplotlib.figure.Figure":
     r"""Plots loss curves in LlamaBoard."""
     plt.close("all")
     plt.switch_backend("agg")
@@ -67,12 +78,12 @@ def gen_loss_plot_adaclip(trainer_log: List[Dict[str, Any]]) -> "matplotlib.figu
             matches = re.findall(
                 r"[+\-]?(?=\.\d|\d)(?:0|[1-9]\d*)?(?:\.\d*)?(?:\d[eE][+\-]?\d+)|[+-]?\d+\.\d+|[+-]?\d+", log
             )
-            current_epoch = int(matches[8])
-            current_batch = int(matches[9])
-            total_batch = int(matches[10])
+            current_epoch = int(matches[6])
+            current_batch = int(matches[7])
+            total_batch = int(matches[8])
             current_steps = (current_epoch) * total_batch + current_batch
             total_steps = (current_epoch + 1) * total_batch
-            loss = float(matches[12])
+            loss = float(matches[10])
             steps.append(current_steps)
             losses.append(loss)
 
@@ -84,7 +95,7 @@ def gen_loss_plot_adaclip(trainer_log: List[Dict[str, Any]]) -> "matplotlib.figu
     return fig
 
 
-def gen_loss_plot_clip(trainer_log: List[Dict[str, Any]]) -> "matplotlib.figure.Figure":
+def gen_loss_plot_clip(trainer_log: list[dict[str, Any]]) -> "matplotlib.figure.Figure":
     r"""Plots loss curves in LlamaBoard."""
     plt.close("all")
     plt.switch_backend("agg")
@@ -120,11 +131,10 @@ def gen_loss_plot_clip(trainer_log: List[Dict[str, Any]]) -> "matplotlib.figure.
     bx.set_ylabel("acc")
     return fig
 
-
-def plot_loss(save_dictionary: str, keys: List[str] = ["loss"]) -> None:
-    r"""Plots loss curves and saves the image."""
+def plot_loss(save_dictionary: str, keys: list[str] = ["loss"]) -> None:
+    r"""Plot loss curves and saves the image."""
     plt.switch_backend("agg")
-    with open(os.path.join(save_dictionary, TRAINER_STATE_NAME), "r", encoding="utf-8") as f:
+    with open(os.path.join(save_dictionary, TRAINER_STATE_NAME), encoding="utf-8") as f:
         data = json.load(f)
 
     for key in keys:
@@ -135,13 +145,13 @@ def plot_loss(save_dictionary: str, keys: List[str] = ["loss"]) -> None:
                 metrics.append(data["log_history"][i][key])
 
         if len(metrics) == 0:
-            logger.warning(f"No metric {key} to plot.")
+            logger.warning_rank0(f"No metric {key} to plot.")
             continue
 
         plt.figure()
         plt.plot(steps, metrics, color="#1f77b4", alpha=0.4, label="original")
         plt.plot(steps, smooth(metrics), color="#1f77b4", label="smoothed")
-        plt.title("training {} of {}".format(key, save_dictionary))
+        plt.title(f"training {key} of {save_dictionary}")
         plt.xlabel("step")
         plt.ylabel(key)
         plt.legend()

@@ -78,12 +78,12 @@ def gen_loss_plot_adaclip(trainer_log: list[dict[str, Any]]) -> "matplotlib.figu
             matches = re.findall(
                 r"[+\-]?(?=\.\d|\d)(?:0|[1-9]\d*)?(?:\.\d*)?(?:\d[eE][+\-]?\d+)|[+-]?\d+\.\d+|[+-]?\d+", log
             )
-            current_epoch = int(matches[8])
-            current_batch = int(matches[9])
-            total_batch = int(matches[10])
+            current_epoch = int(matches[6])
+            current_batch = int(matches[7])
+            total_batch = int(matches[8])
             current_steps = (current_epoch) * total_batch + current_batch
             total_steps = (current_epoch + 1) * total_batch
-            loss = float(matches[12])
+            loss = float(matches[10])
             steps.append(current_steps)
             losses.append(loss)
 
