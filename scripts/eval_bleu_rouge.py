@@ -21,9 +21,9 @@ from datasets import load_dataset
 
 
 try:
-    import jieba
-    from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu
-    from rouge_chinese import Rouge
+    import jieba  # type: ignore
+    from nltk.translate.bleu_score import SmoothingFunction, sentence_bleu  # type: ignore
+    from rouge_chinese import Rouge  # type: ignore
 
     jieba.setLogLevel(logging.CRITICAL)
     jieba.initialize()
@@ -52,6 +52,7 @@ def compute_metrics(sample):
     metric_result = {}
     for k, v in result.items():
         metric_result[k] = round(v["f"] * 100, 4)
+
     metric_result["bleu-4"] = round(bleu_score * 100, 4)
 
     return metric_result
