@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,32 @@ CSS = r"""
   color: white !important;
   background: black !important;
   border-radius: 100vh !important;
+}
+
+.thinking-summary {
+  padding: 8px !important;
+}
+
+.thinking-summary span {
+  border-radius: 4px !important;
+  padding: 4px !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  background: rgb(245, 245, 245) !important;
+}
+
+.dark .thinking-summary span {
+  background: rgb(73, 73, 73) !important;
+}
+
+.thinking-container {
+  border-left: 2px solid #a6a6a6 !important;
+  padding-left: 10px !important;
+  margin: 4px 0 !important;
+}
+
+.thinking-container p {
+  color: #a6a6a6 !important;
 }
 
 .modal-box {

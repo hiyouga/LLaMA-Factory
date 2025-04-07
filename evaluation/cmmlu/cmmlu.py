@@ -1,3 +1,4 @@
+# Copyright 2025 the LlamaFactory team.
 # Copyright 2020 The HuggingFace Datasets Authors and the current dataset script contributor.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,14 +22,15 @@ import pandas as pd
 _CITATION = """\
 @article{li2023cmmlu,
   title={CMMLU: Measuring massive multitask language understanding in Chinese},
-  author={Haonan Li and Yixuan Zhang and Fajri Koto and Yifei Yang and Hai Zhao and Yeyun Gong and Nan Duan and Timothy Baldwin},
+  author={Haonan Li and Yixuan Zhang and Fajri Koto and Yifei Yang and others,
   journal={arXiv preprint arXiv:2306.09212},
   year={2023}
 }
 """
 
 _DESCRIPTION = """\
-CMMLU is a comprehensive Chinese assessment suite specifically designed to evaluate the advanced knowledge and reasoning abilities of LLMs within the Chinese language and cultural context.
+CMMLU is a comprehensive Chinese assessment suite specifically designed to evaluate the advanced knowledge
+and reasoning abilities of LLMs within the Chinese language and cultural context.
 """
 
 _HOMEPAGE = "https://github.com/haonan-li/CMMLU"

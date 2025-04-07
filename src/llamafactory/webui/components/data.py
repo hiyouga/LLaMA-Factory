@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 import json
 import os
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any
 
 from ...extras.constants import DATA_CONFIG
 from ...extras.packages import is_gradio_available
@@ -40,8 +40,9 @@ def next_page(page_index: int, total_num: int) -> int:
 
 
 def can_preview(dataset_dir: str, dataset: list) -> "gr.Button":
+    r"""Check if the dataset is a local dataset."""
     try:
-        with open(os.path.join(dataset_dir, DATA_CONFIG), "r", encoding="utf-8") as f:
+        with open(os.path.join(dataset_dir, DATA_CONFIG), encoding="utf-8") as f:
             dataset_info = json.load(f)
     except Exception:
         return gr.Button(interactive=False)
@@ -56,8 +57,8 @@ def can_preview(dataset_dir: str, dataset: list) -> "gr.Button":
         return gr.Button(interactive=False)
 
 
-def _load_data_file(file_path: str) -> List[Any]:
-    with open(file_path, "r", encoding="utf-8") as f:
+def _load_data_file(file_path: str) -> list[Any]:
+    with open(file_path, encoding="utf-8") as f:
         if file_path.endswith(".json"):
             return json.load(f)
         elif file_path.endswith(".jsonl"):
@@ -66,8 +67,9 @@ def _load_data_file(file_path: str) -> List[Any]:
             return list(f)
 
 
-def get_preview(dataset_dir: str, dataset: list, page_index: int) -> Tuple[int, list, "gr.Column"]:
-    with open(os.path.join(dataset_dir, DATA_CONFIG), "r", encoding="utf-8") as f:
+def get_preview(dataset_dir: str, dataset: list, page_index: int) -> tuple[int, list, "gr.Column"]:
+    r"""Get the preview samples from the dataset."""
+    with open(os.path.join(dataset_dir, DATA_CONFIG), encoding="utf-8") as f:
         dataset_info = json.load(f)
 
     data_path = os.path.join(dataset_dir, dataset_info[dataset[0]]["file_name"])
@@ -81,7 +83,7 @@ def get_preview(dataset_dir: str, dataset: list, page_index: int) -> Tuple[int, 
     return len(data), data[PAGE_SIZE * page_index : PAGE_SIZE * (page_index + 1)], gr.Column(visible=True)
 
 
-def create_preview_box(dataset_dir: "gr.Textbox", dataset: "gr.Dropdown") -> Dict[str, "Component"]:
+def create_preview_box(dataset_dir: "gr.Textbox", dataset: "gr.Dropdown") -> dict[str, "Component"]:
     data_preview_btn = gr.Button(interactive=False, scale=1)
     with gr.Column(visible=False, elem_classes="modal-box") as preview_box:
         with gr.Row():

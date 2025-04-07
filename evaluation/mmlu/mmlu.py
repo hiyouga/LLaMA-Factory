@@ -1,3 +1,4 @@
+# Copyright 2025 the LlamaFactory team.
 # Copyright 2020 The HuggingFace Datasets Authors and the current dataset script contributor.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,14 +22,15 @@ import pandas as pd
 _CITATION = """\
 @article{hendryckstest2021,
   title={Measuring Massive Multitask Language Understanding},
-  author={Dan Hendrycks and Collin Burns and Steven Basart and Andy Zou and Mantas Mazeika and Dawn Song and Jacob Steinhardt},
+  author={Dan Hendrycks and Collin Burns and others},
   journal={Proceedings of the International Conference on Learning Representations (ICLR)},
   year={2021}
 }
 """
 
 _DESCRIPTION = """\
-Measuring Massive Multitask Language Understanding by Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn Song, and Jacob Steinhardt (ICLR 2021).
+Measuring Massive Multitask Language Understanding by Dan Hendrycks, Collin Burns, Steven Basart,
+Andy Zou, Mantas Mazeika, Dawn Song, and Jacob Steinhardt (ICLR 2021).
 """
 
 _HOMEPAGE = "https://github.com/hendrycks/test"
@@ -158,5 +160,4 @@ class MMLU(datasets.GeneratorBasedBuilder):
         df = pd.read_csv(filepath, header=None)
         df.columns = ["question", "A", "B", "C", "D", "answer"]
 
-        for i, instance in enumerate(df.to_dict(orient="records")):
-            yield i, instance
+        yield from enumerate(df.to_dict(orient="records"))

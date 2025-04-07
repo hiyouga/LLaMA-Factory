@@ -1,4 +1,4 @@
-# Copyright 2024 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any
 
 from .chatter import WebChatModel
-from .common import load_config
+from .common import create_ds_config, get_time, load_config
 from .locales import LOCALES
 from .manager import Manager
 from .runner import Runner
-from .utils import create_ds_config, get_time
 
 
 if TYPE_CHECKING:
@@ -27,6 +26,8 @@ if TYPE_CHECKING:
 
 
 class Engine:
+    r"""A general engine to control the behaviors of Web UI."""
+
     def __init__(self, demo_mode: bool = False, pure_chat: bool = False) -> None:
         self.demo_mode = demo_mode
         self.pure_chat = pure_chat
@@ -36,26 +37,38 @@ class Engine:
         if not demo_mode:
             create_ds_config()
 
+<<<<<<< HEAD
     def _update_component(self, input_dict: Dict[str, Dict[str, Any]]) -> Dict["Component", "Component"]:
         r"""Gets the dict to update the components."""
         output_dict: Dict["Component", "Component"] = {}
+=======
+    def _update_component(self, input_dict: dict[str, dict[str, Any]]) -> dict["Component", "Component"]:
+        r"""Update gradio components according to the (elem_id, properties) mapping."""
+        output_dict: dict[Component, Component] = {}
+>>>>>>> 7e0cdb1a76c1ac6b69de86d4ba40e9395f883cdb
         for elem_id, elem_attr in input_dict.items():
             elem = self.manager.get_elem_by_id(elem_id)
             output_dict[elem] = elem.__class__(**elem_attr)
         return output_dict
 
     def resume(self):
+<<<<<<< HEAD
         user_config = load_config() if not self.demo_mode else {}
         lang = user_config.get("lang", None) or "zh"
 
+=======
+        r"""Get the initial value of gradio components and restores training status if necessary."""
+        user_config = load_config() if not self.demo_mode else {}  # do not use config in demo mode
+        lang = user_config.get("lang", None) or "en"
+>>>>>>> 7e0cdb1a76c1ac6b69de86d4ba40e9395f883cdb
         init_dict = {"top.lang": {"value": lang}, "infer.chat_box": {"visible": self.chatter.loaded}}
 
         if not self.pure_chat:
             current_time = get_time()
             init_dict["train.current_time"] = {"value": current_time}
-            init_dict["train.output_dir"] = {"value": "train_{}".format(current_time)}
-            init_dict["train.config_path"] = {"value": "{}.yaml".format(current_time)}
-            init_dict["eval.output_dir"] = {"value": "eval_{}".format(current_time)}
+            init_dict["train.output_dir"] = {"value": f"train_{current_time}"}
+            init_dict["train.config_path"] = {"value": f"{current_time}.yaml"}
+            init_dict["eval.output_dir"] = {"value": f"eval_{current_time}"}
             init_dict["infer.mm_box"] = {"visible": False}
 
             if user_config.get("last_model", None):
@@ -71,6 +84,7 @@ class Engine:
                 yield self._update_component({"eval.resume_btn": {"value": True}})
 
     def change_lang(self, lang: str):
+        r"""Update the displayed language of gradio components."""
         return {
             elem: elem.__class__(**LOCALES[elem_name][lang])
             for elem_name, elem in self.manager.get_elem_iter()

@@ -159,14 +159,23 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
+# vscode
+.vscode/
+
+# uv
+uv.lock
+
 # custom .gitignore
 *.db
 *.csv
 ms_cache/
 hf_cache/
+om_cache/
 cache/
 
 saves/
 output/
 tensorboard/
 wandb/
+swanlog/
+generated_predictions.jsonl
