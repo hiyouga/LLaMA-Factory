@@ -644,6 +644,11 @@ def get_ray_trainer(
     if not ray_args.use_ray:
         raise ValueError("Ray was not enabled. Please set `USE_RAY=1` to enable ray.")
 
+    if ray_args.ray_init_kwargs is not None:
+        import ray
+
+        ray.init(**ray_args.ray_init_kwargs)
+
     trainer = TorchTrainer(
         training_function,
         train_loop_config=train_loop_config,
