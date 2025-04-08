@@ -1319,10 +1319,6 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
         audios: list["AudioInput"],
         processor: "MMProcessor",
     ) -> dict[str, "torch.Tensor"]:
-        cache_key = self._generate_cache_key(images, videos, audios, processor)
-        if cache_key in self._mm_inputs_cache:
-            return self._mm_inputs_cache[cache_key]
-
         image_processor: BaseImageProcessor = getattr(processor, "image_processor", None)
         feature_extractor: SequenceFeatureExtractor = getattr(processor, "feature_extractor", None)
         mm_inputs = {}
