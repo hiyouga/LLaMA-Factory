@@ -97,12 +97,13 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
         processor = AutoProcessor.from_pretrained(model_args.model_name_or_path, **init_kwargs)
         patch_processor(processor, tokenizer, model_args)
     except Exception as e:
-        logger.debug(f"Processor was not found: {e}.")
+        logger.debug(f"Failed to load processor: {e}.")
         processor = None
 
     # Avoid load tokenizer, see:
     # https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/models/auto/processing_auto.py#L324
     if processor is not None and "Processor" not in processor.__class__.__name__:
+        logger.debug("The loaded processor is not an instance of Processor. Dropping it.")
         processor = None
 
     return {"tokenizer": tokenizer, "processor": processor}
@@ -157,7 +158,7 @@ def load_model(
                 model = load_class.from_config(config, trust_remote_code=model_args.trust_remote_code)
             else:
                 model = load_class.from_pretrained(**init_kwargs)
-                if load_class is AutoModelForTextToWaveform:
+                if getattr(model.config, "model_type", None) == "qwen2_5_omni":
                     model = model.thinker  # use part of Omni model
 
         if model_args.mixture_of_depths == "convert":

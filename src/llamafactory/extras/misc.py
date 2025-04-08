@@ -17,6 +17,7 @@
 
 import gc
 import os
+import socket
 from typing import TYPE_CHECKING, Any, Literal, Union
 
 import torch
@@ -88,7 +89,7 @@ def check_version(requirement: str, mandatory: bool = False) -> None:
 
 def check_dependencies() -> None:
     r"""Check the version of the required packages."""
-    check_version("transformers>=4.41.2,<=4.50.0,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0")
+    check_version("transformers>=4.41.2,<=4.51.1,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0")
     check_version("datasets>=2.16.0,<=3.4.1")
     check_version("accelerate>=0.34.0,<=1.5.2")
     check_version("peft>=0.14.0,<=0.15.0")
@@ -278,10 +279,16 @@ def use_ray() -> bool:
 
 def find_available_port() -> int:
     """Find an available port on the local machine."""
-    import socket
-
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind(("", 0))
     port = sock.getsockname()[1]
     sock.close()
     return port
+
+
+def fix_proxy(ipv6_enabled: bool) -> None:
+    """Fix proxy settings for gradio ui."""
+    os.environ["no_proxy"] = "localhost,127.0.0.1,0.0.0.0"
+    if ipv6_enabled:
+        for name in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY"):
+            os.environ.pop(name, None)

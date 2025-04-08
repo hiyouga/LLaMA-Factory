@@ -14,7 +14,7 @@
 
 import os
 from collections import OrderedDict, defaultdict
-from enum import Enum
+from enum import Enum, unique
 from typing import Optional
 
 from peft.utils import SAFETENSORS_WEIGHTS_NAME as SAFE_ADAPTER_WEIGHTS_NAME
@@ -113,6 +113,19 @@ class DownloadSource(str, Enum):
     DEFAULT = "hf"
     MODELSCOPE = "ms"
     OPENMIND = "om"
+
+
+@unique
+class QuantizationMethod(str, Enum):
+    r"""Borrowed from `transformers.utils.quantization_config.QuantizationMethod`."""
+
+    BNB = "bnb"
+    GPTQ = "gptq"
+    AWQ = "awq"
+    AQLM = "aqlm"
+    QUANTO = "quanto"
+    EETQ = "eetq"
+    HQQ = "hqq"
 
 
 class RopeScaling(str, Enum):
@@ -1107,6 +1120,30 @@ register_model_group(
         },
     },
     template="mllama",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
+        "Llama-4-Scout-17B-16E": {
+            DownloadSource.DEFAULT: "meta-llama/Llama-4-Scout-17B-16E",
+            DownloadSource.MODELSCOPE: "LLM-Research/Llama-4-Scout-17B-16E",
+        },
+        "Llama-4-Scout-17B-16E-Instruct": {
+            DownloadSource.DEFAULT: "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Llama-4-Scout-17B-16E-Instruct",
+        },
+        "Llama-4-Maverick-17B-128E": {
+            DownloadSource.DEFAULT: "meta-llama/Llama-4-Maverick-17B-128E",
+            DownloadSource.MODELSCOPE: "LLM-Research/Llama-4-Maverick-17B-128E",
+        },
+        "Llama-4-Maverick-17B-128E-Instruct": {
+            DownloadSource.DEFAULT: "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Llama-4-Maverick-17B-128E-Instruct",
+        },
+    },
+    template="llama4",
     multimodal=True,
 )
 

@@ -164,11 +164,12 @@ class PackedSupervisedDatasetProcessor(SupervisedDatasetProcessor):
         model_inputs = defaultdict(list)
         knapsacks = greedy_knapsack(lengths, self.data_args.cutoff_len)
         for knapsack in knapsacks:
-            packed_input_ids, packed_attention_masks, packed_labels = [], [], []
+            packed_input_ids, packed_attention_masks, packed_position_ids, packed_labels = [], [], [], []
             packed_images, packed_videos, packed_audios = [], [], []
             for i, length in enumerate(knapsack):
                 index = length2indexes[length].pop()
                 packed_input_ids += batch_input_ids[index]
+                packed_position_ids += list(range(len(batch_input_ids[index])))  # NOTE: pad_to_multiple_of ignore this
                 packed_labels += batch_labels[index]
                 packed_images += batch_images[index]
                 packed_videos += batch_videos[index]
@@ -181,6 +182,7 @@ class PackedSupervisedDatasetProcessor(SupervisedDatasetProcessor):
             if len(packed_input_ids) < self.data_args.cutoff_len + 1:  # avoid flash_attn drops attn mask
                 pad_length = self.data_args.cutoff_len - len(packed_input_ids) + 1
                 packed_input_ids += [self.tokenizer.pad_token_id] * pad_length
+                packed_position_ids += [0] * pad_length
                 packed_labels += [IGNORE_INDEX] * pad_length
                 if self.data_args.neat_packing:
                     packed_attention_masks += [0] * pad_length
@@ -192,6 +194,7 @@ class PackedSupervisedDatasetProcessor(SupervisedDatasetProcessor):
 
             model_inputs["input_ids"].append(packed_input_ids)
             model_inputs["attention_mask"].append(packed_attention_masks)
+            model_inputs["position_ids"].append(packed_position_ids)
             model_inputs["labels"].append(packed_labels)
             model_inputs["images"].append(packed_images or None)
             model_inputs["videos"].append(packed_videos or None)
