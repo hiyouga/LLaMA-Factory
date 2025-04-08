@@ -298,8 +298,9 @@ class KTODataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
         batch["kl_input_ids"] = kl_batch["input_ids"]
         batch["kl_attention_mask"] = kl_batch["attention_mask"]
         batch["kl_labels"] = kl_batch["labels"]
-        if "cross_attention_mask" in kl_batch:  # for mllama inputs.
+        if "cross_attention_mask" in kl_batch:  # for mllama inputs
             batch["kl_cross_attention_mask"] = kl_batch["cross_attention_mask"]
+
         if "token_type_ids" in kl_batch:
             batch["kl_token_type_ids"] = kl_batch["token_type_ids"]
 
