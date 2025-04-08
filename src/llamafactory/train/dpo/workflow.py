@@ -92,7 +92,7 @@ def run_dpo(
         trainer.save_state()
         if trainer.is_world_process_zero() and finetuning_args.plot_loss:
             keys = ["loss", "rewards/accuracies"]
-            if isinstance(dataset_module["eval_dataset"], dict):
+            if isinstance(dataset_module.get("eval_dataset"), dict):
                 keys += [f"eval_{key}_loss" for key in dataset_module["eval_dataset"].keys()]
             else:
                 keys += ["eval_loss"]
