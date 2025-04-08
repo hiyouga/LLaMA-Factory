@@ -26,6 +26,7 @@ save_steps: 500
 plot_loss: true
 overwrite_output_dir: true
 save_only_model: false
+report_to: none  # choices: [none, wandb, tensorboard, swanlab, mlflow]
 
 ### train
 per_device_train_batch_size: 1

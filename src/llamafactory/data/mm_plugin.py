@@ -467,6 +467,75 @@ class Gemma3Plugin(BasePlugin):
 
 
 @dataclass
+class Llama4Plugin(BasePlugin):
+    @override
+    def process_messages(
+        self,
+        messages: list[dict[str, str]],
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        processor: Optional["MMProcessor"],
+    ) -> list[dict[str, str]]:
+        self._validate_input(processor, images, videos, audios)
+        if self.expand_mm_tokens:
+            mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+            if "pixel_values" in mm_inputs:
+                image_height, image_width = mm_inputs["pixel_values"][0].shape[-2:]
+                num_patches_per_chunk = int(
+                    (image_height // processor.patch_size)
+                    * (image_width // processor.patch_size)
+                    // processor.downsample_ratio
+                )
+                aspect_ratios = mm_inputs.pop("aspect_ratios")
+
+        num_image_tokens = 0
+        messages = deepcopy(messages)
+        for message in messages:
+            content = message["content"]
+            if self.expand_mm_tokens:
+                placeholder_count = content.count(IMAGE_PLACEHOLDER)
+                prompt_splits = content.split(IMAGE_PLACEHOLDER)
+                new_content = []
+                for local_image_index, split_part in enumerate(prompt_splits):
+                    new_content.append(split_part)
+                    if local_image_index < placeholder_count:
+                        tokens_for_this_image = processor._prompt_split_image(
+                            aspect_ratios[num_image_tokens], num_patches_per_chunk
+                        )
+                        num_image_tokens += 1
+                        new_content.append(tokens_for_this_image)
+
+                content = "".join(new_content)
+            else:
+                content = content.replace(IMAGE_PLACEHOLDER, self.image_token)
+
+            message["content"] = content
+
+        if len(images) != num_image_tokens:
+            raise ValueError(f"The number of images does not match the number of {IMAGE_PLACEHOLDER} tokens.")
+
+        return messages
+
+    @override
+    def get_mm_inputs(
+        self,
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        imglens: list[int],
+        vidlens: list[int],
+        audlens: list[int],
+        batch_ids: list[list[int]],
+        processor: Optional["MMProcessor"],
+    ) -> dict[str, Union[list[int], "torch.Tensor"]]:
+        self._validate_input(processor, images, videos, audios)
+        mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+        mm_inputs.pop("aspect_ratios", None)
+        return mm_inputs
+
+
+@dataclass
 class LlavaPlugin(BasePlugin):
     @override
     def process_messages(
@@ -1179,7 +1248,9 @@ class Qwen2VLPlugin(BasePlugin):
                 video_maxlen=getattr(processor, "video_maxlen", 128),
             )
             mm_inputs.update(image_processor(images=None, videos=video_data["videos"], return_tensors="pt"))
-            mm_inputs["fps_per_video"] = video_data["fps_per_video"]
+            temporal_patch_size: int = getattr(image_processor, "temporal_patch_size", 2)
+            if "second_per_grid_ts" in processor.model_input_names:
+                mm_inputs["second_per_grid_ts"] = [temporal_patch_size / fps for fps in video_data["fps_per_video"]]
 
         return mm_inputs
 
@@ -1238,28 +1309,6 @@ class Qwen2VLPlugin(BasePlugin):
 
         return messages
 
-    @override
-    def get_mm_inputs(
-        self,
-        images: list["ImageInput"],
-        videos: list["VideoInput"],
-        audios: list["AudioInput"],
-        imglens: list[int],
-        vidlens: list[int],
-        audlens: list[int],
-        batch_ids: list[list[int]],
-        processor: Optional["MMProcessor"],
-    ) -> dict[str, Union[list[int], "torch.Tensor"]]:
-        self._validate_input(processor, images, videos, audios)
-        mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
-        fps_per_video = mm_inputs.pop("fps_per_video", [])
-        image_processor: BaseImageProcessor = getattr(processor, "image_processor")
-        temporal_patch_size: int = getattr(image_processor, "temporal_patch_size", 2)
-        if "second_per_grid_ts" in processor.model_input_names and fps_per_video:
-            mm_inputs["second_per_grid_ts"] = [temporal_patch_size / fps for fps in fps_per_video]
-
-        return mm_inputs
-
 
 class Qwen2OmniPlugin(Qwen2VLPlugin):
     @override
@@ -1290,7 +1339,10 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
                 video_maxlen=getattr(processor, "video_maxlen", 128),
             )
             mm_inputs.update(image_processor(images=None, videos=video_dict["videos"], return_tensors="pt"))
-            mm_inputs["fps_per_video"] = video_dict["fps_per_video"]
+            temporal_patch_size: int = getattr(image_processor, "temporal_patch_size", 2)
+            mm_inputs["video_second_per_grid"] = torch.tensor(
+                [temporal_patch_size / fps for fps in video_dict["fps_per_video"]]
+            )
 
         if len(audios) != 0:
             audios = self._regularize_audios(
@@ -1326,6 +1378,7 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
         else:
             mm_inputs = {}
 
+        image_processor: BaseImageProcessor = getattr(processor, "image_processor", None)
         num_audio_tokens, num_image_tokens, num_video_tokens = 0, 0, 0
         use_audio_in_video = getattr(processor, "use_audio_in_video", False)
 
@@ -1346,16 +1399,16 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
             if audio_lengths is None:
                 raise ValueError("audio_lengths should exist when use_audio_in_video is `True`.")
 
-            if not mm_inputs.get("video_grid_thw", None):
+            if mm_inputs.get("video_grid_thw", None) is None:
                 raise ValueError("video_grid_thw should exist when use_audio_in_video is `True`.")
 
             positions_list = []
-            for i, message in enumerate(messages):  # get multimodal index when use_audio
+            for message in messages:  # get multimodal index when use_audio
                 positions = []
                 for special_token in [self.audio_token, self.image_token, self.video_token]:
                     start = 0
                     while True:
-                        pos = message[i].find(special_token, start)
+                        pos = message["content"].find(special_token, start)
                         if pos == -1:
                             break
                         positions.append((pos, special_token))
@@ -1401,8 +1454,8 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
                         .view(-1, 1, 1)
                         .expand(
                             -1,
-                            video_grid_thw[num_video_tokens][1] // self.image_processor.merge_size,
-                            video_grid_thw[num_video_tokens][2] // self.image_processor.merge_size,
+                            video_grid_thw[num_video_tokens][1] // image_processor.merge_size,
+                            video_grid_thw[num_video_tokens][2] // image_processor.merge_size,
                         )
                         .flatten()
                         * mm_inputs["video_second_per_grid"][num_video_tokens]
@@ -1410,17 +1463,17 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
                     ).long()
                     t_ntoken_per_chunk = 50  # FIXME hardcode: [25 * 2]
                     video_chunk_indices = processor.get_chunked_index(video_t_index, t_ntoken_per_chunk)
-                    audio_chunk_indices = self.get_chunked_index(audio_t_index, t_ntoken_per_chunk)
+                    audio_chunk_indices = processor.get_chunked_index(audio_t_index, t_ntoken_per_chunk)
                     placeholder_string = ""
+                    placeholder_string += "<|vision_bos|>" + "<|audio_bos|>"
                     for j in range(max(len(video_chunk_indices), len(audio_chunk_indices))):
                         video_chunk_index = video_chunk_indices[j] if j < len(video_chunk_indices) else None
                         audio_chunk_index = audio_chunk_indices[j] if j < len(audio_chunk_indices) else None
-                        placeholder_string = "<|vision_bos|>" + "<|audio_bos|>"
                         if video_chunk_index is not None:
                             placeholder_string += self.video_token * (video_chunk_index[1] - video_chunk_index[0])
                         if audio_chunk_index is not None:
                             placeholder_string += self.audio_token * (audio_chunk_index[1] - audio_chunk_index[0])
-                        placeholder_string += "<|audio_eos|>" + "<|vision_eos|>"
+                    placeholder_string += "<|audio_eos|>" + "<|vision_eos|>"
 
                     content = content.replace(VIDEO_PLACEHOLDER, placeholder_string, 1)
                     content = content.replace(AUDIO_PLACEHOLDER, "", 1)
@@ -1502,6 +1555,7 @@ class VideoLlavaPlugin(BasePlugin):
 PLUGINS = {
     "base": BasePlugin,
     "gemma3": Gemma3Plugin,
+    "llama4": Llama4Plugin,
     "llava": LlavaPlugin,
     "llava_next": LlavaNextPlugin,
     "llava_next_video": LlavaNextVideoPlugin,
