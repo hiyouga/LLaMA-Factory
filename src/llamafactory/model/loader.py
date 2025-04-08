@@ -97,12 +97,13 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
         processor = AutoProcessor.from_pretrained(model_args.model_name_or_path, **init_kwargs)
         patch_processor(processor, tokenizer, model_args)
     except Exception as e:
-        logger.debug(f"Processor was not found: {e}.")
+        logger.debug(f"Failed to load processor: {e}.")
         processor = None
 
     # Avoid load tokenizer, see:
     # https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/models/auto/processing_auto.py#L324
     if processor is not None and "Processor" not in processor.__class__.__name__:
+        logger.debug("The loaded processor is not an instance of Processor. Dropping it.")
         processor = None
 
     return {"tokenizer": tokenizer, "processor": processor}

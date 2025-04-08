@@ -1,7 +1,4 @@
-# Copyright 2025 HuggingFace Inc. and the LlamaFactory team.
-#
-# This code is based on the HuggingFace's PEFT library.
-# https://github.com/huggingface/peft/blob/v0.10.0/examples/loftq_finetuning/quantize_save_load.py
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,12 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import os
 import shutil
 
 import fire
 from peft import PeftModel
-from transformers import AutoModel, AutoProcessor, AutoTokenizer, Qwen2_5OmniThinkerForConditionalGeneration
+from transformers import AutoModel, AutoProcessor, Qwen2_5OmniThinkerForConditionalGeneration  # type: ignore
 
 
 def merge_lora(
@@ -41,20 +39,14 @@ def merge_lora(
         save_path (str): Directory where the merged model and configurations will be saved.
     """
     # 1. Load the original model, tokenizer, and processor
-    model = AutoModel.from_pretrained(base_model_path)
-    tokenizer = AutoTokenizer.from_pretrained(base_model_path)
-
-    try:
-        processor = AutoProcessor.from_pretrained(base_model_path)
-    except Exception:
-        print("Processor configuration not found, skipping processor load.")
-        processor = None
-
-    print("Successfully loaded the original model, tokenizer, and processor (if available).")
+    model = AutoModel.from_pretrained(base_model_path, torch_dtype="auto", device_map="cpu")
+    processor = AutoProcessor.from_pretrained(base_model_path)
+    print("Successfully loaded the original model and tokenizer.")
 
     # 2. Extract the submodule to be merged (e.g., model.thinker)
     if not hasattr(model, submodule_name):
         raise AttributeError(f"The model does not have a submodule named '{submodule_name}'.")
+
     base_submodule = getattr(model, submodule_name)
     print(f"Successfully extracted submodule: {submodule_name}.")
 
@@ -71,11 +63,8 @@ def merge_lora(
 
     # 6. Save the final merged model along with the tokenizer and processor configuration
     model.save_pretrained(save_path)
-    tokenizer.save_pretrained(save_path)
-    if processor is not None:
-        processor.save_pretrained(save_path)
-
-    print(f"Merged model and configuration saved to {save_path}.")
+    processor.save_pretrained(save_path)
+    print(f"Merged model and tokenizer saved to {save_path}.")
 
     source_file = os.path.join(base_model_path, extra_file)
     target_file = os.path.join(save_path, extra_file)
@@ -89,7 +78,7 @@ def merge_lora(
 def save_full_model(
     saved_thinker_path: str,
     base_model_path: str,
-    save_path: str,
+    save_path: str = "./merged_model_checkpoint",
     extra_file: str = "spk_dict.pt",
 ):
     """Load the saved thinker module and the original model, replace the thinker in the original model.
@@ -99,26 +88,23 @@ def save_full_model(
     Args:
         saved_thinker_path (str): Path to the saved thinker weights.
         base_model_path (str): Directory path of the original model.
-        save_path (str): Directory where the final complete model will be saved.
+        save_path (str): Directory where the merged model and configurations will be saved.
         extra_file (str): Name of the extra file to be copied (default: "spk_dict.pt").
     """
-    # Load the thinker module
-    thinker = Qwen2_5OmniThinkerForConditionalGeneration.from_pretrained(saved_thinker_path, device_map="cpu")
-    # Load the original model
-    base_model = AutoModel.from_pretrained(base_model_path, device_map="cpu")
-    # Replace the thinker module in the original model
+    # 1. Load the saved thinker module and the original model
+    thinker = Qwen2_5OmniThinkerForConditionalGeneration.from_pretrained(
+        saved_thinker_path, torch_dtype="auto", device_map="cpu"
+    )
+    base_model = AutoModel.from_pretrained(base_model_path, torch_dtype="auto", device_map="cpu")
     base_model.thinker = thinker
 
-    # Load the processor and tokenizer
-    processor = AutoProcessor.from_pretrained(base_model_path, trust_remote_code=True)
-    tokenizer = AutoTokenizer.from_pretrained(base_model_path, trust_remote_code=True)
-
-    # Save the complete model along with its configurations
+    # 2. Save the complete model along with its tokenizer and processor configuration
+    processor = AutoProcessor.from_pretrained(base_model_path)
     base_model.save_pretrained(save_path)
-    tokenizer.save_pretrained(save_path)
     processor.save_pretrained(save_path)
-    print(f"Complete model, tokenizer, and processor configuration have been saved to {save_path}.")
+    print(f"Merged model and tokenizer saved to {save_path}.")
 
+    # 3. Copy the extra file from the base model directory to the save_path
     source_file = os.path.join(base_model_path, extra_file)
     target_file = os.path.join(save_path, extra_file)
     if os.path.exists(source_file):

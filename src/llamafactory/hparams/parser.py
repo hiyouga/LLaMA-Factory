@@ -135,7 +135,7 @@ def _check_extra_dependencies(
         check_version("mixture-of-depth>=1.1.6", mandatory=True)
 
     if model_args.infer_backend == EngineName.VLLM:
-        check_version("vllm>=0.4.3,<=0.8.2")
+        check_version("vllm>=0.4.3,<=0.8.3")
         check_version("vllm", mandatory=True)
     elif model_args.infer_backend == EngineName.SGLANG:
         check_version("sglang>=0.4.4")
@@ -284,10 +284,6 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
 
     if model_args.use_unsloth and is_deepspeed_zero3_enabled():
         raise ValueError("Unsloth is incompatible with DeepSpeed ZeRO-3.")
-
-    if data_args.neat_packing and not data_args.packing:
-        logger.warning_rank0("`neat_packing` requires `packing` is True. Change `packing` to True.")
-        data_args.packing = True
 
     _verify_model_args(model_args, data_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args, training_args)
