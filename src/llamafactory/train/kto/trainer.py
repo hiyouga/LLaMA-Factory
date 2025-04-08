@@ -147,6 +147,9 @@ class CustomKTOTrainer(KTOTrainer):
         if "pixel_values" in batch:
             model_inputs["pixel_values"] = batch["pixel_values"]
 
+        if "image_sizes" in batch:
+            model_inputs["image_sizes"] = batch["image_sizes"]
+
         if "image_grid_thw" in batch:
             model_inputs["image_grid_thw"] = batch["image_grid_thw"]
 
