@@ -83,7 +83,7 @@ def run_kto(
         trainer.save_state()
         if trainer.is_world_process_zero() and finetuning_args.plot_loss:
             keys = ["loss", "rewards/chosen"]
-            if isinstance(dataset_module["eval_dataset"], dict):
+            if isinstance(dataset_module.get("eval_dataset"), dict):
                 keys += [f"eval_{key}_loss" for key in dataset_module["eval_dataset"].keys()]
             else:
                 keys += ["eval_loss"]
