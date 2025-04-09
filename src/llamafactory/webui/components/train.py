@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, get_args, get_origin
+from dataclasses import fields
 
 from transformers.trainer_utils import SchedulerType
 
@@ -209,17 +210,62 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
         )
     )
 
+    with gr.Accordion(open=False) as peft_tab:
+        with gr.Row():
+            task_type = gr.Dropdown(
+                choices=["SEQ_CLS", "SEQ_2_SEQ_LM", "CAUSAL_LM", "TOKEN_CLS", "QUESTION_ANS", "FEATURE_EXTRACTION"], 
+                value="CAUSAL_LM",
+            )
+            inference_mode = gr.Checkbox()
+
+
+    elem_dict.update(
+        dict(
+            peft_tab=peft_tab,
+            task_type=task_type,
+            inference_mode=inference_mode,
+        )
+    )
+
+    input_elems.update(
+        {
+            task_type,
+            inference_mode,
+        }
+    )
+        
+    peft_common_config_values = ["base_model_name_or_path", "revision", "peft_type", "task_type", "inference_mode"]
     for peft_config_name in PEFT_CONFIG_MAPPING:
-        with gr.Accordion(open=False) as peft_tab:
+        with gr.Accordion(open=False) as peft_method_tab:
             peft_name = peft_config_name.lower().replace(" ", "_")
 
             elem_dict.update(
-                {peft_name: peft_tab}
+                {peft_name: peft_method_tab}
             )
+            
 
             LOCALES.update(
                 {peft_name: {"en": {"label": f"{peft_config_name} configurations"}}}
             )
+
+            with gr.Row():
+                for field in fields(PEFT_CONFIG_MAPPING[peft_config_name]):
+                    if field.name in peft_common_config_values:
+                        continue
+
+                    if field.type == bool:
+                        elem = gr.Checkbox()
+                    else:
+                        elem = gr.Textbox()
+
+                    elem_dict.update({f"{peft_name}_{field.name}": elem})
+                    input_elems.update({elem})
+
+                    LOCALES.update(
+                        {f"{peft_name}_{field.name}": {"en": {"label": field.name}}}
+                    )
+
+                            
 
 
     with gr.Accordion(open=False) as rlhf_tab:

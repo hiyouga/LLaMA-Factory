@@ -1225,6 +1225,23 @@ LOCALES = {
             "info": "LoRA 層以外の学習可能なモジュールの名前。複数のモジュールを区切るにはカンマを使用します。",
         },
     },
+    "peft_tab": {
+        "en": {
+            "label": "PEFT configurations",
+        },
+    },
+    "task_type": {
+        "en": {
+            "label": "Task type",
+            "info": "Set training task type for PEFT",
+        }
+    },
+    "inference_mode": {
+        "en": {
+            "label": "Inference mode",
+            "info": "Set PEFT adapter to inference mode",
+        }
+    },
     "rlhf_tab": {
         "en": {
             "label": "RLHF configurations",
