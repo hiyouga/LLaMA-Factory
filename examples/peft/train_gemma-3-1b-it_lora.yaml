@@ -38,7 +38,7 @@ load_best_model_at_end: true
 save_total_limit: 1
 
 ### train
-per_device_train_batch_size: 32
+per_device_train_batch_size: 16
 gradient_accumulation_steps: 8
 learning_rate: 5.0e-5
 num_train_epochs: 3.0
@@ -54,7 +54,7 @@ report_to:
 
 ### eval
 eval_dataset: glue_mnli_eval
-per_device_eval_batch_size: 1
+per_device_eval_batch_size: 16
 eval_strategy: steps
 eval_steps: 0.1
 
