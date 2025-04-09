@@ -680,9 +680,30 @@
     },
     "folder": "python"
   },
-  "MNLI": {
+  "glue_mnli_train": {
     "hf_hub_url": "nyu-mll/glue",
     "subset": "mnli",
+    "split": "train",
+    "columns": {
+      "prompt": "premise",
+      "query": "hypothesis",
+      "response": "label"
+    }
+  },
+  "glue_mnli_eval": {
+    "hf_hub_url": "nyu-mll/glue",
+    "subset": "mnli",
+    "split": "validation_mismatched",
+    "columns": {
+      "prompt": "premise",
+      "query": "hypothesis",
+      "response": "label"
+    }
+  },
+  "glue_mnli_test": {
+    "hf_hub_url": "nyu-mll/glue",
+    "subset": "mnli",
+    "split": "validation_matched",
     "columns": {
       "prompt": "premise",
       "query": "hypothesis",
