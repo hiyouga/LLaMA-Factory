@@ -403,7 +403,7 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
 
             root_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + "/clip_finetune/"
             with gr.Row():
-                clip_trainer_1 = gr.Dropdown(["", "Finetune", "Training free"], label="Traing group")
+                clip_trainer_1 = gr.Dropdown(["", "Finetune", "Training free"], label="Training group")
                 clip_trainer = gr.Dropdown(choices=[], label="Traing method")
                 clip_trainer_1.change(
                     update_dropdowns,
@@ -455,6 +455,7 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
 
     input_elems.update(
         {
+            clip_trainer_1,
             clip_trainer,
             dataset_config_file,
             config_file,
@@ -478,6 +479,7 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
     elem_dict.update(
         dict(
             clip_finetune_tab=clip_finetune_tab,
+            clip_trainer_1=clip_trainer_1,
             clip_trainer=clip_trainer,
             dataset_config_file=dataset_config_file,
             config_file=config_file,

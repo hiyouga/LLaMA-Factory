@@ -49,6 +49,7 @@ class Engine:
         r"""Get the initial value of gradio components and restores training status if necessary."""
         user_config = load_config() if not self.demo_mode else {}  # do not use config in demo mode
         lang = user_config.get("lang", None) or "zh"
+        self.change_lang("en")
         init_dict = {"top.lang": {"value": lang}, "infer.chat_box": {"visible": self.chatter.loaded}}
 
         if not self.pure_chat:

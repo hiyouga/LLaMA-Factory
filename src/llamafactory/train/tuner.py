@@ -15,7 +15,6 @@
 import os
 import shutil
 from typing import TYPE_CHECKING, Any, Optional
-
 import torch
 import torch.distributed as dist
 from transformers import PreTrainedModel
@@ -57,9 +56,6 @@ def _training_function(config: dict[str, Any]) -> None:
     model_args, data_args, training_args, finetuning_args, generating_args, clip_args, adaclip_args, optuna_args = (
         get_train_args(args)
     )
-    if is_torch_xpu_available() and torch.xpu.device_count() > 1:
-        dist.destroy_process_group()
-        time.sleep(5)
 
     callbacks.append(LogCallback())
     if finetuning_args.pissa_convert:
