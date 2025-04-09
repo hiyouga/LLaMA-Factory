@@ -30,13 +30,11 @@ report_to: none  # choices: [none, wandb, tensorboard, swanlab, mlflow]
 
 ### ray
 ray_run_name: llama3_8b_sft_lora
-ray_storage_path: /mnt/cluster_storage/
-ray_num_workers: 8  # Number of GPUs to use.
+ray_storage_path: ./saves
+ray_num_workers: 4  # Number of GPUs to use.
+placement_strategy: PACK
 resources_per_worker:
   GPU: 1
-  anyscale/accelerator_shape:4xL4: 0.001  # Use this to specify a specific node shape.
-  # accelerator_type:L4: 0.001            # Or use this to simply specify a GPU type.
-  # See https://docs.ray.io/en/master/ray-core/accelerator-types.html#accelerator-types for a full list of accelerator types.
 # ray_init_kwargs:
 #   runtime_env:
 #     env_vars:
