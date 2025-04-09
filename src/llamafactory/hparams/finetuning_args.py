@@ -15,6 +15,8 @@
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal, Optional
 
+from ..extras.constants import METHODS
+
 
 @dataclass
 class FreezeArguments:
@@ -399,7 +401,7 @@ class FinetuningArguments(
         default="sft",
         metadata={"help": "Which stage will be performed in training."},
     )
-    finetuning_type: Literal["lora", "freeze", "full"] = field(
+    finetuning_type: str = field(
         default="lora",
         metadata={"help": "Which fine-tuning method to use."},
     )
@@ -455,7 +457,7 @@ class FinetuningArguments(
         self.apollo_target: list[str] = split_arg(self.apollo_target)
         self.use_ref_model = self.stage == "dpo" and self.pref_loss not in ["orpo", "simpo"]
 
-        assert self.finetuning_type in ["lora", "freeze", "full"], "Invalid fine-tuning method."
+        assert self.finetuning_type in METHODS, "Invalid fine-tuning method."
         assert self.ref_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
         assert self.reward_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
 

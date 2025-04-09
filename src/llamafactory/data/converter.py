@@ -15,11 +15,12 @@
 import os
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union, List
 
 from ..extras import logging
 from .data_utils import Role
 
+from datasets import ClassLabel
 
 if TYPE_CHECKING:
     from datasets import Dataset, IterableDataset
@@ -39,6 +40,7 @@ logger = logging.get_logger(__name__)
 class DatasetConverter:
     dataset_attr: "DatasetAttr"
     data_args: "DataArguments"
+    id2label: List[str]
 
     def _find_medias(self, medias: Union["MediaType", list["MediaType"], None]) -> Optional[list["MediaType"]]:
         r"""Optionally concatenate media path to media dir when loading from local disk."""
@@ -101,7 +103,10 @@ class AlpacaDatasetConverter(DatasetConverter):
             ]
         elif self.dataset_attr.response and isinstance(example[self.dataset_attr.response], str):  # normal example
             response = [{"role": Role.ASSISTANT.value, "content": example[self.dataset_attr.response]}]
+        elif self.dataset_attr.response and isinstance(example[self.dataset_attr.response], int) and self.id2label: # class label example
+            response = [{"role": Role.ASSISTANT.value, "content": self.id2label[example[self.dataset_attr.response]]}]
         else:  # unsupervised
+            print(self.id2label, isinstance(example[self.dataset_attr.response], int))
             response = []
 
         output = {
@@ -226,12 +231,12 @@ def register_dataset_converter(name: str, dataset_converter: type["DatasetConver
     DATASET_CONVERTERS[name] = dataset_converter
 
 
-def get_dataset_converter(name: str, dataset_attr: "DatasetAttr", data_args: "DataArguments") -> "DatasetConverter":
+def get_dataset_converter(name: str, dataset_attr: "DatasetAttr", data_args: "DataArguments", id2label: List[str]) -> "DatasetConverter":
     r"""Get a dataset converter."""
     if name not in DATASET_CONVERTERS:
         raise ValueError(f"Dataset converter {name} not found.")
 
-    return DATASET_CONVERTERS[name](dataset_attr, data_args)
+    return DATASET_CONVERTERS[name](dataset_attr, data_args, id2label)
 
 
 def align_dataset(
@@ -260,7 +265,11 @@ def align_dataset(
             desc="Converting format of dataset",
         )
 
-    dataset_converter = get_dataset_converter(dataset_attr.formatting, dataset_attr, data_args)
+    id2label = None
+    if isinstance(dataset.features[dataset_attr.response], ClassLabel):
+        id2label = dataset.features[dataset_attr.response]._int2str
+
+    dataset_converter = get_dataset_converter(dataset_attr.formatting, dataset_attr, data_args, id2label)
     return dataset.map(
         dataset_converter,
         batched=False,

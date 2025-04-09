@@ -681,7 +681,12 @@
     "folder": "python"
   },
   "MNLI": {
-  "hf_hub_url": "nyu-mll/glue",
-  "subset": "mnli"
+    "hf_hub_url": "nyu-mll/glue",
+    "subset": "mnli",
+    "columns": {
+      "prompt": "premise",
+      "query": "hypothesis",
+      "response": "label"
+    }
   }
 }
