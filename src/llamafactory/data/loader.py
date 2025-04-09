@@ -68,7 +68,7 @@ def _load_single_dataset(
         data_dir = dataset_attr.folder
 
     elif dataset_attr.load_from == "cloud_file":
-        data = read_cloud_json(dataset_attr.dataset_name)
+        data_path = dataset_attr.dataset_name
 
     elif dataset_attr.load_from == "file":
         data_files = []
@@ -126,10 +126,7 @@ def _load_single_dataset(
             streaming=data_args.streaming,
         )
     elif dataset_attr.load_from == "cloud_file":
-        dataset = Dataset.from_list(
-            data,
-            split=dataset_attr.split,
-        )
+        dataset = Dataset.from_list(read_cloud_json(data_path), split=dataset_attr.split)
     else:
         dataset = load_dataset(
             path=data_path,
