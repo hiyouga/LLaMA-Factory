@@ -17,7 +17,7 @@ lora_target: all
 dataset: glue_mnli_train
 template: gemma
 cutoff_len: 2048
-max_samples: 1000
+# max_samples: 1000
 overwrite_cache: true
 preprocessing_num_workers: 16
 dataloader_num_workers: 4
@@ -34,6 +34,8 @@ plot_loss: true
 include_num_input_tokens_seen: true
 push_to_hub: true
 push_to_hub_organization: rbelanec
+load_best_model_at_end: true
+save_total_limit: 1
 
 ### train
 per_device_train_batch_size: 32
