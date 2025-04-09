@@ -85,7 +85,7 @@ Regarding the above dataset, the *dataset description* in `dataset_info.json` sh
 
 ### Pre-training Dataset
 
-- [Example dataset](c4_demo.json)
+- [Example dataset](c4_demo.jsonl)
 
 In pre-training, only the `text` column will be used for model learning.
 
