@@ -58,5 +58,5 @@ eval_strategy: steps
 eval_steps: 0.1
 
 ### predict
-do_predict: true
-predict_with_generate: true
+# do_predict: true
+# predict_with_generate: true
