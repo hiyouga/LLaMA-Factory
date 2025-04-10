@@ -1,7 +1,7 @@
 ### model
 model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
-quantization_bit: 4
-quantization_method: bitsandbytes  # choices: [bitsandbytes (4/8), hqq (2/3/4/5/6/8), eetq (8)]
+quantization_bit: 4  # choices: [8 (bnb/hqq/eetq), 4 (bnb/hqq), 3 (hqq), 2 (hqq)]
+quantization_method: bnb  # choices: [bnb, hqq, eetq]
 trust_remote_code: true
 
 ### method
@@ -18,6 +18,7 @@ cutoff_len: 2048
 max_samples: 1000
 overwrite_cache: true
 preprocessing_num_workers: 16
+dataloader_num_workers: 4
 
 ### output
 output_dir: saves/llama3-8b/lora/sft
@@ -25,6 +26,8 @@ logging_steps: 10
 save_steps: 500
 plot_loss: true
 overwrite_output_dir: true
+save_only_model: false
+report_to: none  # choices: [none, wandb, tensorboard, swanlab, mlflow]
 
 ### train
 per_device_train_batch_size: 1

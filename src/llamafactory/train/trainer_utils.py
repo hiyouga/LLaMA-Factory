@@ -48,6 +48,7 @@ if is_apollo_available():
 
 
 if is_ray_available():
+    import ray
     from ray.train import RunConfig, ScalingConfig
     from ray.train.torch import TorchTrainer
 
@@ -643,6 +644,9 @@ def get_ray_trainer(
 ) -> "TorchTrainer":
     if not ray_args.use_ray:
         raise ValueError("Ray was not enabled. Please set `USE_RAY=1` to enable ray.")
+
+    if ray_args.ray_init_kwargs is not None:
+        ray.init(**ray_args.ray_init_kwargs)
 
     trainer = TorchTrainer(
         training_function,

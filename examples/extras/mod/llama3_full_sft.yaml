@@ -15,6 +15,7 @@ cutoff_len: 2048
 max_samples: 1000
 overwrite_cache: true
 preprocessing_num_workers: 16
+dataloader_num_workers: 4
 
 ### output
 output_dir: saves/llama3-8b-mod/full/sft
@@ -22,6 +23,8 @@ logging_steps: 10
 save_steps: 500
 plot_loss: true
 overwrite_output_dir: true
+save_only_model: false
+report_to: none  # choices: [none, wandb, tensorboard, swanlab, mlflow]
 
 ### train
 per_device_train_batch_size: 1

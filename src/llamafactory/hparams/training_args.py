@@ -46,6 +46,10 @@ class RayArguments:
         default="PACK",
         metadata={"help": "The placement strategy for Ray training. Default is PACK."},
     )
+    ray_init_kwargs: Optional[dict] = field(
+        default=None,
+        metadata={"help": "The arguments to pass to ray.init for Ray training. Default is None."},
+    )
 
     def __post_init__(self):
         self.use_ray = use_ray()

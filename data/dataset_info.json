@@ -66,6 +66,21 @@
       "assistant_tag": "assistant"
     }
   },
+  "mllm_video_audio_demo": {
+    "file_name": "mllm_video_audio_demo.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "videos": "videos",
+      "audios": "audios"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
   "alpaca_en": {
     "hf_hub_url": "llamafactory/alpaca_en",
     "ms_hub_url": "llamafactory/alpaca_en",
@@ -512,6 +527,16 @@
       "rejected": "rejected"
     }
   },
+  "coig_p": {
+    "hf_hub_url": "m-a-p/COIG-P",
+    "ranking": true,
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "chosen": "chosen",
+      "rejected": "rejected"
+    }
+  },
   "rlhf_v": {
     "hf_hub_url": "llamafactory/RLHF-V",
     "ranking": true,
@@ -607,7 +632,7 @@
     }
   },
   "c4_demo": {
-    "file_name": "c4_demo.json",
+    "file_name": "c4_demo.jsonl",
     "columns": {
       "prompt": "text"
     }

@@ -45,7 +45,7 @@ def apply_liger_kernel(
         from liger_kernel.transformers import apply_liger_kernel_to_gemma3 as apply_liger_kernel
     elif model_type == "gemma3_text":
         from liger_kernel.transformers import apply_liger_kernel_to_gemma3_text as apply_liger_kernel
-    if model_type == "paligemma":
+    elif model_type == "paligemma":
         from liger_kernel.transformers import apply_liger_kernel_to_paligemma as apply_liger_kernel
     elif model_type == "llama":
         from liger_kernel.transformers import apply_liger_kernel_to_llama as apply_liger_kernel
