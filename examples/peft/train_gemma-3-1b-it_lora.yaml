@@ -14,7 +14,7 @@ lora_dropout: 0
 lora_target: all
 
 ### dataset
-dataset: glue_mnli_train
+dataset: mnli_train
 template: gemma
 cutoff_len: 2048
 # max_samples: 1000
@@ -35,6 +35,7 @@ include_num_input_tokens_seen: true
 push_to_hub: true
 push_to_hub_organization: rbelanec
 load_best_model_at_end: true
+metric_for_best_model: eval_mnli_eval_loss
 save_total_limit: 1
 
 ### train
@@ -52,7 +53,7 @@ report_to:
 - wandb
 
 ### eval
-eval_dataset: glue_mnli_eval
+eval_dataset: mnli_eval
 per_device_eval_batch_size: 16
 eval_strategy: steps
 eval_steps: 0.1

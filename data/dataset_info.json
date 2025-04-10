@@ -705,7 +705,7 @@
     },
     "folder": "python"
   },
-  "glue_mnli_train": {
+  "mnli_train": {
     "hf_hub_url": "nyu-mll/glue",
     "subset": "mnli",
     "split": "train",
@@ -715,7 +715,7 @@
       "response": "label"
     }
   },
-  "glue_mnli_eval": {
+  "mnli_eval": {
     "hf_hub_url": "nyu-mll/glue",
     "subset": "mnli",
     "split": "validation_mismatched",
@@ -725,7 +725,7 @@
       "response": "label"
     }
   },
-  "glue_mnli_test": {
+  "mnli_test": {
     "hf_hub_url": "nyu-mll/glue",
     "subset": "mnli",
     "split": "validation_matched",
