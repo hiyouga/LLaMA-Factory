@@ -4,9 +4,10 @@ Currently we support datasets in **alpaca** and **sharegpt** format.
 
 ```json
 "dataset_name": {
-  "hf_hub_url": "the name of the dataset repository on the Hugging Face hub. (if specified, ignore script_url and file_name)",
-  "ms_hub_url": "the name of the dataset repository on the Model Scope hub. (if specified, ignore script_url and file_name)",
-  "script_url": "the name of the directory containing a dataset loading script. (if specified, ignore file_name)",
+  "hf_hub_url": "the name of the dataset repository on the Hugging Face hub. (if specified, ignore script_url, file_name and cloud_file_name)",
+  "ms_hub_url": "the name of the dataset repository on the Model Scope hub. (if specified, ignore script_url, file_name and cloud_file_name)",
+  "script_url": "the name of the directory containing a dataset loading script. (if specified, ignore file_name and cloud_file_name)",
+  "cloud_file_name": "the name of the dataset file in s3/gcs cloud storage. (if specified, ignore file_name)",
   "file_name": "the name of the dataset folder or dataset file in this directory. (required if above are not specified)",
   "formatting": "the format of the dataset. (optional, default: alpaca, can be chosen from {alpaca, sharegpt})",
   "ranking": "whether the dataset is a preference dataset or not. (default: False)",
