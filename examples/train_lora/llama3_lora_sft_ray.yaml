@@ -31,10 +31,16 @@ report_to: none  # choices: [none, wandb, tensorboard, swanlab, mlflow]
 ### ray
 ray_run_name: llama3_8b_sft_lora
 ray_storage_path: ./saves
-ray_num_workers: 4  # number of GPUs to use
+ray_num_workers: 4  # Number of GPUs to use.
+placement_strategy: PACK
 resources_per_worker:
   GPU: 1
-placement_strategy: PACK
+# ray_init_kwargs:
+#   runtime_env:
+#     env_vars:
+#       <YOUR-ENV-VAR-HERE>: "<YOUR-ENV-VAR-HERE>"
+#     pip:
+#       - emoji
 
 ### train
 per_device_train_batch_size: 1
