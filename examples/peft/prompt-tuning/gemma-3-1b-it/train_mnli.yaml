@@ -22,7 +22,7 @@ dataloader_num_workers: 4
 packing: false
 
 ### output
-output_dir: saves/prompt-tuning/gemma-3-1b-it/train_2025-04-10-10-34-00
+output_dir: saves/prompt-tuning/gemma-3-1b-it/train_2025-04-11-17-44-00
 logging_steps: 5
 save_steps: 0.1
 plot_loss: true
