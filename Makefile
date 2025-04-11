@@ -3,7 +3,7 @@
 check_dirs := scripts src tests setup.py
 
 build:
-	pip install build && python -m build
+	pip3 install build && python3 -m build
 
 commit:
 	pre-commit install
