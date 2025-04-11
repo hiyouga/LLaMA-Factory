@@ -15,7 +15,7 @@ num_virtual_tokens: 100
 dataset: mnli_train
 template: gemma
 cutoff_len: 2048
-max_samples: 1000
+# max_samples: 1000
 overwrite_cache: true
 preprocessing_num_workers: 16
 dataloader_num_workers: 4
