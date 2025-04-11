@@ -123,7 +123,6 @@ def load_model(
     peft_args: "PeftConfig" = None,
     is_trainable: bool = False,
     add_valuehead: bool = False,
-    report_to: List[str] = [],
 ) -> "PreTrainedModel":
     r"""Load pretrained model."""
     init_kwargs = _get_init_kwargs(model_args)
@@ -205,15 +204,6 @@ def load_model(
         )
     else:
         param_stats = f"all params: {all_param:,}"
-
-    if "wandb" in report_to:
-        import wandb
-
-        wandb.config.update(
-            {
-                "trainable_parameters": trainable_params,
-            }
-        )
 
     logger.info_rank0(param_stats)
 
