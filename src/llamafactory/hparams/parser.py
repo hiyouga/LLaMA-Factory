@@ -49,7 +49,7 @@ check_dependencies()
 
 
 _TRAIN_ARGS = [ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
-_TRAIN_CLS = tuple[ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
+_TRAIN_CLS = tuple[ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments, PeftConfig]
 _INFER_ARGS = [ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _INFER_CLS = tuple[ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _EVAL_ARGS = [ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments]
@@ -163,14 +163,10 @@ def _check_extra_dependencies(
         check_version("nltk", mandatory=True)
         check_version("rouge_chinese", mandatory=True)
 
-def _parse_peft_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> PeftConfig:
-    parser = HfArgumentParser(PEFT_CONFIG_MAPPING[args["finetuning_type"]])
-    allow_extra_keys = is_env_enabled("ALLOW_EXTRA_ARGS")
-    return _parse_args(parser, args, allow_extra_keys=allow_extra_keys)
-
 
 def _parse_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _TRAIN_CLS:
-    parser = HfArgumentParser(_TRAIN_ARGS)
+    peft_args_class = PEFT_CONFIG_MAPPING.get(args["finetuning_type"], PeftConfig)
+    parser = HfArgumentParser(_TRAIN_ARGS + [peft_args_class])
     allow_extra_keys = is_env_enabled("ALLOW_EXTRA_ARGS")
     return _parse_args(parser, args, allow_extra_keys=allow_extra_keys)
 
@@ -192,9 +188,8 @@ def get_ray_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> Ray
     (ray_args,) = _parse_args(parser, args, allow_extra_keys=True)
     return ray_args
 
-
 def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _TRAIN_CLS:
-    model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_args(args)
+    model_args, data_args, training_args, finetuning_args, generating_args, peft_args = _parse_train_args(args)
 
     # Setup logging
     if training_args.should_log:
@@ -391,7 +386,7 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
     )
     transformers.set_seed(training_args.seed)
 
-    return model_args, data_args, training_args, finetuning_args, generating_args
+    return model_args, data_args, training_args, finetuning_args, generating_args, peft_args
 
 
 def get_infer_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _INFER_CLS:

@@ -16,7 +16,7 @@ import re
 from typing import TYPE_CHECKING
 
 import torch
-from peft import LoraConfig, LoraModel, PeftModel, TaskType, get_peft_model
+from peft import LoraConfig, LoraModel, PeftModel, TaskType, PeftConfig, get_peft_model
 from transformers.integrations import is_deepspeed_zero3_enabled
 
 from ..extras import logging
@@ -259,11 +259,13 @@ def _setup_peft(
     model: "PreTrainedModel",
     model_args: "ModelArguments",
     finetuning_args: "FinetuningArguments",
+    peft_args: "PeftConfig",
     is_trainable: bool,
     cast_trainable_params_to_fp32: bool,
 ) -> "PeftModel":
-    if is_trainable:
-        logger.info_rank0("Fine-tuning method: {}".format("DoRA" if finetuning_args.use_dora else "LoRA"))
+    model = get_peft_model(model, peft_args)
+
+    return model
 
 
 def init_adapter(
@@ -271,6 +273,7 @@ def init_adapter(
     model: "PreTrainedModel",
     model_args: "ModelArguments",
     finetuning_args: "FinetuningArguments",
+    peft_args: "PeftConfig",
     is_trainable: bool,
 ) -> "PreTrainedModel":
     r"""Initialize the adapters.
@@ -310,7 +313,7 @@ def init_adapter(
         )
     elif finetuning_args.finetuning_type in PEFT_METHODS:
         model = _setup_peft(
-            config, model, model_args, finetuning_args, is_trainable, cast_trainable_params_to_fp32
+            config, model, model_args, finetuning_args, peft_args, is_trainable, cast_trainable_params_to_fp32
         )
     else:
         raise NotImplementedError(f"Unknown finetuning type: {finetuning_args.finetuning_type}.")

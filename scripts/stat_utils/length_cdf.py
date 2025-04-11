@@ -34,7 +34,7 @@ def length_cdf(
     Usage: export CUDA_VISIBLE_DEVICES=0
     python length_cdf.py --model_name_or_path path_to_model --dataset alpaca_en_demo --template default
     """
-    model_args, data_args, training_args, _, _ = get_train_args(
+    model_args, data_args, training_args, _, _, _ = get_train_args(
         dict(
             stage="sft",
             model_name_or_path=model_name_or_path,

@@ -50,7 +50,7 @@ def calculate_lr(
     Usage:
     python cal_lr.py --model_name_or_path path_to_model --dataset alpaca_en_demo --cutoff_len 1024 --batch_size 16
     """
-    model_args, data_args, training_args, _, _ = get_train_args(
+    model_args, data_args, training_args, _, _, _ = get_train_args(
         dict(
             stage=stage,
             model_name_or_path=model_name_or_path,

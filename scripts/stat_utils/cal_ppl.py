@@ -69,7 +69,7 @@ def calculate_ppl(
     Usage: export CUDA_VISIBLE_DEVICES=0
     python cal_ppl.py --model_name_or_path path_to_model --dataset alpaca_en_demo --save_name ppl.json
     """
-    model_args, data_args, training_args, finetuning_args, _ = get_train_args(
+    model_args, data_args, training_args, finetuning_args, _, _ = get_train_args(
         dict(
             stage=stage,
             model_name_or_path=model_name_or_path,

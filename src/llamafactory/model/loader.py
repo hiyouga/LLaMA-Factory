@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import os
-from typing import TYPE_CHECKING, Any, Optional, TypedDict
+from typing import TYPE_CHECKING, Any, Optional, TypedDict, List
 
 import torch
 from transformers import (
@@ -27,6 +27,7 @@ from transformers import (
     AutoTokenizer,
 )
 from trl import AutoModelForCausalLMWithValueHead
+from peft import PeftConfig
 
 from ..extras import logging
 from ..extras.misc import count_parameters, skip_check_imports, try_download_model_from_other_hub
@@ -119,8 +120,10 @@ def load_model(
     tokenizer: "PreTrainedTokenizer",
     model_args: "ModelArguments",
     finetuning_args: "FinetuningArguments",
+    peft_args: "PeftConfig" = None,
     is_trainable: bool = False,
     add_valuehead: bool = False,
+    report_to: List[str] = [],
 ) -> "PreTrainedModel":
     r"""Load pretrained model."""
     init_kwargs = _get_init_kwargs(model_args)
@@ -168,7 +171,7 @@ def load_model(
         patch_model(model, tokenizer, model_args, is_trainable, add_valuehead)
         register_autoclass(config, model, tokenizer)
 
-    model = init_adapter(config, model, model_args, finetuning_args, is_trainable)
+    model = init_adapter(config, model, model_args, finetuning_args, peft_args, is_trainable)
 
     if add_valuehead:
         model = AutoModelForCausalLMWithValueHead.from_pretrained(model)
@@ -202,6 +205,15 @@ def load_model(
         )
     else:
         param_stats = f"all params: {all_param:,}"
+
+    if "wandb" in report_to:
+        import wandb
+
+        wandb.config.update(
+            {
+                "trainable_parameters": trainable_params,
+            }
+        )
 
     logger.info_rank0(param_stats)
 

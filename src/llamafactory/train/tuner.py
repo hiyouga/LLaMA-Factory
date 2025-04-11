@@ -52,7 +52,7 @@ logger = logging.get_logger(__name__)
 def _training_function(config: dict[str, Any]) -> None:
     args = config.get("args")
     callbacks: list[Any] = config.get("callbacks")
-    model_args, data_args, training_args, finetuning_args, generating_args = get_train_args(args)
+    model_args, data_args, training_args, finetuning_args, generating_args, peft_args = get_train_args(args)
 
     callbacks.append(LogCallback())
     if finetuning_args.pissa_convert:
@@ -66,7 +66,7 @@ def _training_function(config: dict[str, Any]) -> None:
     if finetuning_args.stage == "pt":
         run_pt(model_args, data_args, training_args, finetuning_args, callbacks)
     elif finetuning_args.stage == "sft":
-        run_sft(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
+        run_sft(model_args, data_args, training_args, finetuning_args, generating_args, peft_args, callbacks)
     elif finetuning_args.stage == "rm":
         run_rm(model_args, data_args, training_args, finetuning_args, callbacks)
     elif finetuning_args.stage == "ppo":

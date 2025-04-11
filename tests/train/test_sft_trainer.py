@@ -57,7 +57,7 @@ class DataCollatorWithVerbose(DataCollatorWithPadding):
 
 @pytest.mark.parametrize("disable_shuffling", [False, True])
 def test_shuffle(disable_shuffling: bool):
-    model_args, data_args, training_args, finetuning_args, _ = get_train_args(
+    model_args, data_args, training_args, finetuning_args, _, _ = get_train_args(
         {
             "output_dir": os.path.join("output", f"shuffle{str(disable_shuffling).lower()}"),
             "disable_shuffling": disable_shuffling,
