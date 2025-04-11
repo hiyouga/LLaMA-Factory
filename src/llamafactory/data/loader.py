@@ -144,17 +144,26 @@ def _load_single_dataset(
             dataset = dataset.to_iterable_dataset(num_shards=training_args.dataloader_num_workers)
 
     if dataset_attr.num_samples is not None and not data_args.streaming:
-        target_num = dataset_attr.num_samples
-        indexes = np.random.permutation(len(dataset))[:target_num]  # all samples should be included
-        target_num -= len(indexes)
-        if target_num > 0:
-            expand_indexes = np.random.choice(len(dataset), target_num)
-            indexes = np.concatenate((indexes, expand_indexes), axis=0)
-
-        assert len(indexes) == dataset_attr.num_samples, "Sample num mismatched."
+        if isinstance(dataset_attr.num_samples, str) and dataset_attr.num_samples.endswith('%'):
+            percentage = float(dataset_attr.num_samples[:-1])
+            if percentage < 0 or percentage > 100:
+                raise ValueError("num_samples must be between 0% and 100%.")
+            target_num = int(len(dataset) * (percentage / 100))
+            indexes = list(range(0, len(dataset), max(int(100 // percentage), 1)))
+        else:
+            target_num = dataset_attr.num_samples
+            indexes = np.random.permutation(len(dataset))[:target_num]
+        
+        if target_num > len(indexes):
+            additional_indexes = np.random.choice(len(dataset), target_num - len(indexes), replace=True)
+            indexes = np.concatenate((indexes, additional_indexes), axis=0)
+        
+        indexes = indexes[:target_num]  # Ensure the length matches exactly
+        assert len(indexes) == target_num, "Sample num mismatched."
+        
         dataset = dataset.select(indexes)
-        logger.info_rank0(f"Sampled {dataset_attr.num_samples} examples from dataset {dataset_attr}.")
-
+        logger.info(f"Sampled {target_num} examples from dataset {dataset_attr}.")
+    
     if data_args.max_samples is not None:  # truncate dataset
         max_samples = min(data_args.max_samples, len(dataset))
         dataset = dataset.select(range(max_samples))
