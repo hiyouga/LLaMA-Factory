@@ -37,7 +37,7 @@ metric_for_best_model: eval_mnli_eval_loss
 save_total_limit: 1
 
 ### train
-per_device_train_batch_size: 16
+per_device_train_batch_size: 8
 gradient_accumulation_steps: 8
 learning_rate: 3.0e-1
 num_train_epochs: 3.0
@@ -53,7 +53,7 @@ report_to:
 
 ### eval
 eval_dataset: mnli_eval
-per_device_eval_batch_size: 16
+per_device_eval_batch_size: 8
 eval_strategy: steps
 eval_steps: 0.1
 
