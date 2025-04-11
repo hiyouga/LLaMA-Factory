@@ -30,8 +30,10 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.training_args import ParallelMode
 from transformers.utils import is_torch_bf16_gpu_available, is_torch_npu_available
 
+from peft import PeftConfig
+
 from ..extras import logging
-from ..extras.constants import CHECKPOINT_NAMES, EngineName
+from ..extras.constants import CHECKPOINT_NAMES, PEFT_CONFIG_MAPPING, EngineName
 from ..extras.misc import check_dependencies, check_version, get_current_device, is_env_enabled
 from .data_args import DataArguments
 from .evaluation_args import EvaluationArguments
@@ -160,6 +162,11 @@ def _check_extra_dependencies(
         check_version("jieba", mandatory=True)
         check_version("nltk", mandatory=True)
         check_version("rouge_chinese", mandatory=True)
+
+def _parse_peft_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> PeftConfig:
+    parser = HfArgumentParser(PEFT_CONFIG_MAPPING[args["finetuning_type"]])
+    allow_extra_keys = is_env_enabled("ALLOW_EXTRA_ARGS")
+    return _parse_args(parser, args, allow_extra_keys=allow_extra_keys)
 
 
 def _parse_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _TRAIN_CLS:

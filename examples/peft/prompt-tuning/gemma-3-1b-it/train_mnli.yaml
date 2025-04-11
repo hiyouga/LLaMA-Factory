@@ -1,0 +1,62 @@
+### model
+model_name_or_path: google/gemma-3-1b-it
+trust_remote_code: true
+flash_attn: auto
+use_cache: false
+
+### method
+stage: sft
+do_train: true
+finetuning_type: prompt-tuning
+task_type: CAUSAL_LM
+num_virtual_tokens: 100
+
+### dataset
+dataset: mnli_train
+template: gemma
+cutoff_len: 2048
+max_samples: 1000
+overwrite_cache: true
+preprocessing_num_workers: 16
+dataloader_num_workers: 4
+packing: false
+
+### output
+output_dir: saves/prompt-tuning/gemma-3-1b-it/train_2025-04-10-10-34-00
+logging_steps: 5
+save_steps: 0.1
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+plot_loss: true
+include_num_input_tokens_seen: true
+push_to_hub: true
+push_to_hub_organization: rbelanec
+load_best_model_at_end: true
+metric_for_best_model: eval_mnli_eval_loss
+save_total_limit: 1
+
+### train
+per_device_train_batch_size: 16
+gradient_accumulation_steps: 8
+learning_rate: 3.0e-1
+num_train_epochs: 3.0
+weight_decay: 1.0e-5
+lr_scheduler_type: cosine
+bf16: true
+ddp_timeout: 180000000
+resume_from_checkpoint: null
+max_grad_norm: 1.0
+optim: adamw_torch
+report_to:
+- wandb
+
+### eval
+eval_dataset: mnli_eval
+per_device_eval_batch_size: 16
+eval_strategy: steps
+eval_steps: 0.1
+
+### predict
+# do_predict: true
+# predict_with_generate: true

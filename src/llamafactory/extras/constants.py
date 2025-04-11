@@ -57,15 +57,14 @@ LAYERNORM_NAMES = {"norm", "ln"}
 
 LLAMABOARD_CONFIG = "llamaboard_config.yaml"
 
-HF_PEFT_METHODS = ["Prompt Tuning", "Prefix Tuning", "P-Tuning", "IA3", "MPT"]
-CUSTOM_PEFT_METHODS = ["DePT", "ADePT", "ATTEMPT", "adapters", "adapter fusion", "BitFit"]
+HF_PEFT_METHODS = ["prompt-tuning", "prefix-tuning", "p-tuning", "ia3"]
+CUSTOM_PEFT_METHODS = ["dept", "adept", "attempt", "adapters", "adapter-fusion", "bitfit"]
 
 PEFT_CONFIG_MAPPING = {
-    "Prompt Tuning": PromptTuningConfig, 
-    "Prefix Tuning": PrefixTuningConfig, 
-    "P-Tuning": PromptEncoderConfig, 
-    "MPT": MultitaskPromptTuningConfig, 
-    "IA3": IA3Config,
+    "prompt-tuning": PromptTuningConfig, 
+    "prefix-tuning": PrefixTuningConfig, 
+    "p-tuning": PromptEncoderConfig, 
+    "ia3": IA3Config,
     }
 
 METHODS = ["full", "freeze", "lora"] + HF_PEFT_METHODS + CUSTOM_PEFT_METHODS

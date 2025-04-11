@@ -48,6 +48,7 @@ class DatasetAttr:
     rejected: Optional[str] = None
     kto_tag: Optional[str] = None
     # alpaca columns
+    instruction: Optional[str] = None
     prompt: Optional[str] = "instruction"
     query: Optional[str] = "input"
     response: Optional[str] = "output"
