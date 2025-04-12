@@ -73,6 +73,10 @@ jobs:
         run: |
           make license
 
+      - name: Check build
+        run: |
+          make build
+
       - name: Test with pytest
         run: |
           make test
