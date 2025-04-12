@@ -38,12 +38,22 @@ class PairwiseDatasetProcessor(DatasetProcessor):
         videos: list["VideoInput"],
         audios: list["AudioInput"],
     ) -> tuple[list[int], list[int], list[int], list[int]]:
-        chosen_messages = self.template.mm_plugin.process_messages(
-            prompt + [response[0]], images, videos, audios, self.processor
-        )
-        rejected_messages = self.template.mm_plugin.process_messages(
-            prompt + [response[1]], images, videos, audios, self.processor
-        )
+        if system:
+            sys_msg = {"role": "system", "content": system}
+            chosen_messages = self.template.mm_plugin.process_messages(
+                [sys_msg] + prompt + [response[0]], images, videos, audios, self.processor
+            )
+            rejected_messages = self.template.mm_plugin.process_messages(
+                [sys_msg] + prompt + [response[1]], images, videos, audios, self.processor
+            )
+        else:
+            chosen_messages = self.template.mm_plugin.process_messages(
+                prompt + [response[0]], images, videos, audios, self.processor
+            )
+            rejected_messages = self.template.mm_plugin.process_messages(
+                prompt + [response[1]], images, videos, audios, self.processor
+            )
+
         prompt_ids, chosen_ids = self.template.encode_oneturn(self.tokenizer, chosen_messages, system, tools)
         _, rejected_ids = self.template.encode_oneturn(self.tokenizer, rejected_messages, system, tools)
 

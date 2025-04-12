@@ -43,7 +43,13 @@ class UnsupervisedDatasetProcessor(DatasetProcessor):
         else:
             messages = prompt + [{"role": Role.ASSISTANT.value, "content": ""}]
 
-        messages = self.template.mm_plugin.process_messages(messages, images, videos, audios, self.processor)
+        if system:
+            sys_msg = {"role": "system", "content": system}
+            messages = self.template.mm_plugin.process_messages(
+                [sys_msg] + messages, images, videos, audios, self.processor
+            )
+        else:
+            messages = self.template.mm_plugin.process_messages(messages, images, videos, audios, self.processor)
         input_ids, labels = self.template.encode_oneturn(self.tokenizer, messages, system, tools)
         if self.template.efficient_eos:
             labels += [self.tokenizer.eos_token_id]
