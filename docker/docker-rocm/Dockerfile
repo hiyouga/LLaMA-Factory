@@ -66,7 +66,7 @@ RUN EXTRA_PACKAGES="metrics"; \
 
 RUN if [ "$INSTALL_PYTORCH" == "true" ]; then \
         pip install --pre torch torchvision torchaudio --index-url "$PYTORCH_INDEX"; \
-    fi; \
+    fi
 
 # Rebuild flash attention
 RUN pip uninstall -y transformer-engine flash-attn && \
