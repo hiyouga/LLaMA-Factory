@@ -467,6 +467,41 @@ class Gemma3Plugin(BasePlugin):
 
 
 @dataclass
+class KimiVLPlugin(BasePlugin):
+    @override
+    def process_messages(self, messages, images, videos, audios, processor):
+        self._validate_input(processor, images, videos, audios)
+        if self.expand_mm_tokens:
+            mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+        image_grid_hws = mm_inputs.get("image_grid_hws", [])
+        num_image_tokens = 0
+        image_processor: BaseImageProcessor = getattr(processor, "image_processor")
+        merge_length = math.prod(image_processor.merge_kernel_size)
+        messages = deepcopy(messages)
+
+        for message in messages:
+            content = message["content"]
+            while IMAGE_PLACEHOLDER in content:
+                if num_image_tokens >= len(image_grid_hws):
+                    raise ValueError(f"`len(images)` is less than the number of {IMAGE_PLACEHOLDER} tokens.")
+
+                image_seqlen = image_grid_hws[num_image_tokens].prod() // merge_length if self.expand_mm_tokens else 1
+                content = content.replace(
+                    IMAGE_PLACEHOLDER,
+                    f"<|media_start|>image<|media_content|>{self.image_token * image_seqlen}<|media_end|>",
+                    1,
+                )
+                num_image_tokens += 1
+
+            message["content"] = content
+
+        if len(images) != num_image_tokens:
+            raise ValueError(f"The number of images does not match the number of {IMAGE_PLACEHOLDER} tokens.")
+
+        return messages
+
+
+@dataclass
 class Llama4Plugin(BasePlugin):
     @override
     def process_messages(
@@ -1555,6 +1590,7 @@ class VideoLlavaPlugin(BasePlugin):
 PLUGINS = {
     "base": BasePlugin,
     "gemma3": Gemma3Plugin,
+    "kimi_vl": KimiVLPlugin,
     "llama4": Llama4Plugin,
     "llava": LlavaPlugin,
     "llava_next": LlavaNextPlugin,
