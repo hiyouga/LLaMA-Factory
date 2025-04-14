@@ -17,6 +17,9 @@ ARG PIP_INDEX=https://pypi.org/simple
 ARG HTTP_PROXY=
 ARG PYTORCH_INDEX=https://download.pytorch.org/whl/nightly/rocm6.3
 
+# Use Bash instead of default /bin/sh
+SHELL ["/bin/bash", "-c"]
+
 # Set the working directory
 WORKDIR /app
 
@@ -66,7 +69,7 @@ RUN EXTRA_PACKAGES="metrics"; \
 
 # Reinstall pytorch
 # This is necessary to ensure that the correct version of PyTorch is installed
-RUN if [ "$INSTALL_PYTORCH" = "true" ]; then \
+RUN if [ "$INSTALL_PYTORCH" == "true" ]; then \
         pip uninstall -y torch torchvision torchaudio && \
         pip install --pre torch torchvision torchaudio --index-url "$PYTORCH_INDEX"; \
     fi
