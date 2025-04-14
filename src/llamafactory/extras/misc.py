@@ -89,7 +89,7 @@ def check_version(requirement: str, mandatory: bool = False) -> None:
 
 def check_dependencies() -> None:
     r"""Check the version of the required packages."""
-    check_version("transformers>=4.41.2,<=4.51.1,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0")
+    check_version("transformers>=4.41.2,<=4.51.2,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0")
     check_version("datasets>=2.16.0,<=3.5.0")
     check_version("accelerate>=0.34.0,<=1.6.0")
     check_version("peft>=0.14.0,<=0.15.1")
@@ -177,10 +177,10 @@ def get_peak_memory() -> tuple[int, int]:
     r"""Get the peak memory usage for the current device (in Bytes)."""
     if is_torch_npu_available():
         return torch.npu.max_memory_allocated(), torch.npu.max_memory_reserved()
-    elif is_torch_cuda_available():
-        return torch.cuda.max_memory_allocated(), torch.cuda.max_memory_reserved()
     elif is_torch_xpu_available():
         return torch.xpu.max_memory_allocated(), torch.xpu.max_memory_reserved()
+    elif is_torch_cuda_available():
+        return torch.cuda.max_memory_allocated(), torch.cuda.max_memory_reserved()
     else:
         return 0, 0
 
