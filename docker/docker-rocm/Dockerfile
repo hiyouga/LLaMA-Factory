@@ -64,7 +64,10 @@ RUN EXTRA_PACKAGES="metrics"; \
         pip install -e ".[$EXTRA_PACKAGES]"; \
     fi
 
-RUN if [ "$INSTALL_PYTORCH" == "true" ]; then \
+# Reinstall pytorch
+# This is necessary to ensure that the correct version of PyTorch is installed
+RUN if [ "$INSTALL_PYTORCH" = "true" ]; then \
+        pip uninstall -y torch torchvision torchaudio && \
         pip install --pre torch torchvision torchaudio --index-url "$PYTORCH_INDEX"; \
     fi
 
