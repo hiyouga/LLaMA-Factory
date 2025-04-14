@@ -1455,7 +1455,7 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
             content = message["content"]
             # separate with audio-video
             while IMAGE_PLACEHOLDER in content:
-                if num_image_tokens >= len(image_grid_hws):
+                if num_image_tokens >= len(image_grid_thw):
                     raise ValueError(f"`len(images)` is less than the number of {IMAGE_PLACEHOLDER} tokens.")
 
                 image_token_replace_length = image_grid_thw[num_image_tokens].prod() // merge_length
