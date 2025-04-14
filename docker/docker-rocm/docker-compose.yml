@@ -9,8 +9,10 @@ services:
         INSTALL_DEEPSPEED: "false"
         INSTALL_FLASHATTN: "false"
         INSTALL_LIGER_KERNEL: "false"
+        INSTALL_PYTORCH: "true"
         INSTALL_HQQ: "false"
         PIP_INDEX: https://pypi.org/simple
+        PYTORCH_INDEX: https://download.pytorch.org/whl/nightly/rocm6.3
     container_name: llamafactory
     volumes:
       - ../../hf_cache:/root/.cache/huggingface
