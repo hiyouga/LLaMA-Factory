@@ -97,7 +97,7 @@ def patch_config(
 
     if is_torch_npu_available():
         # avoid JIT compile on NPU devices, see https://zhuanlan.zhihu.com/p/660875458
-        torch.npu.set_compile_mode(jit_compile=is_env_enabled("JIT_COMPILE"))
+        torch.npu.set_compile_mode(jit_compile=is_env_enabled("NPU_JIT_COMPILE"))
 
     configure_attn_implementation(config, model_args, is_trainable)
     configure_rope(config, model_args, is_trainable)
