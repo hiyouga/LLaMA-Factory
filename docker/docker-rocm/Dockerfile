@@ -12,8 +12,10 @@ ARG INSTALL_DEEPSPEED=false
 ARG INSTALL_FLASHATTN=false
 ARG INSTALL_LIGER_KERNEL=false
 ARG INSTALL_HQQ=false
+ARG INSTALL_PYTORCH=true
 ARG PIP_INDEX=https://pypi.org/simple
 ARG HTTP_PROXY=
+ARG PYTORCH_INDEX=https://download.pytorch.org/whl/nightly/rocm6.3
 
 # Set the working directory
 WORKDIR /app
@@ -61,6 +63,10 @@ RUN EXTRA_PACKAGES="metrics"; \
     else \
         pip install -e ".[$EXTRA_PACKAGES]"; \
     fi
+
+RUN if [ "$INSTALL_PYTORCH" == "true" ]; then \
+        pip install --pre torch torchvision torchaudio --index-url "$PYTORCH_INDEX"; \
+    fi; \
 
 # Rebuild flash attention
 RUN pip uninstall -y transformer-engine flash-attn && \
