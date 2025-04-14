@@ -977,6 +977,22 @@ register_model_group(
 
 register_model_group(
     models={
+        "Kimi-VL-A3B-Instruct": {
+            DownloadSource.DEFAULT: "moonshotai/Kimi-VL-A3B-Instruct",
+            DownloadSource.MODELSCOPE: "moonshotai/Kimi-VL-A3B-Instruct",
+        },
+        "Kimi-VL-A3B-Thinking": {
+            DownloadSource.DEFAULT: "moonshotai/Kimi-VL-A3B-Thinking",
+            DownloadSource.MODELSCOPE: "moonshotai/Kimi-VL-A3B-Thinking",
+        },
+    },
+    template="kimi_vl",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
         "LingoWhale-8B": {
             DownloadSource.DEFAULT: "deeplang-ai/LingoWhale-8B",
             DownloadSource.MODELSCOPE: "DeepLang/LingoWhale-8B",
