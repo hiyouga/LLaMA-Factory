@@ -59,7 +59,7 @@ report_to:
 eval_dataset: mnli_eval
 per_device_eval_batch_size: 8
 eval_strategy: steps
-eval_steps: 0.1
+eval_steps: 200
 
 ### predict
 do_predict: true
