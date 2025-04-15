@@ -90,7 +90,7 @@ def create_modelcard_and_push(
     finetuning_args: "FinetuningArguments",
 ) -> None:
     kwargs = {
-        "tasks": "text-generation",
+        "tasks": {"name": "Causal Language Modeling", "type": "text-generation"},
         "finetuned_from": model_args.model_name_or_path,
         "tags": ["llama-factory", finetuning_args.finetuning_type],
     }
