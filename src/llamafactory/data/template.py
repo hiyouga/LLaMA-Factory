@@ -924,6 +924,20 @@ register_template(
 
 
 register_template(
+    name="kimi_vl",
+    format_user=StringFormatter(
+        slots=["<|im_user|>user<|im_middle|>{{content}}<|im_end|><|im_assistant|>assistant<|im_middle|>"]
+    ),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>"]),
+    format_system=StringFormatter(slots=["<|im_system|>system<|im_middle|>{{content}}<|im_end|>"]),
+    default_system="You are a helpful assistant",
+    stop_words=["<|im_end|>"],
+    thought_words=("◁think▷", "◁/think▷"),
+    mm_plugin=get_mm_plugin("kimi_vl", image_token="<|media_pad|>"),
+)
+
+
+register_template(
     name="llama2",
     format_user=StringFormatter(slots=[{"bos_token"}, "[INST] {{content}} [/INST]"]),
     format_system=StringFormatter(slots=["<<SYS>>\n{{content}}\n<</SYS>>\n\n"]),
