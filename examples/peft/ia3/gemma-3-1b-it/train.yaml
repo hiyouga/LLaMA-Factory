@@ -16,17 +16,16 @@ target_modules:
 feedforward_modules: down_proj
 
 ### dataset
-dataset: mnli_train
+dataset: ${TRAIN_DATASET}
 template: gemma
 cutoff_len: 2048
-# max_samples: 1000
 overwrite_cache: true
 preprocessing_num_workers: 16
 dataloader_num_workers: 4
 packing: false
 
 ### output
-output_dir: saves/ia3/gemma-3-1b-it/train_2025-04-14-12-59-00
+output_dir: ${OUTPUT_DIR}
 logging_steps: 5
 save_steps: 200
 plot_loss: true
@@ -37,7 +36,7 @@ include_num_input_tokens_seen: true
 push_to_hub: true
 push_to_hub_organization: rbelanec
 load_best_model_at_end: true
-metric_for_best_model: eval_mnli_eval_loss
+metric_for_best_model: eval_${EVAL_DATASET}_loss
 save_total_limit: 1
 
 ### train
@@ -56,7 +55,7 @@ report_to:
 - wandb
 
 ### eval
-eval_dataset: mnli_eval
+eval_dataset: ${EVAL_DATASET}
 per_device_eval_batch_size: 8
 eval_strategy: steps
 eval_steps: 200
