@@ -87,7 +87,8 @@ def _process_request(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid length")
 
     if request.messages[0].role == Role.SYSTEM:
-        system = request.messages.pop(0).content
+        content = request.messages.pop(0).content
+        system = content[0].text if isinstance(content, list) else content
     else:
         system = None
 
@@ -128,7 +129,9 @@ def _process_request(
                 elif input_item.type == "video_url":
                     text_content += VIDEO_PLACEHOLDER
                     video_url = input_item.video_url.url
-                    if os.path.isfile(video_url):  # local file
+                    if re.match(r"^data:video\/(mp4|mkv|avi|mov);base64,(.+)$", video_url):  # base64 video
+                        video_stream = io.BytesIO(base64.b64decode(video_url.split(",", maxsplit=1)[1]))
+                    elif os.path.isfile(video_url):  # local file
                         video_stream = open(video_url, "rb")
                     else:  # web uri
                         video_stream = requests.get(video_url, stream=True).raw
@@ -137,7 +140,9 @@ def _process_request(
                 elif input_item.type == "audio_url":
                     text_content += AUDIO_PLACEHOLDER
                     audio_url = input_item.audio_url.url
-                    if os.path.isfile(audio_url):  # local file
+                    if re.match(r"^data:audio\/(mpeg|mp3|wav|ogg);base64,(.+)$", audio_url):  # base64 audio
+                        audio_stream = io.BytesIO(base64.b64decode(audio_url.split(",", maxsplit=1)[1]))
+                    elif os.path.isfile(audio_url):  # local file
                         audio_stream = open(audio_url, "rb")
                     else:  # web uri
                         audio_stream = requests.get(audio_url, stream=True).raw
