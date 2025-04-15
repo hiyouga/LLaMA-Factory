@@ -475,18 +475,6 @@ class Gemma3Plugin(BasePlugin):
 @dataclass
 class InternVLPlugin(BasePlugin):
     @override
-    def _get_video_sample_indices(self, video_fps, max_frame, first_idx=0, **kwargs):  # frames selection for internvl #TODO remove kwargs
-        start, end = -100000, 100000
-        num_segments = 32
-        start_idx = max(first_idx, round(start * video_fps))
-        end_idx = min(round(end * video_fps), max_frame)
-        seg_size = float(end_idx - start_idx) / num_segments
-        frame_indices = np.array(
-            [int(start_idx + (seg_size / 2) + np.round(seg_size * idx)) for idx in range(num_segments)]
-        )
-        return frame_indices
-
-    @override
     def _regularize_videos(
         self, videos: list["VideoInput"], **kwargs
     ) -> tuple[list[list["ImageObject"]], list[float]]:
@@ -494,9 +482,8 @@ class InternVLPlugin(BasePlugin):
         for video in videos:
             container = av.open(video, "r")
             video_stream = next(stream for stream in container.streams if stream.type == "video")
-            max_frame = sum(1 for _ in container.decode(video=0)) - 1
-            fps = video_stream.average_rate
-            sample_indices = self._get_video_sample_indices(max_frame=max_frame, video_fps=fps)
+            kwargs["video_fps"] = getattr(video_stream, "average_rate", 2.0)
+            sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
             frames: list[ImageObject] = []
             container.seek(0)
             for frame_idx, frame in enumerate(container.decode(video_stream)):
@@ -535,7 +522,6 @@ class InternVLPlugin(BasePlugin):
         for message in messages:
             content = message["content"]
             while IMAGE_PLACEHOLDER in content:
-                # TOFIX
                 content = content.replace(
                     IMAGE_PLACEHOLDER,
                     f"<img>{'<IMG_CONTEXT>' * image_seqlen * image_pixel_patch_list[num_image_tokens]}</img>",
@@ -549,7 +535,7 @@ class InternVLPlugin(BasePlugin):
                 end_patch_index = video_patch_indices[num_video_tokens]
                 num_patches = list(video_num_patches[current_patch_index:end_patch_index])
                 video_replaced_prompt = "\n".join(
-                    f"Frame{i+1}: <img>{'<IMG_CONTEXT>'* image_seqlen * num_patches[i]}</img>"
+                    f"Frame{i + 1}: <img>{'<IMG_CONTEXT>' * image_seqlen * num_patches[i]}</img>"
                     for i in range(len(num_patches))
                 )
                 content = content.replace(VIDEO_PLACEHOLDER, video_replaced_prompt, 1)
@@ -574,7 +560,8 @@ class InternVLPlugin(BasePlugin):
         **kwargs,
     ) -> dict[str, "torch.Tensor"]:
         image_processor: BaseImageProcessor = getattr(processor, "image_processor")
-        image_kwargs = image_processor.to_dict()  # get image processor args #FIXME some keys are useless
+        attributes = ["crop_to_patches", "min_patches", "max_patches"]  # need for image processor
+        image_kwargs = {attr: getattr(image_processor, attr, None) for attr in attributes}
 
         mm_inputs = {}
         image_video_patches = []
@@ -584,10 +571,11 @@ class InternVLPlugin(BasePlugin):
                 images,
                 image_max_pixels=getattr(processor, "image_max_pixels", 1024 * 1024),  # anyres max pixels?
                 image_min_pixels=getattr(processor, "image_min_pixels", 32 * 32),
-            )
+            )["images"]
 
         if len(videos) != 0 and isinstance(videos[0], str):
-            videos, _ = self._regularize_videos(videos, **image_kwargs)
+            video_maxlen = getattr(processor, "video_maxlen", 128)
+            videos = self._regularize_videos(videos, video_maxlen=video_maxlen, **image_kwargs)[0]
 
         if len(images) != 0:
             images = make_flat_list_of_images(images)
@@ -597,6 +585,7 @@ class InternVLPlugin(BasePlugin):
             image_num_patches_indices = np.cumsum(image_num_patches)
 
         if len(videos) != 0:
+            videos = [video["images"] for video in videos]
             videos = make_batched_videos(videos)
             num_frames_per_video = [len(video) for video in videos]
             patch_indices = np.cumsum(num_frames_per_video)
