@@ -43,7 +43,8 @@ save_total_limit: 1
 per_device_train_batch_size: 8
 gradient_accumulation_steps: 8
 learning_rate: 3.0e-1
-max_steps: 20000
+# max_steps: 20000
+max_steps: 600
 weight_decay: 1.0e-5
 lr_scheduler_type: cosine
 bf16: true
