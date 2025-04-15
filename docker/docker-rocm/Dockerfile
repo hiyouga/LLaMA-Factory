@@ -12,8 +12,13 @@ ARG INSTALL_DEEPSPEED=false
 ARG INSTALL_FLASHATTN=false
 ARG INSTALL_LIGER_KERNEL=false
 ARG INSTALL_HQQ=false
+ARG INSTALL_PYTORCH=true
 ARG PIP_INDEX=https://pypi.org/simple
 ARG HTTP_PROXY=
+ARG PYTORCH_INDEX=https://download.pytorch.org/whl/nightly/rocm6.3
+
+# Use Bash instead of default /bin/sh
+SHELL ["/bin/bash", "-c"]
 
 # Set the working directory
 WORKDIR /app
@@ -60,6 +65,13 @@ RUN EXTRA_PACKAGES="metrics"; \
         pip install --proxy=$HTTP_PROXY -e ".[$EXTRA_PACKAGES]"; \
     else \
         pip install -e ".[$EXTRA_PACKAGES]"; \
+    fi
+
+# Reinstall pytorch
+# This is necessary to ensure that the correct version of PyTorch is installed
+RUN if [ "$INSTALL_PYTORCH" == "true" ]; then \
+        pip uninstall -y torch torchvision torchaudio && \
+        pip install --pre torch torchvision torchaudio --index-url "$PYTORCH_INDEX"; \
     fi
 
 # Rebuild flash attention

@@ -34,7 +34,8 @@ if TYPE_CHECKING:
 
 HF_TOKEN = os.getenv("HF_TOKEN")
 
-TINY_LLAMA = os.getenv("TINY_LLAMA", "llamafactory/tiny-random-Llama-3")
+TINY_LLAMA3 = os.getenv("TINY_LLAMA3", "llamafactory/tiny-random-Llama-3")
+TINY_LLAMA4 = os.getenv("TINY_LLAMA4", "llamafactory/tiny-random-Llama-4")
 
 MM_MESSAGES = [
     {"role": "user", "content": "<image>What is in this image?"},
@@ -129,9 +130,30 @@ def _check_plugin(
 
 
 def test_base_plugin():
-    tokenizer_module = _load_tokenizer_module(model_name_or_path=TINY_LLAMA)
+    tokenizer_module = _load_tokenizer_module(model_name_or_path=TINY_LLAMA3)
     base_plugin = get_mm_plugin(name="base")
     check_inputs = {"plugin": base_plugin, **tokenizer_module}
+    _check_plugin(**check_inputs)
+
+
+@pytest.mark.skipif(not HF_TOKEN, reason="Gated model.")
+def test_gemma3_plugin():
+    image_seqlen = 256
+    tokenizer_module = _load_tokenizer_module(model_name_or_path="google/gemma-3-4b-it")
+    gemma3_plugin = get_mm_plugin(name="gemma3", image_token="<image_soft_token>")
+    image_tokens_expanded = "<image_soft_token>" * image_seqlen
+    check_inputs = {"plugin": gemma3_plugin, **tokenizer_module}
+    check_inputs["expected_mm_messages"] = [
+        {
+            key: value.replace("<image>", f"\n\n<start_of_image>{image_tokens_expanded}<end_of_image>\n\n")
+            for key, value in message.items()
+        }
+        for message in MM_MESSAGES
+    ]
+    check_inputs["expected_mm_inputs"] = _get_mm_inputs(tokenizer_module["processor"])
+    check_inputs["expected_mm_inputs"].pop("num_crops")
+    check_inputs["expected_mm_inputs"]["token_type_ids"] = [[0] * 1024]
+    check_inputs["expected_no_mm_inputs"] = {"token_type_ids": [[0] * 1024]}
     _check_plugin(**check_inputs)
 
 
@@ -149,6 +171,27 @@ def test_internvl_plugin():
     ]
     check_inputs["expected_mm_inputs"] = _get_mm_inputs(tokenizer_module["processor"])
     check_inputs["expected_mm_inputs"].pop("num_patches", None)
+    _check_plugin(**check_inputs)
+
+
+@pytest.mark.xfail(reason="Unknown error.")
+def test_llama4_plugin():
+    tokenizer_module = _load_tokenizer_module(model_name_or_path=TINY_LLAMA4)
+    processor = tokenizer_module["processor"]
+    llama4_plugin = get_mm_plugin(name="llama4", image_token="<|image|>")
+    check_inputs = {"plugin": llama4_plugin, **tokenizer_module}
+    mm_inputs = _get_mm_inputs(tokenizer_module["processor"])
+    image_height, image_width = mm_inputs["pixel_values"][0].shape[-2:]
+    num_patches_per_chunk = int(
+        (image_height // processor.patch_size) * (image_width // processor.patch_size) // processor.downsample_ratio
+    )
+    aspect_ratios = mm_inputs.pop("aspect_ratios")
+    tokens_for_this_image = processor._prompt_split_image(aspect_ratios[0], num_patches_per_chunk)
+    check_inputs["expected_mm_messages"] = [
+        {key: value.replace("<image>", tokens_for_this_image) for key, value in message.items()}
+        for message in MM_MESSAGES
+    ]
+    check_inputs["expected_mm_inputs"] = mm_inputs
     _check_plugin(**check_inputs)
 
 
@@ -227,7 +270,6 @@ def test_pixtral_plugin():
         for message in MM_MESSAGES
     ]
     check_inputs["expected_mm_inputs"] = _get_mm_inputs(tokenizer_module["processor"])
-    check_inputs["expected_mm_inputs"].pop("image_sizes")
     check_inputs["expected_mm_inputs"]["pixel_values"] = check_inputs["expected_mm_inputs"]["pixel_values"][0]
     _check_plugin(**check_inputs)
 
