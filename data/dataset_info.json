@@ -217,7 +217,7 @@
   "deepctrl": {
     "ms_hub_url": "deepctrl/deepctrl-sft-data"
   },
-  "adgen_train": {
+  "adgen": {
     "hf_hub_url": "HasturOfficial/adgen",
     "ms_hub_url": "AI-ModelScope/adgen",
     "split": "train",
@@ -705,7 +705,7 @@
     },
     "folder": "python"
   },
-  "mnli_train": {
+  "mnli": {
     "hf_hub_url": "nyu-mll/glue",
     "subset": "mnli",
     "split": "train",
@@ -738,7 +738,7 @@
       "response": "label"
     }
   },
-  "qqp_train": {
+  "qqp": {
     "hf_hub_url": "nyu-mll/glue",
     "subset": "qqp",
     "split": "train",
@@ -760,7 +760,7 @@
       "response": "label"
     }
   },
-  "qnli_train": {
+  "qnli": {
     "hf_hub_url": "nyu-mll/glue",
     "subset": "qnli",
     "split": "train",
@@ -782,7 +782,7 @@
       "response": "label"
     }
   },
-  "sst2_train": {
+  "sst2": {
     "hf_hub_url": "nyu-mll/glue",
     "subset": "sst2",
     "split": "train",
@@ -802,7 +802,7 @@
       "response": "label"
     }
   },
-  "stsb_train": {
+  "stsb": {
     "hf_hub_url": "nyu-mll/glue",
     "subset": "stsb",
     "split": "train",
@@ -824,7 +824,7 @@
       "response": "label"
     }
   },
-  "mrpc_train": {
+  "mrpc": {
     "hf_hub_url": "nyu-mll/glue",
     "subset": "mrpc",
     "split": "train",
@@ -857,7 +857,7 @@
       "response": "label"
     }
   },
-  "rte_train": {
+  "rte": {
     "hf_hub_url": "nyu-mll/glue",
     "subset": "rte",
     "split": "train",
@@ -879,7 +879,7 @@
       "response": "label"
     }
   },
-  "cola_train": {
+  "cola": {
     "hf_hub_url": "nyu-mll/glue",
     "subset": "cola",
     "split": "train",

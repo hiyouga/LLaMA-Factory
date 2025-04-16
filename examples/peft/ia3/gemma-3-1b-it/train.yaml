@@ -16,7 +16,7 @@ target_modules:
 feedforward_modules: down_proj
 
 ### dataset
-dataset: ${TRAIN_DATASET}
+dataset: ${DATASET}
 template: gemma
 cutoff_len: 2048
 overwrite_cache: true
@@ -33,17 +33,18 @@ overwrite_output_dir: true
 save_only_model: false
 plot_loss: true
 include_num_input_tokens_seen: true
-push_to_hub: true
-push_to_hub_organization: rbelanec
+# push_to_hub: true
+# push_to_hub_organization: rbelanec
 load_best_model_at_end: true
-metric_for_best_model: eval_${EVAL_DATASET}_loss
+metric_for_best_model: eval_${DATASET}_loss
 save_total_limit: 1
 
 ### train
 per_device_train_batch_size: 8
 gradient_accumulation_steps: 8
 learning_rate: 3.0e-1
-max_steps: 20000
+# max_steps: 20000
+max_steps: 200
 weight_decay: 1.0e-5
 lr_scheduler_type: cosine
 bf16: true
@@ -55,11 +56,14 @@ report_to:
 - wandb
 
 ### eval
-eval_dataset: ${EVAL_DATASET}
+# eval_dataset: ${EVAL_DATASET}
 per_device_eval_batch_size: 8
 eval_strategy: steps
 eval_steps: 200
+val_size: 0.1
 
 ### predict
 # do_predict: true
 # predict_with_generate: true
+
+max_samples: 200
