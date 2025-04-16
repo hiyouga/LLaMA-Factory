@@ -198,10 +198,7 @@ def patch_target_modules(
         return target_modules
 
 
-_register_composite_model(
-    model_type="intern_vl",
-    vision_model_keys=["vision_model", "vision_tower"],
-)
+
 
 
 _register_composite_model(
