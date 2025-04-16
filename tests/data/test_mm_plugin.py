@@ -138,7 +138,7 @@ def test_base_plugin():
 
 
 @pytest.mark.skipif(not HF_TOKEN, reason="Gated model.")
-@pytest.mark.skipif(not is_transformers_version_greater_than("4.51.3"), reason="Requires transformers>=4.51.3")
+@pytest.mark.skipif(not is_transformers_version_greater_than("4.50.0"), reason="Requires transformers>=4.50.0")
 def test_gemma3_plugin():
     image_seqlen = 256
     tokenizer_module = _load_tokenizer_module(model_name_or_path="google/gemma-3-4b-it")
@@ -198,6 +198,7 @@ def test_llama4_plugin():
     _check_plugin(**check_inputs)
 
 
+@pytest.mark.skipif(not is_transformers_version_greater_than("4.47.0"), reason="Requires transformers>=4.47.0")
 def test_llava_plugin():
     image_seqlen = 576
     tokenizer_module = _load_tokenizer_module(model_name_or_path="llava-hf/llava-1.5-7b-hf")
@@ -256,6 +257,7 @@ def test_paligemma_plugin():
     _check_plugin(**check_inputs)
 
 
+@pytest.mark.skipif(not is_transformers_version_greater_than("4.50.0"), reason="Requires transformers>=4.50.0")
 def test_pixtral_plugin():
     image_slice_height, image_slice_width = 2, 2
     tokenizer_module = _load_tokenizer_module(model_name_or_path="mistral-community/pixtral-12b")
@@ -293,6 +295,7 @@ def test_qwen2_vl_plugin():
     _check_plugin(**check_inputs)
 
 
+@pytest.mark.skipif(not is_transformers_version_greater_than("4.47.0"), reason="Requires transformers>=4.47.0")
 def test_video_llava_plugin():
     image_seqlen = 256
     tokenizer_module = _load_tokenizer_module(model_name_or_path="LanguageBind/Video-LLaVA-7B-hf")

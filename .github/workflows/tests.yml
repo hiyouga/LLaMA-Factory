@@ -33,13 +33,7 @@ jobs:
           - "macos-13"
         transformers:
           - null
-        include:
-          - python: "3.9"
-            os: "ubuntu-latest"
-            transformers: "4.41.2"
-          - python: "3.9"
-            os: "ubuntu-latest"
-            transformers: "4.43.0"
+        include:  # test backward compatibility
           - python: "3.9"
             os: "ubuntu-latest"
             transformers: "4.45.0"
