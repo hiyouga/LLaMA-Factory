@@ -967,6 +967,35 @@ register_model_group(
 
 register_model_group(
     models={
+        "InternVL2_5-1B-MPO": {
+            DownloadSource.DEFAULT: "kingsley01/InternVL2_5-1B-MPO-hf",
+        },
+        "InternVL2_5-2B-MPO": {
+            DownloadSource.DEFAULT: "kingsley01/InternVL2_5-2B-MPO-hf",
+        },
+        "InternVL2_5-4B-MPO": {
+            DownloadSource.DEFAULT: "kingsley01/InternVL2_5-4B-MPO-hf",
+        },
+        "InternVL2_5-8B-MPO": {
+            DownloadSource.DEFAULT: "kingsley01/InternVL2_5-8B-MPO-hf",
+        },
+        "InternVL3-1B-hf": {
+            DownloadSource.DEFAULT: "kingsley01/InternVL3-1B-hf",
+        },
+        "InternVL3-2B-hf": {
+            DownloadSource.DEFAULT: "kingsley01/InternVL3-2B-hf",
+        },
+        "InternVL3-8B-hf": {
+            DownloadSource.DEFAULT: "kingsley01/InternVL3-8B-hf",
+        },
+    },
+    template="intern_vl",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
         "Jamba-v0.1": {
             DownloadSource.DEFAULT: "ai21labs/Jamba-v0.1",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Jamba-v0.1",
