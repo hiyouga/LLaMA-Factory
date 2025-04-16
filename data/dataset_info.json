@@ -709,6 +709,7 @@
     "hf_hub_url": "nyu-mll/glue",
     "subset": "mnli",
     "split": "train",
+    "instruction": "Classify the following premise and hypothesis pair into entailment, neutral, and contradiction classes. Response only with the corresponding class.",
     "columns": {
       "prompt": "premise",
       "query": "hypothesis",
@@ -719,6 +720,7 @@
     "hf_hub_url": "nyu-mll/glue",
     "subset": "mnli",
     "split": "validation_mismatched",
+    "instruction": "Classify the following premise and hypothesis pair into entailment, neutral, and contradiction classes. Response only with the corresponding class.",
     "columns": {
       "prompt": "premise",
       "query": "hypothesis",
@@ -729,6 +731,7 @@
     "hf_hub_url": "nyu-mll/glue",
     "subset": "mnli",
     "split": "validation_matched",
+    "instruction": "Classify the following premise and hypothesis pair into entailment, neutral, and contradiction classes. Response only with the corresponding class.",
     "columns": {
       "prompt": "premise",
       "query": "hypothesis",

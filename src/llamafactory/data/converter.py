@@ -78,6 +78,9 @@ class AlpacaDatasetConverter(DatasetConverter):
                 prompt.append({"role": Role.ASSISTANT.value, "content": old_response})
 
         query = []
+        if self.dataset_attr.instruction:
+            query.append(self.dataset_attr.instruction)
+
         if self.dataset_attr.prompt and example[self.dataset_attr.prompt]:
             query.append(example[self.dataset_attr.prompt])
 
@@ -106,7 +109,6 @@ class AlpacaDatasetConverter(DatasetConverter):
         elif self.dataset_attr.response and isinstance(example[self.dataset_attr.response], int) and self.id2label: # class label example
             response = [{"role": Role.ASSISTANT.value, "content": self.id2label[example[self.dataset_attr.response]]}]
         else:  # unsupervised
-            print(self.id2label, isinstance(example[self.dataset_attr.response], int))
             response = []
 
         output = {

@@ -23,6 +23,7 @@ overwrite_cache: true
 preprocessing_num_workers: 16
 dataloader_num_workers: 4
 packing: false
+max_samples: 200
 
 ### output
 output_dir: ${OUTPUT_DIR}
