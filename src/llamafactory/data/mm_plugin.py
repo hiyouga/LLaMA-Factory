@@ -86,7 +86,7 @@ if TYPE_CHECKING:
             pass
 
 
-def _concatenate_list(input_list: list[Any]) -> Union[list[Any], NDArray, "torch.Tensor"]:
+def _concatenate_list(input_list: list[Any]) -> Union[list[Any], "NDArray", "torch.Tensor"]:
     r"""Concatenate a list of lists, numpy arrays or torch tensors.
 
     Returns:
