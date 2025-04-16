@@ -493,7 +493,7 @@ def _create_muon_optimizer(
     model: "PreTrainedModel",
     training_args: "TrainingArguments",
 ) -> "torch.optim.Optimizer":
-    from llamafactory.train.opt.muon import Muon  # type: ignore
+    from llamafactory.opt.muon import Muon  # type: ignore
     ns_steps = getattr(training_args, "ns_steps", 5)
     
     optimizer = Muon(
