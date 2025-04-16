@@ -17,8 +17,10 @@ import subprocess
 import sys
 from copy import deepcopy
 from enum import Enum, unique
+from functools import partial
 
 from .extras import logging
+
 
 USAGE = (
     "-" * 70
