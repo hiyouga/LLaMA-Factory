@@ -25,12 +25,7 @@ from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TypedDict, Union
 
 import numpy as np
 import torch
-from transformers.image_utils import (
-    get_image_size,
-    make_batched_videos,
-    make_flat_list_of_images,
-    to_numpy_array,
-)
+from transformers.image_utils import get_image_size, make_flat_list_of_images, to_numpy_array
 from typing_extensions import override
 
 from ..extras.constants import AUDIO_PLACEHOLDER, IGNORE_INDEX, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
@@ -60,6 +55,10 @@ if is_transformers_version_greater_than("4.45.0"):
         convert_sparse_cross_attention_mask_to_dense,
         get_cross_attention_token_mask,
     )
+
+
+if is_transformers_version_greater_than("4.51.3"):
+    from transformers.image_utils import make_batched_videos
 
 
 if TYPE_CHECKING:

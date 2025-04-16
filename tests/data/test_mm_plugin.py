@@ -20,6 +20,7 @@ import torch
 from PIL import Image
 
 from llamafactory.data.mm_plugin import get_mm_plugin
+from llamafactory.extras.packages import is_transformers_version_greater_than
 from llamafactory.hparams import get_infer_args
 from llamafactory.model import load_tokenizer
 
@@ -137,6 +138,7 @@ def test_base_plugin():
 
 
 @pytest.mark.skipif(not HF_TOKEN, reason="Gated model.")
+@pytest.mark.skipif(not is_transformers_version_greater_than("4.51.3"), reason="Requires transformers>=4.51.3")
 def test_gemma3_plugin():
     image_seqlen = 256
     tokenizer_module = _load_tokenizer_module(model_name_or_path="google/gemma-3-4b-it")
@@ -157,7 +159,7 @@ def test_gemma3_plugin():
     _check_plugin(**check_inputs)
 
 
-@pytest.mark.xfail(reason="cache failure.")
+@pytest.mark.xfail(reason="Unknown error.")
 def test_internvl_plugin():
     image_seqlen = 256
     tokenizer_module = _load_tokenizer_module(model_name_or_path="kingsley01/InternVL2_5-1B-MPO-hf")
