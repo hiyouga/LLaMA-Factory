@@ -181,7 +181,6 @@ llamafactory-cli export examples/merge_lora/llama3_full_sft.yaml
 #### 使用 vLLM+TP 批量推理
 
 ```
-export VLLM_WORKER_MULTIPROC_METHOD=spawn
 python scripts/vllm_infer.py --model_name_or_path path_to_merged_model --dataset alpaca_en_demo
 ```
 
