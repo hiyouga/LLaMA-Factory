@@ -17,16 +17,7 @@ import subprocess
 import sys
 from enum import Enum, unique
 
-from . import launcher
-from .api.app import run_api
-from .chat.chat_model import run_chat
-from .eval.evaluator import run_eval
 from .extras import logging
-from .extras.env import VERSION, print_env
-from .extras.misc import find_available_port, get_device_count, is_env_enabled, use_ray
-from .train.tuner import export_model, run_exp
-from .webui.interface import run_web_demo, run_web_ui
-
 
 USAGE = (
     "-" * 70
@@ -41,18 +32,6 @@ USAGE = (
     + "|   llamafactory-cli webui: launch LlamaBoard                        |\n"
     + "|   llamafactory-cli version: show version info                      |\n"
     + "-" * 70
-)
-
-WELCOME = (
-    "-" * 58
-    + "\n"
-    + f"| Welcome to LLaMA Factory, version {VERSION}"
-    + " " * (21 - len(VERSION))
-    + "|\n|"
-    + " " * 56
-    + "|\n"
-    + "| Project page: https://github.com/hiyouga/LLaMA-Factory |\n"
-    + "-" * 58
 )
 
 logger = logging.get_logger(__name__)
@@ -71,8 +50,28 @@ class Command(str, Enum):
     VER = "version"
     HELP = "help"
 
-
 def main():
+    from . import launcher
+    from .api.app import run_api
+    from .chat.chat_model import run_chat
+    from .eval.evaluator import run_eval
+    from .extras.env import VERSION, print_env
+    from .extras.misc import find_available_port, get_device_count, is_env_enabled, use_ray
+    from .train.tuner import export_model, run_exp
+    from .webui.interface import run_web_demo, run_web_ui
+
+    WELCOME = (
+        "-" * 58
+        + "\n"
+        + f"| Welcome to LLaMA Factory, version {VERSION}"
+        + " " * (21 - len(VERSION))
+        + "|\n|"
+        + " " * 56
+        + "|\n"
+        + "| Project page: https://github.com/hiyouga/LLaMA-Factory |\n"
+        + "-" * 58
+    )
+
     command = sys.argv.pop(1) if len(sys.argv) != 1 else Command.HELP
     if command == Command.API:
         run_api()
@@ -128,4 +127,6 @@ def main():
 
 
 if __name__ == "__main__":
+    from multiprocessing import freeze_support
+    freeze_support()
     main()
