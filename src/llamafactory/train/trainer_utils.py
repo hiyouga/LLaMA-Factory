@@ -494,7 +494,7 @@ def _create_muon_optimizer(
     training_args: "TrainingArguments",
 ) -> "torch.optim.Optimizer":
     from muon import Muon  # type: ignore
-    ns_steps = 5
+    ns_steps = getattr(training_args, "ns_steps", 5)
     
     optimizer = Muon(
         lr=training_args.learning_rate,
