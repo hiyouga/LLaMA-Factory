@@ -23,7 +23,7 @@ import torch
 from transformers.training_args import _convert_str_dict
 from typing_extensions import Self
 
-from ..extras.constants import AttentionFunction, EngineName, RopeScaling
+from ..extras.constants import AttentionFunction, EngineName, QuantizationMethod, RopeScaling
 
 
 @dataclass
@@ -184,8 +184,8 @@ class BaseModelArguments:
 class QuantizationArguments:
     r"""Arguments pertaining to the quantization method."""
 
-    quantization_method: Literal["bitsandbytes", "hqq", "eetq"] = field(
-        default="bitsandbytes",
+    quantization_method: QuantizationMethod = field(
+        default=QuantizationMethod.BNB,
         metadata={"help": "Quantization method to use for on-the-fly quantization."},
     )
     quantization_bit: Optional[int] = field(
@@ -222,6 +222,10 @@ class ProcessorArguments:
         default=False,
         metadata={"help": "Use pan and scan to process image for gemma3."},
     )
+    use_audio_in_video: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use audio in video inputs."},
+    )
     video_max_pixels: int = field(
         default=256 * 256,
         metadata={"help": "The maximum number of pixels of video inputs."},
@@ -237,6 +241,10 @@ class ProcessorArguments:
     video_maxlen: int = field(
         default=128,
         metadata={"help": "The maximum number of sampled frames for video inputs."},
+    )
+    audio_sampling_rate: int = field(
+        default=16000,
+        metadata={"help": "The sampling rate of audio inputs."},
     )
 
     def __post_init__(self):

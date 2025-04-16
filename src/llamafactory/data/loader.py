@@ -16,13 +16,13 @@ import os
 from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import numpy as np
-from datasets import load_dataset, load_from_disk
+from datasets import Dataset, load_dataset, load_from_disk
 
 from ..extras import logging
 from ..extras.constants import FILEEXT2TYPE
 from ..extras.misc import check_version, has_tokenized_data
 from .converter import align_dataset
-from .data_utils import get_dataset_module, merge_dataset, split_dataset
+from .data_utils import get_dataset_module, merge_dataset, read_cloud_json, split_dataset
 from .parser import get_dataset_list
 from .processor import (
     FeedbackDatasetProcessor,
@@ -66,6 +66,9 @@ def _load_single_dataset(
         data_path = os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)
         data_name = dataset_attr.subset
         data_dir = dataset_attr.folder
+
+    elif dataset_attr.load_from == "cloud_file":
+        data_path = dataset_attr.dataset_name
 
     elif dataset_attr.load_from == "file":
         data_files = []
@@ -122,6 +125,8 @@ def _load_single_dataset(
             token=model_args.om_hub_token,
             streaming=data_args.streaming,
         )
+    elif dataset_attr.load_from == "cloud_file":
+        dataset = Dataset.from_list(read_cloud_json(data_path), split=dataset_attr.split)
     else:
         dataset = load_dataset(
             path=data_path,
@@ -131,10 +136,12 @@ def _load_single_dataset(
             split=dataset_attr.split,
             cache_dir=model_args.cache_dir,
             token=model_args.hf_hub_token,
-            streaming=data_args.streaming,
             num_proc=data_args.preprocessing_num_workers,
             trust_remote_code=model_args.trust_remote_code,
+            streaming=data_args.streaming and dataset_attr.load_from != "file",
         )
+        if data_args.streaming and dataset_attr.load_from == "file":
+            dataset = dataset.to_iterable_dataset(num_shards=training_args.dataloader_num_workers)
 
     if dataset_attr.num_samples is not None and not data_args.streaming:
         target_num = dataset_attr.num_samples

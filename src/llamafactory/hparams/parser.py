@@ -135,7 +135,7 @@ def _check_extra_dependencies(
         check_version("mixture-of-depth>=1.1.6", mandatory=True)
 
     if model_args.infer_backend == EngineName.VLLM:
-        check_version("vllm>=0.4.3,<=0.7.3")
+        check_version("vllm>=0.4.3,<=0.8.4")
         check_version("vllm", mandatory=True)
     elif model_args.infer_backend == EngineName.SGLANG:
         check_version("sglang>=0.4.4")
@@ -285,10 +285,6 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
     if model_args.use_unsloth and is_deepspeed_zero3_enabled():
         raise ValueError("Unsloth is incompatible with DeepSpeed ZeRO-3.")
 
-    if data_args.neat_packing and not data_args.packing:
-        logger.warning_rank0("`neat_packing` requires `packing` is True. Change `packing` to True.")
-        data_args.packing = True
-
     _verify_model_args(model_args, data_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args, training_args)
 
@@ -394,8 +390,10 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
 def get_infer_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _INFER_CLS:
     model_args, data_args, finetuning_args, generating_args = _parse_infer_args(args)
 
+    # Setup logging
     _set_transformers_logging()
 
+    # Check arguments
     if model_args.infer_backend == "vllm":
         if finetuning_args.stage != "sft":
             raise ValueError("vLLM engine only supports auto-regressive models.")
@@ -412,6 +410,7 @@ def get_infer_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
     _verify_model_args(model_args, data_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args)
 
+    # Post-process model arguments
     if model_args.export_dir is not None and model_args.export_device == "cpu":
         model_args.device_map = {"": torch.device("cpu")}
         if data_args.cutoff_len != DataArguments().cutoff_len:  # override cutoff_len if it is not default
@@ -425,8 +424,10 @@ def get_infer_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
 def get_eval_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _EVAL_CLS:
     model_args, data_args, eval_args, finetuning_args = _parse_eval_args(args)
 
+    # Setup logging
     _set_transformers_logging()
 
+    # Check arguments
     if model_args.infer_backend == "vllm":
         raise ValueError("vLLM backend is only available for API, CLI and Web.")
 

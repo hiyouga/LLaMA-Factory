@@ -13,21 +13,12 @@
 # limitations under the License.
 
 import os
-import random
 import subprocess
 import sys
+from copy import deepcopy
 from enum import Enum, unique
 
-from . import launcher
-from .api.app import run_api
-from .chat.chat_model import run_chat
-from .eval.evaluator import run_eval
 from .extras import logging
-from .extras.env import VERSION, print_env
-from .extras.misc import get_device_count, is_env_enabled, use_ray
-from .train.tuner import export_model, run_exp
-from .webui.interface import run_web_demo, run_web_ui
-
 
 USAGE = (
     "-" * 70
@@ -44,71 +35,87 @@ USAGE = (
     + "-" * 70
 )
 
-WELCOME = (
-    "-" * 58
-    + "\n"
-    + f"| Welcome to LLaMA Factory, version {VERSION}"
-    + " " * (21 - len(VERSION))
-    + "|\n|"
-    + " " * 56
-    + "|\n"
-    + "| Project page: https://github.com/hiyouga/LLaMA-Factory |\n"
-    + "-" * 58
-)
-
 logger = logging.get_logger(__name__)
 
 
-CMD_FUNC_MAP = {
-    "api": run_api,
-    "chat": run_chat,
-    "env": print_env,
-    "eval": run_eval,
-    "export": export_model,
-    "train": run_exp,
-    "webchat": run_web_demo,
-    "webui": run_web_ui,
-    "version": print(WELCOME),
-    "help": print(USAGE),
-}
-
-
 def main():
-    command = sys.argv.pop(1) if len(sys.argv) != 1 else "help"
-    if command == "train":
-        force_torchrun = is_env_enabled("FORCE_TORCHRUN")
-        if force_torchrun or (get_device_count() > 1 and not use_ray()):
-            nnodes = os.getenv("NNODES", "1")
-            node_rank = os.getenv("NODE_RANK", "0")
-            nproc_per_node = os.getenv("NPROC_PER_NODE", str(get_device_count()))
-            master_addr = os.getenv("MASTER_ADDR", "127.0.0.1")
-            master_port = os.getenv("MASTER_PORT", str(random.randint(20001, 29999)))
-            logger.info_rank0(f"Initializing {nproc_per_node} distributed tasks at: {master_addr}:{master_port}")
-            if int(nnodes) > 1:
-                print(f"Multi-node training enabled: num nodes: {nnodes}, node rank: {node_rank}")
+    from . import launcher
+    from .api.app import run_api
+    from .chat.chat_model import run_chat
+    from .eval.evaluator import run_eval
+    from .extras.env import VERSION, print_env
+    from .extras.misc import find_available_port, get_device_count, is_env_enabled, use_ray
+    from .train.tuner import export_model, run_exp
+    from .webui.interface import run_web_demo, run_web_ui
 
-            process = subprocess.run(
-                (
-                    "torchrun --nnodes {nnodes} --node_rank {node_rank} --nproc_per_node {nproc_per_node} "
-                    "--master_addr {master_addr} --master_port {master_port} {file_name} {args}"
-                )
-                .format(
-                    nnodes=nnodes,
-                    node_rank=node_rank,
-                    nproc_per_node=nproc_per_node,
-                    master_addr=master_addr,
-                    master_port=master_port,
-                    file_name=launcher.__file__,
-                    args=" ".join(sys.argv[1:]),
-                )
-                .split()
+    WELCOME = (
+        "-" * 58
+        + "\n"
+        + f"| Welcome to LLaMA Factory, version {VERSION}"
+        + " " * (21 - len(VERSION))
+        + "|\n|"
+        + " " * 56
+        + "|\n"
+        + "| Project page: https://github.com/hiyouga/LLaMA-Factory |\n"
+        + "-" * 58
+    )
+
+    COMMANDS = {
+        "api": run_api,
+        "chat": run_chat,
+        "env": print_env,
+        "eval": run_eval,
+        "export": export_model,
+        "train": run_exp,
+        "webchat": run_web_demo,
+        "webui": run_web_ui,
+        "version": partial(print, WELCOME),
+        "help": partial(print, USAGE),
+    }
+
+    command = sys.argv.pop(1) if len(sys.argv) != 1 else "help"
+    force_torchrun = is_env_enabled("FORCE_TORCHRUN")
+    if command == "train" and (force_torchrun or (get_device_count() > 1 and not use_ray())):
+        nnodes = os.getenv("NNODES", "1")
+        node_rank = os.getenv("NODE_RANK", "0")
+        nproc_per_node = os.getenv("NPROC_PER_NODE", str(get_device_count()))
+        master_addr = os.getenv("MASTER_ADDR", "127.0.0.1")
+        master_port = os.getenv("MASTER_PORT", str(find_available_port()))
+        logger.info_rank0(f"Initializing {nproc_per_node} distributed tasks at: {master_addr}:{master_port}")
+        if int(nnodes) > 1:
+            print(f"Multi-node training enabled: num nodes: {nnodes}, node rank: {node_rank}")
+
+        env = deepcopy(os.environ)
+        if is_env_enabled("OPTIM_TORCH", "1"):
+            # optimize DDP, see https://zhuanlan.zhihu.com/p/671834539
+            env["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+            env["TORCH_NCCL_AVOID_RECORD_STREAMS"] = "1"
+
+        # NOTE: DO NOT USE shell=True to avoid security risk
+        process = subprocess.run(
+            (
+                "torchrun --nnodes {nnodes} --node_rank {node_rank} --nproc_per_node {nproc_per_node} "
+                "--master_addr {master_addr} --master_port {master_port} {file_name} {args}"
             )
-            sys.exit(process.returncode)
-        else:
-            run_exp()
+            .format(
+                nnodes=nnodes,
+                node_rank=node_rank,
+                nproc_per_node=nproc_per_node,
+                master_addr=master_addr,
+                master_port=master_port,
+                file_name=launcher.__file__,
+                args=" ".join(sys.argv[1:]),
+            )
+            .split(),
+            env=env,
+            check=True,
+        )
+        sys.exit(process.returncode)
     else:
-        CMD_FUNC_MAP[command]()
+        COMMANDS[command]()
 
 
 if __name__ == "__main__":
+    from multiprocessing import freeze_support
+    freeze_support()
     main()

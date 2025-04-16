@@ -128,9 +128,9 @@ class CustomDPOTrainer(DPOTrainer):
         return super()._get_train_sampler()
 
     @override
-    def get_batch_samples(self, epoch_iterator, num_batches):
+    def get_batch_samples(self, *args, **kwargs):
         r"""Replace the method of DPO Trainer with the one of the standard Trainer."""
-        return Trainer.get_batch_samples(self, epoch_iterator, num_batches)
+        return Trainer.get_batch_samples(self, *args, **kwargs)
 
     def odds_ratio_loss(self, chosen_logps: "torch.Tensor", rejected_logps: "torch.Tensor") -> "torch.Tensor":
         r"""Compute ORPO's odds ratio (OR) loss for batched log probabilities of the policy model."""

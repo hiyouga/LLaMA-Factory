@@ -14,7 +14,7 @@
 
 import os
 from collections import OrderedDict, defaultdict
-from enum import Enum
+from enum import Enum, unique
 from typing import Optional
 
 from peft.utils import SAFETENSORS_WEIGHTS_NAME as SAFE_ADAPTER_WEIGHTS_NAME
@@ -115,6 +115,19 @@ class DownloadSource(str, Enum):
     OPENMIND = "om"
 
 
+@unique
+class QuantizationMethod(str, Enum):
+    r"""Borrowed from `transformers.utils.quantization_config.QuantizationMethod`."""
+
+    BNB = "bnb"
+    GPTQ = "gptq"
+    AWQ = "awq"
+    AQLM = "aqlm"
+    QUANTO = "quanto"
+    EETQ = "eetq"
+    HQQ = "hqq"
+
+
 class RopeScaling(str, Enum):
     LINEAR = "linear"
     DYNAMIC = "dynamic"
@@ -133,6 +146,7 @@ def register_model_group(
             any(suffix in name for suffix in ("-Chat", "-Distill", "-Instruct")) or multimodal
         ):
             DEFAULT_TEMPLATE[name] = template
+
         if multimodal:
             MULTIMODAL_SUPPORTED_MODELS.add(name)
 
@@ -711,6 +725,26 @@ register_model_group(
             DownloadSource.DEFAULT: "THUDM/glm-4-9b-chat-1m",
             DownloadSource.MODELSCOPE: "ZhipuAI/glm-4-9b-chat-1m",
         },
+        "GLM-4-9B-0414-Chat": {
+            DownloadSource.DEFAULT: "THUDM/GLM-4-9B-0414",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4-9B-0414",
+        },
+        "GLM-4-32B-0414": {
+            DownloadSource.DEFAULT: "THUDM/GLM-4-32B-Base-0414",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4-32B-Base-0414",
+        },
+        "GLM-4-32B-0414-Chat": {
+            DownloadSource.DEFAULT: "THUDM/GLM-4-32B-0414",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4-32B-0414",
+        },
+        "GLM-Z1-9B-0414-Chat": {
+            DownloadSource.DEFAULT: "THUDM/GLM-Z1-9B-0414",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-Z1-9B-0414",
+        },
+        "GLM-Z1-32B-0414-Chat": {
+            DownloadSource.DEFAULT: "THUDM/GLM-Z1-32B-0414",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-Z1-32B-0414",
+        },
     },
     template="glm4",
 )
@@ -943,6 +977,22 @@ register_model_group(
 
 register_model_group(
     models={
+        "Kimi-VL-A3B-Instruct": {
+            DownloadSource.DEFAULT: "moonshotai/Kimi-VL-A3B-Instruct",
+            DownloadSource.MODELSCOPE: "moonshotai/Kimi-VL-A3B-Instruct",
+        },
+        "Kimi-VL-A3B-Thinking": {
+            DownloadSource.DEFAULT: "moonshotai/Kimi-VL-A3B-Thinking",
+            DownloadSource.MODELSCOPE: "moonshotai/Kimi-VL-A3B-Thinking",
+        },
+    },
+    template="kimi_vl",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
         "LingoWhale-8B": {
             DownloadSource.DEFAULT: "deeplang-ai/LingoWhale-8B",
             DownloadSource.MODELSCOPE: "DeepLang/LingoWhale-8B",
@@ -1107,6 +1157,30 @@ register_model_group(
         },
     },
     template="mllama",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
+        "Llama-4-Scout-17B-16E": {
+            DownloadSource.DEFAULT: "meta-llama/Llama-4-Scout-17B-16E",
+            DownloadSource.MODELSCOPE: "LLM-Research/Llama-4-Scout-17B-16E",
+        },
+        "Llama-4-Scout-17B-16E-Instruct": {
+            DownloadSource.DEFAULT: "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Llama-4-Scout-17B-16E-Instruct",
+        },
+        "Llama-4-Maverick-17B-128E": {
+            DownloadSource.DEFAULT: "meta-llama/Llama-4-Maverick-17B-128E",
+            DownloadSource.MODELSCOPE: "LLM-Research/Llama-4-Maverick-17B-128E",
+        },
+        "Llama-4-Maverick-17B-128E-Instruct": {
+            DownloadSource.DEFAULT: "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+            DownloadSource.MODELSCOPE: "LLM-Research/Llama-4-Maverick-17B-128E-Instruct",
+        },
+    },
+    template="llama4",
     multimodal=True,
 )
 
@@ -2272,6 +2346,18 @@ register_model_group(
 
 register_model_group(
     models={
+        "Qwen2.5-Omni-7B": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-Omni-7B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-Omni-7B",
+        }
+    },
+    template="qwen2_omni",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
         "Qwen2-VL-2B": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-VL-2B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen2-VL-2B",
@@ -2345,6 +2431,10 @@ register_model_group(
         "Qwen2.5-VL-7B-Instruct": {
             DownloadSource.DEFAULT: "Qwen/Qwen2.5-VL-7B-Instruct",
             DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-VL-7B-Instruct",
+        },
+        "Qwen2.5-VL-32B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-VL-32B-Instruct",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-VL-32B-Instruct",
         },
         "Qwen2.5-VL-72B-Instruct": {
             DownloadSource.DEFAULT: "Qwen/Qwen2.5-VL-72B-Instruct",

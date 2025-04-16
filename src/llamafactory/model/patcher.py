@@ -27,6 +27,7 @@ from ..extras.packages import is_transformers_version_greater_than
 from .model_utils.attention import configure_attn_implementation, print_attn_implementation
 from .model_utils.checkpointing import prepare_model_for_training
 from .model_utils.embedding import resize_embedding_layer
+from .model_utils.kv_cache import configure_kv_cache
 from .model_utils.longlora import configure_longlora
 from .model_utils.moe import add_z3_leaf_module, configure_moe
 from .model_utils.packing import configure_packing
@@ -77,6 +78,8 @@ def patch_processor(
     setattr(processor, "video_min_pixels", model_args.video_min_pixels)
     setattr(processor, "video_fps", model_args.video_fps)
     setattr(processor, "video_maxlen", model_args.video_maxlen)
+    setattr(processor, "audio_sampling_rate", model_args.audio_sampling_rate)
+    setattr(processor, "use_audio_in_video", model_args.use_audio_in_video)
 
 
 def patch_config(
@@ -93,7 +96,8 @@ def patch_config(
             model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
 
     if is_torch_npu_available():
-        torch.npu.set_compile_mode(jit_compile=is_env_enabled("JIT_COMPILE"))
+        # avoid JIT compile on NPU devices, see https://zhuanlan.zhihu.com/p/660875458
+        torch.npu.set_compile_mode(jit_compile=is_env_enabled("NPU_JIT_COMPILE"))
 
     configure_attn_implementation(config, model_args, is_trainable)
     configure_rope(config, model_args, is_trainable)
@@ -102,22 +106,20 @@ def patch_config(
     configure_moe(config, model_args, is_trainable)
     configure_visual_model(config)
     configure_packing(model_args, is_trainable)
-
-    if model_args.use_cache and not is_trainable:
-        setattr(config, "use_cache", True)
-        logger.info_rank0("Using KV cache for faster generation.")
+    configure_kv_cache(config, model_args, is_trainable)
 
     if getattr(config, "model_type", None) == "qwen":
         setattr(config, "use_flash_attn", model_args.flash_attn == "fa2")
         for dtype_name, dtype in [("fp16", torch.float16), ("bf16", torch.bfloat16), ("fp32", torch.float32)]:
             setattr(config, dtype_name, model_args.compute_dtype == dtype)
 
-    if getattr(config, "model_type", None) == "qwen2" and is_trainable and model_args.flash_attn == "fa2":
-        setattr(config, "use_cache", False)  # qwen2 does not support use_cache when using flash attn
-
     if getattr(config, "model_type", None) == "minicpmo":
         setattr(config, "init_audio", True)
         setattr(config, "init_tts", False)
+
+    # replace the top-k gating method
+    if getattr(config, "model_type", None) == "kimi_vl" and is_trainable:
+        setattr(config.text_config, "topk_method", "greedy")
 
     if "LlavaLlamaForCausalLM" in getattr(config, "architectures", []):
         raise ValueError("Please download llava models with hf-compatible format: https://huggingface.co/llava-hf")
@@ -128,15 +130,13 @@ def patch_config(
     # deepspeed zero3 is not compatible with low_cpu_mem_usage
     init_kwargs["low_cpu_mem_usage"] = model_args.low_cpu_mem_usage and (not is_deepspeed_zero3_enabled())
 
-    # cast data type of the model if:
-    # 1. not deepspeed zero3 and not fsdp (keep zero3 or fsdp in float32)
-    # 2. quantization_bit is not None (qlora)
-    if (not is_deepspeed_zero3_enabled() and not is_fsdp_enabled()) or model_args.quantization_bit is not None:
+    # do not cast data type of the model deepspeed zero3 without qlora
+    if not (is_deepspeed_zero3_enabled() and model_args.quantization_bit is None):
         init_kwargs["torch_dtype"] = model_args.compute_dtype
 
-        if init_kwargs["low_cpu_mem_usage"]:  # device map requires low_cpu_mem_usage=True
+        if init_kwargs["low_cpu_mem_usage"] and not is_fsdp_enabled():  # fsdp does not need device map
             if "device_map" not in init_kwargs and model_args.device_map:
-                init_kwargs["device_map"] = model_args.device_map
+                init_kwargs["device_map"] = model_args.device_map  # device map requires low_cpu_mem_usage=True
 
             if init_kwargs.get("device_map", None) == "auto":
                 init_kwargs["offload_folder"] = model_args.offload_folder

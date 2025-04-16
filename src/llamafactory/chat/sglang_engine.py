@@ -33,7 +33,7 @@ from .base_engine import BaseEngine, Response
 
 
 if is_sglang_available():
-    from sglang.utils import launch_server_cmd, terminate_process, wait_for_server
+    from sglang.utils import launch_server_cmd, terminate_process, wait_for_server  # type: ignore
 
 
 if TYPE_CHECKING:
@@ -134,24 +134,17 @@ class SGLangEngine(BaseEngine):
         audios: Optional[list["AudioInput"]] = None,
         **input_kwargs,
     ) -> AsyncIterator[dict[str, Any]]:
-        mm_input_dict = {"images": [], "videos": [], "audios": [], "imglens": [0], "vidlens": [0], "audlens": [0]}
-        if images is not None:
-            mm_input_dict.update({"images": images, "imglens": [len(images)]})
-            if not any(IMAGE_PLACEHOLDER in message["content"] for message in messages):
-                messages[0]["content"] = IMAGE_PLACEHOLDER * len(images) + messages[0]["content"]
+        if images is not None and not any(IMAGE_PLACEHOLDER in message["content"] for message in messages):
+            messages[0]["content"] = IMAGE_PLACEHOLDER * len(images) + messages[0]["content"]
 
-        if videos is not None:
-            mm_input_dict.update({"videos": videos, "vidlens": [len(videos)]})
-            if not any(VIDEO_PLACEHOLDER in message["content"] for message in messages):
-                messages[0]["content"] = VIDEO_PLACEHOLDER * len(videos) + messages[0]["content"]
+        if videos is not None and not any(VIDEO_PLACEHOLDER in message["content"] for message in messages):
+            messages[0]["content"] = VIDEO_PLACEHOLDER * len(videos) + messages[0]["content"]
 
-        if audios is not None:
-            mm_input_dict.update({"audios": audios, "audlens": [len(audios)]})
-            if not any(AUDIO_PLACEHOLDER in message["content"] for message in messages):
-                messages[0]["content"] = AUDIO_PLACEHOLDER * len(audios) + messages[0]["content"]
+        if audios is not None and not any(AUDIO_PLACEHOLDER in message["content"] for message in messages):
+            messages[0]["content"] = AUDIO_PLACEHOLDER * len(audios) + messages[0]["content"]
 
         messages = self.template.mm_plugin.process_messages(
-            messages, mm_input_dict["images"], mm_input_dict["videos"], mm_input_dict["audios"], self.processor
+            messages, images or [], videos or [], audios or [], self.processor
         )
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or self.generating_args["default_system"]

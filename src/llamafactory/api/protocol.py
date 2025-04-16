@@ -70,14 +70,17 @@ class FunctionCall(BaseModel):
     function: Function
 
 
-class ImageURL(BaseModel):
+class URL(BaseModel):
     url: str
+    detail: Literal["auto", "low", "high"] = "auto"
 
 
 class MultimodalInputItem(BaseModel):
-    type: Literal["text", "image_url"]
+    type: Literal["text", "image_url", "video_url", "audio_url"]
     text: Optional[str] = None
-    image_url: Optional[ImageURL] = None
+    image_url: Optional[URL] = None
+    video_url: Optional[URL] = None
+    audio_url: Optional[URL] = None
 
 
 class ChatMessage(BaseModel):
