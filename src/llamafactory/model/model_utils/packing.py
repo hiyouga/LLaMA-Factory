@@ -41,7 +41,6 @@ from typing import TYPE_CHECKING
 
 import torch
 import torch.nn.functional as F
-import transformers.modeling_flash_attention_utils
 
 from ...extras import logging
 
@@ -111,6 +110,8 @@ def get_unpad_data(attention_mask: "torch.Tensor") -> tuple["torch.Tensor", "tor
 def configure_packing(model_args: "ModelArguments", is_trainable: bool) -> None:
     if not is_trainable or not model_args.block_diag_attn:
         return
+
+    import transformers.modeling_flash_attention_utils
 
     transformers.modeling_flash_attention_utils._get_unpad_data = get_unpad_data
     logger.info_rank0("Using block diagonal attention for sequence packing without cross-attention.")

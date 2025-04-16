@@ -23,8 +23,6 @@ from typing import TYPE_CHECKING, Optional
 import torch
 import torch.nn as nn
 import transformers
-from transformers.modeling_flash_attention_utils import _flash_attention_forward
-from transformers.models.llama.modeling_llama import Cache, apply_rotary_pos_emb, repeat_kv
 
 from ...extras import logging
 from ...extras.constants import SUPPORTED_CLASS_FOR_S2ATTN
@@ -33,7 +31,15 @@ from ...extras.packages import is_transformers_version_greater_than
 
 
 if not is_transformers_version_greater_than("4.48.0"):
-    from transformers.models.llama.modeling_llama import LlamaAttention, LlamaFlashAttention2, LlamaSdpaAttention
+    from transformers.modeling_flash_attention_utils import _flash_attention_forward
+    from transformers.models.llama.modeling_llama import (
+        Cache,
+        LlamaAttention,
+        LlamaFlashAttention2,
+        LlamaSdpaAttention,
+        apply_rotary_pos_emb,
+        repeat_kv,
+    )
 
 
 if TYPE_CHECKING:
