@@ -157,6 +157,7 @@ def test_gemma3_plugin():
     _check_plugin(**check_inputs)
 
 
+@pytest.mark.xfail(reason="cache failure.")
 def test_internvl_plugin():
     image_seqlen = 256
     tokenizer_module = _load_tokenizer_module(model_name_or_path="kingsley01/InternVL2_5-1B-MPO-hf")

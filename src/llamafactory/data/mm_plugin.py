@@ -86,6 +86,7 @@ if TYPE_CHECKING:
         def _get_number_of_features(self, orig_height: int, orig_width: int, height: int, width: int) -> int:
             pass
 
+
 def _concatenate_list(input_list):
     r"""Concatenate a list of lists, numpy arrays or torch tensors.
 
@@ -98,6 +99,7 @@ def _concatenate_list(input_list):
         return np.concatenate(input_list, axis=0)
     elif isinstance(input_list[0], torch.Tensor):
         return torch.cat(input_list, dim=0)
+
 
 def _get_paligemma_token_type_ids(imglens: list[int], seqlens: list[int], processor: "MMProcessor") -> list[list[int]]:
     r"""Get paligemma token type ids for computing loss.
