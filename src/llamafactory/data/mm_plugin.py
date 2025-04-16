@@ -475,31 +475,6 @@ class Gemma3Plugin(BasePlugin):
 @dataclass
 class InternVLPlugin(BasePlugin):
     @override
-    def _regularize_videos(
-        self, videos: list["VideoInput"], **kwargs
-    ) -> tuple[list[list["ImageObject"]], list[float]]:
-        results, fps_per_video = [], []
-        for video in videos:
-            container = av.open(video, "r")
-            video_stream = next(stream for stream in container.streams if stream.type == "video")
-            kwargs["video_fps"] = getattr(video_stream, "average_rate", 2.0)
-            sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
-            frames: list[ImageObject] = []
-            container.seek(0)
-            for frame_idx, frame in enumerate(container.decode(video_stream)):
-                if frame_idx in sample_indices:
-                    frames.append(frame.to_image())
-
-            frames = self._regularize_images(frames, image_max_pixels=768 * 768, image_min_pixels=32 * 32)
-            results.append(frames)
-            if video_stream.duration is None:
-                fps_per_video.append(2.0)
-            else:
-                fps_per_video.append(len(sample_indices) / float(video_stream.duration * video_stream.time_base))
-
-        return results, fps_per_video
-
-    @override
     def process_messages(
         self,
         messages: list[dict[str, str]],
@@ -522,6 +497,8 @@ class InternVLPlugin(BasePlugin):
         for message in messages:
             content = message["content"]
             while IMAGE_PLACEHOLDER in content:
+                if num_image_tokens >= len(image_pixel_patch_list):
+                    raise ValueError(f"`len(images)` is less than the number of {IMAGE_PLACEHOLDER} tokens.")
                 content = content.replace(
                     IMAGE_PLACEHOLDER,
                     f"<img>{'<IMG_CONTEXT>' * image_seqlen * image_pixel_patch_list[num_image_tokens]}</img>",
@@ -531,6 +508,8 @@ class InternVLPlugin(BasePlugin):
             message["content"] = content
 
             while VIDEO_PLACEHOLDER in content:
+                if num_video_tokens >= len(video_patch_indices):
+                    raise ValueError(f"`len(videos)` is less than the number of {VIDEO_PLACEHOLDER} tokens.")
                 current_patch_index = video_patch_indices[num_video_tokens - 1] if num_video_tokens > 0 else 0
                 end_patch_index = video_patch_indices[num_video_tokens]
                 num_patches = list(video_num_patches[current_patch_index:end_patch_index])
@@ -574,8 +553,13 @@ class InternVLPlugin(BasePlugin):
             )["images"]
 
         if len(videos) != 0 and isinstance(videos[0], str):
-            video_maxlen = getattr(processor, "video_maxlen", 128)
-            videos = self._regularize_videos(videos, video_maxlen=video_maxlen, **image_kwargs)[0]
+            videos = self._regularize_videos(
+                videos,
+                image_max_pixels=getattr(processor, "video_max_pixels", 256 * 256),
+                image_min_pixels=getattr(processor, "video_min_pixels", 16 * 16),
+                video_fps=getattr(processor, "video_fps", 2.0),
+                video_maxlen=getattr(processor, "video_maxlen", 128),
+            )["videos"]
 
         if len(images) != 0:
             images = make_flat_list_of_images(images)
@@ -585,7 +569,6 @@ class InternVLPlugin(BasePlugin):
             image_num_patches_indices = np.cumsum(image_num_patches)
 
         if len(videos) != 0:
-            videos = [video["images"] for video in videos]
             videos = make_batched_videos(videos)
             num_frames_per_video = [len(video) for video in videos]
             patch_indices = np.cumsum(num_frames_per_video)

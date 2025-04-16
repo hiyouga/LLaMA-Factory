@@ -198,7 +198,9 @@ def patch_target_modules(
         return target_modules
 
 
-
+_register_composite_model(
+    model_type="internvl",
+)
 
 
 _register_composite_model(
