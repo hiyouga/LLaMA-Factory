@@ -181,7 +181,6 @@ llamafactory-cli export examples/merge_lora/llama3_full_sft.yaml
 #### Batch Generation using vLLM Tensor Parallel
 
 ```
-export VLLM_WORKER_MULTIPROC_METHOD=spawn
 python scripts/vllm_infer.py --model_name_or_path path_to_merged_model --dataset alpaca_en_demo
 ```
 
