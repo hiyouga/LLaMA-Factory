@@ -57,7 +57,7 @@ if is_transformers_version_greater_than("4.45.0"):
     )
 
 
-if is_transformers_version_greater_than("4.51.3"):
+if is_transformers_version_greater_than("4.49.0"):
     from transformers.image_utils import make_batched_videos, make_flat_list_of_images
 
 
