@@ -737,5 +737,166 @@
       "query": "hypothesis",
       "response": "label"
     }
+  },
+  "qqp_train": {
+    "hf_hub_url": "nyu-mll/glue",
+    "subset": "qqp",
+    "split": "train",
+    "instruction": "Classify the following question pair into duplicate and not_duplicate classes. Response only with the corresponding class.",
+    "columns": {
+      "prompt": "question1",
+      "query": "question2",
+      "response": "label"
+    }
+  },
+  "qqp_eval": {
+    "hf_hub_url": "nyu-mll/glue",
+    "subset": "qqp",
+    "split": "validation",
+    "instruction": "Classify the following question pair into duplicate and not_duplicate classes. Response only with the corresponding class.",
+    "columns": {
+      "prompt": "question1",
+      "query": "question2",
+      "response": "label"
+    }
+  },
+  "qnli_train": {
+    "hf_hub_url": "nyu-mll/glue",
+    "subset": "qnli",
+    "split": "train",
+    "instruction": "Classify the following question and sentence pair into entailment and not_entailment classes. Response only with the corresponding class.",
+    "columns": {
+      "prompt": "question",
+      "query": "sentence",
+      "response": "label"
+    }
+  },
+  "qnli_eval": {
+    "hf_hub_url": "nyu-mll/glue",
+    "subset": "qnli",
+    "split": "validation",
+    "instruction": "Classify the following question and sentence pair into entailment and not_entailment classes. Response only with the corresponding class.",
+    "columns": {
+      "prompt": "question",
+      "query": "sentence",
+      "response": "label"
+    }
+  },
+  "sst2_train": {
+    "hf_hub_url": "nyu-mll/glue",
+    "subset": "sst2",
+    "split": "train",
+    "instruction": "Classify the following sentence into negative and positive classes. Response only with the corresponding class.",
+    "columns": {
+      "prompt": "sentence",
+      "response": "label"
+    }
+  },
+  "sst2_eval": {
+    "hf_hub_url": "nyu-mll/glue",
+    "subset": "sst2",
+    "split": "validation",
+    "instruction": "Classify the following sentence into negative and positive classes. Response only with the corresponding class.",
+    "columns": {
+      "prompt": "sentence",
+      "response": "label"
+    }
+  },
+  "stsb_train": {
+    "hf_hub_url": "nyu-mll/glue",
+    "subset": "stsb",
+    "split": "train",
+    "instruction": "Asign a similarity score from 0 to 5 to the following sentence pair. Response only with the corresponding score.",
+    "columns": {
+      "prompt": "sentence1",
+      "query": "sentence2",
+      "response": "label"
+    }
+  },
+  "stsb_eval": {
+    "hf_hub_url": "nyu-mll/glue",
+    "subset": "stsb",
+    "split": "validation",
+    "instruction": "Asign a similarity score from 0 to 5 to the following sentence pair. Response only with the corresponding score.",
+    "columns": {
+      "prompt": "sentence1",
+      "query": "sentence2",
+      "response": "label"
+    }
+  },
+  "mrpc_train": {
+    "hf_hub_url": "nyu-mll/glue",
+    "subset": "mrpc",
+    "split": "train",
+    "instruction": "Classify the following sentence pair into not_equivalent and equivalent classes. Response only with the corresponding class.",
+    "columns": {
+      "prompt": "sentence1",
+      "query": "sentence2",
+      "response": "label"
+    }
+  },
+  "mrpc_eval": {
+    "hf_hub_url": "nyu-mll/glue",
+    "subset": "mrpc",
+    "split": "validation",
+    "instruction": "Classify the following sentence pair into not_equivalent and equivalent classes. Response only with the corresponding class.",
+    "columns": {
+      "prompt": "sentence1",
+      "query": "sentence2",
+      "response": "label"
+    }
+  },
+  "mrpc_test": {
+    "hf_hub_url": "nyu-mll/glue",
+    "subset": "mrpc",
+    "split": "test",
+    "instruction": "Classify the following sentence pair into not_equivalent and equivalent classes. Response only with the corresponding class.",
+    "columns": {
+      "prompt": "sentence1",
+      "query": "sentence2",
+      "response": "label"
+    }
+  },
+  "rte_train": {
+    "hf_hub_url": "nyu-mll/glue",
+    "subset": "rte",
+    "split": "train",
+    "instruction": "Classify the following sentence pair into entailment and not_entailment classes. Response only with the corresponding class.",
+    "columns": {
+      "prompt": "sentence1",
+      "query": "sentence2",
+      "response": "label"
+    }
+  },
+  "rte_eval": {
+    "hf_hub_url": "nyu-mll/glue",
+    "subset": "rte",
+    "split": "validation",
+    "instruction": "Classify the following sentence pair into entailment and not_entailment classes. Response only with the corresponding class.",
+    "columns": {
+      "prompt": "sentence1",
+      "query": "sentence2",
+      "response": "label"
+    }
+  },
+  "cola_train": {
+    "hf_hub_url": "nyu-mll/glue",
+    "subset": "cola",
+    "split": "train",
+    "instruction": "Classify the following sentence into unacceptable and acceptable classes. Response only with the corresponding class.",
+    "columns": {
+      "prompt": "sentence",
+      "response": "label"
+    }
+  },
+  "cola_eval": {
+    "hf_hub_url": "nyu-mll/glue",
+    "subset": "cola",
+    "split": "validation",
+    "instruction": "Classify the following sentence into unacceptable and acceptable classes. Response only with the corresponding class.",
+    "columns": {
+      "prompt": "sentence",
+      "response": "label"
+    }
   }
 }
