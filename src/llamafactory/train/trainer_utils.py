@@ -494,13 +494,14 @@ def _create_muon_optimizer(
     training_args: "TrainingArguments",
 ) -> "torch.optim.Optimizer":
     from muon import Muon  # type: ignore
+    ns_steps = 5
     
     optimizer = Muon(
         lr=training_args.learning_rate,
         betas=(training_args.adam_beta1, training_args.adam_beta2),
         eps=training_args.adam_epsilon,
         weight_decay=training_args.weight_decay,
-        ns_steps=training_args.ns_steps,
+        ns_steps=ns_steps,
     )
     logger.info_rank0("Using Muon optimizer.")
     return optimizer
