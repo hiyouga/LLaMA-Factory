@@ -140,6 +140,9 @@ def _check_extra_dependencies(
     elif model_args.infer_backend == EngineName.SGLANG:
         check_version("sglang>=0.4.4")
         check_version("sglang", mandatory=True)
+    
+    if finetuning_args.use_muon:
+        check_version("muon", mandatory=True)
 
     if finetuning_args.use_galore:
         check_version("galore_torch", mandatory=True)

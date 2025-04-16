@@ -489,12 +489,30 @@ def _create_adam_mini_optimizer(
     logger.info_rank0("Using Adam-mini optimizer.")
     return optimizer
 
+def _create_muon_optimizer(
+    model: "PreTrainedModel",
+    training_args: "TrainingArguments",
+) -> "torch.optim.Optimizer":
+    from muon import Muon  # type: ignore
+    
+    optimizer = Muon(
+        lr=training_args.learning_rate,
+        betas=(training_args.adam_beta1, training_args.adam_beta2),
+        eps=training_args.adam_epsilon,
+        weight_decay=training_args.weight_decay,
+        ns_steps=training_args.ns_steps,
+    )
+    logger.info_rank0("Using Muon optimizer.")
+    return optimizer
 
 def create_custom_optimizer(
     model: "PreTrainedModel",
     training_args: "TrainingArguments",
     finetuning_args: "FinetuningArguments",
 ) -> Optional["torch.optim.Optimizer"]:
+    if finetuning_args.use_muon:
+        return _create_muon_optimizer(model, training_args)
+    
     if finetuning_args.use_galore:
         return _create_galore_optimizer(model, training_args, finetuning_args)
 

@@ -205,6 +205,12 @@ llamafactory-cli api examples/inference/llama3_lora_sft.yaml
 
 ### Extras
 
+#### Full-Parameter Fine-Tuning using Muon
+
+```bash
+llamafactory-cli train examples/extras/muon/qwen2_full_sft.yaml
+```
+
 #### Full-Parameter Fine-Tuning using GaLore
 
 ```bash
