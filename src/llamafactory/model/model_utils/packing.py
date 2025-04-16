@@ -41,13 +41,9 @@ from typing import TYPE_CHECKING
 
 import torch
 import torch.nn.functional as F
+import transformers.modeling_flash_attention_utils
 
 from ...extras import logging
-from ...extras.packages import is_transformers_version_greater_than
-
-
-if is_transformers_version_greater_than("4.43.0"):
-    import transformers.modeling_flash_attention_utils
 
 
 if TYPE_CHECKING:
