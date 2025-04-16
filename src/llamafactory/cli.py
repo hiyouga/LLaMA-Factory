@@ -19,7 +19,6 @@ from copy import deepcopy
 from functools import partial
 
 
-
 USAGE = (
     "-" * 70
     + "\n"
