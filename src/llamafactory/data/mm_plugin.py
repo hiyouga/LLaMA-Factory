@@ -569,7 +569,7 @@ class InternVLPlugin(BasePlugin):
         if len(images) != 0 and isinstance(images[0], str):
             images = self._regularize_images(
                 images,
-                image_max_pixels=getattr(processor, "image_max_pixels", 1024 * 1024),  # anyres max pixels?
+                image_max_pixels=getattr(processor, "image_max_pixels", 1024 * 1024),
                 image_min_pixels=getattr(processor, "image_min_pixels", 32 * 32),
             )["images"]
 
@@ -595,8 +595,7 @@ class InternVLPlugin(BasePlugin):
             video_pixel_values = video_inputs.pop("pixel_values")
             video_num_patches_indices = np.cumsum(video_num_patches)
 
-        # gather all of the pixel_values
-        # FIXME IMAGE First Now
+        # NOT SUPPORT IMAGE VIDEO INTERLEAVED
         if len(images) != 0 and image_pixel_values is not None:
             for i in range(len(images)):
                 start_index = image_num_patches_indices[i - 1] if i > 0 else 0
@@ -611,11 +610,11 @@ class InternVLPlugin(BasePlugin):
                 end_index = video_num_patches_indices[end_patch_index - 1]
                 image_video_patches.append(video_pixel_values[start_index:end_index])
 
-        if len(images) != 0:
+        if len(images) != 0 or len(videos) != 0:
             pixel_values_list = concatenate_list(image_video_patches)
-            mm_inputs = {
-                "pixel_values": torch.stack([torch.tensor(patch_ndarray) for patch_ndarray in pixel_values_list])
-            }
+            mm_inputs["pixel_values"] = torch.stack([torch.tensor(patch_ndarray) for patch_ndarray in pixel_values_list])
+
+        if len(images) != 0:
             mm_inputs.update({"image_num_patches": image_num_patches})
 
         if len(videos) != 0:
