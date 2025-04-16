@@ -31,11 +31,20 @@ jobs:
           - "ubuntu-latest"
           - "windows-latest"
           - "macos-13"
+        transformers:
+          - null
+        include:  # test backward compatibility
+          - python: "3.9"
+            os: "ubuntu-latest"
+            transformers: "4.45.0"
+          - python: "3.9"
+            os: "ubuntu-latest"
+            transformers: "4.49.0"
 
     runs-on: ${{ matrix.os }}
 
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.os }}-${{ matrix.python }}
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.os }}-${{ matrix.python }}-${{ matrix.transformers }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
     env:
@@ -51,19 +60,24 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           cache: "pip"
-          cache-dependency-path: "setup.py"
+          cache-dependency-path: "**/requirements*.txt"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install ".[torch,dev]"
 
+      - name: Install transformers
+        if: ${{ matrix.transformers }}
+        run: |
+          python -m pip install "transformers==${{ matrix.transformers }}"
+
       - name: Cache files
         id: hf-hub-cache
         uses: actions/cache@v4
         with:
           path: ${{ runner.temp }}/huggingface
-          key: huggingface-${{ matrix.os }}-${{ matrix.python }}-${{ hashFiles('tests/version.txt') }}
+          key: huggingface-${{ matrix.os }}-${{ matrix.python }}-${{ matrix.transformers }}-${{ hashFiles('tests/version.txt') }}
 
       - name: Check quality
         run: |

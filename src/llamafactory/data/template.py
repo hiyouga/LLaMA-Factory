@@ -872,6 +872,18 @@ register_template(
 
 
 register_template(
+    name="granite3_vision",
+    format_user=StringFormatter(slots=["<|user|>\n{{content}}\n<|assistant|>\n"]),
+    format_system=StringFormatter(slots=["<|system|>\n{{content}}\n"]),
+    default_system=(
+        "A chat between a curious user and an artificial intelligence assistant. "
+        "The assistant gives helpful, detailed, and polite answers to the user's questions."
+    ),
+    mm_plugin=get_mm_plugin(name="llava_next", image_token="<image>"),
+)
+
+
+register_template(
     name="index",
     format_user=StringFormatter(slots=["reserved_0{{content}}reserved_1"]),
     format_system=StringFormatter(slots=["<unk>{{content}}"]),
