@@ -253,11 +253,6 @@ _register_composite_model(
 
 
 _register_composite_model(
-    model_type="pixtral", vision_model_keys="vision_encoder", projector_key="vision_language_adapter"
-)
-
-
-_register_composite_model(
     model_type="video_llava",
 )
 
