@@ -1,7 +1,7 @@
 seed: ${SEED}
 
 ### model
-model_name_or_path: google/gemma-3-1b-it
+model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
 trust_remote_code: true
 flash_attn: auto
 use_cache: false
@@ -15,7 +15,7 @@ num_virtual_tokens: 100
 
 ### dataset
 dataset: ${DATASET}
-template: gemma
+template: llama3
 cutoff_len: 2048
 overwrite_cache: true
 preprocessing_num_workers: 16

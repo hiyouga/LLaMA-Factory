@@ -9,9 +9,8 @@ use_cache: false
 ### method
 stage: sft
 do_train: true
-finetuning_type: prompt-tuning
+finetuning_type: lntuning
 task_type: CAUSAL_LM
-num_virtual_tokens: 100
 
 ### dataset
 dataset: ${DATASET}

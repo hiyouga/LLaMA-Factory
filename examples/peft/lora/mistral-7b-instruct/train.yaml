@@ -1,7 +1,7 @@
 seed: ${SEED}
 
 ### model
-model_name_or_path: google/gemma-3-1b-it
+model_name_or_path: mistralai/Mistral-7B-Instruct-v0.3
 trust_remote_code: true
 flash_attn: auto
 use_cache: false
@@ -9,13 +9,15 @@ use_cache: false
 ### method
 stage: sft
 do_train: true
-finetuning_type: prompt-tuning
-task_type: CAUSAL_LM
-num_virtual_tokens: 100
+finetuning_type: lora
+lora_rank: 16
+lora_alpha: 16
+lora_dropout: 0.05
+lora_target: k_proj,v_proj,down_proj
 
 ### dataset
 dataset: ${DATASET}
-template: gemma
+template: mistral
 cutoff_len: 2048
 overwrite_cache: true
 preprocessing_num_workers: 16
@@ -39,7 +41,7 @@ save_total_limit: 1
 ### train
 per_device_train_batch_size: 8
 gradient_accumulation_steps: 8
-learning_rate: 3.0e-1
+learning_rate: 5.0e-5
 max_steps: 20000
 weight_decay: 1.0e-5
 lr_scheduler_type: cosine

@@ -19,7 +19,7 @@ from typing import Optional
 
 from peft.utils import SAFETENSORS_WEIGHTS_NAME as SAFE_ADAPTER_WEIGHTS_NAME
 from peft.utils import WEIGHTS_NAME as ADAPTER_WEIGHTS_NAME
-from peft import PromptTuningConfig, PrefixTuningConfig, MultitaskPromptTuningConfig, PromptEncoderConfig, IA3Config
+from peft import PromptTuningConfig, PrefixTuningConfig, MultitaskPromptTuningConfig, PromptEncoderConfig, IA3Config, LNTuningConfig
 from transformers.utils import SAFE_WEIGHTS_INDEX_NAME, SAFE_WEIGHTS_NAME, WEIGHTS_INDEX_NAME, WEIGHTS_NAME
 
 
@@ -57,7 +57,7 @@ LAYERNORM_NAMES = {"norm", "ln"}
 
 LLAMABOARD_CONFIG = "llamaboard_config.yaml"
 
-HF_PEFT_METHODS = ["prompt-tuning", "prefix-tuning", "p-tuning", "ia3"]
+HF_PEFT_METHODS = ["prompt-tuning", "prefix-tuning", "p-tuning", "ia3", "lntuning", "mtp"]
 CUSTOM_PEFT_METHODS = ["dept", "adept", "attempt", "adapters", "adapter-fusion", "bitfit"]
 
 PEFT_CONFIG_MAPPING = {
@@ -65,6 +65,8 @@ PEFT_CONFIG_MAPPING = {
     "prefix-tuning": PrefixTuningConfig, 
     "p-tuning": PromptEncoderConfig, 
     "ia3": IA3Config,
+    "lntuning": LNTuningConfig,
+    "mtp": MultitaskPromptTuningConfig,
     }
 
 METHODS = ["full", "freeze", "lora"] + HF_PEFT_METHODS + CUSTOM_PEFT_METHODS

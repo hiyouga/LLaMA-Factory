@@ -1,7 +1,7 @@
 seed: ${SEED}
 
 ### model
-model_name_or_path: google/gemma-3-1b-it
+model_name_or_path: mistralai/Mistral-7B-Instruct-v0.3
 trust_remote_code: true
 flash_attn: auto
 use_cache: false
@@ -9,13 +9,12 @@ use_cache: false
 ### method
 stage: sft
 do_train: true
-finetuning_type: prompt-tuning
+finetuning_type: lntuning
 task_type: CAUSAL_LM
-num_virtual_tokens: 100
 
 ### dataset
 dataset: ${DATASET}
-template: gemma
+template: mistral
 cutoff_len: 2048
 overwrite_cache: true
 preprocessing_num_workers: 16
