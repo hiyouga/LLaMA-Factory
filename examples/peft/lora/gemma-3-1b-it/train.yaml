@@ -11,10 +11,7 @@ finetuning_type: lora
 lora_rank: 16
 lora_alpha: 16
 lora_dropout: 0.05
-target_modules:
-- k_proj
-- v_proj
-- down_proj
+lora_target: k_proj,v_proj,down_proj
 
 ### dataset
 dataset: mnli_train
