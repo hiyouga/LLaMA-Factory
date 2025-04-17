@@ -11,6 +11,12 @@ stage: sft
 do_train: true
 finetuning_type: lntuning
 task_type: CAUSAL_LM
+target_modules:
+  - input_layernorm
+  - post_attention_layernorm
+  - pre_feedforward_layernorm
+  - post_feedforward_layernorm
+  - norm
 
 ### dataset
 dataset: ${DATASET}
