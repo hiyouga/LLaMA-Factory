@@ -200,6 +200,7 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                     rope_deltas - delta0,
                 )  # avoid inplace operation FIXME
             else:  # for qwen2vl
+                rope_index_kwargs["attention_mask"] = (rope_index_kwargs["attention_mask"] >= 1).float()
                 features["position_ids"], features["rope_deltas"] = self.model.get_rope_index(**rope_index_kwargs)
 
         if "cross_attention_mask" in mm_inputs:  # for mllama inputs when pad_to_multiple_of is enabled
