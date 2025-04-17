@@ -55,7 +55,6 @@ extra_require = {
     "aqlm": ["aqlm[gpu]>=1.1.0"],
     "vllm": ["vllm>=0.4.3,<=0.8.4"],
     "sglang": ["sglang[srt]>=0.4.5", "transformers==4.51.1"],
-    "muon": ["muon"],
     "galore": ["galore-torch"],
     "apollo": ["apollo-torch"],
     "badam": ["badam>=1.2.1"],

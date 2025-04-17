@@ -493,7 +493,7 @@ def _create_muon_optimizer(
     model: "PreTrainedModel",
     training_args: "TrainingArguments",
 ) -> "torch.optim.Optimizer":
-    from llamafactory.opt.muon import Muon  # type: ignore
+    from llamafactory.third_party.muon import Muon  # type: ignore
     
     # Separate parameters for Muon (2D parameters) and AdamW (others)
     muon_params = []
