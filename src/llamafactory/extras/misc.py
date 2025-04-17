@@ -106,7 +106,7 @@ def check_version(requirement: str, mandatory: bool = False) -> None:
 def check_dependencies() -> None:
     r"""Check the version of the required packages."""
     if is_torch_hpu_available():
-        check_version("transformers>=4.41.2,<=4.45.2")
+        check_version("transformers>=4.41.2,<=4.49.0")
         check_version("optimum-habana>=1.13.2")
         check_version("datasets>=2.16.0,<=3.2.0")
         check_version("accelerate>=0.33.0,<0.34.0")
