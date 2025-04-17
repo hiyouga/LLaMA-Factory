@@ -14,7 +14,7 @@ lora_dropout: 0.05
 lora_target: k_proj,v_proj,down_proj
 
 ### dataset
-dataset: mnli_train
+dataset: mnli
 template: gemma
 cutoff_len: 2048
 overwrite_cache: true
