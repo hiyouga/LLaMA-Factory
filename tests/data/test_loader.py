@@ -15,7 +15,7 @@
 import os
 
 from llamafactory.train.test_utils import load_dataset_module
-
+from llamafactory.extras.misc import is_torch_hpu_available
 
 DEMO_DATA = os.getenv("DEMO_DATA", "llamafactory/demo_data")
 
@@ -37,7 +37,16 @@ TRAIN_ARGS = {
     "fp16": True,
 }
 
-
+if is_torch_hpu_available():
+    TRAIN_ARGS.update(
+        {
+            "use_habana": True,
+            "gaudi_config_name": "Habana/llama",
+            "fp16": False,
+            "bf16": True,
+        }
+    )
+    
 def test_load_train_only():
     dataset_module = load_dataset_module(**TRAIN_ARGS)
     assert dataset_module.get("train_dataset") is not None

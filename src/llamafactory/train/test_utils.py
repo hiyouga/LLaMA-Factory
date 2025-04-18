@@ -57,7 +57,7 @@ def check_lora_model(model: "LoraModel") -> tuple[set[str], set[str]]:
             assert param.dtype == torch.float32
         else:
             assert param.requires_grad is False
-            assert param.dtype == torch.float16
+            assert param.dtype == dtype
 
     return linear_modules, extra_modules
 
