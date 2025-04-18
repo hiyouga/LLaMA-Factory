@@ -1,4 +1,4 @@
-# Copyright 2024 HuggingFace Inc., Daniel Han-Chen & the Unsloth team and the LlamaFactory team.
+# Copyright 2025 HuggingFace Inc., Daniel Han-Chen & the Unsloth team and the LlamaFactory team.
 #
 # This code is inspired by the HuggingFace's Transformers and PEFT library,
 # https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/modeling_utils.py
@@ -79,7 +79,10 @@ def get_custom_gradient_checkpointing_func(gradient_checkpointing_func: Callable
 
     @wraps(gradient_checkpointing_func, assigned=WRAPPER_ASSIGNMENTS + ("__self__",))
     def custom_gradient_checkpointing_func(func: Callable, *args: Union["torch.Tensor", Any], **kwargs):
-        module: torch.nn.Module = func.__self__
+        if isinstance(func, partial):
+            module: torch.nn.Module = func.func.__self__
+        else:
+            module: torch.nn.Module = func.__self__
 
         has_grad = False
         if any(param.requires_grad for param in module.parameters()):

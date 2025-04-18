@@ -1,4 +1,4 @@
-# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+# Copyright 2025 HuggingFace Inc. and the LlamaFactory team.
 #
 # This code is inspired by the HuggingFace's PEFT library.
 # https://github.com/huggingface/peft/blob/v0.10.0/src/peft/peft_model.py
@@ -17,8 +17,7 @@
 
 import gc
 import os
-from collections.abc import Sequence
-from functools import lru_cache
+import socket
 from typing import TYPE_CHECKING, Any, Literal, Union
 
 import torch
@@ -60,6 +59,7 @@ try:
     _is_bf16_available = is_torch_bf16_gpu_available() or (is_torch_npu_available() and torch.npu.is_bf16_supported())
 except Exception:
     _is_bf16_available = False
+
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -111,16 +111,16 @@ def check_dependencies() -> None:
         check_version("datasets>=2.16.0,<=3.2.0")
         check_version("accelerate>=0.33.0,<0.34.0")
     else:
-        check_version("transformers>=4.41.2,<=4.49.0,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0")
-        check_version("datasets>=2.16.0,<=3.3.2")
-        check_version("accelerate>=0.34.0,<=1.4.0")
-    check_version("peft>=0.11.1,<=0.12.0")
+        check_version("transformers>=4.45.0,<=4.51.3,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0")
+        check_version("datasets>=2.16.0,<=3.5.0")
+        check_version("accelerate>=0.34.0,<=1.6.0")
+    check_version("peft>=0.14.0,<=0.15.1")
     check_version("trl>=0.8.6,<=0.9.6")
     if is_transformers_version_greater_than("4.46.0") and not is_transformers_version_greater_than("4.48.1"):
         logger.warning_rank0_once("There are known bugs in transformers v4.46.0-v4.48.0, please use other versions.")
 
 
-def calculate_tps(dataset: Sequence[dict[str, Any]], metrics: dict[str, float], stage: Literal["sft", "rm"]) -> float:
+def calculate_tps(dataset: list[dict[str, Any]], metrics: dict[str, float], stage: Literal["sft", "rm"]) -> float:
     r"""Calculate effective tokens per second."""
     effective_token_num = 0
     for data in dataset:
@@ -163,15 +163,15 @@ def count_parameters(model: "torch.nn.Module") -> tuple[int, int]:
 def get_current_device() -> "torch.device":
     r"""Get the current available device."""
     if is_torch_xpu_available():
-        device = "xpu:{}".format(os.environ.get("LOCAL_RANK", "0"))
+        device = "xpu:{}".format(os.getenv("LOCAL_RANK", "0"))
     elif is_torch_npu_available():
-        device = "npu:{}".format(os.environ.get("LOCAL_RANK", "0"))
+        device = "npu:{}".format(os.getenv("LOCAL_RANK", "0"))
     elif is_torch_mps_available():
-        device = "mps:{}".format(os.environ.get("LOCAL_RANK", "0"))
+        device = "mps:{}".format(os.getenv("LOCAL_RANK", "0"))
     elif is_torch_cuda_available():
-        device = "cuda:{}".format(os.environ.get("LOCAL_RANK", "0"))
+        device = "cuda:{}".format(os.getenv("LOCAL_RANK", "0"))
     elif is_torch_hpu_available():
-        device = "hpu:{}".format(os.environ.get("LOCAL_RANK", "0"))
+        device = "hpu:{}".format(os.getenv("LOCAL_RANK", "0"))
     else:
         device = "cpu"
 
@@ -179,11 +179,13 @@ def get_current_device() -> "torch.device":
 
 
 def get_device_count() -> int:
-    r"""Get the number of available GPU or NPU devices."""
+    r"""Get the number of available devices."""
     if is_torch_xpu_available():
         return torch.xpu.device_count()
     elif is_torch_npu_available():
         return torch.npu.device_count()
+    elif is_torch_mps_available():
+        return torch.mps.device_count()
     elif is_torch_cuda_available():
         return torch.cuda.device_count()
     elif is_torch_hpu_available():
@@ -201,8 +203,12 @@ def get_logits_processor() -> "LogitsProcessorList":
 
 def get_peak_memory() -> tuple[int, int]:
     r"""Get the peak memory usage for the current device (in Bytes)."""
-    if is_torch_npu_available():
+    if is_torch_xpu_available():
+        return torch.xpu.max_memory_allocated(), torch.xpu.max_memory_reserved()
+    elif is_torch_npu_available():
         return torch.npu.max_memory_allocated(), torch.npu.max_memory_reserved()
+    elif is_torch_mps_available():
+        return torch.mps.current_allocated_memory(), -1
     elif is_torch_cuda_available():
         return torch.cuda.max_memory_allocated(), torch.cuda.max_memory_reserved()
     elif is_torch_hpu_available():
@@ -226,9 +232,11 @@ def infer_optim_dtype(model_dtype: "torch.dtype") -> "torch.dtype":
         return torch.float32
 
 
-def is_gpu_or_npu_available() -> bool:
-    r"""Check if the GPU or NPU or HPU is available."""
-    return is_torch_npu_available() or is_torch_cuda_available() or is_torch_hpu_available()
+def is_accelerator_available() -> bool:
+    r"""Check if the accelerator or HPU is available."""
+    return (
+        is_torch_xpu_available() or is_torch_npu_available() or is_torch_mps_available() or is_torch_cuda_available() or is_torch_hpu_available()
+    )
 
 
 def is_env_enabled(env_var: str, default: str = "0") -> bool:
@@ -255,7 +263,7 @@ def skip_check_imports() -> None:
 
 
 def torch_gc() -> None:
-    r"""Collect GPU or NPU memory."""
+    r"""Collect the device memory."""
     gc.collect()
     if is_torch_xpu_available():
         torch.xpu.empty_cache()
@@ -303,3 +311,20 @@ def use_openmind() -> bool:
 
 def use_ray() -> bool:
     return is_env_enabled("USE_RAY")
+
+
+def find_available_port() -> int:
+    r"""Find an available port on the local machine."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(("", 0))
+    port = sock.getsockname()[1]
+    sock.close()
+    return port
+
+
+def fix_proxy(ipv6_enabled: bool = False) -> None:
+    r"""Fix proxy settings for gradio ui."""
+    os.environ["no_proxy"] = "localhost,127.0.0.1,0.0.0.0"
+    if ipv6_enabled:
+        for name in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY"):
+            os.environ.pop(name, None)

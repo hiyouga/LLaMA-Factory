@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional, Union
 
@@ -57,7 +56,7 @@ class Template:
     def encode_oneturn(
         self,
         tokenizer: "PreTrainedTokenizer",
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
     ) -> tuple[list[int], list[int]]:
@@ -73,7 +72,7 @@ class Template:
     def encode_multiturn(
         self,
         tokenizer: "PreTrainedTokenizer",
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
     ) -> list[tuple[list[int], list[int]]]:
@@ -115,7 +114,7 @@ class Template:
     def _encode(
         self,
         tokenizer: "PreTrainedTokenizer",
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str],
         tools: Optional[str],
     ) -> list[list[int]]:
@@ -310,11 +309,13 @@ class Template:
 
 @dataclass
 class Llama2Template(Template):
+    r"""A template that fuse the system message to first user message."""
+
     @override
     def _encode(
         self,
         tokenizer: "PreTrainedTokenizer",
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: str,
         tools: str,
     ) -> list[list[int]]:
@@ -389,7 +390,7 @@ def register_template(
     format_tools: Optional["Formatter"] = None,
     format_prefix: Optional["Formatter"] = None,
     default_system: str = "",
-    stop_words: Optional[Sequence[str]] = None,
+    stop_words: Optional[list[str]] = None,
     thought_words: Optional[tuple[str, str]] = None,
     efficient_eos: bool = False,
     replace_eos: bool = False,
@@ -776,15 +777,17 @@ register_template(
 
 register_template(
     name="default",
-    format_user=StringFormatter(slots=["Human: {{content}}\nAssistant:"]),
+    format_user=StringFormatter(slots=["Human: {{content}}", {"eos_token"}, "\nAssistant:"]),
     format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}, "\n"]),
-    format_system=StringFormatter(slots=["System: {{content}}\n"]),
+    format_system=StringFormatter(slots=["System: {{content}}", {"eos_token"}, "\n"]),
+    replace_jinja_template=True,
 )
 
 
 register_template(
     name="empty",
     format_assistant=StringFormatter(slots=["{{content}}"]),
+    replace_jinja_template=True,
 )
 
 
@@ -808,6 +811,7 @@ register_template(
     name="fewshot",
     format_assistant=StringFormatter(slots=["{{content}}\n\n"]),
     efficient_eos=True,
+    replace_jinja_template=True,
 )
 
 
@@ -815,10 +819,29 @@ register_template(
     name="gemma",
     format_user=StringFormatter(slots=["<start_of_turn>user\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]),
     format_assistant=StringFormatter(slots=["{{content}}<end_of_turn>\n"]),
+    format_system=StringFormatter(slots=["{{content}}\n\n"]),
     format_observation=StringFormatter(
         slots=["<start_of_turn>tool\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]
     ),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<end_of_turn>"],
+    template_class=Llama2Template,
+)
+
+
+# copied from gemma template
+register_template(
+    name="gemma3",
+    format_user=StringFormatter(slots=["<start_of_turn>user\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<end_of_turn>\n"]),
+    format_system=StringFormatter(slots=["{{content}}\n\n"]),
+    format_observation=StringFormatter(
+        slots=["<start_of_turn>tool\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]
+    ),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<end_of_turn>"],
+    mm_plugin=get_mm_plugin("gemma3", image_token="<image_soft_token>"),
+    template_class=Llama2Template,
 )
 
 
@@ -849,10 +872,32 @@ register_template(
 
 
 register_template(
+    name="granite3_vision",
+    format_user=StringFormatter(slots=["<|user|>\n{{content}}\n<|assistant|>\n"]),
+    format_system=StringFormatter(slots=["<|system|>\n{{content}}\n"]),
+    default_system=(
+        "A chat between a curious user and an artificial intelligence assistant. "
+        "The assistant gives helpful, detailed, and polite answers to the user's questions."
+    ),
+    mm_plugin=get_mm_plugin(name="llava_next", image_token="<image>"),
+)
+
+
+register_template(
     name="index",
     format_user=StringFormatter(slots=["reserved_0{{content}}reserved_1"]),
     format_system=StringFormatter(slots=["<unk>{{content}}"]),
     efficient_eos=True,
+)
+
+
+register_template(
+    name="hunyuan",
+    format_user=StringFormatter(slots=["<|bos|>user\n{{content}}<|eos|>\n<|bos|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|eos|>\n"]),
+    format_system=StringFormatter(slots=["<|bos|>system\n{{content}}<|eos|>\n"]),
+    format_prefix=EmptyFormatter(slots=["<|bos|>"]),
+    stop_words=["<|eos|>"],
 )
 
 
@@ -887,6 +932,34 @@ register_template(
         "chosen by the user such as English and 中文."
     ),
     stop_words=["<|im_end|>"],
+)
+
+
+register_template(
+    name="intern_vl",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    default_system=(
+        "你是书生·万象，英文名是InternVL，是由上海人工智能实验室、清华大学及多家合作单位联合开发的多模态大语言模型。"
+    ),
+    stop_words=["<|im_end|>"],
+    mm_plugin=get_mm_plugin(name="intern_vl", image_token="<image>", video_token="<video>"),
+)
+
+
+register_template(
+    name="kimi_vl",
+    format_user=StringFormatter(
+        slots=["<|im_user|>user<|im_middle|>{{content}}<|im_end|><|im_assistant|>assistant<|im_middle|>"]
+    ),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>"]),
+    format_system=StringFormatter(slots=["<|im_system|>system<|im_middle|>{{content}}<|im_end|>"]),
+    default_system="You are a helpful assistant",
+    stop_words=["<|im_end|>"],
+    thought_words=("◁think▷", "◁/think▷"),
+    mm_plugin=get_mm_plugin("kimi_vl", image_token="<|media_pad|>"),
 )
 
 
@@ -932,6 +1005,26 @@ register_template(
     format_tools=ToolFormatter(tool_format="llama3"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|eot_id|>", "<|eom_id|>"],
+)
+
+
+register_template(
+    name="llama4",
+    format_user=StringFormatter(
+        slots=["<|header_start|>user<|header_end|>\n\n{{content}}<|eot|><|header_start|>assistant<|header_end|>\n\n"]
+    ),
+    format_assistant=StringFormatter(slots=["{{content}}<|eot|>"]),
+    format_system=StringFormatter(slots=["<|header_start|>system<|header_end|>\n\n{{content}}<|eot|>"]),
+    format_function=FunctionFormatter(slots=["{{content}}<|eot|>"], tool_format="llama3"),
+    format_observation=StringFormatter(
+        slots=[
+            "<|header_start|>ipython<|header_end|>\n\n{{content}}<|eot|><|header_start|>assistant<|header_end|>\n\n"
+        ]
+    ),
+    format_tools=ToolFormatter(tool_format="llama3"),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<|eot|>", "<|eom|>"],
+    mm_plugin=get_mm_plugin(name="llama4", image_token="<|image|>"),
 )
 
 
@@ -1243,6 +1336,7 @@ register_template(
     format_user=StringFormatter(slots=["{{content}}\n"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     mm_plugin=get_mm_plugin(name="paligemma", image_token="<image>"),
+    template_class=Llama2Template,
 )
 
 
@@ -1255,7 +1349,9 @@ register_template(
         slots=["<start_of_turn>tool\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]
     ),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<end_of_turn>"],
     mm_plugin=get_mm_plugin(name="paligemma", image_token="<image>"),
+    template_class=Llama2Template,
 )
 
 
@@ -1314,7 +1410,7 @@ register_template(
         slots=["<|im_start|>user\n<tool_response>\n{{content}}\n</tool_response><|im_end|>\n<|im_start|>assistant\n"]
     ),
     format_tools=ToolFormatter(tool_format="qwen"),
-    default_system="You are a helpful assistant.",
+    default_system="You are Qwen, created by Alibaba Cloud. You are a helpful assistant.",
     stop_words=["<|im_end|>"],
 )
 
@@ -1330,6 +1426,24 @@ register_template(
     mm_plugin=get_mm_plugin(name="qwen2_audio", audio_token="<|AUDIO|>"),
 )
 
+
+# copied from qwen template
+register_template(
+    name="qwen2_omni",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_function=FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="qwen"),
+    format_observation=StringFormatter(
+        slots=["<|im_start|>user\n<tool_response>\n{{content}}\n</tool_response><|im_end|>\n<|im_start|>assistant\n"]
+    ),
+    format_tools=ToolFormatter(tool_format="qwen"),
+    default_system="You are a helpful assistant.",
+    stop_words=["<|im_end|>"],
+    mm_plugin=get_mm_plugin(
+        name="qwen2_omni", audio_token="<|AUDIO|>", image_token="<|IMAGE|>", video_token="<|VIDEO|>"
+    ),
+)
 
 # copied from qwen template
 register_template(

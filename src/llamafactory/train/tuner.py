@@ -38,6 +38,7 @@ from .trainer_utils import get_ray_trainer, get_swanlab_callback
 
 
 if is_ray_available():
+    import ray
     from ray.train.huggingface.transformers import RayTrainReportCallback
 
 
@@ -76,6 +77,9 @@ def _training_function(config: dict[str, Any]) -> None:
         run_kto(model_args, data_args, training_args, finetuning_args, callbacks)
     else:
         raise ValueError(f"Unknown task: {finetuning_args.stage}.")
+
+    if is_ray_available() and ray.is_initialized():
+        return  # if ray is intialized it will destroy the process group on return
 
     try:
         if dist.is_initialized():

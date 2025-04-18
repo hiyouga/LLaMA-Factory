@@ -13,7 +13,6 @@
 # limitations under the License.
 
 from collections import defaultdict
-from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, Optional
 
 from ...extras import logging
@@ -31,14 +30,14 @@ logger = logging.get_logger(__name__)
 class FeedbackDatasetProcessor(DatasetProcessor):
     def _encode_data_example(
         self,
-        prompt: Sequence[dict[str, str]],
-        response: Sequence[dict[str, str]],
-        kl_response: Sequence[dict[str, str]],
+        prompt: list[dict[str, str]],
+        response: list[dict[str, str]],
+        kl_response: list[dict[str, str]],
         system: Optional[str],
         tools: Optional[str],
-        images: Sequence["ImageInput"],
-        videos: Sequence["VideoInput"],
-        audios: Sequence["AudioInput"],
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
     ) -> tuple[list[int], list[int], list[int], list[int], bool]:
         if response[0]["content"]:  # desired example
             kto_tag = True
@@ -84,8 +83,8 @@ class FeedbackDatasetProcessor(DatasetProcessor):
         return input_ids, labels, kl_input_ids, kl_labels, kto_tag
 
     def preprocess_dataset(self, examples: dict[str, list[Any]]) -> dict[str, list[Any]]:
-        # create unrelated input-output pairs for estimating the KL term by flipping the matched pairs
-        kl_response = examples["_response"][::-1]
+        # Creates mismatched pairs of prompts and completions for the KL dataset by adding a +1 offset to the order of completions.
+        kl_response = [examples["_response"][-1]] + examples["_response"][:-1]
         model_inputs = defaultdict(list)
         for i in range(len(examples["_prompt"])):
             if len(examples["_prompt"][i]) % 2 != 1 or len(examples["_response"][i]) < 2:

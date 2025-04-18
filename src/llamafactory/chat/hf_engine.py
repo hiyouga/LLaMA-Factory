@@ -13,9 +13,8 @@
 # limitations under the License.
 
 import asyncio
-import concurrent.futures
 import os
-from collections.abc import AsyncGenerator, Sequence
+from collections.abc import AsyncGenerator
 from threading import Thread
 from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
@@ -26,7 +25,7 @@ from typing_extensions import override
 from ..data import get_template_and_fix_tokenizer
 from ..extras import logging
 from ..extras.constants import AUDIO_PLACEHOLDER, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER, EngineName
-from ..extras.misc import get_logits_processor, is_torch_hpu_available
+from ..extras.misc import is_torch_hpu_available
 from ..model import load_model, load_tokenizer
 from .base_engine import BaseEngine, Response
 
@@ -83,12 +82,12 @@ class HuggingfaceEngine(BaseEngine):
         processor: Optional["ProcessorMixin"],
         template: "Template",
         generating_args: dict[str, Any],
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        images: Optional[Sequence["ImageInput"]] = None,
-        videos: Optional[Sequence["VideoInput"]] = None,
-        audios: Optional[Sequence["AudioInput"]] = None,
+        images: Optional[list["ImageInput"]] = None,
+        videos: Optional[list["VideoInput"]] = None,
+        audios: Optional[list["AudioInput"]] = None,
         input_kwargs: Optional[dict[str, Any]] = {},
     ) -> tuple[dict[str, Any], int]:
         mm_input_dict = {"images": [], "videos": [], "audios": [], "imglens": [0], "vidlens": [0], "audlens": [0]}
@@ -184,7 +183,6 @@ class HuggingfaceEngine(BaseEngine):
             inputs=inputs,
             attention_mask=attention_mask,
             generation_config=GenerationConfig(**generating_args),
-            logits_processor=get_logits_processor(),
         )
 
         mm_inputs = template.mm_plugin.get_mm_inputs(**mm_input_dict, batch_ids=[prompt_ids], processor=processor)
@@ -233,12 +231,12 @@ class HuggingfaceEngine(BaseEngine):
         processor: Optional["ProcessorMixin"],
         template: "Template",
         generating_args: dict[str, Any],
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        images: Optional[Sequence["ImageInput"]] = None,
-        videos: Optional[Sequence["VideoInput"]] = None,
-        audios: Optional[Sequence["AudioInput"]] = None,
+        images: Optional[list["ImageInput"]] = None,
+        videos: Optional[list["VideoInput"]] = None,
+        audios: Optional[list["AudioInput"]] = None,
         input_kwargs: Optional[dict[str, Any]] = {},
     ) -> list["Response"]:
         gen_kwargs, prompt_length = HuggingfaceEngine._process_args(
@@ -288,12 +286,12 @@ class HuggingfaceEngine(BaseEngine):
         processor: Optional["ProcessorMixin"],
         template: "Template",
         generating_args: dict[str, Any],
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        images: Optional[Sequence["ImageInput"]] = None,
-        videos: Optional[Sequence["VideoInput"]] = None,
-        audios: Optional[Sequence["AudioInput"]] = None,
+        images: Optional[list["ImageInput"]] = None,
+        videos: Optional[list["VideoInput"]] = None,
+        audios: Optional[list["AudioInput"]] = None,
         input_kwargs: Optional[dict[str, Any]] = {},
     ) -> Callable[[], str]:
         gen_kwargs, _ = HuggingfaceEngine._process_args(
@@ -352,18 +350,17 @@ class HuggingfaceEngine(BaseEngine):
     @override
     async def chat(
         self,
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        images: Optional[Sequence["ImageInput"]] = None,
-        videos: Optional[Sequence["VideoInput"]] = None,
-        audios: Optional[Sequence["AudioInput"]] = None,
+        images: Optional[list["ImageInput"]] = None,
+        videos: Optional[list["VideoInput"]] = None,
+        audios: Optional[list["AudioInput"]] = None,
         **input_kwargs,
     ) -> list["Response"]:
         if not self.can_generate:
             raise ValueError("The current model does not support `chat`.")
 
-        loop = asyncio.get_running_loop()
         input_args = (
             self.model,
             self.tokenizer,
@@ -379,24 +376,22 @@ class HuggingfaceEngine(BaseEngine):
             input_kwargs,
         )
         async with self.semaphore:
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                return await loop.run_in_executor(pool, self._chat, *input_args)
+            return await asyncio.to_thread(self._chat, *input_args)
 
     @override
     async def stream_chat(
         self,
-        messages: Sequence[dict[str, str]],
+        messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        images: Optional[Sequence["ImageInput"]] = None,
-        videos: Optional[Sequence["VideoInput"]] = None,
-        audios: Optional[Sequence["AudioInput"]] = None,
+        images: Optional[list["ImageInput"]] = None,
+        videos: Optional[list["VideoInput"]] = None,
+        audios: Optional[list["AudioInput"]] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
         if not self.can_generate:
             raise ValueError("The current model does not support `stream_chat`.")
 
-        loop = asyncio.get_running_loop()
         input_args = (
             self.model,
             self.tokenizer,
@@ -412,13 +407,12 @@ class HuggingfaceEngine(BaseEngine):
             input_kwargs,
         )
         async with self.semaphore:
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                stream = self._stream_chat(*input_args)
-                while True:
-                    try:
-                        yield await loop.run_in_executor(pool, stream)
-                    except StopAsyncIteration:
-                        break
+            stream = self._stream_chat(*input_args)
+            while True:
+                try:
+                    yield await asyncio.to_thread(stream)
+                except StopAsyncIteration:
+                    break
 
     @override
     async def get_scores(
@@ -429,8 +423,6 @@ class HuggingfaceEngine(BaseEngine):
         if self.can_generate:
             raise ValueError("Cannot get scores using an auto-regressive model.")
 
-        loop = asyncio.get_running_loop()
         input_args = (self.model, self.tokenizer, batch_input, input_kwargs)
         async with self.semaphore:
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                return await loop.run_in_executor(pool, self._get_scores, *input_args)
+            return await asyncio.to_thread(self._get_scores, *input_args)

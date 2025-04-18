@@ -14,7 +14,6 @@
 
 import json
 import os
-from collections.abc import Sequence
 
 from openai import OpenAI
 from transformers.utils.versions import require_version
@@ -23,7 +22,7 @@ from transformers.utils.versions import require_version
 require_version("openai>=1.5.0", "To fix: pip install openai>=1.5.0")
 
 
-def calculate_gpa(grades: Sequence[str], hours: Sequence[int]) -> float:
+def calculate_gpa(grades: list[str], hours: list[int]) -> float:
     grade_to_score = {"A": 4, "B": 3, "C": 2}
     total_score, total_hour = 0, 0
     for grade, hour in zip(grades, hours):
@@ -34,8 +33,8 @@ def calculate_gpa(grades: Sequence[str], hours: Sequence[int]) -> float:
 
 def main():
     client = OpenAI(
-        api_key="{}".format(os.environ.get("API_KEY", "0")),
-        base_url="http://localhost:{}/v1".format(os.environ.get("API_PORT", 8000)),
+        api_key="{}".format(os.getenv("API_KEY", "0")),
+        base_url="http://localhost:{}/v1".format(os.getenv("API_PORT", 8000)),
     )
     tools = [
         {

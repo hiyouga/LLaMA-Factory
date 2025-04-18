@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections.abc import Sequence
 from typing import TYPE_CHECKING, Optional, Union
 
 import torch
@@ -33,17 +32,15 @@ if TYPE_CHECKING:
     from ..data.data_utils import DatasetModule
 
 
-def compare_model(
-    model_a: "torch.nn.Module", model_b: "torch.nn.Module", diff_keys: Sequence[str] = [], atol: float = 1e-5
-) -> None:
+def compare_model(model_a: "torch.nn.Module", model_b: "torch.nn.Module", diff_keys: list[str] = []) -> None:
     state_dict_a = model_a.state_dict()
     state_dict_b = model_b.state_dict()
     assert set(state_dict_a.keys()) == set(state_dict_b.keys())
     for name in state_dict_a.keys():
         if any(key in name for key in diff_keys):
-            assert torch.allclose(state_dict_a[name], state_dict_b[name], rtol=1e-4, atol=atol) is False
+            assert torch.allclose(state_dict_a[name], state_dict_b[name], rtol=1e-4, atol=1e-5) is False
         else:
-            assert torch.allclose(state_dict_a[name], state_dict_b[name], rtol=1e-4, atol=atol) is True
+            assert torch.allclose(state_dict_a[name], state_dict_b[name], rtol=1e-4, atol=1e-5) is True
 
 
 def check_lora_model(model: "LoraModel") -> tuple[set[str], set[str]]:
@@ -60,7 +57,7 @@ def check_lora_model(model: "LoraModel") -> tuple[set[str], set[str]]:
             assert param.dtype == torch.float32
         else:
             assert param.requires_grad is False
-            assert param.dtype == dtype
+            assert param.dtype == torch.float16
 
     return linear_modules, extra_modules
 

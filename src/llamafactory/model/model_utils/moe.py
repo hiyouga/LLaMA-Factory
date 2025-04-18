@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 import torch
@@ -27,7 +26,7 @@ if TYPE_CHECKING:
     from ...hparams import ModelArguments
 
 
-def _set_z3_leaf_modules(model: "PreTrainedModel", leaf_modules: Sequence["torch.nn.Module"]) -> None:
+def _set_z3_leaf_modules(model: "PreTrainedModel", leaf_modules: list["torch.nn.Module"]) -> None:
     check_version("deepspeed>=0.13.0")
     from deepspeed.utils import set_z3_leaf_modules  # type: ignore
 
@@ -54,6 +53,12 @@ def add_z3_leaf_module(model: "PreTrainedModel") -> None:
         from transformers.models.jetmoe.modeling_jetmoe import JetMoeMoA, JetMoeMoE
 
         _set_z3_leaf_modules(model, [JetMoeMoA, JetMoeMoE])
+
+    if model_type in ["kimi_vl", "deepseek_v3"]:
+        check_version("transformers>=4.51.1")
+        from transformers.models.deepseek_v3.modeling_deepseek_v3 import DeepseekV3MoE
+
+        _set_z3_leaf_modules(model, [DeepseekV3MoE])
 
     if model_type == "mixtral":
         from transformers.models.mixtral.modeling_mixtral import MixtralSparseMoeBlock

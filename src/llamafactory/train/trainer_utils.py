@@ -1,4 +1,4 @@
-# Copyright 2024 HuggingFace Inc. and the LlamaFactory team.
+# Copyright 2025 HuggingFace Inc. and the LlamaFactory team.
 #
 # This code is inspired by the original GaLore's implementation: https://github.com/jiaweizzhao/GaLore
 # and the original LoRA+'s implementation: https://github.com/nikhil-ghosh-berkeley/loraplus
@@ -48,6 +48,7 @@ if is_apollo_available():
 
 
 if is_ray_available():
+    import ray
     from ray.train import RunConfig, ScalingConfig
     from ray.train.torch import TorchTrainer
 
@@ -515,6 +516,22 @@ def create_custom_scheduler(
     num_training_steps: int,
     optimizer: Optional["torch.optim.Optimizer"] = None,
 ) -> None:
+    if training_args.lr_scheduler_type == "warmup_stable_decay":
+        num_warmup_steps = training_args.get_warmup_steps(num_training_steps)
+        remaining_steps = num_training_steps - num_warmup_steps
+        num_stable_steps = remaining_steps // 3  # use 1/3 for stable by default
+        num_decay_steps = remaining_steps - num_stable_steps
+        scheduler_kwargs = training_args.lr_scheduler_kwargs or {}
+        default_kwargs = {
+            "num_stable_steps": num_stable_steps,
+            "num_decay_steps": num_decay_steps,
+        }
+        for key, value in default_kwargs.items():
+            if key not in scheduler_kwargs:
+                scheduler_kwargs[key] = value
+
+        training_args.lr_scheduler_kwargs = scheduler_kwargs
+
     if optimizer is not None and isinstance(optimizer, DummyOptimizer):
         optimizer_dict = optimizer.optimizer_dict
         scheduler_dict: dict[torch.nn.Parameter, torch.optim.lr_scheduler.LRScheduler] = {}
@@ -583,6 +600,15 @@ def get_swanlab_callback(finetuning_args: "FinetuningArguments") -> "TrainerCall
     if finetuning_args.swanlab_api_key is not None:
         swanlab.login(api_key=finetuning_args.swanlab_api_key)
 
+    if finetuning_args.swanlab_lark_webhook_url is not None:
+        from swanlab.plugin.notification import LarkCallback  # type: ignore
+
+        lark_callback = LarkCallback(
+            webhook_url=finetuning_args.swanlab_lark_webhook_url,
+            secret=finetuning_args.swanlab_lark_secret,
+        )
+        swanlab.register_callbacks([lark_callback])
+
     class SwanLabCallbackExtension(SwanLabCallback):
         def setup(self, args: "TrainingArguments", state: "TrainerState", model: "PreTrainedModel", **kwargs):
             if not state.is_world_process_zero:
@@ -618,6 +644,9 @@ def get_ray_trainer(
 ) -> "TorchTrainer":
     if not ray_args.use_ray:
         raise ValueError("Ray was not enabled. Please set `USE_RAY=1` to enable ray.")
+
+    if ray_args.ray_init_kwargs is not None:
+        ray.init(**ray_args.ray_init_kwargs)
 
     trainer = TorchTrainer(
         training_function,
