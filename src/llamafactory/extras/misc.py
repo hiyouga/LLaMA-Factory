@@ -18,6 +18,7 @@
 import gc
 import os
 import socket
+from functools import lru_cache
 from typing import TYPE_CHECKING, Any, Literal, Union
 
 import torch
@@ -38,7 +39,6 @@ from . import logging
 from .packages import is_transformers_version_greater_than
 
 
-@lru_cache(maxsize=None)
 def is_torch_hpu_available() -> bool:
     try:
         import habana_frameworks.torch.core  # noqa: F401
@@ -235,7 +235,11 @@ def infer_optim_dtype(model_dtype: "torch.dtype") -> "torch.dtype":
 def is_accelerator_available() -> bool:
     r"""Check if the accelerator or HPU is available."""
     return (
-        is_torch_xpu_available() or is_torch_npu_available() or is_torch_mps_available() or is_torch_cuda_available() or is_torch_hpu_available()
+        is_torch_xpu_available()
+        or is_torch_npu_available()
+        or is_torch_mps_available()
+        or is_torch_cuda_available()
+        or is_torch_hpu_available()
     )
 
 

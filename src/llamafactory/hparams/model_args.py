@@ -472,9 +472,7 @@ class ModelArguments(
 
 @dataclass
 class GaudiModelArguments(ModelArguments):
-    r"""
-    Arguments pertaining to which model/config/tokenizer we are going to fine-tune or infer.
-    """
+    r"""Arguments pertaining to which model/config/tokenizer we are going to fine-tune or infer."""
 
     use_habana: bool = field(
         default=False,

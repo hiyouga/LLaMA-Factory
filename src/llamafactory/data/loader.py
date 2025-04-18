@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import numpy as np
