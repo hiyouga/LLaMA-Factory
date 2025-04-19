@@ -54,6 +54,12 @@ def add_z3_leaf_module(model: "PreTrainedModel") -> None:
 
         _set_z3_leaf_modules(model, [JetMoeMoA, JetMoeMoE])
 
+    if model_type in ["kimi_vl", "deepseek_v3"]:
+        check_version("transformers>=4.51.1")
+        from transformers.models.deepseek_v3.modeling_deepseek_v3 import DeepseekV3MoE
+
+        _set_z3_leaf_modules(model, [DeepseekV3MoE])
+
     if model_type == "mixtral":
         from transformers.models.mixtral.modeling_mixtral import MixtralSparseMoeBlock
 
