@@ -204,7 +204,7 @@ def _setup_lora_tuning(
         if (
             finetuning_args.use_dora
             and getattr(model, "quantization_method", None) is not None
-            and getattr(model, "quantization_method", None) != QuantizationMethod.BITS_AND_BYTES
+            and getattr(model, "quantization_method", None) != QuantizationMethod.BNB
         ):
             raise ValueError("DoRA is not compatible with PTQ-quantized models.")
 
