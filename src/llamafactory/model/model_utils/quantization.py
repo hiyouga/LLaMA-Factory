@@ -122,9 +122,21 @@ def configure_quantization(
         if getattr(config, "model_type", None) == "chatglm":
             raise ValueError("ChatGLM model is not supported yet.")
 
+        try:
+            from optimum.gptq import utils as gq_utils
+            if "language_model.model.layers" not in gq_utils.BLOCK_PATTERNS:
+                gq_utils.BLOCK_PATTERNS.insert(0, "language_model.model.layers")
+        except ImportError:
+            pass
+        block_name = None
+        if getattr(config, "model_type", None) in ["gemma", "paligemma"]:
+            block_name = "language_model.model.layers"
+
         init_kwargs["quantization_config"] = GPTQConfig(
             bits=model_args.export_quantization_bit,
+            tokenizer=tokenizer,
             dataset=_get_quantization_dataset(tokenizer, model_args),
+            block_name_to_quantize=block_name,
         )
         init_kwargs["device_map"] = "auto"
         init_kwargs["max_memory"] = get_max_memory()
