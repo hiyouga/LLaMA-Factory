@@ -215,6 +215,12 @@ llamafactory-cli api examples/inference/llama3_lora_sft.yaml
 
 ### 杂项
 
+#### 使用 Muon 进行全参数训练
+
+```bash
+llamafactory-cli train examples/extras/muon/qwen2_full_sft.yaml
+```
+
 #### 使用 GaLore 进行全参数训练
 
 ```bash
