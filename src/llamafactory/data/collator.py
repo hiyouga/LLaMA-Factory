@@ -176,7 +176,7 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                 "input_ids": features["input_ids"],
                 "image_grid_thw": mm_inputs.get("image_grid_thw"),
                 "video_grid_thw": mm_inputs.get("video_grid_thw"),
-                "attention_mask": features["attention_mask"],
+                "attention_mask": (features["attention_mask"] >= 1).float(),
             }
             if "second_per_grid_ts" in mm_inputs:  # for qwen2vl
                 rope_index_kwargs["second_per_grid_ts"] = mm_inputs.get("second_per_grid_ts")
@@ -200,7 +200,6 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                     rope_deltas - delta0,
                 )  # avoid inplace operation FIXME
             else:  # for qwen2vl
-                rope_index_kwargs["attention_mask"] = (rope_index_kwargs["attention_mask"] >= 1).float()
                 features["position_ids"], features["rope_deltas"] = self.model.get_rope_index(**rope_index_kwargs)
 
         if "cross_attention_mask" in mm_inputs:  # for mllama inputs when pad_to_multiple_of is enabled
