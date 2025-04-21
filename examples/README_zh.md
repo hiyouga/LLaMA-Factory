@@ -15,6 +15,18 @@
 
 LLaMA-Factory 默认使用所有可见的计算设备。
 
+基础用法：
+
+```bash
+llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
+```
+
+高级用法：
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1 llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml learning_rate=1e-5 logging_steps=1
+```
+
 ## 示例
 
 ### LoRA 微调
@@ -34,7 +46,6 @@ llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
 #### 多模态指令监督微调
 
 ```bash
-llamafactory-cli train examples/train_lora/llava1_5_lora_sft.yaml
 llamafactory-cli train examples/train_lora/qwen2vl_lora_sft.yaml
 ```
 
