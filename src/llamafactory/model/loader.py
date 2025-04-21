@@ -101,7 +101,7 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
         processor = AutoProcessor.from_pretrained(model_args.model_name_or_path, **init_kwargs)
         patch_processor(processor, tokenizer, model_args)
     except Exception as e:
-        logger.debug(f"Failed to load processor: {e}.")
+        logger.info_rank0(f"Failed to load processor: {e}.")
         processor = None
 
     # Avoid load tokenizer, see:
