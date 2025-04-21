@@ -48,9 +48,6 @@ def run_rm(
         template=template, model=model, pad_to_multiple_of=8, **tokenizer_module
     )
 
-    # Update arguments
-    training_args.remove_unused_columns = False  # important for multimodal and pairwise dataset
-
     # Initialize our Trainer
     trainer = PairwiseTrainer(
         model=model,

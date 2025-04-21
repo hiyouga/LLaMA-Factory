@@ -63,9 +63,6 @@ def run_dpo(
     else:
         ref_model = None
 
-    # Update arguments
-    training_args.remove_unused_columns = False  # important for multimodal and pairwise dataset
-
     # Initialize our Trainer
     trainer = CustomDPOTrainer(
         model=model,
