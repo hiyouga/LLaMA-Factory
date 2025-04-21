@@ -36,20 +36,19 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import torch
-import torch.nn as nn
-import torch.distributed as dist
 import math
-import os
-from torch import Tensor
+
+import torch
+
+
 # This code snippet is a modified version adapted from the following GitHub repository:
 # https://github.com/KellerJordan/Muon/blob/master/muon.py
 @torch.compile
 def zeropower_via_newtonschulz5(G, steps):
-    """
-    Newton-Schulz iteration to compute the zeroth power / orthogonalization of G. We opt to use a
-    quintic iteration whose coefficients are selected to maximize the slope at zero. For the purpose
-    of minimizing steps, it turns out to be empirically effective to keep increasing the slope at
+    """Newton-Schulz iteration to compute the zeroth power / orthogonalization of G.
+
+    We opt to use a quintic iteration whose coefficients are selected to maximize the slope at zero.
+    For the purpose of minimizing steps, it turns out to be empirically effective to keep increasing the slope at
     zero even beyond the point where the iteration no longer converges all the way to one everywhere
     on the interval. This iteration therefore does not produce UV^T but rather something like US'V^T
     where S' is diagonal with S_{ii}' ~ Uniform(0.5, 1.5), which turns out not to hurt model
@@ -65,9 +64,7 @@ def zeropower_via_newtonschulz5(G, steps):
     # Perform the NS iterations
     for _ in range(steps):
         A = X @ X.T
-        B = (
-            b * A + c * A @ A
-        )  # adapted from suggestion by @jxbz, @leloykun, and @YouJiacheng
+        B = b * A + c * A @ A  # adapted from suggestion by @jxbz, @leloykun, and @YouJiacheng
         X = a * X + B @ X
 
     if G.size(0) > G.size(1):
@@ -76,8 +73,7 @@ def zeropower_via_newtonschulz5(G, steps):
 
 
 class Muon(torch.optim.Optimizer):
-    """
-    Muon - MomentUm Orthogonalized by Newton-schulz
+    """Muon - MomentUm Orthogonalized by Newton-schulz.
 
     Muon internally runs standard SGD-momentum, and then performs an orthogonalization post-
     processing step, in which each 2D parameter's update is replaced with the nearest orthogonal
@@ -114,7 +110,6 @@ class Muon(torch.optim.Optimizer):
         adamw_betas=(0.9, 0.95),
         adamw_eps=1e-8,
     ):
-
         defaults = dict(
             lr=lr,
             wd=wd,
@@ -159,7 +154,6 @@ class Muon(torch.optim.Optimizer):
                 loss = closure()
 
         for group in self.param_groups:
-
             ############################
             #           Muon           #
             ############################
@@ -206,7 +200,7 @@ class Muon(torch.optim.Optimizer):
             ############################
 
             params = [p for p in group["params"] if not self.state[p]["use_muon"]]
-            lr = group['lr']
+            lr = group["lr"]
             beta1, beta2 = group["adamw_betas"]
             eps = group["adamw_eps"]
             weight_decay = group["wd"]
