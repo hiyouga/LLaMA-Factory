@@ -124,6 +124,7 @@ def configure_quantization(
 
         try:
             from optimum.gptq import utils as gq_utils
+
             if "language_model.model.layers" not in gq_utils.BLOCK_PATTERNS:
                 gq_utils.BLOCK_PATTERNS.insert(0, "language_model.model.layers")
         except ImportError:
