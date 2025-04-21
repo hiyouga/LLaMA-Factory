@@ -182,11 +182,11 @@ class BaseModelArguments:
         if self.adapter_name_or_path is not None:  # support merging multiple lora weights
             self.adapter_name_or_path = [path.strip() for path in self.adapter_name_or_path.split(",")]
 
-        if self.new_special_tokens is not None:  # support multiple special tokens
-            self.new_special_tokens = [token.strip() for token in self.new_special_tokens.split(",")]
-
         if self.new_normal_tokens is not None:  # support multiple normal tokens
             self.new_normal_tokens = [token.strip() for token in self.new_normal_tokens.split(",")]
+
+        if self.new_special_tokens is not None:  # support multiple special tokens
+            self.new_special_tokens = [token.strip() for token in self.new_special_tokens.split(",")]
 
 
 @dataclass
