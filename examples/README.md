@@ -24,7 +24,13 @@ llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
 Advanced usage:
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml learning_rate=1e-5 logging_steps=1
+CUDA_VISIBLE_DEVICES=0,1 llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml \
+    learning_rate=1e-5 \
+    logging_steps=1
+```
+
+```bash
+bash examples/train_lora/llama3_lora_sft.sh
 ```
 
 ## Examples
@@ -215,12 +221,6 @@ llamafactory-cli api examples/inference/llama3_lora_sft.yaml
 
 ### Extras
 
-#### Full-Parameter Fine-Tuning using Muon
-
-```bash
-llamafactory-cli train examples/extras/muon/qwen2_full_sft.yaml
-```
-
 #### Full-Parameter Fine-Tuning using GaLore
 
 ```bash
@@ -243,6 +243,12 @@ llamafactory-cli train examples/extras/badam/llama3_full_sft.yaml
 
 ```bash
 llamafactory-cli train examples/extras/adam_mini/qwen2_full_sft.yaml
+```
+
+#### Full-Parameter Fine-Tuning using Muon
+
+```bash
+llamafactory-cli train examples/extras/muon/qwen2_full_sft.yaml
 ```
 
 #### LoRA+ Fine-Tuning

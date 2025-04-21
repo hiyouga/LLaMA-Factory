@@ -80,7 +80,7 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 - **多种模型**：LLaMA、LLaVA、Mistral、Mixtral-MoE、Qwen、Qwen2-VL、DeepSeek、Yi、Gemma、ChatGLM、Phi 等等。
 - **集成方法**：（增量）预训练、（多模态）指令监督微调、奖励模型训练、PPO 训练、DPO 训练、KTO 训练、ORPO 训练等等。
 - **多种精度**：16 比特全参数微调、冻结微调、LoRA 微调和基于 AQLM/AWQ/GPTQ/LLM.int8/HQQ/EETQ 的 2/3/4/5/6/8 比特 QLoRA 微调。
-- **先进算法**：[Muon](https://github.com/KellerJordan/Muon), [GaLore](https://github.com/jiaweizzhao/GaLore)、[BAdam](https://github.com/Ledzy/BAdam)、[APOLLO](https://github.com/zhuhanqing/APOLLO)、[Adam-mini](https://github.com/zyushun/Adam-mini)、DoRA、LongLoRA、LLaMA Pro、Mixture-of-Depths、LoRA+、LoftQ 和 PiSSA。
+- **先进算法**：[GaLore](https://github.com/jiaweizzhao/GaLore)、[BAdam](https://github.com/Ledzy/BAdam)、[APOLLO](https://github.com/zhuhanqing/APOLLO)、[Adam-mini](https://github.com/zyushun/Adam-mini)、[Muon](https://github.com/KellerJordan/Muon)、DoRA、LongLoRA、LLaMA Pro、Mixture-of-Depths、LoRA+、LoftQ 和 PiSSA。
 - **实用技巧**：[FlashAttention-2](https://github.com/Dao-AILab/flash-attention)、[Unsloth](https://github.com/unslothai/unsloth)、[Liger Kernel](https://github.com/linkedin/Liger-Kernel)、RoPE scaling、NEFTune 和 rsLoRA。
 - **广泛任务**：多轮对话、工具调用、图像理解、视觉定位、视频识别和语音理解等等。
 - **实验监控**：LlamaBoard、TensorBoard、Wandb、MLflow、[SwanLab](https://github.com/SwanHubX/SwanLab) 等等。
@@ -110,7 +110,9 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 
 ## 更新日志
 
-[25/04/16] 我们支持了 **[Muon](https://github.com/KellerJordan/Muon)** 优化器。详细用法请参照 [examples](examples/README_zh.md)。感谢 [@Juanxi Tian](https://tianshijing.github.io) 的 PR。
+[25/04/21] 我们支持了 **[Muon](https://github.com/KellerJordan/Muon)** 优化器。详细用法请参照 [examples](examples/README_zh.md)。感谢 [@tianshijing](https://github.com/tianshijing) 的 PR。
+
+[25/04/16] 我们支持了 **[InternVL3](https://huggingface.co/OpenGVLab/InternVL3-8B)** 模型的微调。查看 [PR #7258](https://github.com/hiyouga/LLaMA-Factory/pull/7258) 以使用。
 
 [25/04/14] 我们支持了 **[GLM-Z1](https://huggingface.co/THUDM/GLM-Z1-9B-0414)** 和 **[Kimi-VL](https://huggingface.co/moonshotai/Kimi-VL-A3B-Instruct)** 模型的微调。
 
@@ -118,13 +120,13 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 
 [25/03/31] 我们支持了 **[Qwen2.5 Omni](https://qwenlm.github.io/blog/qwen2.5-omni/)** 模型的微调。查看 [PR #7537](https://github.com/hiyouga/LLaMA-Factory/pull/7537) 以使用。
 
+<details><summary>展开日志</summary>
+
 [25/03/15] 我们支持了 **[SGLang](https://github.com/sgl-project/sglang)** 推理后端，请使用 `infer_backend: sglang` 启用。
 
 [25/03/12] 我们支持了 **[Gemma 3](https://huggingface.co/blog/gemma3)** 模型的微调。
 
 [25/02/24] 我们宣布开源 **[EasyR1](https://github.com/hiyouga/EasyR1)**，一个高效可扩展的多模态强化学习框架，支持高效的 GRPO 训练。
-
-<details><summary>展开日志</summary>
 
 [25/02/11] 我们支持了在导出模型时保存 **[Ollama](https://github.com/ollama/ollama)** 配置文件。详细用法请参照 [examples](examples/README_zh.md)。
 
@@ -248,11 +250,11 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 | [Gemma 3](https://huggingface.co/google)                          | 1B/4B/12B/27B                    | gemma3/gemma (1B)   |
 | [GLM-4/GLM-4-0414/GLM-Z1](https://huggingface.co/THUDM)           | 9B/32B                           | glm4                |
 | [GPT-2](https://huggingface.co/openai-community)                  | 0.1B/0.4B/0.8B/1.5B              | -                   |
-| [Granite 3.0-3.1](https://huggingface.co/ibm-granite)             | 1B/2B/3B/8B                      | granite3            |
+| [Granite 3.0-3.3](https://huggingface.co/ibm-granite)             | 1B/2B/3B/8B                      | granite3            |
 | [Hunyuan](https://huggingface.co/tencent/)                        | 7B                               | hunyuan             |
 | [Index](https://huggingface.co/IndexTeam)                         | 1.9B                             | index               |
 | [InternLM 2-3](https://huggingface.co/internlm)                   | 7B/8B/20B                        | intern2             |
-| [InternVL2_5-3](https://huggingface.co/OpenGVLab/InternVL)        | 1B/2B/4B/8B/9B/14B/26B/38B/78B   | intern_vl           |
+| [InternVL 2.5-3](https://huggingface.co/OpenGVLab)\*\*            | 1B/2B/4B/8B/9B/14B/26B/38B/78B   | intern_vl           |
 | [Kimi-VL](https://huggingface.co/moonshotai)                      | 16B                              | kimi_vl             |
 | [Llama](https://github.com/facebookresearch/llama)                | 7B/13B/33B/65B                   | -                   |
 | [Llama 2](https://huggingface.co/meta-llama)                      | 7B/13B/70B                       | llama2              |
@@ -420,11 +422,11 @@ huggingface-cli login
 | 必需项        | 至少     | 推荐      |
 | ------------ | ------- | --------- |
 | python       | 3.9     | 3.10      |
-| torch        | 1.13.1  | 2.6.0     |
-| transformers | 4.41.2  | 4.50.0    |
+| torch        | 2.0.0   | 2.6.0     |
+| transformers | 4.45.0  | 4.50.0    |
 | datasets     | 2.16.0  | 3.2.0     |
 | accelerate   | 0.34.0  | 1.2.1     |
-| peft         | 0.14.0  | 0.15.0    |
+| peft         | 0.14.0  | 0.15.1    |
 | trl          | 0.8.6   | 0.9.6     |
 
 | 可选项        | 至少     | 推荐      |
@@ -433,7 +435,7 @@ huggingface-cli login
 | deepspeed    | 0.10.0  | 0.16.4    |
 | bitsandbytes | 0.39.0  | 0.43.1    |
 | vllm         | 0.4.3   | 0.8.2     |
-| flash-attn   | 2.3.0   | 2.7.2     |
+| flash-attn   | 2.5.6   | 2.7.2     |
 
 ### 硬件依赖
 
@@ -461,7 +463,7 @@ cd LLaMA-Factory
 pip install -e ".[torch,metrics]"
 ```
 
-可选的额外依赖项：torch、torch-npu、metrics、deepspeed、liger-kernel、bitsandbytes、hqq、eetq、gptq、awq、aqlm、vllm、sglang、muon, galore、apollo、badam、adam-mini、qwen、minicpm_v、modelscope、openmind、swanlab、quality
+可选的额外依赖项：torch、torch-npu、metrics、deepspeed、liger-kernel、bitsandbytes、hqq、eetq、gptq、awq、aqlm、vllm、sglang、galore、apollo、badam、adam-mini、qwen、minicpm_v、modelscope、openmind、swanlab、quality
 
 > [!TIP]
 > 遇到包冲突时，可使用 `pip install --no-deps -e .` 解决。
@@ -523,6 +525,7 @@ source /usr/local/Ascend/ascend-toolkit/set_env.sh
 | torch        | 2.1.0   | 2.4.0          |
 | torch-npu    | 2.1.0   | 2.4.0.post2    |
 | deepspeed    | 0.13.2  | 0.13.2         |
+| vllm-ascend  | -       | 0.7.3          |
 
 请使用 `ASCEND_RT_VISIBLE_DEVICES` 而非 `CUDA_VISIBLE_DEVICES` 来指定运算设备。
 
