@@ -726,7 +726,7 @@ docker exec -it llamafactory bash
 ### Deploy with OpenAI-style API and vLLM
 
 ```bash
-API_PORT=8000 llamafactory-cli api examples/inference/llama3_vllm.yaml
+API_PORT=8000 llamafactory-cli api examples/inference/llama3.yaml infer_backend=vllm vllm_enforce_eager=true
 ```
 
 > [!TIP]

@@ -65,11 +65,6 @@ def run_sft(
         **tokenizer_module,
     )
 
-    # Override the decoding parameters of Seq2SeqTrainer
-    training_args.generation_max_length = training_args.generation_max_length or data_args.cutoff_len
-    training_args.generation_num_beams = data_args.eval_num_beams or training_args.generation_num_beams
-    training_args.remove_unused_columns = False  # important for multimodal dataset
-
     # Metric utils
     metric_module = {}
     if training_args.predict_with_generate:
