@@ -128,15 +128,16 @@ def configure_quantization(
                 gq_utils.BLOCK_PATTERNS.insert(0, "language_model.model.layers")
         except ImportError:
             pass
-        block_name = None
-        if getattr(config, "model_type", None) in ["gemma", "paligemma"]:
-            block_name = "language_model.model.layers"
+
+        block_name_to_quantize = None
+        if getattr(config, "model_type", None) in ["gemma3", "paligemma"]:
+            block_name_to_quantize = "language_model.model.layers"
 
         init_kwargs["quantization_config"] = GPTQConfig(
             bits=model_args.export_quantization_bit,
             tokenizer=tokenizer,
             dataset=_get_quantization_dataset(tokenizer, model_args),
-            block_name_to_quantize=block_name,
+            block_name_to_quantize=block_name_to_quantize,
         )
         init_kwargs["device_map"] = "auto"
         init_kwargs["max_memory"] = get_max_memory()
