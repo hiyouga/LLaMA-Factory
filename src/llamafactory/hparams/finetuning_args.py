@@ -411,6 +411,10 @@ class FinetuningArguments(
         default=False,
         metadata={"help": "Whether or not to use the Adam-mini optimizer."},
     )
+    use_muon: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use the Muon optimizer."},
+    )
     freeze_vision_tower: bool = field(
         default=True,
         metadata={"help": "Whether ot not to freeze the vision tower in MLLM training."},
