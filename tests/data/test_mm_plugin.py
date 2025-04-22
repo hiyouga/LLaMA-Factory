@@ -162,7 +162,7 @@ def test_gemma3_plugin():
 @pytest.mark.xfail(reason="Unknown error.")
 def test_internvl_plugin():
     image_seqlen = 256
-    tokenizer_module = _load_tokenizer_module(model_name_or_path="kingsley01/InternVL2_5-1B-MPO-hf")
+    tokenizer_module = _load_tokenizer_module(model_name_or_path="OpenGVLab/InternVL3-1B-hf")
     internvl_plugin = get_mm_plugin("intern_vl", image_token="<image>", video_token="<video>")
     check_inputs = {"plugin": internvl_plugin, **tokenizer_module}
     check_inputs["expected_mm_messages"] = [
