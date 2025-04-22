@@ -189,6 +189,7 @@ class VllmEngine(BaseEngine):
                     image_min_pixels=self.model_args.video_min_pixels,
                     video_fps=self.model_args.video_fps,
                     video_maxlen=self.model_args.video_maxlen,
+                    video_maxlen_ttl=self.model_args.video_maxlen_ttl,
                 )["videos"]
             }
         elif audios is not None:

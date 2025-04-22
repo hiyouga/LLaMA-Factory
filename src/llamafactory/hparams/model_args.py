@@ -253,7 +253,11 @@ class ProcessorArguments:
     )
     video_maxlen: int = field(
         default=128,
-        metadata={"help": "The maximum number of sampled frames for video inputs."},
+        metadata={"help": "The unified maximum number of sampled frames for each video inputs."},
+    )
+    video_maxlen_ttl: int = field(
+        default=128 * 50,  # assume 50 videos at max in 1 input
+        metadata={"help": "The maximum number of total sampled frames of all video inputs."},
     )
     audio_sampling_rate: int = field(
         default=16000,
