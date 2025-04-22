@@ -499,12 +499,12 @@ class InternVLPlugin(BasePlugin):
         image_processor_kwargs = {}
         if getattr(processor, "crop_to_patches", False):
             image_processor_kwargs.update(
-                    {
-                        "crop_to_patches": True,
-                        "max_patches": 12,
-                        "min_patches": 1,
-                    }
-                )
+                {
+                    "crop_to_patches": True,
+                    "max_patches": 12,
+                    "min_patches": 1,
+                }
+            )
 
         mm_inputs = {}
         image_video_patches = []
@@ -550,18 +550,16 @@ class InternVLPlugin(BasePlugin):
                 image_video_patches.append(image_pixel_values[start_index:end_index])
 
         if len(videos) != 0 and video_pixel_values is not None:
+            patch_indices_with_prefix = [0] + list(patch_indices)
             for i in range(len(videos)):
-                current_patch_index = patch_indices[i - 1] if i > 0 else 0
-                end_patch_index = patch_indices[i]
-                start_index = video_num_patches_indices[current_patch_index] if i > 0 else 0
+                current_patch_index = patch_indices_with_prefix[i]
+                end_patch_index = patch_indices_with_prefix[i + 1]
+                start_index = video_num_patches_indices[current_patch_index - 1] if i > 0 else 0
                 end_index = video_num_patches_indices[end_patch_index - 1]
                 image_video_patches.append(video_pixel_values[start_index:end_index])
 
         if len(images) != 0 or len(videos) != 0:
-            pixel_values_list = _concatenate_list(image_video_patches)
-            mm_inputs["pixel_values"] = torch.stack(
-                [torch.tensor(patch_ndarray) for patch_ndarray in pixel_values_list]
-            )
+            mm_inputs["pixel_values"] = _concatenate_list(image_video_patches)
 
         if len(images) != 0:
             mm_inputs.update({"image_num_patches": image_num_patches})
