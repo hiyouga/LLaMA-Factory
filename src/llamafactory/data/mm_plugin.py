@@ -122,6 +122,7 @@ def _cal_max_frames_each_video(durations: list, video_maxlen_ttl: int, video_max
                 )
     return max_nums_of_frames
 
+
 def _get_paligemma_token_type_ids(imglens: list[int], seqlens: list[int], processor: "MMProcessor") -> list[list[int]]:
     r"""Get paligemma token type ids for computing loss.
 
