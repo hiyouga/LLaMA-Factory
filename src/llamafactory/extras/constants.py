@@ -1002,33 +1002,37 @@ register_model_group(
 
 register_model_group(
     models={
-        "InternVL2.5-1B-MPO": {
-            DownloadSource.DEFAULT: "kingsley01/InternVL2_5-1B-MPO-hf",
-            DownloadSource.MODELSCOPE: "llamafactory/InternVL2_5-1B-MPO-hf",
-        },
         "InternVL2.5-2B-MPO": {
-            DownloadSource.DEFAULT: "kingsley01/InternVL2_5-2B-MPO-hf",
-            DownloadSource.MODELSCOPE: "llamafactory/InternVL2_5-2B-MPO-hf",
-        },
-        "InternVL2.5-4B-MPO": {
-            DownloadSource.DEFAULT: "kingsley01/InternVL2_5-4B-MPO-hf",
-            DownloadSource.MODELSCOPE: "llamafactory/InternVL2_5-4B-MPO-hf",
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL2_5-2B-MPO-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL2_5-2B-MPO-hf",
         },
         "InternVL2.5-8B-MPO": {
-            DownloadSource.DEFAULT: "kingsley01/InternVL2_5-8B-MPO-hf",
-            DownloadSource.MODELSCOPE: "llamafactory/InternVL2_5-8B-MPO-hf",
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL2_5-8B-MPO-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL2_5-8B-MPO-hf",
         },
         "InternVL3-1B-hf": {
-            DownloadSource.DEFAULT: "kingsley01/InternVL3-1B-hf",
-            DownloadSource.MODELSCOPE: "llamafactory/InternVL3-1B-hf",
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3-1B-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-1B-hf",
         },
         "InternVL3-2B-hf": {
-            DownloadSource.DEFAULT: "kingsley01/InternVL3-2B-hf",
-            DownloadSource.MODELSCOPE: "llamafactory/InternVL3-2B-hf",
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3-2B-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-2B-hf",
         },
         "InternVL3-8B-hf": {
-            DownloadSource.DEFAULT: "kingsley01/InternVL3-8B-hf",
-            DownloadSource.MODELSCOPE: "llamafactory/InternVL3-8B-hf",
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3-8B-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-8B-hf",
+        },
+        "InternVL3-14B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3-14B-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-14B-hf",
+        },
+        "InternVL3-38B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3-38B-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-38B-hf",
+        },
+        "InternVL3-78B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3-78B-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-78B-hf",
         },
     },
     template="intern_vl",

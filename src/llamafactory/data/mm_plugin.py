@@ -552,9 +552,9 @@ class InternVLPlugin(BasePlugin):
 
         if len(images) != 0 or len(videos) != 0:
             pixel_values_list = _concatenate_list(image_video_patches)
-            mm_inputs["pixel_values"] = torch.stack(
-                [torch.tensor(patch_ndarray) for patch_ndarray in pixel_values_list]
-            )
+            # in the latest version of transformers,
+            # the pixel_values is a list of tensors not ndarray
+            mm_inputs["pixel_values"] = torch.stack(pixel_values_list)
 
         if len(images) != 0:
             mm_inputs.update({"image_num_patches": image_num_patches})
