@@ -231,6 +231,10 @@ class ProcessorArguments:
         default=False,
         metadata={"help": "Use pan and scan to process image for gemma3."},
     )
+    crop_to_patches: bool = field(
+        default=False,
+        metadata={"help": "Whether to crop the image to patches for internvl."},
+    )
     use_audio_in_video: bool = field(
         default=False,
         metadata={"help": "Whether or not to use audio in video inputs."},
