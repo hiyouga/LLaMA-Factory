@@ -85,7 +85,6 @@ if TYPE_CHECKING:
         def _get_number_of_features(self, orig_height: int, orig_width: int, height: int, width: int) -> int:
             pass
 
-
 def _cal_max_frames_each_video(durations: list, video_maxlen_ttl: int, video_maxlen: int) -> list[int]:
     """Calculate `max_num_of_frames` for each video based on their durations, and return a list of `max_num_of_frames`. Every `max_num_of_frames` should be in [2, video_maxlen]."""
     dura_ttl = sum(durations)
