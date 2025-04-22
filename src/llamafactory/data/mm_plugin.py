@@ -104,25 +104,6 @@ def _cal_max_frames_each_video(durations: list, video_maxlen_ttl: int, video_max
     return max_nums_of_frames
 
 
-def _cal_max_frames_each_video(durations: list, video_maxlen_ttl: int, video_maxlen: int) -> list[int]:
-    """Calculate `max_num_of_frames` for each video based on their durations, and return a list of `max_num_of_frames`. Every `max_num_of_frames` should be in [2, video_maxlen]."""
-    dura_ttl = sum(durations)
-    max_nums_of_frames = [  # 2 < max_num_of_frames < video_maxlen
-        min(max(int(video_maxlen_ttl * dura / dura_ttl), 2), video_maxlen) for dura in durations
-    ]  # list of `max_num_of_frames`
-    if sum(max_nums_of_frames) > video_maxlen_ttl:  # may be bigger if some are set 2
-        delta = sum(max_nums_of_frames) - video_maxlen_ttl
-        for _ in range(delta):  #
-            max_idx = max_nums_of_frames.index(max(max_nums_of_frames))
-            if max(max_nums_of_frames) - 1 >= 2:  # should still >= 2
-                max_nums_of_frames[max_idx] -= 1
-            else:
-                raise ValueError(
-                    f"Too many videos. Couldn't satisfy the requirement of having at least 2 frames for each video. Please decrease the number of videos or increase `video_maxlen_ttl` (e.g. >={2 * len(max_nums_of_frames)})."
-                )
-    return max_nums_of_frames
-
-
 def _get_paligemma_token_type_ids(imglens: list[int], seqlens: list[int], processor: "MMProcessor") -> list[list[int]]:
     r"""Get paligemma token type ids for computing loss.
 
