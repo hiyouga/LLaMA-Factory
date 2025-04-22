@@ -15,6 +15,24 @@ Use `CUDA_VISIBLE_DEVICES` (GPU) or `ASCEND_RT_VISIBLE_DEVICES` (NPU) to choose 
 
 By default, LLaMA-Factory uses all visible computing devices.
 
+Basic usage:
+
+```bash
+llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
+```
+
+Advanced usage:
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1 llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml \
+    learning_rate=1e-5 \
+    logging_steps=1
+```
+
+```bash
+bash examples/train_lora/llama3_lora_sft.sh
+```
+
 ## Examples
 
 ### LoRA Fine-Tuning
@@ -34,7 +52,6 @@ llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
 #### Multimodal Supervised Fine-Tuning
 
 ```bash
-llamafactory-cli train examples/train_lora/llava1_5_lora_sft.yaml
 llamafactory-cli train examples/train_lora/qwen2vl_lora_sft.yaml
 ```
 
@@ -226,6 +243,12 @@ llamafactory-cli train examples/extras/badam/llama3_full_sft.yaml
 
 ```bash
 llamafactory-cli train examples/extras/adam_mini/qwen2_full_sft.yaml
+```
+
+#### Full-Parameter Fine-Tuning using Muon
+
+```bash
+llamafactory-cli train examples/extras/muon/qwen2_full_sft.yaml
 ```
 
 #### LoRA+ Fine-Tuning

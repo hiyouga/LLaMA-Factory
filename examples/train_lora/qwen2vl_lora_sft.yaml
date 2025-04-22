@@ -1,5 +1,5 @@
 ### model
-model_name_or_path: Qwen/Qwen2-VL-7B-Instruct
+model_name_or_path: Qwen/Qwen2.5-VL-7B-Instruct
 image_max_pixels: 262144
 video_max_pixels: 16384
 trust_remote_code: true

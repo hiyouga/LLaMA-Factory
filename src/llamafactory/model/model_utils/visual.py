@@ -199,6 +199,11 @@ def patch_target_modules(
 
 
 _register_composite_model(
+    model_type="internvl",
+)
+
+
+_register_composite_model(
     model_type="gemma3",
 )
 
