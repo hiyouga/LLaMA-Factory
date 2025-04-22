@@ -496,8 +496,15 @@ class InternVLPlugin(BasePlugin):
         **kwargs,
     ) -> dict[str, "torch.Tensor"]:
         image_processor: BaseImageProcessor = getattr(processor, "image_processor")
-        attributes = ["crop_to_patches", "min_patches", "max_patches"]  # need for image processor
-        image_kwargs = {attr: getattr(image_processor, attr, None) for attr in attributes}
+        image_processor_kwargs = {}
+        if getattr(processor, "crop_to_patches", False):
+            image_processor_kwargs.update(
+                    {
+                        "crop_to_patches": True,
+                        "max_patches": 12,
+                        "min_patches": 1,
+                    }
+                )
 
         mm_inputs = {}
         image_video_patches = []
@@ -520,7 +527,7 @@ class InternVLPlugin(BasePlugin):
 
         if len(images) != 0:
             images = make_flat_list_of_images(images)
-            image_inputs = image_processor(images=images, **image_kwargs)
+            image_inputs = image_processor(images=images, return_tensors="pt", **image_processor_kwargs)
             image_num_patches = image_inputs.pop("num_patches")
             image_pixel_values = image_inputs.pop("pixel_values")
             image_num_patches_indices = np.cumsum(image_num_patches)
@@ -529,8 +536,8 @@ class InternVLPlugin(BasePlugin):
             videos = make_batched_videos(videos)
             num_frames_per_video = [len(video) for video in videos]
             patch_indices = np.cumsum(num_frames_per_video)
-            image_kwargs["crop_to_patches"] = False
-            video_inputs = image_processor(images=videos, **image_kwargs)
+            image_processor_kwargs["crop_to_patches"] = False
+            video_inputs = image_processor(images=videos, return_tensors="pt", **image_processor_kwargs)
             video_num_patches = video_inputs.pop("num_patches")
             video_pixel_values = video_inputs.pop("pixel_values")
             video_num_patches_indices = np.cumsum(video_num_patches)
@@ -552,9 +559,9 @@ class InternVLPlugin(BasePlugin):
 
         if len(images) != 0 or len(videos) != 0:
             pixel_values_list = _concatenate_list(image_video_patches)
-            # in the latest version of transformers,
-            # the pixel_values is a list of tensors not ndarray
-            mm_inputs["pixel_values"] = torch.stack(pixel_values_list)
+            mm_inputs["pixel_values"] = torch.stack(
+                [torch.tensor(patch_ndarray) for patch_ndarray in pixel_values_list]
+            )
 
         if len(images) != 0:
             mm_inputs.update({"image_num_patches": image_num_patches})

@@ -80,6 +80,7 @@ def patch_processor(
     setattr(processor, "image_max_pixels", model_args.image_max_pixels)
     setattr(processor, "image_min_pixels", model_args.image_min_pixels)
     setattr(processor, "image_do_pan_and_scan", model_args.image_do_pan_and_scan)
+    setattr(processor, "crop_to_patches", model_args.crop_to_patches)
     setattr(processor, "video_max_pixels", model_args.video_max_pixels)
     setattr(processor, "video_min_pixels", model_args.video_min_pixels)
     setattr(processor, "video_fps", model_args.video_fps)
