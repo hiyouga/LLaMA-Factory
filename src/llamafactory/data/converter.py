@@ -108,6 +108,8 @@ class AlpacaDatasetConverter(DatasetConverter):
             response = [{"role": Role.ASSISTANT.value, "content": example[self.dataset_attr.response]}]
         elif self.dataset_attr.response and isinstance(example[self.dataset_attr.response], int) and self.id2label: # class label example
             response = [{"role": Role.ASSISTANT.value, "content": self.id2label[example[self.dataset_attr.response]]}]
+        elif self.dataset_attr.response and isinstance(example[self.dataset_attr.response], float):  # float value (stsb)
+            response = [{"role": Role.ASSISTANT.value, "content": str(example[self.dataset_attr.response])}]
         else:  # unsupervised
             response = []
 
