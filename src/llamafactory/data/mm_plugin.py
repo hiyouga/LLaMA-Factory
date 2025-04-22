@@ -21,7 +21,7 @@ import re
 from copy import deepcopy
 from dataclasses import dataclass
 from io import BytesIO
-from typing import TYPE_CHECKING, Any, BinaryIO, Literal, Optional, TypedDict, Union
+from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TypedDict, Union
 
 import numpy as np
 import torch
@@ -84,20 +84,6 @@ if TYPE_CHECKING:
 
         def _get_number_of_features(self, orig_height: int, orig_width: int, height: int, width: int) -> int:
             pass
-
-
-def _concatenate_list(input_list: list[Any]) -> Union[list[Any], "NDArray", "torch.Tensor"]:
-    r"""Concatenate a list of lists, numpy arrays or torch tensors.
-
-    Returns:
-        a list of numpy arrays or torch tensors.
-    """
-    if isinstance(input_list[0], list):
-        return [item for sublist in input_list for item in sublist]
-    elif isinstance(input_list[0], np.ndarray):
-        return np.concatenate(input_list, axis=0)
-    elif isinstance(input_list[0], torch.Tensor):
-        return torch.cat(input_list, dim=0)
 
 
 def _get_paligemma_token_type_ids(imglens: list[int], seqlens: list[int], processor: "MMProcessor") -> list[list[int]]:
@@ -559,7 +545,7 @@ class InternVLPlugin(BasePlugin):
                 image_video_patches.append(video_pixel_values[start_index:end_index])
 
         if len(images) != 0 or len(videos) != 0:
-            mm_inputs["pixel_values"] = _concatenate_list(image_video_patches)
+            mm_inputs["pixel_values"] = torch.cat(image_video_patches, dim=0)
 
         if len(images) != 0:
             mm_inputs.update({"image_num_patches": image_num_patches})
