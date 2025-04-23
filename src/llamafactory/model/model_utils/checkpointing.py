@@ -66,9 +66,8 @@ def get_unsloth_gradient_checkpointing_func() -> Callable:
             hidden_states = hidden_states.to("cuda", non_blocking=True).detach()
             hidden_states.requires_grad_(True)
             with torch.enable_grad():
-                output = ctx.forward_function(hidden_states, *ctx.args)
-                if isinstance(output, tuple):
-                    output = output[0]
+                outputs = ctx.forward_function(hidden_states, *ctx.args)
+                output = outputs[0] if isinstance(outputs, tuple) else outputs
 
             torch.autograd.backward(output, grad_output)
             return (None, hidden_states.grad) + (None,) * len(ctx.args)
