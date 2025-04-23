@@ -18,7 +18,7 @@ target_modules:
 feedforward_modules: down_proj
 
 ### dataset
-dataset: ${DATASET}
+eval_dataset: ${DATASET}
 template: gemma
 cutoff_len: 2048
 overwrite_cache: true
@@ -59,10 +59,10 @@ report_to:
 per_device_eval_batch_size: 4
 eval_strategy: steps
 eval_steps: 200
-val_size: 0.1
+# val_size: 0.1
 
 ### predict
-# do_predict: true
-# predict_with_generate: true
+do_predict: true
+predict_with_generate: true
 
 # max_samples: 200
