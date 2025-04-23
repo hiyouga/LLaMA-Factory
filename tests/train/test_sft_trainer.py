@@ -50,6 +50,10 @@ class DataCollatorWithVerbose(DataCollatorWithPadding):
     verbose_list: list[dict[str, Any]] = field(default_factory=list)
 
     def __call__(self, features: list[dict[str, Any]]) -> dict[str, Any]:
+        features = [
+            {k: v for k, v in feature.items() if k in ["input_ids", "attention_mask", "labels"]}
+            for feature in features
+        ]
         self.verbose_list.extend(features)
         batch = super().__call__(features)
         return {k: v[:, :1] for k, v in batch.items()}  # truncate input length

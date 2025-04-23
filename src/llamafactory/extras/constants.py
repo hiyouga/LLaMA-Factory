@@ -23,7 +23,7 @@ from peft import PromptTuningConfig, PrefixTuningConfig, MultitaskPromptTuningCo
 from transformers.utils import SAFE_WEIGHTS_INDEX_NAME, SAFE_WEIGHTS_NAME, WEIGHTS_INDEX_NAME, WEIGHTS_NAME
 
 
-AUDIO_PLACEHOLDER = os.environ.get("AUDIO_PLACEHOLDER", "<audio>")
+AUDIO_PLACEHOLDER = os.getenv("AUDIO_PLACEHOLDER", "<audio>")
 
 CHECKPOINT_NAMES = {
     SAFE_ADAPTER_WEIGHTS_NAME,
@@ -51,7 +51,7 @@ FILEEXT2TYPE = {
 
 IGNORE_INDEX = -100
 
-IMAGE_PLACEHOLDER = os.environ.get("IMAGE_PLACEHOLDER", "<image>")
+IMAGE_PLACEHOLDER = os.getenv("IMAGE_PLACEHOLDER", "<image>")
 
 LAYERNORM_NAMES = {"norm", "ln"}
 
@@ -102,7 +102,7 @@ SUPPORTED_CLASS_FOR_S2ATTN = {"llama"}
 
 SWANLAB_CONFIG = "swanlab_public_config.json"
 
-VIDEO_PLACEHOLDER = os.environ.get("VIDEO_PLACEHOLDER", "<video>")
+VIDEO_PLACEHOLDER = os.getenv("VIDEO_PLACEHOLDER", "<video>")
 
 V_HEAD_WEIGHTS_NAME = "value_head.bin"
 
@@ -851,8 +851,43 @@ register_model_group(
             DownloadSource.DEFAULT: "ibm-granite/granite-3.1-8b-instruct",
             DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.1-8b-instruct",
         },
+        "Granite-3.2-2B-Instruct": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.2-2b-instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.2-2b-instruct",
+        },
+        "Granite-3.2-8B-Instruct": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.2-8b-instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.2-8b-instruct",
+        },
+        "Granite-3.3-2B-Base": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.3-2b-base",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.3-2b-base",
+        },
+        "Granite-3.3-8B-Base": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.3-8b-base",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.3-8b-base",
+        },
+        "Granite-3.3-2B-Instruct": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.3-2b-instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.3-2b-instruct",
+        },
+        "Granite-3.3-8B-Instruct": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.3-8b-instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.3-8b-instruct",
+        },
     },
     template="granite3",
+)
+
+
+register_model_group(
+    models={
+        "Granite-3.2-1B-A400M-Base": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-vision-3.2-2b",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-vision-3.2-2b",
+        },
+    },
+    template="granite3_vision",
 )
 
 
@@ -975,6 +1010,46 @@ register_model_group(
         },
     },
     template="intern2",
+)
+
+
+register_model_group(
+    models={
+        "InternVL2.5-2B-MPO": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL2_5-2B-MPO-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL2_5-2B-MPO-hf",
+        },
+        "InternVL2.5-8B-MPO": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL2_5-8B-MPO-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL2_5-8B-MPO-hf",
+        },
+        "InternVL3-1B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3-1B-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-1B-hf",
+        },
+        "InternVL3-2B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3-2B-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-2B-hf",
+        },
+        "InternVL3-8B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3-8B-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-8B-hf",
+        },
+        "InternVL3-14B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3-14B-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-14B-hf",
+        },
+        "InternVL3-38B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3-38B-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-38B-hf",
+        },
+        "InternVL3-78B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3-78B-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-78B-hf",
+        },
+    },
+    template="intern_vl",
+    multimodal=True,
 )
 
 

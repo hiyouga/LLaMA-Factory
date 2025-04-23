@@ -188,7 +188,7 @@ class LogCallback(TrainerCallback):
         self.webui_mode = is_env_enabled("LLAMABOARD_ENABLED")
         if self.webui_mode and not use_ray():
             signal.signal(signal.SIGABRT, self._set_abort)
-            self.logger_handler = logging.LoggerHandler(os.environ.get("LLAMABOARD_WORKDIR"))
+            self.logger_handler = logging.LoggerHandler(os.getenv("LLAMABOARD_WORKDIR"))
             logging.add_handler(self.logger_handler)
             transformers.logging.add_handler(self.logger_handler)
 

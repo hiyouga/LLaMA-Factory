@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 import torch
 import torch.distributed as dist
-from transformers import PreTrainedModel
+from transformers import EarlyStoppingCallback, PreTrainedModel
 
 from ..data import get_template_and_fix_tokenizer
 from ..extras import logging
@@ -60,6 +60,9 @@ def _training_function(config: dict[str, Any]) -> None:
 
     if finetuning_args.use_swanlab:
         callbacks.append(get_swanlab_callback(finetuning_args))
+
+    if finetuning_args.early_stopping_steps is not None:
+        callbacks.append(EarlyStoppingCallback(early_stopping_patience=finetuning_args.early_stopping_steps))
 
     callbacks.append(ReporterCallback(model_args, data_args, finetuning_args, generating_args))  # add to last
 

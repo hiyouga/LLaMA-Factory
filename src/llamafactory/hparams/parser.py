@@ -24,6 +24,7 @@ from typing import Any, Optional, Union
 import torch
 import transformers
 import yaml
+from omegaconf import OmegaConf
 from transformers import HfArgumentParser
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.trainer_utils import get_last_checkpoint
@@ -61,10 +62,14 @@ def read_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> Union[
     if args is not None:
         return args
 
-    if len(sys.argv) == 2 and (sys.argv[1].endswith(".yaml") or sys.argv[1].endswith(".yml")):
-        return yaml.safe_load(Path(sys.argv[1]).absolute().read_text())
-    elif len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
-        return json.loads(Path(sys.argv[1]).absolute().read_text())
+    if sys.argv[1].endswith(".yaml") or sys.argv[1].endswith(".yml"):
+        override_config = OmegaConf.from_cli(sys.argv[2:])
+        dict_config = yaml.safe_load(Path(sys.argv[1]).absolute().read_text())
+        return OmegaConf.to_container(OmegaConf.merge(dict_config, override_config))
+    elif sys.argv[1].endswith(".json"):
+        override_config = OmegaConf.from_cli(sys.argv[2:])
+        dict_config = json.loads(Path(sys.argv[1]).absolute().read_text())
+        return OmegaConf.to_container(OmegaConf.merge(dict_config, override_config))
     else:
         return sys.argv[1:]
 
@@ -91,6 +96,14 @@ def _set_transformers_logging() -> None:
         transformers.utils.logging.set_verbosity_info()
         transformers.utils.logging.enable_default_handler()
         transformers.utils.logging.enable_explicit_format()
+
+
+def _set_env_vars() -> None:
+    if is_torch_npu_available():
+        # avoid JIT compile on NPU devices, see https://zhuanlan.zhihu.com/p/660875458
+        torch.npu.set_compile_mode(jit_compile=is_env_enabled("NPU_JIT_COMPILE"))
+        # avoid use fork method on NPU devices, see https://github.com/hiyouga/LLaMA-Factory/issues/7447
+        os.environ["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
 
 
 def _verify_model_args(
@@ -281,12 +294,13 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
     if training_args.deepspeed is not None and (finetuning_args.use_galore or finetuning_args.use_apollo):
         raise ValueError("GaLore and APOLLO are incompatible with DeepSpeed yet.")
 
-    if model_args.infer_backend == "vllm":
-        raise ValueError("vLLM backend is only available for API, CLI and Web.")
+    if model_args.infer_backend != EngineName.HF:
+        raise ValueError("vLLM/SGLang backend is only available for API, CLI and Web.")
 
     if model_args.use_unsloth and is_deepspeed_zero3_enabled():
         raise ValueError("Unsloth is incompatible with DeepSpeed ZeRO-3.")
 
+    _set_env_vars()
     _verify_model_args(model_args, data_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args, training_args)
 
@@ -323,12 +337,20 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
         logger.warning_rank0("Specify `ref_model` for computing rewards at evaluation.")
 
     # Post-process training arguments
+    training_args.generation_max_length = training_args.generation_max_length or data_args.cutoff_len
+    training_args.generation_num_beams = data_args.eval_num_beams or training_args.generation_num_beams
+    training_args.remove_unused_columns = False  # important for multimodal dataset
+
+    if finetuning_args.finetuning_type == "lora":
+        # https://github.com/huggingface/transformers/blob/v4.50.0/src/transformers/trainer.py#L782
+        training_args.label_names = training_args.label_names or ["labels"]
+
     if (
         training_args.parallel_mode == ParallelMode.DISTRIBUTED
         and training_args.ddp_find_unused_parameters is None
         and finetuning_args.finetuning_type == "lora"
     ):
-        logger.warning_rank0("`ddp_find_unused_parameters` needs to be set as False for LoRA in DDP training.")
+        logger.info_rank0("Set `ddp_find_unused_parameters` to False in DDP training since LoRA is enabled.")
         training_args.ddp_find_unused_parameters = False
 
     if finetuning_args.stage in ["rm", "ppo"] and finetuning_args.finetuning_type in ["full", "freeze"]:
@@ -409,6 +431,7 @@ def get_infer_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
         if model_args.adapter_name_or_path is not None and len(model_args.adapter_name_or_path) != 1:
             raise ValueError("vLLM only accepts a single adapter. Merge them first.")
 
+    _set_env_vars()
     _verify_model_args(model_args, data_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args)
 
@@ -430,9 +453,10 @@ def get_eval_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _E
     _set_transformers_logging()
 
     # Check arguments
-    if model_args.infer_backend == "vllm":
-        raise ValueError("vLLM backend is only available for API, CLI and Web.")
+    if model_args.infer_backend != EngineName.HF:
+        raise ValueError("vLLM/SGLang backend is only available for API, CLI and Web.")
 
+    _set_env_vars()
     _verify_model_args(model_args, data_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args)
 
