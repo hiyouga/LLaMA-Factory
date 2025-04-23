@@ -1,0 +1,64 @@
+seed: ${SEED}
+
+### model
+model_name_or_path: ${MODEL}
+trust_remote_code: true
+flash_attn: auto
+use_cache: false
+
+### method
+stage: sft
+do_train: false
+finetuning_type: lora
+lora_rank: 16
+lora_alpha: 16
+lora_dropout: 0.05
+lora_target: k_proj,v_proj,down_proj
+
+### dataset
+dataset: ${DATASET}
+template: gemma
+cutoff_len: 2048
+overwrite_cache: true
+preprocessing_num_workers: 16
+dataloader_num_workers: 4
+packing: false
+
+### output
+output_dir: ${OUTPUT_DIR}
+logging_steps: 5
+save_steps: 200
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+plot_loss: true
+include_num_input_tokens_seen: true
+push_to_hub: true
+push_to_hub_organization: rbelanec
+load_best_model_at_end: true
+save_total_limit: 1
+
+### train
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 4
+learning_rate: 5.0e-5
+max_steps: 40000
+weight_decay: 1.0e-5
+lr_scheduler_type: cosine
+bf16: true
+ddp_timeout: 180000000
+resume_from_checkpoint: null
+max_grad_norm: 1.0
+optim: adamw_torch
+report_to:
+- wandb
+
+### eval
+per_device_eval_batch_size: 4
+eval_strategy: steps
+eval_steps: 200
+val_size: 0.1
+
+### predict
+# do_predict: true
+# predict_with_generate: true
