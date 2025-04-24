@@ -20,7 +20,7 @@ from transformers import Seq2SeqTrainingArguments
 
 from llamafactory.data import get_dataset, get_template_and_fix_tokenizer
 from llamafactory.extras.constants import IGNORE_INDEX
-from llamafactory.extras.misc import check_version, get_device_count
+from llamafactory.extras.misc import get_device_count
 from llamafactory.extras.packages import is_vllm_available
 from llamafactory.hparams import get_infer_args
 from llamafactory.model import load_tokenizer
@@ -56,7 +56,6 @@ def vllm_infer(
 
     Usage: python vllm_infer.py --model_name_or_path meta-llama/Llama-2-7b-hf --template llama --dataset alpaca_en_demo
     """
-    check_version("vllm>=0.4.3,<=0.8.2")
     if pipeline_parallel_size > get_device_count():
         raise ValueError("Pipeline parallel size should be smaller than the number of gpus.")
 

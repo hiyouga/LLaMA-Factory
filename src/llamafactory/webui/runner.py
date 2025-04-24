@@ -23,7 +23,7 @@ from transformers.trainer import TRAINING_ARGS_NAME
 from transformers.utils import is_torch_npu_available
 
 from ..extras.constants import LLAMABOARD_CONFIG, PEFT_METHODS, TRAINING_STAGES
-from ..extras.misc import is_gpu_or_npu_available, torch_gc, use_ray
+from ..extras.misc import is_accelerator_available, torch_gc, use_ray
 from ..extras.packages import is_gradio_available
 from .common import (
     DEFAULT_CACHE_DIR,
@@ -108,7 +108,7 @@ class Runner:
             if not get("eval.output_dir"):
                 return ALERTS["err_no_output_dir"][lang]
 
-        if not from_preview and not is_gpu_or_npu_available():
+        if not from_preview and not is_accelerator_available():
             gr.Warning(ALERTS["warn_no_cuda"][lang])
 
         return ""
@@ -368,6 +368,7 @@ class Runner:
             if args.get("deepspeed", None) is not None:
                 env["FORCE_TORCHRUN"] = "1"
 
+            # NOTE: DO NOT USE shell=True to avoid security risk
             self.trainer = Popen(["llamafactory-cli", "train", save_cmd(args)], env=env)
             yield from self.monitor()
 
