@@ -2,6 +2,7 @@ seed: ${SEED}
 
 ### model
 model_name_or_path: google/gemma-3-1b-it
+adapter_name_or_path: ${ADAPTER}
 trust_remote_code: true
 flash_attn: auto
 use_cache: false
@@ -19,7 +20,7 @@ target_modules:
   - norm
 
 ### dataset
-dataset: ${DATASET}
+eval_dataset: ${DATASET}
 template: gemma
 cutoff_len: 2048
 overwrite_cache: true

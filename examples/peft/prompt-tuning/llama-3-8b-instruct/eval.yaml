@@ -1,7 +1,8 @@
 seed: ${SEED}
 
 ### model
-model_name_or_path: ${MODEL}
+model_name_or_path: llama-3-8b-instruct
+adapter_name_or_path: ${ADAPTER}
 trust_remote_code: true
 flash_attn: auto
 use_cache: false
@@ -14,7 +15,7 @@ task_type: CAUSAL_LM
 num_virtual_tokens: 100
 
 ### dataset
-dataset: ${DATASET}
+eval_dataset: ${DATASET}
 template: llama3
 cutoff_len: 2048
 overwrite_cache: true

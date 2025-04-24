@@ -2,6 +2,7 @@ seed: ${SEED}
 
 ### model
 model_name_or_path: google/gemma-3-1b-it
+adapter_name_or_path: ${ADAPTER}
 trust_remote_code: true
 flash_attn: auto
 use_cache: false
@@ -16,7 +17,7 @@ lora_dropout: 0.05
 lora_target: k_proj,v_proj,down_proj
 
 ### dataset
-dataset: ${DATASET}
+eval_dataset: ${DATASET}
 template: gemma
 cutoff_len: 2048
 overwrite_cache: true
