@@ -1,7 +1,8 @@
 seed: ${SEED}
 
 ### model
-model_name_or_path: ${MODEL}
+model_name_or_path: google/gemma-3-1b-it
+adapter_name_or_path: ${ADAPTER}
 trust_remote_code: true
 flash_attn: auto
 use_cache: false
@@ -56,6 +57,7 @@ report_to:
 - wandb
 
 ### eval
+do_eval: false
 per_device_eval_batch_size: 4
 eval_strategy: steps
 eval_steps: 200
@@ -64,5 +66,8 @@ eval_steps: 200
 ### predict
 do_predict: true
 predict_with_generate: true
+temperature: null
+top_k: 0
+top_p: 0
 
 # max_samples: 200

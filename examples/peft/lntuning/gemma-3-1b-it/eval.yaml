@@ -1,7 +1,7 @@
 seed: ${SEED}
 
 ### model
-model_name_or_path: ${MODEL}
+model_name_or_path: google/gemma-3-1b-it
 trust_remote_code: true
 flash_attn: auto
 use_cache: false
