@@ -38,7 +38,6 @@ plot_loss: true
 include_num_input_tokens_seen: true
 push_to_hub: true
 push_to_hub_organization: rbelanec
-load_best_model_at_end: true
 save_total_limit: 1
 
 ### train
@@ -59,9 +58,6 @@ report_to:
 ### eval
 do_eval: false
 per_device_eval_batch_size: 4
-eval_strategy: steps
-eval_steps: 200
-# val_size: 0.1
 
 ### predict
 do_predict: true
@@ -69,5 +65,6 @@ predict_with_generate: true
 temperature: null
 top_k: 0
 top_p: 0
+do_sample: false
 
 # max_samples: 200
