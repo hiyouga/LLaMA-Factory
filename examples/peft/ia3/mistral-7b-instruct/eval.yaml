@@ -36,8 +36,6 @@ overwrite_output_dir: true
 save_only_model: false
 plot_loss: true
 include_num_input_tokens_seen: true
-push_to_hub: true
-push_to_hub_organization: rbelanec
 save_total_limit: 1
 
 ### train
@@ -63,7 +61,7 @@ per_device_eval_batch_size: 4
 do_predict: true
 predict_with_generate: true
 temperature: null
-top_k: 0
+top_k: null
 top_p: 0
 do_sample: false
 
