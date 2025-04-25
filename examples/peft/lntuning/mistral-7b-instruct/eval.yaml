@@ -57,5 +57,5 @@ do_predict: true
 predict_with_generate: true
 temperature: null
 top_k: null
-top_p: 0
+top_p: null
 do_sample: false
