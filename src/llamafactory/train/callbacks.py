@@ -270,7 +270,10 @@ class LogCallback(TrainerCallback):
     @override
     def on_log(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         if not args.should_save:
+            print("SHOULD NOT SAVE")
             return
+        else:
+            print("SHOULD SAVE")
 
         self._timing(cur_steps=state.global_step)
         logs = dict(
