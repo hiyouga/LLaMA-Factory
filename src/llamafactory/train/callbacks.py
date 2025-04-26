@@ -286,13 +286,14 @@ class LogCallback(TrainerCallback):
             percentage=round(self.cur_steps / self.max_steps * 100, 2) if self.max_steps != 0 else 100,
             elapsed_time=self.elapsed_time,
             remaining_time=self.remaining_time,
+            grad_norm=state.log_history[-1].get("grad_norm"),
+            learning_rate=state.log_history[-1].get("learning_rate"),
         )
         if state.num_input_tokens_seen:
             logs["throughput"] = round(state.num_input_tokens_seen / (time.time() - self.start_time), 2)
             logs["total_tokens"] = state.num_input_tokens_seen
 
-        # if is_env_enabled("RECORD_VRAM"):
-        if True:
+        if is_env_enabled("RECORD_VRAM"):
             vram_allocated, vram_reserved = get_peak_memory()
             logs["vram_allocated"] = round(vram_allocated / (1024**3), 2)
             logs["vram_reserved"] = round(vram_reserved / (1024**3), 2)
@@ -308,6 +309,9 @@ class LogCallback(TrainerCallback):
 
         if self.thread_pool is not None:
             self.thread_pool.submit(self._write_log, args.output_dir, logs)
+
+        print("LOGS:", logs)
+
 
     @override
     def on_prediction_step(
