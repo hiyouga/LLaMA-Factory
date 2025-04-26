@@ -270,10 +270,7 @@ class LogCallback(TrainerCallback):
     @override
     def on_log(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         if not args.should_save:
-            print("SHOULD NOT SAVE")
             return
-        else:
-            print("SHOULD SAVE")
 
         self._timing(cur_steps=state.global_step)
         logs = dict(
@@ -295,7 +292,7 @@ class LogCallback(TrainerCallback):
             logs["total_tokens"] = state.num_input_tokens_seen
 
         # if is_env_enabled("RECORD_VRAM"):
-        if True:
+        if is_env_enabled("RECORD_VRAM"):
             vram_allocated, vram_reserved = get_peak_memory()
             logs["vram_allocated"] = round(vram_allocated / (1024**3), 2)
             logs["vram_reserved"] = round(vram_reserved / (1024**3), 2)
@@ -311,6 +308,13 @@ class LogCallback(TrainerCallback):
 
         if self.thread_pool is not None:
             self.thread_pool.submit(self._write_log, args.output_dir, logs)
+
+
+        print("Logging to file:", args.output_dir)
+        print("RECORD_VRAM:", is_env_enabled("RECORD_VRAM"))
+        print("THREAD_POOL:", self.thread_pool)
+        print("LOGS:", logs)
+
 
     @override
     def on_prediction_step(
