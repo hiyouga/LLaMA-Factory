@@ -61,7 +61,7 @@ known-third-party = [
     "peft",
     "torch",
     "transformers",
-    "trl"
+    "trl",
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -87,5 +87,9 @@ conflicts = [
     [
         { extra = "torch-npu" },
         { extra = "vllm" },
-    ]
+    ],
+    [
+        { extra = "sglang" },
+        { extra = "minicpm_v" },
+    ],
 ]

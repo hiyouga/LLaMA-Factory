@@ -160,5 +160,11 @@ class DataArguments:
         if self.mask_history and self.train_on_prompt:
             raise ValueError("`mask_history` is incompatible with `train_on_prompt`.")
 
+        if self.neat_packing:
+            self.packing = True
+
+        if self.packing:
+            self.cutoff_len -= 1  # avoid pad_to_multiple_of, needs improve
+
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

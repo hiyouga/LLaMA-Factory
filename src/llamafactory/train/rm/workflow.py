@@ -48,9 +48,6 @@ def run_rm(
         template=template, model=model, pad_to_multiple_of=8, **tokenizer_module
     )
 
-    # Update arguments
-    training_args.remove_unused_columns = False  # important for multimodal and pairwise dataset
-
     # Initialize our Trainer
     trainer = PairwiseTrainer(
         model=model,
@@ -74,7 +71,15 @@ def run_rm(
         trainer.save_metrics("train", train_result.metrics)
         trainer.save_state()
         if trainer.is_world_process_zero() and finetuning_args.plot_loss:
-            plot_loss(training_args.output_dir, keys=["loss", "eval_loss", "eval_accuracy"])
+            keys = ["loss"]
+            if isinstance(dataset_module.get("eval_dataset"), dict):
+                keys += sum(
+                    [[f"eval_{key}_loss", f"eval_{key}_accuracy"] for key in dataset_module["eval_dataset"].keys()], []
+                )
+            else:
+                keys += ["eval_loss", "eval_accuracy"]
+
+            plot_loss(training_args.output_dir, keys=keys)
 
     # Evaluation
     if training_args.do_eval:

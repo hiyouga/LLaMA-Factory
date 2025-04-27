@@ -24,7 +24,6 @@ import torch.nn.functional as F
 from transformers import DataCollatorForSeq2Seq
 
 from ..extras.constants import AUDIO_PLACEHOLDER, IGNORE_INDEX, IMAGE_PLACEHOLDER
-from ..extras.misc import get_current_device
 from ..extras.packages import is_pillow_available
 
 
@@ -65,30 +64,19 @@ def prepare_4d_attention_mask(attention_mask_with_indices: "torch.Tensor", dtype
     where `o` equals to `0.0`, `x` equals to `min_dtype`.
     """
     _, seq_len = attention_mask_with_indices.size()
-
-    # Move to compute device if the source is CPU.
-    source_device = attention_mask_with_indices.device
-    compute_device = get_current_device() if source_device.type == "cpu" else source_device
-    if compute_device != source_device:
-        attention_mask_with_indices = attention_mask_with_indices.to(compute_device)
-
     min_dtype = torch.finfo(dtype).min
-    zero_tensor = torch.tensor(0, dtype=dtype, device=compute_device)
+    zero_tensor = torch.tensor(0, dtype=dtype)
 
     # Create a non-padding mask.
-    non_padding = (attention_mask_with_indices != 0).unsqueeze(1).unsqueeze(2)
+    non_padding_mask = (attention_mask_with_indices != 0).unsqueeze(1).unsqueeze(2)
     # Create indices for comparison.
     indices = attention_mask_with_indices.unsqueeze(1).unsqueeze(2)  # [bsz, 1, 1, seq_len]
     indices_t = attention_mask_with_indices.unsqueeze(1).unsqueeze(3)  # [bsz, 1, seq_len, 1]
     # Create a lower triangular mask.
-    tril_mask = torch.tril(torch.ones((seq_len, seq_len), dtype=torch.bool, device=compute_device))
-    attention_mask_4d = (indices == indices_t) & non_padding & tril_mask
+    tril_mask = torch.tril(torch.ones((seq_len, seq_len), dtype=torch.bool))
+    attention_mask_4d = (indices == indices_t) & non_padding_mask & tril_mask
     # Invert the attention mask.
     attention_mask_4d = torch.where(attention_mask_4d, zero_tensor, min_dtype)
-
-    # Move back to original device if needed.
-    if compute_device != source_device:
-        attention_mask_4d = attention_mask_4d.to(source_device)
     return attention_mask_4d
 
 
@@ -188,7 +176,7 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                 "input_ids": features["input_ids"],
                 "image_grid_thw": mm_inputs.get("image_grid_thw"),
                 "video_grid_thw": mm_inputs.get("video_grid_thw"),
-                "attention_mask": features["attention_mask"],
+                "attention_mask": (features["attention_mask"] >= 1).float(),
             }
             if "second_per_grid_ts" in mm_inputs:  # for qwen2vl
                 rope_index_kwargs["second_per_grid_ts"] = mm_inputs.get("second_per_grid_ts")
@@ -196,6 +184,7 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                 rope_index_kwargs["second_per_grids"] = mm_inputs.get("video_second_per_grid")
 
             if getattr(self.model.config, "model_type", None) == "qwen2_5_omni_thinker":  # for qwen2omni
+                rope_index_kwargs["use_audio_in_video"] = getattr(self.processor, "use_audio_in_video", False)
                 feature_attention_mask = mm_inputs.get("feature_attention_mask", None)
                 if feature_attention_mask is not None:
                     audio_feature_lengths = torch.sum(
@@ -309,8 +298,9 @@ class KTODataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
         batch["kl_input_ids"] = kl_batch["input_ids"]
         batch["kl_attention_mask"] = kl_batch["attention_mask"]
         batch["kl_labels"] = kl_batch["labels"]
-        if "cross_attention_mask" in kl_batch:  # for mllama inputs.
+        if "cross_attention_mask" in kl_batch:  # for mllama inputs
             batch["kl_cross_attention_mask"] = kl_batch["cross_attention_mask"]
+
         if "token_type_ids" in kl_batch:
             batch["kl_token_type_ids"] = kl_batch["token_type_ids"]
 

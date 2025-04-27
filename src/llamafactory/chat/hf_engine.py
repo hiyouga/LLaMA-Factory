@@ -25,7 +25,6 @@ from typing_extensions import override
 from ..data import get_template_and_fix_tokenizer
 from ..extras import logging
 from ..extras.constants import AUDIO_PLACEHOLDER, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER, EngineName
-from ..extras.misc import get_logits_processor
 from ..model import load_model, load_tokenizer
 from .base_engine import BaseEngine, Response
 
@@ -178,7 +177,6 @@ class HuggingfaceEngine(BaseEngine):
             inputs=inputs,
             attention_mask=attention_mask,
             generation_config=GenerationConfig(**generating_args),
-            logits_processor=get_logits_processor(),
         )
 
         mm_inputs = template.mm_plugin.get_mm_inputs(**mm_input_dict, batch_ids=[prompt_ids], processor=processor)
