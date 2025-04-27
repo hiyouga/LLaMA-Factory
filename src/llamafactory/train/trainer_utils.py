@@ -680,6 +680,12 @@ def get_ray_trainer(
     if ray_args.ray_init_kwargs is not None:
         ray.init(**ray_args.ray_init_kwargs)
 
+    if ray_args.ray_storage_filesystem is not None:
+        # this means we are using s3/gcs
+        storage_path = ray_args.ray_storage_path
+    else:
+        storage_path = Path(ray_args.ray_storage_path).absolute().as_posix()
+
     trainer = TorchTrainer(
         training_function,
         train_loop_config=train_loop_config,
@@ -691,7 +697,8 @@ def get_ray_trainer(
         ),
         run_config=RunConfig(
             name=ray_args.ray_run_name,
-            storage_path=Path(ray_args.ray_storage_path).absolute().as_posix(),
+            storage_filesystem=ray_args.ray_storage_filesystem,
+            storage_path=storage_path,
         ),
     )
     return trainer
