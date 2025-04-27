@@ -23,7 +23,7 @@ import torch
 from transformers.training_args import _convert_str_dict
 from typing_extensions import Self
 
-from ..extras.constants import AttentionFunction, EngineName, RopeScaling
+from ..extras.constants import AttentionFunction, EngineName, QuantizationMethod, RopeScaling
 
 
 @dataclass
@@ -65,7 +65,13 @@ class BaseModelArguments:
         default=False,
         metadata={"help": "Whether or not the special tokens should be split during the tokenization process."},
     )
-    new_special_tokens: Optional[str] = field(
+    add_tokens: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "Non-special tokens to be added into the tokenizer. Use commas to separate multiple tokens."
+        },
+    )
+    add_special_tokens: Optional[str] = field(
         default=None,
         metadata={"help": "Special tokens to be added into the tokenizer. Use commas to separate multiple tokens."},
     )
@@ -176,16 +182,19 @@ class BaseModelArguments:
         if self.adapter_name_or_path is not None:  # support merging multiple lora weights
             self.adapter_name_or_path = [path.strip() for path in self.adapter_name_or_path.split(",")]
 
-        if self.new_special_tokens is not None:  # support multiple special tokens
-            self.new_special_tokens = [token.strip() for token in self.new_special_tokens.split(",")]
+        if self.add_tokens is not None:  # support multiple tokens
+            self.add_tokens = [token.strip() for token in self.add_tokens.split(",")]
+
+        if self.add_special_tokens is not None:  # support multiple special tokens
+            self.add_special_tokens = [token.strip() for token in self.add_special_tokens.split(",")]
 
 
 @dataclass
 class QuantizationArguments:
     r"""Arguments pertaining to the quantization method."""
 
-    quantization_method: Literal["bitsandbytes", "hqq", "eetq"] = field(
-        default="bitsandbytes",
+    quantization_method: QuantizationMethod = field(
+        default=QuantizationMethod.BNB,
         metadata={"help": "Quantization method to use for on-the-fly quantization."},
     )
     quantization_bit: Optional[int] = field(
@@ -222,6 +231,14 @@ class ProcessorArguments:
         default=False,
         metadata={"help": "Use pan and scan to process image for gemma3."},
     )
+    crop_to_patches: bool = field(
+        default=False,
+        metadata={"help": "Whether to crop the image to patches for internvl."},
+    )
+    use_audio_in_video: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use audio in video inputs."},
+    )
     video_max_pixels: int = field(
         default=256 * 256,
         metadata={"help": "The maximum number of pixels of video inputs."},
@@ -237,6 +254,10 @@ class ProcessorArguments:
     video_maxlen: int = field(
         default=128,
         metadata={"help": "The maximum number of sampled frames for video inputs."},
+    )
+    audio_sampling_rate: int = field(
+        default=16000,
+        metadata={"help": "The sampling rate of audio inputs."},
     )
 
     def __post_init__(self):

@@ -59,9 +59,6 @@ def run_kto(
     else:
         ref_model = create_ref_model(model_args, finetuning_args)
 
-    # Update arguments
-    training_args.remove_unused_columns = False  # important for multimodal and pairwise dataset
-
     # Initialize our Trainer
     trainer = CustomKTOTrainer(
         model=model,
@@ -82,7 +79,13 @@ def run_kto(
         trainer.save_metrics("train", train_result.metrics)
         trainer.save_state()
         if trainer.is_world_process_zero() and finetuning_args.plot_loss:
-            plot_loss(training_args.output_dir, keys=["loss", "eval_loss", "rewards/chosen"])
+            keys = ["loss", "rewards/chosen"]
+            if isinstance(dataset_module.get("eval_dataset"), dict):
+                keys += [f"eval_{key}_loss" for key in dataset_module["eval_dataset"].keys()]
+            else:
+                keys += ["eval_loss"]
+
+            plot_loss(training_args.output_dir, keys=keys)
 
     # Evaluation
     if training_args.do_eval:
