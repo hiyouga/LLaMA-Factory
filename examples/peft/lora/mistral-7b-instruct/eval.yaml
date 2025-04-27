@@ -1,7 +1,7 @@
 seed: ${SEED}
 
 ### model
-model_name_or_path: mistral-7b-instruct
+model_name_or_path: mistralai/Mistral-7B-Instruct-v0.3
 adapter_name_or_path: ${ADAPTER}
 trust_remote_code: true
 flash_attn: auto

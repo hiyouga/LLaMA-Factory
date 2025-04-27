@@ -1,7 +1,7 @@
 seed: ${SEED}
 
 ### model
-model_name_or_path: llama-3-8b-instruct
+model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
 adapter_name_or_path: ${ADAPTER}
 trust_remote_code: true
 flash_attn: auto

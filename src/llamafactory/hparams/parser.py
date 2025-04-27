@@ -34,7 +34,7 @@ from transformers.utils import is_torch_bf16_gpu_available, is_torch_npu_availab
 from peft import PeftConfig
 
 from ..extras import logging
-from ..extras.constants import CHECKPOINT_NAMES, PEFT_CONFIG_MAPPING, EngineName
+from ..extras.constants import CHECKPOINT_NAMES, PEFT_CONFIG_MAPPING, PEFT_METHODS, EngineName
 from ..extras.misc import check_dependencies, check_version, get_current_device, is_env_enabled
 from .data_args import DataArguments
 from .evaluation_args import EvaluationArguments
@@ -111,7 +111,7 @@ def _verify_model_args(
     data_args: "DataArguments",
     finetuning_args: "FinetuningArguments",
 ) -> None:
-    if model_args.adapter_name_or_path is not None and finetuning_args.finetuning_type not in PEFT_CONFIG_MAPPING:
+    if model_args.adapter_name_or_path is not None and finetuning_args.finetuning_type not in PEFT_METHODS:
         raise ValueError("Adapter is only valid for PEFT methods.")
 
     if model_args.quantization_bit is not None:
