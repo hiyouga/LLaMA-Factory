@@ -2405,6 +2405,69 @@ register_model_group(
 
 register_model_group(
     models={
+        "Qwen3-0.6B-Base": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-0.6B-Base",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-0.6B-Base",
+        },
+        "Qwen3-1.7B-Base": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-1.7B-Base",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-1.7B-Base",
+        },
+        "Qwen3-4B-Base": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-4B-Base",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-4B-Base",
+        },
+        "Qwen3-8B-Base": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-8B-Base",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-8B-Base",
+        },
+        "Qwen3-14B-Base": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-14B-Base",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-14B-Base",
+        },
+        "Qwen3-30B-A3B-Base": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B-Base",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B-Base",
+        },
+        "Qwen3-0.6B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-0.6B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-0.6B",
+        },
+        "Qwen3-1.7B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-1.7B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-1.7B",
+        },
+        "Qwen3-4B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-4B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-4B",
+        },
+        "Qwen3-8B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-8B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-8B",
+        },
+        "Qwen3-14B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-14B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-14B",
+        },
+        "Qwen3-32B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-32B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-32B",
+        },
+        "Qwen3-30B-A3B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B",
+        },
+        "Qwen3-235B-A22B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B",
+        },
+    },
+    template="qwen",
+)
+
+
+register_model_group(
+    models={
         "Qwen2-Audio-7B": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-Audio-7B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen2-Audio-7B",
