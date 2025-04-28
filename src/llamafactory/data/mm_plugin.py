@@ -1636,8 +1636,10 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
                     raise ValueError(f"`len(images)` is less than the number of {IMAGE_PLACEHOLDER} tokens.")
 
                 image_seqlen = image_grid_thw[num_image_tokens].prod() // merge_length if self.expand_mm_tokens else 1
+                # remove <*_bos> and <*_eos> tokens
+                # ref to qwen2_5_omni/processing_qwen2_5_omni.py#L235-L238
                 content = content.replace(
-                    IMAGE_PLACEHOLDER, f"<|vision_bos|>{self.image_token * image_seqlen}<|vision_eos|>", 1
+                    IMAGE_PLACEHOLDER, f"{self.image_token * image_seqlen}", 1
                 )
                 num_image_tokens += 1
 
@@ -1648,7 +1650,7 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
 
                     audio_seqlen = audio_lengths[num_audio_tokens] if self.expand_mm_tokens else 1
                     content = content.replace(
-                        AUDIO_PLACEHOLDER, f"<|audio_bos|>{self.audio_token * audio_seqlen}<|audio_eos|>", 1
+                        AUDIO_PLACEHOLDER, f"{self.audio_token * audio_seqlen}", 1
                     )
                     num_audio_tokens += 1
 
@@ -1661,7 +1663,7 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
                         video_grid_thw[num_video_tokens].prod() // merge_length if self.expand_mm_tokens else 1
                     )
                     content = content.replace(
-                        VIDEO_PLACEHOLDER, f"<|vision_bos|>{self.video_token * video_seqlen}<|vision_eos|>", 1
+                        VIDEO_PLACEHOLDER, f"{self.video_token * video_seqlen}", 1
                     )
                     num_video_tokens += 1
 
