@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional, Union
 
@@ -60,7 +61,7 @@ class Template:
         tools: Optional[str] = None,
     ) -> tuple[list[int], list[int]]:
         r"""Return a single pair of token ids representing prompt and response respectively."""
-        encoded_messages = self._encode(tokenizer, messages, system, tools)
+        encoded_messages = self._encode(tokenizer, messages, system, tools, remove_thought=True)
         prompt_ids = []
         for encoded_ids in encoded_messages[:-1]:
             prompt_ids += encoded_ids
@@ -76,7 +77,7 @@ class Template:
         tools: Optional[str] = None,
     ) -> list[tuple[list[int], list[int]]]:
         r"""Return multiple pairs of token ids representing prompts and responses respectively."""
-        encoded_messages = self._encode(tokenizer, messages, system, tools)
+        encoded_messages = self._encode(tokenizer, messages, system, tools, remove_thought=False)
         return [(encoded_messages[i], encoded_messages[i + 1]) for i in range(0, len(encoded_messages), 2)]
 
     def extract_tool(self, content: str) -> Union[str, list["FunctionCall"]]:
@@ -116,6 +117,7 @@ class Template:
         messages: list[dict[str, str]],
         system: Optional[str],
         tools: Optional[str],
+        remove_thought: bool,
     ) -> list[list[int]]:
         r"""Encode formatted inputs to pairs of token ids.
 
@@ -133,14 +135,21 @@ class Template:
                     tool_text = self.format_tools.apply(content=tools)[0] if tools else ""
                     elements += self.format_system.apply(content=(system + tool_text))
 
-            if message["role"] == Role.USER.value:
-                elements += self.format_user.apply(content=message["content"], idx=str(i // 2))
-            elif message["role"] == Role.ASSISTANT.value:
-                elements += self.format_assistant.apply(content=message["content"])
-            elif message["role"] == Role.OBSERVATION.value:
-                elements += self.format_observation.apply(content=message["content"])
-            elif message["role"] == Role.FUNCTION.value:
-                elements += self.format_function.apply(content=message["content"])
+            content = message["content"]
+            if remove_thought and message["role"] == Role.ASSISTANT and (i != len(messages) - 1):
+                pattern = re.compile(
+                    f"{re.escape(self.thought_words[0])}(.*?){re.escape(self.thought_words[1])}", re.DOTALL
+                )
+                content = re.sub(pattern, "", content).lstrip("\n")
+
+            if message["role"] == Role.USER:
+                elements += self.format_user.apply(content=content, idx=str(i // 2))
+            elif message["role"] == Role.ASSISTANT:
+                elements += self.format_assistant.apply(content=content)
+            elif message["role"] == Role.OBSERVATION:
+                elements += self.format_observation.apply(content=content)
+            elif message["role"] == Role.FUNCTION:
+                elements += self.format_function.apply(content=content)
             else:
                 raise NotImplementedError("Unexpected role: {}".format(message["role"]))
 
@@ -317,6 +326,7 @@ class Llama2Template(Template):
         messages: list[dict[str, str]],
         system: str,
         tools: str,
+        remove_thought: bool,
     ) -> list[list[int]]:
         system = system or self.default_system
         encoded_messages = []
@@ -330,14 +340,21 @@ class Llama2Template(Template):
                     tool_text = self.format_tools.apply(content=tools)[0] if tools else ""
                     system_text = self.format_system.apply(content=(system + tool_text))[0]
 
-            if message["role"] == Role.USER.value:
-                elements += self.format_user.apply(content=system_text + message["content"])
-            elif message["role"] == Role.ASSISTANT.value:
-                elements += self.format_assistant.apply(content=message["content"])
-            elif message["role"] == Role.OBSERVATION.value:
-                elements += self.format_observation.apply(content=message["content"])
-            elif message["role"] == Role.FUNCTION.value:
-                elements += self.format_function.apply(content=message["content"])
+            content = message["content"]
+            if remove_thought and message["role"] == Role.ASSISTANT and (i != len(messages) - 1):
+                pattern = re.compile(
+                    f"{re.escape(self.thought_words[0])}(.*?){re.escape(self.thought_words[1])}", re.DOTALL
+                )
+                content = re.sub(pattern, "", content).lstrip("\n")
+
+            if message["role"] == Role.USER:
+                elements += self.format_user.apply(content=system_text + content)
+            elif message["role"] == Role.ASSISTANT:
+                elements += self.format_assistant.apply(content=content)
+            elif message["role"] == Role.OBSERVATION:
+                elements += self.format_observation.apply(content=content)
+            elif message["role"] == Role.FUNCTION:
+                elements += self.format_function.apply(content=content)
             else:
                 raise NotImplementedError("Unexpected role: {}".format(message["role"]))
 
@@ -1406,7 +1423,6 @@ register_template(
         slots=["<|im_start|>user\n<tool_response>\n{{content}}\n</tool_response><|im_end|>\n<|im_start|>assistant\n"]
     ),
     format_tools=ToolFormatter(tool_format="qwen"),
-    default_system="You are Qwen, created by Alibaba Cloud. You are a helpful assistant.",
     stop_words=["<|im_end|>"],
 )
 
