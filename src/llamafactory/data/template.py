@@ -111,6 +111,11 @@ class Template:
 
         return token_ids
 
+    def _remove_thought(self, content: str) -> str:
+        r"""Remove thought from assistant message."""
+        pattern = re.compile(f"{re.escape(self.thought_words[0])}(.*?){re.escape(self.thought_words[1])}", re.DOTALL)
+        return re.sub(pattern, "", content).lstrip("\n")
+
     def _encode(
         self,
         tokenizer: "PreTrainedTokenizer",
@@ -137,10 +142,7 @@ class Template:
 
             content = message["content"]
             if remove_thought and message["role"] == Role.ASSISTANT and (i != len(messages) - 1):
-                pattern = re.compile(
-                    f"{re.escape(self.thought_words[0])}(.*?){re.escape(self.thought_words[1])}", re.DOTALL
-                )
-                content = re.sub(pattern, "", content).lstrip("\n")
+                content = self._remove_thought(content)
 
             if message["role"] == Role.USER:
                 elements += self.format_user.apply(content=content, idx=str(i // 2))
@@ -342,10 +344,7 @@ class Llama2Template(Template):
 
             content = message["content"]
             if remove_thought and message["role"] == Role.ASSISTANT and (i != len(messages) - 1):
-                pattern = re.compile(
-                    f"{re.escape(self.thought_words[0])}(.*?){re.escape(self.thought_words[1])}", re.DOTALL
-                )
-                content = re.sub(pattern, "", content).lstrip("\n")
+                content = self._remove_thought(content)
 
             if message["role"] == Role.USER:
                 elements += self.format_user.apply(content=system_text + content)
@@ -1415,6 +1414,22 @@ register_template(
 # copied from chatml template
 register_template(
     name="qwen",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_function=FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="qwen"),
+    format_observation=StringFormatter(
+        slots=["<|im_start|>user\n<tool_response>\n{{content}}\n</tool_response><|im_end|>\n<|im_start|>assistant\n"]
+    ),
+    format_tools=ToolFormatter(tool_format="qwen"),
+    default_system="You are Qwen, created by Alibaba Cloud. You are a helpful assistant.",
+    stop_words=["<|im_end|>"],
+)
+
+
+# copied from qwen template
+register_template(
+    name="qwen3",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),

@@ -2462,7 +2462,7 @@ register_model_group(
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B",
         },
     },
-    template="qwen",
+    template="qwen3",
 )
 
 

@@ -216,16 +216,15 @@ def test_phi4_template(use_fast: bool):
 
 @pytest.mark.parametrize("use_fast", [True, False])
 def test_qwen2_5_template(use_fast: bool):
-    system = "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."
     prompt_str = (
-        f"<|im_start|>system\n{system}<|im_end|>\n"
+        "<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n"
         "<|im_start|>user\nHow are you<|im_end|>\n"
         "<|im_start|>assistant\nI am fine!<|im_end|>\n"
         "<|im_start|>user\n你好<|im_end|>\n"
         "<|im_start|>assistant\n"
     )
     answer_str = "很高兴认识你！<|im_end|>\n"
-    _check_template("Qwen/Qwen2.5-7B-Instruct", "qwen", prompt_str, answer_str, use_fast, system=system)
+    _check_template("Qwen/Qwen2.5-7B-Instruct", "qwen", prompt_str, answer_str, use_fast)
 
 
 @pytest.mark.parametrize("use_fast", [True, False])
@@ -237,7 +236,7 @@ def test_qwen3_template(use_fast: bool):
         "<|im_start|>assistant\n"
     )
     answer_str = "<think>\n模型思考内容\n</think>\n\n很高兴认识你！<|im_end|>\n"
-    _check_template("Qwen/Qwen3-8B", "qwen", prompt_str, answer_str, use_fast, messages=MESSAGES_WITH_THOUGHT)
+    _check_template("Qwen/Qwen3-8B", "qwen3", prompt_str, answer_str, use_fast, messages=MESSAGES_WITH_THOUGHT)
 
 
 def test_parse_llama3_template():
