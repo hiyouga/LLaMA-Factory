@@ -1621,11 +1621,11 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
             video_grid_thw = [None] * len(videos)
             audio_lengths = [None] * len(audios)
 
-        if self.expand_mm_tokens and use_audio_in_video and audios:
+        if self.expand_mm_tokens and use_audio_in_video and len(audios) and len(videos):
             if "feature_attention_mask" not in mm_inputs:
                 raise ValueError("audio_lengths should exist when use_audio_in_video is `True`.")
 
-            if "video_grid_thw" not in mm_inputs and videos:
+            if "video_grid_thw" not in mm_inputs:
                 raise ValueError("video_grid_thw should exist when use_audio_in_video is `True`.")
 
         for message in messages:
@@ -1633,37 +1633,16 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
             while IMAGE_PLACEHOLDER in content:
                 if num_image_tokens >= len(images):
                     raise ValueError(f"`len(images)` is less than the number of {IMAGE_PLACEHOLDER} tokens.")
+
                 image_seqlen = image_grid_thw[num_image_tokens].prod() // merge_length if self.expand_mm_tokens else 1
                 content = content.replace(
                     IMAGE_PLACEHOLDER, f"<|vision_bos|>{self.image_token * image_seqlen}<|vision_eos|>", 1
                 )
                 num_image_tokens += 1
 
-            if not use_audio_in_video or (audios and not videos):
-                # for fake audio inputs when use_audio_in_video=True:
-                while AUDIO_PLACEHOLDER in content:
-                    if num_audio_tokens >= len(audios):
-                        raise ValueError(f"`len(audios)` is less than the number of {AUDIO_PLACEHOLDER} tokens.")
-
-                    audio_seqlen = audio_lengths[num_audio_tokens] if self.expand_mm_tokens else 1
-                    content = content.replace(
-                        AUDIO_PLACEHOLDER, f"<|audio_bos|>{self.audio_token * audio_seqlen}<|audio_eos|>", 1
-                    )
-                    num_audio_tokens += 1
-
-                while VIDEO_PLACEHOLDER in content:
-                    if num_video_tokens >= len(videos):
-                        raise ValueError(f"`len(videos)` is less than the number of {VIDEO_PLACEHOLDER} tokens.")
-
-                    video_seqlen = (
-                        video_grid_thw[num_video_tokens].prod() // merge_length if self.expand_mm_tokens else 1
-                    )
-                    content = content.replace(
-                        VIDEO_PLACEHOLDER, f"<|vision_bos|>{self.video_token * video_seqlen}<|vision_eos|>", 1
-                    )
-                    num_video_tokens += 1
-
-            else:  # if use the audio of video # deal video token and audio token togather
+            if (
+                use_audio_in_video and len(audios) and len(videos)
+            ):  # if use the audio of video # deal video token and audio token togather
                 while VIDEO_PLACEHOLDER in content:
                     if num_video_tokens >= len(videos):
                         raise ValueError(f"`len(videos)` is less than the number of {VIDEO_PLACEHOLDER} tokens.")
@@ -1699,6 +1678,28 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
                     content = content.replace(VIDEO_PLACEHOLDER, placeholder_string, 1)
                     content = content.replace(AUDIO_PLACEHOLDER, "", 1)
                     num_audio_tokens += 1
+                    num_video_tokens += 1
+            else:
+                while AUDIO_PLACEHOLDER in content:
+                    if num_audio_tokens >= len(audios):
+                        raise ValueError(f"`len(audios)` is less than the number of {AUDIO_PLACEHOLDER} tokens.")
+
+                    audio_seqlen = audio_lengths[num_audio_tokens] if self.expand_mm_tokens else 1
+                    content = content.replace(
+                        AUDIO_PLACEHOLDER, f"<|audio_bos|>{self.audio_token * audio_seqlen}<|audio_eos|>", 1
+                    )
+                    num_audio_tokens += 1
+
+                while VIDEO_PLACEHOLDER in content:
+                    if num_video_tokens >= len(videos):
+                        raise ValueError(f"`len(videos)` is less than the number of {VIDEO_PLACEHOLDER} tokens.")
+
+                    video_seqlen = (
+                        video_grid_thw[num_video_tokens].prod() // merge_length if self.expand_mm_tokens else 1
+                    )
+                    content = content.replace(
+                        VIDEO_PLACEHOLDER, f"<|vision_bos|>{self.video_token * video_seqlen}<|vision_eos|>", 1
+                    )
                     num_video_tokens += 1
 
             message["content"] = content
