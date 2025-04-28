@@ -1686,13 +1686,6 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
                     content = content.replace(AUDIO_PLACEHOLDER, "", 1)
                     num_audio_tokens += 1
                     num_video_tokens += 1
-
-                if num_audio_tokens != num_video_tokens:
-                    raise ValueError(
-                        f"Imbalanced video/audio tokens: {num_video_tokens} video tokens but {num_audio_tokens} audio tokens. "
-                        "Each video must have a corresponding audio."
-                    )
-
             else:
                 while AUDIO_PLACEHOLDER in content:
                     if num_audio_tokens >= len(audios):
