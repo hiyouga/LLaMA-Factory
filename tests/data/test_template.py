@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import os
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import pytest
 from transformers import AutoTokenizer
@@ -66,7 +66,6 @@ def _check_template(
     prompt_str: str,
     answer_str: str,
     use_fast: bool,
-    system: Optional[str] = None,
     messages: list[dict[str, str]] = MESSAGES,
 ) -> None:
     r"""Check template.
@@ -77,7 +76,6 @@ def _check_template(
         prompt_str: the string corresponding to the prompt part.
         answer_str: the string corresponding to the answer part.
         use_fast: whether to use fast tokenizer.
-        system: the system prompt.
         messages: the list of messages.
 
     """
@@ -85,7 +83,7 @@ def _check_template(
     content_str = tokenizer.apply_chat_template(messages, tokenize=False)
     content_ids = tokenizer.apply_chat_template(messages, tokenize=True)
     template = get_template_and_fix_tokenizer(tokenizer, DataArguments(template=template_name))
-    prompt_ids, answer_ids = template.encode_oneturn(tokenizer, messages, system)
+    prompt_ids, answer_ids = template.encode_oneturn(tokenizer, messages)
     assert content_str == prompt_str + answer_str
     assert content_ids == prompt_ids + answer_ids
     _check_tokenization(tokenizer, (prompt_ids, answer_ids), (prompt_str, answer_str))
@@ -260,3 +258,13 @@ def test_parse_qwen_template():
     assert template.format_system.slots == ["<|im_start|>system\n{{content}}<|im_end|>\n"]
     assert template.format_prefix.slots == []
     assert template.default_system == "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."
+
+
+def test_parse_qwen3_template():
+    tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-8B", token=HF_TOKEN)
+    template = parse_template(tokenizer)
+    assert template.format_user.slots == ["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]
+    assert template.format_assistant.slots == ["{{content}}<|im_end|>\n"]
+    assert template.format_system.slots == ["<|im_start|>system\n{{content}}<|im_end|>\n"]
+    assert template.format_prefix.slots == []
+    assert template.default_system == ""
