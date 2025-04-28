@@ -100,7 +100,7 @@ def _setup_freeze_tuning(
             hidden_modules.add(name.split(".1.")[-1].split(".")[0])
 
         if re.search(r"\.\d+\.", name) is None:
-            non_hidden_modules.add(name.split(".")[-2])
+            non_hidden_modules.add(name.split(".")[-2])  # remove weight/bias
 
     trainable_layers = []
     for module_name in finetuning_args.freeze_trainable_modules:
@@ -121,19 +121,15 @@ def _setup_freeze_tuning(
 
             trainable_layers.append(module_name)
 
-    forbidden_modules = get_forbidden_modules(model.config, finetuning_args)
+    model_type = getattr(model.config, "model_type", None)
+    if not finetuning_args.freeze_multi_modal_projector and model_type in COMPOSITE_MODELS:
+        trainable_layers.append(COMPOSITE_MODELS[model_type].projector_key)
 
-    multi_modal_projector_name = ""
-    if not finetuning_args.freeze_multi_modal_projector:
-        model_type = getattr(model.config, "model_type", None)
-        multi_modal_projector_name = COMPOSITE_MODELS[model_type].projector_key
+    forbidden_modules = get_forbidden_modules(model.config, finetuning_args)
     for name, param in model.named_parameters():
         if any(trainable_layer in name for trainable_layer in trainable_layers) and not any(
             forbidden_module in name for forbidden_module in forbidden_modules
         ):
-            if cast_trainable_params_to_fp32:
-                param.data = param.data.to(torch.float32)
-        elif not finetuning_args.freeze_multi_modal_projector and multi_modal_projector_name in name:
             if cast_trainable_params_to_fp32:
                 param.data = param.data.to(torch.float32)
         else:
