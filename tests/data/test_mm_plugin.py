@@ -135,19 +135,8 @@ def _check_plugin(
     expected_mm_inputs: dict[str, Any] = {},
     expected_no_mm_inputs: dict[str, Any] = {},
 ) -> None:
-    # test mm_messages
-    if plugin.__class__.__name__ != "BasePlugin" and plugin.__class__.__name__ != "Qwen2OmniPlugin":
-        assert plugin.process_messages(MM_MESSAGES, IMAGES, NO_VIDEOS, NO_AUDIOS, processor) == expected_mm_messages
-        assert plugin.process_token_ids(INPUT_IDS, LABELS, IMAGES, NO_VIDEOS, NO_AUDIOS, tokenizer, processor) == (
-            expected_input_ids,
-            expected_labels,
-        )
-        _is_close(
-            plugin.get_mm_inputs(IMAGES, NO_VIDEOS, NO_AUDIOS, IMGLENS, NO_VIDLENS, NO_AUDLENS, BATCH_IDS, processor),
-            expected_mm_inputs,
-        )
     # test omni_messages
-    else:
+    if plugin.__class__.__name__ == "Qwen2OmniPlugin":
         assert plugin.process_messages(OMNI_MESSAGES, IMAGES, NO_VIDEOS, AUDIOS, processor) == expected_mm_messages
         assert plugin.process_token_ids(INPUT_IDS, LABELS, IMAGES, NO_VIDEOS, AUDIOS, tokenizer, processor) == (
             expected_input_ids,
@@ -155,6 +144,17 @@ def _check_plugin(
         )
         _is_close(
             plugin.get_mm_inputs(IMAGES, NO_VIDEOS, AUDIOS, IMGLENS, NO_VIDLENS, AUDLENS, BATCH_IDS, processor),
+            expected_mm_inputs,
+        )
+    # test mm_messages
+    if plugin.__class__.__name__ != "BasePlugin":
+        assert plugin.process_messages(MM_MESSAGES, IMAGES, NO_VIDEOS, NO_AUDIOS, processor) == expected_mm_messages
+        assert plugin.process_token_ids(INPUT_IDS, LABELS, IMAGES, NO_VIDEOS, NO_AUDIOS, tokenizer, processor) == (
+            expected_input_ids,
+            expected_labels,
+        )
+        _is_close(
+            plugin.get_mm_inputs(IMAGES, NO_VIDEOS, NO_AUDIOS, IMGLENS, NO_VIDLENS, NO_AUDLENS, BATCH_IDS, processor),
             expected_mm_inputs,
         )
 
@@ -332,7 +332,11 @@ def test_qwen2_omni_plugin():
     check_inputs = {"plugin": qwen2_omni_plugin, **tokenizer_module}
     check_inputs["expected_mm_messages"] = [
         {
-            key: (value.replace("<image>", "<|IMAGE|>" * image_seqlen).replace("<audio>", "<|AUDIO|>" * audio_seqlen))
+            key: (
+                value.replace("<image>", f"<|vision_bos|>{'<|IMAGE|>' * image_seqlen}<|vision_eos|>").replace(
+                    "<audio>", f"<|audio_bos|>{'<|AUDIO|>' * audio_seqlen}<|audio_eos|>"
+                )
+            )
             for key, value in message.items()
         }
         for message in OMNI_MESSAGES
