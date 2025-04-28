@@ -1671,7 +1671,9 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
                     if num_video_tokens >= len(videos):
                         raise ValueError(f"`len(videos)` is less than the number of {VIDEO_PLACEHOLDER} tokens.")
 
-                    video_seqlen = video_grid_thw[num_video_tokens].prod() // merge_length if self.expand_mm_tokens else 1
+                    video_seqlen = (
+                        video_grid_thw[num_video_tokens].prod() // merge_length if self.expand_mm_tokens else 1
+                    )
                     content = content.replace(
                         VIDEO_PLACEHOLDER, f"<|vision_bos|>{self.video_token * video_seqlen}<|vision_eos|>", 1
                     )
