@@ -23,7 +23,7 @@ from ..extras import logging
 from .model_utils.misc import find_all_linear_modules, find_expanded_modules
 from .model_utils.quantization import QuantizationMethod
 from .model_utils.unsloth import get_unsloth_peft_model, load_unsloth_peft_model
-from .model_utils.visual import get_forbidden_modules, patch_target_modules
+from .model_utils.visual import COMPOSITE_MODELS, get_forbidden_modules, patch_target_modules
 
 
 if TYPE_CHECKING:
@@ -122,10 +122,18 @@ def _setup_freeze_tuning(
             trainable_layers.append(module_name)
 
     forbidden_modules = get_forbidden_modules(model.config, finetuning_args)
+
+    multi_modal_projector_name = ""
+    if not finetuning_args.freeze_multi_modal_projector:
+        model_type = getattr(model.config, "model_type", None)
+        multi_modal_projector_name = COMPOSITE_MODELS[model_type].projector_key
     for name, param in model.named_parameters():
         if any(trainable_layer in name for trainable_layer in trainable_layers) and not any(
             forbidden_module in name for forbidden_module in forbidden_modules
         ):
+            if cast_trainable_params_to_fp32:
+                param.data = param.data.to(torch.float32)
+        elif not finetuning_args.freeze_multi_modal_projector and multi_modal_projector_name in name:
             if cast_trainable_params_to_fp32:
                 param.data = param.data.to(torch.float32)
         else:
