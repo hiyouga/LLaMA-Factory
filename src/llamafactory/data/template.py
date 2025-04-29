@@ -162,6 +162,9 @@ class Template:
     @staticmethod
     def _add_or_replace_eos_token(tokenizer: "PreTrainedTokenizer", eos_token: str) -> None:
         r"""Add or replace eos token to the tokenizer."""
+        if tokenizer.eos_token == eos_token:
+            return
+
         is_added = tokenizer.eos_token_id is None
         num_added_tokens = tokenizer.add_special_tokens({"eos_token": eos_token})
 
@@ -756,6 +759,7 @@ register_template(
         "ABOUT YOURSELF UNLESS THE INFORMATION IS DIRECTLY PERTINENT TO THE USER'S QUERY."
     ),
     stop_words=["<|im_end|>"],
+    replace_eos=True,
 )
 
 
@@ -838,6 +842,7 @@ register_template(
     ),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<end_of_turn>"],
+    replace_eos=True,
     template_class=Llama2Template,
 )
 
@@ -853,6 +858,7 @@ register_template(
     ),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<end_of_turn>"],
+    replace_eos=True,
     mm_plugin=get_mm_plugin("gemma3", image_token="<image_soft_token>"),
     template_class=Llama2Template,
 )
@@ -1018,6 +1024,7 @@ register_template(
     format_tools=ToolFormatter(tool_format="llama3"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|eot_id|>", "<|eom_id|>"],
+    replace_eos=True,
 )
 
 
@@ -1037,6 +1044,7 @@ register_template(
     format_tools=ToolFormatter(tool_format="llama3"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|eot|>", "<|eom|>"],
+    replace_eos=True,
     mm_plugin=get_mm_plugin(name="llama4", image_token="<|image|>"),
 )
 
@@ -1066,6 +1074,7 @@ register_template(
     format_tools=ToolFormatter(tool_format="llama3"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|eot_id|>", "<|eom_id|>"],
+    replace_eos=True,
     mm_plugin=get_mm_plugin(name="mllama", image_token="<|image|>"),
 )
 
@@ -1079,6 +1088,7 @@ register_template(
     format_system=StringFormatter(slots=["<|im_system|>system<|im_middle|>{{content}}<|im_end|>"]),
     default_system="You are a helpful assistant provided by Moonshot-AI.",
     stop_words=["<|im_end|>"],
+    replace_eos=True,
 )
 
 
@@ -1131,6 +1141,7 @@ register_template(
     format_tools=ToolFormatter(tool_format="llama3"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|eot_id|>", "<|eom_id|>"],
+    replace_eos=True,
     mm_plugin=get_mm_plugin(name="llava_next", image_token="<image>"),
 )
 
@@ -1163,6 +1174,7 @@ register_template(
     format_tools=ToolFormatter(tool_format="qwen"),
     default_system="You are a helpful assistant.",
     stop_words=["<|im_end|>"],
+    replace_eos=True,
     mm_plugin=get_mm_plugin(name="llava_next", image_token="<image>"),
 )
 
@@ -1363,6 +1375,7 @@ register_template(
     ),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<end_of_turn>"],
+    replace_eos=True,
     mm_plugin=get_mm_plugin(name="paligemma", image_token="<image>"),
     template_class=Llama2Template,
 )
@@ -1374,6 +1387,7 @@ register_template(
     format_assistant=StringFormatter(slots=["{{content}}<|end|>\n"]),
     format_system=StringFormatter(slots=["<|system|>\n{{content}}<|end|>\n"]),
     stop_words=["<|end|>"],
+    replace_eos=True,
 )
 
 
@@ -1384,6 +1398,7 @@ register_template(
     format_system=StringFormatter(slots=["<|system|>\n{{content}}<|end|>\n"]),
     format_prefix=EmptyFormatter(slots=[{"<|endoftext|>"}]),
     stop_words=["<|end|>"],
+    replace_eos=True,
 )
 
 
@@ -1395,6 +1410,7 @@ register_template(
     format_assistant=StringFormatter(slots=["{{content}}<|im_end|>"]),
     format_system=StringFormatter(slots=["<|im_start|>system<|im_sep|>{{content}}<|im_end|>"]),
     stop_words=["<|im_end|>"],
+    replace_eos=True,
 )
 
 
@@ -1425,6 +1441,7 @@ register_template(
     format_tools=ToolFormatter(tool_format="qwen"),
     default_system="You are Qwen, created by Alibaba Cloud. You are a helpful assistant.",
     stop_words=["<|im_end|>"],
+    replace_eos=True,
 )
 
 
@@ -1440,6 +1457,7 @@ register_template(
     ),
     format_tools=ToolFormatter(tool_format="qwen"),
     stop_words=["<|im_end|>"],
+    replace_eos=True,
 )
 
 
@@ -1451,6 +1469,7 @@ register_template(
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     default_system="You are a helpful assistant.",
     stop_words=["<|im_end|>"],
+    replace_eos=True,
     mm_plugin=get_mm_plugin(name="qwen2_audio", audio_token="<|AUDIO|>"),
 )
 
@@ -1468,6 +1487,7 @@ register_template(
     format_tools=ToolFormatter(tool_format="qwen"),
     default_system="You are a helpful assistant.",
     stop_words=["<|im_end|>"],
+    replace_eos=True,
     mm_plugin=get_mm_plugin(
         name="qwen2_omni", audio_token="<|AUDIO|>", image_token="<|IMAGE|>", video_token="<|VIDEO|>"
     ),
@@ -1486,6 +1506,7 @@ register_template(
     format_tools=ToolFormatter(tool_format="qwen"),
     default_system="You are a helpful assistant.",
     stop_words=["<|im_end|>"],
+    replace_eos=True,
     mm_plugin=get_mm_plugin(name="qwen2_vl", image_token="<|image_pad|>", video_token="<|video_pad|>"),
 )
 
