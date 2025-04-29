@@ -23,12 +23,12 @@
    <sup>Supported by:</sup>
    <br>
    <br>
-   <a href="https://github.com/hiyouga/LLaMA-Factory">
+   <a href="https://warp.dev/llama-factory">
       <img alt="Warp sponsorship" width="400" src="https://github.com/user-attachments/assets/ab8dd143-b0fd-4904-bdc5-dd7ecac94eae">
    </a>
 
-### [Warp, the agentic terminal for developers](https://github.com/hiyouga/LLaMA-Factory)
-[Available for MacOS, Linux, & Windows](https://github.com/hiyouga/LLaMA-Factory)<br>
+### [Warp, the agentic terminal for developers](https://warp.dev/llama-factory)
+[Available for MacOS, Linux, & Windows](https://warp.dev/llama-factory)<br>
 
 </div>
 <hr>
