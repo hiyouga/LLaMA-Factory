@@ -195,10 +195,11 @@ llamafactory-cli export examples/merge_lora/llama3_full_sft.yaml
 
 ### 推理 LoRA 模型
 
-#### 使用 vLLM+TP 批量推理
+#### 使用 vLLM 多卡推理评估
 
 ```
-python scripts/vllm_infer.py --model_name_or_path path_to_merged_model --dataset alpaca_en_demo
+python scripts/vllm_infer.py --model_name_or_path meta-llama/Meta-Llama-3-8B-Instruct --template llama3 --dataset alpaca_en_demo
+python scripts/eval_bleu_rouge.py generated_predictions.jsonl
 ```
 
 #### 使用命令行对话框
@@ -280,10 +281,4 @@ llamafactory-cli train examples/extras/llama_pro/llama3_freeze_sft.yaml
 
 ```bash
 bash examples/extras/fsdp_qlora/train.sh
-```
-
-#### 计算 BLEU 和 ROUGE 分数
-
-```bash
-llamafactory-cli train examples/extras/nlg_eval/llama3_lora_predict.yaml
 ```
