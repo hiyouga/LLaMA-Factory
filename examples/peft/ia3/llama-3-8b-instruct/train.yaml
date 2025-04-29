@@ -54,6 +54,7 @@ max_grad_norm: 1.0
 optim: adamw_torch
 report_to:
 - wandb
+ddp_find_unused_parameters: false
 
 ### eval
 per_device_eval_batch_size: 4
