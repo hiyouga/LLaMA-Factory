@@ -898,5 +898,139 @@
       "prompt": "sentence",
       "response": "label"
     }
+  },
+  "record": {
+    "hf_hub_url": "rbelanec/record",
+    "split": "train",
+    "instruction": "Based on the fowllowing query, entities and passage, replace the @placeholder in the query.",
+    "columns": {
+      "prompt": "inputs",
+      "response": "targets"
+    }
+  },
+  "record_eval": {
+    "hf_hub_url": "rbelanec/record",
+    "split": "validation",
+    "instruction": "Based on the fowllowing query, entities and passage, replace the @placeholder in the query.",
+    "columns": {
+      "prompt": "inputs",
+      "response": "targets"
+    }
+  },
+  "multirc": {
+    "hf_hub_url": "rbelanec/multirc",
+    "split": "train",
+    "instruction": "Based on the following paragraph, question and anwer, determine wheter the answer anwers the question. Response only with the corresponding true or false.",
+    "columns": {
+      "prompt": "inputs",
+      "response": "targets"
+    }
+  },
+  "multirc_eval": {
+    "hf_hub_url": "rbelanec/multirc",
+    "split": "validation",
+    "instruction": "Based on the following paragraph, question and anwer, determine wheter the answer anwers the question. Response only with the corresponding true or false.",
+    "columns": {
+      "prompt": "inputs",
+      "response": "targets"
+    }
+  },
+  "boolq": {
+    "hf_hub_url": "super_glue",
+    "subset": "boolq",
+    "split": "train",
+    "instruction": "Respond to following question with true or false, based on the passage. Response only with the corresponding true or false.",
+    "columns": {
+      "prompt": "question",
+      "query": "passage",
+      "response": "label"
+    }
+  },
+  "boolq_eval": {
+    "hf_hub_url": "super_glue",
+    "subset": "boolq",
+    "split": "validation",
+    "instruction": "Respond to following question with true or false, based on the passage. Response only with the corresponding true or false.",
+    "columns": {
+      "prompt": "question",
+      "query": "passage",
+      "response": "label"
+    }
+  },
+  "wic": {
+    "hf_hub_url": "rbelanec/wic",
+    "split": "train",
+    "instruction": "Based on the contex from following senctence pair, classify the word into true and false classes, based on its meaning in both of the senteces. Response only with the corresponding true or false.",
+    "columns": {
+      "prompt": "inputs",
+      "response": "targets"
+    }
+  },
+  "wic_eval": {
+    "hf_hub_url": "rbelanec/wic",
+    "split": "validation",
+    "instruction": "Based on the contex from following senctence pair, classify the word into true and false classes, based on its meaning in both of the senteces. Response only with the corresponding true or false.",
+    "columns": {
+      "prompt": "inputs",
+      "response": "targets"
+    }
+  },
+  "wsc": {
+    "hf_hub_url": "rbelanec/wsc",
+    "split": "train",
+    "instruction": "Based on the following sentence, determine wheter the pronoun marked with * * is referencing the noun marked with # #. Response only with corresponding true and false.",
+    "columns": {
+      "prompt": "inputs",
+      "response": "targets"
+    }
+  },
+  "wsc_eval": {
+    "hf_hub_url": "rbelanec/wsc",
+    "split": "validation",
+    "instruction": "Based on the following sentence, determine wheter the pronoun marked with * * is referencing the noun marked with # #. Response only with corresponding true and false.",
+    "columns": {
+      "prompt": "inputs",
+      "response": "targets"
+    }
+  },
+  "cb": {
+    "hf_hub_url": "super_glue",
+    "subset": "cb",
+    "split": "train",
+    "instruction": "Classify the following premise and hypothesis pair into entailment, contradiction and neutral classes. Response only with the corresponding class.",
+    "columns": {
+      "prompt": "premise",
+      "query": "hypothesis",
+      "response": "label"
+    }
+  },
+  "cb_eval": {
+    "hf_hub_url": "super_glue",
+    "subset": "cb",
+    "split": "validation",
+    "instruction": "Classify the following premise and hypothesis pair into entailment, contradiction and neutral classes. Response only with the corresponding class.",
+    "columns": {
+      "prompt": "premise",
+      "query": "hypothesis",
+      "response": "label"
+    }
+  },
+  "copa": {
+    "hf_hub_url": "rbelanec/copa",
+    "split": "train",
+    "instruction": "Based on the following premise and choice pair, select the plausible alternative from choice pair. Response only with the corresponding choice1 or choice2.",
+    "columns": {
+      "prompt": "inputs",
+      "response": "targets"
+    }
+  },
+  "copa_eval": {
+    "hf_hub_url": "rbelanec/copa",
+    "split": "validation",
+    "instruction": "Based on the following premise and choice pair, select the plausible alternative from choice pair. Response only with the corresponding choice1 or choice2.",
+    "columns": {
+      "prompt": "inputs",
+      "response": "targets"
+    }
   }
 }
