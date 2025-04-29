@@ -64,6 +64,7 @@ class RayArguments:
                 raise ValueError(
                     f"ray_storage_filesystem must be one of ['s3', 'gs', 'gcs'], got {self.ray_storage_filesystem}"
                 )
+
             import pyarrow.fs as fs
 
             if self.ray_storage_filesystem == "s3":
