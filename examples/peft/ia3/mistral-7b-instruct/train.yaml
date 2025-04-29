@@ -41,8 +41,8 @@ load_best_model_at_end: true
 save_total_limit: 1
 
 ### train
-per_device_train_batch_size: 4
-gradient_accumulation_steps: 4
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 2
 learning_rate: 5.0e-5
 max_steps: 40000
 weight_decay: 1.0e-5
@@ -54,10 +54,9 @@ max_grad_norm: 1.0
 optim: adamw_torch
 report_to:
 - wandb
-ddp_find_unused_parameters: false
 
 ### eval
-per_device_eval_batch_size: 4
+per_device_eval_batch_size: 2
 eval_strategy: steps
 eval_steps: 200
 val_size: 0.1
