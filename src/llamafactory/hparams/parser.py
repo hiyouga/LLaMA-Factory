@@ -148,10 +148,10 @@ def _check_extra_dependencies(
         check_version("mixture-of-depth>=1.1.6", mandatory=True)
 
     if model_args.infer_backend == EngineName.VLLM:
-        check_version("vllm>=0.4.3,<=0.8.4")
+        check_version("vllm>=0.4.3,<=0.8.5")
         check_version("vllm", mandatory=True)
     elif model_args.infer_backend == EngineName.SGLANG:
-        check_version("sglang>=0.4.4")
+        check_version("sglang>=0.4.5")
         check_version("sglang", mandatory=True)
 
     if finetuning_args.use_galore:
