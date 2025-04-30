@@ -393,7 +393,6 @@ class BasePlugin(MMPluginMixin):
     ) -> list[dict[str, str]]:
         r"""Pre-process input messages before tokenization for VLMs."""
         self._validate_input(processor, images, videos, audios)
-        self._validate_messages(messages, images, videos, audios)
         return messages
 
     def process_token_ids(
