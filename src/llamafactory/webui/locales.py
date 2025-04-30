@@ -2468,6 +2468,23 @@ LOCALES = {
             "label": "HTML タグをエスケープ",
         },
     },
+    "enable_thinking": {
+        "en": {
+            "label": "Enable thinking",
+        },
+        "ru": {
+            "label": "Включить мышление",
+        },
+        "zh": {
+            "label": "启用思考",
+        },
+        "ko": {
+            "label": "사고를 활성화하다",
+        },
+        "ja": {
+            "label": "思考を可能にする",
+        },
+    },
     "clear_btn": {
         "en": {
             "value": "Clear history",
