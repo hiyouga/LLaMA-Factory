@@ -191,6 +191,7 @@ class WebChatModel(ChatModel):
         temperature: float,
         skip_special_tokens: bool,
         escape_html: bool,
+        enable_thinking: bool,
     ) -> Generator[tuple[list[dict[str, str]], list[dict[str, str]]], None, None]:
         r"""Generate output text in stream.
 
@@ -210,6 +211,7 @@ class WebChatModel(ChatModel):
             top_p=top_p,
             temperature=temperature,
             skip_special_tokens=skip_special_tokens,
+            enable_thinking=enable_thinking,
         ):
             response += new_text
             if tools:
