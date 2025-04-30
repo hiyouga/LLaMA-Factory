@@ -146,9 +146,11 @@ class SGLangEngine(BaseEngine):
         messages = self.template.mm_plugin.process_messages(
             messages, images or [], videos or [], audios or [], self.processor
         )
-        paired_messages = messages + [{"role": "assistant", "content": ""}]
+        # add thought words to avoid skipping thinking
+        paired_messages = messages + [{"role": "assistant", "content": self.template.add_thought("")}]
         system = system or self.generating_args["default_system"]
-        prompt_ids, _ = self.template.encode_oneturn(self.tokenizer, paired_messages, system, tools)
+        enable_thinking = input_kwargs.pop("enable_thinking", True)
+        prompt_ids, _ = self.template.encode_oneturn(self.tokenizer, paired_messages, system, tools, enable_thinking)
         prompt_length = len(prompt_ids)
 
         temperature: Optional[float] = input_kwargs.pop("temperature", None)
