@@ -106,7 +106,8 @@ class HuggingfaceEngine(BaseEngine):
         # add thought words to avoid skipping thinking
         paired_messages = messages + [{"role": "assistant", "content": template.add_thought("")}]
         system = system or generating_args["default_system"]
-        enable_thinking = input_kwargs.pop("enable_thinking", True)
+        enable_thinking = input_kwargs.pop("enable_thinking", None)
+        enable_thinking = enable_thinking if enable_thinking is not None else generating_args["enable_thinking"]
         prompt_ids, _ = template.encode_oneturn(tokenizer, paired_messages, system, tools, enable_thinking)
         prompt_ids, _ = template.mm_plugin.process_token_ids(
             prompt_ids,
