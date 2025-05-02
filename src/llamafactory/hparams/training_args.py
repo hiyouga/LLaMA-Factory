@@ -34,6 +34,10 @@ class RayArguments:
         default="./saves",
         metadata={"help": "The storage path to save training results to"},
     )
+    ray_storage_filesystem: Optional[Literal["s3", "gs", "gcs"]] = field(
+        default=None,
+        metadata={"help": "The storage filesystem to use. If None specified, local filesystem will be used."},
+    )
     ray_num_workers: int = field(
         default=1,
         metadata={"help": "The number of workers for Ray training. Default is 1 worker."},
@@ -55,6 +59,18 @@ class RayArguments:
         self.use_ray = use_ray()
         if isinstance(self.resources_per_worker, str) and self.resources_per_worker.startswith("{"):
             self.resources_per_worker = _convert_str_dict(json.loads(self.resources_per_worker))
+        if self.ray_storage_filesystem is not None:
+            if self.ray_storage_filesystem not in ["s3", "gs", "gcs"]:
+                raise ValueError(
+                    f"ray_storage_filesystem must be one of ['s3', 'gs', 'gcs'], got {self.ray_storage_filesystem}"
+                )
+
+            import pyarrow.fs as fs
+
+            if self.ray_storage_filesystem == "s3":
+                self.ray_storage_filesystem = fs.S3FileSystem()
+            elif self.ray_storage_filesystem == "gs" or self.ray_storage_filesystem == "gcs":
+                self.ray_storage_filesystem = fs.GcsFileSystem()
 
 
 @dataclass

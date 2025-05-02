@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional, Union
 
@@ -58,6 +60,7 @@ class Template:
         messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
+        enable_thinking: bool = True,
     ) -> tuple[list[int], list[int]]:
         r"""Return a single pair of token ids representing prompt and response respectively."""
         encoded_messages = self._encode(tokenizer, messages, system, tools)
@@ -90,6 +93,19 @@ class Template:
             stop_token_ids.add(tokenizer.convert_tokens_to_ids(token))
 
         return list(stop_token_ids)
+
+    def add_thought(self, content: str) -> str:
+        r"""Add empty thought to assistant message."""
+        return f"{self.thought_words[0]}\n\n{self.thought_words[1]}\n\n" + content
+
+    def remove_thought(self, content: str) -> str:
+        r"""Remove thought from assistant message."""
+        pattern = re.compile(f"{re.escape(self.thought_words[0])}(.*?){re.escape(self.thought_words[1])}", re.DOTALL)
+        return re.sub(pattern, "", content).lstrip("\n")
+
+    def get_thought_word_ids(self, tokenizer: "PreTrainedTokenizer") -> list[int]:
+        r"""Get the token ids of thought words."""
+        return tokenizer.encode(f"{self.thought_words[0]}\n\n{self.thought_words[1]}\n\n", add_special_tokens=False)
 
     def _convert_elements_to_ids(self, tokenizer: "PreTrainedTokenizer", elements: "SLOTS") -> list[int]:
         r"""Convert elements to token ids."""
@@ -133,13 +149,13 @@ class Template:
                     tool_text = self.format_tools.apply(content=tools)[0] if tools else ""
                     elements += self.format_system.apply(content=(system + tool_text))
 
-            if message["role"] == Role.USER.value:
+            if message["role"] == Role.USER:
                 elements += self.format_user.apply(content=message["content"], idx=str(i // 2))
-            elif message["role"] == Role.ASSISTANT.value:
+            elif message["role"] == Role.ASSISTANT:
                 elements += self.format_assistant.apply(content=message["content"])
-            elif message["role"] == Role.OBSERVATION.value:
+            elif message["role"] == Role.OBSERVATION:
                 elements += self.format_observation.apply(content=message["content"])
-            elif message["role"] == Role.FUNCTION.value:
+            elif message["role"] == Role.FUNCTION:
                 elements += self.format_function.apply(content=message["content"])
             else:
                 raise NotImplementedError("Unexpected role: {}".format(message["role"]))
@@ -151,6 +167,9 @@ class Template:
     @staticmethod
     def _add_or_replace_eos_token(tokenizer: "PreTrainedTokenizer", eos_token: str) -> None:
         r"""Add or replace eos token to the tokenizer."""
+        if tokenizer.eos_token == eos_token:
+            return
+
         is_added = tokenizer.eos_token_id is None
         num_added_tokens = tokenizer.add_special_tokens({"eos_token": eos_token})
 
@@ -330,13 +349,13 @@ class Llama2Template(Template):
                     tool_text = self.format_tools.apply(content=tools)[0] if tools else ""
                     system_text = self.format_system.apply(content=(system + tool_text))[0]
 
-            if message["role"] == Role.USER.value:
+            if message["role"] == Role.USER:
                 elements += self.format_user.apply(content=system_text + message["content"])
-            elif message["role"] == Role.ASSISTANT.value:
+            elif message["role"] == Role.ASSISTANT:
                 elements += self.format_assistant.apply(content=message["content"])
-            elif message["role"] == Role.OBSERVATION.value:
+            elif message["role"] == Role.OBSERVATION:
                 elements += self.format_observation.apply(content=message["content"])
-            elif message["role"] == Role.FUNCTION.value:
+            elif message["role"] == Role.FUNCTION:
                 elements += self.format_function.apply(content=message["content"])
             else:
                 raise NotImplementedError("Unexpected role: {}".format(message["role"]))
@@ -374,6 +393,60 @@ class Llama2Template(Template):
             "{% endfor %}"
         )
         return jinja_template
+
+
+@dataclass
+class ReasoningTemplate(Template):
+    r"""A template that add thought to assistant message."""
+
+    @override
+    def encode_oneturn(
+        self,
+        tokenizer: "PreTrainedTokenizer",
+        messages: list[dict[str, str]],
+        system: Optional[str] = None,
+        tools: Optional[str] = None,
+        enable_thinking: bool = True,
+    ) -> tuple[list[int], list[int]]:
+        messages = deepcopy(messages)
+        for i in range(len(messages)):
+            if messages[i]["role"] == Role.ASSISTANT and (i != len(messages) - 1):
+                messages[i]["content"] = self.remove_thought(messages[i]["content"])
+
+        encoded_messages = self._encode(tokenizer, messages, system, tools)
+        prompt_ids = []
+        for encoded_ids in encoded_messages[:-1]:
+            prompt_ids += encoded_ids
+
+        if not enable_thinking or (
+            messages[-1]["role"] == Role.ASSISTANT
+            and self.thought_words[0] not in messages[-1]["content"]
+            and self.thought_words[1] not in messages[-1]["content"]
+        ):
+            prompt_ids += self.get_thought_word_ids(tokenizer)
+
+        response_ids = encoded_messages[-1]
+        return prompt_ids, response_ids
+
+    @override
+    def encode_multiturn(
+        self,
+        tokenizer: "PreTrainedTokenizer",
+        messages: list[dict[str, str]],
+        system: Optional[str] = None,
+        tools: Optional[str] = None,
+    ) -> list[tuple[list[int], list[int]]]:
+        messages = deepcopy(messages)
+        encoded_messages = self._encode(tokenizer, messages, system, tools)
+        for i in range(len(messages) - 1):
+            if (
+                messages[i + 1]["role"] == Role.ASSISTANT
+                and self.thought_words[0] not in messages[i + 1]["content"]
+                and self.thought_words[1] not in messages[i + 1]["content"]
+            ):
+                encoded_messages[i] += self.get_thought_word_ids(tokenizer)
+
+        return [(encoded_messages[i], encoded_messages[i + 1]) for i in range(0, len(encoded_messages), 2)]
 
 
 TEMPLATES: dict[str, "Template"] = {}
@@ -476,6 +549,7 @@ def parse_template(tokenizer: "PreTrainedTokenizer") -> "Template":
     messages = [{"role": "user", "content": "{{content}}"}, {"role": "assistant", "content": "{{content}}"}]
     assistant_slot = tokenizer.apply_chat_template(messages, add_generation_prompt=False, tokenize=False)
     assistant_slot = assistant_slot[len(prefix) + len(user_slot) :]
+    assistant_slot = assistant_slot.replace("<think>", "").replace("</think>", "").lstrip("\n")  # remove thought tags
 
     if len(user_slot) > len(user_slot_empty_system):
         default_system = find_diff(user_slot_empty_system, user_slot)
@@ -739,6 +813,7 @@ register_template(
         "ABOUT YOURSELF UNLESS THE INFORMATION IS DIRECTLY PERTINENT TO THE USER'S QUERY."
     ),
     stop_words=["<|im_end|>"],
+    replace_eos=True,
 )
 
 
@@ -754,6 +829,15 @@ register_template(
     name="deepseek3",
     format_user=StringFormatter(slots=["<｜User｜>{{content}}<｜Assistant｜>"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+)
+
+
+# copied from deepseek3 template
+register_template(
+    name="deepseekr1",
+    format_user=StringFormatter(slots=["<｜User｜>{{content}}<｜Assistant｜>"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    template_class=ReasoningTemplate,
 )
 
 
@@ -821,6 +905,7 @@ register_template(
     ),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<end_of_turn>"],
+    replace_eos=True,
     template_class=Llama2Template,
 )
 
@@ -836,6 +921,7 @@ register_template(
     ),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<end_of_turn>"],
+    replace_eos=True,
     mm_plugin=get_mm_plugin("gemma3", image_token="<image_soft_token>"),
     template_class=Llama2Template,
 )
@@ -852,6 +938,22 @@ register_template(
     format_prefix=EmptyFormatter(slots=["[gMASK]<sop>"]),
     stop_words=["<|user|>", "<|observation|>"],
     efficient_eos=True,
+)
+
+
+# copied from glm4 template
+register_template(
+    name="glmz1",
+    format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>"]),
+    format_assistant=StringFormatter(slots=["\n{{content}}"]),
+    format_system=StringFormatter(slots=["<|system|>\n{{content}}"]),
+    format_function=FunctionFormatter(slots=["{{content}}"], tool_format="glm4"),
+    format_observation=StringFormatter(slots=["<|observation|>\n{{content}}<|assistant|>"]),
+    format_tools=ToolFormatter(tool_format="glm4"),
+    format_prefix=EmptyFormatter(slots=["[gMASK]<sop>"]),
+    stop_words=["<|user|>", "<|observation|>"],
+    efficient_eos=True,
+    template_class=ReasoningTemplate,
 )
 
 
@@ -1001,6 +1103,7 @@ register_template(
     format_tools=ToolFormatter(tool_format="llama3"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|eot_id|>", "<|eom_id|>"],
+    replace_eos=True,
 )
 
 
@@ -1020,6 +1123,7 @@ register_template(
     format_tools=ToolFormatter(tool_format="llama3"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|eot|>", "<|eom|>"],
+    replace_eos=True,
     mm_plugin=get_mm_plugin(name="llama4", image_token="<|image|>"),
 )
 
@@ -1049,6 +1153,7 @@ register_template(
     format_tools=ToolFormatter(tool_format="llama3"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|eot_id|>", "<|eom_id|>"],
+    replace_eos=True,
     mm_plugin=get_mm_plugin(name="mllama", image_token="<|image|>"),
 )
 
@@ -1062,6 +1167,7 @@ register_template(
     format_system=StringFormatter(slots=["<|im_system|>system<|im_middle|>{{content}}<|im_end|>"]),
     default_system="You are a helpful assistant provided by Moonshot-AI.",
     stop_words=["<|im_end|>"],
+    replace_eos=True,
 )
 
 
@@ -1114,6 +1220,7 @@ register_template(
     format_tools=ToolFormatter(tool_format="llama3"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|eot_id|>", "<|eom_id|>"],
+    replace_eos=True,
     mm_plugin=get_mm_plugin(name="llava_next", image_token="<image>"),
 )
 
@@ -1146,6 +1253,7 @@ register_template(
     format_tools=ToolFormatter(tool_format="qwen"),
     default_system="You are a helpful assistant.",
     stop_words=["<|im_end|>"],
+    replace_eos=True,
     mm_plugin=get_mm_plugin(name="llava_next", image_token="<image>"),
 )
 
@@ -1346,6 +1454,7 @@ register_template(
     ),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<end_of_turn>"],
+    replace_eos=True,
     mm_plugin=get_mm_plugin(name="paligemma", image_token="<image>"),
     template_class=Llama2Template,
 )
@@ -1357,6 +1466,7 @@ register_template(
     format_assistant=StringFormatter(slots=["{{content}}<|end|>\n"]),
     format_system=StringFormatter(slots=["<|system|>\n{{content}}<|end|>\n"]),
     stop_words=["<|end|>"],
+    replace_eos=True,
 )
 
 
@@ -1367,6 +1477,7 @@ register_template(
     format_system=StringFormatter(slots=["<|system|>\n{{content}}<|end|>\n"]),
     format_prefix=EmptyFormatter(slots=[{"<|endoftext|>"}]),
     stop_words=["<|end|>"],
+    replace_eos=True,
 )
 
 
@@ -1378,6 +1489,7 @@ register_template(
     format_assistant=StringFormatter(slots=["{{content}}<|im_end|>"]),
     format_system=StringFormatter(slots=["<|im_start|>system<|im_sep|>{{content}}<|im_end|>"]),
     stop_words=["<|im_end|>"],
+    replace_eos=True,
 )
 
 
@@ -1408,6 +1520,24 @@ register_template(
     format_tools=ToolFormatter(tool_format="qwen"),
     default_system="You are Qwen, created by Alibaba Cloud. You are a helpful assistant.",
     stop_words=["<|im_end|>"],
+    replace_eos=True,
+)
+
+
+# copied from qwen template
+register_template(
+    name="qwen3",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_function=FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="qwen"),
+    format_observation=StringFormatter(
+        slots=["<|im_start|>user\n<tool_response>\n{{content}}\n</tool_response><|im_end|>\n<|im_start|>assistant\n"]
+    ),
+    format_tools=ToolFormatter(tool_format="qwen"),
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
+    template_class=ReasoningTemplate,
 )
 
 
@@ -1419,6 +1549,7 @@ register_template(
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     default_system="You are a helpful assistant.",
     stop_words=["<|im_end|>"],
+    replace_eos=True,
     mm_plugin=get_mm_plugin(name="qwen2_audio", audio_token="<|AUDIO|>"),
 )
 
@@ -1436,6 +1567,7 @@ register_template(
     format_tools=ToolFormatter(tool_format="qwen"),
     default_system="You are a helpful assistant.",
     stop_words=["<|im_end|>"],
+    replace_eos=True,
     mm_plugin=get_mm_plugin(
         name="qwen2_omni", audio_token="<|AUDIO|>", image_token="<|IMAGE|>", video_token="<|VIDEO|>"
     ),
@@ -1454,6 +1586,7 @@ register_template(
     format_tools=ToolFormatter(tool_format="qwen"),
     default_system="You are a helpful assistant.",
     stop_words=["<|im_end|>"],
+    replace_eos=True,
     mm_plugin=get_mm_plugin(name="qwen2_vl", image_token="<|image_pad|>", video_token="<|video_pad|>"),
 )
 
