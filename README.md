@@ -18,26 +18,26 @@
 [![Studios](https://img.shields.io/badge/ModelScope-Open%20in%20Studios-blue)](https://modelscope.cn/studios/hiyouga/LLaMA-Board)
 [![SageMaker](https://img.shields.io/badge/SageMaker-Open%20in%20AWS-blue)](https://aws.amazon.com/cn/blogs/china/a-one-stop-code-free-model-fine-tuning-deployment-platform-based-on-sagemaker-and-llama-factory/)
 
-<hr>
-
-
-
 <div align="center" markdown="1">
 
 ### Supporters ❤️
-   <br>
-   <a href="https://warp.dev/llama-factory">
-      <img alt="Warp sponsorship" width="400" src="https://github.com/user-attachments/assets/ab8dd143-b0fd-4904-bdc5-dd7ecac94eae">
-   </a>
 
-### [Warp, the agentic terminal for developers](https://warp.dev/llama-factory)
-[Available for MacOS, Linux, & Windows](https://warp.dev/llama-factory)<br>
+<a href="https://warp.dev/llama-factory">
+    <img alt="Warp sponsorship" width="400" src="https://github.com/user-attachments/assets/ab8dd143-b0fd-4904-bdc5-dd7ecac94eae">
+</a>
+
+#### [Warp, the agentic terminal for developers](https://warp.dev/llama-factory)
+
+[Available for MacOS, Linux, & Windows](https://warp.dev/llama-factory)
 
 </div>
-<hr>
+
+----
+
 <h3 align="center">
     Easily fine-tune 100+ large language models with zero-code <a href="#quickstart">CLI</a> and <a href="#fine-tuning-with-llama-board-gui-powered-by-gradio">Web UI</a>
 </h3>
+
 <p align="center">
     <picture>
         <img alt="Github trend" src="https://trendshift.io/api/badge/repositories/4535">
