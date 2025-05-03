@@ -1422,11 +1422,11 @@ register_model_group(
             DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-7B-Base",
             DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-7B-Base",
         },
-        "MiMo-7B-SFT": {
+        "MiMo-7B-Instruct": {
             DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-7B-SFT",
             DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-7B-SFT",
         },
-        "MiMo-7B-RL": {
+        "MiMo-7B-Instruct-RL": {
             DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-7B-RL",
             DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-7B-RL",
         },

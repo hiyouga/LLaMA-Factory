@@ -1338,6 +1338,7 @@ register_template(
     default_system="You are a helpful assistant.",
     stop_words=["<|im_end|>"],
     replace_eos=True,
+    template_class=ReasoningTemplate,
 )
 
 
