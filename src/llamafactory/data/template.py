@@ -60,7 +60,7 @@ class Template:
         messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        enable_thinking: bool = True,
+        enable_thinking: bool = False,
     ) -> tuple[list[int], list[int]]:
         r"""Return a single pair of token ids representing prompt and response respectively."""
         encoded_messages = self._encode(tokenizer, messages, system, tools)
@@ -406,7 +406,7 @@ class ReasoningTemplate(Template):
         messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        enable_thinking: bool = True,
+        enable_thinking: bool = False,
     ) -> tuple[list[int], list[int]]:
         messages = deepcopy(messages)
         for i in range(len(messages)):
@@ -418,7 +418,7 @@ class ReasoningTemplate(Template):
         for encoded_ids in encoded_messages[:-1]:
             prompt_ids += encoded_ids
 
-        if not enable_thinking or (
+        if not enable_thinking and (
             messages[-1]["role"] == Role.ASSISTANT
             and self.thought_words[0] not in messages[-1]["content"]
             and self.thought_words[1] not in messages[-1]["content"]
