@@ -103,8 +103,7 @@ class HuggingfaceEngine(BaseEngine):
         messages = template.mm_plugin.process_messages(
             messages, mm_input_dict["images"], mm_input_dict["videos"], mm_input_dict["audios"], processor
         )
-        # add thought words to avoid skipping thinking
-        paired_messages = messages + [{"role": "assistant", "content": template.add_thought("")}]
+        paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or generating_args["default_system"]
         enable_thinking = input_kwargs.pop("enable_thinking", None)
         enable_thinking = enable_thinking if enable_thinking is not None else generating_args["enable_thinking"]

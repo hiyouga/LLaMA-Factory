@@ -123,8 +123,7 @@ class VllmEngine(BaseEngine):
         messages = self.template.mm_plugin.process_messages(
             messages, images or [], videos or [], audios or [], self.processor
         )
-        # add thought words to avoid skipping thinking
-        paired_messages = messages + [{"role": "assistant", "content": self.template.add_thought("")}]
+        paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or self.generating_args["default_system"]
         enable_thinking = input_kwargs.pop("enable_thinking", None)
         enable_thinking = enable_thinking if enable_thinking is not None else self.generating_args["enable_thinking"]
