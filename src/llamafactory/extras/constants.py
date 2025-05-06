@@ -1418,6 +1418,29 @@ register_model_group(
 
 register_model_group(
     models={
+        "MiMo-7B-Base": {
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-7B-Base",
+            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-7B-Base",
+        },
+        "MiMo-7B-Instruct": {
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-7B-SFT",
+            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-7B-SFT",
+        },
+        "MiMo-7B-Instruct-RL": {
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-7B-RL",
+            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-7B-RL",
+        },
+        "MiMo-7B-RL-ZERO": {
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-7B-RL-ZERO",
+            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-7B-RL-ZERO",
+        },
+    },
+    template="mimo",
+)
+
+
+register_model_group(
+    models={
         "MiniCPM-2B-SFT-Chat": {
             DownloadSource.DEFAULT: "openbmb/MiniCPM-2B-sft-bf16",
             DownloadSource.MODELSCOPE: "OpenBMB/miniCPM-bf16",
