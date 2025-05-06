@@ -2,12 +2,12 @@
 
 ### model
 model_name_or_path: Qwen/Qwen2.5-VL-7B-Instruct
-adapter_name_or_path: saves/qwen2_vl-7b/lora/sft
+adapter_name_or_path: saves/qwen2_5vl-7b/lora/sft
 template: qwen2_vl
 trust_remote_code: true
 
 ### export
-export_dir: output/qwen2_vl_lora_sft
+export_dir: output/qwen2_5vl_lora_sft
 export_size: 5
 export_device: cpu  # choices: [cpu, auto]
 export_legacy_format: false
