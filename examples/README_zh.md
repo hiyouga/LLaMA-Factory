@@ -52,7 +52,7 @@ llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
 #### 多模态指令监督微调
 
 ```bash
-llamafactory-cli train examples/train_lora/qwen2vl_lora_sft.yaml
+llamafactory-cli train examples/train_lora/qwen2_5vl_lora_sft.yaml
 ```
 
 #### DPO/ORPO/SimPO 训练
@@ -64,7 +64,7 @@ llamafactory-cli train examples/train_lora/llama3_lora_dpo.yaml
 #### 多模态 DPO/ORPO/SimPO 训练
 
 ```bash
-llamafactory-cli train examples/train_lora/qwen2vl_lora_dpo.yaml
+llamafactory-cli train examples/train_lora/qwen2_5vl_lora_dpo.yaml
 ```
 
 #### 奖励模型训练
@@ -168,7 +168,7 @@ FORCE_TORCHRUN=1 NNODES=2 NODE_RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 
 #### 多模态指令监督微调
 
 ```bash
-FORCE_TORCHRUN=1 llamafactory-cli train examples/train_full/qwen2vl_full_sft.yaml
+FORCE_TORCHRUN=1 llamafactory-cli train examples/train_full/qwen2_5vl_full_sft.yaml
 ```
 
 ### 合并 LoRA 适配器与模型量化
