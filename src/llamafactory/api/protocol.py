@@ -106,7 +106,8 @@ class ChatCompletionRequest(BaseModel):
     max_tokens: Optional[int] = None
     stop: Optional[Union[str, list[str]]] = None
     stream: bool = False
-
+    presence_penalty: Optional[float] = None
+    repetition_penalty: Optional[float] = None
 
 class ChatCompletionResponseChoice(BaseModel):
     index: int
