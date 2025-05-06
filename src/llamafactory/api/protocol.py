@@ -109,6 +109,7 @@ class ChatCompletionRequest(BaseModel):
     presence_penalty: Optional[float] = None
     repetition_penalty: Optional[float] = None
 
+
 class ChatCompletionResponseChoice(BaseModel):
     index: int
     message: ChatCompletionMessage
