@@ -70,6 +70,10 @@ class GeneratingArguments:
         default=True,
         metadata={"help": "Whether or not to remove special tokens in the decoding."},
     )
+    enable_thinking: bool = field(
+        default=True,
+        metadata={"help": "Whether or not to enable thinking mode for reasoning models."},
+    )
 
     def to_dict(self, obey_generation_config: bool = False) -> dict[str, Any]:
         args = asdict(self)

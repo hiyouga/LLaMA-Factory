@@ -59,9 +59,6 @@ def run_kto(
     else:
         ref_model = create_ref_model(model_args, finetuning_args)
 
-    # Update arguments
-    training_args.remove_unused_columns = False  # important for multimodal and pairwise dataset
-
     # Initialize our Trainer
     trainer = CustomKTOTrainer(
         model=model,

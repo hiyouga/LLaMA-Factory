@@ -39,6 +39,13 @@ MESSAGES = [
     {"role": "assistant", "content": "很高兴认识你！"},
 ]
 
+MESSAGES_WITH_THOUGHT = [
+    {"role": "user", "content": "How are you"},
+    {"role": "assistant", "content": "<think>\nModel thought here\n</think>\n\nI am fine!"},
+    {"role": "user", "content": "你好"},
+    {"role": "assistant", "content": "<think>\n模型思考内容\n</think>\n\n很高兴认识你！"},
+]
+
 
 def _check_tokenization(
     tokenizer: "PreTrainedTokenizer", batch_input_ids: list[list[int]], batch_text: list[str]
@@ -53,7 +60,14 @@ def _check_tokenization(
         assert tokenizer.decode(input_ids) == text
 
 
-def _check_template(model_id: str, template_name: str, prompt_str: str, answer_str: str, use_fast: bool) -> None:
+def _check_template(
+    model_id: str,
+    template_name: str,
+    prompt_str: str,
+    answer_str: str,
+    use_fast: bool,
+    messages: list[dict[str, str]] = MESSAGES,
+) -> None:
     r"""Check template.
 
     Args:
@@ -62,13 +76,14 @@ def _check_template(model_id: str, template_name: str, prompt_str: str, answer_s
         prompt_str: the string corresponding to the prompt part.
         answer_str: the string corresponding to the answer part.
         use_fast: whether to use fast tokenizer.
+        messages: the list of messages.
 
     """
     tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast=use_fast, token=HF_TOKEN)
-    content_str = tokenizer.apply_chat_template(MESSAGES, tokenize=False)
-    content_ids = tokenizer.apply_chat_template(MESSAGES, tokenize=True)
+    content_str = tokenizer.apply_chat_template(messages, tokenize=False)
+    content_ids = tokenizer.apply_chat_template(messages, tokenize=True)
     template = get_template_and_fix_tokenizer(tokenizer, DataArguments(template=template_name))
-    prompt_ids, answer_ids = template.encode_oneturn(tokenizer, MESSAGES)
+    prompt_ids, answer_ids = template.encode_oneturn(tokenizer, messages)
     assert content_str == prompt_str + answer_str
     assert content_ids == prompt_ids + answer_ids
     _check_tokenization(tokenizer, (prompt_ids, answer_ids), (prompt_str, answer_str))
@@ -103,6 +118,37 @@ def test_encode_multiturn(use_fast: bool):
         "<|start_header_id|>user<|end_header_id|>\n\n你好<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
     )
     answer_str_2 = "很高兴认识你！<|eot_id|>"
+    _check_tokenization(
+        tokenizer,
+        (encoded_pairs[0][0], encoded_pairs[0][1], encoded_pairs[1][0], encoded_pairs[1][1]),
+        (prompt_str_1, answer_str_1, prompt_str_2, answer_str_2),
+    )
+
+
+@pytest.mark.parametrize("use_fast", [True, False])
+def test_reasoning_encode_oneturn(use_fast: bool):
+    tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-8B", use_fast=use_fast)
+    template = get_template_and_fix_tokenizer(tokenizer, DataArguments(template="qwen3"))
+    prompt_ids, answer_ids = template.encode_oneturn(tokenizer, MESSAGES)
+    prompt_str = (
+        "<|im_start|>user\nHow are you<|im_end|>\n"
+        "<|im_start|>assistant\nI am fine!<|im_end|>\n"
+        "<|im_start|>user\n你好<|im_end|>\n"
+        "<|im_start|>assistant\n<think>\n\n</think>\n\n"
+    )
+    answer_str = "很高兴认识你！<|im_end|>\n"
+    _check_tokenization(tokenizer, (prompt_ids, answer_ids), (prompt_str, answer_str))
+
+
+@pytest.mark.parametrize("use_fast", [True, False])
+def test_reasoning_encode_multiturn(use_fast: bool):
+    tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-8B", use_fast=use_fast)
+    template = get_template_and_fix_tokenizer(tokenizer, DataArguments(template="qwen3"))
+    encoded_pairs = template.encode_multiturn(tokenizer, MESSAGES)
+    prompt_str_1 = "<|im_start|>user\nHow are you<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
+    answer_str_1 = "I am fine!<|im_end|>\n"
+    prompt_str_2 = "<|im_start|>user\n你好<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
+    answer_str_2 = "很高兴认识你！<|im_end|>\n"
     _check_tokenization(
         tokenizer,
         (encoded_pairs[0][0], encoded_pairs[0][1], encoded_pairs[1][0], encoded_pairs[1][1]),
@@ -198,7 +244,7 @@ def test_phi4_template(use_fast: bool):
 
 
 @pytest.mark.parametrize("use_fast", [True, False])
-def test_qwen_template(use_fast: bool):
+def test_qwen2_5_template(use_fast: bool):
     prompt_str = (
         "<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n"
         "<|im_start|>user\nHow are you<|im_end|>\n"
@@ -208,6 +254,27 @@ def test_qwen_template(use_fast: bool):
     )
     answer_str = "很高兴认识你！<|im_end|>\n"
     _check_template("Qwen/Qwen2.5-7B-Instruct", "qwen", prompt_str, answer_str, use_fast)
+
+
+@pytest.mark.parametrize("use_fast", [True, False])
+def test_qwen3_template(use_fast: bool):
+    prompt_str = (
+        "<|im_start|>user\nHow are you<|im_end|>\n"
+        "<|im_start|>assistant\nI am fine!<|im_end|>\n"
+        "<|im_start|>user\n你好<|im_end|>\n"
+        "<|im_start|>assistant\n<think>\n\n</think>\n\n"
+    )
+    answer_str = "很高兴认识你！<|im_end|>\n"
+    _check_template("Qwen/Qwen3-8B", "qwen3", prompt_str, answer_str, use_fast)
+
+    prompt_str = (
+        "<|im_start|>user\nHow are you<|im_end|>\n"
+        "<|im_start|>assistant\nI am fine!<|im_end|>\n"
+        "<|im_start|>user\n你好<|im_end|>\n"
+        "<|im_start|>assistant\n"
+    )
+    answer_str = "<think>\n模型思考内容\n</think>\n\n很高兴认识你！<|im_end|>\n"
+    _check_template("Qwen/Qwen3-8B", "qwen3", prompt_str, answer_str, use_fast, messages=MESSAGES_WITH_THOUGHT)
 
 
 def test_parse_llama3_template():
@@ -231,3 +298,13 @@ def test_parse_qwen_template():
     assert template.format_system.slots == ["<|im_start|>system\n{{content}}<|im_end|>\n"]
     assert template.format_prefix.slots == []
     assert template.default_system == "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."
+
+
+def test_parse_qwen3_template():
+    tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-8B", token=HF_TOKEN)
+    template = parse_template(tokenizer)
+    assert template.format_user.slots == ["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]
+    assert template.format_assistant.slots == ["{{content}}<|im_end|>\n"]
+    assert template.format_system.slots == ["<|im_start|>system\n{{content}}<|im_end|>\n"]
+    assert template.format_prefix.slots == []
+    assert template.default_system == ""

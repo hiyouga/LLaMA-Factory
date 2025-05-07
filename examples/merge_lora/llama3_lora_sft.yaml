@@ -9,5 +9,5 @@ trust_remote_code: true
 ### export
 export_dir: output/llama3_lora_sft
 export_size: 5
-export_device: cpu
+export_device: cpu  # choices: [cpu, auto]
 export_legacy_format: false

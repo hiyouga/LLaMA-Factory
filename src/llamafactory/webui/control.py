@@ -56,11 +56,11 @@ def can_quantize_to(quantization_method: str) -> "gr.Dropdown":
     Inputs: top.quantization_method
     Outputs: top.quantization_bit
     """
-    if quantization_method == QuantizationMethod.BITS_AND_BYTES.value:
+    if quantization_method == QuantizationMethod.BNB:
         available_bits = ["none", "8", "4"]
-    elif quantization_method == QuantizationMethod.HQQ.value:
+    elif quantization_method == QuantizationMethod.HQQ:
         available_bits = ["none", "8", "6", "5", "4", "3", "2", "1"]
-    elif quantization_method == QuantizationMethod.EETQ.value:
+    elif quantization_method == QuantizationMethod.EETQ:
         available_bits = ["none", "8"]
 
     return gr.Dropdown(choices=available_bits)

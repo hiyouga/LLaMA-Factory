@@ -148,7 +148,9 @@ class SGLangEngine(BaseEngine):
         )
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         system = system or self.generating_args["default_system"]
-        prompt_ids, _ = self.template.encode_oneturn(self.tokenizer, paired_messages, system, tools)
+        enable_thinking = input_kwargs.pop("enable_thinking", None)
+        enable_thinking = enable_thinking if enable_thinking is not None else self.generating_args["enable_thinking"]
+        prompt_ids, _ = self.template.encode_oneturn(self.tokenizer, paired_messages, system, tools, enable_thinking)
         prompt_length = len(prompt_ids)
 
         temperature: Optional[float] = input_kwargs.pop("temperature", None)

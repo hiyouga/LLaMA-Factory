@@ -99,6 +99,10 @@ class DataArguments:
         default=0.0,
         metadata={"help": "Size of the validation set, should be an integer or a float in range `[0,1)`."},
     )
+    eval_on_each_dataset: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to evaluate on each dataset separately."},
+    )
     packing: Optional[bool] = field(
         default=None,
         metadata={"help": "Enable sequences packing in training. Will automatically enable in pre-training."},
