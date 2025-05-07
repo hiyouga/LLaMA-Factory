@@ -14,8 +14,9 @@
 
 import os
 
-from llamafactory.train.test_utils import load_dataset_module
 from llamafactory.extras.misc import is_torch_hpu_available
+from llamafactory.train.test_utils import load_dataset_module
+
 
 DEMO_DATA = os.getenv("DEMO_DATA", "llamafactory/demo_data")
 
@@ -46,7 +47,8 @@ if is_torch_hpu_available():
             "bf16": True,
         }
     )
-    
+
+
 def test_load_train_only():
     dataset_module = load_dataset_module(**TRAIN_ARGS)
     assert dataset_module.get("train_dataset") is not None
