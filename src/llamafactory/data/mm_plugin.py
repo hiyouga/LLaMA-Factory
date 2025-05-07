@@ -85,6 +85,24 @@ if TYPE_CHECKING:
         def _get_number_of_features(self, orig_height: int, orig_width: int, height: int, width: int) -> int:
             pass
 
+def _cal_max_frames_each_video(durations: list, video_maxlen_ttl: int, video_maxlen: int) -> list[int]:
+    """Calculate `max_num_of_frames` for each video based on their durations, and return a list of `max_num_of_frames`. Every `max_num_of_frames` should be in [2, video_maxlen]."""
+    dura_ttl = sum(durations)
+    max_nums_of_frames = [  # 2 < max_num_of_frames < video_maxlen
+        min(max(int(video_maxlen_ttl * dura / dura_ttl), 2), video_maxlen) for dura in durations
+    ]  # list of `max_num_of_frames`
+    if sum(max_nums_of_frames) > video_maxlen_ttl:  # may be bigger if some are set 2
+        delta = sum(max_nums_of_frames) - video_maxlen_ttl
+        for _ in range(delta):  #
+            max_idx = max_nums_of_frames.index(max(max_nums_of_frames))
+            if max(max_nums_of_frames) - 1 >= 2:  # should still >= 2
+                max_nums_of_frames[max_idx] -= 1
+            else:
+                raise ValueError(
+                    f"Too many videos. Couldn't satisfy the requirement of having at least 2 frames for each video. Please decrease the number of videos or increase `video_maxlen_ttl` (e.g. >={2 * len(max_nums_of_frames)})."
+                )
+    return max_nums_of_frames
+
 
 def _get_paligemma_token_type_ids(imglens: list[int], seqlens: list[int], processor: "MMProcessor") -> list[list[int]]:
     r"""Get paligemma token type ids for computing loss.
@@ -262,10 +280,20 @@ class MMPluginMixin:
     def _regularize_videos(self, videos: list["VideoInput"], **kwargs) -> dict[str, list[list["ImageObject"]]]:
         r"""Regularizes videos to avoid error. Including reading, resizing and converting."""
         results = []
-        for video in videos:
+        video_streams = []
+        durations = []
+        for video in videos:  # prepare durations first
             container = av.open(video, "r")
             video_stream = next(stream for stream in container.streams if stream.type == "video")
-            sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
+            durations.append(video_stream.duration * video_stream.time_base)  # unit: second
+            video_streams.append(video_stream)
+        max_frames_each_video = _cal_max_frames_each_video(durations, **kwargs)
+        for video_stream, max_frames in zip(video_streams, max_frames_each_video):
+            sample_indices = self._get_video_sample_indices(
+                video_stream,
+                video_fps=kwargs["video_fps"],
+                video_maxlen=max_frames,
+            )
             frames: list[ImageObject] = []
             container.seek(0)
             for frame_idx, frame in enumerate(container.decode(video_stream)):
@@ -355,6 +383,7 @@ class MMPluginMixin:
                 image_min_pixels=getattr(processor, "video_min_pixels", 16 * 16),
                 video_fps=getattr(processor, "video_fps", 2.0),
                 video_maxlen=getattr(processor, "video_maxlen", 128),
+                video_maxlen_ttl=getattr(processor, "video_maxlen_ttl", 128 * len(videos)),  # disabled by default
             )["videos"]
             if "videos" in inspect.signature(video_processor.preprocess).parameters:  # for qwen2_vl and video_llava
                 mm_inputs.update(video_processor(images=None, videos=videos, return_tensors="pt"))
@@ -536,6 +565,7 @@ class InternVLPlugin(BasePlugin):
                 image_min_pixels=getattr(processor, "video_min_pixels", 16 * 16),
                 video_fps=getattr(processor, "video_fps", 2.0),
                 video_maxlen=getattr(processor, "video_maxlen", 128),
+                video_maxlen_ttl=getattr(processor, "video_maxlen_ttl", 128 * len(videos)),  # disabled by default
             )["videos"]
 
         if len(images) != 0:
@@ -916,6 +946,7 @@ class MiniCPMVPlugin(BasePlugin):
                 image_min_pixels=getattr(processor, "video_min_pixels", 16 * 16),
                 video_fps=getattr(processor, "video_fps", 2.0),
                 video_maxlen=getattr(processor, "video_maxlen", 128),
+                video_maxlen_ttl=getattr(processor, "video_maxlen_ttl", 128 * len(videos)),  # disabled by default
             )["videos"]
             video_inputs = image_processor(videos, do_pad=True, max_slice_nums=2, return_tensors="pt")
             mm_inputs.update(video_inputs)
@@ -1374,10 +1405,20 @@ class Qwen2VLPlugin(BasePlugin):
         self, videos: list["VideoInput"], **kwargs
     ) -> dict[str, Union[list[list["ImageObject"]], list[float]]]:
         results, fps_per_video = [], []
+        video_streams = []
+        durations = []
         for video in videos:
             container = av.open(video, "r")
             video_stream = next(stream for stream in container.streams if stream.type == "video")
-            sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
+            durations.append(video_stream.duration * video_stream.time_base)  # unit: second
+            video_streams.append(video_stream)
+        max_frames_each_video = _cal_max_frames_each_video(durations, **kwargs)
+        for video_stream, max_frames in zip(video_streams, max_frames_each_video):
+            sample_indices = self._get_video_sample_indices(
+                video_stream,
+                video_fps=kwargs["video_fps"],
+                video_maxlen=max_frames,
+            )
             frames: list[ImageObject] = []
             container.seek(0)
             for frame_idx, frame in enumerate(container.decode(video_stream)):
@@ -1421,6 +1462,7 @@ class Qwen2VLPlugin(BasePlugin):
                 image_min_pixels=getattr(processor, "video_min_pixels", 16 * 16),
                 video_fps=getattr(processor, "video_fps", 2.0),
                 video_maxlen=getattr(processor, "video_maxlen", 128),
+                video_maxlen_ttl=getattr(processor, "video_maxlen_ttl", 128 * len(videos)),  # disabled by default
             )
             mm_inputs.update(image_processor(images=None, videos=video_data["videos"], return_tensors="pt"))
             temporal_patch_size: int = getattr(image_processor, "temporal_patch_size", 2)
@@ -1501,6 +1543,7 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
                 image_min_pixels=getattr(processor, "video_min_pixels", 16 * 16),
                 video_fps=getattr(processor, "video_fps", 2.0),
                 video_maxlen=getattr(processor, "video_maxlen", 128),
+                video_maxlen_ttl=getattr(processor, "video_maxlen_ttl", 128 * len(videos)),  # disabled by default
             )
             mm_inputs.update(image_processor(images=None, videos=video_dict["videos"], return_tensors="pt"))
             temporal_patch_size: int = getattr(image_processor, "temporal_patch_size", 2)
