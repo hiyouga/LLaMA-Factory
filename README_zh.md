@@ -584,7 +584,7 @@ pip install .
 > [!NOTE]
 > 使用自定义数据集时，请更新 `data/dataset_info.json` 文件。
 
-您也可以使用 **[Easy Dataset](https://github.com/ConardLi/easy-dataset)** 构建用于微调的合成数据。
+您也可以使用 **[Easy Dataset](https://github.com/ConardLi/easy-dataset)** 或 **[GraphGen](https://github.com/open-sciencelab/GraphGen)** 构建用于微调的合成数据。
 
 ### 快速开始
 
