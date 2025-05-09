@@ -51,6 +51,8 @@ def vllm_infer(
     pipeline_parallel_size: int = 1,
     image_max_pixels: int = 768 * 768,
     image_min_pixels: int = 32 * 32,
+    video_fps: float = 2.0,
+    video_maxlen: int = 128,
 ):
     r"""Perform batch generation using vLLM engine, which supports tensor parallelism.
 
@@ -96,7 +98,11 @@ def vllm_infer(
         elif sample["videos"]:
             multi_modal_data = {
                 "video": template_obj.mm_plugin._regularize_videos(
-                    sample["videos"], image_max_pixels=image_max_pixels, image_min_pixels=image_min_pixels
+                    sample["videos"],
+                    image_max_pixels=image_max_pixels,
+                    image_min_pixels=image_min_pixels,
+                    video_fps=video_fps,
+                    video_maxlen=video_maxlen,
                 )["videos"]
             }
         elif sample["audios"]:
