@@ -22,6 +22,7 @@ dataloader_num_workers: 4
 output_dir: saves/llama3-8b/lora/sft
 logging_steps: 10
 save_steps: 500
+save_strategy: epoch
 plot_loss: true
 overwrite_output_dir: true
 save_only_model: false
