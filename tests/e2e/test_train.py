@@ -16,6 +16,7 @@ import os
 
 import pytest
 
+from llamafactory.extras.misc import is_torch_hpu_available
 from llamafactory.train.tuner import export_model, run_exp
 
 
@@ -48,6 +49,20 @@ INFER_ARGS = {
 
 OS_NAME = os.getenv("OS_NAME", "")
 
+if is_torch_hpu_available():
+    TRAIN_ARGS.update(
+        {
+            "use_habana": True,
+            "gaudi_config_name": "Habana/llama",
+        }
+    )
+    INFER_ARGS.update(
+        {
+            "use_habana": True,
+            "infer_dtype": "bfloat16",
+        }
+    )
+
 
 @pytest.mark.parametrize(
     "stage,dataset",
@@ -55,7 +70,9 @@ OS_NAME = os.getenv("OS_NAME", "")
         ("pt", "c4_demo"),
         ("sft", "alpaca_en_demo"),
         ("dpo", "dpo_en_demo"),
-        ("kto", "kto_en_demo"),
+        pytest.param(
+            "kto", "kto_en_demo", marks=pytest.mark.skipif(is_torch_hpu_available(), reason="Not supported on HPU.")
+        ),
         pytest.param("rm", "dpo_en_demo", marks=pytest.mark.xfail(OS_NAME.startswith("windows"), reason="OS error.")),
     ],
 )

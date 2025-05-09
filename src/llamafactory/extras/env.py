@@ -25,6 +25,8 @@ import transformers
 import trl
 from transformers.utils import is_torch_cuda_available, is_torch_npu_available
 
+from .misc import is_torch_hpu_available
+
 
 VERSION = "0.9.3.dev0"
 
@@ -47,6 +49,16 @@ def print_env() -> None:
         info["GPU type"] = torch.cuda.get_device_name()
         info["GPU number"] = torch.cuda.device_count()
         info["GPU memory"] = f"{torch.cuda.mem_get_info()[1] / (1024**3):.2f}GB"
+
+    if is_torch_hpu_available():
+        info["PyTorch version"] += " (HPU)"
+        info["HPU type"] = torch.hpu.get_device_name()
+        from optimum.habana.utils import get_habana_frameworks_version
+
+        info["habana_frameworks version"] = get_habana_frameworks_version()
+        from optimum import habana
+
+        info["optimum-habana version"] = habana.__version__
 
     if is_torch_npu_available():
         info["PyTorch version"] += " (NPU)"

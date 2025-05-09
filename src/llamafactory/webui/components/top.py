@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 from ...data import TEMPLATES
 from ...extras.constants import METHODS, SUPPORTED_MODELS
+from ...extras.misc import is_torch_hpu_available
 from ...extras.packages import is_gradio_available
 from ..common import save_config
 from ..control import can_quantize, can_quantize_to, get_model_info, list_checkpoints
@@ -47,6 +48,18 @@ def create_top() -> dict[str, "Component"]:
         rope_scaling = gr.Dropdown(choices=["none", "linear", "dynamic", "yarn", "llama3"], value="none")
         booster = gr.Dropdown(choices=["auto", "flashattn2", "unsloth", "liger_kernel"], value="auto")
 
+    if is_torch_hpu_available():
+        with gr.Row():
+            use_habana = gr.Dropdown(choices=["True", "False"], value="True", allow_custom_value=True, scale=2)
+            gaudi_config_name = gr.Textbox(scale=3)
+            use_lazy_mode = gr.Dropdown(choices=["True", "False"], value="True", allow_custom_value=True, scale=2)
+            use_hpu_graphs = gr.Dropdown(choices=["True", "False"], value="True", allow_custom_value=True, scale=2)
+
+        use_habana.input(save_config, inputs=[lang, use_habana], queue=False)
+        gaudi_config_name.input(save_config, inputs=[lang, gaudi_config_name], queue=False)
+        use_lazy_mode.input(save_config, inputs=[lang, use_lazy_mode], queue=False)
+        use_hpu_graphs.input(save_config, inputs=[lang, use_hpu_graphs], queue=False)
+
     model_name.change(get_model_info, [model_name], [model_path, template], queue=False).then(
         list_checkpoints, [model_name, finetuning_type], [checkpoint_path], queue=False
     )
@@ -58,7 +71,7 @@ def create_top() -> dict[str, "Component"]:
     checkpoint_path.focus(list_checkpoints, [model_name, finetuning_type], [checkpoint_path], queue=False)
     quantization_method.change(can_quantize_to, [quantization_method], [quantization_bit], queue=False)
 
-    return dict(
+    elements = dict(
         lang=lang,
         model_name=model_name,
         model_path=model_path,
@@ -70,3 +83,15 @@ def create_top() -> dict[str, "Component"]:
         rope_scaling=rope_scaling,
         booster=booster,
     )
+
+    if is_torch_hpu_available():
+        elements.update(
+            dict(
+                use_habana=use_habana,
+                gaudi_config_name=gaudi_config_name,
+                use_lazy_mode=use_lazy_mode,
+                use_hpu_graphs=use_hpu_graphs,
+            )
+        )
+
+    return elements

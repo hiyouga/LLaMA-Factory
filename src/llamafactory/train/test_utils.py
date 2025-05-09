@@ -20,7 +20,7 @@ from transformers import AutoModelForCausalLM
 from trl import AutoModelForCausalLMWithValueHead
 
 from ..data import get_dataset, get_template_and_fix_tokenizer
-from ..extras.misc import get_current_device
+from ..extras.misc import get_current_device, is_torch_hpu_available
 from ..hparams import get_infer_args, get_train_args
 from ..model import load_model, load_tokenizer
 
@@ -44,6 +44,7 @@ def compare_model(model_a: "torch.nn.Module", model_b: "torch.nn.Module", diff_k
 
 
 def check_lora_model(model: "LoraModel") -> tuple[set[str], set[str]]:
+    dtype = torch.bfloat16 if is_torch_hpu_available() else torch.float16
     linear_modules, extra_modules = set(), set()
     for name, param in model.named_parameters():
         if any(module in name for module in ["lora_A", "lora_B"]):
@@ -56,7 +57,7 @@ def check_lora_model(model: "LoraModel") -> tuple[set[str], set[str]]:
             assert param.dtype == torch.float32
         else:
             assert param.requires_grad is False
-            assert param.dtype == torch.float16
+            assert param.dtype == dtype
 
     return linear_modules, extra_modules
 
@@ -82,16 +83,17 @@ def load_reference_model(
     add_valuehead: bool = False,
 ) -> Union["PreTrainedModel", "LoraModel"]:
     current_device = get_current_device()
+    dtype = torch.bfloat16 if is_torch_hpu_available() else torch.float16
     if add_valuehead:
         model: AutoModelForCausalLMWithValueHead = AutoModelForCausalLMWithValueHead.from_pretrained(
-            model_path, torch_dtype=torch.float16, device_map=current_device
+            model_path, torch_dtype=dtype, device_map=current_device
         )
         if not is_trainable:
-            model.v_head = model.v_head.to(torch.float16)
+            model.v_head = model.v_head.to(dtype)
 
         return model
 
-    model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16, device_map=current_device)
+    model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=dtype, device_map=current_device)
     if use_lora or use_pissa:
         model = PeftModel.from_pretrained(
             model, lora_path, subfolder="pissa_init" if use_pissa else None, is_trainable=is_trainable

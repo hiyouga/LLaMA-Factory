@@ -17,6 +17,7 @@ import os
 import pytest
 import torch
 
+from llamafactory.extras.misc import is_torch_hpu_available
 from llamafactory.train.test_utils import (
     check_lora_model,
     compare_model,
@@ -54,6 +55,22 @@ INFER_ARGS = {
     "template": "llama3",
     "infer_dtype": "float16",
 }
+
+if is_torch_hpu_available():
+    TRAIN_ARGS.update(
+        {
+            "use_habana": True,
+            "gaudi_config_name": "Habana/llama",
+            "fp16": False,
+            "bf16": True,
+        }
+    )
+    INFER_ARGS.update(
+        {
+            "use_habana": True,
+            "infer_dtype": "bfloat16",
+        }
+    )
 
 
 @pytest.fixture

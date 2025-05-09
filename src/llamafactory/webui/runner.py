@@ -23,7 +23,7 @@ from transformers.trainer import TRAINING_ARGS_NAME
 from transformers.utils import is_torch_npu_available
 
 from ..extras.constants import LLAMABOARD_CONFIG, PEFT_METHODS, TRAINING_STAGES
-from ..extras.misc import is_accelerator_available, torch_gc, use_ray
+from ..extras.misc import is_accelerator_available, is_torch_hpu_available, torch_gc, use_ray
 from ..extras.packages import is_gradio_available
 from .common import (
     DEFAULT_CACHE_DIR,
@@ -283,6 +283,13 @@ class Runner:
             ds_offload = "offload_" if get("train.ds_offload") else ""
             args["deepspeed"] = os.path.join(DEFAULT_CACHE_DIR, f"ds_z{ds_stage}_{ds_offload}config.json")
 
+        # HPU specific args
+        if is_torch_hpu_available():
+            args["use_habana"] = get("top.use_habana") == "True"
+            args["gaudi_config_name"] = get("top.gaudi_config_name")
+            args["use_lazy_mode"] = get("top.use_lazy_mode") == "True"
+            args["use_hpu_graphs"] = get("top.use_hpu_graphs") == "True"
+
         return args
 
     def _parse_eval_args(self, data: dict["Component", Any]) -> dict[str, Any]:
@@ -334,6 +341,13 @@ class Runner:
             args["quantization_bit"] = int(get("top.quantization_bit"))
             args["quantization_method"] = get("top.quantization_method")
             args["double_quantization"] = not is_torch_npu_available()
+
+        # HPU specific args
+        if is_torch_hpu_available():
+            args["use_habana"] = get("top.use_habana") == "True"
+            args["gaudi_config_name"] = get("top.gaudi_config_name")
+            args["use_lazy_mode"] = get("top.use_lazy_mode") == "True"
+            args["use_hpu_graphs"] = get("top.use_hpu_graphs") == "True"
 
         return args
 
