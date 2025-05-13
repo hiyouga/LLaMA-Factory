@@ -559,6 +559,16 @@
       "images": "images"
     }
   },
+  "rlaif_v": {
+    "hf_hub_url": "openbmb/RLAIF-V-Dataset",
+    "ranking": true,
+    "columns": {
+      "prompt": "question",
+      "chosen": "chosen",
+      "rejected": "rejected",
+      "images": "image"
+    }
+  },
   "orca_pairs": {
     "hf_hub_url": "Intel/orca_dpo_pairs",
     "ranking": true,

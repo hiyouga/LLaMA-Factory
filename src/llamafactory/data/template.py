@@ -1622,6 +1622,20 @@ register_template(
 )
 
 
+register_template(
+    name="seed_coder",
+    format_user=StringFormatter(
+        slots=[{"bos_token"}, "user\n{{content}}", {"eos_token"}, {"bos_token"}, "assistant\n"]
+    ),
+    format_system=StringFormatter(slots=[{"bos_token"}, "system\n{{content}}", {"eos_token"}]),
+    default_system=(
+        "You are an AI programming assistant, utilizing the Seed-Coder model, developed by ByteDance Seed, "
+        "and you only answer questions related to computer science. For politically sensitive questions, "
+        "security and privacy issues, and other non-computer science questions, you will refuse to answer.\n\n"
+    ),
+)
+
+
 # copied from llama3 template
 register_template(
     name="skywork_o1",
