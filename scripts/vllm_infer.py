@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import gc
 import json
 from typing import Optional
 
@@ -51,6 +52,9 @@ def vllm_infer(
     pipeline_parallel_size: int = 1,
     image_max_pixels: int = 768 * 768,
     image_min_pixels: int = 32 * 32,
+    video_fps: float = 2.0,
+    video_maxlen: int = 128,
+    batch_size: int = 16,
 ):
     r"""Perform batch generation using vLLM engine, which supports tensor parallelism.
 
@@ -77,45 +81,38 @@ def vllm_infer(
             repetition_penalty=repetition_penalty,
         )
     )
-
+    
     training_args = Seq2SeqTrainingArguments(output_dir="dummy_dir")
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
     template_obj = get_template_and_fix_tokenizer(tokenizer, data_args)
     template_obj.mm_plugin.expand_mm_tokens = False  # for vllm generate
+    
+    engine_args = {
+        "model": model_args.model_name_or_path,
+        "trust_remote_code": True,
+        "dtype": model_args.infer_dtype,
+        "max_model_len": cutoff_len + max_new_tokens,
+        "tensor_parallel_size": (get_device_count() // pipeline_parallel_size) or 1,
+        "pipeline_parallel_size": pipeline_parallel_size,
+        "disable_log_stats": True,
+        "dtype":"float16",
+        "enable_lora": model_args.adapter_name_or_path is not None,
+    }
+    if template_obj.mm_plugin.__class__.__name__ != "BasePlugin":
+        engine_args["limit_mm_per_prompt"] = {"image": 6, "video": 2, "audio": 2}
+
+    if isinstance(model_args.vllm_config, dict):
+        engine_args.update(model_args.vllm_config)
+
+    # results = LLM(**engine_args).generate(vllm_inputs, sampling_params, lora_request=lora_request)
+    llm = LLM(**engine_args)
+
+    # load datasets
     dataset_module = get_dataset(template_obj, model_args, data_args, training_args, "ppo", **tokenizer_module)
-
-    inputs, prompts, labels = [], [], []
-    for sample in dataset_module["train_dataset"]:
-        if sample["images"]:
-            multi_modal_data = {
-                "image": template_obj.mm_plugin._regularize_images(
-                    sample["images"], image_max_pixels=image_max_pixels, image_min_pixels=image_min_pixels
-                )["images"]
-            }
-        elif sample["videos"]:
-            multi_modal_data = {
-                "video": template_obj.mm_plugin._regularize_videos(
-                    sample["videos"], image_max_pixels=image_max_pixels, image_min_pixels=image_min_pixels
-                )["videos"]
-            }
-        elif sample["audios"]:
-            audio_data = template_obj.mm_plugin._regularize_audios(
-                sample["audios"],
-                sampling_rate=16000,
-            )
-            multi_modal_data = {"audio": zip(audio_data["audios"], audio_data["sampling_rates"])}
-        else:
-            multi_modal_data = None
-
-        inputs.append({"prompt_token_ids": sample["input_ids"], "multi_modal_data": multi_modal_data})
-        prompts.append(tokenizer.decode(sample["input_ids"], skip_special_tokens=skip_special_tokens))
-        labels.append(
-            tokenizer.decode(
-                list(filter(lambda x: x != IGNORE_INDEX, sample["labels"])), skip_special_tokens=skip_special_tokens
-            )
-        )
-
+    train_dataset = dataset_module["train_dataset"]
+    
+    # params used in inference
     sampling_params = SamplingParams(
         repetition_penalty=generating_args.repetition_penalty or 1.0,  # repetition_penalty must > 0
         temperature=generating_args.temperature,
@@ -131,32 +128,66 @@ def vllm_infer(
     else:
         lora_request = None
 
-    engine_args = {
-        "model": model_args.model_name_or_path,
-        "trust_remote_code": True,
-        "dtype": model_args.infer_dtype,
-        "max_model_len": cutoff_len + max_new_tokens,
-        "tensor_parallel_size": (get_device_count() // pipeline_parallel_size) or 1,
-        "pipeline_parallel_size": pipeline_parallel_size,
-        "disable_log_stats": True,
-        "enable_lora": model_args.adapter_name_or_path is not None,
-    }
-    if template_obj.mm_plugin.__class__.__name__ != "BasePlugin":
-        engine_args["limit_mm_per_prompt"] = {"image": 4, "video": 2, "audio": 2}
+    for i in range(0, len(train_dataset), batch_size):
+        print(f"Processing batch {i} to {min(i + batch_size, len(train_dataset))}...")
+        
+        vllm_inputs, prompts, labels = [], [], []
+        
+        batch = train_dataset[i : min(i + batch_size, len(train_dataset))]
 
-    if isinstance(model_args.vllm_config, dict):
-        engine_args.update(model_args.vllm_config)
+        # for extra_modal_data in batch[extra_modal]:
+        for j in range(len(batch["input_ids"])):
+            if batch["images"][j] != None:
+                image = batch["images"][j]
+                multi_modal_data = {
+                    "image": template_obj.mm_plugin._regularize_images(
+                        image, image_max_pixels=image_max_pixels, image_min_pixels=image_min_pixels
+                    )["images"]
+                }
+            elif batch["videos"][j] != None:
+                video = batch["videos"][j]
+                multi_modal_data = {
+                    "video": template_obj.mm_plugin._regularize_videos(
+                        video,
+                        image_max_pixels=image_max_pixels,
+                        image_min_pixels=image_min_pixels,
+                        video_fps=video_fps,
+                        video_maxlen=video_maxlen,
+                    )["videos"]
+                }
+            elif batch["audios"][j] != None:
+                audio = batch["audios"][j]
+                audio_data = template_obj.mm_plugin._regularize_audios(
+                    audio,
+                    sampling_rate=16000,
+                )
+                multi_modal_data = {"audio": zip(audio_data["audios"], audio_data["sampling_rates"])}
+            else:
+                multi_modal_data = None
+                    
+            vllm_inputs.append({"prompt_token_ids": batch["input_ids"][j], "multi_modal_data": multi_modal_data})
+            prompts.append(tokenizer.decode(batch["input_ids"][j], skip_special_tokens=skip_special_tokens))
+            labels.append(
+                tokenizer.decode(
+                    list(filter(lambda x: x != IGNORE_INDEX, batch["labels"][j])),
+                    skip_special_tokens=skip_special_tokens,
+                )
+            )
+            
+        results = llm.generate(vllm_inputs, sampling_params, lora_request=lora_request)
 
-    results = LLM(**engine_args).generate(inputs, sampling_params, lora_request=lora_request)
-    preds = [result.outputs[0].text for result in results]
-    with open(save_name, "w", encoding="utf-8") as f:
-        for text, pred, label in zip(prompts, preds, labels):
-            f.write(json.dumps({"prompt": text, "predict": pred, "label": label}, ensure_ascii=False) + "\n")
+        preds = [result.outputs[0].text for result in results]
+        with open(save_name, "a", encoding="utf-8") as f:
+            for text, pred, label in zip(prompts, preds, labels):
+                f.write(json.dumps({"prompt": text, "predict": pred, "label": label}, ensure_ascii=False) + "\n")
 
-    print("*" * 70)
-    print(f"{len(prompts)} generated results have been saved at {save_name}.")
-    print("*" * 70)
-
+        print("*" * 70)
+        print(f"{len(prompts)} generated results have been saved at {save_name}.")
+        print("*" * 70)
+            
+        gc.collect()
+        
 
 if __name__ == "__main__":
     fire.Fire(vllm_infer)
+
