@@ -123,4 +123,5 @@ def test_lora_train_valuehead():
 def test_lora_inference():
     model = load_infer_model(**INFER_ARGS)
     ref_model = load_reference_model(TINY_LLAMA3, TINY_LLAMA_ADAPTER, use_lora=True).merge_and_unload()
-    compare_model(model, ref_model)
+    atol = 1e-3 if is_torch_hpu_available() else 1e-5
+    compare_model(model, ref_model, atol=atol)
