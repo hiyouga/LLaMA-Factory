@@ -2713,6 +2713,25 @@ register_model_group(
 
 register_model_group(
     models={
+        "SmolLM-135M-Instruct": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM-135M-Instruct",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM-135M-Instruct",
+        },
+        "SmolLM-360M-Instruct": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM-360M-Instruct",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM-360M-Instruct",
+        },
+        "SmolLM-1.7B-Instruct": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM-1.7B-Instruct",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM-1.7B-Instruct",
+        },
+    },
+    template="smollm",
+)
+
+
+register_model_group(
+    models={
         "SOLAR-10.7B-v1.0": {
             DownloadSource.DEFAULT: "upstage/SOLAR-10.7B-v1.0",
         },
