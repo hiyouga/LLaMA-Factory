@@ -887,12 +887,13 @@ register_model_group(
 
 register_model_group(
     models={
-        "Granite-3.2-1B-A400M-Base": {
+        "Granite-Vision-3.2-2B": {
             DownloadSource.DEFAULT: "ibm-granite/granite-vision-3.2-2b",
             DownloadSource.MODELSCOPE: "AI-ModelScope/granite-vision-3.2-2b",
         },
     },
     template="granite3_vision",
+    multimodal=True,
 )
 
 
@@ -2502,6 +2503,22 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B",
         },
+        "Qwen3-0.6B-Instruct-GPTQ-Int8": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-0.6B-GPTQ-Int8",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-0.6B-GPTQ-Int8",
+        },
+        "Qwen3-1.7B-Instruct-GPTQ-Int8": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-1.7B-GPTQ-Int8",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-1.7B-GPTQ-Int8",
+        },
+        "Qwen3-4B-Instruct-AWQ": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-4B-AWQ",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-4B-AWQ",
+        },
+        "Qwen3-8B-Instruct-AWQ": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-8B-AWQ",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-8B-AWQ",
+        },
         "Qwen3-14B-Instruct-AWQ": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-14B-AWQ",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-14B-AWQ",
@@ -2509,6 +2526,14 @@ register_model_group(
         "Qwen3-32B-Instruct-AWQ": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-32B-AWQ",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-32B-AWQ",
+        },
+        "Qwen3-30B-A3B-Instruct-GPTQ-Int4": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B-GPTQ-Int4",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B-GPTQ-Int4",
+        },
+        "Qwen3-235B-A22B-Instruct-GPTQ-Int4": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B-GPTQ-Int4",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B-GPTQ-Int4",
         },
     },
     template="qwen3",
@@ -2651,15 +2676,17 @@ register_model_group(
 
 register_model_group(
     models={
-        "SOLAR-10.7B-v1.0": {
-            DownloadSource.DEFAULT: "upstage/SOLAR-10.7B-v1.0",
+        "Seed-Coder-8B-Base": {
+            DownloadSource.DEFAULT: "ByteDance-Seed/Seed-Coder-8B-Base",
         },
-        "SOLAR-10.7B-Instruct-v1.0": {
-            DownloadSource.DEFAULT: "upstage/SOLAR-10.7B-Instruct-v1.0",
-            DownloadSource.MODELSCOPE: "AI-ModelScope/SOLAR-10.7B-Instruct-v1.0",
+        "Seed-Coder-8B-Instruct": {
+            DownloadSource.DEFAULT: "ByteDance-Seed/Seed-Coder-8B-Instruct",
+        },
+        "Seed-Coder-8B-Instruct-Reasoning": {
+            DownloadSource.DEFAULT: "ByteDance-Seed/Seed-Coder-8B-Reasoning-bf16",
         },
     },
-    template="solar",
+    template="seed_coder",
 )
 
 
@@ -2681,6 +2708,20 @@ register_model_group(
         }
     },
     template="skywork_o1",
+)
+
+
+register_model_group(
+    models={
+        "SOLAR-10.7B-v1.0": {
+            DownloadSource.DEFAULT: "upstage/SOLAR-10.7B-v1.0",
+        },
+        "SOLAR-10.7B-Instruct-v1.0": {
+            DownloadSource.DEFAULT: "upstage/SOLAR-10.7B-Instruct-v1.0",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/SOLAR-10.7B-Instruct-v1.0",
+        },
+    },
+    template="solar",
 )
 
 
