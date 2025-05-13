@@ -1,5 +1,7 @@
 [dataset_info.json](dataset_info.json) 包含了所有可用的数据集。如果您希望使用自定义数据集，请**务必**在 `dataset_info.json` 文件中添加*数据集描述*，并通过修改 `dataset: 数据集名称` 配置来使用数据集。
 
+其中 `dataset_info.json` 文件应放置在 `dataset_dir` 目录下。您可以通过修改 `dataset_dir` 参数来使用其他目录。默认值为 `./data`。
+
 目前我们支持 **alpaca** 格式和 **sharegpt** 格式的数据集。
 
 ```json

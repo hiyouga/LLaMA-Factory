@@ -237,9 +237,7 @@ class MistralToolUtils(ToolUtils):
     def tool_formatter(tools: list[dict[str, Any]]) -> str:
         wrapped_tools = []
         for tool in tools:
-            wrapped_tools.append(
-                tool if tool.get("type") == "function" else {"type": "function", "function": tool}
-            )
+            wrapped_tools.append(tool if tool.get("type") == "function" else {"type": "function", "function": tool})
 
         return "[AVAILABLE_TOOLS] " + json.dumps(wrapped_tools, ensure_ascii=False) + "[/AVAILABLE_TOOLS]"
 
