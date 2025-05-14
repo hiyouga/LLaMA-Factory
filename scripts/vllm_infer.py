@@ -81,13 +81,13 @@ def vllm_infer(
             repetition_penalty=repetition_penalty,
         )
     )
-    
+
     training_args = Seq2SeqTrainingArguments(output_dir="dummy_dir")
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
     template_obj = get_template_and_fix_tokenizer(tokenizer, data_args)
     template_obj.mm_plugin.expand_mm_tokens = False  # for vllm generate
-    
+
     engine_args = {
         "model": model_args.model_name_or_path,
         "trust_remote_code": True,
@@ -110,7 +110,7 @@ def vllm_infer(
     # load datasets
     dataset_module = get_dataset(template_obj, model_args, data_args, training_args, "ppo", **tokenizer_module)
     train_dataset = dataset_module["train_dataset"]
-    
+
     sampling_params = SamplingParams(
         repetition_penalty=generating_args.repetition_penalty or 1.0,  # repetition_penalty must > 0
         temperature=generating_args.temperature,
@@ -128,20 +128,20 @@ def vllm_infer(
 
     for i in range(0, len(train_dataset), batch_size):
         print(f"Processing batch {i} to {min(i + batch_size, len(train_dataset))}...")
-        
+
         vllm_inputs, prompts, labels = [], [], []
-        
+
         batch = train_dataset[i : min(i + batch_size, len(train_dataset))]
 
         for j in range(len(batch["input_ids"])):
-            if batch["images"][j] != None:
+            if batch["images"][j] is not None:
                 image = batch["images"][j]
                 multi_modal_data = {
                     "image": template_obj.mm_plugin._regularize_images(
                         image, image_max_pixels=image_max_pixels, image_min_pixels=image_min_pixels
                     )["images"]
                 }
-            elif batch["videos"][j] != None:
+            elif batch["videos"][j] is not None:
                 video = batch["videos"][j]
                 multi_modal_data = {
                     "video": template_obj.mm_plugin._regularize_videos(
@@ -152,7 +152,7 @@ def vllm_infer(
                         video_maxlen=video_maxlen,
                     )["videos"]
                 }
-            elif batch["audios"][j] != None:
+            elif batch["audios"][j] is not None:
                 audio = batch["audios"][j]
                 audio_data = template_obj.mm_plugin._regularize_audios(
                     audio,
@@ -161,7 +161,7 @@ def vllm_infer(
                 multi_modal_data = {"audio": zip(audio_data["audios"], audio_data["sampling_rates"])}
             else:
                 multi_modal_data = None
-                    
+
             vllm_inputs.append({"prompt_token_ids": batch["input_ids"][j], "multi_modal_data": multi_modal_data})
             prompts.append(tokenizer.decode(batch["input_ids"][j], skip_special_tokens=skip_special_tokens))
             labels.append(
@@ -170,7 +170,7 @@ def vllm_infer(
                     skip_special_tokens=skip_special_tokens,
                 )
             )
-            
+
         results = llm.generate(vllm_inputs, sampling_params, lora_request=lora_request)
 
         preds = [result.outputs[0].text for result in results]
@@ -181,9 +181,9 @@ def vllm_infer(
         print("*" * 70)
         print(f"{len(prompts)} generated results have been saved at {save_name}.")
         print("*" * 70)
-            
+
         gc.collect()
-        
+
 
 if __name__ == "__main__":
     fire.Fire(vllm_infer)
