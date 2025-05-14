@@ -1,5 +1,7 @@
 ### model
-model_name_or_path: llava-hf/llava-1.5-7b-hf
+model_name_or_path: Qwen/Qwen2.5-VL-7B-Instruct
+image_max_pixels: 262144
+video_max_pixels: 16384
 trust_remote_code: true
 
 ### method
@@ -10,8 +12,8 @@ lora_rank: 8
 lora_target: all
 
 ### dataset
-dataset: mllm_demo
-template: llava
+dataset: mllm_demo,identity,alpaca_en_demo  # video: mllm_video_demo
+template: qwen2_vl
 cutoff_len: 2048
 max_samples: 1000
 overwrite_cache: true
@@ -19,7 +21,7 @@ preprocessing_num_workers: 16
 dataloader_num_workers: 4
 
 ### output
-output_dir: saves/llava1_5-7b/lora/sft
+output_dir: saves/qwen2_5vl-7b/lora/sft
 logging_steps: 10
 save_steps: 500
 plot_loss: true

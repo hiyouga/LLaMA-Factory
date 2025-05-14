@@ -22,7 +22,7 @@ from peft.utils import WEIGHTS_NAME as ADAPTER_WEIGHTS_NAME
 from transformers.utils import SAFE_WEIGHTS_INDEX_NAME, SAFE_WEIGHTS_NAME, WEIGHTS_INDEX_NAME, WEIGHTS_NAME
 
 
-AUDIO_PLACEHOLDER = os.environ.get("AUDIO_PLACEHOLDER", "<audio>")
+AUDIO_PLACEHOLDER = os.getenv("AUDIO_PLACEHOLDER", "<audio>")
 
 CHECKPOINT_NAMES = {
     SAFE_ADAPTER_WEIGHTS_NAME,
@@ -50,7 +50,7 @@ FILEEXT2TYPE = {
 
 IGNORE_INDEX = -100
 
-IMAGE_PLACEHOLDER = os.environ.get("IMAGE_PLACEHOLDER", "<image>")
+IMAGE_PLACEHOLDER = os.getenv("IMAGE_PLACEHOLDER", "<image>")
 
 LAYERNORM_NAMES = {"norm", "ln"}
 
@@ -89,7 +89,7 @@ SUPPORTED_CLASS_FOR_S2ATTN = {"llama"}
 
 SWANLAB_CONFIG = "swanlab_public_config.json"
 
-VIDEO_PLACEHOLDER = os.environ.get("VIDEO_PLACEHOLDER", "<video>")
+VIDEO_PLACEHOLDER = os.getenv("VIDEO_PLACEHOLDER", "<video>")
 
 V_HEAD_WEIGHTS_NAME = "value_head.bin"
 
@@ -146,6 +146,7 @@ def register_model_group(
             any(suffix in name for suffix in ("-Chat", "-Distill", "-Instruct")) or multimodal
         ):
             DEFAULT_TEMPLATE[name] = template
+
         if multimodal:
             MULTIMODAL_SUPPORTED_MODELS.add(name)
 
@@ -532,6 +533,17 @@ register_model_group(
             DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V3",
             DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V3",
         },
+        "DeepSeek-V3-671B-0324-Chat": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V3-0324",
+            DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V3-0324",
+        },
+    },
+    template="deepseek3",
+)
+
+
+register_model_group(
+    models={
         "DeepSeek-R1-1.5B-Distill": {
             DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
             DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
@@ -565,7 +577,7 @@ register_model_group(
             DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-R1",
         },
     },
-    template="deepseek3",
+    template="deepseekr1",
 )
 
 
@@ -724,8 +736,35 @@ register_model_group(
             DownloadSource.DEFAULT: "THUDM/glm-4-9b-chat-1m",
             DownloadSource.MODELSCOPE: "ZhipuAI/glm-4-9b-chat-1m",
         },
+        "GLM-4-9B-0414-Chat": {
+            DownloadSource.DEFAULT: "THUDM/GLM-4-9B-0414",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4-9B-0414",
+        },
+        "GLM-4-32B-0414": {
+            DownloadSource.DEFAULT: "THUDM/GLM-4-32B-Base-0414",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4-32B-Base-0414",
+        },
+        "GLM-4-32B-0414-Chat": {
+            DownloadSource.DEFAULT: "THUDM/GLM-4-32B-0414",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4-32B-0414",
+        },
     },
     template="glm4",
+)
+
+
+register_model_group(
+    models={
+        "GLM-Z1-9B-0414-Chat": {
+            DownloadSource.DEFAULT: "THUDM/GLM-Z1-9B-0414",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-Z1-9B-0414",
+        },
+        "GLM-Z1-32B-0414-Chat": {
+            DownloadSource.DEFAULT: "THUDM/GLM-Z1-32B-0414",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-Z1-32B-0414",
+        },
+    },
+    template="glmz1",
 )
 
 
@@ -817,8 +856,44 @@ register_model_group(
             DownloadSource.DEFAULT: "ibm-granite/granite-3.1-8b-instruct",
             DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.1-8b-instruct",
         },
+        "Granite-3.2-2B-Instruct": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.2-2b-instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.2-2b-instruct",
+        },
+        "Granite-3.2-8B-Instruct": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.2-8b-instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.2-8b-instruct",
+        },
+        "Granite-3.3-2B-Base": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.3-2b-base",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.3-2b-base",
+        },
+        "Granite-3.3-8B-Base": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.3-8b-base",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.3-8b-base",
+        },
+        "Granite-3.3-2B-Instruct": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.3-2b-instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.3-2b-instruct",
+        },
+        "Granite-3.3-8B-Instruct": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-3.3-8b-instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.3-8b-instruct",
+        },
     },
     template="granite3",
+)
+
+
+register_model_group(
+    models={
+        "Granite-Vision-3.2-2B": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-vision-3.2-2b",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/granite-vision-3.2-2b",
+        },
+    },
+    template="granite3_vision",
+    multimodal=True,
 )
 
 
@@ -946,11 +1021,67 @@ register_model_group(
 
 register_model_group(
     models={
+        "InternVL2.5-2B-MPO": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL2_5-2B-MPO-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL2_5-2B-MPO-hf",
+        },
+        "InternVL2.5-8B-MPO": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL2_5-8B-MPO-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL2_5-8B-MPO-hf",
+        },
+        "InternVL3-1B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3-1B-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-1B-hf",
+        },
+        "InternVL3-2B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3-2B-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-2B-hf",
+        },
+        "InternVL3-8B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3-8B-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-8B-hf",
+        },
+        "InternVL3-14B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3-14B-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-14B-hf",
+        },
+        "InternVL3-38B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3-38B-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-38B-hf",
+        },
+        "InternVL3-78B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3-78B-hf",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-78B-hf",
+        },
+    },
+    template="intern_vl",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
         "Jamba-v0.1": {
             DownloadSource.DEFAULT: "ai21labs/Jamba-v0.1",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Jamba-v0.1",
         }
     },
+)
+
+
+register_model_group(
+    models={
+        "Kimi-VL-A3B-Instruct": {
+            DownloadSource.DEFAULT: "moonshotai/Kimi-VL-A3B-Instruct",
+            DownloadSource.MODELSCOPE: "moonshotai/Kimi-VL-A3B-Instruct",
+        },
+        "Kimi-VL-A3B-Thinking": {
+            DownloadSource.DEFAULT: "moonshotai/Kimi-VL-A3B-Thinking",
+            DownloadSource.MODELSCOPE: "moonshotai/Kimi-VL-A3B-Thinking",
+        },
+    },
+    template="kimi_vl",
+    multimodal=True,
 )
 
 
@@ -1283,6 +1414,29 @@ register_model_group(
         },
     },
     template="marco",
+)
+
+
+register_model_group(
+    models={
+        "MiMo-7B-Base": {
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-7B-Base",
+            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-7B-Base",
+        },
+        "MiMo-7B-Instruct": {
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-7B-SFT",
+            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-7B-SFT",
+        },
+        "MiMo-7B-Instruct-RL": {
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-7B-RL",
+            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-7B-RL",
+        },
+        "MiMo-7B-RL-ZERO": {
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-7B-RL-ZERO",
+            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-7B-RL-ZERO",
+        },
+    },
+    template="mimo",
 )
 
 
@@ -2293,6 +2447,101 @@ register_model_group(
 
 register_model_group(
     models={
+        "Qwen3-0.6B-Base": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-0.6B-Base",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-0.6B-Base",
+        },
+        "Qwen3-1.7B-Base": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-1.7B-Base",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-1.7B-Base",
+        },
+        "Qwen3-4B-Base": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-4B-Base",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-4B-Base",
+        },
+        "Qwen3-8B-Base": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-8B-Base",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-8B-Base",
+        },
+        "Qwen3-14B-Base": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-14B-Base",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-14B-Base",
+        },
+        "Qwen3-30B-A3B-Base": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B-Base",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B-Base",
+        },
+        "Qwen3-0.6B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-0.6B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-0.6B",
+        },
+        "Qwen3-1.7B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-1.7B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-1.7B",
+        },
+        "Qwen3-4B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-4B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-4B",
+        },
+        "Qwen3-8B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-8B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-8B",
+        },
+        "Qwen3-14B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-14B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-14B",
+        },
+        "Qwen3-32B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-32B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-32B",
+        },
+        "Qwen3-30B-A3B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B",
+        },
+        "Qwen3-235B-A22B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B",
+        },
+        "Qwen3-0.6B-Instruct-GPTQ-Int8": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-0.6B-GPTQ-Int8",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-0.6B-GPTQ-Int8",
+        },
+        "Qwen3-1.7B-Instruct-GPTQ-Int8": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-1.7B-GPTQ-Int8",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-1.7B-GPTQ-Int8",
+        },
+        "Qwen3-4B-Instruct-AWQ": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-4B-AWQ",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-4B-AWQ",
+        },
+        "Qwen3-8B-Instruct-AWQ": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-8B-AWQ",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-8B-AWQ",
+        },
+        "Qwen3-14B-Instruct-AWQ": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-14B-AWQ",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-14B-AWQ",
+        },
+        "Qwen3-32B-Instruct-AWQ": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-32B-AWQ",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-32B-AWQ",
+        },
+        "Qwen3-30B-A3B-Instruct-GPTQ-Int4": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B-GPTQ-Int4",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B-GPTQ-Int4",
+        },
+        "Qwen3-235B-A22B-Instruct-GPTQ-Int4": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B-GPTQ-Int4",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B-GPTQ-Int4",
+        },
+    },
+    template="qwen3",
+)
+
+
+register_model_group(
+    models={
         "Qwen2-Audio-7B": {
             DownloadSource.DEFAULT: "Qwen/Qwen2-Audio-7B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen2-Audio-7B",
@@ -2309,10 +2558,14 @@ register_model_group(
 
 register_model_group(
     models={
+        "Qwen2.5-Omni-3B": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-Omni-3B",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-Omni-3B",
+        },
         "Qwen2.5-Omni-7B": {
             DownloadSource.DEFAULT: "Qwen/Qwen2.5-Omni-7B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-Omni-7B",
-        }
+        },
     },
     template="qwen2_omni",
     multimodal=True,
@@ -2423,15 +2676,17 @@ register_model_group(
 
 register_model_group(
     models={
-        "SOLAR-10.7B-v1.0": {
-            DownloadSource.DEFAULT: "upstage/SOLAR-10.7B-v1.0",
+        "Seed-Coder-8B-Base": {
+            DownloadSource.DEFAULT: "ByteDance-Seed/Seed-Coder-8B-Base",
         },
-        "SOLAR-10.7B-Instruct-v1.0": {
-            DownloadSource.DEFAULT: "upstage/SOLAR-10.7B-Instruct-v1.0",
-            DownloadSource.MODELSCOPE: "AI-ModelScope/SOLAR-10.7B-Instruct-v1.0",
+        "Seed-Coder-8B-Instruct": {
+            DownloadSource.DEFAULT: "ByteDance-Seed/Seed-Coder-8B-Instruct",
+        },
+        "Seed-Coder-8B-Instruct-Reasoning": {
+            DownloadSource.DEFAULT: "ByteDance-Seed/Seed-Coder-8B-Reasoning-bf16",
         },
     },
-    template="solar",
+    template="seed_coder",
 )
 
 
@@ -2453,6 +2708,20 @@ register_model_group(
         }
     },
     template="skywork_o1",
+)
+
+
+register_model_group(
+    models={
+        "SOLAR-10.7B-v1.0": {
+            DownloadSource.DEFAULT: "upstage/SOLAR-10.7B-v1.0",
+        },
+        "SOLAR-10.7B-Instruct-v1.0": {
+            DownloadSource.DEFAULT: "upstage/SOLAR-10.7B-Instruct-v1.0",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/SOLAR-10.7B-Instruct-v1.0",
+        },
+    },
+    template="solar",
 )
 
 

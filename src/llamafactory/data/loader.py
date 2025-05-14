@@ -16,13 +16,13 @@ import os
 from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import numpy as np
-from datasets import load_dataset, load_from_disk
+from datasets import Dataset, load_dataset, load_from_disk
 
 from ..extras import logging
 from ..extras.constants import FILEEXT2TYPE
 from ..extras.misc import check_version, has_tokenized_data
 from .converter import align_dataset
-from .data_utils import get_dataset_module, merge_dataset, split_dataset
+from .data_utils import get_dataset_module, merge_dataset, read_cloud_json, split_dataset
 from .parser import get_dataset_list
 from .processor import (
     FeedbackDatasetProcessor,
@@ -66,6 +66,9 @@ def _load_single_dataset(
         data_path = os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)
         data_name = dataset_attr.subset
         data_dir = dataset_attr.folder
+
+    elif dataset_attr.load_from == "cloud_file":
+        data_path = dataset_attr.dataset_name
 
     elif dataset_attr.load_from == "file":
         data_files = []
@@ -122,6 +125,8 @@ def _load_single_dataset(
             token=model_args.om_hub_token,
             streaming=data_args.streaming,
         )
+    elif dataset_attr.load_from == "cloud_file":
+        dataset = Dataset.from_list(read_cloud_json(data_path), split=dataset_attr.split)
     else:
         dataset = load_dataset(
             path=data_path,
@@ -163,7 +168,7 @@ def _get_merged_dataset(
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
     stage: Literal["pt", "sft", "rm", "ppo", "kto"],
-    merge: bool = True,
+    return_dict: bool = False,
 ) -> Optional[Union["Dataset", "IterableDataset", dict[str, "Dataset"]]]:
     r"""Return the merged datasets in the standard format."""
     if dataset_names is None:
@@ -176,10 +181,10 @@ def _get_merged_dataset(
 
         datasets[dataset_name] = _load_single_dataset(dataset_attr, model_args, data_args, training_args)
 
-    if merge:
-        return merge_dataset(list(datasets.values()), data_args, seed=training_args.seed)
-    else:
+    if return_dict:
         return datasets
+    else:
+        return merge_dataset(list(datasets.values()), data_args, seed=training_args.seed)
 
 
 def _get_dataset_processor(
@@ -298,7 +303,12 @@ def get_dataset(
     with training_args.main_process_first(desc="load dataset"):
         dataset = _get_merged_dataset(data_args.dataset, model_args, data_args, training_args, stage)
         eval_dataset = _get_merged_dataset(
-            data_args.eval_dataset, model_args, data_args, training_args, stage, merge=training_args.do_predict
+            data_args.eval_dataset,
+            model_args,
+            data_args,
+            training_args,
+            stage,
+            return_dict=data_args.eval_on_each_dataset,
         )
 
     with training_args.main_process_first(desc="pre-process dataset"):

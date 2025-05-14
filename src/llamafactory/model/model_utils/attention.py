@@ -18,7 +18,6 @@ from transformers.utils import is_flash_attn_2_available, is_torch_sdpa_availabl
 
 from ...extras import logging
 from ...extras.constants import AttentionFunction
-from ...extras.misc import check_version
 
 
 if TYPE_CHECKING:
@@ -36,8 +35,6 @@ def configure_attn_implementation(
     if getattr(config, "model_type", None) == "gemma2" and is_trainable:
         if model_args.flash_attn == AttentionFunction.AUTO or model_args.flash_attn == AttentionFunction.FA2:
             if is_flash_attn_2_available():
-                check_version("transformers>=4.42.4")
-                check_version("flash_attn>=2.6.3")
                 if model_args.flash_attn != AttentionFunction.FA2:
                     logger.warning_rank0("Gemma 2 should use flash attention 2, change `flash_attn` to fa2.")
                     model_args.flash_attn = AttentionFunction.FA2
@@ -72,6 +69,9 @@ def configure_attn_implementation(
 
     if getattr(config, "model_type", None) == "internlm2":  # special case for custom models
         setattr(config, "attn_implementation", requested_attn_implementation)
+    elif getattr(config, "model_type", None) == "kimi_vl":
+        setattr(config.vision_config, "_attn_implementation", requested_attn_implementation)
+        setattr(config.text_config, "_attn_implementation", requested_attn_implementation)
     else:
         setattr(config, "_attn_implementation", requested_attn_implementation)
 

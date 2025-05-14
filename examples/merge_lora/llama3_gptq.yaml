@@ -6,7 +6,7 @@ trust_remote_code: true
 ### export
 export_dir: output/llama3_gptq
 export_quantization_bit: 4
-export_quantization_dataset: data/c4_demo.json
+export_quantization_dataset: data/c4_demo.jsonl
 export_size: 5
-export_device: cpu
+export_device: cpu  # choices: [cpu, auto]
 export_legacy_format: false

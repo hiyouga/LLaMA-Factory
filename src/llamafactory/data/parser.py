@@ -115,12 +115,7 @@ def get_dataset_list(dataset_names: Optional[list[str]], dataset_dir: str) -> li
     dataset_list: list[DatasetAttr] = []
     for name in dataset_names:
         if dataset_info is None:  # dataset_dir is ONLINE
-            if use_modelscope():
-                load_from = "ms_hub"
-            elif use_openmind():
-                load_from = "om_hub"
-            else:
-                load_from = "hf_hub"
+            load_from = "ms_hub" if use_modelscope() else "om_hub" if use_openmind() else "hf_hub"
             dataset_attr = DatasetAttr(load_from, dataset_name=name)
             dataset_list.append(dataset_attr)
             continue
@@ -141,6 +136,8 @@ def get_dataset_list(dataset_names: Optional[list[str]], dataset_dir: str) -> li
                 dataset_attr = DatasetAttr("hf_hub", dataset_name=dataset_info[name]["hf_hub_url"])
         elif "script_url" in dataset_info[name]:
             dataset_attr = DatasetAttr("script", dataset_name=dataset_info[name]["script_url"])
+        elif "cloud_file_name" in dataset_info[name]:
+            dataset_attr = DatasetAttr("cloud_file", dataset_name=dataset_info[name]["cloud_file_name"])
         else:
             dataset_attr = DatasetAttr("file", dataset_name=dataset_info[name]["file_name"])
 

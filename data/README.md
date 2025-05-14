@@ -1,12 +1,15 @@
 The [dataset_info.json](dataset_info.json) contains all available datasets. If you are using a custom dataset, please **make sure** to add a *dataset description* in `dataset_info.json` and specify `dataset: dataset_name` before training to use it.
 
+The `dataset_info.json` file should be put in the `dataset_dir` directory. You can change `dataset_dir` to use another directory. The default value is `./data`.
+
 Currently we support datasets in **alpaca** and **sharegpt** format.
 
 ```json
 "dataset_name": {
-  "hf_hub_url": "the name of the dataset repository on the Hugging Face hub. (if specified, ignore script_url and file_name)",
-  "ms_hub_url": "the name of the dataset repository on the Model Scope hub. (if specified, ignore script_url and file_name)",
-  "script_url": "the name of the directory containing a dataset loading script. (if specified, ignore file_name)",
+  "hf_hub_url": "the name of the dataset repository on the Hugging Face hub. (if specified, ignore script_url, file_name and cloud_file_name)",
+  "ms_hub_url": "the name of the dataset repository on the Model Scope hub. (if specified, ignore script_url, file_name and cloud_file_name)",
+  "script_url": "the name of the directory containing a dataset loading script. (if specified, ignore file_name and cloud_file_name)",
+  "cloud_file_name": "the name of the dataset file in s3/gcs cloud storage. (if specified, ignore file_name)",
   "file_name": "the name of the dataset folder or dataset file in this directory. (required if above are not specified)",
   "formatting": "the format of the dataset. (optional, default: alpaca, can be chosen from {alpaca, sharegpt})",
   "ranking": "whether the dataset is a preference dataset or not. (default: False)",
@@ -85,7 +88,7 @@ Regarding the above dataset, the *dataset description* in `dataset_info.json` sh
 
 ### Pre-training Dataset
 
-- [Example dataset](c4_demo.json)
+- [Example dataset](c4_demo.jsonl)
 
 In pre-training, only the `text` column will be used for model learning.
 

@@ -77,10 +77,10 @@ class WebChatModel(ChatModel):
         if not lazy_init:  # read arguments from command line
             super().__init__()
 
-        if demo_mode and os.environ.get("DEMO_MODEL") and os.environ.get("DEMO_TEMPLATE"):  # load demo model
-            model_name_or_path = os.environ.get("DEMO_MODEL")
-            template = os.environ.get("DEMO_TEMPLATE")
-            infer_backend = os.environ.get("DEMO_BACKEND", "huggingface")
+        if demo_mode and os.getenv("DEMO_MODEL") and os.getenv("DEMO_TEMPLATE"):  # load demo model
+            model_name_or_path = os.getenv("DEMO_MODEL")
+            template = os.getenv("DEMO_TEMPLATE")
+            infer_backend = os.getenv("DEMO_BACKEND", "huggingface")
             super().__init__(
                 dict(model_name_or_path=model_name_or_path, template=template, infer_backend=infer_backend)
             )
@@ -191,6 +191,7 @@ class WebChatModel(ChatModel):
         temperature: float,
         skip_special_tokens: bool,
         escape_html: bool,
+        enable_thinking: bool,
     ) -> Generator[tuple[list[dict[str, str]], list[dict[str, str]]], None, None]:
         r"""Generate output text in stream.
 
@@ -210,6 +211,7 @@ class WebChatModel(ChatModel):
             top_p=top_p,
             temperature=temperature,
             skip_special_tokens=skip_special_tokens,
+            enable_thinking=enable_thinking,
         ):
             response += new_text
             if tools:
