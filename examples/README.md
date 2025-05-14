@@ -15,6 +15,24 @@ Use `CUDA_VISIBLE_DEVICES` (GPU) or `ASCEND_RT_VISIBLE_DEVICES` (NPU) to choose 
 
 By default, LLaMA-Factory uses all visible computing devices.
 
+Basic usage:
+
+```bash
+llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
+```
+
+Advanced usage:
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1 llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml \
+    learning_rate=1e-5 \
+    logging_steps=1
+```
+
+```bash
+bash examples/train_lora/llama3_lora_sft.sh
+```
+
 ## Examples
 
 ### LoRA Fine-Tuning
@@ -34,8 +52,7 @@ llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
 #### Multimodal Supervised Fine-Tuning
 
 ```bash
-llamafactory-cli train examples/train_lora/llava1_5_lora_sft.yaml
-llamafactory-cli train examples/train_lora/qwen2vl_lora_sft.yaml
+llamafactory-cli train examples/train_lora/qwen2_5vl_lora_sft.yaml
 ```
 
 #### DPO/ORPO/SimPO Training
@@ -47,7 +64,7 @@ llamafactory-cli train examples/train_lora/llama3_lora_dpo.yaml
 #### Multimodal DPO/ORPO/SimPO Training
 
 ```bash
-llamafactory-cli train examples/train_lora/qwen2vl_lora_dpo.yaml
+llamafactory-cli train examples/train_lora/qwen2_5vl_lora_dpo.yaml
 ```
 
 #### Reward Modeling
@@ -151,7 +168,7 @@ FORCE_TORCHRUN=1 NNODES=2 NODE_RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 
 #### Multimodal Supervised Fine-Tuning
 
 ```bash
-FORCE_TORCHRUN=1 llamafactory-cli train examples/train_full/qwen2vl_full_sft.yaml
+FORCE_TORCHRUN=1 llamafactory-cli train examples/train_full/qwen2_5vl_full_sft.yaml
 ```
 
 ### Merging LoRA Adapters and Quantization
@@ -178,10 +195,11 @@ llamafactory-cli export examples/merge_lora/llama3_full_sft.yaml
 
 ### Inferring LoRA Fine-Tuned Models
 
-#### Batch Generation using vLLM Tensor Parallel
+#### Evaluation using vLLM's Multi-GPU Inference
 
 ```
-python scripts/vllm_infer.py --model_name_or_path path_to_merged_model --dataset alpaca_en_demo
+python scripts/vllm_infer.py --model_name_or_path meta-llama/Meta-Llama-3-8B-Instruct --template llama3 --dataset alpaca_en_demo
+python scripts/eval_bleu_rouge.py generated_predictions.jsonl
 ```
 
 #### Use CLI ChatBox
@@ -228,6 +246,12 @@ llamafactory-cli train examples/extras/badam/llama3_full_sft.yaml
 llamafactory-cli train examples/extras/adam_mini/qwen2_full_sft.yaml
 ```
 
+#### Full-Parameter Fine-Tuning using Muon
+
+```bash
+llamafactory-cli train examples/extras/muon/qwen2_full_sft.yaml
+```
+
 #### LoRA+ Fine-Tuning
 
 ```bash
@@ -257,10 +281,4 @@ llamafactory-cli train examples/extras/llama_pro/llama3_freeze_sft.yaml
 
 ```bash
 bash examples/extras/fsdp_qlora/train.sh
-```
-
-#### Computing BLEU and ROUGE Scores
-
-```bash
-llamafactory-cli train examples/extras/nlg_eval/llama3_lora_predict.yaml
 ```

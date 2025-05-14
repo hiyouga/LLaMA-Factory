@@ -99,6 +99,10 @@ class DataArguments:
         default=0.0,
         metadata={"help": "Size of the validation set, should be an integer or a float in range `[0,1)`."},
     )
+    eval_on_each_dataset: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to evaluate on each dataset separately."},
+    )
     packing: Optional[bool] = field(
         default=None,
         metadata={"help": "Enable sequences packing in training. Will automatically enable in pre-training."},
@@ -159,6 +163,12 @@ class DataArguments:
 
         if self.mask_history and self.train_on_prompt:
             raise ValueError("`mask_history` is incompatible with `train_on_prompt`.")
+
+        if self.neat_packing:
+            self.packing = True
+
+        if self.packing:
+            self.cutoff_len -= 1  # avoid pad_to_multiple_of, needs improve
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

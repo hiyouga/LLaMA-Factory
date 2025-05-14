@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Optional
 from ...data import SFTDataCollatorWith4DAttentionMask, get_dataset, get_template_and_fix_tokenizer
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
-from ...extras.misc import calculate_tps, get_logits_processor
+from ...extras.misc import calculate_tps
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
 from ..trainer_utils import create_modelcard_and_push
@@ -65,11 +65,6 @@ def run_sft(
         **tokenizer_module,
     )
 
-    # Override the decoding parameters of Seq2SeqTrainer
-    training_args.generation_max_length = training_args.generation_max_length or data_args.cutoff_len
-    training_args.generation_num_beams = data_args.eval_num_beams or training_args.generation_num_beams
-    training_args.remove_unused_columns = False  # important for multimodal dataset
-
     # Metric utils
     metric_module = {}
     if training_args.predict_with_generate:
@@ -82,7 +77,6 @@ def run_sft(
     gen_kwargs = generating_args.to_dict(obey_generation_config=True)
     gen_kwargs["eos_token_id"] = [tokenizer.eos_token_id] + tokenizer.additional_special_tokens_ids
     gen_kwargs["pad_token_id"] = tokenizer.pad_token_id
-    gen_kwargs["logits_processor"] = get_logits_processor()
 
     # Initialize our Trainer
     trainer = CustomSeq2SeqTrainer(
@@ -110,7 +104,15 @@ def run_sft(
         trainer.save_metrics("train", train_result.metrics)
         trainer.save_state()
         if trainer.is_world_process_zero() and finetuning_args.plot_loss:
-            plot_loss(training_args.output_dir, keys=["loss", "eval_loss", "eval_accuracy"])
+            keys = ["loss"]
+            if isinstance(dataset_module.get("eval_dataset"), dict):
+                keys += sum(
+                    [[f"eval_{key}_loss", f"eval_{key}_accuracy"] for key in dataset_module["eval_dataset"].keys()], []
+                )
+            else:
+                keys += ["eval_loss", "eval_accuracy"]
+
+            plot_loss(training_args.output_dir, keys=keys)
 
     if training_args.predict_with_generate:
         tokenizer.padding_side = "left"  # use left-padding in generation

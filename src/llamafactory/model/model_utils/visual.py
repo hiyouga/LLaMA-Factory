@@ -199,7 +199,18 @@ def patch_target_modules(
 
 
 _register_composite_model(
+    model_type="internvl",
+)
+
+
+_register_composite_model(
     model_type="gemma3",
+)
+
+
+_register_composite_model(
+    model_type="llama4",
+    vision_model_keys=["vision_model"],
 )
 
 
@@ -254,6 +265,15 @@ _register_composite_model(
 _register_composite_model(
     model_type="qwen2_audio",
     vision_model_keys=["audio_tower"],
+)
+
+
+_register_composite_model(
+    model_type="qwen2_5_omni_thinker",
+    projector_key="visual.merger",
+    vision_model_keys=["visual.patch_embed", "visual.blocks", "audio_tower"],
+    language_model_keys=["model", "lm_head"],
+    lora_conflict_keys=["patch_embed"],
 )
 
 

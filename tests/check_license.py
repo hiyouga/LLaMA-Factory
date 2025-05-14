@@ -20,7 +20,7 @@ KEYWORDS = ("Copyright", "2025", "LlamaFactory")
 
 
 def main():
-    path_list = []
+    path_list: list[Path] = []
     for check_dir in sys.argv[1:]:
         path_list.extend(Path(check_dir).glob("**/*.py"))
 

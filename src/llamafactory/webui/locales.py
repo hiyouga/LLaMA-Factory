@@ -2468,6 +2468,23 @@ LOCALES = {
             "label": "HTML タグをエスケープ",
         },
     },
+    "enable_thinking": {
+        "en": {
+            "label": "Enable thinking",
+        },
+        "ru": {
+            "label": "Включить мышление",
+        },
+        "zh": {
+            "label": "启用思考",
+        },
+        "ko": {
+            "label": "사고를 활성화하다",
+        },
+        "ja": {
+            "label": "思考を可能にする",
+        },
+    },
     "clear_btn": {
         "en": {
             "value": "Clear history",
@@ -2778,6 +2795,13 @@ ALERTS = {
         "zh": "输出目录已存在，将从该断点恢复训练。",
         "ko": "출력 디렉토리가 이미 존재합니다. 위 출력 디렉토리에 저장된 학습을 재개합니다.",
         "ja": "出力ディレクトリが既に存在します。このチェックポイントからトレーニングを再開します。",
+    },
+    "warn_no_instruct": {
+        "en": "You are using a non-instruct model, please fine-tune it first.",
+        "ru": "Вы используете модель без инструкции, пожалуйста, primeros выполните донастройку этой модели.",
+        "zh": "您正在使用非指令模型，请先对其进行微调。",
+        "ko": "당신은 지시하지 않은 모델을 사용하고 있습니다. 먼저 이를 미세 조정해 주세요.",
+        "ja": "インストラクションモデルを使用していません。まずモデルをアダプターに適合させてください。",
     },
     "info_aborting": {
         "en": "Aborted, wait for terminating...",

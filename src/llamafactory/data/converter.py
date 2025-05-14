@@ -26,7 +26,11 @@ if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments
 
     from ..hparams import DataArguments
+    from .mm_plugin import AudioInput, ImageInput, VideoInput
     from .parser import DatasetAttr
+
+    MediaType = Union[ImageInput, VideoInput, AudioInput]
+
 
 logger = logging.get_logger(__name__)
 
@@ -36,10 +40,12 @@ class DatasetConverter:
     dataset_attr: "DatasetAttr"
     data_args: "DataArguments"
 
-    def _find_medias(self, medias: Union[Any, list[Any]]) -> Optional[list[Any]]:
+    def _find_medias(self, medias: Union["MediaType", list["MediaType"], None]) -> Optional[list["MediaType"]]:
         r"""Optionally concatenate media path to media dir when loading from local disk."""
-        if not isinstance(medias, list):
-            medias = [medias] if medias is not None else []
+        if medias is None:
+            return None
+        elif not isinstance(medias, list):
+            medias = [medias]
         elif len(medias) == 0:
             return None
         else:
