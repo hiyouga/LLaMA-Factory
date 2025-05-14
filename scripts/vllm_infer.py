@@ -55,7 +55,7 @@ def vllm_infer(
     image_min_pixels: int = 32 * 32,
     video_fps: float = 2.0,
     video_maxlen: int = 128,
-    batch_size: int = 16,
+    batch_size: int = 1024,
 ):
     r"""Perform batch generation using vLLM engine, which supports tensor parallelism.
 
