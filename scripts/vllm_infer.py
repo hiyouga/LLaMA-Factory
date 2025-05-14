@@ -96,7 +96,7 @@ def vllm_infer(
         "tensor_parallel_size": (get_device_count() // pipeline_parallel_size) or 1,
         "pipeline_parallel_size": pipeline_parallel_size,
         "disable_log_stats": True,
-        "dtype":"float16",
+        # "dtype":"float16",        # open it, if GPUs do not support the bfloat16
         "enable_lora": model_args.adapter_name_or_path is not None,
     }
     if template_obj.mm_plugin.__class__.__name__ != "BasePlugin":
@@ -105,14 +105,12 @@ def vllm_infer(
     if isinstance(model_args.vllm_config, dict):
         engine_args.update(model_args.vllm_config)
 
-    # results = LLM(**engine_args).generate(vllm_inputs, sampling_params, lora_request=lora_request)
     llm = LLM(**engine_args)
 
     # load datasets
     dataset_module = get_dataset(template_obj, model_args, data_args, training_args, "ppo", **tokenizer_module)
     train_dataset = dataset_module["train_dataset"]
     
-    # params used in inference
     sampling_params = SamplingParams(
         repetition_penalty=generating_args.repetition_penalty or 1.0,  # repetition_penalty must > 0
         temperature=generating_args.temperature,
@@ -135,7 +133,6 @@ def vllm_infer(
         
         batch = train_dataset[i : min(i + batch_size, len(train_dataset))]
 
-        # for extra_modal_data in batch[extra_modal]:
         for j in range(len(batch["input_ids"])):
             if batch["images"][j] != None:
                 image = batch["images"][j]
