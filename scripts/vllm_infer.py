@@ -187,4 +187,3 @@ def vllm_infer(
 
 if __name__ == "__main__":
     fire.Fire(vllm_infer)
-
