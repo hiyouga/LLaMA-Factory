@@ -18,6 +18,7 @@ from typing import Optional
 
 import fire
 from transformers import Seq2SeqTrainingArguments
+from tqdm import tqdm
 
 from llamafactory.data import get_dataset, get_template_and_fix_tokenizer
 from llamafactory.extras.constants import IGNORE_INDEX
@@ -96,11 +97,10 @@ def vllm_infer(
         "tensor_parallel_size": (get_device_count() // pipeline_parallel_size) or 1,
         "pipeline_parallel_size": pipeline_parallel_size,
         "disable_log_stats": True,
-        # "dtype":"float16",        # open it, if GPUs do not support the bfloat16
         "enable_lora": model_args.adapter_name_or_path is not None,
     }
     if template_obj.mm_plugin.__class__.__name__ != "BasePlugin":
-        engine_args["limit_mm_per_prompt"] = {"image": 6, "video": 2, "audio": 2}
+        engine_args["limit_mm_per_prompt"] = {"image": 4, "video": 2, "audio": 2}
 
     if isinstance(model_args.vllm_config, dict):
         engine_args.update(model_args.vllm_config)
@@ -110,7 +110,7 @@ def vllm_infer(
     # load datasets
     dataset_module = get_dataset(template_obj, model_args, data_args, training_args, "ppo", **tokenizer_module)
     train_dataset = dataset_module["train_dataset"]
-    
+
     sampling_params = SamplingParams(
         repetition_penalty=generating_args.repetition_penalty or 1.0,  # repetition_penalty must > 0
         temperature=generating_args.temperature,
@@ -126,8 +126,13 @@ def vllm_infer(
     else:
         lora_request = None
 
-for i in tqdm(range(0, len(train_dataset), batch_size), desc="Processing batches"):
+    # Store all results in these lists
+    all_prompts = []
+    all_preds = []
+    all_labels = []
 
+    # Add batch process to avoid the issue of too many files opened
+    for i in tqdm(range(0, len(train_dataset), batch_size), desc="Processing batched inference"):
         vllm_inputs, prompts, labels = [], [], []
 
         batch = train_dataset[i : min(i + batch_size, len(train_dataset))]
@@ -173,15 +178,21 @@ for i in tqdm(range(0, len(train_dataset), batch_size), desc="Processing batches
         results = llm.generate(vllm_inputs, sampling_params, lora_request=lora_request)
 
         preds = [result.outputs[0].text for result in results]
-        with open(save_name, "a", encoding="utf-8") as f:
-            for text, pred, label in zip(prompts, preds, labels):
-                f.write(json.dumps({"prompt": text, "predict": pred, "label": label}, ensure_ascii=False) + "\n")
 
-        print("*" * 70)
-        print(f"{len(prompts)} generated results have been saved at {save_name}.")
-        print("*" * 70)
+        # Accumulate results
+        all_prompts.extend(prompts)
+        all_preds.extend(preds)
+        all_labels.extend(labels)
 
         gc.collect()
+    # Write all results at once outside the loop
+    with open(save_name, "w", encoding="utf-8") as f:
+        for text, pred, label in zip(all_prompts, all_preds, all_labels):
+            f.write(json.dumps({"prompt": text, "predict": pred, "label": label}, ensure_ascii=False) + "\n")
+
+    print("*" * 70)
+    print(f"{len(all_prompts)} total generated results have been saved at {save_name}.")
+    print("*" * 70)
 
 
 if __name__ == "__main__":
