@@ -126,8 +126,7 @@ def vllm_infer(
     else:
         lora_request = None
 
-    for i in range(0, len(train_dataset), batch_size):
-        print(f"Processing batch {i} to {min(i + batch_size, len(train_dataset))}...")
+for i in tqdm(range(0, len(train_dataset), batch_size), desc="Processing batches"):
 
         vllm_inputs, prompts, labels = [], [], []
 
