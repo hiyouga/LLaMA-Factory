@@ -58,7 +58,18 @@ if is_transformers_version_greater_than("4.45.0"):
 
 
 if is_transformers_version_greater_than("4.49.0"):
-    from transformers.image_utils import make_batched_videos, make_flat_list_of_images
+    try:
+        from transformers.image_utils import make_batched_videos, make_flat_list_of_images
+    except ImportError:
+        try:
+            # If that fails, try importing from the new location
+            from transformers.video_utils import make_batched_videos
+            from transformers.image_utils import make_flat_list_of_images
+        except ImportError:
+            raise ImportError(
+                "Could not import make_batched_videos and make_flat_list_of_images. "
+                "In Transformers 4.52.0, make_batched_videos will be moved to transformers.video_utils."
+            )
 
 
 if TYPE_CHECKING:
