@@ -16,6 +16,7 @@ import os
 
 import pytest
 
+from llamafactory.extras.misc import is_torch_hpu_available
 from llamafactory.train.test_utils import compare_model, load_infer_model, load_reference_model, patch_valuehead_model
 
 
@@ -28,6 +29,14 @@ INFER_ARGS = {
     "template": "llama3",
     "infer_dtype": "float16",
 }
+
+if is_torch_hpu_available():
+    INFER_ARGS.update(
+        {
+            "use_habana": True,
+            "infer_dtype": "bfloat16",
+        }
+    )
 
 
 @pytest.fixture

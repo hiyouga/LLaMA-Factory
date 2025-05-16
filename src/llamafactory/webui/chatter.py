@@ -22,7 +22,7 @@ from transformers.utils import is_torch_npu_available
 from ..chat import ChatModel
 from ..data import Role
 from ..extras.constants import PEFT_METHODS
-from ..extras.misc import torch_gc
+from ..extras.misc import is_torch_hpu_available, torch_gc
 from ..extras.packages import is_gradio_available
 from .common import get_save_dir, load_config
 from .locales import ALERTS
@@ -125,6 +125,10 @@ class WebChatModel(ChatModel):
             vllm_enforce_eager=True,
             trust_remote_code=True,
         )
+        if is_torch_hpu_available():
+            args["use_habana"] = get("top.use_habana") == "True"
+            args["use_lazy_mode"] = get("top.use_lazy_mode") == "True"
+            args["use_hpu_graphs"] = get("top.use_hpu_graphs") == "True"
 
         # checkpoints
         if checkpoint_path:

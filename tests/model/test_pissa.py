@@ -16,6 +16,7 @@ import os
 
 import pytest
 
+from llamafactory.extras.misc import is_torch_hpu_available
 from llamafactory.train.test_utils import compare_model, load_infer_model, load_reference_model, load_train_model
 
 
@@ -47,6 +48,24 @@ INFER_ARGS = {
     "template": "llama3",
     "infer_dtype": "float16",
 }
+
+if is_torch_hpu_available():
+    TRAIN_ARGS.update(
+        {
+            "use_habana": True,
+            "gaudi_config_name": "Habana/llama",
+            "fp16": False,
+            "bf16": True,
+        }
+    )
+    INFER_ARGS.update(
+        {
+            "use_habana": True,
+            "infer_dtype": "bfloat16",
+        }
+    )
+
+OS_NAME = os.getenv("OS_NAME", "")
 
 
 @pytest.mark.xfail(reason="PiSSA initialization is not stable in different platform.")
