@@ -169,11 +169,22 @@ def read_cloud_json(cloud_path):
     try:
         # Try with anonymous access first
         fs = setup_fs(cloud_path, anon=True)
-        return _read_json_with_fs(fs, cloud_path, lines=cloud_path.endswith(".jsonl"))
     except Exception:
         # Try again with credentials
         fs = setup_fs(cloud_path)
-        return _read_json_with_fs(fs, cloud_path, lines=cloud_path.endswith(".jsonl"))
+
+    if fs.isdir(cloud_path):
+        files = [x["Key"] for x in fs.listdir(cloud_path)]
+    else:
+        files = [cloud_path]
+    # filter out non-JSON files
+    files = [file for file in files if file.endswith(".json") or file.endswith(".jsonl")]
+    if not files:
+        raise ValueError(f"No JSON/JSONL files found in the specified path: {cloud_path}")
+    data = []
+    for file in files:
+        data.extend(_read_json_with_fs(fs, file, lines=file.endswith(".jsonl")))
+    return data
 
 
 def _read_json_with_fs(fs, path, lines=True):
