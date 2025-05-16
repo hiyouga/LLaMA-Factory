@@ -364,6 +364,12 @@ class SGLangArguments:
         default=None,
         metadata={"help": "Config to initialize the SGLang engine. Please use JSON strings."},
     )
+    sglang_lora_backend: Literal["triton", "flashinfer"] = field(
+        default="triton",
+        metadata={
+            "help": "The backend of running GEMM kernels for Lora modules. Recommend using the Triton LoRA backend for better performance and stability."
+        },
+    )
 
     def __post_init__(self):
         if isinstance(self.sglang_config, str) and self.sglang_config.startswith("{"):
