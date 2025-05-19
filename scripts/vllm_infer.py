@@ -17,8 +17,8 @@ import json
 from typing import Optional
 
 import fire
-from transformers import Seq2SeqTrainingArguments
 from tqdm import tqdm
+from transformers import Seq2SeqTrainingArguments
 
 from llamafactory.data import get_dataset, get_template_and_fix_tokenizer
 from llamafactory.extras.constants import IGNORE_INDEX
