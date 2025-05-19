@@ -483,13 +483,13 @@ huggingface-cli login
 ```bash
 git clone --depth 1 https://github.com/hiyouga/LLaMA-Factory.git
 cd LLaMA-Factory
-pip install -e ".[torch,metrics]"
+pip install -e ".[torch,metrics]" --no-build-isolation
 ```
 
 Extra dependencies available: torch, torch-npu, metrics, deepspeed, liger-kernel, bitsandbytes, hqq, eetq, gptq, aqlm, vllm, sglang, galore, apollo, badam, adam-mini, qwen, minicpm_v, modelscope, openmind, swanlab, quality
 
 > [!TIP]
-> Use `pip install --no-deps -e .` to resolve package conflicts.
+> Use `pip install -e . --no-deps --no-build-isolation` to resolve package conflicts.
 
 <details><summary>Setting up a virtual environment with <b>uv</b></summary>
 
