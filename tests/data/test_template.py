@@ -134,10 +134,9 @@ def test_reasoning_encode_oneturn(use_fast: bool, messages: list[dict[str, str]]
     template = get_template_and_fix_tokenizer(tokenizer, data_args)
     prompt_ids, answer_ids = template.encode_oneturn(tokenizer, messages)
     prompt_str = (
-        f"<|im_start|>user\n{messages[0]['content']}<|im_end|>\n"
-        f"<|im_start|>assistant\n{MESSAGES[1]['content']}<|im_end|>\n"
-        f"<|im_start|>user\n{messages[2]['content']}<|im_end|>\n"
-        "<|im_start|>assistant\n"
+        f"<|im_start|>user\n{messages[0]['content']}<|im_end|>\n<|im_start|>assistant\n"
+        f"{MESSAGES[1]['content']}<|im_end|>\n"
+        f"<|im_start|>user\n{messages[2]['content']}<|im_end|>\n<|im_start|>assistant\n"
     )
     answer_str = f"{messages[3]['content']}<|im_end|>\n"
     if messages == MESSAGES:
@@ -157,10 +156,10 @@ def test_reasoning_encode_multiturn(use_fast: bool, messages: list[dict[str, str
     data_args = DataArguments(template="qwen3", enable_thinking=enable_thinking)
     template = get_template_and_fix_tokenizer(tokenizer, data_args)
     encoded_pairs = template.encode_multiturn(tokenizer, messages)
-    prompt_str_1 = f"<|im_start|>user\n{messages[0]['content']}<|im_end|>\n"
-    answer_str_1 = f"<|im_start|>assistant\n{messages[1]['content']}<|im_end|>\n"
-    prompt_str_2 = f"<|im_start|>user\n{messages[2]['content']}<|im_end|>\n"
-    answer_str_2 = "<|im_start|>assistant\n"
+    prompt_str_1 = f"<|im_start|>user\n{messages[0]['content']}<|im_end|>\n<|im_start|>assistant\n"
+    answer_str_1 = f"{messages[1]['content']}<|im_end|>\n"
+    prompt_str_2 = f"<|im_start|>user\n{messages[2]['content']}<|im_end|>\n<|im_start|>assistant\n"
+    answer_str_2 = f"{messages[3]['content']}<|im_end|>\n"
     if messages == MESSAGES:
         if enable_thinking:
             answer_str_1 = "<think>\n\n</think>\n\n" + answer_str_1
@@ -286,6 +285,9 @@ def test_qwen3_template(use_fast: bool, messages: list[dict[str, str]]):
         "<|im_start|>assistant\n"
     )
     answer_str = f"{messages[3]['content']}<|im_end|>\n"
+    if messages == MESSAGES:
+        answer_str = "<think>\n\n</think>\n\n" + answer_str
+
     _check_template("Qwen/Qwen3-8B", "qwen3", prompt_str, answer_str, use_fast, messages=messages)
 
 
