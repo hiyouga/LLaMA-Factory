@@ -470,13 +470,13 @@ huggingface-cli login
 ```bash
 git clone --depth 1 https://github.com/hiyouga/LLaMA-Factory.git
 cd LLaMA-Factory
-pip install -e ".[torch,metrics]"
+pip install -e ".[torch,metrics]" --no-build-isolation
 ```
 
 可选的额外依赖项：torch、torch-npu、metrics、deepspeed、liger-kernel、bitsandbytes、hqq、eetq、gptq、aqlm、vllm、sglang、galore、apollo、badam、adam-mini、qwen、minicpm_v、modelscope、openmind、swanlab、quality
 
 > [!TIP]
-> 遇到包冲突时，可使用 `pip install --no-deps -e .` 解决。
+> 遇到包冲突时，可使用 `pip install -e . --no-deps --no-build-isolation` 解决。
 
 <details><summary>使用 <b>uv</b> 构建虚拟环境</summary>
 
