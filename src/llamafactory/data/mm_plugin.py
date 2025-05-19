@@ -63,8 +63,8 @@ if is_transformers_version_greater_than("4.49.0"):
     except ImportError:
         try:
             # If that fails, try importing from the new location
-            from transformers.video_utils import make_batched_videos
             from transformers.image_utils import make_flat_list_of_images
+            from transformers.video_utils import make_batched_videos
         except ImportError:
             raise ImportError(
                 "Could not import make_batched_videos and make_flat_list_of_images. "

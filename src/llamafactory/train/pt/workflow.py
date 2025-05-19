@@ -84,14 +84,15 @@ def run_pt(
                     perplexity = math.exp(metrics[f"eval_{key}_loss"])
                 except OverflowError:
                     perplexity = float("inf")
+
                 metrics[f"eval_{key}_perplexity"] = perplexity
         else:
             try:
                 perplexity = math.exp(metrics["eval_loss"])
             except OverflowError:
                 perplexity = float("inf")
-            metrics["eval_perplexity"] = perplexity
 
+            metrics["eval_perplexity"] = perplexity
 
         trainer.log_metrics("eval", metrics)
         trainer.save_metrics("eval", metrics)
