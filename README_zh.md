@@ -237,7 +237,7 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 
 </details>
 
-> [!NOTE]
+> [!TIP]
 > 如果您无法使用最新的功能，请尝试重新拉取代码并再次安装 LLaMA-Factory。
 
 ## 模型

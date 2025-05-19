@@ -126,9 +126,10 @@ def test_encode_multiturn(use_fast: bool):
 
 
 @pytest.mark.parametrize("use_fast", [True, False])
-@pytest.mark.parametrize("messages", [MESSAGES, MESSAGES_WITH_THOUGHT])
+@pytest.mark.parametrize("cot_messages", [True, False])
 @pytest.mark.parametrize("enable_thinking", [True, False])
-def test_reasoning_encode_oneturn(use_fast: bool, messages: list[dict[str, str]], enable_thinking: bool):
+def test_reasoning_encode_oneturn(use_fast: bool, cot_messages: bool, enable_thinking: bool):
+    messages = MESSAGES_WITH_THOUGHT if cot_messages else MESSAGES
     tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-8B", use_fast=use_fast)
     data_args = DataArguments(template="qwen3", enable_thinking=enable_thinking)
     template = get_template_and_fix_tokenizer(tokenizer, data_args)
@@ -139,7 +140,7 @@ def test_reasoning_encode_oneturn(use_fast: bool, messages: list[dict[str, str]]
         f"<|im_start|>user\n{messages[2]['content']}<|im_end|>\n<|im_start|>assistant\n"
     )
     answer_str = f"{messages[3]['content']}<|im_end|>\n"
-    if messages == MESSAGES:
+    if not cot_messages:
         if enable_thinking:
             answer_str = "<think>\n\n</think>\n\n" + answer_str
         else:
@@ -149,9 +150,10 @@ def test_reasoning_encode_oneturn(use_fast: bool, messages: list[dict[str, str]]
 
 
 @pytest.mark.parametrize("use_fast", [True, False])
-@pytest.mark.parametrize("messages", [MESSAGES, MESSAGES_WITH_THOUGHT])
+@pytest.mark.parametrize("cot_messages", [True, False])
 @pytest.mark.parametrize("enable_thinking", [True, False])
-def test_reasoning_encode_multiturn(use_fast: bool, messages: list[dict[str, str]], enable_thinking: bool):
+def test_reasoning_encode_multiturn(use_fast: bool, cot_messages: bool, enable_thinking: bool):
+    messages = MESSAGES_WITH_THOUGHT if cot_messages else MESSAGES
     tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-8B", use_fast=use_fast)
     data_args = DataArguments(template="qwen3", enable_thinking=enable_thinking)
     template = get_template_and_fix_tokenizer(tokenizer, data_args)
@@ -160,7 +162,7 @@ def test_reasoning_encode_multiturn(use_fast: bool, messages: list[dict[str, str
     answer_str_1 = f"{messages[1]['content']}<|im_end|>\n"
     prompt_str_2 = f"<|im_start|>user\n{messages[2]['content']}<|im_end|>\n<|im_start|>assistant\n"
     answer_str_2 = f"{messages[3]['content']}<|im_end|>\n"
-    if messages == MESSAGES:
+    if not cot_messages:
         if enable_thinking:
             answer_str_1 = "<think>\n\n</think>\n\n" + answer_str_1
             answer_str_2 = "<think>\n\n</think>\n\n" + answer_str_2
@@ -276,8 +278,9 @@ def test_qwen2_5_template(use_fast: bool):
 
 
 @pytest.mark.parametrize("use_fast", [True, False])
-@pytest.mark.parametrize("messages", [MESSAGES, MESSAGES_WITH_THOUGHT])
-def test_qwen3_template(use_fast: bool, messages: list[dict[str, str]]):
+@pytest.mark.parametrize("cot_messages", [True, False])
+def test_qwen3_template(use_fast: bool, cot_messages: bool):
+    messages = MESSAGES_WITH_THOUGHT if cot_messages else MESSAGES
     prompt_str = (
         f"<|im_start|>user\n{messages[0]['content']}<|im_end|>\n"
         f"<|im_start|>assistant\n{MESSAGES[1]['content']}<|im_end|>\n"
@@ -285,7 +288,7 @@ def test_qwen3_template(use_fast: bool, messages: list[dict[str, str]]):
         "<|im_start|>assistant\n"
     )
     answer_str = f"{messages[3]['content']}<|im_end|>\n"
-    if messages == MESSAGES:
+    if not cot_messages:
         answer_str = "<think>\n\n</think>\n\n" + answer_str
 
     _check_template("Qwen/Qwen3-8B", "qwen3", prompt_str, answer_str, use_fast, messages=messages)
