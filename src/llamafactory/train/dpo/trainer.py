@@ -29,6 +29,7 @@ from trl.trainer import disable_dropout_in_model
 from typing_extensions import override
 
 from ...extras.constants import IGNORE_INDEX
+from ...extras.misc import is_torch_hpu_available
 from ...extras.packages import is_transformers_version_greater_than
 from ..callbacks import SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler, get_batch_logps, nested_detach
@@ -38,6 +39,11 @@ if TYPE_CHECKING:
     from transformers import PreTrainedModel, ProcessorMixin
 
     from ...hparams import FinetuningArguments
+
+
+if is_torch_hpu_available():
+    from optimum.habana import GaudiTrainer as Trainer
+    from optimum.habana.trl import GaudiDPOTrainer as DPOTrainer
 
 
 class CustomDPOTrainer(DPOTrainer):

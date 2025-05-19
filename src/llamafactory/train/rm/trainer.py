@@ -25,6 +25,7 @@ from transformers import Trainer
 from typing_extensions import override
 
 from ...extras import logging
+from ...extras.misc import is_torch_hpu_available
 from ...extras.packages import is_transformers_version_greater_than
 from ..callbacks import FixValueHeadModelCallback, SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
@@ -35,6 +36,10 @@ if TYPE_CHECKING:
     from transformers.trainer import PredictionOutput
 
     from ...hparams import FinetuningArguments
+
+
+if is_torch_hpu_available():
+    from optimum.habana import GaudiTrainer as Trainer
 
 
 logger = logging.get_logger(__name__)
@@ -101,7 +106,7 @@ class PairwiseTrainer(Trainer):
         chosen_rewards, rejected_rewards = torch.split(values, batch_size, dim=0)
         chosen_scores = chosen_rewards.gather(dim=-1, index=(chosen_masks.sum(dim=-1, keepdim=True) - 1))
         rejected_scores = rejected_rewards.gather(dim=-1, index=(rejected_masks.sum(dim=-1, keepdim=True) - 1))
-        chosen_scores, rejected_scores = chosen_scores.squeeze(), rejected_scores.squeeze()
+        # chosen_scores, rejected_scores = chosen_scores.squeeze(), rejected_scores.squeeze()
 
         loss = -torch.nn.functional.logsigmoid(chosen_scores.float() - rejected_scores.float()).mean()
         if return_outputs:

@@ -16,6 +16,7 @@ import os
 
 import torch
 
+from llamafactory.extras.misc import is_torch_hpu_available
 from llamafactory.train.test_utils import load_infer_model, load_train_model
 
 
@@ -42,31 +43,50 @@ INFER_ARGS = {
     "infer_dtype": "float16",
 }
 
+if is_torch_hpu_available():
+    TRAIN_ARGS.update(
+        {
+            "use_habana": True,
+            "gaudi_config_name": "Habana/llama",
+            "fp16": False,
+            "bf16": True,
+        }
+    )
+    INFER_ARGS.update(
+        {
+            "use_habana": True,
+            "infer_dtype": "bfloat16",
+        }
+    )
+
 
 def test_freeze_train_all_modules():
     model = load_train_model(freeze_trainable_layers=1, **TRAIN_ARGS)
+    dtype = torch.bfloat16 if is_torch_hpu_available() else torch.float16
     for name, param in model.named_parameters():
         if name.startswith("model.layers.1."):
             assert param.requires_grad is True
             assert param.dtype == torch.float32
         else:
             assert param.requires_grad is False
-            assert param.dtype == torch.float16
+            assert param.dtype == dtype
 
 
 def test_freeze_train_extra_modules():
     model = load_train_model(freeze_trainable_layers=1, freeze_extra_modules="embed_tokens,lm_head", **TRAIN_ARGS)
+    dtype = torch.bfloat16 if is_torch_hpu_available() else torch.float16
     for name, param in model.named_parameters():
         if name.startswith("model.layers.1.") or any(module in name for module in ["embed_tokens", "lm_head"]):
             assert param.requires_grad is True
             assert param.dtype == torch.float32
         else:
             assert param.requires_grad is False
-            assert param.dtype == torch.float16
+            assert param.dtype == dtype
 
 
 def test_freeze_inference():
     model = load_infer_model(**INFER_ARGS)
+    dtype = torch.bfloat16 if is_torch_hpu_available() else torch.float16
     for param in model.parameters():
         assert param.requires_grad is False
-        assert param.dtype == torch.float16
+        assert param.dtype == dtype
