@@ -408,9 +408,8 @@ class ReasoningTemplate(Template):
         tools: Optional[str] = None,
     ) -> tuple[list[int], list[int]]:
         messages = deepcopy(messages)
-        for i in range(len(messages)):
-            if messages[i]["role"] == Role.ASSISTANT and (i != len(messages) - 1):
-                messages[i]["content"] = self.remove_thought(messages[i]["content"])
+        for i in range(1, len(messages) - 2, 2):
+            messages[i]["content"] = self.remove_thought(messages[i]["content"])
 
         prompt_ids, response_ids = super().encode_oneturn(tokenizer, messages, system, tools)
         if (
@@ -433,7 +432,7 @@ class ReasoningTemplate(Template):
         tools: Optional[str] = None,
     ) -> list[tuple[list[int], list[int]]]:
         encoded_messages = self._encode(tokenizer, messages, system, tools)
-        for i in range(len(messages) - 1):
+        for i in range(0, len(messages), 2):
             if (
                 self.thought_words[0] not in messages[i + 1]["content"]
                 and self.thought_words[1] not in messages[i + 1]["content"]
