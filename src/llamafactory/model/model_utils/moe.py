@@ -99,27 +99,29 @@ def add_z3_leaf_module(model: "PreTrainedModel") -> None:
 
 
 def configure_moe(config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool) -> None:
+    if not is_trainable or not model_args.moe_aux_loss_coef:
+        return
+
     model_type = getattr(config, "model_type", None)
-    if model_args.moe_aux_loss_coef is not None:
-        if model_type in [
-            "dbrx",
-            "granitemoe",
-            "jamba",
-            "jetmoe",
-            "llama4",
-            "mixtral",
-            "olmoe",
-            "phimoe",
-            "qwen2_moe",
-            "qwen3_moe",
-        ]:
-            setattr(config, "output_router_logits", is_trainable)
+    if model_type in [
+        "dbrx",
+        "granitemoe",
+        "jamba",
+        "jetmoe",
+        "llama4",
+        "mixtral",
+        "olmoe",
+        "phimoe",
+        "qwen2_moe",
+        "qwen3_moe",
+    ]:
+        setattr(config, "output_router_logits", True)
 
-        if model_type in ["granitemoe", "jamba", "llama4", "mixtral", "olmoe", "phimoe", "qwen2_moe", "qwen3_moe"]:
-            setattr(config, "router_aux_loss_coef", model_args.moe_aux_loss_coef)
+    if model_type in ["granitemoe", "jamba", "llama4", "mixtral", "olmoe", "phimoe", "qwen2_moe", "qwen3_moe"]:
+        setattr(config, "router_aux_loss_coef", model_args.moe_aux_loss_coef)
 
-        elif model_type == "deepseek":
-            setattr(config, "aux_loss_alpha", model_args.moe_aux_loss_coef)
+    elif model_type == "deepseek":
+        setattr(config, "aux_loss_alpha", model_args.moe_aux_loss_coef)
 
-        elif model_type == "jetmoe":
-            setattr(config, "aux_loss_coef", model_args.moe_aux_loss_coef)
+    elif model_type == "jetmoe":
+        setattr(config, "aux_loss_coef", model_args.moe_aux_loss_coef)

@@ -102,8 +102,8 @@ def patch_config(
         else:
             model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
 
-    configure_attn_implementation(config, model_args, is_trainable)
-    configure_rope(config, model_args, is_trainable)
+    configure_attn_implementation(config, model_args)
+    configure_rope(config, model_args)
     configure_longlora(config, model_args, is_trainable)
     configure_quantization(config, tokenizer, model_args, init_kwargs)
     configure_moe(config, model_args, is_trainable)
