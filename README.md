@@ -250,7 +250,7 @@ Compared to ChatGLM's [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/
 
 </details>
 
-> [!NOTE]
+> [!TIP]
 > If you cannot use the latest feature, please pull the latest code and install LLaMA-Factory again.
 
 ## Supported Models

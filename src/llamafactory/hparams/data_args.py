@@ -115,6 +115,14 @@ class DataArguments:
         default=None,
         metadata={"help": "Tool format to use for constructing function calling examples."},
     )
+    default_system: Optional[str] = field(
+        default=None,
+        metadata={"help": "Override the default system message in the template."},
+    )
+    enable_thinking: bool = field(
+        default=True,
+        metadata={"help": "Whether or not to enable thinking mode for reasoning models."},
+    )
     tokenized_path: Optional[str] = field(
         default=None,
         metadata={
