@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from transformers import GenerationConfig
 
@@ -62,17 +62,9 @@ class GeneratingArguments:
         default=1.0,
         metadata={"help": "Exponential penalty to the length that is used with beam-based generation."},
     )
-    default_system: Optional[str] = field(
-        default=None,
-        metadata={"help": "Default system message to use in chat completion."},
-    )
     skip_special_tokens: bool = field(
         default=True,
         metadata={"help": "Whether or not to remove special tokens in the decoding."},
-    )
-    enable_thinking: bool = field(
-        default=True,
-        metadata={"help": "Whether or not to enable thinking mode for reasoning models."},
     )
 
     def to_dict(self, obey_generation_config: bool = False) -> dict[str, Any]:

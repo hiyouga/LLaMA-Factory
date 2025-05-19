@@ -262,9 +262,9 @@ def test_qwen3_template(use_fast: bool):
         "<|im_start|>user\nHow are you<|im_end|>\n"
         "<|im_start|>assistant\nI am fine!<|im_end|>\n"
         "<|im_start|>user\n你好<|im_end|>\n"
-        "<|im_start|>assistant\n<think>\n\n</think>\n\n"
+        "<|im_start|>assistant\n"
     )
-    answer_str = "很高兴认识你！<|im_end|>\n"
+    answer_str = "<think>\n\n</think>\n\n很高兴认识你！<|im_end|>\n"
     _check_template("Qwen/Qwen3-8B", "qwen3", prompt_str, answer_str, use_fast)
 
     prompt_str = (
@@ -293,6 +293,7 @@ def test_parse_llama3_template():
 def test_parse_qwen_template():
     tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-7B-Instruct", token=HF_TOKEN)
     template = parse_template(tokenizer)
+    assert template.__class__.__name__ == "Template"
     assert template.format_user.slots == ["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]
     assert template.format_assistant.slots == ["{{content}}<|im_end|>\n"]
     assert template.format_system.slots == ["<|im_start|>system\n{{content}}<|im_end|>\n"]
@@ -303,6 +304,7 @@ def test_parse_qwen_template():
 def test_parse_qwen3_template():
     tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-8B", token=HF_TOKEN)
     template = parse_template(tokenizer)
+    assert template.__class__.__name__ == "ReasoningTemplate"
     assert template.format_user.slots == ["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]
     assert template.format_assistant.slots == ["{{content}}<|im_end|>\n"]
     assert template.format_system.slots == ["<|im_start|>system\n{{content}}<|im_end|>\n"]
