@@ -29,6 +29,7 @@ from .common import (
     DEFAULT_CACHE_DIR,
     DEFAULT_CONFIG_DIR,
     abort_process,
+    calculate_pixels,
     gen_cmd,
     get_save_dir,
     load_args,
@@ -162,7 +163,15 @@ class Runner:
             mask_history=get("train.mask_history"),
             resize_vocab=get("train.resize_vocab"),
             use_llama_pro=get("train.use_llama_pro"),
+            enable_thinking=get("train.enable_thinking"),
             report_to=get("train.report_to"),
+            freeze_vision_tower=get("train.freeze_vision_tower"),
+            freeze_multi_modal_projector=get("train.freeze_multi_modal_projector"),
+            freeze_language_model=get("train.freeze_language_model"),
+            image_max_pixels=calculate_pixels(get("train.image_max_pixels")),
+            image_min_pixels=calculate_pixels(get("train.image_min_pixels")),
+            video_max_pixels=calculate_pixels(get("train.video_max_pixels")),
+            video_min_pixels=calculate_pixels(get("train.video_min_pixels")),
             use_galore=get("train.use_galore"),
             use_apollo=get("train.use_apollo"),
             use_badam=get("train.use_badam"),
@@ -255,12 +264,6 @@ class Runner:
             args["badam_switch_mode"] = get("train.badam_switch_mode")
             args["badam_switch_interval"] = get("train.badam_switch_interval")
             args["badam_update_ratio"] = get("train.badam_update_ratio")
-
-        # report_to
-        if "none" in args["report_to"]:
-            args["report_to"] = "none"
-        elif "all" in args["report_to"]:
-            args["report_to"] = "all"
 
         # swanlab config
         if get("train.use_swanlab"):

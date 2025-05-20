@@ -106,11 +106,11 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
                 use_llama_pro = gr.Checkbox()
 
             with gr.Column():
+                enable_thinking = gr.Checkbox(value=True)
                 report_to = gr.Dropdown(
-                    choices=["none", "all", "wandb", "mlflow", "neptune", "tensorboard"],
-                    value=["none"],
+                    choices=["none", "wandb", "mlflow", "neptune", "tensorboard", "all"],
+                    value="none",
                     allow_custom_value=True,
-                    multiselect=True,
                 )
 
     input_elems.update(
@@ -126,6 +126,7 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
             mask_history,
             resize_vocab,
             use_llama_pro,
+            enable_thinking,
             report_to,
         }
     )
@@ -143,6 +144,7 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
             mask_history=mask_history,
             resize_vocab=resize_vocab,
             use_llama_pro=use_llama_pro,
+            enable_thinking=enable_thinking,
             report_to=report_to,
         )
     )
@@ -228,6 +230,42 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
             reward_model=reward_model,
             ppo_score_norm=ppo_score_norm,
             ppo_whiten_rewards=ppo_whiten_rewards,
+        )
+    )
+
+    with gr.Accordion(open=False) as mm_tab:
+        with gr.Row():
+            freeze_vision_tower = gr.Checkbox(value=True)
+            freeze_multi_modal_projector = gr.Checkbox(value=True)
+            freeze_language_model = gr.Checkbox(value=False)
+
+        with gr.Row():
+            image_max_pixels = gr.Textbox(value="768*768")
+            image_min_pixels = gr.Textbox(value="32*32")
+            video_max_pixels = gr.Textbox(value="256*256")
+            video_min_pixels = gr.Textbox(value="16*16")
+
+    input_elems.update(
+        {
+            freeze_vision_tower,
+            freeze_multi_modal_projector,
+            freeze_language_model,
+            image_max_pixels,
+            image_min_pixels,
+            video_max_pixels,
+            video_min_pixels,
+        }
+    )
+    elem_dict.update(
+        dict(
+            mm_tab=mm_tab,
+            freeze_vision_tower=freeze_vision_tower,
+            freeze_multi_modal_projector=freeze_multi_modal_projector,
+            freeze_language_model=freeze_language_model,
+            image_max_pixels=image_max_pixels,
+            image_min_pixels=image_min_pixels,
+            video_max_pixels=video_max_pixels,
+            video_min_pixels=video_min_pixels,
         )
     )
 
