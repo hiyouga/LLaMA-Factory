@@ -205,6 +205,14 @@ def load_eval_results(path: os.PathLike) -> str:
     return f"```json\n{result}\n```\n"
 
 
+def calculate_pixels(pixels: str) -> int:
+    r"""Calculate the number of pixels from the expression."""
+    if "*" in pixels:
+        return int(pixels.split("*")[0]) * int(pixels.split("*")[1])
+    else:
+        return int(pixels)
+
+
 def create_ds_config() -> None:
     r"""Create deepspeed config in the current directory."""
     os.makedirs(DEFAULT_CACHE_DIR, exist_ok=True)
