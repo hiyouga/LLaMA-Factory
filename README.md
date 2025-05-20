@@ -441,6 +441,7 @@ huggingface-cli login
 | ------------ | ------- | --------- |
 | python       | 3.9     | 3.10      |
 | torch        | 2.0.0   | 2.6.0     |
+| torchvision  | 0.15.0  | 0.21.0    |
 | transformers | 4.45.0  | 4.50.0    |
 | datasets     | 2.16.0  | 3.2.0     |
 | accelerate   | 0.34.0  | 1.2.1     |

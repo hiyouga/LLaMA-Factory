@@ -42,7 +42,7 @@ def get_console_scripts() -> list[str]:
 
 
 extra_require = {
-    "torch": ["torch>=1.13.1"],
+    "torch": ["torch>=2.0.0", "torchvision>=0.21.0"],
     "torch-npu": ["torch==2.4.0", "torch-npu==2.4.0.post2", "decorator"],
     "metrics": ["nltk", "jieba", "rouge-chinese"],
     "deepspeed": ["deepspeed>=0.10.0,<=0.16.5"],
