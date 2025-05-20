@@ -2566,6 +2566,14 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen2.5-Omni-7B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-Omni-7B",
         },
+        "Qwen2.5-Omni-7B-GPTQ-Int4": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-Omni-7B-GPTQ-Int4",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-Omni-7B-GPTQ-Int4",
+        },
+        "Qwen2.5-Omni-7B-AWQ": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-Omni-7B-AWQ",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-Omni-7B-AWQ",
+        },
     },
     template="qwen2_omni",
     multimodal=True,
