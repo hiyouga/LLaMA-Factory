@@ -30,7 +30,7 @@ jobs:
         os:
           - "ubuntu-latest"
           - "windows-latest"
-          - "macos-latest"
+          - "macos-13"
         transformers:
           - null
         include:  # test backward compatibility
