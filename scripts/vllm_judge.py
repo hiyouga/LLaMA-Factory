@@ -119,7 +119,7 @@ def vllm_judge(
     reward_model_adapter: str = None,
     dataset: str = "alpaca_en_demo",
     dataset_dir: str = "data",
-    template: str = "default",
+    template: str = None,
     cutoff_len: int = 2048,
     max_samples: Optional[int] = None,
     vllm_config: str = "{}",
@@ -147,6 +147,10 @@ def vllm_judge(
         raise ValueError("Pipeline parallel size should be smaller than the number of gpus.")
     if reward_model is None:
         reward_model = model_name_or_path
+    if len(template) == 2:
+        base_template,reward_template = template[0],template[1]
+    else:
+        base_template,reward_template = template,template
     
     model_args, data_args, _, generating_args = get_infer_args(
         dict(
@@ -154,7 +158,7 @@ def vllm_judge(
             adapter_name_or_path=adapter_name_or_path,
             dataset=dataset,
             dataset_dir=dataset_dir,
-            template=template,
+            template=base_template,
             cutoff_len=cutoff_len,
             max_samples=max_samples,
             preprocessing_num_workers=16,
@@ -282,7 +286,6 @@ def vllm_judge(
     
     file_name = save_name.split("/")[-1].split(".")[0]
     prediction_file_name = f"{file_name}_predictions.jsonl"
-    judgement_file_name = f"{file_name}_judgements.jsonl"
     dataset_info_path = os.path.join(dataset_dir,"dataset_info.json")
     pred_dataset_name = f"{dataset}_{file_name}"
     if prompt and os.path.isfile(prompt):
@@ -323,11 +326,11 @@ def vllm_judge(
         reward_model_adapter,
         pred_dataset_name,
         dataset_dir,
-        template,
+        reward_template,
         cutoff_len,
         max_samples,
         vllm_config,
-        judgement_file_name,
+        save_name,
         temperature,
         top_p,
         top_k,
@@ -343,7 +346,7 @@ def vllm_judge(
     )
     correctnesses = []
     faithfulnesses = []
-    with open(judgement_file_name,"r",encoding="utf-8") as f:
+    with open(save_name,"r",encoding="utf-8") as f:
         judgement_datas = [json.loads(line) for line in f if line.strip()]
     for i,judgement_data in enumerate(judgement_datas):
         judge = judgement_data["predict"]
@@ -356,19 +359,39 @@ def vllm_judge(
             correctnesses.append(correctness[0])
             faithfulnesses.append(faithfulness[0])
         except Exception as e:
-            print(f"idx {i}: error : {e}")
             judgement_data["judgement"] = {
                 "correctness":None,
                 "faithfulness":None
             }    
             correctnesses.append(None)
             faithfulnesses.append(None)
-    
+    def to_float(score):
+        try:
+            return float(score)
+        except Exception as e:
+            logger.info_rank0(f"Error converting {score} to float: {e}")
+            return 0
     none_count = correctnesses.count(None)    
-    validated_correctnesses = [float(score) for score in correctnesses if score is not None]
-    validated_faithfulnesses = [float(score) for score in faithfulnesses if score is not None]
-    avg_correctness = sum(validated_correctnesses) / len(validated_correctnesses) if validated_correctnesses else 0
-    avg_faithfulness = sum(validated_faithfulnesses) / len(validated_faithfulnesses) if validated_faithfulnesses else 0
+    validated_correctnesses = []
+    validated_faithfulnesses = []
+    for correctness, faithfulness in zip(correctnesses, faithfulnesses):
+        if correctness is None or faithfulness is None:
+            continue
+        try:
+            correctness = to_float(correctness)
+            faithfulness = to_float(faithfulness)
+            validated_correctnesses.append(correctness)
+            validated_faithfulnesses.append(faithfulness)
+        except Exception as e:
+            continue
+        
+    if len(validated_correctnesses) == 0 or len(validated_faithfulnesses) == 0:
+        avg_correctness = 0
+        avg_faithfulness = 0
+    else:
+        avg_correctness = sum(validated_correctnesses) / len(validated_correctnesses)
+        avg_faithfulness = sum(validated_faithfulnesses) / len(validated_faithfulnesses)    
+                
     judgement_datas.append({"result":
             {
                 "avg_correctness":avg_correctness,
@@ -376,7 +399,7 @@ def vllm_judge(
             }
         }
     )
-    with open(judgement_file_name,"w",encoding="utf-8") as f:
+    with open(save_name,"w",encoding="utf-8") as f:
         for judgement_data in judgement_datas:
             f.write(json.dumps(judgement_data,ensure_ascii=False)+"\n")        
         
@@ -386,7 +409,7 @@ def vllm_judge(
     logger.info_rank0(f"Average Correctness: {str(avg_correctness)}")
     logger.info_rank0(f"Average Faithfulness: {str(avg_faithfulness)}")
     logger.info_rank0(f"*" * 70)
-    logger.info_rank0(f"file saved at {judgement_file_name}.")
+    logger.info_rank0(f"file saved at {save_name}.")
     logger.info_rank0(f"*" * 70)
 if __name__ == "__main__":
     fire.Fire(vllm_judge)
