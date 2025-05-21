@@ -2,7 +2,7 @@
 
 其中 `dataset_info.json` 文件应放置在 `dataset_dir` 目录下。您可以通过修改 `dataset_dir` 参数来使用其他目录。默认值为 `./data`。
 
-目前我们支持 **alpaca** 格式和 **sharegpt** 格式的数据集。
+目前我们支持 **alpaca** 格式和 **sharegpt** 格式的数据集。允许的文件类型包括 json、jsonl、csv、parquet 和 arrow。
 
 ```json
 "数据集名称": {
@@ -88,7 +88,7 @@
 ```
 
 > [!TIP]
-> 如果模型本身具备推理能力，而数据集不包含思维链，LLaMA-Factory 会自动为数据添加空思维链。当 `enable_thinking` 为 `True` 时（慢思考），空思维链会添加到模型回答中并且计算损失，否则会添加到用户指令中并且不计算损失（快思考）。请在训练和推理时保持 `enable_thinking` 参数一致。
+> 如果模型本身具备推理能力（如 Qwen3）而数据集不包含思维链，LLaMA-Factory 会自动为数据添加空思维链。当 `enable_thinking` 为 `True` 时（慢思考，默认），空思维链会添加到模型回答中并且计算损失，否则会添加到用户指令中并且不计算损失（快思考）。请在训练和推理时保持 `enable_thinking` 参数一致。
 >
 > 如果您希望训练包含思维链的数据时使用慢思考，训练不包含思维链的数据时使用快思考，可以设置 `enable_thinking` 为 `None`。但该功能较为复杂，请谨慎使用。
 

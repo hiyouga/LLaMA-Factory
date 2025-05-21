@@ -2,7 +2,7 @@ The [dataset_info.json](dataset_info.json) contains all available datasets. If y
 
 The `dataset_info.json` file should be put in the `dataset_dir` directory. You can change `dataset_dir` to use another directory. The default value is `./data`.
 
-Currently we support datasets in **alpaca** and **sharegpt** format.
+Currently we support datasets in **alpaca** and **sharegpt** format. Allowed file types include json, jsonl, csv, parquet, arrow.
 
 ```json
 "dataset_name": {
@@ -89,7 +89,7 @@ Regarding the above dataset, the *dataset description* in `dataset_info.json` sh
 ```
 
 > [!TIP]  
-> If the model has reasoning capabilities but the dataset does not contain chain-of-thought (CoT), LLaMA-Factory will automatically add empty CoT to the data. When `enable_thinking` is `True` (slow thinking), the empty CoT will be added to the model responses and loss computation will be considered; otherwise (fast thinking), it will be added to the user prompts and loss computation will be ignored. Please keep the `enable_thinking` parameter consistent during training and inference.
+> If the model has reasoning capabilities (e.g. Qwen3) but the dataset does not contain chain-of-thought (CoT), LLaMA-Factory will automatically add empty CoT to the data. When `enable_thinking` is `True` (slow thinking, by default), the empty CoT will be added to the model responses and loss computation will be considered; otherwise (fast thinking), it will be added to the user prompts and loss computation will be ignored. Please keep the `enable_thinking` parameter consistent during training and inference.
 >
 > If you want to train data containing CoT with slow thinking and data without CoT with fast thinking, you can set `enable_thinking` to `None`. However, this feature is relatively complicated and should be used with caution.
 

@@ -4,7 +4,7 @@ accelerate>=0.34.0,<=1.7.0
 peft>=0.14.0,<=0.15.2
 trl>=0.8.6,<=0.9.6
 tokenizers>=0.19.0,<=0.21.1
-gradio>=4.38.0,<=5.29.1
+gradio>=4.38.0,<=5.30.0
 scipy
 einops
 sentencepiece
