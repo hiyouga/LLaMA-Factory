@@ -288,7 +288,6 @@ def test_qwen2_5_template(use_fast: bool):
 @pytest.mark.parametrize("use_fast", [True, False])
 @pytest.mark.parametrize("cot_messages", [True, False])
 def test_qwen3_template(use_fast: bool, cot_messages: bool):
-    messages = MESSAGES_WITH_THOUGHT if cot_messages else MESSAGES
     prompt_str = (
         f"<|im_start|>user\n{MESSAGES[0]['content']}<|im_end|>\n"
         f"<|im_start|>assistant\n{MESSAGES[1]['content']}<|im_end|>\n"
@@ -297,8 +296,10 @@ def test_qwen3_template(use_fast: bool, cot_messages: bool):
     )
     if not cot_messages:
         answer_str = f"<think>\n\n</think>\n\n{MESSAGES[3]['content']}<|im_end|>\n"
+        messages = MESSAGES
     else:
         answer_str = f"{MESSAGES_WITH_THOUGHT[3]['content']}<|im_end|>\n"
+        messages = MESSAGES_WITH_THOUGHT
 
     _check_template("Qwen/Qwen3-8B", "qwen3", prompt_str, answer_str, use_fast, messages=messages)
 
