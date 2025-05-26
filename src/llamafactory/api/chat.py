@@ -186,7 +186,6 @@ async def create_chat_completion_response(
 ) -> "ChatCompletionResponse":
     completion_id = f"chatcmpl-{uuid.uuid4().hex}"
     input_messages, system, tools, images, videos, audios = _process_request(request)
-    repetition_penalty = request.presence_penalty if request.presence_penalty else request.repetition_penalty
     responses = await chat_model.achat(
         input_messages,
         system,
@@ -199,8 +198,8 @@ async def create_chat_completion_response(
         top_p=request.top_p,
         max_new_tokens=request.max_tokens,
         num_return_sequences=request.n,
+        repetition_penalty=request.presence_penalty,
         stop=request.stop,
-        repetition_penalty=repetition_penalty,
     )
 
     prompt_length, response_length = 0, 0
@@ -250,7 +249,6 @@ async def create_stream_chat_completion_response(
     yield _create_stream_chat_completion_chunk(
         completion_id=completion_id, model=request.model, delta=ChatCompletionMessage(role=Role.ASSISTANT, content="")
     )
-    repetition_penalty = request.presence_penalty if request.presence_penalty else request.repetition_penalty
     async for new_token in chat_model.astream_chat(
         input_messages,
         system,
@@ -262,8 +260,8 @@ async def create_stream_chat_completion_response(
         temperature=request.temperature,
         top_p=request.top_p,
         max_new_tokens=request.max_tokens,
+        repetition_penalty=request.presence_penalty,
         stop=request.stop,
-        repetition_penalty=repetition_penalty,
     ):
         if len(new_token) != 0:
             yield _create_stream_chat_completion_chunk(
