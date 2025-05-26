@@ -103,11 +103,10 @@ class ChatCompletionRequest(BaseModel):
     temperature: Optional[float] = None
     top_p: Optional[float] = None
     n: int = 1
+    presence_penalty: Optional[float] = None
     max_tokens: Optional[int] = None
     stop: Optional[Union[str, list[str]]] = None
     stream: bool = False
-    presence_penalty: Optional[float] = None
-    repetition_penalty: Optional[float] = None
 
 
 class ChatCompletionResponseChoice(BaseModel):
