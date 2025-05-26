@@ -29,6 +29,7 @@ from .common import (
     DEFAULT_CACHE_DIR,
     DEFAULT_CONFIG_DIR,
     abort_process,
+    calculate_pixels,
     gen_cmd,
     get_save_dir,
     load_args,
@@ -241,10 +242,10 @@ class Runner:
             args["freeze_vision_tower"] = get("train.freeze_vision_tower")
             args["freeze_multi_modal_projector"] = get("train.freeze_multi_modal_projector")
             args["freeze_language_model"] = get("train.freeze_language_model")
-            args["image_max_pixels"] = get("train.image_max_pixels")
-            args["image_min_pixels"] = get("train.image_min_pixels")
-            args["video_max_pixels"] = get("train.video_max_pixels")
-            args["video_min_pixels"] = get("train.video_min_pixels")
+            args["image_max_pixels"] = calculate_pixels(get("train.image_max_pixels"))
+            args["image_min_pixels"] = calculate_pixels(get("train.image_min_pixels"))
+            args["video_max_pixels"] = calculate_pixels(get("train.video_max_pixels"))
+            args["video_min_pixels"] = calculate_pixels(get("train.video_min_pixels"))
 
         # galore config
         if args["use_galore"]:
