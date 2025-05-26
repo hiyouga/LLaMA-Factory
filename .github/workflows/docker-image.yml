@@ -1,0 +1,18 @@
+name: Remote Docker Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone EasyR1 repo
+        run: |
+          git clone https://github.com/hiyouga/EasyR1.git
+          ls EasyR1
+
+      - name: Build Docker image from EasyR1
+        run: |
+          docker build -f EasyR1/Dockerfile -t easyr1:latest EasyR1
