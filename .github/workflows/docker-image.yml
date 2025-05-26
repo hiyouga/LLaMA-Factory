@@ -11,7 +11,12 @@ jobs:
         run: |
           git clone https://github.com/hiyouga/EasyR1.git
           ls EasyR1
-
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache
+          df -h
       - name: Log in to DockerHub
         uses: docker/login-action@v3
         with:
