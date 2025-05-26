@@ -253,7 +253,11 @@ def test_llama4_template(use_fast: bool):
 
 
 @pytest.mark.parametrize(
-    "use_fast", [True, pytest.param(False, marks=pytest.mark.xfail(reason="Phi-4 slow tokenizer is broken."))]
+    "use_fast",
+    [
+        pytest.param(True, marks=pytest.mark.xfail(not HF_TOKEN, reason="Authorization.")),
+        pytest.param(False, marks=pytest.mark.xfail(reason="Phi-4 slow tokenizer is broken.")),
+    ],
 )
 def test_phi4_template(use_fast: bool):
     prompt_str = (
@@ -266,6 +270,7 @@ def test_phi4_template(use_fast: bool):
     _check_template("microsoft/phi-4", "phi4", prompt_str, answer_str, use_fast)
 
 
+@pytest.mark.xfail(not HF_TOKEN, reason="Authorization.")
 @pytest.mark.parametrize("use_fast", [True, False])
 def test_qwen2_5_template(use_fast: bool):
     prompt_str = (
@@ -284,14 +289,15 @@ def test_qwen2_5_template(use_fast: bool):
 def test_qwen3_template(use_fast: bool, cot_messages: bool):
     messages = MESSAGES_WITH_THOUGHT if cot_messages else MESSAGES
     prompt_str = (
-        f"<|im_start|>user\n{messages[0]['content']}<|im_end|>\n"
+        f"<|im_start|>user\n{MESSAGES[0]['content']}<|im_end|>\n"
         f"<|im_start|>assistant\n{MESSAGES[1]['content']}<|im_end|>\n"
-        f"<|im_start|>user\n{messages[2]['content']}<|im_end|>\n"
+        f"<|im_start|>user\n{MESSAGES[2]['content']}<|im_end|>\n"
         "<|im_start|>assistant\n"
     )
-    answer_str = f"{messages[3]['content']}<|im_end|>\n"
     if not cot_messages:
-        answer_str = "<think>\n\n</think>\n\n" + answer_str
+        answer_str = f"<think>\n\n</think>\n\n{messages[3]['content']}<|im_end|>\n"
+    else:
+        answer_str = f"{messages[3]['content']}<|im_end|>\n"
 
     _check_template("Qwen/Qwen3-8B", "qwen3", prompt_str, answer_str, use_fast, messages=messages)
 
@@ -309,6 +315,7 @@ def test_parse_llama3_template():
     assert template.default_system == ""
 
 
+@pytest.mark.xfail(not HF_TOKEN, reason="Authorization.")
 def test_parse_qwen_template():
     tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-7B-Instruct", token=HF_TOKEN)
     template = parse_template(tokenizer)
@@ -320,6 +327,7 @@ def test_parse_qwen_template():
     assert template.default_system == "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."
 
 
+@pytest.mark.xfail(not HF_TOKEN, reason="Authorization.")
 def test_parse_qwen3_template():
     tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-8B", token=HF_TOKEN)
     template = parse_template(tokenizer)
