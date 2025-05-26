@@ -163,7 +163,7 @@ def save_args(config_path: str, config_dict: dict[str, Any]) -> None:
 
 def _clean_cmd(args: dict[str, Any]) -> dict[str, Any]:
     r"""Remove args with NoneType or False or empty string value."""
-    no_skip_keys = ["packing"]
+    no_skip_keys = ["packing", "freeze_vision_tower", "freeze_multi_modal_projector", "freeze_language_model"]
     return {k: v for k, v in args.items() if (k in no_skip_keys) or (v is not None and v is not False and v != "")}
 
 
