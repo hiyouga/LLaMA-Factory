@@ -1,12 +1,12 @@
-# Installation arguments
+# https://hub.docker.com/r/hiyouga/pytorch/tags
 ARG BASE_IMAGE=hiyouga/pytorch:th2.6.0-cu124-flashattn2.7.4-cxx11abi0
+FROM ${BASE_IMAGE}
+
+# Installation arguments
 ARG PIP_INDEX=https://pypi.org/simple
 ARG EXTRAS=metrics
 ARG INSTALL_FLASHATTN=false
 ARG HTTP_PROXY=""
-
-# https://hub.docker.com/r/hiyouga/pytorch/tags
-FROM "${BASE_IMAGE}"
 
 # Define environments
 ENV MAX_JOBS=16
@@ -37,7 +37,7 @@ COPY . /app
 RUN pip install --no-cache-dir -e ".[${EXTRAS}]" --no-build-isolation
 
 # Rebuild flash attention
-RUN if [ "$INSTALL_FLASHATTN" == "true" ]; then \
+RUN if [ "${INSTALL_FLASHATTN}" == "true" ]; then \
         pip uninstall -y ninja && \
         pip install --no-cache-dir ninja && \
         pip install --no-cache-dir flash-attn --no-build-isolation; \
@@ -47,11 +47,11 @@ RUN if [ "$INSTALL_FLASHATTN" == "true" ]; then \
 VOLUME [ "/root/.cache/huggingface", "/root/.cache/modelscope", "/root/.cache/openmind", "/app/data", "/app/output" ]
 
 # Expose port 7860 for LLaMA Board
-ENV GRADIO_SERVER_PORT 7860
+ENV GRADIO_SERVER_PORT=7860
 EXPOSE 7860
 
 # Expose port 8000 for API service
-ENV API_PORT 8000
+ENV API_PORT=8000
 EXPOSE 8000
 
 # unset proxy

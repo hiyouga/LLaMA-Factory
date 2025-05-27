@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import platform
 
 import accelerate
@@ -82,5 +83,10 @@ def print_env() -> None:
         info["Git commit"] = commit_hash
     except Exception:
         pass
+
+    if os.path.exists("data"):
+        info["Default data directory"] = "detected"
+    else:
+        info["Default data directory"] = "not detected"
 
     print("\n" + "\n".join([f"- {key}: {value}" for key, value in info.items()]) + "\n")
