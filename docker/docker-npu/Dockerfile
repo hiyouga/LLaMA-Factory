@@ -1,12 +1,11 @@
-# Installation arguments
+# https://hub.docker.com/r/ascendai/cann/tags
 ARG BASE_IMAGE=ascendai/cann:8.0.0-910b-ubuntu22.04-py3.11
+FROM ${BASE_IMAGE}
+
+# Installation arguments
 ARG PIP_INDEX=https://pypi.org/simple
 ARG EXTRAS=metrics
-ARG INSTALL_FLASHATTN=false
 ARG HTTP_PROXY=""
-
-# https://hub.docker.com/r/ascendai/cann/tags
-FROM "${BASE_IMAGE}"
 
 # Define environments
 ENV MAX_JOBS=16
@@ -40,11 +39,11 @@ RUN pip install --no-cache-dir -e ".[${EXTRAS}]" --no-build-isolation
 VOLUME [ "/root/.cache/huggingface", "/root/.cache/modelscope", "/root/.cache/openmind", "/app/data", "/app/output" ]
 
 # Expose port 7860 for LLaMA Board
-ENV GRADIO_SERVER_PORT 7860
+ENV GRADIO_SERVER_PORT=7860
 EXPOSE 7860
 
 # Expose port 8000 for API service
-ENV API_PORT 8000
+ENV API_PORT=8000
 EXPOSE 8000
 
 # unset proxy
