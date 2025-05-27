@@ -10,6 +10,10 @@ on:
     - cron: '28 13 * * *'
   push:
     branches: [ "main" ]
+    paths:
+      - "**.py"
+      - "requirements.txt"
+      - ".github/workflows/*.yml"
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
   pull_request:
