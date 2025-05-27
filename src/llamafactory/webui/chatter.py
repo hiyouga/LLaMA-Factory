@@ -114,6 +114,11 @@ class WebChatModel(ChatModel):
         elif self.demo_mode:
             error = ALERTS["err_demo"][lang]
 
+        try:
+            json.loads(get("infer.extra_args"))
+        except json.JSONDecodeError:
+            error = ALERTS["err_json_schema"][lang]
+
         if error:
             gr.Warning(error)
             yield error
@@ -131,9 +136,9 @@ class WebChatModel(ChatModel):
             enable_liger_kernel=(get("top.booster") == "liger_kernel"),
             infer_backend=get("infer.infer_backend"),
             infer_dtype=get("infer.infer_dtype"),
-            vllm_enforce_eager=True,
             trust_remote_code=True,
         )
+        args.update(json.loads(get("infer.extra_args")))
 
         # checkpoints
         if checkpoint_path:

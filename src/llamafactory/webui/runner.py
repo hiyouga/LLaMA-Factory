@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any, Optional
 from transformers.trainer import TRAINING_ARGS_NAME
 from transformers.utils import is_torch_npu_available
 
-from ..extras.constants import LLAMABOARD_CONFIG, PEFT_METHODS, TRAINING_STAGES
+from ..extras.constants import LLAMABOARD_CONFIG, MULTIMODAL_SUPPORTED_MODELS, PEFT_METHODS, TRAINING_STAGES
 from ..extras.misc import is_accelerator_available, torch_gc, use_ray
 from ..extras.packages import is_gradio_available
 from .common import (
@@ -165,13 +165,6 @@ class Runner:
             use_llama_pro=get("train.use_llama_pro"),
             enable_thinking=get("train.enable_thinking"),
             report_to=get("train.report_to"),
-            freeze_vision_tower=get("train.freeze_vision_tower"),
-            freeze_multi_modal_projector=get("train.freeze_multi_modal_projector"),
-            freeze_language_model=get("train.freeze_language_model"),
-            image_max_pixels=calculate_pixels(get("train.image_max_pixels")),
-            image_min_pixels=calculate_pixels(get("train.image_min_pixels")),
-            video_max_pixels=calculate_pixels(get("train.video_max_pixels")),
-            video_min_pixels=calculate_pixels(get("train.video_min_pixels")),
             use_galore=get("train.use_galore"),
             use_apollo=get("train.use_apollo"),
             use_badam=get("train.use_badam"),
@@ -243,6 +236,16 @@ class Runner:
             args["pref_beta"] = get("train.pref_beta")
             args["pref_ftx"] = get("train.pref_ftx")
             args["pref_loss"] = get("train.pref_loss")
+
+        # multimodal config
+        if model_name in MULTIMODAL_SUPPORTED_MODELS:
+            args["freeze_vision_tower"] = get("train.freeze_vision_tower")
+            args["freeze_multi_modal_projector"] = get("train.freeze_multi_modal_projector")
+            args["freeze_language_model"] = get("train.freeze_language_model")
+            args["image_max_pixels"] = calculate_pixels(get("train.image_max_pixels"))
+            args["image_min_pixels"] = calculate_pixels(get("train.image_min_pixels"))
+            args["video_max_pixels"] = calculate_pixels(get("train.video_max_pixels"))
+            args["video_min_pixels"] = calculate_pixels(get("train.video_min_pixels"))
 
         # galore config
         if args["use_galore"]:

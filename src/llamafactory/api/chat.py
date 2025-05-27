@@ -198,6 +198,7 @@ async def create_chat_completion_response(
         top_p=request.top_p,
         max_new_tokens=request.max_tokens,
         num_return_sequences=request.n,
+        repetition_penalty=request.presence_penalty,
         stop=request.stop,
     )
 
@@ -259,6 +260,7 @@ async def create_stream_chat_completion_response(
         temperature=request.temperature,
         top_p=request.top_p,
         max_new_tokens=request.max_tokens,
+        repetition_penalty=request.presence_penalty,
         stop=request.stop,
     ):
         if len(new_token) != 0:
