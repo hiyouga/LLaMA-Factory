@@ -4,6 +4,7 @@ services:
       dockerfile: ./docker/docker-rocm/Dockerfile
       context: ../..
       args:
+        PIP_INDEX: https://pypi.org/simple
         EXTRAS: metrics
     container_name: llamafactory
     volumes:
