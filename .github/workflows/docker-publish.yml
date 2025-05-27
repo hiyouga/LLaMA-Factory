@@ -1,20 +1,17 @@
-name: Docker
+name: push_docker
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "main" ]
     paths:
       - "**.py"
       - "requirements.txt"
       - ".github/workflows/*.yml"
-
-env:
-  REGISTRY: docker.io
-  IMAGE_NAME: llamafactory
+      - "docker/*"
 
 jobs:
   docker-build-and-push:
-    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment: docker
 
@@ -32,9 +29,9 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./docker/docker-cuda/Dockerfile
-          push: true
-          tags: docker.io/${{ secrets.DOCKER_USERNAME }}/llamafactory:latest
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: docker.io/${{ vars.DOCKERHUB_USERNAME }}/llamafactory:latest
