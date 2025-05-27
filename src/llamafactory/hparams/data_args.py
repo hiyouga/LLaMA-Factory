@@ -133,6 +133,10 @@ class DataArguments:
             )
         },
     )
+    data_shared_file_system: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use a shared file system for the datasets."},
+    )
 
     def __post_init__(self):
         def split_arg(arg):
