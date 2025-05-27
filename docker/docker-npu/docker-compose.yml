@@ -4,8 +4,8 @@ services:
       dockerfile: ./docker/docker-npu/Dockerfile
       context: ../..
       args:
-        INSTALL_DEEPSPEED: "false"
         PIP_INDEX: https://pypi.org/simple
+        EXTRAS: metrics
     container_name: llamafactory
     volumes:
       - ../../hf_cache:/root/.cache/huggingface
@@ -22,7 +22,7 @@ services:
       - "8000:8000"
     ipc: host
     tty: true
-    shm_size: "16gb"
+    # shm_size: "16gb"  # ipc: host is set
     stdin_open: true
     command: bash
     devices:

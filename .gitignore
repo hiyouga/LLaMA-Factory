@@ -166,8 +166,8 @@ cython_debug/
 uv.lock
 
 # custom .gitignore
-ms_cache/
 hf_cache/
+ms_cache/
 om_cache/
 cache/
 config/
