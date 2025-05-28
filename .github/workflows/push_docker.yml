@@ -3,17 +3,32 @@ name: push_docker
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches:
+      - "main"
     paths:
-      - "**.py"
+      - "**/*.py"
       - "requirements.txt"
+      - "docker/**"
       - ".github/workflows/*.yml"
-      - "docker/*"
+  pull_request:
+    branches:
+      - "main"
+    paths:
+      - "**/*.py"
+      - "requirements.txt"
+      - "docker/**"
+      - ".github/workflows/*.yml"
 
 jobs:
-  docker-build-and-push:
+  build:
     runs-on: ubuntu-latest
-    environment: docker
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+    environment:
+      name: docker
 
     steps:
       - name: Checkout repository
@@ -23,6 +38,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
@@ -35,3 +51,5 @@ jobs:
           file: ./docker/docker-cuda/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: docker.io/${{ vars.DOCKERHUB_USERNAME }}/llamafactory:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
