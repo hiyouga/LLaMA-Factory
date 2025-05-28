@@ -1,5 +1,5 @@
 # https://hub.docker.com/r/hiyouga/pytorch/tags
-ARG BASE_IMAGE=hiyouga/pytorch:th2.6.0-cu124-flashattn2.7.4-cxx11abi0
+ARG BASE_IMAGE=hiyouga/pytorch:th2.6.0-cu124-flashattn2.7.4-cxx11abi0-devel
 FROM ${BASE_IMAGE}
 
 # Installation arguments
@@ -47,7 +47,7 @@ RUN if [ "${INSTALL_FLASHATTN}" == "true" ]; then \
     fi
 
 # Set up volumes
-VOLUME [ "/root/.cache/huggingface", "/root/.cache/modelscope", "/root/.cache/openmind", "/app/data", "/app/output" ]
+VOLUME [ "/root/.cache/huggingface", "/root/.cache/modelscope", "/root/.cache/openmind", "/app/shared_data", "/app/output" ]
 
 # Expose port 7860 for LLaMA Board
 ENV GRADIO_SERVER_PORT=7860

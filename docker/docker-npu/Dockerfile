@@ -4,7 +4,7 @@ FROM ${BASE_IMAGE}
 
 # Installation arguments
 ARG PIP_INDEX=https://pypi.org/simple
-ARG EXTRAS=metrics
+ARG EXTRAS=torch-npu,metrics
 ARG HTTP_PROXY=""
 
 # Define environments
@@ -39,7 +39,7 @@ COPY . /app
 RUN pip install --no-cache-dir -e ".[${EXTRAS}]" --no-build-isolation
 
 # Set up volumes
-VOLUME [ "/root/.cache/huggingface", "/root/.cache/modelscope", "/root/.cache/openmind", "/app/data", "/app/output" ]
+VOLUME [ "/root/.cache/huggingface", "/root/.cache/modelscope", "/root/.cache/openmind", "/app/shared_data", "/app/output" ]
 
 # Expose port 7860 for LLaMA Board
 ENV GRADIO_SERVER_PORT=7860
