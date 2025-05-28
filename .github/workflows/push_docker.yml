@@ -50,6 +50,6 @@ jobs:
           context: .
           file: ./docker/docker-cuda/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: docker.io/${{ vars.DOCKERHUB_USERNAME }}/llamafactory:latest
+          tags: docker.io/hiyouga/llamafactory:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
