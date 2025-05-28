@@ -21,7 +21,7 @@ dataloader_num_workers: 4
 
 ### output
 output_dir: saves/llama3-8b/lora/kto
-logging_steps: 10
+logging_steps: 1
 save_steps: 500
 plot_loss: true
 overwrite_output_dir: true
