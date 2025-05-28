@@ -1,6 +1,6 @@
 # Start from the pytorch official image (ubuntu-22.04 + cuda-12.4.1 + python-3.11)
 # https://hub.docker.com/r/pytorch/pytorch/tags
-FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
+FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-devel
 
 # Define environments
 ENV MAX_JOBS=16

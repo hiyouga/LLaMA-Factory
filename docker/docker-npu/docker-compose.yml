@@ -5,13 +5,13 @@ services:
       context: ../..
       args:
         PIP_INDEX: https://pypi.org/simple
-        EXTRAS: metrics
+        EXTRAS: torch-npu,metrics
     container_name: llamafactory
     volumes:
       - ../../hf_cache:/root/.cache/huggingface
       - ../../ms_cache:/root/.cache/modelscope
       - ../../om_cache:/root/.cache/openmind
-      - ../../data:/app/data
+      - ../../shared_data:/app/shared_data
       - ../../output:/app/output
       - /usr/local/dcmi:/usr/local/dcmi
       - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
