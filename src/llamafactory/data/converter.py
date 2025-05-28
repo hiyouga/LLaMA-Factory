@@ -255,7 +255,7 @@ def align_dataset(
     kwargs = {}
     if not data_args.streaming:
         kwargs = dict(
-            num_proc=data_args.preprocessing_num_workers,
+            num_proc=data_args.preprocessing_num_workers if data_args.preprocessing_num_workers > 0 else None,
             load_from_cache_file=(not data_args.overwrite_cache) or (training_args.local_process_index != 0),
             desc="Converting format of dataset",
         )

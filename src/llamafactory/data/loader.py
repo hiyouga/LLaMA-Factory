@@ -136,7 +136,7 @@ def _load_single_dataset(
             split=dataset_attr.split,
             cache_dir=model_args.cache_dir,
             token=model_args.hf_hub_token,
-            num_proc=data_args.preprocessing_num_workers,
+            num_proc=data_args.preprocessing_num_workers if data_args.preprocessing_num_workers > 0 else None,
             trust_remote_code=model_args.trust_remote_code,
             streaming=data_args.streaming and dataset_attr.load_from != "file",
         )
@@ -248,7 +248,7 @@ def _get_preprocessed_dataset(
     kwargs = {}
     if not data_args.streaming:
         kwargs = dict(
-            num_proc=data_args.preprocessing_num_workers,
+            num_proc=data_args.preprocessing_num_workers if data_args.preprocessing_num_workers > 0 else None,
             load_from_cache_file=(not data_args.overwrite_cache) or (training_args.local_process_index != 0),
             desc="Running tokenizer on dataset",
         )
