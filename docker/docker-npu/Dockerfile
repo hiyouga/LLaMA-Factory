@@ -4,7 +4,7 @@ FROM ${BASE_IMAGE}
 
 # Installation arguments
 ARG PIP_INDEX=https://pypi.org/simple
-ARG EXTRAS=metrics
+ARG EXTRAS=torch-npu,metrics
 ARG HTTP_PROXY=""
 
 # Define environments
