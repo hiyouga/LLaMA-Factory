@@ -11,7 +11,7 @@ services:
       - ../../hf_cache:/root/.cache/huggingface
       - ../../ms_cache:/root/.cache/modelscope
       - ../../om_cache:/root/.cache/openmind
-      - ../../data:/app/data
+      - ../../shared_data:/app/shared_data
       - ../../output:/app/output
     ports:
       - "7860:7860"

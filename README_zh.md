@@ -476,16 +476,25 @@ huggingface-cli login
 > [!IMPORTANT]
 > 此步骤为必需。
 
+#### 从源码安装
+
 ```bash
 git clone --depth 1 https://github.com/hiyouga/LLaMA-Factory.git
 cd LLaMA-Factory
 pip install -e ".[torch,metrics]" --no-build-isolation
 ```
 
-可选的额外依赖项：torch、torch-npu、metrics、deepspeed、liger-kernel、bitsandbytes、hqq、eetq、gptq、aqlm、vllm、sglang、galore、apollo、badam、adam-mini、qwen、minicpm_v、modelscope、openmind、swanlab、quality
+可选的额外依赖项：torch、torch-npu、metrics、deepspeed、liger-kernel、bitsandbytes、hqq、eetq、gptq、aqlm、vllm、sglang、galore、apollo、badam、adam-mini、qwen、minicpm_v、modelscope、openmind、swanlab、dev
 
-> [!TIP]
-> 遇到包冲突时，可使用 `pip install -e . --no-deps --no-build-isolation` 解决。
+#### 从镜像安装
+
+```bash
+docker run -it --rm --gpus=all --ipc=host hiyouga/llamafactory:latest
+```
+
+查看全部镜像：https://hub.docker.com/r/hiyouga/llamafactory/tags
+
+请参阅[构建 Docker](#构建-docker) 来重新构建镜像。
 
 <details><summary>使用 <b>uv</b> 构建虚拟环境</summary>
 
@@ -673,7 +682,7 @@ docker run -dit --ipc=host --gpus=all \
     -v ./hf_cache:/root/.cache/huggingface \
     -v ./ms_cache:/root/.cache/modelscope \
     -v ./om_cache:/root/.cache/openmind \
-    -v ./data:/app/data \
+    -v ./shared_data:/app/shared_data \
     -v ./output:/app/output \
     -p 7860:7860 \
     -p 8000:8000 \
@@ -688,14 +697,14 @@ docker exec -it llamafactory bash
 ```bash
 docker build -f ./docker/docker-npu/Dockerfile \
     --build-arg PIP_INDEX=https://pypi.org/simple \
-    --build-arg EXTRAS=metrics \
+    --build-arg EXTRAS=torch-npu,metrics \
     -t llamafactory:latest .
 
 docker run -dit --ipc=host \
     -v ./hf_cache:/root/.cache/huggingface \
     -v ./ms_cache:/root/.cache/modelscope \
     -v ./om_cache:/root/.cache/openmind \
-    -v ./data:/app/data \
+    -v ./shared_data:/app/shared_data \
     -v ./output:/app/output \
     -v /usr/local/dcmi:/usr/local/dcmi \
     -v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi \
@@ -725,7 +734,7 @@ docker run -dit --ipc=host \
     -v ./hf_cache:/root/.cache/huggingface \
     -v ./ms_cache:/root/.cache/modelscope \
     -v ./om_cache:/root/.cache/openmind \
-    -v ./data:/app/data \
+    -v ./shared_data:/app/shared_data \
     -v ./output:/app/output \
     -p 7860:7860 \
     -p 8000:8000 \
@@ -744,7 +753,7 @@ docker exec -it llamafactory bash
 - `hf_cache`：使用宿主机的 Hugging Face 缓存文件夹，允许更改为新的目录。
 - `ms_cache`：类似 Hugging Face 缓存文件夹，为 ModelScope 用户提供。
 - `om_cache`：类似 Hugging Face 缓存文件夹，为 Modelers 用户提供。
-- `data`：宿主机中存放数据集的文件夹路径。
+- `shared_data`：宿主机中存放数据集的文件夹路径。
 - `output`：将导出目录设置为该路径后，即可在宿主机中访问导出后的模型。
 
 </details>

@@ -474,16 +474,25 @@ huggingface-cli login
 > [!IMPORTANT]
 > Installation is mandatory.
 
+#### Install from Source
+
 ```bash
 git clone --depth 1 https://github.com/hiyouga/LLaMA-Factory.git
 cd LLaMA-Factory
 pip install -e ".[torch,metrics]" --no-build-isolation
 ```
 
-Extra dependencies available: torch, torch-npu, metrics, deepspeed, liger-kernel, bitsandbytes, hqq, eetq, gptq, aqlm, vllm, sglang, galore, apollo, badam, adam-mini, qwen, minicpm_v, modelscope, openmind, swanlab, quality
+Extra dependencies available: torch, torch-npu, metrics, deepspeed, liger-kernel, bitsandbytes, hqq, eetq, gptq, aqlm, vllm, sglang, galore, apollo, badam, adam-mini, qwen, minicpm_v, modelscope, openmind, swanlab, dev
 
-> [!TIP]
-> Use `pip install -e . --no-deps --no-build-isolation` to resolve package conflicts.
+#### Install from Docker Image
+
+```bash
+docker run -it --rm --gpus=all --ipc=host hiyouga/llamafactory:latest
+```
+
+Find the pre-built images: https://hub.docker.com/r/hiyouga/llamafactory/tags
+
+Please refer to [build docker](#build-docker) to build the image yourself.
 
 <details><summary>Setting up a virtual environment with <b>uv</b></summary>
 
@@ -671,7 +680,7 @@ docker run -dit --ipc=host --gpus=all \
     -v ./hf_cache:/root/.cache/huggingface \
     -v ./ms_cache:/root/.cache/modelscope \
     -v ./om_cache:/root/.cache/openmind \
-    -v ./data:/app/data \
+    -v ./shared_data:/app/shared_data \
     -v ./output:/app/output \
     -p 7860:7860 \
     -p 8000:8000 \
@@ -686,14 +695,14 @@ For Ascend NPU users:
 ```bash
 docker build -f ./docker/docker-npu/Dockerfile \
     --build-arg PIP_INDEX=https://pypi.org/simple \
-    --build-arg EXTRAS=metrics \
+    --build-arg EXTRAS=torch-npu,metrics \
     -t llamafactory:latest .
 
 docker run -dit --ipc=host \
     -v ./hf_cache:/root/.cache/huggingface \
     -v ./ms_cache:/root/.cache/modelscope \
     -v ./om_cache:/root/.cache/openmind \
-    -v ./data:/app/data \
+    -v ./shared_data:/app/shared_data \
     -v ./output:/app/output \
     -v /usr/local/dcmi:/usr/local/dcmi \
     -v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi \
@@ -723,7 +732,7 @@ docker run -dit --ipc=host \
     -v ./hf_cache:/root/.cache/huggingface \
     -v ./ms_cache:/root/.cache/modelscope \
     -v ./om_cache:/root/.cache/openmind \
-    -v ./data:/app/data \
+    -v ./shared_data:/app/shared_data \
     -v ./output:/app/output \
     -p 7860:7860 \
     -p 8000:8000 \
@@ -742,7 +751,7 @@ docker exec -it llamafactory bash
 - `hf_cache`: Utilize Hugging Face cache on the host machine. Reassignable if a cache already exists in a different directory.
 - `ms_cache`: Similar to Hugging Face cache but for ModelScope users.
 - `om_cache`: Similar to Hugging Face cache but for Modelers users.
-- `data`: Place datasets on this dir of the host machine so that they can be selected on LLaMA Board GUI.
+- `shared_data`: Place datasets on this dir of the host machine so that they can be selected on LLaMA Board GUI.
 - `output`: Set export dir to this location so that the merged result can be accessed directly on the host machine.
 
 </details>
