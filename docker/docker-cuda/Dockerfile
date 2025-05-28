@@ -18,6 +18,9 @@ ENV PIP_ROOT_USER_ACTION=ignore
 ENV http_proxy="${HTTP_PROXY}"
 ENV https_proxy="${HTTP_PROXY}"
 
+# Use Bash instead of default /bin/sh
+SHELL ["/bin/bash", "-c"]
+
 # Set the working directory
 WORKDIR /app
 
