@@ -58,7 +58,6 @@ extra_require = {
     "apollo": ["apollo-torch"],
     "badam": ["badam>=1.2.1"],
     "adam-mini": ["adam-mini"],
-    "qwen": ["transformers_stream_generator"],
     "minicpm_v": [
         "soundfile",
         "torchvision",
@@ -68,7 +67,6 @@ extra_require = {
         "msgpack",
         "referencing",
         "jsonschema_specifications",
-        "transformers==4.48.3",
     ],
     "modelscope": ["modelscope"],
     "openmind": ["openmind"],
