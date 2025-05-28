@@ -29,6 +29,7 @@ jobs:
 
     environment:
       name: docker
+      url: https://hub.docker.com/r/hiyouga/llamafactory
 
     steps:
       - name: Checkout repository
