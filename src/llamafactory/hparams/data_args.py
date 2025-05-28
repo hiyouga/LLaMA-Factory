@@ -115,6 +115,14 @@ class DataArguments:
         default=None,
         metadata={"help": "Tool format to use for constructing function calling examples."},
     )
+    default_system: Optional[str] = field(
+        default=None,
+        metadata={"help": "Override the default system message in the template."},
+    )
+    enable_thinking: Optional[bool] = field(
+        default=True,
+        metadata={"help": "Whether or not to enable thinking mode for reasoning models."},
+    )
     tokenized_path: Optional[str] = field(
         default=None,
         metadata={
@@ -125,6 +133,7 @@ class DataArguments:
             )
         },
     )
+
     pad_to_multiple_of: Optional[int] = field(
         default=8,
         metadata={"help": "Pad the input to multiple of so there are fewer shapes in the input."},
@@ -132,6 +141,9 @@ class DataArguments:
     dataset_concatenation: Optional[bool] = field(
         default=False,
         metadata={"help": "Whether to concatenate the sentence for more efficient training."},
+    data_shared_file_system: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use a shared file system for the datasets."},
     )
 
     def __post_init__(self):

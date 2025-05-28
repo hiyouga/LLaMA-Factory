@@ -684,6 +684,10 @@ register_model_group(
             DownloadSource.DEFAULT: "google/gemma-3-1b-it",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-1b-it",
         },
+        "MedGemma-27B-Instruct": {
+            DownloadSource.DEFAULT: "google/medgemma-27b-text-it",
+            DownloadSource.MODELSCOPE: "google/medgemma-27b-text-it",
+        },
     },
     template="gemma",
 )
@@ -714,6 +718,14 @@ register_model_group(
         "Gemma-3-27B-Instruct": {
             DownloadSource.DEFAULT: "google/gemma-3-27b-it",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-27b-it",
+        },
+        "MedGemma-4B": {
+            DownloadSource.DEFAULT: "google/medgemma-4b-pt",
+            DownloadSource.MODELSCOPE: "google/medgemma-4b-pt",
+        },
+        "MedGemma-4B-Instruct": {
+            DownloadSource.DEFAULT: "google/medgemma-4b-it",
+            DownloadSource.MODELSCOPE: "google/medgemma-4b-it",
         },
     },
     template="gemma3",
@@ -887,12 +899,13 @@ register_model_group(
 
 register_model_group(
     models={
-        "Granite-3.2-1B-A400M-Base": {
+        "Granite-Vision-3.2-2B": {
             DownloadSource.DEFAULT: "ibm-granite/granite-vision-3.2-2b",
             DownloadSource.MODELSCOPE: "AI-ModelScope/granite-vision-3.2-2b",
         },
     },
     template="granite3_vision",
+    multimodal=True,
 )
 
 
@@ -2502,6 +2515,22 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B",
         },
+        "Qwen3-0.6B-Instruct-GPTQ-Int8": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-0.6B-GPTQ-Int8",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-0.6B-GPTQ-Int8",
+        },
+        "Qwen3-1.7B-Instruct-GPTQ-Int8": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-1.7B-GPTQ-Int8",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-1.7B-GPTQ-Int8",
+        },
+        "Qwen3-4B-Instruct-AWQ": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-4B-AWQ",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-4B-AWQ",
+        },
+        "Qwen3-8B-Instruct-AWQ": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-8B-AWQ",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-8B-AWQ",
+        },
         "Qwen3-14B-Instruct-AWQ": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-14B-AWQ",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-14B-AWQ",
@@ -2509,6 +2538,14 @@ register_model_group(
         "Qwen3-32B-Instruct-AWQ": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-32B-AWQ",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-32B-AWQ",
+        },
+        "Qwen3-30B-A3B-Instruct-GPTQ-Int4": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B-GPTQ-Int4",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B-GPTQ-Int4",
+        },
+        "Qwen3-235B-A22B-Instruct-GPTQ-Int4": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B-GPTQ-Int4",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B-GPTQ-Int4",
         },
     },
     template="qwen3",
@@ -2540,6 +2577,14 @@ register_model_group(
         "Qwen2.5-Omni-7B": {
             DownloadSource.DEFAULT: "Qwen/Qwen2.5-Omni-7B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-Omni-7B",
+        },
+        "Qwen2.5-Omni-7B-GPTQ-Int4": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-Omni-7B-GPTQ-Int4",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-Omni-7B-GPTQ-Int4",
+        },
+        "Qwen2.5-Omni-7B-AWQ": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-Omni-7B-AWQ",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-Omni-7B-AWQ",
         },
     },
     template="qwen2_omni",
@@ -2651,15 +2696,17 @@ register_model_group(
 
 register_model_group(
     models={
-        "SOLAR-10.7B-v1.0": {
-            DownloadSource.DEFAULT: "upstage/SOLAR-10.7B-v1.0",
+        "Seed-Coder-8B-Base": {
+            DownloadSource.DEFAULT: "ByteDance-Seed/Seed-Coder-8B-Base",
         },
-        "SOLAR-10.7B-Instruct-v1.0": {
-            DownloadSource.DEFAULT: "upstage/SOLAR-10.7B-Instruct-v1.0",
-            DownloadSource.MODELSCOPE: "AI-ModelScope/SOLAR-10.7B-Instruct-v1.0",
+        "Seed-Coder-8B-Instruct": {
+            DownloadSource.DEFAULT: "ByteDance-Seed/Seed-Coder-8B-Instruct",
+        },
+        "Seed-Coder-8B-Instruct-Reasoning": {
+            DownloadSource.DEFAULT: "ByteDance-Seed/Seed-Coder-8B-Reasoning-bf16",
         },
     },
-    template="solar",
+    template="seed_coder",
 )
 
 
@@ -2681,6 +2728,75 @@ register_model_group(
         }
     },
     template="skywork_o1",
+)
+
+
+register_model_group(
+    models={
+        "SmolLM-135M": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM-135M",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM-135M",
+        },
+        "SmolLM-360M": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM-360M",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM-360M",
+        },
+        "SmolLM-1.7B": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM-1.7B",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM-1.7B",
+        },
+        "SmolLM-135M-Instruct": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM-135M-Instruct",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM-135M-Instruct",
+        },
+        "SmolLM-360M-Instruct": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM-360M-Instruct",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM-360M-Instruct",
+        },
+        "SmolLM-1.7B-Instruct": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM-1.7B-Instruct",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM-1.7B-Instruct",
+        },
+        "SmolLM2-135M": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM2-135M",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM2-135M",
+        },
+        "SmolLM2-360M": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM2-360M",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM2-360M",
+        },
+        "SmolLM2-1.7B": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM2-1.7B",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM2-1.7B",
+        },
+        "SmolLM2-135M-Instruct": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM2-135M-Instruct",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM2-135M-Instruct",
+        },
+        "SmolLM2-360M-Instruct": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM2-360M-Instruct",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM2-360M-Instruct",
+        },
+        "SmolLM2-1.7B-Instruct": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+        },
+    },
+    template="smollm",
+)
+
+
+register_model_group(
+    models={
+        "SOLAR-10.7B-v1.0": {
+            DownloadSource.DEFAULT: "upstage/SOLAR-10.7B-v1.0",
+        },
+        "SOLAR-10.7B-Instruct-v1.0": {
+            DownloadSource.DEFAULT: "upstage/SOLAR-10.7B-Instruct-v1.0",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/SOLAR-10.7B-Instruct-v1.0",
+        },
+    },
+    template="solar",
 )
 
 

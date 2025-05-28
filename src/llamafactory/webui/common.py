@@ -163,7 +163,14 @@ def save_args(config_path: str, config_dict: dict[str, Any]) -> None:
 
 def _clean_cmd(args: dict[str, Any]) -> dict[str, Any]:
     r"""Remove args with NoneType or False or empty string value."""
-    no_skip_keys = ["packing"]
+    no_skip_keys = [
+        "packing",
+        "enable_thinking",
+        "use_reentrant_gc",
+        "double_quantization",
+        "freeze_vision_tower",
+        "freeze_multi_modal_projector",
+    ]
     return {k: v for k, v in args.items() if (k in no_skip_keys) or (v is not None and v is not False and v != "")}
 
 
@@ -203,6 +210,14 @@ def load_eval_results(path: os.PathLike) -> str:
         result = json.dumps(json.load(f), indent=4)
 
     return f"```json\n{result}\n```\n"
+
+
+def calculate_pixels(pixels: str) -> int:
+    r"""Calculate the number of pixels from the expression."""
+    if "*" in pixels:
+        return int(pixels.split("*")[0]) * int(pixels.split("*")[1])
+    else:
+        return int(pixels)
 
 
 def create_ds_config() -> None:
