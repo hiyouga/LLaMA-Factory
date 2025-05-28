@@ -32,7 +32,15 @@ jobs:
       url: https://hub.docker.com/r/hiyouga/llamafactory
 
     steps:
-      - name: Checkout repository
+      - name: Free up disk space
+        run: |
+          df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache
+          df -h
+
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
