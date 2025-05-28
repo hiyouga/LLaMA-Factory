@@ -20,6 +20,13 @@ jobs:
       id-token: write
 
     steps:
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache
+          df -h
+
       - name: Checkout
         uses: actions/checkout@v4
 

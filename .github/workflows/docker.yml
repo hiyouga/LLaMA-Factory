@@ -1,4 +1,4 @@
-name: push_docker
+name: docker
 
 on:
   workflow_dispatch:
