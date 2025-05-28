@@ -152,6 +152,8 @@ def setup_fs(path, anon=False):
         fs = fsspec.filesystem("gcs", **storage_options)
     else:
         raise ValueError(f"Unsupported protocol in path: {path}. Use 's3://' or 'gs://'")
+    if not fs.exists(path):
+        raise ValueError(f"Path does not exist: {path}")
     return fs
 
 
