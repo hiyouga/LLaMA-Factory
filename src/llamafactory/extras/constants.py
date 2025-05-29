@@ -581,8 +581,8 @@ register_model_group(
             DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-R1",
         },
         "DeepSeek-R1-671B-0528-Chat": {
-            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-R1",
-            DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-R1",
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-R1-0528",
+            DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-R1-0528",
         },
     },
     template="deepseekr1",
