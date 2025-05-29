@@ -513,7 +513,7 @@ register_model_group(
 
 register_model_group(
     models={
-        "DeepSeek-V2-236B-Chat-0628": {
+        "DeepSeek-V2-236B-0628-Chat": {
             DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V2-Chat-0628",
             DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V2-Chat-0628",
         },
@@ -521,7 +521,7 @@ register_model_group(
             DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V2.5",
             DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V2.5",
         },
-        "DeepSeek-V2.5-236B-Chat-1210": {
+        "DeepSeek-V2.5-236B-1210-Chat": {
             DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V2.5-1210",
             DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V2.5-1210",
         },
@@ -556,6 +556,10 @@ register_model_group(
             DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
             DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
         },
+        "DeepSeek-R1-8B-0528-Distill": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+            DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        },
         "DeepSeek-R1-14B-Distill": {
             DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
             DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
@@ -573,6 +577,10 @@ register_model_group(
             DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-R1-Zero",
         },
         "DeepSeek-R1-671B-Chat": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-R1",
+            DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-R1",
+        },
+        "DeepSeek-R1-671B-0528-Chat": {
             DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-R1",
             DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-R1",
         },
