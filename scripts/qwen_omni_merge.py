@@ -17,7 +17,11 @@ import shutil
 
 import fire
 from peft import PeftModel
-from transformers import AutoModel, AutoProcessor, Qwen2_5OmniThinkerForConditionalGeneration  # type: ignore
+from transformers import (
+    AutoProcessor,
+    Qwen2_5OmniForConditionalGeneration,  # type: ignore
+    Qwen2_5OmniThinkerForConditionalGeneration,
+)
 
 
 def merge_lora(
@@ -27,7 +31,7 @@ def merge_lora(
     submodule_name: str = "thinker",
     save_path: str = "./merged_model_checkpoint",
 ):
-    """Load the original model, tokenizer, and processor configuration, merge the LoRA weights.
+    """Load the original model, merge the LoRA weights.
 
     For a specified submodule, and save the final merged model along with its configurations.
 
@@ -38,10 +42,9 @@ def merge_lora(
         submodule_name (str): Name of the submodule to merge (default: "thinker").
         save_path (str): Directory where the merged model and configurations will be saved.
     """
-    # 1. Load the original model, tokenizer, and processor
-    model = AutoModel.from_pretrained(base_model_path, torch_dtype="auto", device_map="cpu")
-    processor = AutoProcessor.from_pretrained(base_model_path)
-    print("Successfully loaded the original model and tokenizer.")
+    # 1. Load the original model
+    model = Qwen2_5OmniForConditionalGeneration.from_pretrained(base_model_path, torch_dtype="auto", device_map="cpu")
+    print("Successfully loaded the original model.")
 
     # 2. Extract the submodule to be merged (e.g., model.thinker)
     if not hasattr(model, submodule_name):
@@ -52,7 +55,8 @@ def merge_lora(
 
     # 3. Load the LoRA weights onto the extracted submodule
     lora_model = PeftModel.from_pretrained(base_submodule, lora_checkpoint_path)
-    print("LoRA weights loaded successfully.")
+    processor = AutoProcessor.from_pretrained(lora_checkpoint_path)
+    print("LoRA weights and processor loaded successfully.")
 
     # 4. Merge the LoRA weights into the submodule and unload the LoRA modules
     merged_submodule = lora_model.merge_and_unload()
@@ -95,14 +99,16 @@ def save_full_model(
     thinker = Qwen2_5OmniThinkerForConditionalGeneration.from_pretrained(
         saved_thinker_path, torch_dtype="auto", device_map="cpu"
     )
-    base_model = AutoModel.from_pretrained(base_model_path, torch_dtype="auto", device_map="cpu")
+    base_model = Qwen2_5OmniForConditionalGeneration.from_pretrained(
+        base_model_path, torch_dtype="auto", device_map="cpu"
+    )
     base_model.thinker = thinker
 
     # 2. Save the complete model along with its tokenizer and processor configuration
-    processor = AutoProcessor.from_pretrained(base_model_path)
+    processor = AutoProcessor.from_pretrained(saved_thinker_path)
     base_model.save_pretrained(save_path)
     processor.save_pretrained(save_path)
-    print(f"Merged model and tokenizer saved to {save_path}.")
+    print(f"Merged model and processor saved to {save_path}.")
 
     # 3. Copy the extra file from the base model directory to the save_path
     source_file = os.path.join(base_model_path, extra_file)
