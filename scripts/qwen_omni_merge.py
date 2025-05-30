@@ -19,8 +19,8 @@ import fire
 from peft import PeftModel
 from transformers import (
     AutoProcessor,
-    Qwen2_5OmniThinkerForConditionalGeneration,
     Qwen2_5OmniForConditionalGeneration,  # type: ignore
+    Qwen2_5OmniThinkerForConditionalGeneration,
 )
 
 
