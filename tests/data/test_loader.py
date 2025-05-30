@@ -14,6 +14,7 @@
 
 import os
 
+from llamafactory.extras.misc import is_torch_hpu_available
 from llamafactory.train.test_utils import load_dataset_module
 
 
@@ -36,6 +37,16 @@ TRAIN_ARGS = {
     "overwrite_output_dir": True,
     "fp16": True,
 }
+
+if is_torch_hpu_available():
+    TRAIN_ARGS.update(
+        {
+            "use_habana": True,
+            "gaudi_config_name": "Habana/llama",
+            "fp16": False,
+            "bf16": True,
+        }
+    )
 
 
 def test_load_train_only():

@@ -22,7 +22,7 @@ from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.modeling_utils import is_fsdp_enabled
 
 from ..extras import logging
-from ..extras.misc import infer_optim_dtype
+from ..extras.misc import infer_optim_dtype, is_torch_hpu_available
 from ..extras.packages import is_transformers_version_greater_than
 from .model_utils.attention import configure_attn_implementation, print_attn_implementation
 from .model_utils.checkpointing import prepare_model_for_training
@@ -165,6 +165,23 @@ def patch_model(
         or (gen_config.typical_p is not None and gen_config.typical_p != 1.0)
     ):
         gen_config.do_sample = True
+
+    if is_torch_hpu_available() and getattr(model.config, "model_type", None) in ["llama", "qwen2"]:
+        if model_args.attn_softmax_bf16:
+            gen_config.attn_softmax_bf16 = True
+
+        if model_args.use_flash_attention:
+            gen_config.use_flash_attention = True
+            gen_config.flash_attention_recompute = model_args.flash_attention_recompute
+            gen_config.flash_attention_causal_mask = model_args.flash_attention_causal_mask
+
+            if model_args.flash_attention_fp8:
+                import habana_frameworks.torch.hpu as hthpu
+
+                assert hthpu.get_device_name() == "GAUDI3", "Flash attention in FP8 is supported only on Gaudi3"
+
+        if not model_args.use_fused_rope:
+            gen_config.use_fused_rope = False
 
     if getattr(model.config, "model_type", None) not in ["minicpmv", "minicpmo"] and "GenerationMixin" not in str(
         model.generate.__func__

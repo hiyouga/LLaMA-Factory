@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import numpy as np
@@ -260,6 +261,29 @@ def _get_preprocessed_dataset(
         remove_columns=column_names,
         **kwargs,
     )
+
+    if data_args.dataset_concatenation:
+        from datasets import Dataset
+
+        def concatenate_data(dataset, max_seq_length):
+            concatenated_dataset = {}
+            for column, sequence in dataset.features.items():
+                if isinstance(sequence, Sequence):
+                    features_dtype = sequence.feature.dtype
+                else:
+                    features_dtype = sequence.dtype
+                if features_dtype == "null":
+                    continue
+                concatenated_data = [item for sample in dataset[column] for item in sample]
+                reshaped_data = [
+                    concatenated_data[i * max_seq_length : (i + 1) * max_seq_length]
+                    for i in range(len(concatenated_data) // max_seq_length)
+                ]
+                concatenated_dataset[column] = reshaped_data
+            return Dataset.from_dict(concatenated_dataset)
+
+        max_length = training_args.generation_max_length or data_args.cutoff_len
+        dataset = concatenate_data(dataset, max_length)
 
     if training_args.should_log:
         try:

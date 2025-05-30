@@ -133,6 +133,15 @@ class DataArguments:
             )
         },
     )
+
+    pad_to_multiple_of: Optional[int] = field(
+        default=8,
+        metadata={"help": "Pad the input to multiple of so there are fewer shapes in the input."},
+    )
+    dataset_concatenation: Optional[bool] = field(
+        default=False,
+        metadata={"help": "Whether to concatenate the sentence for more efficient training."},
+    )
     data_shared_file_system: bool = field(
         default=False,
         metadata={"help": "Whether or not to use a shared file system for the datasets."},
