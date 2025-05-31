@@ -75,11 +75,6 @@ jobs:
         run: |
           python -m pip install "transformers==${{ matrix.transformers }}"
 
-      - name: Downgrade transformers
-        if: ${{ matrix.os == 'macos-13' }}
-        run: |
-          python -m pip install "transformers<4.52.0"
-
       - name: Cache files
         id: hf-hub-cache
         uses: actions/cache@v4
