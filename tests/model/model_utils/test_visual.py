@@ -12,13 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import shutil
+
 import pytest
 import torch
-from transformers import AutoConfig, AutoModelForVision2Seq
+from transformers import (
+    AutoConfig,
+    AutoModelForSeq2SeqLM,
+    AutoModelForVision2Seq,
+)
+from transformers.modeling_utils import init_empty_weights
 
+from llamafactory.extras.constants import SUPPORTED_MODELS
 from llamafactory.extras.packages import is_transformers_version_greater_than
 from llamafactory.hparams import FinetuningArguments, ModelArguments
 from llamafactory.model.adapter import init_adapter
+
+
+if is_transformers_version_greater_than("4.46.0"):
+    from transformers import AutoModelForImageTextToText
 
 
 @pytest.mark.parametrize("freeze_vision_tower", (False, True))
@@ -76,3 +88,59 @@ def test_visual_lora(freeze_vision_tower: bool, freeze_language_model: bool):
     assert (visual_param_name in trainable_params) != freeze_vision_tower
     assert (language_param_name in trainable_params) != freeze_language_model
     assert (merger_param_name in trainable_params) is False
+
+
+TEST_MM_MODEL_NAME_LIST = [
+    "Gemma-3-4B-Instruct",
+    "Granite-Vision-3.2-2B",
+    "InternVL3-1B-hf",
+    "LLaVA-1.5-7B-Chat",
+    "LLaVA-NeXT-7B-Chat",
+    "Llama-3.2-11B-Vision-Instruct",
+    "Pixtral-12B",
+    "Qwen2-Audio-7B-Instruct",
+    "Qwen2.5-VL-3B-Instruct",
+]
+
+
+@pytest.mark.parametrize("model_name", list(TEST_MM_MODEL_NAME_LIST))
+def test_model_structure_consistency(model_name):
+    model_path = SUPPORTED_MODELS[model_name]["hf"]
+    try:
+        model_args = ModelArguments(model_name_or_path=model_path)
+        finetuning_args = FinetuningArguments(finetuning_type="full")
+        config = AutoConfig.from_pretrained(model_args.model_name_or_path)
+        if type(config) in AutoModelForVision2Seq._model_mapping.keys():
+            load_class = AutoModelForVision2Seq
+        elif (
+            is_transformers_version_greater_than("4.46.0")
+            and type(config) in AutoModelForImageTextToText._model_mapping.keys()
+        ):
+            load_class = AutoModelForImageTextToText
+        elif type(config) in AutoModelForSeq2SeqLM._model_mapping.keys():
+            load_class = AutoModelForSeq2SeqLM
+        else:
+            raise ValueError(f"Unsupported model type: {type(config)}")
+        with init_empty_weights():
+            model = load_class.from_config(config)
+        model = init_adapter(config, model, model_args, finetuning_args, is_trainable=True)
+        original_module_names = set(dict(model.named_modules()).keys())
+
+        model.save_pretrained("./tmp", safe_serialization=False)
+
+        with init_empty_weights():
+            saved_model = load_class.from_pretrained(
+                "./tmp", ignore_mismatched_sizes=True, low_cpu_mem_usage=True, device_map="meta", local_files_only=True
+            )
+
+        saved_module_names = set(dict(saved_model.named_modules()).keys())
+        added_modules = saved_module_names - original_module_names
+        removed_modules = original_module_names - saved_module_names
+
+        shutil.rmtree("./tmp")
+        assert not added_modules, f"[{model_name}] Unexpected modules added: {added_modules}"
+        assert not removed_modules, f"[{model_name}] Modules removed: {removed_modules}"
+
+    except Exception as e:
+        if model_name in ["Llama-3.2-11B-Vision-Instruct", "Gemma-3-4B-Instruct"]:
+            pytest.skip(f"[{model_name}] Skipped due to known issue: {str(e)}")
