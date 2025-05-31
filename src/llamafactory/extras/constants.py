@@ -2765,6 +2765,13 @@ register_model_group(
             DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM-1.7B-Instruct",
             DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM-1.7B-Instruct",
         },
+    },
+    template="smollm",
+)
+
+
+register_model_group(
+    models={
         "SmolLM2-135M": {
             DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM2-135M",
             DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM2-135M",
@@ -2790,7 +2797,7 @@ register_model_group(
             DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM2-1.7B-Instruct",
         },
     },
-    template="smollm",
+    template="smollm2",
 )
 
 
