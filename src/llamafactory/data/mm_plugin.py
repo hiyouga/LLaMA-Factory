@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TypedDict, Union
 
 import numpy as np
 import torch
-from transformers.image_utils import get_image_size, to_numpy_array
+from transformers.image_utils import get_image_size, is_valid_image, make_flat_list_of_images, to_numpy_array
 from typing_extensions import override
 
 from ..extras.constants import AUDIO_PLACEHOLDER, IGNORE_INDEX, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
@@ -58,10 +58,9 @@ if is_transformers_version_greater_than("4.45.0"):
 
 
 if is_transformers_version_greater_than("4.52.0"):
-    from transformers.image_utils import make_flat_list_of_images
     from transformers.video_utils import make_batched_videos
 elif is_transformers_version_greater_than("4.49.0"):
-    from transformers.image_utils import make_batched_videos, make_flat_list_of_images
+    from transformers.image_utils import make_batched_videos
 
 
 if TYPE_CHECKING:
@@ -76,7 +75,7 @@ if TYPE_CHECKING:
         bytes: Optional[bytes]
 
     ImageInput = Union[str, bytes, EncodedImage, BinaryIO, ImageObject]
-    VideoInput = Union[str, BinaryIO]
+    VideoInput = Union[str, BinaryIO, list[list[ImageObject]]]
     AudioInput = Union[str, BinaryIO, NDArray]
 
     class MMProcessor(ProcessorMixin):
@@ -265,20 +264,30 @@ class MMPluginMixin:
     def _regularize_videos(self, videos: list["VideoInput"], **kwargs) -> dict[str, list[list["ImageObject"]]]:
         r"""Regularizes videos to avoid error. Including reading, resizing and converting."""
         results = []
-        for video in videos:
-            container = av.open(video, "r")
-            video_stream = next(stream for stream in container.streams if stream.type == "video")
-            sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
-            frames: list[ImageObject] = []
-            container.seek(0)
-            for frame_idx, frame in enumerate(container.decode(video_stream)):
-                if frame_idx in sample_indices:
-                    frames.append(frame.to_image())
+        if kwargs.get("is_processed_frames", False):
+            for video in videos:
+                for frame in video:
+                    if not is_valid_image(frame):
+                        raise ValueError("Invalid image found in video frames.")
+            for video in videos:
+                frames = self._regularize_images(video, **kwargs)["images"]
+                results.append(frames)
+            return {"videos": results}
+        else:
+            for video in videos:
+                container = av.open(video, "r")
+                video_stream = next(stream for stream in container.streams if stream.type == "video")
+                sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
+                frames: list[ImageObject] = []
+                container.seek(0)
+                for frame_idx, frame in enumerate(container.decode(video_stream)):
+                    if frame_idx in sample_indices:
+                        frames.append(frame.to_image())
 
-            frames = self._regularize_images(frames, **kwargs)["images"]
-            results.append(frames)
+                frames = self._regularize_images(frames, **kwargs)["images"]
+                results.append(frames)
 
-        return {"videos": results}
+            return {"videos": results}
 
     def _regularize_audios(
         self, audios: list["AudioInput"], sampling_rate: float, **kwargs
@@ -358,6 +367,7 @@ class MMPluginMixin:
                 image_min_pixels=getattr(processor, "video_min_pixels", 16 * 16),
                 video_fps=getattr(processor, "video_fps", 2.0),
                 video_maxlen=getattr(processor, "video_maxlen", 128),
+                is_processed_frames=getattr(processor, "is_processed_frames", False),
             )["videos"]
             if "videos" in inspect.signature(video_processor.preprocess).parameters:  # for qwen2_vl and video_llava
                 mm_inputs.update(video_processor(images=None, videos=videos, return_tensors="pt"))
@@ -539,6 +549,7 @@ class InternVLPlugin(BasePlugin):
                 image_min_pixels=getattr(processor, "video_min_pixels", 16 * 16),
                 video_fps=getattr(processor, "video_fps", 2.0),
                 video_maxlen=getattr(processor, "video_maxlen", 128),
+                is_processed_frames=getattr(processor, "is_processed_frames", False),
             )["videos"]
 
         if len(images) != 0:
