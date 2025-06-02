@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TypedDict, Union
 
 import numpy as np
 import torch
-from transformers.image_utils import get_image_size, is_valid_image, make_flat_list_of_images, to_numpy_array
+from transformers.image_utils import get_image_size, is_valid_image, to_numpy_array
 from typing_extensions import override
 
 from ..extras.constants import AUDIO_PLACEHOLDER, IGNORE_INDEX, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
@@ -59,9 +59,10 @@ if is_transformers_version_greater_than("4.45.0"):
 
 
 if is_transformers_version_greater_than("4.52.0"):
+    from transformers.image_utils import make_flat_list_of_images
     from transformers.video_utils import make_batched_videos
 elif is_transformers_version_greater_than("4.49.0"):
-    from transformers.image_utils import make_batched_videos
+    from transformers.image_utils import make_batched_videos, make_flat_list_of_images
 
 
 if TYPE_CHECKING:
@@ -1403,7 +1404,10 @@ class Qwen2VLPlugin(BasePlugin):
                 if len(frames) % 2 != 0:
                     frames.append(frames[-1])
                 results.append(frames)
-            return {"videos": results, "fps_per_video": fps_per_video} # fps_per_video should be specified when is_processed_frames is True
+            return {
+                "videos": results,
+                "fps_per_video": fps_per_video,
+            }  # fps_per_video should be specified when is_processed_frames is True
         else:
             for video in videos:
                 container = av.open(video, "r")
