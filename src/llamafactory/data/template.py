@@ -1714,9 +1714,9 @@ register_template(
 
 register_template(
     name="smollm2",
-    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     stop_words=["<|im_end|>"],
     default_system="You are a helpful AI assistant named SmolLM, trained by Hugging Face.",
 )
