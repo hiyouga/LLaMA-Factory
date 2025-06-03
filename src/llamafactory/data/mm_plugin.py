@@ -1395,7 +1395,7 @@ class Qwen2VLPlugin(BasePlugin):
             frames: list[ImageObject] = []
             if _check_video_is_nested_images(video):
                 for frame in video:
-                    if not is_valid_image(frame) and not os.path.exists(frame):
+                    if not is_valid_image(frame) and not isinstance(frame, dict) and not os.path.exists(frame):
                         raise ValueError("Invalid image found in video frames.")
 
                 frames = video
