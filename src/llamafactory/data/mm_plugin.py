@@ -137,13 +137,7 @@ def _make_batched_images(images: list["ImageObject"], imglens: list[int]) -> lis
 
 def _check_video_is_nested_images(video: "VideoInput") -> bool:
     r"""Check if the video is nested images."""
-    if not isinstance(video, list):
-        return False
-    for frame in video:
-        if not isinstance(frame, (str, BinaryIO, dict)):
-            return False
-
-    return True
+    return isinstance(video, list) and all(isinstance(frame, (str, BinaryIO, dict)) for frame in video)
 
 
 @dataclass
