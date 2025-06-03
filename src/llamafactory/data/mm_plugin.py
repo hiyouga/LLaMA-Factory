@@ -77,7 +77,7 @@ if TYPE_CHECKING:
         bytes: Optional[bytes]
 
     ImageInput = Union[str, bytes, EncodedImage, BinaryIO, ImageObject]
-    VideoInput = Union[str, BinaryIO, list[list[ImageObject]]]
+    VideoInput = Union[str, BinaryIO, list[list[ImageInput]]]
     AudioInput = Union[str, BinaryIO, NDArray]
 
     class MMProcessor(ProcessorMixin):
@@ -133,6 +133,17 @@ def _make_batched_images(images: list["ImageObject"], imglens: list[int]) -> lis
         images = images[imglen:]
 
     return batch_images
+
+
+def _check_video_is_nested_images(video: "VideoInput") -> bool:
+    r"""Check if the video is nested images."""
+    if not isinstance(video, list):
+        return False
+    for frame in video:
+        if not isinstance(frame, (str, BinaryIO, dict)):
+            return False
+
+    return True
 
 
 @dataclass
@@ -266,30 +277,26 @@ class MMPluginMixin:
     def _regularize_videos(self, videos: list["VideoInput"], **kwargs) -> dict[str, list[list["ImageObject"]]]:
         r"""Regularizes videos to avoid error. Including reading, resizing and converting."""
         results = []
-        if kwargs.get("is_processed_frames", False):
-            for video in videos:
+        for video in videos:
+            frames: list[ImageObject] = []
+            if _check_video_is_nested_images(video):
                 for frame in video:
-                    if not is_valid_image(frame) and not os.path.exists(frame):
+                    if not is_valid_image(frame) and not isinstance(frame, dict) and not os.path.exists(frame):
                         raise ValueError("Invalid image found in video frames.")
-            for video in videos:
-                frames = self._regularize_images(video, **kwargs)["images"]
-                results.append(frames)
-            return {"videos": results}
-        else:
-            for video in videos:
+                frames = video
+            else:
                 container = av.open(video, "r")
                 video_stream = next(stream for stream in container.streams if stream.type == "video")
                 sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
-                frames: list[ImageObject] = []
                 container.seek(0)
                 for frame_idx, frame in enumerate(container.decode(video_stream)):
                     if frame_idx in sample_indices:
                         frames.append(frame.to_image())
 
-                frames = self._regularize_images(frames, **kwargs)["images"]
-                results.append(frames)
+            frames = self._regularize_images(frames, **kwargs)["images"]
+            results.append(frames)
 
-            return {"videos": results}
+        return {"videos": results}
 
     def _regularize_audios(
         self, audios: list["AudioInput"], sampling_rate: float, **kwargs
@@ -369,7 +376,6 @@ class MMPluginMixin:
                 image_min_pixels=getattr(processor, "video_min_pixels", 16 * 16),
                 video_fps=getattr(processor, "video_fps", 2.0),
                 video_maxlen=getattr(processor, "video_maxlen", 128),
-                is_processed_frames=getattr(processor, "is_processed_frames", False),
             )["videos"]
             if "videos" in inspect.signature(video_processor.preprocess).parameters:  # for qwen2_vl and video_llava
                 mm_inputs.update(video_processor(images=None, videos=videos, return_tensors="pt"))
@@ -551,7 +557,6 @@ class InternVLPlugin(BasePlugin):
                 image_min_pixels=getattr(processor, "video_min_pixels", 16 * 16),
                 video_fps=getattr(processor, "video_fps", 2.0),
                 video_maxlen=getattr(processor, "video_maxlen", 128),
-                is_processed_frames=getattr(processor, "is_processed_frames", False),
             )["videos"]
 
         if len(images) != 0:
@@ -934,7 +939,6 @@ class MiniCPMVPlugin(BasePlugin):
                 image_min_pixels=getattr(processor, "video_min_pixels", 16 * 16),
                 video_fps=getattr(processor, "video_fps", 2.0),
                 video_maxlen=getattr(processor, "video_maxlen", 128),
-                is_processed_frames=getattr(processor, "is_processed_frames", False),
             )["videos"]
             video_inputs = image_processor(videos, do_pad=True, max_slice_nums=2, return_tensors="pt")
             mm_inputs.update(video_inputs)
@@ -1393,43 +1397,36 @@ class Qwen2VLPlugin(BasePlugin):
         self, videos: list["VideoInput"], **kwargs
     ) -> dict[str, Union[list[list["ImageObject"]], list[float]]]:
         results, fps_per_video = [], []
-        if kwargs.get("is_processed_frames", False):
-            for video in videos:
+        for video in videos:
+            frames: list[ImageObject] = []
+            if _check_video_is_nested_images(video):
                 for frame in video:
                     if not is_valid_image(frame) and not os.path.exists(frame):
                         raise ValueError("Invalid image found in video frames.")
-            for video in videos:
+
+                frames = video
                 fps_per_video.append(kwargs.get("video_fps", 2.0))
-                frames = self._regularize_images(video, **kwargs)["images"]
-                if len(frames) % 2 != 0:
-                    frames.append(frames[-1])
-                results.append(frames)
-            return {
-                "videos": results,
-                "fps_per_video": fps_per_video,
-            }  # fps_per_video should be specified when is_processed_frames is True
-        else:
-            for video in videos:
+            else:
                 container = av.open(video, "r")
                 video_stream = next(stream for stream in container.streams if stream.type == "video")
                 sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
-                frames: list[ImageObject] = []
                 container.seek(0)
                 for frame_idx, frame in enumerate(container.decode(video_stream)):
                     if frame_idx in sample_indices:
                         frames.append(frame.to_image())
 
-                if len(frames) % 2 != 0:  # qwen2-vl requires even number of frames
-                    frames.append(frames[-1])
-
-                frames = self._regularize_images(frames, **kwargs)["images"]
-                results.append(frames)
                 if video_stream.duration is None:
-                    fps_per_video.append(2.0)
+                    fps_per_video.append(kwargs.get("video_fps", 2.0))
                 else:
                     fps_per_video.append(len(sample_indices) / float(video_stream.duration * video_stream.time_base))
 
-            return {"videos": results, "fps_per_video": fps_per_video}
+            if len(frames) % 2 != 0:
+                frames.append(frames[-1])
+
+            frames = self._regularize_images(frames, **kwargs)["images"]
+            results.append(frames)
+
+        return {"videos": results, "fps_per_video": fps_per_video}
 
     @override
     def _get_mm_inputs(
@@ -1456,7 +1453,6 @@ class Qwen2VLPlugin(BasePlugin):
                 image_min_pixels=getattr(processor, "video_min_pixels", 16 * 16),
                 video_fps=getattr(processor, "video_fps", 2.0),
                 video_maxlen=getattr(processor, "video_maxlen", 128),
-                is_processed_frames=getattr(processor, "is_processed_frames", False),
             )
             mm_inputs.update(image_processor(images=None, videos=video_data["videos"], return_tensors="pt"))
             temporal_patch_size: int = getattr(image_processor, "temporal_patch_size", 2)
@@ -1537,7 +1533,6 @@ class Qwen2OmniPlugin(Qwen2VLPlugin):
                 image_min_pixels=getattr(processor, "video_min_pixels", 16 * 16),
                 video_fps=getattr(processor, "video_fps", 2.0),
                 video_maxlen=getattr(processor, "video_maxlen", 128),
-                is_processed_frames=getattr(processor, "is_processed_frames", False),
             )
             mm_inputs.update(image_processor(images=None, videos=video_dict["videos"], return_tensors="pt"))
             temporal_patch_size: int = getattr(image_processor, "temporal_patch_size", 2)

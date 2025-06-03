@@ -155,10 +155,6 @@ class BaseModelArguments:
         default=None,
         metadata={"help": "Auth token to log in with Hugging Face Hub."},
     )
-    is_processed_frames: bool = field(
-        default=False,
-        metadata={"help": "Whether or not the video frames are processed frames."},
-    )
     ms_hub_token: Optional[str] = field(
         default=None,
         metadata={"help": "Auth token to log in with ModelScope Hub."},
