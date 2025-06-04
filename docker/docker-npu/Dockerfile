@@ -39,7 +39,7 @@ COPY . /app
 RUN pip install --no-cache-dir -e ".[${EXTRAS}]" --no-build-isolation
 
 # Set up volumes
-VOLUME [ "/root/.cache/huggingface", "/root/.cache/modelscope", "/root/.cache/openmind", "/app/shared_data", "/app/output" ]
+# VOLUME [ "/root/.cache/huggingface", "/app/shared_data", "/app/output" ]
 
 # Expose port 7860 for LLaMA Board
 ENV GRADIO_SERVER_PORT=7860

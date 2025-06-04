@@ -55,7 +55,7 @@ Choose your path:
 - **Colab (free)**: https://colab.research.google.com/drive/1eRTPn37ltBbYsISy9Aw2NuI2Aq5CQrD9?usp=sharing
 - **Local machine**: Please refer to [usage](#getting-started)
 - **PAI-DSW (free trial)**: https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory
-- **Alaya NeW (offer)**: https://docs.alayanew.com/docs/documents/newActivities/llamafactory/?utm_source=LLaMA-Factory
+- **Alaya NeW (cloud GPU deal)**: https://docs.alayanew.com/docs/documents/newActivities/llamafactory/?utm_source=LLaMA-Factory
 
 > [!NOTE]
 > Except for the above links, all other websites are unauthorized third-party websites. Please carefully use them.
@@ -680,11 +680,6 @@ docker build -f ./docker/docker-cuda/Dockerfile \
     -t llamafactory:latest .
 
 docker run -dit --ipc=host --gpus=all \
-    -v ./hf_cache:/root/.cache/huggingface \
-    -v ./ms_cache:/root/.cache/modelscope \
-    -v ./om_cache:/root/.cache/openmind \
-    -v ./shared_data:/app/shared_data \
-    -v ./output:/app/output \
     -p 7860:7860 \
     -p 8000:8000 \
     --name llamafactory \
@@ -702,11 +697,6 @@ docker build -f ./docker/docker-npu/Dockerfile \
     -t llamafactory:latest .
 
 docker run -dit --ipc=host \
-    -v ./hf_cache:/root/.cache/huggingface \
-    -v ./ms_cache:/root/.cache/modelscope \
-    -v ./om_cache:/root/.cache/openmind \
-    -v ./shared_data:/app/shared_data \
-    -v ./output:/app/output \
     -v /usr/local/dcmi:/usr/local/dcmi \
     -v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi \
     -v /usr/local/Ascend/driver:/usr/local/Ascend/driver \
@@ -732,11 +722,6 @@ docker build -f ./docker/docker-rocm/Dockerfile \
     -t llamafactory:latest .
 
 docker run -dit --ipc=host \
-    -v ./hf_cache:/root/.cache/huggingface \
-    -v ./ms_cache:/root/.cache/modelscope \
-    -v ./om_cache:/root/.cache/openmind \
-    -v ./shared_data:/app/shared_data \
-    -v ./output:/app/output \
     -p 7860:7860 \
     -p 8000:8000 \
     --device /dev/kfd \
@@ -749,12 +734,14 @@ docker exec -it llamafactory bash
 
 </details>
 
-<details><summary>Details about volume</summary>
+<details><summary>Use Docker volumes</summary>
 
-- `hf_cache`: Utilize Hugging Face cache on the host machine. Reassignable if a cache already exists in a different directory.
-- `ms_cache`: Similar to Hugging Face cache but for ModelScope users.
-- `om_cache`: Similar to Hugging Face cache but for Modelers users.
-- `shared_data`: Place datasets on this dir of the host machine so that they can be selected on LLaMA Board GUI.
+You can uncomment `VOLUME [ "/root/.cache/huggingface", "/app/shared_data", "/app/output" ]` in the Dockerfile to use data volumes.
+
+When building the Docker image, use `-v ./hf_cache:/root/.cache/huggingface` argument to mount the local directory to the container. The following data volumes are available.
+
+- `hf_cache`: Utilize Hugging Face cache on the host machine.
+- `shared_data`: The directionary to store datasets on the host machine.
 - `output`: Set export dir to this location so that the merged result can be accessed directly on the host machine.
 
 </details>
