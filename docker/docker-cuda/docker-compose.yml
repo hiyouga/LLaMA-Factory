@@ -7,12 +7,6 @@ services:
         PIP_INDEX: https://pypi.org/simple
         EXTRAS: metrics
     container_name: llamafactory
-    volumes:
-      - ../../hf_cache:/root/.cache/huggingface
-      - ../../ms_cache:/root/.cache/modelscope
-      - ../../om_cache:/root/.cache/openmind
-      - ../../shared_data:/app/shared_data
-      - ../../output:/app/output
     ports:
       - "7860:7860"
       - "8000:8000"
