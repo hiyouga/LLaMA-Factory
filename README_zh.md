@@ -57,7 +57,7 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 - **Colab（免费）**：https://colab.research.google.com/drive/1d5KQtbemerlSDSxZIfAaWXhKr30QypiK?usp=sharing
 - **本地机器**：请见[如何使用](#如何使用)
 - **PAI-DSW（免费试用）**：https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory
-- **Alaya NeW（优惠活动）**：https://docs.alayanew.com/docs/documents/newActivities/llamafactory/?utm_source=LLaMA-Factory
+- **Alaya NeW（算力优惠活动）**：https://docs.alayanew.com/docs/documents/newActivities/llamafactory/?utm_source=LLaMA-Factory
 
 > [!NOTE]
 > 除上述链接以外的其他网站均为未经许可的第三方网站，请小心甄别。
@@ -682,11 +682,6 @@ docker build -f ./docker/docker-cuda/Dockerfile \
     -t llamafactory:latest .
 
 docker run -dit --ipc=host --gpus=all \
-    -v ./hf_cache:/root/.cache/huggingface \
-    -v ./ms_cache:/root/.cache/modelscope \
-    -v ./om_cache:/root/.cache/openmind \
-    -v ./shared_data:/app/shared_data \
-    -v ./output:/app/output \
     -p 7860:7860 \
     -p 8000:8000 \
     --name llamafactory \
@@ -704,11 +699,6 @@ docker build -f ./docker/docker-npu/Dockerfile \
     -t llamafactory:latest .
 
 docker run -dit --ipc=host \
-    -v ./hf_cache:/root/.cache/huggingface \
-    -v ./ms_cache:/root/.cache/modelscope \
-    -v ./om_cache:/root/.cache/openmind \
-    -v ./shared_data:/app/shared_data \
-    -v ./output:/app/output \
     -v /usr/local/dcmi:/usr/local/dcmi \
     -v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi \
     -v /usr/local/Ascend/driver:/usr/local/Ascend/driver \
@@ -734,11 +724,6 @@ docker build -f ./docker/docker-rocm/Dockerfile \
     -t llamafactory:latest .
 
 docker run -dit --ipc=host \
-    -v ./hf_cache:/root/.cache/huggingface \
-    -v ./ms_cache:/root/.cache/modelscope \
-    -v ./om_cache:/root/.cache/openmind \
-    -v ./shared_data:/app/shared_data \
-    -v ./output:/app/output \
     -p 7860:7860 \
     -p 8000:8000 \
     --device /dev/kfd \
@@ -751,11 +736,13 @@ docker exec -it llamafactory bash
 
 </details>
 
-<details><summary>数据卷详情</summary>
+<details><summary>使用数据卷</summary>
 
-- `hf_cache`：使用宿主机的 Hugging Face 缓存文件夹，允许更改为新的目录。
-- `ms_cache`：类似 Hugging Face 缓存文件夹，为 ModelScope 用户提供。
-- `om_cache`：类似 Hugging Face 缓存文件夹，为 Modelers 用户提供。
+您可以通过移除 Dockerfile 中 `VOLUME [ "/root/.cache/huggingface", "/app/shared_data", "/app/output" ]` 的注释来使用数据卷。
+
+在构建 Docker 时使用参数 `-v ./hf_cache:/root/.cache/huggingface` 来挂载数据卷。各个数据卷的含义表示如下。
+
+- `hf_cache`：使用宿主机的 Hugging Face 缓存文件夹。
 - `shared_data`：宿主机中存放数据集的文件夹路径。
 - `output`：将导出目录设置为该路径后，即可在宿主机中访问导出后的模型。
 
