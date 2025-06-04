@@ -52,7 +52,7 @@ RUN if [ "${INSTALL_FLASHATTN}" == "true" ]; then \
     fi
 
 # Set up volumes
-VOLUME [ "/root/.cache/huggingface", "/root/.cache/modelscope", "/root/.cache/openmind", "/app/shared_data", "/app/output" ]
+# VOLUME [ "/root/.cache/huggingface", "/app/shared_data", "/app/output" ]
 
 # Expose port 7860 for LLaMA Board
 ENV GRADIO_SERVER_PORT=7860
