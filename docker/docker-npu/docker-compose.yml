@@ -8,11 +8,6 @@ services:
         EXTRAS: torch-npu,metrics
     container_name: llamafactory
     volumes:
-      - ../../hf_cache:/root/.cache/huggingface
-      - ../../ms_cache:/root/.cache/modelscope
-      - ../../om_cache:/root/.cache/openmind
-      - ../../shared_data:/app/shared_data
-      - ../../output:/app/output
       - /usr/local/dcmi:/usr/local/dcmi
       - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
       - /usr/local/Ascend/driver:/usr/local/Ascend/driver
