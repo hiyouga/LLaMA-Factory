@@ -28,11 +28,11 @@ WORKDIR /app
 # Change pip source
 RUN pip config set global.index-url "${PIP_INDEX}" && \
     pip config set global.extra-index-url "${PIP_INDEX}" && \
-    python -m pip install --upgrade pip
+    pip install --no-cache-dir --upgrade pip packaging wheel setuptools
 
 # Reinstall pytorch rocm
 RUN pip uninstall -y torch torchvision torchaudio && \
-    pip install --pre torch torchvision torchaudio --index-url "${PYTORCH_INDEX}"
+    pip install --no-cache-dir --pre torch torchvision torchaudio --index-url "${PYTORCH_INDEX}"
 
 # Install the requirements
 COPY requirements.txt /app

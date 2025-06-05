@@ -27,7 +27,7 @@ WORKDIR /app
 # Change pip source
 RUN pip config set global.index-url "${PIP_INDEX}" && \
     pip config set global.extra-index-url "${PIP_INDEX}" && \
-    python -m pip install --upgrade pip
+    pip install --no-cache-dir --upgrade pip packaging wheel setuptools
 
 # Install the requirements
 COPY requirements.txt /app
