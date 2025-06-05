@@ -91,8 +91,8 @@ def test_visual_model_save_load():
     model = init_adapter(config, model, model_args, finetuning_args, is_trainable=False)
     loaded_model_weight = dict(model.named_parameters())
 
-    model.save_pretrained(os.path.join("output", "qwen2_vl"), safe_serialization=False)
-    saved_model_weight = torch.load(os.path.join("output", "qwen2_vl", "pytorch_model.bin"), weights_only=True)
+    model.save_pretrained(os.path.join("output", "qwen2_vl"), max_shard_size="10GB", safe_serialization=False)
+    saved_model_weight = torch.load(os.path.join("output", "qwen2_vl", "pytorch_model.bin"), weights_only=False)
 
     if is_transformers_version_greater_than("4.52.0"):
         assert "model.language_model.layers.0.self_attn.q_proj.weight" in loaded_model_weight
