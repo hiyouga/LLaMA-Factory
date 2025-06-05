@@ -12,6 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Why we need this script for qwen_omni?
+
+Because the qwen_omni model is constructed by two parts:
+1. [Thinker]:[audio_encoder, vision_encoder, LLM backbone], which our repository does support to post-training.
+2. [Talker]: [audio_decoder, wave_model], which is not supported to post-training without specific tokenizer.
+When we post-training the model, we exactly train the [Thinker] part, and the [Talker] part is dropped.
+So, to get the complete model, we need to merge the [Talker] part back to the [Thinker] part.
+LoRA mode: [Thinker + LoRA weights] + [Original Talker] -> [Omni model]
+Full mode: [Thinker] + [Original Talker] -> [Omni model]
+For Processor, we do saved the processor from trained model instead of the original model.
+"""
+
 import os
 import shutil
 
