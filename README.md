@@ -493,6 +493,8 @@ Extra dependencies available: torch, torch-npu, metrics, deepspeed, liger-kernel
 docker run -it --rm --gpus=all --ipc=host hiyouga/llamafactory:latest
 ```
 
+This image is built on Ubuntu 22.04 (x86\_64), CUDA 12.4, Python 3.11, PyTorch 2.6.0, and Flash-attn 2.7.4.
+
 Find the pre-built images: https://hub.docker.com/r/hiyouga/llamafactory/tags
 
 Please refer to [build docker](#build-docker) to build the image yourself.
