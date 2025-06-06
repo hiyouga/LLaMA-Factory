@@ -138,7 +138,7 @@ def load_model(
         if model_args.adapter_name_or_path is not None:
             lazy_load = True
         elif is_trainable:
-            model = load_unsloth_pretrained_model(config, model_args)
+            model = load_unsloth_pretrained_model(config, model_args, finetuning_args)
 
     if model is None and not lazy_load:
         init_kwargs["config"] = config
