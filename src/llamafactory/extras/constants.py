@@ -513,7 +513,7 @@ register_model_group(
 
 register_model_group(
     models={
-        "DeepSeek-V2-236B-Chat-0628": {
+        "DeepSeek-V2-0628-236B-Chat": {
             DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V2-Chat-0628",
             DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V2-Chat-0628",
         },
@@ -521,7 +521,7 @@ register_model_group(
             DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V2.5",
             DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V2.5",
         },
-        "DeepSeek-V2.5-236B-Chat-1210": {
+        "DeepSeek-V2.5-1210-236B-Chat": {
             DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V2.5-1210",
             DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V2.5-1210",
         },
@@ -533,7 +533,7 @@ register_model_group(
             DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V3",
             DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V3",
         },
-        "DeepSeek-V3-671B-0324-Chat": {
+        "DeepSeek-V3-0324-671B-Chat": {
             DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V3-0324",
             DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V3-0324",
         },
@@ -575,6 +575,14 @@ register_model_group(
         "DeepSeek-R1-671B-Chat": {
             DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-R1",
             DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-R1",
+        },
+        "DeepSeek-R1-0528-8B-Distill": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+            DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        },
+        "DeepSeek-R1-0528-671B-Chat": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-R1-0528",
+            DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-R1-0528",
         },
     },
     template="deepseekr1",
@@ -684,6 +692,10 @@ register_model_group(
             DownloadSource.DEFAULT: "google/gemma-3-1b-it",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-1b-it",
         },
+        "MedGemma-27B-Instruct": {
+            DownloadSource.DEFAULT: "google/medgemma-27b-text-it",
+            DownloadSource.MODELSCOPE: "google/medgemma-27b-text-it",
+        },
     },
     template="gemma",
 )
@@ -715,6 +727,14 @@ register_model_group(
             DownloadSource.DEFAULT: "google/gemma-3-27b-it",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-27b-it",
         },
+        "MedGemma-4B": {
+            DownloadSource.DEFAULT: "google/medgemma-4b-pt",
+            DownloadSource.MODELSCOPE: "google/medgemma-4b-pt",
+        },
+        "MedGemma-4B-Instruct": {
+            DownloadSource.DEFAULT: "google/medgemma-4b-it",
+            DownloadSource.MODELSCOPE: "google/medgemma-4b-it",
+        },
     },
     template="gemma3",
     multimodal=True,
@@ -736,15 +756,15 @@ register_model_group(
             DownloadSource.DEFAULT: "THUDM/glm-4-9b-chat-1m",
             DownloadSource.MODELSCOPE: "ZhipuAI/glm-4-9b-chat-1m",
         },
-        "GLM-4-9B-0414-Chat": {
+        "GLM-4-0414-9B-Chat": {
             DownloadSource.DEFAULT: "THUDM/GLM-4-9B-0414",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4-9B-0414",
         },
-        "GLM-4-32B-0414": {
+        "GLM-4-0414-32B-Base": {
             DownloadSource.DEFAULT: "THUDM/GLM-4-32B-Base-0414",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4-32B-Base-0414",
         },
-        "GLM-4-32B-0414-Chat": {
+        "GLM-4-0414-32B-Chat": {
             DownloadSource.DEFAULT: "THUDM/GLM-4-32B-0414",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4-32B-0414",
         },
@@ -755,11 +775,11 @@ register_model_group(
 
 register_model_group(
     models={
-        "GLM-Z1-9B-0414-Chat": {
+        "GLM-Z1-0414-9B-Chat": {
             DownloadSource.DEFAULT: "THUDM/GLM-Z1-9B-0414",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-Z1-9B-0414",
         },
-        "GLM-Z1-32B-0414-Chat": {
+        "GLM-Z1-0414-32B-Chat": {
             DownloadSource.DEFAULT: "THUDM/GLM-Z1-32B-0414",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-Z1-32B-0414",
         },
@@ -1437,6 +1457,22 @@ register_model_group(
         },
     },
     template="mimo",
+)
+
+
+register_model_group(
+    models={
+        "MiMo-7B-VL-Instruct": {
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-SFT",
+            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-VL-7B-SFT",
+        },
+        "MiMo-7B-VL-RL": {
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-RL",
+            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-VL-7B-RL",
+        },
+    },
+    template="mimo_vl",
+    multimodal=True,
 )
 
 
@@ -2585,6 +2621,14 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen2.5-Omni-7B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-Omni-7B",
         },
+        "Qwen2.5-Omni-7B-GPTQ-Int4": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-Omni-7B-GPTQ-Int4",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-Omni-7B-GPTQ-Int4",
+        },
+        "Qwen2.5-Omni-7B-AWQ": {
+            DownloadSource.DEFAULT: "Qwen/Qwen2.5-Omni-7B-AWQ",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen2.5-Omni-7B-AWQ",
+        },
     },
     template="qwen2_omni",
     multimodal=True,
@@ -2727,6 +2771,68 @@ register_model_group(
         }
     },
     template="skywork_o1",
+)
+
+
+register_model_group(
+    models={
+        "SmolLM-135M": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM-135M",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM-135M",
+        },
+        "SmolLM-360M": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM-360M",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM-360M",
+        },
+        "SmolLM-1.7B": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM-1.7B",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM-1.7B",
+        },
+        "SmolLM-135M-Instruct": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM-135M-Instruct",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM-135M-Instruct",
+        },
+        "SmolLM-360M-Instruct": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM-360M-Instruct",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM-360M-Instruct",
+        },
+        "SmolLM-1.7B-Instruct": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM-1.7B-Instruct",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM-1.7B-Instruct",
+        },
+    },
+    template="smollm",
+)
+
+
+register_model_group(
+    models={
+        "SmolLM2-135M": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM2-135M",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM2-135M",
+        },
+        "SmolLM2-360M": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM2-360M",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM2-360M",
+        },
+        "SmolLM2-1.7B": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM2-1.7B",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM2-1.7B",
+        },
+        "SmolLM2-135M-Instruct": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM2-135M-Instruct",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM2-135M-Instruct",
+        },
+        "SmolLM2-360M-Instruct": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM2-360M-Instruct",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM2-360M-Instruct",
+        },
+        "SmolLM2-1.7B-Instruct": {
+            DownloadSource.DEFAULT: "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+            DownloadSource.MODELSCOPE: "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+        },
+    },
+    template="smollm2",
 )
 
 

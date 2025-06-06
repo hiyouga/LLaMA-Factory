@@ -78,11 +78,11 @@ class PairwiseTrainer(Trainer):
         return super().create_scheduler(num_training_steps, optimizer)
 
     @override
-    def _get_train_sampler(self) -> Optional["torch.utils.data.Sampler"]:
+    def _get_train_sampler(self, *args, **kwargs) -> Optional["torch.utils.data.Sampler"]:
         if self.finetuning_args.disable_shuffling:
             return torch.utils.data.SequentialSampler(self.train_dataset)
 
-        return super()._get_train_sampler()
+        return super()._get_train_sampler(*args, **kwargs)
 
     @override
     def compute_loss(
