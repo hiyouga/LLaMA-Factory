@@ -880,7 +880,6 @@ register_template(
 register_template(
     name="empty",
     format_assistant=StringFormatter(slots=["{{content}}"]),
-    replace_jinja_template=True,
 )
 
 
