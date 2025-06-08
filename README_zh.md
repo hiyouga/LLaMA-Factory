@@ -495,6 +495,8 @@ pip install -e ".[torch,metrics]" --no-build-isolation
 docker run -it --rm --gpus=all --ipc=host hiyouga/llamafactory:latest
 ```
 
+该镜像基于 Ubuntu 22.04（x86\_64）、CUDA 12.4、Python 3.11、PyTorch 2.6.0 和 Flash-attn 2.7.4 构建。
+
 查看全部镜像：https://hub.docker.com/r/hiyouga/llamafactory/tags
 
 请参阅[构建 Docker](#构建-docker) 来重新构建镜像。
