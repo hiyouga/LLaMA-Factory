@@ -1603,7 +1603,7 @@ register_model_group(
             DownloadSource.MODELSCOPE: "mistralai/Mistral-Small-24B-Instruct-2503",
         },
     },
-    template="mistral_small_vl",
+    template="mistral_small",
     multimodal=True,
 )
 
