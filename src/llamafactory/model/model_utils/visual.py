@@ -264,6 +264,11 @@ _register_composite_model(
 
 
 _register_composite_model(
+    model_type="mistral3",
+)
+
+
+_register_composite_model(
     model_type="qwen2_audio",
     vision_model_keys=["audio_tower"],
 )
