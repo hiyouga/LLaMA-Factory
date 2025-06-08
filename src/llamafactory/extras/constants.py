@@ -1594,6 +1594,22 @@ register_model_group(
 
 register_model_group(
     models={
+        "Mistral-Small-24B-Base-2503": {
+            DownloadSource.DEFAULT: "mistralai/Mistral-Small-24B-Base-2503",
+            DownloadSource.MODELSCOPE: "mistralai/Mistral-Small-24B-Base-2503",
+        },
+        "Mistral-Small-24B-Instruct-2503": {
+            DownloadSource.DEFAULT: "mistralai/Mistral-Small-24B-Instruct-2503",
+            DownloadSource.MODELSCOPE: "mistralai/Mistral-Small-24B-Instruct-2503",
+        },
+    },
+    template="mistral_small_vl",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
         "Mixtral-8x7B-v0.1": {
             DownloadSource.DEFAULT: "mistralai/Mixtral-8x7B-v0.1",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Mixtral-8x7B-v0.1",

@@ -21,14 +21,17 @@ from ...extras.misc import get_current_device
 if TYPE_CHECKING:
     from transformers import PretrainedConfig, PreTrainedModel
 
-    from ...hparams import ModelArguments, FinetuningArguments
+    from ...hparams import FinetuningArguments, ModelArguments
 
 
 logger = logging.get_logger(__name__)
 
 
 def _get_unsloth_kwargs(
-    config: "PretrainedConfig", model_name_or_path: str, model_args: "ModelArguments", finetuning_args: "FinetuningArguments"
+    config: "PretrainedConfig",
+    model_name_or_path: str,
+    model_args: "ModelArguments",
+    finetuning_args: "FinetuningArguments",
 ) -> dict[str, Any]:
     return {
         "model_name": model_name_or_path,
