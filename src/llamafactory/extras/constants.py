@@ -1504,9 +1504,9 @@ register_model_group(
 
 register_model_group(
     models={
-        "MiniCPM4-8B": {
-            DownloadSource.DEFAULT: "openbmb/MiniCPM4-0_5B",
-            DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM4-0_5B",
+        "MiniCPM4-0_5B-Chat": {
+            DownloadSource.DEFAULT: "openbmb/MiniCPM4-0.5B",
+            DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM4-0.5B",
         },
     },
     template="cpm4",
@@ -1514,7 +1514,7 @@ register_model_group(
 
 register_model_group(
     models={
-        "MiniCPM4-4B": {
+        "MiniCPM4-8B-Chat": {
             DownloadSource.DEFAULT: "openbmb/MiniCPM4-8B",
             DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM4-8B",
         },
