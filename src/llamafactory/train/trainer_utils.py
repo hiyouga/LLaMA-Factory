@@ -609,7 +609,7 @@ def get_batch_logps(
         chosen_lengths = valid_length[:num_examples]
         rejected_lengths = valid_length[num_examples:]
         min_lengths = torch.min(chosen_lengths, rejected_lengths)
-        start_positions = torch.argmax(loss_mask, dim=1)
+        start_positions = torch.argmax(loss_mask.int(), dim=1)
         public_lengths = start_positions + torch.cat([min_lengths, min_lengths], dim=0)
 
         seq_len = labels.shape[-1]
