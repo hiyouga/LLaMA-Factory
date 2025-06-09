@@ -1274,9 +1274,10 @@ class PixtralPlugin(BasePlugin):
             content = message["content"]
             while IMAGE_PLACEHOLDER in content:
                 if self.expand_mm_tokens:
+                    patch_size = processor.patch_size * getattr(processor, "spatial_merge_size", 1)
                     height, width = next(image_sizes)
-                    num_height_tokens = height // processor.patch_size
-                    num_width_tokens = width // processor.patch_size
+                    num_height_tokens = height // patch_size
+                    num_width_tokens = width // patch_size
                     replace_tokens = [[self.image_token] * num_width_tokens + [image_break_token]] * num_height_tokens
                     replace_tokens = [item for sublist in replace_tokens for item in sublist]  # flatten list
                     replace_tokens[-1] = image_end_token
