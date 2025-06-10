@@ -501,7 +501,11 @@ def register_template(
     default_slots = ["{{content}}"] if efficient_eos else ["{{content}}", {"eos_token"}]
     default_user_formatter = StringFormatter(slots=["{{content}}"])
     default_assistant_formatter = StringFormatter(slots=default_slots)
-    default_function_formatter = FunctionFormatter(slots=default_slots, tool_format="default")
+    if format_assistant is not None:
+        default_function_formatter = FunctionFormatter(slots=format_assistant.slots, tool_format="default")
+    else:
+        default_function_formatter = FunctionFormatter(slots=default_slots, tool_format="default")
+
     default_tool_formatter = ToolFormatter(tool_format="default")
     default_prefix_formatter = EmptyFormatter()
     TEMPLATES[name] = template_class(
@@ -798,6 +802,7 @@ register_template(
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_observation=StringFormatter(slots=["<|im_start|>tool\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|im_end|>"],
 )
@@ -809,37 +814,9 @@ register_template(
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
-    format_function=FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="default"),
     format_observation=StringFormatter(slots=["<|im_start|>tool\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
-    format_tools=ToolFormatter(tool_format="default"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
-    thought_words=("<|thought_start|>", "<|thought_end|>"),
-    stop_words=["<|im_end|>", "<|tool_call_start|>", "<|tool_call_end|>"],
-    default_system=(
-        "# Functions\n"
-        "Here is a list of functions that you can invoke:\n"
-        "```python\n"
-        "from enum import Enum\n"
-        "from typing import List, Dict, Optional\n"
-        "from pydantic import BaseModel, Field\n"
-        "```\n\n"
-        "# Function Call Rule and Output Format\n"
-        "- If the user's question can be answered without calling any function, please answer the user's question directly. In this situation, you should return your thought and answer the user's question directly.\n"
-        "- If the user cannot be answered without calling any function, and the user does not provide enough information to call functions, please ask the user for more information. In this situation, you should return your thought and ask the user for more information.\n"
-        "- If the user's question cannot be answered without calling any function, and the user has provided enough information to call functions to solve it, you should call the functions. In this situation, the assistant should return your thought and call the functions.\n"
-        "- Use default parameters unless the user has specified otherwise.\n"
-        "- You should answer in the following format:\n\n"
-        "<|thought_start|>\n"
-        "{explain why the user's question can be answered without calling a function or why you should ask the user for more information or why you should call one or more functions and your plan to solve the user's question.}\n"
-        "<|thought_end|>\n"
-        "<|tool_call_start|>\n"
-        "```python\n"
-        "func1(params_name=params_value, params_name2=params_value2...)\n"
-        "func2(params)\n"
-        "```\n"
-        "<|tool_call_end|>\n"
-        "{answer the user's question directly or ask the user for more information}"
-    ),
+    stop_words=["<|im_end|>"],
 )
 
 
