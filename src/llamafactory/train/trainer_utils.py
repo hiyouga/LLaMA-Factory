@@ -49,7 +49,7 @@ if is_apollo_available():
 
 if is_ray_available():
     import ray
-    from ray.train import RunConfig, ScalingConfig
+    from ray.train import RunConfig, ScalingConfig, FailureConfig
     from ray.train.torch import TorchTrainer
 
 
@@ -698,6 +698,7 @@ def get_ray_trainer(
         run_config=RunConfig(
             name=ray_args.ray_run_name,
             storage_path=ray_args.ray_storage_path,
+            failure_config=FailureConfig(max_failures=-1),
         ),
     )
     return trainer
