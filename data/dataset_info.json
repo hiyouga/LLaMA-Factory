@@ -274,7 +274,7 @@
     "tags": {
       "role_tag": "role",
       "content_tag": "content",
-      "user_tag": "human",
+      "user_tag": "user",
       "assistant_tag": "assistant"
     }
   },
@@ -557,6 +557,16 @@
       "chosen": "chosen",
       "rejected": "rejected",
       "images": "images"
+    }
+  },
+  "rlaif_v": {
+    "hf_hub_url": "openbmb/RLAIF-V-Dataset",
+    "ranking": true,
+    "columns": {
+      "prompt": "question",
+      "chosen": "chosen",
+      "rejected": "rejected",
+      "images": "image"
     }
   },
   "orca_pairs": {

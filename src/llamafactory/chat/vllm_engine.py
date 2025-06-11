@@ -124,7 +124,6 @@ class VllmEngine(BaseEngine):
             messages, images or [], videos or [], audios or [], self.processor
         )
         paired_messages = messages + [{"role": "assistant", "content": ""}]
-        system = system or self.generating_args["default_system"]
         prompt_ids, _ = self.template.encode_oneturn(self.tokenizer, paired_messages, system, tools)
         prompt_length = len(prompt_ids)
 

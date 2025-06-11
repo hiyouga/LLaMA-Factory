@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Any
 
 import torch
 from peft import PeftModel
-from transformers import PreTrainedModel, PreTrainedTokenizerBase
+from transformers import GenerationMixin, PreTrainedModel, PreTrainedTokenizerBase
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.modeling_utils import is_fsdp_enabled
 
@@ -85,8 +85,8 @@ def patch_processor(
     setattr(processor, "video_min_pixels", model_args.video_min_pixels)
     setattr(processor, "video_fps", model_args.video_fps)
     setattr(processor, "video_maxlen", model_args.video_maxlen)
-    setattr(processor, "audio_sampling_rate", model_args.audio_sampling_rate)
     setattr(processor, "use_audio_in_video", model_args.use_audio_in_video)
+    setattr(processor, "audio_sampling_rate", model_args.audio_sampling_rate)
 
 
 def patch_config(
@@ -102,8 +102,8 @@ def patch_config(
         else:
             model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
 
-    configure_attn_implementation(config, model_args, is_trainable)
-    configure_rope(config, model_args, is_trainable)
+    configure_attn_implementation(config, model_args)
+    configure_rope(config, model_args)
     configure_longlora(config, model_args, is_trainable)
     configure_quantization(config, tokenizer, model_args, init_kwargs)
     configure_moe(config, model_args, is_trainable)
@@ -169,7 +169,7 @@ def patch_model(
     if getattr(model.config, "model_type", None) not in ["minicpmv", "minicpmo"] and "GenerationMixin" not in str(
         model.generate.__func__
     ):
-        model.generate = MethodType(PreTrainedModel.generate, model)
+        model.generate = MethodType(GenerationMixin.generate, model)
 
     if add_valuehead:
         prepare_valuehead_model(model)

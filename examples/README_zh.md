@@ -52,7 +52,7 @@ llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
 #### 多模态指令监督微调
 
 ```bash
-llamafactory-cli train examples/train_lora/qwen2vl_lora_sft.yaml
+llamafactory-cli train examples/train_lora/qwen2_5vl_lora_sft.yaml
 ```
 
 #### DPO/ORPO/SimPO 训练
@@ -64,7 +64,7 @@ llamafactory-cli train examples/train_lora/llama3_lora_dpo.yaml
 #### 多模态 DPO/ORPO/SimPO 训练
 
 ```bash
-llamafactory-cli train examples/train_lora/qwen2vl_lora_dpo.yaml
+llamafactory-cli train examples/train_lora/qwen2_5vl_lora_dpo.yaml
 ```
 
 #### 奖励模型训练
@@ -104,6 +104,14 @@ llamafactory-cli eval examples/train_lora/llama3_lora_eval.yaml
 ```bash
 FORCE_TORCHRUN=1 NNODES=2 NODE_RANK=0 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
 FORCE_TORCHRUN=1 NNODES=2 NODE_RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
+```
+
+### 支持弹性和容错的多机指令监督微调
+
+要启动一个支持弹性节点和容错的多机指令微调，在每个节点上执行以下命令。弹性节点数量范围为 `MIN_NNODES:MAX_NNODES`，每个节点最多允许因为错误重启 `MAX_RESTARTS` 次。`RDZV_ID` 应设置为一个唯一的作业 ID（由参与该作业的所有节点共享）。更多新可以参考官方文档 [torchrun](https://docs.pytorch.org/docs/stable/elastic/run.html)。
+
+```bash
+FORCE_TORCHRUN=1 MIN_NNODES=1 MAX_NNODES=3 MAX_RESTARTS=3 RDZV_ID=llamafactory MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_full/llama3_full_sft.yaml
 ```
 
 #### 使用 DeepSpeed ZeRO-3 平均分配显存
@@ -168,7 +176,7 @@ FORCE_TORCHRUN=1 NNODES=2 NODE_RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 
 #### 多模态指令监督微调
 
 ```bash
-FORCE_TORCHRUN=1 llamafactory-cli train examples/train_full/qwen2vl_full_sft.yaml
+FORCE_TORCHRUN=1 llamafactory-cli train examples/train_full/qwen2_5vl_full_sft.yaml
 ```
 
 ### 合并 LoRA 适配器与模型量化
@@ -195,10 +203,11 @@ llamafactory-cli export examples/merge_lora/llama3_full_sft.yaml
 
 ### 推理 LoRA 模型
 
-#### 使用 vLLM+TP 批量推理
+#### 使用 vLLM 多卡推理评估
 
 ```
-python scripts/vllm_infer.py --model_name_or_path path_to_merged_model --dataset alpaca_en_demo
+python scripts/vllm_infer.py --model_name_or_path meta-llama/Meta-Llama-3-8B-Instruct --template llama3 --dataset alpaca_en_demo
+python scripts/eval_bleu_rouge.py generated_predictions.jsonl
 ```
 
 #### 使用命令行对话框
@@ -280,10 +289,4 @@ llamafactory-cli train examples/extras/llama_pro/llama3_freeze_sft.yaml
 
 ```bash
 bash examples/extras/fsdp_qlora/train.sh
-```
-
-#### 计算 BLEU 和 ROUGE 分数
-
-```bash
-llamafactory-cli train examples/extras/nlg_eval/llama3_lora_predict.yaml
 ```

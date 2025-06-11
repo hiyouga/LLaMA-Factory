@@ -871,6 +871,28 @@ LOCALES = {
             "info": "拡張ブロックのパラメータのみをトレーニングします。",
         },
     },
+    "enable_thinking": {
+        "en": {
+            "label": "Enable thinking",
+            "info": "Whether or not to enable thinking mode for reasoning models.",
+        },
+        "ru": {
+            "label": "Включить мысли",
+            "info": "Включить режим мысли для моделей решающего характера.",
+        },
+        "zh": {
+            "label": "启用思考模式",
+            "info": "是否启用推理模型的思考模式。",
+        },
+        "ko": {
+            "label": "생각 모드 활성화",
+            "info": "추론 모델의 생각 모드를 활성화할지 여부.",
+        },
+        "ja": {
+            "label": "思考モードを有効化",
+            "info": "推論モデルの思考モードを有効にするかどうか。",
+        },
+    },
     "report_to": {
         "en": {
             "label": "Enable external logger",
@@ -1372,6 +1394,177 @@ LOCALES = {
         "ja": {
             "label": "報酬のホワイトニング",
             "info": "PPO トレーニングにおいて報酬スコアをホワイトニング処理します。",
+        },
+    },
+    "mm_tab": {
+        "en": {
+            "label": "Multimodal configurations",
+        },
+        "ru": {
+            "label": "Конфигурации мультимедиа",
+        },
+        "zh": {
+            "label": "多模态参数设置",
+        },
+        "ko": {
+            "label": "멀티모달 구성",
+        },
+        "ja": {
+            "label": "多モーダル設定",
+        },
+    },
+    "freeze_vision_tower": {
+        "en": {
+            "label": "Freeze vision tower",
+            "info": "Freeze the vision tower in the model.",
+        },
+        "ru": {
+            "label": "Заморозить башню визиона",
+            "info": "Заморозить башню визиона в модели.",
+        },
+        "zh": {
+            "label": "冻结视觉编码器",
+            "info": "冻结模型中的视觉编码器。",
+        },
+        "ko": {
+            "label": "비전 타워 고정",
+            "info": "모델의 비전 타워를 고정합니다.",
+        },
+        "ja": {
+            "label": "ビジョンタワーの固定",
+            "info": "モデルのビジョンタワーを固定します。",
+        },
+    },
+    "freeze_multi_modal_projector": {
+        "en": {
+            "label": "Freeze multi-modal projector",
+            "info": "Freeze the multi-modal projector in the model.",
+        },
+        "ru": {
+            "label": "Заморозить мультимодальный проектор",
+            "info": "Заморозить мультимодальный проектор в модели.",
+        },
+        "zh": {
+            "label": "冻结多模态投影器",
+            "info": "冻结模型中的多模态投影器。",
+        },
+        "ko": {
+            "label": "멀티모달 프로젝터 고정",
+            "info": "모델의 멀티모달 프로젝터를 고정합니다.",
+        },
+        "ja": {
+            "label": "多モーダルプロジェクターの固定",
+            "info": "モデルの多モーダルプロジェクターを固定します。",
+        },
+    },
+    "freeze_language_model": {
+        "en": {
+            "label": "Freeze language model",
+            "info": "Freeze the language model in the model.",
+        },
+        "ru": {
+            "label": "Заморозить язык модели",
+            "info": "Заморозить язык модели в модели.",
+        },
+        "zh": {
+            "label": "冻结语言模型",
+            "info": "冻结模型中的语言模型。",
+        },
+        "ko": {
+            "label": "언어 모델 고정",
+            "info": "모델의 언어 모델을 고정합니다.",
+        },
+        "ja": {
+            "label": "言語モデルの固定",
+            "info": "モデルの言語モデルを固定します。",
+        },
+    },
+    "image_max_pixels": {
+        "en": {
+            "label": "Image max pixels",
+            "info": "The maximum number of pixels of image inputs.",
+        },
+        "ru": {
+            "label": "Максимальное количество пикселей изображения",
+            "info": "Максимальное количество пикселей изображения.",
+        },
+        "zh": {
+            "label": "图像最大像素",
+            "info": "输入图像的最大像素数。",
+        },
+        "ko": {
+            "label": "이미지 최대 픽셀",
+            "info": "이미지 입력의 최대 픽셀 수입니다.",
+        },
+        "ja": {
+            "label": "画像最大ピクセル",
+            "info": "画像入力の最大ピクセル数です。",
+        },
+    },
+    "image_min_pixels": {
+        "en": {
+            "label": "Image min pixels",
+            "info": "The minimum number of pixels of image inputs.",
+        },
+        "ru": {
+            "label": "Минимальное количество пикселей изображения",
+            "info": "Минимальное количество пикселей изображения.",
+        },
+        "zh": {
+            "label": "图像最小像素",
+            "info": "输入图像的最小像素数。",
+        },
+        "ko": {
+            "label": "이미지 최소 픽셀",
+            "info": "이미지 입력의 최소 픽셀 수입니다.",
+        },
+        "ja": {
+            "label": "画像最小ピクセル",
+            "info": "画像入力の最小ピクセル数です。",
+        },
+    },
+    "video_max_pixels": {
+        "en": {
+            "label": "Video max pixels",
+            "info": "The maximum number of pixels of video inputs.",
+        },
+        "ru": {
+            "label": "Максимальное количество пикселей видео",
+            "info": "Максимальное количество пикселей видео.",
+        },
+        "zh": {
+            "label": "视频最大像素",
+            "info": "输入视频的最大像素数。",
+        },
+        "ko": {
+            "label": "비디오 최대 픽셀",
+            "info": "비디오 입력의 최대 픽셀 수입니다.",
+        },
+        "ja": {
+            "label": "ビデオ最大ピクセル",
+            "info": "ビデオ入力の最大ピクセル数です。",
+        },
+    },
+    "video_min_pixels": {
+        "en": {
+            "label": "Video min pixels",
+            "info": "The minimum number of pixels of video inputs.",
+        },
+        "ru": {
+            "label": "Минимальное количество пикселей видео",
+            "info": "Минимальное количество пикселей видео.",
+        },
+        "zh": {
+            "label": "视频最小像素",
+            "info": "输入视频的最小像素数。",
+        },
+        "ko": {
+            "label": "비디오 최소 픽셀",
+            "info": "비디오 입력의 최소 픽셀 수입니다.",
+        },
+        "ja": {
+            "label": "ビデオ最小ピクセル",
+            "info": "ビデオ入力の最小ピクセル数です。",
         },
     },
     "galore_tab": {
@@ -2778,6 +2971,13 @@ ALERTS = {
         "zh": "输出目录已存在，将从该断点恢复训练。",
         "ko": "출력 디렉토리가 이미 존재합니다. 위 출력 디렉토리에 저장된 학습을 재개합니다.",
         "ja": "出力ディレクトリが既に存在します。このチェックポイントからトレーニングを再開します。",
+    },
+    "warn_no_instruct": {
+        "en": "You are using a non-instruct model, please fine-tune it first.",
+        "ru": "Вы используете модель без инструкции, пожалуйста, primeros выполните донастройку этой модели.",
+        "zh": "您正在使用非指令模型，请先对其进行微调。",
+        "ko": "당신은 지시하지 않은 모델을 사용하고 있습니다. 먼저 이를 미세 조정해 주세요.",
+        "ja": "インストラクションモデルを使用していません。まずモデルをアダプターに適合させてください。",
     },
     "info_aborting": {
         "en": "Aborted, wait for terminating...",

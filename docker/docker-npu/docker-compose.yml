@@ -4,15 +4,10 @@ services:
       dockerfile: ./docker/docker-npu/Dockerfile
       context: ../..
       args:
-        INSTALL_DEEPSPEED: "false"
         PIP_INDEX: https://pypi.org/simple
+        EXTRAS: torch-npu,metrics
     container_name: llamafactory
     volumes:
-      - ../../hf_cache:/root/.cache/huggingface
-      - ../../ms_cache:/root/.cache/modelscope
-      - ../../om_cache:/root/.cache/openmind
-      - ../../data:/app/data
-      - ../../output:/app/output
       - /usr/local/dcmi:/usr/local/dcmi
       - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
       - /usr/local/Ascend/driver:/usr/local/Ascend/driver
@@ -22,7 +17,7 @@ services:
       - "8000:8000"
     ipc: host
     tty: true
-    shm_size: "16gb"
+    # shm_size: "16gb"  # ipc: host is set
     stdin_open: true
     command: bash
     devices:

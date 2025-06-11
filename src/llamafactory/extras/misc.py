@@ -79,20 +79,27 @@ def check_version(requirement: str, mandatory: bool = False) -> None:
         logger.warning_rank0_once("Version checking has been disabled, may lead to unexpected behaviors.")
         return
 
-    if mandatory:
-        hint = f"To fix: run `pip install {requirement}`."
+    if "gptmodel" in requirement or "autoawq" in requirement:
+        pip_command = f"pip install {requirement} --no-build-isolation"
     else:
-        hint = f"To fix: run `pip install {requirement}` or set `DISABLE_VERSION_CHECK=1` to skip this check."
+        pip_command = f"pip install {requirement}"
+
+    if mandatory:
+        hint = f"To fix: run `{pip_command}`."
+    else:
+        hint = f"To fix: run `{pip_command}` or set `DISABLE_VERSION_CHECK=1` to skip this check."
 
     require_version(requirement, hint)
 
 
 def check_dependencies() -> None:
     r"""Check the version of the required packages."""
-    check_version("transformers>=4.45.0,<=4.51.3,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0")
-    check_version("datasets>=2.16.0,<=3.5.0")
-    check_version("accelerate>=0.34.0,<=1.6.0")
-    check_version("peft>=0.14.0,<=0.15.1")
+    check_version(
+        "transformers>=4.45.0,<=4.52.4,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0,!=4.52.0"
+    )
+    check_version("datasets>=2.16.0,<=3.6.0")
+    check_version("accelerate>=0.34.0,<=1.7.0")
+    check_version("peft>=0.14.0,<=0.15.2")
     check_version("trl>=0.8.6,<=0.9.6")
     if is_transformers_version_greater_than("4.46.0") and not is_transformers_version_greater_than("4.48.1"):
         logger.warning_rank0_once("There are known bugs in transformers v4.46.0-v4.48.0, please use other versions.")

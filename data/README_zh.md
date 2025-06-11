@@ -1,6 +1,8 @@
 [dataset_info.json](dataset_info.json) 包含了所有可用的数据集。如果您希望使用自定义数据集，请**务必**在 `dataset_info.json` 文件中添加*数据集描述*，并通过修改 `dataset: 数据集名称` 配置来使用数据集。
 
-目前我们支持 **alpaca** 格式和 **sharegpt** 格式的数据集。
+其中 `dataset_info.json` 文件应放置在 `dataset_dir` 目录下。您可以通过修改 `dataset_dir` 参数来使用其他目录。默认值为 `./data`。
+
+目前我们支持 **alpaca** 格式和 **sharegpt** 格式的数据集。允许的文件类型包括 json、jsonl、csv、parquet 和 arrow。
 
 ```json
 "数据集名称": {
@@ -47,7 +49,9 @@
 
 - [样例数据集](alpaca_zh_demo.json)
 
-在指令监督微调时，`instruction` 列对应的内容会与 `input` 列对应的内容拼接后作为人类指令，即人类指令为 `instruction\ninput`。而 `output` 列对应的内容为模型回答。
+在指令监督微调时，`instruction` 列对应的内容会与 `input` 列对应的内容拼接后作为提示词，即提示词为 `instruction\ninput`。而 `output` 列对应的内容为模型回答。
+
+对于推理类模型的微调，如果数据集包含思维链，则需要把思维链放在模型回答中，例如 `<think>cot</think>output`。
 
 如果指定，`system` 列对应的内容将被作为系统提示词。
 
@@ -56,8 +60,8 @@
 ```json
 [
   {
-    "instruction": "人类指令（必填）",
-    "input": "人类输入（选填）",
+    "instruction": "用户指令（必填）",
+    "input": "用户输入（选填）",
     "output": "模型回答（必填）",
     "system": "系统提示词（选填）",
     "history": [
@@ -82,6 +86,11 @@
   }
 }
 ```
+
+> [!TIP]
+> 如果模型本身具备推理能力（如 Qwen3）而数据集不包含思维链，LLaMA-Factory 会自动为数据添加空思维链。当 `enable_thinking` 为 `True` 时（慢思考，默认），空思维链会添加到模型回答中并且计算损失，否则会添加到用户指令中并且不计算损失（快思考）。请在训练和推理时保持 `enable_thinking` 参数一致。
+>
+> 如果您希望训练包含思维链的数据时使用慢思考，训练不包含思维链的数据时使用快思考，可以设置 `enable_thinking` 为 `None`。但该功能较为复杂，请谨慎使用。
 
 ### 预训练数据集
 
@@ -116,8 +125,8 @@
 ```json
 [
   {
-    "instruction": "人类指令（必填）",
-    "input": "人类输入（选填）",
+    "instruction": "用户指令（必填）",
+    "input": "用户输入（选填）",
     "chosen": "优质回答（必填）",
     "rejected": "劣质回答（必填）"
   }
@@ -171,7 +180,7 @@ KTO 数据集需要提供额外的 `kto_tag` 列。详情请参阅 [sharegpt](#s
     "conversations": [
       {
         "from": "human",
-        "value": "人类指令"
+        "value": "用户指令"
       },
       {
         "from": "function_call",
@@ -222,7 +231,7 @@ Sharegpt 格式的偏好数据集同样需要在 `chosen` 列中提供更优的�
     "conversations": [
       {
         "from": "human",
-        "value": "人类指令"
+        "value": "用户指令"
       },
       {
         "from": "gpt",
@@ -230,7 +239,7 @@ Sharegpt 格式的偏好数据集同样需要在 `chosen` 列中提供更优的�
       },
       {
         "from": "human",
-        "value": "人类指令"
+        "value": "用户指令"
       }
     ],
     "chosen": {
@@ -272,7 +281,7 @@ KTO 数据集需要额外添加一个 `kto_tag` 列，包含 bool 类型的人�
     "conversations": [
       {
         "from": "human",
-        "value": "人类指令"
+        "value": "用户指令"
       },
       {
         "from": "gpt",
@@ -311,7 +320,7 @@ KTO 数据集需要额外添加一个 `kto_tag` 列，包含 bool 类型的人�
     "conversations": [
       {
         "from": "human",
-        "value": "<image>人类指令"
+        "value": "<image><image>用户指令"
       },
       {
         "from": "gpt",
@@ -319,6 +328,7 @@ KTO 数据集需要额外添加一个 `kto_tag` 列，包含 bool 类型的人�
       }
     ],
     "images": [
+      "图像路径（必填）",
       "图像路径（必填）"
     ]
   }
@@ -352,7 +362,7 @@ KTO 数据集需要额外添加一个 `kto_tag` 列，包含 bool 类型的人�
     "conversations": [
       {
         "from": "human",
-        "value": "<video>人类指令"
+        "value": "<video><video>用户指令"
       },
       {
         "from": "gpt",
@@ -360,6 +370,7 @@ KTO 数据集需要额外添加一个 `kto_tag` 列，包含 bool 类型的人�
       }
     ],
     "videos": [
+      "视频路径（必填）",
       "视频路径（必填）"
     ]
   }
@@ -393,7 +404,7 @@ KTO 数据集需要额外添加一个 `kto_tag` 列，包含 bool 类型的人�
     "conversations": [
       {
         "from": "human",
-        "value": "<audio>人类指令"
+        "value": "<audio><audio>用户指令"
       },
       {
         "from": "gpt",
@@ -401,6 +412,7 @@ KTO 数据集需要额外添加一个 `kto_tag` 列，包含 bool 类型的人�
       }
     ],
     "audios": [
+      "音频路径（必填）",
       "音频路径（必填）"
     ]
   }
@@ -435,7 +447,7 @@ OpenAI 格式仅仅是 sharegpt 格式的一种特殊情况，其中第一条消
       },
       {
         "role": "user",
-        "content": "人类指令"
+        "content": "用户指令"
       },
       {
         "role": "assistant",

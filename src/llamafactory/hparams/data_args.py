@@ -99,6 +99,10 @@ class DataArguments:
         default=0.0,
         metadata={"help": "Size of the validation set, should be an integer or a float in range `[0,1)`."},
     )
+    eval_on_each_dataset: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to evaluate on each dataset separately."},
+    )
     packing: Optional[bool] = field(
         default=None,
         metadata={"help": "Enable sequences packing in training. Will automatically enable in pre-training."},
@@ -111,6 +115,14 @@ class DataArguments:
         default=None,
         metadata={"help": "Tool format to use for constructing function calling examples."},
     )
+    default_system: Optional[str] = field(
+        default=None,
+        metadata={"help": "Override the default system message in the template."},
+    )
+    enable_thinking: Optional[bool] = field(
+        default=True,
+        metadata={"help": "Whether or not to enable thinking mode for reasoning models."},
+    )
     tokenized_path: Optional[str] = field(
         default=None,
         metadata={
@@ -120,6 +132,10 @@ class DataArguments:
                 "If tokenized_path exists, it will load the tokenized datasets."
             )
         },
+    )
+    data_shared_file_system: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use a shared file system for the datasets."},
     )
 
     def __post_init__(self):

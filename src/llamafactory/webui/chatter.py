@@ -15,6 +15,7 @@
 import json
 import os
 from collections.abc import Generator
+from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any, Optional
 
 from transformers.utils import is_torch_npu_available
@@ -68,6 +69,14 @@ def _format_response(text: str, lang: str, escape_html: bool, thought_words: tup
     )
 
 
+@contextmanager
+def update_attr(obj: Any, name: str, value: Any):
+    old_value = getattr(obj, name, None)
+    setattr(obj, name, value)
+    yield
+    setattr(obj, name, old_value)
+
+
 class WebChatModel(ChatModel):
     def __init__(self, manager: "Manager", demo_mode: bool = False, lazy_init: bool = True) -> None:
         self.manager = manager
@@ -105,6 +114,11 @@ class WebChatModel(ChatModel):
         elif self.demo_mode:
             error = ALERTS["err_demo"][lang]
 
+        try:
+            json.loads(get("infer.extra_args"))
+        except json.JSONDecodeError:
+            error = ALERTS["err_json_schema"][lang]
+
         if error:
             gr.Warning(error)
             yield error
@@ -122,9 +136,9 @@ class WebChatModel(ChatModel):
             enable_liger_kernel=(get("top.booster") == "liger_kernel"),
             infer_backend=get("infer.infer_backend"),
             infer_dtype=get("infer.infer_dtype"),
-            vllm_enforce_eager=True,
             trust_remote_code=True,
         )
+        args.update(json.loads(get("infer.extra_args")))
 
         # checkpoints
         if checkpoint_path:
@@ -191,40 +205,42 @@ class WebChatModel(ChatModel):
         temperature: float,
         skip_special_tokens: bool,
         escape_html: bool,
+        enable_thinking: bool,
     ) -> Generator[tuple[list[dict[str, str]], list[dict[str, str]]], None, None]:
         r"""Generate output text in stream.
 
         Inputs: infer.chatbot, infer.messages, infer.system, infer.tools, infer.image, infer.video, ...
         Output: infer.chatbot, infer.messages
         """
-        chatbot.append({"role": "assistant", "content": ""})
-        response = ""
-        for new_text in self.stream_chat(
-            messages,
-            system,
-            tools,
-            images=[image] if image else None,
-            videos=[video] if video else None,
-            audios=[audio] if audio else None,
-            max_new_tokens=max_new_tokens,
-            top_p=top_p,
-            temperature=temperature,
-            skip_special_tokens=skip_special_tokens,
-        ):
-            response += new_text
-            if tools:
-                result = self.engine.template.extract_tool(response)
-            else:
-                result = response
+        with update_attr(self.engine.template, "enable_thinking", enable_thinking):
+            chatbot.append({"role": "assistant", "content": ""})
+            response = ""
+            for new_text in self.stream_chat(
+                messages,
+                system,
+                tools,
+                images=[image] if image else None,
+                videos=[video] if video else None,
+                audios=[audio] if audio else None,
+                max_new_tokens=max_new_tokens,
+                top_p=top_p,
+                temperature=temperature,
+                skip_special_tokens=skip_special_tokens,
+            ):
+                response += new_text
+                if tools:
+                    result = self.engine.template.extract_tool(response)
+                else:
+                    result = response
 
-            if isinstance(result, list):
-                tool_calls = [{"name": tool.name, "arguments": json.loads(tool.arguments)} for tool in result]
-                tool_calls = json.dumps(tool_calls, ensure_ascii=False)
-                output_messages = messages + [{"role": Role.FUNCTION.value, "content": tool_calls}]
-                bot_text = "```json\n" + tool_calls + "\n```"
-            else:
-                output_messages = messages + [{"role": Role.ASSISTANT.value, "content": result}]
-                bot_text = _format_response(result, lang, escape_html, self.engine.template.thought_words)
+                if isinstance(result, list):
+                    tool_calls = [{"name": tool.name, "arguments": json.loads(tool.arguments)} for tool in result]
+                    tool_calls = json.dumps(tool_calls, ensure_ascii=False)
+                    output_messages = messages + [{"role": Role.FUNCTION.value, "content": tool_calls}]
+                    bot_text = "```json\n" + tool_calls + "\n```"
+                else:
+                    output_messages = messages + [{"role": Role.ASSISTANT.value, "content": result}]
+                    bot_text = _format_response(result, lang, escape_html, self.engine.template.thought_words)
 
-            chatbot[-1] = {"role": "assistant", "content": bot_text}
-            yield chatbot, output_messages
+                chatbot[-1] = {"role": "assistant", "content": bot_text}
+                yield chatbot, output_messages

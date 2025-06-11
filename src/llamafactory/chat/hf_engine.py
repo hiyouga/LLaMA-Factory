@@ -104,7 +104,6 @@ class HuggingfaceEngine(BaseEngine):
             messages, mm_input_dict["images"], mm_input_dict["videos"], mm_input_dict["audios"], processor
         )
         paired_messages = messages + [{"role": "assistant", "content": ""}]
-        system = system or generating_args["default_system"]
         prompt_ids, _ = template.encode_oneturn(tokenizer, paired_messages, system, tools)
         prompt_ids, _ = template.mm_plugin.process_token_ids(
             prompt_ids,
@@ -117,7 +116,7 @@ class HuggingfaceEngine(BaseEngine):
         )
         prompt_length = len(prompt_ids)
         inputs = torch.tensor([prompt_ids], device=model.device)
-        attention_mask = torch.ones_like(inputs, dtype=torch.bool)
+        attention_mask = torch.ones_like(inputs, dtype=torch.long)
 
         do_sample: Optional[bool] = input_kwargs.pop("do_sample", None)
         temperature: Optional[float] = input_kwargs.pop("temperature", None)

@@ -5,8 +5,8 @@
 [![GitHub contributors](https://img.shields.io/github/contributors/hiyouga/LLaMA-Factory?color=orange)](https://github.com/hiyouga/LLaMA-Factory/graphs/contributors)
 [![GitHub workflow](https://github.com/hiyouga/LLaMA-Factory/actions/workflows/tests.yml/badge.svg)](https://github.com/hiyouga/LLaMA-Factory/actions/workflows/tests.yml)
 [![PyPI](https://img.shields.io/pypi/v/llamafactory)](https://pypi.org/project/llamafactory/)
-[![Citation](https://img.shields.io/badge/citation-429-green)](https://scholar.google.com/scholar?cites=12620864006390196564)
-[![GitHub pull request](https://img.shields.io/badge/PRs-welcome-blue)](https://github.com/hiyouga/LLaMA-Factory/pulls)
+[![Citation](https://img.shields.io/badge/citation-561-green)](https://scholar.google.com/scholar?cites=12620864006390196564)
+[![Docker Pulls](https://img.shields.io/docker/pulls/hiyouga/llamafactory)](https://hub.docker.com/r/hiyouga/llamafactory/tags)
 
 [![Twitter](https://img.shields.io/twitter/follow/llamafactory_ai)](https://twitter.com/llamafactory_ai)
 [![Discord](https://dcbadge.vercel.app/api/server/rKfvV9r9FK?compact=true&style=flat)](https://discord.gg/rKfvV9r9FK)
@@ -14,21 +14,34 @@
 
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1d5KQtbemerlSDSxZIfAaWXhKr30QypiK?usp=sharing)
 [![Open in DSW](https://gallery.pai-ml.com/assets/open-in-dsw.svg)](https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory)
-[![Spaces](https://img.shields.io/badge/🤗-Open%20in%20Spaces-blue)](https://huggingface.co/spaces/hiyouga/LLaMA-Board)
-[![Studios](https://img.shields.io/badge/ModelScope-Open%20in%20Studios-blue)](https://modelscope.cn/studios/hiyouga/LLaMA-Board)
-[![SageMaker](https://img.shields.io/badge/SageMaker-Open%20in%20AWS-blue)](https://aws.amazon.com/cn/blogs/china/a-one-stop-code-free-model-fine-tuning-deployment-platform-based-on-sagemaker-and-llama-factory/)
+[![Open in Alaya](assets/alaya_new.svg)](https://docs.alayanew.com/docs/documents/newActivities/llamafactory/?utm_source=LLaMA-Factory)
+[![Open in Spaces](https://img.shields.io/badge/🤗-Open%20in%20Spaces-blue)](https://huggingface.co/spaces/hiyouga/LLaMA-Board)
+[![Open in Studios](https://img.shields.io/badge/ModelScope-Open%20in%20Studios-blue)](https://modelscope.cn/studios/hiyouga/LLaMA-Board)
+[![Open in Novita](https://img.shields.io/badge/Novita-Deploy%20Template-blue)](https://novita.ai/templates-library/105981?sharer=88115474-394e-4bda-968e-b88e123d0c47)
 
-<h3 align="center">
-    使用零代码<a href="#快速开始">命令行</a>与 <a href="#llama-board-可视化微调由-gradio-驱动">Web UI</a> 轻松微调百余种大模型
-</h3>
-<p align="center">
-    <picture>
-        <img alt="Github trend" src="https://trendshift.io/api/badge/repositories/4535">
-    </picture>
-</p>
+### 获得[亚马逊](https://aws.amazon.com/cn/blogs/china/a-one-stop-code-free-model-fine-tuning-deployment-platform-based-on-sagemaker-and-llama-factory/)、[英伟达](https://developer.nvidia.cn/rtx/ai-toolkit)、[阿里云](https://help.aliyun.com/zh/pai/use-cases/fine-tune-a-llama-3-model-with-llama-factory)等的应用。
 
+<div align="center" markdown="1">
 
-👋 加入我们的[微信群](assets/wechat.jpg)或 [NPU 用户群](assets/wechat_npu.jpg)。
+### 赞助商 ❤️
+
+<a href="https://warp.dev/llama-factory">
+    <img alt="Warp sponsorship" width="400" src="https://github.com/user-attachments/assets/ab8dd143-b0fd-4904-bdc5-dd7ecac94eae">
+</a>
+
+#### [Warp，面向开发者的智能终端](https://warp.dev/llama-factory)
+
+[适用于 MacOS、Linux 和 Windows](https://warp.dev/llama-factory)
+
+----
+
+### 使用零代码[命令行](#快速开始)与 [Web UI](#llama-board-可视化微调由-gradio-驱动) 轻松微调百余种大模型
+
+![GitHub Trend](https://trendshift.io/api/badge/repositories/4535)
+
+</div>
+
+👋 加入我们的[微信群](assets/wechat.jpg)、[NPU 用户群](assets/wechat_npu.jpg)或 [Alaya NeW 算力优惠群](assets/wechat_alaya.png)。
 
 \[ [English](README.md) | 中文 \]
 
@@ -43,9 +56,8 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 - **框架文档（昇腾 NPU）**：https://ascend.github.io/docs/sources/llamafactory/
 - **Colab（免费）**：https://colab.research.google.com/drive/1d5KQtbemerlSDSxZIfAaWXhKr30QypiK?usp=sharing
 - **本地机器**：请见[如何使用](#如何使用)
-- **PAI-DSW（免费试用）**：[Llama3 案例](https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory) | [Qwen2-VL 案例](https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory_qwen2vl) | [DeepSeek-R1-Distill 案例](https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory_deepseek_r1_distill_7b)
-- **Amazon SageMaker**：[博客](https://aws.amazon.com/cn/blogs/china/a-one-stop-code-free-model-fine-tuning-deployment-platform-based-on-sagemaker-and-llama-factory/)
-- **Easy Dataset**：[数据蒸馏微调](https://buaa-act.feishu.cn/wiki/KY9xwTGs1iqHrRkjXBwcZP9WnL9)
+- **PAI-DSW（免费试用）**：https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory
+- **Alaya NeW（算力优惠活动）**：https://docs.alayanew.com/docs/documents/newActivities/llamafactory/?utm_source=LLaMA-Factory
 
 > [!NOTE]
 > 除上述链接以外的其他网站均为未经许可的第三方网站，请小心甄别。
@@ -53,7 +65,7 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 ## 目录
 
 - [项目特色](#项目特色)
-- [性能指标](#性能指标)
+- [官方博客](#官方博客)
 - [更新日志](#更新日志)
 - [模型](#模型)
 - [训练方法](#训练方法)
@@ -90,25 +102,27 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 
 | 适配时间      | 模型名称                                                       |
 | ------------ | ------------------------------------------------------------ |
-| Day 0        | Qwen2.5 / Qwen2.5-VL / Gemma 3 / InternLM 3 / MiniCPM-o-2.6  |
+| Day 0        | Qwen3 / Qwen2.5-VL / Gemma 3 / InternLM 3 / MiniCPM-o-2.6    |
 | Day 1        | Llama 3 / GLM-4 / Mistral Small / PaliGemma2 / Llama 4       |
 
-## 性能指标
+## 官方博客
 
-与 ChatGLM 官方的 [P-Tuning](https://github.com/THUDM/ChatGLM2-6B/tree/main/ptuning) 微调相比，LLaMA Factory 的 LoRA 微调提供了 **3.7 倍**的加速比，同时在广告文案生成任务上取得了更高的 Rouge 分数。结合 4 比特量化技术，LLaMA Factory 的 QLoRA 微调进一步降低了 GPU 显存消耗。
+- [使用 LLaMA-Factory 微调 Qwen2.5-VL 实现自动驾驶场景微调](https://docs.alayanew.com/docs/documents/useGuide/LLaMAFactory/mutiple/?utm_source=LLaMA-Factory)（中文）
+- [通过亚马逊 SageMaker HyperPod 上的 LLaMA-Factory 增强多模态模型银行文档的视觉信息提取](https://aws.amazon.com/cn/blogs/machine-learning/how-apoidea-group-enhances-visual-information-extraction-from-banking-documents-with-multimodal-models-using-llama-factory-on-amazon-sagemaker-hyperpod/)（英文）
+- [Easy Dataset × LLaMA Factory: 让大模型高效学习领域知识](https://buaa-act.feishu.cn/wiki/KY9xwTGs1iqHrRkjXBwcZP9WnL9)（中文）
 
-![benchmark](assets/benchmark.svg)
+<details><summary>全部博客</summary>
 
-<details><summary>变量定义</summary>
-
-- **Training Speed**: 训练阶段每秒处理的样本数量。（批处理大小=4，截断长度=1024）
-- **Rouge Score**: [广告文案生成](https://aclanthology.org/D19-1321.pdf)任务验证集上的 Rouge-2 分数。（批处理大小=4，截断长度=1024）
-- **GPU Memory**: 4 比特量化训练的 GPU 显存峰值。（批处理大小=1，截断长度=1024）
-- 我们在 ChatGLM 的 P-Tuning 中采用 `pre_seq_len=128`，在 LLaMA Factory 的 LoRA 微调中采用 `lora_rank=32`。
+- [LLaMA Factory：微调 DeepSeek-R1-Distill-Qwen-7B 模型实现新闻标题分类器](https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory_deepseek_r1_distill_7b)（中文）
+- [基于 Amazon SageMaker 和 LLaMA-Factory 打造一站式无代码模型微调部署平台 Model Hub](https://aws.amazon.com/cn/blogs/china/a-one-stop-code-free-model-fine-tuning-deployment-platform-based-on-sagemaker-and-llama-factory/)（中文）
+- [LLaMA Factory 多模态微调实践：微调 Qwen2-VL 构建文旅大模型](https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory_qwen2vl)（中文）
+- [LLaMA Factory：微调LLaMA3模型实现角色扮演](https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory)（中文）
 
 </details>
 
 ## 更新日志
+
+[25/04/28] 我们支持了 **[Qwen3](https://qwenlm.github.io/blog/qwen3/)** 系列模型的微调。
 
 [25/04/21] 我们支持了 **[Muon](https://github.com/KellerJordan/Muon)** 优化器。详细用法请参照 [examples](examples/README_zh.md)。感谢 [@tianshijing](https://github.com/tianshijing) 的 PR。
 
@@ -118,9 +132,9 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 
 [25/04/06] 我们支持了 **[Llama 4](https://ai.meta.com/blog/llama-4-multimodal-intelligence/)** 模型的微调。查看 [PR #7611](https://github.com/hiyouga/LLaMA-Factory/pull/7611) 以使用。
 
-[25/03/31] 我们支持了 **[Qwen2.5 Omni](https://qwenlm.github.io/blog/qwen2.5-omni/)** 模型的微调。查看 [PR #7537](https://github.com/hiyouga/LLaMA-Factory/pull/7537) 以使用。
-
 <details><summary>展开日志</summary>
+
+[25/03/31] 我们支持了 **[Qwen2.5 Omni](https://qwenlm.github.io/blog/qwen2.5-omni/)** 模型的微调。查看 [PR #7537](https://github.com/hiyouga/LLaMA-Factory/pull/7537) 以使用。
 
 [25/03/15] 我们支持了 **[SGLang](https://github.com/sgl-project/sglang)** 推理后端，请使用 `infer_backend: sglang` 启用。
 
@@ -234,6 +248,9 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 
 </details>
 
+> [!TIP]
+> 如果您无法使用最新的功能，请尝试重新拉取代码并再次安装 LLaMA-Factory。
+
 ## 模型
 
 | 模型名                                                             | 参数量                            | Template            |
@@ -244,17 +261,17 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 | [Command R](https://huggingface.co/CohereForAI)                   | 35B/104B                         | cohere              |
 | [DeepSeek (Code/MoE)](https://huggingface.co/deepseek-ai)         | 7B/16B/67B/236B                  | deepseek            |
 | [DeepSeek 2.5/3](https://huggingface.co/deepseek-ai)              | 236B/671B                        | deepseek3           |
-| [DeepSeek R1 (Distill)](https://huggingface.co/deepseek-ai)       | 1.5B/7B/8B/14B/32B/70B/671B      | deepseek3           |
+| [DeepSeek R1 (Distill)](https://huggingface.co/deepseek-ai)       | 1.5B/7B/8B/14B/32B/70B/671B      | deepseekr1          |
 | [Falcon](https://huggingface.co/tiiuae)                           | 7B/11B/40B/180B                  | falcon              |
 | [Gemma/Gemma 2/CodeGemma](https://huggingface.co/google)          | 2B/7B/9B/27B                     | gemma               |
 | [Gemma 3](https://huggingface.co/google)                          | 1B/4B/12B/27B                    | gemma3/gemma (1B)   |
-| [GLM-4/GLM-4-0414/GLM-Z1](https://huggingface.co/THUDM)           | 9B/32B                           | glm4                |
+| [GLM-4/GLM-4-0414/GLM-Z1](https://huggingface.co/THUDM)           | 9B/32B                           | glm4/glmz1          |
 | [GPT-2](https://huggingface.co/openai-community)                  | 0.1B/0.4B/0.8B/1.5B              | -                   |
 | [Granite 3.0-3.3](https://huggingface.co/ibm-granite)             | 1B/2B/3B/8B                      | granite3            |
 | [Hunyuan](https://huggingface.co/tencent/)                        | 7B                               | hunyuan             |
 | [Index](https://huggingface.co/IndexTeam)                         | 1.9B                             | index               |
 | [InternLM 2-3](https://huggingface.co/internlm)                   | 7B/8B/20B                        | intern2             |
-| [InternVL 2.5-3](https://huggingface.co/OpenGVLab)\*              | 1B/2B/8B/14B/38B/78B             | intern_vl           |
+| [InternVL 2.5-3](https://huggingface.co/OpenGVLab)                | 1B/2B/8B/14B/38B/78B             | intern_vl           |
 | [Kimi-VL](https://huggingface.co/moonshotai)                      | 16B                              | kimi_vl             |
 | [Llama](https://github.com/facebookresearch/llama)                | 7B/13B/33B/65B                   | -                   |
 | [Llama 2](https://huggingface.co/meta-llama)                      | 7B/13B/70B                       | llama2              |
@@ -264,7 +281,8 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 | [LLaVA-1.5](https://huggingface.co/llava-hf)                      | 7B/13B                           | llava               |
 | [LLaVA-NeXT](https://huggingface.co/llava-hf)                     | 7B/8B/13B/34B/72B/110B           | llava_next          |
 | [LLaVA-NeXT-Video](https://huggingface.co/llava-hf)               | 7B/34B                           | llava_next_video    |
-| [MiniCPM](https://huggingface.co/openbmb)                         | 1B/2B/4B                         | cpm/cpm3            |
+| [MiMo](https://huggingface.co/XiaomiMiMo)                         | 7B                               | mimo                |
+| [MiniCPM](https://huggingface.co/openbmb)                         | 0.5B/1B/2B/4B/8B                 | cpm/cpm3/cpm4       |
 | [MiniCPM-o-2.6/MiniCPM-V-2.6](https://huggingface.co/openbmb)     | 8B                               | minicpm_o/minicpm_v |
 | [Ministral/Mistral-Nemo](https://huggingface.co/mistralai)        | 8B/12B                           | ministral           |
 | [Mistral/Mixtral](https://huggingface.co/mistralai)               | 7B/8x7B/8x22B                    | mistral             |
@@ -277,9 +295,11 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 | [Phi-4](https://huggingface.co/microsoft)                         | 14B                              | phi4                |
 | [Pixtral](https://huggingface.co/mistralai)                       | 12B                              | pixtral             |
 | [Qwen (1-2.5) (Code/Math/MoE/QwQ)](https://huggingface.co/Qwen)   | 0.5B/1.5B/3B/7B/14B/32B/72B/110B | qwen                |
+| [Qwen3 (MoE)](https://huggingface.co/Qwen)                        | 0.6B/1.7B/4B/8B/14B/32B/235B     | qwen3               |
 | [Qwen2-Audio](https://huggingface.co/Qwen)                        | 7B                               | qwen2_audio         |
-| [Qwen2.5-Omni](https://huggingface.co/Qwen)\*\*                   | 7B                               | qwen2_omni          |
+| [Qwen2.5-Omni](https://huggingface.co/Qwen)                       | 3B/7B                            | qwen2_omni          |
 | [Qwen2-VL/Qwen2.5-VL/QVQ](https://huggingface.co/Qwen)            | 2B/3B/7B/32B/72B                 | qwen2_vl            |
+| [Seed Coder](https://huggingface.co/ByteDance-Seed)               | 8B                               | seed_coder          |
 | [Skywork o1](https://huggingface.co/Skywork)                      | 8B                               | skywork_o1          |
 | [StarCoder 2](https://huggingface.co/bigcode)                     | 3B/7B/15B                        | -                   |
 | [TeleChat2](https://huggingface.co/Tele-AI)                       | 3B/7B/35B/115B                   | telechat2           |
@@ -399,9 +419,10 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 
 - [DPO mixed (en&zh)](https://huggingface.co/datasets/hiyouga/DPO-En-Zh-20k)
 - [UltraFeedback (en)](https://huggingface.co/datasets/HuggingFaceH4/ultrafeedback_binarized)
-- [COIG-P (en&zh)](https://huggingface.co/datasets/m-a-p/COIG-P)
+- [COIG-P (zh)](https://huggingface.co/datasets/m-a-p/COIG-P)
 - [RLHF-V (en)](https://huggingface.co/datasets/openbmb/RLHF-V-Dataset)
 - [VLFeedback (en)](https://huggingface.co/datasets/Zhihui/VLFeedback)
+- [RLAIF-V (en)](https://huggingface.co/datasets/openbmb/RLAIF-V-Dataset)
 - [Orca DPO Pairs (en)](https://huggingface.co/datasets/Intel/orca_dpo_pairs)
 - [HH-RLHF (en)](https://huggingface.co/datasets/Anthropic/hh-rlhf)
 - [Nectar (en)](https://huggingface.co/datasets/berkeley-nest/Nectar)
@@ -423,6 +444,7 @@ huggingface-cli login
 | ------------ | ------- | --------- |
 | python       | 3.9     | 3.10      |
 | torch        | 2.0.0   | 2.6.0     |
+| torchvision  | 0.15.0  | 0.21.0    |
 | transformers | 4.45.0  | 4.50.0    |
 | datasets     | 2.16.0  | 3.2.0     |
 | accelerate   | 0.34.0  | 1.2.1     |
@@ -457,16 +479,27 @@ huggingface-cli login
 > [!IMPORTANT]
 > 此步骤为必需。
 
+#### 从源码安装
+
 ```bash
 git clone --depth 1 https://github.com/hiyouga/LLaMA-Factory.git
 cd LLaMA-Factory
-pip install -e ".[torch,metrics]"
+pip install -e ".[torch,metrics]" --no-build-isolation
 ```
 
-可选的额外依赖项：torch、torch-npu、metrics、deepspeed、liger-kernel、bitsandbytes、hqq、eetq、gptq、awq、aqlm、vllm、sglang、galore、apollo、badam、adam-mini、qwen、minicpm_v、modelscope、openmind、swanlab、quality
+可选的额外依赖项：torch、torch-npu、metrics、deepspeed、liger-kernel、bitsandbytes、hqq、eetq、gptq、aqlm、vllm、sglang、galore、apollo、badam、adam-mini、qwen、minicpm_v、modelscope、openmind、swanlab、dev
 
-> [!TIP]
-> 遇到包冲突时，可使用 `pip install --no-deps -e .` 解决。
+#### 从镜像安装
+
+```bash
+docker run -it --rm --gpus=all --ipc=host hiyouga/llamafactory:latest
+```
+
+该镜像基于 Ubuntu 22.04（x86\_64）、CUDA 12.4、Python 3.11、PyTorch 2.6.0 和 Flash-attn 2.7.4 构建。
+
+查看全部镜像：https://hub.docker.com/r/hiyouga/llamafactory/tags
+
+请参阅[构建 Docker](#构建-docker) 来重新构建镜像。
 
 <details><summary>使用 <b>uv</b> 构建虚拟环境</summary>
 
@@ -484,8 +517,21 @@ uv run --prerelease=allow llamafactory-cli train examples/train_lora/llama3_lora
 
 </details>
 
-
 <details><summary>Windows 用户指南</summary>
+
+#### 安装 PyTorch
+
+Windows 平台需要额外手动安装 GPU 版本的 PyTorch 依赖包，您可以参考[官方网站](https://pytorch.org/get-started/locally/)和以下命令安装并测试 PyTorch 是否正确安装。
+
+```bash
+pip uninstall torch torchvision torchaudio
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+python -c "import torch; print(torch.cuda.is_available())"
+```
+
+如果看到 `True` 则说明安装成功。
+
+若遇到类似 `Can't pickle local object` 的报错，请设置 `dataloader_num_workers: 0`。
 
 #### 安装 BitsAndBytes
 
@@ -576,7 +622,7 @@ pip install .
 > [!NOTE]
 > 使用自定义数据集时，请更新 `data/dataset_info.json` 文件。
 
-您也可以使用 **[Easy Dataset](https://github.com/ConardLi/easy-dataset)** 构建用于微调的合成数据。
+您也可以使用 **[Easy Dataset](https://github.com/ConardLi/easy-dataset)** 或 **[GraphGen](https://github.com/open-sciencelab/GraphGen)** 构建用于微调的合成数据。
 
 ### 快速开始
 
@@ -633,22 +679,13 @@ CUDA 用户：
 
 ```bash
 docker build -f ./docker/docker-cuda/Dockerfile \
-    --build-arg INSTALL_BNB=false \
-    --build-arg INSTALL_VLLM=false \
-    --build-arg INSTALL_DEEPSPEED=false \
-    --build-arg INSTALL_FLASHATTN=false \
     --build-arg PIP_INDEX=https://pypi.org/simple \
+    --build-arg EXTRAS=metrics \
     -t llamafactory:latest .
 
-docker run -dit --gpus=all \
-    -v ./hf_cache:/root/.cache/huggingface \
-    -v ./ms_cache:/root/.cache/modelscope \
-    -v ./om_cache:/root/.cache/openmind \
-    -v ./data:/app/data \
-    -v ./output:/app/output \
+docker run -dit --ipc=host --gpus=all \
     -p 7860:7860 \
     -p 8000:8000 \
-    --shm-size 16G \
     --name llamafactory \
     llamafactory:latest
 
@@ -658,19 +695,12 @@ docker exec -it llamafactory bash
 昇腾 NPU 用户：
 
 ```bash
-# 根据您的环境选择镜像
 docker build -f ./docker/docker-npu/Dockerfile \
-    --build-arg INSTALL_DEEPSPEED=false \
     --build-arg PIP_INDEX=https://pypi.org/simple \
+    --build-arg EXTRAS=torch-npu,metrics \
     -t llamafactory:latest .
 
-# 根据您的资源更改 `device`
-docker run -dit \
-    -v ./hf_cache:/root/.cache/huggingface \
-    -v ./ms_cache:/root/.cache/modelscope \
-    -v ./om_cache:/root/.cache/openmind \
-    -v ./data:/app/data \
-    -v ./output:/app/output \
+docker run -dit --ipc=host \
     -v /usr/local/dcmi:/usr/local/dcmi \
     -v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi \
     -v /usr/local/Ascend/driver:/usr/local/Ascend/driver \
@@ -681,7 +711,6 @@ docker run -dit \
     --device /dev/davinci_manager \
     --device /dev/devmm_svm \
     --device /dev/hisi_hdc \
-    --shm-size 16G \
     --name llamafactory \
     llamafactory:latest
 
@@ -692,25 +721,15 @@ AMD ROCm 用户：
 
 ```bash
 docker build -f ./docker/docker-rocm/Dockerfile \
-    --build-arg INSTALL_BNB=false \
-    --build-arg INSTALL_VLLM=false \
-    --build-arg INSTALL_DEEPSPEED=false \
-    --build-arg INSTALL_FLASHATTN=false \
     --build-arg PIP_INDEX=https://pypi.org/simple \
+    --build-arg EXTRAS=metrics \
     -t llamafactory:latest .
 
-docker run -dit \
-    -v ./hf_cache:/root/.cache/huggingface \
-    -v ./ms_cache:/root/.cache/modelscope \
-    -v ./om_cache:/root/.cache/openmind \
-    -v ./data:/app/data \
-    -v ./output:/app/output \
-    -v ./saves:/app/saves \
+docker run -dit --ipc=host \
     -p 7860:7860 \
     -p 8000:8000 \
     --device /dev/kfd \
     --device /dev/dri \
-    --shm-size 16G \
     --name llamafactory \
     llamafactory:latest
 
@@ -719,12 +738,14 @@ docker exec -it llamafactory bash
 
 </details>
 
-<details><summary>数据卷详情</summary>
+<details><summary>使用数据卷</summary>
 
-- `hf_cache`：使用宿主机的 Hugging Face 缓存文件夹，允许更改为新的目录。
-- `ms_cache`：类似 Hugging Face 缓存文件夹，为 ModelScope 用户提供。
-- `om_cache`：类似 Hugging Face 缓存文件夹，为 Modelers 用户提供。
-- `data`：宿主机中存放数据集的文件夹路径。
+您可以通过移除 Dockerfile 中 `VOLUME [ "/root/.cache/huggingface", "/app/shared_data", "/app/output" ]` 的注释来使用数据卷。
+
+在构建 Docker 时使用参数 `-v ./hf_cache:/root/.cache/huggingface` 来挂载数据卷。各个数据卷的含义表示如下。
+
+- `hf_cache`：使用宿主机的 Hugging Face 缓存文件夹。
+- `shared_data`：宿主机中存放数据集的文件夹路径。
 - `output`：将导出目录设置为该路径后，即可在宿主机中访问导出后的模型。
 
 </details>
@@ -887,6 +908,7 @@ swanlab_run_name: test_run # 可选
 1. **[RAG-Retrieval](https://github.com/NLPJCL/RAG-Retrieval)**：一个全链路 RAG 检索模型微调、推理和蒸馏代码库。[[blog]](https://zhuanlan.zhihu.com/p/987727357)
 1. **[360-LLaMA-Factory](https://github.com/Qihoo360/360-LLaMA-Factory)**：一个魔改后的代码库，通过 Ring Attention 支持长序列的 SFT 和 DPO 训练。
 1. **[Sky-T1](https://novasky-ai.github.io/posts/sky-t1/)**：由 NovaSky AI 微调的低成本类 o1 长推理模型。
+1. **[WeClone](https://github.com/xming521/WeClone)**：从聊天记录创造数字分身的一站式解决方案。
 
 </details>
 
