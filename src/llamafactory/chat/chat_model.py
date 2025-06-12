@@ -181,4 +181,5 @@ def run_chat() -> None:
             print(new_text, end="", flush=True)
             response += new_text
         print()
-        messages.append({"role": "assistant", "content": response})
+        content = response.split('</think>')[-1].strip().split('<think>')[-1].strip()
+        messages.append({"role": "assistant", "content": content})
