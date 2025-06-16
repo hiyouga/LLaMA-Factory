@@ -86,10 +86,10 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
             padding_side="right",
             **init_kwargs,
         )
-    except ValueError:  # try the fast one
+    except ValueError:  # try another one
         tokenizer = AutoTokenizer.from_pretrained(
             model_args.model_name_or_path,
-            use_fast=True,
+            use_fast=not model_args.use_fast_tokenizer,
             padding_side="right",
             **init_kwargs,
         )
@@ -97,12 +97,23 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
         raise OSError("Failed to load tokenizer.") from e
 
     patch_tokenizer(tokenizer, model_args)
+
     try:
-        processor = AutoProcessor.from_pretrained(model_args.model_name_or_path, **init_kwargs)
-        patch_processor(processor, tokenizer, model_args)
+        processor = AutoProcessor.from_pretrained(
+            model_args.model_name_or_path,
+            use_fast=model_args.use_fast_tokenizer,
+            **init_kwargs,
+        )
+    except ValueError:  # try another one
+        processor = AutoProcessor.from_pretrained(
+            model_args.model_name_or_path,
+            use_fast=not model_args.use_fast_tokenizer,
+            **init_kwargs,
+        )
     except Exception as e:
-        logger.info_rank0(f"Failed to load processor: {e}.")
-        processor = None
+        raise OSError("Failed to load processor.") from e
+
+    patch_processor(processor, tokenizer, model_args)
 
     # Avoid load tokenizer, see:
     # https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/models/auto/processing_auto.py#L324
