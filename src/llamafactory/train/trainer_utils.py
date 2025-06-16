@@ -585,7 +585,10 @@ def create_custom_scheduler(
 
 
 def get_batch_logps(
-    logits: "torch.Tensor", labels: "torch.Tensor", label_pad_token_id: int = IGNORE_INDEX, ld_alpha: Optional[float] = None
+    logits: "torch.Tensor",
+    labels: "torch.Tensor",
+    label_pad_token_id: int = IGNORE_INDEX,
+    ld_alpha: Optional[float] = None,
 ) -> tuple["torch.Tensor", "torch.Tensor"]:
     r"""Compute the log probabilities of the given labels under the given logits.
 
