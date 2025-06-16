@@ -204,7 +204,12 @@ class RLHFArguments:
     )
     ld_alpha: Optional[float] = field(
         default=None,
-        metadata={"help": "α parameter from the LD-DPO paper, which controls the weighting of the verbose token log-probabilities in responses"},
+        metadata={
+            "help": (
+                "Alpha parameter from the LD-DPO paper, which controls the weighting of"
+                " the verbose token log-probabilities in responses."
+            )
+        },
     )
 
 
