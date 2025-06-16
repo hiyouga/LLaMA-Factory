@@ -208,9 +208,12 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             else:  # for qwen2vl
                 features["position_ids"], features["rope_deltas"] = self.get_rope_func(**rope_index_kwargs)
 
-        if getattr(self.model.config, "model_type", None) in ["qwen2_vl", "qwen2_5_vl", "qwen2_5_omni_thinker"]:
-            if "position_ids" not in features or features["position_ids"].dim() != 3:
-                raise ValueError("Qwen2-VL model requires 3D position ids for mrope.")
+        if (
+            self.model is not None
+            and getattr(self.model.config, "model_type", None) in ["qwen2_vl", "qwen2_5_vl", "qwen2_5_omni_thinker"]
+            and ("position_ids" not in features or features["position_ids"].dim() != 3)
+        ):
+            raise ValueError("Qwen2-VL/Qwen2.5-Omni model requires 3D position ids for mrope.")
 
         if "cross_attention_mask" in mm_inputs:  # for mllama inputs when pad_to_multiple_of is enabled
             cross_attention_mask = mm_inputs.pop("cross_attention_mask")
