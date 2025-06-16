@@ -1609,13 +1609,13 @@ register_model_group(
 
 register_model_group(
     models={
-        "Mistral-Small-24B-Base-2503": {
-            DownloadSource.DEFAULT: "mistralai/Mistral-Small-24B-Base-2503",
-            DownloadSource.MODELSCOPE: "mistralai/Mistral-Small-24B-Base-2503",
+        "Mistral-Small-3.1-24B-Base": {
+            DownloadSource.DEFAULT: "mistralai/Mistral-Small-3.1-24B-Base-2503",
+            DownloadSource.MODELSCOPE: "mistralai/Mistral-Small-3.1-24B-Base-2503",
         },
-        "Mistral-Small-24B-Instruct-2503": {
-            DownloadSource.DEFAULT: "mistralai/Mistral-Small-24B-Instruct-2503",
-            DownloadSource.MODELSCOPE: "mistralai/Mistral-Small-24B-Instruct-2503",
+        "Mistral-Small-3.1-24B-Instruct": {
+            DownloadSource.DEFAULT: "mistralai/Mistral-Small-3.1-24B-Instruct-2503",
+            DownloadSource.MODELSCOPE: "mistralai/Mistral-Small-3.1-24B-Instruct-2503",
         },
     },
     template="mistral_small",
