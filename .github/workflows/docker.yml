@@ -43,6 +43,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+
+      - name: Get llamafactory version
+        id: version
+        run: |
+          echo "tag=$(python setup.py --version | sed 's/\.dev0//')" >> "$GITHUB_OUTPUT"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -61,6 +71,8 @@ jobs:
           build-args: |
             EXTRAS=metrics,deepspeed,liger-kernel
           push: ${{ github.event_name != 'pull_request' }}
-          tags: docker.io/hiyouga/llamafactory:latest
+          tags: |
+            docker.io/hiyouga/llamafactory:latest
+            docker.io/hiyouga/llamafactory:${{ steps.version.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
