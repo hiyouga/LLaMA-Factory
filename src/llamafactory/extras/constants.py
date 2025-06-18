@@ -633,6 +633,61 @@ register_model_group(
     template="falcon",
 )
 
+register_model_group(
+    models={
+        "Falcon-H1-0.5B-Instruct": {
+            DownloadSource.DEFAULT: "tiiuae/Falcon-H1-0.5B-Instruct",
+            DownloadSource.MODELSCOPE: "tiiuae/Falcon-H1-0.5B-Instruct",
+        },
+        "Falcon-H1-0.5B-Base": {
+            DownloadSource.DEFAULT: "tiiuae/Falcon-H1-0.5B-Base",
+            DownloadSource.MODELSCOPE: "tiiuae/Falcon-H1-0.5B-Base",
+        },
+        "Falcon-H1-1.5B-Instruct": {
+            DownloadSource.DEFAULT: "tiiuae/Falcon-H1-1.5B-Instruct",
+            DownloadSource.MODELSCOPE: "tiiuae/Falcon-H1-1.5B-Instruct",
+        },
+        "Falcon-H1-1.5B-Base": {
+            DownloadSource.DEFAULT: "tiiuae/Falcon-H1-1.5B-Base",
+            DownloadSource.MODELSCOPE: "tiiuae/Falcon-H1-1.5B-Base",
+        },
+        "Falcon-H1-1.5B-Deep-Instruct": {
+            DownloadSource.DEFAULT: "tiiuae/Falcon-H1-1.5B-Deep-Instruct",
+            DownloadSource.MODELSCOPE: "tiiuae/Falcon-H1-1.5B-Deep-Instruct",
+        },
+        "Falcon-H1-1.5B-Deep-Base": {
+            DownloadSource.DEFAULT: "tiuae/Falcon-H1-1.5B-Deep-Base",
+            DownloadSource.MODELSCOPE: "tiiuae/Falcon-H1-1.5B-Deep-Base",
+        },
+        "Falcon-H1-3B-Instruct": {
+            DownloadSource.DEFAULT: "tiiuae/Falcon-H1-3B-Instruct",
+            DownloadSource.MODELSCOPE: "tiiuae/Falcon-H1-3B-Instruct",
+        },
+        "Falcon-H1-3B-Base": {
+            DownloadSource.DEFAULT: "tiiuae/Falcon-H1-3B-Base",
+            DownloadSource.MODELSCOPE: "tiiuae/Falcon-H1-3B-Base",
+        },
+        "Falcon-H1-7B-Instruct": {
+            DownloadSource.DEFAULT: "tiiuae/Falcon-H1-7B-Instruct",
+            DownloadSource.MODELSCOPE: "tiiuae/Falcon-H1-7B-Instruct",
+        },
+        "Falcon-H1-7B-Base": {
+            DownloadSource.DEFAULT: "tiiuae/Falcon-H1-7B-Base",
+            DownloadSource.MODELSCOPE: "tiiuae/Falcon-H1-7B-Base",
+        },
+        "Falcon-H1-34B-Instruct": {
+            DownloadSource.DEFAULT: "tiiuae/Falcon-H1-34B-Instruct",
+            DownloadSource.MODELSCOPE: "tiiuae/Falcon-H1-34B-Instruct",
+        },
+        "Falcon-H1-34B-Base": {
+            DownloadSource.DEFAULT: "tiiuae/Falcon-H1-34B-Base",
+            DownloadSource.MODELSCOPE: "tiiuae/Falcon-H1-34B-Base",
+        },
+        
+    },
+    template="falcon_h1",
+)
+
 
 register_model_group(
     models={
