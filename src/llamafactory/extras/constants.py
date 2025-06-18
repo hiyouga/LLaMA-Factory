@@ -58,7 +58,7 @@ LLAMABOARD_CONFIG = "llamaboard_config.yaml"
 
 METHODS = ["full", "freeze", "lora"]
 
-MOD_SUPPORTED_MODELS = {"bloom", "falcon", "gemma", "llama", "mistral", "mixtral", "phi", "starcoder2",}
+MOD_SUPPORTED_MODELS = {"bloom", "falcon", "gemma", "llama", "mistral", "mixtral", "phi", "starcoder2"}
 
 MULTIMODAL_SUPPORTED_MODELS = set()
 
