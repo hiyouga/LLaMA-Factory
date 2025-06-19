@@ -17,9 +17,16 @@ from collections import OrderedDict, defaultdict
 from enum import Enum, unique
 from typing import Optional
 
+from peft import (
+    IA3Config,
+    LNTuningConfig,
+    MultitaskPromptTuningConfig,
+    PrefixTuningConfig,
+    PromptEncoderConfig,
+    PromptTuningConfig,
+)
 from peft.utils import SAFETENSORS_WEIGHTS_NAME as SAFE_ADAPTER_WEIGHTS_NAME
 from peft.utils import WEIGHTS_NAME as ADAPTER_WEIGHTS_NAME
-from peft import PromptTuningConfig, PrefixTuningConfig, MultitaskPromptTuningConfig, PromptEncoderConfig, IA3Config, LNTuningConfig
 from transformers.utils import SAFE_WEIGHTS_INDEX_NAME, SAFE_WEIGHTS_NAME, WEIGHTS_INDEX_NAME, WEIGHTS_NAME
 
 
@@ -61,13 +68,13 @@ HF_PEFT_METHODS = ["prompt-tuning", "prefix-tuning", "p-tuning", "ia3", "lntunin
 CUSTOM_PEFT_METHODS = ["dept", "adept", "attempt", "adapters", "adapter-fusion", "bitfit"]
 
 PEFT_CONFIG_MAPPING = {
-    "prompt-tuning": PromptTuningConfig, 
-    "prefix-tuning": PrefixTuningConfig, 
-    "p-tuning": PromptEncoderConfig, 
+    "prompt-tuning": PromptTuningConfig,
+    "prefix-tuning": PrefixTuningConfig,
+    "p-tuning": PromptEncoderConfig,
     "ia3": IA3Config,
     "lntuning": LNTuningConfig,
     "mtp": MultitaskPromptTuningConfig,
-    }
+}
 
 METHODS = ["full", "freeze", "lora"] + HF_PEFT_METHODS + CUSTOM_PEFT_METHODS
 
@@ -696,7 +703,6 @@ register_model_group(
             DownloadSource.DEFAULT: "tiiuae/Falcon-H1-34B-Base",
             DownloadSource.MODELSCOPE: "tiiuae/Falcon-H1-34B-Base",
         },
-        
     },
     template="falcon_h1",
 )

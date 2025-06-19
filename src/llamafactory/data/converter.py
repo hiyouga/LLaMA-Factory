@@ -15,12 +15,13 @@
 import os
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Optional, Union, List
+from typing import TYPE_CHECKING, Any, Optional, Union
+
+from datasets import ClassLabel
 
 from ..extras import logging
 from .data_utils import Role
 
-from datasets import ClassLabel
 
 if TYPE_CHECKING:
     from datasets import Dataset, IterableDataset
@@ -40,7 +41,7 @@ logger = logging.get_logger(__name__)
 class DatasetConverter:
     dataset_attr: "DatasetAttr"
     data_args: "DataArguments"
-    id2label: List[str]
+    id2label: list[str]
 
     def _find_medias(self, medias: Union["MediaType", list["MediaType"], None]) -> Optional[list["MediaType"]]:
         r"""Optionally concatenate media path to media dir when loading from local disk."""
@@ -121,9 +122,13 @@ class AlpacaDatasetConverter(DatasetConverter):
             ]
         elif self.dataset_attr.response and isinstance(example[self.dataset_attr.response], str):  # normal example
             response = [{"role": Role.ASSISTANT.value, "content": example[self.dataset_attr.response]}]
-        elif self.dataset_attr.response and isinstance(example[self.dataset_attr.response], int) and self.id2label: # class label example
+        elif (
+            self.dataset_attr.response and isinstance(example[self.dataset_attr.response], int) and self.id2label
+        ):  # class label example
             response = [{"role": Role.ASSISTANT.value, "content": self.id2label[example[self.dataset_attr.response]]}]
-        elif self.dataset_attr.response and isinstance(example[self.dataset_attr.response], float):  # float value (stsb)
+        elif self.dataset_attr.response and isinstance(
+            example[self.dataset_attr.response], float
+        ):  # float value (stsb)
             response = [{"role": Role.ASSISTANT.value, "content": str(example[self.dataset_attr.response])}]
         else:  # unsupervised
             response = []
@@ -250,7 +255,9 @@ def register_dataset_converter(name: str, dataset_converter: type["DatasetConver
     DATASET_CONVERTERS[name] = dataset_converter
 
 
-def get_dataset_converter(name: str, dataset_attr: "DatasetAttr", data_args: "DataArguments", id2label: List[str]) -> "DatasetConverter":
+def get_dataset_converter(
+    name: str, dataset_attr: "DatasetAttr", data_args: "DataArguments", id2label: list[str]
+) -> "DatasetConverter":
     r"""Get a dataset converter."""
     if name not in DATASET_CONVERTERS:
         raise ValueError(f"Dataset converter {name} not found.")

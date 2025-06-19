@@ -35,7 +35,7 @@ from typing_extensions import override
 
 from ..extras import logging
 from ..extras.constants import TRAINER_LOG, V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
-from ..extras.misc import get_peak_memory, is_env_enabled, use_ray, count_parameters
+from ..extras.misc import count_parameters, get_peak_memory, is_env_enabled, use_ray
 
 
 if is_safetensors_available():
@@ -359,7 +359,7 @@ class ReporterCallback(TrainerCallback):
     def on_train_begin(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
         if not state.is_world_process_zero:
             return
-        
+
         trainable_params, _ = count_parameters(kwargs["model"])
 
         if "wandb" in args.report_to:

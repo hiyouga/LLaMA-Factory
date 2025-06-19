@@ -13,9 +13,10 @@
 # limitations under the License.
 
 import os
-from typing import TYPE_CHECKING, Any, Optional, TypedDict, List
+from typing import TYPE_CHECKING, Any, Optional, TypedDict
 
 import torch
+from peft import PeftConfig
 from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
@@ -26,7 +27,6 @@ from transformers import (
     AutoTokenizer,
 )
 from trl import AutoModelForCausalLMWithValueHead
-from peft import PeftConfig
 
 from ..extras import logging
 from ..extras.misc import count_parameters, skip_check_imports, try_download_model_from_other_hub

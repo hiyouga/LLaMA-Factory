@@ -25,13 +25,12 @@ import torch
 import transformers
 import yaml
 from omegaconf import OmegaConf
+from peft import PeftConfig
 from transformers import HfArgumentParser
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.training_args import ParallelMode
 from transformers.utils import is_torch_bf16_gpu_available, is_torch_npu_available
-
-from peft import PeftConfig
 
 from ..extras import logging
 from ..extras.constants import CHECKPOINT_NAMES, PEFT_CONFIG_MAPPING, PEFT_METHODS, EngineName
@@ -50,7 +49,9 @@ check_dependencies()
 
 
 _TRAIN_ARGS = [ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
-_TRAIN_CLS = tuple[ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments, PeftConfig]
+_TRAIN_CLS = tuple[
+    ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments, PeftConfig
+]
 _INFER_ARGS = [ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _INFER_CLS = tuple[ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _EVAL_ARGS = [ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments]
@@ -205,6 +206,7 @@ def get_ray_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> Ray
     parser = HfArgumentParser(RayArguments)
     (ray_args,) = _parse_args(parser, args, allow_extra_keys=True)
     return ray_args
+
 
 def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _TRAIN_CLS:
     model_args, data_args, training_args, finetuning_args, generating_args, peft_args = _parse_train_args(args)

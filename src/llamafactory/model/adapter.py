@@ -16,7 +16,7 @@ import re
 from typing import TYPE_CHECKING
 
 import torch
-from peft import LoraConfig, LoraModel, PeftModel, TaskType, PeftConfig, get_peft_model
+from peft import LoraConfig, LoraModel, PeftConfig, PeftModel, TaskType, get_peft_model
 from transformers.integrations import is_deepspeed_zero3_enabled
 
 from ..extras import logging
@@ -258,6 +258,7 @@ def _setup_lora_tuning(
 
     return model
 
+
 def _setup_peft(
     config: "PretrainedConfig",
     model: "PreTrainedModel",
@@ -267,14 +268,13 @@ def _setup_peft(
     is_trainable: bool,
     cast_trainable_params_to_fp32: bool,
 ) -> "PeftModel":
-    
-    if model_args.adapter_name_or_path is not None: 
+    if model_args.adapter_name_or_path is not None:
         init_kwargs = {
-                "subfolder": model_args.adapter_folder,
-                "offload_folder": model_args.offload_folder,
-                "cache_dir": model_args.cache_dir,
-                "revision": model_args.model_revision,
-                "token": model_args.hf_hub_token,
+            "subfolder": model_args.adapter_folder,
+            "offload_folder": model_args.offload_folder,
+            "cache_dir": model_args.cache_dir,
+            "revision": model_args.model_revision,
+            "token": model_args.hf_hub_token,
         }
 
         model: PeftModel = PeftModel.from_pretrained(model, model_args.adapter_name_or_path[0], **init_kwargs)
