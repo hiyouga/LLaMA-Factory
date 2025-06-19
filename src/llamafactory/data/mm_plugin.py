@@ -17,6 +17,7 @@
 
 import inspect
 import math
+import os
 import re
 from copy import deepcopy
 from dataclasses import dataclass
@@ -25,7 +26,7 @@ from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TypedDict, Union
 
 import numpy as np
 import torch
-from transformers.image_utils import get_image_size, to_numpy_array
+from transformers.image_utils import get_image_size, is_valid_image, to_numpy_array
 from typing_extensions import override
 
 from ..extras.constants import AUDIO_PLACEHOLDER, IGNORE_INDEX, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
@@ -57,7 +58,10 @@ if is_transformers_version_greater_than("4.45.0"):
     )
 
 
-if is_transformers_version_greater_than("4.49.0"):
+if is_transformers_version_greater_than("4.52.0"):
+    from transformers.image_utils import make_flat_list_of_images
+    from transformers.video_utils import make_batched_videos
+elif is_transformers_version_greater_than("4.49.0"):
     from transformers.image_utils import make_batched_videos, make_flat_list_of_images
 
 
@@ -73,7 +77,7 @@ if TYPE_CHECKING:
         bytes: Optional[bytes]
 
     ImageInput = Union[str, bytes, EncodedImage, BinaryIO, ImageObject]
-    VideoInput = Union[str, BinaryIO]
+    VideoInput = Union[str, BinaryIO, list[list[ImageInput]]]
     AudioInput = Union[str, BinaryIO, NDArray]
 
     class MMProcessor(ProcessorMixin):
@@ -129,6 +133,11 @@ def _make_batched_images(images: list["ImageObject"], imglens: list[int]) -> lis
         images = images[imglen:]
 
     return batch_images
+
+
+def _check_video_is_nested_images(video: "VideoInput") -> bool:
+    r"""Check if the video is nested images."""
+    return isinstance(video, list) and all(isinstance(frame, (str, BinaryIO, dict)) for frame in video)
 
 
 @dataclass
@@ -263,14 +272,20 @@ class MMPluginMixin:
         r"""Regularizes videos to avoid error. Including reading, resizing and converting."""
         results = []
         for video in videos:
-            container = av.open(video, "r")
-            video_stream = next(stream for stream in container.streams if stream.type == "video")
-            sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
             frames: list[ImageObject] = []
-            container.seek(0)
-            for frame_idx, frame in enumerate(container.decode(video_stream)):
-                if frame_idx in sample_indices:
-                    frames.append(frame.to_image())
+            if _check_video_is_nested_images(video):
+                for frame in video:
+                    if not is_valid_image(frame) and not isinstance(frame, dict) and not os.path.exists(frame):
+                        raise ValueError("Invalid image found in video frames.")
+                frames = video
+            else:
+                container = av.open(video, "r")
+                video_stream = next(stream for stream in container.streams if stream.type == "video")
+                sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
+                container.seek(0)
+                for frame_idx, frame in enumerate(container.decode(video_stream)):
+                    if frame_idx in sample_indices:
+                        frames.append(frame.to_image())
 
             frames = self._regularize_images(frames, **kwargs)["images"]
             results.append(frames)
@@ -522,14 +537,14 @@ class InternVLPlugin(BasePlugin):
         mm_inputs = {}
         image_video_patches = []
 
-        if len(images) != 0 and isinstance(images[0], str):
+        if len(images) != 0:
             images = self._regularize_images(
                 images,
                 image_max_pixels=getattr(processor, "image_max_pixels", 1024 * 1024),
                 image_min_pixels=getattr(processor, "image_min_pixels", 32 * 32),
             )["images"]
 
-        if len(videos) != 0 and isinstance(videos[0], str):
+        if len(videos) != 0:
             videos = self._regularize_videos(
                 videos,
                 image_max_pixels=getattr(processor, "video_max_pixels", 256 * 256),
@@ -655,8 +670,10 @@ class KimiVLPlugin(BasePlugin):
         self._validate_messages(messages, images, videos, audios)
         if self.expand_mm_tokens:
             mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+            image_grid_hws = mm_inputs.get("image_grid_hws", [])
+        else:
+            image_grid_hws = [None] * len(images)
 
-        image_grid_hws = mm_inputs.get("image_grid_hws", [])
         num_image_tokens = 0
         image_processor: BaseImageProcessor = getattr(processor, "image_processor")
         merge_length = math.prod(image_processor.merge_kernel_size)
@@ -1257,9 +1274,10 @@ class PixtralPlugin(BasePlugin):
             content = message["content"]
             while IMAGE_PLACEHOLDER in content:
                 if self.expand_mm_tokens:
+                    patch_size = processor.patch_size * getattr(processor, "spatial_merge_size", 1)
                     height, width = next(image_sizes)
-                    num_height_tokens = height // processor.patch_size
-                    num_width_tokens = width // processor.patch_size
+                    num_height_tokens = height // patch_size
+                    num_width_tokens = width // patch_size
                     replace_tokens = [[self.image_token] * num_width_tokens + [image_break_token]] * num_height_tokens
                     replace_tokens = [item for sublist in replace_tokens for item in sublist]  # flatten list
                     replace_tokens[-1] = image_end_token
@@ -1375,24 +1393,33 @@ class Qwen2VLPlugin(BasePlugin):
     ) -> dict[str, Union[list[list["ImageObject"]], list[float]]]:
         results, fps_per_video = [], []
         for video in videos:
-            container = av.open(video, "r")
-            video_stream = next(stream for stream in container.streams if stream.type == "video")
-            sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
             frames: list[ImageObject] = []
-            container.seek(0)
-            for frame_idx, frame in enumerate(container.decode(video_stream)):
-                if frame_idx in sample_indices:
-                    frames.append(frame.to_image())
+            if _check_video_is_nested_images(video):
+                for frame in video:
+                    if not is_valid_image(frame) and not isinstance(frame, dict) and not os.path.exists(frame):
+                        raise ValueError("Invalid image found in video frames.")
 
-            if len(frames) % 2 != 0:  # qwen2-vl requires even number of frames
+                frames = video
+                fps_per_video.append(kwargs.get("video_fps", 2.0))
+            else:
+                container = av.open(video, "r")
+                video_stream = next(stream for stream in container.streams if stream.type == "video")
+                sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
+                container.seek(0)
+                for frame_idx, frame in enumerate(container.decode(video_stream)):
+                    if frame_idx in sample_indices:
+                        frames.append(frame.to_image())
+
+                if video_stream.duration is None:
+                    fps_per_video.append(kwargs.get("video_fps", 2.0))
+                else:
+                    fps_per_video.append(len(sample_indices) / float(video_stream.duration * video_stream.time_base))
+
+            if len(frames) % 2 != 0:
                 frames.append(frames[-1])
 
             frames = self._regularize_images(frames, **kwargs)["images"]
             results.append(frames)
-            if video_stream.duration is None:
-                fps_per_video.append(2.0)
-            else:
-                fps_per_video.append(len(sample_indices) / float(video_stream.duration * video_stream.time_base))
 
         return {"videos": results, "fps_per_video": fps_per_video}
 

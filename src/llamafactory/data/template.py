@@ -52,6 +52,7 @@ class Template:
     efficient_eos: bool
     replace_eos: bool
     replace_jinja_template: bool
+    enable_thinking: Optional[bool]
     mm_plugin: "BasePlugin"
 
     def encode_oneturn(
@@ -60,7 +61,6 @@ class Template:
         messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        enable_thinking: bool = True,
     ) -> tuple[list[int], list[int]]:
         r"""Return a single pair of token ids representing prompt and response respectively."""
         encoded_messages = self._encode(tokenizer, messages, system, tools)
@@ -94,7 +94,7 @@ class Template:
 
         return list(stop_token_ids)
 
-    def add_thought(self, content: str) -> str:
+    def add_thought(self, content: str = "") -> str:
         r"""Add empty thought to assistant message."""
         return f"{self.thought_words[0]}\n\n{self.thought_words[1]}\n\n" + content
 
@@ -105,7 +105,7 @@ class Template:
 
     def get_thought_word_ids(self, tokenizer: "PreTrainedTokenizer") -> list[int]:
         r"""Get the token ids of thought words."""
-        return tokenizer.encode(f"{self.thought_words[0]}\n\n{self.thought_words[1]}\n\n", add_special_tokens=False)
+        return tokenizer.encode(self.add_thought(), add_special_tokens=False)
 
     def _convert_elements_to_ids(self, tokenizer: "PreTrainedTokenizer", elements: "SLOTS") -> list[int]:
         r"""Convert elements to token ids."""
@@ -406,26 +406,24 @@ class ReasoningTemplate(Template):
         messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
-        enable_thinking: bool = True,
     ) -> tuple[list[int], list[int]]:
         messages = deepcopy(messages)
-        for i in range(len(messages)):
-            if messages[i]["role"] == Role.ASSISTANT and (i != len(messages) - 1):
-                messages[i]["content"] = self.remove_thought(messages[i]["content"])
+        for i in range(1, len(messages) - 2, 2):
+            messages[i]["content"] = self.remove_thought(messages[i]["content"])
 
-        encoded_messages = self._encode(tokenizer, messages, system, tools)
-        prompt_ids = []
-        for encoded_ids in encoded_messages[:-1]:
-            prompt_ids += encoded_ids
+        if self.enable_thinking is False:  # remove all cot
+            messages[-1]["content"] = self.remove_thought(messages[-1]["content"])
 
-        if not enable_thinking or (
-            messages[-1]["role"] == Role.ASSISTANT
-            and self.thought_words[0] not in messages[-1]["content"]
+        prompt_ids, response_ids = super().encode_oneturn(tokenizer, messages, system, tools)
+        if (
+            self.thought_words[0] not in messages[-1]["content"]
             and self.thought_words[1] not in messages[-1]["content"]
-        ):
-            prompt_ids += self.get_thought_word_ids(tokenizer)
+        ):  # add empty cot
+            if not self.enable_thinking:  # do not compute loss
+                prompt_ids += self.get_thought_word_ids(tokenizer)
+            else:  # do compute loss
+                response_ids = self.get_thought_word_ids(tokenizer) + response_ids
 
-        response_ids = encoded_messages[-1]
         return prompt_ids, response_ids
 
     @override
@@ -437,14 +435,20 @@ class ReasoningTemplate(Template):
         tools: Optional[str] = None,
     ) -> list[tuple[list[int], list[int]]]:
         messages = deepcopy(messages)
+        if self.enable_thinking is False:  # remove all cot
+            for i in range(1, len(messages), 2):
+                messages[i]["content"] = self.remove_thought(messages[i]["content"])
+
         encoded_messages = self._encode(tokenizer, messages, system, tools)
-        for i in range(len(messages) - 1):
+        for i in range(0, len(messages), 2):
             if (
-                messages[i + 1]["role"] == Role.ASSISTANT
-                and self.thought_words[0] not in messages[i + 1]["content"]
+                self.thought_words[0] not in messages[i + 1]["content"]
                 and self.thought_words[1] not in messages[i + 1]["content"]
-            ):
-                encoded_messages[i] += self.get_thought_word_ids(tokenizer)
+            ):  # add empty cot
+                if not self.enable_thinking:  # do not compute loss
+                    encoded_messages[i] += self.get_thought_word_ids(tokenizer)
+                else:  # do compute loss
+                    encoded_messages[i + 1] = self.get_thought_word_ids(tokenizer) + encoded_messages[i + 1]
 
         return [(encoded_messages[i], encoded_messages[i + 1]) for i in range(0, len(encoded_messages), 2)]
 
@@ -467,6 +471,7 @@ def register_template(
     efficient_eos: bool = False,
     replace_eos: bool = False,
     replace_jinja_template: bool = False,
+    enable_thinking: Optional[bool] = True,
     mm_plugin: "BasePlugin" = get_mm_plugin(name="base"),
     template_class: type["Template"] = Template,
 ) -> None:
@@ -496,7 +501,11 @@ def register_template(
     default_slots = ["{{content}}"] if efficient_eos else ["{{content}}", {"eos_token"}]
     default_user_formatter = StringFormatter(slots=["{{content}}"])
     default_assistant_formatter = StringFormatter(slots=default_slots)
-    default_function_formatter = FunctionFormatter(slots=default_slots, tool_format="default")
+    if format_assistant is not None:
+        default_function_formatter = FunctionFormatter(slots=format_assistant.slots, tool_format="default")
+    else:
+        default_function_formatter = FunctionFormatter(slots=default_slots, tool_format="default")
+
     default_tool_formatter = ToolFormatter(tool_format="default")
     default_prefix_formatter = EmptyFormatter()
     TEMPLATES[name] = template_class(
@@ -513,6 +522,7 @@ def register_template(
         efficient_eos=efficient_eos,
         replace_eos=replace_eos,
         replace_jinja_template=replace_jinja_template,
+        enable_thinking=enable_thinking,
         mm_plugin=mm_plugin,
     )
 
@@ -549,6 +559,7 @@ def parse_template(tokenizer: "PreTrainedTokenizer") -> "Template":
     messages = [{"role": "user", "content": "{{content}}"}, {"role": "assistant", "content": "{{content}}"}]
     assistant_slot = tokenizer.apply_chat_template(messages, add_generation_prompt=False, tokenize=False)
     assistant_slot = assistant_slot[len(prefix) + len(user_slot) :]
+    template_class = ReasoningTemplate if "<think>" in assistant_slot else Template
     assistant_slot = assistant_slot.replace("<think>", "").replace("</think>", "").lstrip("\n")  # remove thought tags
 
     if len(user_slot) > len(user_slot_empty_system):
@@ -558,7 +569,7 @@ def parse_template(tokenizer: "PreTrainedTokenizer") -> "Template":
     else:  # if defaut_system is empty, user_slot_empty_system will be longer than user_slot
         default_system = ""
 
-    return Template(
+    return template_class(
         format_user=StringFormatter(slots=[user_slot]),
         format_assistant=StringFormatter(slots=[assistant_slot]),
         format_system=StringFormatter(slots=[system_slot]),
@@ -572,6 +583,7 @@ def parse_template(tokenizer: "PreTrainedTokenizer") -> "Template":
         efficient_eos=False,
         replace_eos=False,
         replace_jinja_template=False,
+        enable_thinking=True,
         mm_plugin=get_mm_plugin(name="base"),
     )
 
@@ -600,6 +612,11 @@ def get_template_and_fix_tokenizer(tokenizer: "PreTrainedTokenizer", data_args: 
         template.format_function = FunctionFormatter(slots=default_slots, tool_format=data_args.tool_format)
         template.format_tools = ToolFormatter(tool_format=data_args.tool_format)
 
+    if data_args.default_system is not None:
+        logger.info_rank0(f"Using default system message: {data_args.default_system}.")
+        template.default_system = data_args.default_system
+
+    template.enable_thinking = data_args.enable_thinking
     template.fix_special_tokens(tokenizer)
     template.fix_jinja_template(tokenizer)
     return template
@@ -785,6 +802,19 @@ register_template(
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_observation=StringFormatter(slots=["<|im_start|>tool\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<|im_end|>"],
+)
+
+
+# copied from chatml template
+register_template(
+    name="cpm4",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_observation=StringFormatter(slots=["<|im_start|>tool\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|im_end|>"],
 )
@@ -867,7 +897,6 @@ register_template(
 register_template(
     name="empty",
     format_assistant=StringFormatter(slots=["{{content}}"]),
-    replace_jinja_template=True,
 )
 
 
@@ -884,6 +913,19 @@ register_template(
     format_user=StringFormatter(slots=["User: {{content}}\nFalcon:"]),
     format_assistant=StringFormatter(slots=["{{content}}\n"]),
     efficient_eos=True,
+)
+
+
+register_template(
+    name="falcon_h1",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_function=FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="default"),
+    format_observation=StringFormatter(slots=["<|im_start|>tool\n{{content}}<|im_end|>\n"]),
+    format_tools=ToolFormatter(tool_format="default"),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<|im_end|>", "<|end_of_text|>"],
 )
 
 
@@ -1058,6 +1100,7 @@ register_template(
     stop_words=["<|im_end|>"],
     thought_words=("◁think▷", "◁/think▷"),
     mm_plugin=get_mm_plugin("kimi_vl", image_token="<|media_pad|>"),
+    template_class=ReasoningTemplate,
 )
 
 
@@ -1324,6 +1367,42 @@ register_template(
 )
 
 
+# copied from qwen template
+register_template(
+    name="mimo",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_function=FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="qwen"),
+    format_observation=StringFormatter(
+        slots=["<|im_start|>user\n<tool_response>\n{{content}}\n</tool_response><|im_end|>\n<|im_start|>assistant\n"]
+    ),
+    format_tools=ToolFormatter(tool_format="qwen"),
+    default_system="You are a helpful assistant.",
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
+    template_class=ReasoningTemplate,
+)
+
+# copied from qwen2vl
+register_template(
+    name="mimo_vl",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_function=FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="qwen"),
+    format_observation=StringFormatter(
+        slots=["<|im_start|>user\n<tool_response>\n{{content}}\n</tool_response><|im_end|>\n<|im_start|>assistant\n"]
+    ),
+    format_tools=ToolFormatter(tool_format="qwen"),
+    default_system="You are MiMo, an AI assistant developed by Xiaomi.",
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
+    mm_plugin=get_mm_plugin(name="qwen2_vl", image_token="<|image_pad|>", video_token="<|video_pad|>"),
+    template_class=ReasoningTemplate,
+)
+
+
 # copied from chatml template
 register_template(
     name="minicpm_v",
@@ -1384,6 +1463,7 @@ register_template(
     format_observation=StringFormatter(slots=["""[TOOL_RESULTS]{"content": {{content}}}[/TOOL_RESULTS]"""]),
     format_tools=ToolFormatter(tool_format="mistral"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    mm_plugin=get_mm_plugin(name="pixtral", image_token="[IMG]"),
 )
 
 
@@ -1604,6 +1684,20 @@ register_template(
 )
 
 
+register_template(
+    name="seed_coder",
+    format_user=StringFormatter(
+        slots=[{"bos_token"}, "user\n{{content}}", {"eos_token"}, {"bos_token"}, "assistant\n"]
+    ),
+    format_system=StringFormatter(slots=[{"bos_token"}, "system\n{{content}}", {"eos_token"}]),
+    default_system=(
+        "You are an AI programming assistant, utilizing the Seed-Coder model, developed by ByteDance Seed, "
+        "and you only answer questions related to computer science. For politically sensitive questions, "
+        "security and privacy issues, and other non-computer science questions, you will refuse to answer.\n\n"
+    ),
+)
+
+
 # copied from llama3 template
 register_template(
     name="skywork_o1",
@@ -1636,6 +1730,25 @@ register_template(
         "in your response."
     ),
     stop_words=["<|eot_id|>", "<|eom_id|>"],
+)
+
+
+register_template(
+    name="smollm",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    stop_words=["<|im_end|>"],
+)
+
+
+register_template(
+    name="smollm2",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    stop_words=["<|im_end|>"],
+    default_system="You are a helpful AI assistant named SmolLM, trained by Hugging Face.",
 )
 
 

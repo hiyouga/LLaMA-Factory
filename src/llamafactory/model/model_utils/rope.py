@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 logger = logging.get_logger(__name__)
 
 
-def configure_rope(config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool) -> None:
+def configure_rope(config: "PretrainedConfig", model_args: "ModelArguments") -> None:
     if model_args.rope_scaling is None:
         return
 
@@ -40,30 +40,40 @@ def configure_rope(config: "PretrainedConfig", model_args: "ModelArguments", is_
         logger.warning_rank0("Current model does not support RoPE scaling.")
         return
 
-    rope_kwargs = {"rope_type": getattr(model_args.rope_scaling, "value", model_args.rope_scaling)}  # handle enum
-    if model_args.model_max_length is not None:
-        if is_trainable and model_args.rope_scaling == RopeScaling.DYNAMIC:
+    if hasattr(config, "max_position_embeddings"):
+        old_max_length = getattr(config, "max_position_embeddings", None)
+    else:
+        logger.warning_rank0("Cannot find the max position embeddings in the config.")
+        return
+
+    if model_args.model_max_length is not None:  # training
+        if model_args.model_max_length <= old_max_length:
+            logger.warning_rank0("Input length is smaller than max length. Disabling rope scaling.")
+            return
+
+        if model_args.rope_scaling == RopeScaling.DYNAMIC:
             logger.warning_rank0(
                 "Dynamic NTK scaling may not work well with fine-tuning. "
                 "See: https://github.com/huggingface/transformers/pull/24653"
             )
 
-        current_max_length = getattr(config, "max_position_embeddings", None)
-        if (not current_max_length) or model_args.model_max_length <= current_max_length:
-            logger.warning_rank0("Input length is smaller than max length. Disabling rope scaling.")
-            return
+        rope_factor = float(math.ceil(model_args.model_max_length / old_max_length))
+    else:  # inference
+        rope_factor = 2.0
 
-        logger.info_rank0(f"Enlarge max model length from {current_max_length} to {model_args.model_max_length}.")
-        setattr(config, "max_position_embeddings", model_args.model_max_length)
-        rope_kwargs["factor"] = float(math.ceil(model_args.model_max_length / current_max_length))
-        if model_args.rope_scaling == RopeScaling.DYNAMIC:
-            rope_kwargs["original_max_position_embeddings"] = current_max_length
-        elif model_args.rope_scaling == RopeScaling.LLAMA3:
-            rope_kwargs["original_max_position_embeddings"] = current_max_length
-            rope_kwargs["low_freq_factor"] = 1.0
-            rope_kwargs["high_freq_factor"] = 4.0
-    else:
-        rope_kwargs["factor"] = 2.0
+    rope_kwargs = {
+        "rope_type": getattr(model_args.rope_scaling, "value", model_args.rope_scaling),  # handle enum
+        "factor": rope_factor,
+    }
+    setattr(config, "max_position_embeddings", old_max_length * rope_factor)
+    logger.info_rank0(f"Enlarge max model length from {old_max_length} to {old_max_length * rope_factor}.")
+
+    if model_args.rope_scaling in [RopeScaling.DYNAMIC, RopeScaling.YARN]:
+        rope_kwargs["original_max_position_embeddings"] = old_max_length
+    elif model_args.rope_scaling == RopeScaling.LLAMA3:
+        rope_kwargs["original_max_position_embeddings"] = old_max_length
+        rope_kwargs["low_freq_factor"] = 1.0
+        rope_kwargs["high_freq_factor"] = 4.0
 
     setattr(config, "rope_scaling", rope_kwargs)
     logger.info_rank0(

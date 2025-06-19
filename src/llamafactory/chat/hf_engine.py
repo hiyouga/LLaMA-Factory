@@ -103,12 +103,8 @@ class HuggingfaceEngine(BaseEngine):
         messages = template.mm_plugin.process_messages(
             messages, mm_input_dict["images"], mm_input_dict["videos"], mm_input_dict["audios"], processor
         )
-        # add thought words to avoid skipping thinking
-        paired_messages = messages + [{"role": "assistant", "content": template.add_thought("")}]
-        system = system or generating_args["default_system"]
-        enable_thinking = input_kwargs.pop("enable_thinking", None)
-        enable_thinking = enable_thinking if enable_thinking is not None else generating_args["enable_thinking"]
-        prompt_ids, _ = template.encode_oneturn(tokenizer, paired_messages, system, tools, enable_thinking)
+        paired_messages = messages + [{"role": "assistant", "content": ""}]
+        prompt_ids, _ = template.encode_oneturn(tokenizer, paired_messages, system, tools)
         prompt_ids, _ = template.mm_plugin.process_token_ids(
             prompt_ids,
             None,
@@ -120,7 +116,7 @@ class HuggingfaceEngine(BaseEngine):
         )
         prompt_length = len(prompt_ids)
         inputs = torch.tensor([prompt_ids], device=model.device)
-        attention_mask = torch.ones_like(inputs, dtype=torch.bool)
+        attention_mask = torch.ones_like(inputs, dtype=torch.long)
 
         do_sample: Optional[bool] = input_kwargs.pop("do_sample", None)
         temperature: Optional[float] = input_kwargs.pop("temperature", None)

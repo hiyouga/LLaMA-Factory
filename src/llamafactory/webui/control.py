@@ -84,6 +84,17 @@ def get_model_info(model_name: str) -> tuple[str, str]:
     return get_model_path(model_name), get_template(model_name)
 
 
+def check_template(lang: str, template: str) -> None:
+    r"""Check if an instruct model is used.
+
+    Please use queue=True to show the warning message.
+
+    Inputs: top.lang, top.template
+    """
+    if template == "default":
+        gr.Warning(ALERTS["warn_no_instruct"][lang])
+
+
 def get_trainer_info(lang: str, output_path: os.PathLike, do_train: bool) -> tuple[str, "gr.Slider", dict[str, Any]]:
     r"""Get training infomation for monitor.
 

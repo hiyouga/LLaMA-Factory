@@ -23,7 +23,7 @@ preprocessing_num_workers: 16
 dataloader_num_workers: 4
 
 ### output
-output_dir: saves/qwen2_vl-7b/lora/dpo
+output_dir: saves/qwen2_5vl-7b/lora/dpo
 logging_steps: 10
 save_steps: 500
 plot_loss: true

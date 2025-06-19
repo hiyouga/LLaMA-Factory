@@ -52,7 +52,7 @@ llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
 #### Multimodal Supervised Fine-Tuning
 
 ```bash
-llamafactory-cli train examples/train_lora/qwen2vl_lora_sft.yaml
+llamafactory-cli train examples/train_lora/qwen2_5vl_lora_sft.yaml
 ```
 
 #### DPO/ORPO/SimPO Training
@@ -64,7 +64,7 @@ llamafactory-cli train examples/train_lora/llama3_lora_dpo.yaml
 #### Multimodal DPO/ORPO/SimPO Training
 
 ```bash
-llamafactory-cli train examples/train_lora/qwen2vl_lora_dpo.yaml
+llamafactory-cli train examples/train_lora/qwen2_5vl_lora_dpo.yaml
 ```
 
 #### Reward Modeling
@@ -165,10 +165,18 @@ FORCE_TORCHRUN=1 NNODES=2 NODE_RANK=0 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 
 FORCE_TORCHRUN=1 NNODES=2 NODE_RANK=1 MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_full/llama3_full_sft.yaml
 ```
 
+### Elastic and Fault-Tolerant Supervised Fine-Tuning on Multiple Nodes
+
+To launch an elastic job with `MAX_RESTARTS` failures retries, run the following on at least `MIN_NNODES` nodes and at most `MAX_NNODES` nodes. `RDZV_ID` should be set as a unique job id (shared by all nodes participating in the job). See also [torchrun](https://docs.pytorch.org/docs/stable/elastic/run.html).
+
+```bash
+FORCE_TORCHRUN=1 MIN_NNODES=1 MAX_NNODES=3 MAX_RESTARTS=3 RDZV_ID=llamafactory MASTER_ADDR=192.168.0.1 MASTER_PORT=29500 llamafactory-cli train examples/train_full/llama3_full_sft.yaml
+```
+
 #### Multimodal Supervised Fine-Tuning
 
 ```bash
-FORCE_TORCHRUN=1 llamafactory-cli train examples/train_full/qwen2vl_full_sft.yaml
+FORCE_TORCHRUN=1 llamafactory-cli train examples/train_full/qwen2_5vl_full_sft.yaml
 ```
 
 ### Merging LoRA Adapters and Quantization

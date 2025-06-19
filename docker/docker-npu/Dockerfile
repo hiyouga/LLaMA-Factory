@@ -1,67 +1,58 @@
-# Use the Ubuntu 22.04 image with CANN 8.0.rc1
-# More versions can be found at https://hub.docker.com/r/ascendai/cann/tags
-# FROM ascendai/cann:8.0.rc1-910-ubuntu22.04-py3.8
-FROM ascendai/cann:8.0.0-910b-ubuntu22.04-py3.10
-# FROM ascendai/cann:8.0.rc1-910-openeuler22.03-py3.8
-# FROM ascendai/cann:8.0.rc1-910b-openeuler22.03-py3.8
+# https://hub.docker.com/r/ascendai/cann/tags
+ARG BASE_IMAGE=ascendai/cann:8.0.0-910b-ubuntu22.04-py3.11
+FROM ${BASE_IMAGE}
+
+# Installation arguments
+ARG PIP_INDEX=https://pypi.org/simple
+ARG EXTRAS=torch-npu,metrics
+ARG HTTP_PROXY=""
 
 # Define environments
+ENV MAX_JOBS=16
+ENV FLASH_ATTENTION_FORCE_BUILD=TRUE
+ENV VLLM_WORKER_MULTIPROC_METHOD=spawn
 ENV DEBIAN_FRONTEND=noninteractive
+ENV NODE_OPTIONS=""
+ENV PIP_ROOT_USER_ACTION=ignore
+ENV http_proxy="${HTTP_PROXY}"
+ENV https_proxy="${HTTP_PROXY}"
 
-# Define installation arguments
-ARG INSTALL_DEEPSPEED=false
-ARG PIP_INDEX=https://pypi.org/simple
-ARG TORCH_INDEX=https://download.pytorch.org/whl/cpu
-ARG HTTP_PROXY=
+# Use Bash instead of default /bin/sh
+SHELL ["/bin/bash", "-c"]
 
 # Set the working directory
 WORKDIR /app
 
-# Set http proxy
-RUN if [ -n "$HTTP_PROXY" ]; then \
-        echo "Configuring proxy..."; \
-        export http_proxy=$HTTP_PROXY; \
-        export https_proxy=$HTTP_PROXY; \
-    fi
+# Change pip source
+RUN pip config set global.index-url "${PIP_INDEX}" && \
+    pip config set global.extra-index-url "${PIP_INDEX}" && \
+    pip install --no-cache-dir --upgrade pip packaging wheel setuptools
 
 # Install the requirements
 COPY requirements.txt /app
-RUN pip config set global.index-url "$PIP_INDEX" && \
-    pip config set global.extra-index-url "$TORCH_INDEX" && \
-    python -m pip install --upgrade pip && \
-    if [ -n "$HTTP_PROXY" ]; then \
-        python -m pip install --proxy=$HTTP_PROXY -r requirements.txt; \
-    else \
-        python -m pip install -r requirements.txt; \
-    fi
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application into the image
 COPY . /app
 
-# Install the LLaMA Factory
-RUN EXTRA_PACKAGES="torch-npu,metrics"; \
-    if [ "$INSTALL_DEEPSPEED" == "true" ]; then \
-        EXTRA_PACKAGES="${EXTRA_PACKAGES},deepspeed"; \
-    fi; \
-    if [ -n "$HTTP_PROXY" ]; then \
-        pip install --proxy=$HTTP_PROXY -e ".[$EXTRA_PACKAGES]"; \
-    else \
-        pip install -e ".[$EXTRA_PACKAGES]"; \
-    fi
-
-# Unset http proxy
-RUN if [ -n "$HTTP_PROXY" ]; then \
-        unset http_proxy; \
-        unset https_proxy; \
-    fi
+# Install LLaMA Factory
+RUN pip install --no-cache-dir -e ".[${EXTRAS}]" --no-build-isolation
 
 # Set up volumes
-VOLUME [ "/root/.cache/huggingface", "/root/.cache/modelscope", "/app/data", "/app/output" ]
+# VOLUME [ "/root/.cache/huggingface", "/app/shared_data", "/app/output" ]
 
-# Expose port 7860 for the LLaMA Board
-ENV GRADIO_SERVER_PORT 7860
+# Expose port 7860 for LLaMA Board
+ENV GRADIO_SERVER_PORT=7860
 EXPOSE 7860
 
-# Expose port 8000 for the API service
-ENV API_PORT 8000
+# Expose port 8000 for API service
+ENV API_PORT=8000
 EXPOSE 8000
+
+# unset proxy
+ENV http_proxy=
+ENV https_proxy=
+
+# Reset pip config
+RUN pip config unset global.index-url && \
+    pip config unset global.extra-index-url

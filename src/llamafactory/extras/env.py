@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import platform
 
 import accelerate
@@ -26,7 +27,7 @@ import trl
 from transformers.utils import is_torch_cuda_available, is_torch_npu_available
 
 
-VERSION = "0.9.3.dev0"
+VERSION = "0.9.4.dev0"
 
 
 def print_env() -> None:
@@ -82,5 +83,10 @@ def print_env() -> None:
         info["Git commit"] = commit_hash
     except Exception:
         pass
+
+    if os.path.exists("data"):
+        info["Default data directory"] = "detected"
+    else:
+        info["Default data directory"] = "not detected"
 
     print("\n" + "\n".join([f"- {key}: {value}" for key, value in info.items()]) + "\n")
