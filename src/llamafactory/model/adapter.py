@@ -289,8 +289,8 @@ def init_adapter(
     model: "PreTrainedModel",
     model_args: "ModelArguments",
     finetuning_args: "FinetuningArguments",
-    peft_args: "PeftConfig",
     is_trainable: bool,
+    peft_args: "PeftConfig" = None,
 ) -> "PreTrainedModel":
     r"""Initialize the adapters.
 

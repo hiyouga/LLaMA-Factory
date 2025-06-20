@@ -188,7 +188,7 @@ def load_model(
         patch_model(model, tokenizer, model_args, is_trainable, add_valuehead)
         register_autoclass(config, model, tokenizer)
 
-    model = init_adapter(config, model, model_args, finetuning_args, peft_args, is_trainable)
+    model = init_adapter(config, model, model_args, finetuning_args, is_trainable, peft_args=peft_args)
 
     if add_valuehead:
         model = AutoModelForCausalLMWithValueHead.from_pretrained(model)

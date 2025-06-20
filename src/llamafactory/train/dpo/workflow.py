@@ -17,6 +17,8 @@
 
 from typing import TYPE_CHECKING, Optional
 
+from peft import PeftConfig
+
 from ...data import PairwiseDataCollatorWithPadding, get_dataset, get_template_and_fix_tokenizer
 from ...extras.constants import IGNORE_INDEX
 from ...extras.misc import calculate_tps
@@ -38,13 +40,14 @@ def run_dpo(
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
     finetuning_args: "FinetuningArguments",
+    peft_args: "PeftConfig",
     callbacks: Optional[list["TrainerCallback"]] = None,
 ):
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
     template = get_template_and_fix_tokenizer(tokenizer, data_args)
     dataset_module = get_dataset(template, model_args, data_args, training_args, stage="rm", **tokenizer_module)
-    model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
+    model = load_model(tokenizer, model_args, finetuning_args, peft_args, training_args.do_train)
 
     data_collator = PairwiseDataCollatorWithPadding(
         template=template,

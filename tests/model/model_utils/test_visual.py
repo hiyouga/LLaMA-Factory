@@ -38,7 +38,7 @@ def test_visual_full(freeze_vision_tower: bool, freeze_multi_modal_projector: bo
     with torch.device("meta"):
         model = AutoModelForVision2Seq.from_config(config)
 
-    model = init_adapter(config, model, model_args, finetuning_args, peft_args=None, is_trainable=True)
+    model = init_adapter(config, model, model_args, finetuning_args, is_trainable=True, peft_args=None)
     for name, param in model.named_parameters():
         if any(key in name for key in ["visual.patch_embed", "visual.blocks"]):
             assert param.requires_grad != freeze_vision_tower
@@ -58,7 +58,7 @@ def test_visual_lora(freeze_vision_tower: bool, freeze_language_model: bool):
     with torch.device("meta"):
         model = AutoModelForVision2Seq.from_config(config)
 
-    model = init_adapter(config, model, model_args, finetuning_args, peft_args=None, is_trainable=True)
+    model = init_adapter(config, model, model_args, finetuning_args, is_trainable=True, peft_args=None)
     trainable_params, frozen_params = set(), set()
     for name, param in model.named_parameters():
         if param.requires_grad:

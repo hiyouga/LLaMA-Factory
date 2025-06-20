@@ -256,7 +256,7 @@ def register_dataset_converter(name: str, dataset_converter: type["DatasetConver
 
 
 def get_dataset_converter(
-    name: str, dataset_attr: "DatasetAttr", data_args: "DataArguments", id2label: list[str]
+    name: str, dataset_attr: "DatasetAttr", data_args: "DataArguments", id2label: list[str] = None
 ) -> "DatasetConverter":
     r"""Get a dataset converter."""
     if name not in DATASET_CONVERTERS:
