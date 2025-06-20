@@ -292,7 +292,7 @@ def align_dataset(
         )
 
     id2label = None
-    if isinstance(dataset.features[dataset_attr.response], ClassLabel):
+    if dataset_attr.response and isinstance(dataset.features[dataset_attr.response], ClassLabel):
         id2label = dataset.features[dataset_attr.response]._int2str
 
     dataset_converter = get_dataset_converter(dataset_attr.formatting, dataset_attr, data_args, id2label)
