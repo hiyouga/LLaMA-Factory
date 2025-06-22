@@ -188,7 +188,12 @@ def _setup_lora_tuning(
 
         if adapter_to_resume is not None:  # resume lora training
             if model_args.use_unsloth:
-                model = load_unsloth_peft_model(config, model_args, is_trainable=is_trainable)
+                    model = load_unsloth_peft_model(
+                        config, 
+                        model_args, 
+                        finetuning_args,  # Add this parameter
+                        is_trainable=is_trainable
+                    )
             else:
                 model = PeftModel.from_pretrained(model, adapter_to_resume, is_trainable=is_trainable, **init_kwargs)
 
@@ -234,7 +239,12 @@ def _setup_lora_tuning(
         }
 
         if model_args.use_unsloth:
-            model = get_unsloth_peft_model(model, model_args, peft_kwargs)
+            model = load_unsloth_peft_model(
+                config, 
+                model_args, 
+                finetuning_args,  # Add this parameter
+                is_trainable=is_trainable
+            )
         else:
             if finetuning_args.pissa_init:
                 if finetuning_args.pissa_iter == -1:
