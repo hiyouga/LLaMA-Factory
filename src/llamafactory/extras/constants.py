@@ -1145,6 +1145,17 @@ register_model_group(
 
 register_model_group(
     models={
+        "Kimi-Dev-72B-Instruct": {
+            DownloadSource.DEFAULT: "moonshotai/Kimi-Dev-72B",
+            DownloadSource.MODELSCOPE: "moonshotai/Kimi-Dev-72B",
+        },
+    },
+    template="qwen",
+)
+
+
+register_model_group(
+    models={
         "Kimi-VL-A3B-Instruct": {
             DownloadSource.DEFAULT: "moonshotai/Kimi-VL-A3B-Instruct",
             DownloadSource.MODELSCOPE: "moonshotai/Kimi-VL-A3B-Instruct",
@@ -1674,6 +1685,10 @@ register_model_group(
         "Mistral-Small-3.1-24B-Instruct": {
             DownloadSource.DEFAULT: "mistralai/Mistral-Small-3.1-24B-Instruct-2503",
             DownloadSource.MODELSCOPE: "mistralai/Mistral-Small-3.1-24B-Instruct-2503",
+        },
+        "Mistral-Small-3.2-24B-Instruct": {
+            DownloadSource.DEFAULT: "mistralai/Mistral-Small-3.2-24B-Instruct-2506",
+            DownloadSource.MODELSCOPE: "mistralai/Mistral-Small-3.2-24B-Instruct-2506",
         },
     },
     template="mistral_small",
