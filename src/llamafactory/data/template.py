@@ -916,14 +916,13 @@ register_template(
 )
 
 
+# copied from chatml template
 register_template(
     name="falcon_h1",
-    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n"]),
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
-    format_function=FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="default"),
-    format_observation=StringFormatter(slots=["<|im_start|>tool\n{{content}}<|im_end|>\n"]),
-    format_tools=ToolFormatter(tool_format="default"),
+    format_observation=StringFormatter(slots=["<|im_start|>tool\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|im_end|>", "<|end_of_text|>"],
 )
