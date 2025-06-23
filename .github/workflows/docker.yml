@@ -48,7 +48,7 @@ jobs:
         with:
           python-version: "3.9"
 
-      - name: Get llamafactory version
+      - name: Get peftfactory version
         id: version
         run: |
           echo "tag=$(python setup.py --version | sed 's/\.dev0//')" >> "$GITHUB_OUTPUT"
@@ -72,7 +72,7 @@ jobs:
             EXTRAS=metrics,deepspeed,liger-kernel
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            docker.io/hiyouga/llamafactory:latest
-            docker.io/hiyouga/llamafactory:${{ steps.version.outputs.tag }}
+            docker.io/wicwik/peftfactory:latest
+            docker.io/wicwik/peftfactory:${{ steps.version.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
