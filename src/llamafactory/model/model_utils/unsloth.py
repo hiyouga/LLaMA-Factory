@@ -80,7 +80,10 @@ def get_unsloth_peft_model(
 
 
 def load_unsloth_peft_model(
-    config: "PretrainedConfig", model_args: "ModelArguments", finetuning_args: "FinetuningArguments", is_trainable: bool
+    config: "PretrainedConfig",
+    model_args: "ModelArguments",
+    finetuning_args: "FinetuningArguments",
+    is_trainable: bool,
 ) -> "PreTrainedModel":
     r"""Load peft model with unsloth. Used in both training and inference."""
     from unsloth import FastLanguageModel  # type: ignore
