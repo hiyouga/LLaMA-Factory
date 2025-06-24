@@ -1,14 +1,14 @@
-from datasets import load_dataset, ClassLabel
-
 import numpy as np
 import pandas as pd
+from datasets import ClassLabel, load_dataset
+
 
 datasets = {
-"glue": ["mnli", "qqp", "qnli", "sst2", "stsb", "mrpc", "rte", "cola"],
-"super_glue": ["record", "multirc", "boolq", "wic", "wsc.fixed", "cb", "copa"],
-"nlu_reason": ["cais/mmlu", "ybisk/piqa", "allenai/social_i_qa", "hellaswag", "winogrande", "allenai/openbookqa"],
-"math": ["allenai/math_qa", "openai/gsm8k", "ChilleD/SVAMP"],
-"code": ["neulab/conala", "Abzu/CodeAlpacaPython", "codeparrot/apps"]
+    "glue": ["mnli", "qqp", "qnli", "sst2", "stsb", "mrpc", "rte", "cola"],
+    "super_glue": ["record", "multirc", "boolq", "wic", "wsc.fixed", "cb", "copa"],
+    "nlu_reason": ["cais/mmlu", "ybisk/piqa", "allenai/social_i_qa", "hellaswag", "winogrande", "allenai/openbookqa"],
+    "math": ["allenai/math_qa", "openai/gsm8k", "ChilleD/SVAMP"],
+    "code": ["neulab/conala", "Abzu/CodeAlpacaPython", "codeparrot/apps"],
 }
 
 valid_mapping = {
@@ -20,9 +20,7 @@ valid_mapping = {
     "codeparrot/apps": "test",
 }
 
-train_mapping = {
-    "cais/mmlu": "auxiliary_train"
-}
+train_mapping = {"cais/mmlu": "auxiliary_train"}
 
 label_mapping = {
     "record": "answers",
@@ -64,7 +62,9 @@ for b in datasets:
         valid_size = len(loaded_dataset[valid_mapping.get(d, "validation")])
         print(train_size, valid_size)
 
-        if label_mapping.get(d, "label") in loaded_dataset[train_mapping.get(d, "train")].features and isinstance(loaded_dataset[train_mapping.get(d, "train")].features[label_mapping.get(d, "label")], ClassLabel):
+        if label_mapping.get(d, "label") in loaded_dataset[train_mapping.get(d, "train")].features and isinstance(
+            loaded_dataset[train_mapping.get(d, "train")].features[label_mapping.get(d, "label")], ClassLabel
+        ):
             print(loaded_dataset[train_mapping.get(d, "train")].features[label_mapping.get(d, "label")])
 
             labels = set(loaded_dataset[train_mapping.get(d, "train")].features[label_mapping.get(d, "label")].names)
@@ -72,13 +72,12 @@ for b in datasets:
             dataset_info[d]["n_labels"] = len(labels)
         else:
             labels = loaded_dataset[train_mapping.get(d, "train")][label_mapping.get(d, "label")]
-            
+
             if isinstance(labels[0], list):
                 print("N/A")
                 dataset_info[d]["labels"] = np.nan
                 dataset_info[d]["n_labels"] = np.nan
             else:
-                
                 labels = set(labels)
                 if len(labels) < 100:
                     print(labels)
@@ -88,7 +87,7 @@ for b in datasets:
                     print("N/A")
                     dataset_info[d]["labels"] = np.nan
                     dataset_info[d]["n_labels"] = np.nan
-        
+
         dataset_info[d]["train_size"] = train_size
         dataset_info[d]["valid_size"] = valid_size
 

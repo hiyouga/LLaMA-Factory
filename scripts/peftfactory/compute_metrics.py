@@ -1,13 +1,10 @@
+import argparse
 import json
 
-import numpy as np
 import evaluate
-import argparse
-
-from sklearn.metrics import f1_score
-
+import numpy as np
 from datasets import load_dataset
-
+from sklearn.metrics import f1_score
 
 
 def string_to_float(string, default=-1.0):
@@ -17,8 +14,10 @@ def string_to_float(string, default=-1.0):
     except ValueError:
         return default
 
+
 def check_data_state(preds, targets):
     assert len(preds) == len(targets)
+
 
 def binary_reverse(targets, labels):
     return [labels[0] if target == labels[1] else labels[1] for target in targets]
@@ -43,6 +42,7 @@ def f1(preds, targets, labels):
 
     return {"f1": f1_score(targets, preds, labels=labels, pos_label=labels[1])}
 
+
 def macro_f1(preds, targets, labels):
     check_data_state(preds, targets)
 
@@ -53,6 +53,7 @@ def macro_f1(preds, targets, labels):
     preds[invalid_idx_mask] = binary_reverse(targets[invalid_idx_mask], labels)
 
     return {"macro_f1": f1_score(targets, preds, labels=labels, average="macro")}
+
 
 def pearsonr(preds, targets, labels):
     metric = evaluate.load("pearsonr")
@@ -81,8 +82,7 @@ def record(preds):
     references = [{"idx": d["idx"], "answers": d["answers"]} for d in dataset]
 
     return metric.compute(predictions=predictions, references=references)
-    
-    
+
 
 # def multirc(preds, targets):
 #     dataset = load_dataset("rbelanec/multirc", split="validation")
@@ -99,15 +99,14 @@ def record(preds):
 #     return metric.compute(predictions=predictions, references=references)
 
 
-
 DATASET_TO_METRIC_MAPPING = {
     "mnli": {"metrics": [macro_f1, em], "labels": ["entailment", "neutral", "contradiction"]},
-    "qqp":  {"metrics": [f1, em], "labels": ["not_duplicate", "duplicate"]},
+    "qqp": {"metrics": [f1, em], "labels": ["not_duplicate", "duplicate"]},
     "qnli": {"metrics": [f1, em], "labels": ["entailment", "not_entailment"]},
     "sst2": {"metrics": [f1, em], "labels": ["negative", "positive"]},
     "stsb": {"metrics": [pearsonr, spearmanr], "labels": []},
     "mrpc": {"metrics": [f1, em], "labels": ["not_equivalent", "equivalent"]},
-    "rte":  {"metrics": [f1, em], "labels": ["entailment", "not_entailment"]},
+    "rte": {"metrics": [f1, em], "labels": ["entailment", "not_entailment"]},
     "cola": {"metrics": [f1, em], "labels": ["unacceptable", "acceptable"]},
     "record": {"metrics": [record], "labels": []},
     "multirc": {"metrics": [f1, em], "labels": ["False", "True"]},
@@ -150,4 +149,4 @@ with open(f"{eval_dir}/results.jsonl", "w") as outfile:
 
         print(result)
         json.dump(result, outfile)
-        outfile.write('\n')
+        outfile.write("\n")
