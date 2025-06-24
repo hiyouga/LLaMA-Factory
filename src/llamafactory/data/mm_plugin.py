@@ -298,11 +298,8 @@ class MMPluginMixin:
         r"""Regularizes audios to avoid error. Including reading and resampling."""
         results, sampling_rates = [], []
         for audio in audios:
-            if isinstance(audio, (str, BinaryIO)):
-                audio, sampling_rate = librosa.load(audio, sr=sampling_rate)
-
             if not isinstance(audio, np.ndarray):
-                raise ValueError(f"Expect input is a list of audios, but got {type(audio)}.")
+                audio, sampling_rate = librosa.load(audio, sr=sampling_rate)
 
             results.append(audio)
             sampling_rates.append(sampling_rate)
