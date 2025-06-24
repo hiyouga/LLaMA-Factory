@@ -62,9 +62,9 @@ def check_lora_model(model: "LoraModel") -> tuple[set[str], set[str]]:
 
 
 def load_train_model(add_valuehead: bool = False, **kwargs) -> "PreTrainedModel":
-    model_args, _, _, finetuning_args, _, _ = get_train_args(kwargs)
+    model_args, _, _, finetuning_args, _, peft_args = get_train_args(kwargs)
     tokenizer = load_tokenizer(model_args)["tokenizer"]
-    return load_model(tokenizer, model_args, finetuning_args, is_trainable=True, add_valuehead=add_valuehead)
+    return load_model(tokenizer, model_args, finetuning_args, peft_args, is_trainable=True, add_valuehead=add_valuehead)
 
 
 def load_infer_model(add_valuehead: bool = False, **kwargs) -> "PreTrainedModel":
