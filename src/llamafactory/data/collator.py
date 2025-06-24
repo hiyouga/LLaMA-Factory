@@ -182,6 +182,24 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
 
         features: dict[str, torch.Tensor] = super().__call__(features)
 
+        # 补齐 position_ids 到与 input_ids 一样长
+        if "position_ids" in features:
+            input_ids = features["input_ids"]         # shape: [B, L]
+            position_ids = features["position_ids"]   # shape: [B, L'] 可能小于 L
+            batch_size, seq_len = input_ids.shape
+
+            # 如果 position_ids 长度不足，使用 0 补齐
+            if position_ids.shape[1] < seq_len:
+                pad_len = seq_len - position_ids.shape[1]
+                pad = torch.zeros((batch_size, pad_len), dtype=position_ids.dtype, device=position_ids.device)
+                features["position_ids"] = torch.cat([position_ids, pad], dim=1) if self.tokenizer.padding_side == "right" else torch.cat([pad, position_ids], dim=1)
+            elif position_ids.shape[1] > seq_len:
+                features["position_ids"] = position_ids[:, :seq_len]
+
+            # 最终 sanity check
+            assert features["position_ids"].shape == input_ids.shape, \
+                f"Mismatch after pad: {features['position_ids'].shape} vs {input_ids.shape}"
+
         if self.get_rope_func is not None:
             rope_index_kwargs = {
                 "input_ids": features["input_ids"],
