@@ -25,7 +25,7 @@ packing: false
 ### output
 output_dir: ${OUTPUT_DIR}
 logging_steps: 5
-save_steps: 200
+save_steps: 0.05
 plot_loss: true
 overwrite_output_dir: true
 save_only_model: false
@@ -37,16 +37,15 @@ load_best_model_at_end: true
 save_total_limit: 1
 
 ### train
-per_device_train_batch_size: 2
-gradient_accumulation_steps: 2
-learning_rate: 3.0e-1
-max_steps: 40000
+per_device_train_batch_size: 8
+learning_rate: 5.0e-5
+num_train_epochs: 10.0
 weight_decay: 1.0e-5
 lr_scheduler_type: cosine
 bf16: true
 ddp_timeout: 180000000
 resume_from_checkpoint: null
-max_grad_norm: 1.0
+warmup_ratio: 0.1
 optim: adamw_torch
 report_to:
 - wandb
@@ -54,9 +53,5 @@ report_to:
 ### eval
 per_device_eval_batch_size: 2
 eval_strategy: steps
-eval_steps: 200
+eval_steps: 0.05
 val_size: 0.1
-
-### predict
-# do_predict: true
-# predict_with_generate: true
