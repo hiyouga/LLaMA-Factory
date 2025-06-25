@@ -22,6 +22,7 @@ from .components import (
     create_chat_box,
     create_eval_tab,
     create_export_tab,
+    create_footer,
     create_infer_tab,
     create_top,
     create_train_tab,
@@ -63,6 +64,7 @@ def create_ui(demo_mode: bool = False) -> "gr.Blocks":
             with gr.Tab("Export"):
                 engine.manager.add_elems("export", create_export_tab(engine))
 
+        engine.manager.add_elems("footer", create_footer())
         demo.load(engine.resume, outputs=engine.manager.get_elem_list(), concurrency_limit=None)
         lang.change(engine.change_lang, [lang], engine.manager.get_elem_list(), queue=False)
         lang.input(save_config, inputs=[lang], queue=False)
