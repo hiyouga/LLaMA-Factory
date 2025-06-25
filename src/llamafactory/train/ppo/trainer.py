@@ -386,6 +386,12 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             token_ids = [torch.cat((q, r), dim=-1).tolist() for q, r in zip(queries, responses)]
             messages = self.tokenizer.batch_decode(token_ids, skip_special_tokens=False)
             return get_rewards_from_server(self.reward_model, messages)
+        
+        if self.finetuning_args.reward_model_type == "env":
+            query_texts = self.tokenizer.batch_decode(queries, skip_special_tokens=False)
+            response_texts = self.tokenizer.batch_decode(responses, skip_special_tokens=False)
+            # call the reward class to calculate score
+            return self.reward_model(query_texts, response_texts)
 
         batch: dict[str, torch.Tensor] = self.prepare_model_inputs(queries, responses)
         unwrapped_model: AutoModelForCausalLMWithValueHead = self.accelerator.unwrap_model(self.model)
