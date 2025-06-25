@@ -28,14 +28,17 @@ if TYPE_CHECKING:
 
 def get_device_memory() -> "gr.Slider":
     free, total = get_current_memory()
-    used = round((total - free) / (1024**3), 2)
-    total = round(total / (1024**3), 2)
-    return gr.Slider(minimum=0, maximum=total, value=used, step=0.01)
+    if total != -1:
+        used = round((total - free) / (1024**3), 2)
+        total = round(total / (1024**3), 2)
+        return gr.Slider(minimum=0, maximum=total, value=used, step=0.01, visible=True)
+    else:
+        return gr.Slider(visible=False)
 
 
 def create_footer() -> dict[str, "Component"]:
     with gr.Row():
-        device_memory = gr.Slider(interactive=False)
+        device_memory = gr.Slider(visible=False, interactive=False)
         timer = gr.Timer(value=5)
 
     timer.tick(get_device_memory, outputs=[device_memory], queue=False)
