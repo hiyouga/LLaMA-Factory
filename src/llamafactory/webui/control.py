@@ -112,7 +112,7 @@ def get_trainer_info(lang: str, output_path: os.PathLike, do_train: bool) -> tup
     running_log_path = os.path.join(output_path, RUNNING_LOG)
     if os.path.isfile(running_log_path):
         with open(running_log_path, encoding="utf-8") as f:
-            running_log = f.read()[-20000:]  # avoid lengthy log
+            running_log = "```\n" + f.read()[-20000:] + "\n```\n"  # avoid lengthy log
 
     trainer_log_path = os.path.join(output_path, TRAINER_LOG)
     if os.path.isfile(trainer_log_path):
