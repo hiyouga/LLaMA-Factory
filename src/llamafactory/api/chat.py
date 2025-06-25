@@ -132,7 +132,7 @@ def _process_request(
                     if re.match(r"^data:video\/(mp4|mkv|avi|mov);base64,(.+)$", video_url):  # base64 video
                         video_stream = io.BytesIO(base64.b64decode(video_url.split(",", maxsplit=1)[1]))
                     elif os.path.isfile(video_url):  # local file
-                        video_stream = open(video_url, "rb")
+                        video_stream = video_url
                     else:  # web uri
                         video_stream = requests.get(video_url, stream=True).raw
 
@@ -143,7 +143,7 @@ def _process_request(
                     if re.match(r"^data:audio\/(mpeg|mp3|wav|ogg);base64,(.+)$", audio_url):  # base64 audio
                         audio_stream = io.BytesIO(base64.b64decode(audio_url.split(",", maxsplit=1)[1]))
                     elif os.path.isfile(audio_url):  # local file
-                        audio_stream = open(audio_url, "rb")
+                        audio_stream = audio_url
                     else:  # web uri
                         audio_stream = requests.get(audio_url, stream=True).raw
 
