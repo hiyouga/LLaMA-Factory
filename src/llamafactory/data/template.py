@@ -982,6 +982,7 @@ register_template(
 )
 
 
+# part copied from glm4 template
 register_template(
     name="glm4v",
     format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>"]),
@@ -993,7 +994,9 @@ register_template(
     format_prefix=EmptyFormatter(slots=["[gMASK]<sop>"]),
     stop_words=["<|user|>", "<|observation|>"],
     efficient_eos=True,
-    mm_plugin=get_mm_plugin(name="glm4v", image_token="<image>", video_token="<video>"),
+    mm_plugin=get_mm_plugin(name="glm4v", image_token="<|image|>", video_token="<|video|>"),
+    template_class=ReasoningTemplate,
+    thought_words=("<think>", "</think>"),
 )
 
 

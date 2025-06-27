@@ -1446,6 +1446,7 @@ class Qwen2VLPlugin(BasePlugin):
                 video_fps=getattr(processor, "video_fps", 2.0),
                 video_maxlen=getattr(processor, "video_maxlen", 128),
             )
+            breakpoint()
             mm_inputs.update(image_processor(images=None, videos=video_data["videos"], return_tensors="pt"))
             temporal_patch_size: int = getattr(image_processor, "temporal_patch_size", 2)
             if "second_per_grid_ts" in processor.model_input_names:
@@ -1501,6 +1502,45 @@ class Qwen2VLPlugin(BasePlugin):
 @dataclass
 class GLM4VPlugin(Qwen2VLPlugin):
     @override
+    def _get_mm_inputs(
+        self,
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        processor: "MMProcessor",
+    ) -> dict[str, "torch.Tensor"]:
+        image_processor: BaseImageProcessor = getattr(processor, "image_processor", None)
+        video_processor: BaseImageProcessor = getattr(processor, "video_processor", None)
+        mm_inputs = {}
+        if len(images) != 0:
+            images = self._regularize_images(
+                images,
+                image_max_pixels=getattr(processor, "image_max_pixels", 768 * 768),
+                image_min_pixels=getattr(processor, "image_min_pixels", 32 * 32),
+            )["images"]
+            mm_inputs.update(image_processor(images, return_tensors="pt"))
+
+        if len(videos) != 0:
+            video_data = self._regularize_videos(
+                videos,
+                image_max_pixels=getattr(processor, "video_max_pixels", 256 * 256),
+                image_min_pixels=getattr(processor, "video_min_pixels", 16 * 16),
+                video_fps=getattr(processor, "video_fps", 2.0),
+                video_maxlen=getattr(processor, "video_maxlen", 128),
+            )
+            # prepare video metadata
+            video_metadata = [
+                {"fps": 2, "duration": len(video), "total_frames": len(video)} for video in video_data["videos"]
+            ]
+            mm_inputs.update(
+                video_processor(
+                    images=None, videos=video_data["videos"], video_metadata=video_metadata, return_tensors="pt"
+                )
+            )
+
+        return mm_inputs
+
+    @override
     def process_messages(
         self,
         messages: list[dict[str, str]],
@@ -1523,9 +1563,14 @@ class GLM4VPlugin(Qwen2VLPlugin):
             num_frames = len(video_grid_thw)
             timestamps = mm_inputs.get("timestamps", [])
             if hasattr(timestamps, "tolist"):
-                timestamps_list = timestamps.tolist()[0]
+                timestamps = timestamps.tolist()
+
+            if not timestamps:
+                timestamps_list = []
+            elif isinstance(timestamps[0], list):
+                timestamps_list = timestamps[0]
             else:
-                timestamps_list = timestamps[0] if isinstance(timestamps[0], list) else timestamps
+                timestamps_list = timestamps
 
             unique_timestamps = timestamps_list.copy()
             selected_timestamps = unique_timestamps[:num_frames]  # ?
@@ -1536,7 +1581,7 @@ class GLM4VPlugin(Qwen2VLPlugin):
             image_grid_thw = [None] * len(images)
             video_grid_thw = [None] * len(videos)
             num_frames = 0
-            selected_timestamps = [0] * num_frames
+            selected_timestamps = [0]
 
         for message in messages:
             content = message["content"]
@@ -1579,6 +1624,7 @@ class GLM4VPlugin(Qwen2VLPlugin):
         self._validate_input(processor, images, videos, audios)
         mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
         mm_inputs.pop("timestamps", None)
+        mm_inputs.pop("second_per_grid_ts", None)
         return mm_inputs
 
 
