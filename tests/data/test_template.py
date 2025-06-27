@@ -84,10 +84,6 @@ def _check_template(
     content_ids = tokenizer.apply_chat_template(messages, tokenize=True)
     template = get_template_and_fix_tokenizer(tokenizer, DataArguments(template=template_name))
     prompt_ids, answer_ids = template.encode_oneturn(tokenizer, messages)
-    if template_name == "gemma2":
-        content_str = content_str.removesuffix("\n")
-        content_str += tokenizer.eos_token
-        content_ids[-1] = tokenizer.eos_token_id
     assert content_str == prompt_str + answer_str
     assert content_ids == prompt_ids + answer_ids
     _check_tokenization(tokenizer, (prompt_ids, answer_ids), (prompt_str, answer_str))
@@ -239,7 +235,7 @@ def test_gemma2_template(use_fast: bool):
         f"<start_of_turn>user\n{MESSAGES[2]['content']}<end_of_turn>\n"
         "<start_of_turn>model\n"
     )
-    answer_str = f"{MESSAGES[3]['content']}<end_of_turn><eos>"
+    answer_str = f"{MESSAGES[3]['content']}<end_of_turn>\n"
     _check_template("google/gemma-2-2b-it", "gemma2", prompt_str, answer_str, use_fast)
 
 
