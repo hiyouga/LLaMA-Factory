@@ -49,6 +49,17 @@ def run_sft(
     tokenizer = tokenizer_module["tokenizer"]
     template = get_template_and_fix_tokenizer(tokenizer, data_args)
     dataset_module = get_dataset(template, model_args, data_args, training_args, stage="sft", **tokenizer_module)
+    channel_index_map = {}
+    if training_args.channel_loss:
+        # 获取所有channel类型
+        all_types = set()
+        for key in dataset_module.keys():
+            only_channel_dataset = dataset_module[key].select_columns("channel")
+            all_types.update(only_channel_dataset["channel"])
+        channel_index_map = {type_val: i for i, type_val in enumerate(all_types)}
+        for key in dataset_module.keys():
+            dataset_module[key] = dataset_module[key].map(lambda examples: {"channel": [channel_index_map[channel] for channel in examples["channel"]]}, batched=True, num_proc=32, remove_columns=["channel"]) 
+
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
 
     if getattr(model, "is_quantized", False) and not training_args.do_train:
@@ -69,6 +80,9 @@ def run_sft(
     metric_module = {}
     if training_args.predict_with_generate:
         metric_module["compute_metrics"] = ComputeSimilarity(tokenizer=tokenizer)
+    elif training_args.channel_loss:
+        training_args.remove_unused_columns = False
+        training_args.label_names = ["labels","channel"]
     elif finetuning_args.compute_accuracy:
         metric_module["compute_metrics"] = ComputeAccuracy()
         metric_module["preprocess_logits_for_metrics"] = eval_logit_processor
@@ -77,7 +91,6 @@ def run_sft(
     gen_kwargs = generating_args.to_dict(obey_generation_config=True)
     gen_kwargs["eos_token_id"] = [tokenizer.eos_token_id] + tokenizer.additional_special_tokens_ids
     gen_kwargs["pad_token_id"] = tokenizer.pad_token_id
-
     # Initialize our Trainer
     trainer = CustomSeq2SeqTrainer(
         model=model,
@@ -86,6 +99,7 @@ def run_sft(
         data_collator=data_collator,
         callbacks=callbacks,
         gen_kwargs=gen_kwargs,
+        channel_index_map=channel_index_map,
         **dataset_module,
         **tokenizer_module,
         **metric_module,
