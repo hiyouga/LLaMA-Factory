@@ -39,7 +39,6 @@ logger = logging.get_logger(__name__)
 
 @dataclass
 class Template:
-    name: str
     format_user: "Formatter"
     format_assistant: "Formatter"
     format_system: "Formatter"
@@ -70,8 +69,6 @@ class Template:
             prompt_ids += encoded_ids
 
         response_ids = encoded_messages[-1]
-        if self.name == "gemma2":
-            response_ids[-1] = tokenizer.eos_token_id
         return prompt_ids, response_ids
 
     def encode_multiturn(
@@ -83,8 +80,6 @@ class Template:
     ) -> list[tuple[list[int], list[int]]]:
         r"""Return multiple pairs of token ids representing prompts and responses respectively."""
         encoded_messages = self._encode(tokenizer, messages, system, tools)
-        if self.name == "gemma2":
-            encoded_messages[-1][-1] = tokenizer.eos_token_id
         return [(encoded_messages[i], encoded_messages[i + 1]) for i in range(0, len(encoded_messages), 2)]
 
     def extract_tool(self, content: str) -> Union[str, list["FunctionCall"]]:
@@ -514,7 +509,6 @@ def register_template(
     default_tool_formatter = ToolFormatter(tool_format="default")
     default_prefix_formatter = EmptyFormatter()
     TEMPLATES[name] = template_class(
-        name=name,
         format_user=format_user or default_user_formatter,
         format_assistant=format_assistant or default_assistant_formatter,
         format_system=format_system or default_user_formatter,
@@ -956,6 +950,8 @@ register_template(
     template_class=Llama2Template,
 )
 
+
+# copied from gemma template
 register_template(
     name="gemma2",
     format_user=StringFormatter(slots=["<start_of_turn>user\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]),
@@ -965,7 +961,8 @@ register_template(
         slots=["<start_of_turn>tool\n{{content}}<end_of_turn>\n<start_of_turn>model\n"]
     ),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
-    stop_words=["<end_of_turn>", "<eos>"],
+    stop_words=["<eos>", "<end_of_turn>"],
+    efficient_eos=True,
     template_class=Llama2Template,
 )
 
