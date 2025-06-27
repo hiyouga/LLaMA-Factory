@@ -1446,7 +1446,6 @@ class Qwen2VLPlugin(BasePlugin):
                 video_fps=getattr(processor, "video_fps", 2.0),
                 video_maxlen=getattr(processor, "video_maxlen", 128),
             )
-            breakpoint()
             mm_inputs.update(image_processor(images=None, videos=video_data["videos"], return_tensors="pt"))
             temporal_patch_size: int = getattr(image_processor, "temporal_patch_size", 2)
             if "second_per_grid_ts" in processor.model_input_names:
