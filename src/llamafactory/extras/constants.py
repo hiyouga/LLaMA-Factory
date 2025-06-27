@@ -712,6 +712,13 @@ register_model_group(
         "Gemma-1.1-7B-Instruct": {
             DownloadSource.DEFAULT: "google/gemma-1.1-7b-it",
         },
+    },
+    template="gemma",
+)
+
+
+register_model_group(
+    models={
         "Gemma-2-2B": {
             DownloadSource.DEFAULT: "google/gemma-2-2b",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-2b",
@@ -751,7 +758,7 @@ register_model_group(
             DownloadSource.MODELSCOPE: "google/medgemma-27b-text-it",
         },
     },
-    template="gemma",
+    template="gemma2",
 )
 
 
