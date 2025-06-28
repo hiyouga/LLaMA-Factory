@@ -829,6 +829,18 @@ register_model_group(
 
 register_model_group(
     models={
+        "GLM-4.1V-9B-Thinking": {
+            DownloadSource.DEFAULT: "THUDM/GLM-4.1V-9B-Thinking",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.1V-9B-Thinking",
+        }
+    },
+    template="glm4v",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
         "GLM-Z1-0414-9B-Chat": {
             DownloadSource.DEFAULT: "THUDM/GLM-Z1-9B-0414",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-Z1-9B-0414",

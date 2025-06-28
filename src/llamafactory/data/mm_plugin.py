@@ -1623,7 +1623,6 @@ class GLM4VPlugin(Qwen2VLPlugin):
         self._validate_input(processor, images, videos, audios)
         mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
         mm_inputs.pop("timestamps", None)
-        mm_inputs.pop("second_per_grid_ts", None)
         return mm_inputs
 
 
