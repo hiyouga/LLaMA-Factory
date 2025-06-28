@@ -702,7 +702,7 @@ def get_ray_trainer(
             failure_config=FailureConfig(max_failures=-1),
         ),
         torch_config=TorchConfig(
-            timeout_s=10800,
+            timeout_s=43200,
         )
     )
     return trainer
