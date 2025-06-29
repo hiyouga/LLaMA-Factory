@@ -1572,7 +1572,7 @@ class GLM4VPlugin(Qwen2VLPlugin):
                 timestamps_list = timestamps
 
             unique_timestamps = timestamps_list.copy()
-            selected_timestamps = unique_timestamps[:num_frames]  # ?
+            selected_timestamps = unique_timestamps[:num_frames]
             while len(selected_timestamps) < num_frames:
                 selected_timestamps.append(selected_timestamps[-1] if selected_timestamps else 0)
 
@@ -1590,7 +1590,8 @@ class GLM4VPlugin(Qwen2VLPlugin):
                     IMAGE_PLACEHOLDER, f"<|begin_of_image|>{self.image_token * image_seqlen}<|end_of_image|>", 1
                 )
                 num_image_tokens += 1
-            # TODO: need alignment
+
+            # TODO: DO NOT SUPPORT VIDEO UNTIL NEXT PR
             while VIDEO_PLACEHOLDER in content:
                 video_structure = ""
                 for frame_index in range(num_frames):
