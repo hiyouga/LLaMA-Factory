@@ -210,7 +210,8 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
 
         if (
             self.model is not None
-            and getattr(self.model.config, "model_type", None) in ["qwen2_vl", "qwen2_5_vl", "qwen2_5_omni_thinker"]
+            and getattr(self.model.config, "model_type", None)
+            in ["glm4v", "qwen2_vl", "qwen2_5_vl", "qwen2_5_omni_thinker"]
             and ("position_ids" not in features or features["position_ids"].dim() != 3)
         ):
             raise ValueError("Qwen2-VL/Qwen2.5-Omni model requires 3D position ids for mrope.")
