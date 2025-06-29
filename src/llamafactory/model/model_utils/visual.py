@@ -204,6 +204,16 @@ _register_composite_model(
 )
 
 
+# copied from qwen2vl
+_register_composite_model(
+    model_type="glm4v",
+    projector_key="visual.merger",
+    vision_model_keys=["visual.patch_embed", "visual.blocks"],
+    language_model_keys=["language_model", "lm_head"],
+    lora_conflict_keys=["patch_embed"],
+)
+
+
 _register_composite_model(
     model_type="internvl",
 )
