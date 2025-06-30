@@ -758,7 +758,7 @@ register_model_group(
             DownloadSource.MODELSCOPE: "google/medgemma-27b-text-it",
         },
     },
-    template="gemma",
+    template="gemma2",
 )
 
 
