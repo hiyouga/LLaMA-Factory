@@ -172,6 +172,11 @@ class BaseModelArguments:
         metadata={"help": "Whether to trust the execution of code from datasets/models defined on the Hub or not."},
     )
 
+    export_hub_private: bool = field(
+        default=False,
+        metadata={"help": "Whether to push the model and tokenizer to a private repository on the Hugging Face hub."},
+    )
+
     def __post_init__(self):
         if self.model_name_or_path is None:
             raise ValueError("Please provide `model_name_or_path`.")

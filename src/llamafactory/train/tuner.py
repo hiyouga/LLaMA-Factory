@@ -156,6 +156,7 @@ def export_model(args: Optional[dict[str, Any]] = None) -> None:
             token=model_args.hf_hub_token,
             max_shard_size=f"{model_args.export_size}GB",
             safe_serialization=(not model_args.export_legacy_format),
+            private=model_args.export_hub_private
         )
 
     if finetuning_args.stage == "rm":
@@ -182,12 +183,12 @@ def export_model(args: Optional[dict[str, Any]] = None) -> None:
         tokenizer.init_kwargs["padding_side"] = "left"
         tokenizer.save_pretrained(model_args.export_dir)
         if model_args.export_hub_model_id is not None:
-            tokenizer.push_to_hub(model_args.export_hub_model_id, token=model_args.hf_hub_token)
+            tokenizer.push_to_hub(model_args.export_hub_model_id, token=model_args.hf_hub_token, private=model_args.export_hub_private)
 
         if processor is not None:
             processor.save_pretrained(model_args.export_dir)
             if model_args.export_hub_model_id is not None:
-                processor.push_to_hub(model_args.export_hub_model_id, token=model_args.hf_hub_token)
+                processor.push_to_hub(model_args.export_hub_model_id, token=model_args.hf_hub_token, private=model_args.export_hub_private)
 
     except Exception as e:
         logger.warning_rank0(f"Cannot save tokenizer, please copy the files manually: {e}.")
