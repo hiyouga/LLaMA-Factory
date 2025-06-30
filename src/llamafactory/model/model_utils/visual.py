@@ -204,6 +204,13 @@ _register_composite_model(
 )
 
 
+_register_composite_model(
+    model_type="gemma3n",
+    vision_model_keys=["vision_tower", "audio_tower"],
+    lora_conflict_keys=["timm_model", "subsample_conv_projection"],
+)
+
+
 # copied from qwen2vl
 _register_composite_model(
     model_type="glm4v",

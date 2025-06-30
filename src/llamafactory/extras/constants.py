@@ -758,7 +758,7 @@ register_model_group(
             DownloadSource.MODELSCOPE: "google/medgemma-27b-text-it",
         },
     },
-    template="gemma2",
+    template="gemma",
 )
 
 
@@ -798,6 +798,30 @@ register_model_group(
         },
     },
     template="gemma3",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
+        "Gemma-3n-E2B": {
+            DownloadSource.DEFAULT: "google/gemma-3n-E2B",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3n-E2B",
+        },
+        "Gemma-3n-E4B": {
+            DownloadSource.DEFAULT: "google/gemma-3n-E4B",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3n-E4B",
+        },
+        "Gemma-3n-E2B-it": {
+            DownloadSource.DEFAULT: "google/gemma-3n-E2B-it",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3n-E2B-it",
+        },
+        "Gemma-3n-E4B-it": {
+            DownloadSource.DEFAULT: "google/gemma-3n-E4B-it",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3n-E4B-it",
+        },
+    },
+    template="gemma3n",
     multimodal=True,
 )
 
