@@ -52,6 +52,7 @@ from ..extras.constants import CHOICES, SUBJECTS
 from ..hparams import get_eval_args
 from ..model import load_model, load_tokenizer
 from .template import get_eval_template
+from ..extras.misc import use_modelscope, use_openmind
 
 
 if TYPE_CHECKING:
@@ -80,12 +81,39 @@ class Evaluator:
         eval_task = self.eval_args.task.split("_")[0]
         eval_split = self.eval_args.task.split("_")[1]
 
-        mapping = cached_file(
-            path_or_repo_id=os.path.join(self.eval_args.task_dir, eval_task),
-            filename="mapping.json",
-            cache_dir=self.model_args.cache_dir,
-            token=self.model_args.hf_hub_token,
-        )
+        if not os.path.exists(self.eval_args.task_dir):
+            if use_modelscope():
+                from modelscope import snapshot_download
+                local_dir = snapshot_download(
+                    self.eval_args.task_dir,
+                    cache_dir=self.model_args.cache_dir,
+                    token=self.model_args.ms_hub_token
+                )
+                mapping = os.path.join(local_dir, "mapping.json")
+            elif use_openmind():
+                from openmind.utils.hub import snapshot_download
+                local_dir = snapshot_download(
+                    self.eval_args.task_dir,
+                    cache_dir=self.model_args.cache_dir,
+                    token=self.model_args.om_hub_token
+                )
+                mapping = os.path.join(local_dir, "mapping.json")
+            else:
+                from huggingface_hub import hf_hub_download
+                mapping = hf_hub_download(
+                    repo_id=self.eval_args.task_dir,
+                    filename="mapping.json",
+                    repo_type="dataset",
+                    cache_dir=self.model_args.cache_dir,
+                    token=self.model_args.hf_hub_token
+                )
+        else:
+            mapping = cached_file(
+                path_or_repo_id=os.path.join(self.eval_args.task_dir, eval_task),
+                filename="mapping.json",
+                cache_dir=self.model_args.cache_dir,
+                token=self.model_args.hf_hub_token,
+            )
 
         with open(mapping, encoding="utf-8") as f:
             categorys: dict[str, dict[str, str]] = json.load(f)
