@@ -812,11 +812,11 @@ register_model_group(
             DownloadSource.DEFAULT: "google/gemma-3n-E4B",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-3n-E4B",
         },
-        "Gemma-3n-E2B-it": {
+        "Gemma-3n-E2B-Instruct": {
             DownloadSource.DEFAULT: "google/gemma-3n-E2B-it",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-3n-E2B-it",
         },
-        "Gemma-3n-E4B-it": {
+        "Gemma-3n-E4B-Instruct": {
             DownloadSource.DEFAULT: "google/gemma-3n-E4B-it",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-3n-E4B-it",
         },
