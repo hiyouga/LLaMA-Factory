@@ -804,6 +804,30 @@ register_model_group(
 
 register_model_group(
     models={
+        "Gemma-3n-E2B": {
+            DownloadSource.DEFAULT: "google/gemma-3n-E2B",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3n-E2B",
+        },
+        "Gemma-3n-E4B": {
+            DownloadSource.DEFAULT: "google/gemma-3n-E4B",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3n-E4B",
+        },
+        "Gemma-3n-E2B-Instruct": {
+            DownloadSource.DEFAULT: "google/gemma-3n-E2B-it",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3n-E2B-it",
+        },
+        "Gemma-3n-E4B-Instruct": {
+            DownloadSource.DEFAULT: "google/gemma-3n-E4B-it",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3n-E4B-it",
+        },
+    },
+    template="gemma3n",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
         "GLM-4-9B": {
             DownloadSource.DEFAULT: "THUDM/glm-4-9b",
             DownloadSource.MODELSCOPE: "ZhipuAI/glm-4-9b",

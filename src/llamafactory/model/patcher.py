@@ -178,6 +178,9 @@ def patch_model(
         resize_embedding_layer(model, tokenizer)
 
     if is_trainable:
+        if getattr(model.config, "model_type", None) == "gemma3n":
+            setattr(model_args, "disable_gradient_checkpointing", True)
+
         prepare_model_for_training(model, model_args)
         autocast_projector_dtype(model, model_args)
         add_z3_leaf_module(model)
