@@ -388,9 +388,7 @@ class MMPluginMixin:
                     return_tensors="pt",
                 )
             )
-            mm_inputs["feature_attention_mask"] = (
-                mm_inputs.pop("attention_mask") if "attention_mask" in mm_inputs else None
-            )  # prevent conflicts
+            mm_inputs["feature_attention_mask"] = mm_inputs.pop("attention_mask", None)  # prevent conflicts
 
         return mm_inputs
 
@@ -523,8 +521,6 @@ class Gemma3nPlugin(Gemma3Plugin):
     ) -> list[dict[str, str]]:
         self._validate_input(processor, images, videos, audios)
         self._validate_messages(messages, images, videos, audios)
-        num_image_tokens = 0
-        num_audio_tokens = 0
         messages = deepcopy(messages)
         boi_token: str = getattr(processor, "boi_token")
         full_image_sequence: str = getattr(processor, "full_image_sequence")
@@ -535,18 +531,10 @@ class Gemma3nPlugin(Gemma3Plugin):
         for message in messages:
             content = message["content"]
             while IMAGE_PLACEHOLDER in content:
-                image_placeholder_str = "{{image}}"
-                content = content.replace(IMAGE_PLACEHOLDER, image_placeholder_str, 1)
-                num_image_tokens += 1
-
-                message["content"] = content.replace("{{image}}", image_str)
+                content = content.replace(IMAGE_PLACEHOLDER, image_str, 1)
 
             while AUDIO_PLACEHOLDER in content:
-                audio_placeholder_str = "{{audio}}"
-                content = content.replace(AUDIO_PLACEHOLDER, audio_placeholder_str, 1)
-                num_audio_tokens += 1
-
-                message["content"] = content.replace("{{audio}}", audio_str)
+                content = content.replace(AUDIO_PLACEHOLDER, audio_str, 1)
 
         return messages
 
