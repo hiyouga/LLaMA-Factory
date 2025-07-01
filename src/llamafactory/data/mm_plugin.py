@@ -388,7 +388,7 @@ class MMPluginMixin:
                     return_tensors="pt",
                 )
             )
-            mm_inputs["feature_attention_mask"] = mm_inputs.pop("attention_mask")  # prevent conflicts
+            mm_inputs["feature_attention_mask"] = mm_inputs.pop("attention_mask", None)  # prevent conflicts
 
         return mm_inputs
 
@@ -507,6 +507,36 @@ class Gemma3Plugin(BasePlugin):
         mm_inputs.pop("num_crops", None)
         mm_inputs["token_type_ids"] = _get_gemma3_token_type_ids(batch_ids, processor)
         return mm_inputs
+
+
+class Gemma3nPlugin(Gemma3Plugin):
+    @override
+    def process_messages(
+        self,
+        messages: list[dict[str, str]],
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        processor: Optional["MMProcessor"],
+    ) -> list[dict[str, str]]:
+        self._validate_input(processor, images, videos, audios)
+        self._validate_messages(messages, images, videos, audios)
+        messages = deepcopy(messages)
+        boi_token: str = getattr(processor, "boi_token")
+        full_image_sequence: str = getattr(processor, "full_image_sequence")
+        full_audio_sequence: str = getattr(processor, "full_audio_sequence")
+        image_str = full_image_sequence if self.expand_mm_tokens else boi_token
+        audio_str = full_audio_sequence if self.expand_mm_tokens else boi_token
+
+        for message in messages:
+            content = message["content"]
+            while IMAGE_PLACEHOLDER in content:
+                content = content.replace(IMAGE_PLACEHOLDER, image_str, 1)
+
+            while AUDIO_PLACEHOLDER in content:
+                content = content.replace(AUDIO_PLACEHOLDER, audio_str, 1)
+
+        return messages
 
 
 @dataclass
@@ -1845,6 +1875,7 @@ PLUGINS = {
     "base": BasePlugin,
     "gemma3": Gemma3Plugin,
     "glm4v": GLM4VPlugin,
+    "gemma3n": Gemma3nPlugin,
     "intern_vl": InternVLPlugin,
     "kimi_vl": KimiVLPlugin,
     "llama4": Llama4Plugin,
