@@ -269,8 +269,8 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
     if training_args.do_train and model_args.quantization_device_map == "auto":
         raise ValueError("Cannot use device map for quantized models in training.")
     
-    if training_args.report_to == "swanlab" and finetuning_args.use_swanlab == True:
-        training_args.report_to = "none"
+    if "swanlab" in training_args.report_to and finetuning_args.use_swanlab == True:
+        training_args.report_to = [x for x in training_args.report_to if x != "swanlab"]
 
     if finetuning_args.pissa_init and is_deepspeed_zero3_enabled():
         raise ValueError("Please use scripts/pissa_init.py to initialize PiSSA in DeepSpeed ZeRO-3.")
