@@ -100,10 +100,10 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 
 ### 最新模型的 Day-N 微调适配
 
-| 适配时间      | 模型名称                                                       |
-| ------------ | ------------------------------------------------------------ |
-| Day 0        | Qwen3 / Qwen2.5-VL / Gemma 3 / InternLM 3 / MiniCPM-o-2.6    |
-| Day 1        | Llama 3 / GLM-4 / Mistral Small / PaliGemma2 / Llama 4       |
+| 适配时间      | 模型名称                                                             |
+| ------------ | ------------------------------------------------------------------ |
+| Day 0        | Qwen3 / Qwen2.5-VL / Gemma 3 / InternLM 3 / MiniCPM-o-2.6/ GLM4.1V |
+| Day 1        | Llama 3 / GLM-4 / Mistral Small / PaliGemma2 / Llama 4             |
 
 ## 官方博客
 
