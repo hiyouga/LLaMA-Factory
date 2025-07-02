@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import os
 import sys
 from pathlib import Path
@@ -23,7 +22,6 @@ from typing import Any, Optional, Union
 
 import torch
 import transformers
-import yaml
 from omegaconf import OmegaConf
 from transformers import HfArgumentParser
 from transformers.integrations import is_deepspeed_zero3_enabled
