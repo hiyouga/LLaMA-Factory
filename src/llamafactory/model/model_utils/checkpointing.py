@@ -77,8 +77,7 @@ def get_unsloth_gradient_checkpointing_func() -> Callable:
 
 def get_custom_gradient_checkpointing_func(gradient_checkpointing_func: Callable) -> Callable:
     r"""Only applies gradient checkpointing to trainable layers."""
-
-    @wraps(gradient_checkpointing_func, assigned=WRAPPER_ASSIGNMENTS + ("__self__",))
+    
     def custom_gradient_checkpointing_func(func: Callable, *args: Union["torch.Tensor", Any], **kwargs):
         if isinstance(func, partial):
             module: torch.nn.Module = func.func.__self__
@@ -98,6 +97,10 @@ def get_custom_gradient_checkpointing_func(gradient_checkpointing_func: Callable
         else:
             return func(*args, **kwargs)
 
+    # Set the function name and module for better pickling
+    custom_gradient_checkpointing_func.__name__ = "custom_gradient_checkpointing_func"
+    custom_gradient_checkpointing_func.__module__ = "llamafactory.model.model_utils.checkpointing"
+    
     return custom_gradient_checkpointing_func
 
 

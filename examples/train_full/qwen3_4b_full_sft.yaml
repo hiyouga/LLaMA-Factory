@@ -1,0 +1,58 @@
+### model
+model_name_or_path: Qwen/Qwen3-4B
+trust_remote_code: true
+flash_attn: auto
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full
+# deepspeed: examples/deepspeed/ds_z3_config.json  # choices: [ds_z0_config.json, ds_z2_config.json, ds_z3_config.json]
+
+### dataset
+dataset: big_reasoning_traces
+template: qwen3
+cutoff_len: 1024  # Increased for reasoning tasks
+max_samples: 200  # Adjust based on your needs
+overwrite_cache: true
+preprocessing_num_workers: 2
+dataloader_num_workers: 0  # Disabled to avoid multiprocessing issues with gradient checkpointing
+enable_thinking: true  # Enable thinking mode for reasoning tasks
+cache_dir: /workspace/datasets/
+
+### output
+output_dir: /workspace/models/qwen3-4b/full/sft
+logging_steps: 10
+save_steps: 5000
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: wandb  # choices: [none, wandb, tensorboard, swanlab, mlflow]
+run_name: qwen3-4b-full-sft
+
+### train
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 8  # Increased for better gradient estimates
+learning_rate: 5.0e-6  # Lower learning rate for full fine-tuning
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+resume_from_checkpoint: null
+
+### eval
+# eval_dataset: big_reasoning_traces
+# val_size: 0.1
+# per_device_eval_batch_size: 1
+# eval_strategy: steps
+# eval_steps: 500 
+
+try:
+    from torch.distributed.tensor import DTensor
+except ImportError:
+    DTensor = None
+
+if DTensor is not None and isinstance(tensor, DTensor):
+    local_tensor = tensor.to_local()
+    return tensor.device, local_tensor.storage().data_ptr(), tensor.nbytes 

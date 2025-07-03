@@ -52,6 +52,17 @@ if TYPE_CHECKING:
 logger = logging.get_logger(__name__)
 
 
+def _apply_qwen3_patch():
+    """Apply patch for Qwen3 models in transformers 4.52.4."""
+    try:
+        import transformers.modeling_utils
+        if transformers.modeling_utils.ALL_PARALLEL_STYLES is None:
+            transformers.modeling_utils.ALL_PARALLEL_STYLES = ['colwise', 'rowwise']
+            logger.info_rank0("Applied Qwen3 compatibility patch for transformers 4.52.4")
+    except Exception as e:
+        logger.warning_rank0(f"Failed to apply Qwen3 patch: {e}")
+
+
 class TokenizerModule(TypedDict):
     tokenizer: "PreTrainedTokenizer"
     processor: Optional["ProcessorMixin"]
@@ -140,6 +151,9 @@ def load_model(
     add_valuehead: bool = False,
 ) -> "PreTrainedModel":
     r"""Load pretrained model."""
+    # Apply Qwen3 patch if needed
+    _apply_qwen3_patch()
+    
     init_kwargs = _get_init_kwargs(model_args)
     config = load_config(model_args)
     patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)

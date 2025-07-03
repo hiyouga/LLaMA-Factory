@@ -1,0 +1,4 @@
+model_name_or_path: Qwen/Qwen3-4B
+template: qwen3
+infer_backend: huggingface  # choices: [huggingface, vllm, sglang]
+trust_remote_code: true

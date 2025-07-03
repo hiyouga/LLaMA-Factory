@@ -714,5 +714,20 @@
       "prompt": "content"
     },
     "folder": "python"
+  },
+  "big_reasoning_traces": {
+    "hf_hub_url": "tech-tao/big-reasoning-traces-100k",
+    "formatting": "sharegpt",
+    "subset": "default",
+    "columns": {
+      "messages": "messages"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant",
+      "system_tag": "system"
+    }
   }
 }
