@@ -1,5 +1,5 @@
 # https://hub.docker.com/r/ascendai/cann/tags
-ARG BASE_IMAGE=ascendai/cann:8.0.0-910b-ubuntu22.04-py3.11
+ARG BASE_IMAGE=ascendai/cann:8.1.rc1-910b-ubuntu22.04-py3.11
 FROM ${BASE_IMAGE}
 
 # Installation arguments
