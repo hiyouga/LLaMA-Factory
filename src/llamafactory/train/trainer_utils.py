@@ -50,7 +50,7 @@ if is_apollo_available():
 if is_ray_available():
     import ray
     from ray.train import RunConfig, ScalingConfig, FailureConfig
-    from ray.train.torch import TorchTrainer
+    from ray.train.torch import TorchTrainer, TorchConfig
 
 
 if TYPE_CHECKING:
@@ -701,5 +701,8 @@ def get_ray_trainer(
             storage_path=ray_args.ray_storage_path,
             failure_config=FailureConfig(max_failures=-1),
         ),
+        torch_config=TorchConfig(
+            timeout_s=43200,
+        )
     )
     return trainer
