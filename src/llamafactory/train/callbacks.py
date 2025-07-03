@@ -279,6 +279,9 @@ class LogCallback(TrainerCallback):
             accuracy=state.log_history[-1].get("rewards/accuracies"),
             lr=state.log_history[-1].get("learning_rate"),
             epoch=state.log_history[-1].get("epoch"),
+            eval_rouge_1=state.log_history[-1].get("eval_rouge-1"),
+            eval_rouge_l=state.log_history[-1].get("eval_rouge-l"),
+            eval_bleu_4=state.log_history[-1].get("eval_bleu-4"),
             percentage=round(self.cur_steps / self.max_steps * 100, 2) if self.max_steps != 0 else 100,
             elapsed_time=self.elapsed_time,
             remaining_time=self.remaining_time,
@@ -293,14 +296,26 @@ class LogCallback(TrainerCallback):
             logs["vram_reserved"] = round(vram_reserved / (1024**3), 2)
 
         logs = {k: v for k, v in logs.items() if v is not None}
-        if self.webui_mode and all(key in logs for key in ("loss", "lr", "epoch")):
-            log_str = f"'loss': {logs['loss']:.4f}, 'learning_rate': {logs['lr']:2.4e}, 'epoch': {logs['epoch']:.2f}"
-            for extra_key in ("reward", "accuracy", "throughput"):
-                if logs.get(extra_key):
-                    log_str += f", '{extra_key}': {logs[extra_key]:.2f}"
-
-            logger.info_rank0("{" + log_str + "}")
-
+        log_str = ""
+        if self.webui_mode:
+            if all(key in logs for key in ("loss", "lr", "epoch")):
+                log_str = f"'loss': {logs['loss']:.4f}, 'learning_rate': {logs['lr']:2.4e}, 'epoch': {logs['epoch']:.2f}"
+                for extra_key in ("reward", "accuracy", "throughput"):
+                    if logs.get(extra_key):
+                        log_str += f", '{extra_key}': {logs[extra_key]:.2f}"
+            if all(key in logs for key in ("eval_loss", "epoch")):
+                log_str = f"'!!!! 'eval_loss': {logs['eval_loss']:.4f},'epoch': {logs['epoch']:.2f}"
+                rouge_metrics = {
+                    "eval_rouge_1": "eval_rouge_1",
+                    "eval_rouge_2": "eval_rouge_2",
+                    "eval_rouge_l": "eval_rouge_l",
+                    "eval_bleu_4": "eval_bleu_4"
+                }
+                for metric_key, display_name in rouge_metrics.items():
+                    if metric_key in logs:
+                        log_str += f", '{display_name}': {logs[metric_key]:.2f}"
+            if log_str:
+                logger.info_rank0("{" + log_str + "}")
         if self.thread_pool is not None:
             self.thread_pool.submit(self._write_log, args.output_dir, logs)
 

@@ -113,8 +113,13 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
         Subclass and override to inject custom behavior.
         """
+        origin_padding_side = self.tokenizer.padding_side
         if self.args.predict_with_generate:  # do not pass labels to model when generate
             labels = inputs.pop("labels", None)
+            # Automatically fix instead of throwing an errorAdd commentMore actions
+            if self.tokenizer.padding_side != "left":
+                logger.warning("Setting tokenizer.padding_side to 'left' for generation")
+                self.tokenizer.padding_side = "left"
         else:
             labels = inputs.get("labels")
 
