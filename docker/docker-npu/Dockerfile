@@ -6,6 +6,7 @@ FROM ${BASE_IMAGE}
 ARG PIP_INDEX=https://pypi.org/simple
 ARG EXTRAS=torch-npu,metrics
 ARG HTTP_PROXY=""
+ARG PYTORCH_INDEX=https://download.pytorch.org/whl/cpu
 
 # Define environments
 ENV MAX_JOBS=16
@@ -28,12 +29,19 @@ RUN pip config set global.index-url "${PIP_INDEX}" && \
     pip config set global.extra-index-url "${PIP_INDEX}" && \
     pip install --no-cache-dir --upgrade pip packaging wheel setuptools
 
-# Copy the application into the image
+# Reinstall pytorch rocm
+RUN pip uninstall -y torch torchvision torchaudio && \
+    pip install --no-cache-dir "torch-npu==2.5.1" "torchvision==0.20.1" --index-url "${PYTORCH_INDEX}"
+
+# Install the requirements
+COPY requirements.txt /app
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application into the image
 COPY . /app
 
 # Install LLaMA Factory
-RUN pip install --no-cache-dir -e ".[${EXTRAS}]" --extra-index https://download.pytorch.org/whl/cpu/ --no-build-isolation && \
-    pip cache purge
+RUN pip install --no-cache-dir -e ".[${EXTRAS}]" --no-build-isolation
 
 # Set up volumes
 # VOLUME [ "/root/.cache/huggingface", "/app/shared_data", "/app/output" ]
