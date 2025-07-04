@@ -107,6 +107,10 @@ class BaseModelArguments:
         default=False,
         metadata={"help": "Whether or not to use unsloth's gradient checkpointing (no need to install unsloth)."},
     )
+    lora_dropout: float = field(
+        default=0,
+        metadata={"help": "LoRA Dropout value (when training with unsloth)"},
+    )
     enable_liger_kernel: bool = field(
         default=False,
         metadata={"help": "Whether or not to enable liger kernel for faster training."},
