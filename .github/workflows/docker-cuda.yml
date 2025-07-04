@@ -8,7 +8,7 @@ on:
     paths:
       - "**/*.py"
       - "requirements.txt"
-      - "docker/**"
+      - "docker/docker-cuda/**"
       - ".github/workflows/*.yml"
   pull_request:
     branches:
@@ -16,7 +16,7 @@ on:
     paths:
       - "**/*.py"
       - "requirements.txt"
-      - "docker/**"
+      - "docker/docker-cuda/**"
       - ".github/workflows/*.yml"
 
 jobs:
