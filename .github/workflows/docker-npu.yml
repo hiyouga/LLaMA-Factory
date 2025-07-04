@@ -61,7 +61,7 @@ jobs:
           registry: docker.io
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
+
       - name: Login to Quay
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
@@ -69,7 +69,7 @@ jobs:
           registry: quay.io
           username: ${{ vars.QUAY_ASCEND_USERNAME }}
           password: ${{ secrets.QUAY_ASCEND_TOKEN }}
-      
+
       - name: Build and push Image
         uses: docker/build-push-action@v6
         with:
@@ -80,7 +80,7 @@ jobs:
           tags: |
             docker.io/hiyouga/llamafactory:latest-npu-a2
             docker.io/hiyouga/llamafactory:${{ steps.version.outputs.tag }}
-            quay.io/ascend/llamafactory:latest-a2
+            quay.io/ascend/llamafactory:latest-npu-a2
             quay.io/ascend/llamafactory:${{ steps.version.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
