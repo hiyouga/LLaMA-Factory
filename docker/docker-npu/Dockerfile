@@ -1,5 +1,5 @@
 # https://hub.docker.com/r/ascendai/cann/tags
-ARG BASE_IMAGE=ascendai/cann:8.0.0-910b-ubuntu22.04-py3.11
+ARG BASE_IMAGE=ascendai/cann:8.1.rc1-910b-ubuntu22.04-py3.11
 FROM ${BASE_IMAGE}
 
 # Installation arguments
@@ -28,15 +28,12 @@ RUN pip config set global.index-url "${PIP_INDEX}" && \
     pip config set global.extra-index-url "${PIP_INDEX}" && \
     pip install --no-cache-dir --upgrade pip packaging wheel setuptools
 
-# Install the requirements
-COPY requirements.txt /app
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the application into the image
+# Copy the all applications into the image
 COPY . /app
 
 # Install LLaMA Factory
-RUN pip install --no-cache-dir -e ".[${EXTRAS}]" --no-build-isolation
+RUN pip install --no-cache-dir -e ".[${EXTRAS}]" --extra-index https://download.pytorch.org/whl/cpu/ --no-build-isolation && \
+    pip cache purge
 
 # Set up volumes
 # VOLUME [ "/root/.cache/huggingface", "/app/shared_data", "/app/output" ]
