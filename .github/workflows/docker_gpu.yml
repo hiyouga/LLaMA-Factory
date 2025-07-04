@@ -33,12 +33,10 @@ jobs:
 
     steps:
       - name: Free up disk space
-        run: |
-          df -h
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /opt/hostedtoolcache
-          df -h
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+        with:
+          tool-cache: true
+          docker-images: false
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -68,6 +66,7 @@ jobs:
         with:
           context: .
           file: ./docker/docker-cuda/Dockerfile
+          platforms: linux/amd64,linux/arm64
           build-args: |
             EXTRAS=metrics,deepspeed,liger-kernel
           push: ${{ github.event_name != 'pull_request' }}

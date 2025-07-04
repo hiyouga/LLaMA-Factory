@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - "workflow"
+      - "main"
     paths:
       - "**/*.py"
       - "requirements.txt"
@@ -78,9 +78,9 @@ jobs:
           file: ./docker/docker-npu/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            docker.io/wjunlu27/llamafactory:latest-npu
-            docker.io/wjunlu27/llamafactory:${{ steps.version.outputs.tag }}
-            quay.io/wjunlu/llamafactory:latest
-            quay.io/wjunlu/llamafactory:${{ steps.version.outputs.tag }}
+            docker.io/hiyouga/llamafactory:latest-npu
+            docker.io/hiyouga/llamafactory:${{ steps.version.outputs.tag }}
+            quay.io/ascend/llamafactory:latest
+            quay.io/ascend/llamafactory:${{ steps.version.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
