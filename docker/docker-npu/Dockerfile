@@ -36,7 +36,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app
 
 # Install LLaMA Factory
-RUN pip install --no-cache-dir -e ".[${EXTRAS}]" --no-build-isolation
+RUN pip install --no-cache-dir -e ".[${EXTRAS}]" --extra-index https://download.pytorch.org/whl/cpu/ --no-build-isolation
 
 # Set up volumes
 # VOLUME [ "/root/.cache/huggingface", "/app/shared_data", "/app/output" ]
