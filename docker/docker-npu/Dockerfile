@@ -29,7 +29,7 @@ RUN pip config set global.index-url "${PIP_INDEX}" && \
     pip config set global.extra-index-url "${PIP_INDEX}" && \
     pip install --no-cache-dir --upgrade pip packaging wheel setuptools
 
-# Reinstall pytorch rocm
+# Install torch-npu
 RUN pip uninstall -y torch torchvision torchaudio && \
     pip install --no-cache-dir "torch-npu==2.5.1" "torchvision==0.20.1" --index-url "${PYTORCH_INDEX}"
 
