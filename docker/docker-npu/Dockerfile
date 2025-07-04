@@ -28,11 +28,7 @@ RUN pip config set global.index-url "${PIP_INDEX}" && \
     pip config set global.extra-index-url "${PIP_INDEX}" && \
     pip install --no-cache-dir --upgrade pip packaging wheel setuptools
 
-# Install the requirements
-COPY requirements.txt /app
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the application into the image
+# Copy the application into the image
 COPY . /app
 
 # Install LLaMA Factory
