@@ -23,6 +23,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from io import BytesIO
 from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TypedDict, Union
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import torch
@@ -249,22 +250,29 @@ class MMPluginMixin:
 
     def _regularize_images(self, images: list["ImageInput"], **kwargs) -> dict[str, list["ImageObject"]]:
         r"""Regularize images to avoid error. Including reading and pre-processing."""
-        results = []
-        for image in images:
-            if isinstance(image, (str, BinaryIO)):
-                image = Image.open(image)
-            elif isinstance(image, bytes):
-                image = Image.open(BytesIO(image))
-            elif isinstance(image, dict):
-                if image["bytes"] is not None:
-                    image = Image.open(BytesIO(image["bytes"]))
+        
+        def _load_and_preprocess(image_input):
+            # 解码 image_input 成 PIL.Image
+            if isinstance(image_input, (str, BinaryIO)):
+                image = Image.open(image_input)
+            elif isinstance(image_input, bytes):
+                image = Image.open(BytesIO(image_input))
+            elif isinstance(image_input, dict):
+                if image_input["bytes"] is not None:
+                    image = Image.open(BytesIO(image_input["bytes"]))
                 else:
-                    image = Image.open(image["path"])
+                    image = Image.open(image_input["path"])
+            else:
+                image = image_input
 
             if not isinstance(image, ImageObject):
                 raise ValueError(f"Expect input is a list of images, but got {type(image)}.")
 
-            results.append(self._preprocess_image(image, **kwargs))
+            return self._preprocess_image(image, **kwargs)
+
+        # Use ThreadPoolExecutor to parallelize image loading and preprocessing, max_workers can be set to a higher value
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            results = list(executor.map(_load_and_preprocess, images))
 
         return {"images": results}
 
@@ -281,10 +289,15 @@ class MMPluginMixin:
             else:
                 container = av.open(video, "r")
                 video_stream = next(stream for stream in container.streams if stream.type == "video")
+                video_stream.thread_type = "FRAME"
                 sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
+                idx_set = set(int(i) for i in sample_indices)
+                max_idx = max(idx_set)
                 container.seek(0)
                 for frame_idx, frame in enumerate(container.decode(video_stream)):
-                    if frame_idx in sample_indices:
+                    if frame_idx > max_idx:
+                        break
+                    if frame_idx in idx_set:
                         frames.append(frame.to_image())
 
             frames = self._regularize_images(frames, **kwargs)["images"]
@@ -1432,9 +1445,14 @@ class Qwen2VLPlugin(BasePlugin):
                 container = av.open(video, "r")
                 video_stream = next(stream for stream in container.streams if stream.type == "video")
                 sample_indices = self._get_video_sample_indices(video_stream, **kwargs)
+                video_stream.thread_type = "FRAME"
+                idx_set = set(int(i) for i in sample_indices)
+                max_idx = max(idx_set)
                 container.seek(0)
                 for frame_idx, frame in enumerate(container.decode(video_stream)):
-                    if frame_idx in sample_indices:
+                    if frame_idx > max_idx:
+                        break
+                    if frame_idx in idx_set:
                         frames.append(frame.to_image())
 
                 if video_stream.duration is None:
@@ -1442,8 +1460,11 @@ class Qwen2VLPlugin(BasePlugin):
                 else:
                     fps_per_video.append(len(sample_indices) / float(video_stream.duration * video_stream.time_base))
 
-            if len(frames) % 2 != 0:
-                frames.append(frames[-1])
+            n = len(frames)
+            padding_frames_count = (-n) % 2 # temporal_patch_size is 2 in Qwen2VL  
+            if padding_frames_count:
+                last_frame = frames[-1]
+                frames += [last_frame] * padding_frames_count
 
             frames = self._regularize_images(frames, **kwargs)["images"]
             results.append(frames)
