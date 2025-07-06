@@ -48,7 +48,12 @@ from .protocol import (
 SAFE_MEDIA_PATH = os.environ.get("SAFE_MEDIA_PATH", os.path.join(os.path.dirname(__file__), "safe_media"))
 # 允许通过环境变量禁用本地文件加载功能
 ALLOW_LOCAL_FILES = is_env_enabled("ALLOW_LOCAL_FILES", "true")
-
+# 新增：允许的URL前缀白名单，以逗号分隔
+# 例如: "https://s3.amazonaws.com/,https://storage.googleapis.com/"
+ALLOWED_URL_PREFIXES_STR = os.environ.get("ALLOWED_URL_PREFIXES", "")
+ALLOWED_URL_PREFIXES = [
+    prefix.strip() for prefix in ALLOWED_URL_PREFIXES_STR.split(",") if prefix.strip()
+]
 # 确保安全目录存在
 if not os.path.exists(SAFE_MEDIA_PATH):
     os.makedirs(SAFE_MEDIA_PATH)
@@ -77,14 +82,24 @@ def _check_lfi_path(path: str) -> None:
 
 def _check_ssrf_url(url: str) -> None:
     """
-    Checks if a given URL is vulnerable to SSRF. Raises HTTPException if unsafe.
+    Checks if a given URL is vulnerable to SSRF, with an optional whitelist.
+    Raises HTTPException if unsafe.
     """
+    # 1. 新增：URL前缀白名单检查
+    if ALLOWED_URL_PREFIXES:
+        # 如果设置了白名单，则URL必须以其中一个前缀开头
+        if not any(url.startswith(prefix) for prefix in ALLOWED_URL_PREFIXES):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="URL is not in the allowed list of prefixes.",
+            )
+
+    # 2. 现有的IP地址检查 (即使通过白名单也必须执行，以防DNS重绑定)
     try:
         parsed_url = urlparse(url)
         if parsed_url.scheme not in ["http", "https"]:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only HTTP/HTTPS URLs are allowed.")
 
-        # 关键防护：解析域名获取IP地址
         hostname = parsed_url.hostname
         if not hostname:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid URL hostname.")
@@ -93,7 +108,6 @@ def _check_ssrf_url(url: str) -> None:
         ip_address_str = ip_info[0][4][0]
         ip = ipaddress.ip_address(ip_address_str)
 
-        # 关键防护：检查IP是否是公网IP (is_global)，阻止对内网、回环地址等的请求
         if not ip.is_global:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                                 detail=f"Access to private or reserved IP addresses is not allowed.")
@@ -102,7 +116,6 @@ def _check_ssrf_url(url: str) -> None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail=f"Could not resolve hostname: {parsed_url.hostname}")
     except Exception as e:
-        # 捕获其他潜在的解析错误
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid URL: {e}")
 
 if is_fastapi_available():
