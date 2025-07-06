@@ -14,12 +14,15 @@
 
 import base64
 import io
+import ipaddress
 import json
 import os
 import re
+import socket
 import uuid
 from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING, Optional
+from urllib.parse import urlparse
 
 from ..data import Role as DataRole
 from ..extras import logging
@@ -41,6 +44,66 @@ from .protocol import (
     ScoreEvaluationResponse,
 )
 
+# 从环境变量读取安全媒体路径，提供默认值
+SAFE_MEDIA_PATH = os.environ.get("SAFE_MEDIA_PATH", os.path.join(os.path.dirname(__file__), "safe_media"))
+# 允许通过环境变量禁用本地文件加载功能
+ALLOW_LOCAL_FILES = is_env_enabled("ALLOW_LOCAL_FILES", "true")
+
+# 确保安全目录存在
+if not os.path.exists(SAFE_MEDIA_PATH):
+    os.makedirs(SAFE_MEDIA_PATH)
+
+
+def _check_lfi_path(path: str) -> None:
+    """
+    Checks if a given path is vulnerable to LFI. Raises HTTPException if unsafe.
+    """
+    if not ALLOW_LOCAL_FILES:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Local file access is disabled.")
+
+    # 规范化路径并检查它是否在安全目录下
+    try:
+        # 关键防护：os.path.realpath会解析".."和符号链接，得到真实的物理路径
+        real_path = os.path.realpath(path)
+        safe_path = os.path.realpath(SAFE_MEDIA_PATH)
+
+        # 关键防护：如果解析后的真实路径不是以安全目录为前缀，则拒绝访问
+        if not real_path.startswith(safe_path):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                                detail="File access is restricted to the safe media directory.")
+    except Exception:  # 捕获路径不存在等文件系统错误
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or inaccessible file path.")
+
+
+def _check_ssrf_url(url: str) -> None:
+    """
+    Checks if a given URL is vulnerable to SSRF. Raises HTTPException if unsafe.
+    """
+    try:
+        parsed_url = urlparse(url)
+        if parsed_url.scheme not in ["http", "https"]:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only HTTP/HTTPS URLs are allowed.")
+
+        # 关键防护：解析域名获取IP地址
+        hostname = parsed_url.hostname
+        if not hostname:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid URL hostname.")
+
+        ip_info = socket.getaddrinfo(hostname, parsed_url.port)
+        ip_address_str = ip_info[0][4][0]
+        ip = ipaddress.ip_address(ip_address_str)
+
+        # 关键防护：检查IP是否是公网IP (is_global)，阻止对内网、回环地址等的请求
+        if not ip.is_global:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                                detail=f"Access to private or reserved IP addresses is not allowed.")
+
+    except socket.gaierror:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Could not resolve hostname: {parsed_url.hostname}")
+    except Exception as e:
+        # 捕获其他潜在的解析错误
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid URL: {e}")
 
 if is_fastapi_available():
     from fastapi import HTTPException, status
@@ -121,8 +184,10 @@ def _process_request(
                     if re.match(r"^data:image\/(png|jpg|jpeg|gif|bmp);base64,(.+)$", image_url):  # base64 image
                         image_stream = io.BytesIO(base64.b64decode(image_url.split(",", maxsplit=1)[1]))
                     elif os.path.isfile(image_url):  # local file
+                        _check_lfi_path(image_url)
                         image_stream = open(image_url, "rb")
                     else:  # web uri
+                        _check_ssrf_url(image_url)
                         image_stream = requests.get(image_url, stream=True).raw
 
                     images.append(Image.open(image_stream).convert("RGB"))
@@ -132,8 +197,10 @@ def _process_request(
                     if re.match(r"^data:video\/(mp4|mkv|avi|mov);base64,(.+)$", video_url):  # base64 video
                         video_stream = io.BytesIO(base64.b64decode(video_url.split(",", maxsplit=1)[1]))
                     elif os.path.isfile(video_url):  # local file
+                        _check_lfi_path(video_url)
                         video_stream = video_url
                     else:  # web uri
+                        _check_ssrf_url(video_url)
                         video_stream = requests.get(video_url, stream=True).raw
 
                     videos.append(video_stream)
@@ -143,8 +210,10 @@ def _process_request(
                     if re.match(r"^data:audio\/(mpeg|mp3|wav|ogg);base64,(.+)$", audio_url):  # base64 audio
                         audio_stream = io.BytesIO(base64.b64decode(audio_url.split(",", maxsplit=1)[1]))
                     elif os.path.isfile(audio_url):  # local file
+                        _check_lfi_path(audio_url)
                         audio_stream = audio_url
                     else:  # web uri
+                        _check_ssrf_url(audio_url)
                         audio_stream = requests.get(audio_url, stream=True).raw
 
                     audios.append(audio_stream)
