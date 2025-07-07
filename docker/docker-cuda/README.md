@@ -13,7 +13,7 @@ Before running the Docker container with GPU support, you need to install the fo
    # Ubuntu/Debian
    sudo apt-get update
    sudo apt-get install docker.io
-   
+
    # Or install Docker Engine from the official repository:
    # https://docs.docker.com/engine/install/
    ```
@@ -22,7 +22,7 @@ Before running the Docker container with GPU support, you need to install the fo
    ```bash
    # Ubuntu/Debian
    sudo apt-get install docker-compose
-   
+
    # Or install the latest version:
    # https://docs.docker.com/compose/install/
    ```
@@ -33,11 +33,11 @@ Before running the Docker container with GPU support, you need to install the fo
    distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
    curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
    curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-   
+
    # Install nvidia-container-toolkit
    sudo apt-get update
    sudo apt-get install -y nvidia-container-toolkit
-   
+
    # Restart Docker to apply changes
    sudo systemctl restart docker
    ```
