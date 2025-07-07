@@ -49,8 +49,13 @@ class Engine:
     def resume(self):
         r"""Get the initial value of gradio components and restores training status if necessary."""
         user_config = load_config() if not self.demo_mode else {}  # do not use config in demo mode
-        lang = user_config.get("lang", None) or "en"
-        init_dict = {"top.lang": {"value": lang}, "infer.chat_box": {"visible": self.chatter.loaded}}
+        lang = user_config.get("lang") or "en"
+        hub_name = user_config.get("hub_name") or "huggingface"
+        init_dict = {
+            "top.lang": {"value": lang},
+            "top.hub_name": {"value": hub_name},
+            "infer.chat_box": {"visible": self.chatter.loaded},
+        }
 
         if not self.pure_chat:
             current_time = get_time()
