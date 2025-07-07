@@ -20,6 +20,8 @@ from typing import TYPE_CHECKING, Optional
 
 from transformers import DataCollatorForLanguageModeling
 
+from ...extras.misc import calculate_tps
+
 from ...data import get_dataset, get_template_and_fix_tokenizer
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
@@ -62,6 +64,9 @@ def run_pt(
     if training_args.do_train:
         train_result = trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
         trainer.save_model()
+        train_result.metrics["effective_tokens_per_sec"] = calculate_tps(
+            dataset_module["train_dataset"], train_result.metrics, stage="sft"
+        )
         trainer.log_metrics("train", train_result.metrics)
         trainer.save_metrics("train", train_result.metrics)
         trainer.save_state()
