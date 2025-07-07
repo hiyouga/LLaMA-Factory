@@ -444,7 +444,7 @@ class Runner:
             except TimeoutExpired:
                 continue
 
-        if return_code == 0:
+        if return_code == 0 or self.aborted:
             finish_info = ALERTS["info_finished"][lang]
             if self.do_train:
                 finish_log = ALERTS["info_finished"][lang] + "\n\n" + running_log
