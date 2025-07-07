@@ -27,6 +27,10 @@ from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TypedDict, Union
 import numpy as np
 import torch
 from transformers.image_utils import get_image_size, is_valid_image, to_numpy_array
+from transformers.models.mllama.processing_mllama import (
+    convert_sparse_cross_attention_mask_to_dense,
+    get_cross_attention_token_mask,
+)
 from typing_extensions import override
 
 from ..extras.constants import AUDIO_PLACEHOLDER, IGNORE_INDEX, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
@@ -51,17 +55,10 @@ if is_pyav_available():
     import av
 
 
-if is_transformers_version_greater_than("4.45.0"):
-    from transformers.models.mllama.processing_mllama import (
-        convert_sparse_cross_attention_mask_to_dense,
-        get_cross_attention_token_mask,
-    )
-
-
 if is_transformers_version_greater_than("4.52.0"):
     from transformers.image_utils import make_flat_list_of_images
     from transformers.video_utils import make_batched_videos
-elif is_transformers_version_greater_than("4.49.0"):
+else:
     from transformers.image_utils import make_batched_videos, make_flat_list_of_images
 
 

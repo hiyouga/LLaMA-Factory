@@ -35,7 +35,6 @@ from transformers.utils import (
 from transformers.utils.versions import require_version
 
 from . import logging
-from .packages import is_transformers_version_greater_than
 
 
 _is_fp16_available = is_torch_npu_available() or is_torch_cuda_available()
@@ -94,15 +93,11 @@ def check_version(requirement: str, mandatory: bool = False) -> None:
 
 def check_dependencies() -> None:
     r"""Check the version of the required packages."""
-    check_version(
-        "transformers>=4.45.0,<=4.52.4,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0,!=4.52.0"
-    )
+    check_version("transformers>=4.49.0,<=4.52.4,!=4.52.0")
     check_version("datasets>=2.16.0,<=3.6.0")
     check_version("accelerate>=1.3.0,<=1.7.0")
     check_version("peft>=0.14.0,<=0.15.2")
     check_version("trl>=0.8.6,<=0.9.6")
-    if is_transformers_version_greater_than("4.46.0") and not is_transformers_version_greater_than("4.48.1"):
-        logger.warning_rank0_once("There are known bugs in transformers v4.46.0-v4.48.0, please use other versions.")
 
 
 def calculate_tps(dataset: list[dict[str, Any]], metrics: dict[str, float], stage: Literal["sft", "rm"]) -> float:

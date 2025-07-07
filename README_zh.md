@@ -451,7 +451,7 @@ huggingface-cli login
 | python       | 3.9     | 3.10      |
 | torch        | 2.0.0   | 2.6.0     |
 | torchvision  | 0.15.0  | 0.21.0    |
-| transformers | 4.45.0  | 4.50.0    |
+| transformers | 4.49.0  | 4.50.0    |
 | datasets     | 2.16.0  | 3.2.0     |
 | accelerate   | 0.34.0  | 1.2.1     |
 | peft         | 0.14.0  | 0.15.1    |
@@ -493,7 +493,7 @@ cd LLaMA-Factory
 pip install -e ".[torch,metrics]" --no-build-isolation
 ```
 
-可选的额外依赖项：torch、torch-npu、metrics、deepspeed、liger-kernel、bitsandbytes、hqq、eetq、gptq、aqlm、vllm、sglang、galore、apollo、badam、adam-mini、qwen、minicpm_v、modelscope、openmind、swanlab、dev
+可选的额外依赖项：torch、torch-npu、metrics、deepspeed、liger-kernel、bitsandbytes、hqq、eetq、gptq、aqlm、vllm、sglang、galore、apollo、badam、adam-mini、qwen、minicpm_v、openmind、swanlab、dev
 
 #### 从镜像安装
 
