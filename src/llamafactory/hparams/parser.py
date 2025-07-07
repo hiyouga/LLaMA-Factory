@@ -348,7 +348,7 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
     if finetuning_args.finetuning_type == "lora":
         # https://github.com/huggingface/transformers/blob/v4.50.0/src/transformers/trainer.py#L782
         training_args.label_names = training_args.label_names or ["labels"]
-    
+
     if "swanlab" in training_args.report_to and finetuning_args.use_swanlab:
         training_args.report_to.remove("swanlab")
 

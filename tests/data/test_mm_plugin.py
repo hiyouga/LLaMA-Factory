@@ -238,7 +238,6 @@ def test_llama4_plugin():
     _check_plugin(**check_inputs)
 
 
-@pytest.mark.skipif(not is_transformers_version_greater_than("4.47.0"), reason="Requires transformers>=4.47.0")
 def test_llava_plugin():
     image_seqlen = 576
     tokenizer_module = _load_tokenizer_module(model_name_or_path="llava-hf/llava-1.5-7b-hf")
