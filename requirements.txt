@@ -18,7 +18,7 @@ scipy
 # model and tokenizer
 sentencepiece
 tiktoken
-modelscope>=1.23
+modelscope>=1.14.0
 hf-transfer
 # python
 fire
