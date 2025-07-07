@@ -38,6 +38,15 @@ if is_gradio_available():
     import gradio as gr
 
 
+def switch_hub(hub_name: str) -> None:
+    r"""Switch model hub.
+
+    Inputs: top.hub_name
+    """
+    os.environ["USE_MODELSCOPE_HUB"] = "1" if hub_name == "modelscope" else "0"
+    os.environ["USE_OPENMIND_HUB"] = "1" if hub_name == "openmind" else "0"
+
+
 def can_quantize(finetuning_type: str) -> "gr.Dropdown":
     r"""Judge if the quantization is available in this finetuning type.
 

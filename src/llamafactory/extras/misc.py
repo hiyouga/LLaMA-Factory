@@ -268,8 +268,13 @@ def try_download_model_from_other_hub(model_args: "ModelArguments") -> str:
         return model_args.model_name_or_path
 
     if use_modelscope():
-        check_version("modelscope>=1.11.0", mandatory=True)
+        check_version("modelscope>=1.14.0", mandatory=True)
         from modelscope import snapshot_download  # type: ignore
+        from modelscope.hub.api import HubApi  # type: ignore
+
+        if model_args.ms_hub_token:
+            api = HubApi()
+            api.login(model_args.ms_hub_token)
 
         revision = "master" if model_args.model_revision == "main" else model_args.model_revision
         return snapshot_download(
@@ -314,5 +319,5 @@ def fix_proxy(ipv6_enabled: bool = False) -> None:
     r"""Fix proxy settings for gradio ui."""
     os.environ["no_proxy"] = "localhost,127.0.0.1,0.0.0.0"
     if ipv6_enabled:
-        for name in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY"):
-            os.environ.pop(name, None)
+        os.environ.pop("http_proxy", None)
+        os.environ.pop("HTTP_PROXY", None)
