@@ -68,7 +68,6 @@ extra_require = {
         "referencing",
         "jsonschema_specifications",
     ],
-    "modelscope": ["modelscope"],
     "openmind": ["openmind"],
     "swanlab": ["swanlab"],
     "dev": ["pre-commit", "ruff", "pytest", "build"],
