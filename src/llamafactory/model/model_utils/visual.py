@@ -76,7 +76,7 @@ def _register_composite_model(
         model_type=model_type,
         projector_key=projector_key or "multi_modal_projector",
         vision_model_keys=vision_model_keys or ["vision_tower"],
-        language_model_keys=language_model_keys or ["language_model"],
+        language_model_keys=language_model_keys or ["language_model", "lm_head"],
         lora_conflict_keys=lora_conflict_keys or [],
     )
 
@@ -200,12 +200,29 @@ def patch_target_modules(
 
 
 _register_composite_model(
-    model_type="internvl",
+    model_type="gemma3",
 )
 
 
 _register_composite_model(
-    model_type="gemma3",
+    model_type="gemma3n",
+    vision_model_keys=["vision_tower", "audio_tower"],
+    lora_conflict_keys=["timm_model", "subsample_conv_projection"],
+)
+
+
+# copied from qwen2vl
+_register_composite_model(
+    model_type="glm4v",
+    projector_key="visual.merger",
+    vision_model_keys=["visual.patch_embed", "visual.blocks"],
+    language_model_keys=["language_model", "lm_head"],
+    lora_conflict_keys=["patch_embed"],
+)
+
+
+_register_composite_model(
+    model_type="internvl",
 )
 
 
@@ -246,14 +263,8 @@ _register_composite_model(
     lora_conflict_keys=["audio_projection_layer"],
 )
 
-
 _register_composite_model(
-    model_type="paligemma",
-)
-
-
-_register_composite_model(
-    model_type="video_llava",
+    model_type="mistral3",
 )
 
 
@@ -264,7 +275,7 @@ _register_composite_model(
 
 
 _register_composite_model(
-    model_type="mistral3",
+    model_type="paligemma",
 )
 
 
@@ -287,7 +298,9 @@ _register_composite_model(
     model_type="qwen2_vl",
     projector_key="visual.merger",
     vision_model_keys=["visual.patch_embed", "visual.blocks"],
-    language_model_keys=["language_model"] if is_transformers_version_greater_than("4.52.0") else ["model", "lm_head"],
+    language_model_keys=["language_model", "lm_head"]
+    if is_transformers_version_greater_than("4.52.0")
+    else ["model", "lm_head"],
     lora_conflict_keys=["patch_embed"],
 )
 
@@ -296,6 +309,13 @@ _register_composite_model(
     model_type="qwen2_5_vl",
     projector_key="visual.merger",
     vision_model_keys=["visual.patch_embed", "visual.blocks"],
-    language_model_keys=["language_model"] if is_transformers_version_greater_than("4.52.0") else ["model", "lm_head"],
+    language_model_keys=["language_model", "lm_head"]
+    if is_transformers_version_greater_than("4.52.0")
+    else ["model", "lm_head"],
     lora_conflict_keys=["patch_embed"],
+)
+
+
+_register_composite_model(
+    model_type="video_llava",
 )

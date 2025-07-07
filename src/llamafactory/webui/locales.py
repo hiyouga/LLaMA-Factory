@@ -2849,6 +2849,28 @@ LOCALES = {
             "value": "エクスポート",
         },
     },
+    "device_memory": {
+        "en": {
+            "label": "Device memory",
+            "info": "Current memory usage of the device (GB).",
+        },
+        "ru": {
+            "label": "Память устройства",
+            "info": "Текущая память на устройстве (GB).",
+        },
+        "zh": {
+            "label": "设备显存",
+            "info": "当前设备的显存（GB）。",
+        },
+        "ko": {
+            "label": "디바이스 메모리",
+            "info": "지금 사용 중인 기기 메모리 (GB).",
+        },
+        "ja": {
+            "label": "デバイスメモリ",
+            "info": "現在のデバイスのメモリ（GB）。",
+        },
+    },
 }
 
 

@@ -50,7 +50,7 @@ class LoggerHandler(logging.Handler):
 
     def _write_log(self, log_entry: str) -> None:
         with open(self.running_log, "a", encoding="utf-8") as f:
-            f.write(log_entry + "\n\n")
+            f.write(log_entry + "\n")
 
     def emit(self, record) -> None:
         if record.name == "httpx":
