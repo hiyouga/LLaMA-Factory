@@ -1558,11 +1558,7 @@ class GLM4VPlugin(Qwen2VLPlugin):
             video_metadata = [
                 {"fps": 2, "duration": len(video), "total_frames": len(video)} for video in video_data["videos"]
             ]
-            mm_inputs.update(
-                video_processor(
-                    images=None, videos=video_data["videos"], video_metadata=video_metadata
-                )
-            )
+            mm_inputs.update(video_processor(images=None, videos=video_data["videos"], video_metadata=video_metadata))
 
         return mm_inputs
 
@@ -1586,7 +1582,7 @@ class GLM4VPlugin(Qwen2VLPlugin):
             mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
             image_grid_thw = mm_inputs.get("image_grid_thw", [])
             video_grid_thw = mm_inputs.get("video_grid_thw", [])
-            num_frames = video_grid_thw[0][0] if len(video_grid_thw) > 0 else 0 # hard code for now
+            num_frames = video_grid_thw[0][0] if len(video_grid_thw) > 0 else 0  # hard code for now
             timestamps = mm_inputs.get("timestamps", [])
 
             if hasattr(timestamps, "tolist"):
@@ -1622,7 +1618,9 @@ class GLM4VPlugin(Qwen2VLPlugin):
             while VIDEO_PLACEHOLDER in content:
                 video_structure = ""
                 for frame_index in range(num_frames):
-                    video_seqlen = video_grid_thw[num_video_tokens][1:].prod() // merge_length if self.expand_mm_tokens else 1
+                    video_seqlen = (
+                        video_grid_thw[num_video_tokens][1:].prod() // merge_length if self.expand_mm_tokens else 1
+                    )
                     timestamp_sec = selected_timestamps[frame_index]
                     frame_structure = (
                         f"<|begin_of_image|>{self.image_token * video_seqlen}<|end_of_image|>{timestamp_sec}"
@@ -1631,8 +1629,6 @@ class GLM4VPlugin(Qwen2VLPlugin):
 
                 content = content.replace(VIDEO_PLACEHOLDER, f"<|begin_of_video|>{video_structure}<|end_of_video|>", 1)
                 num_video_tokens += 1
-
-            message["content"] = content
 
             message["content"] = content
 
