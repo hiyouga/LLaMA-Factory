@@ -15,19 +15,19 @@
 LOCALES = {
     "title": {
         "en": {
-            "value": "<h1><center>LLaMA Factory: Unified Efficient Fine-Tuning of 100+ LLMs</center></h1>",
+            "value": "<h1><center>🦙🏭LLaMA Factory: Unified Efficient Fine-Tuning of 100+ LLMs</center></h1>",
         },
         "ru": {
-            "value": "<h1><center>LLaMA Factory: Унифицированная эффективная тонкая настройка 100+ LLMs</center></h1>",
+            "value": "<h1><center>🦙🏭LLaMA Factory: Унифицированная эффективная тонкая настройка 100+ LLMs</center></h1>",
         },
         "zh": {
-            "value": "<h1><center>LLaMA Factory: 一站式大模型高效微调平台</center></h1>",
+            "value": "<h1><center>🦙🏭LLaMA Factory: 一站式大模型高效微调平台</center></h1>",
         },
         "ko": {
-            "value": "<h1><center>LLaMA Factory: 100+ LLMs를 위한 통합 효율적인 튜닝</center></h1>",
+            "value": "<h1><center>🦙🏭LLaMA Factory: 100+ LLMs를 위한 통합 효율적인 튜닝</center></h1>",
         },
         "ja": {
-            "value": "<h1><center>LLaMA Factory: 100+ LLMs の統合効率的なチューニング</center></h1>",
+            "value": "<h1><center>🦙🏭LLaMA Factory: 100+ LLMs の統合効率的なチューニング</center></h1>",
         },
     },
     "subtitle": {
