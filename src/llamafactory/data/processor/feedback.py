@@ -51,8 +51,18 @@ class FeedbackDatasetProcessor(DatasetProcessor):
         else:
             kl_messages = prompt + [kl_response[1]]
 
-        messages = self.template.mm_plugin.process_messages(messages, images, videos, audios, self.processor)
-        kl_messages = self.template.mm_plugin.process_messages(kl_messages, images, videos, audios, self.processor)
+        if system:
+            sys_msg = {"role": "system", "content": system}
+            messages = self.template.mm_plugin.process_messages(
+                [sys_msg] + messages, images, videos, audios, self.processor
+            )
+            kl_messages = self.template.mm_plugin.process_messages(
+                [sys_msg] + kl_messages, images, videos, audios, self.processor
+            )
+        else:
+            messages = self.template.mm_plugin.process_messages(messages, images, videos, audios, self.processor)
+            kl_messages = self.template.mm_plugin.process_messages(kl_messages, images, videos, audios, self.processor)
+
         prompt_ids, response_ids = self.template.encode_oneturn(self.tokenizer, messages, system, tools)
         kl_prompt_ids, kl_response_ids = self.template.encode_oneturn(self.tokenizer, kl_messages, system, tools)
 
