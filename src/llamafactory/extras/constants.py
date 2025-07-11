@@ -591,6 +591,17 @@ register_model_group(
 
 register_model_group(
     models={
+        "Devstral-Small-2507-Instruct": {
+            DownloadSource.DEFAULT: "mistralai/Devstral-Small-2507",
+            DownloadSource.MODELSCOPE: "mistralai/Devstral-Small-2507",
+        },
+    },
+    template="mistral_small",
+)
+
+
+register_model_group(
+    models={
         "EXAONE-3.0-7.8B-Instruct": {
             DownloadSource.DEFAULT: "LGAI-EXAONE/EXAONE-3.0-7.8B-Instruct",
         },
