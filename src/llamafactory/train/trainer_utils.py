@@ -167,7 +167,16 @@ def create_reward_model(
             "default_head_bias", torch.zeros_like(vhead_params["v_head.summary.bias"]), persistent=False
         )
         logger.info_rank0(f"Loaded adapter weights of reward model from {finetuning_args.reward_model}")
-        return None
+        return None    
+    elif finetuning_args.reward_model_type == "env":
+        # load reward class
+        module_path, class_name = finetuning_args.reward_model.rsplit(".", 1)
+        import importlib
+        reward_module = importlib.import_module(module_path)
+        reward_class = getattr(reward_module, class_name)
+        reward_instance = reward_class()
+        logger.info_rank0(f"Loaded environment-based reward model: {finetuning_args.reward_model}")
+        return reward_instance
     else:
         reward_model_args = ModelArguments.copyfrom(
             model_args,
