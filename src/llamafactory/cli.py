@@ -83,7 +83,13 @@ def main():
         master_port = os.getenv("MASTER_PORT", str(find_available_port()))
         logger.info_rank0(f"Initializing {nproc_per_node} distributed tasks at: {master_addr}:{master_port}")
         if int(nnodes) > 1:
-            print(f"Multi-node training enabled: num nodes: {nnodes}, node rank: {node_rank}")
+            logger.info_rank0(f"Multi-node training enabled: num nodes: {nnodes}, node rank: {node_rank}")
+
+        # elastic launch support
+        max_restarts = os.getenv("MAX_RESTARTS", "0")
+        rdzv_id = os.getenv("RDZV_ID")
+        min_nnodes = os.getenv("MIN_NNODES")
+        max_nnodes = os.getenv("MAX_NNODES")
 
         env = deepcopy(os.environ)
         if is_env_enabled("OPTIM_TORCH", "1"):
@@ -91,25 +97,55 @@ def main():
             env["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
             env["TORCH_NCCL_AVOID_RECORD_STREAMS"] = "1"
 
-        # NOTE: DO NOT USE shell=True to avoid security risk
-        process = subprocess.run(
-            (
-                "torchrun --nnodes {nnodes} --node_rank {node_rank} --nproc_per_node {nproc_per_node} "
-                "--master_addr {master_addr} --master_port {master_port} {file_name} {args}"
+        if rdzv_id is not None:
+            # launch elastic job with fault tolerant support when possible
+            # see also https://docs.pytorch.org/docs/stable/elastic/train_script.html
+            rdzv_nnodes = nnodes
+            # elastic number of nodes if MIN_NNODES and MAX_NNODES are set
+            if min_nnodes is not None and max_nnodes is not None:
+                rdzv_nnodes = f"{min_nnodes}:{max_nnodes}"
+
+            process = subprocess.run(
+                (
+                    "torchrun --nnodes {rdzv_nnodes} --nproc-per-node {nproc_per_node} "
+                    "--rdzv-id {rdzv_id} --rdzv-backend c10d --rdzv-endpoint {master_addr}:{master_port} "
+                    "--max-restarts {max_restarts} {file_name} {args}"
+                )
+                .format(
+                    rdzv_nnodes=rdzv_nnodes,
+                    nproc_per_node=nproc_per_node,
+                    rdzv_id=rdzv_id,
+                    master_addr=master_addr,
+                    master_port=master_port,
+                    max_restarts=max_restarts,
+                    file_name=launcher.__file__,
+                    args=" ".join(sys.argv[1:]),
+                )
+                .split(),
+                env=env,
+                check=True,
             )
-            .format(
-                nnodes=nnodes,
-                node_rank=node_rank,
-                nproc_per_node=nproc_per_node,
-                master_addr=master_addr,
-                master_port=master_port,
-                file_name=launcher.__file__,
-                args=" ".join(sys.argv[1:]),
+        else:
+            # NOTE: DO NOT USE shell=True to avoid security risk
+            process = subprocess.run(
+                (
+                    "torchrun --nnodes {nnodes} --node_rank {node_rank} --nproc_per_node {nproc_per_node} "
+                    "--master_addr {master_addr} --master_port {master_port} {file_name} {args}"
+                )
+                .format(
+                    nnodes=nnodes,
+                    node_rank=node_rank,
+                    nproc_per_node=nproc_per_node,
+                    master_addr=master_addr,
+                    master_port=master_port,
+                    file_name=launcher.__file__,
+                    args=" ".join(sys.argv[1:]),
+                )
+                .split(),
+                env=env,
+                check=True,
             )
-            .split(),
-            env=env,
-            check=True,
-        )
+
         sys.exit(process.returncode)
     elif command in COMMAND_MAP:
         COMMAND_MAP[command]()

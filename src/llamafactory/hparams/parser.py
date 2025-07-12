@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import os
 import sys
 from pathlib import Path
@@ -23,7 +22,6 @@ from typing import Any, Optional, Union
 
 import torch
 import transformers
-import yaml
 from omegaconf import OmegaConf
 from transformers import HfArgumentParser
 from transformers.integrations import is_deepspeed_zero3_enabled
@@ -64,11 +62,11 @@ def read_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> Union[
 
     if sys.argv[1].endswith(".yaml") or sys.argv[1].endswith(".yml"):
         override_config = OmegaConf.from_cli(sys.argv[2:])
-        dict_config = yaml.safe_load(Path(sys.argv[1]).absolute().read_text())
+        dict_config = OmegaConf.load(Path(sys.argv[1]).absolute())
         return OmegaConf.to_container(OmegaConf.merge(dict_config, override_config))
     elif sys.argv[1].endswith(".json"):
         override_config = OmegaConf.from_cli(sys.argv[2:])
-        dict_config = json.loads(Path(sys.argv[1]).absolute().read_text())
+        dict_config = OmegaConf.load(Path(sys.argv[1]).absolute())
         return OmegaConf.to_container(OmegaConf.merge(dict_config, override_config))
     else:
         return sys.argv[1:]
@@ -150,7 +148,7 @@ def _check_extra_dependencies(
         check_version("mixture-of-depth>=1.1.6", mandatory=True)
 
     if model_args.infer_backend == EngineName.VLLM:
-        check_version("vllm>=0.4.3,<=0.8.6")
+        check_version("vllm>=0.4.3,<=0.9.1")
         check_version("vllm", mandatory=True)
     elif model_args.infer_backend == EngineName.SGLANG:
         check_version("sglang>=0.4.5")
@@ -168,13 +166,21 @@ def _check_extra_dependencies(
     if finetuning_args.use_adam_mini:
         check_version("adam-mini", mandatory=True)
 
+    if finetuning_args.use_swanlab:
+        check_version("swanlab", mandatory=True)
+
     if finetuning_args.plot_loss:
         check_version("matplotlib", mandatory=True)
 
-    if training_args is not None and training_args.predict_with_generate:
-        check_version("jieba", mandatory=True)
-        check_version("nltk", mandatory=True)
-        check_version("rouge_chinese", mandatory=True)
+    if training_args is not None:
+        if training_args.deepspeed:
+            # pin deepspeed version < 0.17 because of https://github.com/deepspeedai/DeepSpeed/issues/7347
+            check_version("deepspeed>=0.10.0,<=0.16.9", mandatory=True)
+
+        if training_args.predict_with_generate:
+            check_version("jieba", mandatory=True)
+            check_version("nltk", mandatory=True)
+            check_version("rouge_chinese", mandatory=True)
 
 
 def _parse_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _TRAIN_CLS:
@@ -351,6 +357,9 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
     if finetuning_args.finetuning_type == "lora":
         # https://github.com/huggingface/transformers/blob/v4.50.0/src/transformers/trainer.py#L782
         training_args.label_names = training_args.label_names or ["labels"]
+
+    if "swanlab" in training_args.report_to and finetuning_args.use_swanlab:
+        training_args.report_to.remove("swanlab")
 
     if (
         training_args.parallel_mode == ParallelMode.DISTRIBUTED

@@ -40,7 +40,7 @@ RUN apt-get update && \
 # Change pip source
 RUN pip config set global.index-url "${PIP_INDEX}" && \
     pip config set global.extra-index-url "${PIP_INDEX}" && \
-    python -m pip install --upgrade pip
+    pip install --no-cache-dir --upgrade pip packaging wheel setuptools
 
 # Install flash-attn-2.7.4.post1 (cxx11abi=False)
 RUN wget -nv https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.4.post1/flash_attn-2.7.4.post1+cu12torch2.6cxx11abiFALSE-cp311-cp311-linux_x86_64.whl && \

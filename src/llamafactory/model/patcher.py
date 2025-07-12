@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Any
 
 import torch
 from peft import PeftModel
-from transformers import PreTrainedModel, PreTrainedTokenizerBase
+from transformers import GenerationMixin, PreTrainedModel, PreTrainedTokenizerBase
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.modeling_utils import is_fsdp_enabled
 
@@ -186,7 +186,7 @@ def patch_model(
     if getattr(model.config, "model_type", None) not in ["minicpmv", "minicpmo"] and "GenerationMixin" not in str(
         model.generate.__func__
     ):
-        model.generate = MethodType(PreTrainedModel.generate, model)
+        model.generate = MethodType(GenerationMixin.generate, model)
 
     if add_valuehead:
         prepare_valuehead_model(model)
@@ -195,6 +195,9 @@ def patch_model(
         resize_embedding_layer(model, tokenizer)
 
     if is_trainable:
+        if getattr(model.config, "model_type", None) == "gemma3n":
+            setattr(model_args, "disable_gradient_checkpointing", True)
+
         prepare_model_for_training(model, model_args)
         autocast_projector_dtype(model, model_args)
         add_z3_leaf_module(model)

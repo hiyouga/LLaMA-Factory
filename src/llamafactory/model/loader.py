@@ -19,6 +19,7 @@ import torch
 from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
+    AutoModelForImageTextToText,
     AutoModelForSeq2SeqLM,
     AutoModelForTextToWaveform,
     AutoModelForVision2Seq,
@@ -29,7 +30,6 @@ from trl import AutoModelForCausalLMWithValueHead
 
 from ..extras import logging
 from ..extras.misc import count_parameters, skip_check_imports, try_download_model_from_other_hub
-from ..extras.packages import is_transformers_version_greater_than
 from .adapter import init_adapter
 from .model_utils.liger_kernel import apply_liger_kernel
 from .model_utils.misc import register_autoclass
@@ -37,10 +37,6 @@ from .model_utils.mod import convert_pretrained_model_to_mod, load_mod_pretraine
 from .model_utils.unsloth import load_unsloth_pretrained_model
 from .model_utils.valuehead import load_valuehead_params
 from .patcher import patch_config, patch_model, patch_processor, patch_tokenizer, patch_valuehead_model
-
-
-if is_transformers_version_greater_than("4.46.0"):
-    from transformers import AutoModelForImageTextToText
 
 
 if TYPE_CHECKING:
@@ -86,10 +82,10 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
             padding_side="right",
             **init_kwargs,
         )
-    except ValueError:  # try the fast one
+    except ValueError:  # try another one
         tokenizer = AutoTokenizer.from_pretrained(
             model_args.model_name_or_path,
-            use_fast=True,
+            use_fast=not model_args.use_fast_tokenizer,
             padding_side="right",
             **init_kwargs,
         )
@@ -97,9 +93,19 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
         raise OSError("Failed to load tokenizer.") from e
 
     patch_tokenizer(tokenizer, model_args)
+
     try:
-        processor = AutoProcessor.from_pretrained(model_args.model_name_or_path, **init_kwargs)
-        patch_processor(processor, tokenizer, model_args)
+        processor = AutoProcessor.from_pretrained(
+            model_args.model_name_or_path,
+            use_fast=model_args.use_fast_tokenizer,
+            **init_kwargs,
+        )
+    except ValueError:  # try another one
+        processor = AutoProcessor.from_pretrained(
+            model_args.model_name_or_path,
+            use_fast=not model_args.use_fast_tokenizer,
+            **init_kwargs,
+        )
     except Exception as e:
         logger.info_rank0(f"Failed to load processor: {e}.")
         processor = None
@@ -109,6 +115,9 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
     if processor is not None and "Processor" not in processor.__class__.__name__:
         logger.debug("The loaded processor is not an instance of Processor. Dropping it.")
         processor = None
+
+    if processor is not None:
+        patch_processor(processor, tokenizer, model_args)
 
     return {"tokenizer": tokenizer, "processor": processor}
 
@@ -138,7 +147,7 @@ def load_model(
         if model_args.adapter_name_or_path is not None:
             lazy_load = True
         elif is_trainable:
-            model = load_unsloth_pretrained_model(config, model_args)
+            model = load_unsloth_pretrained_model(config, model_args, finetuning_args)
 
     if model is None and not lazy_load:
         init_kwargs["config"] = config
@@ -149,10 +158,7 @@ def load_model(
         else:
             if type(config) in AutoModelForVision2Seq._model_mapping.keys():  # image-text
                 load_class = AutoModelForVision2Seq
-            elif (
-                is_transformers_version_greater_than("4.46.0")
-                and type(config) in AutoModelForImageTextToText._model_mapping.keys()
-            ):  # image-text
+            elif type(config) in AutoModelForImageTextToText._model_mapping.keys():  # image-text
                 load_class = AutoModelForImageTextToText
             elif type(config) in AutoModelForSeq2SeqLM._model_mapping.keys():  # audio-text
                 load_class = AutoModelForSeq2SeqLM

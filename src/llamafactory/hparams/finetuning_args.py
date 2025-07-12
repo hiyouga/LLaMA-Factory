@@ -202,6 +202,15 @@ class RLHFArguments:
         default="lora",
         metadata={"help": "The type of the reward model in PPO training. Lora model only supports lora training."},
     )
+    ld_alpha: Optional[float] = field(
+        default=None,
+        metadata={
+            "help": (
+                "Alpha parameter from the LD-DPO paper, which controls the weighting of"
+                " the verbose token log-probabilities in responses."
+            )
+        },
+    )
 
 
 @dataclass

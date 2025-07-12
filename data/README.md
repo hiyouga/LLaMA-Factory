@@ -173,7 +173,7 @@ An additional column `audios` is required. Please refer to the [sharegpt](#share
 
 Compared to the alpaca format, the sharegpt format allows the datasets have **more roles**, such as human, gpt, observation and function. They are presented in a list of objects in the `conversations` column.
 
-Note that the human and observation should appear in odd positions, while gpt and function should appear in even positions.
+Note that the human and observation should appear in odd positions, while gpt and function should appear in even positions. The gpt and function will be learned by the model.
 
 ```json
 [

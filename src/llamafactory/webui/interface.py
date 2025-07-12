@@ -22,6 +22,7 @@ from .components import (
     create_chat_box,
     create_eval_tab,
     create_export_tab,
+    create_footer,
     create_infer_tab,
     create_top,
     create_train_tab,
@@ -38,15 +39,13 @@ def create_ui(demo_mode: bool = False) -> "gr.Blocks":
     engine = Engine(demo_mode=demo_mode, pure_chat=False)
     hostname = os.getenv("HOSTNAME", os.getenv("COMPUTERNAME", platform.node())).split(".")[0]
 
-    with gr.Blocks(title=f"LLaMA Board ({hostname})", css=CSS) as demo:
+    with gr.Blocks(title=f"LLaMA Factory ({hostname})", css=CSS) as demo:
+        title = gr.HTML()
+        subtitle = gr.HTML()
         if demo_mode:
-            gr.HTML("<h1><center>LLaMA Board: A One-stop Web UI for Getting Started with LLaMA Factory</center></h1>")
-            gr.HTML(
-                '<h3><center>Visit <a href="https://github.com/hiyouga/LLaMA-Factory" target="_blank">'
-                "LLaMA Factory</a> for details.</center></h3>"
-            )
             gr.DuplicateButton(value="Duplicate Space for private use", elem_classes="duplicate-button")
 
+        engine.manager.add_elems("head", {"title": title, "subtitle": subtitle})
         engine.manager.add_elems("top", create_top())
         lang: gr.Dropdown = engine.manager.get_elem_by_id("top.lang")
 
@@ -63,6 +62,7 @@ def create_ui(demo_mode: bool = False) -> "gr.Blocks":
             with gr.Tab("Export"):
                 engine.manager.add_elems("export", create_export_tab(engine))
 
+        engine.manager.add_elems("footer", create_footer())
         demo.load(engine.resume, outputs=engine.manager.get_elem_list(), concurrency_limit=None)
         lang.change(engine.change_lang, [lang], engine.manager.get_elem_list(), queue=False)
         lang.input(save_config, inputs=[lang], queue=False)

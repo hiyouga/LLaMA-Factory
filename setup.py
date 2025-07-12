@@ -43,7 +43,7 @@ def get_console_scripts() -> list[str]:
 
 extra_require = {
     "torch": ["torch>=2.0.0", "torchvision>=0.15.0"],
-    "torch-npu": ["torch==2.4.0", "torch-npu==2.4.0.post2", "decorator"],
+    "torch-npu": ["torch-npu==2.5.1", "torchvision==0.20.1", "decorator"],
     "metrics": ["nltk", "jieba", "rouge-chinese"],
     "deepspeed": ["deepspeed>=0.10.0,<=0.16.9"],
     "liger-kernel": ["liger-kernel>=0.5.5"],
@@ -52,7 +52,7 @@ extra_require = {
     "eetq": ["eetq"],
     "gptq": ["optimum>=1.24.0", "gptqmodel>=2.0.0"],
     "aqlm": ["aqlm[gpu]>=1.1.0"],
-    "vllm": ["vllm>=0.4.3,<=0.8.6"],
+    "vllm": ["vllm>=0.4.3,<=0.9.1"],
     "sglang": ["sglang[srt]>=0.4.5", "transformers==4.51.1"],
     "galore": ["galore-torch"],
     "apollo": ["apollo-torch"],
@@ -68,7 +68,6 @@ extra_require = {
         "referencing",
         "jsonschema_specifications",
     ],
-    "modelscope": ["modelscope"],
     "openmind": ["openmind"],
     "swanlab": ["swanlab"],
     "dev": ["pre-commit", "ruff", "pytest", "build"],
