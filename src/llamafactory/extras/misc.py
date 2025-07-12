@@ -47,15 +47,6 @@ def is_torch_hpu_available() -> bool:
     return torch.hpu.is_available()
 
 
-def is_torch_hpu_available() -> bool:
-    try:
-        import habana_frameworks.torch.core  # noqa: F401
-    except ImportError:
-        return False
-
-    return torch.hpu.is_available()
-
-
 _is_fp16_available = is_torch_npu_available() or is_torch_cuda_available()
 if is_torch_hpu_available():
     import habana_frameworks.torch.utils.experimental as htexp
@@ -119,14 +110,10 @@ def check_version(requirement: str, mandatory: bool = False) -> None:
 def check_dependencies() -> None:
     r"""Check the version of the required packages."""
     if is_torch_hpu_available():
-        check_version("transformers>=4.41.2,<=4.49.0")
-        check_version("optimum-habana>=1.13.2")
-        check_version("datasets>=2.16.0,<=3.2.0")
-        check_version("accelerate>=0.33.0,<0.34.0")
-    else:
-        check_version("transformers>=4.49.0,<=4.52.4,!=4.52.0")
-        check_version("datasets>=2.16.0,<=3.6.0")
-        check_version("accelerate>=1.3.0,<=1.7.0")
+        check_version("optimum-habana>=1.15.0")
+    check_version("transformers>=4.49.0,<=4.52.4,!=4.52.0")
+    check_version("datasets>=2.16.0,<=3.6.0")
+    check_version("accelerate>=1.3.0,<=1.7.0")
     check_version("peft>=0.14.0,<=0.15.2")
     check_version("trl>=0.8.6,<=0.9.6")
 

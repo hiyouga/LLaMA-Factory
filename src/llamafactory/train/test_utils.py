@@ -32,7 +32,9 @@ if TYPE_CHECKING:
     from ..data.data_utils import DatasetModule
 
 
-def compare_model(model_a: "torch.nn.Module", model_b: "torch.nn.Module", diff_keys: list[str] = [], atol: float = 1e-5) -> None:
+def compare_model(
+    model_a: "torch.nn.Module", model_b: "torch.nn.Module", diff_keys: list[str] = [], atol: float = 1e-5
+) -> None:
     state_dict_a = model_a.state_dict()
     state_dict_b = model_b.state_dict()
     assert set(state_dict_a.keys()) == set(state_dict_b.keys())

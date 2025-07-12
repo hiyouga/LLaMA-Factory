@@ -16,8 +16,7 @@ from typing import TYPE_CHECKING
 
 from ...data import TEMPLATES
 from ...extras.constants import METHODS, SUPPORTED_MODELS
-from ...extras.misc import use_modelscope, use_openmind
-from ...extras.misc import is_torch_hpu_available
+from ...extras.misc import is_torch_hpu_available, use_modelscope, use_openmind
 from ...extras.packages import is_gradio_available
 from ..common import save_config
 from ..control import can_quantize, can_quantize_to, check_template, get_model_info, list_checkpoints, switch_hub
@@ -78,7 +77,7 @@ def create_top() -> dict[str, "Component"]:
     ).then(list_checkpoints, [model_name, finetuning_type], [checkpoint_path], queue=False).then(
         check_template, [lang, template]
     )
-    hub_name.input(save_config, inputs=[lang, hub_name], queue=False)    
+    hub_name.input(save_config, inputs=[lang, hub_name], queue=False)
 
     elements = dict(
         lang=lang,
