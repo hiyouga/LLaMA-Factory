@@ -520,10 +520,11 @@ class Gemma3nPlugin(Gemma3Plugin):
         self._validate_messages(messages, images, videos, audios)
         messages = deepcopy(messages)
         boi_token: str = getattr(processor, "boi_token")
+        boa_token: str = getattr(processor, "boa_token")
         full_image_sequence: str = getattr(processor, "full_image_sequence")
         full_audio_sequence: str = getattr(processor, "full_audio_sequence")
         image_str = full_image_sequence if self.expand_mm_tokens else boi_token
-        audio_str = full_audio_sequence if self.expand_mm_tokens else boi_token
+        audio_str = full_audio_sequence if self.expand_mm_tokens else boa_token
 
         for message in messages:
             content = message["content"]
@@ -532,6 +533,8 @@ class Gemma3nPlugin(Gemma3Plugin):
 
             while AUDIO_PLACEHOLDER in content:
                 content = content.replace(AUDIO_PLACEHOLDER, audio_str, 1)
+
+            message["content"] = content
 
         return messages
 
