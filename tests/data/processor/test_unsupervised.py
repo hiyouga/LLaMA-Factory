@@ -19,6 +19,7 @@ import pytest
 from datasets import load_dataset
 from transformers import AutoTokenizer
 
+from llamafactory.extras.misc import is_torch_hpu_available
 from llamafactory.train.test_utils import load_dataset_module
 
 
@@ -43,6 +44,15 @@ TRAIN_ARGS = {
     "overwrite_output_dir": True,
     "fp16": True,
 }
+
+if is_torch_hpu_available():
+    TRAIN_ARGS.update(
+        {
+            "use_habana": True,
+            "fp16": False,
+            "bf16": True,
+        }
+    )
 
 
 @pytest.mark.parametrize("num_samples", [16])

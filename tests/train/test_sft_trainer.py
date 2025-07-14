@@ -20,6 +20,7 @@ import pytest
 from transformers import DataCollatorWithPadding
 
 from llamafactory.data import get_dataset, get_template_and_fix_tokenizer
+from llamafactory.extras.misc import is_torch_hpu_available
 from llamafactory.hparams import get_train_args
 from llamafactory.model import load_model, load_tokenizer
 from llamafactory.train.sft.trainer import CustomSeq2SeqTrainer
@@ -43,6 +44,15 @@ TRAIN_ARGS = {
     "max_steps": 1,
     "report_to": "none",
 }
+
+if is_torch_hpu_available():
+    TRAIN_ARGS.update(
+        {
+            "use_habana": True,
+            "gaudi_config_name": "Habana/llama",
+            "bf16": True,
+        }
+    )
 
 
 @dataclass

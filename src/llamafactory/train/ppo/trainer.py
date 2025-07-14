@@ -38,7 +38,13 @@ from trl.models.utils import unwrap_model_for_generation
 from typing_extensions import override
 
 from ...extras import logging
-from ...extras.misc import AverageMeter, count_parameters, get_current_device, get_logits_processor
+from ...extras.misc import (
+    AverageMeter,
+    count_parameters,
+    get_current_device,
+    get_logits_processor,
+    is_torch_hpu_available,
+)
 from ..callbacks import FixValueHeadModelCallback, SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
 from .ppo_utils import dump_layernorm, get_rewards_from_server, replace_model, restore_layernorm
@@ -56,6 +62,13 @@ if TYPE_CHECKING:
     from trl import AutoModelForCausalLMWithValueHead
 
     from ...hparams import FinetuningArguments, GeneratingArguments, ModelArguments
+
+
+if is_torch_hpu_available():
+    from optimum.habana import GaudiTrainer as Trainer
+    from optimum.habana.transformers.generation import GaudiGenerationConfig as GenerationConfig
+    from optimum.habana.trl import GaudiPPOConfig as PPOConfig
+    from optimum.habana.trl import GaudiPPOTrainer as PPOTrainer
 
 
 logger = logging.get_logger(__name__)

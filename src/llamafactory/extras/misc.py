@@ -38,7 +38,22 @@ from transformers.utils.versions import require_version
 from . import logging
 
 
+def is_torch_hpu_available() -> bool:
+    try:
+        import habana_frameworks.torch.core  # noqa: F401
+    except ImportError:
+        return False
+
+    return torch.hpu.is_available()
+
+
 _is_fp16_available = is_torch_npu_available() or is_torch_cuda_available()
+if is_torch_hpu_available():
+    import habana_frameworks.torch.utils.experimental as htexp
+    from habana_frameworks.torch.hpu import is_bf16_supported as is_torch_bf16_gpu_available
+
+    _is_fp16_available = htexp._is_fp16_supported()
+
 try:
     _is_bf16_available = is_torch_bf16_gpu_available() or (is_torch_npu_available() and torch.npu.is_bf16_supported())
 except Exception:
@@ -94,6 +109,8 @@ def check_version(requirement: str, mandatory: bool = False) -> None:
 
 def check_dependencies() -> None:
     r"""Check the version of the required packages."""
+    if is_torch_hpu_available():
+        check_version("optimum-habana>=1.15.0")
     check_version("transformers>=4.49.0,<=4.52.4,!=4.52.0")
     check_version("datasets>=2.16.0,<=3.6.0")
     check_version("accelerate>=1.3.0,<=1.7.0")
@@ -151,6 +168,8 @@ def get_current_device() -> "torch.device":
         device = "mps:{}".format(os.getenv("LOCAL_RANK", "0"))
     elif is_torch_cuda_available():
         device = "cuda:{}".format(os.getenv("LOCAL_RANK", "0"))
+    elif is_torch_hpu_available():
+        device = "hpu:{}".format(os.getenv("LOCAL_RANK", "0"))
     else:
         device = "cpu"
 
@@ -167,6 +186,8 @@ def get_device_count() -> int:
         return torch.mps.device_count()
     elif is_torch_cuda_available():
         return torch.cuda.device_count()
+    elif is_torch_hpu_available():
+        return torch.hpu.device_count()
     else:
         return 0
 
@@ -202,6 +223,8 @@ def get_peak_memory() -> tuple[int, int]:
         return torch.mps.current_allocated_memory(), -1
     elif is_torch_cuda_available():
         return torch.cuda.max_memory_allocated(), torch.cuda.max_memory_reserved()
+    elif is_torch_hpu_available():
+        return torch.hpu.max_memory_allocated(), torch.hpu.max_memory_reserved()
     else:
         return 0, -1
 
@@ -222,9 +245,13 @@ def infer_optim_dtype(model_dtype: "torch.dtype") -> "torch.dtype":
 
 
 def is_accelerator_available() -> bool:
-    r"""Check if the accelerator is available."""
+    r"""Check if the accelerator or HPU is available."""
     return (
-        is_torch_xpu_available() or is_torch_npu_available() or is_torch_mps_available() or is_torch_cuda_available()
+        is_torch_xpu_available()
+        or is_torch_npu_available()
+        or is_torch_mps_available()
+        or is_torch_cuda_available()
+        or is_torch_hpu_available()
     )
 
 

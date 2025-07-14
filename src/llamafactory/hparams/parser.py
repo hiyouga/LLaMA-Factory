@@ -31,7 +31,7 @@ from transformers.utils import is_torch_bf16_gpu_available, is_torch_npu_availab
 
 from ..extras import logging
 from ..extras.constants import CHECKPOINT_NAMES, EngineName
-from ..extras.misc import check_dependencies, check_version, get_current_device, is_env_enabled
+from ..extras.misc import check_dependencies, check_version, get_current_device, is_env_enabled, is_torch_hpu_available
 from .data_args import DataArguments
 from .evaluation_args import EvaluationArguments
 from .finetuning_args import FinetuningArguments
@@ -47,6 +47,8 @@ check_dependencies()
 
 _TRAIN_ARGS = [ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
 _TRAIN_CLS = tuple[ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
+if is_torch_hpu_available():
+    from .model_args import GaudiModelArguments as ModelArguments
 _INFER_ARGS = [ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _INFER_CLS = tuple[ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _EVAL_ARGS = [ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments]
@@ -211,6 +213,13 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
     # Setup logging
     if training_args.should_log:
         _set_transformers_logging()
+
+    # Replace some methods optimized for Gaudi.
+    if "use_habana" in vars(training_args) and training_args.use_habana:
+        from optimum.habana.transformers.modeling_utils import adapt_transformers_to_gaudi
+
+        # Replaces some Transformers' methods for equivalent methods optimized for Gaudi.
+        adapt_transformers_to_gaudi()
 
     # Check arguments
     if finetuning_args.stage != "sft":
@@ -424,7 +433,13 @@ def get_infer_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
     # Setup logging
     _set_transformers_logging()
 
-    # Check arguments
+    # Replace some methods optimized for Gaudi.
+    if "use_habana" in vars(model_args) and model_args.use_habana:
+        from optimum.habana.transformers.modeling_utils import adapt_transformers_to_gaudi
+
+        # Replaces some Transformers' methods for equivalent methods optimized for Gaudi.
+        adapt_transformers_to_gaudi()
+
     if model_args.infer_backend == "vllm":
         if finetuning_args.stage != "sft":
             raise ValueError("vLLM engine only supports auto-regressive models.")
