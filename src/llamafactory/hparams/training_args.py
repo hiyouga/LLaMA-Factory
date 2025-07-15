@@ -81,7 +81,7 @@ class MySeq2SeqTrainingArguments(Seq2SeqTrainingArguments):
     )
 
 @dataclass
-class TrainingArguments(RayArguments, Seq2SeqTrainingArguments):
+class TrainingArguments(RayArguments, MySeq2SeqTrainingArguments):
     r"""Arguments pertaining to the trainer."""
 
     def __post_init__(self):
