@@ -91,61 +91,6 @@ def merge_lora(
         print(f"File '{extra_file}' not found in {base_model_path}, skipping copy.")
 
 
-def merge_oft(
-    base_model_path: str,
-    oft_checkpoint_path: str,
-    extra_file: str = "spk_dict.pt",
-    submodule_name: str = "thinker",
-    save_path: str = "./merged_model_checkpoint",
-):
-    """Load the original model, merge the OFT weights.
-
-    For a specified submodule, and save the final merged model along with its configurations.
-
-    Args:
-        base_model_path (str): Path to the original model directory.
-        oft_checkpoint_path (str): Path to the directory containing OFT weights.
-        extra_file (str): Name of the extra file to be copied (default: "spk_dict.pt").
-        submodule_name (str): Name of the submodule to merge (default: "thinker").
-        save_path (str): Directory where the merged model and configurations will be saved.
-    """
-    # 1. Load the original model
-    model = Qwen2_5OmniForConditionalGeneration.from_pretrained(base_model_path, torch_dtype="auto", device_map="cpu")
-    print("Successfully loaded the original model.")
-
-    # 2. Extract the submodule to be merged (e.g., model.thinker)
-    if not hasattr(model, submodule_name):
-        raise AttributeError(f"The model does not have a submodule named '{submodule_name}'.")
-
-    base_submodule = getattr(model, submodule_name)
-    print(f"Successfully extracted submodule: {submodule_name}.")
-
-    # 3. Load the OFT weights onto the extracted submodule
-    oft_model = PeftModel.from_pretrained(base_submodule, oft_checkpoint_path)
-    processor = AutoProcessor.from_pretrained(oft_checkpoint_path)
-    print("OFT weights and processor loaded successfully.")
-
-    # 4. Merge the OFT weights into the submodule and unload the OFT modules
-    merged_submodule = oft_model.merge_and_unload()
-    print("OFT weights merged successfully.")
-
-    # 5. Replace the original submodule with the merged submodule in the model
-    setattr(model, submodule_name, merged_submodule)
-
-    # 6. Save the final merged model along with the tokenizer and processor configuration
-    model.save_pretrained(save_path)
-    processor.save_pretrained(save_path)
-    print(f"Merged model and tokenizer saved to {save_path}.")
-
-    source_file = os.path.join(base_model_path, extra_file)
-    target_file = os.path.join(save_path, extra_file)
-    if os.path.exists(source_file):
-        shutil.copy(source_file, target_file)
-        print(f"File '{extra_file}' copied from {base_model_path} to {save_path}.")
-    else:
-        print(f"File '{extra_file}' not found in {base_model_path}, skipping copy.")
-
-
 def save_full_model(
     saved_thinker_path: str,
     base_model_path: str,
