@@ -72,6 +72,13 @@ class RayArguments:
             elif self.ray_storage_filesystem == "gs" or self.ray_storage_filesystem == "gcs":
                 self.ray_storage_filesystem = fs.GcsFileSystem()
 
+@dataclass
+class MySeq2SeqTrainingArguments(Seq2SeqTrainingArguments):
+    r"""Arguments pertaining to the trainer."""
+
+    channel_loss: bool = field(
+        default=False, metadata={"help": "Whether to calculate channel loss."}
+    )
 
 @dataclass
 class TrainingArguments(RayArguments, Seq2SeqTrainingArguments):
