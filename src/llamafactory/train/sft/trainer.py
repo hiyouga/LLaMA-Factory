@@ -92,7 +92,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                 "accumulated_items": 0,
                 "accumulated_steps": 0,
                 **{f"{gpu}_{v}_loss": 0.0 for gpu in range(self.gpu_count) for k, v in self.channel_index_map.items()}, # channel 的损失, 粒度为: gpu_channel_loss
-                **{f"{gpu}_{v}_count": 0 for gpu in range(torch.cuda.device_count()) for k, v in self.channel_index_map.items()}   # channel 的计数器, 粒度为: gpu_channel_count
+                **{f"{gpu}_{v}_count": 0 for gpu in range(self.gpu_count) for k, v in self.channel_index_map.items()}   # channel 的计数器, 粒度为: gpu_channel_count
             }
             self._print_debug_info(f"[DEBUG] cumulative_dict init: {self.cumulative_dict}")
             # e.g.: self.data_args.channel_loss: {'channel_test_semantic_20240808': 0, 'channel_test_evaluation_good_20240808': 1, 'channel_test_evaluation_general_20240808': 2}
