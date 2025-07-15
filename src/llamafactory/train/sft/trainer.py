@@ -149,7 +149,11 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             # 每10step 汇聚一次
             if dist.is_initialized():
                 # 汇聚总损失
-                cumulative_loss_tensor = torch.tensor(self.cumulative_dict["cumulative_loss"]).to(self.device)
+                cumulative_loss_val = self.cumulative_dict["cumulative_loss"]
+                if isinstance(cumulative_loss_val, torch.Tensor):
+                    cumulative_loss_tensor = cumulative_loss_val.clone().detach().to(self.device)
+                else:
+                    cumulative_loss_tensor = torch.tensor(cumulative_loss_val).to(self.device)
                 dist.all_reduce(cumulative_loss_tensor, op=dist.ReduceOp.SUM)
                 self.cumulative_dict["cumulative_loss"] = cumulative_loss_tensor.item() / dist.get_world_size()
 
@@ -158,7 +162,10 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                 # 汇聚每个卡的 channel_loss 和 channel_count
                 for key, val in self.cumulative_dict.items():
                     if key not in ["cumulative_loss", "accumulated_steps", "accumulated_items"]:
-                        loss_tensor = torch.tensor(self.cumulative_dict[key]).to(self.device)
+                        if isinstance(val, torch.Tensor):
+                            loss_tensor = val.clone().detach().to(self.device)
+                        else:
+                            loss_tensor = torch.tensor(val).to(self.device)
                         dist.all_reduce(loss_tensor, op=dist.ReduceOp.SUM)
                         self.cumulative_dict[key] = loss_tensor.item()
 
