@@ -591,6 +591,17 @@ register_model_group(
 
 register_model_group(
     models={
+        "Devstral-Small-2507-Instruct": {
+            DownloadSource.DEFAULT: "mistralai/Devstral-Small-2507",
+            DownloadSource.MODELSCOPE: "mistralai/Devstral-Small-2507",
+        },
+    },
+    template="mistral_small",
+)
+
+
+register_model_group(
+    models={
         "EXAONE-3.0-7.8B-Instruct": {
             DownloadSource.DEFAULT: "LGAI-EXAONE/EXAONE-3.0-7.8B-Instruct",
         },
@@ -712,6 +723,13 @@ register_model_group(
         "Gemma-1.1-7B-Instruct": {
             DownloadSource.DEFAULT: "google/gemma-1.1-7b-it",
         },
+    },
+    template="gemma",
+)
+
+
+register_model_group(
+    models={
         "Gemma-2-2B": {
             DownloadSource.DEFAULT: "google/gemma-2-2b",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-2b",
@@ -751,7 +769,7 @@ register_model_group(
             DownloadSource.MODELSCOPE: "google/medgemma-27b-text-it",
         },
     },
-    template="gemma",
+    template="gemma2",
 )
 
 
@@ -797,6 +815,30 @@ register_model_group(
 
 register_model_group(
     models={
+        "Gemma-3n-E2B": {
+            DownloadSource.DEFAULT: "google/gemma-3n-E2B",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3n-E2B",
+        },
+        "Gemma-3n-E4B": {
+            DownloadSource.DEFAULT: "google/gemma-3n-E4B",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3n-E4B",
+        },
+        "Gemma-3n-E2B-Instruct": {
+            DownloadSource.DEFAULT: "google/gemma-3n-E2B-it",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3n-E2B-it",
+        },
+        "Gemma-3n-E4B-Instruct": {
+            DownloadSource.DEFAULT: "google/gemma-3n-E4B-it",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3n-E4B-it",
+        },
+    },
+    template="gemma3n",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
         "GLM-4-9B": {
             DownloadSource.DEFAULT: "THUDM/glm-4-9b",
             DownloadSource.MODELSCOPE: "ZhipuAI/glm-4-9b",
@@ -824,6 +866,22 @@ register_model_group(
         },
     },
     template="glm4",
+)
+
+
+register_model_group(
+    models={
+        "GLM-4.1V-9B-Base": {
+            DownloadSource.DEFAULT: "THUDM/GLM-4.1V-9B-Base",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.1V-9B-Base",
+        },
+        "GLM-4.1V-9B-Thinking": {
+            DownloadSource.DEFAULT: "THUDM/GLM-4.1V-9B-Thinking",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.1V-9B-Thinking",
+        },
+    },
+    template="glm4v",
+    multimodal=True,
 )
 
 

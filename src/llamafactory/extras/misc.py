@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, Any, Literal, Union
 import torch
 import torch.distributed as dist
 import transformers.dynamic_module_utils
+from huggingface_hub.utils import WeakFileLock
 from transformers import InfNanRemoveLogitsProcessor, LogitsProcessorList
 from transformers.dynamic_module_utils import get_relative_imports
 from transformers.utils import (
@@ -35,7 +36,6 @@ from transformers.utils import (
 from transformers.utils.versions import require_version
 
 from . import logging
-from .packages import is_transformers_version_greater_than
 
 
 _is_fp16_available = is_torch_npu_available() or is_torch_cuda_available()
@@ -94,15 +94,11 @@ def check_version(requirement: str, mandatory: bool = False) -> None:
 
 def check_dependencies() -> None:
     r"""Check the version of the required packages."""
-    check_version(
-        "transformers>=4.45.0,<=4.52.4,!=4.46.0,!=4.46.1,!=4.46.2,!=4.46.3,!=4.47.0,!=4.47.1,!=4.48.0,!=4.52.0"
-    )
+    check_version("transformers>=4.49.0,<=4.52.4,!=4.52.0")
     check_version("datasets>=2.16.0,<=3.6.0")
     check_version("accelerate>=1.3.0,<=1.7.0")
     check_version("peft>=0.14.0,<=0.15.2")
     check_version("trl>=0.8.6,<=0.9.6")
-    if is_transformers_version_greater_than("4.46.0") and not is_transformers_version_greater_than("4.48.1"):
-        logger.warning_rank0_once("There are known bugs in transformers v4.46.0-v4.48.0, please use other versions.")
 
 
 def calculate_tps(dataset: list[dict[str, Any]], metrics: dict[str, float], stage: Literal["sft", "rm"]) -> float:
@@ -273,25 +269,36 @@ def try_download_model_from_other_hub(model_args: "ModelArguments") -> str:
         return model_args.model_name_or_path
 
     if use_modelscope():
-        check_version("modelscope>=1.11.0", mandatory=True)
+        check_version("modelscope>=1.14.0", mandatory=True)
         from modelscope import snapshot_download  # type: ignore
+        from modelscope.hub.api import HubApi  # type: ignore
+
+        if model_args.ms_hub_token:
+            api = HubApi()
+            api.login(model_args.ms_hub_token)
 
         revision = "master" if model_args.model_revision == "main" else model_args.model_revision
-        return snapshot_download(
-            model_args.model_name_or_path,
-            revision=revision,
-            cache_dir=model_args.cache_dir,
-        )
+        with WeakFileLock(os.path.abspath(os.path.expanduser("~/.cache/llamafactory/modelscope.lock"))):
+            model_path = snapshot_download(
+                model_args.model_name_or_path,
+                revision=revision,
+                cache_dir=model_args.cache_dir,
+            )
+
+        return model_path
 
     if use_openmind():
         check_version("openmind>=0.8.0", mandatory=True)
         from openmind.utils.hub import snapshot_download  # type: ignore
 
-        return snapshot_download(
-            model_args.model_name_or_path,
-            revision=model_args.model_revision,
-            cache_dir=model_args.cache_dir,
-        )
+        with WeakFileLock(os.path.abspath(os.path.expanduser("~/.cache/llamafactory/openmind.lock"))):
+            model_path = snapshot_download(
+                model_args.model_name_or_path,
+                revision=model_args.model_revision,
+                cache_dir=model_args.cache_dir,
+            )
+
+        return model_path
 
 
 def use_modelscope() -> bool:
@@ -319,5 +326,5 @@ def fix_proxy(ipv6_enabled: bool = False) -> None:
     r"""Fix proxy settings for gradio ui."""
     os.environ["no_proxy"] = "localhost,127.0.0.1,0.0.0.0"
     if ipv6_enabled:
-        for name in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY"):
-            os.environ.pop(name, None)
+        os.environ.pop("http_proxy", None)
+        os.environ.pop("HTTP_PROXY", None)
