@@ -61,10 +61,11 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             self.processing_class: PreTrainedTokenizer = kwargs.get("tokenizer")
 
         super().__init__(**kwargs)
-        self.writer = SummaryWriter(log_dir=self.args.logging_dir, flush_secs=120)   # TODO: 【√】draw channels loss
-
+        
         if os.path.exists(self.args.logging_dir):
             shutil.rmtree(self.args.logging_dir)
+        self.writer = SummaryWriter(log_dir=self.args.logging_dir, flush_secs=120)   # TODO: 【√】draw channels loss
+
             
         self.channel_index_map = channel_index_map
         if processor is not None:
