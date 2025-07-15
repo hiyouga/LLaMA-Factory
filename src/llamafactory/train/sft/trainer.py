@@ -85,7 +85,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
-        self.gpu_count = torch.cuda.device_count()
+        self.gpu_count = torch.cuda.device_count() if torch.cuda.is_available() else torch.npu.device_count()
         if self.finetuning_args.channel_loss:
             self.cumulative_dict = {
                 "cumulative_loss": 0.0,
