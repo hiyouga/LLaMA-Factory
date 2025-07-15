@@ -13,6 +13,55 @@
 # limitations under the License.
 
 LOCALES = {
+    "title": {
+        "en": {
+            "value": "<h1><center>🦙🏭LLaMA Factory: Unified Efficient Fine-Tuning of 100+ LLMs</center></h1>",
+        },
+        "ru": {
+            "value": "<h1><center>🦙🏭LLaMA Factory: Унифицированная эффективная тонкая настройка 100+ LLMs</center></h1>",
+        },
+        "zh": {
+            "value": "<h1><center>🦙🏭LLaMA Factory: 一站式大模型高效微调平台</center></h1>",
+        },
+        "ko": {
+            "value": "<h1><center>🦙🏭LLaMA Factory: 100+ LLMs를 위한 통합 효율적인 튜닝</center></h1>",
+        },
+        "ja": {
+            "value": "<h1><center>🦙🏭LLaMA Factory: 100+ LLMs の統合効率的なチューニング</center></h1>",
+        },
+    },
+    "subtitle": {
+        "en": {
+            "value": (
+                "<h3><center>Visit <a href='https://github.com/hiyouga/LLaMA-Factory' target='_blank'>"
+                "GitHub Page</a></center></h3>"
+            ),
+        },
+        "ru": {
+            "value": (
+                "<h3><center>Посетить <a href='https://github.com/hiyouga/LLaMA-Factory' target='_blank'>"
+                "страницу GitHub</a></center></h3>"
+            ),
+        },
+        "zh": {
+            "value": (
+                "<h3><center>访问 <a href='https://github.com/hiyouga/LLaMA-Factory' target='_blank'>"
+                "GitHub 主页</a></center></h3>"
+            ),
+        },
+        "ko": {
+            "value": (
+                "<h3><center><a href='https://github.com/hiyouga/LLaMA-Factory' target='_blank'>"
+                "GitHub 페이지</a>를 방문하세요.</center></h3>"
+            ),
+        },
+        "ja": {
+            "value": (
+                "<h3><center><a href='https://github.com/hiyouga/LLaMA-Factory' target='_blank'>"
+                "GitHub ページ</a>にアクセスする</center></h3>"
+            ),
+        },
+    },
     "lang": {
         "en": {
             "label": "Language",
@@ -72,6 +121,28 @@ LOCALES = {
         "ja": {
             "label": "モデルパス",
             "info": "事前学習済みモデルへのパス、または Hugging Face のモデル識別子。",
+        },
+    },
+    "hub_name": {
+        "en": {
+            "label": "Hub name",
+            "info": "Choose the model download source.",
+        },
+        "ru": {
+            "label": "Имя хаба",
+            "info": "Выберите источник загрузки модели.",
+        },
+        "zh": {
+            "label": "模型下载源",
+            "info": "选择模型下载源。（网络受限环境推荐使用 ModelScope）",
+        },
+        "ko": {
+            "label": "모델 다운로드 소스",
+            "info": "모델 다운로드 소스를 선택하세요.",
+        },
+        "ja": {
+            "label": "モデルダウンロードソース",
+            "info": "モデルをダウンロードするためのソースを選択してください。",
         },
     },
     "finetuning_type": {

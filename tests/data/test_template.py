@@ -228,6 +228,19 @@ def test_gemma_template(use_fast: bool):
 
 @pytest.mark.skipif(not HF_TOKEN, reason="Gated model.")
 @pytest.mark.parametrize("use_fast", [True, False])
+def test_gemma2_template(use_fast: bool):
+    prompt_str = (
+        f"<bos><start_of_turn>user\n{MESSAGES[0]['content']}<end_of_turn>\n"
+        f"<start_of_turn>model\n{MESSAGES[1]['content']}<end_of_turn>\n"
+        f"<start_of_turn>user\n{MESSAGES[2]['content']}<end_of_turn>\n"
+        "<start_of_turn>model\n"
+    )
+    answer_str = f"{MESSAGES[3]['content']}<end_of_turn>\n"
+    _check_template("google/gemma-2-2b-it", "gemma2", prompt_str, answer_str, use_fast)
+
+
+@pytest.mark.skipif(not HF_TOKEN, reason="Gated model.")
+@pytest.mark.parametrize("use_fast", [True, False])
 def test_llama3_template(use_fast: bool):
     prompt_str = (
         f"<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\n{MESSAGES[0]['content']}<|eot_id|>"
