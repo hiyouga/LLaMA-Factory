@@ -86,6 +86,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
         self.gpu_count = torch.cuda.device_count() if torch.cuda.is_available() else torch.npu.device_count()
+        self.device = 'cuda' if torch.cuda.is_available() else 'npu'
         if self.finetuning_args.channel_loss:
             self.cumulative_dict = {
                 "cumulative_loss": 0.0,
@@ -148,7 +149,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             # 每10step 汇聚一次
             if dist.is_initialized():
                 # 汇聚总损失
-                cumulative_loss_tensor = torch.tensor(self.cumulative_dict["cumulative_loss"]).to('cuda')
+                cumulative_loss_tensor = torch.tensor(self.cumulative_dict["cumulative_loss"]).to(self.device)
                 dist.all_reduce(cumulative_loss_tensor, op=dist.ReduceOp.SUM)
                 self.cumulative_dict["cumulative_loss"] = cumulative_loss_tensor.item() / dist.get_world_size()
 
@@ -157,7 +158,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                 # 汇聚每个卡的 channel_loss 和 channel_count
                 for key, val in self.cumulative_dict.items():
                     if key not in ["cumulative_loss", "accumulated_steps", "accumulated_items"]:
-                        loss_tensor = torch.tensor(self.cumulative_dict[key]).to('cuda')
+                        loss_tensor = torch.tensor(self.cumulative_dict[key]).to(self.device)
                         dist.all_reduce(loss_tensor, op=dist.ReduceOp.SUM)
                         self.cumulative_dict[key] = loss_tensor.item()
 
