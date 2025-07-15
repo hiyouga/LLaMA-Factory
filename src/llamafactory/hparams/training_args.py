@@ -73,15 +73,7 @@ class RayArguments:
                 self.ray_storage_filesystem = fs.GcsFileSystem()
 
 @dataclass
-class MySeq2SeqTrainingArguments(Seq2SeqTrainingArguments):
-    r"""Arguments pertaining to the trainer."""
-
-    channel_loss: bool = field(
-        default=False, metadata={"help": "Whether to calculate channel loss."}
-    )
-
-@dataclass
-class TrainingArguments(RayArguments, MySeq2SeqTrainingArguments):
+class TrainingArguments(RayArguments, Seq2SeqTrainingArguments):
     r"""Arguments pertaining to the trainer."""
 
     def __post_init__(self):

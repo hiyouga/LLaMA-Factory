@@ -86,7 +86,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
         self.gpu_count = torch.cuda.device_count()
-        if self.args.channel_loss:
+        if self.finetuning_args.channel_loss:
             self.cumulative_dict = {
                 "cumulative_loss": 0.0,
                 "accumulated_items": 0,
@@ -122,8 +122,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
     def training_step(self, model, inputs, num_items_in_batch=None):
         """梯度累积会调用多次"""
-
-        if self.args.channel_loss:
+        if self.finetuning_args.channel_loss:
             channels = inputs.pop("channel", None)
 
         loss = super().training_step(model, inputs, num_items_in_batch)
@@ -201,7 +200,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             self._reset_cumulative()
 
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
-        if self.args.channel_loss:
+        if self.finetuning_args.channel_loss:
             _ = inputs.pop("channel", None)
 
         return super().compute_loss(model, inputs, return_outputs, num_items_in_batch)

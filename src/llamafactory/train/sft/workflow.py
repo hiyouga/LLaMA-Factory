@@ -50,7 +50,7 @@ def run_sft(
     template = get_template_and_fix_tokenizer(tokenizer, data_args)
     dataset_module = get_dataset(template, model_args, data_args, training_args, stage="sft", **tokenizer_module)
     channel_index_map = {}
-    if training_args.channel_loss:
+    if finetuning_args.channel_loss:
         # 获取所有channel类型
         all_types = set()
         for key in dataset_module.keys():
@@ -80,7 +80,7 @@ def run_sft(
     metric_module = {}
     if training_args.predict_with_generate:
         metric_module["compute_metrics"] = ComputeSimilarity(tokenizer=tokenizer)
-    elif training_args.channel_loss:
+    elif finetuning_args.channel_loss:
         training_args.remove_unused_columns = False
         training_args.label_names = ["labels","channel"]
     elif finetuning_args.compute_accuracy:

@@ -412,6 +412,10 @@ class FinetuningArguments(
         default="lora",
         metadata={"help": "Which fine-tuning method to use."},
     )
+    channel_loss: bool = field(
+        default=False,
+        metadata={"help": "Whether to calculate channel loss."}
+    )
     use_llama_pro: bool = field(
         default=False,
         metadata={"help": "Whether or not to make only the parameters in the expanded blocks trainable."},
