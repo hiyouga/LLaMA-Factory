@@ -1031,6 +1031,17 @@ register_model_group(
 
 register_model_group(
     models={
+        "Granite-4.0-tiny-preview": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-4.0-tiny-preview",
+            DownloadSource.MODELSCOPE: "ibm-granite/granite-4.0-tiny-preview",
+        },
+    },
+    template="granite4",
+)
+
+
+register_model_group(
+    models={
         "Hunyuan-7B-Instruct": {
             DownloadSource.DEFAULT: "tencent/Hunyuan-7B-Instruct",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Hunyuan-7B-Instruct",
