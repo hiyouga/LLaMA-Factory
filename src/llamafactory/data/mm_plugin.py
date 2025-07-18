@@ -1232,7 +1232,7 @@ class Qwen2VLPlugin(BasePlugin):
         if len(images) != 0:
             images = self._regularize_images(
                 images,
-                image_max_pixels=getattr(processor, "image_max_pixels", 768 * 768),
+                image_max_pixels=getattr(processor, "image_max_pixels", 512 * 512),
                 image_min_pixels=getattr(processor, "image_min_pixels", 32 * 32),
             )["images"]
             mm_inputs.update(image_processor(images, return_tensors="pt"))
@@ -1240,10 +1240,10 @@ class Qwen2VLPlugin(BasePlugin):
         if len(videos) != 0:
             video_data = self._regularize_videos(
                 videos,
-                image_max_pixels=getattr(processor, "video_max_pixels", 256 * 256),
+                image_max_pixels=getattr(processor, "video_max_pixels", 64 * 64),
                 image_min_pixels=getattr(processor, "video_min_pixels", 16 * 16),
                 video_fps=getattr(processor, "video_fps", 2.0),
-                video_maxlen=getattr(processor, "video_maxlen", 128),
+                video_maxlen=getattr(processor, "video_maxlen", 64),
             )
             mm_inputs.update(image_processor(images=None, videos=video_data["videos"], return_tensors="pt"))
             temporal_patch_size: int = getattr(image_processor, "temporal_patch_size", 2)
@@ -1262,6 +1262,7 @@ class Qwen2VLPlugin(BasePlugin):
         processor: Optional["MMProcessor"],
     ) -> list[dict[str, str]]:
         self._validate_input(processor, images, videos, audios)
+        
         num_image_tokens, num_video_tokens = 0, 0
         messages = deepcopy(messages)
         image_processor: BaseImageProcessor = getattr(processor, "image_processor")

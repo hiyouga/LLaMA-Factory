@@ -166,7 +166,7 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
         )
     )
 
-    with gr.Accordion(open=False, visible=False) as lora_tab:
+    with gr.Accordion(open=False) as lora_tab:
         with gr.Row():
             lora_rank = gr.Slider(minimum=1, maximum=1024, value=8, step=1)
             lora_alpha = gr.Slider(minimum=1, maximum=2048, value=16, step=1)
@@ -403,8 +403,8 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
 
             root_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + "/clip_finetune/"
             with gr.Row():
-                clip_trainer_1 = gr.Dropdown(["", "Finetune", "Training free"], label="Training group")
-                clip_trainer = gr.Dropdown(choices=[], label="Traing method")
+                clip_trainer_1 = gr.Dropdown(["", "Finetune", "Training free"])
+                clip_trainer = gr.Dropdown(choices=[])
                 clip_trainer_1.change(
                     update_dropdowns,
                     inputs=[clip_trainer_1, clip_trainer],

@@ -3039,22 +3039,6 @@ LOCALES = {
             "label": "use xpu",
         },
     },
-    "optuna": {
-        "en": {
-            "label": "use optuna",
-            "info": "default not to use",
-        },
-        "ru": {
-            "label": "use optuna",
-        },
-        "zh": {
-            "label": "是否使用optuna自动调参",
-            "info": "默认不使用",
-        },
-        "ko": {
-            "label": "use optuna",
-        },
-    },
     "optuna_tab": {
         "en": {
             "label": "optuna configuration",
@@ -3120,20 +3104,6 @@ LOCALES = {
         },
         "zh": {
             "label": "Adaclip 训练阶段BS",
-        },
-        "ko": {
-            "label": "BAdam 설정",
-        },
-    },
-    "adaclip_topk": {
-        "en": {
-            "label": "Adaclip top_k",
-        },
-        "ru": {
-            "label": "Конфигурации BAdam",
-        },
-        "zh": {
-            "label": "Adaclip top_k",
         },
         "ko": {
             "label": "BAdam 설정",
