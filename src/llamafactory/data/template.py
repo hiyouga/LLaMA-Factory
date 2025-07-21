@@ -1084,7 +1084,6 @@ register_template(
     format_observation=StringFormatter(slots=["<|start_of_role|>tool<|end_of_role|>{{content}}<|end_of_text|>\n<|start_of_role|>assistant\n"]),
     format_tools=ToolFormatter(tool_format="default"),
     stop_words=["<|end_of_text|>"],
-    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     default_system=("You are Granite, developed by IBM. You are a helpful AI assistant.")
 )
 
