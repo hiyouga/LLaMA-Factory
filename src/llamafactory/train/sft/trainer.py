@@ -126,7 +126,8 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         """梯度累积会调用多次"""
         if self.finetuning_args.channel_loss:
             channels = inputs.pop("channel", None)
-
+        else:
+            channels = None
         loss = super().training_step(model, inputs, num_items_in_batch)
 
         if channels is not None:
@@ -164,7 +165,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                 for key, val in self.cumulative_dict.items():
                     if key not in ["cumulative_loss", "accumulated_steps", "accumulated_items"]:
                         if isinstance(val, torch.Tensor):
-                            loss_tensor = val.clone().detach().to(self.device)
+                            loss_tensor = val.clone().deatch().to(self.device)
                         else:
                             loss_tensor = torch.tensor(val).to(self.device)
                         dist.all_reduce(loss_tensor, op=dist.ReduceOp.SUM)
