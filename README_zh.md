@@ -508,6 +508,19 @@ docker run -it --rm --gpus=all --ipc=host hiyouga/llamafactory:latest
 
 请参阅[构建 Docker](#构建-docker) 来重新构建镜像。
 
+如果您的环境不支持使用 Docker（例如在集群中），您可以通过 Apptainer 来拉取并运行本项目容器：
+```bash
+# 拉取
+apptainer pull llamafactory.sif docker://hiyouga/llamafactory:latest
+# 运行
+apptainer shell --nv --cleanenv --bind /mnt/your_dir:/mnt/your_dir llamafactory.sif
+
+# --nv：启用对宿主机 NVIDIA GPU 和 CUDA 的访问
+# --cleanenv：避免宿主机环境变量污染容器环境
+# --bind：将主机目录挂载到容器中（如数据路径），可选
+
+```
+
 <details><summary>使用 <b>uv</b> 构建虚拟环境</summary>
 
 使用 [uv](https://github.com/astral-sh/uv) 创建隔离的 Python 环境：
