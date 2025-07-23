@@ -236,6 +236,7 @@ def _get_preprocessed_dataset(
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"] = None,
     is_eval: bool = False,
+    tokenization_callback = None,
 ) -> Optional[Union["Dataset", "IterableDataset"]]:
     r"""Preprocesses the dataset, including format checking and tokenization."""
     if dataset is None:
@@ -253,6 +254,9 @@ def _get_preprocessed_dataset(
             desc="Running tokenizer on dataset",
         )
 
+    if tokenization_callback and int(os.getenv("LOCAL_RANK", "0")) == 0:
+        tokenization_callback.on_tokenization_start()
+
     dataset = dataset.map(
         dataset_processor.preprocess_dataset,
         batched=True,
@@ -260,6 +264,9 @@ def _get_preprocessed_dataset(
         remove_columns=column_names,
         **kwargs,
     )
+
+    if tokenization_callback and int(os.getenv("LOCAL_RANK", "0")) == 0:
+        tokenization_callback.on_tokenization_end()
 
     if training_args.should_log:
         try:
@@ -282,8 +289,10 @@ def get_dataset(
     stage: Literal["pt", "sft", "rm", "ppo", "kto"],
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"] = None,
+    **kwargs
 ) -> "DatasetModule":
     r"""Get the train dataset and optionally gets the evaluation dataset."""
+    tokenization_callback = kwargs.get("tokenization_callback")
     # Load tokenized dataset if path exists
     if data_args.tokenized_path is not None:
         if has_tokenized_data(data_args.tokenized_path):
@@ -313,16 +322,16 @@ def get_dataset(
 
     with training_args.main_process_first(desc="pre-process dataset", local=(not data_args.data_shared_file_system)):
         dataset = _get_preprocessed_dataset(
-            dataset, data_args, training_args, stage, template, tokenizer, processor, is_eval=False
+            dataset, data_args, training_args, stage, template, tokenizer, processor, is_eval=False, tokenization_callback=tokenization_callback
         )
         if isinstance(eval_dataset, dict):
             for eval_name, eval_data in eval_dataset.items():
                 eval_dataset[eval_name] = _get_preprocessed_dataset(
-                    eval_data, data_args, training_args, stage, template, tokenizer, processor, is_eval=True
+                    eval_data, data_args, training_args, stage, template, tokenizer, processor, is_eval=True, tokenization_callback=tokenization_callback
                 )
         else:
             eval_dataset = _get_preprocessed_dataset(
-                eval_dataset, data_args, training_args, stage, template, tokenizer, processor, is_eval=True
+                eval_dataset, data_args, training_args, stage, template, tokenizer, processor, is_eval=True, tokenization_callback=tokenization_callback
             )
 
         dataset_dict = split_dataset(dataset, eval_dataset, data_args, seed=training_args.seed)
