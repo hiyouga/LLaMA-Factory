@@ -48,6 +48,8 @@ def run_sft(
     tokenization_callbacks = [cb for cb in callbacks if hasattr(cb, 'on_tokenization_start')]
     tokenization_callback = tokenization_callbacks[0] if tokenization_callbacks else None
 
+    dataset_loading_callbacks = [cb for cb in callbacks if hasattr(cb, 'on_dataset_loading_start')]
+    dataset_loading_callback = dataset_loading_callbacks[0] if dataset_loading_callbacks else None
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
     template = get_template_and_fix_tokenizer(tokenizer, data_args)

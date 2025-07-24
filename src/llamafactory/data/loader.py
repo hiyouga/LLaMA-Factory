@@ -293,6 +293,7 @@ def get_dataset(
 ) -> "DatasetModule":
     r"""Get the train dataset and optionally gets the evaluation dataset."""
     tokenization_callback = kwargs.get("tokenization_callback")
+    dataset_loading_callback = kwargs.get("dataset_loading_callback")
     # Load tokenized dataset if path exists
     if data_args.tokenized_path is not None:
         if has_tokenized_data(data_args.tokenized_path):
@@ -309,6 +310,9 @@ def get_dataset(
             raise ValueError("Turn off `streaming` when saving dataset to disk.")
 
     # Load and preprocess dataset
+    if dataset_loading_callback and int(os.getenv("LOCAL_RANK", "0")) == 0:
+        dataset_loading_callback.on_dataset_loading_start()
+
     with training_args.main_process_first(desc="load dataset", local=(not data_args.data_shared_file_system)):
         dataset = _get_merged_dataset(data_args.dataset, model_args, data_args, training_args, stage)
         eval_dataset = _get_merged_dataset(
@@ -319,6 +323,9 @@ def get_dataset(
             stage,
             return_dict=data_args.eval_on_each_dataset,
         )
+
+    if dataset_loading_callback and int(os.getenv("LOCAL_RANK", "0")) == 0:
+        dataset_loading_callback.on_dataset_loading_end()
 
     with training_args.main_process_first(desc="pre-process dataset", local=(not data_args.data_shared_file_system)):
         dataset = _get_preprocessed_dataset(
