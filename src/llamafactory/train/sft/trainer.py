@@ -33,6 +33,7 @@ from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
 import torch.distributed as dist
 from torch.utils.tensorboard import SummaryWriter
 import shutil
+import torch.nn as nn
 if TYPE_CHECKING:
     from torch.utils.data import Dataset
     from transformers import PreTrainedTokenizer, ProcessorMixin
@@ -87,18 +88,16 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
         self.gpu_count = torch.cuda.device_count() if torch.cuda.is_available() else torch.npu.device_count()
-        self.device = 'cuda' if torch.cuda.is_available() else 'npu'
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         if self.finetuning_args.channel_loss:
+            self.all_channels = [v for k, v in self.channel_index_map.items()]
             self.cumulative_dict = {
-                "cumulative_loss": 0.0,
-                "accumulated_items": 0,
-                "accumulated_steps": 0,
-                **{f"{gpu}_{v}_loss": 0.0 for gpu in range(self.gpu_count) for k, v in self.channel_index_map.items()}, # channel 的损失, 粒度为: gpu_channel_loss
-                **{f"{gpu}_{v}_count": 0 for gpu in range(self.gpu_count) for k, v in self.channel_index_map.items()}   # channel 的计数器, 粒度为: gpu_channel_count
+                "local_step_count": 0,
+                **{f"{v}_ch_steps_count": 0 for k, v in self.channel_index_map.items()},
+                **{f"{v}_total_loss_list": [] for k, v in self.channel_index_map.items()},
+                **{f"{v}_token_count_list": [] for k, v in self.channel_index_map.items()}
             }
             self._print_debug_info(f"[DEBUG] cumulative_dict init: {self.cumulative_dict}")
-            # e.g.: self.data_args.channel_loss: {'channel_test_semantic_20240808': 0, 'channel_test_evaluation_good_20240808': 1, 'channel_test_evaluation_general_20240808': 2}
-            # e.g.: self.cumulative_dict: {'cumulative_loss': 0.0, 'accumulated_steps': 0, 0: 0.0, 1: 0.0, 2: 0.0, '0_0_count': 0, '0_1_count': 0, '0_2_count': 0, '1_0_count': 0, '1_1_count': 0, '1_2_count': 0}
 
     @override
     def create_optimizer(self) -> "torch.optim.Optimizer":
@@ -122,98 +121,86 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
     def train(self, resume_from_checkpoint: Optional[Union[str, bool]] = None, trial: Union["optuna.Trial", dict[str, Any], None] = None, ignore_keys_for_eval: Optional[list[str]] = None, **kwargs):
         return super().train(resume_from_checkpoint, trial, ignore_keys_for_eval, **kwargs)
 
-    def training_step(self, model, inputs, num_items_in_batch=None):
-        """梯度累积会调用多次"""
-        if self.finetuning_args.channel_loss:
-            channels = inputs.pop("channel", None)
-        else:
-            channels = None
-        loss = super().training_step(model, inputs, num_items_in_batch)
+    def compute_channel_loss(self, outputs, labels, inputs_channels, num_items_in_batch, position_ids=None):
+        """
+        精确统计每个channel的loss（token级别）
+        模仿https://github.com/modelscope/ms-swift/blob/main/swift/plugin/loss.py中的channel_loss_func实现。
+        改进了一下，loss其实就是累加，没必要把每个Token的都存，直接累加就行。
+        """
+        all_channels = self.all_channels
+        assert all_channels is not None, 'No channels found, please check the channel_index_map.'
+        assert labels is not None, 'No labels found, please check the tokenizer?'
+        
+        logits = outputs.logits
 
-        if channels is not None:
-            self.training_step_end(loss, channels, num_items_in_batch)
+        # 计算token级别loss
+        shift_logits = logits[..., :-1, :].contiguous()
+        shift_labels = labels[..., 1:].contiguous()
+        loss_fct = nn.CrossEntropyLoss(reduction='none')
+        flat_logits = shift_logits.view(-1, shift_logits.size(-1))
+        flat_labels = shift_labels.view(-1)
+        token_loss = loss_fct(flat_logits, flat_labels)
+        mask = flat_labels != -100
 
-        return loss
+        # 计算每个token属于哪个channel
+        bs, seq = shift_labels.shape
+        token_channels = []
+        for i in range(bs):
+            token_channels.extend([inputs_channels[i]] * seq)
+        self.cumulative_dict["local_step_count"] += 1
 
-    def training_step_end(self, loss, channels, num_items_in_batch):
-        # 累积总损失
-        self.cumulative_dict["cumulative_loss"] += loss.item() * num_items_in_batch
-        self.cumulative_dict["accumulated_steps"] += 1
-        self.cumulative_dict["accumulated_items"] += num_items_in_batch
+        for chs in torch.unique(inputs_channels, dim=0):
+            indices = [i for i, c in enumerate(token_channels) if (c == chs).all()]
+            if not indices:
+                continue
+            ch_mask = mask[indices]
+            ch_losses = token_loss[indices]
+            valid_losses = ch_losses[ch_mask]
+            total_loss = torch.sum(valid_losses).item()
+            token_count = valid_losses.numel()
+            for ch in chs:
+                self.cumulative_dict[f"{ch}_total_loss_list"].append(total_loss)
+                self.cumulative_dict[f"{ch}_token_count_list"].append(token_count)
 
-        # 每个step累积各个 channel 的损失和计数
-        for channel in channels:
-            curr_gpu = self._get_curr_gpu()
-            self.cumulative_dict[f"{curr_gpu}_{channel.item()}_loss"] += loss.item() * num_items_in_batch / len(channels)
-            self.cumulative_dict[f"{curr_gpu}_{channel.item()}_count"] += num_items_in_batch / len(channels)
+        # 每gradient_accumulation_steps步聚合
+        if self.cumulative_dict["local_step_count"] % self.args.gradient_accumulation_steps == 0:
+            for ch in self.all_channels:
+                loss_sum = sum(self.cumulative_dict[f"{ch}_total_loss_list"])
+                num_items = sum(self.cumulative_dict[f"{ch}_token_count_list"])
+                ch_loss = loss_sum / (num_items + 1e-12)
+                channel_name = None
+                for k, v in self.channel_index_map.items():
+                    if v == int(ch):
+                        channel_name = k
+                        break
+                if ch_loss > 0.0:
+                    self.cumulative_dict[f"{ch}_ch_steps_count"] += 1
+                    checkpoint_step = self.cumulative_dict["local_step_count"] // self.args.gradient_accumulation_steps
+                    self.writer.add_scalar(f"train/global_ch_loss_{channel_name}", ch_loss, checkpoint_step)
+                    self.writer.add_scalar(f"train/ch_loss_{channel_name}", ch_loss,  self.cumulative_dict[f"{ch}_ch_steps_count"])
 
-        if self.cumulative_dict["accumulated_steps"] % self.args.gradient_accumulation_steps == 0 and (self.state.global_step+1) % self.args.logging_steps == 0:
-            # 每10step 汇聚一次
-            if dist.is_initialized():
-                # 汇聚总损失
-                cumulative_loss_val = self.cumulative_dict["cumulative_loss"]
-                if isinstance(cumulative_loss_val, torch.Tensor):
-                    cumulative_loss_tensor = cumulative_loss_val.clone().detach().to(self.device)
-                else:
-                    cumulative_loss_tensor = torch.tensor(cumulative_loss_val).to(self.device)
-                dist.all_reduce(cumulative_loss_tensor, op=dist.ReduceOp.SUM)
-                self.cumulative_dict["cumulative_loss"] = cumulative_loss_tensor.item() / dist.get_world_size()
+            # Reset
+            for ch in self.all_channels:
+                self.cumulative_dict[f"{ch}_total_loss_list"] = []
+                self.cumulative_dict[f"{ch}_token_count_list"] = []
 
-                # # print(f"[DEBUG] GPU: {dist.get_rank()}, dict: {self.cumulative_dict}")
-
-                # 汇聚每个卡的 channel_loss 和 channel_count
-                for key, val in self.cumulative_dict.items():
-                    if key not in ["cumulative_loss", "accumulated_steps", "accumulated_items"]:
-                        if isinstance(val, torch.Tensor):
-                            loss_tensor = val.clone().deatch().to(self.device)
-                        else:
-                            loss_tensor = torch.tensor(val).to(self.device)
-                        dist.all_reduce(loss_tensor, op=dist.ReduceOp.SUM)
-                        self.cumulative_dict[key] = loss_tensor.item()
-
-                # # print(f"[DEBUG 汇聚] GPU: {dist.get_rank()}, dict: {self.cumulative_dict}")
-
-                if dist.get_rank() == 0:
-                    tmp_merged_dict = {}
-                    for gpu in range(self.gpu_count):
-                        for channel_name,channel_id in self.channel_index_map.items():
-                            if f"{gpu}_{channel_id}_loss" in self.cumulative_dict and f"{gpu}_{channel_id}_count" in self.cumulative_dict:
-                                item_count = self.cumulative_dict[f"{gpu}_{channel_id}_count"]
-                                loss = self.cumulative_dict[f"{gpu}_{channel_id}_loss"]
-                                if channel_id in tmp_merged_dict:
-                                    tmp_merged_dict[channel_id]["loss"] += loss
-                                    tmp_merged_dict[channel_id]["count"] += item_count
-                                else:
-                                    tmp_merged_dict[channel_id] = {"loss":loss,"count":item_count}
-
-                    for key, val in tmp_merged_dict.items():
-                        loss_name = [k for k, v in self.channel_index_map.items() if v == int(key)][0]
-                        if val["count"] > 0:
-                            channel_loss = val["loss"] / val["count"]
-                        else:
-                            channel_loss = 0.0
-                        self.writer.add_scalar(f"train/channel_loss_{loss_name}", channel_loss, self.state.global_step + 1)
-
-                    total_loss = self.cumulative_dict["cumulative_loss"] / self.cumulative_dict["accumulated_items"]
-                    self.writer.add_scalar("train/train_loss", total_loss, self.state.global_step + 1)
-
-            else:
-                for key, val in self.cumulative_dict.items():
-                    if key.endswith('_loss') and key != "cumulative_loss":
-                        loss_name = [k for k, v in self.channel_index_map.items() if v == int(key.split("_")[1])][0]
-                        channel_loss = val / self.args.logging_steps
-                        self.writer.add_scalar(f"train/channel_loss_{loss_name}", channel_loss, self.state.global_step + 1)
-
-                total_loss = self.cumulative_dict["cumulative_loss"] / self.cumulative_dict["accumulated_items"]
-                self.writer.add_scalar("train/train_loss", total_loss, self.state.global_step + 1)
-            # 10step 重置一次
-            self._reset_cumulative()
-
+        # 返回总loss
+        total_loss = token_loss.masked_select(mask).sum()
+        total_tokens = mask.sum()
+        return total_loss / num_items_in_batch if num_items_in_batch is not None \
+            else total_loss / (total_tokens.float() + 1e-12)
+    
+    @override
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
+        total_loss, outputs = super().compute_loss(model, inputs, return_outputs=True, num_items_in_batch=num_items_in_batch)
+        # 实现channel_loss
         if self.finetuning_args.channel_loss:
-            _ = inputs.pop("channel", None)
+            inputs_channels = inputs.pop("channel", None)
+            labels = inputs.pop("labels")
+            my_total_loss = self.compute_channel_loss(outputs, labels, inputs_channels, num_items_in_batch)
+            
 
-        return super().compute_loss(model, inputs, return_outputs, num_items_in_batch)
+        return (total_loss, outputs) if return_outputs else total_loss
 
     def _print_debug_info(self, message):
         """多卡环境时, 在rank0打印
@@ -232,16 +219,6 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         else:
             curr_gpu = 0
         return curr_gpu
-
-    def _reset_cumulative(self):
-        """重置累积值
-        """
-        for key, val in self.cumulative_dict.items():
-            if key.endswith('_loss'):
-                self.cumulative_dict[key] = 0.0
-            else:
-                self.cumulative_dict[key] = 0
-
 
     @override
     def prediction_step(

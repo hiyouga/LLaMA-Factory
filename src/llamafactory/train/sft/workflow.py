@@ -55,10 +55,22 @@ def run_sft(
         all_types = set()
         for key in dataset_module.keys():
             only_channel_dataset = dataset_module[key].select_columns("channel")
-            all_types.update(only_channel_dataset["channel"])
+            if only_channel_dataset.features["channel"].dtype == "string":
+                all_types.update(only_channel_dataset["channel"])
+            elif only_channel_dataset.features["channel"].dtype == "list":
+                for channels in only_channel_dataset["channel"]:
+                    all_types.update(channels)
+            else:
+                raise ValueError(f"Unsupported channel type: {only_channel_dataset.features['channel'].dtype}")
         channel_index_map = {type_val: i for i, type_val in enumerate(all_types)}
         for key in dataset_module.keys():
-            dataset_module[key] = dataset_module[key].map(lambda examples: {"channel": [channel_index_map[channel] for channel in examples["channel"]]}, batched=True, num_proc=32, remove_columns=["channel"]) 
+            # 将channel转换为list类型
+            if dataset_module[key].features["channel"].dtype == "string":
+                dataset_module[key] = dataset_module[key].map(lambda examples: {"channel": [[channel_index_map[channel]] for channel in examples["channel"]]}, batched=True, num_proc=32, remove_columns=["channel"])
+            elif dataset_module[key].features["channel"].dtype == "list":
+                dataset_module[key] = dataset_module[key].map(lambda examples: {"channel": [[channel_index_map[channel] for channel in channels] for channels in examples["channel"]]}, batched=True, num_proc=32, remove_columns=["channel"])
+            else:
+                raise ValueError(f"Unsupported channel type: {dataset_module[key].features['channel'].dtype}")
 
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
 
