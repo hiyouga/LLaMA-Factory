@@ -1,0 +1,40 @@
+# syntax=docker/dockerfile:1.4
+
+# Base Image Selection
+# The repository recommends PyTorch 2.6.0 and CUDA >= 12.2.
+# The official Docker image for the repo uses PyTorch 2.6.0 and CUDA 12.4.
+# A -devel image is chosen to compile flash-attention from source as per the rules.
+# This matches pytorch/pytorch:2.6.0-cuda12.6-cudnn9-devel from the valid images table.
+FROM pytorch/pytorch:2.6.0-cuda12.6-cudnn9-devel
+
+# Set CUDA_HOME environment variable to match the base image
+ENV CUDA_HOME=/usr/local/cuda-12.6
+
+# Install system dependencies for git and for building wheels like flash-attention
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    ninja-build && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set working directory and clone the repository
+WORKDIR /app
+RUN git clone --depth 1 https://github.com/hiyouga/LLaMA-Factory.git .
+
+# Install Python dependencies
+# Includes flash-attention for performance and project extras for full demo functionality.
+RUN pip install --no-cache-dir \
+    flash-attn==2.7.4.post1 \
+    -e ".[metrics,deepspeed,bitsandbytes,vllm]"
+
+# Expose the default port for the Gradio Web UI
+EXPOSE 7860
+
+# Log in to Hugging Face Hub using a secret to download gated models
+# To build with secret: docker build --secret id=hf_token,src=my_hf_token.txt .
+RUN --mount=type=secret,id=hf_token \
+    huggingface-cli login --token "$(cat /run/secrets/hf_token)" || echo "HF login failed, continuing without auth."
+
+# Set the default command to run the Gradio Web UI demo
+CMD ["llamafactory-cli", "webui"]
