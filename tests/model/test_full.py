@@ -16,6 +16,7 @@ import os
 
 import torch
 
+from llamafactory.extras.misc import is_torch_hpu_available
 from llamafactory.train.test_utils import load_infer_model, load_train_model
 
 
@@ -42,6 +43,22 @@ INFER_ARGS = {
     "infer_dtype": "float16",
 }
 
+if is_torch_hpu_available():
+    TRAIN_ARGS.update(
+        {
+            "use_habana": True,
+            "gaudi_config_name": "Habana/llama",
+            "fp16": False,
+            "bf16": True,
+        }
+    )
+    INFER_ARGS.update(
+        {
+            "use_habana": True,
+            "infer_dtype": "bfloat16",
+        }
+    )
+
 
 def test_full_train():
     model = load_train_model(**TRAIN_ARGS)
@@ -52,6 +69,7 @@ def test_full_train():
 
 def test_full_inference():
     model = load_infer_model(**INFER_ARGS)
+    dtype = torch.bfloat16 if is_torch_hpu_available() else torch.float16
     for param in model.parameters():
         assert param.requires_grad is False
-        assert param.dtype == torch.float16
+        assert param.dtype == dtype
