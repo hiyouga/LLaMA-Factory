@@ -184,11 +184,11 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                 self.cumulative_dict[f"{ch}_total_loss_list"] = []
                 self.cumulative_dict[f"{ch}_token_count_list"] = []
 
-        # 返回总loss
-        total_loss = token_loss.masked_select(mask).sum()
-        total_tokens = mask.sum()
-        return total_loss / num_items_in_batch if num_items_in_batch is not None \
-            else total_loss / (total_tokens.float() + 1e-12)
+        # 返回总loss，节约计算成本，不返回这个。
+        # total_loss = token_loss.masked_select(mask).sum()
+        # total_tokens = mask.sum()
+        # return total_loss / num_items_in_batch if num_items_in_batch is not None \
+        #     else total_loss / (total_tokens.float() + 1e-12)
     
     @override
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
@@ -197,7 +197,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         if self.finetuning_args.channel_loss:
             inputs_channels = inputs.pop("channel", None)
             labels = inputs.pop("labels")
-            my_total_loss = self.compute_channel_loss(outputs, labels, inputs_channels, num_items_in_batch)
+            self.compute_channel_loss(outputs, labels, inputs_channels, num_items_in_batch)
             
 
         return (total_loss, outputs) if return_outputs else total_loss
