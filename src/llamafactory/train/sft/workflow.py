@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from typing import TYPE_CHECKING, Optional
 
 from ...data import SFTDataCollatorWith4DAttentionMask, get_dataset, get_template_and_fix_tokenizer
@@ -100,7 +101,8 @@ def run_sft(
     if training_args.do_train:
         training_callbacks = [cb for cb in callbacks if hasattr(cb, 'on_training_start')]
         training_callback = training_callbacks[0] if training_callbacks else None
-        training_callback.on_training_start()
+        if training_callback and int(os.getenv("LOCAL_RANK", "0")) == 0:
+            training_callback.on_training_start()
         train_result = trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
         trainer.save_model()
         if finetuning_args.include_effective_tokens_per_second:
