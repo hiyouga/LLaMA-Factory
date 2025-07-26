@@ -506,6 +506,18 @@ Find the pre-built images: https://hub.docker.com/r/hiyouga/llamafactory/tags
 
 Please refer to [build docker](#build-docker) to build the image yourself.
 
+If your environment does not support Docker (e.g., on HPC systems), you can pull and run the project using **Apptainer** :
+```bash
+# pull
+apptainer pull llamafactory.sif docker://hiyouga/llamafactory:latest
+# run
+apptainer shell --nv --cleanenv --bind /mnt/your_dir:/mnt/your_dir llamafactory.sif
+
+# --nv: Enables access to the host’s NVIDIA GPUs and CUDA libraries
+# --cleanenv: Prevents contamination from the host’s environment variables
+# --bind: Mounts a local host directory into the container (e.g., for accessing data);
+```
+
 <details><summary>Setting up a virtual environment with <b>uv</b></summary>
 
 Create an isolated Python environment with [uv](https://github.com/astral-sh/uv):
