@@ -92,6 +92,8 @@ def split_dataset(
     dataset_dict = {}
     if dataset is not None:
         if data_args.streaming:
+            if not isinstance(dataset, IterableDataset):
+                raise ValueError("Shuffle with `buffer_size` is only supported for IterableDataset in streaming mode.")
             dataset = dataset.shuffle(buffer_size=data_args.buffer_size, seed=seed)
 
         if data_args.val_size > 1e-6:
@@ -111,6 +113,10 @@ def split_dataset(
             dataset_dict.update({f"validation_{name}": data for name, data in eval_dataset.items()})
         else:
             if data_args.streaming:
+                if not isinstance(eval_dataset, IterableDataset):
+                    raise ValueError(
+                        "Shuffle with `buffer_size` is only supported for IterableDataset in streaming mode."
+                    )
                 eval_dataset = eval_dataset.shuffle(buffer_size=data_args.buffer_size, seed=seed)
 
             dataset_dict["validation"] = eval_dataset
