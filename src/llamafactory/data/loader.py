@@ -127,6 +127,8 @@ def _load_single_dataset(
         )
     elif dataset_attr.load_from == "cloud_file":
         dataset = Dataset.from_list(read_cloud_json(data_path), split=dataset_attr.split)
+        if data_args.streaming:
+            dataset = dataset.to_iterable_dataset(num_shards=training_args.dataloader_num_workers)
     else:
         dataset = load_dataset(
             path=data_path,
