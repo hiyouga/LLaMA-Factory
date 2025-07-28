@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from typing import TYPE_CHECKING, Optional
 
 from ...data import SFTDataCollatorWith4DAttentionMask, get_dataset, get_template_and_fix_tokenizer
@@ -45,10 +46,15 @@ def run_sft(
     generating_args: "GeneratingArguments",
     callbacks: Optional[list["TrainerCallback"]] = None,
 ):
+    tokenization_callbacks = [cb for cb in callbacks if hasattr(cb, 'on_tokenization_start')]
+    tokenization_callback = tokenization_callbacks[0] if tokenization_callbacks else None
+
+    dataset_loading_callbacks = [cb for cb in callbacks if hasattr(cb, 'on_dataset_loading_start')]
+    dataset_loading_callback = dataset_loading_callbacks[0] if dataset_loading_callbacks else None
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
     template = get_template_and_fix_tokenizer(tokenizer, data_args)
-    dataset_module = get_dataset(template, model_args, data_args, training_args, stage="sft", **tokenizer_module)
+    dataset_module = get_dataset(template, model_args, data_args, training_args, stage="sft", **tokenizer_module, tokenization_callback=tokenization_callback, dataset_loading_callback=dataset_loading_callback)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
 
     if getattr(model, "is_quantized", False) and not training_args.do_train:
@@ -93,6 +99,10 @@ def run_sft(
 
     # Training
     if training_args.do_train:
+        training_callbacks = [cb for cb in callbacks if hasattr(cb, 'on_training_start')]
+        training_callback = training_callbacks[0] if training_callbacks else None
+        if training_callback and int(os.getenv("LOCAL_RANK", "0")) == 0:
+            training_callback.on_training_start()
         train_result = trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
         trainer.save_model()
         if finetuning_args.include_effective_tokens_per_second:
