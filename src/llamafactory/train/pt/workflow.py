@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import math
+import os
 from typing import TYPE_CHECKING, Optional
 
 from transformers import DataCollatorForLanguageModeling
@@ -66,9 +67,6 @@ def run_pt(
 
     # Training
     if training_args.do_train:
-        training_callbacks = [cb for cb in callbacks if hasattr(cb, 'on_training_start')]
-        training_callback = training_callbacks[0] if training_callbacks else None
-        training_callback.on_training_start()
         train_result = trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
         trainer.save_model()
         trainer.log_metrics("train", train_result.metrics)
