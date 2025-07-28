@@ -102,9 +102,7 @@ def run_exp(args: Optional[dict[str, Any]] = None, callbacks: Optional[list["Tra
         ray_callbacks = [cb for cb in callbacks if hasattr(cb, 'on_ray_node_waiting')]
         ray_callback = ray_callbacks[0] if ray_callbacks else None
         if ray_callback and int(os.getenv("LOCAL_RANK", "0")) == 0:
-            ray_callback.on_dataset_loading_end()
-        ray_callback.on_ray_node_waiting()
-        
+            ray_callback.on_ray_node_waiting()
         callbacks.append(RayTrainReportCallback())
         trainer = get_ray_trainer(
             training_function=_training_function,
