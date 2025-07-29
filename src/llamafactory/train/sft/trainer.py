@@ -145,8 +145,6 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         
         # 每个local step计算每个channel的总loss和token数量
         # 获取当前 batch 中实际出现的 channel
-        import time
-        start_time = time.time()
         channel_available = torch.zeros(bs, dtype=torch.bool, device=inputs_channels.device)
         for ch_index in torch.unique(inputs_channels):
             # 构造当前 channel 的可用性 mask
@@ -168,8 +166,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                     self.ch_total_loss_list[ch_index].append(total_loss)
                     self.ch_token_count_list[ch_index].append(token_count)
                     self.ch_steps_count[ch_index] += 1
-        end_time = time.time()
-        self._print_debug_info(f"time cost: {end_time - start_time}")
+
         # 每个local step补0，方便计算。
         for ch_index in range(len(self.all_channels)):
             if len(self.ch_total_loss_list[ch_index]) < self.local_step_count:
