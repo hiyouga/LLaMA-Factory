@@ -52,17 +52,18 @@ def run_sft(
     channel_index_map = {}
     if finetuning_args.channel_loss:
         # 获取所有channel类型
-        all_types = set()
+        all_channel_set = set()
         for key in dataset_module.keys():
             only_channel_dataset = dataset_module[key].select_columns("channel")
             if only_channel_dataset.features["channel"].dtype == "string":
-                all_types.update(only_channel_dataset["channel"])
+                all_channel_set.update(only_channel_dataset["channel"])
             elif only_channel_dataset.features["channel"].dtype == "list":
                 for channels in only_channel_dataset["channel"]:
-                    all_types.update(channels)
+                    all_channel_set.update(channels)
             else:
                 raise ValueError(f"Unsupported channel type: {only_channel_dataset.features['channel'].dtype}")
-        channel_index_map = {type_val: i for i, type_val in enumerate(all_types)}
+        all_channels = list(all_channel_set)
+        channel_index_map = {channel: i for i, channel in enumerate(all_channels)}
         for key in dataset_module.keys():
             # 将channel转换为list类型
             if dataset_module[key].features["channel"].dtype == "string":
@@ -111,7 +112,7 @@ def run_sft(
         data_collator=data_collator,
         callbacks=callbacks,
         gen_kwargs=gen_kwargs,
-        channel_index_map=channel_index_map,
+        all_channels=all_channels,
         **dataset_module,
         **tokenizer_module,
         **metric_module,

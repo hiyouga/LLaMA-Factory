@@ -53,7 +53,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         finetuning_args: "FinetuningArguments",
         processor: Optional["ProcessorMixin"],
         gen_kwargs: Optional[dict[str, Any]] = None,
-        channel_index_map: Optional[dict[str, Any]] = None,
+        all_channels: Optional[list[str]] = None,
         **kwargs,
     ) -> None:
         if is_transformers_version_greater_than("4.46"):
@@ -68,7 +68,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         self.writer = SummaryWriter(log_dir=self.args.logging_dir, flush_secs=120)   # TODO: 【√】draw channels loss
 
             
-        self.channel_index_map = channel_index_map
+        self.all_channels = all_channels
         if processor is not None:
             # avoid wrong loss under gradient accumulation
             # https://github.com/huggingface/transformers/pull/36044#issuecomment-2746657112
@@ -90,14 +90,11 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         self.gpu_count = torch.cuda.device_count() if torch.cuda.is_available() else torch.npu.device_count()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         if self.finetuning_args.channel_loss:
-            self.all_channels = [v for k, v in self.channel_index_map.items()]
-            self.cumulative_dict = {
-                "local_step_count": 0,
-                **{f"{v}_ch_steps_count": 0 for k, v in self.channel_index_map.items()},
-                **{f"{v}_total_loss_list": [] for k, v in self.channel_index_map.items()},
-                **{f"{v}_token_count_list": [] for k, v in self.channel_index_map.items()}
-            }
-            self._print_debug_info(f"[DEBUG] cumulative_dict init: {self.cumulative_dict}")
+            self.local_step_count = 0
+            self.ch_steps_count = [0] * len(self.all_channels)
+            self.ch_total_loss_list = [[] for _ in range(len(self.all_channels))]
+            self.ch_token_count_list = [[] for _ in range(len(self.all_channels))]
+            self._print_debug_info(f"[DEBUG] init channel loss related variables with {len(self.all_channels)} channels")
 
     @override
     def create_optimizer(self) -> "torch.optim.Optimizer":
@@ -128,7 +125,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         改进了一下，loss其实就是累加，没必要把每个Token的都存，直接累加就行。
         """
         all_channels = self.all_channels
-        assert all_channels is not None, 'No channels found, please check the channel_index_map.'
+        assert all_channels is not None, 'No channels found, please check your dataset.'
         assert labels is not None, 'No labels found, please check the tokenizer?'
         
         logits = outputs.logits
@@ -144,45 +141,65 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
         # 计算每个token属于哪个channel
         bs, seq = shift_labels.shape
-        token_channels = []
-        for i in range(bs):
-            token_channels.extend([inputs_channels[i]] * seq)
-        self.cumulative_dict["local_step_count"] += 1
-
-        for chs in torch.unique(inputs_channels, dim=0):
-            indices = [i for i, c in enumerate(token_channels) if (c == chs).all()]
-            if not indices:
-                continue
-            ch_mask = mask[indices]
-            ch_losses = token_loss[indices]
-            valid_losses = ch_losses[ch_mask]
-            total_loss = torch.sum(valid_losses).item()
-            token_count = valid_losses.numel()
-            for ch in chs:
-                self.cumulative_dict[f"{ch}_total_loss_list"].append(total_loss)
-                self.cumulative_dict[f"{ch}_token_count_list"].append(token_count)
-
-        # 每gradient_accumulation_steps步聚合
-        if self.cumulative_dict["local_step_count"] % self.args.gradient_accumulation_steps == 0:
-            for ch in self.all_channels:
-                loss_sum = sum(self.cumulative_dict[f"{ch}_total_loss_list"])
-                num_items = sum(self.cumulative_dict[f"{ch}_token_count_list"])
+        self.local_step_count += 1
+        
+        # 每个local step计算每个channel的总loss和token数量
+        # 获取当前 batch 中实际出现的 channel
+        import time
+        start_time = time.time()
+        channel_available = torch.zeros(bs, dtype=torch.bool, device=inputs_channels.device)
+        for ch_index in torch.unique(inputs_channels):
+            # 构造当前 channel 的可用性 mask
+            # 对于每个样本，检查该 channel 是否可用
+            for i in range(bs):
+                channel_available[i] = ch_index in inputs_channels[i]
+            
+            # 扩展到所有 token：每个样本的 seq 个 token 都使用相同的可用性
+            channel_token_mask = channel_available.repeat_interleave(seq)
+            
+            # 与 token 的有效性 mask 取与运算
+            valid_channel_mask = channel_token_mask & mask
+            
+            if valid_channel_mask.any():
+                valid_losses = token_loss[valid_channel_mask]
+                total_loss = torch.sum(valid_losses).item()
+                token_count = valid_losses.numel()
+                if token_count > 0 and total_loss > 0.0:
+                    self.ch_total_loss_list[ch_index].append(total_loss)
+                    self.ch_token_count_list[ch_index].append(token_count)
+                    self.ch_steps_count[ch_index] += 1
+        end_time = time.time()
+        self._print_debug_info(f"time cost: {end_time - start_time}")
+        # 每个local step补0，方便计算。
+        for ch_index in range(len(self.all_channels)):
+            if len(self.ch_total_loss_list[ch_index]) < self.local_step_count:
+                self.ch_total_loss_list[ch_index].append(0)
+                self.ch_token_count_list[ch_index].append(0)
+        # 每个梯度更新时候的出现过的channel的平均loss，可以计得和train step一样步数的channel loss
+        if self.local_step_count % self.args.gradient_accumulation_steps == 0 and (self.state.global_step + 1) % self.args.logging_steps == 0:
+            for ch_index, channel in enumerate(self.all_channels):
+                # 取最末尾的gradient_accumulation_steps个值
+                loss_sum = sum(self.ch_total_loss_list[ch_index][-self.args.gradient_accumulation_steps:])
+                num_items = sum(self.ch_token_count_list[ch_index][-self.args.gradient_accumulation_steps:])
                 ch_loss = loss_sum / (num_items + 1e-12)
-                channel_name = None
-                for k, v in self.channel_index_map.items():
-                    if v == int(ch):
-                        channel_name = k
-                        break
                 if ch_loss > 0.0:
-                    self.cumulative_dict[f"{ch}_ch_steps_count"] += 1
-                    checkpoint_step = self.cumulative_dict["local_step_count"] // self.args.gradient_accumulation_steps
-                    self.writer.add_scalar(f"train/global_ch_loss_{channel_name}", ch_loss, checkpoint_step)
-                    self.writer.add_scalar(f"train/ch_loss_{channel_name}", ch_loss,  self.cumulative_dict[f"{ch}_ch_steps_count"])
-
-            # Reset
-            for ch in self.all_channels:
-                self.cumulative_dict[f"{ch}_total_loss_list"] = []
-                self.cumulative_dict[f"{ch}_token_count_list"] = []
+                    self.writer.add_scalar(f"train/ch_loss_{channel}_global", ch_loss, self.state.global_step + 1)
+        # 对每个channel，计算和train loss一样频率的channel loss(train loss是每gradient_accumulation_steps步计算一次)
+        for ch_index, channel in enumerate(self.all_channels):
+            if self.ch_steps_count[ch_index] % self.args.gradient_accumulation_steps == 0:
+                loss_sum = 0
+                num_items = 1e-12
+                # 从ch_total_loss_list倒着找gradient_accumulation_steps个非0值
+                for i in range(len(self.ch_total_loss_list[ch_index])-1, -1, -1):
+                    if self.ch_total_loss_list[ch_index][i] > 0.0:
+                        loss_sum += self.ch_total_loss_list[ch_index][i]
+                        num_items += self.ch_token_count_list[ch_index][i]
+                        if num_items >= self.args.gradient_accumulation_steps:
+                            break
+                ch_loss = loss_sum / (num_items + 1e-12)
+                if ch_loss > 0.0:
+                    self.writer.add_scalar(f"train/ch_loss_{channel}_local", ch_loss, self.ch_steps_count[ch_index] // self.args.gradient_accumulation_steps + 1)
+        
 
         # 返回总loss，节约计算成本，不返回这个。
         # total_loss = token_loss.masked_select(mask).sum()
