@@ -143,7 +143,7 @@ def register_model_group(
     for name, path in models.items():
         SUPPORTED_MODELS[name] = path
         if template is not None and (
-            any(suffix in name for suffix in ("-Chat", "-Distill", "-Instruct")) or multimodal
+            any(suffix in name for suffix in ("-Chat", "-Distill", "-Instruct", "-Thinking")) or multimodal
         ):
             DEFAULT_TEMPLATE[name] = template
 
@@ -2680,67 +2680,75 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B-Base",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B-Base",
         },
-        "Qwen3-0.6B-Instruct": {
+        "Qwen3-0.6B-Thinking": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-0.6B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-0.6B",
         },
-        "Qwen3-1.7B-Instruct": {
+        "Qwen3-1.7B-Thinking": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-1.7B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-1.7B",
         },
-        "Qwen3-4B-Instruct": {
+        "Qwen3-4B-Thinking": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-4B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-4B",
         },
-        "Qwen3-8B-Instruct": {
+        "Qwen3-8B-Thinking": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-8B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-8B",
         },
-        "Qwen3-14B-Instruct": {
+        "Qwen3-14B-Thinking": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-14B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-14B",
         },
-        "Qwen3-32B-Instruct": {
+        "Qwen3-32B-Thinking": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-32B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-32B",
         },
-        "Qwen3-30B-A3B-Instruct": {
+        "Qwen3-30B-A3B-Thinking": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B",
         },
-        "Qwen3-235B-A22B-Instruct": {
+        "Qwen3-235B-A22B-Thinking": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B",
         },
-        "Qwen3-0.6B-Instruct-GPTQ-Int8": {
+        "Qwen3-235B-A22B-Instruct-2507": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B-Instruct-2507",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        },
+        "Qwen3-235B-A22B-Thinking-2507": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B-Thinking-2507",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B-Thinking-2507",
+        },
+        "Qwen3-0.6B-Thinking-GPTQ-Int8": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-0.6B-GPTQ-Int8",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-0.6B-GPTQ-Int8",
         },
-        "Qwen3-1.7B-Instruct-GPTQ-Int8": {
+        "Qwen3-1.7B-Thinking-GPTQ-Int8": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-1.7B-GPTQ-Int8",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-1.7B-GPTQ-Int8",
         },
-        "Qwen3-4B-Instruct-AWQ": {
+        "Qwen3-4B-Thinking-AWQ": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-4B-AWQ",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-4B-AWQ",
         },
-        "Qwen3-8B-Instruct-AWQ": {
+        "Qwen3-8B-Thinking-AWQ": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-8B-AWQ",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-8B-AWQ",
         },
-        "Qwen3-14B-Instruct-AWQ": {
+        "Qwen3-14B-Thinking-AWQ": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-14B-AWQ",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-14B-AWQ",
         },
-        "Qwen3-32B-Instruct-AWQ": {
+        "Qwen3-32B-Thinking-AWQ": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-32B-AWQ",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-32B-AWQ",
         },
-        "Qwen3-30B-A3B-Instruct-GPTQ-Int4": {
+        "Qwen3-30B-A3B-Thinking-GPTQ-Int4": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B-GPTQ-Int4",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B-GPTQ-Int4",
         },
-        "Qwen3-235B-A22B-Instruct-GPTQ-Int4": {
+        "Qwen3-235B-A22B-Thinking-GPTQ-Int4": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B-GPTQ-Int4",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B-GPTQ-Int4",
         },
