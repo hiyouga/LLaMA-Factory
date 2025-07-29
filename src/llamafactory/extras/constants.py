@@ -276,7 +276,7 @@ register_model_group(
 register_model_group(
     models={
         "ChatGLM2-6B-Chat": {
-            DownloadSource.DEFAULT: "THUDM/chatglm2-6b",
+            DownloadSource.DEFAULT: "zai-org/chatglm2-6b",
             DownloadSource.MODELSCOPE: "ZhipuAI/chatglm2-6b",
         }
     },
@@ -287,11 +287,11 @@ register_model_group(
 register_model_group(
     models={
         "ChatGLM3-6B-Base": {
-            DownloadSource.DEFAULT: "THUDM/chatglm3-6b-base",
+            DownloadSource.DEFAULT: "zai-org/chatglm3-6b-base",
             DownloadSource.MODELSCOPE: "ZhipuAI/chatglm3-6b-base",
         },
         "ChatGLM3-6B-Chat": {
-            DownloadSource.DEFAULT: "THUDM/chatglm3-6b",
+            DownloadSource.DEFAULT: "zai-org/chatglm3-6b",
             DownloadSource.MODELSCOPE: "ZhipuAI/chatglm3-6b",
         },
     },
@@ -333,7 +333,7 @@ register_model_group(
 register_model_group(
     models={
         "CodeGeeX4-9B-Chat": {
-            DownloadSource.DEFAULT: "THUDM/codegeex4-all-9b",
+            DownloadSource.DEFAULT: "zai-org/codegeex4-all-9b",
             DownloadSource.MODELSCOPE: "ZhipuAI/codegeex4-all-9b",
         },
     },
@@ -840,28 +840,28 @@ register_model_group(
 register_model_group(
     models={
         "GLM-4-9B": {
-            DownloadSource.DEFAULT: "THUDM/glm-4-9b",
+            DownloadSource.DEFAULT: "zai-org/glm-4-9b",
             DownloadSource.MODELSCOPE: "ZhipuAI/glm-4-9b",
         },
         "GLM-4-9B-Chat": {
-            DownloadSource.DEFAULT: "THUDM/glm-4-9b-chat",
+            DownloadSource.DEFAULT: "zai-org/glm-4-9b-chat",
             DownloadSource.MODELSCOPE: "ZhipuAI/glm-4-9b-chat",
             DownloadSource.OPENMIND: "LlamaFactory/glm-4-9b-chat",
         },
         "GLM-4-9B-1M-Chat": {
-            DownloadSource.DEFAULT: "THUDM/glm-4-9b-chat-1m",
+            DownloadSource.DEFAULT: "zai-org/glm-4-9b-chat-1m",
             DownloadSource.MODELSCOPE: "ZhipuAI/glm-4-9b-chat-1m",
         },
         "GLM-4-0414-9B-Chat": {
-            DownloadSource.DEFAULT: "THUDM/GLM-4-9B-0414",
+            DownloadSource.DEFAULT: "zai-org/GLM-4-9B-0414",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4-9B-0414",
         },
         "GLM-4-0414-32B-Base": {
-            DownloadSource.DEFAULT: "THUDM/GLM-4-32B-Base-0414",
+            DownloadSource.DEFAULT: "zai-org/GLM-4-32B-Base-0414",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4-32B-Base-0414",
         },
         "GLM-4-0414-32B-Chat": {
-            DownloadSource.DEFAULT: "THUDM/GLM-4-32B-0414",
+            DownloadSource.DEFAULT: "zai-org/GLM-4-32B-0414",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4-32B-0414",
         },
     },
@@ -872,11 +872,11 @@ register_model_group(
 register_model_group(
     models={
         "GLM-4.1V-9B-Base": {
-            DownloadSource.DEFAULT: "THUDM/GLM-4.1V-9B-Base",
+            DownloadSource.DEFAULT: "zai-org/GLM-4.1V-9B-Base",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.1V-9B-Base",
         },
         "GLM-4.1V-9B-Thinking": {
-            DownloadSource.DEFAULT: "THUDM/GLM-4.1V-9B-Thinking",
+            DownloadSource.DEFAULT: "zai-org/GLM-4.1V-9B-Thinking",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.1V-9B-Thinking",
         },
     },
@@ -887,12 +887,35 @@ register_model_group(
 
 register_model_group(
     models={
+        "GLM-4.5-Air-Base": {
+            DownloadSource.DEFAULT: "zai-org/GLM-4.5-Air-Base",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.5-Air-Base",
+        },
+        "GLM-4.5-Base": {
+            DownloadSource.DEFAULT: "zai-org/GLM-4.5-Base",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.5-Base",
+        },
+        "GLM-4.5-Air-Chat": {
+            DownloadSource.DEFAULT: "zai-org/GLM-4.5-Air",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.5-Air",
+        },
+        "GLM-4.5-Chat": {
+            DownloadSource.DEFAULT: "zai-org/GLM-4.5",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.5",
+        },
+    },
+    template="glm4_moe",
+)
+
+
+register_model_group(
+    models={
         "GLM-Z1-0414-9B-Chat": {
-            DownloadSource.DEFAULT: "THUDM/GLM-Z1-9B-0414",
+            DownloadSource.DEFAULT: "zai-org/GLM-Z1-9B-0414",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-Z1-9B-0414",
         },
         "GLM-Z1-0414-32B-Chat": {
-            DownloadSource.DEFAULT: "THUDM/GLM-Z1-32B-0414",
+            DownloadSource.DEFAULT: "zai-org/GLM-Z1-32B-0414",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-Z1-32B-0414",
         },
     },
