@@ -1096,10 +1096,12 @@ register_template(
     format_assistant=StringFormatter(slots=["{{content}}<|end_of_text|>\n"]),
     format_system=StringFormatter(slots=["<|start_of_role|>system<|end_of_role|>{{content}}<|end_of_text|>\n"]),
     format_function=FunctionFormatter(slots=["{{content}}<|end_of_text|>\n"], tool_format="default"),
-    format_observation=StringFormatter(slots=["<|start_of_role|>tool<|end_of_role|>{{content}}<|end_of_text|>\n<|start_of_role|>assistant\n"]),
+    format_observation=StringFormatter(
+        slots=["<|start_of_role|>tool<|end_of_role|>{{content}}<|end_of_text|>\n<|start_of_role|>assistant\n"]
+    ),
     format_tools=ToolFormatter(tool_format="default"),
     stop_words=["<|end_of_text|>"],
-    default_system=("You are Granite, developed by IBM. You are a helpful AI assistant.")
+    default_system=("You are Granite, developed by IBM. You are a helpful AI assistant."),
 )
 
 
