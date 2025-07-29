@@ -227,6 +227,15 @@ _register_composite_model(
 
 
 _register_composite_model(
+    model_type="Keye",
+    projector_key="mlp_AR",
+    vision_model_keys=["visual.vision_model.patch_embedding", "visual.vision_model.encoder"],
+    language_model_keys=["model", "lm_head"],
+    lora_conflict_keys=["patch_embedding"],
+)
+
+
+_register_composite_model(
     model_type="llama4",
     vision_model_keys=["vision_model"],
 )
