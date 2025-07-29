@@ -72,6 +72,7 @@ class RayArguments:
             elif self.ray_storage_filesystem == "gs" or self.ray_storage_filesystem == "gcs":
                 self.ray_storage_filesystem = fs.GcsFileSystem()
 
+
 @dataclass
 class TrainingArguments(RayArguments, Seq2SeqTrainingArguments):
     r"""Arguments pertaining to the trainer."""
