@@ -1237,6 +1237,18 @@ register_model_group(
 
 register_model_group(
     models={
+        "Keye-VL-8B-Chat": {
+            DownloadSource.DEFAULT: "Kwai-Keye/Keye-VL-8B-Preview",
+            DownloadSource.MODELSCOPE: "Kwai-Keye/Keye-VL-8B-Preview",
+        },
+    },
+    template="keye_vl",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
         "Kimi-Dev-72B-Instruct": {
             DownloadSource.DEFAULT: "moonshotai/Kimi-Dev-72B",
             DownloadSource.MODELSCOPE: "moonshotai/Kimi-Dev-72B",
