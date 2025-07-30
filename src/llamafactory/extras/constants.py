@@ -2747,6 +2747,10 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B-Instruct-2507",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B-Instruct-2507",
         },
+        "Qwen3-30B-A3B-Thinking-2507": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B-Thinking-2507",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B-Thinking-2507",
+        },
         "Qwen3-235B-A22B-Thinking": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B",
