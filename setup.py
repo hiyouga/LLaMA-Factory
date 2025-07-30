@@ -52,7 +52,7 @@ extra_require = {
     "eetq": ["eetq"],
     "gptq": ["optimum>=1.24.0", "gptqmodel>=2.0.0"],
     "aqlm": ["aqlm[gpu]>=1.1.0"],
-    "vllm": ["vllm>=0.4.3,<=0.9.1"],
+    "vllm": ["vllm>=0.4.3,<=0.10.0"],
     "sglang": ["sglang[srt]>=0.4.5", "transformers==4.51.1"],
     "galore": ["galore-torch"],
     "apollo": ["apollo-torch"],
