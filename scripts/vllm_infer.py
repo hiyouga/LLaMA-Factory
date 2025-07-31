@@ -137,34 +137,43 @@ def vllm_infer(
     for i in tqdm(range(0, len(train_dataset), batch_size), desc="Processing batched inference"):
         vllm_inputs, prompts, labels = [], [], []
         batch = train_dataset[i : min(i + batch_size, len(train_dataset))]
-
         for j in range(len(batch["input_ids"])):
+
+            # Initialize multi_modal_data dictionary
+            multi_modal_data = {}
+            
+            # Process videos if available
+            if batch["videos"][j] is not None:
+                video = batch["videos"][j]
+                video_data = template_obj.mm_plugin._regularize_videos(
+                    video,
+                    image_max_pixels=image_max_pixels,
+                    image_min_pixels=image_min_pixels,
+                    video_fps=video_fps,
+                    video_maxlen=video_maxlen,
+                )["videos"]
+                multi_modal_data["video"] = video_data
+
+            # Process images if available
             if batch["images"][j] is not None:
                 image = batch["images"][j]
-                multi_modal_data = {
-                    "image": template_obj.mm_plugin._regularize_images(
-                        image, image_max_pixels=image_max_pixels, image_min_pixels=image_min_pixels
-                    )["images"]
-                }
-            elif batch["videos"][j] is not None:
-                video = batch["videos"][j]
-                multi_modal_data = {
-                    "video": template_obj.mm_plugin._regularize_videos(
-                        video,
-                        image_max_pixels=image_max_pixels,
-                        image_min_pixels=image_min_pixels,
-                        video_fps=video_fps,
-                        video_maxlen=video_maxlen,
-                    )["videos"]
-                }
-            elif batch["audios"][j] is not None:
+                image_data = template_obj.mm_plugin._regularize_images(
+                    image, image_max_pixels=image_max_pixels, image_min_pixels=image_min_pixels
+                )["images"]
+                multi_modal_data["image"] = image_data
+            
+            # Process audios if available
+            if batch["audios"][j] is not None:
+                print("Processing audio data")
                 audio = batch["audios"][j]
                 audio_data = template_obj.mm_plugin._regularize_audios(
                     audio,
                     sampling_rate=16000,
                 )
-                multi_modal_data = {"audio": zip(audio_data["audios"], audio_data["sampling_rates"])}
-            else:
+                multi_modal_data["audio"] = zip(audio_data["audios"], audio_data["sampling_rates"])
+            
+            # If no multimodal data was found, set to None
+            if not multi_modal_data:
                 multi_modal_data = None
 
             vllm_inputs.append({"prompt_token_ids": batch["input_ids"][j], "multi_modal_data": multi_modal_data})
