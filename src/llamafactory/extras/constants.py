@@ -126,6 +126,7 @@ class QuantizationMethod(str, Enum):
     QUANTO = "quanto"
     EETQ = "eetq"
     HQQ = "hqq"
+    MXFP4 = "mxfp4"
 
 
 class RopeScaling(str, Enum):

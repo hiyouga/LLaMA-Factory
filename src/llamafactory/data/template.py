@@ -1069,7 +1069,9 @@ register_template(
     format_assistant=StringFormatter(slots=["{{content}}<|end|>"]),
     format_system=StringFormatter(slots=["<|start|>system<|message|>{{content}}<|end|>"]),
     default_system="You are ChatGPT, a large language model trained by OpenAI.",
+    thought_words=("<|channel|>analysis<|message|>", "<|end|><|start|>assistant<|channel|>final<|message|>"),
     efficient_eos=True,
+    template_class=ReasoningTemplate,
 )
 
 
