@@ -1714,6 +1714,7 @@ register_model_group(
     multimodal=True,
 )
 
+
 register_model_group(
     models={
         "MiniCPM-V-4": {
@@ -1724,6 +1725,7 @@ register_model_group(
     template="minicpm_v",
     multimodal=True,
 )
+
 
 register_model_group(
     models={
