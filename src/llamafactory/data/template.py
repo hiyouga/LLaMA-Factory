@@ -1064,6 +1064,16 @@ register_template(
 
 
 register_template(
+    name="gpt",
+    format_user=StringFormatter(slots=["<|start|>user<|message|>{{content}}<|end|><|start|>assistant"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|end|>"]),
+    format_system=StringFormatter(slots=["<|start|>system<|message|>{{content}}<|end|>"]),
+    default_system="You are ChatGPT, a large language model trained by OpenAI.",
+    efficient_eos=True,
+)
+
+
+register_template(
     name="granite3",
     format_user=StringFormatter(
         slots=[

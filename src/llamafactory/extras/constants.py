@@ -947,6 +947,21 @@ register_model_group(
 
 register_model_group(
     models={
+        "GPT-OSS-20B-Thinking": {
+            DownloadSource.DEFAULT: "openai/gpt-oss-20b",
+            DownloadSource.MODELSCOPE: "openai/gpt-oss-20b",
+        },
+        "GPT-OSS-120B-Thinking": {
+            DownloadSource.DEFAULT: "openai/gpt-oss-120b",
+            DownloadSource.MODELSCOPE: "openai/gpt-oss-120b",
+        },
+    },
+    template="gpt",
+)
+
+
+register_model_group(
+    models={
         "Granite-3.0-1B-A400M-Base": {
             DownloadSource.DEFAULT: "ibm-granite/granite-3.0-1b-a400m-base",
             DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.0-1b-a400m-base",
