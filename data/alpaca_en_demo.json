@@ -4155,11 +4155,6 @@
     "output": "In life we all embark on journeys grand,\nAnd wander through the trials of our days;\nAt times we'll come across a barren land,\nWhere hardships test and challenge in new ways.\n\nBut through the toil, we're never all alone,\nFor friendship shines as brilliant as the sun;\nWith bonds that strengthen, deepen and have grown,\nA beauty that cannot be rivaled, none.\n\nA friend who's there with hands to lift us high,\nThrough laughter and the joy, through tears and pain,\nA beacon when the road ahead's unclear,\nA treasure more than riches one could gain.\n\nOh friendship, pure and ever shining bright,\nA beauty that brings everlasting light."
   },
   {
-    "instruction": "The news and other sources have been claiming that Democracy is losing ground around the world. Give an example of a recent event to back this claim up.",
-    "input": "",
-    "output": "One recent example that supports this claim is the events in Hong Kong. In 2019 and 2020, the Chinese government imposed a national security law to crack down on pro-democracy protests in Hong Kong, effectively curtailing the freedoms and autonomy that the region once enjoyed. This move by Beijing to assert greater control over Hong Kong has led to concerns by human rights advocates and international leaders that democracy is being undermined in the territory. There is fear that Hong Kong’s outspoken media, independent judiciary, and civil liberties look increasingly vulnerable as Beijing tightens its grip on the city. Additionally, there have been arrests of multiple leading pro-Democracy figures such as Joshua Wong, Agnes Chow and Jimmy Lai in addition to many others who have become political prisoners."
-  },
-  {
     "instruction": "Redact the following sentence to remove all personal information: \"John Smith from Birmingham works in a factory.\"",
     "input": "",
     "output": "\"An individual from a city works in a factory.\""

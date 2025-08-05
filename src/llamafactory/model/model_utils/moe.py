@@ -57,6 +57,11 @@ def add_z3_leaf_module(model: "PreTrainedModel") -> None:
 
         _set_z3_leaf_modules(model, [GraniteMoeMoE])
 
+    if model_type == "glm4_moe":
+        from transformers.models.glm4_moe.modeling_glm4_moe import Glm4MoeMoE
+
+        _set_z3_leaf_modules(model, [Glm4MoeMoE])
+
     if model_type == "jamba":
         from transformers.models.jamba.modeling_jamba import JambaSparseMoeBlock
 
