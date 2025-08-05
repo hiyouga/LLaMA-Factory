@@ -27,6 +27,10 @@ from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TypedDict, Union
 import numpy as np
 import torch
 from transformers.image_utils import get_image_size, is_valid_image, to_numpy_array
+from transformers.models.mllama.processing_mllama import (
+    convert_sparse_cross_attention_mask_to_dense,
+    get_cross_attention_token_mask,
+)
 from typing_extensions import override
 
 from ..extras.constants import AUDIO_PLACEHOLDER, IGNORE_INDEX, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
@@ -51,17 +55,10 @@ if is_pyav_available():
     import av
 
 
-if is_transformers_version_greater_than("4.45.0"):
-    from transformers.models.mllama.processing_mllama import (
-        convert_sparse_cross_attention_mask_to_dense,
-        get_cross_attention_token_mask,
-    )
-
-
 if is_transformers_version_greater_than("4.52.0"):
     from transformers.image_utils import make_flat_list_of_images
     from transformers.video_utils import make_batched_videos
-elif is_transformers_version_greater_than("4.49.0"):
+else:
     from transformers.image_utils import make_batched_videos, make_flat_list_of_images
 
 
@@ -523,10 +520,11 @@ class Gemma3nPlugin(Gemma3Plugin):
         self._validate_messages(messages, images, videos, audios)
         messages = deepcopy(messages)
         boi_token: str = getattr(processor, "boi_token")
+        boa_token: str = getattr(processor, "boa_token")
         full_image_sequence: str = getattr(processor, "full_image_sequence")
         full_audio_sequence: str = getattr(processor, "full_audio_sequence")
         image_str = full_image_sequence if self.expand_mm_tokens else boi_token
-        audio_str = full_audio_sequence if self.expand_mm_tokens else boi_token
+        audio_str = full_audio_sequence if self.expand_mm_tokens else boa_token
 
         for message in messages:
             content = message["content"]
@@ -535,6 +533,8 @@ class Gemma3nPlugin(Gemma3Plugin):
 
             while AUDIO_PLACEHOLDER in content:
                 content = content.replace(AUDIO_PLACEHOLDER, audio_str, 1)
+
+            message["content"] = content
 
         return messages
 
@@ -1561,11 +1561,7 @@ class GLM4VPlugin(Qwen2VLPlugin):
             video_metadata = [
                 {"fps": 2, "duration": len(video), "total_frames": len(video)} for video in video_data["videos"]
             ]
-            mm_inputs.update(
-                video_processor(
-                    images=None, videos=video_data["videos"], video_metadata=video_metadata, return_tensors="pt"
-                )
-            )
+            mm_inputs.update(video_processor(images=None, videos=video_data["videos"], video_metadata=video_metadata))
 
         return mm_inputs
 
@@ -1589,8 +1585,9 @@ class GLM4VPlugin(Qwen2VLPlugin):
             mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
             image_grid_thw = mm_inputs.get("image_grid_thw", [])
             video_grid_thw = mm_inputs.get("video_grid_thw", [])
-            num_frames = len(video_grid_thw)
+            num_frames = video_grid_thw[0][0] if len(video_grid_thw) > 0 else 0  # hard code for now
             timestamps = mm_inputs.get("timestamps", [])
+
             if hasattr(timestamps, "tolist"):
                 timestamps = timestamps.tolist()
 
@@ -1621,19 +1618,20 @@ class GLM4VPlugin(Qwen2VLPlugin):
                 )
                 num_image_tokens += 1
 
-            # TODO: DO NOT SUPPORT VIDEO UNTIL NEXT PR
             while VIDEO_PLACEHOLDER in content:
                 video_structure = ""
                 for frame_index in range(num_frames):
-                    video_seqlen = video_grid_thw[frame_index].prod() // merge_length if self.expand_mm_tokens else 1
+                    video_seqlen = (
+                        video_grid_thw[num_video_tokens][1:].prod() // merge_length if self.expand_mm_tokens else 1
+                    )
                     timestamp_sec = selected_timestamps[frame_index]
                     frame_structure = (
                         f"<|begin_of_image|>{self.image_token * video_seqlen}<|end_of_image|>{timestamp_sec}"
                     )
                     video_structure += frame_structure
 
-                content = content.replace(VIDEO_PLACEHOLDER, video_structure, 1)
-                num_video_tokens += 1  # FIXME: num_video_tokens is not used
+                content = content.replace(VIDEO_PLACEHOLDER, f"<|begin_of_video|>{video_structure}<|end_of_video|>", 1)
+                num_video_tokens += 1
 
             message["content"] = content
 

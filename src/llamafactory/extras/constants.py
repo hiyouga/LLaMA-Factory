@@ -591,6 +591,17 @@ register_model_group(
 
 register_model_group(
     models={
+        "Devstral-Small-2507-Instruct": {
+            DownloadSource.DEFAULT: "mistralai/Devstral-Small-2507",
+            DownloadSource.MODELSCOPE: "mistralai/Devstral-Small-2507",
+        },
+    },
+    template="mistral_small",
+)
+
+
+register_model_group(
+    models={
         "EXAONE-3.0-7.8B-Instruct": {
             DownloadSource.DEFAULT: "LGAI-EXAONE/EXAONE-3.0-7.8B-Instruct",
         },
@@ -1015,6 +1026,17 @@ register_model_group(
     },
     template="granite3_vision",
     multimodal=True,
+)
+
+
+register_model_group(
+    models={
+        "Granite-4.0-tiny-preview": {
+            DownloadSource.DEFAULT: "ibm-granite/granite-4.0-tiny-preview",
+            DownloadSource.MODELSCOPE: "ibm-granite/granite-4.0-tiny-preview",
+        },
+    },
+    template="granite4",
 )
 
 

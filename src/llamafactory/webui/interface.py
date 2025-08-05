@@ -39,15 +39,13 @@ def create_ui(demo_mode: bool = False) -> "gr.Blocks":
     engine = Engine(demo_mode=demo_mode, pure_chat=False)
     hostname = os.getenv("HOSTNAME", os.getenv("COMPUTERNAME", platform.node())).split(".")[0]
 
-    with gr.Blocks(title=f"LLaMA Board ({hostname})", css=CSS) as demo:
+    with gr.Blocks(title=f"LLaMA Factory ({hostname})", css=CSS) as demo:
+        title = gr.HTML()
+        subtitle = gr.HTML()
         if demo_mode:
-            gr.HTML("<h1><center>LLaMA Board: A One-stop Web UI for Getting Started with LLaMA Factory</center></h1>")
-            gr.HTML(
-                '<h3><center>Visit <a href="https://github.com/hiyouga/LLaMA-Factory" target="_blank">'
-                "LLaMA Factory</a> for details.</center></h3>"
-            )
             gr.DuplicateButton(value="Duplicate Space for private use", elem_classes="duplicate-button")
 
+        engine.manager.add_elems("head", {"title": title, "subtitle": subtitle})
         engine.manager.add_elems("top", create_top())
         lang: gr.Dropdown = engine.manager.get_elem_by_id("top.lang")
 

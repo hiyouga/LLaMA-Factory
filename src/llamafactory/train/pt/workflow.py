@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import math
+import os
 from typing import TYPE_CHECKING, Optional
 
 from transformers import DataCollatorForLanguageModeling
@@ -42,10 +43,16 @@ def run_pt(
     finetuning_args: "FinetuningArguments",
     callbacks: Optional[list["TrainerCallback"]] = None,
 ):
+    tokenization_callbacks = [cb for cb in callbacks if hasattr(cb, 'on_tokenization_start')]
+    tokenization_callback = tokenization_callbacks[0] if tokenization_callbacks else None
+
+
+    dataset_loading_callbacks = [cb for cb in callbacks if hasattr(cb, 'on_dataset_loading_start')]
+    dataset_loading_callback = dataset_loading_callbacks[0] if dataset_loading_callbacks else None
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
     template = get_template_and_fix_tokenizer(tokenizer, data_args)
-    dataset_module = get_dataset(template, model_args, data_args, training_args, stage="pt", **tokenizer_module)
+    dataset_module = get_dataset(template, model_args, data_args, training_args, stage="pt", **tokenizer_module, tokenization_callback=tokenization_callback, dataset_loading_callback=dataset_loading_callback)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
