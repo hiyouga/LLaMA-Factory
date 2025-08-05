@@ -1014,6 +1014,7 @@ register_template(
 )
 
 
+# copied from glm4 template
 register_template(
     name="glm4_moe",
     format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>"]),
@@ -1101,7 +1102,7 @@ register_template(
     ),
     format_tools=ToolFormatter(tool_format="default"),
     stop_words=["<|end_of_text|>"],
-    default_system=("You are Granite, developed by IBM. You are a helpful AI assistant."),
+    default_system="You are Granite, developed by IBM. You are a helpful AI assistant.",
 )
 
 
