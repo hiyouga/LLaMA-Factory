@@ -118,9 +118,13 @@ Choose your path:
 
 ## Changelog
 
-[25/07/02] We supported fine-tuning the **[GLM-4.1V-9B-Thinking](https://github.com/THUDM/GLM-4.1V-Thinking)** model. Please install transformers from **main** branch to use.
+[25/08/06] We supported fine-tuning the **[GPT-OSS](https://github.com/openai/gpt-oss)** models. See [PR #8826](https://github.com/hiyouga/LLaMA-Factory/pull/8826) to get started.
+
+[25/07/02] We supported fine-tuning the **[GLM-4.1V-9B-Thinking](https://github.com/THUDM/GLM-4.1V-Thinking)** model.
 
 [25/04/28] We supported fine-tuning the **[Qwen3](https://qwenlm.github.io/blog/qwen3/)** model family.
+
+<details><summary>Full Changelog</summary>
 
 [25/04/21] We supported the **[Muon](https://github.com/KellerJordan/Muon)** optimizer. See [examples](examples/README.md) for usage. Thank [@tianshijing](https://github.com/tianshijing)'s PR.
 
@@ -129,8 +133,6 @@ Choose your path:
 [25/04/14] We supported fine-tuning the **[GLM-Z1](https://huggingface.co/THUDM/GLM-Z1-9B-0414)** and **[Kimi-VL](https://huggingface.co/moonshotai/Kimi-VL-A3B-Instruct)** models.
 
 [25/04/06] We supported fine-tuning the **[Llama 4](https://ai.meta.com/blog/llama-4-multimodal-intelligence/)** model. See [PR #7611](https://github.com/hiyouga/LLaMA-Factory/pull/7611) to get started.
-
-<details><summary>Full Changelog</summary>
 
 [25/03/31] We supported fine-tuning the **[Qwen2.5 Omni](https://qwenlm.github.io/blog/qwen2.5-omni/)** model. See [PR #7537](https://github.com/hiyouga/LLaMA-Factory/pull/7537) to get started.
 
@@ -268,6 +270,7 @@ Choose your path:
 | [GLM-4.1V](https://huggingface.co/zai-org)*                       | 9B                               | glm4v               |
 | [GLM-4.5](https://huggingface.co/zai-org)*                        | 106B/355B                        | glm4_moe            |
 | [GPT-2](https://huggingface.co/openai-community)                  | 0.1B/0.4B/0.8B/1.5B              | -                   |
+| [GPT-OSS](https://huggingface.co/openai)                          | 20B/120B                         | gpt                 |
 | [Granite 3.0-3.3](https://huggingface.co/ibm-granite)             | 1B/2B/3B/8B                      | granite3            |
 | [Granite 4](https://huggingface.co/ibm-granite)                   | 7B                               | granite4            |
 | [Hunyuan](https://huggingface.co/tencent/)                        | 7B                               | hunyuan             |
