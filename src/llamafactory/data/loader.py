@@ -16,7 +16,7 @@ import os
 from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import numpy as np
-from datasets import Dataset, load_dataset, load_from_disk
+from datasets import Dataset, Features, Value, load_dataset, load_from_disk
 
 from ..extras import logging
 from ..extras.constants import FILEEXT2TYPE
@@ -139,6 +139,7 @@ def _load_single_dataset(
             num_proc=data_args.preprocessing_num_workers,
             trust_remote_code=model_args.trust_remote_code,
             streaming=data_args.streaming and dataset_attr.load_from != "file",
+            features=Features({"text": Value(dtype="string", id=None)}),
         )
         if data_args.streaming and dataset_attr.load_from == "file":
             dataset = dataset.to_iterable_dataset(num_shards=training_args.dataloader_num_workers)
