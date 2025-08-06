@@ -62,7 +62,7 @@ class SupervisedDatasetProcessor(DatasetProcessor):
 
             if self.data_args.train_on_prompt:
                 source_label = source_ids
-            elif self.template.efficient_eos:
+            elif self.template.efficient_eos and turn_idx != 0:
                 source_label = [self.tokenizer.eos_token_id] + [IGNORE_INDEX] * (source_len - 1)
             else:
                 source_label = [IGNORE_INDEX] * source_len

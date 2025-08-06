@@ -1,6 +1,5 @@
 # core deps
-transformers>=4.49.0,<=4.52.4,!=4.52.0; sys_platform != 'darwin'
-transformers>=4.49.0,<=4.51.3,!=4.52.0; sys_platform == 'darwin'
+transformers>=4.49.0,<=4.55.0,!=4.52.0
 datasets>=2.16.0,<=3.6.0
 accelerate>=1.3.0,<=1.7.0
 peft>=0.14.0,<=0.15.2

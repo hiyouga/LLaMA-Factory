@@ -72,6 +72,11 @@ jobs:
         run: |
           python -m pip install "transformers==${{ matrix.transformers }}"
 
+      - name: Install transformers to avoid mac os ci errors
+        if: ${{ matrix.os == 'macos-13' }}
+        run: |
+          python -m pip install "transformers<=4.51.3"
+
       - name: Cache files
         id: hf-hub-cache
         uses: actions/cache@v4

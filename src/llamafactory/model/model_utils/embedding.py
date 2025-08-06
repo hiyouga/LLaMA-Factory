@@ -67,4 +67,5 @@ def resize_embedding_layer(model: "PreTrainedModel", tokenizer: "PreTrainedToken
             _noisy_mean_initialization(model.get_input_embeddings().weight.data, num_new_tokens)
             _noisy_mean_initialization(model.get_output_embeddings().weight.data, num_new_tokens)
 
+        model.config.vocab_size = new_embedding_size
         logger.info_rank0(f"Resized token embeddings from {current_embedding_size} to {new_embedding_size}.")
