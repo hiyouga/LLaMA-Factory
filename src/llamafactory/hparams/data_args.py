@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, Union
 
 
 @dataclass
@@ -35,7 +35,7 @@ class DataArguments:
         default=None,
         metadata={"help": "The name of dataset(s) to use for evaluation. Use commas to separate multiple datasets."},
     )
-    dataset_dir: str = field(
+    dataset_dir: Union[str, dict] = field(
         default="data",
         metadata={"help": "Path to the folder containing the datasets."},
     )
