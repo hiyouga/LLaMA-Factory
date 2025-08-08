@@ -96,7 +96,7 @@ class Template:
 
     def add_thought(self, content: str = "") -> str:
         r"""Add empty thought to assistant message."""
-        return f"{self.thought_words[0]}\n\n{self.thought_words[1]}\n\n" + content
+        return f"{self.thought_words[0]}{self.thought_words[1]}" + content
 
     def remove_thought(self, content: str) -> str:
         r"""Remove thought from assistant message."""
@@ -518,7 +518,7 @@ def register_template(
         format_prefix=format_prefix or default_prefix_formatter,
         default_system=default_system,
         stop_words=stop_words or [],
-        thought_words=thought_words or ("<think>", "</think>"),
+        thought_words=thought_words or ("<think>\n", "\n</think>\n\n"),
         efficient_eos=efficient_eos,
         replace_eos=replace_eos,
         replace_jinja_template=replace_jinja_template,
@@ -579,7 +579,7 @@ def parse_template(tokenizer: "PreTrainedTokenizer") -> "Template":
         format_prefix=EmptyFormatter(slots=[prefix]) if prefix else EmptyFormatter(),
         default_system=default_system,
         stop_words=[],
-        thought_words=("<think>", "</think>"),
+        thought_words=("<think>\n", "\n</think>\n\n"),
         efficient_eos=False,
         replace_eos=False,
         replace_jinja_template=False,
@@ -1731,6 +1731,22 @@ register_template(
     stop_words=["<|im_end|>"],
     replace_eos=True,
     template_class=ReasoningTemplate,
+)
+
+
+# copied from qwen template
+register_template(
+    name="qwen3_nothink",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_function=FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="qwen"),
+    format_observation=StringFormatter(
+        slots=["<|im_start|>user\n<tool_response>\n{{content}}\n</tool_response><|im_end|>\n<|im_start|>assistant\n"]
+    ),
+    format_tools=ToolFormatter(tool_format="qwen"),
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
 )
 
 
