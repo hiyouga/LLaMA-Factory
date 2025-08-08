@@ -94,25 +94,33 @@ def get_dataset_list(dataset_names: Optional[list[str]], dataset_dir: Union[str,
     r"""Get the attributes of the datasets."""
     if dataset_names is None:
         dataset_names = []
-
     if isinstance(dataset_dir, dict):
         dataset_info = dataset_dir
-    elif dataset_dir == "ONLINE":
-        dataset_info = None
-    else:
-        if dataset_dir.startswith("REMOTE:"):
-            config_path = hf_hub_download(repo_id=dataset_dir[7:], filename=DATA_CONFIG, repo_type="dataset")
-        else:
-            config_path = os.path.join(dataset_dir, DATA_CONFIG)
-
+    elif isinstance(dataset_dir, str):
         try:
-            with open(config_path) as f:
-                dataset_info = json.load(f)
-        except Exception as err:
-            if len(dataset_names) != 0:
-                raise ValueError(f"Cannot open {config_path} due to {str(err)}.")
+            # Try to interpret string as JSON dictionary
+            parsed = json.loads(dataset_dir)
+            if isinstance(parsed, dict):
+                dataset_info = parsed
+            else:
+                raise ValueError  # fallback to other logic
+        except (json.JSONDecodeError, ValueError):
+            if dataset_dir == "ONLINE":
+                dataset_info = None
+            else:
+                if dataset_dir.startswith("REMOTE:"):
+                    config_path = hf_hub_download(repo_id=dataset_dir[7:], filename=DATA_CONFIG, repo_type="dataset")
+                else:
+                    config_path = os.path.join(dataset_dir, DATA_CONFIG)
 
-            dataset_info = None
+                try:
+                    with open(config_path) as f:
+                        dataset_info = json.load(f)
+                except Exception as err:
+                    if len(dataset_names) != 0:
+                        raise ValueError(f"Cannot open {config_path} due to {str(err)}.")
+
+                    dataset_info = None
 
     dataset_list: list[DatasetAttr] = []
     for name in dataset_names:
