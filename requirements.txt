@@ -19,6 +19,7 @@ sentencepiece
 tiktoken
 modelscope>=1.14.0
 hf-transfer
+safetensors<=0.5.3
 # python
 fire
 omegaconf
