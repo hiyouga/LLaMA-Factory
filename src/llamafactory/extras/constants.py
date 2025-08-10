@@ -911,8 +911,8 @@ register_model_group(
 
 register_model_group(
     models={
-        "GLM4.5V-Air-Thinking":{
-            DownloadSource.DEFAULT: "ZhipuAI/GLM-4.5V",
+        "GLM-4.5V-Air-Thinking":{
+            DownloadSource.DEFAULT: "zai-org/GLM-4.5V",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.5V",
         }
     },
