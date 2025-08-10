@@ -1067,8 +1067,21 @@ register_template(
     name="gpt",
     format_user=StringFormatter(slots=["<|start|>user<|message|>{{content}}<|end|><|start|>assistant"]),
     format_assistant=StringFormatter(slots=["{{content}}<|end|>"]),
-    format_system=StringFormatter(slots=["<|start|>system<|message|>{{content}}<|end|>"]),
-    default_system="You are ChatGPT, a large language model trained by OpenAI.",
+    format_system=StringFormatter(
+        slots=[
+            "<|start|>system<|message|>You are ChatGPT, a large language model trained by OpenAI.\n"
+            "Knowledge cutoff: 2024-06\n"
+            "Reasoning: medium\n\n"
+            "# Valid channels: analysis, commentary, final. Channel must be included for every message.<|end|>"
+            "<|start|>developer<|message|># Instructions\n\n{{content}}<|end|>"
+        ]
+    ),
+    default_system=(
+        "You are ChatGPT, a large language model trained by OpenAI.\n"
+        "Knowledge cutoff: 2024-06\n"
+        "Reasoning: medium\n\n"
+        "# Valid channels: analysis, commentary, final. Channel must be included for every message."
+    ),
     thought_words=("<|channel|>analysis<|message|>", "<|end|><|start|>assistant<|channel|>final<|message|>"),
     efficient_eos=True,
     template_class=ReasoningTemplate,
