@@ -911,6 +911,18 @@ register_model_group(
 
 register_model_group(
     models={
+        "GLM4.5V-Air-Thinking":{
+            DownloadSource.DEFAULT: "ZhipuAI/GLM-4.5V",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.5V",
+        }
+    },
+    template="glm45v",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
         "GLM-Z1-0414-9B-Chat": {
             DownloadSource.DEFAULT: "zai-org/GLM-Z1-9B-0414",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-Z1-9B-0414",
