@@ -2767,10 +2767,6 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen3-4B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-4B",
         },
-        "Qwen3-4B-Instruct-2507": {
-            DownloadSource.DEFAULT: "Qwen/Qwen3-4B-Instruct-2507",
-            DownloadSource.MODELSCOPE: "Qwen/Qwen3-4B-Instruct-2507",
-        },
         "Qwen3-4B-Thinking-2507": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-4B-Thinking-2507",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-4B-Thinking-2507",
@@ -2791,10 +2787,6 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B",
         },
-        "Qwen3-30B-A3B-Instruct-2507": {
-            DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B-Instruct-2507",
-            DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B-Instruct-2507",
-        },
         "Qwen3-30B-A3B-Thinking-2507": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B-Thinking-2507",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B-Thinking-2507",
@@ -2802,10 +2794,6 @@ register_model_group(
         "Qwen3-235B-A22B-Thinking": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B",
-        },
-        "Qwen3-235B-A22B-Instruct-2507": {
-            DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B-Instruct-2507",
-            DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B-Instruct-2507",
         },
         "Qwen3-235B-A22B-Thinking-2507": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B-Thinking-2507",
@@ -2845,6 +2833,25 @@ register_model_group(
         },
     },
     template="qwen3",
+)
+
+
+register_model_group(
+    models={
+        "Qwen3-4B-Instruct-2507": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-4B-Instruct-2507",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-4B-Instruct-2507",
+        },
+        "Qwen3-30B-A3B-Instruct-2507": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B-Instruct-2507",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B-Instruct-2507",
+        },
+        "Qwen3-235B-A22B-Instruct-2507": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B-Instruct-2507",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        },
+    },
+    template="qwen3_nothink",
 )
 
 
