@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal, Optional
 
 
 @dataclass
