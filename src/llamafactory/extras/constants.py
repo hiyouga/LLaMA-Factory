@@ -896,16 +896,28 @@ register_model_group(
             DownloadSource.DEFAULT: "zai-org/GLM-4.5-Base",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.5-Base",
         },
-        "GLM-4.5-Air-Chat": {
+        "GLM-4.5-Air-Thinking": {
             DownloadSource.DEFAULT: "zai-org/GLM-4.5-Air",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.5-Air",
         },
-        "GLM-4.5-Chat": {
+        "GLM-4.5-Thinking": {
             DownloadSource.DEFAULT: "zai-org/GLM-4.5",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.5",
         },
     },
     template="glm4_moe",
+)
+
+
+register_model_group(
+    models={
+        "GLM-4.5V-Air-Thinking":{
+            DownloadSource.DEFAULT: "zai-org/GLM-4.5V",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.5V",
+        }
+    },
+    template="glm45v",
+    multimodal=True,
 )
 
 
