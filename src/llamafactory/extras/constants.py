@@ -911,12 +911,12 @@ register_model_group(
 
 register_model_group(
     models={
-        "GLM-4.5V-Air-Thinking":{
+        "GLM-4.5V-Air-Thinking": {
             DownloadSource.DEFAULT: "zai-org/GLM-4.5V",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.5V",
         }
     },
-    template="glm45v",
+    template="glm4v_moe",
     multimodal=True,
 )
 

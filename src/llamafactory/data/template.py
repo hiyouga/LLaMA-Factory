@@ -1047,8 +1047,9 @@ register_template(
 )
 
 
+# copied from glm4 template
 register_template(
-    name="glm45v",
+    name="glm4v_moe",
     format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>"]),
     format_assistant=StringFormatter(slots=["\n{{content}}"]),
     format_system=StringFormatter(slots=["<|system|>\n{{content}}"]),
