@@ -107,6 +107,12 @@ class DataArguments:
         default=None,
         metadata={"help": "Enable sequences packing in training. Will automatically enable in pre-training."},
     )
+    shuffle_for_sequence_parallel: bool = field(
+        default=True,
+        metadata={
+            "help": "Shuffle dataset before sequence parallel preprocessing (should shuffle before pad & split)."
+        },
+    )
     neat_packing: bool = field(
         default=False,
         metadata={"help": "Enable sequence packing without cross-attention."},

@@ -304,6 +304,27 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
     if model_args.use_unsloth and is_deepspeed_zero3_enabled():
         raise ValueError("Unsloth is incompatible with DeepSpeed ZeRO-3.")
 
+    if data_args.cutoff_len % model_args.sequence_parallel_size != 0:
+        raise ValueError("cutoff_len must be a multiple of sequence_parallel_size.")
+
+    if model_args.sequence_parallel_size > 1:
+        if (data_args.cutoff_len // model_args.sequence_parallel_size) % 8 != 0:
+            tmp_sp_len = data_args.cutoff_len // model_args.sequence_parallel_size
+            closest_cutoff_len = int((tmp_sp_len + (8 - tmp_sp_len % 8)) * model_args.sequence_parallel_size)
+            logger.warning_rank0(
+                f"cutoff_len must be a multiple of 8 after dividing sequence_parallel_size. With sequence parallel, we first pad to cutoff_len and then split the sequence. \nAll the DataCollators pad to multiple of 8, which is hard-coded in LLaMA-Factory. If the splitted sequences are not already mutliple of 8, padding it to be would effectively change the original sequence and is wrong. \nWe automatically increase the cutoff_len = {data_args.cutoff_len} you set to the larger but closest number satifying this condition to be {closest_cutoff_len}."
+            )
+            data_args.cutoff_len = closest_cutoff_len
+
+        if model_args.sequence_parallel_mode == "zigzag-ring" and data_args.neat_packing:
+            raise ValueError(
+                "zigzag ring attention does not support neat_packing. Disable neat_packing or use other sequence_parallel_mode."
+            )
+
+    if data_args.neat_packing and not data_args.packing:
+        logger.warning_rank0("`neat_packing` requires `packing` is True. Change `packing` to True.")
+        data_args.packing = True
+
     _set_env_vars()
     _verify_model_args(model_args, data_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args, training_args)

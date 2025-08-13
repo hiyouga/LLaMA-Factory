@@ -71,6 +71,7 @@ extra_require = {
     "openmind": ["openmind"],
     "swanlab": ["swanlab"],
     "dev": ["pre-commit", "ruff", "pytest", "build"],
+    "sp": ["ring-flash-attn", "flash-attn>=2.6.1", "yunchang"],
 }
 
 

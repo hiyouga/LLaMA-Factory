@@ -51,7 +51,7 @@ def patch_tokenizer(tokenizer: "PreTrainedTokenizer", model_args: "ModelArgument
     if "PreTrainedTokenizerBase" not in str(tokenizer._pad.__func__):
         tokenizer._pad = MethodType(PreTrainedTokenizerBase._pad, tokenizer)
 
-    if model_args.model_max_length is not None and tokenizer.model_max_length < model_args.model_max_length:
+    if model_args.model_max_length is not None and tokenizer.model_max_length != model_args.model_max_length:
         tokenizer.model_max_length = model_args.model_max_length  # enlarge the tokenizer max length
 
     if model_args.add_tokens is not None:

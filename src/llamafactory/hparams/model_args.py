@@ -111,6 +111,16 @@ class BaseModelArguments:
         default=False,
         metadata={"help": "Whether or not to enable liger kernel for faster training."},
     )
+    sequence_parallel_size: int = field(
+        default=1,
+        metadata={
+            "help": "Number of GPUs to process one data sequence. Values greater than 1 means enabling sequence parallelism."
+        },
+    )
+    sequence_parallel_mode: Literal["zigzag-ring", "llama3", "ulysses"] = field(
+        default="zigzag-ring",
+        metadata={"help": "Specific mode of sequence parallel implementation."},
+    )
     moe_aux_loss_coef: Optional[float] = field(
         default=None,
         metadata={"help": "Coefficient of the auxiliary router loss in mixture-of-experts model."},

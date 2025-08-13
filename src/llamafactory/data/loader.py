@@ -31,6 +31,8 @@ from .processor import (
     PretrainDatasetProcessor,
     SupervisedDatasetProcessor,
     UnsupervisedDatasetProcessor,
+    SequenceParallelPaddingProcessor,
+    SequenceParallelSplitProcessor,
 )
 
 
@@ -227,6 +229,25 @@ def _get_dataset_processor(
     return dataset_processor_class(template=template, tokenizer=tokenizer, processor=processor, data_args=data_args)
 
 
+def _get_sequence_parallel_processor(
+    data_args: "DataArguments",
+    model_args: "ModelArguments",
+    stage: Literal["pad", "split"],
+    tokenizer: "PreTrainedTokenizer",
+) -> "DatasetProcessor":
+    r"""
+    Returns the corresponding sequence parallel processor.
+    """
+    if stage == 'pad':
+        dataset_processor_class = SequenceParallelPaddingProcessor
+    elif stage == 'split':
+        dataset_processor_class = SequenceParallelSplitProcessor
+    else:
+        raise NotImplementedError(f"Unexpected stage in sequence_parallel_preprocess: {stage}")
+
+    return dataset_processor_class(tokenizer=tokenizer, data_args=data_args, model_args=model_args)
+
+
 def _get_preprocessed_dataset(
     dataset: Optional[Union["Dataset", "IterableDataset"]],
     data_args: "DataArguments",
@@ -272,6 +293,42 @@ def _get_preprocessed_dataset(
                 raise RuntimeError("Cannot find valid samples, check `data/README.md` for the data format.")
 
     return dataset
+
+
+def _get_sequence_parallel_dataset(
+    dataset: Optional[Union["Dataset", "IterableDataset"]],
+    data_args: "DataArguments",
+    model_args: "ModelArguments",
+    training_args: "Seq2SeqTrainingArguments",
+    tokenizer: "PreTrainedTokenizer",
+    is_eval: bool = False,
+) -> Optional[Union["Dataset", "IterableDataset"]]:
+    if data_args.shuffle_for_sequence_parallel:
+        dataset = dataset.shuffle(seed=training_args.seed)
+    kwargs = dict(
+        num_proc=data_args.preprocessing_num_workers,
+        load_from_cache_file=(not data_args.overwrite_cache) or (training_args.local_process_index != 0),
+        desc="Running padding split on dataset",
+    )
+    pad_dataset_processor = _get_sequence_parallel_processor(
+        data_args=data_args, model_args=model_args, stage="pad", tokenizer=tokenizer
+    )
+    padded_dataset = dataset.map(
+        pad_dataset_processor.preprocess_dataset, batched=True, batch_size=data_args.preprocessing_batch_size, **kwargs
+    )
+    first_data = padded_dataset[0]  # datasets 库支持索引访问
+    kwargs = dict(
+        num_proc=data_args.preprocessing_num_workers,
+        load_from_cache_file=(not data_args.overwrite_cache) or (training_args.local_process_index != 0),
+        desc="Running sequence parallel split on dataset",
+    )
+    split_dataset_processor = _get_sequence_parallel_processor(
+        data_args=data_args, model_args=model_args, stage="split", tokenizer=tokenizer
+    )
+    sp_dataset = padded_dataset.map(
+        split_dataset_processor.preprocess_dataset, batched=True, batch_size=data_args.preprocessing_batch_size, **kwargs
+    )
+    return sp_dataset
 
 
 def get_dataset(
@@ -324,6 +381,15 @@ def get_dataset(
             eval_dataset = _get_preprocessed_dataset(
                 eval_dataset, data_args, training_args, stage, template, tokenizer, processor, is_eval=True
             )
+        
+        if model_args.sequence_parallel_size > 1:
+            dataset = _get_sequence_parallel_dataset(
+                dataset, data_args, model_args, training_args, tokenizer, is_eval=False
+            )
+            if eval_dataset is not None:
+                eval_dataset = _get_sequence_parallel_dataset(
+                    eval_dataset, data_args, model_args, training_args, tokenizer, is_eval=True
+                )
 
         dataset_dict = split_dataset(dataset, eval_dataset, data_args, seed=training_args.seed)
         if data_args.tokenized_path is not None:  # save tokenized dataset to disk
