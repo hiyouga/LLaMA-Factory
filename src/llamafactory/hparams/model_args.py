@@ -113,7 +113,9 @@ class BaseModelArguments:
     )
     fp8: bool = field(
         default=False,
-        metadata={"help": "Enable FP8 mixed precision training via torchao. Requires PyTorch 2.7+ and Hopper architecture GPUs."},
+        metadata={
+            "help": "Enable FP8 mixed precision training via torchao. Requires PyTorch 2.7+ and Hopper architecture GPUs."
+        },
     )
     fp8_enable_fsdp_float8_all_gather: bool = field(
         default=False,

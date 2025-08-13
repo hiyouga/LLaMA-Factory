@@ -6,9 +6,26 @@ from functools import partial
 import torch.distributed as dist
 import transformers
 import transformers.modeling_flash_attention_utils
-from ring_flash_attn import zigzag_ring_flash_attn_func
-from yunchang import UlyssesAttention
-from yunchang.kernels import AttnType
+
+
+try:
+    from ring_flash_attn import zigzag_ring_flash_attn_func
+
+    RING_FLASH_ATTN_AVAILABLE = True
+except ImportError:
+    RING_FLASH_ATTN_AVAILABLE = False
+    zigzag_ring_flash_attn_func = None
+
+try:
+    from yunchang import UlyssesAttention
+    from yunchang.kernels import AttnType
+
+    YUNCHANG_AVAILABLE = True
+except ImportError:
+    YUNCHANG_AVAILABLE = False
+    UlyssesAttention = None
+    AttnType = None
+
 
 def new_flash_attn_forward(
     query_states,
@@ -25,12 +42,20 @@ def new_flash_attn_forward(
     **kwargs,
 ):
     if mode == "zigzag-ring":
+        if not RING_FLASH_ATTN_AVAILABLE:
+            raise ImportError(
+                "ring-flash-attn is required for zigzag-ring mode. Please install it with: pip install ring-flash-attn flash-attn"
+            )
         attn_output = zigzag_ring_flash_attn_func(
             query_states, key_states, value_states, dropout, deterministic=deterministic, causal=is_causal, group=group
         )
     elif mode == "ulysses":
+        if not YUNCHANG_AVAILABLE:
+            raise ImportError("yunchang is required for ulysses mode. Please install it with: pip install yunchang")
         dist_attn = UlyssesAttention(sequence_process_group=group, attn_type=AttnType.FA)
-        attn_output = dist_attn(query_states, key_states, value_states, deterministic=deterministic, dropout_p=dropout, causal=is_causal)
+        attn_output = dist_attn(
+            query_states, key_states, value_states, deterministic=deterministic, dropout_p=dropout, causal=is_causal
+        )
     else:
         raise NotImplementedError("Other sequence parallel modes are to be implemented.")
 
@@ -56,16 +81,34 @@ def apply_sequence_parallel(model_args, full_determinism=False):
     if model_args.sequence_parallel_size == 1:
         return None  # no sequence parallelism
 
+    # Check dependencies based on mode
+    if model_args.sequence_parallel_mode == "zigzag-ring" and not RING_FLASH_ATTN_AVAILABLE:
+        raise ImportError(
+            "ring-flash-attn is required for zigzag-ring mode. Please install it with: pip install ring-flash-attn flash-attn"
+        )
+    elif model_args.sequence_parallel_mode == "ulysses" and not YUNCHANG_AVAILABLE:
+        raise ImportError("yunchang is required for ulysses mode. Please install it with: pip install yunchang")
+
     # init sequence-parallel groups here
     group_this = init_sp_group(model_args.sequence_parallel_size)
 
     try:
         # old_flash_attention_forward = transformers.modeling_flash_attention_utils._flash_attention_forward
         if model_args.sequence_parallel_mode == "zigzag-ring":
-            new_flash_attention_forward = partial(new_flash_attn_forward, group=group_this, mode=model_args.sequence_parallel_mode, deterministic=full_determinism)
+            new_flash_attention_forward = partial(
+                new_flash_attn_forward,
+                group=group_this,
+                mode=model_args.sequence_parallel_mode,
+                deterministic=full_determinism,
+            )
             # assert check_params(old_flash_attention_forward, new_flash_attention_forward)
         elif model_args.sequence_parallel_mode == "ulysses":
-            new_flash_attention_forward = partial(new_flash_attn_forward, group=group_this, mode=model_args.sequence_parallel_mode, deterministic=full_determinism)
+            new_flash_attention_forward = partial(
+                new_flash_attn_forward,
+                group=group_this,
+                mode=model_args.sequence_parallel_mode,
+                deterministic=full_determinism,
+            )
         else:
             raise NotImplementedError("Other sequence parallel modes are to be implemented.")
 

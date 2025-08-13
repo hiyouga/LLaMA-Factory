@@ -16,9 +16,10 @@ from .feedback import FeedbackDatasetProcessor
 from .pairwise import PairwiseDatasetProcessor
 from .pretrain import PretrainDatasetProcessor
 from .processor_utils import DatasetProcessor
+from .sequence_parallel import SequenceParallelPaddingProcessor, SequenceParallelSplitProcessor
 from .supervised import PackedSupervisedDatasetProcessor, SupervisedDatasetProcessor
 from .unsupervised import UnsupervisedDatasetProcessor
-from .sequence_parallel import SequenceParallelPaddingProcessor, SequenceParallelSplitProcessor
+
 
 __all__ = [
     "DatasetProcessor",
@@ -26,8 +27,8 @@ __all__ = [
     "PackedSupervisedDatasetProcessor",
     "PairwiseDatasetProcessor",
     "PretrainDatasetProcessor",
+    "SequenceParallelPaddingProcessor",
+    "SequenceParallelSplitProcessor",
     "SupervisedDatasetProcessor",
     "UnsupervisedDatasetProcessor",
-    "SequenceParallelPaddingProcessor",
-    "SequenceParallelSplitProcessor"
 ]

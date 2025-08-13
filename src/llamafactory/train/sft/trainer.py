@@ -116,8 +116,8 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
     @override
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        r"""
-        Fixes the loss value for transformers 4.46.0.
+        r"""Fixes the loss value for transformers 4.46.0.
+
         https://github.com/huggingface/transformers/blob/v4.46.0/src/transformers/trainer.py#L3605
         """
         if model.sequence_parallel_group is None:  # no sequence parallel, compute as it is

@@ -24,7 +24,6 @@ from typing import TYPE_CHECKING, Literal, Optional, Union
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
-from torch.utils.data import SequentialSampler
 from transformers import Trainer
 from trl import DPOTrainer
 from trl.trainer import disable_dropout_in_model
@@ -192,10 +191,10 @@ class CustomDPOTrainer(DPOTrainer):
 
         all_logits: torch.Tensor = model(**batch, return_dict=True, use_cache=False).logits.to(torch.float32)
         all_logps, valid_length = get_batch_logps(
-            logits=all_logits, 
-            labels=batch["labels"], 
+            logits=all_logits,
+            labels=batch["labels"],
             ld_alpha=(self.ld_alpha if not is_ref_model else None),
-            shift_labels=model.sequence_parallel_group is None
+            shift_labels=model.sequence_parallel_group is None,
         )  # shift labels if no sequence parallel
         if self.loss_type in ["ipo", "orpo", "simpo"]:
             all_logps = all_logps / valid_length

@@ -29,10 +29,10 @@ from .processor import (
     PackedSupervisedDatasetProcessor,
     PairwiseDatasetProcessor,
     PretrainDatasetProcessor,
-    SupervisedDatasetProcessor,
-    UnsupervisedDatasetProcessor,
     SequenceParallelPaddingProcessor,
     SequenceParallelSplitProcessor,
+    SupervisedDatasetProcessor,
+    UnsupervisedDatasetProcessor,
 )
 
 
@@ -235,12 +235,10 @@ def _get_sequence_parallel_processor(
     stage: Literal["pad", "split"],
     tokenizer: "PreTrainedTokenizer",
 ) -> "DatasetProcessor":
-    r"""
-    Returns the corresponding sequence parallel processor.
-    """
-    if stage == 'pad':
+    r"""Returns the corresponding sequence parallel processor."""
+    if stage == "pad":
         dataset_processor_class = SequenceParallelPaddingProcessor
-    elif stage == 'split':
+    elif stage == "split":
         dataset_processor_class = SequenceParallelSplitProcessor
     else:
         raise NotImplementedError(f"Unexpected stage in sequence_parallel_preprocess: {stage}")
@@ -316,7 +314,6 @@ def _get_sequence_parallel_dataset(
     padded_dataset = dataset.map(
         pad_dataset_processor.preprocess_dataset, batched=True, batch_size=data_args.preprocessing_batch_size, **kwargs
     )
-    first_data = padded_dataset[0]  # datasets 库支持索引访问
     kwargs = dict(
         num_proc=data_args.preprocessing_num_workers,
         load_from_cache_file=(not data_args.overwrite_cache) or (training_args.local_process_index != 0),
@@ -326,7 +323,10 @@ def _get_sequence_parallel_dataset(
         data_args=data_args, model_args=model_args, stage="split", tokenizer=tokenizer
     )
     sp_dataset = padded_dataset.map(
-        split_dataset_processor.preprocess_dataset, batched=True, batch_size=data_args.preprocessing_batch_size, **kwargs
+        split_dataset_processor.preprocess_dataset,
+        batched=True,
+        batch_size=data_args.preprocessing_batch_size,
+        **kwargs,
     )
     return sp_dataset
 
@@ -381,7 +381,7 @@ def get_dataset(
             eval_dataset = _get_preprocessed_dataset(
                 eval_dataset, data_args, training_args, stage, template, tokenizer, processor, is_eval=True
             )
-        
+
         if model_args.sequence_parallel_size > 1:
             dataset = _get_sequence_parallel_dataset(
                 dataset, data_args, model_args, training_args, tokenizer, is_eval=False

@@ -17,11 +17,10 @@ from ...extras.constants import IGNORE_INDEX
 from ..data_utils import preprocess_sp_dataset
 from .processor_utils import SequenceParallelProcessor
 
+
 class SequenceParallelPaddingProcessor(SequenceParallelProcessor):
     def preprocess_dataset(self, examples: dict[str, list[Any]]) -> dict[str, list[Any]]:
-        r"""
-        Pad sequence
-        """
+        r"""Pad sequence."""
         max_length = self.data_args.cutoff_len
         input_pad_token_id = self.tokenizer.pad_token_id
         assert self.data_args.ignore_pad_token_for_loss
@@ -53,17 +52,17 @@ class SequenceParallelPaddingProcessor(SequenceParallelProcessor):
 
 class SequenceParallelSplitProcessor(SequenceParallelProcessor):
     def preprocess_dataset(self, examples: dict[str, list[Any]]) -> dict[str, list[Any]]:
-        r"""
-        split dataset
-        """
+        r"""Split dataset."""
         for k, v in examples.items():
             chunks = list()
             for row in v:
                 if row is None:
                     chunks.extend([None] * self.model_args.sequence_parallel_size)
                 else:
-                    chunks.extend(preprocess_sp_dataset(
-                        row, self.model_args.sequence_parallel_size, self.model_args.sequence_parallel_mode
-                    ))
+                    chunks.extend(
+                        preprocess_sp_dataset(
+                            row, self.model_args.sequence_parallel_size, self.model_args.sequence_parallel_mode
+                        )
+                    )
             examples[k] = chunks
         return examples

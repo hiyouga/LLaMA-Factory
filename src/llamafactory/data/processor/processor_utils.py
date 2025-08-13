@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any, Optional
 if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer, ProcessorMixin
 
-    from ...hparams import DataArguments
+    from ...hparams import DataArguments, ModelArguments
     from ..template import Template
 
 
@@ -44,11 +44,10 @@ class DatasetProcessor(ABC):
         r"""Print a data example to stdout."""
         ...
 
+
 @dataclass
 class SequenceParallelProcessor(ABC):
-    r"""
-    A class for data processors.
-    """
+    r"""A class for data processors."""
 
     tokenizer: "PreTrainedTokenizer"
     data_args: "DataArguments"
@@ -56,9 +55,7 @@ class SequenceParallelProcessor(ABC):
 
     @abstractmethod
     def preprocess_dataset(self, examples: dict[str, list[Any]]) -> dict[str, list[Any]]:
-        r"""
-        Builds model inputs from the examples.
-        """
+        r"""Builds model inputs from the examples."""
         ...
 
 
