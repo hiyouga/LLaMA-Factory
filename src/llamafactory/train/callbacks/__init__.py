@@ -12,7 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Import existing callbacks from the parent callbacks.py module
+from .. import callbacks as _parent_callbacks
+
+# Import our new callbacks
 from .qat import QATCallback, get_qat_callback
 
+# Re-export all callbacks from the parent module
+LogCallback = _parent_callbacks.LogCallback
+PissaConvertCallback = _parent_callbacks.PissaConvertCallback
+ReporterCallback = _parent_callbacks.ReporterCallback
+FixValueHeadModelCallback = _parent_callbacks.FixValueHeadModelCallback
+SaveProcessorCallback = _parent_callbacks.SaveProcessorCallback
 
-__all__ = ["QATCallback", "get_qat_callback"]
+__all__ = [
+    "LogCallback",
+    "PissaConvertCallback", 
+    "ReporterCallback",
+    "FixValueHeadModelCallback",
+    "SaveProcessorCallback",
+    "QATCallback",
+    "get_qat_callback",
+]
