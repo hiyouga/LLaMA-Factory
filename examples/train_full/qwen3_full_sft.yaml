@@ -10,7 +10,7 @@
 #   llamafactory-cli train qwen3_full_sft.yaml
 
 ### model
-model_name_or_path: Qwen/Qwen3-8B-Instruct
+model_name_or_path: Qwen/Qwen3-8B
 trust_remote_code: true
 rope_scaling: yarn  # YARN RoPE scaling - factor will be computed automatically
 flash_attn: auto
