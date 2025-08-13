@@ -362,6 +362,10 @@
       "system_tag": "system"
     }
   },
+  "tbench_traces_sharegptv1": {
+    "hf_hub_url": "mlfoundations-dev/tbench_traces_local_sharegptv1",
+    "formatting": "sharegpt"
+  },
   "chinese_r1_distill": {
     "hf_hub_url": "Congliu/Chinese-DeepSeek-R1-Distill-data-110k-SFT",
     "ms_hub_url": "liucong/Chinese-DeepSeek-R1-Distill-data-110k-SFT"
