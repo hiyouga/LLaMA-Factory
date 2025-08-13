@@ -20,6 +20,7 @@ from llamafactory.train.callbacks_module import (
     PissaConvertCallback,
     ReporterCallback,
     SaveProcessorCallback,
+    fix_valuehead_checkpoint,
 )
 
 # Import our new callbacks
@@ -33,5 +34,6 @@ __all__ = [
     "QATCallback",
     "ReporterCallback",
     "SaveProcessorCallback",
+    "fix_valuehead_checkpoint",
     "get_qat_callback",
 ]
