@@ -5,6 +5,8 @@ accelerate>=1.3.0,<=1.7.0
 peft>=0.14.0,<=0.15.2
 trl>=0.8.6,<=0.9.6
 tokenizers>=0.19.0,<=0.21.1
+# advanced training features
+torchao>=0.8.0
 # gui
 gradio>=4.38.0,<=5.31.0
 matplotlib>=3.7.0

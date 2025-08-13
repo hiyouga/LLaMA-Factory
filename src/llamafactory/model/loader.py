@@ -31,6 +31,7 @@ from trl import AutoModelForCausalLMWithValueHead
 from ..extras import logging
 from ..extras.misc import count_parameters, skip_check_imports, try_download_model_from_other_hub
 from .adapter import init_adapter
+from .model_utils.advanced_training import apply_fp8_optimization, apply_hf_kernels, prepare_model_for_qat
 from .model_utils.liger_kernel import apply_liger_kernel
 from .model_utils.misc import register_autoclass
 from .model_utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
@@ -191,6 +192,17 @@ def load_model(
     if not lazy_load:
         patch_model(model, tokenizer, model_args, is_trainable, add_valuehead)
         register_autoclass(config, model, tokenizer)
+
+    # Apply advanced training optimizations
+    if is_trainable:
+        # Apply QAT preparation if enabled
+        model = prepare_model_for_qat(model, model_args)
+        
+        # Apply FP8 optimization if enabled  
+        apply_fp8_optimization(model, model_args)
+        
+        # Apply HuggingFace kernels if enabled
+        apply_hf_kernels(model, model_args)
 
     model = init_adapter(config, model, model_args, finetuning_args, is_trainable)
 

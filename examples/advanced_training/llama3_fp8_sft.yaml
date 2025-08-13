@@ -1,0 +1,56 @@
+# Example configuration for FP8 training with LLaMA-3
+# Requires PyTorch 2.7+ and Hopper architecture GPUs (H100, H200)
+
+### Model
+model_name_or_path: meta-llama/Llama-3.2-3B-Instruct
+trust_remote_code: true
+
+### Method
+stage: sft
+do_train: true
+finetuning_type: lora
+lora_target: all
+lora_rank: 8
+lora_alpha: 16
+lora_dropout: 0.05
+
+### Dataset  
+dataset: alpaca_en
+template: llama3
+cutoff_len: 1024
+max_samples: 1000
+overwrite_cache: true
+preprocessing_num_workers: 16
+
+### Output
+output_dir: ./saves/llama3-3b-fp8-sft
+logging_steps: 10
+save_steps: 500
+save_total_limit: 2
+plot_loss: true
+overwrite_output_dir: true
+
+### Train
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 4
+learning_rate: 5.0e-5
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+
+### FP8 Configuration
+fp8: true                               # Enable FP8 training via torchao
+fp8_enable_fsdp_float8_all_gather: true # Enable FP8 FSDP optimizations
+torch_compile: true                     # Enable torch.compile for better performance
+
+### Advanced Options
+use_liger_kernel: true                  # Use Liger kernels for additional optimization
+flash_attn: auto                        # Use FlashAttention
+
+### Eval
+val_size: 0.1
+per_device_eval_batch_size: 1
+eval_strategy: steps
+eval_steps: 250

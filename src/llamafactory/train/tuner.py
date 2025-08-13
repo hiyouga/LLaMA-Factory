@@ -28,6 +28,7 @@ from ..extras.packages import is_ray_available
 from ..hparams import get_infer_args, get_ray_args, get_train_args, read_args
 from ..model import load_model, load_tokenizer
 from .callbacks import LogCallback, PissaConvertCallback, ReporterCallback
+from .callbacks.qat import get_qat_callback
 from .dpo import run_dpo
 from .kto import run_kto
 from .ppo import run_ppo
@@ -60,6 +61,11 @@ def _training_function(config: dict[str, Any]) -> None:
 
     if finetuning_args.use_swanlab:
         callbacks.append(get_swanlab_callback(finetuning_args))
+
+    # Add QAT callback if enabled
+    qat_callback = get_qat_callback(model_args)
+    if qat_callback is not None:
+        callbacks.append(qat_callback)
 
     if finetuning_args.early_stopping_steps is not None:
         callbacks.append(EarlyStoppingCallback(early_stopping_patience=finetuning_args.early_stopping_steps))

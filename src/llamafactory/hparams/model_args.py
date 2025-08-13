@@ -111,6 +111,22 @@ class BaseModelArguments:
         default=False,
         metadata={"help": "Whether or not to enable liger kernel for faster training."},
     )
+    fp8: bool = field(
+        default=False,
+        metadata={"help": "Enable FP8 mixed precision training via torchao. Requires PyTorch 2.7+ and Hopper architecture GPUs."},
+    )
+    fp8_enable_fsdp_float8_all_gather: bool = field(
+        default=False,
+        metadata={"help": "Enable FP8 optimizations for FSDP2 all-gather operations."},
+    )
+    use_kernels: bool = field(
+        default=False,
+        metadata={"help": "Enable Huggingface kernels package for optimized operations."},
+    )
+    kernel_name: Optional[str] = field(
+        default=None,
+        metadata={"help": "Specific kernel to load from HuggingFace Hub (e.g., 'kernels-community/activation')."},
+    )
     sequence_parallel_size: int = field(
         default=1,
         metadata={
@@ -222,6 +238,31 @@ class QuantizationArguments:
     quantization_device_map: Optional[Literal["auto"]] = field(
         default=None,
         metadata={"help": "Device map used to infer the 4-bit quantized model, needs bitsandbytes>=0.43.0."},
+    )
+    # QAT (Quantization Aware Training) options
+    enable_qat: bool = field(
+        default=False,
+        metadata={"help": "Enable quantization aware training using torchao."},
+    )
+    qat_activation_dtype: Optional[Literal["int4", "int8"]] = field(
+        default=None,
+        metadata={"help": "Data type for activation quantization in QAT. None means no activation quantization."},
+    )
+    qat_weight_dtype: Literal["int4", "int8"] = field(
+        default="int8",
+        metadata={"help": "Data type for weight quantization in QAT."},
+    )
+    qat_group_size: int = field(
+        default=32,
+        metadata={"help": "Group size for weight quantization in QAT."},
+    )
+    qat_quantize_embedding: bool = field(
+        default=True,
+        metadata={"help": "Whether to quantize embedding layers in QAT."},
+    )
+    fake_quant_after_n_steps: Optional[int] = field(
+        default=None,
+        metadata={"help": "Enable fake quantization after N training steps. If None, enabled from start."},
     )
 
 
