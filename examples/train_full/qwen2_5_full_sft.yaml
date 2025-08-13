@@ -11,10 +11,7 @@
 
 ### model
 model_name_or_path: Qwen/Qwen2.5-7B-Instruct
-model_max_length: 131072  # Extended context length: 32768 * 4.0 = 131072
 trust_remote_code: true
-load_in_8bit: false
-load_in_4bit: false
 rope_scaling: yarn  # YARN RoPE scaling - factor will be computed automatically
 flash_attn: auto
 enable_liger_kernel: true
