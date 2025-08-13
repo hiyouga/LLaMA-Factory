@@ -4,6 +4,7 @@
   "gradient_accumulation_steps": "auto",
   "gradient_clipping": "auto",
   "zero_allow_untested_optimizer": true,
+  "zero_force_ds_cpu_optimizer": true,
   "fp16": {
     "enabled": "auto",
     "loss_scale": 0,
