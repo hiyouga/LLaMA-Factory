@@ -725,7 +725,7 @@ def get_ray_trainer(
         run_config=RunConfig(
             name=ray_args.ray_run_name,
             storage_path=ray_args.ray_storage_path,
-            # failure_config=FailureConfig(max_failures=-1),
+            failure_config=FailureConfig(max_failures=ray_args.ray_max_failures),
         ),
         torch_config=TorchConfig(
             timeout_s=43200,

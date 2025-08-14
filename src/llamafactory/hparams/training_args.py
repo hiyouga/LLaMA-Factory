@@ -55,6 +55,12 @@ class RayArguments:
         metadata={"help": "The arguments to pass to ray.init for Ray training. Default is None."},
     )
 
+    # add ray_max_failures
+    ray_max_failures: int = field(
+        default=1,
+        metadata={"help": "The maximum number of failures for Ray training. Default is 1."},
+    )
+
     def __post_init__(self):
         self.use_ray = use_ray()
         if isinstance(self.resources_per_worker, str) and self.resources_per_worker.startswith("{"):
