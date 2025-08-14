@@ -87,6 +87,93 @@ def _parse_args(
     return tuple(parsed_args)
 
 
+def _validate_rope_scaling_with_sequence_parallel(model_args: ModelArguments, data_args: DataArguments) -> None:
+    """Validate RoPE scaling compatibility with sequence parallelism.
+
+    This function checks for potential issues when using RoPE scaling (YARN, etc.)
+    with sequence parallelism, particularly around scaling factors that may cause
+    tensor dimension mismatches or position embedding inconsistencies.
+    """
+    # Only validate if we have sequence parallelism enabled
+    if model_args.sequence_parallel_size <= 1:
+        return
+
+    # Try to get model config to check max_position_embeddings
+    try:
+        from transformers import AutoConfig
+
+        # Load model config to get max_position_embeddings
+        config = AutoConfig.from_pretrained(
+            model_args.model_name_or_path,
+            trust_remote_code=model_args.trust_remote_code,
+            token=model_args.hf_hub_token,
+        )
+
+        max_pos_embeddings = getattr(config, 'max_position_embeddings', None)
+        if max_pos_embeddings is None:
+            # Some models use different attribute names
+            max_pos_embeddings = getattr(config, 'n_positions', None)
+
+        if max_pos_embeddings is not None:
+            # Calculate scaling factor
+            scaling_factor = data_args.cutoff_len / max_pos_embeddings
+
+            # Check for potential issues
+            if scaling_factor > 1.0:  # Only relevant when extending beyond base model length
+                # Check for non-integer scaling factors that might cause precision issues
+                is_near_integer = abs(scaling_factor - round(scaling_factor)) < 0.1
+
+                # Specific problematic ranges for sequence parallelism
+                problematic_ranges = [
+                    (4.5, 5.5),    # Around 5x scaling
+                    (3.5, 4.5),    # Around 4x scaling
+                    (6.5, 7.5),    # Around 7x scaling
+                ]
+
+                is_in_problematic_range = any(
+                    low < scaling_factor < high for low, high in problematic_ranges
+                )
+
+                if not is_near_integer and is_in_problematic_range:
+                    # Calculate recommended cutoff_len values (integer multiples)
+                    lower_multiple = int(scaling_factor) * max_pos_embeddings
+                    upper_multiple = (int(scaling_factor) + 1) * max_pos_embeddings
+
+                    logger.warning_rank0(
+                        f"RoPE scaling factor {scaling_factor:.3f}x may cause issues with sequence parallelism. "
+                        f"Model's max_position_embeddings: {max_pos_embeddings}, your cutoff_len: {data_args.cutoff_len}. "
+                        f"Non-integer scaling factors can cause tensor dimension mismatches in sequence parallel attention. "
+                        f"Consider using cutoff_len: {lower_multiple} ({int(scaling_factor)}x) or {upper_multiple} ({int(scaling_factor)+1}x) "
+                        f"for more stable training."
+                    )
+
+                # Additional validation for very high scaling factors
+                if scaling_factor > 8.0:
+                    logger.warning_rank0(
+                        f"Very high RoPE scaling factor ({scaling_factor:.1f}x) detected with sequence parallelism. "
+                        f"This may cause numerical instability. Consider using a smaller cutoff_len or "
+                        f"a model with higher base max_position_embeddings."
+                    )
+
+                # Validate sequence parallel tensor dimensions
+                per_rank_length = data_args.cutoff_len // model_args.sequence_parallel_size
+                if per_rank_length > max_pos_embeddings and model_args.sequence_parallel_mode == "ulysses":
+                    logger.warning_rank0(
+                        f"With sequence parallelism, each rank processes {per_rank_length} tokens, "
+                        f"which exceeds the model's base max_position_embeddings ({max_pos_embeddings}). "
+                        f"This relies heavily on RoPE scaling and may cause attention artifacts. "
+                        f"Consider using a larger sequence_parallel_size or smaller cutoff_len."
+                    )
+
+    except Exception as e:
+        # If we can't load the config, just log a warning
+        logger.warning_rank0(
+            f"Could not validate RoPE scaling compatibility with sequence parallelism: {e}. "
+            f"If you encounter 'logits' KeyError during training, consider using cutoff_len values "
+            f"that are integer multiples of your model's max_position_embeddings."
+        )
+
+
 def _set_transformers_logging() -> None:
     if os.getenv("LLAMAFACTORY_VERBOSITY", "INFO") in ["DEBUG", "INFO"]:
         transformers.utils.logging.set_verbosity_info()
@@ -339,6 +426,10 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
             raise ValueError(
                 "zigzag ring attention does not support neat_packing. Disable neat_packing or use other sequence_parallel_mode."
             )
+
+        # Validate RoPE scaling compatibility with sequence parallelism
+        if model_args.rope_scaling is not None:
+            _validate_rope_scaling_with_sequence_parallel(model_args, data_args)
 
     if data_args.neat_packing and not data_args.packing:
         logger.warning_rank0("`neat_packing` requires `packing` is True. Change `packing` to True.")
