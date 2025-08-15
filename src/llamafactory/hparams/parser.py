@@ -109,10 +109,10 @@ def _validate_rope_scaling_with_sequence_parallel(model_args: ModelArguments, da
             token=model_args.hf_hub_token,
         )
 
-        max_pos_embeddings = getattr(config, 'max_position_embeddings', None)
+        max_pos_embeddings = getattr(config, "max_position_embeddings", None)
         if max_pos_embeddings is None:
             # Some models use different attribute names
-            max_pos_embeddings = getattr(config, 'n_positions', None)
+            max_pos_embeddings = getattr(config, "n_positions", None)
 
         if max_pos_embeddings is not None:
             # Calculate scaling factor
@@ -125,14 +125,12 @@ def _validate_rope_scaling_with_sequence_parallel(model_args: ModelArguments, da
 
                 # Specific problematic ranges for sequence parallelism
                 problematic_ranges = [
-                    (4.5, 5.5),    # Around 5x scaling
-                    (3.5, 4.5),    # Around 4x scaling
-                    (6.5, 7.5),    # Around 7x scaling
+                    (4.5, 5.5),  # Around 5x scaling
+                    (3.5, 4.5),  # Around 4x scaling
+                    (6.5, 7.5),  # Around 7x scaling
                 ]
 
-                is_in_problematic_range = any(
-                    low < scaling_factor < high for low, high in problematic_ranges
-                )
+                is_in_problematic_range = any(low < scaling_factor < high for low, high in problematic_ranges)
 
                 if not is_near_integer and is_in_problematic_range:
                     # Calculate recommended cutoff_len values (integer multiples)
@@ -143,7 +141,7 @@ def _validate_rope_scaling_with_sequence_parallel(model_args: ModelArguments, da
                         f"RoPE scaling factor {scaling_factor:.3f}x may cause issues with sequence parallelism. "
                         f"Model's max_position_embeddings: {max_pos_embeddings}, your cutoff_len: {data_args.cutoff_len}. "
                         f"Non-integer scaling factors can cause tensor dimension mismatches in sequence parallel attention. "
-                        f"Consider using cutoff_len: {lower_multiple} ({int(scaling_factor)}x) or {upper_multiple} ({int(scaling_factor)+1}x) "
+                        f"Consider using cutoff_len: {lower_multiple} ({int(scaling_factor)}x) or {upper_multiple} ({int(scaling_factor) + 1}x) "
                         f"for more stable training."
                     )
 
@@ -536,6 +534,20 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
     model_args.model_max_length = data_args.cutoff_len
     model_args.block_diag_attn = data_args.neat_packing
     data_args.packing = data_args.packing if data_args.packing is not None else finetuning_args.stage == "pt"
+
+    # Validate model_capacity parameter
+    if model_args.model_capacity is not None:
+        if model_args.model_capacity <= 0:
+            raise ValueError(f"model_capacity must be positive, got {model_args.model_capacity}")
+        if model_args.model_capacity < data_args.cutoff_len:
+            logger.warning_rank0(
+                f"model_capacity ({model_args.model_capacity}) is smaller than cutoff_len ({data_args.cutoff_len}). "
+                f"This may cause training issues if sequences exceed model capacity."
+            )
+        logger.info_rank0(
+            f"Using model_capacity={model_args.model_capacity} to override model context length "
+            f"(cutoff_len={data_args.cutoff_len} still controls data truncation)."
+        )
 
     # Log on each process the small summary
     logger.info(
