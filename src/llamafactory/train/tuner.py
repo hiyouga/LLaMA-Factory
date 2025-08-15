@@ -23,6 +23,7 @@ from transformers import EarlyStoppingCallback, PreTrainedModel
 from ..data import get_template_and_fix_tokenizer
 from ..extras import logging
 from ..extras.constants import V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
+from ..extras.deepspeed_utils import apply_deepspeed_patches
 from ..extras.misc import infer_optim_dtype
 from ..extras.packages import is_ray_available
 from ..hparams import get_infer_args, get_ray_args, get_train_args, read_args
@@ -51,6 +52,9 @@ logger = logging.get_logger(__name__)
 
 
 def _training_function(config: dict[str, Any]) -> None:
+    # Apply DeepSpeed patches early to handle pin memory issues
+    apply_deepspeed_patches()
+
     args = config.get("args")
     callbacks: list[Any] = config.get("callbacks")
     model_args, data_args, training_args, finetuning_args, generating_args = get_train_args(args)

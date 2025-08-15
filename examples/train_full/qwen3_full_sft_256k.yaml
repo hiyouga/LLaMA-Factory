@@ -31,9 +31,9 @@ dataset: tbench_traces_sharegptv1
 template: qwen  # Qwen3 template (same as Qwen2.5)
 cutoff_len: 204800  # 200k context length (5x Qwen3's max_position_embeddings=40960)
 max_samples: null  # Use full dataset
-overwrite_cache: true
+overwrite_cache: false
 preprocessing_num_workers: 64  # Match LIMO preprocessing workers
-dataloader_num_workers: 8
+dataloader_num_workers: 2
 
 ### output  
 output_dir: output/qwen3_8b_tbench_traces_200k_ulysses_ds
@@ -55,4 +55,4 @@ weight_decay: 0.03
 max_grad_norm: 1.0e-3
 bf16: true
 gradient_checkpointing: true
-ddp_timeout: 300000000  # Longer timeout for sequence parallelism
+ddp_timeout: 100000
