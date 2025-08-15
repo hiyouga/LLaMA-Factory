@@ -78,6 +78,11 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
 
+        if finetuning_args.use_dft_loss:
+            from ..trainer_utils import dft_loss_func
+
+            self.compute_loss_func = dft_loss_func
+
     @override
     def create_optimizer(self) -> "torch.optim.Optimizer":
         if self.optimizer is None:
