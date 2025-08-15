@@ -138,7 +138,7 @@ class RLHFArguments:
         default=0.0,
         metadata={"help": "The Binary Classifier Optimization coefficient in DPO training."},
     )
-    pref_loss: Literal["sigmoid", "hinge", "ipo", "kto_pair", "orpo", "simpo", "mpo"] = field(
+    pref_loss: Literal["sigmoid", "hinge", "ipo", "kto_pair", "orpo", "simpo"] = field(
         default="sigmoid",
         metadata={"help": "The type of DPO loss to use."},
     )

@@ -1663,16 +1663,32 @@ register_model_group(
 
 register_model_group(
     models={
-        "MiMo-7B-VL-Instruct": {
-            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-SFT",
-            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-VL-7B-SFT",
-        },
         "MiMo-7B-VL-RL": {
             DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-RL",
             DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-VL-7B-RL",
         },
+        "XiaomiMiMo/MiMo-VL-7B-RL-2508": {
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-RL-2508",
+            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-VL-7B-RL-2508"
+        }
     },
     template="mimo_vl",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
+        "MiMo-7B-VL-Instruct": {
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-SFT",
+            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-VL-7B-SFT",
+        },
+        "XiaomiMiMo/MiMo-VL-7B-SFT-2508": {
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-SFT-2508",
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-SFT-2508"
+        },
+    },
+    template="qwen2_vl",
     multimodal=True,
 )
 

@@ -109,7 +109,7 @@ class CustomDPOTrainer(DPOTrainer):
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
 
-        if finetuning_args.pref_loss == "mpo":
+        if self.bco_gemma >= 1e-6:
             from trl.trainer import RunningMoments
             self.running = RunningMoments(self.accelerator)
 
@@ -198,7 +198,7 @@ class CustomDPOTrainer(DPOTrainer):
                     policy_chosen_logps, policy_rejected_logps, reference_chosen_logps, reference_rejected_logps
                 )
 
-            if self.loss_type == "mpo":
+            if self.bco_gemma > 1e-6:
                 bco_losses = self.bco_loss(
                     policy_chosen_logps,
                     policy_rejected_logps,
@@ -286,6 +286,9 @@ class CustomDPOTrainer(DPOTrainer):
         sft_loss = -policy_chosen_logps_avg
         if self.ftx_gamma > 1e-6:
             losses += self.ftx_gamma * sft_loss
+            if self.bco_gemma > 1e-6:
+                # re-weigthing for MPO
+                losses /= (self.ftx_gamma + self.bco_gemma + 1.0)
 
         prefix = "eval_" if train_eval == "eval" else ""
         metrics[f"{prefix}rewards/chosen"] = chosen_rewards.mean().item()
