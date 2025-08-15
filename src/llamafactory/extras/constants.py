@@ -1667,7 +1667,7 @@ register_model_group(
             DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-RL",
             DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-VL-7B-RL",
         },
-        "XiaomiMiMo/MiMo-VL-7B-RL-2508": {
+        "MiMo-VL-7B-RL-2508": {
             DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-RL-2508",
             DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-VL-7B-RL-2508"
         }
@@ -1683,7 +1683,7 @@ register_model_group(
             DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-SFT",
             DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-VL-7B-SFT",
         },
-        "XiaomiMiMo/MiMo-VL-7B-SFT-2508": {
+        "MiMo-VL-7B-SFT-2508": {
             DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-SFT-2508",
             DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-SFT-2508"
         },
