@@ -45,23 +45,21 @@ class CustomTrainer(Trainer):
         model_args: Optional["ModelArguments"] = None,
         **kwargs,
     ) -> None:
-        # Configure FP8 with Accelerate if enabled
+        # Configure FP8 environment for Transformers trainer's internal Accelerator
         if model_args is not None and model_args.fp8:
             if validate_fp8_requirements():
-                fp8_kwargs = create_fp8_kwargs(model_args)
-                mixed_precision = get_fp8_mixed_precision(model_args)
-
-                # Configure Accelerate for FP8 if not already configured
-                if fp8_kwargs and mixed_precision and "accelerator" not in kwargs:
-                    try:
-                        from accelerate import Accelerator
-
-                        kwargs["accelerator"] = Accelerator(mixed_precision=mixed_precision, kwargs_handlers=fp8_kwargs)
-                        logger.info(
-                            f"Configured Accelerator with FP8 backend: {getattr(model_args, 'fp8_backend', 'auto')}"
-                        )
-                    except ImportError:
-                        logger.error("Failed to import Accelerator for FP8 setup")
+                import os
+                # Set environment variables that the trainer's Accelerator will pick up
+                os.environ["ACCELERATE_MIXED_PRECISION"] = "fp8"
+                
+                backend = getattr(model_args, 'fp8_backend', 'auto')
+                if backend != 'auto':
+                    os.environ["FP8_BACKEND"] = backend
+                
+                if hasattr(model_args, 'fp8_enable_fsdp_float8_all_gather') and model_args.fp8_enable_fsdp_float8_all_gather:
+                    os.environ["FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER"] = "true"
+                
+                logger.info(f"Configured FP8 environment variables for backend: {backend}")
             else:
                 logger.warning("FP8 requirements not met, falling back to default precision")
 
