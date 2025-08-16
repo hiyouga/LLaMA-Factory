@@ -169,21 +169,28 @@ def create_deepspeed_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
 
     try:
         # Use the specific recipe kwargs classes instead of deprecated FP8RecipeKwargs
-        from accelerate.utils import TERecipeKwargs, MSAMPRecipeKwargs
+        from accelerate.utils import MSAMPRecipeKwargs, TERecipeKwargs
 
         backend = getattr(model_args, "fp8_backend", "auto")
 
         # Use Transformer Engine for DeepSpeed FP8 (most stable)
         if backend == "auto" or backend == "te":
-            # Create TERecipeKwargs for Transformer Engine
-            fp8_kwargs = {"use_autocast_during_eval": False}
+            try:
+                # Create TERecipeKwargs for Transformer Engine
+                fp8_kwargs = {"use_autocast_during_eval": False}
 
-            # Add FSDP float8 all-gather if requested
-            if hasattr(model_args, "fp8_enable_fsdp_float8_all_gather") and model_args.fp8_enable_fsdp_float8_all_gather:
-                logger.info_rank0("FSDP float8 all-gather optimization enabled for DeepSpeed")
+                # Add FSDP float8 all-gather if requested
+                if hasattr(model_args, "fp8_enable_fsdp_float8_all_gather") and model_args.fp8_enable_fsdp_float8_all_gather:
+                    logger.info_rank0("FSDP float8 all-gather optimization enabled for DeepSpeed")
 
-            logger.info_rank0("Creating DeepSpeed FP8 configuration with Transformer Engine backend")
-            return [TERecipeKwargs(**fp8_kwargs)]
+                logger.info_rank0("Creating DeepSpeed FP8 configuration with Transformer Engine backend")
+                return [TERecipeKwargs(**fp8_kwargs)]
+            except Exception as te_error:
+                logger.warning_rank0(f"Transformer Engine not available: {te_error}. Falling back to MS-AMP.")
+                # Fall back to MS-AMP
+                fp8_kwargs = {"opt_level": "O2"}
+                logger.info_rank0("Creating DeepSpeed FP8 configuration with MS-AMP backend (fallback)")
+                return [MSAMPRecipeKwargs(**fp8_kwargs)]
 
         elif backend == "msamp":
             # MS-AMP backend for DeepSpeed
@@ -192,8 +199,11 @@ def create_deepspeed_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
             return [MSAMPRecipeKwargs(**fp8_kwargs)]
 
         else:
-            logger.warning_rank0(f"Backend '{backend}' not supported with DeepSpeed, using Transformer Engine")
-            return [TERecipeKwargs(use_autocast_during_eval=False)]
+            logger.warning_rank0(f"Backend '{backend}' not supported with DeepSpeed, trying Transformer Engine, falling back to MS-AMP")
+            try:
+                return [TERecipeKwargs(use_autocast_during_eval=False)]
+            except Exception:
+                return [MSAMPRecipeKwargs(opt_level="O2")]
 
     except ImportError:
         logger.warning_rank0("TERecipeKwargs/MSAMPRecipeKwargs not available - please upgrade accelerate")

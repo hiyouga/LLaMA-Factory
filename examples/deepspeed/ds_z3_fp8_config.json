@@ -1,4 +1,5 @@
 {
+  "train_micro_batch_size_per_gpu": "auto",
   "gradient_clipping": 0.001,
   "zero_allow_untested_optimizer": true,
   "zero_force_ds_cpu_optimizer": true,
