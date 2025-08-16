@@ -85,7 +85,7 @@ class QATCallback(TrainerCallback):
                     module.enable_fake_quant()
 
             self.fake_quant_enabled = True
-            logger.debug_rank0("QAT: Enabled fake quantization")
+            logger.info_rank0("QAT: Enabled fake quantization")
 
         except Exception as e:
             logger.warning_rank0(f"Failed to enable fake quantization: {e}")
@@ -104,7 +104,7 @@ class QATCallback(TrainerCallback):
                     module.disable_fake_quant()
 
             self.fake_quant_enabled = False
-            logger.debug_rank0("QAT: Disabled fake quantization")
+            logger.info_rank0("QAT: Disabled fake quantization")
 
         except Exception as e:
             logger.warning_rank0(f"Failed to disable fake quantization: {e}")
