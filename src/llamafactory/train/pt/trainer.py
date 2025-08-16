@@ -58,26 +58,30 @@ class CustomTrainer(Trainer):
                 logger.warning("FP8 disabled due to DeepSpeed incompatibility - please upgrade to DeepSpeed 0.17.3+")
             else:
                 import os
-                # Check if DeepSpeed is being used for FP8 configuration
+                
+                # Always set mixed precision to fp8 first
+                os.environ["ACCELERATE_MIXED_PRECISION"] = "fp8"
+                logger.info_rank0("Set ACCELERATE_MIXED_PRECISION=fp8")
+                
+                # Configure FP8 backend and options
+                backend = getattr(model_args, 'fp8_backend', 'auto')
+                if backend != 'auto':
+                    os.environ["FP8_BACKEND"] = backend
+                    logger.info_rank0(f"Set FP8_BACKEND={backend}")
+                
+                # Create and validate recipe kwargs (for logging/debugging)
                 if importlib.util.find_spec("deepspeed") is not None:
-                    # Use DeepSpeed-specific FP8 configuration
                     deepspeed_fp8_kwargs = create_deepspeed_fp8_kwargs(model_args)
-                    if deepspeed_fp8_kwargs:
-                        # Store kwargs for DeepSpeed integration
-                        os.environ["ACCELERATE_MIXED_PRECISION"] = "fp8"
-                        # DeepSpeed FP8 will be handled by Accelerate's DeepSpeed integration
-                        logger.info("Configured FP8 for DeepSpeed with Transformer Engine backend")
+                    logger.info_rank0(f"DeepSpeed FP8 kwargs created: {deepspeed_fp8_kwargs}")
                 else:
-                    # No DeepSpeed, use native Accelerate FP8
-                    os.environ["ACCELERATE_MIXED_PRECISION"] = "fp8"
-                    backend = getattr(model_args, 'fp8_backend', 'auto')
-                    if backend != 'auto':
-                        os.environ["FP8_BACKEND"] = backend
-
+                    fp8_kwargs = create_fp8_kwargs(model_args)
+                    logger.info_rank0(f"Native FP8 kwargs created: {fp8_kwargs}")
+                    
                     if hasattr(model_args, 'fp8_enable_fsdp_float8_all_gather') and model_args.fp8_enable_fsdp_float8_all_gather:
                         os.environ["FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER"] = "true"
-
-                    logger.info(f"Configured native Accelerate FP8 with backend: {backend}")
+                        logger.info_rank0("Set FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER=true")
+                
+                logger.info_rank0("FP8 environment variables configured for Accelerate")
 
         if is_transformers_version_greater_than("4.46"):
             kwargs["processing_class"] = kwargs.pop("tokenizer")

@@ -36,5 +36,6 @@
     "stage3_max_reuse_distance": 1000000000,
     "stage3_gather_16bit_weights_on_model_save": true
   },
-  "steps_per_print": 10000000
+  "steps_per_print": 10000000,
+  "gradient_accumulation_steps": "auto"
 }
