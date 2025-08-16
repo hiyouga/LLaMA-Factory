@@ -25,10 +25,10 @@ logger = logging.get_logger(__name__)
 
 def create_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
     """Create AORecipeKwargs for FP8 training with HuggingFace Accelerate.
-    
+
     Args:
         model_args: Model arguments containing FP8 configuration
-        
+
     Returns:
         List containing AORecipeKwargs if FP8 is enabled, empty list otherwise
     """
@@ -42,17 +42,17 @@ def create_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
         fp8_config = {}
 
         # Set backend if specified (default to auto selection)
-        backend = getattr(model_args, 'fp8_backend', 'auto')
-        if backend != 'auto':
-            fp8_config['backend'] = backend
+        backend = getattr(model_args, "fp8_backend", "auto")
+        if backend != "auto":
+            fp8_config["backend"] = backend
 
         # Map FSDP all-gather setting if available
-        if hasattr(model_args, 'fp8_enable_fsdp_float8_all_gather') and model_args.fp8_enable_fsdp_float8_all_gather:
+        if hasattr(model_args, "fp8_enable_fsdp_float8_all_gather") and model_args.fp8_enable_fsdp_float8_all_gather:
             # This setting may need to be handled differently depending on the backend
-            fp8_config['enable_fsdp_float8_all_gather'] = True
+            fp8_config["enable_fsdp_float8_all_gather"] = True
 
         logger.info_rank0(f"Creating FP8 configuration with backend: {backend}")
-        if fp8_config.get('enable_fsdp_float8_all_gather'):
+        if fp8_config.get("enable_fsdp_float8_all_gather"):
             logger.info_rank0("FSDP float8 all-gather optimization enabled")
 
         return [AORecipeKwargs(config=fp8_config)]
@@ -68,10 +68,10 @@ def create_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
 
 def get_fp8_mixed_precision(model_args: "ModelArguments") -> Optional[str]:
     """Get the mixed precision setting for Accelerate when using FP8.
-    
+
     Args:
         model_args: Model arguments containing FP8 configuration
-        
+
     Returns:
         "fp8" if FP8 is enabled, None otherwise
     """
@@ -80,7 +80,7 @@ def get_fp8_mixed_precision(model_args: "ModelArguments") -> Optional[str]:
 
 def validate_fp8_requirements() -> bool:
     """Validate that the system meets FP8 training requirements.
-    
+
     Returns:
         True if FP8 requirements are met, False otherwise
     """
@@ -91,9 +91,7 @@ def validate_fp8_requirements() -> bool:
         pytorch_version = torch.__version__.split("+")[0]  # Remove +cu121 etc.
         major, minor = map(int, pytorch_version.split(".")[:2])
         if major < 2 or (major == 2 and minor < 7):
-            logger.warning_rank0(
-                f"FP8 training requires PyTorch 2.7+, but found {pytorch_version}"
-            )
+            logger.warning_rank0(f"FP8 training requires PyTorch 2.7+, but found {pytorch_version}")
             return False
 
         # Check GPU architecture

@@ -58,7 +58,7 @@ def apply_fp8_optimization(model: "PreTrainedModel", model_args: "ModelArguments
                 )
                 return
 
-        backend = getattr(model_args, 'fp8_backend', 'auto')
+        backend = getattr(model_args, "fp8_backend", "auto")
         logger.info_rank0(f"FP8 training enabled with backend: {backend}")
         logger.info_rank0("FP8 optimization will be applied by HuggingFace Accelerate during training initialization")
 

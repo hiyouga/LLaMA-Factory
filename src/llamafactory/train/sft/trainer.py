@@ -68,11 +68,11 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                 if fp8_kwargs and mixed_precision and "accelerator" not in kwargs:
                     try:
                         from accelerate import Accelerator
-                        kwargs["accelerator"] = Accelerator(
-                            mixed_precision=mixed_precision,
-                            kwarg_handlers=fp8_kwargs
+
+                        kwargs["accelerator"] = Accelerator(mixed_precision=mixed_precision, kwarg_handlers=fp8_kwargs)
+                        logger.info(
+                            f"Configured Accelerator with FP8 backend: {getattr(model_args, 'fp8_backend', 'auto')}"
                         )
-                        logger.info(f"Configured Accelerator with FP8 backend: {getattr(model_args, 'fp8_backend', 'auto')}")
                     except ImportError:
                         logger.error("Failed to import Accelerator for FP8 setup")
             else:
