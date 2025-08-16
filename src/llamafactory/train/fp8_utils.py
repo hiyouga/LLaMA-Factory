@@ -76,7 +76,7 @@ def create_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
             "Please upgrade accelerate: pip install 'accelerate>=1.8.0'"
         ) from e
     except Exception as e:
-        logger.error_rank0(f"Failed to create FP8 configuration: {e}")
+        logger.info_rank0(f"Failed to create FP8 configuration: {e}")
         return []
 
 
@@ -198,5 +198,5 @@ def create_deepspeed_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
         logger.warning_rank0("FP8RecipeKwargs not available - please upgrade accelerate")
         return []
     except Exception as e:
-        logger.error_rank0(f"Failed to create DeepSpeed FP8 configuration: {e}")
+        logger.info_rank0(f"Failed to create DeepSpeed FP8 configuration: {e}")
         return []
