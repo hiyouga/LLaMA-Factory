@@ -47,7 +47,7 @@ def create_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
         if backend == "torchao" or backend == "auto":
             try:
                 from torchao.float8 import Float8LinearConfig
-                
+
                 # Use rowwise scaling for better performance (as recommended by torchao)
                 config = Float8LinearConfig.from_recipe_name("rowwise")
                 logger.info_rank0("Using torchao Float8LinearConfig with rowwise scaling")
@@ -73,7 +73,7 @@ def create_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
     except ImportError as e:
         raise ImportError(
             "AORecipeKwargs not available. FP8 with Accelerate requires Accelerate >= 1.8.0. "
-            f"Please upgrade accelerate: pip install 'accelerate>=1.8.0'"
+            "Please upgrade accelerate: pip install 'accelerate>=1.8.0'"
         ) from e
     except Exception as e:
         logger.error_rank0(f"Failed to create FP8 configuration: {e}")
@@ -129,20 +129,74 @@ def validate_fp8_requirements() -> bool:
 
 
 def check_deepspeed_fp8_compatibility() -> bool:
-    """Check if DeepSpeed is being used and warn about FP8 incompatibility.
-    
+    """Check if DeepSpeed supports FP8 training.
+
     Returns:
-        True if FP8 can be used (no DeepSpeed), False if DeepSpeed is detected
+        True if FP8 can be used with or without DeepSpeed, False if incompatible version
     """
     try:
         import deepspeed
         deepspeed_version = deepspeed.__version__
-        logger.warning_rank0(
-            f"FP8 training is not compatible with DeepSpeed {deepspeed_version}. "
-            f"DeepSpeed ZeRO bypasses Accelerate's mixed precision handling. "
-            f"For FP8 with DeepSpeed, you need DeepSpeed 0.17.3+ with native FP8 support. "
-            f"Currently falling back to BF16/FP16."
-        )
-        return False
+
+        # Parse version to check if it's 0.17.3+
+        version_parts = deepspeed_version.split(".")
+        major, minor, patch = int(version_parts[0]), int(version_parts[1]), int(version_parts[2].split("+")[0])
+
+        if major == 0 and minor >= 17 and (minor > 17 or patch >= 3):
+            logger.info_rank0(f"DeepSpeed {deepspeed_version} detected - FP8 support available")
+            return True
+        else:
+            logger.warning_rank0(
+                f"DeepSpeed {deepspeed_version} detected - FP8 requires DeepSpeed 0.17.3+. "
+                f"Please upgrade: pip install 'deepspeed>=0.17.3'"
+            )
+            return False
     except ImportError:
-        return True  # DeepSpeed not installed, FP8 can be used
+        return True  # DeepSpeed not installed, FP8 can be used with native Accelerate
+
+
+def create_deepspeed_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
+    """Create FP8RecipeKwargs for DeepSpeed FP8 training.
+
+    Args:
+        model_args: Model arguments containing FP8 configuration
+
+    Returns:
+        List containing appropriate RecipeKwargs for DeepSpeed FP8
+    """
+    if not model_args.fp8:
+        return []
+
+    try:
+        from accelerate.utils import FP8RecipeKwargs
+
+        backend = getattr(model_args, "fp8_backend", "auto")
+
+        # Use Transformer Engine for DeepSpeed FP8 (most stable)
+        if backend == "auto" or backend == "te":
+            # Create FP8RecipeKwargs for Transformer Engine
+            fp8_kwargs = {"backend": "te", "use_during_eval": False}
+
+            # Add FSDP float8 all-gather if requested
+            if hasattr(model_args, "fp8_enable_fsdp_float8_all_gather") and model_args.fp8_enable_fsdp_float8_all_gather:
+                logger.info_rank0("FSDP float8 all-gather optimization enabled for DeepSpeed")
+
+            logger.info_rank0("Creating DeepSpeed FP8 configuration with Transformer Engine backend")
+            return [FP8RecipeKwargs(**fp8_kwargs)]
+
+        elif backend == "msamp":
+            # MS-AMP backend for DeepSpeed
+            fp8_kwargs = {"backend": "msamp", "optimization_level": "O2"}
+            logger.info_rank0("Creating DeepSpeed FP8 configuration with MS-AMP backend")
+            return [FP8RecipeKwargs(**fp8_kwargs)]
+
+        else:
+            logger.warning_rank0(f"Backend '{backend}' not supported with DeepSpeed, using Transformer Engine")
+            return [FP8RecipeKwargs(backend="te", use_during_eval=False)]
+
+    except ImportError:
+        logger.warning_rank0("FP8RecipeKwargs not available - please upgrade accelerate")
+        return []
+    except Exception as e:
+        logger.error_rank0(f"Failed to create DeepSpeed FP8 configuration: {e}")
+        return []

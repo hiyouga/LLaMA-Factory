@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import importlib.util
 from types import MethodType
 from typing import TYPE_CHECKING, Optional
 
@@ -22,7 +23,11 @@ from typing_extensions import override
 from ...extras import logging
 from ...extras.packages import is_transformers_version_greater_than
 from ..callbacks import SaveProcessorCallback
-from ..fp8_utils import create_fp8_kwargs, get_fp8_mixed_precision, validate_fp8_requirements, check_deepspeed_fp8_compatibility
+from ..fp8_utils import (
+    check_deepspeed_fp8_compatibility,
+    create_deepspeed_fp8_kwargs,
+    validate_fp8_requirements,
+)
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
 
 
@@ -45,25 +50,34 @@ class CustomTrainer(Trainer):
         model_args: Optional["ModelArguments"] = None,
         **kwargs,
     ) -> None:
-        # Configure FP8 environment for Transformers trainer's internal Accelerator
+        # Configure FP8 for both DeepSpeed and native Accelerate
         if model_args is not None and model_args.fp8:
-            if not check_deepspeed_fp8_compatibility():
-                logger.warning("FP8 disabled due to DeepSpeed incompatibility")
-            elif validate_fp8_requirements():
-                import os
-                # Set environment variables that the trainer's Accelerator will pick up
-                os.environ["ACCELERATE_MIXED_PRECISION"] = "fp8"
-                
-                backend = getattr(model_args, 'fp8_backend', 'auto')
-                if backend != 'auto':
-                    os.environ["FP8_BACKEND"] = backend
-                
-                if hasattr(model_args, 'fp8_enable_fsdp_float8_all_gather') and model_args.fp8_enable_fsdp_float8_all_gather:
-                    os.environ["FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER"] = "true"
-                
-                logger.info(f"Configured FP8 environment variables for backend: {backend}")
-            else:
+            if not validate_fp8_requirements():
                 logger.warning("FP8 requirements not met, falling back to default precision")
+            elif not check_deepspeed_fp8_compatibility():
+                logger.warning("FP8 disabled due to DeepSpeed incompatibility - please upgrade to DeepSpeed 0.17.3+")
+            else:
+                import os
+                # Check if DeepSpeed is being used for FP8 configuration
+                if importlib.util.find_spec("deepspeed") is not None:
+                    # Use DeepSpeed-specific FP8 configuration
+                    deepspeed_fp8_kwargs = create_deepspeed_fp8_kwargs(model_args)
+                    if deepspeed_fp8_kwargs:
+                        # Store kwargs for DeepSpeed integration
+                        os.environ["ACCELERATE_MIXED_PRECISION"] = "fp8"
+                        # DeepSpeed FP8 will be handled by Accelerate's DeepSpeed integration
+                        logger.info("Configured FP8 for DeepSpeed with Transformer Engine backend")
+                else:
+                    # No DeepSpeed, use native Accelerate FP8
+                    os.environ["ACCELERATE_MIXED_PRECISION"] = "fp8"
+                    backend = getattr(model_args, 'fp8_backend', 'auto')
+                    if backend != 'auto':
+                        os.environ["FP8_BACKEND"] = backend
+
+                    if hasattr(model_args, 'fp8_enable_fsdp_float8_all_gather') and model_args.fp8_enable_fsdp_float8_all_gather:
+                        os.environ["FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER"] = "true"
+
+                    logger.info(f"Configured native Accelerate FP8 with backend: {backend}")
 
         if is_transformers_version_greater_than("4.46"):
             kwargs["processing_class"] = kwargs.pop("tokenizer")
