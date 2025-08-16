@@ -30,12 +30,13 @@ def create_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
         model_args: Model arguments containing FP8 configuration
 
     Returns:
-        List containing AORecipeKwargs if FP8 is enabled, empty list otherwise
+        List containing AORecipeKwargs if FP8 is enabled and supported, empty list otherwise
     """
     if not model_args.fp8:
         return []
 
     try:
+        # Check if AORecipeKwargs is available (Accelerate 1.8.0+)
         from accelerate.utils import AORecipeKwargs
 
         # Map LLaMA-Factory FP8 settings to AORecipeKwargs
@@ -58,9 +59,10 @@ def create_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
         return [AORecipeKwargs(config=fp8_config)]
 
     except ImportError as e:
-        logger.error_rank0(f"Failed to import AORecipeKwargs: {e}")
-        logger.error_rank0("Please ensure accelerate is installed and up to date")
-        return []
+        raise ImportError(
+            "AORecipeKwargs not available. FP8 with Accelerate requires Accelerate >= 1.8.0. "
+            f"Please upgrade accelerate: pip install 'accelerate>=1.8.0'"
+        ) from e
     except Exception as e:
         logger.error_rank0(f"Failed to create FP8 configuration: {e}")
         return []
