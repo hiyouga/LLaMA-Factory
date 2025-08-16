@@ -1,7 +1,4 @@
 {
-  "train_batch_size": 32,
-  "train_micro_batch_size_per_gpu": 1,
-  "gradient_accumulation_steps": 4,
   "gradient_clipping": 0.001,
   "zero_allow_untested_optimizer": true,
   "zero_force_ds_cpu_optimizer": true,
