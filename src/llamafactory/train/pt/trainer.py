@@ -56,7 +56,7 @@ class CustomTrainer(Trainer):
                     try:
                         from accelerate import Accelerator
 
-                        kwargs["accelerator"] = Accelerator(mixed_precision=mixed_precision, kwarg_handlers=fp8_kwargs)
+                        kwargs["accelerator"] = Accelerator(mixed_precision=mixed_precision, kwargs_handlers=fp8_kwargs)
                         logger.info(
                             f"Configured Accelerator with FP8 backend: {getattr(model_args, 'fp8_backend', 'auto')}"
                         )
