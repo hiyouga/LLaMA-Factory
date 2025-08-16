@@ -73,6 +73,9 @@ extra_require = {
     "dev": ["pre-commit", "ruff", "pytest", "build"],
     "sp": ["ring-flash-attn", "yunchang"],
     "advanced": ["torchao>=0.8.0", "kernels>=0.9.0", "cut-cross-entropy", "triton<3.4.0"],
+    "fp8": ["torchao>=0.8.0"],
+    "fp8-te": ["transformer_engine[pytorch]>=2.0.0"],
+    "fp8-all": ["torchao>=0.8.0", "transformer_engine[pytorch]>=2.0.0"],
 }
 
 

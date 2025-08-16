@@ -13,7 +13,8 @@
 #   - Log into HF: `huggingface-cli login`
 #
 # Installation:
-#   pip install 'deepspeed>=0.17.3' 'transformer-engine>=2.0.0'
+#   pip install -e '.[deepspeed,fp8-te]'  # For DeepSpeed + Transformer Engine FP8
+#   # OR manually: pip install 'deepspeed>=0.17.3' 'transformer-engine[pytorch]>=2.0.0'
 #
 # Usage:
 #   llamafactory-cli train qwen2_5_full_sft_fp8_deepspeed.yaml
