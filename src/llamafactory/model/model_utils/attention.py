@@ -14,7 +14,7 @@
 
 from typing import TYPE_CHECKING
 
-from transformers.utils import is_flash_attn_2_available, is_torch_sdpa_available
+from transformers.utils import is_flash_attn_2_available, is_flash_attn_3_available, is_torch_sdpa_available
 
 from ...extras import logging
 from ...extras.constants import AttentionFunction
@@ -62,6 +62,12 @@ def configure_attn_implementation(config: "PretrainedConfig", model_args: "Model
             return
 
         requested_attn_implementation = "flash_attention_2"
+    elif model_args.flash_attn == AttentionFunction.FA3:
+        if not is_flash_attn_3_available():
+            logger.warning_rank0("FlashAttention-3 is not installed.")
+            return
+
+        requested_attn_implementation = "flash_attention_3"
     else:
         raise NotImplementedError(f"Unknown attention type: {model_args.flash_attn}")
 
@@ -82,6 +88,8 @@ def print_attn_implementation(config: "PretrainedConfig") -> None:
 
     if attn_implementation == "flash_attention_2":
         logger.info_rank0("Using FlashAttention-2 for faster training and inference.")
+    elif attn_implementation == "flash_attention_3":
+        logger.info_rank0("Using FlashAttention-3 for faster training and inference.")
     elif attn_implementation == "sdpa":
         logger.info_rank0("Using torch SDPA for faster training and inference.")
     else:
