@@ -276,8 +276,8 @@ def _check_extra_dependencies(
 
     if training_args is not None:
         if training_args.deepspeed:
-            # pin deepspeed version < 0.17 because of https://github.com/deepspeedai/DeepSpeed/issues/7347
-            check_version("deepspeed>=0.10.0,<=0.16.9", mandatory=True)
+            # Updated to support FP8 training with DeepSpeed 0.17.3+ (native FP8 support)
+            check_version("deepspeed>=0.17.3,<=0.18.0", mandatory=True)
 
         if training_args.predict_with_generate:
             check_version("jieba", mandatory=True)
