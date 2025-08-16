@@ -1,13 +1,15 @@
 # Full Fine-Tuning config for Qwen2.5-7B-Instruct on tbench_traces_sharegptv1 dataset
 # Based on LIMO paper configuration: https://arxiv.org/abs/2502.03387  
 # Enhanced with YARN RoPE scaling for extended context length (131072 tokens)
+# Using TorchAO FP8 backend (explicit)
 #
 # Requirements:
 #   - Log into WandB (`wandb login`) or set `report_to: none`
 #   - Log into HF: `huggingface-cli login`
+#   - Install TorchAO: pip install torchao>=0.8.0
 #
 # Usage:
-#   llamafactory-cli train qwen2_5_7b_tbench_traces_full_sft_yarn.yaml
+#   llamafactory-cli train qwen2_5_full_sft_fp8_torchao.yaml
 
 ### model
 model_name_or_path: Qwen/Qwen2.5-7B-Instruct
@@ -28,20 +30,18 @@ template: qwen  # Qwen2.5 template
 cutoff_len: 131072  # Match model_max_length
 max_samples: null  # Use full dataset
 overwrite_cache: true
-preprocessing_num_workers: 64  # Match LIMO preprocessing workers
-dataloader_num_workers: 8
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
 
-### QAT Configuration
-enable_qat: true                              # Enable Quantization Aware Training
-qat_activation_dtype: int8                    # Quantize activations to int8
-qat_weight_dtype: int4                        # Use INT4 for weights (8da4w format)
-qat_group_size: 128                           # Larger group size for better quality
-qat_quantize_embedding: false                 # Keep embeddings in higher precision
-fake_quant_after_n_steps: 50                # Delayed quantization for stability
+### FP8 Configuration - TorchAO Backend
+fp8: true                                   # Enable FP8 mixed precision
+fp8_backend: torchao                        # Explicitly use TorchAO backend
+fp8_enable_fsdp_float8_all_gather: true     # Optimize FSDP all-gather ops
+bf16: false                                 # Disable BF16 when using FP8 
 
 ### output  
-output_dir: output/qwen2.5_7b_tbench_traces_sharegptv1_yarn_ds
-logging_steps: 50
+output_dir: output/qwen2.5_7b_tbench_traces_sharegptv1_yarn_ds_fp8_torchao
+logging_steps: 5
 save_steps: 50
 plot_loss: true
 overwrite_output_dir: true
@@ -56,7 +56,6 @@ num_train_epochs: 5.0
 lr_scheduler_type: cosine
 warmup_ratio: 0.05
 weight_decay: 0.03
-max_grad_norm: 1.0e-3  # Note: LLaMA-Factory uses max_grad_norm instead of max_grad_norm
-bf16: true
+max_grad_norm: 1.0e-3
 gradient_checkpointing: true
 ddp_timeout: 180000000

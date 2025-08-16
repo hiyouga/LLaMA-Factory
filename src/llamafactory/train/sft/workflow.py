@@ -86,6 +86,7 @@ def run_sft(
         model=model,
         args=training_args,
         finetuning_args=finetuning_args,
+        model_args=model_args,
         data_collator=data_collator,
         callbacks=callbacks,
         gen_kwargs=gen_kwargs,

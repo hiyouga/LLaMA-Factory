@@ -29,17 +29,22 @@ logger = logging.get_logger(__name__)
 
 
 def apply_fp8_optimization(model: "PreTrainedModel", model_args: "ModelArguments") -> None:
-    """Apply FP8 optimization using torchao if enabled."""
+    """Apply FP8 optimization - now handled by HuggingFace Accelerate during training initialization.
+
+    This function is maintained for backward compatibility but no longer applies FP8 directly.
+    FP8 setup is now handled through Accelerate's mixed_precision="fp8" during trainer initialization.
+    """
     if not model_args.fp8:
         return
 
+    # Hardware and software validation (still useful for early error detection)
     try:
         # Check PyTorch version requirement
         pytorch_version = torch.__version__.split("+")[0]  # Remove +cu121 etc.
         major, minor = map(int, pytorch_version.split(".")[:2])
         if major < 2 or (major == 2 and minor < 7):
             logger.warning_rank0(
-                f"FP8 training requires PyTorch 2.7+, but found {pytorch_version}. Skipping FP8 optimization."
+                f"FP8 training requires PyTorch 2.7+, but found {pytorch_version}. FP8 will be disabled."
             )
             return
 
@@ -49,29 +54,16 @@ def apply_fp8_optimization(model: "PreTrainedModel", model_args: "ModelArguments
             if device_capability < (9, 0):  # Hopper architecture requirement
                 logger.warning_rank0(
                     f"FP8 training requires Hopper architecture (compute capability 9.0+), "
-                    f"but found {device_capability}. Skipping FP8 optimization."
+                    f"but found {device_capability}. FP8 will be disabled."
                 )
                 return
 
-        from torchao.float8 import convert_to_float8_training
+        backend = getattr(model_args, 'fp8_backend', 'auto')
+        logger.info_rank0(f"FP8 training enabled with backend: {backend}")
+        logger.info_rank0("FP8 optimization will be applied by HuggingFace Accelerate during training initialization")
 
-        # Apply FP8 conversion
-        logger.info_rank0("Applying FP8 optimization using torchao...")
-        model = convert_to_float8_training(model)
-
-        # Apply FSDP float8 all-gather if enabled
-        if model_args.fp8_enable_fsdp_float8_all_gather:
-            from torchao.float8.fsdp_utils import precompute_float8_dynamic_scale_for_fsdp
-
-            precompute_float8_dynamic_scale_for_fsdp(model)
-            logger.info_rank0("Enabled FP8 FSDP all-gather optimization.")
-
-        logger.info_rank0("Successfully applied FP8 optimization.")
-
-    except ImportError:
-        logger.warning_rank0("torchao not available. Please install with: pip install torchao>=0.8.0")
     except Exception as e:
-        logger.warning_rank0(f"Failed to apply FP8 optimization: {e}")
+        logger.warning_rank0(f"Failed to validate FP8 requirements: {e}")
 
 
 def prepare_model_for_qat(

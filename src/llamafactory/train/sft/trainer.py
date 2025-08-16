@@ -32,6 +32,7 @@ from ...extras import logging
 from ...extras.constants import IGNORE_INDEX
 from ...extras.packages import is_transformers_version_greater_than
 from ..callbacks import SaveProcessorCallback
+from ..fp8_utils import create_fp8_kwargs, get_fp8_mixed_precision, validate_fp8_requirements
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
 
 
@@ -40,7 +41,7 @@ if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer, ProcessorMixin
     from transformers.trainer import PredictionOutput
 
-    from ...hparams import FinetuningArguments
+    from ...hparams import FinetuningArguments, ModelArguments
 
 
 logger = logging.get_logger(__name__)
@@ -53,9 +54,30 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         self,
         finetuning_args: "FinetuningArguments",
         processor: Optional["ProcessorMixin"],
+        model_args: Optional["ModelArguments"] = None,
         gen_kwargs: Optional[dict[str, Any]] = None,
         **kwargs,
     ) -> None:
+        # Configure FP8 with Accelerate if enabled
+        if model_args is not None and model_args.fp8:
+            if validate_fp8_requirements():
+                fp8_kwargs = create_fp8_kwargs(model_args)
+                mixed_precision = get_fp8_mixed_precision(model_args)
+
+                # Configure Accelerate for FP8 if not already configured
+                if fp8_kwargs and mixed_precision and "accelerator" not in kwargs:
+                    try:
+                        from accelerate import Accelerator
+                        kwargs["accelerator"] = Accelerator(
+                            mixed_precision=mixed_precision,
+                            kwarg_handlers=fp8_kwargs
+                        )
+                        logger.info(f"Configured Accelerator with FP8 backend: {getattr(model_args, 'fp8_backend', 'auto')}")
+                    except ImportError:
+                        logger.error("Failed to import Accelerator for FP8 setup")
+            else:
+                logger.warning("FP8 requirements not met, falling back to default precision")
+
         if is_transformers_version_greater_than("4.46"):
             kwargs["processing_class"] = kwargs.pop("tokenizer")
         else:

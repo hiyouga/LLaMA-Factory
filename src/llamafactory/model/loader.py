@@ -200,7 +200,8 @@ def load_model(
         # Apply QAT preparation if enabled
         model = prepare_model_for_qat(model, model_args)
 
-        # Apply FP8 optimization if enabled
+        # FP8 optimization is now handled by HuggingFace Accelerate during trainer initialization
+        # Keep validation call for early error detection
         apply_fp8_optimization(model, model_args)
 
         # Apply HuggingFace kernels if enabled
