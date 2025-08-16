@@ -22,7 +22,7 @@ from typing_extensions import override
 from ...extras import logging
 from ...extras.packages import is_transformers_version_greater_than
 from ..callbacks import SaveProcessorCallback
-from ..fp8_utils import create_fp8_kwargs, get_fp8_mixed_precision, validate_fp8_requirements
+from ..fp8_utils import create_fp8_kwargs, get_fp8_mixed_precision, validate_fp8_requirements, check_deepspeed_fp8_compatibility
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
 
 
@@ -47,7 +47,9 @@ class CustomTrainer(Trainer):
     ) -> None:
         # Configure FP8 environment for Transformers trainer's internal Accelerator
         if model_args is not None and model_args.fp8:
-            if validate_fp8_requirements():
+            if not check_deepspeed_fp8_compatibility():
+                logger.warning("FP8 disabled due to DeepSpeed incompatibility")
+            elif validate_fp8_requirements():
                 import os
                 # Set environment variables that the trainer's Accelerator will pick up
                 os.environ["ACCELERATE_MIXED_PRECISION"] = "fp8"

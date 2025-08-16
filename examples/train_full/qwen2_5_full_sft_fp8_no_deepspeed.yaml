@@ -1,0 +1,84 @@
+# Full Fine-Tuning config for Qwen2.5-7B-Instruct on tbench_traces_sharegptv1 dataset
+# Using FP8 mixed precision WITHOUT DeepSpeed (uses native Accelerate FP8)
+# Based on LIMO paper configuration: https://arxiv.org/abs/2502.03387  
+# Enhanced with YARN RoPE scaling for extended context length (131072 tokens)
+#
+# Requirements:
+#   - H100/H200 GPU (Hopper architecture)
+#   - PyTorch >= 2.7.0
+#   - Accelerate >= 1.8.0
+#   - TorchAO >= 0.8.0 (for torchao backend)
+#   - Transformer Engine (for te backend)
+#   - Log into WandB (`wandb login`) or set `report_to: none`
+#   - Log into HF: `huggingface-cli login`
+#
+# Usage:
+#   llamafactory-cli train qwen2_5_full_sft_fp8_no_deepspeed.yaml
+
+### model
+model_name_or_path: Qwen/Qwen2.5-7B-Instruct
+trust_remote_code: true
+rope_scaling: yarn  # YARN RoPE scaling - factor will be computed automatically
+flash_attn: auto
+enable_liger_kernel: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full  # Full fine-tuning (not LoRA)
+# Note: No DeepSpeed configuration - using native Accelerate with FP8
+
+### dataset
+dataset: tbench_traces_sharegptv1  # You'll need to add this to data/dataset_info.json
+template: qwen  # Qwen2.5 template
+cutoff_len: 131072  # Match model_max_length
+max_samples: null  # Use full dataset
+overwrite_cache: true
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### FP8 Configuration - Native Accelerate (no DeepSpeed)
+fp8: true                                   # Enable FP8 mixed precision
+fp8_backend: torchao                        # Use TorchAO backend (torchao, te, msamp, auto)
+fp8_enable_fsdp_float8_all_gather: false   # FSDP optimizations (set to true if using FSDP)
+
+### Mixed Precision (FP8 will override this)
+bf16: false                                 # Disabled when using FP8
+fp16: false                                 # Disabled when using FP8
+
+### output  
+output_dir: output/qwen2.5_7b_tbench_traces_sharegptv1_fp8_no_ds
+logging_steps: 5
+save_steps: 50
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: true
+report_to: wandb  # Set to 'none' to disable WandB
+
+### train
+per_device_train_batch_size: 2              # Larger batch size without DeepSpeed memory savings
+gradient_accumulation_steps: 16             # Higher accumulation to maintain effective batch size
+learning_rate: 2.0e-5
+num_train_epochs: 5.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.05
+weight_decay: 0.03
+max_grad_norm: 1.0
+gradient_checkpointing: true                # Important for memory efficiency without DeepSpeed
+dataloader_pin_memory: false                # Reduce memory usage
+remove_unused_columns: false
+
+### FSDP Configuration (Alternative to DeepSpeed for multi-GPU)
+# Uncomment the following section if using multiple GPUs with FSDP
+# fsdp_config:
+#   fsdp_auto_wrap_policy: TRANSFORMER_BASED_WRAP
+#   fsdp_backward_prefetch_policy: BACKWARD_PRE
+#   fsdp_forward_prefetch: false
+#   fsdp_use_orig_params: false
+#   fsdp_cpu_ram_efficient_loading: true
+#   fsdp_transformer_layer_cls_to_wrap: Qwen2DecoderLayer
+
+### Performance Optimizations
+torch_compile: false                        # Can be enabled for additional speedup
+torch_compile_backend: inductor            # Backend for torch.compile if enabled
+ddp_timeout: 1800                          # 30 minutes timeout for DDP operations

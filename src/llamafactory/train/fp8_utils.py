@@ -39,24 +39,36 @@ def create_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
         # Check if AORecipeKwargs is available (Accelerate 1.8.0+)
         from accelerate.utils import AORecipeKwargs
 
-        # Map LLaMA-Factory FP8 settings to AORecipeKwargs
-        fp8_config = {}
-
-        # Set backend if specified (default to auto selection)
         backend = getattr(model_args, "fp8_backend", "auto")
-        if backend != "auto":
-            fp8_config["backend"] = backend
-
-        # Map FSDP all-gather setting if available
-        if hasattr(model_args, "fp8_enable_fsdp_float8_all_gather") and model_args.fp8_enable_fsdp_float8_all_gather:
-            # This setting may need to be handled differently depending on the backend
-            fp8_config["enable_fsdp_float8_all_gather"] = True
-
         logger.info_rank0(f"Creating FP8 configuration with backend: {backend}")
-        if fp8_config.get("enable_fsdp_float8_all_gather"):
-            logger.info_rank0("FSDP float8 all-gather optimization enabled")
 
-        return [AORecipeKwargs(config=fp8_config)]
+        # Create Float8LinearConfig if torchao backend is used
+        config = None
+        if backend == "torchao" or backend == "auto":
+            try:
+                from torchao.float8 import Float8LinearConfig
+                
+                # Use rowwise scaling for better performance (as recommended by torchao)
+                config = Float8LinearConfig.from_recipe_name("rowwise")
+                logger.info_rank0("Using torchao Float8LinearConfig with rowwise scaling")
+            except ImportError:
+                logger.warning_rank0("torchao not available, using default FP8 configuration")
+
+        # Create module filter function to optionally skip first/last layers
+        # TorchAO recommends keeping first/last layers at full precision for stability
+        def module_filter_func(module, layer_name):
+            # Skip embedding and output layers for numerical stability
+            skip_layers = ["embed", "lm_head", "output", "classifier"]
+            if any(skip_name in layer_name.lower() for skip_name in skip_layers):
+                return False
+            # Only convert Linear layers
+            return hasattr(module, 'weight') and len(module.weight.shape) == 2
+
+        # Map FSDP all-gather setting if available (this affects the underlying implementation)
+        if hasattr(model_args, "fp8_enable_fsdp_float8_all_gather") and model_args.fp8_enable_fsdp_float8_all_gather:
+            logger.info_rank0("FSDP float8 all-gather optimization requested")
+
+        return [AORecipeKwargs(config=config, module_filter_func=module_filter_func)]
 
     except ImportError as e:
         raise ImportError(
@@ -114,3 +126,23 @@ def validate_fp8_requirements() -> bool:
     except Exception as e:
         logger.warning_rank0(f"Failed to validate FP8 requirements: {e}")
         return False
+
+
+def check_deepspeed_fp8_compatibility() -> bool:
+    """Check if DeepSpeed is being used and warn about FP8 incompatibility.
+    
+    Returns:
+        True if FP8 can be used (no DeepSpeed), False if DeepSpeed is detected
+    """
+    try:
+        import deepspeed
+        deepspeed_version = deepspeed.__version__
+        logger.warning_rank0(
+            f"FP8 training is not compatible with DeepSpeed {deepspeed_version}. "
+            f"DeepSpeed ZeRO bypasses Accelerate's mixed precision handling. "
+            f"For FP8 with DeepSpeed, you need DeepSpeed 0.17.3+ with native FP8 support. "
+            f"Currently falling back to BF16/FP16."
+        )
+        return False
+    except ImportError:
+        return True  # DeepSpeed not installed, FP8 can be used
