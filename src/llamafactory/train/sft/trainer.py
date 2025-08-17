@@ -38,7 +38,9 @@ from ..fp8_utils import (
     create_deepspeed_fp8_kwargs,
     validate_fp8_requirements,
 )
-from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
+from ...data.processor.alst_data_adapter import create_alst_data_adapter
+from ...model.model_utils.alst_config import create_alst_config
+from ..trainer_utils import create_custom_optimizer, create_custom_scheduler, get_sequence_parallel_group, update_alst_adapter_with_model
 
 
 if TYPE_CHECKING:
@@ -122,6 +124,18 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
+            
+        # Initialize ALST data adapter if needed
+        if model_args is not None and model_args.sequence_parallel_size > 1:
+            self.alst_config = create_alst_config(model_args)
+            if self.alst_config.enabled:
+                # Get sequence parallel group from model (will be None initially, set later)
+                self.alst_data_adapter = create_alst_data_adapter(model_args, self.alst_config, None)
+                logger.info_rank0("ALST data adapter initialized for trainer")
+            else:
+                self.alst_data_adapter = None
+        else:
+            self.alst_data_adapter = None
 
 
     @override
@@ -140,7 +154,9 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
     @override
     def training_step(self, model, inputs, *args, **kwargs):
         # TODO: sequence_parallel modes other than 'zigzag-ring' may not need dummy forward
-        if not self._has_dummy_forwarded and model.sequence_parallel_group is not None:
+        sequence_parallel_group = get_sequence_parallel_group(model, self.accelerator)
+        
+        if not self._has_dummy_forwarded and sequence_parallel_group is not None:
             model.eval()
             with torch.no_grad():
                 _ = model(**inputs)
@@ -150,7 +166,9 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
     @override
     def _get_train_sampler(self, *args, **kwargs) -> Optional["torch.utils.data.Sampler"]:
-        if self.model.sequence_parallel_group is not None or self.finetuning_args.disable_shuffling:
+        sequence_parallel_group = get_sequence_parallel_group(self.model, self.accelerator)
+        
+        if sequence_parallel_group is not None or self.finetuning_args.disable_shuffling:
             return torch.utils.data.SequentialSampler(self.train_dataset)
 
         return super()._get_train_sampler(*args, **kwargs)
@@ -161,7 +179,9 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
         https://github.com/huggingface/transformers/blob/v4.46.0/src/transformers/trainer.py#L3605
         """
-        if model.sequence_parallel_group is None:  # no sequence parallel, compute as it is
+        sequence_parallel_group = get_sequence_parallel_group(model, self.accelerator)
+        
+        if sequence_parallel_group is None:  # no sequence parallel, compute as it is
             loss = super().compute_loss(model, inputs, return_outputs, **kwargs)
         else:
             # compute loss without shift labels, as we have already shifted labels in data processing when using sequence parallel
@@ -182,10 +202,9 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             loss = loss_fct(logits, labels)
 
             # weighted reduce within sequence_parallel_group
-            sp_group = model.sequence_parallel_group
-            dist.all_reduce(loss, op=dist.ReduceOp.SUM, group=sp_group)
+            dist.all_reduce(loss, op=dist.ReduceOp.SUM, group=sequence_parallel_group)
             label_num = (labels != loss_fct.ignore_index).sum()
-            dist.all_reduce(label_num, op=dist.ReduceOp.SUM, group=sp_group)
+            dist.all_reduce(label_num, op=dist.ReduceOp.SUM, group=sequence_parallel_group)
             loss /= label_num
 
         if is_transformers_version_greater_than("4.46") and not getattr(self, "model_accepts_loss_kwargs", False):
@@ -258,3 +277,35 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         with open(output_prediction_file, "w", encoding="utf-8") as f:
             for text, pred, label in zip(decoded_inputs, decoded_preds, decoded_labels):
                 f.write(json.dumps({"prompt": text, "predict": pred, "label": label}, ensure_ascii=False) + "\n")
+    
+    @override
+    def get_train_dataloader(self) -> "torch.utils.data.DataLoader":
+        """Override to add ALST DataLoader wrapping if enabled."""
+        dataloader = super().get_train_dataloader()
+        
+        if self.alst_data_adapter is not None:
+            # Update ALST adapter with sequence parallel group from model
+            update_alst_adapter_with_model(self.alst_data_adapter, self.model, self.accelerator)
+            
+            # Estimate sequence length from dataset if possible
+            sequence_length = getattr(self.args, 'max_seq_length', None) or getattr(self.train_dataset, 'max_length', None)
+            dataloader = self.alst_data_adapter.wrap_dataloader(dataloader, sequence_length)
+            logger.info_rank0("Applied ALST wrapping to training DataLoader")
+            
+        return dataloader
+    
+    @override  
+    def get_eval_dataloader(self, eval_dataset=None) -> "torch.utils.data.DataLoader":
+        """Override to add ALST DataLoader wrapping if enabled."""
+        dataloader = super().get_eval_dataloader(eval_dataset)
+        
+        if self.alst_data_adapter is not None:
+            # Update ALST adapter with sequence parallel group from model
+            update_alst_adapter_with_model(self.alst_data_adapter, self.model, self.accelerator)
+                
+            # Estimate sequence length from dataset if possible
+            sequence_length = getattr(self.args, 'max_seq_length', None) or getattr(eval_dataset or self.eval_dataset, 'max_length', None)
+            dataloader = self.alst_data_adapter.wrap_dataloader(dataloader, sequence_length)
+            logger.info_rank0("Applied ALST wrapping to evaluation DataLoader")
+            
+        return dataloader

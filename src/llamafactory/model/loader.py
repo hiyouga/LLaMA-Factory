@@ -36,6 +36,8 @@ from .model_utils.liger_kernel import apply_liger_kernel
 from .model_utils.misc import register_autoclass
 from .model_utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
 from .model_utils.sequence_parallel import apply_sequence_parallel
+from .model_utils.deepspeed_sequence_parallel import apply_deepspeed_sequence_parallel
+from .model_utils.alst_config import create_alst_config, validate_alst_requirements
 from .model_utils.unsloth import load_unsloth_pretrained_model
 from .model_utils.valuehead import load_valuehead_params
 from .patcher import patch_config, patch_model, patch_processor, patch_tokenizer, patch_valuehead_model
@@ -151,9 +153,19 @@ def load_model(
         config.attention_dropout = 0.0
 
     apply_liger_kernel(config, model_args, is_trainable, require_logits=(finetuning_args.stage not in ["pt", "sft"]))
-    sequence_parallel_group = apply_sequence_parallel(
-        model_args, full_determinism
-    )  # monkey patching, similar to liger_kernel
+    
+    # Initialize sequence parallel - choose between ALST and legacy implementation
+    sequence_parallel_group = None
+    alst_config = create_alst_config(model_args)
+    
+    if alst_config.enabled and validate_alst_requirements(alst_config):
+        logger.info_rank0("Using DeepSpeed ALST for sequence parallelism")
+        # ALST will be applied after model loading to access the actual model
+    else:
+        logger.info_rank0("Using legacy sequence parallelism implementation")
+        sequence_parallel_group = apply_sequence_parallel(
+            model_args, full_determinism
+        )  # monkey patching, similar to liger_kernel
 
     model = None
     lazy_load = False
@@ -248,5 +260,10 @@ def load_model(
         for name, param in model.named_parameters():
             print(f"name: {name}, dtype: {param.dtype}, device: {param.device}, trainable: {param.requires_grad}")
 
+    # Apply ALST if enabled, otherwise use legacy sequence parallel
+    if alst_config.enabled and validate_alst_requirements(alst_config):
+        logger.info_rank0("Applying DeepSpeed ALST to model")
+        sequence_parallel_group = apply_deepspeed_sequence_parallel(model_args, model)
+    
     model.sequence_parallel_group = sequence_parallel_group
     return model

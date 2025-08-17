@@ -28,7 +28,9 @@ from ..fp8_utils import (
     create_deepspeed_fp8_kwargs,
     validate_fp8_requirements,
 )
-from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
+from ...data.processor.alst_data_adapter import create_alst_data_adapter
+from ...model.model_utils.alst_config import create_alst_config
+from ..trainer_utils import create_custom_optimizer, create_custom_scheduler, get_sequence_parallel_group, update_alst_adapter_with_model
 
 
 if TYPE_CHECKING:
@@ -102,6 +104,19 @@ class CustomTrainer(Trainer):
 
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
+            
+        # Initialize ALST data adapter if needed
+        if model_args is not None and model_args.sequence_parallel_size > 1:
+            self.alst_config = create_alst_config(model_args)
+            if self.alst_config.enabled:
+                # Get sequence parallel group from model
+                sp_group = getattr(model, 'sequence_parallel_group', None)
+                self.alst_data_adapter = create_alst_data_adapter(model_args, self.alst_config, sp_group)
+                logger.info_rank0("ALST data adapter initialized for trainer")
+            else:
+                self.alst_data_adapter = None
+        else:
+            self.alst_data_adapter = None
 
     @override
     def create_optimizer(self) -> "torch.optim.Optimizer":
@@ -126,3 +141,35 @@ class CustomTrainer(Trainer):
     @override
     def compute_loss(self, model, inputs, *args, **kwargs):
         return super().compute_loss(model, inputs, *args, **kwargs)
+    
+    @override
+    def get_train_dataloader(self) -> "torch.utils.data.DataLoader":
+        """Override to add ALST DataLoader wrapping if enabled."""
+        dataloader = super().get_train_dataloader()
+        
+        if self.alst_data_adapter is not None:
+            # Update ALST adapter with sequence parallel group from model
+            update_alst_adapter_with_model(self.alst_data_adapter, self.model, self.accelerator)
+            
+            # Estimate sequence length from dataset if possible
+            sequence_length = getattr(self.args, 'max_seq_length', None) or getattr(self.train_dataset, 'max_length', None)
+            dataloader = self.alst_data_adapter.wrap_dataloader(dataloader, sequence_length)
+            logger.info_rank0("Applied ALST wrapping to training DataLoader")
+            
+        return dataloader
+    
+    @override  
+    def get_eval_dataloader(self, eval_dataset=None) -> "torch.utils.data.DataLoader":
+        """Override to add ALST DataLoader wrapping if enabled."""
+        dataloader = super().get_eval_dataloader(eval_dataset)
+        
+        if self.alst_data_adapter is not None:
+            # Update ALST adapter with sequence parallel group from model
+            update_alst_adapter_with_model(self.alst_data_adapter, self.model, self.accelerator)
+            
+            # Estimate sequence length from dataset if possible
+            sequence_length = getattr(self.args, 'max_seq_length', None) or getattr(eval_dataset or self.eval_dataset, 'max_length', None)
+            dataloader = self.alst_data_adapter.wrap_dataloader(dataloader, sequence_length)
+            logger.info_rank0("Applied ALST wrapping to evaluation DataLoader")
+            
+        return dataloader

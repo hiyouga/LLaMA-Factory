@@ -1,0 +1,80 @@
+# Full Fine-Tuning config for Qwen2.5-7B-Instruct using DeepSpeed Arctic Long Sequence Training (ALST)
+# This demonstrates the new ALST integration for ultra-long sequence training (up to 15M tokens)
+# Based on DeepSpeed ALST: https://www.deepspeed.ai/tutorials/ds-sequence/ 
+# Enhanced with ALST sequence parallelism and tiling optimizations
+#
+# Requirements:
+#   - DeepSpeed >= 0.17.4 (for native ALST support)
+#   - Flash Attention >= 2.0 (recommended for optimal performance)
+#   - Multi-GPU setup required (4-8 GPUs recommended)
+#   - pip install -e '.[alst]' or pip install -e '.[sp-alst]'
+#   - Log into WandB (`wandb login`) or set `report_to: none`
+#   - Log into HF: `huggingface-cli login`
+#
+# Usage:
+#   llamafactory-cli train qwen2_5_full_sft_alst_deepspeed.yaml
+
+### model
+model_name_or_path: Qwen/Qwen2.5-7B-Instruct
+trust_remote_code: true
+rope_scaling: yarn  # YARN RoPE scaling for extended context
+flash_attn: auto
+enable_liger_kernel: true
+
+### DeepSpeed ALST Configuration
+sequence_parallel_size: 4                    # Number of GPUs for sequence parallelism
+sequence_parallel_mode: deepspeed-alst       # Use DeepSpeed ALST implementation
+alst_sequence_backend: deepspeed             # Use DeepSpeed native backend
+alst_ulysses_degree: 4                       # Ulysses parallelism degree (should match SP size)
+alst_sequence_tiling: true                   # Enable sequence tiling for memory efficiency  
+alst_memory_optimizations: true              # Enable ALST memory optimizations
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full  # Full fine-tuning (not LoRA)
+deepspeed: examples/deepspeed/ds_z3_alst_config.json  # DeepSpeed ZeRO-3 + ALST config
+
+### dataset
+dataset: tbench_traces_sharegptv1
+template: qwen
+cutoff_len: 262144  # 256K context length - ALST can handle much longer sequences
+max_samples: null
+overwrite_cache: true
+preprocessing_num_workers: 8
+dataloader_num_workers: 2
+shuffle_for_sequence_parallel: false  # ALST handles data distribution automatically
+
+### output  
+output_dir: output/qwen2.5_7b_tbench_traces_alst_256k
+logging_steps: 10
+save_steps: 100
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: true
+report_to: wandb
+
+### train
+per_device_train_batch_size: 1              # ALST enables larger effective batch sizes
+gradient_accumulation_steps: 2              # Reduced due to ALST efficiency
+learning_rate: 1.0e-5                       # Lower LR for ultra-long sequences
+num_train_epochs: 2.0                       # Fewer epochs due to longer sequences
+lr_scheduler_type: cosine
+warmup_ratio: 0.1                           # Longer warmup for stability
+weight_decay: 0.01
+max_grad_norm: 1.0
+bf16: true                                   # BF16 recommended for ALST
+gradient_checkpointing: true                 # Essential for memory efficiency
+ddp_timeout: 300000                          # 5 minutes timeout for ALST initialization
+
+### Performance Optimizations
+dataloader_pin_memory: false                # ALST handles memory management
+remove_unused_columns: false
+
+### ALST Notes:
+# - ALST can scale sequences up to 15M tokens with proper hardware
+# - Sequence tiling reduces memory complexity from O(N) to O(1) 
+# - UlyssesPlus provides constant communication volume as sequence length increases
+# - Memory optimizations include PyTorch profiling-based improvements
+# - Compatible with existing transformer architectures and attention patterns
+# - Provides 2.5x+ throughput improvements over standard sequence parallel methods

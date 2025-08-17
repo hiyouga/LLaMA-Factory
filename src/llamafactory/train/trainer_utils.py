@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
 import torch
+import torch.distributed as dist
 from transformers import Trainer
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.modeling_utils import is_fsdp_enabled
@@ -730,3 +731,57 @@ def get_ray_trainer(
         ),
     )
     return trainer
+
+
+def get_sequence_parallel_group(
+    model: "torch.nn.Module", 
+    accelerator: Optional[Any] = None
+) -> Optional["dist.ProcessGroup"]:
+    """Get sequence parallel group from model, handling DDP wrapping.
+    
+    Args:
+        model: The model (potentially wrapped by DDP/FSDP)
+        accelerator: Optional accelerator for unwrapping
+        
+    Returns:
+        Sequence parallel process group if available, None otherwise
+    """
+    # Try to unwrap the model if accelerator is available
+    if accelerator is not None:
+        try:
+            unwrapped_model = accelerator.unwrap_model(model)
+            return getattr(unwrapped_model, 'sequence_parallel_group', None)
+        except Exception:
+            pass
+    
+    # Fallback: try direct access and common wrapper patterns
+    if hasattr(model, 'sequence_parallel_group'):
+        return getattr(model, 'sequence_parallel_group', None)
+    
+    # Handle common wrapper patterns
+    for attr in ['module', '_orig_mod', '_modules']:
+        if hasattr(model, attr):
+            wrapped_model = getattr(model, attr)
+            if hasattr(wrapped_model, 'sequence_parallel_group'):
+                return getattr(wrapped_model, 'sequence_parallel_group', None)
+    
+    return None
+
+
+def update_alst_adapter_with_model(
+    alst_data_adapter: Optional[Any],
+    model: "torch.nn.Module",
+    accelerator: Optional[Any] = None
+) -> None:
+    """Update ALST data adapter with sequence parallel group from model.
+    
+    Args:
+        alst_data_adapter: ALST data adapter instance
+        model: The model (potentially wrapped)
+        accelerator: Optional accelerator for unwrapping
+    """
+    if alst_data_adapter is not None:
+        sp_group = get_sequence_parallel_group(model, accelerator)
+        if sp_group is not None:
+            alst_data_adapter.sp_group = sp_group
+            logger.debug("Updated ALST data adapter with sequence parallel group")

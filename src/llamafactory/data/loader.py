@@ -34,6 +34,7 @@ from .processor import (
     SupervisedDatasetProcessor,
     UnsupervisedDatasetProcessor,
 )
+from .processor.alst_data_adapter import create_alst_data_adapter
 
 
 if TYPE_CHECKING:
@@ -383,13 +384,22 @@ def get_dataset(
             )
 
         if model_args.sequence_parallel_size > 1:
-            dataset = _get_sequence_parallel_dataset(
-                dataset, data_args, model_args, training_args, tokenizer, is_eval=False
-            )
-            if eval_dataset is not None:
-                eval_dataset = _get_sequence_parallel_dataset(
-                    eval_dataset, data_args, model_args, training_args, tokenizer, is_eval=True
+            # Check if using ALST mode - if so, skip dataset preprocessing as ALST handles it
+            if (hasattr(model_args, 'sequence_parallel_mode') and 
+                model_args.sequence_parallel_mode == "deepspeed-alst" and
+                hasattr(model_args, 'alst_sequence_backend') and
+                model_args.alst_sequence_backend == "deepspeed"):
+                logger.info_rank0("Using ALST mode - sequence parallel dataset processing will be handled by DataLoader adapter")
+                # ALST processing is handled at the DataLoader level, not dataset preprocessing
+            else:
+                logger.info_rank0("Using legacy sequence parallel dataset processing")
+                dataset = _get_sequence_parallel_dataset(
+                    dataset, data_args, model_args, training_args, tokenizer, is_eval=False
                 )
+                if eval_dataset is not None:
+                    eval_dataset = _get_sequence_parallel_dataset(
+                        eval_dataset, data_args, model_args, training_args, tokenizer, is_eval=True
+                    )
 
         dataset_dict = split_dataset(dataset, eval_dataset, data_args, seed=training_args.seed)
         if data_args.tokenized_path is not None:  # save tokenized dataset to disk

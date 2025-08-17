@@ -56,6 +56,19 @@ def new_flash_attn_forward(
         attn_output = dist_attn(
             query_states, key_states, value_states, deterministic=deterministic, dropout_p=dropout, causal=is_causal
         )
+    elif mode == "llama3":
+        # Use DeepSpeed ALST for llama3 mode - this is now implemented through ALST
+        try:
+            from ...model_utils.deepspeed_sequence_parallel import check_alst_requirements
+            
+            if check_alst_requirements():
+                # Fallback to DeepSpeed ALST implementation
+                # This should not be reached as ALST is applied at model level
+                raise NotImplementedError("llama3 mode should use DeepSpeed ALST - configure sequence_parallel_mode='deepspeed-alst'")
+            else:
+                raise ImportError("DeepSpeed ALST requirements not met for llama3 mode. Please install DeepSpeed 0.17.4+")
+        except ImportError as e:
+            raise ImportError(f"llama3 mode requires DeepSpeed ALST: {e}")
     else:
         raise NotImplementedError("Other sequence parallel modes are to be implemented.")
 

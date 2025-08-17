@@ -148,9 +148,25 @@ class BaseModelArguments:
             "help": "Number of GPUs to process one data sequence. Values greater than 1 means enabling sequence parallelism."
         },
     )
-    sequence_parallel_mode: Literal["zigzag-ring", "llama3", "ulysses"] = field(
+    sequence_parallel_mode: Literal["zigzag-ring", "llama3", "ulysses", "deepspeed-alst"] = field(
         default="zigzag-ring",
-        metadata={"help": "Specific mode of sequence parallel implementation."},
+        metadata={"help": "Specific mode of sequence parallel implementation. 'deepspeed-alst' uses DeepSpeed's Arctic Long Sequence Training."},
+    )
+    alst_sequence_backend: Literal["deepspeed", "manual"] = field(
+        default="deepspeed",
+        metadata={"help": "Backend for sequence parallelism. 'deepspeed' uses native ALST, 'manual' uses current implementation."},
+    )
+    alst_sequence_tiling: bool = field(
+        default=False,
+        metadata={"help": "Enable sequence tiling optimization for memory efficiency in long sequences."},
+    )
+    alst_memory_optimizations: bool = field(
+        default=True,
+        metadata={"help": "Enable DeepSpeed ALST memory optimizations including PyTorch memory profiling."},
+    )
+    alst_ulysses_degree: Optional[int] = field(
+        default=None,
+        metadata={"help": "Ulysses parallelism degree for DeepSpeed ALST. If None, uses sequence_parallel_size."},
     )
     moe_aux_loss_coef: Optional[float] = field(
         default=None,
