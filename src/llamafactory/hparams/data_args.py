@@ -106,6 +106,16 @@ class DataArguments:
         default=True,
         metadata={"help": "Whether or not to ignore the tokens corresponding to the pad label in loss computation."},
     )
+    force_sequence_length_padding: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Force all sequences to be padded to cutoff_len during preprocessing. "
+                "Required for sequence parallelism compatibility. When enabled, all samples "
+                "will be exactly cutoff_len tokens, padding with pad tokens as needed."
+            )
+        },
+    )
     val_size: float = field(
         default=0.0,
         metadata={"help": "Size of the validation set, should be an integer or a float in range `[0,1)`."},

@@ -23,7 +23,12 @@ from ...extras.misc import calculate_tps
 from ...extras.ploting import plot_loss
 from ...hparams import ModelArguments
 from ...model import load_model, load_tokenizer
-from ..trainer_utils import create_modelcard_and_push, create_ref_model, get_optimal_pad_multiple, validate_padding_config
+from ..trainer_utils import (
+    create_modelcard_and_push,
+    create_ref_model,
+    get_optimal_pad_multiple,
+    validate_padding_config,
+)
 from .trainer import CustomDPOTrainer
 
 

@@ -43,14 +43,14 @@ class ALSTLossHandler:
     2. Proper model forward pass for ALST
     3. Manual loss computation with sequence parallel aggregation
     """
-    
+
     def __init__(self, sequence_parallel_group: Optional["dist.ProcessGroup"] = None):
         self.sp_group = sequence_parallel_group
-    
+
     def compute_alst_loss(
-        self, 
-        model: "Module", 
-        inputs: Dict[str, Any], 
+        self,
+        model: "Module",
+        inputs: Dict[str, Any],
         return_outputs: bool = False
     ) -> torch.Tensor:
         """Compute loss for ALST sequence parallel training.
@@ -69,20 +69,20 @@ class ALSTLossHandler:
                 "This should be created by UlyssesSPDataLoaderAdapter. "
                 "Check that the ALST data adapter is properly applied."
             )
-        
+
         if "labels" in inputs:
             logger.warning(
                 "Found both 'labels' and 'shift_labels' in inputs. "
                 "ALST mode uses 'shift_labels' - removing 'labels' for clarity."
             )
-        
+
         # Extract shift_labels and prepare model inputs
         shift_labels = inputs["shift_labels"]
         model_inputs = {k: v for k, v in inputs.items() if k not in ["labels", "shift_labels"]}
-        
+
         # Forward pass through model
         outputs = model(**model_inputs, use_cache=False)
-        
+
         # Extract logits from model outputs
         if hasattr(outputs, 'logits'):
             logits = outputs.logits
@@ -97,18 +97,18 @@ class ALSTLossHandler:
                 f"Available attributes: {available_attrs}\n"
                 f"Available keys: {available_keys}"
             )
-        
+
         # Compute loss following ArcticTraining pattern
         loss = self._compute_shift_labels_loss(logits, shift_labels)
-        
+
         # Aggregate loss across sequence parallel ranks
         if self.sp_group is not None and dist.is_initialized():
             loss = self._aggregate_loss_across_ranks(loss, shift_labels)
-        
+
         if return_outputs:
             return loss, outputs
         return loss
-    
+
     def _compute_shift_labels_loss(self, logits: torch.Tensor, shift_labels: torch.Tensor) -> torch.Tensor:
         """Compute cross-entropy loss with shift_labels.
         
@@ -120,14 +120,14 @@ class ALSTLossHandler:
             Loss tensor (scalar)
         """
         loss_fct = CrossEntropyLoss(reduction="sum", ignore_index=-100)
-        
+
         # Flatten for cross-entropy computation
         flat_logits = logits.view(-1, logits.size(-1))
         flat_labels = shift_labels.view(-1)
-        
+
         # Compute loss
         loss_sum = loss_fct(flat_logits, flat_labels)
-        
+
         # Normalize by number of valid tokens
         valid_tokens = (flat_labels != -100).sum()
         if valid_tokens > 0:
@@ -135,9 +135,9 @@ class ALSTLossHandler:
         else:
             # No valid tokens in this shard - zero loss
             loss = loss_sum * 0.0
-        
+
         return loss
-    
+
     def _aggregate_loss_across_ranks(self, loss: torch.Tensor, shift_labels: torch.Tensor) -> torch.Tensor:
         """Aggregate loss across sequence parallel ranks with proper weighting.
         
@@ -152,25 +152,25 @@ class ALSTLossHandler:
         """
         # Count valid tokens on this rank
         valid_tokens = (shift_labels != -100).sum().float()
-        
+
         # Gather losses and token counts from all ranks
         losses_per_rank = torch.distributed.nn.functional.all_gather(loss, group=self.sp_group)
         valid_tokens_per_rank = torch.distributed.nn.functional.all_gather(valid_tokens, group=self.sp_group)
-        
+
         # Compute weighted average
         # Each rank contributes proportionally to its number of valid tokens
         total_weighted_loss = sum(
-            losses_per_rank[i] * valid_tokens_per_rank[i] 
+            losses_per_rank[i] * valid_tokens_per_rank[i]
             for i in range(len(losses_per_rank))
         )
         total_valid_tokens = sum(valid_tokens_per_rank)
-        
+
         if total_valid_tokens > 0:
             aggregated_loss = total_weighted_loss / total_valid_tokens
         else:
             # No valid tokens across any rank - return zero loss
             aggregated_loss = total_weighted_loss * 0.0
-        
+
         return aggregated_loss
 
 

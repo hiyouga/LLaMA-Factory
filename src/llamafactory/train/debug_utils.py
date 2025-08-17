@@ -14,10 +14,13 @@
 
 """Debugging utilities for distributed training and tensor issues."""
 
+from typing import Any, Dict
+
 import torch
 import torch.distributed as dist
-from typing import Any, Dict, Union
+
 from ..extras.logging import get_logger
+
 
 logger = get_logger(__name__)
 
@@ -32,9 +35,9 @@ def debug_tensor_properties(tensor: torch.Tensor, name: str = "tensor", rank_fil
     """
     if rank_filter is not None and dist.is_initialized() and dist.get_rank() != rank_filter:
         return
-        
+
     rank_str = f"[rank{dist.get_rank()}]" if dist.is_initialized() else "[single]"
-    
+
     logger.info_rank0(f"{rank_str} Tensor '{name}' - "
                      f"shape: {tensor.shape}, "
                      f"dtype: {tensor.dtype}, "
@@ -42,11 +45,11 @@ def debug_tensor_properties(tensor: torch.Tensor, name: str = "tensor", rank_fil
                      f"is_contiguous: {tensor.is_contiguous()}, "
                      f"is_cuda: {tensor.is_cuda}, "
                      f"requires_grad: {tensor.requires_grad}")
-    
+
     # Check for common issues
     if not tensor.is_contiguous():
         logger.warning(f"{rank_str} Non-contiguous tensor '{name}' - this may cause distributed ops to fail")
-    
+
     if tensor.device.type == 'cpu' and dist.is_initialized():
         logger.warning(f"{rank_str} CPU tensor '{name}' in distributed context - may need to be on CUDA")
 
@@ -61,12 +64,12 @@ def debug_batch_properties(batch: Dict[str, Any], batch_idx: int = None, rank_fi
     """
     if rank_filter is not None and dist.is_initialized() and dist.get_rank() != rank_filter:
         return
-    
+
     rank_str = f"[rank{dist.get_rank()}]" if dist.is_initialized() else "[single]"
     batch_str = f"batch_{batch_idx}" if batch_idx is not None else "batch"
-    
+
     logger.info_rank0(f"{rank_str} === Debugging {batch_str} ===")
-    
+
     for key, value in batch.items():
         if isinstance(value, torch.Tensor):
             debug_tensor_properties(value, f"{batch_str}.{key}", rank_filter=None)
@@ -89,22 +92,22 @@ def validate_cuda_tensors(batch: Dict[str, torch.Tensor], operation_name: str = 
     """
     rank_str = f"[rank{dist.get_rank()}]" if dist.is_initialized() else "[single]"
     valid = True
-    
+
     for key, value in batch.items():
         if isinstance(value, torch.Tensor):
             if not value.is_cuda and dist.is_initialized():
                 logger.error(f"{rank_str} {operation_name}: Tensor '{key}' is not on CUDA (device: {value.device})")
                 valid = False
-            
+
             if not value.is_contiguous():
                 logger.error(f"{rank_str} {operation_name}: Tensor '{key}' is not contiguous")
                 valid = False
-                
+
             # Check for sparse tensors
             if value.is_sparse:
                 logger.error(f"{rank_str} {operation_name}: Tensor '{key}' is sparse (needs dense)")
                 valid = False
-    
+
     return valid
 
 
@@ -116,25 +119,25 @@ def debug_gather_operation(tensor: torch.Tensor, name: str = "tensor") -> None:
         name: Name for identification
     """
     rank_str = f"[rank{dist.get_rank()}]" if dist.is_initialized() else "[single]"
-    
+
     logger.info_rank0(f"{rank_str} Pre-gather debug '{name}': "
                      f"shape={tensor.shape}, dtype={tensor.dtype}, "
                      f"device={tensor.device}, is_cuda={tensor.is_cuda}, "
                      f"is_contiguous={tensor.is_contiguous()}, "
                      f"is_sparse={tensor.is_sparse}")
-    
+
     # Validate for gather operation
     if not tensor.is_cuda and dist.is_initialized():
         logger.error(f"{rank_str} GATHER ERROR: '{name}' must be on CUDA for distributed gather")
-    
+
     if not tensor.is_contiguous():
         logger.error(f"{rank_str} GATHER ERROR: '{name}' must be contiguous for distributed gather")
-    
+
     if tensor.is_sparse:
         logger.error(f"{rank_str} GATHER ERROR: '{name}' must be dense (not sparse) for distributed gather")
 
 
 # Quick enable/disable debug flags
 DEBUG_TENSORS = False  # Set to True to enable tensor debugging
-DEBUG_BATCHES = False  # Set to True to enable batch debugging  
+DEBUG_BATCHES = False  # Set to True to enable batch debugging
 DEBUG_GATHER = False   # Set to True to enable gather operation debugging

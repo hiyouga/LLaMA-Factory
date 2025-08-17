@@ -24,12 +24,14 @@ from typing import TYPE_CHECKING, Any, Optional, Union
 import numpy as np
 import torch
 from transformers import Seq2SeqTrainer
-from transformers.trainer import _is_peft_model
 from typing_extensions import override
 
+from ...data.processor.alst_data_adapter import create_alst_data_adapter
 from ...extras import logging
 from ...extras.constants import IGNORE_INDEX
 from ...extras.packages import is_transformers_version_greater_than
+from ...model.model_utils.alst_config import create_alst_config
+from ..alst_loss import create_alst_loss_handler, should_use_alst_loss
 from ..callbacks import SaveProcessorCallback
 from ..fp8_utils import (
     check_deepspeed_fp8_compatibility,
@@ -38,10 +40,12 @@ from ..fp8_utils import (
     create_fp8_kwargs,
     validate_fp8_requirements,
 )
-from ...data.processor.alst_data_adapter import create_alst_data_adapter
-from ...model.model_utils.alst_config import create_alst_config
-from ..trainer_utils import create_custom_optimizer, create_custom_scheduler, get_sequence_parallel_group, update_alst_adapter_with_model
-from ..alst_loss import create_alst_loss_handler, should_use_alst_loss
+from ..trainer_utils import (
+    create_custom_optimizer,
+    create_custom_scheduler,
+    get_sequence_parallel_group,
+    update_alst_adapter_with_model,
+)
 
 
 if TYPE_CHECKING:
@@ -74,17 +78,17 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                 logger.warning("FP8 disabled due to DeepSpeed incompatibility - please upgrade to DeepSpeed 0.17.3+")
             else:
                 import os
-                
+
                 # Always set mixed precision to fp8 first
                 os.environ["ACCELERATE_MIXED_PRECISION"] = "fp8"
                 logger.info_rank0("Set ACCELERATE_MIXED_PRECISION=fp8")
-                
+
                 # Configure FP8 backend and options
                 backend = getattr(model_args, 'fp8_backend', 'auto')
                 if backend != 'auto':
                     os.environ["FP8_BACKEND"] = backend
                     logger.info_rank0(f"Set FP8_BACKEND={backend}")
-                
+
                 # Create and validate recipe kwargs (for logging/debugging)
                 if importlib.util.find_spec("deepspeed") is not None:
                     deepspeed_fp8_kwargs = create_deepspeed_fp8_kwargs(model_args)
@@ -92,11 +96,11 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                 else:
                     fp8_kwargs = create_fp8_kwargs(model_args)
                     logger.info_rank0(f"Native FP8 kwargs created: {fp8_kwargs}")
-                    
+
                     if hasattr(model_args, 'fp8_enable_fsdp_float8_all_gather') and model_args.fp8_enable_fsdp_float8_all_gather:
                         os.environ["FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER"] = "true"
                         logger.info_rank0("Set FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER=true")
-                
+
                 logger.info_rank0("FP8 environment variables configured for Accelerate")
 
         # Synchronize gradient accumulation steps between Accelerate and DeepSpeed/Training args
@@ -131,7 +135,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
-            
+
         # Initialize ALST data adapter and loss handler if needed
         if model_args is not None and model_args.sequence_parallel_size > 1:
             self.alst_config = create_alst_config(model_args)
@@ -178,26 +182,26 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
         r"""Compute loss with ALST support for sequence parallel training."""
         sequence_parallel_group = get_sequence_parallel_group(model, self.accelerator)
-        
+
         # Debug: Log input keys and sequence parallel group status
         logger.info_rank0(f"compute_loss called with input keys: {list(inputs.keys())}")
         logger.info_rank0(f"sequence_parallel_group exists: {sequence_parallel_group is not None}")
-        
+
         # Check if we should use ALST loss computation
         if should_use_alst_loss(inputs, sequence_parallel_group):
             # Initialize ALST loss handler if not already done
             if self.alst_loss_handler is None:
                 self.alst_loss_handler = create_alst_loss_handler(sequence_parallel_group)
-            
+
             logger.info_rank0("Using ALST loss computation")
             # Use ALST loss computation
             return self.alst_loss_handler.compute_alst_loss(model, inputs, return_outputs)
-        
+
         else:
             # Standard training (no sequence parallelism) or ALST not properly configured
             if sequence_parallel_group is not None:
                 logger.warning(f"Sequence parallel group exists but ALST loss not triggered. Input keys: {list(inputs.keys())}")
-            
+
             loss = super().compute_loss(model, inputs, return_outputs, **kwargs)
 
         if is_transformers_version_greater_than("4.46") and not getattr(self, "model_accepts_loss_kwargs", False):
@@ -270,15 +274,15 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         with open(output_prediction_file, "w", encoding="utf-8") as f:
             for text, pred, label in zip(decoded_inputs, decoded_preds, decoded_labels):
                 f.write(json.dumps({"prompt": text, "predict": pred, "label": label}, ensure_ascii=False) + "\n")
-    
+
     @override
     def get_train_dataloader(self) -> "torch.utils.data.DataLoader":
         """Override to add ALST DataLoader wrapping if enabled."""
         # Check FP8 compatibility if FP8 is enabled and this is the first time creating dataloader
-        if (hasattr(self, '_fp8_compatibility_checked') is False and 
-            hasattr(self, 'model_args') and 
+        if (hasattr(self, '_fp8_compatibility_checked') is False and
+            hasattr(self, 'model_args') and
             getattr(self.model_args, 'fp8', False)):
-            
+
             try:
                 is_compatible, reason = check_model_fp8_compatibility(self.model)
                 if not is_compatible:
@@ -288,34 +292,34 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                     logger.info_rank0(f"Model FP8 compatibility confirmed: {reason}")
             except Exception as e:
                 logger.warning(f"FP8 compatibility check failed: {e}")
-            
+
             self._fp8_compatibility_checked = True
-        
+
         dataloader = super().get_train_dataloader()
-        
+
         if self.alst_data_adapter is not None:
             # Update ALST adapter with sequence parallel group from model
             update_alst_adapter_with_model(self.alst_data_adapter, self.model, self.accelerator)
-            
+
             # Estimate sequence length from dataset if possible
             sequence_length = getattr(self.args, 'max_seq_length', None) or getattr(self.train_dataset, 'max_length', None)
             dataloader = self.alst_data_adapter.wrap_dataloader(dataloader, sequence_length)
             logger.info_rank0("Applied ALST wrapping to training DataLoader")
-            
+
         return dataloader
-    
-    @override  
+
+    @override
     def get_eval_dataloader(self, eval_dataset=None) -> "torch.utils.data.DataLoader":
         """Override to add ALST DataLoader wrapping if enabled."""
         dataloader = super().get_eval_dataloader(eval_dataset)
-        
+
         if self.alst_data_adapter is not None:
             # Update ALST adapter with sequence parallel group from model
             update_alst_adapter_with_model(self.alst_data_adapter, self.model, self.accelerator)
-                
+
             # Estimate sequence length from dataset if possible
             sequence_length = getattr(self.args, 'max_seq_length', None) or getattr(eval_dataset or self.eval_dataset, 'max_length', None)
             dataloader = self.alst_data_adapter.wrap_dataloader(dataloader, sequence_length)
             logger.info_rank0("Applied ALST wrapping to evaluation DataLoader")
-            
+
         return dataloader

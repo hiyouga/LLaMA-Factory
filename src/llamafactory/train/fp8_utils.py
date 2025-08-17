@@ -51,13 +51,13 @@ def create_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
                 # Use rowwise scaling for better performance (as recommended by torchao)
                 # Configure alignment requirements for FP8 kernels
                 config = Float8LinearConfig.from_recipe_name("rowwise")
-                
+
                 # Enable alignment for better kernel performance
                 if hasattr(config, 'enable_amax_init'):
                     config.enable_amax_init = True
                 if hasattr(config, 'enable_pre_and_post_forward'):
                     config.enable_pre_and_post_forward = True
-                    
+
                 logger.info_rank0("Using torchao Float8LinearConfig with rowwise scaling and alignment")
             except ImportError:
                 logger.warning_rank0("torchao not available, using default FP8 configuration")
@@ -69,20 +69,20 @@ def create_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
             skip_layers = ["embed", "lm_head", "output", "classifier"]
             if any(skip_name in layer_name.lower() for skip_name in skip_layers):
                 return False
-            
+
             # Only convert Linear layers
             if not (hasattr(module, 'weight') and len(module.weight.shape) == 2):
                 return False
-                
+
             # Check dimension alignment for FP8 kernels
             weight = module.weight
             in_features, out_features = weight.shape[1], weight.shape[0]
-            
+
             # Skip layers with dimensions not divisible by 16 to avoid kernel errors
             if in_features % 16 != 0 or out_features % 16 != 0:
                 logger.debug(f"Skipping layer {layer_name} with dimensions {out_features}x{in_features} (not divisible by 16)")
                 return False
-                
+
             return True
 
         # Map FSDP all-gather setting if available (this affects the underlying implementation)
@@ -188,13 +188,13 @@ def check_model_fp8_compatibility(model) -> tuple[bool, str]:
     incompatible_layers = []
     total_layers = 0
     compatible_layers = 0
-    
+
     for name, module in model.named_modules():
         if hasattr(module, 'weight') and len(module.weight.shape) == 2:
             total_layers += 1
             weight = module.weight
             in_features, out_features = weight.shape[1], weight.shape[0]
-            
+
             # Check if dimensions are divisible by 16
             if in_features % 16 == 0 and out_features % 16 == 0:
                 compatible_layers += 1
@@ -203,10 +203,10 @@ def check_model_fp8_compatibility(model) -> tuple[bool, str]:
                 skip_layers = ["embed", "lm_head", "output", "classifier"]
                 if not any(skip_name in name.lower() for skip_name in skip_layers):
                     incompatible_layers.append(f"{name}: {out_features}x{in_features}")
-    
+
     # Consider model compatible if most layers can use FP8
     compatibility_ratio = compatible_layers / total_layers if total_layers > 0 else 0
-    
+
     if compatibility_ratio >= 0.7:  # At least 70% of layers compatible
         return True, f"Model is FP8 compatible ({compatible_layers}/{total_layers} layers)"
     else:

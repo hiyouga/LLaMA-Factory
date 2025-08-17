@@ -105,6 +105,18 @@ class SupervisedDatasetProcessor(DatasetProcessor):
                 videos=examples["_videos"][i] or [],
                 audios=examples["_audios"][i] or [],
             )
+            # Apply force padding if enabled
+            if self.data_args.force_sequence_length_padding:
+                current_length = len(input_ids)
+                if current_length < self.data_args.cutoff_len:
+                    pad_length = self.data_args.cutoff_len - current_length
+                    input_ids += [self.tokenizer.pad_token_id] * pad_length
+                    labels += [IGNORE_INDEX] * pad_length
+                elif current_length > self.data_args.cutoff_len:
+                    # Truncate if longer than cutoff_len
+                    input_ids = input_ids[:self.data_args.cutoff_len]
+                    labels = labels[:self.data_args.cutoff_len]
+
             model_inputs["input_ids"].append(input_ids)
             model_inputs["attention_mask"].append([1] * len(input_ids))
             model_inputs["position_ids"].append(list(range(len(input_ids))))

@@ -65,7 +65,7 @@ def new_flash_attn_forward(
         # Use DeepSpeed ALST for llama3 mode - this is now implemented through ALST
         try:
             from ...model_utils.deepspeed_sequence_parallel import check_alst_requirements
-            
+
             if check_alst_requirements():
                 # Fallback to DeepSpeed ALST implementation
                 # This should not be reached as ALST is applied at model level
@@ -115,7 +115,7 @@ def apply_sequence_parallel(model_args, full_determinism=False):
         # DeepSpeed ALST mode - handled by DeepSpeed, no need for monkey patching
         logger.info_rank0(f"Using DeepSpeed ALST sequence parallel mode with {model_args.sequence_parallel_size} GPUs")
         return group_this
-    
+
     try:
         # For legacy modes that require monkey patching
         if model_args.sequence_parallel_mode == "zigzag-ring":
@@ -138,7 +138,7 @@ def apply_sequence_parallel(model_args, full_determinism=False):
         # Apply monkey patching for legacy modes
         transformers.modeling_flash_attention_utils._flash_attention_forward = new_flash_attention_forward
         logger.info_rank0(f"Applied sequence parallel monkey patching for mode: {model_args.sequence_parallel_mode}")
-        
+
     except Exception as e:
         logger.warning_rank0(
             f"Failed to apply sequence parallel monkey patching: {e}. "

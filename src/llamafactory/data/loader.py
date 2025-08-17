@@ -34,7 +34,6 @@ from .processor import (
     SupervisedDatasetProcessor,
     UnsupervisedDatasetProcessor,
 )
-from .processor.alst_data_adapter import create_alst_data_adapter
 
 
 if TYPE_CHECKING:
@@ -385,7 +384,7 @@ def get_dataset(
 
         if model_args.sequence_parallel_size > 1:
             # Check if using ALST mode - if so, skip dataset preprocessing as ALST handles it
-            if (hasattr(model_args, 'sequence_parallel_mode') and 
+            if (hasattr(model_args, 'sequence_parallel_mode') and
                 model_args.sequence_parallel_mode == "deepspeed-alst" and
                 hasattr(model_args, 'alst_sequence_backend') and
                 model_args.alst_sequence_backend == "deepspeed"):
