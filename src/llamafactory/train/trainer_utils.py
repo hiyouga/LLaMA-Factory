@@ -829,11 +829,14 @@ def get_attention_heads_from_model(model: "torch.nn.Module") -> Optional[int]:
             if hasattr(unwrapped_model, 'model'):
                 unwrapped_model = unwrapped_model.model
         
-        # Handle additional wrapper patterns
-        for attr in ['_orig_mod', '_modules']:
+        # Handle additional wrapper patterns (avoid getting dictionaries)
+        for attr in ['_orig_mod']:
             if hasattr(unwrapped_model, attr):
-                unwrapped_model = getattr(unwrapped_model, attr)
-                break
+                candidate = getattr(unwrapped_model, attr)
+                # Only use if it's actually a model, not a dict or other type
+                if hasattr(candidate, '__class__') and hasattr(candidate, 'config'):
+                    unwrapped_model = candidate
+                    break
         
         # Verify we have a config attribute before accessing it
         if not hasattr(unwrapped_model, 'config'):
