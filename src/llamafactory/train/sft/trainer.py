@@ -37,6 +37,7 @@ from ..fp8_utils import (
     check_deepspeed_fp8_compatibility,
     check_model_fp8_compatibility,
     create_deepspeed_fp8_kwargs,
+    create_fp8_kwargs,
     validate_fp8_requirements,
 )
 from ...data.processor.alst_data_adapter import create_alst_data_adapter

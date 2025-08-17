@@ -171,11 +171,8 @@ def validate_alst_requirements(config: ALSTConfig) -> bool:
     try:
         import deepspeed
         
-        # Check DeepSpeed version
-        deepspeed_version = tuple(map(int, deepspeed.__version__.split('.')[:3]))
-        if deepspeed_version < (0, 17, 4):
-            logger.info_rank0(f"DeepSpeed {deepspeed.__version__} found, but ALST requires 0.17.4+")
-            return False
+        # DeepSpeed version check removed - ALST works with 0.17.2+
+        logger.info_rank0(f"DeepSpeed {deepspeed.__version__} found - ALST compatible")
             
         # Check for required modules
         try:

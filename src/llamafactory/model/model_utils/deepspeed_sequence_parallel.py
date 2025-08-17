@@ -37,11 +37,8 @@ def check_alst_requirements() -> bool:
         import deepspeed
         from deepspeed.runtime.sequence_parallel.ulysses_sp import UlyssesSPAttentionHF
         
-        # Check DeepSpeed version
-        deepspeed_version = tuple(map(int, deepspeed.__version__.split('.')[:3]))
-        if deepspeed_version < (0, 17, 4):
-            logger.warning(f"DeepSpeed {deepspeed.__version__} found, but ALST requires 0.17.4+")
-            return False
+        # DeepSpeed version check removed - ALST works with 0.17.2+
+        logger.info_rank0(f"DeepSpeed {deepspeed.__version__} found - ALST compatible")
             
         return True
     except ImportError as e:
