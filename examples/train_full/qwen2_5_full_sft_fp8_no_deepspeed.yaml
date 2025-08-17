@@ -32,7 +32,6 @@ finetuning_type: full  # Full fine-tuning (not LoRA)
 dataset: tbench_traces_sharegptv1  # You'll need to add this to data/dataset_info.json
 template: qwen  # Qwen2.5 template
 cutoff_len: 4096  # Match model_max_length
-pad_to_multiple_of: 32  # Align with attention heads for optimal memory usage
 max_samples: null  # Use full dataset
 overwrite_cache: true
 preprocessing_num_workers: 4

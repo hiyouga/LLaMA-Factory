@@ -1,0 +1,53 @@
+# Example: Manual Padding Override
+# This config demonstrates how to override auto-detection with manual values
+
+### model
+model_name_or_path: Qwen/Qwen2.5-7B-Instruct
+trust_remote_code: true
+flash_attn: auto
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full
+
+### dataset
+dataset: identity
+template: qwen
+cutoff_len: 2048
+
+# Manual padding override examples:
+pad_to_multiple_of: 64      # Force specific value (overrides auto-detection)
+# pad_to_multiple_of: 1     # Disable padding entirely
+# pad_to_multiple_of: auto  # Explicit auto-detection (default behavior)
+# pad_to_multiple_of: null  # Alternative way to disable padding
+
+max_samples: 100
+overwrite_cache: true
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### output
+output_dir: output/qwen2_5_7b_manual_padding_example
+logging_steps: 10
+save_steps: 100
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: true
+report_to: none
+
+### train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 4
+learning_rate: 2.0e-5
+num_train_epochs: 1.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+gradient_checkpointing: true
+
+### Manual Override Behavior:
+# - Auto-detection is bypassed when pad_to_multiple_of is specified
+# - System uses exact value provided (64 in this case)
+# - Validation warnings may appear if value is suboptimal
+# - Example warning: "pad_to_multiple_of=64 is larger than attention heads (28)"

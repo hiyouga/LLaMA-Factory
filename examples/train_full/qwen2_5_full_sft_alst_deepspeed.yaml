@@ -22,10 +22,10 @@ flash_attn: auto
 enable_liger_kernel: true
 
 ### DeepSpeed ALST Configuration
-sequence_parallel_size: 4                    # Number of GPUs for sequence parallelism
+sequence_parallel_size: 8                    # Number of GPUs for sequence parallelism
 sequence_parallel_mode: deepspeed-alst       # Use DeepSpeed ALST implementation
 alst_sequence_backend: deepspeed             # Use DeepSpeed native backend
-alst_ulysses_degree: 4                       # Ulysses parallelism degree (should match SP size)
+alst_ulysses_degree: 8                       # Ulysses parallelism degree (should match SP size)
 alst_sequence_tiling: true                   # Enable sequence tiling for memory efficiency  
 alst_memory_optimizations: true              # Enable ALST memory optimizations
 
@@ -39,7 +39,6 @@ deepspeed: examples/deepspeed/ds_z3_alst_config.json  # DeepSpeed ZeRO-3 + ALST 
 dataset: tbench_traces_sharegptv1
 template: qwen
 cutoff_len: 262144  # 256K context length - ALST can handle much longer sequences
-pad_to_multiple_of: 32  # Align with attention heads (compatible with ulysses_degree=4)
 max_samples: null
 overwrite_cache: true
 preprocessing_num_workers: 8
@@ -48,8 +47,8 @@ shuffle_for_sequence_parallel: false  # ALST handles data distribution automatic
 
 ### output  
 output_dir: output/qwen2.5_7b_tbench_traces_alst_256k
-logging_steps: 10
-save_steps: 100
+logging_steps: 5
+save_steps: 50
 plot_loss: true
 overwrite_output_dir: true
 save_only_model: true

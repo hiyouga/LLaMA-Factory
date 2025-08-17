@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, Union
 
 
 @dataclass
@@ -46,6 +46,16 @@ class DataArguments:
     cutoff_len: int = field(
         default=2048,
         metadata={"help": "The cutoff length of the tokenized inputs in the dataset."},
+    )
+    pad_to_multiple_of: Optional[Union[int, str]] = field(
+        default="auto",
+        metadata={
+            "help": (
+                "Pad sequences to multiple of this value for optimal memory alignment. "
+                "Use 'auto' for smart detection based on model architecture and training config, "
+                "or specify an integer value for manual override. Set to None to disable padding."
+            )
+        },
     )
     train_on_prompt: bool = field(
         default=False,

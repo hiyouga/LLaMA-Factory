@@ -1,0 +1,52 @@
+# Example: Qwen3-8B with Sequence Parallel and Smart Auto Padding
+# This config demonstrates automatic sequence parallel optimized padding detection
+
+### model
+model_name_or_path: Qwen/Qwen3-8B-Instruct
+trust_remote_code: true
+flash_attn: auto
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full
+
+### Sequence Parallel Configuration
+sequence_parallel_size: 4
+sequence_parallel_mode: ulysses
+# Note: For DeepSpeed ALST, use sequence_parallel_mode: deepspeed-alst
+
+### dataset
+dataset: identity
+template: qwen
+cutoff_len: 8192
+# pad_to_multiple_of: auto  # Auto-detects optimal value for sequence parallel compatibility
+max_samples: 100
+overwrite_cache: true
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### output
+output_dir: output/qwen3_8b_sequence_parallel_auto_padding_example
+logging_steps: 10
+save_steps: 100
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: true
+report_to: none
+
+### train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 8
+learning_rate: 2.0e-5
+num_train_epochs: 1.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+gradient_checkpointing: true
+
+### Expected Auto-Detection Results:
+# - Detects 32 attention heads from Qwen3-8B config
+# - Detects sequence_parallel_size: 4
+# - Verifies 32 % 4 == 0 (compatible with sequence parallelism)
+# - Final padding: 32 (optimal for both attention alignment and sequence parallel efficiency)

@@ -1,0 +1,51 @@
+# Example: Qwen2.5-7B with FP8 and Smart Auto Padding
+# This config demonstrates automatic FP8-optimized padding detection
+
+### model
+model_name_or_path: Qwen/Qwen2.5-7B-Instruct
+trust_remote_code: true
+flash_attn: auto
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full
+
+### FP8 Configuration
+fp8: true
+fp8_backend: torchao  # Requires dimensions divisible by 16
+
+### dataset
+dataset: identity
+template: qwen
+cutoff_len: 4096
+# pad_to_multiple_of: auto  # Auto-detects optimal value for FP8 + attention heads
+max_samples: 100
+overwrite_cache: true
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### output
+output_dir: output/qwen2_5_7b_fp8_auto_padding_example
+logging_steps: 10
+save_steps: 100
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: true
+report_to: none
+
+### train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 4
+learning_rate: 2.0e-5
+num_train_epochs: 1.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+# bf16: false  # Disabled when using FP8
+gradient_checkpointing: true
+
+### Expected Auto-Detection Results:
+# - Detects 28 attention heads from Qwen2.5-7B config
+# - Detects FP8 training with TorchAO backend (requires multiples of 16)
+# - Finds next multiple of 16 that's >= 28: 32
+# - Final padding: 32 (optimized for both attention alignment and FP8)

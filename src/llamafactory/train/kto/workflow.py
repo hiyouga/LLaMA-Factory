@@ -22,7 +22,12 @@ from ...extras.constants import IGNORE_INDEX
 from ...extras.ploting import plot_loss
 from ...hparams import ModelArguments
 from ...model import load_model, load_tokenizer
-from ..trainer_utils import create_modelcard_and_push, create_ref_model
+from ..trainer_utils import (
+    create_modelcard_and_push,
+    create_ref_model,
+    get_optimal_pad_multiple,
+    validate_padding_config,
+)
 from .trainer import CustomKTOTrainer
 
 
@@ -45,10 +50,14 @@ def run_kto(
     dataset_module = get_dataset(template, model_args, data_args, training_args, stage="kto", **tokenizer_module)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
 
+    # Determine optimal padding multiple using smart detection
+    optimal_padding = get_optimal_pad_multiple(model, model_args, data_args, training_args)
+    validate_padding_config(optimal_padding, model_args)
+
     data_collator = KTODataCollatorWithPadding(
         template=template,
         model=model,
-        pad_to_multiple_of=8,
+        pad_to_multiple_of=optimal_padding,  # Smart or manual padding detection
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
         **tokenizer_module,
     )

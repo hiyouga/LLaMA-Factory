@@ -30,7 +30,6 @@ deepspeed: examples/deepspeed/ds_z3_partial_offload_config.json
 dataset: tbench_traces_sharegptv1
 template: qwen  # Qwen3 template (same as Qwen2.5)
 cutoff_len: 204800  # 200k context length (5x Qwen3's max_position_embeddings=40960)
-pad_to_multiple_of: 32  # Align with 32 attention heads for sequence parallel compatibility
 max_samples: null  # Use full dataset
 overwrite_cache: false
 preprocessing_num_workers: 64  # Match LIMO preprocessing workers

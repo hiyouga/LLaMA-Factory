@@ -785,3 +785,158 @@ def update_alst_adapter_with_model(
         if sp_group is not None:
             alst_data_adapter.sp_group = sp_group
             logger.debug("Updated ALST data adapter with sequence parallel group")
+
+
+def get_attention_heads_from_model(model: "torch.nn.Module") -> Optional[int]:
+    """Extract attention heads programmatically from model configuration.
+    
+    Args:
+        model: The model (potentially wrapped by DDP/FSDP/PEFT)
+        
+    Returns:
+        Number of attention heads if found, None otherwise
+    """
+    if model is None:
+        return None
+    
+    try:
+        # Unwrap model through various wrapper layers
+        unwrapped_model = model
+        
+        # Handle DDP/FSDP wrapping
+        if hasattr(unwrapped_model, 'module'):
+            unwrapped_model = unwrapped_model.module
+            
+        # Handle PEFT wrapping
+        if hasattr(unwrapped_model, 'base_model'):
+            unwrapped_model = unwrapped_model.base_model
+            if hasattr(unwrapped_model, 'model'):
+                unwrapped_model = unwrapped_model.model
+        
+        # Handle additional wrapper patterns
+        for attr in ['_orig_mod', '_modules']:
+            if hasattr(unwrapped_model, attr):
+                unwrapped_model = getattr(unwrapped_model, attr)
+                break
+        
+        config = unwrapped_model.config
+        
+        # Try common config attribute names for attention heads
+        attention_head_attrs = [
+            'num_attention_heads',  # Most common (LLaMA, Qwen, etc.)
+            'n_head',              # GPT-style models
+            'num_heads',           # Alternative naming
+            'attention_heads',     # Direct naming
+            'n_heads',             # Another variant
+        ]
+        
+        for attr in attention_head_attrs:
+            if hasattr(config, attr):
+                num_heads = getattr(config, attr)
+                logger.info_rank0(f"Detected {num_heads} attention heads from model.config.{attr}")
+                return num_heads
+        
+        logger.info_rank0("Could not detect attention heads from model config")
+        return None
+        
+    except Exception as e:
+        logger.warning_rank0(f"Failed to detect attention heads: {e}")
+        return None
+
+
+def get_optimal_pad_multiple(
+    model: "torch.nn.Module",
+    model_args: "ModelArguments", 
+    data_args: "DataArguments",
+    training_args: "TrainingArguments"
+) -> Optional[int]:
+    """Determine optimal padding multiple based on model config and training setup.
+    
+    Only applies smart detection when pad_to_multiple_of is 'auto' or None.
+    For manual values, returns them directly.
+    
+    Args:
+        model: The model instance
+        model_args: Model configuration arguments
+        data_args: Data configuration arguments  
+        training_args: Training configuration arguments
+        
+    Returns:
+        Optimal padding multiple, or None to disable padding
+    """
+    from ..hparams import DataArguments, ModelArguments, TrainingArguments
+    
+    # Manual override - use exact value specified
+    if data_args.pad_to_multiple_of is not None and data_args.pad_to_multiple_of != "auto":
+        if isinstance(data_args.pad_to_multiple_of, str):
+            try:
+                return int(data_args.pad_to_multiple_of)
+            except ValueError:
+                logger.warning_rank0(f"Invalid pad_to_multiple_of value: {data_args.pad_to_multiple_of}, using auto-detection")
+        else:
+            return data_args.pad_to_multiple_of
+    
+    # Smart auto-detection mode
+    optimal = 8  # Conservative fallback
+    
+    # FP8 requirements (16 for TorchAO backend)
+    if getattr(model_args, 'fp8', False):
+        backend = getattr(model_args, 'fp8_backend', 'auto')
+        if backend in ['torchao', 'auto']:
+            optimal = max(optimal, 16)
+            logger.debug(f"FP8 training with {backend} backend detected, setting minimum padding to 16")
+    
+    # Programmatic attention head detection from model config
+    attention_heads = get_attention_heads_from_model(model)
+    if attention_heads:
+        # Use the number of attention heads for optimal memory alignment
+        optimal = max(optimal, attention_heads)
+        logger.debug(f"Using {attention_heads} attention heads for padding alignment")
+    
+    # Sequence parallel compatibility
+    if getattr(model_args, 'sequence_parallel_size', 1) > 1:
+        ulysses_degree = getattr(model_args, 'alst_ulysses_degree', model_args.sequence_parallel_size)
+        # Ensure optimal is compatible with ulysses degree
+        while optimal % ulysses_degree != 0:
+            optimal += 8
+        logger.debug(f"Adjusted padding for sequence parallel compatibility: ulysses_degree={ulysses_degree}")
+    
+    logger.info_rank0(f"Auto-detected optimal pad_to_multiple_of: {optimal}")
+    return optimal
+
+
+def validate_padding_config(
+    optimal_padding: Optional[int],
+    model_args: "ModelArguments"
+) -> None:
+    """Validate padding configuration and provide helpful warnings.
+    
+    Args:
+        optimal_padding: The padding multiple being used
+        model_args: Model configuration arguments
+    """
+    if optimal_padding is None:
+        return
+        
+    # FP8 compatibility warning
+    if getattr(model_args, 'fp8', False) and optimal_padding % 16 != 0:
+        logger.warning_rank0(
+            f"FP8 training with pad_to_multiple_of={optimal_padding} may be suboptimal. "
+            f"Consider using a multiple of 16 for TorchAO backend."
+        )
+    
+    # Sequence parallel compatibility warning  
+    if getattr(model_args, 'sequence_parallel_size', 1) > 1:
+        ulysses_degree = getattr(model_args, 'alst_ulysses_degree', model_args.sequence_parallel_size)
+        if optimal_padding % ulysses_degree != 0:
+            logger.warning_rank0(
+                f"Sequence parallel training may be suboptimal with pad_to_multiple_of={optimal_padding}. "
+                f"Consider using a multiple of {ulysses_degree}."
+            )
+    
+    # General efficiency warning for very small values
+    if optimal_padding < 8:
+        logger.warning_rank0(
+            f"pad_to_multiple_of={optimal_padding} is quite small and may not provide optimal performance. "
+            f"Consider using at least 8 for better memory alignment."
+        )

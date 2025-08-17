@@ -21,7 +21,7 @@ from ...data import PairwiseDataCollatorWithPadding, get_dataset, get_template_a
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
 from ..callbacks import fix_valuehead_checkpoint
-from ..trainer_utils import create_modelcard_and_push
+from ..trainer_utils import create_modelcard_and_push, get_optimal_pad_multiple, validate_padding_config
 from .metric import ComputeAccuracy
 from .trainer import PairwiseTrainer
 
@@ -44,8 +44,16 @@ def run_rm(
     template = get_template_and_fix_tokenizer(tokenizer, data_args)
     dataset_module = get_dataset(template, model_args, data_args, training_args, stage="rm", **tokenizer_module)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train, add_valuehead=True)
+
+    # Determine optimal padding multiple using smart detection
+    optimal_padding = get_optimal_pad_multiple(model, model_args, data_args, training_args)
+    validate_padding_config(optimal_padding, model_args)
+
     data_collator = PairwiseDataCollatorWithPadding(
-        template=template, model=model, pad_to_multiple_of=8, **tokenizer_module
+        template=template,
+        model=model,
+        pad_to_multiple_of=optimal_padding,
+        **tokenizer_module,  # Smart or manual padding detection
     )
 
     # Initialize our Trainer

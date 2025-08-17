@@ -28,7 +28,6 @@ deepspeed: examples/deepspeed/ds_z3_partial_offload_config.json
 dataset: tbench_traces_sharegptv1  # You'll need to add this to data/dataset_info.json
 template: qwen  # Qwen2.5 template
 cutoff_len: 131072  # Match model_max_length
-pad_to_multiple_of: 28  # Align with 28 attention heads for FP8 Transformer Engine compatibility
 max_samples: null  # Use full dataset
 overwrite_cache: true
 preprocessing_num_workers: 4

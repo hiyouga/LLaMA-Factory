@@ -23,7 +23,7 @@ from ...extras.misc import calculate_tps
 from ...extras.ploting import plot_loss
 from ...hparams import ModelArguments
 from ...model import load_model, load_tokenizer
-from ..trainer_utils import create_modelcard_and_push, create_ref_model
+from ..trainer_utils import create_modelcard_and_push, create_ref_model, get_optimal_pad_multiple, validate_padding_config
 from .trainer import CustomDPOTrainer
 
 
@@ -48,10 +48,14 @@ def run_dpo(
         tokenizer, model_args, finetuning_args, training_args.do_train, full_determinism=training_args.full_determinism
     )
 
+    # Determine optimal padding multiple using smart detection
+    optimal_padding = get_optimal_pad_multiple(model, model_args, data_args, training_args)
+    validate_padding_config(optimal_padding, model_args)
+
     data_collator = PairwiseDataCollatorWithPadding(
         template=template,
         model=model,
-        pad_to_multiple_of=8,
+        pad_to_multiple_of=optimal_padding,  # Smart or manual padding detection
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
         require_position_ids=model_args.sequence_parallel_size > 1,
         **tokenizer_module,
