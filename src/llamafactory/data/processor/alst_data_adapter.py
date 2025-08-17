@@ -116,19 +116,30 @@ class ALSTDataAdapter:
         )
         
         # Create new dataloader with wrapped dataset
-        manual_dataloader = DataLoader(
-            wrapped_dataset,
-            batch_size=dataloader.batch_size,
-            shuffle=getattr(dataloader, '_shuffle', False),
-            sampler=dataloader.sampler,
-            batch_sampler=dataloader.batch_sampler,
-            num_workers=dataloader.num_workers,
-            collate_fn=dataloader.collate_fn,
-            pin_memory=dataloader.pin_memory,
-            drop_last=dataloader.drop_last,
-            timeout=dataloader.timeout,
-            worker_init_fn=dataloader.worker_init_fn,
-        )
+        # Use either batch_sampler OR individual batch/shuffle/sampler/drop_last parameters
+        if dataloader.batch_sampler is not None:
+            manual_dataloader = DataLoader(
+                wrapped_dataset,
+                batch_sampler=dataloader.batch_sampler,
+                num_workers=dataloader.num_workers,
+                collate_fn=dataloader.collate_fn,
+                pin_memory=dataloader.pin_memory,
+                timeout=dataloader.timeout,
+                worker_init_fn=getattr(dataloader, 'worker_init_fn', None),
+            )
+        else:
+            manual_dataloader = DataLoader(
+                wrapped_dataset,
+                batch_size=dataloader.batch_size,
+                shuffle=getattr(dataloader, '_shuffle', False),
+                sampler=dataloader.sampler,
+                num_workers=dataloader.num_workers,
+                collate_fn=dataloader.collate_fn,
+                pin_memory=dataloader.pin_memory,
+                drop_last=dataloader.drop_last,
+                timeout=dataloader.timeout,
+                worker_init_fn=getattr(dataloader, 'worker_init_fn', None),
+            )
         
         logger.info_rank0("Created manual sequence parallel DataLoader")
         return manual_dataloader

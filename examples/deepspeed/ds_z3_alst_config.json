@@ -21,23 +21,6 @@
       "pin_memory": true
     }
   },
-  "sequence_parallel": {
-    "enabled": true,
-    "size": 4,
-    "mode": "ulysses",
-    "ulysses": {
-      "degree": 4,
-      "seq_length_is_variable": true
-    },
-    "tiling": {
-      "enabled": true,
-      "chunk_size": 8192
-    },
-    "memory_optimizations": {
-      "enabled": true,
-      "pytorch_profiling": false
-    }
-  },
   "bf16": {
     "enabled": true
   },
