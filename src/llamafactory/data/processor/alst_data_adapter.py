@@ -91,24 +91,33 @@ class ALSTDataAdapter:
             logger.info_rank0("ALST not enabled, using standard DataLoader without sequence parallel processing")
             return dataloader  # Return original dataloader without manual SP processing
             
-        try:
-            from deepspeed.runtime.sequence_parallel.ulysses_sp import UlyssesSPDataLoaderAdapter
+        from deepspeed.runtime.sequence_parallel.ulysses_sp import UlyssesSPDataLoaderAdapter
+        import torch.distributed as dist
+        
+        logger.info_rank0("Wrapping DataLoader with UlyssesSPDataLoaderAdapter")
+        
+        # Get sequence parallel parameters from the process group
+        if self.sp_group is None:
+            raise RuntimeError("Sequence parallel group is None - cannot create UlyssesSPDataLoaderAdapter")
             
-            logger.info_rank0("Wrapping DataLoader with UlyssesSPDataLoaderAdapter")
-            
-            # Create ALST-enabled dataloader
-            alst_dataloader = UlyssesSPDataLoaderAdapter(
-                dataloader,
-                process_group=self.sp_group,
-                ulysses_degree=self.alst_config.ulysses_degree,
-            )
-            
-            logger.info_rank0("Successfully created ALST-enabled DataLoader")
-            return alst_dataloader
-            
-        except Exception as e:
-            logger.info_rank0(f"Failed to create ALST DataLoader, falling back to standard dataloader: {e}")
-            return dataloader  # Return original dataloader without manual SP processing
+        sp_rank = dist.get_rank(self.sp_group)
+        sp_world_size = dist.get_world_size(self.sp_group)  
+        device = torch.cuda.current_device() if torch.cuda.is_available() else torch.device('cpu')
+        
+        logger.info_rank0(f"Creating UlyssesSPDataLoaderAdapter with sp_rank={sp_rank}, sp_world_size={sp_world_size}")
+        
+        # Create ALST-enabled dataloader with correct constructor signature
+        # UlyssesSPDataLoaderAdapter(dl, sp_rank, sp_group, sp_world_size, device)
+        alst_dataloader = UlyssesSPDataLoaderAdapter(
+            dataloader,      # dl
+            sp_rank,         # sp_rank  
+            self.sp_group,   # sp_group
+            sp_world_size,   # sp_world_size
+            device          # device
+        )
+        
+        logger.info_rank0("Successfully created ALST-enabled DataLoader")
+        return alst_dataloader
     
     def _manual_sequence_parallel_dataloader(self, dataloader: DataLoader) -> DataLoader:
         """Create sequence parallel dataloader using manual processing."""
