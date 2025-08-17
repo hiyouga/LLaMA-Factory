@@ -7,6 +7,11 @@ import torch.distributed as dist
 import transformers
 import transformers.modeling_flash_attention_utils
 
+from ...extras import logging
+
+
+logger = logging.get_logger(__name__)
+
 
 try:
     from ring_flash_attn import zigzag_ring_flash_attn_func
