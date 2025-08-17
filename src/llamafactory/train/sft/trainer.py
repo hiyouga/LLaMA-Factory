@@ -43,6 +43,7 @@ from ..fp8_utils import (
 from ...data.processor.alst_data_adapter import create_alst_data_adapter
 from ...model.model_utils.alst_config import create_alst_config
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler, get_sequence_parallel_group, update_alst_adapter_with_model
+from ..alst_loss import create_alst_loss_handler, should_use_alst_loss
 
 
 if TYPE_CHECKING:
@@ -145,17 +146,20 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
             
-        # Initialize ALST data adapter if needed
+        # Initialize ALST data adapter and loss handler if needed
         if model_args is not None and model_args.sequence_parallel_size > 1:
             self.alst_config = create_alst_config(model_args)
             if self.alst_config.enabled:
                 # Get sequence parallel group from model (will be None initially, set later)
                 self.alst_data_adapter = create_alst_data_adapter(model_args, self.alst_config, None)
+                self.alst_loss_handler = None  # Will be created when sequence parallel group is available
                 logger.info_rank0("ALST data adapter initialized for trainer")
             else:
                 self.alst_data_adapter = None
+                self.alst_loss_handler = None
         else:
             self.alst_data_adapter = None
+            self.alst_loss_handler = None
 
 
     @override
@@ -195,16 +199,20 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
     @override
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        r"""Fixes the loss value for transformers 4.46.0.
-
-        https://github.com/huggingface/transformers/blob/v4.46.0/src/transformers/trainer.py#L3605
-        """
+        r"""Compute loss with ALST support for sequence parallel training."""
         sequence_parallel_group = get_sequence_parallel_group(model, self.accelerator)
         
-        if sequence_parallel_group is None:  # no sequence parallel, compute as it is
-            loss = super().compute_loss(model, inputs, return_outputs, **kwargs)
-        else:
-            # compute loss without shift labels, as we have already shifted labels in data processing when using sequence parallel
+        # Check if we should use ALST loss computation
+        if should_use_alst_loss(inputs, sequence_parallel_group):
+            # Initialize ALST loss handler if not already done
+            if self.alst_loss_handler is None:
+                self.alst_loss_handler = create_alst_loss_handler(sequence_parallel_group)
+            
+            # Use ALST loss computation
+            return self.alst_loss_handler.compute_alst_loss(model, inputs, return_outputs)
+        
+        elif sequence_parallel_group is not None:
+            # Legacy sequence parallel mode (fallback)
             _, outputs = super().compute_loss(model, inputs, return_outputs=True, **kwargs)
             # Flatten the tokens
             loss_fct = CrossEntropyLoss(reduction="sum")
@@ -226,6 +234,10 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             label_num = (labels != loss_fct.ignore_index).sum()
             dist.all_reduce(label_num, op=dist.ReduceOp.SUM, group=sequence_parallel_group)
             loss /= label_num
+        
+        else:
+            # Standard training (no sequence parallelism)
+            loss = super().compute_loss(model, inputs, return_outputs, **kwargs)
 
         if is_transformers_version_greater_than("4.46") and not getattr(self, "model_accepts_loss_kwargs", False):
             # other model should not scale the loss
