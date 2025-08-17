@@ -63,12 +63,22 @@ class ALSTDataAdapter:
     
     def should_use_alst_data_adapter(self, sequence_length: int) -> bool:
         """Determine if ALST data adapter should be used."""
-        return (
+        result = (
             self.alst_config.enabled and
             self.is_available and
             self.sp_group is not None
             # Remove sequence length requirement - let ALST handle all sequences when enabled
         )
+        
+        # Debug logging to identify why ALST adapter is not being used
+        logger.info_rank0(f"ALST adapter conditions check:")
+        logger.info_rank0(f"  - alst_config.enabled: {self.alst_config.enabled}")
+        logger.info_rank0(f"  - is_available: {self.is_available}")
+        logger.info_rank0(f"  - sp_group is not None: {self.sp_group is not None}")
+        logger.info_rank0(f"  - sp_group: {self.sp_group}")
+        logger.info_rank0(f"  - should_use_alst_data_adapter result: {result}")
+        
+        return result
     
     def wrap_dataloader(
         self, 

@@ -782,9 +782,17 @@ def update_alst_adapter_with_model(
     """
     if alst_data_adapter is not None:
         sp_group = get_sequence_parallel_group(model, accelerator)
+        logger.info_rank0(f"Updating ALST adapter with sequence parallel group: {sp_group}")
+        logger.info_rank0(f"Model type: {type(model)}")
+        logger.info_rank0(f"Model has sequence_parallel_group attr: {hasattr(model, 'sequence_parallel_group')}")
+        if hasattr(model, 'sequence_parallel_group'):
+            logger.info_rank0(f"Model sequence_parallel_group value: {getattr(model, 'sequence_parallel_group', None)}")
+        
         if sp_group is not None:
             alst_data_adapter.sp_group = sp_group
-            logger.debug("Updated ALST data adapter with sequence parallel group")
+            logger.info_rank0("Successfully updated ALST data adapter with sequence parallel group")
+        else:
+            logger.warning("No sequence parallel group found in model - ALST adapter will not be enabled")
 
 
 def get_attention_heads_from_model(model: "torch.nn.Module") -> Optional[int]:
