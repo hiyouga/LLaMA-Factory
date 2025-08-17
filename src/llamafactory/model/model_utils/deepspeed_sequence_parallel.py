@@ -110,6 +110,40 @@ class ALSTAttentionWrapper:
             max_position_embeddings = getattr(self.model_config, 'max_position_embeddings', 32768)
             local_seq_length = max_position_embeddings // ulysses_degree
             
+            # Validate attention head compatibility with sequence parallel size
+            if num_attention_heads % ulysses_degree != 0:
+                # Find valid divisors of attention heads
+                divisors = [i for i in range(1, num_attention_heads + 1) if num_attention_heads % i == 0]
+                
+                # Find closest valid sizes (prefer smaller for better memory efficiency)
+                smaller_valid = [d for d in divisors if d <= ulysses_degree]
+                larger_valid = [d for d in divisors if d > ulysses_degree]
+                
+                closest_smaller = max(smaller_valid) if smaller_valid else None
+                closest_larger = min(larger_valid) if larger_valid else None
+                
+                suggestions = []
+                if closest_smaller:
+                    suggestions.append(f"{closest_smaller} (smaller, more memory efficient)")
+                if closest_larger:
+                    suggestions.append(f"{closest_larger} (larger)")
+                
+                suggestion_text = " or ".join(suggestions)
+                
+                error_msg = (
+                    f"ALST Sequence Parallel Configuration Error:\n"
+                    f"Model has {num_attention_heads} attention heads, but sequence_parallel_size={ulysses_degree}\n"
+                    f"Attention heads must be divisible by sequence_parallel_size.\n\n"
+                    f"Valid sequence_parallel_size options for this model: {divisors}\n"
+                    f"Recommended: {suggestion_text}\n\n"
+                    f"Please update your configuration with:\n"
+                    f"  sequence_parallel_size: {closest_smaller or closest_larger}\n"
+                    f"  alst_ulysses_degree: {closest_smaller or closest_larger}\n"
+                )
+                
+                logger.info_rank0(error_msg)
+                raise ValueError(error_msg)
+            
             logger.info_rank0(f"Initializing UlyssesSPAttentionHF with:")
             logger.info_rank0(f"  - Ulysses degree: {ulysses_degree}")
             logger.info_rank0(f"  - Global sequence length: {max_position_embeddings}")
