@@ -107,8 +107,8 @@ class ALSTAttentionWrapper:
             
             # Get sequence parameters  
             ulysses_degree = self.model_args.alst_ulysses_degree or self.model_args.sequence_parallel_size
-            max_position_embeddings = getattr(self.model_config, 'max_position_embeddings', 32768)
-            local_seq_length = max_position_embeddings // ulysses_degree
+            max_position_embeddings = int(getattr(self.model_config, 'max_position_embeddings', 32768))
+            local_seq_length = int(max_position_embeddings // ulysses_degree)
             
             # Validate attention head compatibility with sequence parallel size
             if num_attention_heads % ulysses_degree != 0:
@@ -154,13 +154,13 @@ class ALSTAttentionWrapper:
             
             self.ulysses_attention = UlyssesSPAttentionHF(
                 attn=None,  # Will be set when wrapping actual attention
-                local_seq_length=local_seq_length,
-                global_seq_length=max_position_embeddings,
+                local_seq_length=int(local_seq_length),
+                global_seq_length=int(max_position_embeddings),
                 batch_size=1,  # Will be dynamic during training
-                attn_head_count=num_attention_heads,
-                attn_head_size=attn_head_size,
-                kv_head_count=num_key_value_heads,
-                num_hidden_layers=num_hidden_layers,
+                attn_head_count=int(num_attention_heads),
+                attn_head_size=int(attn_head_size),
+                kv_head_count=int(num_key_value_heads),
+                num_hidden_layers=int(num_hidden_layers),
                 process_group=self.sp_group,
                 seq_length_is_variable=True,
             )
