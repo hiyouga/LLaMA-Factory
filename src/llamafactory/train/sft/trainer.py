@@ -23,8 +23,6 @@ from typing import TYPE_CHECKING, Any, Optional, Union
 
 import numpy as np
 import torch
-import torch.distributed as dist
-from torch.nn import CrossEntropyLoss
 from transformers import Seq2SeqTrainer
 from transformers.trainer import _is_peft_model
 from typing_extensions import override
@@ -125,18 +123,6 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             # https://github.com/huggingface/transformers/blob/v4.45.0/src/transformers/trainer_seq2seq.py#L287
             self._gen_kwargs = gen_kwargs
 
-        self._has_dummy_forwarded = False
-        
-        # Monkey-patch accelerator gather to debug CUDA tensor issues
-        if dist.is_initialized():
-            original_gather = self.accelerator.gather
-            def debug_gather(tensor):
-                from ..debug_utils import DEBUG_GATHER, debug_gather_operation
-                if DEBUG_GATHER:
-                    debug_gather_operation(tensor, "trainer_gather")
-                return original_gather(tensor)
-            self.accelerator.gather = debug_gather
-
         if processor is not None:
             self.add_callback(SaveProcessorCallback(processor))
 
@@ -177,22 +163,13 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
     @override
     def training_step(self, model, inputs, *args, **kwargs):
-        # TODO: sequence_parallel modes other than 'zigzag-ring' may not need dummy forward
-        sequence_parallel_group = get_sequence_parallel_group(model, self.accelerator)
-        
-        if not self._has_dummy_forwarded and sequence_parallel_group is not None:
-            model.eval()
-            with torch.no_grad():
-                _ = model(**inputs)
-            model.train()
-            self._has_dummy_forwarded = True
+        # ALST doesn't require dummy forward pass - UlyssesSPDataLoaderAdapter handles sequence parallel setup
         return super().training_step(model, inputs, *args, **kwargs)
 
     @override
     def _get_train_sampler(self, *args, **kwargs) -> Optional["torch.utils.data.Sampler"]:
-        sequence_parallel_group = get_sequence_parallel_group(self.model, self.accelerator)
-        
-        if sequence_parallel_group is not None or self.finetuning_args.disable_shuffling:
+        # ALST/UlyssesSPDataLoaderAdapter handles data distribution - use standard sampler logic
+        if self.finetuning_args.disable_shuffling:
             return torch.utils.data.SequentialSampler(self.train_dataset)
 
         return super()._get_train_sampler(*args, **kwargs)
