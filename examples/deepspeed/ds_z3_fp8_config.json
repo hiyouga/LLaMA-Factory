@@ -37,5 +37,15 @@
     "stage3_gather_16bit_weights_on_model_save": true
   },
   "steps_per_print": 10000000,
-  "gradient_accumulation_steps": "auto"
+  "gradient_accumulation_steps": "auto",
+  "comms_config": {
+    "verbose": false
+  },
+  "monitor_config": {
+    "enabled": true,
+    "tag": "DeepSpeedMonitor",
+    "csv_monitor": {
+      "enabled": false
+    }
+  }
 }

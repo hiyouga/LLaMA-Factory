@@ -28,5 +28,15 @@
     "reduce_bucket_size": 5e8,
     "contiguous_gradients": true,
     "round_robin_gradients": true
+  },
+  "comms_config": {
+    "verbose": false
+  },
+  "monitor_config": {
+    "enabled": true,
+    "tag": "DeepSpeedMonitor",
+    "csv_monitor": {
+      "enabled": false
+    }
   }
 }

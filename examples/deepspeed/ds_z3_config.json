@@ -26,5 +26,15 @@
     "stage3_max_live_parameters": 1e9,
     "stage3_max_reuse_distance": 1e9,
     "stage3_gather_16bit_weights_on_model_save": true
+  },
+  "comms_config": {
+    "verbose": false
+  },
+  "monitor_config": {
+    "enabled": true,
+    "tag": "DeepSpeedMonitor",
+    "csv_monitor": {
+      "enabled": false
+    }
   }
 }
