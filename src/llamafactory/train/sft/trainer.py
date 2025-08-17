@@ -35,6 +35,7 @@ from ...extras.packages import is_transformers_version_greater_than
 from ..callbacks import SaveProcessorCallback
 from ..fp8_utils import (
     check_deepspeed_fp8_compatibility,
+    check_model_fp8_compatibility,
     create_deepspeed_fp8_kwargs,
     validate_fp8_requirements,
 )
@@ -281,6 +282,23 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
     @override
     def get_train_dataloader(self) -> "torch.utils.data.DataLoader":
         """Override to add ALST DataLoader wrapping if enabled."""
+        # Check FP8 compatibility if FP8 is enabled and this is the first time creating dataloader
+        if (hasattr(self, '_fp8_compatibility_checked') is False and 
+            hasattr(self, 'model_args') and 
+            getattr(self.model_args, 'fp8', False)):
+            
+            try:
+                is_compatible, reason = check_model_fp8_compatibility(self.model)
+                if not is_compatible:
+                    logger.warning(f"FP8 compatibility issue detected: {reason}")
+                    logger.warning("Consider using bf16 instead of fp8, or try fp8_backend='te' with Transformer Engine")
+                else:
+                    logger.info_rank0(f"Model FP8 compatibility confirmed: {reason}")
+            except Exception as e:
+                logger.warning(f"FP8 compatibility check failed: {e}")
+            
+            self._fp8_compatibility_checked = True
+        
         dataloader = super().get_train_dataloader()
         
         if self.alst_data_adapter is not None:

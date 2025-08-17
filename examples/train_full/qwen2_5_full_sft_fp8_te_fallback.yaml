@@ -1,19 +1,19 @@
-# Full Fine-Tuning config for Qwen2.5-7B-Instruct on tbench_traces_sharegptv1 dataset
-# Using FP8 mixed precision WITHOUT DeepSpeed (uses native Accelerate FP8)
+# Full Fine-Tuning config for Qwen2.5-7B-Instruct using Transformer Engine FP8 fallback
+# Alternative FP8 backend for models with dimension alignment issues
 # Based on LIMO paper configuration: https://arxiv.org/abs/2502.03387  
 # Enhanced with YARN RoPE scaling for extended context length (131072 tokens)
 #
 # Requirements:
-#   - H100/H200 GPU (Hopper architecture)
+#   - H100/H200 GPU (Hopper architecture) 
 #   - PyTorch >= 2.7.0
 #   - Accelerate >= 1.8.0
-#   - TorchAO >= 0.8.0 (for torchao backend)
-#   - Transformer Engine (for te backend)
+#   - Transformer Engine >= 2.0.0 (for te backend)
+#   - pip install -e '.[fp8-te]'
 #   - Log into WandB (`wandb login`) or set `report_to: none`
 #   - Log into HF: `huggingface-cli login`
 #
 # Usage:
-#   llamafactory-cli train qwen2_5_full_sft_fp8_no_deepspeed.yaml
+#   llamafactory-cli train qwen2_5_full_sft_fp8_te_fallback.yaml
 
 ### model
 model_name_or_path: Qwen/Qwen2.5-7B-Instruct
@@ -37,9 +37,9 @@ overwrite_cache: true
 preprocessing_num_workers: 4
 dataloader_num_workers: 2
 
-### FP8 Configuration - Native Accelerate (no DeepSpeed)
+### FP8 Configuration - Transformer Engine Backend
 fp8: true                                   # Enable FP8 mixed precision
-fp8_backend: auto                           # Use auto backend selection (torchao, te, msamp, auto)
+fp8_backend: te                             # Use Transformer Engine backend (better dimension compatibility)
 fp8_enable_fsdp_float8_all_gather: false   # FSDP optimizations (set to true if using FSDP)
 
 ### Mixed Precision (FP8 will override this)
@@ -47,7 +47,7 @@ bf16: false                                 # Disabled when using FP8
 fp16: false                                 # Disabled when using FP8
 
 ### output  
-output_dir: output/qwen2.5_7b_tbench_traces_sharegptv1_fp8_no_ds
+output_dir: output/qwen2.5_7b_tbench_traces_sharegptv1_fp8_te_fallback
 logging_steps: 5
 save_steps: 50
 plot_loss: true
@@ -83,9 +83,10 @@ torch_compile: false                        # Disabled for FP8 stability - dynam
 torch_compile_backend: inductor            # Backend for torch.compile if enabled
 ddp_timeout: 1800                          # 30 minutes timeout for DDP operations
 
-### Notes on FP8 Training:
-# - TorchAO FP8 requires tensor dimensions divisible by 16 for optimal kernels
-# - Some layers may be automatically skipped if dimensions are incompatible
-# - If you encounter dimension errors, try fp8_backend: 'te' with Transformer Engine
-# - Alternatively, use bf16: true instead of FP8 for problematic models
-# - torch_compile is disabled as it can interfere with FP8 dimension requirements
+### Notes on Transformer Engine FP8:
+# - Transformer Engine FP8 is more flexible with tensor dimensions than TorchAO
+# - Better compatibility with models that have dimensions not divisible by 16
+# - Optimized for NVIDIA H100/Hopper GPUs with native FP8 support
+# - Provides better numerical stability compared to TorchAO FP8
+# - Falls back gracefully for incompatible operations
+# - Use this config if you get "divisible by 16" errors with TorchAO backend

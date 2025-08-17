@@ -49,20 +49,41 @@ def create_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
                 from torchao.float8 import Float8LinearConfig
 
                 # Use rowwise scaling for better performance (as recommended by torchao)
+                # Configure alignment requirements for FP8 kernels
                 config = Float8LinearConfig.from_recipe_name("rowwise")
-                logger.info_rank0("Using torchao Float8LinearConfig with rowwise scaling")
+                
+                # Enable alignment for better kernel performance
+                if hasattr(config, 'enable_amax_init'):
+                    config.enable_amax_init = True
+                if hasattr(config, 'enable_pre_and_post_forward'):
+                    config.enable_pre_and_post_forward = True
+                    
+                logger.info_rank0("Using torchao Float8LinearConfig with rowwise scaling and alignment")
             except ImportError:
                 logger.warning_rank0("torchao not available, using default FP8 configuration")
 
-        # Create module filter function to optionally skip first/last layers
-        # TorchAO recommends keeping first/last layers at full precision for stability
+        # Create module filter function to skip problematic layers
+        # TorchAO FP8 requires dimensions divisible by 16 for optimal kernels
         def module_filter_func(module, layer_name):
             # Skip embedding and output layers for numerical stability
             skip_layers = ["embed", "lm_head", "output", "classifier"]
             if any(skip_name in layer_name.lower() for skip_name in skip_layers):
                 return False
+            
             # Only convert Linear layers
-            return hasattr(module, 'weight') and len(module.weight.shape) == 2
+            if not (hasattr(module, 'weight') and len(module.weight.shape) == 2):
+                return False
+                
+            # Check dimension alignment for FP8 kernels
+            weight = module.weight
+            in_features, out_features = weight.shape[1], weight.shape[0]
+            
+            # Skip layers with dimensions not divisible by 16 to avoid kernel errors
+            if in_features % 16 != 0 or out_features % 16 != 0:
+                logger.debug(f"Skipping layer {layer_name} with dimensions {out_features}x{in_features} (not divisible by 16)")
+                return False
+                
+            return True
 
         # Map FSDP all-gather setting if available (this affects the underlying implementation)
         if hasattr(model_args, "fp8_enable_fsdp_float8_all_gather") and model_args.fp8_enable_fsdp_float8_all_gather:
@@ -153,6 +174,46 @@ def check_deepspeed_fp8_compatibility() -> bool:
             return False
     except ImportError:
         return True  # DeepSpeed not installed, FP8 can be used with native Accelerate
+
+
+def check_model_fp8_compatibility(model) -> tuple[bool, str]:
+    """Check if a model is compatible with FP8 training.
+    
+    Args:
+        model: The model to check
+        
+    Returns:
+        Tuple of (is_compatible, reason)
+    """
+    incompatible_layers = []
+    total_layers = 0
+    compatible_layers = 0
+    
+    for name, module in model.named_modules():
+        if hasattr(module, 'weight') and len(module.weight.shape) == 2:
+            total_layers += 1
+            weight = module.weight
+            in_features, out_features = weight.shape[1], weight.shape[0]
+            
+            # Check if dimensions are divisible by 16
+            if in_features % 16 == 0 and out_features % 16 == 0:
+                compatible_layers += 1
+            else:
+                # Skip embedding and output layers in the count as they're typically skipped
+                skip_layers = ["embed", "lm_head", "output", "classifier"]
+                if not any(skip_name in name.lower() for skip_name in skip_layers):
+                    incompatible_layers.append(f"{name}: {out_features}x{in_features}")
+    
+    # Consider model compatible if most layers can use FP8
+    compatibility_ratio = compatible_layers / total_layers if total_layers > 0 else 0
+    
+    if compatibility_ratio >= 0.7:  # At least 70% of layers compatible
+        return True, f"Model is FP8 compatible ({compatible_layers}/{total_layers} layers)"
+    else:
+        reason = f"Model has too many incompatible layers ({len(incompatible_layers)} incompatible): {incompatible_layers[:3]}"
+        if len(incompatible_layers) > 3:
+            reason += f"... and {len(incompatible_layers) - 3} more"
+        return False, reason
 
 
 def create_deepspeed_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
