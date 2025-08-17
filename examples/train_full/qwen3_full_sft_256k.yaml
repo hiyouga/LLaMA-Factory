@@ -38,7 +38,7 @@ dataloader_num_workers: 2
 
 ### output  
 output_dir: output/qwen3_8b_tbench_traces_200k_ulysses_ds
-logging_steps: 50
+logging_steps: 5
 save_steps: 50
 plot_loss: true
 overwrite_output_dir: true
