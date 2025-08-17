@@ -211,10 +211,23 @@ class ManualSequenceParallelDataset(Dataset):
                 if dist.is_initialized():
                     rank = dist.get_rank()
                     sp_rank = rank % self.sequence_parallel_size
-                    processed_item[key] = torch.tensor(processed_chunks[sp_rank])
+                    chunk_data = processed_chunks[sp_rank]
                 else:
                     # If not distributed, just take the first chunk
-                    processed_item[key] = torch.tensor(processed_chunks[0])
+                    chunk_data = processed_chunks[0]
+                
+                # Convert to tensor with proper dtype and ensure contiguous layout
+                if isinstance(chunk_data, (list, tuple)):
+                    # Convert list to numpy first for efficiency (addresses performance warning)
+                    import numpy as np
+                    chunk_array = np.array(chunk_data, dtype=np.int64 if key in ['input_ids', 'labels'] else np.int32)
+                    tensor = torch.from_numpy(chunk_array).contiguous()
+                    processed_item[key] = tensor
+                else:
+                    # Ensure consistent dtype for different keys
+                    target_dtype = torch.int64 if key in ['input_ids', 'labels'] else torch.int32
+                    tensor = torch.tensor(chunk_data, dtype=target_dtype).contiguous()
+                    processed_item[key] = tensor
             else:
                 processed_item[key] = value
                 
