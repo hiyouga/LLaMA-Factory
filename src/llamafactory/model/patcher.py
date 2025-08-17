@@ -188,6 +188,20 @@ def patch_model(
     if not model_args.use_unsloth:
         print_attn_implementation(model.config)
 
+    # ======== NPU fused attention redirect: SDPA -> torch_npu.npu_fusion_attention ========
+    # 放在所有结构改动之后、DeepSpeed/Trainer 初始化之前；不修改任何 Module/_parameters，
+    # 对 ZeRO-3 + offload 安全。
+    try:
+        import os, torch
+        if hasattr(torch, "npu") and torch.npu.is_available() and os.environ.get("NPU_FA_DISABLE", "0") != "1":
+            # 局部导入，避免在非 NPU 环境时报错
+            from .model_utils.sdpa_npu_redirect import apply_sdpa_npu_redirect
+            apply_sdpa_npu_redirect(verbose=not model_args.use_unsloth)
+            logger.info_rank0("[sdpa_npu_redirect] Enabled: SDPA will use Ascend npu_fusion_attention when available.")
+    except Exception as e:
+        logger.warning_rank0(f"[sdpa_npu_redirect] Failed to enable redirect, will keep native SDPA. Reason: {e}")
+    # =====================================================================================
+
     try:
         model.add_model_tags(["llama-factory"])
     except Exception:
