@@ -125,6 +125,16 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             self._gen_kwargs = gen_kwargs
 
         self._has_dummy_forwarded = False
+        
+        # Monkey-patch accelerator gather to debug CUDA tensor issues
+        if dist.is_initialized():
+            original_gather = self.accelerator.gather
+            def debug_gather(tensor):
+                from ..debug_utils import DEBUG_GATHER, debug_gather_operation
+                if DEBUG_GATHER:
+                    debug_gather_operation(tensor, "trainer_gather")
+                return original_gather(tensor)
+            self.accelerator.gather = debug_gather
 
         if processor is not None:
             self.add_callback(SaveProcessorCallback(processor))

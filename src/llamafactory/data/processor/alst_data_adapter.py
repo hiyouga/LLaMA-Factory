@@ -222,24 +222,32 @@ class ManualSequenceParallelDataset(Dataset):
                     import numpy as np
                     chunk_array = np.array(chunk_data, dtype=np.int64 if key in ['input_ids', 'labels'] else np.int32)
                     tensor = torch.from_numpy(chunk_array).contiguous()
+                    
+                    # Ensure tensor is dense (not sparse) for distributed operations
+                    if tensor.is_sparse:
+                        tensor = tensor.to_dense()
+                    
                     processed_item[key] = tensor
                 else:
                     # Ensure consistent dtype for different keys
                     target_dtype = torch.int64 if key in ['input_ids', 'labels'] else torch.int32
                     tensor = torch.tensor(chunk_data, dtype=target_dtype).contiguous()
+                    
+                    # Ensure tensor is dense (not sparse) for distributed operations
+                    if tensor.is_sparse:
+                        tensor = tensor.to_dense()
+                    
                     processed_item[key] = tensor
                 
-                # Debug tensor properties (enable only when debugging)
-                if False:  # Change to True to enable debugging
-                    tensor = processed_item[key]
-                    logger.info_rank0(f"Tensor debug - key: {key}, shape: {tensor.shape}, "
-                                    f"dtype: {tensor.dtype}, device: {tensor.device}, "
-                                    f"is_contiguous: {tensor.is_contiguous()}, "
-                                    f"is_cuda: {tensor.is_cuda}")
-                    if not tensor.is_contiguous():
-                        logger.warning(f"Non-contiguous tensor found for key: {key}")
-                    if tensor.device.type != 'cpu':
-                        logger.warning(f"Unexpected device for key {key}: {tensor.device}")
+                # Debug tensor properties for distributed compatibility
+                from ...train.debug_utils import DEBUG_TENSORS, debug_tensor_properties, validate_cuda_tensors
+                if DEBUG_TENSORS:
+                    debug_tensor_properties(processed_item[key], f"processed_{key}")
+                
+                # Validate tensor for distributed operations (only when distributed training)
+                if dist.is_initialized() and not validate_cuda_tensors({key: processed_item[key]}, f"ALST data processing"):
+                    # This will log the specific validation errors
+                    pass
             else:
                 processed_item[key] = value
                 
