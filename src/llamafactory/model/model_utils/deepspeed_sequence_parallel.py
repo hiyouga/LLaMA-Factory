@@ -131,13 +131,16 @@ class ALSTAttentionWrapper:
             logger.info_rank0("UlyssesSPAttentionHF initialized successfully")
             
         except Exception as e:
+            import traceback
             logger.info_rank0(f"Failed to initialize UlyssesSPAttentionHF: {e}")
+            logger.info_rank0(f"Full traceback:\n{traceback.format_exc()}")
             self.ulysses_attention = None
     
     def wrap_attention_module(self, attention_module: Any) -> Any:
         """Wrap an attention module with ALST capabilities."""
         if self.ulysses_attention is None:
             logger.warning("UlyssesSPAttentionHF not available, returning original module")
+            logger.warning("Check initialization logs above for detailed error information")
             return attention_module
             
         # Store original attention function
