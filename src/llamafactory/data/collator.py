@@ -256,6 +256,26 @@ class SFTDataCollatorWith4DAttentionMask(MultiModalDataCollatorForSeq2Seq):
 
 
 @dataclass
+class ALSTDataCollatorForSeq2Seq(SFTDataCollatorWith4DAttentionMask):
+    r"""Data collator that handles CUDA tensor conversion for ALST sequence parallel."""
+    
+    def __call__(self, features: list[dict[str, Any]]) -> dict[str, "torch.Tensor"]:
+        # Process features normally first
+        batch = super().__call__(features)
+        
+        # Move tensors to CUDA if distributed training is active and we're in the main process
+        # (not in DataLoader worker processes where CUDA init fails)
+        import torch.distributed as dist
+        if dist.is_initialized() and torch.cuda.is_available():
+            device = torch.cuda.current_device()
+            for key, value in batch.items():
+                if isinstance(value, torch.Tensor) and value.device.type == 'cpu':
+                    batch[key] = value.cuda(device)
+                    
+        return batch
+
+
+@dataclass
 class PairwiseDataCollatorWithPadding(MultiModalDataCollatorForSeq2Seq):
     r"""Data collator for pairwise data."""
 

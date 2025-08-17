@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from .collator import (
+    ALSTDataCollatorForSeq2Seq,
     KTODataCollatorWithPadding,
     MultiModalDataCollatorForSeq2Seq,
     PairwiseDataCollatorWithPadding,
@@ -24,6 +25,7 @@ from .template import TEMPLATES, Template, get_template_and_fix_tokenizer
 
 
 __all__ = [
+    "ALSTDataCollatorForSeq2Seq",
     "TEMPLATES",
     "KTODataCollatorWithPadding",
     "MultiModalDataCollatorForSeq2Seq",

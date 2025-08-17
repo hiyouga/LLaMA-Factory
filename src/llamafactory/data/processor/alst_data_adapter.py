@@ -227,11 +227,6 @@ class ManualSequenceParallelDataset(Dataset):
                     if tensor.is_sparse:
                         tensor = tensor.to_dense()
                     
-                    # Move to CUDA if distributed training is active
-                    if dist.is_initialized() and torch.cuda.is_available():
-                        current_device = torch.cuda.current_device()
-                        tensor = tensor.cuda(current_device)
-                    
                     processed_item[key] = tensor
                 else:
                     # Ensure consistent dtype for different keys
@@ -241,11 +236,6 @@ class ManualSequenceParallelDataset(Dataset):
                     # Ensure tensor is dense (not sparse) for distributed operations
                     if tensor.is_sparse:
                         tensor = tensor.to_dense()
-                    
-                    # Move to CUDA if distributed training is active
-                    if dist.is_initialized() and torch.cuda.is_available():
-                        current_device = torch.cuda.current_device()
-                        tensor = tensor.cuda(current_device)
                     
                     processed_item[key] = tensor
                 
