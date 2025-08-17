@@ -39,6 +39,7 @@ deepspeed: examples/deepspeed/ds_z3_alst_config.json  # DeepSpeed ZeRO-3 + ALST 
 dataset: tbench_traces_sharegptv1
 template: qwen
 cutoff_len: 262144  # 256K context length - ALST can handle much longer sequences
+pad_to_multiple_of: 32  # Align with attention heads (compatible with ulysses_degree=4)
 max_samples: null
 overwrite_cache: true
 preprocessing_num_workers: 8

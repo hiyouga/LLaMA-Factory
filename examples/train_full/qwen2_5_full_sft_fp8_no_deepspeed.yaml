@@ -31,7 +31,8 @@ finetuning_type: full  # Full fine-tuning (not LoRA)
 ### dataset
 dataset: tbench_traces_sharegptv1  # You'll need to add this to data/dataset_info.json
 template: qwen  # Qwen2.5 template
-cutoff_len: 131072  # Match model_max_length
+cutoff_len: 4096  # Match model_max_length
+pad_to_multiple_of: 32  # Align with attention heads for optimal memory usage
 max_samples: null  # Use full dataset
 overwrite_cache: true
 preprocessing_num_workers: 4
@@ -56,8 +57,8 @@ save_only_model: true
 report_to: wandb  # Set to 'none' to disable WandB
 
 ### train
-per_device_train_batch_size: 2              # Larger batch size without DeepSpeed memory savings
-gradient_accumulation_steps: 16             # Higher accumulation to maintain effective batch size
+per_device_train_batch_size: 1              # Larger batch size without DeepSpeed memory savings
+gradient_accumulation_steps: 2              # Higher accumulation to maintain effective batch size
 learning_rate: 2.0e-5
 num_train_epochs: 5.0
 lr_scheduler_type: cosine

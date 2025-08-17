@@ -12,6 +12,7 @@ deepspeed: examples/deepspeed/ds_z3_config.json  # choices: [ds_z0_config.json, 
 dataset: identity,alpaca_en_demo
 template: llama3
 cutoff_len: 2048
+pad_to_multiple_of: 32  # Align with 32 attention heads for optimal memory usage
 max_samples: 1000
 overwrite_cache: true
 preprocessing_num_workers: 16

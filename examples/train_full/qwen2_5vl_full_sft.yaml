@@ -17,6 +17,7 @@ deepspeed: examples/deepspeed/ds_z3_config.json
 dataset: mllm_demo,identity,alpaca_en_demo
 template: qwen2_vl
 cutoff_len: 2048
+pad_to_multiple_of: 28  # Align with 28 attention heads for optimal memory usage
 max_samples: 1000
 overwrite_cache: true
 preprocessing_num_workers: 16
