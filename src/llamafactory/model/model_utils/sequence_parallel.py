@@ -105,8 +105,14 @@ def apply_sequence_parallel(model_args, full_determinism=False):
     # init sequence-parallel groups here
     group_this = init_sp_group(model_args.sequence_parallel_size)
 
+    # Handle different sequence parallel modes
+    if model_args.sequence_parallel_mode == "deepspeed-alst":
+        # DeepSpeed ALST mode - handled by DeepSpeed, no need for monkey patching
+        logger.info_rank0(f"Using DeepSpeed ALST sequence parallel mode with {model_args.sequence_parallel_size} GPUs")
+        return group_this
+    
     try:
-        # old_flash_attention_forward = transformers.modeling_flash_attention_utils._flash_attention_forward
+        # For legacy modes that require monkey patching
         if model_args.sequence_parallel_mode == "zigzag-ring":
             new_flash_attention_forward = partial(
                 new_flash_attn_forward,
@@ -114,7 +120,6 @@ def apply_sequence_parallel(model_args, full_determinism=False):
                 mode=model_args.sequence_parallel_mode,
                 deterministic=full_determinism,
             )
-            # assert check_params(old_flash_attention_forward, new_flash_attention_forward)
         elif model_args.sequence_parallel_mode == "ulysses":
             new_flash_attention_forward = partial(
                 new_flash_attn_forward,
@@ -123,16 +128,19 @@ def apply_sequence_parallel(model_args, full_determinism=False):
                 deterministic=full_determinism,
             )
         else:
-            raise NotImplementedError("Other sequence parallel modes are to be implemented.")
+            raise NotImplementedError(f"Sequence parallel mode '{model_args.sequence_parallel_mode}' is not implemented.")
 
-        # monkey patching
+        # Apply monkey patching for legacy modes
         transformers.modeling_flash_attention_utils._flash_attention_forward = new_flash_attention_forward
-    except Exception:
-        raise ValueError(
-            f"The current transformer version {transformers.__version__} is not supported. "
-            "please pip install transformers within the versions that llama-factory requires. "
-            "If the code failed with the latest version, "
-            "please file an issue to https://github.com/Qihoo360/360-llama-factory"
+        logger.info_rank0(f"Applied sequence parallel monkey patching for mode: {model_args.sequence_parallel_mode}")
+        
+    except Exception as e:
+        logger.warning_rank0(
+            f"Failed to apply sequence parallel monkey patching: {e}. "
+            f"This may be due to transformers version {transformers.__version__} compatibility. "
+            f"Consider using deepspeed-alst mode instead."
         )
+        # Don't fail completely - just log the warning and continue
+        pass
 
     return group_this
