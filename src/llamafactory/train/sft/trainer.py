@@ -202,41 +202,25 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         r"""Compute loss with ALST support for sequence parallel training."""
         sequence_parallel_group = get_sequence_parallel_group(model, self.accelerator)
         
+        # Debug: Log input keys and sequence parallel group status
+        logger.info_rank0(f"compute_loss called with input keys: {list(inputs.keys())}")
+        logger.info_rank0(f"sequence_parallel_group exists: {sequence_parallel_group is not None}")
+        
         # Check if we should use ALST loss computation
         if should_use_alst_loss(inputs, sequence_parallel_group):
             # Initialize ALST loss handler if not already done
             if self.alst_loss_handler is None:
                 self.alst_loss_handler = create_alst_loss_handler(sequence_parallel_group)
             
+            logger.info_rank0("Using ALST loss computation")
             # Use ALST loss computation
             return self.alst_loss_handler.compute_alst_loss(model, inputs, return_outputs)
         
-        elif sequence_parallel_group is not None:
-            # Legacy sequence parallel mode (fallback)
-            _, outputs = super().compute_loss(model, inputs, return_outputs=True, **kwargs)
-            # Flatten the tokens
-            loss_fct = CrossEntropyLoss(reduction="sum")
-            logits, labels = outputs["logits"] if isinstance(outputs, dict) else outputs[1], inputs["labels"]
-            # Get vocab_size
-            unwrapped_model = self.accelerator.unwrap_model(model)
-            if _is_peft_model(unwrapped_model):
-                vocab_size = unwrapped_model.base_model.model.config.vocab_size
-            else:
-                vocab_size = unwrapped_model.config.vocab_size
-            logits = logits.view(-1, vocab_size)
-            labels = labels.view(-1)
-            # Enable model parallelism
-            labels = labels.to(logits.device)
-            loss = loss_fct(logits, labels)
-
-            # weighted reduce within sequence_parallel_group
-            dist.all_reduce(loss, op=dist.ReduceOp.SUM, group=sequence_parallel_group)
-            label_num = (labels != loss_fct.ignore_index).sum()
-            dist.all_reduce(label_num, op=dist.ReduceOp.SUM, group=sequence_parallel_group)
-            loss /= label_num
-        
         else:
-            # Standard training (no sequence parallelism)
+            # Standard training (no sequence parallelism) or ALST not properly configured
+            if sequence_parallel_group is not None:
+                logger.warning(f"Sequence parallel group exists but ALST loss not triggered. Input keys: {list(inputs.keys())}")
+            
             loss = super().compute_loss(model, inputs, return_outputs, **kwargs)
 
         if is_transformers_version_greater_than("4.46") and not getattr(self, "model_accepts_loss_kwargs", False):
