@@ -134,6 +134,7 @@ class ALSTAttentionWrapper:
             import traceback
             logger.info_rank0(f"Failed to initialize UlyssesSPAttentionHF: {e}")
             logger.info_rank0(f"Full traceback:\n{traceback.format_exc()}")
+            raise ValueError("Failed to initialize UlyssesSPAttentionHF: {e}")
             self.ulysses_attention = None
     
     def wrap_attention_module(self, attention_module: Any) -> Any:

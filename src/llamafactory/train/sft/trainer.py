@@ -100,6 +100,14 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                 
                 logger.info_rank0("FP8 environment variables configured for Accelerate")
 
+        # Synchronize gradient accumulation steps between Accelerate and DeepSpeed/Training args
+        training_args = kwargs.get("args")
+        if training_args is not None and hasattr(training_args, 'gradient_accumulation_steps'):
+            import os
+            gradient_accumulation_steps = training_args.gradient_accumulation_steps
+            os.environ["ACCELERATE_GRADIENT_ACCUMULATION_STEPS"] = str(gradient_accumulation_steps)
+            logger.info_rank0(f"Set ACCELERATE_GRADIENT_ACCUMULATION_STEPS={gradient_accumulation_steps}")
+
         if is_transformers_version_greater_than("4.46"):
             kwargs["processing_class"] = kwargs.pop("tokenizer")
         else:
