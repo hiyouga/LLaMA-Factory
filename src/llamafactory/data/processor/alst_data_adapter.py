@@ -66,8 +66,8 @@ class ALSTDataAdapter:
         return (
             self.alst_config.enabled and
             self.is_available and
-            self.sp_group is not None and
-            sequence_length >= 1024  # Only use ALST for longer sequences
+            self.sp_group is not None
+            # Remove sequence length requirement - let ALST handle all sequences when enabled
         )
     
     def wrap_dataloader(
@@ -78,8 +78,8 @@ class ALSTDataAdapter:
         """Wrap DataLoader with UlyssesSPDataLoaderAdapter if appropriate."""
         
         if not self.should_use_alst_data_adapter(sequence_length or 0):
-            logger.info_rank0("Using manual data processing for sequence parallel")
-            return self._manual_sequence_parallel_dataloader(dataloader)
+            logger.info_rank0("ALST not enabled, using standard DataLoader without sequence parallel processing")
+            return dataloader  # Return original dataloader without manual SP processing
             
         try:
             from deepspeed.runtime.sequence_parallel.ulysses_sp import UlyssesSPDataLoaderAdapter
@@ -97,8 +97,8 @@ class ALSTDataAdapter:
             return alst_dataloader
             
         except Exception as e:
-            logger.info_rank0(f"Failed to create ALST DataLoader, falling back to manual processing: {e}")
-            return self._manual_sequence_parallel_dataloader(dataloader)
+            logger.info_rank0(f"Failed to create ALST DataLoader, falling back to standard dataloader: {e}")
+            return dataloader  # Return original dataloader without manual SP processing
     
     def _manual_sequence_parallel_dataloader(self, dataloader: DataLoader) -> DataLoader:
         """Create sequence parallel dataloader using manual processing."""
@@ -239,15 +239,12 @@ class ManualSequenceParallelDataset(Dataset):
                     
                     processed_item[key] = tensor
                 
-                # Debug tensor properties for distributed compatibility
-                from ...train.debug_utils import DEBUG_TENSORS, debug_tensor_properties, validate_cuda_tensors
-                if DEBUG_TENSORS:
-                    debug_tensor_properties(processed_item[key], f"processed_{key}")
+                # Debug tensor properties for distributed compatibility (disabled for now)
+                # from ...train.debug_utils import DEBUG_TENSORS, debug_tensor_properties
+                # if DEBUG_TENSORS:
+                #     debug_tensor_properties(processed_item[key], f"processed_{key}")
                 
-                # Validate tensor for distributed operations (only when distributed training)
-                if dist.is_initialized() and not validate_cuda_tensors({key: processed_item[key]}, f"ALST data processing"):
-                    # This will log the specific validation errors
-                    pass
+                # Note: ALST expects CPU tensors from dataset, they get moved to device later
             else:
                 processed_item[key] = value
                 

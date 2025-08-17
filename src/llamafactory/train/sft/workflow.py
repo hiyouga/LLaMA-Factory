@@ -17,7 +17,7 @@
 
 from typing import TYPE_CHECKING, Optional
 
-from ...data import ALSTDataCollatorForSeq2Seq, SFTDataCollatorWith4DAttentionMask, get_dataset, get_template_and_fix_tokenizer
+from ...data import SFTDataCollatorWith4DAttentionMask, get_dataset, get_template_and_fix_tokenizer
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
 from ...extras.misc import calculate_tps
@@ -60,32 +60,17 @@ def run_sft(
     optimal_padding = get_optimal_pad_multiple(model, model_args, data_args, training_args) if training_args.do_train else None
     validate_padding_config(optimal_padding, model_args)
 
-    # Use ALST data collator if sequence parallel is enabled to handle CUDA tensor conversion
-    if model_args.sequence_parallel_size > 1:
-        data_collator = ALSTDataCollatorForSeq2Seq(
-            template=template,
-            model=model if not training_args.predict_with_generate else None,
-            pad_to_multiple_of=optimal_padding,  # Smart or manual padding detection
-            label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
-            block_diag_attn=model_args.block_diag_attn,
-            attn_implementation=getattr(model.config, "_attn_implementation", None),
-            compute_dtype=model_args.compute_dtype,
-            require_position_ids=model_args.sequence_parallel_size > 1,
-            **tokenizer_module,
-        )
-        logger.info_rank0("Using ALST data collator for sequence parallel training with CUDA tensor conversion")
-    else:
-        data_collator = SFTDataCollatorWith4DAttentionMask(
-            template=template,
-            model=model if not training_args.predict_with_generate else None,
-            pad_to_multiple_of=optimal_padding,  # Smart or manual padding detection
-            label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
-            block_diag_attn=model_args.block_diag_attn,
-            attn_implementation=getattr(model.config, "_attn_implementation", None),
-            compute_dtype=model_args.compute_dtype,
-            require_position_ids=model_args.sequence_parallel_size > 1,
-            **tokenizer_module,
-        )
+    data_collator = SFTDataCollatorWith4DAttentionMask(
+        template=template,
+        model=model if not training_args.predict_with_generate else None,
+        pad_to_multiple_of=optimal_padding,  # Smart or manual padding detection
+        label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
+        block_diag_attn=model_args.block_diag_attn,
+        attn_implementation=getattr(model.config, "_attn_implementation", None),
+        compute_dtype=model_args.compute_dtype,
+        require_position_ids=model_args.sequence_parallel_size > 1,
+        **tokenizer_module,
+    )
 
     # Metric utils
     metric_module = {}
