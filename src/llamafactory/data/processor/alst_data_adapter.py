@@ -106,14 +106,13 @@ class ALSTDataAdapter:
         
         logger.info_rank0(f"Creating UlyssesSPDataLoaderAdapter with sp_rank={sp_rank}, sp_world_size={sp_world_size}")
         
-        # Create ALST-enabled dataloader with correct constructor signature
-        # UlyssesSPDataLoaderAdapter(dl, sp_rank, sp_group, sp_world_size, device)
+        # Create ALST-enabled dataloader with keyword arguments (like Oumi)
         alst_dataloader = UlyssesSPDataLoaderAdapter(
-            dataloader,      # dl
-            sp_rank,         # sp_rank  
-            self.sp_group,   # sp_group
-            sp_world_size,   # sp_world_size
-            device          # device
+            dataloader,
+            sp_rank=sp_rank,
+            sp_group=self.sp_group,
+            sp_world_size=sp_world_size,
+            device=device
         )
         
         logger.info_rank0("Successfully created ALST-enabled DataLoader")

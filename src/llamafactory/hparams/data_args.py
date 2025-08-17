@@ -53,6 +53,7 @@ class DataArguments:
             "help": (
                 "Pad sequences to multiple of this value for optimal memory alignment. "
                 "Use 'auto' for smart detection based on model architecture and training config, "
+                "'max_length' to pad all sequences to cutoff_len (required for sequence parallelism), "
                 "or specify an integer value for manual override. Set to None to disable padding."
             )
         },

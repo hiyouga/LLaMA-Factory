@@ -1,0 +1,13 @@
+# Configuration for max_length padding
+# This is required for sequence parallelism/ALST training to ensure
+# all sequences have exactly the same length across all ranks
+
+# Use max_length padding - all sequences padded to cutoff_len
+pad_to_multiple_of: max_length
+
+# Set cutoff_len to desired sequence length
+# This should be divisible by sequence_parallel_size for optimal performance
+cutoff_len: 4096
+
+# For sequence parallel training, ensure cutoff_len is divisible by sequence_parallel_size
+# Example: cutoff_len=4096, sequence_parallel_size=4 → each rank gets 1024 tokens
