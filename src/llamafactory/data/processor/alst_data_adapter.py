@@ -228,6 +228,18 @@ class ManualSequenceParallelDataset(Dataset):
                     target_dtype = torch.int64 if key in ['input_ids', 'labels'] else torch.int32
                     tensor = torch.tensor(chunk_data, dtype=target_dtype).contiguous()
                     processed_item[key] = tensor
+                
+                # Debug tensor properties (enable only when debugging)
+                if False:  # Change to True to enable debugging
+                    tensor = processed_item[key]
+                    logger.info_rank0(f"Tensor debug - key: {key}, shape: {tensor.shape}, "
+                                    f"dtype: {tensor.dtype}, device: {tensor.device}, "
+                                    f"is_contiguous: {tensor.is_contiguous()}, "
+                                    f"is_cuda: {tensor.is_cuda}")
+                    if not tensor.is_contiguous():
+                        logger.warning(f"Non-contiguous tensor found for key: {key}")
+                    if tensor.device.type != 'cpu':
+                        logger.warning(f"Unexpected device for key {key}: {tensor.device}")
             else:
                 processed_item[key] = value
                 
