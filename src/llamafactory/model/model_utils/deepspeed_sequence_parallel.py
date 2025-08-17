@@ -102,6 +102,7 @@ class ALSTAttentionWrapper:
             hidden_size = getattr(self.model_config, 'hidden_size', 4096)
             num_attention_heads = getattr(self.model_config, 'num_attention_heads', 32)
             num_key_value_heads = getattr(self.model_config, 'num_key_value_heads', num_attention_heads)
+            num_hidden_layers = getattr(self.model_config, 'num_hidden_layers', 32)
             attn_head_size = hidden_size // num_attention_heads
             
             # Get sequence parameters  
@@ -115,6 +116,7 @@ class ALSTAttentionWrapper:
             logger.info_rank0(f"  - Local sequence length: {local_seq_length}")
             logger.info_rank0(f"  - Attention heads: {num_attention_heads}")
             logger.info_rank0(f"  - KV heads: {num_key_value_heads}")
+            logger.info_rank0(f"  - Hidden layers: {num_hidden_layers}")
             
             self.ulysses_attention = UlyssesSPAttentionHF(
                 attn=None,  # Will be set when wrapping actual attention
@@ -124,6 +126,7 @@ class ALSTAttentionWrapper:
                 attn_head_count=num_attention_heads,
                 attn_head_size=attn_head_size,
                 kv_head_count=num_key_value_heads,
+                num_hidden_layers=num_hidden_layers,
                 process_group=self.sp_group,
                 seq_length_is_variable=True,
             )
