@@ -800,6 +800,14 @@ def get_attention_heads_from_model(model: "torch.nn.Module") -> Optional[int]:
         return None
     
     try:
+        # Debug the type and structure of the model
+        logger.debug(f"Model type: {type(model)}")
+        
+        # Check if model is actually a dictionary (shouldn't happen, but let's be defensive)
+        if isinstance(model, dict):
+            logger.warning_rank0(f"Expected torch.nn.Module but got dict: {list(model.keys()) if model else 'empty dict'}")
+            return None
+        
         # Unwrap model through various wrapper layers
         unwrapped_model = model
         
@@ -819,7 +827,17 @@ def get_attention_heads_from_model(model: "torch.nn.Module") -> Optional[int]:
                 unwrapped_model = getattr(unwrapped_model, attr)
                 break
         
+        # Verify we have a config attribute before accessing it
+        if not hasattr(unwrapped_model, 'config'):
+            logger.warning_rank0(f"Model {type(unwrapped_model)} has no config attribute")
+            return None
+            
         config = unwrapped_model.config
+        
+        # Verify config is not None and has attributes
+        if config is None:
+            logger.warning_rank0("Model config is None")
+            return None
         
         # Try common config attribute names for attention heads
         attention_head_attrs = [

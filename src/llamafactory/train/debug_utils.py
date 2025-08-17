@@ -135,6 +135,6 @@ def debug_gather_operation(tensor: torch.Tensor, name: str = "tensor") -> None:
 
 
 # Quick enable/disable debug flags
-DEBUG_TENSORS = True   # Set to True to enable tensor debugging
-DEBUG_BATCHES = True   # Set to True to enable batch debugging  
-DEBUG_GATHER = True    # Set to True to enable gather operation debugging
+DEBUG_TENSORS = False  # Set to True to enable tensor debugging
+DEBUG_BATCHES = False  # Set to True to enable batch debugging  
+DEBUG_GATHER = False   # Set to True to enable gather operation debugging
