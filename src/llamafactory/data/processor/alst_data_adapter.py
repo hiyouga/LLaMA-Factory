@@ -37,8 +37,7 @@ def check_alst_data_requirements() -> bool:
     """Check if ALST data processing requirements are available."""
     try:
         import deepspeed
-        # Note: UlyssesSPDataLoaderAdapter does not exist in current DeepSpeed versions
-        # ALST data processing is handled through manual sequence parallel approach
+        from deepspeed.runtime.sequence_parallel.ulysses_sp import UlyssesSPDataLoaderAdapter
         return True
     except ImportError as e:
         logger.warning(f"ALST data requirements not met: {e}")
@@ -78,10 +77,28 @@ class ALSTDataAdapter:
     ) -> DataLoader:
         """Wrap DataLoader with UlyssesSPDataLoaderAdapter if appropriate."""
         
-        # Note: UlyssesSPDataLoaderAdapter does not exist in current DeepSpeed versions
-        # ALST data processing is handled through manual sequence parallel approach
-        logger.info_rank0("Using manual data processing for ALST sequence parallel")
-        return self._manual_sequence_parallel_dataloader(dataloader)
+        if not self.should_use_alst_data_adapter(sequence_length or 0):
+            logger.info_rank0("Using manual data processing for sequence parallel")
+            return self._manual_sequence_parallel_dataloader(dataloader)
+            
+        try:
+            from deepspeed.runtime.sequence_parallel.ulysses_sp import UlyssesSPDataLoaderAdapter
+            
+            logger.info_rank0("Wrapping DataLoader with UlyssesSPDataLoaderAdapter")
+            
+            # Create ALST-enabled dataloader
+            alst_dataloader = UlyssesSPDataLoaderAdapter(
+                dataloader,
+                process_group=self.sp_group,
+                ulysses_degree=self.alst_config.ulysses_degree,
+            )
+            
+            logger.info_rank0("Successfully created ALST-enabled DataLoader")
+            return alst_dataloader
+            
+        except Exception as e:
+            logger.info_rank0(f"Failed to create ALST DataLoader, falling back to manual processing: {e}")
+            return self._manual_sequence_parallel_dataloader(dataloader)
     
     def _manual_sequence_parallel_dataloader(self, dataloader: DataLoader) -> DataLoader:
         """Create sequence parallel dataloader using manual processing."""
