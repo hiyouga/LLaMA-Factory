@@ -38,7 +38,6 @@ def check_alst_requirements() -> bool:
         from deepspeed.runtime.sequence_parallel.ulysses_sp import UlyssesSPAttentionHF
         
         # DeepSpeed version check removed - ALST works with 0.17.2+
-        logger.info_rank0(f"DeepSpeed {deepspeed.__version__} found - ALST compatible")
             
         return True
     except ImportError as e:

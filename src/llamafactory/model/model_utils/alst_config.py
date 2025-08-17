@@ -172,12 +172,10 @@ def validate_alst_requirements(config: ALSTConfig) -> bool:
         import deepspeed
         
         # DeepSpeed version check removed - ALST works with 0.17.2+
-        logger.info_rank0(f"DeepSpeed {deepspeed.__version__} found - ALST compatible")
             
-        # Check for required modules
+        # Check for required modules - only UlyssesSPAttentionHF is needed per DeepSpeed docs
         try:
             from deepspeed.runtime.sequence_parallel.ulysses_sp import UlyssesSPAttentionHF
-            from deepspeed.runtime.sequence_parallel.data import UlyssesSPDataLoaderAdapter
         except ImportError as e:
             logger.info_rank0(f"Required DeepSpeed ALST modules not available: {e}")
             return False

@@ -318,7 +318,6 @@ def validate_alst_installation() -> Dict[str, Any]:
         # Check ALST modules
         try:
             from deepspeed.runtime.sequence_parallel.ulysses_sp import UlyssesSPAttentionHF
-            from deepspeed.runtime.sequence_parallel.data import UlyssesSPDataLoaderAdapter
             validation_result["info"].append("DeepSpeed ALST modules available")
         except ImportError as e:
             validation_result["errors"].append(f"DeepSpeed ALST modules not available: {e}")

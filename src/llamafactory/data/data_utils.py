@@ -203,5 +203,15 @@ def preprocess_sp_dataset(seq_ids, world_size, sequence_parallel_mode):
         step = len(seq_ids) // world_size
         local_values = [seq_ids[s : s + step] for s in range(0, len(seq_ids), step)]
         return local_values
+    elif sequence_parallel_mode == "deepspeed-alst":
+        # ALST uses similar sequence parallelism to ulysses
+        step = len(seq_ids) // world_size
+        local_values = [seq_ids[s : s + step] for s in range(0, len(seq_ids), step)]
+        return local_values
+    elif sequence_parallel_mode == "llama3":
+        # llama3 mode also uses ulysses-style sequence parallelism
+        step = len(seq_ids) // world_size
+        local_values = [seq_ids[s : s + step] for s in range(0, len(seq_ids), step)]
+        return local_values
     else:
-        raise NotImplementedError("Other sequence parallel modes are to be implemented.")
+        raise NotImplementedError(f"Sequence parallel mode '{sequence_parallel_mode}' is not implemented.")
