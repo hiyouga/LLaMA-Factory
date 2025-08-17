@@ -243,7 +243,6 @@ class DeepSpeedSequenceParallel:
     def __init__(self, model_args: "ModelArguments"):
         self.model_args = model_args
         self.sp_group: Optional["dist.ProcessGroup"] = None
-        self.attention_wrapper: Optional[ALSTAttentionWrapper] = None
         self.is_initialized = False
         
     def should_use_alst(self) -> bool:
@@ -275,33 +274,20 @@ class DeepSpeedSequenceParallel:
             return None
     
     def wrap_model_attention(self, model: PreTrainedModel) -> None:
-        """Wrap model attention modules with ALST capabilities."""
+        """For ALST, attention wrapping is handled by DeepSpeed's UlyssesSPDataLoaderAdapter.
+        
+        The attention sequence parallel operations should be handled at the data level,
+        not by wrapping individual attention modules. This is the DeepSpeed ALST approach.
+        """
         if not self.is_initialized or self.sp_group is None:
             logger.warning("ALST not initialized, skipping attention wrapping")
             return
-            
-        try:
-            # Create attention wrapper
-            self.attention_wrapper = ALSTAttentionWrapper(
-                self.model_args, 
-                self.sp_group, 
-                model.config
-            )
-            
-            # Find and wrap attention modules
-            wrapped_count = 0
-            for name, module in model.named_modules():
-                # Look for common attention module patterns
-                if any(pattern in name.lower() for pattern in ['attention', 'attn', 'self_attn']):
-                    if hasattr(module, 'forward'):
-                        logger.info_rank0(f"Wrapping attention module: {name}")
-                        self.attention_wrapper.wrap_attention_module(module)
-                        wrapped_count += 1
-                        
-            logger.info_rank0(f"Successfully wrapped {wrapped_count} attention modules with ALST")
-            
-        except Exception as e:
-            logger.info_rank0(f"Failed to wrap model attention with ALST: {e}")
+        
+        # For ALST, we don't wrap attention modules directly
+        # The sequence parallelism is handled by UlyssesSPDataLoaderAdapter at the data level
+        # and DeepSpeed's internal ALST mechanisms
+        logger.info_rank0("ALST attention handling delegated to DeepSpeed's UlyssesSPDataLoaderAdapter")
+        logger.info_rank0("No manual attention module wrapping required for ALST")
     
     def get_data_parallel_config(self) -> dict[str, Any]:
         """Get data parallel configuration for ALST."""
