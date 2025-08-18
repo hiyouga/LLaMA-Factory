@@ -111,6 +111,22 @@ class BaseModelArguments:
         default=False,
         metadata={"help": "Whether or not to enable liger kernel for faster training."},
     )
+    fp8: bool = field(
+        default=False,
+        metadata={
+            "help": "Enable FP8 mixed precision training via HuggingFace Accelerate. Requires PyTorch 2.7+ and Hopper architecture GPUs."
+        },
+    )
+    fp8_backend: str = field(
+        default="auto",
+        metadata={
+            "help": "FP8 backend to use ('auto', 'torchao', 'te', 'msamp'). 'auto' selects best available backend."
+        },
+    )
+    fp8_enable_fsdp_float8_all_gather: bool = field(
+        default=False,
+        metadata={"help": "Enable FP8 optimizations for FSDP2 all-gather operations."},
+    )
     moe_aux_loss_coef: Optional[float] = field(
         default=None,
         metadata={"help": "Coefficient of the auxiliary router loss in mixture-of-experts model."},

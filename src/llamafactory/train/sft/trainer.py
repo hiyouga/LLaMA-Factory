@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer, ProcessorMixin
     from transformers.trainer import PredictionOutput
 
-    from ...hparams import FinetuningArguments
+    from ...hparams import FinetuningArguments, ModelArguments
 
 
 logger = logging.get_logger(__name__)
@@ -50,9 +50,14 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         self,
         finetuning_args: "FinetuningArguments",
         processor: Optional["ProcessorMixin"],
+        model_args: Optional["ModelArguments"] = None,
         gen_kwargs: Optional[dict[str, Any]] = None,
         **kwargs,
     ) -> None:
+        # Configure FP8 environment if enabled
+        if model_args is not None and model_args.fp8:
+            from ..fp8_utils import configure_fp8_environment
+            configure_fp8_environment(model_args)
         if is_transformers_version_greater_than("4.46"):
             kwargs["processing_class"] = kwargs.pop("tokenizer")
         else:
@@ -106,6 +111,28 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
     @override
     def compute_loss(self, model, inputs, *args, **kwargs):
         return super().compute_loss(model, inputs, *args, **kwargs)
+
+    @override
+    def get_train_dataloader(self) -> "torch.utils.data.DataLoader":
+        """Override to add FP8 backend information logging."""
+        # Log FP8 backend info if FP8 is enabled and this is the first time creating dataloader
+        if (hasattr(self, '_fp8_info_logged') is False and
+            hasattr(self, 'model_args') and
+            getattr(self.model_args, 'fp8', False)):
+
+            backend = getattr(self.model_args, 'fp8_backend', 'auto')
+            if backend == 'torchao' or backend == 'auto':
+                logger.info_rank0(
+                    "FP8 training enabled with TorchAO backend. For optimal performance, "
+                    "ensure model layer dimensions are mostly divisible by 16. "
+                    "If you encounter issues, try fp8_backend='te' with Transformer Engine."
+                )
+            else:
+                logger.info_rank0(f"FP8 training enabled with {backend} backend.")
+
+            self._fp8_info_logged = True
+
+        return super().get_train_dataloader()
 
     @override
     def prediction_step(
