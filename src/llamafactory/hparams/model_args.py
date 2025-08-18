@@ -87,6 +87,13 @@ class BaseModelArguments:
         default=None,
         metadata={"help": "Which scaling strategy should be adopted for the RoPE embeddings."},
     )
+    model_capacity: Optional[int] = field(
+        default=None,
+        metadata={
+            "help": "Override model max_position_embeddings independent of cutoff_len. "
+            "If specified, this determines the model's maximum context length instead of using cutoff_len."
+        },
+    )
     flash_attn: AttentionFunction = field(
         default=AttentionFunction.AUTO,
         metadata={"help": "Enable FlashAttention for faster training and inference."},

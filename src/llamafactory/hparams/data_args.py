@@ -137,6 +137,27 @@ class DataArguments:
         default=False,
         metadata={"help": "Whether or not to use a shared file system for the datasets."},
     )
+    force_sequence_length_padding: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Force all sequences to be padded to cutoff_len during preprocessing. "
+                "Required for sequence parallelism compatibility. When enabled, all samples "
+                "will be exactly cutoff_len tokens, padding with pad tokens as needed."
+            )
+        },
+    )
+    force_max_length_padding: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Force all sequences to be padded to the maximum length found in the dataset "
+                "during preprocessing. This ensures all samples have identical lengths based on "
+                "the longest sample, improving training efficiency. Cannot be used with "
+                "force_sequence_length_padding."
+            )
+        },
+    )
 
     def __post_init__(self):
         def split_arg(arg):
