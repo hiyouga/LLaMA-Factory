@@ -45,7 +45,7 @@ eval_steps: 250
 do_eval: true
 
 ### deepspeed
-deepspeed: examples/deepspeed/ds_z3_config.json
+deepspeed: examples/deepspeed/ds_z3_fp8_config.json
 
 ### FP8 Configuration
 # Enable FP8 mixed precision training
