@@ -183,17 +183,11 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         r"""Compute loss with ALST support for sequence parallel training."""
         sequence_parallel_group = get_sequence_parallel_group(model, self.accelerator)
 
-        # Debug: Log input keys and sequence parallel group status
-        logger.info_rank0(f"compute_loss called with input keys: {list(inputs.keys())}")
-        logger.info_rank0(f"sequence_parallel_group exists: {sequence_parallel_group is not None}")
-
         # Check if we should use ALST loss computation
         if should_use_alst_loss(inputs, sequence_parallel_group):
             # Initialize ALST loss handler if not already done
             if self.alst_loss_handler is None:
                 self.alst_loss_handler = create_alst_loss_handler(sequence_parallel_group)
-
-            logger.info_rank0("Using ALST loss computation")
             # Use ALST loss computation
             return self.alst_loss_handler.compute_alst_loss(model, inputs, return_outputs)
 
