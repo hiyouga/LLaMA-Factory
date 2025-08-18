@@ -33,7 +33,7 @@ from ...extras.packages import is_transformers_version_greater_than
 from ...model.model_utils.alst_config import create_alst_config
 from ..alst_loss import create_alst_loss_handler, should_use_alst_loss
 from ..callbacks import SaveProcessorCallback
-from ..fp8_utils import configure_fp8_environment
+from ..fp8_utils import configure_fp8_environment, verify_fp8_status
 from ..trainer_utils import (
     create_custom_optimizer,
     create_custom_scheduler,
@@ -121,6 +121,10 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             from ..trainer_utils import dft_loss_func
 
             self.compute_loss_func = dft_loss_func
+        
+        # Verify FP8 status after trainer initialization (accelerator should be available)
+        if model_args is not None and model_args.fp8 and hasattr(self, 'accelerator'):
+            verify_fp8_status(self.accelerator, model_args)
 
     @override
     def create_optimizer(self) -> "torch.optim.Optimizer":
@@ -242,24 +246,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
     @override
     def get_train_dataloader(self) -> "torch.utils.data.DataLoader":
-        """Override to add FP8 backend information logging and ALST DataLoader wrapping if enabled."""
-        # Log FP8 backend info if FP8 is enabled and this is the first time creating dataloader
-        if (hasattr(self, '_fp8_info_logged') is False and
-            hasattr(self, 'model_args') and
-            getattr(self.model_args, 'fp8', False)):
-
-            backend = getattr(self.model_args, 'fp8_backend', 'auto')
-            if backend == 'torchao' or backend == 'auto':
-                logger.info_rank0(
-                    "FP8 training enabled with TorchAO backend. For optimal performance, "
-                    "ensure model layer dimensions are mostly divisible by 16. "
-                    "If you encounter issues, try fp8_backend='te' with Transformer Engine."
-                )
-            else:
-                logger.info_rank0(f"FP8 training enabled with {backend} backend.")
-
-            self._fp8_info_logged = True
-
+        """Override to add ALST DataLoader wrapping if enabled."""
         dataloader = super().get_train_dataloader()
 
         if self.alst_data_adapter is not None:

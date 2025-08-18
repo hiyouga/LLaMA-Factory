@@ -139,3 +139,33 @@ def configure_fp8_environment(model_args: "ModelArguments") -> None:
         logger.info_rank0("Set FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER=true")
 
     logger.info_rank0("FP8 environment configured - all FP8 training handled by HuggingFace Accelerate")
+
+
+def verify_fp8_status(accelerator, model_args: "ModelArguments") -> None:
+    """Verify that FP8 training is actually working after model preparation.
+    
+    Args:
+        accelerator: The HuggingFace Accelerator instance
+        model_args: Model arguments containing FP8 configuration
+    """
+    if not model_args.fp8:
+        return
+        
+    # Check Accelerate's FP8 status
+    fp8_enabled = getattr(accelerator, 'fp8_enabled', False)
+    fp8_backend_type = getattr(accelerator, 'fp8_backend', 'UNKNOWN')
+    
+    backend = getattr(model_args, 'fp8_backend', 'auto')
+    if backend == 'torchao' or backend == 'auto':
+        logger.info_rank0(
+            "FP8 training enabled with TorchAO backend. For optimal performance, "
+            "ensure model layer dimensions are mostly divisible by 16. "
+            "If you encounter issues, try fp8_backend='te' with Transformer Engine."
+        )
+    else:
+        logger.info_rank0(f"FP8 training enabled with {backend} backend.")
+    
+    logger.info_rank0(f"Accelerate FP8 status - enabled: {fp8_enabled}, backend: {fp8_backend_type}")
+    
+    if not fp8_enabled:
+        logger.info_rank0("WARNING: FP8 was requested but Accelerate shows fp8_enabled=False. FP8 may not be working.")
