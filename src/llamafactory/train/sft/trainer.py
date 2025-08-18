@@ -34,7 +34,6 @@ from ...model.model_utils.alst_config import create_alst_config
 from ..alst_loss import create_alst_loss_handler, should_use_alst_loss
 from ..callbacks import SaveProcessorCallback
 from ..fp8_utils import (
-    check_model_fp8_compatibility,
     create_deepspeed_fp8_kwargs,
     create_fp8_kwargs,
 )
@@ -269,22 +268,22 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
     @override
     def get_train_dataloader(self) -> "torch.utils.data.DataLoader":
         """Override to add ALST DataLoader wrapping if enabled."""
-        # Check FP8 compatibility if FP8 is enabled and this is the first time creating dataloader
-        if (hasattr(self, '_fp8_compatibility_checked') is False and
+        # Log FP8 backend info if FP8 is enabled and this is the first time creating dataloader
+        if (hasattr(self, '_fp8_info_logged') is False and
             hasattr(self, 'model_args') and
             getattr(self.model_args, 'fp8', False)):
 
-            try:
-                is_compatible, reason = check_model_fp8_compatibility(self.model)
-                if not is_compatible:
-                    logger.warning(f"FP8 compatibility issue detected: {reason}")
-                    logger.warning("Consider using bf16 instead of fp8, or try fp8_backend='te' with Transformer Engine")
-                else:
-                    logger.info_rank0(f"Model FP8 compatibility confirmed: {reason}")
-            except Exception as e:
-                logger.warning(f"FP8 compatibility check failed: {e}")
+            backend = getattr(self.model_args, 'fp8_backend', 'auto')
+            if backend == 'torchao' or backend == 'auto':
+                logger.info_rank0(
+                    "FP8 training enabled with TorchAO backend. For optimal performance, "
+                    "ensure model layer dimensions are mostly divisible by 16. "
+                    "If you encounter issues, try fp8_backend='te' with Transformer Engine."
+                )
+            else:
+                logger.info_rank0(f"FP8 training enabled with {backend} backend.")
 
-            self._fp8_compatibility_checked = True
+            self._fp8_info_logged = True
 
         dataloader = super().get_train_dataloader()
 
