@@ -1,5 +1,6 @@
-# FP8 Training with DeepSpeed Configuration
-# This example demonstrates FP8 mixed precision training using DeepSpeed ZeRO-3
+# FP8 Training with DeepSpeed ZeRO-3 Configuration
+# This demonstrates FP8 mixed precision training using HuggingFace Accelerate + DeepSpeed
+# FP8 is handled by Accelerate/LLaMA-Factory, while DeepSpeed provides ZeRO-3 memory optimization
 # Requires: pip install 'llamafactory[fp8-te]' for Transformer Engine backend
 
 ### model
