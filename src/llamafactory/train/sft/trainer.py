@@ -87,9 +87,9 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             from ..trainer_utils import dft_loss_func
 
             self.compute_loss_func = dft_loss_func
-        
+
         # Verify FP8 status after trainer initialization (accelerator should be available)
-        if model_args is not None and model_args.fp8 and hasattr(self, 'accelerator'):
+        if model_args is not None and model_args.fp8 and hasattr(self, "accelerator"):
             verify_fp8_status(self.accelerator, model_args)
 
     @override

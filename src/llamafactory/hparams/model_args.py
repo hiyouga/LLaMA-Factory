@@ -223,15 +223,12 @@ class QuantizationArguments:
     fp8_backend: str = field(
         default="auto",
         metadata={
-            "help": "FP8 backend to use ('auto', 'torchao', 'te', 'msamp'). "
-            "'auto' selects best available backend."
+            "help": "FP8 backend to use ('auto', 'torchao', 'te', 'msamp'). 'auto' selects best available backend."
         },
     )
     fp8_enable_fsdp_float8_all_gather: bool = field(
         default=False,
-        metadata={
-            "help": "Enable FP8 optimizations for FSDP2 all-gather operations."
-        },
+        metadata={"help": "Enable FP8 optimizations for FSDP2 all-gather operations."},
     )
 
 

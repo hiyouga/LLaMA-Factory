@@ -39,7 +39,7 @@ class CustomTrainer(Trainer):
         finetuning_args: "FinetuningArguments",
         processor: Optional["ProcessorMixin"],
         model_args: Optional["ModelArguments"] = None,
-        **kwargs
+        **kwargs,
     ) -> None:
         # Configure FP8 environment if enabled
         if model_args is not None and model_args.fp8:
@@ -63,9 +63,9 @@ class CustomTrainer(Trainer):
 
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
-        
+
         # Verify FP8 status after trainer initialization (accelerator should be available)
-        if model_args is not None and model_args.fp8 and hasattr(self, 'accelerator'):
+        if model_args is not None and model_args.fp8 and hasattr(self, "accelerator"):
             verify_fp8_status(self.accelerator, model_args)
 
     @override

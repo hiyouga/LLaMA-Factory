@@ -52,9 +52,9 @@ def create_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
             config = Float8LinearConfig.from_recipe_name("rowwise")
 
             # Enable alignment for better kernel performance
-            if hasattr(config, 'enable_amax_init'):
+            if hasattr(config, "enable_amax_init"):
                 config.enable_amax_init = True
-            if hasattr(config, 'enable_pre_and_post_forward'):
+            if hasattr(config, "enable_pre_and_post_forward"):
                 config.enable_pre_and_post_forward = True
 
         # Create module filter function to skip problematic layers
@@ -66,7 +66,7 @@ def create_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
                 return False
 
             # Only convert Linear layers
-            if not (hasattr(module, 'weight') and len(module.weight.shape) == 2):
+            if not (hasattr(module, "weight") and len(module.weight.shape) == 2):
                 return False
 
             # Check dimension alignment for FP8 kernels
@@ -75,7 +75,9 @@ def create_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
 
             # Skip layers with dimensions not divisible by 16 to avoid kernel errors
             if in_features % 16 != 0 or out_features % 16 != 0:
-                logger.debug(f"Skipping layer {layer_name} with dimensions {out_features}x{in_features} (not divisible by 16)")
+                logger.debug(
+                    f"Skipping layer {layer_name} with dimensions {out_features}x{in_features} (not divisible by 16)"
+                )
                 return False
 
             return True
@@ -102,15 +104,13 @@ def get_fp8_mixed_precision(model_args: "ModelArguments") -> Optional[str]:
     return "fp8" if model_args.fp8 else None
 
 
-
-
 def configure_fp8_environment(model_args: "ModelArguments") -> None:
     """Configure FP8 environment for HuggingFace Accelerate.
-    
+
     FP8 training is handled entirely through HuggingFace Accelerate, regardless of whether
     DeepSpeed or FSDP is used for distributed training. This function sets up the environment
     variables and validates the FP8 configuration.
-    
+
     Args:
         model_args: Model arguments containing FP8 configuration
     """
@@ -124,8 +124,8 @@ def configure_fp8_environment(model_args: "ModelArguments") -> None:
     logger.info_rank0("Set ACCELERATE_MIXED_PRECISION=fp8")
 
     # Configure FP8 backend and options
-    backend = getattr(model_args, 'fp8_backend', 'auto')
-    if backend != 'auto':
+    backend = getattr(model_args, "fp8_backend", "auto")
+    if backend != "auto":
         os.environ["FP8_BACKEND"] = backend
         logger.info_rank0(f"Set FP8_BACKEND={backend}")
 
@@ -134,7 +134,7 @@ def configure_fp8_environment(model_args: "ModelArguments") -> None:
     logger.info_rank0(f"FP8 AORecipeKwargs created: {len(fp8_kwargs)} items")
 
     # Enable FSDP float8 all-gather optimization if requested
-    if hasattr(model_args, 'fp8_enable_fsdp_float8_all_gather') and model_args.fp8_enable_fsdp_float8_all_gather:
+    if hasattr(model_args, "fp8_enable_fsdp_float8_all_gather") and model_args.fp8_enable_fsdp_float8_all_gather:
         os.environ["FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER"] = "true"
         logger.info_rank0("Set FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER=true")
 
@@ -143,20 +143,20 @@ def configure_fp8_environment(model_args: "ModelArguments") -> None:
 
 def verify_fp8_status(accelerator, model_args: "ModelArguments") -> None:
     """Verify that FP8 training is actually working after model preparation.
-    
+
     Args:
         accelerator: The HuggingFace Accelerator instance
         model_args: Model arguments containing FP8 configuration
     """
     if not model_args.fp8:
         return
-        
+
     # Check Accelerate's FP8 status
-    fp8_enabled = getattr(accelerator, 'fp8_enabled', False)
-    fp8_backend_type = getattr(accelerator, 'fp8_backend', 'UNKNOWN')
-    
-    backend = getattr(model_args, 'fp8_backend', 'auto')
-    if backend == 'torchao' or backend == 'auto':
+    fp8_enabled = getattr(accelerator, "fp8_enabled", False)
+    fp8_backend_type = getattr(accelerator, "fp8_backend", "UNKNOWN")
+
+    backend = getattr(model_args, "fp8_backend", "auto")
+    if backend == "torchao" or backend == "auto":
         logger.info_rank0(
             "FP8 training enabled with TorchAO backend. For optimal performance, "
             "ensure model layer dimensions are mostly divisible by 16. "
@@ -164,8 +164,8 @@ def verify_fp8_status(accelerator, model_args: "ModelArguments") -> None:
         )
     else:
         logger.info_rank0(f"FP8 training enabled with {backend} backend.")
-    
+
     logger.info_rank0(f"Accelerate FP8 status - enabled: {fp8_enabled}, backend: {fp8_backend_type}")
-    
+
     if not fp8_enabled:
         logger.info_rank0("WARNING: FP8 was requested but Accelerate shows fp8_enabled=False. FP8 may not be working.")
