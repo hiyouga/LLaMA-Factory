@@ -1,0 +1,61 @@
+# FP8 Training with DeepSpeed ZeRO-3 Configuration
+# This demonstrates FP8 mixed precision training using HuggingFace Accelerate + DeepSpeed
+# FP8 is handled by Accelerate/LLaMA-Factory, while DeepSpeed provides ZeRO-3 memory optimization
+# Requires: pip install 'llamafactory[fp8-te]' for Transformer Engine backend
+
+### model
+model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full
+use_fast_tokenizer: true
+
+### dataset
+dataset: identity
+template: llama3
+cutoff_len: 1024
+max_samples: 1000
+overwrite_cache: true
+preprocessing_num_workers: 16
+
+### output
+output_dir: ./saves/llama3-8b-fp8-deepspeed
+logging_steps: 10
+save_steps: 500
+plot_loss: true
+overwrite_output_dir: true
+
+### train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 8
+learning_rate: 2.0e-5
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+
+### eval
+val_size: 0.1
+per_device_eval_batch_size: 1
+eval_strategy: steps
+eval_steps: 250
+do_eval: true
+
+### deepspeed
+deepspeed: examples/deepspeed/ds_z3_fp8_config.json
+
+### FP8 Configuration
+# Enable FP8 mixed precision training
+fp8: true
+
+# Backend selection: 'auto', 'te', 'torchao', 'msamp'
+# 'te' (Transformer Engine) is recommended for DeepSpeed + H100 GPUs
+# 'auto' will select the best available backend
+fp8_backend: te
+
+# Optional: Enable FSDP float8 all-gather optimization (experimental)
+# fp8_enable_fsdp_float8_all_gather: false

@@ -1,6 +1,6 @@
 {
   "train_micro_batch_size_per_gpu": "auto",
-  "gradient_clipping": 0.001,
+  "gradient_clipping": "auto",
   "zero_allow_untested_optimizer": true,
   "zero_force_ds_cpu_optimizer": true,
   "fp16": {
@@ -12,13 +12,7 @@
     "min_loss_scale": 1
   },
   "bf16": {
-    "enabled": false
-  },
-  "fp8": {
-    "enabled": true,
-    "loss_scale_window": 1000,
-    "hysteresis": 2,
-    "min_loss_scale": 1
+    "enabled": "auto"
   },
   "zero_optimization": {
     "stage": 3,
