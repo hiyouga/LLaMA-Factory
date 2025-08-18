@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "llamafactory"
+requires-python = ">=3.9.0"
 dynamic = [
     "version",
     "dependencies",
     "optional-dependencies",
-    "requires-python",
     "scripts",
     "authors",
     "description",
