@@ -71,11 +71,8 @@ extra_require = {
     "openmind": ["openmind"],
     "swanlab": ["swanlab"],
     "dev": ["pre-commit", "ruff", "pytest", "build"],
-    "alst": ["deepspeed>=0.17.2,<=0.17.4", "flash-attn>=2.0"],  # Recommended: Modern ALST dependencies
-    "advanced": ["torchao>=0.8.0", "kernels>=0.9.0", "cut-cross-entropy", "triton<3.4.0"],
-    "fp8": ["torchao>=0.8.0"],
-    "fp8-te": ["transformer_engine[pytorch]>=2.0.0"],
-    "fp8-all": ["torchao>=0.8.0", "transformer_engine[pytorch]>=2.0.0"],
+    "torchao": ["torchao>=0.8.0"],
+    "te": ["transformer_engine[pytorch]>=2.0.0"],
 }
 
 

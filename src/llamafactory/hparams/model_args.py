@@ -134,14 +134,6 @@ class BaseModelArguments:
         default=False,
         metadata={"help": "Enable FP8 optimizations for FSDP2 all-gather operations."},
     )
-    use_kernels: bool = field(
-        default=False,
-        metadata={"help": "Enable Huggingface kernels package for optimized operations."},
-    )
-    kernel_name: Optional[str] = field(
-        default=None,
-        metadata={"help": "Specific kernel to load from HuggingFace Hub (e.g., 'kernels-community/activation')."},
-    )
     sequence_parallel_size: int = field(
         default=1,
         metadata={

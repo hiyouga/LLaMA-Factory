@@ -31,7 +31,7 @@ from trl import AutoModelForCausalLMWithValueHead
 from ..extras import logging
 from ..extras.misc import count_parameters, skip_check_imports, try_download_model_from_other_hub
 from .adapter import init_adapter
-from .model_utils.advanced_training import apply_fp8_optimization, apply_hf_kernels, prepare_model_for_qat
+from .model_utils.qat_utils import prepare_model_for_qat
 from .model_utils.alst_config import create_alst_config, validate_alst_requirements
 from .model_utils.deepspeed_sequence_parallel import apply_deepspeed_sequence_parallel
 from .model_utils.liger_kernel import apply_liger_kernel
@@ -212,12 +212,8 @@ def load_model(
         # Apply QAT preparation if enabled
         model = prepare_model_for_qat(model, model_args)
 
-        # FP8 optimization is now handled by HuggingFace Accelerate during trainer initialization
-        # Keep validation call for early error detection
-        apply_fp8_optimization(model, model_args)
+        # FP8 optimization is handled by HuggingFace Accelerate during trainer initialization
 
-        # Apply HuggingFace kernels if enabled
-        apply_hf_kernels(model, model_args)
 
     model = init_adapter(config, model, model_args, finetuning_args, is_trainable)
 
