@@ -776,6 +776,10 @@ register_model_group(
 
 register_model_group(
     models={
+        "Gemma-3-270M": {
+            DownloadSource.DEFAULT: "google/gemma-3-270m",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-270m",
+        },
         "Gemma-3-4B": {
             DownloadSource.DEFAULT: "google/gemma-3-4b-pt",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-4b-pt",
@@ -787,6 +791,10 @@ register_model_group(
         "Gemma-3-27B": {
             DownloadSource.DEFAULT: "google/gemma-3-27b-pt",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-27b-pt",
+        },
+        "Gemma-3-270M-Instruct": {
+            DownloadSource.DEFAULT: "google/gemma-3-270m-it",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-270m-it",
         },
         "Gemma-3-4B-Instruct": {
             DownloadSource.DEFAULT: "google/gemma-3-4b-it",
@@ -1669,8 +1677,8 @@ register_model_group(
         },
         "MiMo-VL-7B-RL-2508": {
             DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-RL-2508",
-            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-VL-7B-RL-2508"
-        }
+            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-VL-7B-RL-2508",
+        },
     },
     template="mimo_vl",
     multimodal=True,
@@ -1685,7 +1693,7 @@ register_model_group(
         },
         "MiMo-VL-7B-SFT-2508": {
             DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-SFT-2508",
-            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-SFT-2508"
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-SFT-2508",
         },
     },
     template="qwen2_vl",
