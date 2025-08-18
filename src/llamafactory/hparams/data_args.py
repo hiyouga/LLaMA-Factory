@@ -116,6 +116,17 @@ class DataArguments:
             )
         },
     )
+    force_max_length_padding: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Force all sequences to be padded to the maximum length found in the dataset "
+                "during preprocessing. This ensures all samples have identical lengths based on "
+                "the longest sample, improving training efficiency. Cannot be used with "
+                "force_sequence_length_padding."
+            )
+        },
+    )
     val_size: float = field(
         default=0.0,
         metadata={"help": "Size of the validation set, should be an integer or a float in range `[0,1)`."},

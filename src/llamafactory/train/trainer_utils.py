@@ -895,11 +895,7 @@ def get_optimal_pad_multiple(
     """
     # Manual override - use exact value specified
     if data_args.pad_to_multiple_of is not None and data_args.pad_to_multiple_of != "auto":
-        if data_args.pad_to_multiple_of == "max_length":
-            # Use max_length (cutoff_len) for fixed-length padding - required for sequence parallelism
-            logger.info_rank0(f"Using max_length padding: cutoff_len={data_args.cutoff_len}")
-            return data_args.cutoff_len
-        elif isinstance(data_args.pad_to_multiple_of, str):
+        if isinstance(data_args.pad_to_multiple_of, str):
             try:
                 return int(data_args.pad_to_multiple_of)
             except ValueError:
@@ -927,10 +923,10 @@ def get_optimal_pad_multiple(
     # Sequence parallel compatibility
     if getattr(model_args, 'sequence_parallel_size', 1) > 1:
         ulysses_degree = getattr(model_args, 'alst_ulysses_degree', model_args.sequence_parallel_size)
-        # Recommend max_length padding for sequence parallelism
+        # Recommend force padding for sequence parallelism
         logger.info_rank0(
             f"Sequence parallelism detected (size={model_args.sequence_parallel_size}). "
-            f"For optimal ALST performance, consider using pad_to_multiple_of: 'max_length'"
+            f"For optimal ALST performance, consider using force_sequence_length_padding: true"
         )
         # Ensure optimal is compatible with ulysses degree
         while optimal % ulysses_degree != 0:
