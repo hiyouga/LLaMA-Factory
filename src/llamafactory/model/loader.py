@@ -37,7 +37,6 @@ from .model_utils.deepspeed_sequence_parallel import apply_deepspeed_sequence_pa
 from .model_utils.liger_kernel import apply_liger_kernel
 from .model_utils.misc import register_autoclass
 from .model_utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
-from .model_utils.sequence_parallel import apply_sequence_parallel
 from .model_utils.unsloth import load_unsloth_pretrained_model
 from .model_utils.valuehead import load_valuehead_params
 from .patcher import patch_config, patch_model, patch_processor, patch_tokenizer, patch_valuehead_model
@@ -154,18 +153,13 @@ def load_model(
 
     apply_liger_kernel(config, model_args, is_trainable, require_logits=(finetuning_args.stage not in ["pt", "sft"]))
 
-    # Initialize sequence parallel - choose between ALST and legacy implementation
+    # Initialize sequence parallel with ALST
     sequence_parallel_group = None
     alst_config = create_alst_config(model_args)
 
     if alst_config.enabled and validate_alst_requirements(alst_config):
         logger.info_rank0("Using DeepSpeed ALST for sequence parallelism")
         # ALST will be applied after model loading to access the actual model
-    else:
-        logger.info_rank0("Using legacy sequence parallelism implementation")
-        sequence_parallel_group = apply_sequence_parallel(
-            model_args, full_determinism
-        )  # monkey patching, similar to liger_kernel
 
     model = None
     lazy_load = False
