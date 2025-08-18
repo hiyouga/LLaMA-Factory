@@ -25,7 +25,7 @@ from ...extras import logging
 from ...extras.packages import is_transformers_version_greater_than
 from ...model.model_utils.alst_config import create_alst_config
 from ..callbacks import SaveProcessorCallback
-from ..fp8_utils import create_deepspeed_fp8_kwargs, create_fp8_kwargs
+from ..fp8_utils import configure_fp8_environment
 from ..trainer_utils import (
     create_custom_optimizer,
     create_custom_scheduler,
@@ -54,7 +54,6 @@ class CustomTrainer(Trainer):
     ) -> None:
         # Configure FP8 environment if enabled
         if model_args is not None and model_args.fp8:
-            from ..fp8_utils import configure_fp8_environment
             configure_fp8_environment(model_args)
         if is_transformers_version_greater_than("4.46"):
             kwargs["processing_class"] = kwargs.pop("tokenizer")

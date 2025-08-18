@@ -33,10 +33,7 @@ from ...extras.packages import is_transformers_version_greater_than
 from ...model.model_utils.alst_config import create_alst_config
 from ..alst_loss import create_alst_loss_handler, should_use_alst_loss
 from ..callbacks import SaveProcessorCallback
-from ..fp8_utils import (
-    create_deepspeed_fp8_kwargs,
-    create_fp8_kwargs,
-)
+from ..fp8_utils import configure_fp8_environment
 from ..trainer_utils import (
     create_custom_optimizer,
     create_custom_scheduler,
@@ -69,7 +66,6 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
     ) -> None:
         # Configure FP8 environment if enabled
         if model_args is not None and model_args.fp8:
-            from ..fp8_utils import configure_fp8_environment
             configure_fp8_environment(model_args)
 
         # Synchronize gradient accumulation steps between Accelerate and DeepSpeed/Training args

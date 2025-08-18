@@ -102,77 +102,24 @@ def get_fp8_mixed_precision(model_args: "ModelArguments") -> Optional[str]:
     return "fp8" if model_args.fp8 else None
 
 
-def create_deepspeed_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
-    """Create FP8RecipeKwargs for DeepSpeed FP8 training.
-
-    Args:
-        model_args: Model arguments containing FP8 configuration
-
-    Returns:
-        List containing appropriate RecipeKwargs for DeepSpeed FP8
-    """
-    if not model_args.fp8:
-        return []
-
-    try:
-        # Use the specific recipe kwargs classes instead of deprecated FP8RecipeKwargs
-        from accelerate.utils import MSAMPRecipeKwargs, TERecipeKwargs
-
-        backend = getattr(model_args, "fp8_backend", "auto")
-
-        # Use Transformer Engine for DeepSpeed FP8 (most stable)
-        if backend == "auto" or backend == "te":
-            try:
-                # Create TERecipeKwargs for Transformer Engine
-                fp8_kwargs = {"use_autocast_during_eval": False}
-
-                # Add FSDP float8 all-gather if requested
-                if hasattr(model_args, "fp8_enable_fsdp_float8_all_gather") and model_args.fp8_enable_fsdp_float8_all_gather:
-                    logger.info_rank0("FSDP float8 all-gather optimization enabled for DeepSpeed")
-
-                logger.info_rank0("Creating DeepSpeed FP8 configuration with Transformer Engine backend")
-                return [TERecipeKwargs(**fp8_kwargs)]
-            except Exception as te_error:
-                logger.warning_rank0(f"Transformer Engine not available: {te_error}. Falling back to MS-AMP.")
-                # Fall back to MS-AMP
-                fp8_kwargs = {"opt_level": "O2"}
-                logger.info_rank0("Creating DeepSpeed FP8 configuration with MS-AMP backend (fallback)")
-                return [MSAMPRecipeKwargs(**fp8_kwargs)]
-
-        elif backend == "msamp":
-            # MS-AMP backend for DeepSpeed
-            fp8_kwargs = {"opt_level": "O2"}
-            logger.info_rank0("Creating DeepSpeed FP8 configuration with MS-AMP backend")
-            return [MSAMPRecipeKwargs(**fp8_kwargs)]
-
-        else:
-            logger.warning_rank0(f"Backend '{backend}' not supported with DeepSpeed, trying Transformer Engine, falling back to MS-AMP")
-            try:
-                return [TERecipeKwargs(use_autocast_during_eval=False)]
-            except Exception:
-                return [MSAMPRecipeKwargs(opt_level="O2")]
-
-    except ImportError:
-        logger.warning_rank0("TERecipeKwargs/MSAMPRecipeKwargs not available - please upgrade accelerate")
-        return []
-    except Exception as e:
-        logger.info_rank0(f"Failed to create DeepSpeed FP8 configuration: {e}")
-        return []
 
 
 def configure_fp8_environment(model_args: "ModelArguments") -> None:
-    """Centralized FP8 environment variable configuration for HuggingFace Accelerate.
+    """Configure FP8 environment for HuggingFace Accelerate.
+    
+    FP8 training is handled entirely through HuggingFace Accelerate, regardless of whether
+    DeepSpeed or FSDP is used for distributed training. This function sets up the environment
+    variables and validates the FP8 configuration.
     
     Args:
         model_args: Model arguments containing FP8 configuration
     """
-    import importlib.util
     import os
 
     if not model_args.fp8:
         return
 
-    # Always set mixed precision to fp8 first
+    # Set mixed precision to fp8 for HuggingFace Accelerate
     os.environ["ACCELERATE_MIXED_PRECISION"] = "fp8"
     logger.info_rank0("Set ACCELERATE_MIXED_PRECISION=fp8")
 
@@ -182,16 +129,13 @@ def configure_fp8_environment(model_args: "ModelArguments") -> None:
         os.environ["FP8_BACKEND"] = backend
         logger.info_rank0(f"Set FP8_BACKEND={backend}")
 
-    # Create and validate recipe kwargs (for logging/debugging)
-    if importlib.util.find_spec("deepspeed") is not None:
-        deepspeed_fp8_kwargs = create_deepspeed_fp8_kwargs(model_args)
-        logger.info_rank0(f"DeepSpeed FP8 kwargs created: {deepspeed_fp8_kwargs}")
-    else:
-        fp8_kwargs = create_fp8_kwargs(model_args)
-        logger.info_rank0(f"Native FP8 kwargs created: {fp8_kwargs}")
+    # Create and validate FP8 recipe kwargs (for logging/debugging)
+    fp8_kwargs = create_fp8_kwargs(model_args)
+    logger.info_rank0(f"FP8 AORecipeKwargs created: {len(fp8_kwargs)} items")
 
-        if hasattr(model_args, 'fp8_enable_fsdp_float8_all_gather') and model_args.fp8_enable_fsdp_float8_all_gather:
-            os.environ["FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER"] = "true"
-            logger.info_rank0("Set FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER=true")
+    # Enable FSDP float8 all-gather optimization if requested
+    if hasattr(model_args, 'fp8_enable_fsdp_float8_all_gather') and model_args.fp8_enable_fsdp_float8_all_gather:
+        os.environ["FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER"] = "true"
+        logger.info_rank0("Set FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER=true")
 
-    logger.info_rank0("FP8 environment variables configured for Accelerate")
+    logger.info_rank0("FP8 environment configured - all FP8 training handled by HuggingFace Accelerate")
