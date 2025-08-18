@@ -45,22 +45,17 @@ def create_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
         # Create Float8LinearConfig if torchao backend is used
         config = None
         if backend == "torchao" or backend == "auto":
-            try:
-                from torchao.float8 import Float8LinearConfig
+            from torchao.float8 import Float8LinearConfig
 
-                # Use rowwise scaling for better performance (as recommended by torchao)
-                # Configure alignment requirements for FP8 kernels
-                config = Float8LinearConfig.from_recipe_name("rowwise")
+            # Use rowwise scaling for better performance (as recommended by torchao)
+            # Configure alignment requirements for FP8 kernels
+            config = Float8LinearConfig.from_recipe_name("rowwise")
 
-                # Enable alignment for better kernel performance
-                if hasattr(config, 'enable_amax_init'):
-                    config.enable_amax_init = True
-                if hasattr(config, 'enable_pre_and_post_forward'):
-                    config.enable_pre_and_post_forward = True
-
-                logger.info_rank0("Using torchao Float8LinearConfig with rowwise scaling and alignment")
-            except ImportError:
-                logger.warning_rank0("torchao not available, using default FP8 configuration")
+            # Enable alignment for better kernel performance
+            if hasattr(config, 'enable_amax_init'):
+                config.enable_amax_init = True
+            if hasattr(config, 'enable_pre_and_post_forward'):
+                config.enable_pre_and_post_forward = True
 
         # Create module filter function to skip problematic layers
         # TorchAO FP8 requires dimensions divisible by 16 for optimal kernels
@@ -90,12 +85,6 @@ def create_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
             logger.info_rank0("FSDP float8 all-gather optimization requested")
 
         return [AORecipeKwargs(config=config, module_filter_func=module_filter_func)]
-
-    except ImportError as e:
-        raise ImportError(
-            "AORecipeKwargs not available. FP8 with Accelerate requires Accelerate >= 1.8.0. "
-            "Please upgrade accelerate: pip install 'accelerate>=1.8.0'"
-        ) from e
     except Exception as e:
         logger.info_rank0(f"Failed to create FP8 configuration: {e}")
         return []
@@ -112,68 +101,6 @@ def get_fp8_mixed_precision(model_args: "ModelArguments") -> Optional[str]:
     """
     return "fp8" if model_args.fp8 else None
 
-
-def validate_fp8_requirements() -> bool:
-    """Validate that the system meets FP8 training requirements.
-
-    Returns:
-        True if FP8 requirements are met, False otherwise
-    """
-    try:
-        import torch
-
-        # Check PyTorch version requirement
-        pytorch_version = torch.__version__.split("+")[0]  # Remove +cu121 etc.
-        major, minor = map(int, pytorch_version.split(".")[:2])
-        if major < 2 or (major == 2 and minor < 7):
-            logger.warning_rank0(f"FP8 training requires PyTorch 2.7+, but found {pytorch_version}")
-            return False
-
-        # Check GPU architecture
-        if torch.cuda.is_available():
-            device_capability = torch.cuda.get_device_capability()
-            if device_capability < (9, 0):  # Hopper architecture requirement
-                logger.warning_rank0(
-                    f"FP8 training requires Hopper architecture (compute capability 9.0+), "
-                    f"but found {device_capability}"
-                )
-                return False
-        else:
-            logger.warning_rank0("CUDA not available - FP8 requires CUDA-enabled GPUs")
-            return False
-
-        return True
-
-    except Exception as e:
-        logger.warning_rank0(f"Failed to validate FP8 requirements: {e}")
-        return False
-
-
-def check_deepspeed_fp8_compatibility() -> bool:
-    """Check if DeepSpeed supports FP8 training.
-
-    Returns:
-        True if FP8 can be used with or without DeepSpeed, False if incompatible version
-    """
-    try:
-        import deepspeed
-        deepspeed_version = deepspeed.__version__
-
-        # Parse version to check if it's 0.17.3+
-        version_parts = deepspeed_version.split(".")
-        major, minor, patch = int(version_parts[0]), int(version_parts[1]), int(version_parts[2].split("+")[0])
-
-        if major == 0 and minor >= 17 and (minor > 17 or patch >= 3):
-            logger.info_rank0(f"DeepSpeed {deepspeed_version} detected - FP8 support available")
-            return True
-        else:
-            logger.warning_rank0(
-                f"DeepSpeed {deepspeed_version} detected - FP8 requires DeepSpeed 0.17.3+. "
-                f"Please upgrade: pip install 'deepspeed>=0.17.3'"
-            )
-            return False
-    except ImportError:
-        return True  # DeepSpeed not installed, FP8 can be used with native Accelerate
 
 
 def check_model_fp8_compatibility(model) -> tuple[bool, str]:

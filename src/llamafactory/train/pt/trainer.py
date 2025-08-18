@@ -25,11 +25,7 @@ from ...extras import logging
 from ...extras.packages import is_transformers_version_greater_than
 from ...model.model_utils.alst_config import create_alst_config
 from ..callbacks import SaveProcessorCallback
-from ..fp8_utils import (
-    check_deepspeed_fp8_compatibility,
-    create_deepspeed_fp8_kwargs,
-    validate_fp8_requirements,
-)
+from ..fp8_utils import create_deepspeed_fp8_kwargs, create_fp8_kwargs
 from ..trainer_utils import (
     create_custom_optimizer,
     create_custom_scheduler,
@@ -58,36 +54,31 @@ class CustomTrainer(Trainer):
     ) -> None:
         # Configure FP8 for both DeepSpeed and native Accelerate
         if model_args is not None and model_args.fp8:
-            if not validate_fp8_requirements():
-                logger.warning("FP8 requirements not met, falling back to default precision")
-            elif not check_deepspeed_fp8_compatibility():
-                logger.warning("FP8 disabled due to DeepSpeed incompatibility - please upgrade to DeepSpeed 0.17.3+")
+            import os
+
+            # Always set mixed precision to fp8 first
+            os.environ["ACCELERATE_MIXED_PRECISION"] = "fp8"
+            logger.info_rank0("Set ACCELERATE_MIXED_PRECISION=fp8")
+
+            # Configure FP8 backend and options
+            backend = getattr(model_args, 'fp8_backend', 'auto')
+            if backend != 'auto':
+                os.environ["FP8_BACKEND"] = backend
+                logger.info_rank0(f"Set FP8_BACKEND={backend}")
+
+            # Create and validate recipe kwargs (for logging/debugging)
+            if importlib.util.find_spec("deepspeed") is not None:
+                deepspeed_fp8_kwargs = create_deepspeed_fp8_kwargs(model_args)
+                logger.info_rank0(f"DeepSpeed FP8 kwargs created: {deepspeed_fp8_kwargs}")
             else:
-                import os
+                fp8_kwargs = create_fp8_kwargs(model_args)
+                logger.info_rank0(f"Native FP8 kwargs created: {fp8_kwargs}")
 
-                # Always set mixed precision to fp8 first
-                os.environ["ACCELERATE_MIXED_PRECISION"] = "fp8"
-                logger.info_rank0("Set ACCELERATE_MIXED_PRECISION=fp8")
+                if hasattr(model_args, 'fp8_enable_fsdp_float8_all_gather') and model_args.fp8_enable_fsdp_float8_all_gather:
+                    os.environ["FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER"] = "true"
+                    logger.info_rank0("Set FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER=true")
 
-                # Configure FP8 backend and options
-                backend = getattr(model_args, 'fp8_backend', 'auto')
-                if backend != 'auto':
-                    os.environ["FP8_BACKEND"] = backend
-                    logger.info_rank0(f"Set FP8_BACKEND={backend}")
-
-                # Create and validate recipe kwargs (for logging/debugging)
-                if importlib.util.find_spec("deepspeed") is not None:
-                    deepspeed_fp8_kwargs = create_deepspeed_fp8_kwargs(model_args)
-                    logger.info_rank0(f"DeepSpeed FP8 kwargs created: {deepspeed_fp8_kwargs}")
-                else:
-                    fp8_kwargs = create_fp8_kwargs(model_args)
-                    logger.info_rank0(f"Native FP8 kwargs created: {fp8_kwargs}")
-
-                    if hasattr(model_args, 'fp8_enable_fsdp_float8_all_gather') and model_args.fp8_enable_fsdp_float8_all_gather:
-                        os.environ["FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER"] = "true"
-                        logger.info_rank0("Set FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER=true")
-
-                logger.info_rank0("FP8 environment variables configured for Accelerate")
+            logger.info_rank0("FP8 environment variables configured for Accelerate")
 
         if is_transformers_version_greater_than("4.46"):
             kwargs["processing_class"] = kwargs.pop("tokenizer")
