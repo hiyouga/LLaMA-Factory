@@ -196,8 +196,8 @@ def _verify_model_args(
         raise ValueError("Adapter is only valid for the LoRA method.")
 
     if model_args.quantization_bit is not None:
-        if finetuning_args.finetuning_type != "lora":
-            raise ValueError("Quantization is only compatible with the LoRA method.")
+        if finetuning_args.finetuning_type not in ["lora", "oft"]:
+            raise ValueError("Quantization is only compatible with the LoRA or OFT method.")
 
         if finetuning_args.pissa_init:
             raise ValueError("Please use scripts/pissa_init.py to initialize PiSSA for a quantized model.")

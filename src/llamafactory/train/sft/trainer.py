@@ -151,6 +151,10 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             self.alst_data_adapter = None
             self.alst_loss_handler = None
 
+        if finetuning_args.use_dft_loss:
+            from ..trainer_utils import dft_loss_func
+
+            self.compute_loss_func = dft_loss_func
 
     @override
     def create_optimizer(self) -> "torch.optim.Optimizer":
