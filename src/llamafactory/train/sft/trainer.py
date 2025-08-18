@@ -67,33 +67,10 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         gen_kwargs: Optional[dict[str, Any]] = None,
         **kwargs,
     ) -> None:
-        # Configure FP8 for both DeepSpeed and native Accelerate
+        # Configure FP8 environment if enabled
         if model_args is not None and model_args.fp8:
-            import os
-
-            # Always set mixed precision to fp8 first
-            os.environ["ACCELERATE_MIXED_PRECISION"] = "fp8"
-            logger.info_rank0("Set ACCELERATE_MIXED_PRECISION=fp8")
-
-            # Configure FP8 backend and options
-            backend = getattr(model_args, 'fp8_backend', 'auto')
-            if backend != 'auto':
-                os.environ["FP8_BACKEND"] = backend
-                logger.info_rank0(f"Set FP8_BACKEND={backend}")
-
-            # Create and validate recipe kwargs (for logging/debugging)
-            if importlib.util.find_spec("deepspeed") is not None:
-                deepspeed_fp8_kwargs = create_deepspeed_fp8_kwargs(model_args)
-                logger.info_rank0(f"DeepSpeed FP8 kwargs created: {deepspeed_fp8_kwargs}")
-            else:
-                fp8_kwargs = create_fp8_kwargs(model_args)
-                logger.info_rank0(f"Native FP8 kwargs created: {fp8_kwargs}")
-
-                if hasattr(model_args, 'fp8_enable_fsdp_float8_all_gather') and model_args.fp8_enable_fsdp_float8_all_gather:
-                    os.environ["FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER"] = "true"
-                    logger.info_rank0("Set FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER=true")
-
-            logger.info_rank0("FP8 environment variables configured for Accelerate")
+            from ..fp8_utils import configure_fp8_environment
+            configure_fp8_environment(model_args)
 
         # Synchronize gradient accumulation steps between Accelerate and DeepSpeed/Training args
         training_args = kwargs.get("args")
@@ -115,6 +92,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             self.model_accepts_loss_kwargs = False
 
         self.finetuning_args = finetuning_args
+        self.model_args = model_args  # Store for FP8 logging
         if gen_kwargs is not None:
             # https://github.com/huggingface/transformers/blob/v4.45.0/src/transformers/trainer_seq2seq.py#L287
             self._gen_kwargs = gen_kwargs
@@ -203,6 +181,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
         return loss
 
+
     @override
     def prediction_step(
         self,
@@ -267,7 +246,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
     @override
     def get_train_dataloader(self) -> "torch.utils.data.DataLoader":
-        """Override to add ALST DataLoader wrapping if enabled."""
+        """Override to add FP8 backend information logging and ALST DataLoader wrapping if enabled."""
         # Log FP8 backend info if FP8 is enabled and this is the first time creating dataloader
         if (hasattr(self, '_fp8_info_logged') is False and
             hasattr(self, 'model_args') and

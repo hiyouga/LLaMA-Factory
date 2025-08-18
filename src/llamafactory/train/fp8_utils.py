@@ -158,3 +158,40 @@ def create_deepspeed_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
     except Exception as e:
         logger.info_rank0(f"Failed to create DeepSpeed FP8 configuration: {e}")
         return []
+
+
+def configure_fp8_environment(model_args: "ModelArguments") -> None:
+    """Centralized FP8 environment variable configuration for HuggingFace Accelerate.
+    
+    Args:
+        model_args: Model arguments containing FP8 configuration
+    """
+    import importlib.util
+    import os
+
+    if not model_args.fp8:
+        return
+
+    # Always set mixed precision to fp8 first
+    os.environ["ACCELERATE_MIXED_PRECISION"] = "fp8"
+    logger.info_rank0("Set ACCELERATE_MIXED_PRECISION=fp8")
+
+    # Configure FP8 backend and options
+    backend = getattr(model_args, 'fp8_backend', 'auto')
+    if backend != 'auto':
+        os.environ["FP8_BACKEND"] = backend
+        logger.info_rank0(f"Set FP8_BACKEND={backend}")
+
+    # Create and validate recipe kwargs (for logging/debugging)
+    if importlib.util.find_spec("deepspeed") is not None:
+        deepspeed_fp8_kwargs = create_deepspeed_fp8_kwargs(model_args)
+        logger.info_rank0(f"DeepSpeed FP8 kwargs created: {deepspeed_fp8_kwargs}")
+    else:
+        fp8_kwargs = create_fp8_kwargs(model_args)
+        logger.info_rank0(f"Native FP8 kwargs created: {fp8_kwargs}")
+
+        if hasattr(model_args, 'fp8_enable_fsdp_float8_all_gather') and model_args.fp8_enable_fsdp_float8_all_gather:
+            os.environ["FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER"] = "true"
+            logger.info_rank0("Set FP8_ENABLE_FSDP_FLOAT8_ALL_GATHER=true")
+
+    logger.info_rank0("FP8 environment variables configured for Accelerate")
