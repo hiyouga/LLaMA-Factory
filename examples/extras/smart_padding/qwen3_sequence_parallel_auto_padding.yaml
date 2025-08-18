@@ -11,10 +11,13 @@ stage: sft
 do_train: true
 finetuning_type: full
 
-### Sequence Parallel Configuration
+### Sequence Parallel Configuration (DeepSpeed ALST)
 sequence_parallel_size: 4
-sequence_parallel_mode: ulysses
-# Note: For DeepSpeed ALST, use sequence_parallel_mode: deepspeed-alst
+sequence_parallel_mode: deepspeed-alst  # Modern ALST approach (recommended)
+alst_sequence_backend: deepspeed  # Use native DeepSpeed ALST backend
+alst_ulysses_degree: 4  # Ulysses parallelism degree
+alst_sequence_tiling: true  # Enable sequence tiling for memory efficiency
+# Note: Legacy modes available: ulysses, zigzag-ring (not recommended)
 
 ### dataset
 dataset: identity

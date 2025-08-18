@@ -149,8 +149,8 @@ class BaseModelArguments:
         },
     )
     sequence_parallel_mode: Literal["zigzag-ring", "llama3", "ulysses", "deepspeed-alst"] = field(
-        default="zigzag-ring",
-        metadata={"help": "Specific mode of sequence parallel implementation. 'deepspeed-alst' uses DeepSpeed's Arctic Long Sequence Training."},
+        default="deepspeed-alst",
+        metadata={"help": "Specific mode of sequence parallel implementation. 'deepspeed-alst' (recommended) uses DeepSpeed's Arctic Long Sequence Training. Legacy modes: 'zigzag-ring', 'ulysses', 'llama3'."},
     )
     alst_sequence_backend: Literal["deepspeed", "manual"] = field(
         default="deepspeed",

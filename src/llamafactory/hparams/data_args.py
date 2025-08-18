@@ -142,7 +142,7 @@ class DataArguments:
     shuffle_for_sequence_parallel: bool = field(
         default=True,
         metadata={
-            "help": "Shuffle dataset before sequence parallel preprocessing (should shuffle before pad & split)."
+            "help": "DEPRECATED: Shuffle dataset before sequence parallel preprocessing. Only needed for legacy sequence parallel modes (zigzag-ring, ulysses). DeepSpeed ALST handles data distribution automatically."
         },
     )
     neat_packing: bool = field(

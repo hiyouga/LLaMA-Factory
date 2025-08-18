@@ -71,9 +71,8 @@ extra_require = {
     "openmind": ["openmind"],
     "swanlab": ["swanlab"],
     "dev": ["pre-commit", "ruff", "pytest", "build"],
-    "sp": ["ring-flash-attn", "yunchang"],
-    "alst": ["deepspeed>=0.17.4", "flash-attn>=2.0"],
-    "sp-alst": ["deepspeed>=0.17.4", "flash-attn>=2.0", "ring-flash-attn", "yunchang"],
+    "sp": ["ring-flash-attn", "yunchang"],  # DEPRECATED: Legacy sequence parallel dependencies
+    "alst": ["deepspeed>=0.17.2,<=0.17.4", "flash-attn>=2.0"],  # Recommended: Modern ALST dependencies
     "advanced": ["torchao>=0.8.0", "kernels>=0.9.0", "cut-cross-entropy", "triton<3.4.0"],
     "fp8": ["torchao>=0.8.0"],
     "fp8-te": ["transformer_engine[pytorch]>=2.0.0"],

@@ -18,7 +18,11 @@ rope_scaling: yarn  # YARN RoPE scaling - factor will be computed automatically
 flash_attn: auto
 enable_liger_kernel: true
 sequence_parallel_size: 4  # Use 4 GPUs for sequence parallelism
-sequence_parallel_mode: ulysses  # DeepSpeed Ulysses sequence parallel mode
+sequence_parallel_mode: deepspeed-alst  # DeepSpeed Arctic Long Sequence Training (ALST)
+alst_sequence_backend: deepspeed  # Use native DeepSpeed ALST backend
+alst_ulysses_degree: 4  # Ulysses parallelism degree (should match SP size)
+alst_sequence_tiling: true  # Enable sequence tiling for memory efficiency
+alst_memory_optimizations: true  # Enable ALST memory optimizations
 
 ### method
 stage: sft
