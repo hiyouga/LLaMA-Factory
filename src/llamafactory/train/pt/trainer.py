@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import importlib.util
 from types import MethodType
 from typing import TYPE_CHECKING, Optional
 
@@ -87,7 +86,7 @@ class CustomTrainer(Trainer):
                 self.alst_data_adapter = None
         else:
             self.alst_data_adapter = None
-        
+
         # Verify FP8 status after trainer initialization (accelerator should be available)
         if model_args is not None and model_args.fp8 and hasattr(self, 'accelerator'):
             verify_fp8_status(self.accelerator, model_args)

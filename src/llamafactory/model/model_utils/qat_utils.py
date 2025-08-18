@@ -30,28 +30,28 @@ def prepare_model_for_qat(model, model_args: "ModelArguments"):
     """Prepare model for Quantization Aware Training if enabled."""
     if not model_args.enable_qat:
         return model
-    
+
     try:
         from torchao.quantization.qat import Int8DynActInt4WeightQATQuantizer
-        
+
         logger.info_rank0("Preparing model for QAT (Quantization Aware Training)")
-        
+
         # Create QAT quantizer with specified parameters
         quantizer = Int8DynActInt4WeightQATQuantizer(
             groupsize=getattr(model_args, 'qat_group_size', 32),
             precision=torch.float32
         )
-        
+
         # Apply quantization to the model
         model = quantizer.quantize(model)
-        
+
         # Enable fake quantization after specified steps if configured
         if hasattr(model_args, 'fake_quant_after_n_steps') and model_args.fake_quant_after_n_steps is not None:
             logger.info_rank0(f"QAT fake quantization will be enabled after {model_args.fake_quant_after_n_steps} steps")
-        
+
         logger.info_rank0("Model prepared for QAT training")
         return model
-        
+
     except ImportError:
         logger.warning_rank0("torchao not available for QAT. Please install with: pip install torchao>=0.8.0")
         return model

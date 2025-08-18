@@ -30,6 +30,25 @@ logger = logging.get_logger(__name__)
 
 
 def configure_attn_implementation(config: "PretrainedConfig", model_args: "ModelArguments") -> None:
+    # Check for HuggingFace kernel first - this becomes the first choice
+    if model_args.kernel is not None:
+        try:
+            from kernels import get_kernel
+
+            kernel_impl = get_kernel(model_args.kernel)
+            if kernel_impl is not None:
+                # Apply the HuggingFace kernel as attention implementation
+                logger.info_rank0(f"Using HuggingFace kernel: {model_args.kernel}")
+                # The kernel will be applied directly during model initialization
+                # Store kernel info in config for later use
+                setattr(config, "_hf_kernel", model_args.kernel)
+                return
+        except ImportError:
+            logger.warning_rank0(
+                "HuggingFace kernels not available. Install with: pip install -e .[hf-kernels]. Falling back to standard attention."
+            )
+        except Exception as e:
+            logger.warning_rank0(f"Failed to load HuggingFace kernel {model_args.kernel}: {e}. Falling back to standard attention.")
     if getattr(config, "model_type", None) == "gemma2":
         if model_args.flash_attn == AttentionFunction.AUTO or model_args.flash_attn == AttentionFunction.FA2:
             if is_flash_attn_2_available():
@@ -81,6 +100,12 @@ def configure_attn_implementation(config: "PretrainedConfig", model_args: "Model
 
 
 def print_attn_implementation(config: "PretrainedConfig") -> None:
+    # Check for HuggingFace kernel first
+    hf_kernel = getattr(config, "_hf_kernel", None)
+    if hf_kernel is not None:
+        logger.info_rank0(f"Using HuggingFace kernel: {hf_kernel} for faster training and inference.")
+        return
+
     if getattr(config, "model_type", None) == "internlm2":  # special case for custom models
         attn_implementation = getattr(config, "attn_implementation", None)
     else:

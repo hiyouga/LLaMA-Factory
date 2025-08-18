@@ -16,7 +16,7 @@
 
 import json
 from dataclasses import asdict, dataclass
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from ...extras import logging
 
@@ -55,7 +55,7 @@ class ALSTConfig:
     enable_flash_attention_3: bool = False
 
     # DeepSpeed integration
-    deepspeed_config: Optional[Dict[str, Any]] = None
+    deepspeed_config: Optional[dict[str, Any]] = None
 
     def __post_init__(self):
         """Validate and adjust configuration after initialization."""
@@ -81,7 +81,7 @@ class ALSTConfig:
             self.tiling_chunk_size = 8192
             logger.info_rank0(f"Set default tiling_chunk_size to {self.tiling_chunk_size}")
 
-    def to_deepspeed_config(self) -> Dict[str, Any]:
+    def to_deepspeed_config(self) -> dict[str, Any]:
         """Convert ALST config to DeepSpeed configuration format."""
         if not self.enabled:
             return {}
@@ -112,7 +112,7 @@ class ALSTConfig:
 
         return config
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
 
@@ -138,7 +138,7 @@ class ALSTConfig:
         )
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "ALSTConfig":
+    def from_dict(cls, config_dict: dict[str, Any]) -> "ALSTConfig":
         """Create ALSTConfig from dictionary."""
         return cls(**config_dict)
 
@@ -197,9 +197,9 @@ def validate_alst_requirements(config: ALSTConfig) -> bool:
 
 
 def update_deepspeed_config_for_alst(
-    deepspeed_config: Dict[str, Any],
+    deepspeed_config: dict[str, Any],
     alst_config: ALSTConfig
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Update DeepSpeed configuration with ALST settings."""
     if not alst_config.enabled:
         return deepspeed_config
@@ -219,7 +219,7 @@ def update_deepspeed_config_for_alst(
     return updated_config
 
 
-def get_alst_environment_variables(config: ALSTConfig) -> Dict[str, str]:
+def get_alst_environment_variables(config: ALSTConfig) -> dict[str, str]:
     """Get environment variables needed for ALST."""
     env_vars = {}
 

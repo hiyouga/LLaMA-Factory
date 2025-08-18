@@ -106,11 +106,11 @@ def get_fp8_mixed_precision(model_args: "ModelArguments") -> Optional[str]:
 
 def configure_fp8_environment(model_args: "ModelArguments") -> None:
     """Configure FP8 environment for HuggingFace Accelerate.
-    
+
     FP8 training is handled entirely through HuggingFace Accelerate, regardless of whether
     DeepSpeed or FSDP is used for distributed training. This function sets up the environment
     variables and validates the FP8 configuration.
-    
+
     Args:
         model_args: Model arguments containing FP8 configuration
     """
@@ -143,18 +143,18 @@ def configure_fp8_environment(model_args: "ModelArguments") -> None:
 
 def verify_fp8_status(accelerator, model_args: "ModelArguments") -> None:
     """Verify that FP8 training is actually working after model preparation.
-    
+
     Args:
         accelerator: The HuggingFace Accelerator instance
         model_args: Model arguments containing FP8 configuration
     """
     if not model_args.fp8:
         return
-        
+
     # Check Accelerate's FP8 status
     fp8_enabled = getattr(accelerator, 'fp8_enabled', False)
     fp8_backend_type = getattr(accelerator, 'fp8_backend', 'UNKNOWN')
-    
+
     backend = getattr(model_args, 'fp8_backend', 'auto')
     if backend == 'torchao' or backend == 'auto':
         logger.info_rank0(
@@ -164,8 +164,8 @@ def verify_fp8_status(accelerator, model_args: "ModelArguments") -> None:
         )
     else:
         logger.info_rank0(f"FP8 training enabled with {backend} backend.")
-    
+
     logger.info_rank0(f"Accelerate FP8 status - enabled: {fp8_enabled}, backend: {fp8_backend_type}")
-    
+
     if not fp8_enabled:
         logger.info_rank0("WARNING: FP8 was requested but Accelerate shows fp8_enabled=False. FP8 may not be working.")

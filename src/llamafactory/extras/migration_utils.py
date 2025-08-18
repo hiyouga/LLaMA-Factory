@@ -16,7 +16,7 @@
 
 import json
 import os
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Optional
 
 import yaml
 
@@ -26,12 +26,12 @@ from . import logging
 logger = logging.get_logger(__name__)
 
 
-def migrate_sequence_parallel_config(config_data: Dict[str, Any]) -> Tuple[Dict[str, Any], bool]:
+def migrate_sequence_parallel_config(config_data: dict[str, Any]) -> tuple[dict[str, Any], bool]:
     """Migrate legacy sequence parallel configuration to ALST format.
-    
+
     Args:
         config_data: Configuration dictionary (YAML/JSON)
-        
+
     Returns:
         Tuple of (migrated_config, was_migrated)
     """
@@ -82,12 +82,12 @@ def migrate_sequence_parallel_config(config_data: Dict[str, Any]) -> Tuple[Dict[
     return migrated_config, was_migrated
 
 
-def check_alst_compatibility(config_data: Dict[str, Any]) -> Dict[str, Any]:
+def check_alst_compatibility(config_data: dict[str, Any]) -> dict[str, Any]:
     """Check ALST compatibility and provide recommendations.
-    
+
     Args:
         config_data: Configuration dictionary
-        
+
     Returns:
         Dictionary with compatibility status and recommendations
     """
@@ -150,19 +150,19 @@ def check_alst_compatibility(config_data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def create_alst_deepspeed_config(
-    base_config: Optional[Dict[str, Any]] = None,
+    base_config: Optional[dict[str, Any]] = None,
     sequence_parallel_size: int = 4,
     sequence_tiling: bool = True,
     memory_optimizations: bool = True
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Create DeepSpeed configuration optimized for ALST.
-    
+
     Args:
         base_config: Base DeepSpeed configuration to extend
         sequence_parallel_size: Number of sequence parallel processes
         sequence_tiling: Enable sequence tiling
         memory_optimizations: Enable memory optimizations
-        
+
     Returns:
         DeepSpeed configuration dictionary
     """
@@ -226,12 +226,12 @@ def create_alst_deepspeed_config(
 
 def migrate_config_file(input_path: str, output_path: Optional[str] = None, backup: bool = True) -> str:
     """Migrate a configuration file to use ALST if applicable.
-    
+
     Args:
         input_path: Path to input configuration file
         output_path: Path for output file (if None, overwrites input)
         backup: Create backup of original file
-        
+
     Returns:
         Path to migrated configuration file
     """
@@ -292,9 +292,9 @@ def migrate_config_file(input_path: str, output_path: Optional[str] = None, back
         return input_path
 
 
-def validate_alst_installation() -> Dict[str, Any]:
+def validate_alst_installation() -> dict[str, Any]:
     """Validate ALST installation and requirements.
-    
+
     Returns:
         Dictionary with validation results
     """
@@ -309,7 +309,7 @@ def validate_alst_installation() -> Dict[str, Any]:
     try:
         import deepspeed
         version_str = deepspeed.__version__
-        version_tuple = tuple(map(int, version_str.split('.')[:3]))
+        tuple(map(int, version_str.split('.')[:3]))
 
         # ALST works with DeepSpeed 0.17.2+ so accept any reasonable version
         validation_result["info"].append(f"DeepSpeed {version_str} - ALST compatible")

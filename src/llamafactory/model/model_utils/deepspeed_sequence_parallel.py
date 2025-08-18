@@ -274,7 +274,7 @@ class DeepSpeedSequenceParallel:
 
     def wrap_model_attention(self, model: PreTrainedModel) -> None:
         """For ALST, attention wrapping is handled by DeepSpeed's UlyssesSPDataLoaderAdapter.
-        
+
         The attention sequence parallel operations should be handled at the data level,
         not by wrapping individual attention modules. This is the DeepSpeed ALST approach.
         """

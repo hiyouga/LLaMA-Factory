@@ -14,7 +14,7 @@
 
 """Debugging utilities for distributed training and tensor issues."""
 
-from typing import Any, Dict
+from typing import Any
 
 import torch
 import torch.distributed as dist
@@ -27,7 +27,7 @@ logger = get_logger(__name__)
 
 def debug_tensor_properties(tensor: torch.Tensor, name: str = "tensor", rank_filter: int = None) -> None:
     """Debug tensor properties with distributed context.
-    
+
     Args:
         tensor: The tensor to debug
         name: Name/identifier for the tensor
@@ -54,9 +54,9 @@ def debug_tensor_properties(tensor: torch.Tensor, name: str = "tensor", rank_fil
         logger.warning(f"{rank_str} CPU tensor '{name}' in distributed context - may need to be on CUDA")
 
 
-def debug_batch_properties(batch: Dict[str, Any], batch_idx: int = None, rank_filter: int = 0) -> None:
+def debug_batch_properties(batch: dict[str, Any], batch_idx: int = None, rank_filter: int = 0) -> None:
     """Debug all tensors in a batch.
-    
+
     Args:
         batch: Dictionary containing batch data
         batch_idx: Optional batch index for identification
@@ -80,13 +80,13 @@ def debug_batch_properties(batch: Dict[str, Any], batch_idx: int = None, rank_fi
             logger.info_rank0(f"{rank_str} {batch_str}.{key}: {type(value)} (not tensor)")
 
 
-def validate_cuda_tensors(batch: Dict[str, torch.Tensor], operation_name: str = "operation") -> bool:
+def validate_cuda_tensors(batch: dict[str, torch.Tensor], operation_name: str = "operation") -> bool:
     """Validate that all tensors are CUDA and dense before distributed operations.
-    
+
     Args:
         batch: Dictionary of tensors to validate
         operation_name: Name of the operation for error messages
-    
+
     Returns:
         True if all tensors are valid, False otherwise
     """
@@ -113,7 +113,7 @@ def validate_cuda_tensors(batch: Dict[str, torch.Tensor], operation_name: str = 
 
 def debug_gather_operation(tensor: torch.Tensor, name: str = "tensor") -> None:
     """Debug a tensor before a gather operation.
-    
+
     Args:
         tensor: Tensor that will be used in gather operation
         name: Name for identification

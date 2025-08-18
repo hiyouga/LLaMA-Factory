@@ -783,11 +783,11 @@ def get_sequence_parallel_group(
     accelerator: Optional[Any] = None
 ) -> Optional["dist.ProcessGroup"]:
     """Get sequence parallel group from model, handling DDP wrapping.
-    
+
     Args:
         model: The model (potentially wrapped by DDP/FSDP)
         accelerator: Optional accelerator for unwrapping
-        
+
     Returns:
         Sequence parallel process group if available, None otherwise
     """
@@ -819,7 +819,7 @@ def update_alst_adapter_with_model(
     accelerator: Optional[Any] = None
 ) -> None:
     """Update ALST data adapter with sequence parallel group from model.
-    
+
     Args:
         alst_data_adapter: ALST data adapter instance
         model: The model (potentially wrapped)
@@ -842,10 +842,10 @@ def update_alst_adapter_with_model(
 
 def get_attention_heads_from_model(model: "torch.nn.Module") -> Optional[int]:
     """Extract attention heads programmatically from model configuration.
-    
+
     Args:
         model: The model (potentially wrapped by DDP/FSDP/PEFT)
-        
+
     Returns:
         Number of attention heads if found, None otherwise
     """
@@ -925,16 +925,16 @@ def get_optimal_pad_multiple(
     training_args: "TrainingArguments"
 ) -> Optional[int]:
     """Determine optimal padding multiple based on model config and training setup.
-    
+
     Only applies smart detection when pad_to_multiple_of is 'auto' or None.
     For manual values, returns them directly.
-    
+
     Args:
         model: The model instance
         model_args: Model configuration arguments
-        data_args: Data configuration arguments  
+        data_args: Data configuration arguments
         training_args: Training configuration arguments
-        
+
     Returns:
         Optimal padding multiple, or None to disable padding
     """
@@ -987,7 +987,7 @@ def validate_padding_config(
     model_args: "ModelArguments"
 ) -> None:
     """Validate padding configuration and provide helpful warnings.
-    
+
     Args:
         optimal_padding: The padding multiple being used
         model_args: Model configuration arguments

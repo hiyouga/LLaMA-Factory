@@ -118,6 +118,12 @@ class BaseModelArguments:
         default=False,
         metadata={"help": "Whether or not to enable liger kernel for faster training."},
     )
+    kernel: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "Attention kernel implementation to use from HuggingFace kernels (https://github.com/huggingface/kernels). When specified, becomes the first choice for attention implementation. Example: 'kernels-community/vllm-flash-attn3'. Requires installing with 'pip install -e .[hf-kernels]'."
+        },
+    )
     fp8: bool = field(
         default=False,
         metadata={

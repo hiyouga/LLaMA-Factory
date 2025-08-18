@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import importlib.util
 import json
 import os
 from types import MethodType
@@ -121,7 +120,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             from ..trainer_utils import dft_loss_func
 
             self.compute_loss_func = dft_loss_func
-        
+
         # Verify FP8 status after trainer initialization (accelerator should be available)
         if model_args is not None and model_args.fp8 and hasattr(self, 'accelerator'):
             verify_fp8_status(self.accelerator, model_args)

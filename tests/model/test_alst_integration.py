@@ -42,11 +42,11 @@ class TestALSTConfig:
 
         config = create_alst_config(model_args)
 
-        assert config.enabled == True
+        assert config.enabled
         assert config.sequence_parallel_size == 4
         assert config.ulysses_degree == 4  # Should default to sequence_parallel_size
-        assert config.sequence_tiling == True
-        assert config.memory_optimizations == True
+        assert config.sequence_tiling
+        assert config.memory_optimizations
 
     def test_alst_config_disabled(self):
         """Test ALST config when disabled."""
@@ -60,7 +60,7 @@ class TestALSTConfig:
 
         config = create_alst_config(model_args)
 
-        assert config.enabled == False
+        assert not config.enabled
 
     def test_alst_config_validation(self):
         """Test ALST configuration validation."""
@@ -85,7 +85,7 @@ class TestALSTConfig:
         ds_config = config.to_deepspeed_config()
 
         assert "sequence_parallel" in ds_config
-        assert ds_config["sequence_parallel"]["enabled"] == True
+        assert ds_config["sequence_parallel"]["enabled"]
         assert ds_config["sequence_parallel"]["size"] == 4
         assert "tiling" in ds_config["sequence_parallel"]
         assert "memory_optimizations" in ds_config["sequence_parallel"]
@@ -106,7 +106,7 @@ class TestDeepSpeedSequenceParallel:
 
         ds_sp = DeepSpeedSequenceParallel(model_args)
 
-        assert ds_sp.should_use_alst() == True
+        assert ds_sp.should_use_alst()
 
     @patch('llamafactory.model.model_utils.deepspeed_sequence_parallel.check_alst_requirements')
     def test_should_not_use_alst_legacy_mode(self, mock_check_requirements):
@@ -120,7 +120,7 @@ class TestDeepSpeedSequenceParallel:
 
         ds_sp = DeepSpeedSequenceParallel(model_args)
 
-        assert ds_sp.should_use_alst() == False
+        assert not ds_sp.should_use_alst()
 
     @patch('llamafactory.model.model_utils.deepspeed_sequence_parallel.check_alst_requirements')
     def test_should_not_use_alst_no_requirements(self, mock_check_requirements):
@@ -134,7 +134,7 @@ class TestDeepSpeedSequenceParallel:
 
         ds_sp = DeepSpeedSequenceParallel(model_args)
 
-        assert ds_sp.should_use_alst() == False
+        assert not ds_sp.should_use_alst()
 
 
 class TestMigrationUtils:
@@ -150,11 +150,11 @@ class TestMigrationUtils:
 
         migrated_config, was_migrated = migrate_sequence_parallel_config(config_data)
 
-        assert was_migrated == True
+        assert was_migrated
         assert migrated_config["sequence_parallel_mode"] == "deepspeed-alst"
         assert migrated_config["alst_sequence_backend"] == "deepspeed"
         assert migrated_config["alst_ulysses_degree"] == 4
-        assert migrated_config["alst_sequence_tiling"] == True
+        assert migrated_config["alst_sequence_tiling"]
 
     def test_no_migration_needed(self):
         """Test no migration when not applicable."""
@@ -165,7 +165,7 @@ class TestMigrationUtils:
 
         migrated_config, was_migrated = migrate_sequence_parallel_config(config_data)
 
-        assert was_migrated == False
+        assert not was_migrated
         assert migrated_config == config_data
 
     def test_zigzag_ring_warning(self):
@@ -179,7 +179,7 @@ class TestMigrationUtils:
         migrated_config, was_migrated = migrate_sequence_parallel_config(config_data)
 
         # Should not auto-migrate zigzag-ring, but should issue warning
-        assert was_migrated == False
+        assert not was_migrated
         assert migrated_config["sequence_parallel_mode"] == "zigzag-ring"
 
 

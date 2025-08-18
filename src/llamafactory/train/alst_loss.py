@@ -18,7 +18,7 @@ Based on the ArcticTraining implementation pattern:
 https://github.com/snowflakedb/ArcticTraining/blob/main/arctic_training/trainer/sft_trainer.py
 """
 
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import torch
 import torch.distributed as dist
@@ -37,7 +37,7 @@ logger = logging.get_logger(__name__)
 
 class ALSTLossHandler:
     """Handles loss computation for ALST sequence parallel training.
-    
+
     Following the pattern from ArcticTraining, this class handles:
     1. Detection of shift_labels vs labels in inputs
     2. Proper model forward pass for ALST
@@ -50,16 +50,16 @@ class ALSTLossHandler:
     def compute_alst_loss(
         self,
         model: "Module",
-        inputs: Dict[str, Any],
+        inputs: dict[str, Any],
         return_outputs: bool = False
     ) -> torch.Tensor:
         """Compute loss for ALST sequence parallel training.
-        
+
         Args:
             model: The model to compute loss for
             inputs: Input batch (should contain shift_labels for ALST)
             return_outputs: Whether to return outputs (for compatibility)
-            
+
         Returns:
             Loss tensor with proper sequence parallel aggregation
         """
@@ -111,11 +111,11 @@ class ALSTLossHandler:
 
     def _compute_shift_labels_loss(self, logits: torch.Tensor, shift_labels: torch.Tensor) -> torch.Tensor:
         """Compute cross-entropy loss with shift_labels.
-        
+
         Args:
             logits: Model logits [batch_size, seq_len, vocab_size]
             shift_labels: Pre-shifted labels [batch_size, seq_len]
-            
+
         Returns:
             Loss tensor (scalar)
         """
@@ -140,13 +140,13 @@ class ALSTLossHandler:
 
     def _aggregate_loss_across_ranks(self, loss: torch.Tensor, shift_labels: torch.Tensor) -> torch.Tensor:
         """Aggregate loss across sequence parallel ranks with proper weighting.
-        
+
         Following ArcticTraining pattern for differentiable weighted averaging.
-        
+
         Args:
             loss: Local rank loss
             shift_labels: Local rank shift_labels for counting valid tokens
-            
+
         Returns:
             Properly aggregated loss across all sequence parallel ranks
         """
@@ -176,10 +176,10 @@ class ALSTLossHandler:
 
 def create_alst_loss_handler(sequence_parallel_group: Optional["dist.ProcessGroup"] = None) -> ALSTLossHandler:
     """Factory function to create ALST loss handler.
-    
+
     Args:
         sequence_parallel_group: The sequence parallel process group
-        
+
     Returns:
         Configured ALSTLossHandler instance
     """
@@ -188,13 +188,13 @@ def create_alst_loss_handler(sequence_parallel_group: Optional["dist.ProcessGrou
     return handler
 
 
-def should_use_alst_loss(inputs: Dict[str, Any], sequence_parallel_group: Optional["dist.ProcessGroup"]) -> bool:
+def should_use_alst_loss(inputs: dict[str, Any], sequence_parallel_group: Optional["dist.ProcessGroup"]) -> bool:
     """Determine if ALST loss computation should be used.
-    
+
     Args:
         inputs: Input batch
         sequence_parallel_group: Sequence parallel process group
-        
+
     Returns:
         True if ALST loss should be used, False for standard loss computation
     """
