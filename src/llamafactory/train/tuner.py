@@ -27,6 +27,7 @@ from ..extras.deepspeed_utils import apply_deepspeed_patches
 from ..extras.misc import infer_optim_dtype
 from ..extras.packages import is_ray_available
 from ..hparams import get_infer_args, get_ray_args, get_train_args, read_args
+from ..hparams.parser import _log_fsdp_runtime_status
 from ..model import load_model, load_tokenizer
 from .callbacks.qat import get_qat_callback
 from .callbacks_module import LogCallback, PissaConvertCallback, ReporterCallback
@@ -75,6 +76,9 @@ def _training_function(config: dict[str, Any]) -> None:
         callbacks.append(EarlyStoppingCallback(early_stopping_patience=finetuning_args.early_stopping_steps))
 
     callbacks.append(ReporterCallback(model_args, data_args, finetuning_args, generating_args))  # add to last
+
+    # Log FSDP runtime status after all initialization
+    _log_fsdp_runtime_status()
 
     if finetuning_args.stage == "pt":
         run_pt(model_args, data_args, training_args, finetuning_args, callbacks)
