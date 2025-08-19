@@ -14,7 +14,7 @@
 model_name_or_path: Qwen/Qwen2.5-7B-Instruct
 trust_remote_code: true
 rope_scaling: yarn  # YARN RoPE scaling - factor will be computed automatically
-flash_attn: auto
+attn: fa2
 enable_liger_kernel: true
 
 ### method

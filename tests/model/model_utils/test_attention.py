@@ -31,7 +31,7 @@ INFER_ARGS = {
 
 @pytest.mark.xfail(is_transformers_version_greater_than("4.48"), reason="Attention refactor.")
 def test_attention():
-    attention_available = ["disabled"]
+    attention_available = ["eager"]
     if is_torch_sdpa_available():
         attention_available.append("sdpa")
 
@@ -39,12 +39,12 @@ def test_attention():
         attention_available.append("fa2")
 
     llama_attention_classes = {
-        "disabled": "LlamaAttention",
+        "eager": "LlamaAttention",
         "sdpa": "LlamaSdpaAttention",
         "fa2": "LlamaFlashAttention2",
     }
     for requested_attention in attention_available:
-        model = load_infer_model(flash_attn=requested_attention, **INFER_ARGS)
+        model = load_infer_model(attn=requested_attention, **INFER_ARGS)
         for module in model.modules():
             if "Attention" in module.__class__.__name__:
                 assert module.__class__.__name__ == llama_attention_classes[requested_attention]

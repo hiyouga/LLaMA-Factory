@@ -27,14 +27,14 @@ def calculate_flops(
     model_name_or_path: str,
     batch_size: int = 1,
     seq_length: int = 512,
-    flash_attn: str = "auto",
+    attn: str = "eager",
 ):
     r"""Calculate the flops of pre-trained models.
 
     Usage: python cal_flops.py --model_name_or_path path_to_model --batch_size 1 --seq_length 512
     """
     with get_accelerator().device(0):
-        chat_model = ChatModel(dict(model_name_or_path=model_name_or_path, template="empty", flash_attn=flash_attn))
+        chat_model = ChatModel(dict(model_name_or_path=model_name_or_path, template="empty", attn=attn))
         fake_input = torch.ones((batch_size, seq_length), dtype=torch.long, device=chat_model.engine.model.device)
         input_dict = {"input_ids": fake_input, "labels": fake_input.clone()}
         flops, macs, params = get_model_profile(

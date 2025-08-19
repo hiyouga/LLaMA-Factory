@@ -4,9 +4,7 @@
 ### model
 model_name_or_path: meta-llama/Llama-3-8B-Instruct
 trust_remote_code: true
-flash_attn: auto
-
-### method
+attn: fa2
 stage: sft
 do_train: true
 finetuning_type: full

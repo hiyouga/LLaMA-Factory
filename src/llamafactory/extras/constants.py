@@ -96,12 +96,16 @@ V_HEAD_WEIGHTS_NAME = "value_head.bin"
 V_HEAD_SAFE_WEIGHTS_NAME = "value_head.safetensors"
 
 
-class AttentionFunction(str, Enum):
-    AUTO = "auto"
-    DISABLED = "disabled"
-    SDPA = "sdpa"
-    FA2 = "fa2"
-    FA3 = "fa3"
+class AttentionImplementation(str, Enum):
+    # Standard PyTorch/Transformers implementations
+    EAGER = "eager"                    # Vanilla attention (default if unset)
+    SDPA = "sdpa"                     # Torch SDPA
+    FA2 = "fa2"                       # Flash Attention 2
+    FA3 = "fa3"                       # Flash Attention 3
+    
+    # HuggingFace Kernels are handled as string values
+    # Format: "hf:kernel-repo/kernel-name" or just the kernel name
+    # Examples: "hf:kernels-community/vllm-flash-attn3" or "vllm-flash-attn3"
 
 
 class EngineName(str, Enum):

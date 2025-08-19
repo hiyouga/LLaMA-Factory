@@ -13,8 +13,7 @@
 model_name_or_path: Qwen/Qwen2.5-7B-Instruct
 trust_remote_code: true
 rope_scaling: yarn  # YARN RoPE scaling - factor will be computed automatically
-kernel: kernels-community/vllm-flash-attn3  # HuggingFace kernel - takes precedence over flash_attn
-flash_attn: auto  # Fallback if HF kernel fails
+attn: kernels-community/vllm-flash-attn3  # HuggingFace kernel for optimized attention
 enable_liger_kernel: true
 
 ### method

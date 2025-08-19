@@ -131,7 +131,7 @@ class WebChatModel(ChatModel):
             finetuning_type=finetuning_type,
             template=get("top.template"),
             rope_scaling=get("top.rope_scaling") if get("top.rope_scaling") != "none" else None,
-            flash_attn="fa2" if get("top.booster") == "flashattn2" else "auto",
+            attn="fa2" if get("top.booster") == "flashattn2" else None,
             use_unsloth=(get("top.booster") == "unsloth"),
             enable_liger_kernel=(get("top.booster") == "liger_kernel"),
             infer_backend=get("infer.infer_backend"),

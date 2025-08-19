@@ -276,6 +276,20 @@ def _log_fsdp_runtime_status() -> None:
                 
             elif accelerator.distributed_type.value == "FSDP":
                 logger.warning_rank0("FSDP distributed type detected but no FSDP plugin found")
+            elif accelerator.distributed_type.value != "FSDP" and os.environ.get("ACCELERATE_CONFIG_FILE"):
+                # Check if user expected FSDP but it's not enabled
+                config_file = os.environ.get("ACCELERATE_CONFIG_FILE")
+                try:
+                    import yaml
+                    with open(config_file, 'r') as f:
+                        config_data = yaml.safe_load(f)
+                    if config_data.get('distributed_type') == 'FSDP':
+                        logger.warning_rank0(
+                            f"FSDP configured in {config_file} but accelerator is using "
+                            f"{accelerator.distributed_type.value}. Check your launch command."
+                        )
+                except:
+                    pass  # Ignore config file reading errors
             
             # Log world size and process info
             logger.info_rank0(f"World size: {accelerator.num_processes}, Process rank: {accelerator.process_index}")

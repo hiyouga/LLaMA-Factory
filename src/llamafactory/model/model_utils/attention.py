@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 from transformers.utils import is_flash_attn_2_available, is_flash_attn_3_available, is_torch_sdpa_available
 
 from ...extras import logging
-from ...extras.constants import AttentionFunction
+from ...extras.constants import AttentionImplementation
 
 
 if TYPE_CHECKING:
@@ -30,66 +30,74 @@ logger = logging.get_logger(__name__)
 
 
 def configure_attn_implementation(config: "PretrainedConfig", model_args: "ModelArguments") -> None:
-    # Check for HuggingFace kernel first - this becomes the first choice
-    if model_args.kernel is not None:
-        try:
-            from kernels import get_kernel
-
-            kernel_impl = get_kernel(model_args.kernel)
-            if kernel_impl is not None:
-                # Apply the HuggingFace kernel as attention implementation
-                logger.info_rank0(f"Using HuggingFace kernel: {model_args.kernel}")
-                # The kernel will be applied directly during model initialization
-                # Store kernel info in config for later use
-                setattr(config, "_hf_kernel", model_args.kernel)
-                return
-        except ImportError:
-            logger.warning_rank0(
-                "HuggingFace kernels not available. Install with: pip install -e .[hf-kernels]. Falling back to standard attention."
-            )
-        except Exception as e:
-            logger.warning_rank0(f"Failed to load HuggingFace kernel {model_args.kernel}: {e}. Falling back to standard attention.")
-    if getattr(config, "model_type", None) == "gemma2":
-        if model_args.flash_attn == AttentionFunction.AUTO or model_args.flash_attn == AttentionFunction.FA2:
-            if is_flash_attn_2_available():
-                if model_args.flash_attn != AttentionFunction.FA2:
-                    logger.warning_rank0("Gemma 2 should use flash attention 2, change `flash_attn` to fa2.")
-                    model_args.flash_attn = AttentionFunction.FA2
-            else:
-                logger.warning_rank0("FlashAttention-2 is not installed, use eager attention.")
-                model_args.flash_attn = AttentionFunction.DISABLED
-        elif model_args.flash_attn == AttentionFunction.SDPA:
-            logger.warning_rank0(
-                "Gemma-2 should use soft-capping attention, while the SDPA attention does not support it."
-            )
-
-    if model_args.flash_attn == AttentionFunction.AUTO:
-        return
-
-    elif model_args.flash_attn == AttentionFunction.DISABLED:
+    # If no attn specified, use default (eager)
+    if model_args.attn is None:
         requested_attn_implementation = "eager"
-
-    elif model_args.flash_attn == AttentionFunction.SDPA:
-        if not is_torch_sdpa_available():
-            logger.warning_rank0("torch>=2.1.1 is required for SDPA attention.")
-            return
-
-        requested_attn_implementation = "sdpa"
-    elif model_args.flash_attn == AttentionFunction.FA2:
-        if not is_flash_attn_2_available():
-            logger.warning_rank0("FlashAttention-2 is not installed.")
-            return
-
-        requested_attn_implementation = "flash_attention_2"
-    elif model_args.flash_attn == AttentionFunction.FA3:
-        if not is_flash_attn_3_available():
-            logger.warning_rank0("FlashAttention-3 is not installed.")
-            return
-
-        requested_attn_implementation = "flash_attention_3"
+        logger.info_rank0("No attention implementation specified, using default eager attention.")
     else:
-        raise NotImplementedError(f"Unknown attention type: {model_args.flash_attn}")
+        attn_value = model_args.attn.strip()
+        
+        # Check if it's a HuggingFace kernel (contains '/' or starts with 'hf:')
+        if ('/' in attn_value or attn_value.startswith('hf:') or 
+            any(kernel_word in attn_value for kernel_word in ['kernel', 'flash', 'attn'])):
+            # Handle HuggingFace kernel
+            kernel_name = attn_value[3:] if attn_value.startswith('hf:') else attn_value
+            try:
+                from kernels import get_kernel
 
+                kernel_impl = get_kernel(kernel_name)
+                if kernel_impl is not None:
+                    logger.info_rank0(f"Using HuggingFace kernel: {kernel_name}")
+                    setattr(config, "_hf_kernel", kernel_name)
+                    return
+                else:
+                    logger.warning_rank0(f"HuggingFace kernel '{kernel_name}' not found. Falling back to eager attention.")
+                    requested_attn_implementation = "eager"
+            except ImportError:
+                logger.warning_rank0(
+                    "HuggingFace kernels not available. Install with: pip install -e .[hf-kernels]. Falling back to eager attention."
+                )
+                requested_attn_implementation = "eager"
+            except Exception as e:
+                logger.warning_rank0(f"Failed to load HuggingFace kernel {kernel_name}: {e}. Falling back to eager attention.")
+                requested_attn_implementation = "eager"
+        else:
+            # Handle standard attention implementations
+            if attn_value == AttentionImplementation.EAGER:
+                requested_attn_implementation = "eager"
+            elif attn_value == AttentionImplementation.SDPA:
+                if not is_torch_sdpa_available():
+                    logger.warning_rank0("torch>=2.1.1 is required for SDPA attention. Falling back to eager.")
+                    requested_attn_implementation = "eager"
+                else:
+                    requested_attn_implementation = "sdpa"
+            elif attn_value == AttentionImplementation.FA2:
+                if not is_flash_attn_2_available():
+                    logger.warning_rank0("FlashAttention-2 is not installed. Falling back to eager.")
+                    requested_attn_implementation = "eager"
+                else:
+                    requested_attn_implementation = "flash_attention_2"
+            elif attn_value == AttentionImplementation.FA3:
+                if not is_flash_attn_3_available():
+                    logger.warning_rank0("FlashAttention-3 is not installed. Falling back to eager.")
+                    requested_attn_implementation = "eager"
+                else:
+                    requested_attn_implementation = "flash_attention_3"
+            else:
+                logger.warning_rank0(f"Unknown attention implementation '{attn_value}'. Falling back to eager.")
+                requested_attn_implementation = "eager"
+
+    # Special handling for model-specific requirements
+    if getattr(config, "model_type", None) == "gemma2":
+        if requested_attn_implementation == "sdpa":
+            logger.warning_rank0(
+                "Gemma-2 should use soft-capping attention, while SDPA attention does not support it. "
+                "Consider using 'fa2' instead."
+            )
+        elif requested_attn_implementation not in ["flash_attention_2", "eager"]:
+            logger.warning_rank0("Gemma-2 works best with FlashAttention-2 or eager attention.")
+
+    # Apply the attention implementation to config
     if getattr(config, "model_type", None) == "internlm2":  # special case for custom models
         setattr(config, "attn_implementation", requested_attn_implementation)
     elif getattr(config, "model_type", None) == "kimi_vl":
@@ -117,5 +125,7 @@ def print_attn_implementation(config: "PretrainedConfig") -> None:
         logger.info_rank0("Using FlashAttention-3 for faster training and inference.")
     elif attn_implementation == "sdpa":
         logger.info_rank0("Using torch SDPA for faster training and inference.")
+    elif attn_implementation == "eager":
+        logger.info_rank0("Using eager (vanilla) attention implementation.")
     else:
-        logger.info_rank0("Using vanilla attention implementation.")
+        logger.info_rank0(f"Using {attn_implementation or 'default'} attention implementation.")

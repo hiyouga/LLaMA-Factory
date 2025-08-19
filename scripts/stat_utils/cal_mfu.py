@@ -104,7 +104,7 @@ def calculate_mfu(
     seq_length: int = 1024,
     num_steps: int = 100,
     finetuning_type: str = "lora",
-    flash_attn: str = "auto",
+    attn: str = "eager",
     deepspeed_stage: int = 0,
     disable_gc: bool = False,
     liger_kernel: bool = False,
@@ -116,7 +116,7 @@ def calculate_mfu(
     """
     args = {
         "model_name_or_path": model_name_or_path,
-        "flash_attn": flash_attn,
+        "attn": attn,
         "disable_gradient_checkpointing": disable_gc,
         "enable_liger_kernel": liger_kernel,
         "use_unsloth_gc": unsloth_gc,

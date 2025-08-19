@@ -23,7 +23,7 @@ import torch
 from transformers.training_args import _convert_str_dict
 from typing_extensions import Self
 
-from ..extras.constants import AttentionFunction, EngineName, QuantizationMethod, RopeScaling
+from ..extras.constants import AttentionImplementation, EngineName, QuantizationMethod, RopeScaling
 
 
 @dataclass
@@ -94,9 +94,16 @@ class BaseModelArguments:
             "If specified, this determines the model's maximum context length instead of using cutoff_len."
         },
     )
-    flash_attn: AttentionFunction = field(
-        default=AttentionFunction.AUTO,
-        metadata={"help": "Enable FlashAttention for faster training and inference."},
+    attn: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": (
+                "Attention implementation. Valid values: 'eager' (default if unset), 'sdpa', 'fa2', 'fa3', "
+                "or HuggingFace kernel names like 'kernels-community/vllm-flash-attn3'. "
+                "HF kernel names can optionally be prefixed with 'hf:'. "
+                "Requires 'pip install -e .[hf-kernels]' for HF kernels."
+            )
+        },
     )
     shift_attn: bool = field(
         default=False,
@@ -117,12 +124,6 @@ class BaseModelArguments:
     enable_liger_kernel: bool = field(
         default=False,
         metadata={"help": "Whether or not to enable liger kernel for faster training."},
-    )
-    kernel: Optional[str] = field(
-        default=None,
-        metadata={
-            "help": "Attention kernel implementation to use from HuggingFace kernels (https://github.com/huggingface/kernels). When specified, becomes the first choice for attention implementation. Example: 'kernels-community/vllm-flash-attn3'. Requires installing with 'pip install -e .[hf-kernels]'."
-        },
     )
     fp8: bool = field(
         default=False,
@@ -242,6 +243,27 @@ class BaseModelArguments:
 
         if self.add_special_tokens is not None:  # support multiple special tokens
             self.add_special_tokens = [token.strip() for token in self.add_special_tokens.split(",")]
+
+        # Validate attention implementation
+        if self.attn is not None:
+            valid_standard_impls = {impl.value for impl in AttentionImplementation}
+            attn_value = self.attn.strip()
+            
+            # Check if it's a standard implementation
+            if attn_value in valid_standard_impls:
+                pass  # Valid standard implementation
+            else:
+                # Check if it's a HuggingFace kernel (contains '/' or starts with 'hf:')
+                is_hf_kernel = ('/' in attn_value or 
+                               attn_value.startswith('hf:') or
+                               any(kernel_word in attn_value for kernel_word in ['kernel', 'flash', 'attn']))
+                
+                if not is_hf_kernel:
+                    valid_options = list(valid_standard_impls) + ["HF kernel names (e.g., 'kernels-community/vllm-flash-attn3')"]
+                    raise ValueError(
+                        f"Invalid attention implementation '{attn_value}'. "
+                        f"Valid options: {valid_options}"
+                    )
 
 
 @dataclass
