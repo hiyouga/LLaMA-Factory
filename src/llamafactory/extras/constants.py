@@ -757,9 +757,17 @@ register_model_group(
             DownloadSource.DEFAULT: "google/gemma-2-27b-it",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-27b-it",
         },
+        "Gemma-3-270M": {
+            DownloadSource.DEFAULT: "google/gemma-3-270m",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-270m",
+        },
         "Gemma-3-1B": {
             DownloadSource.DEFAULT: "google/gemma-3-1b-pt",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-1b-pt",
+        },
+        "Gemma-3-270M-Instruct": {
+            DownloadSource.DEFAULT: "google/gemma-3-270m-it",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-270m-it",
         },
         "Gemma-3-1B-Instruct": {
             DownloadSource.DEFAULT: "google/gemma-3-1b-it",
@@ -776,10 +784,6 @@ register_model_group(
 
 register_model_group(
     models={
-        "Gemma-3-270M": {
-            DownloadSource.DEFAULT: "google/gemma-3-270m",
-            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-270m",
-        },
         "Gemma-3-4B": {
             DownloadSource.DEFAULT: "google/gemma-3-4b-pt",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-4b-pt",
@@ -791,10 +795,6 @@ register_model_group(
         "Gemma-3-27B": {
             DownloadSource.DEFAULT: "google/gemma-3-27b-pt",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-27b-pt",
-        },
-        "Gemma-3-270M-Instruct": {
-            DownloadSource.DEFAULT: "google/gemma-3-270m-it",
-            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-270m-it",
         },
         "Gemma-3-4B-Instruct": {
             DownloadSource.DEFAULT: "google/gemma-3-4b-it",
@@ -815,6 +815,10 @@ register_model_group(
         "MedGemma-4B-Instruct": {
             DownloadSource.DEFAULT: "google/medgemma-4b-it",
             DownloadSource.MODELSCOPE: "google/medgemma-4b-it",
+        },
+        "MedGemma-27B-Instruct": {
+            DownloadSource.DEFAULT: "google/medgemma-27b-text-it",
+            DownloadSource.MODELSCOPE: "google/medgemma-27b-text-it",
         },
     },
     template="gemma3",
