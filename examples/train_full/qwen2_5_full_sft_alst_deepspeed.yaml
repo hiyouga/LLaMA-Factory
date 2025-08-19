@@ -53,6 +53,7 @@ lr_scheduler_type: cosine
 warmup_ratio: 0.1                           # Longer warmup for stability
 weight_decay: 0.01
 max_grad_norm: 1.0
+bf16: true
 pure_bf16: true # bf16: true leaves parameters in fp32                                   # BF16 recommended for ALST
 gradient_checkpointing: true                 # Essential for memory efficiency
 ddp_timeout: 300000                          # 5 minutes timeout for ALST initialization

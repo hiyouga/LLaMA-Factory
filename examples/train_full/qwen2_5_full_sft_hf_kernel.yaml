@@ -49,6 +49,7 @@ lr_scheduler_type: cosine
 warmup_ratio: 0.05
 weight_decay: 0.03
 max_grad_norm: 1.0e-3
+bf16: true
 pure_bf16: true # bf16: true leaves parameters in fp32
 gradient_checkpointing: true
 ddp_timeout: 180000000

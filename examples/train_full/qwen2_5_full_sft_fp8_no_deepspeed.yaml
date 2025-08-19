@@ -87,5 +87,5 @@ ddp_timeout: 1800                          # 30 minutes timeout for DDP operatio
 # - TorchAO FP8 requires tensor dimensions divisible by 16 for optimal kernels
 # - Some layers may be automatically skipped if dimensions are incompatible
 # - If you encounter dimension errors, try fp8_backend: 'te' with Transformer Engine
-# - Alternatively, use pure_bf16: true # bf16: true leaves parameters in fp32 instead of FP8 for problematic models
+# - Alternatively, use bf16: true and pure_bf16: true instead of FP8 for problematic models
 # - torch_compile is disabled as it can interfere with FP8 dimension requirements
