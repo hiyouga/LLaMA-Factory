@@ -51,6 +51,42 @@ if TYPE_CHECKING:
 logger = logging.get_logger(__name__)
 
 
+def _requires_cpu_first_loading() -> bool:
+    r"""Check if model should be loaded on CPU first for FSDP CPU offloading.
+
+    Returns True if FSDP is configured with CPU offloading that requires CPU-first loading.
+    """
+    try:
+        from accelerate import Accelerator
+
+        # Try to get accelerator state - this may fail if not properly initialized
+        accelerator = Accelerator()
+
+        # Check if we're using FSDP
+        if accelerator.distributed_type.value != "FSDP":
+            return False
+
+        # Check FSDP plugin for CPU offloading settings
+        fsdp_plugin = getattr(accelerator.state, "fsdp_plugin", None)
+        if fsdp_plugin is None:
+            return False
+
+        # Check the specific combination that requires CPU-first loading
+        cpu_ram_efficient_loading = getattr(fsdp_plugin, "fsdp_cpu_ram_efficient_loading", False)
+        offload_params = getattr(fsdp_plugin, "fsdp_offload_params", False)
+
+        needs_cpu_first = cpu_ram_efficient_loading and offload_params
+        if needs_cpu_first:
+            logger.info_rank0("FSDP CPU parameter offloading detected - model will be loaded on CPU first")
+
+        return needs_cpu_first
+
+    except Exception as e:
+        # If we can't detect the configuration, err on the side of caution
+        logger.debug(f"Could not detect FSDP CPU offloading configuration: {e}")
+        return False
+
+
 class TokenizerModule(TypedDict):
     tokenizer: "PreTrainedTokenizer"
     processor: Optional["ProcessorMixin"]
@@ -168,6 +204,10 @@ def load_model(
             lazy_load = True
         elif is_trainable:
             model = load_unsloth_pretrained_model(config, model_args, finetuning_args)
+            # Ensure CPU placement for FSDP CPU offloading if needed
+            if model is not None and _requires_cpu_first_loading() and next(model.parameters()).device.type != "cpu":
+                model = model.cpu()
+                logger.info_rank0("Unsloth model moved to CPU for FSDP CPU offloading compatibility")
 
     if model is None and not lazy_load:
         init_kwargs["config"] = config
@@ -189,8 +229,29 @@ def load_model(
 
             if model_args.train_from_scratch:
                 model = load_class.from_config(config, trust_remote_code=model_args.trust_remote_code)
+                # Ensure CPU placement for FSDP CPU offloading if needed
+                if _requires_cpu_first_loading() and next(model.parameters()).device.type != "cpu":
+                    model = model.cpu()
+                    logger.info_rank0("Model from config moved to CPU for FSDP CPU offloading compatibility")
             else:
-                model = load_class.from_pretrained(**init_kwargs)
+                # Check if we need to load on CPU first for FSDP CPU offloading
+                if _requires_cpu_first_loading():
+                    # Force loading on CPU for FSDP CPU offloading compatibility
+                    cpu_init_kwargs = init_kwargs.copy()
+                    cpu_init_kwargs["device_map"] = None  # Don't auto-place on GPU
+                    # Keep the original torch_dtype but ensure CPU placement
+
+                    # Load model on CPU first
+                    model = load_class.from_pretrained(**cpu_init_kwargs)
+
+                    # Explicitly move to CPU if it wasn't already there
+                    if next(model.parameters()).device.type != "cpu":
+                        model = model.cpu()
+
+                    logger.info_rank0("Model loaded on CPU for FSDP CPU offloading compatibility")
+                else:
+                    model = load_class.from_pretrained(**init_kwargs)
+
                 if getattr(model.config, "model_type", None) == "qwen2_5_omni":
                     model = model.thinker  # use part of Omni model
 
