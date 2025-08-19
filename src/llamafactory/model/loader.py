@@ -62,28 +62,40 @@ def _requires_cpu_first_loading() -> bool:
         # Try to get accelerator state - this may fail if not properly initialized
         accelerator = Accelerator()
 
+        logger.info_rank0(f"Accelerator distributed type: {accelerator.distributed_type}")
+        logger.info_rank0(f"Accelerator state: {accelerator.state}")
+
         # Check if we're using FSDP
         if accelerator.distributed_type.value != "FSDP":
+            logger.info_rank0(f"Not using FSDP, distributed type is: {accelerator.distributed_type.value}")
             return False
 
         # Check FSDP plugin for CPU offloading settings
         fsdp_plugin = getattr(accelerator.state, "fsdp_plugin", None)
+        logger.info_rank0(f"FSDP plugin: {fsdp_plugin}")
+
         if fsdp_plugin is None:
+            logger.info_rank0("No FSDP plugin found")
             return False
 
         # Check the specific combination that requires CPU-first loading
         cpu_ram_efficient_loading = getattr(fsdp_plugin, "fsdp_cpu_ram_efficient_loading", False)
         offload_params = getattr(fsdp_plugin, "fsdp_offload_params", False)
 
+        logger.info_rank0(f"FSDP CPU RAM efficient loading: {cpu_ram_efficient_loading}")
+        logger.info_rank0(f"FSDP offload params: {offload_params}")
+
         needs_cpu_first = cpu_ram_efficient_loading and offload_params
         if needs_cpu_first:
             logger.info_rank0("FSDP CPU parameter offloading detected - model will be loaded on CPU first")
+        else:
+            logger.info_rank0("FSDP CPU parameter offloading NOT detected")
 
         return needs_cpu_first
 
     except Exception as e:
         # If we can't detect the configuration, err on the side of caution
-        logger.debug(f"Could not detect FSDP CPU offloading configuration: {e}")
+        logger.info_rank0(f"Could not detect FSDP CPU offloading configuration: {e}")
         return False
 
 
