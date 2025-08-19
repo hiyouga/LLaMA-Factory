@@ -1,0 +1,10 @@
+debug: false
+distributed_type: FSDP
+downcast_bf16: 'no'
+fsdp_config:
+  fsdp_cpu_ram_efficient_loading: true
+  fsdp_offload_params: true
+  fsdp_reshard_after_forward: true
+  fsdp_state_dict_type: SHARDED_STATE_DICT
+  fsdp_version: 2
+mixed_precision: bf16
