@@ -1,6 +1,6 @@
 # Full Fine-Tuning config for Qwen2.5-7B-Instruct on tbench_traces_sharegptv1 dataset
 # Using FP8 mixed precision WITHOUT DeepSpeed (uses native Accelerate FP8)
-# Based on LIMO paper configuration: https://arxiv.org/abs/2502.03387  
+# Based on LIMO paper configuration: https://arxiv.org/abs/2502.03387
 # Enhanced with YARN RoPE scaling for extended context length (131072 tokens)
 #
 # Requirements:
@@ -46,7 +46,7 @@ fp8_enable_fsdp_float8_all_gather: false   # FSDP optimizations (set to true if 
 bf16: false                                 # Disabled when using FP8
 fp16: false                                 # Disabled when using FP8
 
-### output  
+### output
 output_dir: output/qwen2.5_7b_tbench_traces_sharegptv1_fp8_no_ds
 logging_steps: 5
 save_steps: 50

@@ -9,7 +9,6 @@ from ...extras import logging
 logger = logging.get_logger(__name__)
 
 
-
 def init_sp_group(sp_size):
     assert dist.is_initialized()
     world_size = dist.get_world_size()
@@ -38,7 +37,9 @@ def apply_sequence_parallel(model_args, full_determinism=False):
             f"Please migrate to 'deepspeed-alst' for better performance, stability, and memory efficiency. "
             f"Set sequence_parallel_mode='deepspeed-alst' in your configuration."
         )
-        raise ValueError(f"Legacy sequence parallel mode '{model_args.sequence_parallel_mode}' is no longer supported. Use 'deepspeed-alst' instead.")
+        raise ValueError(
+            f"Legacy sequence parallel mode '{model_args.sequence_parallel_mode}' is no longer supported. Use 'deepspeed-alst' instead."
+        )
 
     # Handle different sequence parallel modes
     if model_args.sequence_parallel_mode == "deepspeed-alst":

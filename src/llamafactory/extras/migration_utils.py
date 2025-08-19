@@ -42,9 +42,7 @@ def migrate_sequence_parallel_config(config_data: dict[str, Any]) -> tuple[dict[
     legacy_modes = ["zigzag-ring", "ulysses"]
     current_mode = migrated_config.get("sequence_parallel_mode")
 
-    if (migrated_config.get("sequence_parallel_size", 1) > 1 and
-        current_mode in legacy_modes):
-
+    if migrated_config.get("sequence_parallel_size", 1) > 1 and current_mode in legacy_modes:
         logger.info_rank0(f"Found legacy sequence parallel configuration: {current_mode}")
 
         # Recommend migration to ALST
@@ -71,9 +69,7 @@ def migrate_sequence_parallel_config(config_data: dict[str, Any]) -> tuple[dict[
             )
 
     # Check for deprecated parameters
-    deprecated_params = {
-        "shuffle_for_sequence_parallel": "ALST handles data distribution automatically"
-    }
+    deprecated_params = {"shuffle_for_sequence_parallel": "ALST handles data distribution automatically"}
 
     for param, message in deprecated_params.items():
         if param in migrated_config:
@@ -91,12 +87,7 @@ def check_alst_compatibility(config_data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Dictionary with compatibility status and recommendations
     """
-    compatibility_report = {
-        "compatible": True,
-        "warnings": [],
-        "recommendations": [],
-        "requirements": []
-    }
+    compatibility_report = {"compatible": True, "warnings": [], "recommendations": [], "requirements": []}
 
     # Check sequence parallel configuration
     sp_size = config_data.get("sequence_parallel_size", 1)
@@ -119,12 +110,14 @@ def check_alst_compatibility(config_data: dict[str, Any]) -> dict[str, Any]:
             compatibility_report["compatible"] = False
 
         # Check hardware requirements
-        compatibility_report["requirements"].extend([
-            "DeepSpeed >= 0.17.4",
-            "Flash Attention >= 2.0 (recommended)",
-            f"Multi-GPU setup with {sp_size} GPUs",
-            "CUDA-capable GPUs (H100/Hopper recommended for optimal performance)"
-        ])
+        compatibility_report["requirements"].extend(
+            [
+                "DeepSpeed >= 0.17.4",
+                "Flash Attention >= 2.0 (recommended)",
+                f"Multi-GPU setup with {sp_size} GPUs",
+                "CUDA-capable GPUs (H100/Hopper recommended for optimal performance)",
+            ]
+        )
 
         # Check training settings
         per_device_batch_size = config_data.get("per_device_train_batch_size", 1)
@@ -136,9 +129,7 @@ def check_alst_compatibility(config_data: dict[str, Any]) -> dict[str, Any]:
 
         # Check precision settings
         if not (config_data.get("bf16") or config_data.get("fp16")):
-            compatibility_report["recommendations"].append(
-                "Enable bf16 or fp16 for optimal ALST performance"
-            )
+            compatibility_report["recommendations"].append("Enable bf16 or fp16 for optimal ALST performance")
 
         # Check gradient checkpointing
         if not config_data.get("gradient_checkpointing"):
@@ -153,7 +144,7 @@ def create_alst_deepspeed_config(
     base_config: Optional[dict[str, Any]] = None,
     sequence_parallel_size: int = 4,
     sequence_tiling: bool = True,
-    memory_optimizations: bool = True
+    memory_optimizations: bool = True,
 ) -> dict[str, Any]:
     """Create DeepSpeed configuration optimized for ALST.
 
@@ -178,7 +169,7 @@ def create_alst_deepspeed_config(
                 "initial_scale_power": 16,
                 "loss_scale_window": 1000,
                 "hysteresis": 2,
-                "min_loss_scale": 1
+                "min_loss_scale": 1,
             },
             "zero_optimization": {
                 "stage": 3,
@@ -190,11 +181,8 @@ def create_alst_deepspeed_config(
                 "stage3_param_persistence_threshold": "auto",
                 "stage3_max_live_parameters": 1e9,
                 "stage3_max_reuse_distance": 1e9,
-                "offload_optimizer": {
-                    "device": "cpu",
-                    "pin_memory": True
-                }
-            }
+                "offload_optimizer": {"device": "cpu", "pin_memory": True},
+            },
         }
 
     # Add ALST sequence parallel configuration
@@ -203,23 +191,14 @@ def create_alst_deepspeed_config(
         "enabled": True,
         "size": sequence_parallel_size,
         "mode": "ulysses",
-        "ulysses": {
-            "degree": sequence_parallel_size,
-            "seq_length_is_variable": True
-        }
+        "ulysses": {"degree": sequence_parallel_size, "seq_length_is_variable": True},
     }
 
     if sequence_tiling:
-        alst_config["sequence_parallel"]["tiling"] = {
-            "enabled": True,
-            "chunk_size": 8192
-        }
+        alst_config["sequence_parallel"]["tiling"] = {"enabled": True, "chunk_size": 8192}
 
     if memory_optimizations:
-        alst_config["sequence_parallel"]["memory_optimizations"] = {
-            "enabled": True,
-            "pytorch_profiling": False
-        }
+        alst_config["sequence_parallel"]["memory_optimizations"] = {"enabled": True, "pytorch_profiling": False}
 
     return alst_config
 
@@ -240,20 +219,20 @@ def migrate_config_file(input_path: str, output_path: Optional[str] = None, back
 
     # Determine file format
     ext = os.path.splitext(input_path)[1].lower()
-    if ext == '.yaml' or ext == '.yml':
-        with open(input_path, encoding='utf-8') as f:
+    if ext == ".yaml" or ext == ".yml":
+        with open(input_path, encoding="utf-8") as f:
             config_data = yaml.safe_load(f)
-        file_format = 'yaml'
-    elif ext == '.json':
-        with open(input_path, encoding='utf-8') as f:
+        file_format = "yaml"
+    elif ext == ".json":
+        with open(input_path, encoding="utf-8") as f:
             config_data = json.load(f)
-        file_format = 'json'
+        file_format = "json"
     else:
         raise ValueError(f"Unsupported configuration file format: {ext}")
 
     # Create backup if requested
     if backup and output_path != input_path:
-        backup_path = input_path + '.backup'
+        backup_path = input_path + ".backup"
         if not os.path.exists(backup_path):
             os.rename(input_path, backup_path)
             logger.info_rank0(f"Created backup: {backup_path}")
@@ -265,11 +244,11 @@ def migrate_config_file(input_path: str, output_path: Optional[str] = None, back
         # Write migrated configuration
         output_file = output_path or input_path
 
-        if file_format == 'yaml':
-            with open(output_file, 'w', encoding='utf-8') as f:
+        if file_format == "yaml":
+            with open(output_file, "w", encoding="utf-8") as f:
                 yaml.dump(migrated_config, f, default_flow_style=False, indent=2)
         else:
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(migrated_config, f, indent=2)
 
         logger.info_rank0(f"Migrated configuration saved to: {output_file}")
@@ -298,25 +277,25 @@ def validate_alst_installation() -> dict[str, Any]:
     Returns:
         Dictionary with validation results
     """
-    validation_result = {
-        "valid": True,
-        "errors": [],
-        "warnings": [],
-        "info": []
-    }
+    validation_result = {"valid": True, "errors": [], "warnings": [], "info": []}
 
     # Check DeepSpeed
     try:
-        import deepspeed
+        import deepspeed  # noqa: F401
+
         version_str = deepspeed.__version__
-        tuple(map(int, version_str.split('.')[:3]))
+        tuple(map(int, version_str.split(".")[:3]))
 
         # ALST works with DeepSpeed 0.17.2+ so accept any reasonable version
         validation_result["info"].append(f"DeepSpeed {version_str} - ALST compatible")
 
         # Check ALST modules
         try:
-            from deepspeed.runtime.sequence_parallel.ulysses_sp import UlyssesSPAttentionHF, UlyssesSPDataLoaderAdapter
+            from deepspeed.runtime.sequence_parallel.ulysses_sp import (  # noqa: F401
+                UlyssesSPAttentionHF,
+                UlyssesSPDataLoaderAdapter,
+            )
+
             validation_result["info"].append("DeepSpeed ALST modules available")
         except ImportError as e:
             validation_result["errors"].append(f"DeepSpeed ALST modules not available: {e}")
@@ -329,16 +308,16 @@ def validate_alst_installation() -> dict[str, Any]:
     # Check Flash Attention
     try:
         import flash_attn
-        fa_version = getattr(flash_attn, '__version__', 'unknown')
+
+        fa_version = getattr(flash_attn, "__version__", "unknown")
         validation_result["info"].append(f"Flash Attention {fa_version} available")
     except ImportError:
-        validation_result["warnings"].append(
-            "Flash Attention not found - may impact ALST performance"
-        )
+        validation_result["warnings"].append("Flash Attention not found - may impact ALST performance")
 
     # Check PyTorch
     try:
         import torch
+
         torch_version = torch.__version__
         validation_result["info"].append(f"PyTorch {torch_version} available")
 

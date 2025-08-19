@@ -73,7 +73,9 @@ class ALSTConfig:
             self.enabled = False
 
         if self.ulysses_degree and self.ulysses_degree > self.sequence_parallel_size:
-            logger.warning(f"ulysses_degree ({self.ulysses_degree}) > sequence_parallel_size ({self.sequence_parallel_size}), adjusting")
+            logger.warning(
+                f"ulysses_degree ({self.ulysses_degree}) > sequence_parallel_size ({self.sequence_parallel_size}), adjusting"
+            )
             self.ulysses_degree = self.sequence_parallel_size
 
         if self.sequence_tiling and self.tiling_chunk_size is None:
@@ -94,7 +96,7 @@ class ALSTConfig:
                 "ulysses": {
                     "degree": self.ulysses_degree,
                     "seq_length_is_variable": self.ulysses_seq_length_is_variable,
-                }
+                },
             }
         }
 
@@ -125,9 +127,9 @@ class ALSTConfig:
         """Create ALSTConfig from ModelArguments."""
         return cls(
             enabled=(
-                model_args.sequence_parallel_size > 1 and
-                model_args.sequence_parallel_mode == "deepspeed-alst" and
-                model_args.alst_sequence_backend == "deepspeed"
+                model_args.sequence_parallel_size > 1
+                and model_args.sequence_parallel_mode == "deepspeed-alst"
+                and model_args.alst_sequence_backend == "deepspeed"
             ),
             sequence_parallel_size=model_args.sequence_parallel_size,
             sequence_parallel_mode=model_args.sequence_parallel_mode,
@@ -169,13 +171,16 @@ def validate_alst_requirements(config: ALSTConfig) -> bool:
         return True
 
     try:
-        import deepspeed
+        import deepspeed  # noqa: F401
 
         # DeepSpeed version check removed - ALST works with 0.17.2+
 
         # Check for required modules - UlyssesSPAttentionHF and UlyssesSPDataLoaderAdapter
         try:
-            from deepspeed.runtime.sequence_parallel.ulysses_sp import UlyssesSPAttentionHF, UlyssesSPDataLoaderAdapter
+            from deepspeed.runtime.sequence_parallel.ulysses_sp import (  # noqa: F401
+                UlyssesSPAttentionHF,
+                UlyssesSPDataLoaderAdapter,
+            )
         except ImportError as e:
             logger.info_rank0(f"Required DeepSpeed ALST modules not available: {e}")
             return False
@@ -183,8 +188,9 @@ def validate_alst_requirements(config: ALSTConfig) -> bool:
         # Check Flash Attention
         try:
             import flash_attn
-            flash_version = getattr(flash_attn, '__version__', '0.0.0')
-            if tuple(map(int, flash_version.split('.')[:2])) < (2, 0):
+
+            flash_version = getattr(flash_attn, "__version__", "0.0.0")
+            if tuple(map(int, flash_version.split(".")[:2])) < (2, 0):
                 logger.warning(f"Flash Attention {flash_version} found, recommend 2.0+ for optimal ALST performance")
         except ImportError:
             logger.warning("Flash Attention not found, may impact ALST performance")
@@ -196,10 +202,7 @@ def validate_alst_requirements(config: ALSTConfig) -> bool:
         return False
 
 
-def update_deepspeed_config_for_alst(
-    deepspeed_config: dict[str, Any],
-    alst_config: ALSTConfig
-) -> dict[str, Any]:
+def update_deepspeed_config_for_alst(deepspeed_config: dict[str, Any], alst_config: ALSTConfig) -> dict[str, Any]:
     """Update DeepSpeed configuration with ALST settings."""
     if not alst_config.enabled:
         return deepspeed_config

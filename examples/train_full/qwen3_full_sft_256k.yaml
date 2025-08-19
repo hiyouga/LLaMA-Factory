@@ -1,5 +1,5 @@
 # Full Fine-Tuning config for Qwen3-8B with 200k context and DeepSpeed Ulysses sequence parallelism
-# Based on LIMO paper configuration: https://arxiv.org/abs/2502.03387  
+# Based on LIMO paper configuration: https://arxiv.org/abs/2502.03387
 # Enhanced with YARN RoPE scaling for extended context length (204800 tokens = 5x base model)
 # Uses DeepSpeed Ulysses strategy for ultra-long context training
 #
@@ -39,7 +39,7 @@ overwrite_cache: false
 preprocessing_num_workers: 64  # Match LIMO preprocessing workers
 dataloader_num_workers: 2
 
-### output  
+### output
 output_dir: output/qwen3_8b_tbench_traces_200k_ulysses_ds
 logging_steps: 5
 save_steps: 50

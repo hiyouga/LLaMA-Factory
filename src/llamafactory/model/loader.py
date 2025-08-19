@@ -208,7 +208,6 @@ def load_model(
 
         # FP8 optimization is handled by HuggingFace Accelerate during trainer initialization
 
-
     model = init_adapter(config, model, model_args, finetuning_args, is_trainable)
 
     if add_valuehead:

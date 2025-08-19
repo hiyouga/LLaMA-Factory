@@ -1,5 +1,5 @@
 # Full Fine-Tuning config for Qwen2.5-7B-Instruct on tbench_traces_sharegptv1 dataset
-# Based on LIMO paper configuration: https://arxiv.org/abs/2502.03387  
+# Based on LIMO paper configuration: https://arxiv.org/abs/2502.03387
 # Enhanced with YARN RoPE scaling for extended context length (131072 tokens)
 # Using TorchAO FP8 backend (explicit)
 #
@@ -37,9 +37,9 @@ dataloader_num_workers: 2
 fp8: true                                   # Enable FP8 mixed precision
 fp8_backend: torchao                        # Explicitly use TorchAO backend
 fp8_enable_fsdp_float8_all_gather: true     # Optimize FSDP all-gather ops
-bf16: false                                 # Disable BF16 when using FP8 
+bf16: false                                 # Disable BF16 when using FP8
 
-### output  
+### output
 output_dir: output/qwen2.5_7b_tbench_traces_sharegptv1_yarn_ds_fp8_torchao
 logging_steps: 5
 save_steps: 50

@@ -98,11 +98,11 @@ V_HEAD_SAFE_WEIGHTS_NAME = "value_head.safetensors"
 
 class AttentionImplementation(str, Enum):
     # Standard PyTorch/Transformers implementations
-    EAGER = "eager"                    # Vanilla attention (default if unset)
-    SDPA = "sdpa"                     # Torch SDPA
-    FA2 = "fa2"                       # Flash Attention 2
-    FA3 = "fa3"                       # Flash Attention 3
-    
+    EAGER = "eager"  # Vanilla attention (default if unset)
+    SDPA = "sdpa"  # Torch SDPA
+    FA2 = "fa2"  # Flash Attention 2
+    FA3 = "fa3"  # Flash Attention 3
+
     # HuggingFace Kernels are handled as string values
     # Format: "hf:kernel-repo/kernel-name" or just the kernel name
     # Examples: "hf:kernels-community/vllm-flash-attn3" or "vllm-flash-attn3"
@@ -1674,8 +1674,8 @@ register_model_group(
         },
         "MiMo-VL-7B-RL-2508": {
             DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-RL-2508",
-            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-VL-7B-RL-2508"
-        }
+            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-VL-7B-RL-2508",
+        },
     },
     template="mimo_vl",
     multimodal=True,
@@ -1690,7 +1690,7 @@ register_model_group(
         },
         "MiMo-VL-7B-SFT-2508": {
             DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-SFT-2508",
-            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-SFT-2508"
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-SFT-2508",
         },
     },
     template="qwen2_vl",

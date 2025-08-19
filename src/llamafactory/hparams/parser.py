@@ -193,50 +193,46 @@ def _validate_fsdp_config() -> None:
     config_file = os.environ.get("ACCELERATE_CONFIG_FILE")
     if not config_file:
         return
-    
+
     try:
         # Validate the FSDP configuration
         config = FsdpValidator.validate_config_file(config_file)
-        
+
         # Log validation success and any recommendations
         if config.distributed_type == "FSDP" and config.fsdp_config:
-            fsdp_version = getattr(config.fsdp_config, 'fsdp_version', 1)
+            fsdp_version = getattr(config.fsdp_config, "fsdp_version", 1)
             logger.info_rank0(f"FSDP configuration validated successfully (v{fsdp_version})")
-            
+
             # Log key FSDP configuration parameters
             fsdp_config = config.fsdp_config
             logger.info_rank0("FSDP configuration parameters:")
-            
-            if hasattr(fsdp_config, 'fsdp_sharding_strategy'):
+
+            if hasattr(fsdp_config, "fsdp_sharding_strategy"):
                 logger.info_rank0(f"  Sharding strategy: {fsdp_config.fsdp_sharding_strategy}")
-            if hasattr(fsdp_config, 'fsdp_offload_params'):
+            if hasattr(fsdp_config, "fsdp_offload_params"):
                 logger.info_rank0(f"  Parameter offloading: {fsdp_config.fsdp_offload_params}")
-            if hasattr(fsdp_config, 'fsdp_state_dict_type'):
+            if hasattr(fsdp_config, "fsdp_state_dict_type"):
                 logger.info_rank0(f"  State dict type: {fsdp_config.fsdp_state_dict_type}")
-            if hasattr(fsdp_config, 'fsdp_backward_prefetch'):
+            if hasattr(fsdp_config, "fsdp_backward_prefetch"):
                 logger.info_rank0(f"  Backward prefetch: {fsdp_config.fsdp_backward_prefetch}")
-            if hasattr(fsdp_config, 'fsdp_cpu_ram_efficient_loading'):
+            if hasattr(fsdp_config, "fsdp_cpu_ram_efficient_loading"):
                 logger.info_rank0(f"  CPU RAM efficient loading: {fsdp_config.fsdp_cpu_ram_efficient_loading}")
-            
+
             # Provide migration suggestions if using FSDP v1
             if fsdp_version == 1:
                 logger.warning_rank0(
                     "Using FSDP v1. Consider migrating to FSDP v2 for better performance and memory efficiency. "
                     "Run: accelerate to-fsdp2 --config_file your_config.yaml --output_file new_config.yaml"
                 )
-                
+
     except ImportError:
-        logger.warning_rank0(
-            "Pydantic not available for FSDP config validation. Install with: pip install pydantic"
-        )
+        logger.warning_rank0("Pydantic not available for FSDP config validation. Install with: pip install pydantic")
     except Exception as e:
         logger.warning_rank0(f"FSDP config validation failed: {e}")
-        
+
         # Try to provide helpful suggestions
         if "does not support these parameters" in str(e):
-            logger.info_rank0(
-                "Tip: Use 'accelerate to-fsdp2' to automatically convert FSDP v1 configs to v2"
-            )
+            logger.info_rank0("Tip: Use 'accelerate to-fsdp2' to automatically convert FSDP v1 configs to v2")
 
 
 def _log_fsdp_runtime_status() -> None:
@@ -244,36 +240,41 @@ def _log_fsdp_runtime_status() -> None:
     try:
         from accelerate import Accelerator
         from transformers.modeling_utils import is_fsdp_enabled
-        
+
         # Check if FSDP is actually enabled at runtime
         fsdp_enabled = is_fsdp_enabled()
         logger.info_rank0(f"FSDP runtime status: {'ENABLED' if fsdp_enabled else 'DISABLED'}")
-        
+
         # Try to get accelerator state for more details
         try:
             accelerator = Accelerator()
-            
+
             # Log accelerator distributed type
             logger.info_rank0(f"Accelerator distributed type: {accelerator.distributed_type}")
-            
+
             # Check for FSDP plugin
-            if hasattr(accelerator.state, 'fsdp_plugin') and accelerator.state.fsdp_plugin:
+            if hasattr(accelerator.state, "fsdp_plugin") and accelerator.state.fsdp_plugin:
                 plugin = accelerator.state.fsdp_plugin
                 logger.info_rank0("FSDP plugin configuration:")
-                
+
                 # Log key FSDP parameters
                 key_params = [
-                    'fsdp_version', 'sharding_strategy', 'backward_prefetch', 
-                    'cpu_offload', 'state_dict_type', 'use_orig_params',
-                    'mixed_precision_policy', 'auto_wrap_policy'
+                    "fsdp_version",
+                    "sharding_strategy",
+                    "backward_prefetch",
+                    "cpu_offload",
+                    "state_dict_type",
+                    "use_orig_params",
+                    "mixed_precision_policy",
+                    "auto_wrap_policy",
                 ]
-                
+
                 for param in key_params:
                     if hasattr(plugin, param):
                         value = getattr(plugin, param)
                         if value is not None:
                             logger.info_rank0(f"  {param}: {value}")
-                
+
             elif accelerator.distributed_type.value == "FSDP":
                 logger.warning_rank0("FSDP distributed type detected but no FSDP plugin found")
             elif accelerator.distributed_type.value != "FSDP" and os.environ.get("ACCELERATE_CONFIG_FILE"):
@@ -281,22 +282,23 @@ def _log_fsdp_runtime_status() -> None:
                 config_file = os.environ.get("ACCELERATE_CONFIG_FILE")
                 try:
                     import yaml
-                    with open(config_file, 'r') as f:
+
+                    with open(config_file) as f:
                         config_data = yaml.safe_load(f)
-                    if config_data.get('distributed_type') == 'FSDP':
+                    if config_data.get("distributed_type") == "FSDP":
                         logger.warning_rank0(
                             f"FSDP configured in {config_file} but accelerator is using "
                             f"{accelerator.distributed_type.value}. Check your launch command."
                         )
-                except:
+                except Exception:
                     pass  # Ignore config file reading errors
-            
+
             # Log world size and process info
             logger.info_rank0(f"World size: {accelerator.num_processes}, Process rank: {accelerator.process_index}")
-            
+
         except Exception as e:
             logger.info_rank0(f"Could not get detailed accelerator info: {e}")
-            
+
     except ImportError:
         logger.info_rank0("Accelerate not available for FSDP runtime check")
     except Exception as e:
@@ -342,7 +344,6 @@ def _verify_model_args(
 
     if model_args.fp8 and model_args.enable_qat:
         logger.warning_rank0("Using FP8 and QAT together may cause conflicts. Monitor training carefully.")
-
 
     if model_args.fp8_enable_fsdp_float8_all_gather and not model_args.fp8:
         logger.warning_rank0("fp8_enable_fsdp_float8_all_gather requires fp8=True. Setting fp8=True.")
@@ -432,7 +433,7 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
 
     # Check arguments
     _validate_fsdp_config()
-    
+
     if finetuning_args.stage != "sft":
         if training_args.predict_with_generate:
             raise ValueError("`predict_with_generate` cannot be set as True except SFT.")

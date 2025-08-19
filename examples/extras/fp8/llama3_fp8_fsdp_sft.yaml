@@ -52,7 +52,7 @@ fsdp_transformer_layer_cls_to_wrap: LlamaDecoderLayer
 # Enable FP8 mixed precision training
 fp8: true
 
-# Backend selection: 'auto', 'torchao', 'te', 'msamp'  
+# Backend selection: 'auto', 'torchao', 'te', 'msamp'
 # 'torchao' is recommended for FSDP (native PyTorch implementation)
 # 'auto' will select the best available backend
 fp8_backend: torchao

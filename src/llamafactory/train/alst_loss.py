@@ -47,12 +47,7 @@ class ALSTLossHandler:
     def __init__(self, sequence_parallel_group: Optional["dist.ProcessGroup"] = None):
         self.sp_group = sequence_parallel_group
 
-    def compute_alst_loss(
-        self,
-        model: "Module",
-        inputs: dict[str, Any],
-        return_outputs: bool = False
-    ) -> torch.Tensor:
+    def compute_alst_loss(self, model: "Module", inputs: dict[str, Any], return_outputs: bool = False) -> torch.Tensor:
         """Compute loss for ALST sequence parallel training.
 
         Args:
@@ -84,12 +79,12 @@ class ALSTLossHandler:
         outputs = model(**model_inputs, use_cache=False)
 
         # Extract logits from model outputs
-        if hasattr(outputs, 'logits'):
+        if hasattr(outputs, "logits"):
             logits = outputs.logits
         elif isinstance(outputs, dict) and "logits" in outputs:
             logits = outputs["logits"]
         else:
-            available_attrs = dir(outputs) if hasattr(outputs, '__dict__') else "N/A"
+            available_attrs = dir(outputs) if hasattr(outputs, "__dict__") else "N/A"
             available_keys = list(outputs.keys()) if isinstance(outputs, dict) else "N/A"
             raise ValueError(
                 f"Could not find logits in model outputs.\n"
@@ -159,10 +154,7 @@ class ALSTLossHandler:
 
         # Compute weighted average
         # Each rank contributes proportionally to its number of valid tokens
-        total_weighted_loss = sum(
-            losses_per_rank[i] * valid_tokens_per_rank[i]
-            for i in range(len(losses_per_rank))
-        )
+        total_weighted_loss = sum(losses_per_rank[i] * valid_tokens_per_rank[i] for i in range(len(losses_per_rank)))
         total_valid_tokens = sum(valid_tokens_per_rank)
 
         if total_valid_tokens > 0:
@@ -198,7 +190,4 @@ def should_use_alst_loss(inputs: dict[str, Any], sequence_parallel_group: Option
     Returns:
         True if ALST loss should be used, False for standard loss computation
     """
-    return (
-        sequence_parallel_group is not None and
-        "shift_labels" in inputs
-    )
+    return sequence_parallel_group is not None and "shift_labels" in inputs

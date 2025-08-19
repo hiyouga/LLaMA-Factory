@@ -1,10 +1,10 @@
 # Full Fine-Tuning config for Qwen2.5-7B-Instruct using Transformer Engine FP8 fallback
 # Alternative FP8 backend for models with dimension alignment issues
-# Based on LIMO paper configuration: https://arxiv.org/abs/2502.03387  
+# Based on LIMO paper configuration: https://arxiv.org/abs/2502.03387
 # Enhanced with YARN RoPE scaling for extended context length (131072 tokens)
 #
 # Requirements:
-#   - H100/H200 GPU (Hopper architecture) 
+#   - H100/H200 GPU (Hopper architecture)
 #   - PyTorch >= 2.7.0
 #   - Accelerate >= 1.8.0
 #   - Transformer Engine >= 2.0.0 (for te backend)
@@ -46,7 +46,7 @@ fp8_enable_fsdp_float8_all_gather: false   # FSDP optimizations (set to true if 
 bf16: false                                 # Disabled when using FP8
 fp16: false                                 # Disabled when using FP8
 
-### output  
+### output
 output_dir: output/qwen2.5_7b_tbench_traces_sharegptv1_fp8_te_fallback
 logging_steps: 5
 save_steps: 50

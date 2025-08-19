@@ -33,8 +33,8 @@ logger = logging.get_logger(__name__)
 def check_alst_requirements() -> bool:
     """Check if ALST requirements are available."""
     try:
-        import deepspeed
-        from deepspeed.runtime.sequence_parallel.ulysses_sp import UlyssesSPAttentionHF
+        import deepspeed  # noqa: F401
+        from deepspeed.runtime.sequence_parallel.ulysses_sp import UlyssesSPAttentionHF  # noqa: F401
 
         # DeepSpeed version check removed - ALST works with 0.17.2+
 
@@ -77,12 +77,7 @@ def create_ulysses_sp_group(sp_size: int) -> Optional["dist.ProcessGroup"]:
 class ALSTAttentionWrapper:
     """Wrapper for DeepSpeed ALST attention modules."""
 
-    def __init__(
-        self,
-        model_args: "ModelArguments",
-        sp_group: "dist.ProcessGroup",
-        model_config: Any
-    ):
+    def __init__(self, model_args: "ModelArguments", sp_group: "dist.ProcessGroup", model_config: Any):
         self.model_args = model_args
         self.sp_group = sp_group
         self.model_config = model_config
@@ -95,18 +90,18 @@ class ALSTAttentionWrapper:
     def _initialize_ulysses_attention(self) -> None:
         """Initialize UlyssesSPAttentionHF for ALST."""
         try:
-            from deepspeed.runtime.sequence_parallel.ulysses_sp import UlyssesSPAttentionHF
+            from deepspeed.runtime.sequence_parallel.ulysses_sp import UlyssesSPAttentionHF  # noqa: F401
 
             # Calculate attention parameters
-            hidden_size = getattr(self.model_config, 'hidden_size', 4096)
-            num_attention_heads = getattr(self.model_config, 'num_attention_heads', 32)
-            num_key_value_heads = getattr(self.model_config, 'num_key_value_heads', num_attention_heads)
-            num_hidden_layers = getattr(self.model_config, 'num_hidden_layers', 32)
+            hidden_size = getattr(self.model_config, "hidden_size", 4096)
+            num_attention_heads = getattr(self.model_config, "num_attention_heads", 32)
+            num_key_value_heads = getattr(self.model_config, "num_key_value_heads", num_attention_heads)
+            num_hidden_layers = getattr(self.model_config, "num_hidden_layers", 32)
             attn_head_size = hidden_size // num_attention_heads
 
             # Get sequence parameters
             ulysses_degree = self.model_args.alst_ulysses_degree or self.model_args.sequence_parallel_size
-            max_position_embeddings = int(getattr(self.model_config, 'max_position_embeddings', 32768))
+            max_position_embeddings = int(getattr(self.model_config, "max_position_embeddings", 32768))
             local_seq_length = int(max_position_embeddings // ulysses_degree)
 
             # Validate attention head compatibility with sequence parallel size
@@ -168,6 +163,7 @@ class ALSTAttentionWrapper:
 
         except Exception as e:
             import traceback
+
             logger.info_rank0(f"Failed to initialize UlyssesSPAttentionHF: {e}")
             logger.info_rank0(f"Full traceback:\n{traceback.format_exc()}")
             raise ValueError("Failed to initialize UlyssesSPAttentionHF: {e}")
@@ -187,7 +183,7 @@ class ALSTAttentionWrapper:
             hidden_states: torch.Tensor,
             attention_mask: Optional[torch.Tensor] = None,
             position_ids: Optional[torch.Tensor] = None,
-            **kwargs
+            **kwargs,
         ) -> tuple[torch.Tensor, ...]:
             """ALST-enabled attention forward pass."""
             # Get batch size and sequence length
@@ -195,7 +191,7 @@ class ALSTAttentionWrapper:
 
             # Update UlyssesSPAttentionHF configuration for current batch
             self.ulysses_attention.batch_size = batch_size
-            if hasattr(self.ulysses_attention, 'local_seq_length'):
+            if hasattr(self.ulysses_attention, "local_seq_length"):
                 # Update local sequence length based on actual input
                 global_seq_len = seq_len * dist.get_world_size(self.sp_group)
                 self.ulysses_attention.local_seq_length = seq_len
@@ -209,26 +205,17 @@ class ALSTAttentionWrapper:
 
                     # Call ALST attention
                     return self.ulysses_attention(
-                        hidden_states,
-                        attention_mask=attention_mask,
-                        position_ids=position_ids,
-                        **kwargs
+                        hidden_states, attention_mask=attention_mask, position_ids=position_ids, **kwargs
                     )
                 except Exception as e:
                     logger.warning(f"ALST attention failed, falling back to original: {e}")
                     return original_forward(
-                        hidden_states,
-                        attention_mask=attention_mask,
-                        position_ids=position_ids,
-                        **kwargs
+                        hidden_states, attention_mask=attention_mask, position_ids=position_ids, **kwargs
                     )
             else:
                 # Use original attention for shorter sequences or manual backend
                 return original_forward(
-                    hidden_states,
-                    attention_mask=attention_mask,
-                    position_ids=position_ids,
-                    **kwargs
+                    hidden_states, attention_mask=attention_mask, position_ids=position_ids, **kwargs
                 )
 
         # Replace the forward method
@@ -247,10 +234,10 @@ class DeepSpeedSequenceParallel:
     def should_use_alst(self) -> bool:
         """Check if ALST should be used based on configuration."""
         return (
-            self.model_args.sequence_parallel_size > 1 and
-            self.model_args.sequence_parallel_mode == "deepspeed-alst" and
-            self.model_args.alst_sequence_backend == "deepspeed" and
-            check_alst_requirements()
+            self.model_args.sequence_parallel_size > 1
+            and self.model_args.sequence_parallel_mode == "deepspeed-alst"
+            and self.model_args.alst_sequence_backend == "deepspeed"
+            and check_alst_requirements()
         )
 
     def initialize_sp_group(self) -> Optional["dist.ProcessGroup"]:
@@ -302,7 +289,9 @@ class DeepSpeedSequenceParallel:
         }
 
 
-def apply_deepspeed_sequence_parallel(model_args: "ModelArguments", model: PreTrainedModel) -> Optional["dist.ProcessGroup"]:
+def apply_deepspeed_sequence_parallel(
+    model_args: "ModelArguments", model: PreTrainedModel
+) -> Optional["dist.ProcessGroup"]:
     """Apply DeepSpeed ALST sequence parallelism to model."""
     if model_args.sequence_parallel_size <= 1:
         return None

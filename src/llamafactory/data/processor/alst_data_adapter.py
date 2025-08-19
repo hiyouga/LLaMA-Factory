@@ -35,8 +35,9 @@ logger = logging.get_logger(__name__)
 def check_alst_data_requirements() -> bool:
     """Check if ALST data processing requirements are available."""
     try:
-        import deepspeed
-        from deepspeed.runtime.sequence_parallel.ulysses_sp import UlyssesSPDataLoaderAdapter
+        import deepspeed  # noqa: F401
+        from deepspeed.runtime.sequence_parallel.ulysses_sp import UlyssesSPDataLoaderAdapter  # noqa: F401
+
         return True
     except ImportError as e:
         logger.warning(f"ALST data requirements not met: {e}")
@@ -47,10 +48,7 @@ class ALSTDataAdapter:
     """Data adapter for Arctic Long Sequence Training with DeepSpeed."""
 
     def __init__(
-        self,
-        model_args: "ModelArguments",
-        alst_config: "ALSTConfig",
-        sp_group: Optional["dist.ProcessGroup"] = None
+        self, model_args: "ModelArguments", alst_config: "ALSTConfig", sp_group: Optional["dist.ProcessGroup"] = None
     ):
         self.model_args = model_args
         self.alst_config = alst_config
@@ -63,9 +61,7 @@ class ALSTDataAdapter:
     def should_use_alst_data_adapter(self, sequence_length: int) -> bool:
         """Determine if ALST data adapter should be used."""
         result = (
-            self.alst_config.enabled and
-            self.is_available and
-            self.sp_group is not None
+            self.alst_config.enabled and self.is_available and self.sp_group is not None
             # Remove sequence length requirement - let ALST handle all sequences when enabled
         )
 
@@ -79,18 +75,14 @@ class ALSTDataAdapter:
 
         return result
 
-    def wrap_dataloader(
-        self,
-        dataloader: DataLoader,
-        sequence_length: Optional[int] = None
-    ) -> DataLoader:
+    def wrap_dataloader(self, dataloader: DataLoader, sequence_length: Optional[int] = None) -> DataLoader:
         """Wrap DataLoader with UlyssesSPDataLoaderAdapter if appropriate."""
         if not self.should_use_alst_data_adapter(sequence_length or 0):
             logger.info_rank0("ALST not enabled, using standard DataLoader without sequence parallel processing")
             return dataloader  # Return original dataloader without manual SP processing
 
         import torch.distributed as dist
-        from deepspeed.runtime.sequence_parallel.ulysses_sp import UlyssesSPDataLoaderAdapter
+        from deepspeed.runtime.sequence_parallel.ulysses_sp import UlyssesSPDataLoaderAdapter  # noqa: F401
 
         logger.info_rank0("Wrapping DataLoader with UlyssesSPDataLoaderAdapter")
 
@@ -100,17 +92,13 @@ class ALSTDataAdapter:
 
         sp_rank = dist.get_rank(self.sp_group)
         sp_world_size = dist.get_world_size(self.sp_group)
-        device = torch.cuda.current_device() if torch.cuda.is_available() else torch.device('cpu')
+        device = torch.cuda.current_device() if torch.cuda.is_available() else torch.device("cpu")
 
         logger.info_rank0(f"Creating UlyssesSPDataLoaderAdapter with sp_rank={sp_rank}, sp_world_size={sp_world_size}")
 
         # Create ALST-enabled dataloader with keyword arguments (like Oumi)
         alst_dataloader = UlyssesSPDataLoaderAdapter(
-            dataloader,
-            sp_rank=sp_rank,
-            sp_group=self.sp_group,
-            sp_world_size=sp_world_size,
-            device=device
+            dataloader, sp_rank=sp_rank, sp_group=self.sp_group, sp_world_size=sp_world_size, device=device
         )
 
         logger.info_rank0("Successfully created ALST-enabled DataLoader")
@@ -126,9 +114,7 @@ class ALSTDataAdapter:
 
         # Create a wrapper dataset that handles sequence parallel processing
         wrapped_dataset = ManualSequenceParallelDataset(
-            dataset,
-            self.model_args.sequence_parallel_size,
-            self.model_args.sequence_parallel_mode
+            dataset, self.model_args.sequence_parallel_size, self.model_args.sequence_parallel_mode
         )
 
         # Create new dataloader with wrapped dataset
@@ -141,20 +127,20 @@ class ALSTDataAdapter:
                 collate_fn=dataloader.collate_fn,
                 pin_memory=dataloader.pin_memory,
                 timeout=dataloader.timeout,
-                worker_init_fn=getattr(dataloader, 'worker_init_fn', None),
+                worker_init_fn=getattr(dataloader, "worker_init_fn", None),
             )
         else:
             manual_dataloader = DataLoader(
                 wrapped_dataset,
                 batch_size=dataloader.batch_size,
-                shuffle=getattr(dataloader, '_shuffle', False),
+                shuffle=getattr(dataloader, "_shuffle", False),
                 sampler=dataloader.sampler,
                 num_workers=dataloader.num_workers,
                 collate_fn=dataloader.collate_fn,
                 pin_memory=dataloader.pin_memory,
                 drop_last=dataloader.drop_last,
                 timeout=dataloader.timeout,
-                worker_init_fn=getattr(dataloader, 'worker_init_fn', None),
+                worker_init_fn=getattr(dataloader, "worker_init_fn", None),
             )
 
         logger.info_rank0("Created manual sequence parallel DataLoader")
@@ -192,12 +178,7 @@ class ALSTDataAdapter:
 class ManualSequenceParallelDataset(Dataset):
     """Dataset wrapper for manual sequence parallel processing."""
 
-    def __init__(
-        self,
-        dataset: Dataset,
-        sequence_parallel_size: int,
-        sequence_parallel_mode: str
-    ):
+    def __init__(self, dataset: Dataset, sequence_parallel_size: int, sequence_parallel_mode: str):
         self.dataset = dataset
         self.sequence_parallel_size = sequence_parallel_size
         self.sequence_parallel_mode = sequence_parallel_mode
@@ -212,15 +193,13 @@ class ManualSequenceParallelDataset(Dataset):
         # Apply sequence parallel processing to relevant fields
         processed_item = {}
         for key, value in item.items():
-            if isinstance(value, (list, torch.Tensor)) and key.endswith(('input_ids', 'labels', 'attention_mask')):
+            if isinstance(value, (list, torch.Tensor)) and key.endswith(("input_ids", "labels", "attention_mask")):
                 # Apply sequence parallel processing
                 if isinstance(value, torch.Tensor):
                     value = value.tolist()
 
                 processed_chunks = preprocess_sp_dataset(
-                    value,
-                    self.sequence_parallel_size,
-                    self.sequence_parallel_mode
+                    value, self.sequence_parallel_size, self.sequence_parallel_mode
                 )
 
                 # Get the chunk for current rank
@@ -236,7 +215,8 @@ class ManualSequenceParallelDataset(Dataset):
                 if isinstance(chunk_data, (list, tuple)):
                     # Convert list to numpy first for efficiency (addresses performance warning)
                     import numpy as np
-                    chunk_array = np.array(chunk_data, dtype=np.int64 if key in ['input_ids', 'labels'] else np.int32)
+
+                    chunk_array = np.array(chunk_data, dtype=np.int64 if key in ["input_ids", "labels"] else np.int32)
                     tensor = torch.from_numpy(chunk_array).contiguous()
 
                     # Ensure tensor is dense (not sparse) for distributed operations
@@ -246,7 +226,7 @@ class ManualSequenceParallelDataset(Dataset):
                     processed_item[key] = tensor
                 else:
                     # Ensure consistent dtype for different keys
-                    target_dtype = torch.int64 if key in ['input_ids', 'labels'] else torch.int32
+                    target_dtype = torch.int64 if key in ["input_ids", "labels"] else torch.int32
                     tensor = torch.tensor(chunk_data, dtype=target_dtype).contiguous()
 
                     # Ensure tensor is dense (not sparse) for distributed operations
@@ -268,9 +248,7 @@ class ManualSequenceParallelDataset(Dataset):
 
 
 def create_alst_data_adapter(
-    model_args: "ModelArguments",
-    alst_config: "ALSTConfig",
-    sp_group: Optional["dist.ProcessGroup"] = None
+    model_args: "ModelArguments", alst_config: "ALSTConfig", sp_group: Optional["dist.ProcessGroup"] = None
 ) -> ALSTDataAdapter:
     """Create ALST data adapter."""
     adapter = ALSTDataAdapter(model_args, alst_config, sp_group)
@@ -288,7 +266,7 @@ def wrap_dataloader_for_alst(
     model_args: "ModelArguments",
     alst_config: "ALSTConfig",
     sp_group: Optional["dist.ProcessGroup"] = None,
-    sequence_length: Optional[int] = None
+    sequence_length: Optional[int] = None,
 ) -> DataLoader:
     """Convenience function to wrap a DataLoader for ALST."""
     adapter = create_alst_data_adapter(model_args, alst_config, sp_group)

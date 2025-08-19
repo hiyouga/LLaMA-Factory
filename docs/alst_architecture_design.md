@@ -23,20 +23,20 @@ This document outlines the architecture design for migrating LLaMA-Factory's seq
 ```python
 class DeepSpeedSequenceParallel:
     """Unified interface for DeepSpeed ALST sequence parallelism."""
-    
+
     def __init__(self, model_args: ModelArguments):
         self.model_args = model_args
         self.sp_group = None
         self.attention_wrapper = None
-        
+
     def initialize_sp_group(self) -> ProcessGroup:
         """Initialize sequence parallel process group."""
         pass
-        
+
     def wrap_attention_modules(self, model) -> None:
-        """Replace attention modules with ALST-enabled versions.""" 
+        """Replace attention modules with ALST-enabled versions."""
         pass
-        
+
     def get_data_adapter(self) -> ALSTDataAdapter:
         """Get data adapter for ALST processing."""
         pass
@@ -44,7 +44,7 @@ class DeepSpeedSequenceParallel:
 
 ### Backward Compatibility Strategy
 
-1. **Mode Detection**: 
+1. **Mode Detection**:
    - `deepspeed-alst` → Use new ALST implementation
    - `zigzag-ring`, `ulysses`, `llama3` → Use compatibility layer or legacy mode
 

@@ -69,8 +69,9 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
         # Synchronize gradient accumulation steps between Accelerate and DeepSpeed/Training args
         training_args = kwargs.get("args")
-        if training_args is not None and hasattr(training_args, 'gradient_accumulation_steps'):
+        if training_args is not None and hasattr(training_args, "gradient_accumulation_steps"):
             import os
+
             gradient_accumulation_steps = training_args.gradient_accumulation_steps
             os.environ["ACCELERATE_GRADIENT_ACCUMULATION_STEPS"] = str(gradient_accumulation_steps)
             logger.info_rank0(f"Set ACCELERATE_GRADIENT_ACCUMULATION_STEPS={gradient_accumulation_steps}")
@@ -122,7 +123,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             self.compute_loss_func = dft_loss_func
 
         # Verify FP8 status after trainer initialization (accelerator should be available)
-        if model_args is not None and model_args.fp8 and hasattr(self, 'accelerator'):
+        if model_args is not None and model_args.fp8 and hasattr(self, "accelerator"):
             verify_fp8_status(self.accelerator, model_args)
 
     @override
@@ -167,7 +168,9 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         else:
             # Standard training (no sequence parallelism) or ALST not properly configured
             if sequence_parallel_group is not None:
-                logger.warning(f"Sequence parallel group exists but ALST loss not triggered. Input keys: {list(inputs.keys())}")
+                logger.warning(
+                    f"Sequence parallel group exists but ALST loss not triggered. Input keys: {list(inputs.keys())}"
+                )
 
             loss = super().compute_loss(model, inputs, return_outputs, **kwargs)
 
@@ -179,7 +182,6 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                 return loss / self.args.gradient_accumulation_steps
 
         return loss
-
 
     @override
     def prediction_step(
@@ -253,7 +255,9 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             update_alst_adapter_with_model(self.alst_data_adapter, self.model, self.accelerator)
 
             # Estimate sequence length from dataset if possible
-            sequence_length = getattr(self.args, 'max_seq_length', None) or getattr(self.train_dataset, 'max_length', None)
+            sequence_length = getattr(self.args, "max_seq_length", None) or getattr(
+                self.train_dataset, "max_length", None
+            )
             dataloader = self.alst_data_adapter.wrap_dataloader(dataloader, sequence_length)
             logger.info_rank0("Applied ALST wrapping to training DataLoader")
 
@@ -269,7 +273,9 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             update_alst_adapter_with_model(self.alst_data_adapter, self.model, self.accelerator)
 
             # Estimate sequence length from dataset if possible
-            sequence_length = getattr(self.args, 'max_seq_length', None) or getattr(eval_dataset or self.eval_dataset, 'max_length', None)
+            sequence_length = getattr(self.args, "max_seq_length", None) or getattr(
+                eval_dataset or self.eval_dataset, "max_length", None
+            )
             dataloader = self.alst_data_adapter.wrap_dataloader(dataloader, sequence_length)
             logger.info_rank0("Applied ALST wrapping to evaluation DataLoader")
 

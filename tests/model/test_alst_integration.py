@@ -67,7 +67,7 @@ class TestALSTConfig:
         config = ALSTConfig(
             enabled=True,
             sequence_parallel_size=4,
-            ulysses_degree=8  # Should be adjusted to match SP size
+            ulysses_degree=8,  # Should be adjusted to match SP size
         )
 
         # Validation should adjust ulysses_degree
@@ -75,12 +75,7 @@ class TestALSTConfig:
 
     def test_deepspeed_config_generation(self):
         """Test DeepSpeed config generation from ALST config."""
-        config = ALSTConfig(
-            enabled=True,
-            sequence_parallel_size=4,
-            sequence_tiling=True,
-            memory_optimizations=True
-        )
+        config = ALSTConfig(enabled=True, sequence_parallel_size=4, sequence_tiling=True, memory_optimizations=True)
 
         ds_config = config.to_deepspeed_config()
 
@@ -94,7 +89,7 @@ class TestALSTConfig:
 class TestDeepSpeedSequenceParallel:
     """Test DeepSpeed sequence parallel management."""
 
-    @patch('llamafactory.model.model_utils.deepspeed_sequence_parallel.check_alst_requirements')
+    @patch("llamafactory.model.model_utils.deepspeed_sequence_parallel.check_alst_requirements")
     def test_should_use_alst(self, mock_check_requirements):
         """Test ALST usage decision logic."""
         mock_check_requirements.return_value = True
@@ -108,7 +103,7 @@ class TestDeepSpeedSequenceParallel:
 
         assert ds_sp.should_use_alst()
 
-    @patch('llamafactory.model.model_utils.deepspeed_sequence_parallel.check_alst_requirements')
+    @patch("llamafactory.model.model_utils.deepspeed_sequence_parallel.check_alst_requirements")
     def test_should_not_use_alst_legacy_mode(self, mock_check_requirements):
         """Test ALST not used for legacy modes."""
         mock_check_requirements.return_value = True
@@ -122,7 +117,7 @@ class TestDeepSpeedSequenceParallel:
 
         assert not ds_sp.should_use_alst()
 
-    @patch('llamafactory.model.model_utils.deepspeed_sequence_parallel.check_alst_requirements')
+    @patch("llamafactory.model.model_utils.deepspeed_sequence_parallel.check_alst_requirements")
     def test_should_not_use_alst_no_requirements(self, mock_check_requirements):
         """Test ALST not used when requirements not met."""
         mock_check_requirements.return_value = False
@@ -142,11 +137,7 @@ class TestMigrationUtils:
 
     def test_migrate_ulysses_to_alst(self):
         """Test migration from ulysses mode to ALST."""
-        config_data = {
-            "sequence_parallel_size": 4,
-            "sequence_parallel_mode": "ulysses",
-            "cutoff_len": 32768
-        }
+        config_data = {"sequence_parallel_size": 4, "sequence_parallel_mode": "ulysses", "cutoff_len": 32768}
 
         migrated_config, was_migrated = migrate_sequence_parallel_config(config_data)
 
@@ -158,10 +149,7 @@ class TestMigrationUtils:
 
     def test_no_migration_needed(self):
         """Test no migration when not applicable."""
-        config_data = {
-            "sequence_parallel_size": 1,
-            "cutoff_len": 2048
-        }
+        config_data = {"sequence_parallel_size": 1, "cutoff_len": 2048}
 
         migrated_config, was_migrated = migrate_sequence_parallel_config(config_data)
 
@@ -170,11 +158,7 @@ class TestMigrationUtils:
 
     def test_zigzag_ring_warning(self):
         """Test warning for zigzag-ring mode."""
-        config_data = {
-            "sequence_parallel_size": 4,
-            "sequence_parallel_mode": "zigzag-ring",
-            "cutoff_len": 16384
-        }
+        config_data = {"sequence_parallel_size": 4, "sequence_parallel_mode": "zigzag-ring", "cutoff_len": 16384}
 
         migrated_config, was_migrated = migrate_sequence_parallel_config(config_data)
 
@@ -183,10 +167,7 @@ class TestMigrationUtils:
         assert migrated_config["sequence_parallel_mode"] == "zigzag-ring"
 
 
-@pytest.mark.skipif(
-    not check_alst_requirements(),
-    reason="ALST requirements not available"
-)
+@pytest.mark.skipif(not check_alst_requirements(), reason="ALST requirements not available")
 class TestALSTIntegration:
     """Integration tests for ALST (requires DeepSpeed)."""
 

@@ -149,11 +149,15 @@ class BaseModelArguments:
     )
     sequence_parallel_mode: Literal["zigzag-ring", "llama3", "ulysses", "deepspeed-alst"] = field(
         default="deepspeed-alst",
-        metadata={"help": "Specific mode of sequence parallel implementation. 'deepspeed-alst' (recommended) uses DeepSpeed's Arctic Long Sequence Training. Legacy modes: 'zigzag-ring', 'ulysses', 'llama3'."},
+        metadata={
+            "help": "Specific mode of sequence parallel implementation. 'deepspeed-alst' (recommended) uses DeepSpeed's Arctic Long Sequence Training. Legacy modes: 'zigzag-ring', 'ulysses', 'llama3'."
+        },
     )
     alst_sequence_backend: Literal["deepspeed", "manual"] = field(
         default="deepspeed",
-        metadata={"help": "Backend for sequence parallelism. 'deepspeed' uses native ALST, 'manual' uses current implementation."},
+        metadata={
+            "help": "Backend for sequence parallelism. 'deepspeed' uses native ALST, 'manual' uses current implementation."
+        },
     )
     alst_sequence_tiling: bool = field(
         default=False,
@@ -248,21 +252,24 @@ class BaseModelArguments:
         if self.attn is not None:
             valid_standard_impls = {impl.value for impl in AttentionImplementation}
             attn_value = self.attn.strip()
-            
+
             # Check if it's a standard implementation
             if attn_value in valid_standard_impls:
                 pass  # Valid standard implementation
             else:
                 # Check if it's a HuggingFace kernel (contains '/' or starts with 'hf:')
-                is_hf_kernel = ('/' in attn_value or 
-                               attn_value.startswith('hf:') or
-                               any(kernel_word in attn_value for kernel_word in ['kernel', 'flash', 'attn']))
-                
+                is_hf_kernel = (
+                    "/" in attn_value
+                    or attn_value.startswith("hf:")
+                    or any(kernel_word in attn_value for kernel_word in ["kernel", "flash", "attn"])
+                )
+
                 if not is_hf_kernel:
-                    valid_options = list(valid_standard_impls) + ["HF kernel names (e.g., 'kernels-community/vllm-flash-attn3')"]
+                    valid_options = list(valid_standard_impls) + [
+                        "HF kernel names (e.g., 'kernels-community/vllm-flash-attn3')"
+                    ]
                     raise ValueError(
-                        f"Invalid attention implementation '{attn_value}'. "
-                        f"Valid options: {valid_options}"
+                        f"Invalid attention implementation '{attn_value}'. Valid options: {valid_options}"
                     )
 
 

@@ -57,7 +57,9 @@ def run_sft(
         setattr(model, "_hf_peft_config_loaded", True)  # hack here: make model compatible with prediction
 
     # Determine optimal padding multiple using smart detection
-    optimal_padding = get_optimal_pad_multiple(model, model_args, data_args, training_args) if training_args.do_train else None
+    optimal_padding = (
+        get_optimal_pad_multiple(model, model_args, data_args, training_args) if training_args.do_train else None
+    )
     validate_padding_config(optimal_padding, model_args)
 
     data_collator = SFTDataCollatorWith4DAttentionMask(

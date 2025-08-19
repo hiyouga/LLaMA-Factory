@@ -38,19 +38,21 @@ def debug_tensor_properties(tensor: torch.Tensor, name: str = "tensor", rank_fil
 
     rank_str = f"[rank{dist.get_rank()}]" if dist.is_initialized() else "[single]"
 
-    logger.info_rank0(f"{rank_str} Tensor '{name}' - "
-                     f"shape: {tensor.shape}, "
-                     f"dtype: {tensor.dtype}, "
-                     f"device: {tensor.device}, "
-                     f"is_contiguous: {tensor.is_contiguous()}, "
-                     f"is_cuda: {tensor.is_cuda}, "
-                     f"requires_grad: {tensor.requires_grad}")
+    logger.info_rank0(
+        f"{rank_str} Tensor '{name}' - "
+        f"shape: {tensor.shape}, "
+        f"dtype: {tensor.dtype}, "
+        f"device: {tensor.device}, "
+        f"is_contiguous: {tensor.is_contiguous()}, "
+        f"is_cuda: {tensor.is_cuda}, "
+        f"requires_grad: {tensor.requires_grad}"
+    )
 
     # Check for common issues
     if not tensor.is_contiguous():
         logger.warning(f"{rank_str} Non-contiguous tensor '{name}' - this may cause distributed ops to fail")
 
-    if tensor.device.type == 'cpu' and dist.is_initialized():
+    if tensor.device.type == "cpu" and dist.is_initialized():
         logger.warning(f"{rank_str} CPU tensor '{name}' in distributed context - may need to be on CUDA")
 
 
@@ -120,11 +122,13 @@ def debug_gather_operation(tensor: torch.Tensor, name: str = "tensor") -> None:
     """
     rank_str = f"[rank{dist.get_rank()}]" if dist.is_initialized() else "[single]"
 
-    logger.info_rank0(f"{rank_str} Pre-gather debug '{name}': "
-                     f"shape={tensor.shape}, dtype={tensor.dtype}, "
-                     f"device={tensor.device}, is_cuda={tensor.is_cuda}, "
-                     f"is_contiguous={tensor.is_contiguous()}, "
-                     f"is_sparse={tensor.is_sparse}")
+    logger.info_rank0(
+        f"{rank_str} Pre-gather debug '{name}': "
+        f"shape={tensor.shape}, dtype={tensor.dtype}, "
+        f"device={tensor.device}, is_cuda={tensor.is_cuda}, "
+        f"is_contiguous={tensor.is_contiguous()}, "
+        f"is_sparse={tensor.is_sparse}"
+    )
 
     # Validate for gather operation
     if not tensor.is_cuda and dist.is_initialized():
@@ -140,4 +144,4 @@ def debug_gather_operation(tensor: torch.Tensor, name: str = "tensor") -> None:
 # Quick enable/disable debug flags
 DEBUG_TENSORS = False  # Set to True to enable tensor debugging
 DEBUG_BATCHES = False  # Set to True to enable batch debugging
-DEBUG_GATHER = False   # Set to True to enable gather operation debugging
+DEBUG_GATHER = False  # Set to True to enable gather operation debugging

@@ -38,16 +38,17 @@ def prepare_model_for_qat(model, model_args: "ModelArguments"):
 
         # Create QAT quantizer with specified parameters
         quantizer = Int8DynActInt4WeightQATQuantizer(
-            groupsize=getattr(model_args, 'qat_group_size', 32),
-            precision=torch.float32
+            groupsize=getattr(model_args, "qat_group_size", 32), precision=torch.float32
         )
 
         # Apply quantization to the model
         model = quantizer.quantize(model)
 
         # Enable fake quantization after specified steps if configured
-        if hasattr(model_args, 'fake_quant_after_n_steps') and model_args.fake_quant_after_n_steps is not None:
-            logger.info_rank0(f"QAT fake quantization will be enabled after {model_args.fake_quant_after_n_steps} steps")
+        if hasattr(model_args, "fake_quant_after_n_steps") and model_args.fake_quant_after_n_steps is not None:
+            logger.info_rank0(
+                f"QAT fake quantization will be enabled after {model_args.fake_quant_after_n_steps} steps"
+            )
 
         logger.info_rank0("Model prepared for QAT training")
         return model
@@ -58,5 +59,3 @@ def prepare_model_for_qat(model, model_args: "ModelArguments"):
     except Exception as e:
         logger.warning_rank0(f"Failed to prepare model for QAT: {e}")
         return model
-
-

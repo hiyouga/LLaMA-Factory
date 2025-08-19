@@ -36,12 +36,15 @@ def configure_attn_implementation(config: "PretrainedConfig", model_args: "Model
         logger.info_rank0("No attention implementation specified, using default eager attention.")
     else:
         attn_value = model_args.attn.strip()
-        
+
         # Check if it's a HuggingFace kernel (contains '/' or starts with 'hf:')
-        if ('/' in attn_value or attn_value.startswith('hf:') or 
-            any(kernel_word in attn_value for kernel_word in ['kernel', 'flash', 'attn'])):
+        if (
+            "/" in attn_value
+            or attn_value.startswith("hf:")
+            or any(kernel_word in attn_value for kernel_word in ["kernel", "flash", "attn"])
+        ):
             # Handle HuggingFace kernel
-            kernel_name = attn_value[3:] if attn_value.startswith('hf:') else attn_value
+            kernel_name = attn_value[3:] if attn_value.startswith("hf:") else attn_value
             try:
                 from kernels import get_kernel
 
@@ -51,7 +54,9 @@ def configure_attn_implementation(config: "PretrainedConfig", model_args: "Model
                     setattr(config, "_hf_kernel", kernel_name)
                     return
                 else:
-                    logger.warning_rank0(f"HuggingFace kernel '{kernel_name}' not found. Falling back to eager attention.")
+                    logger.warning_rank0(
+                        f"HuggingFace kernel '{kernel_name}' not found. Falling back to eager attention."
+                    )
                     requested_attn_implementation = "eager"
             except ImportError:
                 logger.warning_rank0(
@@ -59,7 +64,9 @@ def configure_attn_implementation(config: "PretrainedConfig", model_args: "Model
                 )
                 requested_attn_implementation = "eager"
             except Exception as e:
-                logger.warning_rank0(f"Failed to load HuggingFace kernel {kernel_name}: {e}. Falling back to eager attention.")
+                logger.warning_rank0(
+                    f"Failed to load HuggingFace kernel {kernel_name}: {e}. Falling back to eager attention."
+                )
                 requested_attn_implementation = "eager"
         else:
             # Handle standard attention implementations

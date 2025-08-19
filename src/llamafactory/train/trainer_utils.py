@@ -779,8 +779,7 @@ def get_ray_trainer(
 
 
 def get_sequence_parallel_group(
-    model: "torch.nn.Module",
-    accelerator: Optional[Any] = None
+    model: "torch.nn.Module", accelerator: Optional[Any] = None
 ) -> Optional["dist.ProcessGroup"]:
     """Get sequence parallel group from model, handling DDP wrapping.
 
@@ -795,28 +794,26 @@ def get_sequence_parallel_group(
     if accelerator is not None:
         try:
             unwrapped_model = accelerator.unwrap_model(model)
-            return getattr(unwrapped_model, 'sequence_parallel_group', None)
+            return getattr(unwrapped_model, "sequence_parallel_group", None)
         except Exception:
             pass
 
     # Fallback: try direct access and common wrapper patterns
-    if hasattr(model, 'sequence_parallel_group'):
-        return getattr(model, 'sequence_parallel_group', None)
+    if hasattr(model, "sequence_parallel_group"):
+        return getattr(model, "sequence_parallel_group", None)
 
     # Handle common wrapper patterns
-    for attr in ['module', '_orig_mod', '_modules']:
+    for attr in ["module", "_orig_mod", "_modules"]:
         if hasattr(model, attr):
             wrapped_model = getattr(model, attr)
-            if hasattr(wrapped_model, 'sequence_parallel_group'):
-                return getattr(wrapped_model, 'sequence_parallel_group', None)
+            if hasattr(wrapped_model, "sequence_parallel_group"):
+                return getattr(wrapped_model, "sequence_parallel_group", None)
 
     return None
 
 
 def update_alst_adapter_with_model(
-    alst_data_adapter: Optional[Any],
-    model: "torch.nn.Module",
-    accelerator: Optional[Any] = None
+    alst_data_adapter: Optional[Any], model: "torch.nn.Module", accelerator: Optional[Any] = None
 ) -> None:
     """Update ALST data adapter with sequence parallel group from model.
 
@@ -830,8 +827,10 @@ def update_alst_adapter_with_model(
         logger.info_rank0(f"Updating ALST adapter with sequence parallel group: {sp_group}")
         logger.info_rank0(f"Model type: {type(model)}")
         logger.info_rank0(f"Model has sequence_parallel_group attr: {hasattr(model, 'sequence_parallel_group')}")
-        if hasattr(model, 'sequence_parallel_group'):
-            logger.info_rank0(f"Model sequence_parallel_group value: {getattr(model, 'sequence_parallel_group', None)}")
+        if hasattr(model, "sequence_parallel_group"):
+            logger.info_rank0(
+                f"Model sequence_parallel_group value: {getattr(model, 'sequence_parallel_group', None)}"
+            )
 
         if sp_group is not None:
             alst_data_adapter.sp_group = sp_group
@@ -858,33 +857,35 @@ def get_attention_heads_from_model(model: "torch.nn.Module") -> Optional[int]:
 
         # Check if model is actually a dictionary (shouldn't happen, but let's be defensive)
         if isinstance(model, dict):
-            logger.warning_rank0(f"Expected torch.nn.Module but got dict: {list(model.keys()) if model else 'empty dict'}")
+            logger.warning_rank0(
+                f"Expected torch.nn.Module but got dict: {list(model.keys()) if model else 'empty dict'}"
+            )
             return None
 
         # Unwrap model through various wrapper layers
         unwrapped_model = model
 
         # Handle DDP/FSDP wrapping
-        if hasattr(unwrapped_model, 'module'):
+        if hasattr(unwrapped_model, "module"):
             unwrapped_model = unwrapped_model.module
 
         # Handle PEFT wrapping
-        if hasattr(unwrapped_model, 'base_model'):
+        if hasattr(unwrapped_model, "base_model"):
             unwrapped_model = unwrapped_model.base_model
-            if hasattr(unwrapped_model, 'model'):
+            if hasattr(unwrapped_model, "model"):
                 unwrapped_model = unwrapped_model.model
 
         # Handle additional wrapper patterns (avoid getting dictionaries)
-        for attr in ['_orig_mod']:
+        for attr in ["_orig_mod"]:
             if hasattr(unwrapped_model, attr):
                 candidate = getattr(unwrapped_model, attr)
                 # Only use if it's actually a model, not a dict or other type
-                if hasattr(candidate, '__class__') and hasattr(candidate, 'config'):
+                if hasattr(candidate, "__class__") and hasattr(candidate, "config"):
                     unwrapped_model = candidate
                     break
 
         # Verify we have a config attribute before accessing it
-        if not hasattr(unwrapped_model, 'config'):
+        if not hasattr(unwrapped_model, "config"):
             logger.warning_rank0(f"Model {type(unwrapped_model)} has no config attribute")
             return None
 
@@ -897,11 +898,11 @@ def get_attention_heads_from_model(model: "torch.nn.Module") -> Optional[int]:
 
         # Try common config attribute names for attention heads
         attention_head_attrs = [
-            'num_attention_heads',  # Most common (LLaMA, Qwen, etc.)
-            'n_head',              # GPT-style models
-            'num_heads',           # Alternative naming
-            'attention_heads',     # Direct naming
-            'n_heads',             # Another variant
+            "num_attention_heads",  # Most common (LLaMA, Qwen, etc.)
+            "n_head",  # GPT-style models
+            "num_heads",  # Alternative naming
+            "attention_heads",  # Direct naming
+            "n_heads",  # Another variant
         ]
 
         for attr in attention_head_attrs:
@@ -922,7 +923,7 @@ def get_optimal_pad_multiple(
     model: "torch.nn.Module",
     model_args: "ModelArguments",
     data_args: "DataArguments",
-    training_args: "TrainingArguments"
+    training_args: "TrainingArguments",
 ) -> Optional[int]:
     """Determine optimal padding multiple based on model config and training setup.
 
@@ -944,7 +945,9 @@ def get_optimal_pad_multiple(
             try:
                 return int(data_args.pad_to_multiple_of)
             except ValueError:
-                logger.warning_rank0(f"Invalid pad_to_multiple_of value: {data_args.pad_to_multiple_of}, using auto-detection")
+                logger.warning_rank0(
+                    f"Invalid pad_to_multiple_of value: {data_args.pad_to_multiple_of}, using auto-detection"
+                )
         else:
             return data_args.pad_to_multiple_of
 
@@ -952,9 +955,9 @@ def get_optimal_pad_multiple(
     optimal = 8  # Conservative fallback
 
     # FP8 requirements (16 for TorchAO backend)
-    if getattr(model_args, 'fp8', False):
-        backend = getattr(model_args, 'fp8_backend', 'auto')
-        if backend in ['torchao', 'auto']:
+    if getattr(model_args, "fp8", False):
+        backend = getattr(model_args, "fp8_backend", "auto")
+        if backend in ["torchao", "auto"]:
             optimal = max(optimal, 16)
             logger.debug(f"FP8 training with {backend} backend detected, setting minimum padding to 16")
 
@@ -966,8 +969,8 @@ def get_optimal_pad_multiple(
         logger.debug(f"Using {attention_heads} attention heads for padding alignment")
 
     # Sequence parallel compatibility
-    if getattr(model_args, 'sequence_parallel_size', 1) > 1:
-        ulysses_degree = getattr(model_args, 'alst_ulysses_degree', model_args.sequence_parallel_size)
+    if getattr(model_args, "sequence_parallel_size", 1) > 1:
+        ulysses_degree = getattr(model_args, "alst_ulysses_degree", model_args.sequence_parallel_size)
         # Recommend force padding for sequence parallelism
         logger.info_rank0(
             f"Sequence parallelism detected (size={model_args.sequence_parallel_size}). "
@@ -982,10 +985,7 @@ def get_optimal_pad_multiple(
     return optimal
 
 
-def validate_padding_config(
-    optimal_padding: Optional[int],
-    model_args: "ModelArguments"
-) -> None:
+def validate_padding_config(optimal_padding: Optional[int], model_args: "ModelArguments") -> None:
     """Validate padding configuration and provide helpful warnings.
 
     Args:
@@ -996,15 +996,15 @@ def validate_padding_config(
         return
 
     # FP8 compatibility warning
-    if getattr(model_args, 'fp8', False) and optimal_padding % 16 != 0:
+    if getattr(model_args, "fp8", False) and optimal_padding % 16 != 0:
         logger.warning_rank0(
             f"FP8 training with pad_to_multiple_of={optimal_padding} may be suboptimal. "
             f"Consider using a multiple of 16 for TorchAO backend."
         )
 
     # Sequence parallel compatibility warning
-    if getattr(model_args, 'sequence_parallel_size', 1) > 1:
-        ulysses_degree = getattr(model_args, 'alst_ulysses_degree', model_args.sequence_parallel_size)
+    if getattr(model_args, "sequence_parallel_size", 1) > 1:
+        ulysses_degree = getattr(model_args, "alst_ulysses_degree", model_args.sequence_parallel_size)
         if optimal_padding % ulysses_degree != 0:
             logger.warning_rank0(
                 f"Sequence parallel training may be suboptimal with pad_to_multiple_of={optimal_padding}. "

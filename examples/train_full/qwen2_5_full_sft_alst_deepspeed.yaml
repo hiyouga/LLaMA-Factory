@@ -1,6 +1,6 @@
 # Full Fine-Tuning config for Qwen2.5-7B-Instruct using DeepSpeed Arctic Long Sequence Training (ALST)
 # This demonstrates the new ALST integration for ultra-long sequence training (up to 15M tokens)
-# Based on DeepSpeed ALST: https://www.deepspeed.ai/tutorials/ds-sequence/ 
+# Based on DeepSpeed ALST: https://www.deepspeed.ai/tutorials/ds-sequence/
 # Enhanced with ALST sequence parallelism and tiling optimizations
 
 ### model
@@ -15,7 +15,7 @@ sequence_parallel_size: 4                    # Number of GPUs for sequence paral
 sequence_parallel_mode: deepspeed-alst       # Use DeepSpeed ALST implementation
 alst_sequence_backend: deepspeed             # Use DeepSpeed native backend
 alst_ulysses_degree: 4                       # Ulysses parallelism degree (should match SP size)
-alst_sequence_tiling: true                   # Enable sequence tiling for memory efficiency  
+alst_sequence_tiling: true                   # Enable sequence tiling for memory efficiency
 alst_memory_optimizations: true              # Enable ALST memory optimizations
 
 ### method
@@ -35,7 +35,7 @@ preprocessing_num_workers: 8
 dataloader_num_workers: 2
 shuffle_for_sequence_parallel: false  # ALST handles data distribution automatically
 
-### output  
+### output
 output_dir: output/qwen2.5_7b_tbench_traces_alst_256k
 logging_steps: 5
 save_steps: 50
@@ -63,7 +63,7 @@ remove_unused_columns: false
 
 ### ALST Notes:
 # - ALST can scale sequences up to 15M tokens with proper hardware
-# - Sequence tiling reduces memory complexity from O(N) to O(1) 
+# - Sequence tiling reduces memory complexity from O(N) to O(1)
 # - UlyssesPlus provides constant communication volume as sequence length increases
 # - Memory optimizations include PyTorch profiling-based improvements
 # - Compatible with existing transformer architectures and attention patterns

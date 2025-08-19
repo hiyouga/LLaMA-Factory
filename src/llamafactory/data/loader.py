@@ -384,11 +384,15 @@ def get_dataset(
 
         if model_args.sequence_parallel_size > 1:
             # Check if using ALST mode - if so, skip dataset preprocessing as ALST handles it
-            if (hasattr(model_args, 'sequence_parallel_mode') and
-                model_args.sequence_parallel_mode == "deepspeed-alst" and
-                hasattr(model_args, 'alst_sequence_backend') and
-                model_args.alst_sequence_backend == "deepspeed"):
-                logger.info_rank0("Using ALST mode - sequence parallel dataset processing will be handled by DataLoader adapter")
+            if (
+                hasattr(model_args, "sequence_parallel_mode")
+                and model_args.sequence_parallel_mode == "deepspeed-alst"
+                and hasattr(model_args, "alst_sequence_backend")
+                and model_args.alst_sequence_backend == "deepspeed"
+            ):
+                logger.info_rank0(
+                    "Using ALST mode - sequence parallel dataset processing will be handled by DataLoader adapter"
+                )
                 # ALST processing is handled at the DataLoader level, not dataset preprocessing
             else:
                 logger.info_rank0("Using legacy sequence parallel dataset processing")
