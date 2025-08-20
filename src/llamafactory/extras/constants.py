@@ -1264,6 +1264,16 @@ register_model_group(
     multimodal=True,
 )
 
+register_model_group(
+    models={
+        "Intern-S1-mini": {
+            DownloadSource.DEFAULT: "internlm/Intern-S1-mini",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/Intern-S1-mini",
+        }
+    },
+    template="intern_s1",
+    multimodal=True,
+)
 
 register_model_group(
     models={

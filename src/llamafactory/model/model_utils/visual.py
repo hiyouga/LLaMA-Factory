@@ -234,6 +234,9 @@ _register_composite_model(
     model_type="internvl",
 )
 
+_register_composite_model(
+    model_type="interns1",
+)
 
 _register_composite_model(
     model_type="Keye",
