@@ -14,6 +14,7 @@
 
 import os
 import shutil
+import modelscope
 from typing import TYPE_CHECKING, Any, Optional
 
 import torch
@@ -157,6 +158,26 @@ def export_model(args: Optional[dict[str, Any]] = None) -> None:
             max_shard_size=f"{model_args.export_size}GB",
             safe_serialization=(not model_args.export_legacy_format),
         )
+    if model_args.export_ms_model_id is not None:
+        try:
+            from modelscope.hub.api import HubApi
+            import os
+            
+            ms_token = os.getenv("MODELSCOPE_API_KEY", None)
+            if not ms_token:
+                raise ValueError("ModelScope token is required for upload")
+            api = HubApi()
+            api.login(ms_token)
+            api.upload_folder(
+                repo_id=model_args.export_ms_model_id,
+                folder_path=model_args.export_dir
+            )
+            logger.info_rank0(f"Model pushed to ModelScope: {model_args.export_ms_model_id}")
+            
+        except ImportError:
+            logger.warning_rank0("Modelscope not installed, skip pushing to ModelScope")
+        except Exception as e:
+            logger.warning_rank0(f"Failed to push to ModelScope: {str(e)}")
 
     if finetuning_args.stage == "rm":
         if model_args.adapter_name_or_path is not None:

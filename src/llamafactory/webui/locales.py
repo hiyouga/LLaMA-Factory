@@ -2903,6 +2903,28 @@ LOCALES = {
             "info": "Hugging Face Hub にモデルをアップロードするためのリポジトリ ID。",
         },
     },
+    "export_ms_model_id": {
+        "en": {
+            "label": "MS Hub ID (optional)",
+            "info": "Repo ID for uploading model to ModelScope hub.",
+        },
+        "ru": {
+            "label": "MS Hub ID (опционально)",
+            "info": "Идентификатор репозитория для загрузки модели на ModelScope hub.",
+        },
+        "zh": {
+            "label": "MS Hub ID（非必填）",
+            "info": "用于将模型上传至 ModelScope Hub 的仓库 ID。",
+        },
+        "ko": {
+            "label": "MS 허브 ID (선택 사항)",
+            "info": "모델을 ModelScope 허브에 업로드하기 위한 레포 ID.",
+        },
+        "ja": {
+            "label": "MS Hub ID（オプション）",
+            "info": "ModelScope Hub にモデルをアップロードするためのリポジトリ ID。",
+        },
+    },
     "export_btn": {
         "en": {
             "value": "Export",
