@@ -1855,6 +1855,22 @@ register_template(
 )
 
 
+#copied from seed_coder
+register_template(
+    name="seed_oss",
+    format_user=StringFormatter(
+        slots=[{"bos_token"}, "user\n{{content}}", {"eos_token"}, {"bos_token"}, "assistant\n"]
+    ),
+    format_system=StringFormatter(slots=[{"bos_token"}, "system\n{{content}}", {"eos_token"}]),
+    format_function=FunctionFormatter(
+        slots=[{"bos_token"}, "Function:\n{{content}}", {"eos_token"}], tool_format="seed_oss"
+    ),
+    format_tools=ToolFormatter(tool_format="seed_oss"),
+    template_class=ReasoningTemplate,
+    thought_words=("<seed:think>", "</seed:think>")
+)
+
+
 # copied from llama3 template
 register_template(
     name="skywork_o1",

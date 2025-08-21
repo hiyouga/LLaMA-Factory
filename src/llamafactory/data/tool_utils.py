@@ -69,6 +69,15 @@ QWEN_TOOL_PROMPT = (
     """"arguments": <args-json-object>}}\n</tool_call>"""
 )
 
+SEED_TOOL_PROMPT = (
+    "system\nYou are Doubao, a helpful AI assistant. You may call one or more functions to assist with the user query.",
+    "Tool List:\nYou are authorized to use the following tools (described in JSON Schema format). Before performing ",
+    "any task, you must decide how to call them based on the descriptions and parameters of these tools.{tool_text}\n",
+    "工具调用请遵循如下格式:\n<seed:tool_call>\n<function=example_function_name>\n<parameter=example_parameter_1>value_1",
+    "</parameter>\n<parameter=example_parameter_2>This is the value for the second parameter\nthat can span\nmultiple ",
+    "lines</parameter>\n</function>\n</seed:tool_call>\n"
+)
+
 
 @dataclass
 class ToolUtils(ABC):
@@ -346,6 +355,42 @@ class GLM4MOEToolUtils(QwenToolUtils):
 
         return "\n".join(function_texts)
 
+class SeedToolUtils(ToolUtils):
+    r"""Seed tool using template."""
+
+    @override
+    @staticmethod
+    def tool_formatter(tools: list[dict[str, Any]]) -> str:
+        tool_text = ""
+        for tool in tools:
+            wrapped_tool = tool if tool.get("type") == "function" else {"type": "function", "function": tool}
+            tool_text += "\n" + json.dumps(wrapped_tool, ensure_ascii=False)
+
+        return SEED_TOOL_PROMPT.format(tool_text=tool_text)
+
+    @override
+    @staticmethod
+    def function_formatter(functions: list["FunctionCall"]) -> str:
+        function_json = [
+            {"func_name": name, "func_key_values": json.loads(arguments)} for name, arguments in functions
+        ]
+        function_texts = []
+        for func in function_json:
+            prompt = "\n<seed:tool_call>\n<function=" + func["func_name"]
+            for key, value in func["func_key_values"].items():
+                prompt += "\n<parameter=" + key + ">"
+                if not isinstance(value, str):
+                    value = json.dumps(value, ensure_ascii=False)
+                prompt += value + "</parameter>"
+            prompt += "\n</function>\n</seed:tool_call>"
+            function_texts.append(prompt)
+
+        return "\n".join(function_texts)
+
+    @override
+    @staticmethod
+    def tool_extractor(content: str) -> Union[str, list["FunctionCall"]]:
+        raise NotImplementedError("Seed tool extractor is not implemented yet.")
 
 TOOLS = {
     "default": DefaultToolUtils(),
@@ -354,6 +399,7 @@ TOOLS = {
     "mistral": MistralToolUtils(),
     "qwen": QwenToolUtils(),
     "glm4_moe": GLM4MOEToolUtils(),
+    "seed": SeedToolUtils(),
 }
 
 
