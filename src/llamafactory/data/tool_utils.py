@@ -389,7 +389,7 @@ class SeedToolUtils(ToolUtils):
 
     @override
     @staticmethod
-    def tool_extractor(content: str) -> Union[str, list["FunctionCall"]]:
+    def tool_extractor(content: str) -> Union[str, list["FunctionCall"]]: # TODO
         raise NotImplementedError("Seed tool extractor is not implemented yet.")
 
 TOOLS = {
@@ -399,7 +399,7 @@ TOOLS = {
     "mistral": MistralToolUtils(),
     "qwen": QwenToolUtils(),
     "glm4_moe": GLM4MOEToolUtils(),
-    "seed": SeedToolUtils(),
+    "seed_oss": SeedToolUtils(),
 }
 
 
