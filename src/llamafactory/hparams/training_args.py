@@ -61,6 +61,12 @@ class RayArguments:
         metadata={"help": "The maximum number of failures for Ray training. Default is 1."},
     )
 
+    # add use_gpu
+    use_gpu: bool = field(
+        default=True,
+        metadata={"help": "Whether to procure GPU nodes or not for training vs. tokenization"}
+    )
+
     def __post_init__(self):
         self.use_ray = use_ray()
         if isinstance(self.resources_per_worker, str) and self.resources_per_worker.startswith("{"):

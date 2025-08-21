@@ -713,6 +713,9 @@ def get_ray_trainer(
     # else:
     #     storage_path = Path(ray_args.ray_storage_path).absolute().as_posix()
 
+    # check on ray_args.use_gpu
+    logger.info_rank0(f"Using GPU: {ray_args.use_gpu}")
+
     trainer = TorchTrainer(
         training_function,
         train_loop_config=train_loop_config,
@@ -720,7 +723,7 @@ def get_ray_trainer(
             num_workers=ray_args.ray_num_workers,
             resources_per_worker=ray_args.resources_per_worker,
             placement_strategy=ray_args.placement_strategy,
-            use_gpu=True,
+            use_gpu=ray_args.use_gpu,
         ),
         run_config=RunConfig(
             name=ray_args.ray_run_name,
