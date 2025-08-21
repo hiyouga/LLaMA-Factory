@@ -21,6 +21,10 @@ from typing import Any
 
 from .processor_utils import DatasetProcessor
 
+from ...extras import logging
+
+logger = logging.get_logger(__name__)
+
 
 @dataclass
 class PretrainDatasetProcessor(DatasetProcessor):
@@ -30,6 +34,8 @@ class PretrainDatasetProcessor(DatasetProcessor):
         text_examples = [messages[0]["content"] + eos_token for messages in examples["_prompt"]]
 
         if not self.data_args.packing:
+            print("Packing is disabled, using single text examples for each input.")
+            logger.info_rank0("Packing is disabled, using single text examples for each input.")
             if getattr(self.tokenizer, "add_bos_token", False):
                 text_examples = [self.tokenizer.bos_token + example for example in text_examples]
 
@@ -37,6 +43,8 @@ class PretrainDatasetProcessor(DatasetProcessor):
                 text_examples, add_special_tokens=False, truncation=True, max_length=self.data_args.cutoff_len
             )
         else:
+            print("Packing is enabled, concatenating text examples for each input.")
+            logger.info_rank0("Packing is enabled, concatenating text examples for each input.")
             tokenized_examples = self.tokenizer(text_examples, add_special_tokens=False)
             concatenated_examples = {k: list(chain(*tokenized_examples[k])) for k in tokenized_examples.keys()}
             total_length = len(concatenated_examples[list(concatenated_examples.keys())[0]])
