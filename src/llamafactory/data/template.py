@@ -156,7 +156,7 @@ class Template:
             elif message["role"] == Role.OBSERVATION:
                 elements += self.format_observation.apply(content=message["content"])
             elif message["role"] == Role.FUNCTION:
-                elements += self.format_function.apply(content=message["content"])
+                elements += self.format_function.apply(content=message["content"], thought_words=self.thought_words)
             else:
                 raise NotImplementedError("Unexpected role: {}".format(message["role"]))
 
