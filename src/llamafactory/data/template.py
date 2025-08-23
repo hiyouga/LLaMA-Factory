@@ -1855,19 +1855,17 @@ register_template(
 )
 
 
-#copied from seed_coder
+# copied from seed_coder
 register_template(
     name="seed_oss",
     format_user=StringFormatter(
         slots=[{"bos_token"}, "user\n{{content}}", {"eos_token"}, {"bos_token"}, "assistant\n"]
     ),
     format_system=StringFormatter(slots=[{"bos_token"}, "system\n{{content}}", {"eos_token"}]),
-    format_function=FunctionFormatter(
-        slots=[{"bos_token"}, "\n{{content}}", {"eos_token"}], tool_format="seed_oss"
-    ),
+    format_function=FunctionFormatter(slots=[{"bos_token"}, "\n{{content}}", {"eos_token"}], tool_format="seed_oss"),
     format_tools=ToolFormatter(tool_format="seed_oss"),
     template_class=ReasoningTemplate,
-    thought_words=("<seed:think>", "</seed:think>")
+    thought_words=("<seed:think>", "</seed:think>"),
 )
 
 

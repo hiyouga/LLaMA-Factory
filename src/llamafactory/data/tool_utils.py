@@ -355,6 +355,7 @@ class GLM4MOEToolUtils(QwenToolUtils):
 
         return "\n".join(function_texts)
 
+
 class SeedToolUtils(ToolUtils):
     r"""Seed tool using template."""
 
@@ -387,8 +388,7 @@ class SeedToolUtils(ToolUtils):
     def tool_extractor(content: str) -> Union[str, list["FunctionCall"]]:
         results = []
         regex = re.compile(
-            r"<seed:tool_call>\s*<function=\s*([^\s<]+)\s*(.*?)\s*</function>\s*</seed:tool_call>",
-            re.DOTALL
+            r"<seed:tool_call>\s*<function=\s*([^\s<]+)\s*(.*?)\s*</function>\s*</seed:tool_call>", re.DOTALL
         )
         for func_name, params_block in re.findall(regex, content):
             args_dict = {}
@@ -404,6 +404,7 @@ class SeedToolUtils(ToolUtils):
             results.append(FunctionCall(func_name.strip(), json.dumps(args_dict, ensure_ascii=False)))
 
         return results
+
 
 TOOLS = {
     "default": DefaultToolUtils(),
