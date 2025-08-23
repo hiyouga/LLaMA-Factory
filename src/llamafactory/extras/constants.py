@@ -645,6 +645,7 @@ register_model_group(
     template="falcon",
 )
 
+
 register_model_group(
     models={
         "Falcon-H1-0.5B-Base": {
@@ -1264,6 +1265,7 @@ register_model_group(
     multimodal=True,
 )
 
+
 register_model_group(
     models={
         "Intern-S1-mini": {
@@ -1274,6 +1276,7 @@ register_model_group(
     template="intern_s1",
     multimodal=True,
 )
+
 
 register_model_group(
     models={
@@ -3039,15 +3042,37 @@ register_model_group(
     models={
         "Seed-Coder-8B-Base": {
             DownloadSource.DEFAULT: "ByteDance-Seed/Seed-Coder-8B-Base",
+            DownloadSource.MODELSCOPE: "ByteDance-Seed/Seed-Coder-8B-Base",
         },
         "Seed-Coder-8B-Instruct": {
             DownloadSource.DEFAULT: "ByteDance-Seed/Seed-Coder-8B-Instruct",
+            DownloadSource.MODELSCOPE: "ByteDance-Seed/Seed-Coder-8B-Instruct",
         },
-        "Seed-Coder-8B-Instruct-Reasoning": {
+        "Seed-Coder-8B-Thinking": {
             DownloadSource.DEFAULT: "ByteDance-Seed/Seed-Coder-8B-Reasoning-bf16",
+            DownloadSource.MODELSCOPE: "ByteDance-Seed/Seed-Coder-8B-Reasoning-bf16",
         },
     },
     template="seed_coder",
+)
+
+
+register_model_group(
+    models={
+        "Seed-OSS-36B-Base": {
+            DownloadSource.DEFAULT: "ByteDance-Seed/Seed-OSS-36B-Base",
+            DownloadSource.MODELSCOPE: "ByteDance-Seed/Seed-OSS-36B-Base",
+        },
+        "Seed-OSS-36B-Base-woSyn": {
+            DownloadSource.DEFAULT: "ByteDance-Seed/Seed-OSS-36B-Base-woSyn",
+            DownloadSource.MODELSCOPE: "ByteDance-Seed/Seed-OSS-36B-Base-woSyn",
+        },
+        "Seed-OSS-36B-Instruct": {
+            DownloadSource.DEFAULT: "ByteDance-Seed/Seed-OSS-36B-Instruct",
+            DownloadSource.MODELSCOPE: "ByteDance-Seed/Seed-OSS-36B-Instruct",
+        },
+    },
+    template="seed_oss",
 )
 
 
