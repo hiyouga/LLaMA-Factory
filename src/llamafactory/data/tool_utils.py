@@ -70,11 +70,11 @@ QWEN_TOOL_PROMPT = (
 )
 
 SEED_TOOL_PROMPT = (
-    "system\nYou are Doubao, a helpful AI assistant. You may call one or more functions to assist with the user query.",
-    "Tool List:\nYou are authorized to use the following tools (described in JSON Schema format). Before performing ",
-    "any task, you must decide how to call them based on the descriptions and parameters of these tools.{tool_text}\n",
-    "工具调用请遵循如下格式:\n<seed:tool_call>\n<function=example_function_name>\n<parameter=example_parameter_1>value_1",
-    "</parameter>\n<parameter=example_parameter_2>This is the value for the second parameter\nthat can span\nmultiple ",
+    "system\nYou are Doubao, a helpful AI assistant. You may call one or more functions to assist with the user query."
+    "Tool List:\nYou are authorized to use the following tools (described in JSON Schema format). Before performing "
+    "any task, you must decide how to call them based on the descriptions and parameters of these tools.{tool_text}\n"
+    "工具调用请遵循如下格式:\n<seed:tool_call>\n<function=example_function_name>\n<parameter=example_parameter_1>value_1"
+    "</parameter>\n<parameter=example_parameter_2>This is the value for the second parameter\nthat can span\nmultiple "
     "lines</parameter>\n</function>\n</seed:tool_call>\n"
 )
 
@@ -361,12 +361,7 @@ class SeedToolUtils(ToolUtils):
     @override
     @staticmethod
     def tool_formatter(tools: list[dict[str, Any]]) -> str:
-        tool_text = ""
-        for tool in tools:
-            wrapped_tool = tool if tool.get("type") == "function" else {"type": "function", "function": tool}
-            tool_text += "\n" + json.dumps(wrapped_tool, ensure_ascii=False)
-
-        return SEED_TOOL_PROMPT.format(tool_text=tool_text)
+        return SEED_TOOL_PROMPT.format(tool_text="\n" + json.dumps(tools, ensure_ascii=False))
 
     @override
     @staticmethod
@@ -389,8 +384,26 @@ class SeedToolUtils(ToolUtils):
 
     @override
     @staticmethod
-    def tool_extractor(content: str) -> Union[str, list["FunctionCall"]]: # TODO
-        raise NotImplementedError("Seed tool extractor is not implemented yet.")
+    def tool_extractor(content: str) -> Union[str, list["FunctionCall"]]:
+        results = []
+        regex = re.compile(
+            r"<seed:tool_call>\s*<function=\s*([^\s<]+)\s*(.*?)\s*</function>\s*</seed:tool_call>",
+            re.DOTALL
+        )
+        for func_name, params_block in re.findall(regex, content):
+            args_dict = {}
+            param_pattern = re.compile(r"<parameter=(.*?)>(.*?)</parameter>", re.DOTALL)
+            for key, raw_value in re.findall(param_pattern, params_block.strip()):
+                value = raw_value.strip()
+                try:
+                    parsed_value = json.loads(value)
+                except json.JSONDecodeError:
+                    parsed_value = raw_value
+                args_dict[key] = parsed_value
+
+            results.append(FunctionCall(func_name.strip(), json.dumps(args_dict, ensure_ascii=False)))
+
+        return results
 
 TOOLS = {
     "default": DefaultToolUtils(),

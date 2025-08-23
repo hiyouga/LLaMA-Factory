@@ -1863,7 +1863,7 @@ register_template(
     ),
     format_system=StringFormatter(slots=[{"bos_token"}, "system\n{{content}}", {"eos_token"}]),
     format_function=FunctionFormatter(
-        slots=[{"bos_token"}, "Function:\n{{content}}", {"eos_token"}], tool_format="seed_oss"
+        slots=[{"bos_token"}, "\n{{content}}", {"eos_token"}], tool_format="seed_oss"
     ),
     format_tools=ToolFormatter(tool_format="seed_oss"),
     template_class=ReasoningTemplate,
