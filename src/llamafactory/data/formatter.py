@@ -98,7 +98,7 @@ class FunctionFormatter(StringFormatter):
     def apply(self, **kwargs) -> SLOTS:
         content: str = kwargs.pop("content")
         thought_words, thought = kwargs.pop("thought_words", None), None
-        if thought_words and len(thought_words)== 2:
+        if thought_words and len(thought_words) == 2:
             regex = re.compile(rf"{re.escape(thought_words[0])}(.*?){re.escape(thought_words[1])}", re.DOTALL)
             thought = re.search(regex, content)
 
