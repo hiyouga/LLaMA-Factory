@@ -457,6 +457,15 @@ class FinetuningArguments(
         metadata={"help": "Whether or not to compute effective tokens per second."},
     )
 
+    callbacks: Optional[list[Any]] = field(
+        default=None,
+        metadata={"help": "List of custom callback configurations to load during training."},
+    )
+    custom_callbacks_only: bool = field(
+        default=False,
+        metadata={"help": "If True, only use custom callbacks (disable built-in logging callbacks)."},
+    )
+
     def __post_init__(self):
         def split_arg(arg):
             if isinstance(arg, str):
