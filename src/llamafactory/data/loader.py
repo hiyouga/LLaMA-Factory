@@ -102,7 +102,11 @@ def _load_single_dataset(
     else:
         raise NotImplementedError(f"Unknown load type: {dataset_attr.load_from}.")
 
-    logger.info_rank0(f"Loading data_files: {data_files}")
+    # log the data_files if string or list
+    if isinstance(dataset_attr.dataset_name, (str)):
+        logger.info_rank0(f"Loading data_files: {data_files}")
+    elif isinstance(dataset_attr.dataset_name, (list)):
+        logger.info_rank0(f"Loading data_files: {', '.join(data_files)}")
 
     if dataset_attr.load_from == "ms_hub":
         check_version("modelscope>=1.14.0", mandatory=True)
