@@ -72,14 +72,26 @@ def _load_single_dataset(
 
     elif dataset_attr.load_from == "file":
         data_files = []
-        local_path = os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)
-        if os.path.isdir(local_path):  # is directory
-            for file_name in os.listdir(local_path):
-                data_files.append(os.path.join(local_path, file_name))
-        elif os.path.isfile(local_path):  # is file
-            data_files.append(local_path)
-        else:
-            raise ValueError(f"File {local_path} not found.")
+        # check if dataset_name is a string or a list
+        if isinstance(dataset_attr.dataset_name, str):
+            local_path = os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)
+            if os.path.isdir(local_path):  # is directory
+                for file_name in os.listdir(local_path):
+                    data_files.append(os.path.join(local_path, file_name))
+            elif os.path.isfile(local_path):  # is file
+                data_files.append(local_path)
+            else:
+                raise ValueError(f"File {local_path} not found.")
+        elif isinstance(dataset_attr.dataset_name, list):
+            for dataset_name in dataset_attr.dataset_name:
+                local_path = os.path.join(data_args.dataset_dir, dataset_name)
+                if os.path.isdir(local_path):  # is directory
+                    for file_name in os.listdir(local_path):
+                        data_files.append(os.path.join(local_path, file_name))
+                elif os.path.isfile(local_path):  # is file
+                    data_files.append(local_path)
+                else:
+                    raise ValueError(f"File {local_path} not found.")
 
         data_path = FILEEXT2TYPE.get(os.path.splitext(data_files[0])[-1][1:], None)
         if data_path is None:
@@ -89,6 +101,8 @@ def _load_single_dataset(
             raise ValueError("File types should be identical.")
     else:
         raise NotImplementedError(f"Unknown load type: {dataset_attr.load_from}.")
+
+    logger.info_rank0(f"Loading data_files: {data_files}")
 
     if dataset_attr.load_from == "ms_hub":
         check_version("modelscope>=1.14.0", mandatory=True)
