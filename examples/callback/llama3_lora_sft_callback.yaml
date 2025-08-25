@@ -1,0 +1,80 @@
+### model
+model_name_or_path: llamafactory/tiny-random-Llama-3
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+lora_rank: 8
+lora_target: all
+
+### dataset
+dataset: identity
+template: llama3
+cutoff_len: 2048
+max_samples: 1000
+overwrite_cache: true
+preprocessing_num_workers: 1
+dataloader_num_workers: 1
+
+### output
+output_dir: saves/llama3-8b/lora/sft
+logging_steps: 10
+save_steps: 500
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: none  # choices: [none, wandb, tensorboard, swanlab, mlflow]
+
+### train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 2
+learning_rate: 1.0e-4
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: false
+ddp_timeout: 180000000
+resume_from_checkpoint: null
+
+callbacks:
+  # You can use either an absolute file path with :ClassName
+  # or a Python module path with .ClassName for custom callbacks.
+
+  # Example 1: Upload monitor callback (absolute path)
+  - name: "/home/ubuntu/lun/llamafactory/LLaMA-Factory/examples/callback/working_custom_callbacks.py:DemoUploadMonitorCallBack"
+    args:
+      upload_url: "https://company-monitor.internal/api/metrics"
+      api_key: "${COMPANY_API_KEY:-demo_key}"  # Uses env var COMPANY_API_KEY if set, else 'demo_key'
+      project_name: "llama3-lora-sft-experiment"
+      upload_interval: 20  # Upload metrics every 20 steps
+
+  # Example 1b: (Alternative) Upload monitor callback (module path)
+  # - name: "examples.callback.working_custom_callbacks.DemoUploadMonitorCallBack"
+  #   args:
+  #     upload_url: "https://company-monitor.internal/api/metrics"
+  #     api_key: "${COMPANY_API_KEY:-demo_key}"
+  #     project_name: "llama3-lora-sft-experiment"
+  #     upload_interval: 20
+
+  # Example 2: Smart early stopping based on evaluation loss
+  - name: "examples.callback.working_custom_callbacks.SmartEarlyStoppingCallback"
+    args:
+      loss_threshold: 3.0  # Stop if eval loss goes above 3.0
+      patience: 2          # Wait 2 evaluations before stopping
+
+  # Example 3: Model analysis for debugging and monitoring
+  - name: "examples.callback.working_custom_callbacks.ModelAnalysisCallback"
+    args:
+      analysis_steps: 50   # Analyze model every 50 steps
+
+  # Example 4: Environment-aware callback (demonstrates env variables)
+  - name: "examples.callback.working_custom_callbacks.EnvironmentAwareCallback"
+    args:
+      debug_mode: "${DEBUG_MODE:-false}"           # Set DEBUG_MODE=true for detailed logs
+      log_file: "./llama3_training_detailed.log"
+      project_name: "${PROJECT_NAME:-Pet Project}"   # Uses env var PROJECT_NAME if set, else 'Pet Project'
+
+# Optional: Only use custom callbacks (disable built-in logging)
+# custom_callbacks_only: false
