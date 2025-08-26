@@ -1630,7 +1630,7 @@ class GLM4VPlugin(Qwen2VLPlugin):
                     )
                     video_structure += frame_structure
 
-                if self.expand_mm_tokens:
+                if not self.expand_mm_tokens:
                     video_structure = self.video_token
 
                 content = content.replace(VIDEO_PLACEHOLDER, f"<|begin_of_video|>{video_structure}<|end_of_video|>", 1)
