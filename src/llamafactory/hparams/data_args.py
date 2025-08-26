@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, Union, List
 
 
 @dataclass
@@ -123,13 +123,14 @@ class DataArguments:
         default=True,
         metadata={"help": "Whether or not to enable thinking mode for reasoning models."},
     )
-    tokenized_path: Optional[str] = field(
+    tokenized_path: Optional[Union[str, list[str]]] = field(
         default=None,
         metadata={
             "help": (
                 "Path to save or load the tokenized datasets. "
                 "If tokenized_path not exists, it will save the tokenized datasets. "
                 "If tokenized_path exists, it will load the tokenized datasets."
+                "If passing a list of paths, it will load each of the tokenized datasets"
             )
         },
     )
