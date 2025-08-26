@@ -123,7 +123,7 @@ class DataArguments:
         default=True,
         metadata={"help": "Whether or not to enable thinking mode for reasoning models."},
     )
-    tokenized_path: Optional[Union[str, list[str]]] = field(
+    tokenized_path: Optional[Any] = field(
         default=None,
         metadata={
             "help": (
