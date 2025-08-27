@@ -64,6 +64,9 @@ class DatasetAttr:
     system_tag: Optional[str] = "system"
 
     def __repr__(self) -> str:
+        # check if list
+        if isinstance(self.dataset_name, list):
+            return ", ".join(self.dataset_name)
         return self.dataset_name
 
     def set_attr(self, key: str, obj: dict[str, Any], default: Optional[Any] = None) -> None:
