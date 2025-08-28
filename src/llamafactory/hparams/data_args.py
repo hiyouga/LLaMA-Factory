@@ -16,8 +16,7 @@
 # limitations under the License.
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Literal, Optional, Union, List
-
+from typing import Any, Literal, Optional
 
 @dataclass
 class DataArguments:
