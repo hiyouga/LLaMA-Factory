@@ -314,7 +314,18 @@ def get_dataset(
     dataset_loading_callback = kwargs.get("dataset_loading_callback")
     # Load tokenized dataset if path exists
     if data_args.tokenized_path is not None:
-        if has_tokenized_data(data_args.tokenized_path):
+        if isinstance(data_args.tokenized_path, list):
+            logger.warning_rank0("Loading dataset from disk will ignore other data arguments.")
+            tokenized_data = load_dataset("arrow", data_files={"train" : data_args.tokenized_path})
+            dataset_module = get_dataset_module(tokenized_data)
+            if data_args.streaming:
+                dataset_module["train_dataset"] = dataset_module["train_dataset"].to_iterable_dataset()
+
+            logger.info_rank0("Loaded tokenized dataset from:")
+            for i, path in enumerate(data_args.tokenized_path, 1):
+                logger.info_rank0(f"  {i}. {path}")
+            return dataset_module
+        elif has_tokenized_data(data_args.tokenized_path):
             logger.warning_rank0("Loading dataset from disk will ignore other data arguments.")
             tokenized_data = load_from_disk(data_args.tokenized_path)
             dataset_module = get_dataset_module(tokenized_data)

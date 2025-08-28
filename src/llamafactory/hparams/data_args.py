@@ -18,7 +18,6 @@
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal, Optional
 
-
 @dataclass
 class DataArguments:
     r"""Arguments pertaining to what data we are going to input our model for training and evaluation."""
@@ -123,13 +122,14 @@ class DataArguments:
         default=True,
         metadata={"help": "Whether or not to enable thinking mode for reasoning models."},
     )
-    tokenized_path: Optional[str] = field(
+    tokenized_path: Optional[Any] = field(
         default=None,
         metadata={
             "help": (
                 "Path to save or load the tokenized datasets. "
                 "If tokenized_path not exists, it will save the tokenized datasets. "
                 "If tokenized_path exists, it will load the tokenized datasets."
+                "If passing a list of paths, it will load each of the tokenized datasets"
             )
         },
     )

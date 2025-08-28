@@ -251,7 +251,7 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
     if training_args.max_steps == -1 and data_args.streaming:
         raise ValueError("Please specify `max_steps` in streaming mode.")
 
-    if training_args.do_train and data_args.dataset is None:
+    if training_args.do_train and (data_args.dataset is None) and (data_args.tokenized_path is None):
         raise ValueError("Please specify dataset for training.")
 
     if (training_args.do_eval or training_args.do_predict) and (
