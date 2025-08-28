@@ -1260,6 +1260,18 @@ register_model_group(
             DownloadSource.DEFAULT: "OpenGVLab/InternVL3-78B-hf",
             DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-78B-hf",
         },
+        "InternVL3_5-1B-hf": {
+            DownloadSource.DEFAULT: "llamafactory/InternVL3_5-1B-hf",
+        },
+        "InternVL3_5-2B-hf": {
+            DownloadSource.DEFAULT: "llamafactory/InternVL3_5-2B-hf",
+        },
+        "InternVL3_5-4B-hf": {
+            DownloadSource.DEFAULT: "llamafactory/InternVL3_5-4B-hf",
+        },
+        "InternVL3_5-8B-hf": {
+            DownloadSource.DEFAULT: "llamafactory/InternVL3_5-8B-hf",
+        },
     },
     template="intern_vl",
     multimodal=True,
