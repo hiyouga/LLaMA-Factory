@@ -29,6 +29,7 @@ from ...extras import logging
 from ...extras.constants import IGNORE_INDEX
 from ...extras.packages import is_transformers_version_greater_than
 from ..callbacks import SaveProcessorCallback
+from ..fp8_utils import configure_fp8_environment, verify_fp8_status
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
 
 
@@ -37,7 +38,7 @@ if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer, ProcessorMixin
     from transformers.trainer import PredictionOutput
 
-    from ...hparams import FinetuningArguments
+    from ...hparams import FinetuningArguments, ModelArguments
 
 
 logger = logging.get_logger(__name__)
@@ -50,9 +51,13 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         self,
         finetuning_args: "FinetuningArguments",
         processor: Optional["ProcessorMixin"],
+        model_args: Optional["ModelArguments"] = None,
         gen_kwargs: Optional[dict[str, Any]] = None,
         **kwargs,
     ) -> None:
+        # Configure FP8 environment if enabled
+        if model_args is not None and model_args.fp8:
+            configure_fp8_environment(model_args)
         if is_transformers_version_greater_than("4.46"):
             kwargs["processing_class"] = kwargs.pop("tokenizer")
         else:
@@ -82,6 +87,10 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             from ..trainer_utils import dft_loss_func
 
             self.compute_loss_func = dft_loss_func
+
+        # Verify FP8 status after trainer initialization (accelerator should be available)
+        if model_args is not None and model_args.fp8 and hasattr(self, "accelerator"):
+            verify_fp8_status(self.accelerator, model_args)
 
     @override
     def create_optimizer(self) -> "torch.optim.Optimizer":

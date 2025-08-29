@@ -70,6 +70,9 @@ extra_require = {
     ],
     "openmind": ["openmind"],
     "swanlab": ["swanlab"],
+    "fp8": ["torchao>=0.8.0", "accelerate>=1.10.0"],
+    "fp8-te": ["transformer_engine[pytorch]>=2.0.0", "accelerate>=1.10.0"],
+    "fp8-all": ["torchao>=0.8.0", "transformer_engine[pytorch]>=2.0.0", "accelerate>=1.10.0"],
     "dev": ["pre-commit", "ruff", "pytest", "build"],
 }
 
