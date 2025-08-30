@@ -88,7 +88,18 @@ class SupervisedDatasetProcessor(DatasetProcessor):
     def preprocess_dataset(self, examples: dict[str, list[Any]]) -> dict[str, list[Any]]:
         # build inputs with format `<bos> X Y <eos>` and labels with format `<ignore> ... <ignore> Y <eos>`
         # for multiturn examples, we only mask the prompt part in each prompt-response pair.
-        model_inputs = defaultdict(list)
+
+        # Validate mutually exclusive padding options
+        if self.data_args.force_sequence_length_padding and self.data_args.force_max_length_padding:
+            raise ValueError(
+                "force_sequence_length_padding and force_max_length_padding are mutually exclusive. "
+                "Use only one padding option."
+            )
+
+        # First pass: encode all examples and collect sequences
+        encoded_examples = []
+        valid_indices = []
+
         for i in range(len(examples["_prompt"])):
             if len(examples["_prompt"][i]) % 2 != 1 or len(examples["_response"][i]) != 1:
                 logger.warning_rank0(
@@ -105,12 +116,42 @@ class SupervisedDatasetProcessor(DatasetProcessor):
                 videos=examples["_videos"][i] or [],
                 audios=examples["_audios"][i] or [],
             )
+            encoded_examples.append((input_ids, labels))
+            valid_indices.append(i)
+
+        # Determine target padding length
+        target_length = None
+        if self.data_args.force_sequence_length_padding:
+            target_length = self.data_args.cutoff_len
+        elif self.data_args.force_max_length_padding:
+            if encoded_examples:
+                max_length = max(len(input_ids) for input_ids, _ in encoded_examples)
+                target_length = min(max_length, self.data_args.cutoff_len)
+                logger.info_rank0(f"Dynamic max length padding: using length {target_length}")
+
+        # Second pass: apply padding and build model inputs
+        model_inputs = defaultdict(list)
+        for idx, (input_ids, labels) in enumerate(encoded_examples):
+            original_i = valid_indices[idx]
+
+            # Apply padding if target length is set
+            if target_length is not None:
+                current_length = len(input_ids)
+                if current_length < target_length:
+                    pad_length = target_length - current_length
+                    input_ids += [self.tokenizer.pad_token_id] * pad_length
+                    labels += [IGNORE_INDEX] * pad_length
+                elif current_length > target_length:
+                    # Truncate if longer than target
+                    input_ids = input_ids[:target_length]
+                    labels = labels[:target_length]
+
             model_inputs["input_ids"].append(input_ids)
             model_inputs["attention_mask"].append([1] * len(input_ids))
             model_inputs["labels"].append(labels)
-            model_inputs["images"].append(examples["_images"][i])
-            model_inputs["videos"].append(examples["_videos"][i])
-            model_inputs["audios"].append(examples["_audios"][i])
+            model_inputs["images"].append(examples["_images"][original_i])
+            model_inputs["videos"].append(examples["_videos"][original_i])
+            model_inputs["audios"].append(examples["_audios"][original_i])
 
         return model_inputs
 
