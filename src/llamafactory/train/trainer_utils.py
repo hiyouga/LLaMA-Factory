@@ -494,9 +494,12 @@ def _create_muon_optimizer(
     model: "PreTrainedModel",
     training_args: "TrainingArguments",
 ) -> "torch.optim.Optimizer":
-    from ..third_party.muon import Muon
-
-    muon_params, adamw_params = [], []
+    from llamafactory.third_party.muon import Muon  # type: ignore
+    
+    # Separate parameters for Muon (2D parameters) and AdamW (others)
+    muon_params = []
+    adamw_params = []
+    
     for name, param in model.named_parameters():
         if param.requires_grad:
             # Use Muon for 2D parameters that aren't embeddings or heads
@@ -504,20 +507,34 @@ def _create_muon_optimizer(
                 muon_params.append(param)
             else:
                 adamw_params.append(param)
-
+    
+    # Get optimizer settings from training_args
+    ns_steps = getattr(training_args, "ns_steps", 5)
+    
+    # Determine if we're in distributed mode
+    distributed = getattr(training_args, "local_rank", -1) != -1
+    overlap_comm = getattr(training_args, "overlap_comm", False)
+    
+    # Create Muon optimizer with distributed support
     optimizer = Muon(
         lr=training_args.learning_rate,
         wd=training_args.weight_decay,
         muon_params=muon_params,
+        momentum=0.95,  # default momentum for Muon
+        nesterov=True,  # default nesterov for Muon
+        ns_steps=ns_steps,
         adamw_params=adamw_params,
         adamw_betas=(training_args.adam_beta1, training_args.adam_beta2),
         adamw_eps=training_args.adam_epsilon,
+        distributed=distributed,
+        overlap_comm=overlap_comm,
     )
+    
     logger.info_rank0(
-        f"Using Muon optimizer with {len(muon_params)} Muon params and {len(adamw_params)} AdamW params."
+        f"Using Muon optimizer with {len(muon_params)} Muon params and {len(adamw_params)} AdamW params. "
+        f"Distributed: {distributed}, Overlap comm: {overlap_comm}"
     )
     return optimizer
-
 
 def create_custom_optimizer(
     model: "PreTrainedModel",
