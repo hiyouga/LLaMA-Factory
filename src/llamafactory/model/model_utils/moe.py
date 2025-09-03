@@ -105,7 +105,7 @@ def add_z3_leaf_module(model: "PreTrainedModel") -> None:
 
         _set_z3_leaf_modules(model, [Qwen2MoeSparseMoeBlock])
 
-    if model_type == "qwen3_moe" or text_architectures == "Qwen3MoeForCausalLM": # for internvl_3_5
+    if model_type == "qwen3_moe" or text_architectures == "Qwen3MoeForCausalLM":  # for internvl_3_5
         from transformers.models.qwen3_moe.modeling_qwen3_moe import Qwen3MoeSparseMoeBlock
 
         _set_z3_leaf_modules(model, [Qwen3MoeSparseMoeBlock])
@@ -116,7 +116,7 @@ def configure_moe(config: "PretrainedConfig", model_args: "ModelArguments", is_t
         return
 
     model_type = getattr(config, "model_type", None)
-    text_config = getattr(config, "text_config", None) # for multimodal model
+    text_config = getattr(config, "text_config", None)  # for multimodal model
 
     if model_type in [
         "dbrx",
@@ -133,8 +133,8 @@ def configure_moe(config: "PretrainedConfig", model_args: "ModelArguments", is_t
         setattr(config, "output_router_logits", True)
 
     if text_config and getattr(text_config, "model_type", None) in [
-        "glm4v_moe_text", # glmv4_5
-        "qwen3_moe", # internvl_3_5
+        "glm4v_moe_text",  # glmv4_5
+        "qwen3_moe",  # internvl_3_5
     ]:
         setattr(text_config, "output_router_logits", True)
 
