@@ -481,6 +481,18 @@ class FinetuningArguments(
         default=False,
         metadata={"help": "Whether to use the DFT loss."},
     )
+    use_focal_loss: bool = field(
+        default=False,
+        metadata={"help": "Whether to use the Focal loss for handling class imbalance."},
+    )
+    focal_loss_alpha: float = field(
+        default=0.25,
+        metadata={"help": "Alpha parameter for Focal loss (weighting factor for rare class)."},
+    )
+    focal_loss_gamma: float = field(
+        default=2.0,
+        metadata={"help": "Gamma parameter for Focal loss (focusing parameter for hard examples)."},
+    )
     freeze_vision_tower: bool = field(
         default=True,
         metadata={"help": "Whether ot not to freeze the vision tower in MLLM training."},

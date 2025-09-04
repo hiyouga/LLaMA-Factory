@@ -788,6 +788,72 @@ LOCALES = {
             "info": "埋め込みベクトルに追加されるノイズの大きさ。",
         },
     },
+    "use_focal_loss": {
+        "en": {
+            "label": "Use Focal Loss",
+            "info": "Enable Focal Loss for handling class imbalance by focusing on hard examples.",
+        },
+        "ru": {
+            "label": "Использовать Focal Loss",
+            "info": "Включить Focal Loss для обработки дисбаланса классов путем фокусировки на сложных примерах.",
+        },
+        "zh": {
+            "label": "使用 Focal Loss",
+            "info": "启用 Focal Loss 来处理类别不平衡，重点关注难分类样本。",
+        },
+        "ko": {
+            "label": "Focal Loss 사용",
+            "info": "어려운 예제에 집중하여 클래스 불균형을 처리하는 Focal Loss를 활성화합니다.",
+        },
+        "ja": {
+            "label": "Focal Loss を使用",
+            "info": "困難な例に焦点を当ててクラス不均衡を処理するFocal Lossを有効にします。",
+        },
+    },
+    "focal_loss_alpha": {
+        "en": {
+            "label": "Focal Loss Alpha",
+            "info": "Alpha parameter for Focal Loss (weighting factor for rare class, typically 0.25).",
+        },
+        "ru": {
+            "label": "Focal Loss Alpha",
+            "info": "Параметр Alpha для Focal Loss (весовой коэффициент для редкого класса, обычно 0.25).",
+        },
+        "zh": {
+            "label": "Focal Loss Alpha",
+            "info": "Focal Loss 的 Alpha 参数（稀有类别的权重因子，通常为 0.25）。",
+        },
+        "ko": {
+            "label": "Focal Loss Alpha",
+            "info": "Focal Loss의 Alpha 매개변수 (희귀 클래스의 가중치 인수, 일반적으로 0.25).",
+        },
+        "ja": {
+            "label": "Focal Loss Alpha",
+            "info": "Focal LossのAlphaパラメータ（レアクラスの重み係数、通常0.25）。",
+        },
+    },
+    "focal_loss_gamma": {
+        "en": {
+            "label": "Focal Loss Gamma",
+            "info": "Gamma parameter for Focal Loss (focusing parameter for hard examples, typically 2.0).",
+        },
+        "ru": {
+            "label": "Focal Loss Gamma",
+            "info": "Параметр Gamma для Focal Loss (параметр фокусировки для сложных примеров, обычно 2.0).",
+        },
+        "zh": {
+            "label": "Focal Loss Gamma",
+            "info": "Focal Loss 的 Gamma 参数（难样本的聚焦参数，通常为 2.0）。",
+        },
+        "ko": {
+            "label": "Focal Loss Gamma",
+            "info": "Focal Loss의 Gamma 매개변수 (어려운 예제에 대한 집중 매개변수, 일반적으로 2.0).",
+        },
+        "ja": {
+            "label": "Focal Loss Gamma",
+            "info": "Focal LossのGammaパラメータ（困難な例の集中パラメータ、通常2.0）。",
+        },
+    },
     "extra_args": {
         "en": {
             "label": "Extra arguments",
