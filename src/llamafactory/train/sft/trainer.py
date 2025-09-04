@@ -83,6 +83,16 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
             self.compute_loss_func = dft_loss_func
 
+        if finetuning_args.use_focal_loss:
+            from ..trainer_utils import focal_loss_func
+            from functools import partial
+
+            self.compute_loss_func = partial(
+                focal_loss_func,
+                alpha=finetuning_args.focal_loss_alpha,
+                gamma=finetuning_args.focal_loss_gamma,
+            )
+
     @override
     def create_optimizer(self) -> "torch.optim.Optimizer":
         if self.optimizer is None:
