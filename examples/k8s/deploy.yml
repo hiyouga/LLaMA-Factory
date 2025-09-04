@@ -1,0 +1,98 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llamafactory-volume
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 30Gi
+  storageClassName: default # change this to your preferred storage class
+  volumeMode: Filesystem
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llamafactory
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llamafactory
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: llamafactory
+        sidecar.istio.io/inject: "false"
+    spec:
+      containers:
+        - command:
+            - llamafactory-cli
+            - webui
+          env:
+            - name: GRADIO_SHARE
+              value: "True"
+            - name: HUGGING_FACE_HUB_TOKEN
+              value: <secret>
+          image: hiyouga/llamafactory:0.9.4
+          imagePullPolicy: IfNotPresent
+          name: llamafactory
+          ports:
+            - containerPort: 7860
+              protocol: TCP
+          resources:
+            limits:
+              cpu: "4"
+              memory: 40Gi
+              nvidia.com/gpu: "1"
+            requests:
+              cpu: "2"
+              memory: 8Gi
+              nvidia.com/gpu: "1"
+          securityContext:
+            capabilities:
+              add:
+                - IPC_LOCK
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /app/saves
+              name: llamafactory-volume
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 7860
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 7860
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: llamafactory-volume
+          persistentVolumeClaim:
+            claimName: llamafactory-volume
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llamafactory-svc
+spec:
+  selector:
+    app: llamafactory
+  ports:
+    - name: webui
+      protocol: TCP
+      port: 7860
+      targetPort: 7860
+  type: ClusterIP
