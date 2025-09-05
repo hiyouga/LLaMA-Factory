@@ -40,7 +40,15 @@ class SupervisedDatasetProcessor(DatasetProcessor):
         videos: list["VideoInput"],
         audios: list["AudioInput"],
     ) -> tuple[list[int], list[int]]:
-        messages = self.template.mm_plugin.process_messages(prompt + response, images, videos, audios, self.processor)
+        if system:
+            sys_msg = {"role": "system", "content": system}
+            messages = self.template.mm_plugin.process_messages(
+                [sys_msg] + prompt + response, images, videos, audios, self.processor
+            )
+        else:
+            messages = self.template.mm_plugin.process_messages(
+                prompt + response, images, videos, audios, self.processor
+            )
         input_ids, labels = self.template.mm_plugin.process_token_ids(
             [], [], images, videos, audios, self.tokenizer, self.processor
         )
