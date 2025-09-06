@@ -680,6 +680,21 @@ register_template(
 
 
 register_template(
+    name="bailing_v2",
+    format_user=StringFormatter(slots=["<role>HUMAN</role>{{content}}<|role_end|><role>ASSISTANT</role>"]),
+    format_system=StringFormatter(slots=["<role>SYSTEM</role>{{content}}<|role_end|>"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|role_end|>"]),
+    format_observation=StringFormatter(
+        slots=["<role>OBSERVATION</role>\n<tool_response>\n{{content}}\n</tool_response><|role_end|><role>ASSISTANT</role>"]
+    ),
+    format_function=FunctionFormatter(slots=["{{content}}<|role_end|>"], tool_format="ling"),
+    format_tools=ToolFormatter(tool_format="ling"),
+    stop_words=["<|endoftext|>"],
+    efficient_eos=True,
+)
+
+
+register_template(
     name="belle",
     format_user=StringFormatter(slots=["Human: {{content}}\n\nBelle: "]),
     format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}, "\n\n"]),
