@@ -52,6 +52,7 @@ from ..extras.constants import CHOICES, SUBJECTS
 from ..hparams import get_eval_args
 from ..model import load_model, load_tokenizer
 from .template import get_eval_template
+from ..extras.misc import use_modelscope, use_openmind
 
 
 if TYPE_CHECKING:
@@ -80,12 +81,25 @@ class Evaluator:
         eval_task = self.eval_args.task.split("_")[0]
         eval_split = self.eval_args.task.split("_")[1]
 
-        mapping = cached_file(
-            path_or_repo_id=os.path.join(self.eval_args.task_dir, eval_task),
-            filename="mapping.json",
-            cache_dir=self.model_args.cache_dir,
-            token=self.model_args.hf_hub_token,
-        )
+        from huggingface_hub import hf_hub_download
+        if not os.path.exists(self.eval_args.task_dir):
+            # the modelscope / openmind not sure the api, so do for hugginface online dataset first
+            # different api, because the cache did not work even cleared .cache/hugginface/datasets
+            from huggingface_hub import hf_hub_download
+            mapping = hf_hub_download(
+                repo_id=self.eval_args.task_dir,
+                filename="mapping.json",
+                repo_type="dataset",
+                cache_dir=self.model_args.cache_dir,
+                token=self.model_args.hf_hub_token
+            )
+        else:
+            mapping = cached_file(
+                path_or_repo_id=os.path.join(self.eval_args.task_dir, eval_task),
+                filename="mapping.json",
+                cache_dir=self.model_args.cache_dir,
+                token=self.model_args.hf_hub_token,
+            )
 
         with open(mapping, encoding="utf-8") as f:
             categorys: dict[str, dict[str, str]] = json.load(f)
@@ -95,7 +109,7 @@ class Evaluator:
         results = {}
         for subject in pbar:
             dataset = load_dataset(
-                path=os.path.join(self.eval_args.task_dir, eval_task),
+                path=os.path.join(self.eval_args.task_dir, eval_task) if os.path.exists(self.eval_args.task_dir) else self.eval_args.task_dir,
                 name=subject,
                 cache_dir=self.model_args.cache_dir,
                 download_mode=self.eval_args.download_mode,
