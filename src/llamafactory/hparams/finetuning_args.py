@@ -517,6 +517,23 @@ class FinetuningArguments(
         default=False,
         metadata={"help": "Whether or not to compute effective tokens per second."},
     )
+    include_mfu: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Profile Model FLOPs Utilization (MFU). Profiles 1 step every mfu_profile_every steps; "
+                "uses DeepSpeed FLOPs profiler when available, else falls back to a lightweight estimator."
+            )
+        },
+    )
+    mfu_profile_every: int = field(
+        default=50,
+        metadata={"help": "Profile one training step every K steps to estimate MFU (default: 50)."},
+    )
+    mfu_warmup_steps: int = field(
+        default=5,
+        metadata={"help": "Number of initial steps to skip before MFU profiling begins."},
+    )
 
     def __post_init__(self):
         def split_arg(arg):

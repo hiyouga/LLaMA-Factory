@@ -157,6 +157,80 @@ def get_current_device() -> "torch.device":
     return torch.device(device)
 
 
+def get_world_size() -> int:
+    try:
+        if dist.is_available() and dist.is_initialized():
+            return dist.get_world_size()
+    except Exception:
+        pass
+    return 1
+
+
+def _peak_tflops_lookup(device_name: str, dtype: "torch.dtype") -> Optional[float]:
+    """Return approximate peak TFLOPs per GPU for known accelerators and dtype.
+
+    Supports A100, H100, H200, B200 for bf16/fp16. Values are ballpark and should
+    be overridden via PEAK_TFLOPS_PER_GPU for accurate MFU reporting.
+    """
+    name = device_name.upper()
+    is_bf16 = dtype == torch.bfloat16
+    # Approximate theoretical peaks (per-GPU, BF16/FP16)
+    peaks = {
+        "A100": 312.0 if is_bf16 else 312.0,  # FP16/BF16 similar on A100
+        "H100": 989.0 if is_bf16 else 1979.0,  # H100 BF16 vs FP16 TensorCores
+        "H200": 1415.0 if is_bf16 else 2829.0,  # indicative
+        "B200": 2000.0 if is_bf16 else 4000.0,  # placeholder until confirmed
+    }
+    for key, val in peaks.items():
+        if key in name:
+            return val
+    return None
+
+
+def _parse_peak_env() -> Optional[float]:
+    val = os.getenv("PEAK_TFLOPS_PER_GPU")
+    if not val:
+        return None
+    try:
+        # allow comma-separated list; take first entry for per-GPU reporting
+        first = str(val).split(",")[0].strip()
+        return float(first)
+    except Exception:
+        logger.warning_rank0_once(f"Invalid PEAK_TFLOPS_PER_GPU={val!r}; ignoring override.")
+        return None
+
+
+def compute_mfu_from_trainer(trainer: Any, train_runtime: float) -> Optional[dict[str, float]]:
+    """Compute per-GPU achieved TFLOPs and MFU using HF Trainer's total_flos.
+
+    Returns a dict with keys: achieved_tflops_per_gpu, mfu_percent.
+    Returns None if total_flos is unavailable.
+    """
+    # total_flos is cumulative FLOPs over the run, as tracked by HF Trainer.
+    total_flos = getattr(getattr(trainer, "state", None), "total_flos", None)
+    if not isinstance(total_flos, (int, float)) or total_flos <= 0 or train_runtime <= 0:
+        return None
+
+    world = get_world_size()
+    # Convert FLOPs to TFLOPs/s per GPU. We divide by world size to get per-GPU rate.
+    achieved_tflops_per_gpu = (total_flos / train_runtime) / (1e12 * max(world, 1))
+
+    # Determine peak TFLOPs per GPU
+    dtype = getattr(getattr(trainer, "model", None), "dtype", None) or torch.bfloat16
+    device_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
+    peak = _parse_peak_env() or _peak_tflops_lookup(device_name, dtype)
+    if peak is None or peak <= 0:
+        logger.warning_rank0_once(
+            "MFU: Unknown peak TFLOPs for device '%s' and dtype '%s'. Set PEAK_TFLOPS_PER_GPU to report MFU.",
+            device_name,
+            str(dtype),
+        )
+        return {"achieved_tflops_per_gpu": achieved_tflops_per_gpu}
+
+    mfu = 100.0 * achieved_tflops_per_gpu / peak
+    return {"achieved_tflops_per_gpu": achieved_tflops_per_gpu, "mfu_percent": mfu}
+
+
 def get_device_count() -> int:
     r"""Get the number of available devices."""
     if is_torch_xpu_available():

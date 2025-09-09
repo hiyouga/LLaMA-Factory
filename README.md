@@ -78,7 +78,8 @@ Choose your path:
   - [Download from ModelScope Hub](#download-from-modelscope-hub)
   - [Download from Modelers Hub](#download-from-modelers-hub)
   - [Use W&B Logger](#use-wb-logger)
-  - [Use SwanLab Logger](#use-swanlab-logger)
+- [Use SwanLab Logger](#use-swanlab-logger)
+- [MFU Reporting](#mfu-reporting)
 - [Projects using LLaMA Factory](#projects-using-llama-factory)
 - [License](#license)
 - [Citation](#citation)
@@ -978,3 +979,18 @@ This repo benefits from [PEFT](https://github.com/huggingface/peft), [TRL](https
 ## Star History
 
 ![Star History Chart](https://api.star-history.com/svg?repos=hiyouga/LLaMA-Factory&type=Date)
+## MFU Reporting
+
+LLaMA-Factory can report an estimate of Model FLOPs Utilization (MFU) using Hugging Face Trainer’s `total_flos`.
+
+Supported flows:
+- SFT, RM (reward modeling), DPO, KTO.
+
+Not supported (yet):
+- PPO, evaluation-only runs, prediction-only runs, and ALST-specific paths.
+
+Usage:
+- Enable with `include_mfu: true` in your config (or `--include_mfu true`).
+- Optionally set `PEAK_TFLOPS_PER_GPU` to a realistic per-GPU peak for accurate MFU% (A100/H100/H200/B200 best-effort defaults).
+
+Output includes `achieved_tflops_per_gpu` and, when peak is known, `mfu_percent`.

@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Optional
 
 from ...data import KTODataCollatorWithPadding, get_dataset, get_template_and_fix_tokenizer
 from ...extras.constants import IGNORE_INDEX
+from ...extras.misc import compute_mfu_from_trainer
 from ...extras.ploting import plot_loss
 from ...hparams import ModelArguments
 from ...model import load_model, load_tokenizer
@@ -84,6 +85,10 @@ def run_kto(
     if training_args.do_train:
         train_result = trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
         trainer.save_model()
+        if finetuning_args.include_mfu:
+            mfu_stats = compute_mfu_from_trainer(trainer, train_result.metrics.get("train_runtime", 0.0))
+            if mfu_stats is not None:
+                train_result.metrics.update(mfu_stats)
         trainer.log_metrics("train", train_result.metrics)
         trainer.save_metrics("train", train_result.metrics)
         trainer.save_state()

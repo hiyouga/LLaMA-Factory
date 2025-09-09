@@ -18,6 +18,7 @@
 from typing import TYPE_CHECKING, Optional
 
 from ...data import PairwiseDataCollatorWithPadding, get_dataset, get_template_and_fix_tokenizer
+from ...extras.misc import compute_mfu_from_trainer
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
 from ..callbacks import fix_valuehead_checkpoint
@@ -74,6 +75,12 @@ def run_rm(
         trainer.save_model()
         if training_args.should_save:
             fix_valuehead_checkpoint(model, training_args.output_dir, training_args.save_safetensors)
+
+        # MFU reporting (optional)
+        if finetuning_args.include_mfu:
+            mfu_stats = compute_mfu_from_trainer(trainer, train_result.metrics.get("train_runtime", 0.0))
+            if mfu_stats is not None:
+                train_result.metrics.update(mfu_stats)
 
         trainer.log_metrics("train", train_result.metrics)
         trainer.save_metrics("train", train_result.metrics)
