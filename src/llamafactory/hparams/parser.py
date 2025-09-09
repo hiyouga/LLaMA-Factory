@@ -238,6 +238,8 @@ def _validate_fsdp_config() -> None:
 
 def _log_fsdp_runtime_status() -> None:
     """Log FSDP runtime status after accelerator initialization."""
+    # No-op to avoid premature accelerator/AcceleratorState initialization
+    return
     try:
         from transformers.modeling_utils import is_fsdp_enabled
 
