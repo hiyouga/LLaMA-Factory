@@ -83,9 +83,15 @@ class BaseModelArguments:
         default=True,
         metadata={"help": "Whether or not to use memory-efficient model loading."},
     )
-    rope_scaling: Optional[RopeScaling] = field(
+    rope_scaling: Optional[Union[RopeScaling, dict]] = field(
         default=None,
-        metadata={"help": "Which scaling strategy should be adopted for the RoPE embeddings."},
+        metadata={
+            "help": (
+                "RoPE scaling strategy. Accepts a string enum (e.g., 'yarn', 'dynamic', 'llama3') "
+                "or a dict with explicit parameters, e.g., {rope_type: 'yarn', factor: 2.0, "
+                "original_max_position_embeddings: 32768}."
+            )
+        },
     )
     model_capacity: Optional[int] = field(
         default=None,
@@ -271,6 +277,22 @@ class BaseModelArguments:
                     raise ValueError(
                         f"Invalid attention implementation '{attn_value}'. Valid options: {valid_options}"
                     )
+
+        # Normalize/validate rope_scaling when provided as a dict
+        if isinstance(self.rope_scaling, dict):
+            rope_type = self.rope_scaling.get("rope_type")
+            factor = self.rope_scaling.get("factor")
+            orig = self.rope_scaling.get("original_max_position_embeddings")
+
+            if rope_type is None or factor is None or orig is None:
+                raise ValueError(
+                    "rope_scaling dict must include 'rope_type', 'factor', and 'original_max_position_embeddings'."
+                )
+            try:
+                self.rope_scaling["factor"] = float(factor)
+                self.rope_scaling["original_max_position_embeddings"] = int(orig)
+            except Exception as e:
+                raise ValueError(f"Invalid rope_scaling values: {e}")
 
 
 @dataclass

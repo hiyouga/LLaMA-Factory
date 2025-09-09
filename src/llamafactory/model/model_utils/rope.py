@@ -46,6 +46,23 @@ def configure_rope(config: "PretrainedConfig", model_args: "ModelArguments") -> 
         logger.warning_rank0("Cannot find the max position embeddings in the config.")
         return
 
+    # If user provided explicit dict, respect it and set lengths accordingly
+    if isinstance(model_args.rope_scaling, dict):
+        rope_kwargs = dict(model_args.rope_scaling)
+        rope_type = rope_kwargs.get("rope_type")
+        factor = float(rope_kwargs.get("factor"))
+        orig = int(rope_kwargs.get("original_max_position_embeddings"))
+
+        new_max_length = int(orig * factor)
+        setattr(config, "max_position_embeddings", new_max_length)
+        setattr(config, "rope_scaling", rope_kwargs)
+        logger.info_rank0(
+            f"Set RoPE scaling from config dict: type={rope_type}, factor={factor}, original_max_position_embeddings={orig}."
+        )
+        logger.info_rank0(f"Enlarge max model length from {old_max_length} to {new_max_length}.")
+        return
+
+    # Enum/string path: compute factor from target
     # Determine target length: model_capacity overrides model_max_length (cutoff_len)
     target_length = model_args.model_capacity or model_args.model_max_length
 
