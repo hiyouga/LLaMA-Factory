@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING
 
 from ...extras import logging
 from ...extras.constants import RopeScaling
+from .dynamic_rope import DynamicYarnRotaryEmbedding
 
 
 if TYPE_CHECKING:
@@ -106,3 +107,46 @@ def configure_rope(config: "PretrainedConfig", model_args: "ModelArguments") -> 
     logger.info_rank0(
         f"Using {rope_kwargs['rope_type']} scaling strategy and setting scaling factor to {rope_kwargs['factor']}."
     )
+
+
+def apply_dynamic_yarn_rope(model) -> None:
+    """Swap static YaRN rotary modules for a dynamic variant when requested.
+
+    Activation conditions:
+    - config.rope_scaling is a dict
+    - rope_type == 'yarn'
+    - dynamic == True
+    Only touches submodules exposing attribute `rotary_emb`.
+    """
+    config = getattr(model, "config", None)
+    rope_scaling = getattr(config, "rope_scaling", None)
+
+    if not isinstance(rope_scaling, dict):
+        return
+
+    if rope_scaling.get("rope_type") != "yarn" or not rope_scaling.get("dynamic", False):
+        return
+
+    replaced = 0
+    for name, module in model.named_modules():
+        if not hasattr(module, "rotary_emb"):
+            continue
+        try:
+            orig = getattr(module, "rotary_emb")
+        except Exception:
+            continue
+        if not isinstance(orig, object):
+            continue
+        try:
+            dyn = DynamicYarnRotaryEmbedding(orig, config)
+        except Exception as e:
+            # Skip on mismatch and warn once
+            logger.debug_rank0(f"Skip dynamic YaRN for {name}: {e}")
+            continue
+        setattr(module, "rotary_emb", dyn)
+        replaced += 1
+
+    if replaced > 0:
+        logger.info_rank0(f"Enabled dynamic YaRN rotary for {replaced} attention module(s).")
+    else:
+        logger.warning_rank0("Dynamic YaRN requested but no rotary_emb modules were replaced.")

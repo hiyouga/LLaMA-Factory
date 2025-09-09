@@ -1,19 +1,21 @@
 ### model
 model_name_or_path: Qwen/Qwen3-8B
 trust_remote_code: true
-rope_scaling:
-  rope_type: yarn
-  factor: 2.0
-  original_max_position_embeddings: 32768
 attn: kernels-community/vllm-flash-attn3
 enable_liger_kernel: true
+torch_compile: true
+torch_compile_backend: inductor
+optim: paged_adamw_8bit
+rope_scaling:
+  rope_type: yarn
+  factor: 4.0
+  original_max_position_embeddings: 32768
 
 ### method
 stage: sft
 do_train: true
 finetuning_type: full  # Full fine-tuning (not LoRA)
 deepspeed: examples/deepspeed/ds_z3_partial_offload_config.json
-use_cce: true
 # Enable MFU reporting (uses HF Trainer total_flos)
 include_mfu: true
 # Optional tuning knobs for future DeepSpeed sampling
@@ -22,17 +24,17 @@ mfu_warmup_steps: 5
 
 ### dataset
 dataset: tbench_traces_sharegptv1
-template: qwen
-cutoff_len: 65536
+template: qwen  # Qwen2.5 template
+cutoff_len: 131072  # Match model_max_length
 max_samples: null  # Use full dataset
 overwrite_cache: true
 preprocessing_num_workers: 8
 dataloader_num_workers: 4
 
 ### output
-output_dir: output/qwen3_8b_tbench_traces_sharegptv1_yarn_ds
+output_dir: output/qwen2.5_7b_tbench_traces_sharegptv1_yarn_ds
 logging_steps: 5
-save_steps: 100
+save_steps: 50
 plot_loss: true
 overwrite_output_dir: true
 save_only_model: true  # Save only model for DeepSpeed compatibility

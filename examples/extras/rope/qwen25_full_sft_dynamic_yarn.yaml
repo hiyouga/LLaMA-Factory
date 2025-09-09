@@ -1,0 +1,22 @@
+train:
+  stage: sft
+  do_train: true
+  model_name_or_path: Qwen/Qwen2.5-7B
+  bf16: true
+  output_dir: output/qwen25-7b-sft-dyarn
+  dataset: alpaca_gpt4_en
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 8
+  logging_steps: 10
+  num_train_epochs: 1
+  learning_rate: 2e-5
+  attn: fa2
+  rope_scaling:
+    rope_type: yarn
+    factor: 8.0
+    original_max_position_embeddings: 4096
+    dynamic: true
+    beta_fast: 32
+    beta_slow: 1
+  cutoff_len: 8192
+  model_capacity: 32768
