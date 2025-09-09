@@ -239,64 +239,44 @@ def _validate_fsdp_config() -> None:
 def _log_fsdp_runtime_status() -> None:
     """Log FSDP runtime status after accelerator initialization."""
     try:
-        from accelerate import Accelerator
         from transformers.modeling_utils import is_fsdp_enabled
 
         # Check if FSDP is actually enabled at runtime
         fsdp_enabled = is_fsdp_enabled()
         logger.info_rank0(f"FSDP runtime status: {'ENABLED' if fsdp_enabled else 'DISABLED'}")
 
-        # Try to get accelerator state for more details
+        # Try to get accelerator state for more details without creating a new Accelerator
         try:
-            accelerator = Accelerator()
+            from accelerate.state import AcceleratorState
 
-            # Log accelerator distributed type
-            logger.info_rank0(f"Accelerator distributed type: {accelerator.distributed_type}")
+            state = AcceleratorState()
+            if getattr(state, "initialized", False):
+                # Log accelerator distributed type if available
+                dist_type = getattr(state, "distributed_type", None)
+                if dist_type is not None:
+                    logger.info_rank0(f"Accelerator distributed type: {dist_type}")
 
-            # Check for FSDP plugin
-            if hasattr(accelerator.state, "fsdp_plugin") and accelerator.state.fsdp_plugin:
-                plugin = accelerator.state.fsdp_plugin
-                logger.info_rank0("FSDP plugin configuration:")
-
-                # Log key FSDP parameters
-                key_params = [
-                    "fsdp_version",
-                    "sharding_strategy",
-                    "backward_prefetch",
-                    "cpu_offload",
-                    "state_dict_type",
-                    "use_orig_params",
-                    "mixed_precision_policy",
-                    "auto_wrap_policy",
-                ]
-
-                for param in key_params:
-                    if hasattr(plugin, param):
-                        value = getattr(plugin, param)
-                        if value is not None:
-                            logger.info_rank0(f"  {param}: {value}")
-
-            elif accelerator.distributed_type.value == "FSDP":
-                logger.warning_rank0("FSDP distributed type detected but no FSDP plugin found")
-            elif accelerator.distributed_type.value != "FSDP" and os.environ.get("ACCELERATE_CONFIG_FILE"):
-                # Check if user expected FSDP but it's not enabled
-                config_file = os.environ.get("ACCELERATE_CONFIG_FILE")
-                try:
-                    import yaml
-
-                    with open(config_file) as f:
-                        config_data = yaml.safe_load(f)
-                    if config_data.get("distributed_type") == "FSDP":
-                        logger.warning_rank0(
-                            f"FSDP configured in {config_file} but accelerator is using "
-                            f"{accelerator.distributed_type.value}. Check your launch command."
-                        )
-                except Exception:
-                    pass  # Ignore config file reading errors
-
-            # Log world size and process info
-            logger.info_rank0(f"World size: {accelerator.num_processes}, Process rank: {accelerator.process_index}")
-
+                # Check for FSDP plugin
+                fsdp_plugin = getattr(state, "fsdp_plugin", None)
+                if fsdp_plugin is not None:
+                    logger.info_rank0("FSDP plugin configuration:")
+                    key_params = [
+                        "fsdp_version",
+                        "sharding_strategy",
+                        "backward_prefetch",
+                        "cpu_offload",
+                        "state_dict_type",
+                        "use_orig_params",
+                        "mixed_precision_policy",
+                        "auto_wrap_policy",
+                    ]
+                    for param in key_params:
+                        if hasattr(fsdp_plugin, param):
+                            value = getattr(fsdp_plugin, param)
+                            if value is not None:
+                                logger.info_rank0(f"  {param}: {value}")
+            else:
+                logger.info_rank0("Accelerator not initialized yet; skipping detailed FSDP info.")
         except Exception as e:
             logger.info_rank0(f"Could not get detailed accelerator info: {e}")
 
@@ -502,7 +482,11 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
             raise ValueError("This device does not support `pure_bf16`.")
 
         if is_deepspeed_zero3_enabled():
-            raise ValueError("`pure_bf16` is incompatible with DeepSpeed ZeRO-3.")
+            raise ValueError(
+                "`pure_bf16` is incompatible with DeepSpeed ZeRO-3. "
+                "ZeRO-3 expects FP32 master weights/optimizer states while `pure_bf16` keeps trainable params in bf16. "
+                "Use standard bf16 mixed precision instead (set `bf16: true` and `pure_bf16: false`), or disable ZeRO-3."
+            )
 
     if training_args.parallel_mode == ParallelMode.DISTRIBUTED:
         if finetuning_args.use_galore and finetuning_args.galore_layerwise:
