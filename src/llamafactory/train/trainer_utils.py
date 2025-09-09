@@ -63,6 +63,9 @@ if TYPE_CHECKING:
 
 logger = logging.get_logger(__name__)
 
+# One-time backend logging switches for CCE
+_cce_backend_logged: int = 0  # 0=unset, 1=cce_backend, 2=fallback
+
 
 class DummyOptimizer(torch.optim.Optimizer):
     r"""A dummy optimizer used for the GaLore or APOLLO algorithm."""
@@ -666,6 +669,7 @@ def cce_loss_func(outputs, labels, num_items_in_batch=None):
     shift_labels = labels[..., 1:].contiguous()
 
     # Prefer the memory-efficient op when the optional package is present
+    global _cce_backend_logged
     try:
         from cut_cross_entropy import linear_cross_entropy  # type: ignore
 
@@ -696,13 +700,21 @@ def cce_loss_func(outputs, labels, num_items_in_batch=None):
                 ignore_index=-100,
                 reduction="mean",
             )
+            if _cce_backend_logged == 0:
+                logger.info_rank0("CCE backend active: using cut_cross_entropy.linear_cross_entropy")
+                _cce_backend_logged = 1
             if num_items_in_batch is not None:
                 # Keep parity with dft_loss_func optional normalization path
                 loss = loss * shift_labels.numel() / num_items_in_batch
             return loss
     except Exception:
         # Package missing or model introspection failed; fall back below
-        pass
+        if _cce_backend_logged == 0:
+            logger.info_rank0(
+                "CCE fallback: standard torch.nn.functional.cross_entropy will be used ("
+                "package missing or model lacks hidden_states/lm_head)."
+            )
+            _cce_backend_logged = 2
 
     # Fallback: standard cross-entropy over flattened logits
     logits = logits.float()
