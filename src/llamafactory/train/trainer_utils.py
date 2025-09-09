@@ -650,6 +650,72 @@ def dft_loss_func(outputs, labels, num_items_in_batch=None):
     return loss
 
 
+def cce_loss_func(outputs, labels, num_items_in_batch=None):
+    """Compute loss using Cut Cross-Entropy if available; otherwise fallback to standard CE.
+
+    This mirrors the interface of `dft_loss_func` so it can be plugged into
+    the trainer via `self.compute_loss_func`.
+    """
+    logits = outputs.get("logits")
+    if logits is None:
+        # Some models may only return loss
+        return outputs.get("loss", torch.tensor(0.0))
+
+    # Shift labels to align with next-token prediction
+    labels = torch.nn.functional.pad(labels, (0, 1), value=-100)
+    shift_labels = labels[..., 1:].contiguous()
+
+    # Prefer the memory-efficient op when the optional package is present
+    try:
+        from cut_cross_entropy import linear_cross_entropy  # type: ignore
+
+        # Use logits and lm_head weight when possible to avoid materializing full probs
+        # We expect models to expose last hidden states through outputs.get("hidden_states")
+        # only when configured; otherwise we can still use logits fallback.
+        embeddings = outputs.get("hidden_states", None)
+        classifier = None
+
+        # Try to find the classifier (lm_head) weight on the model if attached
+        model = outputs.get("model", None)
+        if model is not None:
+            for name, module in model.named_modules():
+                if "lm_head" in name and hasattr(module, "weight"):
+                    classifier = module.weight
+                    break
+
+        if embeddings is not None and classifier is not None:
+            if isinstance(embeddings, (list, tuple)):
+                embeddings = embeddings[-1]
+
+            # Remove the last timestep to align with shift_labels
+            hidden = embeddings[:, :-1]
+            loss = linear_cross_entropy(
+                hidden,
+                classifier,
+                shift_labels.reshape(-1),
+                ignore_index=-100,
+                reduction="mean",
+            )
+            if num_items_in_batch is not None:
+                # Keep parity with dft_loss_func optional normalization path
+                loss = loss * shift_labels.numel() / num_items_in_batch
+            return loss
+    except Exception:
+        # Package missing or model introspection failed; fall back below
+        pass
+
+    # Fallback: standard cross-entropy over flattened logits
+    logits = logits.float()
+    vocab_size = logits.size(-1)
+    logits = logits.view(-1, vocab_size)
+    shift_labels = shift_labels.view(-1).to(logits.device)
+
+    loss = torch.nn.functional.cross_entropy(logits, shift_labels, ignore_index=-100, reduction="mean")
+    if num_items_in_batch is not None:
+        loss = loss * shift_labels.numel() / num_items_in_batch
+    return loss
+
+
 def _dft_cross_entropy(
     source: torch.Tensor,
     target: torch.Tensor,

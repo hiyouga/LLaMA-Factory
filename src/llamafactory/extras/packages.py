@@ -101,3 +101,12 @@ def is_vllm_available():
 
 def is_sglang_available():
     return _is_package_available("sglang")
+
+
+def is_cce_available():
+    """Return True if Cut Cross-Entropy is importable.
+
+    The library is installed via the optional extra "cce" and exposes the
+    module name `cut_cross_entropy`.
+    """
+    return _is_package_available("cut_cross_entropy")

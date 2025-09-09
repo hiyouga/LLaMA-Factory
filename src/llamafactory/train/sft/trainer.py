@@ -122,6 +122,19 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
             self.compute_loss_func = dft_loss_func
 
+        # Optional Cut Cross-Entropy support for memory-efficient loss
+        if finetuning_args.use_cce:
+            from ...extras.packages import is_cce_available
+
+            if not is_cce_available():
+                raise ImportError(
+                    "Cut Cross-Entropy is not available. Install with: "
+                    "pip install 'cut-cross-entropy @ git+https://github.com/apple/ml-cross-entropy.git'"
+                )
+            from ..trainer_utils import cce_loss_func
+
+            self.compute_loss_func = cce_loss_func
+
         # Verify FP8 status after trainer initialization (accelerator should be available)
         if model_args is not None and model_args.fp8 and hasattr(self, "accelerator"):
             verify_fp8_status(self.accelerator, model_args)

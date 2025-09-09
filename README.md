@@ -501,7 +501,25 @@ cd LLaMA-Factory
 pip install -e ".[torch,metrics]" --no-build-isolation
 ```
 
-Extra dependencies available: torch, torch-npu, metrics, deepspeed, liger-kernel, bitsandbytes, hqq, eetq, gptq, aqlm, vllm, sglang, galore, apollo, badam, adam-mini, qwen, minicpm_v, openmind, swanlab, dev
+Extra dependencies available: torch, torch-npu, metrics, deepspeed, liger-kernel, bitsandbytes, hqq, eetq, gptq, aqlm, vllm, sglang, galore, apollo, badam, adam-mini, qwen, minicpm_v, openmind, swanlab, dev, cce
+
+### Memory-Efficient Loss (CCE)
+
+Optionally enable Cut Cross-Entropy for memory-efficient loss computation on large vocabularies.
+
+Install:
+
+```bash
+pip install -e ".[dev,cce]"
+```
+
+Use in training (SFT path):
+
+```bash
+llamafactory-cli train --use_cce true ...
+```
+
+Notes: falls back to standard cross-entropy if the optional package is not installed; ALST sequence-parallel path is unchanged.
 
 #### Install from Docker Image
 

@@ -481,6 +481,10 @@ class FinetuningArguments(
         default=False,
         metadata={"help": "Whether to use the DFT loss."},
     )
+    use_cce: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use Cut Cross-Entropy for memory-efficient loss computation (SFT path)."},
+    )
     freeze_vision_tower: bool = field(
         default=True,
         metadata={"help": "Whether ot not to freeze the vision tower in MLLM training."},
@@ -570,6 +574,10 @@ class FinetuningArguments(
 
             if self.pissa_init:
                 raise ValueError("`pissa_init` is only valid for LoRA training.")
+
+        # Loss selection conflicts
+        if self.use_cce and self.use_dft_loss:
+            raise ValueError("`use_cce` cannot be enabled together with `use_dft_loss`.")
 
     def to_dict(self) -> dict[str, Any]:
         args = asdict(self)
