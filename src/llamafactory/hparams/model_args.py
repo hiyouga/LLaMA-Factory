@@ -17,13 +17,13 @@
 
 import json
 from dataclasses import asdict, dataclass, field, fields
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal, Optional
 
 import torch
 from transformers.training_args import _convert_str_dict
 from typing_extensions import Self
 
-from ..extras.constants import AttentionImplementation, EngineName, QuantizationMethod, RopeScaling
+from ..extras.constants import AttentionImplementation, EngineName, QuantizationMethod
 
 
 @dataclass
@@ -83,7 +83,7 @@ class BaseModelArguments:
         default=True,
         metadata={"help": "Whether or not to use memory-efficient model loading."},
     )
-    rope_scaling: Optional[Union[RopeScaling, dict]] = field(
+    rope_scaling: Optional[Any] = field(
         default=None,
         metadata={
             "help": (
@@ -465,7 +465,7 @@ class VllmArguments:
         default=32,
         metadata={"help": "Maximum rank of all LoRAs in the vLLM engine."},
     )
-    vllm_config: Optional[Union[dict, str]] = field(
+    vllm_config: Optional[Any] = field(
         default=None,
         metadata={"help": "Config to initialize the vllm engine. Please use JSON strings."},
     )
@@ -491,7 +491,7 @@ class SGLangArguments:
         default=-1,
         metadata={"help": "Tensor parallel size for the SGLang engine."},
     )
-    sglang_config: Optional[Union[dict, str]] = field(
+    sglang_config: Optional[Any] = field(
         default=None,
         metadata={"help": "Config to initialize the SGLang engine. Please use JSON strings."},
     )
@@ -521,7 +521,7 @@ class ModelArguments(
         init=False,
         metadata={"help": "Torch data type for computing model outputs, derived from `fp/bf16`. Do not specify it."},
     )
-    device_map: Optional[Union[str, dict[str, Any]]] = field(
+    device_map: Optional[Any] = field(
         default=None,
         init=False,
         metadata={"help": "Device map for model placement, derived from training stage. Do not specify it."},

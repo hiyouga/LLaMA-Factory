@@ -96,9 +96,13 @@ def configure_rope(config: "PretrainedConfig", model_args: "ModelArguments") -> 
     setattr(config, "max_position_embeddings", new_max_length)
     logger.info_rank0(f"Enlarge max model length from {old_max_length} to {new_max_length}.")
 
-    if model_args.rope_scaling in [RopeScaling.DYNAMIC, RopeScaling.YARN]:
+    rope_type_name = rope_kwargs["rope_type"]
+    if rope_type_name in (
+        getattr(RopeScaling.DYNAMIC, "value", "dynamic"),
+        getattr(RopeScaling.YARN, "value", "yarn"),
+    ):
         rope_kwargs["original_max_position_embeddings"] = old_max_length
-    elif model_args.rope_scaling == RopeScaling.LLAMA3:
+    elif rope_type_name == getattr(RopeScaling.LLAMA3, "value", "llama3"):
         rope_kwargs["original_max_position_embeddings"] = old_max_length
         rope_kwargs["low_freq_factor"] = 1.0
         rope_kwargs["high_freq_factor"] = 4.0
