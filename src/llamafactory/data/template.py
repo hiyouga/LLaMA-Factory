@@ -156,7 +156,7 @@ class Template:
             elif message["role"] == Role.OBSERVATION:
                 elements += self.format_observation.apply(content=message["content"])
             elif message["role"] == Role.FUNCTION:
-                elements += self.format_function.apply(content=message["content"])
+                elements += self.format_function.apply(content=message["content"], thought_words=self.thought_words)
             else:
                 raise NotImplementedError("Unexpected role: {}".format(message["role"]))
 
@@ -1201,6 +1201,17 @@ register_template(
 )
 
 
+register_template(
+    name="intern_s1",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<|im_end|>"],
+    mm_plugin=get_mm_plugin(name="intern_vl", image_token="<image>", video_token="<video>"),
+)
+
+
 # copied from qwen template
 register_template(
     name="keye_vl",
@@ -1841,6 +1852,20 @@ register_template(
         "and you only answer questions related to computer science. For politically sensitive questions, "
         "security and privacy issues, and other non-computer science questions, you will refuse to answer.\n\n"
     ),
+)
+
+
+# copied from seed_coder
+register_template(
+    name="seed_oss",
+    format_user=StringFormatter(
+        slots=[{"bos_token"}, "user\n{{content}}", {"eos_token"}, {"bos_token"}, "assistant\n"]
+    ),
+    format_system=StringFormatter(slots=[{"bos_token"}, "system\n{{content}}", {"eos_token"}]),
+    format_function=FunctionFormatter(slots=[{"bos_token"}, "\n{{content}}", {"eos_token"}], tool_format="seed_oss"),
+    format_tools=ToolFormatter(tool_format="seed_oss"),
+    template_class=ReasoningTemplate,
+    thought_words=("<seed:think>", "</seed:think>"),
 )
 
 

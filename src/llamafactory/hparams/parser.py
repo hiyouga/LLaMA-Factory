@@ -32,6 +32,7 @@ from transformers.utils import is_torch_bf16_gpu_available, is_torch_npu_availab
 from ..extras import logging
 from ..extras.constants import CHECKPOINT_NAMES, EngineName
 from ..extras.misc import check_dependencies, check_version, get_current_device, is_env_enabled
+from ..extras.packages import is_transformers_version_greater_than
 from .data_args import DataArguments
 from .evaluation_args import EvaluationArguments
 from .finetuning_args import FinetuningArguments
@@ -524,6 +525,9 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
 
     if model_args.use_unsloth and is_deepspeed_zero3_enabled():
         raise ValueError("Unsloth is incompatible with DeepSpeed ZeRO-3.")
+
+    if data_args.neat_packing and is_transformers_version_greater_than("4.53.0"):
+        raise ValueError("Neat packing is incompatible with transformers>=4.53.0.")
 
     if data_args.cutoff_len % model_args.sequence_parallel_size != 0:
         raise ValueError("cutoff_len must be a multiple of sequence_parallel_size.")
