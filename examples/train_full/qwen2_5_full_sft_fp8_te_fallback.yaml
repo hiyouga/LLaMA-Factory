@@ -83,7 +83,7 @@ remove_unused_columns: false
 
 ### Performance Optimizations
 torch_compile: false                        # Disabled for FP8 stability - dynamo can cause dimension issues
-torch_compile_backend: inductor            # Backend for torch.compile if enabled
+torch_compile_backend: eager            # Backend for torch.compile if enabled
 ddp_timeout: 1800                          # 30 minutes timeout for DDP operations
 
 ### Notes on Transformer Engine FP8:

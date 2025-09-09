@@ -56,5 +56,5 @@ ddp_timeout: 180000000
 
 ### optimizations
 # torch_compile: true
-# torch_compile_backend: inductor
+# torch_compile_backend: eager
 # optim: paged_adamw_8bit incompatible with FSDP

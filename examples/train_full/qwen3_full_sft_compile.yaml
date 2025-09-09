@@ -4,7 +4,7 @@ trust_remote_code: true
 attn: kernels-community/vllm-flash-attn3
 enable_liger_kernel: true
 torch_compile: true
-torch_compile_backend: inductor
+torch_compile_backend: eager
 optim: paged_adamw_8bit
 rope_scaling:
   rope_type: yarn

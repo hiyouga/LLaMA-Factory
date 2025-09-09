@@ -540,6 +540,18 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
         logger.warning_rank0("`neat_packing` requires `packing` is True. Change `packing` to True.")
         data_args.packing = True
 
+    # Set TorchDynamo scalar capture when combining Liger kernels with torch.compile
+    try:
+        if (
+            getattr(training_args, "torch_compile", False)
+            and getattr(model_args, "enable_liger_kernel", False)
+            and not os.getenv("TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS")
+        ):
+            os.environ["TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS"] = "1"
+            logger.info_rank0("Set TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS=1 (liger_kernel + torch.compile detected).")
+    except Exception:
+        pass
+
     _set_env_vars()
     _verify_model_args(model_args, data_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args, training_args)

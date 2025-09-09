@@ -98,6 +98,14 @@ def get_custom_gradient_checkpointing_func(gradient_checkpointing_func: Callable
         else:
             return func(*args, **kwargs)
 
+    # Prevent TorchDynamo from tracing this wrapper to avoid recompilations
+    try:
+        import torch._dynamo as _dynamo  # type: ignore
+
+        custom_gradient_checkpointing_func = _dynamo.disable(custom_gradient_checkpointing_func)  # type: ignore
+    except Exception:
+        pass
+
     return custom_gradient_checkpointing_func
 
 
