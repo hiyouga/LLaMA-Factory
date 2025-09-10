@@ -43,13 +43,13 @@
   "comms_logger": {
     "enabled": false
   },
-  "flops_profiler": {
-    "enabled": true,
-    "profile_step": 200,
-    "module_depth": 2,
-    "top_modules": 3,
-    "detailed": false
-  },
+  // "flops_profiler": {
+  //   "enabled": true,
+  //   "profile_step": 200,
+  //   "module_depth": 2,
+  //   "top_modules": 3,
+  //   "detailed": false
+  // },
   "monitor_config": {
     "enabled": true,
     "tag": "DeepSpeedMonitor",

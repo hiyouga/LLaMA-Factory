@@ -32,7 +32,7 @@ from ...extras.packages import is_transformers_version_greater_than
 from ...model.model_utils.alst_config import create_alst_config
 from ..alst_loss import create_alst_loss_handler, should_use_alst_loss
 from ..callbacks import SaveProcessorCallback
-from ..checkpoint_manager import CheckpointBackend, fsdp_dcp_save, select_backend
+from ..checkpoint_manager import CheckpointBackend, fsdp_dcp_load, fsdp_dcp_save, select_backend
 from ..fp8_utils import configure_fp8_environment, verify_fp8_status
 from ..trainer_utils import (
     create_custom_optimizer,
@@ -347,3 +347,46 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             pass
 
         return result
+
+    @override
+    def _load_from_checkpoint(self, resume_from_checkpoint: str, model=None):
+        """Override resume path to support FSDP DCP checkpoints.
+
+        - Uses DCP load when FSDP backend is selected; otherwise defers to HF behavior.
+        - Disables Dynamo capture during load and resets graphs after to avoid stale captures.
+        """
+        backend = select_backend()
+
+        # Disable Dynamo capturing during load (if available)
+        disable_ctx = None
+        try:
+            import torch._dynamo as _dynamo  # type: ignore
+
+            disable_ctx = _dynamo.disable  # type: ignore[attr-defined]
+        except Exception:
+            disable_ctx = None
+
+        if backend == CheckpointBackend.FSDP_DCP:
+            if disable_ctx is not None:
+                with disable_ctx():
+                    fsdp_dcp_load(self, resume_from_checkpoint)
+            else:
+                fsdp_dcp_load(self, resume_from_checkpoint)
+
+            # Reset Dynamo caches post-load
+            try:
+                if torch.cuda.is_available():
+                    torch.cuda.synchronize()
+                try:
+                    import torch._dynamo as _dynamo  # type: ignore
+
+                    _dynamo.reset()  # type: ignore[attr-defined]
+                    logger.info_rank0("Reset TorchDynamo graphs after checkpoint load to avoid stale captures.")
+                except Exception:
+                    pass
+            except Exception:
+                pass
+            return
+
+        # Default behavior for non-FSDP-DCP backends
+        return super()._load_from_checkpoint(resume_from_checkpoint=resume_from_checkpoint, model=model)
