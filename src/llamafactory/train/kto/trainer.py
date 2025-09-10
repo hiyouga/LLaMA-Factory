@@ -104,6 +104,18 @@ class CustomKTOTrainer(KTOTrainer):
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
 
+        # Inform users about Rank-0-only HF logging under DeepSpeed distributed training
+        try:
+            if getattr(self, "is_deepspeed_enabled", False):
+                from ...extras import logging as _llf_logging
+
+                _llf_logging.get_logger(__name__).warning_rank0(
+                    "DeepSpeed ZeRO-3 enabled: HF Trainer logs are emitted on Rank 0 only. "
+                    "For alternate logging, consider enable `prefer_deepspeed_logging` (not recommended with torch.compile)."
+                )
+        except Exception:
+            pass
+
     @override
     def create_optimizer(self) -> "torch.optim.Optimizer":
         if self.optimizer is None:
@@ -230,6 +242,11 @@ class CustomKTOTrainer(KTOTrainer):
             reference_kl_logps,
         )
         losses = losses.nanmean()
+        try:
+            if getattr(self, "is_deepspeed_enabled", False):
+                self._record_rank_avg_loss(losses)
+        except Exception:
+            pass
 
         if self.ftx_gamma > 1e-6 and len(policy_chosen_logps) > 0:  # remember to rescale
             sft_loss = -policy_chosen_logps_avg
@@ -252,6 +269,23 @@ class CustomKTOTrainer(KTOTrainer):
         metrics["kl"] = kl.item()
         return losses, metrics
 
+    def _record_rank_avg_loss(self, loss_tensor: "torch.Tensor") -> None:
+        try:
+            if not hasattr(self, "accelerator") or not getattr(self, "is_deepspeed_enabled", False):
+                return
+
+            val = loss_tensor.detach().new_tensor([float(loss_tensor.detach())])
+            if self.args.world_size > 1:
+                gathered = self.accelerator.gather(val)
+                if self.accelerator.is_main_process:
+                    self._llf_rank_avg_loss = float(gathered.mean().item())
+            else:
+                self._llf_rank_avg_loss = float(val.item())
+        except Exception:
+            pass
+
+    # integrate rank-avg loss into existing log below
+
     @override
     def compute_loss(
         self, model: "PreTrainedModel", inputs: dict[str, "torch.Tensor"], return_outputs: bool = False, **kwargs
@@ -262,6 +296,11 @@ class CustomKTOTrainer(KTOTrainer):
     @override
     def log(self, logs: dict[str, float], *args, **kwargs) -> None:
         r"""Log `logs` on the various objects watching training, including stored metrics."""
+        try:
+            if hasattr(self, "_llf_rank_avg_loss") and getattr(self, "is_deepspeed_enabled", False):
+                logs.setdefault("loss_rank_avg", self._llf_rank_avg_loss)
+        except Exception:
+            pass
         # logs either has "loss" or "eval_loss"
         train_eval = "train" if "loss" in logs else "eval"
         prefix = "eval_" if train_eval == "eval" else ""

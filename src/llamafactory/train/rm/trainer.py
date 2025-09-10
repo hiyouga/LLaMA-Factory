@@ -64,6 +64,16 @@ class PairwiseTrainer(Trainer):
             self.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, self.accelerator)
             self.add_callback(BAdamCallback)
 
+        # Inform users about Rank-0-only HF logging under DeepSpeed distributed training
+        try:
+            if getattr(self, "is_deepspeed_enabled", False):
+                logger.warning_rank0(
+                    "DeepSpeed ZeRO-3 enabled: HF Trainer logs are emitted on Rank 0 only. "
+                    "For alternate logging, consider enable `prefer_deepspeed_logging` (not recommended with torch.compile)."
+                )
+        except Exception:
+            pass
+
     @override
     def create_optimizer(self) -> "torch.optim.Optimizer":
         if self.optimizer is None:
@@ -104,6 +114,11 @@ class PairwiseTrainer(Trainer):
         chosen_scores, rejected_scores = chosen_scores.squeeze(), rejected_scores.squeeze()
 
         loss = -torch.nn.functional.logsigmoid(chosen_scores.float() - rejected_scores.float()).mean()
+        try:
+            if getattr(self, "is_deepspeed_enabled", False):
+                self._record_rank_avg_loss(loss)
+        except Exception:
+            pass
         if return_outputs:
             return loss, (loss, chosen_scores, rejected_scores)
         else:
@@ -127,3 +142,27 @@ class PairwiseTrainer(Trainer):
                 res.append(json.dumps({"chosen": round(float(c_score), 2), "rejected": round(float(r_score), 2)}))
 
             writer.write("\n".join(res))
+
+    def _record_rank_avg_loss(self, loss_tensor: "torch.Tensor") -> None:
+        try:
+            if not hasattr(self, "accelerator") or not getattr(self, "is_deepspeed_enabled", False):
+                return
+
+            val = loss_tensor.detach().new_tensor([float(loss_tensor.detach())])
+            if self.args.world_size > 1:
+                gathered = self.accelerator.gather(val)
+                if self.accelerator.is_main_process:
+                    self._llf_rank_avg_loss = float(gathered.mean().item())
+            else:
+                self._llf_rank_avg_loss = float(val.item())
+        except Exception:
+            pass
+
+    @override
+    def log(self, logs: dict[str, float]) -> None:
+        try:
+            if hasattr(self, "_llf_rank_avg_loss") and getattr(self, "is_deepspeed_enabled", False):
+                logs.setdefault("loss_rank_avg", self._llf_rank_avg_loss)
+        except Exception:
+            pass
+        return super().log(logs)

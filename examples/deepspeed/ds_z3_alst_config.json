@@ -40,20 +40,5 @@
       "warmup_max_lr": "auto",
       "warmup_num_steps": "auto"
     }
-  },
-  "steps_per_print": 50,
-  "wall_clock_breakdown": false,
-  "comms_logger": {
-    "enabled": false
-  },
-  "comms_config": {
-    "verbose": false
-  },
-  "monitor_config": {
-    "enabled": true,
-    "tag": "DeepSpeedMonitor",
-    "csv_monitor": {
-      "enabled": false
-    }
   }
 }

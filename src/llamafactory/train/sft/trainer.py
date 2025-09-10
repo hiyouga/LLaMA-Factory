@@ -28,7 +28,6 @@ from typing_extensions import override
 from ...data.processor.alst_data_adapter import create_alst_data_adapter
 from ...extras import logging
 from ...extras.constants import IGNORE_INDEX
-from ...extras.deepspeed_utils import patch_deepspeed_timers
 from ...extras.packages import is_transformers_version_greater_than
 from ...model.model_utils.alst_config import create_alst_config
 from ..alst_loss import create_alst_loss_handler, should_use_alst_loss
@@ -142,6 +141,16 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         if model_args is not None and model_args.fp8 and hasattr(self, "accelerator"):
             verify_fp8_status(self.accelerator, model_args)
 
+        # Inform users about Rank-0-only HF logging under DeepSpeed distributed training
+        try:
+            if getattr(self, "is_deepspeed_enabled", False):
+                logger.warning_rank0(
+                    "DeepSpeed ZeRO-3 enabled: HF Trainer logs are emitted on Rank 0 only. "
+                    "For alternate logging, consider enable `prefer_deepspeed_logging` (not recommended with torch.compile)."
+                )
+        except Exception:
+            pass
+
     @override
     def create_optimizer(self) -> "torch.optim.Optimizer":
         if self.optimizer is None:
@@ -157,13 +166,6 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
     @override
     def training_step(self, model, inputs, *args, **kwargs):
-        # Ensure DeepSpeed timer patches are applied after engine initialization
-        if getattr(self, "is_deepspeed_enabled", False) and not getattr(self, "_ds_timers_patched", False):
-            try:
-                patch_deepspeed_timers()
-                self._ds_timers_patched = True
-            except Exception:
-                pass
         # ALST doesn't require dummy forward pass - UlyssesSPDataLoaderAdapter handles sequence parallel setup
         return super().training_step(model, inputs, *args, **kwargs)
 
@@ -186,7 +188,14 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             if self.alst_loss_handler is None:
                 self.alst_loss_handler = create_alst_loss_handler(sequence_parallel_group)
             # Use ALST loss computation
-            return self.alst_loss_handler.compute_alst_loss(model, inputs, return_outputs)
+            loss_tuple = self.alst_loss_handler.compute_alst_loss(model, inputs, return_outputs)
+            try:
+                if getattr(self, "is_deepspeed_enabled", False):
+                    loss_tensor = loss_tuple[0] if return_outputs else loss_tuple
+                    self._record_rank_avg_loss(loss_tensor)
+            except Exception:
+                pass
+            return loss_tuple
 
         else:
             # Standard training (no sequence parallelism) or ALST not properly configured
@@ -196,6 +205,12 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                 )
 
             loss = super().compute_loss(model, inputs, return_outputs, **kwargs)
+            try:
+                if getattr(self, "is_deepspeed_enabled", False):
+                    loss_tensor = loss[0] if (return_outputs and isinstance(loss, tuple)) else loss
+                    self._record_rank_avg_loss(loss_tensor)
+            except Exception:
+                pass
 
         if is_transformers_version_greater_than("4.46") and not getattr(self, "model_accepts_loss_kwargs", False):
             # other model should not scale the loss
@@ -205,6 +220,41 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                 return loss / self.args.gradient_accumulation_steps
 
         return loss
+
+    def _record_rank_avg_loss(self, loss_tensor: "torch.Tensor") -> None:
+        """Collect a rank-averaged scalar loss for logging on Rank 0.
+
+        This introduces negligible overhead (all_gather of 1 scalar per step) and
+        improves stability of reported loss under distributed DeepSpeed training.
+        """
+        try:
+            if not hasattr(self, "accelerator") or not getattr(self, "is_deepspeed_enabled", False):
+                return
+            import torch
+
+            scalar = loss_tensor.detach()
+            if not isinstance(scalar, torch.Tensor):
+                return
+            # Ensure a 1D tensor to gather
+            val = scalar.new_tensor([float(scalar)])
+            if self.args.world_size > 1:
+                gathered = self.accelerator.gather(val)
+                if self.accelerator.is_main_process:
+                    self._llf_rank_avg_loss = float(gathered.mean().item())
+            else:
+                self._llf_rank_avg_loss = float(val.item())
+        except Exception:
+            pass
+
+    @override
+    def log(self, logs: dict[str, Any]) -> None:
+        # Add rank-averaged loss if available
+        try:
+            if hasattr(self, "_llf_rank_avg_loss"):
+                logs.setdefault("loss_rank_avg", self._llf_rank_avg_loss)
+        except Exception:
+            pass
+        return super().log(logs)
 
     @override
     def prediction_step(

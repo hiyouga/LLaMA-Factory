@@ -29,22 +29,5 @@
     "stage3_max_live_parameters": 1000000000,
     "stage3_max_reuse_distance": 1000000000,
     "stage3_gather_16bit_weights_on_model_save": true
-  },
-  "steps_per_print": 10000000,
-  "gradient_accumulation_steps": "auto",
-  "comms_config": {
-    "verbose": false
-  },
-  "steps_per_print": 50,
-  "wall_clock_breakdown": false,
-  "comms_logger": {
-    "enabled": false
-  },
-  "monitor_config": {
-    "enabled": true,
-    "tag": "DeepSpeedMonitor",
-    "csv_monitor": {
-      "enabled": false
-    }
   }
 }

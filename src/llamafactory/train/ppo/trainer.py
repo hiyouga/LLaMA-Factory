@@ -276,6 +276,15 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
                     learning_rate=stats["ppo/learning_rate"],
                     epoch=round(step / steps_in_epoch, 2),
                 )
+                # Rank-averaged loss under DeepSpeed (approximate via local meters)
+                try:
+                    if getattr(self, "is_deepspeed_enabled", False) and self.args.world_size > 1:
+                        local = torch.tensor([loss_meter.avg], device=self.accelerator.device, dtype=torch.float32)
+                        gathered = self.accelerator.gather(local)
+                        if self.accelerator.is_main_process:
+                            logs["loss_rank_avg"] = round(float(gathered.mean().item()), 4)
+                except Exception:
+                    pass
                 tqdm.write(str(logs))
                 logs["step"] = step
                 self.state.log_history.append(logs)

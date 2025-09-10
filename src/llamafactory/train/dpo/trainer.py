@@ -116,6 +116,18 @@ class CustomDPOTrainer(DPOTrainer):
 
             self.running = RunningMoments(self.accelerator)
 
+        # Inform users about Rank-0-only HF logging under DeepSpeed distributed training
+        try:
+            if getattr(self, "is_deepspeed_enabled", False):
+                from ...extras import logging as _llf_logging
+
+                _llf_logging.get_logger(__name__).warning_rank0(
+                    "DeepSpeed ZeRO-3 enabled: HF Trainer logs are emitted on Rank 0 only. "
+                    "For alternate logging, consider enable `prefer_deepspeed_logging` (not recommended with torch.compile)."
+                )
+        except Exception:
+            pass
+
     @override
     def create_optimizer(self) -> "torch.optim.Optimizer":
         if self.optimizer is None:
@@ -316,7 +328,30 @@ class CustomDPOTrainer(DPOTrainer):
             metrics[f"{prefix}sft_loss"] = sft_loss.mean().item()
             metrics[f"{prefix}odds_ratio_loss"] = ((losses - sft_loss) / self.beta).mean().item()
 
-        return losses.mean(), metrics
+        loss_mean = losses.mean()
+        try:
+            if getattr(self, "is_deepspeed_enabled", False):
+                self._record_rank_avg_loss(loss_mean)
+        except Exception:
+            pass
+        return loss_mean, metrics
+
+    def _record_rank_avg_loss(self, loss_tensor: "torch.Tensor") -> None:
+        try:
+            if not hasattr(self, "accelerator") or not getattr(self, "is_deepspeed_enabled", False):
+                return
+
+            val = loss_tensor.detach().new_tensor([float(loss_tensor.detach())])
+            if self.args.world_size > 1:
+                gathered = self.accelerator.gather(val)
+                if self.accelerator.is_main_process:
+                    self._llf_rank_avg_loss = float(gathered.mean().item())
+            else:
+                self._llf_rank_avg_loss = float(val.item())
+        except Exception:
+            pass
+
+    # integrate rank-avg loss into existing log below
 
     @override
     def compute_loss(
@@ -328,6 +363,11 @@ class CustomDPOTrainer(DPOTrainer):
     @override
     def log(self, logs: dict[str, float], *args, **kwargs) -> None:
         r"""Log `logs` on the various objects watching training, including stored metrics."""
+        try:
+            if hasattr(self, "_llf_rank_avg_loss") and getattr(self, "is_deepspeed_enabled", False):
+                logs.setdefault("loss_rank_avg", self._llf_rank_avg_loss)
+        except Exception:
+            pass
         # logs either has "loss" or "eval_loss"
         train_eval = "train" if "loss" in logs else "eval"
         # Add averaged stored metrics to logs
