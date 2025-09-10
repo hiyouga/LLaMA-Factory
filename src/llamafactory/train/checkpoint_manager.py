@@ -104,10 +104,43 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
     try:
         from torch.distributed import checkpoint as dist_cp
         from torch.distributed.checkpoint.filesystem import FileSystemWriter
-        from torch.distributed.checkpoint.state_dict import (
-            ModelStateDictOptions,
-            get_state_dict,
-        )
+
+        # Version‑compatible DCP imports
+        # - Torch 2.5+ often has ModelStateDictOptions; older/newer use StateDictOptions+ShardedStateDictConfig
+        try:  # Prefer new model helpers
+            from torch.distributed.checkpoint.state_dict import (
+                get_model_state_dict as dcp_get_model_state_dict,
+            )
+        except Exception:  # Extremely old versions (unlikely in our matrix)
+            from torch.distributed.checkpoint.state_dict import (
+                get_state_dict as dcp_get_model_state_dict,  # type: ignore
+            )
+
+        # Options shims
+        try:
+            from torch.distributed.checkpoint.state_dict import (
+                ModelStateDictOptions as DCPStateDictOptions,  # type: ignore
+            )
+
+            def _make_model_options():
+                return DCPStateDictOptions(sharded=True)  # type: ignore[arg-type]
+
+        except Exception:
+            from torch.distributed.checkpoint.state_dict import (  # type: ignore
+                ShardedStateDictConfig,
+                StateDictOptions,
+            )
+
+            def _make_model_options():
+                return StateDictOptions(state_dict_config=ShardedStateDictConfig())
+
+        # Optimizer helper: may be absent in some torch versions
+        try:
+            from torch.distributed.checkpoint.state_dict import (
+                get_optimizer_state_dict as dcp_get_optim_sd,  # type: ignore
+            )
+        except Exception:
+            dcp_get_optim_sd = None  # type: ignore
 
         model = trainer.model
         optimizer = getattr(trainer, "optimizer", None)
@@ -115,8 +148,8 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
         save_only_model = getattr(trainer.args, "save_only_model", False)
 
         # Build model state dict (sharded)
-        ms_opts = ModelStateDictOptions(sharded=True)
-        model_sd = get_state_dict(model, options=ms_opts)
+        ms_opts = _make_model_options()
+        model_sd = dcp_get_model_state_dict(model, options=ms_opts)
 
         payload: dict[str, Any] = {"model": model_sd}
 
@@ -130,11 +163,11 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
             else:
                 opt_sd: Any
                 try:
-                    from torch.distributed.checkpoint import optim as dist_optim  # type: ignore
-
-                    # New API: produces a sharded optimizer state dict mapping
-                    opt_sd = dist_optim.get_optimizer_state_dict(optimizer)
-                    logger.info_rank0("Saving optimizer state via DCP sharded optimizer API.")
+                    if dcp_get_optim_sd is not None:
+                        opt_sd = dcp_get_optim_sd(optimizer)
+                        logger.info_rank0("Saving optimizer state via DCP optimizer API.")
+                    else:
+                        raise RuntimeError("DCP optimizer helpers unavailable")
                 except Exception:
                     # Fallback: regular state dict
                     opt_sd = optimizer.state_dict()
@@ -194,19 +227,60 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
     try:
         from torch.distributed import checkpoint as dist_cp
         from torch.distributed.checkpoint.filesystem import FileSystemReader
-        from torch.distributed.checkpoint.state_dict import (
-            ModelStateDictOptions,
-            get_state_dict,
-            set_state_dict,
-        )
+
+        # Version‑compatible DCP imports
+        try:  # Prefer new model helpers
+            from torch.distributed.checkpoint.state_dict import (
+                get_model_state_dict as dcp_get_model_state_dict,
+            )
+            from torch.distributed.checkpoint.state_dict import (
+                set_model_state_dict as dcp_set_model_state_dict,
+            )
+        except Exception:
+            from torch.distributed.checkpoint.state_dict import (
+                get_state_dict as dcp_get_model_state_dict,  # type: ignore
+            )
+            from torch.distributed.checkpoint.state_dict import (
+                set_state_dict as dcp_set_model_state_dict,  # type: ignore
+            )
+
+        # Options shims
+        try:
+            from torch.distributed.checkpoint.state_dict import (
+                ModelStateDictOptions as DCPStateDictOptions,  # type: ignore
+            )
+
+            def _make_model_options():
+                return DCPStateDictOptions(sharded=True)  # type: ignore[arg-type]
+
+        except Exception:
+            from torch.distributed.checkpoint.state_dict import (  # type: ignore
+                ShardedStateDictConfig,
+                StateDictOptions,
+            )
+
+            def _make_model_options():
+                return StateDictOptions(state_dict_config=ShardedStateDictConfig())
+
+        # Optimizer helpers (may be absent)
+        try:
+            from torch.distributed.checkpoint.state_dict import (
+                get_optimizer_state_dict as dcp_get_optim_sd,  # type: ignore
+            )
+            from torch.distributed.checkpoint.state_dict import (
+                set_optimizer_state_dict as dcp_set_optim_sd,  # type: ignore
+            )
+        except Exception:
+            dcp_get_optim_sd = None  # type: ignore
+            dcp_set_optim_sd = None  # type: ignore
 
         model = trainer.model
         optimizer = getattr(trainer, "optimizer", None)
         scheduler = getattr(trainer, "lr_scheduler", None)
 
         # Prepare destination containers
-        ms_opts = ModelStateDictOptions(sharded=True)
-        model_dest = get_state_dict(model, options=ms_opts)
+        ms_opts = _make_model_options()
+        model_dest = dcp_get_model_state_dict(model, options=ms_opts)
 
         payload: dict[str, Any] = {"model": model_dest}
 
@@ -215,10 +289,11 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
         opt_dest: Any | None = None
         if can_restore_optimizer:
             try:
-                from torch.distributed.checkpoint import optim as dist_optim  # type: ignore
-
-                opt_dest = dist_optim.get_optimizer_state_dict(optimizer)
-                payload["optimizer"] = opt_dest
+                if dcp_get_optim_sd is not None:
+                    opt_dest = dcp_get_optim_sd(optimizer)
+                    payload["optimizer"] = opt_dest
+                else:
+                    raise RuntimeError("DCP optimizer helpers unavailable")
             except Exception:
                 # Fallback container uses normal state dict structure
                 try:
@@ -243,15 +318,16 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
         dist_cp.load(payload, storage_reader=reader, process_group=process_group)
 
         # Set model from loaded state
-        set_state_dict(model, payload["model"])
+        dcp_set_model_state_dict(model, payload["model"], options=ms_opts)
 
         # Restore optimizer if available in checkpoint
         if "optimizer" in payload and opt_dest is not None and optimizer is not None:
             try:
-                from torch.distributed.checkpoint import optim as dist_optim  # type: ignore
-
-                dist_optim.set_optimizer_state_dict(optimizer, opt_dest)
-                logger.info_rank0("Restored optimizer state via DCP sharded optimizer API.")
+                if dcp_set_optim_sd is not None:
+                    dcp_set_optim_sd(optimizer, opt_dest)
+                    logger.info_rank0("Restored optimizer state via DCP optimizer API.")
+                else:
+                    raise RuntimeError("DCP optimizer helpers unavailable")
             except Exception:
                 try:
                     optimizer.load_state_dict(opt_dest)
