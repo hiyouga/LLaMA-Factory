@@ -209,6 +209,23 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                 if getattr(self, "is_deepspeed_enabled", False):
                     loss_tensor = loss[0] if (return_outputs and isinstance(loss, tuple)) else loss
                     self._record_rank_avg_loss(loss_tensor)
+                    # Also record valid target token counts across ranks to diagnose NaNs
+                    import torch
+
+                    from ..trainer_utils import IGNORE_INDEX as _LLF_IGNORE_INDEX  # reuse constant
+
+                    labels = inputs.get("labels", None)
+                    if isinstance(labels, torch.Tensor):
+                        cnt = (labels != _LLF_IGNORE_INDEX).sum().to(torch.float32)
+                        val = cnt.new_tensor([cnt])
+                        if self.args.world_size > 1:
+                            gathered = self.accelerator.gather(val)
+                            if self.accelerator.is_main_process:
+                                self._llf_valid_targets_min = int(gathered.min().item())
+                                self._llf_valid_targets_mean = float(gathered.mean().item())
+                        else:
+                            self._llf_valid_targets_min = int(val.item())
+                            self._llf_valid_targets_mean = float(val.item())
             except Exception:
                 pass
 
@@ -237,12 +254,20 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
                 return
             # Ensure a 1D tensor to gather
             val = scalar.new_tensor([float(scalar)])
+            # Track finiteness mask for nanmean-style reduction
+            finite = torch.isfinite(val).to(val.dtype)
             if self.args.world_size > 1:
                 gathered = self.accelerator.gather(val)
+                gathered_finite = self.accelerator.gather(finite)
                 if self.accelerator.is_main_process:
-                    self._llf_rank_avg_loss = float(gathered.mean().item())
+                    denom = gathered_finite.sum().clamp_min(1.0)
+                    num = torch.nan_to_num(gathered, nan=0.0, posinf=0.0, neginf=0.0).sum()
+                    self._llf_rank_avg_loss = float((num / denom).item())
+                    # Record how many ranks were NaN to aid debugging
+                    self._llf_loss_nan_ranks = int(gathered_finite.numel() - denom.item())
             else:
                 self._llf_rank_avg_loss = float(val.item())
+                self._llf_loss_nan_ranks = 0
         except Exception:
             pass
 
@@ -252,6 +277,12 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         try:
             if hasattr(self, "_llf_rank_avg_loss"):
                 logs.setdefault("loss_rank_avg", self._llf_rank_avg_loss)
+            if hasattr(self, "_llf_loss_nan_ranks") and getattr(self, "is_deepspeed_enabled", False):
+                logs.setdefault("loss_nan_ranks", self._llf_loss_nan_ranks)
+            if hasattr(self, "_llf_valid_targets_min") and getattr(self, "is_deepspeed_enabled", False):
+                logs.setdefault("valid_targets_min", int(self._llf_valid_targets_min))
+            if hasattr(self, "_llf_valid_targets_mean") and getattr(self, "is_deepspeed_enabled", False):
+                logs.setdefault("valid_targets_mean", round(float(self._llf_valid_targets_mean), 1))
         except Exception:
             pass
         return super().log(logs, *args, **kwargs)
