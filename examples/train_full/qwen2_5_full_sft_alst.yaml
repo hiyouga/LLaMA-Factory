@@ -30,6 +30,7 @@ deepspeed: examples/deepspeed/ds_z3_alst_config.json  # DeepSpeed ZeRO-3 + ALST 
 ### dataset
 dataset: tbench_traces_sharegptv1
 template: qwen
+mask_history: true
 cutoff_len: 262144  # 256K context length - ALST can handle much longer sequences
 force_sequence_length_padding: true  # Fixed length padding to cutoff_len
 max_samples: null

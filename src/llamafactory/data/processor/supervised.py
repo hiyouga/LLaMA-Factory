@@ -99,6 +99,7 @@ class SupervisedDatasetProcessor(DatasetProcessor):
         # First pass: encode all examples and collect sequences
         encoded_examples = []
         valid_indices = []
+        dropped_no_target = 0
 
         for i in range(len(examples["_prompt"])):
             if len(examples["_prompt"][i]) % 2 != 1 or len(examples["_response"][i]) != 1:
@@ -116,6 +117,11 @@ class SupervisedDatasetProcessor(DatasetProcessor):
                 videos=examples["_videos"][i] or [],
                 audios=examples["_audios"][i] or [],
             )
+            # Enforce at least one target token per sample
+            if not any(l != IGNORE_INDEX for l in labels):
+                dropped_no_target += 1
+                logger.warning_rank0("Dropped example with no target (all labels == IGNORE_INDEX) after truncation.")
+                continue
 
             encoded_examples.append((input_ids, labels))
             valid_indices.append(i)
@@ -155,6 +161,16 @@ class SupervisedDatasetProcessor(DatasetProcessor):
             model_inputs["videos"].append(examples["_videos"][original_i])
             model_inputs["audios"].append(examples["_audios"][original_i])
 
+        kept = len(model_inputs["input_ids"]) if "input_ids" in model_inputs else 0
+        total = kept + dropped_no_target
+        if kept == 0:
+            raise ValueError(
+                "All samples were filtered out during preprocessing because they contained no target tokens. "
+                "Consider reducing cutoff_len, enabling mask_history, or adjusting your dataset."
+            )
+        logger.info_rank0(
+            f"Supervised preprocessing: kept {kept}/{total} samples (dropped {dropped_no_target} with no targets)."
+        )
         return model_inputs
 
     def print_data_example(self, example: dict[str, list[int]]) -> None:
@@ -172,6 +188,7 @@ class PackedSupervisedDatasetProcessor(SupervisedDatasetProcessor):
         # build inputs with format `<bos> X1 Y1 <eos> <bos> X2 Y2 <eos>`
         # and labels with format `<ignore> ... <ignore> Y1 <eos> <ignore> ... <ignore> Y2 <eos>`
         valid_num = 0
+        dropped_no_target = 0
         batch_input_ids, batch_labels, batch_images, batch_videos, batch_audios = [], [], [], [], []
         lengths = []
         length2indexes = defaultdict(list)
@@ -191,6 +208,14 @@ class PackedSupervisedDatasetProcessor(SupervisedDatasetProcessor):
                 videos=examples["_videos"][i] or [],
                 audios=examples["_audios"][i] or [],
             )
+            # Enforce at least one target token per sample
+            if not any(l != IGNORE_INDEX for l in labels):
+                dropped_no_target += 1
+                logger.warning_rank0(
+                    "Dropped example with no target (all labels == IGNORE_INDEX) after truncation (packing)."
+                )
+                continue
+
             length = len(input_ids)
             if length > self.data_args.cutoff_len:
                 logger.warning_rank0(f"Dropped lengthy example with length {length} > {self.data_args.cutoff_len}.")
@@ -243,4 +268,14 @@ class PackedSupervisedDatasetProcessor(SupervisedDatasetProcessor):
             model_inputs["videos"].append(packed_videos or None)
             model_inputs["audios"].append(packed_audios or None)
 
+        kept = len(model_inputs["input_ids"]) if "input_ids" in model_inputs else 0
+        total = kept + dropped_no_target
+        if kept == 0:
+            raise ValueError(
+                "All samples were filtered out during preprocessing (packing) due to no target tokens. "
+                "Consider reducing cutoff_len, enabling mask_history, or adjusting your dataset."
+            )
+        logger.info_rank0(
+            f"Packed supervised preprocessing: kept {kept}/{total} samples (dropped {dropped_no_target} with no targets)."
+        )
         return model_inputs

@@ -86,6 +86,7 @@ class FeedbackDatasetProcessor(DatasetProcessor):
         # Creates mismatched pairs of prompts and completions for the KL dataset by adding a +1 offset to the order of completions.
         kl_response = [examples["_response"][-1]] + examples["_response"][:-1]
         model_inputs = defaultdict(list)
+        dropped_no_target = 0
         for i in range(len(examples["_prompt"])):
             if len(examples["_prompt"][i]) % 2 != 1 or len(examples["_response"][i]) < 2:
                 logger.warning_rank0(
@@ -103,6 +104,13 @@ class FeedbackDatasetProcessor(DatasetProcessor):
                 videos=examples["_videos"][i] or [],
                 audios=examples["_audios"][i] or [],
             )
+            # Enforce at least one target token in either primary or KL branch
+            if not any(l != IGNORE_INDEX for l in labels) and not any(l != IGNORE_INDEX for l in kl_labels):
+                dropped_no_target += 1
+                logger.warning_rank0(
+                    "Dropped feedback example with no target tokens in both primary and KL branches after truncation."
+                )
+                continue
             model_inputs["input_ids"].append(input_ids)
             model_inputs["attention_mask"].append([1] * len(input_ids))
             model_inputs["labels"].append(labels)
@@ -119,6 +127,16 @@ class FeedbackDatasetProcessor(DatasetProcessor):
         if desirable_num == 0 or undesirable_num == 0:
             logger.warning_rank0("Your dataset only has one preference type.")
 
+        kept = len(model_inputs["input_ids"]) if "input_ids" in model_inputs else 0
+        total = kept + dropped_no_target
+        if kept == 0:
+            raise ValueError(
+                "All feedback samples were filtered out during preprocessing due to no target tokens. "
+                "Consider reducing cutoff_len or adjusting your dataset."
+            )
+        logger.info_rank0(
+            f"Feedback preprocessing: kept {kept}/{total} samples (dropped {dropped_no_target} with no targets)."
+        )
         return model_inputs
 
     def print_data_example(self, example: dict[str, list[int]]) -> None:

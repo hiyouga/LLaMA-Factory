@@ -36,6 +36,7 @@ deepspeed: examples/deepspeed/ds_z3_partial_offload_config.json
 ### dataset
 dataset: tbench_traces_sharegptv1
 template: qwen  # Qwen3 template (same as Qwen2.5)
+mask_history: true
 cutoff_len: 196608
 max_samples: null  # Use full dataset
 overwrite_cache: false

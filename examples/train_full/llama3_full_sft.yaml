@@ -11,6 +11,7 @@ deepspeed: examples/deepspeed/ds_z3_config.json  # choices: [ds_z0_config.json, 
 ### dataset
 dataset: identity,alpaca_en_demo
 template: llama3
+mask_history: true
 cutoff_len: 2048
 max_samples: 1000
 overwrite_cache: true

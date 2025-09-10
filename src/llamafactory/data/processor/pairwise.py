@@ -71,6 +71,7 @@ class PairwiseDatasetProcessor(DatasetProcessor):
     def preprocess_dataset(self, examples: dict[str, list[Any]]) -> dict[str, list[Any]]:
         # build input pairs with format `<bos> X`, `Y1 <eos>` and `Y2 <eos>`
         model_inputs = defaultdict(list)
+        dropped_no_target = 0
         for i in range(len(examples["_prompt"])):
             if len(examples["_prompt"][i]) % 2 != 1 or len(examples["_response"][i]) < 2:
                 logger.warning_rank0(
@@ -87,6 +88,15 @@ class PairwiseDatasetProcessor(DatasetProcessor):
                 videos=examples["_videos"][i] or [],
                 audios=examples["_audios"][i] or [],
             )
+            # Enforce at least one target token in chosen/rejected labels
+            if not any(l != IGNORE_INDEX for l in chosen_labels) and not any(
+                l != IGNORE_INDEX for l in rejected_labels
+            ):
+                dropped_no_target += 1
+                logger.warning_rank0(
+                    "Dropped pairwise example with no target tokens in both branches after truncation."
+                )
+                continue
             model_inputs["chosen_input_ids"].append(chosen_input_ids)
             model_inputs["chosen_attention_mask"].append([1] * len(chosen_input_ids))
             model_inputs["chosen_position_ids"].append(list(range(len(chosen_input_ids))))
@@ -99,6 +109,16 @@ class PairwiseDatasetProcessor(DatasetProcessor):
             model_inputs["videos"].append(examples["_videos"][i])
             model_inputs["audios"].append(examples["_audios"][i])
 
+        kept = len(model_inputs["chosen_input_ids"]) if "chosen_input_ids" in model_inputs else 0
+        total = kept + dropped_no_target
+        if kept == 0:
+            raise ValueError(
+                "All pairwise samples were filtered out during preprocessing due to no target tokens. "
+                "Consider reducing cutoff_len or adjusting your dataset."
+            )
+        logger.info_rank0(
+            f"Pairwise preprocessing: kept {kept}/{total} samples (dropped {dropped_no_target} with no targets)."
+        )
         return model_inputs
 
     def print_data_example(self, example: dict[str, list[int]]) -> None:
