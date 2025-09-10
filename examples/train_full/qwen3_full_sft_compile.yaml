@@ -18,9 +18,6 @@ finetuning_type: full  # Full fine-tuning (not LoRA)
 deepspeed: examples/deepspeed/ds_z3_partial_offload_config.json
 # Enable MFU reporting (uses HF Trainer total_flos)
 include_mfu: true
-# Optional tuning knobs for future DeepSpeed sampling
-mfu_profile_every: 25
-mfu_warmup_steps: 5
 
 ### dataset
 dataset: tbench_traces_sharegptv1
@@ -32,7 +29,7 @@ preprocessing_num_workers: 8
 dataloader_num_workers: 4
 
 ### output
-output_dir: output/qwen2.5_7b_tbench_traces_sharegptv1_yarn_ds
+output_dir: output/qwen3_8b_tbench_traces_sharegptv1_yarn_ds
 logging_steps: 5
 save_steps: 50
 plot_loss: true
@@ -43,12 +40,12 @@ report_to: wandb  # Set to 'none' to disable WandB
 ### train
 per_device_train_batch_size: 1
 gradient_accumulation_steps: 2
-learning_rate: 2.0e-5
-num_train_epochs: 5.0
+learning_rate: 2.0e-6
+num_train_epochs: 2.0
 lr_scheduler_type: cosine
 warmup_ratio: 0.05
-weight_decay: 0.03
-max_grad_norm: 1.0e-3
+weight_decay: 0.01
+max_grad_norm: 1.0e-4
 bf16: true
 pure_bf16: false
 gradient_checkpointing: true
