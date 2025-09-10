@@ -38,6 +38,24 @@ def apply_compile_shims(enable_liger: bool, torch_compile: bool) -> None:
         except Exception:
             pass
 
+        # Liger: RMSNorm custom autograd and module forward
+        try:
+            import liger_kernel.transformers.rms_norm as rms_norm  # type: ignore
+
+            if hasattr(rms_norm, "LigerRMSNormFunction") and hasattr(rms_norm.LigerRMSNormFunction, "apply"):
+                rms_norm.LigerRMSNormFunction.apply = dynamo.disable(  # type: ignore[attr-defined]
+                    rms_norm.LigerRMSNormFunction.apply
+                )
+                logger.info_rank0("Marked Liger LigerRMSNormFunction.apply as non-traceable for Dynamo.")
+
+            if hasattr(rms_norm, "LigerRMSNorm") and hasattr(rms_norm.LigerRMSNorm, "forward"):
+                rms_norm.LigerRMSNorm.forward = dynamo.disable(  # type: ignore[attr-defined]
+                    rms_norm.LigerRMSNorm.forward
+                )
+                logger.info_rank0("Marked Liger LigerRMSNorm.forward as non-traceable for Dynamo.")
+        except Exception:
+            pass
+
         # Best-effort: reduce noise from pybind11_object.__new__ warnings
         try:
             warnings.filterwarnings(
