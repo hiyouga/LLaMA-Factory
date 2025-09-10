@@ -39,7 +39,7 @@ dataloader_num_workers: 2
 shuffle_for_sequence_parallel: false  # ALST handles data distribution automatically
 
 ### output
-output_dir: saves/qwen2_5/full/sft_alst_deepspeed
+output_dir: output/qwen2_5_full_sft_alst_deepspeed
 logging_steps: 5
 save_steps: 50
 plot_loss: true

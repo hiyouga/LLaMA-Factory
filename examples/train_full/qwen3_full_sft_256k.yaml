@@ -43,7 +43,7 @@ preprocessing_num_workers: 64  # Match LIMO preprocessing workers
 dataloader_num_workers: 2
 
 ### output
-output_dir: saves/qwen3/full/sft_256k
+output_dir: output/qwen3_full_sft_256k
 logging_steps: 5
 save_steps: 50
 plot_loss: true

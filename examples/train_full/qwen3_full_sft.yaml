@@ -35,7 +35,7 @@ preprocessing_num_workers: 64  # Match LIMO preprocessing workers
 dataloader_num_workers: 8
 
 ### output
-output_dir: output/qwen3_8b_tbench_traces_sharegptv1_yarn_ds
+output_dir: output/qwen3_full_sft
 logging_steps: 5
 save_steps: 50
 plot_loss: true

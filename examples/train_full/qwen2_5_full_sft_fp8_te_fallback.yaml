@@ -50,7 +50,7 @@ bf16: false                                 # Disabled when using FP8
 fp16: false                                 # Disabled when using FP8
 
 ### output
-output_dir: output/qwen2.5_7b_tbench_traces_sharegptv1_fp8_te_fallback
+output_dir: output/qwen2_5_full_sft_fp8_te_fallback
 logging_steps: 5
 save_steps: 50
 plot_loss: true

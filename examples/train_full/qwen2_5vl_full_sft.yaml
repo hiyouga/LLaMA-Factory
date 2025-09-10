@@ -23,7 +23,7 @@ preprocessing_num_workers: 16
 dataloader_num_workers: 4
 
 ### output
-output_dir: saves/qwen2_5vl-7b/full/sft
+output_dir: output/qwen2_5vl_full_sft
 logging_steps: 10
 save_steps: 500
 plot_loss: true

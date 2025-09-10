@@ -29,7 +29,7 @@ preprocessing_num_workers: 8
 dataloader_num_workers: 4
 
 ### output
-output_dir: saves/qwen3/full/sft_compile
+output_dir: output/qwen3_full_sft_compile
 logging_steps: 5
 save_steps: 50
 plot_loss: true

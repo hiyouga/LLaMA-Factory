@@ -43,7 +43,7 @@ fp8_enable_fsdp_float8_all_gather: true     # Optimize FSDP all-gather ops
 bf16: false                                 # Disable BF16 when using FP8
 
 ### output
-output_dir: output/qwen2.5_7b_tbench_traces_sharegptv1_yarn_ds_fp8_te
+output_dir: output/qwen2_5_full_sft_fp8_te
 logging_steps: 5
 save_steps: 50
 plot_loss: true
