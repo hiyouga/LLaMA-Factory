@@ -1,7 +1,7 @@
 ### model
 model_name_or_path: Qwen/Qwen3-8B
 trust_remote_code: true
-attn: kernels-community/vllm-flash-attn3
+attn: sdpa
 enable_liger_kernel: true
 torch_compile: false
 rope_scaling:
