@@ -94,19 +94,83 @@ def _is_fsdp_module(mod: torch.nn.Module) -> bool:
     return False
 
 
+def _debug_log_model_wrappers(model: torch.nn.Module) -> None:
+    try:
+        types_chain = [type(model).__name__]
+        probe = model
+        # Walk a short .module chain, which can include wrappers like DDP/compile/PEFT
+        for _ in range(4):
+            if hasattr(probe, "module") and isinstance(getattr(probe, "module"), torch.nn.Module):
+                probe = getattr(probe, "module")
+                types_chain.append(type(probe).__name__)
+            else:
+                break
+        logger.info_rank0(f"DCP root discovery: wrapper chain types = {types_chain}")
+
+        # Scan for FSDP modules and find the shallowest path
+        shallow = None
+        shallow_name = None
+        fsdp_count = 0
+        sample_paths = []
+        for name, mod in probe.named_modules():
+            if _is_fsdp_module(mod):
+                fsdp_count += 1
+                if len(sample_paths) < 5:
+                    sample_paths.append(name or "<root>")
+                if shallow_name is None or name.count(".") < shallow_name.count("."):
+                    shallow = mod
+                    shallow_name = name
+        logger.info_rank0(f"DCP root discovery: FSDP modules detected = {fsdp_count}; sample paths = {sample_paths}")
+        if shallow is not None:
+            logger.info_rank0(
+                f"DCP root discovery: shallowest FSDP path = '{shallow_name or '<root>'}', type = {type(shallow).__name__}"
+            )
+        else:
+            logger.info_rank0("DCP root discovery: no FSDP modules found under unwrapped model")
+    except Exception as e:
+        logger.info_rank0(f"DCP root discovery: logging failed: {e}")
+
+
 def _select_dcp_model_root(model: torch.nn.Module) -> torch.nn.Module:
     """Select the appropriate root module for DCP state dict.
 
     Strategy:
     - If the top-level object is an FSDP wrapper, return it (covers full model).
-    - Else, if there is a `.module` (e.g., DDP wrapper), return that; DCP will
-      traverse nested FSDP submodules under the root to build the state.
-    - Avoid selecting a single FSDP submodule, which would save only a fragment.
+    - Else unwrap a short `.module` chain (DDP/compile/PEFT), search for FSDP modules
+      and return the shallowest FSDP module (the outermost FSDP wrapper).
+    - If no FSDP module is found, return the unwrapped base module.
     """
+    # Log structure to aid debugging
+    _debug_log_model_wrappers(model)
+
     if _is_fsdp_module(model):
         return model
-    root = getattr(model, "module", None)
-    return root if isinstance(root, torch.nn.Module) else model
+
+    # Unwrap non-FSDP wrappers (.module chain)
+    base = model
+    for _ in range(4):
+        next_mod = getattr(base, "module", None)
+        if isinstance(next_mod, torch.nn.Module) and not _is_fsdp_module(base):
+            base = next_mod
+        else:
+            break
+
+    # Find the shallowest FSDP under the base
+    shallow = None
+    shallow_name = None
+    for name, mod in base.named_modules():
+        if _is_fsdp_module(mod):
+            if shallow_name is None or name.count(".") < shallow_name.count("."):
+                shallow = mod
+                shallow_name = name
+
+    selected = shallow if shallow is not None else base
+    try:
+        sel_name = shallow_name if shallow is not None else "<base>"
+        logger.info_rank0(f"DCP root selection: selected path = {sel_name}, type = {type(selected).__name__}")
+    except Exception:
+        pass
+    return selected
 
 
 _GLOO_DCP_GROUP = None
