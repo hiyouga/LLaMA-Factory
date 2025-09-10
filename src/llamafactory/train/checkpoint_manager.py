@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import warnings
 from enum import Enum
 from typing import Any
 
@@ -144,15 +143,79 @@ def _get_gloo_process_group():
         return None
 
 
-def fsdp_dcp_save(trainer, output_dir: str) -> None:
-    """Save checkpoint via PyTorch Distributed Checkpoint APIs.
+# -- DCP Stateful wrapper ----------------------------------------------------
+try:
+    from torch.distributed.checkpoint.state_dict import get_state_dict as dcp_get_state_dict  # type: ignore
+    from torch.distributed.checkpoint.state_dict import set_state_dict as dcp_set_state_dict  # type: ignore
+    from torch.distributed.checkpoint.stateful import Stateful
+except Exception:  # pragma: no cover - older torch variants unsupported for Stateful path
+    Stateful = object  # type: ignore
+    dcp_get_state_dict = None  # type: ignore
+    dcp_set_state_dict = None  # type: ignore
 
-    - Saves model via sharded DCP state dict.
-    - Saves optimizer only via DCP optimizer helpers when available. Skips non-standard optimizers
-      (paged/8-bit/bitsandbytes/DeepSpeed) and does not fall back to optimizer.state_dict(). If args.save_only_model
-      is True, optimizer is skipped regardless.
-    - Saves scheduler via .state_dict() if present and save_only_model is False.
-    - Uses the data-parallel process group when available; syncs before and after.
+
+class AppState(Stateful):  # type: ignore[misc]
+    """Stateful wrapper aligning with PyTorch DCP tutorial.
+
+    This class centralizes state generation and restoration for model/optimizer
+    and optionally scheduler. When used with DCP's save/load, DCP will call
+    state_dict()/load_state_dict() automatically.
+    """
+
+    def __init__(self, model: torch.nn.Module, optimizer: Any | None = None, scheduler: Any | None = None):
+        # Prefer the outermost FSDP wrapper (or shallowest FSDP module)
+        self.model = _select_dcp_model_root(model)
+        self.optimizer = optimizer
+        self.scheduler = scheduler
+
+    def state_dict(self) -> dict[str, Any]:  # type: ignore[override]
+        state: dict[str, Any] = {}
+        # Default to FSDP.SHARDED_STATE_DICT and handle FQNs
+        if dcp_get_state_dict is not None:
+            model_sd, optim_sd = dcp_get_state_dict(self.model, self.optimizer)
+            state["model"] = model_sd
+            state["optim"] = optim_sd
+        else:
+            # Extremely old torch: fall back to raw containers
+            state["model"] = getattr(self.model, "state_dict")()
+            if self.optimizer is not None:
+                state["optim"] = self.optimizer.state_dict()
+        # Lightweight scheduler (not managed by DCP helpers)
+        if self.scheduler is not None:
+            try:
+                state["scheduler"] = self.scheduler.state_dict()
+            except Exception:
+                pass
+        return state
+
+    def load_state_dict(self, state_dict: dict[str, Any]) -> None:  # type: ignore[override]
+        # Restore model/optimizer via DCP helpers when available
+        if dcp_set_state_dict is not None:
+            try:
+                dcp_set_state_dict(
+                    self.model,
+                    self.optimizer,
+                    model_state_dict=state_dict.get("model"),
+                    optim_state_dict=state_dict.get("optim"),
+                )
+            except Exception:
+                pass
+        # Scheduler restore (best-effort)
+        if self.scheduler is not None and "scheduler" in state_dict:
+            try:
+                self.scheduler.load_state_dict(state_dict["scheduler"])  # type: ignore[attr-defined]
+            except Exception:
+                pass
+
+
+def fsdp_dcp_save(trainer, output_dir: str) -> None:
+    """Save checkpoint via PyTorch Distributed Checkpoint APIs (Stateful style).
+
+    - Uses a Stateful `AppState` to generate sharded model/optimizer state dicts in line
+      with the official DCP tutorial, automatically handling FSDP FQNs and defaults.
+    - Skips non-standard optimizers (paged/8-bit/bitsandbytes/DeepSpeed). Respects `save_only_model`.
+    - Saves scheduler via .state_dict() when provided and not `save_only_model`.
+    - Uses the data-parallel process group when available; includes Gloo fallback on NCCL errors.
     """
     ckpt_dir = output_dir
     os.makedirs(ckpt_dir, exist_ok=True)
@@ -167,136 +230,38 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
         pass
 
     try:
-        from torch.distributed import checkpoint as dist_cp
-        from torch.distributed.checkpoint.filesystem import FileSystemWriter
-
-        # Version‑compatible DCP imports
-        # - Torch 2.5+ often has ModelStateDictOptions; older/newer use StateDictOptions+ShardedStateDictConfig
-        try:  # Prefer new model helpers
-            from torch.distributed.checkpoint.state_dict import (
-                get_model_state_dict as dcp_get_model_state_dict,
-            )
-        except Exception:  # Extremely old versions (unlikely in our matrix)
-            from torch.distributed.checkpoint.state_dict import (
-                get_state_dict as dcp_get_model_state_dict,  # type: ignore
-            )
-
-        # Options shims (multiple torch variants); prefer DTensor when supported
-        try:
-            from torch.distributed.checkpoint.state_dict import (
-                ModelStateDictOptions as DCPStateDictOptions,  # type: ignore
-            )
-
-            def _make_model_options():
-                return DCPStateDictOptions(sharded=True)  # type: ignore[arg-type]
-
-        except Exception:
-            from torch.distributed.checkpoint.state_dict import (  # type: ignore
-                ShardedStateDictConfig,
-                StateDictOptions,
-                StateDictType,
-            )
-
-            def _make_model_options():
-                # Prefer DTensor if available in this torch version
-                try:
-                    return StateDictOptions(state_dict_config=ShardedStateDictConfig(use_dtensor=True))  # type: ignore[arg-type]
-                except TypeError:
-                    pass
-                try:
-                    return StateDictOptions(state_dict_config=ShardedStateDictConfig())  # type: ignore[arg-type]
-                except TypeError:
-                    pass
-                try:
-                    return StateDictOptions(model_state_dict_config=ShardedStateDictConfig())  # type: ignore[arg-type]
-                except TypeError:
-                    pass
-                try:
-                    return StateDictOptions(state_dict_type=StateDictType.SHARDED_STATE_DICT)  # type: ignore[arg-type]
-                except TypeError:
-                    pass
-                return None
-
-        # Optimizer helper: may be absent in some torch versions
-        try:
-            from torch.distributed.checkpoint.state_dict import (
-                get_optimizer_state_dict as dcp_get_optim_sd,  # type: ignore
-            )
-        except Exception:
-            dcp_get_optim_sd = None  # type: ignore
+        import torch.distributed.checkpoint as dcp
 
         model = trainer.model
         optimizer = getattr(trainer, "optimizer", None)
         scheduler = getattr(trainer, "lr_scheduler", None)
         save_only_model = getattr(trainer.args, "save_only_model", False)
 
-        # Build model state dict (sharded); select DCP root and silence ST deprecation
-        ms_opts = _make_model_options()
-        dcp_model = _select_dcp_model_root(model)
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore",
-                message="Please use DTensor instead and we are deprecating ShardedTensor.",
-                category=FutureWarning,
+        # Decide optimizer inclusion
+        include_opt = (not save_only_model) and (optimizer is not None)
+        optim_name = getattr(getattr(trainer, "args", None), "optim", None)
+        configured_nonstandard = isinstance(optim_name, str) and any(
+            x in optim_name.lower() for x in ("8bit", "8_bit", "paged", "lomo", "deepspeed")
+        )
+        if include_opt and (configured_nonstandard or _is_nonstandard_optimizer(optimizer)):  # type: ignore[arg-type]
+            logger.warning_rank0(
+                "Detected non-standard optimizer (paged/8-bit/bitsandbytes/DeepSpeed). "
+                "Skipping optimizer state save; model weights will still be saved."
             )
-            if ms_opts is not None:
-                model_sd = dcp_get_model_state_dict(dcp_model, options=ms_opts)
-            else:
-                model_sd = dcp_get_model_state_dict(dcp_model)
-        try:
-            logger.info_rank0(f"DCP model state entries: {len(model_sd) if isinstance(model_sd, dict) else 'unknown'}")
-        except Exception:
-            pass
+            include_opt = False
 
-        payload: dict[str, Any] = {"model": model_sd}
-
-        # Optimizer state (optional)
-        include_opt = (not save_only_model) and optimizer is not None
-        if include_opt:
-            # Also respect the configured optim name if present
-            optim_name = getattr(getattr(trainer, "args", None), "optim", None)
-            configured_nonstandard = isinstance(optim_name, str) and any(
-                x in optim_name.lower() for x in ("8bit", "8_bit", "paged", "lomo", "deepspeed")
-            )
-            if configured_nonstandard or _is_nonstandard_optimizer(optimizer):
-                logger.warning_rank0(
-                    "Detected non-standard optimizer (paged/8-bit/bitsandbytes/DeepSpeed). "
-                    "Skipping optimizer state save; model weights will still be saved."
-                )
-            else:
-                # Save only via DCP optimizer helpers; do not fall back to .state_dict()
-                if dcp_get_optim_sd is not None:
-                    try:
-                        opt_sd = dcp_get_optim_sd(optimizer)
-                        payload["optimizer"] = opt_sd
-                        logger.info_rank0("Saving optimizer state via DCP optimizer API.")
-                    except Exception as e:
-                        logger.warning_rank0(
-                            f"Failed to obtain optimizer state via DCP optimizer API: {e}. Skipping optimizer save."
-                        )
-                else:
-                    logger.warning_rank0(
-                        "DCP optimizer helpers are unavailable in this torch version. Skipping optimizer state save."
-                    )
-
-        # Scheduler state (optional, lightweight)
         include_sched = (not save_only_model) and (scheduler is not None)
-        if include_sched:
-            try:
-                payload["scheduler"] = scheduler.state_dict()
-            except Exception as e:
-                logger.warning_rank0(f"Failed to get scheduler state_dict; skipping scheduler save: {e}")
-        elif scheduler is not None and save_only_model:
+        if not include_sched and scheduler is not None:
             logger.warning_rank0(
                 "save_only_model=True; skipping scheduler state save. Model weights will still be saved."
             )
-
-        if optimizer is not None and save_only_model:
+        if not include_opt and optimizer is not None and save_only_model:
             logger.warning_rank0(
                 "save_only_model=True; skipping optimizer state save. Model weights will still be saved."
             )
 
-        writer = FileSystemWriter(ckpt_dir)
+        app = AppState(model, optimizer if include_opt else None, scheduler if include_sched else None)
+        state: dict[str, Any] = {"app": app}
 
         # Use DP group if available; else default
         process_group = _get_dp_process_group()
@@ -308,7 +273,7 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
                     torch.cuda.empty_cache()
             except Exception:
                 pass
-            dist_cp.save(payload, storage_writer=writer, process_group=process_group)
+            dcp.save(state, checkpoint_id=ckpt_dir, process_group=process_group)
             logger.info_rank0(f"Saved FSDP DCP checkpoint to {ckpt_dir}")
         except Exception as e:
             msg = str(e).lower()
@@ -337,7 +302,7 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
                         torch.cuda.empty_cache()
                 except Exception:
                     pass
-                dist_cp.save(payload, storage_writer=writer, process_group=gloo_pg)
+                dcp.save(state, checkpoint_id=ckpt_dir, process_group=gloo_pg)
                 logger.info_rank0(f"Saved FSDP DCP checkpoint to {ckpt_dir} using Gloo fallback")
             else:
                 raise RuntimeError(
@@ -362,11 +327,12 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
 
 
 def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
-    """Load checkpoint via PyTorch Distributed Checkpoint APIs.
+    """Load checkpoint via PyTorch Distributed Checkpoint APIs (Stateful style).
 
-    - Loads model using sharded DCP state dict and sets it on the wrapped model.
-    - Restores optimizer and scheduler when present; warns clearly if only the model was saved.
-    - Uses the data-parallel process group when available; syncs before and after.
+    - Constructs a Stateful `AppState` and delegates state generation and restoration
+      to DCP's get/set_state_dict helpers as per the official tutorial.
+    - Skips non-standard optimizer restore (paged/8-bit/bitsandbytes/DeepSpeed).
+    - Uses the data-parallel process group when available; includes Gloo fallback on NCCL errors.
     """
     # Synchronize before load
     try:
@@ -378,134 +344,32 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
         pass
 
     try:
-        from torch.distributed import checkpoint as dist_cp
-        from torch.distributed.checkpoint.filesystem import FileSystemReader
-
-        # Version‑compatible DCP imports
-        try:  # Prefer new model helpers
-            from torch.distributed.checkpoint.state_dict import (
-                get_model_state_dict as dcp_get_model_state_dict,
-            )
-            from torch.distributed.checkpoint.state_dict import (
-                set_model_state_dict as dcp_set_model_state_dict,
-            )
-        except Exception:
-            from torch.distributed.checkpoint.state_dict import (
-                get_state_dict as dcp_get_model_state_dict,  # type: ignore
-            )
-            from torch.distributed.checkpoint.state_dict import (
-                set_state_dict as dcp_set_model_state_dict,  # type: ignore
-            )
-
-        # Options shims (multiple torch variants); prefer DTensor when supported
-        try:
-            from torch.distributed.checkpoint.state_dict import (
-                ModelStateDictOptions as DCPStateDictOptions,  # type: ignore
-            )
-
-            def _make_model_options():
-                return DCPStateDictOptions(sharded=True)  # type: ignore[arg-type]
-
-        except Exception:
-            from torch.distributed.checkpoint.state_dict import (  # type: ignore
-                ShardedStateDictConfig,
-                StateDictOptions,
-                StateDictType,
-            )
-
-            def _make_model_options():
-                # Prefer DTensor if available in this torch version
-                try:
-                    return StateDictOptions(state_dict_config=ShardedStateDictConfig(use_dtensor=True))  # type: ignore[arg-type]
-                except TypeError:
-                    pass
-                try:
-                    return StateDictOptions(state_dict_config=ShardedStateDictConfig())  # type: ignore[arg-type]
-                except TypeError:
-                    pass
-                try:
-                    return StateDictOptions(model_state_dict_config=ShardedStateDictConfig())  # type: ignore[arg-type]
-                except TypeError:
-                    pass
-                try:
-                    return StateDictOptions(state_dict_type=StateDictType.SHARDED_STATE_DICT)  # type: ignore[arg-type]
-                except TypeError:
-                    pass
-                return None
-
-        # Optimizer helpers (may be absent)
-        try:
-            from torch.distributed.checkpoint.state_dict import (
-                get_optimizer_state_dict as dcp_get_optim_sd,  # type: ignore
-            )
-            from torch.distributed.checkpoint.state_dict import (
-                set_optimizer_state_dict as dcp_set_optim_sd,  # type: ignore
-            )
-        except Exception:
-            dcp_get_optim_sd = None  # type: ignore
-            dcp_set_optim_sd = None  # type: ignore
+        import torch.distributed.checkpoint as dcp
 
         model = trainer.model
         optimizer = getattr(trainer, "optimizer", None)
         scheduler = getattr(trainer, "lr_scheduler", None)
 
-        # Prepare destination containers
-        ms_opts = _make_model_options()
-        dcp_model = _select_dcp_model_root(model)
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore",
-                message="Please use DTensor instead and we are deprecating ShardedTensor.",
-                category=FutureWarning,
-            )
-            if ms_opts is not None:
-                model_dest = dcp_get_model_state_dict(dcp_model, options=ms_opts)
-            else:
-                model_dest = dcp_get_model_state_dict(dcp_model)
-
-        payload: dict[str, Any] = {"model": model_dest}
-
-        # Optimizer destination container
+        # Respect non-standard optimizer limitation
         optim_name = getattr(getattr(trainer, "args", None), "optim", None)
         configured_nonstandard = isinstance(optim_name, str) and any(
             x in optim_name.lower() for x in ("8bit", "8_bit", "paged", "lomo", "deepspeed")
         )
-        is_nonstandard_opt = (
-            (_is_nonstandard_optimizer(optimizer) or configured_nonstandard) if optimizer is not None else False
-        )
-        can_restore_optimizer = optimizer is not None and not is_nonstandard_opt
+        is_nonstandard_opt = optimizer is not None and (_is_nonstandard_optimizer(optimizer) or configured_nonstandard)
         if is_nonstandard_opt:
             logger.warning_rank0(
                 "Detected non-standard optimizer (paged/8-bit/bitsandbytes/DeepSpeed). "
                 "Will not attempt optimizer state restore; proceeding with model-only resume."
             )
-        opt_dest: Any | None = None
-        if can_restore_optimizer:
-            try:
-                if dcp_get_optim_sd is not None:
-                    opt_dest = dcp_get_optim_sd(optimizer)
-                    payload["optimizer"] = opt_dest
-                else:
-                    raise RuntimeError("DCP optimizer helpers unavailable")
-            except Exception:
-                # If we cannot build a DCP optimizer container, skip optimizer restore
-                opt_dest = None
 
-        # Scheduler destination container
-        sched_dest: Any | None = None
-        if scheduler is not None:
-            try:
-                sched_dest = scheduler.state_dict()
-                payload["scheduler"] = sched_dest
-            except Exception:
-                sched_dest = None
+        app = AppState(model, None if is_nonstandard_opt else optimizer, scheduler)
+        state: dict[str, Any] = {"app": app}
 
-        reader = FileSystemReader(ckpt_dir)
         process_group = _get_dp_process_group()
 
-        # Perform load into destination containers
+        # Perform load via DCP Stateful
         try:
-            dist_cp.load(payload, storage_reader=reader, process_group=process_group)
+            dcp.load(state_dict=state, checkpoint_id=ckpt_dir, process_group=process_group)
         except Exception as e:
             msg = str(e).lower()
             likely_nccl = "nccl" in msg or "unhandled cuda error" in msg
@@ -514,40 +378,9 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
                 logger.warning_rank0(
                     "FSDP DCP load encountered a NCCL error; retrying with Gloo process group for checkpointing."
                 )
-                dist_cp.load(payload, storage_reader=reader, process_group=gloo_pg)
+                dcp.load(state_dict=state, checkpoint_id=ckpt_dir, process_group=gloo_pg)
             else:
                 raise
-
-        # Set model from loaded state
-        if ms_opts is not None:
-            dcp_set_model_state_dict(dcp_model, payload["model"], options=ms_opts)
-        else:
-            dcp_set_model_state_dict(dcp_model, payload["model"])  # type: ignore[misc]
-
-        # Restore optimizer if available in checkpoint
-        if "optimizer" in payload and opt_dest is not None and optimizer is not None:
-            try:
-                if dcp_set_optim_sd is not None:
-                    dcp_set_optim_sd(optimizer, opt_dest)
-                    logger.info_rank0("Restored optimizer state via DCP optimizer API.")
-                else:
-                    raise RuntimeError("DCP optimizer helpers unavailable")
-            except Exception:
-                logger.warning_rank0("Failed to restore optimizer via DCP API; continuing with model-only resume.")
-        else:
-            logger.warning_rank0(
-                "Optimizer state not restored (either unsupported optimizer or not present). "
-                "Continuing with model-only resume."
-            )
-
-        # Restore scheduler if present
-        if "scheduler" in payload and sched_dest is not None and scheduler is not None:
-            try:
-                scheduler.load_state_dict(sched_dest)
-            except Exception as e:
-                logger.warning_rank0(f"Failed to restore scheduler state; continuing without scheduler resume: {e}")
-        elif scheduler is not None:
-            logger.warning_rank0("Scheduler state not found in checkpoint. Continuing without scheduler resume.")
 
         logger.info_rank0(f"Loaded FSDP DCP checkpoint from {ckpt_dir}")
 
