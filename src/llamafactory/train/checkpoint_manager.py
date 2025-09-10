@@ -233,7 +233,6 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
         # Build model state dict (sharded); select DCP root and silence ST deprecation
         ms_opts = _make_model_options()
         dcp_model = _select_dcp_model_root(model)
-        submods = {dcp_model}
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 "ignore",
@@ -241,9 +240,13 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
                 category=FutureWarning,
             )
             if ms_opts is not None:
-                model_sd = dcp_get_model_state_dict(dcp_model, submodules=submods, options=ms_opts)
+                model_sd = dcp_get_model_state_dict(dcp_model, options=ms_opts)
             else:
-                model_sd = dcp_get_model_state_dict(dcp_model, submodules=submods)
+                model_sd = dcp_get_model_state_dict(dcp_model)
+        try:
+            logger.info_rank0(f"DCP model state entries: {len(model_sd) if isinstance(model_sd, dict) else 'unknown'}")
+        except Exception:
+            pass
 
         payload: dict[str, Any] = {"model": model_sd}
 
@@ -449,7 +452,6 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
         # Prepare destination containers
         ms_opts = _make_model_options()
         dcp_model = _select_dcp_model_root(model)
-        submods = {dcp_model}
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 "ignore",
@@ -457,9 +459,9 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
                 category=FutureWarning,
             )
             if ms_opts is not None:
-                model_dest = dcp_get_model_state_dict(dcp_model, submodules=submods, options=ms_opts)
+                model_dest = dcp_get_model_state_dict(dcp_model, options=ms_opts)
             else:
-                model_dest = dcp_get_model_state_dict(dcp_model, submodules=submods)
+                model_dest = dcp_get_model_state_dict(dcp_model)
 
         payload: dict[str, Any] = {"model": model_dest}
 
