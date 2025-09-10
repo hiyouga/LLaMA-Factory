@@ -192,10 +192,61 @@ try:
     from torch.distributed.checkpoint.state_dict import get_state_dict as dcp_get_state_dict  # type: ignore
     from torch.distributed.checkpoint.state_dict import set_state_dict as dcp_set_state_dict  # type: ignore
     from torch.distributed.checkpoint.stateful import Stateful
+
+    # Optional options API for better nested-FSDP handling
+    try:
+        from torch.distributed.checkpoint.state_dict import (
+            ModelStateDictOptions as DCPModelStateDictOptions,  # type: ignore
+        )
+    except Exception:
+        DCPModelStateDictOptions = None  # type: ignore
+    try:
+        from torch.distributed.checkpoint.state_dict import (  # type: ignore
+            ShardedStateDictConfig,
+            StateDictOptions,
+            StateDictType,
+        )
+    except Exception:
+        ShardedStateDictConfig = None  # type: ignore
+        StateDictOptions = None  # type: ignore
+        StateDictType = None  # type: ignore
 except Exception:  # pragma: no cover - older torch variants unsupported for Stateful path
     Stateful = object  # type: ignore
     dcp_get_state_dict = None  # type: ignore
     dcp_set_state_dict = None  # type: ignore
+    DCPModelStateDictOptions = None  # type: ignore
+    ShardedStateDictConfig = None  # type: ignore
+    StateDictOptions = None  # type: ignore
+    StateDictType = None  # type: ignore
+
+
+def _make_dcp_model_options():
+    """Create DCP model state dict options with sharded/DTensor preference across torch versions."""
+    # Newer API
+    if DCPModelStateDictOptions is not None:
+        try:
+            return DCPModelStateDictOptions(sharded=True)  # type: ignore[arg-type]
+        except Exception:
+            pass
+    # Older API variants
+    if StateDictOptions is not None and ShardedStateDictConfig is not None:
+        try:
+            return StateDictOptions(state_dict_config=ShardedStateDictConfig(use_dtensor=True))  # type: ignore[arg-type]
+        except Exception:
+            pass
+        try:
+            return StateDictOptions(state_dict_config=ShardedStateDictConfig())  # type: ignore[arg-type]
+        except Exception:
+            pass
+        try:
+            return StateDictOptions(model_state_dict_config=ShardedStateDictConfig())  # type: ignore[arg-type]
+        except Exception:
+            pass
+        try:
+            return StateDictOptions(state_dict_type=StateDictType.SHARDED_STATE_DICT)  # type: ignore[arg-type]
+        except Exception:
+            pass
+    return None
 
 
 class AppState(Stateful):  # type: ignore[misc]
@@ -216,13 +267,21 @@ class AppState(Stateful):  # type: ignore[misc]
         state: dict[str, Any] = {}
         # Default to FSDP.SHARDED_STATE_DICT and handle FQNs
         if dcp_get_state_dict is not None:
+            opts = _make_dcp_model_options()
             if self.optimizer is not None:
-                model_sd, optim_sd = dcp_get_state_dict(self.model, self.optimizer)
+                try:
+                    model_sd, optim_sd = dcp_get_state_dict(self.model, self.optimizer, options=opts)  # type: ignore[misc]
+                except TypeError:
+                    # Some versions require positional options or no options
+                    model_sd, optim_sd = dcp_get_state_dict(self.model, self.optimizer)  # type: ignore[misc]
                 state["model"] = model_sd
                 state["optim"] = optim_sd
             else:
                 # Only model state (torch versions may require an explicit empty iterable for optimizers)
-                model_sd, _ = dcp_get_state_dict(self.model, ())  # type: ignore[misc]
+                try:
+                    model_sd, _ = dcp_get_state_dict(self.model, (), options=opts)  # type: ignore[misc]
+                except TypeError:
+                    model_sd, _ = dcp_get_state_dict(self.model, ())  # type: ignore[misc]
                 state["model"] = model_sd
         else:
             # Extremely old torch: fall back to raw containers
@@ -241,20 +300,39 @@ class AppState(Stateful):  # type: ignore[misc]
         # Restore model/optimizer via DCP helpers when available
         if dcp_set_state_dict is not None:
             try:
+                opts = _make_dcp_model_options()
                 if self.optimizer is not None:
-                    dcp_set_state_dict(
-                        self.model,
-                        self.optimizer,
-                        model_state_dict=state_dict.get("model"),
-                        optim_state_dict=state_dict.get("optim"),
-                    )
+                    try:
+                        dcp_set_state_dict(
+                            self.model,
+                            self.optimizer,
+                            model_state_dict=state_dict.get("model"),
+                            optim_state_dict=state_dict.get("optim"),
+                            options=opts,  # type: ignore[misc]
+                        )
+                    except TypeError:
+                        dcp_set_state_dict(
+                            self.model,
+                            self.optimizer,
+                            model_state_dict=state_dict.get("model"),
+                            optim_state_dict=state_dict.get("optim"),
+                        )
                 else:
-                    dcp_set_state_dict(
-                        self.model,
-                        (),  # explicit empty iterable for optimizers
-                        model_state_dict=state_dict.get("model"),
-                        optim_state_dict=None,
-                    )
+                    try:
+                        dcp_set_state_dict(
+                            self.model,
+                            (),  # explicit empty iterable for optimizers
+                            model_state_dict=state_dict.get("model"),
+                            optim_state_dict=None,
+                            options=opts,  # type: ignore[misc]
+                        )
+                    except TypeError:
+                        dcp_set_state_dict(
+                            self.model,
+                            (),
+                            model_state_dict=state_dict.get("model"),
+                            optim_state_dict=None,
+                        )
             except Exception:
                 pass
         # Scheduler restore (best-effort)
