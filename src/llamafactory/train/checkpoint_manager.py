@@ -127,9 +127,9 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
     """Save checkpoint via PyTorch Distributed Checkpoint APIs.
 
     - Saves model via sharded DCP state dict.
-    - Attempts to save optimizer via torch.distributed.checkpoint.optim.get_optimizer_state_dict when available,
-      otherwise falls back to optimizer.state_dict(). Skips non-standard optimizers (paged/8-bit) with a warning
-      unless args.save_only_model is True, in which case optimizer is skipped silently.
+    - Saves optimizer only via DCP optimizer helpers when available. Skips non-standard optimizers
+      (paged/8-bit/bitsandbytes/DeepSpeed) and does not fall back to optimizer.state_dict(). If args.save_only_model
+      is True, optimizer is skipped regardless.
     - Saves scheduler via .state_dict() if present and save_only_model is False.
     - Uses the data-parallel process group when available; syncs before and after.
     """
@@ -229,24 +229,31 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
         # Optimizer state (optional)
         include_opt = (not save_only_model) and optimizer is not None
         if include_opt:
-            if _is_nonstandard_optimizer(optimizer):
+            # Also respect the configured optim name if present
+            optim_name = getattr(getattr(trainer, "args", None), "optim", None)
+            configured_nonstandard = isinstance(optim_name, str) and any(
+                x in optim_name.lower() for x in ("8bit", "8_bit", "paged", "lomo", "deepspeed")
+            )
+            if configured_nonstandard or _is_nonstandard_optimizer(optimizer):
                 logger.warning_rank0(
                     "Detected non-standard optimizer (paged/8-bit/bitsandbytes/DeepSpeed). "
                     "Skipping optimizer state save; model weights will still be saved."
                 )
             else:
-                opt_sd: Any
-                try:
-                    if dcp_get_optim_sd is not None:
+                # Save only via DCP optimizer helpers; do not fall back to .state_dict()
+                if dcp_get_optim_sd is not None:
+                    try:
                         opt_sd = dcp_get_optim_sd(optimizer)
+                        payload["optimizer"] = opt_sd
                         logger.info_rank0("Saving optimizer state via DCP optimizer API.")
-                    else:
-                        raise RuntimeError("DCP optimizer helpers unavailable")
-                except Exception:
-                    # Fallback: regular state dict
-                    opt_sd = optimizer.state_dict()
-                    logger.info_rank0("Saving optimizer state via standard state_dict() fallback.")
-                payload["optimizer"] = opt_sd
+                    except Exception as e:
+                        logger.warning_rank0(
+                            f"Failed to obtain optimizer state via DCP optimizer API: {e}. Skipping optimizer save."
+                        )
+                else:
+                    logger.warning_rank0(
+                        "DCP optimizer helpers are unavailable in this torch version. Skipping optimizer state save."
+                    )
 
         # Scheduler state (optional, lightweight)
         include_sched = (not save_only_model) and (scheduler is not None)
@@ -394,7 +401,13 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
         payload: dict[str, Any] = {"model": model_dest}
 
         # Optimizer destination container
-        is_nonstandard_opt = _is_nonstandard_optimizer(optimizer) if optimizer is not None else False
+        optim_name = getattr(getattr(trainer, "args", None), "optim", None)
+        configured_nonstandard = isinstance(optim_name, str) and any(
+            x in optim_name.lower() for x in ("8bit", "8_bit", "paged", "lomo", "deepspeed")
+        )
+        is_nonstandard_opt = (
+            (_is_nonstandard_optimizer(optimizer) or configured_nonstandard) if optimizer is not None else False
+        )
         can_restore_optimizer = optimizer is not None and not is_nonstandard_opt
         if is_nonstandard_opt:
             logger.warning_rank0(
@@ -410,12 +423,8 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
                 else:
                     raise RuntimeError("DCP optimizer helpers unavailable")
             except Exception:
-                # Fallback container uses normal state dict structure
-                try:
-                    opt_dest = optimizer.state_dict()
-                    payload["optimizer"] = opt_dest
-                except Exception:
-                    opt_dest = None
+                # If we cannot build a DCP optimizer container, skip optimizer restore
+                opt_dest = None
 
         # Scheduler destination container
         sched_dest: Any | None = None
@@ -447,11 +456,7 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
                 else:
                     raise RuntimeError("DCP optimizer helpers unavailable")
             except Exception:
-                try:
-                    optimizer.load_state_dict(opt_dest)
-                    logger.info_rank0("Restored optimizer state via standard load_state_dict().")
-                except Exception as e:
-                    logger.warning_rank0(f"Failed to restore optimizer state; continuing with model-only resume: {e}")
+                logger.warning_rank0("Failed to restore optimizer via DCP API; continuing with model-only resume.")
         else:
             logger.warning_rank0(
                 "Optimizer state not restored (either unsupported optimizer or not present). "
