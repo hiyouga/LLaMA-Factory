@@ -134,43 +134,36 @@ def _debug_log_model_wrappers(model: torch.nn.Module) -> None:
 def _select_dcp_model_root(model: torch.nn.Module) -> torch.nn.Module:
     """Select the appropriate root module for DCP state dict.
 
-    Strategy:
     - If the top-level object is an FSDP wrapper, return it (covers full model).
-    - Else unwrap a short `.module` chain (DDP/compile/PEFT), search for FSDP modules
-      and return the shallowest FSDP module (the outermost FSDP wrapper).
-    - If no FSDP module is found, return the unwrapped base module.
+    - Else unwrap a short `.module` chain and special-case `OptimizedModule._orig_mod`
+      to reach the real base model. Return this base so DCP can traverse all nested
+      FSDP wrappers. Avoid selecting an individual FSDP submodule, which can lead to
+      nested _flat_param errors and partial saves.
     """
-    # Log structure to aid debugging
     _debug_log_model_wrappers(model)
 
     if _is_fsdp_module(model):
+        logger.info_rank0("DCP root selection: top-level is FSDP; using model as root")
         return model
 
-    # Unwrap non-FSDP wrappers (.module chain)
     base = model
-    for _ in range(4):
+    for _ in range(6):
         next_mod = getattr(base, "module", None)
-        if isinstance(next_mod, torch.nn.Module) and not _is_fsdp_module(base):
+        if isinstance(next_mod, torch.nn.Module):
             base = next_mod
-        else:
-            break
+            continue
+        # torch.compile OptimizedModule exposes original module as _orig_mod
+        orig = getattr(base, "_orig_mod", None)
+        if isinstance(orig, torch.nn.Module):
+            base = orig
+            continue
+        break
 
-    # Find the shallowest FSDP under the base
-    shallow = None
-    shallow_name = None
-    for name, mod in base.named_modules():
-        if _is_fsdp_module(mod):
-            if shallow_name is None or name.count(".") < shallow_name.count("."):
-                shallow = mod
-                shallow_name = name
-
-    selected = shallow if shallow is not None else base
     try:
-        sel_name = shallow_name if shallow is not None else "<base>"
-        logger.info_rank0(f"DCP root selection: selected path = {sel_name}, type = {type(selected).__name__}")
+        logger.info_rank0(f"DCP root selection: using base type = {type(base).__name__}")
     except Exception:
         pass
-    return selected
+    return base
 
 
 _GLOO_DCP_GROUP = None
