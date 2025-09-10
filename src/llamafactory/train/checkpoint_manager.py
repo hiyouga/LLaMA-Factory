@@ -290,23 +290,82 @@ class AppState(Stateful):  # type: ignore[misc]
                 except TypeError:
                     # Some versions require positional options or no options
                     model_sd, optim_sd = dcp_get_state_dict(self.model, self.optimizer)  # type: ignore[misc]
+                try:
+                    logger.info_rank0("DCP save path: model+optimizer via get_state_dict")
+                except Exception:
+                    pass
                 state["model"] = model_sd
                 state["optim"] = optim_sd
             else:
                 # Model-only path: prefer dedicated model helper when available
-                if dcp_get_model_state_dict is not None:
-                    try:
-                        model_sd = dcp_get_model_state_dict(self.model, options=opts)  # type: ignore[misc]
-                    except TypeError:
-                        model_sd = dcp_get_model_state_dict(self.model)  # type: ignore[misc]
+                try:
+                    if dcp_get_model_state_dict is not None:
+                        try:
+                            model_sd = dcp_get_model_state_dict(self.model, options=opts)  # type: ignore[misc]
+                        except TypeError:
+                            model_sd = dcp_get_model_state_dict(self.model)  # type: ignore[misc]
+                        try:
+                            logger.info_rank0("DCP save path: model-only via get_model_state_dict")
+                        except Exception:
+                            pass
+                    else:
+                        # Fallback: explicit empty optimizers iterable
+                        try:
+                            model_sd, _ = dcp_get_state_dict(self.model, (), options=opts)  # type: ignore[misc]
+                        except TypeError:
+                            model_sd, _ = dcp_get_state_dict(self.model, ())  # type: ignore[misc]
+                        try:
+                            logger.info_rank0("DCP save path: model-only via get_state_dict(empty)")
+                        except Exception:
+                            pass
                     state["model"] = model_sd
-                else:
-                    # Fallback: explicit empty optimizers iterable
-                    try:
-                        model_sd, _ = dcp_get_state_dict(self.model, (), options=opts)  # type: ignore[misc]
-                    except TypeError:
-                        model_sd, _ = dcp_get_state_dict(self.model, ())  # type: ignore[misc]
-                    state["model"] = model_sd
+                except RuntimeError as e:
+                    msg = str(e).lower()
+                    if "_flat_param contains _flat_param" in msg or "not the root module" in msg:
+                        # Fallback: save a forest of outermost FSDP submodules
+                        logger.warning_rank0(
+                            "DCP model-level save failed due to nested FSDP. Falling back to per-submodule save."
+                        )
+                        # Build forest of outermost FSDP modules under the selected base
+                        fsdp_paths: list[tuple[str, torch.nn.Module]] = []
+                        all_paths: dict[str, torch.nn.Module] = {}
+                        for name, mod in self.model.named_modules():
+                            if _is_fsdp_module(mod):
+                                all_paths[name] = mod
+                        # Keep only paths that do not have a shorter FSDP ancestor
+                        for name, mod in all_paths.items():
+                            parent = name.rsplit(".", 1)[0] if "." in name else ""
+                            has_fsdp_parent = False
+                            while parent:
+                                if parent in all_paths:
+                                    has_fsdp_parent = True
+                                    break
+                                parent = parent.rsplit(".", 1)[0] if "." in parent else ""
+                            if not has_fsdp_parent:
+                                fsdp_paths.append((name, mod))
+                        forest_sd: dict[str, Any] = {"__fsdp_forest__": True}
+                        for name, mod in fsdp_paths:
+                            try:
+                                part_sd = (
+                                    dcp_get_model_state_dict(mod, options=opts)  # type: ignore[misc]
+                                    if dcp_get_model_state_dict is not None
+                                    else dcp_get_state_dict(mod)[0]  # type: ignore[misc]
+                                )
+                                forest_sd[name] = part_sd
+                            except Exception as e2:
+                                logger.warning_rank0(f"Skipping FSDP submodule '{name}' due to: {e2}")
+                        try:
+                            sample = [n for n in forest_sd.keys() if not n.startswith("__")][:5]
+                            logger.info_rank0(
+                                f"DCP save path: per-submodule forest, roots={len(forest_sd)-1}, sample_paths={sample}"
+                            )
+                        except Exception:
+                            pass
+                        if len(forest_sd) <= 1:
+                            raise
+                        state["model"] = forest_sd
+                    else:
+                        raise
         else:
             # Extremely old torch: fall back to raw containers
             state["model"] = getattr(self.model, "state_dict")()
@@ -341,29 +400,73 @@ class AppState(Stateful):  # type: ignore[misc]
                             model_state_dict=state_dict.get("model"),
                             optim_state_dict=state_dict.get("optim"),
                         )
+                    try:
+                        logger.info_rank0("DCP load path: model+optimizer via set_state_dict")
+                    except Exception:
+                        pass
                 else:
-                    # Prefer dedicated model helper
-                    if dcp_set_model_state_dict is not None:
+                    # Handle per-submodule forest payload
+                    payload_model = state_dict.get("model")
+                    if isinstance(payload_model, dict) and payload_model.get("__fsdp_forest__"):
+                        logger.info_rank0("Restoring FSDP per-submodule forest payload.")
+                        for name, part in payload_model.items():
+                            if name.startswith("__"):
+                                continue
+                            # Resolve submodule by dotted name under self.model
+                            mod: torch.nn.Module = self.model
+                            try:
+                                for seg in name.split(".") if name else []:
+                                    if not seg:
+                                        continue
+                                    mod = getattr(mod, seg)
+                            except Exception:
+                                logger.warning_rank0(f"Cannot resolve submodule '{name}' for DCP restore; skipping.")
+                                continue
+                            if dcp_set_model_state_dict is not None:
+                                try:
+                                    dcp_set_model_state_dict(mod, part, options=opts)  # type: ignore[misc]
+                                except TypeError:
+                                    dcp_set_model_state_dict(mod, part)  # type: ignore[misc]
+                            else:
+                                try:
+                                    dcp_set_state_dict(
+                                        mod, (), model_state_dict=part, optim_state_dict=None, options=opts
+                                    )  # type: ignore[misc]
+                                except TypeError:
+                                    dcp_set_state_dict(mod, (), model_state_dict=part, optim_state_dict=None)  # type: ignore[misc]
                         try:
-                            dcp_set_model_state_dict(self.model, state_dict.get("model"), options=opts)  # type: ignore[misc]
-                        except TypeError:
-                            dcp_set_model_state_dict(self.model, state_dict.get("model"))  # type: ignore[misc]
+                            logger.info_rank0(
+                                f"DCP load path: per-submodule forest, parts={len([k for k in payload_model.keys() if not k.startswith('__')])}"
+                            )
+                        except Exception:
+                            pass
                     else:
+                        # Prefer dedicated model helper
+                        if dcp_set_model_state_dict is not None:
+                            try:
+                                dcp_set_model_state_dict(self.model, payload_model, options=opts)  # type: ignore[misc]
+                            except TypeError:
+                                dcp_set_model_state_dict(self.model, payload_model)  # type: ignore[misc]
+                        else:
+                            try:
+                                dcp_set_state_dict(
+                                    self.model,
+                                    (),  # explicit empty iterable for optimizers
+                                    model_state_dict=payload_model,
+                                    optim_state_dict=None,
+                                    options=opts,  # type: ignore[misc]
+                                )
+                            except TypeError:
+                                dcp_set_state_dict(
+                                    self.model,
+                                    (),
+                                    model_state_dict=payload_model,
+                                    optim_state_dict=None,
+                                )
                         try:
-                            dcp_set_state_dict(
-                                self.model,
-                                (),  # explicit empty iterable for optimizers
-                                model_state_dict=state_dict.get("model"),
-                                optim_state_dict=None,
-                                options=opts,  # type: ignore[misc]
-                            )
-                        except TypeError:
-                            dcp_set_state_dict(
-                                self.model,
-                                (),
-                                model_state_dict=state_dict.get("model"),
-                                optim_state_dict=None,
-                            )
+                            logger.info_rank0("DCP load path: model-only via set_model_state_dict/set_state_dict")
+                        except Exception:
+                            pass
             except Exception:
                 pass
         # Scheduler restore (best-effort)
