@@ -172,9 +172,14 @@ class AppState(Stateful):  # type: ignore[misc]
         state: dict[str, Any] = {}
         # Default to FSDP.SHARDED_STATE_DICT and handle FQNs
         if dcp_get_state_dict is not None:
-            model_sd, optim_sd = dcp_get_state_dict(self.model, self.optimizer)
-            state["model"] = model_sd
-            state["optim"] = optim_sd
+            if self.optimizer is not None:
+                model_sd, optim_sd = dcp_get_state_dict(self.model, self.optimizer)
+                state["model"] = model_sd
+                state["optim"] = optim_sd
+            else:
+                # Only model state
+                model_sd, _ = dcp_get_state_dict(self.model)  # type: ignore[misc]
+                state["model"] = model_sd
         else:
             # Extremely old torch: fall back to raw containers
             state["model"] = getattr(self.model, "state_dict")()
@@ -192,12 +197,20 @@ class AppState(Stateful):  # type: ignore[misc]
         # Restore model/optimizer via DCP helpers when available
         if dcp_set_state_dict is not None:
             try:
-                dcp_set_state_dict(
-                    self.model,
-                    self.optimizer,
-                    model_state_dict=state_dict.get("model"),
-                    optim_state_dict=state_dict.get("optim"),
-                )
+                if self.optimizer is not None:
+                    dcp_set_state_dict(
+                        self.model,
+                        self.optimizer,
+                        model_state_dict=state_dict.get("model"),
+                        optim_state_dict=state_dict.get("optim"),
+                    )
+                else:
+                    dcp_set_state_dict(
+                        self.model,
+                        None,
+                        model_state_dict=state_dict.get("model"),
+                        optim_state_dict=None,
+                    )
             except Exception:
                 pass
         # Scheduler restore (best-effort)
@@ -278,6 +291,18 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
         except Exception as e:
             msg = str(e).lower()
             likely_nccl = "nccl" in msg or "unhandled cuda error" in msg
+            # Heuristic detection of CUDA OOM/alloc failures
+            oom_markers = (
+                "out of memory",
+                "cuda oom",
+                "cuda out of memory",
+                "cuda error out of memory",
+                "cublas_status_alloc_failed",
+                "cudnn_status_alloc_failed",
+                "cuda runtime error: out of memory",
+                "ncclinternalerror: unhandled cuda error",  # often follows OOM
+            )
+            is_oom_like = any(m in msg for m in oom_markers)
             # Log a quick GPU memory snapshot to help diagnose hidden OOMs
             try:
                 if torch.cuda.is_available():
@@ -305,11 +330,15 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
                 dcp.save(state, checkpoint_id=ckpt_dir, process_group=gloo_pg)
                 logger.info_rank0(f"Saved FSDP DCP checkpoint to {ckpt_dir} using Gloo fallback")
             else:
-                raise RuntimeError(
-                    "FSDP DCP save failed, likely due to NCCL GPU memory pressure. "
-                    "Consider enabling NCCL_ASYNC_ERROR_HANDLING=1, retrying with fewer ranks or shorter cutoff_len, "
-                    "or let the code use Gloo fallback if available. Original error: " + str(e)
-                )
+                # Only emit the GPU memory pressure/OOM hint when the error looks like OOM
+                if is_oom_like:
+                    raise RuntimeError(
+                        "FSDP DCP save failed, likely due to CUDA OOM or GPU memory pressure. "
+                        "Consider enabling NCCL_ASYNC_ERROR_HANDLING=1, retrying with fewer ranks or shorter cutoff_len, "
+                        "or using CPU offload. Original error: " + str(e)
+                    )
+                # Otherwise, bubble up the original error to avoid misleading diagnostics
+                raise
 
         # Synchronize after successful save
         try:
