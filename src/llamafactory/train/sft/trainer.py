@@ -363,32 +363,15 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         - After save completes, synchronizes CUDA and resets Dynamo caches so the next
           forward/backward recompile against the current parameter storage.
         """
-        # Disable Dynamo capturing during save (if available)
-        disable_ctx = None
-        try:
-            import torch._dynamo as _dynamo  # type: ignore
-
-            disable_ctx = _dynamo.disable  # type: ignore[attr-defined]
-        except Exception:
-            disable_ctx = None
-
         # Determine checkpoint backend
         backend = select_backend()
         ckpt_dir = os.path.join(self.args.output_dir, f"checkpoint-{self.state.global_step}")
 
-        if disable_ctx is not None:
-            with disable_ctx():
-                if backend == CheckpointBackend.FSDP_DCP:
-                    fsdp_dcp_save(self, ckpt_dir)
-                    result = None
-                else:
-                    result = super()._save_checkpoint(*args, **kwargs)
+        if backend == CheckpointBackend.FSDP_DCP:
+            fsdp_dcp_save(self, ckpt_dir)
+            result = None
         else:
-            if backend == CheckpointBackend.FSDP_DCP:
-                fsdp_dcp_save(self, ckpt_dir)
-                result = None
-            else:
-                result = super()._save_checkpoint(*args, **kwargs)
+            result = super()._save_checkpoint(*args, **kwargs)
 
         # Synchronize and reset Dynamo caches post-save on each process
         try:
@@ -415,21 +398,8 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         """
         backend = select_backend()
 
-        # Disable Dynamo capturing during load (if available)
-        disable_ctx = None
-        try:
-            import torch._dynamo as _dynamo  # type: ignore
-
-            disable_ctx = _dynamo.disable  # type: ignore[attr-defined]
-        except Exception:
-            disable_ctx = None
-
         if backend == CheckpointBackend.FSDP_DCP:
-            if disable_ctx is not None:
-                with disable_ctx():
-                    fsdp_dcp_load(self, resume_from_checkpoint)
-            else:
-                fsdp_dcp_load(self, resume_from_checkpoint)
+            fsdp_dcp_load(self, resume_from_checkpoint)
 
             # Reset Dynamo caches post-load
             try:
