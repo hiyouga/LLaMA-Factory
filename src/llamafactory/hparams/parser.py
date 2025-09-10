@@ -562,7 +562,8 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
                 _pylog.getLogger("torch._dynamo").setLevel(_pylog.ERROR)
             except Exception:
                 pass
-            apply_compile_shims(_liger_on, _compile_on)
+            _ds_on = training_args.deepspeed is not None
+            apply_compile_shims(_liger_on, _compile_on, _ds_on)
     except Exception:
         pass
 

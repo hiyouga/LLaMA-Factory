@@ -32,6 +32,7 @@ from ...extras.packages import is_transformers_version_greater_than
 from ...model.model_utils.alst_config import create_alst_config
 from ..alst_loss import create_alst_loss_handler, should_use_alst_loss
 from ..callbacks import SaveProcessorCallback
+from ..checkpoint_manager import CheckpointBackend, fsdp_dcp_save, select_backend
 from ..fp8_utils import configure_fp8_environment, verify_fp8_status
 from ..trainer_utils import (
     create_custom_optimizer,
@@ -313,12 +314,23 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         except Exception:
             disable_ctx = None
 
+        # Determine checkpoint backend
+        backend = select_backend()
+        ckpt_dir = os.path.join(self.args.output_dir, f"checkpoint-{self.state.global_step}")
+
         if disable_ctx is not None:
-            # Run save under disabled capture
             with disable_ctx():
-                result = super()._save_checkpoint(*args, **kwargs)
+                if backend == CheckpointBackend.FSDP_DCP:
+                    fsdp_dcp_save(self, ckpt_dir)
+                    result = None
+                else:
+                    result = super()._save_checkpoint(*args, **kwargs)
         else:
-            result = super()._save_checkpoint(*args, **kwargs)
+            if backend == CheckpointBackend.FSDP_DCP:
+                fsdp_dcp_save(self, ckpt_dir)
+                result = None
+            else:
+                result = super()._save_checkpoint(*args, **kwargs)
 
         # Synchronize and reset Dynamo caches post-save on each process
         try:
