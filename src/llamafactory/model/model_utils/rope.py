@@ -57,9 +57,29 @@ def configure_rope(config: "PretrainedConfig", model_args: "ModelArguments") -> 
         new_max_length = int(orig * factor)
         setattr(config, "max_position_embeddings", new_max_length)
         setattr(config, "rope_scaling", rope_kwargs)
+        # Detailed diagnostics to aid debugging
+        rope_theta = getattr(config, "rope_theta", None)
+        model_type = getattr(config, "model_type", None)
+        attn_impl = getattr(config, "_attn_implementation", None)
         logger.info_rank0(
-            f"Set RoPE scaling from config dict: type={rope_type}, factor={factor}, original_max_position_embeddings={orig}."
+            "RoPE config (explicit): "
+            f"model_type={model_type}, rope_type={rope_type}, factor={factor}, "
+            f"original_max_position_embeddings={orig}, new_max_position_embeddings={new_max_length}, "
+            f"rope_theta={rope_theta}, attn_impl={attn_impl}"
         )
+        # Heuristic warning for DeepSpeed + FlashAttention + YaRN
+        try:
+            from transformers.integrations import is_deepspeed_zero3_enabled
+
+            if rope_type == "yarn" and is_deepspeed_zero3_enabled():
+                logger.warning_rank0(
+                    "DeepSpeed detected with YaRN scaling. If you see instability (NaNs), try one of: "
+                    "(1) set model_args.attn='sdpa' to avoid FlashAttention kernels; "
+                    "(2) add rope_scaling.dynamic=true to enable dynamic YaRN; "
+                    "(3) verify rope_theta and original_max_position_embeddings match the pretrained base."
+                )
+        except Exception:
+            pass
         logger.info_rank0(f"Enlarge max model length from {old_max_length} to {new_max_length}.")
         return
 
@@ -108,8 +128,14 @@ def configure_rope(config: "PretrainedConfig", model_args: "ModelArguments") -> 
         rope_kwargs["high_freq_factor"] = 4.0
 
     setattr(config, "rope_scaling", rope_kwargs)
+    rope_theta = getattr(config, "rope_theta", None)
+    model_type = getattr(config, "model_type", None)
+    attn_impl = getattr(config, "_attn_implementation", None)
     logger.info_rank0(
-        f"Using {rope_kwargs['rope_type']} scaling strategy and setting scaling factor to {rope_kwargs['factor']}."
+        "RoPE config (auto): "
+        f"model_type={model_type}, rope_type={rope_kwargs['rope_type']}, factor={rope_kwargs['factor']}, "
+        f"original_max_position_embeddings={rope_kwargs.get('original_max_position_embeddings')}, "
+        f"new_max_position_embeddings={new_max_length}, rope_theta={rope_theta}, attn_impl={attn_impl}"
     )
 
 
