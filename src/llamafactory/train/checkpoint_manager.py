@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import warnings
 from enum import Enum
 from typing import Any
 
@@ -79,6 +80,35 @@ def _is_nonstandard_optimizer(optimizer: torch.optim.Optimizer | None) -> bool:
     return False
 
 
+def _select_dcp_model_root(model: torch.nn.Module) -> torch.nn.Module:
+    """Select the appropriate root module for DCP state dict extraction.
+
+    - Prefer the outermost FSDP wrapper when present to avoid nested _flat_param errors.
+    - Otherwise return the original model (or its .module if present).
+    """
+    candidate = getattr(model, "module", model)
+    try:
+        from torch.distributed.fsdp.api import FullyShardedDataParallel as FSDP  # type: ignore
+    except Exception:
+        FSDP = None  # type: ignore
+
+    if FSDP is not None:
+        if isinstance(candidate, FSDP):
+            return candidate
+        # Find shallowest FSDP submodule (closest to root)
+        shallow_name = None
+        shallow_mod = None
+        for name, mod in candidate.named_modules():
+            if isinstance(mod, FSDP):
+                if shallow_name is None or name.count(".") < shallow_name.count("."):
+                    shallow_name = name
+                    shallow_mod = mod
+        if shallow_mod is not None:
+            return shallow_mod
+
+    return candidate
+
+
 def fsdp_dcp_save(trainer, output_dir: str) -> None:
     """Save checkpoint via PyTorch Distributed Checkpoint APIs.
 
@@ -116,7 +146,7 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
                 get_state_dict as dcp_get_model_state_dict,  # type: ignore
             )
 
-        # Options shims (multiple torch variants)
+        # Options shims (multiple torch variants); prefer DTensor when supported
         try:
             from torch.distributed.checkpoint.state_dict import (
                 ModelStateDictOptions as DCPStateDictOptions,  # type: ignore
@@ -133,6 +163,11 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
             )
 
             def _make_model_options():
+                # Prefer DTensor if available in this torch version
+                try:
+                    return StateDictOptions(state_dict_config=ShardedStateDictConfig(use_dtensor=True))  # type: ignore[arg-type]
+                except TypeError:
+                    pass
                 try:
                     return StateDictOptions(state_dict_config=ShardedStateDictConfig())  # type: ignore[arg-type]
                 except TypeError:
@@ -160,12 +195,19 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
         scheduler = getattr(trainer, "lr_scheduler", None)
         save_only_model = getattr(trainer.args, "save_only_model", False)
 
-        # Build model state dict (sharded)
+        # Build model state dict (sharded); select DCP root and silence ST deprecation
         ms_opts = _make_model_options()
-        if ms_opts is not None:
-            model_sd = dcp_get_model_state_dict(model, options=ms_opts)
-        else:
-            model_sd = dcp_get_model_state_dict(model)
+        dcp_model = _select_dcp_model_root(model)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="Please use DTensor instead and we are deprecating ShardedTensor.",
+                category=FutureWarning,
+            )
+            if ms_opts is not None:
+                model_sd = dcp_get_model_state_dict(dcp_model, options=ms_opts)
+            else:
+                model_sd = dcp_get_model_state_dict(dcp_model)
 
         payload: dict[str, Any] = {"model": model_sd}
 
@@ -267,7 +309,7 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
                 set_state_dict as dcp_set_model_state_dict,  # type: ignore
             )
 
-        # Options shims (multiple torch variants)
+        # Options shims (multiple torch variants); prefer DTensor when supported
         try:
             from torch.distributed.checkpoint.state_dict import (
                 ModelStateDictOptions as DCPStateDictOptions,  # type: ignore
@@ -284,6 +326,11 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
             )
 
             def _make_model_options():
+                # Prefer DTensor if available in this torch version
+                try:
+                    return StateDictOptions(state_dict_config=ShardedStateDictConfig(use_dtensor=True))  # type: ignore[arg-type]
+                except TypeError:
+                    pass
                 try:
                     return StateDictOptions(state_dict_config=ShardedStateDictConfig())  # type: ignore[arg-type]
                 except TypeError:
@@ -316,10 +363,17 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
 
         # Prepare destination containers
         ms_opts = _make_model_options()
-        if ms_opts is not None:
-            model_dest = dcp_get_model_state_dict(model, options=ms_opts)
-        else:
-            model_dest = dcp_get_model_state_dict(model)
+        dcp_model = _select_dcp_model_root(model)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="Please use DTensor instead and we are deprecating ShardedTensor.",
+                category=FutureWarning,
+            )
+            if ms_opts is not None:
+                model_dest = dcp_get_model_state_dict(dcp_model, options=ms_opts)
+            else:
+                model_dest = dcp_get_model_state_dict(dcp_model)
 
         payload: dict[str, Any] = {"model": model_dest}
 
@@ -364,9 +418,9 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
 
         # Set model from loaded state
         if ms_opts is not None:
-            dcp_set_model_state_dict(model, payload["model"], options=ms_opts)
+            dcp_set_model_state_dict(dcp_model, payload["model"], options=ms_opts)
         else:
-            dcp_set_model_state_dict(model, payload["model"])  # type: ignore[misc]
+            dcp_set_model_state_dict(dcp_model, payload["model"])  # type: ignore[misc]
 
         # Restore optimizer if available in checkpoint
         if "optimizer" in payload and opt_dest is not None and optimizer is not None:
