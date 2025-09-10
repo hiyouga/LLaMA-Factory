@@ -191,6 +191,20 @@ def _get_gloo_process_group():
 try:
     from torch.distributed.checkpoint.state_dict import get_state_dict as dcp_get_state_dict  # type: ignore
     from torch.distributed.checkpoint.state_dict import set_state_dict as dcp_set_state_dict  # type: ignore
+
+    # Prefer new model-only helpers when available
+    try:
+        from torch.distributed.checkpoint.state_dict import (
+            get_model_state_dict as dcp_get_model_state_dict,  # type: ignore
+        )
+    except Exception:
+        dcp_get_model_state_dict = None  # type: ignore
+    try:
+        from torch.distributed.checkpoint.state_dict import (
+            set_model_state_dict as dcp_set_model_state_dict,  # type: ignore
+        )
+    except Exception:
+        dcp_set_model_state_dict = None  # type: ignore
     from torch.distributed.checkpoint.stateful import Stateful
 
     # Optional options API for better nested-FSDP handling
@@ -214,6 +228,8 @@ except Exception:  # pragma: no cover - older torch variants unsupported for Sta
     Stateful = object  # type: ignore
     dcp_get_state_dict = None  # type: ignore
     dcp_set_state_dict = None  # type: ignore
+    dcp_get_model_state_dict = None  # type: ignore
+    dcp_set_model_state_dict = None  # type: ignore
     DCPModelStateDictOptions = None  # type: ignore
     ShardedStateDictConfig = None  # type: ignore
     StateDictOptions = None  # type: ignore
@@ -277,12 +293,20 @@ class AppState(Stateful):  # type: ignore[misc]
                 state["model"] = model_sd
                 state["optim"] = optim_sd
             else:
-                # Only model state (torch versions may require an explicit empty iterable for optimizers)
-                try:
-                    model_sd, _ = dcp_get_state_dict(self.model, (), options=opts)  # type: ignore[misc]
-                except TypeError:
-                    model_sd, _ = dcp_get_state_dict(self.model, ())  # type: ignore[misc]
-                state["model"] = model_sd
+                # Model-only path: prefer dedicated model helper when available
+                if dcp_get_model_state_dict is not None:
+                    try:
+                        model_sd = dcp_get_model_state_dict(self.model, options=opts)  # type: ignore[misc]
+                    except TypeError:
+                        model_sd = dcp_get_model_state_dict(self.model)  # type: ignore[misc]
+                    state["model"] = model_sd
+                else:
+                    # Fallback: explicit empty optimizers iterable
+                    try:
+                        model_sd, _ = dcp_get_state_dict(self.model, (), options=opts)  # type: ignore[misc]
+                    except TypeError:
+                        model_sd, _ = dcp_get_state_dict(self.model, ())  # type: ignore[misc]
+                    state["model"] = model_sd
         else:
             # Extremely old torch: fall back to raw containers
             state["model"] = getattr(self.model, "state_dict")()
@@ -318,21 +342,28 @@ class AppState(Stateful):  # type: ignore[misc]
                             optim_state_dict=state_dict.get("optim"),
                         )
                 else:
-                    try:
-                        dcp_set_state_dict(
-                            self.model,
-                            (),  # explicit empty iterable for optimizers
-                            model_state_dict=state_dict.get("model"),
-                            optim_state_dict=None,
-                            options=opts,  # type: ignore[misc]
-                        )
-                    except TypeError:
-                        dcp_set_state_dict(
-                            self.model,
-                            (),
-                            model_state_dict=state_dict.get("model"),
-                            optim_state_dict=None,
-                        )
+                    # Prefer dedicated model helper
+                    if dcp_set_model_state_dict is not None:
+                        try:
+                            dcp_set_model_state_dict(self.model, state_dict.get("model"), options=opts)  # type: ignore[misc]
+                        except TypeError:
+                            dcp_set_model_state_dict(self.model, state_dict.get("model"))  # type: ignore[misc]
+                    else:
+                        try:
+                            dcp_set_state_dict(
+                                self.model,
+                                (),  # explicit empty iterable for optimizers
+                                model_state_dict=state_dict.get("model"),
+                                optim_state_dict=None,
+                                options=opts,  # type: ignore[misc]
+                            )
+                        except TypeError:
+                            dcp_set_state_dict(
+                                self.model,
+                                (),
+                                model_state_dict=state_dict.get("model"),
+                                optim_state_dict=None,
+                            )
             except Exception:
                 pass
         # Scheduler restore (best-effort)
