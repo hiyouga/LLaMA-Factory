@@ -123,6 +123,27 @@ def _select_dcp_model_root(model: torch.nn.Module) -> torch.nn.Module:
     return candidate
 
 
+_GLOO_DCP_GROUP = None
+
+
+def _get_gloo_process_group():
+    """Create or return a cached Gloo process group for control-plane collectives.
+
+    Using Gloo for DCP planning (gather_object/reduce_scatter) can avoid NCCL GPU memory
+    pressure and reduce the chance of GPU OOM during checkpoint save/load.
+    """
+    global _GLOO_DCP_GROUP
+    try:
+        if not torch.distributed.is_initialized():
+            return None
+        if _GLOO_DCP_GROUP is not None:
+            return _GLOO_DCP_GROUP
+        _GLOO_DCP_GROUP = torch.distributed.new_group(backend="gloo")
+        return _GLOO_DCP_GROUP
+    except Exception:
+        return None
+
+
 def fsdp_dcp_save(trainer, output_dir: str) -> None:
     """Save checkpoint via PyTorch Distributed Checkpoint APIs.
 
@@ -277,8 +298,50 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
         # Use DP group if available; else default
         process_group = _get_dp_process_group()
 
-        dist_cp.save(payload, storage_writer=writer, process_group=process_group)
-        logger.info_rank0(f"Saved FSDP DCP checkpoint to {ckpt_dir}")
+        try:
+            # Proactively release cached GPU memory to reduce NCCL/DCP planning pressure
+            try:
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+            except Exception:
+                pass
+            dist_cp.save(payload, storage_writer=writer, process_group=process_group)
+            logger.info_rank0(f"Saved FSDP DCP checkpoint to {ckpt_dir}")
+        except Exception as e:
+            msg = str(e).lower()
+            likely_nccl = "nccl" in msg or "unhandled cuda error" in msg
+            # Log a quick GPU memory snapshot to help diagnose hidden OOMs
+            try:
+                if torch.cuda.is_available():
+                    dev = torch.cuda.current_device()
+                    free, total = torch.cuda.mem_get_info()
+                    alloc = torch.cuda.memory_allocated(dev)
+                    rsvd = torch.cuda.memory_reserved(dev)
+                    logger.warning_rank0(
+                        f"GPU memory snapshot before DCP save retry: free={free/1e9:.2f}GB, total={total/1e9:.2f}GB, "
+                        f"allocated={alloc/1e9:.2f}GB, reserved={rsvd/1e9:.2f}GB"
+                    )
+            except Exception:
+                pass
+            # Retry with a CPU/Gloo process group to lower GPU memory pressure during planning
+            gloo_pg = _get_gloo_process_group()
+            if gloo_pg is not None and likely_nccl:
+                logger.warning_rank0(
+                    "FSDP DCP save encountered a NCCL error; retrying with Gloo process group for checkpointing."
+                )
+                try:
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
+                except Exception:
+                    pass
+                dist_cp.save(payload, storage_writer=writer, process_group=gloo_pg)
+                logger.info_rank0(f"Saved FSDP DCP checkpoint to {ckpt_dir} using Gloo fallback")
+            else:
+                raise RuntimeError(
+                    "FSDP DCP save failed, likely due to NCCL GPU memory pressure. "
+                    "Consider enabling NCCL_ASYNC_ERROR_HANDLING=1, retrying with fewer ranks or shorter cutoff_len, "
+                    "or let the code use Gloo fallback if available. Original error: " + str(e)
+                )
 
         # Synchronize after successful save
         try:
@@ -439,7 +502,19 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
         process_group = _get_dp_process_group()
 
         # Perform load into destination containers
-        dist_cp.load(payload, storage_reader=reader, process_group=process_group)
+        try:
+            dist_cp.load(payload, storage_reader=reader, process_group=process_group)
+        except Exception as e:
+            msg = str(e).lower()
+            likely_nccl = "nccl" in msg or "unhandled cuda error" in msg
+            gloo_pg = _get_gloo_process_group()
+            if gloo_pg is not None and likely_nccl:
+                logger.warning_rank0(
+                    "FSDP DCP load encountered a NCCL error; retrying with Gloo process group for checkpointing."
+                )
+                dist_cp.load(payload, storage_reader=reader, process_group=gloo_pg)
+            else:
+                raise
 
         # Set model from loaded state
         if ms_opts is not None:
