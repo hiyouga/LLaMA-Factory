@@ -28,6 +28,7 @@ from typing_extensions import override
 from ...data.processor.alst_data_adapter import create_alst_data_adapter
 from ...extras import logging
 from ...extras.constants import IGNORE_INDEX
+from ...extras.deepspeed_utils import patch_deepspeed_timers
 from ...extras.packages import is_transformers_version_greater_than
 from ...model.model_utils.alst_config import create_alst_config
 from ..alst_loss import create_alst_loss_handler, should_use_alst_loss
@@ -156,6 +157,13 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
     @override
     def training_step(self, model, inputs, *args, **kwargs):
+        # Ensure DeepSpeed timer patches are applied after engine initialization
+        if getattr(self, "is_deepspeed_enabled", False) and not getattr(self, "_ds_timers_patched", False):
+            try:
+                patch_deepspeed_timers()
+                self._ds_timers_patched = True
+            except Exception:
+                pass
         # ALST doesn't require dummy forward pass - UlyssesSPDataLoaderAdapter handles sequence parallel setup
         return super().training_step(model, inputs, *args, **kwargs)
 
