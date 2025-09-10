@@ -41,13 +41,20 @@
       "warmup_num_steps": "auto"
     }
   },
-  "steps_per_print": 10,
-  "wall_clock_breakdown": false,
+  "steps_per_print": 50,
+  "wall_clock_breakdown": true,
   "comms_logger": {
     "enabled": false
   },
   "comms_config": {
     "verbose": false
+  },
+  "flops_profiler": {
+    "enabled": true,
+    "profile_step": 200,
+    "module_depth": 2,
+    "top_modules": 3,
+    "detailed": false
   },
   "monitor_config": {
     "enabled": true,
