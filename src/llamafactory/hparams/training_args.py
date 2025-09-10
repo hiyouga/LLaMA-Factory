@@ -81,6 +81,17 @@ class RayArguments:
 class TrainingArguments(RayArguments, Seq2SeqTrainingArguments):
     r"""Arguments pertaining to the trainer."""
 
+    # Prefer DeepSpeed engine logging over HF Trainer logging (optional)
+    prefer_deepspeed_logging: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "If true and DeepSpeed is enabled, disables HF Trainer logging to prefer DeepSpeed engine logs. "
+                "You can also set environment variable LLF_PREFER_DEEPSPEED_LOGGING=1 to enable this behavior."
+            )
+        },
+    )
+
     def __post_init__(self):
         Seq2SeqTrainingArguments.__post_init__(self)
         RayArguments.__post_init__(self)

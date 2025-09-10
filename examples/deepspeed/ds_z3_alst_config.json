@@ -42,7 +42,7 @@
     }
   },
   "steps_per_print": 50,
-  "wall_clock_breakdown": true,
+  "wall_clock_breakdown": false,
   "comms_logger": {
     "enabled": false
   },

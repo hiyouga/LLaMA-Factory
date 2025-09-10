@@ -570,14 +570,14 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
     _verify_model_args(model_args, data_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args, training_args)
 
-    # Prefer DeepSpeed logging over HF Trainer logging when DS is enabled
+    # Prefer DeepSpeed logging over HF Trainer logging only if explicitly requested
     try:
         if training_args.deepspeed is not None:
-            if os.getenv("LLF_ALLOW_HF_LOGGING_WITH_DEEPSPEED", "0").lower() not in ("1", "true"):
+            prefer_ds_env = os.getenv("LLF_PREFER_DEEPSPEED_LOGGING", "0").lower() in ("1", "true")
+            if getattr(training_args, "prefer_deepspeed_logging", False) or prefer_ds_env:
                 if getattr(training_args, "logging_strategy", None) != "no":
                     logger.warning_rank0(
-                        "DeepSpeed is enabled; preferring DeepSpeed engine logging and disabling HF Trainer logging. "
-                        "Set LLF_ALLOW_HF_LOGGING_WITH_DEEPSPEED=1 to keep HF logging."
+                        "DeepSpeed is enabled; prefer_deepspeed_logging is set — disabling HF Trainer logging in favor of DeepSpeed logs."
                     )
                     training_args.logging_strategy = "no"
     except Exception:
