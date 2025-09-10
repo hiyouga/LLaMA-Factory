@@ -23,7 +23,7 @@ include_mfu: true
 dataset: tbench_traces_sharegptv1
 template: qwen  # Qwen2.5 template
 cutoff_len: 131072  # Match model_max_length
-max_samples: null  # Use full dataset
+max_samples: null
 overwrite_cache: true
 preprocessing_num_workers: 8
 dataloader_num_workers: 4
@@ -31,7 +31,7 @@ dataloader_num_workers: 4
 ### output
 output_dir: output/qwen3_full_sft_compile
 logging_steps: 5
-save_steps: 50
+save_steps: 100
 plot_loss: true
 overwrite_output_dir: true
 save_only_model: true  # Save only model for DeepSpeed compatibility
@@ -41,7 +41,7 @@ report_to: wandb  # Set to 'none' to disable WandB
 per_device_train_batch_size: 1
 gradient_accumulation_steps: 2
 learning_rate: 2.0e-6
-num_train_epochs: 2.0
+num_train_epochs: 3.0
 lr_scheduler_type: cosine
 warmup_ratio: 0.05
 weight_decay: 0.01
@@ -50,3 +50,10 @@ bf16: true
 pure_bf16: false
 gradient_checkpointing: true
 ddp_timeout: 180000000
+
+### Hugging Face Hub push (Trainer-based)
+# Enable automatic pushing from HF Trainer. Commonly, rank-0 pushes at the end.
+push_to_hub: true
+hub_model_id: penfever/qwen3_full_sft_compile
+hub_strategy: end
+hub_private_repo: true

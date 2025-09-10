@@ -1,0 +1,104 @@
+# Example: Push checkpoints and/or exported model to Hugging Face Hub
+#
+# How to use:
+# 1) Train and push final checkpoint from the Trainer (rank-0):
+#    llamafactory-cli train examples/extras/hf_hub_push_example.yaml
+#
+#    - Uses `push_to_hub: true` and related `hub_*` fields below.
+#    - Set `hub_strategy: end` to push only at the very end of training.
+#    - Alternative strategies: `every_save` (on each save) or `checkpoint` (HF-style checkpoints).
+#    - Recommended: authenticate once with `huggingface-cli login` or set env `HUGGINGFACE_HUB_TOKEN`.
+#
+# 2) Export a merged model and push (recommended for LoRA/adapters):
+#    llamafactory-cli export examples/extras/hf_hub_push_example.yaml
+#
+#    - Uses `export_*` + `export_hub_model_id` to produce and push a clean, merged artifact.
+#    - Good when you want a single ready-to-infer repo without training scaffolding.
+
+### minimal model/train to make the config runnable
+model_name_or_path: dummy-model/placeholder  # Replace with your base model
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora  # Use LoRA or full as you need
+
+### dataset (use any dataset you have locally or on the hub)
+dataset: dummy_dataset  # Replace with your dataset name or path
+template: default
+cutoff_len: 1024
+max_samples: 128
+overwrite_cache: true
+
+### output
+output_dir: output/hf_hub_push_example
+save_steps: 50
+save_total_limit: 2
+logging_steps: 10
+report_to: none  # set to 'wandb' or others if desired
+overwrite_output_dir: true
+save_only_model: true  # safer with DeepSpeed; keeps only final model weights
+
+### train (toy values; adjust for your setup)
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 4
+learning_rate: 2.0e-5
+num_train_epochs: 1.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.03
+weight_decay: 0.0
+bf16: true
+gradient_checkpointing: true
+
+### Hugging Face Hub push (Trainer-based)
+# Enable automatic pushing from HF Trainer. Commonly, rank-0 pushes at the end.
+push_to_hub: true
+
+# The repo to push to. Use '<org-or-username>/<repo-name>'.
+hub_model_id: your-user-or-org/your-train-repo
+
+# When to push:
+# - 'end': only at the end of training (recommended for checkpoints)
+# - 'every_save': at every save step
+# - 'checkpoint': pushes each HF checkpoint subfolder
+hub_strategy: end
+
+# Whether to create a private repository on first push.
+hub_private_repo: true
+
+# Force a push even if the local files appear unchanged (rarely needed).
+hub_always_push: false
+
+# Commit revision/branch to push to. If omitted, defaults to the default branch.
+# hub_revision: main
+
+# Authentication token. Prefer leaving this unset and login via 'huggingface-cli login'
+# or export env 'HUGGINGFACE_HUB_TOKEN'. If you do set it, interpolate from env.
+# hub_token: ${HUGGINGFACE_HUB_TOKEN}
+
+### Export and push a merged model (post-train)
+# Run with: `llamafactory-cli export examples/extras/hf_hub_push_example.yaml`
+export_dir: output/hf_hub_push_example_export
+
+# Shard size for the exported model files (in GB). Adjust as needed.
+export_size: 5
+
+# Device to use during export. 'cpu' is safest; 'auto' may speed up.
+export_device: cpu
+
+# Quantization settings for export (optional). Leave unset or configure as needed.
+# export_quantization_bit: 4
+# export_quantization_dataset: your/calib/dataset
+# export_quantization_nsamples: 128
+# export_quantization_maxlen: 1024
+
+# Whether to save in legacy .bin format instead of .safetensors (default: safetensors).
+export_legacy_format: false
+
+# The Hub repo for the exported, merged model. Often a different repo than training.
+export_hub_model_id: your-user-or-org/your-export-repo
+
+# Token used by the export step when pushing tokenizer/processor/model.
+# Prefer env login; otherwise interpolate from env.
+# hf_hub_token: ${HUGGINGFACE_HUB_TOKEN}

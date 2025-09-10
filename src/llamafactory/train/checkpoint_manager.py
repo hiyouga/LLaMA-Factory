@@ -116,7 +116,7 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
                 get_state_dict as dcp_get_model_state_dict,  # type: ignore
             )
 
-        # Options shims
+        # Options shims (multiple torch variants)
         try:
             from torch.distributed.checkpoint.state_dict import (
                 ModelStateDictOptions as DCPStateDictOptions,  # type: ignore
@@ -129,10 +129,23 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
             from torch.distributed.checkpoint.state_dict import (  # type: ignore
                 ShardedStateDictConfig,
                 StateDictOptions,
+                StateDictType,
             )
 
             def _make_model_options():
-                return StateDictOptions(state_dict_config=ShardedStateDictConfig())
+                try:
+                    return StateDictOptions(state_dict_config=ShardedStateDictConfig())  # type: ignore[arg-type]
+                except TypeError:
+                    pass
+                try:
+                    return StateDictOptions(model_state_dict_config=ShardedStateDictConfig())  # type: ignore[arg-type]
+                except TypeError:
+                    pass
+                try:
+                    return StateDictOptions(state_dict_type=StateDictType.SHARDED_STATE_DICT)  # type: ignore[arg-type]
+                except TypeError:
+                    pass
+                return None
 
         # Optimizer helper: may be absent in some torch versions
         try:
@@ -149,7 +162,10 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
 
         # Build model state dict (sharded)
         ms_opts = _make_model_options()
-        model_sd = dcp_get_model_state_dict(model, options=ms_opts)
+        if ms_opts is not None:
+            model_sd = dcp_get_model_state_dict(model, options=ms_opts)
+        else:
+            model_sd = dcp_get_model_state_dict(model)
 
         payload: dict[str, Any] = {"model": model_sd}
 
@@ -244,7 +260,7 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
                 set_state_dict as dcp_set_model_state_dict,  # type: ignore
             )
 
-        # Options shims
+        # Options shims (multiple torch variants)
         try:
             from torch.distributed.checkpoint.state_dict import (
                 ModelStateDictOptions as DCPStateDictOptions,  # type: ignore
@@ -257,10 +273,23 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
             from torch.distributed.checkpoint.state_dict import (  # type: ignore
                 ShardedStateDictConfig,
                 StateDictOptions,
+                StateDictType,
             )
 
             def _make_model_options():
-                return StateDictOptions(state_dict_config=ShardedStateDictConfig())
+                try:
+                    return StateDictOptions(state_dict_config=ShardedStateDictConfig())  # type: ignore[arg-type]
+                except TypeError:
+                    pass
+                try:
+                    return StateDictOptions(model_state_dict_config=ShardedStateDictConfig())  # type: ignore[arg-type]
+                except TypeError:
+                    pass
+                try:
+                    return StateDictOptions(state_dict_type=StateDictType.SHARDED_STATE_DICT)  # type: ignore[arg-type]
+                except TypeError:
+                    pass
+                return None
 
         # Optimizer helpers (may be absent)
         try:
@@ -280,7 +309,10 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
 
         # Prepare destination containers
         ms_opts = _make_model_options()
-        model_dest = dcp_get_model_state_dict(model, options=ms_opts)
+        if ms_opts is not None:
+            model_dest = dcp_get_model_state_dict(model, options=ms_opts)
+        else:
+            model_dest = dcp_get_model_state_dict(model)
 
         payload: dict[str, Any] = {"model": model_dest}
 
@@ -318,7 +350,10 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
         dist_cp.load(payload, storage_reader=reader, process_group=process_group)
 
         # Set model from loaded state
-        dcp_set_model_state_dict(model, payload["model"], options=ms_opts)
+        if ms_opts is not None:
+            dcp_set_model_state_dict(model, payload["model"], options=ms_opts)
+        else:
+            dcp_set_model_state_dict(model, payload["model"])  # type: ignore[misc]
 
         # Restore optimizer if available in checkpoint
         if "optimizer" in payload and opt_dest is not None and optimizer is not None:
