@@ -78,11 +78,61 @@ def apply_compile_shims(enable_liger: bool, torch_compile: bool, enable_deepspee
         try:
             import deepspeed.utils.timer as ds_timer  # type: ignore
 
-            if hasattr(ds_timer, "EventTimer") and hasattr(ds_timer, "CPUTimer"):
-                ds_timer.EventTimer = ds_timer.CPUTimer  # type: ignore[attr-defined]
-                logger.info_rank0(
-                    "Disabled DeepSpeed CUDA event timers under torch.compile; using CPU timing (approximate)."
-                )
+            # Patch existing EventTimer class to a safe elapsed function to cover prior imports
+            _orig_event_cls = getattr(ds_timer, "EventTimer", None)
+            _cpu_cls = getattr(ds_timer, "CPUTimer", None)
+            if _orig_event_cls is not None:
+
+                def _safe_elapsed(self):
+                    try:
+                        # Prefer CPU timing when CUDA events are not reliably recorded
+                        end_t = getattr(self, "end_time", None)
+                        start_t = getattr(self, "start_time", None)
+                        if end_t is not None and start_t is not None:
+                            return float(end_t - start_t)
+                    except Exception:
+                        pass
+                    return 0.0
+
+                try:
+                    setattr(_orig_event_cls, "get_elapsed_msec", _safe_elapsed)  # type: ignore
+                    logger.info_rank0("Patched DeepSpeed EventTimer.get_elapsed_msec with a safe CPU fallback.")
+                except Exception:
+                    pass
+
+            # Redirect future EventTimer references to CPUTimer, if available
+            if _orig_event_cls is not None and _cpu_cls is not None:
+                try:
+                    ds_timer.EventTimer = _cpu_cls  # type: ignore[attr-defined]
+                    logger.info_rank0(
+                        "Disabled DeepSpeed CUDA event timers under torch.compile; using CPU timing (approximate)."
+                    )
+                except Exception:
+                    pass
+
+            # Best-effort: disable synchronized timers to avoid CUDA event usage
+            try:
+                if hasattr(ds_timer, "TIMER_SYNCHRONIZED"):
+                    setattr(ds_timer, "TIMER_SYNCHRONIZED", False)  # type: ignore
+            except Exception:
+                pass
+
+            # As a last resort, neutralize comm logging timer wrapper which calls timers(...).elapsed()
+            try:
+                import deepspeed.comm.comm as ds_comm  # type: ignore
+
+                if hasattr(ds_comm, "log_wrapper"):
+
+                    def _identity_wrapper(fn):
+                        def _inner(*args, **kwargs):
+                            return fn(*args, **kwargs)
+
+                        return _inner
+
+                    ds_comm.log_wrapper = _identity_wrapper  # type: ignore
+                    logger.info_rank0("Patched DeepSpeed comm.log_wrapper to avoid CUDA timer usage under compile.")
+            except Exception:
+                pass
         except Exception:
             # Fallback: guard elapsed computation to avoid crashes
             try:

@@ -541,11 +541,12 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
         logger.warning_rank0("`neat_packing` requires `packing` is True. Change `packing` to True.")
         data_args.packing = True
 
-    # Set TorchDynamo scalar capture and apply shims when combining Liger kernels with torch.compile
+    # Set TorchDynamo scalar capture and apply shims when using torch.compile
     try:
         _compile_on = getattr(training_args, "torch_compile", False)
         _liger_on = getattr(model_args, "enable_liger_kernel", False)
-        if _compile_on and _liger_on:
+        _ds_on = training_args.deepspeed is not None
+        if _compile_on and (_liger_on or _ds_on):
             if not os.getenv("TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS"):
                 os.environ["TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS"] = "1"
                 logger.info_rank0("Set TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS=1 (liger_kernel + torch.compile detected).")
@@ -562,7 +563,6 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
                 _pylog.getLogger("torch._dynamo").setLevel(_pylog.ERROR)
             except Exception:
                 pass
-            _ds_on = training_args.deepspeed is not None
             apply_compile_shims(_liger_on, _compile_on, _ds_on)
     except Exception:
         pass
