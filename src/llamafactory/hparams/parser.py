@@ -78,6 +78,63 @@ def _parse_args(
 ) -> tuple[Any]:
     args = read_args(args)
     if isinstance(args, dict):
+        # Pre-sanitize DeepSpeed config if provided as a file path in the dict
+        try:
+
+            def _strip_json_comments(text: str) -> str:
+                # Removes // line comments and /* */ block comments conservatively
+                import re
+
+                # Remove /* ... */ blocks
+                text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+
+                # Remove // comments, but keep URLs: // only when preceded by start or whitespace
+                def _rm_line_comment(line: str) -> str:
+                    idx = line.find("//")
+                    if idx != -1:
+                        return line[:idx]
+                    return line
+
+                return "\n".join(_rm_line_comment(l) for l in text.splitlines())
+
+            def _load_and_sanitize_ds(path: str) -> Optional[dict[str, Any]]:
+                p = Path(path)
+                if not p.exists():
+                    return None
+                raw = p.read_text(encoding="utf-8")
+                cleaned = _strip_json_comments(raw)
+                import json
+
+                cfg = json.loads(cleaned)
+                # Fix known problematic fields
+                if isinstance(cfg, dict):
+                    # steps_per_print should be finite integer
+                    val = cfg.get("steps_per_print", None)
+                    if isinstance(val, str) and val.lower() in ("inf", "infinity"):
+                        cfg["steps_per_print"] = 50
+                    # Disable synchronized timers by default under compile; harmless otherwise
+                    timers = cfg.get("timers_config")
+                    if isinstance(timers, dict):
+                        timers.setdefault("synchronized", False)
+                return cfg
+
+            # Locate DS path under common locations
+            containers = []
+            if "training_args" in args and isinstance(args["training_args"], dict):
+                containers.append(args["training_args"])
+            # Also consider top-level in case of flat dicts
+            containers.append(args)
+
+            for c in containers:
+                ds_val = c.get("deepspeed", None)
+                if isinstance(ds_val, str):
+                    sanitized = _load_and_sanitize_ds(ds_val)
+                    if sanitized is not None:
+                        c["deepspeed"] = sanitized
+                        logger.info_rank0(f"Loaded and sanitized DeepSpeed config from {ds_val} (comments removed).")
+        except Exception as e:
+            logger.warning_rank0(f"DeepSpeed config pre-sanitize skipped: {e}")
+
         return parser.parse_dict(args, allow_extra_keys=allow_extra_keys)
 
     (*parsed_args, unknown_args) = parser.parse_args_into_dataclasses(args=args, return_remaining_strings=True)
