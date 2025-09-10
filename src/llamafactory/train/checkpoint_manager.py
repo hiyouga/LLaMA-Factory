@@ -95,31 +95,18 @@ def _is_fsdp_module(mod: torch.nn.Module) -> bool:
 
 
 def _select_dcp_model_root(model: torch.nn.Module) -> torch.nn.Module:
-    """Select the appropriate root module for DCP state dict extraction.
+    """Select the appropriate root module for DCP state dict.
 
-    - Prefer the outermost FSDP wrapper when present to avoid nested _flat_param errors.
-    - Otherwise return the original model (or its .module if present).
+    Strategy:
+    - If the top-level object is an FSDP wrapper, return it (covers full model).
+    - Else, if there is a `.module` (e.g., DDP wrapper), return that; DCP will
+      traverse nested FSDP submodules under the root to build the state.
+    - Avoid selecting a single FSDP submodule, which would save only a fragment.
     """
-    # Prefer the wrapper itself if it is FSDP; avoid unwrapping .module in that case
     if _is_fsdp_module(model):
         return model
-
-    candidate = getattr(model, "module", model)
-    if _is_fsdp_module(candidate):
-        return candidate
-
-    # Find the shallowest FSDP submodule by name depth
-    shallow_name = None
-    shallow_mod = None
-    for name, mod in candidate.named_modules():
-        if _is_fsdp_module(mod):
-            if shallow_name is None or name.count(".") < shallow_name.count("."):
-                shallow_name = name
-                shallow_mod = mod
-    if shallow_mod is not None:
-        return shallow_mod
-
-    return candidate
+    root = getattr(model, "module", None)
+    return root if isinstance(root, torch.nn.Module) else model
 
 
 _GLOO_DCP_GROUP = None
