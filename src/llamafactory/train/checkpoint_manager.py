@@ -80,31 +80,45 @@ def _is_nonstandard_optimizer(optimizer: torch.optim.Optimizer | None) -> bool:
     return False
 
 
+def _is_fsdp_module(mod: torch.nn.Module) -> bool:
+    try:
+        from torch.distributed.fsdp.api import FullyShardedDataParallel as FSDP  # type: ignore
+
+        if isinstance(mod, FSDP):
+            return True
+    except Exception:
+        pass
+    # Heuristic attributes present on FSDP wrappers across torch versions
+    for attr in ("_fsdp_wrapped_module", "_fsdp_state", "_handles", "sharding_strategy"):
+        if hasattr(mod, attr):
+            return True
+    return False
+
+
 def _select_dcp_model_root(model: torch.nn.Module) -> torch.nn.Module:
     """Select the appropriate root module for DCP state dict extraction.
 
     - Prefer the outermost FSDP wrapper when present to avoid nested _flat_param errors.
     - Otherwise return the original model (or its .module if present).
     """
-    candidate = getattr(model, "module", model)
-    try:
-        from torch.distributed.fsdp.api import FullyShardedDataParallel as FSDP  # type: ignore
-    except Exception:
-        FSDP = None  # type: ignore
+    # Prefer the wrapper itself if it is FSDP; avoid unwrapping .module in that case
+    if _is_fsdp_module(model):
+        return model
 
-    if FSDP is not None:
-        if isinstance(candidate, FSDP):
-            return candidate
-        # Find shallowest FSDP submodule (closest to root)
-        shallow_name = None
-        shallow_mod = None
-        for name, mod in candidate.named_modules():
-            if isinstance(mod, FSDP):
-                if shallow_name is None or name.count(".") < shallow_name.count("."):
-                    shallow_name = name
-                    shallow_mod = mod
-        if shallow_mod is not None:
-            return shallow_mod
+    candidate = getattr(model, "module", model)
+    if _is_fsdp_module(candidate):
+        return candidate
+
+    # Find the shallowest FSDP submodule by name depth
+    shallow_name = None
+    shallow_mod = None
+    for name, mod in candidate.named_modules():
+        if _is_fsdp_module(mod):
+            if shallow_name is None or name.count(".") < shallow_name.count("."):
+                shallow_name = name
+                shallow_mod = mod
+    if shallow_mod is not None:
+        return shallow_mod
 
     return candidate
 
@@ -198,6 +212,7 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
         # Build model state dict (sharded); select DCP root and silence ST deprecation
         ms_opts = _make_model_options()
         dcp_model = _select_dcp_model_root(model)
+        submods = {dcp_model}
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 "ignore",
@@ -205,9 +220,9 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
                 category=FutureWarning,
             )
             if ms_opts is not None:
-                model_sd = dcp_get_model_state_dict(dcp_model, options=ms_opts)
+                model_sd = dcp_get_model_state_dict(dcp_model, submodules=submods, options=ms_opts)
             else:
-                model_sd = dcp_get_model_state_dict(dcp_model)
+                model_sd = dcp_get_model_state_dict(dcp_model, submodules=submods)
 
         payload: dict[str, Any] = {"model": model_sd}
 
@@ -269,7 +284,7 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
 
     except Exception as e:
         # Do not fall back to HF save here; fail fast to surface DCP issues explicitly
-        logger.error_rank0(f"FSDP DCP save failed: {e}")
+        logger.warning_rank0(f"FSDP DCP save failed: {e}")
         raise
 
 
@@ -364,6 +379,7 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
         # Prepare destination containers
         ms_opts = _make_model_options()
         dcp_model = _select_dcp_model_root(model)
+        submods = {dcp_model}
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 "ignore",
@@ -371,9 +387,9 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
                 category=FutureWarning,
             )
             if ms_opts is not None:
-                model_dest = dcp_get_model_state_dict(dcp_model, options=ms_opts)
+                model_dest = dcp_get_model_state_dict(dcp_model, submodules=submods, options=ms_opts)
             else:
-                model_dest = dcp_get_model_state_dict(dcp_model)
+                model_dest = dcp_get_model_state_dict(dcp_model, submodules=submods)
 
         payload: dict[str, Any] = {"model": model_dest}
 
