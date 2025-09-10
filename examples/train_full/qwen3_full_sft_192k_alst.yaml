@@ -16,8 +16,8 @@ model_name_or_path: Qwen/Qwen3-8B
 trust_remote_code: true
 rope_scaling:
   rope_type: yarn
-  factor: 5.0  # 5x of Qwen3 default max_position_embeddings (40960) => 204800
-  original_max_position_embeddings: 40960
+  factor: 6.0
+  original_max_position_embeddings: 32768
 attn: fa2
 enable_liger_kernel: true
 sequence_parallel_size: 4  # Use 4 GPUs for sequence parallelism
@@ -36,14 +36,14 @@ deepspeed: examples/deepspeed/ds_z3_partial_offload_config.json
 ### dataset
 dataset: tbench_traces_sharegptv1
 template: qwen  # Qwen3 template (same as Qwen2.5)
-cutoff_len: 204800  # 200k context length (5x Qwen3's max_position_embeddings=40960)
+cutoff_len: 196608
 max_samples: null  # Use full dataset
 overwrite_cache: false
-preprocessing_num_workers: 64  # Match LIMO preprocessing workers
-dataloader_num_workers: 2
+preprocessing_num_workers: 8
+dataloader_num_workers: 4
 
 ### output
-output_dir: output/qwen3_full_sft_256k
+output_dir: output/qwen3_full_sft_192k_alst
 logging_steps: 5
 save_steps: 50
 plot_loss: true

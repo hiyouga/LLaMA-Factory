@@ -174,7 +174,8 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
         if include_opt:
             if _is_nonstandard_optimizer(optimizer):
                 logger.warning_rank0(
-                    "Detected non-standard optimizer (paged/8-bit/bitsandbytes). Skipping optimizer state save."
+                    "Detected non-standard optimizer (paged/8-bit/bitsandbytes/DeepSpeed). "
+                    "Skipping optimizer state save; model weights will still be saved."
                 )
             else:
                 opt_sd: Any
@@ -197,6 +198,15 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
                 payload["scheduler"] = scheduler.state_dict()
             except Exception as e:
                 logger.warning_rank0(f"Failed to get scheduler state_dict; skipping scheduler save: {e}")
+        elif scheduler is not None and save_only_model:
+            logger.warning_rank0(
+                "save_only_model=True; skipping scheduler state save. Model weights will still be saved."
+            )
+
+        if optimizer is not None and save_only_model:
+            logger.warning_rank0(
+                "save_only_model=True; skipping optimizer state save. Model weights will still be saved."
+            )
 
         writer = FileSystemWriter(ckpt_dir)
 
@@ -206,22 +216,19 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
         dist_cp.save(payload, storage_writer=writer, process_group=process_group)
         logger.info_rank0(f"Saved FSDP DCP checkpoint to {ckpt_dir}")
 
-    except Exception as e:
-        logger.warning_rank0(f"FSDP DCP save failed; falling back to HF: {e}")
-        # Fall back to HF save
+        # Synchronize after successful save
         try:
-            trainer.save_model(ckpt_dir)
-        except Exception as e2:
-            logger.error_rank0(f"HF fallback save also failed: {e2}")
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
+            if torch.distributed.is_initialized():
+                torch.distributed.barrier()
+        except Exception:
+            pass
 
-    # Synchronize after save
-    try:
-        if torch.cuda.is_available():
-            torch.cuda.synchronize()
-        if torch.distributed.is_initialized():
-            torch.distributed.barrier()
-    except Exception:
-        pass
+    except Exception as e:
+        # Do not fall back to HF save here; fail fast to surface DCP issues explicitly
+        logger.error_rank0(f"FSDP DCP save failed: {e}")
+        raise
 
 
 def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
@@ -317,7 +324,13 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
         payload: dict[str, Any] = {"model": model_dest}
 
         # Optimizer destination container
-        can_restore_optimizer = optimizer is not None and not _is_nonstandard_optimizer(optimizer)
+        is_nonstandard_opt = _is_nonstandard_optimizer(optimizer) if optimizer is not None else False
+        can_restore_optimizer = optimizer is not None and not is_nonstandard_opt
+        if is_nonstandard_opt:
+            logger.warning_rank0(
+                "Detected non-standard optimizer (paged/8-bit/bitsandbytes/DeepSpeed). "
+                "Will not attempt optimizer state restore; proceeding with model-only resume."
+            )
         opt_dest: Any | None = None
         if can_restore_optimizer:
             try:
@@ -371,7 +384,8 @@ def fsdp_dcp_load(trainer, ckpt_dir: str) -> None:
                     logger.warning_rank0(f"Failed to restore optimizer state; continuing with model-only resume: {e}")
         else:
             logger.warning_rank0(
-                "Optimizer state not found in checkpoint or unsupported optimizer detected. Continuing with model-only resume."
+                "Optimizer state not restored (either unsupported optimizer or not present). "
+                "Continuing with model-only resume."
             )
 
         # Restore scheduler if present

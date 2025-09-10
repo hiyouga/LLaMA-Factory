@@ -6,16 +6,10 @@
 #   - Log into WandB (`wandb login`) or set `report_to: none`
 #   - Log into HF: `huggingface-cli login`
 #
-# Usage:
-#   llamafactory-cli train qwen2_5_7b_tbench_traces_full_sft_yarn.yaml
 
 ### model
 model_name_or_path: Qwen/Qwen2.5-7B-Instruct
 trust_remote_code: true
-rope_scaling:
-  rope_type: yarn
-  factor: 4.0
-  original_max_position_embeddings: 32768
 attn: fa2
 enable_liger_kernel: true
 
@@ -23,16 +17,16 @@ enable_liger_kernel: true
 stage: sft
 do_train: true
 finetuning_type: full  # Full fine-tuning (not LoRA)
-deepspeed: examples/deepspeed/ds_z3_partial_offload_config.json
+deepspeed: examples/deepspeed/ds_z3_config.json
 
 ### dataset
 dataset: tbench_traces_sharegptv1  # You'll need to add this to data/dataset_info.json
 template: qwen  # Qwen2.5 template
-cutoff_len: 131072  # Match model_max_length
+cutoff_len: 32768
 max_samples: null  # Use full dataset
 overwrite_cache: true
-preprocessing_num_workers: 64  # Match LIMO preprocessing workers
-dataloader_num_workers: 8
+preprocessing_num_workers: 8
+dataloader_num_workers: 4
 
 ### output
 output_dir: output/qwen2_5_full_sft
