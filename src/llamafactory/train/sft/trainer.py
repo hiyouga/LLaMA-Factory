@@ -247,14 +247,14 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             pass
 
     @override
-    def log(self, logs: dict[str, Any]) -> None:
+    def log(self, logs: dict[str, Any], *args, **kwargs) -> None:
         # Add rank-averaged loss if available
         try:
             if hasattr(self, "_llf_rank_avg_loss"):
                 logs.setdefault("loss_rank_avg", self._llf_rank_avg_loss)
         except Exception:
             pass
-        return super().log(logs)
+        return super().log(logs, *args, **kwargs)
 
     @override
     def prediction_step(

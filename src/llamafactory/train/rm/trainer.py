@@ -159,10 +159,10 @@ class PairwiseTrainer(Trainer):
             pass
 
     @override
-    def log(self, logs: dict[str, float]) -> None:
+    def log(self, logs: dict[str, float], *args, **kwargs) -> None:
         try:
             if hasattr(self, "_llf_rank_avg_loss") and getattr(self, "is_deepspeed_enabled", False):
                 logs.setdefault("loss_rank_avg", self._llf_rank_avg_loss)
         except Exception:
             pass
-        return super().log(logs)
+        return super().log(logs, *args, **kwargs)
