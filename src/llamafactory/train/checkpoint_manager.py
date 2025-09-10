@@ -177,8 +177,8 @@ class AppState(Stateful):  # type: ignore[misc]
                 state["model"] = model_sd
                 state["optim"] = optim_sd
             else:
-                # Only model state
-                model_sd, _ = dcp_get_state_dict(self.model)  # type: ignore[misc]
+                # Only model state (torch versions may require an explicit empty iterable for optimizers)
+                model_sd, _ = dcp_get_state_dict(self.model, ())  # type: ignore[misc]
                 state["model"] = model_sd
         else:
             # Extremely old torch: fall back to raw containers
@@ -207,7 +207,7 @@ class AppState(Stateful):  # type: ignore[misc]
                 else:
                     dcp_set_state_dict(
                         self.model,
-                        None,
+                        (),  # explicit empty iterable for optimizers
                         model_state_dict=state_dict.get("model"),
                         optim_state_dict=None,
                     )

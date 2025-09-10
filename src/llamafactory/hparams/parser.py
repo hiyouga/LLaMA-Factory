@@ -601,6 +601,20 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
         logger.warning_rank0("`neat_packing` requires `packing` is True. Change `packing` to True.")
         data_args.packing = True
 
+    # Hard guardrail: Liger + torch.compile + DeepSpeed is unstable
+    try:
+        _liger_on = getattr(model_args, "enable_liger_kernel", False)
+        _compile_on = getattr(training_args, "torch_compile", False)
+        _ds_on = bool(getattr(training_args, "deepspeed", None))
+        if _liger_on and _compile_on and _ds_on:
+            raise ValueError(
+                "Unsupported configuration detected: enable_liger_kernel=true with torch_compile=true and DeepSpeed enabled. "
+                "These three together produce unstable training. Disable at least one of: enable_liger_kernel, torch_compile, or DeepSpeed."
+            )
+    except Exception:
+        # Do not block training if attribute probing fails in unusual environments
+        pass
+
     # Set TorchDynamo scalar capture and apply shims when using torch.compile
     try:
         _compile_on = getattr(training_args, "torch_compile", False)
