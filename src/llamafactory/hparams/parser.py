@@ -116,6 +116,9 @@ def _parse_args(
                     timers = cfg.get("timers_config")
                     if isinstance(timers, dict):
                         timers.setdefault("synchronized", False)
+                        timers.setdefault("enabled", False)
+                    else:
+                        cfg["timers_config"] = {"enabled": False, "synchronized": False}
                 return cfg
 
             # Locate DS path under common locations
