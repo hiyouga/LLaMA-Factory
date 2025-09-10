@@ -43,7 +43,7 @@ qat_quantize_embedding: false                 # Keep embeddings in higher precis
 fake_quant_after_n_steps: 50                # Delayed quantization for stability
 
 ### output
-output_dir: output/qwen2.5_7b_tbench_traces_sharegptv1_yarn_ds
+output_dir: saves/qwen2_5/full/sft_qat
 logging_steps: 5
 save_steps: 50
 plot_loss: true

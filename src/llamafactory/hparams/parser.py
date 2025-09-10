@@ -583,6 +583,29 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
     except Exception:
         pass
 
+    # Guardrail: FSDP fsdp_use_orig_params=false with torch.compile=true is unstable
+    try:
+        cfg_file = os.environ.get("ACCELERATE_CONFIG_FILE")
+        if cfg_file and getattr(training_args, "torch_compile", False):
+            from .fsdp_validator import FsdpConfigV1, FsdpValidator
+
+            acc_cfg = FsdpValidator.validate_config_file(cfg_file)
+            if str(acc_cfg.distributed_type) == "FSDP" and isinstance(acc_cfg.fsdp_config, FsdpConfigV1):
+                if acc_cfg.fsdp_config.fsdp_use_orig_params is False:
+                    raise ValueError(
+                        "Unsupported configuration detected: FSDP with fsdp_use_orig_params=false and torch_compile=true.\n"
+                        "This combination often breaks optimizer state dict saving due to parameter name mapping\n"
+                        "under TorchDynamo/compile and wrapper modules.\n"
+                        "Recommended fixes:\n"
+                        "  - Set fsdp_use_orig_params: true in your accelerate FSDP config and prefer SHARDED_STATE_DICT; or\n"
+                        "  - Disable torch_compile for FSDP runs; or\n"
+                        "  - Set save_only_model: true to skip optimizer state saving (no optimizer resume)."
+                    )
+    except Exception as e:
+        if isinstance(e, ValueError) and "Unsupported configuration detected" in str(e):
+            raise
+        logger.warning_rank0(f"FSDP compile/orig_params guardrail note: {e}")
+
     if (
         training_args.do_train
         and finetuning_args.finetuning_type == "lora"

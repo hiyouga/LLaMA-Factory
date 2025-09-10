@@ -294,3 +294,44 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             logger.info_rank0("Applied ALST wrapping to evaluation DataLoader")
 
         return dataloader
+
+    @override
+    def _save_checkpoint(self, *args, **kwargs):
+        """Wrap checkpoint save to avoid Dynamo graph entanglement and reset graphs afterwards.
+
+        - Disables torch.compile graph capture during the save to prevent stale references across
+          ZeRO-3 parameter gather/ungather or FSDP state dict collection.
+        - After save completes, synchronizes CUDA and resets Dynamo caches so the next
+          forward/backward recompile against the current parameter storage.
+        """
+        # Disable Dynamo capturing during save (if available)
+        disable_ctx = None
+        try:
+            import torch._dynamo as _dynamo  # type: ignore
+
+            disable_ctx = _dynamo.disable  # type: ignore[attr-defined]
+        except Exception:
+            disable_ctx = None
+
+        if disable_ctx is not None:
+            # Run save under disabled capture
+            with disable_ctx():
+                result = super()._save_checkpoint(*args, **kwargs)
+        else:
+            result = super()._save_checkpoint(*args, **kwargs)
+
+        # Synchronize and reset Dynamo caches post-save on each process
+        try:
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
+            try:
+                import torch._dynamo as _dynamo  # type: ignore
+
+                _dynamo.reset()  # type: ignore[attr-defined]
+                logger.info_rank0("Reset TorchDynamo graphs after checkpoint save to avoid stale captures.")
+            except Exception:
+                pass
+        except Exception:
+            pass
+
+        return result

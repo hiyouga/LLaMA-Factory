@@ -30,7 +30,7 @@ preprocessing_num_workers: 8
 dataloader_num_workers: 4
 
 ### output
-output_dir: output/qwen3_8b_tbench_traces_sharegptv1_yarn_ds
+output_dir: saves/qwen3/full/sft_cce
 logging_steps: 5
 save_steps: 100
 plot_loss: true

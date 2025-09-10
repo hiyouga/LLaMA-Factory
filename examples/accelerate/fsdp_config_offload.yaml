@@ -9,7 +9,7 @@ fsdp_config:
   fsdp_cpu_ram_efficient_loading: true
   fsdp_offload_params: true  # offload may affect training speed
   fsdp_sharding_strategy: FULL_SHARD
-  fsdp_state_dict_type: FULL_STATE_DICT
+  fsdp_state_dict_type: SHARDED_STATE_DICT
   fsdp_sync_module_states: true
   fsdp_use_orig_params: true
 machine_rank: 0
