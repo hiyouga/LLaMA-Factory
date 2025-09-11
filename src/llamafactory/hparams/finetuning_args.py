@@ -514,6 +514,11 @@ class FinetuningArguments(
         metadata={"help": "Whether or not to compute effective tokens per second."},
     )
 
+    enable_npu_fused_ops: bool = field(
+        default=False,
+        metadata={"help": "Whether enable NPU fused operators or not. "},
+    )
+
     def __post_init__(self):
         def split_arg(arg):
             if isinstance(arg, str):
