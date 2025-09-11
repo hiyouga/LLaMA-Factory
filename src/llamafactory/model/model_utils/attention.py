@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from transformers.utils import is_flash_attn_2_available, is_flash_attn_3_available, is_torch_sdpa_available
 
@@ -27,6 +27,38 @@ if TYPE_CHECKING:
 
 
 logger = logging.get_logger(__name__)
+
+
+def is_flash_attention_enabled(config: "PretrainedConfig", model_args: "ModelArguments") -> bool:
+    """Return True if FlashAttention (v2 or v3) is active via implementation or HF kernel.
+
+    Checks, in order of reliability:
+    - Explicit implementation set on config ("flash_attention_2" or "flash_attention_3").
+    - HuggingFace kernel specified on config containing "flash-attn".
+    - Fallback to user arg value (fa2/fa3) if config fields are missing.
+    """
+    # Prefer config implementation if set
+    attn_impl: Optional[str] = getattr(config, "_attn_implementation", None)
+    if attn_impl is None:
+        attn_impl = getattr(config, "attn_implementation", None)
+
+    if attn_impl in ("flash_attention_2", "flash_attention_3"):
+        return True
+
+    # Check HF kernel path
+    hf_kernel = getattr(config, "_hf_kernel", None)
+    if isinstance(hf_kernel, str) and "flash-attn" in hf_kernel.lower():
+        return True
+
+    # Fallback to raw argument string if present
+    try:
+        attn_value = (model_args.attn or "").strip().lower()
+        if attn_value in ("fa2", "fa3"):
+            return True
+    except Exception:
+        pass
+
+    return False
 
 
 def configure_attn_implementation(config: "PretrainedConfig", model_args: "ModelArguments") -> None:

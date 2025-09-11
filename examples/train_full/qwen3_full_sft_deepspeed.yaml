@@ -18,7 +18,7 @@ include_mfu: true
 dataset: tbench_traces_sharegptv1
 template: qwen  # Qwen2.5 template
 mask_history: true
-cutoff_len: 98304  # Match model_max_length
+cutoff_len: 122880  # Match model_max_length
 max_samples: null
 overwrite_cache: true
 preprocessing_num_workers: 8

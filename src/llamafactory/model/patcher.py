@@ -24,7 +24,11 @@ from transformers.modeling_utils import is_fsdp_enabled
 from ..extras import logging
 from ..extras.misc import infer_optim_dtype
 from ..extras.packages import is_transformers_version_greater_than
-from .model_utils.attention import configure_attn_implementation, print_attn_implementation
+from .model_utils.attention import (
+    configure_attn_implementation,
+    is_flash_attention_enabled,
+    print_attn_implementation,
+)
 from .model_utils.checkpointing import prepare_model_for_training
 from .model_utils.embedding import resize_embedding_layer
 from .model_utils.kv_cache import configure_kv_cache
@@ -112,7 +116,8 @@ def patch_config(
     configure_kv_cache(config, model_args, is_trainable)
 
     if getattr(config, "model_type", None) == "qwen":
-        setattr(config, "use_flash_attn", model_args.attn == "fa2" or model_args.attn == "fa3")
+        # Enable Qwen FlashAttention path for FA2/FA3 or HF kernels that contain "flash-attn"
+        setattr(config, "use_flash_attn", is_flash_attention_enabled(config, model_args))
         for dtype_name, dtype in [("fp16", torch.float16), ("bf16", torch.bfloat16), ("fp32", torch.float32)]:
             setattr(config, dtype_name, model_args.compute_dtype == dtype)
 
