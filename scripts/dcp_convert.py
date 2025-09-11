@@ -92,7 +92,65 @@ def _merge_dcp_to_hf(
     state = {"app": app}
 
     # Non-distributed load: no process group provided
-    dcp.load(state_dict=state, checkpoint_id=src)
+    try:
+        dcp.load(state_dict=state, checkpoint_id=src)
+    except Exception as e:
+        # Fallback: convert to torch.save and merge by FQN into a plain HF model
+        print(f"DCP load failed ({e}). Falling back to torch.save merge...", file=sys.stderr)
+        try:
+            import tempfile
+
+            import torch
+            from torch.distributed.checkpoint.format_utils import dcp_to_torch_save
+        except Exception as e2:
+            print(f"Fallback unavailable: {e2}", file=sys.stderr)
+            return 7
+
+        with tempfile.TemporaryDirectory() as td:
+            tmp_path = os.path.join(td, "checkpoint.pth")
+            dcp_to_torch_save(src, tmp_path)
+            blob = torch.load(tmp_path, map_location="cpu")
+        # Descend into structure: expect top-level 'app' then 'model'
+        root = blob
+        if isinstance(root, dict) and "app" in root and isinstance(root["app"], dict):
+            root = root["app"]
+        model_blob = root.get("model") if isinstance(root, dict) else None
+        if not isinstance(model_blob, dict):
+            print("Unsupported checkpoint structure; expected a dict under app.model", file=sys.stderr)
+            return 8
+
+        # Flatten forest if present
+        flat: dict[str, torch.Tensor] = {}
+        if model_blob.get("__fsdp_forest__"):
+            for k, v in model_blob.items():
+                if k.startswith("__"):
+                    continue
+                if isinstance(v, dict):
+                    for kk, vv in v.items():
+                        if isinstance(vv, torch.Tensor):
+                            flat[kk] = vv
+                else:
+                    print(f"Warning: unexpected non-dict entry under forest key '{k}'", file=sys.stderr)
+        else:
+            for kk, vv in model_blob.items():
+                if isinstance(vv, torch.Tensor):
+                    flat[kk] = vv
+
+        msd = model.state_dict()
+        assign_count = 0
+        for k, v in flat.items():
+            if k in msd:
+                try:
+                    msd[k].copy_(v.to(msd[k].dtype))
+                    assign_count += 1
+                except Exception:
+                    # Shape/device mismatch; leave for load_state_dict to report
+                    pass
+        missing, unexpected = model.load_state_dict(msd, strict=False)
+        print(
+            f"Merged tensors: {assign_count}, Missing in ckpt: {len(missing)}, Unexpected in model: {len(unexpected)}",
+            file=sys.stderr,
+        )
 
     os.makedirs(out_dir, exist_ok=True)
     model.save_pretrained(out_dir, safe_serialization=True)
