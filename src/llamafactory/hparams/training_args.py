@@ -92,6 +92,19 @@ class TrainingArguments(RayArguments, Seq2SeqTrainingArguments):
         },
     )
 
+    # Force PyTorch multiprocessing to use filesystem-backed sharing instead of /dev/shm
+    force_file_system_sharing: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "If true, sets torch.multiprocessing sharing strategy to 'file_system' early in startup to avoid "
+                "/dev/shm pressure on multi-GPU nodes. Equivalent to calling: \n"
+                "  import torch.multiprocessing as mp; mp.set_sharing_strategy('file_system')\n"
+                "You can also enable via env var LLF_FORCE_FILE_SYSTEM_SHARING=1."
+            )
+        },
+    )
+
     def __post_init__(self):
         Seq2SeqTrainingArguments.__post_init__(self)
         RayArguments.__post_init__(self)

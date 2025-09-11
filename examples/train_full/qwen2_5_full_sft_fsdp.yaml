@@ -54,6 +54,7 @@ bf16: true
 pure_bf16: true
 gradient_checkpointing: true
 ddp_timeout: 180000000
+force_file_system_sharing: true
 
 ### optimizations
 # torch_compile: true

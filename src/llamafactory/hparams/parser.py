@@ -471,6 +471,27 @@ def get_ray_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> Ray
 def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _TRAIN_CLS:
     model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_args(args)
 
+    # Optional: switch PyTorch sharing to filesystem to bypass /dev/shm pressure
+    try:
+        _force_fs = bool(getattr(training_args, "force_file_system_sharing", False)) or (
+            os.getenv("LLF_FORCE_FILE_SYSTEM_SHARING", "0").lower() in ("1", "true")
+        )
+        if _force_fs:
+            import torch.multiprocessing as mp
+
+            current = None
+            try:
+                current = mp.get_sharing_strategy()
+            except Exception:
+                pass
+            if current != "file_system":
+                mp.set_sharing_strategy("file_system")
+                logger.info_rank0(
+                    "Set torch.multiprocessing sharing strategy to 'file_system' to avoid /dev/shm usage."
+                )
+    except Exception as e:
+        logger.warning_rank0(f"Could not set file_system sharing strategy: {e}")
+
     # Setup logging
     if training_args.should_log:
         _set_transformers_logging()
