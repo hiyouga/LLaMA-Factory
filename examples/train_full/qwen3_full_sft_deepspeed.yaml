@@ -1,7 +1,7 @@
 ### model
 model_name_or_path: Qwen/Qwen3-8B
 trust_remote_code: true
-attn: sdpa
+attn: fa2
 enable_liger_kernel: true
 torch_compile: false
 rope_scaling: linear

@@ -5,7 +5,7 @@ attn: kernels-community/vllm-flash-attn3
 enable_liger_kernel: true
 torch_compile: true
 torch_compile_backend: eager
-optim: paged_adamw_8bit
+# optim: paged_adamw_8bit doesn't work with FSDP2
 
 ### method
 stage: sft
