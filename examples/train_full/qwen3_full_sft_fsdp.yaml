@@ -3,8 +3,6 @@ model_name_or_path: Qwen/Qwen3-8B
 trust_remote_code: true
 attn: fa2
 enable_liger_kernel: true
-torch_compile: false
-torch_compile_backend: inductor
 optim: paged_adamw_8bit
 
 ### method
