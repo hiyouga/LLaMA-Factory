@@ -21,7 +21,6 @@ from typing import TYPE_CHECKING
 
 from ...extras import logging
 from ...extras.constants import RopeScaling
-from .dynamic_rope import DynamicYarnRotaryEmbedding
 
 
 if TYPE_CHECKING:
@@ -75,7 +74,7 @@ def configure_rope(config: "PretrainedConfig", model_args: "ModelArguments") -> 
                 logger.warning_rank0(
                     "DeepSpeed detected with YaRN scaling. If you see instability (NaNs), try one of: "
                     "(1) set model_args.attn='sdpa' to avoid FlashAttention kernels; "
-                    "(2) add rope_scaling.dynamic=true to enable dynamic YaRN; "
+                    "(2) reduce factor temporarily (e.g., 2.0→3.0→4.0); "
                     "(3) verify rope_theta and original_max_position_embeddings match the pretrained base."
                 )
         except Exception:
@@ -137,46 +136,3 @@ def configure_rope(config: "PretrainedConfig", model_args: "ModelArguments") -> 
         f"original_max_position_embeddings={rope_kwargs.get('original_max_position_embeddings')}, "
         f"new_max_position_embeddings={new_max_length}, rope_theta={rope_theta}, attn_impl={attn_impl}"
     )
-
-
-def apply_dynamic_yarn_rope(model) -> None:
-    """Swap static YaRN rotary modules for a dynamic variant when requested.
-
-    Activation conditions:
-    - config.rope_scaling is a dict
-    - rope_type == 'yarn'
-    - dynamic == True
-    Only touches submodules exposing attribute `rotary_emb`.
-    """
-    config = getattr(model, "config", None)
-    rope_scaling = getattr(config, "rope_scaling", None)
-
-    if not isinstance(rope_scaling, dict):
-        return
-
-    if rope_scaling.get("rope_type") != "yarn" or not rope_scaling.get("dynamic", False):
-        return
-
-    replaced = 0
-    for name, module in model.named_modules():
-        if not hasattr(module, "rotary_emb"):
-            continue
-        try:
-            orig = getattr(module, "rotary_emb")
-        except Exception:
-            continue
-        if not isinstance(orig, object):
-            continue
-        try:
-            dyn = DynamicYarnRotaryEmbedding(orig, config)
-        except Exception as e:
-            # Skip on mismatch and warn once
-            logger.debug_rank0(f"Skip dynamic YaRN for {name}: {e}")
-            continue
-        setattr(module, "rotary_emb", dyn)
-        replaced += 1
-
-    if replaced > 0:
-        logger.info_rank0(f"Enabled dynamic YaRN rotary for {replaced} attention module(s).")
-    else:
-        logger.warning_rank0("Dynamic YaRN requested but no rotary_emb modules were replaced.")

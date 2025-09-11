@@ -32,7 +32,7 @@ from .model_utils.longlora import configure_longlora
 from .model_utils.moe import add_z3_leaf_module, configure_moe
 from .model_utils.packing import configure_packing
 from .model_utils.quantization import configure_quantization
-from .model_utils.rope import apply_dynamic_yarn_rope, configure_rope
+from .model_utils.rope import configure_rope
 from .model_utils.valuehead import prepare_valuehead_model
 from .model_utils.visual import autocast_projector_dtype, configure_visual_model
 
@@ -188,11 +188,7 @@ def patch_model(
     if not model_args.use_unsloth:
         print_attn_implementation(model.config)
 
-    # Swap in dynamic YaRN rotary embedding if requested by config
-    try:
-        apply_dynamic_yarn_rope(model)
-    except Exception as e:
-        logger.warning_rank0(f"Failed to enable dynamic YaRN rotary: {e}")
+    # No custom dynamic RoPE swaps; rely on Transformers' built-in scaling via config only
 
     try:
         model.add_model_tags(["llama-factory"])
