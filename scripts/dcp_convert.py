@@ -52,6 +52,14 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Pass trust_remote_code=True to AutoConfig/AutoModel for custom architectures",
     )
+    p.add_argument(
+        "--fill-missing",
+        action="store_true",
+        help=(
+            "Do not error on missing checkpoint keys; keep base model weights for missing entries and report counts. "
+            "Also forces a resilient merge path that bypasses direct DCP load."
+        ),
+    )
     return p.parse_args()
 
 
@@ -67,6 +75,7 @@ def _merge_dcp_to_hf(
     base: str,
     dtype: str = "bfloat16",
     trust_remote_code: bool = False,
+    fill_missing: bool = False,
 ) -> int:
     import os
 
@@ -88,15 +97,8 @@ def _merge_dcp_to_hf(
     cfg = AutoConfig.from_pretrained(base, trust_remote_code=trust_remote_code)
     model = AutoModelForCausalLM.from_config(cfg, trust_remote_code=trust_remote_code, torch_dtype=_to_dtype(dtype))
 
-    app = AppState(model, optimizer=None, scheduler=None)
-    state = {"app": app}
-
-    # Non-distributed load: no process group provided
-    try:
-        dcp.load(state_dict=state, checkpoint_id=src)
-    except Exception as e:
+    def _fallback_merge() -> int:
         # Fallback: convert to torch.save and merge by FQN into a plain HF model
-        print(f"DCP load failed ({e}). Falling back to torch.save merge...", file=sys.stderr)
         try:
             import tempfile
 
@@ -119,18 +121,19 @@ def _merge_dcp_to_hf(
             print("Unsupported checkpoint structure; expected a dict under app.model", file=sys.stderr)
             return 8
 
-        # Flatten forest if present
+        # Flatten forest if present, with prefixing of submodule name
         flat: dict[str, torch.Tensor] = {}
         if model_blob.get("__fsdp_forest__"):
-            for k, v in model_blob.items():
-                if k.startswith("__"):
+            for prefix, sub in model_blob.items():
+                if prefix.startswith("__"):
                     continue
-                if isinstance(v, dict):
-                    for kk, vv in v.items():
+                if isinstance(sub, dict):
+                    for kk, vv in sub.items():
                         if isinstance(vv, torch.Tensor):
-                            flat[kk] = vv
+                            key = kk if (not prefix or kk.startswith(prefix + ".")) else f"{prefix}.{kk}"
+                            flat[key] = vv
                 else:
-                    print(f"Warning: unexpected non-dict entry under forest key '{k}'", file=sys.stderr)
+                    print(f"Warning: unexpected non-dict entry under forest key '{prefix}'", file=sys.stderr)
         else:
             for kk, vv in model_blob.items():
                 if isinstance(vv, torch.Tensor):
@@ -144,13 +147,29 @@ def _merge_dcp_to_hf(
                     msd[k].copy_(v.to(msd[k].dtype))
                     assign_count += 1
                 except Exception:
-                    # Shape/device mismatch; leave for load_state_dict to report
                     pass
         missing, unexpected = model.load_state_dict(msd, strict=False)
         print(
-            f"Merged tensors: {assign_count}, Missing in ckpt: {len(missing)}, Unexpected in model: {len(unexpected)}",
+            f"Merged tensors: {assign_count}, Filled from base (missing): {len(missing)}, Unused tensors: {len(unexpected)}",
             file=sys.stderr,
         )
+        return 0
+
+    if fill_missing:
+        code = _fallback_merge()
+        if code != 0:
+            return code
+    else:
+        app = AppState(model, optimizer=None, scheduler=None)
+        state = {"app": app}
+        # Non-distributed load: no process group provided
+        try:
+            dcp.load(state_dict=state, checkpoint_id=src)
+        except Exception as e:
+            print(f"DCP load failed ({e}). Falling back to torch.save merge...", file=sys.stderr)
+            code = _fallback_merge()
+            if code != 0:
+                return code
 
     os.makedirs(out_dir, exist_ok=True)
     model.save_pretrained(out_dir, safe_serialization=True)
@@ -189,7 +208,12 @@ def main() -> int:
             print("--base is required when using --hf-out", file=sys.stderr)
             return 6
         code = _merge_dcp_to_hf(
-            src, args.hf_out, args.base, dtype=args.dtype, trust_remote_code=args.trust_remote_code
+            src,
+            args.hf_out,
+            args.base,
+            dtype=args.dtype,
+            trust_remote_code=args.trust_remote_code,
+            fill_missing=args.fill_missing,
         )
         ret = code if code != 0 else (ret or 0)
 
