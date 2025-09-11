@@ -9,10 +9,7 @@
 ### model
 model_name_or_path: Qwen/Qwen2.5-7B-Instruct
 trust_remote_code: true
-rope_scaling:
-  rope_type: yarn
-  factor: 1.0
-  original_max_position_embeddings: 32768
+rope_scaling: linear
 attn: fa2
 enable_liger_kernel: true
 
