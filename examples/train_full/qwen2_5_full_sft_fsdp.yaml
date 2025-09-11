@@ -27,7 +27,10 @@ cutoff_len: 32768  # Match model_max_length
 max_samples: null  # Use full dataset
 overwrite_cache: true
 preprocessing_num_workers: 16  # Match LIMO preprocessing workers
-dataloader_num_workers: 8
+dataloader_num_workers: 2
+dataloader_prefetch_factor: 1
+dataloader_persistent_workers: false
+dataloader_pin_memory: false
 
 ### output
 output_dir: output/qwen2_5_full_sft_fsdp_offload
