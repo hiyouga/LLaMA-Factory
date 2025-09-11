@@ -20,7 +20,7 @@ import sys
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Convert DCP checkpoint formats")
+    p = argparse.ArgumentParser(description="Convert/merge DCP checkpoints")
     p.add_argument("--src", required=True, help="Path to DCP checkpoint directory")
     p.add_argument(
         "--torch-out",
@@ -28,7 +28,82 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Output .pth path for torch.save compatible checkpoint",
     )
+    p.add_argument(
+        "--hf-out",
+        required=False,
+        default=None,
+        help="Output directory for Hugging Face save_pretrained export",
+    )
+    p.add_argument(
+        "--base",
+        required=False,
+        default=None,
+        help="Base model ID or local path to instantiate architecture for HF export (e.g., Qwen/Qwen3-8B)",
+    )
+    p.add_argument(
+        "--dtype",
+        required=False,
+        default="bfloat16",
+        choices=["bfloat16", "float16", "float32"],
+        help="Torch dtype for instantiating the HF model when merging (default: bfloat16)",
+    )
+    p.add_argument(
+        "--trust-remote-code",
+        action="store_true",
+        help="Pass trust_remote_code=True to AutoConfig/AutoModel for custom architectures",
+    )
     return p.parse_args()
+
+
+def _to_dtype(name: str):
+    import torch
+
+    return {"bfloat16": torch.bfloat16, "float16": torch.float16, "float32": torch.float32}[name]
+
+
+def _merge_dcp_to_hf(
+    src: str,
+    out_dir: str,
+    base: str,
+    dtype: str = "bfloat16",
+    trust_remote_code: bool = False,
+) -> int:
+    import os
+
+    from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+
+    # Import the AppState from the training code to leverage forest-aware restore
+    try:
+        from llamafactory.train.checkpoint_manager import AppState  # type: ignore
+    except Exception as e:
+        print(f"Failed to import AppState from checkpoint_manager: {e}", file=sys.stderr)
+        return 4
+
+    try:
+        import torch.distributed.checkpoint as dcp
+    except Exception as e:
+        print(f"PyTorch DCP unavailable: {e}", file=sys.stderr)
+        return 5
+
+    cfg = AutoConfig.from_pretrained(base, trust_remote_code=trust_remote_code)
+    model = AutoModelForCausalLM.from_config(cfg, trust_remote_code=trust_remote_code, torch_dtype=_to_dtype(dtype))
+
+    app = AppState(model, optimizer=None, scheduler=None)
+    state = {"app": app}
+
+    # Non-distributed load: no process group provided
+    dcp.load(state_dict=state, checkpoint_id=src)
+
+    os.makedirs(out_dir, exist_ok=True)
+    model.save_pretrained(out_dir, safe_serialization=True)
+    try:
+        tok = AutoTokenizer.from_pretrained(base, trust_remote_code=trust_remote_code)
+        tok.save_pretrained(out_dir)
+    except Exception as e:
+        print(f"Warning: failed to save tokenizer: {e}", file=sys.stderr)
+    cfg.save_pretrained(out_dir)
+    print(f"Wrote Hugging Face model to: {out_dir}")
+    return 0
 
 
 def main() -> int:
@@ -38,6 +113,7 @@ def main() -> int:
         print(f"Source DCP directory not found: {src}", file=sys.stderr)
         return 2
 
+    ret: int | None = None
     if args.torch_out:
         try:
             from torch.distributed.checkpoint.format_utils import dcp_to_torch_save
@@ -48,8 +124,22 @@ def main() -> int:
         os.makedirs(os.path.dirname(os.path.abspath(out_path)) or ".", exist_ok=True)
         dcp_to_torch_save(src, out_path)
         print(f"Wrote torch.save checkpoint: {out_path}")
+        ret = 0
 
-    return 0
+    if args.hf_out:
+        if not args.base:
+            print("--base is required when using --hf-out", file=sys.stderr)
+            return 6
+        code = _merge_dcp_to_hf(
+            src, args.hf_out, args.base, dtype=args.dtype, trust_remote_code=args.trust_remote_code
+        )
+        ret = code if code != 0 else (ret or 0)
+
+    if not args.torch_out and not args.hf_out:
+        print("Nothing to do. Specify --torch-out and/or --hf-out.", file=sys.stderr)
+        return 1
+
+    return ret or 0
 
 
 if __name__ == "__main__":
