@@ -102,6 +102,14 @@ def patch_config(
         else:
             model_args.compute_dtype = infer_optim_dtype(model_dtype=getattr(config, "torch_dtype", None))
 
+    # Apply model_config overrides if provided
+    if model_args.model_config:
+        logger.info_rank0(f"Applying model_config overrides: {model_args.model_config}")
+        for key, value in model_args.model_config.items():
+            old_value = getattr(config, key, None)
+            setattr(config, key, value)
+            logger.info_rank0(f"Override {key}: {old_value} -> {value}")
+
     configure_attn_implementation(config, model_args)
     configure_rope(config, model_args)
     configure_longlora(config, model_args, is_trainable)

@@ -380,6 +380,10 @@ class SGLangArguments:
 class ModelArguments(
     SGLangArguments, VllmArguments, ExportArguments, ProcessorArguments, QuantizationArguments, BaseModelArguments
 ):
+    model_config: Optional[dict[str, Any]] = field(
+        default=None,
+        metadata={"help": "Custom model configuration overrides as a dictionary or JSON string."},
+    )
     r"""Arguments pertaining to which model/config/tokenizer we are going to fine-tune or infer.
 
     The class on the most right will be displayed first.
@@ -412,6 +416,13 @@ class ModelArguments(
         ExportArguments.__post_init__(self)
         VllmArguments.__post_init__(self)
         SGLangArguments.__post_init__(self)
+        
+        # Parse model_config if it's a JSON string
+        if isinstance(self.model_config, str):
+            try:
+                self.model_config = json.loads(self.model_config)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Invalid JSON string for model_config: {e}")
 
     @classmethod
     def copyfrom(cls, source: "Self", **kwargs) -> "Self":

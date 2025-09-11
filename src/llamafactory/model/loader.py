@@ -138,7 +138,24 @@ def load_model(
     r"""Load pretrained model."""
     init_kwargs = _get_init_kwargs(model_args)
     config = load_config(model_args)
+    
+    # Debug: Log model_config if provided
+    if model_args.model_config:
+        logger.info_rank0(f"ModelArguments.model_config: {model_args.model_config}")
+        logger.info_rank0(f"Config before patching: hidden_size={getattr(config, 'hidden_size', 'N/A')}, "
+                         f"num_attention_heads={getattr(config, 'num_attention_heads', 'N/A')}, "
+                         f"num_hidden_layers={getattr(config, 'num_hidden_layers', 'N/A')}, "
+                         f"max_position_embeddings={getattr(config, 'max_position_embeddings', 'N/A')}")
+    
     patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
+    
+    # Debug: Log config after patching
+    if model_args.model_config:
+        logger.info_rank0(f"Config after patching: hidden_size={getattr(config, 'hidden_size', 'N/A')}, "
+                         f"num_attention_heads={getattr(config, 'num_attention_heads', 'N/A')}, "
+                         f"num_hidden_layers={getattr(config, 'num_hidden_layers', 'N/A')}, "
+                         f"max_position_embeddings={getattr(config, 'max_position_embeddings', 'N/A')}")
+    
     apply_liger_kernel(config, model_args, is_trainable, require_logits=(finetuning_args.stage not in ["pt", "sft"]))
 
     model = None
