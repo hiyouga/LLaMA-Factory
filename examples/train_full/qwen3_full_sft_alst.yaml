@@ -52,7 +52,7 @@ report_to: wandb  # Set to 'none' to disable WandB
 ### train
 per_device_train_batch_size: 1
 gradient_accumulation_steps: 4  # Increased due to longer sequences
-learning_rate: 1.5e-5  # Slightly lower LR for stability with long context
+learning_rate: 1.5e-4
 num_train_epochs: 3.0  # Reduced epochs due to computational cost
 lr_scheduler_type: cosine
 warmup_ratio: 0.1  # Longer warmup for stability

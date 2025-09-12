@@ -48,7 +48,7 @@ report_to: wandb
 ### train
 per_device_train_batch_size: 1              # ALST enables larger effective batch sizes
 gradient_accumulation_steps: 2              # Reduced due to ALST efficiency
-learning_rate: 1.0e-5                       # Lower LR for ultra-long sequences
+learning_rate: 1.5e-4                       # Lower LR for ultra-long sequences
 num_train_epochs: 2.0                       # Fewer epochs due to longer sequences
 lr_scheduler_type: cosine
 warmup_ratio: 0.1                           # Longer warmup for stability
