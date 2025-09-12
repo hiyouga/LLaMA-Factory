@@ -32,7 +32,11 @@ group_by_length: true
 ### output
 output_dir: output/qwen3_full_sft_deepspeed
 logging_steps: 5
-save_steps: 100
+save_strategy: "no"
+save_total_limit: 1
+load_best_model_at_end: false
+evaluation_strategy: "no"   # optional
+logging_strategy: "steps"   # keep as you like
 plot_loss: true
 overwrite_output_dir: true
 save_only_model: true  # Save only model for DeepSpeed compatibility
