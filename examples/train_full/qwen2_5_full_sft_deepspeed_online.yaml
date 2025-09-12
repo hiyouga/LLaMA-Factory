@@ -27,7 +27,12 @@ cutoff_len: 32768
 max_samples: null  # Use full dataset
 overwrite_cache: true
 preprocessing_num_workers: 8
-dataloader_num_workers: 4
+dataloader_num_workers: 2 #avoid issues when dev/shm is small
+dataloader_prefetch_factor: 1
+dataloader_persistent_workers: false
+dataloader_pin_memory: false
+force_file_system_sharing: true
+group_by_length: true
 
 ### output
 output_dir: output/qwen2_5_full_sft_deepspeed_online

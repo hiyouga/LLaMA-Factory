@@ -24,6 +24,7 @@ dataloader_num_workers: 2 #avoid issues when dev/shm is small
 dataloader_prefetch_factor: 1
 dataloader_persistent_workers: false
 dataloader_pin_memory: false
+force_file_system_sharing: true
 
 ### output
 output_dir: output/qwen3_full_sft_fsdp
@@ -47,4 +48,3 @@ bf16: true
 pure_bf16: false
 gradient_checkpointing: true
 ddp_timeout: 180000000
-force_file_system_sharing: true
