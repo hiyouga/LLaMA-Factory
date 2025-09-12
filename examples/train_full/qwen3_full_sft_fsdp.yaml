@@ -29,7 +29,10 @@ force_file_system_sharing: true
 ### output
 output_dir: output/qwen3_full_sft_fsdp
 logging_steps: 5
-save_steps: 50
+save_strategy: "no"
+save_total_limit: 1
+load_best_model_at_end: false
+logging_strategy: "steps"   # keep as you like
 plot_loss: true
 overwrite_output_dir: true
 save_only_model: false #FSDP incompatibility
@@ -43,7 +46,7 @@ num_train_epochs: 3.0
 lr_scheduler_type: cosine
 warmup_ratio: 0.05
 weight_decay: 0.01
-max_grad_norm: 1.0e-3
+max_grad_norm: 1.0e-4
 bf16: true
 pure_bf16: false
 gradient_checkpointing: true
