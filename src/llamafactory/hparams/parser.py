@@ -57,19 +57,58 @@ _EVAL_CLS = tuple[ModelArguments, DataArguments, EvaluationArguments, Finetuning
 
 
 def read_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> Union[dict[str, Any], list[str]]:
-    r"""Get arguments from the command line or a config file."""
+    r"""Get arguments from the command line or a config file.
+
+    This function supports passing overrides when a YAML/JSON config path is provided.
+    In addition to OmegaConf's native "key=value" style, it normalizes a few
+    common flag patterns (e.g., "--deepspeed /path/config.json") into
+    "deepspeed=/path/config.json" so they are correctly merged.
+    """
+
+    def _normalize_cli_overrides(argv: list[str]) -> list[str]:
+        # Convert --deepspeed <val> and --deepspeed=<val> into deepspeed=<val>
+        normalized: list[str] = []
+        i = 0
+        while i < len(argv):
+            tok = argv[i]
+            if tok in ("--deepspeed", "deepspeed"):
+                # Expect a value token following; if not present, drop the flag
+                if i + 1 < len(argv):
+                    val = argv[i + 1]
+                    # Skip if next token looks like another flag without value
+                    if not (val.startswith("--") or val.startswith("-")):
+                        normalized.append(f"deepspeed={val}")
+                        i += 2
+                        continue
+                # No valid value provided; ignore and advance
+                i += 1
+                continue
+
+            if tok.startswith("--deepspeed="):
+                normalized.append("deepspeed=" + tok.split("=", 1)[1])
+                i += 1
+                continue
+
+            # Pass-through any other tokens for OmegaConf to handle (key=value, etc.)
+            normalized.append(tok)
+            i += 1
+
+        return normalized
+
     if args is not None:
         return args
 
-    if sys.argv[1].endswith(".yaml") or sys.argv[1].endswith(".yml"):
-        override_config = OmegaConf.from_cli(sys.argv[2:])
+    # When launching with a config file, allow CLI overrides after the path
+    if len(sys.argv) > 1 and (sys.argv[1].endswith(".yaml") or sys.argv[1].endswith(".yml")):
+        override_config = OmegaConf.from_cli(_normalize_cli_overrides(sys.argv[2:]))
         dict_config = OmegaConf.load(Path(sys.argv[1]).absolute())
         return OmegaConf.to_container(OmegaConf.merge(dict_config, override_config))
-    elif sys.argv[1].endswith(".json"):
-        override_config = OmegaConf.from_cli(sys.argv[2:])
+    elif len(sys.argv) > 1 and sys.argv[1].endswith(".json"):
+        override_config = OmegaConf.from_cli(_normalize_cli_overrides(sys.argv[2:]))
         dict_config = OmegaConf.load(Path(sys.argv[1]).absolute())
         return OmegaConf.to_container(OmegaConf.merge(dict_config, override_config))
     else:
+        # No config file; return raw CLI tokens for HfArgumentParser to handle
         return sys.argv[1:]
 
 

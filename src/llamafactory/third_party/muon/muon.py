@@ -156,7 +156,10 @@ class Muon(torch.optim.Optimizer):
 
         for group in self.param_groups:
             # Muon loop
-            params = [p for p in group["params"] if self.state[p]["use_muon"]]
+            # Guard against params introduced/re-wrapped by DeepSpeed/FSDP that don't have
+            # the 'use_muon' flag initialized in optimizer state. Default them to False
+            # so they fall back to the AdamW-style path below instead of crashing.
+            params = [p for p in group["params"] if self.state[p].get("use_muon", False)]
             lr = group["lr"]
             wd = group["wd"]
             momentum = group["momentum"]
@@ -193,7 +196,7 @@ class Muon(torch.optim.Optimizer):
                 p.data.add_(u, alpha=-adjusted_lr)
 
             # Adam backup
-            params = [p for p in group["params"] if not self.state[p]["use_muon"]]
+            params = [p for p in group["params"] if not self.state[p].get("use_muon", False)]
             lr = group["lr"]
             beta1, beta2 = group["adamw_betas"]
             eps = group["adamw_eps"]
