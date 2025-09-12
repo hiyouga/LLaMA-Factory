@@ -19,7 +19,12 @@ from typing import TYPE_CHECKING, Optional
 
 from ...data import PairwiseDataCollatorWithPadding, get_dataset, get_template_and_fix_tokenizer
 from ...extras.constants import IGNORE_INDEX
-from ...extras.misc import calculate_tps, compute_mfu_from_trainer
+from ...extras.misc import (
+    calculate_tps,
+    compute_mfu_from_trainer,
+    compute_mfu_theoretical_from_trainer,
+    get_world_size,
+)
 from ...extras.ploting import plot_loss
 from ...hparams import ModelArguments
 from ...model import load_model, load_tokenizer
@@ -100,6 +105,23 @@ def run_dpo(
             mfu_stats = compute_mfu_from_trainer(trainer, train_result.metrics.get("train_runtime", 0.0))
             if mfu_stats is not None:
                 train_result.metrics.update(mfu_stats)
+
+            # Theoretical MFU
+            steps_ps = float(train_result.metrics.get("train_steps_per_second", 0.0) or 0.0)
+            try:
+                world = get_world_size()
+                total_bs = int(training_args.per_device_train_batch_size) * max(world, 1)
+            except Exception:
+                total_bs = int(training_args.per_device_train_batch_size)
+            theo_stats = compute_mfu_theoretical_from_trainer(
+                trainer,
+                model_args.model_name_or_path,
+                total_bs,
+                int(data_args.cutoff_len),
+                steps_ps,
+            )
+            if theo_stats is not None:
+                train_result.metrics.update(theo_stats)
 
         trainer.log_metrics("train", train_result.metrics)
         trainer.save_metrics("train", train_result.metrics)
