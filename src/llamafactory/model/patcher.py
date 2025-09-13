@@ -219,7 +219,7 @@ def patch_valuehead_model(model: "AutoModelForCausalLMWithValueHead") -> None:
 
         if base_model and hasattr(base_model, "get_rope_index"):
             return base_model.get_rope_index
-        elif (base_model and hasattr(base_model, "model") and hasattr(base_model.model, "get_rope_index")):
+        elif base_model and hasattr(base_model, "model") and hasattr(base_model.model, "get_rope_index"):
             return base_model.model.get_rope_index
         else:
             return None
