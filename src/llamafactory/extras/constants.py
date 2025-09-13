@@ -603,6 +603,17 @@ register_model_group(
 
 register_model_group(
     models={
+        "ERNIE-4.5-21B-A3B-Thinking": {
+            DownloadSource.DEFAULT: "baidu/ERNIE-4.5-21B-A3B-Thinking",
+            DownloadSource.MODELSCOPE: "PaddlePaddle/ERNIE-4.5-21B-A3B-Thinking",
+        },
+    },
+    template="ernie",
+)
+
+
+register_model_group(
+    models={
         "EXAONE-3.0-7.8B-Instruct": {
             DownloadSource.DEFAULT: "LGAI-EXAONE/EXAONE-3.0-7.8B-Instruct",
         },
@@ -1783,6 +1794,10 @@ register_model_group(
             DownloadSource.DEFAULT: "openbmb/MiniCPM4-8B",
             DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM4-8B",
         },
+        "MiniCPM4.1-8B-Chat": {
+            DownloadSource.DEFAULT: "openbmb/MiniCPM4.1-8B",
+            DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM4.1-8B",
+        },
     },
     template="cpm4",
 )
@@ -1790,7 +1805,7 @@ register_model_group(
 
 register_model_group(
     models={
-        "MiniCPM-o-2_6": {
+        "MiniCPM-o-2.6": {
             DownloadSource.DEFAULT: "openbmb/MiniCPM-o-2_6",
             DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM-o-2_6",
         },
@@ -1802,7 +1817,7 @@ register_model_group(
 
 register_model_group(
     models={
-        "MiniCPM-V-2_6": {
+        "MiniCPM-V-2.6": {
             DownloadSource.DEFAULT: "openbmb/MiniCPM-V-2_6",
             DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM-V-2_6",
         },
@@ -1826,7 +1841,7 @@ register_model_group(
 
 register_model_group(
     models={
-        "MiniCPM-V-4_5": {
+        "MiniCPM-V-4.5": {
             DownloadSource.DEFAULT: "openbmb/MiniCPM-V-4_5",
             DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM-V-4_5",
         },
@@ -1941,6 +1956,37 @@ register_model_group(
         },
     },
     template="mistral",
+)
+
+
+register_model_group(
+    models={
+        "MobileLLM-R1-140M-Base": {
+            DownloadSource.DEFAULT: "facebook/MobileLLM-R1-140M-base",
+            DownloadSource.MODELSCOPE: "facebook/MobileLLM-R1-140M-base",
+        },
+        "MobileLLM-R1-360M-Base": {
+            DownloadSource.DEFAULT: "facebook/MobileLLM-R1-360M-base",
+            DownloadSource.MODELSCOPE: "facebook/MobileLLM-R1-360M-base",
+        },
+        "MobileLLM-R1-950M-Base": {
+            DownloadSource.DEFAULT: "facebook/MobileLLM-R1-950M-base",
+            DownloadSource.MODELSCOPE: "facebook/MobileLLM-R1-950M-base",
+        },
+        "MobileLLM-R1-140M-Instruct": {
+            DownloadSource.DEFAULT: "facebook/MobileLLM-R1-140M",
+            DownloadSource.MODELSCOPE: "facebook/MobileLLM-R1-140M",
+        },
+        "MobileLLM-R1-360M-Instruct": {
+            DownloadSource.DEFAULT: "facebook/MobileLLM-R1-360M",
+            DownloadSource.MODELSCOPE: "facebook/MobileLLM-R1-360M",
+        },
+        "MobileLLM-R1-950M-Instruct": {
+            DownloadSource.DEFAULT: "facebook/MobileLLM-R1-950M",
+            DownloadSource.MODELSCOPE: "facebook/MobileLLM-R1-950M",
+        },
+    },
+    template="llama3",
 )
 
 
@@ -2912,6 +2958,10 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B-GPTQ-Int4",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B-GPTQ-Int4",
         },
+        "Qwen/Qwen3-Next-80B-A3B-Thinking": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-Next-80B-A3B-Thinking",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-Next-80B-A3B-Thinking",
+        },
     },
     template="qwen3",
 )
@@ -2930,6 +2980,10 @@ register_model_group(
         "Qwen3-235B-A22B-Instruct-2507": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B-Instruct-2507",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        },
+        "Qwen3-Next-80B-A3B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-Next-80B-A3B-Instruct",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-Next-80B-A3B-Instruct",
         },
     },
     template="qwen3_nothink",
