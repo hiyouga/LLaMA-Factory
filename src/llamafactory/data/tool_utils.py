@@ -78,7 +78,6 @@ SEED_TOOL_PROMPT = (
     "lines</parameter>\n</function>\n</seed:tool_call>\n"
 )
 
-
 LING_TOOL_PROMPT = (
     "# Tools\n\nYou may call one or more functions to assist with the user query.\n\n"
     "You are provided with function signatures within <tools></tools> XML tags:\n<tools>{tool_text}"
