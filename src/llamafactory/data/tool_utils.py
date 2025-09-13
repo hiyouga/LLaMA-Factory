@@ -79,6 +79,15 @@ SEED_TOOL_PROMPT = (
 )
 
 
+LING_TOOL_PROMPT = (
+    "# Tools\n\nYou may call one or more functions to assist with the user query.\n\n"
+    "You are provided with function signatures within <tools></tools> XML tags:\n<tools>{tool_text}"
+    "\n</tools>\n\nFor each function call, return a json object with function name and arguments within "
+    """<tool_call></tool_call> XML tags:\n<tool_call>\n{{"name": <function-name>, """
+    """"arguments": <args-json-object>}}\n</tool_call>"""
+)
+
+
 @dataclass
 class ToolUtils(ABC):
     """Base class for tool utilities."""
@@ -406,6 +415,20 @@ class SeedToolUtils(ToolUtils):
         return results
 
 
+class LingToolUtils(QwenToolUtils):
+    r"""Ling v2 tool using template."""
+
+    @override
+    @staticmethod
+    def tool_formatter(tools: list[dict[str, Any]]) -> str:
+        tool_text = ""
+        for tool in tools:
+            wrapped_tool = tool if tool.get("type") == "function" else {"type": "function", "function": tool}
+            tool_text += "\n" + json.dumps(wrapped_tool, ensure_ascii=False)
+
+        return LING_TOOL_PROMPT.format(tool_text=tool_text) + "\n" + "detailed thinking off"
+
+
 TOOLS = {
     "default": DefaultToolUtils(),
     "glm4": GLM4ToolUtils(),
@@ -414,6 +437,7 @@ TOOLS = {
     "qwen": QwenToolUtils(),
     "glm4_moe": GLM4MOEToolUtils(),
     "seed_oss": SeedToolUtils(),
+    "ling": LingToolUtils(),
 }
 
 
