@@ -685,7 +685,9 @@ register_template(
     format_system=StringFormatter(slots=["<role>SYSTEM</role>{{content}}<|role_end|>"]),
     format_assistant=StringFormatter(slots=["{{content}}<|role_end|>"]),
     format_observation=StringFormatter(
-        slots=["<role>OBSERVATION</role>\n<tool_response>\n{{content}}\n</tool_response><|role_end|><role>ASSISTANT</role>"]
+        slots=[
+            "<role>OBSERVATION</role>\n<tool_response>\n{{content}}\n</tool_response><|role_end|><role>ASSISTANT</role>"
+        ]
     ),
     format_function=FunctionFormatter(slots=["{{content}}<|role_end|>"], tool_format="ling"),
     format_tools=ToolFormatter(tool_format="ling"),
