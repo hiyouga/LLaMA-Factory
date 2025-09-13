@@ -58,6 +58,10 @@ def is_apollo_available():
     return _is_package_available("apollo_torch")
 
 
+def is_jieba_available():
+    return _is_package_available("jieba")
+
+
 def is_gradio_available():
     return _is_package_available("gradio")
 
