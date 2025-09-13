@@ -34,31 +34,36 @@ LOCALES = {
         "en": {
             "value": (
                 "<h3><center>Visit <a href='https://github.com/hiyouga/LLaMA-Factory' target='_blank'>"
-                "GitHub Page</a></center></h3>"
+                "GitHub Page</a> <a href='https://llamafactory.readthedocs.io/en/latest/' target='_blank'>"
+                "Documentation</a></center></h3>"
             ),
         },
         "ru": {
             "value": (
                 "<h3><center>Посетить <a href='https://github.com/hiyouga/LLaMA-Factory' target='_blank'>"
-                "страницу GitHub</a></center></h3>"
+                "страницу GitHub</a> <a href='https://llamafactory.readthedocs.io/en/latest/' target='_blank'>"
+                "Документацию</a></center></h3>"
             ),
         },
         "zh": {
             "value": (
                 "<h3><center>访问 <a href='https://github.com/hiyouga/LLaMA-Factory' target='_blank'>"
-                "GitHub 主页</a></center></h3>"
+                "GitHub 主页</a> <a href='https://llamafactory.readthedocs.io/zh-cn/latest/' target='_blank'>"
+                "官方文档</a></center></h3>"
             ),
         },
         "ko": {
             "value": (
                 "<h3><center><a href='https://github.com/hiyouga/LLaMA-Factory' target='_blank'>"
-                "GitHub 페이지</a>를 방문하세요.</center></h3>"
+                "GitHub 페이지</a> <a href='https://llamafactory.readthedocs.io/en/latest/' target='_blank'>"
+                "공식 문서</a>를 방문하세요.</center></h3>"
             ),
         },
         "ja": {
             "value": (
                 "<h3><center><a href='https://github.com/hiyouga/LLaMA-Factory' target='_blank'>"
-                "GitHub ページ</a>にアクセスする</center></h3>"
+                "GitHub ページ</a> <a href='https://llamafactory.readthedocs.io/en/latest/' target='_blank'>"
+                "ドキュメント</a>にアクセスする</center></h3>"
             ),
         },
     },
