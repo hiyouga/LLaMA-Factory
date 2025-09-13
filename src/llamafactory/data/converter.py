@@ -257,8 +257,8 @@ class OpenAIDatasetConverter(DatasetConverter):
             content = message[self.dataset_attr.content_tag]
 
             if role in [self.dataset_attr.assistant_tag, self.dataset_attr.function_tag]:
-                if "tool_calls" in message and len(message['tool_calls']) > 0:
-                    tool_calls_list = [tool['function'] for tool in message['tool_calls']]
+                if "tool_calls" in message and len(message["tool_calls"]) > 0:
+                    tool_calls_list = [tool["function"] for tool in message["tool_calls"]]
                     content = json.dumps(tool_calls_list, ensure_ascii=False)
                     role = self.dataset_attr.function_tag
 
@@ -340,7 +340,7 @@ class OpenAIDatasetConverter(DatasetConverter):
         if isinstance(tools, dict) or isinstance(tools, list):
             tools = json.dumps(tools, ensure_ascii=False)
 
-        short_system_prompt = 'detailed thinking off'
+        short_system_prompt = "detailed thinking off"
         if not system:
             if not tools:
                 system = short_system_prompt
@@ -348,13 +348,12 @@ class OpenAIDatasetConverter(DatasetConverter):
                 pass
         else:
             if not tools:
-                if 'detailed thinking on' in system or 'detailed thinking off' in system:
+                if "detailed thinking on" in system or "detailed thinking off" in system:
                     pass
                 else:
-                    system += '\n' + short_system_prompt
+                    system += "\n" + short_system_prompt
             else:
-                system += '\n'
-
+                system += "\n"
 
         output = {
             "_prompt": prompt,
