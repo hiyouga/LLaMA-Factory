@@ -917,6 +917,18 @@ register_template(
 )
 
 
+# copied from chatml template
+register_template(
+    name="ernie",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n\n"]),
+    format_observation=StringFormatter(slots=["<|im_start|>tool\n{{content}}<|im_end|>\n\n<|im_start|>assistant\n"]),
+    default_system="<global_setting>\nthink_mode=True\n</global_setting>",
+    stop_words=["<|im_end|>"],
+)
+
+
 register_template(
     name="exaone",
     format_user=StringFormatter(slots=["[|user|]{{content}}\n[|assistant|]"]),
