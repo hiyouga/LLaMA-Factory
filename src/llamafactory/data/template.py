@@ -96,7 +96,7 @@ class Template:
 
     def add_thought(self, content: str = "") -> str:
         r"""Add empty thought to assistant message."""
-        return f"{self.thought_words[0]}\n\n{self.thought_words[1]}\n\n" + content
+        return f"{self.thought_words[0]}{self.thought_words[1]}" + content
 
     def remove_thought(self, content: str) -> str:
         r"""Remove thought from assistant message."""
@@ -156,7 +156,7 @@ class Template:
             elif message["role"] == Role.OBSERVATION:
                 elements += self.format_observation.apply(content=message["content"])
             elif message["role"] == Role.FUNCTION:
-                elements += self.format_function.apply(content=message["content"])
+                elements += self.format_function.apply(content=message["content"], thought_words=self.thought_words)
             else:
                 raise NotImplementedError("Unexpected role: {}".format(message["role"]))
 
@@ -518,7 +518,7 @@ def register_template(
         format_prefix=format_prefix or default_prefix_formatter,
         default_system=default_system,
         stop_words=stop_words or [],
-        thought_words=thought_words or ("<think>", "</think>"),
+        thought_words=thought_words or ("<think>\n", "\n</think>\n\n"),
         efficient_eos=efficient_eos,
         replace_eos=replace_eos,
         replace_jinja_template=replace_jinja_template,
@@ -579,7 +579,7 @@ def parse_template(tokenizer: "PreTrainedTokenizer") -> "Template":
         format_prefix=EmptyFormatter(slots=[prefix]) if prefix else EmptyFormatter(),
         default_system=default_system,
         stop_words=[],
-        thought_words=("<think>", "</think>"),
+        thought_words=("<think>\n", "\n</think>\n\n"),
         efficient_eos=False,
         replace_eos=False,
         replace_jinja_template=False,
@@ -674,6 +674,23 @@ register_template(
     format_user=StringFormatter(slots=["<role>HUMAN</role>{{content}}<role>ASSISTANT</role>"]),
     format_system=StringFormatter(slots=["<role>SYSTEM</role>{{content}}"]),
     format_observation=StringFormatter(slots=["<role>OBSERVATION</role>{{content}}<role>ASSISTANT</role>"]),
+    stop_words=["<|endoftext|>"],
+    efficient_eos=True,
+)
+
+
+register_template(
+    name="bailing_v2",
+    format_user=StringFormatter(slots=["<role>HUMAN</role>{{content}}<|role_end|><role>ASSISTANT</role>"]),
+    format_system=StringFormatter(slots=["<role>SYSTEM</role>{{content}}<|role_end|>"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|role_end|>"]),
+    format_observation=StringFormatter(
+        slots=[
+            "<role>OBSERVATION</role>\n<tool_response>\n{{content}}\n</tool_response><|role_end|><role>ASSISTANT</role>"
+        ]
+    ),
+    format_function=FunctionFormatter(slots=["{{content}}<|role_end|>"], tool_format="ling"),
+    format_tools=ToolFormatter(tool_format="ling"),
     stop_words=["<|endoftext|>"],
     efficient_eos=True,
 )
@@ -900,6 +917,18 @@ register_template(
 )
 
 
+# copied from chatml template
+register_template(
+    name="ernie",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n\n"]),
+    format_observation=StringFormatter(slots=["<|im_start|>tool\n{{content}}<|im_end|>\n\n<|im_start|>assistant\n"]),
+    default_system="<global_setting>\nthink_mode=True\n</global_setting>",
+    stop_words=["<|im_end|>"],
+)
+
+
 register_template(
     name="exaone",
     format_user=StringFormatter(slots=["[|user|]{{content}}\n[|assistant|]"]),
@@ -1049,6 +1078,23 @@ register_template(
 
 # copied from glm4 template
 register_template(
+    name="glm4v_moe",
+    format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>"]),
+    format_assistant=StringFormatter(slots=["\n{{content}}"]),
+    format_system=StringFormatter(slots=["<|system|>\n{{content}}"]),
+    format_function=FunctionFormatter(slots=["{{content}}"], tool_format="glm4_moe"),
+    format_observation=StringFormatter(slots=["<|observation|>\n{{content}}<|assistant|>"]),
+    format_tools=ToolFormatter(tool_format="glm4_moe"),
+    format_prefix=EmptyFormatter(slots=["[gMASK]<sop>"]),
+    stop_words=["<|user|>", "<|observation|>", "</answer>"],
+    efficient_eos=True,
+    mm_plugin=get_mm_plugin(name="glm4v", image_token="<|image|>", video_token="<|video|>"),
+    template_class=ReasoningTemplate,
+)
+
+
+# copied from glm4 template
+register_template(
     name="glmz1",
     format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>"]),
     format_assistant=StringFormatter(slots=["\n{{content}}"]),
@@ -1179,6 +1225,17 @@ register_template(
     default_system=(
         "你是书生·万象，英文名是InternVL，是由上海人工智能实验室、清华大学及多家合作单位联合开发的多模态大语言模型。"
     ),
+    stop_words=["<|im_end|>"],
+    mm_plugin=get_mm_plugin(name="intern_vl", image_token="<image>", video_token="<video>"),
+)
+
+
+register_template(
+    name="intern_s1",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|im_end|>"],
     mm_plugin=get_mm_plugin(name="intern_vl", image_token="<image>", video_token="<video>"),
 )
@@ -1535,7 +1592,7 @@ register_template(
     format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     stop_words=["<|im_end|>"],
-    default_system="You are Qwen, created by Alibaba Cloud. You are a helpful assistant.",
+    default_system="You are a helpful assistant. You can accept audio and text input and output voice and text.",
     mm_plugin=get_mm_plugin(name="minicpm_v", image_token="<image>", video_token="<video>", audio_token="<audio>"),
 )
 
@@ -1734,6 +1791,22 @@ register_template(
 )
 
 
+# copied from qwen template
+register_template(
+    name="qwen3_nothink",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_function=FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="qwen"),
+    format_observation=StringFormatter(
+        slots=["<|im_start|>user\n<tool_response>\n{{content}}\n</tool_response><|im_end|>\n<|im_start|>assistant\n"]
+    ),
+    format_tools=ToolFormatter(tool_format="qwen"),
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
+)
+
+
 # copied from chatml template
 register_template(
     name="qwen2_audio",
@@ -1808,6 +1881,20 @@ register_template(
         "and you only answer questions related to computer science. For politically sensitive questions, "
         "security and privacy issues, and other non-computer science questions, you will refuse to answer.\n\n"
     ),
+)
+
+
+# copied from seed_coder
+register_template(
+    name="seed_oss",
+    format_user=StringFormatter(
+        slots=[{"bos_token"}, "user\n{{content}}", {"eos_token"}, {"bos_token"}, "assistant\n"]
+    ),
+    format_system=StringFormatter(slots=[{"bos_token"}, "system\n{{content}}", {"eos_token"}]),
+    format_function=FunctionFormatter(slots=[{"bos_token"}, "\n{{content}}", {"eos_token"}], tool_format="seed_oss"),
+    format_tools=ToolFormatter(tool_format="seed_oss"),
+    template_class=ReasoningTemplate,
+    thought_words=("<seed:think>", "</seed:think>"),
 )
 
 

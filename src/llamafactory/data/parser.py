@@ -15,7 +15,7 @@
 import json
 import os
 from dataclasses import dataclass
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, Union
 
 from huggingface_hub import hf_hub_download
 
@@ -91,12 +91,14 @@ class DatasetAttr:
                 self.set_attr(tag, attr["tags"])
 
 
-def get_dataset_list(dataset_names: Optional[list[str]], dataset_dir: str) -> list["DatasetAttr"]:
+def get_dataset_list(dataset_names: Optional[list[str]], dataset_dir: Union[str, dict]) -> list["DatasetAttr"]:
     r"""Get the attributes of the datasets."""
     if dataset_names is None:
         dataset_names = []
 
-    if dataset_dir == "ONLINE":
+    if isinstance(dataset_dir, dict):
+        dataset_info = dataset_dir
+    elif dataset_dir == "ONLINE":
         dataset_info = None
     else:
         if dataset_dir.startswith("REMOTE:"):

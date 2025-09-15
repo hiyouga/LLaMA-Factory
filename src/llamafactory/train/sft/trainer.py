@@ -96,6 +96,11 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             self.ch_token_count_list = [[] for _ in range(len(self.all_channels))]
             self._print_debug_info(f"[DEBUG] init channel loss related variables with {len(self.all_channels)} channels")
 
+        if finetuning_args.use_dft_loss:
+            from ..trainer_utils import dft_loss_func
+
+            self.compute_loss_func = dft_loss_func
+
     @override
     def create_optimizer(self) -> "torch.optim.Optimizer":
         if self.optimizer is None:

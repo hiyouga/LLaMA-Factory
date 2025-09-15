@@ -56,13 +56,13 @@ LAYERNORM_NAMES = {"norm", "ln"}
 
 LLAMABOARD_CONFIG = "llamaboard_config.yaml"
 
-METHODS = ["full", "freeze", "lora"]
+METHODS = ["full", "freeze", "lora", "oft"]
 
 MOD_SUPPORTED_MODELS = {"bloom", "falcon", "gemma", "llama", "mistral", "mixtral", "phi", "starcoder2"}
 
 MULTIMODAL_SUPPORTED_MODELS = set()
 
-PEFT_METHODS = {"lora"}
+PEFT_METHODS = {"lora", "oft"}
 
 RUNNING_LOG = "running_log.txt"
 
@@ -603,6 +603,17 @@ register_model_group(
 
 register_model_group(
     models={
+        "ERNIE-4.5-21B-A3B-Thinking": {
+            DownloadSource.DEFAULT: "baidu/ERNIE-4.5-21B-A3B-Thinking",
+            DownloadSource.MODELSCOPE: "PaddlePaddle/ERNIE-4.5-21B-A3B-Thinking",
+        },
+    },
+    template="ernie",
+)
+
+
+register_model_group(
+    models={
         "EXAONE-3.0-7.8B-Instruct": {
             DownloadSource.DEFAULT: "LGAI-EXAONE/EXAONE-3.0-7.8B-Instruct",
         },
@@ -644,6 +655,7 @@ register_model_group(
     },
     template="falcon",
 )
+
 
 register_model_group(
     models={
@@ -757,9 +769,17 @@ register_model_group(
             DownloadSource.DEFAULT: "google/gemma-2-27b-it",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-2-27b-it",
         },
+        "Gemma-3-270M": {
+            DownloadSource.DEFAULT: "google/gemma-3-270m",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-270m",
+        },
         "Gemma-3-1B": {
             DownloadSource.DEFAULT: "google/gemma-3-1b-pt",
             DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-1b-pt",
+        },
+        "Gemma-3-270M-Instruct": {
+            DownloadSource.DEFAULT: "google/gemma-3-270m-it",
+            DownloadSource.MODELSCOPE: "LLM-Research/gemma-3-270m-it",
         },
         "Gemma-3-1B-Instruct": {
             DownloadSource.DEFAULT: "google/gemma-3-1b-it",
@@ -807,6 +827,10 @@ register_model_group(
         "MedGemma-4B-Instruct": {
             DownloadSource.DEFAULT: "google/medgemma-4b-it",
             DownloadSource.MODELSCOPE: "google/medgemma-4b-it",
+        },
+        "MedGemma-27B-Instruct": {
+            DownloadSource.DEFAULT: "google/medgemma-27b-text-it",
+            DownloadSource.MODELSCOPE: "google/medgemma-27b-text-it",
         },
     },
     template="gemma3",
@@ -896,16 +920,28 @@ register_model_group(
             DownloadSource.DEFAULT: "zai-org/GLM-4.5-Base",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.5-Base",
         },
-        "GLM-4.5-Air-Chat": {
+        "GLM-4.5-Air-Thinking": {
             DownloadSource.DEFAULT: "zai-org/GLM-4.5-Air",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.5-Air",
         },
-        "GLM-4.5-Chat": {
+        "GLM-4.5-Thinking": {
             DownloadSource.DEFAULT: "zai-org/GLM-4.5",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.5",
         },
     },
     template="glm4_moe",
+)
+
+
+register_model_group(
+    models={
+        "GLM-4.5V-Air-Thinking": {
+            DownloadSource.DEFAULT: "zai-org/GLM-4.5V",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.5V",
+        }
+    },
+    template="glm4v_moe",
+    multimodal=True,
 )
 
 
@@ -1235,8 +1271,48 @@ register_model_group(
             DownloadSource.DEFAULT: "OpenGVLab/InternVL3-78B-hf",
             DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3-78B-hf",
         },
+        "InternVL3.5-1B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3_5-1B-HF",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3_5-1B-HF",
+        },
+        "InternVL3.5-2B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3_5-2B-HF",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3_5-2B-HF",
+        },
+        "InternVL3.5-4B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3_5-4B-HF",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3_5-4B-HF",
+        },
+        "InternVL3.5-8B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3_5-8B-HF",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3_5-8B-HF",
+        },
+        "InternVL3.5-14B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3_5-14B-HF",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3_5-14B-HF",
+        },
+        "InternVL3.5-30B-A3B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3_5-30B-A3B-HF",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3_5-30B-A3B-HF",
+        },
+        "InternVL3.5-38B-hf": {
+            DownloadSource.DEFAULT: "OpenGVLab/InternVL3_5-38B-HF",
+            DownloadSource.MODELSCOPE: "OpenGVLab/InternVL3_5-38B-HF",
+        },
     },
     template="intern_vl",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
+        "Intern-S1-mini": {
+            DownloadSource.DEFAULT: "internlm/Intern-S1-mini",
+            DownloadSource.MODELSCOPE: "Shanghai_AI_Laboratory/Intern-S1-mini",
+        }
+    },
+    template="intern_s1",
     multimodal=True,
 )
 
@@ -1651,16 +1727,32 @@ register_model_group(
 
 register_model_group(
     models={
-        "MiMo-7B-VL-Instruct": {
-            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-SFT",
-            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-VL-7B-SFT",
-        },
         "MiMo-7B-VL-RL": {
             DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-RL",
             DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-VL-7B-RL",
         },
+        "MiMo-VL-7B-RL-2508": {
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-RL-2508",
+            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-VL-7B-RL-2508",
+        },
     },
     template="mimo_vl",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
+        "MiMo-7B-VL-Instruct": {
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-SFT",
+            DownloadSource.MODELSCOPE: "XiaomiMiMo/MiMo-VL-7B-SFT",
+        },
+        "MiMo-VL-7B-SFT-2508": {
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-SFT-2508",
+            DownloadSource.DEFAULT: "XiaomiMiMo/MiMo-VL-7B-SFT-2508",
+        },
+    },
+    template="qwen2_vl",
     multimodal=True,
 )
 
@@ -1702,6 +1794,10 @@ register_model_group(
             DownloadSource.DEFAULT: "openbmb/MiniCPM4-8B",
             DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM4-8B",
         },
+        "MiniCPM4.1-8B-Chat": {
+            DownloadSource.DEFAULT: "openbmb/MiniCPM4.1-8B",
+            DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM4.1-8B",
+        },
     },
     template="cpm4",
 )
@@ -1709,7 +1805,7 @@ register_model_group(
 
 register_model_group(
     models={
-        "MiniCPM-o-2_6": {
+        "MiniCPM-o-2.6": {
             DownloadSource.DEFAULT: "openbmb/MiniCPM-o-2_6",
             DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM-o-2_6",
         },
@@ -1721,7 +1817,7 @@ register_model_group(
 
 register_model_group(
     models={
-        "MiniCPM-V-2_6": {
+        "MiniCPM-V-2.6": {
             DownloadSource.DEFAULT: "openbmb/MiniCPM-V-2_6",
             DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM-V-2_6",
         },
@@ -1736,6 +1832,18 @@ register_model_group(
         "MiniCPM-V-4": {
             DownloadSource.DEFAULT: "openbmb/MiniCPM-V-4",
             DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM-V-4",
+        },
+    },
+    template="minicpm_v",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
+        "MiniCPM-V-4.5": {
+            DownloadSource.DEFAULT: "openbmb/MiniCPM-V-4_5",
+            DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM-V-4_5",
         },
     },
     template="minicpm_v",
@@ -1848,6 +1956,37 @@ register_model_group(
         },
     },
     template="mistral",
+)
+
+
+register_model_group(
+    models={
+        "MobileLLM-R1-140M-Base": {
+            DownloadSource.DEFAULT: "facebook/MobileLLM-R1-140M-base",
+            DownloadSource.MODELSCOPE: "facebook/MobileLLM-R1-140M-base",
+        },
+        "MobileLLM-R1-360M-Base": {
+            DownloadSource.DEFAULT: "facebook/MobileLLM-R1-360M-base",
+            DownloadSource.MODELSCOPE: "facebook/MobileLLM-R1-360M-base",
+        },
+        "MobileLLM-R1-950M-Base": {
+            DownloadSource.DEFAULT: "facebook/MobileLLM-R1-950M-base",
+            DownloadSource.MODELSCOPE: "facebook/MobileLLM-R1-950M-base",
+        },
+        "MobileLLM-R1-140M-Instruct": {
+            DownloadSource.DEFAULT: "facebook/MobileLLM-R1-140M",
+            DownloadSource.MODELSCOPE: "facebook/MobileLLM-R1-140M",
+        },
+        "MobileLLM-R1-360M-Instruct": {
+            DownloadSource.DEFAULT: "facebook/MobileLLM-R1-360M",
+            DownloadSource.MODELSCOPE: "facebook/MobileLLM-R1-360M",
+        },
+        "MobileLLM-R1-950M-Instruct": {
+            DownloadSource.DEFAULT: "facebook/MobileLLM-R1-950M",
+            DownloadSource.MODELSCOPE: "facebook/MobileLLM-R1-950M",
+        },
+    },
+    template="llama3",
 )
 
 
@@ -2755,6 +2894,10 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen3-4B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-4B",
         },
+        "Qwen3-4B-Thinking-2507": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-4B-Thinking-2507",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-4B-Thinking-2507",
+        },
         "Qwen3-8B-Thinking": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-8B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-8B",
@@ -2771,10 +2914,6 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B",
         },
-        "Qwen3-30B-A3B-Instruct-2507": {
-            DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B-Instruct-2507",
-            DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B-Instruct-2507",
-        },
         "Qwen3-30B-A3B-Thinking-2507": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B-Thinking-2507",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B-Thinking-2507",
@@ -2782,10 +2921,6 @@ register_model_group(
         "Qwen3-235B-A22B-Thinking": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B",
-        },
-        "Qwen3-235B-A22B-Instruct-2507": {
-            DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B-Instruct-2507",
-            DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B-Instruct-2507",
         },
         "Qwen3-235B-A22B-Thinking-2507": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B-Thinking-2507",
@@ -2823,8 +2958,35 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B-GPTQ-Int4",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B-GPTQ-Int4",
         },
+        "Qwen/Qwen3-Next-80B-A3B-Thinking": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-Next-80B-A3B-Thinking",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-Next-80B-A3B-Thinking",
+        },
     },
     template="qwen3",
+)
+
+
+register_model_group(
+    models={
+        "Qwen3-4B-Instruct-2507": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-4B-Instruct-2507",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-4B-Instruct-2507",
+        },
+        "Qwen3-30B-A3B-Instruct-2507": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-30B-A3B-Instruct-2507",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-30B-A3B-Instruct-2507",
+        },
+        "Qwen3-235B-A22B-Instruct-2507": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-235B-A22B-Instruct-2507",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        },
+        "Qwen3-Next-80B-A3B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-Next-80B-A3B-Instruct",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-Next-80B-A3B-Instruct",
+        },
+    },
+    template="qwen3_nothink",
 )
 
 
@@ -2974,15 +3136,37 @@ register_model_group(
     models={
         "Seed-Coder-8B-Base": {
             DownloadSource.DEFAULT: "ByteDance-Seed/Seed-Coder-8B-Base",
+            DownloadSource.MODELSCOPE: "ByteDance-Seed/Seed-Coder-8B-Base",
         },
         "Seed-Coder-8B-Instruct": {
             DownloadSource.DEFAULT: "ByteDance-Seed/Seed-Coder-8B-Instruct",
+            DownloadSource.MODELSCOPE: "ByteDance-Seed/Seed-Coder-8B-Instruct",
         },
-        "Seed-Coder-8B-Instruct-Reasoning": {
+        "Seed-Coder-8B-Thinking": {
             DownloadSource.DEFAULT: "ByteDance-Seed/Seed-Coder-8B-Reasoning-bf16",
+            DownloadSource.MODELSCOPE: "ByteDance-Seed/Seed-Coder-8B-Reasoning-bf16",
         },
     },
     template="seed_coder",
+)
+
+
+register_model_group(
+    models={
+        "Seed-OSS-36B-Base": {
+            DownloadSource.DEFAULT: "ByteDance-Seed/Seed-OSS-36B-Base",
+            DownloadSource.MODELSCOPE: "ByteDance-Seed/Seed-OSS-36B-Base",
+        },
+        "Seed-OSS-36B-Base-woSyn": {
+            DownloadSource.DEFAULT: "ByteDance-Seed/Seed-OSS-36B-Base-woSyn",
+            DownloadSource.MODELSCOPE: "ByteDance-Seed/Seed-OSS-36B-Base-woSyn",
+        },
+        "Seed-OSS-36B-Instruct": {
+            DownloadSource.DEFAULT: "ByteDance-Seed/Seed-OSS-36B-Instruct",
+            DownloadSource.MODELSCOPE: "ByteDance-Seed/Seed-OSS-36B-Instruct",
+        },
+    },
+    template="seed_oss",
 )
 
 

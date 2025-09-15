@@ -222,9 +222,21 @@ _register_composite_model(
 
 
 _register_composite_model(
+    model_type="glm4v_moe",
+    projector_key="visual.merger",
+    vision_model_keys=["visual.patch_embed", "visual.blocks"],
+    language_model_keys=["language_model", "lm_head"],
+    lora_conflict_keys=["patch_embed"],
+)
+
+
+_register_composite_model(
     model_type="internvl",
 )
 
+_register_composite_model(
+    model_type="interns1",
+)
 
 _register_composite_model(
     model_type="Keye",
@@ -232,6 +244,11 @@ _register_composite_model(
     vision_model_keys=["visual.vision_model.patch_embedding", "visual.vision_model.encoder"],
     language_model_keys=["model", "lm_head"],
     lora_conflict_keys=["patch_embedding"],
+)
+
+
+_register_composite_model(
+    model_type="kimi_vl",
 )
 
 

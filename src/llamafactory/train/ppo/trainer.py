@@ -390,7 +390,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         batch: dict[str, torch.Tensor] = self.prepare_model_inputs(queries, responses)
         unwrapped_model: AutoModelForCausalLMWithValueHead = self.accelerator.unwrap_model(self.model)
 
-        if self.finetuning_args.reward_model_type == "lora":
+        if self.finetuning_args.reward_model_type in ["lora", "oft"]:
             replace_model(unwrapped_model, target="reward")
             reward_model = self.model
         else:
@@ -399,7 +399,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         with unwrap_model_for_generation(reward_model, self.accelerator), self.amp_context:  # support bf16
             values: torch.Tensor = reward_model(**batch, return_dict=True, use_cache=False)[-1]
 
-        if self.finetuning_args.reward_model_type == "lora":
+        if self.finetuning_args.reward_model_type in ["lora", "oft"]:
             replace_model(unwrapped_model, target="default")
 
         rewards = values.gather(dim=-1, index=(batch["attention_mask"].sum(dim=-1, keepdim=True) - 1))

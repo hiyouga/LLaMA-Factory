@@ -50,7 +50,7 @@ class RayArguments:
         default="PACK",
         metadata={"help": "The placement strategy for Ray training. Default is PACK."},
     )
-    ray_init_kwargs: Optional[dict] = field(
+    ray_init_kwargs: Optional[Union[dict, str]] = field(
         default=None,
         metadata={"help": "The arguments to pass to ray.init for Ray training. Default is None."},
     )
@@ -59,10 +59,14 @@ class RayArguments:
         self.use_ray = use_ray()
         if isinstance(self.resources_per_worker, str) and self.resources_per_worker.startswith("{"):
             self.resources_per_worker = _convert_str_dict(json.loads(self.resources_per_worker))
+
+        if isinstance(self.ray_init_kwargs, str) and self.ray_init_kwargs.startswith("{"):
+            self.ray_init_kwargs = _convert_str_dict(json.loads(self.ray_init_kwargs))
+
         if self.ray_storage_filesystem is not None:
             if self.ray_storage_filesystem not in ["s3", "gs", "gcs"]:
                 raise ValueError(
-                    f"ray_storage_filesystem must be one of ['s3', 'gs', 'gcs'], got {self.ray_storage_filesystem}"
+                    f"ray_storage_filesystem must be one of ['s3', 'gs', 'gcs'], got {self.ray_storage_filesystem}."
                 )
 
             import pyarrow.fs as fs
