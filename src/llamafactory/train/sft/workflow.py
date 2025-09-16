@@ -49,6 +49,30 @@ def run_sft(
     tokenizer = tokenizer_module["tokenizer"]
     template = get_template_and_fix_tokenizer(tokenizer, data_args)
     dataset_module = get_dataset(template, model_args, data_args, training_args, stage="sft", **tokenizer_module)
+    channel_index_map = {}
+    if finetuning_args.channel_loss:
+        # 获取所有channel类型
+        all_channel_set = set()
+        for key in dataset_module.keys():
+            only_channel_dataset = dataset_module[key].select_columns("channel")
+            if only_channel_dataset.features["channel"].dtype == "string":
+                all_channel_set.update(only_channel_dataset["channel"])
+            elif only_channel_dataset.features["channel"].dtype == "list":
+                for channels in only_channel_dataset["channel"]:
+                    all_channel_set.update(channels)
+            else:
+                raise ValueError(f"Unsupported channel type: {only_channel_dataset.features['channel'].dtype}")
+        all_channels = list(all_channel_set)
+        channel_index_map = {channel: i for i, channel in enumerate(all_channels)}
+        for key in dataset_module.keys():
+            # 将channel转换为list类型
+            if dataset_module[key].features["channel"].dtype == "string":
+                dataset_module[key] = dataset_module[key].map(lambda examples: {"channel": [[channel_index_map[channel]] for channel in examples["channel"]]}, batched=True, num_proc=32, remove_columns=["channel"])
+            elif dataset_module[key].features["channel"].dtype == "list":
+                dataset_module[key] = dataset_module[key].map(lambda examples: {"channel": [[channel_index_map[channel] for channel in channels] for channels in examples["channel"]]}, batched=True, num_proc=32, remove_columns=["channel"])
+            else:
+                raise ValueError(f"Unsupported channel type: {dataset_module[key].features['channel'].dtype}")
+
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
 
     if getattr(model, "is_quantized", False) and not training_args.do_train:
@@ -69,6 +93,9 @@ def run_sft(
     metric_module = {}
     if training_args.predict_with_generate:
         metric_module["compute_metrics"] = ComputeSimilarity(tokenizer=tokenizer)
+    elif finetuning_args.channel_loss:
+        training_args.remove_unused_columns = False
+        training_args.label_names = ["labels","channel"]
     elif finetuning_args.compute_accuracy:
         metric_module["compute_metrics"] = ComputeAccuracy()
         metric_module["preprocess_logits_for_metrics"] = eval_logit_processor
@@ -77,7 +104,6 @@ def run_sft(
     gen_kwargs = generating_args.to_dict(obey_generation_config=True)
     gen_kwargs["eos_token_id"] = [tokenizer.eos_token_id] + tokenizer.additional_special_tokens_ids
     gen_kwargs["pad_token_id"] = tokenizer.pad_token_id
-
     # Initialize our Trainer
     trainer = CustomSeq2SeqTrainer(
         model=model,
@@ -86,6 +112,7 @@ def run_sft(
         data_collator=data_collator,
         callbacks=callbacks,
         gen_kwargs=gen_kwargs,
+        all_channels=all_channels,
         **dataset_module,
         **tokenizer_module,
         **metric_module,
