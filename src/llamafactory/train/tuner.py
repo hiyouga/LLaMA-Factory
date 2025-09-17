@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 import torch
 import torch.distributed as dist
-from transformers import EarlyStoppingCallback, PreTrainedModel
+from transformers import PreTrainedModel
 
 from ..data import get_template_and_fix_tokenizer
 from ..extras import logging
@@ -27,14 +27,14 @@ from ..extras.misc import infer_optim_dtype
 from ..extras.packages import is_ray_available
 from ..hparams import get_infer_args, get_ray_args, get_train_args, read_args
 from ..model import load_model, load_tokenizer
-from .callbacks import LogCallback, PissaConvertCallback, ReporterCallback
+from .callback_registry import get_all_callbacks
 from .dpo import run_dpo
 from .kto import run_kto
 from .ppo import run_ppo
 from .pt import run_pt
 from .rm import run_rm
 from .sft import run_sft
-from .trainer_utils import get_ray_trainer, get_swanlab_callback
+from .trainer_utils import get_ray_trainer
 
 
 if is_ray_available():
@@ -54,17 +54,7 @@ def _training_function(config: dict[str, Any]) -> None:
     callbacks: list[Any] = config.get("callbacks")
     model_args, data_args, training_args, finetuning_args, generating_args = get_train_args(args)
 
-    callbacks.append(LogCallback())
-    if finetuning_args.pissa_convert:
-        callbacks.append(PissaConvertCallback())
-
-    if finetuning_args.use_swanlab:
-        callbacks.append(get_swanlab_callback(finetuning_args))
-
-    if finetuning_args.early_stopping_steps is not None:
-        callbacks.append(EarlyStoppingCallback(early_stopping_patience=finetuning_args.early_stopping_steps))
-
-    callbacks.append(ReporterCallback(model_args, data_args, finetuning_args, generating_args))  # add to last
+    callbacks.extend(get_all_callbacks(args))
 
     if finetuning_args.stage == "pt":
         run_pt(model_args, data_args, training_args, finetuning_args, callbacks)
