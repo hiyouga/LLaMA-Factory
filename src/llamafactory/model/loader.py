@@ -29,6 +29,7 @@ from transformers import (
 from trl import AutoModelForCausalLMWithValueHead
 
 from ..extras import logging
+from ..extras.constants import AttentionFunction
 from ..extras.misc import count_parameters, skip_check_imports, try_download_model_from_other_hub
 from .adapter import init_adapter
 from .model_utils.liger_kernel import apply_liger_kernel
@@ -37,6 +38,8 @@ from .model_utils.mod import convert_pretrained_model_to_mod, load_mod_pretraine
 from .model_utils.unsloth import load_unsloth_pretrained_model
 from .model_utils.valuehead import load_valuehead_params
 from .patcher import patch_config, patch_model, patch_processor, patch_tokenizer, patch_valuehead_model
+
+from ..third_party.npu_fused_ops.npu_fused_patcher import apply_fused_ops
 
 
 if TYPE_CHECKING:
@@ -138,6 +141,10 @@ def load_model(
     r"""Load pretrained model."""
     init_kwargs = _get_init_kwargs(model_args)
     config = load_config(model_args)
+    # Currently, the npu fused operators can only be enabled in training mode and when flash-attn==sdpa.
+    # Other scenarios are not yet supported.
+    if model_args.flash_attn == AttentionFunction.SDPA and is_trainable:
+        apply_fused_ops(config, enable=finetuning_args.enable_npu_fused_ops)
     patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
     apply_liger_kernel(config, model_args, is_trainable, require_logits=(finetuning_args.stage not in ["pt", "sft"]))
 
