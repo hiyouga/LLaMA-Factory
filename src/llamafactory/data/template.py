@@ -930,11 +930,11 @@ register_template(
 
 
 register_template(
-    name="ernie_no_think",
-    format_user=StringFormatter(slots=["<|begin_of_sentence|>User: {{content}}  Assistant: "]),
+    name="ernie_nothink",
+    format_user=StringFormatter(slots=["User: {{content}}\nAssistant: "]),
     format_assistant=StringFormatter(slots=["{{content}}<|end_of_sentence|>"]),
-    format_system=StringFormatter(slots=["<|begin_of_sentence|><|role_start|>system<|role_end|>{{content}}<|end_of_sentence|>"]),
-    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    format_system=StringFormatter(slots=["{{content}}\n"]),
+    format_prefix=EmptyFormatter(slots=["<|begin_of_sentence|>"]),
     stop_words=["<|end_of_sentence|>"],
 )
 
