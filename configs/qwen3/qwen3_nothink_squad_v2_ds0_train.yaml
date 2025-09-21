@@ -16,13 +16,13 @@ dataset: squad_v2_train
 dataset_dir: ./data
 template: qwen3_nothink
 cutoff_len: 2048
-max_samples: 1000
+# max_samples: 1000
 overwrite_cache: true
 preprocessing_num_workers: 16
 dataloader_num_workers: 4
 
 ### output
-output_dir: Experiments/qwen3_nothink_SQuAD_lora_sft
+output_dir: Experiments/qwen3_nothink/SQuAD/sft/lora/train
 logging_steps: 10
 save_steps: 500
 plot_loss: true
@@ -48,6 +48,10 @@ greater_is_better: false
 
 ### eval
 eval_dataset: squad_v2_eval
+# save_dir: Experiments/qwen3_nothink/SQuAD/sft/lora/eval
 per_device_eval_batch_size: 4
 eval_strategy: steps
 eval_steps: 500
+compute_accuracy: true
+
+

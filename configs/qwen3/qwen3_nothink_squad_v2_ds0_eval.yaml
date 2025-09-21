@@ -1,0 +1,30 @@
+### model
+model_name_or_path: Qwen/Qwen3-4B-Instruct-2507
+adapter_name_or_path: Experiments/qwen3_nothink/SQuAD/sft/lora/train
+cache_dir: ./.cache
+trust_remote_code: true
+
+### method
+stage: sft
+do_predict: true
+finetuning_type: lora
+
+### dataset
+eval_dataset: squad_v2_eval
+dataset_dir: ./data
+template: qwen3_nothink
+cutoff_len: 2048
+# max_samples: 1000
+overwrite_cache: true
+preprocessing_num_workers: 16
+dataloader_num_workers: 4
+
+### output
+output_dir: Experiments/qwen3_nothink/SQuAD/sft/lora/eval
+overwrite_output_dir: true
+
+### eval
+per_device_eval_batch_size: 4
+ddp_timeout: 180000000
+predict_with_generate: true
+

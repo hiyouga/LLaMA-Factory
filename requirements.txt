@@ -36,3 +36,8 @@ av
 librosa
 # accelerate 
 deepspeed>=0.10.0,<=0.16.9
+
+# evaluation
+nltk
+jieba
+rouge-chinese

@@ -4,8 +4,8 @@
     "formatting": "alpaca",
     "columns": {
       "prompt": "prompt",
-      "query": "input",
-      "response": "answer"
+      "query": "query",
+      "response": "response"
     }
   },
   "squad_v2_eval": {
@@ -13,8 +13,8 @@
     "formatting": "alpaca",
     "columns": {
       "prompt": "prompt",
-      "query": "input",
-      "response": "answer"
+      "query": "query",
+      "response": "response"
     }
   },
   "identity": {

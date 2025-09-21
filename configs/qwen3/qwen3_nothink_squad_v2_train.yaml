@@ -45,7 +45,7 @@ load_best_model_at_end: true
 metric_for_best_model: loss
 greater_is_better: false
 
-### eval
+# ### eval
 eval_dataset: squad_v2_eval
 per_device_eval_batch_size: 4
 eval_strategy: steps

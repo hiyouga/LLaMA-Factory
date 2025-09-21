@@ -30,7 +30,9 @@ def squad_v2_preprocess(
                     f"Context: {context}\nQuestion: {question}"
                     for context, question in zip(examples["context"], examples["question"])
                 ],
-                "response": [answer["text"] for answer in examples["answers"]],
+                "response": [
+                    answer["text"][0] if len(answer["text"]) > 0 else "IDK" for answer in examples["answers"]
+                ],
             }
 
         dataset = data.map(helper, batched=True, remove_columns=data.column_names)

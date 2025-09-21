@@ -7,7 +7,7 @@
 #$ -q gpu@@yye7_lab  # Run on the GPU cluster
 #$ -o ~/Projects/LLaMA-Factory/logs/$JOB_NAME_$JOB_ID.log
 #$ -l gpu_card=2     # Run on 1 GPU card
-#$ -N base            # Specify job name
+#$ -N LLMHalluc_Train            # Specify job name
 
 # Source bashrc to load all environment settings including private modules
 source ~/.bashrc
@@ -15,4 +15,4 @@ source ~/.bashrc
 # Change to project directory
 cd ~/Projects/LLaMA-Factory
 source ./bash/sys/activate_env.sh
-llamafactory-cli train ./configs/qwen3/qwen3_nothink_squad_v2_ds0.yaml
+llamafactory-cli train ./configs/qwen3/qwen3_nothink_squad_v2_ds0_train.yaml
