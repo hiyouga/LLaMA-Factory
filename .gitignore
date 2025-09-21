@@ -1,5 +1,14 @@
-# Large files exceeding GitHub's 100MB limit
+# Large files exceeding 25MB limit
 data/squad_v2/train.json
+data/squad_v2/validation.json
+
+# Pattern for any large data files (>25MB)
+# Uncomment specific patterns as needed:
+# data/**/*.csv
+# data/**/*.parquet
+# data/**/*.pkl
+# data/**/*.bin
+# *.safetensors
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

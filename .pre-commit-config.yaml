@@ -4,7 +4,7 @@ repos:
     hooks:
     -   id: check-ast
     -   id: check-added-large-files
-        args: ['--maxkb=102400']  # 100MB GitHub limit
+        args: ['--maxkb=25000']
     -   id: check-merge-conflict
     -   id: check-yaml
     -   id: debug-statements
