@@ -930,8 +930,8 @@ register_template(
 
 
 register_template(
-    name="ernie_dense",
-    format_user=StringFormatter(slots=["<|begin_of_sentence|><|role_start|>user<|role_end|>{{content}}<|end_of_sentence|><|role_start|>assistant<|role_end|>"]),
+    name="ernie_no_think",
+    format_user=StringFormatter(slots=["<|begin_of_sentence|>User: {{content}}  Assistant: "]),
     format_assistant=StringFormatter(slots=["{{content}}<|end_of_sentence|>"]),
     format_system=StringFormatter(slots=["<|begin_of_sentence|><|role_start|>system<|role_end|>{{content}}<|end_of_sentence|>"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),

@@ -603,21 +603,9 @@ register_model_group(
 
 register_model_group(
     models={
-        "ERNIE-4.5-21B-A3B-PT": {
-            DownloadSource.DEFAULT: "baidu/ERNIE-4.5-21B-A3B-PT",
-            DownloadSource.MODELSCOPE: "PaddlePaddle/ERNIE-4.5-21B-A3B-PT",
-        },
-    },
-    models={
         "ERNIE-4.5-21B-A3B-Thinking": {
             DownloadSource.DEFAULT: "baidu/ERNIE-4.5-21B-A3B-Thinking",
             DownloadSource.MODELSCOPE: "PaddlePaddle/ERNIE-4.5-21B-A3B-Thinking",
-        },
-    },
-    models={
-        "ERNIE-4.5-300B-A47B-PT": {
-            DownloadSource.DEFAULT: "baidu/ERNIE-4.5-300B-A47B-PT",
-            DownloadSource.MODELSCOPE: "PaddlePaddle/ERNIE-4.5-300B-A47B-PT",
         },
     },
     template="ernie",
@@ -631,7 +619,19 @@ register_model_group(
             DownloadSource.MODELSCOPE: "PaddlePaddle/ERNIE-4.5-0.3B-PT",
         },
     },
-    template="ernie_dense",
+    models={
+        "ERNIE-4.5-21B-A3B-PT": {
+            DownloadSource.DEFAULT: "baidu/ERNIE-4.5-21B-A3B-PT",
+            DownloadSource.MODELSCOPE: "PaddlePaddle/ERNIE-4.5-21B-A3B-PT",
+        },
+    },
+    models={
+        "ERNIE-4.5-300B-A47B-PT": {
+            DownloadSource.DEFAULT: "baidu/ERNIE-4.5-300B-A47B-PT",
+            DownloadSource.MODELSCOPE: "PaddlePaddle/ERNIE-4.5-300B-A47B-PT",
+        },
+    },
+    template="ernie_no_think",
 )
 
 
