@@ -5,7 +5,7 @@
 #$ -m abe            # Send mail when job begins, ends and aborts
 #$ -pe smp 16        # Specify parallel environment and legal core size
 #$ -q gpu@@yye7_lab  # Run on the GPU cluster
-#$ -o ~/Projects/LLMHalluc/logs/run.log
+#$ -o ~/Projects/LLaMa-Factory/logs/run.log
 #$ -l gpu_card=2     # Run on 1 GPU card
 #$ -N run            # Specify job name
 
@@ -13,6 +13,6 @@
 source ~/.bashrc
 
 # Change to project directory
-cd ~/Projects/LLMHalluc
+cd ~/Projects/LLAMA-Factory
 
-uv run src/lf_main.py
+llamafactory-cli train ./configs/qwen3/qwen3_nothink_squad_v2_ds0.yaml
