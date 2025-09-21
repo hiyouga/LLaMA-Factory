@@ -5,9 +5,9 @@
 #$ -m abe            # Send mail when job begins, ends and aborts
 #$ -pe smp 16        # Specify parallel environment and legal core size
 #$ -q gpu@@yye7_lab  # Run on the GPU cluster
-#$ -o ~/Projects/LLaMA-Factory/logs/run.log
+#$ -o ~/Projects/LLaMA-Factory/logs/$JOB_NAME_$JOB_ID.log
 #$ -l gpu_card=2     # Run on 1 GPU card
-#$ -N run            # Specify job name
+#$ -N base            # Specify job name
 
 # Source bashrc to load all environment settings including private modules
 source ~/.bashrc

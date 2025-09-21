@@ -34,3 +34,5 @@ sse-starlette
 # media
 av
 librosa
+# accelerate 
+deepspeed
