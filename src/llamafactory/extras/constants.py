@@ -631,7 +631,7 @@ register_model_group(
             DownloadSource.MODELSCOPE: "PaddlePaddle/ERNIE-4.5-300B-A47B-PT",
         },
     },
-    template="ernie_no_think",
+    template="ernie_nothink",
 )
 
 
