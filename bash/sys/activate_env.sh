@@ -34,5 +34,5 @@ echo "   • python (with llamafactory available)"
 echo "   • llamafactory-cli [command]"
 echo ""
 echo "To deactivate later, run: deactivate"
-
+echo "=================================="
 

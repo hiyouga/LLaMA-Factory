@@ -35,4 +35,4 @@ sse-starlette
 av
 librosa
 # accelerate 
-deepspeed
+deepspeed>=0.10.0,<=0.16.9

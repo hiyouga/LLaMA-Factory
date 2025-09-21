@@ -9,7 +9,7 @@ do_train: true
 finetuning_type: lora
 lora_rank: 8
 lora_target: all
-deepspeed: configs/deepspeed/ds_stage0_config.yaml
+deepspeed: configs/deepspeed/ds_z0_config.json
 
 ### dataset
 dataset: squad_v2_train
