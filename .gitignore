@@ -1,3 +1,6 @@
+# Large files exceeding GitHub's 100MB limit
+data/squad_v2/train.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
