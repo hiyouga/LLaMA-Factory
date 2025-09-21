@@ -24,14 +24,15 @@ echo "   source bash/activate_env.sh"
 echo ""
 
 # If script is sourced, activate the environment
-if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
-    echo "🚀 Activating virtual environment..."
-    source .venv/bin/activate
-    echo "✅ Environment activated!"
-    echo ""
-    echo "You can now use:"
-    echo "   • python (with llamafactory available)"
-    echo "   • llamafactory-cli [command]"
-    echo ""
-    echo "To deactivate later, run: deactivate"
-fi
+
+echo "🚀 Activating virtual environment..."
+source .venv/bin/activate
+echo "✅ Environment activated!"
+echo ""
+echo "You can now use:"
+echo "   • python (with llamafactory available)"
+echo "   • llamafactory-cli [command]"
+echo ""
+echo "To deactivate later, run: deactivate"
+
+

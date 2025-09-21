@@ -1,0 +1,18 @@
+
+#!/bin/bash
+
+#$ -M tma2@nd.edu    # Email address for job notification
+#$ -m abe            # Send mail when job begins, ends and aborts
+#$ -pe smp 16        # Specify parallel environment and legal core size
+#$ -q gpu@@yye7_lab  # Run on the GPU cluster
+#$ -o ~/Projects/LLMHalluc/logs/run.log
+#$ -l gpu_card=2     # Run on 1 GPU card
+#$ -N run            # Specify job name
+
+# Source bashrc to load all environment settings including private modules
+source ~/.bashrc
+
+# Change to project directory
+cd ~/Projects/LLMHalluc
+
+uv run src/lf_main.py

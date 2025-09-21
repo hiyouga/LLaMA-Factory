@@ -20,6 +20,13 @@
 - Created `bash/README.md` - Documentation for the scripts
 - All scripts are executable and tested working
 
+## Git Repository Management
+- Configured pre-commit hooks with 25MB file size limit
+- Removed large files from git history using git-filter-repo
+- Added data/squad_v2/train.json (158MB) and validation.json (15MB) to .gitignore
+- Successfully pushed to GitHub repository without large file issues
+- Pre-commit hooks now prevent large files from being committed
+
 ## Code Style
 - Uses Ruff for formatting and linting (configured in pyproject.toml)
 - Google-style docstrings required
