@@ -912,6 +912,23 @@ register_template(
 
 
 register_template(
+    name="dots_ocr",
+    format_user=StringFormatter(slots=["<|user|>{{content}}<|endofuser|><|assistant|>"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|endofassistant|>"]),
+    format_system=StringFormatter(slots=["<|system|>{{content}}<|endofsystem|>\n"]),
+    stop_words=["<|endofassistant|>"],
+    efficient_eos=True,
+    mm_plugin=get_mm_plugin(
+        name="qwen2_vl",
+        image_token="<|imgpad|>",
+        video_token="<|vidpad|>",
+        start_token="<|img|>",
+        end_token="<|endofimg|>",
+    ),
+)
+
+
+register_template(
     name="empty",
     format_assistant=StringFormatter(slots=["{{content}}"]),
 )
