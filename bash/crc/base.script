@@ -14,5 +14,5 @@ source ~/.bashrc
 
 # Change to project directory
 cd ~/Projects/LLAMA-Factory
-
+source ./bash/sys/activate_env.sh
 llamafactory-cli train ./configs/qwen3/qwen3_nothink_squad_v2_ds0.yaml
