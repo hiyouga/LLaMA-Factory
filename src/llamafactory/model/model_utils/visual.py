@@ -200,6 +200,15 @@ def patch_target_modules(
 
 
 _register_composite_model(
+    model_type="dots_ocr",
+    projector_key="vision_tower.merger",
+    vision_model_keys=["vision_tower"],
+    language_model_keys=["model", "lm_head"],
+    lora_conflict_keys=["merger"],
+)
+
+
+_register_composite_model(
     model_type="gemma3",
 )
 

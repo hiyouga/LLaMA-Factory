@@ -1397,6 +1397,9 @@ class Qwen2AudioPlugin(BasePlugin):
 
 @dataclass
 class Qwen2VLPlugin(BasePlugin):
+    start_token: str = "<|vision_start|>"
+    end_token: str = "<|vision_end|>"
+
     @override
     def _preprocess_image(self, image: "ImageObject", **kwargs) -> "ImageObject":
         image = super()._preprocess_image(image, **kwargs)
@@ -1512,14 +1515,14 @@ class Qwen2VLPlugin(BasePlugin):
             while IMAGE_PLACEHOLDER in content:
                 image_seqlen = image_grid_thw[num_image_tokens].prod() // merge_length if self.expand_mm_tokens else 1
                 content = content.replace(
-                    IMAGE_PLACEHOLDER, f"<|vision_start|>{self.image_token * image_seqlen}<|vision_end|>", 1
+                    IMAGE_PLACEHOLDER, f"{self.start_token}{self.image_token * image_seqlen}{self.end_token}", 1
                 )
                 num_image_tokens += 1
 
             while VIDEO_PLACEHOLDER in content:
                 video_seqlen = video_grid_thw[num_video_tokens].prod() // merge_length if self.expand_mm_tokens else 1
                 content = content.replace(
-                    VIDEO_PLACEHOLDER, f"<|vision_start|>{self.video_token * video_seqlen}<|vision_end|>", 1
+                    VIDEO_PLACEHOLDER, f"{self.start_token}{self.video_token * video_seqlen}{self.end_token}", 1
                 )
                 num_video_tokens += 1
 
@@ -1907,9 +1910,10 @@ def get_mm_plugin(
     image_token: Optional[str] = None,
     video_token: Optional[str] = None,
     audio_token: Optional[str] = None,
+    **kwargs,
 ) -> "BasePlugin":
     r"""Get plugin for multimodal inputs."""
     if name not in PLUGINS:
         raise ValueError(f"Multimodal plugin `{name}` not found.")
 
-    return PLUGINS[name](image_token, video_token, audio_token)
+    return PLUGINS[name](image_token, video_token, audio_token, **kwargs)
