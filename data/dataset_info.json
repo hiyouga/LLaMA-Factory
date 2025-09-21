@@ -1,4 +1,22 @@
 {
+  "squad_v2_train": {
+    "file_name": "squad_v2/train.json",
+    "formatting": "alpaca",
+    "columns": {
+      "prompt": "prompt",
+      "query": "input",
+      "response": "answer"
+    }
+  },
+  "squad_v2_eval": {
+    "file_name": "squad_v2/validation.json",
+    "formatting": "alpaca",
+    "columns": {
+      "prompt": "prompt",
+      "query": "input",
+      "response": "answer"
+    }
+  },
   "identity": {
     "file_name": "identity.json"
   },
