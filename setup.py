@@ -70,6 +70,8 @@ extra_require = {
     ],
     "openmind": ["openmind"],
     "swanlab": ["swanlab"],
+    "wandb": ["wandb"],
+    "tracking": ["wandb", "swanlab"],
     "dev": ["pre-commit", "ruff", "pytest", "build"],
 }
 

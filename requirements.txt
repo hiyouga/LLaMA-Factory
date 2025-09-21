@@ -13,6 +13,7 @@ einops
 numpy<2.0.0
 pandas>=2.0.0
 scipy
+wandb
 # model and tokenizer
 sentencepiece
 tiktoken
