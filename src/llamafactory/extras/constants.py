@@ -603,6 +603,18 @@ register_model_group(
 
 register_model_group(
     models={
+        "dots.ocr": {
+            DownloadSource.DEFAULT: "rednote-hilab/dots.ocr",
+            DownloadSource.MODELSCOPE: "rednote-hilab/dots.ocr",
+        },
+    },
+    template="dots_ocr",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
         "ERNIE-4.5-21B-A3B-Thinking": {
             DownloadSource.DEFAULT: "baidu/ERNIE-4.5-21B-A3B-Thinking",
             DownloadSource.MODELSCOPE: "PaddlePaddle/ERNIE-4.5-21B-A3B-Thinking",
