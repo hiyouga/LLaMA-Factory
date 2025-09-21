@@ -2,6 +2,8 @@ from datasets import load_dataset
 from typing import Any
 from pathlib import Path
 
+from llmhalluc.prompts.QAPrompt import QA_INSTRUCTION
+
 
 def squad_v2_preprocess(
     splits: str | list[str] = ["train", "validation"],
@@ -19,11 +21,15 @@ def squad_v2_preprocess(
             split=splits,
             download_mode="force_redownload" if redownload else "reuse_dataset_if_exists",
         )
+        prompt = QA_INSTRUCTION
 
         def helper(examples: dict[str, list[Any]]) -> dict[str, list[Any]]:
             return {
-                "prompt": examples["question"],
-                "query": examples["context"],
+                "prompt": [prompt for _ in examples["context"]],
+                "query": [
+                    f"Context: {context}\nQuestion: {question}"
+                    for context, question in zip(examples["context"], examples["question"])
+                ],
                 "response": [answer["text"] for answer in examples["answers"]],
             }
 
@@ -31,8 +37,10 @@ def squad_v2_preprocess(
 
         save_path = Path(data_dir) / "squad_v2" / f"{splits}.json"
 
-        with save_path.open("w") as f:
-            dataset.to_json(f, orient="records")
+        if not save_path.parent.exists():
+            save_path.parent.mkdir(parents=True, exist_ok=True)
+
+        dataset.to_json(str(save_path), orient="records")
 
 
 squad_v2_preprocess()
