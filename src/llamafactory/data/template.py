@@ -947,6 +947,16 @@ register_template(
 
 
 register_template(
+    name="ernie_nothink",
+    format_user=StringFormatter(slots=["User: {{content}}\nAssistant: "]),
+    format_assistant=StringFormatter(slots=["{{content}}<|end_of_sentence|>"]),
+    format_system=StringFormatter(slots=["{{content}}\n"]),
+    format_prefix=EmptyFormatter(slots=["<|begin_of_sentence|>"]),
+    stop_words=["<|end_of_sentence|>"],
+)
+
+
+register_template(
     name="exaone",
     format_user=StringFormatter(slots=["[|user|]{{content}}\n[|assistant|]"]),
     format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}, "\n"]),
