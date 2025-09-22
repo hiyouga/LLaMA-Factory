@@ -626,6 +626,25 @@ register_model_group(
 
 register_model_group(
     models={
+        "ERNIE-4.5-0.3B-PT": {
+            DownloadSource.DEFAULT: "baidu/ERNIE-4.5-0.3B-PT",
+            DownloadSource.MODELSCOPE: "PaddlePaddle/ERNIE-4.5-0.3B-PT",
+        },
+        "ERNIE-4.5-21B-A3B-PT": {
+            DownloadSource.DEFAULT: "baidu/ERNIE-4.5-21B-A3B-PT",
+            DownloadSource.MODELSCOPE: "PaddlePaddle/ERNIE-4.5-21B-A3B-PT",
+        },
+        "ERNIE-4.5-300B-A47B-PT": {
+            DownloadSource.DEFAULT: "baidu/ERNIE-4.5-300B-A47B-PT",
+            DownloadSource.MODELSCOPE: "PaddlePaddle/ERNIE-4.5-300B-A47B-PT",
+        },
+    },
+    template="ernie_nothink",
+)
+
+
+register_model_group(
+    models={
         "EXAONE-3.0-7.8B-Instruct": {
             DownloadSource.DEFAULT: "LGAI-EXAONE/EXAONE-3.0-7.8B-Instruct",
         },
