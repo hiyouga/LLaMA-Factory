@@ -150,7 +150,14 @@ class Template:
                     elements += self.format_system.apply(content=(system + tool_text))
 
             if message["role"] == Role.USER:
-                elements += self.format_user.apply(content=message["content"], idx=str(i // 2))
+                # >>>>>>>>
+                content_kwargs = {
+                    "idx": str(i // 2),
+                    **{key: val for key, val in message.items() if key.endswith("content")},
+                }
+                elements += self.format_user.apply(**content_kwargs)
+                # <<<<<<<<
+                # elements += self.format_user.apply(content=message["content"], idx=str(i // 2))
             elif message["role"] == Role.ASSISTANT:
                 elements += self.format_assistant.apply(content=message["content"])
             elif message["role"] == Role.OBSERVATION:
@@ -2093,3 +2100,21 @@ register_template(
     format_user=StringFormatter(slots=["<human>:{{content}}\n<bot>:"]),
     format_assistant=StringFormatter(slots=["{{content}}\n"]),
 )
+
+# >>>>>>>>
+register_template(
+    name="qwen3_nothink_bt",
+    format_user=StringFormatter(
+        slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n{{backtrack_content}}"]
+    ),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_function=FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="qwen"),
+    format_observation=StringFormatter(
+        slots=["<|im_start|>user\n<tool_response>\n{{content}}\n</tool_response><|im_end|>\n<|im_start|>assistant\n"]
+    ),
+    format_tools=ToolFormatter(tool_format="qwen"),
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
+)
+# <<<<<<<<

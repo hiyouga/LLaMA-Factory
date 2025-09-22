@@ -137,7 +137,10 @@ def _load_single_dataset(
             cache_dir=model_args.cache_dir,
             token=model_args.hf_hub_token,
             num_proc=data_args.preprocessing_num_workers,
-            trust_remote_code=model_args.trust_remote_code,
+            # >>>>>>>> Ignore trust_remote_code for file dataset
+            trust_remote_code=model_args.trust_remote_code if not dataset_attr.load_from == "file" else False,
+            # trust_remote_code=model_args.trust_remote_code,
+            # <<<<<<<<
             streaming=data_args.streaming and dataset_attr.load_from != "file",
         )
         if data_args.streaming and dataset_attr.load_from == "file":
@@ -264,7 +267,11 @@ def _get_preprocessed_dataset(
     if training_args.should_log:
         try:
             print("eval example:" if is_eval else "training example:")
-            dataset_processor.print_data_example(next(iter(dataset)))
+            # >>>>>>>> Print a random example instead of the first one
+            random_idx = np.random.randint(0, len(dataset))
+            dataset_processor.print_data_example(dataset[random_idx])
+            # dataset_processor.print_data_example(next(iter(dataset)))
+            # <<<<<<<<
         except StopIteration:
             if stage == "pt":
                 raise RuntimeError("Cannot find sufficient samples, consider increasing dataset size.")

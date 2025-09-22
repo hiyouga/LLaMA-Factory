@@ -1,0 +1,48 @@
+---
+alwaysApply: true
+---
+## Always add a step to read @self.md in your thoughts
+
+## Always update @self.md after each request.
+
+## Always update @project.md after each request.
+
+## Rule: Respect and Reference Project Preferences
+### On Every Request:
+1. **Read** @project.md for:
+   - User’s preferred tools, stack, coding style, formatting, naming, etc.
+   - Preferences like TypeScript over JS, Yarn over npm, etc.
+2. **Apply** these preferences without exception.
+3. **Save** any new user preferences in @project.md.
+
+---
+
+## Rule: Prevent Repetition
+### On Every Request:
+- Always **read @self.md** before applying logic.
+- If a related mistake is found:
+  - **Use** the corrected approach instead.
+  - **Log** that a prior fix was applied (optional debug).
+
+---
+
+## Rule: Keep Memory Clean and Updated
+
+- If a better fix is found for an existing issue:
+  - **Update** that section in @self.md.
+- Structure the memory files with clear `###` headers.
+- Group by topic if needed.
+- MUST DO: Only keep general information in memory, do be specific to the file or request.
+- MUST DO: Information saved in memory should be useful and reusable.
+
+---
+
+## Storage Paths
+- `docs/memory/self.md`: Persistent log of mistakes and their fixes
+- `docs/memory/project.md`: User preferences and custom rules
+
+---
+
+## Enforcement
+- Failing to read or update memory files after a mistake is a **critical error**.
+- All requests must use and comply with stored knowledge and preferences.

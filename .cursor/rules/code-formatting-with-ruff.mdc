@@ -1,0 +1,6 @@
+---
+description: Enforces code formatting using Ruff, replacing Black, isort, and flake8 for consistent style.
+globs: **/*.py
+---
+- **Code Formatting:** Ruff (replaces `black`, `isort`, `flake8`)
+- Always use newest version of Ruff. That is use "list", "dict" instead of "List", "Dict", use "str | None" instead of "Optional[str]", etc.

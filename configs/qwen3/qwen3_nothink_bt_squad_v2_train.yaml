@@ -1,0 +1,55 @@
+### model
+model_name_or_path: Qwen/Qwen3-4B-Instruct-2507
+cache_dir: ./.cache
+trust_remote_code: true
+add_special_tokens: ["<|BACKTRACK|>"]
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+lora_rank: 8
+lora_target: all
+
+### dataset
+dataset: squad_v2_backtrack_train
+dataset_dir: ./data
+template: qwen3_nothink_bt
+cutoff_len: 2048
+max_samples: 1000
+overwrite_cache: true
+preprocessing_num_workers: 16
+dataloader_num_workers: 4
+
+### output
+output_dir: Experiments/qwen3_nothink/SQuAD/sft/lora/train
+logging_steps: 10
+save_steps: 500
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: wandb
+run_name: qwen3_nothink_SQuAD_lora_sft
+
+### train
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-4
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+fp16: true
+ddp_timeout: 180000000
+resume_from_checkpoint: null
+save_total_limit: 3
+load_best_model_at_end: true
+metric_for_best_model: loss
+greater_is_better: false
+
+### eval
+eval_dataset: squad_v2_backtrack_eval
+# save_dir: Experiments/qwen3_nothink/SQuAD/sft/lora/eval
+per_device_eval_batch_size: 4
+eval_strategy: steps
+eval_steps: 500
+compute_accuracy: true

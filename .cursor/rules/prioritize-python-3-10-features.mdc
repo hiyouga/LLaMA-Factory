@@ -1,0 +1,5 @@
+---
+description: Prioritizes the use of new features available in Python 3.10 and later versions.
+globs: **/*.py
+---
+- **Prioritize new features in Python 3.10+**.

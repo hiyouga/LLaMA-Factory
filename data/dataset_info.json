@@ -1,4 +1,24 @@
 {
+  "squad_v2_backtrack_train": {
+    "file_name": "squad_v2_backtrack/train.json",
+    "formatting": "alpaca",
+    "columns": {
+      "prompt": "prompt",
+      "query": "query",
+      "response": "response",
+      "backtrack_content": "backtrack_content"
+    }
+  },
+  "squad_v2_backtrack_eval": {
+    "file_name": "squad_v2_backtrack/validation.json",
+    "formatting": "alpaca",
+    "columns": {
+      "prompt": "prompt",
+      "query": "query",
+      "response": "response",
+      "backtrack_content": "backtrack_content"
+    }
+  },
   "squad_v2_train": {
     "file_name": "squad_v2/train.json",
     "formatting": "alpaca",

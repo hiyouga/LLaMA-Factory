@@ -71,7 +71,7 @@ class BaseModelArguments:
             "help": "Non-special tokens to be added into the tokenizer. Use commas to separate multiple tokens."
         },
     )
-    add_special_tokens: Optional[str] = field(
+    add_special_tokens: Optional[str | list[str]] = field(
         default=None,
         metadata={"help": "Special tokens to be added into the tokenizer. Use commas to separate multiple tokens."},
     )
@@ -186,7 +186,12 @@ class BaseModelArguments:
             self.add_tokens = [token.strip() for token in self.add_tokens.split(",")]
 
         if self.add_special_tokens is not None:  # support multiple special tokens
-            self.add_special_tokens = [token.strip() for token in self.add_special_tokens.split(",")]
+            if isinstance(self.add_special_tokens, str):
+                self.add_special_tokens = [token.strip() for token in self.add_special_tokens.split(",")]
+            elif isinstance(self.add_special_tokens, list):
+                self.add_special_tokens = [token.strip() for token in self.add_special_tokens]
+            else:
+                raise ValueError("`add_special_tokens` must be a string or a list of strings.")
 
 
 @dataclass

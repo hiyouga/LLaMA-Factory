@@ -99,6 +99,11 @@ class AlpacaDatasetConverter(DatasetConverter):
 
         prompt.append({"role": Role.USER.value, "content": "\n".join(query)})  # "prompt\nquery"
 
+        # >>>>>>>> Add backtrack content to alpaca format
+        if self.dataset_attr.backtrack_content and self.dataset_attr.backtrack_content in example:
+            prompt[-1]["backtrack_content"] = example[self.dataset_attr.backtrack_content] or ""
+        # <<<<<<<<
+
         if self.dataset_attr.kto_tag and isinstance(example[self.dataset_attr.kto_tag], bool):  # kto example
             response = [{"role": Role.ASSISTANT.value, "content": example[self.dataset_attr.response]}]
             if example[self.dataset_attr.kto_tag]:

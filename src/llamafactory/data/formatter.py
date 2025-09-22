@@ -75,6 +75,9 @@ class StringFormatter(Formatter):
         for slot in self.slots:
             if isinstance(slot, str):
                 for name, value in kwargs.items():
+                    # >>>>>>>> If value is None, set it to an empty string
+                    value = value or ""
+                    # <<<<<<<<
                     if not isinstance(value, str):
                         raise RuntimeError(f"Expected a string, got {value}")
 
