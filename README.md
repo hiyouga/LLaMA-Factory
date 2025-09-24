@@ -323,6 +323,7 @@ Choose your path:
 | [Yi/Yi-1.5 (Code)](https://huggingface.co/01-ai)                  | 1.5B/6B/9B/34B                   | yi                  |
 | [Yi-VL](https://huggingface.co/01-ai)                             | 6B/34B                           | yi_vl               |
 | [Yuan 2](https://huggingface.co/IEITYuan)                         | 2B/51B/102B                      | yuan                |
+| [LING-V2 (mini/flash)](https://huggingface.co/inclusionAI)        | 16B/100B                         | bailing_v2          |
 
 > [!NOTE]
 > For the "base" models, the `template` argument can be chosen from `default`, `alpaca`, `vicuna` etc. But make sure to use the **corresponding template** for the "instruct/chat" models.
