@@ -138,7 +138,11 @@ class Template:
         Turn 0: prefix + system + query        resp
         Turn t: query                          resp.
         """
-        system = system or self.default_system
+        if messages[0]["role"] == Role.SYSTEM.value:
+            system = messages[0]["content"]
+            messages = messages[1:]  # remove sys_msg
+        else:
+            system = system or self.default_system  # default
         encoded_messages = []
         for i, message in enumerate(messages):
             elements = []
@@ -337,7 +341,12 @@ class Llama2Template(Template):
         system: str,
         tools: str,
     ) -> list[list[int]]:
-        system = system or self.default_system
+        if messages[0]["role"] == Role.SYSTEM.value:
+            # system may be inside msgs
+            system = messages[0]["content"]
+            messages = messages[1:]  # remove sys_msg
+        else:
+            system = system or self.default_system  # default
         encoded_messages = []
         for i, message in enumerate(messages):
             elements = []
