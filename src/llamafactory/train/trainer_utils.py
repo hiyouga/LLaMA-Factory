@@ -648,6 +648,65 @@ def dft_loss_func(outputs, labels, num_items_in_batch=None):
     return loss
 
 
+def focal_loss_func(outputs, labels, alpha=0.25, gamma=2.0, num_items_in_batch=None):
+    logits = outputs.get("logits")
+    if logits is None:
+        return outputs.get("loss", torch.tensor(0.0))
+
+    logits = logits.float()
+    vocab_size = logits.size(-1)
+    labels = torch.nn.functional.pad(labels, (0, 1), value=-100)
+    shift_labels = labels[..., 1:].contiguous()
+    logits = logits.view(-1, vocab_size)
+    shift_labels = shift_labels.view(-1)
+    shift_labels = shift_labels.to(logits.device)
+
+    loss = _focal_cross_entropy(logits, shift_labels, alpha, gamma, num_items_in_batch)
+    return loss
+
+
+def _focal_cross_entropy(
+    source: torch.Tensor,
+    target: torch.Tensor,
+    alpha: float = 0.25,
+    gamma: float = 2.0,
+    num_items_in_batch: Optional[torch.Tensor] = None,
+    ignore_index: int = -100,
+) -> torch.Tensor:
+    # Ultra memory-efficient focal loss: single pass computation
+    valid_mask = target != ignore_index
+    if not valid_mask.any():
+        return torch.tensor(0.0, device=source.device, dtype=source.dtype)
+
+    # Filter valid tokens upfront
+    valid_logits = source[valid_mask]
+    valid_targets = target[valid_mask]
+    
+    # Single softmax computation for both CE and focal weight
+    log_probs = torch.nn.functional.log_softmax(valid_logits, dim=-1)
+    target_log_probs = log_probs.gather(1, valid_targets.unsqueeze(1)).squeeze(1)
+    
+    # CE loss from log_probs (no redundant computation)
+    ce_loss = -target_log_probs
+    
+    # Focal weight computation (detached to prevent gradient issues)
+    with torch.no_grad():
+        p_t = torch.exp(target_log_probs.detach())
+        focal_weight = alpha * torch.pow(1 - p_t, gamma)
+    
+    # Apply focal weights (maintain gradients on ce_loss only)
+    focal_losses = focal_weight.detach() * ce_loss
+
+    if num_items_in_batch is not None:
+        total_loss = focal_losses.sum()
+        if torch.is_tensor(num_items_in_batch):
+            num_items_in_batch = num_items_in_batch.to(total_loss.device)
+        loss = total_loss / num_items_in_batch
+    else:
+        loss = focal_losses.mean()
+    return loss
+
+
 def _dft_cross_entropy(
     source: torch.Tensor,
     target: torch.Tensor,

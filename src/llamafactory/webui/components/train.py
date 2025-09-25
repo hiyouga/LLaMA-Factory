@@ -93,6 +93,10 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
             extra_args = gr.Textbox(value='{"optim": "adamw_torch"}')
 
         with gr.Row():
+            focal_loss_alpha = gr.Slider(minimum=0, maximum=1, value=0.25, step=0.01)
+            focal_loss_gamma = gr.Slider(minimum=0, maximum=5, value=2.0, step=0.1)
+
+        with gr.Row():
             with gr.Column():
                 packing = gr.Checkbox()
                 neat_packing = gr.Checkbox()
@@ -107,6 +111,9 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
 
             with gr.Column():
                 enable_thinking = gr.Checkbox(value=True)
+                use_focal_loss = gr.Checkbox()
+                
+            with gr.Column():
                 report_to = gr.Dropdown(
                     choices=["none", "wandb", "mlflow", "neptune", "tensorboard", "all"],
                     value="none",
@@ -120,6 +127,8 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
             warmup_steps,
             neftune_alpha,
             extra_args,
+            focal_loss_alpha,
+            focal_loss_gamma,
             packing,
             neat_packing,
             train_on_prompt,
@@ -127,6 +136,7 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
             resize_vocab,
             use_llama_pro,
             enable_thinking,
+            use_focal_loss,
             report_to,
         }
     )
@@ -138,6 +148,8 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
             warmup_steps=warmup_steps,
             neftune_alpha=neftune_alpha,
             extra_args=extra_args,
+            focal_loss_alpha=focal_loss_alpha,
+            focal_loss_gamma=focal_loss_gamma,
             packing=packing,
             neat_packing=neat_packing,
             train_on_prompt=train_on_prompt,
@@ -145,6 +157,7 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
             resize_vocab=resize_vocab,
             use_llama_pro=use_llama_pro,
             enable_thinking=enable_thinking,
+            use_focal_loss=use_focal_loss,
             report_to=report_to,
         )
     )
