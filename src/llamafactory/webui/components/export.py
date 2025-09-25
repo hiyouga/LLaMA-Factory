@@ -16,7 +16,7 @@ import json
 from collections.abc import Generator
 from typing import TYPE_CHECKING, Union
 
-from ...extras.constants import PEFT_METHODS
+from ...extras.constants import PEFT_METHODS, DEFAULT_EXPORT_DIR
 from ...extras.misc import torch_gc
 from ...extras.packages import is_gradio_available
 from ...train.tuner import export_model
@@ -124,7 +124,7 @@ def create_export_tab(engine: "Engine") -> dict[str, "Component"]:
         export_legacy_format = gr.Checkbox()
 
     with gr.Row():
-        export_dir = gr.Textbox()
+        export_dir = gr.Textbox(value=DEFAULT_EXPORT_DIR)
         export_hub_model_id = gr.Textbox()
         extra_args = gr.Textbox(value="{}")
 

@@ -95,6 +95,7 @@ V_HEAD_WEIGHTS_NAME = "value_head.bin"
 
 V_HEAD_SAFE_WEIGHTS_NAME = "value_head.safetensors"
 
+DEFAULT_EXPORT_DIR = os.getenv("EXPORT_DIR", "")
 
 class AttentionFunction(str, Enum):
     AUTO = "auto"
