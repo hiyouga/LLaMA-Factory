@@ -3060,6 +3060,31 @@ register_model_group(
     multimodal=True,
 )
 
+register_model_group(
+    models={
+        "Qwen/Qwen3-Omni-30B-A3B-Captioner": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-Omni-30B-A3B-Captioner",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-Omni-30B-A3B-Captioner",
+        },
+        "Qwen/Qwen3-Omni-30B-A3B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-Omni-30B-A3B-Instruct",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-Omni-30B-A3B-Instruct",
+        },
+    },
+    template="qwen3_omni_nothink",
+    multimodal=True,
+)
+
+register_model_group(
+    models={
+        "Qwen/Qwen3-Omni-30B-A3B-Thinking": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-Omni-30B-A3B-Thinking",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-Omni-30B-A3B-Thinking",
+        },
+    },
+    template="qwen3_omni",
+    multimodal=True,
+)
 
 register_model_group(
     models={

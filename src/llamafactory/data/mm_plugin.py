@@ -134,7 +134,7 @@ def _make_batched_images(images: list["ImageObject"], imglens: list[int]) -> lis
 
 def _check_video_is_nested_images(video: "VideoInput") -> bool:
     r"""Check if the video is nested images."""
-    return isinstance(video, list) and all(isinstance(frame, (str, BinaryIO, dict)) for frame in video)
+    return isinstance(video, list) and all(isinstance(frame, (str, BinaryIO, dict, ImageObject)) for frame in video)
 
 
 @dataclass
@@ -1561,9 +1561,12 @@ class Qwen3VLPlugin(Qwen2VLPlugin):
                 video_maxlen=getattr(processor, "video_maxlen", 128),
             )
             video_metadata = [
-                {"fps": getattr(processor, "video_fps", 2.0), "duration": len(video), "total_num_frames": len(video)} for video in videos["videos"]
+                {"fps": getattr(processor, "video_fps", 24.0), "duration": len(video), "total_num_frames": len(video)}
+                for video in videos["videos"]
             ]
-            mm_inputs.update(video_processor(videos=videos["videos"], video_metadata=video_metadata, return_metadata=True))
+            mm_inputs.update(
+                video_processor(videos=videos["videos"], video_metadata=video_metadata, return_metadata=True)
+            )
             temporal_patch_size: int = getattr(image_processor, "temporal_patch_size", 2)
             if "second_per_grid_ts" in processor.model_input_names:
                 mm_inputs["second_per_grid_ts"] = [temporal_patch_size / fps for fps in videos["fps_per_video"]]
@@ -1604,7 +1607,9 @@ class Qwen3VLPlugin(Qwen2VLPlugin):
         for idx, message in enumerate(messages):
             content = message["content"]
             while IMAGE_PLACEHOLDER in content:
-                image_seqlen = image_grid_thw[num_image_tokens].prod() // image_merge_length if self.expand_mm_tokens else 1
+                image_seqlen = (
+                    image_grid_thw[num_image_tokens].prod() // image_merge_length if self.expand_mm_tokens else 1
+                )
                 content = content.replace(
                     IMAGE_PLACEHOLDER, f"{self.start_token}{self.image_token * image_seqlen}{self.end_token}", 1
                 )
@@ -1620,17 +1625,17 @@ class Qwen3VLPlugin(Qwen2VLPlugin):
                 video_structure = ""
                 for frame_index in range(num_frames):
                     video_seqlen = (
-                        video_grid_thw[num_video_tokens][1:].prod() // video_merge_length if self.expand_mm_tokens else 1
+                        video_grid_thw[num_video_tokens][1:].prod() // video_merge_length
+                        if self.expand_mm_tokens
+                        else 1
                     )
                     timestamp_sec = timestamps[frame_index]
-                    frame_structure = (
-                        f"<{timestamp_sec:.1f} seconds>{self.start_token}{self.video_token * video_seqlen}{self.end_token}"
-                    )
+                    frame_structure = f"<{timestamp_sec:.1f} seconds>{self.start_token}{self.video_token * video_seqlen}{self.end_token}"
                     video_structure += frame_structure
 
                 if not self.expand_mm_tokens:
                     video_structure = f"{self.start_token}{self.video_token}{self.end_token}"
-                
+
                 content = content.replace(VIDEO_PLACEHOLDER, video_structure, 1)
                 num_video_tokens += 1
 
