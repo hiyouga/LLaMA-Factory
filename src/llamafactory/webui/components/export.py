@@ -58,6 +58,7 @@ def save_model(
     export_legacy_format: bool,
     export_dir: str,
     export_hub_model_id: str,
+    export_ms_model_id: str,
     extra_args: str,
 ) -> Generator[str, None, None]:
     user_config = load_config()
@@ -92,6 +93,7 @@ def save_model(
         template=template,
         export_dir=export_dir,
         export_hub_model_id=export_hub_model_id or None,
+        export_ms_model_id=export_ms_model_id or None,
         export_size=export_size,
         export_quantization_bit=int(export_quantization_bit) if export_quantization_bit in GPTQ_BITS else None,
         export_quantization_dataset=export_quantization_dataset,
@@ -126,6 +128,7 @@ def create_export_tab(engine: "Engine") -> dict[str, "Component"]:
     with gr.Row():
         export_dir = gr.Textbox()
         export_hub_model_id = gr.Textbox()
+        export_ms_model_id = gr.Textbox()
         extra_args = gr.Textbox(value="{}")
 
     checkpoint_path: gr.Dropdown = engine.manager.get_elem_by_id("top.checkpoint_path")
@@ -150,6 +153,7 @@ def create_export_tab(engine: "Engine") -> dict[str, "Component"]:
             export_legacy_format,
             export_dir,
             export_hub_model_id,
+            export_ms_model_id,
             extra_args,
         ],
         [info_box],
@@ -163,6 +167,7 @@ def create_export_tab(engine: "Engine") -> dict[str, "Component"]:
         export_legacy_format=export_legacy_format,
         export_dir=export_dir,
         export_hub_model_id=export_hub_model_id,
+        export_ms_model_id=export_ms_model_id,
         extra_args=extra_args,
         export_btn=export_btn,
         info_box=info_box,

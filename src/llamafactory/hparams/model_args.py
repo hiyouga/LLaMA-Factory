@@ -308,6 +308,10 @@ class ExportArguments:
         default=None,
         metadata={"help": "The name of the repository if push the model to the Hugging Face hub."},
     )
+    export_ms_model_id: Optional[str] = field(
+        default=None,
+        metadata={"help": "The name of the repository if push the model to the ModelScope hub."},
+    )
 
     def __post_init__(self):
         if self.export_quantization_bit is not None and self.export_quantization_dataset is None:
