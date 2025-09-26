@@ -54,6 +54,7 @@ class DatasetAttr:
     history: Optional[str] = None
     # sharegpt columns
     messages: Optional[str] = "conversations"
+    channel: Optional[str] = None
     # sharegpt tags
     role_tag: Optional[str] = "from"
     content_tag: Optional[str] = "value"
@@ -78,7 +79,7 @@ class DatasetAttr:
         self.set_attr("num_samples", attr)
 
         if "columns" in attr:
-            column_names = ["prompt", "query", "response", "history", "messages", "system", "tools"]
+            column_names = ["prompt", "query", "response", "history", "messages", "channel", "system", "tools"]
             column_names += ["images", "videos", "audios", "chosen", "rejected", "kto_tag"]
             for column_name in column_names:
                 self.set_attr(column_name, attr["columns"])
