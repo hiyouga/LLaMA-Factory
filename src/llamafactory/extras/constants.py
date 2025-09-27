@@ -3060,13 +3060,14 @@ register_model_group(
     multimodal=True,
 )
 
+
 register_model_group(
     models={
-        "Qwen/Qwen3-Omni-30B-A3B-Captioner": {
+        "Qwen3-Omni-30B-A3B-Captioner": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-Omni-30B-A3B-Captioner",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-Omni-30B-A3B-Captioner",
         },
-        "Qwen/Qwen3-Omni-30B-A3B-Instruct": {
+        "Qwen3-Omni-30B-A3B-Instruct": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-Omni-30B-A3B-Instruct",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-Omni-30B-A3B-Instruct",
         },
@@ -3075,9 +3076,10 @@ register_model_group(
     multimodal=True,
 )
 
+
 register_model_group(
     models={
-        "Qwen/Qwen3-Omni-30B-A3B-Thinking": {
+        "Qwen3-Omni-30B-A3B-Thinking": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-Omni-30B-A3B-Thinking",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-Omni-30B-A3B-Thinking",
         },
@@ -3085,6 +3087,7 @@ register_model_group(
     template="qwen3_omni",
     multimodal=True,
 )
+
 
 register_model_group(
     models={
@@ -3190,24 +3193,24 @@ register_model_group(
 
 register_model_group(
     models={
-        "Qwen/Qwen3-VL-235B-A22B-Thinking": {
-            DownloadSource.DEFAULT: "Qwen/Qwen3-VL-235B-A22B-Thinking",
-            DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-235B-A22B-Thinking",
+        "Qwen3-VL-235B-A22B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-VL-235B-A22B-Instruct",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-235B-A22B-Instruct",
         },
     },
-    template="qwen3_vl",
+    template="qwen3_vl_nothink",
     multimodal=True,
 )
 
 
 register_model_group(
     models={
-        "Qwen/Qwen3-VL-235B-A22B-Instruct": {
-            DownloadSource.DEFAULT: "Qwen/Qwen3-VL-235B-A22B-Instruct",
-            DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-235B-A22B-Instruct",
+        "Qwen3-VL-235B-A22B-Thinking": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-VL-235B-A22B-Thinking",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-235B-A22B-Thinking",
         },
     },
-    template="qwen3_vl_nothink",
+    template="qwen3_vl",
     multimodal=True,
 )
 
