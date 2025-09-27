@@ -922,8 +922,8 @@ register_template(
         name="qwen2_vl",
         image_token="<|imgpad|>",
         video_token="<|vidpad|>",
-        start_token="<|img|>",
-        end_token="<|endofimg|>",
+        vision_bos_token="<|img|>",
+        vision_eos_token="<|endofimg|>",
     ),
 )
 
@@ -1862,7 +1862,14 @@ register_template(
     stop_words=["<|im_end|>"],
     replace_eos=True,
     mm_plugin=get_mm_plugin(
-        name="qwen2_omni", audio_token="<|AUDIO|>", image_token="<|IMAGE|>", video_token="<|VIDEO|>"
+        name="qwen2_omni",
+        image_token="<|IMAGE|>",
+        video_token="<|VIDEO|>",
+        audio_token="<|AUDIO|>",
+        vision_bos_token="<|vision_bos|>",
+        vision_eos_token="<|vision_eos|>",
+        audio_bos_token="<|audio_bos|>",
+        audio_eos_token="<|audio_eos|>",
     ),
 )
 
@@ -1880,7 +1887,7 @@ register_template(
     stop_words=["<|im_end|>"],
     replace_eos=True,
     mm_plugin=get_mm_plugin(
-        name="qwen2_omni", audio_token="<|AUDIO|>", image_token="<|IMAGE|>", video_token="<|VIDEO|>"
+        name="qwen2_omni", image_token="<|image_pad|>", video_token="<|video_pad|>", audio_token="<|audio_pad|>"
     ),
     template_class=ReasoningTemplate,
 )
@@ -1899,7 +1906,7 @@ register_template(
     stop_words=["<|im_end|>"],
     replace_eos=True,
     mm_plugin=get_mm_plugin(
-        name="qwen2_omni", audio_token="<|AUDIO|>", image_token="<|IMAGE|>", video_token="<|VIDEO|>"
+        name="qwen2_omni", image_token="<|image_pad|>", video_token="<|video_pad|>", audio_token="<|audio_pad|>"
     ),
 )
 
