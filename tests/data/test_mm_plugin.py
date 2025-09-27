@@ -333,9 +333,9 @@ def test_qwen2_omni_plugin():
     tokenizer_module = _load_tokenizer_module(model_name_or_path="Qwen/Qwen2.5-Omni-7B")
     qwen2_omni_plugin = get_mm_plugin(
         name="qwen2_omni",
-        audio_token="<|AUDIO|>",
         image_token="<|IMAGE|>",
         video_token="<|VIDEO|>",
+        audio_token="<|AUDIO|>",
         vision_bos_token="<|vision_bos|>",
         vision_eos_token="<|vision_eos|>",
         audio_bos_token="<|audio_bos|>",

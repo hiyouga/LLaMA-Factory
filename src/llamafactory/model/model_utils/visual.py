@@ -298,6 +298,7 @@ _register_composite_model(
     lora_conflict_keys=["audio_projection_layer"],
 )
 
+
 _register_composite_model(
     model_type="mistral3",
 )
@@ -349,6 +350,7 @@ _register_composite_model(
     else ["model", "lm_head"],
     lora_conflict_keys=["patch_embed"],
 )
+
 
 _register_composite_model(
     model_type="qwen3_vl",
