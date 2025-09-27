@@ -147,7 +147,7 @@ def _check_extra_dependencies(
         check_version("mixture-of-depth>=1.1.6", mandatory=True)
 
     if model_args.infer_backend == EngineName.VLLM:
-        check_version("vllm>=0.4.3,<=0.10.0")
+        check_version("vllm>=0.4.3,<=0.10.2")
         check_version("vllm", mandatory=True)
     elif model_args.infer_backend == EngineName.SGLANG:
         check_version("sglang>=0.4.5")
@@ -174,7 +174,8 @@ def _check_extra_dependencies(
     if training_args is not None:
         if training_args.deepspeed:
             # pin deepspeed version < 0.17 because of https://github.com/deepspeedai/DeepSpeed/issues/7347
-            check_version("deepspeed>=0.10.0,<=0.16.9", mandatory=True)
+            check_version("deepspeed", mandatory=True)
+            check_version("deepspeed>=0.10.0,<=0.16.9")
 
         if training_args.predict_with_generate:
             check_version("jieba", mandatory=True)
