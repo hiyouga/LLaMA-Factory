@@ -15,12 +15,16 @@
 import json
 import os
 from dataclasses import dataclass
-from typing import Any, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
 from huggingface_hub import hf_hub_download
 
 from ..extras.constants import DATA_CONFIG
 from ..extras.misc import use_modelscope, use_openmind
+
+
+if TYPE_CHECKING:
+    from ..hparams.data_args import DataArguments
 
 
 @dataclass
@@ -90,10 +94,31 @@ class DatasetAttr:
                 self.set_attr(tag, attr["tags"])
 
 
-def get_dataset_list(dataset_names: Optional[list[str]], dataset_dir: Union[str, dict]) -> list["DatasetAttr"]:
+def _apply_data_args_overrides(dataset_attr: "DatasetAttr", data_args: "DataArguments") -> None:
+    if data_args.formatting is not None:
+        dataset_attr.formatting = data_args.formatting
+    if data_args.messages is not None:
+        dataset_attr.messages = data_args.messages
+    if data_args.role_tag is not None:
+        dataset_attr.role_tag = data_args.role_tag
+    if data_args.content_tag is not None:
+        dataset_attr.content_tag = data_args.content_tag
+    if data_args.user_tag is not None:
+        dataset_attr.user_tag = data_args.user_tag
+    if data_args.assistant_tag is not None:
+        dataset_attr.assistant_tag = data_args.assistant_tag
+    if data_args.system is not None:
+        dataset_attr.system = data_args.system
+    if data_args.subset is not None:
+        dataset_attr.subset = data_args.subset
+
+
+def get_dataset_list(dataset_names: Optional[list[str]], data_args: "DataArguments") -> list["DatasetAttr"]:
     r"""Get the attributes of the datasets."""
     if dataset_names is None:
         dataset_names = []
+
+    dataset_dir: Union[str, dict] = data_args.dataset_dir
 
     if isinstance(dataset_dir, dict):
         dataset_info = dataset_dir
@@ -119,6 +144,7 @@ def get_dataset_list(dataset_names: Optional[list[str]], dataset_dir: Union[str,
         if dataset_info is None:  # dataset_dir is ONLINE
             load_from = "ms_hub" if use_modelscope() else "om_hub" if use_openmind() else "hf_hub"
             dataset_attr = DatasetAttr(load_from, dataset_name=name)
+            _apply_data_args_overrides(dataset_attr, data_args)
             dataset_list.append(dataset_attr)
             continue
 
@@ -144,6 +170,7 @@ def get_dataset_list(dataset_names: Optional[list[str]], dataset_dir: Union[str,
             dataset_attr = DatasetAttr("file", dataset_name=dataset_info[name]["file_name"])
 
         dataset_attr.join(dataset_info[name])
+        _apply_data_args_overrides(dataset_attr, data_args)
         dataset_list.append(dataset_attr)
 
     return dataset_list

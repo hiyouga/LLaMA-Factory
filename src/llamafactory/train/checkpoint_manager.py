@@ -357,7 +357,7 @@ class AppState(Stateful):  # type: ignore[misc]
                         try:
                             sample = [n for n in forest_sd.keys() if not n.startswith("__")][:5]
                             logger.info_rank0(
-                                f"DCP save path: per-submodule forest, roots={len(forest_sd)-1}, sample_paths={sample}"
+                                f"DCP save path: per-submodule forest, roots={len(forest_sd) - 1}, sample_paths={sample}"
                             )
                         except Exception:
                             pass
@@ -567,8 +567,8 @@ def fsdp_dcp_save(trainer, output_dir: str) -> None:
                     alloc = torch.cuda.memory_allocated(dev)
                     rsvd = torch.cuda.memory_reserved(dev)
                     logger.warning_rank0(
-                        f"GPU memory snapshot before DCP save retry: free={free/1e9:.2f}GB, total={total/1e9:.2f}GB, "
-                        f"allocated={alloc/1e9:.2f}GB, reserved={rsvd/1e9:.2f}GB"
+                        f"GPU memory snapshot before DCP save retry: free={free / 1e9:.2f}GB, total={total / 1e9:.2f}GB, "
+                        f"allocated={alloc / 1e9:.2f}GB, reserved={rsvd / 1e9:.2f}GB"
                     )
             except Exception:
                 pass

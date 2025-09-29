@@ -177,7 +177,7 @@ def _get_merged_dataset(
         return None
 
     datasets = {}
-    for dataset_name, dataset_attr in zip(dataset_names, get_dataset_list(dataset_names, data_args.dataset_dir)):
+    for dataset_name, dataset_attr in zip(dataset_names, get_dataset_list(dataset_names, data_args)):
         if (stage == "rm" and dataset_attr.ranking is False) or (stage != "rm" and dataset_attr.ranking is True):
             raise ValueError("The dataset is not applicable in the current training stage.")
 
