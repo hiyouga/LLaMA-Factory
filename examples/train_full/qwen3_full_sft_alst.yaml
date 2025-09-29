@@ -38,12 +38,20 @@ cutoff_len: 196608
 max_samples: null  # Use full dataset
 overwrite_cache: false
 preprocessing_num_workers: 8
-dataloader_num_workers: 4
+dataloader_num_workers: 2 #avoid issues when dev/shm is small
+dataloader_prefetch_factor: 1
+dataloader_persistent_workers: false
+dataloader_pin_memory: false
+force_file_system_sharing: true
+group_by_length: true
 
 ### output
 output_dir: output/qwen3_full_sft_192k_alst
 logging_steps: 5
-save_steps: 50
+save_strategy: "no"
+save_total_limit: 1
+load_best_model_at_end: false
+logging_strategy: "steps"   # keep as you like
 plot_loss: true
 overwrite_output_dir: true
 save_only_model: true  # Save only model for DeepSpeed compatibility

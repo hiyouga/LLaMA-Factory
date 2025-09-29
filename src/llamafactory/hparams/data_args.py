@@ -31,6 +31,10 @@ class DataArguments:
         default=None,
         metadata={"help": "The name of dataset(s) to use for training. Use commas to separate multiple datasets."},
     )
+    subset: Optional[str] = field(
+        default=None,
+        metadata={"help": "Subset of the dataset to load when using a multi-config Hugging Face dataset."},
+    )
     eval_dataset: Optional[str] = field(
         default=None,
         metadata={"help": "The name of dataset(s) to use for evaluation. Use commas to separate multiple datasets."},
@@ -38,6 +42,34 @@ class DataArguments:
     dataset_dir: str = field(
         default="data",
         metadata={"help": "Path to the folder containing the datasets."},
+    )
+    formatting: Optional[Literal["alpaca", "sharegpt"]] = field(
+        default=None,
+        metadata={"help": "Formatting style of the dataset used by the parser (e.g. 'sharegpt')."},
+    )
+    messages: Optional[str] = field(
+        default=None,
+        metadata={"help": "Column name that stores the message list for ShareGPT-style datasets."},
+    )
+    role_tag: Optional[str] = field(
+        default=None,
+        metadata={"help": "Key used to identify the speaker role inside ShareGPT message objects."},
+    )
+    content_tag: Optional[str] = field(
+        default=None,
+        metadata={"help": "Key used to extract textual content from ShareGPT message objects."},
+    )
+    user_tag: Optional[str] = field(
+        default=None,
+        metadata={"help": "Value representing the user role inside ShareGPT role-tagged messages."},
+    )
+    assistant_tag: Optional[str] = field(
+        default=None,
+        metadata={"help": "Value representing the assistant role inside ShareGPT role-tagged messages."},
+    )
+    system: Optional[str] = field(
+        default=None,
+        metadata={"help": "Column name containing standalone system messages when not embedded in conversations."},
     )
     media_dir: Optional[str] = field(
         default=None,

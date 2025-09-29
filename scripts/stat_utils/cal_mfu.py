@@ -23,6 +23,13 @@ from transformers import AutoConfig
 from llamafactory.train.tuner import run_exp
 
 
+try:
+    # Prefer OmegaConf for robust YAML/JSON config merging
+    from omegaconf import OmegaConf  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    OmegaConf = None  # type: ignore
+
+
 BASE = 2  # gemm (add + mul)
 
 
@@ -99,43 +106,99 @@ def compute_device_flops(world_size: int) -> float:
 
 
 def calculate_mfu(
-    model_name_or_path: str,
-    batch_size: int = 1,
-    seq_length: int = 1024,
-    num_steps: int = 100,
-    finetuning_type: str = "lora",
-    attn: str = "eager",
-    deepspeed_stage: int = 0,
-    disable_gc: bool = False,
-    liger_kernel: bool = False,
-    unsloth_gc: bool = False,
+    model_name_or_path: str = None,
+    batch_size: int = None,
+    seq_length: int = None,
+    num_steps: int = None,
+    finetuning_type: str = None,
+    attn: str = None,
+    deepspeed_stage: int = None,
+    disable_gc: bool = None,
+    liger_kernel: bool = None,
+    unsloth_gc: bool = None,
+    config_path: str = None,
+    output_dir: str = os.path.join("saves", "test_mfu"),
 ) -> float:
     r"""Calculate MFU for given model and hyper-params.
 
     Usage: python cal_mfu.py --model_name_or_path path_to_model --batch_size 1 --seq_length 1024
     """
-    args = {
-        "model_name_or_path": model_name_or_path,
-        "attn": attn,
-        "disable_gradient_checkpointing": disable_gc,
-        "enable_liger_kernel": liger_kernel,
-        "use_unsloth_gc": unsloth_gc,
-        "stage": "pt",
-        "do_train": True,
-        "finetuning_type": finetuning_type,
-        "dataset": "c4_demo",
-        "cutoff_len": seq_length,
-        "output_dir": os.path.join("saves", "test_mfu"),
-        "logging_strategy": "no",
-        "save_strategy": "no",
-        "save_only_model": True,
-        "overwrite_output_dir": True,
-        "per_device_train_batch_size": batch_size,
-        "max_steps": num_steps,
-        "bf16": True,
-    }
-    if deepspeed_stage in [2, 3]:
-        args["deepspeed"] = f"examples/deepspeed/ds_z{deepspeed_stage}_config.json"
+    # Build training args, optionally starting from a config file
+    if config_path:
+        if OmegaConf is None:
+            raise RuntimeError(
+                "OmegaConf is required for --config_path. Please install omegaconf or omit config_path."
+            )
+        cfg = OmegaConf.load(config_path)
+        # Convert to standard Python container (resolve interpolations)
+        args = OmegaConf.to_container(cfg, resolve=True)  # type: ignore
+        if not isinstance(args, dict):
+            raise ValueError("Loaded config must resolve to a dict.")
+
+        # Apply non-intrusive defaults suitable for a quick MFU probe if absent
+        args.setdefault("do_train", True)
+        args.setdefault("stage", "pt")  # prefer a light pretraining step for MFU probe
+        args.setdefault("output_dir", output_dir)
+        args.setdefault("logging_strategy", "no")
+        args.setdefault("save_strategy", "no")
+        args.setdefault("save_only_model", True)
+        args.setdefault("overwrite_output_dir", True)
+        args.setdefault("bf16", True)
+
+        # CLI overrides (only set if provided)
+        if model_name_or_path is not None:
+            args["model_name_or_path"] = model_name_or_path
+        if attn is not None:
+            args["attn"] = attn
+        if disable_gc is not None:
+            args["disable_gradient_checkpointing"] = disable_gc
+        if liger_kernel is not None:
+            args["enable_liger_kernel"] = liger_kernel
+        if unsloth_gc is not None:
+            args["use_unsloth_gc"] = unsloth_gc
+        if finetuning_type is not None:
+            args["finetuning_type"] = finetuning_type
+        if batch_size is not None:
+            args["per_device_train_batch_size"] = batch_size
+        if seq_length is not None:
+            args["cutoff_len"] = seq_length
+        if num_steps is not None:
+            args["max_steps"] = num_steps
+        if output_dir:
+            args["output_dir"] = output_dir
+
+        # Optional DeepSpeed stage override if provided and not already a full config object
+        if deepspeed_stage in [2, 3] and not isinstance(args.get("deepspeed"), (dict, list)):
+            args["deepspeed"] = f"examples/deepspeed/ds_z{deepspeed_stage}_config.json"
+
+        # Validate required fields
+        if "model_name_or_path" not in args or not args["model_name_or_path"]:
+            raise ValueError("model_name_or_path must be set via config_path or CLI.")
+    else:
+        # Original lightweight defaults when no config is provided
+        # Fills any None values with reasonable defaults
+        args = {
+            "model_name_or_path": model_name_or_path,
+            "attn": attn if attn is not None else "eager",
+            "disable_gradient_checkpointing": bool(disable_gc) if disable_gc is not None else False,
+            "enable_liger_kernel": bool(liger_kernel) if liger_kernel is not None else False,
+            "use_unsloth_gc": bool(unsloth_gc) if unsloth_gc is not None else False,
+            "stage": "pt",
+            "do_train": True,
+            "finetuning_type": finetuning_type if finetuning_type is not None else "lora",
+            "dataset": "c4_demo",
+            "cutoff_len": seq_length if seq_length is not None else 1024,
+            "output_dir": output_dir,
+            "logging_strategy": "no",
+            "save_strategy": "no",
+            "save_only_model": True,
+            "overwrite_output_dir": True,
+            "per_device_train_batch_size": batch_size if batch_size is not None else 1,
+            "max_steps": num_steps if num_steps is not None else 100,
+            "bf16": True,
+        }
+        if deepspeed_stage in [2, 3]:
+            args["deepspeed"] = f"examples/deepspeed/ds_z{deepspeed_stage}_config.json"
 
     run_exp(args)
     if dist.is_initialized():
@@ -145,13 +208,20 @@ def calculate_mfu(
         world_size = 1
 
     if int(os.getenv("LOCAL_RANK", "0")) == 0:
-        with open(os.path.join("saves", "test_mfu", "all_results.json"), encoding="utf-8") as f:
+        with open(os.path.join(output_dir, "all_results.json"), encoding="utf-8") as f:
             result = json.load(f)
 
-        total_batch_size = batch_size * world_size
+        # Resolve effective batch size and seq length from merged args if not provided
+        eff_batch = batch_size if batch_size is not None else int(args.get("per_device_train_batch_size", 1))
+        eff_seq = seq_length if seq_length is not None else int(args.get("cutoff_len", 1024))
+        eff_model = model_name_or_path or args.get("model_name_or_path")
+        if not eff_model:
+            raise ValueError("model_name_or_path must be specified.")
+
+        total_batch_size = eff_batch * world_size
         mfu_value = (
             result["train_steps_per_second"]
-            * compute_model_flops(model_name_or_path, total_batch_size, seq_length)
+            * compute_model_flops(eff_model, total_batch_size, eff_seq)
             / compute_device_flops(world_size)
         )
         print(f"MFU: {mfu_value * 100:.2f}%")

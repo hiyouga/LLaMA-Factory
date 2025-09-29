@@ -24,7 +24,7 @@ import torch
 import torch.distributed as dist
 import transformers.dynamic_module_utils
 from huggingface_hub.utils import WeakFileLock
-from transformers import InfNanRemoveLogitsProcessor, LogitsProcessorList
+from transformers import AutoConfig, InfNanRemoveLogitsProcessor, LogitsProcessorList
 from transformers.dynamic_module_utils import get_relative_imports
 from transformers.utils import (
     is_torch_bf16_gpu_available,
@@ -229,6 +229,134 @@ def compute_mfu_from_trainer(trainer: Any, train_runtime: float) -> Optional[dic
 
     mfu = 100.0 * achieved_tflops_per_gpu / peak
     return {"achieved_tflops_per_gpu": achieved_tflops_per_gpu, "mfu_percent": mfu}
+
+
+def _compute_model_flops_from_cfg(
+    cfg: Any,
+    total_batch_size: int,
+    seq_length: int,
+    include_backward: bool = True,
+    include_recompute: bool = False,
+    include_flashattn: bool = False,
+) -> int:
+    """Estimate FLOPs per optimizer step using model config.
+
+    Mirrors scripts/stat_utils/cal_mfu.py to keep estimates comparable.
+    """
+    hidden_size = getattr(cfg, "hidden_size", None)
+    vocab_size = getattr(cfg, "vocab_size", None)
+    intermediate_size = getattr(cfg, "intermediate_size", None)
+    num_attention_heads = getattr(cfg, "num_attention_heads", None)
+    num_key_value_heads = getattr(cfg, "num_key_value_heads", None)
+    num_hidden_layers = getattr(cfg, "num_hidden_layers", None)
+    tie_word_embeddings = getattr(cfg, "tie_word_embeddings", False)
+
+    BASE = 2  # gemm (add + mul)
+
+    # mlp module
+    mlp_flops_per_token = 3 * BASE * hidden_size * intermediate_size  # up, gate, down
+    mlp_flops = total_batch_size * seq_length * num_hidden_layers * mlp_flops_per_token
+
+    # attn projector module
+    q_flops_per_token = BASE * hidden_size * hidden_size
+    o_flops_per_token = BASE * hidden_size * hidden_size
+    k_flops_per_token = BASE * hidden_size * hidden_size * num_key_value_heads // num_attention_heads
+    v_flops_per_token = BASE * hidden_size * hidden_size * num_key_value_heads // num_attention_heads
+    attn_proj_flops_per_token = q_flops_per_token + o_flops_per_token + k_flops_per_token + v_flops_per_token
+    attn_proj_flops = total_batch_size * seq_length * num_hidden_layers * attn_proj_flops_per_token
+
+    # attn sdpa module (scaled dot-product attention)
+    sdpa_flops_per_layer = 2 * BASE * hidden_size * seq_length * seq_length  # (q * k^T) * v
+    sdpa_flops = total_batch_size * num_hidden_layers * sdpa_flops_per_layer
+
+    # embedding module
+    embedding_flops_per_token = hidden_size * vocab_size
+    embedding_flops = total_batch_size * seq_length * embedding_flops_per_token
+    if tie_word_embeddings is False:
+        embedding_flops *= 2
+
+    non_embedding_flops = mlp_flops + attn_proj_flops + sdpa_flops
+    non_embedding_coeff, embedding_coeff = 1, 1
+    if include_backward:
+        non_embedding_coeff += 2
+        embedding_coeff += 2
+
+    if include_recompute:
+        non_embedding_coeff += 1
+
+    total_flops = non_embedding_coeff * non_embedding_flops + embedding_coeff * embedding_flops
+
+    if include_flashattn:
+        total_flops += sdpa_flops
+
+    return int(total_flops)
+
+
+def _compute_model_flops(
+    model_name_or_path: str,
+    total_batch_size: int,
+    seq_length: int,
+    include_backward: bool = True,
+    include_recompute: bool = False,
+    include_flashattn: bool = False,
+) -> int:
+    """Wrapper to load AutoConfig and compute FLOPs."""
+    cfg = AutoConfig.from_pretrained(model_name_or_path)
+    return _compute_model_flops_from_cfg(
+        cfg,
+        total_batch_size,
+        seq_length,
+        include_backward=include_backward,
+        include_recompute=include_recompute,
+        include_flashattn=include_flashattn,
+    )
+
+
+def compute_mfu_theoretical_from_trainer(
+    trainer: Any,
+    model_name_or_path: str,
+    total_batch_size: int,
+    seq_length: int,
+    steps_per_second: float,
+) -> Optional[dict[str, float]]:
+    """Compute theoretical MFU from model config and measured steps/s.
+
+    Per-GPU achieved TFLOPs/s = (steps/s * FLOPs_per_step) / (1e12 * world_size)
+    MFU% uses the same peak lookup/override as compute_mfu_from_trainer.
+    """
+    try:
+        if steps_per_second is None or steps_per_second <= 0:
+            return None
+
+        world = get_world_size()
+        # Prefer existing model.config to avoid network calls; fallback to AutoConfig
+        cfg = getattr(getattr(trainer, "model", None), "config", None)
+        if cfg is not None:
+            flops_per_step = _compute_model_flops_from_cfg(cfg, total_batch_size, seq_length)
+        else:
+            flops_per_step = _compute_model_flops(model_name_or_path, total_batch_size, seq_length)
+        cluster_flops_per_s = steps_per_second * flops_per_step
+        achieved_tflops_per_gpu = cluster_flops_per_s / (1e12 * max(world, 1))
+
+        # Determine peak TFLOPs per GPU
+        dtype = getattr(getattr(trainer, "model", None), "dtype", None) or torch.bfloat16
+        device_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
+        peak = _parse_peak_env() or _peak_tflops_lookup(device_name, dtype)
+        if peak is None or peak <= 0:
+            logger.warning_rank0_once(
+                "MFU (theoretical): Unknown peak TFLOPs for device '%s' and dtype '%s'. Set PEAK_TFLOPS_PER_GPU.",
+                device_name,
+                str(dtype),
+            )
+            return {"achieved_tflops_per_gpu_theoretical": achieved_tflops_per_gpu}
+
+        mfu = 100.0 * achieved_tflops_per_gpu / peak
+        return {
+            "achieved_tflops_per_gpu_theoretical": achieved_tflops_per_gpu,
+            "mfu_percent_theoretical": mfu,
+        }
+    except Exception:
+        return None
 
 
 def get_device_count() -> int:
