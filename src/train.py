@@ -12,10 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
+import torch
+
 from llamafactory.train.tuner import run_exp
 
 
 def main():
+    local_rank = os.environ.get("LOCAL_RANK")
+    if local_rank is None:
+        local_rank = os.environ.get("SLURM_LOCALID")
+
+    if local_rank is not None:
+        try:
+            local_rank_int = int(local_rank)
+        except ValueError:
+            local_rank_int = 0
+        if torch.cuda.is_available():
+            device_count = torch.cuda.device_count() or 1
+            torch.cuda.set_device(local_rank_int % device_count)
     run_exp()
 
 
