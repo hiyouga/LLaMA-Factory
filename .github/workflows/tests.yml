@@ -40,6 +40,9 @@ jobs:
           - python: "3.9"
             os: "ubuntu-latest"
             transformers: "4.51.0"
+          - python: "3.9"
+            os: "ubuntu-latest"
+            transformers: "4.53.0"
 
     runs-on: ${{ matrix.os }}
 

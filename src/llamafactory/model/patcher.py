@@ -188,6 +188,23 @@ def patch_model(
     if not model_args.use_unsloth:
         print_attn_implementation(model.config)
 
+    # ======== NPU fused attention redirect: SDPA -> torch_npu.npu_fusion_attention ========
+    # Place after all structural modifications and before DeepSpeed/Trainer initialization;
+    # does not modify any Module/_parameters, safe for ZeRO-3 + offload.
+    try:
+        import os
+
+        import torch
+
+        if hasattr(torch, "npu") and torch.npu.is_available() and os.environ.get("NPU_FA_DISABLE", "0") != "1":
+            from .model_utils.sdpa_npu_redirect import apply_sdpa_npu_redirect
+
+            apply_sdpa_npu_redirect(verbose=not model_args.use_unsloth)
+            logger.info_rank0("[sdpa_npu_redirect] Enabled: SDPA will use Ascend npu_fusion_attention when available.")
+    except Exception as e:
+        logger.warning_rank0(f"[sdpa_npu_redirect] Failed to enable redirect, will keep native SDPA. Reason: {e}")
+    # =====================================================================================
+
     try:
         model.add_model_tags(["llama-factory"])
     except Exception:
@@ -211,9 +228,23 @@ def patch_valuehead_model(model: "AutoModelForCausalLMWithValueHead") -> None:
         if isinstance(self.pretrained_model, PeftModel):
             self.pretrained_model.create_or_update_model_card(output_dir)
 
+    def get_rope_index_func(self: "AutoModelForCausalLMWithValueHead"):
+        if isinstance(self.pretrained_model, PeftModel):
+            base_model = self.pretrained_model.base_model.model
+        else:
+            base_model = self.pretrained_model
+
+        if base_model and hasattr(base_model, "get_rope_index"):
+            return base_model.get_rope_index
+        elif base_model and hasattr(base_model, "model") and hasattr(base_model.model, "get_rope_index"):
+            return base_model.model.get_rope_index
+        else:
+            return None
+
     ignore_modules = [name for name, _ in model.named_parameters() if "pretrained_model" in name]
     setattr(model, "_keys_to_ignore_on_save", ignore_modules)
     setattr(model, "tie_weights", MethodType(tie_weights, model))
     setattr(model, "get_input_embeddings", MethodType(get_input_embeddings, model))
     setattr(model, "get_output_embeddings", MethodType(get_output_embeddings, model))
+    setattr(model, "get_rope_index", get_rope_index_func(model))
     setattr(model, "create_or_update_model_card", MethodType(create_or_update_model_card, model))

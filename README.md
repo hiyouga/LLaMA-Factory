@@ -5,16 +5,16 @@
 [![GitHub contributors](https://img.shields.io/github/contributors/hiyouga/LLaMA-Factory?color=orange)](https://github.com/hiyouga/LLaMA-Factory/graphs/contributors)
 [![GitHub workflow](https://github.com/hiyouga/LLaMA-Factory/actions/workflows/tests.yml/badge.svg)](https://github.com/hiyouga/LLaMA-Factory/actions/workflows/tests.yml)
 [![PyPI](https://img.shields.io/pypi/v/llamafactory)](https://pypi.org/project/llamafactory/)
-[![Citation](https://img.shields.io/badge/citation-760-green)](https://scholar.google.com/scholar?cites=12620864006390196564)
+[![Citation](https://img.shields.io/badge/citation-840-green)](https://scholar.google.com/scholar?cites=12620864006390196564)
 [![Docker Pulls](https://img.shields.io/docker/pulls/hiyouga/llamafactory)](https://hub.docker.com/r/hiyouga/llamafactory/tags)
 
 [![Twitter](https://img.shields.io/twitter/follow/llamafactory_ai)](https://twitter.com/llamafactory_ai)
-[![Discord](https://dcbadge.vercel.app/api/server/rKfvV9r9FK?compact=true&style=flat)](https://discord.gg/rKfvV9r9FK)
-[![GitCode](https://gitcode.com/zhengyaowei/LLaMA-Factory/star/badge.svg)](https://gitcode.com/zhengyaowei/LLaMA-Factory)
+[![Discord](assets/thirdparty/discord.svg)](https://discord.gg/rKfvV9r9FK)
 
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1eRTPn37ltBbYsISy9Aw2NuI2Aq5CQrD9?usp=sharing)
-[![Open in DSW](https://gallery.pai-ml.com/assets/open-in-dsw.svg)](https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory)
-[![Open in Alaya](assets/alaya_new.svg)](https://docs.alayanew.com/docs/documents/newActivities/llamafactory/?utm_source=LLaMA-Factory)
+[![Open in Colab](assets/thirdparty/colab.svg)](https://colab.research.google.com/drive/1eRTPn37ltBbYsISy9Aw2NuI2Aq5CQrD9?usp=sharing)
+[![Open in DSW](assets/thirdparty/dsw.svg)](https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory)
+[![Open in Lab4ai](assets/thirdparty/lab4ai.svg)](https://www.lab4ai.cn/course/detail?id=7c13e60f6137474eb40f6fd3983c0f46&utm_source=LLaMA-Factory)
+[![Open in Online](assets/thirdparty/online.svg)](https://www.llamafactory.com.cn/?utm_source=LLaMA-Factory)
 [![Open in Spaces](https://img.shields.io/badge/🤗-Open%20in%20Spaces-blue)](https://huggingface.co/spaces/hiyouga/LLaMA-Board)
 [![Open in Studios](https://img.shields.io/badge/ModelScope-Open%20in%20Studios-blue)](https://modelscope.cn/studios/hiyouga/LLaMA-Board)
 [![Open in Novita](https://img.shields.io/badge/Novita-Deploy%20Template-blue)](https://novita.ai/templates-library/105981?sharer=88115474-394e-4bda-968e-b88e123d0c47)
@@ -25,7 +25,7 @@
 
 ### Supporters ❤️
 
-| <div style="text-align: center;"><a href="https://warp.dev/llama-factory"><img alt="Warp sponsorship" width="400" src="assets/warp.jpg"></a><br><a href="https://warp.dev/llama-factory" style="font-size:larger;">Warp, the agentic terminal for developers</a><br><a href="https://warp.dev/llama-factory">Available for MacOS, Linux, & Windows</a> | <a href="https://serpapi.com"><img alt="SerpAPI sponsorship" width="250" src="assets/serpapi.svg"> </a> |
+| <div style="text-align: center;"><a href="https://warp.dev/llama-factory"><img alt="Warp sponsorship" width="400" src="assets/sponsors/warp.jpg"></a><br><a href="https://warp.dev/llama-factory" style="font-size:larger;">Warp, the agentic terminal for developers</a><br><a href="https://warp.dev/llama-factory">Available for MacOS, Linux, & Windows</a> | <a href="https://serpapi.com"><img alt="SerpAPI sponsorship" width="250" src="assets/sponsors/serpapi.svg"> </a> |
 | ---- | ---- |
 
 ----
@@ -36,7 +36,7 @@
 
 </div>
 
-👋 Join our [WeChat group](assets/wechat.jpg), [NPU user group](assets/wechat_npu.jpg) or [Alaya NeW user group](assets/wechat_alaya.png).
+👋 Join our [WeChat](assets/wechat/main.jpg), [NPU](assets/wechat/npu.jpg), [Lab4AI](assets/wechat/lab4ai.jpg), [LLaMA Factory Online](assets/wechat/online.jpg) user group.
 
 \[ English | [中文](README_zh.md) \]
 
@@ -52,6 +52,8 @@ Choose your path:
 - **Local machine**: Please refer to [usage](#getting-started)
 - **PAI-DSW (free trial)**: https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory
 - **Alaya NeW (cloud GPU deal)**: https://docs.alayanew.com/docs/documents/useGuide/LLaMAFactory/mutiple/?utm_source=LLaMA-Factory
+- **Official Course**: https://www.lab4ai.cn/course/detail?id=7c13e60f6137474eb40f6fd3983c0f46&utm_source=LLaMA-Factory
+- **LLaMA Factory Online**: https://www.llamafactory.com.cn/?utm_source=LLaMA-Factory
 
 > [!NOTE]
 > Except for the above links, all other websites are unauthorized third-party websites. Please carefully use them.
@@ -70,6 +72,7 @@ Choose your path:
   - [Data Preparation](#data-preparation)
   - [Quickstart](#quickstart)
   - [Fine-Tuning with LLaMA Board GUI](#fine-tuning-with-llama-board-gui-powered-by-gradio)
+  - [LLaMA Factory Online](#llama-factory-online)
   - [Build Docker](#build-docker)
   - [Deploy with OpenAI-style API and vLLM](#deploy-with-openai-style-api-and-vllm)
   - [Download from ModelScope Hub](#download-from-modelscope-hub)
@@ -86,7 +89,7 @@ Choose your path:
 - **Various models**: LLaMA, LLaVA, Mistral, Mixtral-MoE, Qwen, Qwen2-VL, DeepSeek, Yi, Gemma, ChatGLM, Phi, etc.
 - **Integrated methods**: (Continuous) pre-training, (multimodal) supervised fine-tuning, reward modeling, PPO, DPO, KTO, ORPO, etc.
 - **Scalable resources**: 16-bit full-tuning, freeze-tuning, LoRA and 2/3/4/5/6/8-bit QLoRA via AQLM/AWQ/GPTQ/LLM.int8/HQQ/EETQ.
-- **Advanced algorithms**: [GaLore](https://github.com/jiaweizzhao/GaLore), [BAdam](https://github.com/Ledzy/BAdam), [APOLLO](https://github.com/zhuhanqing/APOLLO), [Adam-mini](https://github.com/zyushun/Adam-mini), [Muon](https://github.com/KellerJordan/Muon), [OFT] (https://github.com/huggingface/peft/tree/main/src/peft/tuners/oft), DoRA, LongLoRA, LLaMA Pro, Mixture-of-Depths, LoRA+, LoftQ and PiSSA.
+- **Advanced algorithms**: [GaLore](https://github.com/jiaweizzhao/GaLore), [BAdam](https://github.com/Ledzy/BAdam), [APOLLO](https://github.com/zhuhanqing/APOLLO), [Adam-mini](https://github.com/zyushun/Adam-mini), [Muon](https://github.com/KellerJordan/Muon), [OFT](https://github.com/huggingface/peft/tree/main/src/peft/tuners/oft), DoRA, LongLoRA, LLaMA Pro, Mixture-of-Depths, LoRA+, LoftQ and PiSSA.
 - **Practical tricks**: [FlashAttention-2](https://github.com/Dao-AILab/flash-attention), [Unsloth](https://github.com/unslothai/unsloth), [Liger Kernel](https://github.com/linkedin/Liger-Kernel), RoPE scaling, NEFTune and rsLoRA.
 - **Wide tasks**: Multi-turn dialogue, tool using, image understanding, visual grounding, video recognition, audio understanding, etc.
 - **Experiment monitors**: LlamaBoard, TensorBoard, Wandb, MLflow, [SwanLab](https://github.com/SwanHubX/SwanLab), etc.
@@ -101,14 +104,15 @@ Choose your path:
 
 ## Blogs
 
-- [Fine-tune GPT-OSS for Role-Playing using LLaMA-Factory](https://docs.llamafactory.com.cn/docs/documents/best-practice/gptoss/?utm_source=LLaMA-Factory) (Chinese)
-- [Fine-tune Llama3.1-70B for Medical Diagnosis using LLaMA-Factory](https://docs.alayanew.com/docs/documents/bestPractice/bigModel/llama70B/?utm_source=LLaMA-Factory) (Chinese)
+- 💡 [Easy Dataset × LLaMA Factory: Enabling LLMs to Efficiently Learn Domain Knowledge](https://buaa-act.feishu.cn/wiki/GVzlwYcRFiR8OLkHbL6cQpYin7g) (English)
+- [Fine-tune a mental health LLM using LLaMA-Factory](https://www.lab4ai.cn/project/detail?id=25cce32ec131497b9e06a93336a0817f&type=project&utm_source=LLaMA-Factory) (Chinese)
+- [Fine-tune GPT-OSS for Role-Playing using LLaMA-Factory](https://docs.llamafactory.com.cn/docs/documents/best-practice/gptroleplay/?utm_source=LLaMA-Factory) (Chinese)
 - [A One-Stop Code-Free Model Reinforcement Learning and Deployment Platform based on LLaMA-Factory and EasyR1](https://aws.amazon.com/cn/blogs/china/building-llm-model-hub-based-on-llamafactory-and-easyr1/) (Chinese)
 - [How Apoidea Group enhances visual information extraction from banking documents with multimodal models using LLaMA-Factory on Amazon SageMaker HyperPod](https://aws.amazon.com/cn/blogs/machine-learning/how-apoidea-group-enhances-visual-information-extraction-from-banking-documents-with-multimodal-models-using-llama-factory-on-amazon-sagemaker-hyperpod/) (English)
-- [Easy Dataset × LLaMA Factory: Enabling LLMs to Efficiently Learn Domain Knowledge](https://buaa-act.feishu.cn/wiki/GVzlwYcRFiR8OLkHbL6cQpYin7g) (English)
 
 <details><summary>All Blogs</summary>
 
+- [Fine-tune Llama3.1-70B for Medical Diagnosis using LLaMA-Factory](https://docs.alayanew.com/docs/documents/bestPractice/bigModel/llama70B/?utm_source=LLaMA-Factory) (Chinese)
 - [Fine-tune Qwen2.5-VL for Autonomous Driving using LLaMA-Factory](https://docs.alayanew.com/docs/documents/useGuide/LLaMAFactory/mutiple/?utm_source=LLaMA-Factory) (Chinese)
 - [LLaMA Factory: Fine-tuning the DeepSeek-R1-Distill-Qwen-7B Model for News Classifier](https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory_deepseek_r1_distill_7b) (Chinese)
 - [A One-Stop Code-Free Model Fine-Tuning \& Deployment Platform based on SageMaker and LLaMA-Factory](https://aws.amazon.com/cn/blogs/china/a-one-stop-code-free-model-fine-tuning-deployment-platform-based-on-sagemaker-and-llama-factory/) (Chinese)
@@ -119,13 +123,17 @@ Choose your path:
 
 ## Changelog
 
+[25/08/22] We supported **[OFT](https://arxiv.org/abs/2306.07280)** and **[OFTv2](https://arxiv.org/abs/2506.19847)**. See [examples](examples/README.md) for usage.
+
+[25/08/20] We supported fine-tuning the **[Intern-S1-mini](https://huggingface.co/internlm/Intern-S1-mini)** models. See [PR #8976](https://github.com/hiyouga/LLaMA-Factory/pull/8976) to get started.
+
 [25/08/06] We supported fine-tuning the **[GPT-OSS](https://github.com/openai/gpt-oss)** models. See [PR #8826](https://github.com/hiyouga/LLaMA-Factory/pull/8826) to get started.
+
+<details><summary>Full Changelog</summary>
 
 [25/07/02] We supported fine-tuning the **[GLM-4.1V-9B-Thinking](https://github.com/THUDM/GLM-4.1V-Thinking)** model.
 
 [25/04/28] We supported fine-tuning the **[Qwen3](https://qwenlm.github.io/blog/qwen3/)** model family.
-
-<details><summary>Full Changelog</summary>
 
 [25/04/21] We supported the **[Muon](https://github.com/KellerJordan/Muon)** optimizer. See [examples](examples/README.md) for usage. Thank [@tianshijing](https://github.com/tianshijing)'s PR.
 
@@ -254,65 +262,70 @@ Choose your path:
 
 ## Supported Models
 
-| Model                                                             | Model size                       | Template            |
-| ----------------------------------------------------------------- | -------------------------------- | ------------------- |
-| [Baichuan 2](https://huggingface.co/baichuan-inc)                 | 7B/13B                           | baichuan2           |
-| [BLOOM/BLOOMZ](https://huggingface.co/bigscience)                 | 560M/1.1B/1.7B/3B/7.1B/176B      | -                   |
-| [ChatGLM3](https://huggingface.co/THUDM)                          | 6B                               | chatglm3            |
-| [Command R](https://huggingface.co/CohereForAI)                   | 35B/104B                         | cohere              |
-| [DeepSeek (Code/MoE)](https://huggingface.co/deepseek-ai)         | 7B/16B/67B/236B                  | deepseek            |
-| [DeepSeek 2.5/3](https://huggingface.co/deepseek-ai)              | 236B/671B                        | deepseek3           |
-| [DeepSeek R1 (Distill)](https://huggingface.co/deepseek-ai)       | 1.5B/7B/8B/14B/32B/70B/671B      | deepseekr1          |
-| [Falcon](https://huggingface.co/tiiuae)                           | 7B/11B/40B/180B                  | falcon              |
-| [Falcon-H1](https://huggingface.co/tiiuae)                        | 0.5B/1.5B/3B/7B/34B              | falcon_h1           |
-| [Gemma/Gemma 2/CodeGemma](https://huggingface.co/google)          | 2B/7B/9B/27B                     | gemma/gemma2        |
-| [Gemma 3/Gemma 3n](https://huggingface.co/google)                 | 1B/4B/6B/8B/12B/27B              | gemma3/gemma3n      |
-| [GLM-4/GLM-4-0414/GLM-Z1](https://huggingface.co/zai-org)         | 9B/32B                           | glm4/glmz1          |
-| [GLM-4.1V](https://huggingface.co/zai-org)                        | 9B                               | glm4v               |
-| [GLM-4.5/GLM-4.5V](https://huggingface.co/zai-org)*               | 106B/355B                        | glm4_moe/glm4v_moe  |
-| [GPT-2](https://huggingface.co/openai-community)                  | 0.1B/0.4B/0.8B/1.5B              | -                   |
-| [GPT-OSS](https://huggingface.co/openai)                          | 20B/120B                         | gpt                 |
-| [Granite 3.0-3.3](https://huggingface.co/ibm-granite)             | 1B/2B/3B/8B                      | granite3            |
-| [Granite 4](https://huggingface.co/ibm-granite)                   | 7B                               | granite4            |
-| [Hunyuan](https://huggingface.co/tencent/)                        | 7B                               | hunyuan             |
-| [Index](https://huggingface.co/IndexTeam)                         | 1.9B                             | index               |
-| [InternLM 2-3](https://huggingface.co/internlm)                   | 7B/8B/20B                        | intern2             |
-| [InternVL 2.5-3](https://huggingface.co/OpenGVLab)                | 1B/2B/8B/14B/38B/78B             | intern_vl           |
-| [Kimi-VL](https://huggingface.co/moonshotai)                      | 16B                              | kimi_vl             |
-| [Llama](https://github.com/facebookresearch/llama)                | 7B/13B/33B/65B                   | -                   |
-| [Llama 2](https://huggingface.co/meta-llama)                      | 7B/13B/70B                       | llama2              |
-| [Llama 3-3.3](https://huggingface.co/meta-llama)                  | 1B/3B/8B/70B                     | llama3              |
-| [Llama 4](https://huggingface.co/meta-llama)                      | 109B/402B                        | llama4              |
-| [Llama 3.2 Vision](https://huggingface.co/meta-llama)             | 11B/90B                          | mllama              |
-| [LLaVA-1.5](https://huggingface.co/llava-hf)                      | 7B/13B                           | llava               |
-| [LLaVA-NeXT](https://huggingface.co/llava-hf)                     | 7B/8B/13B/34B/72B/110B           | llava_next          |
-| [LLaVA-NeXT-Video](https://huggingface.co/llava-hf)               | 7B/34B                           | llava_next_video    |
-| [MiMo](https://huggingface.co/XiaomiMiMo)                         | 7B                               | mimo                |
-| [MiniCPM](https://huggingface.co/openbmb)                         | 0.5B/1B/2B/4B/8B                 | cpm/cpm3/cpm4       |
-| [MiniCPM-o-2.6/MiniCPM-V-2.6](https://huggingface.co/openbmb)     | 8B                               | minicpm_o/minicpm_v |
-| [Ministral/Mistral-Nemo](https://huggingface.co/mistralai)        | 8B/12B                           | ministral           |
-| [Mistral/Mixtral](https://huggingface.co/mistralai)               | 7B/8x7B/8x22B                    | mistral             |
-| [Mistral Small](https://huggingface.co/mistralai)                 | 24B                              | mistral_small       |
-| [OLMo](https://huggingface.co/allenai)                            | 1B/7B                            | -                   |
-| [PaliGemma/PaliGemma2](https://huggingface.co/google)             | 3B/10B/28B                       | paligemma           |
-| [Phi-1.5/Phi-2](https://huggingface.co/microsoft)                 | 1.3B/2.7B                        | -                   |
-| [Phi-3/Phi-3.5](https://huggingface.co/microsoft)                 | 4B/14B                           | phi                 |
-| [Phi-3-small](https://huggingface.co/microsoft)                   | 7B                               | phi_small           |
-| [Phi-4](https://huggingface.co/microsoft)                         | 14B                              | phi4                |
-| [Pixtral](https://huggingface.co/mistralai)                       | 12B                              | pixtral             |
-| [Qwen (1-2.5) (Code/Math/MoE/QwQ)](https://huggingface.co/Qwen)   | 0.5B/1.5B/3B/7B/14B/32B/72B/110B | qwen                |
-| [Qwen3 (MoE/Instruct/Thinking)](https://huggingface.co/Qwen)      | 0.6B/1.7B/4B/8B/14B/32B/235B     | qwen3/qwen3_nothink |
-| [Qwen2-Audio](https://huggingface.co/Qwen)                        | 7B                               | qwen2_audio         |
-| [Qwen2.5-Omni](https://huggingface.co/Qwen)                       | 3B/7B                            | qwen2_omni          |
-| [Qwen2-VL/Qwen2.5-VL/QVQ](https://huggingface.co/Qwen)            | 2B/3B/7B/32B/72B                 | qwen2_vl            |
-| [Seed Coder](https://huggingface.co/ByteDance-Seed)               | 8B                               | seed_coder          |
-| [Skywork o1](https://huggingface.co/Skywork)                      | 8B                               | skywork_o1          |
-| [StarCoder 2](https://huggingface.co/bigcode)                     | 3B/7B/15B                        | -                   |
-| [TeleChat2](https://huggingface.co/Tele-AI)                       | 3B/7B/35B/115B                   | telechat2           |
-| [XVERSE](https://huggingface.co/xverse)                           | 7B/13B/65B                       | xverse              |
-| [Yi/Yi-1.5 (Code)](https://huggingface.co/01-ai)                  | 1.5B/6B/9B/34B                   | yi                  |
-| [Yi-VL](https://huggingface.co/01-ai)                             | 6B/34B                           | yi_vl               |
-| [Yuan 2](https://huggingface.co/IEITYuan)                         | 2B/51B/102B                      | yuan                |
+| Model                                                             | Model size                       | Template             |
+| ----------------------------------------------------------------- | -------------------------------- | -------------------- |
+| [Baichuan 2](https://huggingface.co/baichuan-inc)                 | 7B/13B                           | baichuan2            |
+| [BLOOM/BLOOMZ](https://huggingface.co/bigscience)                 | 560M/1.1B/1.7B/3B/7.1B/176B      | -                    |
+| [ChatGLM3](https://huggingface.co/THUDM)                          | 6B                               | chatglm3             |
+| [Command R](https://huggingface.co/CohereForAI)                   | 35B/104B                         | cohere               |
+| [DeepSeek (Code/MoE)](https://huggingface.co/deepseek-ai)         | 7B/16B/67B/236B                  | deepseek             |
+| [DeepSeek 2.5/3](https://huggingface.co/deepseek-ai)              | 236B/671B                        | deepseek3            |
+| [DeepSeek R1 (Distill)](https://huggingface.co/deepseek-ai)       | 1.5B/7B/8B/14B/32B/70B/671B      | deepseekr1           |
+| [ERNIE-4.5](https://huggingface.co/baidu)                         | 0.3B/21B/300B                    | ernie/ernie_nothink  |
+| [Falcon](https://huggingface.co/tiiuae)                           | 7B/11B/40B/180B                  | falcon               |
+| [Falcon-H1](https://huggingface.co/tiiuae)                        | 0.5B/1.5B/3B/7B/34B              | falcon_h1            |
+| [Gemma/Gemma 2/CodeGemma](https://huggingface.co/google)          | 2B/7B/9B/27B                     | gemma/gemma2         |
+| [Gemma 3/Gemma 3n](https://huggingface.co/google)                 | 270M/1B/4B/6B/8B/12B/27B         | gemma3/gemma3n       |
+| [GLM-4/GLM-4-0414/GLM-Z1](https://huggingface.co/zai-org)         | 9B/32B                           | glm4/glmz1           |
+| [GLM-4.1V](https://huggingface.co/zai-org)                        | 9B                               | glm4v                |
+| [GLM-4.5/GLM-4.5V](https://huggingface.co/zai-org)                | 106B/355B                        | glm4_moe/glm4v_moe   |
+| [GPT-2](https://huggingface.co/openai-community)                  | 0.1B/0.4B/0.8B/1.5B              | -                    |
+| [GPT-OSS](https://huggingface.co/openai)                          | 20B/120B                         | gpt                  |
+| [Granite 3.0-3.3](https://huggingface.co/ibm-granite)             | 1B/2B/3B/8B                      | granite3             |
+| [Granite 4](https://huggingface.co/ibm-granite)                   | 7B                               | granite4             |
+| [Hunyuan](https://huggingface.co/tencent/)                        | 7B                               | hunyuan              |
+| [Index](https://huggingface.co/IndexTeam)                         | 1.9B                             | index                |
+| [InternLM 2-3](https://huggingface.co/internlm)                   | 7B/8B/20B                        | intern2              |
+| [InternVL 2.5-3.5](https://huggingface.co/OpenGVLab)              | 1B/2B/4B/8B/14B/30B/38B/78B/241B | intern_vl            |
+| [InternLM/Intern-S1-mini](https://huggingface.co/internlm/)       | 8B                               | intern_s1            |
+| [Kimi-VL](https://huggingface.co/moonshotai)                      | 16B                              | kimi_vl              |
+| [Ling 2.0 (mini/flash)](https://huggingface.co/inclusionAI)       | 16B/100B                         | bailing_v2           |
+| [Llama](https://github.com/facebookresearch/llama)                | 7B/13B/33B/65B                   | -                    |
+| [Llama 2](https://huggingface.co/meta-llama)                      | 7B/13B/70B                       | llama2               |
+| [Llama 3-3.3](https://huggingface.co/meta-llama)                  | 1B/3B/8B/70B                     | llama3               |
+| [Llama 4](https://huggingface.co/meta-llama)                      | 109B/402B                        | llama4               |
+| [Llama 3.2 Vision](https://huggingface.co/meta-llama)             | 11B/90B                          | mllama               |
+| [LLaVA-1.5](https://huggingface.co/llava-hf)                      | 7B/13B                           | llava                |
+| [LLaVA-NeXT](https://huggingface.co/llava-hf)                     | 7B/8B/13B/34B/72B/110B           | llava_next           |
+| [LLaVA-NeXT-Video](https://huggingface.co/llava-hf)               | 7B/34B                           | llava_next_video     |
+| [MiMo](https://huggingface.co/XiaomiMiMo)                         | 7B                               | mimo                 |
+| [MiniCPM 1-4.1](https://huggingface.co/openbmb)                   | 0.5B/1B/2B/4B/8B                 | cpm/cpm3/cpm4        |
+| [MiniCPM-o-2.6/MiniCPM-V-2.6](https://huggingface.co/openbmb)     | 8B                               | minicpm_o/minicpm_v  |
+| [Ministral/Mistral-Nemo](https://huggingface.co/mistralai)        | 8B/12B                           | ministral            |
+| [Mistral/Mixtral](https://huggingface.co/mistralai)               | 7B/8x7B/8x22B                    | mistral              |
+| [Mistral Small](https://huggingface.co/mistralai)                 | 24B                              | mistral_small        |
+| [OLMo](https://huggingface.co/allenai)                            | 1B/7B                            | -                    |
+| [PaliGemma/PaliGemma2](https://huggingface.co/google)             | 3B/10B/28B                       | paligemma            |
+| [Phi-1.5/Phi-2](https://huggingface.co/microsoft)                 | 1.3B/2.7B                        | -                    |
+| [Phi-3/Phi-3.5](https://huggingface.co/microsoft)                 | 4B/14B                           | phi                  |
+| [Phi-3-small](https://huggingface.co/microsoft)                   | 7B                               | phi_small            |
+| [Phi-4](https://huggingface.co/microsoft)                         | 14B                              | phi4                 |
+| [Pixtral](https://huggingface.co/mistralai)                       | 12B                              | pixtral              |
+| [Qwen (1-2.5) (Code/Math/MoE/QwQ)](https://huggingface.co/Qwen)   | 0.5B/1.5B/3B/7B/14B/32B/72B/110B | qwen                 |
+| [Qwen3 (MoE/Instruct/Thinking/Next)](https://huggingface.co/Qwen) | 0.6B/1.7B/4B/8B/14B/32B/80B/235B | qwen3/qwen3_nothink  |
+| [Qwen2-Audio](https://huggingface.co/Qwen)                        | 7B                               | qwen2_audio          |
+| [Qwen2.5-Omni](https://huggingface.co/Qwen)                       | 3B/7B                            | qwen2_omni           |
+| [Qwen3-Omni](https://huggingface.co/Qwen)*                        | 30B                              | qwen3_omni           |
+| [Qwen2-VL/Qwen2.5-VL/QVQ](https://huggingface.co/Qwen)            | 2B/3B/7B/32B/72B                 | qwen2_vl             |
+| [Qwen3-VL](https://huggingface.co/Qwen)*                          | 235B                             | qwen3_vl             |
+| [Seed (OSS/Coder)](https://huggingface.co/ByteDance-Seed)         | 8B/36B                           | seed_oss/seed_coder  |
+| [Skywork o1](https://huggingface.co/Skywork)                      | 8B                               | skywork_o1           |
+| [StarCoder 2](https://huggingface.co/bigcode)                     | 3B/7B/15B                        | -                    |
+| [TeleChat2](https://huggingface.co/Tele-AI)                       | 3B/7B/35B/115B                   | telechat2            |
+| [XVERSE](https://huggingface.co/xverse)                           | 7B/13B/65B                       | xverse               |
+| [Yi/Yi-1.5 (Code)](https://huggingface.co/01-ai)                  | 1.5B/6B/9B/34B                   | yi                   |
+| [Yi-VL](https://huggingface.co/01-ai)                             | 6B/34B                           | yi_vl                |
+| [Yuan 2](https://huggingface.co/IEITYuan)                         | 2B/51B/102B                      | yuan                 |
 
 > [!NOTE]
 > For the "base" models, the `template` argument can be chosen from `default`, `alpaca`, `vicuna` etc. But make sure to use the **corresponding template** for the "instruct/chat" models.
@@ -356,6 +369,11 @@ You also can add a custom chat template to [template.py](src/llamafactory/data/t
 - [SkyPile (zh)](https://huggingface.co/datasets/Skywork/SkyPile-150B)
 - [FineWeb (en)](https://huggingface.co/datasets/HuggingFaceFW/fineweb)
 - [FineWeb-Edu (en)](https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu)
+- [CCI3-HQ (zh)](https://huggingface.co/datasets/BAAI/CCI3-HQ)
+- [CCI3-Data (zh)](https://huggingface.co/datasets/BAAI/CCI3-Data)
+- [CCI4.0-M2-Base-v1 (en&zh)](https://huggingface.co/datasets/BAAI/CCI4.0-M2-Base-v1)
+- [CCI4.0-M2-CoT-v1 (en&zh)](https://huggingface.co/datasets/BAAI/CCI4.0-M2-CoT-v1)
+- [CCI4.0-M2-Extra-v1 (en&zh)](https://huggingface.co/datasets/BAAI/CCI4.0-M2-Extra-v1)
 - [The Stack (en)](https://huggingface.co/datasets/bigcode/the-stack)
 - [StarCoder (en)](https://huggingface.co/datasets/bigcode/starcoderdata)
 
@@ -393,6 +411,7 @@ You also can add a custom chat template to [template.py](src/llamafactory/data/t
 - [ShareGPT Hyperfiltered (en)](https://huggingface.co/datasets/totally-not-an-llm/sharegpt-hyperfiltered-3k)
 - [ShareGPT4 (en&zh)](https://huggingface.co/datasets/shibing624/sharegpt_gpt4)
 - [UltraChat 200k (en)](https://huggingface.co/datasets/HuggingFaceH4/ultrachat_200k)
+- [Infinity Instruct (zh)](https://huggingface.co/datasets/BAAI/Infinity-Instruct)
 - [AgentInstruct (en)](https://huggingface.co/datasets/THUDM/AgentInstruct)
 - [LMSYS Chat 1M (en)](https://huggingface.co/datasets/lmsys/lmsys-chat-1m)
 - [Evol Instruct V2 (en)](https://huggingface.co/datasets/WizardLM/WizardLM_evol_instruct_V2_196k)
@@ -652,6 +671,10 @@ See [examples/README.md](examples/README.md) for advanced usage (including distr
 ```bash
 llamafactory-cli webui
 ```
+
+### LLaMA Factory Online
+
+Read our [documentation](https://docs.llamafactory.com.cn/docs/documents/quickstart/getstarted/?utm_source=LLaMA-Factory).
 
 ### Build Docker
 
