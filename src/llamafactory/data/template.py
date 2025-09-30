@@ -416,8 +416,8 @@ class ReasoningTemplate(Template):
 
         prompt_ids, response_ids = super().encode_oneturn(tokenizer, messages, system, tools)
         if (
-            self.thought_words[0] not in messages[-1]["content"]
-            and self.thought_words[1] not in messages[-1]["content"]
+            self.thought_words[0].strip() not in messages[-1]["content"]
+            and self.thought_words[1].strip() not in messages[-1]["content"]
         ):  # add empty cot
             if not self.enable_thinking:  # do not compute loss
                 prompt_ids += self.get_thought_word_ids(tokenizer)
@@ -442,8 +442,8 @@ class ReasoningTemplate(Template):
         encoded_messages = self._encode(tokenizer, messages, system, tools)
         for i in range(0, len(messages), 2):
             if (
-                self.thought_words[0] not in messages[i + 1]["content"]
-                and self.thought_words[1] not in messages[i + 1]["content"]
+                self.thought_words[0].strip() not in messages[i + 1]["content"]
+                and self.thought_words[1].strip() not in messages[i + 1]["content"]
             ):  # add empty cot
                 if not self.enable_thinking:  # do not compute loss
                     encoded_messages[i] += self.get_thought_word_ids(tokenizer)
