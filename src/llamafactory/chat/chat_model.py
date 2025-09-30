@@ -24,9 +24,6 @@ from typing import TYPE_CHECKING, Any, Optional
 from ..extras.constants import EngineName
 from ..extras.misc import torch_gc
 from ..hparams import get_infer_args
-from .hf_engine import HuggingfaceEngine
-from .sglang_engine import SGLangEngine
-from .vllm_engine import VllmEngine
 
 
 if TYPE_CHECKING:
@@ -49,12 +46,28 @@ class ChatModel:
 
     def __init__(self, args: Optional[dict[str, Any]] = None) -> None:
         model_args, data_args, finetuning_args, generating_args = get_infer_args(args)
+
         if model_args.infer_backend == EngineName.HF:
+            from .hf_engine import HuggingfaceEngine
             self.engine: BaseEngine = HuggingfaceEngine(model_args, data_args, finetuning_args, generating_args)
         elif model_args.infer_backend == EngineName.VLLM:
-            self.engine: BaseEngine = VllmEngine(model_args, data_args, finetuning_args, generating_args)
+            try:
+                from .vllm_engine import VllmEngine
+                self.engine: BaseEngine = VllmEngine(model_args, data_args, finetuning_args, generating_args)
+            except ImportError as e:
+                raise ImportError(
+                    "vLLM not install, you may need to run `pip install vllm`\n"
+                    "or try to use HuggingFace backend: --infer_backend huggingface"
+                ) from e
         elif model_args.infer_backend == EngineName.SGLANG:
-            self.engine: BaseEngine = SGLangEngine(model_args, data_args, finetuning_args, generating_args)
+            try:
+                from .sglang_engine import SGLangEngine
+                self.engine: BaseEngine = SGLangEngine(model_args, data_args, finetuning_args, generating_args)
+            except ImportError as e:
+                raise ImportError(
+                    "SGLang not install, you may need to run `pip install sglang[all]`\n"
+                    "or try to use HuggingFace backend: --infer_backend huggingface"
+                ) from e
         else:
             raise NotImplementedError(f"Unknown backend: {model_args.infer_backend}")
 
