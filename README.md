@@ -36,7 +36,7 @@
 
 </div>
 
-👋 Join our [WeChat](assets/wechat/main.jpg), [NPU](assets/wechat/npu.jpg), [Lab4AI](assets/wechat/lab4ai.jpg), [LLaMA Factory Online](assets/wechat/online.jpg) user group.
+👋 Join our [WeChat](https://github.com/hiyouga/llamafactory-community/blob/main/wechat/main.jpg), [NPU](https://github.com/hiyouga/llamafactory-community/blob/main/wechat/npu.jpg), [Lab4AI](https://github.com/hiyouga/llamafactory-community/blob/main/wechat/lab4ai.jpg), [LLaMA Factory Online](https://github.com/hiyouga/llamafactory-community/blob/main/wechat/online.jpg) user group.
 
 \[ English | [中文](README_zh.md) \]
 

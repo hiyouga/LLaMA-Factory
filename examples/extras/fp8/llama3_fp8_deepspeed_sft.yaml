@@ -6,7 +6,7 @@
 model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
 trust_remote_code: true
 
-### Method configuration  
+### Method configuration
 stage: sft
 do_train: true
 finetuning_type: full
@@ -40,7 +40,7 @@ fp8: true
 fp8_backend: torchao  # Use TorchAO backend for FP8
 fp8_enable_fsdp_float8_all_gather: false  # Not used with DeepSpeed
 
-### DeepSpeed configuration  
+### DeepSpeed configuration
 deepspeed: examples/deepspeed/ds_z3_fp8_config.json
 
 ### Logging configuration

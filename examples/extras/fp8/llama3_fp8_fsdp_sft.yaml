@@ -1,4 +1,4 @@
-# FP8 training example with FSDP 
+# FP8 training example with FSDP
 # This config demonstrates FP8 mixed precision training using HuggingFace Accelerate
 # with FSDP for distributed training and float8 all-gather optimization
 

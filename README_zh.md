@@ -36,7 +36,7 @@
 
 </div>
 
-👋 加入我们的[微信群](assets/wechat/main.jpg)、[NPU 用户群](assets/wechat/npu.jpg)、[大模型实验室群](assets/wechat/lab4ai.jpg) 或 [LLaMA Factory Online 用户群](assets/wechat/online.png)。
+👋 加入我们的[微信群](https://github.com/hiyouga/llamafactory-community/blob/main/wechat/main.jpg)、[NPU 用户群](https://github.com/hiyouga/llamafactory-community/blob/main/wechat/npu.jpg)、[大模型实验室群](https://github.com/hiyouga/llamafactory-community/blob/main/wechat/lab4ai.jpg) 或 [LLaMA Factory Online 用户群](https://github.com/hiyouga/llamafactory-community/blob/main/wechat/online.png)。
 
 \[ [English](README.md) | 中文 \]
 
