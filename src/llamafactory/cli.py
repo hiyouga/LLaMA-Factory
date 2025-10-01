@@ -37,36 +37,43 @@ USAGE = (
 
 def _run_api():
     from .api.app import run_api
+
     return run_api()
 
 
 def _run_chat():
     from .chat.chat_model import run_chat
+
     return run_chat()
 
 
 def _run_eval():
     from .eval.evaluator import run_eval
+
     return run_eval()
 
 
 def _export_model():
     from .train.tuner import export_model
+
     return export_model()
 
 
 def _run_exp():
     from .train.tuner import run_exp
+
     return run_exp()
 
 
 def _run_web_demo():
     from .webui.interface import run_web_demo
+
     return run_web_demo()
 
 
 def _run_web_ui():
     from .webui.interface import run_web_ui
+
     return run_web_ui()
 
 

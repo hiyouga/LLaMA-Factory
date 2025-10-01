@@ -49,10 +49,12 @@ class ChatModel:
 
         if model_args.infer_backend == EngineName.HF:
             from .hf_engine import HuggingfaceEngine
+
             self.engine: BaseEngine = HuggingfaceEngine(model_args, data_args, finetuning_args, generating_args)
         elif model_args.infer_backend == EngineName.VLLM:
             try:
                 from .vllm_engine import VllmEngine
+
                 self.engine: BaseEngine = VllmEngine(model_args, data_args, finetuning_args, generating_args)
             except ImportError as e:
                 raise ImportError(
@@ -62,6 +64,7 @@ class ChatModel:
         elif model_args.infer_backend == EngineName.SGLANG:
             try:
                 from .sglang_engine import SGLangEngine
+
                 self.engine: BaseEngine = SGLangEngine(model_args, data_args, finetuning_args, generating_args)
             except ImportError as e:
                 raise ImportError(
