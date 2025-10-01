@@ -131,6 +131,14 @@ def _verify_model_args(
         logger.warning_rank0("We should use slow tokenizer for the Yi models. Change `use_fast_tokenizer` to False.")
         model_args.use_fast_tokenizer = False
 
+    # Validate advanced training features
+    if model_args.fp8 and model_args.quantization_bit is not None:
+        raise ValueError("FP8 training is not compatible with quantization. Please disable one of them.")
+
+    if model_args.fp8_enable_fsdp_float8_all_gather and not model_args.fp8:
+        logger.warning_rank0("fp8_enable_fsdp_float8_all_gather requires fp8=True. Setting fp8=True.")
+        model_args.fp8 = True
+
 
 def _check_extra_dependencies(
     model_args: "ModelArguments",
