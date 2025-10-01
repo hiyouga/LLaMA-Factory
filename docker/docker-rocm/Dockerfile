@@ -66,6 +66,12 @@ EXPOSE 8000
 ENV http_proxy=
 ENV https_proxy=
 
+# Set no_proxy environment variable
+ENV no_proxy="localhost, 127.0.0.1, ::1"
+
+# fix pydantic version
+RUN pip install pydantic==2.10.6
+
 # Reset pip config
 RUN pip config unset global.index-url && \
     pip config unset global.extra-index-url
