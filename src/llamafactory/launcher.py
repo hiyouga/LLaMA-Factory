@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from llamafactory.train.tuner import run_exp  # use absolute import
-
 
 def launch():
+    from llamafactory.train.tuner import run_exp  # use absolute import
+
     run_exp()
 
 
