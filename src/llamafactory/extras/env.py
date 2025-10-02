@@ -15,22 +15,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-import platform
-
-import accelerate
-import datasets
-import peft
-import torch
-import transformers
-import trl
-from transformers.utils import is_torch_cuda_available, is_torch_npu_available
-
 
 VERSION = "0.9.4.dev0"
 
 
 def print_env() -> None:
+    import os
+    import platform
+
+    import accelerate
+    import datasets
+    import peft
+    import torch
+    import transformers
+    import trl
+    from transformers.utils import is_torch_cuda_available, is_torch_npu_available
+
     info = {
         "`llamafactory` version": VERSION,
         "Platform": platform.platform(),
