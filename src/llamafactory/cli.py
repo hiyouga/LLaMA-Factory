@@ -36,51 +36,15 @@ USAGE = (
 )
 
 
-def _run_api():
-    from .api.app import run_api
-
-    return run_api()
-
-
-def _run_chat():
-    from .chat.chat_model import run_chat
-
-    return run_chat()
-
-
-def _run_eval():
-    raise NotImplementedError("Evaluation will be deprecated in the future.")
-
-
-def _export_model():
-    from .train.tuner import export_model
-
-    return export_model()
-
-
-def _run_exp():
-    from .train.tuner import run_exp
-
-    return run_exp()
-
-
-def _run_web_demo():
-    from .webui.interface import run_web_demo
-
-    return run_web_demo()
-
-
-def _run_web_ui():
-    from .webui.interface import run_web_ui
-
-    return run_web_ui()
-
-
 def main():
-    from . import launcher
     from .extras import logging
     from .extras.env import VERSION, print_env
     from .extras.misc import find_available_port, get_device_count, is_env_enabled, use_ray
+
+    if is_env_enabled("USE_V1"):
+        from .v1 import launcher
+    else:
+        from . import launcher
 
     logger = logging.get_logger(__name__)
 
@@ -97,14 +61,14 @@ def main():
     )
 
     COMMAND_MAP = {
-        "api": _run_api,
-        "chat": _run_chat,
+        "api": launcher.run_api,
+        "chat": launcher.run_chat,
         "env": print_env,
-        "eval": _run_eval,
-        "export": _export_model,
-        "train": _run_exp,
-        "webchat": _run_web_demo,
-        "webui": _run_web_ui,
+        "eval": launcher.run_eval,
+        "export": launcher.export_model,
+        "train": launcher.run_exp,
+        "webchat": launcher.run_web_demo,
+        "webui": launcher.run_web_ui,
         "version": partial(print, WELCOME),
         "help": partial(print, USAGE),
     }
