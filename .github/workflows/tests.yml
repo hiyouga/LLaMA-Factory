@@ -78,7 +78,7 @@ jobs:
       - name: Downgrade transformers for Python 3.9
         if: ${{ matrix.python == '3.9' }}
         run: |
-          python -m pip install "transformers<=4.57.0"
+          python -m pip install "transformers<4.57.0"
 
       - name: Update accelerate to avoid mac os ci errors (before accelerate 1.11.0)
         if: ${{ matrix.os == 'macos-latest' }}
