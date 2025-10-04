@@ -13,9 +13,12 @@
 # limitations under the License.
 
 
-from ..config.training_args import TrainingArguments
+from dataclasses import dataclass, field
 
 
-class BaseTrainer:
-    def __init__(self, args: TrainingArguments) -> None:
-        self.args = args
+@dataclass
+class TrainingArguments:
+    output_dir: str = field(
+        default="",
+        metadata={"help": "Path to the output directory."},
+    )

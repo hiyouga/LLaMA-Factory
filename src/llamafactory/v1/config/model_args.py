@@ -13,9 +13,12 @@
 # limitations under the License.
 
 
-from ..config.training_args import TrainingArguments
+from dataclasses import dataclass, field
 
 
-class BaseTrainer:
-    def __init__(self, args: TrainingArguments) -> None:
-        self.args = args
+@dataclass
+class ModelArguments:
+    model_name_or_path: str = field(
+        default="",
+        metadata={"help": "Path to the model or model identifier from Hugging Face."},
+    )
