@@ -30,9 +30,7 @@ jobs:
         os:
           - "ubuntu-latest"
           - "windows-latest"
-          - "macos-13"
-        transformers:
-          - null
+          - "macos-latest"
         include:  # test backward compatibility
           - python: "3.9"
             os: "ubuntu-latest"
