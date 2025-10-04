@@ -23,7 +23,6 @@ jobs:
       fail-fast: false
       matrix:
         python:
-          - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
@@ -32,13 +31,13 @@ jobs:
           - "windows-latest"
           - "macos-latest"
         include:  # test backward compatibility
-          - python: "3.9"
+          - python: "3.10"
             os: "ubuntu-latest"
             transformers: "4.49.0"
-          - python: "3.9"
+          - python: "3.10"
             os: "ubuntu-latest"
             transformers: "4.51.0"
-          - python: "3.9"
+          - python: "3.10"
             os: "ubuntu-latest"
             transformers: "4.53.0"
 
