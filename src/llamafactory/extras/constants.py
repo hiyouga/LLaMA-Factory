@@ -3197,6 +3197,10 @@ register_model_group(
             DownloadSource.DEFAULT: "Qwen/Qwen3-VL-235B-A22B-Instruct",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-235B-A22B-Instruct",
         },
+        "Qwen3-VL-30B-A3B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-VL-30B-A3B-Instruct",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-30B-A3B-Instruct",
+        },
     },
     template="qwen3_vl_nothink",
     multimodal=True,
@@ -3208,6 +3212,10 @@ register_model_group(
         "Qwen3-VL-235B-A22B-Thinking": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-VL-235B-A22B-Thinking",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-235B-A22B-Thinking",
+        },
+        "Qwen3-VL-30B-A3B-Thinking": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-VL-30B-A3B-Thinking",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-30B-A3B-Thinking",
         },
     },
     template="qwen3_vl",
