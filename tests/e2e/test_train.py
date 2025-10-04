@@ -36,6 +36,7 @@ TRAIN_ARGS = {
     "per_device_train_batch_size": 1,
     "max_steps": 1,
     "report_to": "none",
+    "fp16": False,
 }
 
 INFER_ARGS = {
