@@ -376,7 +376,7 @@ def test_qwen2_vl_plugin():
 @pytest.mark.skipif(not is_transformers_version_greater_than("4.57.0"), reason="Requires transformers>=4.57.0")
 def test_qwen3_vl_plugin():
     frame_seqlen = 1
-    tokenizer_module = _load_tokenizer_module(model_name_or_path="Qwen/Qwen3-VL-235B-A22B-Instruct")
+    tokenizer_module = _load_tokenizer_module(model_name_or_path="Qwen/Qwen3-VL-30B-A3B-Instruct")
     qwen3_vl_plugin = get_mm_plugin(name="qwen3_vl", video_token="<|video_pad|>")
     check_inputs = {"plugin": qwen3_vl_plugin, **tokenizer_module}
     check_inputs["expected_mm_messages"] = [
