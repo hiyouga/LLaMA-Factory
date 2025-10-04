@@ -18,6 +18,9 @@ on:
       - "requirements.txt"
       - "docker/**"
       - ".github/workflows/*.yml"
+  release:
+    types:
+      - published
 
 jobs:
   build:
@@ -40,7 +43,7 @@ jobs:
 
     steps:
       - name: Free up disk space
-        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+        uses: jlumbroso/free-disk-space@v1.3.1
         with:
           tool-cache: true
           docker-images: false
@@ -51,12 +54,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
+          python-version: "3.10"
 
       - name: Get llamafactory version
         id: version
         run: |
-          echo "tag=$(python setup.py --version | sed 's/\.dev0//')" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "tag=$(python setup.py --version)" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -86,7 +93,6 @@ jobs:
             EXTRAS=metrics,deepspeed,liger-kernel
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            docker.io/hiyouga/llamafactory:latest
             docker.io/hiyouga/llamafactory:${{ steps.version.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -100,9 +106,7 @@ jobs:
           file: ./docker/docker-npu/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            docker.io/hiyouga/llamafactory:latest-npu-a2
             docker.io/hiyouga/llamafactory:${{ steps.version.outputs.tag }}-npu-a2
-            quay.io/ascend/llamafactory:latest-npu-a2
             quay.io/ascend/llamafactory:${{ steps.version.outputs.tag }}-npu-a2
           cache-from: type=gha
           cache-to: type=gha,mode=max
