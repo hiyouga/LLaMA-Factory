@@ -315,9 +315,9 @@ Choose your path:
 | [Qwen3 (MoE/Instruct/Thinking/Next)](https://huggingface.co/Qwen) | 0.6B/1.7B/4B/8B/14B/32B/80B/235B | qwen3/qwen3_nothink  |
 | [Qwen2-Audio](https://huggingface.co/Qwen)                        | 7B                               | qwen2_audio          |
 | [Qwen2.5-Omni](https://huggingface.co/Qwen)                       | 3B/7B                            | qwen2_omni           |
-| [Qwen3-Omni](https://huggingface.co/Qwen)*                        | 30B                              | qwen3_omni           |
+| [Qwen3-Omni](https://huggingface.co/Qwen)                         | 30B                              | qwen3_omni           |
 | [Qwen2-VL/Qwen2.5-VL/QVQ](https://huggingface.co/Qwen)            | 2B/3B/7B/32B/72B                 | qwen2_vl             |
-| [Qwen3-VL](https://huggingface.co/Qwen)*                          | 235B                             | qwen3_vl             |
+| [Qwen3-VL](https://huggingface.co/Qwen)                           | 235B                             | qwen3_vl             |
 | [Seed (OSS/Coder)](https://huggingface.co/ByteDance-Seed)         | 8B/36B                           | seed_oss/seed_coder  |
 | [Skywork o1](https://huggingface.co/Skywork)                      | 8B                               | skywork_o1           |
 | [StarCoder 2](https://huggingface.co/bigcode)                     | 3B/7B/15B                        | -                    |
