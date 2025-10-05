@@ -20,17 +20,6 @@ from collections.abc import Sequence
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any
 
-# mcore-adapter imports
-try:
-    import mcore_adapter
-except ImportError:
-    raise ImportError("mcore_adapter is not installed. Please install it with `pip install mcore-adapter`.")
-
-from mcore_adapter.models import AutoConfig, AutoModel
-from mcore_adapter.trainer import DPOTrainer as McaDPOTrainer
-from mcore_adapter.trainer import McaTrainer
-from mcore_adapter.trainer.dpo_config import DPOConfig
-
 from ...data import (
     SFTDataCollatorWith4DAttentionMask,
     get_dataset,
@@ -41,15 +30,26 @@ from ...data.collator import (
 )
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
+from ...extras.packages import is_mcore_adapter_available
 from ...extras.ploting import plot_loss
 from ...model import load_tokenizer
 from ..callbacks import SaveProcessorCallback
 
 
-if TYPE_CHECKING:
-    from transformers import DataCollatorForSeq2Seq, Seq2SeqTrainingArguments, TrainerCallback
+if not is_mcore_adapter_available():
+    raise ImportError("mcore_adapter is not installed. Please install it with `pip install mcore-adapter`.")
 
-    from ...hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
+from mcore_adapter.models import AutoConfig, AutoModel
+from mcore_adapter.trainer import DPOTrainer as McaDPOTrainer
+from mcore_adapter.trainer import McaTrainer
+from mcore_adapter.trainer.dpo_config import DPOConfig
+from mcore_adapter.training_args import Seq2SeqTrainingArguments as McaSeq2SeqTrainingArguments
+
+
+if TYPE_CHECKING:
+    from transformers import DataCollatorForSeq2Seq, TrainerCallback
+
+    from ...hparams import DataArguments, FinetuningArguments, ModelArguments
 
 
 logger = get_logger(__name__)
@@ -78,7 +78,7 @@ def _data_collator_wrapper(data_collator: Any):
 def run_pt(
     model_args: ModelArguments,
     data_args: DataArguments,
-    training_args: Seq2SeqTrainingArguments,
+    training_args: McaSeq2SeqTrainingArguments,
     finetuning_args: FinetuningArguments,
     callbacks: list[TrainerCallback] | None = None,
 ):
@@ -128,28 +128,16 @@ def run_pt(
                 keys += ["eval_loss"]
             plot_loss(training_args.output_dir, keys=keys)
 
-    if training_args.do_eval:
-        metrics = trainer.evaluate(metric_key_prefix="eval")
-        trainer.log_metrics("eval", metrics)
-        trainer.save_metrics("eval", metrics)
-
-    if training_args.do_predict:
-        predict_results = trainer.predict(dataset_module["eval_dataset"], metric_key_prefix="predict")
-        trainer.log_metrics("predict", predict_results.metrics)
-        trainer.save_metrics("predict", predict_results.metrics)
-
-    # create_modelcard_and_push(trainer, model_args, data_args, training_args, finetuning_args)
-
 
 def run_sft(
     model_args: ModelArguments,
     data_args: DataArguments,
-    training_args: Seq2SeqTrainingArguments,
+    training_args: McaSeq2SeqTrainingArguments,
     finetuning_args: FinetuningArguments,
-    generating_args: GeneratingArguments,
     callbacks: list[TrainerCallback] | None = None,
 ):
     # align packing flags
+    # TODO: FIX SequencePacking
     data_args.neat_packing = training_args.sequence_packing = data_args.neat_packing or training_args.sequence_packing
     data_args.packing = data_args.neat_packing or data_args.packing
 
@@ -203,43 +191,13 @@ def run_sft(
     if "processor" in tokenizer_module and tokenizer_module["processor"] is not None:
         trainer.add_callback(SaveProcessorCallback(tokenizer_module["processor"]))
 
-    if training_args.do_train:
-        train_result = trainer.train(training_args.resume_from_checkpoint)
-        trainer.save_model()
-        trainer.log_metrics("train", train_result.metrics)
-        trainer.save_metrics("train", train_result.metrics)
-        trainer.save_state()
-        if trainer.is_world_process_zero() and finetuning_args.plot_loss:
-            keys = ["loss"]
-            if isinstance(dataset_module.get("eval_dataset"), dict):
-                keys += sum(
-                    [[f"eval_{key}_loss", f"eval_{key}_accuracy"] for key in dataset_module["eval_dataset"].keys()],
-                    [],
-                )
-            else:
-                keys += ["eval_loss", "eval_accuracy"]
-            plot_loss(training_args.output_dir, keys=keys)
-
-    if training_args.predict_with_generate:
-        tokenizer.padding_side = "left"
-
-    if training_args.do_eval:
-        metrics = trainer.evaluate(metric_key_prefix="eval")
-        trainer.log_metrics("eval", metrics)
-        trainer.save_metrics("eval", metrics)
-
-    if training_args.do_predict:
-        predict_results = trainer.predict(dataset_module["eval_dataset"], metric_key_prefix="predict")
-        trainer.log_metrics("predict", predict_results.metrics)
-        trainer.save_metrics("predict", predict_results.metrics)
-
-    # create_modelcard_and_push(trainer, model_args, data_args, training_args, finetuning_args)
+    trainer.train(training_args.resume_from_checkpoint)
 
 
 def run_dpo(
     model_args: ModelArguments,
     data_args: DataArguments,
-    training_args: Seq2SeqTrainingArguments,
+    training_args: McaSeq2SeqTrainingArguments,
     finetuning_args: FinetuningArguments,
     callbacks: list[TrainerCallback] | None = None,
 ):
@@ -293,28 +251,5 @@ def run_dpo(
     if "processor" in tokenizer_module and tokenizer_module["processor"] is not None:
         trainer.add_callback(SaveProcessorCallback(tokenizer_module["processor"]))
 
-    if training_args.do_train:
-        train_result = trainer.train(training_args.resume_from_checkpoint)
-        trainer.save_model()
-        trainer.log_metrics("train", train_result.metrics)
-        trainer.save_metrics("train", train_result.metrics)
-        trainer.save_state()
-        if trainer.is_world_process_zero() and finetuning_args.plot_loss:
-            keys = ["loss", "rewards/accuracies"]
-            if isinstance(dataset_module.get("eval_dataset"), dict):
-                keys += [f"eval_{key}_loss" for key in dataset_module["eval_dataset"].keys()]
-            else:
-                keys += ["eval_loss"]
-            plot_loss(training_args.output_dir, keys=keys)
-
-    if training_args.do_eval:
-        metrics = trainer.evaluate(metric_key_prefix="eval")
-        if ref_model is not None and id(model) == id(ref_model):
-            remove_keys = [key for key in metrics.keys() if "rewards" in key]
-            for key in remove_keys:
-                metrics.pop(key)
-        trainer.log_metrics("eval", metrics)
-        trainer.save_metrics("eval", metrics)
-
-    # create_modelcard_and_push(trainer, model_args, data_args, training_args, finetuning_args)
+    trainer.train(training_args.resume_from_checkpoint)
 
