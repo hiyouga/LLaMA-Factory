@@ -22,6 +22,7 @@ from typing import Any, Optional, Union
 
 import torch
 import transformers
+from mcore_adapter import TrainingArguments as McaTrainingArguments
 from omegaconf import OmegaConf
 from transformers import HfArgumentParser
 from transformers.integrations import is_deepspeed_zero3_enabled
@@ -48,6 +49,8 @@ check_dependencies()
 
 _TRAIN_ARGS = [ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
 _TRAIN_CLS = tuple[ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
+_TRAIN_MCA_ARGS = [ModelArguments, DataArguments, McaTrainingArguments, FinetuningArguments, GeneratingArguments]
+_TRAIN_MCA_CLS = tuple[ModelArguments, DataArguments, McaTrainingArguments, FinetuningArguments, GeneratingArguments]
 _INFER_ARGS = [ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _INFER_CLS = tuple[ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _EVAL_ARGS = [ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments]
@@ -197,6 +200,12 @@ def _parse_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -
     return _parse_args(parser, args, allow_extra_keys=allow_extra_keys)
 
 
+def _parse_train_mca_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _TRAIN_MCA_CLS:
+    parser = HfArgumentParser(_TRAIN_MCA_ARGS)
+    allow_extra_keys = is_env_enabled("ALLOW_EXTRA_ARGS")
+    return _parse_args(parser, args, allow_extra_keys=allow_extra_keys)
+
+
 def _parse_infer_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _INFER_CLS:
     parser = HfArgumentParser(_INFER_ARGS)
     allow_extra_keys = is_env_enabled("ALLOW_EXTRA_ARGS")
@@ -216,7 +225,10 @@ def get_ray_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> Ray
 
 
 def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _TRAIN_CLS:
-    model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_args(args)
+    if is_env_enabled("USE_MCA"):
+        model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_mca_args(args)
+    else:
+        model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_args(args)
 
     # Setup logging
     if training_args.should_log:

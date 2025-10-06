@@ -473,6 +473,10 @@ class FinetuningArguments(
         default=False,
         metadata={"help": "Whether or not to use the Adam-mini optimizer."},
     )
+    use_mca: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use the Megatron-LM training."},
+    )
     use_muon: bool = field(
         default=False,
         metadata={"help": "Whether or not to use the Muon optimizer."},

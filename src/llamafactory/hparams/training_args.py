@@ -16,7 +16,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Literal, Optional, Union
 
-from transformers import Seq2SeqTrainingArguments
+from mcore_adapter import Seq2SeqTrainingArguments as McaSeq2SeqTrainingArguments
 from transformers.training_args import _convert_str_dict
 
 from ..extras.misc import use_ray
@@ -78,9 +78,10 @@ class RayArguments:
 
 
 @dataclass
-class TrainingArguments(RayArguments, Seq2SeqTrainingArguments):
+class TrainingArguments(RayArguments, McaSeq2SeqTrainingArguments):
     r"""Arguments pertaining to the trainer."""
 
     def __post_init__(self):
-        Seq2SeqTrainingArguments.__post_init__(self)
+        # Seq2SeqTrainingArguments.__post_init__(self)
         RayArguments.__post_init__(self)
+        McaSeq2SeqTrainingArguments.__post_init__(self)

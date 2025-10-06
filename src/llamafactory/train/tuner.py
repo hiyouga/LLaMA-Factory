@@ -30,6 +30,9 @@ from ..model import load_model, load_tokenizer
 from .callbacks import LogCallback, PissaConvertCallback, ReporterCallback
 from .dpo import run_dpo
 from .kto import run_kto
+from .mca import run_dpo as run_dpo_mca
+from .mca import run_pt as run_pt_mca
+from .mca import run_sft as run_sft_mca
 from .ppo import run_ppo
 from .pt import run_pt
 from .rm import run_rm
@@ -67,15 +70,24 @@ def _training_function(config: dict[str, Any]) -> None:
     callbacks.append(ReporterCallback(model_args, data_args, finetuning_args, generating_args))  # add to last
 
     if finetuning_args.stage == "pt":
-        run_pt(model_args, data_args, training_args, finetuning_args, callbacks)
+        if finetuning_args.use_mca:
+            run_pt_mca(model_args, data_args, training_args, finetuning_args, callbacks)
+        else:
+            run_pt(model_args, data_args, training_args, finetuning_args, callbacks)
     elif finetuning_args.stage == "sft":
-        run_sft(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
+        if finetuning_args.use_mca:
+            run_sft_mca(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
+        else:
+            run_sft(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
     elif finetuning_args.stage == "rm":
         run_rm(model_args, data_args, training_args, finetuning_args, callbacks)
     elif finetuning_args.stage == "ppo":
         run_ppo(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
     elif finetuning_args.stage == "dpo":
-        run_dpo(model_args, data_args, training_args, finetuning_args, callbacks)
+        if finetuning_args.use_mca:
+            run_dpo_mca(model_args, data_args, training_args, finetuning_args, callbacks)
+        else:
+            run_dpo(model_args, data_args, training_args, finetuning_args, callbacks)
     elif finetuning_args.stage == "kto":
         run_kto(model_args, data_args, training_args, finetuning_args, callbacks)
     else:
