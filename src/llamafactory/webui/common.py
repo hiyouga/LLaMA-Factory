@@ -36,8 +36,8 @@ from ..extras.misc import use_modelscope, use_openmind
 
 logger = logging.get_logger(__name__)
 
-DEFAULT_CACHE_DIR = "cache"
-DEFAULT_CONFIG_DIR = "config"
+DEFAULT_CACHE_DIR = "llamaboard_cache"
+DEFAULT_CONFIG_DIR = "llamaboard_config"
 DEFAULT_DATA_DIR = "data"
 DEFAULT_SAVE_DIR = "saves"
 USER_CONFIG = "user_config.yaml"

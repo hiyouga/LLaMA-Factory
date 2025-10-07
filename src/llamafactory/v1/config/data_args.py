@@ -12,16 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..config.model_args import ModelArguments
-from ..extras.types import Model, Processor
+
+from dataclasses import dataclass, field
+from typing import Optional
 
 
-class ModelEngine:
-    def __init__(self, model_args: ModelArguments) -> None:
-        self.args = model_args
-
-    def get_model(self) -> Model:
-        pass
-
-    def get_processor(self) -> Processor:
-        pass
+@dataclass
+class DataArguments:
+    dataset: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path to the dataset."},
+    )
+    dataset_dir: str = field(
+        default="data",
+        metadata={"help": "Path to the folder containing the datasets."},
+    )
+    cutoff_len: int = field(
+        default=2048,
+        metadata={"help": "Cutoff length for the dataset."},
+    )
