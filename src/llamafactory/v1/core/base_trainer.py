@@ -12,10 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from ..config.training_args import TrainingArguments
+from ..extras.types import DataLoader, Model, Processor
 
 
 class BaseTrainer:
-    def __init__(self, args: TrainingArguments) -> None:
+    def __init__(
+        self,
+        args: TrainingArguments,
+        model: Model,
+        processor: Processor,
+        data_loader: DataLoader,
+    ) -> None:
         self.args = args
+        self.model = model
+        self.processor = processor
+        self.data_loader = data_loader
+        self.optimizer = None
+        self.lr_scheduler = None
+
+    def fit(self) -> None:
+        pass

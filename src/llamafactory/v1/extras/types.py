@@ -12,16 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..config.model_args import ModelArguments
-from ..extras.types import Model, Processor
+from typing import TYPE_CHECKING, Union
 
 
-class ModelEngine:
-    def __init__(self, model_args: ModelArguments) -> None:
-        self.args = model_args
+if TYPE_CHECKING:
+    from datasets import Dataset as HFDataset
+    from datasets import IterableDataset
+    from torch.utils.data import DataLoader as TorchDataLoader
+    from transformers import PreTrainedModel, PreTrainedTokenizer, ProcessorMixin
 
-    def get_model(self) -> Model:
-        pass
-
-    def get_processor(self) -> Processor:
-        pass
+    Dataset = Union[HFDataset, IterableDataset]
+    DataLoader = TorchDataLoader
+    Model = PreTrainedModel
+    Processor = Union[PreTrainedTokenizer, ProcessorMixin]
+else:
+    Dataset = None
+    DataLoader = None
+    Model = None
+    Processor = None

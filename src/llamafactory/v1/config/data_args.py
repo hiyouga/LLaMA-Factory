@@ -19,13 +19,13 @@ from typing import Optional
 
 @dataclass
 class DataArguments:
-    dataset: str = field(
-        default="",
+    dataset: Optional[str] = field(
+        default=None,
         metadata={"help": "Path to the dataset."},
     )
-    dataset_config: Optional[str] = field(
-        default=None,
-        metadata={"help": "Path to the dataset config."},
+    dataset_dir: str = field(
+        default="data",
+        metadata={"help": "Path to the folder containing the datasets."},
     )
     cutoff_len: int = field(
         default=2048,

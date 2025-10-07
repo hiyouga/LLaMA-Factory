@@ -31,8 +31,9 @@ from .training_args import TrainingArguments
 def get_args(
     args: Optional[Union[dict[str, Any], list[str]]] = None,
 ) -> tuple[DataArguments, ModelArguments, TrainingArguments, SampleArguments]:
+    """Parse arguments from command line or config file."""
     parser = HfArgumentParser([DataArguments, ModelArguments, TrainingArguments, SampleArguments])
-    allow_extra_keys = is_env_enabled("ALLOW_EXTRA_KEYS", "1")
+    allow_extra_keys = is_env_enabled("ALLOW_EXTRA_KEYS")
 
     if args is None:
         if len(sys.argv) > 1 and (sys.argv[1].endswith(".yaml") or sys.argv[1].endswith(".yml")):
