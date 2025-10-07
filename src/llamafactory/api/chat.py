@@ -26,7 +26,7 @@ from ..extras import logging
 from ..extras.constants import AUDIO_PLACEHOLDER, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
 from ..extras.misc import is_env_enabled
 from ..extras.packages import is_fastapi_available, is_pillow_available, is_requests_available
-from .common import dictify, jsonify
+from .common import check_lfi_path, check_ssrf_url, dictify, jsonify
 from .protocol import (
     ChatCompletionMessage,
     ChatCompletionResponse,
@@ -121,8 +121,10 @@ def _process_request(
                     if re.match(r"^data:image\/(png|jpg|jpeg|gif|bmp);base64,(.+)$", image_url):  # base64 image
                         image_stream = io.BytesIO(base64.b64decode(image_url.split(",", maxsplit=1)[1]))
                     elif os.path.isfile(image_url):  # local file
+                        check_lfi_path(image_url)
                         image_stream = open(image_url, "rb")
                     else:  # web uri
+                        check_ssrf_url(image_url)
                         image_stream = requests.get(image_url, stream=True).raw
 
                     images.append(Image.open(image_stream).convert("RGB"))
@@ -132,8 +134,10 @@ def _process_request(
                     if re.match(r"^data:video\/(mp4|mkv|avi|mov);base64,(.+)$", video_url):  # base64 video
                         video_stream = io.BytesIO(base64.b64decode(video_url.split(",", maxsplit=1)[1]))
                     elif os.path.isfile(video_url):  # local file
+                        check_lfi_path(video_url)
                         video_stream = video_url
                     else:  # web uri
+                        check_ssrf_url(video_url)
                         video_stream = requests.get(video_url, stream=True).raw
 
                     videos.append(video_stream)
@@ -143,8 +147,10 @@ def _process_request(
                     if re.match(r"^data:audio\/(mpeg|mp3|wav|ogg);base64,(.+)$", audio_url):  # base64 audio
                         audio_stream = io.BytesIO(base64.b64decode(audio_url.split(",", maxsplit=1)[1]))
                     elif os.path.isfile(audio_url):  # local file
+                        check_lfi_path(audio_url)
                         audio_stream = audio_url
                     else:  # web uri
+                        check_ssrf_url(audio_url)
                         audio_stream = requests.get(audio_url, stream=True).raw
 
                     audios.append(audio_stream)
