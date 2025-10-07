@@ -12,16 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..config.model_args import ModelArguments
-from ..extras.types import Model, Processor
+
+from dataclasses import dataclass
 
 
-class ModelEngine:
-    def __init__(self, model_args: ModelArguments) -> None:
-        self.args = model_args
+@dataclass
+class Template:
+    user_template: str
+    assistant_template: str
+    system_template: str
 
-    def get_model(self) -> Model:
-        pass
-
-    def get_processor(self) -> Processor:
-        pass
+    def render_message(self, message: "dict[str, str]") -> str:
+        return self.user_template.format(**message)

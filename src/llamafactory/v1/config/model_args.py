@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..config.model_args import ModelArguments
-from ..extras.types import Model, Processor
+
+from dataclasses import dataclass, field
 
 
-class ModelEngine:
-    def __init__(self, model_args: ModelArguments) -> None:
-        self.args = model_args
-
-    def get_model(self) -> Model:
-        pass
-
-    def get_processor(self) -> Processor:
-        pass
+@dataclass
+class ModelArguments:
+    model: str = field(
+        metadata={"help": "Path to the model or model identifier from Hugging Face."},
+    )
+    trust_remote_code: bool = field(
+        default=False,
+        metadata={"help": "Trust remote code from Hugging Face."},
+    )
