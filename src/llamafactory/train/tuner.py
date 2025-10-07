@@ -76,7 +76,7 @@ def _training_function(config: dict[str, Any]) -> None:
             run_pt(model_args, data_args, training_args, finetuning_args, callbacks)
     elif finetuning_args.stage == "sft":
         if finetuning_args.use_mca:
-            run_sft_mca(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
+            run_sft_mca(model_args, data_args, training_args, finetuning_args, callbacks)
         else:
             run_sft(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
     elif finetuning_args.stage == "rm":
