@@ -17,10 +17,6 @@ import subprocess
 import sys
 from copy import deepcopy
 
-from .extras import logging
-from .extras.env import VERSION, print_env
-from .extras.misc import find_available_port, get_device_count, is_env_enabled, use_ray
-
 
 USAGE = (
     "-" * 70
@@ -39,23 +35,24 @@ USAGE = (
 )
 
 
-WELCOME = (
-    "-" * 58
-    + "\n"
-    + f"| Welcome to LLaMA Factory, version {VERSION}"
-    + " " * (21 - len(VERSION))
-    + "|\n|"
-    + " " * 56
-    + "|\n"
-    + "| Project page: https://github.com/hiyouga/LLaMA-Factory |\n"
-    + "-" * 58
-)
-
-
-logger = logging.get_logger(__name__)
-
-
 def launch():
+    from .extras import logging
+    from .extras.env import VERSION, print_env
+    from .extras.misc import find_available_port, get_device_count, is_env_enabled, use_ray
+
+    logger = logging.get_logger(__name__)
+    WELCOME = (
+        "-" * 58
+        + "\n"
+        + f"| Welcome to LLaMA Factory, version {VERSION}"
+        + " " * (21 - len(VERSION))
+        + "|\n|"
+        + " " * 56
+        + "|\n"
+        + "| Project page: https://github.com/hiyouga/LLaMA-Factory |\n"
+        + "-" * 58
+    )
+
     command = sys.argv.pop(1) if len(sys.argv) > 1 else "help"
     if command == "train" and (is_env_enabled("FORCE_TORCHRUN") or (get_device_count() > 1 and not use_ray())):
         # launch distributed training

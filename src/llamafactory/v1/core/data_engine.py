@@ -33,7 +33,6 @@ class DatasetPathMixin:
     def _abspath(self, path: str) -> str:
         return os.path.abspath(os.path.expanduser(os.path.join(self.args.dataset_dir, path)))
 
-
     def _exists(self, path: str) -> bool:
         return os.path.exists(self._abspath(path))
 
@@ -47,7 +46,6 @@ class DataEngine(DatasetPathMixin):
         self.datasets: dict[str, Dataset] = {}
         dataset_info = self.get_dataset_info()
         self.load_dataset(dataset_info)
-
 
     def get_dataset_info(self) -> dict:
         """Get dataset info from dataset path.
