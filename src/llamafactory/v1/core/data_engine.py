@@ -43,9 +43,10 @@ class DatasetPathMixin:
 class DataEngine(DatasetPathMixin):
     def __init__(self, data_args: DataArguments) -> None:
         self.args = data_args
+        self.datasets: dict[str, Dataset] = {}
         dataset_info = self.get_dataset_info()
         self.load_dataset(dataset_info)
-        self.datasets: dict[str, Dataset] = {}
+
 
     def get_dataset_info(self) -> dict:
         """Get dataset info from dataset path.
