@@ -227,6 +227,7 @@ def get_ray_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> Ray
 def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _TRAIN_CLS:
     if is_env_enabled("USE_MCA"):
         model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_mca_args(args)
+        # FIXME: this is a hack to avoid the error in MCA
         setattr(training_args, "predict_with_generate", False)
         setattr(training_args, "generation_max_length", data_args.cutoff_len)
         setattr(training_args, "generation_num_beams", 1)
