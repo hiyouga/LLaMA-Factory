@@ -229,6 +229,7 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
         model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_mca_args(args)
         setattr(training_args, "predict_with_generate", False)
         setattr(training_args, "generation_max_length", data_args.cutoff_len)
+        setattr(training_args, "generation_num_beams", 1)
     else:
         model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_args(args)
 
