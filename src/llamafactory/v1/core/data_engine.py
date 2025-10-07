@@ -31,7 +31,8 @@ class DatasetPathMixin:
     args: DataArguments
 
     def _abspath(self, path: str) -> str:
-        return os.path.abspath(os.path.join(self.args.dataset_dir, path))
+        return os.path.abspath(os.path.expanduser(os.path.join(self.args.dataset_dir, path)))
+
 
     def _exists(self, path: str) -> bool:
         return os.path.exists(self._abspath(path))
