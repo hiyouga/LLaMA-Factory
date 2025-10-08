@@ -203,7 +203,22 @@ def _parse_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -
 def _parse_train_mca_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _TRAIN_MCA_CLS:
     parser = HfArgumentParser(_TRAIN_MCA_ARGS)
     allow_extra_keys = is_env_enabled("ALLOW_EXTRA_ARGS")
-    return _parse_args(parser, args, allow_extra_keys=allow_extra_keys)
+    model_args, data_args, training_args, finetuning_args, generating_args = _parse_args(
+        parser, args, allow_extra_keys=allow_extra_keys
+    )
+
+    _configure_mca_training_args(training_args, data_args, finetuning_args)
+
+    return model_args, data_args, training_args, finetuning_args, generating_args
+
+
+def _configure_mca_training_args(training_args, data_args, finetuning_args) -> None:
+    """Patch training args to avoid args checking errors and sync MCA settings."""
+    training_args.predict_with_generate = False
+    training_args.generation_max_length = data_args.cutoff_len
+    training_args.generation_num_beams = 1
+    training_args.use_mca = True
+    finetuning_args.use_mca = True
 
 
 def _parse_infer_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _INFER_CLS:
@@ -227,12 +242,10 @@ def get_ray_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> Ray
 def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _TRAIN_CLS:
     if is_env_enabled("USE_MCA"):
         model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_mca_args(args)
-        # FIXME: this is a hack to avoid the error in MCA
-        setattr(training_args, "predict_with_generate", False)
-        setattr(training_args, "generation_max_length", data_args.cutoff_len)
-        setattr(training_args, "generation_num_beams", 1)
     else:
         model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_args(args)
+        # 确保在非 MCA 模式下，finetuning_args.use_mca 为 False
+        finetuning_args.use_mca = False
 
     # Setup logging
     if training_args.should_log:
