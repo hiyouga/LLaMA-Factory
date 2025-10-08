@@ -5,7 +5,7 @@ video_max_pixels: 16384
 do_train: true
 stage: sft
 finetuning_type: full # only support full for now
-dataset: mllm_demo
+dataset: llava_1k_en
 preprocessing_num_workers: 8
 cutoff_len: 4096
 template: qwen2_vl
