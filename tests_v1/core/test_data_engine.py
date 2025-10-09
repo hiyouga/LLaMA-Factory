@@ -33,7 +33,7 @@ def test_map_dataset(num_samples: int):
     indexes = random.choices(range(len(data_engine)), k=num_samples)
     for index in indexes:
         print(data_engine[index])
-        assert data_engine[index] == original_data[index]
+        assert data_engine[index] == {"_dataset_name": "default", **original_data[index]}
 
 
 if __name__ == "__main__":
