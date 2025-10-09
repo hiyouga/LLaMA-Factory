@@ -16,21 +16,20 @@ from typing import TYPE_CHECKING, NotRequired, TypedDict, Union
 
 
 if TYPE_CHECKING:
-    from datasets import Dataset as HFArrowDataset
-    from datasets import IterableDataset as HFIterableDataset
-    from torch.utils.data import DataLoader as TorchDataLoader
-    from torch.utils.data import Dataset as TorchArrowDataset
-    from torch.utils.data import IterableDataset as TorchIterableDataset
-    from transformers import DataCollator as HFDataCollator
-    from transformers import PreTrainedModel, PreTrainedTokenizer, ProcessorMixin
+    import datasets
+    import torch
+    import torch.utils.data
+    import transformers
 
-    TorchDataset = Union[TorchArrowDataset, TorchIterableDataset]
-    HFDataset = Union[HFArrowDataset, HFIterableDataset]
-    DataCollator = HFDataCollator
-    DataLoader = TorchDataLoader
-    Model = PreTrainedModel
-    Processor = Union[PreTrainedTokenizer, ProcessorMixin]
+    Tensor = torch.Tensor
+    TorchDataset = Union[torch.utils.data.Dataset, torch.utils.data.IterableDataset]
+    HFDataset = Union[datasets.Dataset, datasets.IterableDataset]
+    DataCollator = transformers.DataCollator
+    DataLoader = torch.utils.data.DataLoader
+    Model = transformers.PreTrainedModel
+    Processor = Union[transformers.PreTrainedTokenizer, transformers.ProcessorMixin]
 else:
+    Tensor = None
     TorchDataset = None
     HFDataset = None
     DataCollator = None
@@ -45,14 +44,14 @@ class DatasetInfo(TypedDict, total=False):
     file_name: NotRequired[str]
     """Local file path."""
     dataset_dir: NotRequired[str]
-    """Dataset directory."""
+    """Dataset directory, default to args.dataset_dir."""
     split: NotRequired[str]
-    """Dataset split."""
+    """Dataset split, default to "train"."""
     converter: NotRequired[str]
-    """Dataset converter."""
-    num_samples: NotRequired[int]
-    """Number of samples."""
+    """Dataset converter, default to None."""
+    size: NotRequired[int]
+    """Number of samples, default to all samples."""
     weight: NotRequired[float]
-    """Dataset weight."""
+    """Dataset weight, default to 1.0."""
     streaming: NotRequired[bool]
-    """Is streaming dataset."""
+    """Is streaming dataset, default to False."""
