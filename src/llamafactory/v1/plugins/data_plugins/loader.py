@@ -95,7 +95,7 @@ class DataGetItemPlugin:
 
     def get_data(self, index: Union[slice, list[int]]) -> list[dict]:
         if isinstance(index, slice):
-            return [self._get_by_index(i) for i in range(index.indices(len(self)))]
+            return [self._get_by_index(i) for i in range(*index.indices(len(self.data_index)))]
         elif isinstance(index, list):
             return [self._get_by_index(i) for i in index]
         else:
