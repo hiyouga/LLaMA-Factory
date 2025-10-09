@@ -86,7 +86,6 @@ class DataIndexPlugin:
 
 @dataclass
 class DataGetItemPlugin:
-    args: DataArguments
     datasets: dict[str, HFDataset]
     data_index: list[tuple[str, int]]
 
