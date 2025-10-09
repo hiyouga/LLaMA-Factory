@@ -1,6 +1,6 @@
 .PHONY: build commit license quality style test
 
-check_dirs := scripts src tests setup.py
+check_dirs := scripts src tests tests_v1 setup.py
 
 build:
 	pip3 install build && python3 -m build
