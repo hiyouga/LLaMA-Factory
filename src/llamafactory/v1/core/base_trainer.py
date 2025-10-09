@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from ..config.training_args import TrainingArguments
-from ..extras.types import DataLoader, Model, Processor
+from ..extras.types import DataCollator, Model, Processor, TorchDataset
 
 
 class BaseTrainer:
@@ -22,14 +22,19 @@ class BaseTrainer:
         args: TrainingArguments,
         model: Model,
         processor: Processor,
-        data_loader: DataLoader,
+        dataset: TorchDataset,
+        data_collator: DataCollator,
     ) -> None:
         self.args = args
         self.model = model
         self.processor = processor
-        self.data_loader = data_loader
+        self.dataset = dataset
+        self.data_collator = data_collator
         self.optimizer = None
         self.lr_scheduler = None
+
+    def create_dataloader(self) -> None:
+        pass
 
     def fit(self) -> None:
         pass
