@@ -27,4 +27,3 @@ pipeline_model_parallel_size: 2
 bias_activation_fusion: true
 apply_rope_fusion: true
 use_distributed_optimizer: true
-use_mca: true
