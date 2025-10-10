@@ -1,5 +1,6 @@
 model_name_or_path: Qwen/Qwen3-VL-30B-A3B-Instruct
 
+# GPU memory 8 * 78GB
 do_train: true
 stage: sft
 finetuning_type: full # only support full for now
@@ -20,8 +21,8 @@ bf16: true
 
 # mcore speed up
 tensor_model_parallel_size: 1
-sequence_parallel: true
-pipeline_model_parallel_size: 1
+sequence_parallel: false
+pipeline_model_parallel_size: 4
 bias_activation_fusion: true
 apply_rope_fusion: true
 use_distributed_optimizer: true
@@ -30,5 +31,4 @@ overlap_grad_reduce: true
 moe_grouped_gemm: true
 moe_token_dispatcher_type: alltoall
 expert_model_parallel_size: 2
-moe_token_dispatcher_num_batches: 1
-moe_layer_recompute: true
+recompute_granularity: full

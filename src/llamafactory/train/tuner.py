@@ -66,34 +66,28 @@ def _training_function(config: dict[str, Any]) -> None:
 
     callbacks.append(ReporterCallback(model_args, data_args, finetuning_args, generating_args))  # add to last
 
-    if finetuning_args.stage == "pt":
-        if finetuning_args.use_mca:
-            if not is_mcore_adapter_available():
-                raise ImportError("mcore_adapter is not installed. Please install it with `pip install mcore-adapter`.")
+    if finetuning_args.stage in ["pt", "sft", "dpo"] and finetuning_args.use_mca:
+        if not is_mcore_adapter_available():
+            raise ImportError("mcore_adapter is not installed. Please install it with `pip install mcore-adapter`.")
+        if finetuning_args.stage == "pt":
             from .mca import run_pt as run_pt_mca
             run_pt_mca(model_args, data_args, training_args, finetuning_args, callbacks)
-        else:
-            run_pt(model_args, data_args, training_args, finetuning_args, callbacks)
-    elif finetuning_args.stage == "sft":
-        if finetuning_args.use_mca:
-            if not is_mcore_adapter_available():
-                raise ImportError("mcore_adapter is not installed. Please install it with `pip install mcore-adapter`.")
+        elif finetuning_args.stage == "sft":
             from .mca import run_sft as run_sft_mca
             run_sft_mca(model_args, data_args, training_args, finetuning_args, callbacks)
-        else:
-            run_sft(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
+        else:  # dpo
+            from .mca import run_dpo as run_dpo_mca
+            run_dpo_mca(model_args, data_args, training_args, finetuning_args, callbacks)
+    elif finetuning_args.stage == "pt":
+        run_pt(model_args, data_args, training_args, finetuning_args, callbacks)
+    elif finetuning_args.stage == "sft":
+        run_sft(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
     elif finetuning_args.stage == "rm":
         run_rm(model_args, data_args, training_args, finetuning_args, callbacks)
     elif finetuning_args.stage == "ppo":
         run_ppo(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
     elif finetuning_args.stage == "dpo":
-        if finetuning_args.use_mca:
-            if not is_mcore_adapter_available():
-                raise ImportError("mcore_adapter is not installed. Please install it with `pip install mcore-adapter`.")
-            from .mca import run_dpo as run_dpo_mca
-            run_dpo_mca(model_args, data_args, training_args, finetuning_args, callbacks)
-        else:
-            run_dpo(model_args, data_args, training_args, finetuning_args, callbacks)
+        run_dpo(model_args, data_args, training_args, finetuning_args, callbacks)
     elif finetuning_args.stage == "kto":
         run_kto(model_args, data_args, training_args, finetuning_args, callbacks)
     else:

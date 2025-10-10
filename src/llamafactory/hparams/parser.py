@@ -22,7 +22,6 @@ from typing import Any, Optional, Union
 
 import torch
 import transformers
-from mcore_adapter import TrainingArguments as McaTrainingArguments
 from omegaconf import OmegaConf
 from transformers import HfArgumentParser
 from transformers.integrations import is_deepspeed_zero3_enabled
@@ -33,7 +32,7 @@ from transformers.utils import is_torch_bf16_gpu_available, is_torch_npu_availab
 from ..extras import logging
 from ..extras.constants import CHECKPOINT_NAMES, EngineName
 from ..extras.misc import check_dependencies, check_version, get_current_device, is_env_enabled
-from ..extras.packages import is_transformers_version_greater_than
+from ..extras.packages import is_mcore_adapter_available, is_transformers_version_greater_than
 from .data_args import DataArguments
 from .evaluation_args import EvaluationArguments
 from .finetuning_args import FinetuningArguments
@@ -49,13 +48,18 @@ check_dependencies()
 
 _TRAIN_ARGS = [ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
 _TRAIN_CLS = tuple[ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
-_TRAIN_MCA_ARGS = [ModelArguments, DataArguments, McaTrainingArguments, FinetuningArguments, GeneratingArguments]
-_TRAIN_MCA_CLS = tuple[ModelArguments, DataArguments, McaTrainingArguments, FinetuningArguments, GeneratingArguments]
 _INFER_ARGS = [ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _INFER_CLS = tuple[ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _EVAL_ARGS = [ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments]
 _EVAL_CLS = tuple[ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments]
 
+if is_mcore_adapter_available() and is_env_enabled("USE_MCA"):
+    from mcore_adapter import TrainingArguments as McaTrainingArguments
+    _TRAIN_MCA_ARGS = [ModelArguments, DataArguments, McaTrainingArguments, FinetuningArguments, GeneratingArguments]
+    _TRAIN_MCA_CLS = tuple[ModelArguments, DataArguments, McaTrainingArguments, FinetuningArguments, GeneratingArguments]
+else:
+    _TRAIN_MCA_ARGS = []
+    _TRAIN_MCA_CLS = tuple()
 
 def read_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> Union[dict[str, Any], list[str]]:
     r"""Get arguments from the command line or a config file."""
@@ -244,7 +248,6 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
         model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_mca_args(args)
     else:
         model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_args(args)
-        # 确保在非 MCA 模式下，finetuning_args.use_mca 为 False
         finetuning_args.use_mca = False
 
     # Setup logging
