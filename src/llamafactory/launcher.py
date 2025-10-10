@@ -16,6 +16,7 @@ import os
 import subprocess
 import sys
 from copy import deepcopy
+import yaml
 
 
 USAGE = (
@@ -54,7 +55,24 @@ def launch():
     )
 
     command = sys.argv.pop(1) if len(sys.argv) > 1 else "help"
-    if command == "train" and (is_env_enabled("FORCE_TORCHRUN") or (get_device_count() > 1 and not use_ray())):
+    use_kt_flag = False
+    if command == "train":
+        yaml_path = None
+        for arg in sys.argv[1:]:
+            if arg.endswith((".yml", ".yaml")) and os.path.isfile(arg):
+                yaml_path = arg
+                break
+        if yaml_path is not None:
+            try:
+                with open(yaml_path, "r", encoding="utf-8") as f:
+                    cfg = yaml.safe_load(f) or {}
+                use_kt_flag = bool(cfg.get("use_kt", False))
+            except Exception as e:
+                logger.warning_rank0(f"Failed to parse YAML '{yaml_path}': {e}")
+        os.environ["USE_KT"] = "1" if use_kt_flag else "0"
+        logger.info_rank0(f"use_kt = {use_kt_flag}")
+    
+    if command == "train" and (is_env_enabled("FORCE_TORCHRUN") or (get_device_count() > 1 and not use_ray())) and not use_kt_flag:
         # launch distributed training
         nnodes = os.getenv("NNODES", "1")
         node_rank = os.getenv("NODE_RANK", "0")

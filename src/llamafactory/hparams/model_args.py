@@ -99,6 +99,26 @@ class BaseModelArguments:
         default=None,
         metadata={"help": "Convert the model to mixture-of-depths (MoD) or load the MoD model."},
     )
+    use_kt: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use ktransformers's optimization for the LoRA training."},
+    )
+    kt_optimize_rule: Optional[str] = field(
+        default=None,
+        metadata={"help":"Path to the ktransformers optimize rule, according to https://github.com/kvcache-ai/ktransformers/"},
+    )
+    cpu_infer: Optional[int] = field(
+        default=32,
+        metadata={"help":"The calculation is based on the number of CPU cores used"},
+    )
+    chunk_size: Optional[int] = field(
+        default=8192,
+        metadata={"help":"chunk size used for CPU calculate in KTransformers"},
+    )
+    mode: Optional[str] = field(
+        default="normal",
+        metadata={"help":"normal or long_context for llama model"},
+    )
     use_unsloth: bool = field(
         default=False,
         metadata={"help": "Whether or not to use unsloth's optimization for the LoRA training."},
@@ -392,10 +412,30 @@ class SGLangArguments:
         if isinstance(self.sglang_config, str) and self.sglang_config.startswith("{"):
             self.sglang_config = _convert_str_dict(json.loads(self.sglang_config))
 
+@dataclass
+class KTransformersArguments:
+    r"""Arguments pertaining to the KT worker."""
+
+    kt_maxlen: int = field(
+        default=4096,
+        metadata={"help": "Maximum sequence (prompt + response) length of the KT engine."},
+    )
+    kt_use_cuda_graph: bool = field(
+        default=True,
+        metadata={"help": "Whether use cuda graph for the KT engine."},
+    )
+    kt_mode: str = field(
+        default="normal",
+        metadata={"help": "normal or long-context mode for the KT engine."},
+    )
+    kt_force_think: bool = field(
+        default=False,
+        metadata={"help": "force think button for the KT engine"},
+    )
 
 @dataclass
 class ModelArguments(
-    SGLangArguments, VllmArguments, ExportArguments, ProcessorArguments, QuantizationArguments, BaseModelArguments
+    SGLangArguments, VllmArguments, KTransformersArguments, ExportArguments, ProcessorArguments, QuantizationArguments, BaseModelArguments
 ):
     r"""Arguments pertaining to which model/config/tokenizer we are going to fine-tune or infer.
 

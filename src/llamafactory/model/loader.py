@@ -35,6 +35,7 @@ from .model_utils.liger_kernel import apply_liger_kernel
 from .model_utils.misc import register_autoclass
 from .model_utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
 from .model_utils.unsloth import load_unsloth_pretrained_model
+from .model_utils.ktransformers import load_kt_pretrained_model
 from .model_utils.valuehead import load_valuehead_params
 from .patcher import patch_config, patch_model, patch_processor, patch_tokenizer, patch_valuehead_model
 
@@ -143,7 +144,9 @@ def load_model(
 
     model = None
     lazy_load = False
-    if model_args.use_unsloth:
+    if model_args.use_kt:
+        model = load_kt_pretrained_model(config, model_args, finetuning_args)
+    elif model_args.use_unsloth:
         if model_args.adapter_name_or_path is not None:
             lazy_load = True
         elif is_trainable:

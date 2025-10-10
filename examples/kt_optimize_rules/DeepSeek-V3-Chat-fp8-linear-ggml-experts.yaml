@@ -1,0 +1,63 @@
+- match:
+    class: ktransformers.models.modeling_deepseek_v3.DeepseekV3RotaryEmbedding
+  replace:
+    class: ktransformers.operators.RoPE.YarnRotaryEmbeddingV3
+    kwargs:
+      generate_device: "cuda"
+      prefill_device: "cuda"
+- match:
+    name: "^model\\.layers\\.(?!.*self_attn\\.kv_b_proj).*$"  # regular expression 
+    class: torch.nn.Linear  # only match modules matching name and class simultaneously
+  replace:
+    class: ktransformers.operators.linear.KTransformersLinear  # optimized Kernel on quantized data types
+    kwargs:
+      generate_device: "cuda"
+      prefill_device: "cuda"
+      generate_op: "KLinearFP8"
+      prefill_op: "KLinearTorch"
+- match:
+    name: "^model\\.layers\\..*\\.mlp$"
+    class: ktransformers.models.modeling_deepseek_v3.DeepseekV3MoE
+  replace:
+    class: ktransformers.operators.experts.KDeepseekV3MoE     # mlp module with custom forward function
+    kwargs:
+      generate_device: "cuda"
+      prefill_device: "cuda"
+- match:
+    class: ktransformers.models.modeling_deepseek_v3.MoEGate
+  replace:
+    class: ktransformers.operators.gate.KMoEGate
+    kwargs:
+      generate_device: "cuda:0"
+      prefill_device: "cuda:0"
+- match:
+    name: "^model\\.layers\\..*\\.mlp\\.experts$"
+  replace:
+    class: ktransformers.operators.experts.KTransformersExperts     # custom MoE Kernel with expert paralleism
+    kwargs:
+      prefill_device: "cuda"
+      prefill_op: "KExpertsTorch"
+      generate_device: "cpu"
+      generate_op: "KExpertsCPU"
+      out_device: "cuda"
+  recursive: False # don't recursively inject submodules of this module
+- match:
+    name: "^model\\.layers\\..*\\.self_attn$"
+  replace:
+    class: ktransformers.operators.attention.KDeepseekV2Attention # optimized MLA implementation
+    kwargs:
+      generate_device: "cuda"
+      prefill_device: "cuda"
+- match:
+    name: "^model$"
+  replace:
+    class: "ktransformers.operators.models.KDeepseekV2Model"
+    kwargs:
+      per_layer_prefill_intput_threshold: 0 # 0 is close layer wise prefill
+- match:
+    name: "^model.embed_tokens"
+  replace:
+    class: "default"
+    kwargs:
+      generate_device: "cpu"
+      prefill_device: "cpu"

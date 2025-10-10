@@ -1,0 +1,59 @@
+- match:
+    class: ktransformers.models.modeling_mixtral.MixtralRotaryEmbedding
+  replace:
+    class: ktransformers.operators.RoPE.RotaryEmbedding
+    kwargs:
+      generate_device: "cuda"
+      prefill_device: "cuda"
+- match:
+    name: "^model\\.layers\\..*$"
+    class: torch.nn.Linear  # only match modules matching name and class simultaneously
+  replace:
+    class: ktransformers.operators.linear.KTransformersLinear  # optimized Kernel on quantized data types
+    kwargs:
+      generate_device: "cuda"
+      prefill_device: "cuda"
+      generate_op: "KLinearMarlin"
+      prefill_op: "KLinearTorch"
+- match:
+    name: "^lm_head"
+    class: torch.nn.Linear
+  replace:
+    class: ktransformers.operators.linear.KTransformersLinear
+    kwargs:
+      generate_device: "cuda"
+      prefill_device: "cuda"
+      generate_op: "KLinearMarlin"
+      prefill_op: "KLinearTorch"
+- match:
+    name: "^model\\.layers\\..*\\.block_sparse_moe$"
+    class: ktransformers.models.modeling_mixtral.MixtralSparseMoeBlock
+  replace: 
+    class: ktransformers.operators.experts.KMistralSparseMoEBlock
+- match:
+    name: "^model\\.layers\\..*\\.block_sparse_moe\\.experts$"
+  replace: 
+    class: ktransformers.operators.experts.KTransformersExperts
+    kwargs:
+      prefill_device: "cuda"
+      prefill_op: "KExpertsTorch"
+      generate_device: "cpu"
+      generate_op:  "KExpertsCPU"
+      out_device: "cuda"
+  recursive: False # don't recursively inject submodules of this module
+
+- match:
+    name: "^model.embed_tokens"
+  replace:
+    class: "default"
+    kwargs:
+        generate_device: "cpu"
+        prefill_device: "cpu"
+
+- match:
+    name: "^model\\.layers\\..*\\."
+  replace:
+    class: "default"
+    kwargs:
+      generate_device: "cuda"
+      prefill_device: "cuda"

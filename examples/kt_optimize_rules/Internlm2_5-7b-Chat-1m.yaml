@@ -1,0 +1,28 @@
+- match:
+    class: ktransformers.models.modeling_llama.LlamaRotaryEmbedding
+  replace:
+    class: ktransformers.operators.RoPE.RotaryEmbeddingV2
+- match:
+    name: "^model.embed_tokens"
+  replace:
+    class: "default"
+    kwargs:
+        generate_device: "cpu"
+        prefill_device: "cpu"
+- match:
+    class: ktransformers.models.modeling_llama.LlamaModel
+  replace:
+    class: ktransformers.operators.models.KLlamaModel
+    kwargs:
+      generate_device: "cuda"
+      prefill_device: "cuda"
+      per_layer_prefill_intput_threshold: 0 # 0 is close layer wise prefill
+
+- match:
+    name: "^model\\.layers\\..*\\.self_attn$"
+  replace:
+    class: ktransformers.operators.attention.KLlamaAttention
+    kwargs:
+      generate_device: "cuda"
+      prefill_device: "cuda"
+

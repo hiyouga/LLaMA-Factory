@@ -1,0 +1,96 @@
+- match:
+    class: ktransformers.models.modeling_qwen2_moe.Qwen2MoeRotaryEmbedding
+  replace:
+    class: ktransformers.operators.RoPE.RotaryEmbedding
+    kwargs:
+      generate_device: "cuda"
+      prefill_device: "cuda"
+
+- match:
+    name: "^lm_head$"  # regular expression 
+    class: torch.nn.Linear  # only match modules matching name and class simultaneously
+  replace:
+    class: ktransformers.operators.linear.KTransformersLinear  # optimized Kernel on quantized data types
+    kwargs:
+      generate_device: "cuda"
+      prefill_device: "cuda"
+      generate_op: "KLinearMarlin"
+      prefill_op: "KLinearTorch"
+
+# - match:
+#     name: "^model\\.layers\\..*$"  # regular expression 
+#     class: torch.nn.Linear  # only match modules matching name and class simultaneously
+#   replace:
+#     class: ktransformers.operators.linear.KTransformersLinear  # optimized Kernel on quantized data types
+#     kwargs:
+#       generate_device: "cuda"
+#       prefill_device: "cuda"
+#       generate_op: "VLinearMarlin"
+#       prefill_op: "KLinearTorch"
+- match:
+    name: "^model\\.layers\\.(?!.*mlp\\.shared_expert_gate).*$"  # regular expression 
+    class: torch.nn.Linear  # only match modules matching name and class simultaneously
+  replace:
+    class: ktransformers.operators.linear.KTransformersLinear  # optimized Kernel on quantized data types
+    kwargs:
+      generate_device: "cuda"
+      prefill_device: "cuda"
+      generate_op: "VLinearMarlin"
+      prefill_op: "KLinearTorch"
+- match:
+    name: "^model\\.layers\\..*\\.mlp$"
+    class: ktransformers.models.modeling_qwen2_moe.Qwen2MoeSparseMoeBlock
+  replace:
+    class: ktransformers.operators.experts.KQwen2MoeSparseMoeBlockV2     # mlp module with custom forward function
+    kwargs:
+      generate_device: "cuda"
+      prefill_device: "cuda"
+
+- match:
+    name: "^model\\.layers\\..*\\.mlp\\.experts$"
+  replace:
+    class: ktransformers.operators.experts.KTransformersExpertsV2     # custom MoE Kernel with expert paralleism
+    kwargs:
+      prefill_device: "cuda"
+      prefill_op: "KExpertsTorch"
+      generate_device: "cpu"
+      generate_op: "KExpertsCPU"
+      out_device: "cuda"
+      backend: "AMXInt8" # or "AMXBF16" or "llamafile" (default)
+  recursive: False # don't recursively inject submodules of this module
+- match:
+    name: "^model\\.layers\\..*\\.self_attn$"
+  replace:
+    class: ktransformers.operators.balance_serve_attention.KQwen2MoeAttention # optimized MLA implementation
+    kwargs:
+      generate_device: "cuda"
+      prefill_device: "cuda"
+- match:
+    name: "^model$"
+  replace:
+    class: "ktransformers.operators.models.KQwen2MoeModel"
+    kwargs:
+      per_layer_prefill_intput_threshold: 0 # 0 is close layer wise prefill
+- match:
+    name: "^model.embed_tokens"
+  replace:
+    class: "default"
+    kwargs:
+      generate_device: "cpu"
+      prefill_device: "cpu"
+
+- match:
+    class: ktransformers.models.modeling_qwen2_moe.Qwen2MoeRMSNorm
+  replace:
+    class: ktransformers.operators.layernorm.KQwen2MoeRMSNorm
+    kwargs:
+      generate_device: "cuda"
+      prefill_device: "cuda"
+
+- match:
+    class: ktransformers.models.modeling_qwen2_moe.Qwen2MoeMLP
+  replace:
+    class:  ktransformers.operators.mlp.KQwen2MoeMLP
+    kwargs:
+      generate_device: "cuda"
+      prefill_device: "cuda"
