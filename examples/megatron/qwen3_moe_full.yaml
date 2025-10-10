@@ -1,6 +1,6 @@
-model_name_or_path: Qwen/Qwen3-VL-30B-A3B-Instruct
+model_name_or_path: Qwen/Qwen3-30B-A3B-Instruct-2507
 
-# GPU memory 8 * 78GB
+# GPU memory: 8 * 78GB
 do_train: true
 stage: sft
 finetuning_type: full # only support full for now
@@ -9,9 +9,10 @@ preprocessing_num_workers: 8
 cutoff_len: 4096
 template: qwen3_nothink
 
+# global batchsize = (8 // 2 // 4) * 8 = 8
 output_dir: saves/mca/qwen3_moe_full
 per_device_train_batch_size: 1
-gradient_accumulation_steps: 2
+gradient_accumulation_steps: 8
 num_train_epochs: 2
 learning_rate: 3e-6
 logging_steps: 1
