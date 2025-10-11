@@ -29,7 +29,7 @@ if is_env_enabled("USE_MCA"):
     except ImportError:
         raise ImportError(
             "mcore_adapter is required when USE_MCA=1.",
-            "Please install it mcore_adapter and their dependencies."
+            "Please install `mcore_adapter` and its dependencies."
         )
 else:
     BaseTrainingArguments = Seq2SeqTrainingArguments
