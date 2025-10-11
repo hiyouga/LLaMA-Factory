@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from dataclasses import dataclass
 from typing import Any
 
@@ -100,40 +101,26 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             batch_image_grid_thw.append(feature.pop("image_grid_thw"))
             batch_video_grid_thw.append(feature.pop("video_grid_thw"))
 
-        features: dict[str, torch.Tensor] = super().__call__(features)
+        batch: dict[str, torch.Tensor] = super().__call__(features)
 
-        features["pixel_values"] = torch.cat(batch_pixel_values, dim=0)
-        features["pixel_values_videos"] = torch.cat(batch_pixel_values_videos, dim=0)
-        features["image_grid_thw"] = torch.cat(batch_image_grid_thw, dim=0)
-        features["video_grid_thw"] = torch.cat(batch_video_grid_thw, dim=0)
+        batch["pixel_values"] = torch.cat(batch_pixel_values, dim=0)
+        batch["pixel_values_videos"] = torch.cat(batch_pixel_values_videos, dim=0)
+        batch["image_grid_thw"] = torch.cat(batch_image_grid_thw, dim=0)
+        batch["video_grid_thw"] = torch.cat(batch_video_grid_thw, dim=0)
 
         if self.get_rope_func is not None:
             rope_index_kwargs = {
-                "input_ids": features["input_ids"],
-                "image_grid_thw": features["image_grid_thw"],
-                "video_grid_thw": features["video_grid_thw"],
-                "attention_mask": (features["attention_mask"] >= 1).float(),
+                "input_ids": batch["input_ids"],
+                "image_grid_thw": batch["image_grid_thw"],
+                "video_grid_thw": batch["video_grid_thw"],
+                "attention_mask": (batch["attention_mask"] >= 1).float(),
             }
-            features["position_ids"], features["rope_deltas"] = self.get_rope_func(**rope_index_kwargs)
+            batch["position_ids"], batch["rope_deltas"] = self.get_rope_func(**rope_index_kwargs)
 
-        if (
-            self.model is not None
-            and getattr(self.model.config, "model_type", None)
-            in [
-                "glm4v",
-                "Keye",
-                "qwen2_vl",
-                "qwen2_5_vl",
-                "qwen2_5_omni_thinker",
-                "qwen3_omni_moe_thinker",
-                "qwen3_vl",
-                "qwen3_vl_moe",
-            ]
-            and ("position_ids" not in features or features["position_ids"].dim() != 3)
-        ):
-            raise ValueError(f"{self.model.config.model_type} requires 3D position ids for mrope.")
+        if "position_ids" not in batch or batch["position_ids"].dim() != 3:
+            raise ValueError("Qwen2VL requires 3D position ids for mrope.")
 
-        return features
+        return batch
 
 
 def bench_qwen(
@@ -141,8 +128,10 @@ def bench_qwen(
     batch_size: int = 1,
     seq_length: int = 2048,
     liger_kernel: bool = False,
-    deepspeed_stage: int = 0,
+    deepspeed_stage: int = 3,
 ):
+    os.environ["LLAMABOARD_ENABLED"] = "true"
+    os.environ["LLAMABOARD_WORKDIR"] = "output/dummy_dir"
     args = {
         "model_name_or_path": model_name_or_path,
         "enable_liger_kernel": liger_kernel,
@@ -152,29 +141,29 @@ def bench_qwen(
         "dataset": "alpaca_en_demo",
         "template": "qwen2_vl",
         "cutoff_len": seq_length,
-        "output_dir": "dummy_dir",
-        "logging_strategy": "no",
+        "output_dir": "output/dummy_dir",
+        "logging_steps": 10,
         "save_strategy": "no",
         "save_only_model": True,
         "overwrite_output_dir": True,
         "per_device_train_batch_size": batch_size,
-        "max_steps": 100,
+        "max_steps": 1000,
         "bf16": True,
         "include_num_input_tokens_seen": True,
+        "report_to": "none",
     }
     if deepspeed_stage in [2, 3]:
         args["deepspeed"] = f"examples/deepspeed/ds_z{deepspeed_stage}_config.json"
 
-    model_args, data_args, training_args, finetuning_args, _ = get_train_args(args)
+    model_args, _, training_args, finetuning_args, _ = get_train_args(args)
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
-    trainset = DummyDataset(size=10000, seq_length=seq_length, processor=tokenizer_module["processor"])
+    trainset = DummyDataset(size=100000, seq_length=seq_length, processor=tokenizer_module["processor"])
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
     data_collator = MultiModalDataCollatorForSeq2Seq(
-        model=model, pad_to_multiple_of=8, label_pad_token_id=IGNORE_INDEX
+        tokenizer=tokenizer, model=model, pad_to_multiple_of=8, label_pad_token_id=IGNORE_INDEX
     )
 
-    # Initialize our Trainer
     trainer = CustomSeq2SeqTrainer(
         model=model,
         args=training_args,
