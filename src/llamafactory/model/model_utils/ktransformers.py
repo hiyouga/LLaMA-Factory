@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from typing import TYPE_CHECKING, Any, Optional
+import importlib.util as _u
 
 import torch
 
@@ -25,30 +26,21 @@ if TYPE_CHECKING:
 
 from transformers import PretrainedConfig, PreTrainedModel, AutoConfig, AutoModelForCausalLM
 
-from ktransformers.optimize.optimize import optimize_and_load_gguf
-from ktransformers.models.modeling_deepseek import DeepseekV2ForCausalLM
-from ktransformers.models.modeling_qwen2_moe import Qwen2MoeForCausalLM
-from ktransformers.models.modeling_deepseek_v3 import DeepseekV3ForCausalLM
-from ktransformers.models.modeling_llama import LlamaForCausalLM
-from ktransformers.models.modeling_mixtral import MixtralForCausalLM
-from ktransformers.util.utils import load_weights, prefill_and_generate, prefill_and_generate_capture, get_compute_capability, xpu_fp16_model
-from ktransformers.server.config.config import Config
-from ktransformers.operators.flashinfer_wrapper import flashinfer_enabled
-from ktransformers.util.vendors import device_manager, get_device, to_device, GPUVendor
-from ktransformers.sft.lora import inject_lora_layer, lora_and_load_adapter
-from ktransformers.util.custom_loader import GGUFLoader, SafeTensorLoader
-from ktransformers.util.globals import GLOBAL_CONFIG
-from ktransformers.sft.metrics import ComputeSimilarity
+KT_AVAILABLE = _u.find_spec("ktransformers") is not None
+if KT_AVAILABLE:
+    from ktransformers.optimize.optimize import optimize_and_load_gguf
+    from ktransformers.models.modeling_deepseek import DeepseekV2ForCausalLM
+    from ktransformers.models.modeling_qwen2_moe import Qwen2MoeForCausalLM
+    from ktransformers.models.modeling_deepseek_v3 import DeepseekV3ForCausalLM
+    from ktransformers.models.modeling_llama import LlamaForCausalLM
+    from ktransformers.models.modeling_mixtral import MixtralForCausalLM
+    from ktransformers.util.utils import load_weights, xpu_fp16_model
+    from ktransformers.server.config.config import Config
+    from ktransformers.sft.lora import inject_lora_layer
+    from ktransformers.util.custom_loader import GGUFLoader, SafeTensorLoader
+    from ktransformers.util.globals import GLOBAL_CONFIG
 
 logger = logging.get_logger(__name__)
-
-custom_models = {
-    "DeepseekV2ForCausalLM": DeepseekV2ForCausalLM,
-    "DeepseekV3ForCausalLM": DeepseekV3ForCausalLM,
-    "Qwen2MoeForCausalLM": Qwen2MoeForCausalLM,
-    "LlamaForCausalLM": LlamaForCausalLM,
-    "MixtralForCausalLM": MixtralForCausalLM,
-}
 
 def _get_kt_kwargs(
     config: "PretrainedConfig",
@@ -75,6 +67,13 @@ def load_kt_pretrained_model(
     config: "PretrainedConfig", model_args: "ModelArguments", finetuning_args: "FinetuningArguments"
 ) -> Optional["PreTrainedModel"]:
     r"""Optionally load pretrained model with KTransformers. Used in training."""
+    custom_models = {
+        "DeepseekV2ForCausalLM": DeepseekV2ForCausalLM,
+        "DeepseekV3ForCausalLM": DeepseekV3ForCausalLM,
+        "Qwen2MoeForCausalLM": Qwen2MoeForCausalLM,
+        "LlamaForCausalLM": LlamaForCausalLM,
+        "MixtralForCausalLM": MixtralForCausalLM,
+    }
     Config().cpu_infer = model_args.cpu_infer
     Config().chunk_size = model_args.chunk_size
     if torch.xpu.is_available():
