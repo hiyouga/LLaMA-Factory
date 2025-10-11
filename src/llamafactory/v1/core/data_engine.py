@@ -34,7 +34,16 @@ class DataCollator:
         self.dataset_info = dataset_info
 
     def __call__(self, features: list[dict[str, Any]]) -> dict[str, Tensor]:
-        pass
+        """Collate features into a batch."""
+        for feature in features:
+            dataset_info = self.dataset_info[feature["_dataset_name"]]
+            if dataset_info["converter"] is not None:
+                pass
+
+            pass
+
+        # sft: messages
+        # dpo: chosen_messages, rejected_messages
 
 
 class DataEngine(Dataset):
@@ -124,7 +133,7 @@ class DataEngine(Dataset):
         else:
             return len(self.data_index)
 
-    def __getitem__(self, index: Union[int, slice, list[int]]) -> Union[dict, list[dict]]:
+    def __getitem__(self, index: Union[int, Any]) -> Union[dict, Any]:
         """Get dataset item.
 
         Args:

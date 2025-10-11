@@ -15,7 +15,7 @@
 
 import os
 from dataclasses import dataclass
-from typing import Literal, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 from datasets import load_dataset
 
@@ -93,7 +93,7 @@ class DataGetItemPlugin:
         dataset_name, sample_index = self.data_index[index]
         return {"_dataset_name": dataset_name, **self.datasets[dataset_name][sample_index]}
 
-    def get_data(self, index: Union[slice, list[int]]) -> list[dict]:
+    def get_data(self, index: Union[slice, list[int], Any]) -> Union[list[dict], Any]:
         if isinstance(index, slice):
             return [self._get_by_index(i) for i in range(*index.indices(len(self.data_index)))]
         elif isinstance(index, list):
