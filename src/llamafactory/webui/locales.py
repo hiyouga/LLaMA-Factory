@@ -1323,6 +1323,28 @@ LOCALES = {
             "info": "LoRA 層以外の学習可能なモジュールの名前。複数のモジュールを区切るにはカンマを使用します。",
         },
     },
+    "lora_parameters": {
+        "en": {
+            "label": "LoRA parameters (optional)",
+            "info": "Name(s) of parameters to apply LoRA. Use commas to separate multiple parameters.",
+        },
+        "ru": {
+            "label": "Параметры LoRA (необязательно)",
+            "info": "Имя(ена) параметров для применения LoRA. Используйте запятые для разделения нескольких параметров.",
+        },
+        "zh": {
+            "label": "LoRA 参数（可选）",
+            "info": "要应用 LoRA 的参数名称。使用逗号分隔多个参数。",
+        },
+        "ko": {
+            "label": "LoRA 매개변수 (선택 사항)",
+            "info": "LoRA를 적용할 매개변수의 이름입니다. 여러 매개변수를 구분하려면 쉼표를 사용하십시오.",
+        },
+        "ja": {
+            "label": "LoRA パラメータ (オプション)",
+            "info": "LoRA を適用するパラメータの名前。複数のパラメータを区切るにはカンマを使用します。",
+        },
+    },
     "rlhf_tab": {
         "en": {
             "label": "RLHF configurations",
