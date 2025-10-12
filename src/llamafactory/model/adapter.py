@@ -235,6 +235,7 @@ def _setup_lora_tuning(
                 "use_rslora": finetuning_args.use_rslora,
                 "use_dora": finetuning_args.use_dora,
                 "modules_to_save": finetuning_args.additional_target,
+                "target_parameters": finetuning_args.lora_parameters,
             }
         elif finetuning_args.finetuning_type == "oft":
             peft_kwargs = {
