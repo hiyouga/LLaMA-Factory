@@ -51,8 +51,6 @@ class DummyDataset(Dataset):
         self.video_grid_thw = torch.tensor([[video_t, 18, 18]], dtype=torch.long)
         self.video_seqlen = video_t * image_token_num
 
-        self.seq_length = self.text_seqlen + self.image_seqlen + self.video_seqlen
-
     def __len__(self):
         return self.size
 
