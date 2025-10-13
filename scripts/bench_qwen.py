@@ -89,15 +89,10 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             self.get_rope_func = None
 
     def __call__(self, features: list[dict[str, Any]]) -> dict[str, "torch.Tensor"]:
-        batch_pixel_values = []
-        batch_pixel_values_videos = []
-        batch_image_grid_thw = []
-        batch_video_grid_thw = []
-        for feature in features:
-            batch_pixel_values.append(feature.pop("pixel_values"))
-            batch_pixel_values_videos.append(feature.pop("pixel_values_videos"))
-            batch_image_grid_thw.append(feature.pop("image_grid_thw"))
-            batch_video_grid_thw.append(feature.pop("video_grid_thw"))
+        batch_pixel_values = [feature.pop("pixel_values") for feature in features]
+        batch_pixel_values_videos = [feature.pop("pixel_values_videos") for feature in features]
+        batch_image_grid_thw = [feature.pop("image_grid_thw") for feature in features]
+        batch_video_grid_thw = [feature.pop("video_grid_thw") for feature in features]
 
         batch: dict[str, torch.Tensor] = super().__call__(features)
 
