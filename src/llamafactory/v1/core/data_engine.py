@@ -23,7 +23,6 @@ from torch.utils.data import Dataset
 
 from ..config.data_args import DataArguments
 from ..extras.types import DatasetInfo, HFDataset, Sample
-from ..plugins.data_plugins.loader import DataIndexPlugin, DataLoaderPlugin, DataSelectorPlugin
 
 
 class DataEngine(Dataset):
@@ -40,12 +39,6 @@ class DataEngine(Dataset):
         """List of (dataset_name, sample_index)"""
         self.streaming: bool = False
         """Whether dataset is streaming."""
-        self.data_loader_plugin = DataLoaderPlugin(args=self.args)
-        """Data loader plugin."""
-        self.data_index_plugin = DataIndexPlugin()
-        """Data index plugin."""
-        self.data_selector_plugin = DataSelectorPlugin(data_index=self.data_index)
-        """Data selector plugin."""
         self.get_dataset_info()
         self.load_dataset()
         self.build_data_index()
@@ -74,7 +67,9 @@ class DataEngine(Dataset):
             if "hf_hub_url" in value:
                 self.datasets[key] = load_dataset(value["hf_hub_url"], split=split, streaming=streaming)
             else:  # data loader plugin
-                self.datasets[key] = self.data_loader_plugin.auto_load_data(value)
+                from ..plugins.data_plugins.loader import DataLoaderPlugin
+
+                self.datasets[key] = DataLoaderPlugin(args=self.args).auto_load_data(value)
 
     def build_data_index(self) -> None:
         """Build dataset index."""
@@ -87,7 +82,9 @@ class DataEngine(Dataset):
                 data_index = [(dataset_name, sample_index) for sample_index in range(len(dataset))]
 
             if size or weight:  # data index plugin
-                data_index = self.data_index_plugin.adjust_data_index(data_index, size, weight)
+                from ..plugins.data_plugins.loader import DataIndexPlugin
+
+                data_index = DataIndexPlugin().adjust_data_index(data_index, size, weight)
 
             self.data_index.extend(data_index)
 
@@ -136,14 +133,16 @@ class DataEngine(Dataset):
             dataset_name, sample_index = self.data_index[index]
             return self._convert_data_sample(self.datasets[dataset_name][sample_index], dataset_name)
         else:
-            data_index = self.data_selector_plugin.select(index)
-            if isinstance(data_index, list):
+            from ..plugins.data_plugins.loader import DataSelectorPlugin
+
+            selected_index = DataSelectorPlugin(data_index=self.data_index).select(index)
+            if isinstance(selected_index, list):
                 return [
                     self._convert_data_sample(self.datasets[dataset_name][sample_index], dataset_name)
-                    for dataset_name, sample_index in data_index
+                    for dataset_name, sample_index in selected_index
                 ]
             else:
-                dataset_name, sample_index = data_index
+                dataset_name, sample_index = selected_index
                 return self._convert_data_sample(self.datasets[dataset_name][sample_index], dataset_name)
 
     def __iter__(self) -> Iterable:
