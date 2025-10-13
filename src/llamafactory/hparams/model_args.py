@@ -99,26 +99,6 @@ class BaseModelArguments:
         default=None,
         metadata={"help": "Convert the model to mixture-of-depths (MoD) or load the MoD model."},
     )
-    use_kt: bool = field(
-        default=False,
-        metadata={"help": "Whether or not to use ktransformers's optimization for the LoRA training."},
-    )
-    kt_optimize_rule: Optional[str] = field(
-        default=None,
-        metadata={"help":"Path to the ktransformers optimize rule, according to https://github.com/kvcache-ai/ktransformers/"},
-    )
-    cpu_infer: Optional[int] = field(
-        default=32,
-        metadata={"help":"The calculation is based on the number of CPU cores used"},
-    )
-    chunk_size: Optional[int] = field(
-        default=8192,
-        metadata={"help":"chunk size used for CPU calculate in KTransformers"},
-    )
-    mode: Optional[str] = field(
-        default="normal",
-        metadata={"help":"normal or long_context for llama model"},
-    )
     use_unsloth: bool = field(
         default=False,
         metadata={"help": "Whether or not to use unsloth's optimization for the LoRA training."},

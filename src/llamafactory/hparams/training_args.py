@@ -19,7 +19,7 @@ from typing import Literal, Optional, Union
 from transformers import Seq2SeqTrainingArguments
 from transformers.training_args import _convert_str_dict
 
-from ..extras.misc import use_ray
+from ..extras.misc import use_ray, use_kt
 
 
 @dataclass
@@ -57,6 +57,7 @@ class RayArguments:
 
     def __post_init__(self):
         self.use_ray = use_ray()
+        self.use_kt = use_kt()
         if isinstance(self.resources_per_worker, str) and self.resources_per_worker.startswith("{"):
             self.resources_per_worker = _convert_str_dict(json.loads(self.resources_per_worker))
 
@@ -76,9 +77,33 @@ class RayArguments:
             elif self.ray_storage_filesystem == "gs" or self.ray_storage_filesystem == "gcs":
                 self.ray_storage_filesystem = fs.GcsFileSystem()
 
+@dataclass
+class KTransformersArguments:
+    r"""Arguments pertaining to the KT training."""
+    
+    use_kt: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use ktransformers's optimization for the LoRA training."},
+    )
+    kt_optimize_rule: Optional[str] = field(
+        default=None,
+        metadata={"help":"Path to the ktransformers optimize rule, according to https://github.com/kvcache-ai/ktransformers/"},
+    )
+    cpu_infer: Optional[int] = field(
+        default=32,
+        metadata={"help":"The calculation is based on the number of CPU cores used"},
+    )
+    chunk_size: Optional[int] = field(
+        default=8192,
+        metadata={"help":"chunk size used for CPU calculate in KTransformers"},
+    )
+    mode: Optional[str] = field(
+        default="normal",
+        metadata={"help":"normal or long_context for llama model"},
+    )
 
 @dataclass
-class TrainingArguments(RayArguments, Seq2SeqTrainingArguments):
+class TrainingArguments(RayArguments, KTransformersArguments, Seq2SeqTrainingArguments):
     r"""Arguments pertaining to the trainer."""
 
     def __post_init__(self):
