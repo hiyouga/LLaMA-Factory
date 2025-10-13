@@ -43,6 +43,9 @@ jobs:
           - python: "3.9"
             os: "ubuntu-latest"
             transformers: "4.53.0"
+        exclude:  # exclude python 3.9 on macos
+          - python: "3.9"
+            os: "macos-latest"
 
     runs-on: ${{ matrix.os }}
 
