@@ -25,7 +25,10 @@ from ...extras.types import DatasetInfo, HFDataset
 
 @dataclass
 class DataLoaderPlugin:
+    """Plugin for loading dataset."""
+
     args: DataArguments
+    """Data arguments."""
 
     def _get_builder_name(self, path: str) -> Literal["arrow", "csv", "json", "parquet", "text"]:
         """Get dataset builder name.
@@ -66,9 +69,21 @@ class DataLoaderPlugin:
 
 @dataclass
 class DataIndexPlugin:
+    """Plugin for adjusting dataset index."""
+
     def adjust_data_index(
         self, data_index: list[tuple[str, int]], size: Optional[int], weight: Optional[float]
     ) -> list[tuple[str, int]]:
+        """Adjust dataset index by size and weight.
+
+        Args:
+            data_index (list[tuple[str, int]]): List of (dataset_name, sample_index).
+            size (Optional[int]): Desired dataset size.
+            weight (Optional[float]): Desired dataset weight.
+
+        Returns:
+            list[tuple[str, int]]: Adjusted dataset index.
+        """
         if size is not None:
             data_index = self.adjust_by_size(data_index, size)
 
@@ -85,18 +100,24 @@ class DataIndexPlugin:
 
 
 @dataclass
-class DataGetItemPlugin:
-    datasets: dict[str, HFDataset]
+class DataSelectorPlugin:
+    """Plugin for selecting dataset samples."""
+
     data_index: list[tuple[str, int]]
+    """List of (dataset_name, sample_index)"""
 
-    def _get_by_index(self, index: int) -> dict:
-        dataset_name, sample_index = self.data_index[index]
-        return {"_dataset_name": dataset_name, **self.datasets[dataset_name][sample_index]}
+    def select(self, index: Union[slice, list[int], Any]) -> Union[tuple[str, int], list[tuple[str, int]]]:
+        """Select dataset samples.
 
-    def get_data(self, index: Union[slice, list[int], Any]) -> Union[list[dict], Any]:
+        Args:
+            index (Union[slice, list[int], Any]): Index of dataset samples.
+
+        Returns:
+            Union[tuple[str, int], list[tuple[str, int]]]: Selected dataset samples.
+        """
         if isinstance(index, slice):
-            return [self._get_by_index(i) for i in range(*index.indices(len(self.data_index)))]
+            return [self.data_index[i] for i in range(*index.indices(len(self.data_index)))]
         elif isinstance(index, list):
-            return [self._get_by_index(i) for i in index]
+            return [self.data_index[i] for i in index]
         else:
             raise ValueError(f"Invalid index type {type(index)}.")
