@@ -12,8 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Any
+
 from ..config.training_args import TrainingArguments
-from ..extras.types import DataCollator, Model, Processor, TorchDataset
+from ..extras.types import Model, Processor, Tensor, TorchDataset
+
+
+class DataCollator:
+    """Default Data collator."""
+
+    def __init__(self, processor: Processor) -> None:
+        self.processor = processor
+
+    def __call__(self, features: list[dict[str, Any]]) -> dict[str, Tensor]:
+        """Collate features into a batch."""
+        for feature in features:
+            pass
+
+        # sft: messages
+        # dpo: chosen_messages, rejected_messages
 
 
 class BaseTrainer:

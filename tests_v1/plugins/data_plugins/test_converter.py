@@ -22,15 +22,31 @@ from llamafactory.v1.core.data_engine import DataEngine
 
 
 @pytest.mark.parametrize("num_samples", [16])
-def test_map_dataset(num_samples: int):
-    data_args = DataArguments(dataset="llamafactory/v1-sft-demo")
+def test_alpaca_converter(num_samples: int):
+    data_args = DataArguments(dataset="llamafactory/v1-sft-demo/dataset_info.yaml")
     data_engine = DataEngine(data_args)
-    original_data = load_dataset("llamafactory/v1-sft-demo", split="train")
+    original_data = load_dataset("llamafactory/tiny-supervised-dataset", split="train")
     indexes = random.choices(range(len(data_engine)), k=num_samples)
     for index in indexes:
         print(data_engine[index])
-        assert data_engine[index] == {"_dataset_name": "default", **original_data[index]}
+        expected_data = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "value": original_data[index]["instruction"] + original_data[index]["input"]}
+                    ],
+                    "loss_weight": 0.0,
+                },
+                {
+                    "role": "assistant",
+                    "content": [{"type": "text", "value": original_data[index]["output"]}],
+                    "loss_weight": 1.0,
+                },
+            ]
+        }
+        assert data_engine[index] == {"_dataset_name": "tiny_dataset", **expected_data}
 
 
 if __name__ == "__main__":
-    test_map_dataset(1)
+    test_alpaca_converter(1)
