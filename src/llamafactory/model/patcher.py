@@ -175,7 +175,12 @@ def patch_model(
         prepare_valuehead_model(model)
 
     if model_args.resize_vocab:
-        resize_embedding_layer(model, tokenizer)
+        resize_embedding_layer(
+            model,
+            tokenizer,
+            new_special_tokens_config=getattr(model_args, "_special_token_descriptions", None),
+            init_special_tokens=model_args.init_special_tokens,
+        )
 
     if is_trainable:
         if getattr(model.config, "model_type", None) == "gemma3n":
