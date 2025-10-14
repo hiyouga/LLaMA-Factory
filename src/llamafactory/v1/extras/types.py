@@ -11,8 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from enum import Enum
+from typing import TYPE_CHECKING, Literal, TypedDict, Union
 
-from typing import TYPE_CHECKING, Literal, NotRequired, TypedDict, Union
+
+try:
+    from typing import NotRequired  # Python 3.11+
+except ImportError:
+    from typing_extensions import NotRequired  # Python < 3.11
 
 
 if TYPE_CHECKING:
@@ -91,3 +97,18 @@ class Model(TypedDict):
     """HF model."""
     dist_model: DistModel
     """Distributed model."""
+
+
+class KernelType(str, Enum):
+    RMSNORM = "rmsnorm"
+    SWIGLU = "swiglu"
+    FLASH_ATTENTION = "flash_attention"
+    ROPE = "rope"
+    MOE = "moe"
+
+
+class DeviceType(str, Enum):
+    CPU = 'cpu'
+    CUDA = 'cuda'
+    NPU = 'npu'
+    XPU = 'xpu'
