@@ -93,23 +93,18 @@ def _description_based_initialization(
                     f"Description for token {i+1}/{num_new_tokens} contains no valid tokens. "
                     "Using mean of existing embeddings."
                 )
-                avg_weight = embed_weight[:-num_new_tokens].mean(dim=0)
-                noise = (
-                    torch.normal(mean=0, std=(1.0 / math.sqrt(embedding_dim)), size=(embedding_dim,))
-                    if add_noise
-                    else 0
-                )
-                embed_weight[-num_new_tokens + i] = avg_weight + noise
+                base_embedding = embed_weight[:-num_new_tokens].mean(dim=0)
             else:
                 # Get embeddings of description tokens and average them
                 token_embeds = model.get_input_embeddings()(valid_token_ids)
-                avg_embed = token_embeds.mean(dim=0)
-                noise = (
-                    torch.normal(mean=0, std=(1.0 / math.sqrt(embedding_dim)), size=(embedding_dim,))
-                    if add_noise
-                    else 0
-                )
-                embed_weight[-num_new_tokens + i] = avg_embed + noise
+                base_embedding = token_embeds.mean(dim=0)
+
+            # Add noise if requested (ensure correct device and dtype)
+            if add_noise:
+                noise = torch.randn_like(base_embedding) * (1.0 / math.sqrt(embedding_dim))
+                embed_weight[-num_new_tokens + i] = base_embedding + noise
+            else:
+                embed_weight[-num_new_tokens + i] = base_embedding
 
 
 def _initialize_embeddings(

@@ -22,9 +22,12 @@ from typing import Any, Literal, Optional, Union
 import torch
 from transformers.training_args import _convert_str_dict
 from typing_extensions import Self
+from omegaconf import OmegaConf
 
 from ..extras.constants import AttentionFunction, EngineName, QuantizationMethod, RopeScaling
+from ..extras.logging import get_logger
 
+logger = get_logger(__name__)
 
 @dataclass
 class BaseModelArguments:
@@ -210,12 +213,6 @@ class BaseModelArguments:
         # Process special tokens with priority: new_special_tokens_config > add_special_tokens
         if self.new_special_tokens_config is not None:
             # Priority 1: Load from YAML config (extracts both tokens and descriptions)
-            from omegaconf import OmegaConf
-
-            from ..extras.logging import get_logger
-
-            logger = get_logger(__name__)
-
             try:
                 cfg = OmegaConf.load(self.new_special_tokens_config)
                 token_descriptions = OmegaConf.to_container(cfg)
@@ -265,9 +262,6 @@ class BaseModelArguments:
         # Validate init method
         if self.init_special_tokens in ["desc_init", "desc_init_w_noise"]:
             if not hasattr(self, "_special_token_descriptions") or self._special_token_descriptions is None:
-                from ..extras.logging import get_logger
-
-                logger = get_logger(__name__)
                 logger.warning_rank0(
                     f"init_special_tokens='{self.init_special_tokens}' requires new_special_tokens_config. "
                     "Falling back to 'noise_init'"
