@@ -261,7 +261,7 @@ class BaseModelArguments:
 
         # Validate init method
         if self.init_special_tokens in ["desc_init", "desc_init_w_noise"]:
-            if not hasattr(self, "_special_token_descriptions") or self._special_token_descriptions is None:
+            if self._special_token_descriptions is None:
                 logger.warning_rank0(
                     f"init_special_tokens='{self.init_special_tokens}' requires new_special_tokens_config. "
                     "Falling back to 'noise_init'"

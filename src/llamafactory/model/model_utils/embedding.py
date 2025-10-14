@@ -84,6 +84,10 @@ def _description_based_initialization(
 
         with torch.no_grad():
             token_ids = tokens["input_ids"][0]
+            # Move to the same device as embed_weight
+            device = embed_weight.device
+            token_ids = token_ids.to(device)
+
             # Filter out new tokens (they don't have valid embeddings yet)
             valid_token_ids = token_ids[token_ids < (len(tokenizer) - num_new_tokens)]
 
