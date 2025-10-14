@@ -38,7 +38,7 @@ from .evaluation_args import EvaluationArguments
 from .finetuning_args import FinetuningArguments
 from .generating_args import GeneratingArguments
 from .model_args import ModelArguments
-from .training_args import RayArguments, KTransformersArguments, TrainingArguments
+from .training_args import RayArguments, TrainingArguments
 
 
 logger = logging.get_logger(__name__)
@@ -216,11 +216,6 @@ def get_ray_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> Ray
     parser = HfArgumentParser(RayArguments)
     (ray_args,) = _parse_args(parser, args, allow_extra_keys=True)
     return ray_args
-
-def get_kt_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> KTransformersArguments:
-    parser = HfArgumentParser(KTransformersArguments)
-    (kt_args,) = _parse_args(parser, args, allow_extra_keys=True)
-    return kt_args
 
 
 def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _TRAIN_CLS:

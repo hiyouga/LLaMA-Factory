@@ -25,7 +25,6 @@ from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
 from ..trainer_utils import create_modelcard_and_push
 from .metric import ComputeAccuracy, ComputeSimilarity, eval_logit_processor
-from .trainer import CustomSeq2SeqTrainer
 
 
 if TYPE_CHECKING:
@@ -50,6 +49,9 @@ def run_sft(
     template = get_template_and_fix_tokenizer(tokenizer, data_args)
     dataset_module = get_dataset(template, model_args, data_args, training_args, stage="sft", **tokenizer_module)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
+    
+    from ktransformers.util.globals import GLOBAL_CONFIG
+    GLOBAL_CONFIG._config["mod"] = "sft"
 
     if getattr(model, "is_quantized", False) and not training_args.do_train:
         setattr(model, "_hf_peft_config_loaded", True)  # hack here: make model compatible with prediction
@@ -79,13 +81,17 @@ def run_sft(
     gen_kwargs["pad_token_id"] = tokenizer.pad_token_id
 
     # Initialize our Trainer
-    trainer = CustomSeq2SeqTrainer(
+    from ktransformers.sft.lora import KTrainer
+    if "processor" in tokenizer_module:
+        proc = tokenizer_module.pop("processor")
+        tok = getattr(proc, "tokenizer", None)
+        if tok is not None:
+            tokenizer_module["tokenizer"] = tok
+    trainer = KTrainer(
         model=model,
         args=training_args,
-        finetuning_args=finetuning_args,
         data_collator=data_collator,
         callbacks=callbacks,
-        gen_kwargs=gen_kwargs,
         **dataset_module,
         **tokenizer_module,
         **metric_module,
@@ -93,6 +99,7 @@ def run_sft(
 
     # Training
     if training_args.do_train:
+        model.config.use_cache = False
         train_result = trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
         trainer.save_model()
         if finetuning_args.include_effective_tokens_per_second:

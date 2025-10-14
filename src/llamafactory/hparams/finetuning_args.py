@@ -439,6 +439,34 @@ class SwanLabArguments:
         metadata={"help": "The Lark(飞书) secret for SwanLab."},
     )
 
+@dataclass
+class KTransformersArguments:
+    r"""Arguments pertaining to the KT training."""
+    
+    use_kt: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use ktransformers's optimization for the LoRA training."},
+    )
+    kt_optimize_rule: Optional[str] = field(
+        default=None,
+        metadata={"help":"Path to the ktransformers optimize rule, according to https://github.com/kvcache-ai/ktransformers/"},
+    )
+    cpu_infer: Optional[int] = field(
+        default=32,
+        metadata={"help":"The calculation is based on the number of CPU cores used"},
+    )
+    chunk_size: Optional[int] = field(
+        default=8192,
+        metadata={"help":"chunk size used for CPU calculate in KTransformers"},
+    )
+    mode: Optional[str] = field(
+        default="normal",
+        metadata={"help":"normal or long_context for llama model"},
+    )
+    
+    def __post_init__(self):
+        self.use_kt = use_kt()
+
 
 @dataclass
 class FinetuningArguments(
