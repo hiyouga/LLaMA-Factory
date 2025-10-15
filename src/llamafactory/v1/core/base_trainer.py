@@ -15,7 +15,8 @@
 from typing import Any
 
 from ..config.training_args import TrainingArguments
-from ..extras.types import Model, Processor, Tensor, TorchDataset
+from ..extras.types import Processor, Tensor, TorchDataset
+from .model_worker import ModelWorker
 
 
 class DataCollator:
@@ -37,18 +38,24 @@ class BaseTrainer:
     def __init__(
         self,
         args: TrainingArguments,
-        model: Model,
-        processor: Processor,
         dataset: TorchDataset,
         data_collator: DataCollator,
+        model_worker: ModelWorker,
     ) -> None:
         self.args = args
-        self.model = model
-        self.processor = processor
         self.dataset = dataset
         self.data_collator = data_collator
+        self.model_worker = model_worker
         self.optimizer = None
         self.lr_scheduler = None
+
+    def init_device_mesh(self) -> None:
+        pass
+
+    def init_model_and_optimizer(self) -> None:
+        self.model_config = self.model_worker.get_model_config()
+        with self.dist_plugin.get_model_init_context():
+            self.model = self.model_worker.get_model(self.model_config)
 
     def create_dataloader(self) -> None:
         pass

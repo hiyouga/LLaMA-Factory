@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     HFDataset = Union[datasets.Dataset, datasets.IterableDataset]
     DataCollator = transformers.DataCollator
     DataLoader = torch.utils.data.DataLoader
+    HFConfig = transformers.PretrainedConfig
     HFModel = transformers.PreTrainedModel
     DistModel = torch.nn.parallel.DistributedDataParallel
     Processor = Union[transformers.PreTrainedTokenizer, transformers.ProcessorMixin]
@@ -37,6 +38,7 @@ else:
     HFDataset = None
     DataCollator = None
     DataLoader = None
+    HFConfig = None
     HFModel = None
     DistModel = None
     Processor = None
@@ -86,10 +88,3 @@ class DPOSample(TypedDict):
 
 
 Sample = Union[SFTSample, DPOSample]
-
-
-class Model(TypedDict):
-    hf_model: HFModel
-    """HF model."""
-    dist_model: DistModel
-    """Distributed model."""

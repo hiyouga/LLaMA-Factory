@@ -14,10 +14,20 @@
 
 
 from dataclasses import dataclass, field
+from enum import Enum
+
+
+class SampleBackend(Enum):
+    HF = "hf"
+    VLLM = "vllm"
 
 
 @dataclass
 class SampleArguments:
+    sample_backend: SampleBackend = field(
+        default=SampleBackend.HF,
+        metadata={"help": "Sampling backend, default to 'hf'."},
+    )
     max_new_tokens: int = field(
         default=128,
         metadata={"help": "Maximum number of new tokens to generate."},
