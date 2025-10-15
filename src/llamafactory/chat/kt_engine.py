@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     from transformers import PreTrainedTokenizer
     from trl import PreTrainedModelWrapper
 
+    from ..data.mm_plugin import AudioInput, ImageInput, VideoInput
     from ..hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
 
 from ktransformers.operators.flashinfer_wrapper import flashinfer_enabled
@@ -207,14 +208,22 @@ class KTransformersEngine(BaseEngine):
         messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
+        images: Optional[list["ImageInput"]] = None,
+        videos: Optional[list["VideoInput"]] = None,
+        audios: Optional[list["AudioInput"]] = None,
         **input_kwargs,
     ) -> list["Response"]:
         if not self.can_generate:
             raise ValueError("The current model does not support `chat`.")
         async with self.semaphore:
+            produced = ""
             final_text = ""
             async for t in self._generate(messages, system, tools, **input_kwargs):
-                final_text = t
+                delta = t
+                produced = produced + delta
+                if delta:
+                    final_text += delta
+
             prompt_ids, _ = self.template.encode_oneturn(
                 self.tokenizer, messages + [{"role": "assistant", "content": ""}], system, tools
             )
@@ -233,6 +242,9 @@ class KTransformersEngine(BaseEngine):
         messages: list[dict[str, str]],
         system: Optional[str] = None,
         tools: Optional[str] = None,
+        images: Optional[list["ImageInput"]] = None,
+        videos: Optional[list["VideoInput"]] = None,
+        audios: Optional[list["AudioInput"]] = None,
         **input_kwargs,
     ) -> AsyncGenerator[str, None]:
         if not self.can_generate:
