@@ -201,7 +201,7 @@ def _setup_lora_tuning(
 
         if adapter_to_resume is not None:  # resume lora training
             if model_args.use_kt:
-                model = load_kt_peft_model(config, model_args, finetuning_args, model, is_trainable=is_trainable)
+                model = load_kt_peft_model(model_args, model)
             elif model_args.use_unsloth:
                 model = load_unsloth_peft_model(config, model_args, finetuning_args, is_trainable=is_trainable)
             else:
@@ -279,7 +279,7 @@ def _setup_lora_tuning(
             else:
                 raise ValueError("KTransformers is currently only supported for LoRA.")
 
-            model = get_kt_peft_model(model, model_args, peft_config)
+            model = get_kt_peft_model(model, peft_config)
             print(f"KT_model:{model}")
         elif model_args.use_unsloth:
             if finetuning_args.finetuning_type == "oft":

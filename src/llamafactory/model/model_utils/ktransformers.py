@@ -65,7 +65,7 @@ def _get_kt_kwargs(
 
 
 def load_kt_pretrained_model(
-    config: "PretrainedConfig", model_args: "ModelArguments", finetuning_args: "FinetuningArguments"
+    config: "PretrainedConfig", model_args: "ModelArguments"
 ) -> Optional["PreTrainedModel"]:
     r"""Optionally load pretrained model with KTransformers. Used in training."""
     custom_models = {
@@ -106,15 +106,8 @@ def load_kt_pretrained_model(
     optimize_config_path = model_args.kt_optimize_rule
     gguf_path = model_args.model_name_or_path
 
-    if optimize_config_path is None:
-        optimize_config_path = input(
-            "please input the path of your rule file(yaml file containing optimize rules):"
-        )
-
-    if gguf_path is None:
-        gguf_path = input(
-            "please input the path of your gguf file(gguf file in the dir containing input gguf file must all belong to current model):"
-        )
+    assert optimize_config_path is not None, "optimize_config_path must be provided (path to YAML rules file)."
+    assert gguf_path is not None, "gguf_path must be provided (path to a folder or .gguf file)."
 
     GLOBAL_CONFIG._config["mod"] = "infer"
     optimize_and_load_gguf(model, optimize_config_path, gguf_path, config)
@@ -123,7 +116,7 @@ def load_kt_pretrained_model(
 
 
 def get_kt_peft_model(
-    model: "PreTrainedModel", model_args: "ModelArguments", peft_kwargs: dict[str, Any]
+    model: "PreTrainedModel", peft_kwargs: dict[str, Any]
 ) -> "PreTrainedModel":
     r"""Get the peft model for the pretrained model with KTransformers. Used in training."""
     from ktransformers.sft.peft_utils.mapping import get_peft_model
@@ -132,11 +125,7 @@ def get_kt_peft_model(
 
 
 def load_kt_peft_model(
-    config: "PretrainedConfig",
-    model_args: "ModelArguments",
-    finetuning_args: "FinetuningArguments",
-    model: "PreTrainedModel",
-    is_trainable: bool,
+    model_args: "ModelArguments", model: "PreTrainedModel",
 ) -> "PreTrainedModel":
     r"""Load peft model with KTransformers. Used in both training and inference."""
     load_adapter_name_or_path = model_args.adapter_name_or_path[0]

@@ -147,7 +147,7 @@ def load_model(
     if model_args.use_kt:
         from ktransformers.sft.monkey_patch_torch_module import install_patch
         install_patch()
-        model = load_kt_pretrained_model(config, model_args, finetuning_args)
+        model = load_kt_pretrained_model(config, model_args)
     elif model_args.use_unsloth:
         if model_args.adapter_name_or_path is not None:
             lazy_load = True
