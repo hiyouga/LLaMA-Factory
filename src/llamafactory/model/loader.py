@@ -31,11 +31,11 @@ from trl import AutoModelForCausalLMWithValueHead
 from ..extras import logging
 from ..extras.misc import count_parameters, skip_check_imports, try_download_model_from_other_hub
 from .adapter import init_adapter
+from .model_utils.ktransformers import load_kt_pretrained_model
 from .model_utils.liger_kernel import apply_liger_kernel
 from .model_utils.misc import register_autoclass
 from .model_utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
 from .model_utils.unsloth import load_unsloth_pretrained_model
-from .model_utils.ktransformers import load_kt_pretrained_model
 from .model_utils.valuehead import load_valuehead_params
 from .patcher import patch_config, patch_model, patch_processor, patch_tokenizer, patch_valuehead_model
 
@@ -145,7 +145,7 @@ def load_model(
     model = None
     lazy_load = False
     if model_args.use_kt:
-        from ktransformers.sft.monkey_patch_torch_module import install_patch, restore_patch
+        from ktransformers.sft.monkey_patch_torch_module import install_patch
         install_patch()
         model = load_kt_pretrained_model(config, model_args, finetuning_args)
     elif model_args.use_unsloth:

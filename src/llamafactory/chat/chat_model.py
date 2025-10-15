@@ -74,7 +74,7 @@ class ChatModel:
         elif model_args.infer_backend == EngineName.KT:
             try:
                 from .kt_engine import KTransformersEngine
-                
+
                 self.engine: BaseEngine = KTransformersEngine(model_args, data_args, finetuning_args, generating_args)
             except ImportError as e:
                 raise ImportError(

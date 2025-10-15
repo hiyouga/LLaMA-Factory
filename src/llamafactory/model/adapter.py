@@ -19,11 +19,11 @@ import torch
 from peft import LoraConfig, LoraModel, OFTConfig, PeftModel, TaskType, get_peft_model
 from transformers.integrations import is_deepspeed_zero3_enabled
 
-from ..extras.constants import EngineName
 from ..extras import logging
+from ..extras.constants import EngineName
+from .model_utils.ktransformers import get_kt_peft_model, load_kt_peft_model
 from .model_utils.misc import find_all_linear_modules, find_expanded_modules
 from .model_utils.quantization import QuantizationMethod
-from .model_utils.ktransformers import get_kt_peft_model, load_kt_peft_model
 from .model_utils.unsloth import get_unsloth_peft_model, load_unsloth_peft_model
 from .model_utils.visual import COMPOSITE_MODELS, get_forbidden_modules, patch_target_modules
 
@@ -165,7 +165,7 @@ def _setup_lora_tuning(
         if is_deepspeed_zero3_enabled():
             assert len(model_args.adapter_name_or_path) == 1, "Cannot use multiple adapters in DeepSpeed ZeRO-3."
             is_mergeable = False
-            
+
         if model_args.use_kt:
             assert len(model_args.adapter_name_or_path) == 1, "Up to now, KTransformers model only accepts a single adapter, for more features, you can contact with us."
             is_mergeable = False
@@ -188,7 +188,7 @@ def _setup_lora_tuning(
             "token": model_args.hf_hub_token,
         }
 
-        if model_args.use_kt == True:
+        if model_args.use_kt:
             if model_args.infer_backend != EngineName.KT:
                 raise ValueError("We should use ktransformers as backend to infer the adapter fine-tuned by ktransformers.")
 
@@ -278,7 +278,7 @@ def _setup_lora_tuning(
                 )
             else:
                 raise ValueError("KTransformers is currently only supported for LoRA.")
-            
+
             model = get_kt_peft_model(model, model_args, peft_config)
             print(f"KT_model:{model}")
         elif model_args.use_unsloth:

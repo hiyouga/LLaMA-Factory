@@ -24,7 +24,6 @@ from ...extras.misc import calculate_tps
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
 from ..trainer_utils import create_modelcard_and_push
-from .metric import ComputeAccuracy, ComputeSimilarity, eval_logit_processor
 
 
 if TYPE_CHECKING:
@@ -49,7 +48,7 @@ def run_sft(
     template = get_template_and_fix_tokenizer(tokenizer, data_args)
     dataset_module = get_dataset(template, model_args, data_args, training_args, stage="sft", **tokenizer_module)
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
-    
+
     from ktransformers.util.globals import GLOBAL_CONFIG
     GLOBAL_CONFIG._config["mod"] = "sft"
 
@@ -70,15 +69,9 @@ def run_sft(
     # Metric utils
     metric_module = {}
     if training_args.predict_with_generate:
-        metric_module["compute_metrics"] = ComputeSimilarity(tokenizer=tokenizer)
+        raise NotImplementedError("`predict_with_generate` is not supported in KTransformers SFT yet. if you do need it, please open an issue.")
     elif finetuning_args.compute_accuracy:
-        metric_module["compute_metrics"] = ComputeAccuracy()
-        metric_module["preprocess_logits_for_metrics"] = eval_logit_processor
-
-    # Keyword arguments for `model.generate`
-    gen_kwargs = generating_args.to_dict(obey_generation_config=True)
-    gen_kwargs["eos_token_id"] = [tokenizer.eos_token_id] + tokenizer.additional_special_tokens_ids
-    gen_kwargs["pad_token_id"] = tokenizer.pad_token_id
+        raise NotImplementedError("`compute_accuracy` is not supported in KTransformers SFT yet. if you do need it, please open an issue.")
 
     # Initialize our Trainer
     from ktransformers.sft.lora import KTrainer
@@ -120,23 +113,6 @@ def run_sft(
                 keys += ["eval_loss", "eval_accuracy"]
 
             plot_loss(training_args.output_dir, keys=keys)
-
-    if training_args.predict_with_generate:
-        tokenizer.padding_side = "left"  # use left-padding in generation
-
-    # Evaluation
-    if training_args.do_eval:
-        metrics = trainer.evaluate(metric_key_prefix="eval", **gen_kwargs)
-        trainer.log_metrics("eval", metrics)
-        trainer.save_metrics("eval", metrics)
-
-    # Predict
-    if training_args.do_predict:
-        logger.warning_rank0_once("Batch generation can be very slow. Consider using `scripts/vllm_infer.py` instead.")
-        predict_results = trainer.predict(dataset_module["eval_dataset"], metric_key_prefix="predict", **gen_kwargs)
-        trainer.log_metrics("predict", predict_results.metrics)
-        trainer.save_metrics("predict", predict_results.metrics)
-        trainer.save_predictions(dataset_module["eval_dataset"], predict_results, generating_args.skip_special_tokens)
 
     # Create model card
     create_modelcard_and_push(trainer, model_args, data_args, training_args, finetuning_args)

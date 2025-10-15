@@ -442,7 +442,7 @@ class SwanLabArguments:
 @dataclass
 class KTransformersArguments:
     r"""Arguments pertaining to the KT training."""
-    
+
     use_kt: bool = field(
         default=False,
         metadata={"help": "Whether or not to use ktransformers's optimization for the LoRA training."},
@@ -463,10 +463,6 @@ class KTransformersArguments:
         default="normal",
         metadata={"help":"normal or long_context for llama model"},
     )
-    
-    def __post_init__(self):
-        self.use_kt = use_kt()
-
 
 @dataclass
 class FinetuningArguments(

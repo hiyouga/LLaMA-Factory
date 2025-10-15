@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import TYPE_CHECKING, Any, Optional
 import importlib.util as _u
+from typing import TYPE_CHECKING, Any, Optional
 
 import torch
 
@@ -24,21 +24,22 @@ from ...extras.misc import get_current_device
 if TYPE_CHECKING:
     from ...hparams import FinetuningArguments, ModelArguments
 
-from transformers import PretrainedConfig, PreTrainedModel, AutoConfig, AutoModelForCausalLM
+from transformers import AutoConfig, AutoModelForCausalLM, PretrainedConfig, PreTrainedModel
+
 
 KT_AVAILABLE = _u.find_spec("ktransformers") is not None
 if KT_AVAILABLE:
-    from ktransformers.optimize.optimize import optimize_and_load_gguf
     from ktransformers.models.modeling_deepseek import DeepseekV2ForCausalLM
-    from ktransformers.models.modeling_qwen2_moe import Qwen2MoeForCausalLM
     from ktransformers.models.modeling_deepseek_v3 import DeepseekV3ForCausalLM
     from ktransformers.models.modeling_llama import LlamaForCausalLM
     from ktransformers.models.modeling_mixtral import MixtralForCausalLM
-    from ktransformers.util.utils import load_weights, xpu_fp16_model
+    from ktransformers.models.modeling_qwen2_moe import Qwen2MoeForCausalLM
+    from ktransformers.optimize.optimize import optimize_and_load_gguf
     from ktransformers.server.config.config import Config
     from ktransformers.sft.lora import inject_lora_layer
     from ktransformers.util.custom_loader import GGUFLoader, SafeTensorLoader
     from ktransformers.util.globals import GLOBAL_CONFIG
+    from ktransformers.util.utils import load_weights
 
 logger = logging.get_logger(__name__)
 
@@ -76,14 +77,10 @@ def load_kt_pretrained_model(
     }
     Config().cpu_infer = model_args.cpu_infer
     Config().chunk_size = model_args.chunk_size
-    if torch.xpu.is_available():
-        use_cuda_graph = False
     config = AutoConfig.from_pretrained(model_args.model_name_or_path, trust_remote_code=model_args.trust_remote_code)
 
     if model_args.mode == 'long_context':
         assert config.architectures[0] == "LlamaForCausalLM", "only LlamaForCausalLM support long_context mode"
-        torch.set_default_dtype(torch.float16)
-    elif xpu_fp16_model(config):
         torch.set_default_dtype(torch.float16)
     else:
         torch.set_default_dtype(config.torch_dtype)
@@ -99,21 +96,16 @@ def load_kt_pretrained_model(
                 config._attn_implementation = "eager"
             if "Mixtral" in config.architectures[0]:
                 config._attn_implementation = "flash_attention_2"
-            if torch.xpu.is_available():
-                config._attn_implementation = "eager"
             model = custom_models[config.architectures[0]](config)
         else:
-            if torch.xpu.is_available():
-                attn_implementation = "eager"
-            else:
-                attn_implementation = "flash_attention_2"
+            attn_implementation = "flash_attention_2"
             model = AutoModelForCausalLM.from_config(
                 config, trust_remote_code=True, attn_implementation=attn_implementation
             )
 
     optimize_config_path = model_args.kt_optimize_rule
     gguf_path = model_args.model_name_or_path
-    
+
     if optimize_config_path is None:
         optimize_config_path = input(
             "please input the path of your rule file(yaml file containing optimize rules):"
@@ -123,7 +115,7 @@ def load_kt_pretrained_model(
         gguf_path = input(
             "please input the path of your gguf file(gguf file in the dir containing input gguf file must all belong to current model):"
         )
-        
+
     GLOBAL_CONFIG._config["mod"] = "infer"
     optimize_and_load_gguf(model, optimize_config_path, gguf_path, config)
 
@@ -155,24 +147,24 @@ def load_kt_peft_model(
         model.train()
     else:
         inject_lora_layer(model, load_adapter_name_or_path)
-        
+
         adapter_loader = SafeTensorLoader(load_adapter_name_or_path)
         device = next(model.parameters()).device
         for key in adapter_loader.tensor_file_map.keys():
             try:
                 tensor = adapter_loader.load_tensor(key, device=device)
-                
+
                 model_key = key.replace("base_model.model.", "")
                 model_key = model_key.replace(".weight", ".default.weight")
                 model_key = model_key.replace(".default.default.weight", ".default.weight")
-                
+
                 param = model.get_parameter(model_key)
                 param.data.copy_(tensor.data)
-                
+
                 print(f"Loaded adapter weight: {key} -> {model_key}")
-            except AttributeError as e:
+            except AttributeError:
                 print(f"Skipping {key}: not a model parameter")
-            except KeyError as e:
+            except KeyError:
                 print(f"Key not found in model: {model_key} (original: {key})")
 
     return model

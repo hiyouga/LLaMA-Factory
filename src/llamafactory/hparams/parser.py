@@ -248,7 +248,7 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
 
         if model_args.shift_attn:
             raise ValueError("PPO training is incompatible with S^2-Attn.")
-        
+
         if finetuning_args.reward_model_type == "lora" and model_args.use_kt:
             raise ValueError("KTransformers does not support lora reward model.")
 
@@ -319,7 +319,7 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
 
     if model_args.use_unsloth and is_deepspeed_zero3_enabled():
         raise ValueError("Unsloth is incompatible with DeepSpeed ZeRO-3.")
-    
+
     if model_args.use_kt and is_deepspeed_zero3_enabled():
         raise ValueError("KTransformers is incompatible with DeepSpeed ZeRO-3.")
 
