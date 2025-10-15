@@ -3193,13 +3193,21 @@ register_model_group(
 
 register_model_group(
     models={
-        "Qwen3-VL-235B-A22B-Instruct": {
-            DownloadSource.DEFAULT: "Qwen/Qwen3-VL-235B-A22B-Instruct",
-            DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-235B-A22B-Instruct",
+        "Qwen3-VL-4B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-VL-4B-Instruct",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-4B-Instruct",
+        },
+        "Qwen3-VL-8B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-VL-8B-Instruct",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-8B-Instruct",
         },
         "Qwen3-VL-30B-A3B-Instruct": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-VL-30B-A3B-Instruct",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-30B-A3B-Instruct",
+        },
+        "Qwen3-VL-235B-A22B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-VL-235B-A22B-Instruct",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-235B-A22B-Instruct",
         },
     },
     template="qwen3_vl_nothink",
@@ -3209,13 +3217,21 @@ register_model_group(
 
 register_model_group(
     models={
-        "Qwen3-VL-235B-A22B-Thinking": {
-            DownloadSource.DEFAULT: "Qwen/Qwen3-VL-235B-A22B-Thinking",
-            DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-235B-A22B-Thinking",
+        "Qwen3-VL-4B-Thinking": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-VL-4B-Thinking",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-4B-Thinking",
+        },
+        "Qwen3-VL-8B-Thinking": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-VL-8B-Thinking",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-8B-Thinking",
         },
         "Qwen3-VL-30B-A3B-Thinking": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-VL-30B-A3B-Thinking",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-30B-A3B-Thinking",
+        },
+        "Qwen3-VL-235B-A22B-Thinking": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-VL-235B-A22B-Thinking",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-235B-A22B-Thinking",
         },
     },
     template="qwen3_vl",
