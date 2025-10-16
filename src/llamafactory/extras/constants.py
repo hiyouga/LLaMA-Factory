@@ -1152,19 +1152,12 @@ register_model_group(
             DownloadSource.DEFAULT: "tencent/Hunyuan-7B-Instruct",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Hunyuan-7B-Instruct",
         },
-    },
-    template="hunyuan",
-)
-
-
-register_model_group(
-    models={
-        "Hunyuan-MT-7B": {
+        "Hunyuan-MT-7B-Instruct": {
             DownloadSource.DEFAULT: "tencent/Hunyuan-MT-7B",
             DownloadSource.MODELSCOPE: "Tencent-Hunyuan/Hunyuan-MT-7B",
         },
     },
-    template="hunyuan_mt",
+    template="hunyuan",
 )
 
 
