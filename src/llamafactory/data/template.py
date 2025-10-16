@@ -1206,17 +1206,6 @@ register_template(
     format_system=StringFormatter(slots=["{{content}}<|extra_4|>"]),
     format_prefix=EmptyFormatter(slots=["<|startoftext|>"]),
     stop_words=["<|eos|>"],
-    template_class=ReasoningTemplate
-)
-
-
-register_template(
-    name="hunyuan_mt",
-    format_user=StringFormatter(slots=["{{content}}<|extra_0|>"]),
-    format_assistant=StringFormatter(slots=["{{content}}<|eos|>"]),
-    format_system=StringFormatter(slots=["{{content}}<|extra_4|>"]),
-    format_prefix=EmptyFormatter(slots=["<|startoftext|>"]),
-    stop_words=["<|eos|>"],
 )
 
 
