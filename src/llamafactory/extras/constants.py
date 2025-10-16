@@ -1159,6 +1159,17 @@ register_model_group(
 
 register_model_group(
     models={
+        "Hunyuan-MT-7B": {
+            DownloadSource.DEFAULT: "tencent/Hunyuan-MT-7B",
+            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/Hunyuan-MT-7B",
+        },
+    },
+    template="hunyuan_mt",
+)
+
+
+register_model_group(
+    models={
         "Index-1.9B-Base": {
             DownloadSource.DEFAULT: "IndexTeam/Index-1.9B",
             DownloadSource.MODELSCOPE: "IndexTeam/Index-1.9B",
