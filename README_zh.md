@@ -285,8 +285,7 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 | [GPT-OSS](https://huggingface.co/openai)                          | 20B/120B                         | gpt                  |
 | [Granite 3.0-3.3](https://huggingface.co/ibm-granite)             | 1B/2B/3B/8B                      | granite3             |
 | [Granite 4](https://huggingface.co/ibm-granite)                   | 7B                               | granite4             |
-| [Hunyuan](https://huggingface.co/tencent/)                        | 7B                               | hunyuan              |
-| [Hunyuan-mt](https://huggingface.co/tencent/)                     | 7B                               | hunyuan_mt           |
+| [Hunyuan (MT)](https://huggingface.co/tencent/)                   | 7B                               | hunyuan              |
 | [Index](https://huggingface.co/IndexTeam)                         | 1.9B                             | index                |
 | [InternLM 2-3](https://huggingface.co/internlm)                   | 7B/8B/20B                        | intern2              |
 | [InternVL 2.5-3.5](https://huggingface.co/OpenGVLab)              | 1B/2B/4B/8B/14B/30B/38B/78B/241B | intern_vl            |
