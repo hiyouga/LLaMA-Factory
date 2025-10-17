@@ -19,7 +19,7 @@ import inspect
 import math
 import os
 import re
-from copy import deepcopyvideo
+from copy import deepcopy
 from dataclasses import dataclass
 from io import BytesIO
 from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TypedDict, Union
