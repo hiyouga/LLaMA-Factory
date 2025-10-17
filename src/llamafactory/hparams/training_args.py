@@ -81,6 +81,11 @@ class RayArguments:
 class TrainingArguments(RayArguments, Seq2SeqTrainingArguments):
     r"""Arguments pertaining to the trainer."""
 
+    overwrite_output_dir: bool = field(
+        default=False,
+        metadata={"help": "deprecated"},
+    )
+
     def __post_init__(self):
         Seq2SeqTrainingArguments.__post_init__(self)
         RayArguments.__post_init__(self)
