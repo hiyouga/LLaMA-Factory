@@ -1201,10 +1201,10 @@ register_template(
 
 register_template(
     name="hunyuan",
-    format_user=StringFormatter(slots=["<|bos|>user\n{{content}}<|eos|>\n<|bos|>assistant\n"]),
-    format_assistant=StringFormatter(slots=["{{content}}<|eos|>\n"]),
-    format_system=StringFormatter(slots=["<|bos|>system\n{{content}}<|eos|>\n"]),
-    format_prefix=EmptyFormatter(slots=["<|bos|>"]),
+    format_user=StringFormatter(slots=["{{content}}<|extra_0|>"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|eos|>"]),
+    format_system=StringFormatter(slots=["{{content}}<|extra_4|>"]),
+    format_prefix=EmptyFormatter(slots=["<|startoftext|>"]),
     stop_words=["<|eos|>"],
 )
 
