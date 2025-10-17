@@ -1,6 +1,6 @@
 {
-  "identity": {
-    "file_name": "identity.json"
+  "WEST": {
+    "file_name": "/home/lpl/KT-SFT/test_adapter/western_train.json"
   },
   "alpaca_en_demo": {
     "file_name": "alpaca_en_demo.json"
