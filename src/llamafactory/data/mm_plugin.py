@@ -265,7 +265,7 @@ class MMPluginMixin:
 
         return {"images": results}
 
-    def _regularize_videos(self, videos: list["VideoInput"], **kwargs) -> dict[str, list[list["ImageObject"]]]:
+    def _regularize_videos(self, videos: list["VideoInput"], **kwargs) -> dict[str, Union[list[list["ImageObject"]], list[float]]]:
         r"""Regularizes videos to avoid error. Including reading, resizing and converting."""
         results = []
         durations = []
