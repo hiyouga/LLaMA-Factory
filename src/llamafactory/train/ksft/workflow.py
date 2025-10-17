@@ -75,11 +75,6 @@ def run_sft(
 
     # Initialize our Trainer
     from ktransformers.sft.lora import KTrainer
-    # if "processor" in tokenizer_module:
-    #     proc = tokenizer_module.pop("processor")
-    #     tok = getattr(proc, "tokenizer", None)
-    #     if tok is not None:
-    #         tokenizer_module["tokenizer"] = tok
     trainer = KTrainer(
         model=model,
         args=training_args,
