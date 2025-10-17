@@ -94,7 +94,7 @@ def _description_based_initialization(
             if len(valid_token_ids) == 0:
                 # Fallback: use mean of all existing embeddings
                 logger.warning_rank0(
-                    f"Description for token {i+1}/{num_new_tokens} contains no valid tokens. "
+                    f"Description for token {i + 1}/{num_new_tokens} contains no valid tokens. "
                     "Using mean of existing embeddings."
                 )
                 base_embedding = embed_weight[:-num_new_tokens].mean(dim=0)

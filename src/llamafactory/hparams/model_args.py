@@ -20,14 +20,16 @@ from dataclasses import asdict, dataclass, field, fields
 from typing import Any, Literal, Optional, Union
 
 import torch
+from omegaconf import OmegaConf
 from transformers.training_args import _convert_str_dict
 from typing_extensions import Self
-from omegaconf import OmegaConf
 
 from ..extras.constants import AttentionFunction, EngineName, QuantizationMethod, RopeScaling
 from ..extras.logging import get_logger
 
+
 logger = get_logger(__name__)
+
 
 @dataclass
 class BaseModelArguments:
@@ -168,7 +170,7 @@ class BaseModelArguments:
         default="offload",
         metadata={"help": "Path to offload model weights."},
     )
-    use_cache: bool = field(
+    use_kv_cache: bool = field(
         default=True,
         metadata={"help": "Whether or not to use KV cache in generation."},
     )
