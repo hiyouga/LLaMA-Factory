@@ -85,7 +85,7 @@ if TYPE_CHECKING:
         durations: list[float]
 
     class RegularizedAudioOutput(TypedDict):
-        audios: list["NDArray"]
+        audios: list[NDArray]
         sampling_rates: list[float]
 
     class MMProcessor(ProcessorMixin):
