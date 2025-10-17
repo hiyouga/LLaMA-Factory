@@ -15,58 +15,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-import torch
-from torch import nn
-
-
-def apply_rotary_pos_emb(q, k, cos, sin, position_ids=None, unsqueeze_dim=1):
-    cos = cos.unsqueeze(unsqueeze_dim)
-    sin = sin.unsqueeze(unsqueeze_dim)
-    q_embed = q * sin
-    k_embed = k * cos
-    return q_embed, k_embed
-
-
-class TinyRMSNorm(nn.Module):
-    def __init__(self, dim):
-        super().__init__()
-        self.weight = nn.Parameter(torch.ones(dim))
-
-    def forward(self, x):
-        return x * self.weight
-
-
-class TinyMLP(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.gate_proj = nn.Linear(10, 10)
-        self.up_proj = nn.Linear(10, 10)
-        self.down_proj = nn.Linear(10, 10)
-
-    def forward(self, x):
-        return self.gate_proj(x) * self.up_proj(x) + self.down_proj(x)
-
-
-class TinyAttention(nn.Module):
-    def forward(self, q, k, v, cos, sin, position_ids=None, unsqueeze_dim=1):
-        q_embed, k_embed = apply_rotary_pos_emb(q, k, cos, sin, position_ids, unsqueeze_dim)
-        return q_embed, k_embed
-
-
-class TinyModel(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.linear = nn.Linear(10, 10)
-        self.norm = TinyRMSNorm(10)
-        self.mlp = TinyMLP()
-        self.attn = TinyAttention()
-        self.attn_implementation = 'default'
-
-    def set_attn_implementation(self, attn_implementation):
-        self.attn_implementation = attn_implementation
-
-    def forward(self, x):
-        return self.mlp(self.norm(self.linear(x)))
+from transformers import AutoModelForCausalLM
 
 
 class TestKernelPlugin(unittest.TestCase):
@@ -77,10 +26,10 @@ class TestKernelPlugin(unittest.TestCase):
         mock_device.type = 'npu'
         mock_get_accelerator.return_value = mock_device
 
-        model = TinyModel()
+        model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen2.5")
 
-        original_rmsnorm_forward = model.norm.forward
-        original_swiglu_forward = model.mlp.forward
+        original_rmsnorm_forward = model.model.layers[0].input_layernorm.forward
+        original_swiglu_forward = model.model.layers[0].mlp.forward
 
 
         from llamafactory.v1.plugins.model_plugins.kernels.mlp import npu_swiglu
@@ -91,7 +40,7 @@ class TestKernelPlugin(unittest.TestCase):
         apply_kernel(model, npu_rope.NpuRoPEKernel)
 
         model = apply_kernel(model, npu_rms_norm.NpuRMSNormKernel)
-        assert model.norm.forward is not original_rmsnorm_forward
+        assert model.model.layers[0].input_layernorm is not original_rmsnorm_forward
 
         model = apply_kernel(model, npu_swiglu.NpuSwiGluKernel)
-        assert model.mlp.forward is not original_swiglu_forward
+        assert model.model.layers[0].mlp.forward is not original_swiglu_forward

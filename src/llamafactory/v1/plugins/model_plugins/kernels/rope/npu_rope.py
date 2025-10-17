@@ -11,13 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import importlib.util
+
 import sys
 
 import torch
 
-from .....extras.types import DeviceType, HFModel, KernelType
+from .....extras.types import HFModel
 from ....trainer_plugins.distributed.accelerate import is_torch_npu_available
+from ..constants import DeviceType, KernelType
 from ..registry import KERNEL_REGISTRY, MetaRoPEKernel
 
 
@@ -66,7 +67,7 @@ class NpuRoPEKernel(MetaRoPEKernel):
         `apply_rotary_pos_emb` function in that module's namespace with the
         NPU-accelerated version from this file.
         """
-        if not (is_torch_npu_available() and importlib.util.find_spec("torch_npu")):
+        if not is_torch_npu_available():
             return model
 
         _modules = set()
