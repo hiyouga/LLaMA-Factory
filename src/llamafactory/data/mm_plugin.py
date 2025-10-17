@@ -276,7 +276,7 @@ class MMPluginMixin:
                     if not is_valid_image(frame) and not isinstance(frame, dict) and not os.path.exists(frame):
                         raise ValueError("Invalid image found in video frames.")
                 frames = video
-                durations.append(len(frames))
+                durations.append(len(frames) / kwargs.get("video_fps", 2.0))
             else:
                 container = av.open(video, "r")
                 video_stream = next(stream for stream in container.streams if stream.type == "video")
