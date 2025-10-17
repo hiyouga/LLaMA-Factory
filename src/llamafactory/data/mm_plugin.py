@@ -19,7 +19,7 @@ import inspect
 import math
 import os
 import re
-from copy import deepcopy
+from copy import deepcopyvideo
 from dataclasses import dataclass
 from io import BytesIO
 from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TypedDict, Union
@@ -285,7 +285,7 @@ class MMPluginMixin:
                 for frame_idx, frame in enumerate(container.decode(video_stream)):
                     if frame_idx in sample_indices:
                         frames.append(frame.to_image())
-                durations.append(float(video.duration * video.time_base))
+                durations.append(float(video_stream.duration * video_stream.time_base))
 
             frames = self._regularize_images(frames, **kwargs)["images"]
             results.append(frames)
