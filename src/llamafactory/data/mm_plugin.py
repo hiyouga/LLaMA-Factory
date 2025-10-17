@@ -77,6 +77,17 @@ if TYPE_CHECKING:
     VideoInput = Union[str, BinaryIO, list[list[ImageInput]]]
     AudioInput = Union[str, BinaryIO, NDArray]
 
+    class RegularizedImageOutput(TypedDict):
+        images: list[ImageObject]
+
+    class RegularizedVideoOutput(TypedDict):
+        videos: list[list[ImageObject]]
+        durations: list[float]
+
+    class RegularizedAudioOutput(TypedDict):
+        audios: list["NDArray"]
+        sampling_rates: list[float]
+
     class MMProcessor(ProcessorMixin):
         patch_size: int
         image_seq_length: int
@@ -244,7 +255,7 @@ class MMPluginMixin:
         sample_frames = min(total_frames, video_maxlen, sample_frames)
         return np.linspace(0, total_frames - 1, sample_frames).astype(np.int32)
 
-    def _regularize_images(self, images: list["ImageInput"], **kwargs) -> dict[str, list["ImageObject"]]:
+    def _regularize_images(self, images: list["ImageInput"], **kwargs) -> RegularizedImageOutput:
         r"""Regularize images to avoid error. Including reading and pre-processing."""
         results = []
         for image in images:
@@ -265,7 +276,7 @@ class MMPluginMixin:
 
         return {"images": results}
 
-    def _regularize_videos(self, videos: list["VideoInput"], **kwargs) -> dict[str, Union[list[list["ImageObject"]], list[float]]]:
+    def _regularize_videos(self, videos: list["VideoInput"], **kwargs) -> RegularizedVideoOutput:
         r"""Regularizes videos to avoid error. Including reading, resizing and converting."""
         results = []
         durations = []
@@ -294,7 +305,7 @@ class MMPluginMixin:
 
     def _regularize_audios(
         self, audios: list["AudioInput"], sampling_rate: float, **kwargs
-    ) -> dict[str, Union[list["NDArray"], list[float]]]:
+    ) -> RegularizedAudioOutput:
         r"""Regularizes audios to avoid error. Including reading and resampling."""
         results, sampling_rates = [], []
         for audio in audios:
