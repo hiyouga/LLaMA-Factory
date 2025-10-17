@@ -28,8 +28,9 @@ from ...data import (
 from ...data.collator import (
     PairwiseDataCollatorWithPadding,
 )
-from ...extras.constants import IGNORE_INDEX
+from ...extras.constants import IGNORE_INDEX, MCA_SUPPORTED_MODELS
 from ...extras.logging import get_logger
+from ...extras.misc import calculate_tps
 from ...extras.packages import is_mcore_adapter_available
 from ...extras.ploting import plot_loss
 from ...model import load_tokenizer
@@ -74,6 +75,11 @@ def _data_collator_wrapper(data_collator: Any):
 
     return wrapper
 
+def _check_model_support(model_args: ModelArguments):
+    from transformers import AutoConfig as HfAutoConfig
+    config = HfAutoConfig.from_pretrained(model_args.model_name_or_path)
+    if config.model_type not in MCA_SUPPORTED_MODELS:
+        raise ValueError(f"Model {config.model_type} is not supported by MCA.")
 
 def run_pt(
     model_args: ModelArguments,
@@ -91,6 +97,7 @@ def run_pt(
     dataset_module = get_dataset(template, model_args, data_args, training_args, stage="pt", **tokenizer_module)
     data_args.cutoff_len -= 1
 
+    _check_model_support(model_args)
     model = AutoModel.from_pretrained(model_args.model_name_or_path, training_args)
 
     from transformers import DataCollatorForSeq2Seq
@@ -150,18 +157,19 @@ def run_sft(
     dataset_module = get_dataset(template, model_args, data_args, training_args, stage="sft", **tokenizer_module)
     data_args.cutoff_len -= 1
 
+    _check_model_support(model_args)
     model = AutoModel.from_pretrained(model_args.model_name_or_path, training_args)
 
-    # optional freezing for qwen2_vl
-    if getattr(model.config, "hf_model_type", None) in ["qwen2_vl"] and finetuning_args.freeze_vision_tower:
+    # optional freezing for qwen2_vl, qwen2_5_vl
+    if getattr(model.config, "hf_model_type", None) in ["qwen2_vl", "qwen2_5_vl"] and finetuning_args.freeze_vision_tower:
         for name, p in model.named_parameters():
             if any(name.startswith(k) for k in ["vision_model.blocks", "vision_model.patch_embed"]):
                 p.requires_grad_(False)
-    if getattr(model.config, "hf_model_type", None) in ["qwen2_vl"] and finetuning_args.freeze_multi_modal_projector:
+    if getattr(model.config, "hf_model_type", None) in ["qwen2_vl", "qwen2_5_vl"] and finetuning_args.freeze_multi_modal_projector:
         for name, p in model.named_parameters():
             if any(name.startswith(k) for k in ["multi_modal_projector"]):
                 p.requires_grad_(False)
-    if getattr(model.config, "hf_model_type", None) in ["qwen2_vl"] and finetuning_args.freeze_language_model:
+    if getattr(model.config, "hf_model_type", None) in ["qwen2_vl", "qwen2_5_vl"] and finetuning_args.freeze_language_model:
         for name, p in model.named_parameters():
             if any(name.startswith(k) for k in ["embedding", "decoder", "output_layer"]):
                 p.requires_grad_(False)
@@ -191,7 +199,18 @@ def run_sft(
     if "processor" in tokenizer_module and tokenizer_module["processor"] is not None:
         trainer.add_callback(SaveProcessorCallback(tokenizer_module["processor"]))
 
-    trainer.train(training_args.resume_from_checkpoint)
+    train_result = trainer.train(training_args.resume_from_checkpoint)
+    trainer.save_model()
+    trainer.log_metrics("train", train_result.metrics)
+    trainer.save_metrics("train", train_result.metrics)
+    trainer.save_state()
+    if trainer.is_world_process_zero() and finetuning_args.plot_loss:
+        keys = ["loss"]
+        if isinstance(dataset_module.get("eval_dataset"), dict):
+            keys += [f"eval_{key}_loss" for key in dataset_module["eval_dataset"].keys()]
+        else:
+            keys += ["eval_loss"]
+        plot_loss(training_args.output_dir, keys=keys)
 
 
 def run_dpo(
@@ -205,6 +224,7 @@ def run_dpo(
     tokenizer = tokenizer_module["tokenizer"]
     template = get_template_and_fix_tokenizer(tokenizer, data_args)
 
+    _check_model_support(model_args)
     model = AutoModel.from_pretrained(model_args.model_name_or_path, training_args)
 
     if finetuning_args.use_ref_model:
@@ -251,5 +271,22 @@ def run_dpo(
     if "processor" in tokenizer_module and tokenizer_module["processor"] is not None:
         trainer.add_callback(SaveProcessorCallback(tokenizer_module["processor"]))
 
-    trainer.train(training_args.resume_from_checkpoint)
+    train_result = trainer.train(training_args.resume_from_checkpoint)
+    trainer.save_model()
+    if finetuning_args.include_effective_tokens_per_second:
+        train_result.metrics["effective_tokens_per_sec"] = calculate_tps(
+            dataset_module["train_dataset"], train_result.metrics, stage="rm"
+        )
+
+    trainer.log_metrics("train", train_result.metrics)
+    trainer.save_metrics("train", train_result.metrics)
+    trainer.save_state()
+    if trainer.is_world_process_zero() and finetuning_args.plot_loss:
+        keys = ["loss", "rewards/accuracies"]
+        if isinstance(dataset_module.get("eval_dataset"), dict):
+            keys += [f"eval_{key}_loss" for key in dataset_module["eval_dataset"].keys()]
+        else:
+            keys += ["eval_loss"]
+
+        plot_loss(training_args.output_dir, keys=keys)
 
