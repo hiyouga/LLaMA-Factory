@@ -77,7 +77,7 @@ def _data_collator_wrapper(data_collator: Any):
 
 def _check_model_support(model_args: ModelArguments):
     from transformers import AutoConfig as HfAutoConfig
-    config = HfAutoConfig.from_pretrained(model_args.model_name_or_path)
+    config = HfAutoConfig.from_pretrained(model_args.model_name_or_path, trust_remote_code=model_args.trust_remote_code)
     if config.model_type not in MCA_SUPPORTED_MODELS:
         raise ValueError(f"Model {config.model_type} is not supported by MCA.")
 
