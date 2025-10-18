@@ -13,7 +13,9 @@
 # limitations under the License.
 
 
-from typing import Callable, NotRequired, TypedDict
+from typing import Callable, TypedDict
+
+from typing_extensions import NotRequired
 
 from ...extras.types import Sample, SFTSample
 
