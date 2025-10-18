@@ -77,6 +77,17 @@ if TYPE_CHECKING:
     VideoInput = Union[str, BinaryIO, list[list[ImageInput]]]
     AudioInput = Union[str, BinaryIO, NDArray]
 
+    class RegularizedImageOutput(TypedDict):
+        images: list[ImageObject]
+
+    class RegularizedVideoOutput(TypedDict):
+        videos: list[list[ImageObject]]
+        durations: list[float]
+
+    class RegularizedAudioOutput(TypedDict):
+        audios: list[NDArray]
+        sampling_rates: list[float]
+
     class MMProcessor(ProcessorMixin):
         patch_size: int
         image_seq_length: int
@@ -244,7 +255,7 @@ class MMPluginMixin:
         sample_frames = min(total_frames, video_maxlen, sample_frames)
         return np.linspace(0, total_frames - 1, sample_frames).astype(np.int32)
 
-    def _regularize_images(self, images: list["ImageInput"], **kwargs) -> dict[str, list["ImageObject"]]:
+    def _regularize_images(self, images: list["ImageInput"], **kwargs) -> RegularizedImageOutput:
         r"""Regularize images to avoid error. Including reading and pre-processing."""
         results = []
         for image in images:
@@ -265,9 +276,10 @@ class MMPluginMixin:
 
         return {"images": results}
 
-    def _regularize_videos(self, videos: list["VideoInput"], **kwargs) -> dict[str, list[list["ImageObject"]]]:
+    def _regularize_videos(self, videos: list["VideoInput"], **kwargs) -> RegularizedVideoOutput:
         r"""Regularizes videos to avoid error. Including reading, resizing and converting."""
         results = []
+        durations = []
         for video in videos:
             frames: list[ImageObject] = []
             if _check_video_is_nested_images(video):
@@ -275,6 +287,7 @@ class MMPluginMixin:
                     if not is_valid_image(frame) and not isinstance(frame, dict) and not os.path.exists(frame):
                         raise ValueError("Invalid image found in video frames.")
                 frames = video
+                durations.append(len(frames) / kwargs.get("video_fps", 2.0))
             else:
                 container = av.open(video, "r")
                 video_stream = next(stream for stream in container.streams if stream.type == "video")
@@ -283,15 +296,16 @@ class MMPluginMixin:
                 for frame_idx, frame in enumerate(container.decode(video_stream)):
                     if frame_idx in sample_indices:
                         frames.append(frame.to_image())
+                durations.append(float(video_stream.duration * video_stream.time_base))
 
             frames = self._regularize_images(frames, **kwargs)["images"]
             results.append(frames)
 
-        return {"videos": results}
+        return {"videos": results, "durations": durations}
 
     def _regularize_audios(
         self, audios: list["AudioInput"], sampling_rate: float, **kwargs
-    ) -> dict[str, Union[list["NDArray"], list[float]]]:
+    ) -> RegularizedAudioOutput:
         r"""Regularizes audios to avoid error. Including reading and resampling."""
         results, sampling_rates = [], []
         for audio in audios:
@@ -1565,8 +1579,8 @@ class Qwen3VLPlugin(Qwen2VLPlugin):
                 video_maxlen=getattr(processor, "video_maxlen", 128),
             )
             video_metadata = [
-                {"fps": getattr(processor, "video_fps", 24.0), "duration": len(video), "total_num_frames": len(video)}
-                for video in videos["videos"]
+                {"fps": getattr(processor, "video_fps", 24.0), "duration": duration, "total_num_frames": len(video)}
+                for video, duration in zip(videos["videos"], videos["durations"])
             ]
             mm_inputs.update(
                 video_processor(videos=videos["videos"], video_metadata=video_metadata, return_metadata=True)
@@ -1599,13 +1613,11 @@ class Qwen3VLPlugin(Qwen2VLPlugin):
             mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
             image_grid_thw = mm_inputs.get("image_grid_thw", [])
             video_grid_thw = mm_inputs.get("video_grid_thw", [])
-            num_frames = video_grid_thw[0][0] if len(video_grid_thw) > 0 else 0  # hard code for now
             video_metadata = mm_inputs.get("video_metadata", {})
 
         else:
             image_grid_thw = [None] * len(images)
             video_grid_thw = [None] * len(videos)
-            num_frames = 0
             timestamps = [0]
 
         for idx, message in enumerate(messages):
@@ -1629,6 +1641,7 @@ class Qwen3VLPlugin(Qwen2VLPlugin):
                     video_processor.merge_size,
                 )
                 video_structure = ""
+                num_frames = video_grid_thw[num_video_tokens][0]
                 for frame_index in range(num_frames):
                     video_seqlen = (
                         video_grid_thw[num_video_tokens][1:].prod() // video_merge_length
