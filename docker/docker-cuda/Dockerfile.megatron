@@ -1,0 +1,77 @@
+# NVIDIA official image (ubuntu-22.04 + cuda-12.4 + python-3.10)
+# https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-24-08.html
+FROM nvcr.io/nvidia/pytorch:24.05-py3
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PIP_ROOT_USER_ACTION=ignore
+ENV PYPI_MIRROR=https://mirrors.aliyun.com/pypi/simple/
+ENV PYPI_TRUSTED_HOST=mirrors.aliyun.com
+ENV APT_MIRROR=https://mirrors.tuna.tsinghua.edu.cn/ubuntu/
+
+RUN pip install --upgrade pip setuptools wheel --trusted-host ${PYPI_TRUSTED_HOST} --index-url ${PYPI_MIRROR}
+
+RUN pip uninstall -y torch torchvision torch-tensorrt \
+    flash_attn transformer-engine \
+    cudf dask-cuda cugraph cugraph-service-server cuml raft-dask cugraph-dgl cugraph-pyg dask-cudf
+
+RUN pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu124
+
+RUN pip uninstall -y opencv opencv-python opencv-python-headless && \
+    rm -rf /usr/local/lib/python3.10/dist-packages/cv2/ && \
+    pip install opencv-python-headless==4.11.0.86 --trusted-host ${PYPI_TRUSTED_HOST} --index-url ${PYPI_MIRROR}
+
+RUN pip install "numpy==1.26.4" "optree>=0.13.0" "spacy==3.7.5" "weasel==0.4.1" \
+    transformer-engine[pytorch]==2.2.0 megatron-core==0.13.0 deepspeed==0.16.4 \
+    --trusted-host ${PYPI_TRUSTED_HOST} --index-url ${PYPI_MIRROR}
+
+RUN pip install https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.2.post1/flash_attn-2.7.2.post1+cu12torch2.6cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
+
+# RUN pip install vllm==0.8.4 \
+#     --trusted-host ${PYPI_TRUSTED_HOST} --index-url ${PYPI_MIRROR}
+
+WORKDIR /build
+
+ARG apex_url=git+https://github.com/NVIDIA/apex.git@25.04
+RUN pip uninstall -y apex && \
+    MAX_JOBS=32 NINJA_FLAGS="-j32" NVCC_APPEND_FLAGS="--threads 32" \
+    pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation \
+    --config-settings "--build-option=--cpp_ext --cuda_ext --parallel 32" ${apex_url}
+
+RUN rm -rf /build
+WORKDIR /workspace
+
+RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak && \
+    { \
+    echo "deb ${APT_MIRROR} jammy main restricted universe multiverse"; \
+    echo "deb ${APT_MIRROR} jammy-security main restricted universe multiverse"; \
+    echo "deb ${APT_MIRROR} jammy-updates main restricted universe multiverse"; \
+    echo "deb ${APT_MIRROR} jammy-backports main restricted universe multiverse"; \
+    } > /etc/apt/sources.list
+
+RUN apt-get update && apt-get install -y zip
+
+RUN apt-get install -y openjdk-21-jdk
+ENV JAVA_HOME /usr/lib/jvm/java-21-openjdk-amd64
+
+# pip install LLaMA-Factory
+WORKDIR /app
+
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
+
+RUN pip install "git+https://github.com/alibaba/roll.git#subdirectory=mcore_adapter"
+
+COPY . /app/
+RUN pip install -e ".[metrics]" --no-build-isolation
+
+# Expose port 7860 for LLaMA Board
+ENV GRADIO_SERVER_PORT=7860
+EXPOSE 7860
+
+# Expose port 8000 for API service
+ENV API_PORT=8000
+EXPOSE 8000
+
+# unset proxy
+ENV http_proxy=
+ENV https_proxy=

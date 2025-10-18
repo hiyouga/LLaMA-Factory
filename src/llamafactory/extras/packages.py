@@ -70,6 +70,10 @@ def is_matplotlib_available():
     return _is_package_available("matplotlib")
 
 
+def is_mcore_adapter_available():
+    return _is_package_available("mcore_adapter")
+
+
 def is_pillow_available():
     return _is_package_available("PIL")
 
