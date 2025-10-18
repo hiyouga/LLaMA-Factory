@@ -90,6 +90,14 @@ def is_rouge_available():
     return _is_package_available("rouge_chinese")
 
 
+def is_safetensors_available():
+    return _is_package_available("safetensors")
+
+
+def is_sglang_available():
+    return _is_package_available("sglang")
+
+
 def is_starlette_available():
     return _is_package_available("sse_starlette")
 
@@ -105,7 +113,3 @@ def is_uvicorn_available():
 
 def is_vllm_available():
     return _is_package_available("vllm")
-
-
-def is_sglang_available():
-    return _is_package_available("sglang")

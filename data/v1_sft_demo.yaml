@@ -1,0 +1,8 @@
+identity:
+  file_name: identity.json
+  converter: alpaca
+alpaca_en_demo:
+  file_name: alpaca_en_demo.json
+  dataset_dir: ~/data
+  converter: alpaca
+  num_samples: 500

@@ -94,6 +94,11 @@ class RayArguments:
 class TrainingArguments(RayArguments, BaseTrainingArguments):
     r"""Arguments pertaining to the trainer."""
 
+    overwrite_output_dir: bool = field(
+        default=False,
+        metadata={"help": "deprecated"},
+    )
+
     def __post_init__(self):
         RayArguments.__post_init__(self)
         BaseTrainingArguments.__post_init__(self)
