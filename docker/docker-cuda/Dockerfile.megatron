@@ -21,7 +21,7 @@ RUN pip uninstall -y opencv opencv-python opencv-python-headless && \
     pip install opencv-python-headless==4.11.0.86 --trusted-host ${PYPI_TRUSTED_HOST} --index-url ${PYPI_MIRROR}
 
 RUN pip install "numpy==1.26.4" "optree>=0.13.0" "spacy==3.7.5" "weasel==0.4.1" \
-    transformer-engine[pytorch]==2.2.0 megatron-core==0.11.0 deepspeed==0.16.4 \
+    transformer-engine[pytorch]==2.2.0 megatron-core==0.13.0 deepspeed==0.16.4 \
     --trusted-host ${PYPI_TRUSTED_HOST} --index-url ${PYPI_MIRROR}
 
 RUN pip install https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.2.post1/flash_attn-2.7.2.post1+cu12torch2.6cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
