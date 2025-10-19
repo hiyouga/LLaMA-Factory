@@ -198,8 +198,14 @@ def _setup_lora_tuning(
         logger.info_rank0("Loaded adapter(s): {}".format(",".join(model_args.adapter_name_or_path)))
 
     if is_trainable and adapter_to_resume is None:  # create new lora weights while training
+        target_modules = []
+        target_parameters = []
         if len(finetuning_args.lora_target) == 1 and finetuning_args.lora_target[0] == "all":
-            target_modules = find_all_linear_modules(model, finetuning_args.freeze_vision_tower)
+            if finetuning_args.lora_parameters: # if specified the parameters to be adapted, use them
+                print("Using specified LoRA parameters: ", finetuning_args.lora_parameters)
+                target_parameters = finetuning_args.lora_parameters
+            else:
+                target_modules = find_all_linear_modules(model, finetuning_args.freeze_vision_tower)
         else:
             target_modules = finetuning_args.lora_target
 
@@ -235,7 +241,7 @@ def _setup_lora_tuning(
                 "use_rslora": finetuning_args.use_rslora,
                 "use_dora": finetuning_args.use_dora,
                 "modules_to_save": finetuning_args.additional_target,
-                "target_parameters": finetuning_args.lora_parameters,
+                "target_parameters": target_parameters,
             }
         elif finetuning_args.finetuning_type == "oft":
             peft_kwargs = {
