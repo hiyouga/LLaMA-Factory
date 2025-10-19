@@ -1,0 +1,4 @@
+model_name_or_path: output/qwen2_5vl_lora_sft_reid
+template: qwen2_vl
+infer_backend: huggingface  # choices: [huggingface, vllm, sglang]
+trust_remote_code: true

@@ -177,3 +177,7 @@ wandb/
 swanlog/
 generated_predictions.jsonl
 predictions_score.json
+pretrain/
+train_reid/qwen_data_res
+train_reid/data
+
