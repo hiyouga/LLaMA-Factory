@@ -298,6 +298,7 @@ class MMPluginMixin:
                 for frame_idx, frame in enumerate(container.decode(video_stream)):
                     if frame_idx in sample_indices:
                         frames.append(frame.to_image())
+
                 if video_stream.duration is None:
                     durations.append(len(frames) / kwargs.get("video_fps", 2.0))
                 else:
