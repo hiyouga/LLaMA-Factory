@@ -23,6 +23,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from io import BytesIO
 from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TypedDict, Union
+from typing_extensions import NotRequired
 
 import numpy as np
 import torch
@@ -83,6 +84,7 @@ if TYPE_CHECKING:
     class RegularizedVideoOutput(TypedDict):
         videos: list[list[ImageObject]]
         durations: list[float]
+        fps_per_video: NotRequired[list[float]]
 
     class RegularizedAudioOutput(TypedDict):
         audios: list[NDArray]
@@ -296,7 +298,10 @@ class MMPluginMixin:
                 for frame_idx, frame in enumerate(container.decode(video_stream)):
                     if frame_idx in sample_indices:
                         frames.append(frame.to_image())
-                durations.append(float(video_stream.duration * video_stream.time_base))
+                if video_stream.duration is None:
+                    durations.append(len(frames) / kwargs.get("video_fps", 2.0))
+                else:
+                    durations.append(float(video_stream.duration * video_stream.time_base))
 
             frames = self._regularize_images(frames, **kwargs)["images"]
             results.append(frames)
@@ -1434,8 +1439,8 @@ class Qwen2VLPlugin(BasePlugin):
     @override
     def _regularize_videos(
         self, videos: list["VideoInput"], **kwargs
-    ) -> dict[str, Union[list[list["ImageObject"]], list[float]]]:
-        results, fps_per_video = [], []
+    ) -> "RegularizedVideoOutput":
+        results, fps_per_video, durations = [], [], []
         for video in videos:
             frames: list[ImageObject] = []
             if _check_video_is_nested_images(video):
@@ -1445,6 +1450,7 @@ class Qwen2VLPlugin(BasePlugin):
 
                 frames = video
                 fps_per_video.append(kwargs.get("video_fps", 2.0))
+                durations.append(len(frames) / kwargs.get("video_fps", 2.0))
             else:
                 container = av.open(video, "r")
                 video_stream = next(stream for stream in container.streams if stream.type == "video")
@@ -1456,8 +1462,10 @@ class Qwen2VLPlugin(BasePlugin):
 
                 if video_stream.duration is None:
                     fps_per_video.append(kwargs.get("video_fps", 2.0))
+                    durations.append(len(frames) / kwargs.get("video_fps", 2.0))
                 else:
                     fps_per_video.append(len(sample_indices) / float(video_stream.duration * video_stream.time_base))
+                    durations.append(float(video_stream.duration * video_stream.time_base))
 
             if len(frames) % 2 != 0:
                 frames.append(frames[-1])
@@ -1465,7 +1473,7 @@ class Qwen2VLPlugin(BasePlugin):
             frames = self._regularize_images(frames, **kwargs)["images"]
             results.append(frames)
 
-        return {"videos": results, "fps_per_video": fps_per_video}
+        return {"videos": results, "fps_per_video": fps_per_video, "durations": durations}
 
     @override
     def _get_mm_inputs(
@@ -1697,7 +1705,8 @@ class GLM4VPlugin(Qwen2VLPlugin):
             )
             # prepare video metadata
             video_metadata = [
-                {"fps": 2, "duration": len(video), "total_frames": len(video)} for video in video_data["videos"]
+                {"fps": 2, "duration": duration, "total_frames": len(video)}
+                for video, duration in zip(video_data["videos"], video_data["durations"])
             ]
             mm_inputs.update(video_processor(images=None, videos=video_data["videos"], video_metadata=video_metadata))
 
