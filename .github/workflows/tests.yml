@@ -78,12 +78,6 @@ jobs:
         run: |
           python -m pip install "transformers==${{ matrix.transformers }}"
 
-      - name: Update accelerate to avoid mac os ci errors (before accelerate 1.11.0)
-        if: ${{ matrix.os == 'macos-latest' }}
-        run: |
-          python -m pip uninstall -y accelerate
-          python -m pip install "git+https://github.com/huggingface/accelerate.git"
-
       - name: Cache files
         id: hf-hub-cache
         uses: actions/cache@v4
