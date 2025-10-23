@@ -63,19 +63,19 @@ def fix_valuehead_cpu_loading():
 
 def test_lora_train_qv_modules():
     model = load_train_model(lora_target="q_proj,v_proj", **TRAIN_ARGS)
-    linear_modules, _ = check_lora_model(model)
+    linear_modules, _, _ = check_lora_model(model)
     assert linear_modules == {"q_proj", "v_proj"}
 
 
 def test_lora_train_all_modules():
     model = load_train_model(lora_target="all", **TRAIN_ARGS)
-    linear_modules, _ = check_lora_model(model)
+    linear_modules, _, _ = check_lora_model(model)
     assert linear_modules == {"q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "gate_proj", "down_proj"}
 
 
 def test_lora_train_extra_modules():
     model = load_train_model(additional_target="embed_tokens,lm_head", **TRAIN_ARGS)
-    _, extra_modules = check_lora_model(model)
+    _, extra_modules, _ = check_lora_model(model)
     assert extra_modules == {"embed_tokens", "lm_head"}
 
 
@@ -91,6 +91,11 @@ def test_lora_train_new_adapters():
     compare_model(
         model, ref_model, diff_keys=["q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "gate_proj", "down_proj"]
     )
+    
+def test_lora_parameters():  
+    model = load_train_model(lora_parameters="q_proj.weight, k_proj.weight", **TRAIN_ARGS)  
+    _, _, injected_parameters = check_lora_model(model)   
+    assert injected_parameters == {"q_proj.weight", "k_proj.weight"}
 
 
 @pytest.mark.usefixtures("fix_valuehead_cpu_loading")
