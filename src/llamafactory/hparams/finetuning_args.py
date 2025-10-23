@@ -88,6 +88,16 @@ class LoraArguments:
             )
         },
     )
+    lora_parameters: Optional[str] = field(  
+        default=None,  
+        metadata={  
+            "help": (  
+                "Name(s) of nn.Parameters to apply LoRA directly. "  
+                "Use commas to separate multiple parameters. "  
+                "Useful for MoE models with expert parameters."  
+            )  
+        },  
+    )
     loraplus_lr_ratio: Optional[float] = field(
         default=None,
         metadata={"help": "LoRA plus learning rate ratio (lr_B / lr_A)."},
@@ -524,6 +534,7 @@ class FinetuningArguments(
         self.freeze_extra_modules: Optional[list[str]] = split_arg(self.freeze_extra_modules)
         self.lora_alpha: int = self.lora_alpha or self.lora_rank * 2
         self.lora_target: list[str] = split_arg(self.lora_target)
+        self.lora_parameters: Optional[list[str]] = split_arg(self.lora_parameters)
         self.oft_target: list[str] = split_arg(self.oft_target)
         self.additional_target: Optional[list[str]] = split_arg(self.additional_target)
         self.galore_target: list[str] = split_arg(self.galore_target)

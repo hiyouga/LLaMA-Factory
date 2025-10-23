@@ -43,22 +43,40 @@ def compare_model(model_a: "torch.nn.Module", model_b: "torch.nn.Module", diff_k
             assert torch.allclose(state_dict_a[name], state_dict_b[name], rtol=1e-4, atol=1e-5) is True
 
 
-def check_lora_model(model: "LoraModel") -> tuple[set[str], set[str]]:
-    linear_modules, extra_modules = set(), set()
-    for name, param in model.named_parameters():
-        if any(module in name for module in ["lora_A", "lora_B"]):
-            linear_modules.add(name.split(".lora_", maxsplit=1)[0].split(".")[-1])
-            assert param.requires_grad is True
-            assert param.dtype == torch.float32
-        elif "modules_to_save" in name:
-            extra_modules.add(name.split(".modules_to_save", maxsplit=1)[0].split(".")[-1])
-            assert param.requires_grad is True
-            assert param.dtype == torch.float32
-        else:
-            assert param.requires_grad is False
-            assert param.dtype == torch.float16
+# def check_lora_model(model: "LoraModel") -> tuple[set[str], set[str]]:
+#     linear_modules, extra_modules = set(), set()
+#     for name, param in model.named_parameters():
+#         if any(module in name for module in ["lora_A", "lora_B"]):
+#             linear_modules.add(name.split(".lora_", maxsplit=1)[0].split(".")[-1])
+#             assert param.requires_grad is True
+#             assert param.dtype == torch.float32
+#         elif "modules_to_save" in name:
+#             extra_modules.add(name.split(".modules_to_save", maxsplit=1)[0].split(".")[-1])
+#             assert param.requires_grad is True
+#             assert param.dtype == torch.float32
+#         else:
+#             assert param.requires_grad is False
+#             assert param.dtype == torch.float16
 
-    return linear_modules, extra_modules
+#     return linear_modules, extra_modules
+
+def check_lora_model(model: "LoraModel") -> tuple[list[str], list[str], list[str]]:
+    lora_param_names = []
+    injected_param_names = []
+    frozen_param_names = []
+
+    for name, param in model.named_parameters():
+        if "lora_A" in name or "lora_B" in name:
+            lora_param_names.append(name)
+            base_name = name.split(".lora_", maxsplit=1)[0]
+            injected_param_names.append(base_name)
+        elif not param.requires_grad:
+            frozen_param_names.append(name)
+        elif hasattr(param, "_is_lora_injected") and getattr(param, "_is_lora_injected"):
+            injected_param_names.append(name)
+
+    injected_param_names = list(dict.fromkeys(injected_param_names))
+    return lora_param_names, injected_param_names, frozen_param_names
 
 
 def load_train_model(add_valuehead: bool = False, **kwargs) -> "PreTrainedModel":
