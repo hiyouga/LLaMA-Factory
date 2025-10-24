@@ -16,6 +16,7 @@ import gc
 import json
 from typing import Optional
 
+import av
 import fire
 from tqdm import tqdm
 from transformers import Seq2SeqTrainingArguments
@@ -31,6 +32,14 @@ from llamafactory.model import load_tokenizer
 if is_vllm_available():
     from vllm import LLM, SamplingParams
     from vllm.lora.request import LoRARequest
+
+
+def _need_video_kwargs(template):
+    NEEDED_TEMPLATE = ["qwen3_vl", "glm4v"]
+    if any(t in template for t in NEEDED_TEMPLATE):
+        return True
+
+    return False
 
 
 def vllm_infer(
@@ -132,6 +141,7 @@ def vllm_infer(
 
     # Store all results in these lists
     all_prompts, all_preds, all_labels = [], [], []
+    need_video_kwargs = _need_video_kwargs(template)
 
     # Add batch process to avoid the issue of too many files opened
     for i in tqdm(range(0, len(train_dataset), batch_size), desc="Processing batched inference"):
@@ -147,6 +157,7 @@ def vllm_infer(
                     )["images"]
                 }
             elif batch["videos"][j] is not None:
+                video_metadata, video_metadata_kwargs = None, None
                 video = batch["videos"][j]
                 multi_modal_data = {
                     "video": template_obj.mm_plugin._regularize_videos(
@@ -157,6 +168,25 @@ def vllm_infer(
                         video_maxlen=video_maxlen,
                     )["videos"]
                 }
+                if need_video_kwargs:
+                    container = av.open(video[0], "r")
+                    video_stream = next(stream for stream in container.streams if stream.type == "video")
+                    sampling_indices = template_obj.mm_plugin._get_video_sample_indices(
+                        video_stream, video_fps, video_maxlen
+                    )
+                    total_frames = video_stream.frames
+                    video_metadata_kwargs = {
+                        "fps": getattr(tokenizer_module["processor"], "video_fps", 24.0),
+                        "do_sample_frames": False,
+                        "total_num_frames": total_frames,
+                    }
+                    video_metadata = dict(
+                        fps=video_fps,
+                        frames_indices=sampling_indices,
+                        total_num_frames=total_frames,
+                        video_backend="opencv",
+                    )
+                    multi_modal_data["video"] = (multi_modal_data["video"], video_metadata)
             elif batch["audios"][j] is not None:
                 audio = batch["audios"][j]
                 audio_data = template_obj.mm_plugin._regularize_audios(
@@ -167,7 +197,11 @@ def vllm_infer(
             else:
                 multi_modal_data = None
 
-            vllm_inputs.append({"prompt_token_ids": batch["input_ids"][j], "multi_modal_data": multi_modal_data})
+            vllm_input_data = {"prompt_token_ids": batch["input_ids"][j], "multi_modal_data": multi_modal_data}
+            if "video_metadata_kwargs" in locals() and video_metadata_kwargs is not None:
+                vllm_input_data["mm_processor_kwargs"] = video_metadata_kwargs
+
+            vllm_inputs.append(vllm_input_data)
             prompts.append(tokenizer.decode(batch["input_ids"][j], skip_special_tokens=skip_special_tokens))
             labels.append(
                 tokenizer.decode(
