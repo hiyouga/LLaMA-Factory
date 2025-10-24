@@ -3197,6 +3197,10 @@ register_model_group(
 
 register_model_group(
     models={
+        "Qwen3-VL-2B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-VL-2B-Instruct",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-2B-Instruct",
+        },
         "Qwen3-VL-4B-Instruct": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-VL-4B-Instruct",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-4B-Instruct",
@@ -3204,6 +3208,10 @@ register_model_group(
         "Qwen3-VL-8B-Instruct": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-VL-8B-Instruct",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-8B-Instruct",
+        },
+        "Qwen3-VL-32B-Instruct": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-VL-32B-Instruct",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-32B-Instruct",
         },
         "Qwen3-VL-30B-A3B-Instruct": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-VL-30B-A3B-Instruct",
@@ -3221,6 +3229,10 @@ register_model_group(
 
 register_model_group(
     models={
+        "Qwen3-VL-2B-Thinking": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-VL-2B-Thinking",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-2B-Thinking",
+        },
         "Qwen3-VL-4B-Thinking": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-VL-4B-Thinking",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-4B-Thinking",
@@ -3228,6 +3240,10 @@ register_model_group(
         "Qwen3-VL-8B-Thinking": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-VL-8B-Thinking",
             DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-8B-Thinking",
+        },
+        "Qwen3-VL-32B-Thinking": {
+            DownloadSource.DEFAULT: "Qwen/Qwen3-VL-32B-Thinking",
+            DownloadSource.MODELSCOPE: "Qwen/Qwen3-VL-32B-Thinking",
         },
         "Qwen3-VL-30B-A3B-Thinking": {
             DownloadSource.DEFAULT: "Qwen/Qwen3-VL-30B-A3B-Thinking",
