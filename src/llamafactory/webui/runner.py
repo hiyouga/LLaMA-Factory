@@ -212,6 +212,7 @@ class Runner:
             args["pissa_convert"] = get("train.use_pissa")
             args["lora_target"] = get("train.lora_target") or "all"
             args["additional_target"] = get("train.additional_target") or None
+            args["lora_parameters"] = get("train.lora_parameters") or None
 
             if args["use_llama_pro"]:
                 args["freeze_trainable_layers"] = get("train.freeze_trainable_layers")
