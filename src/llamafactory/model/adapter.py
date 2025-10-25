@@ -202,7 +202,7 @@ def _setup_lora_tuning(
         target_parameters = []
         if len(finetuning_args.lora_target) == 1 and finetuning_args.lora_target[0] == "all":
             if finetuning_args.lora_parameters: # if specified the parameters to be adapted, use them
-                print("Using specified LoRA parameters: ", finetuning_args.lora_parameters)
+                logger.info_rank0("Using specified LoRA parameters: {}", finetuning_args.lora_parameters)
                 target_parameters = finetuning_args.lora_parameters
             else:
                 target_modules = find_all_linear_modules(model, finetuning_args.freeze_vision_tower)
