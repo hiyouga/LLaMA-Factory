@@ -461,7 +461,7 @@ class FinetuningArguments(
         default="sft",
         metadata={"help": "Which stage will be performed in training."},
     )
-    finetuning_type: Literal["lora", "freeze", "full"] = field(
+    finetuning_type: Literal["lora", "oft", "freeze", "full"] = field(
         default="lora",
         metadata={"help": "Which fine-tuning method to use."},
     )
@@ -472,6 +472,10 @@ class FinetuningArguments(
     use_adam_mini: bool = field(
         default=False,
         metadata={"help": "Whether or not to use the Adam-mini optimizer."},
+    )
+    use_mca: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use MCA (Megatron Core Adapter) training. Controlled by USE_MCA environment variable."},
     )
     use_muon: bool = field(
         default=False,

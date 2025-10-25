@@ -12,20 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-def main():
-    from .extras.misc import is_env_enabled
-
-    if is_env_enabled("USE_V1"):
-        from .v1 import launcher
-    else:
-        from . import launcher
-
-    launcher.launch()
+from .workflow import run_dpo, run_pt, run_sft
 
 
-if __name__ == "__main__":
-    from multiprocessing import freeze_support
+__all__ = ["run_dpo", "run_pt", "run_sft"]
 
-    freeze_support()
-    main()
