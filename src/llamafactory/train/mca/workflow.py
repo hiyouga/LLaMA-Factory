@@ -70,7 +70,7 @@ def _data_collator_wrapper(data_collator: Any):
                 feature[k] = feature[k][:-1]
             for k in ["attention_mask", "position_ids"]:
                 if k in feature:
-                    feature[k] = feature[k][1:]
+                    feature[k] = feature[k][:-1]
         return data_collator(features)
 
     return wrapper
