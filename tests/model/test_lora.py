@@ -75,7 +75,7 @@ def test_lora_train_all_modules():
 
 def test_lora_train_extra_modules():
     model = load_train_model(additional_target="embed_tokens,lm_head", **TRAIN_ARGS)
-    _, extra_modules, _ = check_lora_model(model)
+    _, _, extra_modules = check_lora_model(model)
     assert extra_modules == {"embed_tokens", "lm_head"}
 
 
@@ -94,7 +94,7 @@ def test_lora_train_new_adapters():
     
 def test_lora_parameters():  
     model = load_train_model(lora_parameters="q_proj.weight, k_proj.weight", **TRAIN_ARGS)  
-    _, _, injected_parameters = check_lora_model(model)   
+    _, injected_parameters, _ = check_lora_model(model)   
     assert injected_parameters == {"q_proj.weight", "k_proj.weight"}
 
 
