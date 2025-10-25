@@ -36,7 +36,7 @@ def _resolve_pad_token_id(tokenizer: "PreTrainedTokenizer", model: "PreTrainedMo
 
 
 @dataclass
-class TokenizedIdsCollator(MultiModalDataCollatorForSeq2Seq):
+class TokenizedIdsCollator(DataCollatorForSeq2Seq):
     r"""Collator for pre-tokenized LM data.
 
     Expects features containing `input_ids` and optionally `attention_mask`.
