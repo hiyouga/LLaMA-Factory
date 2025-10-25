@@ -25,7 +25,7 @@ def calculate_similarity(pair, model):
     计算一对文本的相似度
     
     Args:
-        pair: 包含index、predict和label的字典
+        pair: 包含index、predict、label和images_path的字典
         model: SentenceTransformer模型
     
     Returns:
@@ -34,6 +34,7 @@ def calculate_similarity(pair, model):
     try:
         predict = pair['predict']
         label = pair['label']
+        images_path = pair.get('images_path', '')
         
         # 编码文本，使用不同的prompt
         predict_embedding = model.encode([predict], prompt_name="query")
@@ -45,6 +46,7 @@ def calculate_similarity(pair, model):
         return {
             'predict': predict,
             'label': label,
+            'images_path': images_path,
             'sim_score': similarity
         }
     except Exception as e:
@@ -52,6 +54,7 @@ def calculate_similarity(pair, model):
         return {
             'predict': pair.get('predict', ''),
             'label': pair.get('label', ''),
+            'images_path': pair.get('images_path', ''),
             'sim_score': 0.0
         }
 
@@ -64,7 +67,7 @@ def read_input_file(file_path):
         file_path: 输入文件路径
     
     Returns:
-        list: 包含index、predict和label的字典列表
+        list: 包含index、predict、label和images_path的字典列表
     """
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"输入文件不存在: {file_path}")
@@ -79,7 +82,8 @@ def read_input_file(file_path):
                     data.append({
                         'index': idx,
                         'predict': item['predict'],
-                        'label': item['label']
+                        'label': item['label'],
+                        'images_path': item.get('images_path', '')  # 获取images_path，如果不存在则使用空字符串
                     })
             except json.JSONDecodeError as e:
                 print(f"警告: 第{idx+1}行JSON解析错误: {e}")
@@ -172,7 +176,9 @@ def main():
     # 计算平均相似度
     if similarities:
         avg_score = sum(similarities) / len(similarities)
-        print(f"所有样本相似度计算完成，平均相似度: {avg_score:.4f}")
+        max_sim_score = max(similarities)
+        min_sim_score = min(similarities)
+        print(f"所有样本相似度计算完成，平均相似度: {avg_score:.4f}，最大相似度: {max_sim_score:.4f}，最小相似度: {min_sim_score:.4f}")
     else:
         avg_score = 0.0
         print("没有有效样本进行相似度计算")
@@ -183,4 +189,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    #  python /home/wangrui/code/LLaMA-Factory/train_reid/scripts/qwen3_embedding/pre_and_label_sim.py --input_path /home/wangrui/code/LLaMA-Factory/train_reid/data/local_data/infer_res/generated_predictions_with_images_sorted.jsonl --output_path /home/wangrui/code/LLaMA-Factory/train_reid/data/local_data/infer_res/prediction_sim_score.jsonl 
+    #  python /home/wangrui/code/LLaMA-Factory/train_reid/scripts/qwen3_embedding/pre_and_label_sim.py --input_path /home/wangrui/code/LLaMA-Factory/train_reid/data/local_data/infer_res/generated_predictions_with_images_sorted.jsonl --output_path /home/wangrui/code/LLaMA-Factory/train_reid/data/local_data/infer_res/prediction_sim_score.jsonl

@@ -14,7 +14,7 @@ lora_rank: 8
 lora_target: all
 
 ### dataset
-eval_dataset: mllm_reid_test_1k # 测试集名称
+eval_dataset: mllm_reid_test_1k_retpreid # 测试集名称
 template: qwen2_vl
 cutoff_len: 2048
 max_samples: 1000

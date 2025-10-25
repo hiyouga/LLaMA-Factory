@@ -24,6 +24,20 @@
       "tools": "tools"
     }
   },
+  "mllm_reid_5k_realreid_test": {
+    "file_name": "mllm_reid_5k_realreid_test.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "images": "images"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
   "mllm_reid_test_1k_retpreid": {
     "file_name": "mllm_reid_test_1k_retpreid.json",
     "formatting": "sharegpt",
