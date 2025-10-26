@@ -32,8 +32,7 @@ logger = logging.get_logger(__name__)
 def _iter_parquet_rows(paths: list[str], ids_key: str, mask_key: Optional[str]) -> Iterable[dict[str, Any]]:
     r"""Iterate over rows from multiple Parquet files, yielding pre-tokenized samples."""
     for path in paths:
-        with open(path, "rb") as f:
-            pf = pq.ParquetFile(f)
+        with pq.ParquetFile(path) as pf:
             for i in range(pf.num_row_groups):
                 table: pa.Table = pf.read_row_group(i)
                 ids_col = table[ids_key]
