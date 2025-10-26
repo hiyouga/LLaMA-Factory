@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Any
 import torch
 
 from ..extras.constants import IGNORE_INDEX
-from .collator import MultiModalDataCollatorForSeq2Seq
+from transformers import DataCollatorForSeq2Seq
 
 
 if TYPE_CHECKING:
