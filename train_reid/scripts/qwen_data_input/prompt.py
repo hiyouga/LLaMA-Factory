@@ -24,3 +24,4 @@ Choose one color from black, white, red, purple, yellow, blue, green, pink, gray
 ###Output###
 Combine all the attributes above into a natural language as the final output.
 """
+
