@@ -74,5 +74,4 @@ def load_tokenized_parquet_dataset(
         raise ValueError("data_files must be a non-empty list of Parquet paths")
 
     logger.info_rank0(f"Building streaming dataset from {len(data_files)} parquet file(s)")
-    gen = lambda: _iter_parquet_rows(data_files, ids_key, mask_key)
-    return IterableDataset.from_generator(gen)  # type: ignore
+    return IterableDataset.from_generator(_iter_parquet_rows, gen_kwargs={"paths": data_files, "ids_key": ids_key, "mask_key": mask_key})  # type: ignore
