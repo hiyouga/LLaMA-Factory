@@ -146,7 +146,7 @@ class DataArguments:
             )
         },
     )
-    data_files: Optional[Union[str, list[str]]] = field(
+    data_files: Optional[Union[str, list[str], dict]] = field(
         default=None,
         metadata={
             "help": (
