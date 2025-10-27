@@ -28,6 +28,14 @@ logger = logging.get_logger(__name__)
 
 
 def configure_attn_implementation(config: "PretrainedConfig", model_args: "ModelArguments") -> None:
+    if getattr(config, "model_type", None) == "gpt_oss":
+        from transformers.integrations.hub_kernels import load_and_register_kernel
+        load_and_register_kernel("kernels-community/vllm-flash-attn3")
+        setattr(config, "_attn_implementation", "kernels-community/vllm-flash-attn3")
+        setattr(config, "_attn_implementation_internal", "kernels-community/vllm-flash-attn3")
+        model_args.flash_attn = "kernels-community/vllm-flash-attn3"
+        return
+    
     from transformers.utils import is_flash_attn_2_available
 
     if getattr(config, "model_type", None) == "gemma2":
