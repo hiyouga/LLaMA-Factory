@@ -28,7 +28,8 @@ class AlpacaSample(TypedDict, total=False):
 
 
 class PairSample(TypedDict, total=False):
-    prompt: NotRequired[str]
+    system: NotRequired[str]
+    conversations: NotRequired[str]
     chosen: NotRequired[str]
     rejected: NotRequired[str]
 
@@ -72,47 +73,65 @@ def pair_converter(raw_sample: PairSample) -> DPOSample:
 
     Args:
         raw_sample (PairSample): pair sample with prompt, chosen, rejected fields.
+        see example at: https://huggingface.co/datasets/llamafactory/DPO-En-Zh-20k/viewer/zh?row=0
 
     Returns:
         DPOSample: DPO sample with chosen_messages and rejected_messages.
     """
     chosen_messages = []
-    if "prompt" in raw_sample:
+    if "system" in raw_sample:
         chosen_messages.append(
-            {
-                "role": "user",
-                "content": [{"type": "text", "value": raw_sample["prompt"]}],
-                "loss_weight": 0.0,
-            }
+            {"role": "system", "content": [{"type": "text", "value": raw_sample["system"]}], "loss_weight": 0.0}
         )
+    if "conversations" in raw_sample:
+        value = raw_sample.get("conversations", "")
+        if value:
+            chosen_messages.append(
+                {
+                    "role": "user",
+                    "content": [{"type": "text", "value": value[0].get("value", "")}],
+                    "loss_weight": 0.0,
+                }
+            )
+
 
     if "chosen" in raw_sample:
-        chosen_messages.append(
-            {
-                "role": "assistant",
-                "content": [{"type": "text", "value": raw_sample["chosen"]}],
-                "loss_weight": 1.0,
-            }
-        )
+        value = raw_sample.get("chosen", "")
+        if value:
+            chosen_messages.append(
+                {
+                    "role": "assistant",
+                    "content": [{"type": "text", "value": value.get("value", "")}],
+                    "loss_weight": 1.0,
+                }
+            )
 
     rejected_messages = []
-    if "prompt" in raw_sample:
+    if "system" in raw_sample:
         rejected_messages.append(
-            {
-                "role": "user",
-                "content": [{"type": "text", "value": raw_sample["prompt"]}],
-                "loss_weight": 0.0,
-            }
+            {"role": "system", "content": [{"type": "text", "value": raw_sample["system"]}], "loss_weight": 0.0}
         )
+    if "conversations" in raw_sample:
+        value = raw_sample.get("conversations", "")
+        if value:
+            rejected_messages.append(
+                {
+                    "role": "user",
+                    "content": [{"type": "text", "value": value[0].get("value", "")}],
+                    "loss_weight": 0.0,
+                }
+            )
 
     if "rejected" in raw_sample:
-        rejected_messages.append(
-            {
-                "role": "assistant",
-                "content": [{"type": "text", "value": raw_sample["rejected"]}],
-                "loss_weight": 1.0,
-            }
-        )
+        value = raw_sample.get("rejected", "")
+        if value:
+            rejected_messages.append(
+                {
+                    "role": "assistant",
+                    "content": [{"type": "text", "value": value.get("value", "")}],
+                    "loss_weight": 1.0,
+                }
+            )
 
     return {
         "chosen_messages": chosen_messages,
