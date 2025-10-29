@@ -75,10 +75,7 @@ class TokenizedIdsCollator(DataCollatorForSeq2Seq):
                 mask = [1] * len(ids) + [0] * pad_amt
             attention_mask.append(mask)
 
-            row_labels = row_ids.copy()
-            for i in range(len(ids), max_len):
-                row_labels[i] = IGNORE_INDEX
-            labels.append(row_labels)
+            labels.append(ids + [IGNORE_INDEX] * pad_amt)
 
         batch = {
             "input_ids": torch.tensor(input_ids, dtype=torch.long),
