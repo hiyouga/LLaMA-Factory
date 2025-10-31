@@ -77,7 +77,7 @@ def hf_infer(
     # --- Load model ---
     model = AutoModelForCausalLM.from_pretrained(
         model_name_or_path,
-        torch_dtype=torch.bfloat16,
+        torch_dtype=model_args.infer_dtype,
         device_map="auto",
         trust_remote_code=True,
     )
