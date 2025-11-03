@@ -56,7 +56,18 @@ LAYERNORM_NAMES = {"norm", "ln"}
 
 LLAMABOARD_CONFIG = "llamaboard_config.yaml"
 
-MCA_SUPPORTED_MODELS = {"deepseek_v3", "llama", "mistral", "mixtral", "qwen2", "qwen2_vl", "qwen2_5_vl", "qwen3", "qwen3_moe", "qwen3_next"}
+MCA_SUPPORTED_MODELS = {
+    "deepseek_v3",
+    "llama",
+    "mistral",
+    "mixtral",
+    "qwen2",
+    "qwen2_vl",
+    "qwen2_5_vl",
+    "qwen3",
+    "qwen3_moe",
+    "qwen3_next",
+}
 
 METHODS = ["full", "freeze", "lora", "oft"]
 

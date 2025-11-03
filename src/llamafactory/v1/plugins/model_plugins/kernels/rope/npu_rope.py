@@ -59,7 +59,7 @@ class NpuRoPEKernel(MetaRoPEKernel):
         KERNEL_REGISTRY.register(kernel_type, device_type, cls)
 
     @classmethod
-    def apply(cls, model, **kwargs) -> 'HFModel':
+    def apply(cls, model, **kwargs) -> "HFModel":
         """Apply RoPE acceleration by monkey-patching `apply_rotary_pos_emb`.
 
         This function iterates through the model's modules to find attention layers,
@@ -96,7 +96,7 @@ class NpuQwen2VLRoPEKernel(MetaRoPEKernel):
         KERNEL_REGISTRY.register(kernel_type, device_type, cls)
 
     @classmethod
-    def apply(cls, model, **kwargs) -> 'HFModel':
+    def apply(cls, model, **kwargs) -> "HFModel":
         """Apply RoPE acceleration by monkey-patching `apply_rotary_pos_emb`.
 
         This function iterates through the model's modules to find attention layers,

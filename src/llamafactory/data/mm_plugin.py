@@ -70,7 +70,6 @@ if TYPE_CHECKING:
     from transformers.image_processing_utils import BaseImageProcessor
     from transformers.video_processing_utils import BaseVideoProcessor
 
-
     class EncodedImage(TypedDict):
         path: Optional[str]
         bytes: Optional[bytes]

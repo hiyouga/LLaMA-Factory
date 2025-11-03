@@ -65,7 +65,6 @@ class NpuRMSNormKernel(MetaRMSNormKernel):
         for name, module in model.named_modules():
             # Match any module whose class name contains "RMSNorm"
             if re.search(rms_norm_pattern, module.__class__.__name__):
-
                 # Bind function as an instance method to preserve `self` semantics
                 # and replace the original forward
                 module.forward = types.MethodType(cls.kernel, module)

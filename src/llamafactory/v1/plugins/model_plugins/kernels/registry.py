@@ -21,10 +21,10 @@ from .constants import DeviceType, KernelType
 
 
 class KernelRegistry:
-    _instance: Optional['KernelRegistry'] = None
+    _instance: Optional["KernelRegistry"] = None
     _initialized: bool = False
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> 'KernelRegistry':
+    def __new__(cls, *args: Any, **kwargs: Any) -> "KernelRegistry":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
@@ -36,10 +36,7 @@ class KernelRegistry:
         self._initialized = True
 
     def register(
-        self,
-        kernel_type: KernelType,
-        device_type: DeviceType,
-        kernel_impl: Optional[Callable[..., Any]]
+        self, kernel_type: KernelType, device_type: DeviceType, kernel_impl: Optional[Callable[..., Any]]
     ) -> None:
         """Register a kernel implementation.
 
@@ -57,11 +54,7 @@ class KernelRegistry:
         self._registry[kernel_type][device_type] = kernel_impl
         print(f"Registered kernel {kernel_type.name} for device {device_type.name}.")
 
-    def get_kernel(
-        self,
-        kernel_type: KernelType,
-        device_type: DeviceType
-    ) -> Optional[Callable[..., Any]]:
+    def get_kernel(self, kernel_type: KernelType, device_type: DeviceType) -> Optional[Callable[..., Any]]:
         return self._registry.get(kernel_type, {}).get(device_type)
 
 
@@ -84,35 +77,30 @@ class MetaKernel(ABC):
 
 
 class MetaFlashAttentionKernel(MetaKernel):
-
     @classmethod
     def apply(cls, model: HFModel, **kwargs) -> HFModel:
         raise NotImplementedError
 
 
 class MetaRMSNormKernel(MetaKernel):
-
     @classmethod
     def apply(cls, model: HFModel, **kwargs) -> HFModel:
         raise NotImplementedError
 
 
 class MetaSwiGluKernel(MetaKernel):
-
     @classmethod
     def apply(cls, model: HFModel, **kwargs) -> HFModel:
         raise NotImplementedError
 
 
 class MetaRoPEKernel(MetaKernel):
-
     @classmethod
     def apply(cls, model: HFModel, **kwargs) -> HFModel:
         raise NotImplementedError
 
 
 class MetaMoEKernel(MetaKernel):
-
     @classmethod
     def apply(cls, model: HFModel, **kwargs) -> HFModel:
         raise NotImplementedError
@@ -130,7 +118,7 @@ def discover_kernels(model: HFModel) -> list[MetaKernel]:
     return []
 
 
-def apply_kernel(model: HFModel, kernel: type[MetaKernel], /, **kwargs) -> 'HFModel':
+def apply_kernel(model: HFModel, kernel: type[MetaKernel], /, **kwargs) -> "HFModel":
     """Call the MetaKernel's `apply` to perform the replacement.
 
     Corresponding replacement logic is maintained inside each kernel; the only
@@ -145,4 +133,6 @@ def apply_kernel(model: HFModel, kernel: type[MetaKernel], /, **kwargs) -> 'HFMo
     if issubclass(kernel, MetaKernel) and kernel.device == get_available_accelerator().type:
         return kernel.apply(model, **kwargs)
 
-    raise ValueError(f"{kernel} must be a MetaKernel instance, or the kernel don't match the device type. got {kernel.device} and {get_available_accelerator().type} instead.")
+    raise ValueError(
+        f"{kernel} must be a MetaKernel instance, or the kernel don't match the device type. got {kernel.device} and {get_available_accelerator().type} instead."
+    )

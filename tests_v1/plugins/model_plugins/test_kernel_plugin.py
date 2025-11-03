@@ -19,18 +19,16 @@ from transformers import AutoModelForCausalLM
 
 
 class TestKernelPlugin(unittest.TestCase):
-
-    @patch('torch.accelerator.current_accelerator')
+    @patch("torch.accelerator.current_accelerator")
     def test_apply_kernel(self, mock_get_accelerator):
         mock_device = MagicMock()
-        mock_device.type = 'npu'
+        mock_device.type = "npu"
         mock_get_accelerator.return_value = mock_device
 
         model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen2.5")
 
         original_rmsnorm_forward = model.model.layers[0].input_layernorm.forward
         original_swiglu_forward = model.model.layers[0].mlp.forward
-
 
         from llamafactory.v1.plugins.model_plugins.kernels.mlp import npu_swiglu
         from llamafactory.v1.plugins.model_plugins.kernels.registry import apply_kernel
