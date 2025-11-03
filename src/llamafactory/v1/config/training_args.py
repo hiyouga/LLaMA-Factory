@@ -38,3 +38,14 @@ class TrainingArguments:
         default=False,
         metadata={"help": "Use bf16 for training."},
     )
+
+    def __post_init__(self) -> None:
+        # Self-validation on construction (no external call required)
+        if self.micro_batch_size <= 0:
+            raise ValueError("training.micro_batch_size must be > 0")
+        if self.global_batch_size <= 0:
+            raise ValueError("training.global_batch_size must be > 0")
+        if self.global_batch_size < self.micro_batch_size:
+            raise ValueError("training.global_batch_size must be >= training.micro_batch_size")
+        if self.learning_rate <= 0:
+            raise ValueError("training.learning_rate must be > 0")
