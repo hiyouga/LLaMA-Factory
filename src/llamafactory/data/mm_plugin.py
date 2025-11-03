@@ -65,9 +65,11 @@ else:
 if TYPE_CHECKING:
     from av.stream import Stream
     from numpy.typing import NDArray
-    from transformers import PreTrainedTokenizer, ProcessorMixin, BaseVideoProcessor
+    from transformers import PreTrainedTokenizer, ProcessorMixin
     from transformers.feature_extraction_sequence_utils import SequenceFeatureExtractor
     from transformers.image_processing_utils import BaseImageProcessor
+    from transformers.video_processing_utils import BaseVideoProcessor
+
 
     class EncodedImage(TypedDict):
         path: Optional[str]
