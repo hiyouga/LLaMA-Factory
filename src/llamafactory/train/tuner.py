@@ -71,13 +71,17 @@ def _training_function(config: dict[str, Any]) -> None:
             raise ImportError("mcore_adapter is not installed. Please install it with `pip install mcore-adapter`.")
         if finetuning_args.stage == "pt":
             from .mca import run_pt as run_pt_mca
+
             run_pt_mca(model_args, data_args, training_args, finetuning_args, callbacks)
         elif finetuning_args.stage == "sft":
             from .mca import run_sft as run_sft_mca
+
             run_sft_mca(model_args, data_args, training_args, finetuning_args, callbacks)
-        else:  # dpo
+        elif finetuning_args.stage == "dpo":
             from .mca import run_dpo as run_dpo_mca
+
             run_dpo_mca(model_args, data_args, training_args, finetuning_args, callbacks)
+
     elif finetuning_args.stage == "pt":
         run_pt(model_args, data_args, training_args, finetuning_args, callbacks)
     elif finetuning_args.stage == "sft":

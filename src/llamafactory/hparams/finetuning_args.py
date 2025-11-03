@@ -475,7 +475,12 @@ class FinetuningArguments(
     )
     use_mca: bool = field(
         default=False,
-        metadata={"help": "Whether or not to use MCA (Megatron Core Adapter) training. Controlled by USE_MCA environment variable."},
+        metadata={
+            "help": (
+                "Whether or not to use MCA (Megatron Core Adapter) training. "
+                "Controlled by USE_MCA environment variable."
+            )
+        },
     )
     use_muon: bool = field(
         default=False,

@@ -24,7 +24,7 @@ class KernelType(str, Enum):
 
 
 class DeviceType(str, Enum):
-    CPU = 'cpu'
-    CUDA = 'cuda'
-    NPU = 'npu'
-    XPU = 'xpu'
+    CPU = "cpu"
+    CUDA = "cuda"
+    NPU = "npu"
+    XPU = "xpu"

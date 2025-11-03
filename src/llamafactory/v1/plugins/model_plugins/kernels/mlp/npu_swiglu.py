@@ -27,14 +27,11 @@ def _npu_swiglu_forward(self, hidden_state):
     import torch_npu
 
     return self.down_proj(
-        torch_npu.npu_swiglu(
-            torch.cat((self.gate_proj(hidden_state), self.up_proj(hidden_state)), dim=-1), dim=-1
-        )
+        torch_npu.npu_swiglu(torch.cat((self.gate_proj(hidden_state), self.up_proj(hidden_state)), dim=-1), dim=-1)
     )
 
 
 class NpuSwiGluKernel(MetaSwiGluKernel):
-
     device = DeviceType.NPU
     kernel = _npu_swiglu_forward
 
@@ -43,7 +40,7 @@ class NpuSwiGluKernel(MetaSwiGluKernel):
         KERNEL_REGISTRY.register(kernel_type, device_type, cls)
 
     @classmethod
-    def apply(cls, model, **kwargs) -> 'HFModel':
+    def apply(cls, model, **kwargs) -> "HFModel":
         if not is_torch_npu_available():
             return model
 
@@ -51,7 +48,6 @@ class NpuSwiGluKernel(MetaSwiGluKernel):
         for name, module in model.named_modules():
             # Match any module whose class name contains "RMSNorm"
             if re.search(swiglu_pattern, module.__class__.__name__):
-
                 # Bind function as an instance method to preserve `self` semantics
                 # and replace the original forward
                 module.forward = types.MethodType(cls.kernel, module)

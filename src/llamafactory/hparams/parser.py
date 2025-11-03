@@ -55,11 +55,15 @@ _EVAL_CLS = tuple[ModelArguments, DataArguments, EvaluationArguments, Finetuning
 
 if is_mcore_adapter_available() and is_env_enabled("USE_MCA"):
     from mcore_adapter import TrainingArguments as McaTrainingArguments
+
     _TRAIN_MCA_ARGS = [ModelArguments, DataArguments, McaTrainingArguments, FinetuningArguments, GeneratingArguments]
-    _TRAIN_MCA_CLS = tuple[ModelArguments, DataArguments, McaTrainingArguments, FinetuningArguments, GeneratingArguments]
+    _TRAIN_MCA_CLS = tuple[
+        ModelArguments, DataArguments, McaTrainingArguments, FinetuningArguments, GeneratingArguments
+    ]
 else:
     _TRAIN_MCA_ARGS = []
     _TRAIN_MCA_CLS = tuple()
+
 
 def read_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> Union[dict[str, Any], list[str]]:
     r"""Get arguments from the command line or a config file."""
