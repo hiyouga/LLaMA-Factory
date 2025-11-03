@@ -166,27 +166,21 @@ def run_sft(
     model = AutoModel.from_pretrained(model_args.model_name_or_path, training_args)
 
     # optional freezing for qwen2_vl, qwen2_5_vl
-    if (
-        getattr(model.config, "hf_model_type", None) in ["qwen2_vl", "qwen2_5_vl"]
-        and finetuning_args.freeze_vision_tower
-    ):
-        for name, p in model.named_parameters():
-            if any(name.startswith(k) for k in ["vision_model.blocks", "vision_model.patch_embed"]):
-                p.requires_grad_(False)
-    if (
-        getattr(model.config, "hf_model_type", None) in ["qwen2_vl", "qwen2_5_vl"]
-        and finetuning_args.freeze_multi_modal_projector
-    ):
-        for name, p in model.named_parameters():
-            if any(name.startswith(k) for k in ["multi_modal_projector"]):
-                p.requires_grad_(False)
-    if (
-        getattr(model.config, "hf_model_type", None) in ["qwen2_vl", "qwen2_5_vl"]
-        and finetuning_args.freeze_language_model
-    ):
-        for name, p in model.named_parameters():
-            if any(name.startswith(k) for k in ["embedding", "decoder", "output_layer"]):
-                p.requires_grad_(False)
+    if getattr(model.config, "hf_model_type", None) in ["qwen2_vl", "qwen2_5_vl"]:
+        params_to_freeze = []
+        if finetuning_args.freeze_vision_tower:
+            params_to_freeze.extend(["vision_model.blocks", "vision_model.patch_embed"])
+
+        if finetuning_args.freeze_multi_modal_projector:
+            params_to_freeze.extend(["multi_modal_projector"])
+
+        if finetuning_args.freeze_language_model:
+            params_to_freeze.extend(["embedding", "decoder", "output_layer"])
+
+        if params_to_freeze:
+            for name, p in model.named_parameters():
+                if any(name.startswith(k) for k in params_to_freeze):
+                    p.requires_grad_(False)
 
     pad_to_max = training_args.expert_model_parallel_size is not None and training_args.expert_model_parallel_size > 1
     data_collator = SFTDataCollatorWith4DAttentionMask(
