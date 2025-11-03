@@ -16,16 +16,16 @@ import json
 import sys
 from pathlib import Path
 from dataclasses import dataclass, fields as dataclass_fields
-from typing import Any, Callable, Optional, Union
+from typing import Any, Optional, Union
 
 from omegaconf import OmegaConf
 from transformers import HfArgumentParser
 
-from llamafactory.extras.misc import is_env_enabled
 from llamafactory.v1.config.data_args import DataArguments
 from llamafactory.v1.config.model_args import ModelArguments
 from llamafactory.v1.config.sample_args import SampleArguments
 from llamafactory.v1.config.training_args import TrainingArguments
+from llamafactory.v1.config.validators import run_cross_validators
 
 
 @dataclass(frozen=True)
@@ -48,7 +48,7 @@ class RuntimeArgs:
                 validator()
         
         # 2) Run registered cross-section validators
-        _run_cross_validators(self)
+        run_cross_validators(self)
 
     def __repr__(self) -> str:  # pragma: no cover - concise & future-proof
         parts = []
@@ -66,26 +66,6 @@ class RuntimeArgs:
         """Explicit validation (already done in __post_init__, but kept for compatibility)."""
         # Already validated in __post_init__, this is a no-op but kept for explicit calls
         pass
-
-
-# Registry for cross-section validators: {frozenset of section names: validator_fn}
-_CROSS_VALIDATORS: dict[frozenset[str], list[Callable[[RuntimeArgs], None]]] = {}
-
-
-def _run_cross_validators(runtime: RuntimeArgs) -> None:
-    """Run registered validators only when all required sections are present."""
-    # Dynamically check which sections are present (not None)
-    present = {
-        field.name 
-        for field in dataclass_fields(runtime) 
-        if getattr(runtime, field.name) is not None
-    }
-    
-    # Run validators only if all their required sections exist
-    for required_sections, validators in _CROSS_VALIDATORS.items():
-        if required_sections.issubset(present):
-            for validator in validators:
-                validator(runtime)
 
 
 def _prepare_args(
