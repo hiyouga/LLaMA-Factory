@@ -106,6 +106,10 @@ def is_starlette_available():
 def is_transformers_version_greater_than(content: str):
     return _get_package_version("transformers") >= version.parse(content)
 
+@lru_cache
+def is_torch_version_greater_than(content: str):
+    return _get_package_version("torch") >= version.parse(content)
+
 
 def is_uvicorn_available():
     return _is_package_available("uvicorn")

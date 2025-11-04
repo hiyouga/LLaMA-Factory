@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 from ...extras import logging
 from ...extras.constants import AttentionFunction
+from ...extras.packages import is_torch_version_greater_than
 
 
 if TYPE_CHECKING:
@@ -51,15 +52,14 @@ def configure_attn_implementation(config: "PretrainedConfig", model_args: "Model
         requested_attn_implementation = "eager"
 
     elif model_args.flash_attn == AttentionFunction.SDPA:
-        from transformers.utils import is_torch_sdpa_available
-
-        if not is_torch_sdpa_available():
+        if not is_torch_version_greater_than("2.1.1"):
             logger.warning_rank0("torch>=2.1.1 is required for SDPA attention.")
             return
 
         requested_attn_implementation = "sdpa"
     elif model_args.flash_attn == AttentionFunction.FA2:
-        if not is_flash_attn_2_available():
+        from transformers import is_torch_npu_available
+        if not (is_flash_attn_2_available() or is_torch_npu_available()):
             logger.warning_rank0("FlashAttention-2 is not installed.")
             return
 
