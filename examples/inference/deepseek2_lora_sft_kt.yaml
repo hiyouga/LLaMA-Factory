@@ -1,0 +1,10 @@
+model_name_or_path: deepseek-ai/DeepSeek-V2-Lite
+adapter_name_or_path: saves/Kllama_deepseekV2
+template: deepseek
+infer_backend: ktransformers  # choices: [huggingface, vllm, sglang, ktransformers]
+trust_remote_code: true
+
+use_kt: true # use KTransformers as LoRA sft backend to inference
+kt_optimize_rule: examples/kt_optimize_rules/DeepSeek-V2-Lite-Chat-sft-amx.yaml
+cpu_infer: 32
+chunk_size: 8192

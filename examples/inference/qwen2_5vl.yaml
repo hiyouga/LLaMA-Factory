@@ -1,4 +1,4 @@
 model_name_or_path: Qwen/Qwen2.5-VL-7B-Instruct
 template: qwen2_vl
-infer_backend: huggingface  # choices: [huggingface, vllm, sglang]
+infer_backend: huggingface  # choices: [huggingface, vllm, sglang, ktransformers]
 trust_remote_code: true

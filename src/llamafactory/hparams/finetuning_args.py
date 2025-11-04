@@ -439,7 +439,6 @@ class SwanLabArguments:
         metadata={"help": "The Lark(飞书) secret for SwanLab."},
     )
 
-
 @dataclass
 class FinetuningArguments(
     SwanLabArguments,
