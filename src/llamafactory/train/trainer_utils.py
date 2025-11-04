@@ -100,6 +100,9 @@ def create_modelcard_and_push(
     if model_args.use_unsloth:
         kwargs["tags"] = kwargs["tags"] + ["unsloth"]
 
+    if model_args.use_kt:
+        kwargs["tags"] = kwargs["tags"] + ["ktransformers"]
+
     if not training_args.do_train:
         pass
     elif training_args.push_to_hub:

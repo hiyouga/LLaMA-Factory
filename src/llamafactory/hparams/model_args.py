@@ -1,4 +1,4 @@
-# Copyright 2025 HuggingFace Inc. and the LlamaFactory team.
+# Copyright 2025 HuggingFace Inc., the KVCache.AI team, Approaching AI, and the LlamaFactory team.
 #
 # This code is inspired by the HuggingFace's transformers library.
 # https://github.com/huggingface/transformers/blob/v4.40.0/examples/pytorch/language-modeling/run_clm.py
@@ -476,8 +476,50 @@ class SGLangArguments:
 
 
 @dataclass
+class KTransformersArguments:
+    r"""Arguments pertaining to the KT training."""
+
+    use_kt: bool = field(
+        default=False,
+        metadata={"help": "Whether To Use KTransformers Optimizations For LoRA Training."},
+    )
+    kt_optimize_rule: Optional[str] = field(
+        default=None,
+        metadata={"help": "Path To The KTransformers Optimize Rule; See https://github.com/kvcache-ai/ktransformers/."},
+    )
+    cpu_infer: Optional[int] = field(
+        default=32,
+        metadata={"help": "Number Of CPU Cores Used For Computation."},
+    )
+    chunk_size: Optional[int] = field(
+        default=8192,
+        metadata={"help": "Chunk Size Used For CPU Compute In KTransformers."},
+    )
+    mode: Optional[str] = field(
+        default="normal",
+        metadata={"help": "Normal Or Long_Context For Llama Models."},
+    )
+
+    kt_maxlen: int = field(
+        default=4096,
+        metadata={"help": "Maximum Sequence (Prompt + Response) Length Of The KT Engine."},
+    )
+    kt_use_cuda_graph: bool = field(
+        default=True,
+        metadata={"help": "Whether To Use CUDA Graphs For The KT Engine."},
+    )
+    kt_mode: str = field(
+        default="normal",
+        metadata={"help": "Normal Or Long_Context Mode For The KT Engine."},
+    )
+    kt_force_think: bool = field(
+        default=False,
+        metadata={"help": "Force-Think Toggle For The KT Engine."},
+    )
+
+@dataclass
 class ModelArguments(
-    SGLangArguments, VllmArguments, ExportArguments, ProcessorArguments, QuantizationArguments, BaseModelArguments
+    SGLangArguments, VllmArguments, KTransformersArguments, ExportArguments, ProcessorArguments, QuantizationArguments, BaseModelArguments
 ):
     r"""Arguments pertaining to which model/config/tokenizer we are going to fine-tune or infer.
 

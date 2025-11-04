@@ -1,0 +1,9 @@
+model_name_or_path: opensourcerelease/DeepSeek-V3-bf16
+template: deepseek
+infer_backend: ktransformers  # choices: [huggingface, vllm, sglang, ktransformers]
+trust_remote_code: true
+
+use_kt: true # use KTransformers as LoRA sft backend to inference
+kt_optimize_rule: examples/kt_optimize_rules/DeepSeek-V3-Chat-sft-amx-multi-gpu.yaml
+cpu_infer: 32
+chunk_size: 8192

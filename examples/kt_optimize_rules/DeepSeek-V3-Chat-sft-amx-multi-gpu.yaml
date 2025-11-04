@@ -1,0 +1,156 @@
+- match:
+    name: "^model.embed_tokens"
+  replace:
+    class: "default"
+    kwargs:
+        generate_device: "cpu"
+        prefill_device: "cpu"
+
+- match:
+    name: "^model\\.layers\\.(0|[1-9]|[12][0-9])\\."
+    class: ktransformers.models.modeling_deepseek_v3.DeepseekV3RotaryEmbedding
+  replace:
+    class: ktransformers.operators.RoPE.YarnRotaryEmbeddingV3
+    kwargs:
+      generate_device: "cuda:0"
+      prefill_device: "cuda:0"
+- match:
+    name: "^model\\.layers\\.([3456][0-9])\\."
+    class: ktransformers.models.modeling_deepseek_v3.DeepseekV3RotaryEmbedding
+  replace:
+    class: ktransformers.operators.RoPE.YarnRotaryEmbeddingV3
+    kwargs:
+      generate_device: "cuda:1"
+      prefill_device: "cuda:1"
+
+- match:
+    name: "^model\\.layers\\.(0|[1-9]|[12][0-9])\\.(?!self_attn\\.kv_b_proj).*$"  # regular expression 
+    class: torch.nn.Linear  # only match modules matching name and class simultaneously
+  replace:
+    class: ktransformers.operators.linear.KTransformersLinear  # optimized Kernel on quantized data types
+    kwargs:
+      generate_device: "cuda:0"
+      prefill_device: "cuda:0"
+      generate_op: "KLinearTorch"
+      prefill_op: "KLinearTorch"
+
+- match:
+    name: "^model\\.layers\\.([3456][0-9])\\.(?!self_attn\\.kv_b_proj).*$"  # regular expression 
+    class: torch.nn.Linear  # only match modules matching name and class simultaneously
+  replace:
+    class: ktransformers.operators.linear.KTransformersLinear  # optimized Kernel on quantized data types
+    kwargs:
+      generate_device: "cuda:1"
+      prefill_device: "cuda:1"
+      generate_op: "KLinearTorch"
+      prefill_op: "KLinearTorch"
+  
+- match:
+    name: "^model\\.layers\\.(0|[1-9]|[12][0-9])\\.mlp$"
+    class: ktransformers.models.modeling_deepseek_v3.DeepseekV3MoE
+  replace:
+    class: ktransformers.operators.experts.KDeepseekV3MoE     # mlp module with custom forward function
+    kwargs:
+      generate_device: "cuda:0"
+      prefill_device: "cuda:0"
+- match:
+    name: "^model\\.layers\\.([3456][0-9])\\.mlp$"
+    class: ktransformers.models.modeling_deepseek_v3.DeepseekV3MoE
+  replace:
+    class: ktransformers.operators.experts.KDeepseekV3MoE     # mlp module with custom forward function
+    kwargs:
+      generate_device: "cuda:1"
+      prefill_device: "cuda:1"
+
+- match:
+    name: "^model\\.layers\\.(0|[1-9]|[12][0-9])\\.mlp\\.gate$"
+    class: ktransformers.models.modeling_deepseek_v3.MoEGate
+  replace:
+    class: ktransformers.operators.gate.KMoEGate
+    kwargs:
+      generate_device: "cuda:0"
+      prefill_device: "cuda:0"
+- match:
+    name: "^model\\.layers\\.([3456][0-9])\\.mlp\\.gate$"
+    class: ktransformers.models.modeling_deepseek_v3.MoEGate
+  replace:
+    class: ktransformers.operators.gate.KMoEGate     # mlp module with custom forward function
+    kwargs:
+      generate_device: "cuda:1"
+      prefill_device: "cuda:1"
+
+- match:
+    name: "^model\\.layers\\.(0|[1-9]|[12][0-9])\\.mlp\\.experts$"
+  replace:
+    class: ktransformers.operators.experts.KTransformersExperts     # custom MoE Kernel with expert paralleism
+    kwargs:
+      prefill_device: "cuda:0"
+      prefill_op: "KExpertsTorch"
+      generate_device: "cpu"
+      generate_op:  "KSFTExpertsCPU"
+      out_device: "cuda:0"
+      backend: "AMXInt8" # or "AMXBF16" or "llamafile" (default)
+  recursive: False # don't recursively inject submodules of this module
+
+- match:
+    name: "^model\\.layers\\.([3456][0-9])\\.mlp\\.experts$"
+  replace:
+    class: ktransformers.operators.experts.KTransformersExperts     # custom MoE Kernel with expert paralleism
+    kwargs:
+      prefill_device: "cuda:1"
+      prefill_op: "KExpertsTorch"
+      generate_device: "cpu"
+      generate_op:  "KSFTExpertsCPU"
+      out_device: "cuda:1"
+      backend: "AMXInt8" # or "AMXBF16" or "llamafile" (default)
+  recursive: False # don't recursively inject submodules of this module
+
+- match:
+    name: "^model\\.layers\\.(0|[1-9]|[12][0-9])\\.self_attn$"
+  replace:
+    class: ktransformers.operators.attention.KDeepseekV2Attention # optimized MLA implementation
+    kwargs:
+      generate_device: "cuda:0"
+      prefill_device: "cuda:0"
+- match:
+    name: "^model\\.layers\\.([3456][0-9])\\.self_attn$"
+  replace:
+    class: ktransformers.operators.attention.KDeepseekV2Attention # optimized MLA implementation
+    kwargs:
+      generate_device: "cuda:1"
+      prefill_device: "cuda:1"
+- match:
+    name: "^model$"
+  replace:
+    class: "ktransformers.operators.models.KDeepseekV2Model"
+    kwargs:
+      per_layer_prefill_intput_threshold: 0 # 0 is close layer wise prefill
+      transfer_map: 
+        30: "cuda:1"
+
+- match:
+    name: "^model\\.layers\\.(0|[1-9]|[12][0-9])\\."
+  replace:
+    class: "default"
+    kwargs:
+      generate_device: "cuda:0"
+      prefill_device: "cuda:0"
+
+- match:
+    name: "^lm_head"
+    class: torch.nn.Linear
+  replace:
+    class: ktransformers.operators.linear.KTransformersLinear
+    kwargs:
+      generate_device: "cuda:1"
+      prefill_device: "cuda:1"
+      generate_op: "KLinearTorch"
+      prefill_op: "KLinearTorch"
+
+- match:
+    name: "(^model\\.layers\\.([3456][0-9])\\.)|(model.norm)"
+  replace:
+    class: "default"
+    kwargs:
+      generate_device: "cuda:1"
+      prefill_device: "cuda:1"

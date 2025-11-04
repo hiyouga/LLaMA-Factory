@@ -120,6 +120,7 @@ class EngineName(str, Enum):
     HF = "huggingface"
     VLLM = "vllm"
     SGLANG = "sglang"
+    KT = "ktransformers"
 
 
 class DownloadSource(str, Enum):

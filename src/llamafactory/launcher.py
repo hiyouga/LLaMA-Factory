@@ -38,7 +38,7 @@ USAGE = (
 def launch():
     from .extras import logging
     from .extras.env import VERSION, print_env
-    from .extras.misc import find_available_port, get_device_count, is_env_enabled, use_ray
+    from .extras.misc import find_available_port, get_device_count, is_env_enabled, use_kt, use_ray
 
     logger = logging.get_logger(__name__)
     WELCOME = (
@@ -57,7 +57,7 @@ def launch():
     if is_env_enabled("USE_MCA"):  # force use torchrun
         os.environ["FORCE_TORCHRUN"] = "1"
 
-    if command == "train" and (is_env_enabled("FORCE_TORCHRUN") or (get_device_count() > 1 and not use_ray())):
+    if command == "train" and (is_env_enabled("FORCE_TORCHRUN") or (get_device_count() > 1 and not use_ray() and not use_kt())):
         # launch distributed training
         nnodes = os.getenv("NNODES", "1")
         node_rank = os.getenv("NODE_RANK", "0")
