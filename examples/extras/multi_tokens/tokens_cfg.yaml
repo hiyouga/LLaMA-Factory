@@ -1,0 +1,25 @@
+# SVG Container Tags
+"<|START_OF_SVG|>": "Marks the beginning of an SVG document"
+"<|END_OF_SVG|>": "Marks the end of an SVG document"
+
+# SVG Group Tags
+"<|start_of_g|>": "Begins a group element in SVG for organizing related shapes"
+"<|end_of_g|>": "Ends a group element"
+
+# SVG Shape Tags
+"<|start_of_rect|>": "Begins a rectangle shape with width and height attributes"
+"<|end_of_rect|>": "Ends a rectangle shape definition"
+"<|start_of_circle|>": "Begins a circular shape with radius attribute"
+"<|end_of_circle|>": "Ends a circular shape definition"
+"<|start_of_path|>": "Begins a path element for drawing custom vector graphics"
+"<|end_of_path|>": "Ends a path element definition"
+"<|start_of_ellipse|>": "Begins an ellipse shape with x and y radii"
+"<|end_of_ellipse|>": "Ends an ellipse shape definition"
+
+# SVG Text Tags
+"<|start_of_text|>": "Begins a text element for rendering text content"
+"<|end_of_text|>": "Ends a text element"
+
+# SVG Style Tags
+"<|start_of_style|>": "Begins a style definition block for CSS styling"
+"<|end_of_style|>": "Ends a style definition block"

@@ -28,11 +28,11 @@ if TYPE_CHECKING:
 
 def configure_kv_cache(config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool) -> None:
     if not is_trainable:
-        setattr(config, "use_cache", model_args.use_cache)
+        setattr(config, "use_cache", model_args.use_kv_cache)
         if hasattr(config, "text_config"):
-            setattr(config.text_config, "use_cache", model_args.use_cache)
+            setattr(config.text_config, "use_cache", model_args.use_kv_cache)
 
-        if model_args.use_cache:
+        if model_args.use_kv_cache:
             logger.info_rank0("KV cache is enabled for faster generation.")
         else:
             logger.info_rank0("KV cache is disabled.")

@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import TYPE_CHECKING, NotRequired, TypedDict, Union
+from typing import TYPE_CHECKING, Literal, TypedDict, Union
+
+from typing_extensions import NotRequired
 
 
 if TYPE_CHECKING:
@@ -26,7 +28,8 @@ if TYPE_CHECKING:
     HFDataset = Union[datasets.Dataset, datasets.IterableDataset]
     DataCollator = transformers.DataCollator
     DataLoader = torch.utils.data.DataLoader
-    Model = transformers.PreTrainedModel
+    HFModel = transformers.PreTrainedModel
+    DistModel = torch.nn.parallel.DistributedDataParallel
     Processor = Union[transformers.PreTrainedTokenizer, transformers.ProcessorMixin]
 else:
     Tensor = None
@@ -34,7 +37,8 @@ else:
     HFDataset = None
     DataCollator = None
     DataLoader = None
-    Model = None
+    HFModel = None
+    DistModel = None
     Processor = None
 
 
@@ -55,3 +59,37 @@ class DatasetInfo(TypedDict, total=False):
     """Dataset weight, default to 1.0."""
     streaming: NotRequired[bool]
     """Is streaming dataset, default to False."""
+
+
+class Content(TypedDict):
+    type: Literal["text", "tools", "reasoning", "tool_calls", "image_url"]
+    value: str
+
+
+class Message(TypedDict):
+    role: Literal["system", "user", "assistant"]
+    content: list[Content]
+    loss_weight: float
+
+
+class SFTSample(TypedDict):
+    messages: list[Message]
+    extra_info: NotRequired[str]
+    _dataset_name: NotRequired[str]
+
+
+class DPOSample(TypedDict):
+    chosen_messages: list[Message]
+    rejected_messages: list[Message]
+    extra_info: NotRequired[str]
+    _dataset_name: NotRequired[str]
+
+
+Sample = Union[SFTSample, DPOSample]
+
+
+class Model(TypedDict):
+    hf_model: HFModel
+    """HF model."""
+    dist_model: DistModel
+    """Distributed model."""

@@ -5,7 +5,7 @@
 [![GitHub contributors](https://img.shields.io/github/contributors/hiyouga/LLaMA-Factory?color=orange)](https://github.com/hiyouga/LLaMA-Factory/graphs/contributors)
 [![GitHub workflow](https://github.com/hiyouga/LLaMA-Factory/actions/workflows/tests.yml/badge.svg)](https://github.com/hiyouga/LLaMA-Factory/actions/workflows/tests.yml)
 [![PyPI](https://img.shields.io/pypi/v/llamafactory)](https://pypi.org/project/llamafactory/)
-[![Citation](https://img.shields.io/badge/citation-840-green)](https://scholar.google.com/scholar?cites=12620864006390196564)
+[![Citation](https://img.shields.io/badge/citation-1000+-green)](https://scholar.google.com/scholar?cites=12620864006390196564)
 [![Docker Pulls](https://img.shields.io/docker/pulls/hiyouga/llamafactory)](https://hub.docker.com/r/hiyouga/llamafactory/tags)
 
 [![Twitter](https://img.shields.io/twitter/follow/llamafactory_ai)](https://twitter.com/llamafactory_ai)
@@ -122,6 +122,8 @@ Choose your path:
 </details>
 
 ## Changelog
+
+[25/10/26] We support Megatron-core training backend with [**mcore_adapter**](https://github.com/alibaba/ROLL/tree/main/mcore_adapter). See [PR #9237](https://github.com/hiyouga/LLaMA-Factory/pull/9237) to get started.
 
 [25/08/22] We supported **[OFT](https://arxiv.org/abs/2306.07280)** and **[OFTv2](https://arxiv.org/abs/2506.19847)**. See [examples](examples/README.md) for usage.
 
@@ -283,7 +285,7 @@ Choose your path:
 | [GPT-OSS](https://huggingface.co/openai)                          | 20B/120B                         | gpt                  |
 | [Granite 3.0-3.3](https://huggingface.co/ibm-granite)             | 1B/2B/3B/8B                      | granite3             |
 | [Granite 4](https://huggingface.co/ibm-granite)                   | 7B                               | granite4             |
-| [Hunyuan](https://huggingface.co/tencent/)                        | 7B                               | hunyuan              |
+| [Hunyuan (MT)](https://huggingface.co/tencent/)                   | 7B                               | hunyuan              |
 | [Index](https://huggingface.co/IndexTeam)                         | 1.9B                             | index                |
 | [InternLM 2-3](https://huggingface.co/internlm)                   | 7B/8B/20B                        | intern2              |
 | [InternVL 2.5-3.5](https://huggingface.co/OpenGVLab)              | 1B/2B/4B/8B/14B/30B/38B/78B/241B | intern_vl            |
@@ -317,7 +319,7 @@ Choose your path:
 | [Qwen2.5-Omni](https://huggingface.co/Qwen)                       | 3B/7B                            | qwen2_omni           |
 | [Qwen3-Omni](https://huggingface.co/Qwen)                         | 30B                              | qwen3_omni           |
 | [Qwen2-VL/Qwen2.5-VL/QVQ](https://huggingface.co/Qwen)            | 2B/3B/7B/32B/72B                 | qwen2_vl             |
-| [Qwen3-VL](https://huggingface.co/Qwen)                           | 235B                             | qwen3_vl             |
+| [Qwen3-VL](https://huggingface.co/Qwen)                           | 2B/4B/8B/30B/32B/235B            | qwen3_vl             |
 | [Seed (OSS/Coder)](https://huggingface.co/ByteDance-Seed)         | 8B/36B                           | seed_oss/seed_coder  |
 | [Skywork o1](https://huggingface.co/Skywork)                      | 8B                               | skywork_o1           |
 | [StarCoder 2](https://huggingface.co/bigcode)                     | 3B/7B/15B                        | -                    |

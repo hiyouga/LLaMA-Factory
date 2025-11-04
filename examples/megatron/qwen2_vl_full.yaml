@@ -1,0 +1,29 @@
+model_name_or_path: Qwen/Qwen2-VL-7B-Instruct
+image_max_pixels: 262144
+video_max_pixels: 16384
+
+do_train: true
+stage: sft
+finetuning_type: full # only support full for now
+dataset: llava_1k_en
+preprocessing_num_workers: 8
+cutoff_len: 4096
+template: qwen2_vl
+
+output_dir: saves/mca/qwen2_vl_full
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 2
+num_train_epochs: 2
+learning_rate: 2e-5
+logging_steps: 1
+save_steps: 100
+lr_scheduler_type: cosine
+bf16: true
+
+# mcore speed up
+tensor_model_parallel_size: 4
+sequence_parallel: true
+pipeline_model_parallel_size: 2
+bias_activation_fusion: true
+apply_rope_fusion: true
+use_distributed_optimizer: true
