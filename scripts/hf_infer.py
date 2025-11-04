@@ -48,7 +48,7 @@ def hf_infer(
     """
     device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
-    model_args, data_args, _, generating_args = get_infer_args(
+    model_args, data_args, _, _ = get_infer_args(
         dict(
             model_name_or_path=model_name_or_path,
             adapter_name_or_path=adapter_name_or_path,
