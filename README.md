@@ -332,6 +332,8 @@ Choose your path:
 > [!NOTE]
 > For the "base" models, the `template` argument can be chosen from `default`, `alpaca`, `vicuna` etc. But make sure to use the **corresponding template** for the "instruct/chat" models.
 >
+> If the model has both reasoning and non-reasoning versions, please use the `_nothink` suffix to distinguish between them. For example, `qwen3` and `qwen3_nothink`.
+>
 > Remember to use the **SAME** template in training and inference.
 >
 > \*: You should install the `transformers` from main branch and use `DISABLE_VERSION_CHECK=1` to skip version check.

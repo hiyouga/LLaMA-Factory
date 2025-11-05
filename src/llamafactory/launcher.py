@@ -57,7 +57,9 @@ def launch():
     if is_env_enabled("USE_MCA"):  # force use torchrun
         os.environ["FORCE_TORCHRUN"] = "1"
 
-    if command == "train" and (is_env_enabled("FORCE_TORCHRUN") or (get_device_count() > 1 and not use_ray() and not use_kt())):
+    if command == "train" and (
+        is_env_enabled("FORCE_TORCHRUN") or (get_device_count() > 1 and not use_ray() and not use_kt())
+    ):
         # launch distributed training
         nnodes = os.getenv("NNODES", "1")
         node_rank = os.getenv("NODE_RANK", "0")

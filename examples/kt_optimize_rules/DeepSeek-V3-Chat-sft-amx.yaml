@@ -7,7 +7,7 @@
       prefill_device: "cuda"
 
 - match:
-    name: "^lm_head$"  # regular expression 
+    name: "^lm_head$"  # regular expression
     class: torch.nn.Linear  # only match modules matching name and class simultaneously
   replace:
     class: ktransformers.operators.linear.KTransformersLinear  # optimized Kernel on quantized data types
@@ -18,7 +18,7 @@
       prefill_op: "KLinearTorch"
 
 - match:
-    name: "^model\\.layers\\.(?!.*self_attn\\.kv_b_proj).*$"  # regular expression 
+    name: "^model\\.layers\\.(?!.*self_attn\\.kv_b_proj).*$"  # regular expression
     class: torch.nn.Linear  # only match modules matching name and class simultaneously
   replace:
     class: ktransformers.operators.linear.KTransformersLinear  # optimized Kernel on quantized data types
