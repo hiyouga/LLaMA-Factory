@@ -83,6 +83,7 @@ def run_sft(
         **dataset_module,
         **metric_module,
     )
+    trainer.model_accepts_loss_kwargs = False
 
     # Training
     if training_args.do_train:
