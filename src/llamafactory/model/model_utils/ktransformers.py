@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import importlib.util as _u
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import torch
 
@@ -43,6 +43,7 @@ if KT_AVAILABLE:
 
 logger = logging.get_logger(__name__)
 
+
 def _get_kt_kwargs(
     config: "PretrainedConfig",
     model_name_or_path: str,
@@ -64,9 +65,7 @@ def _get_kt_kwargs(
     }
 
 
-def load_kt_pretrained_model(
-    config: "PretrainedConfig", model_args: "ModelArguments"
-) -> Optional["PreTrainedModel"]:
+def load_kt_pretrained_model(config: "PretrainedConfig", model_args: "ModelArguments") -> "PreTrainedModel":
     r"""Optionally load pretrained model with KTransformers. Used in training."""
     custom_models = {
         "DeepseekV2ForCausalLM": DeepseekV2ForCausalLM,
@@ -79,7 +78,7 @@ def load_kt_pretrained_model(
     Config().chunk_size = model_args.chunk_size
     config = AutoConfig.from_pretrained(model_args.model_name_or_path, trust_remote_code=model_args.trust_remote_code)
 
-    if model_args.mode == 'long_context':
+    if model_args.mode == "long_context":
         assert config.architectures[0] == "LlamaForCausalLM", "only LlamaForCausalLM support long_context mode"
         torch.set_default_dtype(torch.float16)
     else:
@@ -88,9 +87,7 @@ def load_kt_pretrained_model(
     with torch.device("meta"):
         if config.architectures[0] in custom_models:
             print("using custom modeling_xxx.py.")
-            if (
-                "Qwen2Moe" in config.architectures[0]
-            ):  # Qwen2Moe must use flash_attention_2 to avoid overflow.
+            if "Qwen2Moe" in config.architectures[0]:  # Qwen2Moe must use flash_attention_2 to avoid overflow.
                 config._attn_implementation = "flash_attention_2"
             if "Llama" in config.architectures[0]:
                 config._attn_implementation = "eager"
@@ -115,21 +112,17 @@ def load_kt_pretrained_model(
     return model
 
 
-def get_kt_peft_model(
-    model: "PreTrainedModel", peft_kwargs: dict[str, Any]
-) -> "PreTrainedModel":
+def get_kt_peft_model(model: "PreTrainedModel", peft_kwargs: dict[str, Any]) -> "PreTrainedModel":
     r"""Get the peft model for the pretrained model with KTransformers. Used in training."""
     from ktransformers.sft.peft_utils.mapping import get_peft_model
 
     return get_peft_model(model, peft_kwargs)
 
 
-def load_kt_peft_model(
-    model_args: "ModelArguments", model: "PreTrainedModel",
-) -> "PreTrainedModel":
+def load_kt_peft_model(model_args: "ModelArguments", model: "PreTrainedModel") -> "PreTrainedModel":
     r"""Load peft model with KTransformers. Used in both training and inference."""
     load_adapter_name_or_path = model_args.adapter_name_or_path[0]
-    if load_adapter_name_or_path.endswith('.gguf'):
+    if load_adapter_name_or_path.endswith(".gguf"):
         inject_lora_layer(model, load_adapter_name_or_path)
         adapter_gguf_loader = GGUFLoader(load_adapter_name_or_path)
         load_weights(model, adapter_gguf_loader, adapter_gguf=True)

@@ -485,7 +485,9 @@ class KTransformersArguments:
     )
     kt_optimize_rule: Optional[str] = field(
         default=None,
-        metadata={"help": "Path To The KTransformers Optimize Rule; See https://github.com/kvcache-ai/ktransformers/."},
+        metadata={
+            "help": "Path To The KTransformers Optimize Rule; See https://github.com/kvcache-ai/ktransformers/."
+        },
     )
     cpu_infer: Optional[int] = field(
         default=32,
@@ -517,9 +519,16 @@ class KTransformersArguments:
         metadata={"help": "Force-Think Toggle For The KT Engine."},
     )
 
+
 @dataclass
 class ModelArguments(
-    SGLangArguments, VllmArguments, KTransformersArguments, ExportArguments, ProcessorArguments, QuantizationArguments, BaseModelArguments
+    SGLangArguments,
+    VllmArguments,
+    KTransformersArguments,
+    ExportArguments,
+    ProcessorArguments,
+    QuantizationArguments,
+    BaseModelArguments,
 ):
     r"""Arguments pertaining to which model/config/tokenizer we are going to fine-tune or infer.
 

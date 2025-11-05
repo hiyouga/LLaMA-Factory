@@ -59,6 +59,7 @@ def configure_attn_implementation(config: "PretrainedConfig", model_args: "Model
         requested_attn_implementation = "sdpa"
     elif model_args.flash_attn == AttentionFunction.FA2:
         from transformers import is_torch_npu_available
+
         if not (is_flash_attn_2_available() or is_torch_npu_available()):
             logger.warning_rank0("FlashAttention-2 is not installed.")
             return
