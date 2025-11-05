@@ -167,7 +167,7 @@ def _setup_lora_tuning(
             is_mergeable = False
 
         if model_args.use_kt:
-            assert len(model_args.adapter_name_or_path) == 1, "Up to now, KTransformers model only accepts a single adapter, for more features, you can contact with us."
+            assert len(model_args.adapter_name_or_path) == 1, "KTransformers model only accepts a single adapter"
             is_mergeable = False
 
         if model_args.use_unsloth:
@@ -190,7 +190,9 @@ def _setup_lora_tuning(
 
         if model_args.use_kt:
             if model_args.infer_backend != EngineName.KT:
-                raise ValueError("We should use ktransformers as backend to infer the adapter fine-tuned by ktransformers.")
+                raise ValueError(
+                    "We should use ktransformers as backend to infer the adapter fine-tuned by ktransformers."
+                )
 
         for adapter in adapter_to_merge:
             model: LoraModel = PeftModel.from_pretrained(model, adapter, **init_kwargs)
@@ -218,9 +220,9 @@ def _setup_lora_tuning(
         if model_args.use_kt:
             new_list = []
             for m in target_modules:
-                if m in ('down_proj', 'up_proj', 'gate_proj'):
+                if m in ("down_proj", "up_proj", "gate_proj"):
                     new_list.extend([f"mlp.{m}", f"shared_experts.{m}"])
-                elif m not in ('generate_linear', 'orig_module', 'prefill_linear'):
+                elif m not in ("generate_linear", "orig_module", "prefill_linear"):
                     new_list.append(m)
 
             target_modules[:] = new_list
