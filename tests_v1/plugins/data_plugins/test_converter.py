@@ -48,5 +48,54 @@ def test_alpaca_converter(num_samples: int):
         assert data_engine[index] == {"_dataset_name": "tiny_dataset", **expected_data}
 
 
+@pytest.mark.parametrize("num_samples", [16])
+def test_pair_converter(num_samples: int):
+    data_args = DataArguments(dataset="frozenleaves/tiny-dpo/dataset_info.yaml")
+    data_engine = DataEngine(data_args)
+    original_data = load_dataset("HuggingFaceH4/orca_dpo_pairs", split="train_prefs")
+    indexes = random.choices(range(len(data_engine)), k=num_samples)
+    for index in indexes:
+        print(data_engine[index])
+        print(original_data[index])
+        expected_data = {
+            "chosen_messages": [
+                {
+                    "role": "system",
+                    "content": [{"type": "text", "value": original_data[index]["chosen"][0]["content"]}],
+                    "loss_weight": 0.0,
+                },
+                {
+                    "role": "user",
+                    "content": [{"type": "text", "value": original_data[index]["chosen"][1]["content"]}],
+                    "loss_weight": 0.0,
+                },
+                {
+                    "role": "assistant",
+                    "content": [{"type": "text", "value": original_data[index]["chosen"][2]["content"]}],
+                    "loss_weight": 1.0,
+                },
+            ],
+            "rejected_messages": [
+                {
+                    "role": "system",
+                    "content": [{"type": "text", "value": original_data[index]["rejected"][0]["content"]}],
+                    "loss_weight": 0.0,
+                },
+                {
+                    "role": "user",
+                    "content": [{"type": "text", "value": original_data[index]["rejected"][1]["content"]}],
+                    "loss_weight": 0.0,
+                },
+                {
+                    "role": "assistant",
+                    "content": [{"type": "text", "value": original_data[index]["rejected"][2]["content"]}],
+                    "loss_weight": 1.0,
+                },
+            ],
+        }
+        assert data_engine[index] == {"_dataset_name": "dpo_zh_demo", **expected_data}
+
+
 if __name__ == "__main__":
     test_alpaca_converter(1)
+    test_pair_converter(1)
