@@ -61,44 +61,39 @@ def test_pair_converter(num_samples: int):
             "chosen_messages": [
                 {
                     "role": "system",
-                    "content": [{"type": "text", "value": original_data[index]["chosen"][0]['content']}],
+                    "content": [{"type": "text", "value": original_data[index]["chosen"][0]["content"]}],
                     "loss_weight": 0.0,
                 },
                 {
                     "role": "user",
-                    "content": [
-                        {"type": "text", "value": original_data[index]["prompt"]}
-                    ],
+                    "content": [{"type": "text", "value": original_data[index]["chosen"][1]["content"]}],
                     "loss_weight": 0.0,
                 },
                 {
                     "role": "assistant",
-                    "content": [{"type": "text", "value": original_data[index]["chosen"][2]['content']}],
+                    "content": [{"type": "text", "value": original_data[index]["chosen"][2]["content"]}],
                     "loss_weight": 1.0,
                 },
             ],
-            "rejected_messages":[
+            "rejected_messages": [
                 {
                     "role": "system",
-                    "content": [{"type": "text", "value": original_data[index]["rejected"][0]['content']}],
+                    "content": [{"type": "text", "value": original_data[index]["rejected"][0]["content"]}],
                     "loss_weight": 0.0,
                 },
                 {
                     "role": "user",
-                    "content": [
-                        {"type": "text", "value": original_data[index]["prompt"]}
-                    ],
+                    "content": [{"type": "text", "value": original_data[index]["rejected"][1]["content"]}],
                     "loss_weight": 0.0,
                 },
                 {
                     "role": "assistant",
-                    "content": [{"type": "text", "value": original_data[index]["rejected"][2]['content']}],
+                    "content": [{"type": "text", "value": original_data[index]["rejected"][2]["content"]}],
                     "loss_weight": 1.0,
                 },
             ],
         }
         assert data_engine[index] == {"_dataset_name": "dpo_zh_demo", **expected_data}
-
 
 
 if __name__ == "__main__":

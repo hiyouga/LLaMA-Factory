@@ -81,8 +81,9 @@ def pair_converter(raw_sample: PairSample) -> DPOSample:
     chosen_messages = []
     assert "chosen" in raw_sample, "chosen field is required in pair sample."
     assert "rejected" in raw_sample, "rejected field is required in pair sample."
-    assert isinstance(raw_sample["chosen"], list)  and isinstance(raw_sample["rejected"], list), \
+    assert isinstance(raw_sample["chosen"], list) and isinstance(raw_sample["rejected"], list), (
         "chosen and rejected field should be a list[dict], or you may need to implement your custom converter."
+    )
 
     if "chosen" in raw_sample:
         value = raw_sample.get("chosen", "")
@@ -103,7 +104,7 @@ def pair_converter(raw_sample: PairSample) -> DPOSample:
                         "loss_weight": 0.0,
                     }
                 )
-            if item.get("role", "") == "assistant" :
+            if item.get("role", "") == "assistant":
                 chosen_messages.append(
                     {
                         "role": "assistant",
@@ -124,7 +125,7 @@ def pair_converter(raw_sample: PairSample) -> DPOSample:
                         "loss_weight": 0.0,
                     }
                 )
-            if item.get("role", "") == "user" :
+            if item.get("role", "") == "user":
                 rejected_messages.append(
                     {
                         "role": "user",
@@ -132,7 +133,7 @@ def pair_converter(raw_sample: PairSample) -> DPOSample:
                         "loss_weight": 0.0,
                     }
                 )
-            if item.get("role", "") == "assistant" :
+            if item.get("role", "") == "assistant":
                 rejected_messages.append(
                     {
                         "role": "assistant",
@@ -141,15 +142,12 @@ def pair_converter(raw_sample: PairSample) -> DPOSample:
                     }
                 )
 
-    return {
-        "chosen_messages": chosen_messages,
-        "rejected_messages": rejected_messages
-    }
+    return {"chosen_messages": chosen_messages, "rejected_messages": rejected_messages}
 
 
 CONVERTERS = {
     "alpaca": alpaca_converter,
-    'pair': pair_converter,
+    "pair": pair_converter,
 }
 
 
