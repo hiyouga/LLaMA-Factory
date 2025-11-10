@@ -463,7 +463,7 @@ You also can add a custom chat template to [template.py](src/llamafactory/data/t
 Some datasets require confirmation before using them, so we recommend logging in with your Hugging Face account using these commands.
 
 ```bash
-pip install --upgrade huggingface_hub
+pip install "huggingface_hub<1.0.0"
 huggingface-cli login
 ```
 
