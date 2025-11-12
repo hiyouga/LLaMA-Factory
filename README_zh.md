@@ -10,6 +10,8 @@
 
 [![Twitter](https://img.shields.io/twitter/follow/llamafactory_ai)](https://twitter.com/llamafactory_ai)
 [![Discord](assets/thirdparty/discord.svg)](https://discord.gg/rKfvV9r9FK)
+[![WeChat](https://img.shields.io/badge/WeChat-User%20Group-blue?logo=wechat)](https://github.com/hiyouga/llamafactory-community)
+[![Blog](https://img.shields.io/badge/Hugo-Official%20Blog-blue?logo=hugo)](https://blog.llamafactory.net/)
 
 [![Open in Colab](assets/thirdparty/colab.svg)](https://colab.research.google.com/drive/1d5KQtbemerlSDSxZIfAaWXhKr30QypiK?usp=sharing)
 [![Open in DSW](assets/thirdparty/dsw.svg)](https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory)
@@ -44,18 +46,22 @@
 
 https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 
-选择你的打开方式：
+开始本地训练：
+- 请见[如何使用](#如何使用)
 
+开始云端训练：
+- **Colab（免费）**：https://colab.research.google.com/drive/1d5KQtbemerlSDSxZIfAaWXhKr30QypiK?usp=sharing
+- **PAI-DSW（免费试用）**：https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory
+- **LLaMA Factory Online（在线微调）**：https://www.llamafactory.com.cn/?utm_source=LLaMA-Factory
+- **九章智算云（算力优惠活动）**：https://docs.alayanew.com/docs/documents/useGuide/LLaMAFactory/mutiple/?utm_source=LLaMA-Factory
+
+阅读技术文档：
 - **入门教程**：https://zhuanlan.zhihu.com/p/695287607
 - **微调视频教程**：https://www.bilibili.com/video/BV1djgRzxEts/
 - **框架文档**：https://llamafactory.readthedocs.io/zh-cn/latest/
 - **框架文档（昇腾 NPU）**：https://ascend.github.io/docs/sources/llamafactory/
-- **Colab（免费）**：https://colab.research.google.com/drive/1d5KQtbemerlSDSxZIfAaWXhKr30QypiK?usp=sharing
-- **本地机器**：请见[如何使用](#如何使用)
-- **PAI-DSW（免费试用）**：https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory
-- **九章智算云（算力优惠活动）**：https://docs.alayanew.com/docs/documents/useGuide/LLaMAFactory/mutiple/?utm_source=LLaMA-Factory
+- **官方博客**：https://blog.llamafactory.net/
 - **官方课程**：https://www.lab4ai.cn/course/detail?id=7c13e60f6137474eb40f6fd3983c0f46&utm_source=LLaMA-Factory
-- **LLaMA Factory Online（在线微调）**：https://www.llamafactory.com.cn/?utm_source=LLaMA-Factory
 
 > [!NOTE]
 > 除上述链接以外的其他网站均为未经许可的第三方网站，请小心甄别。
@@ -105,6 +111,11 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 | Day 1        | Llama 3 / GLM-4 / Mistral Small / PaliGemma2 / Llama 4               |
 
 ## 官方博客
+
+> [!TIP]
+> 我们现在拥有了 LLaMA Factory 的专属博客！
+>
+> 网站地址：https://blog.llamafactory.net/
 
 - 💡 [Easy Dataset × LLaMA Factory: 让大模型高效学习领域知识](https://buaa-act.feishu.cn/wiki/KY9xwTGs1iqHrRkjXBwcZP9WnL9)（中文）
 - [使用 LLaMA-Factory 微调心理健康大模型](https://www.lab4ai.cn/project/detail?id=25cce32ec131497b9e06a93336a0817f&type=project&utm_source=LLaMA-Factory)（中文）
