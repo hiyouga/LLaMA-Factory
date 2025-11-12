@@ -165,6 +165,9 @@ cython_debug/
 # uv
 uv.lock
 
+# macOS
+.DS_Store
+
 # custom .gitignore
 hf_cache/
 ms_cache/

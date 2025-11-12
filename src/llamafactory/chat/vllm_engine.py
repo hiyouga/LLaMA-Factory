@@ -15,8 +15,8 @@
 import uuid
 from collections.abc import AsyncGenerator, AsyncIterator
 from typing import TYPE_CHECKING, Any, Optional, Union
-from packaging import version
 
+from packaging import version
 from typing_extensions import override
 
 from ..data import get_template_and_fix_tokenizer

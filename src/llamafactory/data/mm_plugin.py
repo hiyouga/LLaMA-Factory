@@ -465,6 +465,7 @@ class BasePlugin(MMPluginMixin):
         self._validate_input(processor, images, videos, audios)
         return self._get_mm_inputs(images, videos, audios, processor)
 
+
 @dataclass
 class ErnieVLPlugin(BasePlugin):
     @override

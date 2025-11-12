@@ -11,3 +11,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+from typing import Optional
+
+from torch.distributed.device_mesh import DeviceMesh
+
+
+class DeviceMeshManager:
+    """Device mesh manager."""
+
+    _instance: Optional["DeviceMeshManager"] = None
+    _initialized: bool = False
+
+    def __new__(cls) -> "DeviceMeshManager":
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self) -> None:
+        if self._initialized:
+            return
+
+        self.device_mesh: Optional[DeviceMesh] = None
+        self._initialized = True

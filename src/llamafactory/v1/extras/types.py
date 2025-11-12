@@ -32,6 +32,8 @@ if TYPE_CHECKING:
     HFModel = transformers.PreTrainedModel
     DistModel = torch.nn.parallel.DistributedDataParallel
     Processor = Union[transformers.PreTrainedTokenizer, transformers.ProcessorMixin]
+    Optimizer = torch.optim.Optimizer
+    Scheduler = torch.optim.lr_scheduler.LRScheduler
 else:
     Tensor = None
     TorchDataset = None
@@ -42,6 +44,8 @@ else:
     HFModel = None
     DistModel = None
     Processor = None
+    Optimizer = None
+    Scheduler = None
 
 
 class DatasetInfo(TypedDict, total=False):

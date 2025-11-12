@@ -12,6 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""The definition of data engine.
+
+Init Data engine:
+1. Parse dataset info from arguments.
+2. Load datasets according to dataset info.
+3. Build data index (and reweight samples if necessary).
+
+Get Data Sample:
+1. Get sample from data index.
+2. Convert sample to standard format.
+3. Return sample.
+"""
+
 import os
 from collections.abc import AsyncIterable, Iterable
 from typing import Any, Union

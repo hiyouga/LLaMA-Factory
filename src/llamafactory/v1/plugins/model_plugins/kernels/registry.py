@@ -15,8 +15,8 @@
 from abc import ABC, ABCMeta, abstractmethod
 from typing import Any, Callable, Optional
 
+from ....accelerator.helper import get_available_accelerator
 from ....extras.types import HFModel
-from ...trainer_plugins.distributed.accelerate import get_available_accelerator
 from .constants import DeviceType, KernelType
 
 
