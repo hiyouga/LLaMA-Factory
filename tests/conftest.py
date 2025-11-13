@@ -12,47 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-LLaMA-Factory test configuration.
+"""LLaMA-Factory test configuration.
 
 Contains shared fixtures, pytest configuration, and custom markers.
 """
 
-import os
 import pytest
 
+from llamafactory.extras.misc import get_current_device, is_env_enabled
 from llamafactory.train.test_utils import patch_valuehead_model
 
 
-def get_current_device_type() -> str:
-    """
-    Detect the current device type.
-    
-    Returns:
-        str: One of 'cuda', 'npu', 'xpu', 'mps', 'cpu'
-    """
-    try:
-        from transformers.utils import (
-            is_torch_cuda_available,
-            is_torch_mps_available,
-            is_torch_npu_available,
-            is_torch_xpu_available,
-        )        
-        if is_torch_cuda_available():
-            return "cuda"
-        elif is_torch_npu_available():
-            return "npu"
-        elif is_torch_mps_available():
-            return "xpu"
-        elif is_torch_xpu_available():
-            return "mps"
-        else:
-            return "cpu"
-    except Exception:
-        return "cpu"
-
-
-CURRENT_DEVICE = get_current_device_type()
+try:
+    CURRENT_DEVICE = get_current_device().type
+except Exception:
+    CURRENT_DEVICE = "cpu"
 
 
 def pytest_configure(config):
@@ -69,17 +43,16 @@ def pytest_configure(config):
 
 
 def _handle_slow_tests(items):
-    """
-    Skip slow tests unless RUN_SLOW environment variable is set.
-    
+    """Skip slow tests unless RUN_SLOW environment variable is set.
+
     Usage:
         # Skip slow tests (default)
         @pytest.mark.slow
-        
+
         # Run slow tests
         RUN_SLOW=1 pytest tests/
     """
-    if os.getenv("RUN_SLOW", "").lower() not in ("1", "true", "yes"):
+    if not is_env_enabled("RUN_SLOW", "0"):
         skip_slow = pytest.mark.skip(reason="slow test (set RUN_SLOW=1 to run)")
         for item in items:
             if "slow" in item.keywords:
@@ -87,9 +60,8 @@ def _handle_slow_tests(items):
 
 
 def _handle_device_skips(items):
-    """
-    Skip tests on specified devices based on skip_on_devices marker.
-    
+    """Skip tests on specified devices based on skip_on_devices marker.
+
     Usage:
         @pytest.mark.skip_on_devices("npu", "xpu")
         def test_something():
@@ -108,9 +80,8 @@ def _handle_device_skips(items):
 
 
 def _handle_device_requirements(items):
-    """
-    Skip tests that require a specific device when running on other devices.
-    
+    """Skip tests that require a specific device when running on other devices.
+
     Usage:
         @pytest.mark.require_device("cuda")
         def test_gpu_only():
@@ -137,5 +108,5 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture
 def fix_valuehead_cpu_loading():
-    """Fix valuehead model loading"""
+    """Fix valuehead model loading."""
     patch_valuehead_model()
