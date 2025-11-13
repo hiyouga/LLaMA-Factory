@@ -16,7 +16,7 @@ import os
 
 import pytest
 
-from llamafactory.train.test_utils import compare_model, load_infer_model, load_reference_model, patch_valuehead_model
+from llamafactory.train.test_utils import compare_model, load_infer_model, load_reference_model
 
 
 TINY_LLAMA3 = os.getenv("TINY_LLAMA3", "llamafactory/tiny-random-Llama-3")
@@ -28,11 +28,6 @@ INFER_ARGS = {
     "template": "llama3",
     "infer_dtype": "float16",
 }
-
-
-@pytest.fixture
-def fix_valuehead_cpu_loading():
-    patch_valuehead_model()
 
 
 def test_base():
