@@ -34,6 +34,7 @@ if KT_AVAILABLE:
     from ktransformers.models.modeling_llama import LlamaForCausalLM
     from ktransformers.models.modeling_mixtral import MixtralForCausalLM
     from ktransformers.models.modeling_qwen2_moe import Qwen2MoeForCausalLM
+    from ktransformers.models.modeling_qwen3_moe import Qwen3MoeForCausalLM
     from ktransformers.optimize.optimize import optimize_and_load_gguf
     from ktransformers.server.config.config import Config
     from ktransformers.sft.lora import inject_lora_layer
@@ -71,6 +72,7 @@ def load_kt_pretrained_model(config: "PretrainedConfig", model_args: "ModelArgum
         "DeepseekV2ForCausalLM": DeepseekV2ForCausalLM,
         "DeepseekV3ForCausalLM": DeepseekV3ForCausalLM,
         "Qwen2MoeForCausalLM": Qwen2MoeForCausalLM,
+        "Qwen3MoeForCausalLM": Qwen3MoeForCausalLM,
         "LlamaForCausalLM": LlamaForCausalLM,
         "MixtralForCausalLM": MixtralForCausalLM,
     }
