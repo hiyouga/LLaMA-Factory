@@ -23,7 +23,6 @@ from llamafactory.train.test_utils import (
     load_infer_model,
     load_reference_model,
     load_train_model,
-    patch_valuehead_model,
 )
 
 
@@ -54,11 +53,6 @@ INFER_ARGS = {
     "template": "llama3",
     "infer_dtype": "float16",
 }
-
-
-@pytest.fixture
-def fix_valuehead_cpu_loading():
-    patch_valuehead_model()
 
 
 def test_lora_train_qv_modules():
