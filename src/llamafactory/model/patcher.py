@@ -17,9 +17,12 @@ from typing import TYPE_CHECKING, Any
 
 import torch
 from peft import PeftModel
+from torch import nn
+from torch.nn import functional as F
 from transformers import GenerationMixin, PreTrainedModel, PreTrainedTokenizerBase
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.modeling_utils import is_fsdp_enabled
+from transformers.models.qwen3_omni_moe import modeling_qwen3_omni_moe
 
 from ..extras import logging
 from ..extras.misc import infer_optim_dtype
@@ -45,6 +48,73 @@ if TYPE_CHECKING:
 
 
 logger = logging.get_logger(__name__)
+
+
+class Qwen3OmniMoeThinkerTextSparseMoeBlock(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.num_experts = config.num_experts
+        self.top_k = config.num_experts_per_tok
+        self.norm_topk_prob = config.norm_topk_prob
+
+        # gating
+        self.gate = nn.Linear(config.hidden_size, config.num_experts, bias=False)
+        self.experts = nn.ModuleList(
+            [
+                modeling_qwen3_omni_moe.Qwen3OmniMoeThinkerTextMLP(
+                    config, intermediate_size=config.moe_intermediate_size
+                )
+                for _ in range(self.num_experts)
+            ]
+        )
+
+    def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
+        batch_size, sequence_length, hidden_dim = hidden_states.shape
+        hidden_states = hidden_states.view(-1, hidden_dim)
+        # router_logits: (batch * sequence_length, n_experts)
+        router_logits = self.gate(hidden_states)
+
+        # 计算所有专家的路由权重
+        routing_weights = F.softmax(router_logits, dim=1, dtype=torch.float)
+
+        # 保留top_k的权重，其余专家权重置为0（而非仅保留top_k专家）
+        top_k_weights, top_k_indices = torch.topk(routing_weights, self.top_k, dim=-1)
+        # 初始化全零权重矩阵（形状与所有专家相同）
+        full_routing_weights = torch.zeros_like(routing_weights)
+        # 仅保留top_k专家的权重，其余专家权重保持为0
+        full_routing_weights.scatter_(1, top_k_indices, top_k_weights)
+
+        # 归一化top_k权重（保持与原逻辑一致）
+        if self.norm_topk_prob:
+            # 计算每行top_k权重的和（用于归一化）
+            top_k_sum = full_routing_weights.sum(dim=-1, keepdim=True)
+            # 避免除零（虽然softmax后和不为零，但归一化可能导致极端情况）
+            top_k_sum = torch.clamp(top_k_sum, min=1e-9)
+            full_routing_weights /= top_k_sum
+
+        # 转换回输入数据类型
+        full_routing_weights = full_routing_weights.to(hidden_states.dtype)
+
+        final_hidden_states = torch.zeros(
+            (batch_size * sequence_length, hidden_dim), dtype=hidden_states.dtype, device=hidden_states.device
+        )
+
+        # 遍历所有专家（而非仅被选中的专家）
+        for expert_idx in range(self.num_experts):
+            expert_layer = self.experts[expert_idx]
+            # 获取当前专家的权重（未激活的专家此处权重为0）
+            expert_weights = full_routing_weights[:, expert_idx, None]  # 形状: (batch*seq, 1)
+            # 所有样本都参与当前专家的计算，但权重可能为0
+            current_hidden_states = expert_layer(hidden_states) * expert_weights
+            # 累加所有专家的输出（权重为0的专家不影响结果）
+            final_hidden_states += current_hidden_states
+
+        final_hidden_states = final_hidden_states.reshape(batch_size, sequence_length, hidden_dim)
+        return final_hidden_states, router_logits
+
+
+def patch_qwen3_omni_moe_thinker_text_sparse_moe_block():
+    modeling_qwen3_omni_moe.Qwen3OmniMoeThinkerTextSparseMoeBlock = Qwen3OmniMoeThinkerTextSparseMoeBlock
 
 
 def patch_tokenizer(tokenizer: "PreTrainedTokenizer", model_args: "ModelArguments") -> None:
@@ -135,6 +205,10 @@ def patch_config(
 
     if getattr(config, "model_type", None) == "internlm3" and not is_transformers_version_greater_than("4.47.1"):
         raise RuntimeError("InternLM3 model requires transformers>=4.47.1, please upgrade it.")
+
+    if getattr(config, "model_type", None) == "qwen3_omni_moe_thinker":
+        # breakpoint()
+        patch_qwen3_omni_moe_thinker_text_sparse_moe_block()
 
     # deepspeed zero3 is not compatible with low_cpu_mem_usage
     init_kwargs["low_cpu_mem_usage"] = model_args.low_cpu_mem_usage and (not is_deepspeed_zero3_enabled())
