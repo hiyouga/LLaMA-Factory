@@ -1,0 +1,62 @@
+### model
+model_name_or_path: google/gemma-3n-E2B-it
+template: gemma3n # Gemma3/Gemma3n 对应模板
+stage: sft
+finetuning_type: lora
+
+trust_remote_code: true
+
+torch_dtype: bfloat16
+flash_attn: auto
+
+### data
+dataset: gemma3n_asr_nemo_train # 对应 data/dataset_info.json 的 key
+dataset_dir: ./data
+val_size: 0.01 # 随机抽 1% 做验证
+cutoff_len: 1024 # 音频转写 1-30s + 简单 prompt，1024 足够
+max_samples: 2000 # 单卡 debug：最多用 2000 条样本；后面全量可以去掉这个限制
+overwrite_cache: true
+preprocessing_num_workers: 8
+dataloader_num_workers: 4
+train_on_prompt: false
+packing: false # audio 场景不要 pack，避免多个 <audio> 串在一起
+
+### lora
+lora_rank: 16 # debug 可以小一点
+lora_alpha: 32
+lora_dropout: 0.05
+lora_target: all # 先简单 all，后面可以精简到 q_proj,k_proj,v_proj,o_proj 等
+
+### training
+output_dir: saves/gemma3n-e2b-asr-nemo/lora_debug
+overwrite_output_dir: true
+
+# 单卡快速 debug，用 max_steps 限制训练步数
+max_steps: 200
+num_train_epochs: 1.0 # 和 max_steps 二者取其一生效，保留 1.0 也没问题
+
+per_device_train_batch_size: 1
+per_device_eval_batch_size: 1
+gradient_accumulation_steps: 8 # 有效 batch ≈ 8 条/step
+
+learning_rate: 2.0e-4
+lr_scheduler_type: cosine
+warmup_ratio: 0.03
+weight_decay: 0.01
+adam_beta2: 0.95
+max_grad_norm: 1.0
+gradient_checkpointing: true
+
+logging_steps: 10
+eval_strategy: steps
+evaluation_strategy: steps # 兼容老字段
+eval_steps: 100
+save_steps: 200
+save_total_limit: 2
+load_best_model_at_end: false # debug 阶段无所谓 best model
+
+ddp_timeout: 1800
+ddp_find_unused_parameters: false
+
+seed: 42
+report_to: none

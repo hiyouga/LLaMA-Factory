@@ -22,6 +22,7 @@ import re
 from copy import deepcopy
 from dataclasses import dataclass
 from io import BytesIO
+from urllib.parse import urlparse
 from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TypedDict, Union
 
 import numpy as np
@@ -44,6 +45,12 @@ from ..extras.packages import (
 
 if is_librosa_available():
     import librosa
+
+# Optional S3 support. Only used when audio paths start with s3://
+try:
+    import boto3  # type: ignore[import-untyped]
+except Exception:  # noqa: BLE001
+    boto3 = None
 
 
 if is_pillow_available():
@@ -309,17 +316,73 @@ class MMPluginMixin:
 
         return {"videos": results, "durations": durations}
 
-    def _regularize_audios(
-        self, audios: list["AudioInput"], sampling_rate: float, **kwargs
-    ) -> "RegularizedAudioOutput":
-        r"""Regularizes audios to avoid error. Including reading and resampling."""
-        results, sampling_rates = [], []
-        for audio in audios:
-            if not isinstance(audio, np.ndarray):
-                audio, sampling_rate = librosa.load(audio, sr=sampling_rate)
+    def _load_single_audio(
+        self,
+        audio: "AudioInput",
+        sampling_rate: float,
+    ) -> tuple["NDArray", float]:
+        """Normalize a single audio input to (np.ndarray, sr).
 
-            results.append(audio)
-            sampling_rates.append(sampling_rate)
+        Supports numpy arrays, file-like objects, local paths and s3:// URIs.
+        """
+        # Already decoded array
+        if isinstance(audio, np.ndarray):
+            return audio, sampling_rate
+
+        # Binary/file-like
+        if isinstance(audio, BytesIO) or hasattr(audio, "read"):
+            try:
+                audio.seek(0, 0)
+            except (AttributeError, OSError):
+                pass
+            y, sr = librosa.load(audio, sr=sampling_rate)
+            return y, sr
+
+        # String or os.PathLike path / URI
+        if isinstance(audio, (str, os.PathLike)):
+            path = os.fspath(audio)
+            # S3 URI: s3://bucket/key
+            if path.startswith("s3://"):
+                if boto3 is None:
+                    raise ImportError(
+                        "Loading audio from S3 requires `boto3`. "
+                        "Please install it in your environment, e.g. `pip install boto3`."
+                    )
+
+                parsed = urlparse(path)
+                bucket = parsed.netloc
+                key = parsed.path.lstrip("/")
+
+                s3_client = boto3.client("s3")
+                obj = s3_client.get_object(Bucket=bucket, Key=key)
+                data = obj["Body"].read()
+                bio = BytesIO(data)
+                y, sr = librosa.load(bio, sr=sampling_rate)
+                return y, sr
+
+            # Local path – original behavior
+            y, sr = librosa.load(path, sr=sampling_rate)
+            return y, sr
+
+        raise TypeError(f"Unsupported audio type: {type(audio)}")
+
+    def _regularize_audios(
+        self,
+        audios: list["AudioInput"],
+        sampling_rate: float,
+        **kwargs,
+    ) -> "RegularizedAudioOutput":
+        r"""Regularizes audios to avoid error.
+
+        Including reading and resampling.
+        """
+        results: list["NDArray"] = []
+        sampling_rates: list[float] = []
+
+        for audio in audios:
+            y, sr = self._load_single_audio(audio, sampling_rate)
+            results.append(y)
+            sampling_rates.append(sr)
 
         return {"audios": results, "sampling_rates": sampling_rates}
 
