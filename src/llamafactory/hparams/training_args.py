@@ -56,10 +56,6 @@ class RayArguments:
         default=1,
         metadata={"help": "The number of workers for Ray training. Default is 1 worker."},
     )
-    resources_per_worker: Union[dict, str] = field(
-        default_factory=lambda: {"GPU": 1},
-        metadata={"help": "The resources per worker for Ray training. Default is to use 1 GPU per worker."},
-    )
     placement_strategy: Literal["SPREAD", "PACK", "STRICT_SPREAD", "STRICT_PACK"] = field(
         default="PACK",
         metadata={"help": "The placement strategy for Ray training. Default is PACK."},
@@ -71,8 +67,6 @@ class RayArguments:
 
     def __post_init__(self):
         self.use_ray = use_ray()
-        if isinstance(self.resources_per_worker, str) and self.resources_per_worker.startswith("{"):
-            self.resources_per_worker = _convert_str_dict(json.loads(self.resources_per_worker))
 
         if isinstance(self.ray_init_kwargs, str) and self.ray_init_kwargs.startswith("{"):
             self.ray_init_kwargs = _convert_str_dict(json.loads(self.ray_init_kwargs))

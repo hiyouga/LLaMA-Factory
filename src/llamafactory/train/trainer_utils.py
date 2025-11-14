@@ -30,6 +30,7 @@ from transformers.modeling_utils import is_fsdp_enabled
 from transformers.optimization import get_scheduler
 from transformers.pytorch_utils import ALL_LAYERNORM_LAYERS
 from transformers.trainer_pt_utils import get_parameter_names
+from transformers.utils import is_torch_npu_available
 from typing_extensions import override
 
 from ..extras import logging
@@ -51,6 +52,23 @@ if is_ray_available():
     import ray
     from ray.train import RunConfig, ScalingConfig
     from ray.train.torch import TorchTrainer
+
+    # hack TorchConfigContextManager to support set npu device
+    class TorchConfigContextManager:
+        def __enter__(self):
+            # Set default device
+            if is_torch_npu_available():
+                device = ray.train.torch.get_device()
+                torch.npu.set_device(device)
+            elif torch.cuda.is_available():
+                device = ray.train.torch.get_device()
+                torch.cuda.set_device(device)
+
+        def __exit__(self, type, value, traceback):
+            # Propagate exceptios if any
+            return False
+
+    ray.train.torch.config.TorchConfigContextManager = TorchConfigContextManager
 
 
 if TYPE_CHECKING:
@@ -761,14 +779,24 @@ def get_ray_trainer(
     else:
         storage_path = Path(ray_args.ray_storage_path).absolute().as_posix()
 
+    if is_torch_npu_available():
+        comm_backend = "hccl"
+        resources_per_worker = {"NPU": 1}
+        use_gpu = False
+    else:
+        comm_backend = "nccl"
+        resources_per_worker = {"GPU": 1}
+        use_gpu = True
+
     trainer = TorchTrainer(
         training_function,
+        torch_config=ray.train.torch.TorchConfig(backend=comm_backend),
         train_loop_config=train_loop_config,
         scaling_config=ScalingConfig(
             num_workers=ray_args.ray_num_workers,
-            resources_per_worker=ray_args.resources_per_worker,
+            resources_per_worker=resources_per_worker,
             placement_strategy=ray_args.placement_strategy,
-            use_gpu=True,
+            use_gpu=use_gpu,
         ),
         run_config=RunConfig(
             name=ray_args.ray_run_name,

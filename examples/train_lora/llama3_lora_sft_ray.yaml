@@ -33,8 +33,6 @@ ray_run_name: llama3_8b_sft_lora
 ray_storage_path: ./saves
 ray_num_workers: 4  # Number of GPUs to use.
 placement_strategy: PACK
-resources_per_worker:
-  GPU: 1
 # ray_init_kwargs:
 #   runtime_env:
 #     env_vars:
