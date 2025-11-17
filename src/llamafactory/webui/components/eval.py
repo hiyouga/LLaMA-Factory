@@ -47,9 +47,18 @@ def create_eval_tab(engine: "Engine") -> dict[str, "Component"]:
         max_samples = gr.Textbox(value="100000")
         batch_size = gr.Slider(minimum=1, maximum=1024, value=2, step=1)
         predict = gr.Checkbox(value=True)
+        compute_wer_cer = gr.Checkbox(value=False)
 
-    input_elems.update({cutoff_len, max_samples, batch_size, predict})
-    elem_dict.update(dict(cutoff_len=cutoff_len, max_samples=max_samples, batch_size=batch_size, predict=predict))
+    input_elems.update({cutoff_len, max_samples, batch_size, predict, compute_wer_cer})
+    elem_dict.update(
+        dict(
+            cutoff_len=cutoff_len,
+            max_samples=max_samples,
+            batch_size=batch_size,
+            predict=predict,
+            compute_wer_cer=compute_wer_cer,
+        )
+    )
 
     with gr.Row():
         max_new_tokens = gr.Slider(minimum=8, maximum=4096, value=512, step=1)

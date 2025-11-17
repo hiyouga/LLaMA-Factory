@@ -318,6 +318,7 @@ class Runner:
             temperature=get("eval.temperature"),
             output_dir=get_save_dir(model_name, finetuning_type, get("eval.output_dir")),
             trust_remote_code=True,
+            compute_wer_cer=get("eval.compute_wer_cer"),
             ddp_timeout=180000000,
         )
 

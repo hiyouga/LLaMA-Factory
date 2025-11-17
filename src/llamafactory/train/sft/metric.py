@@ -92,13 +92,14 @@ class ComputeSimilarity:
     """
 
     tokenizer: "PreTrainedTokenizer"
+    compute_wer_cer: bool = True
 
     def _dump(self) -> Optional[dict[str, float]]:
         result = None
         if hasattr(self, "score_dict"):
             result = {k: float(np.mean(v)) for k, v in self.score_dict.items()}
 
-        self.score_dict = {"rouge-1": [], "rouge-2": [], "rouge-l": [], "bleu-4": []}
+        self.score_dict = {"rouge-1": [], "rouge-2": [], "rouge-l": [], "bleu-4": [], "wer": [], "cer": []}
         return result
 
     def __post_init__(self):
@@ -130,5 +131,43 @@ class ComputeSimilarity:
             bleu_score = sentence_bleu([list(label)], list(pred), smoothing_function=SmoothingFunction().method3)
             self.score_dict["bleu-4"].append(round(bleu_score * 100, 4))
 
+            if self.compute_wer_cer:
+                # Word Error Rate (WER) based on segmented tokens
+                wer = _compute_error_rate(reference, hypothesis)
+                # Character Error Rate (CER) based on raw characters
+                cer = _compute_error_rate(list(label), list(pred))
+                self.score_dict["wer"].append(round(wer * 100, 4))
+                self.score_dict["cer"].append(round(cer * 100, 4))
+
         if compute_result:
             return self._dump()
+
+
+def _compute_error_rate(reference: list[str], hypothesis: list[str]) -> float:
+    r"""Compute normalized edit distance for sequences (WER/CER helper).
+
+    When reference is empty, return 0.0 if hypothesis is also empty, otherwise 1.0.
+    """
+    ref_len = len(reference)
+    hyp_len = len(hypothesis)
+
+    if ref_len == 0:
+        return 0.0 if hyp_len == 0 else 1.0
+
+    # Standard Levenshtein distance
+    dp = [[0] * (hyp_len + 1) for _ in range(ref_len + 1)]
+    for i in range(ref_len + 1):
+        dp[i][0] = i
+    for j in range(hyp_len + 1):
+        dp[0][j] = j
+
+    for i in range(1, ref_len + 1):
+        for j in range(1, hyp_len + 1):
+            cost = 0 if reference[i - 1] == hypothesis[j - 1] else 1
+            dp[i][j] = min(
+                dp[i - 1][j] + 1,      # deletion
+                dp[i][j - 1] + 1,      # insertion
+                dp[i - 1][j - 1] + cost,  # substitution
+            )
+
+    return float(dp[ref_len][hyp_len]) / float(ref_len)

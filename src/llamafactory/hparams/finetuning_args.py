@@ -506,6 +506,10 @@ class FinetuningArguments(
         default=False,
         metadata={"help": "Whether or not to compute the token-level accuracy at evaluation."},
     )
+    compute_wer_cer: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to compute WER and CER for generation-based evaluation."},
+    )
     disable_shuffling: bool = field(
         default=False,
         metadata={"help": "Whether or not to disable the shuffling of the training set."},
