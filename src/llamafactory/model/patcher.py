@@ -22,7 +22,6 @@ from torch.nn import functional as F
 from transformers import GenerationMixin, PreTrainedModel, PreTrainedTokenizerBase
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.modeling_utils import is_fsdp_enabled
-from transformers.models.qwen3_omni_moe import modeling_qwen3_omni_moe
 
 from ..extras import logging
 from ..extras.misc import infer_optim_dtype
@@ -45,6 +44,9 @@ if TYPE_CHECKING:
     from trl import AutoModelForCausalLMWithValueHead
 
     from ..hparams import ModelArguments
+
+if is_transformers_version_greater_than("4.57.0"):
+    from transformers.models.qwen3_omni_moe import modeling_qwen3_omni_moe
 
 
 logger = logging.get_logger(__name__)
@@ -114,7 +116,8 @@ class Qwen3OmniMoeThinkerTextSparseMoeBlock(nn.Module):
 
 
 def patch_qwen3_omni_moe_thinker_text_sparse_moe_block():
-    modeling_qwen3_omni_moe.Qwen3OmniMoeThinkerTextSparseMoeBlock = Qwen3OmniMoeThinkerTextSparseMoeBlock
+    if is_transformers_version_greater_than("4.57.0"):
+        modeling_qwen3_omni_moe.Qwen3OmniMoeThinkerTextSparseMoeBlock = Qwen3OmniMoeThinkerTextSparseMoeBlock
 
 
 def patch_tokenizer(tokenizer: "PreTrainedTokenizer", model_args: "ModelArguments") -> None:
