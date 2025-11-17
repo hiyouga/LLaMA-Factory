@@ -92,7 +92,7 @@ class ComputeSimilarity:
     """
 
     tokenizer: "PreTrainedTokenizer"
-    compute_wer_cer: bool = True
+    compute_wer_cer: bool = False
 
     def _dump(self) -> Optional[dict[str, float]]:
         result = None
