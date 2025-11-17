@@ -23,6 +23,7 @@ import numpy as np
 import torch
 from transformers.utils import is_nltk_available
 
+from ...extras import logging
 from ...extras.constants import IGNORE_INDEX
 from ...extras.misc import numpify
 from ...extras.packages import is_jieba_available, is_rouge_available
@@ -42,6 +43,9 @@ if is_nltk_available():
 
 if is_rouge_available():
     from rouge_chinese import Rouge  # type: ignore
+
+
+logger = logging.get_logger(__name__)
 
 
 def eval_logit_processor(logits: "torch.Tensor", labels: "torch.Tensor") -> "torch.Tensor":
@@ -120,6 +124,16 @@ class ComputeSimilarity:
 
         decoded_preds = self.tokenizer.batch_decode(preds, skip_special_tokens=True)
         decoded_labels = self.tokenizer.batch_decode(labels, skip_special_tokens=True)
+
+        # Log a few sample prediction/label pairs during evaluation for debugging.
+        if self.compute_wer_cer and not getattr(self, "_printed_examples", False):
+            num_samples = min(3, len(decoded_preds))
+            if num_samples > 0:
+                logger.info_rank0("Sample predictions for WER/CER evaluation:")
+                for i in range(num_samples):
+                    logger.info_rank0(f"[sample {i}] pred : {decoded_preds[i]}")
+                    logger.info_rank0(f"[sample {i}] label: {decoded_labels[i]}")
+                self._printed_examples = True
 
         for pred, label in zip(decoded_preds, decoded_labels):
             hypothesis = list(jieba.cut(pred))
