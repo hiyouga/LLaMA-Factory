@@ -97,9 +97,16 @@ class ComputeSimilarity:
     def _dump(self) -> Optional[dict[str, float]]:
         result = None
         if hasattr(self, "score_dict"):
-            result = {k: float(np.mean(v)) for k, v in self.score_dict.items()}
+            result = {}
+            for k, v in self.score_dict.items():
+                if len(v) > 0:
+                    result[k] = float(np.mean(v))
 
-        self.score_dict = {"rouge-1": [], "rouge-2": [], "rouge-l": [], "bleu-4": [], "wer": [], "cer": []}
+        # Reset metric containers. Only allocate WER/CER when they are enabled.
+        self.score_dict = {"rouge-1": [], "rouge-2": [], "rouge-l": [], "bleu-4": []}
+        if getattr(self, "compute_wer_cer", False):
+            self.score_dict["wer"] = []
+            self.score_dict["cer"] = []
         return result
 
     def __post_init__(self):
