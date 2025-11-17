@@ -120,8 +120,8 @@ class ComputeSimilarity:
             if len(" ".join(hypothesis).split()) == 0 or len(" ".join(reference).split()) == 0:
                 result = {"rouge-1": {"f": 0.0}, "rouge-2": {"f": 0.0}, "rouge-l": {"f": 0.0}}
             else:
-                rogue = Rogue()
-                scores = rogue.get_scores(" ".join(hypothesis), " ".join(reference))
+                rouge = Rouge()
+                scores = rouge.get_scores(" ".join(hypothesis), " ".join(reference))
                 result = scores[0]
 
             for k, v in result.items():

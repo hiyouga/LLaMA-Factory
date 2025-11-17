@@ -2809,6 +2809,14 @@ register_model_group(
             DownloadSource.DEFAULT: "vit_b32",
             DownloadSource.MODELSCOPE: "vit_b32",
         },
+        "CnViT-B/16": {
+            DownloadSource.DEFAULT: "cnvit_b16",
+            DownloadSource.MODELSCOPE: "cnvit_b16",
+        },
+        "CnViT-L/14": {
+            DownloadSource.DEFAULT: "cnvit_l14",
+            DownloadSource.MODELSCOPE: "cnvit_l14",
+        },
     },
     template="clip",
 )
