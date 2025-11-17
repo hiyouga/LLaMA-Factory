@@ -74,39 +74,39 @@ class Qwen3OmniMoeThinkerTextSparseMoeBlock(nn.Module):
         # router_logits: (batch * sequence_length, n_experts)
         router_logits = self.gate(hidden_states)
 
-        # 计算所有专家的路由权重
+        # Calculate the routing weights for all experts
         routing_weights = F.softmax(router_logits, dim=1, dtype=torch.float)
 
-        # 保留top_k的权重，其余专家权重置为0（而非仅保留top_k专家）
+        # Retain the weight of the top_k and reset the rest of the expert rights to 0 (instead of retaining only top_k experts)
         top_k_weights, top_k_indices = torch.topk(routing_weights, self.top_k, dim=-1)
-        # 初始化全零权重矩阵（形状与所有专家相同）
+        # Initialize the all-zero weight matrix (same shape as all experts)
         full_routing_weights = torch.zeros_like(routing_weights)
-        # 仅保留top_k专家的权重，其余专家权重保持为0
+        # Only the weight of top_k experts is retained, and the weight of the rest of the experts remains at 0
         full_routing_weights.scatter_(1, top_k_indices, top_k_weights)
 
-        # 归一化top_k权重（保持与原逻辑一致）
+        # Normalized top_k weights (keep the original logic consistent)
         if self.norm_topk_prob:
-            # 计算每行top_k权重的和（用于归一化）
+            # Calculate the sum of the weights top_k each row (for normalization)
             top_k_sum = full_routing_weights.sum(dim=-1, keepdim=True)
-            # 避免除零（虽然softmax后和不为零，但归一化可能导致极端情况）
+            # Avoid dividing by zero
             top_k_sum = torch.clamp(top_k_sum, min=1e-9)
             full_routing_weights /= top_k_sum
 
-        # 转换回输入数据类型
+        # Convert back to the input data type
         full_routing_weights = full_routing_weights.to(hidden_states.dtype)
 
         final_hidden_states = torch.zeros(
             (batch_size * sequence_length, hidden_dim), dtype=hidden_states.dtype, device=hidden_states.device
         )
 
-        # 遍历所有专家（而非仅被选中的专家）
+        # Go through all the experts (not just the selected ones)
         for expert_idx in range(self.num_experts):
             expert_layer = self.experts[expert_idx]
-            # 获取当前专家的权重（未激活的专家此处权重为0）
-            expert_weights = full_routing_weights[:, expert_idx, None]  # 形状: (batch*seq, 1)
-            # 所有样本都参与当前专家的计算，但权重可能为0
+            # Get the weight of the current expert (inactive expert has a weight of 0 here)
+            expert_weights = full_routing_weights[:, expert_idx, None]  # shape: (batch*seq, 1)
+            # All samples participate in the calculations of the current expert, the weight may be equal to 0
             current_hidden_states = expert_layer(hidden_states) * expert_weights
-            # 累加所有专家的输出（权重为0的专家不影响结果）
+            # Add-up to all expert outputs (experts with a weight of 0 do not affect the result)
             final_hidden_states += current_hidden_states
 
         final_hidden_states = final_hidden_states.reshape(batch_size, sequence_length, hidden_dim)
@@ -206,8 +206,7 @@ def patch_config(
     if getattr(config, "model_type", None) == "internlm3" and not is_transformers_version_greater_than("4.47.1"):
         raise RuntimeError("InternLM3 model requires transformers>=4.47.1, please upgrade it.")
 
-    if getattr(config, "model_type", None) == "qwen3_omni_moe_thinker":
-        # breakpoint()
+    if getattr(config, "model_type", None) == "qwen3_omni_moe":
         patch_qwen3_omni_moe_thinker_text_sparse_moe_block()
 
     # deepspeed zero3 is not compatible with low_cpu_mem_usage
