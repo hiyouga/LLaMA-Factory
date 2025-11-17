@@ -22,8 +22,8 @@ import re
 from copy import deepcopy
 from dataclasses import dataclass
 from io import BytesIO
-from urllib.parse import urlparse
 from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TypedDict, Union
+from urllib.parse import urlparse
 
 import numpy as np
 import torch
@@ -51,6 +51,12 @@ try:
     import boto3  # type: ignore[import-untyped]
 except Exception:  # noqa: BLE001
     boto3 = None
+
+# Optional pydub support. Preferred backend for audio loading when available.
+try:
+    from pydub import AudioSegment  # type: ignore[import-untyped]
+except Exception:  # noqa: BLE001
+    AudioSegment = None
 
 
 if is_pillow_available():
@@ -316,6 +322,41 @@ class MMPluginMixin:
 
         return {"videos": results, "durations": durations}
 
+    def _load_audio_with_pydub(
+        self,
+        src: Union[str, BinaryIO, BytesIO],
+        sampling_rate: float,
+    ) -> tuple["NDArray", float]:
+        r"""Load audio with pydub + ffmpeg and return mono float32 waveform."""
+        if AudioSegment is None:
+            raise ImportError(
+                "Loading audio requires `pydub`. Please install it in your environment, e.g. `pip install pydub`."
+            )
+
+        if isinstance(src, (BytesIO, BinaryIO)) or hasattr(src, "read"):
+            try:
+                src.seek(0)
+            except Exception:  # noqa: BLE001
+                pass
+
+        segment = AudioSegment.from_file(src)
+
+        target_sr = int(sampling_rate) if sampling_rate is not None else segment.frame_rate
+        if segment.frame_rate != target_sr:
+            segment = segment.set_frame_rate(target_sr)
+
+        samples = np.array(segment.get_array_of_samples())
+        if segment.channels > 1:
+            samples = samples.reshape(-1, segment.channels).mean(axis=1)
+
+        sample_width = max(int(segment.sample_width), 1)
+        max_val = float(1 << (8 * sample_width - 1))
+        if max_val <= 0:
+            max_val = 1.0
+
+        waveform = (samples.astype(np.float32) / max_val).astype(np.float32)
+        return waveform, float(segment.frame_rate)
+
     def _load_single_audio(
         self,
         audio: "AudioInput",
@@ -335,8 +376,24 @@ class MMPluginMixin:
                 audio.seek(0, 0)
             except (AttributeError, OSError):
                 pass
-            y, sr = librosa.load(audio, sr=sampling_rate)
-            return y, sr
+
+            if AudioSegment is not None:
+                try:
+                    return self._load_audio_with_pydub(audio, sampling_rate)
+                except Exception:  # noqa: BLE001
+                    try:
+                        audio.seek(0, 0)
+                    except Exception:  # noqa: BLE001
+                        pass
+
+            if "librosa" in globals():
+                y, sr = librosa.load(audio, sr=sampling_rate)
+                return y, sr
+
+            raise ImportError(
+                "Neither `pydub` nor `librosa` is available for loading audio. "
+                "Please install at least one of them, e.g. `pip install pydub`."
+            )
 
         # String or os.PathLike path / URI
         if isinstance(audio, (str, os.PathLike)):
@@ -357,12 +414,40 @@ class MMPluginMixin:
                 obj = s3_client.get_object(Bucket=bucket, Key=key)
                 data = obj["Body"].read()
                 bio = BytesIO(data)
-                y, sr = librosa.load(bio, sr=sampling_rate)
+
+                if AudioSegment is not None:
+                    try:
+                        return self._load_audio_with_pydub(bio, sampling_rate)
+                    except Exception:  # noqa: BLE001
+                        try:
+                            bio.seek(0)
+                        except Exception:  # noqa: BLE001
+                            pass
+
+                if "librosa" in globals():
+                    y, sr = librosa.load(bio, sr=sampling_rate)
+                    return y, sr
+
+                raise ImportError(
+                    "Neither `pydub` nor `librosa` is available for loading audio from S3. "
+                    "Please install at least one of them, e.g. `pip install pydub`."
+                )
+
+            # Local path – prefer pydub, fall back to librosa
+            if AudioSegment is not None:
+                try:
+                    return self._load_audio_with_pydub(path, sampling_rate)
+                except Exception:  # noqa: BLE001
+                    pass
+
+            if "librosa" in globals():
+                y, sr = librosa.load(path, sr=sampling_rate)
                 return y, sr
 
-            # Local path – original behavior
-            y, sr = librosa.load(path, sr=sampling_rate)
-            return y, sr
+            raise ImportError(
+                "Neither `pydub` nor `librosa` is available for loading local audio files. "
+                "Please install at least one of them, e.g. `pip install pydub`."
+            )
 
         raise TypeError(f"Unsupported audio type: {type(audio)}")
 
