@@ -1,0 +1,10 @@
+model_name_or_path: Qwen/Qwen3-235B-A22B-Instruct-2507
+adapter_name_or_path: saves/Kllama_Qwen3MoE_235bA22b
+template: qwen3_nothink
+infer_backend: ktransformers  # choices: [huggingface, vllm, sglang, ktransformers]
+trust_remote_code: true
+
+use_kt: true # use KTransformers as LoRA sft backend to inference
+kt_optimize_rule: examples/kt_optimize_rules/Qwen3Moe-sft-amx.yaml
+cpu_infer: 32
+chunk_size: 8192
