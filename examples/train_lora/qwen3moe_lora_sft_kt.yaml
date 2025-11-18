@@ -11,8 +11,8 @@ lora_target: all
 
 ### dataset
 dataset: identity, alpaca_en_demo
-template: qwen3
-cutoff_len: 512
+template: qwen3_nothink
+cutoff_len: 2048
 max_samples: 100000
 overwrite_cache: true
 preprocessing_num_workers: 16
