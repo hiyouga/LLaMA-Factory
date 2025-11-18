@@ -155,6 +155,42 @@ class MetaMoEKernel(MetaKernel):
         raise NotImplementedError
 
 
+# Track whether kernels have been loaded
+_KERNELS_LOADED = False
+
+
+def _ensure_kernels_loaded() -> None:
+    """Ensure all kernel implementations are imported and registered.
+
+    This function dynamically imports all kernel implementation modules to trigger
+    their auto-registration. It's called by discover_kernels() to ensure kernels
+    are available before discovery. It only loads modules once.
+    """
+    global _KERNELS_LOADED
+
+    if _KERNELS_LOADED:
+        return
+
+    # List of kernel module paths to import
+    kernel_modules = [
+        "rms_norm.npu_rms_norm",
+        "rope.npu_rope",
+        "mlp.npu_swiglu",
+        "mlp.npu_fused_moe",
+        # Add new kernel modules here as they are created
+    ]
+
+    # Import each module to trigger kernel registration
+    for module_name in kernel_modules:
+        try:
+            __import__(f"{__package__}.{module_name}", fromlist=["*"])
+        except ImportError:
+            # Silently ignore import errors (e.g., missing dependencies like torch_npu)
+            pass
+
+    _KERNELS_LOADED = True
+
+
 def discover_kernels(model: HFModel) -> list[type[MetaKernel]]:
     """Discover and return all kernel classes registered for the current device.
 
@@ -164,7 +200,8 @@ def discover_kernels(model: HFModel) -> list[type[MetaKernel]]:
     required dependencies are installed, target modules exist in the model).
 
     The function automatically discovers all kernels registered in KERNEL_REGISTRY
-    without requiring manual enumeration.
+    without requiring manual enumeration. On first call, it dynamically imports
+    all kernel implementation modules to trigger their auto-registration.
 
     Args:
         model: The HuggingFace model to apply kernels to.
@@ -172,6 +209,9 @@ def discover_kernels(model: HFModel) -> list[type[MetaKernel]]:
     Returns:
         A list of MetaKernel classes available for the current device.
     """
+    # Ensure all kernel modules are imported to trigger registration
+    _ensure_kernels_loaded()
+
     discovered_kernels: list[type[MetaKernel]] = []
 
     # Detect current device type
