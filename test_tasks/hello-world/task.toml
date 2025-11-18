@@ -1,0 +1,14 @@
+version = "1.0"
+
+[metadata]
+author_name = "Alex Shaw"
+author_email = "alexgshaw64@gmail.com"
+difficulty = "easy"
+category = "programming"
+tags = ["trivial"]
+
+[verifier]
+timeout_sec = 120.0
+
+[agent]
+timeout_sec = 120.0

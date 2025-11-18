@@ -1,4 +1,17 @@
 {
+  "tb_sonnet_4_5_sucess_messages": {
+    "file_name": "tb_sonnet_4_5_success_messages.jsonl",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
   "identity": {
     "file_name": "identity.json"
   },
