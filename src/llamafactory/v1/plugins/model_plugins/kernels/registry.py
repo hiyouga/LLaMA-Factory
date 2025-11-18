@@ -155,22 +155,13 @@ class MetaMoEKernel(MetaKernel):
         raise NotImplementedError
 
 
-# Track whether kernels have been loaded
-_KERNELS_LOADED = False
-
-
 def _ensure_kernels_loaded() -> None:
     """Ensure all kernel implementations are imported and registered.
 
     This function dynamically imports all kernel implementation modules to trigger
-    their auto-registration. It's called by discover_kernels() to ensure kernels
-    are available before discovery. It only loads modules once.
+    their auto-registration. Python's module system ensures each module is only
+    executed once (cached in sys.modules), so repeated calls are safe and fast.
     """
-    global _KERNELS_LOADED
-
-    if _KERNELS_LOADED:
-        return
-
     # List of kernel module paths to import
     kernel_modules = [
         "rms_norm.npu_rms_norm",
@@ -181,14 +172,13 @@ def _ensure_kernels_loaded() -> None:
     ]
 
     # Import each module to trigger kernel registration
+    # Python's import system caches modules, so this is fast on subsequent calls
     for module_name in kernel_modules:
         try:
             __import__(f"{__package__}.{module_name}", fromlist=["*"])
         except ImportError:
             # Silently ignore import errors (e.g., missing dependencies like torch_npu)
             pass
-
-    _KERNELS_LOADED = True
 
 
 def discover_kernels(model: HFModel) -> list[type[MetaKernel]]:

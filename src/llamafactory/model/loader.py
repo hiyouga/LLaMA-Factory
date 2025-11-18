@@ -30,7 +30,6 @@ from trl import AutoModelForCausalLMWithValueHead
 
 from ..extras import logging
 from ..extras.misc import count_parameters, skip_check_imports, try_download_model_from_other_hub
-from ..v1.plugins.model_plugins.kernels.registry import apply_available_kernels
 from .adapter import init_adapter
 from .model_utils.ktransformers import load_kt_pretrained_model
 from .model_utils.liger_kernel import apply_liger_kernel
@@ -204,8 +203,6 @@ def load_model(
             model.load_state_dict(vhead_params, strict=False)
             logger.info_rank0(f"Loaded valuehead from checkpoint: {vhead_path}")
 
-    model = apply_available_kernels(model)
-
     if not is_trainable:
         model.requires_grad_(False)
         for param in model.parameters():
@@ -215,6 +212,11 @@ def load_model(
         model.eval()
     else:
         model.train()
+
+    if model_args.use_kernels:
+        from ..v1.plugins.model_plugins.kernels.registry import apply_available_kernels
+
+        model = apply_available_kernels(model)
 
     trainable_params, all_param = count_parameters(model)
     if is_trainable:
