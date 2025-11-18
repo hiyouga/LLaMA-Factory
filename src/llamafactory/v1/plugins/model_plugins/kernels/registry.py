@@ -181,7 +181,7 @@ def _ensure_kernels_loaded() -> None:
             pass
 
 
-def discover_kernels(model: HFModel) -> list[type[MetaKernel]]:
+def discover_kernels(model: HFModel = None) -> list[type[MetaKernel]]:
     """Discover and return all kernel classes registered for the current device.
 
     This function inspects the runtime environment (device type) and returns
@@ -195,6 +195,7 @@ def discover_kernels(model: HFModel) -> list[type[MetaKernel]]:
 
     Args:
         model: The HuggingFace model to apply kernels to.
+        TODO: implement the kernel route detection logic by model structure.
 
     Returns:
         A list of MetaKernel classes available for the current device.

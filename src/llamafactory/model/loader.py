@@ -213,6 +213,8 @@ def load_model(
     else:
         model.train()
 
+    # Borrowing the kernel plugins ability of v1 to temporarily apply the NPU fusion operator to v0,
+    # it is turned off by default, and can be discarded after the transition period ends.
     if model_args.use_kernels:
         from ..v1.plugins.model_plugins.kernels.registry import apply_available_kernels
 
