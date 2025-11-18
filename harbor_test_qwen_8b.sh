@@ -1,3 +1,4 @@
+rm -r ~/.cache
 docker system prune -a --volumes -f
 nvidia-smi && sudo fuser -kv /dev/nvidia*
 export HF_TOKEN=your_hf_token_here
