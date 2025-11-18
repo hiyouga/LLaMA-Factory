@@ -53,7 +53,7 @@ logger = logging.get_logger(__name__)
 
 
 def get_seqlens_in_batch(attention_mask: "torch.Tensor") -> "torch.Tensor":
-    r"""Get the sequnce lengths in the current batch.
+    r"""Get the sequence lengths in the current batch.
 
     e.g.
     ```python
