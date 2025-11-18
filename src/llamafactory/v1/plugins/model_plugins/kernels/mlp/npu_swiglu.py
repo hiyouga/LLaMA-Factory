@@ -20,7 +20,7 @@ import torch
 from .....extras.types import HFModel
 from ....trainer_plugins.distributed.accelerate import is_torch_npu_available
 from ..constants import DeviceType, KernelType
-from ..registry import KERNEL_REGISTRY, MetaSwiGluKernel
+from ..registry import MetaSwiGluKernel
 
 
 def _npu_swiglu_forward(self, hidden_state):
@@ -32,12 +32,9 @@ def _npu_swiglu_forward(self, hidden_state):
 
 
 class NpuSwiGluKernel(MetaSwiGluKernel):
+    type = KernelType.SWIGLU
     device = DeviceType.NPU
     kernel = _npu_swiglu_forward
-
-    @classmethod
-    def register_kernel(cls, kernel_type=KernelType.SWIGLU, device_type=DeviceType.NPU):
-        KERNEL_REGISTRY.register(kernel_type, device_type, cls)
 
     @classmethod
     def apply(cls, model, **kwargs) -> "HFModel":
