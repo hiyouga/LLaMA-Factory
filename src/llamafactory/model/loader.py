@@ -215,7 +215,7 @@ def load_model(
 
     # Borrowing the kernel plugins ability of v1 to temporarily apply the NPU fusion operator to v0,
     # it is turned off by default, and can be discarded after the transition period ends.
-    if model_args.use_kernels:
+    if model_args.use_kernels and is_trainable:
         logger.warning_rank0(
             "You are try to using future feature about kernels, please note that this feature "
             "is not supported for all models. If get any error, please disable this feature, or report the issue."
