@@ -19,6 +19,7 @@ from datasets import load_dataset
 
 from llamafactory.v1.config.data_args import DataArguments
 from llamafactory.v1.core.data_engine import DataEngine
+from llamafactory.v1.plugins.data_plugins.converter import get_converter
 
 
 @pytest.mark.parametrize("num_samples", [16])
@@ -46,6 +47,96 @@ def test_alpaca_converter(num_samples: int):
             ]
         }
         assert data_engine[index] == {"_dataset_name": "tiny_dataset", **expected_data}
+
+
+def test_sharegpt_converter_invalid():
+    example = {
+        "conversations": [
+            {
+                "from": "system",
+                "value": "Processes historical market data to generate trading signals "
+                "based on specified technical indicators.",
+            },
+            {
+                "from": "human",
+                "value": "I possess a detailed dataset, 'Historical_Market_Data.csv'. "
+                "Could you proceed with these function calls to assist me with the task?",
+            },
+            {
+                "from": "gpt",
+                "value": "```tool_call\n{'arguments': '{\"data_file\": \"Historical_Market_Data.csv\"]}', "
+                "'name': 'backtest_trading_signals'}```\n",
+            },
+            {
+                "from": "tool",
+                "value": '<tool id="D2">\n{"analysis": {"RSI_signals": [{"date": "2025-01-10", '
+                '"symbol": "AAPL", "signal": "Buy"}]}}}\n</tool>\n',
+            },
+        ]
+    }
+    dataset_converter = get_converter("sharegpt")
+    assert dataset_converter(example) == {"messages": []}
+
+
+def test_sharegpt_converter_valid():
+    example = {
+        "conversations": [
+            {
+                "from": "system",
+                "value": "Processes historical market data to generate trading signals based on "
+                "specified technical indicators.",
+            },
+            {
+                "from": "human",
+                "value": "I possess a detailed dataset, 'Historical_Market_Data.csv'. "
+                "Could you proceed with these function calls to assist me with the task?",
+            },
+            {
+                "from": "gpt",
+                "value": "```tool_call\n{'arguments': '{\"data_file\": \"Historical_Market_Data.csv\"]}', "
+                "'name': 'backtest_trading_signals'}```\n",
+            },
+        ]
+    }
+    dataset_converter = get_converter("sharegpt")
+    expected_data = {
+        "messages": [
+            {
+                "content": [
+                    {
+                        "type": "text",
+                        "value": "Processes historical market data to generate trading signals based on "
+                        "specified technical indicators.",
+                    }
+                ],
+                "loss_weight": 0.0,
+                "role": "system",
+            },
+            {
+                "content": [
+                    {
+                        "type": "text",
+                        "value": "I possess a detailed dataset, 'Historical_Market_Data.csv'. "
+                        "Could you proceed with these function calls to assist me with the task?",
+                    }
+                ],
+                "loss_weight": 0.0,
+                "role": "user",
+            },
+            {
+                "content": [
+                    {
+                        "type": "text",
+                        "value": "```tool_call\n{'arguments': '{\"data_file\": \"Historical_Market_Data.csv\"]}', "
+                        "'name': 'backtest_trading_signals'}```\n",
+                    }
+                ],
+                "loss_weight": 1.0,
+                "role": "assistant",
+            },
+        ]
+    }
+    assert dataset_converter(example) == expected_data
 
 
 @pytest.mark.parametrize("num_samples", [16])
@@ -98,4 +189,6 @@ def test_pair_converter(num_samples: int):
 
 if __name__ == "__main__":
     test_alpaca_converter(1)
+    test_sharegpt_converter_invalid()
+    test_sharegpt_converter_valid()
     test_pair_converter(1)
