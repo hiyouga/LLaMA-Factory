@@ -3,7 +3,7 @@ n_attempts: 1
 timeout_multiplier: 1.0
 orchestrator:
   type: local
-  n_concurrent_trials: 16
+  n_concurrent_trials: 4
   quiet: false
 environment:
   type: docker
@@ -14,7 +14,7 @@ agents:
     model_name: gpt-5
     kwargs:
       api_base: "http://localhost:8000/v1"
-      reasoning_effort: "high"
+      reasoning_effort: "low"
       custom_llm_provider: "openai"
 datasets:
   - path: terminal-bench-2

@@ -7,7 +7,7 @@ export OPENAI_API_KEY=dummy
 
 python -m vllm.entrypoints.openai.api_server \
   --model Qwen/Qwen3-8B \
-  --served-model-name gpt-5 \
+  --served-model-name qwen3-8b \
   --dtype bfloat16 \
   --tensor-parallel-size 1 \
   --data-parallel-size=4 \
@@ -25,7 +25,7 @@ curl http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer dummy" \
   -d '{
-    "model": "gpt-5",
+    "model": "qwen3-8b",
     "messages": [
       {"role": "user", "content": "Say hi from vLLM"}
     ]

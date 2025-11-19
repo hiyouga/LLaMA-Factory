@@ -1,4 +1,4 @@
-rm -r ~/.cache
+rm -r $HOME/.cache
 docker system prune -a --volumes -f
 nvidia-smi && sudo fuser -kv /dev/nvidia*
 export HF_TOKEN=your_hf_token_here
@@ -12,6 +12,7 @@ python -m vllm.entrypoints.openai.api_server \
   --tensor-parallel-size 4 \
   --enable-lora \
   --lora-modules gpt-5=saves/qwen3-8b/lora/sft/checkpoint-75 \
+  --rope-scaling '{"rope_type":"yarn","factor":4.0,"original_max_position_embeddings":32768}' --max-model-len 131072 \
   --port 8000 &
 
 echo "Waiting for vLLM API server to start..."
@@ -32,5 +33,6 @@ curl http://localhost:8000/v1/chat/completions \
     ]
   }'
 
+rm -r $HOME/.cache
 echo "Running Harbor test..."
 harbor run --config harbor_test_qwen_8b_sft.yaml > harbor_test_qwen_8b_sft.log 2>&1
