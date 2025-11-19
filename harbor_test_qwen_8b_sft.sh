@@ -1,8 +1,8 @@
 rm -r $HOME/.cache
 docker system prune -a --volumes -f
 nvidia-smi && sudo fuser -kv /dev/nvidia*
-export HF_TOKEN=your_hf_token_here
-export WANDB_API_KEY=your_wandb_key_here
+export HF_TOKEN=${HF_TOKEN:-"your_hf_token_here"}
+export WANDB_API_KEY=${WANDB_API_KEY:-"your_wandb_key_here"}
 export OPENAI_API_KEY=dummy
 
 python -m vllm.entrypoints.openai.api_server \
