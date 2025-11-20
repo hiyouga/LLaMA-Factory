@@ -672,7 +672,7 @@ register_model_group(
             DownloadSource.MODELSCOPE: "PaddlePaddle/ERNIE-4.5-VL-424B-A47B-PT",
         },
     },
-    template="ernie_nothink",
+    template="ernie_vl",
 )
 
 
