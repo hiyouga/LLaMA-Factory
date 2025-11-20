@@ -73,6 +73,15 @@ class NpuSwiGluKernel(MetaSwiGluKernel):
     def apply(cls, model, **kwargs) -> "HFModel":
         if not is_torch_npu_available():
             return model
+
+        # Mapping of specific mlp modules to their corresponding kernel implementations
+        kernel_mapping = {
+            "Glm4MLP": _npu_swiglu_glm4_forward,
+            "Glm4vTextMLP": _npu_swiglu_glm4_forward,
+            "Phi3MLP": _npu_swiglu_glm4_forward,
+            "Gemma3nTextMLP": _npu_swiglu_gemma3ntext_forward,
+        }
+
         replace_modules = []
         swiglu_pattern = re.compile("MLP", re.IGNORECASE)
         for name, module in model.named_modules():
@@ -84,12 +93,7 @@ class NpuSwiGluKernel(MetaSwiGluKernel):
                 # Bind function as an instance method to preserve `self` semantics
                 # and replace the original forward
                 replace_modules.append(module.__class__.__name__)
-                if module.__class__.__name__ in ("Glm4MLP", "Glm4vTextMLP", "Phi3MLP"):
-                    cls.kernel = _npu_swiglu_glm4_forward
-                elif module.__class__.__name__ == "Gemma3nTextMLP":
-                    cls.kernel = _npu_swiglu_gemma3ntext_forward
-                else:
-                    cls.kernel = _npu_swiglu_forward
-                module.forward = types.MethodType(cls.kernel, module)
+                kernel_func = kernel_mapping.get(module.__class__.__name__, _npu_swiglu_forward)
+                module.forward = types.MethodType(kernel_func, module)
 
         return model
