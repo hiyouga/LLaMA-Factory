@@ -67,6 +67,8 @@ class NpuSwiGluKernel(MetaSwiGluKernel):
         "Llama4VisionMLP2",
         "PhiMLP",
         "Qwen3OmniMoeVisionMLP",
+        "Qwen3VLVisionMLP",
+        "Qwen3VLMoeVisionMLP",
     ]
 
     @classmethod
@@ -82,7 +84,6 @@ class NpuSwiGluKernel(MetaSwiGluKernel):
             "Gemma3nTextMLP": _npu_swiglu_gemma3ntext_forward,
         }
 
-        replace_modules = []
         swiglu_pattern = re.compile("MLP", re.IGNORECASE)
         for name, module in model.named_modules():
             # Match any module whose class name contains "MLP"
@@ -92,7 +93,6 @@ class NpuSwiGluKernel(MetaSwiGluKernel):
             ):
                 # Bind function as an instance method to preserve `self` semantics
                 # and replace the original forward
-                replace_modules.append(module.__class__.__name__)
                 kernel_func = kernel_mapping.get(module.__class__.__name__, _npu_swiglu_forward)
                 module.forward = types.MethodType(kernel_func, module)
 
