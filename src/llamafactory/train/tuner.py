@@ -97,7 +97,11 @@ def _training_function(config: dict[str, Any]) -> None:
     elif finetuning_args.stage == "ppo":
         run_ppo(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
     elif finetuning_args.stage == "dpo":
-        run_dpo(model_args, data_args, training_args, finetuning_args, callbacks)
+        if model_args.use_kt:
+            from .kdpo.workflow import run_dpo as run_dpo_kt
+            run_dpo_kt(model_args, data_args, training_args, finetuning_args, callbacks)
+        else:
+            run_dpo(model_args, data_args, training_args, finetuning_args, callbacks)
     elif finetuning_args.stage == "kto":
         run_kto(model_args, data_args, training_args, finetuning_args, callbacks)
     else:
