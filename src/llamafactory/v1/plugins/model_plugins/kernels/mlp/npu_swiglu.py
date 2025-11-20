@@ -31,22 +31,65 @@ def _npu_swiglu_forward(self, hidden_state):
     )
 
 
+def _npu_swiglu_glm4_forward(self, hidden_states):
+    import torch_npu
+
+    up_states = self.gate_up_proj(hidden_states)
+    gate, up_states = up_states.chunk(2, dim=-1)
+    return self.down_proj(torch_npu.npu_swiglu(torch.cat((gate, up_states), dim=-1), dim=-1))
+
+
+def _npu_swiglu_gemma3ntext_forward(self, hidden_states):
+    import torch_npu
+
+    gate_proj = self.gate_proj(hidden_states)
+    if self.activation_sparsity > 0.0:
+        gate_proj = self._gaussian_topk(gate_proj)
+    down_proj = self.down_proj(
+        torch_npu.npu_swiglu(torch.cat((gate_proj, self.up_proj(hidden_states)), dim=-1), dim=-1)
+    )
+    return down_proj
+
+
 class NpuSwiGluKernel(MetaSwiGluKernel):
     type = KernelType.SWIGLU
     device = DeviceType.NPU
     kernel = _npu_swiglu_forward
 
+    # Don't apply the kernel to the following modules
+    except_modules = [
+        "DiTMLP",
+        "GPT2MLP",
+        "GptOssMLP",
+        "FalconMLP",
+        "FalconH1MLP",
+        "InternVLVisionMLP",
+        "Llama4VisionMLP2",
+        "PhiMLP",
+        "Qwen3OmniMoeVisionMLP",
+    ]
+
     @classmethod
     def apply(cls, model, **kwargs) -> "HFModel":
         if not is_torch_npu_available():
             return model
-
+        replace_modules = []
         swiglu_pattern = re.compile("MLP", re.IGNORECASE)
         for name, module in model.named_modules():
-            # Match any module whose class name contains "RMSNorm"
-            if re.search(swiglu_pattern, module.__class__.__name__):
+            # Match any module whose class name contains "MLP"
+            if (
+                re.search(swiglu_pattern, module.__class__.__name__)
+                and module.__class__.__name__ not in cls.except_modules
+            ):
                 # Bind function as an instance method to preserve `self` semantics
                 # and replace the original forward
+                replace_modules.append(module.__class__.__name__)
+                if module.__class__.__name__ in ("Glm4MLP", "Glm4vTextMLP", "Phi3MLP"):
+                    cls.kernel = _npu_swiglu_glm4_forward
+                elif module.__class__.__name__ == "Gemma3nTextMLP":
+                    cls.kernel = _npu_swiglu_gemma3ntext_forward
+                else:
+                    cls.kernel = _npu_swiglu_forward
                 module.forward = types.MethodType(cls.kernel, module)
 
         return model
