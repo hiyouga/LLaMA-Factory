@@ -964,6 +964,19 @@ register_template(
 
 
 register_template(
+    name="ernie_vl",
+    format_user=StringFormatter(slots=["User: {{content}}"]),
+    format_assistant=StringFormatter(slots=["\nAssistant: {{content}}<|end_of_sentence|>"]),
+    format_system=StringFormatter(slots=["{{content}}\n"]),
+    stop_words=["<|end_of_sentence|>"],
+    replace_eos=True,
+    replace_jinja_template=True,
+    template_class=ReasoningTemplate,
+    mm_plugin=get_mm_plugin(name="ernie_vl", image_token="<|image@placeholder|>", video_token="<|video@placeholder|>"),
+)
+
+
+register_template(
     name="exaone",
     format_user=StringFormatter(slots=["[|user|]{{content}}\n[|assistant|]"]),
     format_assistant=StringFormatter(slots=["{{content}}", {"eos_token"}, "\n"]),
