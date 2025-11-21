@@ -482,16 +482,18 @@ class ErnieVLPlugin(BasePlugin):
         image_idx, video_idx = 0, 0
         for message in messages:
             content = message["content"]
+            image_token = self.image_token or "<|image@placeholder|>"
+            video_token = self.video_token or "<|video@placeholder|>"
             while IMAGE_PLACEHOLDER in content:
                 image_idx += 1
-                replacement = f"Picture {image_idx}:<|IMAGE_START|>{{image}}<|IMAGE_END|>"
-                content = content.replace(IMAGE_PLACEHOLDER, replacement, 1)
+                content = content.replace(
+                    IMAGE_PLACEHOLDER, f"Picture {image_idx}:<|IMAGE_START|>{image_token}<|IMAGE_END|>", 1
+                )
             while VIDEO_PLACEHOLDER in content:
                 video_idx += 1
-                replacement = f"Video {video_idx}:<|VIDEO_START|>{{video}}<|VIDEO_END|>"
-                content = content.replace(VIDEO_PLACEHOLDER, replacement, 1)
-            content = content.replace("{{image}}", self.image_token or "<|image@placeholder|>")
-            content = content.replace("{{video}}", self.video_token or "<|video@placeholder|>")
+                content = content.replace(
+                    VIDEO_PLACEHOLDER, f"Video {video_idx}:<|VIDEO_START|>{video_token}<|VIDEO_END|>", 1
+                )
             message["content"] = content
         return messages
 

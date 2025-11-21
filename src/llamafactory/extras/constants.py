@@ -673,6 +673,7 @@ register_model_group(
         },
     },
     template="ernie_vl",
+    multimodal=True,
 )
 
 
