@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from abc import ABC, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from typing import Any, Callable, Optional
 
 from ....extras.types import HFModel
@@ -61,18 +61,67 @@ class KernelRegistry:
 KERNEL_REGISTRY = KernelRegistry()
 
 
-class MetaKernel(ABC):
+class AutoRegisterKernelMeta(ABCMeta):
+    """Metaclass that automatically registers kernel classes upon creation.
+
+    This metaclass checks if a newly created class has both `type` and `device`
+    attributes defined. If so, it automatically registers the kernel in the
+    global KERNEL_REGISTRY, eliminating the need for manual registration.
+
+    To disable auto-registration for a specific class, set `auto_register = False`.
+    """
+
+    def __new__(mcs, name, bases, namespace, **kwargs):
+        cls = super().__new__(mcs, name, bases, namespace, **kwargs)
+
+        # Check if auto-registration is disabled
+        auto_register = namespace.get("auto_register", True)
+
+        # Only auto-register if the class has both type and device attributes defined
+        # and they are not None (skip base classes like MetaKernel itself)
+        # and auto_register is True
+        kernel_type = namespace.get("type")
+        device_type = namespace.get("device")
+
+        if auto_register and kernel_type is not None and device_type is not None:
+            # Auto-register this kernel
+            KERNEL_REGISTRY.register(kernel_type, device_type, cls)
+
+        return cls
+
+
+class MetaKernel(ABC, metaclass=AutoRegisterKernelMeta):
+    """Base class for all kernel implementations.
+
+    Subclasses are automatically registered when they define both `type` and `device`
+    attributes. To disable auto-registration, set `auto_register = False`.
+
+    Attributes:
+        type: The kernel type (e.g., KernelType.RMSNORM). Must be set in subclasses.
+        device: The device type (e.g., DeviceType.NPU). Must be set in subclasses.
+        kernel: The actual kernel function or implementation.
+        auto_register: Set to False to disable automatic registration (default: True).
+    """
+
     type: Optional[KernelType] = None
     device: Optional[DeviceType] = None
     kernel: Optional[Callable] = None
 
     @classmethod
-    def register_kernel(cls, kernel_type: KernelType, device_type: DeviceType):
-        KERNEL_REGISTRY.register(kernel_type, device_type, cls)
-
-    @classmethod
     @abstractmethod
     def apply(cls, model: HFModel, **kwargs) -> HFModel:
+        """Apply the kernel to the model.
+
+        This method should check if the kernel can be applied (e.g., dependencies
+        are installed, target modules exist) and perform the kernel replacement.
+
+        Args:
+            model: The HuggingFace model to optimize.
+            **kwargs: Additional arguments for kernel application.
+
+        Returns:
+            The optimized model (may be the same object with modifications).
+        """
         raise NotImplementedError
 
 
@@ -106,16 +155,75 @@ class MetaMoEKernel(MetaKernel):
         raise NotImplementedError
 
 
-def discover_kernels(model: HFModel) -> list[MetaKernel]:
-    """Discover and construct MetaKernel instances for the current model/device.
+def _ensure_kernels_loaded() -> None:
+    """Ensure all kernel implementations are imported and registered.
 
-    This is a placeholder to be implemented: it should inspect the runtime
-    environment (device type, available extensions, model architecture) and
-    return an ordered list of MetaKernel instances to be applied. Each returned
-    MetaKernel must encapsulate its own replacement logic in `apply`.
+    This function dynamically imports all kernel implementation modules to trigger
+    their auto-registration. Python's module system ensures each module is only
+    executed once (cached in sys.modules), so repeated calls are safe and fast.
     """
-    # TODO: Implement auto discovery logic based on registry and device capabilities.
-    return []
+    # List of kernel module paths to import
+    kernel_modules = [
+        "rms_norm.npu_rms_norm",
+        "rope.npu_rope",
+        "mlp.npu_swiglu",
+        "mlp.npu_fused_moe",
+        # Add new kernel modules here as they are created
+    ]
+
+    # Import each module to trigger kernel registration
+    # Python's import system caches modules, so this is fast on subsequent calls
+    for module_name in kernel_modules:
+        try:
+            __import__(f"{__package__}.{module_name}", fromlist=["*"])
+        except ImportError:
+            # Silently ignore import errors (e.g., missing dependencies like torch_npu)
+            pass
+
+
+def discover_kernels(model: HFModel = None) -> list[type[MetaKernel]]:
+    """Discover and return all kernel classes registered for the current device.
+
+    This function inspects the runtime environment (device type) and returns
+    all MetaKernel classes registered for that device. Each kernel's `apply()`
+    method is responsible for checking if it can actually be applied (e.g.,
+    required dependencies are installed, target modules exist in the model).
+
+    The function automatically discovers all kernels registered in KERNEL_REGISTRY
+    without requiring manual enumeration. On first call, it dynamically imports
+    all kernel implementation modules to trigger their auto-registration.
+
+    Args:
+        model: The HuggingFace model to apply kernels to.
+        TODO: implement the kernel route detection logic by model structure.
+
+    Returns:
+        A list of MetaKernel classes available for the current device.
+    """
+    # Ensure all kernel modules are imported to trigger registration
+    _ensure_kernels_loaded()
+
+    discovered_kernels: list[type[MetaKernel]] = []
+
+    # Detect current device type
+    accelerator = get_available_accelerator()
+    try:
+        device_type = DeviceType(accelerator.type)
+    except ValueError:
+        # Unknown device type, return empty list
+        return discovered_kernels
+
+    # Skip CPU as it typically doesn't have optimized kernels
+    if device_type == DeviceType.CPU:
+        return discovered_kernels
+
+    # Iterate through registry and collect all kernels for current device
+    for kernel_type, devices in KERNEL_REGISTRY._registry.items():
+        kernel_cls = devices.get(device_type)
+        if kernel_cls is not None:
+            discovered_kernels.append(kernel_cls)
+
+    return discovered_kernels
 
 
 def apply_kernel(model: HFModel, kernel: type[MetaKernel], /, **kwargs) -> "HFModel":
@@ -136,3 +244,10 @@ def apply_kernel(model: HFModel, kernel: type[MetaKernel], /, **kwargs) -> "HFMo
     raise ValueError(
         f"{kernel} must be a MetaKernel instance, or the kernel don't match the device type. got {kernel.device} and {get_available_accelerator().type} instead."
     )
+
+
+def apply_available_kernels(model: HFModel, **kwargs) -> "HFModel":
+    """Apply all available kernels to the model."""
+    for kernel in discover_kernels(model):
+        model = apply_kernel(model, kernel, **kwargs)
+    return model

@@ -19,7 +19,7 @@ import torch
 from .....extras.types import HFModel
 from ....trainer_plugins.distributed.accelerate import is_torch_npu_available
 from ..constants import DeviceType, KernelType
-from ..registry import KERNEL_REGISTRY, MetaRoPEKernel
+from ..registry import MetaRoPEKernel
 
 
 def _apply_rotary_pos_emb(q, k, cos, sin, position_ids=None, unsqueeze_dim=1):
@@ -51,12 +51,9 @@ def _apply_multimodal_rotary_pos_emb_qwen25_vl(q, k, cos, sin, mrope_section, un
 
 
 class NpuRoPEKernel(MetaRoPEKernel):
+    type = KernelType.ROPE
     device = DeviceType.NPU
     kernel = _apply_rotary_pos_emb
-
-    @classmethod
-    def register_kernel(cls, kernel_type=KernelType.ROPE, device_type=DeviceType.NPU):
-        KERNEL_REGISTRY.register(kernel_type, device_type, cls)
 
     @classmethod
     def apply(cls, model, **kwargs) -> "HFModel":
@@ -88,12 +85,16 @@ class NpuRoPEKernel(MetaRoPEKernel):
 
 
 class NpuQwen2VLRoPEKernel(MetaRoPEKernel):
+    """Qwen2-VL specific RoPE kernel - not auto-registered.
+
+    This kernel is for specific models (Qwen2-VL) and should be manually
+    applied when needed rather than auto-discovered.
+    """
+
+    type = KernelType.ROPE
     device = DeviceType.NPU
     kernel = _apply_multimodal_rotary_pos_emb_qwen25_vl
-
-    @classmethod
-    def register_kernel(cls, kernel_type=KernelType.ROPE, device_type=DeviceType.NPU):
-        KERNEL_REGISTRY.register(kernel_type, device_type, cls)
+    auto_register = False  # Disable auto-registration for model-specific kernel
 
     @classmethod
     def apply(cls, model, **kwargs) -> "HFModel":
