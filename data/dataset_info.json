@@ -1,4 +1,30 @@
 {
+  "tb_expanded_val": {
+    "file_name": "tbench_conversations_expanded/val_processed.jsonl",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
+  "tb_expanded_train": {
+    "file_name": "tbench_conversations_expanded/train_processed.jsonl",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
   "tb_sonnet_4_5_sucess_messages": {
     "file_name": "tb_sonnet_4_5_success_messages.jsonl",
     "formatting": "sharegpt",

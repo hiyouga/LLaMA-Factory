@@ -1,0 +1,18 @@
+jobs_dir: jobs
+n_attempts: 1
+timeout_multiplier: 1.0
+orchestrator:
+  type: local
+  n_concurrent_trials: 20
+  quiet: false
+environment:
+  type: daytona #docker
+agents:
+  - name: terminus-2
+    model_name: hosted_vllm/qwen3-8b-sft
+    kwargs:
+      api_base: "http://localhost:8000/v1"
+      reasoning_effort: "low"
+datasets:
+  - path: terminal-bench-2
+  # - path: test_tasks
