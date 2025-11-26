@@ -15,6 +15,7 @@
 import uuid
 from collections.abc import AsyncGenerator, AsyncIterator
 from typing import TYPE_CHECKING, Any, Optional, Union
+from packaging import version
 
 from typing_extensions import override
 
@@ -77,11 +78,18 @@ class VllmEngine(BaseEngine):
             "tensor_parallel_size": get_device_count() or 1,
             "gpu_memory_utilization": model_args.vllm_gpu_util,
             "disable_log_stats": True,
-            "disable_log_requests": True,
             "enforce_eager": model_args.vllm_enforce_eager,
             "enable_lora": model_args.adapter_name_or_path is not None,
             "max_lora_rank": model_args.vllm_max_lora_rank,
         }
+
+        import vllm
+
+        if version.parse(vllm.__version__) <= version.parse("0.10.0"):
+            engine_args["disable_log_requests"] = True
+        else:
+            engine_args["enable_log_requests"] = False
+
         if self.template.mm_plugin.__class__.__name__ != "BasePlugin":
             engine_args["limit_mm_per_prompt"] = {"image": 4, "video": 2, "audio": 2}
 
