@@ -31,11 +31,8 @@ from .base_engine import BaseEngine, Response
 
 
 if is_vllm_available():
-    import vllm
     from vllm import AsyncEngineArgs, AsyncLLMEngine, RequestOutput, SamplingParams
     from vllm.lora.request import LoRARequest
-else:
-    vllm = None
 
 
 if TYPE_CHECKING:
@@ -85,6 +82,8 @@ class VllmEngine(BaseEngine):
             "enable_lora": model_args.adapter_name_or_path is not None,
             "max_lora_rank": model_args.vllm_max_lora_rank,
         }
+
+        import vllm
 
         if version.parse(vllm.__version__) <= version.parse("0.10.0"):
             engine_args["disable_log_requests"] = True
