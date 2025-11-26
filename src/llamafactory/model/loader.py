@@ -213,6 +213,17 @@ def load_model(
     else:
         model.train()
 
+    # Borrowing the kernel plugins ability of v1 to temporarily apply the NPU fusion operator to v0,
+    # it is turned off by default, and can be discarded after the transition period ends.
+    if model_args.use_v1_kernels and is_trainable:
+        logger.warning_rank0(
+            "You are try to using future feature about kernels, please note that this feature "
+            "is not supported for all models. If get any error, please disable this feature, or report the issue."
+        )
+        from ..v1.plugins.model_plugins.kernels.registry import apply_available_kernels
+
+        model = apply_available_kernels(model)
+
     trainable_params, all_param = count_parameters(model)
     if is_trainable:
         param_stats = (

@@ -174,6 +174,10 @@ class BaseModelArguments:
         default=True,
         metadata={"help": "Whether or not to use KV cache in generation."},
     )
+    use_v1_kernels: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use high-performance kernels in training."},
+    )
     infer_dtype: Literal["auto", "float16", "bfloat16", "float32"] = field(
         default="auto",
         metadata={"help": "Data type for model weights and activations at inference."},
