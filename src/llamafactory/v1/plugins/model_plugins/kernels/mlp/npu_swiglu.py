@@ -57,19 +57,35 @@ class NpuSwiGluKernel(MetaSwiGluKernel):
     kernel = _npu_swiglu_forward
 
     # Don't apply the kernel to the following modules
-    except_modules = [
-        "DiTMLP",
-        "GPT2MLP",
-        "GptOssMLP",
-        "FalconMLP",
-        "FalconH1MLP",
-        "InternVLVisionMLP",
-        "Llama4VisionMLP2",
-        "PhiMLP",
-        "Qwen3OmniMoeVisionMLP",
-        "Qwen3VLVisionMLP",
-        "Qwen3VLMoeVisionMLP",
-    ]
+    expect_modules = frozenset(
+        {
+            "Qwen3VLMoeTextMLP",
+            "Qwen3VLTextMLP",
+            "Qwen3OmniMoeThinkerTextMLP",
+            "Qwen3OmniMoeMLP",
+            "Qwen3OmniMoeTalkerTextMLP",
+            "Qwen3OmniMoeCode2WavMlp",
+            "Qwen3NextMLP",
+            "Qwen3MoeMLP",
+            "Qwen3MLP",
+            "Qwen2MLP",
+            "Qwen2MoeMLP",
+            "Qwen2_5_VLMLP",
+            "Qwen2_5OmniMLP",
+            "Llama4TextMLP",
+            "LlamaMLP",
+            "Glm4MLP",
+            "Glm4MoeMLP",
+            "Glm4vMoeTextMLP",
+            "Gemma3MLP",
+            "Gemma2MLP",
+            "Gemma3nTextMLP",
+            "Phi3MLP",
+            "DeepseekV2MLP",
+            "DeepseekV3MLP",
+            "SeedOssMLP",
+        }
+    )
 
     @classmethod
     def apply(cls, model, **kwargs) -> "HFModel":
@@ -89,7 +105,7 @@ class NpuSwiGluKernel(MetaSwiGluKernel):
             # Match any module whose class name contains "MLP"
             if (
                 re.search(swiglu_pattern, module.__class__.__name__)
-                and module.__class__.__name__ not in cls.except_modules
+                and module.__class__.__name__ in cls.expect_modules
             ):
                 # Bind function as an instance method to preserve `self` semantics
                 # and replace the original forward
