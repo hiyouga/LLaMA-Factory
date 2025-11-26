@@ -34,6 +34,8 @@ if is_vllm_available():
     import vllm
     from vllm import AsyncEngineArgs, AsyncLLMEngine, RequestOutput, SamplingParams
     from vllm.lora.request import LoRARequest
+else:
+    vllm = None
 
 
 if TYPE_CHECKING:
