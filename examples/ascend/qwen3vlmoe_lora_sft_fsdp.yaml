@@ -3,7 +3,7 @@ model_name_or_path: Qwen/Qwen3-VL-30B-A3B-Instruct
 image_max_pixels: 262144
 video_max_pixels: 16384
 trust_remote_code: true
-use_kernels: true  # replaced kernels: [NpuRMSNormKernel, NpuRoPEKernel, NpuQwen3VLMoEFusedMoEKernel]
+use_v1_kernels: true  # replaced kernels: [NpuRMSNormKernel, NpuRoPEKernel, NpuQwen3VLMoEFusedMoEKernel]
 
 ### method
 stage: sft
