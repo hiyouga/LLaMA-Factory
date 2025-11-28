@@ -8,6 +8,7 @@ on:
     paths:
       - "**/*.py"
       - "requirements.txt"
+      - "Makefile"
       - ".github/workflows/*.yml"
   pull_request:
     branches:
@@ -15,6 +16,7 @@ on:
     paths:
       - "**/*.py"
       - "requirements.txt"
+      - "Makefile"
       - ".github/workflows/*.yml"
 
 jobs:
