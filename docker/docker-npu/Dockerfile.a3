@@ -1,6 +1,6 @@
 # https://hub.docker.com/r/ascendai/cann/tags
 
-FROM quay.io/ascend/cann:8.3.rc2-910b-ubuntu22.04-py3.11
+FROM quay.io/ascend/cann:8.3.rc2-a3-ubuntu22.04-py3.11
 
 # Installation arguments
 ARG PIP_INDEX=https://pypi.org/simple
@@ -61,3 +61,4 @@ ENV https_proxy=
 # Reset pip config
 RUN pip config unset global.index-url && \
     pip config unset global.extra-index-url
+
