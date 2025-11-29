@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from tests.utils import runs_on
 from llamafactory.data import Role
 from llamafactory.data.converter import get_dataset_converter
 from llamafactory.data.parser import DatasetAttr
 from llamafactory.hparams import DataArguments
+from tests.utils import runs_on
 
 
 @runs_on(["cpu"])

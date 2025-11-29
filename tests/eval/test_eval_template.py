@@ -15,6 +15,7 @@
 from llamafactory.eval.template import get_eval_template
 from tests.utils import runs_on
 
+
 @runs_on(["cpu"])
 def test_eval_template_en():
     support_set = [

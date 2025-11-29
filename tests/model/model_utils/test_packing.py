@@ -15,8 +15,8 @@
 import pytest
 import torch
 
-from tests.utils import runs_on
 from llamafactory.model.model_utils.packing import get_seqlens_in_batch, get_unpad_data
+from tests.utils import runs_on
 
 
 @runs_on(["cpu","npu"])

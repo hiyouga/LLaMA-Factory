@@ -18,8 +18,8 @@ import pytest
 
 from llamafactory.chat import ChatModel
 from llamafactory.extras.packages import is_sglang_available
-
 from tests.utils import runs_on
+
 
 MODEL_NAME = "Qwen/Qwen2.5-0.5B"
 

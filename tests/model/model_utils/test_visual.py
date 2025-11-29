@@ -18,10 +18,10 @@ import pytest
 import torch
 from transformers import AutoConfig, AutoModelForVision2Seq
 
-from tests.utils import runs_on
 from llamafactory.extras.packages import is_transformers_version_greater_than
 from llamafactory.hparams import FinetuningArguments, ModelArguments
 from llamafactory.model.adapter import init_adapter
+from tests.utils import runs_on
 
 
 @runs_on(["cpu","npu"])

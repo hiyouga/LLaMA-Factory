@@ -17,7 +17,6 @@ import os
 import pytest
 import torch
 
-from tests.utils import runs_on
 from llamafactory.train.test_utils import (
     check_lora_model,
     compare_model,
@@ -25,6 +24,7 @@ from llamafactory.train.test_utils import (
     load_reference_model,
     load_train_model,
 )
+from tests.utils import runs_on
 
 
 TINY_LLAMA3 = os.getenv("TINY_LLAMA3", "llamafactory/tiny-random-Llama-3")

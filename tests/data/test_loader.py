@@ -14,8 +14,8 @@
 
 import os
 
-from tests.utils import runs_on
 from llamafactory.train.test_utils import load_dataset_module
+from tests.utils import runs_on
 
 
 DEMO_DATA = os.getenv("DEMO_DATA", "llamafactory/demo_data")

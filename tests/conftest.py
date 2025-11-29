@@ -43,9 +43,7 @@ def pytest_configure(config):
 
 
 def pytest_runtest_setup(item):
-    """
-    Hook to check the 'runs_on' marker before running a test.
-    """
+    """Hook to check the 'runs_on' marker before running a test."""
     marker = item.get_closest_marker("runs_on")
 
     # If the test does not have this marker, run it by default

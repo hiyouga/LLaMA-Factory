@@ -18,10 +18,10 @@ from typing import TYPE_CHECKING
 import pytest
 from transformers import AutoTokenizer
 
-from tests.utils import runs_on
 from llamafactory.data import get_template_and_fix_tokenizer
 from llamafactory.data.template import parse_template
 from llamafactory.hparams import DataArguments
+from tests.utils import runs_on
 
 
 if TYPE_CHECKING:

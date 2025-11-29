@@ -20,11 +20,11 @@ import pytest
 import torch
 from PIL import Image
 
-from tests.utils import runs_on
 from llamafactory.data.mm_plugin import get_mm_plugin
 from llamafactory.extras.packages import is_transformers_version_greater_than
 from llamafactory.hparams import get_infer_args
 from llamafactory.model import load_tokenizer
+from tests.utils import runs_on
 
 
 if TYPE_CHECKING:

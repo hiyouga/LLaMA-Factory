@@ -18,8 +18,8 @@ import pytest
 import torch
 from transformers import AutoConfig, AutoModelForCausalLM
 
-from tests.utils import runs_on
 from llamafactory.model.model_utils.misc import find_expanded_modules
+from tests.utils import runs_on
 
 
 HF_TOKEN = os.getenv("HF_TOKEN")

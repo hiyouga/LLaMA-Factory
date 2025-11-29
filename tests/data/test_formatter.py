@@ -15,8 +15,8 @@
 import json
 from datetime import datetime
 
-from tests.utils import runs_on
 from llamafactory.data.formatter import EmptyFormatter, FunctionFormatter, StringFormatter, ToolFormatter
+from tests.utils import runs_on
 
 
 FUNCTION = {"name": "tool_name", "arguments": {"foo": "bar", "size": 10}}

@@ -19,9 +19,9 @@ import pytest
 from datasets import load_dataset
 from transformers import AutoTokenizer
 
-from tests.utils import runs_on
 from llamafactory.extras.constants import IGNORE_INDEX
 from llamafactory.train.test_utils import load_dataset_module
+from tests.utils import runs_on
 
 
 DEMO_DATA = os.getenv("DEMO_DATA", "llamafactory/demo_data")

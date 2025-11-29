@@ -16,9 +16,9 @@ import os
 
 import pytest
 
-from tests.utils import runs_on
 from llamafactory.hparams import ModelArguments
 from llamafactory.model import load_tokenizer
+from tests.utils import runs_on
 
 
 TINY_LLAMA3 = os.getenv("TINY_LLAMA3", "llamafactory/tiny-random-Llama-3")

@@ -15,8 +15,8 @@
 
 import pytest
 
-from tests.utils import runs_on
 from llamafactory.data.processor.processor_utils import infer_seqlen
+from tests.utils import runs_on
 
 
 @runs_on(["cpu"])
