@@ -80,7 +80,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to Quay
-        if: ${{ github.event_name != 'pull_request' && matrix.device == 'npu' && matrix.npu_type == 'a2' && matrix.npu_type == 'a3'}}
+        if: ${{ github.event_name != 'pull_request' && matrix.device == 'npu'}}
         uses: docker/login-action@v3
         with:
           registry: quay.io
