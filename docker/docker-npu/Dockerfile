@@ -1,6 +1,7 @@
 # https://hub.docker.com/r/ascendai/cann/tags
 
-FROM quay.io/ascend/cann:8.3.rc2-910b-ubuntu22.04-py3.11
+ARG BASE_IMAGE=quay.io/ascend/cann:8.3.rc2-910b-ubuntu22.04-py3.11
+FROM ${BASE_IMAGE}
 
 # Installation arguments
 ARG PIP_INDEX=https://pypi.org/simple
