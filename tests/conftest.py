@@ -42,6 +42,29 @@ def pytest_configure(config):
     )
 
 
+def pytest_runtest_setup(item):
+    """
+    Hook to check the 'runs_on' marker before running a test.
+    """
+    marker = item.get_closest_marker("runs_on")
+
+    # If the test does not have this marker, run it by default
+    if marker is None:
+        return
+
+    allowed_devices = marker.args[0]
+    # Compatibility handling: Allow a single string instead of a list
+    # Example: @runs_on("cpu")
+    if isinstance(allowed_devices, str):
+        allowed_devices = [allowed_devices]
+
+    if CURRENT_DEVICE not in allowed_devices:
+        pytest.skip(
+            f"Test skipped: Current device is '{CURRENT_DEVICE}', "
+            f"but test requires one of {allowed_devices}."
+        )
+
+
 def _handle_slow_tests(items):
     """Skip slow tests unless RUN_SLOW environment variable is set.
 

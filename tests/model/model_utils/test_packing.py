@@ -15,9 +15,11 @@
 import pytest
 import torch
 
+from tests.utils import runs_on
 from llamafactory.model.model_utils.packing import get_seqlens_in_batch, get_unpad_data
 
 
+@runs_on(["cpu","npu"])
 @pytest.mark.parametrize(
     "attention_mask,golden_seq_lens",
     [

@@ -19,6 +19,7 @@ from typing import Any
 import pytest
 from transformers import DataCollatorWithPadding
 
+from tests.utils  import runs_on
 from llamafactory.data import get_dataset, get_template_and_fix_tokenizer
 from llamafactory.hparams import get_train_args
 from llamafactory.model import load_model, load_tokenizer
@@ -59,6 +60,7 @@ class DataCollatorWithVerbose(DataCollatorWithPadding):
         return {k: v[:, :1] for k, v in batch.items()}  # truncate input length
 
 
+@runs_on(["cpu","npu"])
 @pytest.mark.parametrize("disable_shuffling", [False, True])
 def test_shuffle(disable_shuffling: bool):
     model_args, data_args, training_args, finetuning_args, _ = get_train_args(

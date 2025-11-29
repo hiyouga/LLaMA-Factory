@@ -19,6 +19,7 @@ import pytest
 from llamafactory.chat import ChatModel
 from llamafactory.extras.packages import is_sglang_available
 
+from tests.utils import runs_on
 
 MODEL_NAME = "Qwen/Qwen2.5-0.5B"
 
@@ -39,6 +40,7 @@ MESSAGES = [
 ]
 
 
+@runs_on(["cpu"])
 @pytest.mark.skipif(not is_sglang_available(), reason="SGLang is not installed")
 def test_chat():
     r"""Test the SGLang engine's basic chat functionality."""
@@ -48,6 +50,7 @@ def test_chat():
     print(response.response_text)
 
 
+@runs_on(["cpu"])
 @pytest.mark.skipif(not is_sglang_available(), reason="SGLang is not installed")
 def test_stream_chat():
     r"""Test the SGLang engine's streaming chat functionality."""

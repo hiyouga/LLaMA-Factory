@@ -16,6 +16,7 @@ import os
 
 from llamafactory.chat import ChatModel
 
+from tests.utils import runs_on
 
 TINY_LLAMA3 = os.getenv("TINY_LLAMA3", "llamafactory/tiny-random-Llama-3")
 
@@ -35,11 +36,13 @@ MESSAGES = [
 EXPECTED_RESPONSE = "_rho"
 
 
+@runs_on(["cpu"])
 def test_chat():
     chat_model = ChatModel(INFER_ARGS)
     assert chat_model.chat(MESSAGES)[0].response_text == EXPECTED_RESPONSE
 
 
+@runs_on(["cpu"])
 def test_stream_chat():
     chat_model = ChatModel(INFER_ARGS)
     response = ""

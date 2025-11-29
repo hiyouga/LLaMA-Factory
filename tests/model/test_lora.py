@@ -17,6 +17,7 @@ import os
 import pytest
 import torch
 
+from tests.utils import runs_on
 from llamafactory.train.test_utils import (
     check_lora_model,
     compare_model,
@@ -55,30 +56,35 @@ INFER_ARGS = {
 }
 
 
+@runs_on(["cpu","npu"])
 def test_lora_train_qv_modules():
     model = load_train_model(lora_target="q_proj,v_proj", **TRAIN_ARGS)
     linear_modules, _ = check_lora_model(model)
     assert linear_modules == {"q_proj", "v_proj"}
 
 
+@runs_on(["cpu","npu"])
 def test_lora_train_all_modules():
     model = load_train_model(lora_target="all", **TRAIN_ARGS)
     linear_modules, _ = check_lora_model(model)
     assert linear_modules == {"q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "gate_proj", "down_proj"}
 
 
+@runs_on(["cpu","npu"])
 def test_lora_train_extra_modules():
     model = load_train_model(additional_target="embed_tokens,lm_head", **TRAIN_ARGS)
     _, extra_modules = check_lora_model(model)
     assert extra_modules == {"embed_tokens", "lm_head"}
 
 
+@runs_on(["cpu","npu"])
 def test_lora_train_old_adapters():
     model = load_train_model(adapter_name_or_path=TINY_LLAMA_ADAPTER, create_new_adapter=False, **TRAIN_ARGS)
     ref_model = load_reference_model(TINY_LLAMA3, TINY_LLAMA_ADAPTER, use_lora=True, is_trainable=True)
     compare_model(model, ref_model)
 
 
+@runs_on(["cpu","npu"])
 def test_lora_train_new_adapters():
     model = load_train_model(adapter_name_or_path=TINY_LLAMA_ADAPTER, create_new_adapter=True, **TRAIN_ARGS)
     ref_model = load_reference_model(TINY_LLAMA3, TINY_LLAMA_ADAPTER, use_lora=True, is_trainable=True)
@@ -87,6 +93,7 @@ def test_lora_train_new_adapters():
     )
 
 
+@runs_on(["cpu","npu"])
 @pytest.mark.usefixtures("fix_valuehead_cpu_loading")
 def test_lora_train_valuehead():
     model = load_train_model(add_valuehead=True, **TRAIN_ARGS)
@@ -96,6 +103,7 @@ def test_lora_train_valuehead():
     assert torch.allclose(state_dict["v_head.summary.weight"], ref_state_dict["v_head.summary.weight"])
     assert torch.allclose(state_dict["v_head.summary.bias"], ref_state_dict["v_head.summary.bias"])
 
+@runs_on(["cpu","npu"])
 @pytest.mark.skip_on_devices("npu")
 def test_lora_inference():
     model = load_infer_model(**INFER_ARGS)
