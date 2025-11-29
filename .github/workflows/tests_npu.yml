@@ -83,5 +83,5 @@ jobs:
         run: |
           make test
         env:
-          HF_HOME: ${{ runner.temp }}/huggingface
+          HF_HOME: /root/.cache/huggingface
           HF_HUB_OFFLINE: "${{ steps.hf-hub-cache.outputs.cache-hit == 'true' && '1' || '0' }}"
