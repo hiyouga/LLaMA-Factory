@@ -21,7 +21,6 @@ from transformers import AutoTokenizer
 
 from llamafactory.extras.constants import IGNORE_INDEX
 from llamafactory.train.test_utils import load_dataset_module
-from tests.utils import runs_on
 
 
 DEMO_DATA = os.getenv("DEMO_DATA", "llamafactory/demo_data")
@@ -43,7 +42,7 @@ TRAIN_ARGS = {
 }
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.parametrize("num_samples", [16])
 def test_supervised_single_turn(num_samples: int):
     train_dataset = load_dataset_module(dataset_dir="ONLINE", dataset=TINY_DATA, **TRAIN_ARGS)["train_dataset"]
@@ -63,7 +62,7 @@ def test_supervised_single_turn(num_samples: int):
         assert train_dataset["input_ids"][index] == ref_input_ids
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.parametrize("num_samples", [8])
 def test_supervised_multi_turn(num_samples: int):
     train_dataset = load_dataset_module(dataset_dir="REMOTE:" + DEMO_DATA, dataset="system_chat", **TRAIN_ARGS)[
@@ -77,7 +76,7 @@ def test_supervised_multi_turn(num_samples: int):
         assert train_dataset["input_ids"][index] == ref_input_ids
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.parametrize("num_samples", [4])
 def test_supervised_train_on_prompt(num_samples: int):
     train_dataset = load_dataset_module(
@@ -92,7 +91,7 @@ def test_supervised_train_on_prompt(num_samples: int):
         assert train_dataset["labels"][index] == ref_ids
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.parametrize("num_samples", [4])
 def test_supervised_mask_history(num_samples: int):
     train_dataset = load_dataset_module(

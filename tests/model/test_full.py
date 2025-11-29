@@ -14,10 +14,10 @@
 
 import os
 
+import pytest
 import torch
 
 from llamafactory.train.test_utils import load_infer_model, load_train_model
-from tests.utils import runs_on
 
 
 TINY_LLAMA3 = os.getenv("TINY_LLAMA3", "llamafactory/tiny-random-Llama-3")
@@ -43,14 +43,14 @@ INFER_ARGS = {
     "infer_dtype": "float16",
 }
 
-@runs_on(["cpu","npu"])
+@pytest.mark.runs_on(["cpu","npu"])
 def test_full_train():
     model = load_train_model(**TRAIN_ARGS)
     for param in model.parameters():
         assert param.requires_grad is True
         assert param.dtype == torch.float32
 
-@runs_on(["cpu","npu"])
+@pytest.mark.runs_on(["cpu","npu"])
 def test_full_inference():
     model = load_infer_model(**INFER_ARGS)
     for param in model.parameters():

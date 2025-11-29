@@ -23,7 +23,6 @@ from llamafactory.data import get_dataset, get_template_and_fix_tokenizer
 from llamafactory.hparams import get_train_args
 from llamafactory.model import load_model, load_tokenizer
 from llamafactory.train.sft.trainer import CustomSeq2SeqTrainer
-from tests.utils import runs_on
 
 
 DEMO_DATA = os.getenv("DEMO_DATA", "llamafactory/demo_data")
@@ -60,7 +59,7 @@ class DataCollatorWithVerbose(DataCollatorWithPadding):
         return {k: v[:, :1] for k, v in batch.items()}  # truncate input length
 
 
-@runs_on(["cpu","npu"])
+@pytest.mark.runs_on(["cpu","npu"])
 @pytest.mark.parametrize("disable_shuffling", [False, True])
 def test_shuffle(disable_shuffling: bool):
     model_args, data_args, training_args, finetuning_args, _ = get_train_args(

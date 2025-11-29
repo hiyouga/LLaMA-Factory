@@ -27,7 +27,7 @@ jobs:
         python:
           - "3.11"
         os:
-          - "linux-aarch64-a2-1"
+          - "linux-aarch64-a2-4"
         pytorch_npu:
           - "2.7.1"
 
@@ -52,16 +52,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install ".[torch-npu,dev]" torch-npu==${{matrix.pytorch_npu}}
-
-      - name: Check npu and CANN info
-        run: |
-          cat /usr/local/Ascend/ascend-toolkit/latest/"$(uname -i)"-linux/ascend_toolkit_install.info
-          npu-smi info
-          python -c "import torch; print(f'NPU available: {torch.npu.is_available()}')"
-
-      - name: Check pip list
-        run: |
-          pip list
 
       - name: Install node
         run: |

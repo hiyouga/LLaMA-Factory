@@ -17,7 +17,6 @@ import os
 import pytest
 
 from llamafactory.train.test_utils import compare_model, load_infer_model, load_reference_model
-from tests.utils import runs_on
 
 
 TINY_LLAMA3 = os.getenv("TINY_LLAMA3", "llamafactory/tiny-random-Llama-3")
@@ -30,14 +29,14 @@ INFER_ARGS = {
     "infer_dtype": "float16",
 }
 
-@runs_on(["cpu","npu"])
+@pytest.mark.runs_on(["cpu","npu"])
 @pytest.mark.skip_on_devices("npu")
 def test_base():
     model = load_infer_model(**INFER_ARGS)
     ref_model = load_reference_model(TINY_LLAMA3)
     compare_model(model, ref_model)
 
-@runs_on(["cpu","npu"])
+@pytest.mark.runs_on(["cpu","npu"])
 @pytest.mark.skip_on_devices("npu")
 @pytest.mark.usefixtures("fix_valuehead_cpu_loading")
 def test_valuehead():

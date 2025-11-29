@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
+
 from llamafactory.data import Role
 from llamafactory.data.converter import get_dataset_converter
 from llamafactory.data.parser import DatasetAttr
 from llamafactory.hparams import DataArguments
-from tests.utils import runs_on
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 def test_alpaca_converter():
     dataset_attr = DatasetAttr("hf_hub", "llamafactory/tiny-supervised-dataset")
     data_args = DataArguments()
@@ -40,7 +41,7 @@ def test_alpaca_converter():
     }
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 def test_sharegpt_converter():
     dataset_attr = DatasetAttr("hf_hub", "llamafactory/tiny-supervised-dataset")
     data_args = DataArguments()

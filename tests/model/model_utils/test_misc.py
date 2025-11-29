@@ -19,13 +19,12 @@ import torch
 from transformers import AutoConfig, AutoModelForCausalLM
 
 from llamafactory.model.model_utils.misc import find_expanded_modules
-from tests.utils import runs_on
 
 
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 
-@runs_on(["cpu","npu"])
+@pytest.mark.runs_on(["cpu","npu"])
 @pytest.mark.skipif(not HF_TOKEN, reason="Gated model.")
 def test_expanded_modules():
     config = AutoConfig.from_pretrained("meta-llama/Meta-Llama-3-8B-Instruct")

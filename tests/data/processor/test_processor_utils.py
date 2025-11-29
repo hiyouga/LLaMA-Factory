@@ -16,10 +16,9 @@
 import pytest
 
 from llamafactory.data.processor.processor_utils import infer_seqlen
-from tests.utils import runs_on
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.parametrize(
     "test_input,test_output",
     [

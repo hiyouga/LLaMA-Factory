@@ -14,10 +14,10 @@
 
 import os
 
+import pytest
 import torch
 
 from llamafactory.train.test_utils import load_infer_model, load_train_model
-from tests.utils import runs_on
 
 
 TINY_LLAMA3 = os.getenv("TINY_LLAMA3", "llamafactory/tiny-random-Llama-3")
@@ -44,7 +44,7 @@ INFER_ARGS = {
 }
 
 
-@runs_on(["cpu","npu"])
+@pytest.mark.runs_on(["cpu","npu"])
 def test_freeze_train_all_modules():
     model = load_train_model(freeze_trainable_layers=1, **TRAIN_ARGS)
     for name, param in model.named_parameters():
@@ -56,7 +56,7 @@ def test_freeze_train_all_modules():
             assert param.dtype == torch.float16
 
 
-@runs_on(["cpu","npu"])
+@pytest.mark.runs_on(["cpu","npu"])
 def test_freeze_train_extra_modules():
     model = load_train_model(freeze_trainable_layers=1, freeze_extra_modules="embed_tokens,lm_head", **TRAIN_ARGS)
     for name, param in model.named_parameters():
@@ -68,7 +68,7 @@ def test_freeze_train_extra_modules():
             assert param.dtype == torch.float16
 
 
-@runs_on(["cpu","npu"])
+@pytest.mark.runs_on(["cpu","npu"])
 def test_freeze_inference():
     model = load_infer_model(**INFER_ARGS)
     for param in model.parameters():

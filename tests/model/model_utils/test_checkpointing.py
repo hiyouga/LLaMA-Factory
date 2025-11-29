@@ -19,7 +19,6 @@ import torch
 
 from llamafactory.extras.misc import get_current_device
 from llamafactory.train.test_utils import load_train_model
-from tests.utils import runs_on
 
 
 TINY_LLAMA3 = os.getenv("TINY_LLAMA3", "llamafactory/tiny-random-Llama-3")
@@ -40,7 +39,7 @@ TRAIN_ARGS = {
 }
 
 
-@runs_on(["cpu","npu"])
+@pytest.mark.runs_on(["cpu","npu"])
 @pytest.mark.parametrize("disable_gradient_checkpointing", [False, True])
 def test_vanilla_checkpointing(disable_gradient_checkpointing: bool):
     model = load_train_model(disable_gradient_checkpointing=disable_gradient_checkpointing, **TRAIN_ARGS)
@@ -48,14 +47,14 @@ def test_vanilla_checkpointing(disable_gradient_checkpointing: bool):
         assert getattr(module, "gradient_checkpointing") != disable_gradient_checkpointing
 
 
-@runs_on(["cpu","npu"])
+@pytest.mark.runs_on(["cpu","npu"])
 def test_unsloth_gradient_checkpointing():
     model = load_train_model(use_unsloth_gc=True, **TRAIN_ARGS)
     for module in filter(lambda m: hasattr(m, "gradient_checkpointing"), model.modules()):
         assert module._gradient_checkpointing_func.__self__.__name__ == "UnslothGradientCheckpointing"
 
 
-@runs_on(["cpu","npu"])
+@pytest.mark.runs_on(["cpu","npu"])
 def test_upcast_layernorm():
     model = load_train_model(upcast_layernorm=True, **TRAIN_ARGS)
     for name, param in model.named_parameters():
@@ -63,7 +62,7 @@ def test_upcast_layernorm():
             assert param.dtype == torch.float32
 
 
-@runs_on(["cpu","npu"])
+@pytest.mark.runs_on(["cpu","npu"])
 def test_upcast_lmhead_output():
     model = load_train_model(upcast_lmhead_output=True, **TRAIN_ARGS)
     inputs = torch.randn((1, 16), dtype=torch.float16, device=get_current_device())

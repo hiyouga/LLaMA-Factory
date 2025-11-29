@@ -21,7 +21,6 @@ from transformers import AutoTokenizer
 from llamafactory.data import get_template_and_fix_tokenizer
 from llamafactory.data.template import parse_template
 from llamafactory.hparams import DataArguments
-from tests.utils import runs_on
 
 
 if TYPE_CHECKING:
@@ -90,7 +89,7 @@ def _check_template(
     _check_tokenization(tokenizer, (prompt_ids, answer_ids), (prompt_str, answer_str))
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.parametrize("use_fast", [True, False])
 def test_encode_oneturn(use_fast: bool):
     tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA3, use_fast=use_fast)
@@ -106,7 +105,7 @@ def test_encode_oneturn(use_fast: bool):
     _check_tokenization(tokenizer, (prompt_ids, answer_ids), (prompt_str, answer_str))
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.parametrize("use_fast", [True, False])
 def test_encode_multiturn(use_fast: bool):
     tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA3, use_fast=use_fast)
@@ -128,7 +127,7 @@ def test_encode_multiturn(use_fast: bool):
     )
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.parametrize("use_fast", [True, False])
 @pytest.mark.parametrize("cot_messages", [True, False])
 @pytest.mark.parametrize("enable_thinking", [True, False, None])
@@ -155,7 +154,7 @@ def test_reasoning_encode_oneturn(use_fast: bool, cot_messages: bool, enable_thi
     _check_tokenization(tokenizer, (prompt_ids, answer_ids), (prompt_str, answer_str))
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.parametrize("use_fast", [True, False])
 @pytest.mark.parametrize("cot_messages", [True, False])
 @pytest.mark.parametrize("enable_thinking", [True, False, None])
@@ -185,7 +184,7 @@ def test_reasoning_encode_multiturn(use_fast: bool, cot_messages: bool, enable_t
     )
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.parametrize("use_fast", [True, False])
 def test_jinja_template(use_fast: bool):
     tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA3, use_fast=use_fast)
@@ -196,7 +195,7 @@ def test_jinja_template(use_fast: bool):
     assert tokenizer.apply_chat_template(MESSAGES) == ref_tokenizer.apply_chat_template(MESSAGES)
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 def test_ollama_modelfile():
     tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA3)
     template = get_template_and_fix_tokenizer(tokenizer, DataArguments(template="llama3"))
@@ -214,14 +213,14 @@ def test_ollama_modelfile():
     )
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 def test_get_stop_token_ids():
     tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA3)
     template = get_template_and_fix_tokenizer(tokenizer, DataArguments(template="llama3"))
     assert set(template.get_stop_token_ids(tokenizer)) == {128008, 128009}
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.skipif(not HF_TOKEN, reason="Gated model.")
 @pytest.mark.parametrize("use_fast", [True, False])
 def test_gemma_template(use_fast: bool):
@@ -235,7 +234,7 @@ def test_gemma_template(use_fast: bool):
     _check_template("google/gemma-3-4b-it", "gemma", prompt_str, answer_str, use_fast)
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.skipif(not HF_TOKEN, reason="Gated model.")
 @pytest.mark.parametrize("use_fast", [True, False])
 def test_gemma2_template(use_fast: bool):
@@ -249,7 +248,7 @@ def test_gemma2_template(use_fast: bool):
     _check_template("google/gemma-2-2b-it", "gemma2", prompt_str, answer_str, use_fast)
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.skipif(not HF_TOKEN, reason="Gated model.")
 @pytest.mark.parametrize("use_fast", [True, False])
 def test_llama3_template(use_fast: bool):
@@ -263,7 +262,7 @@ def test_llama3_template(use_fast: bool):
     _check_template("meta-llama/Meta-Llama-3-8B-Instruct", "llama3", prompt_str, answer_str, use_fast)
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.parametrize(
     "use_fast", [True, pytest.param(False, marks=pytest.mark.xfail(reason="Llama 4 has no slow tokenizer."))]
 )
@@ -286,7 +285,7 @@ def test_llama4_template(use_fast: bool):
     ],
 )
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 def test_phi4_template(use_fast: bool):
     prompt_str = (
         f"<|im_start|>user<|im_sep|>{MESSAGES[0]['content']}<|im_end|>"
@@ -298,7 +297,7 @@ def test_phi4_template(use_fast: bool):
     _check_template("microsoft/phi-4", "phi4", prompt_str, answer_str, use_fast)
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.xfail(not HF_TOKEN, reason="Authorization.")
 @pytest.mark.parametrize("use_fast", [True, False])
 def test_qwen2_5_template(use_fast: bool):
@@ -313,7 +312,7 @@ def test_qwen2_5_template(use_fast: bool):
     _check_template("Qwen/Qwen2.5-7B-Instruct", "qwen", prompt_str, answer_str, use_fast)
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.parametrize("use_fast", [True, False])
 @pytest.mark.parametrize("cot_messages", [True, False])
 def test_qwen3_template(use_fast: bool, cot_messages: bool):
@@ -333,7 +332,7 @@ def test_qwen3_template(use_fast: bool, cot_messages: bool):
     _check_template("Qwen/Qwen3-8B", "qwen3", prompt_str, answer_str, use_fast, messages=messages)
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 def test_parse_llama3_template():
     tokenizer = AutoTokenizer.from_pretrained(TINY_LLAMA3, token=HF_TOKEN)
     template = parse_template(tokenizer)
@@ -347,7 +346,7 @@ def test_parse_llama3_template():
     assert template.default_system == ""
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.xfail(not HF_TOKEN, reason="Authorization.")
 def test_parse_qwen_template():
     tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-7B-Instruct", token=HF_TOKEN)
@@ -360,7 +359,7 @@ def test_parse_qwen_template():
     assert template.default_system == "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.xfail(not HF_TOKEN, reason="Authorization.")
 def test_parse_qwen3_template():
     tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-8B", token=HF_TOKEN)

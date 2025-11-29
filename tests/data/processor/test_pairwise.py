@@ -21,7 +21,6 @@ from transformers import AutoTokenizer
 
 from llamafactory.extras.constants import IGNORE_INDEX
 from llamafactory.train.test_utils import load_dataset_module
-from tests.utils import runs_on
 
 
 DEMO_DATA = os.getenv("DEMO_DATA", "llamafactory/demo_data")
@@ -52,7 +51,7 @@ def _convert_sharegpt_to_openai(messages: list[dict[str, str]]) -> list[dict[str
     return new_messages
 
 
-@runs_on(["cpu"])
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.parametrize("num_samples", [16])
 def test_pairwise_data(num_samples: int):
     train_dataset = load_dataset_module(**TRAIN_ARGS)["train_dataset"]
