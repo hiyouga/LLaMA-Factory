@@ -29,6 +29,7 @@ INFER_ARGS = {
 }
 
 
+@pytest.mark.runs_on(["cpu","npu"])
 @pytest.mark.xfail(is_transformers_version_greater_than("4.48"), reason="Attention refactor.")
 def test_attention():
     attention_available = ["disabled"]

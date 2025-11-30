@@ -14,6 +14,7 @@
 
 import os
 
+import pytest
 import torch
 from PIL import Image
 from transformers import AutoConfig, AutoModelForVision2Seq
@@ -28,6 +29,7 @@ from llamafactory.model import load_tokenizer
 TINY_LLAMA3 = os.getenv("TINY_LLAMA3", "llamafactory/tiny-random-Llama-3")
 
 
+@pytest.mark.runs_on(["cpu"])
 def test_base_collator():
     model_args, data_args, *_ = get_infer_args({"model_name_or_path": TINY_LLAMA3, "template": "default"})
     tokenizer_module = load_tokenizer(model_args)
@@ -71,6 +73,7 @@ def test_base_collator():
         assert batch_input[k].eq(torch.tensor(expected_input[k])).all()
 
 
+@pytest.mark.runs_on(["cpu"])
 def test_multimodal_collator():
     model_args, data_args, *_ = get_infer_args(
         {"model_name_or_path": "Qwen/Qwen2-VL-2B-Instruct", "template": "qwen2_vl"}
@@ -126,6 +129,7 @@ def test_multimodal_collator():
         assert batch_input[k].eq(torch.tensor(expected_input[k])).all()
 
 
+@pytest.mark.runs_on(["cpu"])
 def test_4d_attention_mask():
     o = 0.0
     x = torch.finfo(torch.float16).min

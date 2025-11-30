@@ -14,6 +14,7 @@
 
 import os
 
+import pytest
 import torch
 
 from llamafactory.train.test_utils import load_infer_model, load_train_model
@@ -42,14 +43,14 @@ INFER_ARGS = {
     "infer_dtype": "float16",
 }
 
-
+@pytest.mark.runs_on(["cpu","npu"])
 def test_full_train():
     model = load_train_model(**TRAIN_ARGS)
     for param in model.parameters():
         assert param.requires_grad is True
         assert param.dtype == torch.float32
 
-
+@pytest.mark.runs_on(["cpu","npu"])
 def test_full_inference():
     model = load_infer_model(**INFER_ARGS)
     for param in model.parameters():

@@ -27,14 +27,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        device:
-          - "cuda"
-          - "npu"
+        include:
+          - device: "cuda"
+            npu_type: ""
+          - device: "npu"
+            npu_type: "a2"
+          - device: "npu"
+            npu_type: "a3"
 
     runs-on: ubuntu-latest
 
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.device }}
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.device }}-${{ matrix.npu_type }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
     environment:
@@ -76,7 +80,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to Quay
-        if: ${{ github.event_name != 'pull_request' && matrix.device == 'npu' }}
+        if: ${{ github.event_name != 'pull_request' && matrix.device == 'npu'}}
         uses: docker/login-action@v3
         with:
           registry: quay.io
@@ -97,8 +101,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push Docker image (NPU)
-        if: ${{ matrix.device == 'npu' }}
+      - name: Build and push Docker image (NPU-A2)
+        if: ${{ matrix.device == 'npu' && matrix.npu_type == 'a2' }}
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -108,5 +112,21 @@ jobs:
           tags: |
             docker.io/hiyouga/llamafactory:${{ steps.version.outputs.tag }}-npu-a2
             quay.io/ascend/llamafactory:${{ steps.version.outputs.tag }}-npu-a2
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Docker image (NPU-A3)
+        if: ${{ matrix.device == 'npu' && matrix.npu_type == 'a3' }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          file: ./docker/docker-npu/Dockerfile
+          build-args: |
+            BASE_IMAGE=quay.io/ascend/cann:8.3.rc2-a3-ubuntu22.04-py3.11
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            docker.io/hiyouga/llamafactory:${{ steps.version.outputs.tag }}-npu-a3
+            quay.io/ascend/llamafactory:${{ steps.version.outputs.tag }}-npu-a3
           cache-from: type=gha
           cache-to: type=gha,mode=max

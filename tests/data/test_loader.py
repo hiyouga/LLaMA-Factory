@@ -14,6 +14,8 @@
 
 import os
 
+import pytest
+
 from llamafactory.train.test_utils import load_dataset_module
 
 
@@ -38,18 +40,21 @@ TRAIN_ARGS = {
 }
 
 
+@pytest.mark.runs_on(["cpu"])
 def test_load_train_only():
     dataset_module = load_dataset_module(**TRAIN_ARGS)
     assert dataset_module.get("train_dataset") is not None
     assert dataset_module.get("eval_dataset") is None
 
 
+@pytest.mark.runs_on(["cpu"])
 def test_load_val_size():
     dataset_module = load_dataset_module(val_size=0.1, **TRAIN_ARGS)
     assert dataset_module.get("train_dataset") is not None
     assert dataset_module.get("eval_dataset") is not None
 
 
+@pytest.mark.runs_on(["cpu"])
 def test_load_eval_data():
     dataset_module = load_dataset_module(eval_dataset=TINY_DATA, **TRAIN_ARGS)
     assert dataset_module.get("train_dataset") is not None

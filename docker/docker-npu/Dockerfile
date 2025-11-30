@@ -1,9 +1,6 @@
 # https://hub.docker.com/r/ascendai/cann/tags
 
-# default base image build for A2, if build for A3, using this image:
-# ARG BASE_IMAGE=ascendai/cann:8.3.rc1-a3-ubuntu22.04-py3.11
-
-ARG BASE_IMAGE=ascendai/cann:8.3.rc1-910b-ubuntu22.04-py3.11
+ARG BASE_IMAGE=quay.io/ascend/cann:8.3.rc2-910b-ubuntu22.04-py3.11
 FROM ${BASE_IMAGE}
 
 # Installation arguments

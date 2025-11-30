@@ -45,6 +45,7 @@ TRAIN_ARGS = {
 }
 
 
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.parametrize("num_samples", [16])
 def test_unsupervised_data(num_samples: int):
     train_dataset = load_dataset_module(**TRAIN_ARGS)["train_dataset"]

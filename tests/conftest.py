@@ -40,7 +40,37 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "require_device: test requires specific device, e.g., @pytest.mark.require_device('cuda')"
     )
+    config.addinivalue_line(
+        "markers", "runs_on: test requires specific device, e.g., @pytest.mark.runs_on(['cpu'])"
+    )
 
+
+def _handle_runs_on(items):
+    """Skip tests on specified devices based on runs_on marker.
+
+    Usage:
+        # Skip tests on specified devices
+        @pytest.mark.runs_on(['cpu'])
+        def test_something():
+            pass
+    """
+    for item in items:
+        runs_on_marker = item.get_closest_marker("runs_on")
+        if runs_on_marker:
+            runs_on_devices = runs_on_marker.args[0]
+
+            # Compatibility handling: Allow a single string instead of a list
+            # Example: @pytest.mark.("cpu")
+            if isinstance(runs_on_devices, str):
+                runs_on_devices = [runs_on_devices]
+
+
+            if CURRENT_DEVICE not in runs_on_devices:
+                item.add_marker(
+                    pytest.mark.skip(
+                        reason=f"test requires one of {runs_on_devices} (current: {CURRENT_DEVICE})"
+                    )
+                )
 
 def _handle_slow_tests(items):
     """Skip slow tests unless RUN_SLOW environment variable is set.
@@ -104,6 +134,7 @@ def pytest_collection_modifyitems(config, items):
     _handle_slow_tests(items)
     _handle_device_skips(items)
     _handle_device_requirements(items)
+    _handle_runs_on(items)
 
 
 @pytest.fixture

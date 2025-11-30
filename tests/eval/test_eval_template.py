@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
+
 from llamafactory.eval.template import get_eval_template
 
 
+@pytest.mark.runs_on(["cpu"])
 def test_eval_template_en():
     support_set = [
         {
@@ -52,7 +55,7 @@ def test_eval_template_en():
         {"role": "assistant", "content": "C"},
     ]
 
-
+@pytest.mark.runs_on(["cpu"])
 def test_eval_template_zh():
     support_set = [
         {
