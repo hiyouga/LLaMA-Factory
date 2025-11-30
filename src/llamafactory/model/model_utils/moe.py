@@ -127,7 +127,7 @@ def add_z3_leaf_module(model: "PreTrainedModel") -> None:
 
         _set_z3_leaf_modules(model, [Qwen3VLMoeTextSparseMoeBlock])
 
-    if model_type == "qwen3_omni_moe":
+    if model_type in ("qwen3_omni_moe", "qwen3_omni_moe_thinker"):
         from transformers.models.qwen3_omni_moe.modeling_qwen3_omni_moe import Qwen3OmniMoeThinkerTextSparseMoeBlock
 
         _set_z3_leaf_modules(model, [Qwen3OmniMoeThinkerTextSparseMoeBlock])
