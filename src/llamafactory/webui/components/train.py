@@ -179,6 +179,7 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
             use_pissa = gr.Checkbox()
             lora_target = gr.Textbox(scale=2)
             additional_target = gr.Textbox(scale=2)
+            lora_parameters = gr.Textbox(scale=2)
 
     input_elems.update(
         {
@@ -192,6 +193,7 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
             use_pissa,
             lora_target,
             additional_target,
+            lora_parameters,
         }
     )
     elem_dict.update(
@@ -207,6 +209,7 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
             use_pissa=use_pissa,
             lora_target=lora_target,
             additional_target=additional_target,
+            lora_parameters=lora_parameters,
         )
     )
 
