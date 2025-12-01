@@ -17,9 +17,8 @@ import types
 import torch
 import torch.nn.functional as F
 import torch_npu
-import transformers
-from packaging import version
 
+from .....extras.packages import is_transformers_version_greater_than
 from .....extras.types import HFModel
 from ....trainer_plugins.distributed.accelerate import is_torch_npu_available
 from ..constants import DeviceType, KernelType
@@ -194,8 +193,6 @@ class Qwen3NpuMoeFused:
 
 
 # moe patch config mapping
-IS_BELOW_V5 = version.parse(transformers.__version__) < version.parse("5.0.0")
-
 kernel_moe_mapping = {
     "Qwen3VLMoeForConditionalGeneration": {
         "Qwen3VLMoeTextExperts": NpuMoeFused.npu_moe_experts_forward,
@@ -203,7 +200,7 @@ kernel_moe_mapping = {
     }
 }
 
-if IS_BELOW_V5:
+if not is_transformers_version_greater_than("5.0.0"):
     kernel_moe_mapping["Qwen3MoeForCausalLM"] = {
         "Qwen3MoeSparseMoeBlock": Qwen3NpuMoeFused.qwen3moe_sparse_moe_block_forward
     }
