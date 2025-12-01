@@ -113,8 +113,6 @@ class HybridGmmFunction(torch.autograd.Function):
             dtype=torch.int64
         )
         
-        # weight_stack = torch.stack(weight_list, dim=0)  # [E, K, N]
-        
         grad_w_stack = torch_npu.npu_grouped_matmul(
             [x_concat.t()],
             [dy_concat],
@@ -203,7 +201,7 @@ class Qwen3NpuMoeFused:
         input_list = list(torch.split(permuted_hidden_states, split_sizes, dim=0))
 
         gate_weights = [e.gate_proj.weight.t() for e in self.experts]
-        up_weights   = [e.up_proj.weight.t() for e in self.experts]
+        up_weights = [e.up_proj.weight.t() for e in self.experts]
         down_weights = [e.down_proj.weight.t() for e in self.experts]
 
         gate_out_tuple = HybridGmmFunction.apply(len(input_list), *input_list, *gate_weights)
@@ -238,7 +236,7 @@ kernel_moe_mapping = {
 
 if IS_BELOW_V5:
     kernel_moe_mapping["Qwen3MoeForCausalLM"] = {
-         "Qwen3MoeSparseMoeBlock": Qwen3NpuMoeFused.qwen3moe_sparse_moe_block_forward
+        "Qwen3MoeSparseMoeBlock": Qwen3NpuMoeFused.qwen3moe_sparse_moe_block_forward
     }
 
 class NpuMoEFusedMoEKernel(MetaMoEKernel):
