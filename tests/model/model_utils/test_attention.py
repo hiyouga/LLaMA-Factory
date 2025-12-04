@@ -15,7 +15,12 @@
 import os
 
 import pytest
-from transformers.utils import is_flash_attn_2_available, is_torch_sdpa_available
+from transformers.utils import is_flash_attn_2_available
+try:
+    from transformers.utils import is_torch_sdpa_available
+except Exception:
+    def is_torch_sdpa_available():
+        return False
 
 from llamafactory.extras.packages import is_transformers_version_greater_than
 from llamafactory.train.test_utils import load_infer_model
