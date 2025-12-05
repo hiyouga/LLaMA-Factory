@@ -1,0 +1,34 @@
+# If you want to run this example on multiple nodes, you need to set the following parameters:
+# - num_machines: the number of nodes
+# - num_processes: the number of GPUs in all nodes, num_machines * num_processes_per_machine
+# - main_process_ip: the IP address of the main process, please keep it the same across all nodes
+# - main_process_port: the port of all nodes, please keep it the same across all nodes
+# - machine_rank: the rank of the current machine, starting from 0, and it should be 0 for main_process_ip
+
+compute_environment: LOCAL_MACHINE
+debug: false
+distributed_type: FSDP
+downcast_bf16: 'no'
+fsdp_config:
+  fsdp_auto_wrap_policy: TRANSFORMER_BASED_WRAP
+  fsdp_backward_prefetch: BACKWARD_PRE
+  fsdp_forward_prefetch: false
+  fsdp_cpu_ram_efficient_loading: true
+  fsdp_offload_params: false
+  fsdp_sharding_strategy: FULL_SHARD
+  fsdp_state_dict_type: FULL_STATE_DICT
+  fsdp_sync_module_states: true
+  fsdp_use_orig_params: true
+machine_rank: 0
+main_training_function: main
+mixed_precision: bf16  # or fp16
+main_process_ip: 192.168.0.1
+main_process_port: 29500
+num_machines: 2  # the number of nodes
+num_processes: 16  # the number of GPUs in all nodes, num_machines * num_processes_per_machine
+rdzv_backend: static
+same_network: true
+tpu_env: []
+tpu_use_cluster: false
+tpu_use_sudo: false
+use_cpu: false
