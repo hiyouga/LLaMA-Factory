@@ -20,7 +20,7 @@ from transformers.utils import is_flash_attn_2_available
 # Compatible with Transformers v4 and Transformers v5
 try:
     from transformers.utils import is_torch_sdpa_available
-except Exception:
+except ImportError:
     def is_torch_sdpa_available():
         return True
 
