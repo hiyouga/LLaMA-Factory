@@ -15,8 +15,8 @@
 from abc import ABC, ABCMeta, abstractmethod
 from typing import Any, Callable, Optional
 
+from ....accelerator.helper import get_current_accelerator
 from ....extras.types import HFModel
-from ...trainer_plugins.distributed.accelerate import get_available_accelerator
 from .constants import DeviceType, KernelType
 
 
@@ -206,7 +206,7 @@ def discover_kernels(model: HFModel = None) -> list[type[MetaKernel]]:
     discovered_kernels: list[type[MetaKernel]] = []
 
     # Detect current device type
-    accelerator = get_available_accelerator()
+    accelerator = get_current_accelerator()
     try:
         device_type = DeviceType(accelerator.type)
     except ValueError:
@@ -238,11 +238,11 @@ def apply_kernel(model: HFModel, kernel: type[MetaKernel], /, **kwargs) -> "HFMo
         model = AutoModelForCausalLM.from_pretrained("qwen/qwen2.5-0.5B")
         model = apply_kernel(model, NpuRMSNormKernel)
     """
-    if issubclass(kernel, MetaKernel) and kernel.device == get_available_accelerator().type:
+    if issubclass(kernel, MetaKernel) and kernel.device == get_current_accelerator().type:
         return kernel.apply(model, **kwargs)
 
     raise ValueError(
-        f"{kernel} must be a MetaKernel instance, or the kernel don't match the device type. got {kernel.device} and {get_available_accelerator().type} instead."
+        f"{kernel} must be a MetaKernel instance, or the kernel don't match the device type. got {kernel.device} and {get_current_accelerator().type} instead."
     )
 
 

@@ -18,9 +18,9 @@ import torch
 import torch.nn.functional as F
 import torch_npu
 
+from .....accelerator.helper import is_torch_npu_available
 from .....extras.packages import is_transformers_version_greater_than
 from .....extras.types import HFModel
-from ....trainer_plugins.distributed.accelerate import is_torch_npu_available
 from ..constants import DeviceType, KernelType
 from ..registry import MetaMoEKernel
 

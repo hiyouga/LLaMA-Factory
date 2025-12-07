@@ -25,3 +25,11 @@ class ModelArguments:
         default=False,
         metadata={"help": "Trust remote code from Hugging Face."},
     )
+    use_fast_processor: bool = field(
+        default=True,
+        metadata={"help": "Use fast processor from Hugging Face."},
+    )
+    auto_model_class: str = field(
+        default="causallm",
+        metadata={"help": "Model class from Hugging Face."},
+    )

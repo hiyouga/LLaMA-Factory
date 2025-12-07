@@ -19,16 +19,12 @@ from typing import Any, Literal, Optional, Union
 
 from datasets import load_dataset
 
-from ...config.data_args import DataArguments
 from ...extras.types import DatasetInfo, HFDataset
 
 
 @dataclass
 class DataLoaderPlugin:
     """Plugin for loading dataset."""
-
-    args: DataArguments
-    """Data arguments."""
 
     def _get_builder_name(self, path: str) -> Literal["arrow", "csv", "json", "parquet", "text"]:
         """Get dataset builder name.
@@ -42,7 +38,7 @@ class DataLoaderPlugin:
         return os.path.splitext(path)[-1][1:].replace("jsonl", "json").replace("txt", "text")
 
     def auto_load_data(self, dataset_info: DatasetInfo) -> HFDataset:
-        dataset_dir = dataset_info.get("dataset_dir", self.args.dataset_dir)
+        dataset_dir = dataset_info.get("dataset_dir", ".")
         split = dataset_info.get("split", "train")
         streaming = dataset_info.get("streaming", False)
         if "file_name" in dataset_info:

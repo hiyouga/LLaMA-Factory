@@ -17,8 +17,8 @@ import types
 
 import torch
 
+from .....accelerator.helper import is_torch_npu_available
 from .....extras.types import HFModel
-from ....trainer_plugins.distributed.accelerate import is_torch_npu_available
 from ..constants import DeviceType, KernelType
 from ..registry import MetaSwiGluKernel
 
