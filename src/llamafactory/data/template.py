@@ -199,9 +199,12 @@ class Template:
             logger.info_rank0(f"Add pad token: {tokenizer.pad_token}")
 
         if stop_words:
-            num_added_tokens = tokenizer.add_special_tokens(
-                dict(additional_special_tokens=stop_words), replace_additional_special_tokens=False
-            )
+            try:
+                num_added_tokens = tokenizer.add_special_tokens(
+                    dict(additional_special_tokens=stop_words), replace_additional_special_tokens=False
+                )
+            except TypeError:
+                num_added_tokens = tokenizer.add_special_tokens(dict(additional_special_tokens=stop_words))
             logger.info_rank0("Add {} to stop words.".format(",".join(stop_words)))
             if num_added_tokens > 0:
                 logger.warning_rank0("New tokens have been added, make sure `resize_vocab` is True.")
