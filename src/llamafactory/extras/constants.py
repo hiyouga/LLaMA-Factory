@@ -1969,6 +1969,17 @@ register_model_group(
     template="mistral",
 )
 
+register_model_group(
+    models={
+        "Ministral-3-3B-Instruct-2512": {
+            DownloadSource.DEFAULT: "mistralai/Ministral-3-3B-Instruct-2512",
+            DownloadSource.MODELSCOPE: "mistralai/Ministral-3-3B-Instruct-2512",
+        },
+    },
+    template="mistral",
+    multimodal=True,
+)
+
 
 register_model_group(
     models={

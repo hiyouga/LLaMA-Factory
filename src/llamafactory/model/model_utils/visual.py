@@ -46,6 +46,8 @@ class CompositeModel:
     lora_conflict_keys: list[str]
 
     def get_projector(self, module: "torch.nn.Module") -> "torch.nn.Module":
+        keys = self.projector_key.split(".")
+        print(f"projector_key split -> {keys}")
         for key in self.projector_key.split("."):
             module = getattr(module, key)
 
@@ -299,8 +301,18 @@ _register_composite_model(
 )
 
 
+# _register_composite_model(
+#     model_type="mistral3",
+# )
+
+# _register_composite_model(
+#     model_type="ministral3",
+#     projector_key="model.multi_modal_projector",
+# )
+
 _register_composite_model(
     model_type="mistral3",
+    projector_key="model.multi_modal_projector",
 )
 
 
