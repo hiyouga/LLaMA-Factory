@@ -81,7 +81,7 @@ def run_sft(
         extra_ids = getattr(tokenizer, "additional_special_tokens_ids", None)
         if not isinstance(extra_ids, list):
             extra_special_tokens = getattr(tokenizer, "_extra_special_tokens", [])
-            string_tokens = [t if isinstance(t, str) else getattr(t, "content", str(t)) for t in extra_special_tokens]
+            string_tokens = [str(t) for t in extra_special_tokens]
             extra_ids = tokenizer.convert_tokens_to_ids(string_tokens)
         all_eos_ids = [tokenizer.eos_token_id] + [i for i in extra_ids if i != -1]
         unique_eos_ids = list(dict.fromkeys(all_eos_ids))
