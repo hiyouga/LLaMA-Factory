@@ -12,11 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""The definition of data engine.
+
+Init Data engine:
+1. Parse dataset info from arguments.
+2. Load datasets according to dataset info.
+3. Build data index (and reweight samples if necessary).
+
+Get Data Sample:
+1. Get sample from data index.
+2. Convert sample to standard format.
+3. Return sample.
+"""
+
 import os
 from collections.abc import AsyncIterable, Iterable
 from typing import Any, Union
 
-from datasets import load_dataset
 from huggingface_hub import hf_hub_download
 from omegaconf import OmegaConf
 from torch.utils.data import Dataset
@@ -45,15 +57,13 @@ class DataEngine(Dataset):
 
     def get_dataset_info(self) -> None:
         """Get dataset info from data arguments."""
-        if self.args.dataset.endswith(".yaml") and os.path.isfile(
-            os.path.join(self.args.dataset_dir, self.args.dataset)
-        ):  # local file
-            self.dataset_infos = OmegaConf.load(os.path.join(self.args.dataset_dir, self.args.dataset))
+        if self.args.dataset.endswith(".yaml") and os.path.isfile(self.args.dataset):  # local file
+            self.dataset_infos = OmegaConf.load(self.args.dataset)
         elif self.args.dataset.endswith(".yaml"):  # hf hub uri, e.g. llamafactory/v1-sft-demo/dataset_info.yaml
             repo_id, filename = os.path.split(self.args.dataset)
             filepath = hf_hub_download(repo_id=repo_id, filename=filename, repo_type="dataset")
             self.dataset_infos = OmegaConf.load(filepath)
-        elif os.path.exists(os.path.join(self.args.dataset_dir, self.args.dataset)):  # local file(s)
+        elif os.path.exists(self.args.dataset):  # local file(s)
             self.dataset_infos = {"default": {"file_name": self.args.dataset}}
         else:  # hf hub dataset, e.g. llamafactory/v1-sft-demo
             self.dataset_infos = {"default": {"hf_hub_url": self.args.dataset}}
@@ -65,11 +75,13 @@ class DataEngine(Dataset):
             streaming = value.get("streaming", False)
             self.streaming |= streaming
             if "hf_hub_url" in value:
+                from datasets import load_dataset
+
                 self.datasets[key] = load_dataset(value["hf_hub_url"], split=split, streaming=streaming)
             else:  # data loader plugin
                 from ..plugins.data_plugins.loader import DataLoaderPlugin
 
-                self.datasets[key] = DataLoaderPlugin(args=self.args).auto_load_data(value)
+                self.datasets[key] = DataLoaderPlugin().auto_load_data(value)
 
     def build_data_index(self) -> None:
         """Build dataset index."""
@@ -145,11 +157,11 @@ class DataEngine(Dataset):
                 dataset_name, sample_index = selected_index
                 return self._convert_data_sample(self.datasets[dataset_name][sample_index], dataset_name)
 
-    def __iter__(self) -> Iterable:
+    def __iter__(self) -> Iterable[Sample]:
         """Get dataset iterator.
 
         Returns:
-            Iterable: Dataset iterator.
+            Iterable[Sample]: Dataset iterator.
         """
         if self.streaming:
             pass
@@ -159,11 +171,11 @@ class DataEngine(Dataset):
 
         raise NotImplementedError()
 
-    async def __aiter__(self) -> AsyncIterable:
+    async def __aiter__(self) -> AsyncIterable[Sample]:
         """Get dataset async iterator.
 
         Returns:
-            AsyncIterable: Dataset async iterator.
+            AsyncIterable[Sample]: Dataset async iterator.
         """
         if self.streaming:
             pass
