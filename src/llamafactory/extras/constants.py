@@ -969,6 +969,14 @@ register_model_group(
             DownloadSource.DEFAULT: "zai-org/GLM-4.1V-9B-Thinking",
             DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.1V-9B-Thinking",
         },
+        "GLM-4.6V": {
+            DownloadSource.DEFAULT: "zai-org/GLM-4.6V",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.6V",
+        },
+        "GLM-4.6V-Flash": {
+            DownloadSource.DEFAULT: "zai-org/GLM-4.6V-Flash",
+            DownloadSource.MODELSCOPE: "ZhipuAI/GLM-4.6V-Flash",
+        },
     },
     template="glm4v",
     multimodal=True,
