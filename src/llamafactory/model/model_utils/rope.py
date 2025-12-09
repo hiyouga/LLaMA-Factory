@@ -41,8 +41,8 @@ def configure_rope(config: "PretrainedConfig", model_args: "ModelArguments") -> 
         return
 
     rope_scaling = getattr(config, "rope_scaling", None)
-    if hasattr(rope_scaling, "original_max_position_embeddings"):
-        old_max_length = getattr(rope_scaling, "original_max_position_embeddings", None)
+    if isinstance(rope_scaling, dict) and "original_max_position_embeddings" in rope_scaling:
+        old_max_length = rope_scaling["original_max_position_embeddings"]
     elif hasattr(config, "max_position_embeddings"):
         old_max_length = getattr(config, "max_position_embeddings", None)
     else:
