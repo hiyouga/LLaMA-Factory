@@ -284,7 +284,6 @@ def test_llama4_template(use_fast: bool):
         pytest.param(False, marks=pytest.mark.xfail(reason="Phi-4 slow tokenizer is broken.")),
     ],
 )
-
 @pytest.mark.runs_on(["cpu"])
 def test_phi4_template(use_fast: bool):
     prompt_str = (
