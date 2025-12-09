@@ -25,6 +25,7 @@ from transformers import (
     AutoModelForVision2Seq,
     AutoProcessor,
     AutoTokenizer,
+    FineGrainedFP8Config
 )
 from trl import AutoModelForCausalLMWithValueHead
 
@@ -141,6 +142,20 @@ def load_model(
     config = load_config(model_args)
     patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
     apply_liger_kernel(config, model_args, is_trainable, require_logits=(finetuning_args.stage not in ["pt", "sft"]))
+
+    # To be compatible with quantitative models
+    qc = getattr(config, "quantization_config", None)
+
+    if qc is not None:
+        if isinstance(qc, dict):
+            quant_method = qc.get("quant_method")
+        else:
+            quant_method = getattr(qc, "quant_method", None)
+
+        if quant_method == "fp8":
+            quant_config = FineGrainedFP8Config(dequantize=True)
+            init_kwargs["quantization_config"] = quant_config
+
 
     model = None
     lazy_load = False

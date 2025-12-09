@@ -77,7 +77,7 @@ def run_sft(
     gen_kwargs = generating_args.to_dict(obey_generation_config=True)
 
     # Compatible with Transformers v4 and Transformers v5
-    if is_transformers_version_greater_than("5.0.0RC0"):
+    if is_transformers_version_greater_than("4.58.0"):
         extra_special_tokens = getattr(tokenizer, "_extra_special_tokens", [])
         extra_ids = tokenizer.convert_tokens_to_ids(extra_special_tokens)
         all_eos_ids = [tokenizer.eos_token_id] + [i for i in extra_ids if i != -1]
