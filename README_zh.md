@@ -293,7 +293,7 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 | [Gemma/Gemma 2/CodeGemma](https://huggingface.co/google)          | 2B/7B/9B/27B                     | gemma/gemma2         |
 | [Gemma 3/Gemma 3n](https://huggingface.co/google)                 | 270M/1B/4B/6B/8B/12B/27B         | gemma3/gemma3n       |
 | [GLM-4/GLM-4-0414/GLM-Z1](https://huggingface.co/zai-org)         | 9B/32B                           | glm4/glmz1           |
-| [GLM-4.1V](https://huggingface.co/zai-org)                        | 9B                               | glm4v                |
+| [GLM-4.1V/GLM-4.6V](https://huggingface.co/zai-org)               | 9B/106B                          | glm4v                |
 | [GLM-4.5/GLM-4.5V](https://huggingface.co/zai-org)                | 106B/355B                        | glm4_moe/glm4v_moe   |
 | [GPT-2](https://huggingface.co/openai-community)                  | 0.1B/0.4B/0.8B/1.5B              | -                    |
 | [GPT-OSS](https://huggingface.co/openai)                          | 20B/120B                         | gpt                  |

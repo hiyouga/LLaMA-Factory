@@ -55,6 +55,7 @@ def test_eval_template_en():
         {"role": "assistant", "content": "C"},
     ]
 
+
 @pytest.mark.runs_on(["cpu"])
 def test_eval_template_zh():
     support_set = [
