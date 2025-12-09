@@ -40,7 +40,10 @@ def configure_rope(config: "PretrainedConfig", model_args: "ModelArguments") -> 
         logger.warning_rank0("Current model does not support RoPE scaling.")
         return
 
-    if hasattr(config, "max_position_embeddings"):
+    rope_scaling = getattr(config, "rope_scaling", None)
+    if hasattr(rope_scaling, "original_max_position_embeddings"):
+        old_max_length = getattr(rope_scaling, "original_max_position_embeddings", None)
+    elif hasattr(config, "max_position_embeddings"):
         old_max_length = getattr(config, "max_position_embeddings", None)
     else:
         logger.warning_rank0("Cannot find the max position embeddings in the config.")
