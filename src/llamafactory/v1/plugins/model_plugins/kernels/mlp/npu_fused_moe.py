@@ -18,10 +18,10 @@ import torch
 import torch.nn.functional as F
 import torch_npu
 
-from .....accelerator.helper import is_torch_npu_available
-from .....extras.packages import is_transformers_version_greater_than
-from .....extras.types import HFModel
-from ..constants import DeviceType, KernelType
+from .....accelerator.helper import DeviceType, is_torch_npu_available
+from .....utils.packages import is_transformers_version_greater_than
+from .....utils.types import HFModel
+from ..constants import KernelType
 from ..registry import MetaMoEKernel
 
 

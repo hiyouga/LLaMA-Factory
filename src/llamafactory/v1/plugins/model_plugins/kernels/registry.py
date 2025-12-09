@@ -13,11 +13,11 @@
 # limitations under the License.
 
 from abc import ABC, ABCMeta, abstractmethod
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Union
 
-from ....accelerator.helper import get_current_accelerator
-from ....extras.types import HFModel
-from .constants import DeviceType, KernelType
+from ....accelerator.helper import DeviceType, get_current_accelerator
+from ....utils.types import HFModel
+from .constants import KernelType
 
 
 class KernelRegistry:
@@ -27,11 +27,13 @@ class KernelRegistry:
     def __new__(cls, *args: Any, **kwargs: Any) -> "KernelRegistry":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
+
         return cls._instance
 
     def __init__(self) -> None:
         if self._initialized:
             return
+
         self._registry: dict[KernelType, dict[DeviceType, Callable[..., Any]]] = {}
         self._initialized = True
 
@@ -218,7 +220,7 @@ def discover_kernels(model: HFModel = None) -> list[type[MetaKernel]]:
         return discovered_kernels
 
     # Iterate through registry and collect all kernels for current device
-    for kernel_type, devices in KERNEL_REGISTRY._registry.items():
+    for devices in KERNEL_REGISTRY._registry.values():
         kernel_cls = devices.get(device_type)
         if kernel_cls is not None:
             discovered_kernels.append(kernel_cls)
@@ -226,7 +228,7 @@ def discover_kernels(model: HFModel = None) -> list[type[MetaKernel]]:
     return discovered_kernels
 
 
-def apply_kernel(model: HFModel, kernel: type[MetaKernel], /, **kwargs) -> "HFModel":
+def apply_kernel(model: HFModel, kernel: Union[type[MetaKernel], Any], /, **kwargs) -> "HFModel":
     """Call the MetaKernel's `apply` to perform the replacement.
 
     Corresponding replacement logic is maintained inside each kernel; the only
@@ -238,16 +240,18 @@ def apply_kernel(model: HFModel, kernel: type[MetaKernel], /, **kwargs) -> "HFMo
         model = AutoModelForCausalLM.from_pretrained("qwen/qwen2.5-0.5B")
         model = apply_kernel(model, NpuRMSNormKernel)
     """
-    if issubclass(kernel, MetaKernel) and kernel.device == get_current_accelerator().type:
-        return kernel.apply(model, **kwargs)
+    if not issubclass(kernel, MetaKernel):
+        raise ValueError(f"{kernel} must be a MetaKernel instance.")
 
-    raise ValueError(
-        f"{kernel} must be a MetaKernel instance, or the kernel don't match the device type. got {kernel.device} and {get_current_accelerator().type} instead."
-    )
+    if kernel.device != get_current_accelerator().type:
+        raise ValueError(f"{kernel} must be applied to {kernel.device} device, got {get_current_accelerator().type}.")
+
+    return kernel.apply(model, **kwargs)
 
 
 def apply_available_kernels(model: HFModel, **kwargs) -> "HFModel":
     """Apply all available kernels to the model."""
     for kernel in discover_kernels(model):
         model = apply_kernel(model, kernel, **kwargs)
+
     return model

@@ -28,6 +28,21 @@ from .sample_args import SampleArguments
 from .training_args import TrainingArguments
 
 
+def validate_args(
+    data_args: DataArguments,
+    model_args: ModelArguments,
+    training_args: TrainingArguments,
+    sample_args: SampleArguments,
+):
+    """Validate arguments."""
+    if (
+        model_args.quant_config is not None
+        and training_args.dist_config is not None
+        and training_args.dist_config.name == "deepspeed"
+    ):
+        raise ValueError("Quantization is not supported with deepspeed backend.")
+
+
 def get_args(
     args: Optional[Union[dict[str, Any], list[str]]] = None,
 ) -> tuple[DataArguments, ModelArguments, TrainingArguments, SampleArguments]:
@@ -55,6 +70,8 @@ def get_args(
             print(parser.format_help())
             print(f"Got unknown args, potentially deprecated arguments: {unknown_args}")
             raise ValueError(f"Some specified arguments are not used by the HfArgumentParser: {unknown_args}")
+
+    validate_args(*parsed_args)
 
     return tuple(parsed_args)
 

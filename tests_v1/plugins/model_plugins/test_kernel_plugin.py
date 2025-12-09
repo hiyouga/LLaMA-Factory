@@ -17,10 +17,13 @@ from unittest.mock import MagicMock, patch
 
 from transformers import AutoModelForCausalLM
 
+from llamafactory.v1.accelerator.helper import get_current_accelerator
+
 
 class TestKernelPlugin(unittest.TestCase):
     @patch("torch.accelerator.current_accelerator")
     def test_apply_kernel(self, mock_get_accelerator):
+        get_current_accelerator.cache_clear()
         mock_device = MagicMock()
         mock_device.type = "npu"
         mock_get_accelerator.return_value = mock_device
@@ -47,6 +50,7 @@ class TestKernelPlugin(unittest.TestCase):
 class Test_Use_V1_Kernels(unittest.TestCase):
     @patch("torch.accelerator.current_accelerator")
     def test_use_v1_kernels(self, mock_get_accelerator):
+        get_current_accelerator.cache_clear()
         mock_device = MagicMock()
         mock_device.type = "npu"
         mock_get_accelerator.return_value = mock_device

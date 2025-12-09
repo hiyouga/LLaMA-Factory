@@ -17,9 +17,9 @@ import types
 
 import torch
 
-from .....accelerator.helper import is_torch_npu_available
-from .....extras.types import HFModel
-from ..constants import DeviceType, KernelType
+from .....accelerator.helper import DeviceType, is_torch_npu_available
+from .....utils.types import HFModel
+from ..constants import KernelType
 from ..registry import MetaSwiGluKernel
 
 

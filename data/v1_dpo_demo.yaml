@@ -1,4 +1,4 @@
 dpo_zh_demo:
-  hf_hub_url: HuggingFaceH4/orca_dpo_pairs
+  path: HuggingFaceH4/orca_dpo_pairs
   split: train_prefs
   converter: pair

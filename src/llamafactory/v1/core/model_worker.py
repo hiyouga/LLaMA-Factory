@@ -24,10 +24,12 @@ Init Phase:
 
 from typing import Optional
 
+import torch
 from transformers import AutoConfig, AutoProcessor
 
-from ..config.model_args import ModelArguments
-from ..extras.types import DistModel, HFConfig, HFModel, Processor
+from ..accelerator.helper import DeviceType
+from ..config.model_args import AutoClass, ModelArguments
+from ..utils.types import HFConfig, HFModel, Processor
 
 
 class ModelWorker:
@@ -38,16 +40,15 @@ class ModelWorker:
         """Tokenizer or multi-modal processor."""
         self.model_config: Optional[HFConfig] = None
         """Model configuration."""
-        self.unwrapped_model: Optional[HFModel] = None
-        """Unwrapped model."""
-        self.model: Optional[DistModel] = None
-        """Distributed model."""
-        self.init_processor()
-        self.init_model_config()
-        self.init_model()
-        self.init_adapter()
+        self.model: Optional[HFModel] = None
+        """HF model."""
+        self.is_adapter = False
+        """Whether the model has adapter."""
 
     def init_processor(self) -> None:
+        if self.processor is not None:
+            return
+
         self.processor = AutoProcessor.from_pretrained(
             self.args.model,
             trust_remote_code=self.args.trust_remote_code,
@@ -55,38 +56,58 @@ class ModelWorker:
         )
 
     def init_model_config(self) -> None:
+        if self.model_config is not None:
+            return
+
         self.model_config = AutoConfig.from_pretrained(
             self.args.model,
             trust_remote_code=self.args.trust_remote_code,
         )
 
     def init_model(self) -> None:
-        if self.args.auto_model_class == "causallm":
+        if self.model is not None:
+            return
+
+        self.init_model_config()
+
+        if self.args.auto_class == AutoClass.CAUSALLM:
             from transformers import AutoModelForCausalLM, AutoModelForImageTextToText
 
             if type(self.model_config) in AutoModelForImageTextToText._model_mapping.keys():
-                AutoClass = AutoModelForImageTextToText
+                ModelClass = AutoModelForImageTextToText
             else:
-                AutoClass = AutoModelForCausalLM
-        elif self.args.auto_model_class == "classification":
+                ModelClass = AutoModelForCausalLM
+        elif self.args.auto_class == AutoClass.CLASSIFICATION:
             from transformers import AutoModelForTokenClassification
 
-            AutoClass = AutoModelForTokenClassification
+            ModelClass = AutoModelForTokenClassification
         else:
             from transformers import AutoModel
 
-            AutoClass = AutoModel
+            ModelClass = AutoModel
 
-        self.unwrapped_model = AutoClass.from_pretrained(
-            self.args.model,
-            config=self.model_config,
-            dtype="auto",
-            device_map="cpu",
-            trust_remote_code=self.args.trust_remote_code,
-        )
+        default_device_type = torch.get_default_device().type
+        if default_device_type == DeviceType.META:
+            self.model = ModelClass.from_config(self.model_config)
+        else:
+            self.model = ModelClass.from_pretrained(
+                self.args.model,
+                config=self.model_config,
+                dtype="auto",
+                device_map=default_device_type,
+                trust_remote_code=self.args.trust_remote_code,
+            )
 
     def init_adapter(self) -> None:
-        pass
+        if self.is_adapter:
+            return
+
+        if self.args.peft_config is not None:
+            from ..plugins.model_plugins.peft import PeftPlugin
+
+            self.model = PeftPlugin(self.args.peft_config.name)(self.model, self.args.peft_config)
+
+        self.is_adapter = True
 
     def get_processor(self) -> Processor:
         return self.processor
@@ -95,4 +116,4 @@ class ModelWorker:
         return self.model_config
 
     def get_model(self) -> HFModel:
-        return self.unwrapped_model
+        return self.model

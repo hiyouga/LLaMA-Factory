@@ -29,7 +29,7 @@ Train Phase:
 """
 
 from ..config.training_args import TrainingArguments
-from ..extras.types import TorchDataset
+from ..utils.types import TorchDataset
 from .model_worker import ModelWorker
 from .trainer_utils.data_collator import DataCollator
 
@@ -49,13 +49,10 @@ class BaseTrainer:
         self.optimizer = None
         self.lr_scheduler = None
 
-    def init_device_mesh(self) -> None:
-        pass
-
     def init_model_and_optimizer(self) -> None:
-        self.model_config = self.model_worker.get_model_config()
+        self.model_worker.init_model_config()
         # with self.dist_plugin.get_model_init_context():
-        #     self.model = self.model_worker.get_model(self.model_config)
+        #     self.model = self.model_worker.init_model(self.model_config)
 
     def create_dataloader(self) -> None:
         pass
