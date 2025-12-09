@@ -1976,7 +1976,7 @@ register_model_group(
             DownloadSource.MODELSCOPE: "mistralai/Ministral-3-3B-Instruct-2512",
         },
     },
-    template="mistral",
+    template="ministral3",
     multimodal=True,
 )
 

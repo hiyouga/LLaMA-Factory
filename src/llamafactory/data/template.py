@@ -1685,6 +1685,19 @@ register_template(
 
 
 register_template(
+    name="ministral3",
+    format_user=StringFormatter(slots=["[INST]{{content}}[/INST]"]),
+    format_system=StringFormatter(slots=["{{content}}\n\n"]),
+    format_function=FunctionFormatter(slots=["[TOOL_CALLS]{{content}}", {"eos_token"}], tool_format="mistral"),
+    format_observation=StringFormatter(slots=["""[TOOL_RESULTS]{"content": {{content}}}[/TOOL_RESULTS]"""]),
+    format_tools=ToolFormatter(tool_format="mistral"),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    template_class=Llama2Template,
+    mm_plugin=get_mm_plugin(name="pixtral", image_token="[IMG]"),
+)
+
+
+register_template(
     name="olmo",
     format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>\n"]),
     format_prefix=EmptyFormatter(slots=[{"eos_token"}]),
