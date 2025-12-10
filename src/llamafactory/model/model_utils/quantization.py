@@ -84,8 +84,13 @@ def configure_quantization(
     tokenizer: "PreTrainedTokenizer",
     model_args: "ModelArguments",
     init_kwargs: dict[str, Any],
+    is_trainable: bool,
 ) -> None:
     r"""Priority: PTQ-quantized (train/infer) > AutoGPTQ (export) > On-the-fly quantization (train/infer)."""
+
+    if not is_trainable:
+        return
+
     if getattr(config, "quantization_config", None):  # ptq
         if model_args.quantization_bit is not None:
             logger.warning_rank0("`quantization_bit` will not affect on the PTQ-quantized models.")
