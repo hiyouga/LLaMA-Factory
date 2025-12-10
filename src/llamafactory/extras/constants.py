@@ -141,6 +141,7 @@ class QuantizationMethod(str, Enum):
     EETQ = "eetq"
     HQQ = "hqq"
     MXFP4 = "mxfp4"
+    FP8 = "fp8"
 
 
 class RopeScaling(str, Enum):
@@ -1975,6 +1976,25 @@ register_model_group(
         },
     },
     template="mistral",
+)
+
+register_model_group(
+    models={
+        "Ministral-3-3B-Instruct-2512": {
+            DownloadSource.DEFAULT: "mistralai/Ministral-3-3B-Instruct-2512",
+            DownloadSource.MODELSCOPE: "mistralai/Ministral-3-3B-Instruct-2512",
+        },
+        "Ministral-3-8B-Instruct-2512": {
+            DownloadSource.DEFAULT: "mistralai/Ministral-3-8B-Instruct-2512",
+            DownloadSource.MODELSCOPE: "mistralai/Ministral-3-8B-Instruct-2512",
+        },
+        "Ministral-3-14B-Instruct-2512": {
+            DownloadSource.DEFAULT: "mistralai/Ministral-3-14B-Instruct-2512",
+            DownloadSource.MODELSCOPE: "mistralai/Ministral-3-14B-Instruct-2512",
+        },
+    },
+    template="ministral3",
+    multimodal=True,
 )
 
 

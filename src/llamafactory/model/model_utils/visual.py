@@ -301,6 +301,7 @@ _register_composite_model(
 
 _register_composite_model(
     model_type="mistral3",
+    projector_key="model.multi_modal_projector",
 )
 
 
