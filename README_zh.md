@@ -317,8 +317,7 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 | [MiMo](https://huggingface.co/XiaomiMiMo)                         | 7B                               | mimo                 |
 | [MiniCPM 1-4.1](https://huggingface.co/openbmb)                   | 0.5B/1B/2B/4B/8B                 | cpm/cpm3/cpm4        |
 | [MiniCPM-o-2.6/MiniCPM-V-2.6](https://huggingface.co/openbmb)     | 8B                               | minicpm_o/minicpm_v  |
-| [Ministral/Mistral-Nemo](https://huggingface.co/mistralai)        | 8B/12B                           | ministral            |
-| [Ministral 3](https://huggingface.co/mistralai)        | 3B/8B/14B                           | ministral3            |
+| [Ministral(3)/Mistral-Nemo](https://huggingface.co/mistralai)     | 3B/8B/12B/14B                    | ministral/ministral3 |
 | [Mistral/Mixtral](https://huggingface.co/mistralai)               | 7B/8x7B/8x22B                    | mistral              |
 | [Mistral Small](https://huggingface.co/mistralai)                 | 24B                              | mistral_small        |
 | [OLMo](https://huggingface.co/allenai)                            | 1B/7B                            | -                    |
