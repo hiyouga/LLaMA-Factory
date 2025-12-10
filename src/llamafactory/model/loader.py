@@ -142,7 +142,6 @@ def load_model(
     patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
     apply_liger_kernel(config, model_args, is_trainable, require_logits=(finetuning_args.stage not in ["pt", "sft"]))
 
-
     model = None
     lazy_load = False
     if model_args.use_kt:
