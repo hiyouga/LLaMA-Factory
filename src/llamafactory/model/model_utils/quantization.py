@@ -87,10 +87,6 @@ def configure_quantization(
     is_trainable: bool,
 ) -> None:
     r"""Priority: PTQ-quantized (train/infer) > AutoGPTQ (export) > On-the-fly quantization (train/infer)."""
-
-    if not is_trainable:
-        return
-
     if getattr(config, "quantization_config", None):  # ptq
         if model_args.quantization_bit is not None:
             logger.warning_rank0("`quantization_bit` will not affect on the PTQ-quantized models.")
@@ -114,7 +110,7 @@ def configure_quantization(
             check_version("aqlm>=1.1.0", mandatory=True)
             quantization_config["bits"] = 2
         
-        if quant_method == QuantizationMethod.FP8:
+        if quant_method == QuantizationMethod.FP8 and is_trainable:
             quant_config = FineGrainedFP8Config(dequantize=True)
             init_kwargs["quantization_config"] = quant_config
 
