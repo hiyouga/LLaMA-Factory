@@ -83,8 +83,8 @@ def configure_quantization(
     config: "PretrainedConfig",
     tokenizer: "PreTrainedTokenizer",
     model_args: "ModelArguments",
-    init_kwargs: dict[str, Any],
     is_trainable: bool,
+    init_kwargs: dict[str, Any],
 ) -> None:
     r"""Priority: PTQ-quantized (train/infer) > AutoGPTQ (export) > On-the-fly quantization (train/infer)."""
     if getattr(config, "quantization_config", None):  # ptq
