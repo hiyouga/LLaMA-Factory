@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any
 
 import torch
 from datasets import load_dataset
-from transformers import BitsAndBytesConfig, EetqConfig, GPTQConfig, HqqConfig
+from transformers import BitsAndBytesConfig, EetqConfig, GPTQConfig, HqqConfig, FineGrainedFP8Config
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.modeling_utils import is_fsdp_enabled
 
@@ -108,6 +108,10 @@ def configure_quantization(
         if quant_method == QuantizationMethod.AQLM:
             check_version("aqlm>=1.1.0", mandatory=True)
             quantization_config["bits"] = 2
+        
+        if quant_method == "fp8":
+            quant_config = FineGrainedFP8Config(dequantize=True)
+            init_kwargs["quantization_config"] = quant_config
 
         quant_bits = quantization_config.get("bits", "?")
         logger.info_rank0(f"Loading {quant_bits}-bit {quant_method.upper()}-quantized model.")
