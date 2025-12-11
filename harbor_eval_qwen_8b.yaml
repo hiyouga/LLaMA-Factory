@@ -1,0 +1,23 @@
+jobs_dir: jobs
+n_attempts: 1
+timeout_multiplier: 2.0
+
+orchestrator:
+  type: local
+  n_concurrent_trials: 20
+  quiet: false
+environment:
+  type: daytona #docker
+  force_build: true
+  delete: false
+agents:
+  - name: terminus-2
+    model_name: hosted_vllm/qwen3-8b
+    kwargs:
+      api_base: "http://localhost:8000/v1"
+      reasoning_effort: "low"
+      max_turns: 120
+datasets:
+  - path: terminal-bench-agi-eval
+  # - path: terminal-bench-2
+  # - path: test_tasks
