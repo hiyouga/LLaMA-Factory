@@ -314,9 +314,10 @@ def get_dataset(
         # move front to make sure eval_dataset(if contain or split) can preprocessed appropriately
         train_dict, eval_dict = split_dataset(dataset, eval_dataset, data_args, seed=training_args.seed)
 
-        train_dict["train"] = _get_preprocessed_dataset(
-            train_dict["train"], data_args, training_args, stage, template, tokenizer, processor, is_eval=False
-        )
+        if "train" in train_dict:
+            train_dict["train"] = _get_preprocessed_dataset(
+                train_dict["train"], data_args, training_args, stage, template, tokenizer, processor, is_eval=False
+            )
 
         for key in eval_dict:
             eval_dict[key] = _get_preprocessed_dataset(
