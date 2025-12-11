@@ -108,7 +108,7 @@ def create_modelcard_and_push(
     elif training_args.push_to_hub:
         trainer.push_to_hub(**kwargs)
     else:
-        trainer.create_model_card(license="other", **kwargs)  # prevent from connecting to hub
+        Trainer.create_model_card(trainer, license="other", **kwargs)  # prevent from connecting to hub
 
 
 def create_ref_model(
