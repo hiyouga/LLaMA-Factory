@@ -93,6 +93,7 @@ def split_dataset(
     if eval_dataset is not None and data_args.val_size > 1e-6:
         raise ValueError("Cannot specify `val_size` if `eval_dataset` is not None.")
 
+    # the train and eval better to in dict dtype and separately return for cpode clearly and good handle outside
     train_dict, eval_dict = {}, {}
 
     if dataset is not None:
