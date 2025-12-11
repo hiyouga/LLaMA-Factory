@@ -324,10 +324,7 @@ def get_dataset(
             )
 
         # Combine train and eval dictionaries
-        dataset_dict = dict()
-        dataset_dict.update(train_dict)
-        dataset_dict.update(eval_dict)
-        dataset_dict = DatasetDict(dataset_dict)
+        dataset_dict = DatasetDict({**train_dict, **eval_dict})
 
         if data_args.tokenized_path is not None:  # save tokenized dataset to disk
             if training_args.should_save:
