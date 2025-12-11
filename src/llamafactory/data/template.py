@@ -199,9 +199,12 @@ class Template:
             logger.info_rank0(f"Add pad token: {tokenizer.pad_token}")
 
         if stop_words:
-            num_added_tokens = tokenizer.add_special_tokens(
-                dict(additional_special_tokens=stop_words), replace_additional_special_tokens=False
-            )
+            try:
+                num_added_tokens = tokenizer.add_special_tokens(
+                    dict(additional_special_tokens=stop_words), replace_additional_special_tokens=False
+                )
+            except TypeError:
+                num_added_tokens = tokenizer.add_special_tokens(dict(additional_special_tokens=stop_words))
             logger.info_rank0("Add {} to stop words.".format(",".join(stop_words)))
             if num_added_tokens > 0:
                 logger.warning_rank0("New tokens have been added, make sure `resize_vocab` is True.")
@@ -1125,7 +1128,7 @@ register_template(
 
 # copied from glm4 template
 register_template(
-    name="glm4v_moe",
+    name="glm4_5v",
     format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>"]),
     format_assistant=StringFormatter(slots=["\n{{content}}"]),
     format_system=StringFormatter(slots=["<|system|>\n{{content}}"]),
@@ -1680,6 +1683,19 @@ register_template(
     format_observation=StringFormatter(slots=["""[TOOL_RESULTS]{"content": {{content}}}[/TOOL_RESULTS]"""]),
     format_tools=ToolFormatter(tool_format="mistral"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    mm_plugin=get_mm_plugin(name="pixtral", image_token="[IMG]"),
+)
+
+
+register_template(
+    name="ministral3",
+    format_user=StringFormatter(slots=["[INST]{{content}}[/INST]"]),
+    format_system=StringFormatter(slots=["{{content}}\n\n"]),
+    format_function=FunctionFormatter(slots=["[TOOL_CALLS]{{content}}", {"eos_token"}], tool_format="mistral"),
+    format_observation=StringFormatter(slots=["""[TOOL_RESULTS]{"content": {{content}}}[/TOOL_RESULTS]"""]),
+    format_tools=ToolFormatter(tool_format="mistral"),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    template_class=Llama2Template,
     mm_plugin=get_mm_plugin(name="pixtral", image_token="[IMG]"),
 )
 

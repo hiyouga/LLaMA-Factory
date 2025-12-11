@@ -48,6 +48,7 @@ INFER_ARGS = {
 
 OS_NAME = os.getenv("OS_NAME", "")
 
+
 @pytest.mark.runs_on(["cpu"])
 @pytest.mark.parametrize(
     "stage,dataset",

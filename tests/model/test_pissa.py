@@ -49,14 +49,15 @@ INFER_ARGS = {
 }
 
 
-@pytest.mark.runs_on(["cpu","npu"])
+@pytest.mark.runs_on(["cpu", "npu"])
 @pytest.mark.xfail(reason="PiSSA initialization is not stable in different platform.")
 def test_pissa_train():
     model = load_train_model(**TRAIN_ARGS)
     ref_model = load_reference_model(TINY_LLAMA_PISSA, TINY_LLAMA_PISSA, use_pissa=True, is_trainable=True)
     compare_model(model, ref_model)
 
-@pytest.mark.runs_on(["cpu","npu"])
+
+@pytest.mark.runs_on(["cpu", "npu"])
 @pytest.mark.xfail(reason="Known connection error.")
 def test_pissa_inference():
     model = load_infer_model(**INFER_ARGS)

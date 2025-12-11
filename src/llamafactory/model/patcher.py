@@ -115,7 +115,7 @@ def patch_config(
     configure_attn_implementation(config, model_args)
     configure_rope(config, model_args)
     configure_longlora(config, model_args, is_trainable)
-    configure_quantization(config, tokenizer, model_args, init_kwargs)
+    configure_quantization(config, tokenizer, model_args, is_trainable, init_kwargs)
     configure_moe(config, model_args, is_trainable)
     configure_visual_model(config)
     configure_packing(model_args, is_trainable)
