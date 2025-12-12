@@ -20,5 +20,7 @@ from llamafactory.v1.accelerator.interface import DistributedInterface, Distribu
 
 def test_distributed_interface():
     DistributedInterface(DistributedStrategy())
-    assert DistributedInterface.rank == int(os.getenv("RANK", "0"))
-    assert DistributedInterface.world_size == int(os.getenv("WORLD_SIZE", "1"))
+    assert DistributedInterface.get_rank() == int(os.getenv("RANK", "0"))
+    assert DistributedInterface.get_world_size() == int(os.getenv("WORLD_SIZE", "1"))
+    assert DistributedInterface.get_local_rank() == int(os.getenv("LOCAL_RANK", "0"))
+    assert DistributedInterface.get_local_world_size() == int(os.getenv("LOCAL_WORLD_SIZE", "1"))
