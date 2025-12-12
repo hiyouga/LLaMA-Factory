@@ -129,9 +129,13 @@ def add_z3_leaf_module(model: "PreTrainedModel") -> None:
 
     if model_type in ("qwen3_omni_moe", "qwen3_omni_moe_thinker"):
         from transformers.models.qwen3_omni_moe.modeling_qwen3_omni_moe import Qwen3OmniMoeThinkerTextSparseMoeBlock
-
+            
         _set_z3_leaf_modules(model, [Qwen3OmniMoeThinkerTextSparseMoeBlock])
-
+    
+    if model_type == "gpt_oss":
+        from transformers.models.gpt_oss.modeling_gpt_oss import GptOssMLP
+        
+        _set_z3_leaf_modules(model, [GptOssMLP])
 
 def configure_moe(config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool) -> None:
     if not is_trainable or not model_args.moe_aux_loss_coef:
