@@ -21,10 +21,3 @@ class KernelType(str, Enum):
     FLASH_ATTENTION = "flash_attention"
     ROPE = "rope"
     MOE = "moe"
-
-
-class DeviceType(str, Enum):
-    CPU = "cpu"
-    CUDA = "cuda"
-    NPU = "npu"
-    XPU = "xpu"

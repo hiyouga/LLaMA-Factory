@@ -1,8 +1,9 @@
 identity:
-  file_name: data/identity.json
+  path: data/identity.json
+  source: local
   converter: alpaca
 alpaca_en_demo:
-  file_name: alpaca_en_demo.json
-  dataset_dir: data
+  path: data/alpaca_en_demo.json
+  source: local
   converter: alpaca
-  num_samples: 500
+  size: 500

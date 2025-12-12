@@ -11,20 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
-from dataclasses import dataclass, field
-
-from .arg_utils import SampleBackend
-
-
-@dataclass
-class SampleArguments:
-    sample_backend: SampleBackend = field(
-        default=SampleBackend.HF,
-        metadata={"help": "Sampling backend, default to 'hf'."},
-    )
-    max_new_tokens: int = field(
-        default=128,
-        metadata={"help": "Maximum number of new tokens to generate."},
-    )

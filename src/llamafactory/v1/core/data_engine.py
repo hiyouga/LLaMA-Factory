@@ -34,7 +34,7 @@ from omegaconf import OmegaConf
 from torch.utils.data import Dataset
 
 from ..config.data_args import DataArguments
-from ..extras.types import DatasetInfo, HFDataset, Sample
+from ..utils.types import DatasetInfo, HFDataset, Sample
 
 
 class DataEngine(Dataset):
@@ -64,9 +64,9 @@ class DataEngine(Dataset):
             filepath = hf_hub_download(repo_id=repo_id, filename=filename, repo_type="dataset")
             self.dataset_infos = OmegaConf.load(filepath)
         elif os.path.exists(self.args.dataset):  # local file(s)
-            self.dataset_infos = {"default": {"file_name": self.args.dataset}}
+            self.dataset_infos = {"default": {"path": self.args.dataset, "source": "local"}}
         else:  # hf hub dataset, e.g. llamafactory/v1-sft-demo
-            self.dataset_infos = {"default": {"hf_hub_url": self.args.dataset}}
+            self.dataset_infos = {"default": {"path": self.args.dataset}}
 
     def load_dataset(self) -> None:
         """Load datasets according to dataset info."""
@@ -74,14 +74,14 @@ class DataEngine(Dataset):
             split = value.get("split", "train")
             streaming = value.get("streaming", False)
             self.streaming |= streaming
-            if "hf_hub_url" in value:
+            if value.get("source", "hf_hub") == "hf_hub":
                 from datasets import load_dataset
 
-                self.datasets[key] = load_dataset(value["hf_hub_url"], split=split, streaming=streaming)
+                self.datasets[key] = load_dataset(value["path"], split=split, streaming=streaming)
             else:  # data loader plugin
                 from ..plugins.data_plugins.loader import DataLoaderPlugin
 
-                self.datasets[key] = DataLoaderPlugin().auto_load_data(value)
+                self.datasets[key] = DataLoaderPlugin(value["source"]).load(value)
 
     def build_data_index(self) -> None:
         """Build dataset index."""
@@ -112,9 +112,9 @@ class DataEngine(Dataset):
         """
         converter = self.dataset_infos[dataset_name].get("converter")
         if converter is not None:
-            from ..plugins.data_plugins.converter import get_converter
+            from ..plugins.data_plugins.converter import DataConverterPlugin
 
-            return {"_dataset_name": dataset_name, **get_converter(converter)(raw_sample)}
+            return {"_dataset_name": dataset_name, **DataConverterPlugin(converter)(raw_sample)}
         else:
             return {"_dataset_name": dataset_name, **raw_sample}
 
@@ -147,7 +147,7 @@ class DataEngine(Dataset):
         else:
             from ..plugins.data_plugins.loader import DataSelectorPlugin
 
-            selected_index = DataSelectorPlugin(data_index=self.data_index).select(index)
+            selected_index = DataSelectorPlugin().select(self.data_index, index)
             if isinstance(selected_index, list):
                 return [
                     self._convert_data_sample(self.datasets[dataset_name][sample_index], dataset_name)
@@ -187,7 +187,7 @@ class DataEngine(Dataset):
 
 
 if __name__ == "__main__":
-    from ..config.parser import get_args
+    from ..config.arg_parser import get_args
 
     data_args, *_ = get_args()
     data_engine = DataEngine(data_args=data_args)
