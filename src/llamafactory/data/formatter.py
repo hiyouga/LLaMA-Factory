@@ -98,7 +98,7 @@ class FunctionFormatter(StringFormatter):
     def apply(self, **kwargs) -> SLOTS:
         content: str = kwargs.pop("content")
         thought_words, thought = kwargs.pop("thought_words", None), None
-        tool_call_words, thought = kwargs.pop("tool_call_words", None), None
+        tool_call_words = kwargs.pop("tool_call_words", None)
 
         tool_call = None
         if tool_call_words and len(tool_call_words) == 2:
