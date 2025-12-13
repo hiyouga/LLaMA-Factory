@@ -18,7 +18,7 @@
 
 import json
 from enum import Enum, unique
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 
 class PluginConfig(dict):
@@ -32,25 +32,16 @@ class PluginConfig(dict):
 
         return self["name"]
 
-    def __getattr__(self, key: str) -> Any:
-        try:
-            return self[key]
-        except KeyError:
-            raise AttributeError(f"Attribute {key} not found.")
-
-    def __setattr__(self, key: str, value: Any):
-        self[key] = value
-
 
 PluginArgument = Optional[Union[PluginConfig, dict, str]]
 
 
 @unique
-class AutoClass(str, Enum):
+class ModelClass(str, Enum):
     """Auto class for model config."""
 
-    CAUSALLM = "llm"
-    CLASSIFICATION = "cls"
+    LLM = "llm"
+    CLS = "cls"
     OTHER = "other"
 
 

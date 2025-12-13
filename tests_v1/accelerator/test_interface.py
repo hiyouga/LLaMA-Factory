@@ -15,11 +15,11 @@
 
 import os
 
-from llamafactory.v1.accelerator.interface import DistributedInterface, DistributedStrategy
+from llamafactory.v1.accelerator.interface import DistributedInterface
 
 
 def test_distributed_interface():
-    DistributedInterface(DistributedStrategy())
+    DistributedInterface()
     assert DistributedInterface.get_rank() == int(os.getenv("RANK", "0"))
     assert DistributedInterface.get_world_size() == int(os.getenv("WORLD_SIZE", "1"))
     assert DistributedInterface.get_local_rank() == int(os.getenv("LOCAL_RANK", "0"))

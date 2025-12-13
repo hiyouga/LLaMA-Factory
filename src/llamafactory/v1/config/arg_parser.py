@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import json
 import sys
 from pathlib import Path
@@ -26,6 +25,9 @@ from .data_args import DataArguments
 from .model_args import ModelArguments
 from .sample_args import SampleArguments
 from .training_args import TrainingArguments
+
+
+InputArgument = Optional[Union[dict[str, Any], list[str]]]
 
 
 def validate_args(
@@ -43,9 +45,7 @@ def validate_args(
         raise ValueError("Quantization is not supported with deepspeed backend.")
 
 
-def get_args(
-    args: Optional[Union[dict[str, Any], list[str]]] = None,
-) -> tuple[DataArguments, ModelArguments, TrainingArguments, SampleArguments]:
+def get_args(args: InputArgument = None) -> tuple[DataArguments, ModelArguments, TrainingArguments, SampleArguments]:
     """Parse arguments from command line or config file."""
     parser = HfArgumentParser([DataArguments, ModelArguments, TrainingArguments, SampleArguments])
     allow_extra_keys = is_env_enabled("ALLOW_EXTRA_KEYS")

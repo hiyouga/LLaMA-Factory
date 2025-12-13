@@ -29,7 +29,7 @@ _default_log_level: "logging._Level" = logging.INFO
 
 
 class _Logger(logging.Logger):
-    r"""A logger that supports rank0 logging."""
+    """A logger that supports rank0 logging."""
 
     def info_rank0(self, *args, **kwargs) -> None:
         self.info(*args, **kwargs)
@@ -42,7 +42,7 @@ class _Logger(logging.Logger):
 
 
 def _get_default_logging_level() -> "logging._Level":
-    r"""Return the default logging level."""
+    """Return the default logging level."""
     env_level_str = os.getenv("LLAMAFACTORY_VERBOSITY", None)
     if env_level_str:
         if env_level_str.upper() in logging._nameToLevel:
@@ -62,7 +62,7 @@ def _get_library_root_logger() -> "_Logger":
 
 
 def _configure_library_root_logger() -> None:
-    r"""Configure root logger using a stdout stream handler with an explicit format."""
+    """Configure root logger using a stdout stream handler with an explicit format."""
     global _default_handler
 
     with _thread_lock:
@@ -82,7 +82,7 @@ def _configure_library_root_logger() -> None:
 
 
 def get_logger(name: Optional[str] = None) -> "_Logger":
-    r"""Return a logger with the specified name. It it not supposed to be accessed externally."""
+    """Return a logger with the specified name. It it not supposed to be accessed externally."""
     if name is None:
         name = _get_library_name()
 
@@ -91,13 +91,13 @@ def get_logger(name: Optional[str] = None) -> "_Logger":
 
 
 def add_handler(handler: "logging.Handler") -> None:
-    r"""Add a handler to the root logger."""
+    """Add a handler to the root logger."""
     _configure_library_root_logger()
     _get_library_root_logger().addHandler(handler)
 
 
 def remove_handler(handler: logging.Handler) -> None:
-    r"""Remove a handler to the root logger."""
+    """Remove a handler to the root logger."""
     _configure_library_root_logger()
     _get_library_root_logger().removeHandler(handler)
 

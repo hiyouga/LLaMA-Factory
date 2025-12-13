@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     import torch
     import torch.utils.data
     import transformers
+    from torch.distributed import ProcessGroup
     from torch.distributed.fsdp import FullyShardedDataParallel
 
     Tensor = torch.Tensor
@@ -37,6 +38,7 @@ if TYPE_CHECKING:
     Processor = Union[transformers.PreTrainedTokenizer, transformers.ProcessorMixin]
     Optimizer = torch.optim.Optimizer
     Scheduler = torch.optim.lr_scheduler.LRScheduler
+    ProcessGroup = ProcessGroup
 else:
     Tensor = None
     TensorLike = None
@@ -50,6 +52,7 @@ else:
     Processor = None
     Optimizer = None
     Scheduler = None
+    ProcessGroup = None
 
 
 class DatasetInfo(TypedDict, total=False):
@@ -67,6 +70,19 @@ class DatasetInfo(TypedDict, total=False):
     """Dataset weight, default to 1.0."""
     streaming: NotRequired[bool]
     """Is streaming dataset, default to False."""
+
+
+class DistributedConfig(TypedDict, total=False):
+    mp_replicate_size: NotRequired[int]
+    """Model parallel replicate size, default to 1."""
+    mp_shard_size: NotRequired[int]
+    """Model parallel shard size, default to world_size // mp_replicate_size."""
+    dp_size: NotRequired[int]
+    """Data parallel size, default to world_size // cp_size."""
+    cp_size: NotRequired[int]
+    """Context parallel size, default to 1."""
+    timeout: NotRequired[int]
+    """Timeout for distributed communication, default to 600."""
 
 
 class Content(TypedDict):
