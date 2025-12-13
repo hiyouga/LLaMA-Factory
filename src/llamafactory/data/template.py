@@ -588,7 +588,7 @@ def parse_template(tokenizer: "PreTrainedTokenizer") -> "Template":
         default_system=default_system,
         stop_words=[],
         thought_words=("<think>\n", "\n</think>\n\n"),
-        tool_call_words=("<tool_call>\n", "\n</tool_call>\n\n"),
+        tool_call_words=("<tool_call>", "</tool_call>"),
         efficient_eos=False,
         replace_eos=False,
         replace_jinja_template=False,
