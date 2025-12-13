@@ -25,5 +25,5 @@ def pytest_collection_modifyitems(config: Config, items: list[Item]):
     skip_bc = pytest.mark.skip(reason="Skip backward compatibility tests")
 
     for item in items:
-        if "test_v1" in str(item.fspath):
+        if "tests_v1" in str(item.fspath):
             item.add_marker(skip_bc)
