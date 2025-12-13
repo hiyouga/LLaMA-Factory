@@ -6,7 +6,7 @@ import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 
-from llamafactory.v1.accelerator.helper import ReduceOp, all_reduce
+from llamafactory.v1.accelerator.helper import ReduceOp, all_reduce, is_torch_npu_available
 
 
 os.environ["ASCEND_RT_VISIBLE_DEVICES"] = "0,1"
@@ -50,8 +50,8 @@ def _dist_worker(rank, world_size):
 
 
 @pytest.mark.skipif(
-    not torch.npu.is_available() or torch.npu.device_count() < 2,
-    reason="Requires at least 2 GPUs",
+    not is_torch_npu_available() or torch.npu.device_count() < 2,
+    reason="Requires at least 2 NPUs",
 )
 def test_distributed_ops():
     mp.spawn(
