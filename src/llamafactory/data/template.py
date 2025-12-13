@@ -157,7 +157,9 @@ class Template:
             elif message["role"] == Role.OBSERVATION:
                 elements += self.format_observation.apply(content=message["content"])
             elif message["role"] == Role.FUNCTION:
-                elements += self.format_function.apply(content=message["content"], thought_words=self.thought_words, tool_call_words=self.tool_call_words)
+                elements += self.format_function.apply(
+                    content=message["content"], thought_words=self.thought_words, tool_call_words=self.tool_call_words
+                )
             else:
                 raise NotImplementedError("Unexpected role: {}".format(message["role"]))
 
@@ -524,7 +526,7 @@ def register_template(
         default_system=default_system,
         stop_words=stop_words or [],
         thought_words=thought_words or ("<think>\n", "\n</think>\n\n"),
-        tool_call_words=tool_call_words or ("<tool_call>\n", "\n</tool_call>\n\n"),
+        tool_call_words=tool_call_words or ("<tool_call>", "</tool_call>"),
         efficient_eos=efficient_eos,
         replace_eos=replace_eos,
         replace_jinja_template=replace_jinja_template,
