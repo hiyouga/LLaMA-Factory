@@ -42,6 +42,7 @@ TRAIN_ARGS = {
     "output_dir": "dummy_dir",
     "overwrite_output_dir": True,
     "fp16": True,
+    "report_to": "none",  # transfromers compatibility
 }
 
 
