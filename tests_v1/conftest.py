@@ -12,15 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
+from pytest import Config, Item
 
-import os
-
-from llamafactory.v1.accelerator.interface import DistributedInterface
+from llamafactory.v1.utils.packages import is_transformers_version_greater_than
 
 
-def test_distributed_interface():
-    DistributedInterface()
-    assert DistributedInterface.get_rank() == int(os.getenv("RANK", "0"))
-    assert DistributedInterface.get_world_size() == int(os.getenv("WORLD_SIZE", "1"))
-    assert DistributedInterface.get_local_rank() == int(os.getenv("LOCAL_RANK", "0"))
-    assert DistributedInterface.get_local_world_size() == int(os.getenv("LOCAL_WORLD_SIZE", "1"))
+def pytest_collection_modifyitems(config: Config, items: list[Item]):
+    if is_transformers_version_greater_than("4.57.0"):
+        return
+
+    skip_bc = pytest.mark.skip(reason="Skip backward compatibility tests")
+
+    for item in items:
+        if "tests_v1" in str(item.fspath):
+            item.add_marker(skip_bc)

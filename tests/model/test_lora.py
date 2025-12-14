@@ -104,7 +104,6 @@ def test_lora_train_valuehead():
 
 
 @pytest.mark.runs_on(["cpu", "npu"])
-@pytest.mark.skip_on_devices("npu")
 def test_lora_inference():
     model = load_infer_model(**INFER_ARGS)
     ref_model = load_reference_model(TINY_LLAMA3, TINY_LLAMA_ADAPTER, use_lora=True).merge_and_unload()

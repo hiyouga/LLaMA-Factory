@@ -38,7 +38,7 @@ class BasePlugin:
         self.name = name
 
     @property
-    def register(self) -> Callable:
+    def register(self):
         """Decorator to register a function as a plugin.
 
         Example usage:
@@ -60,7 +60,7 @@ class BasePlugin:
 
         return decorator
 
-    def __call__(self, *args, **kwargs) -> Callable:
+    def __call__(self, *args, **kwargs):
         """Call the registered function with the given arguments.
 
         Example usage:
@@ -75,6 +75,9 @@ class BasePlugin:
 
 
 if __name__ == "__main__":
+    """
+    python -m llamafactory.v1.utils.plugin
+    """
 
     class PrintPlugin(BasePlugin):
         pass

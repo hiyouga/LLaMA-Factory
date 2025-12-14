@@ -15,12 +15,12 @@
 from abc import ABC, abstractmethod
 
 from ..config.sample_args import SampleArguments, SampleBackend
-from .model_worker import ModelWorker
+from .model_loader import ModelLoader
 
 
 class BaseEngine(ABC):
     @abstractmethod
-    def __init__(self, sample_args: SampleArguments, model_worker: ModelWorker) -> None: ...
+    def __init__(self, sample_args: SampleArguments, model_loader: ModelLoader) -> None: ...
 
     @abstractmethod
     async def generate(self):
@@ -32,15 +32,13 @@ class BaseEngine(ABC):
 
 
 class HuggingFaceEngine(BaseEngine):
-    def __init__(self, model_worker: ModelWorker, sample_args: SampleArguments) -> None:
-        self.model = model_worker.get_model()
-        self.processor = model_worker.get_processor()
+    def __init__(self, model_loader: ModelLoader, sample_args: SampleArguments) -> None:
         self.args = sample_args
 
 
 class ChatSampler:
-    def __init__(self, model_worker: ModelWorker, sample_args: SampleArguments) -> None:
+    def __init__(self, model_loader: ModelLoader, sample_args: SampleArguments) -> None:
         if sample_args.sample_backend == SampleBackend.HF:
-            self.engine = HuggingFaceEngine(model_worker, sample_args)
+            self.engine = HuggingFaceEngine(model_loader, sample_args)
         else:
             raise ValueError(f"Unknown sample backend: {sample_args.sample_backend}")
