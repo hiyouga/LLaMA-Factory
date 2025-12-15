@@ -52,12 +52,9 @@ def _dist_worker(rank, world_size):
     dist.destroy_process_group()
 
 
-@pytest.mark.skipif(
-    not is_torch_npu_available() or torch.npu.device_count() < 2,
-    reason="Requires at least 2 NPUs",
-)
+@pytest.mark.runs_on(["npu"])
+@pytest.mark.require_distributed(2)
 def test_distributed_ops(monkeypatch):
-    monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "0,1")
     monkeypatch.setenv("MASTER_ADDR", "127.0.0.1")
     monkeypatch.setenv("MASTER_PORT", str(find_available_port()))
     WORLD_SIZE = 2

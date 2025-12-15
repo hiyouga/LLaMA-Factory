@@ -17,67 +17,57 @@
 Contains shared fixtures, pytest configuration, and custom markers.
 """
 
+import os
 import pytest
+from pytest import Config, Item
 
 from llamafactory.extras.misc import get_current_device, is_env_enabled
 from llamafactory.train.test_utils import patch_valuehead_model
 
 
 try:
-    CURRENT_DEVICE = get_current_device().type
+    CURRENT_DEVICE = get_current_device().type  # cpu | cuda | npu
 except Exception:
     CURRENT_DEVICE = "cpu"
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config):
     """Register custom pytest markers."""
     config.addinivalue_line(
-        "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"' or set RUN_SLOW=1 to run)"
+        "markers",
+        "slow: marks tests as slow (deselect with '-m \"not slow\"' or set RUN_SLOW=1 to run)",
     )
     config.addinivalue_line(
-        "markers", "skip_on_devices: skip test on specified devices, e.g., @pytest.mark.skip_on_devices('npu', 'xpu')"
+        "markers",
+        "runs_on: test requires specific device type, e.g., @pytest.mark.runs_on(['cuda'])",
     )
     config.addinivalue_line(
-        "markers", "require_device: test requires specific device, e.g., @pytest.mark.require_device('cuda')"
+        "markers",
+        "require_distributed(num_devices): allow multi-device execution (default: 2)",
     )
-    config.addinivalue_line("markers", "runs_on: test requires specific device, e.g., @pytest.mark.runs_on(['cpu'])")
 
 
-def _handle_runs_on(items):
-    """Skip tests on specified devices based on runs_on marker.
-
-    Usage:
-        # Skip tests on specified devices
-        @pytest.mark.runs_on(['cpu'])
-        def test_something():
-            pass
-    """
+def _handle_runs_on(items: list[Item]):
+    """Skip tests on specified device TYPES (cpu/cuda/npu)."""
     for item in items:
-        runs_on_marker = item.get_closest_marker("runs_on")
-        if runs_on_marker:
-            runs_on_devices = runs_on_marker.args[0]
+        marker = item.get_closest_marker("runs_on")
+        if not marker:
+            continue
 
-            # Compatibility handling: Allow a single string instead of a list
-            # Example: @pytest.mark.("cpu")
-            if isinstance(runs_on_devices, str):
-                runs_on_devices = [runs_on_devices]
+        devices = marker.args[0]
+        if isinstance(devices, str):
+            devices = [devices]
 
-            if CURRENT_DEVICE not in runs_on_devices:
-                item.add_marker(
-                    pytest.mark.skip(reason=f"test requires one of {runs_on_devices} (current: {CURRENT_DEVICE})")
+        if CURRENT_DEVICE not in devices:
+            item.add_marker(
+                pytest.mark.skip(
+                    reason=f"test requires one of {devices} (current: {CURRENT_DEVICE})"
                 )
+            )
 
 
-def _handle_slow_tests(items):
-    """Skip slow tests unless RUN_SLOW environment variable is set.
-
-    Usage:
-        # Skip slow tests (default)
-        @pytest.mark.slow
-
-        # Run slow tests
-        RUN_SLOW=1 pytest tests/
-    """
+def _handle_slow_tests(items: list[Item]):
+    """Skip slow tests unless RUN_SLOW is enabled."""
     if not is_env_enabled("RUN_SLOW", "0"):
         skip_slow = pytest.mark.skip(reason="slow test (set RUN_SLOW=1 to run)")
         for item in items:
@@ -85,52 +75,77 @@ def _handle_slow_tests(items):
                 item.add_marker(skip_slow)
 
 
-def _handle_device_skips(items):
-    """Skip tests on specified devices based on skip_on_devices marker.
+def _get_visible_devices_env() -> str | None:
+    """Return device visibility env var name."""
+    if CURRENT_DEVICE == "cuda":
+        return "CUDA_VISIBLE_DEVICES"
+    if CURRENT_DEVICE == "npu":
+        return "ASCEND_RT_VISIBLE_DEVICES"
+    return None
 
-    Usage:
-        @pytest.mark.skip_on_devices("npu", "xpu")
-        def test_something():
-            pass
+
+def _parse_visible_devices(value: str | None) -> list[str]:
+    if not value:
+        return []
+    return [v for v in value.split(",") if v != ""]
+
+
+def _handle_device_visibility(items: list[Item]):
     """
-    for item in items:
-        skip_marker = item.get_closest_marker("skip_on_devices")
-        if skip_marker:
-            skip_devices = skip_marker.args
-            if CURRENT_DEVICE in skip_devices:
-                item.add_marker(
-                    pytest.mark.skip(
-                        reason=f"test skipped on {CURRENT_DEVICE.upper()} (skip list: {', '.join(skip_devices)})"
-                    )
-                )
+    Core rule:
 
-
-def _handle_device_requirements(items):
-    """Skip tests that require a specific device when running on other devices.
-
-    Usage:
-        @pytest.mark.require_device("cuda")
-        def test_gpu_only():
-            pass
+    - If NO test has @require_distributed:
+        -> force single-device visibility
+    - If ANY test has @require_distributed:
+        -> allow multi-device visibility
+        -> but skip tests whose required device count is not met
     """
+    env_key = _get_visible_devices_env()
+    if env_key is None or CURRENT_DEVICE == "cpu":
+        return
+
+    visible_devices = _parse_visible_devices(os.environ.get(env_key))
+
+    has_distributed_test = any(
+        item.get_closest_marker("require_distributed") is not None
+        for item in items
+    )
+
+    # -------------------------------
+    # Case 1: no distributed tests
+    # -------------------------------
+    if not has_distributed_test:
+        # hard lock to single device
+        if visible_devices:
+            os.environ[env_key] = visible_devices[0]
+        else:
+            os.environ[env_key] = "0"
+        return
+
+    # -------------------------------
+    # Case 2: distributed tests exist
+    # -------------------------------
+    available = len(visible_devices) if visible_devices else 1
+
     for item in items:
-        require_marker = item.get_closest_marker("require_device")
-        if require_marker:
-            required_device = require_marker.args[0] if require_marker.args else None
-            if required_device and CURRENT_DEVICE != required_device:
-                item.add_marker(
-                    pytest.mark.skip(
-                        reason=f"test requires {required_device.upper()} (current: {CURRENT_DEVICE.upper()})"
-                    )
+        marker = item.get_closest_marker("require_distributed")
+        if not marker:
+            continue
+
+        required = marker.args[0] if marker.args else 2
+        if available < required:
+            item.add_marker(
+                pytest.mark.skip(
+                    reason=f"test requires {required} devices, but only {available} visible"
                 )
+            )
 
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config: Config, items: list[Item]):
     """Modify test collection based on markers and environment."""
     _handle_slow_tests(items)
-    _handle_device_skips(items)
-    _handle_device_requirements(items)
     _handle_runs_on(items)
+    _handle_device_visibility(items)
 
 
 @pytest.fixture
