@@ -3522,6 +3522,17 @@ register_model_group(
 
 register_model_group(
     models={
+        "VibeThinker-1.5B": {
+            DownloadSource.DEFAULT: "WeiboAI/VibeThinker-1.5B",
+            DownloadSource.MODELSCOPE: "WeiboAI/VibeThinker-1.5B",
+        },
+    },
+    template="vibethinker",
+)
+
+
+register_model_group(
+    models={
         "Vicuna-v1.5-7B-Chat": {
             DownloadSource.DEFAULT: "lmsys/vicuna-7b-v1.5",
             DownloadSource.MODELSCOPE: "Xorbits/vicuna-7b-v1.5",

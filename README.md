@@ -277,7 +277,7 @@ Read technical notes:
 ## Supported Models
 
 | Model                                                             | Model size                       | Template             |
-| ----------------------------------------------------------------- | -------------------------------- | -------------------- |
+|-------------------------------------------------------------------| -------------------------------- | -------------------- |
 | [Baichuan 2](https://huggingface.co/baichuan-inc)                 | 7B/13B                           | baichuan2            |
 | [BLOOM/BLOOMZ](https://huggingface.co/bigscience)                 | 560M/1.1B/1.7B/3B/7.1B/176B      | -                    |
 | [ChatGLM3](https://huggingface.co/THUDM)                          | 6B                               | chatglm3             |
@@ -337,6 +337,7 @@ Read technical notes:
 | [StarCoder 2](https://huggingface.co/bigcode)                     | 3B/7B/15B                        | -                    |
 | [TeleChat2](https://huggingface.co/Tele-AI)                       | 3B/7B/35B/115B                   | telechat2            |
 | [XVERSE](https://huggingface.co/xverse)                           | 7B/13B/65B                       | xverse               |
+| [VibeThinker-1.5B](https://huggingface.co/WeiboAI)                | 1.5B                             | vibethinker          |
 | [Yi/Yi-1.5 (Code)](https://huggingface.co/01-ai)                  | 1.5B/6B/9B/34B                   | yi                   |
 | [Yi-VL](https://huggingface.co/01-ai)                             | 6B/34B                           | yi_vl                |
 | [Yuan 2](https://huggingface.co/IEITYuan)                         | 2B/51B/102B                      | yuan                 |
