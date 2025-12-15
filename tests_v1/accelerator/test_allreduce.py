@@ -19,6 +19,7 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 
 from llamafactory.v1.accelerator.helper import ReduceOp, all_reduce, is_torch_npu_available
+from llamafactory.v1.utils.utils import find_available_port
 
 
 def _dist_worker(rank, world_size):
@@ -58,7 +59,7 @@ def _dist_worker(rank, world_size):
 def test_distributed_ops(monkeypatch):
     monkeypatch.setenv("ASCEND_RT_VISIBLE_DEVICES", "0,1")
     monkeypatch.setenv("MASTER_ADDR", "127.0.0.1")
-    monkeypatch.setenv("MASTER_PORT", "29501")
+    monkeypatch.setenv("MASTER_PORT", str(find_available_port()))
     WORLD_SIZE = 2
     mp.spawn(
         _dist_worker,
