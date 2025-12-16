@@ -73,7 +73,7 @@ def _handle_slow_tests(items: list[Item]):
                 item.add_marker(skip_slow)
 
 
-def _get_visible_devices_env() -> str | None:
+def _get_visible_devices_env():
     """Return device visibility env var name."""
     if CURRENT_DEVICE == "cuda":
         return "CUDA_VISIBLE_DEVICES"
