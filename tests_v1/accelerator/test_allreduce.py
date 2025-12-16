@@ -75,3 +75,19 @@ def test_distributed_ops(monkeypatch):
         nprocs=WORLD_SIZE,
         join=True,
     )
+
+
+@pytest.mark.runs_on(["npu", "cuda"])
+@pytest.mark.require_distributed(4)
+def test_required_multi():
+    # test require_distributed mark ok
+    pass
+
+
+@pytest.mark.runs_on(["npu", "cuda"])
+@pytest.mark.require_distributed(999)
+def test_required_invalid():
+    # test require_distributed mark not ok,
+    raise RuntimeError(
+        "this case should not be run, please check whether the require_distributed mark implementation is correct"
+    )

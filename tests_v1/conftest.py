@@ -121,14 +121,13 @@ def pytest_collection_modifyitems(config: Config, items: list[Item]):
 
 
 @pytest.fixture(autouse=True)
-def _manage_distributed_env(request):
+def _manage_distributed_env(request, monkeypatch):
     """Set environment variables for distributed tests if specific devices are requested."""
     env_key = _get_visible_devices_env()
     if not env_key:
-        yield
         return
 
-    # Save old environment
+    # Save old environment for logic checks, monkeypatch handles restoration
     old_value = os.environ.get(env_key)
 
     marker = request.node.get_closest_marker("require_distributed")
@@ -142,24 +141,14 @@ def _manage_distributed_env(request):
         else:
             devices_str = ",".join(str(i) for i in range(required))
 
-        os.environ[env_key] = devices_str
+        monkeypatch.setenv(env_key, devices_str)
     else:
         # Non-distributed test
         if old_value:
             visible_devices = [v for v in old_value.split(",") if v != ""]
-            os.environ[env_key] = visible_devices[0] if visible_devices else "0"
+            monkeypatch.setenv(env_key, visible_devices[0] if visible_devices else "0")
         else:
-            os.environ[env_key] = "0"
-
-    try:
-        yield
-    finally:
-        # Restore old environment
-        if old_value is None:
-            if env_key in os.environ:
-                del os.environ[env_key]
-        else:
-            os.environ[env_key] = old_value
+            monkeypatch.setenv(env_key, "0")
 
 
 @pytest.fixture
