@@ -336,8 +336,8 @@ Read technical notes:
 | [Skywork o1](https://huggingface.co/Skywork)                      | 8B                               | skywork_o1           |
 | [StarCoder 2](https://huggingface.co/bigcode)                     | 3B/7B/15B                        | -                    |
 | [TeleChat2](https://huggingface.co/Tele-AI)                       | 3B/7B/35B/115B                   | telechat2            |
-| [XVERSE](https://huggingface.co/xverse)                           | 7B/13B/65B                       | xverse               |
 | [VibeThinker-1.5B](https://huggingface.co/WeiboAI)                | 1.5B                             | vibethinker          |
+| [XVERSE](https://huggingface.co/xverse)                           | 7B/13B/65B                       | xverse               |
 | [Yi/Yi-1.5 (Code)](https://huggingface.co/01-ai)                  | 1.5B/6B/9B/34B                   | yi                   |
 | [Yi-VL](https://huggingface.co/01-ai)                             | 6B/34B                           | yi_vl                |
 | [Yuan 2](https://huggingface.co/IEITYuan)                         | 2B/51B/102B                      | yuan                 |
