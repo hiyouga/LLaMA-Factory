@@ -15,15 +15,6 @@
 import os
 import socket
 
-import torch
-
-from llamafactory.v1.accelerator.helper import (
-    is_torch_cuda_available,
-    is_torch_mps_available,
-    is_torch_npu_available,
-    is_torch_xpu_available,
-)
-
 
 def find_available_port() -> int:
     r"""Find an available port on the local machine."""
@@ -32,36 +23,6 @@ def find_available_port() -> int:
     port = sock.getsockname()[1]
     sock.close()
     return port
-
-
-def get_current_device() -> "torch.device":
-    r"""Get the current available device."""
-    if is_torch_xpu_available():
-        device = "xpu:{}".format(os.getenv("LOCAL_RANK", "0"))
-    elif is_torch_npu_available():
-        device = "npu:{}".format(os.getenv("LOCAL_RANK", "0"))
-    elif is_torch_mps_available():
-        device = "mps:{}".format(os.getenv("LOCAL_RANK", "0"))
-    elif is_torch_cuda_available():
-        device = "cuda:{}".format(os.getenv("LOCAL_RANK", "0"))
-    else:
-        device = "cpu"
-
-    return torch.device(device)
-
-
-def get_device_count() -> int:
-    r"""Get the number of available devices."""
-    if is_torch_xpu_available():
-        return torch.xpu.device_count()
-    elif is_torch_npu_available():
-        return torch.npu.device_count()
-    elif is_torch_mps_available():
-        return torch.mps.device_count()
-    elif is_torch_cuda_available():
-        return torch.cuda.device_count()
-    else:
-        return 0
 
 
 def is_env_enabled(env_var: str, default: str = "0") -> bool:
