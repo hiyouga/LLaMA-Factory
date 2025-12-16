@@ -30,7 +30,7 @@ INFER_ARGS = {
 }
 
 
-@pytest.mark.runs_on(["cpu", "npu"])
+@pytest.mark.runs_on(["cpu", "npu", "cuda"])
 def test_base():
     model = load_infer_model(**INFER_ARGS)
     ref_model = load_reference_model(TINY_LLAMA3)

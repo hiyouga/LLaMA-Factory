@@ -39,7 +39,7 @@ TRAIN_ARGS = {
 }
 
 
-@pytest.mark.runs_on(["cpu", "npu"])
+@pytest.mark.runs_on(["cpu", "npu", "cuda"])
 @pytest.mark.parametrize("disable_gradient_checkpointing", [False, True])
 def test_vanilla_checkpointing(disable_gradient_checkpointing: bool):
     model = load_train_model(disable_gradient_checkpointing=disable_gradient_checkpointing, **TRAIN_ARGS)
@@ -47,14 +47,14 @@ def test_vanilla_checkpointing(disable_gradient_checkpointing: bool):
         assert getattr(module, "gradient_checkpointing") != disable_gradient_checkpointing
 
 
-@pytest.mark.runs_on(["cpu", "npu"])
+@pytest.mark.runs_on(["cpu", "npu", "cuda"])
 def test_unsloth_gradient_checkpointing():
     model = load_train_model(use_unsloth_gc=True, **TRAIN_ARGS)
     for module in filter(lambda m: hasattr(m, "gradient_checkpointing"), model.modules()):
         assert module._gradient_checkpointing_func.__self__.__name__ == "UnslothGradientCheckpointing"
 
 
-@pytest.mark.runs_on(["cpu", "npu"])
+@pytest.mark.runs_on(["cpu", "npu", "cuda"])
 def test_upcast_layernorm():
     model = load_train_model(upcast_layernorm=True, **TRAIN_ARGS)
     for name, param in model.named_parameters():
@@ -62,7 +62,7 @@ def test_upcast_layernorm():
             assert param.dtype == torch.float32
 
 
-@pytest.mark.runs_on(["cpu", "npu"])
+@pytest.mark.runs_on(["cpu", "npu", "cuda"])
 def test_upcast_lmhead_output():
     model = load_train_model(upcast_lmhead_output=True, **TRAIN_ARGS)
     inputs = torch.randn((1, 16), dtype=torch.float16, device=get_current_device())
