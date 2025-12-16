@@ -80,7 +80,6 @@ def load_reference_model(
     is_trainable: bool = False,
     add_valuehead: bool = False,
 ) -> Union["PreTrainedModel", "LoraModel"]:
-    # current_device = get_current_device()
     if add_valuehead:
         model: AutoModelForCausalLMWithValueHead = AutoModelForCausalLMWithValueHead.from_pretrained(
             model_path, torch_dtype=torch.float16, device_map="auto"

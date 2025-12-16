@@ -18,14 +18,25 @@ import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 
-from llamafactory.v1.accelerator.helper import ReduceOp, all_reduce, is_torch_npu_available
+from llamafactory.v1.accelerator.helper import ReduceOp, all_reduce, is_torch_cuda_available, is_torch_npu_available
 from llamafactory.v1.utils.utils import find_available_port
 
 
 def _dist_worker(rank, world_size):
-    torch.npu.set_device(rank)
+    if is_torch_cuda_available():
+        backend = "nccl"
+        device = torch.device(f"cuda:{rank}")
+        torch.cuda.set_device(rank)
+    elif is_torch_npu_available():
+        backend = "hccl"
+        device = torch.device(f"npu:{rank}")
+        torch.npu.set_device(rank)
+    else:
+        backend = "gloo"
+        device = torch.device("cpu")
+
     dist.init_process_group(
-        backend="hccl",
+        backend=backend,
         rank=rank,
         world_size=world_size,
     )
@@ -33,7 +44,7 @@ def _dist_worker(rank, world_size):
     # --------------------
     # Test all_reduce SUM
     # --------------------
-    y = torch.tensor(rank + 1.0, device="npu")
+    y = torch.tensor(rank + 1.0, device=device)
     y_sum = all_reduce(y.clone(), op=ReduceOp.SUM)
     assert y_sum.item() == 3.0
 
@@ -52,7 +63,7 @@ def _dist_worker(rank, world_size):
     dist.destroy_process_group()
 
 
-@pytest.mark.runs_on(["npu"])
+@pytest.mark.runs_on(["npu", "cuda"])
 @pytest.mark.require_distributed(2)
 def test_distributed_ops(monkeypatch):
     monkeypatch.setenv("MASTER_ADDR", "127.0.0.1")
