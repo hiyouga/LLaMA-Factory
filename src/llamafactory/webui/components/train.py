@@ -87,7 +87,7 @@ def create_train_tab(engine: "Engine") -> dict[str, "Component"]:
         )
     )
 
-    with gr.Accordion(open=False, visible=False) as extra_tab:
+    with gr.Accordion(open=False) as extra_tab:
         with gr.Row():
             logging_steps = gr.Slider(minimum=1, maximum=1000, value=5, step=5)
             save_steps = gr.Slider(minimum=10, maximum=5000, value=100, step=10)
