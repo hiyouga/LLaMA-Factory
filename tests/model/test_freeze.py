@@ -44,7 +44,7 @@ INFER_ARGS = {
 }
 
 
-@pytest.mark.runs_on(["cpu", "npu"])
+@pytest.mark.runs_on(["cpu", "npu", "cuda"])
 def test_freeze_train_all_modules():
     model = load_train_model(freeze_trainable_layers=1, **TRAIN_ARGS)
     for name, param in model.named_parameters():
@@ -56,7 +56,7 @@ def test_freeze_train_all_modules():
             assert param.dtype == torch.float16
 
 
-@pytest.mark.runs_on(["cpu", "npu"])
+@pytest.mark.runs_on(["cpu", "npu", "cuda"])
 def test_freeze_train_extra_modules():
     model = load_train_model(freeze_trainable_layers=1, freeze_extra_modules="embed_tokens,lm_head", **TRAIN_ARGS)
     for name, param in model.named_parameters():
@@ -68,7 +68,7 @@ def test_freeze_train_extra_modules():
             assert param.dtype == torch.float16
 
 
-@pytest.mark.runs_on(["cpu", "npu"])
+@pytest.mark.runs_on(["cpu", "npu", "cuda"])
 def test_freeze_inference():
     model = load_infer_model(**INFER_ARGS)
     for param in model.parameters():

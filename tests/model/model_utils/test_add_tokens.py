@@ -25,7 +25,7 @@ TINY_LLAMA3 = os.getenv("TINY_LLAMA3", "llamafactory/tiny-random-Llama-3")
 UNUSED_TOKEN = "<|UNUSED_TOKEN|>"
 
 
-@pytest.mark.runs_on(["cpu", "npu"])
+@pytest.mark.runs_on(["cpu", "npu", "cuda"])
 @pytest.mark.parametrize("special_tokens", [False, True])
 def test_add_tokens(special_tokens: bool):
     if special_tokens:

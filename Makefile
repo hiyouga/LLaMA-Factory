@@ -21,4 +21,4 @@ style:
 	ruff format $(check_dirs)
 
 test:
-	CUDA_VISIBLE_DEVICES= ASCEND_RT_VISIBLE_DEVICES=0 WANDB_DISABLED=true pytest -vv --import-mode=importlib tests/ tests_v1/
+	WANDB_DISABLED=true pytest -vv --import-mode=importlib tests/ tests_v1/

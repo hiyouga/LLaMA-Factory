@@ -59,7 +59,7 @@ class DataCollatorWithVerbose(DataCollatorWithPadding):
         return {k: v[:, :1] for k, v in batch.items()}  # truncate input length
 
 
-@pytest.mark.runs_on(["cpu", "npu"])
+@pytest.mark.runs_on(["cpu", "npu", "cuda"])
 @pytest.mark.parametrize("disable_shuffling", [False, True])
 def test_shuffle(disable_shuffling: bool):
     model_args, data_args, training_args, finetuning_args, _ = get_train_args(

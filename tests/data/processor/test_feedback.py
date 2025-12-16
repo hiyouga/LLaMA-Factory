@@ -42,7 +42,7 @@ TRAIN_ARGS = {
 }
 
 
-@pytest.mark.runs_on(["cpu", "npu"])
+@pytest.mark.runs_on(["cpu", "npu", "cuda"])
 @pytest.mark.parametrize("num_samples", [16])
 def test_feedback_data(num_samples: int):
     train_dataset = load_dataset_module(**TRAIN_ARGS)["train_dataset"]
