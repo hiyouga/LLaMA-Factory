@@ -22,9 +22,9 @@ import os
 import pytest
 from pytest import Config, Item
 
-from llamafactory.extras.misc import get_current_device, is_env_enabled
 from llamafactory.train.test_utils import patch_valuehead_model
 from llamafactory.v1.utils.packages import is_transformers_version_greater_than
+from llamafactory.v1.utils.utils import get_current_device, get_device_count, is_env_enabled
 
 
 try:
@@ -90,12 +90,11 @@ def _handle_device_visibility(items: list[Item]):
 
     # Parse visible devices
     visible_devices_env = os.environ.get(env_key)
-    if visible_devices_env:
-        visible_devices = [v for v in visible_devices_env.split(",") if v != ""]
+    if visible_devices_env is None:
+        available = get_device_count()
     else:
-        visible_devices = []
-
-    available = len(visible_devices) if visible_devices else 1
+        visible_devices = [v for v in visible_devices_env.split(",") if v != ""]
+        available = len(visible_devices)
 
     for item in items:
         marker = item.get_closest_marker("require_distributed")
