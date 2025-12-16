@@ -2147,6 +2147,7 @@ register_template(
     format_tools=ToolFormatter(tool_format="qwen"),
     stop_words=["<|im_end|>"],
     replace_eos=True,
+    template_class=ReasoningTemplate,
 )
 
 
