@@ -83,14 +83,7 @@ def _get_visible_devices_env() -> str | None:
 
 
 def _handle_device_visibility(items: list[Item]):
-    """Handle device visibility based on test markers.
-
-    - If NO test has @require_distributed:
-        -> force single-device visibility
-    - If ANY test has @require_distributed:
-        -> allow multi-device visibility
-        -> but skip tests whose required device count is not met.
-    """
+    """Handle device visibility based on test markers."""
     env_key = _get_visible_devices_env()
     if env_key is None or CURRENT_DEVICE == "cpu":
         return
@@ -102,22 +95,6 @@ def _handle_device_visibility(items: list[Item]):
     else:
         visible_devices = []
 
-    has_distributed_test = any(item.get_closest_marker("require_distributed") is not None for item in items)
-
-    # -------------------------------
-    # Case 1: no distributed tests
-    # -------------------------------
-    if not has_distributed_test:
-        # hard lock to single device
-        if visible_devices:
-            os.environ[env_key] = visible_devices[0]
-        else:
-            os.environ[env_key] = "0"
-        return
-
-    # -------------------------------
-    # Case 2: distributed tests exist
-    # -------------------------------
     available = len(visible_devices) if visible_devices else 1
 
     for item in items:
@@ -128,8 +105,6 @@ def _handle_device_visibility(items: list[Item]):
         required = marker.args[0] if marker.args else 2
         if available < required:
             item.add_marker(pytest.mark.skip(reason=f"test requires {required} devices, but only {available} visible"))
-        else:
-            os.environ[env_key] = ",".join(str(i) for i in range(required))
 
 
 def pytest_collection_modifyitems(config: Config, items: list[Item]):
@@ -141,7 +116,6 @@ def pytest_collection_modifyitems(config: Config, items: list[Item]):
             if "tests_v1" in str(item.fspath):
                 item.add_marker(skip_bc)
 
-    # Handle custom markers (from main-1213)
     _handle_slow_tests(items)
     _handle_runs_on(items)
     _handle_device_visibility(items)
@@ -150,17 +124,6 @@ def pytest_collection_modifyitems(config: Config, items: list[Item]):
 @pytest.fixture(autouse=True)
 def _manage_distributed_env(request):
     """Set environment variables for distributed tests if specific devices are requested."""
-    marker = request.node.get_closest_marker("require_distributed")
-    if not marker or len(marker.args) < 2:
-        yield
-        return
-
-    # User specified specific devices: @pytest.mark.require_distributed(2, [0, 1])
-    specific_devices = marker.args[1]
-    if not specific_devices:
-        yield
-        return
-
     env_key = _get_visible_devices_env()
     if not env_key:
         yield
@@ -169,16 +132,33 @@ def _manage_distributed_env(request):
     # Save old environment
     old_value = os.environ.get(env_key)
 
-    # Set new environment
-    devices_str = ",".join(map(str, specific_devices))
-    os.environ[env_key] = devices_str
+    marker = request.node.get_closest_marker("require_distributed")
+    if marker:
+        # Distributed test
+        required = marker.args[0] if marker.args else 2
+        specific_devices = marker.args[1] if len(marker.args) > 1 else None
+
+        if specific_devices:
+            devices_str = ",".join(map(str, specific_devices))
+        else:
+            devices_str = ",".join(str(i) for i in range(required))
+
+        os.environ[env_key] = devices_str
+    else:
+        # Non-distributed test
+        if old_value:
+            visible_devices = [v for v in old_value.split(",") if v != ""]
+            os.environ[env_key] = visible_devices[0] if visible_devices else "0"
+        else:
+            os.environ[env_key] = "0"
 
     try:
         yield
     finally:
         # Restore old environment
         if old_value is None:
-            del os.environ[env_key]
+            if env_key in os.environ:
+                del os.environ[env_key]
         else:
             os.environ[env_key] = old_value
 
