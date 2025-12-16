@@ -3527,7 +3527,7 @@ register_model_group(
             DownloadSource.MODELSCOPE: "WeiboAI/VibeThinker-1.5B",
         },
     },
-    template="vibethinker",
+    template="qwen3",
 )
 
 

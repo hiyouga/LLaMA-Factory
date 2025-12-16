@@ -2136,22 +2136,6 @@ register_template(
 
 
 register_template(
-    name="vibethinker",
-    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
-    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
-    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
-    format_function=FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="qwen"),
-    format_observation=StringFormatter(
-        slots=["<|im_start|>user\n<tool_response>\n{{content}}\n</tool_response><|im_end|>\n<|im_start|>assistant\n"]
-    ),
-    format_tools=ToolFormatter(tool_format="qwen"),
-    stop_words=["<|im_end|>"],
-    replace_eos=True,
-    template_class=ReasoningTemplate,
-)
-
-
-register_template(
     name="vicuna",
     format_user=StringFormatter(slots=["USER: {{content}} ASSISTANT:"]),
     default_system=(
