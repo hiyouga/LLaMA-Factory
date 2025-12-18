@@ -1,0 +1,48 @@
+# Start FSDP2 fine-tuning
+# accelerate launch \
+#     --config_file examples/accelerate/fsdp2_config.yaml \
+#     src/train.py examples/ascend/qwen3vlmoe_full_sft_fsdp2.yaml
+# Change `num_processes` in fsdp2_config.yaml to 16 in A3
+
+### model
+model_name_or_path: Qwen/Qwen3-VL-30B-A3B-Instruct
+image_max_pixels: 262144
+video_max_pixels: 16384
+trust_remote_code: true
+use_v1_kernels: true
+flash_attn: fa2
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full
+disable_gradient_checkpointing: false
+
+### dataset
+dataset: llava_1k_en, llava_1k_zh
+template: qwen3_vl
+cutoff_len: 1024
+overwrite_cache: true
+preprocessing_num_workers: 16
+dataloader_num_workers: 4
+
+### output
+output_dir: saves/Qwen3-VL-30B-A3B-Instruct/full/sft
+logging_steps: 1
+save_steps: 500
+max_steps: 500
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: true
+report_to: none  # choices: [none, wandb, tensorboard, swanlab, mlflow]
+
+### train
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 1
+learning_rate: 1.0e-4
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+resume_from_checkpoint: null
+seed: 1234
