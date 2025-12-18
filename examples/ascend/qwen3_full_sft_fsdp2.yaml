@@ -1,0 +1,45 @@
+# Start FSDP2 fine-tuning
+# accelerate launch \
+#     --config_file examples/accelerate/fsdp2_config.yaml \
+#     src/train.py examples/ascend/qwen3_full_sft_fsdp2.yaml
+# Change `num_processes` in fsdp2_config.yaml to 16 in A3
+
+### model
+model_name_or_path: Qwen/Qwen3-8B
+trust_remote_code: true
+use_v1_kernels: true
+flash_attn: fa2
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full
+
+### dataset
+dataset: alpaca_en_demo
+template: qwen3
+cutoff_len: 2048
+max_samples: 1000
+overwrite_cache: true
+preprocessing_num_workers: 16
+dataloader_num_workers: 4
+
+### output
+output_dir: saves/Qwen3-8B/full/sft
+logging_steps: 1
+save_steps: 500
+max_steps: 500
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: none  # choices: [none, wandb, tensorboard, swanlab, mlflow]
+
+### train
+per_device_train_batch_size: 8
+gradient_accumulation_steps: 1
+learning_rate: 1.0e-5
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 1800
+resume_from_checkpoint: null
