@@ -1,0 +1,91 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llamafactory"
+dynamic = [
+    "version",
+    "dependencies",
+    "optional-dependencies",
+    "requires-python",
+    "scripts",
+    "authors",
+    "description",
+    "readme",
+    "license",
+    "keywords",
+    "classifiers"
+]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 119
+indent-width = 4
+
+[tool.ruff.lint]
+ignore = [
+    "C408", # collection
+    "C901", # complex
+    "E501", # line too long
+    "E731", # lambda function
+    "E741", # ambiguous var name
+    "D100", # no doc public module
+    "D101", # no doc public class
+    "D102", # no doc public method
+    "D103", # no doc public function
+    "D104", # no doc public package
+    "D105", # no doc magic method
+    "D107", # no doc __init__
+]
+extend-select = [
+    "C",      # complexity
+    "E",      # error
+    "F",      # pyflakes
+    "I",      # isort
+    "W",      # warning
+    "UP",     # pyupgrade
+    "D",      # pydocstyle
+    "PT009",  # pytest assert
+    "RUF022", # sort __all__
+]
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
+known-first-party = ["llamafactory"]
+known-third-party = [
+    "accelerate",
+    "datasets",
+    "gradio",
+    "numpy",
+    "peft",
+    "torch",
+    "transformers",
+    "trl"
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.uv]
+conflicts = [
+    [
+        { extra = "torch-npu" },
+        { extra = "aqlm" },
+    ],
+    [
+        { extra = "torch-npu" },
+        { extra = "liger-kernel" },
+    ],
+    [
+        { extra = "torch-npu" },
+        { extra = "vllm" },
+    ]
+]

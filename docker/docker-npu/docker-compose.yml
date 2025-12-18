@@ -1,0 +1,33 @@
+services:
+  llamafactory:
+    build:
+      dockerfile: ./docker/docker-npu/Dockerfile
+      context: ../..
+      args:
+        INSTALL_DEEPSPEED: "false"
+        PIP_INDEX: https://pypi.org/simple
+    container_name: llamafactory
+    volumes:
+      - ../../hf_cache:/root/.cache/huggingface
+      - ../../ms_cache:/root/.cache/modelscope
+      - ../../om_cache:/root/.cache/openmind
+      - ../../data:/app/data
+      - ../../output:/app/output
+      - /usr/local/dcmi:/usr/local/dcmi
+      - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
+      - /usr/local/Ascend/driver:/usr/local/Ascend/driver
+      - /etc/ascend_install.info:/etc/ascend_install.info
+    ports:
+      - "7860:7860"
+      - "8000:8000"
+    ipc: host
+    tty: true
+    shm_size: "16gb"
+    stdin_open: true
+    command: bash
+    devices:
+      - /dev/davinci0
+      - /dev/davinci_manager
+      - /dev/devmm_svm
+      - /dev/hisi_hdc
+    restart: unless-stopped

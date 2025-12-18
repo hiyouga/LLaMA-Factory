@@ -1,0 +1,32 @@
+# Copyright (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+### model
+model_name_or_path: vit_b16
+
+### method
+stage: sft_clip
+do_train: true
+finetuning_type: full
+
+### output
+output_dir: saves/clip
+overwrite_output_dir: true
+
+### dataset
+dataset: caltech101
+template: default
+cutoff_len: 1024
+max_samples: 50
+overwrite_cache: true
+preprocessing_num_workers: 16
+
+### eval
+per_device_eval_batch_size: 1
+
+### clip
+root: /home/edgeai/data
+trainer: CLIP_Adapter_hf
+dataset_config_file: src/llamafactory/clip_finetune/configs/datasets/
+config_file: src/llamafactory/clip_finetune/configs/trainers/CLIP_Finetune/
+xpu: 0

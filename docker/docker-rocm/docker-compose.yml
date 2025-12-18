@@ -1,0 +1,33 @@
+services:
+  llamafactory:
+    build:
+      dockerfile: ./docker/docker-rocm/Dockerfile
+      context: ../..
+      args:
+        INSTALL_BNB: "false"
+        INSTALL_VLLM: "false"
+        INSTALL_DEEPSPEED: "false"
+        INSTALL_FLASHATTN: "false"
+        INSTALL_LIGER_KERNEL: "false"
+        INSTALL_HQQ: "false"
+        PIP_INDEX: https://pypi.org/simple
+    container_name: llamafactory
+    volumes:
+      - ../../hf_cache:/root/.cache/huggingface
+      - ../../ms_cache:/root/.cache/modelscope
+      - ../../om_cache:/root/.cache/openmind
+      - ../../data:/app/data
+      - ../../output:/app/output
+      - ../../saves:/app/saves
+    ports:
+      - "7860:7860"
+      - "8000:8000"
+    ipc: host
+    tty: true
+    shm_size: "16gb"
+    stdin_open: true
+    command: bash
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    restart: unless-stopped

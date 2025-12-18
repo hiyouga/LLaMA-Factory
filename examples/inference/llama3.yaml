@@ -1,0 +1,4 @@
+model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
+template: llama3
+infer_backend: huggingface  # choices: [huggingface, vllm]
+trust_remote_code: true

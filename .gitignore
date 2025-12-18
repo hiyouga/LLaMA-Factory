@@ -165,18 +165,17 @@ cython_debug/
 # uv
 uv.lock
 
-# macOS
-.DS_Store
-
 # custom .gitignore
-hf_cache/
+*.db
+*.csv
 ms_cache/
+hf_cache/
 om_cache/
-llamaboard_cache/
-llamaboard_config/
+cache/
+
 saves/
 output/
+tensorboard/
 wandb/
 swanlog/
 generated_predictions.jsonl
-predictions_score.json

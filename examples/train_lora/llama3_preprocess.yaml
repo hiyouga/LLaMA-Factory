@@ -1,0 +1,23 @@
+### model
+model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+lora_rank: 8
+lora_target: all
+
+### dataset
+dataset: identity,alpaca_en_demo
+template: llama3
+cutoff_len: 2048
+max_samples: 1000
+overwrite_cache: true
+preprocessing_num_workers: 16
+tokenized_path: saves/llama3-8b/dataset/sft
+
+### output
+output_dir: saves/llama3-8b/lora/sft
+overwrite_output_dir: true
