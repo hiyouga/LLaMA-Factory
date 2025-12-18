@@ -68,6 +68,9 @@ class SupervisedDatasetProcessor(DatasetProcessor):
                     )
                     assistant_loss_mask = None
 
+        if self.data_args.mask_history and assistant_loss_mask is not None:
+            assistant_loss_mask = assistant_loss_mask[::-1]  # align with reversed encoded_pairs
+
         for turn_idx, (source_ids, target_ids) in enumerate(encoded_pairs):
             if total_length >= self.data_args.cutoff_len:
                 break
