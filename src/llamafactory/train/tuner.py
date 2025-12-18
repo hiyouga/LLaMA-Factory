@@ -85,13 +85,7 @@ def _training_function(config: dict[str, Any]) -> None:
     elif finetuning_args.stage == "pt":
         run_pt(model_args, data_args, training_args, finetuning_args, callbacks)
     elif finetuning_args.stage == "sft":
-        if model_args.use_kt:
-            from .ksft.workflow import run_sft as run_sft_kt
-
-            run_sft_kt(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
-        else:
-            run_sft(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
-
+        run_sft(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
     elif finetuning_args.stage == "rm":
         run_rm(model_args, data_args, training_args, finetuning_args, callbacks)
     elif finetuning_args.stage == "ppo":
