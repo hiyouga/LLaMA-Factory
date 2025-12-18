@@ -20,11 +20,12 @@ import os
 import sys
 import warnings
 from types import MethodType
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 import torch
 from accelerate.utils import DistributedDataParallelKwargs
 from tqdm import tqdm
+from torch.optim.lr_scheduler import LambdaLR
 from transformers import GenerationConfig, Trainer, TrainerControl, TrainerState
 from transformers.optimization import get_scheduler
 from transformers.trainer import DEFAULT_CALLBACKS
@@ -33,15 +34,14 @@ from transformers.trainer_pt_utils import remove_dummy_checkpoint
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 from transformers.utils import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
 from trl import PPOConfig, PPOTrainer
-from trl.core import PPODecorators, logprobs_from_logits
 from trl.models.utils import unwrap_model_for_generation
 from typing_extensions import override
 
 from ...extras import logging
-from ...extras.misc import AverageMeter, count_parameters, get_current_device, get_logits_processor
+from ...extras.misc import AverageMeter, count_parameters, get_current_device, get_logits_processor, torch_gc
 from ..callbacks import FixValueHeadModelCallback, SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
-from .ppo_utils import dump_layernorm, get_rewards_from_server, replace_model, restore_layernorm
+from .ppo_utils import dump_layernorm, get_rewards_from_server, replace_model, restore_layernorm, logprobs_from_logits, masked_mean, masked_whiten
 
 
 if TYPE_CHECKING:
@@ -59,6 +59,30 @@ if TYPE_CHECKING:
 
 
 logger = logging.get_logger(__name__)
+
+
+class LlamaFactoryValueModelAdapter(torch.nn.Module):
+    r"""
+    A specific value model adapter to conform to the TRL interface.
+    """
+
+    def __init__(self, model: "AutoModelForCausalLMWithValueHead"):
+        super().__init__()
+        self.wrapped_model = model
+        self.v_head = model.v_head
+        self.base_model_prefix = model.base_model_prefix
+
+    def forward(self, *args, **kwargs):
+        return self.wrapped_model(*args, **kwargs)
+
+    def score(self, hidden_states: "torch.Tensor") -> "torch.Tensor":
+        return self.v_head(hidden_states)
+
+    def __getattr__(self, name: str):
+        try:
+            return super().__getattr__(name)
+        except AttributeError:
+            return getattr(self.wrapped_model, name)
 
 
 class CustomPPOTrainer(PPOTrainer, Trainer):
@@ -85,22 +109,16 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
 
         backward_batch_size = training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps
         ppo_config = PPOConfig(
-            model_name=model_args.model_name_or_path,
             learning_rate=training_args.learning_rate,
             mini_batch_size=training_args.per_device_train_batch_size,
             batch_size=backward_batch_size * finetuning_args.ppo_buffer_size,
             gradient_accumulation_steps=training_args.gradient_accumulation_steps,
-            ppo_epochs=finetuning_args.ppo_epochs,
+            num_ppo_epochs=finetuning_args.ppo_epochs,
             max_grad_norm=training_args.max_grad_norm,
             seed=training_args.seed,
-            optimize_device_cache=True,
-            target=finetuning_args.ppo_target,
-            use_score_scaling=finetuning_args.ppo_score_norm,
-            use_score_norm=finetuning_args.ppo_score_norm,
             whiten_rewards=finetuning_args.ppo_whiten_rewards,
-            accelerator_kwargs={"step_scheduler_with_optimizer": False},
-            log_with=training_args.report_to[0] if training_args.report_to else None,
-            project_kwargs={"logging_dir": training_args.logging_dir},
+            fp16=training_args.fp16, # TODO to be fix
+            bf16=training_args.bf16,
         )
 
         # Add deepspeed config
@@ -122,32 +140,66 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
                 len(train_dataset) / total_train_batch_size
             )
 
-        optimizer = self.create_optimizer(model, training_args, finetuning_args)
-        scheduler = self.create_scheduler(training_args, num_training_steps, optimizer)
+        optimizer = create_custom_optimizer(model, training_args, finetuning_args)
+        if optimizer is None:
+            optimizer = torch.optim.AdamW(model.parameters(), lr=training_args.learning_rate)
+
+        create_custom_scheduler(training_args, num_training_steps, optimizer)
+        lr_scheduler = get_scheduler(
+            training_args.lr_scheduler_type,
+            optimizer=optimizer,
+            num_warmup_steps=training_args.get_warmup_steps(num_training_steps),
+            num_training_steps=num_training_steps,
+            scheduler_specific_kwargs=training_args.lr_scheduler_kwargs,
+        )
+        if not isinstance(lr_scheduler, LambdaLR):
+            raise ValueError(
+                "The PPO trainer requires lr_scheduler to be torch.optim.lr_scheduler.LambdaLR, "
+                f"got {type(lr_scheduler)}."
+            )
+        lr_scheduler = cast(LambdaLR, lr_scheduler)
+
+        self.generation_config = GenerationConfig(
+            pad_token_id=tokenizer.pad_token_id,
+            eos_token_id=[tokenizer.eos_token_id] + tokenizer.additional_special_tokens_ids,
+            **generating_args.to_dict(),
+        )
+
+        # Force policy model to have generation_config if missing (for TRL logic)
+        if not hasattr(model, "generation_config"):
+            model.generation_config = self.generation_config
+
+        # Force policy model to have is_gradient_checkpointing if missing (for TRL 0.24)
+        if not hasattr(model, "is_gradient_checkpointing"):
+            if hasattr(model, "pretrained_model") and hasattr(model.pretrained_model, "is_gradient_checkpointing"):
+                model.is_gradient_checkpointing = model.pretrained_model.is_gradient_checkpointing
+            else:
+                model.is_gradient_checkpointing = getattr(model, "gradient_checkpointing", False)
 
         PPOTrainer.__init__(
             self,
-            config=ppo_config,
+            args=ppo_config,
+            processing_class=tokenizer,
             model=model,
             ref_model=ref_model,
-            tokenizer=tokenizer,
-            dataset=train_dataset,
-            optimizer=optimizer,
+            reward_model=reward_model,
+            train_dataset=train_dataset,
+            value_model=LlamaFactoryValueModelAdapter(reward_model),
             data_collator=data_collator,
-            lr_scheduler=scheduler,
+            optimizers=(optimizer, lr_scheduler),
         )
 
         self.args = training_args
+        self.config = ppo_config  # Save PPOConfig as self.config for compatibility
         self.model_args = model_args
         self.finetuning_args = finetuning_args
         self.reward_model = reward_model
+        if self.reward_model is not None:
+            if getattr(self.reward_model.config, "pad_token_id", None) is None:
+                self.reward_model.config.pad_token_id = tokenizer.pad_token_id
+            if not hasattr(self.reward_model, "generation_config"):
+                self.reward_model.generation_config = self.generation_config
         self.current_device = get_current_device()  # patch for deepspeed training
-
-        self.generation_config = GenerationConfig(
-            pad_token_id=self.tokenizer.pad_token_id,
-            eos_token_id=[self.tokenizer.eos_token_id] + self.tokenizer.additional_special_tokens_ids,
-            **generating_args.to_dict(),
-        )
 
         self.state = TrainerState()
         self.control = TrainerControl()
@@ -294,6 +346,180 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
 
         self.callback_handler.on_train_end(self.args, self.state, self.control)
 
+    def prepare_model_inputs(self, queries: list["torch.Tensor"], responses: list["torch.Tensor"]) -> dict[str, "torch.Tensor"]:
+        queries = [q.to(self.current_device) for q in queries]
+        responses = [r.to(self.current_device) for r in responses]
+
+        input_ids = [torch.cat([q, r]) for q, r in zip(queries, responses)]
+        input_ids = torch.nn.utils.rnn.pad_sequence(input_ids, batch_first=True, padding_value=self.tokenizer.pad_token_id)
+        attention_mask = input_ids.ne(self.tokenizer.pad_token_id)
+        return {"input_ids": input_ids, "attention_mask": attention_mask}
+
+    def step(
+        self,
+        queries: list["torch.Tensor"],
+        responses: list["torch.Tensor"],
+        rewards: list["torch.Tensor"],
+    ) -> dict[str, Any]:
+
+        # 1. Prepare batch
+        model_inputs = self.prepare_model_inputs(queries, responses)
+        input_ids = model_inputs["input_ids"]
+        attention_mask = model_inputs["attention_mask"]
+        rewards = torch.tensor(rewards, device=self.current_device)
+
+        bs = len(queries)
+
+        # 2. Compute logprobs, values, ref_logprobs
+        with torch.no_grad():
+            logprobs_list, values_list, ref_logprobs_list = [], [], []
+
+            fbs = self.config.mini_batch_size # forward batch size
+            for i in range(math.ceil(bs / fbs)):
+                start, end = i * fbs, (i + 1) * fbs
+                mb_input_ids = input_ids[start:end]
+                mb_attention_mask = attention_mask[start:end]
+
+                # Forward pass
+                output, vpred_temp = self.model(input_ids=mb_input_ids, attention_mask=mb_attention_mask, return_dict=True, use_cache=False)
+                logits = output.logits[:, :-1]
+                logits /= self.config.temperature + 1e-7
+                all_logprobs = logprobs_from_logits(logits, mb_input_ids[:, 1:])
+                vpred = vpred_temp[:, :-1].squeeze(-1)
+
+                # Reference model
+                if self.ref_model is None:
+                    with self.null_ref_context():
+                        ref_output = self.model.policy(input_ids=mb_input_ids, attention_mask=mb_attention_mask, return_dict=True, use_cache=False)
+                else:
+                    ref_output = self.ref_model(input_ids=mb_input_ids, attention_mask=mb_attention_mask, return_dict=True, use_cache=False)
+
+                ref_logits = ref_output.logits[:, :-1]
+                ref_logits /= self.config.temperature + 1e-7
+                ref_logprobs = logprobs_from_logits(ref_logits, mb_input_ids[:, 1:])
+
+                logprobs_list.append(all_logprobs)
+                values_list.append(vpred)
+                ref_logprobs_list.append(ref_logprobs)
+
+            logprobs = torch.cat(logprobs_list)
+            values = torch.cat(values_list)
+            ref_logprobs = torch.cat(ref_logprobs_list)
+
+            # Construct masks
+            masks = torch.zeros_like(logprobs)
+            for j in range(len(queries)):
+                q_len = len(queries[j])
+                r_len = len(responses[j])
+                masks[j, q_len-1 : q_len + r_len - 1] = 1.0
+
+            padding_mask = (input_ids[:, 1:] == self.tokenizer.pad_token_id)
+            masks = masks * (~padding_mask)
+
+        # 3. Compute rewards, advantages
+        logr = ref_logprobs - logprobs
+
+        # KL penalty
+        if self.config.kl_estimator == "k1":
+            kl = -logr
+        else:
+            kl = (logr.exp() - 1) - logr
+
+        non_score_reward = -self.config.kl_coef * kl
+
+        # Add scores to rewards
+        full_rewards = non_score_reward.clone()
+        for j in range(len(queries)):
+            q_len = len(queries[j])
+            r_len = len(responses[j])
+            idx = q_len + r_len - 2
+            if idx < 0: idx = 0
+            full_rewards[j, idx] += rewards[j]
+
+        # Whiten
+        if self.config.whiten_rewards:
+            full_rewards = masked_whiten(full_rewards, mask=masks, shift_mean=False)
+            full_rewards = full_rewards * masks
+
+        # Advantages (GAE)
+        lastgaelam = 0
+        advantages_reversed = []
+        gen_len = values.shape[1]
+        for t in reversed(range(gen_len)):
+            nextvalues = values[:, t + 1] if t < gen_len - 1 else 0.0
+            delta = full_rewards[:, t] + self.config.gamma * nextvalues - values[:, t]
+            lastgaelam = delta + self.config.gamma * self.config.lam * lastgaelam
+            advantages_reversed.append(lastgaelam)
+        advantages = torch.stack(advantages_reversed[::-1], axis=1)
+        returns = advantages + values
+
+        # Whiten advantages
+        advantages = masked_whiten(advantages, masks)
+        advantages = advantages * masks
+
+        # 4. PPO Epochs
+        approxkl_stats = []
+        pg_loss_stats = []
+        vf_loss_stats = []
+        entropy_stats = []
+
+        for _ in range(self.config.num_ppo_epochs):
+            b_inds = torch.randperm(bs)
+            for mini_batch_start in range(0, bs, self.config.mini_batch_size):
+                mini_batch_end = mini_batch_start + self.config.mini_batch_size
+                mini_batch_inds = b_inds[mini_batch_start:mini_batch_end]
+
+                mb_input_ids = input_ids[mini_batch_inds]
+                mb_attention_mask = attention_mask[mini_batch_inds]
+                mb_advantages = advantages[mini_batch_inds]
+                mb_returns = returns[mini_batch_inds]
+                mb_values = values[mini_batch_inds]
+                mb_logprobs = logprobs[mini_batch_inds]
+                mb_masks = masks[mini_batch_inds]
+
+                output, vpred_temp = self.model(input_ids=mb_input_ids, attention_mask=mb_attention_mask, return_dict=True, use_cache=False)
+                logits = output.logits[:, :-1]
+                logits /= self.config.temperature + 1e-7
+                new_logprobs = logprobs_from_logits(logits, mb_input_ids[:, 1:])
+                vpred = vpred_temp[:, :-1].squeeze(-1)
+
+                vpredclipped = torch.clamp(
+                    vpred,
+                    mb_values - self.config.cliprange_value,
+                    mb_values + self.config.cliprange_value,
+                )
+
+                vf_losses1 = torch.square(vpred - mb_returns)
+                vf_losses2 = torch.square(vpredclipped - mb_returns)
+                vf_loss = 0.5 * masked_mean(torch.max(vf_losses1, vf_losses2), mb_masks)
+
+                logprobs_diff = new_logprobs - mb_logprobs
+                ratio = torch.exp(logprobs_diff)
+                pg_losses = -mb_advantages * ratio
+                pg_losses2 = -mb_advantages * torch.clamp(ratio, 1.0 - self.config.cliprange, 1.0 + self.config.cliprange)
+                pg_loss = masked_mean(torch.max(pg_losses, pg_losses2), mb_masks)
+
+                loss = pg_loss + self.config.vf_coef * vf_loss
+
+                self.accelerator.backward(loss)
+                self.optimizer.step()
+                self.optimizer.zero_grad()
+
+                with torch.no_grad():
+                     approxkl = 0.5 * masked_mean((logprobs_diff**2), mb_masks)
+                     probabilities = torch.softmax(logits, dim=-1)
+                     entropy = torch.logsumexp(logits, dim=-1) - torch.sum(probabilities * logits, dim=-1)
+                     approxkl_stats.append(approxkl)
+                     pg_loss_stats.append(pg_loss)
+                     vf_loss_stats.append(vf_loss)
+                     entropy_stats.append(masked_mean(entropy, mb_masks))
+
+        return {
+            "ppo/loss/total": torch.stack(pg_loss_stats).mean() + self.config.vf_coef * torch.stack(vf_loss_stats).mean(),
+            "ppo/policy/approxkl": torch.stack(approxkl_stats).mean().item(),
+            "ppo/learning_rate": self.lr_scheduler.get_last_lr()[0],
+        }
+
     @override
     def create_optimizer(
         self,
@@ -390,8 +616,13 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         batch: dict[str, torch.Tensor] = self.prepare_model_inputs(queries, responses)
         unwrapped_model: AutoModelForCausalLMWithValueHead = self.accelerator.unwrap_model(self.model)
 
+        if hasattr(unwrapped_model, "value_model"):
+             value_model_obj = unwrapped_model.value_model
+        else:
+             value_model_obj = unwrapped_model
+
         if self.finetuning_args.reward_model_type in ["lora", "oft"]:
-            replace_model(unwrapped_model, target="reward")
+            replace_model(value_model_obj, target="reward")
             reward_model = self.model
         else:
             reward_model = self.reward_model
@@ -400,13 +631,12 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             values: torch.Tensor = reward_model(**batch, return_dict=True, use_cache=False)[-1]
 
         if self.finetuning_args.reward_model_type in ["lora", "oft"]:
-            replace_model(unwrapped_model, target="default")
+            replace_model(value_model_obj, target="default")
 
         rewards = values.gather(dim=-1, index=(batch["attention_mask"].sum(dim=-1, keepdim=True) - 1))
         return rewards.float().detach()  # use fp32 type
 
     @override
-    @PPODecorators.empty_device_cache()
     def batched_forward_pass(
         self,
         model: "AutoModelForCausalLMWithValueHead",
@@ -420,6 +650,8 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
 
         Subclass and override to inject custom behavior.
         """
+        torch_gc()
+
         bs = len(queries)
         fbs = self.config.mini_batch_size
         all_logprobs = []
@@ -482,22 +714,39 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         if output_dir is None:
             output_dir = self.args.output_dir
 
-        if self.is_fsdp_enabled or self.is_deepspeed_enabled:
-            try:
-                state_dict = self.accelerator.get_state_dict(self.model)  # must be called at all ranks
-                if self.args.should_save:
-                    self._save(output_dir, state_dict=state_dict)
-            except ValueError:
-                logger.warning_rank0(
-                    " stage3_gather_16bit_weights_on_model_save=false. Saving the full checkpoint instead,"
-                    " use zero_to_fp32.py to recover weights"
-                )
-                if self.args.should_save:
-                    self._save(output_dir, state_dict={})
-                # remove the dummy state_dict
-                remove_dummy_checkpoint(self.args.should_save, output_dir, [WEIGHTS_NAME, SAFE_WEIGHTS_NAME])
-                self.model.save_checkpoint(output_dir)
+        # TRL 0.24 compatibility: save policy only
+        backup_model = None
+        backup_deepspeed = None
+        if hasattr(self.model, "policy"): # Check if wrapper
+             backup_model = self.model
+             self.model = self.model.policy
 
-        elif self.args.should_save:
-            unwrapped_model: AutoModelForCausalLMWithValueHead = self.accelerator.unwrap_model(self.model)
-            self._save(output_dir, state_dict=unwrapped_model.state_dict())
+             if self.is_deepspeed_enabled:
+                backup_deepspeed = getattr(self, "deepspeed", None)
+                self.deepspeed = self.model
+
+        try:
+            if self.is_fsdp_enabled or self.is_deepspeed_enabled:
+                try:
+                    state_dict = self.accelerator.get_state_dict(self.model)  # must be called at all ranks
+                    if self.args.should_save:
+                        self._save(output_dir, state_dict=state_dict)
+                except ValueError:
+                    logger.warning_rank0(
+                        " stage3_gather_16bit_weights_on_model_save=false. Saving the full checkpoint instead,"
+                        " use zero_to_fp32.py to recover weights"
+                    )
+                    if self.args.should_save:
+                        self._save(output_dir, state_dict={})
+                    # remove the dummy state_dict
+                    remove_dummy_checkpoint(self.args.should_save, output_dir, [WEIGHTS_NAME, SAFE_WEIGHTS_NAME])
+                    self.model.save_checkpoint(output_dir)
+
+            elif self.args.should_save:
+                unwrapped_model: AutoModelForCausalLMWithValueHead = self.accelerator.unwrap_model(self.model)
+                self._save(output_dir, state_dict=unwrapped_model.state_dict())
+        finally:
+             if backup_model is not None:
+                 self.model = backup_model
+                 if self.is_deepspeed_enabled:
+                      self.deepspeed = backup_deepspeed
