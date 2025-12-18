@@ -55,7 +55,7 @@ def patch_qwen3_omni_moe_thinker_text_sparse_moe_block():
         from .model_utils.moe import Qwen3OmniMoeThinkerTextSparseMoeBlock
 
         logger.warning_rank0(
-            "You are using transformers with 4.x version,  the Qwen3OmniMoeThinkerTextSparseMoeBlock will have some issues about deepspeed zero2 and fsdp2 training, so that we patched this model to avoid this issue. Transformers v5.0.0rc0 has fix this issue, you can also try to update the transformers to using qwen3_omni. See it on https://github.com/hiyouga/LLaMA-Factory/issues/9628"
+            "You are using transformers with 4.x version, the Qwen3OmniMoeThinkerTextSparseMoeBlock will have some issues about deepspeed zero2 and fsdp2 training, so that we patched this model to avoid it. Transformers v5.0.0rc0 has fixed the issue, you can also try to update the transformers to using qwen3_omni. See more information on https://github.com/hiyouga/LLaMA-Factory/issues/9628."
         )
 
         modeling_qwen3_omni_moe.Qwen3OmniMoeThinkerTextSparseMoeBlock = Qwen3OmniMoeThinkerTextSparseMoeBlock
