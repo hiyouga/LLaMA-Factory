@@ -1,12 +1,12 @@
 ## `Xtune` Examples
 
-See screenshot of running CLIP and AdaCLIP finetune on Intel Arc A770 below.
+See screenshot of running cnCLIP / CLIP and AdaCLIP finetune on Intel Arc A770 below.
 
 UI component details can be seen [here](./doc/ui_component.md).
 
 <table width="100%">
   <tr>
-    <td align="center" colspan="1"><strong>CLIP finetune</strong></td>
+    <td align="center" colspan="1"><strong>CnCLIP/CLIP finetune</strong></td>
     <td align="center" colspan="1"><strong>AdaCLIP finetune</strong></td>
   <tr>
   <tr>
