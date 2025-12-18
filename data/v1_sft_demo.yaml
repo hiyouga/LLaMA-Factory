@@ -1,9 +1,0 @@
-identity:
-  path: data/identity.json
-  source: local
-  converter: alpaca
-alpaca_en_demo:
-  path: data/alpaca_en_demo.json
-  source: local
-  converter: alpaca
-  size: 500
