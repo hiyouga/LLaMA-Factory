@@ -49,6 +49,7 @@ class Template:
     default_system: str
     stop_words: list[str]
     thought_words: tuple[str, str]
+    tool_call_words: tuple[str, str]
     efficient_eos: bool
     replace_eos: bool
     replace_jinja_template: bool
@@ -156,7 +157,9 @@ class Template:
             elif message["role"] == Role.OBSERVATION:
                 elements += self.format_observation.apply(content=message["content"])
             elif message["role"] == Role.FUNCTION:
-                elements += self.format_function.apply(content=message["content"], thought_words=self.thought_words)
+                elements += self.format_function.apply(
+                    content=message["content"], thought_words=self.thought_words, tool_call_words=self.tool_call_words
+                )
             else:
                 raise NotImplementedError("Unexpected role: {}".format(message["role"]))
 
@@ -471,6 +474,7 @@ def register_template(
     default_system: str = "",
     stop_words: Optional[list[str]] = None,
     thought_words: Optional[tuple[str, str]] = None,
+    tool_call_words: Optional[tuple[str, str]] = None,
     efficient_eos: bool = False,
     replace_eos: bool = False,
     replace_jinja_template: bool = False,
@@ -522,6 +526,7 @@ def register_template(
         default_system=default_system,
         stop_words=stop_words or [],
         thought_words=thought_words or ("<think>\n", "\n</think>\n\n"),
+        tool_call_words=tool_call_words or ("<tool_call>", "</tool_call>"),
         efficient_eos=efficient_eos,
         replace_eos=replace_eos,
         replace_jinja_template=replace_jinja_template,
@@ -583,6 +588,7 @@ def parse_template(tokenizer: "PreTrainedTokenizer") -> "Template":
         default_system=default_system,
         stop_words=[],
         thought_words=("<think>\n", "\n</think>\n\n"),
+        tool_call_words=("<tool_call>", "</tool_call>"),
         efficient_eos=False,
         replace_eos=False,
         replace_jinja_template=False,

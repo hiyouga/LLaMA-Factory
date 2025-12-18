@@ -19,23 +19,29 @@ from typing_extensions import NotRequired
 
 if TYPE_CHECKING:
     import datasets
+    import numpy as np
     import torch
     import torch.utils.data
     import transformers
+    from torch.distributed import ProcessGroup
+    from torch.distributed.fsdp import FullyShardedDataParallel
 
     Tensor = torch.Tensor
+    TensorLike = Union[int, float, list[int], list[float], np.ndarray, Tensor]
     TorchDataset = Union[torch.utils.data.Dataset, torch.utils.data.IterableDataset]
     HFDataset = Union[datasets.Dataset, datasets.IterableDataset]
     DataCollator = transformers.DataCollator
     DataLoader = torch.utils.data.DataLoader
     HFConfig = transformers.PretrainedConfig
     HFModel = transformers.PreTrainedModel
-    DistModel = torch.nn.parallel.DistributedDataParallel
+    DistModel = Union[torch.nn.parallel.DistributedDataParallel, FullyShardedDataParallel]
     Processor = Union[transformers.PreTrainedTokenizer, transformers.ProcessorMixin]
     Optimizer = torch.optim.Optimizer
     Scheduler = torch.optim.lr_scheduler.LRScheduler
+    ProcessGroup = ProcessGroup
 else:
     Tensor = None
+    TensorLike = None
     TorchDataset = None
     HFDataset = None
     DataCollator = None
@@ -46,15 +52,14 @@ else:
     Processor = None
     Optimizer = None
     Scheduler = None
+    ProcessGroup = None
 
 
 class DatasetInfo(TypedDict, total=False):
-    hf_hub_url: NotRequired[str]
-    """HF hub dataset uri."""
-    file_name: NotRequired[str]
+    path: str
     """Local file path."""
-    dataset_dir: NotRequired[str]
-    """Dataset directory, default to args.dataset_dir."""
+    source: NotRequired[Literal["hf_hub", "ms_hub", "local"]]
+    """Dataset source, default to "hf_hub"."""
     split: NotRequired[str]
     """Dataset split, default to "train"."""
     converter: NotRequired[str]
@@ -67,13 +72,26 @@ class DatasetInfo(TypedDict, total=False):
     """Is streaming dataset, default to False."""
 
 
+class DistributedConfig(TypedDict, total=False):
+    mp_replicate_size: NotRequired[int]
+    """Model parallel replicate size, default to 1."""
+    mp_shard_size: NotRequired[int]
+    """Model parallel shard size, default to world_size // mp_replicate_size."""
+    dp_size: NotRequired[int]
+    """Data parallel size, default to world_size // cp_size."""
+    cp_size: NotRequired[int]
+    """Context parallel size, default to 1."""
+    timeout: NotRequired[int]
+    """Timeout for distributed communication, default to 600."""
+
+
 class Content(TypedDict):
-    type: Literal["text", "tools", "reasoning", "tool_calls", "image_url"]
+    type: Literal["text", "reasoning", "tools", "tool_calls", "image_url"]
     value: str
 
 
 class Message(TypedDict):
-    role: Literal["system", "user", "assistant"]
+    role: Literal["system", "user", "assistant", "tool"]
     content: list[Content]
     loss_weight: float
 

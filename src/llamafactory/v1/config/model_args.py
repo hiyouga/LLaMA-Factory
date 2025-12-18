@@ -14,6 +14,9 @@
 
 
 from dataclasses import dataclass, field
+from typing import Optional
+
+from .arg_utils import ModelClass, PluginConfig, get_plugin_config
 
 
 @dataclass
@@ -29,7 +32,24 @@ class ModelArguments:
         default=True,
         metadata={"help": "Use fast processor from Hugging Face."},
     )
-    auto_model_class: str = field(
-        default="causallm",
+    model_class: ModelClass = field(
+        default=ModelClass.LLM,
         metadata={"help": "Model class from Hugging Face."},
     )
+    peft_config: Optional[PluginConfig] = field(
+        default=None,
+        metadata={"help": "PEFT configuration for the model."},
+    )
+    kernel_config: Optional[PluginConfig] = field(
+        default=None,
+        metadata={"help": "Kernel configuration for the model."},
+    )
+    quant_config: Optional[PluginConfig] = field(
+        default=None,
+        metadata={"help": "Quantization configuration for the model."},
+    )
+
+    def __post_init__(self) -> None:
+        self.peft_config = get_plugin_config(self.peft_config)
+        self.kernel_config = get_plugin_config(self.kernel_config)
+        self.quant_config = get_plugin_config(self.quant_config)

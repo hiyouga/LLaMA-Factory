@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import json
 import sys
 from pathlib import Path
@@ -28,9 +27,25 @@ from .sample_args import SampleArguments
 from .training_args import TrainingArguments
 
 
-def get_args(
-    args: Optional[Union[dict[str, Any], list[str]]] = None,
-) -> tuple[DataArguments, ModelArguments, TrainingArguments, SampleArguments]:
+InputArgument = Optional[Union[dict[str, Any], list[str]]]
+
+
+def validate_args(
+    data_args: DataArguments,
+    model_args: ModelArguments,
+    training_args: TrainingArguments,
+    sample_args: SampleArguments,
+):
+    """Validate arguments."""
+    if (
+        model_args.quant_config is not None
+        and training_args.dist_config is not None
+        and training_args.dist_config.name == "deepspeed"
+    ):
+        raise ValueError("Quantization is not supported with deepspeed backend.")
+
+
+def get_args(args: InputArgument = None) -> tuple[DataArguments, ModelArguments, TrainingArguments, SampleArguments]:
     """Parse arguments from command line or config file."""
     parser = HfArgumentParser([DataArguments, ModelArguments, TrainingArguments, SampleArguments])
     allow_extra_keys = is_env_enabled("ALLOW_EXTRA_KEYS")
@@ -55,6 +70,8 @@ def get_args(
             print(parser.format_help())
             print(f"Got unknown args, potentially deprecated arguments: {unknown_args}")
             raise ValueError(f"Some specified arguments are not used by the HfArgumentParser: {unknown_args}")
+
+    validate_args(*parsed_args)
 
     return tuple(parsed_args)
 

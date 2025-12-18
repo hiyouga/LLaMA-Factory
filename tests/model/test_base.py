@@ -30,16 +30,14 @@ INFER_ARGS = {
 }
 
 
-@pytest.mark.runs_on(["cpu", "npu"])
-@pytest.mark.skip_on_devices("npu")
+@pytest.mark.runs_on(["cpu", "npu", "cuda"])
 def test_base():
     model = load_infer_model(**INFER_ARGS)
     ref_model = load_reference_model(TINY_LLAMA3)
     compare_model(model, ref_model)
 
 
-@pytest.mark.runs_on(["cpu", "npu"])
-@pytest.mark.skip_on_devices("npu")
+@pytest.mark.runs_on(["cpu"])
 @pytest.mark.usefixtures("fix_valuehead_cpu_loading")
 def test_valuehead():
     model = load_infer_model(add_valuehead=True, **INFER_ARGS)

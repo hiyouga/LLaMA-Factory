@@ -22,9 +22,10 @@ import os
 import pytest
 from pytest import Config, Item
 
-from llamafactory.extras.misc import get_current_device, get_device_count, is_env_enabled
-from llamafactory.extras.packages import is_transformers_version_greater_than
 from llamafactory.train.test_utils import patch_valuehead_model
+from llamafactory.v1.accelerator.helper import get_current_device, get_device_count
+from llamafactory.v1.utils.packages import is_transformers_version_greater_than
+from llamafactory.v1.utils.utils import is_env_enabled
 
 
 try:

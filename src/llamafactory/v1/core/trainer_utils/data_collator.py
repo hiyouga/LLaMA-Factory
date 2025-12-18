@@ -15,7 +15,7 @@
 
 from typing import Any
 
-from ...extras.types import Processor, Tensor, TorchDataset
+from ...utils.types import Processor, Tensor, TorchDataset
 
 
 class DataCollator:

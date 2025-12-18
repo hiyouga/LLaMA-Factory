@@ -23,7 +23,7 @@ from llamafactory.hparams import FinetuningArguments, ModelArguments
 from llamafactory.model.adapter import init_adapter
 
 
-@pytest.mark.runs_on(["cpu", "npu"])
+@pytest.mark.runs_on(["cpu", "npu", "cuda"])
 @pytest.mark.parametrize("freeze_vision_tower", (False, True))
 @pytest.mark.parametrize("freeze_multi_modal_projector", (False, True))
 @pytest.mark.parametrize("freeze_language_model", (False, True))
@@ -49,7 +49,7 @@ def test_visual_full(freeze_vision_tower: bool, freeze_multi_modal_projector: bo
             assert param.requires_grad != freeze_language_model
 
 
-@pytest.mark.runs_on(["cpu", "npu"])
+@pytest.mark.runs_on(["cpu", "npu", "cuda"])
 @pytest.mark.parametrize("freeze_vision_tower,freeze_language_model", ((False, False), (False, True), (True, False)))
 def test_visual_lora(freeze_vision_tower: bool, freeze_language_model: bool):
     model_args = ModelArguments(model_name_or_path="Qwen/Qwen2-VL-2B-Instruct")
@@ -82,7 +82,7 @@ def test_visual_lora(freeze_vision_tower: bool, freeze_language_model: bool):
     assert (merger_param_name in trainable_params) is False
 
 
-@pytest.mark.runs_on(["cpu", "npu"])
+@pytest.mark.runs_on(["cpu", "npu", "cuda"])
 def test_visual_model_save_load():
     # check VLM's state dict: https://github.com/huggingface/transformers/pull/38385
     model_args = ModelArguments(model_name_or_path="Qwen/Qwen2-VL-2B-Instruct")

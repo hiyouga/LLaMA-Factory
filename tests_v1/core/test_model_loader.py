@@ -12,27 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import torch
 
-from ..accelerator.interface import DistributedInterface
-from ..config.arg_parser import get_args
-from ..core.base_trainer import BaseTrainer
-from ..core.data_engine import DataEngine
-from ..core.model_loader import ModelLoader
+from llamafactory.v1.config.model_args import ModelArguments
+from llamafactory.v1.core.model_loader import ModelLoader
 
 
-class SFTTrainer(BaseTrainer):
-    pass
+def test_tiny_qwen():
+    from transformers import Qwen2Config, Qwen2ForCausalLM, Qwen2TokenizerFast
 
-
-def run_sft(user_args):
-    model_args, data_args, training_args, _ = get_args(user_args)
-    DistributedInterface(training_args.dist_config)
-    data_engine = DataEngine(data_args)
+    model_args = ModelArguments(model="llamafactory/tiny-random-qwen2.5")
     model_loader = ModelLoader(model_args)
-    trainer = SFTTrainer(
-        args=training_args,
-        model=model_loader.model,
-        processor=model_loader.processor,
-        dataset=data_engine,
-    )
-    trainer.fit()
+    assert isinstance(model_loader.processor, Qwen2TokenizerFast)
+    assert isinstance(model_loader.model.config, Qwen2Config)
+    assert isinstance(model_loader.model, Qwen2ForCausalLM)
+    assert model_loader.model.dtype == torch.bfloat16
+
+
+if __name__ == "__main__":
+    test_tiny_qwen()

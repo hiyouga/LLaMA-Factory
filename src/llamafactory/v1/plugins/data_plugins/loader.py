@@ -14,57 +14,59 @@
 
 
 import os
-from dataclasses import dataclass
+import random
 from typing import Any, Literal, Optional, Union
 
 from datasets import load_dataset
 
-from ...extras.types import DatasetInfo, HFDataset
+from ...utils.plugin import BasePlugin
+from ...utils.types import DatasetInfo, HFDataset
 
 
-@dataclass
-class DataLoaderPlugin:
+class DataLoaderPlugin(BasePlugin):
     """Plugin for loading dataset."""
 
-    def _get_builder_name(self, path: str) -> Literal["arrow", "csv", "json", "parquet", "text"]:
-        """Get dataset builder name.
-
-        Args:
-            path (str): Dataset path.
-
-        Returns:
-            Literal["arrow", "csv", "json", "parquet", "text"]: Dataset builder name.
-        """
-        return os.path.splitext(path)[-1][1:].replace("jsonl", "json").replace("txt", "text")
-
-    def auto_load_data(self, dataset_info: DatasetInfo) -> HFDataset:
-        dataset_dir = dataset_info.get("dataset_dir", ".")
+    def load(self, dataset_info: DatasetInfo) -> HFDataset:
+        path = dataset_info["path"]
         split = dataset_info.get("split", "train")
         streaming = dataset_info.get("streaming", False)
-        if "file_name" in dataset_info:
-            filepath = os.path.join(dataset_dir, dataset_info["file_name"])
-            return self.load_data_from_file(filepath, split, streaming)
-        else:
-            raise NotImplementedError()
-
-    def load_data_from_file(self, filepath: str, split: str, streaming: bool) -> HFDataset:
-        if os.path.isdir(filepath):
-            filetype = self._get_builder_name(os.listdir(filepath)[0])
-            dataset = load_dataset(filetype, data_dir=filepath, split=split)
-        elif os.path.isfile(filepath):
-            filetype = self._get_builder_name(filepath)
-            dataset = load_dataset(filetype, data_files=filepath, split=split)
-        else:
-            raise ValueError(f"Can not load dataset from {filepath}.")
-
-        if streaming:
-            dataset = dataset.to_iterable_dataset()
-
-        return dataset
+        return super().__call__(path, split, streaming)
 
 
-@dataclass
-class DataIndexPlugin:
+def _get_builder_name(path: str) -> Literal["arrow", "csv", "json", "parquet", "text"]:
+    """Get dataset builder name.
+
+    Args:
+        path (str): Dataset path.
+
+    Returns:
+        Literal["arrow", "csv", "json", "parquet", "text"]: Dataset builder name.
+    """
+    filetype = os.path.splitext(path)[-1][1:]
+    if filetype in ["arrow", "csv", "json", "jsonl", "parquet", "txt"]:
+        return filetype.replace("jsonl", "json").replace("txt", "text")
+    else:
+        raise ValueError(f"Unknown dataset filetype: {filetype}.")
+
+
+@DataLoaderPlugin("local").register
+def load_data_from_file(filepath: str, split: str, streaming: bool) -> HFDataset:
+    if os.path.isdir(filepath):
+        filetype = _get_builder_name(os.listdir(filepath)[0])
+        dataset = load_dataset(filetype, data_dir=filepath, split=split)
+    elif os.path.isfile(filepath):
+        filetype = _get_builder_name(filepath)
+        dataset = load_dataset(filetype, data_files=filepath, split=split)
+    else:
+        raise ValueError(f"Can not load dataset from {filepath}.")
+
+    if streaming:  # faster when data is streamed from local files
+        dataset = dataset.to_iterable_dataset()
+
+    return dataset
+
+
+class DataIndexPlugin(BasePlugin):
     """Plugin for adjusting dataset index."""
 
     def adjust_data_index(
@@ -81,39 +83,32 @@ class DataIndexPlugin:
             list[tuple[str, int]]: Adjusted dataset index.
         """
         if size is not None:
-            data_index = self.adjust_by_size(data_index, size)
+            data_index = random.choices(data_index, k=size)
 
         if weight is not None:
-            data_index = self.adjust_by_weight(data_index, weight)
+            data_index = random.choices(data_index, k=int(len(data_index) * weight))
 
         return data_index
 
-    def adjust_by_size(self, data_index: list[tuple[str, int]], size: int) -> list[tuple[str, int]]:
-        raise NotImplementedError()
 
-    def adjust_by_weight(self, data_index: list[tuple[str, int]], weight: float) -> list[tuple[str, int]]:
-        raise NotImplementedError()
-
-
-@dataclass
-class DataSelectorPlugin:
+class DataSelectorPlugin(BasePlugin):
     """Plugin for selecting dataset samples."""
 
-    data_index: list[tuple[str, int]]
-    """List of (dataset_name, sample_index)"""
-
-    def select(self, index: Union[slice, list[int], Any]) -> Union[tuple[str, int], list[tuple[str, int]]]:
+    def select(
+        self, data_index: list[tuple[str, int]], index: Union[slice, list[int], Any]
+    ) -> Union[tuple[str, int], list[tuple[str, int]]]:
         """Select dataset samples.
 
         Args:
+            data_index (list[tuple[str, int]]): List of (dataset_name, sample_index).
             index (Union[slice, list[int], Any]): Index of dataset samples.
 
         Returns:
             Union[tuple[str, int], list[tuple[str, int]]]: Selected dataset samples.
         """
         if isinstance(index, slice):
-            return [self.data_index[i] for i in range(*index.indices(len(self.data_index)))]
+            return [data_index[i] for i in range(*index.indices(len(data_index)))]
         elif isinstance(index, list):
-            return [self.data_index[i] for i in index]
+            return [data_index[i] for i in index]
         else:
             raise ValueError(f"Invalid index type {type(index)}.")

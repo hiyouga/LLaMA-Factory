@@ -44,7 +44,7 @@ WELCOME = (
 def launch():
     command = sys.argv.pop(1) if len(sys.argv) > 1 else "help"
 
-    if command == "sft":
+    if command == "sft":  # train command will fallback to sft command
         from .trainers.sft_trainer import run_sft
 
         run_sft()

@@ -12,25 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional
+import os
+import socket
 
-from torch.distributed.device_mesh import DeviceMesh
+
+def find_available_port() -> int:
+    r"""Find an available port on the local machine."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(("", 0))
+    port = sock.getsockname()[1]
+    sock.close()
+    return port
 
 
-class DeviceMeshManager:
-    """Device mesh manager."""
+def is_env_enabled(env_var: str, default: str = "0") -> bool:
+    r"""Check if the environment variable is enabled."""
+    return os.getenv(env_var, default).lower() in ["true", "y", "1"]
 
-    _instance: Optional["DeviceMeshManager"] = None
-    _initialized: bool = False
 
-    def __new__(cls) -> "DeviceMeshManager":
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-
-    def __init__(self) -> None:
-        if self._initialized:
-            return
-
-        self.device_mesh: Optional[DeviceMesh] = None
-        self._initialized = True
+if __name__ == "__main__":
+    print(find_available_port())

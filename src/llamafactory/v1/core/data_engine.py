@@ -26,7 +26,7 @@ Get Data Sample:
 """
 
 import os
-from collections.abc import AsyncIterable, Iterable
+from collections.abc import Iterable
 from typing import Any, Union
 
 from huggingface_hub import hf_hub_download
@@ -34,11 +34,15 @@ from omegaconf import OmegaConf
 from torch.utils.data import Dataset
 
 from ..config.data_args import DataArguments
-from ..extras.types import DatasetInfo, HFDataset, Sample
+from ..utils.types import DatasetInfo, HFDataset, Sample
 
 
 class DataEngine(Dataset):
-    """Data engine."""
+    """Data engine.
+
+    Args:
+        data_args: Data arguments.
+    """
 
     def __init__(self, data_args: DataArguments) -> None:
         self.args = data_args
@@ -51,11 +55,11 @@ class DataEngine(Dataset):
         """List of (dataset_name, sample_index)"""
         self.streaming: bool = False
         """Whether dataset is streaming."""
-        self.get_dataset_info()
-        self.load_dataset()
-        self.build_data_index()
+        self._get_dataset_info()
+        self._load_dataset()
+        self._build_data_index()
 
-    def get_dataset_info(self) -> None:
+    def _get_dataset_info(self) -> None:
         """Get dataset info from data arguments."""
         if self.args.dataset.endswith(".yaml") and os.path.isfile(self.args.dataset):  # local file
             self.dataset_infos = OmegaConf.load(self.args.dataset)
@@ -64,35 +68,36 @@ class DataEngine(Dataset):
             filepath = hf_hub_download(repo_id=repo_id, filename=filename, repo_type="dataset")
             self.dataset_infos = OmegaConf.load(filepath)
         elif os.path.exists(self.args.dataset):  # local file(s)
-            self.dataset_infos = {"default": {"file_name": self.args.dataset}}
+            self.dataset_infos = {"default": {"path": self.args.dataset, "source": "local"}}
         else:  # hf hub dataset, e.g. llamafactory/v1-sft-demo
-            self.dataset_infos = {"default": {"hf_hub_url": self.args.dataset}}
+            self.dataset_infos = {"default": {"path": self.args.dataset}}
 
-    def load_dataset(self) -> None:
+    def _load_dataset(self) -> None:
         """Load datasets according to dataset info."""
-        for key, value in self.dataset_infos.items():
-            split = value.get("split", "train")
-            streaming = value.get("streaming", False)
+        for dataset_name, dataset_info in self.dataset_infos.items():
+            split = dataset_info.get("split", "train")
+            streaming = dataset_info.get("streaming", False)
             self.streaming |= streaming
-            if "hf_hub_url" in value:
+            if dataset_info.get("source", "hf_hub") == "hf_hub":
                 from datasets import load_dataset
 
-                self.datasets[key] = load_dataset(value["hf_hub_url"], split=split, streaming=streaming)
+                self.datasets[dataset_name] = load_dataset(dataset_info["path"], split=split, streaming=streaming)
             else:  # data loader plugin
                 from ..plugins.data_plugins.loader import DataLoaderPlugin
 
-                self.datasets[key] = DataLoaderPlugin().auto_load_data(value)
+                self.datasets[dataset_name] = DataLoaderPlugin(dataset_info["source"]).load(dataset_info)
 
-    def build_data_index(self) -> None:
+    def _build_data_index(self) -> None:
         """Build dataset index."""
         for dataset_name, dataset in self.datasets.items():
-            size = self.dataset_infos[dataset_name].get("size")
-            weight = self.dataset_infos[dataset_name].get("weight")
-            if self.streaming:
+            streaming = self.dataset_infos[dataset_name].get("streaming", False)
+            if streaming:
                 data_index = [(dataset_name, -1) for _ in range(1000)]
             else:
                 data_index = [(dataset_name, sample_index) for sample_index in range(len(dataset))]
 
+            size = self.dataset_infos[dataset_name].get("size")
+            weight = self.dataset_infos[dataset_name].get("weight")
             if size or weight:  # data index plugin
                 from ..plugins.data_plugins.loader import DataIndexPlugin
 
@@ -112,9 +117,9 @@ class DataEngine(Dataset):
         """
         converter = self.dataset_infos[dataset_name].get("converter")
         if converter is not None:
-            from ..plugins.data_plugins.converter import get_converter
+            from ..plugins.data_plugins.converter import DataConverterPlugin
 
-            return {"_dataset_name": dataset_name, **get_converter(converter)(raw_sample)}
+            return {"_dataset_name": dataset_name, **DataConverterPlugin(converter)(raw_sample)}
         else:
             return {"_dataset_name": dataset_name, **raw_sample}
 
@@ -144,10 +149,10 @@ class DataEngine(Dataset):
         if isinstance(index, int):
             dataset_name, sample_index = self.data_index[index]
             return self._convert_data_sample(self.datasets[dataset_name][sample_index], dataset_name)
-        else:
+        else:  # data selector plugin
             from ..plugins.data_plugins.loader import DataSelectorPlugin
 
-            selected_index = DataSelectorPlugin(data_index=self.data_index).select(index)
+            selected_index = DataSelectorPlugin().select(self.data_index, index)
             if isinstance(selected_index, list):
                 return [
                     self._convert_data_sample(self.datasets[dataset_name][sample_index], dataset_name)
@@ -163,31 +168,19 @@ class DataEngine(Dataset):
         Returns:
             Iterable[Sample]: Dataset iterator.
         """
-        if self.streaming:
-            pass
-        else:
-            # TODO: add shuffle here
-            pass
-
-        raise NotImplementedError()
-
-    async def __aiter__(self) -> AsyncIterable[Sample]:
-        """Get dataset async iterator.
-
-        Returns:
-            AsyncIterable[Sample]: Dataset async iterator.
-        """
-        if self.streaming:
-            pass
-        else:
-            # TODO: add shuffle here
-            pass
+        # NOTE: hf iterable dataset uses worker ids while map dataset does not
+        # NOTE: add worker id and shuffle to the map dataset
+        # https://github.com/huggingface/datasets/blob/4.0.0/src/datasets/iterable_dataset.py#L2214
 
         raise NotImplementedError()
 
 
 if __name__ == "__main__":
-    from ..config.parser import get_args
+    """
+    python -m llamafactory.v1.core.data_engine --model none --dataset data/v1_sft_demo.yaml
+    python -m llamafactory.v1.core.data_engine --model none --dataset data/v1_dpo_demo.yaml
+    """
+    from ..config.arg_parser import get_args
 
     data_args, *_ = get_args()
     data_engine = DataEngine(data_args=data_args)

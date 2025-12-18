@@ -13,18 +13,14 @@
 # limitations under the License.
 
 
-from dataclasses import dataclass, field
+import os
 
-from .arg_utils import SampleBackend
+from llamafactory.v1.accelerator.interface import DistributedInterface
 
 
-@dataclass
-class SampleArguments:
-    sample_backend: SampleBackend = field(
-        default=SampleBackend.HF,
-        metadata={"help": "Sampling backend, default to 'hf'."},
-    )
-    max_new_tokens: int = field(
-        default=128,
-        metadata={"help": "Maximum number of new tokens to generate."},
-    )
+def test_distributed_interface():
+    DistributedInterface()
+    assert DistributedInterface.get_rank() == int(os.getenv("RANK", "0"))
+    assert DistributedInterface.get_world_size() == int(os.getenv("WORLD_SIZE", "1"))
+    assert DistributedInterface.get_local_rank() == int(os.getenv("LOCAL_RANK", "0"))
+    assert DistributedInterface.get_local_world_size() == int(os.getenv("LOCAL_WORLD_SIZE", "1"))
