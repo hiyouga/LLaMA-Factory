@@ -51,8 +51,12 @@ logger = logging.get_logger(__name__)
 
 
 def patch_qwen3_omni_moe_thinker_text_sparse_moe_block():
-    if is_transformers_version_greater_than("4.57.0"):
+    if is_transformers_version_greater_than("4.57.0") and not is_transformers_version_greater_than("4.58.0"):
         from .model_utils.moe import Qwen3OmniMoeThinkerTextSparseMoeBlock
+
+        logger.warning_rank0(
+            "You are using transformers with 4.x version, the Qwen3OmniMoeThinkerTextSparseMoeBlock will have some issues about deepspeed zero2 and fsdp2 training, so that we patched this model to avoid it. Transformers v5.0.0rc0 has fixed the issue, you can also try to update the transformers to using qwen3_omni. See more information on https://github.com/hiyouga/LLaMA-Factory/issues/9628."
+        )
 
         modeling_qwen3_omni_moe.Qwen3OmniMoeThinkerTextSparseMoeBlock = Qwen3OmniMoeThinkerTextSparseMoeBlock
 
