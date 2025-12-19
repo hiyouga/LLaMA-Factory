@@ -1624,7 +1624,7 @@ class Qwen3VLPlugin(Qwen2VLPlugin):
                 for video, duration in zip(videos["videos"], videos["durations"])
             ]
             mm_inputs.update(
-                video_processor(videos=videos["videos"], video_metadata=video_metadata, return_metadata=True)
+                video_processor(videos=videos["videos"], video_metadata=video_metadata, fps=getattr(processor, "video_fps", 2.0), return_metadata=True)
             )
             temporal_patch_size: int = getattr(image_processor, "temporal_patch_size", 2)
             if "second_per_grid_ts" in processor.model_input_names:
