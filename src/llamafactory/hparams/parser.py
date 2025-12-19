@@ -306,17 +306,14 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
     if training_args.do_train and data_args.dataset is None:
         raise ValueError("Please specify dataset for training.")
 
-    if (training_args.do_eval or training_args.do_predict) and (
+    if (training_args.do_eval or training_args.do_predict or training_args.predict_with_generate) and (
         data_args.eval_dataset is None and data_args.val_size < 1e-6
     ):
-        raise ValueError("Please specify dataset for evaluation.")
+        raise ValueError("Please make sure eval_dataset be provided or val_size >1e-6")
 
     if training_args.predict_with_generate:
         if is_deepspeed_zero3_enabled():
             raise ValueError("`predict_with_generate` is incompatible with DeepSpeed ZeRO-3.")
-
-        if data_args.eval_dataset is None:
-            raise ValueError("Cannot use `predict_with_generate` if `eval_dataset` is None.")
 
         if finetuning_args.compute_accuracy:
             raise ValueError("Cannot use `predict_with_generate` and `compute_accuracy` together.")
