@@ -120,6 +120,9 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             fp16=training_args.fp16, # TODO to be fix
             bf16=training_args.bf16,
         )
+        ppo_config.report_to = training_args.report_to
+        ppo_config.logging_steps = training_args.logging_steps
+        ppo_config.save_steps = training_args.save_steps
 
         # Add deepspeed config
         if training_args.deepspeed_plugin is not None:
@@ -139,6 +142,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             num_training_steps = training_args.num_train_epochs * math.ceil(
                 len(train_dataset) / total_train_batch_size
             )
+        ppo_config.total_episodes = num_training_steps * backward_batch_size
 
         optimizer = create_custom_optimizer(model, training_args, finetuning_args)
         if optimizer is None:
@@ -189,7 +193,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             optimizers=(optimizer, lr_scheduler),
         )
 
-        self.args = training_args
+        self.train_args = training_args
         self.config = ppo_config  # Save PPOConfig as self.config for compatibility
         self.model_args = model_args
         self.finetuning_args = finetuning_args
@@ -209,7 +213,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         self.callback_handler = CallbackHandler(
             callbacks, self.accelerator.unwrap_model(self.model), self.tokenizer, self.optimizer, self.lr_scheduler
         )
-        if self.args.max_steps > 0:
+        if self.train_args.max_steps > 0:
             logger.info_rank0("max_steps is given, it will override any value given in num_train_epochs")
 
         self.amp_context = torch.autocast(self.current_device.type)
@@ -242,20 +246,20 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             raise ValueError("`resume_from_checkpoint` will be supported in the future version.")
 
         total_train_batch_size = (
-            self.args.per_device_train_batch_size
-            * self.args.gradient_accumulation_steps
+            self.train_args.per_device_train_batch_size
+            * self.train_args.gradient_accumulation_steps
             * self.finetuning_args.ppo_buffer_size
-            * self.args.world_size
+            * self.train_args.world_size
         )
-        if self.args.max_steps > 0:
-            num_examples = total_train_batch_size * self.args.max_steps
+        if self.train_args.max_steps > 0:
+            num_examples = total_train_batch_size * self.train_args.max_steps
             num_train_epochs = sys.maxsize
-            max_steps = self.args.max_steps
-            steps_in_epoch = self.args.max_steps
+            max_steps = self.train_args.max_steps
+            steps_in_epoch = self.train_args.max_steps
         else:
             len_dataloader = len(self.dataloader)
             num_examples = len(self.dataset)
-            num_train_epochs = self.args.num_train_epochs
+            num_train_epochs = self.train_args.num_train_epochs
             max_steps = math.ceil(num_train_epochs * len_dataloader)
             steps_in_epoch = len_dataloader
 
@@ -267,11 +271,11 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         logger.info_rank0("***** Running training *****")
         logger.info_rank0(f"  Num examples = {num_examples:,}")
         logger.info_rank0(f"  Num Epochs = {num_train_epochs:,}")
-        logger.info_rank0(f"  Instantaneous batch size per device = {self.args.per_device_train_batch_size:,}")
+        logger.info_rank0(f"  Instantaneous batch size per device = {self.train_args.per_device_train_batch_size:,}")
         logger.info_rank0(
             f"  Total train batch size (w. parallel, buffer, distributed & accumulation) = {total_train_batch_size:,}"
         )
-        logger.info_rank0(f"  Gradient Accumulation steps = {self.args.gradient_accumulation_steps:,}")
+        logger.info_rank0(f"  Gradient Accumulation steps = {self.train_args.gradient_accumulation_steps:,}")
         logger.info_rank0(f"  Num optimization epochs per batch = {self.finetuning_args.ppo_epochs:,}")
         logger.info_rank0(f"  Total training steps = {max_steps:,}")
         logger.info_rank0(f"  Number of trainable parameters = {count_parameters(self.model)[0]:,}")
@@ -279,7 +283,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         dataiter = iter(self.dataloader)
         loss_meter = AverageMeter()
         reward_meter = AverageMeter()
-        self.callback_handler.on_train_begin(self.args, self.state, self.control)
+        self.callback_handler.on_train_begin(self.train_args, self.state, self.control)
 
         for step in tqdm(range(max_steps), disable=not self.is_local_process_zero()):
             try:
@@ -319,9 +323,9 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
                     logger.warning_rank0("Failed to save stats due to unknown errors.")
 
             self.state.global_step += 1
-            self.callback_handler.on_step_end(self.args, self.state, self.control)
+            self.callback_handler.on_step_end(self.train_args, self.state, self.control)
 
-            if self.is_local_process_zero() and (step + 1) % self.args.logging_steps == 0:
+            if self.is_local_process_zero() and (step + 1) % self.train_args.logging_steps == 0:
                 logs = dict(
                     loss=round(loss_meter.avg, 4),
                     reward=round(reward_meter.avg, 4),
@@ -331,20 +335,20 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
                 tqdm.write(str(logs))
                 logs["step"] = step
                 self.state.log_history.append(logs)
-                self.callback_handler.on_log(self.args, self.state, self.control, logs)
+                self.callback_handler.on_log(self.train_args, self.state, self.control, logs)
                 loss_meter.reset()
                 reward_meter.reset()
 
-            if (step + 1) % self.args.save_steps == 0:  # save checkpoint
+            if (step + 1) % self.train_args.save_steps == 0:  # save checkpoint
                 self.save_model(
-                    os.path.join(self.args.output_dir, f"{PREFIX_CHECKPOINT_DIR}-{self.state.global_step}")
+                    os.path.join(self.train_args.output_dir, f"{PREFIX_CHECKPOINT_DIR}-{self.state.global_step}")
                 )
-                self.callback_handler.on_save(self.args, self.state, self.control)
+                self.callback_handler.on_save(self.train_args, self.state, self.control)
 
             if self.control.should_epoch_stop or self.control.should_training_stop:
                 break
 
-        self.callback_handler.on_train_end(self.args, self.state, self.control)
+        self.callback_handler.on_train_end(self.train_args, self.state, self.control)
 
     def prepare_model_inputs(self, queries: list["torch.Tensor"], responses: list["torch.Tensor"]) -> dict[str, "torch.Tensor"]:
         queries = [q.to(self.current_device) for q in queries]
@@ -712,7 +716,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         Subclass and override to inject custom behavior.
         """
         if output_dir is None:
-            output_dir = self.args.output_dir
+            output_dir = self.train_args.output_dir
 
         # TRL 0.24 compatibility: save policy only
         backup_model = None
@@ -729,20 +733,20 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             if self.is_fsdp_enabled or self.is_deepspeed_enabled:
                 try:
                     state_dict = self.accelerator.get_state_dict(self.model)  # must be called at all ranks
-                    if self.args.should_save:
+                    if self.train_args.should_save:
                         self._save(output_dir, state_dict=state_dict)
                 except ValueError:
                     logger.warning_rank0(
                         " stage3_gather_16bit_weights_on_model_save=false. Saving the full checkpoint instead,"
                         " use zero_to_fp32.py to recover weights"
                     )
-                    if self.args.should_save:
+                    if self.train_args.should_save:
                         self._save(output_dir, state_dict={})
                     # remove the dummy state_dict
-                    remove_dummy_checkpoint(self.args.should_save, output_dir, [WEIGHTS_NAME, SAFE_WEIGHTS_NAME])
+                    remove_dummy_checkpoint(self.train_args.should_save, output_dir, [WEIGHTS_NAME, SAFE_WEIGHTS_NAME])
                     self.model.save_checkpoint(output_dir)
 
-            elif self.args.should_save:
+            elif self.train_args.should_save:
                 unwrapped_model: AutoModelForCausalLMWithValueHead = self.accelerator.unwrap_model(self.model)
                 self._save(output_dir, state_dict=unwrapped_model.state_dict())
         finally:
