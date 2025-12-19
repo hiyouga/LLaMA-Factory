@@ -19,9 +19,11 @@ import math
 import os
 import sys
 import warnings
+from importlib.metadata import version as get_pkg_version
 from types import MethodType
 from typing import TYPE_CHECKING, Any, Optional, cast
 
+from packaging.version import Version
 import torch
 from accelerate.utils import DistributedDataParallelKwargs
 from tqdm import tqdm
@@ -108,24 +110,55 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             raise NotImplementedError("PPOTrainer does not support eval dataset yet.")
 
         backward_batch_size = training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps
-        ppo_config = PPOConfig(
-            learning_rate=training_args.learning_rate,
-            mini_batch_size=training_args.per_device_train_batch_size,
-            batch_size=backward_batch_size * finetuning_args.ppo_buffer_size,
-            gradient_accumulation_steps=training_args.gradient_accumulation_steps,
-            num_ppo_epochs=finetuning_args.ppo_epochs,
-            max_grad_norm=training_args.max_grad_norm,
-            seed=training_args.seed,
-            whiten_rewards=finetuning_args.ppo_whiten_rewards,
-            fp16=training_args.fp16, # TODO to be fix
-            bf16=training_args.bf16,
-        )
-        ppo_config.report_to = training_args.report_to
+
+        try:
+            trl_version = Version(get_pkg_version("trl"))
+        except Exception:
+            trl_version = Version("0")
+
+        if trl_version >= Version("0.24.0"):
+            local_dataloader_batch_size = backward_batch_size * finetuning_args.ppo_buffer_size
+            num_mini_batches = training_args.gradient_accumulation_steps * finetuning_args.ppo_buffer_size
+            ppo_config = PPOConfig(
+                learning_rate=training_args.learning_rate,
+                per_device_train_batch_size=local_dataloader_batch_size,
+                gradient_accumulation_steps=1,
+                num_mini_batches=num_mini_batches,
+                num_ppo_epochs=finetuning_args.ppo_epochs,
+                max_grad_norm=training_args.max_grad_norm,
+                seed=training_args.seed,
+                whiten_rewards=finetuning_args.ppo_whiten_rewards,
+                fp16=training_args.fp16,  # TODO to be fix
+                bf16=training_args.bf16,
+            )
+        else:
+            ppo_config = PPOConfig(
+                learning_rate=training_args.learning_rate,
+                mini_batch_size=training_args.per_device_train_batch_size,
+                batch_size=backward_batch_size * finetuning_args.ppo_buffer_size,
+                gradient_accumulation_steps=training_args.gradient_accumulation_steps,
+                num_ppo_epochs=finetuning_args.ppo_epochs,
+                max_grad_norm=training_args.max_grad_norm,
+                seed=training_args.seed,
+                whiten_rewards=finetuning_args.ppo_whiten_rewards,
+                fp16=training_args.fp16,  # TODO to be fix
+                bf16=training_args.bf16,
+            )
+
+        # Keep backward-compatible attributes for the custom PPO loop.
+        ppo_config.batch_size = backward_batch_size * finetuning_args.ppo_buffer_size
+        ppo_config.mini_batch_size = training_args.per_device_train_batch_size
+
+        # Normalize logging config across TRL versions.
+        report_to = getattr(training_args, "report_to", None)
+        if hasattr(ppo_config, "report_to"):
+            ppo_config.report_to = report_to
+        ppo_config.log_with = None if report_to in (None, "none", ["none"], []) else report_to
         ppo_config.logging_steps = training_args.logging_steps
         ppo_config.save_steps = training_args.save_steps
 
         # Add deepspeed config
-        if training_args.deepspeed_plugin is not None:
+        if training_args.deepspeed_plugin is not None and hasattr(ppo_config, "accelerator_kwargs"):
             ppo_config.accelerator_kwargs["kwargs_handlers"] = [
                 DistributedDataParallelKwargs(find_unused_parameters=training_args.ddp_find_unused_parameters)
             ]
@@ -180,15 +213,19 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             else:
                 model.is_gradient_checkpointing = getattr(model, "gradient_checkpointing", False)
 
+        reward_model_for_trl = reward_model
+        if reward_model_for_trl is None or isinstance(reward_model_for_trl, str):
+            reward_model_for_trl = torch.nn.Identity()
+
         PPOTrainer.__init__(
             self,
             args=ppo_config,
             processing_class=tokenizer,
             model=model,
             ref_model=ref_model,
-            reward_model=reward_model,
+            reward_model=reward_model_for_trl,
             train_dataset=train_dataset,
-            value_model=LlamaFactoryValueModelAdapter(reward_model),
+            value_model=LlamaFactoryValueModelAdapter(model),
             data_collator=data_collator,
             optimizers=(optimizer, lr_scheduler),
         )
@@ -198,7 +235,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         self.model_args = model_args
         self.finetuning_args = finetuning_args
         self.reward_model = reward_model
-        if self.reward_model is not None:
+        if self.reward_model is not None and not isinstance(self.reward_model, str):
             if getattr(self.reward_model.config, "pad_token_id", None) is None:
                 self.reward_model.config.pad_token_id = tokenizer.pad_token_id
             if not hasattr(self.reward_model, "generation_config"):
@@ -394,7 +431,13 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
                 # Reference model
                 if self.ref_model is None:
                     with self.null_ref_context():
-                        ref_output = self.model.policy(input_ids=mb_input_ids, attention_mask=mb_attention_mask, return_dict=True, use_cache=False)
+                        policy_model = getattr(self.model, "policy", self.model)
+                        ref_output = policy_model(
+                            input_ids=mb_input_ids,
+                            attention_mask=mb_attention_mask,
+                            return_dict=True,
+                            use_cache=False,
+                        )
                 else:
                     ref_output = self.ref_model(input_ids=mb_input_ids, attention_mask=mb_attention_mask, return_dict=True, use_cache=False)
 
@@ -572,16 +615,17 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
             for k, v in batch.items():
                 batch[k] = v[:, start_index:]
 
-        with unwrap_model_for_generation(self.model, self.accelerator) as unwrapped_model:
-            unwrapped_model: AutoModelForCausalLMWithValueHead = self.accelerator.unwrap_model(self.model)
+        with unwrap_model_for_generation(self.model, self.accelerator):
+            unwrapped_model = self.accelerator.unwrap_model(self.model)
+            policy_model = getattr(unwrapped_model, "policy", unwrapped_model)
             if self.model_args.upcast_layernorm:
-                layernorm_params = dump_layernorm(unwrapped_model)
+                layernorm_params = dump_layernorm(policy_model)
 
-            generate_output: torch.Tensor = unwrapped_model.generate(
+            generate_output: torch.Tensor = policy_model.generate(
                 generation_config=self.generation_config, logits_processor=get_logits_processor(), **batch
             )
             if self.model_args.upcast_layernorm:
-                restore_layernorm(unwrapped_model, layernorm_params)
+                restore_layernorm(policy_model, layernorm_params)
 
         query = batch["input_ids"].detach().cpu()
         response = generate_output[:, batch["input_ids"].size(-1) :].detach().cpu()
@@ -710,7 +754,7 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         )
 
     @override
-    def save_model(self, output_dir: Optional[str] = None) -> None:
+    def save_model(self, output_dir: Optional[str] = None, _internal_call: bool = False) -> None:
         r"""Save model checkpoint.
 
         Subclass and override to inject custom behavior.
