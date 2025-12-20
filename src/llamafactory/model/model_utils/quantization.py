@@ -113,6 +113,7 @@ def configure_quantization(
         if quant_method == QuantizationMethod.FP8:
             quant_config = FineGrainedFP8Config(dequantize=True)
             init_kwargs["quantization_config"] = quant_config
+            init_kwargs["ignore_mismatched_sizes"] = True
 
         quant_bits = quantization_config.get("bits", "?")
         logger.info_rank0(f"Loading {quant_bits}-bit {quant_method.upper()}-quantized model.")
