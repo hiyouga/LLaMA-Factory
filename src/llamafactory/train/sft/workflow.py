@@ -73,7 +73,7 @@ def run_sft(
             raise NotImplementedError("`predict_with_generate` is not supported in KTransformers SFT yet.")
         elif finetuning_args.compute_accuracy:
             raise NotImplementedError("`compute_accuracy` is not supported in KTransformers SFT yet.")
-    
+
     if training_args.predict_with_generate:
         metric_module["compute_metrics"] = ComputeSimilarity(tokenizer=tokenizer)
     elif finetuning_args.compute_accuracy:
@@ -99,8 +99,8 @@ def run_sft(
 
     # Initialize our Trainer
     if model_args.use_kt:
-        from ktransformers.util.globals import GLOBAL_CONFIG
-        from ktransformers.sft.lora import KTrainer
+        from ktransformers.sft.lora import KTrainer  # type: ignore
+        from ktransformers.util.globals import GLOBAL_CONFIG  # type: ignore
 
         GLOBAL_CONFIG._config["mod"] = "sft"
 
