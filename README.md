@@ -313,6 +313,7 @@ Read technical notes:
 | [LLaVA-NeXT](https://huggingface.co/llava-hf)                     | 7B/8B/13B/34B/72B/110B           | llava_next           |
 | [LLaVA-NeXT-Video](https://huggingface.co/llava-hf)               | 7B/34B                           | llava_next_video     |
 | [MiMo](https://huggingface.co/XiaomiMiMo)                         | 7B                               | mimo                 |
+| [MiMo-v2](https://huggingface.co/XiaomiMiMo)                      | 310B                             | mimo_v2              |
 | [MiniCPM 1-4.1](https://huggingface.co/openbmb)                   | 0.5B/1B/2B/4B/8B                 | cpm/cpm3/cpm4        |
 | [MiniCPM-o-2.6/MiniCPM-V-2.6](https://huggingface.co/openbmb)     | 8B                               | minicpm_o/minicpm_v  |
 | [Ministral(3)/Mistral-Nemo](https://huggingface.co/mistralai)     | 3B/8B/12B/14B                    | ministral/ministral3 |
