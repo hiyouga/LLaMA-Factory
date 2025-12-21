@@ -278,27 +278,21 @@ Read technical notes:
 
 | Model                                                             | Model size                       | Template             |
 | ----------------------------------------------------------------- | -------------------------------- | -------------------- |
-| [Baichuan 2](https://huggingface.co/baichuan-inc)                 | 7B/13B                           | baichuan2            |
 | [BLOOM/BLOOMZ](https://huggingface.co/bigscience)                 | 560M/1.1B/1.7B/3B/7.1B/176B      | -                    |
-| [ChatGLM3](https://huggingface.co/THUDM)                          | 6B                               | chatglm3             |
 | [Command R](https://huggingface.co/CohereForAI)                   | 35B/104B                         | cohere               |
-| [DeepSeek (Code/MoE)](https://huggingface.co/deepseek-ai)         | 7B/16B/67B/236B                  | deepseek             |
-| [DeepSeek 2.5/3](https://huggingface.co/deepseek-ai)              | 236B/671B                        | deepseek3            |
+| [DeepSeek (LLM/Code/MoE)](https://huggingface.co/deepseek-ai)     | 7B/16B/67B/236B                  | deepseek             |
+| [DeepSeek 3-3.2](https://huggingface.co/deepseek-ai)              | 236B/671B                        | deepseek3            |
 | [DeepSeek R1 (Distill)](https://huggingface.co/deepseek-ai)       | 1.5B/7B/8B/14B/32B/70B/671B      | deepseekr1           |
 | [ERNIE-4.5](https://huggingface.co/baidu)                         | 0.3B/21B/300B                    | ernie/ernie_nothink  |
-| [Falcon](https://huggingface.co/tiiuae)                           | 7B/11B/40B/180B                  | falcon               |
-| [Falcon-H1](https://huggingface.co/tiiuae)                        | 0.5B/1.5B/3B/7B/34B              | falcon_h1            |
+| [Falcon/Falcon H1](https://huggingface.co/tiiuae)                 | 0.5B/1.5B/3B/7B/11B/34B/40B/180B | falcon/falcon_h1     |
 | [Gemma/Gemma 2/CodeGemma](https://huggingface.co/google)          | 2B/7B/9B/27B                     | gemma/gemma2         |
 | [Gemma 3/Gemma 3n](https://huggingface.co/google)                 | 270M/1B/4B/6B/8B/12B/27B         | gemma3/gemma3n       |
 | [GLM-4/GLM-4-0414/GLM-Z1](https://huggingface.co/zai-org)         | 9B/32B                           | glm4/glmz1           |
-| [GLM-4.1V](https://huggingface.co/zai-org)                        | 9B                               | glm4v                |
 | [GLM-4.5/GLM-4.5(6)V](https://huggingface.co/zai-org)             | 9B/106B/355B                     | glm4_moe/glm4_5v     |
 | [GPT-2](https://huggingface.co/openai-community)                  | 0.1B/0.4B/0.8B/1.5B              | -                    |
-| [GPT-OSS](https://huggingface.co/openai)                          | 20B/120B                         | gpt                  |
-| [Granite 3.0-3.3](https://huggingface.co/ibm-granite)             | 1B/2B/3B/8B                      | granite3             |
-| [Granite 4](https://huggingface.co/ibm-granite)                   | 7B                               | granite4             |
+| [GPT-OSS](https://huggingface.co/openai)                          | 20B/120B                         | gpt_oss              |
+| [Granite 3-4](https://huggingface.co/ibm-granite)                 | 1B/2B/3B/7B/8B                   | granite3/granite4    |
 | [Hunyuan (MT)](https://huggingface.co/tencent/)                   | 7B                               | hunyuan              |
-| [Index](https://huggingface.co/IndexTeam)                         | 1.9B                             | index                |
 | [InternLM 2-3](https://huggingface.co/internlm)                   | 7B/8B/20B                        | intern2              |
 | [InternVL 2.5-3.5](https://huggingface.co/OpenGVLab)              | 1B/2B/4B/8B/14B/30B/38B/78B/241B | intern_vl            |
 | [InternLM/Intern-S1-mini](https://huggingface.co/internlm/)       | 8B                               | intern_s1            |
@@ -312,16 +306,13 @@ Read technical notes:
 | [LLaVA-1.5](https://huggingface.co/llava-hf)                      | 7B/13B                           | llava                |
 | [LLaVA-NeXT](https://huggingface.co/llava-hf)                     | 7B/8B/13B/34B/72B/110B           | llava_next           |
 | [LLaVA-NeXT-Video](https://huggingface.co/llava-hf)               | 7B/34B                           | llava_next_video     |
-| [MiMo](https://huggingface.co/XiaomiMiMo)                         | 7B                               | mimo                 |
-| [MiMo-v2](https://huggingface.co/XiaomiMiMo)                      | 309B                             | mimo_v2              |
+| [MiMo](https://huggingface.co/XiaomiMiMo)                         | 7B/309B                          | mimo/mimo_v2         |
 | [MiniCPM 1-4.1](https://huggingface.co/openbmb)                   | 0.5B/1B/2B/4B/8B                 | cpm/cpm3/cpm4        |
 | [MiniCPM-o-2.6/MiniCPM-V-2.6](https://huggingface.co/openbmb)     | 8B                               | minicpm_o/minicpm_v  |
-| [Ministral(3)/Mistral-Nemo](https://huggingface.co/mistralai)     | 3B/8B/12B/14B                    | ministral/ministral3 |
+| [Ministral 3](https://huggingface.co/mistralai)                   | 3B/8B/14B                        | ministral3           |
 | [Mistral/Mixtral](https://huggingface.co/mistralai)               | 7B/8x7B/8x22B                    | mistral              |
-| [Mistral Small](https://huggingface.co/mistralai)                 | 24B                              | mistral_small        |
 | [OLMo](https://huggingface.co/allenai)                            | 1B/7B                            | -                    |
 | [PaliGemma/PaliGemma2](https://huggingface.co/google)             | 3B/10B/28B                       | paligemma            |
-| [Phi-1.5/Phi-2](https://huggingface.co/microsoft)                 | 1.3B/2.7B                        | -                    |
 | [Phi-3/Phi-3.5](https://huggingface.co/microsoft)                 | 4B/14B                           | phi                  |
 | [Phi-3-small](https://huggingface.co/microsoft)                   | 7B                               | phi_small            |
 | [Phi-4](https://huggingface.co/microsoft)                         | 14B                              | phi4                 |
@@ -334,13 +325,9 @@ Read technical notes:
 | [Qwen2-VL/Qwen2.5-VL/QVQ](https://huggingface.co/Qwen)            | 2B/3B/7B/32B/72B                 | qwen2_vl             |
 | [Qwen3-VL](https://huggingface.co/Qwen)                           | 2B/4B/8B/30B/32B/235B            | qwen3_vl             |
 | [Seed (OSS/Coder)](https://huggingface.co/ByteDance-Seed)         | 8B/36B                           | seed_oss/seed_coder  |
-| [Skywork o1](https://huggingface.co/Skywork)                      | 8B                               | skywork_o1           |
 | [StarCoder 2](https://huggingface.co/bigcode)                     | 3B/7B/15B                        | -                    |
-| [TeleChat2](https://huggingface.co/Tele-AI)                       | 3B/7B/35B/115B                   | telechat2            |
 | [VibeThinker-1.5B](https://huggingface.co/WeiboAI)                | 1.5B                             | qwen3                |
-| [XVERSE](https://huggingface.co/xverse)                           | 7B/13B/65B                       | xverse               |
 | [Yi/Yi-1.5 (Code)](https://huggingface.co/01-ai)                  | 1.5B/6B/9B/34B                   | yi                   |
-| [Yi-VL](https://huggingface.co/01-ai)                             | 6B/34B                           | yi_vl                |
 | [Yuan 2](https://huggingface.co/IEITYuan)                         | 2B/51B/102B                      | yuan                 |
 
 > [!NOTE]

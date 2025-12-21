@@ -1166,7 +1166,7 @@ register_template(
 
 
 register_template(
-    name="gpt",
+    name="gpt_oss",
     format_user=StringFormatter(slots=["<|start|>user<|message|>{{content}}<|end|><|start|>assistant"]),
     format_assistant=StringFormatter(slots=["{{content}}<|end|>"]),
     format_system=StringFormatter(slots=["<|start|>system<|message|>{{content}}<|end|>"]),

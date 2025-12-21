@@ -99,7 +99,7 @@ jobs:
           tags: |
             docker.io/hiyouga/llamafactory:${{ steps.version.outputs.tag }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min
 
       - name: Build and push Docker image (NPU-A2)
         if: ${{ matrix.device == 'npu' && matrix.npu_type == 'a2' }}
@@ -113,7 +113,7 @@ jobs:
             docker.io/hiyouga/llamafactory:${{ steps.version.outputs.tag }}-npu-a2
             quay.io/ascend/llamafactory:${{ steps.version.outputs.tag }}-npu-a2
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min
 
       - name: Build and push Docker image (NPU-A3)
         if: ${{ matrix.device == 'npu' && matrix.npu_type == 'a3' }}
@@ -129,4 +129,5 @@ jobs:
             docker.io/hiyouga/llamafactory:${{ steps.version.outputs.tag }}-npu-a3
             quay.io/ascend/llamafactory:${{ steps.version.outputs.tag }}-npu-a3
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min
+          # https://docs.docker.com/build/cache/backends/#cache-mode

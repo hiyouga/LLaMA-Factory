@@ -1067,7 +1067,7 @@ register_model_group(
             DownloadSource.MODELSCOPE: "openai/gpt-oss-120b",
         },
     },
-    template="gpt",
+    template="gpt_oss",
 )
 
 
@@ -1995,6 +1995,18 @@ register_model_group(
 
 register_model_group(
     models={
+        "Ministral-3-3B-Base-2512": {
+            DownloadSource.DEFAULT: "mistralai/Ministral-3-3B-Base-2512",
+            DownloadSource.MODELSCOPE: "mistralai/Ministral-3-3B-Base-2512",
+        },
+        "Ministral-3-8B-Base-2512": {
+            DownloadSource.DEFAULT: "mistralai/Ministral-3-8B-Base-2512",
+            DownloadSource.MODELSCOPE: "mistralai/Ministral-3-8B-Base-2512",
+        },
+        "Ministral-3-14B-Base-2512": {
+            DownloadSource.DEFAULT: "mistralai/Ministral-3-14B-Base-2512",
+            DownloadSource.MODELSCOPE: "mistralai/Ministral-3-14B-Base-2512",
+        },
         "Ministral-3-3B-Instruct-2512": {
             DownloadSource.DEFAULT: "mistralai/Ministral-3-3B-Instruct-2512",
             DownloadSource.MODELSCOPE: "mistralai/Ministral-3-3B-Instruct-2512",
