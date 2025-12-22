@@ -17,7 +17,7 @@ import copy
 import sys
 from collections.abc import Generator, Iterator
 from dataclasses import dataclass
-from typing import Optional, Required
+from typing import Optional
 
 from torchdata.stateful_dataloader import StatefulDataLoader
 from torchdata.stateful_dataloader.sampler import StatefulDistributedSampler
@@ -91,7 +91,7 @@ class DataLoader:
     def __init__(
         self,
         dataloader: any,
-        collate_fn: Required["DataCollator"],
+        collate_fn: "DataCollator",
         num_micro_batch: int = 1,
         length: int = 0,
         drop_last: bool = True,
