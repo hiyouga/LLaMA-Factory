@@ -16,6 +16,7 @@
 # limitations under the License.
 
 from typing import TYPE_CHECKING, Optional
+from transformers import AutoModelForSequenceClassification
 
 from ...data import MultiModalDataCollatorForSeq2Seq, get_dataset, get_template_and_fix_tokenizer
 from ...extras.ploting import plot_loss
@@ -51,6 +52,9 @@ def run_ppo(
     # Create reference model and reward model
     ref_model = create_ref_model(model_args, finetuning_args, add_valuehead=True)
     reward_model = create_reward_model(model, model_args, finetuning_args)
+    config = reward_model.config
+    config.num_labels = 1
+    reward_model = AutoModelForSequenceClassification.from_config(config)
 
     # Initialize our Trainer
     ppo_trainer: CustomPPOTrainer = CustomPPOTrainer(

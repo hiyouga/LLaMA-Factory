@@ -11,12 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import functools
+import gc
 import json
 from contextlib import nullcontext
 from typing import TYPE_CHECKING, Literal, Optional
 
 import torch
+import torch.nn.functional as F
 from transformers.integrations import is_deepspeed_zero3_enabled
 
 from ...extras.packages import is_requests_available
@@ -78,3 +80,54 @@ def restore_layernorm(model: "PreTrainedModel", layernorm_params: Optional[dict[
     for name, param in model.named_parameters():
         if name in layernorm_params:
             param.data = layernorm_params[name]
+
+def logprobs_from_logits(logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+    # https://github.com/OpenRLHF/OpenRLHF/pull/718#issuecomment-2641081881
+    if logits.dtype in [torch.float32, torch.float64]:
+        logits_labels = torch.gather(logits, dim=-1, index=labels.unsqueeze(-1)).squeeze(-1)
+        logsumexp_values = torch.stack(
+            [torch.logsumexp(l, dim=-1) for l in logits]  # loop to reduce peak mem consumption
+        )
+        log_probs_labels = logits_labels - logsumexp_values  # log_softmax(x_i) = x_i - logsumexp(x)
+    else:
+        log_probs_labels = []
+        for row_logits, row_labels in zip(logits, labels):  # loop to reduce peak mem consumption
+            row_log_probs = F.log_softmax(row_logits, dim=-1)
+            row_log_probs_labels = row_log_probs.gather(dim=-1, index=row_labels.unsqueeze(-1)).squeeze(-1)
+            log_probs_labels.append(row_log_probs_labels)
+        log_probs_labels = torch.stack(log_probs_labels)
+    return log_probs_labels
+
+def empty_device_cache_decorator(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        gc.collect()
+        return func(*args, **kwargs)
+    return wrapper
+
+
+def masked_mean(values: "torch.Tensor", mask: "torch.Tensor", axis: Optional[int] = None) -> "torch.Tensor":
+    r"""Compute mean of tensor with a masked values."""
+    if axis is None:
+        return (values * mask).sum() / mask.sum()
+    else:
+        return (values * mask).sum(axis=axis) / mask.sum(axis=axis)
+
+
+def masked_var(values: "torch.Tensor", mask: "torch.Tensor", unbiased: bool = True) -> "torch.Tensor":
+    r"""Compute variance of tensor with masked values."""
+    mean = masked_mean(values, mask)
+    centered_values = values - mean
+    variance = masked_mean(centered_values**2, mask)
+    return variance
+
+
+def masked_whiten(values: "torch.Tensor", mask: "torch.Tensor", shift_mean: bool = True) -> "torch.Tensor":
+    r"""Whiten values with masked values."""
+    mean, var = masked_mean(values, mask), masked_var(values, mask)
+    whitened = (values - mean) * torch.rsqrt(var + 1e-8)
+    if not shift_mean:
+        whitened += mean
+    return whitened
