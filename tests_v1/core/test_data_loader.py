@@ -94,15 +94,15 @@ def create_real_dataset(max_samples: int = 20, batch_size: int = 4):
     data_engine = DataEngine(data_args)
 
     # Create processor and template
-    processor = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-3B-Instruct", trust_remote_code=True, use_fast=True)
+    processor = AutoTokenizer.from_pretrained("llamafactory/tiny-random-qwen2.5")
     template = QwenTemplate()
 
     # Create tensor dataset
-    tensor_dataset = TensorDataset(data_engine, processor, template, max_samples=max_samples)
+    raw_data_dataset = TensorDataset(data_engine, processor, template, max_samples=max_samples)
 
     # Create torch DataLoader
     torch_dataloader = TorchDataLoader(
-        tensor_dataset,
+        raw_data_dataset,
         batch_size=batch_size,
         shuffle=False,
         collate_fn=lambda x: x,
