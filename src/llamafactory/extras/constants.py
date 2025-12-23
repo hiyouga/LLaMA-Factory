@@ -114,6 +114,7 @@ class AttentionFunction(str, Enum):
     DISABLED = "disabled"
     SDPA = "sdpa"
     FA2 = "fa2"
+    FA3 = "fa3"
 
 
 class EngineName(str, Enum):
