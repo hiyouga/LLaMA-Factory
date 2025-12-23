@@ -30,6 +30,9 @@ if TYPE_CHECKING:
 
     from ...hparams import FinetuningArguments, ModelArguments
 
+# ⚠️ add here
+from collections import defaultdict
+from typing import Dict
 
 class CustomTrainer(Trainer):
     r"""Inherit Trainer for custom optimizer."""
@@ -67,6 +70,9 @@ class CustomTrainer(Trainer):
         # Verify FP8 status after trainer initialization (accelerator should be available)
         if model_args is not None and model_args.fp8 and hasattr(self, "accelerator"):
             verify_fp8_status(self.accelerator, model_args)
+        
+        # ⚠️ add a _metrics_buffer to store lm_loss and Router_Loss
+        self._metrics_buffer = defaultdict(lambda: defaultdict(lambda: torch.tensor(0.0)))
 
     @override
     def create_optimizer(self) -> "torch.optim.Optimizer":
@@ -89,5 +95,75 @@ class CustomTrainer(Trainer):
         return super()._get_train_sampler(*args, **kwargs)
 
     @override
-    def compute_loss(self, model, inputs, *args, **kwargs):
-        return super().compute_loss(model, inputs, *args, **kwargs)
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+        loss, outputs = super().compute_loss(model, inputs, return_outputs=True, **kwargs)
+        
+        if outputs is not None:
+            extra_metrics = {}
+            if isinstance(outputs, dict):
+                for k, v in outputs.items():
+                    if k in ["lm_loss", "Router_loss"] and v is not None:
+                        extra_metrics[k] = v
+            else:
+                if hasattr(outputs, "lm_loss"): extra_metrics["lm_loss"] = outputs.lm_loss
+                if hasattr(outputs, "Router_loss"): extra_metrics["Router_loss"] = outputs.Router_loss
+
+            if extra_metrics:
+                mode = "train" if model.training else "eval"
+                
+                target_device = loss.device
+                
+                if self._metrics_buffer[mode]["steps"].device != target_device:
+                     self._metrics_buffer[mode]["steps"] = self._metrics_buffer[mode]["steps"].to(target_device)
+
+                with torch.no_grad():
+                    for k, v in extra_metrics.items():
+                        if self._metrics_buffer[mode][k].device != target_device:
+                            self._metrics_buffer[mode][k] = self._metrics_buffer[mode][k].to(target_device)
+                        
+                        self._metrics_buffer[mode][k] += v.detach()
+                    
+                    self._metrics_buffer[mode]["steps"] += 1.0
+
+        return (loss, outputs) if return_outputs else loss
+    
+    @override
+    def log(self, logs: Dict[str, float], start_time: Optional[float] = None) -> None:
+        """
+        仅当 Buffer 中有数据时，才计算并注入 Log。
+        """
+        if self._metrics_buffer["train"]["steps"] > 0:
+            steps = self._metrics_buffer["train"]["steps"]
+            for k, v in self._metrics_buffer["train"].items():
+                if k == "steps": continue
+                avg_val = v / steps
+                logs[f"train/{k}"] = round(avg_val.item(), 4)
+            
+            # clear buffer
+            self._metrics_buffer["train"].clear()
+            self._metrics_buffer["train"]["steps"] = torch.tensor(0.0)
+
+        super().log(logs, start_time=start_time)
+    
+    @override
+    def evaluate(self, eval_dataset=None, ignore_keys=None, metric_key_prefix="eval"):
+        self._metrics_buffer["eval"].clear()
+        
+        metrics = super().evaluate(eval_dataset, ignore_keys, metric_key_prefix)
+
+        if self._metrics_buffer["eval"]["steps"] > 0:
+            steps = self._metrics_buffer["eval"]["steps"]
+            for k, v in self._metrics_buffer["eval"].items():
+                if k == "steps": continue
+                
+                # 分布式汇总 (All-Reduce Sum)
+                if self.args.world_size > 1:
+                    total_val = self.accelerator.reduce(v, reduction="sum")
+                    total_steps = self.accelerator.reduce(steps, reduction="sum")
+                    avg_val = total_val / total_steps
+                else:
+                    avg_val = v / steps
+                
+                metrics[f"{metric_key_prefix}_{k}"] = round(avg_val.item(), 4)
+            
+        return metrics

@@ -39,6 +39,10 @@ from .model_utils.unsloth import load_unsloth_pretrained_model
 from .model_utils.valuehead import load_valuehead_params
 from .patcher import patch_config, patch_model, patch_processor, patch_tokenizer, patch_valuehead_model
 
+from .custom_models.modeling_qwen_router import Qwen2RouterConfig, Qwen2RouterForCausalLM
+
+AutoConfig.register("qwen2_Router", Qwen2RouterConfig)
+AutoModelForCausalLM.register(Qwen2RouterConfig, Qwen2RouterForCausalLM)
 
 if TYPE_CHECKING:
     from transformers import PretrainedConfig, PreTrainedModel, PreTrainedTokenizer, ProcessorMixin
@@ -126,7 +130,25 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
 def load_config(model_args: "ModelArguments") -> "PretrainedConfig":
     r"""Load model config."""
     init_kwargs = _get_init_kwargs(model_args)
-    return AutoConfig.from_pretrained(model_args.model_name_or_path, **init_kwargs)
+    config = AutoConfig.from_pretrained(model_args.model_name_or_path, **init_kwargs)
+
+    if getattr(model_args, "enable_Router", False):
+        if config.model_type == "qwen2":
+            config_dict = config.to_dict()
+            config_dict["model_type"] = "qwen2_Router"
+            config_dict["architectures"] = ["Qwen2RouterForCausalLM"] 
+            config = Qwen2RouterConfig.from_dict(config_dict)
+
+        if model_args.router_arg1 is not None:
+            config.router_arg1 = model_args.router_arg1
+        if model_args.router_arg2 is not None:
+            config.router_arg2 = model_args.router_arg2
+        if model_args.router_arg3 is not None:
+            config.router_arg3 = model_args.router_arg3
+        ...
+
+
+    return config
 
 
 def load_model(
@@ -141,6 +163,10 @@ def load_model(
     config = load_config(model_args)
     patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
     apply_liger_kernel(config, model_args, is_trainable, require_logits=(finetuning_args.stage not in ["pt", "sft"]))
+
+    # ⚠️ modify here
+    if getattr(model_args, "enable_Router", False):
+        init_kwargs["ignore_mismatched_sizes"] = True
 
     model = None
     lazy_load = False
@@ -177,6 +203,10 @@ def load_model(
                 model = load_class.from_config(config, trust_remote_code=model_args.trust_remote_code)
             else:
                 model = load_class.from_pretrained(**init_kwargs)
+                # ⚠️ add here
+                if getattr(model_args, "enable_Router", False):
+                    logger.info_rank0(f"成功加载自定义模型类: {type(model).__name__}")
+
                 if getattr(model.config, "model_type", None) in ["qwen2_5_omni", "qwen3_omni_moe"]:
                     model = getattr(model, "thinker")
 
