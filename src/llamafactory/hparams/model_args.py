@@ -37,45 +37,21 @@ from typing import Dict
 class routerArguments:
     r"""Arguments pertaining to the router."""
 
-    enable_router: bool = field(
+    router_arg1: bool = field(
         default=False,
-        metadata={"help": "Whether or not to enable the router module in the model."},
+       )
+
+    router_arg2: Optional[int] = field(
+        default=None,
     )
 
-    index_n_heads: Optional[int] = field(
+    router_arg3: Optional[int] = field(
         default=None,
-        metadata={"help": "Number of router head per gqa group."},
     )
 
-    index_head_dim: Optional[int] = field(
-        default=None,
-        metadata={"help": "Dimension of each router head."},
-    )
+    # ....
 
-    share_every_n_groups: Optional[int] = field(
-        default=None,
-        metadata={"help": "Number of GQA groups to share the same router."},
-    )
 
-    index_topk: Optional[int] = field(
-        default=None,
-        metadata={"help": "Top-k value for router attention."},
-    )
-
-    sample_ratio: Optional[int] = field(
-        default=None,
-        metadata={"help": "Sample ratio for router training."},
-    )
-
-    router_stage: Optional[int] = field(
-        default=None,
-        metadata={"help": "Stage of router training."},
-    )
-
-    router_layer_stages: Optional[Dict[int, int]] = field(
-        default=None,
-        metadata={"help": "Layer to stage mapping for router training."},
-    )
 ##################################################
 
 
