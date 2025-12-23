@@ -207,6 +207,13 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                 ).unsqueeze(-1)
             else:  # for qwen vl
                 features["position_ids"], features["rope_deltas"] = self.get_rope_func(**rope_index_kwargs)
+        else:
+            if hasattr(self, "template") and hasattr(self.template, "mm_plugin"):
+                if self.template.mm_plugin.__class__.__name__ == "ErnieVLPlugin":  # for ernie vl
+                    bsz, seq_len = features["input_ids"].shape
+                    position_ids = torch.zeros((bsz, seq_len, 3), dtype=torch.long)
+                    position_ids[:, :, 0] = torch.arange(seq_len).unsqueeze(0).expand(bsz, -1)
+                    features["position_ids"] = position_ids
 
         if (
             self.model is not None

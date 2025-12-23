@@ -114,7 +114,23 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
     @override
     def compute_loss(self, model, inputs, *args, **kwargs):
-        return super().compute_loss(model, inputs, *args, **kwargs)
+        outputs = model(**inputs)
+        loss = outputs.get("loss")
+        if loss is not None:
+            return loss
+        logits, labels = outputs.get("logits"), inputs.get("labels")
+        if logits is None or labels is None:
+            return super().compute_loss(model, inputs, *args, **kwargs)
+        loss = torch.nn.functional.cross_entropy(
+            logits.view(-1, logits.size(-1)),
+            labels.view(-1),
+            ignore_index=IGNORE_INDEX,
+        )
+        router_loss = outputs.get("router_loss")
+        if router_loss is not None:
+            loss = loss + router_loss.mean()
+        return loss
+
 
     @override
     def prediction_step(
