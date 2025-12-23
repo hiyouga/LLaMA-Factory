@@ -29,16 +29,19 @@ logger = logging.get_logger(__name__)
 
 
 def configure_attn_implementation(config: "PretrainedConfig", model_args: "ModelArguments") -> None:
+    from transformers.utils import is_flash_attn_2_available
+
     if getattr(config, "model_type", None) == "gpt_oss":
         from transformers.integrations.hub_kernels import load_and_register_kernel
+
         flash_attn3_kernel = "kernels-community/vllm-flash-attn3"
         load_and_register_kernel(flash_attn3_kernel)
         setattr(config, "_attn_implementation", flash_attn3_kernel)
         setattr(config, "_attn_implementation_internal", flash_attn3_kernel)
-        model_args.flash_attn = flash_attn3_kernel
+        model_args.flash_attn = AttentionFunction.FA3
+
+        logger.info_rank0("Using FlashAttention-3 with attention sink for the gpt-oss model.")
         return
-    
-    from transformers.utils import is_flash_attn_2_available
 
     if getattr(config, "model_type", None) == "gemma2":
         if model_args.flash_attn == AttentionFunction.AUTO or model_args.flash_attn == AttentionFunction.FA2:
