@@ -97,7 +97,7 @@ class ModelLoader:
             self.args.model,
             config=self.model_config,
             dtype="auto",
-            device_map=DistributedInterface.current_accelerator,
+            device_map=DistributedInterface().current_accelerator,
             trust_remote_code=self.args.trust_remote_code,
         )
 

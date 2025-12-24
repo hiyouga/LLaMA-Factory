@@ -28,10 +28,10 @@ from transformers import AutoTokenizer
 
 from llamafactory.v1.config.data_args import DataArguments
 from llamafactory.v1.core.data_engine import DataEngine
-from llamafactory.v1.core.data_loader import DataLoader
 from llamafactory.v1.core.trainer_utils.data_collator import (
     DefaultCollator,
 )
+from llamafactory.v1.core.trainer_utils.data_loader import DataLoader
 from llamafactory.v1.plugins.data_plugins.template import QwenTemplate
 from llamafactory.v1.utils.batching_queue import TextBatchingQueue
 
