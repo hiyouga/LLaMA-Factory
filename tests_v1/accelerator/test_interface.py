@@ -16,35 +16,37 @@
 import os
 
 import pytest
+import torch.multiprocessing as mp
 
 from llamafactory.v1.accelerator.helper import ReduceOp, get_world_size
 from llamafactory.v1.accelerator.interface import DistributedInterface
-from llamafactory.v1.utils.pytest import dist_launch
+from llamafactory.v1.utils.pytest import dist_env
 
 
-def _all_reduce_tests():
-    print(f"{get_world_size()=}")
-    print(f"{DistributedInterface()}")
+def _all_reduce_tests(local_rank: int, world_size: int):
+    with dist_env(local_rank, world_size):
+        print(f"{get_world_size()=}")
+        print(f"{DistributedInterface()}")
 
-    rank = DistributedInterface().get_rank()
-    world_size = DistributedInterface().get_world_size()
+        rank = DistributedInterface().get_rank()
+        world_size = DistributedInterface().get_world_size()
 
-    assert world_size == 2
+        assert world_size == 2
 
-    y_sum = DistributedInterface().all_reduce(rank + 1.0, op=ReduceOp.SUM)
-    assert y_sum == pytest.approx(3.0)
+        y_sum = DistributedInterface().all_reduce(rank + 1.0, op=ReduceOp.SUM)
+        assert y_sum == pytest.approx(3.0)
 
-    y_mean = DistributedInterface().all_reduce(rank + 1.0, op=ReduceOp.MEAN)
-    assert y_mean == pytest.approx(1.5)
+        y_mean = DistributedInterface().all_reduce(rank + 1.0, op=ReduceOp.MEAN)
+        assert y_mean == pytest.approx(1.5)
 
-    y_max = DistributedInterface().all_reduce(rank + 1.0, op=ReduceOp.MAX)
-    assert y_max == pytest.approx(2.0)
+        y_max = DistributedInterface().all_reduce(rank + 1.0, op=ReduceOp.MAX)
+        assert y_max == pytest.approx(2.0)
 
-    z = DistributedInterface().all_gather(rank + 1.0)
-    assert z == pytest.approx([1.0, 2.0])
+        z = DistributedInterface().all_gather(rank + 1.0)
+        assert z == pytest.approx([1.0, 2.0])
 
-    z = DistributedInterface().broadcast(rank + 1.0)
-    assert z == pytest.approx(rank + 1.0)
+        z = DistributedInterface().broadcast(rank + 1.0)
+        assert z == pytest.approx(rank + 1.0)
 
 
 def test_all_device():
@@ -56,4 +58,4 @@ def test_all_device():
 
 @pytest.mark.require_distributed(2)
 def test_multi_device():
-    dist_launch(_all_reduce_tests, world_size=2)
+    mp.spawn(_all_reduce_tests, args=(2,), nprocs=2, join=True)

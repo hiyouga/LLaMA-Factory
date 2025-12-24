@@ -14,9 +14,6 @@
 
 import os
 from contextlib import contextmanager
-from typing import Any, Callable
-
-import torch.multiprocessing as mp
 
 from .env import find_available_port
 
@@ -38,14 +35,3 @@ def dist_env(local_rank: int = 0, world_size: int = 1):
     finally:
         for key in env_vars.keys():
             os.environ.pop(key, None)
-
-
-def wrapper(local_rank: int, world_size: int, test_func: Callable[[Any], Any], *args):
-    with dist_env(local_rank, world_size):
-        print(f"{world_size=}, {local_rank=}")
-        test_func(*args)
-
-
-def dist_launch(test_func: Callable[[Any], Any], *args, world_size: int = 2) -> None:
-    """Run distributed test."""
-    mp.spawn(wrapper, args=(world_size, test_func, *args), nprocs=world_size, join=True)
