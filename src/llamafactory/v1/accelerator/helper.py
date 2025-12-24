@@ -117,6 +117,12 @@ def synchronize() -> None:
     torch.accelerator.synchronize()
 
 
+@requires_accelerator
+def set_device() -> None:
+    """Set current accelerator."""
+    torch.accelerator.set_device_index(get_local_rank())
+
+
 def is_torch_cuda_available():
     """Check if CUDA is available."""
     return get_current_accelerator().type == DeviceType.CUDA

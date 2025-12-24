@@ -140,6 +140,7 @@ class DistributedInterface:
             timeout = config.get("timeout", 18000)
 
         if self._is_distributed:
+            helper.set_device()
             init_process_group(timeout=timedelta(seconds=timeout))
             self.model_device_mesh = init_device_mesh(
                 device_type=self.current_accelerator.type,
