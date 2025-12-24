@@ -94,7 +94,7 @@ def configure_quantization(
         quantization_config: dict[str, Any] = getattr(config, "quantization_config", None)
         quant_method = quantization_config.get("quant_method", "")
 
-        if quant_method not in (QuantizationMethod.MXFP4 and QuantizationMethod.FP8) and (
+        if quant_method not in (QuantizationMethod.MXFP4, QuantizationMethod.FP8) and (
             is_deepspeed_zero3_enabled() or is_fsdp_enabled()
         ):
             # mxfp4 will dequant the model weights
