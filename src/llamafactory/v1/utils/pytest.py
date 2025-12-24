@@ -1,0 +1,51 @@
+# Copyright 2025 the LlamaFactory team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import os
+from contextlib import contextmanager
+from typing import Any, Callable
+
+import torch.multiprocessing as mp
+
+from .env import find_available_port
+
+
+@contextmanager
+def dist_env(local_rank: int = 0, world_size: int = 1):
+    """Set distributed environment variables."""
+    env_vars = {
+        "MASTER_ADDR": "127.0.0.1",
+        "MASTER_PORT": str(find_available_port()),
+        "RANK": str(local_rank),
+        "LOCAL_RANK": str(local_rank),
+        "WORLD_SIZE": str(world_size),
+        "LOCAL_WORLD_SIZE": str(world_size),
+    }
+    os.environ.update(env_vars)
+    try:
+        yield
+    finally:
+        for key in env_vars.keys():
+            os.environ.pop(key, None)
+
+
+def wrapper(local_rank: int, world_size: int, test_func: Callable[[Any], Any], *args):
+    with dist_env(local_rank, world_size):
+        print(f"{world_size=}, {local_rank=}")
+        test_func(*args)
+
+
+def dist_launch(test_func: Callable[[Any], Any], *args, world_size: int = 2) -> None:
+    """Run distributed test."""
+    mp.spawn(wrapper, args=(world_size, test_func, *args), nprocs=world_size, join=True)

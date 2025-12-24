@@ -22,10 +22,10 @@ from llamafactory.v1.accelerator.helper import get_current_accelerator
 
 class TestKernelPlugin(unittest.TestCase):
     @patch("torch.accelerator.current_accelerator")
-    def test_apply_kernel(self, mock_get_accelerator):
+    def test_apply_kernel(self, mock_get_accelerator: MagicMock):
         get_current_accelerator.cache_clear()
         mock_device = MagicMock()
-        mock_device.type = "npu"
+        setattr(mock_device, "type", "npu")
         mock_get_accelerator.return_value = mock_device
 
         model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen2.5")
@@ -49,10 +49,10 @@ class TestKernelPlugin(unittest.TestCase):
 
 class Test_Use_V1_Kernels(unittest.TestCase):
     @patch("torch.accelerator.current_accelerator")
-    def test_use_v1_kernels(self, mock_get_accelerator):
+    def test_use_v1_kernels(self, mock_get_accelerator: MagicMock):
         get_current_accelerator.cache_clear()
         mock_device = MagicMock()
-        mock_device.type = "npu"
+        setattr(mock_device, "type", "npu")
         mock_get_accelerator.return_value = mock_device
 
         model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen2.5")

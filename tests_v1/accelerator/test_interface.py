@@ -15,12 +15,45 @@
 
 import os
 
+import pytest
+
+from llamafactory.v1.accelerator.helper import ReduceOp, get_world_size
 from llamafactory.v1.accelerator.interface import DistributedInterface
+from llamafactory.v1.utils.pytest import dist_launch
 
 
-def test_distributed_interface():
-    DistributedInterface()
-    assert DistributedInterface.get_rank() == int(os.getenv("RANK", "0"))
-    assert DistributedInterface.get_world_size() == int(os.getenv("WORLD_SIZE", "1"))
-    assert DistributedInterface.get_local_rank() == int(os.getenv("LOCAL_RANK", "0"))
-    assert DistributedInterface.get_local_world_size() == int(os.getenv("LOCAL_WORLD_SIZE", "1"))
+def _all_reduce_tests():
+    print(f"{get_world_size()=}")
+    print(f"{DistributedInterface()}")
+
+    rank = DistributedInterface().get_rank()
+    world_size = DistributedInterface().get_world_size()
+
+    assert world_size == 2
+
+    y_sum = DistributedInterface().all_reduce(rank + 1.0, op=ReduceOp.SUM)
+    assert y_sum == pytest.approx(3.0)
+
+    y_mean = DistributedInterface().all_reduce(rank + 1.0, op=ReduceOp.MEAN)
+    assert y_mean == pytest.approx(1.5)
+
+    y_max = DistributedInterface().all_reduce(rank + 1.0, op=ReduceOp.MAX)
+    assert y_max == pytest.approx(2.0)
+
+    z = DistributedInterface().all_gather(rank + 1.0)
+    assert z == pytest.approx([1.0, 2.0])
+
+    z = DistributedInterface().broadcast(rank + 1.0)
+    assert z == pytest.approx(rank + 1.0)
+
+
+def test_all_device():
+    assert DistributedInterface().get_rank() == int(os.getenv("RANK", "0"))
+    assert DistributedInterface().get_world_size() == int(os.getenv("WORLD_SIZE", "1"))
+    assert DistributedInterface().get_local_rank() == int(os.getenv("LOCAL_RANK", "0"))
+    assert DistributedInterface().get_local_world_size() == int(os.getenv("LOCAL_WORLD_SIZE", "1"))
+
+
+@pytest.mark.require_distributed(2)
+def test_multi_device():
+    dist_launch(_all_reduce_tests, world_size=2)
