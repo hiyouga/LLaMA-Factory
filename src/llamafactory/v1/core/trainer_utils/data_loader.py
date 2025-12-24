@@ -22,10 +22,10 @@ from typing import Optional
 from torchdata.stateful_dataloader import StatefulDataLoader
 from torchdata.stateful_dataloader.sampler import StatefulDistributedSampler
 
-from ..utils.batching_queue import BaseBatchingQueue
-from ..utils.logging import get_logger
-from ..utils.types import Processor, TorchDataset
-from .trainer_utils.data_collator import DataCollator
+from ...utils.batching_queue import BaseBatchingQueue
+from ...utils.logging import get_logger
+from ...utils.types import Processor, TorchDataset
+from .data_collator import DataCollator
 
 
 logger = get_logger(__name__)
