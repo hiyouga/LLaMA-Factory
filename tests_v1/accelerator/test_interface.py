@@ -42,7 +42,7 @@ def _all_reduce_tests(local_rank: int, world_size: int, master_port: int):
         assert z == pytest.approx([1.0, 2.0])
 
         z = DistributedInterface().broadcast(rank + 1.0)
-        assert z == pytest.approx(rank + 1.0)
+        assert z == pytest.approx(1.0)
 
 
 def test_all_device():
