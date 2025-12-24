@@ -17,7 +17,7 @@ import os
 import pytest
 import torch.multiprocessing as mp
 
-from llamafactory.v1.accelerator.helper import ReduceOp, get_world_size
+from llamafactory.v1.accelerator.helper import ReduceOp
 from llamafactory.v1.accelerator.interface import DistributedInterface
 from llamafactory.v1.utils.env import find_available_port
 from llamafactory.v1.utils.pytest import dist_env
@@ -25,12 +25,8 @@ from llamafactory.v1.utils.pytest import dist_env
 
 def _all_reduce_tests(local_rank: int, world_size: int, master_port: int):
     with dist_env(local_rank, world_size, master_port):
-        print(f"{get_world_size()=}")
-        print(f"{DistributedInterface()}")
-
         rank = DistributedInterface().get_rank()
         world_size = DistributedInterface().get_world_size()
-
         assert world_size == 2
 
         y_sum = DistributedInterface().all_reduce(rank + 1.0, op=ReduceOp.SUM)
@@ -56,7 +52,7 @@ def test_all_device():
     assert DistributedInterface().get_local_world_size() == int(os.getenv("LOCAL_WORLD_SIZE", "1"))
 
 
-@pytest.mark.runs_on(["cpu", "cuda"])
+@pytest.mark.runs_on(["cuda", "npu"])
 @pytest.mark.require_distributed(2)
 def test_multi_device():
     master_port = find_available_port()
