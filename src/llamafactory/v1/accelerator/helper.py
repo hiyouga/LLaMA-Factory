@@ -96,16 +96,16 @@ def get_local_world_size() -> int:
     return int(os.getenv("LOCAL_WORLD_SIZE", "1"))
 
 
-@requires_accelerator
 @lru_cache
+@requires_accelerator
 def get_current_accelerator(check_available: bool = True) -> torch.device:
     """Get current accelerator."""
     accelerator = torch.accelerator.current_accelerator(check_available=check_available)
     return accelerator or torch.device(DeviceType.CPU.value)
 
 
-@requires_accelerator
 @lru_cache
+@requires_accelerator
 def get_device_count() -> int:
     """Get the number of available devices."""
     return torch.accelerator.device_count()

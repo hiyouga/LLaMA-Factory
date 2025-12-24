@@ -15,15 +15,13 @@
 import os
 from contextlib import contextmanager
 
-from .env import find_available_port
-
 
 @contextmanager
-def dist_env(local_rank: int = 0, world_size: int = 1):
+def dist_env(local_rank: int = 0, world_size: int = 1, master_port: int = 25595):
     """Set distributed environment variables."""
     env_vars = {
         "MASTER_ADDR": "127.0.0.1",
-        "MASTER_PORT": str(find_available_port()),
+        "MASTER_PORT": str(master_port),
         "RANK": str(local_rank),
         "LOCAL_RANK": str(local_rank),
         "WORLD_SIZE": str(world_size),

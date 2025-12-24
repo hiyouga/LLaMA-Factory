@@ -84,7 +84,7 @@ def _get_visible_devices_env() -> Optional[str]:
 def _handle_device_visibility(items: list[Item]):
     """Handle device visibility based on test markers."""
     env_key = _get_visible_devices_env()
-    if env_key is None or CURRENT_DEVICE == "cpu":
+    if env_key is None or CURRENT_DEVICE in ("cpu", "mps"):
         return
 
     # Parse visible devices

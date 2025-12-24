@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import os
 
 import pytest
@@ -20,11 +19,12 @@ import torch.multiprocessing as mp
 
 from llamafactory.v1.accelerator.helper import ReduceOp, get_world_size
 from llamafactory.v1.accelerator.interface import DistributedInterface
+from llamafactory.v1.utils.env import find_available_port
 from llamafactory.v1.utils.pytest import dist_env
 
 
-def _all_reduce_tests(local_rank: int, world_size: int):
-    with dist_env(local_rank, world_size):
+def _all_reduce_tests(local_rank: int, world_size: int, master_port: int):
+    with dist_env(local_rank, world_size, master_port):
         print(f"{get_world_size()=}")
         print(f"{DistributedInterface()}")
 
@@ -56,6 +56,8 @@ def test_all_device():
     assert DistributedInterface().get_local_world_size() == int(os.getenv("LOCAL_WORLD_SIZE", "1"))
 
 
+@pytest.mark.runs_on(["cpu", "cuda"])
 @pytest.mark.require_distributed(2)
 def test_multi_device():
-    mp.spawn(_all_reduce_tests, args=(2,), nprocs=2, join=True)
+    master_port = find_available_port()
+    mp.spawn(_all_reduce_tests, args=(2, master_port), nprocs=2)
