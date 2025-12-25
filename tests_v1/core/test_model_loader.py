@@ -14,14 +14,16 @@
 
 import torch
 
-from llamafactory.v1.config.model_args import ModelArguments
+from llamafactory.v1.config.model_args import ModelArguments, PluginConfig
 from llamafactory.v1.core.model_loader import ModelLoader
 
 
 def test_tiny_qwen():
     from transformers import Qwen2Config, Qwen2ForCausalLM, Qwen2TokenizerFast
 
-    model_args = ModelArguments(model="llamafactory/tiny-random-qwen2.5")
+    model_args = ModelArguments(
+        model="llamafactory/tiny-random-qwen2.5", kernel_config=PluginConfig(name="auto", use_v1_kernels="auto")
+    )
     model_loader = ModelLoader(model_args)
     assert isinstance(model_loader.processor, Qwen2TokenizerFast)
     assert isinstance(model_loader.model.config, Qwen2Config)

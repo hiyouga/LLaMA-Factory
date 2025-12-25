@@ -18,10 +18,6 @@ import pytest
 from transformers import AutoModelForCausalLM
 
 from llamafactory.v1.accelerator.helper import get_current_accelerator
-from llamafactory.v1.plugins.model_plugins.kernels.mlp import npu_swiglu
-from llamafactory.v1.plugins.model_plugins.kernels.registry import apply_available_kernels, apply_kernel
-from llamafactory.v1.plugins.model_plugins.kernels.rms_norm import npu_rms_norm
-from llamafactory.v1.plugins.model_plugins.kernels.rope import npu_rope
 
 
 @pytest.fixture(autouse=True)
@@ -35,18 +31,14 @@ def test_apply_kernel(mock_get_accelerator: MagicMock):
     setattr(mock_device, "type", "npu")
     mock_get_accelerator.return_value = mock_device
 
-    model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen2.5")
+    from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_default_kernels
 
+    model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen2.5")
     original_rmsnorm_forward = model.model.layers[0].input_layernorm.forward
     original_swiglu_forward = model.model.layers[0].mlp.forward
-
-    apply_kernel(model, npu_rope.NpuRoPEKernel)
-
-    model = apply_kernel(model, npu_rms_norm.NpuRMSNormKernel)
-    assert model.model.layers[0].input_layernorm is not original_rmsnorm_forward
-
-    model = apply_kernel(model, npu_swiglu.NpuSwiGluKernel)
-    assert model.model.layers[0].mlp.forward is not original_swiglu_forward
+    model = apply_default_kernels(model=model, use_v1_kernels="npu_fused_rmsnorm")
+    assert model.model.layers[0].input_layernorm.forward.__func__ is not original_rmsnorm_forward.__func__
+    assert model.model.layers[0].mlp.forward.__func__ is original_swiglu_forward.__func__
 
 
 @patch("torch.accelerator.current_accelerator")
@@ -56,12 +48,13 @@ def test_apply_all_kernels(mock_get_accelerator: MagicMock):
     setattr(mock_device, "type", "npu")
     mock_get_accelerator.return_value = mock_device
 
+    from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_default_kernels
+
     model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen2.5")
 
     original_rmsnorm_forward = model.model.layers[0].input_layernorm.forward
     original_swiglu_forward = model.model.layers[0].mlp.forward
 
-    model = apply_available_kernels(model)
-
-    assert model.model.layers[0].input_layernorm is not original_rmsnorm_forward
-    assert model.model.layers[0].mlp.forward is not original_swiglu_forward
+    model = apply_default_kernels(model=model, use_v1_kernels=True)
+    assert model.model.layers[0].input_layernorm.forward.__func__ is not original_rmsnorm_forward.__func__
+    assert model.model.layers[0].mlp.forward.__func__ is not original_swiglu_forward.__func__

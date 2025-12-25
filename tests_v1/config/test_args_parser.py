@@ -1,0 +1,52 @@
+import sys
+from unittest.mock import patch
+
+from llamafactory.v1.config.arg_parser import get_args
+
+
+def test_get_args_from_yaml(tmp_path):
+    config_yaml = """
+        ### model
+        model: "llamafactory/tiny-random-qwen2.5"
+        trust_remote_code: true
+        use_fast_processor: true
+        model_class: "llm"
+        peft_config: null
+        kernel_config:
+          name: "auto"
+          use_v1_kernels: auto # choice: null/true/false/auto/kernel_id1,kernel_id2,kernel_id3, default is null
+        quant_config: null
+
+        ### data
+        dataset: "llamafactory/tiny-supervised-dataset"
+        cutoff_len: 2048
+
+        ### training
+        output_dir: "outputs/test_run"
+        micro_batch_size: 1
+        global_batch_size: 1
+        learning_rate: 1.0e-4
+        bf16: false
+        dist_config: null
+
+        ### sample
+        sample_backend: "hf"
+        max_new_tokens: 128
+    """
+
+    config_file = tmp_path / "config.yaml"
+    config_file.write_text(config_yaml, encoding="utf-8")
+
+    test_argv = ["test_args_parser.py", str(config_file)]
+
+    with patch.object(sys, "argv", test_argv):
+        data_args, model_args, training_args, sample_args = get_args()
+        assert training_args.output_dir == "outputs/test_run"
+        assert training_args.micro_batch_size == 1
+        assert training_args.global_batch_size == 1
+        assert training_args.learning_rate == 1.0e-4
+        assert training_args.bf16 is False
+        assert training_args.dist_config is None
+        assert model_args.model == "llamafactory/tiny-random-qwen2.5"
+        assert model_args.kernel_config.name == "auto"
+        assert model_args.kernel_config.get("use_v1_kernels") == "auto"
