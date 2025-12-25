@@ -84,7 +84,7 @@ class BaseKernel(ABC):
         Example:
             >>> from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_kernel
             >>> model = HFModel(config=config)
-            >>> model = apply_kernel("npu_fused_moe", model=model)
+            >>> model = apply_kernel(model=model, kernel_id="npu_fused_moe")
         """
         if not cls.check_deps():
             raise RuntimeError(f"{cls.__name__} is not available but {cls.__name__} kernel was called.")
