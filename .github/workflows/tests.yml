@@ -72,13 +72,14 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install --system torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          uv pip install --system -e ".[dev]"
+          uv venv
+          uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          uv pip install -e ".[dev]"
 
       - name: Install transformers
         if: ${{ matrix.transformers }}
         run: |
-          uv pip install --system "transformers==${{ matrix.transformers }}"
+          uv pip install "transformers==${{ matrix.transformers }}"
 
       - name: Cache files
         id: hf-hub-cache
