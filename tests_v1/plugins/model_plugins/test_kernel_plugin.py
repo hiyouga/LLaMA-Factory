@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -25,12 +26,22 @@ def clear_accelerator_cache():
     get_current_accelerator.cache_clear()
 
 
+def reload_kernels():
+    """Helper to reload kernel modules to respect mocked accelerator."""
+    # Unload kernel interface and registry
+    keys_to_remove = [k for k in sys.modules if k.startswith("llamafactory.v1.plugins.model_plugins.kernels")]
+    for k in keys_to_remove:
+        del sys.modules[k]
+
+
 @patch("torch.accelerator.current_accelerator")
 def test_apply_kernel(mock_get_accelerator: MagicMock):
     mock_device = MagicMock()
     setattr(mock_device, "type", "npu")
     mock_get_accelerator.return_value = mock_device
 
+    # Force reload of kernels with mocked accelerator
+    reload_kernels()
     from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_default_kernels
 
     model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen2.5")
@@ -48,6 +59,8 @@ def test_apply_all_kernels(mock_get_accelerator: MagicMock):
     setattr(mock_device, "type", "npu")
     mock_get_accelerator.return_value = mock_device
 
+    # Force reload of kernels with mocked accelerator
+    reload_kernels()
     from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_default_kernels
 
     model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen2.5")
