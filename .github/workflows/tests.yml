@@ -63,24 +63,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ matrix.python }}
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
+          github-token: ${{ github.token }}
+          enable-cache: false
 
       - name: Install dependencies
         run: |
-          uv pip install --system torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          uv pip install --system -e "."
-          uv pip install --system -r examples/requirements/dev.txt
+          uv venv
+          uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+          uv pip install -e ".[dev]"
 
       - name: Install transformers
         if: ${{ matrix.transformers }}
         run: |
-          uv pip install --system "transformers==${{ matrix.transformers }}"
+          uv pip install "transformers==${{ matrix.transformers }}"
 
       - name: Cache files
         id: hf-hub-cache
@@ -92,18 +91,25 @@ jobs:
       - name: Check quality
         run: |
           make style && make quality
+        env:
+          UV_NO_SYNC: 1
 
       - name: Check license
         run: |
           make license
+        env:
+          UV_NO_SYNC: 1
 
       - name: Check build
         run: |
           make build
+        env:
+          UV_NO_SYNC: 1
 
       - name: Test with pytest
         run: |
           make test
         env:
+          UV_NO_SYNC: 1
           HF_HOME: ${{ runner.temp }}/huggingface
           HF_HUB_OFFLINE: "${{ steps.hf-hub-cache.outputs.cache-hit == 'true' && '1' || '0' }}"

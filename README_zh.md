@@ -516,10 +516,12 @@ huggingface-cli login
 ```bash
 git clone --depth 1 https://github.com/hiyouga/LLaMA-Factory.git
 cd LLaMA-Factory
-pip install -e ".[torch,metrics]" --no-build-isolation
+pip install -e ".[metrics]" --no-build-isolation
 ```
 
-可选的额外依赖项：torch、torch-npu、metrics、deepspeed、liger-kernel、bitsandbytes、hqq、eetq、gptq、aqlm、vllm、sglang、galore、apollo、badam、adam-mini、qwen、minicpm_v、openmind、swanlab、dev
+可选的额外依赖项：`metrics`、`deepspeed`。使用 `pip install -e ".[metrics,deepspeed]"` 安装。
+
+其他可选依赖项请参考 `examples/requirements/` 目录下的文件。
 
 #### 从镜像安装
 
@@ -538,13 +540,7 @@ docker run -it --rm --gpus=all --ipc=host hiyouga/llamafactory:latest
 使用 [uv](https://github.com/astral-sh/uv) 创建隔离的 Python 环境：
 
 ```bash
-uv sync --extra torch --extra metrics --prerelease=allow
-```
-
-在环境中运行 LLaMA-Factory：
-
-```bash
-uv run --prerelease=allow llamafactory-cli train examples/train_lora/llama3_lora_pretrain.yaml
+uv run llamafactory-cli webui
 ```
 
 </details>
@@ -581,7 +577,7 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 
 <details><summary>昇腾 NPU 用户指南</summary>
 
-在昇腾 NPU 设备上安装 LLaMA Factory 时，请升级 Python 到 3.10 及以上，并需要指定额外依赖项，使用 `pip install -e ".[torch-npu,metrics]"` 命令安装。此外，还需要安装 **[Ascend CANN Toolkit 与 Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**，安装方法请参考[安装教程](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/80RC2alpha002/quickstart/quickstart/quickstart_18_0004.html)或使用以下命令：
+在昇腾 NPU 设备上安装 LLaMA Factory 时，请升级 Python 到 3.10 及以上，并需要指定额外依赖项，使用 `pip install -e . torch-npu==2.7.1` 命令安装。此外，还需要安装 **[Ascend CANN Toolkit 与 Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**，安装方法请参考[安装教程](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/80RC2alpha002/quickstart/quickstart/quickstart_18_0004.html)或使用以下命令：
 
 ```bash
 # 请替换 URL 为 CANN 版本和设备型号对应的 URL
@@ -600,8 +596,8 @@ source /usr/local/Ascend/ascend-toolkit/set_env.sh
 | 依赖项        | 至少     | 推荐           |
 | ------------ | ------- | -------------- |
 | CANN         | 8.0.RC1 | 8.0.0.alpha002 |
-| torch        | 2.1.0   | 2.4.0          |
-| torch-npu    | 2.1.0   | 2.4.0.post2    |
+| torch        | 2.1.0   | 2.7.1          |
+| torch-npu    | 2.1.0   | 2.7.1          |
 | deepspeed    | 0.13.2  | 0.13.2         |
 | vllm-ascend  | -       | 0.7.3          |
 

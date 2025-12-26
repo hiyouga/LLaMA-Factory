@@ -514,7 +514,7 @@ huggingface-cli login
 ```bash
 git clone --depth 1 https://github.com/hiyouga/LLaMA-Factory.git
 cd LLaMA-Factory
-pip install -e "." --no-build-isolation
+pip install -e ".[metrics]" --no-build-isolation
 ```
 
 Optional dependencies available: `metrics`, `deepspeed`. Install with: `pip install -e ".[metrics,deepspeed]"`
@@ -538,13 +538,7 @@ Please refer to [build docker](#build-docker) to build the image yourself.
 Create an isolated Python environment with [uv](https://github.com/astral-sh/uv):
 
 ```bash
-uv sync --extra torch --extra metrics --prerelease=allow
-```
-
-Run LLaMA-Factory in the isolated environment:
-
-```bash
-uv run --prerelease=allow llamafactory-cli train examples/train_lora/llama3_lora_pretrain.yaml
+uv run llamafactory-cli webui
 ```
 
 </details>
@@ -581,7 +575,7 @@ To enable FlashAttention-2 on the Windows platform, please use the script from [
 
 <details><summary>For Ascend NPU users</summary>
 
-To install LLaMA Factory on Ascend NPU devices, please upgrade Python to version 3.10 or higher: `pip install -e "."`. Additionally, you need to install the **[Ascend CANN Toolkit and Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**. Please follow the [installation tutorial](https://www.hiascend.com/document/detail/en/CANNCommunityEdition/600alphaX/softwareinstall/instg/atlasdeploy_03_0031.html) or use the following commands:
+To install LLaMA Factory on Ascend NPU devices, please upgrade Python to version 3.10 or higher: `pip install -e . torch-npu==2.7.1`. Additionally, you need to install the **[Ascend CANN Toolkit and Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**. Please follow the [installation tutorial](https://www.hiascend.com/document/detail/en/CANNCommunityEdition/600alphaX/softwareinstall/instg/atlasdeploy_03_0031.html) or use the following commands:
 
 ```bash
 # replace the url according to your CANN version and devices
@@ -600,8 +594,8 @@ source /usr/local/Ascend/ascend-toolkit/set_env.sh
 | Requirement  | Minimum | Recommend      |
 | ------------ | ------- | -------------- |
 | CANN         | 8.0.RC1 | 8.0.0.alpha002 |
-| torch        | 2.1.0   | 2.4.0          |
-| torch-npu    | 2.1.0   | 2.4.0.post2    |
+| torch        | 2.1.0   | 2.7.1          |
+| torch-npu    | 2.1.0   | 2.7.1          |
 | deepspeed    | 0.13.2  | 0.13.2         |
 | vllm-ascend  | -       | 0.7.3          |
 

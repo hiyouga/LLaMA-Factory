@@ -60,7 +60,7 @@ WORKDIR /app
 COPY . /app
 
 # Install LLaMA Factory
-RUN pip install --no-cache-dir -e "." --no-build-isolation
+RUN pip install --no-cache-dir -e ".[metrics]" --no-build-isolation
 
 RUN pip install "git+https://github.com/alibaba/roll.git#subdirectory=mcore_adapter"
 

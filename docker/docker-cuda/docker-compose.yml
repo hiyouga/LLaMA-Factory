@@ -5,7 +5,6 @@ services:
       context: ../..
       args:
         PIP_INDEX: https://pypi.org/simple
-        EXTRAS: metrics
     container_name: llamafactory
     ports:
       - "7860:7860"

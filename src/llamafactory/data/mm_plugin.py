@@ -26,6 +26,7 @@ from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TypedDict, Union
 
 import numpy as np
 import torch
+import torchaudio
 from transformers.image_utils import get_image_size, is_valid_image, to_numpy_array
 from transformers.models.mllama.processing_mllama import (
     convert_sparse_cross_attention_mask_to_dense,
@@ -34,16 +35,7 @@ from transformers.models.mllama.processing_mllama import (
 from typing_extensions import NotRequired, override
 
 from ..extras.constants import AUDIO_PLACEHOLDER, IGNORE_INDEX, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
-from ..extras.packages import (
-    is_librosa_available,
-    is_pillow_available,
-    is_pyav_available,
-    is_transformers_version_greater_than,
-)
-
-
-if is_librosa_available():
-    import librosa
+from ..extras.packages import is_pillow_available, is_pyav_available, is_transformers_version_greater_than
 
 
 if is_pillow_available():
@@ -316,7 +308,14 @@ class MMPluginMixin:
         results, sampling_rates = [], []
         for audio in audios:
             if not isinstance(audio, np.ndarray):
-                audio, sampling_rate = librosa.load(audio, sr=sampling_rate)
+                audio, sr = torchaudio.load(audio)
+                if audio.shape[0] > 1:
+                    audio = audio.mean(dim=0, keepdim=True)
+
+                if sr != sampling_rate:
+                    audio = torchaudio.functional.resample(audio, sr, sampling_rate)
+
+                audio = audio.squeeze(0).numpy()
 
             results.append(audio)
             sampling_rates.append(sampling_rate)
@@ -500,13 +499,17 @@ class ErnieVLPlugin(BasePlugin):
             while IMAGE_PLACEHOLDER in content:
                 image_seqlen = image_grid_thw[image_idx].prod() // merge_length if self.expand_mm_tokens else 1
                 content = content.replace(
-                    IMAGE_PLACEHOLDER, f"Picture {image_idx + 1}:<|IMAGE_START|>{image_token * image_seqlen}<|IMAGE_END|>", 1
+                    IMAGE_PLACEHOLDER,
+                    f"Picture {image_idx + 1}:<|IMAGE_START|>{image_token * image_seqlen}<|IMAGE_END|>",
+                    1,
                 )
                 image_idx += 1
             while VIDEO_PLACEHOLDER in content:
                 video_seqlen = video_grid_thw[video_idx].prod() // merge_length if self.expand_mm_tokens else 1
                 content = content.replace(
-                    VIDEO_PLACEHOLDER, f"Video {video_idx + 1}:<|VIDEO_START|>{video_token * video_seqlen}<|VIDEO_END|>", 1
+                    VIDEO_PLACEHOLDER,
+                    f"Video {video_idx + 1}:<|VIDEO_START|>{video_token * video_seqlen}<|VIDEO_END|>",
+                    1,
                 )
                 video_idx += 1
             message["content"] = content

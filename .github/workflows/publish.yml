@@ -23,10 +23,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
         with:
-          python-version: "3.9"
+          python-version: "3.11"
+          github-token: ${{ github.token }}
 
       - name: Build package
         run: |

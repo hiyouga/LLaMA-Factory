@@ -156,16 +156,13 @@ def patch_config(
     # deepspeed zero3 is not compatible with low_cpu_mem_usage
     init_kwargs["low_cpu_mem_usage"] = model_args.low_cpu_mem_usage and (not is_deepspeed_zero3_enabled())
 
-    # do not cast data type of the model deepspeed zero3 without qlora
-    if not (is_deepspeed_zero3_enabled() and model_args.quantization_bit is None):
-        init_kwargs["torch_dtype"] = "auto"
+    # fsdp/deepspeed zero3 does not need device map
+    if not (is_deepspeed_zero3_enabled() or is_fsdp_enabled()) and init_kwargs["low_cpu_mem_usage"]:
+        if "device_map" not in init_kwargs and model_args.device_map:
+            init_kwargs["device_map"] = model_args.device_map  # device map requires low_cpu_mem_usage=True
 
-        if init_kwargs["low_cpu_mem_usage"] and not is_fsdp_enabled():  # fsdp does not need device map
-            if "device_map" not in init_kwargs and model_args.device_map:
-                init_kwargs["device_map"] = model_args.device_map  # device map requires low_cpu_mem_usage=True
-
-            if init_kwargs.get("device_map", None) == "auto":
-                init_kwargs["offload_folder"] = model_args.offload_folder
+        if init_kwargs.get("device_map", None) == "auto":
+            init_kwargs["offload_folder"] = model_args.offload_folder
 
 
 def patch_model(
