@@ -8,7 +8,7 @@ ENV PYPI_MIRROR=https://mirrors.aliyun.com/pypi/simple/
 ENV PYPI_TRUSTED_HOST=mirrors.aliyun.com
 ENV APT_MIRROR=https://mirrors.tuna.tsinghua.edu.cn/ubuntu/
 
-RUN pip install --upgrade pip setuptools wheel hatchling --trusted-host ${PYPI_TRUSTED_HOST} --index-url ${PYPI_MIRROR}
+RUN pip install --upgrade pip setuptools wheel "hatchling>=1.18.0" editables --trusted-host ${PYPI_TRUSTED_HOST} --index-url ${PYPI_MIRROR}
 
 RUN pip uninstall -y torch torchvision torch-tensorrt \
     flash_attn transformer-engine \

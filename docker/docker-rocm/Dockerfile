@@ -28,7 +28,7 @@ WORKDIR /app
 # Change pip source
 RUN pip config set global.index-url "${PIP_INDEX}" && \
     pip config set global.extra-index-url "${PIP_INDEX}" && \
-    pip install --no-cache-dir --upgrade pip packaging wheel setuptools hatchling
+    pip install --no-cache-dir --upgrade pip packaging wheel setuptools "hatchling>=1.18.0" editables
 
 # Reinstall pytorch rocm
 RUN pip uninstall -y torch torchvision torchaudio && \
