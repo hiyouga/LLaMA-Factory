@@ -158,7 +158,7 @@ def patch_config(
 
     # do not cast data type of the model deepspeed zero3 without qlora
     if not (is_deepspeed_zero3_enabled() and model_args.quantization_bit is None):
-        init_kwargs["torch_dtype"] = model_args.compute_dtype
+        init_kwargs["torch_dtype"] = "auto"
 
         if init_kwargs["low_cpu_mem_usage"] and not is_fsdp_enabled():  # fsdp does not need device map
             if "device_map" not in init_kwargs and model_args.device_map:

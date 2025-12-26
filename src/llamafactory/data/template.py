@@ -981,7 +981,7 @@ register_template(
     replace_eos=True,
     replace_jinja_template=True,
     template_class=ReasoningTemplate,
-    mm_plugin=get_mm_plugin(name="ernie_vl", image_token="<|image@placeholder|>", video_token="<|video@placeholder|>"),
+    mm_plugin=get_mm_plugin(name="ernie_vl", image_token="<|IMAGE_PLACEHOLDER|>", video_token="<|VIDEO_PLACEHOLDER|>"),
 )
 
 
