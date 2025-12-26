@@ -5,7 +5,6 @@ services:
       context: ../..
       args:
         PIP_INDEX: https://pypi.org/simple
-        EXTRAS: torch-npu,metrics
     container_name: llamafactory-a2
     image: llamafactory:npu-a2
     volumes:

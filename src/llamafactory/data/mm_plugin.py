@@ -500,13 +500,17 @@ class ErnieVLPlugin(BasePlugin):
             while IMAGE_PLACEHOLDER in content:
                 image_seqlen = image_grid_thw[image_idx].prod() // merge_length if self.expand_mm_tokens else 1
                 content = content.replace(
-                    IMAGE_PLACEHOLDER, f"Picture {image_idx + 1}:<|IMAGE_START|>{image_token * image_seqlen}<|IMAGE_END|>", 1
+                    IMAGE_PLACEHOLDER,
+                    f"Picture {image_idx + 1}:<|IMAGE_START|>{image_token * image_seqlen}<|IMAGE_END|>",
+                    1,
                 )
                 image_idx += 1
             while VIDEO_PLACEHOLDER in content:
                 video_seqlen = video_grid_thw[video_idx].prod() // merge_length if self.expand_mm_tokens else 1
                 content = content.replace(
-                    VIDEO_PLACEHOLDER, f"Video {video_idx + 1}:<|VIDEO_START|>{video_token * video_seqlen}<|VIDEO_END|>", 1
+                    VIDEO_PLACEHOLDER,
+                    f"Video {video_idx + 1}:<|VIDEO_START|>{video_token * video_seqlen}<|VIDEO_END|>",
+                    1,
                 )
                 video_idx += 1
             message["content"] = content

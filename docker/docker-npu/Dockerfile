@@ -37,7 +37,7 @@ RUN pip uninstall -y torch torchvision torchaudio && \
 COPY . /app
 
 # Install LLaMA Factory
-RUN pip install --no-cache-dir -e "." --no-build-isolation
+RUN pip install --no-cache-dir -e ".[metrics,deepspeed]" --no-build-isolation
 
 # Set up volumes
 # VOLUME [ "/root/.cache/huggingface", "/app/shared_data", "/app/output" ]

@@ -15,7 +15,6 @@
 import os
 from typing import TYPE_CHECKING, Any, Optional, TypedDict
 
-import torch
 from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
@@ -158,6 +157,7 @@ def load_model(
     if model is None and not lazy_load:
         init_kwargs["config"] = config
         init_kwargs["pretrained_model_name_or_path"] = model_args.model_name_or_path
+        init_kwargs["torch_dtype"] = "auto"
 
         if model_args.mixture_of_depths == "load":
             model = load_mod_pretrained_model(**init_kwargs)
