@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "Unified Efficient Fine-Tuning of 100+ LLMs"
 readme = "README.md"
 license = "Apache-2.0"
-requires-python = ">=3.9.0"
+requires-python = ">=3.11.0"
 authors = [
     { name = "hiyouga", email = "hiyouga@buaa.edu.cn" }
 ]
@@ -30,10 +30,9 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Artificial Intelligence"
 ]
 dependencies = [
@@ -98,7 +97,7 @@ path = "src/llamafactory/extras/env.py"
 pattern = "VERSION = \"(?P<version>[^\"]+)\""
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py311"
 line-length = 119
 indent-width = 4
 

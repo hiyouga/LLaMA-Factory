@@ -25,29 +25,15 @@ jobs:
       fail-fast: false
       matrix:
         python:
-          - "3.9"
-          - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
         os:
           - "ubuntu-latest"
           - "windows-latest"
           - "macos-latest"
         transformers:
           - null
-        include:  # test backward compatibility
-          - python: "3.9"
-            os: "ubuntu-latest"
-            transformers: "4.49.0"
-          - python: "3.9"
-            os: "ubuntu-latest"
-            transformers: "4.51.0"
-          - python: "3.9"
-            os: "ubuntu-latest"
-            transformers: "4.53.0"
-        exclude:  # exclude python 3.9 on macos
-          - python: "3.9"
-            os: "macos-latest"
 
     runs-on: ${{ matrix.os }}
 
