@@ -516,7 +516,7 @@ huggingface-cli login
 ```bash
 git clone --depth 1 https://github.com/hiyouga/LLaMA-Factory.git
 cd LLaMA-Factory
-pip install -e ".[torch,metrics]" --no-build-isolation
+pip install -e ".[metrics]" --no-build-isolation
 ```
 
 可选的额外依赖项：`metrics`、`deepspeed`。使用 `pip install -e ".[metrics,deepspeed]"` 安装。
