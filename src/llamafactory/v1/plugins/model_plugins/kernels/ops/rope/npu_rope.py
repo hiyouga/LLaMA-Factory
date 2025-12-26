@@ -25,10 +25,13 @@ import sys
 import torch
 
 from ......accelerator.helper import DeviceType
+from ......utils.logging import get_logger
 from ......utils.types import HFModel
 from ...base import BaseKernel
 from ...registry import register_kernel
 
+
+logger = get_logger(__name__)
 
 try:
     import torch_npu
@@ -111,7 +114,7 @@ class NpuRoPEKernel(BaseKernel):
             ValueError: If the model is not provided.
         """
         if not cls.check_deps():
-            raise RuntimeError(" NpuRoPEKernel was called without checking dependencies pass.")
+            raise RuntimeError(f"torch_npu is not available but {cls.__name__} was called.")
         model = kwargs.get("model", None)
         if model is None:
             raise ValueError(f"HFModel instance is required for {cls.__name__}.")
@@ -138,6 +141,6 @@ class NpuRoPEKernel(BaseKernel):
                                 _apply_multimodal_rotary_pos_emb_qwen25_vl,
                             )
                             _modules.add(module_name)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning_rank0_once(f"Failed to apply RoPE kernel to module {module_name}: {e}")
         return model

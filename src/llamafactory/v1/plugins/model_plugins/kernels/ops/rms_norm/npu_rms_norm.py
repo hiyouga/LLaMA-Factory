@@ -52,7 +52,7 @@ class NpuRMSNormKernel(BaseKernel):
     _device = DeviceType.NPU
 
     @classmethod
-    def apply(cls, model: HFModel, **kwargs) -> HFModel:
+    def apply(cls, **kwargs) -> "HFModel":
         r"""Iterate the model and apply NPU-optimized forward to matched RMSNorm modules.
 
         Key points:
@@ -63,18 +63,21 @@ class NpuRMSNormKernel(BaseKernel):
           numerical behavior and interface consistency.
 
         Args:
-            model (HFModel): The model to optimize.
-            **kwargs: Arbitrary keyword arguments.
+            **kwargs: Keyword arguments containing the model.
 
         Returns:
             HFModel: The model with NPU fused RMSNorm.
 
         Raises:
             RuntimeError: If torch_npu is not available.
+            ValueError: If the model is not provided.
         """
-        if not cls.check_deps():
-            raise RuntimeError("torch_npu is not available but npu_ascend kernel was called.")
+        model = kwargs.get("model")
+        if model is None:
+            raise ValueError(f"HFModel instance is required for {cls.__name__}.")
 
+        if not cls.check_deps():
+            raise RuntimeError(f"torch_npu is not available but {cls.__name__} was called.")
         rms_norm_pattern = re.compile("RMSNorm", re.IGNORECASE)
 
         for name, module in model.named_modules():

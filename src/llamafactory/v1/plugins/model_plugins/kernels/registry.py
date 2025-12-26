@@ -20,7 +20,6 @@ Init Phase:
 
 """
 
-from collections import defaultdict
 from typing import Optional
 
 from ....accelerator.helper import get_current_accelerator
@@ -36,7 +35,7 @@ class Registry:
     Storage structure: ``{ "kernel_id": Class }``
     """
 
-    _kernels: dict[str, type[BaseKernel]] = defaultdict(dict)
+    _kernels: dict[str, type[BaseKernel]] = {}
 
     @classmethod
     def register(cls, kernel_cls: type[BaseKernel]):
@@ -67,7 +66,7 @@ class Registry:
             raise ValueError(f"Kernel ID (_kernel_id) is needed for {kernel_cls} to register")
 
         if kernel_id in cls._kernels:
-            raise ValueError(f"{kernel_id} already registered!, the registered kernel is {cls._kernels[kernel_id]}")
+            raise ValueError(f"{kernel_id} already registered! The registered kernel is {cls._kernels[kernel_id]}")
 
         cls._kernels[kernel_id] = kernel_cls
         return kernel_cls

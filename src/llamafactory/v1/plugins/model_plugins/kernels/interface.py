@@ -99,7 +99,7 @@ def apply_kernel(kernel_id: str, **kwargs):
     kernel = default_kernels.get(kernel_id)
     if kernel is None:
         raise ValueError(f"Kernel {kernel_id} not found")
-    return kernel.apply(**kwargs)
+    kernel.apply(**kwargs)
 
 
 class KernelPlugin(BasePlugin):
