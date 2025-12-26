@@ -15,7 +15,7 @@ import json
 import os
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional
 
 from ..extras import logging
 from .data_utils import Role
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from .mm_plugin import AudioInput, ImageInput, VideoInput
     from .parser import DatasetAttr
 
-    MediaType = Union[ImageInput, VideoInput, AudioInput]
+    MediaType = ImageInput | VideoInput | AudioInput
 
 
 logger = logging.get_logger(__name__)
@@ -40,7 +40,7 @@ class DatasetConverter:
     dataset_attr: "DatasetAttr"
     data_args: "DataArguments"
 
-    def _find_medias(self, medias: Union["MediaType", list["MediaType"], None]) -> Optional[list["MediaType"]]:
+    def _find_medias(self, medias: "MediaType" | list["MediaType"] | None) -> Optional[list["MediaType"]]:
         r"""Optionally concatenate media path to media dir when loading from local disk."""
         if medias is None:
             return None
@@ -391,11 +391,11 @@ def get_dataset_converter(name: str, dataset_attr: "DatasetAttr", data_args: "Da
 
 
 def align_dataset(
-    dataset: Union["Dataset", "IterableDataset"],
+    dataset: "Dataset" | "IterableDataset",
     dataset_attr: "DatasetAttr",
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
-) -> Union["Dataset", "IterableDataset"]:
+) -> "Dataset" | "IterableDataset":
     r"""Align the dataset to a specific format.
 
     Aligned dataset:

@@ -34,6 +34,16 @@ jobs:
           - "macos-latest"
         transformers:
           - null
+        include:  # test backward compatibility
+          - python: "3.11"
+            os: "ubuntu-latest"
+            transformers: "4.49.0"
+          - python: "3.11"
+            os: "ubuntu-latest"
+            transformers: "4.51.0"
+          - python: "3.11"
+            os: "ubuntu-latest"
+            transformers: "4.53.0"
 
     runs-on: ${{ matrix.os }}
 
