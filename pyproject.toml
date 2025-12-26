@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "llamafactory"
-version = "0.9.4.dev0"
+dynamic = ["version"]
 description = "Unified Efficient Fine-Tuning of 100+ LLMs"
 readme = "README.md"
 license = "Apache-2.0"
@@ -122,6 +122,10 @@ Repository = "https://github.com/hiyouga/LLaMA-Factory"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/llamafactory"]
+
+[tool.hatch.version]
+path = "src/llamafactory/extras/env.py"
+pattern = "VERSION = \"(?P<version>[^\"]+)\""
 
 [tool.ruff]
 target-version = "py39"
