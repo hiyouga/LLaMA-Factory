@@ -43,10 +43,16 @@ def compare_model(model_a: "torch.nn.Module", model_b: "torch.nn.Module", diff_k
 
 
 def check_lora_model(model: "LoraModel") -> tuple[set[str], set[str]]:
-    linear_modules, extra_modules = set(), set()
+    linear_modules, linear_parameters, extra_modules = set(), set(), set()
     for name, param in model.named_parameters():
         if any(module in name for module in ["lora_A", "lora_B"]):
             linear_modules.add(name.split(".lora_", maxsplit=1)[0].split(".")[-1])
+            parts = name.split(".")
+            for i, part in enumerate(parts):
+                if "lora_" in part:
+                    short_name = parts[i - 1] + "." + parts[-1]
+                    linear_parameters.add(short_name)
+                    break
             assert param.requires_grad is True
             assert param.dtype == torch.float32
         elif "modules_to_save" in name:
@@ -57,8 +63,7 @@ def check_lora_model(model: "LoraModel") -> tuple[set[str], set[str]]:
             assert param.requires_grad is False
             assert param.dtype == torch.float16
 
-    return linear_modules, extra_modules
-
+    return linear_modules, linear_parameters, extra_modules
 
 def load_train_model(add_valuehead: bool = False, **kwargs) -> "PreTrainedModel":
     model_args, _, _, finetuning_args, _ = get_train_args(kwargs)
