@@ -38,7 +38,7 @@ RUN pip uninstall -y torch torchvision torchaudio && \
 COPY . /app
 
 # Install LLaMA Factory
-RUN pip install --no-cache-dir -e ".[${EXTRAS}]" --no-build-isolation
+RUN pip install --no-cache-dir -e ".[${EXTRAS}]"
 
 # Rebuild flash attention
 RUN if [ "${INSTALL_FLASHATTN}" == "true" ]; then \

@@ -60,11 +60,11 @@ WORKDIR /app
 COPY . /app
 
 # Install LLaMA Factory
-RUN pip install --no-cache-dir -e "." --no-build-isolation
+RUN pip install --no-cache-dir -e "."
 
 RUN pip install "git+https://github.com/alibaba/roll.git#subdirectory=mcore_adapter"
 
-RUN pip install -e ".[metrics]" --no-build-isolation
+RUN pip install -e ".[metrics]"
 
 # Expose port 7860 for LLaMA Board
 ENV GRADIO_SERVER_PORT=7860
