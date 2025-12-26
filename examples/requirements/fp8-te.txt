@@ -1,0 +1,2 @@
+transformer_engine[pytorch]>=2.0.0
+accelerate>=1.10.0

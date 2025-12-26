@@ -45,6 +45,9 @@ dependencies = [
     "peft>=0.14.0,<=0.17.1",
     "trl>=0.8.6,<=0.9.6",
     "torchdata",
+    # torch
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
     # gui
     "gradio>=4.38.0,<=5.45.0",
     "matplotlib>=3.7.0",
@@ -77,6 +80,10 @@ dependencies = [
     # yanked
     "propcache!=0.4.0"
 ]
+
+[project.optional-dependencies]
+metrics = ["nltk", "jieba", "rouge-chinese"]
+deepspeed = ["deepspeed>=0.10.0,<=0.16.9"]
 
 [project.scripts]
 llamafactory-cli = "llamafactory.cli:main"

@@ -517,6 +517,10 @@ cd LLaMA-Factory
 pip install -e "." --no-build-isolation
 ```
 
+Optional dependencies available: `metrics`, `deepspeed`. Install with: `pip install -e ".[metrics,deepspeed]"`
+
+Additional dependencies for specific features are available in `examples/requirements/`.
+
 #### Install from Docker Image
 
 ```bash

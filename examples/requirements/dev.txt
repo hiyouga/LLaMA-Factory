@@ -1,0 +1,4 @@
+pre-commit
+ruff
+pytest
+build
