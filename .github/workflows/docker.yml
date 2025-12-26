@@ -7,7 +7,7 @@ on:
       - "main"
     paths:
       - "**/*.py"
-      - "requirements.txt"
+      - "pyproject.toml"
       - "docker/**"
       - ".github/workflows/*.yml"
   pull_request:
@@ -15,7 +15,7 @@ on:
       - "main"
     paths:
       - "**/*.py"
-      - "requirements.txt"
+      - "pyproject.toml"
       - "docker/**"
       - ".github/workflows/*.yml"
   release:
@@ -64,7 +64,7 @@ jobs:
         id: version
         run: |
           if [ "${{ github.event_name }}" = "release" ]; then
-            echo "tag=$(python setup.py --version)" >> "$GITHUB_OUTPUT"
+            echo "tag=$(grep -oP 'VERSION = "\K[^"]+' src/llamafactory/extras/env.py)" >> "$GITHUB_OUTPUT"
           else
             echo "tag=latest" >> "$GITHUB_OUTPUT"
           fi
@@ -93,8 +93,6 @@ jobs:
         with:
           context: .
           file: ./docker/docker-cuda/Dockerfile
-          build-args: |
-            EXTRAS=metrics,deepspeed,liger-kernel
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             docker.io/hiyouga/llamafactory:${{ steps.version.outputs.tag }}

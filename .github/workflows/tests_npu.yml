@@ -7,7 +7,7 @@ on:
       - "main"
     paths:
       - "**/*.py"
-      - "requirements.txt"
+      - "pyproject.toml"
       - "Makefile"
       - ".github/workflows/*.yml"
   pull_request:
@@ -15,7 +15,7 @@ on:
       - "main"
     paths:
       - "**/*.py"
-      - "requirements.txt"
+      - "pyproject.toml"
       - "Makefile"
       - ".github/workflows/*.yml"
 
@@ -48,10 +48,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install ".[torch-npu,dev]" torch-npu==${{matrix.pytorch_npu}}
+          uv pip install --system -e "." torch-npu==${{matrix.pytorch_npu}}
+          uv pip install --system -r examples/requirements/dev.txt
 
       - name: Install node
         run: |

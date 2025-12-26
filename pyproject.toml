@@ -1,22 +1,104 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "llamafactory"
+dynamic = ["version"]
+description = "Unified Efficient Fine-Tuning of 100+ LLMs"
+readme = "README.md"
+license = "Apache-2.0"
 requires-python = ">=3.9.0"
-dynamic = [
-    "version",
-    "dependencies",
-    "optional-dependencies",
-    "scripts",
-    "authors",
-    "description",
-    "readme",
-    "license",
-    "keywords",
-    "classifiers"
+authors = [
+    { name = "hiyouga", email = "hiyouga@buaa.edu.cn" }
 ]
+keywords = [
+    "AI",
+    "LLM",
+    "GPT",
+    "ChatGPT",
+    "Llama",
+    "Transformer",
+    "DeepSeek",
+    "Pytorch"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+dependencies = [
+    # core deps
+    "transformers>=4.49.0,<=4.56.2,!=4.52.0; python_version < '3.10'",
+    "transformers>=4.49.0,<=4.57.1,!=4.52.0,!=4.57.0; python_version >= '3.10'",
+    "datasets>=2.16.0,<=4.0.0",
+    "accelerate>=1.3.0,<=1.11.0",
+    "peft>=0.14.0,<=0.17.1",
+    "trl>=0.8.6,<=0.9.6",
+    "torchdata",
+    # torch
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    # gui
+    "gradio>=4.38.0,<=5.45.0",
+    "matplotlib>=3.7.0",
+    "tyro<0.9.0",
+    # ops
+    "einops",
+    "numpy<2.0.0",
+    "pandas>=2.0.0",
+    "scipy",
+    # model and tokenizer
+    "sentencepiece",
+    "tiktoken",
+    "modelscope>=1.14.0",
+    "hf-transfer",
+    "safetensors<=0.5.3",
+    # python
+    "fire",
+    "omegaconf",
+    "packaging",
+    "protobuf",
+    "pyyaml",
+    "pydantic<=2.10.6",
+    # api
+    "uvicorn",
+    "fastapi",
+    "sse-starlette",
+    # media
+    "av",
+    "librosa",
+    # yanked
+    "propcache!=0.4.0"
+]
+
+[project.optional-dependencies]
+metrics = ["nltk", "jieba", "rouge-chinese"]
+deepspeed = ["deepspeed>=0.10.0,<=0.16.9"]
+
+[project.scripts]
+llamafactory-cli = "llamafactory.cli:main"
+lmf = "llamafactory.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/hiyouga/LLaMA-Factory"
+Repository = "https://github.com/hiyouga/LLaMA-Factory"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/llamafactory"]
+
+[tool.hatch.version]
+path = "src/llamafactory/extras/env.py"
+pattern = "VERSION = \"(?P<version>[^\"]+)\""
 
 [tool.ruff]
 target-version = "py39"
@@ -73,23 +155,3 @@ indent-style = "space"
 docstring-code-format = true
 skip-magic-trailing-comma = false
 line-ending = "auto"
-
-[tool.uv]
-conflicts = [
-    [
-        { extra = "torch-npu" },
-        { extra = "aqlm" },
-    ],
-    [
-        { extra = "torch-npu" },
-        { extra = "vllm" },
-    ],
-    [
-        { extra = "torch-npu" },
-        { extra = "sglang" },
-    ],
-    [
-        { extra = "vllm" },
-        { extra = "sglang" },
-    ],
-]

@@ -1,0 +1,1 @@
+bitsandbytes>=0.39.0
