@@ -14,7 +14,7 @@
 
 import json
 from collections.abc import Generator
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from ...extras.constants import PEFT_METHODS
 from ...extras.misc import torch_gc
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 GPTQ_BITS = ["8", "4", "3", "2"]
 
 
-def can_quantize(checkpoint_path: Union[str, list[str]]) -> "gr.Dropdown":
+def can_quantize(checkpoint_path: str | list[str]) -> "gr.Dropdown":
     if isinstance(checkpoint_path, list) and len(checkpoint_path) != 0:
         return gr.Dropdown(value="none", interactive=False)
     else:
@@ -49,7 +49,7 @@ def save_model(
     model_name: str,
     model_path: str,
     finetuning_type: str,
-    checkpoint_path: Union[str, list[str]],
+    checkpoint_path: str | list[str],
     template: str,
     export_size: int,
     export_quantization_bit: str,

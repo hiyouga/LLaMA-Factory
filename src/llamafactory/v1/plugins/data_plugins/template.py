@@ -14,7 +14,6 @@
 
 
 from dataclasses import dataclass
-from typing import Union
 
 
 @dataclass
@@ -32,7 +31,7 @@ class QwenTemplate:
     message_template: str = "<|im_start|>{role}\n{content}<|im_end|>\n"  # FIXME if role: tool
     thinking_template: str = "<think>\n{content}\n</think>\n\n"
 
-    def _extract_content(self, content_data: Union[str, list[dict[str, str]]]) -> str:
+    def _extract_content(self, content_data: str | list[dict[str, str]]) -> str:
         if isinstance(content_data, str):
             return content_data.strip()
 
@@ -47,7 +46,7 @@ class QwenTemplate:
 
         return ""
 
-    def render_message(self, message: dict[str, Union[str, list[dict[str, str]]]]) -> str:
+    def render_message(self, message: dict[str, str | list[dict[str, str]]]) -> str:
         role = message["role"]
         content = self._extract_content(message.get("content", ""))
 

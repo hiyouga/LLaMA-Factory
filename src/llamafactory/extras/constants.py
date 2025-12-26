@@ -15,7 +15,6 @@
 import os
 from collections import OrderedDict, defaultdict
 from enum import Enum, unique
-from typing import Optional
 
 from peft.utils import SAFETENSORS_WEIGHTS_NAME as SAFE_ADAPTER_WEIGHTS_NAME
 from peft.utils import WEIGHTS_NAME as ADAPTER_WEIGHTS_NAME
@@ -154,7 +153,7 @@ class RopeScaling(str, Enum):
 
 def register_model_group(
     models: dict[str, dict[DownloadSource, str]],
-    template: Optional[str] = None,
+    template: str | None = None,
     multimodal: bool = False,
 ) -> None:
     for name, path in models.items():
