@@ -1,0 +1,156 @@
+# GitHub Copilot Instructions for LLaMA Factory
+
+## Project Overview
+
+LLaMA Factory is a unified framework for efficient fine-tuning of 100+ large language models (LLMs). It provides:
+- Support for various models: LLaMA, LLaVA, Mistral, Qwen, DeepSeek, Yi, Gemma, ChatGLM, Phi, etc.
+- Multiple training methods: pre-training, supervised fine-tuning, reward modeling, PPO, DPO, KTO, ORPO
+- Scalable resources: 16-bit full-tuning, freeze-tuning, LoRA and QLoRA variants
+- Advanced algorithms: GaLore, BAdam, APOLLO, Adam-mini, Muon, OFT, DoRA, etc.
+- Web UI (LLaMA Board) and CLI interfaces
+
+## Code Structure
+
+- `src/llamafactory/` - Main package directory
+  - `api/` - OpenAI-style API implementation
+  - `chat/` - Chat interface implementation
+  - `cli.py` - Command-line interface
+  - `data/` - Data processing and dataset handling
+  - `eval/` - Model evaluation utilities
+  - `extras/` - Additional utilities and helpers
+  - `hparams/` - Hyperparameter definitions
+  - `model/` - Model loading, patching, and utilities
+  - `train/` - Training pipeline implementation
+  - `webui/` - Gradio-based web interface
+  - `v1/` - Version 1 compatibility layer
+- `src/train.py` - Training entry point
+- `src/webui.py` - Web UI entry point
+- `src/api.py` - API server entry point
+- `tests/` - Test suite
+- `examples/` - Example configurations for various training scenarios
+- `data/` - Dataset definitions and examples
+
+## Development Practices
+
+### Code Style
+
+- Follow the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
+- Use ruff for linting and formatting
+- Line length: 119 characters
+- Indentation: 4 spaces
+- Quote style: double quotes
+- Use Google-style docstrings for documentation
+
+### Import Organization
+
+- Known first-party: `llamafactory`
+- Known third-party: `accelerate`, `datasets`, `gradio`, `numpy`, `peft`, `torch`, `transformers`, `trl`
+- Use 2 blank lines after imports
+
+### Quality Checks
+
+Before committing code, run:
+```bash
+make style      # Auto-fix style issues
+make quality    # Check code quality
+make test       # Run test suite
+```
+
+Or use the combined command:
+```bash
+make commit     # Run pre-commit hooks
+```
+
+### Testing
+
+- Use pytest for testing
+- Tests are located in `tests/` and `tests_v1/` directories
+- Run tests with: `WANDB_DISABLED=true pytest -vv --import-mode=importlib tests/ tests_v1/`
+- Disable wandb during testing to avoid external dependencies
+
+### Building
+
+Build the package with:
+```bash
+pip3 install build && python3 -m build
+```
+
+### License
+
+- All source files must include the Apache 2.0 license header
+- Check license headers with: `python3 tests/check_license.py scripts src tests tests_v1 setup.py`
+
+## Common Patterns
+
+### Configuration Files
+
+- Training configurations are typically YAML or JSON files in `examples/` directory
+- Hyperparameters are defined using dataclasses in `src/llamafactory/hparams/`
+
+### Model Support
+
+- New model support is added through model patches in `src/llamafactory/model/`
+- Visual models use the visual utilities in `src/llamafactory/model/model_utils/visual.py`
+- Quantization support is in `src/llamafactory/model/model_utils/quantization.py`
+
+### Data Processing
+
+- Dataset definitions are in `data/dataset_info.json`
+- Data templates and processors are in `src/llamafactory/data/`
+
+### Training
+
+- Training pipelines are in `src/llamafactory/train/`
+- Support for different training methods: SFT, DPO, PPO, RM, PT, KTO, ORPO
+
+## Key Dependencies
+
+- Python >= 3.9.0
+- PyTorch and transformers for model handling
+- datasets for data processing
+- peft for parameter-efficient fine-tuning
+- accelerate for distributed training
+- gradio for web UI
+- trl for reinforcement learning
+- Optional: vllm/sglang for inference, flash-attention-2, unsloth, liger-kernel
+
+## Entry Points
+
+- **CLI Training**: `llamafactory-cli train --config examples/train_lora/llama3_lora_sft.yaml`
+- **Web UI**: `llamafactory-cli webui` or `python src/webui.py`
+- **API Server**: `llamafactory-cli api` or `python src/api.py`
+- **Chat Interface**: `llamafactory-cli chat --model_name_or_path MODEL_PATH`
+
+## Environment Setup
+
+For development:
+```bash
+pip install -e ".[dev]"
+```
+
+## Important Notes
+
+- The project supports multiple backends: default PyTorch, vLLM, SGLang
+- Megatron-core training is supported via mcore_adapter
+- SwanLab and W&B are supported for experiment tracking
+- Docker support is available with pre-built images
+- Day-0/Day-1 support for latest cutting-edge models
+- Multi-modal support for vision and audio understanding tasks
+
+## Contribution Guidelines
+
+1. Fork the repository
+2. Create a development branch
+3. Set up development environment with `pip install -e ".[dev]"`
+4. Make changes following the style guide
+5. Run quality checks: `make style && make quality`
+6. Run tests: `make test`
+7. Submit a pull request
+
+## Common Commands
+
+- `make style` - Format code
+- `make quality` - Run linters
+- `make test` - Run tests
+- `make commit` - Install and run pre-commit hooks
+- `make license` - Check license headers
