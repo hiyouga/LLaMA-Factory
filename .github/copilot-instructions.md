@@ -23,9 +23,9 @@ LLaMA Factory is a unified framework for efficient fine-tuning of 100+ large lan
   - `train/` - Training pipeline implementation
   - `webui/` - Gradio-based web interface
   - `v1/` - Version 1 compatibility layer
-- `src/train.py` - Training entry point
-- `src/webui.py` - Web UI entry point
-- `src/api.py` - API server entry point
+- `src/train.py` - Training entry script (delegates to `llamafactory.train.tuner`)
+- `src/webui.py` - Web UI entry script (delegates to `llamafactory.webui.interface`)
+- `src/api.py` - API server entry script (delegates to `llamafactory.api.app`)
 - `tests/` - Test suite
 - `examples/` - Example configurations for various training scenarios
 - `data/` - Dataset definitions and examples
@@ -78,7 +78,7 @@ pip3 install build && python3 -m build
 ### License
 
 - All source files must include the Apache 2.0 license header
-- Check license headers with: `python3 tests/check_license.py scripts src tests tests_v1 setup.py`
+- Check license headers with: `make license`
 
 ## Common Patterns
 
