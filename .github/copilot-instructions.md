@@ -2,14 +2,28 @@
 
 ## Project Overview
 
-LLaMA Factory is a unified framework for efficient fine-tuning of 100+ large language models (LLMs). It provides:
+LLaMA Factory is an efficient fine-tuning framework for 100+ large language models (LLMs). It provides:
 - Support for various models: LLaMA, LLaVA, Mistral, Qwen, DeepSeek, Yi, Gemma, ChatGLM, Phi, etc.
 - Multiple training methods: pre-training, supervised fine-tuning, reward modeling, PPO, DPO, KTO, ORPO
 - Scalable resources: 16-bit full-tuning, freeze-tuning, LoRA and QLoRA variants
 - Advanced algorithms: GaLore, BAdam, APOLLO, Adam-mini, Muon, OFT, DoRA, etc.
 - Web UI (LLaMA Board) and CLI interfaces
 
+### Architecture Versions
+
+LLaMA Factory has two parallel architectures that can be switched via the `USE_V1` environment variable:
+
+**v0 (default)** - File hierarchy:
+- `api`, `webui` → `chat`, `eval`, `train` → `data`, `model` → `hparams` → `extras`
+
+**v1** - File hierarchy:
+- `trainers` → `core` → `accelerator`, `plugins`, `config` → `utils`
+
+Set `USE_V1=1` to enable v1 architecture.
+
 ## Code Structure
+
+### v0 Architecture (Default)
 
 - `src/llamafactory/` - Main package directory
   - `api/` - OpenAI-style API implementation
@@ -22,13 +36,22 @@ LLaMA Factory is a unified framework for efficient fine-tuning of 100+ large lan
   - `model/` - Model loading, patching, and utilities
   - `train/` - Training pipeline implementation
   - `webui/` - Gradio-based web interface
-  - `v1/` - Version 1 compatibility layer
 - `src/train.py` - Training entry script (delegates to `llamafactory.train.tuner`)
 - `src/webui.py` - Web UI entry script (delegates to `llamafactory.webui.interface`)
 - `src/api.py` - API server entry script (delegates to `llamafactory.api.app`)
 - `tests/` - Test suite
 - `examples/` - Example configurations for various training scenarios
 - `data/` - Dataset definitions and examples
+
+### v1 Architecture (USE_V1=1)
+
+- `src/llamafactory/v1/` - Version 1 package directory
+  - `trainers/` - Training implementations
+  - `core/` - Core training utilities
+  - `accelerator/` - Acceleration and distributed training
+  - `plugins/` - Pluggable components (model, data, sampler, trainer)
+  - `config/` - Configuration management
+  - `utils/` - Utility functions
 
 ## Development Practices
 
