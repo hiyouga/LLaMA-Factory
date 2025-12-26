@@ -65,8 +65,9 @@ make commit     # Run pre-commit hooks
 
 - Use pytest for testing
 - Tests are located in `tests/` and `tests_v1/` directories
-- Run tests with: `WANDB_DISABLED=true pytest -vv --import-mode=importlib tests/ tests_v1/`
+- Run tests with: `make test` (which runs `WANDB_DISABLED=true pytest -vv --import-mode=importlib tests/ tests_v1/`)
 - Disable wandb during testing to avoid external dependencies
+- **Note**: Training configurations require GPU machines, so training is typically not tested end-to-end. Use `make test` to validate file-level functionality.
 
 ### Building
 
