@@ -12,22 +12,49 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""The definition of NPU fused MoE kernels.
+
+Init Phase:
+1. Define GMM functions.
+2. Define NPU fused MoE functions.
+3. Register NPU fused MoE kernel.
+
+"""
+
 import types
 
 import torch
 import torch.nn.functional as F
-import torch_npu
 
-from .....accelerator.helper import DeviceType, is_torch_npu_available
-from .....utils.packages import is_transformers_version_greater_than
-from .....utils.types import HFModel
-from ..constants import KernelType
-from ..registry import MetaMoEKernel
+
+try:
+    import torch_npu
+except ImportError:
+    pass
+
+from ......accelerator.helper import DeviceType
+from ......utils.packages import is_transformers_version_greater_than
+from ......utils.types import HFModel
+from ...base import BaseKernel
+from ...registry import register_kernel
 
 
 class GmmFunction(torch.autograd.Function):
+    r"""Custom autograd function for NPU Grouped Matrix Multiplication (GMM)."""
+
     @staticmethod
     def forward(ctx, x, weight, group_list):
+        r"""Performs the forward pass of Grouped Matrix Multiplication.
+
+        Args:
+            ctx: Context object to save tensors for backward pass.
+            x (Tensor): Input tensor.
+            weight (Tensor): Weight tensor.
+            group_list (list): List of group sizes.
+
+        Returns:
+            Tensor: The result of the grouped matrix multiplication.
+        """
         ctx.save_for_backward(x, weight)
         ctx.group_list = group_list
 
@@ -38,6 +65,15 @@ class GmmFunction(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, grad_output):
+        r"""Performs the backward pass of Grouped Matrix Multiplication.
+
+        Args:
+            ctx: Context object containing saved tensors.
+            grad_output (Tensor): Gradient with respect to the output.
+
+        Returns:
+            tuple: Gradients with respect to input, weight, and None for group_list.
+        """
         input_tensor, weight = ctx.saved_tensors
         group_list = ctx.group_list
 
@@ -58,8 +94,20 @@ class GmmFunction(torch.autograd.Function):
 
 
 class HybridGmmFunction(torch.autograd.Function):
+    r"""Custom autograd function for Hybrid Grouped Matrix Multiplication on NPU."""
+
     @staticmethod
     def forward(ctx, num_experts, *args):
+        r"""Performs the forward pass of Hybrid GMM.
+
+        Args:
+            ctx: Context object to save tensors.
+            num_experts (int): Number of experts.
+            *args: Variable length argument list containing inputs and weights.
+
+        Returns:
+            tuple: The outputs of the grouped matrix multiplication.
+        """
         x_list = list(args[:num_experts])
         weight_list = list(args[num_experts:])
 
@@ -76,6 +124,15 @@ class HybridGmmFunction(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, *grad_outputs):
+        r"""Performs the backward pass of Hybrid GMM.
+
+        Args:
+            ctx: Context object containing saved tensors.
+            *grad_outputs: Gradients with respect to the outputs.
+
+        Returns:
+            tuple: Gradients with respect to inputs and weights.
+        """
         saved_tensors = ctx.saved_tensors
         num_experts = ctx.num_experts
         split_sizes = ctx.split_sizes
@@ -119,10 +176,23 @@ class HybridGmmFunction(torch.autograd.Function):
 
 
 class NpuMoeFused:
+    r"""Container for NPU fused MoE forward functions."""
+
     @staticmethod
     def npu_moe_experts_forward(
         self, hidden_states: torch.Tensor, routing_weights: torch.Tensor, router_indices: torch.Tensor
     ) -> torch.Tensor:
+        r"""Forward pass for MoE experts using NPU fused operations.
+
+        Args:
+            self: The MoE layer instance.
+            hidden_states (Tensor): Input hidden states.
+            routing_weights (Tensor): Routing weights.
+            router_indices (Tensor): Router indices.
+
+        Returns:
+            Tensor: Output tensor after expert computation.
+        """
         batch_size = hidden_states.shape[0]
         hidden_states = hidden_states.reshape(-1, self.hidden_size)
         permuted_hidden_states, row_ids_map = torch_npu.npu_moe_token_permute(
@@ -138,6 +208,15 @@ class NpuMoeFused:
 
     @staticmethod
     def npu_moe_sparse_block_forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
+        r"""Forward pass for sparse MoE block using NPU optimization.
+
+        Args:
+            self: The MoE sparse block instance.
+            hidden_states (Tensor): Input hidden states.
+
+        Returns:
+            Tensor: The routed output.
+        """
         batch_size = hidden_states.shape[0]
         hidden_states = hidden_states.reshape(-1, self.hidden_size)
         router_logits = self.gate(hidden_states)
@@ -151,8 +230,19 @@ class NpuMoeFused:
 
 
 class Qwen3NpuMoeFused:
+    r"""Container for Qwen3 NPU fused MoE forward functions."""
+
     @staticmethod
     def qwen3moe_sparse_moe_block_forward(self, hidden_states: torch.Tensor):
+        r"""Forward pass for Qwen3 sparse MoE block using NPU fused operations.
+
+        Args:
+            self: The Qwen3 MoE block instance.
+            hidden_states (Tensor): Input hidden states.
+
+        Returns:
+            tuple: A tuple containing the next states and router logits.
+        """
         batch_size, sequence_length, hidden_dim = hidden_states.shape
         hidden_states = hidden_states.view(-1, hidden_dim)
 
@@ -206,14 +296,33 @@ if not is_transformers_version_greater_than("5.0.0"):
     }
 
 
-class NpuMoEFusedMoEKernel(MetaMoEKernel):
-    type = KernelType.MOE
-    device = DeviceType.NPU
+@register_kernel
+class NpuFusedMoEKernel(BaseKernel):
+    r"""NPU Fused MoE Kernel implementation."""
+
+    _kernel_id = "npu_fused_moe"
+    _device = DeviceType.NPU
 
     @classmethod
-    def apply(cls, model, **kwargs) -> HFModel:
-        if not is_torch_npu_available():
-            return model
+    def apply(cls, **kwargs) -> HFModel:
+        r"""Applies the NPU fused MoE kernel to the model.
+
+        Args:
+            **kwargs: Keyword arguments containing the model.
+
+        Returns:
+            HFModel: The model with patched MoE forward functions.
+
+        Raises:
+            ValueError: If the model is not provided.
+            RuntimeError: If dependencies are not met.
+        """
+        model = kwargs.get("model", None)
+        if model is None:
+            raise ValueError(f"HFModel instance is required for {cls.__name__}.")
+
+        if not cls.check_deps():
+            raise RuntimeError("torch_npu is not available but NpuMoEFusedMoEKernel was called.")
 
         archs = getattr(model.config, "architectures", [])
         target_moe_mapping = None
