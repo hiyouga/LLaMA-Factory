@@ -28,21 +28,24 @@ WORKDIR /app
 # Change pip source
 RUN pip config set global.index-url "${PIP_INDEX}" && \
     pip config set global.extra-index-url "${PIP_INDEX}" && \
-    pip install --no-cache-dir --upgrade pip packaging wheel setuptools
+    pip install --no-cache-dir --upgrade pip packaging wheel setuptools uv
 
 # Reinstall pytorch rocm
 RUN pip uninstall -y torch torchvision torchaudio && \
     pip install --no-cache-dir --pre torch torchvision torchaudio --index-url "${PYTORCH_INDEX}"
 
-# Install the requirements
-COPY requirements.txt /app
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy pyproject.toml and src directory for dependency installation
+COPY pyproject.toml /app
+COPY src /app/src
+
+# Install the requirements from pyproject.toml
+RUN uv pip install --system --no-cache-dir -e "." --no-build-isolation
 
 # Copy the rest of the application into the image
 COPY . /app
 
 # Install LLaMA Factory
-RUN pip install --no-cache-dir -e ".[${EXTRAS}]" --no-build-isolation
+RUN uv pip install --system --no-cache-dir -e ".[${EXTRAS}]" --no-build-isolation
 
 # Rebuild flash attention
 RUN if [ "${INSTALL_FLASHATTN}" == "true" ]; then \

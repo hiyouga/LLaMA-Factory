@@ -7,7 +7,7 @@ on:
       - "main"
     paths:
       - "**/*.py"
-      - "requirements.txt"
+      - "pyproject.toml"
       - "docker/**"
       - ".github/workflows/*.yml"
   pull_request:
@@ -15,7 +15,7 @@ on:
       - "main"
     paths:
       - "**/*.py"
-      - "requirements.txt"
+      - "pyproject.toml"
       - "docker/**"
       - ".github/workflows/*.yml"
   release:
@@ -64,7 +64,7 @@ jobs:
         id: version
         run: |
           if [ "${{ github.event_name }}" = "release" ]; then
-            echo "tag=$(python setup.py --version)" >> "$GITHUB_OUTPUT"
+            echo "tag=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")" >> "$GITHUB_OUTPUT"
           else
             echo "tag=latest" >> "$GITHUB_OUTPUT"
           fi
