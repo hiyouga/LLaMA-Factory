@@ -5,7 +5,7 @@ FROM ${BASE_IMAGE}
 
 # Installation arguments
 ARG PIP_INDEX=https://pypi.org/simple
-ARG EXTRAS=torch-npu,metrics
+ARG EXTRAS=metrics
 ARG HTTP_PROXY=""
 ARG PYTORCH_INDEX=https://download.pytorch.org/whl/cpu
 

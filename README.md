@@ -517,7 +517,7 @@ cd LLaMA-Factory
 pip install -e ".[torch,metrics]" --no-build-isolation
 ```
 
-Extra dependencies available: torch, torch-npu, metrics, deepspeed, liger-kernel, bitsandbytes, hqq, eetq, gptq, aqlm, vllm, sglang, galore, apollo, badam, adam-mini, qwen, minicpm_v, openmind, swanlab, dev
+Extra dependencies available: torch, metrics, deepspeed, liger-kernel, bitsandbytes, hqq, eetq, gptq, aqlm, vllm, sglang, galore, apollo, badam, adam-mini, qwen, minicpm_v, openmind, swanlab, dev
 
 #### Install from Docker Image
 
@@ -579,7 +579,7 @@ To enable FlashAttention-2 on the Windows platform, please use the script from [
 
 <details><summary>For Ascend NPU users</summary>
 
-To install LLaMA Factory on Ascend NPU devices, please upgrade Python to version 3.10 or higher and specify extra dependencies: `pip install -e ".[torch-npu,metrics]"`. Additionally, you need to install the **[Ascend CANN Toolkit and Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**. Please follow the [installation tutorial](https://www.hiascend.com/document/detail/en/CANNCommunityEdition/600alphaX/softwareinstall/instg/atlasdeploy_03_0031.html) or use the following commands:
+To install LLaMA Factory on Ascend NPU devices, please upgrade Python to version 3.10 or higher and specify extra dependencies: `pip install -e ".[metrics]"`. Additionally, you need to install the **[Ascend CANN Toolkit and Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**. Please follow the [installation tutorial](https://www.hiascend.com/document/detail/en/CANNCommunityEdition/600alphaX/softwareinstall/instg/atlasdeploy_03_0031.html) or use the following commands:
 
 ```bash
 # replace the url according to your CANN version and devices
@@ -731,7 +731,7 @@ For Ascend NPU users:
 ```bash
 docker build -f ./docker/docker-npu/Dockerfile \
     --build-arg PIP_INDEX=https://pypi.org/simple \
-    --build-arg EXTRAS=torch-npu,metrics \
+    --build-arg EXTRAS=metrics \
     -t llamafactory:latest .
 
 docker run -dit --ipc=host \
