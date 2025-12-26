@@ -54,8 +54,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install torch-npu==${{matrix.pytorch_npu}}
-          uv pip install -e ".[dev]"
+          uv pip install --system torch-npu==${{matrix.pytorch_npu}}
+          uv pip install --system -e ".[dev]"
 
       - name: Install node
         run: |
