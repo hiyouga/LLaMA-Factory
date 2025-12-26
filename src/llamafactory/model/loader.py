@@ -202,8 +202,9 @@ def load_model(
         if vhead_params is not None:
             model.load_state_dict(vhead_params, strict=False)
             logger.info_rank0(f"Loaded valuehead from checkpoint: {vhead_path}")
-    
+
     if not is_trainable:
+        model.requires_grad_(False)
         model.eval()
     else:
         model.train()
