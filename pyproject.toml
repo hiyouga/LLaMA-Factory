@@ -78,39 +78,6 @@ dependencies = [
     "propcache!=0.4.0"
 ]
 
-[project.optional-dependencies]
-torch = ["torch>=2.0.0", "torchvision>=0.15.0"]
-metrics = ["nltk", "jieba", "rouge-chinese"]
-deepspeed = ["deepspeed>=0.10.0,<=0.16.9"]
-liger-kernel = ["liger-kernel>=0.5.5"]
-bitsandbytes = ["bitsandbytes>=0.39.0"]
-hqq = ["hqq"]
-eetq = ["eetq"]
-gptq = ["optimum>=1.24.0", "gptqmodel>=2.0.0"]
-aqlm = ["aqlm[gpu]>=1.1.0"]
-vllm = ["vllm>=0.4.3,<=0.11.0"]
-sglang = ["sglang[srt]>=0.4.5", "transformers==4.51.1"]
-galore = ["galore-torch"]
-apollo = ["apollo-torch"]
-badam = ["badam>=1.2.1"]
-adam-mini = ["adam-mini"]
-minicpm_v = [
-    "soundfile",
-    "torchvision",
-    "torchaudio",
-    "vector_quantize_pytorch",
-    "vocos",
-    "msgpack",
-    "referencing",
-    "jsonschema_specifications"
-]
-openmind = ["openmind"]
-swanlab = ["swanlab"]
-fp8 = ["torchao>=0.8.0", "accelerate>=1.10.0"]
-fp8-te = ["transformer_engine[pytorch]>=2.0.0", "accelerate>=1.10.0"]
-fp8-all = ["torchao>=0.8.0", "transformer_engine[pytorch]>=2.0.0", "accelerate>=1.10.0"]
-dev = ["pre-commit", "ruff", "pytest", "build"]
-
 [project.scripts]
 llamafactory-cli = "llamafactory.cli:main"
 lmf = "llamafactory.cli:main"
@@ -181,11 +148,3 @@ indent-style = "space"
 docstring-code-format = true
 skip-magic-trailing-comma = false
 line-ending = "auto"
-
-[tool.uv]
-conflicts = [
-    [
-        { extra = "vllm" },
-        { extra = "sglang" },
-    ],
-]

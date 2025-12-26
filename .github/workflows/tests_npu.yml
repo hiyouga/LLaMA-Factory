@@ -54,7 +54,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install --system -e ".[dev]" torch-npu==${{matrix.pytorch_npu}}
+          uv pip install --system -e "." torch-npu==${{matrix.pytorch_npu}}
+          uv pip install --system pre-commit ruff pytest build
 
       - name: Install node
         run: |

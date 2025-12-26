@@ -74,7 +74,8 @@ jobs:
       - name: Install dependencies
         run: |
           uv pip install --system torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          uv pip install --system -e ".[dev]"
+          uv pip install --system -e "."
+          uv pip install --system pre-commit ruff pytest build
 
       - name: Install transformers
         if: ${{ matrix.transformers }}

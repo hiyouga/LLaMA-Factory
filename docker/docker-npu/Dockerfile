@@ -5,7 +5,6 @@ FROM ${BASE_IMAGE}
 
 # Installation arguments
 ARG PIP_INDEX=https://pypi.org/simple
-ARG EXTRAS=metrics
 ARG HTTP_PROXY=""
 ARG PYTORCH_INDEX=https://download.pytorch.org/whl/cpu
 
@@ -38,7 +37,7 @@ RUN pip uninstall -y torch torchvision torchaudio && \
 COPY . /app
 
 # Install LLaMA Factory
-RUN pip install --no-cache-dir -e ".[${EXTRAS}]" --no-build-isolation
+RUN pip install --no-cache-dir -e "." --no-build-isolation
 
 # Set up volumes
 # VOLUME [ "/root/.cache/huggingface", "/app/shared_data", "/app/output" ]

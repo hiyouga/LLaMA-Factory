@@ -93,8 +93,6 @@ jobs:
         with:
           context: .
           file: ./docker/docker-cuda/Dockerfile
-          build-args: |
-            EXTRAS=metrics,deepspeed,liger-kernel
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             docker.io/hiyouga/llamafactory:${{ steps.version.outputs.tag }}
