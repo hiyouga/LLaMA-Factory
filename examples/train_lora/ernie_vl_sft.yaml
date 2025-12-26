@@ -1,0 +1,41 @@
+
+### model
+model_name_or_path: /home/xiaoxunpeng/workplace/Models/ERNIE-4.5-VL-28B-A3B-PT
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+lora_rank: 16
+lora_alpha: 32
+lora_target: q_proj,v_proj,k_proj,o_proj
+
+### dataset
+dataset: mllm_demo
+template: ernie_vl
+cutoff_len: 2048
+max_samples: 50
+overwrite_cache: true
+preprocessing_num_workers: 16
+
+### output
+output_dir: saves/ernie_test_run
+logging_steps: 1
+save_steps: 10
+plot_loss: true
+overwrite_output_dir: true
+
+### train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-4
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+
+### quantization
+quantization_bit: 4
+deepspeed: examples/deepspeed/ds_z3_config.json
