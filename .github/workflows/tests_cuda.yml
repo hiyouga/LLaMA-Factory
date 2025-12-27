@@ -1,0 +1,51 @@
+name: tests_cuda
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths: ["**/*.py", "requirements.txt", "Makefile", ".github/workflows/*.yml"]
+  pull_request:
+    branches: ["main"]
+    paths: ["**/*.py", "requirements.txt", "Makefile", ".github/workflows/*.yml"]
+
+jobs:
+  tests:
+    runs-on: linux-x86_64-gpu-2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "**/requirements*.txt"
+
+      - name: Check GPU Status
+        run: nvidia-smi
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ".[torch,dev]"
+
+      - name: Cache HuggingFace models
+        id: hf-hub-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/huggingface
+          key: hf-cache-${{ runner.os }}-${{ hashFiles('tests/version.txt') }}
+
+      - name: Check quality & build
+        run: |
+          make style && make quality && make license && make build
+
+      - name: Test with pytest
+        run: |
+          make test
+        env:
+          HF_HOME: ${{ runner.temp }}/huggingface
+          HF_HUB_OFFLINE: "${{ steps.hf-hub-cache.outputs.cache-hit == 'true' && '1' || '0' }}"
