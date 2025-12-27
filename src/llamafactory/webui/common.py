@@ -17,7 +17,7 @@ import os
 import signal
 from collections import defaultdict
 from datetime import datetime
-from typing import Any, Optional, Union
+from typing import Any
 
 from psutil import Process
 from yaml import safe_dump, safe_load
@@ -71,7 +71,7 @@ def _get_config_path() -> os.PathLike:
     return os.path.join(DEFAULT_CACHE_DIR, USER_CONFIG)
 
 
-def load_config() -> dict[str, Union[str, dict[str, Any]]]:
+def load_config() -> dict[str, str | dict[str, Any]]:
     r"""Load user config if exists."""
     try:
         with open(_get_config_path(), encoding="utf-8") as f:
@@ -81,7 +81,7 @@ def load_config() -> dict[str, Union[str, dict[str, Any]]]:
 
 
 def save_config(
-    lang: str, hub_name: Optional[str] = None, model_name: Optional[str] = None, model_path: Optional[str] = None
+    lang: str, hub_name: str | None = None, model_name: str | None = None, model_path: str | None = None
 ) -> None:
     r"""Save user config."""
     os.makedirs(DEFAULT_CACHE_DIR, exist_ok=True)
@@ -151,7 +151,7 @@ def load_dataset_info(dataset_dir: str) -> dict[str, dict[str, Any]]:
         return {}
 
 
-def load_args(config_path: str) -> Optional[dict[str, Any]]:
+def load_args(config_path: str) -> dict[str, Any] | None:
     r"""Load the training configuration from config path."""
     try:
         with open(config_path, encoding="utf-8") as f:

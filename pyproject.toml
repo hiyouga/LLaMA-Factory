@@ -104,18 +104,20 @@ indent-width = 4
 
 [tool.ruff.lint]
 ignore = [
-    "C408", # collection
-    "C901", # complex
-    "E501", # line too long
-    "E731", # lambda function
-    "E741", # ambiguous var name
-    "D100", # no doc public module
-    "D101", # no doc public class
-    "D102", # no doc public method
-    "D103", # no doc public function
-    "D104", # no doc public package
-    "D105", # no doc magic method
-    "D107", # no doc __init__
+    "C408",  # collection
+    "C901",  # complex
+    "E501",  # line too long
+    "E731",  # lambda function
+    "E741",  # ambiguous var name
+    "UP007", # no upgrade union
+    "UP045", # no upgrade optional
+    "D100",  # no doc public module
+    "D101",  # no doc public class
+    "D102",  # no doc public method
+    "D103",  # no doc public function
+    "D104",  # no doc public package
+    "D105",  # no doc magic method
+    "D107",  # no doc __init__
 ]
 extend-select = [
     "C",      # complexity

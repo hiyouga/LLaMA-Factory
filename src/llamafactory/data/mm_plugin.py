@@ -22,7 +22,7 @@ import re
 from copy import deepcopy
 from dataclasses import dataclass
 from io import BytesIO
-from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TypedDict, Union
+from typing import TYPE_CHECKING, BinaryIO, Literal, NotRequired, Optional, TypedDict, Union
 
 import numpy as np
 import torch
@@ -32,7 +32,7 @@ from transformers.models.mllama.processing_mllama import (
     convert_sparse_cross_attention_mask_to_dense,
     get_cross_attention_token_mask,
 )
-from typing_extensions import NotRequired, override
+from typing_extensions import override
 
 from ..extras.constants import AUDIO_PLACEHOLDER, IGNORE_INDEX, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
 from ..extras.packages import is_pillow_available, is_pyav_available, is_transformers_version_greater_than
@@ -63,8 +63,8 @@ if TYPE_CHECKING:
     from transformers.video_processing_utils import BaseVideoProcessor
 
     class EncodedImage(TypedDict):
-        path: Optional[str]
-        bytes: Optional[bytes]
+        path: str | None
+        bytes: bytes | None
 
     ImageInput = Union[str, bytes, EncodedImage, BinaryIO, ImageObject]
     VideoInput = Union[str, BinaryIO, list[list[ImageInput]]]
@@ -144,9 +144,9 @@ def _check_video_is_nested_images(video: "VideoInput") -> bool:
 
 @dataclass
 class MMPluginMixin:
-    image_token: Optional[str]
-    video_token: Optional[str]
-    audio_token: Optional[str]
+    image_token: str | None
+    video_token: str | None
+    audio_token: str | None
     expand_mm_tokens: bool = True
 
     def _validate_input(
@@ -328,7 +328,7 @@ class MMPluginMixin:
         videos: list["VideoInput"],
         audios: list["AudioInput"],
         processor: "MMProcessor",
-        imglens: Optional[list[int]] = None,
+        imglens: list[int] | None = None,
     ) -> dict[str, "torch.Tensor"]:
         r"""Process visual inputs.
 
@@ -426,13 +426,13 @@ class BasePlugin(MMPluginMixin):
     def process_token_ids(
         self,
         input_ids: list[int],
-        labels: Optional[list[int]],
+        labels: list[int] | None,
         images: list["ImageInput"],
         videos: list["VideoInput"],
         audios: list["AudioInput"],
         tokenizer: "PreTrainedTokenizer",
         processor: Optional["MMProcessor"],
-    ) -> tuple[list[int], Optional[list[int]]]:
+    ) -> tuple[list[int], list[int] | None]:
         r"""Pre-process token ids after tokenization for VLMs."""
         self._validate_input(processor, images, videos, audios)
         return input_ids, labels
@@ -1305,13 +1305,13 @@ class PaliGemmaPlugin(BasePlugin):
     def process_token_ids(
         self,
         input_ids: list[int],
-        labels: Optional[list[int]],
+        labels: list[int] | None,
         images: list["ImageInput"],
         videos: list["VideoInput"],
         audios: list["AudioInput"],
         tokenizer: "PreTrainedTokenizer",
         processor: Optional["MMProcessor"],
-    ) -> tuple[list[int], Optional[list[int]]]:
+    ) -> tuple[list[int], list[int] | None]:
         self._validate_input(processor, images, videos, audios)
         num_images = len(images)
         image_seqlen = processor.image_seq_length if self.expand_mm_tokens else 0  # skip mm token
@@ -2126,9 +2126,9 @@ def register_mm_plugin(name: str, plugin_class: type["BasePlugin"]) -> None:
 
 def get_mm_plugin(
     name: str,
-    image_token: Optional[str] = None,
-    video_token: Optional[str] = None,
-    audio_token: Optional[str] = None,
+    image_token: str | None = None,
+    video_token: str | None = None,
+    audio_token: str | None = None,
     **kwargs,
 ) -> "BasePlugin":
     r"""Get plugin for multimodal inputs."""

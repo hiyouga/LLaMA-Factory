@@ -16,7 +16,6 @@
 # limitations under the License.
 
 import os
-from typing import Optional
 
 import fire
 import torch
@@ -34,7 +33,7 @@ def convert_mca_to_hf(
     output_path: str = "./output",
     bf16: bool = False,
     fp16: bool = False,
-    convert_model_max_length: Optional[int] = None,
+    convert_model_max_length: int | None = None,
 ):
     """Convert megatron checkpoint to HuggingFace format.
 
@@ -67,11 +66,11 @@ def convert(
     output_path: str = "./output",
     bf16: bool = False,
     fp16: bool = False,
-    convert_model_max_length: Optional[int] = None,
+    convert_model_max_length: int | None = None,
     tensor_model_parallel_size: int = 1,
     pipeline_model_parallel_size: int = 1,
     expert_model_parallel_size: int = 1,
-    virtual_pipeline_model_parallel_size: Optional[int] = None,
+    virtual_pipeline_model_parallel_size: int | None = None,
 ):
     """Convert checkpoint between MCA and HuggingFace formats.
 

@@ -53,9 +53,9 @@ class DistributedStrategy:
 
     mp_replicate_size: int = 1
     """Model parallel replicate size, default to 1."""
-    mp_shard_size: Optional[int] = None
+    mp_shard_size: int | None = None
     """Model parallel shard size, default to world_size // mp_replicate_size."""
-    dp_size: Optional[int] = None
+    dp_size: int | None = None
     """Data parallel size, default to world_size // cp_size."""
     cp_size: int = 1
     """Context parallel size, default to 1."""
@@ -115,7 +115,7 @@ class DistributedInterface:
 
         return cls._instance
 
-    def __init__(self, config: Optional[DistributedConfig] = None) -> None:
+    def __init__(self, config: DistributedConfig | None = None) -> None:
         if self._initialized:
             return
 
@@ -165,7 +165,7 @@ class DistributedInterface:
             f"model_device_mesh={self.model_device_mesh}, data_device_mesh={self.data_device_mesh}"
         )
 
-    def get_device_mesh(self, dim: Optional[Dim] = None) -> Optional[DeviceMesh]:
+    def get_device_mesh(self, dim: Dim | None = None) -> DeviceMesh | None:
         """Get device mesh for specified dimension."""
         if dim is None:
             raise ValueError("dim must be specified.")
@@ -176,14 +176,14 @@ class DistributedInterface:
         else:
             return self.model_device_mesh[dim.value]
 
-    def get_group(self, dim: Optional[Dim] = None) -> Optional[ProcessGroup]:
+    def get_group(self, dim: Dim | None = None) -> Optional[ProcessGroup]:
         """Get process group for specified dimension."""
         if self.model_device_mesh is None or dim is None:
             return None
         else:
             return self.get_device_mesh(dim).get_group()
 
-    def get_rank(self, dim: Optional[Dim] = None) -> int:
+    def get_rank(self, dim: Dim | None = None) -> int:
         """Get parallel rank for specified dimension."""
         if self.model_device_mesh is None:
             return 0
@@ -192,7 +192,7 @@ class DistributedInterface:
         else:
             return self.get_device_mesh(dim).get_local_rank()
 
-    def get_world_size(self, dim: Optional[Dim] = None) -> int:
+    def get_world_size(self, dim: Dim | None = None) -> int:
         """Get parallel size for specified dimension."""
         if self.model_device_mesh is None:
             return 1
@@ -209,7 +209,7 @@ class DistributedInterface:
         """Get parallel local world size."""
         return self._local_world_size
 
-    def all_gather(self, data: Tensor, dim: Optional[Dim] = Dim.DP) -> Tensor:
+    def all_gather(self, data: Tensor, dim: Dim | None = Dim.DP) -> Tensor:
         """Gather tensor across specified parallel group."""
         if self.model_device_mesh is not None:
             return helper.operate_tensorlike(helper.all_gather, data, group=self.get_group(dim))
@@ -217,7 +217,7 @@ class DistributedInterface:
             return data
 
     def all_reduce(
-        self, data: TensorLike, op: helper.ReduceOp = helper.ReduceOp.MEAN, dim: Optional[Dim] = Dim.DP
+        self, data: TensorLike, op: helper.ReduceOp = helper.ReduceOp.MEAN, dim: Dim | None = Dim.DP
     ) -> TensorLike:
         """Reduce tensor across specified parallel group."""
         if self.model_device_mesh is not None:
@@ -225,7 +225,7 @@ class DistributedInterface:
         else:
             return data
 
-    def broadcast(self, data: TensorLike, src: int = 0, dim: Optional[Dim] = Dim.DP) -> TensorLike:
+    def broadcast(self, data: TensorLike, src: int = 0, dim: Dim | None = Dim.DP) -> TensorLike:
         """Broadcast tensor across specified parallel group."""
         if self.model_device_mesh is not None:
             return helper.operate_tensorlike(helper.broadcast, data, src=src, group=self.get_group(dim))

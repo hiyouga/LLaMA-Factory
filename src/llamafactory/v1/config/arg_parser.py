@@ -15,7 +15,7 @@
 import json
 import sys
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 from omegaconf import OmegaConf
 from transformers import HfArgumentParser
@@ -27,7 +27,7 @@ from .sample_args import SampleArguments
 from .training_args import TrainingArguments
 
 
-InputArgument = Optional[Union[dict[str, Any], list[str]]]
+InputArgument = dict[str, Any] | list[str] | None
 
 
 def validate_args(

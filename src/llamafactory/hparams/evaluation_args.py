@@ -14,7 +14,7 @@
 
 import os
 from dataclasses import dataclass, field
-from typing import Literal, Optional
+from typing import Literal
 
 from datasets import DownloadMode
 
@@ -46,7 +46,7 @@ class EvaluationArguments:
         default=5,
         metadata={"help": "Number of examplars for few-shot learning."},
     )
-    save_dir: Optional[str] = field(
+    save_dir: str | None = field(
         default=None,
         metadata={"help": "Path to save the evaluation results."},
     )

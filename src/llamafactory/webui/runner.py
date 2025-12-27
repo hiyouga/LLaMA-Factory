@@ -17,7 +17,7 @@ import os
 from collections.abc import Generator
 from copy import deepcopy
 from subprocess import PIPE, Popen, TimeoutExpired
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from transformers.utils import is_torch_npu_available
 
@@ -59,7 +59,7 @@ class Runner:
         self.manager = manager
         self.demo_mode = demo_mode
         """ Resume """
-        self.trainer: Optional[Popen] = None
+        self.trainer: Popen | None = None
         self.do_train = True
         self.running_data: dict[Component, Any] = None
         """ State """

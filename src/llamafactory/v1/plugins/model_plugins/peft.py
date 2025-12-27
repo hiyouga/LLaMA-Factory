@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Literal, Optional, TypedDict
+from typing import Literal, TypedDict
 
 from peft import LoraConfig, PeftModel, get_peft_model
 
@@ -36,7 +36,7 @@ class FreezeConfigDict(TypedDict, total=False):
     """Plugin name."""
     freeze_trainable_layers: int
     """Freeze trainable layers."""
-    freeze_trainable_modules: Optional[list[str]]
+    freeze_trainable_modules: list[str] | None
     """Freeze trainable modules."""
 
 

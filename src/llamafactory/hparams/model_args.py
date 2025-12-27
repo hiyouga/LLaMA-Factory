@@ -17,12 +17,11 @@
 
 import json
 from dataclasses import asdict, dataclass, field, fields
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal, Self
 
 import torch
 from omegaconf import OmegaConf
 from transformers.training_args import _convert_str_dict
-from typing_extensions import Self
 
 from ..extras.constants import AttentionFunction, EngineName, QuantizationMethod, RopeScaling
 from ..extras.logging import get_logger
@@ -35,13 +34,13 @@ logger = get_logger(__name__)
 class BaseModelArguments:
     r"""Arguments pertaining to the model."""
 
-    model_name_or_path: Optional[str] = field(
+    model_name_or_path: str | None = field(
         default=None,
         metadata={
             "help": "Path to the model weight or identifier from huggingface.co/models or modelscope.cn/models."
         },
     )
-    adapter_name_or_path: Optional[str] = field(
+    adapter_name_or_path: str | None = field(
         default=None,
         metadata={
             "help": (
@@ -50,11 +49,11 @@ class BaseModelArguments:
             )
         },
     )
-    adapter_folder: Optional[str] = field(
+    adapter_folder: str | None = field(
         default=None,
         metadata={"help": "The folder containing the adapter weights to load."},
     )
-    cache_dir: Optional[str] = field(
+    cache_dir: str | None = field(
         default=None,
         metadata={"help": "Where to store the pre-trained models downloaded from huggingface.co or modelscope.cn."},
     )
@@ -70,17 +69,17 @@ class BaseModelArguments:
         default=False,
         metadata={"help": "Whether or not the special tokens should be split during the tokenization process."},
     )
-    add_tokens: Optional[str] = field(
+    add_tokens: str | None = field(
         default=None,
         metadata={
             "help": "Non-special tokens to be added into the tokenizer. Use commas to separate multiple tokens."
         },
     )
-    add_special_tokens: Optional[str] = field(
+    add_special_tokens: str | None = field(
         default=None,
         metadata={"help": "Special tokens to be added into the tokenizer. Use commas to separate multiple tokens."},
     )
-    new_special_tokens_config: Optional[str] = field(
+    new_special_tokens_config: str | None = field(
         default=None,
         metadata={
             "help": (
@@ -110,7 +109,7 @@ class BaseModelArguments:
         default=True,
         metadata={"help": "Whether or not to use memory-efficient model loading."},
     )
-    rope_scaling: Optional[RopeScaling] = field(
+    rope_scaling: RopeScaling | None = field(
         default=None,
         metadata={"help": "Which scaling strategy should be adopted for the RoPE embeddings."},
     )
@@ -122,7 +121,7 @@ class BaseModelArguments:
         default=False,
         metadata={"help": "Enable shift short attention (S^2-Attn) proposed by LongLoRA."},
     )
-    mixture_of_depths: Optional[Literal["convert", "load"]] = field(
+    mixture_of_depths: Literal["convert", "load"] | None = field(
         default=None,
         metadata={"help": "Convert the model to mixture-of-depths (MoD) or load the MoD model."},
     )
@@ -138,7 +137,7 @@ class BaseModelArguments:
         default=False,
         metadata={"help": "Whether or not to enable liger kernel for faster training."},
     )
-    moe_aux_loss_coef: Optional[float] = field(
+    moe_aux_loss_coef: float | None = field(
         default=None,
         metadata={"help": "Coefficient of the auxiliary router loss in mixture-of-experts model."},
     )
@@ -182,15 +181,15 @@ class BaseModelArguments:
         default="auto",
         metadata={"help": "Data type for model weights and activations at inference."},
     )
-    hf_hub_token: Optional[str] = field(
+    hf_hub_token: str | None = field(
         default=None,
         metadata={"help": "Auth token to log in with Hugging Face Hub."},
     )
-    ms_hub_token: Optional[str] = field(
+    ms_hub_token: str | None = field(
         default=None,
         metadata={"help": "Auth token to log in with ModelScope Hub."},
     )
-    om_hub_token: Optional[str] = field(
+    om_hub_token: str | None = field(
         default=None,
         metadata={"help": "Auth token to log in with Modelers Hub."},
     )
@@ -283,7 +282,7 @@ class QuantizationArguments:
         default=QuantizationMethod.BNB,
         metadata={"help": "Quantization method to use for on-the-fly quantization."},
     )
-    quantization_bit: Optional[int] = field(
+    quantization_bit: int | None = field(
         default=None,
         metadata={"help": "The number of bits to quantize the model using on-the-fly quantization."},
     )
@@ -295,7 +294,7 @@ class QuantizationArguments:
         default=True,
         metadata={"help": "Whether or not to use double quantization in bitsandbytes int4 training."},
     )
-    quantization_device_map: Optional[Literal["auto"]] = field(
+    quantization_device_map: Literal["auto"] | None = field(
         default=None,
         metadata={"help": "Device map used to infer the 4-bit quantized model, needs bitsandbytes>=0.43.0."},
     )
@@ -375,7 +374,7 @@ class ProcessorArguments:
 class ExportArguments:
     r"""Arguments pertaining to the model export."""
 
-    export_dir: Optional[str] = field(
+    export_dir: str | None = field(
         default=None,
         metadata={"help": "Path to the directory to save the exported model."},
     )
@@ -387,11 +386,11 @@ class ExportArguments:
         default="cpu",
         metadata={"help": "The device used in model export, use `auto` to accelerate exporting."},
     )
-    export_quantization_bit: Optional[int] = field(
+    export_quantization_bit: int | None = field(
         default=None,
         metadata={"help": "The number of bits to quantize the exported model."},
     )
-    export_quantization_dataset: Optional[str] = field(
+    export_quantization_dataset: str | None = field(
         default=None,
         metadata={"help": "Path to the dataset or dataset name to use in quantizing the exported model."},
     )
@@ -407,7 +406,7 @@ class ExportArguments:
         default=False,
         metadata={"help": "Whether or not to save the `.bin` files instead of `.safetensors`."},
     )
-    export_hub_model_id: Optional[str] = field(
+    export_hub_model_id: str | None = field(
         default=None,
         metadata={"help": "The name of the repository if push the model to the Hugging Face hub."},
     )
@@ -437,7 +436,7 @@ class VllmArguments:
         default=32,
         metadata={"help": "Maximum rank of all LoRAs in the vLLM engine."},
     )
-    vllm_config: Optional[Union[dict, str]] = field(
+    vllm_config: dict | str | None = field(
         default=None,
         metadata={"help": "Config to initialize the vllm engine. Please use JSON strings."},
     )
@@ -463,7 +462,7 @@ class SGLangArguments:
         default=-1,
         metadata={"help": "Tensor parallel size for the SGLang engine."},
     )
-    sglang_config: Optional[Union[dict, str]] = field(
+    sglang_config: dict | str | None = field(
         default=None,
         metadata={"help": "Config to initialize the SGLang engine. Please use JSON strings."},
     )
@@ -487,21 +486,21 @@ class KTransformersArguments:
         default=False,
         metadata={"help": "Whether To Use KTransformers Optimizations For LoRA Training."},
     )
-    kt_optimize_rule: Optional[str] = field(
+    kt_optimize_rule: str | None = field(
         default=None,
         metadata={
             "help": "Path To The KTransformers Optimize Rule; See https://github.com/kvcache-ai/ktransformers/."
         },
     )
-    cpu_infer: Optional[int] = field(
+    cpu_infer: int | None = field(
         default=32,
         metadata={"help": "Number Of CPU Cores Used For Computation."},
     )
-    chunk_size: Optional[int] = field(
+    chunk_size: int | None = field(
         default=8192,
         metadata={"help": "Chunk Size Used For CPU Compute In KTransformers."},
     )
-    mode: Optional[str] = field(
+    mode: str | None = field(
         default="normal",
         metadata={"help": "Normal Or Long_Context For Llama Models."},
     )
@@ -539,17 +538,17 @@ class ModelArguments(
     The class on the most right will be displayed first.
     """
 
-    compute_dtype: Optional[torch.dtype] = field(
+    compute_dtype: torch.dtype | None = field(
         default=None,
         init=False,
         metadata={"help": "Torch data type for computing model outputs, derived from `fp/bf16`. Do not specify it."},
     )
-    device_map: Optional[Union[str, dict[str, Any]]] = field(
+    device_map: str | dict[str, Any] | None = field(
         default=None,
         init=False,
         metadata={"help": "Device map for model placement, derived from training stage. Do not specify it."},
     )
-    model_max_length: Optional[int] = field(
+    model_max_length: int | None = field(
         default=None,
         init=False,
         metadata={"help": "The maximum input length for model, derived from `cutoff_len`. Do not specify it."},

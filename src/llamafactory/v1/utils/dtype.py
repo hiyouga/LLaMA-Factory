@@ -16,7 +16,6 @@
 # limitations under the License.
 
 from contextlib import contextmanager
-from typing import Union
 
 import torch
 from transformers.utils import is_torch_bf16_available_on_device, is_torch_fp16_available_on_device
@@ -38,7 +37,7 @@ class DtypeInterface:
     _is_fp32_available = True
 
     @staticmethod
-    def is_available(precision: Union[str, torch.dtype]) -> bool:
+    def is_available(precision: str | torch.dtype) -> bool:
         if precision in DtypeRegistry.HALF_LIST:
             return DtypeInterface._is_fp16_available
         elif precision in DtypeRegistry.FLOAT_LIST:
@@ -49,19 +48,19 @@ class DtypeInterface:
             raise RuntimeError(f"Unexpected precision: {precision}")
 
     @staticmethod
-    def is_fp16(precision: Union[str, torch.dtype]) -> bool:
+    def is_fp16(precision: str | torch.dtype) -> bool:
         return precision in DtypeRegistry.HALF_LIST
 
     @staticmethod
-    def is_fp32(precision: Union[str, torch.dtype]) -> bool:
+    def is_fp32(precision: str | torch.dtype) -> bool:
         return precision in DtypeRegistry.FLOAT_LIST
 
     @staticmethod
-    def is_bf16(precision: Union[str, torch.dtype]) -> bool:
+    def is_bf16(precision: str | torch.dtype) -> bool:
         return precision in DtypeRegistry.BFLOAT_LIST
 
     @staticmethod
-    def to_dtype(precision: Union[str, torch.dtype]) -> torch.dtype:
+    def to_dtype(precision: str | torch.dtype) -> torch.dtype:
         if precision in DtypeRegistry.HALF_LIST:
             return torch.float16
         elif precision in DtypeRegistry.FLOAT_LIST:
@@ -83,7 +82,7 @@ class DtypeInterface:
             raise RuntimeError(f"Unexpected precision: {precision}")
 
     @contextmanager
-    def set_dtype(self, precision: Union[str, torch.dtype]):
+    def set_dtype(self, precision: str | torch.dtype):
         original_dtype = torch.get_default_dtype()
         torch.set_default_dtype(self.to_dtype(precision))
         try:

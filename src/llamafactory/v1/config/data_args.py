@@ -14,12 +14,11 @@
 
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
 class DataArguments:
-    dataset: Optional[str] = field(
+    dataset: str | None = field(
         default=None,
         metadata={"help": "Path to the dataset."},
     )
