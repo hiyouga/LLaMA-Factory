@@ -49,7 +49,7 @@ dependencies = [
     "trl>=0.8.6,<=0.9.6",
     "torchdata>=0.10.0,<=0.11.0",
     # gui
-    "gradio>=4.38.0,<=6.2.0",
+    "gradio>=4.38.0,<=5.50.0",
     "matplotlib>=3.7.0",
     "tyro<0.9.0",
     # ops
