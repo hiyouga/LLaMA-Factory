@@ -80,8 +80,10 @@ class CustomKTOTrainer(KTOTrainer):
         # trl
         # Not all losses require a KL calculation
         self.calculate_KL = True
-        if self.loss_type in ["apo_zero_unpaired"]:
+        if hasattr(self, "loss_type") and self.loss_type in ["apo_zero_unpaired"]:
             self.calculate_KL = False
+        else:
+            self.loss_type = "kto"
 
         Trainer.__init__(self, model=model, **kwargs)
         self.model_accepts_loss_kwargs = False  # overwrite trainer's default behavior
