@@ -21,7 +21,19 @@ on:
 
 jobs:
   tests:
-    runs-on: linux-x86_64-gpu-2
+    strategy:
+      fail-fast: false
+      matrix:
+        python:
+          - "3.11"
+        os:
+          - "linux-x86_64-gpu-2"
+
+    runs-on: ${{ matrix.os }}
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.os }}-${{ matrix.python }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
     steps:
       - name: Checkout
@@ -30,7 +42,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python }}
           github-token: ${{ github.token }}
           enable-cache: false
 
