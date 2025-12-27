@@ -29,15 +29,13 @@ RUN pip config set global.index-url "${PIP_INDEX}" && \
     pip config set global.extra-index-url "${PIP_INDEX}" && \
     pip install --no-cache-dir --upgrade pip packaging wheel setuptools "hatchling>=1.18.0" editables
 
-# Install torch-npu
-RUN pip uninstall -y torch torchvision torchaudio && \
-    pip install --no-cache-dir "torch==2.7.1" "torch-npu==2.7.1" "torchvision==0.22.1" --index-url "${PYTORCH_INDEX}"
-
 # Copy the application into the image
 COPY . /app
 
-# Install LLaMA Factory
-RUN pip install --no-cache-dir -e ".[metrics]" --no-build-isolation
+# Install torch-npu
+RUN pip uninstall -y torch torchvision torchaudio && \
+    pip install --no-cache-dir --no-build-isolation -e ".[metrics]" \
+    "torch==2.7.1" "torch-npu==2.7.1" "torchvision==0.22.1" "torchaudio==2.7.1" --index-url "${PYTORCH_INDEX}"
 
 # Set up volumes
 # VOLUME [ "/root/.cache/huggingface", "/app/shared_data", "/app/output" ]

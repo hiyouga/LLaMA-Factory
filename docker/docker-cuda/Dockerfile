@@ -26,13 +26,13 @@ WORKDIR /app
 # Change pip source
 RUN pip config set global.index-url "${PIP_INDEX}" && \
     pip config set global.extra-index-url "${PIP_INDEX}" && \
-    pip install --no-cache-dir --upgrade pip packaging wheel setuptools "hatchling>=1.18.0" editables
+    pip install --no-cache-dir --upgrade pip packaging wheel setuptools editables "hatchling>=1.18.0"
 
 # Copy the application into the image
 COPY . /app
 
 # Install LLaMA Factory
-RUN pip install --no-cache-dir -e ".[metrics,deepspeed]" --no-build-isolation
+RUN pip install --no-cache-dir --no-build-isolation -e ".[metrics,deepspeed]"
 
 # Rebuild flash attention
 RUN if [ "${INSTALL_FLASHATTN}" == "true" ]; then \
