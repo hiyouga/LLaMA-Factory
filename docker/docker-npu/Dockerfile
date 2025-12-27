@@ -34,14 +34,14 @@ COPY . /app
 
 # Install torch-npu
 RUN pip uninstall -y torch torchvision torchaudio && \
-    pip install --no-cache-dir --no-build-isolation -e ".[metrics]" \
-    "torch==2.7.1" "torch-npu==2.7.1" "torchvision==0.22.1" "torchaudio==2.7.1" --index-url "${PYTORCH_INDEX}"
+    pip install --no-cache-dir "torch==2.7.1" "torch-npu==2.7.1" "torchvision==0.22.1" "torchaudio==2.7.1" --index-url "${PYTORCH_INDEX}" && \
+    pip install --no-cache-dir --no-build-isolation -e ".[metrics]"
 
 # Set up volumes
 # VOLUME [ "/root/.cache/huggingface", "/app/shared_data", "/app/output" ]
 
 # Verify torch version
-RUN python -c "import torch, sys; v=torch.__version__; print('torch version:', v); sys.exit(0 if v.startswith('2.7.1') else 1)"
+RUN python3 -c "import torch, sys; v=torch.__version__; print('torch version:', v); sys.exit(0 if v.startswith('2.7.1') else 1)"
 
 # Expose port 7860 for LLaMA Board
 ENV GRADIO_SERVER_PORT=7860
