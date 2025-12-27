@@ -35,7 +35,7 @@ COPY . /app
 # Install torch-npu
 RUN pip uninstall -y torch torchvision torchaudio && \
     pip install --no-cache-dir "torch==2.7.1" "torch-npu==2.7.1" "torchvision==0.22.1" "torchaudio==2.7.1" --index-url "${PYTORCH_INDEX}" && \
-    pip install --no-cache-dir --no-build-isolation -e ".[metrics]"
+    pip install --no-cache-dir -e ".[metrics]" --no-build-isolation
 
 # Set up volumes
 # VOLUME [ "/root/.cache/huggingface", "/app/shared_data", "/app/output" ]
