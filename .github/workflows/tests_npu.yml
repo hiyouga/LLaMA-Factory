@@ -55,8 +55,8 @@ jobs:
       - name: Install dependencies
         run: |
           uv venv
-          uv pip install --system torch-npu==${{matrix.pytorch_npu}}
-          uv pip install --system -e ".[dev]"
+          uv pip install torch-npu==${{matrix.pytorch_npu}}
+          uv pip install -e ".[dev]"
 
       - name: Install node
         run: |
@@ -74,19 +74,19 @@ jobs:
 
       - name: Check quality
         run: |
-          make style && make quality
+          UV_NO_SYNC=1 make style && make quality
 
       - name: Check license
         run: |
-          make license
+          UV_NO_SYNC=1 make license
 
       - name: Check build
         run: |
-          make build
+          UV_NO_SYNC=1 make build
 
       - name: Test with pytest
         run: |
-          make test
+          UV_NO_SYNC=1 make test
         env:
           HF_HOME: /root/.cache/huggingface
           HF_HUB_OFFLINE: "${{ steps.hf-hub-cache.outputs.cache-hit == 'true' && '1' || '0' }}"
