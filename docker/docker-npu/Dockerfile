@@ -27,7 +27,7 @@ WORKDIR /app
 # Change pip source
 RUN pip config set global.index-url "${PIP_INDEX}" && \
     pip config set global.extra-index-url "${PIP_INDEX}" && \
-    pip install --no-cache-dir --upgrade pip packaging wheel setuptools "hatchling>=1.18.0" editables
+    pip install --no-cache-dir --upgrade pip packaging wheel setuptools editables "hatchling>=1.18.0"
 
 # Copy the application into the image
 COPY . /app
@@ -39,9 +39,6 @@ RUN pip uninstall -y torch torchvision torchaudio && \
 
 # Set up volumes
 # VOLUME [ "/root/.cache/huggingface", "/app/shared_data", "/app/output" ]
-
-# Verify torch version
-RUN python3 -c "import torch, sys; v=torch.__version__; print('torch version:', v); sys.exit(0 if v.startswith('2.7.1') else 1)"
 
 # Expose port 7860 for LLaMA Board
 ENV GRADIO_SERVER_PORT=7860

@@ -34,7 +34,7 @@ COPY . /app
 
 # Reinstall pytorch rocm and install LLaMA Factory
 RUN pip uninstall -y torch torchvision torchaudio && \
-    pip install --no-cache-dir -e --pre ".[metrics,deepspeed]" --index-url "${PYTORCH_INDEX}"
+    pip install --no-cache-dir --no-build-isolation -e --pre ".[metrics,deepspeed]" --index-url "${PYTORCH_INDEX}"
 
 # Rebuild flash attention
 RUN if [ "${INSTALL_FLASHATTN}" == "true" ]; then \
