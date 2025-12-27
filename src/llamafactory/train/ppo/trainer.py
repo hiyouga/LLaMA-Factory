@@ -33,27 +33,19 @@ from transformers.trainer_pt_utils import remove_dummy_checkpoint
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 from transformers.utils import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
 
-# Check for compatible TRL version
+# Check if TRL version is compatible (0.8.6 <= version < 0.9.6)
 try:
     from trl import PPOConfig, PPOTrainer, __version__ as trl_version
-    from trl.core import PPODecorators, logprobs_from_logits
-    
-    # Check if TRL version is compatible (0.8.6 <= version < 0.9.6)
     from packaging import version
     if version.parse(trl_version) < version.parse("0.8.6") or version.parse(trl_version) > version.parse("0.9.6"):
         raise ImportError(
             "Incompatible TRL version detected. LLaMA-Factory ppo requires TRL version >=0.8.6,<=0.9.6. "
-            f"Found version {trl_version}. Please install the correct version with:\n"
-            "To fix: run `pip install trl>=0.8.6,<=0..9.6` and set `DISABLE_VERSION_CHECK=1` to skip this check.\n"
+            f"Found version {trl_version}. Please install the correct version with: `pip install trl>=0.8.6,<=0.9.6`\n"
+            "To fix: run `DISABLE_VERSION_CHECK=1 llamafactory-cli train example_ppo.yaml`\n"
         )
+    from trl.core import PPODecorators, logprobs_from_logits
 except ImportError as e:
-    if "PPODecorators" in str(e):
-        raise ImportError(
-            "Incompatible TRL version detected. LLaMA-Factory ppo requires TRL version >=0.8.6,<=0.9.6. "
-            f"Found version {trl_version}. Please install the correct version with:\n"
-            "To fix: run `pip install trl>=0.8.6,<=0..9.6` and set `DISABLE_VERSION_CHECK=1` to skip this check.\n"
-        ) from e
-    raise
+    raise e
 from trl.models.utils import unwrap_model_for_generation
 from typing_extensions import override
 

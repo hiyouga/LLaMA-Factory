@@ -77,8 +77,11 @@ class CustomKTOTrainer(KTOTrainer):
         self.desirable_weight = finetuning_args.kto_chosen_weight
         self.undesirable_weight = finetuning_args.kto_rejected_weight
         self.ftx_gamma = finetuning_args.pref_ftx
+        # trl
+        # Not all losses require a KL calculation
         self.calculate_KL = True
-        self.loss_type = "kto"
+        if self.loss_type in ["apo_zero_unpaired"]:
+            self.calculate_KL = False
 
         Trainer.__init__(self, model=model, **kwargs)
         self.model_accepts_loss_kwargs = False  # overwrite trainer's default behavior
