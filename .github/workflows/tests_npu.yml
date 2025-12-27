@@ -49,8 +49,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python }}
+          github-token: ${{ github.token }}
+          enable-cache: false
 
       - name: Install dependencies
         run: |
