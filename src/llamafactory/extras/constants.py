@@ -1073,6 +1073,40 @@ register_model_group(
 
 register_model_group(
     models={
+        "MiniMax-Text-01": {
+            DownloadSource.DEFAULT: "MiniMaxAI/MiniMax-Text-01-hf",
+            DownloadSource.MODELSCOPE: "MiniMaxAI/MiniMax-Text-01",
+        },
+        "MiniMax-M1-40k": {
+            DownloadSource.DEFAULT: "MiniMaxAI/MiniMax-M1-40k-hf",
+            DownloadSource.MODELSCOPE: "MiniMaxAI/MiniMax-M1-40k-hf",
+        },
+        "MiniMax-M1-80k": {
+            DownloadSource.DEFAULT: "MiniMaxAI/MiniMax-M1-80k-hf",
+            DownloadSource.MODELSCOPE: "MiniMaxAI/MiniMax-M1-80k-hf",
+        },
+    },
+    template="minimax_m1",
+)
+
+
+register_model_group(
+    models={
+        "MiniMax-M2": {
+            DownloadSource.DEFAULT: "MiniMaxAI/MiniMax-M2",
+            DownloadSource.MODELSCOPE: "MiniMaxAI/MiniMax-M2",
+        },
+        "MiniMax-M2.1": {
+            DownloadSource.DEFAULT: "MiniMaxAI/MiniMax-M2.1",
+            DownloadSource.MODELSCOPE: "MiniMaxAI/MiniMax-M2.1",
+        },
+    },
+    template="minimax_m2",
+)
+
+
+register_model_group(
+    models={
         "Granite-3.0-1B-A400M-Base": {
             DownloadSource.DEFAULT: "ibm-granite/granite-3.0-1b-a400m-base",
             DownloadSource.MODELSCOPE: "AI-ModelScope/granite-3.0-1b-a400m-base",
