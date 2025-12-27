@@ -312,7 +312,7 @@ class MiniMaxM1ToolUtils(ToolUtils):
             except json.JSONDecodeError:
                 continue
 
-        return results if results else content
+        return results
 
 
 class MiniMaxM2ToolUtils(ToolUtils):
@@ -342,8 +342,6 @@ class MiniMaxM2ToolUtils(ToolUtils):
                 prompt += value + "</parameter>"
             prompt += "\n</invoke>"
             function_texts.append(prompt)
-
-        return "\n<minimax:tool_call>\n" + "\n".join(function_texts) + "\n</minimax:tool_call>"
 
     @override
     @staticmethod
