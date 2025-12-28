@@ -1676,7 +1676,9 @@ register_template(
 register_template(
     name="minimax1",
     format_user=StringFormatter(
-        slots=["<beginning_of_sentence>user name=user\n{{content}}<end_of_sentence>\n<beginning_of_sentence>ai name=assistant\n"]
+        slots=[
+            "<beginning_of_sentence>user name=user\n{{content}}<end_of_sentence>\n<beginning_of_sentence>ai name=assistant\n"
+        ]
     ),
     format_assistant=StringFormatter(slots=["{{content}}<end_of_sentence>\n"]),
     format_system=StringFormatter(
@@ -1684,7 +1686,9 @@ register_template(
     ),
     format_function=FunctionFormatter(slots=["{{content}}<end_of_sentence>\n"], tool_format="minimax1"),
     format_observation=StringFormatter(
-        slots=["<beginning_of_sentence>tool name=tools\n{{content}}<end_of_sentence>\n<beginning_of_sentence>ai name=assistant\n"]
+        slots=[
+            "<beginning_of_sentence>tool name=tools\n{{content}}<end_of_sentence>\n<beginning_of_sentence>ai name=assistant\n"
+        ]
     ),
     format_tools=ToolFormatter(tool_format="minimax1"),
     default_system="You are a helpful assistant.",
