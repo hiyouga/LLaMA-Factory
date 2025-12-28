@@ -1073,35 +1073,35 @@ register_model_group(
 
 register_model_group(
     models={
-        "MiniMax-Text-01": {
+        "MiniMax-Text-01-Instruct": {
             DownloadSource.DEFAULT: "MiniMaxAI/MiniMax-Text-01-hf",
             DownloadSource.MODELSCOPE: "MiniMaxAI/MiniMax-Text-01",
         },
-        "MiniMax-M1-40k": {
+        "MiniMax-M1-40k-Thinking": {
             DownloadSource.DEFAULT: "MiniMaxAI/MiniMax-M1-40k-hf",
             DownloadSource.MODELSCOPE: "MiniMaxAI/MiniMax-M1-40k-hf",
         },
-        "MiniMax-M1-80k": {
+        "MiniMax-M1-80k-Thinking": {
             DownloadSource.DEFAULT: "MiniMaxAI/MiniMax-M1-80k-hf",
             DownloadSource.MODELSCOPE: "MiniMaxAI/MiniMax-M1-80k-hf",
         },
     },
-    template="minimax_m1",
+    template="minimax1",
 )
 
 
 register_model_group(
     models={
-        "MiniMax-M2": {
+        "MiniMax-M2-Thinking": {
             DownloadSource.DEFAULT: "MiniMaxAI/MiniMax-M2",
             DownloadSource.MODELSCOPE: "MiniMaxAI/MiniMax-M2",
         },
-        "MiniMax-M2.1": {
+        "MiniMax-M2.1-Thinking": {
             DownloadSource.DEFAULT: "MiniMaxAI/MiniMax-M2.1",
             DownloadSource.MODELSCOPE: "MiniMaxAI/MiniMax-M2.1",
         },
     },
-    template="minimax_m2",
+    template="minimax2",
 )
 
 
