@@ -65,15 +65,15 @@ MINIMAX_M1_TOOL_PROMPT = (
     "You are provided with these tools:\n<tools>\n{tool_text}</tools>\n\n"
     "If you need to call tools, please respond with <tool_calls></tool_calls> XML tags, and provide tool-name and "
     "json-object of arguments, following the format below:\n<tool_calls>\n"
-    "{{\"name\": <tool-name-1>, \"arguments\": <args-json-object-1>}}\n...\n</tool_calls>"
+    """{{"name": <tool-name-1>, "arguments": <args-json-object-1>}}\n...\n</tool_calls>"""
 )
 
 MINIMAX_M2_TOOL_PROMPT = (
     "\n\n# Tools\n\nYou may call one or more tools to assist with the user query.\n"
     "Here are the tools available in JSONSchema format:\n\n<tools>\n{tool_text}</tools>\n\n"
     "When making tool calls, use XML format to invoke tools and pass parameters:\n"
-    "\n<minimax:tool_call>\n<invoke name=\"tool-name-1\">\n<parameter name=\"param-key-1\">param-value-1</parameter>\n"
-    "<parameter name=\"param-key-2\">param-value-2</parameter>\n...\n</invoke>\n</minimax:tool_call>"
+    """\n<minimax:tool_call>\n<invoke name="tool-name-1">\n<parameter name="param-key-1">param-value-1</parameter>\n"""
+    """<parameter name="param-key-2">param-value-2</parameter>\n...\n</invoke>\n</minimax:tool_call>"""
 )
 
 QWEN_TOOL_PROMPT = (
@@ -334,9 +334,9 @@ class MiniMaxM2ToolUtils(ToolUtils):
         function_texts = []
         for func in functions:
             name, arguments = func.name, json.loads(func.arguments)
-            prompt = "<invoke name=\"" + name + "\">"
+            prompt = '<invoke name="' + name + '">'
             for key, value in arguments.items():
-                prompt += "\n<parameter name=\"" + key + "\">"
+                prompt += '\n<parameter name="' + key + '">'
                 if not isinstance(value, str):
                     value = json.dumps(value, ensure_ascii=False)
                 prompt += value + "</parameter>"
@@ -346,9 +346,7 @@ class MiniMaxM2ToolUtils(ToolUtils):
     @override
     @staticmethod
     def tool_extractor(content: str) -> Union[str, list["FunctionCall"]]:
-        regex = re.compile(
-            r"<minimax:tool_call>\s*(.+?)\s*</minimax:tool_call>", re.DOTALL
-        )
+        regex = re.compile(r"<minimax:tool_call>\s*(.+?)\s*</minimax:tool_call>", re.DOTALL)
         tool_match = re.search(regex, content)
         if not tool_match:
             return content
