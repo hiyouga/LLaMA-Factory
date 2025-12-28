@@ -336,7 +336,7 @@ class MiniMaxM2ToolUtils(ToolUtils):
             name, arguments = func.name, json.loads(func.arguments)
             prompt = f'<invoke name="{name}">'
             for key, value in arguments.items():
-                prompt += '\n<parameter name="' + key + '">'
+                prompt += f'\n<parameter name="{key}">'
                 if not isinstance(value, str):
                     value = json.dumps(value, ensure_ascii=False)
                 prompt += value + "</parameter>"
