@@ -1673,6 +1673,39 @@ register_template(
 )
 
 
+register_template(
+    name="minimax1",
+    format_user=StringFormatter(
+        slots=["<beginning_of_sentence>user name=user\n{{content}}<end_of_sentence>\n<beginning_of_sentence>ai name=assistant\n"]
+    ),
+    format_assistant=StringFormatter(slots=["{{content}}<end_of_sentence>\n"]),
+    format_system=StringFormatter(
+        slots=["<beginning_of_sentence>system ai_setting=assistant\n{{content}}<end_of_sentence>\n"]
+    ),
+    format_function=FunctionFormatter(slots=["{{content}}<end_of_sentence>\n"], tool_format="minimax1"),
+    format_observation=StringFormatter(
+        slots=["<beginning_of_sentence>tool name=tools\n{{content}}<end_of_sentence>\n<beginning_of_sentence>ai name=assistant\n"]
+    ),
+    format_tools=ToolFormatter(tool_format="minimax1"),
+    default_system="You are a helpful assistant.",
+    stop_words=["<end_of_sentence>"],
+)
+
+
+register_template(
+    name="minimax2",
+    format_user=StringFormatter(slots=["]~b]user\n{{content}}[e~[\n]~b]ai\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}[e~[\n"]),
+    format_system=StringFormatter(slots=["]~!b[]~b]system\n{{content}}[e~[\n"]),
+    format_function=FunctionFormatter(slots=["{{content}}[e~[\n"], tool_format="minimax2"),
+    format_observation=StringFormatter(slots=["]~b]tool\n<response>{{content}}</response>[e~[\n]~b]ai\n"]),
+    format_tools=ToolFormatter(tool_format="minimax2"),
+    default_system="You are a helpful assistant. Your name is MiniMax-M2.1 and is built by MiniMax.",
+    stop_words=["[e~["],
+    template_class=ReasoningTemplate,
+)
+
+
 # mistral tokenizer v3 tekken
 register_template(
     name="ministral",
