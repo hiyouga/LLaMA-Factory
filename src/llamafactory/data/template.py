@@ -1674,7 +1674,7 @@ register_template(
 
 
 register_template(
-    name="minimax_m1",
+    name="minimax1",
     format_user=StringFormatter(
         slots=["<beginning_of_sentence>user name=user\n{{content}}<end_of_sentence>\n<beginning_of_sentence>ai name=assistant\n"]
     ),
@@ -1693,7 +1693,7 @@ register_template(
 
 
 register_template(
-    name="minimax_m2",
+    name="minimax2",
     format_user=StringFormatter(slots=["]~b]user\n{{content}}[e~[\n]~b]ai\n"]),
     format_assistant=StringFormatter(slots=["{{content}}[e~[\n"]),
     format_system=StringFormatter(slots=["]~!b[]~b]system\n{{content}}[e~[\n"]),
