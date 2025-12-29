@@ -1,4 +1,4 @@
-name: tests_npu
+name: tests_cuda
 
 on:
   workflow_dispatch:
@@ -27,22 +27,13 @@ jobs:
         python:
           - "3.11"
         os:
-          - "linux-aarch64-a2-4"
-        pytorch_npu:
-          - "2.7.1"
+          - "linux-x86_64-gpu-2"
 
     runs-on: ${{ matrix.os }}
 
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.os }}-${{ matrix.python }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
-
-    container:
-      image: ascendai/cann:8.3.rc2-910b-ubuntu22.04-py3.11
-      env:
-        HF_ENDPOINT: https://hf-mirror.com
-        HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        OS_NAME: ${{ matrix.os }}
 
     steps:
       - name: Checkout
@@ -55,25 +46,20 @@ jobs:
           github-token: ${{ github.token }}
           enable-cache: false
 
+      - name: Check GPU Status
+        run: nvidia-smi
+
       - name: Install dependencies
         run: |
           uv venv
-          uv pip install torch-npu==${{matrix.pytorch_npu}}
           uv pip install -e ".[dev]"
 
-      - name: Install node
-        run: |
-          apt-get update || true
-          apt-get install -y curl
-          curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-          apt-get install -y nodejs
-
-      - name: Cache files
+      - name: Cache HuggingFace models
         id: hf-hub-cache
         uses: actions/cache@v4
         with:
           path: ${{ runner.temp }}/huggingface
-          key: huggingface-${{ matrix.os }}-${{ matrix.python }}-${{ hashFiles('tests/version.txt') }}
+          key: hf-cache-${{ runner.os }}-${{ hashFiles('tests/version.txt') }}
 
       - name: Check quality
         run: |
@@ -98,5 +84,5 @@ jobs:
           make test
         env:
           UV_NO_SYNC: 1
-          HF_HOME: /root/.cache/huggingface
+          HF_HOME: ${{ runner.temp }}/huggingface
           HF_HUB_OFFLINE: "${{ steps.hf-hub-cache.outputs.cache-hit == 'true' && '1' || '0' }}"
