@@ -56,4 +56,11 @@ def test_all_device():
 @pytest.mark.require_distributed(2)
 def test_multi_device():
     master_port = find_available_port()
+    import os
+    import sys
+
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    os.environ["PYTHONPATH"] = project_root + os.pathsep + os.environ.get("PYTHONPATH", "")
     mp.spawn(_all_reduce_tests, args=(2, master_port), nprocs=2)

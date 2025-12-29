@@ -18,11 +18,13 @@ Contains shared fixtures, pytest configuration, and custom markers.
 """
 
 import os
+from typing import Optional
 
 import pytest
+import torch.distributed as dist
 from pytest import Config, FixtureRequest, Item, MonkeyPatch
 
-from llamafactory.extras.misc import get_current_device, get_device_count, is_env_enabled
+from llamafactory.extras.misc import find_available_port, get_current_device, get_device_count, is_env_enabled
 from llamafactory.extras.packages import is_transformers_version_greater_than
 from llamafactory.train.test_utils import patch_valuehead_model
 
@@ -70,7 +72,7 @@ def _handle_slow_tests(items: list[Item]):
                 item.add_marker(skip_slow)
 
 
-def _get_visible_devices_env() -> str | None:
+def _get_visible_devices_env() -> Optional[str]:
     """Return device visibility env var name."""
     if CURRENT_DEVICE == "cuda":
         return "CUDA_VISIBLE_DEVICES"
@@ -119,6 +121,14 @@ def pytest_collection_modifyitems(config: Config, items: list[Item]):
 
 
 @pytest.fixture(autouse=True)
+def _cleanup_distributed_state():
+    """Cleanup distributed state after each test."""
+    yield
+    if dist.is_initialized():
+        dist.destroy_process_group()
+
+
+@pytest.fixture(autouse=True)
 def _manage_distributed_env(request: FixtureRequest, monkeypatch: MonkeyPatch) -> None:
     """Set environment variables for distributed tests if specific devices are requested."""
     env_key = _get_visible_devices_env()
@@ -145,6 +155,12 @@ def _manage_distributed_env(request: FixtureRequest, monkeypatch: MonkeyPatch) -
             monkeypatch.setenv(env_key, visible_devices[0] if visible_devices else "0")
         else:
             monkeypatch.setenv(env_key, "0")
+
+        monkeypatch.setenv("MASTER_ADDR", "127.0.0.1")
+        monkeypatch.setenv("MASTER_PORT", str(find_available_port()))
+        monkeypatch.setenv("WORLD_SIZE", "1")
+        monkeypatch.setenv("RANK", "0")
+        monkeypatch.setenv("LOCAL_RANK", "0")
 
 
 @pytest.fixture
