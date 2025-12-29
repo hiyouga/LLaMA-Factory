@@ -63,6 +63,7 @@ MCA_SUPPORTED_MODELS = {
     "qwen2",
     "qwen2_vl",
     "qwen2_5_vl",
+    "qwen3_vl",
     "qwen3",
     "qwen3_moe",
     "qwen3_next",
