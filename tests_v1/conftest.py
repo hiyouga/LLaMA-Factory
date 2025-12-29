@@ -20,6 +20,7 @@ Contains shared fixtures, pytest configuration, and custom markers.
 import os
 
 import pytest
+import torch
 from pytest import Config, FixtureRequest, Item, MonkeyPatch
 
 from llamafactory.v1.accelerator.helper import get_current_accelerator, get_device_count
@@ -145,3 +146,7 @@ def _manage_distributed_env(request: FixtureRequest, monkeypatch: MonkeyPatch) -
             monkeypatch.setenv(env_key, visible_devices[0] if visible_devices else "0")
         else:
             monkeypatch.setenv(env_key, "0")
+        if CURRENT_DEVICE == "cuda":
+            monkeypatch.setattr(torch.cuda, "device_count", lambda: 1)
+        elif CURRENT_DEVICE == "npu":
+            monkeypatch.setattr(torch.npu, "device_count", lambda: 1)

@@ -21,10 +21,11 @@ import os
 from typing import Optional
 
 import pytest
+import torch
 import torch.distributed as dist
 from pytest import Config, FixtureRequest, Item, MonkeyPatch
 
-from llamafactory.extras.misc import find_available_port, get_current_device, get_device_count, is_env_enabled
+from llamafactory.extras.misc import get_current_device, get_device_count, is_env_enabled
 from llamafactory.extras.packages import is_transformers_version_greater_than
 from llamafactory.train.test_utils import patch_valuehead_model
 
@@ -155,12 +156,10 @@ def _manage_distributed_env(request: FixtureRequest, monkeypatch: MonkeyPatch) -
             monkeypatch.setenv(env_key, visible_devices[0] if visible_devices else "0")
         else:
             monkeypatch.setenv(env_key, "0")
-
-        monkeypatch.setenv("MASTER_ADDR", "127.0.0.1")
-        monkeypatch.setenv("MASTER_PORT", str(find_available_port()))
-        monkeypatch.setenv("WORLD_SIZE", "1")
-        monkeypatch.setenv("RANK", "0")
-        monkeypatch.setenv("LOCAL_RANK", "0")
+        if CURRENT_DEVICE == "cuda":
+            monkeypatch.setattr(torch.cuda, "device_count", lambda: 1)
+        elif CURRENT_DEVICE == "npu":
+            monkeypatch.setattr(torch.npu, "device_count", lambda: 1)
 
 
 @pytest.fixture
