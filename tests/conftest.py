@@ -21,6 +21,8 @@ import os
 from typing import Optional
 
 import pytest
+import torch
+import torch.distributed as dist
 from pytest import Config, FixtureRequest, Item, MonkeyPatch
 
 from llamafactory.extras.misc import get_current_device, get_device_count, is_env_enabled
@@ -120,6 +122,14 @@ def pytest_collection_modifyitems(config: Config, items: list[Item]):
 
 
 @pytest.fixture(autouse=True)
+def _cleanup_distributed_state():
+    """Cleanup distributed state after each test."""
+    yield
+    if dist.is_initialized():
+        dist.destroy_process_group()
+
+
+@pytest.fixture(autouse=True)
 def _manage_distributed_env(request: FixtureRequest, monkeypatch: MonkeyPatch) -> None:
     """Set environment variables for distributed tests if specific devices are requested."""
     env_key = _get_visible_devices_env()
@@ -146,6 +156,10 @@ def _manage_distributed_env(request: FixtureRequest, monkeypatch: MonkeyPatch) -
             monkeypatch.setenv(env_key, visible_devices[0] if visible_devices else "0")
         else:
             monkeypatch.setenv(env_key, "0")
+        if CURRENT_DEVICE == "cuda":
+            monkeypatch.setattr(torch.cuda, "device_count", lambda: 1)
+        elif CURRENT_DEVICE == "npu":
+            monkeypatch.setattr(torch.npu, "device_count", lambda: 1)
 
 
 @pytest.fixture

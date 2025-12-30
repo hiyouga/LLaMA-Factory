@@ -61,6 +61,21 @@ LLAMA3_TOOL_PROMPT = (
     "Do not use variables.\n\n{tool_text}"
 )
 
+MINIMAX_M1_TOOL_PROMPT = (
+    "You are provided with these tools:\n<tools>\n{tool_text}</tools>\n\n"
+    "If you need to call tools, please respond with <tool_calls></tool_calls> XML tags, and provide tool-name and "
+    "json-object of arguments, following the format below:\n<tool_calls>\n"
+    """{{"name": <tool-name-1>, "arguments": <args-json-object-1>}}\n...\n</tool_calls>"""
+)
+
+MINIMAX_M2_TOOL_PROMPT = (
+    "\n\n# Tools\n\nYou may call one or more tools to assist with the user query.\n"
+    "Here are the tools available in JSONSchema format:\n\n<tools>\n{tool_text}</tools>\n\n"
+    "When making tool calls, use XML format to invoke tools and pass parameters:\n"
+    """\n<minimax:tool_call>\n<invoke name="tool-name-1">\n<parameter name="param-key-1">param-value-1</parameter>\n"""
+    """<parameter name="param-key-2">param-value-2</parameter>\n...\n</invoke>\n</minimax:tool_call>"""
+)
+
 QWEN_TOOL_PROMPT = (
     "\n\n# Tools\n\nYou may call one or more functions to assist with the user query.\n\n"
     "You are provided with function signatures within <tools></tools> XML tags:\n<tools>{tool_text}"
@@ -253,6 +268,109 @@ class Llama3ToolUtils(ToolUtils):
             return content
 
 
+class MiniMaxM1ToolUtils(ToolUtils):
+    r"""MiniMax-M1 tool using template."""
+
+    @override
+    @staticmethod
+    def tool_formatter(tools: list[dict[str, Any]]) -> str:
+        tool_text = ""
+        for tool in tools:
+            tool = tool.get("function", "") if tool.get("type") == "function" else tool
+            tool_text += json.dumps(tool, ensure_ascii=False) + "\n"
+
+        return MINIMAX_M1_TOOL_PROMPT.format(tool_text=tool_text)
+
+    @override
+    @staticmethod
+    def function_formatter(functions: list["FunctionCall"]) -> str:
+        function_texts = []
+        for func in functions:
+            name, arguments = func.name, json.loads(func.arguments)
+            function_texts.append(json.dumps({"name": name, "arguments": arguments}, ensure_ascii=False))
+
+        return "<tool_calls>\n" + "\n".join(function_texts) + "\n</tool_calls>"
+
+    @override
+    @staticmethod
+    def tool_extractor(content: str) -> Union[str, list["FunctionCall"]]:
+        regex = re.compile(r"<tool_calls>\s*(.+?)\s*</tool_calls>", re.DOTALL)
+        tool_match = re.search(regex, content)
+        if not tool_match:
+            return content
+
+        tool_calls_content = tool_match.group(1)
+        results = []
+        for line in tool_calls_content.split("\n"):
+            line = line.strip()
+            if not line:
+                continue
+
+            try:
+                tool_call = json.loads(line)
+                results.append(FunctionCall(tool_call["name"], json.dumps(tool_call["arguments"], ensure_ascii=False)))
+            except json.JSONDecodeError:
+                continue
+
+        return results
+
+
+class MiniMaxM2ToolUtils(ToolUtils):
+    r"""MiniMax-M2 tool using template."""
+
+    @override
+    @staticmethod
+    def tool_formatter(tools: list[dict[str, Any]]) -> str:
+        tool_text = ""
+        for tool in tools:
+            tool = tool.get("function", "") if tool.get("type") == "function" else tool
+            tool_text += "<tool>" + json.dumps(tool, ensure_ascii=False) + "</tool>\n"
+
+        return MINIMAX_M2_TOOL_PROMPT.format(tool_text=tool_text)
+
+    @override
+    @staticmethod
+    def function_formatter(functions: list["FunctionCall"]) -> str:
+        function_texts = []
+        for func in functions:
+            name, arguments = func.name, json.loads(func.arguments)
+            prompt = f'<invoke name="{name}">'
+            for key, value in arguments.items():
+                prompt += f'\n<parameter name="{key}">'
+                if not isinstance(value, str):
+                    value = json.dumps(value, ensure_ascii=False)
+                prompt += value + "</parameter>"
+            prompt += "\n</invoke>"
+            function_texts.append(prompt)
+
+    @override
+    @staticmethod
+    def tool_extractor(content: str) -> Union[str, list["FunctionCall"]]:
+        regex = re.compile(r"<minimax:tool_call>\s*(.+?)\s*</minimax:tool_call>", re.DOTALL)
+        tool_match = re.search(regex, content)
+        if not tool_match:
+            return content
+
+        tool_calls_content = tool_match.group(1)
+        invoke_regex = re.compile(r"<invoke name=\"(.*?)\">(.*?)</invoke>", re.DOTALL)
+        results = []
+
+        for func_name, params_block in re.findall(invoke_regex, tool_calls_content):
+            args_dict = {}
+            param_pattern = re.compile(r"<parameter name=\"(.*?)\">(.*?)</parameter>", re.DOTALL)
+            for key, raw_value in re.findall(param_pattern, params_block):
+                value = raw_value.strip()
+                try:
+                    parsed_value = json.loads(value)
+                except json.JSONDecodeError:
+                    parsed_value = raw_value
+                args_dict[key] = parsed_value
+
+            results.append(FunctionCall(func_name.strip(), json.dumps(args_dict, ensure_ascii=False)))
+
+        return results
+
+
 class MistralToolUtils(ToolUtils):
     r"""Mistral v0.3 tool using template."""
 
@@ -432,6 +550,8 @@ TOOLS = {
     "default": DefaultToolUtils(),
     "glm4": GLM4ToolUtils(),
     "llama3": Llama3ToolUtils(),
+    "minimax1": MiniMaxM1ToolUtils(),
+    "minimax2": MiniMaxM2ToolUtils(),
     "mistral": MistralToolUtils(),
     "qwen": QwenToolUtils(),
     "glm4_moe": GLM4MOEToolUtils(),

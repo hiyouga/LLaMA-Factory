@@ -162,13 +162,13 @@ def _load_single_dataset(
 
 
 def _get_merged_dataset(
-    dataset_names: Optional[list[str]],
+    dataset_names: list[str] | None,
     model_args: "ModelArguments",
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
     stage: Literal["pt", "sft", "rm", "ppo", "kto"],
     return_dict: bool = False,
-) -> Optional[Union["Dataset", "IterableDataset", dict[str, "Dataset"]]]:
+) -> Union["Dataset", "IterableDataset", dict[str, "Dataset"]] | None:
     r"""Return the merged datasets in the standard format."""
     if dataset_names is None:
         return None
@@ -227,7 +227,7 @@ def _get_dataset_processor(
 
 
 def _get_preprocessed_dataset(
-    dataset: Optional[Union["Dataset", "IterableDataset"]],
+    dataset: Union["Dataset", "IterableDataset"] | None,
     data_args: "DataArguments",
     training_args: "Seq2SeqTrainingArguments",
     stage: Literal["pt", "sft", "rm", "ppo", "kto"],
@@ -235,7 +235,7 @@ def _get_preprocessed_dataset(
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"] = None,
     is_eval: bool = False,
-) -> Optional[Union["Dataset", "IterableDataset"]]:
+) -> Union["Dataset", "IterableDataset"] | None:
     r"""Preprocesses the dataset, including format checking and tokenization."""
     if dataset is None:
         return None

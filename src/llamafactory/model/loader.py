@@ -15,7 +15,6 @@
 import os
 from typing import TYPE_CHECKING, Any, Optional, TypedDict
 
-import torch
 from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
@@ -158,6 +157,7 @@ def load_model(
     if model is None and not lazy_load:
         init_kwargs["config"] = config
         init_kwargs["pretrained_model_name_or_path"] = model_args.model_name_or_path
+        init_kwargs["torch_dtype"] = "auto"
 
         if model_args.mixture_of_depths == "load":
             model = load_mod_pretrained_model(**init_kwargs)
@@ -205,10 +205,6 @@ def load_model(
 
     if not is_trainable:
         model.requires_grad_(False)
-        for param in model.parameters():
-            if param.data.dtype == torch.float32 and model_args.compute_dtype != torch.float32:
-                param.data = param.data.to(model_args.compute_dtype)
-
         model.eval()
     else:
         model.train()

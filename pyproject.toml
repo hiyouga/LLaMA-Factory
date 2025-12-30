@@ -1,42 +1,123 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "llamafactory"
-requires-python = ">=3.9.0"
-dynamic = [
-    "version",
-    "dependencies",
-    "optional-dependencies",
-    "scripts",
-    "authors",
-    "description",
-    "readme",
-    "license",
-    "keywords",
-    "classifiers"
+dynamic = ["version"]
+description = "Unified Efficient Fine-Tuning of 100+ LLMs"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11.0"
+authors = [
+    { name = "hiyouga", email = "hiyouga@buaa.edu.cn" }
+]
+keywords = [
+    "AI",
+    "LLM",
+    "GPT",
+    "ChatGPT",
+    "Llama",
+    "Transformer",
+    "DeepSeek",
+    "Pytorch"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+dependencies = [
+    # core deps
+    "torch>=2.4.0",
+    "torchvision>=0.19.0",
+    "torchaudio>=2.4.0",
+    "transformers>=4.49.0,<=4.56.2,!=4.52.0; python_version < '3.10'",
+    "transformers>=4.49.0,<=4.57.1,!=4.52.0,!=4.57.0; python_version >= '3.10'",
+    "datasets>=2.16.0,<=4.0.0",
+    "accelerate>=1.3.0,<=1.11.0",
+    "peft>=0.14.0,<=0.17.1",
+    "trl>=0.8.6,<=0.9.6",
+    "torchdata>=0.10.0,<=0.11.0",
+    # gui
+    "gradio>=4.38.0,<=5.50.0",
+    "matplotlib>=3.7.0",
+    "tyro<0.9.0",
+    # ops
+    "einops",
+    "numpy",
+    "pandas",
+    "scipy",
+    # model and tokenizer
+    "sentencepiece",
+    "tiktoken",
+    "modelscope",
+    "hf-transfer",
+    "safetensors",
+    # python
+    "av",
+    "fire",
+    "omegaconf",
+    "packaging",
+    "protobuf",
+    "pyyaml",
+    "pydantic",
+    # api
+    "uvicorn",
+    "fastapi",
+    "sse-starlette"
 ]
 
+[project.optional-dependencies]
+dev = ["pre-commit", "ruff", "pytest", "build"]
+metrics = ["nltk", "jieba", "rouge-chinese"]
+deepspeed = ["deepspeed>=0.10.0,<=0.16.9"]
+
+[project.scripts]
+llamafactory-cli = "llamafactory.cli:main"
+lmf = "llamafactory.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/hiyouga/LLaMA-Factory"
+Repository = "https://github.com/hiyouga/LLaMA-Factory"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/llamafactory"]
+
+[tool.hatch.version]
+path = "src/llamafactory/extras/env.py"
+pattern = "VERSION = \"(?P<version>[^\"]+)\""
+
 [tool.ruff]
-target-version = "py39"
+target-version = "py311"
 line-length = 119
 indent-width = 4
 
 [tool.ruff.lint]
 ignore = [
-    "C408", # collection
-    "C901", # complex
-    "E501", # line too long
-    "E731", # lambda function
-    "E741", # ambiguous var name
-    "D100", # no doc public module
-    "D101", # no doc public class
-    "D102", # no doc public method
-    "D103", # no doc public function
-    "D104", # no doc public package
-    "D105", # no doc magic method
-    "D107", # no doc __init__
+    "C408",  # collection
+    "C901",  # complex
+    "E501",  # line too long
+    "E731",  # lambda function
+    "E741",  # ambiguous var name
+    "UP007", # no upgrade union
+    "UP045", # no upgrade optional
+    "D100",  # no doc public module
+    "D101",  # no doc public class
+    "D102",  # no doc public method
+    "D103",  # no doc public function
+    "D104",  # no doc public package
+    "D105",  # no doc magic method
+    "D107",  # no doc __init__
 ]
 extend-select = [
     "C",      # complexity
@@ -73,23 +154,3 @@ indent-style = "space"
 docstring-code-format = true
 skip-magic-trailing-comma = false
 line-ending = "auto"
-
-[tool.uv]
-conflicts = [
-    [
-        { extra = "torch-npu" },
-        { extra = "aqlm" },
-    ],
-    [
-        { extra = "torch-npu" },
-        { extra = "vllm" },
-    ],
-    [
-        { extra = "torch-npu" },
-        { extra = "sglang" },
-    ],
-    [
-        { extra = "vllm" },
-        { extra = "sglang" },
-    ],
-]

@@ -1,0 +1,88 @@
+name: tests_cuda
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+    paths:
+      - "**/*.py"
+      - "pyproject.toml"
+      - "Makefile"
+      - ".github/workflows/*.yml"
+  pull_request:
+    branches:
+      - "main"
+    paths:
+      - "**/*.py"
+      - "pyproject.toml"
+      - "Makefile"
+      - ".github/workflows/*.yml"
+
+jobs:
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        python:
+          - "3.11"
+        os:
+          - "linux-x86_64-gpu-2"
+
+    runs-on: ${{ matrix.os }}
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.os }}-${{ matrix.python }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python }}
+          github-token: ${{ github.token }}
+          enable-cache: false
+
+      - name: Check GPU Status
+        run: nvidia-smi
+
+      - name: Install dependencies
+        run: |
+          uv venv
+          uv pip install -e ".[dev]"
+
+      - name: Cache HuggingFace models
+        id: hf-hub-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/huggingface
+          key: hf-cache-${{ runner.os }}-${{ hashFiles('tests/version.txt') }}
+
+      - name: Check quality
+        run: |
+          make style && make quality
+        env:
+          UV_NO_SYNC: 1
+
+      - name: Check license
+        run: |
+          make license
+        env:
+          UV_NO_SYNC: 1
+
+      - name: Check build
+        run: |
+          make build
+        env:
+          UV_NO_SYNC: 1
+
+      - name: Test with pytest
+        run: |
+          make test
+        env:
+          UV_NO_SYNC: 1
+          HF_HOME: ${{ runner.temp }}/huggingface
+          HF_HUB_OFFLINE: "${{ steps.hf-hub-cache.outputs.cache-hit == 'true' && '1' || '0' }}"

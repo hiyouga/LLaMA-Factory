@@ -18,9 +18,10 @@ Contains shared fixtures, pytest configuration, and custom markers.
 """
 
 import os
-from typing import Optional
+import sys
 
 import pytest
+import torch
 from pytest import Config, FixtureRequest, Item, MonkeyPatch
 
 from llamafactory.v1.accelerator.helper import get_current_accelerator, get_device_count
@@ -71,7 +72,7 @@ def _handle_slow_tests(items: list[Item]):
                 item.add_marker(skip_slow)
 
 
-def _get_visible_devices_env() -> Optional[str]:
+def _get_visible_devices_env() -> str | None:
     """Return device visibility env var name."""
     if CURRENT_DEVICE == "cuda":
         return "CUDA_VISIBLE_DEVICES"
@@ -140,9 +141,21 @@ def _manage_distributed_env(request: FixtureRequest, monkeypatch: MonkeyPatch) -
             devices_str = ",".join(str(i) for i in range(required))
 
         monkeypatch.setenv(env_key, devices_str)
+
+        # add project root dir to path for mp run
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        if project_root not in sys.path:
+            sys.path.insert(0, project_root)
+
+        os.environ["PYTHONPATH"] = project_root + os.pathsep + os.environ.get("PYTHONPATH", "")
+
     else:  # non-distributed test
         if old_value:
             visible_devices = [v for v in old_value.split(",") if v != ""]
             monkeypatch.setenv(env_key, visible_devices[0] if visible_devices else "0")
         else:
             monkeypatch.setenv(env_key, "0")
+        if CURRENT_DEVICE == "cuda":
+            monkeypatch.setattr(torch.cuda, "device_count", lambda: 1)
+        elif CURRENT_DEVICE == "npu":
+            monkeypatch.setattr(torch.npu, "device_count", lambda: 1)

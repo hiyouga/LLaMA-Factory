@@ -15,7 +15,7 @@ import json
 import os
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Union
 
 from ..extras import logging
 from .data_utils import Role
@@ -40,7 +40,7 @@ class DatasetConverter:
     dataset_attr: "DatasetAttr"
     data_args: "DataArguments"
 
-    def _find_medias(self, medias: Union["MediaType", list["MediaType"], None]) -> Optional[list["MediaType"]]:
+    def _find_medias(self, medias: Union["MediaType", list["MediaType"], None]) -> list["MediaType"] | None:
         r"""Optionally concatenate media path to media dir when loading from local disk."""
         if medias is None:
             return None

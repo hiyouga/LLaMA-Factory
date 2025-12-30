@@ -117,7 +117,7 @@ def _configure_library_root_logger() -> None:
         library_root_logger.propagate = False
 
 
-def get_logger(name: Optional[str] = None) -> "_Logger":
+def get_logger(name: str | None = None) -> "_Logger":
     r"""Return a logger with the specified name. It it not supposed to be accessed externally."""
     if name is None:
         name = _get_library_name()

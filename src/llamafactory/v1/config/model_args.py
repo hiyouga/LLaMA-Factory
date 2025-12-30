@@ -14,7 +14,6 @@
 
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 from .arg_utils import ModelClass, PluginConfig, get_plugin_config
 
@@ -36,15 +35,15 @@ class ModelArguments:
         default=ModelClass.LLM,
         metadata={"help": "Model class from Hugging Face."},
     )
-    peft_config: Optional[PluginConfig] = field(
+    peft_config: PluginConfig | None = field(
         default=None,
         metadata={"help": "PEFT configuration for the model."},
     )
-    kernel_config: Optional[PluginConfig] = field(
+    kernel_config: PluginConfig | None = field(
         default=None,
         metadata={"help": "Kernel configuration for the model."},
     )
-    quant_config: Optional[PluginConfig] = field(
+    quant_config: PluginConfig | None = field(
         default=None,
         metadata={"help": "Quantization configuration for the model."},
     )

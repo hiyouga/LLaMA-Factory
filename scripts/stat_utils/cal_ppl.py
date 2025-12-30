@@ -14,7 +14,7 @@
 
 import json
 from dataclasses import dataclass
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import fire
 import torch
@@ -61,7 +61,7 @@ def calculate_ppl(
     dataset_dir: str = "data",
     template: str = "default",
     cutoff_len: int = 2048,
-    max_samples: Optional[int] = None,
+    max_samples: int | None = None,
     train_on_prompt: bool = False,
 ):
     r"""Calculate the ppl on the dataset of the pre-trained models.

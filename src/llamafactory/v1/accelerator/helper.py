@@ -25,10 +25,11 @@ Including:
 """
 
 import os
+from collections.abc import Callable
 from contextlib import contextmanager
 from enum import Enum, unique
 from functools import lru_cache, wraps
-from typing import Callable, Optional
+from typing import Optional
 
 import numpy as np
 import torch

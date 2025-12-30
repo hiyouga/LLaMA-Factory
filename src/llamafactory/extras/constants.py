@@ -15,7 +15,6 @@
 import os
 from collections import OrderedDict, defaultdict
 from enum import Enum, unique
-from typing import Optional
 
 from peft.utils import SAFETENSORS_WEIGHTS_NAME as SAFE_ADAPTER_WEIGHTS_NAME
 from peft.utils import WEIGHTS_NAME as ADAPTER_WEIGHTS_NAME
@@ -64,6 +63,7 @@ MCA_SUPPORTED_MODELS = {
     "qwen2",
     "qwen2_vl",
     "qwen2_5_vl",
+    "qwen3_vl",
     "qwen3",
     "qwen3_moe",
     "qwen3_next",
@@ -154,7 +154,7 @@ class RopeScaling(str, Enum):
 
 def register_model_group(
     models: dict[str, dict[DownloadSource, str]],
-    template: Optional[str] = None,
+    template: str | None = None,
     multimodal: bool = False,
 ) -> None:
     for name, path in models.items():
@@ -1069,6 +1069,40 @@ register_model_group(
         },
     },
     template="gpt_oss",
+)
+
+
+register_model_group(
+    models={
+        "MiniMax-Text-01-Instruct": {
+            DownloadSource.DEFAULT: "MiniMaxAI/MiniMax-Text-01-hf",
+            DownloadSource.MODELSCOPE: "MiniMaxAI/MiniMax-Text-01",
+        },
+        "MiniMax-M1-40k-Thinking": {
+            DownloadSource.DEFAULT: "MiniMaxAI/MiniMax-M1-40k-hf",
+            DownloadSource.MODELSCOPE: "MiniMaxAI/MiniMax-M1-40k-hf",
+        },
+        "MiniMax-M1-80k-Thinking": {
+            DownloadSource.DEFAULT: "MiniMaxAI/MiniMax-M1-80k-hf",
+            DownloadSource.MODELSCOPE: "MiniMaxAI/MiniMax-M1-80k-hf",
+        },
+    },
+    template="minimax1",
+)
+
+
+register_model_group(
+    models={
+        "MiniMax-M2-Thinking": {
+            DownloadSource.DEFAULT: "MiniMaxAI/MiniMax-M2",
+            DownloadSource.MODELSCOPE: "MiniMaxAI/MiniMax-M2",
+        },
+        "MiniMax-M2.1-Thinking": {
+            DownloadSource.DEFAULT: "MiniMaxAI/MiniMax-M2.1",
+            DownloadSource.MODELSCOPE: "MiniMaxAI/MiniMax-M2.1",
+        },
+    },
+    template="minimax2",
 )
 
 

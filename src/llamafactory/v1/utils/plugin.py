@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from . import logging
 
@@ -29,7 +29,7 @@ class BasePlugin:
 
     _registry: dict[str, Callable] = {}
 
-    def __init__(self, name: Optional[str] = None):
+    def __init__(self, name: str | None = None):
         """Initialize the plugin with a name.
 
         Args:

@@ -5,7 +5,6 @@ services:
       context: ../..
       args:
         PIP_INDEX: https://pypi.org/simple
-        EXTRAS: torch-npu,metrics
     container_name: llamafactory-a2
     image: llamafactory:npu-a2
     volumes:
@@ -36,7 +35,6 @@ services:
       args:
         BASE_IMAGE: quay.io/ascend/cann:8.3.rc2-a3-ubuntu22.04-py3.11
         PIP_INDEX: https://pypi.org/simple
-        EXTRAS: torch-npu,metrics
     container_name: llamafactory-a3
     image: llamafactory:npu-a3
     volumes:

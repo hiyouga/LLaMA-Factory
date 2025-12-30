@@ -14,10 +14,9 @@
 
 import time
 from enum import Enum, unique
-from typing import Any, Optional, Union
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
-from typing_extensions import Literal
 
 
 @unique
@@ -61,7 +60,7 @@ class FunctionDefinition(BaseModel):
 
 class FunctionAvailable(BaseModel):
     type: Literal["function", "code_interpreter"] = "function"
-    function: Optional[FunctionDefinition] = None
+    function: FunctionDefinition | None = None
 
 
 class FunctionCall(BaseModel):
@@ -77,35 +76,35 @@ class URL(BaseModel):
 
 class MultimodalInputItem(BaseModel):
     type: Literal["text", "image_url", "video_url", "audio_url"]
-    text: Optional[str] = None
-    image_url: Optional[URL] = None
-    video_url: Optional[URL] = None
-    audio_url: Optional[URL] = None
+    text: str | None = None
+    image_url: URL | None = None
+    video_url: URL | None = None
+    audio_url: URL | None = None
 
 
 class ChatMessage(BaseModel):
     role: Role
-    content: Optional[Union[str, list[MultimodalInputItem]]] = None
-    tool_calls: Optional[list[FunctionCall]] = None
+    content: str | list[MultimodalInputItem] | None = None
+    tool_calls: list[FunctionCall] | None = None
 
 
 class ChatCompletionMessage(BaseModel):
-    role: Optional[Role] = None
-    content: Optional[str] = None
-    tool_calls: Optional[list[FunctionCall]] = None
+    role: Role | None = None
+    content: str | None = None
+    tool_calls: list[FunctionCall] | None = None
 
 
 class ChatCompletionRequest(BaseModel):
     model: str
     messages: list[ChatMessage]
-    tools: Optional[list[FunctionAvailable]] = None
-    do_sample: Optional[bool] = None
-    temperature: Optional[float] = None
-    top_p: Optional[float] = None
+    tools: list[FunctionAvailable] | None = None
+    do_sample: bool | None = None
+    temperature: float | None = None
+    top_p: float | None = None
     n: int = 1
-    presence_penalty: Optional[float] = None
-    max_tokens: Optional[int] = None
-    stop: Optional[Union[str, list[str]]] = None
+    presence_penalty: float | None = None
+    max_tokens: int | None = None
+    stop: str | list[str] | None = None
     stream: bool = False
 
 
@@ -118,7 +117,7 @@ class ChatCompletionResponseChoice(BaseModel):
 class ChatCompletionStreamResponseChoice(BaseModel):
     index: int
     delta: ChatCompletionMessage
-    finish_reason: Optional[Finish] = None
+    finish_reason: Finish | None = None
 
 
 class ChatCompletionResponseUsage(BaseModel):
@@ -147,7 +146,7 @@ class ChatCompletionStreamResponse(BaseModel):
 class ScoreEvaluationRequest(BaseModel):
     model: str
     messages: list[str]
-    max_length: Optional[int] = None
+    max_length: int | None = None
 
 
 class ScoreEvaluationResponse(BaseModel):

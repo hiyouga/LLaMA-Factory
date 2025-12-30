@@ -16,7 +16,6 @@ import json
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Optional, Union
 
 from typing_extensions import override
 
@@ -27,14 +26,14 @@ from .tool_utils import FunctionCall, get_tool_utils
 @dataclass
 class Formatter(ABC):
     slots: SLOTS = field(default_factory=list)
-    tool_format: Optional[str] = None
+    tool_format: str | None = None
 
     @abstractmethod
     def apply(self, **kwargs) -> SLOTS:
         r"""Forms a list of slots according to the inputs to encode."""
         ...
 
-    def extract(self, content: str) -> Union[str, list["FunctionCall"]]:
+    def extract(self, content: str) -> str | list["FunctionCall"]:
         r"""Extract a list of tuples from the response message if using tools.
 
         Each tuple consists of function name and function arguments.
@@ -156,5 +155,5 @@ class ToolFormatter(Formatter):
             raise RuntimeError(f"Invalid JSON format in tool description: {str([content])}.")  # flat string
 
     @override
-    def extract(self, content: str) -> Union[str, list["FunctionCall"]]:
+    def extract(self, content: str) -> str | list["FunctionCall"]:
         return self.tool_utils.tool_extractor(content)

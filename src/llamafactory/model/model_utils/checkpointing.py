@@ -20,9 +20,10 @@
 
 import inspect
 import os
+from collections.abc import Callable
 from functools import WRAPPER_ASSIGNMENTS, partial, wraps
 from types import MethodType
-from typing import TYPE_CHECKING, Any, Callable, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import torch
 
