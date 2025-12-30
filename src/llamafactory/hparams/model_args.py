@@ -173,7 +173,7 @@ class BaseModelArguments:
         default=True,
         metadata={"help": "Whether or not to use KV cache in generation."},
     )
-    use_v1_kernels: bool = field(
+    use_v1_kernels: bool | str | None = field(
         default=False,
         metadata={"help": "Whether or not to use high-performance kernels in training."},
     )
