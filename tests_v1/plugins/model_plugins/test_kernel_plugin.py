@@ -39,7 +39,6 @@ def test_apply_kernel(mock_get_accelerator: MagicMock):
     mock_device = MagicMock()
     setattr(mock_device, "type", "npu")
     mock_get_accelerator.return_value = mock_device
-
     # Force reload of kernels with mocked accelerator
     reload_kernels()
     from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_default_kernels
@@ -47,7 +46,7 @@ def test_apply_kernel(mock_get_accelerator: MagicMock):
     model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen2.5")
     original_rmsnorm_forward = model.model.layers[0].input_layernorm.forward
     original_swiglu_forward = model.model.layers[0].mlp.forward
-    model = apply_default_kernels(model=model, use_v1_kernels="npu_fused_rmsnorm")
+    model = apply_default_kernels(model=model, include_kernels="npu_fused_rmsnorm")
     assert model.model.layers[0].input_layernorm.forward.__func__ is not original_rmsnorm_forward.__func__
     assert model.model.layers[0].mlp.forward.__func__ is original_swiglu_forward.__func__
 
@@ -68,6 +67,6 @@ def test_apply_all_kernels(mock_get_accelerator: MagicMock):
     original_rmsnorm_forward = model.model.layers[0].input_layernorm.forward
     original_swiglu_forward = model.model.layers[0].mlp.forward
 
-    model = apply_default_kernels(model=model, use_v1_kernels=True)
+    model = apply_default_kernels(model=model, include_kernels=True)
     assert model.model.layers[0].input_layernorm.forward.__func__ is not original_rmsnorm_forward.__func__
     assert model.model.layers[0].mlp.forward.__func__ is not original_swiglu_forward.__func__

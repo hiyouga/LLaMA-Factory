@@ -116,7 +116,7 @@ class ModelLoader:
             from ..plugins.model_plugins.kernels.interface import KernelPlugin
 
             model = KernelPlugin(self.args.kernel_config.name)(
-                model=model, use_v1_kernels=self.args.kernel_config.get("use_v1_kernels")
+                model=model, include_kernels=self.args.kernel_config.get("include_kernels")
             )
 
         return model

@@ -29,7 +29,7 @@ from ...base import BaseKernel
 from ...registry import register_kernel
 
 
-def _npu_rms_forward(self, hidden_states):
+def npu_rms_norm_forward(self, hidden_states):
     r"""NPU forward implementation for RMSNorm.
 
     Args:
@@ -85,6 +85,6 @@ class NpuRMSNormKernel(BaseKernel):
             if re.search(rms_norm_pattern, module.__class__.__name__):
                 # Bind function as an instance method to preserve `self` semantics
                 # and replace the original forward
-                module.forward = types.MethodType(_npu_rms_forward, module)
+                module.forward = types.MethodType(npu_rms_norm_forward, module)
 
         return model

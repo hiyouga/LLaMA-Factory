@@ -37,7 +37,7 @@ except ImportError:
     pass
 
 
-def _npu_swiglu_forward(self, hidden_state):
+def npu_swiglu_forward(self, hidden_state):
     r"""SwiGLU forward pass for NPU.
 
     Args:
@@ -162,7 +162,7 @@ class NpuSwiGluKernel(BaseKernel):
             ):
                 # Bind function as an instance method to preserve `self` semantics
                 # and replace the original forward
-                kernel_func = kernel_mapping.get(module.__class__.__name__, _npu_swiglu_forward)
+                kernel_func = kernel_mapping.get(module.__class__.__name__, npu_swiglu_forward)
                 module.forward = types.MethodType(kernel_func, module)
 
         return model

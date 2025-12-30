@@ -28,7 +28,7 @@ def test_get_args_from_yaml(tmp_path):
         peft_config: null
         kernel_config:
           name: "auto"
-          use_v1_kernels: auto # choice: null/true/false/auto/kernel_id1,kernel_id2,kernel_id3, default is null
+          include_kernels: "auto" # choice: null/true/false/auto/kernel_id1,kernel_id2,kernel_id3, default is null
         quant_config: null
 
         ### data
@@ -63,4 +63,4 @@ def test_get_args_from_yaml(tmp_path):
         assert training_args.dist_config is None
         assert model_args.model == "llamafactory/tiny-random-qwen2.5"
         assert model_args.kernel_config.name == "auto"
-        assert model_args.kernel_config.get("use_v1_kernels") == "auto"
+        assert model_args.kernel_config.get("include_kernels") == "auto"

@@ -23,7 +23,7 @@ Init Phase:
 from abc import ABC, abstractmethod
 from typing import Any
 
-from ....accelerator.helper import DeviceType, get_current_accelerator, is_torch_cuda_available, is_torch_npu_available
+from ....accelerator.helper import DeviceType, get_current_accelerator
 from ....utils.types import HFModel
 
 
@@ -60,10 +60,6 @@ class BaseKernel(ABC):
         """
         if cls._device != get_current_accelerator().type:
             return False
-        if cls._device == DeviceType.NPU:
-            return is_torch_npu_available()
-        if cls._device == DeviceType.CUDA:
-            return is_torch_cuda_available()
         return True
 
     @classmethod

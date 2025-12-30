@@ -105,8 +105,7 @@ def apply_kernel(kernel_id: str, **kwargs):
 class KernelPlugin(BasePlugin):
     r"""Plugin for managing kernel optimizations."""
 
-    def __init__(self, name: str = "KernelPlugin"):
-        super().__init__(name)
+    pass
 
 
 @KernelPlugin("auto").register
@@ -115,17 +114,17 @@ def apply_default_kernels(**kwargs):
 
     Args:
         **kwargs: Keyword arguments passed to the kernel application function.
-                  Typically includes the model instance.
+                  Typically includes the model instance and the include_kernels configuration.
 
     Returns:
         HFModel: The model with applied kernels.
     """
-    if not kwargs.get("use_v1_kernels"):
+    if not kwargs.get("include_kernels"):  # None/False/empty string
         return kwargs.get("model")
-    elif kwargs.get("use_v1_kernels") == "auto" or kwargs.get("use_v1_kernels") is True:
+    elif kwargs.get("include_kernels") == "auto" or kwargs.get("include_kernels") is True:  # True/auto
         use_kernels = default_kernels.keys()
     else:
-        use_kernels = kwargs.get("use_v1_kernels").split(",")
+        use_kernels = kwargs.get("include_kernels").split(",")  # "kernel_id1,kernel_id2,kernel_id3"
     for kernel in use_kernels:
         if kernel not in default_kernels:
             raise ValueError(f"Kernel {kernel} not found")
