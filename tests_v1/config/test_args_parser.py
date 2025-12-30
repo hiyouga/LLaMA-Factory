@@ -13,12 +13,13 @@
 # limitations under the License.
 
 import sys
+import pathlib
 from unittest.mock import patch
 
 from llamafactory.v1.config.arg_parser import get_args
 
 
-def test_get_args_from_yaml(tmp_path):
+def test_get_args_from_yaml(tmp_path: pathlib.Path):
     config_yaml = """
         ### model
         model: "llamafactory/tiny-random-qwen2.5"
