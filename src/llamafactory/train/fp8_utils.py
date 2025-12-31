@@ -35,12 +35,19 @@ def create_fp8_kwargs(model_args: "ModelArguments") -> list[Any]:
     if not model_args.fp8:
         return []
 
-    try:
-        # Check if AORecipeKwargs is available (Accelerate 1.8.0+)
-        from accelerate.utils import AORecipeKwargs
+    backend = getattr(model_args, "fp8_backend", "auto")
+    logger.info_rank0(f"Creating FP8 configuration with backend: {backend}")
 
-        backend = getattr(model_args, "fp8_backend", "auto")
-        logger.info_rank0(f"Creating FP8 configuration with backend: {backend}")
+    try:
+        # Use Transformer Engine backend (optimal for Hopper GPUs)
+        if backend == "te":
+            from accelerate.utils import FP8RecipeKwargs
+
+            logger.info_rank0("Using Transformer Engine FP8 backend")
+            return [FP8RecipeKwargs(backend="TE", fp8_format="HYBRID", amax_history_len=16, amax_compute_algo="max")]
+
+        # Use TorchAO backend (default)
+        from accelerate.utils import AORecipeKwargs
 
         # Create Float8LinearConfig if torchao backend is used
         config = None
@@ -169,3 +176,52 @@ def verify_fp8_status(accelerator, model_args: "ModelArguments") -> None:
 
     if not fp8_enabled:
         logger.info_rank0("WARNING: FP8 was requested but Accelerate shows fp8_enabled=False. FP8 may not be working.")
+
+
+def patch_accelerator_for_fp8() -> None:
+    """Patch Accelerator to inject FP8 recipe kwargs.
+
+    This is needed because HuggingFace Trainer doesn't pass kwargs_handlers to Accelerator.
+    We monkey-patch Accelerator.__init__ to inject the FP8 recipe and force mixed_precision='fp8'.
+    """
+    import types
+
+    import transformer_engine.pytorch as te
+    from accelerate import Accelerator
+
+    # Guard against multiple patches
+    if getattr(Accelerator, "_te_fp8_patched", False):
+        return
+
+    # Stub for Accelerate 1.12+ compatibility (te.fp8.check_mxfp8_support doesn't exist yet)
+    if not hasattr(te, "fp8"):
+        te.fp8 = types.ModuleType("fp8")
+        te.fp8.check_mxfp8_support = lambda: (False, "MXFP8 not supported")
+
+    try:
+        from accelerate.utils import TERecipeKwargs as FP8Recipe
+
+        use_te_recipe = True
+    except ImportError:
+        from accelerate.utils import FP8RecipeKwargs as FP8Recipe
+
+        use_te_recipe = False
+
+    original_init = Accelerator.__init__
+
+    def patched_init(self, *args, **kwargs):
+        if "kwargs_handlers" not in kwargs or not kwargs["kwargs_handlers"]:
+            if use_te_recipe:
+                kwargs["kwargs_handlers"] = [
+                    FP8Recipe(fp8_format="HYBRID", amax_history_len=16, amax_compute_algo="max")
+                ]
+            else:
+                kwargs["kwargs_handlers"] = [
+                    FP8Recipe(backend="TE", fp8_format="HYBRID", amax_history_len=16, amax_compute_algo="max")
+                ]
+            # Only force mixed_precision when we inject handlers
+            kwargs["mixed_precision"] = "fp8"
+        return original_init(self, *args, **kwargs)
+
+    Accelerator.__init__ = patched_init
+    Accelerator._te_fp8_patched = True

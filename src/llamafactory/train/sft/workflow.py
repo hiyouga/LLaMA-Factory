@@ -119,6 +119,7 @@ def run_sft(
     else:
         trainer = CustomSeq2SeqTrainer(
             model=model,
+            model_args=model_args,
             args=training_args,
             finetuning_args=finetuning_args,
             data_collator=data_collator,
