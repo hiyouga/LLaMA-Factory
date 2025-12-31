@@ -266,8 +266,9 @@ def vllm_infer(
 
         average_score['predict_model_preparation_time'] = preparation_time
         average_score['predict_runtime'] = predict_time
-        average_score['predict_samples_per_second'] = len(dataset)/predict_time
-        average_score['predict_steps_per_second'] = 1/predict_time
+        num_steps = len(range(0, len(train_dataset), batch_size))
+        average_score['predict_samples_per_second'] = len(dataset) / predict_time if predict_time > 0 else 0.0
+        average_score['predict_steps_per_second'] = num_steps / predict_time if predict_time > 0 else 0.0
 
         with open(matrix_save_name, "w", encoding="utf-8") as f:
             json.dump(average_score, f, indent=4)
