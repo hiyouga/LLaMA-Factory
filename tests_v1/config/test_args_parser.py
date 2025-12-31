@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
 import pathlib
+import sys
 from unittest.mock import patch
 
 from llamafactory.v1.config.arg_parser import get_args

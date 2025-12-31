@@ -2,7 +2,7 @@
 
 set -x
 
-MODEL_PATH=meta-llama/Meta-Llama-3-8B-Instruct
+MODEL_PATH=Qwen/Qwen3-4B-Instruct-2507
 
 llamafactory-cli train \
     --model_name_or_path ${MODEL_PATH} \
@@ -13,13 +13,12 @@ llamafactory-cli train \
     --lora_rank 8 \
     --lora_target all \
     --dataset identity,alpaca_en_demo \
-    --template llama3 \
+    --template qwen3_nothink \
     --cutoff_len 2048 \
     --max_samples 1000 \
-    --overwrite_cache \
     --preprocessing_num_workers 16 \
     --dataloader_num_workers 4 \
-    --output_dir saves/llama3-8b/lora/sft \
+    --output_dir saves/qwen3-4b/lora/sft \
     --logging_steps 10 \
     --save_steps 500 \
     --plot_loss \
