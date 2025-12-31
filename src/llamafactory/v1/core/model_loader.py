@@ -112,6 +112,13 @@ class ModelLoader:
 
             model = PeftPlugin(self.args.peft_config.name)(model, self.args.peft_config, self.is_train)
 
+        if self.args.kernel_config is not None:
+            from ..plugins.model_plugins.kernels.interface import KernelPlugin
+
+            model = KernelPlugin(self.args.kernel_config.name)(
+                model=model, include_kernels=self.args.kernel_config.get("include_kernels")
+            )
+
         return model
 
 
