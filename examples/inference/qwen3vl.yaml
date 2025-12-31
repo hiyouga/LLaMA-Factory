@@ -1,4 +1,4 @@
-model_name_or_path: saves/llama3-8b/full/sft
-template: llama3
+model_name_or_path: Qwen/Qwen3-VL-4B-Instruct
+template: qwen3_vl_nothink
 infer_backend: huggingface  # choices: [huggingface, vllm, sglang, ktransformers]
 trust_remote_code: true

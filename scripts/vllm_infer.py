@@ -18,9 +18,10 @@ import time
 
 import av
 import fire
+from datasets import load_dataset
+from eval_bleu_rouge import compute_metrics
 from tqdm import tqdm
 from transformers import Seq2SeqTrainingArguments
-from datasets import load_dataset
 
 from llamafactory.data import get_dataset, get_template_and_fix_tokenizer
 from llamafactory.extras.constants import IGNORE_INDEX
@@ -28,8 +29,6 @@ from llamafactory.extras.misc import get_device_count
 from llamafactory.extras.packages import is_vllm_available
 from llamafactory.hparams import get_infer_args
 from llamafactory.model import load_tokenizer
-
-from eval_bleu_rouge import compute_metrics
 
 
 if is_vllm_available():
@@ -235,10 +234,10 @@ def vllm_infer(
     print(f"{len(all_prompts)} total generated results have been saved at {save_name}.")
     print("*" * 70)
 
-    # Write all matrix results when matrix_save_name is not None, 
+    # Write all matrix results when matrix_save_name is not None,
     # The result matrix is referencing src.llamafactory.train.sft.workflow.run_sft # 127~132
     # trainer.save_metrics("predict", predict_results.metrics)
-    # 
+    #
     #   {
     #        "predict_bleu-4": 4.349975,
     #        "predict_model_preparation_time": 0.0128,
@@ -265,11 +264,11 @@ def vllm_infer(
             print(f"predict_{task}: {score:.4f}")
             average_score["predict_" + task] = score
 
-        average_score['predict_model_preparation_time'] = preparation_time
-        average_score['predict_runtime'] = predict_time
+        average_score["predict_model_preparation_time"] = preparation_time
+        average_score["predict_runtime"] = predict_time
         num_steps = len(range(0, len(train_dataset), batch_size))
-        average_score['predict_samples_per_second'] = len(dataset) / predict_time if predict_time > 0 else 0.0
-        average_score['predict_steps_per_second'] = num_steps / predict_time if predict_time > 0 else 0.0
+        average_score["predict_samples_per_second"] = len(dataset) / predict_time if predict_time > 0 else 0.0
+        average_score["predict_steps_per_second"] = num_steps / predict_time if predict_time > 0 else 0.0
 
         with open(matrix_save_name, "w", encoding="utf-8") as f:
             json.dump(average_score, f, indent=4)

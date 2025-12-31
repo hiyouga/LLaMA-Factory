@@ -1,10 +1,10 @@
 ### model
-model_name_or_path: saves/llama3-8b/full/sft
-template: llama3
+model_name_or_path: saves/qwen3-4b/full/sft
+template: qwen3_nothink
 trust_remote_code: true
 
 ### export
-export_dir: output/llama3_full_sft
+export_dir: saves/qwen3_sft_merged
 export_size: 5
 export_device: cpu  # choices: [cpu, auto]
 export_legacy_format: false
