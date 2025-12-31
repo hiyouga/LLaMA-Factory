@@ -29,7 +29,7 @@ from llamafactory.extras.packages import is_vllm_available
 from llamafactory.hparams import get_infer_args
 from llamafactory.model import load_tokenizer
 
-from .eval_bleu_rouge import compute_metrics
+from eval_bleu_rouge import compute_metrics
 
 
 if is_vllm_available():
