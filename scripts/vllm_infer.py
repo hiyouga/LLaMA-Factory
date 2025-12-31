@@ -14,11 +14,13 @@
 
 import gc
 import json
+import time
 
 import av
 import fire
 from tqdm import tqdm
 from transformers import Seq2SeqTrainingArguments
+from datasets import load_dataset
 
 from llamafactory.data import get_dataset, get_template_and_fix_tokenizer
 from llamafactory.extras.constants import IGNORE_INDEX
@@ -26,6 +28,8 @@ from llamafactory.extras.misc import get_device_count
 from llamafactory.extras.packages import is_vllm_available
 from llamafactory.hparams import get_infer_args
 from llamafactory.model import load_tokenizer
+
+from .eval_bleu_rouge import compute_metrics
 
 
 if is_vllm_available():
@@ -51,6 +55,7 @@ def vllm_infer(
     max_samples: int | None = None,
     vllm_config: str = "{}",
     save_name: str = "generated_predictions.jsonl",
+    matrix_save_name: str = None,
     temperature: float = 0.95,
     top_p: float = 0.7,
     top_k: int = 50,
@@ -117,6 +122,7 @@ def vllm_infer(
     if isinstance(model_args.vllm_config, dict):
         engine_args.update(model_args.vllm_config)
 
+    model_preparation_start_time = time.time()
     llm = LLM(**engine_args)
 
     # load datasets
@@ -142,6 +148,7 @@ def vllm_infer(
     all_prompts, all_preds, all_labels = [], [], []
     need_video_kwargs = _need_video_kwargs(template)
 
+    model_predict_start_time = time.time()
     # Add batch process to avoid the issue of too many files opened
     for i in tqdm(range(0, len(train_dataset), batch_size), desc="Processing batched inference"):
         vllm_inputs, prompts, labels = [], [], []
@@ -218,6 +225,7 @@ def vllm_infer(
         all_labels.extend(labels)
         gc.collect()
 
+    model_predict_end_time = time.time()
     # Write all results at once outside the loop
     with open(save_name, "w", encoding="utf-8") as f:
         for text, pred, label in zip(all_prompts, all_preds, all_labels):
@@ -226,6 +234,47 @@ def vllm_infer(
     print("*" * 70)
     print(f"{len(all_prompts)} total generated results have been saved at {save_name}.")
     print("*" * 70)
+
+    # Write all matrix results when matrix_save_name is not None, 
+    # The result matrix is referencing src.llamafactory.train.sft.workflow.run_sft # 127~132
+    # trainer.save_metrics("predict", predict_results.metrics)
+    # 
+    #   {
+    #        "predict_bleu-4": 4.349975,
+    #        "predict_model_preparation_time": 0.0128,
+    #        "predict_rouge-1": 21.873359375,
+    #        "predict_rouge-2": 4.144340625,
+    #        "predict_rouge-l": 10.83949375,
+    #        "predict_runtime": 131.664,
+    #        "predict_samples_per_second": 0.076,
+    #        "predict_steps_per_second": 0.008
+    #    }
+    #
+    if matrix_save_name is not None:
+        predict_time = model_predict_end_time - model_predict_start_time
+        preparation_time = model_predict_start_time - model_preparation_start_time
+
+        start_time = time.time()
+        dataset = load_dataset("json", data_files=save_name, split="train")
+        dataset = dataset.map(compute_metrics, num_proc=8, remove_columns=dataset.column_names)
+        score_dict = dataset.to_dict()
+
+        average_score = {}
+        for task, scores in sorted(score_dict.items(), key=lambda x: x[0]):
+            print(f"predict_{task}: {sum(scores) / len(scores):.4f}")
+            average_score["predict_"+task] = sum(scores) / len(scores)
+
+        average_score['predict_model_preparation_time'] = preparation_time
+        average_score['predict_runtime'] = predict_time
+        average_score['predict_samples_per_second'] = len(dataset)/predict_time
+        average_score['predict_steps_per_second'] = 1/predict_time
+
+        with open(matrix_save_name, "w", encoding="utf-8") as f:
+            json.dump(average_score, f, indent=4)
+
+        print("*" * 70)
+        print(f"\nDone in {time.time() - start_time:.3f}s.\nScore file saved to {matrix_save_name}.")
+        print("*" * 70)
 
 
 if __name__ == "__main__":
