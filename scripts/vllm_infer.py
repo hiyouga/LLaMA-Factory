@@ -261,8 +261,9 @@ def vllm_infer(
 
         average_score = {}
         for task, scores in sorted(score_dict.items(), key=lambda x: x[0]):
-            print(f"predict_{task}: {sum(scores) / len(scores):.4f}")
-            average_score["predict_"+task] = sum(scores) / len(scores)
+            score = sum(scores) / len(scores) if scores else 0.0
+            print(f"predict_{task}: {score:.4f}")
+            average_score["predict_" + task] = score
 
         average_score['predict_model_preparation_time'] = preparation_time
         average_score['predict_runtime'] = predict_time
