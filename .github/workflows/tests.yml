@@ -27,7 +27,7 @@ jobs:
         python:
           - "3.11"
           - "3.12"
-          # - "3.13" # enable after trl is upgraded
+          - "3.13"
         os:
           - "ubuntu-latest"
           - "windows-latest"
