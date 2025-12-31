@@ -19,7 +19,7 @@
 from collections import OrderedDict
 
 
-VERSION = "0.9.5"
+VERSION = "0.9.4"
 
 
 def print_env() -> None:
