@@ -26,6 +26,7 @@ import torch.nn.functional as F
 from transformers import Trainer
 from trl import DPOTrainer
 from trl.trainer import disable_dropout_in_model
+from trl.trainer.utils import prepare_deepspeed
 from typing_extensions import override
 
 from ...extras.constants import IGNORE_INDEX
@@ -95,7 +96,7 @@ class CustomDPOTrainer(DPOTrainer):
                 if not (
                     getattr(ref_model, "is_loaded_in_8bit", False) or getattr(ref_model, "is_loaded_in_4bit", False)
                 ):  # quantized models are already set on the correct device
-                    self.ref_model = self._prepare_deepspeed(self.ref_model)
+                    self.ref_model = prepare_deepspeed(self.ref_model, self.accelerator)
             else:
                 self.ref_model = self.accelerator.prepare_model(self.ref_model, evaluation_mode=True)
                 self.ref_model.eval()
@@ -210,7 +211,7 @@ class CustomDPOTrainer(DPOTrainer):
     @override
     def concatenated_forward(
         self, model: "PreTrainedModel", batch: dict[str, "torch.Tensor"], is_ref_model: bool = False
-    ) -> tuple["torch.Tensor", "torch.Tensor", "torch.Tensor", "torch.Tensor", "torch.Tensor"]:
+    ) -> dict[str, "torch.Tensor"]:
         r"""Compute the sum log probabilities of the labels under given logits if loss_type is not IPO, ORPO or SimPO.
 
         Otherwise the average log probabilities.
@@ -230,11 +231,18 @@ class CustomDPOTrainer(DPOTrainer):
         chosen_logps, rejected_logps = all_logps.split(batch_size, dim=0)
         chosen_logits, rejected_logits = all_logits.split(batch_size, dim=0)
         chosen_length, _ = valid_length.split(batch_size, dim=0)
-
         if self.loss_type in ["ipo", "orpo", "simpo"]:
-            return chosen_logps, rejected_logps, chosen_logits, rejected_logits, chosen_logps
+            chosen_logps_avg = chosen_logps
         else:
-            return chosen_logps, rejected_logps, chosen_logits, rejected_logits, chosen_logps / chosen_length
+            chosen_logps_avg = chosen_logps / chosen_length
+
+        return {
+            "chosen_logps": chosen_logps,
+            "rejected_logps": rejected_logps,
+            "chosen_logits": chosen_logits,
+            "rejected_logits": rejected_logits,
+            "chosen_logps_avg": chosen_logps_avg,
+        }
 
     @override
     def compute_reference_log_probs(
@@ -252,9 +260,9 @@ class CustomDPOTrainer(DPOTrainer):
             ref_context = nullcontext()
 
         with torch.no_grad(), ref_context:
-            reference_chosen_logps, reference_rejected_logps, *_ = self.concatenated_forward(
-                ref_model, batch, is_ref_model=True
-            )
+            ref_output = self.concatenated_forward(ref_model, batch, is_ref_model=True)
+            reference_chosen_logps = ref_output["chosen_logps"]
+            reference_rejected_logps = ref_output["rejected_logps"]
 
         return reference_chosen_logps, reference_rejected_logps
 
@@ -267,13 +275,13 @@ class CustomDPOTrainer(DPOTrainer):
     ) -> tuple["torch.Tensor", dict[str, "torch.Tensor"]]:
         r"""Compute the DPO loss and other metrics for the given batch of inputs for train or test."""
         metrics = {}
-        (
-            policy_chosen_logps,
-            policy_rejected_logps,
-            policy_chosen_logits,
-            policy_rejected_logits,
-            policy_chosen_logps_avg,
-        ) = self.concatenated_forward(model, batch)
+
+        model_output = self.concatenated_forward(model, batch)
+        policy_chosen_logps = model_output["chosen_logps"]
+        policy_rejected_logps = model_output["rejected_logps"]
+        policy_chosen_logits = model_output["chosen_logits"]
+        policy_rejected_logits = model_output["rejected_logits"]
+        policy_chosen_logps_avg = model_output["chosen_logps_avg"]
 
         reference_chosen_logps, reference_rejected_logps = self.compute_reference_log_probs(model, batch)
         losses, chosen_rewards, rejected_rewards = self.compute_preference_loss(
