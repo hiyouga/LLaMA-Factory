@@ -7,7 +7,7 @@ on:
       - "main"
     paths:
       - "**/*.py"
-      - "requirements.txt"
+      - "pyproject.toml"
       - "docker/**"
       - ".github/workflows/*.yml"
   pull_request:
@@ -15,7 +15,7 @@ on:
       - "main"
     paths:
       - "**/*.py"
-      - "requirements.txt"
+      - "pyproject.toml"
       - "docker/**"
       - ".github/workflows/*.yml"
   release:
@@ -29,16 +29,13 @@ jobs:
       matrix:
         include:
           - device: "cuda"
-            npu_type: ""
-          - device: "npu"
-            npu_type: "a2"
-          - device: "npu"
-            npu_type: "a3"
+          - device: "npu-a2"
+          - device: "npu-a3"
 
     runs-on: ubuntu-latest
 
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.device }}-${{ matrix.npu_type }}
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.device }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
     environment:
@@ -55,16 +52,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
       - name: Get llamafactory version
         id: version
         run: |
           if [ "${{ github.event_name }}" = "release" ]; then
-            echo "tag=$(python setup.py --version)" >> "$GITHUB_OUTPUT"
+            echo "tag=$(grep -oP 'VERSION = "\K[^"]+' src/llamafactory/extras/env.py)" >> "$GITHUB_OUTPUT"
           else
             echo "tag=latest" >> "$GITHUB_OUTPUT"
           fi
@@ -80,7 +72,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to Quay
-        if: ${{ github.event_name != 'pull_request' && matrix.device == 'npu'}}
+        if: ${{ github.event_name != 'pull_request' && startsWith(matrix.device, 'npu') }}
         uses: docker/login-action@v3
         with:
           registry: quay.io
@@ -93,14 +85,12 @@ jobs:
         with:
           context: .
           file: ./docker/docker-cuda/Dockerfile
-          build-args: |
-            EXTRAS=metrics,deepspeed,liger-kernel
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             docker.io/hiyouga/llamafactory:${{ steps.version.outputs.tag }}
 
       - name: Build and push Docker image (NPU-A2)
-        if: ${{ matrix.device == 'npu' && matrix.npu_type == 'a2' }}
+        if: ${{ matrix.device == 'npu-a2' }}
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -112,7 +102,7 @@ jobs:
             quay.io/ascend/llamafactory:${{ steps.version.outputs.tag }}-npu-a2
 
       - name: Build and push Docker image (NPU-A3)
-        if: ${{ matrix.device == 'npu' && matrix.npu_type == 'a3' }}
+        if: ${{ matrix.device == 'npu-a3' }}
         uses: docker/build-push-action@v6
         with:
           context: .

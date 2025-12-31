@@ -27,7 +27,7 @@ Get Data Sample:
 
 import os
 from collections.abc import Iterable
-from typing import Any, Union
+from typing import Any
 
 from huggingface_hub import hf_hub_download
 from omegaconf import OmegaConf
@@ -134,7 +134,7 @@ class DataEngine(Dataset):
         else:
             return len(self.data_index)
 
-    def __getitem__(self, index: Union[int, Any]) -> Union[Sample, list[Sample]]:
+    def __getitem__(self, index: int | Any) -> Sample | list[Sample]:
         """Get dataset item.
 
         Args:

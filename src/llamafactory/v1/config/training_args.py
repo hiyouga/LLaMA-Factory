@@ -14,7 +14,6 @@
 
 import os
 from dataclasses import dataclass, field
-from typing import Optional
 from uuid import uuid4
 
 from .arg_utils import PluginConfig, get_plugin_config
@@ -42,7 +41,7 @@ class TrainingArguments:
         default=False,
         metadata={"help": "Use bf16 for training."},
     )
-    dist_config: Optional[PluginConfig] = field(
+    dist_config: PluginConfig | None = field(
         default=None,
         metadata={"help": "Distribution configuration for training."},
     )

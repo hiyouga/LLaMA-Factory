@@ -1,0 +1,2 @@
+sglang[srt]>=0.4.5
+transformers==4.51.1

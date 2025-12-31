@@ -332,3 +332,7 @@ def fix_proxy(ipv6_enabled: bool = False) -> None:
     if ipv6_enabled:
         os.environ.pop("http_proxy", None)
         os.environ.pop("HTTP_PROXY", None)
+        os.environ.pop("https_proxy", None)
+        os.environ.pop("HTTPS_PROXY", None)
+        os.environ.pop("all_proxy", None)
+        os.environ.pop("ALL_PROXY", None)

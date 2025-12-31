@@ -15,26 +15,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""A unified interface for model parallelism and data parallelism.
+
+Supports model parallelism types:
+- mp_replicate: Replicate model across multiple devices.
+- mp_shard: Shard model across multiple devices.
+
+And data parallelism types:
+- dp: Data parallelism.
+- cp: Context parallelism.
+"""
+
 from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum
 from typing import Any, Optional
 
-from torch.distributed import init_process_group
+from torch.distributed import barrier, destroy_process_group, init_process_group
 from torch.distributed.device_mesh import DeviceMesh, init_device_mesh
 
 from ..utils.types import DistributedConfig, ProcessGroup, Tensor, TensorLike
-from .helper import (
-    ReduceOp,
-    all_gather,
-    all_reduce,
-    get_current_accelerator,
-    get_local_rank,
-    get_local_world_size,
-    get_rank,
-    get_world_size,
-    is_distributed,
-)
+from . import helper
 
 
 class Dim(str, Enum):
@@ -52,32 +53,32 @@ class DistributedStrategy:
 
     mp_replicate_size: int = 1
     """Model parallel replicate size, default to 1."""
-    mp_shard_size: Optional[int] = None
+    mp_shard_size: int | None = None
     """Model parallel shard size, default to world_size // mp_replicate_size."""
-    dp_size: Optional[int] = None
+    dp_size: int | None = None
     """Data parallel size, default to world_size // cp_size."""
     cp_size: int = 1
     """Context parallel size, default to 1."""
 
     def __post_init__(self) -> None:
-        if not is_distributed():
+        if not helper.is_distributed():
             self.mp_shard_size = 1
         elif self.mp_shard_size is None:
-            self.mp_shard_size = get_world_size() // self.mp_replicate_size
-        elif self.mp_replicate_size * self.mp_shard_size != get_world_size():
+            self.mp_shard_size = helper.get_world_size() // self.mp_replicate_size
+        elif self.mp_replicate_size * self.mp_shard_size != helper.get_world_size():
             raise ValueError(
                 f"mp_replicate_size * mp_shard_size must equal to world_size, "
-                f"got {self.mp_replicate_size} * {self.mp_shard_size} != {get_world_size()}."
+                f"got {self.mp_replicate_size} * {self.mp_shard_size} != {helper.get_world_size()}."
             )
 
-        if not is_distributed():
+        if not helper.is_distributed():
             self.dp_size = 1
         elif self.dp_size is None:
-            self.dp_size = get_world_size() // self.cp_size
-        elif self.dp_size * self.cp_size != get_world_size():
+            self.dp_size = helper.get_world_size() // self.cp_size
+        elif self.dp_size * self.cp_size != helper.get_world_size():
             raise ValueError(
                 f"dp_size * cp_size must equal to world_size, "
-                f"got {self.dp_size} * {self.cp_size} != {get_world_size()}."
+                f"got {self.dp_size} * {self.cp_size} != {helper.get_world_size()}."
             )
 
     @property
@@ -106,20 +107,6 @@ class DistributedInterface:
 
     _instance: Optional["DistributedInterface"] = None
     _initialized: bool = False
-    _is_distributed = is_distributed()
-    _rank = get_rank()
-    _world_size = get_world_size()
-    _local_rank = get_local_rank()
-    _local_world_size = get_local_world_size()
-
-    strategy: Optional[DistributedStrategy] = None
-    """Distributed strategy."""
-    model_device_mesh: Optional[DeviceMesh] = None
-    """Model parallel device mesh."""
-    data_device_mesh: Optional[DeviceMesh] = None
-    """Data parallel device mesh."""
-    current_accelerator = get_current_accelerator()
-    """Current accelerator."""
 
     def __new__(cls, *args: Any, **kwargs: Any) -> "DistributedInterface":
         """Singleton pattern."""
@@ -128,9 +115,17 @@ class DistributedInterface:
 
         return cls._instance
 
-    def __init__(self, config: Optional[DistributedConfig] = None) -> None:
+    def __init__(self, config: DistributedConfig | None = None) -> None:
         if self._initialized:
             return
+
+        self._is_distributed = helper.is_distributed()
+        self._rank = helper.get_rank()
+        self._world_size = helper.get_world_size()
+        self._local_rank = helper.get_local_rank()
+        self._local_world_size = helper.get_local_world_size()
+        self.current_accelerator = helper.get_current_accelerator()
+        self.device_count = helper.get_device_count()
 
         if config is None:
             self.strategy = DistributedStrategy()
@@ -145,6 +140,7 @@ class DistributedInterface:
             timeout = config.get("timeout", 18000)
 
         if self._is_distributed:
+            helper.set_device()
             init_process_group(timeout=timedelta(seconds=timeout))
             self.model_device_mesh = init_device_mesh(
                 device_type=self.current_accelerator.type,
@@ -169,65 +165,84 @@ class DistributedInterface:
             f"model_device_mesh={self.model_device_mesh}, data_device_mesh={self.data_device_mesh}"
         )
 
-    @classmethod
-    def get_device_mesh(cls, dim: Optional[Dim] = None) -> Optional[DeviceMesh]:
+    def get_device_mesh(self, dim: Dim | None = None) -> DeviceMesh | None:
         """Get device mesh for specified dimension."""
         if dim is None:
             raise ValueError("dim must be specified.")
-        elif cls.model_device_mesh is None:
+        elif self.model_device_mesh is None:
             return None
-        elif dim in cls.strategy.data_mesh_dim_names:
-            return cls.data_device_mesh[dim.value]
+        elif dim in self.strategy.data_mesh_dim_names:
+            return self.data_device_mesh[dim.value]
         else:
-            return cls.model_device_mesh[dim.value]
+            return self.model_device_mesh[dim.value]
 
-    @classmethod
-    def get_group(cls, dim: Optional[Dim] = None) -> Optional[ProcessGroup]:
+    def get_group(self, dim: Dim | None = None) -> Optional[ProcessGroup]:
         """Get process group for specified dimension."""
-        if cls.model_device_mesh is None or dim is None:
+        if self.model_device_mesh is None or dim is None:
             return None
         else:
-            return cls.get_device_mesh(dim).get_group()
+            return self.get_device_mesh(dim).get_group()
 
-    @classmethod
-    def get_rank(cls, dim: Optional[Dim] = None) -> int:
+    def get_rank(self, dim: Dim | None = None) -> int:
         """Get parallel rank for specified dimension."""
-        if cls.model_device_mesh is None:
+        if self.model_device_mesh is None:
             return 0
         elif dim is None:
-            return cls._rank
+            return self._rank
         else:
-            return cls.get_device_mesh(dim).get_local_rank()
+            return self.get_device_mesh(dim).get_local_rank()
 
-    @classmethod
-    def get_world_size(cls, dim: Optional[Dim] = None) -> int:
+    def get_world_size(self, dim: Dim | None = None) -> int:
         """Get parallel size for specified dimension."""
-        if cls.model_device_mesh is None:
+        if self.model_device_mesh is None:
             return 1
         elif dim is None:
-            return cls._world_size
+            return self._world_size
         else:
-            return cls.get_device_mesh(dim).size()
+            return self.get_device_mesh(dim).size()
 
-    @classmethod
-    def get_local_rank(cls) -> int:
+    def get_local_rank(self) -> int:
         """Get parallel local rank."""
-        return cls._local_rank
+        return self._local_rank
 
-    @classmethod
-    def get_local_world_size(cls) -> int:
+    def get_local_world_size(self) -> int:
         """Get parallel local world size."""
-        return cls._local_world_size
+        return self._local_world_size
 
-    @classmethod
-    def all_gather(cls, data: Tensor, dim: Optional[Dim] = Dim.DP) -> Tensor:
+    def all_gather(self, data: Tensor, dim: Dim | None = Dim.DP) -> Tensor:
         """Gather tensor across specified parallel group."""
-        return all_gather(data, cls.get_group(dim)) if cls.model_device_mesh is not None else data
+        if self.model_device_mesh is not None:
+            return helper.operate_tensorlike(helper.all_gather, data, group=self.get_group(dim))
+        else:
+            return data
 
-    @classmethod
-    def all_reduce(cls, data: TensorLike, op: ReduceOp = ReduceOp.MEAN, dim: Optional[Dim] = Dim.DP) -> TensorLike:
+    def all_reduce(
+        self, data: TensorLike, op: helper.ReduceOp = helper.ReduceOp.MEAN, dim: Dim | None = Dim.DP
+    ) -> TensorLike:
         """Reduce tensor across specified parallel group."""
-        return all_reduce(data, op, cls.get_group(dim)) if cls.model_device_mesh is not None else data
+        if self.model_device_mesh is not None:
+            return helper.operate_tensorlike(helper.all_reduce, data, op=op, group=self.get_group(dim))
+        else:
+            return data
+
+    def broadcast(self, data: TensorLike, src: int = 0, dim: Dim | None = Dim.DP) -> TensorLike:
+        """Broadcast tensor across specified parallel group."""
+        if self.model_device_mesh is not None:
+            return helper.operate_tensorlike(helper.broadcast, data, src=src, group=self.get_group(dim))
+        else:
+            return data
+
+    def sync(self) -> None:
+        """Synchronize all processes."""
+        helper.synchronize()
+
+    def barrier(self) -> None:
+        """Barrier all processes."""
+        barrier()
+
+    def destroy(self) -> None:
+        """Destroy all processes."""
+        destroy_process_group()
 
 
 if __name__ == "__main__":

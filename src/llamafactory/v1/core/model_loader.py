@@ -97,7 +97,7 @@ class ModelLoader:
             self.args.model,
             config=self.model_config,
             dtype="auto",
-            device_map=DistributedInterface.current_accelerator,
+            device_map=DistributedInterface().current_accelerator,
             trust_remote_code=self.args.trust_remote_code,
         )
 
@@ -111,6 +111,13 @@ class ModelLoader:
             from ..plugins.model_plugins.peft import PeftPlugin
 
             model = PeftPlugin(self.args.peft_config.name)(model, self.args.peft_config, self.is_train)
+
+        if self.args.kernel_config is not None:
+            from ..plugins.model_plugins.kernels.interface import KernelPlugin
+
+            model = KernelPlugin(self.args.kernel_config.name)(
+                model=model, include_kernels=self.args.kernel_config.get("include_kernels")
+            )
 
         return model
 

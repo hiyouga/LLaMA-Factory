@@ -4,7 +4,6 @@ FROM ${BASE_IMAGE}
 
 # Installation arguments
 ARG PIP_INDEX=https://pypi.org/simple
-ARG EXTRAS=metrics
 ARG INSTALL_FLASHATTN=false
 ARG HTTP_PROXY=""
 ARG PYTORCH_INDEX=https://download.pytorch.org/whl/rocm6.3
@@ -28,21 +27,14 @@ WORKDIR /app
 # Change pip source
 RUN pip config set global.index-url "${PIP_INDEX}" && \
     pip config set global.extra-index-url "${PIP_INDEX}" && \
-    pip install --no-cache-dir --upgrade pip packaging wheel setuptools
+    pip install --no-cache-dir --upgrade pip packaging wheel setuptools editables "hatchling>=1.18.0"
 
-# Reinstall pytorch rocm
-RUN pip uninstall -y torch torchvision torchaudio && \
-    pip install --no-cache-dir --pre torch torchvision torchaudio --index-url "${PYTORCH_INDEX}"
-
-# Install the requirements
-COPY requirements.txt /app
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the application into the image
+# Copy the application into the image
 COPY . /app
 
-# Install LLaMA Factory
-RUN pip install --no-cache-dir -e ".[${EXTRAS}]" --no-build-isolation
+# Reinstall pytorch rocm and install LLaMA Factory
+RUN pip uninstall -y torch torchvision torchaudio && \
+    pip install --no-cache-dir --no-build-isolation -e --pre ".[metrics,deepspeed]" --index-url "${PYTORCH_INDEX}"
 
 # Rebuild flash attention
 RUN if [ "${INSTALL_FLASHATTN}" == "true" ]; then \

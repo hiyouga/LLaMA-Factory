@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 
 @dataclass
@@ -40,7 +40,7 @@ class FreezeArguments:
             )
         },
     )
-    freeze_extra_modules: Optional[str] = field(
+    freeze_extra_modules: str | None = field(
         default=None,
         metadata={
             "help": (
@@ -56,7 +56,7 @@ class FreezeArguments:
 class LoraArguments:
     r"""Arguments pertaining to the LoRA training."""
 
-    additional_target: Optional[str] = field(
+    additional_target: str | None = field(
         default=None,
         metadata={
             "help": (
@@ -66,7 +66,7 @@ class LoraArguments:
             )
         },
     )
-    lora_alpha: Optional[int] = field(
+    lora_alpha: int | None = field(
         default=None,
         metadata={"help": "The scale factor for LoRA fine-tuning (default: lora_rank * 2)."},
     )
@@ -88,7 +88,7 @@ class LoraArguments:
             )
         },
     )
-    loraplus_lr_ratio: Optional[float] = field(
+    loraplus_lr_ratio: float | None = field(
         default=None,
         metadata={"help": "LoRA plus learning rate ratio (lr_B / lr_A)."},
     )
@@ -126,7 +126,7 @@ class LoraArguments:
 class OFTArguments:
     r"""Arguments pertaining to the OFT training."""
 
-    additional_target: Optional[str] = field(
+    additional_target: str | None = field(
         default=None,
         metadata={
             "help": (
@@ -220,27 +220,27 @@ class RLHFArguments:
         default=False,
         metadata={"help": "Whiten the rewards before compute advantages in PPO training."},
     )
-    ref_model: Optional[str] = field(
+    ref_model: str | None = field(
         default=None,
         metadata={"help": "Path to the reference model used for the PPO or DPO training."},
     )
-    ref_model_adapters: Optional[str] = field(
+    ref_model_adapters: str | None = field(
         default=None,
         metadata={"help": "Path to the adapters of the reference model."},
     )
-    ref_model_quantization_bit: Optional[int] = field(
+    ref_model_quantization_bit: int | None = field(
         default=None,
         metadata={"help": "The number of bits to quantize the reference model."},
     )
-    reward_model: Optional[str] = field(
+    reward_model: str | None = field(
         default=None,
         metadata={"help": "Path to the reward model used for the PPO training."},
     )
-    reward_model_adapters: Optional[str] = field(
+    reward_model_adapters: str | None = field(
         default=None,
         metadata={"help": "Path to the adapters of the reward model."},
     )
-    reward_model_quantization_bit: Optional[int] = field(
+    reward_model_quantization_bit: int | None = field(
         default=None,
         metadata={"help": "The number of bits to quantize the reward model."},
     )
@@ -248,7 +248,7 @@ class RLHFArguments:
         default="lora",
         metadata={"help": "The type of the reward model in PPO training. Lora model only supports lora training."},
     )
-    ld_alpha: Optional[float] = field(
+    ld_alpha: float | None = field(
         default=None,
         metadata={
             "help": (
@@ -361,15 +361,15 @@ class BAdamArgument:
         default="layer",
         metadata={"help": "Whether to use layer-wise or ratio-wise BAdam optimizer."},
     )
-    badam_start_block: Optional[int] = field(
+    badam_start_block: int | None = field(
         default=None,
         metadata={"help": "The starting block index for layer-wise BAdam."},
     )
-    badam_switch_mode: Optional[Literal["ascending", "descending", "random", "fixed"]] = field(
+    badam_switch_mode: Literal["ascending", "descending", "random", "fixed"] | None = field(
         default="ascending",
         metadata={"help": "the strategy of picking block to update for layer-wise BAdam."},
     )
-    badam_switch_interval: Optional[int] = field(
+    badam_switch_interval: int | None = field(
         default=50,
         metadata={
             "help": "Number of steps to update the block for layer-wise BAdam. Use -1 to disable the block update."
@@ -406,15 +406,15 @@ class SwanLabArguments:
         default=False,
         metadata={"help": "Whether or not to use the SwanLab (an experiment tracking and visualization tool)."},
     )
-    swanlab_project: Optional[str] = field(
+    swanlab_project: str | None = field(
         default="llamafactory",
         metadata={"help": "The project name in SwanLab."},
     )
-    swanlab_workspace: Optional[str] = field(
+    swanlab_workspace: str | None = field(
         default=None,
         metadata={"help": "The workspace name in SwanLab."},
     )
-    swanlab_run_name: Optional[str] = field(
+    swanlab_run_name: str | None = field(
         default=None,
         metadata={"help": "The experiment name in SwanLab."},
     )
@@ -422,19 +422,19 @@ class SwanLabArguments:
         default="cloud",
         metadata={"help": "The mode of SwanLab."},
     )
-    swanlab_api_key: Optional[str] = field(
+    swanlab_api_key: str | None = field(
         default=None,
         metadata={"help": "The API key for SwanLab."},
     )
-    swanlab_logdir: Optional[str] = field(
+    swanlab_logdir: str | None = field(
         default=None,
         metadata={"help": "The log directory for SwanLab."},
     )
-    swanlab_lark_webhook_url: Optional[str] = field(
+    swanlab_lark_webhook_url: str | None = field(
         default=None,
         metadata={"help": "The Lark(飞书) webhook URL for SwanLab."},
     )
-    swanlab_lark_secret: Optional[str] = field(
+    swanlab_lark_secret: str | None = field(
         default=None,
         metadata={"help": "The Lark(飞书) secret for SwanLab."},
     )
@@ -510,7 +510,7 @@ class FinetuningArguments(
         default=False,
         metadata={"help": "Whether or not to disable the shuffling of the training set."},
     )
-    early_stopping_steps: Optional[int] = field(
+    early_stopping_steps: int | None = field(
         default=None,
         metadata={"help": "Number of steps to stop training if the `metric_for_best_model` does not improve."},
     )
@@ -530,11 +530,11 @@ class FinetuningArguments(
             return arg
 
         self.freeze_trainable_modules: list[str] = split_arg(self.freeze_trainable_modules)
-        self.freeze_extra_modules: Optional[list[str]] = split_arg(self.freeze_extra_modules)
+        self.freeze_extra_modules: list[str] | None = split_arg(self.freeze_extra_modules)
         self.lora_alpha: int = self.lora_alpha or self.lora_rank * 2
         self.lora_target: list[str] = split_arg(self.lora_target)
         self.oft_target: list[str] = split_arg(self.oft_target)
-        self.additional_target: Optional[list[str]] = split_arg(self.additional_target)
+        self.additional_target: list[str] | None = split_arg(self.additional_target)
         self.galore_target: list[str] = split_arg(self.galore_target)
         self.apollo_target: list[str] = split_arg(self.apollo_target)
         self.use_ref_model = self.stage == "dpo" and self.pref_loss not in ["orpo", "simpo"]

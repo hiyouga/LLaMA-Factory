@@ -15,7 +15,6 @@
 import os
 from typing import TYPE_CHECKING, Any, Optional, TypedDict
 
-import torch
 from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
@@ -158,6 +157,7 @@ def load_model(
     if model is None and not lazy_load:
         init_kwargs["config"] = config
         init_kwargs["pretrained_model_name_or_path"] = model_args.model_name_or_path
+        init_kwargs["torch_dtype"] = "auto"
 
         if model_args.mixture_of_depths == "load":
             model = load_mod_pretrained_model(**init_kwargs)
@@ -205,10 +205,6 @@ def load_model(
 
     if not is_trainable:
         model.requires_grad_(False)
-        for param in model.parameters():
-            if param.data.dtype == torch.float32 and model_args.compute_dtype != torch.float32:
-                param.data = param.data.to(model_args.compute_dtype)
-
         model.eval()
     else:
         model.train()
@@ -220,9 +216,9 @@ def load_model(
             "You are try to using future feature about kernels, please note that this feature "
             "is not supported for all models. If get any error, please disable this feature, or report the issue."
         )
-        from ..v1.plugins.model_plugins.kernels.registry import apply_available_kernels
+        from ..v1.plugins.model_plugins.kernels.interface import apply_default_kernels
 
-        model = apply_available_kernels(model)
+        model = apply_default_kernels(model=model, include_kernels=model_args.use_v1_kernels)
 
     trainable_params, all_param = count_parameters(model)
     if is_trainable:

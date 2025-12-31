@@ -84,8 +84,6 @@ def load_reference_model(
         model: AutoModelForCausalLMWithValueHead = AutoModelForCausalLMWithValueHead.from_pretrained(
             model_path, torch_dtype=torch.float16, device_map="auto"
         )
-        if not is_trainable:
-            model.v_head = model.v_head.to(torch.float16)
 
         return model
 

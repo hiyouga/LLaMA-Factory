@@ -18,7 +18,6 @@
 
 import json
 from enum import Enum, unique
-from typing import Optional, Union
 
 
 class PluginConfig(dict):
@@ -33,7 +32,7 @@ class PluginConfig(dict):
         return self["name"]
 
 
-PluginArgument = Optional[Union[PluginConfig, dict, str]]
+PluginArgument = PluginConfig | dict | str | None
 
 
 @unique
@@ -74,7 +73,7 @@ def _convert_str_dict(data: dict) -> dict:
     return data
 
 
-def get_plugin_config(config: PluginArgument) -> Optional[PluginConfig]:
+def get_plugin_config(config: PluginArgument) -> PluginConfig | None:
     """Get the plugin configuration from the argument value.
 
     Args:

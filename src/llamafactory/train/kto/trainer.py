@@ -78,10 +78,13 @@ class CustomKTOTrainer(KTOTrainer):
         self.desirable_weight = finetuning_args.kto_chosen_weight
         self.undesirable_weight = finetuning_args.kto_rejected_weight
         self.ftx_gamma = finetuning_args.pref_ftx
-        # Set `loss_type` and `calculate_KL` to their default values,
-        # to maintain consistency with the logic of trl version 0.9.6.
+        # trl
+        # Not all losses require a KL calculation
         self.calculate_KL = True
-        self.loss_type = "kto"
+        if hasattr(self, "loss_type") and self.loss_type in ["apo_zero_unpaired"]:
+            self.calculate_KL = False
+        else:
+            self.loss_type = "kto"
 
         Trainer.__init__(self, model=model, **kwargs)
         self.model_accepts_loss_kwargs = False  # overwrite trainer's default behavior
@@ -95,7 +98,7 @@ class CustomKTOTrainer(KTOTrainer):
                 if not (
                     getattr(ref_model, "is_loaded_in_8bit", False) or getattr(ref_model, "is_loaded_in_4bit", False)
                 ):  # quantized models are already set on the correct device
-                    self.ref_model = prepare_deepspeed(self.ref_model,self.accelerator)
+                    self.ref_model = prepare_deepspeed(self.ref_model, self.accelerator)
             else:
                 self.ref_model = self.accelerator.prepare_model(self.ref_model, evaluation_mode=True)
                 self.ref_model.eval()

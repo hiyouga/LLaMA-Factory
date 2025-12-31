@@ -8,7 +8,7 @@ ENV PYPI_MIRROR=https://mirrors.aliyun.com/pypi/simple/
 ENV PYPI_TRUSTED_HOST=mirrors.aliyun.com
 ENV APT_MIRROR=https://mirrors.tuna.tsinghua.edu.cn/ubuntu/
 
-RUN pip install --upgrade pip setuptools wheel --trusted-host ${PYPI_TRUSTED_HOST} --index-url ${PYPI_MIRROR}
+RUN pip install --upgrade pip setuptools wheel "hatchling>=1.18.0" editables --trusted-host ${PYPI_TRUSTED_HOST} --index-url ${PYPI_MIRROR}
 
 RUN pip uninstall -y torch torchvision torch-tensorrt \
     flash_attn transformer-engine \
@@ -56,13 +56,13 @@ ENV JAVA_HOME /usr/lib/jvm/java-21-openjdk-amd64
 # pip install LLaMA-Factory
 WORKDIR /app
 
-COPY requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy the application into the image
+COPY . /app
+
+# Install LLaMA Factory
+RUN pip install --no-cache-dir -e ".[metrics]" --no-build-isolation
 
 RUN pip install "git+https://github.com/alibaba/roll.git#subdirectory=mcore_adapter"
-
-COPY . /app/
-RUN pip install -e ".[metrics]" --no-build-isolation
 
 # Expose port 7860 for LLaMA Board
 ENV GRADIO_SERVER_PORT=7860

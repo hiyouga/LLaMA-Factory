@@ -14,7 +14,7 @@
 
 import json
 import os
-from typing import Any, Optional
+from typing import Any
 
 from transformers.trainer_utils import get_last_checkpoint
 
@@ -206,7 +206,7 @@ def list_datasets(dataset_dir: str = None, training_stage: str = list(TRAINING_S
     return gr.Dropdown(choices=datasets)
 
 
-def list_output_dirs(model_name: Optional[str], finetuning_type: str, current_time: str) -> "gr.Dropdown":
+def list_output_dirs(model_name: str | None, finetuning_type: str, current_time: str) -> "gr.Dropdown":
     r"""List all the directories that can resume from.
 
     Inputs: top.model_name, top.finetuning_type, train.current_time

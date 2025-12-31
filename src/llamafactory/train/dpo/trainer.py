@@ -96,7 +96,7 @@ class CustomDPOTrainer(DPOTrainer):
                 if not (
                     getattr(ref_model, "is_loaded_in_8bit", False) or getattr(ref_model, "is_loaded_in_4bit", False)
                 ):  # quantized models are already set on the correct device
-                    self.ref_model = prepare_deepspeed(self.ref_model,self.accelerator)
+                    self.ref_model = prepare_deepspeed(self.ref_model, self.accelerator)
             else:
                 self.ref_model = self.accelerator.prepare_model(self.ref_model, evaluation_mode=True)
                 self.ref_model.eval()
@@ -243,7 +243,6 @@ class CustomDPOTrainer(DPOTrainer):
             "rejected_logits": rejected_logits,
             "chosen_logps_avg": chosen_logps_avg,
         }
-
 
     @override
     def compute_reference_log_probs(

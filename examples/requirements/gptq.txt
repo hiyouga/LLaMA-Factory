@@ -1,0 +1,2 @@
+optimum>=1.24.0
+gptqmodel>=2.0.0

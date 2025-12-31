@@ -15,7 +15,7 @@
 
 import os
 import random
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal
 
 from datasets import load_dataset
 
@@ -70,7 +70,7 @@ class DataIndexPlugin(BasePlugin):
     """Plugin for adjusting dataset index."""
 
     def adjust_data_index(
-        self, data_index: list[tuple[str, int]], size: Optional[int], weight: Optional[float]
+        self, data_index: list[tuple[str, int]], size: int | None, weight: float | None
     ) -> list[tuple[str, int]]:
         """Adjust dataset index by size and weight.
 
@@ -95,8 +95,8 @@ class DataSelectorPlugin(BasePlugin):
     """Plugin for selecting dataset samples."""
 
     def select(
-        self, data_index: list[tuple[str, int]], index: Union[slice, list[int], Any]
-    ) -> Union[tuple[str, int], list[tuple[str, int]]]:
+        self, data_index: list[tuple[str, int]], index: slice | list[int] | Any
+    ) -> tuple[str, int] | list[tuple[str, int]]:
         """Select dataset samples.
 
         Args:

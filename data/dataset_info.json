@@ -471,6 +471,14 @@
   "ultrachat_de": {
     "hf_hub_url": "mayflowergmbh/ultra-chat_de"
   },
+  "dlr_web": {
+    "hf_hub_url": "Attention1115/DLR-Web",
+    "split": "full",
+    "columns": {
+      "prompt": "question",
+      "response": "response"
+    }
+  },
   "dpo_en_demo": {
     "file_name": "dpo_en_demo.json",
     "ranking": true,

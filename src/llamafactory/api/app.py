@@ -16,7 +16,7 @@ import asyncio
 import os
 from contextlib import asynccontextmanager
 from functools import partial
-from typing import Annotated, Optional
+from typing import Annotated
 
 from ..chat import ChatModel
 from ..extras.constants import EngineName
@@ -79,7 +79,7 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
     api_key = os.getenv("API_KEY")
     security = HTTPBearer(auto_error=False)
 
-    async def verify_api_key(auth: Annotated[Optional[HTTPAuthorizationCredentials], Depends(security)]):
+    async def verify_api_key(auth: Annotated[HTTPAuthorizationCredentials | None, Depends(security)]):
         if api_key and (auth is None or auth.credentials != api_key):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key.")
 

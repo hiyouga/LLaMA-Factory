@@ -22,28 +22,20 @@ import re
 from copy import deepcopy
 from dataclasses import dataclass
 from io import BytesIO
-from typing import TYPE_CHECKING, BinaryIO, Literal, Optional, TypedDict, Union
+from typing import TYPE_CHECKING, BinaryIO, Literal, NotRequired, Optional, TypedDict, Union
 
 import numpy as np
 import torch
+import torchaudio
 from transformers.image_utils import get_image_size, is_valid_image, to_numpy_array
 from transformers.models.mllama.processing_mllama import (
     convert_sparse_cross_attention_mask_to_dense,
     get_cross_attention_token_mask,
 )
-from typing_extensions import NotRequired, override
+from typing_extensions import override
 
 from ..extras.constants import AUDIO_PLACEHOLDER, IGNORE_INDEX, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
-from ..extras.packages import (
-    is_librosa_available,
-    is_pillow_available,
-    is_pyav_available,
-    is_transformers_version_greater_than,
-)
-
-
-if is_librosa_available():
-    import librosa
+from ..extras.packages import is_pillow_available, is_pyav_available, is_transformers_version_greater_than
 
 
 if is_pillow_available():
@@ -71,8 +63,8 @@ if TYPE_CHECKING:
     from transformers.video_processing_utils import BaseVideoProcessor
 
     class EncodedImage(TypedDict):
-        path: Optional[str]
-        bytes: Optional[bytes]
+        path: str | None
+        bytes: bytes | None
 
     ImageInput = Union[str, bytes, EncodedImage, BinaryIO, ImageObject]
     VideoInput = Union[str, BinaryIO, list[list[ImageInput]]]
@@ -152,9 +144,9 @@ def _check_video_is_nested_images(video: "VideoInput") -> bool:
 
 @dataclass
 class MMPluginMixin:
-    image_token: Optional[str]
-    video_token: Optional[str]
-    audio_token: Optional[str]
+    image_token: str | None
+    video_token: str | None
+    audio_token: str | None
     expand_mm_tokens: bool = True
 
     def _validate_input(
@@ -316,7 +308,14 @@ class MMPluginMixin:
         results, sampling_rates = [], []
         for audio in audios:
             if not isinstance(audio, np.ndarray):
-                audio, sampling_rate = librosa.load(audio, sr=sampling_rate)
+                audio, sr = torchaudio.load(audio)
+                if audio.shape[0] > 1:
+                    audio = audio.mean(dim=0, keepdim=True)
+
+                if sr != sampling_rate:
+                    audio = torchaudio.functional.resample(audio, sr, sampling_rate)
+
+                audio = audio.squeeze(0).numpy()
 
             results.append(audio)
             sampling_rates.append(sampling_rate)
@@ -329,7 +328,7 @@ class MMPluginMixin:
         videos: list["VideoInput"],
         audios: list["AudioInput"],
         processor: "MMProcessor",
-        imglens: Optional[list[int]] = None,
+        imglens: list[int] | None = None,
     ) -> dict[str, "torch.Tensor"]:
         r"""Process visual inputs.
 
@@ -427,13 +426,13 @@ class BasePlugin(MMPluginMixin):
     def process_token_ids(
         self,
         input_ids: list[int],
-        labels: Optional[list[int]],
+        labels: list[int] | None,
         images: list["ImageInput"],
         videos: list["VideoInput"],
         audios: list["AudioInput"],
         tokenizer: "PreTrainedTokenizer",
         processor: Optional["MMProcessor"],
-    ) -> tuple[list[int], Optional[list[int]]]:
+    ) -> tuple[list[int], list[int] | None]:
         r"""Pre-process token ids after tokenization for VLMs."""
         self._validate_input(processor, images, videos, audios)
         return input_ids, labels
@@ -480,21 +479,39 @@ class ErnieVLPlugin(BasePlugin):
         self._validate_input(processor, images, videos, audios)
         self._validate_messages(messages, images, videos, audios)
         messages = deepcopy(messages)
+
+        image_processor: BaseImageProcessor = getattr(processor, "image_processor")
+
+        merge_length: int = getattr(image_processor, "merge_size") ** 2
+        if self.expand_mm_tokens:
+            mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+            image_grid_thw = mm_inputs.get("image_grid_thw", [])
+            video_grid_thw = mm_inputs.get("video_grid_thw", [])
+        else:
+            image_grid_thw = [None] * len(images)
+            video_grid_thw = [None] * len(videos)
+
         image_idx, video_idx = 0, 0
         for message in messages:
             content = message["content"]
-            image_token = self.image_token or "<|image@placeholder|>"
-            video_token = self.video_token or "<|video@placeholder|>"
+            image_token = self.image_token or "<|IMAGE_PLACEHOLDER|>"
+            video_token = self.video_token or "<|VIDEO_PLACEHOLDER|>"
             while IMAGE_PLACEHOLDER in content:
+                image_seqlen = image_grid_thw[image_idx].prod() // merge_length if self.expand_mm_tokens else 1
+                content = content.replace(
+                    IMAGE_PLACEHOLDER,
+                    f"Picture {image_idx + 1}:<|IMAGE_START|>{image_token * image_seqlen}<|IMAGE_END|>",
+                    1,
+                )
                 image_idx += 1
-                content = content.replace(
-                    IMAGE_PLACEHOLDER, f"Picture {image_idx}:<|IMAGE_START|>{image_token}<|IMAGE_END|>", 1
-                )
             while VIDEO_PLACEHOLDER in content:
-                video_idx += 1
+                video_seqlen = video_grid_thw[video_idx].prod() // merge_length if self.expand_mm_tokens else 1
                 content = content.replace(
-                    VIDEO_PLACEHOLDER, f"Video {video_idx}:<|VIDEO_START|>{video_token}<|VIDEO_END|>", 1
+                    VIDEO_PLACEHOLDER,
+                    f"Video {video_idx + 1}:<|VIDEO_START|>{video_token * video_seqlen}<|VIDEO_END|>",
+                    1,
                 )
+                video_idx += 1
             message["content"] = content
         return messages
 
@@ -1288,13 +1305,13 @@ class PaliGemmaPlugin(BasePlugin):
     def process_token_ids(
         self,
         input_ids: list[int],
-        labels: Optional[list[int]],
+        labels: list[int] | None,
         images: list["ImageInput"],
         videos: list["VideoInput"],
         audios: list["AudioInput"],
         tokenizer: "PreTrainedTokenizer",
         processor: Optional["MMProcessor"],
-    ) -> tuple[list[int], Optional[list[int]]]:
+    ) -> tuple[list[int], list[int] | None]:
         self._validate_input(processor, images, videos, audios)
         num_images = len(images)
         image_seqlen = processor.image_seq_length if self.expand_mm_tokens else 0  # skip mm token
@@ -2109,9 +2126,9 @@ def register_mm_plugin(name: str, plugin_class: type["BasePlugin"]) -> None:
 
 def get_mm_plugin(
     name: str,
-    image_token: Optional[str] = None,
-    video_token: Optional[str] = None,
-    audio_token: Optional[str] = None,
+    image_token: str | None = None,
+    video_token: str | None = None,
+    audio_token: str | None = None,
     **kwargs,
 ) -> "BasePlugin":
     r"""Get plugin for multimodal inputs."""
