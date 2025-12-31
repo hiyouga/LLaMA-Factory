@@ -25,6 +25,7 @@ import torch
 from transformers import Trainer
 from trl import KTOTrainer
 from trl.trainer import disable_dropout_in_model
+from trl.trainer.utils import prepare_deepspeed
 from typing_extensions import override
 
 from ...extras.constants import IGNORE_INDEX
@@ -97,7 +98,7 @@ class CustomKTOTrainer(KTOTrainer):
                 if not (
                     getattr(ref_model, "is_loaded_in_8bit", False) or getattr(ref_model, "is_loaded_in_4bit", False)
                 ):  # quantized models are already set on the correct device
-                    self.ref_model = self._prepare_deepspeed(self.ref_model)
+                    self.ref_model = prepare_deepspeed(self.ref_model, self.accelerator)
             else:
                 self.ref_model = self.accelerator.prepare_model(self.ref_model, evaluation_mode=True)
                 self.ref_model.eval()

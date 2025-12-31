@@ -32,7 +32,8 @@ from transformers.trainer_callback import CallbackHandler
 from transformers.trainer_pt_utils import remove_dummy_checkpoint
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 from transformers.utils import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
-from trl import PPOConfig, PPOTrainer, __version__ as trl_version
+from trl import PPOConfig, PPOTrainer
+from trl import __version__ as trl_version
 from trl.models.utils import unwrap_model_for_generation
 from typing_extensions import override
 
@@ -84,12 +85,14 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
 
         # Check if TRL version is compatible (0.8.6 <= version <= 0.9.6)
         try:
-            from packaging import version
             from transformers.utils.versions import require_version
-            require_version( "trl>=0.8.6,<=0.9.6","Incompatible TRL version detected. LLaMA-Factory ppo requires TRL version >=0.8.6,<=0.9.6. "\
-                      f"Found version {trl_version}. Please install the correct version with: `pip install trl>=0.8.6,<=0.9.6`\n"\
-                      "To fix: run `DISABLE_VERSION_CHECK=1 llamafactory-cli train example_ppo.yaml`\n")
-            from trl.core import PPODecorators, logprobs_from_logits
+
+            require_version(
+                "trl>=0.8.6,<=0.9.6",
+                "Incompatible TRL version detected. LLaMA-Factory ppo requires TRL version >=0.8.6,<=0.9.6. "
+                f"Found version {trl_version}. Please install the correct version with: `pip install trl>=0.8.6,<=0.9.6`\n"
+                "To fix: run `DISABLE_VERSION_CHECK=1 llamafactory-cli train example_ppo.yaml`\n",
+            )
         except ImportError as e:
             raise e
 
@@ -429,6 +432,8 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
 
         Subclass and override to inject custom behavior.
         """
+        from trl.core import logprobs_from_logits
+
         torch_gc()
         bs = len(queries)
         fbs = self.config.mini_batch_size
