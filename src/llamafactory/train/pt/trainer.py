@@ -21,7 +21,7 @@ from typing_extensions import override
 
 from ...extras.packages import is_transformers_version_greater_than
 from ..callbacks import SaveProcessorCallback
-from ..fp8_utils import configure_fp8_environment, verify_fp8_status
+from ..fp8_utils import configure_fp8_environment, patch_accelerator_for_fp8, verify_fp8_status
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
 
 
@@ -41,11 +41,13 @@ class CustomTrainer(Trainer):
         model_args: Optional["ModelArguments"] = None,
         **kwargs,
     ) -> None:
+        kwargs["processing_class"] = kwargs.pop("tokenizer")
         # Configure FP8 environment if enabled
-        if model_args is not None and model_args.fp8:
-            configure_fp8_environment(model_args)
-        if is_transformers_version_greater_than("4.46"):
-            kwargs["processing_class"] = kwargs.pop("tokenizer")
+        training_args = kwargs.get("args")
+        if training_args.fp8:
+            configure_fp8_environment(training_args)
+            if getattr(training_args, "fp8_backend", "auto") == "te":
+                patch_accelerator_for_fp8()
 
         super().__init__(**kwargs)
         if processor is not None:
