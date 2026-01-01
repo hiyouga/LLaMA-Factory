@@ -88,8 +88,8 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
             self.compute_loss_func = dft_loss_func
 
-        if model_args is not None and model_args.fp8 and hasattr(self, "accelerator"):
-            verify_fp8_status(self.accelerator, model_args)
+        if training_args.fp8 and hasattr(self, "accelerator"): # verify FP8 status after trainer initialization
+            verify_fp8_status(self.accelerator, training_args)
 
     @override
     def create_optimizer(self) -> "torch.optim.Optimizer":
