@@ -522,6 +522,10 @@ class FinetuningArguments(
         default=False,
         metadata={"help": "Whether or not to compute effective tokens per second."},
     )
+    log_entropy: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to log entropy during training."},
+    )
 
     def __post_init__(self):
         def split_arg(arg):

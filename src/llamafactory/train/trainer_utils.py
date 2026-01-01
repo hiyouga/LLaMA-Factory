@@ -777,3 +777,38 @@ def get_ray_trainer(
         ),
     )
     return trainer
+
+
+def compute_entropy(logits: torch.Tensor, labels: torch.Tensor, ignore_index: int = -100) -> torch.Tensor:
+    """Compute mean entropy over valid tokens.
+
+    Args:
+        logits: Model output logits of shape (batch_size, seq_len, vocab_size)
+        labels: Target labels of shape (batch_size, seq_len)
+        ignore_index: Index to ignore in labels (typically -100)
+
+    Returns:
+        Mean entropy over valid tokens
+    """
+    # Shift logits and labels for next-token prediction
+    shift_logits = logits[..., :-1, :].contiguous()
+    shift_labels = labels[..., 1:].contiguous()
+
+    # Create mask for valid tokens
+    valid_mask = shift_labels != ignore_index
+
+    if not valid_mask.any():
+        return torch.tensor(0.0, device=logits.device)
+
+    # Compute probabilities via softmax
+    probs = torch.nn.functional.softmax(shift_logits, dim=-1)
+
+    # Compute entropy: -sum(p * log(p))
+    log_probs = torch.nn.functional.log_softmax(shift_logits, dim=-1)
+    entropy = -torch.sum(probs * log_probs, dim=-1)  # (batch_size, seq_len-1)
+
+    # Average over valid tokens only
+    valid_entropy = entropy[valid_mask]
+    mean_entropy = valid_entropy.mean()
+
+    return mean_entropy
