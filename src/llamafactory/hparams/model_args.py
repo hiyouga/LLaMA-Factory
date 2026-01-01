@@ -298,23 +298,6 @@ class QuantizationArguments:
         default=None,
         metadata={"help": "Device map used to infer the 4-bit quantized model, needs bitsandbytes>=0.43.0."},
     )
-    fp8: bool = field(
-        default=False,
-        metadata={
-            "help": "Enable FP8 mixed precision training via HuggingFace Accelerate. "
-            "Requires PyTorch 2.7+ and Hopper architecture GPUs."
-        },
-    )
-    fp8_backend: str = field(
-        default="auto",
-        metadata={
-            "help": "FP8 backend to use ('auto', 'torchao', 'te', 'msamp'). 'auto' selects best available backend."
-        },
-    )
-    fp8_enable_fsdp_float8_all_gather: bool = field(
-        default=False,
-        metadata={"help": "Enable FP8 optimizations for FSDP2 all-gather operations."},
-    )
 
 
 @dataclass
