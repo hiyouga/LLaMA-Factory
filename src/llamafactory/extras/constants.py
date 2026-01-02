@@ -3848,7 +3848,7 @@ register_model_group(
 
 register_model_group(
     models={
-        "Youtu-LLM-2B": {
+        "Youtu-LLM-2B-Instruct": {
             DownloadSource.DEFAULT: "tencent/Youtu-LLM-2B",
             DownloadSource.MODELSCOPE: "Tencent-YouTu-Research/Youtu-LLM-2B",
         },
