@@ -459,6 +459,13 @@ class ReasoningTemplate(Template):
         return [(encoded_messages[i], encoded_messages[i + 1]) for i in range(0, len(encoded_messages), 2)]
 
 
+@dataclass
+class YoutuTemplate(ReasoningTemplate):
+    @override
+    def _get_jinja_template(self, tokenizer: "PreTrainedTokenizer") -> str:
+        return """{% if not add_generation_prompt is defined %}{% set add_generation_prompt = false %}{% endif %}{% set ns = namespace(is_first=false, is_tool=false, is_tool_message=false, first_tool_index=messages|length, is_output_first=true, system_prompt='', is_first_sp=true, is_last_user=false) %}{% for message in messages %}{% if message['role'] == 'system' %}{% if ns.is_first_sp %}{% set ns.system_prompt = ns.system_prompt + message['content'] %}{% set ns.is_first_sp = false %}{% else %}{% set ns.system_prompt = ns.system_prompt + '\\n\\n' + message['content'] %}{% endif %}{% endif %}{% if not ns.is_tool_message and (message['role'] == 'tool' or (message['role'] == 'user' and message['content'].startswith('<tool_response>') and message['content'].endswith('</tool_response>'))) %}{% set ns.is_tool_message = true %}{% set ns.first_tool_index = loop.index0 %}{% endif %}{% endfor %}{% if tools is defined and tools is not none %}{% set tool_ns = namespace(text='<|begin_of_tool_description|>Tool calling capabilities.\\nYou may call one or more functions to assist with the user query. You have the following functions available:', return_text='For tool call returns, you MUST use the following format:\\n<tool_call>{\\\"name\\\": \\\"function-name\\\", \\\"arguments\\\": {\\\"param1\\\": \\\"value1\\\", \\\"param2\\\": \\\"value2\\\"}}</tool_call>\\n<|end_of_tool_description|>') %}{% for tool in tools %}{% set tool_ns.text = tool_ns.text + '\\n```json\\n' + (tool | tojson) + '\\n```' %}{% endfor %}{% set tool_ns.text = tool_ns.text + '\\n' + tool_ns.return_text %}{% if ns.system_prompt == '' %}{% set ns.system_prompt = tool_ns.text %}{% else %}{% set ns.system_prompt = ns.system_prompt + '\\n\\n' + tool_ns.text %}{% endif %}{% endif %}{{ bos_token }}{{ ns.system_prompt }}{% for message in messages %}{% set content = message['content'] %}{% if message['role'] == 'user' %}{% set ns.is_tool = false %}{% set ns.is_first = false %}{% set ns.is_last_user = true %}{{ '<|User|>' + content }}{% endif %}{% if message['role'] == 'assistant' %}{% if '</think>' in content and not loop.last and loop.index0 < (ns.first_tool_index - 1) %}{% set content = content.rsplit('</think>')[-1].lstrip('\\n') %}{% endif %}{% if '<think>' not in content and '</think>' not in content and loop.last %}{% set content = '<think>\\n\\n</think>\\n\\n' + content %}{% endif %}{% endif %}{% if message['role'] == 'assistant' and message['tool_calls'] is defined and message['tool_calls'] is not none %}{% set ns.is_last_user = false %}{{ '<|Assistant|>' }}{% if content is not none %}{{ content }}{% endif %}{% set ns.is_first = false %}{% set ns.is_tool = false %}{% set ns.is_output_first = true %}{% for tool in message['tool_calls'] %}{% if tool['function']['arguments'] is string %}{% set tool_call_str = '{\\\"name\\\": \\\"' + tool['function']['name'] + '\\\", \\\"arguments\\\": ' + tool['function']['arguments'] + '}' %}{% else %}{% set tool_call_str = '{\\\"name\\\": \\\"' + tool['function']['name'] + '\\\", \\\"arguments\\\": ' + tool['function']['arguments']|tojson + '}' %}{% endif %}{% if not ns.is_first %}{{ '<tool_call>' + tool_call_str + '</tool_call>' }}{% set ns.is_first = true %}{% else %}{{ '\\n' + '<tool_call>' + tool_call_str + '</tool_call>' }}{% endif %}{% endfor %}{{ '<|end_of_text|>' }}{% endif %}{% if message['role'] == 'assistant' and (message['tool_calls'] is not defined or message['tool_calls'] is none)%}{% set ns.is_last_user = false %}{% set ns.is_tool = false %}{% set ns.is_output_first = true %}{{ '<|Assistant|>' + content + '<|end_of_text|>' }}{% endif %}{% if message['role'] == 'tool' %}{% set ns.is_last_user = false %}{% set ns.is_tool = true %}{% if ns.is_output_first %}{{ '<|User|><tool_response>' + content + '</tool_response>' }}{% set ns.is_output_first = false %}{% else %}{{ '\\n<tool_response>' + content + '</tool_response>' }}{% endif %}{% endif %}{% endfor %}{% if add_generation_prompt and (ns.is_last_user or ns.is_tool) %}{{ '<|Assistant|>' }}{% if enable_thinking is defined and enable_thinking is false %}{{ '<think>\\n\\n</think>\\n\\n' }}{% elif forced_thinking is defined and forced_thinking is true %}{{ '<think>\\n' }}{% endif %}{% endif %}"""
+
+
 TEMPLATES: dict[str, "Template"] = {}
 
 
@@ -2275,6 +2282,21 @@ register_template(
     stop_words=["###"],
     efficient_eos=True,
     mm_plugin=get_mm_plugin(name="llava", image_token="<image>"),
+)
+
+
+register_template(
+    name="youtu",
+    format_user=StringFormatter(slots=["<|User|>{{content}}<|Assistant|>"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|end_of_text|>"]),
+    format_system=StringFormatter(slots=["{{content}}"]),
+    format_function=FunctionFormatter(slots=["{{content}}"], tool_format="default"),
+    format_observation=StringFormatter(slots=["<tool_response>\n{{content}}\n</tool_response><|Assistant|>"]),
+    format_tools=ToolFormatter(tool_format="default"),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<|end_of_text|>"],
+    replace_eos=True,
+    template_class=YoutuTemplate,
 )
 
 

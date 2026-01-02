@@ -3848,6 +3848,16 @@ register_model_group(
 
 register_model_group(
     models={
+        "Youtu-LLM-2B": {
+            DownloadSource.DEFAULT: "tencent/Youtu-LLM-2B",
+            DownloadSource.MODELSCOPE: "Tencent-YouTu-Research/Youtu-LLM-2B",
+        },
+    },
+)
+
+
+register_model_group(
+    models={
         "Yuan2-2B-Chat": {
             DownloadSource.DEFAULT: "IEITYuan/Yuan2-2B-hf",
             DownloadSource.MODELSCOPE: "YuanLLM/Yuan2.0-2B-hf",
