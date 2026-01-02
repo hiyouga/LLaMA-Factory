@@ -3852,6 +3852,10 @@ register_model_group(
             DownloadSource.DEFAULT: "tencent/Youtu-LLM-2B",
             DownloadSource.MODELSCOPE: "Tencent-YouTu-Research/Youtu-LLM-2B",
         },
+        "Youtu-LLM-2B-Base": {
+            DownloadSource.DEFAULT: "tencent/Youtu-LLM-2B-Base",
+            DownloadSource.MODELSCOPE: "Tencent-YouTu-Research/Youtu-LLM-2B-Base",
+        },
     },
 )
 
