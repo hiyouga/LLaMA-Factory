@@ -76,11 +76,6 @@ dependencies = [
     "sse-starlette"
 ]
 
-[project.optional-dependencies]
-dev = ["pre-commit", "ruff", "pytest", "build"]
-metrics = ["nltk", "jieba", "rouge-chinese"]
-deepspeed = ["deepspeed>=0.10.0,<=0.16.9"]
-
 [project.scripts]
 llamafactory-cli = "llamafactory.cli:main"
 lmf = "llamafactory.cli:main"

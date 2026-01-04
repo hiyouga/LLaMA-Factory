@@ -52,7 +52,8 @@ jobs:
       - name: Install dependencies
         run: |
           uv venv
-          uv pip install -e ".[dev]"
+          uv pip install -e .
+          uv pip install -r requirements/dev.txt
 
       - name: Cache HuggingFace models
         id: hf-hub-cache

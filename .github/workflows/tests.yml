@@ -70,7 +70,8 @@ jobs:
         run: |
           uv venv
           uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-          uv pip install -e ".[dev]"
+          uv pip install -e .
+          uv pip install -r requirements/dev.txt
 
       - name: Install transformers
         if: ${{ matrix.transformers }}
