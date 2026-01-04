@@ -2279,6 +2279,21 @@ register_template(
 
 
 register_template(
+    name="youtu",
+    format_user=StringFormatter(slots=["<|User|>{{content}}<|Assistant|>"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|end_of_text|>"]),
+    format_system=StringFormatter(slots=["{{content}}"]),
+    format_function=FunctionFormatter(slots=["{{content}}"], tool_format="default"),
+    format_observation=StringFormatter(slots=["<tool_response>\n{{content}}\n</tool_response><|Assistant|>"]),
+    format_tools=ToolFormatter(tool_format="default"),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<|end_of_text|>"],
+    replace_eos=True,
+    template_class=ReasoningTemplate,
+)
+
+
+register_template(
     name="yuan",
     format_user=StringFormatter(slots=["{{content}}", {"token": "<sep>"}]),
     format_assistant=StringFormatter(slots=["{{content}}<eod>\n"]),
