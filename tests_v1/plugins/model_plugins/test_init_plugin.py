@@ -39,7 +39,7 @@ def test_init_on_rank0():
         )
     )
     model_loader = ModelLoader(model_args=model_args)
-    if DistributedInterface.get_rank() == 0:
+    if DistributedInterface().get_rank() == 0:
         assert model_loader.model.device.type == "cpu"
     else:
         assert model_loader.model.device.type == "meta"
@@ -53,4 +53,4 @@ def test_init_on_default():
         )
     )
     model_loader = ModelLoader(model_args=model_args)
-    assert model_loader.model.device == DistributedInterface().current_accelerator
+    assert model_loader.model.device.type == DistributedInterface().current_accelerator.type
