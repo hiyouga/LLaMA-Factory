@@ -3857,6 +3857,7 @@ register_model_group(
             DownloadSource.MODELSCOPE: "Tencent-YouTu-Research/Youtu-LLM-2B-Base",
         },
     },
+    template="youtu",
 )
 
 

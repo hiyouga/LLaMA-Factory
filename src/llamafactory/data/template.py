@@ -459,43 +459,6 @@ class ReasoningTemplate(Template):
         return [(encoded_messages[i], encoded_messages[i + 1]) for i in range(0, len(encoded_messages), 2)]
 
 
-@dataclass
-class YoutuTemplate(ReasoningTemplate):
-    @override
-    def _get_jinja_template(self, tokenizer: "PreTrainedTokenizer") -> str:
-        prefix = self._convert_slots_to_jinja(self.format_prefix.apply(), tokenizer)
-        system = self._convert_slots_to_jinja(self.format_system.apply(), tokenizer, placeholder="system_message")
-        user = self._convert_slots_to_jinja(self.format_user.apply(), tokenizer)
-        assistant = self._convert_slots_to_jinja(self.format_assistant.apply(), tokenizer)
-
-        jinja_template = ""
-        if prefix:
-            jinja_template += "{{ " + prefix + " }}"
-
-        if self.default_system:
-            jinja_template += "{% set system_message = '" + self._jinja_escape(self.default_system) + "' %}"
-
-        jinja_template += (
-            "{% if messages and messages[0]['role'] == 'system' %}"
-            "{% set loop_messages = messages[1:] %}"
-            "{% set system_message = messages[0]['content'] %}"
-            "{% else %}{% set loop_messages = messages %}{% endif %}"
-        )
-
-        jinja_template += (
-            "{% if system_message is defined %}{{ " + system + " }}{% endif %}"
-            "{% for message in loop_messages %}"
-            "{% set content = message['content'] %}"
-            "{% if message['role'] == 'user' %}"
-            "{{ " + user + " }}"
-            "{% elif message['role'] == 'assistant' %}"
-            "{{ " + assistant + " }}"
-            "{% endif %}"
-            "{% endfor %}"
-        )
-        return jinja_template
-
-
 TEMPLATES: dict[str, "Template"] = {}
 
 
@@ -2326,7 +2289,7 @@ register_template(
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<|end_of_text|>"],
     replace_eos=True,
-    template_class=YoutuTemplate,
+    template_class=ReasoningTemplate,
 )
 
 
