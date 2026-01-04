@@ -139,14 +139,13 @@ def patch_config(
         setattr(config.text_config, "topk_method", "greedy")
 
     architectures = getattr(config, "architectures", None)
-
-    if isinstance(architectures, (list, tuple)) and "InternVLChatModel" in architectures:
+    if isinstance(architectures, list) and "InternVLChatModel" in architectures:
         raise ValueError(
             "Please download the internvl models in a Hugging Face–compatible format "
             "(for example, https://huggingface.co/OpenGVLab/InternVL3-8B-hf)."
         )
 
-    if isinstance(architectures, (list, tuple)) and "LlavaLlamaForCausalLM" in architectures:
+    if isinstance(architectures, list) and "LlavaLlamaForCausalLM" in architectures:
         raise ValueError("Please download llava models with hf-compatible format: https://huggingface.co/llava-hf")
 
     if getattr(config, "model_type", None) == "internlm3" and not is_transformers_version_greater_than("4.47.1"):
