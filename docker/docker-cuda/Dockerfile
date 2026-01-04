@@ -32,7 +32,8 @@ RUN pip config set global.index-url "${PIP_INDEX}" && \
 COPY . /app
 
 # Install LLaMA Factory
-RUN pip install --no-cache-dir --no-build-isolation -e ".[metrics,deepspeed]"
+RUN pip install --no-cache-dir --no-build-isolation -e . && \
+    pip install --no-cache-dir --no-build-isolation -r requirements/metrics.txt -r requirements/deepspeed.txt
 
 # Rebuild flash attention
 RUN if [ "${INSTALL_FLASHATTN}" == "true" ]; then \

@@ -28,7 +28,7 @@ try:
     jieba.setLogLevel(logging.CRITICAL)
     jieba.initialize()
 except ImportError:
-    print("Please install llamafactory with `pip install -e .[metrics]`.")
+    print("Please install llamafactory with `pip install -r requirements/metrics.txt`.")
     raise
 
 
