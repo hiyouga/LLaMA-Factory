@@ -22,7 +22,7 @@ from .arg_utils import PluginConfig, get_plugin_config
 @dataclass
 class TrainingArguments:
     output_dir: str = field(
-        default=os.path.join("outputs", str(uuid4())),
+        default=os.path.join("outputs", str(uuid4().hex)),
         metadata={"help": "Path to the output directory."},
     )
     micro_batch_size: int = field(

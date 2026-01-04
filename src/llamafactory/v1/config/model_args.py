@@ -27,13 +27,13 @@ class ModelArguments:
         default=False,
         metadata={"help": "Trust remote code from Hugging Face."},
     )
-    use_fast_processor: bool = field(
-        default=True,
-        metadata={"help": "Use fast processor from Hugging Face."},
-    )
     model_class: ModelClass = field(
         default=ModelClass.LLM,
         metadata={"help": "Model class from Hugging Face."},
+    )
+    init_config: PluginConfig | None = field(
+        default=None,
+        metadata={"help": "Initialization configuration for the model."},
     )
     peft_config: PluginConfig | None = field(
         default=None,
@@ -49,6 +49,7 @@ class ModelArguments:
     )
 
     def __post_init__(self) -> None:
+        self.init_config = get_plugin_config(self.init_config)
         self.peft_config = get_plugin_config(self.peft_config)
         self.kernel_config = get_plugin_config(self.kernel_config)
         self.quant_config = get_plugin_config(self.quant_config)

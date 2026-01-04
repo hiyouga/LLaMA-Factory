@@ -34,8 +34,12 @@ from typing import Any, Optional
 from torch.distributed import barrier, destroy_process_group, init_process_group
 from torch.distributed.device_mesh import DeviceMesh, init_device_mesh
 
+from ..utils import logging
 from ..utils.types import DistributedConfig, ProcessGroup, Tensor, TensorLike
 from . import helper
+
+
+logger = logging.get_logger(__name__)
 
 
 class Dim(str, Enum):
@@ -157,6 +161,7 @@ class DistributedInterface:
             self.data_device_mesh = None
 
         self._initialized = True
+        logger.info_rank0(f"DistributedInterface initialized with strategy={self.strategy}.")
 
     def __str__(self) -> str:
         return (
