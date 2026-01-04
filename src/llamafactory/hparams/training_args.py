@@ -94,6 +94,7 @@ class RayArguments:
 @dataclass
 class Fp8Arguments:
     r"""Arguments pertaining to the FP8 training."""
+
     fp8: bool = field(
         default=False,
         metadata={
