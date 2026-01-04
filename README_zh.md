@@ -331,7 +331,6 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 | [StarCoder 2](https://huggingface.co/bigcode)                     | 3B/7B/15B                        | -                    |
 | [VibeThinker-1.5B](https://huggingface.co/WeiboAI)                | 1.5B                             | qwen3                |
 | [Yi/Yi-1.5 (Code)](https://huggingface.co/01-ai)                  | 1.5B/6B/9B/34B                   | yi                   |
-| [Youtu-LLM](https://huggingface.co/tencent/)                      | 2B                               | youtu                |
 | [Yuan 2](https://huggingface.co/IEITYuan)                         | 2B/51B/102B                      | yuan                 |
 
 > [!NOTE]
@@ -437,7 +436,6 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 - [Chinese-DeepSeek-R1-Distill (zh)](https://huggingface.co/datasets/Congliu/Chinese-DeepSeek-R1-Distill-data-110k-SFT)
 - [LLaVA mixed (en&zh)](https://huggingface.co/datasets/BUAADreamer/llava-en-zh-300k)
 - [Pokemon-gpt4o-captions (en&zh)](https://huggingface.co/datasets/jugg1024/pokemon-gpt4o-captions)
-- [DLR-Web (en)](https://huggingface.co/datasets/Attention1115/DLR-Web)
 - [Open Assistant (de)](https://huggingface.co/datasets/mayflowergmbh/oasst_de)
 - [Dolly 15k (de)](https://huggingface.co/datasets/mayflowergmbh/dolly-15k_de)
 - [Alpaca GPT4 (de)](https://huggingface.co/datasets/mayflowergmbh/alpaca-gpt4_de)
@@ -521,6 +519,9 @@ git clone --depth 1 https://github.com/hiyouga/LLaMA-Factory.git
 cd LLaMA-Factory
 pip install -e ".[metrics]"
 ```
+
+> [!WARNING]
+> 假如你的模型需要使用 Conv3D ，不建议使用 PyTorch 2.9 版本，这个版本可能会导致 Conv3D 性能大幅退化，见 [pytorch #166122](https://github.com/pytorch/pytorch/issues/166122)
 
 可选的额外依赖项：`metrics`、`deepspeed`。使用 `pip install -e ".[metrics,deepspeed]"` 安装。
 
@@ -642,7 +643,7 @@ cd transformers
 pip install .
 ```
 
-3. 在训练参数中设置 `double_quantization: false`，可参考[示例](examples/train_qlora/qwen3_lora_sft_bnb_npu.yaml)。
+3. 在训练参数中设置 `double_quantization: false`，可参考[示例](examples/train_qlora/llama3_lora_sft_bnb_npu.yaml)。
 
 </details>
 
@@ -657,12 +658,12 @@ pip install .
 
 ### 快速开始
 
-下面三行命令分别对 Qwen3-4B-Instruct 模型进行 LoRA **微调**、**推理**和**合并**。
+下面三行命令分别对 Llama3-8B-Instruct 模型进行 LoRA **微调**、**推理**和**合并**。
 
 ```bash
-llamafactory-cli train examples/train_lora/qwen3_lora_sft.yaml
-llamafactory-cli chat examples/inference/qwen3_lora_sft.yaml
-llamafactory-cli export examples/merge_lora/qwen3_lora_sft.yaml
+llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
+llamafactory-cli chat examples/inference/llama3_lora_sft.yaml
+llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
 ```
 
 高级用法请参考 [examples/README_zh.md](examples/README_zh.md)（包括多 GPU 微调）。
@@ -788,7 +789,7 @@ docker exec -it llamafactory bash
 ### 利用 vLLM 部署 OpenAI API
 
 ```bash
-API_PORT=8000 llamafactory-cli api examples/inference/qwen3.yaml infer_backend=vllm vllm_enforce_eager=true
+API_PORT=8000 llamafactory-cli api examples/inference/llama3.yaml infer_backend=vllm vllm_enforce_eager=true
 ```
 
 > [!TIP]

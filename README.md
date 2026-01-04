@@ -329,7 +329,6 @@ Read technical notes:
 | [StarCoder 2](https://huggingface.co/bigcode)                     | 3B/7B/15B                        | -                    |
 | [VibeThinker-1.5B](https://huggingface.co/WeiboAI)                | 1.5B                             | qwen3                |
 | [Yi/Yi-1.5 (Code)](https://huggingface.co/01-ai)                  | 1.5B/6B/9B/34B                   | yi                   |
-| [Youtu-LLM](https://huggingface.co/tencent/)                      | 2B                               | youtu                |
 | [Yuan 2](https://huggingface.co/IEITYuan)                         | 2B/51B/102B                      | yuan                 |
 
 > [!NOTE]
@@ -435,7 +434,6 @@ You also can add a custom chat template to [template.py](src/llamafactory/data/t
 - [Chinese-DeepSeek-R1-Distill (zh)](https://huggingface.co/datasets/Congliu/Chinese-DeepSeek-R1-Distill-data-110k-SFT)
 - [LLaVA mixed (en&zh)](https://huggingface.co/datasets/BUAADreamer/llava-en-zh-300k)
 - [Pokemon-gpt4o-captions (en&zh)](https://huggingface.co/datasets/jugg1024/pokemon-gpt4o-captions)
-- [DLR-Web (en)](https://huggingface.co/datasets/Attention1115/DLR-Web)
 - [Open Assistant (de)](https://huggingface.co/datasets/mayflowergmbh/oasst_de)
 - [Dolly 15k (de)](https://huggingface.co/datasets/mayflowergmbh/dolly-15k_de)
 - [Alpaca GPT4 (de)](https://huggingface.co/datasets/mayflowergmbh/alpaca-gpt4_de)
@@ -519,6 +517,10 @@ git clone --depth 1 https://github.com/hiyouga/LLaMA-Factory.git
 cd LLaMA-Factory
 pip install -e ".[metrics]"
 ```
+
+> [!WARNING]
+> Models that rely on Conv3D are not recommended to run on PyTorch 2.9, as Conv3D performance may degrade severely in this version. Refer to PyTorch #166122
+.
 
 Optional dependencies available: `metrics`, `deepspeed`. Install with: `pip install -e ".[metrics,deepspeed]"`
 
@@ -640,7 +642,7 @@ cd transformers
 pip install .
 ```
 
-3. Set `double_quantization: false` in the configuration. You can refer to the [example](examples/train_qlora/qwen3_lora_sft_bnb_npu.yaml).
+3. Set `double_quantization: false` in the configuration. You can refer to the [example](examples/train_qlora/llama3_lora_sft_bnb_npu.yaml).
 
 </details>
 
@@ -655,12 +657,12 @@ You can also use **[Easy Dataset](https://github.com/ConardLi/easy-dataset)**, *
 
 ### Quickstart
 
-Use the following 3 commands to run LoRA **fine-tuning**, **inference** and **merging** of the Qwen3-4B-Instruct model, respectively.
+Use the following 3 commands to run LoRA **fine-tuning**, **inference** and **merging** of the Llama3-8B-Instruct model, respectively.
 
 ```bash
-llamafactory-cli train examples/train_lora/qwen3_lora_sft.yaml
-llamafactory-cli chat examples/inference/qwen3_lora_sft.yaml
-llamafactory-cli export examples/merge_lora/qwen3_lora_sft.yaml
+llamafactory-cli train examples/train_lora/llama3_lora_sft.yaml
+llamafactory-cli chat examples/inference/llama3_lora_sft.yaml
+llamafactory-cli export examples/merge_lora/llama3_lora_sft.yaml
 ```
 
 See [examples/README.md](examples/README.md) for advanced usage (including distributed training).
@@ -783,7 +785,7 @@ When building the Docker image, use `-v ./hf_cache:/root/.cache/huggingface` arg
 ### Deploy with OpenAI-style API and vLLM
 
 ```bash
-API_PORT=8000 llamafactory-cli api examples/inference/qwen3.yaml infer_backend=vllm vllm_enforce_eager=true
+API_PORT=8000 llamafactory-cli api examples/inference/llama3.yaml infer_backend=vllm vllm_enforce_eager=true
 ```
 
 > [!TIP]
