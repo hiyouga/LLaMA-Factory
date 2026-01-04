@@ -142,6 +142,7 @@ def _verify_model_args(
         logger.warning_rank0("We should use slow tokenizer for the Yi models. Change `use_fast_tokenizer` to False.")
         model_args.use_fast_tokenizer = False
 
+
 def _check_extra_dependencies(
     model_args: "ModelArguments",
     finetuning_args: "FinetuningArguments",

@@ -93,7 +93,10 @@ def create_fp8_kwargs(training_args: "TrainingArguments") -> list[Any]:
             return True
 
         # Map FSDP all-gather setting if available (this affects the underlying implementation)
-        if hasattr(training_args, "fp8_enable_fsdp_float8_all_gather") and training_args.fp8_enable_fsdp_float8_all_gather:
+        if (
+            hasattr(training_args, "fp8_enable_fsdp_float8_all_gather")
+            and training_args.fp8_enable_fsdp_float8_all_gather
+        ):
             logger.info_rank0("FSDP float8 all-gather optimization requested")
 
         return [AORecipeKwargs(config=config, module_filter_func=module_filter_func)]
