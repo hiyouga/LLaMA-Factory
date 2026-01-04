@@ -188,6 +188,167 @@ class FSDP2Engine:
         # 简单的参数分组逻辑
         return torch.optim.AdamW(model.parameters(), lr=lr, fused=True)
 
+    def _load_from_hf_meta(self, hf_model_path: str) -> PreTrainedModel:
+        """从 HF 加载 (Meta Init -> Shard -> Materialize -> Chunk Load).
+
+        解决超大模型无法在 CPU 完整加载的问题。
+        """
+        if self.rank == 0:
+            logger.info(f"Loading config from {hf_model_path} ...")
+
+        config = AutoConfig.from_pretrained(hf_model_path, trust_remote_code=True)
+
+        # 1. Meta Init
+        with torch.device("meta"):
+            # 使用配置的 param_dtype (如 bf16) 初始化，避免 float32 占用显存
+            # 注意：torch_dtype 是必须的，否则 meta tensor 默认可能是 float32，
+            # 导致 materialize 时显存翻倍或 mismatch
+            model = AutoModelForCausalLM.from_config(
+                config, trust_remote_code=True, torch_dtype=self.get_mp_policy().param_dtype
+            )
+
+        if self.rank == 0:
+            logger.info("Model structure created on Meta device.")
+
+        # 2. Apply FSDP2 (Sharding)
+        # 此时参数在 Meta 上被切分 (DTensor on Meta)
+        model = self.prepare_model(model)
+
+        # 3. Materialize (Allocate Memory)
+        if self.rank == 0:
+            logger.info("Materializing sharded model params...")
+
+        # 动态获取当前设备
+        device = torch.npu.current_device() if hasattr(torch, "npu") and torch.npu.is_available() else "cuda"
+        # to_empty 会在指定设备上分配内存（只分配本地切片大小）
+        model.to_empty(device=device)
+
+        # 4. Load Weights
+        # 逐个文件加载并拷贝到本地切片
+        self._load_weights_from_hf_checkpoint(model, hf_model_path)
+
+        return model
+
+    def _load_weights_from_hf_checkpoint(self, model, hf_model_path):
+        import glob
+        import json
+
+        if self.rank == 0:
+            logger.info(f"Loading weights from {hf_model_path} ...")
+
+        # 确定索引文件
+        index_file = os.path.join(hf_model_path, "model.safetensors.index.json")
+        is_safetensors = True
+        checkpoint_files = []
+
+        if os.path.exists(index_file):
+            with open(index_file) as f:
+                index = json.load(f)
+            # 获取所有唯一的权重文件
+            checkpoint_files = sorted(set(index["weight_map"].values()))
+            checkpoint_files = [os.path.join(hf_model_path, f) for f in checkpoint_files]
+        elif os.path.exists(os.path.join(hf_model_path, "model.safetensors")):
+            checkpoint_files = [os.path.join(hf_model_path, "model.safetensors")]
+        else:
+            is_safetensors = False
+            index_file = os.path.join(hf_model_path, "pytorch_model.bin.index.json")
+            if os.path.exists(index_file):
+                with open(index_file) as f:
+                    index = json.load(f)
+                checkpoint_files = sorted(set(index["weight_map"].values()))
+                checkpoint_files = [os.path.join(hf_model_path, f) for f in checkpoint_files]
+            elif os.path.exists(os.path.join(hf_model_path, "pytorch_model.bin")):
+                checkpoint_files = [os.path.join(hf_model_path, "pytorch_model.bin")]
+            else:
+                # 尝试 glob
+                checkpoint_files = sorted(glob.glob(os.path.join(hf_model_path, "*.safetensors")))
+                if checkpoint_files:
+                    is_safetensors = True
+                else:
+                    checkpoint_files = sorted(glob.glob(os.path.join(hf_model_path, "*.bin")))
+
+        if not checkpoint_files:
+            raise ValueError(f"No checkpoint files found in {hf_model_path}")
+
+        # 建立参数映射: name -> param
+        param_map = dict(model.named_parameters())
+
+        total_files = len(checkpoint_files)
+        for i, ckpt_file in enumerate(checkpoint_files):
+            if self.rank == 0:
+                logger.info(f"[{i + 1}/{total_files}] Loading {os.path.basename(ckpt_file)} ...")
+
+            # 加载单个文件到 CPU
+            if is_safetensors:
+                from safetensors import safe_open
+
+                # safetensors 支持按需读取，内存友好
+                with safe_open(ckpt_file, framework="pt", device="cpu") as f:
+                    for key in f.keys():
+                        if key in param_map:
+                            tensor = f.get_tensor(key)
+                            self._copy_weights(param_map[key], tensor)
+            else:
+                # bin 文件通常需要整体加载
+                state_dict = torch.load(ckpt_file, map_location="cpu")
+                for key, tensor in state_dict.items():
+                    if key in param_map:
+                        self._copy_weights(param_map[key], tensor)
+                del state_dict
+                gc.collect()
+
+    def _copy_weights(self, param, loaded_tensor):
+        from torch.distributed._tensor import DTensor, Replicate, Shard
+
+        # 转换 loaded_tensor dtype
+        if loaded_tensor.dtype != param.dtype:
+            loaded_tensor = loaded_tensor.to(param.dtype)
+
+        if isinstance(param, DTensor):
+            # 获取 Sharding 信息
+            placement = param.placements[0]
+            local_tensor = param.to_local()
+
+            if isinstance(placement, Replicate):
+                # Replicate: 已经是完整大小，直接拷贝
+                local_tensor.copy_(loaded_tensor)
+
+            elif isinstance(placement, Shard):
+                dim = placement.dim
+                mesh = param.device_mesh
+                mesh_dim = placement.mesh_dim
+
+                my_coordinate = mesh.get_coordinate()
+                if my_coordinate is None:
+                    return  # 当前 Rank 不在该 Mesh 上
+
+                rank_in_dim = my_coordinate[mesh_dim]
+                world_size_in_dim = mesh.size(mesh_dim)
+
+                full_size = param.shape[dim]
+
+                # 计算分片大小 (Assuming uniform splitting by fully_shard)
+                chunk_size = (full_size + world_size_in_dim - 1) // world_size_in_dim
+
+                start = rank_in_dim * chunk_size
+                end = min(start + chunk_size, full_size)
+
+                if start >= full_size:
+                    return
+
+                # 切片 (Global tensor slice)
+                sliced_tensor = loaded_tensor.narrow(dim, start, end - start)
+
+                # 处理 Padding: local_tensor 可能因为 padding 比 sliced_tensor 大
+                # 构造对应的 slice 进行拷贝
+                slices = [slice(None)] * local_tensor.ndim
+                slices[dim] = slice(0, sliced_tensor.shape[dim])
+
+                local_tensor[tuple(slices)].copy_(sliced_tensor)
+        else:
+            # 普通 Tensor (未被 Shard，例如 scalar buffer)
+            param.data.copy_(loaded_tensor)
+
     def load_model(
         self, hf_model_name_or_path: str, dcp_path: str = None
     ) -> tuple[PreTrainedModel, PreTrainedTokenizer]:
@@ -215,13 +376,14 @@ class FSDP2Engine:
                 logger.info(f"DCP path found at {dcp_path}. Using efficient Sharded Loading (Meta Init -> DCP Load).")
             model = self._load_from_dcp(hf_model_name_or_path, dcp_path)
 
-        # 策略 2: HF 加载 (兼容，无需转换)
+        # 策略 2: HF Meta 加载 (高效，大模型推荐)
+        # 能够直接从 HF Checkpoint 加载到 Sharded Model，无需经过 CPU 完整加载
         else:
             if self.rank == 0:
                 if dcp_path:
                     logger.warning(f"DCP path {dcp_path} not found.")
-                logger.info("Using Standard Loading (CPU Load -> Shard). This may consume more CPU memory on Rank 0.")
-            model = self._load_from_hf(hf_model_name_or_path)
+                logger.info("Using HF Meta Loading (Meta Init -> Shard -> Materialize -> Chunk Load).")
+            model = self._load_from_hf_meta(hf_model_name_or_path)
 
         return model, tokenizer
 
@@ -235,29 +397,46 @@ class FSDP2Engine:
             # 1. Meta Init
             model_config = AutoConfig.from_pretrained(hf_model_path, trust_remote_code=True)
             with torch.device("meta"):
-                model = AutoModelForCausalLM.from_config(model_config, trust_remote_code=True)
+                # 关键修改：必须指定 torch_dtype，否则 meta tensor 默认为 float32
+                model = AutoModelForCausalLM.from_config(
+                    model_config, trust_remote_code=True, torch_dtype=self.get_mp_policy().param_dtype
+                )
 
             if self.rank == 0:
                 logger.info("Model structure created on Meta device.")
 
             # 2. Apply FSDP2 (Sharding)
+            # 此时参数被替换为 DTensor，包含全局 Sharding 信息
             model = self.prepare_model(model)
 
             # 3. Materialize (To Empty)
             if self.rank == 0:
                 logger.info("Materializing sharded model params...")
-            # 注意：使用 device="npu" (或 cuda) 直接分配显存
-            # 这里硬编码 npu 是为了匹配用户环境，实际应动态获取
-            device_type = "npu" if hasattr(torch, "npu") and torch.npu.is_available() else "cuda"
-            model.to_empty(device=device_type)
+
+            # 动态获取当前设备
+            device = torch.npu.current_device() if hasattr(torch, "npu") and torch.npu.is_available() else "cuda"
+
+            # to_empty: 在本地设备上分配内存（仅分配当前 Rank 负责的分片大小）
+            # 由于此时是 DTensor，PyTorch 会自动计算并分配 Local Shard
+            model.to_empty(device=device)
 
             # 4. DCP Load
             if self.rank == 0:
                 logger.info(f"Loading distributed checkpoint from {dcp_path} ...")
 
+            # StateDictOptions: 配置加载行为
+            # full_state_dict=False: 表示加载 Sharded State Dict
+            # cpu_offload=True: 允许在 CPU 上暂存（如果需要），通常 DCP 直接支持 Device-to-Device
             options = StateDictOptions(full_state_dict=False, cpu_offload=True)
+
+            # 获取 Sharded State Dict (即 Local State Dict)
             local_state_dict = get_model_state_dict(model, options=options)
+
+            # dcp.load: 并行加载 DCP 权重并填充到 local_state_dict
+            # PyTorch DCP 会自动处理 Global ID 到 Local Slice 的映射
             dcp.load(state_dict=local_state_dict, checkpoint_id=dcp_path)
+
+            # 将加载好的权重应用回模型
             set_model_state_dict(model, local_state_dict, options=options)
 
             if self.rank == 0:
