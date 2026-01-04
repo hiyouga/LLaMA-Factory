@@ -31,10 +31,10 @@ def set_seed(seed: int = 42):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    torch.npu.manual_seed_all(seed)
+    torch.cuda.manual_seed_all(seed)
 
-    torch.npu.deterministic = True
-    torch.npu.benchmark = False
+    torch.cuda.deterministic = True
+    torch.cuda.benchmark = False
 
 
 class FSDP2Config:
@@ -64,9 +64,9 @@ class FSDP2Engine:
 
         # 1. 初始化进程组 (如果尚未初始化)
         if not dist.is_initialized():
-            dist.init_process_group(backend="hccl")
+            dist.init_process_group(backend="nccl")
 
-        torch.npu.set_device(self.local_rank)
+        torch.cuda.set_device(self.local_rank)
 
         # 2. 初始化 Device Mesh
         # 如果没有指定 shape，默认是全数据的 FSDP (1D Mesh)
@@ -78,7 +78,7 @@ class FSDP2Engine:
             self.mesh_dim_names = self.config.mesh_dim_names
 
         logger.info(f"Initializing Device Mesh with shape {self.mesh_shape} and names {self.mesh_dim_names}")
-        self.device_mesh = init_device_mesh("npu", self.mesh_shape, mesh_dim_names=self.mesh_dim_names)
+        self.device_mesh = init_device_mesh("cuda", self.mesh_shape, mesh_dim_names=self.mesh_dim_names)
 
         # 获取用于 FSDP 的 sub-mesh (通常是数据并行维度)
         # 如果是 1D mesh, 就是它自己。如果是 2D (DP, EP)，这里我们需要获取 DP 维度的 mesh。
@@ -219,7 +219,7 @@ class FSDP2Engine:
             logger.info("Materializing sharded model params...")
 
         # 动态获取当前设备
-        device = torch.npu.current_device() if hasattr(torch, "npu") and torch.npu.is_available() else "cuda"
+        device = torch.cuda.current_device()
         # to_empty 会在指定设备上分配内存（只分配本地切片大小）
         model.to_empty(device=device)
 
@@ -414,7 +414,7 @@ class FSDP2Engine:
                 logger.info("Materializing sharded model params...")
 
             # 动态获取当前设备
-            device = torch.npu.current_device() if hasattr(torch, "npu") and torch.npu.is_available() else "cuda"
+            device = torch.cuda.current_device()
 
             # to_empty: 在本地设备上分配内存（仅分配当前 Rank 负责的分片大小）
             # 由于此时是 DTensor，PyTorch 会自动计算并分配 Local Shard
@@ -537,7 +537,7 @@ def get_transformer_layer_cls(model: PreTrainedModel):
 
 def run_fsdp2_training_step(model: torch.nn.Module, batch: dict[str, torch.Tensor], optimizer: torch.optim.Optimizer):
     # 1. Move data to GPU
-    device = torch.npu.current_device()
+    device = torch.cuda.current_device()
     batch = {k: v.to(device) for k, v in batch.items()}
 
     # 2. Forward
@@ -585,8 +585,8 @@ def main():
     engine = FSDP2Engine(config)
 
     # 加载模型与权重 (使用新的统一接口)
-    hf_model_path = "/data/lcx/Qwen3-8B"  # 用于读取 Config
-    dcp_path = "/data/lcx/Qwen3-8B-DCP"  # 你的 DCP 权重目录
+    hf_model_path = "/home/frozen/lcx/Qwen3-4B"  # 用于读取 Config
+    dcp_path = "/home/frozen/lcx/Qwen3-4B-DCP"  # 你的 DCP 权重目录
 
     # 自动选择策略：有 DCP 用 DCP，没 DCP 用 HF
     # model, tokenizer = engine.load_model(hf_model_path, dcp_path)
