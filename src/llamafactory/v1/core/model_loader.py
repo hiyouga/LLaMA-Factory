@@ -14,17 +14,24 @@
 
 """The definition of model loader.
 
-Init Phase:
+How to use:
+model_loader = ModelLoader(model_args, is_trainable=True)
+model_loader.processor: Get the tokenizer or multi-modal processor.
+model_loader.model_config: Get the model configuration.
+model_loader.model: Get the HF model.
+
+Init Workflow:
 1. Init processor.
 2. Init model config.
 3. Init model.
 4. Init adapter.
-
 """
 
 import torch
+from accelerate import init_empty_weights
 from transformers import AutoConfig, AutoProcessor
 
+from ..accelerator.helper import DeviceType
 from ..accelerator.interface import DistributedInterface
 from ..config.model_args import ModelArguments, ModelClass
 from ..utils import logging
@@ -55,11 +62,14 @@ class ModelLoader:
         """HF model."""
 
     def _init_processor(self) -> Processor:
-        """Init processor."""
+        """Init processor.
+
+        NOTE: Transformers v5 always use fast tokenizer.
+        https://github.com/huggingface/transformers/blob/v5.0.0rc1/src/transformers/models/auto/tokenization_auto.py#L642
+        """
         return AutoProcessor.from_pretrained(
             self.args.model,
             trust_remote_code=self.args.trust_remote_code,
-            use_fast=self.args.use_fast_processor,
         )
 
     def _init_model_config(self) -> HFConfig:
@@ -92,14 +102,24 @@ class ModelLoader:
 
             AutoClass = AutoModel
 
-        # map the entire model to the current accelerator
-        model = AutoClass.from_pretrained(
-            self.args.model,
-            config=self.model_config,
-            dtype="auto",
-            device_map=DistributedInterface().current_accelerator,
-            trust_remote_code=self.args.trust_remote_code,
-        )
+        if self.args.init_config is not None:
+            from ..plugins.model_plugins.initialization import InitPlugin
+
+            init_device = InitPlugin(self.args.init_config.name)()
+        else:
+            init_device = DistributedInterface().current_accelerator
+
+        if init_device.type == DeviceType.META:
+            with init_empty_weights():
+                model = AutoClass.from_config(self.model_config)
+        else:
+            model = AutoClass.from_pretrained(
+                self.args.model,
+                config=self.model_config,
+                dtype="auto",
+                device_map=init_device,
+                trust_remote_code=self.args.trust_remote_code,
+            )
 
         if self.args.peft_config is None:
             if self.is_train:
