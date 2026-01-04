@@ -21,8 +21,10 @@ from llamafactory.v1.core.model_loader import ModelLoader
 
 def test_init_on_meta():
     _, model_args, *_ = get_args(
-        model="llamafactory/tiny-random-qwen2.5",
-        init_config={"name": "init_on_meta"},
+        dict(
+            model="llamafactory/tiny-random-qwen2.5",
+            init_config={"name": "init_on_meta"},
+        )
     )
     model_loader = ModelLoader(model_args=model_args)
     assert model_loader.model.device.type == "meta"
@@ -31,8 +33,10 @@ def test_init_on_meta():
 @pytest.mark.runs_on(["cuda", "npu"])
 def test_init_on_rank0():
     _, model_args, *_ = get_args(
-        model="llamafactory/tiny-random-qwen2.5",
-        init_config={"name": "init_on_rank0"},
+        dict(
+            model="llamafactory/tiny-random-qwen2.5",
+            init_config={"name": "init_on_rank0"},
+        )
     )
     model_loader = ModelLoader(model_args=model_args)
     if DistributedInterface.get_rank() == 0:
@@ -43,8 +47,10 @@ def test_init_on_rank0():
 
 def test_init_on_default():
     _, model_args, *_ = get_args(
-        model="llamafactory/tiny-random-qwen2.5",
-        init_config={"name": "init_on_default"},
+        dict(
+            model="llamafactory/tiny-random-qwen2.5",
+            init_config={"name": "init_on_default"},
+        )
     )
     model_loader = ModelLoader(model_args=model_args)
     assert model_loader.model.device == DistributedInterface().current_accelerator
