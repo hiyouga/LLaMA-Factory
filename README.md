@@ -521,10 +521,6 @@ pip install -e .
 pip install -r requirements/metrics.txt
 ```
 
-> [!WARNING]
-> Models that rely on Conv3D are not recommended to run on PyTorch 2.9, as Conv3D performance may degrade severely in this version. Refer to PyTorch #166122
-.
-
 Optional dependencies available: `metrics`, `deepspeed`. Install with: `pip install -e . && pip install -r requirements/metrics.txt -r requirements/deepspeed.txt`
 
 Additional dependencies for specific features are available in `examples/requirements/`.

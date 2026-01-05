@@ -523,9 +523,6 @@ pip install -e .
 pip install -r requirements/metrics.txt
 ```
 
-> [!WARNING]
-> 假如你的模型需要使用 Conv3D ，不建议使用 PyTorch 2.9 版本，这个版本可能会导致 Conv3D 性能大幅退化，见 [pytorch #166122](https://github.com/pytorch/pytorch/issues/166122)
-
 可选的额外依赖项：`metrics`、`deepspeed`。使用 `pip install -e . && pip install -r requirements/metrics.txt -r requirements/deepspeed.txt` 安装。
 
 其他可选依赖项请参考 `examples/requirements/` 目录下的文件。
