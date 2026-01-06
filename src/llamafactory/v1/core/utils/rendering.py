@@ -35,8 +35,12 @@ def _update_model_input(
     tokenizer = get_tokenizer(processor)
     temp_ids = tokenizer.encode(temp_str, add_special_tokens=False)
     input_ids.extend(temp_ids)
-    labels.extend([IGNORE_INDEX] * len(temp_ids))
     loss_weights.extend([temp_weight] * len(temp_ids))
+    if temp_weight > 1e-6:
+        labels.extend(temp_ids)
+    else:
+        labels.extend([IGNORE_INDEX] * len(temp_ids))
+
     return ""
 
 
