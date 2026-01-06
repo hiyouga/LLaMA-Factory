@@ -51,4 +51,4 @@ def test_init_on_default():
         )
     )
     model_engine = ModelEngine(model_args=model_args)
-    assert model_engine.model.device == DistributedInterface().current_accelerator
+    assert model_engine.model.device == DistributedInterface().current_device
