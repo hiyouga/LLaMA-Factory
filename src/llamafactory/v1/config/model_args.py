@@ -25,7 +25,7 @@ class ModelArguments:
         metadata={"help": "Path to the model or model identifier from Hugging Face."},
     )
     template: str = field(
-        default="chatml",
+        default="qwen3_nothink",
         metadata={"help": "Template for the model."},
     )
     trust_remote_code: bool = field(
