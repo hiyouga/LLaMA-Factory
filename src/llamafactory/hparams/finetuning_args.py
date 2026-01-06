@@ -490,6 +490,14 @@ class FinetuningArguments(
         default=False,
         metadata={"help": "Whether to use the DFT loss."},
     )
+    use_eaft_loss: bool = field(
+        default=False,
+        metadata={"help": "Whether to use the EAFT loss."},
+    )
+    eaft_alpha: float = field(
+        default=1.0,
+        metadata={"help": "The alpha parameter for EAFT loss to control the power of adaptive weight."},
+    )
     freeze_vision_tower: bool = field(
         default=True,
         metadata={"help": "Whether ot not to freeze the vision tower in MLLM training."},

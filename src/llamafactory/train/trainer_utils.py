@@ -679,6 +679,61 @@ def _dft_cross_entropy(
     return loss
 
 
+def eaft_loss_func(outputs, labels, num_items_in_batch=None, alpha=1.0):
+    logits = outputs.get("logits")
+    if logits is None:
+        return outputs.get("loss", torch.tensor(0.0))
+
+    logits = logits.float()
+    vocab_size = logits.size(-1)
+    labels = torch.nn.functional.pad(labels, (0, 1), value=-100)
+    shift_labels = labels[..., 1:].contiguous()
+    logits = logits.view(-1, vocab_size)
+    shift_labels = shift_labels.view(-1)
+    shift_labels = shift_labels.to(logits.device)
+
+    loss = _eaft_cross_entropy(logits, shift_labels, num_items_in_batch, alpha)
+    return loss
+
+
+def _eaft_cross_entropy(
+    source: torch.Tensor,
+    target: torch.Tensor,
+    num_items_in_batch: Optional[torch.Tensor] = None,
+    alpha: float = 1.0,
+    ignore_index: int = -100,
+) -> torch.Tensor:
+    per_token_loss = torch.nn.functional.cross_entropy(source, target, ignore_index=ignore_index, reduction="none")
+    valid_mask = target != ignore_index
+    if not valid_mask.any():
+        return torch.tensor(0.0, device=source.device, dtype=source.dtype)
+
+    valid_losses = per_token_loss[valid_mask]
+
+    with torch.no_grad():
+        source_detached = source[valid_mask].detach()
+        
+        topk_val, _ = torch.topk(source_detached, k=20, dim=-1)
+        logsumexp_topk = torch.logsumexp(topk_val, dim=-1, keepdim=True)
+        log_probs_topk = topk_val - logsumexp_topk
+        probs_topk = torch.exp(log_probs_topk)
+        entropy_approx = -(probs_topk * log_probs_topk).sum(dim=-1)
+        
+        entropy_term = entropy_approx / 3.0
+        adaptive_weight = torch.pow(entropy_term, alpha)
+
+    weighted_losses = valid_losses * adaptive_weight
+
+    if num_items_in_batch is not None:
+        total_loss = weighted_losses.sum()
+        if torch.is_tensor(num_items_in_batch):
+            num_items_in_batch = num_items_in_batch.to(total_loss.device)
+        loss = total_loss / num_items_in_batch
+    else:
+        loss = weighted_losses.mean()
+    return loss
+
+
 def nested_detach(
     tensors: Union["torch.Tensor", list["torch.Tensor"], tuple["torch.Tensor"], dict[str, "torch.Tensor"]],
     clone: bool = False,
