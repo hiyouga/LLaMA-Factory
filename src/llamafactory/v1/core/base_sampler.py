@@ -93,6 +93,7 @@ class HuggingFaceEngine(BaseEngine):
         streamer = TextIteratorStreamer(
             tokenizer=get_tokenizer(self.renderer.processor),
             skip_prompt=True,
+            skip_special_tokens=True,  # TODO: configurable
         )
         device = DistributedInterface().current_device
         kwargs = {
