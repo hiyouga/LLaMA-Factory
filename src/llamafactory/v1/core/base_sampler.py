@@ -98,6 +98,7 @@ class HuggingFaceEngine(BaseEngine):
         kwargs = {
             "input_ids": torch.tensor([model_inputs["input_ids"]]).to(device),
             "attention_mask": torch.tensor([model_inputs["attention_mask"]]).to(device),
+            "max_new_tokens": self.args.max_new_tokens,
             "streamer": streamer,
         }
         thread = Thread(target=self.model.generate, kwargs=kwargs, daemon=True)
