@@ -50,17 +50,14 @@ def render_chatml_messages(
             labels.extend([IGNORE_INDEX] * len(temp_ids))
 
     if is_generate:
-        temp_str = "<|im_start|>assistant\n"
-        temp_weight = 0.0
-        temp_ids = tokenizer.encode(temp_str, add_special_tokens=False)
+        temp_ids = tokenizer.encode("<|im_start|>assistant\n", add_special_tokens=False)
         input_ids.extend(temp_ids)
-        loss_weights.extend([temp_weight] * len(temp_ids))
+        loss_weights.extend([0.0] * len(temp_ids))
         labels.extend([IGNORE_INDEX] * len(temp_ids))
 
-    attention_mask = [1] * len(input_ids)
     return ModelInput(
         input_ids=input_ids,
-        attention_mask=attention_mask,
+        attention_mask=[1] * len(input_ids),
         labels=labels,
         loss_weights=loss_weights,
     )
