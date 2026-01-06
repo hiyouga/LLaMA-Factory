@@ -73,7 +73,7 @@ dependencies = [
     # api
     "uvicorn",
     "fastapi",
-    "sse-starlette"
+    "sse-starlette",
 ]
 
 [project.scripts]

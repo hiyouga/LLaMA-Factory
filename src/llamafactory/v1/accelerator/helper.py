@@ -119,9 +119,15 @@ def synchronize() -> None:
 
 
 @requires_accelerator
-def set_device() -> None:
-    """Set current accelerator."""
+def set_device_index() -> None:
+    """Set current accelerator index to local rank."""
     torch.accelerator.set_device_index(get_local_rank())
+
+
+@requires_accelerator
+def get_device_index() -> int:
+    """Get current accelerator index."""
+    return torch.accelerator.current_device_index()
 
 
 def is_torch_cuda_available():

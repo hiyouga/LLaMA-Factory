@@ -40,11 +40,11 @@ from ...registry import register_kernel
 
 
 class GmmFunction(torch.autograd.Function):
-    r"""Custom autograd function for NPU Grouped Matrix Multiplication (GMM)."""
+    """Custom autograd function for NPU Grouped Matrix Multiplication (GMM)."""
 
     @staticmethod
     def forward(ctx, x, weight, group_list):
-        r"""Performs the forward pass of Grouped Matrix Multiplication.
+        """Performs the forward pass of Grouped Matrix Multiplication.
 
         Args:
             ctx: Context object to save tensors for backward pass.
@@ -65,7 +65,7 @@ class GmmFunction(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, grad_output):
-        r"""Performs the backward pass of Grouped Matrix Multiplication.
+        """Performs the backward pass of Grouped Matrix Multiplication.
 
         Args:
             ctx: Context object containing saved tensors.
@@ -94,11 +94,11 @@ class GmmFunction(torch.autograd.Function):
 
 
 class HybridGmmFunction(torch.autograd.Function):
-    r"""Custom autograd function for Hybrid Grouped Matrix Multiplication on NPU."""
+    """Custom autograd function for Hybrid Grouped Matrix Multiplication on NPU."""
 
     @staticmethod
     def forward(ctx, num_experts, *args):
-        r"""Performs the forward pass of Hybrid GMM.
+        """Performs the forward pass of Hybrid GMM.
 
         Args:
             ctx: Context object to save tensors.
@@ -124,7 +124,7 @@ class HybridGmmFunction(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx, *grad_outputs):
-        r"""Performs the backward pass of Hybrid GMM.
+        """Performs the backward pass of Hybrid GMM.
 
         Args:
             ctx: Context object containing saved tensors.
@@ -176,13 +176,13 @@ class HybridGmmFunction(torch.autograd.Function):
 
 
 class NpuMoeFused:
-    r"""Container for NPU fused MoE forward functions."""
+    """Container for NPU fused MoE forward functions."""
 
     @staticmethod
     def npu_moe_experts_forward(
         self, hidden_states: torch.Tensor, routing_weights: torch.Tensor, router_indices: torch.Tensor
     ) -> torch.Tensor:
-        r"""Forward pass for MoE experts using NPU fused operations.
+        """Forward pass for MoE experts using NPU fused operations.
 
         Args:
             self: The MoE layer instance.
@@ -230,11 +230,11 @@ class NpuMoeFused:
 
 
 class Qwen3NpuMoeFused:
-    r"""Container for Qwen3 NPU fused MoE forward functions."""
+    """Container for Qwen3 NPU fused MoE forward functions."""
 
     @staticmethod
     def qwen3moe_sparse_moe_block_forward(self, hidden_states: torch.Tensor):
-        r"""Forward pass for Qwen3 sparse MoE block using NPU fused operations.
+        """Forward pass for Qwen3 sparse MoE block using NPU fused operations.
 
         Args:
             self: The Qwen3 MoE block instance.
@@ -298,14 +298,14 @@ if not is_transformers_version_greater_than("5.0.0"):
 
 @register_kernel
 class NpuFusedMoEKernel(BaseKernel):
-    r"""NPU Fused MoE Kernel implementation."""
+    """NPU Fused MoE Kernel implementation."""
 
     _kernel_id = "npu_fused_moe"
     _device = DeviceType.NPU
 
     @classmethod
     def apply(cls, **kwargs) -> HFModel:
-        r"""Applies the NPU fused MoE kernel to the model.
+        """Applies the NPU fused MoE kernel to the model.
 
         Args:
             **kwargs: Keyword arguments containing the model.
@@ -333,6 +333,7 @@ class NpuFusedMoEKernel(BaseKernel):
 
         if target_moe_mapping is None:
             return model
+
         for module in model.modules():
             class_name = module.__class__.__name__
             if class_name in target_moe_mapping:

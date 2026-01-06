@@ -21,7 +21,12 @@ from .arg_utils import ModelClass, PluginConfig, get_plugin_config
 @dataclass
 class ModelArguments:
     model: str = field(
+        default="Qwen/Qwen3-4B-Instruct-2507",
         metadata={"help": "Path to the model or model identifier from Hugging Face."},
+    )
+    template: str = field(
+        default="chatml",
+        metadata={"help": "Template for the model."},
     )
     trust_remote_code: bool = field(
         default=False,

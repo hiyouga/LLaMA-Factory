@@ -40,7 +40,7 @@ except ImportError:
 
 
 def _apply_rotary_pos_emb(q, k, cos, sin, position_ids=None, unsqueeze_dim=1):
-    r"""Applies Rotary Position Embedding to the query and key tensors using NPU optimization.
+    """Applies Rotary Position Embedding to the query and key tensors using NPU optimization.
 
     Args:
         q (Tensor): Query tensor.
@@ -61,7 +61,7 @@ def _apply_rotary_pos_emb(q, k, cos, sin, position_ids=None, unsqueeze_dim=1):
 
 
 def _apply_multimodal_rotary_pos_emb_qwen25_vl(q, k, cos, sin, mrope_section, unsqueeze_dim=1):
-    r"""Applies Rotary Position Embedding with multimodal sections (Qwen2-VL) on NPU.
+    """Applies Rotary Position Embedding with multimodal sections (Qwen2-VL) on NPU.
 
     Args:
         q (Tensor): Query tensor.
@@ -89,14 +89,14 @@ def _apply_multimodal_rotary_pos_emb_qwen25_vl(q, k, cos, sin, mrope_section, un
 
 @register_kernel
 class NpuRoPEKernel(BaseKernel):
-    r"""NPU Kernel for Rotary Position Embedding."""
+    """NPU Kernel for Rotary Position Embedding."""
 
     _kernel_id = "npu_fused_rope"
     _device = DeviceType.NPU
 
     @classmethod
     def apply(cls, **kwargs) -> "HFModel":
-        r"""Apply RoPE acceleration by monkey-patching `apply_rotary_pos_emb`.
+        """Apply RoPE acceleration by monkey-patching `apply_rotary_pos_emb`.
 
         This function iterates through the model's modules to find attention layers,
         identifies the module where they are defined, and replaces the original
@@ -115,9 +115,11 @@ class NpuRoPEKernel(BaseKernel):
         """
         if not cls.check_deps():
             raise RuntimeError(f"torch_npu is not available but {cls.__name__} was called.")
+
         model = kwargs.get("model", None)
         if model is None:
             raise ValueError(f"HFModel instance is required for {cls.__name__}.")
+
         _modules = set()
         for module in model.modules():
             if "Attention" in module.__class__.__name__:
@@ -143,4 +145,5 @@ class NpuRoPEKernel(BaseKernel):
                             _modules.add(module_name)
                 except Exception as e:
                     logger.warning_rank0_once(f"Failed to apply RoPE kernel to module {module_name}: {e}")
+
         return model
