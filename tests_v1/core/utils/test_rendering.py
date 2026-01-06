@@ -31,7 +31,7 @@ V1_MESSAGES = [
 
 
 def test_chatml_rendering():
-    tokenizer: Processor = AutoTokenizer.from_pretrained("Qwen/Qwen3-4B-Instruct-2507")
+    tokenizer: Processor = AutoTokenizer.from_pretrained("llamafactory/tiny-random-qwen3")
     renderer = Renderer(template="chatml", processor=tokenizer)
 
     hf_inputs = tokenizer.apply_chat_template(HF_MESSAGES[:-1], add_generation_prompt=True)
@@ -53,7 +53,7 @@ def test_chatml_rendering():
 
 
 def test_chatml_parse():
-    tokenizer: Processor = AutoTokenizer.from_pretrained("Qwen/Qwen3-4B-Instruct-2507")
+    tokenizer: Processor = AutoTokenizer.from_pretrained("llamafactory/tiny-random-qwen3")
     renderer = Renderer(template="chatml", processor=tokenizer)
     generated_text = "LLM stands for Large Language Model."
     parsed_message = renderer.parse_message(generated_text)
