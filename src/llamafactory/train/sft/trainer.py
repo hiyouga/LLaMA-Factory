@@ -88,7 +88,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             self.compute_loss_func = dft_loss_func
 
 
-        if finetuning_args.use_eaft_loss:
+        elif finetuning_args.use_eaft_loss:
             from ..trainer_utils import eaft_loss_func
 
             self.compute_loss_func = lambda outputs, labels, num_items_in_batch=None: eaft_loss_func(
