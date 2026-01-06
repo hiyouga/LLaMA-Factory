@@ -31,7 +31,6 @@ from datetime import timedelta
 from enum import Enum
 from typing import Any, Optional
 
-import torch
 from torch.distributed import barrier, destroy_process_group, init_process_group
 from torch.distributed.device_mesh import DeviceMesh, init_device_mesh
 
@@ -130,7 +129,7 @@ class DistributedInterface:
         self._world_size = helper.get_world_size()
         self._local_rank = helper.get_local_rank()
         self._local_world_size = helper.get_local_world_size()
-        self.current_device = torch.device(type=helper.get_current_accelerator().type, index=helper.get_device_index())
+        self.current_device = helper.get_current_device()
         self.device_count = helper.get_device_count()
 
         if config is None:
@@ -162,7 +161,7 @@ class DistributedInterface:
             self.data_device_mesh = None
 
         self._initialized = True
-        logger.info_rank0(f"DistributedInterface initialized with strategy={self.strategy}.")
+        logger.info_rank0(f"DistributedInterface initialized: {self}.")
 
     def __str__(self) -> str:
         return (

@@ -121,13 +121,17 @@ def synchronize() -> None:
 @requires_accelerator
 def set_device_index() -> None:
     """Set current accelerator index to local rank."""
-    torch.accelerator.set_device_index(get_local_rank())
+    if get_current_accelerator().type != DeviceType.CPU:
+        torch.accelerator.set_device_index(get_local_rank())
 
 
 @requires_accelerator
-def get_device_index() -> int:
-    """Get current accelerator index."""
-    return torch.accelerator.current_device_index()
+def get_current_device() -> torch.device:
+    """Get current accelerator device."""
+    if get_current_accelerator().type == DeviceType.CPU:
+        return torch.device(DeviceType.CPU.value)
+    else:
+        return torch.device(type=get_current_accelerator().type, index=torch.accelerator.current_device_index())
 
 
 def is_torch_cuda_available():

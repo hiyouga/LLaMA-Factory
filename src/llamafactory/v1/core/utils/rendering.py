@@ -113,8 +113,10 @@ def render_chatml_messages(
             for val_idx, content in enumerate(message["content"]):
                 if content["type"] == "text":
                     temp_str += content["value"]
+                elif content["type"] == "reasoning":
+                    temp_str += "<thinking>\n" + content["value"] + "\n</thinking>\n\n"  # avoid using special tokens
                 elif content["type"] == "tool_call":
-                    if val_idx != 0:
+                    if val_idx != 0 and message["content"][val_idx - 1]["type"] in ["text", "tool_call"]:
                         temp_str += "\n"
 
                     try:
@@ -169,18 +171,42 @@ def render_chatml_messages(
 
 
 def parse_chatml_message(generated_text: str) -> Message:
-    tool_calls = []
-    if "<tool_call>" in generated_text:
-        regex = re.compile(r"<tool_call>\s*(.+?)\s*</tool_call>(?=\s*<tool_call>|\s*$)", re.DOTALL)
-        tool_calls: list[str] = re.findall(regex, generated_text)
-        if tool_calls:
-            tool_calls = [json.loads(tool_call.strip()) for tool_call in tool_calls]
-            generated_text = re.sub(regex, "", generated_text)
+    """Parse a message in ChatML format. Supports interleaved reasoning and tool calls.
 
-    content = [{"type": "text", "value": generated_text}]
-    if tool_calls:
-        for tool_call in tool_calls:
-            content.append({"type": "tool_call", "value": json.dumps(tool_call, ensure_ascii=False)})
+    Args:
+        generated_text (str): The generated text in ChatML format.
+
+    Returns:
+        Message: The parsed message.
+    """
+    pattern = re.compile(r"<(thinking|tool_call)>\s*(.*?)\s*</\1>\s*", re.DOTALL)
+    content = []
+    last_end = 0
+    for match in pattern.finditer(generated_text):
+        start, end = match.span()
+        if start > last_end:
+            text = generated_text[last_end:start].strip()
+            if text:
+                content.append({"type": "text", "value": text})
+
+        tag_type = match.group(1)
+        tag_value = match.group(2).strip()
+        if tag_type == "thinking":
+            content.append({"type": "reasoning", "value": tag_value.strip()})
+        elif tag_type == "tool_call":
+            try:
+                json.loads(tag_value.strip())
+            except json.JSONDecodeError:
+                raise ValueError(f"Invalid tool call format: {tag_value.strip()}.")
+
+            content.append({"type": "tool_call", "value": tag_value.strip()})
+
+        last_end = end
+
+    if last_end < len(generated_text):
+        text = generated_text[last_end:].strip()
+        if text:
+            content.append({"type": "text", "value": text})
 
     return Message(role="assistant", content=content)
 
