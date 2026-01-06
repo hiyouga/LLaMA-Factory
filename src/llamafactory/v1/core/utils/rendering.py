@@ -26,7 +26,7 @@ def render_chatml_messages(
 ) -> ModelInput:
     """Apply chatml template to messages and convert them to model input.
 
-    See https://huggingface.co/spaces/huggingfacejs/chat-template-playground
+    See https://huggingface.co/spaces/huggingfacejs/chat-template-playground?modelId=Qwen/Qwen2-7B-Instruct
     """
     tokenizer = get_tokenizer(processor)
     input_ids, labels, loss_weights = [], [], []

@@ -19,7 +19,7 @@ import re
 from ...utils.constants import IGNORE_INDEX
 from ...utils.helper import get_tokenizer
 from ...utils.plugin import BasePlugin
-from ...utils.types import Message, ModelInput, Processor
+from ...utils.types import Message, ModelInput, Processor, ToolCall
 
 
 class RenderingPlugin(BasePlugin):
@@ -127,9 +127,10 @@ def render_qwen_messages(
                         temp_str += "\n"
 
                     try:
-                        tool_call = json.loads(content["value"])
+                        tool_call: ToolCall = json.loads(content["value"])
                     except json.JSONDecodeError:
                         raise ValueError(f"Invalid tool call format: {content['value']}.")
+
                     temp_str += (
                         '<tool_call>\n{"name": "'
                         + tool_call["name"]
