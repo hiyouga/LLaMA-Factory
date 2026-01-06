@@ -158,7 +158,7 @@ def sharegpt_converter(raw_sample: SharegptSample) -> SFTSample:
             )
 
     if tools:
-        return {"messages": messages, "extra_info": json.dumps({"tools": tools})}
+        return {"messages": messages, "tools": json.dumps(tools)}
     else:
         return {"messages": messages}
 

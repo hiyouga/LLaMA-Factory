@@ -102,8 +102,10 @@ class Message(TypedDict):
 class SFTSample(TypedDict):
     messages: list[Message]
     """Messages in the sample."""
+    tools: NotRequired[str]
+    """Tools for the sample in JSON string format."""
     extra_info: NotRequired[str]
-    """Extra information for the sample, including tools, kto_labels."""
+    """Extra information for the sample, e.g. kto_labels."""
     _dataset_name: NotRequired[str]
     """Dataset name for the sample."""
 
@@ -113,8 +115,10 @@ class DPOSample(TypedDict):
     """Chosen messages in the sample."""
     rejected_messages: list[Message]
     """Rejected messages in the sample."""
+    tools: NotRequired[str]
+    """Tools for the sample in JSON string format."""
     extra_info: NotRequired[str]
-    """Extra information for the sample, including tools, kto_labels."""
+    """Extra information for the sample, e.g. kto_labels."""
     _dataset_name: NotRequired[str]
     """Dataset name for the sample."""
 
