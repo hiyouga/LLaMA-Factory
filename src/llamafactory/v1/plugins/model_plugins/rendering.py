@@ -12,4 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-IGNORE_INDEX = -100
+
+from ...utils.plugin import BasePlugin
+from ...utils.types import Message, ModelInput, Processor
+
+
+class RenderingPlugin(BasePlugin):
+    pass
+
+
+@RenderingPlugin("qwen").register("render_messages")
+def render_qwen_messages(
+    processor: Processor,
+    messages: list[Message],
+    tools: str | None = None,
+    is_generate: bool = False,
+) -> ModelInput:
+    raise NotImplementedError()
+
+
+@RenderingPlugin("qwen").register("parse_message")
+def parse_qwen_message(generated_text: str) -> Message:
+    raise NotImplementedError()

@@ -12,4 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-IGNORE_INDEX = -100
+from transformers import PreTrainedTokenizer
+
+from .types import Processor
+
+
+def get_tokenizer(processor: Processor) -> PreTrainedTokenizer:
+    """Get tokenizer from processor.
+
+    Args:
+        processor: Processor.
+
+    Returns:
+        Tokenizer.
+    """
+    return processor.tokenizer if hasattr(processor, "tokenizer") else processor

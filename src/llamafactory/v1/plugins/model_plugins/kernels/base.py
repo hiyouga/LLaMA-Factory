@@ -38,17 +38,17 @@ class BaseKernel(ABC):
 
     @classmethod
     def get_kernel_id(cls) -> str:
-        r"""Returns the unique identifier for the kernel."""
+        """Returns the unique identifier for the kernel."""
         return cls._kernel_id
 
     @classmethod
     def get_device(cls) -> str:
-        r"""Returns the device type associated with the kernel (e.g., "cuda", "npu", "cpu")."""
+        """Returns the device type associated with the kernel (e.g., "cuda", "npu", "cpu")."""
         return cls._device
 
     @classmethod
     def check_deps(cls) -> bool:
-        r"""Checks if the required dependencies for the kernel are available.
+        """Checks if the required dependencies for the kernel are available.
 
         Returns:
             bool: ``True`` if dependencies are met, ``False`` otherwise.
@@ -65,7 +65,7 @@ class BaseKernel(ABC):
     @classmethod
     @abstractmethod
     def apply(cls, **kwargs) -> HFModel:
-        r"""Applies the kernel optimization to the model.
+        """Applies the kernel optimization to the model.
 
         Args:
             **kwargs: Arbitrary keyword arguments, usually containing the model instance and the kernel configuration.

@@ -38,7 +38,7 @@ except ImportError:
 
 
 def npu_swiglu_forward(self, hidden_state):
-    r"""SwiGLU forward pass for NPU.
+    """SwiGLU forward pass for NPU.
 
     Args:
         self: The MLP layer instance.
@@ -53,7 +53,7 @@ def npu_swiglu_forward(self, hidden_state):
 
 
 def _npu_swiglu_glm4_forward(self, hidden_states):
-    r"""SwiGLU forward pass for GLM4 on NPU.
+    """SwiGLU forward pass for GLM4 on NPU.
 
     Args:
         self: The GLM4 MLP layer instance.
@@ -68,7 +68,7 @@ def _npu_swiglu_glm4_forward(self, hidden_states):
 
 
 def _npu_swiglu_gemma3ntext_forward(self, hidden_states):
-    r"""SwiGLU forward pass for Gemma3nText on NPU.
+    """SwiGLU forward pass for Gemma3nText on NPU.
 
     Args:
         self: The Gemma3nText MLP layer instance.
@@ -88,7 +88,7 @@ def _npu_swiglu_gemma3ntext_forward(self, hidden_states):
 
 @register_kernel
 class NpuSwiGluKernel(BaseKernel):
-    r"""NPU Kernel for fused SwiGLU activation."""
+    """NPU Kernel for fused SwiGLU activation."""
 
     # just support apply to the following module layers
     expect_modules = frozenset(
@@ -126,7 +126,7 @@ class NpuSwiGluKernel(BaseKernel):
 
     @classmethod
     def apply(cls, **kwargs) -> "HFModel":
-        r"""Applies the NPU fused SwiGLU kernel to the model.
+        """Applies the NPU fused SwiGLU kernel to the model.
 
         Args:
             **kwargs: Keyword arguments containing the model.

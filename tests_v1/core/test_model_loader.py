@@ -15,18 +15,18 @@
 import torch
 
 from llamafactory.v1.config.model_args import ModelArguments, PluginConfig
-from llamafactory.v1.core.model_loader import ModelLoader
+from llamafactory.v1.core.model_engine import ModelEngine
 
 
 def test_tiny_qwen():
     from transformers import Qwen2Config, Qwen2ForCausalLM, Qwen2TokenizerFast
 
     model_args = ModelArguments(model="llamafactory/tiny-random-qwen2.5")
-    model_loader = ModelLoader(model_args)
-    assert isinstance(model_loader.processor, Qwen2TokenizerFast)
-    assert isinstance(model_loader.model.config, Qwen2Config)
-    assert isinstance(model_loader.model, Qwen2ForCausalLM)
-    assert model_loader.model.dtype == torch.bfloat16
+    model_engine = ModelEngine(model_args)
+    assert isinstance(model_engine.processor, Qwen2TokenizerFast)
+    assert isinstance(model_engine.model_config, Qwen2Config)
+    assert isinstance(model_engine.model, Qwen2ForCausalLM)
+    assert model_engine.model.dtype == torch.bfloat16
 
 
 def test_tiny_qwen_with_kernel_plugin():
@@ -37,13 +37,14 @@ def test_tiny_qwen_with_kernel_plugin():
     model_args = ModelArguments(
         model="llamafactory/tiny-random-qwen2.5", kernel_config=PluginConfig(name="auto", include_kernels="auto")
     )
-    model_loader = ModelLoader(model_args)
+    model_engine = ModelEngine(model_args)
     # test enable apply kernel plugin
     if hasattr(torch, "npu"):
-        assert model_loader.model.model.layers[0].input_layernorm.forward.__code__ == npu_rms_norm_forward.__code__
+        assert model_engine.model.model.layers[0].input_layernorm.forward.__code__ == npu_rms_norm_forward.__code__
     else:
-        assert model_loader.model.model.layers[0].input_layernorm.forward.__code__ != npu_rms_norm_forward.__code__
-    assert isinstance(model_loader.model, Qwen2ForCausalLM)
+        assert model_engine.model.model.layers[0].input_layernorm.forward.__code__ != npu_rms_norm_forward.__code__
+
+    assert isinstance(model_engine.model, Qwen2ForCausalLM)
 
 
 if __name__ == "__main__":

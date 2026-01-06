@@ -12,10 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import asyncio
+import os
 from abc import ABC, abstractmethod
+from collections.abc import AsyncGenerator, Generator
+from threading import Thread
 
+import torch
+from transformers import TextIteratorStreamer
+
+from ..accelerator.interface import DistributedInterface
 from ..config import ModelArguments, SampleArguments, SampleBackend
-from ..utils.types import HFModel, Processor, TorchDataset
+from ..utils.helper import get_tokenizer
+from ..utils.types import HFModel, Message, Sample, TorchDataset
+from .utils.rendering import Renderer
 
 
 class BaseEngine(ABC):
@@ -24,8 +34,8 @@ class BaseEngine(ABC):
         self,
         args: SampleArguments,
         model_args: ModelArguments,
-        model: HFModel = None,
-        processor: Processor = None,
+        model: HFModel,
+        renderer: Renderer,
     ) -> None:
         """Initialize the engine.
 
@@ -33,17 +43,34 @@ class BaseEngine(ABC):
             args: Sample arguments.
             model_args: Model arguments.
             model: Model.
-            processor: Processor.
+            renderer: Renderer.
         """
         ...
 
     @abstractmethod
-    async def generate(self, messages):
-        pass
+    async def generate(self, messages: list[Message], tools: str | None = None) -> AsyncGenerator[str, None]:
+        """Generate tokens asynchronously.
+
+        Args:
+            messages: List of messages.
+            tools: Tools string.
+
+        Yields:
+            Generated tokens.
+        """
+        ...
 
     @abstractmethod
-    async def batch_infer(self, data: TorchDataset) -> None:
-        pass
+    async def batch_infer(self, dataset: TorchDataset) -> list[Sample]:
+        """Batch infer samples.
+
+        Args:
+            dataset: Torch dataset.
+
+        Returns:
+            List of samples.
+        """
+        ...
 
 
 class HuggingFaceEngine(BaseEngine):
@@ -52,26 +79,103 @@ class HuggingFaceEngine(BaseEngine):
         args: SampleArguments,
         model_args: ModelArguments,
         model: HFModel,
-        processor: Processor,
+        renderer: Renderer,
     ) -> None:
         self.args = args
+        self.model_args = model_args
+        self.model = model
+        self.renderer = renderer
+        self.semaphore = asyncio.Semaphore(int(os.getenv("MAX_CONCURRENT", "1")))
+
+    @torch.inference_mode()
+    def get_response(self, messages: list[Message], tools: str | None = None) -> Generator[str, None, None]:
+        model_inputs = self.renderer.render_messages(messages, tools, is_generate=True)
+        streamer = TextIteratorStreamer(
+            tokenizer=get_tokenizer(self.renderer.processor),
+            skip_prompt=True,
+            skip_special_tokens=True,  # TODO: configurable
+        )
+        device = DistributedInterface().current_device
+        kwargs = {
+            "input_ids": torch.tensor([model_inputs["input_ids"]]).to(device),
+            "attention_mask": torch.tensor([model_inputs["attention_mask"]]).to(device),
+            "max_new_tokens": self.args.max_new_tokens,
+            "streamer": streamer,
+        }
+        thread = Thread(target=self.model.generate, kwargs=kwargs, daemon=True)
+        thread.start()
+
+        def stream():
+            try:
+                return streamer.__next__()
+            except StopIteration:
+                raise StopAsyncIteration()
+
+        return stream
+
+    async def generate(self, messages: list[Message], tools: str | None = None) -> AsyncGenerator[str, None]:
+        async with self.semaphore:
+            response = self.get_response(messages, tools)
+            while True:
+                try:
+                    yield await asyncio.to_thread(response)
+                except StopAsyncIteration:
+                    break
+
+    async def batch_infer(self, dataset: TorchDataset) -> list[Sample]:
+        """Batch infer samples.
+
+        Args:
+            dataset: Torch dataset.
+
+        Returns:
+            List of samples.
+        """
+        raise NotImplementedError("Batch infer is not implemented.")
 
 
 class BaseSampler:
+    """Base sampler.
+
+    Args:
+        args: Sample arguments.
+        model_args: Model arguments.
+        model: Model.
+        renderer: Renderer.
+    """
+
     def __init__(
         self,
         args: SampleArguments,
         model_args: ModelArguments,
         model: HFModel,
-        processor: Processor,
+        renderer: Renderer,
     ) -> None:
         if args.sample_backend == SampleBackend.HF:
-            self.engine = HuggingFaceEngine(args, model_args, model, processor)
+            self.engine = HuggingFaceEngine(args, model_args, model, renderer)
         else:
             raise ValueError(f"Unknown sample backend: {args.sample_backend}")
 
-    async def generate(self, messages):
-        return await self.engine.generate(messages)
+    async def generate(self, messages: list[Message], tools: str | None = None) -> AsyncGenerator[str, None]:
+        """Generate tokens asynchronously.
 
-    async def batch_infer(self, data: TorchDataset) -> None:
-        return await self.engine.batch_infer(data)
+        Args:
+            messages: List of messages.
+            tools: Tools string.
+
+        Yields:
+            Generated tokens.
+        """
+        async for token in self.engine.generate(messages, tools):
+            yield token
+
+    async def batch_infer(self, dataset: TorchDataset) -> list[Sample]:
+        """Batch infer samples.
+
+        Args:
+            dataset: Torch dataset.
+
+        Returns:
+            List of samples.
+        """
+        return await self.engine.batch_infer(dataset)

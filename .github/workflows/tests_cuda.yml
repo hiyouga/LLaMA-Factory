@@ -55,12 +55,12 @@ jobs:
           uv pip install -e .
           uv pip install -r requirements/dev.txt
 
-      - name: Cache HuggingFace models
+      - name: Cache files
         id: hf-hub-cache
         uses: actions/cache@v4
         with:
           path: ${{ runner.temp }}/huggingface
-          key: hf-cache-${{ runner.os }}-${{ hashFiles('tests/version.txt') }}
+          key: huggingface-${{ matrix.os }}-${{ matrix.python }}-${{ hashFiles('tests/version.txt') }}
 
       - name: Check quality
         run: |
