@@ -54,7 +54,7 @@ def test_sharegpt_converter():
         "conversations": [
             {"from": "system", "value": "System"},
             {"from": "human", "value": "User"},
-            {"from": "function_call", "value": "[1]"},
+            {"from": "function_call", "value": "1"},
             {"from": "observation", "value": "Observation"},
             {"from": "gpt", "value": "Assistant"},
         ]
