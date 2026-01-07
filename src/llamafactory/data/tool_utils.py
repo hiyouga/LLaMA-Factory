@@ -102,7 +102,7 @@ LING_TOOL_PROMPT = (
     """"arguments": <args-json-object>}}\n</tool_call>"""
 )
 
-LFM_TOOL_PROMPT = "List of tools: <|tool_list_start|>{tool_text}<|tool_list_end|>"
+LFM2_TOOL_PROMPT = "List of tools: <|tool_list_start|>{tool_text}<|tool_list_end|>"
 
 
 @dataclass
@@ -549,8 +549,8 @@ class LingToolUtils(QwenToolUtils):
         return LING_TOOL_PROMPT.format(tool_text=tool_text) + "\n" + "detailed thinking off"
 
 
-class LFMToolUtils(ToolUtils):
-    r"""LFM 2.5 tool using template with Pythonic function call syntax."""
+class LFM2ToolUtils(ToolUtils):
+    r"""LFM2.5 tool using template with Pythonic function call syntax."""
 
     @override
     @staticmethod
@@ -560,7 +560,7 @@ class LFMToolUtils(ToolUtils):
             tool = tool.get("function", tool) if tool.get("type") == "function" else tool
             tool_list.append(tool)
 
-        return LFM_TOOL_PROMPT.format(tool_text=json.dumps(tool_list, ensure_ascii=False))
+        return LFM2_TOOL_PROMPT.format(tool_text=json.dumps(tool_list, ensure_ascii=False))
 
     @override
     @staticmethod
@@ -643,7 +643,7 @@ class LFMToolUtils(ToolUtils):
             for keyword in node.keywords:
                 key = keyword.arg
                 try:
-                    value = LFMToolUtils._ast_to_value(keyword.value)
+                    value = LFM2ToolUtils._ast_to_value(keyword.value)
                 except (ValueError, SyntaxError):
                     return content
                 args_dict[key] = value
@@ -657,7 +657,7 @@ TOOLS = {
     "default": DefaultToolUtils(),
     "glm4": GLM4ToolUtils(),
     "llama3": Llama3ToolUtils(),
-    "lfm": LFMToolUtils(),
+    "lfm2": LFM2ToolUtils(),
     "minimax1": MiniMaxM1ToolUtils(),
     "minimax2": MiniMaxM2ToolUtils(),
     "mistral": MistralToolUtils(),

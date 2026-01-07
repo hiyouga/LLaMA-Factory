@@ -1502,7 +1502,7 @@ register_model_group(
             DownloadSource.DEFAULT: "LiquidAI/LFM2.5-1.2B-Instruct",
         },
     },
-    template="lfm",
+    template="lfm2",
 )
 
 

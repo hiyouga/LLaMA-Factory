@@ -300,6 +300,7 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 | [InternLM/Intern-S1-mini](https://huggingface.co/internlm/)       | 8B                               | intern_s1            |
 | [Kimi-VL](https://huggingface.co/moonshotai)                      | 16B                              | kimi_vl              |
 | [Ling 2.0 (mini/flash)](https://huggingface.co/inclusionAI)       | 16B/100B                         | bailing_v2           |
+| [LFM 2.5 (VL)](https://huggingface.co/LiquidAI)                   | 1.2B/1.6B                        | lfm2/lfm2_vl         |
 | [Llama](https://github.com/facebookresearch/llama)                | 7B/13B/33B/65B                   | -                    |
 | [Llama 2](https://huggingface.co/meta-llama)                      | 7B/13B/70B                       | llama2               |
 | [Llama 3-3.3](https://huggingface.co/meta-llama)                  | 1B/3B/8B/70B                     | llama3               |
