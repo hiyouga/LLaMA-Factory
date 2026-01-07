@@ -2092,6 +2092,13 @@ class VideoLlavaPlugin(BasePlugin):
         return messages
 
 
+@dataclass
+class LFMVLPlugin(BasePlugin):
+    r"""Plugin for LFM2.5-VL vision-language models."""
+
+    pass  # Uses BasePlugin defaults - LFM-VL processor handles everything
+
+
 PLUGINS = {
     "base": BasePlugin,
     "ernie_vl": ErnieVLPlugin,
@@ -2104,6 +2111,7 @@ PLUGINS = {
     "llava": LlavaPlugin,
     "llava_next": LlavaNextPlugin,
     "llava_next_video": LlavaNextVideoPlugin,
+    "lfm_vl": LFMVLPlugin,
     "minicpm_v": MiniCPMVPlugin,
     "mllama": MllamaPlugin,
     "paligemma": PaliGemmaPlugin,
