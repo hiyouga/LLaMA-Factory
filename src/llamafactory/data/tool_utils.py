@@ -564,7 +564,19 @@ class LFMToolUtils(ToolUtils):
     @override
     @staticmethod
     def function_formatter(functions: list["FunctionCall"]) -> str:
-        raise NotImplementedError("LFMToolUtils.function_formatter not yet implemented")
+        calls = []
+        for name, args_json in functions:
+            args = json.loads(args_json)
+            kwargs_parts = []
+            for key, value in args.items():
+                if isinstance(value, str):
+                    kwargs_parts.append(f'{key}="{value}"')
+                else:
+                    kwargs_parts.append(f"{key}={json.dumps(value, ensure_ascii=False)}")
+
+            calls.append(f"{name}({', '.join(kwargs_parts)})")
+
+        return f"<|tool_call_start|>[{', '.join(calls)}]<|tool_call_end|>"
 
     @override
     @staticmethod
