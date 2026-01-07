@@ -2171,7 +2171,7 @@ PLUGINS = {
     "llava": LlavaPlugin,
     "llava_next": LlavaNextPlugin,
     "llava_next_video": LlavaNextVideoPlugin,
-    "lfm_vl": LFMVLPlugin,
+    "lfm2_vl": LFMVLPlugin,
     "minicpm_v": MiniCPMVPlugin,
     "mllama": MllamaPlugin,
     "paligemma": PaliGemmaPlugin,

@@ -1512,7 +1512,7 @@ register_model_group(
             DownloadSource.DEFAULT: "LiquidAI/LFM2.5-VL-1.6B",
         },
     },
-    template="lfm_vl",
+    template="lfm2_vl",
     multimodal=True,
 )
 
