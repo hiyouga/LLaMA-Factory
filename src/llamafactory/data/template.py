@@ -1336,6 +1336,12 @@ register_template(
     format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
     format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
     format_function=FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="lfm"),
+    format_observation=StringFormatter(
+        slots=[
+            "<|im_start|>tool\n<|tool_response_start|>{{content}}<|tool_response_end|><|im_end|>\n"
+            "<|im_start|>assistant\n"
+        ]
+    ),
     default_system="You are a helpful AI assistant.",
     stop_words=["<|im_end|>"],
     replace_eos=True,
