@@ -151,6 +151,12 @@ def patch_config(
     if getattr(config, "model_type", None) == "internlm3" and not is_transformers_version_greater_than("4.47.1"):
         raise RuntimeError("InternLM3 model requires transformers>=4.47.1, please upgrade it.")
 
+    if getattr(config, "model_type", None) == "lfm2_vl" and not is_transformers_version_greater_than("4.58.0"):
+        raise RuntimeError(
+            "LFM2.5-VL model requires transformers>=4.58.0 or install from commit: "
+            "pip install git+https://github.com/huggingface/transformers.git@3c2517727ce28a30f5044e01663ee204deb1cdbe"
+        )
+
     if getattr(config, "model_type", None) == "qwen3_omni_moe":
         patch_qwen3_omni_moe_thinker_text_sparse_moe_block()
 
