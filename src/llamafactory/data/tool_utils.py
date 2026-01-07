@@ -637,6 +637,7 @@ TOOLS = {
     "default": DefaultToolUtils(),
     "glm4": GLM4ToolUtils(),
     "llama3": Llama3ToolUtils(),
+    "lfm": LFMToolUtils(),
     "minimax1": MiniMaxM1ToolUtils(),
     "minimax2": MiniMaxM2ToolUtils(),
     "mistral": MistralToolUtils(),
