@@ -101,6 +101,8 @@ LING_TOOL_PROMPT = (
     """"arguments": <args-json-object>}}\n</tool_call>"""
 )
 
+LFM_TOOL_PROMPT = "List of tools: <|tool_list_start|>{tool_text}<|tool_list_end|>"
+
 
 @dataclass
 class ToolUtils(ABC):
