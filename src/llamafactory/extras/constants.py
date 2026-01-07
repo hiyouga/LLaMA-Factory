@@ -1495,6 +1495,16 @@ register_model_group(
 
 register_model_group(
     models={
+        "LFM2.5-1.2B": {
+            DownloadSource.DEFAULT: "LiquidAI/LFM2.5-1.2B-Base",
+        },
+    },
+    template="lfm",
+)
+
+
+register_model_group(
+    models={
         "Llama-7B": {
             DownloadSource.DEFAULT: "huggyllama/llama-7b",
             DownloadSource.MODELSCOPE: "skyline2006/llama-7b",
