@@ -1345,6 +1345,7 @@ register_template(
     format_tools=ToolFormatter(tool_format="lfm"),
     default_system="You are a helpful AI assistant.",
     stop_words=["<|im_end|>"],
+    tool_call_words=("<|tool_call_start|>", "<|tool_call_end|>"),
     replace_eos=True,
 )
 
