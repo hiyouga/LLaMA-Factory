@@ -49,6 +49,11 @@ def launch():
 
         run_sft()
 
+    elif command == "chat":
+        from .samplers.cli_sampler import run_chat
+
+        run_chat()
+
     elif command == "env":
         print_env()
 

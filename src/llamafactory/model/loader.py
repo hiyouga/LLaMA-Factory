@@ -15,6 +15,7 @@
 import os
 from typing import TYPE_CHECKING, Any, Optional, TypedDict
 
+import torch
 from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
@@ -29,6 +30,7 @@ from trl import AutoModelForCausalLMWithValueHead
 
 from ..extras import logging
 from ..extras.misc import count_parameters, skip_check_imports, try_download_model_from_other_hub
+from ..extras.packages import is_torch_version_greater_than
 from .adapter import init_adapter
 from .model_utils.ktransformers import load_kt_pretrained_model
 from .model_utils.liger_kernel import apply_liger_kernel
@@ -202,6 +204,16 @@ def load_model(
         if vhead_params is not None:
             model.load_state_dict(vhead_params, strict=False)
             logger.info_rank0(f"Loaded valuehead from checkpoint: {vhead_path}")
+
+    # Conv3D is not recommended when using torch 2.9.x
+    if is_torch_version_greater_than("2.9.0") and not is_torch_version_greater_than("2.10.0"):
+        if any(isinstance(m, torch.nn.Conv3d) for m in model.modules()):
+            raise ValueError(
+                "Unsupported torch version detected: torch 2.9.x with Conv3D. "
+                "This combination is known to cause severe performance regression. "
+                "Please downgrade torch to <2.9 or remove Conv3D. "
+                "See https://github.com/pytorch/pytorch/issues/166122"
+            )
 
     if not is_trainable:
         model.requires_grad_(False)

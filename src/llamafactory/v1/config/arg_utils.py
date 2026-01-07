@@ -17,7 +17,7 @@
 
 
 import json
-from enum import Enum, unique
+from enum import StrEnum, unique
 
 
 class PluginConfig(dict):
@@ -36,7 +36,7 @@ PluginArgument = PluginConfig | dict | str | None
 
 
 @unique
-class ModelClass(str, Enum):
+class ModelClass(StrEnum):
     """Auto class for model config."""
 
     LLM = "llm"
@@ -45,7 +45,7 @@ class ModelClass(str, Enum):
 
 
 @unique
-class SampleBackend(str, Enum):
+class SampleBackend(StrEnum):
     HF = "hf"
     VLLM = "vllm"
 

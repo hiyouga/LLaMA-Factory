@@ -14,15 +14,23 @@
 
 """The definition of data engine.
 
-Init Data engine:
+How to use:
+data_engine = DataEngine(data_args)
+data_engine[i]: Get the sample via index.
+
+Init workflow:
 1. Parse dataset info from arguments.
 2. Load datasets according to dataset info.
 3. Build data index (and reweight samples if necessary).
 
-Get Data Sample:
+Get data sample:
 1. Get sample from data index.
 2. Convert sample to standard format.
 3. Return sample.
+
+Note:
+1. The data engine is equivalent to the torch dataset.
+2. The data engine is agnostic to the model used.
 """
 
 import os
@@ -98,10 +106,10 @@ class DataEngine(Dataset):
 
             size = self.dataset_infos[dataset_name].get("size")
             weight = self.dataset_infos[dataset_name].get("weight")
-            if size or weight:  # data index plugin
-                from ..plugins.data_plugins.loader import DataIndexPlugin
+            if size or weight:
+                from ..plugins.data_plugins.loader import adjust_data_index
 
-                data_index = DataIndexPlugin().adjust_data_index(data_index, size, weight)
+                data_index = adjust_data_index(data_index, size, weight)
 
             self.data_index.extend(data_index)
 
@@ -150,9 +158,9 @@ class DataEngine(Dataset):
             dataset_name, sample_index = self.data_index[index]
             return self._convert_data_sample(self.datasets[dataset_name][sample_index], dataset_name)
         else:  # data selector plugin
-            from ..plugins.data_plugins.loader import DataSelectorPlugin
+            from ..plugins.data_plugins.loader import select_data_sample
 
-            selected_index = DataSelectorPlugin().select(self.data_index, index)
+            selected_index = select_data_sample(self.data_index, index)
             if isinstance(selected_index, list):
                 return [
                     self._convert_data_sample(self.datasets[dataset_name][sample_index], dataset_name)

@@ -517,12 +517,13 @@ huggingface-cli login
 #### 从源码安装
 
 ```bash
-git clone --depth 1 https://github.com/hiyouga/LLaMA-Factory.git
-cd LLaMA-Factory
-pip install -e ".[metrics]"
+git clone --depth 1 https://github.com/hiyouga/LlamaFactory.git
+cd LlamaFactory
+pip install -e .
+pip install -r requirements/metrics.txt
 ```
 
-可选的额外依赖项：`metrics`、`deepspeed`。使用 `pip install -e ".[metrics,deepspeed]"` 安装。
+可选的额外依赖项：`metrics`、`deepspeed`。使用 `pip install -e . && pip install -r requirements/metrics.txt -r requirements/deepspeed.txt` 安装。
 
 其他可选依赖项请参考 `examples/requirements/` 目录下的文件。
 
@@ -580,35 +581,19 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 
 <details><summary>昇腾 NPU 用户指南</summary>
 
-在昇腾 NPU 设备上安装 LLaMA Factory 时，请升级 Python 到 3.10 及以上，并需要指定额外依赖项，使用 `pip install -e . torch-npu==2.7.1` 命令安装。此外，还需要安装 **[Ascend CANN Toolkit 与 Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**，安装方法请参考[安装教程](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/80RC2alpha002/quickstart/quickstart/quickstart_18_0004.html)或使用以下命令：
+在昇腾 NPU 设备上安装 LLaMA Factory 时，请升级 Python 到 3.10 及以上，并需要指定额外依赖项，使用 `pip install -r requirements/npu.txt` 命令安装。此外，还需要安装 **Ascend CANN Toolkit 与 Kernels**，安装方法请参考[安装教程](https://llamafactory.readthedocs.io/zh-cn/latest/advanced/npu_installation.html)。
+
+您可以直接下载预安装的最新docker镜像：
 
 ```bash
-# 请替换 URL 为 CANN 版本和设备型号对应的 URL
-# 安装 CANN Toolkit
-wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C17SPC701/Ascend-cann-toolkit_8.0.RC1.alpha001_linux-"$(uname -i)".run
-bash Ascend-cann-toolkit_8.0.RC1.alpha001_linux-"$(uname -i)".run --install
+# Docker Hub
+docker pull hiyouga/llamafactory:latest-npu-a2
+docker pull hiyouga/llamafactory:latest-npu-a3
 
-# 安装 CANN Kernels
-wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C17SPC701/Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run
-bash Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run --install
-
-# 设置环境变量
-source /usr/local/Ascend/ascend-toolkit/set_env.sh
+# quay.io
+docker pull quay.io/ascend/llamafactory:latest-npu-a2
+docker pull quay.io/ascend/llamafactory:latest-npu-a3
 ```
-
-| 依赖项        | 至少     | 推荐           |
-| ------------ | ------- | -------------- |
-| CANN         | 8.0.RC1 | 8.0.0.alpha002 |
-| torch        | 2.1.0   | 2.7.1          |
-| torch-npu    | 2.1.0   | 2.7.1          |
-| deepspeed    | 0.13.2  | 0.13.2         |
-| vllm-ascend  | -       | 0.7.3          |
-
-请使用 `ASCEND_RT_VISIBLE_DEVICES` 而非 `CUDA_VISIBLE_DEVICES` 来指定运算设备。
-
-如果遇到无法正常推理的情况，请尝试设置 `do_sample: false`。
-
-下载预构建 Docker 镜像：[32GB](http://mirrors.cn-central-221.ovaijisuan.com/detail/130.html) | [64GB](http://mirrors.cn-central-221.ovaijisuan.com/detail/131.html)
 
 #### 安装 BitsAndBytes
 

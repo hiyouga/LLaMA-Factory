@@ -33,7 +33,7 @@ logger = get_logger(__name__)
 
 
 def scan_all_kernels():
-    r"""Scan all kernels in the ``ops`` directory.
+    """Scan all kernels in the ``ops`` directory.
 
     Scans the ``ops`` directory for all ``.py`` files and attempts to import them.
     Importing triggers the :func:`~registry.register_kernel` decorator, which automatically registers the kernels.
@@ -77,7 +77,7 @@ default_kernels = scan_all_kernels()
 
 
 def get_default_kernels():
-    r"""Get a list of default registered kernel IDs.
+    """Get a list of default registered kernel IDs.
 
     Returns:
         list[str]: List of kernel IDs.
@@ -86,7 +86,7 @@ def get_default_kernels():
 
 
 def apply_kernel(kernel_id: str, **kwargs):
-    r"""Applies a specific kernel to the model.
+    """Applies a specific kernel to the model.
 
     Args:
         kernel_id (str): The ID of the kernel to apply.
@@ -99,18 +99,19 @@ def apply_kernel(kernel_id: str, **kwargs):
     kernel = default_kernels.get(kernel_id)
     if kernel is None:
         raise ValueError(f"Kernel {kernel_id} not found")
+
     kernel.apply(**kwargs)
 
 
 class KernelPlugin(BasePlugin):
-    r"""Plugin for managing kernel optimizations."""
+    """Plugin for managing kernel optimizations."""
 
     pass
 
 
-@KernelPlugin("auto").register
+@KernelPlugin("auto").register()
 def apply_default_kernels(**kwargs):
-    r"""Applies all default registered kernels to the model.
+    """Applies all default registered kernels to the model.
 
     Args:
         **kwargs: Keyword arguments passed to the kernel application function.
@@ -125,8 +126,11 @@ def apply_default_kernels(**kwargs):
         use_kernels = default_kernels.keys()
     else:
         use_kernels = kwargs.get("include_kernels").split(",")  # "kernel_id1,kernel_id2,kernel_id3"
+
     for kernel in use_kernels:
         if kernel not in default_kernels:
             raise ValueError(f"Kernel {kernel} not found")
+
         apply_kernel(kernel, **kwargs)
+
     return kwargs.get("model")

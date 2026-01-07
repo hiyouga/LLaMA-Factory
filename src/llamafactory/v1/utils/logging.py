@@ -54,7 +54,7 @@ def _get_default_logging_level() -> "logging._Level":
 
 
 def _get_library_name() -> str:
-    return __name__.split(".")[0]
+    return ".".join(__name__.split(".")[:2])  # llamafactory.v1
 
 
 def _get_library_root_logger() -> "_Logger":

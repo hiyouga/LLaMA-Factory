@@ -30,7 +30,7 @@ from ...registry import register_kernel
 
 
 def npu_rms_norm_forward(self, hidden_states):
-    r"""NPU forward implementation for RMSNorm.
+    """NPU forward implementation for RMSNorm.
 
     Args:
         self: RMSNorm module instance with `weight` and `variance_epsilon`.
@@ -46,14 +46,14 @@ def npu_rms_norm_forward(self, hidden_states):
 
 @register_kernel
 class NpuRMSNormKernel(BaseKernel):
-    r"""NPU kernel wrapper for RMSNorm that applies the replacement within a model."""
+    """NPU kernel wrapper for RMSNorm that applies the replacement within a model."""
 
     _kernel_id = "npu_fused_rmsnorm"
     _device = DeviceType.NPU
 
     @classmethod
     def apply(cls, **kwargs) -> "HFModel":
-        r"""Iterate the model and apply NPU-optimized forward to matched RMSNorm modules.
+        """Iterate the model and apply NPU-optimized forward to matched RMSNorm modules.
 
         Key points:
         - Match modules whose class name contains "RMSNorm" (case-insensitive).
@@ -78,6 +78,7 @@ class NpuRMSNormKernel(BaseKernel):
 
         if not cls.check_deps():
             raise RuntimeError(f"torch_npu is not available but {cls.__name__} was called.")
+
         rms_norm_pattern = re.compile("RMSNorm", re.IGNORECASE)
 
         for name, module in model.named_modules():

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import ast
 import json
 import re
 from abc import ABC, abstractmethod
@@ -100,6 +101,8 @@ LING_TOOL_PROMPT = (
     """<tool_call></tool_call> XML tags:\n<tool_call>\n{{"name": <function-name>, """
     """"arguments": <args-json-object>}}\n</tool_call>"""
 )
+
+LFM_TOOL_PROMPT = "List of tools: <|tool_list_start|>{tool_text}<|tool_list_end|>"
 
 
 @dataclass
@@ -546,10 +549,115 @@ class LingToolUtils(QwenToolUtils):
         return LING_TOOL_PROMPT.format(tool_text=tool_text) + "\n" + "detailed thinking off"
 
 
+class LFMToolUtils(ToolUtils):
+    r"""LFM 2.5 tool using template with Pythonic function call syntax."""
+
+    @override
+    @staticmethod
+    def tool_formatter(tools: list[dict[str, Any]]) -> str:
+        tool_list = []
+        for tool in tools:
+            tool = tool.get("function", tool) if tool.get("type") == "function" else tool
+            tool_list.append(tool)
+
+        return LFM_TOOL_PROMPT.format(tool_text=json.dumps(tool_list, ensure_ascii=False))
+
+    @override
+    @staticmethod
+    def function_formatter(functions: list["FunctionCall"]) -> str:
+        calls = []
+        for name, args_json in functions:
+            args = json.loads(args_json)
+            kwargs_parts = []
+            for key, value in args.items():
+                if isinstance(value, str):
+                    kwargs_parts.append(f'{key}="{value}"')
+                else:
+                    kwargs_parts.append(f"{key}={json.dumps(value, ensure_ascii=False)}")
+
+            calls.append(f"{name}({', '.join(kwargs_parts)})")
+
+        return f"<|tool_call_start|>[{', '.join(calls)}]<|tool_call_end|>"
+
+    @staticmethod
+    def _ast_to_value(node: ast.AST) -> Any:
+        """Convert an AST node to a Python value, handling JSON-style booleans/null."""
+        # Handle JSON-style true/false/null as Name nodes
+        if isinstance(node, ast.Name):
+            if node.id == "true":
+                return True
+            elif node.id == "false":
+                return False
+            elif node.id == "null":
+                return None
+            else:
+                raise ValueError(f"Unknown identifier: {node.id}")
+
+        # Use literal_eval for other cases (strings, numbers, lists, dicts)
+        return ast.literal_eval(node)
+
+    @override
+    @staticmethod
+    def tool_extractor(content: str) -> Union[str, list["FunctionCall"]]:
+        # Extract content between tool call markers
+        start_marker = "<|tool_call_start|>"
+        end_marker = "<|tool_call_end|>"
+
+        start_idx = content.find(start_marker)
+        if start_idx == -1:
+            return content
+
+        end_idx = content.find(end_marker, start_idx)
+        if end_idx == -1:
+            return content
+
+        tool_call_str = content[start_idx + len(start_marker) : end_idx].strip()
+
+        # Parse Pythonic function call syntax using AST
+        try:
+            tree = ast.parse(tool_call_str, mode="eval")
+        except SyntaxError:
+            return content
+
+        # Handle both single call and list of calls
+        if isinstance(tree.body, ast.List):
+            call_nodes = tree.body.elts
+        elif isinstance(tree.body, ast.Call):
+            call_nodes = [tree.body]
+        else:
+            return content
+
+        results = []
+        for node in call_nodes:
+            if not isinstance(node, ast.Call):
+                return content
+
+            # Extract function name
+            if isinstance(node.func, ast.Name):
+                func_name = node.func.id
+            else:
+                return content
+
+            # Extract keyword arguments
+            args_dict = {}
+            for keyword in node.keywords:
+                key = keyword.arg
+                try:
+                    value = LFMToolUtils._ast_to_value(keyword.value)
+                except (ValueError, SyntaxError):
+                    return content
+                args_dict[key] = value
+
+            results.append(FunctionCall(func_name, json.dumps(args_dict, ensure_ascii=False)))
+
+        return results if results else content
+
+
 TOOLS = {
     "default": DefaultToolUtils(),
     "glm4": GLM4ToolUtils(),
     "llama3": Llama3ToolUtils(),
+    "lfm": LFMToolUtils(),
     "minimax1": MiniMaxM1ToolUtils(),
     "minimax2": MiniMaxM2ToolUtils(),
     "mistral": MistralToolUtils(),

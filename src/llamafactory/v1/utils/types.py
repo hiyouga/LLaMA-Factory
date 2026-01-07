@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import TYPE_CHECKING, Literal, NotRequired, TypedDict, Union
+from typing import TYPE_CHECKING, Any, Literal, NotRequired, TypedDict, Union
 
 
 if TYPE_CHECKING:
@@ -84,27 +84,63 @@ class DistributedConfig(TypedDict, total=False):
 
 
 class Content(TypedDict):
-    type: Literal["text", "reasoning", "tools", "tool_calls", "image_url"]
+    type: Literal["text", "reasoning", "tool_call", "image_url"]
+    """Type of the content."""
     value: str
+    """Value of the content."""
 
 
 class Message(TypedDict):
     role: Literal["system", "user", "assistant", "tool"]
+    """Role of the message."""
     content: list[Content]
-    loss_weight: float
+    """Content of the message."""
+    loss_weight: NotRequired[float]
+    """Loss weight for this message, default to 1.0. Required in training."""
 
 
 class SFTSample(TypedDict):
     messages: list[Message]
+    """Messages in the sample."""
+    tools: NotRequired[str]
+    """Tools for the sample in JSON string format."""
     extra_info: NotRequired[str]
+    """Extra information for the sample, e.g. kto_labels."""
     _dataset_name: NotRequired[str]
+    """Dataset name for the sample."""
 
 
 class DPOSample(TypedDict):
     chosen_messages: list[Message]
+    """Chosen messages in the sample."""
     rejected_messages: list[Message]
+    """Rejected messages in the sample."""
+    tools: NotRequired[str]
+    """Tools for the sample in JSON string format."""
     extra_info: NotRequired[str]
+    """Extra information for the sample, e.g. kto_labels."""
     _dataset_name: NotRequired[str]
+    """Dataset name for the sample."""
 
 
 Sample = Union[SFTSample, DPOSample]
+
+
+class ToolCall(TypedDict):
+    name: str
+    """Function name."""
+    arguments: dict[str, Any]
+    """Function arguments."""
+
+
+class ModelInput(TypedDict, total=False):
+    input_ids: list[int]
+    """Input ids for the model."""
+    attention_mask: list[int]
+    """Attention mask for the model."""
+    labels: list[int]
+    """Labels for the model."""
+    loss_weights: list[float]
+    """Loss weight for each token, default to 1.0."""
+    position_ids: NotRequired[list[int] | list[list[int]]]
+    """Position ids for the model (optional)."""

@@ -54,18 +54,18 @@ def test_sharegpt_converter():
         "conversations": [
             {"from": "system", "value": "System"},
             {"from": "human", "value": "User"},
-            {"from": "function_call", "value": "Tool"},
+            {"from": "function_call", "value": "1"},
             {"from": "observation", "value": "Observation"},
             {"from": "gpt", "value": "Assistant"},
         ]
     }
     expected_data = {
         "messages": [
-            {"content": [{"type": "text", "value": "System"}], "loss_weight": 0.0, "role": "system"},
-            {"content": [{"type": "text", "value": "User"}], "loss_weight": 0.0, "role": "user"},
-            {"content": [{"type": "tool_calls", "value": "Tool"}], "loss_weight": 1.0, "role": "assistant"},
-            {"content": [{"type": "text", "value": "Observation"}], "loss_weight": 0.0, "role": "tool"},
-            {"content": [{"type": "text", "value": "Assistant"}], "loss_weight": 1.0, "role": "assistant"},
+            {"role": "system", "content": [{"type": "text", "value": "System"}], "loss_weight": 0.0},
+            {"role": "user", "content": [{"type": "text", "value": "User"}], "loss_weight": 0.0},
+            {"role": "assistant", "content": [{"type": "tool_call", "value": "1"}], "loss_weight": 1.0},
+            {"role": "tool", "content": [{"type": "text", "value": "Observation"}], "loss_weight": 0.0},
+            {"role": "assistant", "content": [{"type": "text", "value": "Assistant"}], "loss_weight": 1.0},
         ]
     }
     assert DataConverterPlugin("sharegpt")(example) == expected_data

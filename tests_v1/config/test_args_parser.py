@@ -24,7 +24,6 @@ def test_get_args_from_yaml(tmp_path: pathlib.Path):
         ### model
         model: "llamafactory/tiny-random-qwen2.5"
         trust_remote_code: true
-        use_fast_processor: true
         model_class: "llm"
         kernel_config:
           name: "auto"
