@@ -1331,6 +1331,17 @@ register_template(
 
 
 register_template(
+    name="lfm",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    default_system="You are a helpful AI assistant.",
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
+)
+
+
+register_template(
     name="llama2",
     format_user=StringFormatter(slots=[{"bos_token"}, "[INST] {{content}} [/INST]"]),
     format_system=StringFormatter(slots=["<<SYS>>\n{{content}}\n<</SYS>>\n\n"]),
