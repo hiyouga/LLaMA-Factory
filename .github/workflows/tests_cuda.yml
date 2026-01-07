@@ -27,7 +27,7 @@ jobs:
         python:
           - "3.11"
         os:
-          - "self-hosted"
+          - "linux-x86_64-gpu-2"
 
     runs-on: ${{ matrix.os }}
 
