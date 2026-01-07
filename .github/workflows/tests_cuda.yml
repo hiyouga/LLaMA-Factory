@@ -35,6 +35,11 @@ jobs:
       group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.os }}-${{ matrix.python }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+    env:
+      HF_HOME: "${{ github.workspace }}/../.runner_cache/huggingface"
+      UV_CACHE_DIR: "${{ github.workspace }}/../.runner_cache/uv"
+      UV_NO_SYNC: 1
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -55,35 +60,18 @@ jobs:
           uv pip install -e .
           uv pip install -r requirements/dev.txt
 
-      - name: Cache files
-        id: hf-hub-cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ runner.temp }}/huggingface
-          key: huggingface-${{ matrix.os }}-${{ matrix.python }}-${{ hashFiles('tests/version.txt') }}
-
       - name: Check quality
         run: |
           make style && make quality
-        env:
-          UV_NO_SYNC: 1
 
       - name: Check license
         run: |
           make license
-        env:
-          UV_NO_SYNC: 1
 
       - name: Check build
         run: |
           make build
-        env:
-          UV_NO_SYNC: 1
 
       - name: Test with pytest
         run: |
           make test
-        env:
-          UV_NO_SYNC: 1
-          HF_HOME: ${{ runner.temp }}/huggingface
-          HF_HUB_OFFLINE: "${{ steps.hf-hub-cache.outputs.cache-hit == 'true' && '1' || '0' }}"
