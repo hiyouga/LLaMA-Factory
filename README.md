@@ -515,8 +515,8 @@ huggingface-cli login
 #### Install from Source
 
 ```bash
-git clone --depth 1 https://github.com/hiyouga/LLaMA-Factory.git
-cd LLaMA-Factory
+git clone --depth 1 https://github.com/hiyouga/LlamaFactory.git
+cd LlamaFactory
 pip install -e .
 pip install -r requirements/metrics.txt
 ```
