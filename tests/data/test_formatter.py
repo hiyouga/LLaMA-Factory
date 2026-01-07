@@ -336,3 +336,47 @@ def test_lfm_multi_tool_extractor():
         ("test_tool", """{"foo": "bar", "size": 10}"""),
         ("another_tool", """{"foo": "job", "size": 2}"""),
     ]
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+def test_lfm_tool_extractor_with_nested_dict():
+    formatter = ToolFormatter(tool_format="lfm")
+    result = """<|tool_call_start|>[search(query="test", options={"limit": 10, "offset": 0})]<|tool_call_end|>"""
+    extracted = formatter.extract(result)
+    assert len(extracted) == 1
+    assert extracted[0][0] == "search"
+    args = json.loads(extracted[0][1])
+    assert args["query"] == "test"
+    assert args["options"] == {"limit": 10, "offset": 0}
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+def test_lfm_tool_extractor_with_list_arg():
+    formatter = ToolFormatter(tool_format="lfm")
+    result = """<|tool_call_start|>[batch_process(items=[1, 2, 3], enabled=True)]<|tool_call_end|>"""
+    extracted = formatter.extract(result)
+    assert len(extracted) == 1
+    assert extracted[0][0] == "batch_process"
+    args = json.loads(extracted[0][1])
+    assert args["items"] == [1, 2, 3]
+    assert args["enabled"] is True
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+def test_lfm_tool_extractor_no_match():
+    formatter = ToolFormatter(tool_format="lfm")
+    result = "This is a regular response without tool calls."
+    extracted = formatter.extract(result)
+    assert extracted == result
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+def test_lfm_tool_round_trip():
+    formatter = FunctionFormatter(slots=["{{content}}"], tool_format="lfm")
+    tool_formatter = ToolFormatter(tool_format="lfm")
+    original = {"name": "my_func", "arguments": {"arg1": "hello", "arg2": 42, "arg3": True}}
+    formatted = formatter.apply(content=json.dumps(original))
+    extracted = tool_formatter.extract(formatted[0])
+    assert len(extracted) == 1
+    assert extracted[0][0] == original["name"]
+    assert json.loads(extracted[0][1]) == original["arguments"]
