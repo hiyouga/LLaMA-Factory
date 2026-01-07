@@ -292,3 +292,47 @@ def test_qwen_multi_tool_extractor():
         ("test_tool", """{"foo": "bar", "size": 10}"""),
         ("another_tool", """{"foo": "job", "size": 2}"""),
     ]
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+def test_lfm_function_formatter():
+    formatter = FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="lfm")
+    tool_calls = json.dumps(FUNCTION)
+    assert formatter.apply(content=tool_calls) == [
+        """<|tool_call_start|>[tool_name(foo="bar", size=10)]<|tool_call_end|><|im_end|>\n"""
+    ]
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+def test_lfm_multi_function_formatter():
+    formatter = FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="lfm")
+    tool_calls = json.dumps([FUNCTION] * 2)
+    assert formatter.apply(content=tool_calls) == [
+        """<|tool_call_start|>[tool_name(foo="bar", size=10), tool_name(foo="bar", size=10)]<|tool_call_end|>"""
+        "<|im_end|>\n"
+    ]
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+def test_lfm_tool_formatter():
+    formatter = ToolFormatter(tool_format="lfm")
+    assert formatter.apply(content=json.dumps(TOOLS)) == [
+        "List of tools: <|tool_list_start|>" + json.dumps(TOOLS, ensure_ascii=False) + "<|tool_list_end|>"
+    ]
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+def test_lfm_tool_extractor():
+    formatter = ToolFormatter(tool_format="lfm")
+    result = """<|tool_call_start|>[test_tool(foo="bar", size=10)]<|tool_call_end|>"""
+    assert formatter.extract(result) == [("test_tool", """{"foo": "bar", "size": 10}""")]
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+def test_lfm_multi_tool_extractor():
+    formatter = ToolFormatter(tool_format="lfm")
+    result = """<|tool_call_start|>[test_tool(foo="bar", size=10), another_tool(foo="job", size=2)]<|tool_call_end|>"""
+    assert formatter.extract(result) == [
+        ("test_tool", """{"foo": "bar", "size": 10}"""),
+        ("another_tool", """{"foo": "job", "size": 2}"""),
+    ]
