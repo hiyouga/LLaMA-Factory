@@ -579,6 +579,23 @@ class LFMToolUtils(ToolUtils):
 
         return f"<|tool_call_start|>[{', '.join(calls)}]<|tool_call_end|>"
 
+    @staticmethod
+    def _ast_to_value(node: ast.AST) -> Any:
+        """Convert an AST node to a Python value, handling JSON-style booleans/null."""
+        # Handle JSON-style true/false/null as Name nodes
+        if isinstance(node, ast.Name):
+            if node.id == "true":
+                return True
+            elif node.id == "false":
+                return False
+            elif node.id == "null":
+                return None
+            else:
+                raise ValueError(f"Unknown identifier: {node.id}")
+
+        # Use literal_eval for other cases (strings, numbers, lists, dicts)
+        return ast.literal_eval(node)
+
     @override
     @staticmethod
     def tool_extractor(content: str) -> Union[str, list["FunctionCall"]]:
@@ -625,7 +642,10 @@ class LFMToolUtils(ToolUtils):
             args_dict = {}
             for keyword in node.keywords:
                 key = keyword.arg
-                value = ast.literal_eval(keyword.value)
+                try:
+                    value = LFMToolUtils._ast_to_value(keyword.value)
+                except (ValueError, SyntaxError):
+                    return content
                 args_dict[key] = value
 
             results.append(FunctionCall(func_name, json.dumps(args_dict, ensure_ascii=False)))
