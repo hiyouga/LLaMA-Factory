@@ -29,7 +29,7 @@ Train Phase:
 
 from ..config.training_args import TrainingArguments
 from ..utils.types import HFModel, Processor, TorchDataset
-from .trainer_utils.data_collator import DataCollator
+from .utils.data_collator import DataCollator
 
 
 class BaseTrainer:

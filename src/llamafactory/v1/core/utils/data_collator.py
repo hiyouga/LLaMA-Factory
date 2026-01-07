@@ -23,8 +23,8 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data._utils.collate import default_collate
 
 from ....extras.constants import IGNORE_INDEX
-from ...plugins.data_plugins.template import Template
 from ...utils.types import Processor, Tensor
+from .rendering import Renderer
 
 
 def len2culen(seqlens: "torch.Tensor") -> "torch.Tensor":  # FIXME move to utils
@@ -70,7 +70,7 @@ class DefaultCollator(DataCollator):
     """Example for now."""
 
     processor: "Processor"  # processor name -> map to encode_messages function
-    template: "Template"
+    renderer: "Renderer"
 
     def __call__(self, messages: list[list[dict[str, Any]]]) -> dict[str, Tensor]:
         features = []
@@ -88,8 +88,11 @@ class DefaultCollator(DataCollator):
         else:
             # raw messages need to be encoded
             for message in messages:
-                encoded_message = self.template.encode_messages(self.tokenizer, message)
-                encoded_message = {k: torch.tensor(v, dtype=torch.long) for k, v in encoded_message.items()}
+                encoded_message = self.renderer.render_messages(message)
+                # ModelInput is a dataclass/dict-like, convert to tensor dict
+                encoded_message = {
+                    k: torch.tensor(v, dtype=torch.long) for k, v in encoded_message.items() if isinstance(v, list)
+                }
                 features.append(encoded_message)
 
         return super().__call__(features)
@@ -105,7 +108,7 @@ class DataCollatorWithPacking(DefaultCollator):
     """Data collator with packing."""
 
     processor: "Processor"
-    template: "Template"
+    renderer: "Renderer"
 
     def __call__(self, features: Sequence[dict[str, "torch.Tensor"]]) -> dict[str, "torch.Tensor"]:
         seqlens = torch.tensor([len(feature["input_ids"]) for feature in features], dtype=torch.long)
