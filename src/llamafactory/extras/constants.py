@@ -1519,6 +1519,17 @@ register_model_group(
 
 register_model_group(
     models={
+        "LFM2.5-Audio-1.5B": {
+            DownloadSource.DEFAULT: "LiquidAI/LFM2.5-Audio-1.5B",
+        },
+    },
+    template="lfm2_audio",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
         "Llama-7B": {
             DownloadSource.DEFAULT: "huggyllama/llama-7b",
             DownloadSource.MODELSCOPE: "skyline2006/llama-7b",
