@@ -431,3 +431,44 @@ def test_lfm2_vl_plugin():
     assert lfm2_vl_plugin.video_token is None
     assert lfm2_vl_plugin.audio_token is None
     assert lfm2_vl_plugin.__class__.__name__ == "LFMVLPlugin"
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+def test_lfm2_audio_plugin():
+    """Test LFM2.5-Audio plugin instantiation."""
+    # Test plugin can be instantiated with correct tokens
+    lfm2_audio_plugin = get_mm_plugin(
+        name="lfm2_audio",
+        audio_token="<|reserved_1|>",
+        audio_bos_token="<|audio_start|>",
+        audio_eos_token="<|text_start|>",
+    )
+    assert lfm2_audio_plugin is not None
+    assert lfm2_audio_plugin.audio_token == "<|reserved_1|>"
+    assert lfm2_audio_plugin.audio_bos_token == "<|audio_start|>"
+    assert lfm2_audio_plugin.audio_eos_token == "<|text_start|>"
+    assert lfm2_audio_plugin.image_token is None
+    assert lfm2_audio_plugin.video_token is None
+    assert lfm2_audio_plugin.__class__.__name__ == "LFM2AudioPlugin"
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+def test_lfm2_audio_plugin_process_messages():
+    """Test LFM2.5-Audio placeholder replacement."""
+    lfm2_audio_plugin = get_mm_plugin(
+        name="lfm2_audio",
+        audio_token="<|reserved_1|>",
+        audio_bos_token="<|audio_start|>",
+        audio_eos_token="<|text_start|>",
+    )
+    messages = [{"content": "Transcribe this: <audio>"}]
+    processed = lfm2_audio_plugin.process_messages(
+        messages=messages,
+        images=[],
+        videos=[],
+        audios=["dummy.wav"],
+        processor=None,
+    )
+    # Without processor: single token expansion
+    expected = "Transcribe this: <|audio_start|><|reserved_1|><|text_start|>"
+    assert processed[0]["content"] == expected
