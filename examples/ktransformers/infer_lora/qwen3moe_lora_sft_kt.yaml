@@ -5,6 +5,6 @@ infer_backend: ktransformers  # choices: [huggingface, vllm, sglang, ktransforme
 trust_remote_code: true
 
 use_kt: true # use KTransformers as LoRA sft backend to inference
-kt_optimize_rule: examples/kt_optimize_rules/Qwen3Moe-sft-amx.yaml
+kt_optimize_rule: examples/ktransformers/kt_optimize_rules/Qwen3Moe-sft-amx.yaml
 cpu_infer: 32
 chunk_size: 8192
