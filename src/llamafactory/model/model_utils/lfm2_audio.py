@@ -99,7 +99,14 @@ class LFM2AudioModelForCausalLM(PreTrainedModel, GenerationMixin):
         device_map: Optional[str] = None,
         **kwargs,
     ) -> "LFM2AudioModelForCausalLM":
-        """Load LFM2.5-Audio model using liquid_audio package."""
+        """Load LFM2.5-Audio model using liquid_audio package.
+
+        Supports both:
+        1. Original liquid_audio models (from HuggingFace hub or local liquid format)
+        2. Merged/exported models (safetensors format from LLaMA-Factory export)
+        """
+        from pathlib import Path
+
         if not is_liquid_audio_available():
             raise ImportError(
                 "liquid-audio package is required for LFM2.5-Audio models. "
@@ -130,7 +137,70 @@ class LFM2AudioModelForCausalLM(PreTrainedModel, GenerationMixin):
         logger.info_rank0(f"Loading LFM2.5-Audio model from {pretrained_model_name_or_path}")
         logger.info_rank0(f"Using dtype={torch_dtype}, device={device}")
 
-        # Load using liquid_audio
+        # Check if this is a merged/exported model (has safetensors but no liquid_audio config)
+        model_path = Path(pretrained_model_name_or_path)
+        is_merged_model = (
+            model_path.exists()
+            and model_path.is_dir()
+            and (model_path / "model.safetensors.index.json").exists()
+            and not (model_path / "lfm2_audio_config.yaml").exists()
+        )
+
+        if is_merged_model:
+            # Load merged model: first create base from original, then load merged weights
+            logger.info_rank0("Detected merged model, loading base model then applying merged weights...")
+
+            # We need to load base model first to get the structure
+            # Try to find original model name from config or use default
+            base_model_id = "LiquidAI/LFM2.5-Audio-1.5B"
+
+            liquid_model = LFM2AudioModel.from_pretrained(
+                base_model_id,
+                dtype=torch_dtype,
+                device=device,
+            )
+
+            # Create config from liquid model
+            lfm_config = liquid_model.conf.lfm
+            if config is None:
+                config = LFM2AudioConfig(
+                    vocab_size=lfm_config.vocab_size,
+                    hidden_size=lfm_config.hidden_size,
+                    num_hidden_layers=lfm_config.num_hidden_layers,
+                    num_attention_heads=lfm_config.num_attention_heads,
+                    num_key_value_heads=lfm_config.num_key_value_heads,
+                    codebooks=liquid_model.conf.codebooks,
+                    torch_dtype=torch_dtype,
+                )
+
+            # Create wrapper instance
+            wrapper = cls(config)
+            wrapper._liquid_model = liquid_model
+            wrapper._is_loaded = True
+
+            # Load merged weights from safetensors
+            import json
+
+            from safetensors.torch import load_file
+
+            index_file = model_path / "model.safetensors.index.json"
+            with open(index_file) as f:
+                index = json.load(f)
+
+            # Load all shards
+            weight_files = set(index["weight_map"].values())
+            merged_state_dict = {}
+            for weight_file in weight_files:
+                shard_path = model_path / weight_file
+                merged_state_dict.update(load_file(str(shard_path)))
+
+            # Load merged weights (with strict=False to handle tied weights)
+            wrapper.load_state_dict(merged_state_dict, strict=False)
+            logger.info_rank0(f"Loaded merged weights from {pretrained_model_name_or_path}")
+
+            return wrapper
+
+        # Standard path: load using liquid_audio
         liquid_model = LFM2AudioModel.from_pretrained(
             pretrained_model_name_or_path,
             dtype=torch_dtype,
