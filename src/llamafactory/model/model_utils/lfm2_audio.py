@@ -79,6 +79,9 @@ class LFM2AudioModelForCausalLM(PreTrainedModel, GenerationMixin):
         self._liquid_model = None
         self._is_loaded = False
         # Initialize generation_config for HuggingFace compatibility
+        # LFM2.5-Audio token IDs from tokenizer_config.json:
+        #   eos_token_id=7 -> <|im_end|> (end of message marker)
+        #   pad_token_id=0 -> <unk> (unknown/padding token)
         self.generation_config = GenerationConfig(
             eos_token_id=config.eos_token_id if hasattr(config, "eos_token_id") else 7,
             pad_token_id=config.pad_token_id if hasattr(config, "pad_token_id") else 0,

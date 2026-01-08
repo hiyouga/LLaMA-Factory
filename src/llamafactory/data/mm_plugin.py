@@ -2216,13 +2216,19 @@ class LFM2AudioPlugin(BasePlugin):
         if hasattr(processor, "audio_processor") and processor.audio_processor is not None:
             audio_processor = processor.audio_processor
             audios_regularized = self._regularize_audios(audios, sampling_rate=16000)["audios"]
-            # liquid_audio returns log-mel features
+
+            # Calculate per-audio sequence lengths BEFORE batching (each audio may have different length)
+            # FastConformer uses 8x subsampling: seq_len = (audio_samples - 1) // 8 + 1
+            audio_seq_lengths = []
+            for audio_array in audios_regularized:
+                audio_len = len(audio_array) if hasattr(audio_array, "__len__") else audio_array.shape[-1]
+                seq_len = (audio_len - 1) // 8 + 1
+                audio_seq_lengths.append(seq_len)
+
+            # liquid_audio returns log-mel features (may pad to max length)
             features = audio_processor(audios_regularized, sampling_rate=16000)
             mm_inputs["audio_features"] = features
-            # Calculate sequence lengths from feature shapes (8x subsampling in FastConformer)
-            if hasattr(features, "shape"):
-                seq_len = (features.shape[-1] - 1) // 8 + 1
-                mm_inputs["audio_seq_lengths"] = [seq_len] * len(audios)
+            mm_inputs["audio_seq_lengths"] = audio_seq_lengths
         # Fallback: standard HF feature_extractor
         elif hasattr(processor, "feature_extractor") and processor.feature_extractor is not None:
             feature_extractor: SequenceFeatureExtractor = processor.feature_extractor
