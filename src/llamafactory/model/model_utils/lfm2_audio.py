@@ -73,6 +73,8 @@ class LFM2AudioModelForCausalLM(PreTrainedModel, GenerationMixin):
     _no_split_modules = ["Lfm2DecoderLayer", "ConformerBlock"]
     main_input_name = "input_ids"
     _supports_cache_class = True
+    # Skip tied weights when saving (depth_embeddings.*.embedding.weight == .*.to_logits.weight)
+    _keys_to_ignore_on_save = [f"_liquid_model.depth_embeddings.{i}.to_logits.weight" for i in range(8)]
 
     def __init__(self, config: LFM2AudioConfig):
         super().__init__(config)
