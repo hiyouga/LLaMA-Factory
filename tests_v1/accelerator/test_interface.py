@@ -56,4 +56,5 @@ def test_all_device():
 @pytest.mark.require_distributed(2)
 def test_multi_device():
     master_port = find_available_port()
-    mp.spawn(_all_reduce_tests, args=(2, master_port), nprocs=2)
+    world_size = 2
+    mp.spawn(_all_reduce_tests, args=(world_size, master_port), nprocs=world_size)

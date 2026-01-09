@@ -82,14 +82,17 @@ class DataEngine(Dataset):
 
     def _load_dataset(self) -> None:
         """Load datasets according to dataset info."""
+        is_streaming = [dataset_info.get("streaming", False) for dataset_info in self.dataset_infos.values()]
+        self.streaming = any(is_streaming)
+        if all(is_streaming) != any(is_streaming):
+            raise ValueError("All datasets must be streaming or non-streaming.")
+
         for dataset_name, dataset_info in self.dataset_infos.items():
             split = dataset_info.get("split", "train")
-            streaming = dataset_info.get("streaming", False)
-            self.streaming |= streaming
             if dataset_info.get("source", "hf_hub") == "hf_hub":
                 from datasets import load_dataset
 
-                self.datasets[dataset_name] = load_dataset(dataset_info["path"], split=split, streaming=streaming)
+                self.datasets[dataset_name] = load_dataset(dataset_info["path"], split=split, streaming=self.streaming)
             else:  # data loader plugin
                 from ..plugins.data_plugins.loader import DataLoaderPlugin
 
@@ -98,8 +101,7 @@ class DataEngine(Dataset):
     def _build_data_index(self) -> None:
         """Build dataset index."""
         for dataset_name, dataset in self.datasets.items():
-            streaming = self.dataset_infos[dataset_name].get("streaming", False)
-            if streaming:
+            if self.streaming:
                 data_index = [(dataset_name, -1) for _ in range(1000)]
             else:
                 data_index = [(dataset_name, sample_index) for sample_index in range(len(dataset))]
@@ -185,8 +187,8 @@ class DataEngine(Dataset):
 
 if __name__ == "__main__":
     """
-    python -m llamafactory.v1.core.data_engine --model none --dataset data/v1_sft_demo.yaml
-    python -m llamafactory.v1.core.data_engine --model none --dataset data/v1_dpo_demo.yaml
+    python -m llamafactory.v1.core.data_engine --dataset data/v1_sft_demo.yaml
+    python -m llamafactory.v1.core.data_engine --dataset data/v1_dpo_demo.yaml
     """
     from ..config.arg_parser import get_args
 
