@@ -28,8 +28,9 @@ Train Phase:
 """
 
 from ..config.training_args import TrainingArguments
-from ..utils.types import HFModel, Processor, TorchDataset
-from .trainer_utils.data_collator import DataCollator
+from ..utils.types import HFModel, TorchDataset
+from .utils.data_collator import DataCollator
+from .utils.rendering import Renderer
 
 
 class BaseTrainer:
@@ -37,21 +38,21 @@ class BaseTrainer:
         self,
         args: TrainingArguments,
         model: HFModel,
-        processor: Processor,
+        renderer: Renderer,
         dataset: TorchDataset,
     ) -> None:
         self.args = args
         self.model = model
-        self.processor = processor
+        self.renderer = renderer
         self.dataset = dataset
         self.data_collator = DataCollator()
         self.optimizer = None
         self.lr_scheduler = None
 
-    def init_model_and_optimizer(self) -> None:
+    def _create_dataloader(self) -> None:
         pass
 
-    def create_dataloader(self) -> None:
+    def _init_model_and_optimizer(self) -> None:
         pass
 
     def fit(self) -> None:
