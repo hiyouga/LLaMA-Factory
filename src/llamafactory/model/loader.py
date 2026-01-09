@@ -230,7 +230,7 @@ def load_model(
         )
         from ..v1.plugins.model_plugins.kernels.interface import apply_default_kernels
 
-        model = apply_default_kernels(model=model, include_kernels=model_args.use_v1_kernels)
+        model = apply_default_kernels(model, include_kernels=model_args.use_v1_kernels)
 
     trainable_params, all_param = count_parameters(model)
     if is_trainable:

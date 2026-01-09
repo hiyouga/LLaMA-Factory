@@ -15,11 +15,11 @@
 import asyncio
 import os
 from abc import ABC, abstractmethod
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator
 from threading import Thread
 
 import torch
-from transformers import TextIteratorStreamer
+from transformers import AsyncTextIteratorStreamer
 
 from ..accelerator.interface import DistributedInterface
 from ..config import ModelArguments, SampleArguments, SampleBackend
@@ -88,39 +88,26 @@ class HuggingFaceEngine(BaseEngine):
         self.semaphore = asyncio.Semaphore(int(os.getenv("MAX_CONCURRENT", "1")))
 
     @torch.inference_mode()
-    def get_response(self, messages: list[Message], tools: str | None = None) -> Generator[str, None, None]:
-        model_inputs = self.renderer.render_messages(messages, tools, is_generate=True)
-        streamer = TextIteratorStreamer(
-            tokenizer=get_tokenizer(self.renderer.processor),
-            skip_prompt=True,
-            skip_special_tokens=True,  # TODO: configurable
-        )
-        device = DistributedInterface().current_device
-        kwargs = {
-            "input_ids": torch.tensor([model_inputs["input_ids"]]).to(device),
-            "attention_mask": torch.tensor([model_inputs["attention_mask"]]).to(device),
-            "max_new_tokens": self.args.max_new_tokens,
-            "streamer": streamer,
-        }
-        thread = Thread(target=self.model.generate, kwargs=kwargs, daemon=True)
-        thread.start()
-
-        def stream():
-            try:
-                return streamer.__next__()
-            except StopIteration:
-                raise StopAsyncIteration()
-
-        return stream
-
     async def generate(self, messages: list[Message], tools: str | None = None) -> AsyncGenerator[str, None]:
         async with self.semaphore:
-            response = self.get_response(messages, tools)
-            while True:
-                try:
-                    yield await asyncio.to_thread(response)
-                except StopAsyncIteration:
-                    break
+            model_inputs = self.renderer.render_messages(messages, tools, is_generate=True)
+            streamer = AsyncTextIteratorStreamer(
+                tokenizer=get_tokenizer(self.renderer.processor),
+                skip_prompt=True,
+                skip_special_tokens=True,  # TODO: configurable
+            )
+            device = DistributedInterface().current_device
+            kwargs = {
+                "input_ids": torch.tensor([model_inputs["input_ids"]]).to(device),
+                "attention_mask": torch.tensor([model_inputs["attention_mask"]]).to(device),
+                "max_new_tokens": self.args.max_new_tokens,
+                "streamer": streamer,
+            }
+            thread = Thread(target=self.model.generate, kwargs=kwargs, daemon=True)
+            thread.start()
+
+            async for token in streamer:
+                yield token
 
     async def batch_infer(self, dataset: TorchDataset) -> list[Sample]:
         """Batch infer samples.
