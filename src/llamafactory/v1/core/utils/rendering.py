@@ -12,6 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Rendering utils.
+
+How to use:
+renderer = Renderer(template, processor)
+renderer.render_messages(messages: list[Message], tools: str | None) -> ModelInputs
+renderer.parse_message(text: str) -> Message
+renderer.process_samples(samples: list[Sample]) -> list[ModelInput]
+"""
 
 import numpy as np
 

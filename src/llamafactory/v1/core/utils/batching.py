@@ -12,18 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""guidlines: fetch until get fixed batchsize.
-
-save state_dict for buffer.
-resume with state.
+"""Batching utils supports stateful dataloader.
 
 1. Init stateful dataloader (tokenize)
-2. Add to buffer (2 * max seq len per device)
+2. Add to buffer
 3. Yield batch indexes (micro batch * grad acc)
-a ) non pack + non dynamic
-b ) non pack + dynamic
-c ) pack + non dynamic
-d ) pack + dynamic
+    a) non pack + non dynamic
+    b) non pack + dynamic
+    c) pack + non dynamic
+    d) pack + dynamic
 """
 
 from collections.abc import Iterator
