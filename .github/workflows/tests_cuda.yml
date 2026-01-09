@@ -38,6 +38,8 @@ jobs:
     env:
       HF_HOME: "${{ github.workspace }}/../.runner_cache/huggingface"
       UV_CACHE_DIR: "${{ github.workspace }}/../.runner_cache/uv"
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      OS_NAME: ${{ matrix.os }}
       UV_NO_SYNC: 1
 
     steps:
