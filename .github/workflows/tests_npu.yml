@@ -43,6 +43,7 @@ jobs:
         HF_ENDPOINT: https://hf-mirror.com
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
         OS_NAME: ${{ matrix.os }}
+        UV_NO_SYNC: 1
 
     steps:
       - name: Checkout
@@ -69,35 +70,18 @@ jobs:
           curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
           apt-get install -y nodejs
 
-      - name: Cache files
-        id: hf-hub-cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ runner.temp }}/huggingface
-          key: huggingface-${{ matrix.os }}-${{ matrix.python }}-${{ hashFiles('tests/version.txt') }}
-
       - name: Check quality
         run: |
           make style && make quality
-        env:
-          UV_NO_SYNC: 1
 
       - name: Check license
         run: |
           make license
-        env:
-          UV_NO_SYNC: 1
 
       - name: Check build
         run: |
           make build
-        env:
-          UV_NO_SYNC: 1
 
       - name: Test with pytest
         run: |
           make test
-        env:
-          UV_NO_SYNC: 1
-          HF_HOME: /root/.cache/huggingface
-          HF_HUB_OFFLINE: "${{ steps.hf-hub-cache.outputs.cache-hit == 'true' && '1' || '0' }}"
