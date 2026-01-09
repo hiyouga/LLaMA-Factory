@@ -1910,6 +1910,17 @@ register_template(
 )
 
 
+register_template(
+    name="phi4_mini",
+    format_user=StringFormatter(slots=["<|user|>{{content}}<|end|><|assistant|>"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|end|>"]),
+    format_system=StringFormatter(slots=["<|system|>{{content}}<|end|>"]),
+    format_tools=StringFormatter(slots=["<|tool|>{{content}}<|/tool|>"]),
+    stop_words=["<|end|>"],
+    replace_eos=True,
+)
+
+
 # copied from ministral template
 register_template(
     name="pixtral",
