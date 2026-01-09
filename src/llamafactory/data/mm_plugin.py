@@ -1466,6 +1466,85 @@ class Qwen2AudioPlugin(BasePlugin):
 
 
 @dataclass
+class AudioFlamingo3Plugin(BasePlugin):
+    # AF3 processor handles token expansion via apply_chat_template()
+    # Don't expand in plugin - delegate to processor for correct windowing calculation
+    expand_mm_tokens: bool = False
+
+    @override
+    def _get_mm_inputs(
+        self,
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        processor: "MMProcessor",
+        **kwargs,
+    ) -> dict[str, "torch.Tensor"]:
+        r"""Process audio inputs for Audio-Flamingo-3."""
+        feature_extractor: SequenceFeatureExtractor = getattr(processor, "feature_extractor", None)
+        mm_inputs = {}
+
+        if len(audios) != 0:
+            audios = self._regularize_audios(
+                audios,
+                sampling_rate=getattr(processor, "audio_sampling_rate", 16000),
+            )["audios"]
+            mm_inputs.update(
+                feature_extractor(
+                    audios,
+                    sampling_rate=getattr(processor, "audio_sampling_rate", 16000),
+                    return_attention_mask=True,
+                    padding="max_length",
+                    return_tensors="pt",
+                )
+            )
+
+        return mm_inputs
+
+    @override
+    def process_messages(
+        self,
+        messages: list[dict[str, str]],
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        processor: Optional["MMProcessor"],
+    ) -> list[dict[str, str]]:
+        self._validate_input(processor, images, videos, audios)
+        self._validate_messages(messages, images, videos, audios)
+        messages = deepcopy(messages)
+
+        for message in messages:
+            content = message["content"]
+            # AF3 uses <sound> as placeholder, map <audio> -> <sound> for dataset compatibility
+            # Replace one placeholder per audio (AF3 expects 1 placeholder per audio message)
+            if AUDIO_PLACEHOLDER in content:
+                content = content.replace(AUDIO_PLACEHOLDER, self.audio_token, 1)
+            message["content"] = content
+
+        return messages
+
+    @override
+    def get_mm_inputs(
+        self,
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        imglens: list[int],
+        vidlens: list[int],
+        audlens: list[int],
+        batch_ids: list[list[int]],
+        processor: Optional["MMProcessor"],
+    ) -> dict[str, Union[list[int], "torch.Tensor"]]:
+        self._validate_input(processor, images, videos, audios)
+        mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+        # AF3 model expects input_features_mask, but feature_extractor returns attention_mask
+        if "attention_mask" in mm_inputs:
+            mm_inputs["input_features_mask"] = mm_inputs.pop("attention_mask")
+        return mm_inputs
+
+
+@dataclass
 class Qwen2VLPlugin(BasePlugin):
     vision_bos_token: str = "<|vision_start|>"
     vision_eos_token: str = "<|vision_end|>"
