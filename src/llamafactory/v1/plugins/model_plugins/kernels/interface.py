@@ -24,12 +24,13 @@ Init Phase:
 import importlib
 from pathlib import Path
 
-from ....utils.logging import get_logger
+from ....utils import logging
 from ....utils.plugin import BasePlugin
+from ....utils.types import HFModel
 from .registry import Registry
 
 
-logger = get_logger(__name__)
+logger = logging.get_logger(__name__)
 
 
 def scan_all_kernels():
@@ -110,27 +111,30 @@ class KernelPlugin(BasePlugin):
 
 
 @KernelPlugin("auto").register()
-def apply_default_kernels(**kwargs):
+def apply_default_kernels(model: HFModel, include_kernels: str = None) -> HFModel:
     """Applies all default registered kernels to the model.
 
     Args:
-        **kwargs: Keyword arguments passed to the kernel application function.
-                  Typically includes the model instance and the include_kernels configuration.
+        model (HFModel): The model instance to apply kernels to.
+        include_kernels (str, optional): Comma-separated list of kernel IDs to apply.
+                                         If "auto" or True, applies all default kernels.
+                                         If None or False, no kernels are applied.
+                                         Defaults to None.
 
     Returns:
         HFModel: The model with applied kernels.
     """
-    if not kwargs.get("include_kernels"):  # None/False/empty string
-        return kwargs.get("model")
-    elif kwargs.get("include_kernels") == "auto" or kwargs.get("include_kernels") is True:  # True/auto
+    if not include_kernels:
+        return model
+    elif include_kernels == "auto" or include_kernels is True:
         use_kernels = default_kernels.keys()
     else:
-        use_kernels = kwargs.get("include_kernels").split(",")  # "kernel_id1,kernel_id2,kernel_id3"
+        use_kernels = include_kernels.split(",")  # "kernel_id1,kernel_id2,kernel_id3"
 
     for kernel in use_kernels:
         if kernel not in default_kernels:
             raise ValueError(f"Kernel {kernel} not found")
 
-        apply_kernel(kernel, **kwargs)
+        apply_kernel(kernel, model=model)
 
-    return kwargs.get("model")
+    return model

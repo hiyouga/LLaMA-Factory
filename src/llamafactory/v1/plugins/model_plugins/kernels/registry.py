@@ -20,8 +20,6 @@ Init Phase:
 
 """
 
-from typing import Optional
-
 from ....accelerator.helper import get_current_accelerator
 from .base import BaseKernel
 
@@ -73,14 +71,14 @@ class Registry:
         return kernel_cls
 
     @classmethod
-    def get(cls, kernel_id: str) -> Optional[type[BaseKernel]]:
+    def get(cls, kernel_id: str) -> type[BaseKernel] | None:
         """Retrieves a registered kernel implementation by its ID.
 
         Args:
             kernel_id (str): The ID of the kernel to retrieve.
 
         Returns:
-            Optional[type[BaseKernel]]: The kernel class if found, else ``None``.
+            type[BaseKernel] | None: The kernel class if found, else ``None``.
         """
         return cls._kernels.get(kernel_id)
 

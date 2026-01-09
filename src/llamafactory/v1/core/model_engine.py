@@ -87,7 +87,7 @@ class ModelEngine:
     def _init_model(self) -> HFModel:
         """Init model.
 
-        Let transformers handle the model init context.
+        Transformers can choose the proper model init context.
         https://github.com/huggingface/transformers/blob/v5.0.0rc0/src/transformers/modeling_utils.py#L3538
         """
         if self.args.model_class == ModelClass.LLM:
@@ -141,7 +141,7 @@ class ModelEngine:
             from ..plugins.model_plugins.kernels.interface import KernelPlugin
 
             model = KernelPlugin(self.args.kernel_config.name)(
-                model=model, include_kernels=self.args.kernel_config.get("include_kernels")
+                model, include_kernels=self.args.kernel_config.get("include_kernels")
             )
 
         return model
