@@ -2239,6 +2239,7 @@ class LFMVLPlugin(BasePlugin):
 
 
 PLUGINS = {
+    "audio_flamingo_3": AudioFlamingo3Plugin,
     "base": BasePlugin,
     "ernie_vl": ErnieVLPlugin,
     "gemma3": Gemma3Plugin,
