@@ -22,7 +22,3 @@ class DataArguments:
         default=None,
         metadata={"help": "Path to the dataset."},
     )
-    cutoff_len: int = field(
-        default=2048,
-        metadata={"help": "Cutoff length for the dataset."},
-    )

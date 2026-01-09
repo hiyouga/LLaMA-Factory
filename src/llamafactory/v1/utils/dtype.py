@@ -32,8 +32,8 @@ class DtypeRegistry:
 class DtypeInterface:
     """Type of precision used."""
 
-    _is_fp16_available = is_torch_fp16_available_on_device(DistributedInterface.current_accelerator)
-    _is_bf16_available = is_torch_bf16_available_on_device(DistributedInterface.current_accelerator)
+    _is_fp16_available = is_torch_fp16_available_on_device(DistributedInterface().current_device)
+    _is_bf16_available = is_torch_bf16_available_on_device(DistributedInterface().current_device)
     _is_fp32_available = True
 
     @staticmethod

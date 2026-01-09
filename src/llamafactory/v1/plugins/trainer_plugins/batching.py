@@ -12,22 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .arg_parser import InputArgument, get_args
-from .arg_utils import BatchingStrategy, ModelClass, SampleBackend
-from .data_args import DataArguments
-from .model_args import ModelArguments
-from .sample_args import SampleArguments
-from .training_args import TrainingArguments
+from ...utils.plugin import BasePlugin
 
 
-__all__ = [
-    "BatchingStrategy",
-    "DataArguments",
-    "InputArgument",
-    "ModelArguments",
-    "ModelClass",
-    "SampleArguments",
-    "SampleBackend",
-    "TrainingArguments",
-    "get_args",
-]
+class BatchingPlugin(BasePlugin):
+    pass

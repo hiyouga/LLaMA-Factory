@@ -29,7 +29,6 @@ Train Phase:
 
 from ..config.training_args import TrainingArguments
 from ..utils.types import HFModel, TorchDataset
-from .utils.data_collator import DataCollator
 from .utils.rendering import Renderer
 
 
@@ -45,7 +44,6 @@ class BaseTrainer:
         self.model = model
         self.renderer = renderer
         self.dataset = dataset
-        self.data_collator = DataCollator()
         self.optimizer = None
         self.lr_scheduler = None
 
