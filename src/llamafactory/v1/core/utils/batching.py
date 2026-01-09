@@ -153,10 +153,10 @@ class BatchGenerator(Iterator):
 
     def __iter__(self):
         if not self._is_resuming:
-            self._data_iter = iter(self._data_provider)
             self._buffer.clear()
             self._buffer_tokens = 0
 
+        self._data_iter = iter(self._data_provider)
         self._is_resuming = False
         return self
 
