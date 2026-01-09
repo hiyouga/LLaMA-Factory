@@ -340,7 +340,7 @@ def get_train_args(args: dict[str, Any] | list[str] | None = None) -> _TRAIN_CLS
     if training_args.deepspeed is not None and (finetuning_args.use_galore or finetuning_args.use_apollo):
         raise ValueError("GaLore and APOLLO are incompatible with DeepSpeed yet.")
 
-    if training_args.fp8 and training_args.quantization_bit is not None:
+    if training_args.fp8 and model_args.quantization_bit is not None:
         raise ValueError("FP8 training is not compatible with quantization. Please disable one of them.")
 
     if model_args.infer_backend != EngineName.HF:
