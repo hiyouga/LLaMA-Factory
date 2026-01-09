@@ -54,6 +54,7 @@ jobs:
     env:
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
       OS_NAME: ${{ matrix.os }}
+      UV_NO_SYNC: 1
 
     steps:
       - name: Checkout
@@ -88,25 +89,18 @@ jobs:
       - name: Check quality
         run: |
           make style && make quality
-        env:
-          UV_NO_SYNC: 1
 
       - name: Check license
         run: |
           make license
-        env:
-          UV_NO_SYNC: 1
 
       - name: Check build
         run: |
           make build
-        env:
-          UV_NO_SYNC: 1
 
       - name: Test with pytest
         run: |
           make test
         env:
-          UV_NO_SYNC: 1
           HF_HOME: ${{ runner.temp }}/huggingface
           HF_HUB_OFFLINE: "${{ steps.hf-hub-cache.outputs.cache-hit == 'true' && '1' || '0' }}"
