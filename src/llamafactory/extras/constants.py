@@ -1159,6 +1159,29 @@ register_model_group(
 
 register_model_group(
     models={
+        "HY-MT1.5-1.8B": {
+            DownloadSource.DEFAULT: "tencent/HY-MT1.5-1.8B",
+            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/HY-MT1.5-1.8B",
+        },
+        "HY-MT1.5-7B": {
+            DownloadSource.DEFAULT: "tencent/HY-MT1.5-7B",
+            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/HY-MT1.5-7B",
+        },
+        "HY-MT1.5-1.8B-FP8": {
+            DownloadSource.DEFAULT: "tencent/HY-MT1.5-1.8B-FP8",
+            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/HY-MT1.5-1.8B-FP8",
+        },
+        "HY-MT1.5-7B-FP8": {
+            DownloadSource.DEFAULT: "tencent/HY-MT1.5-7B-FP8",
+            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/HY-MT1.5-7B-FP8",
+        },
+    },
+    template="hunyuan_1_5",
+)
+
+
+register_model_group(
+    models={
         "Index-1.9B-Base": {
             DownloadSource.DEFAULT: "IndexTeam/Index-1.9B",
             DownloadSource.MODELSCOPE: "IndexTeam/Index-1.9B",
