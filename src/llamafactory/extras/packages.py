@@ -122,3 +122,7 @@ def is_uvicorn_available():
 
 def is_vllm_available():
     return _is_package_available("vllm")
+
+
+def is_liquid_audio_available():
+    return _is_package_available("liquid_audio")
