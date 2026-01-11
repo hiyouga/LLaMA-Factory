@@ -15,7 +15,7 @@
 """The definition of data engine.
 
 How to use:
-data_engine = DataEngine(data_args)
+data_engine = DataEngine(data_args.train_dataset)
 data_engine[i]: Get the sample via index.
 
 Init workflow:
@@ -41,7 +41,6 @@ from huggingface_hub import hf_hub_download
 from omegaconf import OmegaConf
 from torch.utils.data import Dataset
 
-from ..config.data_args import DataArguments
 from ..utils.types import DatasetInfo, HFDataset, Sample
 
 
@@ -52,9 +51,9 @@ class DataEngine(Dataset):
         data_args: Data arguments.
     """
 
-    def __init__(self, data_args: DataArguments) -> None:
-        self.args = data_args
-        """Data arguments."""
+    def __init__(self, dataset_path: str) -> None:
+        self.path = dataset_path
+        """Dataset path."""
         self.datasets: dict[str, HFDataset] = {}
         """Dict of (dataset_name, dataset)"""
         self.dataset_infos: dict[str, DatasetInfo] = {}
@@ -69,16 +68,16 @@ class DataEngine(Dataset):
 
     def _get_dataset_info(self) -> None:
         """Get dataset info from data arguments."""
-        if self.args.dataset.endswith(".yaml") and os.path.isfile(self.args.dataset):  # local file
-            self.dataset_infos = OmegaConf.load(self.args.dataset)
-        elif self.args.dataset.endswith(".yaml"):  # hf hub uri, e.g. llamafactory/v1-sft-demo/dataset_info.yaml
-            repo_id, filename = os.path.split(self.args.dataset)
+        if self.path.endswith(".yaml") and os.path.isfile(self.path):  # local file
+            self.dataset_infos = OmegaConf.load(self.path)
+        elif self.path.endswith(".yaml"):  # hf hub uri, e.g. llamafactory/v1-sft-demo/dataset_info.yaml
+            repo_id, filename = os.path.split(self.path)
             filepath = hf_hub_download(repo_id=repo_id, filename=filename, repo_type="dataset")
             self.dataset_infos = OmegaConf.load(filepath)
-        elif os.path.exists(self.args.dataset):  # local file(s)
-            self.dataset_infos = {"default": {"path": self.args.dataset, "source": "local"}}
+        elif os.path.exists(self.path):  # local file(s)
+            self.dataset_infos = {"default": {"path": self.path, "source": "local"}}
         else:  # hf hub dataset, e.g. llamafactory/v1-sft-demo
-            self.dataset_infos = {"default": {"path": self.args.dataset}}
+            self.dataset_infos = {"default": {"path": self.path}}
 
     def _load_dataset(self) -> None:
         """Load datasets according to dataset info."""
@@ -187,11 +186,11 @@ class DataEngine(Dataset):
 
 if __name__ == "__main__":
     """
-    python -m llamafactory.v1.core.data_engine --dataset data/v1_sft_demo.yaml
-    python -m llamafactory.v1.core.data_engine --dataset data/v1_dpo_demo.yaml
+    python -m llamafactory.v1.core.data_engine --train_dataset data/v1_sft_demo.yaml
+    python -m llamafactory.v1.core.data_engine --train_dataset data/v1_dpo_demo.yaml
     """
     from ..config.arg_parser import get_args
 
-    data_args, *_ = get_args()
-    data_engine = DataEngine(data_args=data_args)
+    _, data_args, *_ = get_args()
+    data_engine = DataEngine(data_args.train_dataset)
     print(data_engine[0])

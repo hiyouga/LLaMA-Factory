@@ -19,7 +19,7 @@ from llamafactory.v1.core.model_engine import ModelEngine
 
 
 def test_init_on_meta():
-    _, model_args, *_ = get_args(
+    model_args, *_ = get_args(
         dict(
             model="llamafactory/tiny-random-qwen3",
             init_config={"name": "init_on_meta"},
@@ -30,7 +30,7 @@ def test_init_on_meta():
 
 
 def test_init_on_rank0():
-    _, model_args, *_ = get_args(
+    model_args, *_ = get_args(
         dict(
             model="llamafactory/tiny-random-qwen3",
             init_config={"name": "init_on_rank0"},
@@ -44,7 +44,7 @@ def test_init_on_rank0():
 
 
 def test_init_on_default():
-    _, model_args, *_ = get_args(
+    model_args, *_ = get_args(
         dict(
             model="llamafactory/tiny-random-qwen3",
             init_config={"name": "init_on_default"},

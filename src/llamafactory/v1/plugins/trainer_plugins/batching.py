@@ -18,8 +18,11 @@ from ...utils.types import BatchInfo, BatchInput, DataLoader
 
 
 class BatchingPlugin(BasePlugin):
-    def compute_length(self, dataloader: DataLoader) -> int:
-        """Compute the length of the batch generator."""
+    def compute_length(self, data_provider: DataLoader) -> int:
+        """Compute the length of the batch generator.
+
+        The approximate length is used to calculate the lr schedule.
+        """
         raise NotImplementedError()
 
     def fill_buffer(self, buffer: StatefulBuffer, batch_info: BatchInfo) -> None:
