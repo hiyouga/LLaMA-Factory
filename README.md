@@ -291,7 +291,7 @@ Read technical notes:
 | [GPT-2](https://huggingface.co/openai-community)                  | 0.1B/0.4B/0.8B/1.5B              | -                    |
 | [GPT-OSS](https://huggingface.co/openai)                          | 20B/120B                         | gpt_oss              |
 | [Granite 3-4](https://huggingface.co/ibm-granite)                 | 1B/2B/3B/7B/8B                   | granite3/granite4    |
-| [Hunyuan/Hunyuan1.5 (MT)](https://huggingface.co/tencent/)        | 1.8B/7B                          | hunyuan/hunyuan1_5   |
+| [Hunyuan/Hunyuan1.5 (MT)](https://huggingface.co/tencent/)        | 0.5B/1.8B/4B/7B/13B              | hunyuan/hunyuan_small |
 | [InternLM 2-3](https://huggingface.co/internlm)                   | 7B/8B/20B                        | intern2              |
 | [InternVL 2.5-3.5](https://huggingface.co/OpenGVLab)              | 1B/2B/4B/8B/14B/30B/38B/78B/241B | intern_vl            |
 | [Intern-S1-mini](https://huggingface.co/internlm/)                | 8B                               | intern_s1            |
