@@ -21,7 +21,7 @@ from .types import ModelInput
 class StatefulBuffer:
     """A buffer that stores model inputs."""
 
-    def __init__(self, max_buffer_size: int = 1e9) -> None:
+    def __init__(self, max_buffer_size: int = 1_000_000_000) -> None:
         self._buffer: list[ModelInput] = []
         self._buffer_size: int = 0
         self._max_buffer_size: int = max_buffer_size
