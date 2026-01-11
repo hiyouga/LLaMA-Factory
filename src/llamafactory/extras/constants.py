@@ -1144,6 +1144,18 @@ register_model_group(
 
 register_model_group(
     models={
+        "Hunyuan-0.5B-Instruct": {
+            DownloadSource.DEFAULT: "tencent/Hunyuan-0.5B-Instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Hunyuan-0.5B-Instruct",
+        },
+        "Hunyuan-1.8B-Instruct": {
+            DownloadSource.DEFAULT: "tencent/Hunyuan-1.8B-Instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Hunyuan-1.8B-Instruct",
+        },
+        "Hunyuan-4B-Instruct": {
+            DownloadSource.DEFAULT: "tencent/Hunyuan-4B-Instruct",
+            DownloadSource.MODELSCOPE: "AI-ModelScope/Hunyuan-4B-Instruct",
+        },
         "Hunyuan-7B-Instruct": {
             DownloadSource.DEFAULT: "tencent/Hunyuan-7B-Instruct",
             DownloadSource.MODELSCOPE: "AI-ModelScope/Hunyuan-7B-Instruct",
