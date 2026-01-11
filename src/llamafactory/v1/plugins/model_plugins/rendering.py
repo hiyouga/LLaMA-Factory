@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import json
 import re
 
@@ -51,12 +50,16 @@ def _update_model_input(
 
 
 @RenderingPlugin("qwen3_nothink").register("render_messages")
-def render_qwen_messages(
+def render_qwen3_nothink_messages(
     processor: Processor,
     messages: list[Message],
     tools: str | None = None,
     is_generate: bool = False,
 ) -> ModelInput:
+    """Render messages in the Qwen3 nothink template format.
+
+    See https://huggingface.co/spaces/huggingfacejs/chat-template-playground?modelId=Qwen/Qwen3-4B-Instruct-2507
+    """
     input_ids, labels, loss_weights = [], [], []
     temp_str, temp_weight = "", 0.0
     if tools:
@@ -179,7 +182,15 @@ def render_qwen_messages(
 
 
 @RenderingPlugin("qwen3_nothink").register("parse_message")
-def parse_qwen_message(generated_text: str) -> Message:
+def parse_qwen3_nothink_message(generated_text: str) -> Message:
+    """Parse a message in the Qwen3 nothink template format. Supports interleaved reasoning and tool calls.
+
+    Args:
+        generated_text (str): The generated text in the Qwen3 nothink template format.
+
+    Returns:
+        Message: The parsed message.
+    """
     pattern = re.compile(r"<(thinking|tool_call)>\s*(.*?)\s*</\1>\s*", re.DOTALL)
     content = []
     last_end = 0

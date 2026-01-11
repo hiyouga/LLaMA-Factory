@@ -144,3 +144,20 @@ class ModelInput(TypedDict, total=False):
     """Loss weight for each token, default to 1.0."""
     position_ids: NotRequired[list[int] | list[list[int]]]
     """Position ids for the model (optional)."""
+    token_type_ids: NotRequired[list[int]]
+    """Token type ids used in DPO, 0 represents the chosen messages, 1 represents the rejected messages."""
+
+
+class BatchInput(TypedDict, total=False):
+    input_ids: Tensor
+    """Input ids for the model."""
+    attention_mask: Tensor
+    """Attention mask for the model."""
+    labels: Tensor
+    """Labels for the model."""
+    loss_weights: Tensor
+    """Loss weight for each token, default to 1.0."""
+    position_ids: NotRequired[Tensor]
+    """Position ids for the model (optional)."""
+    token_type_ids: NotRequired[Tensor]
+    """Token type ids used in DPO, 0 represents the chosen messages, 1 represents the rejected messages."""

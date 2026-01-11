@@ -62,7 +62,7 @@ dependencies = [
     "hf-transfer",
     "safetensors",
     # python
-    "av",
+    "av>=10.0.0,<=16.0.0",
     "fire",
     "omegaconf",
     "packaging",
