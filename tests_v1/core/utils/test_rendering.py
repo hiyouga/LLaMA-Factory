@@ -219,6 +219,9 @@ def test_process_dpo_samples():
 
 
 if __name__ == "__main__":
+    """
+    python -m tests_v1.core.utils.test_rendering
+    """
     test_chatml_rendering()
     test_chatml_parse()
     test_chatml_rendering_remote(16)

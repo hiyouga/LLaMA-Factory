@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, Literal, NotRequired, TypedDict, Union
 
 
@@ -161,3 +162,18 @@ class BatchInput(TypedDict, total=False):
     """Position ids for the model (optional)."""
     token_type_ids: NotRequired[Tensor]
     """Token type ids used in DPO, 0 represents the chosen messages, 1 represents the rejected messages."""
+
+
+class BatchInfo(TypedDict):
+    micro_batch_size: int
+    """Micro batch size."""
+    num_micro_batch: int
+    """Number of micro batches."""
+    global_batch_size: int
+    """Global batch size."""
+    cutoff_len: int
+    """Cutoff length."""
+    data_provider: DataLoader
+    """Data provider."""
+    data_iter: Iterator[list[ModelInput]]
+    """Data iterator."""

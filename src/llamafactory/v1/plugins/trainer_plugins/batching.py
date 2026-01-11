@@ -12,8 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ...utils.objects import StatefulBuffer
 from ...utils.plugin import BasePlugin
+from ...utils.types import BatchInfo, BatchInput
 
 
 class BatchingPlugin(BasePlugin):
-    pass
+    def compute_length(self, batch_info: BatchInfo) -> int:
+        raise NotImplementedError()
+
+    def fill_buffer(self, buffer: StatefulBuffer, batch_info: BatchInfo) -> None:
+        raise NotImplementedError()
+
+    def generate_batch(self, buffer: StatefulBuffer, batch_info: BatchInfo) -> list[BatchInput] | None:
+        raise NotImplementedError()

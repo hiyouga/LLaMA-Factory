@@ -120,6 +120,9 @@ def test_pair_converter(num_samples: int):
 
 
 if __name__ == "__main__":
+    """
+    python -m tests_v1.plugins.data_plugins.test_converter
+    """
     test_alpaca_converter(1)
     test_sharegpt_converter()
     test_pair_converter(1)

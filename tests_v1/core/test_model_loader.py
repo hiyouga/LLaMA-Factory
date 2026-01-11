@@ -44,5 +44,8 @@ def test_tiny_qwen_with_kernel_plugin():
 
 
 if __name__ == "__main__":
+    """
+    python -m tests_v1.core.test_model_loader
+    """
     test_tiny_qwen()
     test_tiny_qwen_with_kernel_plugin()
