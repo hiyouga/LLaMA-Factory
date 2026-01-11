@@ -1139,7 +1139,7 @@ register_template(
 
 
 register_template(
-    name="hunyuan1_5",
+    name="hunyuan_small",
     format_user=StringFormatter(slots=["<｜hy_User｜>{{content}}<｜hy_place▁holder▁no▁8｜>"]),
     format_assistant=StringFormatter(slots=["{{content}}<｜hy_place▁holder▁no▁2｜>"]),
     format_system=StringFormatter(slots=["{{content}}<｜hy_place▁holder▁no▁3｜>"]),
