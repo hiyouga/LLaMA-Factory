@@ -156,13 +156,17 @@ class BaseTrainer:
                     loss = self.compute_loss(micro_batch)
                     mini_step_valid_tokens = compute_valid_tokens([micro_batch])
                     # fsdp uses mean reduction so we need to scale the loss by dp_size
-                    loss = loss * mini_step_valid_tokens * self.dp_size / step_valid_tokens
+                    loss = loss * mini_step_valid_tokens * self.dp_size / (step_valid_tokens + 1e-6)
 
                     loss.backward()
                     step_loss += loss.item()
 
                 grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm).item()
-                self.optimizer.step()
+                if not torch.isfinite(grad_norm):
+                    logger.warning_rank0(f"Gradient norm is not finite: {grad_norm}")
+                else:
+                    self.optimizer.step()
+
                 self.lr_scheduler.step()
                 self.optimizer.zero_grad()
 
