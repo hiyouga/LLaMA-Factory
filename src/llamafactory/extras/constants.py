@@ -1164,13 +1164,13 @@ register_model_group(
             DownloadSource.DEFAULT: "tencent/Hunyuan-MT-7B",
             DownloadSource.MODELSCOPE: "Tencent-Hunyuan/Hunyuan-MT-7B",
         },
-        "Hunyuan-A13B-Instruct": {
-            DownloadSource.DEFAULT: "tencent/Hunyuan-A13B-Instruct",
-            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/Hunyuan-A13B-Instruct",
-        },
         "HY-MT1.5-7B-Instruct": {
             DownloadSource.DEFAULT: "tencent/HY-MT1.5-7B",
             DownloadSource.MODELSCOPE: "Tencent-Hunyuan/HY-MT1.5-7B",
+        },
+        "Hunyuan-A13B-Instruct": {
+            DownloadSource.DEFAULT: "tencent/Hunyuan-A13B-Instruct",
+            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/Hunyuan-A13B-Instruct",
         },
     },
     template="hunyuan",
