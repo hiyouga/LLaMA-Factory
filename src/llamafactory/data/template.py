@@ -1139,6 +1139,16 @@ register_template(
 
 
 register_template(
+    name="hunyuan1_5",
+    format_user=StringFormatter(slots=["<｜hy_User｜>{{content}}<｜hy_place▁holder▁no▁8｜>"]),
+    format_assistant=StringFormatter(slots=["{{content}}<｜hy_place▁holder▁no▁2｜>"]),
+    format_system=StringFormatter(slots=["{{content}}<｜hy_place▁holder▁no▁3｜>"]),
+    format_prefix=EmptyFormatter(slots=["<｜hy_begin▁of▁sentence｜>"]),
+    stop_words=["<｜hy_place▁holder▁no▁2｜>"],
+)
+
+
+register_template(
     name="intern2",
     format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
     format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
