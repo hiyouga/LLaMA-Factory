@@ -130,10 +130,8 @@ class BaseTrainer:
         labels = batch["labels"].to(self.device, non_blocking=True)
         outputs: ModelOutput = model(**model_inputs)
         logits = outputs.logits.float()
-        shift_logits = logits[..., :-1, :].contiguous()
-        shift_labels = labels[..., 1:].contiguous()
-        shift_labels = shift_labels.view(-1)
-        shift_logits = shift_logits.view(shift_labels.size(0), -1)
+        shift_labels = labels[..., 1:].contiguous().view(-1)
+        shift_logits = logits[..., :-1, :].contiguous().view(shift_labels.size(0), -1)
         return -F.cross_entropy(shift_logits, shift_labels, reduction="none").view(batch_size, -1)
 
     @abstractmethod
