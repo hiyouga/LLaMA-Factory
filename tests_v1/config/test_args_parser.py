@@ -34,7 +34,7 @@ def test_get_args_from_yaml(tmp_path: Path):
         quant_config: null
 
         ### data
-        dataset: llamafactory/v1-sft-demo
+        train_dataset: llamafactory/v1-sft-demo
 
         ### training
         output_dir: outputs/test_run
@@ -56,8 +56,8 @@ def test_get_args_from_yaml(tmp_path: Path):
     test_argv = ["test_args_parser.py", str(config_file)]
 
     with patch.object(sys, "argv", test_argv):
-        data_args, model_args, training_args, sample_args = get_args()
-        assert data_args.dataset == "llamafactory/v1-sft-demo"
+        model_args, data_args, training_args, sample_args = get_args()
+        assert data_args.train_dataset == "llamafactory/v1-sft-demo"
         assert model_args.model == "llamafactory/tiny-random-qwen3"
         assert model_args.kernel_config.name == "auto"
         assert model_args.kernel_config.get("include_kernels") == "auto"

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, Literal, NotRequired, TypedDict, Union
+from typing import TYPE_CHECKING, Any, Literal, NamedTuple, NotRequired, TypedDict, Union
 
 
 if TYPE_CHECKING:
@@ -146,7 +146,7 @@ class ModelInput(TypedDict, total=False):
     position_ids: NotRequired[list[int] | list[list[int]]]
     """Position ids for the model (optional)."""
     token_type_ids: NotRequired[list[int]]
-    """Token type ids used in DPO, 0 represents the chosen messages, 1 represents the rejected messages."""
+    """Token type ids used in DPO, 1 represents the chosen messages, 2 represents the rejected messages."""
 
 
 class BatchInput(TypedDict, total=False):
@@ -161,7 +161,7 @@ class BatchInput(TypedDict, total=False):
     position_ids: NotRequired[Tensor]
     """Position ids for the model (optional)."""
     token_type_ids: NotRequired[Tensor]
-    """Token type ids used in DPO, 0 represents the chosen messages, 1 represents the rejected messages."""
+    """Token type ids used in DPO, 1 represents the chosen messages, 2 represents the rejected messages."""
 
 
 class BatchInfo(TypedDict):
@@ -173,3 +173,8 @@ class BatchInfo(TypedDict):
     """Cutoff length."""
     data_iter: Iterator[list[ModelInput]]
     """Data iterator."""
+
+
+class ModelOutput(NamedTuple):
+    logits: Tensor
+    """Logits for the model."""

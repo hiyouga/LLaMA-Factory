@@ -216,7 +216,7 @@ if __name__ == "__main__":
     """
     python -m llamafactory.v1.core.utils.batching \
         --model llamafactory/tiny-random-qwen2.5 \
-        --dataset data/v1_sft_demo.yaml \
+        --train_dataset data/v1_sft_demo.yaml \
         --micro_batch_size 2 \
         --global_batch_size 4 \
         --batching_workers 0
@@ -225,8 +225,8 @@ if __name__ == "__main__":
     from ..data_engine import DataEngine
     from ..model_engine import ModelEngine
 
-    data_args, model_args, training_args, _ = get_args()
-    data_engine = DataEngine(data_args=data_args)
+    model_args, data_args, training_args, _ = get_args()
+    data_engine = DataEngine(data_args.train_dataset)
     model_engine = ModelEngine(model_args=model_args)
     batch_generator = BatchGenerator(
         data_engine,

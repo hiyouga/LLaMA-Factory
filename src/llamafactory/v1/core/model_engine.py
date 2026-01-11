@@ -153,7 +153,7 @@ if __name__ == "__main__":
     """
     from ..config.arg_parser import get_args
 
-    _, model_args, *_ = get_args()
+    model_args, *_ = get_args()
     model_engine = ModelEngine(model_args=model_args)
     print(model_engine.processor)
     print(model_engine.model_config)
