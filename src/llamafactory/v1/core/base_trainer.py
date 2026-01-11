@@ -123,7 +123,7 @@ class BaseTrainer:
 
         log_probs: Tensor of shape (batch_size, seq_len - 1)
         """
-        batch_size, seq_length = batch["labels"].shape
+        batch_size, _ = batch["labels"].shape
         model_inputs = {
             k: v.to(self.device, non_blocking=True) for k, v in batch.items() if k in self.model_input_names
         }

@@ -43,3 +43,10 @@ def run_sft(args: InputArgument = None):
     )
     trainer.fit()
     DistributedInterface().destroy()
+
+
+if __name__ == "__main__":
+    """
+    python -m llamafactory.v1.trainers.sft_trainer --model Qwen/Qwen3-0.6B --train_dataset data/v1_sft_demo.yaml
+    """
+    run_sft()
