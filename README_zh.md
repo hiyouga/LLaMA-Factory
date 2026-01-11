@@ -278,8 +278,8 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 
 ## 模型
 
-| 模型名                                                               | 参数量                              | Template             |
-|-------------------------------------------------------------------|----------------------------------| -------------------- |
+| 模型名                                                             | 参数量                            | Template             |
+| ----------------------------------------------------------------- | -------------------------------- | -------------------- |
 | [BLOOM/BLOOMZ](https://huggingface.co/bigscience)                 | 560M/1.1B/1.7B/3B/7.1B/176B      | -                    |
 | [DeepSeek (LLM/Code/MoE)](https://huggingface.co/deepseek-ai)     | 7B/16B/67B/236B                  | deepseek             |
 | [DeepSeek 3-3.2](https://huggingface.co/deepseek-ai)              | 236B/671B                        | deepseek3            |
@@ -293,8 +293,7 @@ https://github.com/user-attachments/assets/43b700c6-a178-41db-b1f8-8190a5d3fcfc
 | [GPT-2](https://huggingface.co/openai-community)                  | 0.1B/0.4B/0.8B/1.5B              | -                    |
 | [GPT-OSS](https://huggingface.co/openai)                          | 20B/120B                         | gpt_oss              |
 | [Granite 3-4](https://huggingface.co/ibm-granite)                 | 1B/2B/3B/7B/8B                   | granite3/granite4    |
-| [Hunyuan (MT)](https://huggingface.co/tencent/)                   | 7B                               | hunyuan              |
-| [Hunyuan1.5 (MT)](https://huggingface.co/tencent/)                | 1.8B/7B                          | hunyuan_1_5          |
+| [Hunyuan/Hunyuan1.5 (MT)](https://huggingface.co/tencent/)        | 1.8B/7                           | hunyuan/hunyuan1_5   |
 | [InternLM 2-3](https://huggingface.co/internlm)                   | 7B/8B/20B                        | intern2              |
 | [InternVL 2.5-3.5](https://huggingface.co/OpenGVLab)              | 1B/2B/4B/8B/14B/30B/38B/78B/241B | intern_vl            |
 | [Intern-S1-mini](https://huggingface.co/internlm/)                | 8B                               | intern_s1            |
