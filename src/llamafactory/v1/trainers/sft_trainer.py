@@ -23,8 +23,7 @@ from ..utils.types import BatchInput, Tensor
 
 class SFTTrainer(BaseTrainer):
     def compute_loss(self, batch: BatchInput) -> Tensor:
-        loss_weights = batch["loss_weights"].to(self.device, non_blocking=True)
-        shift_loss_weights = loss_weights[..., 1:].contiguous().view(-1)
+        shift_loss_weights = batch["loss_weights"].to(self.device, non_blocking=True)[..., 1:]
         log_probs = self.compute_log_probs(self.model, batch)
         loss = (-log_probs * shift_loss_weights).sum() / shift_loss_weights.sum()
         return loss
