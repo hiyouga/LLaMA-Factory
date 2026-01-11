@@ -14,15 +14,18 @@
 
 from ...utils.objects import StatefulBuffer
 from ...utils.plugin import BasePlugin
-from ...utils.types import BatchInfo, BatchInput
+from ...utils.types import BatchInfo, BatchInput, DataLoader
 
 
 class BatchingPlugin(BasePlugin):
-    def compute_length(self, batch_info: BatchInfo) -> int:
+    def compute_length(self, dataloader: DataLoader) -> int:
+        """Compute the length of the batch generator."""
         raise NotImplementedError()
 
     def fill_buffer(self, buffer: StatefulBuffer, batch_info: BatchInfo) -> None:
+        """Fill the buffer with data."""
         raise NotImplementedError()
 
     def generate_batch(self, buffer: StatefulBuffer, batch_info: BatchInfo) -> list[BatchInput] | None:
+        """Generate a batch from the buffer."""
         raise NotImplementedError()

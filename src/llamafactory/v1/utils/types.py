@@ -169,11 +169,7 @@ class BatchInfo(TypedDict):
     """Micro batch size."""
     num_micro_batch: int
     """Number of micro batches."""
-    global_batch_size: int
-    """Global batch size."""
     cutoff_len: int
     """Cutoff length."""
-    data_provider: DataLoader
-    """Data provider."""
     data_iter: Iterator[list[ModelInput]]
     """Data iterator."""
