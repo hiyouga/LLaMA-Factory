@@ -23,7 +23,7 @@
     d) pack + dynamic
 """
 
-from collections.abc import Iterable
+from collections.abc import Iterator
 from typing import Any
 
 from torch.utils.data import default_collate
@@ -59,7 +59,7 @@ def default_collate_fn(buffer: StatefulBuffer, batch_info: BatchInfo) -> list[Ba
     return batch
 
 
-class BatchGenerator(Iterable):
+class BatchGenerator(Iterator):
     def __init__(
         self,
         dataset: TorchDataset,
