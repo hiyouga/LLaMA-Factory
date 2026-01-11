@@ -38,4 +38,7 @@ def test_sync_sampler():
 
 
 if __name__ == "__main__":
+    """
+    python tests_v1/sampler/test_cli_sampler.py
+    """
     test_sync_sampler()

@@ -52,3 +52,12 @@ def test_init_on_default():
     )
     model_engine = ModelEngine(model_args=model_args)
     assert model_engine.model.device == DistributedInterface().current_device
+
+
+if __name__ == "__main__":
+    """
+    python tests_v1/plugins/model_plugins/test_init_plugin.py
+    """
+    test_init_on_meta()
+    test_init_on_rank0()
+    test_init_on_default()

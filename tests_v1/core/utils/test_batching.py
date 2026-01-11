@@ -46,4 +46,7 @@ def test_normal_batching():
 
 
 if __name__ == "__main__":
+    """
+    python -m tests_v1.core.utils.test_batching
+    """
     test_normal_batching()

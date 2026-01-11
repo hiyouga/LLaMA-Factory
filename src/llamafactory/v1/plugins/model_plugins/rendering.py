@@ -22,7 +22,19 @@ from ...utils.types import Message, ModelInput, Processor, ToolCall
 
 
 class RenderingPlugin(BasePlugin):
-    pass
+    def render_messages(
+        self,
+        processor: Processor,
+        messages: list[Message],
+        tools: str | None = None,
+        is_generate: bool = False,
+    ) -> ModelInput:
+        """Render messages in the template format."""
+        return self["render_messages"](processor, messages, tools, is_generate)
+
+    def parse_messages(self, generated_text: str) -> Message:
+        """Parse messages in the template format."""
+        return self["parse_messages"](generated_text)
 
 
 def _update_model_input(
