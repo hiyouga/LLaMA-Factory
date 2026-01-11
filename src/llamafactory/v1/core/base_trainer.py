@@ -69,6 +69,9 @@ class BaseTrainer:
         self._create_batch_generator()
         self.num_training_steps = self.args.num_train_epochs * len(self.train_batch_generator)
 
+        if self.args.enable_activation_checkpointing:
+            self.model.gradient_checkpointing_enable({"use_reentrant": False})
+
         if self.args.dist_config is not None:
             shard_need_optimizer = self.args.dist_config.name == "deepspeed"
         else:
@@ -166,3 +169,9 @@ class BaseTrainer:
                 step_loss, grad_norm = DistributedInterface().all_reduce([step_loss, grad_norm])
                 DistributedInterface().sync()
                 print(f"Epoch {epoch}, Step {self.global_step}, Loss: {step_loss:.4f}, Grad Norm: {grad_norm:.4f}")
+
+    def save_model(self) -> None:
+        """Save the model."""
+        self.model.save_pretrained(self.args.output_dir)
+        self.renderer.processor.save_pretrained(self.args.output_dir)
+        logger.info_rank0(f"Model saved to {self.args.output_dir}")

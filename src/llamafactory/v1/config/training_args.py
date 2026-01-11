@@ -61,6 +61,10 @@ class TrainingArguments:
         default=16,
         metadata={"help": "Number of workers for batching."},
     )
+    enable_activation_checkpointing: bool = field(
+        default=True,
+        metadata={"help": "Enable activation checkpointing for training."},
+    )
     dist_config: PluginConfig | None = field(
         default=None,
         metadata={"help": "Distribution configuration for training."},

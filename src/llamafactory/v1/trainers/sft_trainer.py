@@ -41,6 +41,7 @@ def run_sft(args: InputArgument = None):
         train_dataset=train_dataset,
     )
     trainer.fit()
+    trainer.save_model()
     DistributedInterface().destroy()
 
 
