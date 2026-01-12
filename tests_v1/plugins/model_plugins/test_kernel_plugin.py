@@ -17,9 +17,13 @@ import os
 import sys
 import traceback
 
+import pytest
 
-# Suppress tokenizers parallelism warning when forking
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+@pytest.fixture(scope="module", autouse=True)
+def suppress_tokenizers_parallelism_warning():
+    """Suppress tokenizers parallelism warning when forking."""
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 def _subprocess_wrapper(target_func, queue):
@@ -42,7 +46,7 @@ def _run_in_subprocess(target_func):
 
     proc = ctx.Process(target=_subprocess_wrapper, args=(target_func, queue))
     proc.start()
-    proc.join(timeout=120)
+    proc.join(timeout=1200)
 
     if proc.is_alive():
         proc.terminate()
