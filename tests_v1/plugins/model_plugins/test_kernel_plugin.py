@@ -44,7 +44,11 @@ def _run_in_subprocess(target_func):
     proc.start()
     proc.join(timeout=120)
 
-    if proc.exitcode != 0:
+    if proc.is_alive():
+        proc.terminate()
+        proc.join()
+        raise RuntimeError("Subprocess timed out and was terminated.")
+    elif proc.exitcode != 0:
         raise RuntimeError(f"Subprocess exited with code {proc.exitcode}")
 
     success, error = queue.get()
