@@ -12,17 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import multiprocessing
 import os
 import sys
 import traceback
 
 import pytest
+import torch.multiprocessing as mp
+
+
+# Ensure repo root is on sys.path so torch mp spawn can import `tests_v1.*`
+# during pickling/unpickling (important for pytest --import-mode=importlib).
+_THIS_DIR = os.path.dirname(__file__)
+_REPO_ROOT = os.path.abspath(os.path.join(_THIS_DIR, os.pardir, os.pardir, os.pardir))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
 
 @pytest.fixture(scope="module", autouse=True)
 def suppress_tokenizers_parallelism_warning():
-    """Suppress tokenizers parallelism warning when forking."""
+    """Suppress tokenizers parallelism warning when spawning."""
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
@@ -36,12 +44,8 @@ def _subprocess_wrapper(target_func, queue):
 
 
 def _run_in_subprocess(target_func):
-    """Run a function in a subprocess to isolate module state.
-
-    Uses 'fork' context which inherits parent's module state, avoiding
-    the need to pickle/unpickle test modules.
-    """
-    ctx = multiprocessing.get_context("fork")
+    """Run a function in a subprocess to isolate module state (torch mp spawn)."""
+    ctx = mp.get_context("spawn")
     queue = ctx.Queue()
 
     proc = ctx.Process(target=_subprocess_wrapper, args=(target_func, queue))
