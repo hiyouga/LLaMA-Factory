@@ -13,8 +13,13 @@
 # limitations under the License.
 
 import multiprocessing
+import os
 import sys
 import traceback
+
+
+# Suppress tokenizers parallelism warning when forking
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 def _subprocess_wrapper(target_func, queue):
@@ -29,10 +34,10 @@ def _subprocess_wrapper(target_func, queue):
 def _run_in_subprocess(target_func):
     """Run a function in a subprocess to isolate module state.
 
-    This ensures that each test runs in a clean Python interpreter state,
-    preventing model/kernel pollution between tests.
+    Uses 'fork' context which inherits parent's module state, avoiding
+    the need to pickle/unpickle test modules.
     """
-    ctx = multiprocessing.get_context("spawn")
+    ctx = multiprocessing.get_context("fork")
     queue = ctx.Queue()
 
     proc = ctx.Process(target=_subprocess_wrapper, args=(target_func, queue))
