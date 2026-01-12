@@ -220,12 +220,14 @@ class FSDP2Engine:
 
         # 动态获取当前设备
         device = torch.cuda.current_device()
-        # to_empty 会在指定设备上分配内存（只分配本地切片大小）
-        model.to_empty(device=device)
+        
+        with torch.no_grad():
+            # to_empty 会在指定设备上分配内存（只分配本地切片大小）
+            model.to_empty(device=device)
 
-        # 4. Load Weights
-        # 逐个文件加载并拷贝到本地切片
-        self._load_weights_from_hf_checkpoint(model, hf_model_path)
+            # 4. Load Weights
+            # 逐个文件加载并拷贝到本地切片
+            self._load_weights_from_hf_checkpoint(model, hf_model_path)
 
         return model
 
@@ -316,7 +318,7 @@ class FSDP2Engine:
             elif isinstance(placement, Shard):
                 dim = placement.dim
                 mesh = param.device_mesh
-                mesh_dim = placement.mesh_dim
+                mesh_dim = 0  # Since we are taking placements[0], the mesh_dim is 0
 
                 my_coordinate = mesh.get_coordinate()
                 if my_coordinate is None:
