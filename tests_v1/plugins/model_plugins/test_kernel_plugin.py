@@ -22,8 +22,7 @@ import torch.multiprocessing as mp
 
 # Ensure repo root is on sys.path so torch mp spawn can import `tests_v1.*`
 # during pickling/unpickling (important for pytest --import-mode=importlib).
-_THIS_DIR = os.path.dirname(__file__)
-_REPO_ROOT = os.path.abspath(os.path.join(_THIS_DIR, os.pardir, os.pardir, os.pardir))
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
