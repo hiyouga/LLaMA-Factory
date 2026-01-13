@@ -116,5 +116,3 @@ def test_apply_kernel():
 @pytest.mark.runs_on(["cpu", "cuda", "npu"])
 def test_apply_all_kernels():
     _run_in_subprocess("apply_all_kernels")
-
-
