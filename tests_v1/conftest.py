@@ -33,6 +33,13 @@ from llamafactory.v1.utils.packages import is_transformers_version_greater_than
 CURRENT_DEVICE = get_current_accelerator().type
 
 
+# add project root dir to path for mp run
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+os.environ["PYTHONPATH"] = project_root + os.pathsep + os.environ.get("PYTHONPATH", "")
+
+
 def pytest_configure(config: Config):
     """Register custom pytest markers."""
     config.addinivalue_line(
@@ -53,10 +60,6 @@ def _handle_runs_on(items: list[Item]):
     """Skip tests on specified device TYPES (cpu/cuda/npu)."""
     for item in items:
         marker = item.get_closest_marker("runs_on")
-        # add project root dir to path for mp run
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        if project_root not in sys.path:
-            sys.path.insert(0, project_root)
         if not marker:
             continue
 
@@ -154,12 +157,12 @@ def _manage_distributed_env(request: FixtureRequest, monkeypatch: MonkeyPatch) -
 
         monkeypatch.setenv(env_key, devices_str)
 
-        # add project root dir to path for mp run
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        if project_root not in sys.path:
-            sys.path.insert(0, project_root)
+        # # add project root dir to path for mp run
+        # project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        # if project_root not in sys.path:
+        #     sys.path.insert(0, project_root)
 
-        os.environ["PYTHONPATH"] = project_root + os.pathsep + os.environ.get("PYTHONPATH", "")
+        # os.environ["PYTHONPATH"] = project_root + os.pathsep + os.environ.get("PYTHONPATH", "")
 
     else:  # non-distributed test
         if old_value:
