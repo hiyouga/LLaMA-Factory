@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from .arg_parser import InputArgument, get_args
-from .arg_utils import ModelClass, SampleBackend
+from .arg_utils import BatchingStrategy, ModelClass, SampleBackend
 from .data_args import DataArguments
 from .model_args import ModelArguments
 from .sample_args import SampleArguments
@@ -21,6 +21,7 @@ from .training_args import TrainingArguments
 
 
 __all__ = [
+    "BatchingStrategy",
     "DataArguments",
     "InputArgument",
     "ModelArguments",

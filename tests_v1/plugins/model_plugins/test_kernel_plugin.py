@@ -43,6 +43,7 @@ def test_apply_kernel(mock_get_accelerator: MagicMock):
     reload_kernels()
     from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_default_kernels
 
+    # NOTE: use a special model to avoid contamination by other tests
     model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen2.5")
     original_rmsnorm_forward = model.model.layers[0].input_layernorm.forward
     original_swiglu_forward = model.model.layers[0].mlp.forward
@@ -62,6 +63,7 @@ def test_apply_all_kernels(mock_get_accelerator: MagicMock):
     reload_kernels()
     from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_default_kernels
 
+    # NOTE: use a special model to avoid contamination by other tests
     model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen2.5")
 
     original_rmsnorm_forward = model.model.layers[0].input_layernorm.forward

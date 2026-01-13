@@ -16,7 +16,7 @@ import os
 from dataclasses import dataclass, field
 from uuid import uuid4
 
-from .arg_utils import PluginConfig, get_plugin_config
+from .arg_utils import BatchingStrategy, PluginConfig, get_plugin_config
 
 
 @dataclass
@@ -29,22 +29,56 @@ class TrainingArguments:
         default=1,
         metadata={"help": "Micro batch size for training."},
     )
-    global_batch_size: int = field(
-        default=1,
-        metadata={"help": "Global batch size for training."},
+    global_batch_size: int | None = field(
+        default=None,
+        metadata={"help": "Global batch size for training, default to DP size * micro batch size."},
+    )
+    cutoff_len: int = field(
+        default=2048,
+        metadata={"help": "Maximum sequence length for training."},
     )
     learning_rate: float = field(
         default=1e-4,
         metadata={"help": "Learning rate for training."},
     )
+    num_train_epochs: int = field(
+        default=3,
+        metadata={"help": "Number of training epochs."},
+    )
+    max_grad_norm: float = field(
+        default=1.0,
+        metadata={"help": "Maximum gradient norm for training."},
+    )
     bf16: bool = field(
         default=False,
         metadata={"help": "Use bf16 for training."},
+    )
+    batching_strategy: BatchingStrategy = field(
+        default=BatchingStrategy.NORMAL,
+        metadata={"help": "Batching strategy for training."},
+    )
+    batching_workers: int = field(
+        default=16,
+        metadata={"help": "Number of workers for batching."},
+    )
+    enable_activation_checkpointing: bool = field(
+        default=True,
+        metadata={"help": "Enable activation checkpointing for training."},
     )
     dist_config: PluginConfig | None = field(
         default=None,
         metadata={"help": "Distribution configuration for training."},
     )
+    optim_config: PluginConfig | None = field(
+        default=None,
+        metadata={"help": "Optimizer configuration for training."},
+    )
+    lr_scheduler_config: PluginConfig | None = field(
+        default=None,
+        metadata={"help": "Learning rate scheduler configuration for training."},
+    )
 
     def __post_init__(self) -> None:
         self.dist_config = get_plugin_config(self.dist_config)
+        self.optim_config = get_plugin_config(self.optim_config)
+        self.lr_scheduler_config = get_plugin_config(self.lr_scheduler_config)

@@ -419,3 +419,15 @@ def test_video_llava_plugin():
     ]
     check_inputs["expected_mm_inputs"] = _get_mm_inputs(tokenizer_module["processor"])
     _check_plugin(**check_inputs)
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+def test_lfm2_vl_plugin():
+    """Test LFM2.5-VL plugin instantiation."""
+    # Test plugin can be instantiated with correct tokens
+    lfm2_vl_plugin = get_mm_plugin(name="lfm2_vl", image_token="<image>")
+    assert lfm2_vl_plugin is not None
+    assert lfm2_vl_plugin.image_token == "<image>"
+    assert lfm2_vl_plugin.video_token is None
+    assert lfm2_vl_plugin.audio_token is None
+    assert lfm2_vl_plugin.__class__.__name__ == "LFMVLPlugin"

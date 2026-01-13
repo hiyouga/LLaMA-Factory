@@ -40,7 +40,7 @@ resume_from_checkpoint: null
 
 ### ktransformers
 use_kt: true # use KTransformers as LoRA sft backend
-kt_optimize_rule: examples/kt_optimize_rules/Qwen3Moe-sft-amx.yaml
+kt_optimize_rule: examples/ktransformers/kt_optimize_rules/Qwen3Moe-sft-amx.yaml
 cpu_infer: 32
 chunk_size: 8192
 

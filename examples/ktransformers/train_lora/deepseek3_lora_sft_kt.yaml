@@ -10,8 +10,8 @@ lora_rank: 8
 lora_target: all
 
 ### dataset
-dataset: identity
-template: deepseek
+dataset: identity, alpaca_en_demo
+template: deepseek3
 cutoff_len: 2048
 max_samples: 100000
 overwrite_cache: true
@@ -40,7 +40,7 @@ resume_from_checkpoint: null
 
 ### ktransformers
 use_kt: true # use KTransformers as LoRA sft backend
-kt_optimize_rule: examples/kt_optimize_rules/DeepSeek-V3-Chat-sft-amx-multi-gpu.yaml
+kt_optimize_rule: examples/ktransformers/kt_optimize_rules/DeepSeek-V3-Chat-sft-amx-multi-gpu.yaml
 cpu_infer: 32
 chunk_size: 8192
 

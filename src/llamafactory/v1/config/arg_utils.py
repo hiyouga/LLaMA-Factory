@@ -50,6 +50,14 @@ class SampleBackend(StrEnum):
     VLLM = "vllm"
 
 
+@unique
+class BatchingStrategy(StrEnum):
+    NORMAL = "normal"
+    PADDING_FREE = "padding_free"
+    DYNAMIC_BATCHING = "dynamic_batching"
+    DYNAMIC_PADDING_FREE = "dynamic_padding_free"
+
+
 def _convert_str_dict(data: dict) -> dict:
     """Parse string representation inside the dictionary.
 

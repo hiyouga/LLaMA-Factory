@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import os
 import sys
 from pathlib import Path
@@ -70,13 +71,13 @@ def read_args(args: dict[str, Any] | list[str] | None = None) -> dict[str, Any] 
     if args is not None:
         return args
 
-    if sys.argv[1].endswith(".yaml") or sys.argv[1].endswith(".yml"):
+    if len(sys.argv) > 1 and (sys.argv[1].endswith(".yaml") or sys.argv[1].endswith(".yml")):
         override_config = OmegaConf.from_cli(sys.argv[2:])
         dict_config = OmegaConf.load(Path(sys.argv[1]).absolute())
         return OmegaConf.to_container(OmegaConf.merge(dict_config, override_config))
-    elif sys.argv[1].endswith(".json"):
+    elif len(sys.argv) > 1 and sys.argv[1].endswith(".json"):
         override_config = OmegaConf.from_cli(sys.argv[2:])
-        dict_config = OmegaConf.load(Path(sys.argv[1]).absolute())
+        dict_config = OmegaConf.create(json.load(Path(sys.argv[1]).absolute()))
         return OmegaConf.to_container(OmegaConf.merge(dict_config, override_config))
     else:
         return sys.argv[1:]
@@ -339,7 +340,7 @@ def get_train_args(args: dict[str, Any] | list[str] | None = None) -> _TRAIN_CLS
     if training_args.deepspeed is not None and (finetuning_args.use_galore or finetuning_args.use_apollo):
         raise ValueError("GaLore and APOLLO are incompatible with DeepSpeed yet.")
 
-    if training_args.fp8 and training_args.quantization_bit is not None:
+    if training_args.fp8 and model_args.quantization_bit is not None:
         raise ValueError("FP8 training is not compatible with quantization. Please disable one of them.")
 
     if model_args.infer_backend != EngineName.HF:

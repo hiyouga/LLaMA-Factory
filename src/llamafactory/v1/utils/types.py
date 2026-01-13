@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import TYPE_CHECKING, Any, Literal, NotRequired, TypedDict, Union
+from collections.abc import Iterator
+from typing import TYPE_CHECKING, Any, Literal, NamedTuple, NotRequired, TypedDict, Union
 
 
 if TYPE_CHECKING:
@@ -144,3 +145,36 @@ class ModelInput(TypedDict, total=False):
     """Loss weight for each token, default to 1.0."""
     position_ids: NotRequired[list[int] | list[list[int]]]
     """Position ids for the model (optional)."""
+    token_type_ids: NotRequired[list[int]]
+    """Token type ids used in DPO, 1 represents the chosen messages, 2 represents the rejected messages."""
+
+
+class BatchInput(TypedDict, total=False):
+    input_ids: Tensor
+    """Input ids for the model."""
+    attention_mask: Tensor
+    """Attention mask for the model."""
+    labels: Tensor
+    """Labels for the model."""
+    loss_weights: Tensor
+    """Loss weight for each token, default to 1.0."""
+    position_ids: NotRequired[Tensor]
+    """Position ids for the model (optional)."""
+    token_type_ids: NotRequired[Tensor]
+    """Token type ids used in DPO, 1 represents the chosen messages, 2 represents the rejected messages."""
+
+
+class BatchInfo(TypedDict):
+    micro_batch_size: int
+    """Micro batch size."""
+    num_micro_batch: int
+    """Number of micro batches."""
+    cutoff_len: int
+    """Cutoff length."""
+    data_iter: Iterator[list[ModelInput]]
+    """Data iterator."""
+
+
+class ModelOutput(NamedTuple):
+    logits: Tensor
+    """Logits for the model."""

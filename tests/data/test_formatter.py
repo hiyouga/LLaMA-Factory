@@ -295,8 +295,8 @@ def test_qwen_multi_tool_extractor():
 
 
 @pytest.mark.runs_on(["cpu", "mps"])
-def test_lfm_function_formatter():
-    formatter = FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="lfm")
+def test_lfm2_function_formatter():
+    formatter = FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="lfm2")
     tool_calls = json.dumps(FUNCTION)
     assert formatter.apply(content=tool_calls) == [
         """<|tool_call_start|>[tool_name(foo="bar", size=10)]<|tool_call_end|><|im_end|>\n"""
@@ -304,8 +304,8 @@ def test_lfm_function_formatter():
 
 
 @pytest.mark.runs_on(["cpu", "mps"])
-def test_lfm_multi_function_formatter():
-    formatter = FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="lfm")
+def test_lfm2_multi_function_formatter():
+    formatter = FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="lfm2")
     tool_calls = json.dumps([FUNCTION] * 2)
     assert formatter.apply(content=tool_calls) == [
         """<|tool_call_start|>[tool_name(foo="bar", size=10), tool_name(foo="bar", size=10)]<|tool_call_end|>"""
@@ -314,23 +314,23 @@ def test_lfm_multi_function_formatter():
 
 
 @pytest.mark.runs_on(["cpu", "mps"])
-def test_lfm_tool_formatter():
-    formatter = ToolFormatter(tool_format="lfm")
+def test_lfm2_tool_formatter():
+    formatter = ToolFormatter(tool_format="lfm2")
     assert formatter.apply(content=json.dumps(TOOLS)) == [
         "List of tools: <|tool_list_start|>" + json.dumps(TOOLS, ensure_ascii=False) + "<|tool_list_end|>"
     ]
 
 
 @pytest.mark.runs_on(["cpu", "mps"])
-def test_lfm_tool_extractor():
-    formatter = ToolFormatter(tool_format="lfm")
+def test_lfm2_tool_extractor():
+    formatter = ToolFormatter(tool_format="lfm2")
     result = """<|tool_call_start|>[test_tool(foo="bar", size=10)]<|tool_call_end|>"""
     assert formatter.extract(result) == [("test_tool", """{"foo": "bar", "size": 10}""")]
 
 
 @pytest.mark.runs_on(["cpu", "mps"])
-def test_lfm_multi_tool_extractor():
-    formatter = ToolFormatter(tool_format="lfm")
+def test_lfm2_multi_tool_extractor():
+    formatter = ToolFormatter(tool_format="lfm2")
     result = """<|tool_call_start|>[test_tool(foo="bar", size=10), another_tool(foo="job", size=2)]<|tool_call_end|>"""
     assert formatter.extract(result) == [
         ("test_tool", """{"foo": "bar", "size": 10}"""),
@@ -339,8 +339,8 @@ def test_lfm_multi_tool_extractor():
 
 
 @pytest.mark.runs_on(["cpu", "mps"])
-def test_lfm_tool_extractor_with_nested_dict():
-    formatter = ToolFormatter(tool_format="lfm")
+def test_lfm2_tool_extractor_with_nested_dict():
+    formatter = ToolFormatter(tool_format="lfm2")
     result = """<|tool_call_start|>[search(query="test", options={"limit": 10, "offset": 0})]<|tool_call_end|>"""
     extracted = formatter.extract(result)
     assert len(extracted) == 1
@@ -351,8 +351,8 @@ def test_lfm_tool_extractor_with_nested_dict():
 
 
 @pytest.mark.runs_on(["cpu", "mps"])
-def test_lfm_tool_extractor_with_list_arg():
-    formatter = ToolFormatter(tool_format="lfm")
+def test_lfm2_tool_extractor_with_list_arg():
+    formatter = ToolFormatter(tool_format="lfm2")
     result = """<|tool_call_start|>[batch_process(items=[1, 2, 3], enabled=True)]<|tool_call_end|>"""
     extracted = formatter.extract(result)
     assert len(extracted) == 1
@@ -363,17 +363,17 @@ def test_lfm_tool_extractor_with_list_arg():
 
 
 @pytest.mark.runs_on(["cpu", "mps"])
-def test_lfm_tool_extractor_no_match():
-    formatter = ToolFormatter(tool_format="lfm")
+def test_lfm2_tool_extractor_no_match():
+    formatter = ToolFormatter(tool_format="lfm2")
     result = "This is a regular response without tool calls."
     extracted = formatter.extract(result)
     assert extracted == result
 
 
 @pytest.mark.runs_on(["cpu", "mps"])
-def test_lfm_tool_round_trip():
-    formatter = FunctionFormatter(slots=["{{content}}"], tool_format="lfm")
-    tool_formatter = ToolFormatter(tool_format="lfm")
+def test_lfm2_tool_round_trip():
+    formatter = FunctionFormatter(slots=["{{content}}"], tool_format="lfm2")
+    tool_formatter = ToolFormatter(tool_format="lfm2")
     original = {"name": "my_func", "arguments": {"arg1": "hello", "arg2": 42, "arg3": True}}
     formatted = formatter.apply(content=json.dumps(original))
     extracted = tool_formatter.extract(formatted[0])
