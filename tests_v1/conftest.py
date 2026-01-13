@@ -120,6 +120,17 @@ def pytest_collection_modifyitems(config: Config, items: list[Item]):
     _handle_device_visibility(items)
 
 
+@pytest.fixture(scope="session", autouse=True)
+def _set_env():
+    # add project root dir to path for mp run
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+
+    os.environ["PYTHONPATH"] = project_root + os.pathsep + os.getenv("PYTHONPATH", "")
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+
 @pytest.fixture(autouse=True)
 def _cleanup_distributed_state():
     """Cleanup distributed state after each test."""
@@ -149,13 +160,6 @@ def _manage_distributed_env(request: FixtureRequest, monkeypatch: MonkeyPatch) -
             devices_str = ",".join(str(i) for i in range(required))
 
         monkeypatch.setenv(env_key, devices_str)
-
-        # add project root dir to path for mp run
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        if project_root not in sys.path:
-            sys.path.insert(0, project_root)
-
-        os.environ["PYTHONPATH"] = project_root + os.pathsep + os.environ.get("PYTHONPATH", "")
 
     else:  # non-distributed test
         if old_value:
