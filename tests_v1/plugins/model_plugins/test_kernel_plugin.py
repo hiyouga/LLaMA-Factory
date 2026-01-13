@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import sys
 from unittest.mock import MagicMock, patch
 
@@ -20,18 +19,8 @@ import pytest
 import torch.multiprocessing as mp
 from transformers import AutoModelForCausalLM
 
-from llamafactory.v1.accelerator.helper import get_current_accelerator
 
-
-@pytest.fixture(scope="module", autouse=True)
-def suppress_tokenizers_parallelism_warning():
-    """Suppress tokenizers parallelism warning when spawning."""
-    os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
-
-def _impl_apply_kernel(rank) -> None:
-    get_current_accelerator.cache_clear()
-
+def _apply_kernel(rank) -> None:
     with patch("torch.accelerator.current_accelerator") as mock_get_accelerator:
         mock_device = MagicMock()
         setattr(mock_device, "type", "npu")
@@ -55,8 +44,6 @@ def _impl_apply_kernel(rank) -> None:
 
 
 def _impl_apply_all_kernels(rank) -> None:
-    get_current_accelerator.cache_clear()
-
     with patch("torch.accelerator.current_accelerator") as mock_get_accelerator:
         mock_device = MagicMock()
         setattr(mock_device, "type", "npu")
@@ -81,7 +68,7 @@ def _impl_apply_all_kernels(rank) -> None:
 
 @pytest.mark.runs_on(["cpu", "cuda", "npu"])
 def test_apply_kernel():
-    mp.spawn(_impl_apply_kernel)
+    mp.spawn(_apply_kernel)
 
 
 @pytest.mark.runs_on(["cpu", "cuda", "npu"])
