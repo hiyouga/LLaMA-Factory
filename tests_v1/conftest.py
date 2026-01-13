@@ -172,5 +172,3 @@ def _manage_distributed_env(request: FixtureRequest, monkeypatch: MonkeyPatch) -
             monkeypatch.setattr(torch.cuda, "device_count", lambda: 1)
         elif CURRENT_DEVICE == "npu":
             monkeypatch.setattr(torch.npu, "device_count", lambda: 1)
-        
-

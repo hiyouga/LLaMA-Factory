@@ -13,8 +13,9 @@
 # limitations under the License.
 
 import os
-import sys
 import subprocess
+import sys
+
 import pytest
 
 
@@ -23,14 +24,13 @@ def suppress_tokenizers_parallelism_warning():
     """Suppress tokenizers parallelism warning when spawning."""
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+
 def _run_in_subprocess(case: str, timeout: int = 1200) -> None:
     """Run this test module as a script in a fresh interpreter process.
 
     This avoids multiprocessing spawn pickling/import requirements (e.g. tests folder must be a package)
     while still providing full isolation of module state, without embedding code strings.
     """
-
-
     proc = subprocess.run(
         [sys.executable, os.path.abspath(__file__), case],
         capture_output=True,
@@ -39,10 +39,7 @@ def _run_in_subprocess(case: str, timeout: int = 1200) -> None:
     )
     if proc.returncode != 0:
         raise AssertionError(
-            "Subprocess failed.\n"
-            f"Exit code: {proc.returncode}\n"
-            f"STDOUT:\n{proc.stdout}\n"
-            f"STDERR:\n{proc.stderr}\n"
+            f"Subprocess failed.\nExit code: {proc.returncode}\nSTDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}\n"
         )
 
 
