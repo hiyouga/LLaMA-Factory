@@ -43,7 +43,7 @@ def _apply_kernel(rank) -> None:
         assert model.model.layers[0].mlp.forward.__func__ is original_swiglu_forward.__func__
 
 
-def _impl_apply_all_kernels(rank) -> None:
+def _apply_all_kernels(rank) -> None:
     with patch("torch.accelerator.current_accelerator") as mock_get_accelerator:
         mock_device = MagicMock()
         setattr(mock_device, "type", "npu")
@@ -73,4 +73,4 @@ def test_apply_kernel():
 
 @pytest.mark.runs_on(["cpu", "cuda", "npu"])
 def test_apply_all_kernels():
-    mp.spawn(_impl_apply_all_kernels)
+    mp.spawn(_apply_all_kernels)
