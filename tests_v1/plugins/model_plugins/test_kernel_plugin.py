@@ -14,17 +14,8 @@
 
 import os
 import sys
-import traceback
-
+import subprocess
 import pytest
-import torch.multiprocessing as mp
-
-
-# Ensure repo root is on sys.path so torch mp spawn can import `tests_v1.*`
-# during pickling/unpickling (important for pytest --import-mode=importlib).
-_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir))
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -32,46 +23,30 @@ def suppress_tokenizers_parallelism_warning():
     """Suppress tokenizers parallelism warning when spawning."""
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+def _run_in_subprocess(case: str, timeout: int = 1200) -> None:
+    """Run this test module as a script in a fresh interpreter process.
 
-def _subprocess_wrapper(target_func, queue):
-    """Wrapper function for subprocess execution (must be at module level for pickling)."""
-    try:
-        target_func()
-        queue.put((True, None))
-    except Exception as e:
-        queue.put((False, f"{e}\n{traceback.format_exc()}"))
+    This avoids multiprocessing spawn pickling/import requirements (e.g. tests folder must be a package)
+    while still providing full isolation of module state, without embedding code strings.
+    """
 
 
-def _run_in_subprocess(target_func):
-    """Run a function in a subprocess to isolate module state (torch mp spawn)."""
-    ctx = mp.get_context("spawn")
-    queue = ctx.Queue()
-
-    proc = ctx.Process(target=_subprocess_wrapper, args=(target_func, queue))
-    proc.start()
-    proc.join(timeout=1200)
-
-    if proc.is_alive():
-        proc.terminate()
-        proc.join()
-        raise RuntimeError("Subprocess timed out and was terminated.")
-    elif proc.exitcode != 0:
-        raise RuntimeError(f"Subprocess exited with code {proc.exitcode}")
-
-    success, error = queue.get()
-    if not success:
-        raise AssertionError(error)
+    proc = subprocess.run(
+        [sys.executable, os.path.abspath(__file__), case],
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+    )
+    if proc.returncode != 0:
+        raise AssertionError(
+            "Subprocess failed.\n"
+            f"Exit code: {proc.returncode}\n"
+            f"STDOUT:\n{proc.stdout}\n"
+            f"STDERR:\n{proc.stderr}\n"
+        )
 
 
-def _reload_kernels():
-    """Helper to reload kernel modules to respect mocked accelerator."""
-    keys_to_remove = [k for k in sys.modules if k.startswith("llamafactory.v1.plugins.model_plugins.kernels")]
-    for k in keys_to_remove:
-        del sys.modules[k]
-
-
-def _test_apply_kernel_impl():
-    """Actual test logic for apply_kernel, runs in subprocess."""
+def _impl_apply_kernel() -> None:
     from unittest.mock import MagicMock, patch
 
     from transformers import AutoModelForCausalLM
@@ -85,7 +60,11 @@ def _test_apply_kernel_impl():
         setattr(mock_device, "type", "npu")
         mock_get_accelerator.return_value = mock_device
 
-        _reload_kernels()
+        # reload kernel modules to respect mocked accelerator
+        for k in list(sys.modules.keys()):
+            if k.startswith("llamafactory.v1.plugins.model_plugins.kernels"):
+                del sys.modules[k]
+
         from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_default_kernels
 
         model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen3")
@@ -98,8 +77,7 @@ def _test_apply_kernel_impl():
         assert model.model.layers[0].mlp.forward.__func__ is original_swiglu_forward.__func__
 
 
-def _test_apply_all_kernels_impl():
-    """Actual test logic for apply_all_kernels, runs in subprocess."""
+def _impl_apply_all_kernels() -> None:
     from unittest.mock import MagicMock, patch
 
     from transformers import AutoModelForCausalLM
@@ -113,7 +91,11 @@ def _test_apply_all_kernels_impl():
         setattr(mock_device, "type", "npu")
         mock_get_accelerator.return_value = mock_device
 
-        _reload_kernels()
+        # reload kernel modules to respect mocked accelerator
+        for k in list(sys.modules.keys()):
+            if k.startswith("llamafactory.v1.plugins.model_plugins.kernels"):
+                del sys.modules[k]
+
         from llamafactory.v1.plugins.model_plugins.kernels.interface import apply_default_kernels
 
         model = AutoModelForCausalLM.from_pretrained("llamafactory/tiny-random-qwen3")
@@ -126,11 +108,13 @@ def _test_apply_all_kernels_impl():
         assert model.model.layers[0].mlp.forward.__func__ is not original_swiglu_forward.__func__
 
 
+@pytest.mark.runs_on(["cpu", "cuda", "npu"])
 def test_apply_kernel():
-    """Test applying a specific kernel (runs in isolated subprocess)."""
-    _run_in_subprocess(_test_apply_kernel_impl)
+    _run_in_subprocess("apply_kernel")
 
 
+@pytest.mark.runs_on(["cpu", "cuda", "npu"])
 def test_apply_all_kernels():
-    """Test applying all kernels (runs in isolated subprocess)."""
-    _run_in_subprocess(_test_apply_all_kernels_impl)
+    _run_in_subprocess("apply_all_kernels")
+
+

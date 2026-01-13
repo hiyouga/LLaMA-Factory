@@ -53,6 +53,10 @@ def _handle_runs_on(items: list[Item]):
     """Skip tests on specified device TYPES (cpu/cuda/npu)."""
     for item in items:
         marker = item.get_closest_marker("runs_on")
+        # add project root dir to path for mp run
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        if project_root not in sys.path:
+            sys.path.insert(0, project_root)
         if not marker:
             continue
 
@@ -168,3 +172,5 @@ def _manage_distributed_env(request: FixtureRequest, monkeypatch: MonkeyPatch) -
             monkeypatch.setattr(torch.cuda, "device_count", lambda: 1)
         elif CURRENT_DEVICE == "npu":
             monkeypatch.setattr(torch.npu, "device_count", lambda: 1)
+        
+
