@@ -13,10 +13,14 @@
 # limitations under the License.
 
 import os
-import subprocess
 import sys
+from unittest.mock import MagicMock, patch
 
 import pytest
+import torch.multiprocessing as mp
+from transformers import AutoModelForCausalLM
+
+from llamafactory.v1.accelerator.helper import get_current_accelerator
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -25,31 +29,7 @@ def suppress_tokenizers_parallelism_warning():
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
-def _run_in_subprocess(case: str, timeout: int = 1200) -> None:
-    """Run this test module as a script in a fresh interpreter process.
-
-    This avoids multiprocessing spawn pickling/import requirements (e.g. tests folder must be a package)
-    while still providing full isolation of module state, without embedding code strings.
-    """
-    proc = subprocess.run(
-        [sys.executable, os.path.abspath(__file__), case],
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-    )
-    if proc.returncode != 0:
-        raise AssertionError(
-            f"Subprocess failed.\nExit code: {proc.returncode}\nSTDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}\n"
-        )
-
-
-def _impl_apply_kernel() -> None:
-    from unittest.mock import MagicMock, patch
-
-    from transformers import AutoModelForCausalLM
-
-    from llamafactory.v1.accelerator.helper import get_current_accelerator
-
+def _impl_apply_kernel(rank) -> None:
     get_current_accelerator.cache_clear()
 
     with patch("torch.accelerator.current_accelerator") as mock_get_accelerator:
@@ -74,13 +54,7 @@ def _impl_apply_kernel() -> None:
         assert model.model.layers[0].mlp.forward.__func__ is original_swiglu_forward.__func__
 
 
-def _impl_apply_all_kernels() -> None:
-    from unittest.mock import MagicMock, patch
-
-    from transformers import AutoModelForCausalLM
-
-    from llamafactory.v1.accelerator.helper import get_current_accelerator
-
+def _impl_apply_all_kernels(rank) -> None:
     get_current_accelerator.cache_clear()
 
     with patch("torch.accelerator.current_accelerator") as mock_get_accelerator:
@@ -107,9 +81,9 @@ def _impl_apply_all_kernels() -> None:
 
 @pytest.mark.runs_on(["cpu", "cuda", "npu"])
 def test_apply_kernel():
-    _run_in_subprocess("apply_kernel")
+    mp.spawn(_impl_apply_kernel)
 
 
 @pytest.mark.runs_on(["cpu", "cuda", "npu"])
 def test_apply_all_kernels():
-    _run_in_subprocess("apply_all_kernels")
+    mp.spawn(_impl_apply_all_kernels)
