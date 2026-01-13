@@ -66,11 +66,9 @@ def _apply_all_kernels(rank) -> None:
         assert model.model.layers[0].mlp.forward.__func__ is not original_swiglu_forward.__func__
 
 
-@pytest.mark.runs_on(["cpu", "cuda", "npu"])
 def test_apply_kernel():
     mp.spawn(_apply_kernel)
 
 
-@pytest.mark.runs_on(["cpu", "cuda", "npu"])
 def test_apply_all_kernels():
     mp.spawn(_apply_all_kernels)
