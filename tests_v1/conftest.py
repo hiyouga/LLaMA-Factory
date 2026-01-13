@@ -120,7 +120,7 @@ def pytest_collection_modifyitems(config: Config, items: list[Item]):
     _handle_device_visibility(items)
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def _set_env():
     # add project root dir to path for mp run
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
