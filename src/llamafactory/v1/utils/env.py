@@ -28,3 +28,11 @@ def find_available_port() -> int:
 def is_env_enabled(env_var: str, default: str = "0") -> bool:
     """Check if the environment variable is enabled."""
     return os.getenv(env_var, default).lower() in ["true", "yes", "on", "t", "y", "1"]
+
+
+def use_ray() -> bool:
+    return False
+
+
+def use_kt() -> bool:
+    return False

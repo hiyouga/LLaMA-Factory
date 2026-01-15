@@ -1,99 +1,100 @@
 import gc
-
-# 简单的日志工具
-import logging
 import os
-from typing import Optional
 
 import torch
-import torch.distributed as dist
-import torch.distributed.checkpoint as dcp
 import torch.nn as nn
 from torch.distributed.checkpoint.state_dict import StateDictOptions, get_model_state_dict, set_model_state_dict
-from torch.distributed.device_mesh import init_device_mesh
 from torch.distributed.fsdp import (
     CPUOffloadPolicy,
     MixedPrecisionPolicy,
     fully_shard,
 )
-from torch.utils.data import DataLoader, Dataset, DistributedSampler
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
+from transformers import PreTrainedModel
+
+from ....accelerator.helper import get_current_accelerator
+from ....accelerator.interface import DistributedInterface
+from ....utils.logging import get_logger
 
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
-def set_seed(seed: int = 42):
-    import random
+def get_transformer_layer_cls(model: PreTrainedModel):
+    # 策略 1: 优先检查 HF 模型自带的 _no_split_modules
+    no_split_modules = getattr(model, "_no_split_modules", None)
+    if no_split_modules:
+        if isinstance(no_split_modules, list):
+            for name, module in model.named_modules():
+                for cls_name in no_split_modules:
+                    if module.__class__.__name__ == cls_name:
+                        return module.__class__
 
-    import numpy as np
+    # 策略 2: 针对常见的 Llama, Qwen, DeepSeek 等结构
+    if hasattr(model, "model") and hasattr(model.model, "layers"):
+        return type(model.model.layers[0])
+    if hasattr(model, "layers"):
+        return type(model.layers[0])
 
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-
-    torch.cuda.deterministic = True
-    torch.cuda.benchmark = False
-
-
-class FSDP2Config:
-    def __init__(
-        self,
-        mixed_precision: str = "bf16",  # bf16, fp16, fp32
-        reshard_after_forward: bool = True,
-        offload_params: bool = False,
-        mesh_shape: Optional[tuple[int, ...]] = None,  # (dp, ep) 等，默认 (world_size,)
-        mesh_dim_names: Optional[tuple[str, ...]] = None,  # ("dp", "ep") 等，默认 ("fsdp",)
-        pin_memory: bool = True,  # 是否将参数内存 pinned 到 CPU，True 可以提高 H2D/D2H 效率，但会占用更多 CPU 内存
-    ):
-        self.mixed_precision = mixed_precision
-        self.reshard_after_forward = reshard_after_forward
-        self.offload_params = offload_params
-        self.pin_memory = pin_memory
-        self.mesh_shape = mesh_shape
-        self.mesh_dim_names = mesh_dim_names
+    return None
 
 
-class FSDP2Engine:
-    def __init__(self, config: FSDP2Config):
-        self.config = config
-        self.rank = int(os.environ.get("RANK", 0))
-        self.local_rank = int(os.environ.get("LOCAL_RANK", 0))
-        self.world_size = int(os.environ.get("WORLD_SIZE", 1))
+class FSDP2Plugin:
+    def __init__(self, dist_config: dict):
+        # 使用 DistributedInterface 获取环境信息
+        self.dist_interface = DistributedInterface()
+        self.rank = self.dist_interface.get_rank()
+        self.local_rank = self.dist_interface.get_local_rank()
+        self.world_size = self.dist_interface.get_world_size()
 
-        # 1. 初始化进程组 (如果尚未初始化)
-        if not dist.is_initialized():
-            dist.init_process_group(backend="nccl")
+        # Parse config
+        self.mixed_precision = dist_config.get("mixed_precision", "bf16")
+        self.reshard_after_forward = dist_config.get("reshard_after_forward", True)
+        self.offload_params = dist_config.get("offload_params", False)
+        self.pin_memory = dist_config.get("pin_memory", True)
+        self.dcp_path = dist_config.get("dcp_path", None)
 
-        torch.cuda.set_device(self.local_rank)
+        # 1. 进程组与设备初始化已由 DistributedInterface 完成
+        # 2. 获取 Device Mesh
+        # DistributedInterface 提供了 model_device_mesh 和 data_device_mesh
+        # FSDP 使用 Data Parallel Mesh (DP)
+        # data_device_mesh = init_device_mesh(
+        #         device_type="cuda",
+        #         mesh_shape=(self.world_size,),
+        #         mesh_dim_names=("dp",),
+        #     )
+        self.device_mesh = self.dist_interface.data_device_mesh
+        # self.data_device_mesh = data_device_mesh
 
-        # 2. 初始化 Device Mesh
-        # 如果没有指定 shape，默认是全数据的 FSDP (1D Mesh)
-        if self.config.mesh_shape is None:
-            self.mesh_shape = (self.world_size,)
-            self.mesh_dim_names = ("fsdp",)
+        # 检查 Mesh 是否存在（可能因为单机或配置原因未初始化）
+        if self.device_mesh is None:
+            # 如果没有 Device Mesh，尝试回退或者报错。
+            # 但 FSDP2 必须依赖 DeviceMesh。
+            # 如果 interface 中配置正确，这里应该有值。
+            logger.warning(
+                "Device Mesh not found in DistributedInterface. FSDP2 might fail if not running in distributed mode."
+            )
+
+        # DistributedInterface 默认的 DP Mesh dim name 是 "dp"
+        # 我们可以直接使用 self.device_mesh["dp"] 或者根据 dim name 获取
+        if self.device_mesh is not None:
+            # DistributedInterface 的 mesh 已经是多维的（如果有 Context Parallel），
+            # 或者是一维的（只有 DP）。
+            # 获取 DP 维度的 SubMesh
+            try:
+                # 尝试获取 DP 维度的 mesh
+                self.fsdp_mesh = self.device_mesh["dp"]
+            except Exception:
+                self.fsdp_mesh = self.device_mesh
+
+            logger.info(f"Using Device Mesh: {self.fsdp_mesh}")
         else:
-            self.mesh_shape = self.config.mesh_shape
-            self.mesh_dim_names = self.config.mesh_dim_names
-
-        logger.info(f"Initializing Device Mesh with shape {self.mesh_shape} and names {self.mesh_dim_names}")
-        self.device_mesh = init_device_mesh("cuda", self.mesh_shape, mesh_dim_names=self.mesh_dim_names)
-
-        # 获取用于 FSDP 的 sub-mesh (通常是数据并行维度)
-        # 如果是 1D mesh, 就是它自己。如果是 2D (DP, EP)，这里我们需要获取 DP 维度的 mesh。
-        if "fsdp" in self.mesh_dim_names:
-            self.fsdp_mesh = self.device_mesh
-        elif "dp" in self.mesh_dim_names:
-            self.fsdp_mesh = self.device_mesh["dp"]
-        else:
-            raise ValueError(f"Mesh dim names {self.mesh_dim_names} must contain 'fsdp' or 'dp'.")
+            self.fsdp_mesh = None
 
     def get_mp_policy(self) -> MixedPrecisionPolicy:
-        if self.config.mixed_precision == "bf16":
+        if self.mixed_precision == "bf16":
             param_dtype = torch.bfloat16
-            reduce_dtype = torch.float32  # 梯度归约通常用 fp32 保持精度
-        elif self.config.mixed_precision == "fp16":
+            reduce_dtype = torch.float32
+        elif self.mixed_precision == "fp16":
             param_dtype = torch.float16
             reduce_dtype = torch.float32
         else:
@@ -103,13 +104,15 @@ class FSDP2Engine:
         return MixedPrecisionPolicy(
             param_dtype=param_dtype,
             reduce_dtype=reduce_dtype,
-            cast_forward_inputs=True,  # 自动将输入转为 param_dtype，避免手动转换
+            cast_forward_inputs=True,
         )
 
     def prepare_model(self, model: PreTrainedModel) -> PreTrainedModel:
-        mp_policy = self.get_mp_policy()
+        if self.fsdp_mesh is None:
+            logger.warning("No FSDP Mesh available, skipping FSDP wrapping.")
+            return model
 
-        # 1. 识别 Transformer Layers (基于 _no_split_modules 或 Heuristic)
+        mp_policy = self.get_mp_policy()
         layer_cls = get_transformer_layer_cls(model)
 
         if layer_cls is None:
@@ -121,17 +124,11 @@ class FSDP2Engine:
             logger.info(f"Applying per-layer FSDP to {layer_cls.__name__}")
             transformer_layer_cls_to_wrap = {layer_cls}
 
-        # 2. 遍历模型子模块，对每一层应用 fully_shard
-        # FSDP2 最佳实践：自底向上，先 shard 层，最后 shard 整个模型
-
         for name, module in model.named_modules():
             should_wrap = False
 
-            # Wrap Transformer Blocks
             if type(module) in transformer_layer_cls_to_wrap:
                 should_wrap = True
-
-            # Wrap Embeddings (如果未绑定权重)
             elif isinstance(module, nn.Embedding):
                 if not getattr(model.config, "tie_word_embeddings", True):
                     should_wrap = True
@@ -140,105 +137,94 @@ class FSDP2Engine:
                 fully_shard(
                     module,
                     mesh=self.fsdp_mesh,
-                    reshard_after_forward=self.config.reshard_after_forward,
+                    reshard_after_forward=self.reshard_after_forward,
                     mp_policy=mp_policy,
-                    offload_policy=CPUOffloadPolicy(pin_memory=self.config.pin_memory)
-                    if self.config.offload_params
-                    else None,
+                    offload_policy=CPUOffloadPolicy(pin_memory=self.pin_memory) if self.offload_params else None,
                 )
 
-        # 3. 应用 Gradient Checkpointing (使用 transformers 原生能力)
-        # 相比我们自己 hack forward，直接利用 transformers 的接口更稳健
-        # 假设这里默认开启 (实际应从 config 读取)
-        use_gradient_checkpointing = True
-
+        use_gradient_checkpointing = True  # Could be configurable
         if use_gradient_checkpointing:
             if self.rank == 0:
                 logger.info("Enabling gradient checkpointing (transformers native)...")
 
-            # 开启 GC
             model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
 
-            # 关键：开启输入梯度，确保 checkpoint 链条完整
             if hasattr(model, "enable_input_require_grads"):
                 model.enable_input_require_grads()
             else:
-                # 兜底：如果模型没有这个方法，手动对第一个参数开启
+
                 def make_inputs_require_grad(module, input, output):
                     output.requires_grad_(True)
 
                 model.get_input_embeddings().register_forward_hook(make_inputs_require_grad)
 
-        # 4. 对整个模型应用 fully_shard (处理 embedding, output head 等剩余参数)
         fully_shard(
             model,
             mesh=self.fsdp_mesh,
-            reshard_after_forward=self.config.reshard_after_forward,
+            reshard_after_forward=self.reshard_after_forward,
             mp_policy=mp_policy,
-            offload_policy=CPUOffloadPolicy(pin_memory=self.config.pin_memory) if self.config.offload_params else None,
+            offload_policy=CPUOffloadPolicy(pin_memory=self.pin_memory) if self.offload_params else None,
         )
 
         return model
 
-    def prepare_optimizer(self, model: torch.nn.Module, lr: float = 1e-4) -> torch.optim.Optimizer:
-        """构建优化器.
-
-        注意：必须在模型 Sharding 之后构建优化器，这样优化器状态也会被自动 Sharded。
-        """
-        # 简单的参数分组逻辑
-        return torch.optim.AdamW(model.parameters(), lr=lr, fused=True)
-
-    def _load_from_hf_meta(self, hf_model_path: str) -> PreTrainedModel:
-        """从 HF 加载 (Meta Init -> Shard -> Materialize -> Chunk Load).
-
-        解决超大模型无法在 CPU 完整加载的问题。
-        """
-        if self.rank == 0:
-            logger.info(f"Loading config from {hf_model_path} ...")
-
-        config = AutoConfig.from_pretrained(hf_model_path, trust_remote_code=True)
-
-        # 1. Meta Init
-        with torch.device("meta"):
-            # 使用配置的 param_dtype (如 bf16) 初始化，避免 float32 占用显存
-            # 注意：torch_dtype 是必须的，否则 meta tensor 默认可能是 float32，
-            # 导致 materialize 时显存翻倍或 mismatch
-            model = AutoModelForCausalLM.from_config(
-                config, trust_remote_code=True, torch_dtype=self.get_mp_policy().param_dtype
-            )
-
-        if self.rank == 0:
-            logger.info("Model structure created on Meta device.")
-
-        # 2. Apply FSDP2 (Sharding)
-        # 此时参数在 Meta 上被切分 (DTensor on Meta)
-        model = self.prepare_model(model)
-
-        # 3. Materialize (Allocate Memory)
+    @torch.no_grad()
+    def materialize_and_load(self, model: PreTrainedModel, hf_model_path: str, dcp_path: str = None):
         if self.rank == 0:
             logger.info("Materializing sharded model params...")
 
-        # 动态获取当前设备
-        device = torch.cuda.current_device()
-        
-        with torch.no_grad():
-            # to_empty 会在指定设备上分配内存（只分配本地切片大小）
-            model.to_empty(device=device)
+        device = get_current_accelerator()
+        model.to_empty(device=device)
 
-            # 4. Load Weights
-            # 逐个文件加载并拷贝到本地切片
+        if dcp_path and os.path.exists(dcp_path):
+            if self.rank == 0:
+                logger.info(f"DCP path found at {dcp_path}. Using efficient Sharded Loading (DCP Load).")
+            self._load_from_dcp(model, dcp_path)
+        else:
+            if self.rank == 0:
+                if dcp_path:
+                    logger.warning(f"DCP path {dcp_path} not found.")
+                logger.info("Using HF Meta Loading (Chunk Load).")
             self._load_weights_from_hf_checkpoint(model, hf_model_path)
 
         return model
+
+    def shard_model(self, model: PreTrainedModel, hf_model_path: str, dcp_path: str = None) -> PreTrainedModel:
+        if model.device.type == "meta":
+            model = self.prepare_model(model)
+            model = self.materialize_and_load(model, hf_model_path=hf_model_path, dcp_path=dcp_path)
+        else:
+            model = self.prepare_model(model)
+        return model
+
+    def _load_from_dcp(self, model: PreTrainedModel, dcp_path: str):
+        import torch.distributed.checkpoint as dcp
+
+        try:
+            if self.rank == 0:
+                logger.info(f"Loading distributed checkpoint from {dcp_path} ...")
+
+            options = StateDictOptions(full_state_dict=False, cpu_offload=True)
+            local_state_dict = get_model_state_dict(model, options=options)
+            dcp.load(state_dict=local_state_dict, checkpoint_id=dcp_path)
+            set_model_state_dict(model, local_state_dict, options=options)
+
+            if self.rank == 0:
+                logger.info("DCP weights loaded successfully.")
+
+        except Exception as e:
+            logger.error(f"Failed to load from DCP: {e}")
+            raise e
 
     def _load_weights_from_hf_checkpoint(self, model, hf_model_path):
         import glob
         import json
 
+        hf_model_path = self._resolve_hf_checkpoint_dir(hf_model_path)
+
         if self.rank == 0:
             logger.info(f"Loading weights from {hf_model_path} ...")
 
-        # 确定索引文件
         index_file = os.path.join(hf_model_path, "model.safetensors.index.json")
         is_safetensors = True
         checkpoint_files = []
@@ -246,7 +232,6 @@ class FSDP2Engine:
         if os.path.exists(index_file):
             with open(index_file) as f:
                 index = json.load(f)
-            # 获取所有唯一的权重文件
             checkpoint_files = sorted(set(index["weight_map"].values()))
             checkpoint_files = [os.path.join(hf_model_path, f) for f in checkpoint_files]
         elif os.path.exists(os.path.join(hf_model_path, "model.safetensors")):
@@ -262,7 +247,6 @@ class FSDP2Engine:
             elif os.path.exists(os.path.join(hf_model_path, "pytorch_model.bin")):
                 checkpoint_files = [os.path.join(hf_model_path, "pytorch_model.bin")]
             else:
-                # 尝试 glob
                 checkpoint_files = sorted(glob.glob(os.path.join(hf_model_path, "*.safetensors")))
                 if checkpoint_files:
                     is_safetensors = True
@@ -272,26 +256,22 @@ class FSDP2Engine:
         if not checkpoint_files:
             raise ValueError(f"No checkpoint files found in {hf_model_path}")
 
-        # 建立参数映射: name -> param
         param_map = dict(model.named_parameters())
-
         total_files = len(checkpoint_files)
+
         for i, ckpt_file in enumerate(checkpoint_files):
             if self.rank == 0:
                 logger.info(f"[{i + 1}/{total_files}] Loading {os.path.basename(ckpt_file)} ...")
 
-            # 加载单个文件到 CPU
             if is_safetensors:
                 from safetensors import safe_open
 
-                # safetensors 支持按需读取，内存友好
                 with safe_open(ckpt_file, framework="pt", device="cpu") as f:
                     for key in f.keys():
                         if key in param_map:
                             tensor = f.get_tensor(key)
                             self._copy_weights(param_map[key], tensor)
             else:
-                # bin 文件通常需要整体加载
                 state_dict = torch.load(ckpt_file, map_location="cpu")
                 for key, tensor in state_dict.items():
                     if key in param_map:
@@ -299,37 +279,128 @@ class FSDP2Engine:
                 del state_dict
                 gc.collect()
 
-    def _copy_weights(self, param, loaded_tensor):
-        from torch.distributed._tensor import DTensor, Replicate, Shard
+    def _resolve_hf_checkpoint_dir(self, hf_model_path: str) -> str:
+        """Resolve a HF model identifier or local path to a local directory containing checkpoint files.
 
-        # 转换 loaded_tensor dtype
+        - If `hf_model_path` is an existing directory, return it.
+        - If it's a file path, return its parent directory.
+        - Otherwise treat it as a Hugging Face Hub repo id and download/resolve to the local cache dir.
+        """
+        if not hf_model_path:
+            return hf_model_path
+
+        # Local directory or file path.
+        if os.path.isdir(hf_model_path):
+            return hf_model_path
+        if os.path.isfile(hf_model_path):
+            return os.path.dirname(hf_model_path)
+
+        # HuggingFace Hub repo id: snapshot to local cache so we can glob/index files.
+        try:
+            from huggingface_hub import snapshot_download
+        except Exception as e:
+            raise ValueError(
+                f"hf_model_path='{hf_model_path}' does not exist locally and huggingface_hub is not available "
+                f"to download it. Please provide a local model directory or install huggingface_hub. Error: {e}"
+            ) from e
+
+        revision = os.getenv("HF_REVISION")
+        offline = os.getenv("HF_HUB_OFFLINE") == "1" or os.getenv("TRANSFORMERS_OFFLINE") == "1"
+
+        # In distributed runs, let rank0 download first to avoid N-way concurrent downloads.
+        if torch.distributed.is_available() and torch.distributed.is_initialized():
+            if self.rank == 0:
+                local_dir = snapshot_download(
+                    repo_id=hf_model_path,
+                    revision=revision,
+                    local_files_only=offline,
+                    # Keep the snapshot reasonably small; we only need weights+indexes for loading.
+                    allow_patterns=[
+                        "*.safetensors",
+                        "*.bin",
+                        "*.index.json",
+                        "model.safetensors",
+                        "model.safetensors.index.json",
+                        "pytorch_model.bin",
+                        "pytorch_model.bin.index.json",
+                        "config.json",
+                    ],
+                )
+                logger.info(f"Resolved HF repo id '{hf_model_path}' to local dir: {local_dir}")
+            torch.distributed.barrier()
+            if self.rank != 0:
+                local_dir = snapshot_download(
+                    repo_id=hf_model_path,
+                    revision=revision,
+                    local_files_only=True,  # should exist after rank0 download
+                    allow_patterns=[
+                        "*.safetensors",
+                        "*.bin",
+                        "*.index.json",
+                        "model.safetensors",
+                        "model.safetensors.index.json",
+                        "pytorch_model.bin",
+                        "pytorch_model.bin.index.json",
+                        "config.json",
+                    ],
+                )
+            return local_dir
+
+        local_dir = snapshot_download(
+            repo_id=hf_model_path,
+            revision=revision,
+            local_files_only=offline,
+            allow_patterns=[
+                "*.safetensors",
+                "*.bin",
+                "*.index.json",
+                "model.safetensors",
+                "model.safetensors.index.json",
+                "pytorch_model.bin",
+                "pytorch_model.bin.index.json",
+                "config.json",
+            ],
+        )
+        if self.rank == 0:
+            logger.info(f"Resolved HF repo id '{hf_model_path}' to local dir: {local_dir}")
+        return local_dir
+
+    def _copy_weights(self, param, loaded_tensor):
+        from torch.distributed._tensor import DTensor, Shard
+
         if loaded_tensor.dtype != param.dtype:
             loaded_tensor = loaded_tensor.to(param.dtype)
 
         if isinstance(param, DTensor):
-            # 获取 Sharding 信息
-            placement = param.placements[0]
+            # 找到 Shard placement 对应的 mesh dimension
+
+            shard_placement = None
+            mesh_dim = -1
+
+            for i, placement in enumerate(param.placements):
+                if isinstance(placement, Shard):
+                    shard_placement = placement
+                    mesh_dim = i
+                    break
+
             local_tensor = param.to_local()
 
-            if isinstance(placement, Replicate):
-                # Replicate: 已经是完整大小，直接拷贝
+            if shard_placement is None:
+                # 认为是 Replicate
                 local_tensor.copy_(loaded_tensor)
-
-            elif isinstance(placement, Shard):
-                dim = placement.dim
+            else:
+                dim = shard_placement.dim
                 mesh = param.device_mesh
-                mesh_dim = 0  # Since we are taking placements[0], the mesh_dim is 0
+                # mesh_dim 就是上面循环找到的索引
 
                 my_coordinate = mesh.get_coordinate()
                 if my_coordinate is None:
-                    return  # 当前 Rank 不在该 Mesh 上
+                    return
 
                 rank_in_dim = my_coordinate[mesh_dim]
                 world_size_in_dim = mesh.size(mesh_dim)
 
                 full_size = param.shape[dim]
-
-                # 计算分片大小 (Assuming uniform splitting by fully_shard)
                 chunk_size = (full_size + world_size_in_dim - 1) // world_size_in_dim
 
                 start = rank_in_dim * chunk_size
@@ -338,299 +409,10 @@ class FSDP2Engine:
                 if start >= full_size:
                     return
 
-                # 切片 (Global tensor slice)
                 sliced_tensor = loaded_tensor.narrow(dim, start, end - start)
 
-                # 处理 Padding: local_tensor 可能因为 padding 比 sliced_tensor 大
-                # 构造对应的 slice 进行拷贝
                 slices = [slice(None)] * local_tensor.ndim
                 slices[dim] = slice(0, sliced_tensor.shape[dim])
-
                 local_tensor[tuple(slices)].copy_(sliced_tensor)
         else:
-            # 普通 Tensor (未被 Shard，例如 scalar buffer)
             param.data.copy_(loaded_tensor)
-
-    def load_model(
-        self, hf_model_name_or_path: str, dcp_path: str = None
-    ) -> tuple[PreTrainedModel, PreTrainedTokenizer]:
-        """统一的模型加载入口，支持 DCP 高效加载和 HF 兼容加载.
-
-        Args:
-            hf_model_name_or_path: Hugging Face 模型路径或名称 (必须提供，用于读取 Config 和 Tokenizer)
-            dcp_path: (可选) DCP 权重路径。如果提供且存在，优先使用 DCP 加载。
-
-        Returns:
-            model: 已经应用 FSDP2 Sharding 的模型
-            tokenizer: 加载的 Tokenizer
-        """
-        if self.rank == 0:
-            logger.info(f"Loading config and tokenizer from {hf_model_name_or_path} ...")
-
-        tokenizer = AutoTokenizer.from_pretrained(hf_model_name_or_path, trust_remote_code=True)
-        # 确保 tokenizer 有 pad_token，否则训练会报错
-        if tokenizer.pad_token is None:
-            tokenizer.pad_token = tokenizer.eos_token
-
-        # 策略 1: DCP 加载 (高效，推荐)
-        if dcp_path and os.path.exists(dcp_path):
-            if self.rank == 0:
-                logger.info(f"DCP path found at {dcp_path}. Using efficient Sharded Loading (Meta Init -> DCP Load).")
-            model = self._load_from_dcp(hf_model_name_or_path, dcp_path)
-
-        # 策略 2: HF Meta 加载 (高效，大模型推荐)
-        # 能够直接从 HF Checkpoint 加载到 Sharded Model，无需经过 CPU 完整加载
-        else:
-            if self.rank == 0:
-                if dcp_path:
-                    logger.warning(f"DCP path {dcp_path} not found.")
-                logger.info("Using HF Meta Loading (Meta Init -> Shard -> Materialize -> Chunk Load).")
-            model = self._load_from_hf_meta(hf_model_name_or_path)
-
-        return model, tokenizer
-
-    def _load_from_dcp(self, hf_model_path: str, dcp_path: str) -> PreTrainedModel:
-        """内部实现：从 DCP 加载.
-
-        注意：DCP 是分布式 Checkpoint 格式，它包含了所有 Rank 的参数，
-        所以可以直接在 Meta 设备上初始化模型结构，然后直接加载 DCP 权重。
-        """
-        try:
-            # 1. Meta Init
-            model_config = AutoConfig.from_pretrained(hf_model_path, trust_remote_code=True)
-            with torch.device("meta"):
-                # 关键修改：必须指定 torch_dtype，否则 meta tensor 默认为 float32
-                model = AutoModelForCausalLM.from_config(
-                    model_config, trust_remote_code=True, torch_dtype=self.get_mp_policy().param_dtype
-                )
-
-            if self.rank == 0:
-                logger.info("Model structure created on Meta device.")
-
-            # 2. Apply FSDP2 (Sharding)
-            # 此时参数被替换为 DTensor，包含全局 Sharding 信息
-            model = self.prepare_model(model)
-
-            # 3. Materialize (To Empty)
-            if self.rank == 0:
-                logger.info("Materializing sharded model params...")
-
-            # 动态获取当前设备
-            device = torch.cuda.current_device()
-
-            # to_empty: 在本地设备上分配内存（仅分配当前 Rank 负责的分片大小）
-            # 由于此时是 DTensor，PyTorch 会自动计算并分配 Local Shard
-            model.to_empty(device=device)
-
-            # 4. DCP Load
-            if self.rank == 0:
-                logger.info(f"Loading distributed checkpoint from {dcp_path} ...")
-
-            # StateDictOptions: 配置加载行为
-            # full_state_dict=False: 表示加载 Sharded State Dict
-            # cpu_offload=True: 允许在 CPU 上暂存（如果需要），通常 DCP 直接支持 Device-to-Device
-            options = StateDictOptions(full_state_dict=False, cpu_offload=True)
-
-            # 获取 Sharded State Dict (即 Local State Dict)
-            local_state_dict = get_model_state_dict(model, options=options)
-
-            # dcp.load: 并行加载 DCP 权重并填充到 local_state_dict
-            # PyTorch DCP 会自动处理 Global ID 到 Local Slice 的映射
-            dcp.load(state_dict=local_state_dict, checkpoint_id=dcp_path)
-
-            # 将加载好的权重应用回模型
-            set_model_state_dict(model, local_state_dict, options=options)
-
-            if self.rank == 0:
-                logger.info("DCP weights loaded successfully.")
-
-            return model
-
-        except Exception as e:
-            logger.error(f"Failed to load from DCP: {e}")
-            raise e
-
-    def _load_from_hf(self, hf_model_path: str) -> PreTrainedModel:
-        """内部实现：从 HF 加载 (CPU -> Shard).
-
-        注意：这种方式需要在 CPU 上加载整个模型，然后利用 FSDP 自动分片。
-        这种方式虽然简单，但会占用更多 CPU 内存，且无法利用 DCP 的分布式特性。
-        """
-        try:
-            # 1. CPU Load
-            # 只在 Rank 0 上打印日志，但所有 Rank 都加载 (或者未来优化为 Rank 0 加载 + 广播)
-            # 目前为了实现简单，采用所有 Rank CPU 加载，然后利用 FSDP 自动分片
-            # 优化：可以配合 device_map="cpu" 和 low_cpu_mem_usage=True
-            if self.rank == 0:
-                logger.info(f"Loading model from {hf_model_path} to CPU...")
-
-            model = AutoModelForCausalLM.from_pretrained(
-                hf_model_path,
-                torch_dtype=self.get_mp_policy().param_dtype,  # 使用 MP 策略的精度加载
-                device_map="cpu",
-                trust_remote_code=True,
-                low_cpu_mem_usage=True,
-            )
-
-            # 清理缓存
-            gc.collect()
-
-            if self.rank == 0:
-                logger.info("Pretrained model loaded on CPU. Applying FSDP2...")
-
-            # 2. Apply FSDP2 (Sharding)
-            # FSDP 会自动将 CPU 上的参数切分并搬运到 GPU
-            model = self.prepare_model(model)
-
-            # 3. 确保所有参数都已就位 (同步点)
-            dist.barrier()
-
-            return model
-
-        except Exception as e:
-            logger.error(f"Failed to load from HF: {e}")
-            raise e
-
-    def save_checkpoint(self, model: torch.nn.Module, path: str):
-        from torch.distributed.checkpoint import FileSystemWriter, save
-        from torch.distributed.checkpoint.state_dict import get_model_state_dict
-
-        # 获取 State Dict (FSDP2 下不需要 context manager，直接 get_model_state_dict 会处理)
-        # 注意：这里我们使用 PyTorch 官方推荐的 DCP 格式，它支持并行的保存和加载
-        state_dict = get_model_state_dict(model)
-
-        if self.rank == 0:
-            os.makedirs(path, exist_ok=True)
-            logger.info(f"Saving checkpoint to {path}")
-
-        # 并行保存
-        save(state_dict, checkpoint_id=FileSystemWriter(path))
-        if self.rank == 0:
-            logger.info("Checkpoint saved.")
-
-
-# --- 辅助函数 ---
-
-
-def get_transformer_layer_cls(model: PreTrainedModel):
-    # 策略 1: 优先检查 HF 模型自带的 _no_split_modules
-    # 这通常包含了需要作为整体被 Wrap 的层类名
-    no_split_modules = getattr(model, "_no_split_modules", None)
-    if no_split_modules:
-        if isinstance(no_split_modules, list):
-            # 通常是一个列表，取第一个包含 "layer" 或 "block" 的，或者直接取第一个
-            # 为了更准确，我们可以尝试在 model modules 里找匹配的类
-            for name, module in model.named_modules():
-                for cls_name in no_split_modules:
-                    if module.__class__.__name__ == cls_name:
-                        return module.__class__
-            # 如果没找到实例，但有名字，尝试反射（虽然比较难），或者回退到策略 2
-
-    # 策略 2: 针对常见的 Llama, Qwen, DeepSeek 等结构
-    if hasattr(model, "model") and hasattr(model.model, "layers"):
-        # 取第一层作为样本
-        return type(model.model.layers[0])
-    # 针对其他结构可以继续扩展
-    if hasattr(model, "layers"):
-        return type(model.layers[0])
-
-    return None
-
-
-def run_fsdp2_training_step(model: torch.nn.Module, batch: dict[str, torch.Tensor], optimizer: torch.optim.Optimizer):
-    # 1. Move data to GPU
-    device = torch.cuda.current_device()
-    batch = {k: v.to(device) for k, v in batch.items()}
-
-    # 2. Forward
-    outputs = model(**batch)
-    loss = outputs.loss
-
-    # 3. Backward
-    loss.backward()
-
-    # 4. Clip Grad (FSDP2 方式)
-    # 所有的参数已经被 Sharded，直接对 model 所有的 parameters 归一化即可，
-    # 但 FSDP2 提供了优化的处理方式，这里使用通用方式，PyTorch底层会处理
-    grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-
-    # 5. Step
-    optimizer.step()
-    optimizer.zero_grad()
-
-    return loss.item(), grad_norm
-
-
-class DummyDataset(Dataset):
-    def __init__(self, size=100, seq_len=128, vocab_size=32000):
-        self.size = size
-        self.seq_len = seq_len
-        self.vocab_size = vocab_size
-
-    def __len__(self):
-        return self.size
-
-    def __getitem__(self, idx):
-        # 简单模拟：随机生成数据
-        return {
-            "input_ids": torch.randint(0, self.vocab_size, (self.seq_len,), dtype=torch.long),
-            "attention_mask": torch.ones(self.seq_len, dtype=torch.long),
-            "labels": torch.randint(0, self.vocab_size, (self.seq_len,), dtype=torch.long),
-        }
-
-
-def main():
-    # 0. 设置随机种子
-    set_seed(42)
-
-    config = FSDP2Config(mixed_precision="bf16")
-    engine = FSDP2Engine(config)
-
-    # 加载模型与权重 (使用新的统一接口)
-    hf_model_path = "/home/frozen/lcx/Qwen3-4B"  # 用于读取 Config
-    dcp_path = "/home/frozen/lcx/Qwen3-4B-DCP"  # 你的 DCP 权重目录
-
-    # 自动选择策略：有 DCP 用 DCP，没 DCP 用 HF
-    # model, tokenizer = engine.load_model(hf_model_path, dcp_path)
-    # 或者强制测试 HF 加载：
-    model, tokenizer = engine.load_model(hf_model_path, dcp_path=dcp_path)
-
-    # 准备优化器 (必须在 prepare_model 之后)
-    optimizer = engine.prepare_optimizer(model)
-
-    #  准备数据
-    if engine.rank == 0:
-        logger.info("Preparing dummy data...")
-
-    # 动态获取 vocab_size，防止数据越界导致 NaN
-    vocab_size = getattr(model.config, "vocab_size", 32000)
-    dataset = DummyDataset(size=40, seq_len=64, vocab_size=vocab_size)
-    # 使用 DistributedSampler 确保每个 GPU 处理不同的数据切片
-    sampler = DistributedSampler(dataset, num_replicas=engine.world_size, rank=engine.rank, shuffle=True)
-    dataloader = DataLoader(dataset, batch_size=4, sampler=sampler)
-
-    # 6. 训练循环
-    model.train()
-    if engine.rank == 0:
-        logger.info("Starting training loop...")
-
-    for epoch in range(20):  # 跑 20 个 epoch
-        sampler.set_epoch(epoch)
-        for step, batch in enumerate(dataloader):
-            loss, grad_norm = run_fsdp2_training_step(model, batch, optimizer)
-
-            if engine.rank == 0 and step % 2 == 0:
-                # 注意：DTensor 直接 format 可能会报错，先转为 scalar
-                loss_val = loss if isinstance(loss, (float, int)) else loss.item()
-                grad_norm_val = grad_norm if isinstance(grad_norm, (float, int)) else grad_norm.item()
-                print(f"Epoch {epoch} | Step {step} | Loss: {loss_val:.4f} | GradNorm: {grad_norm_val:.4f}")
-
-    # 7. 保存 (仅保存演示，实际保存路径需要有写权限)
-    # engine.save_checkpoint(model, "/tmp/fsdp2_ckpt")
-    if engine.rank == 0:
-        logger.info("Training finished.")
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    main()

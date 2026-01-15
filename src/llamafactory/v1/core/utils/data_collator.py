@@ -90,7 +90,7 @@ class DefaultCollator(DataCollator):
             for message in messages:
                 if isinstance(message, dict) and "messages" in message:
                     message = message["messages"]
-                
+
                 encoded_message = self.renderer.render_messages(message)
                 # ModelInput is a dataclass/dict-like, convert to tensor dict
                 encoded_message = {
@@ -123,4 +123,3 @@ class DataCollatorWithPacking(DefaultCollator):
                 batch[input_name] = default_collate([feature[input_name] for feature in features])
 
         return batch
-

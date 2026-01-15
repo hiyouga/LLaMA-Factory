@@ -35,6 +35,7 @@ import torch.nn.functional as F
 from ..accelerator.helper import ReduceOp
 from ..accelerator.interface import Dim, DistributedInterface
 from ..config import TrainingArguments
+from ..plugins.trainer_plugins.distributed.fsdp2 import FSDP2Plugin
 from ..utils import logging
 from ..utils.helper import compute_valid_tokens
 from ..utils.types import BatchInput, HFModel, ModelOutput, Tensor, TorchDataset
@@ -73,7 +74,7 @@ class BaseTrainer:
             self.model.gradient_checkpointing_enable({"use_reentrant": False})
 
         if self.args.dist_config is not None:
-            shard_need_optimizer = self.args.dist_config.name == "deepspeed"
+            shard_need_optimizer = self.args.dist_config.get("name", None) == "deepspeed"
         else:
             shard_need_optimizer = False
 
@@ -98,7 +99,17 @@ class BaseTrainer:
         )
 
     def _shard_model(self) -> None:
-        pass
+        assert self.args.dist_config is not None
+        if self.args.dist_config.get("name", None) == "fsdp2":
+            fsdp_plugin = FSDP2Plugin(self.args.dist_config)
+            dcp_path = self.args.dist_config.get("dcp_path", None)
+            self.model = fsdp_plugin.shard_model(
+                self.model, hf_model_path=self.model.config.name_or_path, dcp_path=dcp_path
+            )
+        elif self.args.dist_config.get("name", None) == "deepspeed":
+            pass
+        else:
+            raise ValueError(f"Unsupported dist config: {self.args.dist_config.get('name')}")
 
     def _init_optimizer(self) -> None:
         """Init optimizer."""
@@ -162,7 +173,9 @@ class BaseTrainer:
                     step_loss += loss.item()
 
                 grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm).item()
-                if not torch.isfinite(grad_norm):
+
+                # isfinite(): argument 'input' (position 1) must be Tensor, not float
+                if not torch.isfinite(torch.tensor(grad_norm)):  # type: ignore # pyright: ignore [reportUnknownReturnType]
                     logger.warning_rank0(f"Gradient norm is not finite: {grad_norm}")
                 else:
                     self.optimizer.step()
