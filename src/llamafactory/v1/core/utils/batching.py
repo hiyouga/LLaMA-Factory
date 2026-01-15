@@ -30,8 +30,8 @@ from torch.utils.data import default_collate
 from torchdata.stateful_dataloader import StatefulDataLoader
 from torchdata.stateful_dataloader.sampler import StatefulDistributedSampler
 
-from ...accelerator.interface import Dim, DistributedInterface
 from ...accelerator.helper import get_current_device
+from ...accelerator.interface import Dim, DistributedInterface
 from ...config import BatchingStrategy
 from ...utils import logging
 from ...utils.helper import pad_and_truncate
@@ -142,7 +142,7 @@ class BatchGenerator(Iterator):
             num_workers=self.batching_workers,
             collate_fn=self.renderer.process_samples,
             pin_memory=self.pin_memory,
-            pin_memory_device=get_current_device().type, 
+            pin_memory_device=get_current_device().type,
             drop_last=self.drop_last,
         )
         if self.batching_strategy == BatchingStrategy.NORMAL:

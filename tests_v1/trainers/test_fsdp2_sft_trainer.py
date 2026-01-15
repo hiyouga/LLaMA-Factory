@@ -79,7 +79,6 @@ max_new_tokens: 128
     )
 
     # Decode output with error handling (progress bars may contain non-UTF-8 bytes)
-    stdout = result.stdout.decode("utf-8", errors="replace")
     stderr = result.stderr.decode("utf-8", errors="replace")
 
     # Check the result
