@@ -75,12 +75,15 @@ max_new_tokens: 128
         [sys.executable, "-m", "llamafactory.cli", "sft", str(config_file)],
         env=env,
         capture_output=True,
-        text=True,
         cwd=str(Path(__file__).parent.parent.parent),  # LLaMA-Factory root
     )
 
+    # Decode output with error handling (progress bars may contain non-UTF-8 bytes)
+    stdout = result.stdout.decode("utf-8", errors="replace")
+    stderr = result.stderr.decode("utf-8", errors="replace")
+
     # Check the result
-    assert result.returncode == 0, f"Training failed with return code {result.returncode}\nSTDERR: {result.stderr}"
+    assert result.returncode == 0, f"Training failed with return code {result.returncode}\nSTDERR: {stderr}"
 
     # Verify output files exist (optional - adjust based on what run_sft produces)
     # assert (output_dir / "some_expected_file").exists()
