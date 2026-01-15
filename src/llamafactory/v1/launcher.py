@@ -84,6 +84,11 @@ def launch():
             env["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
             env["TORCH_NCCL_AVOID_RECORD_STREAMS"] = "1"
 
+        torchrun_args = [
+            "torchrun",
+            "--nproc-per-node",
+            nproc_per_node,
+        ]
         if rdzv_id is not None:
             # launch elastic job with fault tolerant support when possible
             # see also https://docs.pytorch.org/docs/stable/elastic/train_script.html
@@ -92,46 +97,41 @@ def launch():
             if min_nnodes is not None and max_nnodes is not None:
                 rdzv_nnodes = f"{min_nnodes}:{max_nnodes}"
 
-            process = subprocess.run(
-                (
-                    "torchrun --nnodes {rdzv_nnodes} --nproc-per-node {nproc_per_node} "
-                    "--rdzv-id {rdzv_id} --rdzv-backend c10d --rdzv-endpoint {master_addr}:{master_port} "
-                    "--max-restarts {max_restarts} {file_name} {args}"
-                )
-                .format(
-                    rdzv_nnodes=rdzv_nnodes,
-                    nproc_per_node=nproc_per_node,
-                    rdzv_id=rdzv_id,
-                    master_addr=master_addr,
-                    master_port=master_port,
-                    max_restarts=max_restarts,
-                    file_name=__file__,
-                    args=" ".join([command] + sys.argv[1:]),
-                )
-                .split(),
-                env=env,
-                check=True,
+            torchrun_args.extend(
+                [
+                    "--nnodes",
+                    rdzv_nnodes,
+                    "--rdzv-id",
+                    rdzv_id,
+                    "--rdzv-backend",
+                    "c10d",
+                    "--rdzv-endpoint",
+                    f"{master_addr}:{master_port}",
+                    "--max-restarts",
+                    max_restarts,
+                ]
             )
         else:
             # NOTE: DO NOT USE shell=True to avoid security risk
-            process = subprocess.run(
-                (
-                    "torchrun --nnodes {nnodes} --node_rank {node_rank} --nproc-per-node {nproc_per_node} "
-                    "--master_addr {master_addr} --master_port {master_port} {file_name} {args}"
-                )
-                .format(
-                    nnodes=nnodes,
-                    node_rank=node_rank,
-                    nproc_per_node=nproc_per_node,
-                    master_addr=master_addr,
-                    master_port=master_port,
-                    file_name=__file__,
-                    args=" ".join([command] + sys.argv[1:]),
-                )
-                .split(),
-                env=env,
-                check=True,
+            torchrun_args.extend(
+                [
+                    "--nnodes",
+                    nnodes,
+                    "--node_rank",
+                    node_rank,
+                    "--master_addr",
+                    master_addr,
+                    "--master_port",
+                    master_port,
+                ]
             )
+
+        script_args = [__file__, command] + sys.argv[1:]
+        process = subprocess.run(
+            torchrun_args + script_args,
+            env=env,
+            check=True,
+        )
 
         sys.exit(process.returncode)
 
@@ -149,19 +149,26 @@ def launch():
     elif command == "help":
         print(USAGE)
 
+    elif command in _DIST_TRAIN_COMMANDS:
+        # Single GPU training without torchrun
+        if command in ("train", "sft"):
+            from llamafactory.v1.trainers.sft_trainer import run_sft
+
+            run_sft()
+        elif command == "dpo":
+            raise NotImplementedError("DPO trainer is not implemented yet.")
+        elif command == "rm":
+            raise NotImplementedError("RM trainer is not implemented yet.")
+
     else:
         print(f"Unknown command: {command}.\n{USAGE}")
 
 
 def main():
-    # Use absolute import when script is run directly by torchrun
     # sys.argv[1] contains the command (sft/dpo/rm/train), sys.argv[2:] contains the rest args
     command = sys.argv[1] if len(sys.argv) > 1 else "sft"
 
     # Routing needs the sub-command, but downstream trainers usually expect argv without it.
-    # When launched by `torchrun`, we pass:
-    #   launcher.py <command> <config.yaml> [extra args...]
-    # So remove `<command>` before calling trainer entrypoints.
     if command in _DIST_TRAIN_COMMANDS:
         sys.argv.pop(1)
     else:
