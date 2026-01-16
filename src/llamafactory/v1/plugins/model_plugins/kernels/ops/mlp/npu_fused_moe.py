@@ -324,7 +324,7 @@ class NpuFusedMoEKernel(BaseKernel):
         if not cls.check_deps():
             raise RuntimeError("torch_npu is not available but NpuMoEFusedMoEKernel was called.")
 
-        archs = getattr(model.config, "architectures", [])
+        archs = getattr(model.config, "architectures", None) or []
         target_moe_mapping = None
         for arch in archs:
             if arch in kernel_moe_mapping:
