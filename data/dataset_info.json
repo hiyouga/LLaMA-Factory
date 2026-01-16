@@ -24,6 +24,90 @@
       "tools": "tools"
     }
   },
+  "mllm_reid_train_18k_retpreid_score": {
+    "file_name": "mllm_reid_train_18k_retpreid_score.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "images": "images"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
+  "mllm_reid_test_1k_retpreid_score": {
+    "file_name": "mllm_reid_test_1k_retpreid_score.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "images": "images"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
+  "mllm_reid_train_54k_retpreid_score_3": {
+    "file_name": "mllm_reid_train_54k_retpreid_score_3.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "images": "images"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
+  "mllm_reid_test_3k_retpreid_score_3": {
+    "file_name": "mllm_reid_test_3k_retpreid_score_3.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "images": "images"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
+  "mllm_reid_train_54k_retpreid_score_3_with_res_cot": {
+    "file_name": "mllm_reid_train_54k_retpreid_score_3_with_res_cot.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "images": "images"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
+  "mllm_reid_test_3k_retpreid_score_3_with_res_cot": {
+    "file_name": "mllm_reid_test_3k_retpreid_score_3_with_res_cot.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "images": "images"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
   "mllm_reid_5k_realreid_test": {
     "file_name": "mllm_reid_5k_realreid_test.json",
     "formatting": "sharegpt",
