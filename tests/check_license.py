@@ -16,8 +16,7 @@ import sys
 from pathlib import Path
 
 
-KEYWORDS = ("Copyright", "LlamaFactory")
-VALID_YEARS = ("2025", "2026")
+KEYWORDS = ("Copyright", "2025", "LlamaFactory")
 
 
 def main():
@@ -32,9 +31,7 @@ def main():
                 continue
 
             print(f"Check license: {path}")
-            first_line = file_content[0]
-            assert all(keyword in first_line for keyword in KEYWORDS), f"File {path} does not contain license."
-            assert any(year in first_line for year in VALID_YEARS), f"File {path} does not contain valid year."
+            assert all(keyword in file_content[0] for keyword in KEYWORDS), f"File {path} does not contain license."
 
 
 if __name__ == "__main__":
