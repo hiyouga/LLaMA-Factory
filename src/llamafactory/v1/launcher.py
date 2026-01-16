@@ -32,24 +32,11 @@ _DIST_TRAIN_COMMANDS = ("train", "sft", "dpo", "rm")
 
 
 def launch():
-    from ..extras.env import VERSION, print_env
     from .accelerator.helper import get_device_count
     from .utils.env import find_available_port, is_env_enabled, use_kt, use_ray
     from .utils.logging import get_logger
 
     logger = get_logger(__name__)
-
-    WELCOME = (
-        "-" * 58
-        + "\n"
-        + f"| Welcome to LLaMA Factory, version {VERSION}"
-        + " " * (21 - len(VERSION))
-        + "|\n|"
-        + " " * 56
-        + "|\n"
-        + "| Project page: https://github.com/hiyouga/LLaMA-Factory |\n"
-        + "-" * 58
-    )
 
     # NOTE:
     # `llamafactory-cli <command> ...` enters here first.
@@ -140,10 +127,10 @@ def launch():
         run_chat()
 
     elif command == "env":
-        print_env()
+        raise NotImplementedError("Environment information is not implemented yet.")
 
     elif command == "version":
-        print(WELCOME)
+        raise NotImplementedError("Version information is not implemented yet.")
 
     elif command == "help":
         print(USAGE)

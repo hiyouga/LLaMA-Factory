@@ -1,4 +1,4 @@
-# Copyright 2026 the LlamaFactory team.
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ def get_transformer_layer_cls(model: PreTrainedModel):
     return None
 
 
-class FSDP2Plugin:
+class FSDP2Engine:
     def __init__(self, dist_config: dict):
         self.dist_interface = DistributedInterface()
         self.rank = self.dist_interface.get_rank()
@@ -176,10 +176,10 @@ class FSDP2Plugin:
 
         return model
 
-    def shard_model(self, model: PreTrainedModel, hf_model_path: str, dcp_path: str = None) -> PreTrainedModel:
+    def shard_model(self, model: PreTrainedModel) -> PreTrainedModel:
         if model.device.type == "meta":
             model = self.prepare_model(model)
-            model = self.materialize_and_load(model, hf_model_path=hf_model_path, dcp_path=dcp_path)
+            model = self.materialize_and_load(model, hf_model_path=model.config.name_or_path, dcp_path=self.dcp_path)
         else:
             model = self.prepare_model(model)
         return model
