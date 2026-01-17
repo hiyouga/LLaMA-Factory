@@ -2159,6 +2159,160 @@ class LFMVLPlugin(BasePlugin):
         return messages
 
 
+@dataclass
+class LFM2AudioPlugin(BasePlugin):
+    r"""Plugin for LFM2.5-Audio models.
+
+    LFM2.5-Audio Architecture:
+    - FastConformer audio encoder (16kHz input, 8x subsampling)
+    - Audio markers: <|audio_start|> ... <|text_start|>
+    - Uses liquid_audio package for feature extraction (optional)
+
+    Token Structure:
+    - <|audio_start|> (token 128): Audio region start
+    - <|text_start|> (token 129): Audio region end / text start
+    - audio_token: Placeholder token repeated for sequence length
+    """
+
+    audio_bos_token: str = "<|audio_start|>"
+    audio_eos_token: str = "<|text_start|>"
+
+    @override
+    def _validate_input(
+        self,
+        processor: Optional["MMProcessor"],
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+    ) -> None:
+        r"""Validate inputs. Allow audio without standard HF feature_extractor.
+
+        LFM2.5-Audio uses liquid_audio package for audio processing, not standard
+        HuggingFace feature_extractor. We skip the audio validation here.
+        """
+        # Only validate images/videos, skip audio feature_extractor check
+        if len(images) != 0 or len(videos) != 0:
+            super()._validate_input(processor, images, videos, [])
+
+    @override
+    def _get_mm_inputs(
+        self,
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        processor: Optional["MMProcessor"],
+    ) -> dict[str, "torch.Tensor"]:
+        r"""Extract audio features using liquid_audio or HF processor.
+
+        LFM2.5-Audio uses custom liquid_audio processor, not standard HuggingFace.
+        This method tries to extract features if a compatible processor is available.
+        """
+        mm_inputs: dict[str, torch.Tensor] = {}
+
+        if len(audios) == 0 or processor is None:
+            return mm_inputs
+
+        # Try liquid_audio processor first (has audio_processor attribute)
+        if hasattr(processor, "audio_processor") and processor.audio_processor is not None:
+            audio_processor = processor.audio_processor
+            audios_regularized = self._regularize_audios(audios, sampling_rate=16000)["audios"]
+
+            # Calculate per-audio sequence lengths BEFORE batching (each audio may have different length)
+            # FastConformer uses 8x subsampling: seq_len = (audio_samples - 1) // 8 + 1
+            audio_seq_lengths = []
+            for audio_array in audios_regularized:
+                audio_len = len(audio_array) if hasattr(audio_array, "__len__") else audio_array.shape[-1]
+                seq_len = (audio_len - 1) // 8 + 1
+                audio_seq_lengths.append(seq_len)
+
+            # liquid_audio returns log-mel features (may pad to max length)
+            features = audio_processor(audios_regularized, sampling_rate=16000)
+            mm_inputs["audio_features"] = features
+            mm_inputs["audio_seq_lengths"] = audio_seq_lengths
+        # Fallback: standard HF feature_extractor
+        elif hasattr(processor, "feature_extractor") and processor.feature_extractor is not None:
+            feature_extractor: SequenceFeatureExtractor = processor.feature_extractor
+            audios_regularized = self._regularize_audios(audios, sampling_rate=16000)["audios"]
+            mm_inputs.update(
+                feature_extractor(
+                    audios_regularized,
+                    sampling_rate=16000,
+                    return_attention_mask=True,
+                    padding="max_length",
+                    return_tensors="pt",
+                )
+            )
+            mm_inputs["feature_attention_mask"] = mm_inputs.pop("attention_mask", None)
+
+        return mm_inputs
+
+    @override
+    def process_messages(
+        self,
+        messages: list[dict[str, str]],
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        processor: Optional["MMProcessor"],
+    ) -> list[dict[str, str]]:
+        r"""Replace audio placeholders with boundary-wrapped tokens.
+
+        Produces: <|audio_start|>{audio_token * seqlen}<|text_start|>
+        """
+        self._validate_input(processor, images, videos, audios)
+        self._validate_messages(messages, images, videos, audios)
+
+        num_audio_tokens = 0
+        messages = deepcopy(messages)
+
+        # Calculate audio sequence lengths if processor is available
+        audio_seqlens: list[int] = []
+        if self.expand_mm_tokens and processor is not None:
+            mm_inputs = self._get_mm_inputs([], [], audios, processor)
+            if "audio_seq_lengths" in mm_inputs:
+                # liquid_audio path
+                audio_seqlens = mm_inputs["audio_seq_lengths"]
+            elif "feature_attention_mask" in mm_inputs and mm_inputs["feature_attention_mask"] is not None:
+                # HF path - calculate from attention mask (8x subsampling)
+                input_lengths = mm_inputs["feature_attention_mask"].sum(-1).numpy()
+                audio_seqlens = [(int(length) - 1) // 8 + 1 for length in input_lengths]
+
+        for message in messages:
+            content = message["content"]
+            while AUDIO_PLACEHOLDER in content:
+                # Get audio sequence length
+                if self.expand_mm_tokens and num_audio_tokens < len(audio_seqlens):
+                    audio_seqlen = audio_seqlens[num_audio_tokens]
+                else:
+                    audio_seqlen = 1  # Fallback: single token
+
+                # Build: <|audio_start|>{audio_token * seqlen}<|text_start|>
+                audio_tokens = self.audio_token * audio_seqlen if self.audio_token else ""
+                replacement = f"{self.audio_bos_token}{audio_tokens}{self.audio_eos_token}"
+
+                content = content.replace(AUDIO_PLACEHOLDER, replacement, 1)
+                num_audio_tokens += 1
+
+            message["content"] = content
+
+        return messages
+
+    @override
+    def get_mm_inputs(
+        self,
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        imglens: list[int],
+        vidlens: list[int],
+        audlens: list[int],
+        batch_ids: list[list[int]],
+        processor: Optional["MMProcessor"],
+    ) -> dict[str, Union[list[int], "torch.Tensor"]]:
+        self._validate_input(processor, images, videos, audios)
+        return self._get_mm_inputs(images, videos, audios, processor)
+
+
 PLUGINS = {
     "base": BasePlugin,
     "ernie_vl": ErnieVLPlugin,
@@ -2172,6 +2326,7 @@ PLUGINS = {
     "llava_next": LlavaNextPlugin,
     "llava_next_video": LlavaNextVideoPlugin,
     "lfm2_vl": LFMVLPlugin,
+    "lfm2_audio": LFM2AudioPlugin,
     "minicpm_v": MiniCPMVPlugin,
     "mllama": MllamaPlugin,
     "paligemma": PaliGemmaPlugin,

@@ -1265,6 +1265,32 @@ register_template(
 
 
 register_template(
+    name="lfm2_audio",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_function=FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="lfm2"),
+    format_observation=StringFormatter(
+        slots=[
+            "<|im_start|>tool\n<|tool_response_start|>{{content}}<|tool_response_end|><|im_end|>\n"
+            "<|im_start|>assistant\n"
+        ]
+    ),
+    format_tools=ToolFormatter(tool_format="lfm2"),
+    default_system="You are a helpful audio assistant by Liquid AI.",
+    stop_words=["<|im_end|>"],
+    tool_call_words=("<|tool_call_start|>", "<|tool_call_end|>"),
+    replace_eos=True,
+    mm_plugin=get_mm_plugin(
+        name="lfm2_audio",
+        audio_token="<|reserved_1|>",  # Token ID 17 - placeholder between markers
+        audio_bos_token="<|audio_start|>",  # Token ID 128
+        audio_eos_token="<|text_start|>",  # Token ID 129
+    ),
+)
+
+
+register_template(
     name="llama2",
     format_user=StringFormatter(slots=[{"bos_token"}, "[INST] {{content}} [/INST]"]),
     format_system=StringFormatter(slots=["<<SYS>>\n{{content}}\n<</SYS>>\n\n"]),
