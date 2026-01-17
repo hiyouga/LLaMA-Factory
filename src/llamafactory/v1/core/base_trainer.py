@@ -35,6 +35,7 @@ import torch.nn.functional as F
 from ..accelerator.helper import ReduceOp
 from ..accelerator.interface import Dim, DistributedInterface
 from ..config import TrainingArguments
+from ..plugins.trainer_plugins.distributed.accelerate import DistributedPlugin
 from ..utils import logging
 from ..utils.helper import compute_valid_tokens
 from ..utils.types import BatchInput, HFModel, ModelOutput, Tensor, TorchDataset
@@ -67,7 +68,11 @@ class BaseTrainer:
         self.model_input_names = self.renderer.processor.model_input_names
 
         self._create_batch_generator()
-        self.num_training_steps = self.args.num_train_epochs * len(self.train_batch_generator)
+        # Calculate num_training_steps: max_steps takes priority if set
+        if self.args.max_steps is not None and self.args.max_steps > 0:
+            self.num_training_steps = self.args.max_steps
+        else:
+            self.num_training_steps = self.args.num_train_epochs * len(self.train_batch_generator)
 
         if self.args.enable_activation_checkpointing:
             self.model.gradient_checkpointing_enable({"use_reentrant": False})
@@ -98,7 +103,10 @@ class BaseTrainer:
         )
 
     def _shard_model(self) -> None:
-        pass
+        self.model = DistributedPlugin(self.args.dist_config.name)(
+            self.model,
+            self.args.dist_config,
+        )
 
     def _init_optimizer(self) -> None:
         """Init optimizer."""
@@ -162,7 +170,9 @@ class BaseTrainer:
                     step_loss += loss.item()
 
                 grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm).item()
-                if not torch.isfinite(grad_norm):
+
+                # isfinite(): argument 'input' (position 1) must be Tensor, not float
+                if not torch.isfinite(torch.tensor(grad_norm)):  # type: ignore # pyright: ignore [reportUnknownReturnType]
                     logger.warning_rank0(f"Gradient norm is not finite: {grad_norm}")
                 else:
                     self.optimizer.step()
@@ -173,6 +183,11 @@ class BaseTrainer:
                 step_loss, grad_norm = DistributedInterface().all_reduce([step_loss, grad_norm])
                 DistributedInterface().sync()
                 print(f"Epoch {epoch}, Step {self.global_step}, Loss: {step_loss:.4f}, Grad Norm: {grad_norm:.4f}")
+
+                # Check if max_steps is reached
+                if self.global_step >= self.num_training_steps:
+                    logger.info_rank0(f"Reached max_steps ({self.num_training_steps}), stopping training.")
+                    return
 
     def save_model(self) -> None:
         """Save the model."""

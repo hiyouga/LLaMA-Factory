@@ -15,7 +15,6 @@
 import sys
 from unittest.mock import MagicMock, patch
 
-import pytest
 import torch.multiprocessing as mp
 from transformers import AutoModelForCausalLM
 
