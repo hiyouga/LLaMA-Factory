@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any, Optional
 import torch
 import torch.distributed as dist
 from transformers import EarlyStoppingCallback, PreTrainedModel
+from transformers.utils import is_torch_cuda_available, is_torch_npu_available
 
 from ..data import get_template_and_fix_tokenizer
 from ..extras import logging
@@ -34,12 +35,17 @@ from .ppo import run_ppo
 from .pt import run_pt
 from .rm import run_rm
 from .sft import run_sft
-from .trainer_utils import get_ray_trainer, get_swanlab_callback
+from .trainer_utils import (
+    get_master_addr_port,
+    get_placement_group,
+    get_ray_remote_config_for_worker,
+    get_swanlab_callback,
+)
 
 
 if is_ray_available():
     import ray
-    from ray.train.huggingface.transformers import RayTrainReportCallback
+    from ray.util.scheduling_strategies import PlacementGroupSchedulingStrategy
 
 
 if TYPE_CHECKING:
@@ -115,13 +121,7 @@ def run_exp(args: Optional[dict[str, Any]] = None, callbacks: Optional[list["Tra
     ray_args = get_ray_args(args)
     callbacks = callbacks or []
     if ray_args.use_ray:
-        callbacks.append(RayTrainReportCallback())
-        trainer = get_ray_trainer(
-            training_function=_training_function,
-            train_loop_config={"args": args, "callbacks": callbacks},
-            ray_args=ray_args,
-        )
-        trainer.fit()
+        _ray_training_function(ray_args, args, callbacks)
     else:
         _training_function(config={"args": args, "callbacks": callbacks})
 
@@ -212,3 +212,96 @@ def export_model(args: Optional[dict[str, Any]] = None) -> None:
     with open(ollama_modelfile, "w", encoding="utf-8") as f:
         f.write(template.get_ollama_modelfile(tokenizer))
         logger.info_rank0(f"Ollama modelfile saved in {ollama_modelfile}")
+
+
+@ray.remote
+class RayWorker:
+    def __init__(self):
+        self._setup_env_visible_devices()
+
+        rank = os.environ["RANK"]
+        world_size = os.environ["WORLD_SIZE"]
+        master_addr = os.environ["MASTER_ADDR"]
+        master_port = os.environ["MASTER_PORT"]
+        use_agent_store = os.environ["TORCHELASTIC_USE_AGENT_STORE"]
+        local_rank = os.environ["LOCAL_RANK"] if os.environ.get("LOCAL_RANK", None) else "0"
+
+        store = {
+            "RANK": rank,
+            "WORLD_SIZE": world_size,
+            "MASTER_ADDR": master_addr,
+            "MASTER_PORT": master_port,
+            "LOCAL_RANK": local_rank,
+            "TORCHELASTIC_USE_AGENT_STORE": use_agent_store,
+        }
+
+        visible_devices_keyword = "ASCEND_RT_VISIBLE_DEVICES" if is_torch_npu_available() else "CUDA_VISIBLE_DEVICES"
+        visible_devices_id = os.environ.get(visible_devices_keyword)
+        store[visible_devices_keyword] = visible_devices_id
+
+        for key, value in store.items():
+            if value is not None:
+                os.environ[key] = value
+
+        if is_torch_cuda_available():
+            torch.cuda.set_device(int(local_rank))
+        elif is_torch_npu_available():
+            torch.npu.set_device(int(local_rank))
+
+    def _setup_env_visible_devices(self):
+        RAY_NOSET_VISIBLE_DEVICES_LIST = [
+            "RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES",
+            "RAY_EXPERIMENTAL_NOSET_ASCEND_RT_VISIBLE_DEVICES",
+        ]
+        is_ray_noset_visible_devices = any(os.environ.get(env_var, None) for env_var in RAY_NOSET_VISIBLE_DEVICES_LIST)
+        if is_ray_noset_visible_devices:
+            device_name = "NPU" if is_torch_npu_available() else "GPU"
+            local_rank = ray.get_runtime_context().get_accelerator_ids()[device_name][0]
+            os.environ["LOCAL_RANK"] = local_rank
+
+    def _training_function(self, config):
+        _training_function(config)
+
+
+def _ray_training_function(ray_args, args, callbacks):
+    num_workers = ray_args.ray_num_workers
+    logger.info(f"Using ray.remote mode with {num_workers} workers for distributed training.")
+
+    # initialize ray
+    if not ray.is_initialized():
+        if ray_args.ray_init_kwargs is not None:
+            ray.init(**ray_args.ray_init_kwargs)
+        else:
+            ray.init()
+
+    # create placementgroup for resource management
+    pg, bundle = get_placement_group(num_workers, ray_args.placement_strategy)
+    ray.get(pg.ready())
+    logger.info(f"Create placement group with {num_workers} bundles: {bundle}")
+
+    # get master_addr_port
+    master_addr, master_port = ray.get(
+        get_master_addr_port.options(
+            scheduling_strategy=PlacementGroupSchedulingStrategy(
+                placement_group=pg,
+                placement_group_bundle_index=0,
+            ),
+        ).remote()
+    )
+
+    # luanch workers
+    workers = []
+    for rank in range(num_workers):
+        remote_config = get_ray_remote_config_for_worker(
+            placement_group=pg,
+            bundle_idx=rank,
+            rank=rank,
+            world_size=num_workers,
+            master_addr=master_addr,
+            master_port=master_port,
+        )
+        worker = RayWorker.options(**remote_config).remote()
+        workers.append(worker)
+
+    ray.get([worker._training_function.remote(config={"args": args, "callbacks": callbacks}) for worker in workers])
+    ray.shutdown()
