@@ -66,16 +66,16 @@ def merge_dataset(
             logger.warning_rank0_once("We recommend using `mix_strategy=concat` in non-streaming mode.")
 
         strategy_map: str = {
-            (True, False): "first_exhausted",
-            (False, True): "all_exhausted",
-            (False, False): "all_exhausted_without_replacement",
-        }[(data_args.mix_strategy.endswith("under"), data_args.mix_strategy.endswith("over"))]
+            "interleave_under": "first_exhausted",
+            "interleave_over": "all_exhausted",
+            "interleave_once": "all_exhausted_without_replacement",
+        }[data_args.mix_strategy]
 
         return interleave_datasets(
             datasets=all_datasets,
             probabilities=data_args.interleave_probs,
             seed=seed,
-            stopping_strategy=strategy_map, # type: ignore
+            stopping_strategy=strategy_map,  # type: ignore
         )
 
     else:
