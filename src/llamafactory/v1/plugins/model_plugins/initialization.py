@@ -41,8 +41,3 @@ def init_on_rank0() -> torch.device:
 @InitPlugin("init_on_default").register()
 def init_on_default() -> torch.device:
     return DistributedInterface().current_device
-
-
-@InitPlugin("auto").register()
-def init_auto() -> "str":
-    return "auto"

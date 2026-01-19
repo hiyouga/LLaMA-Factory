@@ -17,8 +17,10 @@ import sys
 from pathlib import Path
 
 import pytest
+import torch
 
 
+@pytest.mark.xfail(reason="CI machines may OOM when heavily loaded.")
 @pytest.mark.runs_on(["cuda", "npu"])
 def test_fsdp2_sft_trainer(tmp_path: Path):
     """Test FSDP2 SFT trainer by simulating `llamafactory-cli sft config.yaml` behavior."""

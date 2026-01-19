@@ -35,7 +35,7 @@ import torch.nn.functional as F
 from ..accelerator.helper import ReduceOp
 from ..accelerator.interface import Dim, DistributedInterface
 from ..config import TrainingArguments
-from ..plugins.trainer_plugins.distributed import DistributedPlugin
+from ..plugins.trainer_plugins.distributed.hub import DistributedPlugin
 from ..utils import logging
 from ..utils.helper import compute_valid_tokens
 from ..utils.types import BatchInput, HFModel, ModelOutput, Tensor, TorchDataset
