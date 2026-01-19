@@ -180,6 +180,16 @@ def operate_tensorlike(fn: Callable[[...], Tensor], data: TensorLike, **kwargs) 
         return result.tolist()
 
 
+def get_init_process_group_backend() -> str:
+    """Get backend for init process group."""
+    if is_torch_npu_available():
+        return "hccl"
+    elif is_torch_cuda_available():
+        return "nccl"
+    else:
+        return "gloo"
+
+
 def all_gather(tensor: Tensor, group: Optional[ProcessGroup] = None) -> Tensor:
     """Gathers the tensor from all ranks and stacks them at the first dim."""
     world_size = get_world_size()

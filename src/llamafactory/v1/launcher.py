@@ -48,7 +48,6 @@ def launch():
     if command in _DIST_TRAIN_COMMANDS and (
         is_env_enabled("FORCE_TORCHRUN") or (get_device_count() > 1 and not use_ray() and not use_kt())
     ):
-
         nnodes = os.getenv("NNODES", "1")
         node_rank = os.getenv("NODE_RANK", "0")
         nproc_per_node = os.getenv("NPROC_PER_NODE", str(get_device_count()))

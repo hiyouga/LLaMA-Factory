@@ -35,7 +35,7 @@ import torch.nn.functional as F
 from ..accelerator.helper import ReduceOp
 from ..accelerator.interface import Dim, DistributedInterface
 from ..config import TrainingArguments
-from ..plugins.trainer_plugins.distributed.accelerate import DistributedPlugin
+from ..plugins.trainer_plugins.distributed import DistributedPlugin
 from ..utils import logging
 from ..utils.helper import compute_valid_tokens
 from ..utils.types import BatchInput, HFModel, ModelOutput, Tensor, TorchDataset
@@ -103,6 +103,16 @@ class BaseTrainer:
         )
 
     def _shard_model(self) -> None:
+        if self.args.dist_config is None:
+            if DistributedInterface().get_world_size(Dim.DP) > 1:
+                from torch.nn.parallel import DistributedDataParallel as DDP
+
+                logger.warning_rank0(
+                    "dist_config is None but distributed training is enabled; falling back to DistributedDataParallel."
+                )
+                device_ids = None if self.device.type == "cpu" else [self.device.index]
+                self.model = DDP(self.model, device_ids=device_ids)
+            return
         self.model = DistributedPlugin(self.args.dist_config.name)(
             self.model,
             self.args.dist_config,
@@ -182,7 +192,8 @@ class BaseTrainer:
 
                 step_loss, grad_norm = DistributedInterface().all_reduce([step_loss, grad_norm])
                 DistributedInterface().sync()
-                print(f"Epoch {epoch}, Step {self.global_step}, Loss: {step_loss:.4f}, Grad Norm: {grad_norm:.4f}")
+                if DistributedInterface().get_rank() == 0:
+                    print(f"Epoch {epoch}, Step {self.global_step}, Loss: {step_loss:.4f}, Grad Norm: {grad_norm:.4f}")
 
                 # Check if max_steps is reached
                 if self.global_step >= self.num_training_steps:
@@ -191,6 +202,7 @@ class BaseTrainer:
 
     def save_model(self) -> None:
         """Save the model."""
-        self.model.save_pretrained(self.args.output_dir)
+        model_to_save = self.model.module if hasattr(self.model, "module") else self.model
+        model_to_save.save_pretrained(self.args.output_dir)
         self.renderer.processor.save_pretrained(self.args.output_dir)
         logger.info_rank0(f"Model saved to {self.args.output_dir}")
