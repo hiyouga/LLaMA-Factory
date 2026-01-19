@@ -24,8 +24,8 @@ from llamafactory.v1.plugins.data_plugins.converter import DataConverterPlugin
 
 @pytest.mark.parametrize("num_samples", [16])
 def test_alpaca_converter(num_samples: int):
-    data_args = DataArguments(dataset="llamafactory/v1-dataset-info/tiny-supervised-dataset.yaml")
-    data_engine = DataEngine(data_args)
+    data_args = DataArguments(train_dataset="llamafactory/v1-dataset-info/tiny-supervised-dataset.yaml")
+    data_engine = DataEngine(data_args.train_dataset)
     original_data = load_dataset("llamafactory/tiny-supervised-dataset", split="train")
     indexes = random.choices(range(len(data_engine)), k=num_samples)
     for index in indexes:
@@ -73,8 +73,8 @@ def test_sharegpt_converter():
 
 @pytest.mark.parametrize("num_samples", [16])
 def test_pair_converter(num_samples: int):
-    data_args = DataArguments(dataset="llamafactory/v1-dataset-info/orca-dpo-pairs.yaml")
-    data_engine = DataEngine(data_args)
+    data_args = DataArguments(train_dataset="llamafactory/v1-dataset-info/orca-dpo-pairs.yaml")
+    data_engine = DataEngine(data_args.train_dataset)
     original_data = load_dataset("HuggingFaceH4/orca_dpo_pairs", split="train_prefs")
     indexes = random.choices(range(len(data_engine)), k=num_samples)
     for index in indexes:
@@ -120,6 +120,9 @@ def test_pair_converter(num_samples: int):
 
 
 if __name__ == "__main__":
+    """
+    python -m tests_v1.plugins.data_plugins.test_converter
+    """
     test_alpaca_converter(1)
     test_sharegpt_converter()
     test_pair_converter(1)

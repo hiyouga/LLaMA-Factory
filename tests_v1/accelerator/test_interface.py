@@ -58,3 +58,10 @@ def test_multi_device():
     master_port = find_available_port()
     world_size = 2
     mp.spawn(_all_reduce_tests, args=(world_size, master_port), nprocs=world_size)
+
+
+if __name__ == "__main__":
+    """
+    python tests_v1/accelerator/test_interface.py
+    """
+    test_all_device()

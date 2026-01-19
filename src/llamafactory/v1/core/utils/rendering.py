@@ -142,8 +142,8 @@ class Renderer:
             elif "chosen_messages" in sample and "rejected_messages" in sample:
                 chosen_input = self.render_messages(sample["chosen_messages"], sample.get("tools"))
                 rejected_input = self.render_messages(sample["rejected_messages"], sample.get("tools"))
-                chosen_input["token_type_ids"] = [0] * len(chosen_input["input_ids"])
-                rejected_input["token_type_ids"] = [1] * len(rejected_input["input_ids"])
+                chosen_input["token_type_ids"] = [1] * len(chosen_input["input_ids"])
+                rejected_input["token_type_ids"] = [2] * len(rejected_input["input_ids"])
                 model_input = ModelInput(
                     input_ids=chosen_input["input_ids"] + rejected_input["input_ids"],
                     attention_mask=chosen_input["attention_mask"] + rejected_input["attention_mask"],

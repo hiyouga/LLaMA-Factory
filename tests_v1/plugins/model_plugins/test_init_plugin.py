@@ -19,7 +19,7 @@ from llamafactory.v1.core.model_engine import ModelEngine
 
 
 def test_init_on_meta():
-    _, model_args, *_ = get_args(
+    model_args, *_ = get_args(
         dict(
             model="llamafactory/tiny-random-qwen3",
             init_config={"name": "init_on_meta"},
@@ -30,7 +30,7 @@ def test_init_on_meta():
 
 
 def test_init_on_rank0():
-    _, model_args, *_ = get_args(
+    model_args, *_ = get_args(
         dict(
             model="llamafactory/tiny-random-qwen3",
             init_config={"name": "init_on_rank0"},
@@ -44,7 +44,7 @@ def test_init_on_rank0():
 
 
 def test_init_on_default():
-    _, model_args, *_ = get_args(
+    model_args, *_ = get_args(
         dict(
             model="llamafactory/tiny-random-qwen3",
             init_config={"name": "init_on_default"},
@@ -52,3 +52,12 @@ def test_init_on_default():
     )
     model_engine = ModelEngine(model_args=model_args)
     assert model_engine.model.device == DistributedInterface().current_device
+
+
+if __name__ == "__main__":
+    """
+    python tests_v1/plugins/model_plugins/test_init_plugin.py
+    """
+    test_init_on_meta()
+    test_init_on_rank0()
+    test_init_on_default()

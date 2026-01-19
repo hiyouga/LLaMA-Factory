@@ -12,8 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ...utils.objects import StatefulBuffer
 from ...utils.plugin import BasePlugin
+from ...utils.types import BatchInfo, BatchInput, DataLoader
 
 
 class BatchingPlugin(BasePlugin):
-    pass
+    def compute_length(self, data_provider: DataLoader) -> int:
+        """Compute the length of the batch generator.
+
+        The approximate length is used to calculate the lr schedule.
+        """
+        raise NotImplementedError()
+
+    def fill_buffer(self, buffer: StatefulBuffer, batch_info: BatchInfo) -> None:
+        """Fill the buffer with data."""
+        raise NotImplementedError()
+
+    def generate_batch(self, buffer: StatefulBuffer, batch_info: BatchInfo) -> list[BatchInput] | None:
+        """Generate a batch from the buffer."""
+        raise NotImplementedError()

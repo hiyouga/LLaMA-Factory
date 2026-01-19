@@ -19,8 +19,8 @@ from llamafactory.v1.core.utils.batching import BatchGenerator
 
 
 def test_normal_batching():
-    data_args = DataArguments(dataset="llamafactory/v1-sft-demo")
-    data_engine = DataEngine(data_args=data_args)
+    data_args = DataArguments(train_dataset="llamafactory/v1-sft-demo")
+    data_engine = DataEngine(data_args.train_dataset)
     model_args = ModelArguments(model="llamafactory/tiny-random-qwen3")
     model_engine = ModelEngine(model_args=model_args)
     training_args = TrainingArguments(
@@ -46,4 +46,7 @@ def test_normal_batching():
 
 
 if __name__ == "__main__":
+    """
+    python -m tests_v1.core.utils.test_batching
+    """
     test_normal_batching()

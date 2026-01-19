@@ -1145,16 +1145,47 @@ register_model_group(
 
 register_model_group(
     models={
+        "Hunyuan-0.5B-Instruct": {
+            DownloadSource.DEFAULT: "tencent/Hunyuan-0.5B-Instruct",
+            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/Hunyuan-0.5B-Instruct",
+        },
+        "Hunyuan-1.8B-Instruct": {
+            DownloadSource.DEFAULT: "tencent/Hunyuan-1.8B-Instruct",
+            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/Hunyuan-1.8B-Instruct",
+        },
+        "Hunyuan-4B-Instruct": {
+            DownloadSource.DEFAULT: "tencent/Hunyuan-4B-Instruct",
+            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/Hunyuan-4B-Instruct",
+        },
         "Hunyuan-7B-Instruct": {
             DownloadSource.DEFAULT: "tencent/Hunyuan-7B-Instruct",
-            DownloadSource.MODELSCOPE: "AI-ModelScope/Hunyuan-7B-Instruct",
+            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/Hunyuan-7B-Instruct",
         },
         "Hunyuan-MT-7B-Instruct": {
             DownloadSource.DEFAULT: "tencent/Hunyuan-MT-7B",
             DownloadSource.MODELSCOPE: "Tencent-Hunyuan/Hunyuan-MT-7B",
         },
+        "HY-MT1.5-7B-Instruct": {
+            DownloadSource.DEFAULT: "tencent/HY-MT1.5-7B",
+            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/HY-MT1.5-7B",
+        },
+        "Hunyuan-A13B-Instruct": {
+            DownloadSource.DEFAULT: "tencent/Hunyuan-A13B-Instruct",
+            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/Hunyuan-A13B-Instruct",
+        },
     },
     template="hunyuan",
+)
+
+
+register_model_group(
+    models={
+        "HY-MT1.5-1.8B-Instruct": {
+            DownloadSource.DEFAULT: "tencent/HY-MT1.5-1.8B",
+            DownloadSource.MODELSCOPE: "Tencent-Hunyuan/HY-MT1.5-1.8B",
+        },
+    },
+    template="hunyuan_small",
 )
 
 

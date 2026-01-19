@@ -34,30 +34,29 @@ from ...accelerator.interface import DistributedInterface
 from ...config import BatchingStrategy
 from ...utils import logging
 from ...utils.helper import pad_and_truncate
-from ...utils.types import BatchInput, ModelInput, TorchDataset
+from ...utils.objects import StatefulBuffer
+from ...utils.types import BatchInfo, BatchInput, ModelInput, TorchDataset
 from .rendering import Renderer
 
 
 logger = logging.get_logger(__name__)
 
 
-def default_collate_fn(
-    buffer: list[ModelInput], buffer_tokens: int, micro_batch_size: int, num_micro_batch: int, cutoff_len: int
-) -> tuple[list[ModelInput], int, list[BatchInput]]:
+def default_collate_fn(buffer: StatefulBuffer, batch_info: BatchInfo) -> list[BatchInput] | None:
+    micro_batch_size = batch_info["micro_batch_size"]
+    num_micro_batch = batch_info["num_micro_batch"]
+    cutoff_len = batch_info["cutoff_len"]
     batch_size = micro_batch_size * num_micro_batch
     if len(buffer) < batch_size:
-        return buffer, buffer_tokens, None
+        return None
 
-    samples = buffer[:batch_size]
-    buffer = buffer[batch_size:]
-    buffer_tokens -= sum(len(sample["input_ids"]) for sample in samples)
-
+    samples = buffer.get(batch_size)
     batch = []
     for i in range(num_micro_batch):
         micro_batch = samples[i * micro_batch_size : (i + 1) * micro_batch_size]
         batch.append(default_collate(pad_and_truncate(micro_batch, cutoff_len)))
 
-    return buffer, buffer_tokens, batch
+    return batch
 
 
 class BatchGenerator(Iterator):
@@ -105,9 +104,14 @@ class BatchGenerator(Iterator):
 
         self._is_resuming: bool = False
         self._data_iter = iter(self._data_provider)
-        self._buffer: list[ModelInput] = []
-        self._buffer_tokens: int = 0
-        self._max_buffer_tokens: int = self.micro_batch_size * self.num_micro_batch * self.cutoff_len
+        self._buffer = StatefulBuffer()
+
+        self._batch_info: BatchInfo = {
+            "micro_batch_size": self.micro_batch_size,
+            "num_micro_batch": self.num_micro_batch,
+            "cutoff_len": self.cutoff_len,
+            "data_iter": self._data_iter,
+        }
 
         logger.info_rank0(
             f"Init unified data loader with global batch size {self.global_batch_size}, "
@@ -145,7 +149,7 @@ class BatchGenerator(Iterator):
         else:
             from ...plugins.trainer_plugins.batching import BatchingPlugin
 
-            self._length = BatchingPlugin(self.batching_strategy).compute_length()
+            self._length = BatchingPlugin(self.batching_strategy).compute_length(self._data_provider)
             raise NotImplementedError("Batching strategy other than NORMAL is not supported yet.")
 
     def __len__(self) -> int:
@@ -161,38 +165,34 @@ class BatchGenerator(Iterator):
         return self
 
     def __next__(self):
-        batch = self._next_batch()
+        self._fill_buffer()
+        batch = self._generate_batch()
         if batch is None:
             raise StopIteration
 
         return batch
 
-    def _next_batch(self) -> list[BatchInput] | None:
-        while self._buffer_tokens < self._max_buffer_tokens:
-            try:
-                samples: list[ModelInput] = next(self._data_iter)
-            except StopIteration:
-                break
-
-            num_tokens = sum(len(sample["input_ids"]) for sample in samples)
-            self._buffer.extend(samples)
-            self._buffer_tokens += num_tokens
-
-        return self._build_batch()
-
-    def _build_batch(self) -> list[BatchInput] | None:
+    def _fill_buffer(self) -> None:
         if self.batching_strategy == BatchingStrategy.NORMAL:
-            self._buffer, self._buffer_tokens, batch = default_collate_fn(
-                self._buffer, self._buffer_tokens, self.micro_batch_size, self.num_micro_batch, self.cutoff_len
-            )
-            return batch
+            while len(self._buffer) < self.micro_batch_size * self.num_micro_batch:
+                try:
+                    samples: list[ModelInput] = next(self._data_iter)
+                except StopIteration:
+                    break
+
+                self._buffer.put(samples)
         else:
             from ...plugins.trainer_plugins.batching import BatchingPlugin
 
-            self._buffer, self._buffer_tokens, batch = BatchingPlugin(self.batching_strategy)(
-                self._buffer, self._buffer_tokens, self.micro_batch_size, self.num_micro_batch, self.cutoff_len
-            )
-            return batch
+            BatchingPlugin(self.batching_strategy).fill_buffer(self._buffer, self._batch_info)
+
+    def _generate_batch(self) -> list[BatchInput] | None:
+        if self.batching_strategy == BatchingStrategy.NORMAL:
+            return default_collate_fn(self._buffer, self._batch_info)
+        else:
+            from ...plugins.trainer_plugins.batching import BatchingPlugin
+
+            return BatchingPlugin(self.batching_strategy).generate_batch(self._buffer, self._batch_info)
 
     def state_dict(self) -> dict[str, Any]:
         return {
@@ -216,7 +216,7 @@ if __name__ == "__main__":
     """
     python -m llamafactory.v1.core.utils.batching \
         --model llamafactory/tiny-random-qwen2.5 \
-        --dataset data/v1_sft_demo.yaml \
+        --train_dataset data/v1_sft_demo.yaml \
         --micro_batch_size 2 \
         --global_batch_size 4 \
         --batching_workers 0
@@ -225,8 +225,8 @@ if __name__ == "__main__":
     from ..data_engine import DataEngine
     from ..model_engine import ModelEngine
 
-    data_args, model_args, training_args, _ = get_args()
-    data_engine = DataEngine(data_args=data_args)
+    model_args, data_args, training_args, _ = get_args()
+    data_engine = DataEngine(data_args.train_dataset)
     model_engine = ModelEngine(model_args=model_args)
     batch_generator = BatchGenerator(
         data_engine,

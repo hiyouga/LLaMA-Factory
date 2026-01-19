@@ -30,9 +30,9 @@ from .training_args import TrainingArguments
 InputArgument = dict[str, Any] | list[str] | None
 
 
-def get_args(args: InputArgument = None) -> tuple[DataArguments, ModelArguments, TrainingArguments, SampleArguments]:
+def get_args(args: InputArgument = None) -> tuple[ModelArguments, DataArguments, TrainingArguments, SampleArguments]:
     """Parse arguments from command line or config file."""
-    parser = HfArgumentParser([DataArguments, ModelArguments, TrainingArguments, SampleArguments])
+    parser = HfArgumentParser([ModelArguments, DataArguments, TrainingArguments, SampleArguments])
     allow_extra_keys = is_env_enabled("ALLOW_EXTRA_KEYS")
 
     if args is None:

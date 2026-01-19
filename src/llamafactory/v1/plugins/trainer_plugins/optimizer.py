@@ -12,17 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ...utils.plugin import BasePlugin
 
-from dataclasses import dataclass, field
 
-
-@dataclass
-class DataArguments:
-    train_dataset: str | None = field(
-        default=None,
-        metadata={"help": "Path to the training dataset."},
-    )
-    eval_dataset: str | None = field(
-        default=None,
-        metadata={"help": "Path to the evaluation dataset."},
-    )
+class OptimizerPlugin(BasePlugin):
+    pass

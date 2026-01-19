@@ -73,14 +73,14 @@ class SyncSampler(BaseSampler):
 
 
 def run_chat(args: InputArgument = None):
-    data_args, model_args, _, sample_args = get_args(args)
+    model_args, data_args, _, sample_args = get_args(args)
     if sample_args.sample_backend != SampleBackend.HF:
         model_args.init_plugin = {"name": "init_on_meta"}
 
     model_engine = ModelEngine(model_args)
     sampler = SyncSampler(sample_args, model_args, model_engine.model, model_engine.renderer)
-    if data_args.dataset is not None:
-        dataset = DataEngine(data_args)
+    if data_args.train_dataset is not None:
+        dataset = DataEngine(data_args.train_dataset)
         sampler.batch_infer(dataset)
     else:
         if os.name != "nt":
