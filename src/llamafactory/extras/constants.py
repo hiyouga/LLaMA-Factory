@@ -57,6 +57,7 @@ LLAMABOARD_CONFIG = "llamaboard_config.yaml"
 
 MCA_SUPPORTED_MODELS = {
     "deepseek_v3",
+    "glm4_moe",
     "llama",
     "mistral",
     "mixtral",

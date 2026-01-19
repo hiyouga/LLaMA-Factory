@@ -340,7 +340,7 @@ def get_train_args(args: dict[str, Any] | list[str] | None = None) -> _TRAIN_CLS
     if training_args.deepspeed is not None and (finetuning_args.use_galore or finetuning_args.use_apollo):
         raise ValueError("GaLore and APOLLO are incompatible with DeepSpeed yet.")
 
-    if training_args.fp8 and model_args.quantization_bit is not None:
+    if not finetuning_args.use_mca and training_args.fp8 and model_args.quantization_bit is not None:
         raise ValueError("FP8 training is not compatible with quantization. Please disable one of them.")
 
     if model_args.infer_backend != EngineName.HF:
@@ -359,7 +359,7 @@ def get_train_args(args: dict[str, Any] | list[str] | None = None) -> _TRAIN_CLS
     _verify_model_args(model_args, data_args, finetuning_args)
     _check_extra_dependencies(model_args, finetuning_args, training_args)
 
-    if training_args.fp8_enable_fsdp_float8_all_gather and not training_args.fp8:
+    if not finetuning_args.use_mca and training_args.fp8_enable_fsdp_float8_all_gather and not training_args.fp8:
         logger.warning_rank0("fp8_enable_fsdp_float8_all_gather requires fp8=True. Setting fp8=True.")
         model_args.fp8 = True
 
