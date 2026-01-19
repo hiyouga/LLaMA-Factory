@@ -32,7 +32,7 @@ RUN pip uninstall -y apex && \
     pip install -v --disable-pip-version-check --no-cache-dir --no-build-isolation \
     --config-settings "--build-option=--cpp_ext --cuda_ext --parallel 32" ${apex_url}
 
-RUN pip3 install --no-build-isolation transformer_engine[pytorch]
+RUN pip install --no-build-isolation transformer_engine[pytorch]
 
 RUN rm -rf /build
 WORKDIR /workspace
