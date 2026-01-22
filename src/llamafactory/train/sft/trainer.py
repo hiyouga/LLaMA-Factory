@@ -17,6 +17,8 @@
 
 import json
 import os
+import time
+from collections import OrderedDict
 from types import MethodType
 from typing import TYPE_CHECKING, Any, Optional, Union
 
@@ -120,6 +122,104 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
     @override
     def compute_loss(self, model, inputs, *args, **kwargs):
         return super().compute_loss(model, inputs, *args, **kwargs)
+
+    @override
+    def _save_checkpoint(self, model, trial):
+        r"""Override to measure checkpoint saving time."""
+        checkpoint_folder = f"checkpoint-{self.state.global_step}"
+        run_dir = self._get_output_dir(trial=trial)
+        output_dir = os.path.join(run_dir, checkpoint_folder)
+
+        logger.info_rank0(f"💾 Starting checkpoint save at step {self.state.global_step}...")
+        start_time = time.time()
+
+        result = super()._save_checkpoint(model, trial)
+
+        elapsed_time = time.time() - start_time
+        logger.info_rank0(
+            f"✅ Checkpoint saved to {output_dir} in {elapsed_time:.2f} seconds ({elapsed_time / 60:.2f} minutes)"
+        )
+
+        return result
+
+    @override
+    def save_model(self, output_dir: Optional[str] = None, _internal_call: bool = False):
+        r"""Override to save LoRA adapter with DeepSpeed ZeRO-3 compatibility.
+
+        PEFT's get_peft_model_state_dict() fails with ZeRO-3 partitioned parameters.
+        Uses direct all_gather on ds_tensor to avoid GatheredParameters INFLIGHT issues.
+        """
+        output_dir = output_dir if output_dir is not None else self.args.output_dir
+        os.makedirs(output_dir, exist_ok=True)
+
+        unwrapped_model = self.accelerator.unwrap_model(self.model)
+
+        # Check if using PEFT model (import only when needed for non-PEFT cases)
+        try:
+            from peft import PeftModel
+
+            is_peft_model = isinstance(unwrapped_model, PeftModel)
+        except ImportError:
+            is_peft_model = False
+
+        if is_peft_model and self.is_deepspeed_enabled:
+            logger.info_rank0("💡 Saving PEFT adapter with DeepSpeed ZeRO-3 (direct all_gather)...")
+
+            lora_params = [
+                (name, param)
+                for name, param in unwrapped_model.named_parameters()
+                if param.requires_grad and "lora" in name.lower()
+            ]
+            logger.info_rank0(f"📊 Found {len(lora_params)} LoRA params")
+
+            torch.distributed.barrier()
+            torch.cuda.synchronize()
+
+            world_size = torch.distributed.get_world_size()
+            state_dict = OrderedDict()
+
+            for name, param in lora_params:
+                if hasattr(param, "ds_tensor"):
+                    # ZeRO-3: param is partitioned, gather from all ranks
+                    local_tensor = param.ds_tensor.to(param.device)
+                    gathered_tensors = [torch.zeros_like(local_tensor) for _ in range(world_size)]
+                    torch.distributed.all_gather(gathered_tensors, local_tensor)
+                    full_tensor = torch.cat(gathered_tensors, dim=0)
+                    tensor_to_save = full_tensor[: param.ds_numel].view(param.ds_shape)
+                else:
+                    tensor_to_save = param
+
+                if self.args.should_save:
+                    state_dict[name] = tensor_to_save.detach().cpu().clone()
+
+            logger.info_rank0(f"📊 Gathered {len(state_dict)} params successfully!")
+
+            if self.args.should_save:
+                unwrapped_model.save_pretrained(
+                    output_dir,
+                    state_dict=state_dict,
+                    safe_serialization=self.args.save_safetensors,
+                )
+                logger.info_rank0("✅ Adapter saved!")
+
+            torch.distributed.barrier()
+
+            if self.processing_class is not None and self.args.should_save:
+                self.processing_class.save_pretrained(output_dir)
+
+        elif is_peft_model:
+            # Non-DeepSpeed PEFT save
+            unwrapped_model.save_pretrained(
+                output_dir,
+                safe_serialization=self.args.save_safetensors,
+            )
+            if self.processing_class is not None and self.args.should_save:
+                self.processing_class.save_pretrained(output_dir)
+            logger.info_rank0("✅ Adapter saved!")
+
+        else:
+            # Non-PEFT models
+            super().save_model(output_dir, _internal_call)
 
     @override
     def prediction_step(
