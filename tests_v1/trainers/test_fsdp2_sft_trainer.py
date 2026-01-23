@@ -17,7 +17,6 @@ import sys
 from pathlib import Path
 
 import pytest
-import torch
 
 
 @pytest.mark.xfail(reason="CI machines may OOM when heavily loaded.")

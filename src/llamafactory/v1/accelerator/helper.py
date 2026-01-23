@@ -180,11 +180,11 @@ def operate_tensorlike(fn: Callable[[...], Tensor], data: TensorLike, **kwargs) 
         return result.tolist()
 
 
-def get_init_process_group_backend() -> str:
+def get_process_group_backend() -> str:
     """Get backend for init process group."""
-    if is_torch_npu_available():
+    if get_current_accelerator().type == DeviceType.NPU:
         return "hccl"
-    elif is_torch_cuda_available():
+    elif get_current_accelerator().type == DeviceType.CUDA:
         return "nccl"
     else:
         return "gloo"

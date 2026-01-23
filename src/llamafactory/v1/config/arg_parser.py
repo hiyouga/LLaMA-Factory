@@ -20,7 +20,7 @@ from typing import Any
 from omegaconf import OmegaConf
 from transformers import HfArgumentParser
 
-from ...extras.misc import is_env_enabled
+from ..utils.env import is_env_enabled
 from .data_args import DataArguments
 from .model_args import ModelArguments
 from .sample_args import SampleArguments

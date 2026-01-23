@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import annotations
-
 from ....config.arg_utils import PluginConfig
 from ....utils.plugin import BasePlugin
 from ....utils.types import HFModel

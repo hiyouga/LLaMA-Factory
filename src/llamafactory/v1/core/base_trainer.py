@@ -35,7 +35,6 @@ import torch.nn.functional as F
 from ..accelerator.helper import ReduceOp
 from ..accelerator.interface import Dim, DistributedInterface
 from ..config import TrainingArguments
-from ..plugins.trainer_plugins.distributed.hub import DistributedPlugin
 from ..utils import logging
 from ..utils.helper import compute_valid_tokens
 from ..utils.types import BatchInput, HFModel, ModelOutput, Tensor, TorchDataset
@@ -112,11 +111,13 @@ class BaseTrainer:
                 )
                 device_ids = None if self.device.type == "cpu" else [self.device.index]
                 self.model = DDP(self.model, device_ids=device_ids)
-            return
-        self.model = DistributedPlugin(self.args.dist_config.name)(
-            self.model,
-            self.args.dist_config,
-        )
+        else:
+            from ..plugins.trainer_plugins.distributed.hub import DistributedPlugin
+
+            self.model = DistributedPlugin(self.args.dist_config.name)(
+                self.model,
+                self.args.dist_config,
+            )
 
     def _init_optimizer(self) -> None:
         """Init optimizer."""

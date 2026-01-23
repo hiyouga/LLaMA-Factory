@@ -5,17 +5,17 @@ model_class: llm
 template: qwen3_nothink
 
 kernel_config:
-    name: auto
-    include_kernels: auto # choice: null/true/false/auto/kernel_id1,kernel_id2,kernel_id3, default is null
+  name: auto
+  include_kernels: auto # choice: null/true/false/auto/kernel_id1,kernel_id2,kernel_id3, default is null
 
 quant_config: null
 
 dist_config:
-    name: fsdp2
-    dcp_path: null # /mnt/f/pretrain_models/Qwen3-0.6B-dcp
+  name: fsdp2
+  dcp_path: null # /mnt/f/pretrain_models/Qwen3-0.6B-dcp
 
 init_config:
-     name: init_on_meta
+  name: init_on_meta
 
 ### data
 train_dataset: data/v1_sft_demo.yaml 

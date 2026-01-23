@@ -33,7 +33,7 @@ from ....utils.logging import get_logger
 logger = get_logger(__name__)
 
 
-def get_transformer_layer_cls(model: PreTrainedModel):
+def get_transformer_layer_cls(model: PreTrainedModel) -> type[nn.Module] | None:
     no_split_modules = getattr(model, "_no_split_modules", None)
     if no_split_modules:
         if isinstance(no_split_modules, (list, tuple)):
