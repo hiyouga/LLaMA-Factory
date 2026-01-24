@@ -24,6 +24,76 @@
       "tools": "tools"
     }
   },
+  "mllm_reid_img2img_one2one_5k_new_autodl": {
+    "file_name": "mllm_reid_img2img_one2one_5k_new_autodl.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "images": "images"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
+  "mllm_reid_img2img_one2many_5k_new_autodl": {
+    "file_name": "mllm_reid_img2img_one2many_5k_new_autodl.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "images": "images"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
+  "mllm_reid_txt2img_many2one_2k_new_autodl": {
+    "file_name": "mllm_reid_txt2img_many2one_2k_new_autodl.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "images": "images"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
+  "mllm_reid_txt2img_one2many_2k_new_autodl": {
+    "file_name": "mllm_reid_txt2img_one2many_2k_new_autodl.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "images": "images"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
+  "mllm_reid_txt2img_one2one_2k_new_autodl": {
+    "file_name": "mllm_reid_txt2img_one2one_2k_new_autodl.json",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "images": "images"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  },
   "mllm_reid_img2img_one2one_5k_new": {
     "file_name": "mllm_reid_img2img_one2one_5k_new.json",
     "formatting": "sharegpt",
@@ -38,6 +108,7 @@
       "assistant_tag": "assistant"
     }
   },
+
   "mllm_reid_img2img_one2many_5k_new": {
     "file_name": "mllm_reid_img2img_one2many_5k_new.json",
     "formatting": "sharegpt",
