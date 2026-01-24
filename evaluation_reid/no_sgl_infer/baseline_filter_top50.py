@@ -28,7 +28,7 @@ class ResNet50Extractor:
         feat = torch.nn.functional.normalize(feat, dim=1)
         return feat.cpu().numpy()[0]
 
-def baseline_filter_50(test_samples, image_root, save_path, gallery_size=10):
+def baseline_filter_50(test_samples, image_root, save_path, gallery_size=50):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     extractor = ResNet50Extractor(device)
 

@@ -1,0 +1,53 @@
+### model
+model_name_or_path: /home/wangrui/.cache/modelscope/hub/models/Qwen/Qwen2.5-VL-7B-Instruct
+# 【关键修改1】大幅降低像素限制。50176 = 224x224分辨率。ReID任务先跑通，再尝试加到 128000
+image_max_pixels: 112896  
+video_max_pixels: 16384
+trust_remote_code: true
+quantization_bit: 4
+quantization_method: bitsandbytes
+
+### method
+stage: dpo
+do_train: true
+finetuning_type: lora
+lora_rank: 16                 # 【关键修改2】降低Rank，从32降到8，省显存
+lora_alpha: 32               # 配套修改，通常是 Rank * 2
+lora_target: q_proj,v_proj   # 【关键修改3】不要用all！只训练核心的Q和V投影，避开MLP层
+lora_dropout: 0.05
+pref_beta: 0.3
+pref_loss: sigmoid
+
+### dataset
+dataset: mllm_reid_txt2img_one2many_2k_new_dpo_min
+template: qwen2_vl
+cutoff_len: 1536             # 【关键修改4】稍微再降一点，给图片留空间
+max_samples: 1000
+overwrite_cache: true
+preprocessing_num_workers: 16
+dataloader_num_workers: 4
+
+### output
+output_dir: saves/qwen2_5vl-7b/lora/sft_retpreid/lora8_q_v_proj_px_dpo_2k_pinggu_min
+logging_steps: 10
+save_steps: 500
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: none
+
+### train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 16     # 【建议】因为BS=1太小，梯度累积建议加到8，保持训练稳定性
+learning_rate: 1.0e-5
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+resume_from_checkpoint: null
+
+optim: paged_adamw_32bit
+gradient_checkpointing: true
+flash_attn: fa2
+deepspeed: ds_z2_config.json

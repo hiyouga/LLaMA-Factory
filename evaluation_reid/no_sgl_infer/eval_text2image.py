@@ -59,6 +59,7 @@ def run_iterative_eval(model, processor, test_data, image_root, cache_file, num_
             gt = [1 if os.path.basename(p).split("_")[0] == query_pid else 0 for p in gallery_rel_paths]
 
             # 不能在这里随机打乱，这样导致每一次评估的时候不能维持唯一变量
+
             # random.seed(42)  # 固定种子
             # combined = list(zip(gallery_full_paths, gt))
             # random.shuffle(combined)

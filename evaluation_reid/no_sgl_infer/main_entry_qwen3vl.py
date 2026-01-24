@@ -9,8 +9,8 @@ from eval_text2image import run_iterative_eval
 CAPTION_PATH = "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/data_caption_all_qwen.json"
 IMAGE_PATH = "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs"
 MODEL_PATH = "/home/wangrui/.cache/modelscope/hub/models/Qwen/Qwen3-VL-4B-Instruct"
-CACHE_FILE = "/home/wangrui/code/LLaMA-Factory/output/reid_resnet50_cache/pstp_test_gallery_10_shuffle.json"
-
+# CACHE_FILE = "/home/wangrui/code/LLaMA-Factory/output/reid_resnet50_cache/pstp_test_gallery_10_shuffle.json"
+CACHE_FILE = "/home/wangrui/code/LLaMA-Factory/output/reid_resnet50_cache/pstp_test_gallery_50_shuffle.json"
 
 def main():
     # 1. 加载数据

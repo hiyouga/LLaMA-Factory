@@ -8,7 +8,7 @@ trust_remote_code: true
 stage: sft
 do_train: true
 finetuning_type: lora
-lora_rank: 16
+lora_rank: 64
 lora_target: all
 lora_dropout: 0.05
 
@@ -22,16 +22,16 @@ preprocessing_num_workers: 16
 dataloader_num_workers: 4
 
 ### output
-output_dir: saves/qwen2_5vl-7b/lora/sft_retpreid/lora16_with_progressive_16k_drop005_bs4
+output_dir: saves/qwen2_5vl-7b/lora/sft_retpreid/lora64_with_progressive_16k_drop005_bs1
 logging_steps: 10
-save_steps: 5000
+save_steps: 3000
 plot_loss: true
 overwrite_output_dir: true
 save_only_model: false
 report_to: none  # choices: [none, wandb, tensorboard, swanlab, mlflow]
 
 ### train
-per_device_train_batch_size: 2
+per_device_train_batch_size: 1
 gradient_accumulation_steps: 8
 learning_rate: 1.0e-4
 num_train_epochs: 3.0

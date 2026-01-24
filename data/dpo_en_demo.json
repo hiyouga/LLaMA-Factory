@@ -13,7 +13,14 @@
     "rejected": {
       "from": "gpt",
       "value": "Hello! I'd be happy to help you create a language game simulating the first-person perspective of a character named Angela! What kind of game are you imagining? Do you have any specific details or themes in mind for the game, such as a setting, plot, or style? The more information you can provide, the better I can assist you. Additionally, please let me know if you have any specific preferences for the language or tone of the game. I'll do my best to suggest engaging and accurate responses as your helpful, respectful, and honest assistant! 😊"
-    }
+    },
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1003_c15_0018.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0571_c1_0016.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0355_c11_0009.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0731_c13_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2770_c13_0009.jpg"
+    ]
   },
   {
     "conversations": [

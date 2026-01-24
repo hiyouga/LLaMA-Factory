@@ -1,0 +1,1855 @@
+[
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A man with short hair and glasses. He is wearing a black coat and black trousers. He's back to the camera.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 4.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1003_c15_0018.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0571_c1_0016.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0355_c11_0009.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0731_c13_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2770_c13_0009.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man is wearing a black cotton-padded jacket and black trousers.He is wearing a pair of glasses.He put his hands in his pockets.He was walking with his head up in the shadows.Side back to camera.The picture is far and clear.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2932_c1_0014.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1438_c7_0010.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2299_c12_0019.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A female adult with short hair, wearing a black long-sleeve down jacket and carrying a backpack that is white on top and red and dark blue on the bottom, is walking along the road with a neutral expression and an upright posture. She is also holding a turquoise-colored bag in her hand. Several cars are parked in front of her.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3108_c15_0019.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2949_c14_0002.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2858_c14_0000.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1393_c5_0014.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3315_c12_0003.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man wears glasses and has a handsome hairstyle. He is wearing a dark coat and a pair of blue jeans. He is wearing a pair of sports shoes.There was white dust on his clothes.There are some bicycles parked on the right.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2473_c14_0023.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1470_c13_0002.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0608_c5_0006.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A lady with long hair wearing glasses is walking on the road. She is carrying a blue-gray backpack, wearing a light blue long hooded down jacket, wearing dark red pants and brown short snow boots, and carrying a bag in her right hand.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 6.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2364_c7_0026.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3626_c12_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2885_c5_0014.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1200_c6_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0322_c1_0009.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3522_c7_0005.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The short haired man is walking towards the door while wearing a dark black down coat, black pants, white shoes and taking something.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 5.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1455_c12_0007.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2745_c14_0048.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0666_c4_0034.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1857_c11_0030.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0664_c11_0012.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man in the picture is wearing a pair of black glasses, a black down jacket, a pair of trousers and a pair of black shoes\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 4.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0938_c15_0029.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1105_c5_0011.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3297_c2_0034.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1072_c1_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0900_c11_0025.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3451_c12_0000.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A male adult with a slightly fat build and short hair is walking briskly in a parking lot. He is not wearing a hat but carries a black backpack. His upper body is clad in a long-sleeved black jacket with no visible inner lining, while his lower body features long black pants adorned with a small white logo. He wears black sneakers with green accents. His posture suggests motion — mid-stride, leaning forward slightly — and his emotion appears neutral as his face is obscured.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1396_c14_0017.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1620_c12_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0585_c14_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0571_c14_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3051_c13_0007.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2207_c1_0005.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A middle aged man is wearing a red coat, a deep grey pants, a pair of black shoes. He is wearing a black bag.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3527_c14_0016.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2376_c1_0000.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0372_c11_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2087_c14_0003.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A male adult with a thin build and short hair is walking away, wearing a black hooded down jacket with long sleeves and black pants, both in black color; he has no visible backpack or handbag, and his shoes are also black. His posture is upright as he walks forward, and his emotion appears neutral since his face is not visible.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2774_c10_0026.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1576_c8_0020.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2440_c14_0026.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A women riding on the yellow bike wearing a pink overcoat with long sleeves and a feathered hood,with dark blue jeans.She takes a handbag.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3635_c15_0013.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2792_c7_0018.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3075_c14_0026.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A pedestrian is wearing a red jacket that is open,blue shirt inside,black pants and black shoes.His hair is black and short.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0014_c1_0002.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2050_c14_0000.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0732_c12_0010.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0647_c14_0005.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2079_c14_0002.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3565_c11_0021.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A young adult female with long black hair is walking outside, wearing a long black down jacket with a hood and long sleeves, paired with black trousers and black boots. She carries a red backpack on her back and has a blue scarf around her neck. Her left hand is in her pocket while her right hand touches her nose, suggesting a neutral or contemplative emotion. Her posture is upright as she walks, and she is not wearing a hat.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2001_c11_0013.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2453_c1_0002.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1059_c7_0007.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The woman is wearing a black shirt and trousers and singing boots. She is walking with a blue bag on her arm.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2018_c1_0043.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0986_c1_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0322_c14_0017.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A young male with short hair and glasses is walking outdoors, wearing a deep brown long-sleeve down jacket with a visible inner lining, paired with gray long pants. He carries a black backpack containing a blue-capped drink bottle. His posture is upright and in motion, suggesting a casual gait, and his expression appears neutral.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0525_c7_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2251_c13_0002.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0454_c7_0013.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1085_c7_0005.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man is wearing a black coat and blue jeans. He is walking with a hat and a white headset.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 5.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1015_c11_0025.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0262_c7_0011.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1850_c14_0028.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1794_c4_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2044_c7_0006.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The woman's hair is red. She wears a long black coat. She has a pair of black tights. She wears a pair of black shoes.She has a black bag on her shoulder.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0936_c1_0000.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0129_c1_0003.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0046_c5_0006.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A young male with short hair and a thin build is walking with a neutral expression. He is not wearing a hat. He carries a black backpack and has his hands in his pockets. His upper body is covered by a long-sleeve blue coat, and he is wearing long black pants. His shoes are black. His gait appears relaxed and casual as he walks forward.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 5.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2360_c5_0005.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3307_c12_0033.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0541_c7_0005.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0995_c5_0010.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1827_c1_0003.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0879_c11_0020.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A middle aged woman is wearing a black overcoat, a black pants and a pair of black leather shoes. She is hanging a white bag and a black leather bag.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2325_c5_0024.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0248_c7_0013.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2758_c13_0008.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2982_c5_0011.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3280_c11_0009.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1912_c14_0044.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A man in a black down jacket, black slacks and army green sports is walking and looking to the right.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 4.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1140_c1_0002.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1023_c1_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1815_c5_0019.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0920_c1_0003.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man, who was tall from behind, was wearing a blue-purple coat, blue jeans and light-colored sneakers.He was also carrying a blue backpack.There were many pedestrians in front of him.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 4.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1972_c13_0002.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1664_c1_0072.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3541_c7_0008.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0614_c1_0018.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man has short black hair and he is walking.He is wearing a black blazer ,black jeans and black leather shoes.He is looking at somewhere.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1167_c10_0080.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0015_c1_0000.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2853_c7_0035.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2712_c4_0052.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3211_c4_0024.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A young adult male with short black hair is walking with a neutral expression and a relaxed gait. He is not wearing a hat or carrying a backpack or handbag. He is dressed in a long-sleeved black down jacket with a visible inner lining, paired with long blue jeans. His shoes are white sports shoes. His body build appears slightly thin.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0383_c6_0015.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3063_c14_0021.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0234_c7_0012.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A young adult male with short black hair and a slightly fat build is seen from behind, wearing a long-sleeved gray coat over a gray inner lining, paired with long black pants and gray sneakers with white soles. He carries a black backpack and no hat, walking with a neutral posture as he moves toward the exit of the shop.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 4.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0232_c7_0010.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0280_c1_0006.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0329_c11_0011.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3305_c11_0011.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"the man wears a black coat and blue jeans. he has a pair of black shoes on his foot and a phone on his hand.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0335_c11_0013.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2654_c15_0028.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2370_c14_0027.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0162_c5_0006.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man is wearing a white coat. He is wearing a pair of glasses and a black hat. He is walking on the road.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 5.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1621_c11_0009.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3079_c14_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2751_c2_0021.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1872_c8_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2062_c5_0007.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A female adult with short brown hair, slightly fat build, is standing in a neutral posture. She is not wearing a hat and is carrying a dark blue handbag. Her upper body is covered by a long-sleeved black down jacket with no visible inner lining. Her lower body is clad in long black pants, and she is wearing black skate shoes.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0481_c14_0011.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0542_c5_0006.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3608_c11_0008.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2072_c14_0008.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"He is a man who wears a brown scarf and he has black jacket and trousers. He is walking outside.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 4.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2505_c7_0008.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3595_c13_0030.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2717_c11_0021.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1036_c14_0015.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0033_c5_0013.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man is wearing a dark blue down jacket,a pair of blue jeans and a pair of black shoes.He is carrying a black backpack.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2938_c5_0003.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2070_c5_0013.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1788_c5_0019.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0833_c11_0013.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The walking male with sunglasses wears a tanned jacket and dark blue jeans.The pedestrian under a tanned jacket has his blue jeans and black shoes on.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2783_c1_0006.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0013_c14_0028.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3158_c14_0025.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A male adult with short black hair and glasses is walking outside, wearing a black hooded down jacket with long sleeves and black trousers. His right hand is in his pocket, and he has a neutral expression. He appears to have a slightly fat build and is walking with a relaxed gait. No hat, backpack, or handbag is visible. Shoe color cannot be determined from the image.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2234_c1_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1060_c9_0014.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0457_c7_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2259_c12_0009.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3617_c14_0086.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2297_c11_0013.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"This woman is wearing a red coat, red trousers and black shoes. Her Hoodie is red. She was wearing a Hoodie hat.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3681_c5_0014.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0275_c15_0030.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2731_c13_0009.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0860_c4_0017.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3682_c5_0015.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man is wearing a black coat, blue sweatpants and yellow shoes.He has short black hair.He's walking.He wears a pair of glasses.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3610_c6_0061.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1555_c12_0011.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0100_c5_0011.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3015_c11_0016.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"Here is a man wearing a black jacket, blue jeans and a pair of black shoes. He is walking with a black backpack.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1566_c11_0011.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3516_c7_0005.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1751_c11_0023.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The woman in the plaid scarf was wearing a rose down jacket, black tights and green sneakers.Her shoes were decorated with green stripes.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 4.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2703_c7_0006.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1632_c14_0063.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3360_c12_0009.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3023_c13_0021.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0913_c14_0011.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man with black hair is wearing a black coat,a white hoodie,blue jeans,and white and black shoes.He is walking towards the front.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 5.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1086_c14_0018.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3591_c13_0008.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0113_c15_0023.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0731_c8_0017.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3347_c12_0006.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A female adult with long hair, wearing a black long-sleeve coat, carrying a black handbag and a black backpack, paired with black leggings and black shoes, standing in a neutral posture on the road.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0778_c6_0032.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1577_c1_0019.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2866_c14_0005.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A male adult with short black hair and a thin build is walking on the street. He is not wearing a hat. He carries a brown backpack on his back and has no handbag or additional bag. His upper body is dressed in a long-sleeve black turtleneck (no visible inner lining), and his lower body features long black trousers. He is wearing black shoes. His facial expression appears neutral, and his gait is steady and purposeful as he walks forward.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 4.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2552_c5_0007.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1489_c11_0022.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0286_c12_0048.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0010_c14_0012.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man with black hair is wearing a grey sweater,black trousers,and black sneakers.He also has a black backpack on his pack.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2270_c11_0035.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3332_c13_0061.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0785_c11_0014.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2855_c14_0000.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1336_c5_0002.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2723_c13_0010.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"This man is wearing a black coat, grey trousers and black shoes. He is walking with a backpack on his back.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1760_c8_0032.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1994_c4_0027.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2484_c1_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1904_c12_0008.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A man with short black hair is walking on the street.He wears a blue jacket,a pair of grey trousers and black shoes.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2698_c14_0015.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2720_c11_0005.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3358_c4_0056.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1162_c13_0005.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The female who has black and white shoes wears a dark down jacket and a pair of dark blue jeans.Her black bag matches with them. \"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 4.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1946_c15_0061.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0188_c15_0026.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0603_c1_0014.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2035_c14_0002.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A young male with short hair, wearing a black long-sleeve down jacket and black long pants, is walking with one hand in his pocket. He carries no visible backpack or handbag, and wears black sneakers. His posture is relaxed and upright, with a neutral expression, captured under good lighting conditions.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3656_c14_0017.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0999_c5_0010.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1277_c13_0025.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2687_c5_0009.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3189_c6_0032.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2024_c5_0010.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A woman with long hair, wearing a white cotton padded jacket, a gray skirt, black shoes and a white bag on her shoulder, was walking to the glass door and was about to go out.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0797_c11_0010.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2289_c14_0087.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3282_c13_0004.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2734_c4_0046.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A man in a black coat was walking on the road. He was wearing black trousers and shoes. He is carrying a backpack\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3599_c4_0040.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3046_c12_0000.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3079_c15_0015.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1843_c1_0001.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The woman was wearing a white coat, black trousers and black shoes. She has long black hair. She is walking.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3657_c4_0010.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1570_c13_0040.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0960_c7_0004.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1376_c14_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0330_c12_0031.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0317_c14_0008.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The lady with colorful scarf wears a long green down jacket, black pants and grey sneakers. She is answering her mobile phone while walking.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 5.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2222_c1_0003.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0847_c13_0007.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1669_c3_0088.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1703_c1_0004.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1405_c5_0008.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1595_c11_0066.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The woman, who is carrying a black bag, is wearing a pink down jacket with a hat, black trousers and grey trainers.She is walking side by side with a woman carrying a pink bag.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1999_c12_0010.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3495_c5_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2308_c13_0002.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3677_c1_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3276_c1_0011.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2203_c1_0005.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A slightly fat adult male with short hair is walking down the road in a neutral expression. He is wearing a dark blue long-sleeve down jacket with no visible inner lining, paired with long blue jeans and black sports shoes. He is not wearing a hat and is not carrying a backpack, but he is holding a white plastic bag in his hand. His gait appears casual and steady.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 5.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0522_c5_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2966_c14_0004.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3442_c7_0006.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1613_c13_0003.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2208_c14_0025.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2187_c14_0021.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"He is a man with a blue down jacket and his trousers are black. He has a pair of white shoes and carries a black bag. He is walking.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0892_c13_0002.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0865_c11_0019.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0206_c1_0007.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1552_c10_0011.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man is wearing a blue coat.His trousers are black.He is wearing a pair of black shoes.He is carrying a black backpack.His hands are in his pockets.He is walking,\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 4.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0213_c7_0006.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3068_c5_0010.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1927_c13_0003.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1827_c14_0020.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3419_c7_0005.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A man with headphones was walking in the street in a dark blue coat, black trousers and white sports shoes.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3437_c14_0028.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0204_c7_0005.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2545_c5_0006.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0977_c14_0017.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man is wearing a blue jacket and blue jeans.He is also wearing a pair of glasses.He thrust his hands into his pockets.He was walking with his head back in the shadows.Directly towards the camera.The picture is far and clear.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 4.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3141_c5_0026.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2487_c5_0020.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3185_c13_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1432_c14_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0687_c13_0005.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The old woman with short white hair is walking along the road with a slightly fat build. She is not wearing a hat and is carrying a black leather handbag on her right arm. Her upper body is covered by a long-sleeved black down jacket with a black hood, and she is wearing long dark brown trousers on her lower body. Her shoes are black, and her posture suggests a steady, neutral gait. Her expression appears neutral as she moves forward.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 6.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2828_c1_0000.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0311_c14_0011.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1624_c11_0019.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3482_c5_0008.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0417_c11_0015.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2046_c7_0016.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"Taking short strides, the girl is wearing a red scarf and a kind of azure jacket, a pair of leggings as she carries a red bag on her elbow.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3368_c5_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1481_c10_0015.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2434_c1_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0432_c7_0023.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0051_c1_0004.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A lady with long hair is walking down the street. She is wearing a long black hooded coat with a red dress, black pants and high-heeled shoes, with her left hand in her pocket.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1099_c15_0022.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3535_c5_0009.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1142_c1_0002.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3402_c5_0014.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3488_c1_0003.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1784_c15_0022.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A man with short black hair wears a black jacket,a pair of black pants and trainers.He holds a smartphone with his left hand.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1997_c13_0016.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3247_c1_0019.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1394_c14_0011.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1453_c12_0001.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The woman is wearing a black jacket and she is wearing black pants. She has long and black hair. She is walking.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2001_c12_0010.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0988_c5_0010.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3394_c5_0008.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man whose trousers are tan is riding his old bicycle along the road.He wears a tan jacket.His shoes are black with red patterns.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0380_c15_0030.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3224_c1_0008.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0907_c7_0005.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A male adult with short hair, of thin build, is walking on the road with a neutral expression and an upright gait. He is not wearing a hat. He carries a brown bag slung over his shoulder. His upper body is covered by a long-sleeve down jacket with a gradient color transitioning from white to dark blue, with no visible inner lining. His lower body is clad in long light blue pants. He is wearing blue shoes.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2009_c14_0002.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1353_c14_0014.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1938_c7_0037.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2173_c5_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1742_c4_0015.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man is wearing a black cotton-padded jacket and blue trousers.He is also wearing a pair of glasses.He is walking in the shadow.Back to camera.The picture is close and clear.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3041_c11_0021.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3121_c1_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1514_c10_0014.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1293_c1_0000.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A female adult with a slightly fat build and medium-length hair is walking forward with a neutral expression. She is not wearing a hat but is carrying a black backpack. Her upper body is clad in a long-sleeve blue coat with no visible inner lining, and she wears dark blue long pants on her lower body. Her shoes are white.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1212_c11_0000.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1813_c1_0002.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1478_c12_0004.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0411_c1_0069.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1239_c5_0008.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A male teenager with short black hair, wearing a blue long-sleeve down jacket and black long pants, is walking with a neutral posture. He carries a red backpack on his back and holds a white mobile phone in his left hand. He is not wearing a hat, and his shoes are black. His body build appears slightly thin, and his emotion is neutral.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0357_c13_0000.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2612_c7_0005.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2856_c1_0015.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2351_c13_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0420_c13_0001.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"This guy is wearing a black down jacket, blue pants, blue shoes, his hands are hidden in his sleeves, and the light is bad here\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 5.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0468_c3_0016.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1641_c13_0035.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0304_c7_0006.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3528_c1_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1211_c11_0006.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The person is wearing a black top with tan pants. He has a short black hair. He is walking with noting.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2285_c12_0010.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0556_c14_0004.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2483_c7_0006.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A pedestrian, male, dressed in a short black down jacket, was on the phone, with one hand in his pocket, wearing glasses, black trousers and black shoes.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 5.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1756_c1_0009.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2329_c11_0020.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3523_c1_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1813_c15_0023.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3435_c14_0009.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0246_c11_0025.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A young adult male with short black hair is walking with a neutral expression, his head slightly down and hands in his pockets. He is wearing a black long-sleeve jacket (no visible inner lining) and blue jeans (long lower-body pants). He is carrying a backpack, though its color is not clearly discernible in the image. His shoe color is not clearly visible. He is not wearing a hat or carrying a handbag. His gait appears casual and relaxed, consistent with a typical walking posture.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0643_c14_0002.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0711_c12_0028.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1738_c1_0000.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A man in a grey hat, wearing a grey coat, grey trousers and black leather shoes, was walking, hands in pockets, carrying a blue bag\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 6.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1180_c6_0011.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2878_c1_0025.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0133_c1_0000.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1924_c14_0055.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2824_c1_0006.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0018_c5_0016.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A small colored backpack, wearing an off-white long down jacket, black leggings and black and white canvas shoes walking on the street, carrying a yellow handbag\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2790_c7_0013.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1088_c5_0008.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0292_c14_0011.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2652_c15_0024.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A walking lady was wearing a long white down jacket. She was on the phone. She also had a dark gray bag.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2819_c3_0007.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2449_c14_0030.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2885_c14_0006.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1793_c13_0008.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2867_c1_0006.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1115_c7_0002.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A young adult male with short black hair and glasses is walking with his head bowed, wearing a red, white, and blue long-sleeve down jacket (no visible inner lining), black long pants, and black shoes with white soles. He is not wearing a hat, carrying a backpack, or holding a handbag. His posture appears neutral, and his gait suggests a casual stride toward the camera in an indoor setting.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2360_c14_0006.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3132_c5_0006.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1501_c12_0009.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A male adult with short black hair, slightly fat build, wearing a black hooded down jacket (long sleeve, no visible inner lining), dark blue jeans (long lower-body clothing, pants), and brown shoes. He is not carrying a backpack or handbag, and his emotion appears neutral as he walks forward with a casual gait.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 4.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0373_c14_0023.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1139_c15_0026.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2600_c5_0010.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3409_c15_0024.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1425_c1_0000.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2397_c1_0001.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A young adult male with short black hair, wearing a black long-sleeve coat and light blue long pants, is walking with a neutral expression. He carries a dark blue backpack and wears black shoes. His posture is upright and his gait appears steady as he walks alongside another man in similar attire.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 6.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0360_c14_0022.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1180_c2_0014.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3332_c12_0013.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1033_c1_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0150_c14_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2703_c7_0006.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The walking male with glasses wears a black coat and black pants.The pedestrian with dark red shoes has a black coat and black trousers.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 4.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2550_c7_0005.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2123_c1_0016.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2561_c12_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2714_c12_0000.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A short-haired woman walked to the door with her hands in her pockets. She was wearing a dark mid-length hooded down jacket, black leggings, dark Uggs, and a blue cross-body bag.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3272_c14_0003.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3607_c13_0007.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2580_c1_0065.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0497_c1_0023.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1794_c1_0007.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A woman was walking with a file and a dark bag in her right hand. She was wearing a light pink coat with her clothes open, black leggings and a white scarf.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0918_c14_0013.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3627_c12_0062.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1890_c11_0025.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A middle-aged male with thin build and short black hair, wearing no hat or backpack, is seen from behind in a blue and gray long-sleeve winter jacket with inner lining, paired with long blue jeans and brown trainers. His hands are in his pockets, posture relaxed and neutral, suggesting calm engagement with nearby people.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1870_c6_0021.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1701_c5_0021.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3274_c1_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1934_c11_0017.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2084_c14_0003.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The woman is wearing a pink coat, black pants and black shoes. She has brown long hair. She takes a small black bag. She is walking.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0458_c1_0011.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1094_c1_0003.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2375_c13_0024.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3430_c7_0008.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1158_c11_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1392_c14_0018.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A young female with short black hair and a thin build is standing on the street, wearing a long-sleeved dark gray coat over black pants and white loafers. She has no hat and is not carrying a backpack or handbag. Her upper-body garment is dark gray with no visible inner lining, and her lower-body clothing is long and consists of black pants. She holds a light-colored glass of water in one hand and another small item in her right hand, smiling with a happy expression while maintaining an upright posture.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 6.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0956_c7_0003.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1865_c6_0024.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2342_c12_0018.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2856_c1_0015.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3561_c13_0003.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3624_c14_0052.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A young adult male with short black hair is walking outdoors in a neutral posture, wearing a black long-sleeve puffer coat with the collar standing up, paired with black long pants featuring white side stripes. He is not wearing a hat but has on black gloves and is carrying a black backpack. His shoe color is not visible. His expression appears neutral, and his build is slightly thin.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 4.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0517_c5_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2417_c14_0023.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2028_c3_0013.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2535_c7_0008.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A pedestrian with gloves is wearing a dark short hooded down jacket, a pair of light gray sports pants and a pair of dark sneakers, dragging a red suitcase, and wearing a down jacket hat on his head.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1679_c13_0010.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2959_c14_0002.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3456_c13_0001.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man with black short hair wears a brown black jacket a pair of blue jeans and a pair of black shoes.He is walking.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 5.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3488_c1_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2661_c14_0023.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3491_c7_0005.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2567_c9_0025.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1738_c1_0003.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1556_c12_0007.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A male adult with short hair, seen from behind, is walking in a room with a neutral posture. He is wearing a black long-sleeve cotton-padded jacket and blue long pants. He has no hat, no backpack, and no handbag or bag. His shoes are black. The image is distant and fuzzy, making facial expressions indiscernible, but his gait appears steady and casual.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3114_c1_0002.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1496_c11_0011.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1777_c14_0026.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man is wearing a red coat and a red shirt.His trousers are black.He is wearing a pair of black shoes.He is walking.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1967_c6_0026.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1202_c6_0021.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1329_c1_0001.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"From the back, a female with a ponytail, wearing a long white down coat, black bottoms and brown leather boots is walking outside with her hands in her pockets. She also has an orange canvas bag on her left arm with white writing on it\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0957_c15_0025.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2539_c5_0017.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0696_c12_0009.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0323_c4_0052.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2038_c14_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2318_c4_0035.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A man with short black hair is wearing a black down jacket with a brown fur and black trousers. He is wearing a pair of black and white sneakers.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3682_c1_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3018_c8_0045.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3691_c4_0040.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The male pedestrian is wearing a black hooded down jacket and dark jeans. He is walking and dragging a black suitcase. \"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2617_c7_0007.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0484_c14_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1871_c13_0006.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2827_c14_0007.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2407_c15_0024.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The woman is wearing a red coat, black trousers and black shoes. She has long black hair. She is walking\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 4.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0090_c7_0006.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2354_c7_0008.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2864_c5_0007.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1557_c11_0010.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1125_c14_0012.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man in glasses is wearing a red jacket,a pair of black trousers and a pair of black shoes.He is opening the door.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 5.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2776_c12_0000.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2573_c13_0013.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0898_c12_0013.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2543_c7_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1880_c11_0016.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A young female with long hair, wearing a pink knitted hat and carrying a black backpack, is dressed in a red-and-black plaid long-sleeve dress over black tights, paired with black heeled boots. She has a thin build and appears to be walking upright with a neutral expression.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2395_c7_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0719_c4_0034.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1338_c1_0004.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0369_c13_0003.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A male adult with short black hair and a slightly fat build is walking on the road with a neutral expression. He is wearing a gray hooded down jacket (long sleeve, no visible inner lining) with the hood up, dark blue long pants, and bright blue shoes. His hands are tucked into his jacket pockets, and he carries no backpack or handbag. His gait is casual and relaxed, with a forward-leaning posture as he moves.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 5.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3401_c14_0003.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1052_c1_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3057_c12_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3303_c11_0014.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3487_c1_0004.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A female adult with long dark hair is walking away from the camera, wearing a black down jacket with a fur collar and black long pants. She has her hands in her pockets, suggesting a slightly hunched posture, and is not wearing a hat or carrying any backpack or bag. Her gait appears casual and relaxed, with neutral emotion implied by her body language. The jacket is long-sleeved and solid black, matching her black trousers and dark-colored shoes. The scene is dimly lit, placing her mostly in shadow.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1481_c10_0015.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3464_c11_0001.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2196_c7_0014.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0057_c5_0012.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1498_c8_0013.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3238_c7_0015.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"This elderly madam is wearing a red scarf, a kind of black jacket, dark jeans and white sneakers. She also wears a leather backpack on her right shoulder.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1344_c14_0022.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2439_c5_0016.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2537_c14_0007.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1931_c10_0015.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A young female with long black hair, wearing a light gray down jacket with long sleeves and no visible inner lining, paired with black long pants and black shoes. She is carrying a black backpack and has a neutral expression, walking with a standard upright gait.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 5.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2659_c7_0002.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0477_c1_0028.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0185_c5_0009.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1246_c5_0011.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3051_c11_0015.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A man who wears black overcoat, white pants, a black hats and a white scarf with black is walking. And he carries someting.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 5.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3626_c12_0000.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2746_c2_0015.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1716_c5_0018.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3040_c13_0005.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/2554_c1_0006.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man in glasses is wearing a black down jacket which is open,a pair of black trousers and a pair of black shoes.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 3.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3503_c5_0000.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0890_c6_0023.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1836_c1_0003.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1821_c1_0006.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0406_c13_0001.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man with a pair of glasses is wearing a black coat.His trousers are black.His shoes are black.He is carrying a black backpack.He is walking.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3473_c7_0006.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1812_c11_0034.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0374_c6_0022.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man is in a black jacket with a white hat, black trousers and red shoes. He is walking. He has short hair.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 2.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3398_c14_0013.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0332_c11_0004.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0840_c11_0022.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0515_c3_0017.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"The man is wearing a red coat and black jeans.He wears a pair of black shoes.He has short black hair.He wears glasses.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1530_c12_0008.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3516_c1_0000.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0011_c1_0004.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/3230_c5_0005.jpg"
+    ]
+  },
+  {
+    "messages": [
+      {
+        "content": "Given the following images <image><image><image>, select the image that best matches the following description of the pedestrian's appearance:\n\"A man in a brown down jacket, wearing a hat over his down jacket, with his back to the camera, his face hidden.\"",
+        "role": "user"
+      },
+      {
+        "content": "The best matches the following description is image 1.",
+        "role": "assistant"
+      }
+    ],
+    "images": [
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1146_c15_0016.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/0539_c14_0009.jpg",
+      "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs/1467_c14_0056.jpg"
+    ]
+  }
+]

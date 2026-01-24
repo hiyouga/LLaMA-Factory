@@ -8,7 +8,14 @@ from eval_text2image import run_iterative_eval
 # --- 配置区域 ---
 CAPTION_PATH = "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/data_caption_all_qwen.json"
 IMAGE_PATH = "/home/wangrui/code/MLLM4Text-ReID-main/data/RSTPReid/imgs"
-MODEL_PATH = "/home/wangrui/.cache/modelscope/hub/models/Qwen/Qwen2.5-VL-7B-Instruct"
+# MODEL_PATH = "/home/wangrui/.cache/modelscope/hub/models/Qwen/Qwen2.5-VL-7B-Instruct"
+# only 微调了2k rstpreid 的 mllm_reid_txt2img_one2many_2k_new 数据集，评估查看效果
+# MODEL_PATH = '/home/wangrui/code/LLaMA-Factory/output/qwen2_5vl_lora_sft_retpreid_mllm_reid_txt2img_one2many_2k_new'
+# only 微调了2k rstpreid 的 mllm_reid_txt2img_one2many_2k_new_dpo_min 数据集，评估查看效果
+# MODEL_PATH = '/home/wangrui/code/LLaMA-Factory/output/qwen2_5vl_lora_sft_retpreid_mllm_reid_txt2img_one2many_2k_new_dpo'
+# 微调了2k rstpreid 的 mllm_reid_txt2img_one2many_2k_new_qlora_max_samples_1k 数据集中的1k条，没有dpo，但是有qlora，评估查看效果
+MODEL_PATH = '/home/wangrui/code/LLaMA-Factory/output/qwen2_5vl_lora_sft_retpreid_mllm_reid_txt2img_one2many_2k_new_qlora_max_samples_1k'
+# CACHE_FILE = "/home/wangrui/code/LLaMA-Factory/output/reid_resnet50_cache/pstp_test_gallery_50_shuffle.json"
 CACHE_FILE = "/home/wangrui/code/LLaMA-Factory/output/reid_resnet50_cache/pstp_test_gallery_10_shuffle.json"
 
 
@@ -24,7 +31,7 @@ def main():
     else:
         print(f">>> Using existing cache: {CACHE_FILE}")
 
-    # 3. 加载 VLM
+    # # 3. 加载 VLM
     print(f">>> Loading Model from {MODEL_PATH}...")
     model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
         MODEL_PATH,

@@ -685,6 +685,17 @@
       "rejected": "rejected"
     }
   },
+    "mllm_reid_txt2img_one2many_2k_new_dpo_min": {
+    "file_name": "mllm_reid_txt2img_one2many_2k_new_dpo_min.json",
+    "ranking": true,
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "chosen": "chosen",
+      "rejected": "rejected",
+      "images": "images"
+    }
+  },
   "dpo_zh_demo": {
     "file_name": "dpo_zh_demo.json",
     "ranking": true,
