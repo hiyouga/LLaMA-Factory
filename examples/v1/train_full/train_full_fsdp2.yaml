@@ -1,0 +1,34 @@
+model: Qwen/Qwen3-0.6B
+trust_remote_code: true
+model_class: llm
+
+template: qwen3_nothink
+
+kernel_config:
+  name: auto
+  include_kernels: auto # choice: null/true/false/auto/kernel_id1,kernel_id2,kernel_id3, default is null
+
+quant_config: null
+
+dist_config:
+  name: fsdp2
+  dcp_path: null # /mnt/f/pretrain_models/Qwen3-0.6B-dcp
+
+init_config:
+  name: init_on_meta
+
+### data
+train_dataset: data/v1_sft_demo.yaml 
+
+### training
+output_dir: outputs/test_fsdp2
+micro_batch_size: 1
+global_batch_size: 1
+cutoff_len: 2048
+learning_rate: 1.0e-4
+bf16: false
+max_steps: 10
+
+### sample
+sample_backend: hf
+max_new_tokens: 128

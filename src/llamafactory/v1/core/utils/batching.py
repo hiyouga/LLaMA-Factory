@@ -30,7 +30,7 @@ from torch.utils.data import default_collate
 from torchdata.stateful_dataloader import StatefulDataLoader
 from torchdata.stateful_dataloader.sampler import StatefulDistributedSampler
 
-from ...accelerator.interface import DistributedInterface
+from ...accelerator.interface import Dim, DistributedInterface
 from ...config import BatchingStrategy
 from ...utils import logging
 from ...utils.helper import pad_and_truncate
@@ -83,8 +83,7 @@ class BatchGenerator(Iterator):
         self.pin_memory = pin_memory
         self.drop_last = drop_last
         # TODO: support length and infinity
-
-        dp_size = DistributedInterface().get_world_size("dp")
+        dp_size = DistributedInterface().get_world_size(Dim.DP)
 
         if self.global_batch_size is None:
             self.global_batch_size = dp_size * micro_batch_size
@@ -126,8 +125,8 @@ class BatchGenerator(Iterator):
         if len(self.dataset) != -1:
             sampler = StatefulDistributedSampler(
                 self.dataset,
-                num_replicas=DistributedInterface().get_world_size("dp"),
-                rank=DistributedInterface().get_rank("dp"),
+                num_replicas=DistributedInterface().get_world_size(Dim.DP),
+                rank=DistributedInterface().get_rank(Dim.DP),
                 shuffle=True,
                 seed=0,
                 drop_last=self.drop_last,
@@ -142,6 +141,7 @@ class BatchGenerator(Iterator):
             num_workers=self.batching_workers,
             collate_fn=self.renderer.process_samples,
             pin_memory=self.pin_memory,
+            pin_memory_device=DistributedInterface().current_device.type,
             drop_last=self.drop_last,
         )
         if self.batching_strategy == BatchingStrategy.NORMAL:

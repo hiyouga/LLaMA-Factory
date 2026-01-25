@@ -45,6 +45,10 @@ class TrainingArguments:
         default=3,
         metadata={"help": "Number of training epochs."},
     )
+    max_steps: int | None = field(
+        default=None,
+        metadata={"help": "Maximum number of training steps. If set, overrides num_train_epochs."},
+    )
     max_grad_norm: float = field(
         default=1.0,
         metadata={"help": "Maximum gradient norm for training."},

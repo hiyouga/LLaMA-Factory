@@ -145,7 +145,7 @@ class DistributedInterface:
             timeout = config.get("timeout", 18000)
 
         if self._is_distributed:
-            init_process_group(timeout=timedelta(seconds=timeout))
+            init_process_group(timeout=timedelta(seconds=timeout), backend=helper.get_process_group_backend())
             self.model_device_mesh = init_device_mesh(
                 device_type=self.current_device.type,
                 mesh_shape=self.strategy.model_mesh_shape,
