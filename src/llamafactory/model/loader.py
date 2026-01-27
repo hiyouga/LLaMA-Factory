@@ -33,6 +33,7 @@ from ..extras.misc import count_parameters, skip_check_imports, try_download_mod
 from ..extras.packages import is_torch_version_greater_than
 from .adapter import init_adapter
 from .model_utils.ktransformers import load_kt_pretrained_model
+from .model_utils.lfm2_audio import is_lfm2_audio_model, load_lfm2_audio_pretrained_model
 from .model_utils.liger_kernel import apply_liger_kernel
 from .model_utils.misc import register_autoclass
 from .model_utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
@@ -127,6 +128,14 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
 def load_config(model_args: "ModelArguments") -> "PretrainedConfig":
     r"""Load model config."""
     init_kwargs = _get_init_kwargs(model_args)
+
+    # Special handling for LFM2.5-Audio models
+    if is_lfm2_audio_model(model_args.model_name_or_path):
+        from .model_utils.lfm2_audio import LFM2AudioConfig
+
+        logger.info_rank0("Detected LFM2.5-Audio model, using custom config loader.")
+        return LFM2AudioConfig()
+
     return AutoConfig.from_pretrained(model_args.model_name_or_path, **init_kwargs)
 
 
@@ -155,6 +164,10 @@ def load_model(
             lazy_load = True
         elif is_trainable:
             model = load_unsloth_pretrained_model(config, model_args, finetuning_args)
+    elif is_lfm2_audio_model(model_args.model_name_or_path):
+        # Load LFM2.5-Audio model using liquid_audio package
+        logger.info_rank0("Loading LFM2.5-Audio model with liquid_audio package...")
+        model = load_lfm2_audio_pretrained_model(model_args, **init_kwargs)
 
     if model is None and not lazy_load:
         init_kwargs["config"] = config

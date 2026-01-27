@@ -431,3 +431,110 @@ def test_lfm2_vl_plugin():
     assert lfm2_vl_plugin.video_token is None
     assert lfm2_vl_plugin.audio_token is None
     assert lfm2_vl_plugin.__class__.__name__ == "LFMVLPlugin"
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+def test_lfm2_audio_plugin():
+    """Test LFM2.5-Audio plugin instantiation."""
+    # Test plugin can be instantiated with correct tokens
+    lfm2_audio_plugin = get_mm_plugin(
+        name="lfm2_audio",
+        audio_token="<|reserved_1|>",
+        audio_bos_token="<|audio_start|>",
+        audio_eos_token="<|text_start|>",
+    )
+    assert lfm2_audio_plugin is not None
+    assert lfm2_audio_plugin.audio_token == "<|reserved_1|>"
+    assert lfm2_audio_plugin.audio_bos_token == "<|audio_start|>"
+    assert lfm2_audio_plugin.audio_eos_token == "<|text_start|>"
+    assert lfm2_audio_plugin.image_token is None
+    assert lfm2_audio_plugin.video_token is None
+    assert lfm2_audio_plugin.__class__.__name__ == "LFM2AudioPlugin"
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+def test_lfm2_audio_plugin_process_messages():
+    """Test LFM2.5-Audio placeholder replacement."""
+    lfm2_audio_plugin = get_mm_plugin(
+        name="lfm2_audio",
+        audio_token="<|reserved_1|>",
+        audio_bos_token="<|audio_start|>",
+        audio_eos_token="<|text_start|>",
+    )
+    messages = [{"content": "Transcribe this: <audio>"}]
+    processed = lfm2_audio_plugin.process_messages(
+        messages=messages,
+        images=[],
+        videos=[],
+        audios=["dummy.wav"],
+        processor=None,
+    )
+    # Without processor: single token expansion
+    expected = "Transcribe this: <|audio_start|><|reserved_1|><|text_start|>"
+    assert processed[0]["content"] == expected
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+def test_lfm2_audio_plugin_multiple_audios():
+    """Test LFM2.5-Audio plugin with multiple audio placeholders."""
+    lfm2_audio_plugin = get_mm_plugin(
+        name="lfm2_audio",
+        audio_token="<|reserved_1|>",
+        audio_bos_token="<|audio_start|>",
+        audio_eos_token="<|text_start|>",
+    )
+    messages = [{"content": "First: <audio> Second: <audio>"}]
+    processed = lfm2_audio_plugin.process_messages(
+        messages=messages,
+        images=[],
+        videos=[],
+        audios=["audio1.wav", "audio2.wav"],
+        processor=None,
+    )
+    # Each placeholder should be replaced independently
+    expected = "First: <|audio_start|><|reserved_1|><|text_start|> Second: <|audio_start|><|reserved_1|><|text_start|>"
+    assert processed[0]["content"] == expected
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+def test_lfm2_audio_plugin_text_only():
+    """Test LFM2.5-Audio plugin with text-only messages (no audio)."""
+    lfm2_audio_plugin = get_mm_plugin(
+        name="lfm2_audio",
+        audio_token="<|reserved_1|>",
+        audio_bos_token="<|audio_start|>",
+        audio_eos_token="<|text_start|>",
+    )
+    messages = [{"content": "Hello, how are you?"}]
+    processed = lfm2_audio_plugin.process_messages(
+        messages=messages,
+        images=[],
+        videos=[],
+        audios=[],
+        processor=None,
+    )
+    # Text-only message should remain unchanged
+    assert processed[0]["content"] == "Hello, how are you?"
+
+
+@pytest.mark.runs_on(["cpu", "mps"])
+def test_lfm2_audio_plugin_get_mm_inputs_no_processor():
+    """Test LFM2.5-Audio plugin get_mm_inputs returns empty dict without processor."""
+    lfm2_audio_plugin = get_mm_plugin(
+        name="lfm2_audio",
+        audio_token="<|reserved_1|>",
+        audio_bos_token="<|audio_start|>",
+        audio_eos_token="<|text_start|>",
+    )
+    mm_inputs = lfm2_audio_plugin.get_mm_inputs(
+        images=[],
+        videos=[],
+        audios=AUDIOS,
+        imglens=[0],
+        vidlens=[0],
+        audlens=[1],
+        batch_ids=BATCH_IDS,
+        processor=None,
+    )
+    # Without processor, should return empty dict
+    assert mm_inputs == {}
