@@ -118,8 +118,29 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         return super()._get_train_sampler(*args, **kwargs)
 
     @override
-    def compute_loss(self, model, inputs, *args, **kwargs):
-        return super().compute_loss(model, inputs, *args, **kwargs)
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+        # Always get outputs if we need entropy, otherwise follow the request
+        need_outputs = return_outputs or getattr(self.finetuning_args, 'log_entropy', False)
+
+        if need_outputs:
+            loss, outputs = super().compute_loss(model, inputs, return_outputs=True, **kwargs)
+        else:
+            loss = super().compute_loss(model, inputs, return_outputs=False, **kwargs)
+            outputs = None
+
+        # Compute entropy if enabled
+        if getattr(self.finetuning_args, 'log_entropy', False) and outputs is not None:
+            if hasattr(outputs, 'logits') and 'labels' in inputs:
+                from ..trainer_utils import compute_entropy
+
+                with torch.no_grad():
+                    # Use the already-computed logits (detached to avoid affecting gradients)
+                    entropy = compute_entropy(outputs.logits.detach(), inputs['labels'])
+                    self._current_entropy = entropy.item()
+
+        if return_outputs:
+            return loss, outputs
+        return loss
 
     @override
     def prediction_step(
@@ -147,6 +168,14 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             generated_tokens = generated_tokens.contiguous()
 
         return loss, generated_tokens, labels
+
+    @override
+    def log(self, logs: dict[str, float], *args, **kwargs) -> None:
+        r"""Override to add entropy to logs if computed."""
+        if hasattr(self, '_current_entropy'):
+            logs['entropy'] = self._current_entropy
+            del self._current_entropy
+        return super().log(logs, *args, **kwargs)
 
     def save_predictions(
         self, dataset: "Dataset", predict_results: "PredictionOutput", skip_special_tokens: bool = True
