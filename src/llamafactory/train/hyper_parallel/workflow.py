@@ -94,8 +94,8 @@ def run_sft(
     gen_kwargs["pad_token_id"] = tokenizer.pad_token_id
 
     hp_args = HyperParallelArguments.from_finetuning_args(finetuning_args)
-    if getattr(hp_args, "context_parallel_size", None) != finetuning_args.context_parallel_size:
-        setattr(hp_args, "context_parallel_size", finetuning_args.context_parallel_size)
+    if getattr(hp_args, "cp_size", None) != finetuning_args.cp_size:
+        setattr(hp_args, "cp_size", finetuning_args.cp_size)
 
     callbacks = list(callbacks or [])
     processor = tokenizer_module.get("processor")
