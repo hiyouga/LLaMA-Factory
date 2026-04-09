@@ -139,7 +139,6 @@ class EngineName(StrEnum):
     HF = "huggingface"
     VLLM = "vllm"
     SGLANG = "sglang"
-    KT = "ktransformers"
 
 
 class DownloadSource(StrEnum):

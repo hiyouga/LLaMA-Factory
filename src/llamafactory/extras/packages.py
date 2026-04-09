@@ -87,7 +87,7 @@ def is_ray_available():
 
 
 def is_kt_available():
-    return _is_package_available("ktransformers")
+    return _is_package_available("kt_kernel")
 
 
 def is_requests_available():

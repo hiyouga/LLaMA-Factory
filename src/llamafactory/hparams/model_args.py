@@ -460,46 +460,35 @@ class SGLangArguments:
 
 @dataclass
 class KTransformersArguments:
-    r"""Arguments pertaining to the KT training."""
+    r"""Arguments pertaining to KTransformers AMX MoE SFT training.
+
+    These fields are bridged into the HfTrainerKTConfig / accelerate KTransformersPlugin
+    via ``_bridge_kt_env_vars`` and ``_late_bridge`` in ``parser.py``.
+    """
 
     use_kt: bool = field(
         default=False,
-        metadata={"help": "Whether To Use KTransformers Optimizations For LoRA Training."},
+        metadata={"help": "Whether to use KTransformers AMX MoE backend for SFT training."},
     )
-    kt_optimize_rule: str | None = field(
+    kt_weight_path: str | None = field(
         default=None,
-        metadata={
-            "help": "Path To The KTransformers Optimize Rule; See https://github.com/kvcache-ai/ktransformers/."
-        },
+        metadata={"help": "Path to pre-quantized INT8 expert weights (.kt files)."},
     )
-    cpu_infer: int | None = field(
-        default=32,
-        metadata={"help": "Number Of CPU Cores Used For Computation."},
+    kt_expert_checkpoint_path: str | None = field(
+        default=None,
+        metadata={"help": "Path to expert checkpoint (safetensors) for online conversion."},
     )
-    chunk_size: int | None = field(
-        default=8192,
-        metadata={"help": "Chunk Size Used For CPU Compute In KTransformers."},
+    kt_use_lora_experts: bool | None = field(
+        default=None,
+        metadata={"help": "Whether to use GPU-side LoRA Experts."},
     )
-    mode: str | None = field(
-        default="normal",
-        metadata={"help": "Normal Or Long_Context For Llama Models."},
+    kt_lora_expert_num: int | None = field(
+        default=None,
+        metadata={"help": "Number of GPU-side LoRA Experts."},
     )
-
-    kt_maxlen: int = field(
-        default=4096,
-        metadata={"help": "Maximum Sequence (Prompt + Response) Length Of The KT Engine."},
-    )
-    kt_use_cuda_graph: bool = field(
-        default=True,
-        metadata={"help": "Whether To Use CUDA Graphs For The KT Engine."},
-    )
-    kt_mode: str = field(
-        default="normal",
-        metadata={"help": "Normal Or Long_Context Mode For The KT Engine."},
-    )
-    kt_force_think: bool = field(
-        default=False,
-        metadata={"help": "Force-Think Toggle For The KT Engine."},
+    kt_lora_expert_intermediate_size: int | None = field(
+        default=None,
+        metadata={"help": "Intermediate size for GPU-side LoRA Experts."},
     )
 
 
