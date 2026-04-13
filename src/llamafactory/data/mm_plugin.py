@@ -783,9 +783,13 @@ class Gemma4Plugin(BasePlugin):
 
             while AUDIO_PLACEHOLDER in content:
                 current_audio = next(audio_iter)
-                if self.expand_mm_tokens:
+                # The Gemma4 processor may be loaded without `feature_extractor`
+                # (text-only checkpoints, partial offline loads); guard before
+                # reading `.sampling_rate` to prevent an AttributeError crash.
+                feature_extractor = getattr(processor, "feature_extractor", None)
+                if self.expand_mm_tokens and feature_extractor is not None:
                     num_audio_tokens = processor._compute_audio_num_tokens(
-                        current_audio, processor.feature_extractor.sampling_rate
+                        current_audio, feature_extractor.sampling_rate
                     )
                     audio_str = f"{boa_token}{audio_token * num_audio_tokens}{eoa_token}"
                 else:
