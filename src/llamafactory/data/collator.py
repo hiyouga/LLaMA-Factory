@@ -172,16 +172,21 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             features["rope_deltas"] = torch.zeros(features["input_ids"].shape[0])
             return
 
-        if "mm_token_type_ids" in inspect.signature(self.get_rope_func).parameters:
-            image_token_id = getattr(self.model.config, "image_token_id", None)
-            video_token_id = getattr(self.model.config, "video_token_id", None)
-            if image_token_id is not None or video_token_id is not None:
-                mm_token_type_ids = torch.zeros_like(features["input_ids"])
-                if image_token_id is not None:
-                    mm_token_type_ids[features["input_ids"] == image_token_id] = 1
-                if video_token_id is not None:
-                    mm_token_type_ids[features["input_ids"] == video_token_id] = 2
-                rope_index_kwargs["mm_token_type_ids"] = mm_token_type_ids
+        image_token_id = getattr(self.model.config, "image_token_id", None)
+        video_token_id = getattr(self.model.config, "video_token_id", None)
+
+        # Newer transformers implementations (e.g. Qwen2VL, Gemma4) may require
+        # mm_token_type_ids in get_rope_index(). Do not rely on inspect.signature()
+        # here because wrapped/bound methods may not expose the expected signature.
+        if "mm_token_type_ids" in features:
+            rope_index_kwargs["mm_token_type_ids"] = features["mm_token_type_ids"]
+        elif image_token_id is not None or video_token_id is not None:
+            mm_token_type_ids = torch.zeros_like(features["input_ids"])
+            if image_token_id is not None:
+                mm_token_type_ids[features["input_ids"] == image_token_id] = 1
+            if video_token_id is not None:
+                mm_token_type_ids[features["input_ids"] == video_token_id] = 2
+            rope_index_kwargs["mm_token_type_ids"] = mm_token_type_ids
 
         if "second_per_grid_ts" in mm_inputs:  # for qwen2vl
             rope_index_kwargs["second_per_grid_ts"] = mm_inputs.get("second_per_grid_ts")
@@ -232,23 +237,34 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
         for sample_idx in range(bsz):
             sample_packing = (packing_params_list[sample_idx] or {}) if sample_idx < len(packing_params_list) else {}
             sequence_boundaries = sample_packing.get("sequence_boundaries")
-            num_sub_seqs = (len(sequence_boundaries) - 1) if sequence_boundaries and len(sequence_boundaries) > 1 else 1
+            num_sub_seqs = (
+                (len(sequence_boundaries) - 1) if sequence_boundaries and len(sequence_boundaries) > 1 else 1
+            )
             image_subseq_ids = sample_packing.get("image_subseq_ids") or []
             video_subseq_ids = sample_packing.get("video_subseq_ids") or []
             images_per_subseq = (
-                [image_subseq_ids.count(i) for i in range(num_sub_seqs)] if image_subseq_ids and num_sub_seqs > 1 else None
+                [image_subseq_ids.count(i) for i in range(num_sub_seqs)]
+                if image_subseq_ids and num_sub_seqs > 1
+                else None
             )
             videos_per_subseq = (
-                [video_subseq_ids.count(i) for i in range(num_sub_seqs)] if video_subseq_ids and num_sub_seqs > 1 else None
+                [video_subseq_ids.count(i) for i in range(num_sub_seqs)]
+                if video_subseq_ids and num_sub_seqs > 1
+                else None
             )
             if has_dummy_image:
                 mm_inputs = {}
 
             if num_sub_seqs <= 1:
                 sample_features = {
-                    "input_ids": features["input_ids"],
+                    "input_ids": features["input_ids"][sample_idx : sample_idx + 1],
                     "attention_mask": features["attention_mask"][sample_idx : sample_idx + 1],
                 }
+                if "mm_token_type_ids" in features:
+                    sample_features["mm_token_type_ids"] = features["mm_token_type_ids"][sample_idx : sample_idx + 1]
+                if "token_type_ids" in features:
+                    sample_features["token_type_ids"] = features["token_type_ids"][sample_idx : sample_idx + 1]
+
                 mm_inputs_for_sample = _slice_mm_inputs_for_sample(
                     mm_inputs, batch_imglens, batch_vidlens, sample_idx=sample_idx
                 )
@@ -263,8 +279,19 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                     subseq_end = sequence_boundaries[subseq_idx + 1]
                     subseq_features = {
                         "input_ids": features["input_ids"][sample_idx : sample_idx + 1, subseq_start:subseq_end],
-                        "attention_mask": features["attention_mask"][sample_idx : sample_idx + 1, subseq_start:subseq_end],
+                        "attention_mask": features["attention_mask"][
+                            sample_idx : sample_idx + 1, subseq_start:subseq_end
+                        ],
                     }
+                    if "mm_token_type_ids" in features:
+                        subseq_features["mm_token_type_ids"] = features["mm_token_type_ids"][
+                            sample_idx : sample_idx + 1, subseq_start:subseq_end
+                        ]
+                    if "token_type_ids" in features:
+                        subseq_features["token_type_ids"] = features["token_type_ids"][
+                            sample_idx : sample_idx + 1, subseq_start:subseq_end
+                        ]
+
                     mm_inputs_for_subseq = _slice_mm_inputs_for_sample(
                         mm_inputs,
                         batch_imglens,
@@ -272,7 +299,7 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                         sample_idx,
                         images_per_subseq,
                         videos_per_subseq,
-                        subseq_idx
+                        subseq_idx,
                     )
                     self._compute_rope_position_ids(subseq_features, mm_inputs_for_subseq)
                     sample_position_ids.append(subseq_features["position_ids"])
@@ -284,16 +311,22 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
         if has_dummy_image:
             mm_inputs = dummy_mm_inputs
 
-        expected_position_ids_shape = (bsz, seq_len) if all_position_ids[0].dim() == 2 else (
-            all_position_ids[0].size(0),
-            bsz,
-            seq_len,
+        expected_position_ids_shape = (
+            (bsz, seq_len)
+            if all_position_ids[0].dim() == 2
+            else (
+                all_position_ids[0].size(0),
+                bsz,
+                seq_len,
+            )
         )
         # Check if position_ids shape matches expected shape.
         # for further usage, we should padding to the right when some padding token on the right.
         if has_dummy_image:
             features["position_ids"] = torch.cat([features["position_ids"], dummy_image_right_padding_mrope], dim=-1)
-            features["attention_mask"] = torch.cat([features["attention_mask"], dummy_image_right_padding_attention_mask], dim=-1)
+            features["attention_mask"] = torch.cat(
+                [features["attention_mask"], dummy_image_right_padding_attention_mask], dim=-1
+            )
 
         if features["position_ids"].shape != expected_position_ids_shape:
             raise ValueError(
@@ -375,23 +408,14 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             batch_input_ids,
             self.processor,
         )
+
         if "token_type_ids" in mm_inputs:
             token_type_ids = mm_inputs.pop("token_type_ids")
             for i, feature in enumerate(features):
                 feature["token_type_ids"] = token_type_ids[i]
 
-        if "mm_token_type_ids" in mm_inputs: # need tensor-like for gemma4
-            mm_token_type_ids = mm_inputs.pop("mm_token_type_ids")
-            max_len = max(len(ids) for ids in mm_token_type_ids)
-            padded = []
-            for ids in mm_token_type_ids:
-                pad_len = max_len - len(ids)
-                if self.tokenizer.padding_side == "right":
-                    padded.append(ids + [0] * pad_len)
-                else:
-                    padded.append([0] * pad_len + ids)
-
-            mm_inputs["mm_token_type_ids"] = torch.tensor(padded, dtype=torch.long)
+        # Keep raw mm_token_type_ids aside and align them after super().__call__()
+        mm_token_type_ids = mm_inputs.pop("mm_token_type_ids", None)
 
         features: dict[str, torch.Tensor] = super().__call__(features)
 
@@ -402,18 +426,44 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             "qwen3_omni_moe_thinker",
         ]
 
+        # If the processor provides mm_token_type_ids, keep them for all models.
+        if mm_token_type_ids is not None:
+            padded_mm_token_type_ids = []
+            for ids in mm_token_type_ids:
+                if torch.is_tensor(ids):
+                    ids = ids.tolist()
+
+                pad_len = seq_len - len(ids)
+                if pad_len < 0:
+                    ids = ids[:seq_len]
+                    pad_len = 0
+
+                if self.tokenizer.padding_side == "right":
+                    padded_ids = ids + [0] * pad_len
+                else:
+                    padded_ids = [0] * pad_len + ids
+
+                padded_mm_token_type_ids.append(padded_ids)
+
+            features["mm_token_type_ids"] = torch.tensor(
+                padded_mm_token_type_ids,
+                dtype=torch.long,
+                device=features["input_ids"].device,
+            )
+        elif model_type == "gemma4":
+            # Gemma 4 text-only batches still require the field.
+            features["mm_token_type_ids"] = torch.zeros_like(features["input_ids"])
+
+        # Keep token_type_ids present as well for Gemma 4 text-only robustness.
+        if model_type == "gemma4" and "token_type_ids" not in features:
+            features["token_type_ids"] = torch.zeros_like(features["input_ids"])
+
         if self.get_rope_func is not None:
-            # for mmrope situation, we should calculate position_ids and rope_deltas per sample.
-            # When neat_packing is on, each sample has packing_params; None means no packing for that sample.
-            boundaries_list = [
-                p.get("sequence_boundaries") if p is not None else None for p in packing_params_list
-            ]
+            boundaries_list = [p.get("sequence_boundaries") if p is not None else None for p in packing_params_list]
             has_packing = any(b is not None and len(b) > 2 for b in boundaries_list)
             if has_dummy_image and has_packing:
-                # FIXME: too tricky, need to be refactored
                 features["has_dummy_image"] = True
 
-            # When fake image/audio was injected, sequence_boundaries no longer match the tensor; use non-packing path.
             if not has_packing:
                 self._compute_rope_position_ids(features, mm_inputs)
             else:
@@ -430,7 +480,6 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                     has_dummy_image,
                 )
 
-            # For transformers compatibility, after https://github.com/huggingface/transformers/issues/39400
             if features["position_ids"].dim() == 3:
                 features["position_ids"] = torch.cat(
                     [features["position_ids"][0].unsqueeze(0), features["position_ids"]], dim=0
@@ -457,8 +506,7 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             return {"data": features, "input_ids": features["input_ids"], "labels": features["labels"]}
 
         return features
-
-
+    
 @dataclass
 class SFTDataCollatorWith4DAttentionMask(MultiModalDataCollatorForSeq2Seq):
     r"""Data collator for 4d attention mask."""
@@ -471,7 +519,11 @@ class SFTDataCollatorWith4DAttentionMask(MultiModalDataCollatorForSeq2Seq):
     def __post_init__(self):
         super().__post_init__()
         if self.neat_packing and self.attn_implementation == "flash_attention_2":
-            if self.model is not None and getattr(self.model.config, "model_type", None) in ["qwen3_5", "qwen3_5_moe", "gpt_oss"]:
+            if self.model is not None and getattr(self.model.config, "model_type", None) in [
+                "qwen3_5",
+                "qwen3_5_moe",
+                "gpt_oss",
+            ]:
                 raise ValueError("Neat packing is not supported for qwen3_5, qwen3_5_moe, gpt_oss models for now.")
 
     @staticmethod
@@ -486,14 +538,16 @@ class SFTDataCollatorWith4DAttentionMask(MultiModalDataCollatorForSeq2Seq):
         if non_padding_indices.numel() == seq_len:
             return
 
-        keys_on_seq_dim_1 = {"input_ids", "labels", "attention_mask", "token_type_ids"}
+        keys_on_seq_dim_1 = {"input_ids", "labels", "attention_mask", "token_type_ids", "mm_token_type_ids"}
         for key, value in list(features.items()):
             if not torch.is_tensor(value):
                 continue
 
             if key == "position_ids" and value.size(-1) == seq_len:
                 features[key] = value.index_select(-1, non_padding_indices)
-            elif key == "cross_attention_mask" and value.dim() >= 2 and value.size(0) == 1 and value.size(1) == seq_len:
+            elif (
+                key == "cross_attention_mask" and value.dim() >= 2 and value.size(0) == 1 and value.size(1) == seq_len
+            ):
                 features[key] = value.index_select(1, non_padding_indices)
             elif key in keys_on_seq_dim_1 and value.dim() == 2 and value.size(0) == 1 and value.size(1) == seq_len:
                 features[key] = value.index_select(1, non_padding_indices)
@@ -504,7 +558,7 @@ class SFTDataCollatorWith4DAttentionMask(MultiModalDataCollatorForSeq2Seq):
         if self.block_diag_attn and self.attn_implementation != "flash_attention_2":
             features["attention_mask"] = prepare_4d_attention_mask(features["attention_mask"], self.compute_dtype)
 
-        if self.neat_packing and self.attn_implementation == "flash_attention_2": # FIXME compatibility fa3/fa4
+        if self.neat_packing and self.attn_implementation == "flash_attention_2":  # FIXME compatibility fa3/fa4
             assert features["input_ids"].shape[0] == 1, "bsz should be 1 for neat packing"
             if not has_dummy_image:
                 self._unpad_packed_features(features)
