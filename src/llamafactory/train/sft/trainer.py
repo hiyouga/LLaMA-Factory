@@ -214,7 +214,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             pad_len = np.nonzero(preds[i] != self.processing_class.pad_token_id)[0]
             if len(pad_len):  # move pad token to last
                 preds[i] = np.concatenate((preds[i][pad_len[0] :], preds[i][: pad_len[0]]), axis=-1)
-        
+
         input_ids_column = dataset["input_ids"]
         try:
             input_ids_list = input_ids_column.to_pylist()

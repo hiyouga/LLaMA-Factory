@@ -1,5 +1,4 @@
 model: Qwen/Qwen3-4B
-trust_remote_code: true
 model_class: llm
 
 template: qwen3_nothink
@@ -28,7 +27,6 @@ train_dataset: data/v1_sft_demo.yaml
 ### training
 output_dir: ./outputs/test_lora
 micro_batch_size: 1
-global_batch_size: 4
 cutoff_len: 2048
 learning_rate: 1.0e-4
 bf16: true

@@ -482,6 +482,24 @@ class FinetuningArguments(
             )
         },
     )
+    use_hyper_parallel: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Whether or not to use HyperParallel distributed training backend (FSDP/TP). "
+                "Only supported for the 'sft' stage with full fine-tuning."
+            )
+        },
+    )
+    hyper_parallel_args: str | None = field(
+        default=None,
+        metadata={
+            "help": (
+                "Path to a JSON file containing HyperParallel strategy arguments "
+                "(e.g., tp_size, param_dtype). Used when use_hyper_parallel=True."
+            )
+        },
+    )
     use_muon: bool = field(
         default=False,
         metadata={"help": "Whether or not to use the Muon optimizer."},

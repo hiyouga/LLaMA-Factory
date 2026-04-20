@@ -3,12 +3,13 @@ model_class: llm
 
 template: qwen3_nothink
 
-# Freeze Configuration
+# PEFT Configuration
 peft_config:
-  name: freeze
-  freeze_trainable_layers: 2      # Train the last 2 layers
-  freeze_trainable_modules: all       # In these layers, train specific modules
-  freeze_extra_modules: null      # Extra modules to train (e.g. embed_tokens, lm_head)
+  name: lora
+  r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  target_modules: all
 
 # Kernel Config
 kernel_config:
@@ -20,16 +21,18 @@ dist_config:
   name: fsdp2
   dcp_path: null
 
+init_config:
+  name: init_on_rank0
+
 ### data
 train_dataset: data/v1_sft_demo.yaml
 
 ### training
-output_dir: ./outputs/test_freeze
+output_dir: ./outputs/test_lora
 micro_batch_size: 1
-global_batch_size: 4
 cutoff_len: 2048
-learning_rate: 2.0e-5
-bf16: false
+learning_rate: 1.0e-4
+bf16: true
 max_steps: 10
 
 ### sample

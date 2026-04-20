@@ -85,7 +85,7 @@ class DistributedConfig(TypedDict, total=False):
 
 
 class Content(TypedDict):
-    type: Literal["text", "reasoning", "tool_call", "image_url"]
+    type: Literal["text", "reasoning", "tool_call", "image_url", "video_url", "audio_url"]
     """Type of the content."""
     value: str
     """Value of the content."""

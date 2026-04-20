@@ -150,9 +150,6 @@ def load_adapter(model: HFModel, adapter_name_or_path: Union[list[str], str], is
 
 @PeftPlugin("lora").register()
 def get_lora_model(model: HFModel, config: LoraConfigDict, is_train: bool = False) -> HFModel:
-    if model.device.type == "meta":
-        raise ValueError("Currently lora stage does not support loading model by meta.")
-
     adapter_name_or_path = config.get("adapter_name_or_path")
 
     if adapter_name_or_path:

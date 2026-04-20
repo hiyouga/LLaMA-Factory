@@ -30,7 +30,6 @@ from .model_utils.embedding import resize_embedding_layer
 from .model_utils.kv_cache import configure_kv_cache
 from .model_utils.longlora import configure_longlora
 from .model_utils.moe import add_z3_leaf_module, configure_moe
-from .model_utils.packing import configure_packing
 from .model_utils.quantization import configure_quantization
 from .model_utils.rope import configure_rope
 from .model_utils.valuehead import prepare_valuehead_model
@@ -142,7 +141,6 @@ def patch_config(
     configure_quantization(config, tokenizer, model_args, is_trainable, init_kwargs)
     configure_moe(config, model_args, is_trainable)
     configure_visual_model(config)
-    configure_packing(model_args, is_trainable)
     configure_kv_cache(config, model_args, is_trainable)
 
     if getattr(config, "model_type", None) == "qwen":

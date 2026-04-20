@@ -91,7 +91,11 @@ class Renderer:
         self.processor = processor
 
     def render_messages(
-        self, messages: list[Message], tools: str | None = None, is_generate: bool = False
+        self,
+        messages: list[Message],
+        tools: str | None = None,
+        is_generate: bool = False,
+        enable_thinking: bool = False,
     ) -> ModelInput:
         """Apply template to messages and convert them to model input.
 
@@ -99,6 +103,7 @@ class Renderer:
             messages (list[Message]): The messages to render.
             tools (str | None, optional): The tools to use. Defaults to None.
             is_generate (bool, optional): Whether to render for generation. Defaults to False.
+            enable_thinking (bool, optional): Whether to enable thinking mode for generation. Defaults to False.
 
         Returns:
             ModelInput: The rendered model input.
@@ -108,7 +113,9 @@ class Renderer:
         else:
             from ...plugins.model_plugins.rendering import RenderingPlugin
 
-            return RenderingPlugin(self.template).render_messages(self.processor, messages, tools, is_generate)
+            return RenderingPlugin(self.template).render_messages(
+                self.processor, messages, tools, is_generate, enable_thinking
+            )
 
     def parse_message(self, generated_text: str) -> Message:
         """Parse a message in the template format.
@@ -139,6 +146,8 @@ class Renderer:
         for sample in samples:
             if "messages" in sample:
                 model_input = self.render_messages(sample["messages"], sample.get("tools"))
+                if "position_ids" not in model_input:
+                    model_input["position_ids"] = list(range(1, len(model_input["input_ids"]) + 1))
             elif "chosen_messages" in sample and "rejected_messages" in sample:
                 chosen_input = self.render_messages(sample["chosen_messages"], sample.get("tools"))
                 rejected_input = self.render_messages(sample["rejected_messages"], sample.get("tools"))

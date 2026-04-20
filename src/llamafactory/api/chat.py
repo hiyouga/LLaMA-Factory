@@ -88,7 +88,10 @@ def _process_request(
 
     if request.messages[0].role == Role.SYSTEM:
         content = request.messages.pop(0).content
-        system = content[0].text if isinstance(content, list) else content
+        if isinstance(content, list):
+            system = content[0].text if content else ""
+        else:
+            system = content
     else:
         system = None
 

@@ -28,12 +28,7 @@ save_only_model: false
 report_to: none  # choices: [none, wandb, tensorboard, swanlab, mlflow]
 
 ### ray
-ray_run_name: qwen3_4b_sft_lora
-ray_storage_path: ./saves
 ray_num_workers: 4  # Number of GPUs to use.
-placement_strategy: PACK
-resources_per_worker:
-  GPU: 1
 # ray_init_kwargs:
 #   runtime_env:
 #     env_vars:

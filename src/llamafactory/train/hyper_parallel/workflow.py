@@ -1,7 +1,4 @@
-# Copyright 2025 HuggingFace Inc. and the LlamaFactory team.
-#
-# This code is inspired by the HuggingFace's transformers library.
-# https://github.com/huggingface/transformers/blob/v4.40.0/examples/pytorch/summarization/run_summarization.py
+# Copyright 2025 the LlamaFactory team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,12 +18,12 @@ from ...data import SFTDataCollatorWith4DAttentionMask, get_dataset, get_templat
 from ...extras.constants import IGNORE_INDEX
 from ...extras.logging import get_logger
 from ...extras.misc import calculate_tps
-from ...extras.packages import is_transformers_version_greater_than
+from ...extras.packages import is_hyper_parallel_available, is_transformers_version_greater_than
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
-from ..trainer_utils import create_modelcard_and_push, create_ref_model
-from .metric import ComputeAccuracy, ComputeSimilarity, eval_logit_processor
-from .trainer import CustomSeq2SeqTrainer
+from ..callbacks import SaveProcessorCallback
+from ..sft.metric import ComputeAccuracy, ComputeSimilarity, eval_logit_processor
+from ..trainer_utils import asft_loss_func, create_modelcard_and_push, create_ref_model, dft_loss_func, eaft_loss_func
 
 
 if TYPE_CHECKING:
@@ -46,6 +43,16 @@ def run_sft(
     generating_args: "GeneratingArguments",
     callbacks: Optional[list["TrainerCallback"]] = None,
 ):
+    if not is_hyper_parallel_available():
+        raise ImportError(
+            "hyper_parallel is not installed. Please install it with `pip install hyper_parallel`."
+        )
+
+    from hyper_parallel.integration.llamafactory import (  # pylint: disable=C0415
+        HyperParallelArguments,
+        HyperParallelTrainer,
+    )
+
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
     template = get_template_and_fix_tokenizer(tokenizer, data_args)
@@ -56,16 +63,12 @@ def run_sft(
     if finetuning_args.use_asft_loss:
         ref_model = create_ref_model(model_args, finetuning_args)
 
-    if getattr(model, "is_quantized", False) and not training_args.do_train:
-        setattr(model, "_hf_peft_config_loaded", True)  # hack here: make model compatible with prediction
-
     data_collator = SFTDataCollatorWith4DAttentionMask(
         template=template,
         model=model if not training_args.predict_with_generate else None,
-        pad_to_multiple_of=8 if training_args.do_train else None,  # for shift short attention
+        pad_to_multiple_of=8 if training_args.do_train else None,
         label_pad_token_id=IGNORE_INDEX if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id,
         block_diag_attn=model_args.block_diag_attn,
-        neat_packing=data_args.neat_packing,
         attn_implementation=getattr(model.config, "_attn_implementation", None),
         compute_dtype=model_args.compute_dtype,
         **tokenizer_module,
@@ -73,12 +76,6 @@ def run_sft(
 
     # Metric utils
     metric_module = {}
-    if model_args.use_kt:
-        if training_args.predict_with_generate:
-            raise NotImplementedError("`predict_with_generate` is not supported in KTransformers SFT yet.")
-        elif finetuning_args.compute_accuracy:
-            raise NotImplementedError("`compute_accuracy` is not supported in KTransformers SFT yet.")
-
     if training_args.predict_with_generate:
         metric_module["compute_metrics"] = ComputeSimilarity(tokenizer=tokenizer)
     elif finetuning_args.compute_accuracy:
@@ -87,8 +84,6 @@ def run_sft(
 
     # Keyword arguments for `model.generate`
     gen_kwargs = generating_args.to_dict(obey_generation_config=True)
-
-    # Compatible with Transformers v4 and Transformers v5
     if is_transformers_version_greater_than("4.58.0"):
         extra_ids = getattr(tokenizer, "additional_special_tokens_ids", None)
         if not isinstance(extra_ids, list):
@@ -96,44 +91,52 @@ def run_sft(
             string_tokens = [str(t) for t in extra_special_tokens]
             extra_ids = tokenizer.convert_tokens_to_ids(string_tokens)
         all_eos_ids = [tokenizer.eos_token_id] + [i for i in extra_ids if i != -1]
-        unique_eos_ids = list(dict.fromkeys(all_eos_ids))
-        gen_kwargs["eos_token_id"] = unique_eos_ids
+        gen_kwargs["eos_token_id"] = list(dict.fromkeys(all_eos_ids))
     else:
         gen_kwargs["eos_token_id"] = [tokenizer.eos_token_id] + tokenizer.additional_special_tokens_ids
     gen_kwargs["pad_token_id"] = tokenizer.pad_token_id
 
-    # Initialize our Trainer
-    if model_args.use_kt:
-        from ktransformers.sft.lora import KTrainer  # type: ignore
-        from ktransformers.util.globals import GLOBAL_CONFIG  # type: ignore
+    hp_args = HyperParallelArguments.from_finetuning_args(finetuning_args)
 
-        GLOBAL_CONFIG._config["mod"] = "sft"
+    callbacks = list(callbacks or [])
+    processor = tokenizer_module.get("processor")
+    if processor is not None:
+        callbacks.append(SaveProcessorCallback(processor))
 
-        trainer = KTrainer(
-            model=model,
-            args=training_args,
-            tokenizer=tokenizer_module,
-            data_collator=data_collator,
-            callbacks=callbacks,
-            **dataset_module,
-            **metric_module,
+    compute_loss_func = None
+    if finetuning_args.use_dft_loss:
+        compute_loss_func = dft_loss_func
+    elif finetuning_args.use_eaft_loss:
+        compute_loss_func = lambda outputs, labels, num_items_in_batch=None: eaft_loss_func(  # noqa: E731
+            outputs, labels, num_items_in_batch, finetuning_args.eaft_alpha
         )
-        trainer.model_accepts_loss_kwargs = False
-        model.config.use_cache = False
+    elif finetuning_args.use_asft_loss:
+        from functools import partial
 
-    else:
-        trainer = CustomSeq2SeqTrainer(
-            model=model,
-            args=training_args,
-            finetuning_args=finetuning_args,
-            data_collator=data_collator,
-            callbacks=callbacks,
-            gen_kwargs=gen_kwargs,
-            ref_model=ref_model,
-            **dataset_module,
-            **tokenizer_module,
-            **metric_module,
-        )
+        compute_loss_func = partial(asft_loss_func, asft_alpha=finetuning_args.asft_alpha)
+
+    trainer = HyperParallelTrainer(
+        hp_args=hp_args,
+        model=model,
+        args=training_args,
+        finetuning_args=finetuning_args,
+        data_collator=data_collator,
+        callbacks=callbacks,
+        gen_kwargs=gen_kwargs,
+        ref_model=ref_model,
+        compute_loss_func=compute_loss_func,
+        **dataset_module,
+        **tokenizer_module,
+        **metric_module,
+    )
+
+    if finetuning_args.use_badam:
+        from types import MethodType
+
+        from badam import BAdamCallback, clip_grad_norm_old_version  # type: ignore[import]
+
+        trainer.accelerator.clip_grad_norm_ = MethodType(clip_grad_norm_old_version, trainer.accelerator)
+        trainer.add_callback(BAdamCallback)
 
     # Training
     if training_args.do_train:
@@ -151,7 +154,8 @@ def run_sft(
             keys = ["loss"]
             if isinstance(dataset_module.get("eval_dataset"), dict):
                 keys += sum(
-                    [[f"eval_{key}_loss", f"eval_{key}_accuracy"] for key in dataset_module["eval_dataset"].keys()], []
+                    [[f"eval_{key}_loss", f"eval_{key}_accuracy"] for key in dataset_module["eval_dataset"].keys()],
+                    [],
                 )
             else:
                 keys += ["eval_loss", "eval_accuracy"]
@@ -159,7 +163,7 @@ def run_sft(
             plot_loss(training_args.output_dir, keys=keys)
 
     if training_args.predict_with_generate:
-        tokenizer.padding_side = "left"  # use left-padding in generation
+        tokenizer.padding_side = "left"
 
     # Evaluation
     if training_args.do_eval:

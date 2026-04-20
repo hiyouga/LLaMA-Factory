@@ -50,9 +50,9 @@ if is_apollo_available():
 
 if is_ray_available():
     import ray
-    from ray.util.state import list_nodes
     from ray.util.placement_group import PlacementGroup, placement_group
     from ray.util.scheduling_strategies import PlacementGroupSchedulingStrategy
+    from ray.util.state import list_nodes
 
 
 if TYPE_CHECKING:

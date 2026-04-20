@@ -70,6 +70,10 @@ def is_matplotlib_available():
     return _is_package_available("matplotlib")
 
 
+def is_hyper_parallel_available():
+    return _is_package_available("hyper_parallel")
+
+
 def is_mcore_adapter_available():
     return _is_package_available("mcore_adapter")
 

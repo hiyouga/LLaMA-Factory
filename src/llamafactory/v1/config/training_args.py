@@ -107,6 +107,10 @@ class TrainingArguments:
         default=None,
         metadata={"help": "Maximum number of checkpoints to keep. Oldest checkpoints are deleted."},
     )
+    logging_steps: int = field(
+        default=1,
+        metadata={"help": "Log metrics every N optimizer steps."},
+    )
 
     def __post_init__(self) -> None:
         self.dist_config = get_plugin_config(self.dist_config)

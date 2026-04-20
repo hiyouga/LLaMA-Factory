@@ -236,6 +236,13 @@
     "ms_hub_url": "AI-ModelScope/sharegpt_gpt4",
     "formatting": "sharegpt"
   },
+  "sgsc_b2b_entities": {
+    "hf_hub_url": "Nooxus-AI/NOO-Verified-Global-Entities",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages"
+    }
+  },
   "ultrachat_200k": {
     "hf_hub_url": "HuggingFaceH4/ultrachat_200k",
     "ms_hub_url": "AI-ModelScope/ultrachat_200k",

@@ -998,6 +998,55 @@ register_template(
 
 
 register_template(
+    name="gemma4",
+    format_user=StringFormatter(slots=["<|turn>user\n{{content}}<turn|>\n<|turn>model\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<turn|>\n"]),
+    format_system=StringFormatter(slots=["<|turn>system\n<|think|>{{content}}<turn|>\n"]), #  default thought singal contained
+    format_observation=StringFormatter(
+        slots=["<|turn>tool\n{{content}}<turn|>\n<|turn>model\n"]
+    ), # seem not consistent with the chattemplate
+    format_tools=ToolFormatter(tool_format="gemma4"),
+    format_function=FunctionFormatter(slots=["<|tool>{{content}}<tool|>"], tool_format="gemma4"),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<turn|>"],
+    default_system="You are a helpful assistant.", # important for thinking
+    thought_words=("<|channel>thought\n", "<channel|>"),
+    replace_eos=True,
+    mm_plugin=get_mm_plugin(
+        "gemma4",
+        image_token="<|image|>",
+        video_token="<|video|>",
+    ),
+    template_class=ReasoningTemplate,
+)
+
+
+register_template(
+    name="gemma4n",
+    format_user=StringFormatter(slots=["<|turn>user\n{{content}}<turn|>\n<|turn>model\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<turn|>\n"]),
+    format_system=StringFormatter(slots=["<|turn>system\n<|think|>{{content}}<turn|>\n"]), #  default thought singal contained
+    format_observation=StringFormatter(
+        slots=["<|turn>tool\n{{content}}<turn|>\n<|turn>model\n"]
+    ),
+    format_tools=ToolFormatter(tool_format="gemma4"),
+    format_function=FunctionFormatter(slots=["<|tool>{{content}}<tool|>"], tool_format="gemma4"),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<turn|>"],
+    default_system="You are a helpful assistant.", # important for thinking
+    thought_words=("<|channel>thought\n", "<channel|>"),
+    replace_eos=True,
+    mm_plugin=get_mm_plugin(
+        "gemma4",
+        image_token="<|image|>",
+        video_token="<|video|>",
+        audio_token="<|audio|>",
+    ),
+    template_class=ReasoningTemplate,
+)
+
+
+register_template(
     name="glm4",
     format_user=StringFormatter(slots=["<|user|>\n{{content}}<|assistant|>"]),
     format_assistant=StringFormatter(slots=["\n{{content}}"]),

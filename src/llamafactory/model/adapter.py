@@ -125,7 +125,7 @@ def _setup_freeze_tuning(
 
     model_type = getattr(model.config, "model_type", None)
     if not finetuning_args.freeze_multi_modal_projector and model_type in COMPOSITE_MODELS:
-        trainable_layers.append(COMPOSITE_MODELS[model_type].projector_key)
+        trainable_layers.extend(COMPOSITE_MODELS[model_type].projector_keys)
 
     forbidden_modules = get_forbidden_modules(model.config, finetuning_args)
     for name, param in model.named_parameters():
