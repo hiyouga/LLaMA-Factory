@@ -758,7 +758,7 @@ class SeedToolUtils(ToolUtils):
 
             results.append(FunctionCall(func_name.strip(), json.dumps(args_dict, ensure_ascii=False)))
 
-        return results
+        return results if results else content
 
 
 class LingToolUtils(QwenToolUtils):

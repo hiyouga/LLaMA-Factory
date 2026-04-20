@@ -16,6 +16,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import torch
+
 from ....config.arg_utils import PluginConfig
 from ....utils.plugin import BasePlugin
 
@@ -43,6 +45,20 @@ def save_model_fsdp2(model: HFModel, output_dir: str, processor: Processor) -> N
     return save_model(model, output_dir, processor)
 
 
+@DistributedPlugin("fsdp2").register("save_checkpoint")
+def save_checkpoint_fsdp2(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: str, **kwargs) -> None:
+    from .fsdp2 import save_checkpoint
+
+    return save_checkpoint(model, optimizer, ckpt_dir, **kwargs)
+
+
+@DistributedPlugin("fsdp2").register("load_checkpoint")
+def load_checkpoint_fsdp2(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: str, **kwargs) -> None:
+    from .fsdp2 import load_checkpoint
+
+    return load_checkpoint(model, optimizer, ckpt_dir, **kwargs)
+
+
 @DistributedPlugin("deepspeed").register()
 def shard_model_deepspeed(model: HFModel, dist_config: PluginConfig, **kwargs) -> HFModel:
     from .deepspeed import DeepSpeedEngine
@@ -59,3 +75,17 @@ def save_model_deepspeed(model: HFModel, output_dir: str, processor: Processor) 
     from .deepspeed import save_model
 
     return save_model(model, output_dir, processor)
+
+
+@DistributedPlugin("deepspeed").register("save_checkpoint")
+def save_checkpoint_deepspeed(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: str) -> None:
+    from .deepspeed import save_checkpoint
+
+    return save_checkpoint(model, optimizer, ckpt_dir)
+
+
+@DistributedPlugin("deepspeed").register("load_checkpoint")
+def load_checkpoint_deepspeed(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: str) -> None:
+    from .deepspeed import load_checkpoint
+
+    return load_checkpoint(model, optimizer, ckpt_dir)

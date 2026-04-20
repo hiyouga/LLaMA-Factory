@@ -18,9 +18,16 @@ import os
 
 import torch
 import torch.distributed as dist
+import torch.distributed.checkpoint as dcp
 import torch.nn as nn
 from peft.tuners.lora import LoraLayer
-from torch.distributed.checkpoint.state_dict import StateDictOptions, get_model_state_dict, set_model_state_dict
+from torch.distributed.checkpoint.state_dict import (
+    StateDictOptions,
+    get_model_state_dict,
+    get_optimizer_state_dict,
+    set_model_state_dict,
+    set_optimizer_state_dict,
+)
 from torch.distributed.fsdp import (
     CPUOffloadPolicy,
     MixedPrecisionPolicy,
@@ -64,6 +71,51 @@ def save_model(model: HFModel, output_dir: str, processor: Processor) -> None:
         model_to_save.save_pretrained(output_dir, state_dict=state_dict, max_shard_size="4GB")
         processor.save_pretrained(output_dir, max_shard_size="4GB")
         logger.info(f"Model saved to {output_dir}")
+
+
+def save_checkpoint(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: str, **kwargs) -> None:
+    save_ckpt_as_hf = kwargs.get("save_ckpt_as_hf", False)
+    processor = kwargs.get("processor", None)
+
+    # Always save DCP format for resume capability
+    options = StateDictOptions(full_state_dict=False, cpu_offload=True)
+
+    model_state = get_model_state_dict(model, options=options)
+    dcp.save(state_dict=model_state, checkpoint_id=os.path.join(ckpt_dir, "model"))
+
+    optim_state = get_optimizer_state_dict(model, optimizer, options=options)
+    dcp.save(state_dict=optim_state, checkpoint_id=os.path.join(ckpt_dir, "optimizer"))
+
+    # Additionally save HF format if requested
+    if save_ckpt_as_hf:
+        if DistributedInterface().get_rank() == 0:
+            logger.info("Gathering state dict for saving additional HF format checkpoint...")
+
+        hf_options = StateDictOptions(full_state_dict=True, cpu_offload=True)
+        hf_state_dict = get_model_state_dict(model, options=hf_options)
+
+        if DistributedInterface().get_rank() == 0:
+            model_to_save = model.module if hasattr(model, "module") else model
+            hf_dir = os.path.join(ckpt_dir, "hf_model")
+            model_to_save.save_pretrained(hf_dir, state_dict=hf_state_dict, max_shard_size="4GB")
+            if processor is not None:
+                processor.save_pretrained(hf_dir, max_shard_size="4GB")
+
+            logger.info(f"Additional HF format checkpoint saved to {hf_dir}")
+
+
+def load_checkpoint(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: str, **kwargs) -> None:
+    options = StateDictOptions(full_state_dict=False, cpu_offload=True)
+
+    ckpt_model_dir = os.path.join(ckpt_dir, "model")
+    model_state = get_model_state_dict(model, options=options)
+    dcp.load(state_dict=model_state, checkpoint_id=ckpt_model_dir)
+    set_model_state_dict(model, model_state, options=options)
+
+    ckpt_optim_dir = os.path.join(ckpt_dir, "optimizer")
+    optim_state = get_optimizer_state_dict(model, optimizer, options=options)
+    dcp.load(state_dict=optim_state, checkpoint_id=ckpt_optim_dir)
+    set_optimizer_state_dict(model, optimizer, optim_state, options=options)
 
 
 class FSDP2Engine:

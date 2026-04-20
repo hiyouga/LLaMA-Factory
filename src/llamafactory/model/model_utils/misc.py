@@ -35,7 +35,7 @@ def find_all_linear_modules(model: "PreTrainedModel", freeze_vision_tower: bool)
         forbidden_modules.add("output")
 
     if model_type in COMPOSITE_MODELS:
-        forbidden_modules.add(COMPOSITE_MODELS[model_type].projector_key)
+        forbidden_modules.update(COMPOSITE_MODELS[model_type].projector_keys)
 
     if freeze_vision_tower and model_type in COMPOSITE_MODELS:
         forbidden_modules.update(COMPOSITE_MODELS[model_type].vision_model_keys)

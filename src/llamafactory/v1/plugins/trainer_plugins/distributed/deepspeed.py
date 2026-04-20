@@ -19,6 +19,7 @@ this module leverages accelerate's Accelerator + DeepSpeedPlugin to handle
 initialization, backward, gradient accumulation, and model saving.
 """
 
+import os
 from typing import Any, Optional
 
 import torch
@@ -127,3 +128,22 @@ def save_model(model: HFModel, output_dir: str, processor: Processor) -> None:
 
     accelerator.wait_for_everyone()
     logger.info_rank0(f"Model saved to {output_dir}")
+
+
+def save_checkpoint(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: str, **kwargs) -> None:
+    save_ckpt_as_hf = kwargs.get("save_ckpt_as_hf", False)
+    processor = kwargs.get("processor", None)
+
+    # Always save DeepSpeed state for resume capability
+    accelerator: Accelerator = model._accelerator  # type: ignore[union-attr]
+    accelerator.save_state(ckpt_dir)
+
+    # Additionally save HF format if requested
+    if save_ckpt_as_hf:
+        hf_dir = os.path.join(ckpt_dir, "hf_model")
+        save_model(model, hf_dir, processor)
+
+
+def load_checkpoint(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: str, **kwargs) -> None:
+    accelerator: Accelerator = model._accelerator  # type: ignore[union-attr]
+    accelerator.load_state(ckpt_dir)
