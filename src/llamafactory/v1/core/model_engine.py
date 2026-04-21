@@ -36,10 +36,6 @@ from transformers import AutoConfig, AutoProcessor
 from ..accelerator.helper import DeviceType
 from ..accelerator.interface import DistributedInterface
 from ..config.model_args import ModelArguments, ModelClass
-from ..plugins.model_plugins.deepspeed_utils import (
-    setup_deepspeed_zero3_model_loading,
-    teardown_deepspeed_zero3_model_loading,
-)
 from ..utils import logging
 from ..utils.types import HFConfig, HFModel, Processor
 from .utils.rendering import Renderer
@@ -74,15 +70,23 @@ class ModelEngine:
         self._dist_config = DistributedInterface().dist_config
         self._deepspeed_zero3_plugin = None
         self._deepspeed_zero3_enabled = False
-        try:
-            self._deepspeed_zero3_plugin = setup_deepspeed_zero3_model_loading(self.is_train, self._dist_config)
-            self._deepspeed_zero3_enabled = self._deepspeed_zero3_plugin is not None
+
+        if self.is_train and self._dist_config is not None and self._dist_config.get("name") == "deepspeed":
+            from ..plugins.model_plugins.deepspeed_utils import (
+                setup_deepspeed_zero3_model_loading,
+                teardown_deepspeed_zero3_model_loading,
+            )
+
+            try:
+                self._deepspeed_zero3_plugin = setup_deepspeed_zero3_model_loading(self.is_train, self._dist_config)
+                self._deepspeed_zero3_enabled = self._deepspeed_zero3_plugin is not None
+                self.model = self._init_model()
+            finally:
+                teardown_deepspeed_zero3_model_loading(self._deepspeed_zero3_plugin)
+                self._deepspeed_zero3_plugin = None
+                self._deepspeed_zero3_enabled = False
+        else:
             self.model = self._init_model()
-            """HF model."""
-        finally:
-            teardown_deepspeed_zero3_model_loading(self._deepspeed_zero3_plugin)
-            self._deepspeed_zero3_plugin = None
-            self._deepspeed_zero3_enabled = False
 
     def _init_processor(self) -> Processor:
         """Init processor.
