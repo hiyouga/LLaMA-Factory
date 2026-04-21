@@ -36,8 +36,11 @@ from transformers import AutoConfig, AutoProcessor
 from ..accelerator.helper import DeviceType
 from ..accelerator.interface import DistributedInterface
 from ..config.model_args import ModelArguments, ModelClass
+from ..plugins.model_plugins.deepspeed_utils import (
+    setup_deepspeed_zero3_model_loading,
+    teardown_deepspeed_zero3_model_loading,
+)
 from ..utils import logging
-from ..utils.deepspeed_utils import setup_deepspeed_zero3_model_loading, teardown_deepspeed_zero3_model_loading
 from ..utils.types import HFConfig, HFModel, Processor
 from .utils.rendering import Renderer
 

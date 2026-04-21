@@ -25,9 +25,9 @@ import torch
 from accelerate import Accelerator
 from accelerate.utils import DeepSpeedPlugin
 
-from ....utils.deepspeed_utils import infer_deepspeed_mixed_precision
 from ....utils.logging import get_logger
 from ....utils.types import HFModel, Processor
+from ...model_plugins.deepspeed_utils import infer_deepspeed_mixed_precision
 
 
 logger = get_logger(__name__)
