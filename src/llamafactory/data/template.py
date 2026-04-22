@@ -54,6 +54,7 @@ class Template:
     replace_eos: bool
     replace_jinja_template: bool
     enable_thinking: Optional[bool]
+    preserve_thinking: bool
     mm_plugin: "BasePlugin"
 
     def encode_oneturn(
@@ -414,8 +415,9 @@ class ReasoningTemplate(Template):
         tools: Optional[str] = None,
     ) -> tuple[list[int], list[int]]:
         messages = deepcopy(messages)
-        for i in range(1, len(messages) - 2, 2):
-            messages[i]["content"] = self.remove_thought(messages[i]["content"])
+        if not self.preserve_thinking:
+            for i in range(1, len(messages) - 2, 2):
+                messages[i]["content"] = self.remove_thought(messages[i]["content"])
 
         if self.enable_thinking is False:  # remove all cot
             messages[-1]["content"] = self.remove_thought(messages[-1]["content"])
@@ -491,6 +493,7 @@ def register_template(
     replace_eos: bool = False,
     replace_jinja_template: bool = False,
     enable_thinking: Optional[bool] = True,
+    preserve_thinking: bool = False,
     mm_plugin: "BasePlugin" = get_mm_plugin(name="base"),
     template_class: type["Template"] = Template,
 ) -> None:
@@ -543,6 +546,7 @@ def register_template(
         replace_eos=replace_eos,
         replace_jinja_template=replace_jinja_template,
         enable_thinking=enable_thinking,
+        preserve_thinking=preserve_thinking,
         mm_plugin=mm_plugin,
     )
 
@@ -605,6 +609,7 @@ def parse_template(tokenizer: "PreTrainedTokenizer") -> "Template":
         replace_eos=False,
         replace_jinja_template=False,
         enable_thinking=True,
+        preserve_thinking=False,
         mm_plugin=get_mm_plugin(name="base"),
     )
 
@@ -644,6 +649,7 @@ def get_template_and_fix_tokenizer(tokenizer: "PreTrainedTokenizer", data_args: 
             "e.g., qwen3_vl_nothink"
         )
         template.enable_thinking = data_args.enable_thinking
+        template.preserve_thinking = data_args.preserve_thinking
 
     template.fix_special_tokens(tokenizer)
     template.fix_jinja_template(tokenizer)
@@ -2111,6 +2117,41 @@ register_template(
 )
 
 
+# copied from qwen3_5 template
+register_template(
+    name="qwen3_6",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_function=FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="qwen3_5"),
+    format_observation=StringFormatter(
+        slots=["<|im_start|>user\n<tool_response>\n{{content}}\n</tool_response><|im_end|>\n<|im_start|>assistant\n"]
+    ),
+    format_tools=ToolFormatter(tool_format="qwen3_5"),
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
+    mm_plugin=get_mm_plugin(name="qwen3_vl", image_token="<|image_pad|>", video_token="<|video_pad|>"),
+    template_class=ReasoningTemplate,
+)
+
+
+# copied from qwen3_5_nothink template
+register_template(
+    name="qwen3_6_nothink",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    format_function=FunctionFormatter(slots=["{{content}}<|im_end|>\n"], tool_format="qwen3_5"),
+    format_observation=StringFormatter(
+        slots=["<|im_start|>user\n<tool_response>\n{{content}}\n</tool_response><|im_end|>\n<|im_start|>assistant\n"]
+    ),
+    format_tools=ToolFormatter(tool_format="qwen3_5"),
+    stop_words=["<|im_end|>"],
+    replace_eos=True,
+    mm_plugin=get_mm_plugin(name="qwen3_vl", image_token="<|image_pad|>", video_token="<|video_pad|>"),
+)
+
+
 register_template(
     name="sailor",
     format_user=StringFormatter(slots=["<|im_start|>question\n{{content}}<|im_end|>\n<|im_start|>answer\n"]),
@@ -2321,3 +2362,4 @@ register_template(
     efficient_eos=True,
     template_class=Glm47ReasoningTemplate,
 )
+
