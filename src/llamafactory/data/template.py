@@ -651,6 +651,8 @@ def get_template_and_fix_tokenizer(tokenizer: "PreTrainedTokenizer", data_args: 
 
     if data_args.enable_thinking is not None:
         template.enable_thinking = data_args.enable_thinking
+
+    if data_args.preserve_thinking is not None:
         template.preserve_thinking = data_args.preserve_thinking
 
     template.fix_special_tokens(tokenizer)
