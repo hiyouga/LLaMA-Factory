@@ -227,7 +227,9 @@ class BaseTrainer:
         """Train the model."""
         self.model.train()
         self.callback_handler.on_train_begin(self.args, self.state)
-        for epoch in range(self._resume_epoch, self.args.num_train_epochs):
+
+        epoch = self._resume_epoch
+        while self.global_step < self.num_training_steps:
             self.state.epoch = epoch
             self.train_batch_generator.set_epoch(epoch)
             self.callback_handler.on_epoch_begin(self.args, self.state)
@@ -332,6 +334,7 @@ class BaseTrainer:
                     return
 
             self.callback_handler.on_epoch_end(self.args, self.state)
+            epoch += 1
 
         self.callback_handler.on_train_end(self.args, self.state)
 
