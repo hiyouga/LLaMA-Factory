@@ -22,6 +22,7 @@ import requests
 from typing_extensions import override
 
 from ..data import get_template_and_fix_tokenizer
+from ..data.template import ReasoningTemplate
 from ..extras import logging
 from ..extras.constants import AUDIO_PLACEHOLDER, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER, EngineName
 from ..extras.misc import get_device_count, torch_gc
@@ -161,6 +162,18 @@ class SGLangEngine(BaseEngine):
         )
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         prompt_ids, _ = self.template.encode_oneturn(self.tokenizer, paired_messages, system, tools)
+        if (
+            self.template.enable_thinking is False
+            and not isinstance(self.template, ReasoningTemplate)
+            and self.template.thought_words is not None
+        ):
+            prompt_ids += self.tokenizer.encode(
+                self.template.thought_words[0] + self.template.thought_words[1], add_special_tokens=False
+            )
+        elif self.template.enable_thinking is True and isinstance(self.template, ReasoningTemplate):
+            prompt_ids += self.tokenizer.encode(
+                self.template.thought_words[0], add_special_tokens=False
+            )
         prompt_length = len(prompt_ids)
 
         temperature: Optional[float] = input_kwargs.pop("temperature", None)
