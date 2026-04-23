@@ -648,6 +648,8 @@ def get_template_and_fix_tokenizer(tokenizer: "PreTrainedTokenizer", data_args: 
             "please add `_nothink` suffix if the model is not a reasoning model. "
             "e.g., qwen3_vl_nothink"
         )
+
+    if data_args.enable_thinking is not None:
         template.enable_thinking = data_args.enable_thinking
         template.preserve_thinking = data_args.preserve_thinking
 
