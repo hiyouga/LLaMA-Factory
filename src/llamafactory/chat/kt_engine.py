@@ -23,7 +23,6 @@ import torch
 from typing_extensions import override
 
 from ..data import get_template_and_fix_tokenizer
-from ..data.template import ReasoningTemplate
 from ..extras import logging
 from ..extras.constants import EngineName
 from ..model import load_model, load_tokenizer
@@ -115,18 +114,8 @@ class KTransformersEngine(BaseEngine):
     ) -> AsyncGenerator[str, None]:
         paired = messages + [{"role": "assistant", "content": ""}]
         prompt_ids, _ = self.template.encode_oneturn(self.tokenizer, paired, system, tools)
-        if (
-            self.template.enable_thinking is False
-            and not isinstance(self.template, ReasoningTemplate)
-            and self.template.thought_words is not None
-        ):
-            prompt_ids += self.tokenizer.encode(
-                self.template.thought_words[0] + self.template.thought_words[1], add_special_tokens=False
-            )
-        elif self.template.enable_thinking is True and isinstance(self.template, ReasoningTemplate):
-            prompt_ids += self.tokenizer.encode(
-                self.template.thought_words[0], add_special_tokens=False
-            )
+        if not self.force_think:
+            prompt_ids = self.template.inject_thinking_tokens(prompt_ids, self.tokenizer)
         prompt_len = len(prompt_ids)
 
         max_length: Optional[int] = input_kwargs.pop("max_length", None)

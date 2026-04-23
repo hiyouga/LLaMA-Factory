@@ -23,7 +23,6 @@ from transformers import GenerationConfig, TextIteratorStreamer
 from typing_extensions import override
 
 from ..data import get_template_and_fix_tokenizer
-from ..data.template import ReasoningTemplate
 from ..extras import logging
 from ..extras.constants import AUDIO_PLACEHOLDER, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER, EngineName
 from ..model import load_model, load_tokenizer
@@ -106,18 +105,7 @@ class HuggingfaceEngine(BaseEngine):
         )
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         prompt_ids, _ = template.encode_oneturn(tokenizer, paired_messages, system, tools)
-        if (
-            template.enable_thinking is False
-            and not isinstance(template, ReasoningTemplate)
-            and template.thought_words is not None
-        ):
-            prompt_ids += tokenizer.encode(
-                template.thought_words[0] + template.thought_words[1], add_special_tokens=False
-            )
-        elif template.enable_thinking is True and isinstance(template, ReasoningTemplate):
-            prompt_ids += tokenizer.encode(
-                template.thought_words[0], add_special_tokens=False
-            )
+        prompt_ids = template.inject_thinking_tokens(prompt_ids, tokenizer)
         prompt_ids, _ = template.mm_plugin.process_token_ids(
             prompt_ids,
             None,
