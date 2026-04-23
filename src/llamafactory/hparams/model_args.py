@@ -207,7 +207,7 @@ class BaseModelArguments:
             "help": (
                 "Whether to ignore mismatched tensor shapes when loading model weights. "
                 "Useful for models with GQA or other architectural variants where checkpoint "
-                "shapes legitimately differ (e.g. GLM-OCR, GQA models)."
+                "shapes legitimately differ (e.g. GLM-OCR)."
             )
         },
     )
