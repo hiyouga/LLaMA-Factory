@@ -186,22 +186,6 @@ def _verify_model_args(
             raise ValueError("Quantized model only accepts a single adapter. Merge them first.")
 
 
-def _bridge_kt_env_vars(model_args: "ModelArguments", finetuning_args: "FinetuningArguments") -> None:
-    """Bridge LLaMA-Factory KT/LoRA args to accelerate KTransformersPlugin via env vars."""
-    mapping = {
-        "ACCELERATE_KT_WEIGHT_PATH": getattr(model_args, "kt_weight_path", None),
-        "ACCELERATE_KT_EXPERT_CHECKPOINT_PATH": getattr(model_args, "kt_expert_checkpoint_path", None),
-        "ACCELERATE_KT_MODEL_MAX_LENGTH": getattr(model_args, "model_max_length", None),
-        "ACCELERATE_KT_LORA_RANK": getattr(finetuning_args, "lora_rank", None),
-        "ACCELERATE_KT_LORA_ALPHA": getattr(finetuning_args, "lora_alpha", None),
-        "ACCELERATE_KT_USE_LORA_EXPERTS": getattr(model_args, "kt_use_lora_experts", None),
-        "ACCELERATE_KT_LORA_EXPERT_NUM": getattr(model_args, "kt_lora_expert_num", None),
-        "ACCELERATE_KT_LORA_EXPERT_INTERMEDIATE_SIZE": getattr(model_args, "kt_lora_expert_intermediate_size", None),
-    }
-    for env_key, value in mapping.items():
-        if value is not None:
-            os.environ[env_key] = str(value)
-
 
 def _check_extra_dependencies(
     model_args: "ModelArguments",
@@ -527,29 +511,8 @@ def get_train_args(args: dict[str, Any] | list[str] | None = None) -> _TRAIN_CLS
     )
     transformers.set_seed(training_args.seed)
 
-    # Bridge LLaMA-Factory KT args into HfTrainerKTConfig for from_pretrained wrapping.
     if model_args.use_kt:
-        _bridge_kt_env_vars(model_args, finetuning_args)
-        hf_kt = getattr(training_args, "hf_kt_config", None)
-        if hf_kt is not None and hasattr(hf_kt, "_kt_config") and isinstance(hf_kt._kt_config, dict):
-            _late_bridge = {
-                "kt_lora_rank": getattr(finetuning_args, "lora_rank", None),
-                "kt_lora_alpha": getattr(finetuning_args, "lora_alpha", None),
-                "kt_weight_path": getattr(model_args, "kt_weight_path", None),
-                "kt_expert_checkpoint_path": getattr(model_args, "kt_expert_checkpoint_path", None),
-                "kt_model_max_length": getattr(model_args, "model_max_length", None),
-                "kt_use_lora_experts": getattr(model_args, "kt_use_lora_experts", None),
-                "kt_lora_expert_num": getattr(model_args, "kt_lora_expert_num", None),
-                "kt_lora_expert_intermediate_size": getattr(model_args, "kt_lora_expert_intermediate_size", None),
-            }
-            for key, value in _late_bridge.items():
-                if value is not None:
-                    hf_kt._kt_config[key] = value
-            # Auto-enable share_cache_pool when gradient checkpointing is on.
-            gc_enabled = getattr(training_args, "gradient_checkpointing", False) or \
-                not getattr(model_args, "disable_gradient_checkpointing", True)
-            if gc_enabled:
-                hf_kt._kt_config.setdefault("kt_share_cache_pool", True)
+        model_args.apply_kt_config(finetuning_args, training_args, model_args.model_max_length)
 
     return model_args, data_args, training_args, finetuning_args, generating_args
 
