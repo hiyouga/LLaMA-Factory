@@ -35,7 +35,7 @@ class DistributedPlugin(BasePlugin):
 def shard_model_fsdp2(model: HFModel, dist_config: PluginConfig, **kwargs) -> HFModel:
     from .fsdp2 import FSDP2Engine
 
-    return FSDP2Engine(dist_config).shard_model(model)
+    return FSDP2Engine(dist_config, bf16=bool(kwargs.get("bf16"))).shard_model(model)
 
 
 @DistributedPlugin("fsdp2").register("save_model")

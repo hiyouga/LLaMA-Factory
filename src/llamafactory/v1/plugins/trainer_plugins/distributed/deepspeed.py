@@ -28,6 +28,7 @@ from accelerate.utils import DeepSpeedPlugin
 
 from ....utils.logging import get_logger
 from ....utils.types import HFModel, Processor
+from ...model_plugins.deepspeed_utils import infer_deepspeed_mixed_precision
 
 
 logger = get_logger(__name__)
@@ -51,6 +52,7 @@ class DeepSpeedEngine:
             raise ValueError("DeepSpeed config_file is required in dist_config")
 
         ds_plugin = DeepSpeedPlugin(hf_ds_config=config_file)
+        ds_plugin.set_mixed_precision(infer_deepspeed_mixed_precision(ds_plugin.deepspeed_config))
 
         self.accelerator = Accelerator(
             deepspeed_plugin=ds_plugin,

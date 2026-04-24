@@ -123,6 +123,8 @@ class DistributedInterface:
         if self._initialized:
             return
 
+        self.dist_config = config
+
         helper.set_device_index()
         self._is_distributed = helper.is_distributed()
         self._rank = helper.get_rank()
