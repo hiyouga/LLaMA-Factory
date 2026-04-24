@@ -1,5 +1,5 @@
 ### model
-model_name_or_path: Qwen/Qwen3.5-397B-A17B
+model_name_or_path: Qwen/Qwen3-235B-A22B-Instruct-2507
 trust_remote_code: true
 
 ### method
@@ -11,7 +11,7 @@ lora_target: all
 
 ### dataset
 dataset: identity,alpaca_en_demo
-template: qwen3_5
+template: qwen3
 cutoff_len: 2048
 max_samples: 10000
 overwrite_cache: true
@@ -19,7 +19,7 @@ preprocessing_num_workers: 16
 dataloader_num_workers: 4
 
 ### output
-output_dir: saves/qwen3.5-moe/lora/sft-kt
+output_dir: saves/qwen3-235b/lora/sft-kt
 logging_steps: 10
 save_steps: 500
 plot_loss: true
@@ -40,7 +40,6 @@ resume_from_checkpoint: null
 
 ### ktransformers
 use_kt: true
-# For original BF16 checkpoints, start with examples/ktransformers/accelerate/fsdp2_kt_bf16.yaml.
+# Pair with examples/ktransformers/accelerate/fsdp2_kt_bf16.yaml for original BF16 checkpoints.
 # For pre-converted expert weights, uncomment kt_weight_path and use fsdp2_kt_int8.yaml or fsdp2_kt_int4.yaml.
-# Pair the 397B path with fsdp2_kt_int8.yaml, tune cutoff_len to prepared weights and GPU memory.
-# kt_weight_path: /path/to/Qwen3.5-MoE-AMXINT8
+# kt_weight_path: /path/to/Qwen3-235B-A22B-Instruct-2507-AMXINT8

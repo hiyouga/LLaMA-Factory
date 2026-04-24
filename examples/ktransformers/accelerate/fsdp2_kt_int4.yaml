@@ -16,7 +16,7 @@ use_cpu: false
 
 kt_config:
   enabled: true
-  kt_backend: AMXINT8  # Use with online-converted INT8 expert weights
+  kt_backend: AMXINT4  # Use with online-converted INT4 expert weights
   kt_num_threads: 96
   kt_tp_enabled: true
   kt_threadpool_count: 2

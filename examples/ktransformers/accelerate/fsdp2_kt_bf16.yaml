@@ -9,14 +9,14 @@ fsdp_config:
   fsdp_version: 2
 mixed_precision: bf16
 num_machines: 1
-num_processes: 4
+num_processes: 4 # Adjust based on your GPU count; 4 is suitable for 4 GPUs
 rdzv_backend: static
 same_network: true
 use_cpu: false
 
 kt_config:
   enabled: true
-  kt_backend: AMXBF16
+  kt_backend: AMXBF16  # Use with original BF16 expert weights.
   kt_num_threads: 96
   kt_tp_enabled: true
   kt_threadpool_count: 2

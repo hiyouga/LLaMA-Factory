@@ -9,7 +9,7 @@ fsdp_config:
   fsdp_version: 2
 mixed_precision: bf16
 num_machines: 1
-num_processes: 4 # Adjust based on your GPU count; 4 is suitable for 4 GPUs
+num_processes: 8 # Adjust based on your GPU count; 8 is suitable for 8 GPUs
 rdzv_backend: static
 same_network: true
 use_cpu: false
