@@ -515,11 +515,6 @@ def get_train_args(args: dict[str, Any] | list[str] | None = None) -> _TRAIN_CLS
 
     model_args.device_map = {"": get_current_device()}
     model_args.model_max_length = data_args.cutoff_len
-    if model_args.use_kt and training_args.world_size > 1:
-        # In distributed KT mode, rank 0 processes concatenated tokens from all ranks.
-        suggested = data_args.cutoff_len * training_args.world_size
-        if model_args.model_max_length <= 4096 and suggested > model_args.model_max_length:
-            model_args.model_max_length = suggested
     model_args.block_diag_attn = data_args.neat_packing
     data_args.packing = data_args.packing if data_args.packing is not None else finetuning_args.stage == "pt"
 
