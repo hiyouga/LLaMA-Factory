@@ -62,6 +62,10 @@ def add_z3_leaf_module(model: "PreTrainedModel") -> None:
         # deepseek v3 and kimi vl use custom code
         _set_z3_leaf_modules(model, ["DeepseekV3MoE"])
 
+    if model_type == "hy_v3":
+        # hy3 uses custom code
+        _set_z3_leaf_modules(model, ["HYV3MoE"])
+
     if model_type == "ernie4_5_moe":
         from transformers.models.ernie4_5_moe.modeling_ernie4_5_moe import Ernie4_5_MoeSparseMoeBlock
 
@@ -164,6 +168,7 @@ def configure_moe(config: "PretrainedConfig", model_args: "ModelArguments", is_t
         "dbrx",
         "ernie4_5_moe",
         "granitemoe",
+        "hy_v3",
         "jamba",
         "jetmoe",
         "llama4",
@@ -184,6 +189,7 @@ def configure_moe(config: "PretrainedConfig", model_args: "ModelArguments", is_t
     if model_type in [
         "ernie4_5_moe",
         "granitemoe",
+        "hy_v3",
         "jamba",
         "llama4",
         "mixtral",
@@ -202,6 +208,9 @@ def configure_moe(config: "PretrainedConfig", model_args: "ModelArguments", is_t
 
     elif model_type == "jetmoe":
         setattr(config, "aux_loss_coef", model_args.moe_aux_loss_coef)
+
+    elif model_type == "hy_v3":
+        setattr(config, "router_aux_loss_coef", model_args.moe_aux_loss_coef)
 
 
 class Qwen3OmniMoeThinkerTextSparseMoeBlock(nn.Module):

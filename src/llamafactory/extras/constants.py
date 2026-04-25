@@ -58,6 +58,7 @@ LLAMABOARD_CONFIG = "llamaboard_config.yaml"
 MCA_SUPPORTED_MODELS = {
     "deepseek_v3",
     "glm4_moe",
+    "hy_v3",
     "llama",
     "mistral",
     "mixtral",
@@ -1254,6 +1255,17 @@ register_model_group(
         },
     },
     template="hunyuan_small",
+)
+
+
+register_model_group(
+    models={
+        "Hy3-Preview": {
+            DownloadSource.DEFAULT: "tencent/Hy3-preview",
+            DownloadSource.MODELSCOPE: "tencent/Hy3-preview",
+        },
+    },
+    template="hy3",
 )
 
 
