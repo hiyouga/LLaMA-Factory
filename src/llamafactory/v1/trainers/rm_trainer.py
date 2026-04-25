@@ -56,6 +56,25 @@ def _attach_reward_head(model: HFModel) -> None:
     model.add_module("reward_head", reward_head)
 
 
+def _validate_rm_dataset_format(train_dataset: DataEngine, dataset_path: str) -> None:
+    """Validate RM dataset format early for clearer error messages."""
+    if len(train_dataset) == 0:
+        raise ValueError(f"RM training dataset is empty: {dataset_path}")
+
+    sample = train_dataset[0]
+    if "chosen_messages" in sample and "rejected_messages" in sample:
+        return
+
+    dataset_name = sample.get("_dataset_name", "unknown")
+    sample_keys = sorted(sample.keys())
+    raise ValueError(
+        "RM training requires pair-format samples containing chosen/rejected responses. "
+        f"First sample from dataset '{dataset_name}' has keys: {sample_keys}. "
+        "Please use pair data (e.g. a dataset with chosen_messages/rejected_messages, "
+        "or set converter='pair' for raw chosen/rejected fields)."
+    )
+
+
 class RMTrainer(BaseTrainer):
     def __init__(
         self,
@@ -130,6 +149,7 @@ def run_rm(args: InputArgument = None):
     model_args, data_args, training_args, _ = get_args(args)
     DistributedInterface(training_args.dist_config)
     train_dataset = DataEngine(data_args.train_dataset)
+    _validate_rm_dataset_format(train_dataset, data_args.train_dataset)
     model_engine = ModelEngine(model_args, is_train=True)
     trainer = RMTrainer(
         args=training_args,

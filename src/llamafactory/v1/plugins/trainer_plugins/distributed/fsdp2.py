@@ -204,6 +204,11 @@ class FSDP2Engine:
 
             if type(module) in transformer_layer_cls_to_wrap:
                 should_wrap = True
+            elif name == "reward_head":
+                # RM training attaches a lightweight reward head on top of the base model.
+                # Ensure it is FSDP-wrapped as well so its parameters are DTensor-compatible
+                # with DTensor hidden states produced by the sharded backbone.
+                should_wrap = True
             elif isinstance(module, nn.Embedding):
                 if not getattr(model.config, "tie_word_embeddings", True):
                     should_wrap = True
@@ -362,7 +367,7 @@ class FSDP2Engine:
 
         with torch.no_grad():
             grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            if isinstance(grad_norm, torch.distributed._tensor.DTensor):
+            if isinstance(grad_norm, torch.distributed.tensor.DTensor):
                 grad_norm = grad_norm.full_tensor()
 
         for param in model.parameters():
