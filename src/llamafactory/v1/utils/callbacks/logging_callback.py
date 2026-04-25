@@ -53,7 +53,7 @@ class LoggingCallback(TrainerCallback):
             return
 
         # Human-readable output to stdout
-        display_logs = {**logs, "total_steps": state.num_training_steps}
+        display_logs = {**logs, "step": state.global_step, "total_steps": state.num_training_steps}
         parts = ", ".join(f"{k}: {v:.4f}" if isinstance(v, float) else f"{k}: {v}" for k, v in display_logs.items())
         logger.info_rank0(parts)
 

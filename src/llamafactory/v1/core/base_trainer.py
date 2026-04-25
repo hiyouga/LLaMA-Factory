@@ -46,6 +46,7 @@ from ..utils.helper import compute_valid_tokens
 from ..utils.types import BatchInput, HFModel, ModelOutput, Tensor, TorchDataset
 from .utils.batching import BatchGenerator
 from .utils.checkpoint import TrainingCheckpointCoordinator
+from .utils.reward_head import strip_reward_head_from_state_dict
 from .utils.rendering import Renderer
 
 
@@ -134,6 +135,9 @@ class BaseTrainer:
             global_step=self.global_step,
             epoch=self._resume_epoch,
         )
+        # Keep callback state aligned with checkpoint-resumed trainer counters.
+        self.state.global_step = self.global_step
+        self.state.epoch = self._resume_epoch
 
         if self.args.dist_config is not None and self.args.dist_config.get("cp_size", 1) > 1:
             # qwen3.5 is not supported because of the different attention implementation, which will be supported in the future.
@@ -316,7 +320,7 @@ class BaseTrainer:
                 if self.global_step % self.args.logging_steps == 0:
                     logs = {
                         "epoch": epoch,
-                        "step": self.global_step,
+                        "step": self.state.global_step,
                         "loss": step_loss,
                         "grad_norm": grad_norm,
                         "learning_rate": current_lr,
@@ -348,7 +352,8 @@ class BaseTrainer:
             )
         else:
             model_to_save = self.model.module if hasattr(self.model, "module") else self.model
-            model_to_save.save_pretrained(self.args.output_dir, max_shard_size="4GB")
+            model_state_dict = strip_reward_head_from_state_dict(model_to_save.state_dict())
+            model_to_save.save_pretrained(self.args.output_dir, state_dict=model_state_dict, max_shard_size="4GB")
             self.renderer.processor.save_pretrained(self.args.output_dir, max_shard_size="4GB")
             logger.info_rank0(f"Model saved to {self.args.output_dir}")
 

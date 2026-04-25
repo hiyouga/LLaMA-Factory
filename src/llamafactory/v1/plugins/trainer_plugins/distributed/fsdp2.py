@@ -36,6 +36,7 @@ from torch.distributed.fsdp import (
 
 from ....accelerator.helper import get_current_accelerator
 from ....accelerator.interface import DistributedInterface
+from ....core.utils.reward_head import strip_reward_head_from_state_dict
 from ....utils.logging import get_logger
 from ....utils.types import HFModel, Processor
 
@@ -65,6 +66,7 @@ def save_model(model: HFModel, output_dir: str, processor: Processor) -> None:
 
     options = StateDictOptions(full_state_dict=True, cpu_offload=True)
     state_dict = get_model_state_dict(model, options=options)
+    state_dict = strip_reward_head_from_state_dict(state_dict)
 
     if DistributedInterface().get_rank() == 0:
         model_to_save = model.module if hasattr(model, "module") else model
@@ -93,6 +95,7 @@ def save_checkpoint(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: 
 
         hf_options = StateDictOptions(full_state_dict=True, cpu_offload=True)
         hf_state_dict = get_model_state_dict(model, options=hf_options)
+        hf_state_dict = strip_reward_head_from_state_dict(hf_state_dict)
 
         if DistributedInterface().get_rank() == 0:
             model_to_save = model.module if hasattr(model, "module") else model
