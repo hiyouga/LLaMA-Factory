@@ -33,7 +33,7 @@ def strip_reward_head_from_state_dict(state_dict: dict[str, torch.Tensor]) -> di
     """Remove reward-head parameters from a model state dict before save_pretrained()."""
     filtered_state_dict: dict[str, torch.Tensor] = {}
     for key, value in state_dict.items():
-        if key.startswith("reward_head.") or ".reward_head." in key:
+        if "reward_head" in key.split("."):
             continue
         filtered_state_dict[key] = value
     return filtered_state_dict
