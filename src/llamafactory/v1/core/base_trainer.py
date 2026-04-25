@@ -46,8 +46,8 @@ from ..utils.helper import compute_valid_tokens
 from ..utils.types import BatchInput, HFModel, ModelOutput, Tensor, TorchDataset
 from .utils.batching import BatchGenerator
 from .utils.checkpoint import TrainingCheckpointCoordinator
-from .utils.reward_head import strip_reward_head_from_state_dict
 from .utils.rendering import Renderer
+from .utils.reward_head import strip_reward_head_from_state_dict
 
 
 logger = logging.get_logger(__name__)

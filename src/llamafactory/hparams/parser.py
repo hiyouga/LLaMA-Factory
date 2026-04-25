@@ -467,7 +467,7 @@ def get_train_args(args: dict[str, Any] | list[str] | None = None) -> _TRAIN_CLS
         training_args.resume_from_checkpoint is None
         and training_args.do_train
         and os.path.isdir(training_args.output_dir)
-        and not getattr(training_args, "overwrite_output_dir", False) # for mca training args and transformers >= 5.0
+        and not getattr(training_args, "overwrite_output_dir", False)  # for mca training args and transformers >= 5.0
         and can_resume_from_checkpoint
     ):
         last_checkpoint = get_last_checkpoint(training_args.output_dir)

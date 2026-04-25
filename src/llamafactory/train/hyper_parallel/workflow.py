@@ -44,9 +44,7 @@ def run_sft(
     callbacks: Optional[list["TrainerCallback"]] = None,
 ):
     if not is_hyper_parallel_available():
-        raise ImportError(
-            "hyper_parallel is not installed. Please install it with `pip install hyper_parallel`."
-        )
+        raise ImportError("hyper_parallel is not installed. Please install it with `pip install hyper_parallel`.")
 
     from hyper_parallel.integration.llamafactory import (  # pylint: disable=C0415
         HyperParallelArguments,

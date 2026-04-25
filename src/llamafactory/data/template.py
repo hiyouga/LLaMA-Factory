@@ -1007,15 +1007,17 @@ register_template(
     name="gemma4",
     format_user=StringFormatter(slots=["<|turn>user\n{{content}}<turn|>\n<|turn>model\n"]),
     format_assistant=StringFormatter(slots=["{{content}}<turn|>\n"]),
-    format_system=StringFormatter(slots=["<|turn>system\n<|think|>{{content}}<turn|>\n"]), #  default thought singal contained
+    format_system=StringFormatter(
+        slots=["<|turn>system\n<|think|>{{content}}<turn|>\n"]
+    ),  #  default thought singal contained
     format_observation=StringFormatter(
         slots=["<|turn>tool\n{{content}}<turn|>\n<|turn>model\n"]
-    ), # seem not consistent with the chattemplate
+    ),  # seem not consistent with the chattemplate
     format_tools=ToolFormatter(tool_format="gemma4"),
     format_function=FunctionFormatter(slots=["<|tool>{{content}}<tool|>"], tool_format="gemma4"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<turn|>"],
-    default_system="You are a helpful assistant.", # important for thinking
+    default_system="You are a helpful assistant.",  # important for thinking
     thought_words=("<|channel>thought\n", "<channel|>"),
     replace_eos=True,
     mm_plugin=get_mm_plugin(
@@ -1031,15 +1033,15 @@ register_template(
     name="gemma4n",
     format_user=StringFormatter(slots=["<|turn>user\n{{content}}<turn|>\n<|turn>model\n"]),
     format_assistant=StringFormatter(slots=["{{content}}<turn|>\n"]),
-    format_system=StringFormatter(slots=["<|turn>system\n<|think|>{{content}}<turn|>\n"]), #  default thought singal contained
-    format_observation=StringFormatter(
-        slots=["<|turn>tool\n{{content}}<turn|>\n<|turn>model\n"]
-    ),
+    format_system=StringFormatter(
+        slots=["<|turn>system\n<|think|>{{content}}<turn|>\n"]
+    ),  #  default thought singal contained
+    format_observation=StringFormatter(slots=["<|turn>tool\n{{content}}<turn|>\n<|turn>model\n"]),
     format_tools=ToolFormatter(tool_format="gemma4"),
     format_function=FunctionFormatter(slots=["<|tool>{{content}}<tool|>"], tool_format="gemma4"),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<turn|>"],
-    default_system="You are a helpful assistant.", # important for thinking
+    default_system="You are a helpful assistant.",  # important for thinking
     thought_words=("<|channel>thought\n", "<channel|>"),
     replace_eos=True,
     mm_plugin=get_mm_plugin(
@@ -2362,4 +2364,3 @@ register_template(
     efficient_eos=True,
     template_class=Glm47ReasoningTemplate,
 )
-

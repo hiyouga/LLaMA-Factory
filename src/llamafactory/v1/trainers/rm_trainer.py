@@ -145,5 +145,4 @@ def run_rm(args: InputArgument = None):
 
 
 if __name__ == "__main__":
-
     run_rm()

@@ -26,9 +26,9 @@ import torch
 from accelerate import Accelerator
 from accelerate.utils import DeepSpeedPlugin
 
+from ....core.utils.reward_head import strip_reward_head_from_state_dict
 from ....utils.logging import get_logger
 from ....utils.types import HFModel, Processor
-from ....core.utils.reward_head import strip_reward_head_from_state_dict
 from ...model_plugins.deepspeed_utils import infer_deepspeed_mixed_precision
 
 

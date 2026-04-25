@@ -92,7 +92,8 @@ def _data_collator_wrapper(data_collator: Any):
 
 def _check_model_support(model_args: "ModelArguments"):
     from transformers import AutoConfig as HfAutoConfig
-    if os.path.exists(os.path.join(model_args.model_name_or_path, "mca_config.json")): # load from mcore ckpt
+
+    if os.path.exists(os.path.join(model_args.model_name_or_path, "mca_config.json")):  # load from mcore ckpt
         mca_config = json.load(open(os.path.join(model_args.model_name_or_path, "mca_config.json")))
         model_type = mca_config.get("hf_model_type", None)
     else:
@@ -110,7 +111,14 @@ def _check_model_support(model_args: "ModelArguments"):
 
 def _freeze_model_parameters(model: Any, finetuning_args: "FinetuningArguments"):
     """Freeze model parameters for qwen_vl series models based on finetuning arguments."""
-    if getattr(model.config, "hf_model_type", None) not in ["qwen2_vl", "qwen2_5_vl", "qwen3_vl", "qwen3_vl_moe", "qwen3_5", "qwen3_5_moe"]:
+    if getattr(model.config, "hf_model_type", None) not in [
+        "qwen2_vl",
+        "qwen2_5_vl",
+        "qwen3_vl",
+        "qwen3_vl_moe",
+        "qwen3_5",
+        "qwen3_5_moe",
+    ]:
         return
 
     params_to_freeze = []

@@ -44,15 +44,16 @@ class CompositeModel:
     language_model_keys: list[str]
     lora_conflict_keys: list[str]
 
-
     def get_projectors(self, module: "torch.nn.Module") -> list["torch.nn.Module"]:
         mm_projectors: list[torch.nn.Module] = []
         for projector_key in self.projector_keys:
             project_module = module
             for key in projector_key.split("."):
                 project_module = getattr(project_module, key, None)
-                if project_module is None: # i,e gemma4 bigger one, there is no embed_audio
-                    logger.warning_rank0(f"Projector key {projector_key} not found in module {module.__class__.__name__}.")
+                if project_module is None:  # i,e gemma4 bigger one, there is no embed_audio
+                    logger.warning_rank0(
+                        f"Projector key {projector_key} not found in module {module.__class__.__name__}."
+                    )
                     break
 
             if project_module is not None:
