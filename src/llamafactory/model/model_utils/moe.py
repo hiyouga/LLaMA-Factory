@@ -209,9 +209,6 @@ def configure_moe(config: "PretrainedConfig", model_args: "ModelArguments", is_t
     elif model_type == "jetmoe":
         setattr(config, "aux_loss_coef", model_args.moe_aux_loss_coef)
 
-    elif model_type == "hy_v3":
-        setattr(config, "router_aux_loss_coef", model_args.moe_aux_loss_coef)
-
 
 class Qwen3OmniMoeThinkerTextSparseMoeBlock(nn.Module):
     def __init__(self, config):

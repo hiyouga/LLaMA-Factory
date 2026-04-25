@@ -178,11 +178,6 @@ def patch_config(
     if getattr(config, "model_type", None) == "qwen3_omni_moe":
         patch_qwen3_omni_moe_thinker_text_sparse_moe_block()
 
-    if getattr(config, "model_type", None) == "hy_v3" and is_trainable:
-        # Hy3 uses sigmoid routing with expert bias, ensure output_router_logits is set
-        if hasattr(config, "output_router_logits"):
-            setattr(config, "output_router_logits", True)
-
     # deepspeed zero3 is not compatible with low_cpu_mem_usage
     init_kwargs["low_cpu_mem_usage"] = model_args.low_cpu_mem_usage and (not is_deepspeed_zero3_enabled())
 

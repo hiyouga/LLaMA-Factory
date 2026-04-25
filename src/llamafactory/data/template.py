@@ -824,8 +824,8 @@ register_template(
 
 register_template(
     name="hy3",
-    format_user=StringFormatter(slots=["<｜hy_User｜>{{content}}"]),
-    format_assistant=StringFormatter(slots=["<｜hy_Assistant｜><think></think>{{content}}<｜hy_eos｜>"]),
+    format_user=StringFormatter(slots=["<｜hy_User｜>{{content}}<｜hy_Assistant｜>"]),
+    format_assistant=StringFormatter(slots=["{{content}}<｜hy_eos｜>"]),
     format_system=StringFormatter(slots=["{{content}}"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
     stop_words=["<｜hy_eos｜>"],
@@ -2375,4 +2375,3 @@ register_template(
     efficient_eos=True,
     template_class=Glm47ReasoningTemplate,
 )
-
