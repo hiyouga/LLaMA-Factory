@@ -215,7 +215,7 @@ def _load_standard_training_states(
                 state_dict.update(torch.load(f, map_location="cpu", weights_only=True))
         if state_dict:
             incompatible_keys = model_to_load.load_state_dict(state_dict, strict=False)
-            missing_keys = [key for key in incompatible_keys.missing_keys if not key.startswith("reward_head.")]
+            missing_keys = [key for key in incompatible_keys.missing_keys if "reward_head" not in key.split(".")]
             if missing_keys:
                 raise RuntimeError(
                     "Unexpected missing keys when loading checkpoint model weights: "
