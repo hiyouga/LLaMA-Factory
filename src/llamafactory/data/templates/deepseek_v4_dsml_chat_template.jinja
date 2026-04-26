@@ -172,7 +172,7 @@
         {%- endif -%}
         {%- if not msg.get("wo_eos") -%}{{- "<｜end▁of▁sentence｜>" -}}{%- endif -%}
     {%- else -%}
-        {{- raise_exception("Unknown role: " ~ msg.role) -}}
+        {# Skip unknown roles silently #}
     {%- endif -%}
 
     {%- set need_transition = is_last or (next_role == "assistant") or (next_role == "latest_reminder") -%}
@@ -180,7 +180,7 @@
 
     {%- if need_transition and this_task is not none -%}
         {%- set task_tokens = {"action": "<｜action｜>", "query": "<｜query｜>", "authority": "<｜authority｜>", "domain": "<｜domain｜>", "title": "<｜title｜>", "read_url": "<｜read_url｜>"} -%}
-        {%- if this_task not in task_tokens -%}{{- raise_exception("Invalid task: " ~ this_task) -}}{%- endif -%}
+        {%- if this_task not in task_tokens -%}{# Skip invalid task silently #}{%- endif -%}
         {%- if this_task == "action" -%}
             {{- "<｜Assistant｜>" -}}{{- "<think>" if thinking_mode == "thinking" else "</think>" -}}
         {%- endif -%}

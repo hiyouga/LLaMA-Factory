@@ -317,34 +317,50 @@ def patch_model(
             except Exception:
                 pass
 
+            # Try pytorch index first, then safetensors
             index_path = os.path.join(model_args.model_name_or_path, "pytorch_model.bin.index.json")
+            if not os.path.isfile(index_path):
+                index_path = os.path.join(model_args.model_name_or_path, "model.safetensors.index.json")
+
             if os.path.isfile(index_path):
                 with open(index_path) as f:
                     index = json.load(f)
                 weight_map = index.get("weight_map", {})
                 if hasattr(model, "model") and hasattr(model.model, "layers"):
                     layers = model.model.layers
+                    # Group keys by shard to avoid repeated I/O
+                    shard_to_keys = {}
                     for layer_id in range(len(layers)):
                         key = f"model.layers.{layer_id}.self_attn.kv_b_proj.weight"
                         shard_name = weight_map.get(key)
-                        if shard_name is None:
-                            continue
+                        if shard_name:
+                            shard_to_keys.setdefault(shard_name, []).append((layer_id, key))
+
+                    for shard_name, keys in shard_to_keys.items():
                         shard_path = os.path.join(model_args.model_name_or_path, shard_name)
                         if not os.path.isfile(shard_path):
                             continue
-                        shard = torch.load(shard_path, map_location="cpu", weights_only=True)
-                        w = shard.get(key)
-                        if w is None:
-                            continue
-                        target = getattr(layers[layer_id].self_attn, "kv_b_proj", None)
-                        if target is None or not hasattr(target, "weight"):
-                            continue
-                        tw = target.weight
-                        if w.ndim != 2 or tw.ndim != 2:
-                            continue
-                        sw0 = min(w.size(0), tw.size(0))
-                        sw1 = min(w.size(1), tw.size(1))
-                        tw.data[:sw0, :sw1].copy_(w[:sw0, :sw1].to(device=tw.device, dtype=tw.dtype))
+
+                        if shard_path.endswith(".safetensors"):
+                            from safetensors.torch import load_file
+
+                            shard = load_file(shard_path, device="cpu")
+                        else:
+                            shard = torch.load(shard_path, map_location="cpu", weights_only=True)
+
+                        for layer_id, key in keys:
+                            w = shard.get(key)
+                            target = getattr(layers[layer_id].self_attn, "kv_b_proj", None)
+                            if w is None or target is None or not hasattr(target, "weight"):
+                                continue
+                            tw = target.weight
+                            if w.ndim != 2 or tw.ndim != 2:
+                                continue
+                            sw0, sw1 = min(w.size(0), tw.size(0)), min(w.size(1), tw.size(1))
+                            with torch.no_grad():
+                                tw[:sw0, :sw1].copy_(w[:sw0, :sw1].to(device=tw.device, dtype=tw.dtype))
+
+                        del shard
 
     if is_trainable:
         if getattr(model.config, "model_type", None) == "gemma3n":
