@@ -217,7 +217,7 @@ def render_gemma4_messages(
     )
 
 
-@RenderingPlugin("gemma4").register("parse_message")
+@RenderingPlugin("gemma4").register("parse_messages")
 def parse_gemma4_message(generated_text: str) -> Message:
     """Parse a message in the Gemma4 template format.
 
@@ -231,13 +231,16 @@ def parse_gemma4_message(generated_text: str) -> Message:
     content: list[dict] = []
 
     # Extract and remove the reasoning block (always at the start, if present).
-    think_match = think_pattern.match(generated_text.lstrip())
-    remaining = generated_text
+    # Match and slice on the same lstripped string — using match.end() against
+    # the original would mis-offset by len(leading whitespace).
+    stripped = generated_text.lstrip()
+    think_match = think_pattern.match(stripped)
+    remaining = stripped
     if think_match:
         reasoning = think_match.group(1).strip()
         if reasoning:
             content.append({"type": "reasoning", "value": reasoning})
-        remaining = generated_text[think_match.end():]
+        remaining = stripped[think_match.end():]
 
     # Parse the remaining text for tool calls and plain text.
     last_end = 0
