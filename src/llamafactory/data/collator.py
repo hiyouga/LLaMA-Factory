@@ -479,12 +479,8 @@ class SFTDataCollatorWith4DAttentionMask(MultiModalDataCollatorForSeq2Seq):
     def __post_init__(self):
         super().__post_init__()
         if self.neat_packing and self.attn_implementation == "flash_attention_2":
-            if self.model is not None and getattr(self.model.config, "model_type", None) in [
-                "qwen3_5",
-                "qwen3_5_moe",
-                "gpt_oss",
-            ]:
-                raise ValueError("Neat packing is not supported for qwen3_5, qwen3_5_moe, gpt_oss models for now.")
+            if self.model is not None and getattr(self.model.config, "model_type", None) in ["gemma4", "gpt_oss"]:
+                raise ValueError("Neat packing is not supported for gemma4, gpt_oss models for now.")
 
     @staticmethod
     def _unpad_packed_features(features: dict[str, Any]) -> None:

@@ -63,7 +63,8 @@ class SupervisedDatasetProcessor(DatasetProcessor):
         input_ids, labels = self.template.mm_plugin.process_token_ids(
             [], [], images, videos, audios, self.tokenizer, self.processor
         )
-        encoded_pairs = self.template.encode_multiturn(self.tokenizer, messages, system, tools)
+        discarding_history_cot = self.data_args.mask_history and not self.template.preserve_thinking
+        encoded_pairs = self.template.encode_multiturn(self.tokenizer, messages, system, tools, discarding_history_cot)
         total_length = len(input_ids) + (1 if self.template.efficient_eos else 0)
         if self.data_args.mask_history:
             encoded_pairs = encoded_pairs[::-1]  # high priority for last turns
