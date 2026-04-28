@@ -29,7 +29,6 @@ micro_batch_size: 1
 global_batch_size: 4
 cutoff_len: 2048
 learning_rate: 2.0e-5
-bf16: false
 max_steps: 10
 
 ### sample

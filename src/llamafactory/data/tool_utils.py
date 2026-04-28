@@ -209,6 +209,7 @@ class DefaultToolUtils(ToolUtils):
 
         return results
 
+
 class Gemma4ToolUtils(ToolUtils):
     r"""Gemma-4 tool using template."""
 
@@ -292,7 +293,7 @@ class Gemma4ToolUtils(ToolUtils):
                 flags=re.DOTALL,
             )
             # Quote unquoted object keys so the payload can be parsed by json.loads.
-            normalized = re.sub(r'(^|[{\s,])([A-Za-z_][A-Za-z0-9_]*)(\s*:)', r'\1"\2"\3', normalized)
+            normalized = re.sub(r"(^|[{\s,])([A-Za-z_][A-Za-z0-9_]*)(\s*:)", r'\1"\2"\3', normalized)
             try:
                 return json.loads(normalized)
             except json.JSONDecodeError:
@@ -367,6 +368,7 @@ class Gemma4ToolUtils(ToolUtils):
             function_texts.append(call_text)
 
         return "".join(function_texts)
+
 
 class GLM4ToolUtils(ToolUtils):
     r"""GLM-4 tool using template."""
@@ -758,7 +760,7 @@ class SeedToolUtils(ToolUtils):
 
             results.append(FunctionCall(func_name.strip(), json.dumps(args_dict, ensure_ascii=False)))
 
-        return results
+        return results if results else content
 
 
 class LingToolUtils(QwenToolUtils):

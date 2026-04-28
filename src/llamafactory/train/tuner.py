@@ -78,9 +78,7 @@ def _training_function(config: dict[str, Any]) -> None:
 
     if finetuning_args.stage == "sft" and finetuning_args.use_hyper_parallel:
         if not is_hyper_parallel_available():
-            raise ImportError(
-                "hyper_parallel is not installed. Please install it with `pip install hyper_parallel`."
-            )
+            raise ImportError("hyper_parallel is not installed. Please install it with `pip install hyper_parallel`.")
         from .hyper_parallel import run_sft as run_sft_hp
 
         run_sft_hp(model_args, data_args, training_args, finetuning_args, generating_args, callbacks)
@@ -182,7 +180,15 @@ def export_model(args: Optional[dict[str, Any]] = None) -> None:
     if not is_transformers_version_greater_than("5.0.0"):
         save_kwargs["safe_serialization"] = not model_args.export_legacy_format
 
-    model.save_pretrained(**save_kwargs)
+    try:
+        model.save_pretrained(**save_kwargs)
+    except NotImplementedError as err:
+        raise RuntimeError(
+            "Failed to export model: weight conversion reversal is not supported for this model architecture "
+            "(NotImplementedError in transformers.core_model_loading.reverse_op). "
+            "This is a known issue with transformers>=5.0 for certain model types (e.g. Mistral/Ministral). "
+            "Workarounds: (1) use transformers<5.0, or (2) report the issue to the transformers repository."
+        ) from err
 
     if model_args.export_hub_model_id is not None:
         # Prepare push arguments (safe_serialization removed in transformers v5.0.0)

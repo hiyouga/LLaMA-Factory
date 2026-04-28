@@ -27,7 +27,8 @@ if TYPE_CHECKING:
 
 logger = logging.get_logger(__name__)
 
-MAX_SU_SEQ_IDX = 2**32 # maximum sub-sequence index
+MAX_SU_SEQ_IDX = 2**32  # maximum sub-sequence index
+
 
 @dataclass
 class PackingParams:
@@ -45,6 +46,7 @@ class PackingParams:
     audio_subseq_ids: list[int]
     right_padding_length: int
 
+
 @dataclass
 class SupervisedDatasetProcessor(DatasetProcessor):
     def _encode_data_example(
@@ -61,7 +63,8 @@ class SupervisedDatasetProcessor(DatasetProcessor):
         input_ids, labels = self.template.mm_plugin.process_token_ids(
             [], [], images, videos, audios, self.tokenizer, self.processor
         )
-        encoded_pairs = self.template.encode_multiturn(self.tokenizer, messages, system, tools)
+        discarding_history_cot = self.data_args.mask_history and not self.template.preserve_thinking
+        encoded_pairs = self.template.encode_multiturn(self.tokenizer, messages, system, tools, discarding_history_cot)
         total_length = len(input_ids) + (1 if self.template.efficient_eos else 0)
         if self.data_args.mask_history:
             encoded_pairs = encoded_pairs[::-1]  # high priority for last turns
@@ -232,7 +235,7 @@ class PackedSupervisedDatasetProcessor(SupervisedDatasetProcessor):
             if requires_packing_params:
                 packing_params = PackingParams(
                     sequence_boundaries=sequence_boundaries,
-                    image_subseq_ids=image_subseq_ids or [MAX_SU_SEQ_IDX], # avoid dataset concat error
+                    image_subseq_ids=image_subseq_ids or [MAX_SU_SEQ_IDX],  # avoid dataset concat error
                     video_subseq_ids=video_subseq_ids or [MAX_SU_SEQ_IDX],
                     audio_subseq_ids=audio_subseq_ids or [MAX_SU_SEQ_IDX],
                     right_padding_length=pad_length,

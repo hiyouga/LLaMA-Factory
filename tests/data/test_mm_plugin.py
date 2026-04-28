@@ -219,14 +219,19 @@ def test_gemma4_plugin():
     check_inputs = {"plugin": gemma4_plugin, **tokenizer_module}
     # validate
     mm_inputs = gemma4_plugin._get_mm_inputs(IMAGES, NO_VIDEOS, NO_AUDIOS, processor)
-    num_image_soft_tokens = 256 # when we use default max_soft_tokens=280
+    num_image_soft_tokens = 256  # when we use default max_soft_tokens=280
     image_token = getattr(processor, "image_token")
     boi_token = getattr(processor, "boi_token")
     eoi_token = getattr(processor, "eoi_token")
 
-    expected_mm_type_ids = [[int(token_id == getattr(processor, "image_token_id")) for token_id in token_ids] for token_ids in BATCH_IDS]
+    expected_mm_type_ids = [
+        [int(token_id == getattr(processor, "image_token_id")) for token_id in token_ids] for token_ids in BATCH_IDS
+    ]
     check_inputs["expected_mm_messages"] = [
-        {"role": "user", "content": f"{boi_token}{image_token * num_image_soft_tokens}{eoi_token}What is in this image?"},
+        {
+            "role": "user",
+            "content": f"{boi_token}{image_token * num_image_soft_tokens}{eoi_token}What is in this image?",
+        },
         {"role": "assistant", "content": "A cat."},
     ]
     for key in ("num_soft_tokens_per_image",):

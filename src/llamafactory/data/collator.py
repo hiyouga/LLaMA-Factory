@@ -157,9 +157,7 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
         else:
             self.get_rope_func = None
 
-    def _compute_rope_position_ids(
-        self, features: dict[str, "torch.Tensor"], mm_inputs: dict[str, Any]
-    ) -> None:
+    def _compute_rope_position_ids(self, features: dict[str, "torch.Tensor"], mm_inputs: dict[str, Any]) -> None:
         r"""Compute position_ids and rope_deltas via get_rope_func for VLMs."""
         rope_index_kwargs = {
             "input_ids": features["input_ids"],
@@ -201,9 +199,7 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
                 rope_index_kwargs["audio_seqlens"] = audio_feature_lengths  # prepare for input
 
             features["position_ids"], rope_deltas = self.get_rope_func(**rope_index_kwargs)
-            features["rope_deltas"] = rope_deltas - (1 - rope_index_kwargs["attention_mask"]).sum(
-                dim=-1
-            ).unsqueeze(-1)
+            features["rope_deltas"] = rope_deltas - (1 - rope_index_kwargs["attention_mask"]).sum(dim=-1).unsqueeze(-1)
         else:  # for qwen vl
             features["position_ids"], features["rope_deltas"] = self.get_rope_func(**rope_index_kwargs)
 
@@ -416,6 +412,18 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
 
         # Keep raw mm_token_type_ids aside and align them after super().__call__()
         mm_token_type_ids = mm_inputs.pop("mm_token_type_ids", None)
+        if "mm_token_type_ids" in mm_inputs:  # need tensor-like for gemma4
+            mm_token_type_ids = mm_inputs.pop("mm_token_type_ids")
+            max_len = max(len(ids) for ids in mm_token_type_ids)
+            padded = []
+            for ids in mm_token_type_ids:
+                pad_len = max_len - len(ids)
+                if self.tokenizer.padding_side == "right":
+                    padded.append(ids + [0] * pad_len)
+                else:
+                    padded.append([0] * pad_len + ids)
+
+            mm_inputs["mm_token_type_ids"] = torch.tensor(padded, dtype=torch.long)
 
         features: dict[str, torch.Tensor] = super().__call__(features)
 
@@ -459,6 +467,8 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             features["token_type_ids"] = torch.zeros_like(features["input_ids"])
 
         if self.get_rope_func is not None:
+            # for mmrope situation, we should calculate position_ids and rope_deltas per sample.
+            # When neat_packing is on, each sample has packing_params; None means no packing for that sample.
             boundaries_list = [p.get("sequence_boundaries") if p is not None else None for p in packing_params_list]
             has_packing = any(b is not None and len(b) > 2 for b in boundaries_list)
             if has_dummy_image and has_packing:
@@ -525,6 +535,8 @@ class SFTDataCollatorWith4DAttentionMask(MultiModalDataCollatorForSeq2Seq):
                 "gpt_oss",
             ]:
                 raise ValueError("Neat packing is not supported for qwen3_5, qwen3_5_moe, gpt_oss models for now.")
+            if self.model is not None and getattr(self.model.config, "model_type", None) in ["gemma4", "gpt_oss"]:
+                raise ValueError("Neat packing is not supported for gemma4, gpt_oss models for now.")
 
     @staticmethod
     def _unpad_packed_features(features: dict[str, Any]) -> None:

@@ -39,40 +39,80 @@ except ImportError:
     pass
 
 
-def _apply_rotary_pos_emb(q, k, cos, sin, position_ids=None, unsqueeze_dim=1):
-    """Applies Rotary Position Embedding to the query and key tensors using NPU optimization.
+def _apply_npu_rotary_emb(q, k, cos, sin):
+    """Apply NPU-accelerated rotary embedding with automatic Partial RoPE detection.
+
+    This function automatically detects whether to use Partial RoPE or Full RoPE
+    based on the dimension ratio between ``cos/sin`` and ``q/k`` tensors, ensuring
+    compatibility with future model versions without hardcoding.
 
     Args:
         q (Tensor): Query tensor.
         k (Tensor): Key tensor.
-        cos (Tensor): Cosine part of embedding.
-        sin (Tensor): Sine part of embedding.
-        position_ids (Tensor, optional): Position IDs. Default: ``None``.
-        unsqueeze_dim (int): Dimension to unsqueeze cos and sin. Default: 1.
+        cos (Tensor): Cosine part of rotary embedding (already unsqueezed).
+        sin (Tensor): Sine part of rotary embedding (already unsqueezed).
 
     Returns:
-        tuple: (q_embed, k_embed) The embedded query and key tensors.
+        tuple[Tensor, Tensor]: The embedded query and key tensors ``(q_embed, k_embed)``.
     """
-    cos = cos.unsqueeze(unsqueeze_dim)
-    sin = sin.unsqueeze(unsqueeze_dim)
-    q_embed = torch_npu.npu_rotary_mul(q, cos, sin)
-    k_embed = torch_npu.npu_rotary_mul(k, cos, sin)
+    rotary_dim = cos.shape[-1]
+    query_dim = q.shape[-1]
+
+    if rotary_dim < query_dim:
+        q_rot, q_pass = q[..., :rotary_dim], q[..., rotary_dim:]
+        k_rot, k_pass = k[..., :rotary_dim], k[..., rotary_dim:]
+
+        q_embed = torch_npu.npu_rotary_mul(q_rot, cos, sin).to(q.dtype)
+        k_embed = torch_npu.npu_rotary_mul(k_rot, cos, sin).to(k.dtype)
+
+        q_embed = torch.cat([q_embed, q_pass], dim=-1)
+        k_embed = torch.cat([k_embed, k_pass], dim=-1)
+    else:
+        q_embed = torch_npu.npu_rotary_mul(q, cos, sin).to(q.dtype)
+        k_embed = torch_npu.npu_rotary_mul(k, cos, sin).to(k.dtype)
+
     return q_embed, k_embed
 
 
-def _apply_multimodal_rotary_pos_emb_qwen25_vl(q, k, cos, sin, mrope_section, unsqueeze_dim=1):
-    """Applies Rotary Position Embedding with multimodal sections (Qwen2-VL) on NPU.
+def _apply_rotary_pos_emb(q, k, cos, sin, position_ids=None, unsqueeze_dim=1):
+    """Apply Rotary Position Embedding to query and key tensors using NPU optimization.
+
+    This function automatically supports both Full RoPE and Partial RoPE based on
+    the dimension ratio between ``cos/sin`` and ``q/k`` tensors.
 
     Args:
         q (Tensor): Query tensor.
         k (Tensor): Key tensor.
         cos (Tensor): Cosine part of embedding.
         sin (Tensor): Sine part of embedding.
-        mrope_section (Tensor): Multimodal RoPE section.
-        unsqueeze_dim (int): Dimension to unsqueeze cos and sin. Default: 1.
+        position_ids (Tensor, optional): Position IDs. Defaults to ``None``.
+        unsqueeze_dim (int): Dimension to unsqueeze cos and sin. Defaults to 1.
 
     Returns:
-        tuple: (q_embed, k_embed) The embedded query and key tensors.
+        tuple[Tensor, Tensor]: The embedded query and key tensors ``(q_embed, k_embed)``.
+    """
+    cos = cos.unsqueeze(unsqueeze_dim)
+    sin = sin.unsqueeze(unsqueeze_dim)
+
+    return _apply_npu_rotary_emb(q, k, cos, sin)
+
+
+def _apply_multimodal_rotary_pos_emb_qwen25_vl(q, k, cos, sin, mrope_section, unsqueeze_dim=1):
+    """Apply Rotary Position Embedding with multimodal sections (Qwen2-VL) on NPU.
+
+    This function supports Partial RoPE for multimodal inputs with automatic dimension
+    detection, ensuring compatibility with future model versions.
+
+    Args:
+        q (Tensor): Query tensor.
+        k (Tensor): Key tensor.
+        cos (Tensor): Cosine part of embedding.
+        sin (Tensor): Sine part of embedding.
+        mrope_section (list[int]): Multimodal RoPE section sizes.
+        unsqueeze_dim (int): Dimension to unsqueeze cos and sin. Defaults to 1.
+
+    Returns:
+        tuple[Tensor, Tensor]: The embedded query and key tensors ``(q_embed, k_embed)``.
     """
     mrope_section = mrope_section * 2
     cos = torch.cat([m[i % 3] for i, m in enumerate(cos.split(mrope_section, dim=-1))], dim=-1).unsqueeze(
@@ -82,9 +122,7 @@ def _apply_multimodal_rotary_pos_emb_qwen25_vl(q, k, cos, sin, mrope_section, un
         unsqueeze_dim
     )
 
-    q_embed = torch_npu.npu_rotary_mul(q, cos, sin)
-    k_embed = torch_npu.npu_rotary_mul(k, cos, sin)
-    return q_embed, k_embed
+    return _apply_npu_rotary_emb(q, k, cos, sin)
 
 
 @register_kernel
@@ -96,12 +134,12 @@ class NpuRoPEKernel(BaseKernel):
 
     @classmethod
     def apply(cls, **kwargs) -> "HFModel":
-        """Apply RoPE acceleration by monkey-patching `apply_rotary_pos_emb`.
+        """Apply RoPE acceleration by monkey-patching ``apply_rotary_pos_emb``.
 
-        This function iterates through the model's modules to find attention layers,
-        identifies the module where they are defined, and replaces the original
-        `apply_rotary_pos_emb` function in that module's namespace with the
-        NPU-accelerated version from this file.
+        Iterates through the model's modules to find attention layers, identifies
+        the module where they are defined, and replaces the original
+        ``apply_rotary_pos_emb`` function in that module's namespace with the
+        NPU-accelerated version.
 
         Args:
             **kwargs: Keyword arguments containing the model.
@@ -110,7 +148,7 @@ class NpuRoPEKernel(BaseKernel):
             HFModel: The model with patched RoPE functions.
 
         Raises:
-            RuntimeError: If dependencies are not met.
+            RuntimeError: If ``torch_npu`` is not available.
             ValueError: If the model is not provided.
         """
         if not cls.check_deps():

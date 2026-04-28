@@ -45,6 +45,7 @@ from ..utils.callbacks import (
 from ..utils.helper import compute_valid_tokens
 from ..utils.types import BatchInput, HFModel, ModelOutput, Tensor, TorchDataset
 from .utils.batching import BatchGenerator
+from .utils.checkpoint import TrainingCheckpointCoordinator
 from .utils.rendering import Renderer
 
 
@@ -81,6 +82,10 @@ class BaseTrainer:
         else:
             self.num_training_steps = self.args.num_train_epochs * len(self.train_batch_generator)
 
+        if self.args.save_epochs is not None:
+            steps_per_epoch = len(self.train_batch_generator)
+            self.args.save_steps = max(1, int(steps_per_epoch * self.args.save_epochs))
+
         if self.args.enable_activation_checkpointing:
             self.model.gradient_checkpointing_enable({"use_reentrant": False})
 
@@ -107,13 +112,28 @@ class BaseTrainer:
             self._init_optimizer()
             self._init_lr_scheduler()
 
+        self._resume_epoch = 0
+        self._checkpoint = TrainingCheckpointCoordinator(self)
+        if self.args.resume_from_checkpoint:
+            self._checkpoint.resume(self.args.resume_from_checkpoint)
+
+        if self.args.save_ckpt_as_hf:
+            logger.warning_rank0(
+                "save_ckpt_as_hf is enabled. Intermediate checkpoints will be saved in Hugging Face format. "
+                "Note that this will significantly increase memory consumption during saving."
+            )
+
         # Callbacks
         self.callback_handler = CallbackHandler([LoggingCallback()], trainer=self)
         for cb in callbacks or []:
             self.callback_handler.add_callback(cb)
 
         # Callbacks: TrainerState tracks progress across the full run.
-        self.state = TrainerState(num_training_steps=self.num_training_steps)
+        self.state = TrainerState(
+            num_training_steps=self.num_training_steps,
+            global_step=self.global_step,
+            epoch=self._resume_epoch,
+        )
 
         if self.args.dist_config is not None and self.args.dist_config.get("cp_size", 1) > 1:
             # qwen3.5 is not supported because of the different attention implementation, which will be supported in the future.
@@ -158,6 +178,7 @@ class BaseTrainer:
             self.model = DistributedPlugin(self.args.dist_config.name)(
                 self.model,
                 self.args.dist_config,
+                bf16=self.args.bf16,
             )
 
     def _init_optimizer(self) -> None:
@@ -206,7 +227,9 @@ class BaseTrainer:
         """Train the model."""
         self.model.train()
         self.callback_handler.on_train_begin(self.args, self.state)
-        for epoch in range(self.args.num_train_epochs):
+
+        epoch = self._resume_epoch
+        while self.global_step < self.num_training_steps:
             self.state.epoch = epoch
             self.train_batch_generator.set_epoch(epoch)
             self.callback_handler.on_epoch_begin(self.args, self.state)
@@ -300,6 +323,9 @@ class BaseTrainer:
                     }
                     self.callback_handler.on_log(self.args, self.state, logs)
 
+                if self.args.save_steps and self.global_step % self.args.save_steps == 0:
+                    self._checkpoint.save(epoch)
+
                 # Check if max_steps is reached
                 if self.global_step >= self.num_training_steps:
                     logger.info_rank0(f"Reached max_steps ({self.num_training_steps}), stopping training.")
@@ -308,6 +334,7 @@ class BaseTrainer:
                     return
 
             self.callback_handler.on_epoch_end(self.args, self.state)
+            epoch += 1
 
         self.callback_handler.on_train_end(self.args, self.state)
 

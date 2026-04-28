@@ -238,6 +238,7 @@ def _get_expected_position_ids(
     image_pad_id: int,
     video_pad_id: int | None = None,
 ) -> torch.Tensor:
+def _get_expected_position_ids(packing_params, get_rope_func, input_ids, attention_mask) -> torch.Tensor:
     bound_list = packing_params["sequence_boundaries"]
     input_ids_slices = [input_ids[bound_list[i] : bound_list[i + 1]] for i in range(len(bound_list) - 1)]
     attention_mask_slices = [attention_mask[bound_list[i] : bound_list[i + 1]] for i in range(len(bound_list) - 1)]
