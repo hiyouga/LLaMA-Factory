@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
+import os
 from types import MethodType
 from typing import TYPE_CHECKING, Any
 
@@ -47,6 +49,22 @@ if is_transformers_version_greater_than("4.57.0"):
 
 
 logger = logging.get_logger(__name__)
+
+try:
+    from transformers.models.auto.configuration_auto import CONFIG_MAPPING
+
+    try:
+        from transformers.models.deepseek_v4.configuration_deepseek_v4 import DeepseekV4Config
+
+        if "deepseek_v4" not in CONFIG_MAPPING:
+            CONFIG_MAPPING.register("deepseek_v4", DeepseekV4Config)
+    except Exception:
+        from transformers.models.deepseek_v3.configuration_deepseek_v3 import DeepseekV3Config
+
+        if "deepseek_v4" not in CONFIG_MAPPING:
+            CONFIG_MAPPING.register("deepseek_v4", DeepseekV3Config)
+except Exception:
+    pass
 
 
 def patch_qwen3_omni_moe_thinker_text_sparse_moe_block():
@@ -361,6 +379,35 @@ def patch_config(
     if getattr(config, "model_type", None) == "qwen3_omni_moe":
         patch_qwen3_omni_moe_thinker_text_sparse_moe_block()
 
+    if isinstance(architectures, list) and "DeepseekV4ForCausalLM" in architectures:
+        qk_rope = getattr(config, "qk_rope_head_dim", None)
+        head_dim = getattr(config, "head_dim", None)
+        qk_head = getattr(config, "qk_head_dim", None)
+        qk_nope = getattr(config, "qk_nope_head_dim", None)
+        target_nope = None
+
+        if head_dim is not None and qk_rope is not None:
+            target_nope = int(head_dim) - int(qk_rope)
+        elif qk_head is not None and qk_rope is not None:
+            target_nope = int(qk_head) - int(qk_rope)
+
+        if target_nope is not None and qk_nope is not None and int(qk_nope) != target_nope:
+            setattr(config, "qk_nope_head_dim", target_nope)
+        elif target_nope is not None and qk_nope is None:
+            setattr(config, "qk_nope_head_dim", target_nope)
+
+        if getattr(config, "partial_rotary_factor", None) is None and head_dim and qk_rope:
+            setattr(config, "partial_rotary_factor", float(qk_rope) / float(head_dim))
+
+        has_deepseek_v4 = True
+        try:
+            import transformers.models.deepseek_v4  # noqa: F401
+        except Exception:
+            has_deepseek_v4 = False
+
+        if not has_deepseek_v4:
+            init_kwargs.setdefault("ignore_mismatched_sizes", True)
+
     # deepspeed zero3 is not compatible with low_cpu_mem_usage
     init_kwargs["low_cpu_mem_usage"] = model_args.low_cpu_mem_usage and (not is_deepspeed_zero3_enabled())
 
@@ -403,6 +450,100 @@ def patch_model(
             new_special_tokens_config=getattr(model_args, "_special_token_descriptions", None),
             init_special_tokens=model_args.init_special_tokens,
         )
+
+    architectures = getattr(model.config, "architectures", None)
+    if isinstance(architectures, list) and "DeepseekV4ForCausalLM" in architectures:
+        has_deepseek_v4 = True
+        try:
+            import transformers.models.deepseek_v4  # noqa: F401
+        except Exception:
+            has_deepseek_v4 = False
+
+        if has_deepseek_v4:
+            try:
+                import torch.nn.functional as F
+                from torch import nn
+                from transformers.activations import ACT2FN
+
+                if "sqrtsoftplus" not in ACT2FN:
+
+                    class SqrtSoftplusActivation(nn.Module):
+                        def forward(self, input):
+                            return F.softplus(input).sqrt()
+
+                    ACT2FN["sqrtsoftplus"] = SqrtSoftplusActivation
+            except Exception:
+                pass
+        else:
+            try:
+                from transformers.models.deepseek_v3 import modeling_deepseek_v3 as dsv3
+
+                if not hasattr(dsv3, "_llamafactory_dsv4_rope_patch"):
+                    orig_interleave = dsv3.apply_rotary_pos_emb_interleave
+                    orig_plain = dsv3.apply_rotary_pos_emb
+
+                    def patched_interleave(q, k, cos, sin, position_ids=None):
+                        if cos.size(-1) != q.size(-1):
+                            cos = cos[..., : q.size(-1)]
+                            sin = sin[..., : q.size(-1)]
+                        return orig_interleave(q, k, cos, sin, position_ids)
+
+                    def patched_plain(q, k, cos, sin, position_ids=None):
+                        if cos.size(-1) != q.size(-1):
+                            cos = cos[..., : q.size(-1)]
+                            sin = sin[..., : q.size(-1)]
+                        return orig_plain(q, k, cos, sin, position_ids)
+
+                    dsv3.apply_rotary_pos_emb_interleave = patched_interleave
+                    dsv3.apply_rotary_pos_emb = patched_plain
+                    dsv3._llamafactory_dsv4_rope_patch = True
+            except Exception:
+                pass
+
+            # Try pytorch index first, then safetensors
+            index_path = os.path.join(model_args.model_name_or_path, "pytorch_model.bin.index.json")
+            if not os.path.isfile(index_path):
+                index_path = os.path.join(model_args.model_name_or_path, "model.safetensors.index.json")
+
+            if os.path.isfile(index_path):
+                with open(index_path) as f:
+                    index = json.load(f)
+                weight_map = index.get("weight_map", {})
+                if hasattr(model, "model") and hasattr(model.model, "layers"):
+                    layers = model.model.layers
+                    # Group keys by shard to avoid repeated I/O
+                    shard_to_keys = {}
+                    for layer_id in range(len(layers)):
+                        key = f"model.layers.{layer_id}.self_attn.kv_b_proj.weight"
+                        shard_name = weight_map.get(key)
+                        if shard_name:
+                            shard_to_keys.setdefault(shard_name, []).append((layer_id, key))
+
+                    for shard_name, keys in shard_to_keys.items():
+                        shard_path = os.path.join(model_args.model_name_or_path, shard_name)
+                        if not os.path.isfile(shard_path):
+                            continue
+
+                        if shard_path.endswith(".safetensors"):
+                            from safetensors.torch import load_file
+
+                            shard = load_file(shard_path, device="cpu")
+                        else:
+                            shard = torch.load(shard_path, map_location="cpu", weights_only=True)
+
+                        for layer_id, key in keys:
+                            w = shard.get(key)
+                            target = getattr(layers[layer_id].self_attn, "kv_b_proj", None)
+                            if w is None or target is None or not hasattr(target, "weight"):
+                                continue
+                            tw = target.weight
+                            if w.ndim != 2 or tw.ndim != 2:
+                                continue
+                            sw0, sw1 = min(w.size(0), tw.size(0)), min(w.size(1), tw.size(1))
+                            with torch.no_grad():
+                                tw[:sw0, :sw1].copy_(w[:sw0, :sw1].to(device=tw.device, dtype=tw.dtype))
+
+                        del shard
 
     if is_trainable:
         if getattr(model.config, "model_type", None) == "gemma3n":

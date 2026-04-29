@@ -40,12 +40,22 @@ def _set_z3_leaf_modules(model: "PreTrainedModel", leaf_modules: list[Union["nn.
     set_z3_leaf_modules(model, leaf_modules)
 
 
+def _has_deepseek_v4_sparse_moe_block() -> bool:
+    try:
+        from transformers.models.deepseek_v4 import modeling_deepseek_v4
+
+        return hasattr(modeling_deepseek_v4, "DeepseekV4SparseMoeBlock")
+    except Exception:
+        return False
+
+
 def add_z3_leaf_module(model: "PreTrainedModel") -> None:
     r"""Set module as a leaf module to skip partitioning in deepspeed zero3."""
     if not is_deepspeed_zero3_enabled():
         return
 
     model_type = getattr(model.config, "model_type", None)
+    architectures = getattr(model.config, "architectures", None)
     text_config = getattr(model.config, "text_config", None)
     text_model_type = getattr(text_config, "model_type", None)
 
@@ -59,8 +69,15 @@ def add_z3_leaf_module(model: "PreTrainedModel") -> None:
         _set_z3_leaf_modules(model, ["DeepseekV2MoE"])
 
     if model_type == "deepseek_v3" or model_type == "kimi_vl":
-        # deepseek v3 and kimi vl use custom code
         _set_z3_leaf_modules(model, ["DeepseekV3MoE"])
+
+    if model_type == "deepseek_v4" or (isinstance(architectures, list) and "DeepseekV4ForCausalLM" in architectures):
+        if _has_deepseek_v4_sparse_moe_block():
+            from transformers.models.deepseek_v4.modeling_deepseek_v4 import DeepseekV4SparseMoeBlock
+
+            _set_z3_leaf_modules(model, [DeepseekV4SparseMoeBlock])
+        else:
+            _set_z3_leaf_modules(model, ["DeepseekV3MoE"])
 
     if model_type == "ernie4_5_moe":
         from transformers.models.ernie4_5_moe.modeling_ernie4_5_moe import Ernie4_5_MoeSparseMoeBlock

@@ -36,6 +36,10 @@ CHOICES = ["A", "B", "C", "D"]
 
 DATA_CONFIG = "dataset_info.json"
 
+DEEPSEEK_V4_HF_COLLECTION = "https://huggingface.co/collections/deepseek-ai/deepseek-v4"
+
+DEEPSEEK_V4_MODELSCOPE_COLLECTION = "https://www.modelscope.cn/collections/deepseek-ai/DeepSeek-V4"
+
 DEFAULT_TEMPLATE = defaultdict(str)
 
 FILEEXT2TYPE = {
@@ -492,6 +496,29 @@ register_model_group(
         },
     },
     template="deepseek3",
+)
+
+
+register_model_group(
+    models={
+        "DeepSeek-V4-Flash-Base": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V4-Flash-Base",
+            DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V4-Flash-Base",
+        },
+        "DeepSeek-V4-Flash-Chat": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V4-Flash",
+            DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V4-Flash",
+        },
+        "DeepSeek-V4-Pro-Base": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V4-Pro-Base",
+            DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V4-Pro-Base",
+        },
+        "DeepSeek-V4-Pro-Chat": {
+            DownloadSource.DEFAULT: "deepseek-ai/DeepSeek-V4-Pro",
+            DownloadSource.MODELSCOPE: "deepseek-ai/DeepSeek-V4-Pro",
+        },
+    },
+    template="deepseek4",
 )
 
 

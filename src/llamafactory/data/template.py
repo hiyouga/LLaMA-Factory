@@ -15,6 +15,7 @@
 import re
 from copy import deepcopy
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Union
 
 from typing_extensions import override
@@ -35,6 +36,15 @@ if TYPE_CHECKING:
 
 
 logger = logging.get_logger(__name__)
+
+_TEMPLATE_DIR = Path(__file__).with_name("templates")
+
+
+def _load_template_resource(file_name: str) -> str:
+    return (_TEMPLATE_DIR / file_name).read_text(encoding="utf-8")
+
+
+DEEPSEEK_V4_DSML_CHAT_TEMPLATE = _load_template_resource("deepseek_v4_dsml_chat_template.jinja")
 
 
 @dataclass
@@ -331,6 +341,45 @@ class Template:
 
         modelfile += "PARAMETER num_ctx 4096\n"
         return modelfile
+
+
+@dataclass
+class Deepseek4Template(Template):
+    thinking_mode: str = "thinking"
+    drop_thinking: bool = True
+    reasoning_effort: Optional[str] = None
+
+    @override
+    def _get_jinja_template(self, tokenizer: "PreTrainedTokenizer") -> str:
+        reasoning_effort = "none" if self.reasoning_effort is None else f"\"{self.reasoning_effort}\""
+        drop_thinking = "true" if self.drop_thinking else "false"
+        header = (
+            f'{{%- set thinking_mode = "{self.thinking_mode}" -%}}'
+            f'{{%- set drop_thinking = {drop_thinking} -%}}'
+            f"{{%- set reasoning_effort = {reasoning_effort} -%}}\n"
+        )
+        return header + DEEPSEEK_V4_DSML_CHAT_TEMPLATE
+
+
+@dataclass
+class Deepseek4NoThinkTemplate(Deepseek4Template):
+    thinking_mode: str = "chat"
+    drop_thinking: bool = True
+    reasoning_effort: Optional[str] = None
+
+
+@dataclass
+class Deepseek4ThinkHighTemplate(Deepseek4Template):
+    thinking_mode: str = "thinking"
+    drop_thinking: bool = True
+    reasoning_effort: Optional[str] = "high"
+
+
+@dataclass
+class Deepseek4ThinkMaxTemplate(Deepseek4Template):
+    thinking_mode: str = "thinking"
+    drop_thinking: bool = False
+    reasoning_effort: Optional[str] = "max"
 
 
 @dataclass
@@ -821,6 +870,44 @@ register_template(
     name="deepseek3",
     format_user=StringFormatter(slots=["<｜User｜>{{content}}<｜Assistant｜>"]),
     format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+)
+
+register_template(
+    name="deepseek_v3",
+    format_user=StringFormatter(slots=["<｜User｜>{{content}}<｜Assistant｜>"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+)
+
+register_template(
+    name="deepseek4",
+    format_user=StringFormatter(slots=["<｜User｜>{{content}}<｜Assistant｜>"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    replace_jinja_template=True,
+    template_class=Deepseek4ThinkHighTemplate,
+)
+
+register_template(
+    name="deepseek4_nothink",
+    format_user=StringFormatter(slots=["<｜User｜>{{content}}<｜Assistant｜>"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    replace_jinja_template=True,
+    template_class=Deepseek4NoThinkTemplate,
+)
+
+register_template(
+    name="deepseek4_think_high",
+    format_user=StringFormatter(slots=["<｜User｜>{{content}}<｜Assistant｜>"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    replace_jinja_template=True,
+    template_class=Deepseek4ThinkHighTemplate,
+)
+
+register_template(
+    name="deepseek4_think_max",
+    format_user=StringFormatter(slots=["<｜User｜>{{content}}<｜Assistant｜>"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    replace_jinja_template=True,
+    template_class=Deepseek4ThinkMaxTemplate,
 )
 
 
