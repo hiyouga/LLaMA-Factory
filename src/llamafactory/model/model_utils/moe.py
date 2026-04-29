@@ -168,7 +168,6 @@ def configure_moe(config: "PretrainedConfig", model_args: "ModelArguments", is_t
         "dbrx",
         "ernie4_5_moe",
         "granitemoe",
-        "hy_v3",
         "jamba",
         "jetmoe",
         "llama4",
@@ -189,7 +188,6 @@ def configure_moe(config: "PretrainedConfig", model_args: "ModelArguments", is_t
     if model_type in [
         "ernie4_5_moe",
         "granitemoe",
-        "hy_v3",
         "jamba",
         "llama4",
         "mixtral",
