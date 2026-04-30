@@ -161,6 +161,7 @@ class SGLangEngine(BaseEngine):
         )
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         prompt_ids, _ = self.template.encode_oneturn(self.tokenizer, paired_messages, system, tools)
+        prompt_ids = self.template.inject_thinking_tokens(prompt_ids, self.tokenizer)
         prompt_length = len(prompt_ids)
 
         temperature: Optional[float] = input_kwargs.pop("temperature", None)

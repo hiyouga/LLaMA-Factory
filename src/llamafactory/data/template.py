@@ -110,6 +110,28 @@ class Template:
         r"""Get the token ids of thought words."""
         return tokenizer.encode(self.add_thought(), add_special_tokens=False)
 
+    def inject_thinking_tokens(self, prompt_ids: list[int], tokenizer: "PreTrainedTokenizer") -> list[int]:
+        r"""Inject thinking tokens into prompt_ids after encode_oneturn for inference.
+
+        When enable_thinking is False and this is not a ReasoningTemplate, append both
+        thought start and end tokens to suppress thinking output.
+        When enable_thinking is True and this is a ReasoningTemplate, append the thought
+        start token to initiate the thinking chain.
+        """
+        if (
+            self.enable_thinking is False
+            and not isinstance(self, ReasoningTemplate)
+            and self.thought_words is not None
+        ):
+            prompt_ids = prompt_ids + tokenizer.encode(
+                self.thought_words[0] + self.thought_words[1], add_special_tokens=False
+            )
+        elif self.enable_thinking is True and isinstance(self, ReasoningTemplate):
+            prompt_ids = prompt_ids + tokenizer.encode(
+                self.thought_words[0], add_special_tokens=False
+            )
+        return prompt_ids
+
     def _convert_elements_to_ids(self, tokenizer: "PreTrainedTokenizer", elements: "SLOTS") -> list[int]:
         r"""Convert elements to token ids."""
         token_ids = []

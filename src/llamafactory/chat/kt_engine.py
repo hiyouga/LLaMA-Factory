@@ -114,6 +114,8 @@ class KTransformersEngine(BaseEngine):
     ) -> AsyncGenerator[str, None]:
         paired = messages + [{"role": "assistant", "content": ""}]
         prompt_ids, _ = self.template.encode_oneturn(self.tokenizer, paired, system, tools)
+        if not self.force_think:
+            prompt_ids = self.template.inject_thinking_tokens(prompt_ids, self.tokenizer)
         prompt_len = len(prompt_ids)
 
         max_length: Optional[int] = input_kwargs.pop("max_length", None)

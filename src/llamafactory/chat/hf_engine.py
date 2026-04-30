@@ -105,6 +105,7 @@ class HuggingfaceEngine(BaseEngine):
         )
         paired_messages = messages + [{"role": "assistant", "content": ""}]
         prompt_ids, _ = template.encode_oneturn(tokenizer, paired_messages, system, tools)
+        prompt_ids = template.inject_thinking_tokens(prompt_ids, tokenizer)
         prompt_ids, _ = template.mm_plugin.process_token_ids(
             prompt_ids,
             None,
