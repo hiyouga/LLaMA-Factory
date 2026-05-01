@@ -257,7 +257,7 @@ class OpenAIDatasetConverter(DatasetConverter):
             content = message[self.dataset_attr.content_tag]
 
             if role in [self.dataset_attr.assistant_tag, self.dataset_attr.function_tag]:
-                if "tool_calls" in message and len(message["tool_calls"]) > 0:
+                if message.get("tool_calls") and len(message["tool_calls"]) > 0:
                     tool_calls_list = [tool["function"] for tool in message["tool_calls"]]
                     content = json.dumps(tool_calls_list, ensure_ascii=False)
                     role = self.dataset_attr.function_tag
