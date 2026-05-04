@@ -682,6 +682,7 @@ def sft_loss_func(
     else:
         if not (shift_labels != IGNORE_INDEX).any():
             return torch.tensor(0.0, device=logits.device, dtype=logits.dtype)
+
         loss = F.cross_entropy(
             shift_logits,
             shift_labels,
