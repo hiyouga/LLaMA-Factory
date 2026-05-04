@@ -71,8 +71,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             # https://arxiv.org/abs/2604.23747 (Algorithm 2)
             self.model_accepts_loss_kwargs = False
             # Use custom loss function that correctly handles num_items_in_batch for
-            # global per-token mean aggregation, avoiding the mean-of-means bug.
-            # See: https://arxiv.org/abs/2604.23747
+            # global per-token mean aggregation, avoiding the mean-of-means issue.
             self.compute_loss_func = partial(
                 sft_loss_func, label_smoothing_factor=training_args.label_smoothing_factor
             )
