@@ -111,10 +111,10 @@ def run_sft(
         )
     elif finetuning_args.use_asft_loss:
         compute_loss_func = partial(asft_loss_func, asft_alpha=finetuning_args.asft_alpha)
-    else:
-        # Use custom loss function that correctly handles num_items_in_batch for
-        # global per-token mean aggregation, avoiding the mean-of-means bug.
-        # See: https://arxiv.org/abs/2604.23747
+    elif processor is not None:
+        # Use custom loss function for VLM/omni models that correctly handles
+        # num_items_in_batch for global per-token mean aggregation, avoiding
+        # the mean-of-means bug. See: https://arxiv.org/abs/2604.23747
         compute_loss_func = partial(sft_loss_func, label_smoothing_factor=training_args.label_smoothing_factor)
 
     trainer = HyperParallelTrainer(
