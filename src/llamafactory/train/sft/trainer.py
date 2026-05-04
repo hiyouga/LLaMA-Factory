@@ -30,7 +30,7 @@ from ...extras import logging
 from ...extras.constants import IGNORE_INDEX
 from ..callbacks import SaveProcessorCallback
 from ..fp8_utils import configure_fp8_environment, patch_accelerator_for_fp8, verify_fp8_status
-from ..trainer_utils import create_custom_optimizer, create_custom_scheduler, sft_loss_func
+from ..trainer_utils import causal_lm_loss_func, create_custom_optimizer, create_custom_scheduler
 
 
 if TYPE_CHECKING:
@@ -72,7 +72,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             # Use custom loss function for VLM/omni models that correctly handles
             # num_items_in_batch for global per-token mean aggregation, avoiding the mean-of-means issue.
             self.compute_loss_func = partial(
-                sft_loss_func, label_smoothing_factor=training_args.label_smoothing_factor
+                causal_lm_loss_func, label_smoothing_factor=training_args.label_smoothing_factor
             )
 
         self.finetuning_args = finetuning_args

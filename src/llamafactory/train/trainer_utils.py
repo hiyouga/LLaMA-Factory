@@ -636,13 +636,13 @@ def get_batch_logps(
     return logps, valid_length
 
 
-def sft_loss_func(
+def causal_lm_loss_func(
     outputs: "torch.Tensor",
     labels: "torch.Tensor",
     num_items_in_batch: Optional["torch.Tensor"] = None,
     label_smoothing_factor: float = 0.0,
 ) -> "torch.Tensor":
-    r"""Compute SFT cross-entropy loss with correct global per-token mean aggregation.
+    r"""Compute causal LM cross-entropy loss with global per-token mean aggregation.
 
     When num_items_in_batch is provided (by the HF Trainer when compute_loss_func is set),
     uses reduction="sum" divided by the global token count across all DP ranks and gradient
@@ -672,8 +672,10 @@ def sft_loss_func(
             reduction="sum",
             label_smoothing=label_smoothing_factor,
         )
+
         if torch.is_tensor(num_items_in_batch):
             num_items_in_batch = num_items_in_batch.to(loss.device)
+
         loss = (
             loss / num_items_in_batch
             if num_items_in_batch > 0

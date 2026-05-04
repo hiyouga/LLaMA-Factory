@@ -26,11 +26,11 @@ from ..callbacks import SaveProcessorCallback
 from ..sft.metric import ComputeAccuracy, ComputeSimilarity, eval_logit_processor
 from ..trainer_utils import (
     asft_loss_func,
+    causal_lm_loss_func,
     create_modelcard_and_push,
     create_ref_model,
     dft_loss_func,
     eaft_loss_func,
-    sft_loss_func,
 )
 
 
@@ -121,7 +121,7 @@ def run_sft(
     elif processor is not None:
         # Use custom loss function for VLM/omni models that correctly handles
         # num_items_in_batch for global per-token mean aggregation, avoiding the mean-of-means issue.
-        compute_loss_func = partial(sft_loss_func, label_smoothing_factor=training_args.label_smoothing_factor)
+        compute_loss_func = partial(causal_lm_loss_func, label_smoothing_factor=training_args.label_smoothing_factor)
 
     trainer = HyperParallelTrainer(
         hp_args=hp_args,
