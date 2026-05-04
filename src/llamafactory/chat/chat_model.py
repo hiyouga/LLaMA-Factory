@@ -71,16 +71,6 @@ class ChatModel:
                     "SGLang not install, you may need to run `pip install sglang[all]`\n"
                     "or try to use HuggingFace backend: --infer_backend huggingface"
                 ) from e
-        elif model_args.infer_backend == EngineName.KT:
-            try:
-                from .kt_engine import KTransformersEngine
-
-                self.engine: BaseEngine = KTransformersEngine(model_args, data_args, finetuning_args, generating_args)
-            except ImportError as e:
-                raise ImportError(
-                    "KTransformers not install, you may need to run `pip install ktransformers`\n"
-                    "or try to use HuggingFace backend: --infer_backend huggingface"
-                ) from e
         else:
             raise NotImplementedError(f"Unknown backend: {model_args.infer_backend}")
 
