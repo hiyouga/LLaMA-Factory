@@ -53,10 +53,9 @@ class CustomTrainer(Trainer):
         if processor is not None:
             # avoid wrong loss under gradient accumulation and distributed training
             # https://github.com/huggingface/transformers/pull/36044#issuecomment-2746657112
-            # https://arxiv.org/abs/2604.23747 (Algorithm 2)
             self.model_accepts_loss_kwargs = False
-            # Use custom loss function that correctly handles num_items_in_batch for
-            # global per-token mean aggregation, avoiding the mean-of-means issue.
+            # Use custom loss function for VLM/omni models that correctly handles
+            # num_items_in_batch for global per-token mean aggregation, avoiding the mean-of-means issue.
             self.compute_loss_func = partial(
                 sft_loss_func, label_smoothing_factor=training_args.label_smoothing_factor
             )

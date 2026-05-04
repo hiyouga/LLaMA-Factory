@@ -646,7 +646,7 @@ def sft_loss_func(
 
     When num_items_in_batch is provided (by the HF Trainer when compute_loss_func is set),
     uses reduction="sum" divided by the global token count across all DP ranks and gradient
-    accumulation steps, which avoids the "mean of means" bug in distributed training.
+    accumulation steps, which avoids the "mean of means" issue in distributed training for multi-modal models.
     See: https://arxiv.org/abs/2604.23747 (Algorithm 2)
 
     Note: This requires ``average_tokens_across_devices=True`` (the HF Trainer default)
@@ -666,16 +666,28 @@ def sft_loss_func(
 
     if num_items_in_batch is not None:
         loss = F.cross_entropy(
-            shift_logits, shift_labels, ignore_index=IGNORE_INDEX, reduction="sum", label_smoothing=label_smoothing_factor
+            shift_logits,
+            shift_labels,
+            ignore_index=IGNORE_INDEX,
+            reduction="sum",
+            label_smoothing=label_smoothing_factor,
         )
         if torch.is_tensor(num_items_in_batch):
             num_items_in_batch = num_items_in_batch.to(loss.device)
-        loss = loss / num_items_in_batch if num_items_in_batch > 0 else torch.tensor(0.0, device=logits.device, dtype=logits.dtype)
+        loss = (
+            loss / num_items_in_batch
+            if num_items_in_batch > 0
+            else torch.tensor(0.0, device=logits.device, dtype=logits.dtype)
+        )
     else:
         if not (shift_labels != IGNORE_INDEX).any():
             return torch.tensor(0.0, device=logits.device, dtype=logits.dtype)
         loss = F.cross_entropy(
-            shift_logits, shift_labels, ignore_index=IGNORE_INDEX, reduction="mean", label_smoothing=label_smoothing_factor
+            shift_logits,
+            shift_labels,
+            ignore_index=IGNORE_INDEX,
+            reduction="mean",
+            label_smoothing=label_smoothing_factor,
         )
 
     return loss
