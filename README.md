@@ -68,6 +68,7 @@ Read technical notes:
 
 - [Features](#features)
 - [Blogs](#blogs)
+- [Books](#books)
 - [Changelog](#changelog)
 - [Supported Models](#supported-models)
 - [Supported Training Approaches](#supported-training-approaches)
@@ -132,6 +133,10 @@ Read technical notes:
 - [LLaMA Factory: Fine-tuning Llama3 for Role-Playing](https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory) (Chinese)
 
 </details>
+
+## Books
+
+- [Quantization and Fast Inference: A practitioner’s guide to efficient AI](https://www.manning.com/books/quantization-and-fast-inference) (English)
 
 ## Changelog
 
