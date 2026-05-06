@@ -28,7 +28,6 @@ from safetensors.torch import load_file
 from ...accelerator.helper import DeviceType, get_current_accelerator
 from ...accelerator.interface import DistributedInterface
 from ...utils import logging
-from .reward_head import has_reward_head, load_reward_head, save_reward_head, strip_reward_head_from_state_dict
 
 
 logger = logging.get_logger(__name__)
@@ -173,11 +172,7 @@ def _save_standard_training_states(
     if rank == 0:
         model_to_save = model.module if hasattr(model, "module") else model
         model_dir = os.path.join(ckpt_dir, "model")
-        if has_reward_head(model):
-            model_state_dict = strip_reward_head_from_state_dict(model_to_save.state_dict())
-        else:
-            model_state_dict = model_to_save.state_dict()
-        model_to_save.save_pretrained(model_dir, state_dict=model_state_dict, max_shard_size="4GB")
+        model_to_save.save_pretrained(model_dir, state_dict=model_to_save.state_dict(), max_shard_size="4GB")
         processor.save_pretrained(model_dir)
 
         os.makedirs(os.path.join(ckpt_dir, "optimizer"), exist_ok=True)
@@ -218,15 +213,10 @@ def _load_standard_training_states(
                 state_dict.update(torch.load(f, map_location="cpu", weights_only=True))
         if state_dict:
             incompatible_keys = model_to_load.load_state_dict(state_dict, strict=False)
-            allowed_missing_prefixes = ("reward_head",)
-            missing_keys = [
-                key for key in incompatible_keys.missing_keys
-                if not any(prefix in key.split(".") for prefix in allowed_missing_prefixes)
-            ]
-            if missing_keys:
+            if incompatible_keys.missing_keys:
                 raise RuntimeError(
                     "Unexpected missing keys when loading checkpoint model weights: "
-                    f"{missing_keys}."
+                    f"{incompatible_keys.missing_keys}."
                 )
         else:
             logger.warning_rank0(f"No model weights found in {model_dir}, skipping model state restore.")
@@ -296,8 +286,6 @@ class TrainingCheckpointCoordinator:
         DistributedInterface().sync()
 
         if rank == 0:
-            if has_reward_head(self._t.model) and save_reward_head(self._t.model, ckpt_dir):
-                logger.info_rank0(f"Reward head checkpoint saved to {ckpt_dir}")
             mark_checkpoint_complete(ckpt_dir)
             if self._t.args.save_total_limit is not None:
                 rotate_checkpoints(self._t.args.output_dir, self._t.args.save_total_limit)
@@ -352,8 +340,5 @@ class TrainingCheckpointCoordinator:
 
         if self._dist_name != "deepspeed":
             load_rng_state(ckpt_dir, rank)
-
-        if has_reward_head(self._t.model) and load_reward_head(self._t.model, ckpt_dir, self._t.device):
-            logger.info_rank0(f"Reward head checkpoint loaded from {ckpt_dir}")
 
         logger.info_rank0(f"Resumed from checkpoint: step={self._t.global_step}, epoch={self._t._resume_epoch}")

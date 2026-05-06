@@ -26,7 +26,6 @@ import torch
 from accelerate import Accelerator
 from accelerate.utils import DeepSpeedPlugin
 
-from ....core.utils.reward_head import has_reward_head, strip_reward_head_from_state_dict
 from ....utils.logging import get_logger
 from ....utils.types import HFModel, Processor
 from ...model_plugins.deepspeed_utils import infer_deepspeed_mixed_precision
@@ -124,8 +123,6 @@ def save_model(model: HFModel, output_dir: str, processor: Processor) -> None:
 
     unwrapped_model = accelerator.unwrap_model(model)
     state_dict = accelerator.get_state_dict(model)
-    if has_reward_head(model):
-        state_dict = strip_reward_head_from_state_dict(state_dict)
 
     if accelerator.is_main_process:
         unwrapped_model.save_pretrained(output_dir, state_dict=state_dict, max_shard_size="4GB")

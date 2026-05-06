@@ -47,7 +47,6 @@ from ..utils.types import BatchInput, HFModel, ModelOutput, Tensor, TorchDataset
 from .utils.batching import BatchGenerator
 from .utils.checkpoint import TrainingCheckpointCoordinator
 from .utils.rendering import Renderer
-from .utils.reward_head import has_reward_head, strip_reward_head_from_state_dict
 
 
 logger = logging.get_logger(__name__)
@@ -352,11 +351,7 @@ class BaseTrainer:
             )
         else:
             model_to_save = self.model.module if hasattr(self.model, "module") else self.model
-            if has_reward_head(self.model):
-                model_state_dict = strip_reward_head_from_state_dict(model_to_save.state_dict())
-            else:
-                model_state_dict = model_to_save.state_dict()
-            model_to_save.save_pretrained(self.args.output_dir, state_dict=model_state_dict, max_shard_size="4GB")
+            model_to_save.save_pretrained(self.args.output_dir, state_dict=model_to_save.state_dict(), max_shard_size="4GB")
             self.renderer.processor.save_pretrained(self.args.output_dir, max_shard_size="4GB")
             logger.info_rank0(f"Model saved to {self.args.output_dir}")
 
