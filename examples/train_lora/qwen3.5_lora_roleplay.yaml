@@ -11,7 +11,7 @@ lora_dropout: 0.1
 lora_target: all
 
 ### dataset
-dataset: identity,alpaca_en
+dataset: identity,sharegpt_hyper
 template: qwen3_5
 cutoff_len: 2048
 max_samples: 1000
