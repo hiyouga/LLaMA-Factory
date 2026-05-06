@@ -144,6 +144,12 @@ class ModelEngine:
             from transformers import AutoModelForTokenClassification
 
             AutoClass = AutoModelForTokenClassification
+
+        elif self.args.model_class == ModelClass.CLS_SEQ:
+            from transformers import AutoModelForSequenceClassification
+
+            self.model_config.num_labels = 1
+            AutoClass = AutoModelForSequenceClassification
         else:
             from transformers import AutoModel
 

@@ -151,19 +151,16 @@ class Renderer:
             elif "chosen_messages" in sample and "rejected_messages" in sample:
                 chosen_input = self.render_messages(sample["chosen_messages"], sample.get("tools"))
                 rejected_input = self.render_messages(sample["rejected_messages"], sample.get("tools"))
-                chosen_input["token_type_ids"] = [1] * len(chosen_input["input_ids"])
-                rejected_input["token_type_ids"] = [2] * len(rejected_input["input_ids"])
+                chosen_len = len(chosen_input["input_ids"])
+                rejected_len = len(rejected_input["input_ids"])
                 model_input = ModelInput(
                     input_ids=chosen_input["input_ids"] + rejected_input["input_ids"],
-                    attention_mask=chosen_input["attention_mask"] + rejected_input["attention_mask"],
+                    attention_mask=[1] * chosen_len + [2] * rejected_len,
                     labels=chosen_input["labels"] + rejected_input["labels"],
                     loss_weights=chosen_input["loss_weights"] + rejected_input["loss_weights"],
-                    token_type_ids=chosen_input["token_type_ids"] + rejected_input["token_type_ids"],
+                    token_type_ids=[1] * chosen_len + [2] * rejected_len,
+                    position_ids=list(range(chosen_len)) + list(range(rejected_len)),
                 )
-                if "position_ids" in chosen_input:
-                    model_input["position_ids"] = np.concatenate(
-                        [chosen_input["position_ids"], rejected_input["position_ids"]], axis=-1
-                    )
             else:
                 raise ValueError("No valid messages or chosen_messages/rejected_messages found in sample.")
 

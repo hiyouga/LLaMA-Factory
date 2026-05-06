@@ -41,6 +41,7 @@ class ModelClass(StrEnum):
 
     LLM = "llm"
     CLS = "cls"
+    CLS_SEQ = "cls_seq"
     OTHER = "other"
 
 

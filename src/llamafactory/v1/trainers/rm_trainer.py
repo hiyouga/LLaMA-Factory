@@ -15,15 +15,14 @@
 import os
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 
 from ..accelerator.interface import DistributedInterface
 from ..config import InputArgument, TrainingArguments, get_args
+from ..config.arg_utils import ModelClass
 from ..core.base_trainer import BaseTrainer
 from ..core.data_engine import DataEngine
 from ..core.model_engine import ModelEngine
-from ..core.utils.reward_head import load_reward_head, save_reward_head
 from ..utils import logging
 from ..utils.types import BatchInput, HFModel, Tensor
 
@@ -31,29 +30,25 @@ from ..utils.types import BatchInput, HFModel, Tensor
 logger = logging.get_logger(__name__)
 
 
-def _get_hidden_size(model: HFModel) -> int:
-    config = model.config
-    if hasattr(config, "hidden_size"):
-        return int(config.hidden_size)
-    if hasattr(config, "text_config") and hasattr(config.text_config, "hidden_size"):
-        return int(config.text_config.hidden_size)
-    raise ValueError("Cannot infer hidden size from model config for RM training.")
+def _prepare_4d_attention_mask(attention_mask_with_indices: torch.Tensor, dtype: torch.dtype) -> torch.Tensor:
+    """Expand 2D attention mask with document indices to 4D block-diagonal causal mask.
 
+    Input: (batch_size, seq_len) with values like [1,1,2,2,0] (0=padding, different ints=different docs)
+    Output: (batch_size, 1, seq_len, seq_len) with 0.0 for attend, min_dtype for mask.
+    """
+    _, seq_len = attention_mask_with_indices.size()
+    min_dtype = torch.finfo(dtype).min
+    zero_tensor = torch.tensor(0, dtype=dtype, device=attention_mask_with_indices.device)
 
-def _attach_reward_head(model: HFModel) -> None:
-    if hasattr(model, "reward_head"):
-        return
-
-    hidden_size = _get_hidden_size(model)
-    reward_head = nn.Linear(hidden_size, 1, bias=False)
-    nn.init.normal_(reward_head.weight, mean=0.0, std=0.02)
-    try:
-        ref_param = next(model.parameters())
-        reward_head = reward_head.to(device=ref_param.device, dtype=ref_param.dtype)
-    except StopIteration:
-        # Fallback for models without parameters (unexpected), keep default init device/dtype.
-        pass
-    model.add_module("reward_head", reward_head)
+    non_padding_mask = (attention_mask_with_indices != 0).unsqueeze(1).unsqueeze(2)
+    indices = attention_mask_with_indices.unsqueeze(1).unsqueeze(2)
+    indices_t = attention_mask_with_indices.unsqueeze(1).unsqueeze(3)
+    tril_mask = torch.tril(
+        torch.ones((seq_len, seq_len), dtype=torch.bool, device=attention_mask_with_indices.device)
+    )
+    attention_mask_4d = (indices == indices_t) & non_padding_mask & tril_mask
+    attention_mask_4d = torch.where(attention_mask_4d, zero_tensor, min_dtype)
+    return attention_mask_4d
 
 
 def _validate_rm_dataset_format(train_dataset: DataEngine, dataset_path: str) -> None:
@@ -88,41 +83,76 @@ class RMTrainer(BaseTrainer):
         if cp_size > 1:
             raise NotImplementedError("RM trainer currently only supports cp_size == 1.")
 
-        _attach_reward_head(model)
         super().__init__(args, model, renderer, train_dataset, callbacks)
 
-    def save_model(self) -> None:
-        super().save_model()
-        if DistributedInterface().get_rank() == 0 and save_reward_head(self.model, self.args.output_dir):
-            logger.info_rank0(f"Reward head model saved at: {self.args.output_dir}")
+    def _get_score_module(self):
+        """Get the score head module from the SeqCls model for hook registration."""
+        model = self.model.module if hasattr(self.model, "module") else self.model
+        score = getattr(model, "score", None)
+        if score is None or getattr(model, "model", None) is None:
+            raise ValueError(
+                "RM training requires a model loaded with AutoModelForSequenceClassification "
+                "(model_class='cls_seq'). The model must have `.model` and `.score` attributes."
+            )
+        return score
 
     def compute_loss(self, batch: BatchInput) -> Tensor:
-        if "token_type_ids" not in batch:
-            raise ValueError("RM training requires pair data with token_type_ids from converter='pair'.")
         if "attention_mask" not in batch:
             raise ValueError("RM training requires attention_mask in batch.")
 
-        model_inputs: dict[str, Tensor] = {}
-        for key in ("input_ids", "attention_mask", "position_ids", "token_type_ids"):
-            if key in batch and isinstance(batch[key], torch.Tensor):
-                model_inputs[key] = batch[key].to(self.device, non_blocking=True)
+        attention_mask = batch["attention_mask"].to(self.device, non_blocking=True)
+        input_ids = batch["input_ids"].to(self.device, non_blocking=True)
 
-        outputs = self.model(
-            **model_inputs,
-            output_hidden_states=True,
-            return_dict=True,
-            use_cache=False,
-        )
-        hidden_states = outputs.hidden_states[-1]
-        reward_head_dtype = self.model.reward_head.weight.dtype
-        if hidden_states.dtype != reward_head_dtype:
-            hidden_states = hidden_states.to(dtype=reward_head_dtype)
-        rewards = self.model.reward_head(hidden_states).squeeze(-1)
+        position_ids = None
+        if "position_ids" in batch and isinstance(batch["position_ids"], torch.Tensor):
+            position_ids = batch["position_ids"].to(self.device, non_blocking=True)
 
-        token_type_ids = batch["token_type_ids"].to(self.device, non_blocking=True)
-        attention_mask = batch["attention_mask"].to(self.device, non_blocking=True).bool()
-        chosen_mask = (token_type_ids == 1) & attention_mask
-        rejected_mask = (token_type_ids == 2) & attention_mask
+        token_type_ids = batch.get("token_type_ids")
+        if token_type_ids is None:
+            raise ValueError(
+                "RM training requires pair data with token_type_ids. "
+                "Ensure the dataset has chosen_messages/rejected_messages."
+            )
+        token_type_ids = token_type_ids.to(self.device, non_blocking=True)
+
+        attn_impl = getattr(self.model.config, "_attn_implementation", "eager")
+        if attn_impl == "flash_attention_2":
+            model_attention_mask = attention_mask
+        else:
+            model_attention_mask = _prepare_4d_attention_mask(attention_mask, dtype=torch.float32)
+
+        # Call through the full FSDP-wrapped model instead of sub-modules directly.
+        # Under FSDP2, calling sub-modules bypasses the pre-forward hooks that handle
+        # DTensor unshard / input casting, causing mixed Tensor/DTensor errors.
+        # A forward hook on the score layer captures per-position scores before pooling.
+        score_module = self._get_score_module()
+        captured_scores: dict[str, torch.Tensor] = {}
+
+        def _capture_hook(_module, _input, output):
+            captured_scores["value"] = output
+
+        hook_handle = score_module.register_forward_hook(_capture_hook)
+        try:
+            model_output = self.model(
+                input_ids=input_ids,
+                attention_mask=model_attention_mask,
+                position_ids=position_ids,
+                use_cache=False,
+                return_dict=True,
+            )
+        finally:
+            hook_handle.remove()
+
+        rewards = captured_scores["value"].float().squeeze(-1)
+
+        # FSDP2 registers its backward hooks (which unshard parameters) on the module's
+        # output tensors.  Since loss is computed from the captured intermediate tensor
+        # rather than model_output, we must keep model_output in the autograd graph so
+        # those backward hooks still fire and parameters are unsharded during backward.
+        _fsdp_bwd_anchor = model_output.logits.sum() * 0.0
+
+        chosen_mask = (token_type_ids == 1)
+        rejected_mask = (token_type_ids == 2)
 
         valid_pair_mask = chosen_mask.any(dim=-1) & rejected_mask.any(dim=-1)
         if not torch.any(valid_pair_mask):
@@ -142,11 +172,12 @@ class RMTrainer(BaseTrainer):
 
         chosen_scores = rewards.gather(dim=1, index=chosen_last_idx.unsqueeze(-1)).squeeze(-1)
         rejected_scores = rewards.gather(dim=1, index=rejected_last_idx.unsqueeze(-1)).squeeze(-1)
-        return -F.logsigmoid(chosen_scores.float() - rejected_scores.float()).mean()
+        return -F.logsigmoid(chosen_scores - rejected_scores).mean() + _fsdp_bwd_anchor
 
 
 def run_rm(args: InputArgument = None):
     model_args, data_args, training_args, _ = get_args(args)
+    model_args.model_class = ModelClass.CLS_SEQ
     DistributedInterface(training_args.dist_config)
     train_dataset = DataEngine(data_args.train_dataset)
     _validate_rm_dataset_format(train_dataset, data_args.train_dataset)
@@ -157,8 +188,6 @@ def run_rm(args: InputArgument = None):
         renderer=model_engine.renderer,
         train_dataset=train_dataset,
     )
-    if os.path.isdir(model_args.model) and load_reward_head(trainer.model, model_args.model, trainer.device):
-        logger.info_rank0(f"Loaded reward head weights from: {model_args.model}")
     trainer.fit()
     trainer.save_model()
     DistributedInterface().destroy()
