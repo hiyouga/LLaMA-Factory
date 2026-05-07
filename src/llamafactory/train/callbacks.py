@@ -31,7 +31,7 @@ from typing_extensions import override
 
 from ..extras import logging
 from ..extras.constants import TRAINER_LOG, V_HEAD_SAFE_WEIGHTS_NAME, V_HEAD_WEIGHTS_NAME
-from ..extras.misc import get_peak_memory, is_env_enabled, use_ray
+from ..extras.misc import get_peak_memory, is_env_enabled, use_ray, is_torch_cuda_available, is_torch_npu_available
 from ..extras.packages import is_safetensors_available
 
 
@@ -391,9 +391,9 @@ class TorchProfilerCallback(TrainerCallback):
 
         activities = [torch.profiler.ProfilerActivity.CPU]
         try:
-            if torch.accelerator.current_accelerator().type == "cuda":
+            if is_torch_cuda_available():
                 activities.append(torch.profiler.ProfilerActivity.CUDA)
-            if torch.accelerator.current_accelerator().type == "npu":
+            if is_torch_npu_available():
                 activities.append(torch.profiler.ProfilerActivity.NPU)
         except Exception:
             pass
