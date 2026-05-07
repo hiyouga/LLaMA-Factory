@@ -349,6 +349,9 @@ class TorchProfilerCallback(TrainerCallback):
       PROFILER_WARMUP_STEPS  – profiler warm-up steps per cycle       (default: 1)
       PROFILER_ACTIVE_STEPS  – steps to record per cycle              (default: 1)
       PROFILER_REPEAT        – number of cycles; 0 = forever          (default: 1)
+      RECORD_SHAPES          – record tensor shapes (default: 1)
+      PROFILE_MEMORY         – profile memory usage (default: 1)
+      WITH_STACK             – record stack traces (default: 1)
 
     Trace files (one per rank, Chrome / TensorBoard JSON format) are written to
     ``<PROFILER_OUTPUT_DIR>/rank_<N>/``.
@@ -369,10 +372,16 @@ class TorchProfilerCallback(TrainerCallback):
     def on_train_begin(
         self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs
     ) -> None:
+        if self.profiler is not None:
+            self.profiler.stop()
+            self.profiler = None
+
         wait = int(os.getenv("PROFILER_WAIT_STEPS", "1"))
         warmup = int(os.getenv("PROFILER_WARMUP_STEPS", "1"))
         active = int(os.getenv("PROFILER_ACTIVE_STEPS", "1"))
         repeat = int(os.getenv("PROFILER_REPEAT", "1"))
+        record_shapes = is_env_enabled("RECORD_SHAPES", "1")
+        profile_memory = is_env_enabled("PROFILE_MEMORY", "1")
         with_stack = is_env_enabled("WITH_STACK", "1")
 
         output_dir = os.getenv("PROFILER_OUTPUT_DIR", os.path.join(args.output_dir, "profiler"))
@@ -393,8 +402,8 @@ class TorchProfilerCallback(TrainerCallback):
             activities=activities,
             schedule=torch.profiler.schedule(wait=wait, warmup=warmup, active=active, repeat=repeat),
             on_trace_ready=torch.profiler.tensorboard_trace_handler(trace_dir),
-            record_shapes=True,
-            profile_memory=True,
+            record_shapes=record_shapes,
+            profile_memory=profile_memory,
             with_stack=with_stack,
         )
         self.profiler.start()
@@ -476,4 +485,3 @@ class ReporterCallback(TrainerCallback):
                     "generating_args": self.generating_args.to_dict(),
                 }
             )
-            
