@@ -269,26 +269,13 @@ class BaseTrainer:
                     # deepspeed: engine.step() already ran inside backward at the sync boundary
                     grad_norm = self._deepspeed_engine.get_grad_norm()
                 else:
+                    grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm).item()
+
                     if self.args.dist_config and self.args.dist_config.get("cp_size", 1) > 1:
-                        from torch.nn.utils.clip_grad import _clip_grads_with_norm_, _get_total_norm
+                        grad_norm = grad_norm**2
+                        grad_norm = DistributedInterface().all_reduce(grad_norm, op=ReduceOp.SUM, dim=Dim.CP)
+                        grad_norm = grad_norm**0.5
 
-                        parameters = self.model.parameters()
-                        if isinstance(parameters, torch.Tensor):
-                            parameters = [parameters]
-                        else:
-                            parameters = list(parameters)
-                        grads = [p.grad for p in parameters if p.grad is not None]
-                        grad_norm = _get_total_norm(grads)
-                        grad_norm = grad_norm.to(self.device)
-                        _clip_grads_with_norm_(parameters, self.args.max_grad_norm, grad_norm)
-                        if isinstance(grad_norm, torch.distributed._tensor.DTensor):
-                            grad_norm = grad_norm.full_tensor().item()
-                    else:
-                        grad_norm = torch.nn.utils.clip_grad_norm_(
-                            self.model.parameters(), self.args.max_grad_norm
-                        ).item()
-
-                    # isfinite(): argument 'input' (position 1) must be Tensor, not float
                     if not torch.isfinite(torch.tensor(grad_norm)):  # type: ignore # pyright: ignore [reportUnknownReturnType]
                         logger.warning_rank0(f"Gradient norm is not finite: {grad_norm}")
                     else:

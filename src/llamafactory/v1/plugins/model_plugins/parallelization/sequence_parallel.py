@@ -175,9 +175,9 @@ def sequence_parallel_loss(model, model_inputs):
     global_labels = [torch.empty_like(labels) for _ in range(cp_world_size)]
     dist.all_gather(global_labels, labels, group=cp_group)
     labels = torch.cat(global_labels, dim=1).contiguous()
-    shift_labels = labels[..., 1:].view(-1).contiguous()
+    shift_labels = labels[..., 1:].contiguous()
     shift_labels = F.pad(shift_labels, (0, 1), value=-100)
-    shift_labels = torch.chunk(shift_labels, chunks=cp_world_size, dim=-1)[cp_rank].contiguous()
+    shift_labels = torch.chunk(shift_labels, chunks=cp_world_size, dim=1)[cp_rank].contiguous()
 
     # use all_gather to collect loss_weights from all sequence parallel processes
     loss_weights = model_inputs["loss_weights"]
@@ -186,7 +186,8 @@ def sequence_parallel_loss(model, model_inputs):
     shift_loss_weights = torch.cat(global_loss_weights, dim=1).contiguous()
     shift_loss_weights = shift_loss_weights[..., 1:].contiguous()
 
-    shift_logits = logits.view(shift_labels.size(0), -1).contiguous()
+    shift_logits = logits.view(-1, logits.size(-1)).contiguous()
+    shift_labels = shift_labels.view(-1).contiguous()
 
     # use all_gather to collect log_probs from all sequence parallel processes
     log_probs = -F.cross_entropy(shift_logits, shift_labels, reduction="none").view(batch_size, -1)

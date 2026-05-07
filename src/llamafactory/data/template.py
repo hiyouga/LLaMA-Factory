@@ -834,6 +834,19 @@ register_template(
 
 
 register_template(
+    name="hy3",
+    format_user=StringFormatter(slots=["<｜hy_User｜>{{content}}<｜hy_Assistant｜>"]),
+    format_assistant=StringFormatter(slots=["{{content}}<｜hy_eos｜>"]),
+    format_system=StringFormatter(slots=["{{content}}"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<｜hy_eos｜>"],
+    replace_eos=True,
+    thought_words=("<think>", "</think>"),
+    template_class=ReasoningTemplate,
+)
+
+
+register_template(
     name="deepseekcoder",
     format_user=StringFormatter(slots=["### Instruction:\n{{content}}\n### Response:"]),
     format_assistant=StringFormatter(slots=["\n{{content}}\n<|EOT|>\n"]),

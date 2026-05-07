@@ -20,6 +20,7 @@ import importlib.util
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
+import transformers.utils.import_utils as import_utils
 from packaging import version
 
 
@@ -87,7 +88,7 @@ def is_ray_available():
 
 
 def is_kt_available():
-    return _is_package_available("ktransformers")
+    return _is_package_available("kt_kernel")
 
 
 def is_requests_available():
@@ -126,3 +127,26 @@ def is_uvicorn_available():
 
 def is_vllm_available():
     return _is_package_available("vllm")
+
+
+_orig_is_package_available = import_utils._is_package_available
+
+
+class PackageAvailability(tuple):
+    __slots__ = ()
+
+    def __new__(cls, available: bool, pkg_version: str = "N/A"):
+        return super().__new__(cls, (bool(available), pkg_version))
+
+    def __bool__(self) -> bool:
+        return self[0]
+
+
+def _patched_is_package_available(pkg_name: str, return_version: bool = False):
+    available, version = _orig_is_package_available(pkg_name, return_version=return_version)
+
+    return PackageAvailability(available, version)
+
+
+if is_transformers_version_greater_than("5.3.0"):
+    import_utils._is_package_available = _patched_is_package_available

@@ -139,7 +139,6 @@ class EngineName(StrEnum):
     HF = "huggingface"
     VLLM = "vllm"
     SGLANG = "sglang"
-    KT = "ktransformers"
 
 
 class DownloadSource(StrEnum):
@@ -1254,6 +1253,17 @@ register_model_group(
         },
     },
     template="hunyuan_small",
+)
+
+
+register_model_group(
+    models={
+        "Hy3-Preview": {
+            DownloadSource.DEFAULT: "tencent/Hy3-preview",
+            DownloadSource.MODELSCOPE: "tencent/Hy3-preview",
+        },
+    },
+    template="hy3",
 )
 
 
