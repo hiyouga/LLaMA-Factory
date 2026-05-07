@@ -149,6 +149,11 @@ class ModelEngine:
             from transformers import AutoModelForSequenceClassification
 
             self.model_config.num_labels = 1
+            # For composite configs (e.g. multimodal models), the text sub-config is what
+            # actually gets passed to the classification head, so set num_labels there too.
+            text_config = getattr(self.model_config, "text_config", None)
+            if text_config is not None:
+                text_config.num_labels = 1
             AutoClass = AutoModelForSequenceClassification
         else:
             from transformers import AutoModel
