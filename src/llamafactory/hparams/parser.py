@@ -39,6 +39,7 @@ from .evaluation_args import EvaluationArguments
 from .finetuning_args import FinetuningArguments
 from .generating_args import GeneratingArguments
 from .model_args import ModelArguments
+from .profiler_args import ProfilerArguments
 from .training_args import RayArguments, TrainingArguments
 
 
@@ -47,8 +48,17 @@ logger = logging.get_logger(__name__)
 check_dependencies()
 
 
-_TRAIN_ARGS = [ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
-_TRAIN_CLS = tuple[ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
+_TRAIN_ARGS = [
+    ModelArguments,
+    DataArguments,
+    TrainingArguments,
+    FinetuningArguments,
+    GeneratingArguments,
+    ProfilerArguments,
+]
+_TRAIN_CLS = tuple[
+    ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments, ProfilerArguments
+]
 _INFER_ARGS = [ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _INFER_CLS = tuple[ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _EVAL_ARGS = [ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments]
@@ -57,9 +67,21 @@ _EVAL_CLS = tuple[ModelArguments, DataArguments, EvaluationArguments, Finetuning
 if is_mcore_adapter_available() and is_env_enabled("USE_MCA"):
     from mcore_adapter import TrainingArguments as McaTrainingArguments
 
-    _TRAIN_MCA_ARGS = [ModelArguments, DataArguments, McaTrainingArguments, FinetuningArguments, GeneratingArguments]
+    _TRAIN_MCA_ARGS = [
+        ModelArguments,
+        DataArguments,
+        McaTrainingArguments,
+        FinetuningArguments,
+        GeneratingArguments,
+        ProfilerArguments,
+    ]
     _TRAIN_MCA_CLS = tuple[
-        ModelArguments, DataArguments, McaTrainingArguments, FinetuningArguments, GeneratingArguments
+        ModelArguments,
+        DataArguments,
+        McaTrainingArguments,
+        FinetuningArguments,
+        GeneratingArguments,
+        ProfilerArguments,
     ]
 else:
     _TRAIN_MCA_ARGS = []
@@ -249,13 +271,13 @@ def _parse_train_args(args: dict[str, Any] | list[str] | None = None) -> _TRAIN_
 def _parse_train_mca_args(args: dict[str, Any] | list[str] | None = None) -> _TRAIN_MCA_CLS:
     parser = HfArgumentParser(_TRAIN_MCA_ARGS)
     allow_extra_keys = is_env_enabled("ALLOW_EXTRA_ARGS")
-    model_args, data_args, training_args, finetuning_args, generating_args = _parse_args(
+    model_args, data_args, training_args, finetuning_args, generating_args, profiler_args = _parse_args(
         parser, args, allow_extra_keys=allow_extra_keys
     )
 
     _configure_mca_training_args(training_args, data_args, finetuning_args)
 
-    return model_args, data_args, training_args, finetuning_args, generating_args
+    return model_args, data_args, training_args, finetuning_args, generating_args, profiler_args
 
 
 def _configure_mca_training_args(training_args, data_args, finetuning_args) -> None:
@@ -287,9 +309,11 @@ def get_ray_args(args: dict[str, Any] | list[str] | None = None) -> RayArguments
 
 def get_train_args(args: dict[str, Any] | list[str] | None = None) -> _TRAIN_CLS:
     if is_env_enabled("USE_MCA"):
-        model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_mca_args(args)
+        model_args, data_args, training_args, finetuning_args, generating_args, profiler_args = _parse_train_mca_args(
+            args
+        )
     else:
-        model_args, data_args, training_args, finetuning_args, generating_args = _parse_train_args(args)
+        model_args, data_args, training_args, finetuning_args, generating_args, profiler_args = _parse_train_args(args)
         finetuning_args.use_mca = False
 
     # Setup logging
@@ -515,7 +539,7 @@ def get_train_args(args: dict[str, Any] | list[str] | None = None) -> _TRAIN_CLS
     if model_args.use_kt:
         model_args.apply_kt_config(finetuning_args, training_args, model_args.model_max_length)
 
-    return model_args, data_args, training_args, finetuning_args, generating_args
+    return model_args, data_args, training_args, finetuning_args, generating_args, profiler_args
 
 
 def get_infer_args(args: dict[str, Any] | list[str] | None = None) -> _INFER_CLS:

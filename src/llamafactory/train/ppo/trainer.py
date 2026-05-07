@@ -38,15 +38,8 @@ from trl.models.utils import unwrap_model_for_generation
 from typing_extensions import override
 
 from ...extras import logging
-from ...extras.misc import (
-    AverageMeter,
-    count_parameters,
-    get_current_device,
-    get_logits_processor,
-    is_env_enabled,
-    torch_gc,
-)
-from ..callbacks import FixValueHeadModelCallback, SaveProcessorCallback, TorchProfilerCallback
+from ...extras.misc import AverageMeter, count_parameters, get_current_device, get_logits_processor, torch_gc
+from ..callbacks import FixValueHeadModelCallback, SaveProcessorCallback
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
 from .ppo_utils import dump_layernorm, get_rewards_from_server, replace_model, restore_layernorm
 
@@ -197,9 +190,6 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
 
         if processor is not None:
             self.add_callback(SaveProcessorCallback(processor))
-
-        if is_env_enabled("ENABLE_TORCH_PROFILER"):
-            self.add_callback(TorchProfilerCallback())
 
         if finetuning_args.use_badam:
             from badam import BAdamCallback, clip_grad_norm_old_version  # type: ignore

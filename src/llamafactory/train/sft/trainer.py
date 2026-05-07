@@ -28,8 +28,7 @@ from typing_extensions import override
 
 from ...extras import logging
 from ...extras.constants import IGNORE_INDEX
-from ...extras.misc import is_env_enabled
-from ..callbacks import SaveProcessorCallback, TorchProfilerCallback
+from ..callbacks import SaveProcessorCallback
 from ..fp8_utils import configure_fp8_environment, patch_accelerator_for_fp8, verify_fp8_status
 from ..trainer_utils import create_custom_optimizer, create_custom_scheduler
 
@@ -78,9 +77,6 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
         if processor is not None:
             self.add_callback(SaveProcessorCallback(processor))
-
-        if is_env_enabled("ENABLE_TORCH_PROFILER"):
-            self.add_callback(TorchProfilerCallback())
 
         if finetuning_args.use_badam:
             from badam import BAdamCallback, clip_grad_norm_old_version  # type: ignore
