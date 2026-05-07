@@ -373,6 +373,7 @@ class TorchProfilerCallback(TrainerCallback):
         warmup = int(os.getenv("PROFILER_WARMUP_STEPS", "1"))
         active = int(os.getenv("PROFILER_ACTIVE_STEPS", "1"))
         repeat = int(os.getenv("PROFILER_REPEAT", "1"))
+        with_stack = is_env_enabled("WITH_STACK", "1")
 
         output_dir = os.getenv("PROFILER_OUTPUT_DIR", os.path.join(args.output_dir, "profiler"))
         rank = self._get_rank()
@@ -394,7 +395,7 @@ class TorchProfilerCallback(TrainerCallback):
             on_trace_ready=torch.profiler.tensorboard_trace_handler(trace_dir),
             record_shapes=True,
             profile_memory=True,
-            with_stack=True,
+            with_stack=with_stack,
         )
         self.profiler.start()
         logger.info_rank0(
@@ -475,3 +476,4 @@ class ReporterCallback(TrainerCallback):
                     "generating_args": self.generating_args.to_dict(),
                 }
             )
+            
