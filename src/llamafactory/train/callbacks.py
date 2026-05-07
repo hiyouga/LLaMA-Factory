@@ -338,6 +338,87 @@ class LogCallback(TrainerCallback):
                 self.thread_pool.submit(self._write_log, args.output_dir, logs)
 
 
+class TorchProfilerCallback(TrainerCallback):
+    r"""A callback for collecting torch.profiler traces during training.
+
+    Activated by setting the environment variable ``ENABLE_TORCH_PROFILER=1``.
+
+    Tuning knobs (all optional, via environment variables):
+      PROFILER_OUTPUT_DIR    – where to write traces (default: <output_dir>/profiler)
+      PROFILER_WAIT_STEPS    – steps to skip at start of each cycle (default: 1)
+      PROFILER_WARMUP_STEPS  – profiler warm-up steps per cycle       (default: 1)
+      PROFILER_ACTIVE_STEPS  – steps to record per cycle              (default: 1)
+      PROFILER_REPEAT        – number of cycles; 0 = forever          (default: 1)
+
+    Trace files (one per rank, Chrome / TensorBoard JSON format) are written to
+    ``<PROFILER_OUTPUT_DIR>/rank_<N>/``.
+    """
+
+    def __init__(self) -> None:
+        self.profiler = None
+
+    @staticmethod
+    def _get_rank() -> int:
+        import torch.distributed as dist
+
+        if dist.is_available() and dist.is_initialized():
+            return dist.get_rank()
+        return 0
+
+    @override
+    def on_train_begin(
+        self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs
+    ) -> None:
+        wait = int(os.getenv("PROFILER_WAIT_STEPS", "1"))
+        warmup = int(os.getenv("PROFILER_WARMUP_STEPS", "1"))
+        active = int(os.getenv("PROFILER_ACTIVE_STEPS", "1"))
+        repeat = int(os.getenv("PROFILER_REPEAT", "1"))
+
+        output_dir = os.getenv("PROFILER_OUTPUT_DIR", os.path.join(args.output_dir, "profiler"))
+        rank = self._get_rank()
+        trace_dir = os.path.join(output_dir, f"rank_{rank}")
+        os.makedirs(trace_dir, exist_ok=True)
+
+        activities = [torch.profiler.ProfilerActivity.CPU]
+        try:
+            if torch.accelerator.current_accelerator().type == "cuda":
+                activities.append(torch.profiler.ProfilerActivity.CUDA)
+            if torch.accelerator.current_accelerator().type == "npu":
+                activities.append(torch.profiler.ProfilerActivity.NPU)
+        except Exception:
+            pass
+
+        self.profiler = torch.profiler.profile(
+            activities=activities,
+            schedule=torch.profiler.schedule(wait=wait, warmup=warmup, active=active, repeat=repeat),
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(trace_dir),
+            record_shapes=True,
+            profile_memory=True,
+            with_stack=True,
+        )
+        self.profiler.start()
+        logger.info_rank0(
+            f"TorchProfiler started — schedule: wait={wait}, warmup={warmup}, "
+            f"active={active}, repeat={repeat}. Traces → {output_dir}"
+        )
+
+    @override
+    def on_step_end(
+        self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs
+    ) -> None:
+        if self.profiler is not None:
+            self.profiler.step()
+
+    @override
+    def on_train_end(
+        self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs
+    ) -> None:
+        if self.profiler is not None:
+            self.profiler.stop()
+            self.profiler = None
+            logger.info_rank0("TorchProfiler stopped.")
+
+
 class ReporterCallback(TrainerCallback):
     r"""A callback for reporting training status to external logger."""
 
