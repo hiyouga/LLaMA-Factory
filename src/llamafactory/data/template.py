@@ -80,10 +80,18 @@ class Template:
         system: Optional[str] = None,
         tools: Optional[str] = None,
         discarding_history_cot: bool = False,  # only effect reasoning template
-    ) -> list[tuple[list[int], list[int]]]:
-        r"""Return multiple pairs of token ids representing prompts and responses respectively."""
+    ) -> list[tuple[list[int], list[int], bool]]:
+        r"""Return multiple pairs of token ids representing prompts and responses respectively.
+
+        Returns:
+            list of (source_ids, target_ids, should_compute_loss)
+        """
         encoded_messages = self._encode(tokenizer, messages, system, tools)
-        return [(encoded_messages[i], encoded_messages[i + 1]) for i in range(0, len(encoded_messages), 2)]
+        return [
+            (encoded_messages[i], encoded_messages[i + 1], messages[i + 1].get("loss", True))
+            for i in range(0, len(encoded_messages), 2)
+        ]
+
 
     def extract_tool(self, content: str) -> Union[str, list["FunctionCall"]]:
         r"""Extract tool message."""
