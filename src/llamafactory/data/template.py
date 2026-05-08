@@ -451,7 +451,7 @@ class ReasoningTemplate(Template):
         system: Optional[str] = None,
         tools: Optional[str] = None,
         discarding_history_cot: bool = False,
-    ) -> list[tuple[list[int], list[int]]]:
+    ) -> list[tuple[list[int], list[int], bool]]:
         messages = deepcopy(messages)
         if self.enable_thinking is False:  # remove all cot
             for i in range(1, len(messages), 2):
