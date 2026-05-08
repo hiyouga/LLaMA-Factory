@@ -477,7 +477,7 @@ class ReasoningTemplate(Template):
                 else:  # do compute loss
                     encoded_messages[i + 1] = self.get_thought_word_ids(tokenizer) + encoded_messages[i + 1]
 
-        return [(encoded_messages[i], encoded_messages[i + 1]) for i in range(0, len(encoded_messages), 2)]
+        return [(encoded_messages[i], encoded_messages[i + 1], messages[i + 1].get("loss", True)) for i in range(0, len(encoded_messages), 2)]
 
 
 @dataclass
