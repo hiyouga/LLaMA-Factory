@@ -17,7 +17,6 @@
 
 import copy
 import inspect
-import os
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal, Optional
 
@@ -474,13 +473,6 @@ class MultiModalDataCollatorForSeq2Seq(DataCollatorForSeq2Seq):
             bsz, seq_length = features["input_ids"].shape
             features["position_ids"] = torch.arange(seq_length).long().repeat(bsz, 1)
             return {"data": features, "input_ids": features["input_ids"], "labels": features["labels"]}
-
-        if (
-            self.model is not None
-            and getattr(self.model.config, "model_type", None) == "minicpmv4_6"
-            and "target_sizes" in features
-        ):  # for minicpmv4_6 with new transformers (NaViT API, no image_bound)
-            features["downsample_mode"] = os.getenv("DOWNSAMPLE_MODE", "16x")
 
         return features
 
