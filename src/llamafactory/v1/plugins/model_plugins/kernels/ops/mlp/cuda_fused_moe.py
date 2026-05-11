@@ -185,7 +185,6 @@ class TritonFusedMoeFunction(torch.autograd.Function):
                 b=fc1_weighted_output,
                 c=grad_fc2_weight,
                 cumsum_K=cumsum_t,
-                transpose_a=True,
             )
 
         # Step 3: Routing weight backward
@@ -226,7 +225,6 @@ class TritonFusedMoeFunction(torch.autograd.Function):
                 b=scatter_output,
                 c=grad_fc1_weight,
                 cumsum_K=cumsum_t,
-                transpose_a=True,
             )
 
         # Step 6: Gather gradients back to original positions
@@ -270,9 +268,6 @@ def _triton_moe_experts_forward(
 # ---------------------------------------------------------------------------
 
 _TRITON_MOE_MAPPING: dict[str, dict[str, object]] = {
-    "MixtralForCausalLM": {
-        "MixtralExperts": _triton_moe_experts_forward,
-    },
     "Qwen3MoeForCausalLM": {
         "Qwen3MoeExperts": _triton_moe_experts_forward,
     },

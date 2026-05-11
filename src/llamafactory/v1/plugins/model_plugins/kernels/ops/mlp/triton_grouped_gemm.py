@@ -202,7 +202,6 @@ def _group_gemm_same_mn_kernel(
     G: tl.constexpr,
     M: tl.constexpr,
     N: tl.constexpr,
-    TRANSPOSE_A: tl.constexpr,
     BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
     BLOCK_K: tl.constexpr,
@@ -230,7 +229,7 @@ def _group_gemm_same_mn_kernel(
     acc = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
     offs_k = tl.arange(0, BLOCK_K)
 
-    # TRANSPOSE_A: a.T @ b where a is (total_K, M) -> a.T is (M, K_i)
+    # a is (total_K, M), compute a.T @ b -> (M, N)
     # b is (total_K, N)
     a_base = a_ptr + gtid_start * M
     b_base = b_ptr + gtid_start * N
@@ -239,15 +238,8 @@ def _group_gemm_same_mn_kernel(
         k_offs = k_start + offs_k
         k_mask = k_offs < k_size
 
-        if TRANSPOSE_A:
-            # Load a block: shape (BLOCK_K, BLOCK_M) from a(total_K, M)
-            a_ptrs = a_base + k_offs[:, None] * M + offs_m[None, :]
-            a_block = tl.load(a_ptrs, mask=k_mask[:, None] & (offs_m[None, :] < M), other=0.0)
-            # Transpose to (BLOCK_M, BLOCK_K) for matmul
-            a_block_t = tl.trans(a_block)
-        else:
-            a_ptrs = a_base + k_offs[:, None] * M + offs_m[None, :]
-            a_block_t = tl.trans(tl.load(a_ptrs, mask=k_mask[:, None] & (offs_m[None, :] < M), other=0.0))
+        a_ptrs = a_base + k_offs[:, None] * M + offs_m[None, :]
+        a_block_t = tl.trans(tl.load(a_ptrs, mask=k_mask[:, None] & (offs_m[None, :] < M), other=0.0))
 
         # Load b block: (BLOCK_K, BLOCK_N)
         b_ptrs = b_base + k_offs[:, None] * N + offs_n[None, :]
@@ -265,19 +257,17 @@ def group_gemm_same_mn(
     b: torch.Tensor,
     c: torch.Tensor,
     cumsum_K: torch.Tensor,
-    transpose_a: bool = False,
 ) -> None:
     """Grouped GEMM where all groups produce same (M, N) output; variable K reduction.
 
-    Computes: c[g] = a[s:e].T @ b[s:e] (if transpose_a) for each group g,
+    Computes: c[g] = a[s:e].T @ b[s:e] for each group g,
     where s, e are defined by cumsum_K boundaries.
 
     Args:
-        a: (total_K, M) if transpose_a, input tensor grouped by expert
+        a: (total_K, M) input tensor grouped by expert
         b: (total_K, N) input tensor grouped by expert
         c: (G, M, N) output tensor (pre-allocated)
         cumsum_K: (G,) cumulative token counts per expert
-        transpose_a: if True, compute a.T @ b
     """
     G, M, N = c.shape
 
@@ -289,7 +279,6 @@ def group_gemm_same_mn(
         G=G,
         M=M,
         N=N,
-        TRANSPOSE_A=transpose_a,
     )
 
 
