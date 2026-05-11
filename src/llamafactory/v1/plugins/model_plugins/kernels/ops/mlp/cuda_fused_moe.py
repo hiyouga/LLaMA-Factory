@@ -291,7 +291,7 @@ _TRITON_MOE_MAPPING: dict[str, dict[str, object]] = {
 
 
 @register_kernel
-class CudnnFusedMoEKernel(BaseKernel):
+class CudaFusedMoEKernel(BaseKernel):
     """Pure-Triton fused MoE kernel for NVIDIA CUDA GPUs.
 
     Replaces HuggingFace per-expert Python loops with a fully fused Triton pipeline:
@@ -301,7 +301,7 @@ class CudnnFusedMoEKernel(BaseKernel):
     Requires: CUDA GPU + Triton
     """
 
-    _kernel_id = "cudnn_fused_moe"
+    _kernel_id = "cuda_fused_moe"
     _device = DeviceType.CUDA
 
     @classmethod
@@ -313,7 +313,7 @@ class CudnnFusedMoEKernel(BaseKernel):
 
             return True
         except ImportError:
-            logger.info("cudnn_fused_moe: Triton not available, kernel disabled.")
+            logger.info("cuda_fused_moe: Triton not available, kernel disabled.")
             return False
 
     @classmethod
@@ -323,7 +323,7 @@ class CudnnFusedMoEKernel(BaseKernel):
             raise ValueError(f"HFModel instance is required for {cls.__name__}.")
 
         if not cls.check_deps():
-            logger.warning("cudnn_fused_moe: Dependencies not met. Skipping kernel application.")
+            logger.warning("cuda_fused_moe: Dependencies not met. Skipping kernel application.")
             return model
 
         archs = getattr(model.config, "architectures", None) or []
@@ -335,7 +335,7 @@ class CudnnFusedMoEKernel(BaseKernel):
 
         if target_mapping is None:
             logger.info(
-                f"cudnn_fused_moe: Model architecture {archs} not supported. "
+                f"cuda_fused_moe: Model architecture {archs} not supported. "
                 f"Supported: {list(_TRITON_MOE_MAPPING.keys())}"
             )
             return model
@@ -349,8 +349,8 @@ class CudnnFusedMoEKernel(BaseKernel):
                     patched_count += 1
 
         if patched_count > 0:
-            logger.info(f"cudnn_fused_moe: Patched {patched_count} MoE expert modules with pure Triton pipeline.")
+            logger.info(f"cuda_fused_moe: Patched {patched_count} MoE expert modules with pure Triton pipeline.")
         else:
-            logger.warning("cudnn_fused_moe: No MoE expert modules found to patch.")
+            logger.warning("cuda_fused_moe: No MoE expert modules found to patch.")
 
         return model
