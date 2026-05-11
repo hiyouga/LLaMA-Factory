@@ -63,8 +63,10 @@ class TritonFusedMoeFunction(torch.autograd.Function):
         fc1_weight,
         fc2_weight,
     ):
-        """
+        """Forward pass.
+
         Args:
+            ctx: autograd context
             num_experts: int
             gate_weights: (num_tokens, top_k) routing weights
             expert_index: (num_tokens, top_k) expert assignments
@@ -73,9 +75,7 @@ class TritonFusedMoeFunction(torch.autograd.Function):
             fc2_weight: (E, hidden, inter) down projection weight
         """
         # Compute scatter index: maps (token, topk) → position in sorted buffer
-        scatter_index = (
-            expert_index.flatten().argsort(stable=True).argsort().int().view(expert_index.shape)
-        )
+        scatter_index = expert_index.flatten().argsort(stable=True).argsort().int().view(expert_index.shape)
 
         # Token counts per expert and cumulative boundaries
         splits = torch.zeros(num_experts, dtype=torch.int32, device=hidden_states.device)

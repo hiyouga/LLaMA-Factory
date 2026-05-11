@@ -162,9 +162,9 @@ def group_gemm_same_nk(
 
     c = torch.empty((a.shape[0], N), dtype=a.dtype, device=a.device)
 
-    _group_gemm_same_nk_kernel[(
-        lambda meta: (triton.cdiv(max_M, meta["BLOCK_M"]) * triton.cdiv(N, meta["BLOCK_N"]), G)
-    )](
+    _group_gemm_same_nk_kernel[
+        (lambda meta: (triton.cdiv(max_M, meta["BLOCK_M"]) * triton.cdiv(N, meta["BLOCK_N"]), G))
+    ](
         a_ptr=a,
         b_ptr=b,
         c_ptr=c,
@@ -281,9 +281,7 @@ def group_gemm_same_mn(
     """
     G, M, N = c.shape
 
-    _group_gemm_same_mn_kernel[(
-        lambda meta: (triton.cdiv(M, meta["BLOCK_M"]) * triton.cdiv(N, meta["BLOCK_N"]), G)
-    )](
+    _group_gemm_same_mn_kernel[(lambda meta: (triton.cdiv(M, meta["BLOCK_M"]) * triton.cdiv(N, meta["BLOCK_N"]), G))](
         a_ptr=a,
         b_ptr=b,
         c_ptr=c,
