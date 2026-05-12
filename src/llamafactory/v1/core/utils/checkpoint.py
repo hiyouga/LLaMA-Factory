@@ -215,8 +215,7 @@ def _load_standard_training_states(
             incompatible_keys = model_to_load.load_state_dict(state_dict, strict=False)
             if incompatible_keys.missing_keys:
                 raise RuntimeError(
-                    "Unexpected missing keys when loading checkpoint model weights: "
-                    f"{incompatible_keys.missing_keys}."
+                    f"Unexpected missing keys when loading checkpoint model weights: {incompatible_keys.missing_keys}."
                 )
         else:
             logger.warning_rank0(f"No model weights found in {model_dir}, skipping model state restore.")

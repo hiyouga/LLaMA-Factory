@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import math
 
 import torch
 import torch.nn.functional as F
@@ -120,8 +119,8 @@ class RMTrainer(BaseTrainer):
         # Build position_ids that reset at each document boundary.
         batch_size, seq_len = token_type_ids.shape
         arange = torch.arange(seq_len, device=self.device).unsqueeze(0).expand(batch_size, -1)
-        chosen_mask = (token_type_ids == 1)
-        rejected_mask = (token_type_ids == 2)
+        chosen_mask = token_type_ids == 1
+        rejected_mask = token_type_ids == 2
         chosen_lens = chosen_mask.sum(dim=1, keepdim=True)
         position_ids = torch.zeros_like(token_type_ids)
         position_ids[chosen_mask] = arange[chosen_mask]
@@ -137,8 +136,8 @@ class RMTrainer(BaseTrainer):
 
         rewards = model_output.logits.float().squeeze(-1)
 
-        chosen_mask = (token_type_ids == 1)
-        rejected_mask = (token_type_ids == 2)
+        chosen_mask = token_type_ids == 1
+        rejected_mask = token_type_ids == 2
 
         valid_pair_mask = chosen_mask.any(dim=-1) & rejected_mask.any(dim=-1)
         if not torch.any(valid_pair_mask):
