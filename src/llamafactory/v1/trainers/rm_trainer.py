@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
+import math
 
 import torch
 import torch.nn.functional as F
 
-from ..accelerator.interface import DistributedInterface
+from ..accelerator.interface import Dim, DistributedInterface
 from ..config import InputArgument, TrainingArguments, get_args
 from ..config.arg_utils import ModelClass
 from ..core.base_trainer import BaseTrainer
@@ -43,25 +43,29 @@ def _validate_rm_dataset_format(train_dataset: DataEngine, dataset_path: str) ->
     sample_keys = sorted(sample.keys())
     raise ValueError(
         "RM training requires pair-format samples containing chosen/rejected responses. "
-        f"First sample from dataset '{dataset_name}\ has keys: {sample_keys}. "
+        f"First sample from dataset '{dataset_name}' has keys: {sample_keys}. "
         "Please use pair data (e.g. a dataset with chosen_messages/rejected_messages, "
         "or set converter='pair' for raw chosen/rejected fields)."
     )
 
 
 def _init_score_head(model: HFModel) -> None:
-    """Initialize the score head for RM training.
+    """Initialize the score head for RM training with small Gaussian weights.
 
-    The score layer is missing from pretrained LLM checkpoints and its initialization
-    can be non-deterministic across distributed ranks. We explicitly zero-initialize it
-    so that initial chosen/rejected scores are equal (loss starts at ln(2) ~ 0.693).
+    Uses Gaussian initialization so that different parameters have distinct values,
+    providing better gradient flow than zero initialization while keeping initial
+    scores small enough that the starting loss is close to ln(2).
     """
     unwrapped = model.module if hasattr(model, "module") else model
     score = getattr(unwrapped, "score", None)
     if score is not None and hasattr(score, "weight"):
+        hidden_size = score.weight.shape[-1]
+        std = 1.0 / (hidden_size * 10)
         with torch.no_grad():
-            score.weight.zero_()
-        logger.info_rank0(f"Initialized score head to zeros: {score.weight.shape}")
+            score.weight.normal_(mean=0.0, std=std)
+            if score.bias is not None:
+                score.bias.zero_()
+        logger.info_rank0(f"Initialized score head with Gaussian (std={std:.6f}): {score.weight.shape}")
 
 
 class RMTrainer(BaseTrainer):
@@ -79,9 +83,15 @@ class RMTrainer(BaseTrainer):
 
         super().__init__(args, model, renderer, train_dataset, callbacks)
 
-        self._captured_scores: dict[str, torch.Tensor] = {}
-        score_module = self._get_score_module()
-        score_module.register_forward_hook(self._score_capture_hook)
+    def _shard_model(self) -> None:
+        if self.args.dist_config is None:
+            if DistributedInterface().get_world_size(Dim.DP) > 1:
+                from torch.nn.parallel import DistributedDataParallel as DDP
+
+                device_ids = None if self.device.type == "cpu" else [self.device.index]
+                self.model = DDP(self.model, device_ids=device_ids, find_unused_parameters=True)
+        else:
+            super()._shard_model()
 
     @property
     def _unwrapped_model(self):
@@ -90,20 +100,6 @@ class RMTrainer(BaseTrainer):
         if hasattr(model, "module"):
             model = model.module
         return model
-
-    def _get_score_module(self):
-        """Get the score head module from the SeqCls model for hook registration."""
-        model = self._unwrapped_model
-        score = getattr(model, "score", None)
-        if score is None or getattr(model, "model", None) is None:
-            raise ValueError(
-                "RM training requires a model loaded with AutoModelForSequenceClassification "
-                "(model_class='cls_seq'). The model must have `.model` and `.score` attributes."
-            )
-        return score
-
-    def _score_capture_hook(self, _module, _input, output):
-        self._captured_scores["value"] = output
 
     def compute_loss(self, batch: BatchInput) -> Tensor:
         input_ids = batch["input_ids"].to(self.device, non_blocking=True)
@@ -139,12 +135,7 @@ class RMTrainer(BaseTrainer):
             return_dict=True,
         )
 
-        rewards = self._captured_scores["value"].float().squeeze(-1)
-
-        # FSDP2 registers backward hooks on module output tensors to trigger parameter unshard.
-        # Since loss is computed from the captured intermediate tensor rather than model_output,
-        # we must keep model_output in the autograd graph so those backward hooks still fire.
-        _fsdp_bwd_anchor = model_output.logits.sum() * 0.0
+        rewards = model_output.logits.float().squeeze(-1)
 
         chosen_mask = (token_type_ids == 1)
         rejected_mask = (token_type_ids == 2)
@@ -167,12 +158,12 @@ class RMTrainer(BaseTrainer):
 
         chosen_scores = rewards.gather(dim=1, index=chosen_last_idx.unsqueeze(-1)).squeeze(-1)
         rejected_scores = rewards.gather(dim=1, index=rejected_last_idx.unsqueeze(-1)).squeeze(-1)
-        return -F.logsigmoid(chosen_scores - rejected_scores).mean() + _fsdp_bwd_anchor
+        return -F.logsigmoid(chosen_scores - rejected_scores).mean()
 
 
 def run_rm(args: InputArgument = None):
     model_args, data_args, training_args, _ = get_args(args)
-    model_args.model_class = ModelClass.CLS_SEQ
+    model_args.model_class = ModelClass.CLS
     DistributedInterface(training_args.dist_config)
     train_dataset = DataEngine(data_args.train_dataset)
     _validate_rm_dataset_format(train_dataset, data_args.train_dataset)

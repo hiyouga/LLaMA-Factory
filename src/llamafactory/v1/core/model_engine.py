@@ -141,18 +141,13 @@ class ModelEngine:
         elif self.args.model_class == ModelClass.CLS:
             from transformers import AutoModelForTokenClassification
 
-            AutoClass = AutoModelForTokenClassification
-
-        elif self.args.model_class == ModelClass.CLS_SEQ:
-            from transformers import AutoModelForSequenceClassification
-
             self.model_config.num_labels = 1
-            # For composite configs (e.g. multimodal models), the text sub-config is what
-            # actually gets passed to the classification head, so set num_labels there too.
+            self.model_config.classifier_dropout = 0.0
             text_config = getattr(self.model_config, "text_config", None)
             if text_config is not None:
                 text_config.num_labels = 1
-            AutoClass = AutoModelForSequenceClassification
+                text_config.classifier_dropout = 0.0
+            AutoClass = AutoModelForTokenClassification
         else:
             from transformers import AutoModel
 
