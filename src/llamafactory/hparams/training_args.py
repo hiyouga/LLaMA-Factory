@@ -14,6 +14,7 @@
 
 import json
 from dataclasses import dataclass, field
+from typing import Optional
 
 from transformers import Seq2SeqTrainingArguments
 from transformers.training_args import _convert_str_dict
@@ -63,6 +64,49 @@ class RayArguments:
             self.ray_init_kwargs = _convert_str_dict(json.loads(self.ray_init_kwargs))
 
 
+
+@dataclass
+class ProfilerArguments:
+    r"""Arguments for torch profiler configuration."""
+
+    enable_torch_profiler: bool = field(
+        default=False,
+        metadata={"help": "Whether to enable torch profiler for collecting performance traces."},
+    )
+    profiler_output_dir: Optional[str] = field(
+        default=None,
+        metadata={"help": "Directory to write profiler traces. Defaults to <output_dir>/profiler if not set."},
+    )
+    profiler_wait_steps: int = field(
+        default=1,
+        metadata={"help": "Number of steps to skip at the start of each profiling cycle."},
+    )
+    profiler_warmup_steps: int = field(
+        default=1,
+        metadata={"help": "Number of profiler warm-up steps per cycle."},
+    )
+    profiler_active_steps: int = field(
+        default=1,
+        metadata={"help": "Number of steps to actively record per cycle."},
+    )
+    profiler_repeat: int = field(
+        default=1,
+        metadata={"help": "Number of profiling cycles. Set to 0 for continuous profiling."},
+    )
+    profiler_record_shapes: bool = field(
+        default=True,
+        metadata={"help": "Whether to record tensor shapes during profiling."},
+    )
+    profiler_profile_memory: bool = field(
+        default=True,
+        metadata={"help": "Whether to profile memory usage."},
+    )
+    profiler_with_stack: bool = field(
+        default=True,
+        metadata={"help": "Whether to record stack traces during profiling."},
+    )
+
+
 @dataclass
 class Fp8Arguments:
     r"""Arguments pertaining to the FP8 training."""
@@ -87,7 +131,7 @@ class Fp8Arguments:
 
 
 @dataclass
-class TrainingArguments(Fp8Arguments, RayArguments, BaseTrainingArguments):
+class TrainingArguments(ProfilerArguments, Fp8Arguments, RayArguments, BaseTrainingArguments):
     r"""Arguments pertaining to the trainer."""
 
     overwrite_output_dir: bool = field(

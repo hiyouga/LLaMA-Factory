@@ -62,7 +62,7 @@ logger = logging.get_logger(__name__)
 def _training_function(config: dict[str, Any]) -> None:
     args = config.get("args")
     callbacks: list[Any] = config.get("callbacks")
-    model_args, data_args, training_args, finetuning_args, generating_args, profiler_args = get_train_args(args)
+    model_args, data_args, training_args, finetuning_args, generating_args = get_train_args(args)
 
     callbacks.append(LogCallback())
     if finetuning_args.pissa_convert:
@@ -74,8 +74,8 @@ def _training_function(config: dict[str, Any]) -> None:
     if finetuning_args.early_stopping_steps is not None:
         callbacks.append(EarlyStoppingCallback(early_stopping_patience=finetuning_args.early_stopping_steps))
 
-    if profiler_args.enable_torch_profiler:
-        callbacks.append(TorchProfilerCallback(profiler_args))
+    if training_args.enable_torch_profiler:
+        callbacks.append(TorchProfilerCallback(training_args))
 
     callbacks.append(ReporterCallback(model_args, data_args, finetuning_args, generating_args))  # add to last
 

@@ -148,7 +148,7 @@ def bench_qwen(
     if deepspeed_stage in [2, 3]:
         args["deepspeed"] = f"examples/deepspeed/ds_z{deepspeed_stage}_config.json"
 
-    model_args, _, training_args, finetuning_args, _, _ = get_train_args(args)
+    model_args, _, training_args, finetuning_args, _ = get_train_args(args)
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
     trainset = DummyDataset(size=100000, seq_length=seq_length, processor=tokenizer_module["processor"])

@@ -44,7 +44,7 @@ if TYPE_CHECKING:
     from transformers import TrainerControl, TrainerState, TrainingArguments
     from trl import AutoModelForCausalLMWithValueHead
 
-    from ..hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments, ProfilerArguments
+    from ..hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
 
 
 logger = logging.get_logger(__name__)
@@ -357,9 +357,9 @@ class TorchProfilerCallback(TrainerCallback):
     ``<profiler_output_dir>/rank_<N>/``.
     """
 
-    def __init__(self, profiler_args: "ProfilerArguments") -> None:
+    def __init__(self, training_args: "TrainingArguments") -> None:
         self.profiler = None
-        self.profiler_args = profiler_args
+        self.profiler_args = training_args
 
     @staticmethod
     def _get_rank() -> int:
