@@ -90,5 +90,5 @@ jobs:
 
       - name: Test with pytest
         run: |
-          sleep 3600
+          source usr/local/Ascend/ascend-toolkit/set_env.sh
           make test
