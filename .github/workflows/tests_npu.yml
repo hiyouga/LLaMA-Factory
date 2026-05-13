@@ -90,4 +90,5 @@ jobs:
 
       - name: Test with pytest
         run: |
+          sleep 3600
           make test
