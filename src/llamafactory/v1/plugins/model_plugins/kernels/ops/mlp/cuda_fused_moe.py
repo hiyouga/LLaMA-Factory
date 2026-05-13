@@ -25,6 +25,7 @@ import logging
 import types
 
 import torch
+import torch.nn.functional as F
 
 from ......accelerator.helper import DeviceType
 from ......utils.types import HFModel
@@ -242,7 +243,7 @@ class TritonFusedMoeFunction(torch.autograd.Function):
 
 
 # ---------------------------------------------------------------------------
-# Patched forward function
+# Patched forward functions
 # ---------------------------------------------------------------------------
 
 
@@ -252,7 +253,7 @@ def _triton_moe_experts_forward(
     top_k_index: torch.Tensor,
     top_k_weights: torch.Tensor,
 ) -> torch.Tensor:
-    """Replacement forward for MoE expert modules using pure Triton pipeline."""
+    """Replacement forward for v5+ MoE expert modules with stacked 3D weights."""
     return TritonFusedMoeFunction.apply(
         self.num_experts,
         top_k_weights.to(hidden_states.dtype),
@@ -264,12 +265,77 @@ def _triton_moe_experts_forward(
 
 
 # ---------------------------------------------------------------------------
+# Legacy (transformers < 5.0) support: weight stacking + SparseMoeBlock patch
+# ---------------------------------------------------------------------------
+
+
+class _StackedExpertWeights(torch.nn.Module):
+    """Lightweight container holding stacked 3D expert weight tensors."""
+
+    def __init__(self, gate_up_proj: torch.Tensor, down_proj: torch.Tensor, num_experts: int):
+        super().__init__()
+        self.gate_up_proj = torch.nn.Parameter(gate_up_proj)
+        self.down_proj = torch.nn.Parameter(down_proj)
+        self.num_experts = num_experts
+
+
+def _stack_expert_weights(module: torch.nn.Module) -> None:
+    """Replace nn.ModuleList of individual experts with stacked 3D parameter tensors."""
+    experts = module.experts
+    num_experts = len(experts)
+
+    gate_up_list = []
+    for expert in experts:
+        gate_w = expert.gate_proj.weight.data  # (inter, hidden)
+        up_w = expert.up_proj.weight.data  # (inter, hidden)
+        gate_up_list.append(torch.cat([gate_w, up_w], dim=0))  # (2*inter, hidden)
+    gate_up_proj = torch.stack(gate_up_list, dim=0)  # (E, 2*inter, hidden)
+
+    down_proj = torch.stack([e.down_proj.weight.data for e in experts], dim=0)  # (E, hidden, inter)
+
+    module.experts = _StackedExpertWeights(gate_up_proj, down_proj, num_experts)
+    logger.info(
+        f"cuda_fused_moe: Stacked {num_experts} expert weights into "
+        f"gate_up_proj {tuple(gate_up_proj.shape)}, down_proj {tuple(down_proj.shape)}"
+    )
+
+
+def _triton_moe_sparse_block_forward(self, hidden_states: torch.Tensor):
+    """Replacement forward for legacy SparseMoeBlock with inline routing."""
+    batch_size, sequence_length, hidden_dim = hidden_states.shape
+    hidden_states = hidden_states.view(-1, hidden_dim)
+
+    router_logits = self.gate(hidden_states)
+    routing_weights = F.softmax(router_logits, dim=1, dtype=torch.float)
+    routing_weights, selected_experts = torch.topk(routing_weights, self.top_k, dim=-1)
+    if self.norm_topk_prob:
+        routing_weights /= routing_weights.sum(dim=-1, keepdim=True)
+    routing_weights = routing_weights.to(hidden_states.dtype)
+
+    final_hidden_states = TritonFusedMoeFunction.apply(
+        self.num_experts,
+        routing_weights,
+        selected_experts,
+        hidden_states,
+        self.experts.gate_up_proj,
+        self.experts.down_proj,
+    )
+
+    final_hidden_states = final_hidden_states.reshape(batch_size, sequence_length, hidden_dim)
+    return final_hidden_states, router_logits
+
+
+# ---------------------------------------------------------------------------
 # Module mapping
 # ---------------------------------------------------------------------------
 
 _TRITON_MOE_MAPPING: dict[str, dict[str, object]] = {
+    "MixtralForCausalLM": {
+        "MixtralExperts": _triton_moe_experts_forward,
+    },
     "Qwen3MoeForCausalLM": {
         "Qwen3MoeExperts": _triton_moe_experts_forward,
+        "Qwen3MoeSparseMoeBlock": _triton_moe_sparse_block_forward,
     },
     "Qwen3_5MoeForCausalLM": {
         "Qwen3_5MoeExperts": _triton_moe_experts_forward,
@@ -338,10 +404,22 @@ class CudaFusedMoEKernel(BaseKernel):
         patched_count = 0
         for module in model.modules():
             class_name = module.__class__.__name__
-            if class_name in target_mapping:
-                if hasattr(module, "gate_up_proj") and hasattr(module, "down_proj"):
-                    module.forward = types.MethodType(target_mapping[class_name], module)
-                    patched_count += 1
+            if class_name not in target_mapping:
+                continue
+
+            target_fn = target_mapping[class_name]
+
+            if hasattr(module, "gate_up_proj") and hasattr(module, "down_proj"):
+                module.forward = types.MethodType(target_fn, module)
+                patched_count += 1
+            elif (
+                hasattr(module, "experts")
+                and isinstance(module.experts, torch.nn.ModuleList)
+                and hasattr(module, "gate")
+            ):
+                _stack_expert_weights(module)
+                module.forward = types.MethodType(target_fn, module)
+                patched_count += 1
 
         if patched_count > 0:
             logger.info(f"cuda_fused_moe: Patched {patched_count} MoE expert modules with pure Triton pipeline.")
