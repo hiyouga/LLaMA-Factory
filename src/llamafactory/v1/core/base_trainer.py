@@ -34,7 +34,7 @@ import torch.nn.functional as F
 
 from ..accelerator.helper import ReduceOp
 from ..accelerator.interface import Dim, DistributedInterface
-from ..config import TrainingArguments
+from ..config import BatchingStrategy, TrainingArguments
 from ..utils import logging
 from ..utils.callbacks import (
     CallbackHandler,
@@ -151,6 +151,12 @@ class BaseTrainer:
             SequenceParallelModelPlugin(self.args.dist_config.get("cp_mode", "ulysses"))(model, self.args.dist_config)
 
     def _create_batch_generator(self) -> None:
+        if (
+            self.args.batching_strategy == BatchingStrategy.PADDING_FREE
+            and getattr(self.model.config, "_attn_implementation", None) != "flash_attention_2"
+        ):
+            raise ValueError("`padding_free` requires `flash_attn: fa2`.")
+
         self.train_batch_generator = BatchGenerator(
             dataset=self.train_dataset,
             renderer=self.renderer,
@@ -234,6 +240,7 @@ class BaseTrainer:
             self.train_batch_generator.set_epoch(epoch)
             self.callback_handler.on_epoch_begin(self.args, self.state)
 
+            # BatchGenerator is an iterator; each loop step calls its __next__ to produce one optimizer step.
             for micro_batches in self.train_batch_generator:
                 self.global_step += 1
 

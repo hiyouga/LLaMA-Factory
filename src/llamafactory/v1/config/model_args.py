@@ -15,6 +15,7 @@
 
 from dataclasses import dataclass, field
 
+from ..utils.types import AttentionFunction
 from .arg_utils import ModelClass, PluginConfig, get_plugin_config
 
 
@@ -31,6 +32,10 @@ class ModelArguments:
     trust_remote_code: bool = field(
         default=False,
         metadata={"help": "Trust remote code from Hugging Face."},
+    )
+    flash_attn: AttentionFunction = field(
+        default=AttentionFunction.AUTO,
+        metadata={"help": "Attention implementation to use: auto, disabled, sdpa, or fa2."},
     )
     model_class: ModelClass = field(
         default=ModelClass.LLM,

@@ -61,6 +61,9 @@ def load_checkpoint_fsdp2(model: HFModel, optimizer: torch.optim.Optimizer, ckpt
 
 @DistributedPlugin("deepspeed").register()
 def shard_model_deepspeed(model: HFModel, dist_config: PluginConfig, **kwargs) -> HFModel:
+    if dist_config.get("cp_size", 1) > 1:
+        raise ValueError("CP currently requires `dist_config.name: fsdp2`.")
+
     from .deepspeed import DeepSpeedEngine
 
     return DeepSpeedEngine(

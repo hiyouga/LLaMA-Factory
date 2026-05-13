@@ -70,7 +70,6 @@ class UlyssesAttention(torch.nn.Module):
         gather_idx: int = 1,
         attn_fn: Optional[callable] = None,
     ) -> None:
-
         super().__init__()
         self.spg = sequence_process_group
         self.scatter_idx = scatter_idx

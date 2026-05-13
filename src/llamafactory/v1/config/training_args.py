@@ -116,3 +116,9 @@ class TrainingArguments:
         self.dist_config = get_plugin_config(self.dist_config)
         self.optim_config = get_plugin_config(self.optim_config)
         self.lr_scheduler_config = get_plugin_config(self.lr_scheduler_config)
+
+        if str(self.batching_strategy) == str(BatchingStrategy.DYNAMIC_BATCHING):
+            if self.max_steps is None or self.max_steps <= 0:
+                raise ValueError("`dynamic_batching` requires `max_steps` because it is step-driven.")
+            if self.save_epochs is not None:
+                raise ValueError("`save_epochs` is not supported with `dynamic_batching`; use `save_steps` instead.")

@@ -120,6 +120,9 @@ class ModelEngine:
             init_device = DistributedInterface().current_device
 
         init_kwargs = {} if self._deepspeed_zero3_enabled else {"device_map": init_device}
+        from ..plugins.model_plugins.transformers_kernels import update_transformers_kernels_kwargs
+
+        init_kwargs = update_transformers_kernels_kwargs(flash_attn=self.args.flash_attn, init_kwargs=init_kwargs)
 
         if self.args.quant_config is not None:
             from ..plugins.model_plugins.quantization import QuantizationPlugin

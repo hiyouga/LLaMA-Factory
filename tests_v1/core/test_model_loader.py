@@ -41,11 +41,3 @@ def test_tiny_qwen_with_kernel_plugin():
         assert model_engine.model.model.layers[0].input_layernorm.forward.__code__ != npu_rms_norm_forward.__code__
 
     assert "Qwen3ForCausalLM" in model_engine.model.__class__.__name__
-
-
-if __name__ == "__main__":
-    """
-    python -m tests_v1.core.test_model_loader
-    """
-    test_tiny_qwen()
-    test_tiny_qwen_with_kernel_plugin()
