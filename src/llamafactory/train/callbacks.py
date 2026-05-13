@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import fnmatch
 import json
 import os
 import signal
 import sys
 import time
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -484,3 +487,143 @@ class ReporterCallback(TrainerCallback):
                     "generating_args": self.generating_args.to_dict(),
                 }
             )
+
+
+class ModuleProfilerCallback(TrainerCallback):
+    r"""Profile forward/backward time of specified modules using accelerator events.
+
+    Hooks are registered on modules matching the user-provided name patterns.
+    Timing statistics are logged at each trainer logging step.
+
+    Usage in YAML config:
+        profile_modules: "*.layers.0.self_attn,*.layers.0.mlp"
+
+    Supports fnmatch wildcards:
+        profile_modules: "*.layers.*.self_attn,*.layers.*.mlp.experts"
+    """
+
+    @staticmethod
+    def _get_accelerator():
+        """Detect available accelerator and return (event_factory, synchronize_fn)."""
+        if is_torch_cuda_available():
+            return torch.cuda.Event, torch.cuda.synchronize
+        if is_torch_npu_available():
+            return torch.npu.Event, torch.npu.synchronize
+        return None, None
+
+    def __init__(self, profile_modules: str) -> None:
+        self.patterns = [p.strip() for p in profile_modules.split(",") if p.strip()]
+        self._create_event, self._synchronize = self._get_accelerator()
+        self._handles: list[Any] = []
+        self._forward_times: dict[str, list[float]] = defaultdict(list)
+        self._backward_times: dict[str, list[float]] = defaultdict(list)
+        self._pending_forward: dict[str, tuple] = {}
+        self._pending_backward: dict[str, tuple] = {}
+
+    @property
+    def enabled(self) -> bool:
+        return self._create_event is not None
+
+    def _match(self, name: str) -> bool:
+        return any(fnmatch.fnmatch(name, pat) for pat in self.patterns)
+
+    def _make_forward_pre_hook(self, name: str):
+        def hook(module, input):
+            start = self._create_event(enable_timing=True)
+            end = self._create_event(enable_timing=True)
+            start.record()
+            self._pending_forward[name] = (start, end)
+
+        return hook
+
+    def _make_forward_hook(self, name: str):
+        def hook(module, input, output):
+            pair = self._pending_forward.get(name)
+            if pair is not None:
+                pair[1].record()
+
+        return hook
+
+    def _make_backward_pre_hook(self, name: str):
+        def hook(module, grad_output):
+            start = self._create_event(enable_timing=True)
+            end = self._create_event(enable_timing=True)
+            start.record()
+            self._pending_backward[name] = (start, end)
+
+        return hook
+
+    def _make_backward_hook(self, name: str):
+        def hook(module, grad_input, grad_output):
+            pair = self._pending_backward.get(name)
+            if pair is not None:
+                pair[1].record()
+
+        return hook
+
+    @override
+    def on_train_begin(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
+        if not self.enabled:
+            logger.warning_rank0("ModuleProfiler: no supported accelerator (CUDA/NPU) found, profiling disabled.")
+            return
+
+        model = kwargs.get("model")
+        if model is None:
+            return
+
+        matched = []
+        for name, module in model.named_modules():
+            if not name or not self._match(name):
+                continue
+            self._handles.append(module.register_forward_pre_hook(self._make_forward_pre_hook(name)))
+            self._handles.append(module.register_forward_hook(self._make_forward_hook(name)))
+            self._handles.append(module.register_full_backward_pre_hook(self._make_backward_pre_hook(name)))
+            self._handles.append(module.register_full_backward_hook(self._make_backward_hook(name)))
+            matched.append(name)
+
+        if matched:
+            logger.info_rank0(
+                f"ModuleProfiler: registered hooks on {len(matched)} modules: {matched[:5]}"
+                + (f" ... (+{len(matched)-5} more)" if len(matched) > 5 else "")
+            )
+        else:
+            logger.warning_rank0(f"ModuleProfiler: no modules matched patterns {self.patterns}")
+
+    @override
+    def on_step_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
+        if not self.enabled:
+            return
+
+        self._synchronize()
+
+        for name, (start, end) in self._pending_forward.items():
+            self._forward_times[name].append(start.elapsed_time(end))
+        self._pending_forward.clear()
+
+        for name, (start, end) in self._pending_backward.items():
+            self._backward_times[name].append(start.elapsed_time(end))
+        self._pending_backward.clear()
+
+    @override
+    def on_log(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
+        if not self._forward_times and not self._backward_times:
+            return
+
+        lines = ["[ModuleProfiler] Timing (ms):"]
+        all_names = sorted(set(list(self._forward_times.keys()) + list(self._backward_times.keys())))
+        for name in all_names:
+            fwd = self._forward_times.get(name, [])
+            bwd = self._backward_times.get(name, [])
+            fwd_mean = sum(fwd) / len(fwd) if fwd else 0.0
+            bwd_mean = sum(bwd) / len(bwd) if bwd else 0.0
+            lines.append(f"  {name}: fwd={fwd_mean:.3f}, bwd={bwd_mean:.3f}, total={fwd_mean+bwd_mean:.3f}")
+
+        logger.info_rank0("\n".join(lines))
+        self._forward_times.clear()
+        self._backward_times.clear()
+
+    @override
+    def on_train_end(self, args: "TrainingArguments", state: "TrainerState", control: "TrainerControl", **kwargs):
+        for handle in self._handles:
+            handle.remove()
+        self._handles.clear()

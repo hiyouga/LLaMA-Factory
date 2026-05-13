@@ -64,7 +64,6 @@ class RayArguments:
             self.ray_init_kwargs = _convert_str_dict(json.loads(self.ray_init_kwargs))
 
 
-
 @dataclass
 class ProfilerArguments:
     r"""Arguments for torch profiler configuration."""
@@ -104,6 +103,16 @@ class ProfilerArguments:
     profiler_with_stack: bool = field(
         default=True,
         metadata={"help": "Whether to record stack traces during profiling."},
+    )
+    profile_modules: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": (
+                "Comma-separated list of module name patterns to profile with CUDA events. "
+                "Supports fnmatch wildcards (e.g. 'model.layers.0.self_attn,model.layers.*.mlp'). "
+                "Reports per-module forward/backward timing statistics at each logging step."
+            )
+        },
     )
 
 

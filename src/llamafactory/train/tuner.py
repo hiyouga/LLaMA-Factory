@@ -32,7 +32,13 @@ from ..extras.packages import (
 )
 from ..hparams import RayArguments, get_infer_args, get_ray_args, get_train_args, read_args
 from ..model import load_model, load_tokenizer
-from .callbacks import LogCallback, PissaConvertCallback, ReporterCallback, TorchProfilerCallback
+from .callbacks import (
+    LogCallback,
+    ModuleProfilerCallback,
+    PissaConvertCallback,
+    ReporterCallback,
+    TorchProfilerCallback,
+)
 from .dpo import run_dpo
 from .kto import run_kto
 from .ppo import run_ppo
@@ -76,6 +82,9 @@ def _training_function(config: dict[str, Any]) -> None:
 
     if training_args.enable_torch_profiler:
         callbacks.append(TorchProfilerCallback(training_args))
+
+    if training_args.profile_modules:
+        callbacks.append(ModuleProfilerCallback(training_args.profile_modules))
 
     callbacks.append(ReporterCallback(model_args, data_args, finetuning_args, generating_args))  # add to last
 
