@@ -122,48 +122,6 @@ def _pack_padding_free_samples(samples: list[ModelInput], cutoff_len: int) -> Ba
     return {key: torch.tensor(value).unsqueeze(0) for key, value in packed.items()}
 
 
-@BatchingPlugin("normal").register("get_data_provider_batch_size")
-def get_normal_data_provider_batch_size(batch_info: BatchInfo) -> int:
-    return batch_info["micro_batch_size"] * batch_info["num_micro_batch"]
-
-
-@BatchingPlugin("normal").register("compute_length")
-def compute_normal_length(data_provider: DataLoader, batch_info: BatchInfo) -> int:
-    return len(data_provider)
-
-
-@BatchingPlugin("normal").register("fill_buffer")
-def fill_normal_buffer(
-    buffer: StatefulBuffer,
-    batch_info: BatchInfo,
-    next_samples: Callable[[bool], list[ModelInput] | None],
-) -> None:
-    while len(buffer) < batch_info["micro_batch_size"] * batch_info["num_micro_batch"]:
-        samples = next_samples(False)
-        if samples is None:
-            break
-
-        buffer.put(samples)
-
-
-@BatchingPlugin("normal").register("generate_batch")
-def generate_normal_batch(buffer: StatefulBuffer, batch_info: BatchInfo) -> list[BatchInput] | None:
-    micro_batch_size = batch_info["micro_batch_size"]
-    num_micro_batch = batch_info["num_micro_batch"]
-    cutoff_len = batch_info["cutoff_len"]
-    batch_size = micro_batch_size * num_micro_batch
-    if len(buffer) < batch_size:
-        return None
-
-    samples = buffer.get(batch_size)
-    batch = []
-    for i in range(num_micro_batch):
-        micro_batch = samples[i * micro_batch_size : (i + 1) * micro_batch_size]
-        batch.append(default_collate(pad_and_truncate(micro_batch, cutoff_len)))
-
-    return batch
-
-
 @BatchingPlugin("padding_free").register("get_data_provider_batch_size")
 def get_padding_free_data_provider_batch_size(batch_info: BatchInfo) -> int:
     return batch_info["micro_batch_size"] * batch_info["num_micro_batch"]

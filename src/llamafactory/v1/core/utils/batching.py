@@ -27,13 +27,14 @@ from collections.abc import Iterator
 from typing import Any
 
 import torch
+from torch.utils.data import default_collate
 from torchdata.stateful_dataloader import StatefulDataLoader
 from torchdata.stateful_dataloader.sampler import StatefulDistributedSampler
 
 from ...accelerator.interface import Dim, DistributedInterface
 from ...config import BatchingStrategy
-from ...plugins.trainer_plugins.batching import BatchingPlugin
 from ...utils import logging
+from ...utils.helper import pad_and_truncate
 from ...utils.objects import StatefulBuffer
 from ...utils.types import BatchInfo, BatchInput, ModelInput, TorchDataset
 from .rendering import Renderer
@@ -41,7 +42,24 @@ from .rendering import Renderer
 
 logger = logging.get_logger(__name__)
 
-__all__ = ["BatchGenerator", "BatchingPlugin"]
+__all__ = ["BatchGenerator"]
+
+
+def default_collate_fn(buffer: StatefulBuffer, batch_info: BatchInfo) -> list[BatchInput] | None:
+    micro_batch_size = batch_info["micro_batch_size"]
+    num_micro_batch = batch_info["num_micro_batch"]
+    cutoff_len = batch_info["cutoff_len"]
+    batch_size = micro_batch_size * num_micro_batch
+    if len(buffer) < batch_size:
+        return None
+
+    samples = buffer.get(batch_size)
+    batch = []
+    for i in range(num_micro_batch):
+        micro_batch = samples[i * micro_batch_size : (i + 1) * micro_batch_size]
+        batch.append(default_collate(pad_and_truncate(micro_batch, cutoff_len)))
+
+    return batch
 
 
 class BatchGenerator(Iterator):
@@ -86,7 +104,6 @@ class BatchGenerator(Iterator):
         if not self.drop_last:
             raise ValueError("Drop last must be True.")
 
-        self._batching_plugin = BatchingPlugin(str(self.batching_strategy))
         self._batch_info: BatchInfo = {
             "micro_batch_size": self.micro_batch_size,
             "num_micro_batch": self.num_micro_batch,
@@ -123,7 +140,12 @@ class BatchGenerator(Iterator):
 
         generato_seed = torch.Generator()
         generato_seed.manual_seed(self.seed)
-        batch_size = self._batching_plugin.get_data_provider_batch_size(self._batch_info)
+        if self.batching_strategy == BatchingStrategy.NORMAL:
+            batch_size = self.micro_batch_size * self.num_micro_batch
+        else:
+            from ...plugins.trainer_plugins.batching import BatchingPlugin
+
+            batch_size = BatchingPlugin(self.batching_strategy).get_data_provider_batch_size(self._batch_info)
 
         self._data_provider = StatefulDataLoader(
             self.dataset,
@@ -136,7 +158,12 @@ class BatchGenerator(Iterator):
             drop_last=self.drop_last,
             generator=generato_seed,
         )
-        self._length = self._batching_plugin.compute_length(self._data_provider, self._batch_info)
+        if self.batching_strategy == BatchingStrategy.NORMAL:
+            self._length = len(self._data_provider)
+        else:
+            from ...plugins.trainer_plugins.batching import BatchingPlugin
+
+            self._length = BatchingPlugin(self.batching_strategy).compute_length(self._data_provider, self._batch_info)
 
     def __len__(self) -> int:
         return self._length
@@ -158,10 +185,26 @@ class BatchGenerator(Iterator):
         return batch
 
     def _fill_buffer(self) -> None:
-        self._batching_plugin.fill_buffer(self._buffer, self._batch_info, self._next_samples)
+        if self.batching_strategy == BatchingStrategy.NORMAL:
+            while len(self._buffer) < self.micro_batch_size * self.num_micro_batch:
+                try:
+                    samples: list[ModelInput] = next(self._data_iter)
+                except StopIteration:
+                    break
+
+                self._buffer.put(samples)
+        else:
+            from ...plugins.trainer_plugins.batching import BatchingPlugin
+
+            BatchingPlugin(self.batching_strategy).fill_buffer(self._buffer, self._batch_info, self._next_samples)
 
     def _generate_batch(self) -> list[BatchInput] | None:
-        return self._batching_plugin.generate_batch(self._buffer, self._batch_info)
+        if self.batching_strategy == BatchingStrategy.NORMAL:
+            return default_collate_fn(self._buffer, self._batch_info)
+        else:
+            from ...plugins.trainer_plugins.batching import BatchingPlugin
+
+            return BatchingPlugin(self.batching_strategy).generate_batch(self._buffer, self._batch_info)
 
     def _next_samples(self, restart: bool) -> list[ModelInput] | None:
         try:
@@ -170,6 +213,7 @@ class BatchGenerator(Iterator):
             if not restart:
                 return None
 
+            # Dynamic batching may restart the provider to fill one token-budgeted batch.
             self._data_iter = iter(self._data_provider)
             try:
                 return next(self._data_iter)

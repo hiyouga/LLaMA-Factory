@@ -15,8 +15,8 @@
 from llamafactory.v1.config import DataArguments, ModelArguments, TrainingArguments
 from llamafactory.v1.core.data_engine import DataEngine
 from llamafactory.v1.core.model_engine import ModelEngine
-from llamafactory.v1.core.utils.batching import BatchGenerator, BatchingPlugin
-from llamafactory.v1.plugins.trainer_plugins.batching import _get_dynamic_micro_batch_sizes
+from llamafactory.v1.core.utils.batching import BatchGenerator
+from llamafactory.v1.plugins.trainer_plugins.batching import BatchingPlugin, _get_dynamic_micro_batch_sizes
 from llamafactory.v1.utils.constants import IGNORE_INDEX
 from llamafactory.v1.utils.objects import StatefulBuffer
 
@@ -72,7 +72,6 @@ def test_batching_plugin_data_provider_batch_sizes():
         "cutoff_len": 10,
     }
 
-    assert BatchingPlugin("normal").get_data_provider_batch_size(batch_info) == 6
     assert BatchingPlugin("padding_free").get_data_provider_batch_size(batch_info) == 6
     assert BatchingPlugin("dynamic_batching").get_data_provider_batch_size(batch_info) == 1
 
@@ -142,7 +141,6 @@ def test_dynamic_batching_fill_buffer_restarts_until_micro_batch_is_complete():
 
     batch_generator = BatchGenerator.__new__(BatchGenerator)
     batch_generator.batching_strategy = "dynamic_batching"
-    batch_generator._batching_plugin = BatchingPlugin(batch_generator.batching_strategy)
     batch_generator.micro_batch_size = 2
     batch_generator.num_micro_batch = 1
     batch_generator._buffer = StatefulBuffer()
