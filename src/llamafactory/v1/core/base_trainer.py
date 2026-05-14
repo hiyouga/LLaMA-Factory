@@ -27,6 +27,7 @@ Train Phase:
 
 """
 
+import time
 from abc import abstractmethod
 
 import torch
@@ -68,6 +69,9 @@ class BaseTrainer:
 
         # info
         self.global_step = 0
+        self.train_start_time = None
+        self.total_train_loss = 0.0
+        self.num_loss_steps = 0
 
         # cached variables
         self.device = DistributedInterface().current_device
@@ -226,6 +230,7 @@ class BaseTrainer:
     def fit(self) -> None:
         """Train the model."""
         self.model.train()
+        self.train_start_time = time.time()
         self.callback_handler.on_train_begin(self.args, self.state)
 
         epoch = self._resume_epoch
@@ -297,6 +302,10 @@ class BaseTrainer:
                 self.state.grad_norm = grad_norm
                 self.state.learning_rate = current_lr
 
+                # Track loss for final metrics
+                self.total_train_loss += step_loss
+                self.num_loss_steps += 1
+
                 self.callback_handler.on_step_end(self.args, self.state)
 
                 # Logging: trainer decides when to log
@@ -317,13 +326,61 @@ class BaseTrainer:
                 if self.global_step >= self.num_training_steps:
                     logger.info_rank0(f"Reached max_steps ({self.num_training_steps}), stopping training.")
                     self.callback_handler.on_epoch_end(self.args, self.state)
+                    self._log_final_train_metrics()
                     self.callback_handler.on_train_end(self.args, self.state)
                     return
 
             self.callback_handler.on_epoch_end(self.args, self.state)
             epoch += 1
 
+        self._log_final_train_metrics()
         self.callback_handler.on_train_end(self.args, self.state)
+
+    def _log_final_train_metrics(self) -> None:
+        """Compute and log final training metrics similar to v0."""
+        if DistributedInterface().get_rank() != 0:
+            return
+
+        train_runtime = time.time() - self.train_start_time
+        train_loss = self.total_train_loss / max(self.num_loss_steps, 1)
+
+        # Calculate samples per second
+        # global_batch_size may be None, so calculate it: DP size * micro_batch_size
+        global_batch_size = self.args.global_batch_size
+        if global_batch_size is None:
+            global_batch_size = self.dp_size * self.args.micro_batch_size
+
+        total_samples = self.global_step * global_batch_size
+        train_samples_per_second = total_samples / train_runtime if train_runtime > 0 else 0
+        train_steps_per_second = self.global_step / train_runtime if train_runtime > 0 else 0
+
+        # Format runtime as HH:MM:SS
+        hours = int(train_runtime // 3600)
+        minutes = int((train_runtime % 3600) // 60)
+        seconds = train_runtime % 60
+        runtime_str = f"{hours}:{minutes:02d}:{seconds:05.2f}"
+
+        # Calculate epoch: total steps / steps per epoch
+        steps_per_epoch = len(self.train_batch_generator)
+        final_epoch = self.global_step / steps_per_epoch if steps_per_epoch > 0 else self.args.num_train_epochs
+
+        # Create metrics dict similar to v0
+        metrics = {
+            "train_runtime": int(train_runtime),
+            "train_samples_per_second": round(train_samples_per_second, 3),
+            "train_steps_per_second": round(train_steps_per_second, 3),
+            "train_loss": round(train_loss, 4),
+            "epoch": round(final_epoch, 3),
+        }
+
+        # Log in the same format as v0
+        logger.info_rank0(f"{{'train_runtime': '{int(train_runtime)}', 'train_samples_per_second': '{train_samples_per_second:.3f}', 'train_steps_per_second': '{train_steps_per_second:.3f}', 'train_loss': '{train_loss:.4f}', 'epoch': '{metrics['epoch']}'}}")
+        logger.info_rank0("***** train metrics *****")
+        logger.info_rank0(f"  epoch                    = {metrics['epoch']:>11}")
+        logger.info_rank0(f"  train_loss               = {train_loss:>11.4f}")
+        logger.info_rank0(f"  train_runtime            = {runtime_str:>11}")
+        logger.info_rank0(f"  train_samples_per_second = {train_samples_per_second:>11.3f}")
+        logger.info_rank0(f"  train_steps_per_second   = {train_steps_per_second:>11.3f}")
 
     def save_model(self) -> None:
         """Save the model."""
