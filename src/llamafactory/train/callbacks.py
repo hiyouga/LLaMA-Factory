@@ -53,17 +53,9 @@ if TYPE_CHECKING:
 logger = logging.get_logger(__name__)
 
 _XPU_TELEMETRY_FIELDS: tuple[tuple[tuple[str, ...], str], ...] = (
-    # Compute utilization: metric 0 ("GPU Utilization (%)") is preferred but is often
-    # reported as N/A on Arc/BMG and some PVC firmwares. Fall back to compute-engine
-    # group util (metric 31) and EU array active (metric 9) when available.
-    (
-        (
-            "GPU Utilization (%)",
-            "Compute engine group utilization (%)",
-            "GPU EU Array Active (%)",
-        ),
-        "xpu_compute_util_pct",
-    ),
+    # Compute utilization: use metric 31 (Compute engine group utilization) which
+    # measures compute engines only, providing the most accurate view of AI/ML workload.
+    (("Compute engine group utilization (%)",), "xpu_compute_util_pct"),
     (("GPU Memory Utilization (%)",), "xpu_mem_bandwidth_pct"),
     (("GPU Memory Used (MiB)",), "xpu_mem_in_use_mib"),
 )
@@ -77,15 +69,14 @@ def _sample_xpu_device_metrics(device_id: int = 0) -> dict[str, float]:
     empty dict if ``xpu-smi`` is missing, times out, or returns malformed output.
     A single warning is logged per failure mode.
 
-    Metric IDs requested: 0=GPU Util, 5=Mem Util, 9=EU Active, 18=Mem Used (MiB),
-    31=Compute Engine Group Util. Metric 0 is preferred for compute utilization but
-    falls back to 31 then 9 when N/A on the device.
+    Metric IDs requested: 5=Mem Util, 18=Mem Used (MiB), 31=Compute Engine Group Util.
+    Metric 31 provides the most accurate compute utilization for AI/ML workloads.
     """
     metrics: dict[str, float] = {}
-    cmd = ["xpu-smi", "dump", "-d", str(device_id), "-m", "0,5,9,18,31", "-n", "1"]
+    cmd = ["sudo", "xpu-smi", "dump", "-d", str(device_id), "-m", "5,18,31", "-n", "1"]
 
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=3)
     except FileNotFoundError:
         logger.warning_rank0_once(
             "xpu-smi binary not found on PATH; XPU telemetry will be skipped. "
@@ -134,12 +125,14 @@ def _sample_xpu_device_metrics(device_id: int = 0) -> dict[str, float]:
 def _sample_host_resource_usage() -> dict[str, float]:
     r"""Sample host-side CPU and RAM utilization via ``psutil``.
 
-    Returns an empty dict when ``psutil`` is not installed (warned once). The first
-    call to ``psutil.cpu_percent(interval=None)`` always returns 0.0; this helper
-    primes the counter on its first invocation so later samples reflect real activity.
+    Returns an empty dict when ``psutil`` is not installed (warned once). RAM metrics
+    are always included when available. The first call to ``psutil.cpu_percent(interval=None)``
+    has no prior sample to diff against and would report 0.0, so ``host_cpu_busy_pct``
+    is omitted on the first invocation; the counter is primed and reported from the
+    second invocation onward.
     """
     try:
-        import psutil  # type: ignore[import-not-found]
+        import psutil
     except ImportError:
         logger.warning_rank0_once(
             "psutil is not installed; host CPU/RAM telemetry will be skipped. "
@@ -147,21 +140,22 @@ def _sample_host_resource_usage() -> dict[str, float]:
         )
         return {}
 
-    # Prime the non-blocking CPU counter exactly once at the start.
-    if not getattr(_sample_host_resource_usage, "_primed", False):
-        psutil.cpu_percent(interval=None)
-        _sample_host_resource_usage._primed = True
-        return {}
-
     try:
+        first_call = not getattr(_sample_host_resource_usage, "_primed", False)
+        cpu_pct = psutil.cpu_percent(interval=None)
+        _sample_host_resource_usage._primed = True
+
         vmem = psutil.virtual_memory()
-        return {
-            "host_cpu_busy_pct": round(psutil.cpu_percent(interval=None), 2),
+        result: dict[str, float] = {
             "host_ram_in_use_gib": round(vmem.used / (1024**3), 2),
             "host_ram_full_pct": round(vmem.percent, 2),
         }
+
+        if not first_call:
+            result["host_cpu_busy_pct"] = round(cpu_pct, 2)
+        return result
     except Exception as err:
-        logger.warning_rank0_once(f"psutil host query failed ({err!r}); CPU telemetry will be skipped.")
+        logger.warning_rank0_once(f"psutil host query failed ({err!r}); host telemetry will be skipped.")
         return {}
 
 
@@ -329,6 +323,22 @@ class LogCallback(TrainerCallback):
         with open(os.path.join(output_dir, TRAINER_LOG), "a", encoding="utf-8") as f:
             f.write(json.dumps(logs) + "\n")
 
+    def _sample_and_write_log(self, output_dir: str, logs: dict[str, Any], device_id: int) -> None:
+        r"""Sample device/host metrics on the worker thread and append to the log file.
+
+        ``_sample_xpu_device_metrics`` shells out to ``xpu-smi`` (subprocess + IO) and
+        ``_sample_host_resource_usage`` calls ``psutil``; both are blocking. Running them
+        here keeps the main training thread free, which matters when ``logging_steps`` is
+        small. Metrics are not used by the Web UI's inline log line, so deferring them
+        only affects the persisted ``trainer_log.jsonl`` content.
+        """
+        if is_env_enabled("RECORD_XPU"):
+            logs.update(_sample_xpu_device_metrics(device_id))
+        if is_env_enabled("RECORD_CPU"):
+            logs.update(_sample_host_resource_usage())
+        logs = {k: v for k, v in logs.items() if v is not None}
+        self._write_log(output_dir, logs)
+
     def _create_thread_pool(self, output_dir: str) -> None:
         os.makedirs(output_dir, exist_ok=True)
         self.thread_pool = ThreadPoolExecutor(max_workers=1)
@@ -410,21 +420,16 @@ class LogCallback(TrainerCallback):
             logs["vram_allocated"] = round(vram_allocated / (1024**3), 2)
             logs["vram_reserved"] = round(vram_reserved / (1024**3), 2)
 
-        # XPU telemetry via xpu-smi (opt-in via RECORD_XPU=1)
-        if is_env_enabled("RECORD_XPU"):
-            device_id = 0
-            if hasattr(torch, "xpu") and torch.xpu.is_available():
-                try:
-                    device_id = torch.xpu.current_device()
-                except Exception:
-                    device_id = 0
-            logs.update(_sample_xpu_device_metrics(device_id))
+        # Resolve the active XPU device on the main thread (cheap torch query) so the
+        # worker can sample without touching torch state. Actual xpu-smi / psutil
+        # sampling is offloaded below to avoid blocking training on logging steps.
+        xpu_device_id = 0
+        if is_env_enabled("RECORD_XPU") and hasattr(torch, "xpu") and torch.xpu.is_available():
+            try:
+                xpu_device_id = torch.xpu.current_device()
+            except Exception:
+                xpu_device_id = 0
 
-        # Host CPU / RAM telemetry via psutil (opt-in via RECORD_CPU=1)
-        if is_env_enabled("RECORD_CPU"):
-            logs.update(_sample_host_resource_usage())
-
-        logs = {k: v for k, v in logs.items() if v is not None}
         if self.webui_mode and all(key in logs for key in ("loss", "lr", "epoch")):
             log_str = f"'loss': {logs['loss']:.4f}, 'learning_rate': {logs['lr']:2.4e}, 'epoch': {logs['epoch']:.2f}"
             for extra_key in ("reward", "accuracy", "throughput"):
@@ -434,7 +439,9 @@ class LogCallback(TrainerCallback):
             logger.info_rank0("{" + log_str + "}")
 
         if self.thread_pool is not None:
-            self.thread_pool.submit(self._write_log, args.output_dir, logs)
+            # Offload XPU/host sampling (xpu-smi subprocess + psutil) plus the file write
+            # onto the single-worker pool so they cannot stall the training step.
+            self.thread_pool.submit(self._sample_and_write_log, args.output_dir, logs, xpu_device_id)
 
     @override
     def on_prediction_step(
