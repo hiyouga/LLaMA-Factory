@@ -72,6 +72,7 @@ class BaseTrainer:
         self.train_start_time = None
         self.total_train_loss = 0.0
         self.num_loss_steps = 0
+        self.total_flos = 0.0
 
         # cached variables
         self.device = DistributedInterface().current_device
@@ -227,6 +228,35 @@ class BaseTrainer:
         """Compute the scalar loss."""
         ...
 
+    def compute_flops(self, batch: BatchInput) -> float:
+        """Compute floating point operations for a batch.
+
+        Following HuggingFace Trainer convention:
+        FLOPS = 6 * num_tokens * num_parameters (excluding embeddings)
+
+        Args:
+            batch: The input batch containing input_ids or other input tensors.
+
+        Returns:
+            The number of floating-point operations.
+        """
+        # Get the main input tensor (input_ids for most models)
+        main_input = batch.get("input_ids")
+        if main_input is None:
+            # Try alternative input names
+            for key in ["inputs", "input", "tokens"]:
+                if key in batch:
+                    main_input = batch[key]
+                    break
+
+        if main_input is None or not hasattr(self.model, "num_parameters"):
+            return 0.0
+
+        # Calculate: 6 * num_tokens * num_parameters (excluding embeddings)
+        num_tokens = main_input.numel()
+        num_params = self.model.num_parameters(exclude_embeddings=True)
+        return 6.0 * num_tokens * num_params
+
     def fit(self) -> None:
         """Train the model."""
         self.model.train()
@@ -246,6 +276,7 @@ class BaseTrainer:
                 self.callback_handler.on_step_begin(self.args, self.state)
 
                 step_loss = 0
+                step_flos = 0.0
                 step_valid_tokens = compute_valid_tokens(micro_batches)
                 step_valid_tokens = DistributedInterface().all_reduce(step_valid_tokens, op=ReduceOp.SUM)
                 num_micro = len(micro_batches)
@@ -269,6 +300,9 @@ class BaseTrainer:
                     else:
                         loss.backward()
                     step_loss += loss.item()
+
+                    # Accumulate FLOPS for this micro-batch
+                    step_flos += self.compute_flops(micro_batch)
 
                 if self._deepspeed_engine is not None:
                     # deepspeed: engine.step() already ran inside backward at the sync boundary
@@ -302,9 +336,10 @@ class BaseTrainer:
                 self.state.grad_norm = grad_norm
                 self.state.learning_rate = current_lr
 
-                # Track loss for final metrics
+                # Track loss and FLOPS for final metrics
                 self.total_train_loss += step_loss
                 self.num_loss_steps += 1
+                self.total_flos += step_flos
 
                 self.callback_handler.on_step_end(self.args, self.state)
 
@@ -365,19 +400,24 @@ class BaseTrainer:
         steps_per_epoch = len(self.train_batch_generator)
         final_epoch = self.global_step / steps_per_epoch if steps_per_epoch > 0 else self.args.num_train_epochs
 
+        # Format total_flos in GigaFLOPS (GF) like v0
+        total_flos_gf = int(self.total_flos / 1e9)
+
         # Create metrics dict similar to v0
         metrics = {
             "train_runtime": int(train_runtime),
             "train_samples_per_second": round(train_samples_per_second, 3),
             "train_steps_per_second": round(train_steps_per_second, 3),
             "train_loss": round(train_loss, 4),
+            "total_flos": f"{total_flos_gf}GF",
             "epoch": round(final_epoch, 3),
         }
 
         # Log in the same format as v0
-        logger.info_rank0(f"{{'train_runtime': '{int(train_runtime)}', 'train_samples_per_second': '{train_samples_per_second:.3f}', 'train_steps_per_second': '{train_steps_per_second:.3f}', 'train_loss': '{train_loss:.4f}', 'epoch': '{metrics['epoch']}'}}")
+        logger.info_rank0(f"{{'train_runtime': '{int(train_runtime)}', 'train_samples_per_second': '{train_samples_per_second:.3f}', 'train_steps_per_second': '{train_steps_per_second:.3f}', 'total_flos': '{total_flos_gf}GF', 'train_loss': '{train_loss:.4f}', 'epoch': '{metrics['epoch']}'}}")
         logger.info_rank0("***** train metrics *****")
         logger.info_rank0(f"  epoch                    = {metrics['epoch']:>11}")
+        logger.info_rank0(f"  total_flos               = {total_flos_gf:>10}GF")
         logger.info_rank0(f"  train_loss               = {train_loss:>11.4f}")
         logger.info_rank0(f"  train_runtime            = {runtime_str:>11}")
         logger.info_rank0(f"  train_samples_per_second = {train_samples_per_second:>11.3f}")
