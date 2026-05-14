@@ -338,7 +338,7 @@ class BaseTrainer:
 
     def _log_final_train_metrics(self) -> None:
         """Compute and log final training metrics similar to v0."""
-        if DistributedInterface().get_rank() != 0:
+        if DistributedInterface().get_rank() != 0 or self.train_start_time is None:
             return
 
         train_runtime = time.time() - self.train_start_time
@@ -350,9 +350,10 @@ class BaseTrainer:
         if global_batch_size is None:
             global_batch_size = self.dp_size * self.args.micro_batch_size
 
-        total_samples = self.global_step * global_batch_size
+        # Use num_loss_steps for accurate throughput in current session (handles checkpoint resume)
+        total_samples = self.num_loss_steps * global_batch_size
         train_samples_per_second = total_samples / train_runtime if train_runtime > 0 else 0
-        train_steps_per_second = self.global_step / train_runtime if train_runtime > 0 else 0
+        train_steps_per_second = self.num_loss_steps / train_runtime if train_runtime > 0 else 0
 
         # Format runtime as HH:MM:SS
         hours = int(train_runtime // 3600)
