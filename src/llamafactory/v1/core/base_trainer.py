@@ -83,7 +83,10 @@ class BaseTrainer:
 
         # System metrics collector (initialize after device is set)
         device_type = "xpu" if "xpu" in str(self.device.type) else "cuda"
-        self.metrics_collector = SystemMetricsCollector(device_type=device_type, collection_interval=1.0)
+        device_index = self.device.index if self.device.index is not None else 0
+        self.metrics_collector = SystemMetricsCollector(
+            device_type=device_type, collection_interval=1.0, device_index=device_index
+        )
 
         self._create_batch_generator()
         # Calculate num_training_steps: max_steps takes priority if set

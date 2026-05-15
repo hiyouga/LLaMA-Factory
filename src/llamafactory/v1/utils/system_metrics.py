@@ -17,6 +17,8 @@
 Collects CPU utilization, GPU/XPU utilization and memory usage during training.
 """
 
+import json
+import subprocess
 import threading
 import time
 from typing import Any
@@ -24,21 +26,21 @@ from typing import Any
 import psutil
 import torch
 
-from .level_zero_monitor import get_xpu_utilization
-
 
 class SystemMetricsCollector:
     """Collects system metrics during training."""
 
-    def __init__(self, device_type: str = "xpu", collection_interval: float = 1.0) -> None:
+    def __init__(self, device_type: str = "xpu", collection_interval: float = 1.0, device_index: int = 0) -> None:
         """Initialize the metrics collector.
 
         Args:
             device_type: Device type ('xpu', 'cuda', or 'cpu')
             collection_interval: Interval in seconds between metric collections
+            device_index: GPU device index to monitor (default 0)
         """
         self.device_type = device_type
         self.collection_interval = collection_interval
+        self.device_index = device_index
         self._collecting = False
         self._thread = None
         self._lock = threading.Lock()
@@ -51,9 +53,18 @@ class SystemMetricsCollector:
 
         # Check device availability
         self._has_gpu = False
+        self._has_xpu_smi = False
         if device_type == "xpu" and hasattr(torch, "xpu") and torch.xpu.is_available():
             self._has_gpu = True
             self._device_count = torch.xpu.device_count()
+            # Check if xpu-smi is available
+            try:
+                result = subprocess.run(
+                    ["sudo", "-n", "xpu-smi", "discovery"], capture_output=True, timeout=2.0, check=False
+                )
+                self._has_xpu_smi = result.returncode == 0
+            except Exception:
+                self._has_xpu_smi = False
         elif device_type == "cuda" and torch.cuda.is_available():
             self._has_gpu = True
             self._device_count = torch.cuda.device_count()
@@ -95,19 +106,23 @@ class SystemMetricsCollector:
                     if self.device_type == "xpu":
                         try:
                             # Get memory usage from PyTorch XPU
-                            allocated = torch.xpu.memory_allocated(0)
-                            reserved = torch.xpu.memory_reserved(0)
+                            allocated = torch.xpu.memory_allocated(self.device_index)
+                            reserved = torch.xpu.memory_reserved(self.device_index)
                             # Use reserved as it includes allocated + cached
                             if self._total_gpu_memory > 0:
                                 gpu_memory_percent = (reserved / self._total_gpu_memory) * 100
-                            # Get GPU utilization from Level Zero API
-                            gpu_util_percent = get_xpu_utilization(0)
+
+                            # Get GPU utilization from xpu-smi (requires sudo)
+                            if self._has_xpu_smi:
+                                gpu_util_percent = self._get_xpu_smi_utilization()
+                            else:
+                                gpu_util_percent = 0.0
                         except Exception:
                             pass
                     elif self.device_type == "cuda":
                         try:
                             # CUDA memory
-                            allocated = torch.cuda.memory_allocated(0)
+                            allocated = torch.cuda.memory_allocated(self.device_index)
                             if self._total_gpu_memory > 0:
                                 gpu_memory_percent = (allocated / self._total_gpu_memory) * 100
                             # CUDA doesn't provide utilization directly either
@@ -128,6 +143,41 @@ class SystemMetricsCollector:
                 pass
 
             time.sleep(self.collection_interval)
+
+    def _get_xpu_smi_utilization(self) -> float:
+        """Get GPU utilization from xpu-smi tool.
+
+        Returns:
+            GPU compute engine utilization percentage (0-100), or 0.0 if unavailable
+        """
+        try:
+            result = subprocess.run(
+                ["sudo", "-n", "xpu-smi", "stats", "-d", str(self.device_index), "-j"],
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+                check=False,
+            )
+
+            if result.returncode == 0:
+                data = json.loads(result.stdout)
+                # Look for compute engine utilization
+                if "device_level" in data:
+                    for metric in data["device_level"]:
+                        # Prioritize compute engine utilization for training workloads
+                        if metric.get("metrics_type") == "XPUM_STATS_ENGINE_GROUP_COMPUTE_ALL_UTILIZATION":
+                            value = metric.get("value", 0.0)
+                            if value is not None:
+                                return float(value)
+                        # Fallback to overall GPU utilization
+                        elif metric.get("metrics_type") == "XPUM_STATS_GPU_UTILIZATION":
+                            value = metric.get("value", 0.0)
+                            if value is not None:
+                                return float(value)
+        except Exception:
+            pass
+
+        return 0.0
 
     def start(self) -> None:
         """Start collecting metrics in background thread."""
