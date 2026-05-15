@@ -182,9 +182,12 @@ class ModelEngine:
         if self.args.kernel_config is not None:
             from ..plugins.model_plugins.kernels.interface import KernelPlugin
 
-            model = KernelPlugin(self.args.kernel_config.name)(
-                model, include_kernels=self.args.kernel_config.get("include_kernels")
-            )
+            kernel_config = self.args.kernel_config
+            kernel_kwargs: dict = {"model": model, "include_kernels": kernel_config.get("include_kernels")}
+            if kernel_config.name == "liger_kernel":
+                # Fused linear CE omits logits; SFT stage needs logits for loss_weights.
+                kernel_kwargs["require_logits"] = self.is_train
+            model = KernelPlugin(kernel_config.name)(**kernel_kwargs)
 
         return model
 

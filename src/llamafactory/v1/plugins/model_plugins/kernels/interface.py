@@ -138,3 +138,48 @@ def apply_default_kernels(model: HFModel, include_kernels: str = None) -> HFMode
         apply_kernel(kernel, model=model)
 
     return model
+
+
+@KernelPlugin("liger_kernel").register()
+def apply_liger_kernels(
+    model: HFModel,
+    include_kernels: str = None,
+    require_logits: bool = False,
+) -> HFModel:
+    """Applies Liger kernel to the model.
+
+    Args:
+        model (HFModel): The model instance to apply kernels to.
+        include_kernels (str, optional): If ``"auto"`` or ``True``, apply Liger with
+                                         library defaults. If a comma-separated list (e.g.
+                                         ``rope,rms_norm``), enable only those ops; names match
+                                         ``apply_liger_kernel_to_*`` kwargs: ``rope``, ``rms_norm``,
+                                         ``swiglu``, ``cross_entropy``, ``fused_linear_cross_entropy``.
+                                         If ``None`` or ``False``, do nothing. Defaults to ``None``.
+        require_logits (bool, optional): When true, disables ``fused_linear_cross_entropy`` in favor
+                                         of non-fused CE so the forward pass returns ``logits``. Needed
+                                         for trainers that compute weighted loss from logits (e.g. v1
+                                         SFT with ``loss_weights``). Defaults to ``False`` (fused CE
+                                         when supported). The v1 ``run_sft`` entrypoint sets
+                                         ``require_logits`` to true for ``liger_kernel`` when the key
+                                         is omitted so SFT weighted loss keeps working.
+
+    Returns:
+        HFModel: The model with Liger kernel applied.
+    """
+    if not include_kernels:
+        return model
+    if include_kernels == "auto" or include_kernels is True:
+        use_kernels = "auto"
+    else:
+        use_kernels = [k.strip() for k in include_kernels.split(",") if k.strip()]
+        if not use_kernels:
+            return model
+
+    try:
+        from .liger_kernel_ops import LigerKernel
+    except ImportError as e:
+        logger.warning_rank0(f"[Kernel] Failed to import liger_kernel ops, skip. Error: {e}")
+        return model
+
+    return LigerKernel.apply(use_kernels=use_kernels, model=model, require_logits=require_logits)
