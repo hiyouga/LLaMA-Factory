@@ -16,9 +16,11 @@ from types import MethodType
 from typing import TYPE_CHECKING, Any
 
 import torch
+import importlib
 from peft import PeftModel
 from transformers import GenerationMixin, PreTrainedModel, PreTrainedTokenizerBase
 from transformers.integrations import is_deepspeed_zero3_enabled
+from transformers import is_torch_npu_available
 from transformers.modeling_utils import is_fsdp_enabled
 
 from ..extras import logging
@@ -83,8 +85,67 @@ def _check_fla_dependencies() -> None:
             "Please install/upgrade it."
         ) from exc
 
+def _import_optional_module(module_name: str) -> Any | None:
+    try:
+        return importlib.import_module(module_name)
+    except ImportError as exc:
+        logger.debug('Failed to import optional module %s: %s', module_name, exc)
+        return None
 
-def patch_qwen3_5_forward(model: "PreTrainedModel") -> None:
+def patch_transformers_flash_linear_attention_available() -> None:
+
+    def _is_flash_linear_attention_available() -> bool:
+        return True
+
+    transformers_utils = _import_optional_module('transformers.utils')
+    if transformers_utils is not None:
+        setattr(transformers_utils, 'is_flash_linear_attention_available', _is_flash_linear_attention_available)
+
+    transformers_import_utils = _import_optional_module('transformers.utils.import_utils')
+    if transformers_import_utils is not None:
+        setattr(transformers_import_utils, 'is_flash_linear_attention_available', _is_flash_linear_attention_available)
+
+def patch_qwen3_5_forward_npu(model: "PreTrainedModel") -> None:
+    """Patch for Qwen3.5 models on NPU by importing torch_npu to enable torch.cuda compatibility.
+    
+    On NPU, torch.cuda operations will fail unless torch_npu is imported.
+    torch_npu provides compatibility layer that maps torch.cuda calls to NPU operations.
+    
+    Also replaces chunk_gated_delta_rule with NPU-compatible implementation.
+    """
+    try:
+        from torch_npu.contrib import transfer_to_npu  # noqa: F401
+        logger.info_rank0("Imported torch_npu for NPU compatibility with torch.cuda operations in Qwen3.5 models.")
+    except ImportError:
+        logger.warning_rank0(
+            "torch_npu is not installed. Qwen3.5 models may fail on NPU due to torch.cuda.current_device() calls. "
+            "Please install torch_npu: pip install torch-npu"
+        )
+    
+    from .model_utils.chunk_gated_delta_rule import chunk_gated_delta_rule as npu_chunk_gated_delta_rule
+    
+    if model.config.architectures[0] == "Qwen3_5MoeForConditionalGeneration":
+        try:
+            # Qwen3.5-MoE structure: model.model.language_model.layers
+            for layer in model.model.language_model.layers:
+                if hasattr(layer, "linear_attn"):
+                    layer.linear_attn.chunk_gated_delta_rule = npu_chunk_gated_delta_rule
+            
+            logger.info_rank0("Replaced chunk_gated_delta_rule with NPU-compatible implementation for Qwen3.5-MoE model.")
+        except Exception as e:
+            logger.warning_rank0(f"Failed to replace chunk_gated_delta_rule for NPU: {e}")
+    elif model.config.architectures[0] == "Qwen3_5ForConditionalGeneration":
+        try:
+            # Qwen3.5 structure: model.model.layers
+            for layer in model.model.layers:
+                if hasattr(layer, "linear_attn"):
+                    layer.linear_attn.chunk_gated_delta_rule = npu_chunk_gated_delta_rule
+            
+            logger.info_rank0("Replaced chunk_gated_delta_rule with NPU-compatible implementation for Qwen3.5 model.")
+        except Exception as e:
+            logger.warning_rank0(f"Failed to replace chunk_gated_delta_rule for NPU: {e}")
+
+def patch_qwen3_5_forward_gpu(model: "PreTrainedModel") -> None:
     """Patch the forward method of Qwen3_5ForConditionalGeneration to support cu_seqlens input only patch when do training.
 
     Refer to: https://github.com/axolotl-ai-cloud/axolotl/blob/main/src/axolotl/monkeypatch/models/qwen3_5/modeling.py.
@@ -416,7 +477,10 @@ def patch_model(
         add_z3_leaf_module(model)
 
         if getattr(model.config, "model_type", None) in ["qwen3_5", "qwen3_5_moe"] and model_args.flash_attn == "fa2":
-            patch_qwen3_5_forward(model)
+            if is_torch_npu_available():
+                patch_qwen3_5_forward_npu(model)
+            else:
+                patch_qwen3_5_forward_gpu(model)
 
     if not model_args.use_unsloth:
         print_attn_implementation(model.config)
