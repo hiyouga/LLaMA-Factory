@@ -147,6 +147,16 @@ class ModelInput(TypedDict, total=False):
     """Position ids for the model (optional)."""
     token_type_ids: NotRequired[list[int]]
     """Token type ids used in DPO, 1 represents the chosen messages, 2 represents the rejected messages."""
+    pixel_values: NotRequired[Any]
+    """Pixel values for vision models."""
+    image_grid_thw: NotRequired[Any]
+    """Image grid (temporal, height, width) for vision models."""
+    pixel_values_videos: NotRequired[Any]
+    """Pixel values for video inputs."""
+    video_grid_thw: NotRequired[Any]
+    """Video grid (temporal, height, width) for video models."""
+    mm_token_type_ids: NotRequired[list[int]]
+    """Multimodal token type ids: 0=text, 1=image, 2=video."""
 
 
 class BatchInput(TypedDict, total=False):
@@ -162,6 +172,16 @@ class BatchInput(TypedDict, total=False):
     """Position ids for the model (optional)."""
     token_type_ids: NotRequired[Tensor]
     """Token type ids used in DPO, 1 represents the chosen messages, 2 represents the rejected messages."""
+    pixel_values: NotRequired[Tensor]
+    """Pixel values for vision models."""
+    image_grid_thw: NotRequired[Tensor]
+    """Image grid (temporal, height, width) for vision models."""
+    pixel_values_videos: NotRequired[Tensor]
+    """Pixel values for video inputs."""
+    video_grid_thw: NotRequired[Tensor]
+    """Video grid (temporal, height, width) for video models."""
+    mm_token_type_ids: NotRequired[Tensor]
+    """Multimodal token type ids: 0=text, 1=image, 2=video."""
 
 
 class BatchInfo(TypedDict):

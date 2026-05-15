@@ -65,12 +65,21 @@ def _pad_and_truncate(tensor: Tensor, max_seqlen: int, pad_value: int = 0) -> Te
     return torch.cat([tensor, pad_tensor], dim=-1)
 
 
+_MULTIMODAL_PASSTHROUGH_KEYS = frozenset({
+    "pixel_values", "image_grid_thw", "pixel_values_videos", "video_grid_thw", "second_per_grid_ts",
+})
+
+
 def pad_and_truncate(samples: list[ModelInput], max_seqlen: int) -> list[BatchInput]:
     max_length = min(max(len(sample["input_ids"]) for sample in samples), max_seqlen)
     padded_samples = []
     for sample in samples:
         padded_sample = {}
         for key, value in sample.items():
+            if key in _MULTIMODAL_PASSTHROUGH_KEYS:
+                padded_sample[key] = value
+                continue
+
             if "label" in key:
                 pad_value = IGNORE_INDEX
             else:

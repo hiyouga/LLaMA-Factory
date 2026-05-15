@@ -35,6 +35,7 @@ from ...accelerator.interface import Dim, DistributedInterface
 from ...config import BatchingStrategy
 from ...utils import logging
 from ...utils.helper import pad_and_truncate
+from ...utils.helper import _MULTIMODAL_PASSTHROUGH_KEYS
 from ...utils.objects import StatefulBuffer
 from ...utils.types import BatchInfo, BatchInput, ModelInput, TorchDataset
 from .rendering import Renderer
@@ -55,7 +56,17 @@ def default_collate_fn(buffer: StatefulBuffer, batch_info: BatchInfo) -> list[Ba
     batch = []
     for i in range(num_micro_batch):
         micro_batch = samples[i * micro_batch_size : (i + 1) * micro_batch_size]
-        batch.append(default_collate(pad_and_truncate(micro_batch, cutoff_len)))
+        padded = pad_and_truncate(micro_batch, cutoff_len)
+
+        standard_samples = [{k: v for k, v in s.items() if k not in _MULTIMODAL_PASSTHROUGH_KEYS} for s in padded]
+        collated = default_collate(standard_samples)
+
+        for key in _MULTIMODAL_PASSTHROUGH_KEYS:
+            tensors = [s[key] for s in padded if key in s]
+            if tensors:
+                collated[key] = torch.cat(tensors, dim=0)
+
+        batch.append(collated)
 
     return batch
 
