@@ -21,6 +21,8 @@ import uuid
 from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING, Optional
 
+from collections import deque
+
 from ..data import Role as DataRole
 from ..extras import logging
 from ..extras.constants import AUDIO_PLACEHOLDER, IMAGE_PLACEHOLDER, VIDEO_PLACEHOLDER
@@ -87,7 +89,9 @@ def _process_request(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid length")
 
     if request.messages[0].role == Role.SYSTEM:
-        content = request.messages.pop(0).content
+        messages_deque = deque(request.messages)
+        content = messages_deque.popleft().content
+        request.messages = list(messages_deque)
         if isinstance(content, list):
             system = content[0].text if content else ""
         else:

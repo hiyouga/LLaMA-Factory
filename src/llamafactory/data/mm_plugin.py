@@ -19,6 +19,7 @@ import inspect
 import math
 import os
 import re
+from collections import deque
 from copy import deepcopy
 from dataclasses import dataclass
 from io import BytesIO
@@ -1868,11 +1869,12 @@ class Qwen2AudioPlugin(BasePlugin):
             if "feature_attention_mask" in mm_inputs:
                 audio_lengths = mm_inputs["feature_attention_mask"].sum(-1).tolist()
 
+        audio_lengths_deque = deque(audio_lengths) if self.expand_mm_tokens else None
         for message in messages:
             content = message["content"]
             while AUDIO_PLACEHOLDER in content:
                 if self.expand_mm_tokens:
-                    audio_length = audio_lengths.pop(0)
+                    audio_length = audio_lengths_deque.popleft()
                     input_length = (audio_length - 1) // 2 + 1
                     audio_seqlen = (input_length - 2) // 2 + 1
                 else:
