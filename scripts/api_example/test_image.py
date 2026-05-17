@@ -40,6 +40,9 @@ def main():
         }
     )
     result = client.chat.completions.create(messages=messages, model="test")
+    if not result.choices:
+        print("Round 1: no response received")
+        return
     messages.append(result.choices[0].message)
     print("Round 1:", result.choices[0].message.content)
     # The image shows a pyramid of colored blocks with numbers on them. Here are the colors and numbers of ...
@@ -56,6 +59,9 @@ def main():
         }
     )
     result = client.chat.completions.create(messages=messages, model="test")
+    if not result.choices:
+        print("Round 2: no response received")
+        return
     messages.append(result.choices[0].message)
     print("Round 2:", result.choices[0].message.content)
     # The image shows a cluster of forget-me-not flowers. Forget-me-nots are small ...
