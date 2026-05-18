@@ -74,6 +74,7 @@ class BaseTrainer:
         self.total_train_loss = 0.0
         self.num_loss_steps = 0
         self.total_flos = 0.0
+        self._num_params = None  # Cache for model parameters count
 
         # cached variables
         self.device = DistributedInterface().current_device
@@ -82,7 +83,7 @@ class BaseTrainer:
         self.model_input_names = self.renderer.processor.model_input_names
 
         # System metrics collector (initialize after device is set)
-        device_type = "xpu" if "xpu" in str(self.device.type) else "cuda"
+        device_type = "xpu" if "xpu" in str(self.device.type) else ("cuda" if "cuda" in str(self.device.type) else "cpu")
         device_index = self.device.index if self.device.index is not None else 0
         self.metrics_collector = SystemMetricsCollector(
             device_type=device_type, collection_interval=1.0, device_index=device_index
@@ -262,8 +263,12 @@ class BaseTrainer:
 
         # Calculate: 6 * num_tokens * num_parameters (excluding embeddings)
         num_tokens = main_input.numel()
-        num_params = self.model.num_parameters(exclude_embeddings=True)
-        return 6.0 * num_tokens * num_params
+
+        # Cache num_parameters to avoid redundant calculation
+        if self._num_params is None:
+            self._num_params = self.model.num_parameters(exclude_embeddings=True)
+
+        return 6.0 * num_tokens * self._num_params
 
     def fit(self) -> None:
         """Train the model."""

@@ -76,14 +76,12 @@ class SystemMetricsCollector:
         self._total_gpu_memory = 0
         if self._has_gpu and device_type == "xpu":
             try:
-                # Try to estimate from allocated + reserved
-                # XPU doesn't provide total memory directly, use a reasonable estimate
-                self._total_gpu_memory = 48 * 1024**3  # 48GB default for Intel Data Center GPU Max
+                self._total_gpu_memory = torch.xpu.get_device_properties(device_index).total_memory
             except Exception:
                 self._total_gpu_memory = 0
         elif self._has_gpu and device_type == "cuda":
             try:
-                self._total_gpu_memory = torch.cuda.get_device_properties(0).total_memory
+                self._total_gpu_memory = torch.cuda.get_device_properties(device_index).total_memory
             except Exception:
                 self._total_gpu_memory = 0
 
