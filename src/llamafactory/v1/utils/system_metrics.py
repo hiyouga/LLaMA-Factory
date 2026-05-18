@@ -77,12 +77,18 @@ class SystemMetricsCollector:
         if self._has_gpu and device_type == "xpu":
             try:
                 self._total_gpu_memory = torch.xpu.get_device_properties(device_index).total_memory
-            except Exception:
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Failed to get XPU memory: {e}, using fallback")
                 self._total_gpu_memory = 0
         elif self._has_gpu and device_type == "cuda":
             try:
                 self._total_gpu_memory = torch.cuda.get_device_properties(device_index).total_memory
-            except Exception:
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Failed to get CUDA memory: {e}")
                 self._total_gpu_memory = 0
 
     def _collect_metrics(self) -> None:
