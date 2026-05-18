@@ -1438,6 +1438,8 @@ class MiniCPMVPlugin(BasePlugin):
             mm_inputs.update(audio_inputs)
             mm_inputs.update({"audio_bounds": audio_bounds_ls, "spk_bounds": spk_bounds_ls})
 
+        return mm_inputs
+
 
 @dataclass
 class MiniCPMV4_6Plugin(BasePlugin):
