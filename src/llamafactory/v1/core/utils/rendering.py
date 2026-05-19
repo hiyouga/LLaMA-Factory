@@ -39,6 +39,67 @@ DEFAULT_CHATML_JINJA = (
     "{% endif %}"
 )
 
+DEFAULT_TRAINING_JINJA = (
+    "{% for message in messages %}"
+    "{% if message['content'] is string %}"
+    "{{'<|im_start|>' + message['role'] + '\n' + message['content'] + '<|im_end|>' + '\n'}}"
+    "{% else %}"
+    "{{'<|im_start|>' + message['role'] + '\n'}}"
+    "{% for item in message['content'] %}"
+    "{% if item['type'] == 'text' %}{{item['text']}}"
+    "{% elif item['type'] == 'image' %}{{'<|vision_start|><|image_pad|><|vision_end|>'}}"
+    "{% elif item['type'] == 'video' %}{{'<|vision_start|><|video_pad|><|vision_end|>'}}"
+    "{% endif %}"
+    "{% endfor %}"
+    "{{'<|im_end|>' + '\n'}}"
+    "{% endif %}"
+    "{% endfor %}"
+    "{% if add_generation_prompt %}"
+    "{{'<|im_start|>assistant\n'}}"
+    "{% endif %}"
+)
+
+
+def _is_prefix_stable(template_caller, tokenizer) -> bool:
+    """Check if the chat template is prefix-stable (render(prefix) is a prefix of render(full)).
+
+    Tests multiple message patterns to catch templates that strip/add content
+    based on message position (e.g., Qwen3.5 strips <think> from non-last assistant).
+    """
+    test_cases = [
+        [
+            {"role": "user", "content": "test"},
+            {"role": "assistant", "content": "ok"},
+            {"role": "user", "content": "more"},
+        ],
+        [
+            {"role": "user", "content": "hello"},
+            {"role": "assistant", "content": "first reply"},
+            {"role": "user", "content": "follow up"},
+            {"role": "assistant", "content": "second reply"},
+        ],
+        [
+            {"role": "system", "content": "You are helpful."},
+            {"role": "user", "content": "hi"},
+            {"role": "assistant", "content": "hello"},
+            {"role": "user", "content": "bye"},
+        ],
+    ]
+    for msgs in test_cases:
+        for i in range(1, len(msgs)):
+            try:
+                text_short = template_caller.apply_chat_template(
+                    msgs[:i], tokenize=False, add_generation_prompt=False
+                )
+                text_long = template_caller.apply_chat_template(
+                    msgs[: i + 1], tokenize=False, add_generation_prompt=False
+                )
+            except Exception:
+                return False
+            if not text_long.startswith(text_short):
+                return False
+    return True
+
 
 def _to_hf_messages(messages: list[Message], is_multimodal: bool = False) -> list[dict]:
     """Convert v1 Message format to HF format for apply_chat_template."""
@@ -97,15 +158,78 @@ def _count_media_in_messages(messages: list[Message]) -> tuple[int, int]:
     return n_images, n_videos
 
 
+def _build_text_to_expanded_mapping(
+    text_ids: list[int],
+    expanded_ids: list[int],
+    video_grid_thw,
+    image_pad_id: int,
+    vision_start_id: int,
+    vision_end_id: int,
+) -> list[int]:
+    """Build a cumulative position mapping from text_ids positions to expanded_ids positions.
+
+    Returns a list of length len(text_ids)+1 where mapping[i] gives the corresponding
+    position in expanded_ids. Turn boundaries (which fall at non-media positions) can be
+    looked up directly.
+    """
+    mapping = [0] * (len(text_ids) + 1)
+    t_cursor = 0
+    e_cursor = 0
+    video_idx = 0
+
+    while t_cursor < len(text_ids):
+        if (
+            t_cursor + 2 < len(text_ids)
+            and text_ids[t_cursor] == vision_start_id
+            and text_ids[t_cursor + 2] == vision_end_id
+        ):
+            media_type = text_ids[t_cursor + 1]
+            mapping[t_cursor] = e_cursor
+
+            if media_type == image_pad_id:
+                assert expanded_ids[e_cursor] == vision_start_id
+                e_cursor += 1
+                while e_cursor < len(expanded_ids) and expanded_ids[e_cursor] == image_pad_id:
+                    e_cursor += 1
+                assert expanded_ids[e_cursor] == vision_end_id
+                e_cursor += 1
+            else:
+                num_frames = int(video_grid_thw[video_idx][0])
+                frames_found = 0
+                while frames_found < num_frames:
+                    if expanded_ids[e_cursor] == vision_end_id:
+                        frames_found += 1
+                    e_cursor += 1
+                video_idx += 1
+
+            mapping[t_cursor + 1] = e_cursor
+            mapping[t_cursor + 2] = e_cursor
+            t_cursor += 3
+        else:
+            mapping[t_cursor] = e_cursor
+            t_cursor += 1
+            e_cursor += 1
+
+    mapping[len(text_ids)] = e_cursor
+    return mapping
+
+
 def _render_auto_messages_multimodal(
     processor: Processor,
     messages: list[Message],
     tools: str | None = None,
     is_generate: bool = False,
 ) -> ModelInput:
-    """Render messages for multimodal models using processor to expand image/video placeholders."""
+    """Render messages for multimodal models using processor to expand image/video placeholders.
+
+    Optimization: calls processor only once for the full sequence, then uses a position
+    mapping (text_ids → expanded_ids) to compute per-turn boundaries without repeated
+    processor calls.
+    """
+    tokenizer = get_tokenizer(processor)
+
     if not getattr(processor, "chat_template", None):
-        processor.chat_template = DEFAULT_CHATML_JINJA
+        processor.chat_template = DEFAULT_TRAINING_JINJA
 
     hf_messages = _to_hf_messages(messages, is_multimodal=True)
     images, videos = _extract_media_from_messages(messages)
@@ -136,39 +260,45 @@ def _render_auto_messages_multimodal(
     outputs = processor(text=full_text, **proc_kwargs)
     expanded_input_ids = outputs["input_ids"][0].tolist()
 
+    full_text_no_gen = processor.apply_chat_template(
+        hf_messages, tokenize=False, add_generation_prompt=False, tools=tools_parsed
+    )
+    text_ids_full = tokenizer.encode(full_text_no_gen, add_special_tokens=False)
+
+    image_pad_id = tokenizer.convert_tokens_to_ids("<|image_pad|>")
+    vision_start_id = tokenizer.convert_tokens_to_ids("<|vision_start|>")
+    vision_end_id = tokenizer.convert_tokens_to_ids("<|vision_end|>")
+
+    mapping = _build_text_to_expanded_mapping(
+        text_ids_full,
+        expanded_input_ids,
+        outputs.get("video_grid_thw"),
+        image_pad_id,
+        vision_start_id,
+        vision_end_id,
+    )
+
     input_ids, labels, loss_weights = [], [], []
-    prev_len = 0
-    images_so_far, videos_so_far = [], []
+    prev_expanded_pos = 0
 
     for i, message in enumerate(messages):
         if tools_parsed and i < first_user_idx:
             continue
 
-        for content in message["content"]:
-            if content["type"] == "image_url":
-                images_so_far.append(content["value"])
-            elif content["type"] == "video_url":
-                videos_so_far.append(content["value"])
-
         curr_text = processor.apply_chat_template(
             hf_messages[: i + 1], tokenize=False, add_generation_prompt=False, tools=tools_parsed
         )
+        curr_text_len = len(tokenizer.encode(curr_text, add_special_tokens=False))
+        curr_expanded_pos = mapping[curr_text_len]
 
-        curr_kwargs = {"return_tensors": "pt"}
-        if images_so_far:
-            curr_kwargs["images"] = images_so_far
-        if videos_so_far:
-            curr_kwargs["videos"] = videos_so_far
-        curr_outputs = processor(text=curr_text, **curr_kwargs)
-        curr_len = len(curr_outputs["input_ids"][0])
+        turn_ids = expanded_input_ids[prev_expanded_pos:curr_expanded_pos]
+        turn_len = curr_expanded_pos - prev_expanded_pos
 
-        turn_len = curr_len - prev_len
         if tools_parsed and i == first_user_idx and first_user_idx > 0:
             turn_weight = 0.0
         else:
             turn_weight = message.get("loss_weight", 1.0 if message["role"] == "assistant" else 0.0)
 
-        turn_ids = expanded_input_ids[prev_len:curr_len]
         input_ids.extend(turn_ids)
         loss_weights.extend([turn_weight] * turn_len)
         if turn_weight > 1e-6:
@@ -176,13 +306,18 @@ def _render_auto_messages_multimodal(
         else:
             labels.extend([IGNORE_INDEX] * turn_len)
 
-        prev_len = curr_len
+        prev_expanded_pos = curr_expanded_pos
 
     if is_generate:
-        gen_suffix = expanded_input_ids[prev_len:]
+        gen_suffix = expanded_input_ids[prev_expanded_pos:]
         input_ids.extend(gen_suffix)
         loss_weights.extend([0.0] * len(gen_suffix))
         labels.extend([IGNORE_INDEX] * len(gen_suffix))
+    else:
+        assert prev_expanded_pos == len(expanded_input_ids), (
+            f"Position mapping mismatch: computed {prev_expanded_pos}, "
+            f"actual {len(expanded_input_ids)}. Template may not be prefix-stable."
+        )
 
     result = ModelInput(
         input_ids=input_ids,
@@ -220,7 +355,7 @@ def _render_auto_messages(
 
     template_caller = processor if is_multimodal else tokenizer
     if not getattr(template_caller, "chat_template", None):
-        template_caller.chat_template = DEFAULT_CHATML_JINJA
+        template_caller.chat_template = DEFAULT_TRAINING_JINJA
 
     hf_messages = _to_hf_messages(messages, is_multimodal=is_multimodal)
 

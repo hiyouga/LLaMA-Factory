@@ -113,6 +113,16 @@ class ModelEngine:
                 self.processor.chat_template = self.args.custom_chat_template
             else:
                 tokenizer.chat_template = self.args.custom_chat_template
+        elif self.is_train and self.args.template == "auto":
+            from .utils.rendering import DEFAULT_TRAINING_JINJA, _is_prefix_stable
+
+            template_caller = self.processor if not is_tokenizer(self.processor) else tokenizer
+            if not _is_prefix_stable(template_caller, tokenizer):
+                logger.warning_rank0(
+                    "Model's chat_template is not prefix-stable (e.g., strips <think> from non-last turns). "
+                    "Replacing with DEFAULT_TRAINING_JINJA for correct training loss masking."
+                )
+                template_caller.chat_template = DEFAULT_TRAINING_JINJA
 
     def _init_model_config(self) -> HFConfig:
         """Init model config."""
