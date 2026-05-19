@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import csv
+import io
 import json
 import os
 import signal
+import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -48,6 +51,118 @@ if TYPE_CHECKING:
 
 
 logger = logging.get_logger(__name__)
+
+_XPU_TELEMETRY_FIELDS: tuple[tuple[tuple[str, ...], str], ...] = (
+    # Compute utilization: metric 0 ("GPU Utilization (%)") is preferred but is often
+    # reported as N/A on Arc/BMG and some PVC firmwares. Fall back to compute-engine
+    # group util (metric 31) and EU array active (metric 9) when available.
+    (
+        (
+            "GPU Utilization (%)",
+            "Compute engine group utilization (%)",
+            "GPU EU Array Active (%)",
+        ),
+        "xpu_compute_util_pct",
+    ),
+    (("GPU Memory Utilization (%)",), "xpu_mem_bandwidth_pct"),
+    (("GPU Memory Used (MiB)",), "xpu_mem_in_use_mib"),
+)
+
+
+def _sample_xpu_device_metrics(device_id: int = 0) -> dict[str, float]:
+    r"""Sample per-device XPU telemetry via the ``xpu-smi dump`` interface.
+
+    ``xpu-smi dump`` emits CSV (the ``-j`` flag is only honored by ``stats``/``discovery``),
+    so we parse the header row to map column names onto our metric keys. Returns an
+    empty dict if ``xpu-smi`` is missing, times out, or returns malformed output.
+    A single warning is logged per failure mode.
+
+    Metric IDs requested: 0=GPU Util, 5=Mem Util, 9=EU Active, 18=Mem Used (MiB),
+    31=Compute Engine Group Util. Metric 0 is preferred for compute utilization but
+    falls back to 31 then 9 when N/A on the device.
+    """
+    metrics: dict[str, float] = {}
+    cmd = ["xpu-smi", "dump", "-d", str(device_id), "-m", "0,5,9,18,31", "-n", "1"]
+
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+    except FileNotFoundError:
+        logger.warning_rank0_once(
+            "xpu-smi binary not found on PATH; XPU telemetry will be skipped. "
+            "Install Intel XPU Manager or unset RECORD_XPU to silence this warning."
+        )
+        return metrics
+    except subprocess.TimeoutExpired:
+        logger.warning_rank0_once("xpu-smi query timed out; XPU telemetry will be skipped for this step.")
+        return metrics
+    except Exception as err:
+        logger.warning_rank0_once(f"xpu-smi query failed ({err!r}); XPU telemetry will be skipped.")
+        return metrics
+
+    if proc.returncode != 0:
+        logger.warning_rank0_once(
+            f"xpu-smi exited with code {proc.returncode}; XPU telemetry will be skipped. "
+            f"stderr: {proc.stderr.strip()[:200]}"
+        )
+        return metrics
+
+    rows = list(csv.reader(io.StringIO(proc.stdout)))
+    # Expect a header line plus at least one data row.
+    data_rows = [r for r in rows if r and r[0].strip()]
+    if len(data_rows) < 2:
+        logger.warning_rank0_once("xpu-smi returned no data rows; XPU telemetry will be skipped.")
+        return metrics
+
+    header = [col.strip() for col in data_rows[0]]
+    values = [col.strip() for col in data_rows[1]]
+    row = dict(zip(header, values))
+
+    for src_keys, dst_key in _XPU_TELEMETRY_FIELDS:
+        for src_key in src_keys:
+            raw = row.get(src_key)
+            if raw is None or raw == "" or raw.lower() == "n/a":
+                continue
+            try:
+                metrics[dst_key] = round(float(raw), 2)
+                break
+            except (ValueError, TypeError):
+                continue
+
+    return metrics
+
+
+def _sample_host_resource_usage() -> dict[str, float]:
+    r"""Sample host-side CPU and RAM utilization via ``psutil``.
+
+    Returns an empty dict when ``psutil`` is not installed (warned once). The first
+    call to ``psutil.cpu_percent(interval=None)`` always returns 0.0; this helper
+    primes the counter on its first invocation so later samples reflect real activity.
+    """
+    try:
+        import psutil  # type: ignore[import-not-found]
+    except ImportError:
+        logger.warning_rank0_once(
+            "psutil is not installed; host CPU/RAM telemetry will be skipped. "
+            "Run `pip install psutil` or unset RECORD_CPU to silence this warning."
+        )
+        return {}
+
+    # Prime the non-blocking CPU counter exactly once at the start.
+    if not getattr(_sample_host_resource_usage, "_primed", False):
+        psutil.cpu_percent(interval=None)
+        _sample_host_resource_usage._primed = True
+        return {}
+
+    try:
+        vmem = psutil.virtual_memory()
+        return {
+            "host_cpu_busy_pct": round(psutil.cpu_percent(interval=None), 2),
+            "host_ram_in_use_gib": round(vmem.used / (1024**3), 2),
+            "host_ram_full_pct": round(vmem.percent, 2),
+        }
+    except Exception as err:
+        logger.warning_rank0_once(f"psutil host query failed ({err!r}); CPU telemetry will be skipped.")
+        return {}
 
 
 def fix_valuehead_checkpoint(
@@ -294,6 +409,20 @@ class LogCallback(TrainerCallback):
             vram_allocated, vram_reserved = get_peak_memory()
             logs["vram_allocated"] = round(vram_allocated / (1024**3), 2)
             logs["vram_reserved"] = round(vram_reserved / (1024**3), 2)
+
+        # XPU telemetry via xpu-smi (opt-in via RECORD_XPU=1)
+        if is_env_enabled("RECORD_XPU"):
+            device_id = 0
+            if hasattr(torch, "xpu") and torch.xpu.is_available():
+                try:
+                    device_id = torch.xpu.current_device()
+                except Exception:
+                    device_id = 0
+            logs.update(_sample_xpu_device_metrics(device_id))
+
+        # Host CPU / RAM telemetry via psutil (opt-in via RECORD_CPU=1)
+        if is_env_enabled("RECORD_CPU"):
+            logs.update(_sample_host_resource_usage())
 
         logs = {k: v for k, v in logs.items() if v is not None}
         if self.webui_mode and all(key in logs for key in ("loss", "lr", "epoch")):
