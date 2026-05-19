@@ -13,6 +13,8 @@
 # limitations under the License.
 
 
+import os
+
 from ..accelerator.interface import DistributedInterface
 from ..config import InputArgument, get_args
 from ..core.base_trainer import BaseTrainer
@@ -31,6 +33,8 @@ class SFTTrainer(BaseTrainer):
 
 def run_sft(args: InputArgument = None):
     model_args, data_args, training_args, _ = get_args(args)
+    if training_args.batching_workers > 0:
+        os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
     DistributedInterface(training_args.dist_config)
     train_dataset = DataEngine(data_args.train_dataset)
     model_engine = ModelEngine(model_args, is_train=True)

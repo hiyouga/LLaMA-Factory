@@ -63,7 +63,13 @@ class TrainingArguments:
     )
     batching_workers: int = field(
         default=16,
-        metadata={"help": "Number of workers for batching."},
+        metadata={
+            "help": (
+                "Number of DataLoader workers for batching/tokenization. "
+                "When > 0, TOKENIZERS_PARALLELISM is set to false so Rust tokenizers do not "
+                "spawn parallel pools in forked workers (avoids EAGAIN / worker crashes on multi-GPU)."
+            )
+        },
     )
     enable_activation_checkpointing: bool = field(
         default=True,

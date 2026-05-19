@@ -29,6 +29,8 @@ Init workflow:
 4. Init adapter.
 """
 
+import os
+
 import torch
 from accelerate import init_empty_weights
 from transformers import AutoConfig, AutoProcessor
@@ -101,10 +103,15 @@ class ModelEngine:
 
     def _init_model_config(self) -> HFConfig:
         """Init model config."""
-        return AutoConfig.from_pretrained(
+        config = AutoConfig.from_pretrained(
             self.args.model,
             trust_remote_code=self.args.trust_remote_code,
         )
+        v1_attn = os.environ.get("LLAMAFACTORY_V1_ATTN_IMPLEMENTATION")
+        if v1_attn:
+            setattr(config, "_attn_implementation", v1_attn)
+            setattr(config, "attn_implementation", v1_attn)
+        return config
 
     def _init_model(self) -> HFModel:
         """Init model.

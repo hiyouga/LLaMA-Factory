@@ -103,6 +103,22 @@ def save_model(model: HFModel, output_dir: str, processor: Processor) -> None:
         logger.info(f"Model saved to {output_dir}")
 
 
+def _release_cuda_cache_for_nccl() -> None:
+    """Return PyTorch's reserved-but-unused GPU memory to the driver.
+
+    torch.distributed.checkpoint.save/load exchange their plan via NCCL gather_object, which
+    needs fresh per-collective scratch buffers. NCCL allocates via raw cudaMalloc - *not* the
+    caching allocator - so if PyTorch has reserved the whole device, even a ~5 KB cudaMalloc
+    fails with "Failed to CUDA calloc async N bytes". Dropping refs and emptying the cache
+    here gives NCCL room to bring up the plan collective. Pair with
+    PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True so empty_cache() can actually release
+    segments back to CUDA.
+    """
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+
 def save_checkpoint(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: str, **kwargs) -> None:
     save_ckpt_as_hf = kwargs.get("save_ckpt_as_hf", False)
     processor = kwargs.get("processor", None)
@@ -110,17 +126,22 @@ def save_checkpoint(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: 
     # Always save DCP format for resume capability
     options = StateDictOptions(full_state_dict=False, cpu_offload=True)
 
+    _release_cuda_cache_for_nccl()
     model_state = get_model_state_dict(model, options=options)
     dcp.save(state_dict=model_state, checkpoint_id=os.path.join(ckpt_dir, "model"))
+    del model_state
 
+    _release_cuda_cache_for_nccl()
     optim_state = get_optimizer_state_dict(model, optimizer, options=options)
     dcp.save(state_dict=optim_state, checkpoint_id=os.path.join(ckpt_dir, "optimizer"))
+    del optim_state
 
     # Additionally save HF format if requested
     if save_ckpt_as_hf:
         if DistributedInterface().get_rank() == 0:
             logger.info("Gathering state dict for saving additional HF format checkpoint...")
 
+        _release_cuda_cache_for_nccl()
         hf_options = StateDictOptions(full_state_dict=True, cpu_offload=True)
         hf_state_dict = get_model_state_dict(model, options=hf_options)
 
@@ -132,20 +153,29 @@ def save_checkpoint(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: 
                 processor.save_pretrained(hf_dir, max_shard_size="4GB")
 
             logger.info(f"Additional HF format checkpoint saved to {hf_dir}")
+        del hf_state_dict
+
+    _release_cuda_cache_for_nccl()
 
 
 def load_checkpoint(model: HFModel, optimizer: torch.optim.Optimizer, ckpt_dir: str, **kwargs) -> None:
     options = StateDictOptions(full_state_dict=False, cpu_offload=True)
 
+    _release_cuda_cache_for_nccl()
     ckpt_model_dir = os.path.join(ckpt_dir, "model")
     model_state = get_model_state_dict(model, options=options)
     dcp.load(state_dict=model_state, checkpoint_id=ckpt_model_dir)
     set_model_state_dict(model, model_state, options=options)
+    del model_state
 
+    _release_cuda_cache_for_nccl()
     ckpt_optim_dir = os.path.join(ckpt_dir, "optimizer")
     optim_state = get_optimizer_state_dict(model, optimizer, options=options)
     dcp.load(state_dict=optim_state, checkpoint_id=ckpt_optim_dir)
     set_optimizer_state_dict(model, optimizer, optim_state, options=options)
+    del optim_state
+
+    _release_cuda_cache_for_nccl()
 
 
 class FSDP2Engine:
@@ -381,7 +411,7 @@ class FSDP2Engine:
 
         with torch.no_grad():
             grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            if isinstance(grad_norm, torch.distributed._tensor.DTensor):
+            if isinstance(grad_norm, torch.distributed.tensor.DTensor):
                 grad_norm = grad_norm.full_tensor()
 
         for param in model.parameters():

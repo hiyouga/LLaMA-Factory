@@ -151,10 +151,15 @@ def padding_and_split_data(data, device_mesh=None):
 
 @SequenceParallelLossPlugin("sequence_parallel_loss").register()
 def sequence_parallel_loss(model, model_inputs):
-    device_mesh = DistributedInterface().get_device_mesh(Dim.CP)
+    dist_interface = DistributedInterface()
+    device_mesh = dist_interface.get_device_mesh(Dim.CP)
+    # Use local rank (not global rank) as the device ordinal: on multi-node setups
+    # `dist.get_rank()` returns the global rank, which exceeds the per-node GPU
+    # count and triggers "CUDA error: invalid device ordinal" on worker nodes.
+    device = dist_interface.current_device
 
     model_inputs = {
-        k: v.to(dist.get_rank(), non_blocking=True) for k, v in model_inputs.items() if isinstance(v, torch.Tensor)
+        k: v.to(device, non_blocking=True) for k, v in model_inputs.items() if isinstance(v, torch.Tensor)
     }
 
     model_inputs = padding_and_split_data(model_inputs, device_mesh)

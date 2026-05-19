@@ -28,6 +28,7 @@ Train Phase:
 """
 
 from abc import abstractmethod
+import os
 
 import torch
 import torch.nn.functional as F
@@ -143,7 +144,15 @@ class BaseTrainer:
                 )
             from ..plugins.model_plugins.parallelization.sequence_parallel import SequenceParallelModelPlugin
 
-            if model.config._attn_implementation != "flash_attention_2":
+            user_attn = os.environ.get("LLAMAFACTORY_V1_ATTN_IMPLEMENTATION")
+            if user_attn:
+                model.config._attn_implementation = user_attn
+                setattr(model.config, "attn_implementation", user_attn)
+                logger.warning_rank0(
+                    f"LLAMAFACTORY_V1_ATTN_IMPLEMENTATION={user_attn!r}: not forcing flash_attention_2 for CP. "
+                    "Ulysses CP is only validated with FlashAttention; training may fail if incompatible."
+                )
+            elif model.config._attn_implementation != "flash_attention_2":
                 logger.warning_rank0(
                     "Sequence parallelism is optimized for flash attention only. Replace the attention implementation to flash_attention_2."
                 )
@@ -191,10 +200,32 @@ class BaseTrainer:
 
             self.optimizer = OptimizerPlugin(self.args.optim_config.name)(self.model, self.args.optim_config)
 
+    def _should_defer_fsdp_grad_accum(self, num_micro: int) -> bool:
+        """Whether to defer FSDP2 HSDP cross-replica all-reduce until the last microbatch.
+
+        Returns True only when all of the following hold:
+        * We are not running under DeepSpeed (which already manages sync via accelerator).
+        * There is more than one microbatch per optimizer step (otherwise the deferral is a no-op).
+        * The model exposes the FSDP2 hooks `set_requires_all_reduce` / `set_is_last_backward`.
+        * `LLAMAFACTORY_V1_FSDP_HSDP_GRAD_ACCUM` is not set to a falsy value
+          (`0`, `false`, `no`, `off`; case-insensitive).
+        """
+        if self._deepspeed_engine is not None or num_micro <= 1:
+            return False
+        if os.environ.get("LLAMAFACTORY_V1_FSDP_HSDP_GRAD_ACCUM", "1").lower() in ("0", "false", "no", "off"):
+            return False
+        return hasattr(self.model, "set_requires_all_reduce") and hasattr(self.model, "set_is_last_backward")
+
     def _init_lr_scheduler(self) -> None:
         """Init lr scheduler."""
         if self.args.lr_scheduler_config is None:
             self.lr_scheduler = torch.optim.lr_scheduler.LambdaLR(self.optimizer, lr_lambda=lambda x: 1.0)
+        elif self.args.lr_scheduler_config.name == "cosine":
+            self.lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                self.optimizer,
+                T_max=max(1, self.num_training_steps),
+                eta_min=self.args.lr_scheduler_config.get("eta_min", 0.0),
+            )
         else:
             from ..plugins.trainer_plugins.lr_scheduler import LRSchedulerPlugin
 
@@ -244,7 +275,23 @@ class BaseTrainer:
                 step_valid_tokens = compute_valid_tokens(micro_batches)
                 step_valid_tokens = DistributedInterface().all_reduce(step_valid_tokens, op=ReduceOp.SUM)
                 num_micro = len(micro_batches)
+                # FSDP2 (HSDP) gradient accumulation: by default every loss.backward() triggers a
+                # per-FSDP-unit cross-replica all-reduce of grads (and a per-backward sync wait),
+                # so on multi-node HSDP every microbatch crosses the inter-node link N-1 times per
+                # layer. With NNODES microbatches/optimizer-step that erases the benefit of adding
+                # nodes (e.g. 2-node and 4-node both end up at the same step time). Match the
+                # DeepSpeed branch's behavior by deferring the cross-replica all-reduce and the
+                # backward sync to the final microbatch only. set_requires_all_reduce(False)
+                # keeps the cheap intra-node reduce-scatter every backward but skips the expensive
+                # inter-node all-reduce; set_is_last_backward(False) avoids the per-microbatch
+                # synchronous wait. Disable via LLAMAFACTORY_V1_FSDP_HSDP_GRAD_ACCUM=0 if needed.
+                fsdp_grad_accum = self._should_defer_fsdp_grad_accum(num_micro)
                 for i, micro_batch in enumerate(micro_batches):
+                    is_last_micro = i == num_micro - 1
+                    if fsdp_grad_accum:
+                        self.model.set_requires_all_reduce(is_last_micro)
+                        self.model.set_is_last_backward(is_last_micro)
+
                     if self.args.dist_config and self.args.dist_config.get("cp_size", 1) > 1:
                         from ..plugins.model_plugins.parallelization.sequence_parallel import (
                             SequenceParallelLossPlugin,
@@ -259,7 +306,7 @@ class BaseTrainer:
 
                     if self._deepspeed_engine is not None:
                         # deepspeed: set sync_gradients so engine.step() only fires on last micro-batch
-                        self._deepspeed_engine.accelerator.sync_gradients = i == num_micro - 1
+                        self._deepspeed_engine.accelerator.sync_gradients = is_last_micro
                         self._deepspeed_engine.backward(loss)
                     else:
                         loss.backward()

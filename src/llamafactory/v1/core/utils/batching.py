@@ -23,6 +23,7 @@
     d) pack + dynamic
 """
 
+import os
 from collections.abc import Iterator
 from typing import Any
 
@@ -136,6 +137,13 @@ class BatchGenerator(Iterator):
             )
         else:
             raise NotImplementedError("Iterable dataset is not supported yet.")
+
+        if self.batching_workers > 0:
+            # Rust tokenizers use a parallel encoding thread pool. Many forked DataLoader
+            # workers across distributed ranks can hit pthread limits (EAGAIN) and panic with
+            # "ThreadPoolBuildError ... Resource temporarily unavailable". HF recommends
+            # disabling tokenizer-side parallelism whenever workers run tokenization.
+            os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
         generato_seed = torch.Generator()
         generato_seed.manual_seed(self.seed)
