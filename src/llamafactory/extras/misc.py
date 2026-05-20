@@ -114,9 +114,72 @@ def calculate_tps(dataset: list[dict[str, Any]], metrics: dict[str, float], stag
     return result / dist.get_world_size() if dist.is_initialized() else result
 
 
+def _is_kt_zero_storage_placeholder(param: "torch.nn.Parameter") -> bool:
+    r"""Detect zero-storage placeholder parameters created by KT's _clear_original_expert_weights.
+
+    These placeholders preserve shape/dtype for PEFT feature discovery but use only 1 byte
+    of physical storage. Their numel() returns the original full size.
+
+    Detection uses two mechanisms:
+    1. _kt_zero_storage attribute: Set by _clear_original_expert_weights, survives
+       param.data reassignment (e.g. by _setup_full_tuning upcasting).
+    2. Storage size heuristic: For robustness, also check if physical storage is
+       implausibly small for the reported numel.
+    """
+    # Fast path: explicit marker attribute set by _clear_original_expert_weights()
+    if getattr(param, "_kt_zero_storage", False):
+        return True
+    try:
+        # A legitimate parameter always has storage >= numel * element_size.
+        # A zero-storage placeholder has 1-byte storage but reports large numel.
+        if param.numel() <= 1:
+            return False  # Not a placeholder -- genuinely tiny or scalar
+        storage_size = param.untyped_storage().size()
+        # Placeholders use torch.UntypedStorage(1, device="cpu"), so storage_size == 1
+        # while numel() * element_size() is typically millions of bytes.
+        return storage_size <= 1
+    except Exception:
+        return False
+
+
+def _find_kt_wrappers(model: "torch.nn.Module"):
+    r"""Find _kt_wrappers list on the model, unwrapping up to 3 levels."""
+    _kt_wrappers = getattr(model, "_kt_wrappers", None)
+    if _kt_wrappers is not None:
+        return _kt_wrappers
+    # Try unwrapping PEFT/other wrappers to find _kt_wrappers
+    _inner = model
+    for _ in range(3):  # max 3 levels of wrapping
+        if hasattr(_inner, "model"):
+            _inner = _inner.model
+            _kt_wrappers = getattr(_inner, "_kt_wrappers", None)
+            if _kt_wrappers is not None:
+                return _kt_wrappers
+        else:
+            break
+    return None
+
+
+def _kt_is_full_mode(_kt_wrappers) -> bool:
+    r"""Check if KT wrappers are in full_weight_grad mode by checking gate_proj_buf existence."""
+    if _kt_wrappers is None:
+        return False
+    for layer_wrapper in _kt_wrappers:
+        inner_wrapper = getattr(layer_wrapper, "wrapper", None)
+        if inner_wrapper is not None and getattr(inner_wrapper, "gate_proj_buf", None) is not None:
+            return True
+    return False
+
+
 def count_parameters(model: "torch.nn.Module") -> tuple[int, int]:
     r"""Return the number of trainable parameters and number of all parameters in the model."""
     trainable_params, all_param = 0, 0
+
+    # Detect KT mode early: full mode skips placeholders (counted via wrapper buffers),
+    # LoRA mode keeps placeholders (they represent expert base weights for all_param).
+    _kt_wrappers = _find_kt_wrappers(model)
+    _kt_full_mode = _kt_is_full_mode(_kt_wrappers)
+
     for param in model.parameters():
         num_params = param.numel()
         # if using DS Zero 3 and the weights are initialized empty
@@ -134,9 +197,46 @@ def count_parameters(model: "torch.nn.Module") -> tuple[int, int]:
 
             num_params = num_params * 2 * num_bytes
 
+        # Skip zero-storage placeholder params in KT full mode only.
+        # Full mode: expert weights counted via KT wrapper buffers (gate_proj_buf etc.)
+        #   -> skip placeholders to avoid double counting.
+        # LoRA mode: expert base weights are NOT counted elsewhere
+        #   -> keep placeholders in all_param (as non-trainable), matching baseline behavior.
+        if _kt_full_mode and _is_kt_zero_storage_placeholder(param):
+            continue
+
         all_param += num_params
         if param.requires_grad:
             trainable_params += num_params
+
+    # Count KT wrapper parameters invisible to model.parameters()
+    if _kt_wrappers is not None:
+        for layer_wrapper in _kt_wrappers:
+            inner_wrapper = getattr(layer_wrapper, "wrapper", None)
+            if inner_wrapper is None:
+                continue
+
+            # Full mode: base weight buffers (gate_proj_buf/up_proj_buf/down_proj_buf)
+            for buf_name in ("gate_proj_buf", "up_proj_buf", "down_proj_buf"):
+                buf = getattr(inner_wrapper, buf_name, None)
+                if buf is not None and isinstance(buf, torch.nn.Parameter):
+                    num_params = buf.numel()
+                    all_param += num_params
+                    if buf.requires_grad:
+                        trainable_params += num_params
+
+            # LoRA mode: fused expert LoRA params (not in nn.Module tree, invisible to model.parameters())
+            fused_lora_params = getattr(layer_wrapper, "_fused_expert_lora_params", None)
+            if fused_lora_params is not None:
+                for p in fused_lora_params:
+                    if isinstance(p, torch.nn.Parameter):
+                        num_params = p.numel()
+                        all_param += num_params
+                        if p.requires_grad:
+                            trainable_params += num_params
+            # NOTE: _peft_lora_modules (non-fused expert LoRA) are NOT counted here
+            # because they are already registered as model sub-modules by PEFT and
+            # thus visible via model.parameters(). Counting them again would double-count.
 
     return trainable_params, all_param
 

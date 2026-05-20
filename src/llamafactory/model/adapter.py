@@ -47,6 +47,10 @@ def _setup_full_tuning(
     logger.info_rank0("Fine-tuning method: Full")
     forbidden_modules = get_forbidden_modules(model.config, finetuning_args)
     for name, param in model.named_parameters():
+        # Skip KT zero-storage placeholders (expert weights managed by KT wrapper).
+        # Upcasting them would re-materialize full-size float32 tensors (~115 GB waste).
+        if getattr(param, "_kt_zero_storage", False):
+            continue
         if not any(forbidden_module in name for forbidden_module in forbidden_modules):
             if cast_trainable_params_to_fp32:
                 param.data = param.data.to(torch.float32)
