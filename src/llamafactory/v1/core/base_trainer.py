@@ -144,10 +144,8 @@ class BaseTrainer:
             from ..plugins.model_plugins.parallelization.sequence_parallel import SequenceParallelModelPlugin
 
             if model.config._attn_implementation != "flash_attention_2":
-                logger.warning_rank0(
-                    "Sequence parallelism is optimized for flash attention only. Replace the attention implementation to flash_attention_2."
-                )
-                model.config._attn_implementation = "flash_attention_2"
+                raise ValueError("Sequence parallelism requires flash attention. Please set `flash_attn: fa2`.")
+
             SequenceParallelModelPlugin(self.args.dist_config.get("cp_mode", "ulysses"))(model, self.args.dist_config)
 
     def _create_batch_generator(self) -> None:
