@@ -281,9 +281,11 @@ class Qwen3NpuMoeFused:
         next_states = next_states.view(batch_size, sequence_length, -1)
         return next_states, router_logits
 
+
 def npu_group_gemm(x, weight, group_list):
     output = GmmFunction.apply(x, weight, group_list)
     return output
+
 
 class Qwen3_5NpuMoeFused:
     """Container for Qwen3.5 NPU fused MoE forward functions."""
@@ -304,10 +306,12 @@ class Qwen3_5NpuMoeFused:
             Tensor: Output tensor after expert computation.
         """
         import torch_npu
+
         selected_experts = top_k_index
         routing_weights = top_k_weights
-        permuted_hidden_states, row_ids_map = torch_npu.npu_moe_token_permute(hidden_states,
-                                                                                selected_experts.to(torch.int32))
+        permuted_hidden_states, row_ids_map = torch_npu.npu_moe_token_permute(
+            hidden_states, selected_experts.to(torch.int32)
+        )
         tokens_per_expert = torch.histc(selected_experts, bins=self.num_experts, min=0, max=self.num_experts)
         intermediate_hidden_states = npu_group_gemm(permuted_hidden_states, self.gate_up_proj, tokens_per_expert)
         intermediate_activations = torch_npu.npu_swiglu(intermediate_hidden_states, dim=-1)
@@ -315,15 +319,16 @@ class Qwen3_5NpuMoeFused:
         final_hidden_states = torch_npu.npu_moe_token_unpermute(output, row_ids_map, probs=routing_weights)
         return final_hidden_states
 
+
 # moe patch config mapping
 kernel_moe_mapping = {
     "Qwen3VLMoeForConditionalGeneration": {
         "Qwen3VLMoeTextExperts": NpuMoeFused.npu_moe_experts_forward,
         "Qwen3VLMoeTextSparseMoeBlock": NpuMoeFused.npu_moe_sparse_block_forward,
     },
-    "Qwen3_5MoeForConditionalGeneration": {
-        "Qwen3_5MoeExperts": Qwen3_5NpuMoeFused.qwen3_5moe_experts_forward
-    }
+    # "Qwen3_5MoeForConditionalGeneration": {
+    #     "Qwen3_5MoeExperts": Qwen3_5NpuMoeFused.qwen3_5moe_experts_forward
+    # }
 }
 
 if not is_transformers_version_greater_than("5.0.0"):
