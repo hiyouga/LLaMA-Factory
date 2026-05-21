@@ -80,10 +80,10 @@ def _training_function(config: dict[str, Any]) -> None:
     if finetuning_args.early_stopping_steps is not None:
         callbacks.append(EarlyStoppingCallback(early_stopping_patience=finetuning_args.early_stopping_steps))
 
-    if training_args.enable_torch_profiler:
+    if getattr(training_args, "enable_torch_profiler", False):
         callbacks.append(TorchProfilerCallback(training_args))
 
-    if training_args.profile_modules:
+    if getattr(training_args, "profile_modules", None):
         callbacks.append(ModuleProfilerCallback(training_args.profile_modules))
 
     callbacks.append(ReporterCallback(model_args, data_args, finetuning_args, generating_args))  # add to last
