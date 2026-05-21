@@ -20,7 +20,6 @@ import sys
 import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -584,7 +583,7 @@ class ModuleProfilerCallback(TrainerCallback):
         if matched:
             logger.info_rank0(
                 f"ModuleProfiler: registered hooks on {len(matched)} modules: {matched[:5]}"
-                + (f" ... (+{len(matched)-5} more)" if len(matched) > 5 else "")
+                + (f" ... (+{len(matched) - 5} more)" if len(matched) > 5 else "")
             )
         else:
             logger.warning_rank0(f"ModuleProfiler: no modules matched patterns {self.patterns}")
@@ -616,7 +615,7 @@ class ModuleProfilerCallback(TrainerCallback):
             bwd = self._backward_times.get(name, [])
             fwd_mean = sum(fwd) / len(fwd) if fwd else 0.0
             bwd_mean = sum(bwd) / len(bwd) if bwd else 0.0
-            lines.append(f"  {name}: fwd={fwd_mean:.3f}, bwd={bwd_mean:.3f}, total={fwd_mean+bwd_mean:.3f}")
+            lines.append(f"  {name}: fwd={fwd_mean:.3f}, bwd={bwd_mean:.3f}, total={fwd_mean + bwd_mean:.3f}")
 
         logger.info_rank0("\n".join(lines))
         self._forward_times.clear()

@@ -36,7 +36,7 @@ class ModelArguments:
     flash_attn: AttentionFunction = field(
         default=AttentionFunction.SDPA,
         metadata={
-            "help": "Attention implementation to use: disabled, sdpa, or fa2. SDPA is the default implementation for models."
+            "help": "Attention implementation to use: eager, sdpa, or flash_attention_2. SDPA is the default implementation for models."
         },
     )
     model_class: ModelClass = field(
@@ -61,6 +61,12 @@ class ModelArguments:
     )
 
     def __post_init__(self) -> None:
+        supported_flash_attn = [item.value for item in AttentionFunction]
+        if self.flash_attn not in supported_flash_attn:
+            raise ValueError(
+                f"Unsupported `flash_attn`: {self.flash_attn}. Supported values are: {supported_flash_attn}."
+            )
+
         self.init_config = get_plugin_config(self.init_config)
         self.peft_config = get_plugin_config(self.peft_config)
         self.kernel_config = get_plugin_config(self.kernel_config)

@@ -147,7 +147,9 @@ class BaseTrainer:
             from ..plugins.model_plugins.parallelization.sequence_parallel import SequenceParallelModelPlugin
 
             if model.config._attn_implementation != "flash_attention_2":
-                raise ValueError("Sequence parallelism requires flash attention. Please set `flash_attn: fa2`.")
+                raise ValueError(
+                    "Sequence parallelism requires flash attention. Please set `flash_attn: flash_attention_2`."
+                )
 
             SequenceParallelModelPlugin(self.args.dist_config.get("cp_mode", "ulysses"))(model, self.args.dist_config)
 
@@ -156,7 +158,7 @@ class BaseTrainer:
             self.args.batching_strategy == BatchingStrategy.PADDING_FREE
             and getattr(self.model.config, "_attn_implementation", None) != "flash_attention_2"
         ):
-            raise ValueError("`padding_free` requires `flash_attn: fa2`.")
+            raise ValueError("`padding_free` requires `flash_attn: flash_attention_2`.")
 
         self.train_batch_generator = BatchGenerator(
             dataset=self.train_dataset,

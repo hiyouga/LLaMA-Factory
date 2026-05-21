@@ -37,7 +37,7 @@ from ..accelerator.helper import DeviceType
 from ..accelerator.interface import DistributedInterface
 from ..config.model_args import ModelArguments, ModelClass
 from ..utils import logging
-from ..utils.types import AttentionFunction, HFConfig, HFModel, Processor
+from ..utils.types import HFConfig, HFModel, Processor
 from .utils.rendering import Renderer
 
 
@@ -120,14 +120,7 @@ class ModelEngine:
             init_device = DistributedInterface().current_device
 
         init_kwargs = {} if self._deepspeed_zero3_enabled else {"device_map": init_device}
-
-        if self.args.flash_attn == AttentionFunction.SDPA:
-            init_kwargs["attn_implementation"] = "sdpa"
-            logger.info_rank0(f"Using attention implementation: {init_kwargs['attn_implementation']}.")
-        else:
-            from ..plugins.model_plugins.transformers_kernels import update_transformers_kernels_kwargs
-
-            init_kwargs = update_transformers_kernels_kwargs(flash_attn=self.args.flash_attn, init_kwargs=init_kwargs)
+        logger.info_rank0(f"Using attention implementation: {self.args.flash_attn}.")
 
         if self.args.quant_config is not None:
             from ..plugins.model_plugins.quantization import QuantizationPlugin
@@ -172,6 +165,7 @@ class ModelEngine:
                 self.args.model,
                 config=self.model_config,
                 dtype="auto",
+                attn_implementation=self.args.flash_attn,
                 trust_remote_code=self.args.trust_remote_code,
                 **init_kwargs,
             )

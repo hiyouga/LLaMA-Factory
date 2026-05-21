@@ -56,9 +56,9 @@ else:
 
 @unique
 class AttentionFunction(StrEnum):
-    DISABLED = "disabled"
+    EAGER = "eager"
     SDPA = "sdpa"
-    FA2 = "fa2"
+    FLASH_ATTENTION_2 = "flash_attention_2"
 
 
 class DatasetInfo(TypedDict, total=False):
