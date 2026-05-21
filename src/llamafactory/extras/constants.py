@@ -139,7 +139,6 @@ class EngineName(StrEnum):
     HF = "huggingface"
     VLLM = "vllm"
     SGLANG = "sglang"
-    KT = "ktransformers"
 
 
 class DownloadSource(StrEnum):
@@ -1259,6 +1258,17 @@ register_model_group(
 
 register_model_group(
     models={
+        "Hy3-Preview": {
+            DownloadSource.DEFAULT: "tencent/Hy3-preview",
+            DownloadSource.MODELSCOPE: "tencent/Hy3-preview",
+        },
+    },
+    template="hy3",
+)
+
+
+register_model_group(
+    models={
         "Index-1.9B-Base": {
             DownloadSource.DEFAULT: "IndexTeam/Index-1.9B",
             DownloadSource.MODELSCOPE: "IndexTeam/Index-1.9B",
@@ -1934,6 +1944,18 @@ register_model_group(
         },
     },
     template="minicpm_v",
+    multimodal=True,
+)
+
+
+register_model_group(
+    models={
+        "MiniCPM-V-4.6": {
+            DownloadSource.DEFAULT: "openbmb/MiniCPM-V-4_6",
+            DownloadSource.MODELSCOPE: "OpenBMB/MiniCPM-V-4_6",
+        },
+    },
+    template="minicpm_v_4_6",
     multimodal=True,
 )
 

@@ -125,7 +125,7 @@ def patch_qwen3_5_forward(model: "PreTrainedModel") -> None:
             hidden_states, _ = self.self_attn(
                 hidden_states=hidden_states,
                 attention_mask=attention_mask,
-                position_ids=position_ids,
+                position_ids=position_ids[None, 0],  # keep [1, B, L]
                 past_key_values=past_key_values,
                 cache_position=cache_position,
                 position_embeddings=position_embeddings,

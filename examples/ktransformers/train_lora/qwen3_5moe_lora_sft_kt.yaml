@@ -1,5 +1,5 @@
 ### model
-model_name_or_path: deepseek-ai/DeepSeek-V2-Lite
+model_name_or_path: Qwen/Qwen3.5-397B-A17B
 trust_remote_code: true
 
 ### method
@@ -11,7 +11,7 @@ lora_target: all
 
 ### dataset
 dataset: identity, alpaca_en_demo
-template: deepseek
+template: qwen3_5
 cutoff_len: 2048
 max_samples: 100000
 overwrite_cache: true
@@ -19,7 +19,7 @@ preprocessing_num_workers: 16
 dataloader_num_workers: 4
 
 ### output
-output_dir: saves/Kllama_deepseekV2
+output_dir: saves/KT_FT_qwen35Moe
 logging_steps: 10
 save_steps: 500
 plot_loss: true
@@ -39,14 +39,8 @@ ddp_timeout: 180000000
 resume_from_checkpoint: null
 
 ### ktransformers
-use_kt: true # use KTransformers as LoRA sft backend
-kt_optimize_rule: examples/ktransformers/kt_optimize_rules/DeepSeek-V2-Lite-Chat-sft-amx.yaml
-cpu_infer: 32
-chunk_size: 8192
-
-### eval
-# eval_dataset: alpaca_en_demo
-# val_size: 0.1
-# per_device_eval_batch_size: 1
-# eval_strategy: steps
-# eval_steps: 500
+use_kt: true
+# For original BF16 checkpoints, start with examples/ktransformers/accelerate/fsdp2_kt_bf16.yaml.
+# For pre-converted expert weights, uncomment kt_weight_path and use fsdp2_kt_int8.yaml or fsdp2_kt_int4.yaml.
+# Pair the 397B path with fsdp2_kt_int8.yaml, tune cutoff_len to prepared weights and GPU memory.
+# kt_weight_path: /path/to/Qwen3.5-MoE-AMXINT8

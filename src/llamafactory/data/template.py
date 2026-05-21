@@ -834,6 +834,19 @@ register_template(
 
 
 register_template(
+    name="hy3",
+    format_user=StringFormatter(slots=["<｜hy_User｜>{{content}}<｜hy_Assistant｜>"]),
+    format_assistant=StringFormatter(slots=["{{content}}<｜hy_eos｜>"]),
+    format_system=StringFormatter(slots=["{{content}}"]),
+    format_prefix=EmptyFormatter(slots=[{"bos_token"}]),
+    stop_words=["<｜hy_eos｜>"],
+    replace_eos=True,
+    thought_words=("<think>", "</think>"),
+    template_class=ReasoningTemplate,
+)
+
+
+register_template(
     name="deepseekcoder",
     format_user=StringFormatter(slots=["### Instruction:\n{{content}}\n### Response:"]),
     format_assistant=StringFormatter(slots=["\n{{content}}\n<|EOT|>\n"]),
@@ -1688,6 +1701,17 @@ register_template(
     stop_words=["<|im_end|>"],
     default_system="You are a helpful assistant.",
     mm_plugin=get_mm_plugin(name="minicpm_v", image_token="<image>", video_token="<video>"),
+)
+
+
+register_template(
+    name="minicpm_v_4_6",
+    format_user=StringFormatter(slots=["<|im_start|>user\n{{content}}<|im_end|>\n<|im_start|>assistant\n"]),
+    format_assistant=StringFormatter(slots=["{{content}}<|im_end|>\n"]),
+    format_system=StringFormatter(slots=["<|im_start|>system\n{{content}}<|im_end|>\n"]),
+    stop_words=["<|im_end|>"],
+    default_system="You are a helpful assistant.",
+    mm_plugin=get_mm_plugin(name="minicpm_v_4_6", image_token="<image>", video_token="<video>"),
 )
 
 

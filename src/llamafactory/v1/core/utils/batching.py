@@ -146,6 +146,8 @@ class BatchGenerator(Iterator):
             from ...plugins.trainer_plugins.batching import BatchingPlugin
 
             batch_size = BatchingPlugin(self.batching_strategy).get_data_provider_batch_size(self._batch_info)
+        generator_seed = torch.Generator()
+        generator_seed.manual_seed(self.seed)
 
         self._data_provider = StatefulDataLoader(
             self.dataset,
@@ -156,7 +158,7 @@ class BatchGenerator(Iterator):
             pin_memory=self.pin_memory,
             pin_memory_device=DistributedInterface().current_device.type,
             drop_last=self.drop_last,
-            generator=generato_seed,
+            generator=generator_seed,
         )
         if self.batching_strategy == BatchingStrategy.NORMAL:
             self._length = len(self._data_provider)

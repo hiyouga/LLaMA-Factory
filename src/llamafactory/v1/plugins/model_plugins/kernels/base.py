@@ -34,7 +34,7 @@ class BaseKernel(ABC):
     """
 
     _kernel_id: Any = ""  # kernel ID, any hashable value to identify a kernel implementation
-    _device: DeviceType = DeviceType.CPU  # "cuda", "npu", "cpu", etc.
+    _device: list[DeviceType] = [DeviceType.CPU]  # "cuda", "npu", "cpu", etc.
 
     @classmethod
     def get_kernel_id(cls) -> str:
@@ -42,8 +42,8 @@ class BaseKernel(ABC):
         return cls._kernel_id
 
     @classmethod
-    def get_device(cls) -> str:
-        """Returns the device type associated with the kernel (e.g., "cuda", "npu", "cpu")."""
+    def get_device(cls) -> list[DeviceType]:
+        """Returns the device type list associated with the kernel (e.g., ["cuda", "npu", "cpu"])."""
         return cls._device
 
     @classmethod
@@ -58,7 +58,7 @@ class BaseKernel(ABC):
             it should raise an error instead of silently switching.
             Kernels can override this method to implement custom dependency checks.
         """
-        if cls._device != get_current_accelerator().type:
+        if get_current_accelerator().type not in cls._device:
             return False
         return True
 

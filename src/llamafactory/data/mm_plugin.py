@@ -22,7 +22,8 @@ import re
 from copy import deepcopy
 from dataclasses import dataclass
 from io import BytesIO
-from typing import TYPE_CHECKING, BinaryIO, Literal, NotRequired, Optional, TypedDict, Union
+from types import SimpleNamespace
+from typing import TYPE_CHECKING, Any, BinaryIO, Literal, NotRequired, Optional, TypedDict, Union
 
 import numpy as np
 import torch
@@ -244,6 +245,14 @@ class MMPluginMixin:
         sample_frames = max(1, math.floor(float(video_stream.duration * video_stream.time_base) * video_fps))
         sample_frames = min(total_frames, video_maxlen, sample_frames)
         return np.linspace(0, total_frames - 1, sample_frames).astype(np.int32)
+
+    def _get_video_token_metadata(
+        self,
+        videos: list["VideoInput"],
+        processor: "MMProcessor",
+    ) -> Optional[dict[str, Any]]:
+        r"""Build metadata used to expand video tokens without decoding frames."""
+        return None
 
     def _regularize_images(self, images: list["ImageInput"], **kwargs) -> "RegularizedImageOutput":
         r"""Regularize images to avoid error. Including reading and pre-processing."""
@@ -1433,6 +1442,225 @@ class MiniCPMVPlugin(BasePlugin):
 
 
 @dataclass
+class MiniCPMV4_6Plugin(BasePlugin):
+    """Plugin for MiniCPM-V-4.6 with new transformers (NaViT vision + get_placeholder_mask API)."""
+
+    def _get_mm_inputs(
+        self,
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        processor: "MMProcessor",
+        **kwargs,
+    ) -> dict[str, "torch.Tensor"]:
+        image_processor = getattr(processor, "image_processor")
+        video_processor = getattr(processor, "video_processor", None)
+        mm_inputs = {}
+
+        if len(images) != 0:
+            # The image_processor ignores downsample_mode; target_sizes are always based on patch_size.
+            # downsample_mode only affects the token divisor in _build_v4_6_placeholder and model forward.
+            mm_inputs.update(image_processor(images, return_tensors="pt"))
+
+        if len(videos) != 0:
+            if video_processor is not None:
+                video_inputs = video_processor(videos, return_tensors="pt")
+                mm_inputs["pixel_values_videos"] = video_inputs["pixel_values_videos"]
+                mm_inputs["target_sizes_videos"] = video_inputs["target_sizes_videos"]
+            else:
+                video_inputs = image_processor(videos, return_tensors="pt")
+                mm_inputs["pixel_values_videos"] = video_inputs["pixel_values"]
+                mm_inputs["target_sizes_videos"] = video_inputs["target_sizes"]
+
+        if len(audios) != 0:
+            audio_features, audio_feature_lens, audio_phs = processor.audio_feature_extract(
+                [audios],
+                chunk_input=True,
+                sampling_rate=getattr(processor, "audio_sampling_rate", 16000),
+            )
+            audio_feature_lens = [
+                x.clone().detach() if isinstance(x, torch.Tensor) else torch.tensor(x) for x in audio_feature_lens
+            ]
+            mm_inputs.update({"audio_features": audio_features, "audio_feature_lens": audio_feature_lens})
+            if kwargs.get("ret_phs", False):
+                mm_inputs.update({"audio_phs": audio_phs})
+
+        return mm_inputs
+
+    def _build_v4_6_placeholder(
+        self,
+        image_inputs: dict[str, Any],
+        image_idx: int,
+        use_image_id: bool,
+        processor: "MMProcessor",
+    ) -> str:
+        """Build image placeholder for MiniCPM-V-4.6 using NaViT token count computation."""
+        grids = image_inputs.get("grids", [[0, 0]])
+        num_patches_per_image = image_inputs.get("num_patches_per_image", [1])
+        target_sizes = image_inputs.get("target_sizes")
+
+        downsample_mode = os.getenv("DOWNSAMPLE_MODE")
+        if downsample_mode is None:
+            image_processor = getattr(processor, "image_processor")
+            downsample_mode = getattr(image_processor, "downsample_mode", "16x")
+        token_divisor = 4 if downsample_mode == "4x" else 16
+
+        flat_index = 0
+        for idx in range(image_idx):
+            flat_index += num_patches_per_image[idx]
+        n_patches = num_patches_per_image[image_idx]
+
+        img_target_sizes = target_sizes[flat_index : flat_index + n_patches]
+        num_tokens_per_patch = img_target_sizes.prod(-1) // token_divisor
+        num_rows, num_cols = grids[image_idx]
+
+        image_start = getattr(processor, "image_start_token", "<image>")
+        image_end = getattr(processor, "image_end_token", "</image>")
+        slice_start = getattr(processor, "slice_start_token", "<slice>")
+        slice_end = getattr(processor, "slice_end_token", "</slice>")
+        image_id_start = getattr(processor, "image_id_start_token", "<image_id>")
+        image_id_end = getattr(processor, "image_id_end_token", "</image_id>")
+        image_token = (
+            getattr(processor, "image_token", None)
+            or getattr(getattr(processor, "tokenizer", None), "image_token", None)
+            or "<image>"
+        )
+
+        image_placeholder = image_start + "<|ph|>" * int(num_tokens_per_patch[0]) + image_end
+        if use_image_id:
+            image_placeholder = f"{image_id_start}{image_idx}{image_id_end}" + image_placeholder
+
+        slice_mode = getattr(processor, "slice_mode", True)
+        if slice_mode and num_rows > 0 and num_cols > 0:
+            per_slice_tokens = int(num_tokens_per_patch[1]) if len(num_tokens_per_patch) > 1 else 0
+            slice_placeholder = slice_start + "<|ph|>" * per_slice_tokens + slice_end
+            slices = [slice_placeholder * num_cols for _ in range(num_rows)]
+            image_placeholder += "\n".join(slices)
+
+        return image_placeholder.replace("<|ph|>", image_token)
+
+    @override
+    def process_messages(
+        self,
+        messages: list[dict[str, str]],
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        processor: Optional["MMProcessor"],
+    ) -> list[dict[str, str]]:
+        self._validate_input(processor, images, videos, audios)
+        self._validate_messages(messages, images, videos, audios)
+        num_image_tokens, num_video_tokens, num_audio_tokens = 0, 0, 0
+        messages = deepcopy(messages)
+        mm_inputs, audio_inputs = {}, {}
+        if len(images) != 0 and len(videos) != 0:
+            raise ValueError("MiniCPM-V model does not support input images and videos at the same time.")
+
+        use_image_id = getattr(processor, "default_use_image_id", True)
+
+        if len(videos) != 0:
+            use_image_id = False
+            mm_inputs = self._get_mm_inputs([], videos, [], processor)
+
+        for i, message in enumerate(messages):
+            content = message["content"]
+            while IMAGE_PLACEHOLDER in content:
+                content = content.replace(IMAGE_PLACEHOLDER, "{{image}}", 1)
+                num_image_tokens += 1
+
+            while VIDEO_PLACEHOLDER in content:
+                num_frames = 1
+                if "num_frames_per_video" in mm_inputs:
+                    num_frames = sum(mm_inputs["num_frames_per_video"])
+                content = content.replace(VIDEO_PLACEHOLDER, "{{image}}" * num_frames, 1)
+                num_video_tokens += 1
+
+            while AUDIO_PLACEHOLDER in content:
+                content = content.replace(AUDIO_PLACEHOLDER, "{{audio}}", 1)
+                num_audio_tokens += 1
+
+            message["content"] = content.replace("{{image}}", "(<image>./</image>)").replace(
+                "{{audio}}", "(<audio>./</audio>)"
+            )
+
+        if len(images):
+            mm_inputs = self._get_mm_inputs(images, [], [], processor)
+
+        if len(audios):
+            audio_inputs = self._get_mm_inputs([], [], audios, processor, ret_phs=True)
+
+        if self.expand_mm_tokens and mm_inputs:
+            pattern = "(<image>./</image>)"
+            idx = 0
+            for index, message in enumerate(messages):
+                text = message["content"]
+                image_tags = re.findall(pattern, text)
+                text_chunks = text.split(pattern)
+                final_text = ""
+                for i in range(len(image_tags)):
+                    image_placeholder = self._build_v4_6_placeholder(mm_inputs, idx, use_image_id, processor)
+                    final_text = final_text + text_chunks[i] + image_placeholder
+                    idx += 1
+                final_text += text_chunks[-1]
+                messages[index]["content"] = final_text
+
+        if self.expand_mm_tokens and audio_inputs:
+            pattern = "(<audio>./</audio>)"
+            idx = 0
+            for index, message in enumerate(messages):
+                text = message["content"]
+                audio_tags = re.findall(pattern, text)
+                text_chunks = text.split(pattern)
+                final_text = ""
+                for i in range(len(audio_tags)):
+                    audio_placeholder = audio_inputs["audio_phs"][0][idx]
+                    final_text = final_text + text_chunks[i] + audio_placeholder
+                    idx += 1
+                final_text += text_chunks[-1]
+                messages[index]["content"] = final_text
+
+        return messages
+
+    @override
+    def get_mm_inputs(
+        self,
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        imglens: list[int],
+        vidlens: list[int],
+        audlens: list[int],
+        batch_ids: list[list[int]],
+        processor: Optional["MMProcessor"],
+    ) -> dict[str, Union[list[int], "torch.Tensor"]]:
+        self._validate_input(processor, images, videos, audios)
+        mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+
+        # v4.6 does NOT use image_bound — the model finds image tokens via get_placeholder_mask
+        # Ensure target_sizes key name matches the model's expected input
+        if "target_sizes" not in mm_inputs and "tgt_sizes" in mm_inputs:
+            mm_inputs["target_sizes"] = mm_inputs.pop("tgt_sizes")
+
+        if "target_sizes" not in mm_inputs:
+            mm_inputs["target_sizes"] = torch.empty(0, 2, dtype=torch.int32)
+
+        if "pixel_values" not in mm_inputs:
+            mm_inputs["pixel_values"] = torch.empty(1, 3, 14, 0)
+
+        # Pass downsample_mode to model forward so it matches the placeholder divisor
+        _ds = os.getenv("DOWNSAMPLE_MODE")
+        if _ds is None:
+            _ds = getattr(getattr(processor, "image_processor", None), "downsample_mode", "16x")
+        mm_inputs["downsample_mode"] = _ds
+
+        if len(audios) > 0:
+            audio_inputs = self._get_mm_inputs([], [], audios, processor)
+            mm_inputs.update(audio_inputs)
+
+        return mm_inputs
+
+
+@dataclass
 class MllamaPlugin(BasePlugin):
     @override
     def process_messages(
@@ -1747,6 +1975,199 @@ class Qwen2VLPlugin(BasePlugin):
             "frames_indices": frames_indices,
         }
 
+    def _get_qwen_video_size_after_regularization(
+        self, width: int, height: int, image_max_pixels: int, image_min_pixels: int
+    ) -> tuple[int, int]:
+        r"""Compute the frame size produced by Qwen-VL image regularization."""
+        if (width * height) > image_max_pixels:
+            resize_factor = math.sqrt(image_max_pixels / (width * height))
+            width, height = int(width * resize_factor), int(height * resize_factor)
+
+        if (width * height) < image_min_pixels:
+            resize_factor = math.sqrt(image_min_pixels / (width * height))
+            width, height = int(width * resize_factor), int(height * resize_factor)
+
+        if min(width, height) < 28:
+            width, height = max(width, 28), max(height, 28)
+
+        if width / height > 200:
+            width, height = height * 180, height
+
+        if height / width > 200:
+            width, height = width, width * 180
+
+        return width, height
+
+    def _get_qwen_video_stream_metadata(
+        self,
+        video: "VideoInput",
+        video_fps: float,
+        video_maxlen: int,
+    ) -> Optional[dict[str, Any]]:
+        if not is_pyav_available() or not isinstance(video, (str, os.PathLike)):
+            return None
+
+        try:
+            container = av.open(video, "r")
+        except (av.FFmpegError, OSError):
+            return None
+
+        try:
+            video_stream = next((stream for stream in container.streams if stream.type == "video"), None)
+            if video_stream is None:
+                return None
+
+            if video_stream.duration is None or video_stream.average_rate is None:
+                return None
+
+            average_fps = float(video_stream.average_rate)
+            if average_fps <= 0:
+                return None
+
+            sample_indices = self._get_video_sample_indices(
+                video_stream, video_fps=video_fps, video_maxlen=video_maxlen
+            )
+            return {
+                "width": video_stream.width,
+                "height": video_stream.height,
+                "average_fps": average_fps,
+                "sample_indices": sample_indices,
+            }
+        finally:
+            container.close()
+
+    def _get_qwen_video_resize(
+        self,
+        num_frames: int,
+        height: int,
+        width: int,
+        patch_size: int,
+        temporal_patch_size: int,
+        merge_size: int,
+        min_pixels: int,
+        max_pixels: int,
+    ) -> tuple[int, int]:
+        from transformers.models.qwen2_vl.image_processing_qwen2_vl import smart_resize
+
+        return smart_resize(
+            height=height,
+            width=width,
+            factor=patch_size * merge_size,
+            min_pixels=min_pixels,
+            max_pixels=max_pixels,
+        )
+
+    def _get_qwen_video_grid_metadata(
+        self,
+        videos: list["VideoInput"],
+        processor: "MMProcessor",
+    ) -> Optional[dict[str, Any]]:
+        if len(videos) == 0:
+            return {"video_grid_thw": torch.empty((0, 3), dtype=torch.long), "frames_indices": [], "fps": 2.0}
+
+        image_processor: BaseImageProcessor = getattr(processor, "image_processor", None)
+        video_processor: BaseVideoProcessor = getattr(processor, "video_processor", None) or image_processor
+        if image_processor is None or video_processor is None:
+            return None
+
+        patch_size = getattr(video_processor, "patch_size", None)
+        temporal_patch_size = getattr(video_processor, "temporal_patch_size", None)
+        merge_size = getattr(video_processor, "merge_size", None)
+        size = getattr(video_processor, "size", None)
+        if patch_size is None or temporal_patch_size is None or merge_size is None or size is None:
+            return None
+
+        if isinstance(size, dict):
+            min_pixels = size.get("shortest_edge")
+            max_pixels = size.get("longest_edge")
+        else:
+            min_pixels = getattr(size, "shortest_edge", None)
+            max_pixels = getattr(size, "longest_edge", None)
+
+        if min_pixels is None or max_pixels is None:
+            return None
+
+        video_fps = getattr(processor, "video_fps", 2.0)
+        video_maxlen = getattr(processor, "video_maxlen", 128)
+        image_max_pixels = getattr(processor, "video_max_pixels", 256 * 256)
+        image_min_pixels = getattr(processor, "video_min_pixels", 16 * 16)
+
+        video_grid_thw = []
+        frames_indices = []
+        for video in videos:
+            metadata = self._get_qwen_video_stream_metadata(video, video_fps, video_maxlen)
+            if metadata is None:
+                return None
+
+            width, height = self._get_qwen_video_size_after_regularization(
+                metadata["width"], metadata["height"], image_max_pixels, image_min_pixels
+            )
+            num_frames = len(metadata["sample_indices"])
+            if num_frames % 2 != 0:
+                num_frames += 1
+
+            resized_size = self._get_qwen_video_resize(
+                num_frames,
+                height,
+                width,
+                patch_size,
+                temporal_patch_size,
+                merge_size,
+                min_pixels,
+                max_pixels,
+            )
+
+            resized_height, resized_width = resized_size
+            video_grid_thw.append(
+                [
+                    math.ceil(num_frames / temporal_patch_size),
+                    resized_height // patch_size,
+                    resized_width // patch_size,
+                ]
+            )
+            frames_indices.append([idx / metadata["average_fps"] * video_fps for idx in metadata["sample_indices"]])
+
+        return {
+            "video_grid_thw": torch.tensor(video_grid_thw, dtype=torch.long),
+            "frames_indices": frames_indices,
+            "fps": video_fps,
+        }
+
+    @override
+    def _get_video_token_metadata(
+        self,
+        videos: list["VideoInput"],
+        processor: "MMProcessor",
+    ) -> Optional[dict[str, Any]]:
+        video_metadata = self._get_qwen_video_grid_metadata(videos, processor)
+        if video_metadata is None:
+            return None
+
+        return {"video_grid_thw": video_metadata["video_grid_thw"]}
+
+    def _get_mm_token_metadata(
+        self,
+        images: list["ImageInput"],
+        videos: list["VideoInput"],
+        audios: list["AudioInput"],
+        processor: "MMProcessor",
+    ) -> Optional[dict[str, Any]]:
+        if len(audios) != 0:
+            return None
+
+        mm_inputs = {}
+        if len(images) != 0:
+            mm_inputs.update(self._get_mm_inputs(images, [], [], processor))
+
+        if len(videos) != 0:
+            video_inputs = self._get_video_token_metadata(videos, processor)
+            if video_inputs is None:
+                return None
+
+            mm_inputs.update(video_inputs)
+
+        return mm_inputs
+
     @override
     def _get_mm_inputs(
         self,
@@ -1798,7 +2219,10 @@ class Qwen2VLPlugin(BasePlugin):
 
         merge_length: int = getattr(image_processor, "merge_size") ** 2
         if self.expand_mm_tokens:
-            mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+            mm_inputs = self._get_mm_token_metadata(images, videos, audios, processor)
+            if mm_inputs is None:
+                mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+
             image_grid_thw = mm_inputs.get("image_grid_thw", [])
             video_grid_thw = mm_inputs.get("video_grid_thw", [])
         else:
@@ -1832,6 +2256,51 @@ class Qwen2VLPlugin(BasePlugin):
 
 @dataclass
 class Qwen3VLPlugin(Qwen2VLPlugin):
+    @override
+    def _get_qwen_video_resize(
+        self,
+        num_frames: int,
+        height: int,
+        width: int,
+        patch_size: int,
+        temporal_patch_size: int,
+        merge_size: int,
+        min_pixels: int,
+        max_pixels: int,
+    ) -> tuple[int, int]:
+        from transformers.models.qwen3_vl.video_processing_qwen3_vl import smart_resize
+
+        return smart_resize(
+            num_frames=num_frames,
+            height=height,
+            width=width,
+            temporal_factor=temporal_patch_size,
+            factor=patch_size * merge_size,
+            min_pixels=min_pixels,
+            max_pixels=max_pixels,
+        )
+
+    @override
+    def _get_video_token_metadata(
+        self,
+        videos: list["VideoInput"],
+        processor: "MMProcessor",
+    ) -> Optional[dict[str, Any]]:
+        video_metadata = self._get_qwen_video_grid_metadata(videos, processor)
+        if video_metadata is None:
+            return None
+
+        return {
+            "video_grid_thw": video_metadata["video_grid_thw"],
+            "video_metadata": [
+                SimpleNamespace(
+                    frames_indices=frames_indices,
+                    fps=video_metadata["fps"],
+                )
+                for frames_indices in video_metadata["frames_indices"]
+            ],
+        }
+
     @override
     def _get_mm_inputs(
         self,
@@ -1904,7 +2373,10 @@ class Qwen3VLPlugin(Qwen2VLPlugin):
         image_merge_length: int = getattr(image_processor, "merge_size") ** 2
         video_merge_length: int = getattr(video_processor, "merge_size") ** 2
         if self.expand_mm_tokens:
-            mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+            mm_inputs = self._get_mm_token_metadata(images, videos, audios, processor)
+            if mm_inputs is None:
+                mm_inputs = self._get_mm_inputs(images, videos, audios, processor)
+
             image_grid_thw = mm_inputs.get("image_grid_thw", [])
             video_grid_thw = mm_inputs.get("video_grid_thw", [])
             num_frames = video_grid_thw[0][0] if len(video_grid_thw) > 0 else 0  # hard code for now
@@ -2442,6 +2914,7 @@ PLUGINS = {
     "llava_next_video": LlavaNextVideoPlugin,
     "lfm2_vl": LFMVLPlugin,
     "minicpm_v": MiniCPMVPlugin,
+    "minicpm_v_4_6": MiniCPMV4_6Plugin,
     "mllama": MllamaPlugin,
     "paligemma": PaliGemmaPlugin,
     "pixtral": PixtralPlugin,
