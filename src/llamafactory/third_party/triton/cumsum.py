@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2023-2025, Songlin Yang, Yu Zhang
 
 from typing import Optional
@@ -10,11 +9,10 @@ import triton.language as tl
 from .utils import prepare_chunk_indices
 
 
-@triton.heuristics({
-    'HAS_SCALE': lambda args: args['scale'] is not None,
-    'IS_VARLEN': lambda args: args['cu_seqlens'] is not None
-})
-@triton.jit(do_not_specialize=['T'])
+@triton.heuristics(
+    {"HAS_SCALE": lambda args: args["scale"] is not None, "IS_VARLEN": lambda args: args["cu_seqlens"] is not None}
+)
+@triton.jit(do_not_specialize=["T"])
 def chunk_local_cumsum_scalar_kernel(
     s,
     o,
@@ -35,23 +33,18 @@ def chunk_local_cumsum_scalar_kernel(
     N_CHUNKS: tl.constexpr = BLOCK_T // CHUNK_SIZE
 
     if IS_VARLEN:
-        i_s, i_block = tl.load(chunk_indices + i_block * 2).to(tl.int32), tl.load(
-            chunk_indices + i_block * 2 + 1
-        ).to(tl.int32)
+        i_s, i_block = (
+            tl.load(chunk_indices + i_block * 2).to(tl.int32),
+            tl.load(chunk_indices + i_block * 2 + 1).to(tl.int32),
+        )
 
-        bos, eos = tl.load(cu_seqlens + i_s).to(tl.int32), tl.load(
-            cu_seqlens + i_s + 1
-        ).to(tl.int32)
+        bos, eos = tl.load(cu_seqlens + i_s).to(tl.int32), tl.load(cu_seqlens + i_s + 1).to(tl.int32)
         T = eos - bos
     else:
         bos, eos = i_b * T, i_b * T + T
 
-    ptr_s = tl.make_block_ptr(
-        s + bos * H, (T, H), (H, 1), (i_block * BLOCK_T, 0), (BLOCK_T, H), (1, 0)
-    )
-    ptr_o = tl.make_block_ptr(
-        o + bos * H, (T, H), (H, 1), (i_block * BLOCK_T, 0), (BLOCK_T, H), (1, 0)
-    )
+    ptr_s = tl.make_block_ptr(s + bos * H, (T, H), (H, 1), (i_block * BLOCK_T, 0), (BLOCK_T, H), (1, 0))
+    ptr_o = tl.make_block_ptr(o + bos * H, (T, H), (H, 1), (i_block * BLOCK_T, 0), (BLOCK_T, H), (1, 0))
     b_s = tl.load(ptr_s, boundary_check=(0,)).to(tl.float32)
     b_s = tl.reshape(b_s, (N_CHUNKS, CHUNK_SIZE, H))
     b_s = tl.trans(b_s, (1, 0, 2))
@@ -75,14 +68,11 @@ def chunk_local_cumsum_scalar(
     scale: float = None,
     cu_seqlens: Optional[torch.Tensor] = None,
     head_first: bool = False,
-    output_dtype: Optional[torch.dtype] = torch.float
+    output_dtype: Optional[torch.dtype] = torch.float,
 ) -> torch.Tensor:
-    
     B, T, H = g.shape
     if chunk_size != 2 ** (chunk_size.bit_length() - 1):
-        raise ValueError(
-            f"chunk_size must be a power of 2, chunk_size is{chunk_size}"
-        )
+        raise ValueError(f"chunk_size must be a power of 2, chunk_size is{chunk_size}")
     # We adjust the tiling strategy to prevent overflow in in backward passes and context parallel scenarios
     #  while maximizing UB utilization where possible.
     # The tiling strategy is as follows:
@@ -119,7 +109,7 @@ def chunk_local_cumsum(
     cu_seqlens: Optional[torch.Tensor] = None,
     head_first: bool = False,
     output_dtype: Optional[torch.dtype] = torch.float,
-    **kwargs
+    **kwargs,
 ) -> torch.Tensor:
     if cu_seqlens is not None:
         if g.shape[0] != 1:
@@ -134,7 +124,7 @@ def chunk_local_cumsum(
             scale=scale,
             cu_seqlens=cu_seqlens,
             head_first=head_first,
-            output_dtype=output_dtype
+            output_dtype=output_dtype,
         )
     else:
         raise ValueError(

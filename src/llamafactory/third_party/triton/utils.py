@@ -1,36 +1,30 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2023-2025, Songlin Yang, Yu Zhang
 
-import itertools
 import contextlib
-import os
 import functools
-import warnings
+import itertools
 import logging
+import os
+import warnings
+from collections.abc import Callable
 from enum import Enum
-from functools import lru_cache
-from typing import Any, Callable, Dict, Optional, Tuple
-from packaging import version
+from typing import Any, Optional
 
 import torch
-import torch.nn.functional as F
 import triton
 import triton.language as tl
 import triton.language.extra.libdevice as tldevice
 import triton.runtime.driver as driver
+from packaging import version
+
 
 logger = logging.getLogger(__name__)
 
 FLA_CI_ENV = os.getenv("FLA_CI_ENV") == "1"
 
 
-def tensor_cache(
-    fn: Optional[Callable[..., torch.Tensor]] = None,
-    *,
-    maxsize: int = 1
-) -> Any:
-    """
-    A decorator that caches the most recent results of a function with tensor inputs.
+def tensor_cache(fn: Optional[Callable[..., torch.Tensor]] = None, *, maxsize: int = 1) -> Any:
+    """A decorator that caches the most recent results of a function with tensor inputs.
 
     This decorator will store the outputs of the decorated function for the most recent
     set of input tensors, up to `maxsize` entries. If the function is called again with
@@ -67,8 +61,9 @@ def tensor_cache(
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             for i, (cached_args, cached_kwargs, cached_result) in enumerate(cache):
                 if len(args) == len(cached_args) and len(kwargs) == len(cached_kwargs):
-                    if all(_is_match(a, b) for a, b in zip(args, cached_args)) and \
-                            all(k in cached_kwargs and _is_match(v, cached_kwargs[k]) for k, v in kwargs.items()):
+                    if all(_is_match(a, b) for a, b in zip(args, cached_args)) and all(
+                        k in cached_kwargs and _is_match(v, cached_kwargs[k]) for k, v in kwargs.items()
+                    ):
                         if i != 0:
                             cache.insert(0, cache.pop(i))
                         return cached_result
@@ -92,10 +87,7 @@ def prepare_lens(cu_seqlens: torch.LongTensor) -> torch.LongTensor:
 
 
 @tensor_cache(maxsize=3)
-def prepare_chunk_indices(
-    cu_seqlens: torch.LongTensor,
-    chunk_size: int
-) -> torch.LongTensor:
+def prepare_chunk_indices(cu_seqlens: torch.LongTensor, chunk_size: int) -> torch.LongTensor:
     indices = torch.cat([torch.arange(n) for n in triton.cdiv(prepare_lens(cu_seqlens), chunk_size).tolist()])
     return torch.stack([indices.eq(0).cumsum(0) - 1, indices], 1).to(cu_seqlens)
 
@@ -124,10 +116,10 @@ def assert_close(prefix, ref, tri, ratio, warning=False, err_atol=1e-6):
         assert error_rate < ratio, msg
 
 
-if hasattr(triton.language, '_experimental_make_tensor_descriptor'):
+if hasattr(triton.language, "_experimental_make_tensor_descriptor"):
     # For Triton 3.3.x
     make_tensor_descriptor = triton.language._experimental_make_tensor_descriptor
-elif hasattr(triton.language, 'make_tensor_descriptor'):
+elif hasattr(triton.language, "make_tensor_descriptor"):
     # For Triton 3.4.x and later
     make_tensor_descriptor = triton.language.make_tensor_descriptor
 else:
@@ -136,7 +128,6 @@ else:
     Returns None to indicate TMA descriptors are unavailable.
     Just make triton compiler happy.
     """
-
 
     @triton.jit
     def make_tensor_descriptor(
@@ -149,53 +140,59 @@ else:
         return None
 
 
-@lru_cache(maxsize=None)
+@functools.cache
 def get_available_device() -> str:
     try:
         return triton.runtime.driver.active.get_current_target().backend
     except BaseException:
         _cpu_device_warning()
-        return 'cpu'
+        return "cpu"
 
 
 def map_triton_backend_to_torch_device() -> str:
-    backend = get_available_device()        # 'cuda' | 'hip' | 'xpu' | 'cpu' | ...
-    return {'cuda': 'cuda', 'hip': 'cuda', 'xpu': 'xpu'}.get(backend, backend)
+    backend = get_available_device()  # 'cuda' | 'hip' | 'xpu' | 'cpu' | ...
+    return {"cuda": "cuda", "hip": "cuda", "xpu": "xpu"}.get(backend, backend)
 
 
-device = get_available_device() if get_available_device() != 'hip' else 'cuda'
+device = get_available_device() if get_available_device() != "hip" else "cuda"
 device_torch_lib = getattr(torch, device)
 device_platform = get_available_device()
-is_amd = (device_platform == 'hip')
-is_nvidia = (device_platform == 'cuda')
-is_nvidia_hopper = (
-            is_nvidia and ('NVIDIA H' in torch.cuda.get_device_name(0) or torch.cuda.get_device_capability()[0] >= 9))
+is_amd = device_platform == "hip"
+is_nvidia = device_platform == "cuda"
+is_nvidia_hopper = is_nvidia and (
+    "NVIDIA H" in torch.cuda.get_device_name(0) or torch.cuda.get_device_capability()[0] >= 9
+)
 
-is_tf32_supported = (is_nvidia and torch.cuda.get_device_capability(0)[0] >= 8)
-is_tma_supported = (is_nvidia and torch.cuda.get_device_capability(0)[0] >= 9) \
-                   and os.environ.get('FLA_NO_USE_TMA', '0') != '1' and \
-                   (hasattr(triton.language, '_experimental_make_tensor_descriptor') or hasattr(triton.language,
-                                                                                                'make_tensor_descriptor'))
+is_tf32_supported = is_nvidia and torch.cuda.get_device_capability(0)[0] >= 8
+is_tma_supported = (
+    (is_nvidia and torch.cuda.get_device_capability(0)[0] >= 9)
+    and os.environ.get("FLA_NO_USE_TMA", "0") != "1"
+    and (
+        hasattr(triton.language, "_experimental_make_tensor_descriptor")
+        or hasattr(triton.language, "make_tensor_descriptor")
+    )
+)
 
 if is_nvidia and not is_tf32_supported:
     # Make old card happy, since triton will use tf32 by default.
     # This is a workaround for old nvidia card.
-    os.environ['TRITON_F32_DEFAULT'] = 'ieee'
+    os.environ["TRITON_F32_DEFAULT"] = "ieee"
 
 
-@lru_cache(maxsize=None)
-def check_pytorch_version(version_s: str = '2.4') -> bool:
+@functools.cache
+def check_pytorch_version(version_s: str = "2.4") -> bool:
     return version.parse(torch.__version__) >= version.parse(version_s)
 
-if check_pytorch_version('2.4'):
-    device = 'cuda' if device == 'cpu' else device
+
+if check_pytorch_version("2.4"):
+    device = "cuda" if device == "cpu" else device
     autocast_custom_fwd = functools.partial(torch.amp.custom_fwd, device_type=device)
     autocast_custom_bwd = functools.partial(torch.amp.custom_bwd, device_type=device)
 
     def custom_device_ctx(index: int):
         return device_torch_lib.device(index)
 else:
-    assert device == 'cuda', 'Only cuda device is supported for PyTorch version < 2.4.0.'
+    assert device == "cuda", "Only cuda device is supported for PyTorch version < 2.4.0."
     autocast_custom_fwd = device_torch_lib.amp.custom_fwd
     autocast_custom_bwd = device_torch_lib.amp.custom_bwd
 
@@ -203,12 +200,8 @@ else:
         return torch.cuda.device(index)
 
 
-def input_guard(
-    fn: Callable[..., torch.Tensor]
-) -> Callable[..., torch.Tensor]:
-    """
-    A decorator to make sure all input tensors are contiguous and set the device based on input tensors.
-    """
+def input_guard(fn: Callable[..., torch.Tensor]) -> Callable[..., torch.Tensor]:
+    """A decorator to make sure all input tensors are contiguous and set the device based on input tensors."""
 
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
@@ -238,18 +231,15 @@ def input_guard(
 
 
 def _cpu_device_warning():
-    warnings.warn(('Triton is not supported on current platform, roll back to CPU.'), stacklevel=1)
+    warnings.warn(("Triton is not supported on current platform, roll back to CPU."), stacklevel=1)
 
 
 @tensor_cache
-def prepare_chunk_offsets(
-    cu_seqlens: torch.LongTensor,
-    chunk_size: int
-) -> torch.LongTensor:
+def prepare_chunk_offsets(cu_seqlens: torch.LongTensor, chunk_size: int) -> torch.LongTensor:
     return torch.cat([cu_seqlens.new_tensor([0]), triton.cdiv(prepare_lens(cu_seqlens), chunk_size)]).cumsum(-1)
 
 
-if os.environ.get('FLA_USE_FAST_OPS', '0') == '1':
+if os.environ.get("FLA_USE_FAST_OPS", "0") == "1":
     exp = tldevice.fast_expf
     exp2 = tldevice.exp2
     log = tldevice.fast_logf
@@ -264,7 +254,7 @@ else:
 def get_all_max_shared_mem():
     try:
         return [
-            triton.runtime.driver.active.utils.get_device_properties(i)['max_shared_mem']
+            triton.runtime.driver.active.utils.get_device_properties(i)["max_shared_mem"]
             for i in range(device_torch_lib.device_count())
         ]
     except BaseException:
@@ -273,10 +263,10 @@ def get_all_max_shared_mem():
 
 
 class Backend(Enum):
-    ADA = 101376       # RTX 4090
-    AMPERE = 166912    # A100
-    HOPPER = 232448    # H100
-    DEFAULT = 102400   # Default
+    ADA = 101376  # RTX 4090
+    AMPERE = 166912  # A100
+    HOPPER = 232448  # H100
+    DEFAULT = 102400  # Default
 
     @classmethod
     def get_shared_memory(cls, arch: str) -> int:
@@ -286,7 +276,7 @@ class Backend(Enum):
             return cls.DEFAULT.value
 
 
-@lru_cache(maxsize=None)
+@functools.cache
 def check_shared_mem(arch: str = "none", tensor_idx: int = 0) -> bool:
     try:
         device_shared_mem_list = get_all_max_shared_mem()
@@ -319,16 +309,14 @@ def get_autotune_config(
         list(limit_auto_multi_buffer_of_local_buffer_list),
     ):
         base_config_dict = {
-            'multibuffer': multibuffer,
-            'unit_flag': unit_flag,
-            'limit_auto_multi_buffer_only_for_local_buffer': limit_auto_multi_buffer_only_for_local_buffer,
-            'limit_auto_multi_buffer_of_local_buffer': limit_auto_multi_buffer_of_local_buffer,
+            "multibuffer": multibuffer,
+            "unit_flag": unit_flag,
+            "limit_auto_multi_buffer_only_for_local_buffer": limit_auto_multi_buffer_only_for_local_buffer,
+            "limit_auto_multi_buffer_of_local_buffer": limit_auto_multi_buffer_of_local_buffer,
         }
 
         if limit_auto_multi_buffer_only_for_local_buffer:
-            configs.append(
-                triton.Config(base_config_dict)
-            )
+            configs.append(triton.Config(base_config_dict))
         else:
             for (
                 set_workspace_multibuffer,
@@ -342,15 +330,15 @@ def get_autotune_config(
                 list(tile_mix_cube_loop_num_list),
             ):
                 full_config_dict = base_config_dict.copy()
-                full_config_dict.update({
-                    'set_workspace_multibuffer': set_workspace_multibuffer,
-                    'enable_hivm_auto_cv_balance': enable_hivm_auto_cv_balance,
-                    'tile_mix_vector_loop': tile_mix_vector_loop,
-                    'tile_mix_cube_loop': tile_mix_cube_loop,
-                })
-                configs.append(
-                    triton.Config(full_config_dict)
+                full_config_dict.update(
+                    {
+                        "set_workspace_multibuffer": set_workspace_multibuffer,
+                        "enable_hivm_auto_cv_balance": enable_hivm_auto_cv_balance,
+                        "tile_mix_vector_loop": tile_mix_vector_loop,
+                        "tile_mix_cube_loop": tile_mix_cube_loop,
+                    }
                 )
+                configs.append(triton.Config(full_config_dict))
     return configs
 
 

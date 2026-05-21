@@ -1,22 +1,23 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2023-2025, Songlin Yang, Yu Zhang
 
-from typing import Optional, Tuple
+from typing import Optional
 
 import torch
 import triton
 import triton.language as tl
 
-from .utils import prepare_chunk_indices, exp, prepare_chunk_offsets
+from .utils import exp, prepare_chunk_indices, prepare_chunk_offsets
 
 
-@triton.heuristics({
-    'USE_G': lambda args: args['g'] is not None,
-    'USE_G_GAMMA': lambda args: args['g_gamma'] is not None,
-    'USE_DW': lambda args: args['dw'] is not None,
-    'IS_VARLEN': lambda args: args['cu_seqlens'] is not None,
-})
-@triton.jit(do_not_specialize=['T'])
+@triton.heuristics(
+    {
+        "USE_G": lambda args: args["g"] is not None,
+        "USE_G_GAMMA": lambda args: args["g_gamma"] is not None,
+        "USE_DW": lambda args: args["dw"] is not None,
+        "IS_VARLEN": lambda args: args["cu_seqlens"] is not None,
+    }
+)
+@triton.jit(do_not_specialize=["T"])
 def chunk_bwd_kernel_dqkwg(
     q,
     k,
@@ -79,7 +80,7 @@ def chunk_bwd_kernel_dqkwg(
             dk_h = dk + (bos * H + i_h) * K
 
             if USE_DW:
-                w_h = w + (bos * H + i_h) * K
+                w_h = w + (bos * H + i_h) * K  # noqa: F841
                 dw_h = dw + (bos * H + i_h) * K
                 dv_h = dv + (bos * H + i_h) * V
 
@@ -90,7 +91,12 @@ def chunk_bwd_kernel_dqkwg(
                 else:
                     dg_h = dg_k + (i_b * H + i_h) * T_max
                     g_h = g + (i_b * H + i_h) * T_max
-                b_dg_last = tl.zeros([1, ], dtype=tl.float32)
+                b_dg_last = tl.zeros(
+                    [
+                        1,
+                    ],
+                    dtype=tl.float32,
+                )
 
             if USE_G_GAMMA:
                 b_gamma = tl.load(g_gamma + i_h)
@@ -114,7 +120,7 @@ def chunk_bwd_kernel_dqkwg(
                 b_dh = tl.load(p_dh, boundary_check=(0, 1))
 
                 if USE_G:
-                    b_dg_last += (tl.sum(b_h * b_dh))
+                    b_dg_last += tl.sum(b_h * b_dh)
 
                 b_ds += tl.dot(b_do, tl.trans(b_v))
                 b_dq += tl.dot(b_do, b_h.to(b_do.dtype))
@@ -144,7 +150,12 @@ def chunk_bwd_kernel_dqkwg(
             m_A = (o_t[:, None] >= o_t[None, :]) & (m_t[:, None] & m_t)
 
             if USE_G:
-                b_dg = tl.zeros([BT, ], dtype=tl.float32)
+                b_dg = tl.zeros(
+                    [
+                        BT,
+                    ],
+                    dtype=tl.float32,
+                )
                 p_g = tl.make_block_ptr(g_h, (T,), (1,), (i_t * BT,), (BT,), (0,))
                 b_g = tl.load(p_g, boundary_check=(0,))
                 b_g_last = tl.load(g_h + (min(i_t * BT + BT, T) - 1) * 1)
@@ -160,8 +171,14 @@ def chunk_bwd_kernel_dqkwg(
                 if IS_VARLEN:
                     b_ds = tl.where(m_A, b_ds * exp(b_g[:, None] - b_g[None, :]), 0) * scale
                 else:
-                    p_gdiff = tl.make_block_ptr(gdiff + i_b * H * NT * BT * BT + i_h * NT * BT * BT + i_t * BT * BT,
-                                                (BT, BT), (BT, 1), (0, 0), (BT, BT), (1, 0))
+                    p_gdiff = tl.make_block_ptr(
+                        gdiff + i_b * H * NT * BT * BT + i_h * NT * BT * BT + i_t * BT * BT,
+                        (BT, BT),
+                        (BT, 1),
+                        (0, 0),
+                        (BT, BT),
+                        (1, 0),
+                    )
                     gdiff_ = tl.load(p_gdiff)
                     b_ds = b_ds * gdiff_ * scale
 
@@ -205,12 +222,14 @@ def chunk_bwd_kernel_dqkwg(
                 tl.store(p_dk, b_dk.to(p_dk.dtype.element_ty), boundary_check=(0, 1))
 
 
-@triton.heuristics({
-    'USE_G': lambda args: args['g'] is not None,
-    'USE_G_GAMMA': lambda args: args['g_gamma'] is not None,
-    'IS_VARLEN': lambda args: args['cu_seqlens'] is not None,
-})
-@triton.jit(do_not_specialize=['T'])
+@triton.heuristics(
+    {
+        "USE_G": lambda args: args["g"] is not None,
+        "USE_G_GAMMA": lambda args: args["g_gamma"] is not None,
+        "IS_VARLEN": lambda args: args["cu_seqlens"] is not None,
+    }
+)
+@triton.jit(do_not_specialize=["T"])
 def chunk_bwd_kernel_dv_local(
     q,
     k,
@@ -284,12 +303,14 @@ def chunk_bwd_kernel_dv_local(
             tl.store(p_dv, b_dv.to(p_dv.dtype.element_ty), boundary_check=(0, 1))
 
 
-@triton.heuristics({
-    'USE_G': lambda args: args['g'] is not None,
-    'USE_G_GAMMA': lambda args: args['g_gamma'] is not None,
-    'IS_VARLEN': lambda args: args['cu_seqlens'] is not None
-})
-@triton.jit(do_not_specialize=['T'])
+@triton.heuristics(
+    {
+        "USE_G": lambda args: args["g"] is not None,
+        "USE_G_GAMMA": lambda args: args["g_gamma"] is not None,
+        "IS_VARLEN": lambda args: args["cu_seqlens"] is not None,
+    }
+)
+@triton.jit(do_not_specialize=["T"])
 def chunk_fwd_kernel_o(
     q,
     k,
@@ -318,9 +339,7 @@ def chunk_fwd_kernel_o(
     for i_v in range(tl.cdiv(V, BV)):
         for i_n in range(N):
             if IS_VARLEN:
-                bos, eos = tl.load(cu_seqlens + i_n).to(tl.int32), tl.load(
-                    cu_seqlens + i_n + 1
-                ).to(tl.int32)
+                bos, eos = tl.load(cu_seqlens + i_n).to(tl.int32), tl.load(cu_seqlens + i_n + 1).to(tl.int32)
                 T = eos - bos
                 NT = tl.cdiv(T, BT)
                 boh = tl.load(chunk_offsets + i_n).to(tl.int64)
@@ -360,9 +379,7 @@ def chunk_fwd_kernel_o(
                         p_k = tl.make_block_ptr(
                             k + k_offset, (K, T), (1, Hg * K), (i_k * BK, i_t * BT), (BK, BT), (0, 1)
                         )
-                        p_h = tl.make_block_ptr(
-                            h_base, (K, V), (V, 1), (i_k * BK, i_v * BV), (BK, BV), (1, 0)
-                        )
+                        p_h = tl.make_block_ptr(h_base, (K, V), (V, 1), (i_k * BK, i_v * BV), (BK, BV), (1, 0))
                         b_q = tl.load(p_q, boundary_check=(0, 1))
                         b_k = tl.load(p_k, boundary_check=(0, 1))
                         b_h = tl.load(p_h, boundary_check=(0, 1))
@@ -388,12 +405,8 @@ def chunk_fwd_kernel_o(
                     m_A = o_i[:, None] >= o_i[None, :]
                     b_A = tl.where(m_A, b_A, 0)
 
-                    p_v = tl.make_block_ptr(
-                        v + v_offset, (T, V), (H * V, 1), (i_t * BT, i_v * BV), (BT, BV), (1, 0)
-                    )
-                    p_o = tl.make_block_ptr(
-                        o + o_offset, (T, V), (H * V, 1), (i_t * BT, i_v * BV), (BT, BV), (1, 0)
-                    )
+                    p_v = tl.make_block_ptr(v + v_offset, (T, V), (H * V, 1), (i_t * BT, i_v * BV), (BT, BV), (1, 0))
+                    p_o = tl.make_block_ptr(o + o_offset, (T, V), (H * V, 1), (i_t * BT, i_v * BV), (BT, BV), (1, 0))
                     b_v = tl.load(p_v, boundary_check=(0, 1))
 
                     # to fix mma -> mma layout conversion
@@ -416,7 +429,7 @@ def chunk_bwd_dqkwg(
     cu_seqlens: Optional[torch.LongTensor] = None,
     chunk_size: int = 64,
     scale: float = 1.0,
-) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     B, T, H, K, V = *k.shape, v.shape[-1]
     BT = min(chunk_size, max(16, triton.next_power_of_2(T)))
     chunk_indices = prepare_chunk_indices(cu_seqlens, BT) if cu_seqlens is not None else None
@@ -447,7 +460,7 @@ def chunk_bwd_dqkwg(
             bias = torch.arange(0, BT).to(g.device)
             o_t = (NT - 1) * BT + bias
             m_t = o_t < T
-            m_A = (m_t[:, None] & m_t)
+            m_A = m_t[:, None] & m_t
             g_diff[:, :, -1] *= m_A
     else:
         g_diff = None
@@ -495,7 +508,7 @@ def chunk_bwd_dv_local(
     g_gamma: Optional[torch.Tensor] = None,
     scale: float = None,
     cu_seqlens: Optional[torch.LongTensor] = None,
-    chunk_size: int = 64
+    chunk_size: int = 64,
 ) -> torch.Tensor:
     B, T, H, K, V = *k.shape, do.shape[-1]
     BT = min(chunk_size, max(16, triton.next_power_of_2(T)))
@@ -538,15 +551,13 @@ def chunk_fwd_o(
     g_gamma: Optional[torch.Tensor] = None,
     scale: Optional[float] = None,
     cu_seqlens: Optional[torch.LongTensor] = None,
-    chunk_size: int = 64
+    chunk_size: int = 64,
 ) -> torch.Tensor:
     B, T, Hg, K, V = *q.shape, v.shape[-1]
     H = v.shape[-2]
     BT = min(chunk_size, max(16, triton.next_power_of_2(T)))
-    chunk_indices = (
-        prepare_chunk_indices(cu_seqlens, BT) if cu_seqlens is not None else None
-    )
-    NT = triton.cdiv(T, BT) if cu_seqlens is None else len(chunk_indices)
+    chunk_indices = prepare_chunk_indices(cu_seqlens, BT) if cu_seqlens is not None else None
+    NT = triton.cdiv(T, BT) if cu_seqlens is None else len(chunk_indices)  # noqa: F841
     if scale is None:
         scale = k.shape[-1] ** -0.5
 
@@ -587,6 +598,7 @@ def chunk_fwd_o(
         BV=128,
     )
     return o
+
 
 bwd_chunk_dqkwg = chunk_bwd_dqkwg
 bwd_chunk_dv_local = chunk_bwd_dv_local

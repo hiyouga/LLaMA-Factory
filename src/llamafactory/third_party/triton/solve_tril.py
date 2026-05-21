@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2023-2025, Songlin Yang, Yu Zhang
 # Copyright (c) 2026, Huawei Technologies Co., Ltd. All rights reserved.
 
@@ -9,10 +8,10 @@ import torch
 import triton
 import triton.language as tl
 
-from .utils import prepare_chunk_indices, make_tensor_descriptor, input_guard, is_amd
+from .utils import input_guard, make_tensor_descriptor, prepare_chunk_indices
 
 
-FLA_TRIL_PRECISION = os.environ.get('FLA_TRIL_PRECISION', 'ieee')
+FLA_TRIL_PRECISION = os.environ.get("FLA_TRIL_PRECISION", "ieee")
 
 
 @triton.heuristics({"IS_VARLEN": lambda args: args["cu_seqlens"] is not None})
@@ -28,7 +27,7 @@ def solve_tril_16x16_kernel(
     TPP: tl.constexpr,
     USE_TMA: tl.constexpr,
     IS_VARLEN: tl.constexpr,
-    DOT_PRECISION: tl.constexpr
+    DOT_PRECISION: tl.constexpr,
 ):
     pid_t, pid_bh = tl.program_id(0), tl.program_id(1)
     i_b, i_h = pid_bh // H, pid_bh % H
@@ -44,7 +43,7 @@ def solve_tril_16x16_kernel(
         bos, eos = i_b * T, i_b * T + T
         T_eff = T
 
-    o_i = tl.arange(0, 16)
+    o_i = tl.arange(0, 16)  # noqa: F841
     o_i_fp32 = tl.arange(0, 16).to(tl.float32)
     m_A = o_i_fp32[:, None] > o_i_fp32[None, :]
     m_I = o_i_fp32[:, None] == o_i_fp32[None, :]
@@ -59,9 +58,7 @@ def solve_tril_16x16_kernel(
         offset = (tile_t * 16) % BT
 
         if not USE_TMA:
-            p_A = tl.make_block_ptr(
-                A, (T_eff, BT), (H * BT, 1), (tile_row, offset), (16, 16), (1, 0)
-            )
+            p_A = tl.make_block_ptr(A, (T_eff, BT), (H * BT, 1), (tile_row, offset), (16, 16), (1, 0))
             b_A_raw = tl.load(p_A, boundary_check=(0, 1)).to(tl.float32)
         else:
             desc = make_tensor_descriptor(A, [T_eff, BT], [H * BT, 1], [16, 16])
@@ -79,17 +76,13 @@ def solve_tril_16x16_kernel(
         b_A += m_I
 
         if not USE_TMA:
-            p_Ai = tl.make_block_ptr(
-                Ai, (T_eff, 16), (H * 16, 1), (tile_row, 0), (16, 16), (1, 0)
-            )
+            p_Ai = tl.make_block_ptr(Ai, (T_eff, 16), (H * 16, 1), (tile_row, 0), (16, 16), (1, 0))
             tl.store(p_Ai, b_A.to(p_Ai.dtype.element_ty, fp_downcast_rounding="rtne"), boundary_check=(0, 1))
         else:
             desc_o.store([tile_row, 0], b_A.to(desc_o.dtype, fp_downcast_rounding="rtne"))
 
 
-@triton.heuristics({
-    'IS_VARLEN': lambda args: args['cu_seqlens'] is not None
-})
+@triton.heuristics({"IS_VARLEN": lambda args: args["cu_seqlens"] is not None})
 @triton.jit(do_not_specialize=["T", "TPP"])
 def merge_16x16_to_32x32_inverse_kernel(
     A,
@@ -102,7 +95,7 @@ def merge_16x16_to_32x32_inverse_kernel(
     TPP: tl.constexpr,
     USE_TMA: tl.constexpr,
     IS_VARLEN: tl.constexpr,
-    DOT_PRECISION: tl.constexpr
+    DOT_PRECISION: tl.constexpr,
 ):
     i_t, i_bh = tl.program_id(0), tl.program_id(1)
     i_b, i_h = i_bh // H, i_bh % H
@@ -167,7 +160,7 @@ def merge_16x16_to_32x32_inverse_kernel(
 
 
 @triton.heuristics({"IS_VARLEN": lambda args: args["cu_seqlens"] is not None})
-@triton.jit(do_not_specialize=['T'])
+@triton.jit(do_not_specialize=["T"])
 def solve_tril_64x64_kernel(
     A,
     Ai,
@@ -178,7 +171,7 @@ def solve_tril_64x64_kernel(
     BT: tl.constexpr,
     USE_TMA: tl.constexpr,
     IS_VARLEN: tl.constexpr,
-    DOT_PRECISION: tl.constexpr
+    DOT_PRECISION: tl.constexpr,
 ):
     i_t, i_bh = tl.program_id(0), tl.program_id(1)
     i_b, i_h = i_bh // H, i_bh % H
@@ -217,12 +210,9 @@ def solve_tril_64x64_kernel(
 
 @input_guard
 def solve_tril(
-    A: torch.Tensor,
-    cu_seqlens: Optional[torch.Tensor] = None,
-    output_dtype: torch.dtype = torch.float
+    A: torch.Tensor, cu_seqlens: Optional[torch.Tensor] = None, output_dtype: torch.dtype = torch.float
 ) -> torch.Tensor:
-    """
-    Compute the inverse of the matrix I + A
+    """Compute the inverse of the matrix I + A
     A should be strictly lower triangular, i.e., A.triu() == 0.
 
     Args:
@@ -236,11 +226,9 @@ def solve_tril(
 
     Returns:
         (I + A)^-1 with the same shape as A
-    """
+    """  # noqa: D205
     if A.shape[-1] not in [16, 32, 64]:
-        raise ValueError(
-            f"A shape BT should in [16,32, 64], but current is {A.shape[-1]}"
-        )
+        raise ValueError(f"A shape BT should in [16,32, 64], but current is {A.shape[-1]}")
     output_dtype = A.dtype if output_dtype is None else output_dtype
 
     B, T, H, BT = A.shape

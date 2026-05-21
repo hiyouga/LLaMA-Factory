@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2023-2025, Songlin Yang, Yu Zhang
 
 from typing import Optional
@@ -10,11 +9,13 @@ import triton.language as tl
 from .utils import prepare_chunk_indices
 
 
-@triton.heuristics({
-    'USE_G': lambda args: args['g'] is not None,
-    'IS_VARLEN': lambda args: args['cu_seqlens'] is not None,
-})
-@triton.jit(do_not_specialize=['T'])
+@triton.heuristics(
+    {
+        "USE_G": lambda args: args["g"] is not None,
+        "IS_VARLEN": lambda args: args["cu_seqlens"] is not None,
+    }
+)
+@triton.jit(do_not_specialize=["T"])
 def chunk_scaled_dot_kkt_fwd_kernel(
     k,
     g,
@@ -68,12 +69,21 @@ def chunk_scaled_dot_kkt_fwd_kernel(
             g_batch_off = i_b * H * T_max
             A_batch_off = i_b * T_max * H * BT
 
-            p_beta = tl.make_block_ptr(beta + beta_batch_off + bos + i_h * T_max, (T_local,), (1,), (i_t * BT,), (BT,), (0,))
+            p_beta = tl.make_block_ptr(
+                beta + beta_batch_off + bos + i_h * T_max, (T_local,), (1,), (i_t * BT,), (BT,), (0,)
+            )
             b_beta = tl.load(p_beta, boundary_check=(0,))
 
             b_A = tl.zeros([BT, BT], dtype=tl.float32)
             for i_k in range(tl.cdiv(K, BK)):
-                p_k = tl.make_block_ptr(k + k_batch_off + (bos * H + i_h) * K, (T_local, K), (H * K, 1), (i_t * BT, i_k * BK), (BT, BK), (1, 0))
+                p_k = tl.make_block_ptr(
+                    k + k_batch_off + (bos * H + i_h) * K,
+                    (T_local, K),
+                    (H * K, 1),
+                    (i_t * BT, i_k * BK),
+                    (BT, BK),
+                    (1, 0),
+                )
                 b_k = tl.load(p_k, boundary_check=(0, 1))
                 dot_product = tl.dot(b_k, tl.trans(b_k))
 
@@ -89,28 +99,24 @@ def chunk_scaled_dot_kkt_fwd_kernel(
                 b_A += masked_dot
 
             if USE_G:
-                p_g = tl.make_block_ptr(g + g_batch_off + bos + i_h * T_max, (T_local,), (1,), (i_t * BT,), (BT,), (0,))
+                p_g = tl.make_block_ptr(
+                    g + g_batch_off + bos + i_h * T_max, (T_local,), (1,), (i_t * BT,), (BT,), (0,)
+                )
                 b_g = tl.load(p_g, boundary_check=(0,))
                 b_g_diff = b_g[:, None] - b_g[None, :]
                 b_g_diff = tl.minimum(tl.maximum(b_g_diff, -50.0), 50.0)
                 b_A *= tl.exp(b_g_diff)
             b_A *= b_beta[:, None]
 
-            p_A = tl.make_block_ptr(A + A_batch_off + (bos * H + i_h) * BT, (T_local, BT), (BT * H, 1), (i_t * BT, 0), (BT, BT), (1, 0))
+            p_A = tl.make_block_ptr(
+                A + A_batch_off + (bos * H + i_h) * BT, (T_local, BT), (BT * H, 1), (i_t * BT, 0), (BT, BT), (1, 0)
+            )
             tl.store(p_A, b_A.to(p_A.dtype.element_ty), boundary_check=(0, 1))
 
 
-@triton.heuristics({
-    'IS_VARLEN': lambda args: args['cu_seqlens'] is not None
-})
-@triton.autotune(
-    configs=[
-        triton.Config({'BK': BK})
-        for BK in [32, 64]
-    ],
-    key=["BC"]
-)
-@triton.jit(do_not_specialize=['T'])
+@triton.heuristics({"IS_VARLEN": lambda args: args["cu_seqlens"] is not None})
+@triton.autotune(configs=[triton.Config({"BK": BK}) for BK in [32, 64]], key=["BC"])
+@triton.jit(do_not_specialize=["T"])
 def chunk_scaled_dot_kkt_fwd_kernel_intra_sub_inter(
     k,
     g,
@@ -151,14 +157,18 @@ def chunk_scaled_dot_kkt_fwd_kernel_intra_sub_inter(
 
             b_A = tl.zeros([BC, BC], dtype=tl.float32)
             for i_k in range(tl.cdiv(K, BK)):
-                p_k = tl.make_block_ptr(k_ptr, (T_val, K), (H * K, 1), (i_t * BT + i_i * BC, i_k * BK), (BC, BK),
-                                        (1, 0))
-                p_g = tl.make_block_ptr(g_ptr, (T_val, K), (H * K, 1), (i_t * BT + i_i * BC, i_k * BK), (BC, BK),
-                                        (1, 0))
-                b_kt = tl.make_block_ptr(k_ptr, (K, T_val), (1, H * K), (i_k * BK, i_t * BT + i_j * BC), (BK, BC),
-                                         (0, 1))
-                p_gk = tl.make_block_ptr(g_ptr, (K, T_val), (1, H * K), (i_k * BK, i_t * BT + i_j * BC), (BK, BC),
-                                         (0, 1))
+                p_k = tl.make_block_ptr(
+                    k_ptr, (T_val, K), (H * K, 1), (i_t * BT + i_i * BC, i_k * BK), (BC, BK), (1, 0)
+                )
+                p_g = tl.make_block_ptr(
+                    g_ptr, (T_val, K), (H * K, 1), (i_t * BT + i_i * BC, i_k * BK), (BC, BK), (1, 0)
+                )
+                b_kt = tl.make_block_ptr(
+                    k_ptr, (K, T_val), (1, H * K), (i_k * BK, i_t * BT + i_j * BC), (BK, BC), (0, 1)
+                )
+                p_gk = tl.make_block_ptr(
+                    g_ptr, (K, T_val), (1, H * K), (i_k * BK, i_t * BT + i_j * BC), (BK, BC), (0, 1)
+                )
 
                 o_k = i_k * BK + tl.arange(0, BK)
                 m_k = o_k < K
@@ -174,10 +184,8 @@ def chunk_scaled_dot_kkt_fwd_kernel_intra_sub_inter(
             tl.store(p_A, b_A.to(A.dtype.element_ty), boundary_check=(0, 1))
 
 
-@triton.heuristics({
-    'IS_VARLEN': lambda args: args['cu_seqlens'] is not None
-})
-@triton.jit(do_not_specialize=['T'])
+@triton.heuristics({"IS_VARLEN": lambda args: args["cu_seqlens"] is not None})
+@triton.jit(do_not_specialize=["T"])
 def chunk_scaled_dot_kkt_fwd_kernel_intra_sub_intra(
     k,
     g,
@@ -204,7 +212,7 @@ def chunk_scaled_dot_kkt_fwd_kernel_intra_sub_intra(
             bos, eos = i_b * T, i_b * T + T
             T_val = T
 
-        should_compute = (i_t * BT + i_i * BC < T_val)
+        should_compute = i_t * BT + i_i * BC < T_val
 
         if should_compute:
             o_i = tl.arange(0, BC)
@@ -213,10 +221,12 @@ def chunk_scaled_dot_kkt_fwd_kernel_intra_sub_intra(
             m_A = (i_t * BT + i_i * BC + o_i) < T_val
             o_A = (bos + i_t * BT + i_i * BC + o_i) * H * BT + i_h * BT + i_i * BC
 
-            p_k = tl.make_block_ptr(k + (bos * H + i_h) * K, (T_val, K), (H * K, 1), (i_t * BT + i_i * BC, 0), (BC, BK),
-                                    (1, 0))
-            p_g = tl.make_block_ptr(g + (bos * H + i_h) * K, (T_val, K), (H * K, 1), (i_t * BT + i_i * BC, 0), (BC, BK),
-                                    (1, 0))
+            p_k = tl.make_block_ptr(
+                k + (bos * H + i_h) * K, (T_val, K), (H * K, 1), (i_t * BT + i_i * BC, 0), (BC, BK), (1, 0)
+            )
+            p_g = tl.make_block_ptr(
+                g + (bos * H + i_h) * K, (T_val, K), (H * K, 1), (i_t * BT + i_i * BC, 0), (BC, BK), (1, 0)
+            )
             p_beta = beta + (bos + i_t * BT + i_i * BC + o_i) * H + i_h
 
             b_k = tl.load(p_k, boundary_check=(0, 1)) * tl.load(p_beta, mask=m_A, other=0)[:, None]
@@ -231,7 +241,7 @@ def chunk_scaled_dot_kkt_fwd_kernel_intra_sub_intra(
                 b_A = tl.sum(b_k * b_kt[None, :] * tl.exp(b_g - b_gk[None, :]), 1)
                 # 转化成f32
                 o_i_tmp = o_i.to(tl.float32)
-                b_A = tl.where(o_i_tmp > j, b_A, 0.)
+                b_A = tl.where(o_i_tmp > j, b_A, 0.0)
 
                 tl.store(A + o_A + j, b_A, mask=m_A)
                 p_kt += H * K
@@ -245,10 +255,9 @@ def chunk_scaled_dot_kkt_fwd(
     beta: Optional[torch.Tensor] = None,
     cu_seqlens: Optional[torch.LongTensor] = None,
     chunk_size: int = 64,
-    output_dtype: torch.dtype = torch.float32
+    output_dtype: torch.dtype = torch.float32,
 ) -> torch.Tensor:
-    r"""
-    Compute beta * K * K^T.
+    r"""Compute beta * K * K^T.
 
     Args:
         k (torch.Tensor):

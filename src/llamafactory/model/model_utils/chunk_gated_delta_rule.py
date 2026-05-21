@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2023-2025, Songlin Yang, Yu Zhang
 
 import warnings
@@ -6,42 +5,33 @@ from typing import Optional
 
 import torch
 
-from .triton.chunk_delta_h import chunk_gated_delta_rule_bwd_dhu, chunk_gated_delta_rule_fwd_h
-from .triton.chunk_o import chunk_bwd_dqkwg, chunk_bwd_dv_local, chunk_fwd_o
-from .triton.chunk_scaled_dot_kkt import chunk_scaled_dot_kkt_fwd
-from .triton.wy_fast import prepare_wy_repr_bwd, recompute_w_u_fwd
-from .triton.solve_tril import solve_tril
-from .triton.cumsum import chunk_local_cumsum
-from .triton.utils import autocast_custom_bwd, autocast_custom_fwd, input_guard
+from ...third_party.triton.chunk_delta_h import chunk_gated_delta_rule_bwd_dhu, chunk_gated_delta_rule_fwd_h
+from ...third_party.triton.chunk_o import chunk_bwd_dqkwg, chunk_bwd_dv_local, chunk_fwd_o
+from ...third_party.triton.chunk_scaled_dot_kkt import chunk_scaled_dot_kkt_fwd
+from ...third_party.triton.cumsum import chunk_local_cumsum
+from ...third_party.triton.solve_tril import solve_tril
+from ...third_party.triton.utils import autocast_custom_bwd, autocast_custom_fwd, input_guard
+from ...third_party.triton.wy_fast import prepare_wy_repr_bwd, recompute_w_u_fwd
 
 
 def chunk_gated_delta_rule_fwd(
-        q: torch.Tensor,
-        k: torch.Tensor,
-        v: torch.Tensor,
-        g: torch.Tensor,
-        beta: torch.Tensor,
-        scale: float,
-        initial_state: torch.Tensor,
-        output_final_state: bool,
-        cu_seqlens: Optional[torch.LongTensor] = None,
-        chunk_size: int = 64,
+    q: torch.Tensor,
+    k: torch.Tensor,
+    v: torch.Tensor,
+    g: torch.Tensor,
+    beta: torch.Tensor,
+    scale: float,
+    initial_state: torch.Tensor,
+    output_final_state: bool,
+    cu_seqlens: Optional[torch.LongTensor] = None,
+    chunk_size: int = 64,
 ):
     g = chunk_local_cumsum(g, chunk_size=chunk_size, cu_seqlens=cu_seqlens, head_first=False)
     # obtain WY representation. u is actually the new v.
     A = chunk_scaled_dot_kkt_fwd(
-        k=k,
-        g=g,
-        beta=beta,
-        cu_seqlens=cu_seqlens,
-        chunk_size=chunk_size,
-        output_dtype=torch.float32
+        k=k, g=g, beta=beta, cu_seqlens=cu_seqlens, chunk_size=chunk_size, output_dtype=torch.float32
     )
-    A = solve_tril(
-        A=A,
-        cu_seqlens=cu_seqlens,
-        output_dtype=k.dtype
-    )
+    A = solve_tril(A=A, cu_seqlens=cu_seqlens, output_dtype=k.dtype)
     w, u = recompute_w_u_fwd(
         k=k,
         v=v,
@@ -74,18 +64,18 @@ def chunk_gated_delta_rule_fwd(
 
 
 def chunk_gated_delta_rule_bwd(
-        q: torch.Tensor,
-        k: torch.Tensor,
-        v: torch.Tensor,
-        g: torch.Tensor,
-        beta: torch.Tensor,
-        A: torch.Tensor,
-        scale: float,
-        initial_state: torch.Tensor,
-        do: torch.Tensor,
-        dht: torch.Tensor,
-        cu_seqlens: Optional[torch.LongTensor] = None,
-        chunk_size: int = 64,
+    q: torch.Tensor,
+    k: torch.Tensor,
+    v: torch.Tensor,
+    g: torch.Tensor,
+    beta: torch.Tensor,
+    A: torch.Tensor,
+    scale: float,
+    initial_state: torch.Tensor,
+    do: torch.Tensor,
+    dht: torch.Tensor,
+    cu_seqlens: Optional[torch.LongTensor] = None,
+    chunk_size: int = 64,
 ):
     w, u = recompute_w_u_fwd(
         k=k,
@@ -142,44 +132,33 @@ def chunk_gated_delta_rule_bwd(
         cu_seqlens=cu_seqlens,
     )
     dk2, dv, db, dg2 = prepare_wy_repr_bwd(
-        k=k,
-        v=v,
-        beta=beta,
-        g=g,
-        A=A,
-        dw=dw,
-        du=dv,
-        cu_seqlens=cu_seqlens,
-        chunk_size=chunk_size
+        k=k, v=v, beta=beta, g=g, A=A, dw=dw, du=dv, cu_seqlens=cu_seqlens, chunk_size=chunk_size
     )
     dk.add_(dk2)
     dg.add_(dg2)
     if dg.dtype != torch.float32:
-        raise ValueError(
-            f"dg current type is {dg.dtype} , should be float32"
-        )
+        raise ValueError(f"dg current type is {dg.dtype} , should be float32")
     dg = chunk_local_cumsum(dg, chunk_size=chunk_size, reverse=True, cu_seqlens=cu_seqlens, head_first=False)
     return dq, dk, dv, db, dg, dh0
 
 
 class ChunkGatedDeltaRuleFunction(torch.autograd.Function):
-
     @staticmethod
     @input_guard
     @autocast_custom_fwd
     def forward(
-            ctx,
-            q: torch.Tensor,
-            k: torch.Tensor,
-            v: torch.Tensor,
-            g: torch.Tensor,
-            beta: torch.Tensor,
-            scale: float,
-            initial_state: torch.Tensor,
-            output_final_state: bool,
-            cu_seqlens: Optional[torch.LongTensor] = None,
-            use_qk_l2norm_in_kernel: bool = False,
-            chunk_size: int = 64,
+        ctx,
+        q: torch.Tensor,
+        k: torch.Tensor,
+        v: torch.Tensor,
+        g: torch.Tensor,
+        beta: torch.Tensor,
+        scale: float,
+        initial_state: torch.Tensor,
+        output_final_state: bool,
+        cu_seqlens: Optional[torch.LongTensor] = None,
+        use_qk_l2norm_in_kernel: bool = False,
+        chunk_size: int = 64,
     ):
         q_rstd, k_rstd = None, None
         g, o, A, final_state = chunk_gated_delta_rule_fwd(
@@ -192,7 +171,7 @@ class ChunkGatedDeltaRuleFunction(torch.autograd.Function):
             initial_state=initial_state,
             output_final_state=output_final_state,
             cu_seqlens=cu_seqlens,
-            chunk_size=chunk_size
+            chunk_size=chunk_size,
         )
         ctx.save_for_backward(q, q_rstd, k, k_rstd, v, g, beta, A, initial_state, cu_seqlens)
         ctx.scale = scale
@@ -203,11 +182,7 @@ class ChunkGatedDeltaRuleFunction(torch.autograd.Function):
     @staticmethod
     @input_guard
     @autocast_custom_bwd
-    def backward(
-            ctx,
-            do: torch.Tensor,
-            dht: torch.Tensor
-    ):
+    def backward(ctx, do: torch.Tensor, dht: torch.Tensor):
         q, q_rstd, k, k_rstd, v, g, beta, A, initial_state, cu_seqlens = ctx.saved_tensors
         dq, dk, dv, db, dg, dh0 = chunk_gated_delta_rule_bwd(
             q=q,
@@ -228,21 +203,20 @@ class ChunkGatedDeltaRuleFunction(torch.autograd.Function):
 
 @torch.compiler.disable
 def chunk_gated_delta_rule(
-        q: torch.Tensor,
-        k: torch.Tensor,
-        v: torch.Tensor,
-        g: torch.Tensor,
-        beta: torch.Tensor,
-        scale: float = None,
-        initial_state: torch.Tensor = None,
-        output_final_state: bool = False,
-        use_qk_l2norm_in_kernel: bool = False,
-        cu_seqlens: Optional[torch.LongTensor] = None,
-        chunk_size: int = 64,
-        head_first: bool = False,
+    q: torch.Tensor,
+    k: torch.Tensor,
+    v: torch.Tensor,
+    g: torch.Tensor,
+    beta: torch.Tensor,
+    scale: float = None,
+    initial_state: torch.Tensor = None,
+    output_final_state: bool = False,
+    use_qk_l2norm_in_kernel: bool = False,
+    cu_seqlens: Optional[torch.LongTensor] = None,
+    chunk_size: int = 64,
+    head_first: bool = False,
 ):
-    r"""
-    Args:
+    r"""Args:
         q (torch.Tensor):
             queries of shape `[B, T, H, K]`.
         k (torch.Tensor):
@@ -305,15 +279,13 @@ def chunk_gated_delta_rule(
             output_final_state=True,
             cu_seqlens=cu_seqlens
         )
-    """
+    """  # noqa: D205
     if q.dtype != k.dtype or k.dtype != v.dtype:
         raise ValueError(
             f"q current type is {q.dtype} , k current type is {k.dtype} ,v current type is {v.dtype} , they should are equal"
         )
     if q.dtype == torch.float32:
-        raise ValueError(
-            "ChunkGatedDeltaRuleFunction does not support float32. Please use bfloat16."
-        )
+        raise ValueError("ChunkGatedDeltaRuleFunction does not support float32. Please use bfloat16.")
     if len(beta.shape) != 3:
         raise ValueError(
             f"beta current shape len is {len(beta.shape)}, beta must be of shape [B, T, H] if head_first=False, or [B, H, T] otherwise."
@@ -357,16 +329,6 @@ def chunk_gated_delta_rule(
         k = l2norm(k, dim=-1, eps=1e-6)
 
     o, final_state = ChunkGatedDeltaRuleFunction.apply(
-        q,
-        k,
-        v,
-        g,
-        beta,
-        scale,
-        initial_state,
-        output_final_state,
-        cu_seqlens,
-        False,
-        chunk_size
+        q, k, v, g, beta, scale, initial_state, output_final_state, cu_seqlens, False, chunk_size
     )
     return o, final_state
