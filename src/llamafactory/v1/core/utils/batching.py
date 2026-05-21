@@ -138,14 +138,14 @@ class BatchGenerator(Iterator):
         else:
             raise NotImplementedError("Iterable dataset is not supported yet.")
 
-        generato_seed = torch.Generator()
-        generato_seed.manual_seed(self.seed)
+
         if self.batching_strategy == BatchingStrategy.NORMAL:
             batch_size = self.micro_batch_size * self.num_micro_batch
         else:
             from ...plugins.trainer_plugins.batching import BatchingPlugin
 
             batch_size = BatchingPlugin(self.batching_strategy).get_data_provider_batch_size(self._batch_info)
+        
         generator_seed = torch.Generator()
         generator_seed.manual_seed(self.seed)
 
