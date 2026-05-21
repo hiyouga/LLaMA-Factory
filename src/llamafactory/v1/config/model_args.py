@@ -34,8 +34,10 @@ class ModelArguments:
         metadata={"help": "Trust remote code from Hugging Face."},
     )
     flash_attn: AttentionFunction = field(
-        default=AttentionFunction.AUTO,
-        metadata={"help": "Attention implementation to use: auto, disabled, sdpa, or fa2."},
+        default=AttentionFunction.SDPA,
+        metadata={
+            "help": "Attention implementation to use: disabled, sdpa, or fa2. SDPA is the default implementation for models."
+        },
     )
     model_class: ModelClass = field(
         default=ModelClass.LLM,

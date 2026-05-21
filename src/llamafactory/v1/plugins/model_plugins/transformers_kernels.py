@@ -23,7 +23,7 @@ logger = logging.get_logger(__name__)
 
 
 def update_transformers_kernels_kwargs(
-    flash_attn: Any = "auto",
+    flash_attn: Any = "sdpa",
     init_kwargs: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Update ``init_kwargs`` with transformers kernel options for ``from_pretrained()``.
@@ -38,7 +38,7 @@ def update_transformers_kernels_kwargs(
     init_kwargs = dict(init_kwargs) if init_kwargs else {}
     flash_attn = getattr(flash_attn, "value", flash_attn)
 
-    if flash_attn in (None, "auto") or flash_attn == "sdpa":
+    if flash_attn in (None, "sdpa"):
         init_kwargs["attn_implementation"] = "sdpa"
     elif flash_attn == "disabled":
         init_kwargs["attn_implementation"] = "eager"

@@ -56,7 +56,6 @@ else:
 
 @unique
 class AttentionFunction(StrEnum):
-    AUTO = "auto"
     DISABLED = "disabled"
     SDPA = "sdpa"
     FA2 = "fa2"
