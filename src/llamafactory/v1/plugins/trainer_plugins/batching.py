@@ -91,23 +91,24 @@ def _get_dynamic_padding_free_micro_batch_sizes(
     cutoff_len = batch_info["cutoff_len"]
     sizes = []
     index = 0
-    total_samples = len(samples)
 
-    while index < total_samples and len(sizes) < batch_info["num_micro_batch"]:
+    while index < len(samples) and len(sizes) < batch_info["num_micro_batch"]:
         current_tokens = 0
         used = 0
+        is_complete = False
 
-        while index + used < total_samples:
+        while index + used < len(samples):
             sample = samples[index + used]
             sample_len = min(len(sample["input_ids"]), cutoff_len)
 
             if current_tokens + sample_len > budget:
+                is_complete = True
                 break
 
             current_tokens += sample_len
             used += 1
 
-        if used <= 0:
+        if used <= 0 or not is_complete:
             break
 
         sizes.append(used)
