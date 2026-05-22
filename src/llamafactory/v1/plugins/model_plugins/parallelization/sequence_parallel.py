@@ -14,6 +14,7 @@
 
 import sys
 from functools import partial
+from typing import Callable
 
 import torch
 import torch.distributed as dist
@@ -24,16 +25,19 @@ from ....accelerator.interface import Dim, DistributedInterface
 from ....utils import logging
 from ....utils.plugin import BasePlugin
 from ....utils.types import ModelOutput
-from .ulysses import (
-    UlyssesAttention,
-    get_ulysses_sequence_parallel_group,
-    get_ulysses_sequence_parallel_rank,
-    get_ulysses_sequence_parallel_world_size,
-    set_ulysses_sequence_parallel_group,
+from .cp_state import (
+    get_context_parallel_group,
+    get_context_parallel_rank,
+    get_context_parallel_world_size,
+    set_context_parallel_group,
 )
+from .ring import RingAttention
+from .ulysses import UlyssesAttention
 
 
 logger = logging.get_logger(__name__)
+
+RING_CP_MODES = frozenset({"ring", "ring_zigzag"})
 
 
 class SequenceParallelModelPlugin(BasePlugin):
@@ -44,6 +48,31 @@ class SequenceParallelModelPlugin(BasePlugin):
 class SequenceParallelLossPlugin(BasePlugin):
     def __call__(self, model, inputs, *args, **kwargs):
         return super().__call__(model, inputs, *args, **kwargs)
+
+
+def get_cp_pad_factor() -> int:
+    """Padding alignment factor for context parallel data split."""
+    dist_config = DistributedInterface().dist_config or {}
+    cp_mode = dist_config.get("cp_mode", "ulysses")
+    return 2 if cp_mode == "ring_zigzag" else 1
+
+
+def _patch_flash_attention_forward(new_flash_attention_forward: Callable) -> None:
+    for module_name, module in list(sys.modules.items()):
+        try:
+            if (
+                hasattr(module, "__file__")
+                and module.__file__ is not None
+                and "transformers" in module.__file__
+                and getattr(module._flash_attention_forward, "__name__", "") == "_flash_attention_forward"
+            ):
+                module._flash_attention_forward = new_flash_attention_forward
+                logger.info_rank0(
+                    f"Replaced _flash_attention_forward in module {module_name} "
+                    "with new_flash_attn_forward for sequence parallel."
+                )
+        except (AttributeError, TypeError):
+            continue
 
 
 def new_flash_attn_forward(
@@ -61,6 +90,7 @@ def new_flash_attn_forward(
     target_dtype=None,
     **kwargs,
 ):
+    query_length = query_states.shape[1] * sequence_parallel_size
     if mode == "ulysses":
         dist_attn = UlyssesAttention(sequence_process_group=group, attn_fn=attn_fn)
         attn_output = dist_attn(
@@ -68,7 +98,22 @@ def new_flash_attn_forward(
             key_states,
             value_states,
             attention_mask,
-            query_length=query_states.shape[1] * sequence_parallel_size,
+            query_length=query_length,
+            deterministic=deterministic,
+            dropout_p=dropout,
+            causal=is_causal,
+            position_ids=kwargs.get("position_ids", None),
+            target_dtype=target_dtype,
+        )
+    elif mode in RING_CP_MODES:
+        variant = "zigzag" if mode == "ring_zigzag" else "ring"
+        dist_attn = RingAttention(sequence_process_group=group, variant=variant)
+        attn_output = dist_attn(
+            query_states,
+            key_states,
+            value_states,
+            attention_mask,
+            query_length=query_length,
             deterministic=deterministic,
             dropout_p=dropout,
             causal=is_causal,
@@ -76,68 +121,74 @@ def new_flash_attn_forward(
             target_dtype=target_dtype,
         )
     else:
-        raise NotImplementedError("Other sequence parallel modes are to be implemented.")
+        raise NotImplementedError(f"Unsupported context parallel mode: {mode}")
 
     return attn_output
 
 
-@SequenceParallelModelPlugin("ulysses").register()
-def apply_sequence_parallel(model, model_args):
-    # Replace _flash_attention_forward with new_flash_attn_forward
-    module = sys.modules[model.__module__]
+def _apply_sequence_parallel_plugin(model, model_args, mode: str) -> None:
     cp_size = model_args.get("cp_size", 1)
+    set_context_parallel_group(DistributedInterface().get_group(Dim.CP))
 
-    set_ulysses_sequence_parallel_group(DistributedInterface().get_group(Dim.CP))
+    if mode == "ulysses":
+        try:
+            num_attention_heads = model.config.num_attention_heads
+            num_key_value_heads = model.config.num_key_value_heads
+        except AttributeError:
+            num_attention_heads = model.config.text_config.num_attention_heads
+            num_key_value_heads = model.config.text_config.num_key_value_heads
 
-    try:
-        num_attention_heads, num_key_value_heads = model.config.num_attention_heads, model.config.num_attention_heads
-    except AttributeError:
-        num_attention_heads, num_key_value_heads = (
-            model.config.text_config.num_attention_heads,
-            model.config.text_config.num_key_value_heads,
+        assert num_attention_heads % cp_size == 0, "num_attention_heads must be divisible by cp_size"
+        assert num_key_value_heads % cp_size == 0 or cp_size % num_key_value_heads == 0, (
+            "num_key_value_heads must be divisible by cp_size"
         )
 
-    assert num_attention_heads % cp_size == 0, "num_attention_heads must be divisible by cp_size"
-    assert num_key_value_heads % cp_size == 0 or cp_size % num_key_value_heads == 0, (
-        "num_key_value_heads must be divisible by cp_size"
-    )
-
     origin_attn = transformers.modeling_flash_attention_utils._flash_attention_forward
+    attn_fn = origin_attn if mode == "ulysses" else None
     new_flash_attention_forward = partial(
         new_flash_attn_forward,
-        group=get_ulysses_sequence_parallel_group(),
-        mode="ulysses",
-        attn_fn=origin_attn,
+        group=get_context_parallel_group(),
+        mode=mode,
+        attn_fn=attn_fn,
         sequence_parallel_size=cp_size,
     )
-
-    for module_name, module in list(sys.modules.items()):
-        try:
-            if (
-                hasattr(module, "__file__")
-                and "transformers" in module.__file__
-                and getattr(module._flash_attention_forward, "__name__", "") == "_flash_attention_forward"
-            ):
-                module._flash_attention_forward = new_flash_attention_forward
-                logger.info_rank0(
-                    f"Replaced _flash_attention_forward in module {module_name} with new_flash_attn_forward for sequence parallel."
-                )
-        except (AttributeError, TypeError):
-            continue
+    _patch_flash_attention_forward(new_flash_attention_forward)
 
 
-def padding_and_split_data(data, device_mesh=None):
+@SequenceParallelModelPlugin("ulysses").register()
+def apply_sequence_parallel_ulysses(model, model_args):
+    logger.info_rank0("Applying sequence parallel plugin for ulysses")
+    _apply_sequence_parallel_plugin(model, model_args, mode="ulysses")
+
+
+@SequenceParallelModelPlugin("ring").register()
+def apply_sequence_parallel_ring(model, model_args):
+    logger.info_rank0("Applying sequence parallel plugin for ring")
+    _apply_sequence_parallel_plugin(model, model_args, mode="ring")
+
+
+@SequenceParallelModelPlugin("ring_zigzag").register()
+def apply_sequence_parallel_ring_zigzag(model, model_args):
+    logger.info_rank0("Applying sequence parallel plugin for ring_zigzag")
+    _apply_sequence_parallel_plugin(model, model_args, mode="ring_zigzag")
+
+
+def padding_and_split_data(data, device_mesh=None, pad_factor: int | None = None):
+    if pad_factor is None:
+        pad_factor = get_cp_pad_factor()
+
     if device_mesh is not None:
         cp_size = device_mesh["cp"].size()
         cp_rank = device_mesh["cp"].get_local_rank()
         cp_group = device_mesh["cp"].get_group()
+        alignment = pad_factor * cp_size
         for k, v in data.items():
             if isinstance(v, torch.Tensor) and v.ndim > 1:
                 data_len = torch.tensor(v.shape[-1], device=v.device, dtype=torch.int64)
                 global_data_len = [torch.empty_like(data_len) for _ in range(cp_size)]
                 dist.all_gather(global_data_len, data_len, group=cp_group)
                 max_data_len = max(global_data_len)
-                pad_size = max_data_len - v.shape[-1] + (cp_size - max_data_len % cp_size) % cp_size
+                pad_size = max_data_len - v.shape[-1] + (alignment - max_data_len % alignment) % alignment
                 if k == "labels":
                     pad_value = -100
                 elif k == "loss_weights":
@@ -167,9 +218,9 @@ def sequence_parallel_loss(model, model_inputs):
 
     labels = model_inputs["labels"]
 
-    cp_group = get_ulysses_sequence_parallel_group()
-    cp_world_size = get_ulysses_sequence_parallel_world_size(cp_group)
-    cp_rank = get_ulysses_sequence_parallel_rank(cp_group)
+    cp_group = get_context_parallel_group()
+    cp_world_size = get_context_parallel_world_size(cp_group)
+    cp_rank = get_context_parallel_rank(cp_group)
 
     # use all_gather to collect labels from all sequence parallel processes
     global_labels = [torch.empty_like(labels) for _ in range(cp_world_size)]

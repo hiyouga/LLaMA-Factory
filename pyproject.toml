@@ -79,6 +79,15 @@ dependencies = [
 llamafactory-cli = "llamafactory.cli:main"
 lmf = "llamafactory.cli:main"
 
+[project.optional-dependencies]
+ring = [
+    "ring-flash-attn>=0.1.0",
+    "flash-attn>=2.5.0",
+]
+ring-npu = [
+    "ring-attn-ascend>=0.0.2",
+]
+
 [project.urls]
 Homepage = "https://github.com/hiyouga/LLaMA-Factory"
 Repository = "https://github.com/hiyouga/LLaMA-Factory"

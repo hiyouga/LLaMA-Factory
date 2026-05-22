@@ -22,34 +22,33 @@ import torch.distributed as dist
 from torch import Tensor
 from torch.distributed import ProcessGroup
 
+from .cp_state import (
+    get_context_parallel_group,
+    get_context_parallel_rank,
+    get_context_parallel_world_size,
+    set_context_parallel_group,
+)
 from .seq_comm import SeqAllToAll4D
 
 
-_ULYSSES_SEQUENCE_PARALLEL_GROUP = None
-
-
-def set_ulysses_sequence_parallel_group(group: dist.ProcessGroup):
+def set_ulysses_sequence_parallel_group(group: dist.ProcessGroup) -> None:
     """Set ulysses sequence parallel process group."""
-    global _ULYSSES_SEQUENCE_PARALLEL_GROUP
-    _ULYSSES_SEQUENCE_PARALLEL_GROUP = group
+    set_context_parallel_group(group)
 
 
 def get_ulysses_sequence_parallel_group() -> Optional[dist.ProcessGroup]:
     """Get ulysses sequence parallel process group."""
-    global _ULYSSES_SEQUENCE_PARALLEL_GROUP
-    return _ULYSSES_SEQUENCE_PARALLEL_GROUP
+    return get_context_parallel_group()
 
 
 def get_ulysses_sequence_parallel_world_size(group: ProcessGroup = None) -> int:
     """Get ulysses sequence parallel world size."""
-    group = get_ulysses_sequence_parallel_group() if group is None else group
-    return dist.get_world_size(group) if group else 1
+    return get_context_parallel_world_size(group)
 
 
 def get_ulysses_sequence_parallel_rank(group: ProcessGroup = None) -> int:
     """Get ulysses sequence parallel rank."""
-    group = get_ulysses_sequence_parallel_group() if group is None else group
-    return dist.get_rank(group) if group else 0
+    return get_context_parallel_rank(group)
 
 
 class UlyssesAttention(torch.nn.Module):
@@ -132,7 +131,7 @@ class UlyssesAttention(torch.nn.Module):
             attention_mask = attention_mask.to(torch.int64)
 
         global_attention_mask = [
-            torch.empty_like(attention_mask) for _ in range(get_ulysses_sequence_parallel_world_size(self.spg))
+            torch.empty_like(attention_mask) for _ in range(get_context_parallel_world_size(self.spg))
         ]
         dist.all_gather(global_attention_mask, attention_mask, group=self.spg)
         attention_mask = torch.cat(global_attention_mask, dim=1)

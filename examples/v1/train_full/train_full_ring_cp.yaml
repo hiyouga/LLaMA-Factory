@@ -8,14 +8,14 @@ template: qwen3_nothink
 dist_config:
   name: fsdp2
   dcp_path: null
-  cp_mode: ulysses
+  cp_mode: ring # choice: ring/ring_zigzag
   cp_size: 2
 
 ### data
 train_dataset: data/v1_sft_demo.yaml
 
 ### training
-output_dir: outputs/test_ulysses_cp
+output_dir: outputs/test_ring_cp
 micro_batch_size: 1
 cutoff_len: 2048
 learning_rate: 1.0e-4
