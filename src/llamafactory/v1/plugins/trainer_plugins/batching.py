@@ -84,9 +84,7 @@ def _get_dynamic_micro_batch_sizes(samples: list[ModelInput], batch_info: BatchI
     return sizes
 
 
-def _get_dynamic_padding_free_micro_batch_sizes(
-    samples: list[ModelInput], batch_info: BatchInfo
-) -> list[int]:
+def _get_dynamic_padding_free_micro_batch_sizes(samples: list[ModelInput], batch_info: BatchInfo) -> list[int]:
     budget = batch_info["cutoff_len"] * batch_info["micro_batch_size"]
     cutoff_len = batch_info["cutoff_len"]
     sizes = []

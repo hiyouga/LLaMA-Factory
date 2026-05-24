@@ -16,7 +16,11 @@ from llamafactory.v1.config import DataArguments, ModelArguments, TrainingArgume
 from llamafactory.v1.core.data_engine import DataEngine
 from llamafactory.v1.core.model_engine import ModelEngine
 from llamafactory.v1.core.utils.batching import BatchGenerator
-from llamafactory.v1.plugins.trainer_plugins.batching import BatchingPlugin, _get_dynamic_micro_batch_sizes, _get_dynamic_padding_free_micro_batch_sizes
+from llamafactory.v1.plugins.trainer_plugins.batching import (
+    BatchingPlugin,
+    _get_dynamic_micro_batch_sizes,
+    _get_dynamic_padding_free_micro_batch_sizes,
+)
 from llamafactory.v1.utils.constants import IGNORE_INDEX
 from llamafactory.v1.utils.objects import StatefulBuffer
 
@@ -200,7 +204,7 @@ def test_normal_batching():
 
 
 def test_dynamic_padding_free():
-    """Test core logic of dynamic padding free strategy: pack samples by total token budget without padding"""
+    """Test core logic of dynamic padding free strategy: pack samples by total token budget without padding."""
     # Construct test samples (lengths: 3, 4, 6, 2, 8, 9)
     # input_ids breakdown:
     #   sample 0: [0,1,2] (length=3)
@@ -236,29 +240,68 @@ def test_dynamic_padding_free():
 
     # Verify input_ids concatenation (first label of non-initial samples set to IGNORE_INDEX)
     assert packed_batch["input_ids"].tolist() == [
-        [0,1,2,        # Sample 0
-         10,11,12,13,  # Sample 1
-         20,21,22,23,24,25,  # Sample 2
-         30,31]        # Sample 3
+        [
+            0,
+            1,
+            2,  # Sample 0
+            10,
+            11,
+            12,
+            13,  # Sample 1
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,  # Sample 2
+            30,
+            31,
+        ]  # Sample 3
     ]
 
     # Verify labels (first token of non-initial samples is IGNORE_INDEX)
     assert packed_batch["labels"].tolist() == [
-        [0,1,2,                          # Sample 0
-         IGNORE_INDEX,11,12,13,          # Sample 1
-         IGNORE_INDEX,21,22,23,24,25,    # Sample 2
-         IGNORE_INDEX,31]                # Sample 3
+        [
+            0,
+            1,
+            2,  # Sample 0
+            IGNORE_INDEX,
+            11,
+            12,
+            13,  # Sample 1
+            IGNORE_INDEX,
+            21,
+            22,
+            23,
+            24,
+            25,  # Sample 2
+            IGNORE_INDEX,
+            31,
+        ]  # Sample 3
     ]
 
     # Verify attention_mask
-    assert packed_batch["attention_mask"].tolist() == [[1]*15]
+    assert packed_batch["attention_mask"].tolist() == [[1] * 15]
 
     # Verify position_ids
     assert packed_batch["position_ids"].tolist() == [
-        [0,1,2,        # Sample 0
-         0,1,2,3,      # Sample 1
-         0,1,2,3,4,5,  # Sample 2
-         0,1]           # Sample 3
+        [
+            0,
+            1,
+            2,  # Sample 0
+            0,
+            1,
+            2,
+            3,  # Sample 1
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,  # Sample 2
+            0,
+            1,
+        ]  # Sample 3
     ]
 
     # Verify remaining samples in buffer: 6-4=2 samples (length 8,9)
@@ -278,8 +321,8 @@ def test_dynamic_padding_free_returns_none_when_token_budget_is_incomplete():
 
 
 def test_dynamic_padding_free_fill_buffer_restarts_until_micro_batch_is_complete():
-    """
-    Test fill_buffer logic for dynamic_padding_free: restart data iterator until token budget is full
+    """Test fill_buffer logic for dynamic_padding_free: restart data iterator until token budget is full.
+
     Data provider yields one sample of length 6 per iteration.
     _fill_buffer keeps restarting iterator until next sample exceeds budget.
     Budget = 2 * 10 = 20 tokens.
@@ -310,7 +353,9 @@ def test_dynamic_padding_free_fill_buffer_restarts_until_micro_batch_is_complete
     #   4th sample is kept in buffer for next batch
     #   => num_iters = 4
     assert data_provider.num_iters == 4
-    assert _get_dynamic_padding_free_micro_batch_sizes(batch_generator._buffer.samples, batch_generator._batch_info) == [3]
+    assert _get_dynamic_padding_free_micro_batch_sizes(
+        batch_generator._buffer.samples, batch_generator._batch_info
+    ) == [3]
 
     batch = batch_generator._generate_batch()
 
