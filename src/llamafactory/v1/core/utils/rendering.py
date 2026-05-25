@@ -39,67 +39,6 @@ DEFAULT_CHATML_JINJA = (
     "{% endif %}"
 )
 
-DEFAULT_TRAINING_JINJA = (
-    "{% for message in messages %}"
-    "{% if message['content'] is string %}"
-    "{{'<|im_start|>' + message['role'] + '\n' + message['content'] + '<|im_end|>' + '\n'}}"
-    "{% else %}"
-    "{{'<|im_start|>' + message['role'] + '\n'}}"
-    "{% for item in message['content'] %}"
-    "{% if item['type'] == 'text' %}{{item['text']}}"
-    "{% elif item['type'] == 'image' %}{{'<|vision_start|><|image_pad|><|vision_end|>'}}"
-    "{% elif item['type'] == 'video' %}{{'<|vision_start|><|video_pad|><|vision_end|>'}}"
-    "{% endif %}"
-    "{% endfor %}"
-    "{{'<|im_end|>' + '\n'}}"
-    "{% endif %}"
-    "{% endfor %}"
-    "{% if add_generation_prompt %}"
-    "{{'<|im_start|>assistant\n'}}"
-    "{% endif %}"
-)
-
-
-def _is_prefix_stable(template_caller, tokenizer) -> bool:
-    """Check if the chat template is prefix-stable (render(prefix) is a prefix of render(full)).
-
-    Tests multiple message patterns to catch templates that strip/add content
-    based on message position (e.g., Qwen3.5 strips <think> from non-last assistant).
-    """
-    test_cases = [
-        [
-            {"role": "user", "content": "test"},
-            {"role": "assistant", "content": "ok"},
-            {"role": "user", "content": "more"},
-        ],
-        [
-            {"role": "user", "content": "hello"},
-            {"role": "assistant", "content": "first reply"},
-            {"role": "user", "content": "follow up"},
-            {"role": "assistant", "content": "second reply"},
-        ],
-        [
-            {"role": "system", "content": "You are helpful."},
-            {"role": "user", "content": "hi"},
-            {"role": "assistant", "content": "hello"},
-            {"role": "user", "content": "bye"},
-        ],
-    ]
-    for msgs in test_cases:
-        for i in range(1, len(msgs)):
-            try:
-                text_short = template_caller.apply_chat_template(
-                    msgs[:i], tokenize=False, add_generation_prompt=False
-                )
-                text_long = template_caller.apply_chat_template(
-                    msgs[: i + 1], tokenize=False, add_generation_prompt=False
-                )
-            except Exception:
-                return False
-            if not text_long.startswith(text_short):
-                return False
-    return True
-
 
 def _to_hf_messages(messages: list[Message], is_multimodal: bool = False) -> list[dict]:
     """Convert v1 Message format to HF format for apply_chat_template."""
@@ -158,186 +97,119 @@ def _count_media_in_messages(messages: list[Message]) -> tuple[int, int]:
     return n_images, n_videos
 
 
-def _build_text_to_expanded_mapping(
-    text_ids: list[int],
-    expanded_ids: list[int],
-    video_grid_thw,
-    image_pad_id: int,
-    vision_start_id: int,
-    vision_end_id: int,
-) -> list[int]:
-    """Build a cumulative position mapping from text_ids positions to expanded_ids positions.
+def _detect_assistant_markers(template_caller) -> tuple[str, str]:
+    """Detect the text markers that bracket assistant content in the rendered template.
 
-    Returns a list of length len(text_ids)+1 where mapping[i] gives the corresponding
-    position in expanded_ids. Turn boundaries (which fall at non-media positions) can be
-    looked up directly.
+    Returns (start_marker, end_marker) where:
+    - start_marker: text immediately before assistant content (e.g., '<|im_start|>assistant\\n')
+    - end_marker: text immediately after assistant content (e.g., '<|im_end|>')
     """
-    mapping = [0] * (len(text_ids) + 1)
-    t_cursor = 0
-    e_cursor = 0
-    video_idx = 0
-
-    while t_cursor < len(text_ids):
-        if (
-            t_cursor + 2 < len(text_ids)
-            and text_ids[t_cursor] == vision_start_id
-            and text_ids[t_cursor + 2] == vision_end_id
-        ):
-            media_type = text_ids[t_cursor + 1]
-            mapping[t_cursor] = e_cursor
-
-            if media_type == image_pad_id:
-                assert expanded_ids[e_cursor] == vision_start_id
-                e_cursor += 1
-                while e_cursor < len(expanded_ids) and expanded_ids[e_cursor] == image_pad_id:
-                    e_cursor += 1
-                assert expanded_ids[e_cursor] == vision_end_id
-                e_cursor += 1
-            else:
-                num_frames = int(video_grid_thw[video_idx][0])
-                frames_found = 0
-                while frames_found < num_frames:
-                    if expanded_ids[e_cursor] == vision_end_id:
-                        frames_found += 1
-                    e_cursor += 1
-                video_idx += 1
-
-            mapping[t_cursor + 1] = e_cursor
-            mapping[t_cursor + 2] = e_cursor
-            t_cursor += 3
-        else:
-            mapping[t_cursor] = e_cursor
-            t_cursor += 1
-            e_cursor += 1
-
-    mapping[len(text_ids)] = e_cursor
-    return mapping
-
-
-def _render_auto_messages_multimodal(
-    processor: Processor,
-    messages: list[Message],
-    tools: str | None = None,
-    is_generate: bool = False,
-) -> ModelInput:
-    """Render messages for multimodal models using processor to expand image/video placeholders.
-
-    Optimization: calls processor only once for the full sequence, then uses a position
-    mapping (text_ids → expanded_ids) to compute per-turn boundaries without repeated
-    processor calls.
-    """
-    tokenizer = get_tokenizer(processor)
-
-    if not getattr(processor, "chat_template", None):
-        processor.chat_template = DEFAULT_TRAINING_JINJA
-
-    hf_messages = _to_hf_messages(messages, is_multimodal=True)
-    images, videos = _extract_media_from_messages(messages)
-
-    tools_parsed = None
-    if tools:
-        tools_parsed = json.loads(tools)
-        if not isinstance(tools_parsed, list):
-            tools_parsed = [tools_parsed]
-
-    first_user_idx = 0
-    if tools_parsed:
-        for idx, msg in enumerate(messages):
-            if msg["role"] == "user":
-                first_user_idx = idx
-                break
-
-    full_text = processor.apply_chat_template(
-        hf_messages, tokenize=False, add_generation_prompt=is_generate, tools=tools_parsed
+    CONTENT_A = "AABBCC_PROBE_CONTENT_1_XXYYZZ"
+    CONTENT_B = "AABBCC_PROBE_CONTENT_2_XXYYZZ"
+    test_msgs = [
+        {"role": "user", "content": "Q1"},
+        {"role": "assistant", "content": CONTENT_A},
+        {"role": "user", "content": "Q2"},
+        {"role": "assistant", "content": CONTENT_B},
+    ]
+    rendered = template_caller.apply_chat_template(
+        test_msgs, tokenize=False, add_generation_prompt=False
     )
 
-    proc_kwargs = {"return_tensors": "pt"}
-    if images:
-        proc_kwargs["images"] = images
-    if videos:
-        proc_kwargs["videos"] = videos
-
-    outputs = processor(text=full_text, **proc_kwargs)
-    expanded_input_ids = outputs["input_ids"][0].tolist()
-
-    full_text_no_gen = processor.apply_chat_template(
-        hf_messages, tokenize=False, add_generation_prompt=False, tools=tools_parsed
-    )
-    text_ids_full = tokenizer.encode(full_text_no_gen, add_special_tokens=False)
-
-    image_pad_id = tokenizer.convert_tokens_to_ids("<|image_pad|>")
-    vision_start_id = tokenizer.convert_tokens_to_ids("<|vision_start|>")
-    vision_end_id = tokenizer.convert_tokens_to_ids("<|vision_end|>")
-
-    mapping = _build_text_to_expanded_mapping(
-        text_ids_full,
-        expanded_input_ids,
-        outputs.get("video_grid_thw"),
-        image_pad_id,
-        vision_start_id,
-        vision_end_id,
-    )
-
-    input_ids, labels, loss_weights = [], [], []
-    prev_expanded_pos = 0
-
-    for i, message in enumerate(messages):
-        if tools_parsed and i < first_user_idx:
-            continue
-
-        curr_text = processor.apply_chat_template(
-            hf_messages[: i + 1], tokenize=False, add_generation_prompt=False, tools=tools_parsed
+    pos_a = rendered.find(CONTENT_A)
+    pos_b = rendered.find(CONTENT_B)
+    if pos_a == -1 or pos_b == -1:
+        raise ValueError(
+            "Cannot detect assistant role markers: probe content not found in rendered template. "
+            "The model's chat_template may not render assistant content literally."
         )
-        curr_text_len = len(tokenizer.encode(curr_text, add_special_tokens=False))
-        curr_expanded_pos = mapping[curr_text_len]
 
-        turn_ids = expanded_input_ids[prev_expanded_pos:curr_expanded_pos]
-        turn_len = curr_expanded_pos - prev_expanded_pos
+    # end_marker: text immediately after the LAST assistant content to end-of-string
+    end_text = rendered[pos_b + len(CONTENT_B):]
+    end_marker = end_text.split("\n")[0]
+    if not end_marker:
+        end_marker = end_text.rstrip()
 
-        if tools_parsed and i == first_user_idx and first_user_idx > 0:
-            turn_weight = 0.0
-        else:
-            turn_weight = message.get("loss_weight", 1.0 if message["role"] == "assistant" else 0.0)
-
-        input_ids.extend(turn_ids)
-        loss_weights.extend([turn_weight] * turn_len)
-        if turn_weight > 1e-6:
-            labels.extend(turn_ids)
-        else:
-            labels.extend([IGNORE_INDEX] * turn_len)
-
-        prev_expanded_pos = curr_expanded_pos
-
-    if is_generate:
-        gen_suffix = expanded_input_ids[prev_expanded_pos:]
-        input_ids.extend(gen_suffix)
-        loss_weights.extend([0.0] * len(gen_suffix))
-        labels.extend([IGNORE_INDEX] * len(gen_suffix))
+    # start_marker: text between the previous end_marker and the content
+    prefix = rendered[:pos_a]
+    last_end = prefix.rfind(end_marker)
+    if last_end != -1:
+        start_marker = prefix[last_end + len(end_marker):]
     else:
-        assert prev_expanded_pos == len(expanded_input_ids), (
-            f"Position mapping mismatch: computed {prev_expanded_pos}, "
-            f"actual {len(expanded_input_ids)}. Template may not be prefix-stable."
-        )
+        start_marker = prefix
 
-    result = ModelInput(
-        input_ids=input_ids,
-        attention_mask=[1] * len(input_ids),
-        labels=labels,
-        loss_weights=loss_weights,
-    )
+    start_marker = start_marker.lstrip("\n")
+    return start_marker, end_marker
 
-    if "pixel_values" in outputs:
-        result["pixel_values"] = outputs["pixel_values"]
-    if "image_grid_thw" in outputs:
-        result["image_grid_thw"] = outputs["image_grid_thw"]
-    if "pixel_values_videos" in outputs:
-        result["pixel_values_videos"] = outputs["pixel_values_videos"]
-    if "video_grid_thw" in outputs:
-        result["video_grid_thw"] = outputs["video_grid_thw"]
-    if "mm_token_type_ids" in outputs:
-        result["mm_token_type_ids"] = outputs["mm_token_type_ids"][0].tolist()
 
-    return result
+def _find_assistant_regions(text: str, start_marker: str, end_marker: str) -> list[tuple[int, int]]:
+    """Find character ranges of assistant content (inclusive of end_marker) in rendered text.
+
+    Returns list of (content_start_char, region_end_char) where:
+    - content_start_char: first char of assistant content (after start_marker)
+    - region_end_char: char after end_marker (exclusive bound)
+    """
+    regions = []
+    pos = 0
+    while True:
+        start = text.find(start_marker, pos)
+        if start == -1:
+            break
+        content_start = start + len(start_marker)
+        end = text.find(end_marker, content_start)
+        if end == -1:
+            region_end = len(text)
+        else:
+            region_end = end + len(end_marker)
+        regions.append((content_start, region_end))
+        pos = region_end
+    return regions
+
+
+def _char_region_to_token_region(
+    offsets: list[tuple[int, int]], content_start: int, region_end: int
+) -> tuple[int, int]:
+    """Map a character region to token indices using offset_mapping.
+
+    Returns (token_start, token_end) as a half-open interval [start, end).
+    """
+    tok_start = None
+    tok_end = None
+    for i, (char_s, char_e) in enumerate(offsets):
+        if char_s == char_e:
+            continue
+        if tok_start is None and char_e > content_start:
+            tok_start = i
+        if char_s < region_end:
+            tok_end = i + 1
+    return tok_start, tok_end
+
+
+def _build_expansion_offsets(text_ids: list[int], expanded_ids: list[int], vision_token_ids: set[int]) -> list[int]:
+    """Build cumulative expansion offset for each text token position.
+
+    Returns a list of length len(text_ids)+1 where offset[i] is the number of extra
+    tokens inserted before text token i due to vision expansion. So the expanded index
+    for text token i is: i + offset[i].
+    """
+    offsets = [0] * (len(text_ids) + 1)
+    e_ptr = 0
+    cumulative = 0
+
+    for t_idx in range(len(text_ids)):
+        offsets[t_idx] = cumulative
+        if e_ptr < len(expanded_ids) and expanded_ids[e_ptr] in vision_token_ids:
+            # Walk past all contiguous vision tokens in expanded
+            while e_ptr < len(expanded_ids) and expanded_ids[e_ptr] in vision_token_ids:
+                e_ptr += 1
+                cumulative += 1
+            cumulative -= 1  # the text token itself accounts for 1
+            e_ptr += 0  # don't advance e_ptr further; next iteration handles next text token
+        else:
+            e_ptr += 1
+
+    offsets[len(text_ids)] = cumulative
+    return offsets
 
 
 def _render_auto_messages(
@@ -345,17 +217,22 @@ def _render_auto_messages(
     messages: list[Message],
     tools: str | None = None,
     is_generate: bool = False,
+    assistant_start_marker: str | None = None,
+    assistant_end_marker: str | None = None,
 ) -> ModelInput:
-    """Render messages using apply_chat_template with per-turn loss masking."""
+    """Render messages using the model's own template with text-based boundary detection.
+
+    Uses apply_chat_template once to render the full conversation, then finds assistant
+    content regions by searching for role markers in the rendered text. Character positions
+    are mapped to token positions via offset_mapping.
+    """
     tokenizer = get_tokenizer(processor)
     is_multimodal = not is_tokenizer(processor)
-
-    if is_multimodal and _count_media_in_messages(messages) != (0, 0):
-        return _render_auto_messages_multimodal(processor, messages, tools, is_generate)
+    has_media = is_multimodal and _count_media_in_messages(messages) != (0, 0)
 
     template_caller = processor if is_multimodal else tokenizer
     if not getattr(template_caller, "chat_template", None):
-        template_caller.chat_template = DEFAULT_TRAINING_JINJA
+        template_caller.chat_template = DEFAULT_CHATML_JINJA
 
     hf_messages = _to_hf_messages(messages, is_multimodal=is_multimodal)
 
@@ -365,64 +242,136 @@ def _render_auto_messages(
         if not isinstance(tools_parsed, list):
             tools_parsed = [tools_parsed]
 
-    input_ids, labels, loss_weights = [], [], []
-    prev_ids = []
+    # 1. Render full text with model's own template
+    full_text = template_caller.apply_chat_template(
+        hf_messages, tokenize=False, add_generation_prompt=is_generate, tools=tools_parsed
+    )
 
-    # When tools are present, some templates require a user message in the slice.
-    # Find the first user message index to batch system+user together.
-    first_user_idx = 0
-    if tools_parsed:
-        for idx, msg in enumerate(messages):
-            if msg["role"] == "user":
-                first_user_idx = idx
-                break
+    if has_media:
+        # Multimodal path: call processor once for expansion
+        images, videos = _extract_media_from_messages(messages)
+        proc_kwargs = {"return_tensors": "pt"}
+        if images:
+            proc_kwargs["images"] = images
+        if videos:
+            proc_kwargs["videos"] = videos
+        outputs = processor(text=full_text, **proc_kwargs)
+        input_ids = outputs["input_ids"][0].tolist()
 
-    for i, message in enumerate(messages):
-        if tools_parsed and i < first_user_idx:
-            continue
+        # Get text-level tokenization for boundary detection
+        text_encoding = tokenizer(full_text, return_offsets_mapping=True, add_special_tokens=False)
+        text_ids = text_encoding["input_ids"]
+        text_offsets = text_encoding["offset_mapping"]
+    else:
+        # Text-only path
+        encoding = tokenizer(full_text, return_offsets_mapping=True, add_special_tokens=False)
+        input_ids = encoding["input_ids"]
+        text_ids = input_ids
+        text_offsets = encoding["offset_mapping"]
+        outputs = None
 
-        curr_text = template_caller.apply_chat_template(
-            hf_messages[: i + 1],
-            tokenize=False,
-            add_generation_prompt=False,
-            tools=tools_parsed,
-        )
-        curr_ids = tokenizer.encode(curr_text, add_special_tokens=False)
+    # 2. Find assistant content regions in rendered text
+    if assistant_start_marker is None or assistant_end_marker is None:
+        assistant_start_marker, assistant_end_marker = _detect_assistant_markers(template_caller)
 
-        turn_ids = curr_ids[len(prev_ids):]
-        if tools_parsed and i == first_user_idx and first_user_idx > 0:
-            turn_weight = 0.0
-        else:
-            turn_weight = message.get("loss_weight", 1.0 if message["role"] == "assistant" else 0.0)
-
-        input_ids.extend(turn_ids)
-        loss_weights.extend([turn_weight] * len(turn_ids))
-        if turn_weight > 1e-6:
-            labels.extend(turn_ids)
-        else:
-            labels.extend([IGNORE_INDEX] * len(turn_ids))
-
-        prev_ids = curr_ids
-
+    # Render without generation prompt for boundary detection (gen prompt is not assistant content)
     if is_generate:
-        gen_text = template_caller.apply_chat_template(
-            hf_messages,
-            tokenize=False,
-            add_generation_prompt=True,
-            tools=tools_parsed,
+        boundary_text = template_caller.apply_chat_template(
+            hf_messages, tokenize=False, add_generation_prompt=False, tools=tools_parsed
         )
-        gen_ids = tokenizer.encode(gen_text, add_special_tokens=False)
-        gen_suffix = gen_ids[len(prev_ids):]
-        input_ids.extend(gen_suffix)
-        loss_weights.extend([0.0] * len(gen_suffix))
-        labels.extend([IGNORE_INDEX] * len(gen_suffix))
+    else:
+        boundary_text = full_text
 
-    return ModelInput(
+    regions_char = _find_assistant_regions(boundary_text, assistant_start_marker, assistant_end_marker)
+
+    # 3. Map char regions to text-token regions
+    regions_text_tok = []
+    for content_start, region_end in regions_char:
+        tok_start, tok_end = _char_region_to_token_region(text_offsets, content_start, region_end)
+        if tok_start is not None and tok_end is not None:
+            regions_text_tok.append((tok_start, tok_end))
+
+    # 4. Map text-token regions to expanded-token regions (multimodal expansion)
+    if has_media and len(input_ids) != len(text_ids):
+        # Build expansion offset map: for text token i, expanded index = i + exp_offsets[i]
+        # Use a simple walk: text tokens map 1:1 except where vision placeholders expand
+        exp_map = _build_text_to_expanded_simple(text_ids, input_ids)
+        regions_expanded = []
+        for tok_start, tok_end in regions_text_tok:
+            regions_expanded.append((exp_map[tok_start], exp_map[tok_end]))
+    else:
+        regions_expanded = regions_text_tok
+
+    # 5. Build labels and loss_weights
+    labels = [IGNORE_INDEX] * len(input_ids)
+    loss_weights = [0.0] * len(input_ids)
+
+    # Assign per-turn weights: i-th assistant region → i-th assistant message's loss_weight
+    assistant_messages = [m for m in messages if m["role"] == "assistant"]
+    for region_idx, (tok_start, tok_end) in enumerate(regions_expanded):
+        if region_idx < len(assistant_messages):
+            weight = assistant_messages[region_idx].get("loss_weight", 1.0)
+        else:
+            weight = 1.0
+
+        for t in range(tok_start, min(tok_end, len(input_ids))):
+            if weight > 1e-6:
+                labels[t] = input_ids[t]
+                loss_weights[t] = weight
+
+    result = ModelInput(
         input_ids=input_ids,
         attention_mask=[1] * len(input_ids),
         labels=labels,
         loss_weights=loss_weights,
     )
+
+    if outputs is not None:
+        if "pixel_values" in outputs:
+            result["pixel_values"] = outputs["pixel_values"]
+        if "image_grid_thw" in outputs:
+            result["image_grid_thw"] = outputs["image_grid_thw"]
+        if "pixel_values_videos" in outputs:
+            result["pixel_values_videos"] = outputs["pixel_values_videos"]
+        if "video_grid_thw" in outputs:
+            result["video_grid_thw"] = outputs["video_grid_thw"]
+        if "mm_token_type_ids" in outputs:
+            result["mm_token_type_ids"] = outputs["mm_token_type_ids"][0].tolist()
+
+    return result
+
+
+def _build_text_to_expanded_simple(text_ids: list[int], expanded_ids: list[int]) -> list[int]:
+    """Build mapping from text token index → expanded token index.
+
+    Returns list of length len(text_ids)+1. mapping[i] = expanded position for text token i.
+    mapping[len(text_ids)] = len(expanded_ids).
+
+    Walks both sequences in parallel. When they diverge (expansion point), scans the expanded
+    sequence until tokens sync again.
+    """
+    mapping = [0] * (len(text_ids) + 1)
+    e_ptr = 0
+
+    for t_idx in range(len(text_ids)):
+        mapping[t_idx] = e_ptr
+        if e_ptr < len(expanded_ids) and text_ids[t_idx] == expanded_ids[e_ptr]:
+            # 1:1 correspondence
+            e_ptr += 1
+        else:
+            # Expansion point: text has one token, expanded has many
+            # Scan expanded until we find the next text token
+            if t_idx + 1 < len(text_ids):
+                next_text_token = text_ids[t_idx + 1]
+                # Skip all expanded tokens that are part of this expansion
+                while e_ptr < len(expanded_ids) and expanded_ids[e_ptr] != next_text_token:
+                    e_ptr += 1
+            else:
+                # Last text token expands to everything remaining
+                e_ptr = len(expanded_ids)
+
+    mapping[len(text_ids)] = e_ptr
+    return mapping
 
 
 def _parse_auto_message(generated_text: str) -> Message:
@@ -484,6 +433,18 @@ class Renderer:
     def __init__(self, template: str, processor: Processor):
         self.template = template
         self.processor = processor
+        self._assistant_start_marker = None
+        self._assistant_end_marker = None
+
+        if template == "auto":
+            template_caller = processor if not is_tokenizer(processor) else get_tokenizer(processor)
+            if getattr(template_caller, "chat_template", None):
+                try:
+                    self._assistant_start_marker, self._assistant_end_marker = (
+                        _detect_assistant_markers(template_caller)
+                    )
+                except (ValueError, Exception):
+                    pass
 
     def render_messages(
         self,
@@ -504,7 +465,14 @@ class Renderer:
             ModelInput: The rendered model input.
         """
         if self.template == "auto":
-            return _render_auto_messages(self.processor, messages, tools, is_generate)
+            return _render_auto_messages(
+                self.processor,
+                messages,
+                tools,
+                is_generate,
+                self._assistant_start_marker,
+                self._assistant_end_marker,
+            )
         elif self.template == "chatml":
             return render_chatml_messages(self.processor, messages, tools, is_generate)
         else:
