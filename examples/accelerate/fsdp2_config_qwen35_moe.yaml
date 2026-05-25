@@ -3,7 +3,7 @@ debug: false
 distributed_type: FSDP
 downcast_bf16: 'no'
 fsdp_config:
-  fsdp_version: 1
+  fsdp_version: 2
   fsdp_auto_wrap_policy: TRANSFORMER_BASED_WRAP
   fsdp_transformer_layer_cls_to_wrap: Qwen3_5MoeDecoderLayer,Qwen3_5MoeVisionBlock
   fsdp_cpu_ram_efficient_loading: true
