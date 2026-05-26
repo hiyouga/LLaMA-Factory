@@ -85,6 +85,10 @@ class TrainingArguments:
         default=42,
         metadata={"help": "Random seed that will be set at the beginning of training."},
     )
+    full_determinism: bool = field(
+        default=False,
+        metadata={"help": "Enable full deterministic mode for reproducible distributed training."},
+    )
     resume_from_checkpoint: str | None = field(
         default=None,
         metadata={"help": "Path to a checkpoint directory to resume training from, or 'auto' to find the latest."},
