@@ -51,22 +51,17 @@ def _should_use_residual_rmsnorm(module):
         bool: ``True`` if the module uses residual parameterization, ``False`` otherwise.
 
     .. note::
-        This detection ensures compatibility with future model versions (e.g., Qwen3.6, Qwen4.0)
-        without hardcoding version numbers. Two methods are used: weight value inspection
-        (most reliable) and class name pattern matching (backward compatibility).
+        This must follow the module's forward semantics. Do not infer it from trained
+        weight values because standard RMSNorm weights can also be close to zero.
     """
-    if hasattr(module, "weight") and module.weight is not None:
-        weight_mean = module.weight.data.mean().item()
-        if abs(weight_mean) < 0.3:
-            return True
+    residual_rmsnorm_classes = {
+        "Qwen3_5RMSNorm",
+        "Qwen3_5MoeRMSNorm",
+        "Qwen3NextRMSNorm",
+    }
 
     class_name = module.__class__.__name__
-    residual_patterns = ["Qwen3_5", "Qwen3_6", "Qwen4"]
-    for pattern in residual_patterns:
-        if pattern in class_name:
-            return True
-
-    return False
+    return class_name in residual_rmsnorm_classes
 
 
 def npu_rms_norm_forward(self, hidden_states):
@@ -82,7 +77,7 @@ def npu_rms_norm_forward(self, hidden_states):
     _eps = getattr(self, "variance_epsilon", None) or getattr(self, "eps", 1e-6)
 
     if hasattr(self, "weight") and self.weight is not None:
-        if _should_use_residual_rmsnorm(self):
+        if getattr(self, "_npu_use_residual_rmsnorm", False):
             effective_weight = 1.0 + self.weight.float()
         else:
             effective_weight = self.weight.float()
@@ -162,6 +157,7 @@ class NpuRMSNormKernel(BaseKernel):
                 if "Gated" in module.__class__.__name__:
                     module.forward = types.MethodType(npu_gated_rms_norm_forward, module)
                 else:
+                    module._npu_use_residual_rmsnorm = _should_use_residual_rmsnorm(module)
                     module.forward = types.MethodType(npu_rms_norm_forward, module)
 
         return model
