@@ -171,7 +171,6 @@ def load_model(
             else:
                 import transformers
                 if not hasattr(transformers.PreTrainedModel, "hf_device_map"):
-                    # 使用 str() 确保 device 是合法字符串，字典键为空字符串代表 fallback 全局设备
                     setattr(
                         transformers.PreTrainedModel,
                         "hf_device_map",
@@ -180,6 +179,9 @@ def load_model(
 
                 init_kwargs["device_map"] = "auto"
                 model = load_class.from_pretrained(**init_kwargs)
+
+                if getattr(model.config, "model_type", None) in ["qwen2_5_omni", "qwen3_omni_moe"]:
+                    model = getattr(model, "thinker")
 
         if model_args.mixture_of_depths == "convert":
             model = convert_pretrained_model_to_mod(model, config, model_args)
