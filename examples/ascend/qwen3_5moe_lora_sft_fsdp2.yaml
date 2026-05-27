@@ -30,7 +30,7 @@ dataloader_num_workers: 4
 packing: false
 
 ### output
-output_dir: saves/Qwen3.5-4B/full/sft
+output_dir: saves/Qwen3.5-35B/lora/sft
 logging_steps: 1
 save_steps: 2000
 max_steps: 2000
