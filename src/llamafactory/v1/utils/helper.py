@@ -65,9 +65,15 @@ def _pad_and_truncate(tensor: Tensor, max_seqlen: int, pad_value: int = 0) -> Te
     return torch.cat([tensor, pad_tensor], dim=-1)
 
 
-_MULTIMODAL_PASSTHROUGH_KEYS = frozenset({
-    "pixel_values", "image_grid_thw", "pixel_values_videos", "video_grid_thw", "second_per_grid_ts",
-})
+_MULTIMODAL_PASSTHROUGH_KEYS = frozenset(
+    {
+        "pixel_values",
+        "image_grid_thw",
+        "pixel_values_videos",
+        "video_grid_thw",
+        "second_per_grid_ts",
+    }
+)
 
 
 def _find_contiguous_blocks(type_ids: list[int], target: int) -> list[tuple[int, int]]:
@@ -142,9 +148,7 @@ def _align_multimodal_on_truncation(sample: ModelInput, max_length: int) -> Mode
 
     # --- Video alignment ---
     if "video_grid_thw" in sample and "pixel_values_videos" in sample:
-        video_frame_blocks = _find_contiguous_blocks(
-            sample.get("mm_token_type_ids", mm_type_ids), target=2
-        )
+        video_frame_blocks = _find_contiguous_blocks(sample.get("mm_token_type_ids", mm_type_ids), target=2)
         video_grid_thw = sample["video_grid_thw"]
 
         # Group frames into videos: video_i has T=video_grid_thw[i][0] frames
@@ -178,8 +182,16 @@ def _align_multimodal_on_truncation(sample: ModelInput, max_length: int) -> Mode
             cur_mm_type_ids = sample.get("mm_token_type_ids", mm_type_ids)
             if not isinstance(cur_mm_type_ids, list):
                 cur_mm_type_ids = list(cur_mm_type_ids)
-            labels = list(sample["labels"]) if "labels" in sample and not isinstance(sample["labels"], list) else sample.get("labels")
-            loss_weights = list(sample["loss_weights"]) if "loss_weights" in sample and not isinstance(sample["loss_weights"], list) else sample.get("loss_weights")
+            labels = (
+                list(sample["labels"])
+                if "labels" in sample and not isinstance(sample["labels"], list)
+                else sample.get("labels")
+            )
+            loss_weights = (
+                list(sample["loss_weights"])
+                if "loss_weights" in sample and not isinstance(sample["loss_weights"], list)
+                else sample.get("loss_weights")
+            )
 
             for block_idx in range(complete_frame_count, len(video_frame_blocks)):
                 start, length = video_frame_blocks[block_idx]

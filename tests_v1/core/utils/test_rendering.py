@@ -178,10 +178,7 @@ def test_parse_message():
     }
 
     # Test with <thinking> tag (alternative format)
-    generated_text_thinking = (
-        "<thinking>I need to calculate.</thinking>"
-        "The answer is 48."
-    )
+    generated_text_thinking = "<thinking>I need to calculate.</thinking>The answer is 48."
     parsed = renderer.parse_message(generated_text_thinking)
     assert parsed == {
         "role": "assistant",

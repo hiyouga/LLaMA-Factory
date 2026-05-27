@@ -63,7 +63,9 @@ def _to_hf_messages(messages: list[Message], is_multimodal: bool = False) -> lis
                     reasoning_content += content["value"]
                 elif content["type"] == "tool_call":
                     tc = json.loads(content["value"])
-                    tool_calls.append({"type": "function", "function": {"name": tc["name"], "arguments": tc["arguments"]}})
+                    tool_calls.append(
+                        {"type": "function", "function": {"name": tc["name"], "arguments": tc["arguments"]}}
+                    )
                 elif content["type"] == "image_url":
                     hf_content.append({"type": "image", "image": content["value"]})
                 elif content["type"] == "video_url":
@@ -80,7 +82,9 @@ def _to_hf_messages(messages: list[Message], is_multimodal: bool = False) -> lis
                     reasoning_content += content["value"]
                 elif content["type"] == "tool_call":
                     tc = json.loads(content["value"])
-                    tool_calls.append({"type": "function", "function": {"name": tc["name"], "arguments": tc["arguments"]}})
+                    tool_calls.append(
+                        {"type": "function", "function": {"name": tc["name"], "arguments": tc["arguments"]}}
+                    )
             hf_msg = {"role": message["role"], "content": text}
 
         if tool_calls:
@@ -117,10 +121,10 @@ def _count_media_in_messages(messages: list[Message]) -> tuple[int, int]:
 
 
 def _detect_assistant_markers(template_caller) -> tuple[str, str]:
-    """Detect the text markers that bracket assistant content in the rendered template.
+    r"""Detect the text markers that bracket assistant content in the rendered template.
 
     Returns (start_marker, end_marker) where:
-    - start_marker: text immediately before assistant content (e.g., '<|im_start|>assistant\\n')
+    - start_marker: text immediately before assistant content (e.g., '<|im_start|>assistant\n')
     - end_marker: text immediately after assistant content (e.g., '<|im_end|>')
     """
     CONTENT_A = "AABBCC_PROBE_CONTENT_1_XXYYZZ"
@@ -131,9 +135,7 @@ def _detect_assistant_markers(template_caller) -> tuple[str, str]:
         {"role": "user", "content": "Q2"},
         {"role": "assistant", "content": CONTENT_B},
     ]
-    rendered = template_caller.apply_chat_template(
-        test_msgs, tokenize=False, add_generation_prompt=False
-    )
+    rendered = template_caller.apply_chat_template(test_msgs, tokenize=False, add_generation_prompt=False)
 
     pos_a = rendered.find(CONTENT_A)
     pos_b = rendered.find(CONTENT_B)
@@ -143,7 +145,7 @@ def _detect_assistant_markers(template_caller) -> tuple[str, str]:
             "The model's chat_template may not render assistant content literally."
         )
 
-    end_text = rendered[pos_b + len(CONTENT_B):]
+    end_text = rendered[pos_b + len(CONTENT_B) :]
     end_marker = end_text.split("\n")[0]
     if not end_marker:
         end_marker = end_text.rstrip()
@@ -151,7 +153,7 @@ def _detect_assistant_markers(template_caller) -> tuple[str, str]:
     prefix = rendered[:pos_a]
     last_end = prefix.rfind(end_marker)
     if last_end != -1:
-        start_marker = prefix[last_end + len(end_marker):]
+        start_marker = prefix[last_end + len(end_marker) :]
     else:
         start_marker = prefix
 
@@ -286,8 +288,7 @@ def _render_messages(
         template_kwargs["enable_thinking"] = enable_thinking
 
     full_text = template_caller.apply_chat_template(
-        hf_messages, tokenize=False, add_generation_prompt=is_generate,
-        tools=tools_parsed, **template_kwargs
+        hf_messages, tokenize=False, add_generation_prompt=is_generate, tools=tools_parsed, **template_kwargs
     )
 
     if has_media:
@@ -320,8 +321,7 @@ def _render_messages(
     # Render without generation prompt for boundary detection (gen prompt is not assistant content)
     if is_generate:
         boundary_text = template_caller.apply_chat_template(
-            hf_messages, tokenize=False, add_generation_prompt=False,
-            tools=tools_parsed, **template_kwargs
+            hf_messages, tokenize=False, add_generation_prompt=False, tools=tools_parsed, **template_kwargs
         )
     else:
         boundary_text = full_text
@@ -429,9 +429,7 @@ class Renderer:
         template_caller = processor if not is_tokenizer(processor) else get_tokenizer(processor)
         if getattr(template_caller, "chat_template", None):
             try:
-                self._assistant_start_marker, self._assistant_end_marker = (
-                    _detect_assistant_markers(template_caller)
-                )
+                self._assistant_start_marker, self._assistant_end_marker = _detect_assistant_markers(template_caller)
             except (ValueError, Exception):
                 pass
 

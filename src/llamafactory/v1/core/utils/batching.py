@@ -34,8 +34,7 @@ from torchdata.stateful_dataloader.sampler import StatefulDistributedSampler
 from ...accelerator.interface import Dim, DistributedInterface
 from ...config import BatchingStrategy
 from ...utils import logging
-from ...utils.helper import pad_and_truncate
-from ...utils.helper import _MULTIMODAL_PASSTHROUGH_KEYS
+from ...utils.helper import _MULTIMODAL_PASSTHROUGH_KEYS, pad_and_truncate
 from ...utils.objects import StatefulBuffer
 from ...utils.types import BatchInfo, BatchInput, ModelInput, TorchDataset
 from .rendering import Renderer
