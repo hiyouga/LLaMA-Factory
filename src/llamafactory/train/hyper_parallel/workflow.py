@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from functools import partial
 from typing import TYPE_CHECKING, Optional
 
 from ...data import SFTDataCollatorWith4DAttentionMask, get_dataset, get_template_and_fix_tokenizer
@@ -23,7 +24,14 @@ from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
 from ..callbacks import SaveProcessorCallback
 from ..sft.metric import ComputeAccuracy, ComputeSimilarity, eval_logit_processor
-from ..trainer_utils import asft_loss_func, create_modelcard_and_push, create_ref_model, dft_loss_func, eaft_loss_func
+from ..trainer_utils import (
+    asft_loss_func,
+    causal_lm_loss_func,
+    create_modelcard_and_push,
+    create_ref_model,
+    dft_loss_func,
+    eaft_loss_func,
+)
 
 
 if TYPE_CHECKING:
@@ -109,9 +117,11 @@ def run_sft(
             outputs, labels, num_items_in_batch, finetuning_args.eaft_alpha
         )
     elif finetuning_args.use_asft_loss:
-        from functools import partial
-
         compute_loss_func = partial(asft_loss_func, asft_alpha=finetuning_args.asft_alpha)
+    elif processor is not None:
+        # Use custom loss function for VLM/omni models that correctly handles
+        # num_items_in_batch for global per-token mean aggregation, avoiding the mean-of-means issue.
+        compute_loss_func = partial(causal_lm_loss_func, label_smoothing_factor=training_args.label_smoothing_factor)
 
     trainer = HyperParallelTrainer(
         hp_args=hp_args,
